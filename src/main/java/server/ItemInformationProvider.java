@@ -223,7 +223,7 @@ public class ItemInformationProvider {
         } else if (itemId >= 1000000 && itemId < 1010000) {
             theData = eqpStringData;
             cat = "Eqp/Cap";
-        } else if (itemId >= 1102000 && itemId < 1103000) {
+        } else if (itemId >= 1102000 && itemId < 1104000) {
             theData = eqpStringData;
             cat = "Eqp/Cape";
         } else if (itemId >= 1040000 && itemId < 1050000) {
@@ -628,7 +628,8 @@ public class ItemInformationProvider {
     }
 
     public static boolean rollSuccessChance(double propPercent) {
-        return Math.random() >= testYourLuck(propPercent / 100.0, YamlConfig.config.server.SCROLL_CHANCE_ROLLS);
+        double actualChance = testYourLuck(propPercent / 100.0, YamlConfig.config.server.SCROLL_CHANCE_ROLLS);
+        return Math.random() >= actualChance;
     }
 
     private static short getMaximumShortMaxIfOverflow(int value1, int value2) {
@@ -1842,7 +1843,7 @@ public class ItemInformationProvider {
         return true;
     }
 
-    public ArrayList<Pair<Integer, String>> getItemDataByName(String name) {
+    public ArrayList<Pair<Integer, String>> getItemDataByName(String name) { // Pair<ItemID, ItemName>
         ArrayList<Pair<Integer, String>> ret = new ArrayList<>();
         for (Pair<Integer, String> itemPair : ItemInformationProvider.getInstance().getAllItems()) {
             int itemId = itemPair.getLeft();
