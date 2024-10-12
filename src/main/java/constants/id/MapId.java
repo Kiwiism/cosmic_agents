@@ -47,7 +47,7 @@ public class MapId {
     public static final int KOREAN_FOLK_TOWN = 222000000;
     public static final int ARIANT = 260000000;
     public static final int MAGATIA = 261000000;
-    public static final int TEMPLE_OF_TIME = 270000100;
+    public static final int TEMPLE_OF_TIME = 270000000;
     public static final int ELLIN_FOREST = 300000000;
     public static final int SINGAPORE = 540000000;
     public static final int BOAT_QUAY_TOWN = 541000000;
