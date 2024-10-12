@@ -204,8 +204,14 @@ public class PacketCreator {
         p.writeShort(chr.getDex()); // dex
         p.writeShort(chr.getInt()); // int
         p.writeShort(chr.getLuk()); // luk
-        p.writeShort(chr.getCurrentMaxMp() >= 30000 ? chr.getHp() / 10 : chr.getHp());
-        p.writeShort(chr.getClientMaxHp()); // maxhp
+        int totalMaxHp = chr.getCurrentMaxHp();
+        p.writeShort(totalMaxHp >= 30000 ? chr.getHp() / 10 : chr.getHp());
+        int clientMaxHp = chr.getClientMaxHp();
+        int extraHp = totalMaxHp - chr.getClientMaxHp();
+        if (totalMaxHp >= 30000) {
+            clientMaxHp = (clientMaxHp + extraHp) / 10 - extraHp;
+        }
+        p.writeShort(clientMaxHp); // maxhp
         p.writeShort(chr.getMp()); // mp (?)
         p.writeShort(chr.getClientMaxMp()); // maxmp
         p.writeShort(chr.getRemainingAp()); // remaining ap
@@ -1012,7 +1018,6 @@ public class PacketCreator {
             Integer value = statupdate.getRight();
             if ((stat == Stat.HP || stat == Stat.MAXHP) && chr != null) {
                 int extraHp = chr.getCurrentMaxHp() - chr.getClientMaxHp();
-                int extraMp = chr.getCurrentMaxMp() - chr.getClientMaxMp();
                 if (chr.getCurrentMaxHp() >= 30000) {
                     if (stat == Stat.MAXHP) {
                         value = (value + extraHp) / 10 - extraHp;
@@ -1083,7 +1088,7 @@ public class PacketCreator {
         p.writeByte(0);//updated
         p.writeInt(to.getId());
         p.writeByte(spawnPoint);
-        p.writeShort(chr.getCurrentMaxMp() >= 30000 ? chr.getHp() / 10 : chr.getHp());
+        p.writeShort(chr.getCurrentMaxHp() >= 30000 ? chr.getHp() / 10 : chr.getHp());
         p.writeBool(chr.isChasing());
         if (chr.isChasing()) {
             chr.setChasing(false);
@@ -1101,7 +1106,7 @@ public class PacketCreator {
         p.writeByte(0);//updated
         p.writeInt(to.getId());
         p.writeByte(spawnPoint);
-        p.writeShort(chr.getCurrentMaxMp() >= 30000 ? chr.getHp() / 10 : chr.getHp());
+        p.writeShort(chr.getCurrentMaxHp() >= 30000 ? chr.getHp() / 10 : chr.getHp());
         p.writeBool(true);
         p.writeInt(spawnPosition.x);    // spawn position placement thanks to Arnah (Vertisy)
         p.writeInt(spawnPosition.y);

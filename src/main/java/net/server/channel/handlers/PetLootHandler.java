@@ -82,6 +82,11 @@ public final class PetLootHandler extends AbstractPacketHandler {
             }
 
             chr.pickupItem(ob, petIndex);
+            // vac: needs cooldown  or very laggy
+//            List<MapObject> list = chr.getMap().getMapObjectsInRange(chr.getPosition(), Double.POSITIVE_INFINITY, Arrays.asList(MapObjectType.ITEM));
+//            for (MapObject item : list) {
+//                chr.pickupItem(item, petIndex);
+//            }
         } catch (NullPointerException | ClassCastException e) {
             c.sendPacket(PacketCreator.enableActions());
         }

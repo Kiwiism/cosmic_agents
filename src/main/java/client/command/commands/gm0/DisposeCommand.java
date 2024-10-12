@@ -40,6 +40,16 @@ public class DisposeCommand extends Command {
         QuestScriptManager.getInstance().dispose(c);
         c.sendPacket(PacketCreator.enableActions());
         c.removeClickedNPC();
+        if (params.length >= 1) {
+            try {
+                int input = Integer.parseInt(params[0]);
+                float ratio = input / 100f;
+                c.getPlayer().setAutopotHpAlert(ratio);
+                c.getPlayer().message("HP Autopot set to " + input + "%");
+            } catch (Exception ignored) {
+                c.getPlayer().message("HP Autopot set error.");
+            }
+        }
         c.getPlayer().message("You've been disposed.");
     }
 }

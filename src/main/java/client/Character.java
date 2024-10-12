@@ -9009,7 +9009,6 @@ public class Character extends AbstractCharacterObject {
                 if (((float) this.getHp()) / this.getCurrentMaxHp() <= autohpAlert) { // try within user settings... thanks Lame, Optimist, Stealth2800
                     Item autohpItem = this.getInventory(InventoryType.USE).findById(autohpItemid);
                     if (autohpItem != null) {
-                        this.setAutopotHpAlert(0.9f * autohpAlert);
                         PetAutopotProcessor.runAutopotAction(client, autohpItem.getPosition(), autohpItemid);
                     }
                 }
