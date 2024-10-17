@@ -205,15 +205,22 @@ public class PacketCreator {
         p.writeShort(chr.getInt()); // int
         p.writeShort(chr.getLuk()); // luk
         int totalMaxHp = chr.getCurrentMaxHp();
-        p.writeShort(totalMaxHp >= 30000 ? chr.getHp() / 10 : chr.getHp());
+        p.writeShort(totalMaxHp >= 10000 ? chr.getHp() / 10 : chr.getHp());
         int clientMaxHp = chr.getClientMaxHp();
         int extraHp = totalMaxHp - chr.getClientMaxHp();
-        if (totalMaxHp >= 30000) {
+        if (totalMaxHp >= 10000) {
             clientMaxHp = (clientMaxHp + extraHp) / 10 - extraHp;
         }
         p.writeShort(clientMaxHp); // maxhp
-        p.writeShort(chr.getMp()); // mp (?)
-        p.writeShort(chr.getClientMaxMp()); // maxmp
+
+        int totalMaxMp = chr.getCurrentMaxMp();
+        p.writeShort(totalMaxMp >= 10000 ? chr.getMp() / 10 : chr.getMp());
+        int clientMaxMp = chr.getClientMaxMp();
+        int extraMp = totalMaxMp - chr.getClientMaxMp();
+        if (totalMaxMp >= 10000) {
+            clientMaxMp = (clientMaxMp + extraMp) / 10 - extraMp;
+        }
+        p.writeShort(clientMaxMp); // maxmp
         p.writeShort(chr.getRemainingAp()); // remaining ap
         if (GameConstants.hasSPTable(chr.getJob())) {
             addRemainingSkillInfo(p, chr);
@@ -1018,7 +1025,7 @@ public class PacketCreator {
             Integer value = statupdate.getRight();
             if ((stat == Stat.HP || stat == Stat.MAXHP) && chr != null) {
                 int extraHp = chr.getCurrentMaxHp() - chr.getClientMaxHp();
-                if (chr.getCurrentMaxHp() >= 30000) {
+                if (chr.getCurrentMaxHp() >= 10000) {
                     if (stat == Stat.MAXHP) {
                         value = (value + extraHp) / 10 - extraHp;
                     } else {
@@ -1028,7 +1035,7 @@ public class PacketCreator {
             }
             if ((stat == Stat.MP || stat == Stat.MAXMP) && chr != null) {
                 int extraMp = chr.getCurrentMaxMp() - chr.getClientMaxMp();
-                if (chr.getCurrentMaxMp() >= 30000) {
+                if (chr.getCurrentMaxMp() >= 10000) {
                     if (stat == Stat.MAXMP) {
                         value = (value + extraMp) / 10 - extraMp;
                     } else {
@@ -1088,7 +1095,7 @@ public class PacketCreator {
         p.writeByte(0);//updated
         p.writeInt(to.getId());
         p.writeByte(spawnPoint);
-        p.writeShort(chr.getCurrentMaxHp() >= 30000 ? chr.getHp() / 10 : chr.getHp());
+        p.writeShort(chr.getCurrentMaxHp() >= 10000 ? chr.getHp() / 10 : chr.getHp());
         p.writeBool(chr.isChasing());
         if (chr.isChasing()) {
             chr.setChasing(false);
@@ -1106,7 +1113,7 @@ public class PacketCreator {
         p.writeByte(0);//updated
         p.writeInt(to.getId());
         p.writeByte(spawnPoint);
-        p.writeShort(chr.getCurrentMaxHp() >= 30000 ? chr.getHp() / 10 : chr.getHp());
+        p.writeShort(chr.getCurrentMaxHp() >= 10000 ? chr.getHp() / 10 : chr.getHp());
         p.writeBool(true);
         p.writeInt(spawnPosition.x);    // spawn position placement thanks to Arnah (Vertisy)
         p.writeInt(spawnPosition.y);
