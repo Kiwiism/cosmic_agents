@@ -28,11 +28,18 @@ import client.Client;
 import client.command.Command;
 import constants.id.NpcId;
 import server.ItemInformationProvider;
+import server.life.LifeFactory;
 import server.life.MonsterDropEntry;
 import server.life.MonsterInformationProvider;
+import server.life.SpawnPoint;
 import tools.Pair;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class WhatDropsFromCommand extends Command {
     {
@@ -42,31 +49,53 @@ public class WhatDropsFromCommand extends Command {
     @Override
     public void execute(Client c, String[] params) {
         Character player = c.getPlayer();
-        if (params.length < 1) {
-            player.dropMessage(5, "Please do @whatdropsfrom <monster name>");
-            return;
-        }
-        String monsterName = player.getLastCommandMessage();
         String output = "";
-        int limit = 3;
-        Iterator<Pair<Integer, String>> listIterator = MonsterInformationProvider.getMobsIDsFromName(monsterName).iterator();
-        for (int i = 0; i < limit; i++) {
-            if (listIterator.hasNext()) {
+        Set<Integer> uniqueMobs = new HashSet<>();
+        List<Pair<Integer, String>> monsters = new ArrayList<>();
+        int limit = 5;
+
+        MonsterInformationProvider mip = MonsterInformationProvider.getInstance();
+        if (params.length < 1) { // No parameters provided; get monsters from the map's spawn points.
+            player.dropMessage(5, "Do @whatdropsfrom <monster name> for specific mob info, defaulting to map mobs");
+            uniqueMobs = player.getMap().getMonsterSpawn()
+                    .stream()
+                    .map(SpawnPoint::getMonsterId)
+                    .collect(Collectors.toSet());
+        } else { // Find by name
+            String monsterName = player.getLastCommandMessage();
+            uniqueMobs = MonsterInformationProvider.getMobsIDsFromName(monsterName).stream().map(Pair::getLeft).collect(Collectors.toSet());
+        }
+
+        for (Integer mobId : uniqueMobs) {
+            String mobName = mip.getMobNameFromId(mobId);
+            if (mobName == null || mobName.isEmpty()) {
+                mobName = "Mob#" + mobId;
+            }
+            mobName +=  "(" + LifeFactory.getMonsterLevel(mobId) + ")";
+            monsters.add(new Pair<>(mobId, mobName));
+        }
+
+        if (monsters.isEmpty()) {
+            player.dropMessage(5, "Do @whatdropsfrom <monster name> for specific mob info, defaulting to map mobs");
+        } else {
+            Iterator<Pair<Integer, String>> listIterator = monsters.iterator();
+            for (int i = 0; i < limit && listIterator.hasNext(); i++) {
                 Pair<Integer, String> data = listIterator.next();
                 int mobId = data.getLeft();
                 String mobName = data.getRight();
                 output += mobName + " drops the following items:\r\n\r\n";
-                for (MonsterDropEntry drop : MonsterInformationProvider.getInstance().retrieveDrop(mobId)) {
+                for (MonsterDropEntry drop : mip.retrieveDrop(mobId)) {
                     try {
-                        String name = ItemInformationProvider.getInstance().getName(drop.itemId);
-                        if (name == null || name.equals("null") || drop.chance == 0) {
+                        String itemName = ItemInformationProvider.getInstance().getName(drop.itemId);
+                        if (itemName == null || itemName.equals("null") || drop.chance == 0) {
                             continue;
                         }
-                        float chance = Math.max(1000000 / drop.chance / (!MonsterInformationProvider.getInstance().isBoss(mobId) ? player.getDropRate() : player.getBossDropRate()), 1);
-                        output += "- " + name + " (1/" + (int) chance + ")\r\n";
+                        // Calculate the chance, factoring in whether the mob is a boss or not.
+                        float chance = Math.max(1000000 / drop.chance /
+                                (!mip.isBoss(mobId) ? player.getDropRate() : player.getBossDropRate()), 1);
+                        output += "- " + itemName + " (1/" + (int) chance + ")\r\n";
                     } catch (Exception ex) {
                         ex.printStackTrace();
-                        continue;
                     }
                 }
                 output += "\r\n";

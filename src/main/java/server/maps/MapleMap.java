@@ -1880,7 +1880,7 @@ public class MapleMap {
         }
     }
 
-    private List<SpawnPoint> getMonsterSpawn() {
+    public List<SpawnPoint> getMonsterSpawn() {
         synchronized (monsterSpawn) {
             return new ArrayList<>(monsterSpawn);
         }
