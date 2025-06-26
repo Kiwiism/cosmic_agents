@@ -9,4 +9,8 @@
         <sqlFile path="db/001-accounts.sql"/>
     </changeSet>
 
+    <changeSet id="2" author="Ponk">
+        <sqlFile path="db/002-characters.sql"/>
+    </changeSet>
+
 </databaseChangeLog>
