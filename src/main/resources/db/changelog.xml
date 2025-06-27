@@ -41,4 +41,8 @@
         <sqlFile path="db/009-drops.sql"/>
     </changeSet>
 
+    <changeSet id="10" author="Ponk">
+        <sqlFile path="db/010-storage.sql"/>
+    </changeSet>
+
 </databaseChangeLog>
