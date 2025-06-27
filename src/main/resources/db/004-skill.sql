@@ -10,6 +10,16 @@ CREATE TABLE lb_skills
     UNIQUE INDEX skillpair (skillid, characterid)
 );
 
+CREATE TABLE lb_cooldowns
+(
+    id        INT             NOT NULL AUTO_INCREMENT,
+    charid    INT             NOT NULL,
+    SkillID   INT             NOT NULL,
+    length    BIGINT UNSIGNED NOT NULL,
+    StartTime BIGINT UNSIGNED NOT NULL,
+    PRIMARY KEY (id)
+);
+
 CREATE TABLE lb_skillmacros
 (
     id          INT     NOT NULL AUTO_INCREMENT,
