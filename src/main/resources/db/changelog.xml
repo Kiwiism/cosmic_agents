@@ -17,4 +17,8 @@
         <sqlFile path="db/003-inventory.sql"/>
     </changeSet>
 
+    <changeSet id="4" author="Ponk">
+        <sqlFile path="db/004-skill.sql"/>
+    </changeSet>
+
 </databaseChangeLog>
