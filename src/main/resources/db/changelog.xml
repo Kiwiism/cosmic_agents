@@ -93,4 +93,8 @@
         <sqlFile path="db/022-ban.sql"/>
     </changeSet>
 
+    <changeSet id="23" author="Ponk">
+        <sqlFile path="db/023-bosslog.sql"/>
+    </changeSet>
+
 </databaseChangeLog>
