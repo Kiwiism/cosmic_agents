@@ -125,4 +125,8 @@
         <sqlFile path="db/121-monstercard-data.sql"/>
     </changeSet>
 
+    <changeSet id="131" author="Ponk">
+        <sqlFile path="db/131-reactordrops-data.sql"/>
+    </changeSet>
+
 </databaseChangeLog>
