@@ -97,4 +97,8 @@
         <sqlFile path="db/023-bosslog.sql"/>
     </changeSet>
 
+    <changeSet id="24" author="Ponk">
+        <sqlFile path="db/024-duey.sql"/>
+    </changeSet>
+
 </databaseChangeLog>

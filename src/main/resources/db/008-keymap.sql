@@ -13,5 +13,5 @@ CREATE TABLE lb_quickslotkeymapped
     accountid INT    NOT NULL,
     keymap    BIGINT NOT NULL DEFAULT 0,
     PRIMARY KEY (accountid),
-    CONSTRAINT lb_quickslotkeymapped_accountid_fk FOREIGN KEY (accountid) REFERENCES lb_accounts (id) ON DELETE CASCADE
+    FOREIGN KEY (accountid) REFERENCES lb_accounts (id) ON DELETE CASCADE
 );
