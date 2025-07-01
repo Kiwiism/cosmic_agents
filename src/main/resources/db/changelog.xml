@@ -65,4 +65,8 @@
         <sqlFile path="db/015-marriage.sql"/>
     </changeSet>
 
+    <changeSet id="16" author="Ponk">
+        <sqlFile path="db/016-monsterbook.sql"/>
+    </changeSet>
+
 </databaseChangeLog>
