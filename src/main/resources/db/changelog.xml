@@ -121,4 +121,8 @@
         <sqlFile path="db/114-makerreagent-data.sql"/>
     </changeSet>
 
+    <changeSet id="121" author="Ponk">
+        <sqlFile path="db/121-monstercard-data.sql"/>
+    </changeSet>
+
 </databaseChangeLog>
