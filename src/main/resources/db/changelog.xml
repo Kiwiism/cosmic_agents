@@ -57,4 +57,8 @@
         <sqlFile path="db/013-cash-shop.sql"/>
     </changeSet>
 
+    <changeSet id="14" author="Ponk">
+        <sqlFile path="db/014-gift.sql"/>
+    </changeSet>
+
 </databaseChangeLog>
