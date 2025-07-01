@@ -3,15 +3,6 @@
 
 USE `cosmic`;
 
-  # zhelms, pink bean customs
-  DELETE FROM temp_data WHERE itemid=1002357;
-  INSERT IGNORE INTO temp_data (`dropperid`, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`) VALUES
-(8800002, 1002357, 1, 2, 0, 300000),
-(8800002, 1002390, 3, 5, 0, 80000),
-(8800002, 1002430, 3, 5, 0, 40000),
-(8820001, 1002971, 3, 5, 0, 80000),
-(8820001, 1052202, 3, 5, 0, 80000);
-
   UPDATE IGNORE temp_data SET chance=700 WHERE itemid=1302056;
 
   UPDATE IGNORE temp_data SET dropperid=9000002 WHERE dropperid=9000000;
