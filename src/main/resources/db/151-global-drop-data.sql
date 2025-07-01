@@ -1,4 +1,4 @@
-INSERT INTO drop_data_global (continent, itemid, minimum_quantity, maximum_quantity, questid, chance, comments)
+INSERT INTO lb_drop_data_global (continent, itemid, minimum_quantity, maximum_quantity, questid, chance, comments)
 VALUES (-1, 4031865, 1, 1, 0, 35000, 'NX Card 100 PTS'),
        (-1, 4031866, 1, 1, 0, 20000, 'NX Card 250 PTS'),
        (-1, 4001126, 1, 2, 0, 8000, 'Maple Leaves'),
