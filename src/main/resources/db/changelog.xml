@@ -77,4 +77,8 @@
         <sqlFile path="db/018-transfer.sql"/>
     </changeSet>
 
+    <changeSet id="19" author="Ponk">
+        <sqlFile path="db/019-mts.sql"/>
+    </changeSet>
+
 </databaseChangeLog>
