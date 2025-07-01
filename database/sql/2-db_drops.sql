@@ -3,9 +3,6 @@
 
 USE `cosmic`;
 
-  # improve drop rates for skill/mastery books
-  UPDATE IGNORE temp_data SET chance=1000 WHERE itemid >= 2280000 and itemid < 2300000 and chance < 1000;
-
   # make some mobs drop unusual accessory scrolls
   INSERT IGNORE INTO temp_data (`dropperid`, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`) VALUES
 (6090003, 2040103, 1, 1, 0, 3000),
