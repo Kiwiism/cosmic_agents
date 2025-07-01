@@ -136,4 +136,8 @@
         <sqlFile path="db/142-nxcoupons-data.sql"/>
     </changeSet>
 
+    <changeSet id="151" author="Ponk">
+        <sqlFile path="db/151-global-drop-data.sql"/>
+    </changeSet>
+
 </databaseChangeLog>
