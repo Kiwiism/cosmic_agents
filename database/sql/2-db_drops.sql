@@ -3,14 +3,6 @@
 
 USE `cosmic`;
 
-  # normalize item drops for left-side Pianus
-  DELETE FROM temp_data WHERE dropperid=8520000;
-
-  INSERT INTO temp_data (`dropperid`, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`)
-  SELECT  8520000, temp_data.itemid, temp_data.minimum_quantity, temp_data.maximum_quantity, temp_data.questid, temp_data.chance
-  FROM    temp_data
-  WHERE   temp_data.dropperid = 8510000;
-
   # delete/normalize item drops from clones of Pink Bean
   DELETE FROM temp_data WHERE dropperid=8820000;
   DELETE FROM temp_data WHERE dropperid>=8820010 AND dropperid<=8820014;
