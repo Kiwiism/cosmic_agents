@@ -3,8 +3,6 @@
 
 USE `cosmic`;
 
-  UPDATE IGNORE temp_data SET chance=700 WHERE itemid=1302056;
-
   UPDATE IGNORE temp_data SET dropperid=9000002 WHERE dropperid=9000000;
   UPDATE IGNORE temp_data SET chance=600000 WHERE itemid=4000058;
 
@@ -569,10 +567,6 @@ DELETE FROM temp_data WHERE dropperid >= 9300315 AND dropperid <= 9300324;
   UPDATE drop_data SET chance=0 WHERE itemid=2050099;
   UPDATE drop_data SET questid=6191 WHERE itemid=4031477;
   UPDATE drop_data SET questid=6190 WHERE itemid=4001111;
-
-  # two items named "Sparta": remove the entries where lv100 Sparta is being dropped by low-level mobs.
-  UPDATE IGNORE drop_data SET itemid=1402011 WHERE itemid=1302056 AND dropperid < 8000000;
-  DELETE FROM drop_data WHERE itemid=1302056 AND dropperid < 8000000;
 
   # patch Masteria drops being very rare
   UPDATE drop_data SET chance=200000 WHERE itemid>=4032003 AND itemid<=4032033 AND chance=10000;
