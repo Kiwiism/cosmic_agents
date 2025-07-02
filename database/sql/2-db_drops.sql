@@ -3,14 +3,6 @@
 
 USE `cosmic`;
 
-# add AriantPQ items, AriantPQ specific items found thanks to Dragohe4rt
-  INSERT IGNORE INTO temp_data (`dropperid`, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`) VALUES
-(9300157, 2100067, 1, 1, 0, 100000),
-(9300157, 2022266, 1, 1, 0, 200000),
-(9300157, 2022267, 1, 1, 0, 200000),
-(9300157, 2022268, 1, 1, 0, 200000),
-(9300157, 2022269, 1, 1, 0, 200000);
-
   CREATE TABLE IF NOT EXISTS `drop_data` (
     `id` bigint(20) NOT NULL AUTO_INCREMENT,
     `dropperid` int(11) NOT NULL,
@@ -81,7 +73,6 @@ USE `cosmic`;
   DELETE FROM drop_data WHERE dropperid >= 9300054 AND dropperid <= 9300056;
   DELETE FROM drop_data WHERE dropperid >= 9300143 AND dropperid <= 9300144;
   DELETE FROM drop_data WHERE dropperid >= 8810019 AND dropperid <= 8810023;
-  DELETE FROM drop_data WHERE dropperid = 9300157;
   DELETE FROM drop_data WHERE dropperid = 9500100;
   DELETE FROM drop_data where dropperid >= 9300141 AND dropperid <= 9300154 AND (itemid < 4001130 OR itemid >= 4001136);
 
