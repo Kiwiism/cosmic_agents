@@ -25,9 +25,6 @@ USE `cosmic`;
   );
   DROP TABLE temp_data;
 
-  # remove drop data from mobs which respawns as other mobs
-  DELETE FROM drop_data WHERE dropperid = 8190001;
-
   # remove key of dimension dropping outside PQ
   DELETE FROM drop_data WHERE itemid=4001023 AND dropperid!=9300012;
 
