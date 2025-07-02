@@ -3,11 +3,6 @@
 
 USE `cosmic`;
 
-  INSERT IGNORE INTO temp_data (dropperid, itemid, minimum_quantity, maximum_quantity, questid, chance)
-    SELECT dropperid, 4000176, 1, 1, 0, 600000
-    FROM   temp_data
-    WHERE  itemid = 2011000;  #Poisonous Mushroom
-
   # add Giant Cake anniversary-themed drops
   INSERT IGNORE INTO temp_data (`dropperid`, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`) VALUES
 (9400606, 1012098, 1, 1, 0, 120000),
