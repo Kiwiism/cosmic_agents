@@ -28,31 +28,40 @@ USE `cosmic`;
  -- Copying drops from some mobs to other versions of them
 
  INSERT IGNORE INTO drop_data (`dropperid`, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`)
- SELECT 9300342, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance` FROM drop_data WHERE dropperid = 1210102;
+ SELECT 9300342, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`
+ FROM drop_data WHERE dropperid = 1210102;
 
  INSERT IGNORE INTO drop_data (`dropperid`, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`)
- SELECT 6300001, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance` FROM drop_data WHERE dropperid = 6300000;
+ SELECT 6300001, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`
+ FROM drop_data WHERE dropperid = 6300000;
 
  INSERT IGNORE INTO drop_data (`dropperid`, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`)
- SELECT 6300002, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance` FROM drop_data WHERE dropperid = 6300000;
+ SELECT 6300002, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`
+ FROM drop_data WHERE dropperid = 6300000;
 
  INSERT IGNORE INTO drop_data (`dropperid`, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`)
- SELECT 6400001, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance` FROM drop_data WHERE dropperid = 6400000;
+ SELECT 6400001, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`
+ FROM drop_data WHERE dropperid = 6400000;
 
  INSERT IGNORE INTO drop_data (`dropperid`, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`)
- SELECT 6130102, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance` FROM drop_data WHERE dropperid = 6130103;
+ SELECT 6130102, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`
+ FROM drop_data WHERE dropperid = 6130103;
 
  INSERT IGNORE INTO drop_data (`dropperid`, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`)
- SELECT 6230201, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance` FROM drop_data WHERE dropperid = 6230200;
+ SELECT 6230201, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`
+ FROM drop_data WHERE dropperid = 6230200;
 
  INSERT IGNORE INTO drop_data (`dropperid`, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`)
- SELECT 3000002, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance` FROM drop_data WHERE dropperid = 3000001;
+ SELECT 3000002, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`
+ FROM drop_data WHERE dropperid = 3000001;
 
  INSERT IGNORE INTO drop_data (`dropperid`, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`)
- SELECT 3000003, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance` FROM drop_data WHERE dropperid = 3000001;
+ SELECT 3000003, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`
+ FROM drop_data WHERE dropperid = 3000001;
 
  INSERT IGNORE INTO drop_data (`dropperid`, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`)
- SELECT 3000004, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance` FROM drop_data WHERE dropperid = 3000001;
+ SELECT 3000004, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`
+ FROM drop_data WHERE dropperid = 3000001;
 
  -- Thanks to DietStory v1.02 dev team
  -- There are two Jr. Boogies mob ids for some unknown reason. 3230301 had no drops, but 3230300 had all the correct drops.
