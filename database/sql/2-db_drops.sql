@@ -65,52 +65,6 @@ USE `cosmic`;
  INSERT IGNORE INTO drop_data (`dropperid`, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`)
  SELECT 3230301, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance` FROM drop_data WHERE dropperid = 3230300;
 
-  # delete all unused content on drop data
-  DELETE FROM `drop_data` WHERE itemid=400000;
-  DELETE FROM `drop_data` WHERE itemid=400001;
-  DELETE FROM `drop_data` WHERE itemid=400002;
-  DELETE FROM `drop_data` WHERE itemid=400003;
-  DELETE FROM `drop_data` WHERE itemid=400004;
-  DELETE FROM `drop_data` WHERE itemid=400005;
-  DELETE FROM `drop_data` WHERE itemid=400006;
-  DELETE FROM `drop_data` WHERE itemid=400009;
-  DELETE FROM `drop_data` WHERE itemid=400010;
-  DELETE FROM `drop_data` WHERE itemid=400011;
-  DELETE FROM `drop_data` WHERE itemid=401000;
-  DELETE FROM `drop_data` WHERE itemid=404000;
-  DELETE FROM `drop_data` WHERE itemid=1002926;
-  DELETE FROM `drop_data` WHERE itemid=1002927;
-  DELETE FROM `drop_data` WHERE itemid=1027090;
-  DELETE FROM `drop_data` WHERE itemid=1302096;
-  DELETE FROM `drop_data` WHERE itemid=2002205;
-  DELETE FROM `drop_data` WHERE itemid=2040033;
-  DELETE FROM `drop_data` WHERE itemid=2040536;
-  DELETE FROM `drop_data` WHERE itemid=2040827;
-  DELETE FROM `drop_data` WHERE itemid=2040913;
-  DELETE FROM `drop_data` WHERE itemid=2040935;
-  DELETE FROM `drop_data` WHERE itemid=2043109;
-  DELETE FROM `drop_data` WHERE itemid=2043309;
-  DELETE FROM `drop_data` WHERE itemid=2043709;
-  DELETE FROM `drop_data` WHERE itemid=2044009;
-  DELETE FROM `drop_data` WHERE itemid=2044209;
-  DELETE FROM `drop_data` WHERE itemid=2044309;
-  DELETE FROM `drop_data` WHERE itemid=2044609;
-  DELETE FROM `drop_data` WHERE itemid=2049212;
-  DELETE FROM `drop_data` WHERE itemid=2049214;
-  DELETE FROM `drop_data` WHERE itemid=4000306;
-  DELETE FROM `drop_data` WHERE itemid=4000343;
-  DELETE FROM `drop_data` WHERE itemid=4000420;
-  DELETE FROM `drop_data` WHERE itemid=4000429;
-  DELETE FROM `drop_data` WHERE itemid=4000430;
-  DELETE FROM `drop_data` WHERE itemid=4000431;
-  DELETE FROM `drop_data` WHERE itemid=4000432;
-  DELETE FROM `drop_data` WHERE itemid=4000433;
-  DELETE FROM `drop_data` WHERE itemid=4000434;
-  DELETE FROM `drop_data` WHERE itemid=4000435;
-  DELETE FROM `drop_data` WHERE itemid=4032192;
-  DELETE FROM `drop_data` WHERE itemid=8143000;
-  DELETE FROM `drop_data` WHERE itemid=2094101;
-
   # MapleMesoFetcher ftw! Set meso drop for remaining mobs which drops more than 4 items.
   INSERT IGNORE INTO drop_data (`dropperid`, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`) VALUES
 (100122, 0, 35, 52, 0, 400000),
