@@ -3,12 +3,6 @@
 
 USE `cosmic`;
 
-  # update USE drops that were supposed to be ETC
-  INSERT IGNORE INTO temp_data (dropperid, itemid, minimum_quantity, maximum_quantity, questid, chance)
-    SELECT dropperid, 4001006, 1, 1, 0, 10000
-    FROM   temp_data
-    WHERE  itemid = 2050099;  #Flaming feather
-
   INSERT IGNORE INTO temp_data (dropperid, itemid, minimum_quantity, maximum_quantity, questid, chance)
     SELECT dropperid, 4000176, 1, 1, 0, 600000
     FROM   temp_data
@@ -561,7 +555,6 @@ DELETE FROM temp_data WHERE dropperid >= 9300315 AND dropperid <= 9300324;
   UPDATE drop_data SET questid=28248 WHERE itemid=4001359;
   UPDATE drop_data SET questid=28175 WHERE itemid=4001342;
   UPDATE drop_data SET questid=7777 WHERE itemid=4031905;	#id 7777 for ALL "quest items" with no v83 quest.
-  UPDATE drop_data SET chance=0 WHERE itemid=2050099;
   UPDATE drop_data SET questid=6191 WHERE itemid=4031477;
   UPDATE drop_data SET questid=6190 WHERE itemid=4001111;
 
