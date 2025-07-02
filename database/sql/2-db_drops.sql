@@ -25,10 +25,6 @@ USE `cosmic`;
   );
   DROP TABLE temp_data;
 
-  # remove every non-card drop from bosses out of their natural habitat
-  DELETE FROM drop_data WHERE dropperid >= 9300184 AND dropperid < 9300215 AND (itemid < 2380000 OR itemid >= 2390000);
-  DELETE FROM drop_data WHERE dropperid >= 9500337 AND dropperid < 9500364 AND (itemid < 2380000 OR itemid >= 2390000);
-
   # reinsert loot for Dark Nependeath
   DELETE FROM drop_data WHERE dropperid=4130104;
   INSERT IGNORE INTO drop_data (`dropperid`, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`) VALUES
