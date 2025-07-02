@@ -25,9 +25,6 @@ USE `cosmic`;
   );
   DROP TABLE temp_data;
 
-  # remove key of dimension dropping outside PQ
-  DELETE FROM drop_data WHERE itemid=4001023 AND dropperid!=9300012;
-
   # make Sword Earrings not drop by normal means, just like Shield Earrings
   DELETE FROM drop_data WHERE itemid=1032030;
 
