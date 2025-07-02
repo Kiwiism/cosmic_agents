@@ -26,7 +26,6 @@ USE `cosmic`;
   DROP TABLE temp_data;
 
   #update card rates
-  UPDATE drop_data SET chance=8000 WHERE (itemid >= 2380000 AND itemid < 2388000);
   UPDATE drop_data SET chance=24000 WHERE (itemid >= 2388000 AND itemid < 2390000);
   UPDATE drop_data SET chance=24000 WHERE itemid = 2388046;
 
