@@ -28,10 +28,6 @@ USE `cosmic`;
  -- Copying drops from some mobs to other versions of them
 
  INSERT IGNORE INTO drop_data (`dropperid`, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`)
- SELECT 6400001, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`
- FROM drop_data WHERE dropperid = 6400000;
-
- INSERT IGNORE INTO drop_data (`dropperid`, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`)
  SELECT 6130102, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`
  FROM drop_data WHERE dropperid = 6130103;
 
