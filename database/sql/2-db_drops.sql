@@ -25,7 +25,6 @@ USE `cosmic`;
   );
   DROP TABLE temp_data;
 
-  DELETE FROM drop_data WHERE dropperid >= 9300184 AND dropperid <= 9300215 AND itemid = 0;
 
   # MapleArrowFetcher! Set proper arrow quantity drop for the mobs.
 
