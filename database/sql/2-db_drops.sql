@@ -25,14 +25,6 @@ USE `cosmic`;
   );
   DROP TABLE temp_data;
 
- -- Copying drops from some mobs to other versions of them
-
- -- Thanks to DietStory v1.02 dev team
- -- There are two Jr. Boogies mob ids for some unknown reason. 3230301 had no drops, but 3230300 had all the correct drops.
- -- Just copying the drops from the one with the correct drop data.
- INSERT IGNORE INTO drop_data (`dropperid`, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`)
- SELECT 3230301, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance` FROM drop_data WHERE dropperid = 3230300;
-
   # MapleMesoFetcher ftw! Set meso drop for remaining mobs which drops more than 4 items.
   INSERT IGNORE INTO drop_data (`dropperid`, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`) VALUES
 (100122, 0, 35, 52, 0, 400000),
