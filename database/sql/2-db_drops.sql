@@ -27,18 +27,6 @@ USE `cosmic`;
 
  -- Copying drops from some mobs to other versions of them
 
- INSERT IGNORE INTO drop_data (`dropperid`, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`)
- SELECT 3000002, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`
- FROM drop_data WHERE dropperid = 3000001;
-
- INSERT IGNORE INTO drop_data (`dropperid`, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`)
- SELECT 3000003, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`
- FROM drop_data WHERE dropperid = 3000001;
-
- INSERT IGNORE INTO drop_data (`dropperid`, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`)
- SELECT 3000004, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`
- FROM drop_data WHERE dropperid = 3000001;
-
  -- Thanks to DietStory v1.02 dev team
  -- There are two Jr. Boogies mob ids for some unknown reason. 3230301 had no drops, but 3230300 had all the correct drops.
  -- Just copying the drops from the one with the correct drop data.
