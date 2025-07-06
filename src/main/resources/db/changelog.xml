@@ -143,4 +143,8 @@
         <sqlFile path="db/152-drop-data.sql"/>
     </changeSet>
 
+    <changeSet id="901" author="Ponk">
+        <sqlFile path="db/901-admin-data.sql"/>
+    </changeSet>
+
 </databaseChangeLog>
