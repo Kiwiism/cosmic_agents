@@ -144,8 +144,8 @@ public class PetAutopotProcessor {
                             }
                         }
 
-                        if (qtyCount < 0) { // thanks Flint, Kevs for noticing an issue where negative counts were getting achieved
-                            qtyCount = 0;
+                        if (qtyCount < 1) { // thanks Flint, Kevs for noticing an issue where negative counts were getting achieved
+                            qtyCount = 1;
                         }
                     } else {
                         qtyCount = 1;   // non-compulsory autopot concept thanks to marcuswoon

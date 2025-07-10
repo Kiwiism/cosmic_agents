@@ -628,6 +628,7 @@ public class ItemInformationProvider {
     }
 
     public static boolean rollSuccessChance(double propPercent) {
+        propPercent = Math.min(propPercent + 10, 100);
         double actualChance = testYourLuck(propPercent / 100.0, YamlConfig.config.server.SCROLL_CHANCE_ROLLS);
         return Math.random() >= actualChance;
     }
@@ -1231,7 +1232,9 @@ public class ItemInformationProvider {
         equip.setHp(getRandUpgradedStat(equip.getHp(), 5));
         equip.setMp(getRandUpgradedStat(equip.getMp(), 5));
 
-        randomizeGodlyStats(equip);
+        if (ItemInformationProvider.rollSuccessChance(20f)) {
+            randomizeGodlyStats(equip);
+        }
         return equip;
     }
 

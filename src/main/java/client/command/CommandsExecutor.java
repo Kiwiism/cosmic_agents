@@ -371,6 +371,8 @@ public class CommandsExecutor {
         addCommand("mylawn", MapOwnerClaimCommand.class);
         addCommand("bosshp", BossHpCommand.class);
         addCommand("mobhp", MobHpCommand.class);
+        addCommand("dress", DressingRoomCommand.class);
+        addCommand("dresscash", DressingRoomCashCommand.class);
 
         commandsNameDesc.add(levelCommandsCursor);
     }
@@ -411,8 +413,6 @@ public class CommandsExecutor {
         addCommand("gmshop", 2, GmShopCommand.class);
         addCommand("heal", 2, HealCommand.class);
         addCommand("item", 2, ItemCommand.class);
-        addCommand("dress", 2, DressingRoomCommand.class);
-        addCommand("dresscash", 2, DressingRoomCashCommand.class);
         addCommand("drop", 2, ItemDropCommand.class);
         addCommand("level", 2, LevelCommand.class);
         addCommand("levelpro", 2, LevelProCommand.class);
