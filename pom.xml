@@ -66,6 +66,7 @@
         <HikariCP.version>6.3.0</HikariCP.version> <!-- Database connection pool -->
         <mysql-connector-j.version>9.3.0</mysql-connector-j.version> <!-- MySQL JDBC driver -->
         <jdbi-version>3.49.5</jdbi-version> <!-- Convenience wrapper around JDBC -->
+        <liquibase-core.version>4.32.0</liquibase-core.version> <!-- Database migrations -->
         <junit.version>5.13.1</junit.version> <!-- Unit test -->
         <mockito.version>5.18.0</mockito.version> <!-- Unit test -->
     </properties>
@@ -98,7 +99,11 @@
             <artifactId>jdbi3-core</artifactId>
             <version>${jdbi-version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+            <version>${liquibase-core.version}</version>
+        </dependency>
 
         <!-- Networking -->
         <dependency>

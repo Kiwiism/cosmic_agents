@@ -57,15 +57,20 @@ We will set up the following:
 - Client - the client is the application used to _play the game_, i.e. MapleStory.exe.
 
 ### 1 - Database 
-You will start by installing the database server and database client, and then run some scripts to prepare it for the server.
+You will start by installing the database server and database client. Then you will connect to the server with the client to create a new database schema.
 
 #### Steps
 
-1. Download and install [MySQL Community Server 8+](https://dev.mysql.com/downloads/mysql/). You will have to set a root password, make sure you don't lose it because you will need it later.
+1. Download and install [MySQL Community Server 8+](https://dev.mysql.com/downloads/mysql/). You will have to set a root password. Make sure you don't lose it because you will need it later.
 2. Download and install [HeidiSQL](https://www.heidisql.com/download.php).
-3. Open HeidiSQL and connect to the database ("New" -> "Session in root folder" -> fill in password -> "Open").
-4. Run all four scripts located in database/sql in order. Starting with ``1-db_database.sql`` and ending with ``4-db-admin.sql``. In HeidiSQL: "File" -> "Run SQL File...".
-5. The database is ready!
+3. Connect to the database: 
+   1. Open HeidiSQL
+   2. Create a new Session: "New" -> fill in your password -> "Save"
+   3. Connect to the database: click on your saved session -> "Open"
+4. Create a new database schema:
+   1. In the opened session, right-click on the session name in the menu on the left
+   2. "Create new" -> "Database" -> database name should be "cosmic" -> "OK"
+5. Done. The database is now ready. Once the Cosmic server starts, it will create tables and populate some of them with initial data.
 
 ### 2 - Server
 You will start by cloning the repository, then configure the database properties and lastly start the server.
@@ -87,8 +92,6 @@ Below, I list other ways of running the server which are completely optional.
 Support for Docker is also provided out of the box, as an alternative to running straight in the IDE. If you have [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed it's as easy as running `docker compose up`.
 
 Making changes becomes a bit more tedious though as you have to rebuild the server image via `docker compose up --build`.
-
-On the first launch, the database container will run the scripts which may take so long that the server fails to start. In that case, just wait until the database is done running the scripts and then retry (Ctrl+C and re-run the command).
 
 #### Jar
 Another option is to start the server from a terminal by running a jar file. You first need to build the jar file from source which requires [Maven](https://maven.apache.org/). Fortunately, [Maven Wrapper](https://maven.apache.org/wrapper/) is provided so you don't have to install Maven separately.
