@@ -121,7 +121,7 @@ public class SearchCommand extends Command {
             for (Pair<Integer, String> itemPair : ItemInformationProvider.getInstance().getAllItems()) {
                 if (sb.length() < 32654) {//ohlol
                     if (itemPair.getRight().toLowerCase().contains(search.toLowerCase())) {
-                        sb.append("#b").append(itemPair.getLeft()).append("#k - #r").append(itemPair.getRight()).append("\r\n");
+                        sb.append("#b").append(itemPair.getLeft()).append("#k - #z").append(itemPair.getLeft()).append("#\r\n");
                     }
                 } else {
                     sb.append("#bCouldn't load all items, there are too many results.\r\n");

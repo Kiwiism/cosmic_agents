@@ -4944,7 +4944,7 @@ public class Character extends AbstractCharacterObject {
     public int getExpRate() {
         World w = getWorldServer();
         if (hasNoviceExpRate()) {
-            return Math.min(w.getExpRate(), 2);
+            return Math.min(w.getExpRate(), 5);
         }
         if (hasFirstJobExpRate()) {
             return Math.min(w.getExpRate(), 5);

@@ -43,6 +43,7 @@ public class BuffMeCommand extends Command {
         SkillFactory.getSkill(1005).getEffect(SkillFactory.getSkill(1005).getMaxLevel()).applyTo(player);
         SkillFactory.getSkill(2321000).getEffect(SkillFactory.getSkill(2321000).getMaxLevel()).applyTo(player); // Maple Warrior
         SkillFactory.getSkill(3121002).getEffect(SkillFactory.getSkill(3121002).getMaxLevel()).applyTo(player, true); // Sharp Eye 3121002
+        SkillFactory.getSkill(5121009).getEffect(SkillFactory.getSkill(5121009).getMaxLevel()).applyTo(player, true); // Speed Infusion 5121009
         player.healHpMp();
     }
 }
