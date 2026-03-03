@@ -96,6 +96,15 @@ public abstract class CharacterFactory {
         if (!newCharacter.insertNewChar(recipe)) {
             return -2;
         }
+
+//        newCharacter.getInventory(InventoryType.CASH).addItem(new Item(5000000, (short) 5, (short)1)); // brownKitty
+//        newCharacter.getInventory(InventoryType.CASH).addItem(new Item(5190001, (short) 6, (short)1)); // petHPSkill
+//        newCharacter.getInventory(InventoryType.CASH).addItem(new Item(5190006, (short) 7, (short)1)); // petMPSkill
+//
+//        newCharacter.getInventory(InventoryType.CASH).addItem(new Item(5190000, (short) 8, (short)1)); // Item Pick-up Skill
+//        newCharacter.getInventory(InventoryType.CASH).addItem(new Item(5190002, (short) 9, (short)1)); // Expand Range Skill
+//        newCharacter.getInventory(InventoryType.CASH).addItem(new Item(5190003, (short) 10, (short)1)); // Automatic Pick-Up Skill
+
         c.sendPacket(PacketCreator.addNewCharEntry(newCharacter));
 
         Server.getInstance().createCharacterEntry(newCharacter);

@@ -1965,9 +1965,19 @@ public class MapleMap {
             }
         }
 
+        monster.buff(getBuffMultiplierFromMapID(mapid));
+
         spawnedMonstersOnMap.incrementAndGet();
         addSelfDestructive(monster);
         applyRemoveAfter(monster);  // thanks LightRyuzaki for pointing issues with spawned CWKPQ mobs not applying this
+    }
+
+    private static double getBuffMultiplierFromMapID(int mapid) {
+        int prefix = mapid / 1000000;
+        if (prefix == 450) { // arcane river - debuff mob
+            return 0.01;
+        }
+        return 1.0;
     }
 
     public void spawnDojoMonster(final Monster monster) {

@@ -36,7 +36,6 @@ import constants.game.GameConstants;
 import constants.inventory.ItemConstants;
 import constants.net.OpcodeConstants;
 import constants.net.ServerConstants;
-import database.DatabaseMigrations;
 import database.note.NoteDao;
 import net.ChannelDependencies;
 import net.PacketProcessor;
@@ -873,7 +872,7 @@ public class Server {
             throw new IllegalStateException("Failed to initiate a connection to the database");
         }
 
-        DatabaseMigrations.runDatabaseMigrations();
+//        DatabaseMigrations.runDatabaseMigrations();
 
         channelDependencies = registerChannelDependencies();
 

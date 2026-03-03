@@ -93,7 +93,7 @@ public class WhatDropsFromCommand extends Command {
                         // Calculate the chance, factoring in whether the mob is a boss or not.
                         float chance = Math.max(1000000 / drop.chance /
                                 (!mip.isBoss(mobId) ? player.getDropRate() : player.getBossDropRate()), 1);
-                        output += "- " + itemName + " (1/" + (int) chance + ")\r\n";
+                        output += "- #z" + drop.itemId + "# (1/" + (int) chance + ")\r\n";
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }

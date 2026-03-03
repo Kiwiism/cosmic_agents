@@ -1608,6 +1608,17 @@ public class Monster extends AbstractLoadedLife {
         return this.stats.getBuffToGive();
     }
 
+    public void buff(double multiplier) {
+        setStartingHp((int) (stats.getHp() * multiplier));
+//        stats.setExp((int) (stats.getExp() * multiplier));
+//
+//        double sqrtMultiplier = Math.sqrt(multiplier);
+//        stats.setPADamage((int) (stats.getPADamage() * sqrtMultiplier));
+//        stats.setMADamage((int) (stats.getMADamage() * sqrtMultiplier));
+//        stats.setPDDamage((int) (stats.getPDDamage() * sqrtMultiplier));
+//        stats.setMDDamage((int) (stats.getMDDamage() * sqrtMultiplier));
+    }
+
     private final class DamageTask implements Runnable {
 
         private final int dealDamage;

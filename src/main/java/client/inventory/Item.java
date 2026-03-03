@@ -169,7 +169,12 @@ public class Item implements Comparable<Item> {
     }
 
     public void setExpiration(long expire) {
-        this.expiration = !ItemConstants.isPermanentItem(id) ? expire : ItemConstants.isPet(id) ? Long.MAX_VALUE : -1;
+//        if (ItemConstants.isPermanentItem(id)) {
+        this.expiration = ItemConstants.isPet(id) ? Long.MAX_VALUE : -1;
+//        }
+//        else {
+//            this.expiration = expire;
+//        }
     }
 
     public int getSN() {
