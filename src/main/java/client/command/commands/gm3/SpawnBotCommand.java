@@ -6,6 +6,7 @@ import client.Client;
 import client.DefaultDates;
 import client.command.Command;
 import client.creator.BotCreator;
+import server.maps.BotManager;
 import server.maps.MapleMap;
 import tools.BCrypt;
 import tools.DatabaseConnection;
@@ -32,7 +33,9 @@ public class SpawnBotCommand extends Command {
             return;
         }
 
-        String botName = params[0];
+        // params are lowercased by CommandsExecutor; use lastCommandMessage to preserve casing
+        String[] rawArgs = player.getLastCommandMessage().trim().split("[ ]", 2);
+        String botName = rawArgs[0];
         MapleMap adminMap = player.getMap();
         Point adminPos = player.getPosition();
 
@@ -95,8 +98,10 @@ public class SpawnBotCommand extends Command {
             c.getChannelServer().getWorldServer().addPlayer(botChar);
             botChar.setEnteredChannelWorld();
             adminMap.addPlayer(botChar);
+            botChar.broadcastStance(); // fix floating on spawn
 
-            player.yellowMessage("Bot '" + botName + "' spawned.");
+            BotManager.getInstance().registerBot(player.getId(), botChar);
+            player.yellowMessage("Bot '" + botName + "' spawned. Say 'follow me' or 'stop' to control it.");
         } catch (SQLException e) {
             player.yellowMessage("Failed to load bot character '" + botName + "'.");
             e.printStackTrace();
