@@ -4,9 +4,13 @@ import client.Character;
 import client.Client;
 import client.Job;
 import client.SkinColor;
+import client.inventory.Inventory;
+import client.inventory.InventoryType;
+import client.inventory.Item;
 import constants.id.MapId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.ItemInformationProvider;
 
 /**
  * Creates bot/companion characters server-side using the same Character.getDefault +
@@ -27,13 +31,33 @@ public class BotCreator extends CharacterFactory {
         botChar.setSkinColor(SkinColor.getById(0));
         botChar.setGender(0);
         botChar.setName(name);
-        botChar.setHair(30030);
+        botChar.setHair(30020);
         botChar.setFace(20100);
         botChar.setJob(Job.BEGINNER);
         botChar.setLevel(1);
         botChar.setMapId(MapId.HENESYS);
 
-        CharacterFactoryRecipe recipe = new CharacterFactoryRecipe(Job.BEGINNER, 1, MapId.HENESYS, 0, 0, 0, 0);
+        // Equip standard beginner starting gear (mirrors CharacterFactory.createNewCharacter)
+        Inventory equipped = botChar.getInventory(InventoryType.EQUIPPED);
+        ItemInformationProvider ii = ItemInformationProvider.getInstance();
+
+        Item top = ii.getEquipById(1040002);    // White Undershirt
+        top.setPosition((byte) -5);
+        equipped.addItemFromDB(top);
+
+        Item bottom = ii.getEquipById(1060002); // Undies (blue shorts)
+        bottom.setPosition((byte) -6);
+        equipped.addItemFromDB(bottom);
+
+        Item shoes = ii.getEquipById(1072001);  // Rubber Boots
+        shoes.setPosition((byte) -7);
+        equipped.addItemFromDB(shoes);
+
+        Item weapon = ii.getEquipById(1302000); // Wooden Sword
+        weapon.setPosition((byte) -11);
+        equipped.addItemFromDB(weapon.copy());
+
+        CharacterFactoryRecipe recipe = new CharacterFactoryRecipe(Job.BEGINNER, 1, MapId.HENESYS, 1040002, 1060002, 1072001, 1302000);
 
         if (!botChar.insertNewChar(recipe)) {
             log.error("insertNewChar failed for bot '{}'", name);
