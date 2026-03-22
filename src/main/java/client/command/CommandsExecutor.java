@@ -144,6 +144,7 @@ import client.command.commands.gm3.ReloadPortalsCommand;
 import client.command.commands.gm3.ReloadShopsCommand;
 import client.command.commands.gm3.RipCommand;
 import client.command.commands.gm3.SeedCommand;
+import client.command.commands.gm3.SpawnBotCommand;
 import client.command.commands.gm3.SpawnCommand;
 import client.command.commands.gm3.StartEventCommand;
 import client.command.commands.gm3.StartMapEventCommand;
@@ -440,6 +441,7 @@ public class CommandsExecutor {
         addCommand("debuff", 3, DebuffCommand.class);
         addCommand("fly", 3, FlyCommand.class);
         addCommand("spawn", 3, SpawnCommand.class);
+        addCommand("spawnbot", 3, SpawnBotCommand.class);
         addCommand("mutemap", 3, MuteMapCommand.class);
         addCommand("checkdmg", 3, CheckDmgCommand.class);
         addCommand("inmap", 3, InMapCommand.class);
