@@ -21,6 +21,7 @@
  */
 package server.maps;
 
+import client.BotClient;
 import client.BuffStat;
 import client.Character;
 import client.Client;
@@ -2337,11 +2338,11 @@ public class MapleMap {
                 aggroMonitor.startAggroCoordinator();
             }
 
-            if (onFirstUserEnter.length() != 0) {
+            if (onFirstUserEnter.length() != 0 && !(chr.getClient() instanceof BotClient)) {
                 msm.runMapScript(chr.getClient(), "onFirstUserEnter/" + onFirstUserEnter, true);
             }
         }
-        if (onUserEnter.length() != 0) {
+        if (onUserEnter.length() != 0 && !(chr.getClient() instanceof BotClient)) {
             if (onUserEnter.equals("cygnusTest") && !MapId.isCygnusIntro(mapid)) {
                 chr.saveLocation("INTRO");
             }
