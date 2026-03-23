@@ -62,6 +62,10 @@ public class BotManager {
         public int   STUCK_CHASE_TICKS    = 60;  // ticks of raw-chase mode after stuck detected
         public int   STUCK_MIN_MOVE       = 20;  // px; moved less than this in N ticks = stuck
         public int   STUCK_WALKBACK_LIMIT = 200; // px; max backward travel allowed during raw-chase
+
+        // Waypoint (1-hop pathfinding to a rope outside normal detection range)
+        public int   WAYPOINT_SEEK_X  = 500;  // expanded rope search radius when setting a waypoint
+        public int   WAYPOINT_TIMEOUT = 80;   // ticks before an unreached waypoint expires (~8s)
     }
 
     /** Singleton config — replace with `cfg = new Config()` after hotswapping to reset. */
@@ -129,6 +133,10 @@ public class BotManager {
         int   stuckCheckTimer     = 0;
         Point lastStuckCheckPos   = null;
         int   rawChaseTicks       = 0;
+
+        // Waypoint — navigate to a rope outside normal detection range
+        Rope  waypointRope  = null;
+        int   waypointTimer = 0;
 
         // Foothold index, rebuilt on map change
         int lastMapId = -1;
@@ -234,6 +242,7 @@ public class BotManager {
             entry.rawChaseTicks     = 0;
             entry.stuckCheckTimer   = 0;
             entry.lastStuckCheckPos = null;
+            entry.waypointRope      = null;
             return;
         }
 
@@ -261,6 +270,7 @@ public class BotManager {
             entry.rawChaseTicks     = 0;
             entry.stuckCheckTimer   = 0;
             entry.lastStuckCheckPos = null;
+            entry.waypointRope      = null;
             broadcastMovement(bot, 0, 0);
             return;
         }
@@ -433,6 +443,49 @@ public class BotManager {
         }
         if (entry.rawChaseTicks > 0) entry.rawChaseTicks--;
 
+        // Waypoint navigation — walk to a rope that was outside normal detection range
+        if (entry.waypointRope != null) {
+            if (dy >= -cfg.JUMP_Y_THRESH * 2) {
+                entry.waypointRope = null; // owner no longer far above — situation resolved
+            } else if (--entry.waypointTimer <= 0) {
+                entry.waypointRope = null; // timed out
+            } else {
+                Rope wp  = entry.waypointRope;
+                int  wdx = wp.x() - botPos.x;
+                if (Math.abs(wdx) < cfg.ROPE_GRAB_X) {
+                    // Reached the rope — grab directly or jump to it
+                    entry.waypointRope = null;
+                    if (botPos.y >= wp.topY() && botPos.y <= wp.bottomY()) {
+                        entry.climbing  = true;
+                        entry.climbX    = wp.x();
+                        entry.climbTopY = wp.topY();
+                        bot.setPosition(new Point(wp.x(), botPos.y));
+                        bot.setStance(16);
+                        broadcastMovement(bot, 0, 0);
+                    } else {
+                        entry.jumpCooldown = cfg.JUMP_COOLDOWN;
+                        initiateRopeJump(entry, bot, wdx);
+                    }
+                    return;
+                }
+                // Walk one step toward the rope X
+                int stepToWp = Math.min(Math.abs(wdx), cfg.STEP) * (wdx >= 0 ? 1 : -1);
+                int walkX    = botPos.x + stepToWp;
+                Point snapped = bot.getMap().getPointBelow(new Point(walkX, botPos.y - cfg.MAX_SLOPE_UP));
+                if (snapped != null && snapped.y <= botPos.y + cfg.MAX_SNAP_DROP) {
+                    bot.setPosition(new Point(walkX, snapped.y));
+                    bot.setStance(wdx >= 0 ? 2 : 3);
+                    broadcastMovement(bot, wdx >= 0 ? cfg.WALK_VEL : -cfg.WALK_VEL, 0);
+                } else if (dy > cfg.JUMP_Y_THRESH) {
+                    // Ledge on path to waypoint and owner is below — fall through naturally
+                    entry.inAir   = true;
+                    entry.airVelX = stepToWp;
+                    entry.velY    = 0f;
+                }
+                return;
+            }
+        }
+
         // Complete a pending down-jump (prone was shown last tick — now execute the fall)
         if (entry.downJumpPending) {
             entry.downJumpPending = false;
@@ -571,7 +624,14 @@ public class BotManager {
                         return;
                     }
                 }
-                // No reachable platform — back off so rope logic gets priority next tick
+                // No reachable platform — try setting a waypoint to a rope outside normal range
+                if (farAbove && entry.waypointRope == null) {
+                    Rope wp = findWaypointRope(bot, botPos);
+                    if (wp != null) {
+                        entry.waypointRope  = wp;
+                        entry.waypointTimer = cfg.WAYPOINT_TIMEOUT;
+                    }
+                }
                 entry.jumpCooldown = entry.rawChaseTicks > 0 ? cfg.JUMP_COOLDOWN : cfg.JUMP_COOLDOWN * 3;
             }
         }
@@ -737,6 +797,20 @@ public class BotManager {
      * Uses the same prevY→newY crossing pattern as tickAirborne's landing check
      * so platforms are never missed due to arc position quantisation.
      */
+    /** Finds the nearest rope whose top is above the bot, within WAYPOINT_SEEK_X radius. */
+    private Rope findWaypointRope(Character bot, Point botPos) {
+        Rope best    = null;
+        int  bestDist = cfg.WAYPOINT_SEEK_X + 1;
+        for (Rope r : bot.getMap().getRopes()) {
+            int dist = Math.abs(r.x() - botPos.x);
+            if (dist < bestDist && r.topY() < botPos.y) {
+                bestDist = dist;
+                best     = r;
+            }
+        }
+        return best;
+    }
+
     private boolean arcCheckJump(Character bot, Point from, int stepX, int targetY) {
         float vy = -cfg.JUMP_FORCE;
         int x = from.x, y = from.y;
