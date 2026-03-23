@@ -39,6 +39,8 @@ public class BotManager {
         // Physics
         public float GRAVITY      = 15f;   // px/tick² (downward acceleration)
         public float JUMP_FORCE   = 60f;   // initial upward velocity px/tick
+        public float JUMP_FORCE_DOWNWARD   = 16f;   // initial upward velocity px/tick
+        public float JUMP_FORCE_ROPE   = 16f;   // initial upward velocity px/tick
         public float MAX_FALL     = 50f;   // terminal fall velocity px/tick
 
         // Jump control
@@ -78,14 +80,14 @@ public class BotManager {
     private static final Pattern FOLLOW_PATTERN = Pattern.compile(
             "\\b(follow( me)?|come( here)?|f me)\\b", Pattern.CASE_INSENSITIVE);
     private static final Pattern STOP_PATTERN = Pattern.compile(
-            "\\b(stop|stay|wait|halt)\\b", Pattern.CASE_INSENSITIVE);
+            "\\b(stop|stay|wait|halt|hold)\\b", Pattern.CASE_INSENSITIVE);
 
     private static final List<String> FOLLOW_REPLIES = List.of(
-            "ok", "sure", "on my way!", "got it", "coming!",
-            "roger that", "yep!", "alright", "right behind you",
-            "aye aye!", "lets go!", "as you wish");
+            "ok", "k", "sure", "omw", "got it", "coming",
+            "roger", "yep", "alright",
+            "aye", "lets go!", "as you wish", "ok boss");
     private static final List<String> STOP_REPLIES = List.of(
-            "ok", "sure", "alright", "got it", "stopping",
+            "ok", "k", "sure", "alright", "got it", "stopping",
             "ok ill wait here", "ill be here", "np", "standing by",
             "understood", "ok boss");
 
@@ -189,13 +191,12 @@ public class BotManager {
         if (FOLLOW_PATTERN.matcher(message).find()) {
             TimerManager.getInstance().schedule(() -> {
                 botSay(entry.bot, randomReply(FOLLOW_REPLIES));
-                entry.following = true;
-            }, 2000);
+                TimerManager.getInstance().schedule(() -> entry.following = true, 250);
+            }, 1500);
         } else if (STOP_PATTERN.matcher(message).find()) {
             TimerManager.getInstance().schedule(() -> {
                 entry.following = false;
-                TimerManager.getInstance().schedule(() ->
-                        botSay(entry.bot, randomReply(STOP_REPLIES)), 2000);
+                TimerManager.getInstance().schedule(() -> botSay(entry.bot, randomReply(STOP_REPLIES)), 1500);
             }, 1000);
         }
     }
@@ -208,18 +209,21 @@ public class BotManager {
         BotEntry entry = bots.get(ownerCharId);
         if (entry == null) return;
 
-        // Keep physics running even when stopped — prevents freezing mid-air
-        if (!entry.following) {
-            if (entry.inAir) tickAirborne(entry);
-            return;
-        }
-
+        // TODO: put owner in entry?
         Character owner = Server.getInstance()
                 .getWorld(bot.getWorld())
                 .getPlayerStorage()
                 .getCharacterById(ownerCharId);
         if (owner == null) {
             entry.following = false;
+            return;
+        }
+        Point botPos    = bot.getPosition();
+        Point targetPos = owner.getPosition();
+
+        // Keep physics running even when stopped — prevents freezing mid-air
+        if (!entry.following) {
+            if (entry.inAir) tickAirborne(entry, targetPos);
             return;
         }
 
@@ -238,9 +242,6 @@ public class BotManager {
             entry.lastMapId = bot.getMapId();
         }
 
-        Point botPos    = bot.getPosition();
-        Point targetPos = owner.getPosition();
-
         // Teleport if hopelessly far (portal shortcut, fell off map, etc.)
         if (Math.abs(botPos.x - targetPos.x) + Math.abs(botPos.y - targetPos.y) > cfg.TELEPORT_DIST) {
             Point spawn = new Point(targetPos.x, targetPos.y - 10);
@@ -253,7 +254,7 @@ public class BotManager {
         if (entry.climbing) {
             tickClimbing(entry, targetPos);
         } else if (entry.inAir) {
-            tickAirborne(entry);
+            tickAirborne(entry, targetPos);
         } else {
             tickGrounded(entry, targetPos);
         }
@@ -286,8 +287,8 @@ public class BotManager {
 
         if (entry.jumpCooldown > 0) entry.jumpCooldown--;
 
-        // Jump off rope if owner is too far horizontally
-        if (Math.abs(dxOwner) > cfg.FOLLOW_DIST && entry.jumpCooldown == 0 && botPos.y < targetPos.y) {
+        // Jump off rope if owner is too far horizontally and below
+        if (Math.abs(dxOwner) > cfg.FOLLOW_DIST && entry.jumpCooldown == 0 && entry.climbRope.bottomY() < targetPos.y) {
             jumpOffRope(entry, bot, dxOwner);
             return;
         }
@@ -295,7 +296,7 @@ public class BotManager {
         // Reached top of rope — snap to foothold
         if (botPos.y <= entry.climbRope.topY()) {
             entry.climbing = false;
-            Point ground = bot.getMap().getPointBelow(new Point(botPos.x, botPos.y));
+            Point ground = bot.getMap().getPointBelow(new Point(botPos.x, botPos.y - 3));
             if (ground != null && ground.y <= botPos.y + cfg.CLIMB_SPEED + 2) {
                 entry.inAir = false;
                 entry.velY  = 0f;
@@ -310,7 +311,7 @@ public class BotManager {
         }
 
         // Reached bottom of rope — freefall
-        if (botPos.y >= entry.climbRope.bottomY()) {
+        if (botPos.y >= entry.climbRope.bottomY() + 3) {
             entry.climbing = false;
             entry.inAir    = true;
             entry.velY     = 0f;
@@ -320,13 +321,13 @@ public class BotManager {
         }
 
         // Close enough to owner — hold position on rope
-        if (Math.abs(dy) < cfg.JUMP_Y_THRESH && Math.abs(dxOwner) < cfg.STOP_DIST) {
+        if (Math.abs(dy) < cfg.FOLLOW_DIST && Math.abs(dxOwner) < cfg.FOLLOW_DIST * 2) {
             bot.setStance(entry.climbRope.isLadder() ? 17 : 16);
             broadcastMovement(bot, 0, 0);
             return;
         }
 
-        int newY = dy < 0 ? botPos.y - cfg.CLIMB_SPEED
+        int newY = (dy < 0) || (entry.climbRope.topY() < botPos.y + 200) ? botPos.y - cfg.CLIMB_SPEED
                           : Math.min(botPos.y + cfg.CLIMB_SPEED, entry.climbRope.bottomY());
         bot.setPosition(new Point(entry.climbRope.x(), newY));
         bot.setStance(entry.climbRope.isLadder() ? 17 : 16);
@@ -337,13 +338,13 @@ public class BotManager {
     private void jumpOffRope(BotEntry entry, Character bot, int dx) {
         entry.climbing        = false;
         entry.inAir           = true;
-        entry.velY            = -cfg.JUMP_FORCE;
+        entry.velY            = -cfg.JUMP_FORCE_ROPE;
         entry.seekingRope     = false;
         entry.airVelX         = dx > 0 ? cfg.STEP : dx < 0 ? -cfg.STEP : 0;
         entry.ropeGrabCooldown = cfg.JUMP_COOLDOWN + 2; // stay off rope long enough to clear it
         entry.jumpCooldown    = cfg.JUMP_COOLDOWN;
         bot.setStance(dx >= 0 ? 6 : 7);
-        int jumpVelY = -(int) ((cfg.JUMP_FORCE - cfg.GRAVITY) * (1000f / cfg.TICK_MS));
+        int jumpVelY = (int) -cfg.JUMP_FORCE_ROPE;
         broadcastMovement(bot, dx >= 0 ? cfg.WALK_VEL : -cfg.WALK_VEL, jumpVelY);
     }
 
@@ -351,7 +352,7 @@ public class BotManager {
     // Airborne physics
     // -------------------------------------------------------------------------
 
-    private void tickAirborne(BotEntry entry) {
+    private void tickAirborne(BotEntry entry, Point targetPos) {
         if (entry.downJumpGracePeriodMS > 0L) {
             entry.downJumpGracePeriodMS = Math.max(0L, entry.downJumpGracePeriodMS - cfg.TICK_MS);
         }
@@ -394,7 +395,9 @@ public class BotManager {
                 entry.seekingRope = false;
                 entry.airVelX     = 0;
                 bot.setPosition(new Point(newX, floorPt.y));
-                bot.setStance(5);
+                int dx = targetPos.x - botPos.x;
+                int dy = targetPos.y - botPos.y;
+                bot.setStance(dx >= 0 ? 2 : 3);
                 broadcastMovement(bot, 0, 0);
                 return;
             }
@@ -490,7 +493,7 @@ public class BotManager {
             entry.downJumpPending = false;
             entry.downJumpGracePeriodMS = 300L;
             entry.inAir           = true;
-            entry.velY            = -16f; // slight upward force before gravity pulls through floor
+            entry.velY            = -cfg.JUMP_FORCE_DOWNWARD; // slight upward force before gravity pulls through floor
             entry.airVelX         = 0;
             entry.jumpCooldown    = cfg.JUMP_COOLDOWN;
             bot.setPosition(new Point(botPos.x, botPos.y));
@@ -502,7 +505,7 @@ public class BotManager {
         // Down-jump: owner is clearly below AND primarily below (not just diagonal separation)
         if (dy > cfg.JUMP_Y_THRESH * 3 && dy > Math.abs(dx) && entry.jumpCooldown == 0) {
             // Prefer walking off a natural terrain drop — sample position-only, no foothold connectivity
-            if (Math.abs(dx) > cfg.FOLLOW_DIST) {
+            if (Math.abs(dx) > cfg.STOP_DIST) {
                 int sampleDir = dx > 0 ? cfg.STEP : -cfg.STEP;
                 int dropStepX = 0;
                 for (int i = 1; i * cfg.STEP <= cfg.LEDGE_SEEK_X; i++) {
@@ -582,9 +585,7 @@ public class BotManager {
                 int maxJumpH = (int) calculateMaxJumpHeight();
                 // Track the winning jump direction so initiateJump uses the correct airVelX
                 int winDir = Integer.MIN_VALUE; // sentinel: no winner yet
-                if (-dy <= maxJumpH) {
-                    winDir = Math.abs(dx) < cfg.STOP_DIST ? 0 : dx; // 0 = vertical when nearly above
-                } else if (arcCheckJump(bot, botPos, arcStep, targetPos.y)) {
+                if (arcCheckJump(bot, botPos, arcStep, targetPos.y)) {
                     winDir = arcStep;                       // diagonal arc found a platform
                 } else if (arcCheckJump(bot, botPos, 0, targetPos.y)) {
                     winDir = 0;                             // vertical arc found a platform
@@ -721,7 +722,7 @@ public class BotManager {
         entry.velY        = -cfg.JUMP_FORCE;
         entry.inAir       = true;
         entry.seekingRope = false;
-        int jumpVelY = -(int) ((cfg.JUMP_FORCE - cfg.GRAVITY) * (1000f / cfg.TICK_MS));
+        int jumpVelY = (int) -cfg.JUMP_FORCE;
         if (dx == 0) {
             // Vertical jump — only when explicitly 0 (winDir=0 or owner directly above)
             entry.airVelX = 0;
