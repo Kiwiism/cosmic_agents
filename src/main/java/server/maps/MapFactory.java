@@ -230,7 +230,8 @@ public class MapFactory {
                 int rx = DataTool.getInt(ropeData.getChildByPath("x"));
                 int ry1 = DataTool.getInt(ropeData.getChildByPath("y1"));
                 int ry2 = DataTool.getInt(ropeData.getChildByPath("y2"));
-                map.addRope(new Rope(rx, ry1, ry2));
+                int l = DataTool.getInt(ropeData.getChildByPath("l"), 0); // 0=rope, 1=ladder
+                map.addRope(new Rope(rx, ry1, ry2, l == 1));
             }
         }
         if (mapData.getChildByPath("area") != null) {

@@ -112,9 +112,8 @@ public class BotManager {
         int jumpCooldown = 0;
 
         // Rope climbing
-        boolean climbing = false;
-        int climbX       = 0;
-        int climbTopY    = Integer.MAX_VALUE;
+        boolean climbing  = false;
+        Rope    climbRope = null;
 
         // Jitter prevention — only starts moving toward owner once distance exceeds FOLLOW_DIST
         boolean wasMovingX = false;
@@ -210,10 +209,7 @@ public class BotManager {
 
         // Keep physics running even when stopped — prevents freezing mid-air
         if (!entry.following) {
-            if (entry.inAir) {
-                Point botPos = bot.getPosition();
-                tickAirborne(entry, bot, botPos, botPos.x + entry.airVelX, 0);
-            }
+            if (entry.inAir) tickAirborne(entry);
             return;
         }
 
@@ -231,18 +227,7 @@ public class BotManager {
             Point spawn = new Point(owner.getPosition().x, owner.getPosition().y - 10);
             bot.setStance(5); // ensure spawn packet shows stand stance, not walk
             bot.changeMap(owner.getMap(), spawn);
-            entry.inAir             = true;
-            entry.climbing          = false;
-            entry.velY              = 0f;
-            entry.airVelX           = 0;
-            entry.wasMovingX        = false;
-            entry.seekingRope       = false;
-            entry.ropeGrabCooldown  = 0;
-            entry.downJumpPending   = false;
-            entry.rawChaseTicks     = 0;
-            entry.stuckCheckTimer   = 0;
-            entry.lastStuckCheckPos = null;
-            entry.waypointRope      = null;
+            resetEntryState(entry);
             return;
         }
 
@@ -252,55 +237,62 @@ public class BotManager {
             entry.lastMapId = bot.getMapId();
         }
 
-        Point botPos   = bot.getPosition();
-        Point ownerPos = owner.getPosition();
+        Point botPos    = bot.getPosition();
+        Point targetPos = owner.getPosition();
 
         // Teleport if hopelessly far (portal shortcut, fell off map, etc.)
-        if (Math.abs(botPos.x - ownerPos.x) + Math.abs(botPos.y - ownerPos.y) > cfg.TELEPORT_DIST) {
-            Point spawn = new Point(ownerPos.x, ownerPos.y - 10);
+        if (Math.abs(botPos.x - targetPos.x) + Math.abs(botPos.y - targetPos.y) > cfg.TELEPORT_DIST) {
+            Point spawn = new Point(targetPos.x, targetPos.y - 10);
             bot.setPosition(spawn);
-            entry.inAir             = true;
-            entry.climbing          = false;
-            entry.velY              = 0f;
-            entry.airVelX           = 0;
-            entry.wasMovingX        = false;
-            entry.seekingRope       = false;
-            entry.ropeGrabCooldown  = 0;
-            entry.downJumpPending   = false;
-            entry.rawChaseTicks     = 0;
-            entry.stuckCheckTimer   = 0;
-            entry.lastStuckCheckPos = null;
-            entry.waypointRope      = null;
+            resetEntryState(entry);
             broadcastMovement(bot, 0, 0);
             return;
         }
 
         if (entry.climbing) {
-            tickClimbing(entry, bot, botPos, ownerPos);
+            tickClimbing(entry, targetPos);
         } else if (entry.inAir) {
-            // Use committed airVelX — horizontal direction is locked at jump time, not re-computed
-            tickAirborne(entry, bot, botPos, botPos.x + entry.airVelX, ownerPos.x - botPos.x);
+            tickAirborne(entry);
         } else {
-            tickGrounded(entry, bot, botPos, ownerPos);
+            tickGrounded(entry, targetPos);
         }
+    }
+
+    private void resetEntryState(BotEntry entry) {
+        entry.inAir             = true;
+        entry.climbing          = false;
+        entry.velY              = 0f;
+        entry.airVelX           = 0;
+        entry.wasMovingX        = false;
+        entry.seekingRope       = false;
+        entry.ropeGrabCooldown  = 0;
+        entry.downJumpPending   = false;
+        entry.rawChaseTicks     = 0;
+        entry.stuckCheckTimer   = 0;
+        entry.lastStuckCheckPos = null;
+        entry.waypointRope      = null;
     }
 
     // -------------------------------------------------------------------------
     // Rope climbing
     // -------------------------------------------------------------------------
 
-    private void tickClimbing(BotEntry entry, Character bot, Point botPos, Point ownerPos) {
-        int dy        = ownerPos.y - botPos.y;
-        int dxOwner   = ownerPos.x - entry.climbX; // owner's X relative to rope
+    private void tickClimbing(BotEntry entry, Point targetPos) {
+        Character bot = entry.bot;
+        Point botPos  = bot.getPosition();
+        int dy      = targetPos.y - botPos.y;
+        int dxOwner = targetPos.x - entry.climbRope.x();
 
-        // Jump off rope if owner is too far horizontally — no point climbing further
+        if (entry.jumpCooldown > 0) entry.jumpCooldown--;
+
+        // Jump off rope if owner is too far horizontally
         if (Math.abs(dxOwner) > cfg.FOLLOW_DIST && entry.jumpCooldown == 0) {
             jumpOffRope(entry, bot, dxOwner);
             return;
         }
 
-        // Reached top of rope — try to snap to the foothold, then stop climbing
-        if (botPos.y <= entry.climbTopY) {
+        // Reached top of rope — snap to foothold
+        if (botPos.y <= entry.climbRope.topY()) {
             entry.climbing = false;
             Point ground = bot.getMap().getPointBelow(new Point(botPos.x, botPos.y));
             if (ground != null && ground.y <= botPos.y + cfg.CLIMB_SPEED + 2) {
@@ -315,24 +307,28 @@ public class BotManager {
             }
             return;
         }
-        // TODO: Reached bottom of rope, freefall
-//        if (botPos.y >= rope.bottomY) {
-//            entry.inAir = true;
-//            entry.velY  = 0f;
-//            bot.setStance(5);
-//            return;
-//        }
 
-
-        // Close enough to owner (maybe owner is afk on a rope, stay close)
-        if (Math.abs(dy) < Math.abs(cfg.JUMP_Y_THRESH) && Math.abs(dxOwner) < cfg.STOP_DIST) {
-//            jumpOffRope(entry, bot, dxOwner);
+        // Reached bottom of rope — freefall
+        if (botPos.y >= entry.climbRope.bottomY()) {
+            entry.climbing = false;
+            entry.inAir    = true;
+            entry.velY     = 0f;
+            bot.setStance(6);
+            broadcastMovement(bot, 0, 0);
             return;
         }
 
-        int newY = dy < 0 ? botPos.y - cfg.CLIMB_SPEED : botPos.y + cfg.CLIMB_SPEED;
-        bot.setPosition(new Point(entry.climbX, newY));
-        bot.setStance(16);
+        // Close enough to owner — hold position on rope
+        if (Math.abs(dy) < cfg.JUMP_Y_THRESH && Math.abs(dxOwner) < cfg.STOP_DIST) {
+            bot.setStance(entry.climbRope.isLadder() ? 17 : 16);
+            broadcastMovement(bot, 0, 0);
+            return;
+        }
+
+        int newY = dy < 0 ? botPos.y - cfg.CLIMB_SPEED
+                          : Math.min(botPos.y + cfg.CLIMB_SPEED, entry.climbRope.bottomY());
+        bot.setPosition(new Point(entry.climbRope.x(), newY));
+        bot.setStance(entry.climbRope.isLadder() ? 17 : 16);
         broadcastMovement(bot, 0, 0);
     }
 
@@ -354,7 +350,11 @@ public class BotManager {
     // Airborne physics
     // -------------------------------------------------------------------------
 
-    private void tickAirborne(BotEntry entry, Character bot, Point botPos, int newX, int dx) {
+    private void tickAirborne(BotEntry entry) {
+        Character bot = entry.bot;
+        Point botPos  = bot.getPosition();
+        int newX      = botPos.x + entry.airVelX;
+
         // Mid-air rope catch — only when we intentionally jumped for a rope
         if (entry.ropeGrabCooldown > 0) entry.ropeGrabCooldown--;
         if (entry.seekingRope && entry.ropeGrabCooldown == 0) {
@@ -365,10 +365,9 @@ public class BotManager {
                     entry.inAir       = false;
                     entry.velY        = 0f;
                     entry.seekingRope = false;
-                    entry.climbX      = rope.x();
-                    entry.climbTopY   = rope.topY();
+                    entry.climbRope   = rope;
                     bot.setPosition(new Point(rope.x(), botPos.y));
-                    bot.setStance(16);
+                    bot.setStance(entry.climbRope.isLadder() ? 17 : 16);
                     broadcastMovement(bot, 0, 0);
                     return;
                 }
@@ -407,9 +406,11 @@ public class BotManager {
     // Ground movement with foothold awareness
     // -------------------------------------------------------------------------
 
-    private void tickGrounded(BotEntry entry, Character bot, Point botPos, Point ownerPos) {
-        int dx = ownerPos.x - botPos.x;
-        int dy = ownerPos.y - botPos.y; // negative = owner is higher on screen
+    private void tickGrounded(BotEntry entry, Point targetPos) {
+        Character bot = entry.bot;
+        Point botPos  = bot.getPosition();
+        int dx = targetPos.x - botPos.x;
+        int dy = targetPos.y - botPos.y; // negative = owner is higher on screen
 
         Foothold currentFh = bot.getMap().getFootholds()
                 .findBelow(new Point(botPos.x, botPos.y - cfg.MAX_SLOPE_UP));
@@ -450,10 +451,9 @@ public class BotManager {
                     entry.waypointRope = null;
                     if (botPos.y >= wp.topY() && botPos.y <= wp.bottomY()) {
                         entry.climbing  = true;
-                        entry.climbX    = wp.x();
-                        entry.climbTopY = wp.topY();
+                        entry.climbRope = wp;
                         bot.setPosition(new Point(wp.x(), botPos.y));
-                        bot.setStance(16);
+                        bot.setStance(entry.climbRope.isLadder() ? 17 : 16);
                         broadcastMovement(bot, 0, 0);
                     } else {
                         entry.jumpCooldown = cfg.JUMP_COOLDOWN;
@@ -540,10 +540,9 @@ public class BotManager {
                 if (Math.abs(rdx) < cfg.ROPE_GRAB_X
                         && botPos.y >= rope.topY() && botPos.y <= rope.bottomY()) {
                     entry.climbing  = true;
-                    entry.climbX    = rope.x();
-                    entry.climbTopY = rope.topY();
+                    entry.climbRope = rope;
                     bot.setPosition(new Point(rope.x(), botPos.y));
-                    bot.setStance(16);
+                    bot.setStance(entry.climbRope.isLadder() ? 17 : 16);
                     broadcastMovement(bot, 0, 0);
                     return;
                 }
@@ -569,7 +568,7 @@ public class BotManager {
 
         // Proactive jump — path blocked, same X, or owner is significantly above (y-chase priority)
         if (dy < -cfg.JUMP_Y_THRESH && entry.jumpCooldown == 0) {
-            int stepX    = calcStepX(entry, botPos.x, ownerPos.x);
+            int stepX    = calcStepX(entry, botPos.x, targetPos.x);
             boolean blocked  = stepX == 0 || !isPathWalkable(bot, botPos, stepX);
             boolean farAbove = dy < -cfg.JUMP_Y_THRESH * 2; // owner is clearly on a higher platform
             if (blocked || farAbove) {
@@ -579,9 +578,9 @@ public class BotManager {
                 int winDir = Integer.MIN_VALUE; // sentinel: no winner yet
                 if (-dy <= maxJumpH) {
                     winDir = Math.abs(dx) < cfg.STOP_DIST ? 0 : dx; // 0 = vertical when nearly above
-                } else if (arcCheckJump(bot, botPos, arcStep, ownerPos.y)) {
+                } else if (arcCheckJump(bot, botPos, arcStep, targetPos.y)) {
                     winDir = arcStep;                       // diagonal arc found a platform
-                } else if (arcCheckJump(bot, botPos, 0, ownerPos.y)) {
+                } else if (arcCheckJump(bot, botPos, 0, targetPos.y)) {
                     winDir = 0;                             // vertical arc found a platform
                 } else if (farAbove) {
                     // Widen search: walk 1..ARC_LEAD_STEPS in either direction then check both jump dirs
@@ -594,7 +593,7 @@ public class BotManager {
                             if (leadGround == null || leadGround.y > botPos.y + cfg.MAX_SNAP_DROP) continue;
                             Point leadPt = new Point(leadX, leadGround.y);
                             for (int jDir : new int[]{1, -1}) {
-                                if (arcCheckJump(bot, leadPt, arcStep * jDir, ownerPos.y)) {
+                                if (arcCheckJump(bot, leadPt, arcStep * jDir, targetPos.y)) {
                                     winDir = arcStep * jDir;
                                     break outer;
                                 }
@@ -611,7 +610,7 @@ public class BotManager {
                 if (entry.rawChaseTicks > 0) {
                     int backStep = -arcStep;
                     if (Math.abs(dx) <= cfg.STUCK_WALKBACK_LIMIT
-                            && arcCheckJump(bot, botPos, backStep, ownerPos.y)) {
+                            && arcCheckJump(bot, botPos, backStep, targetPos.y)) {
                         entry.jumpCooldown = cfg.JUMP_COOLDOWN;
                         initiateJump(entry, bot, backStep);
                         return;
@@ -637,7 +636,7 @@ public class BotManager {
             return;
         }
 
-        int stepX = calcStepX(entry, botPos.x, ownerPos.x);
+        int stepX = calcStepX(entry, botPos.x, targetPos.x);
         int newX  = botPos.x + stepX;
 
         // Normal ground walk — snap Y to terrain at newX
@@ -651,7 +650,7 @@ public class BotManager {
                 entry.airVelX = stepX;
                 entry.velY   = 0f;
             } else if (entry.jumpCooldown == 0 && stepX != 0
-                    && arcCheckJump(bot, botPos, stepX, ownerPos.y)) {
+                    && arcCheckJump(bot, botPos, stepX, targetPos.y)) {
                 // Arc would reach a useful platform — jump instead of falling
                 initiateJump(entry, bot, dx);
             } else {
