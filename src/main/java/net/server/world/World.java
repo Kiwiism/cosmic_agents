@@ -496,7 +496,9 @@ public class World {
     public void registerAccountCharacterView(Integer accountId, Character chr) {
         accountCharsLock.lock();
         try {
-            accountChars.get(accountId).put(chr.getId(), chr);
+            java.util.SortedMap<Integer, Character> charsMap = accountChars.get(accountId);
+            if (charsMap == null) return; // bot accounts (id=-1) have no entry — skip
+            charsMap.put(chr.getId(), chr);
         } finally {
             accountCharsLock.unlock();
         }
