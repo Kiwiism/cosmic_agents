@@ -127,6 +127,7 @@ public class BotManager {
 
         // Down-jump: true when prone was shown last tick, jump fires this tick
         boolean downJumpPending = false;
+        long downJumpGracePeriodMS = 0;
 
         // Stuck recovery
         int   stuckCheckTimer     = 0;
@@ -286,7 +287,7 @@ public class BotManager {
         if (entry.jumpCooldown > 0) entry.jumpCooldown--;
 
         // Jump off rope if owner is too far horizontally
-        if (Math.abs(dxOwner) > cfg.FOLLOW_DIST && entry.jumpCooldown == 0) {
+        if (Math.abs(dxOwner) > cfg.FOLLOW_DIST && entry.jumpCooldown == 0 && botPos.y < targetPos.y) {
             jumpOffRope(entry, bot, dxOwner);
             return;
         }
@@ -351,6 +352,10 @@ public class BotManager {
     // -------------------------------------------------------------------------
 
     private void tickAirborne(BotEntry entry) {
+        if (entry.downJumpGracePeriodMS > 0L) {
+            entry.downJumpGracePeriodMS = Math.max(0L, entry.downJumpGracePeriodMS - cfg.TICK_MS);
+        }
+
         Character bot = entry.bot;
         Point botPos  = bot.getPosition();
         int newX      = botPos.x + entry.airVelX;
@@ -378,8 +383,9 @@ public class BotManager {
         int newY   = botPos.y + (int) entry.velY;
 
         // Landing check — search strictly below current Y to avoid immediately re-landing
+        // Also dont land after down jump grace period
         // on the foothold we just left (botPos.y + 1, not botPos.y - 1)
-        if (entry.velY > 0) {
+        if (entry.velY > 0 && entry.downJumpGracePeriodMS == 0) {
             Point floorPt = bot.getMap().getPointBelow(new Point(newX, botPos.y + 1));
             if (floorPt != null && floorPt.y <= newY) {
                 entry.inAir       = false;
@@ -482,21 +488,21 @@ public class BotManager {
         // Complete a pending down-jump (prone was shown last tick — now execute the fall)
         if (entry.downJumpPending) {
             entry.downJumpPending = false;
+            entry.downJumpGracePeriodMS = 300L;
             entry.inAir           = true;
             entry.velY            = -16f; // slight upward force before gravity pulls through floor
-            entry.airVelX         = dx > 0 ? cfg.STEP : dx < 0 ? -cfg.STEP : 0;
+            entry.airVelX         = 0;
             entry.jumpCooldown    = cfg.JUMP_COOLDOWN;
-            bot.setPosition(new Point(botPos.x, botPos.y + cfg.MAX_SNAP_DROP + 2));
+            bot.setPosition(new Point(botPos.x, botPos.y));
             bot.setStance(dx >= 0 ? 6 : 7);
-            broadcastMovement(bot, dx >= 0 ? cfg.WALK_VEL : -cfg.WALK_VEL,
-                    (int) (cfg.GRAVITY * (1000f / cfg.TICK_MS)));
+            broadcastMovement(bot, 0, (int) entry.velY);
             return;
         }
 
         // Down-jump: owner is clearly below AND primarily below (not just diagonal separation)
         if (dy > cfg.JUMP_Y_THRESH * 3 && dy > Math.abs(dx) && entry.jumpCooldown == 0) {
             // Prefer walking off a natural terrain drop — sample position-only, no foothold connectivity
-            if (dx != 0) {
+            if (Math.abs(dx) > cfg.FOLLOW_DIST) {
                 int sampleDir = dx > 0 ? cfg.STEP : -cfg.STEP;
                 int dropStepX = 0;
                 for (int i = 1; i * cfg.STEP <= cfg.LEDGE_SEEK_X; i++) {
