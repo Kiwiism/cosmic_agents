@@ -537,14 +537,17 @@ public class BotManager {
                 if (!canJump && farAbove) {
                     outer:
                     for (int lead = 1; lead <= cfg.ARC_LEAD_STEPS; lead++) {
-                        for (int dir : new int[]{1, -1}) {
-                            int leadX = botPos.x + arcStep * lead * dir;
+                        for (int walkDir : new int[]{1, -1}) {         // walk forward or backward first
+                            int leadX = botPos.x + arcStep * lead * walkDir;
                             Point leadGround = bot.getMap().getPointBelow(
                                     new Point(leadX, botPos.y - cfg.MAX_SLOPE_UP));
-                            if (leadGround != null && leadGround.y <= botPos.y + cfg.MAX_SNAP_DROP
-                                    && arcCheckJump(bot, new Point(leadX, leadGround.y), arcStep, ownerPos.y)) {
-                                canJump = true;
-                                break outer;
+                            if (leadGround == null || leadGround.y > botPos.y + cfg.MAX_SNAP_DROP) continue;
+                            Point leadPt = new Point(leadX, leadGround.y);
+                            for (int jumpDir : new int[]{1, -1}) {     // then jump forward or backward
+                                if (arcCheckJump(bot, leadPt, arcStep * jumpDir, ownerPos.y)) {
+                                    canJump = true;
+                                    break outer;
+                                }
                             }
                         }
                     }
