@@ -64,7 +64,7 @@ public class BotManager {
         public int   STUCK_WALKBACK_LIMIT = 200; // px; max backward travel allowed during raw-chase
 
         // Waypoint (1-hop pathfinding to a rope outside normal detection range)
-        public int   WAYPOINT_SEEK_X  = 500;  // expanded rope search radius when setting a waypoint
+        public int   WAYPOINT_SEEK_X  = 1500;  // expanded rope search radius when setting a waypoint
         public int   WAYPOINT_TIMEOUT = 80;   // ticks before an unreached waypoint expires (~8s)
     }
 
@@ -299,21 +299,6 @@ public class BotManager {
             return;
         }
 
-        // Owner is near the rope X — they're likely on the same rope (stopped mid-rope).
-        // Track their Y instead of jumping off (avoids jump→catch→jump loop).
-        if (Math.abs(ownerPos.x - entry.climbX) < cfg.ROPE_GRAB_X * 2) {
-            if (Math.abs(dy) < cfg.CLIMB_SPEED) {
-                bot.setStance(16);
-                broadcastMovement(bot, 0, 0);
-            } else {
-                int newY = Math.max(entry.climbTopY, botPos.y + (dy > 0 ? cfg.CLIMB_SPEED : -cfg.CLIMB_SPEED));
-                bot.setPosition(new Point(entry.climbX, newY));
-                bot.setStance(16);
-                broadcastMovement(bot, 0, 0);
-            }
-            return;
-        }
-
         // Reached top of rope — try to snap to the foothold, then stop climbing
         if (botPos.y <= entry.climbTopY) {
             entry.climbing = false;
@@ -330,14 +315,22 @@ public class BotManager {
             }
             return;
         }
+        // TODO: Reached bottom of rope, freefall
+//        if (botPos.y >= rope.bottomY) {
+//            entry.inAir = true;
+//            entry.velY  = 0f;
+//            bot.setStance(5);
+//            return;
+//        }
 
-        // Close enough vertically to owner — jump off toward them
-        if (dy > -cfg.JUMP_Y_THRESH) {
-            jumpOffRope(entry, bot, dxOwner);
+
+        // Close enough to owner (maybe owner is afk on a rope, stay close)
+        if (Math.abs(dy) < Math.abs(cfg.JUMP_Y_THRESH) && Math.abs(dxOwner) < cfg.STOP_DIST) {
+//            jumpOffRope(entry, bot, dxOwner);
             return;
         }
 
-        int newY = botPos.y - cfg.CLIMB_SPEED;
+        int newY = dy < 0 ? botPos.y - cfg.CLIMB_SPEED : botPos.y + cfg.CLIMB_SPEED;
         bot.setPosition(new Point(entry.climbX, newY));
         bot.setStance(16);
         broadcastMovement(bot, 0, 0);
@@ -581,7 +574,7 @@ public class BotManager {
             boolean farAbove = dy < -cfg.JUMP_Y_THRESH * 2; // owner is clearly on a higher platform
             if (blocked || farAbove) {
                 int arcStep  = stepX != 0 ? stepX : (dx >= 0 ? cfg.STEP : -cfg.STEP);
-                int maxJumpH = (int) (cfg.JUMP_FORCE * cfg.JUMP_FORCE / (2 * cfg.GRAVITY));
+                int maxJumpH = (int) calculateMaxJumpHeight();
                 // Track the winning jump direction so initiateJump uses the correct airVelX
                 int winDir = Integer.MIN_VALUE; // sentinel: no winner yet
                 if (-dy <= maxJumpH) {
@@ -680,6 +673,10 @@ public class BotManager {
         broadcastMovement(bot, velX, 0);
     }
 
+    private float calculateMaxJumpHeight() {
+        return cfg.JUMP_FORCE * cfg.JUMP_FORCE / (2 * cfg.GRAVITY);
+    }
+
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
@@ -752,7 +749,7 @@ public class BotManager {
         Rope best     = null;
         int  bestDist = cfg.ROPE_SEEK_X + 1;
         // Max upward reach: v0²/(2g) — how high the bot can jump to catch the rope bottom
-        int jumpReach = (int) (cfg.JUMP_FORCE * cfg.JUMP_FORCE / (2 * cfg.GRAVITY));
+        int jumpReach = (int) calculateMaxJumpHeight();
         for (Rope r : bot.getMap().getRopes()) {
             int dist = Math.abs(r.x() - botPos.x);
             // Rope must go above bot (topY < botPos.y) and its bottom must be reachable
@@ -803,7 +800,7 @@ public class BotManager {
         int  bestDist = cfg.WAYPOINT_SEEK_X + 1;
         for (Rope r : bot.getMap().getRopes()) {
             int dist = Math.abs(r.x() - botPos.x);
-            if (dist < bestDist && r.topY() < botPos.y) {
+            if (dist < bestDist && r.topY() < botPos.y && r.bottomY() > botPos.y - calculateMaxJumpHeight()) {
                 bestDist = dist;
                 best     = r;
             }
