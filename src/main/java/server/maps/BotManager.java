@@ -54,6 +54,12 @@ public class BotManager {
         public int   ROPE_GRAB_X   = 22;    // max X distance to grab/start climbing a rope
         public int   TELEPORT_DIST = 2000; // Manhattan distance before bot teleports to owner
         public int   PRONE_STANCE  = 10;   // stance before down-jump: confirmed state=10 = down-held/crouch on ground
+
+        // Stuck recovery
+        public int   STUCK_CHECK_INTERVAL = 30;  // ticks between stuck-position checks
+        public int   STUCK_CHASE_TICKS    = 60;  // ticks of raw-chase mode after stuck detected
+        public int   STUCK_MIN_MOVE       = 20;  // px; moved less than this in N ticks = stuck
+        public int   STUCK_WALKBACK_LIMIT = 200; // px; max backward travel allowed during raw-chase
     }
 
     /** Singleton config — replace with `cfg = new Config()` after hotswapping to reset. */
@@ -116,6 +122,11 @@ public class BotManager {
 
         // Down-jump: true when prone was shown last tick, jump fires this tick
         boolean downJumpPending = false;
+
+        // Stuck recovery
+        int   stuckCheckTimer     = 0;
+        Point lastStuckCheckPos   = null;
+        int   rawChaseTicks       = 0;
 
         // Foothold index, rebuilt on map change
         int lastMapId = -1;
@@ -210,14 +221,17 @@ public class BotManager {
             Point spawn = new Point(owner.getPosition().x, owner.getPosition().y - 10);
             bot.setStance(5); // ensure spawn packet shows stand stance, not walk
             bot.changeMap(owner.getMap(), spawn);
-            entry.inAir           = true;
-            entry.climbing        = false;
-            entry.velY            = 0f;
-            entry.airVelX         = 0;
-            entry.wasMovingX      = false;
-            entry.seekingRope     = false;
-            entry.ropeGrabCooldown = 0;
-            entry.downJumpPending = false;
+            entry.inAir             = true;
+            entry.climbing          = false;
+            entry.velY              = 0f;
+            entry.airVelX           = 0;
+            entry.wasMovingX        = false;
+            entry.seekingRope       = false;
+            entry.ropeGrabCooldown  = 0;
+            entry.downJumpPending   = false;
+            entry.rawChaseTicks     = 0;
+            entry.stuckCheckTimer   = 0;
+            entry.lastStuckCheckPos = null;
             return;
         }
 
@@ -234,14 +248,17 @@ public class BotManager {
         if (Math.abs(botPos.x - ownerPos.x) + Math.abs(botPos.y - ownerPos.y) > cfg.TELEPORT_DIST) {
             Point spawn = new Point(ownerPos.x, ownerPos.y - 10);
             bot.setPosition(spawn);
-            entry.inAir           = true;
-            entry.climbing        = false;
-            entry.velY            = 0f;
-            entry.airVelX         = 0;
-            entry.wasMovingX      = false;
-            entry.seekingRope     = false;
-            entry.ropeGrabCooldown = 0;
-            entry.downJumpPending = false;
+            entry.inAir             = true;
+            entry.climbing          = false;
+            entry.velY              = 0f;
+            entry.airVelX           = 0;
+            entry.wasMovingX        = false;
+            entry.seekingRope       = false;
+            entry.ropeGrabCooldown  = 0;
+            entry.downJumpPending   = false;
+            entry.rawChaseTicks     = 0;
+            entry.stuckCheckTimer   = 0;
+            entry.lastStuckCheckPos = null;
             broadcastMovement(bot, 0, 0);
             return;
         }
@@ -384,11 +401,26 @@ public class BotManager {
 
         if (entry.jumpCooldown > 0) entry.jumpCooldown--;
 
+        // Stuck detection — check every STUCK_CHECK_INTERVAL ticks whether we've moved enough
+        if (entry.lastStuckCheckPos == null) entry.lastStuckCheckPos = botPos;
+        entry.stuckCheckTimer++;
+        if (entry.stuckCheckTimer >= cfg.STUCK_CHECK_INTERVAL) {
+            int moved = Math.abs(botPos.x - entry.lastStuckCheckPos.x)
+                    + Math.abs(botPos.y - entry.lastStuckCheckPos.y);
+            // Only flag stuck if we haven't moved AND owner is still far away
+            if (moved < cfg.STUCK_MIN_MOVE && Math.abs(dx) > cfg.FOLLOW_DIST) {
+                entry.rawChaseTicks = cfg.STUCK_CHASE_TICKS;
+            }
+            entry.stuckCheckTimer   = 0;
+            entry.lastStuckCheckPos = botPos;
+        }
+        if (entry.rawChaseTicks > 0) entry.rawChaseTicks--;
+
         // Complete a pending down-jump (prone was shown last tick — now execute the fall)
         if (entry.downJumpPending) {
             entry.downJumpPending = false;
             entry.inAir           = true;
-            entry.velY            = -5f; // slight upward force before gravity pulls through floor
+            entry.velY            = -16f; // slight upward force before gravity pulls through floor
             entry.airVelX         = dx > 0 ? cfg.STEP : dx < 0 ? -cfg.STEP : 0;
             entry.jumpCooldown    = cfg.JUMP_COOLDOWN;
             bot.setPosition(new Point(botPos.x, botPos.y + cfg.MAX_SNAP_DROP + 2));
@@ -398,8 +430,8 @@ public class BotManager {
             return;
         }
 
-        // Down-jump: owner is significantly below — show prone for 1 tick, then fall
-        if (dy > cfg.JUMP_Y_THRESH * 2 && entry.jumpCooldown == 0) {
+        // Down-jump: owner is clearly below AND primarily below (not just diagonal separation)
+        if (dy > cfg.JUMP_Y_THRESH * 3 && dy > Math.abs(dx) && entry.jumpCooldown == 0) {
             entry.downJumpPending = true;
             bot.setStance(cfg.PRONE_STANCE);
             broadcastMovement(bot, 0, 0);
@@ -446,16 +478,26 @@ public class BotManager {
         if (dy < -cfg.JUMP_Y_THRESH && entry.jumpCooldown == 0) {
             int stepX = calcStepX(entry, botPos.x, ownerPos.x);
             if (stepX == 0 || !isPathWalkable(bot, botPos, stepX)) {
+                int arcStep = stepX != 0 ? stepX : (dx >= 0 ? cfg.STEP : -cfg.STEP);
                 int maxJumpH = (int) (cfg.JUMP_FORCE * cfg.JUMP_FORCE / (2 * cfg.GRAVITY));
-                if (-dy <= maxJumpH) {
-                    // Target within jump reach — jump
+                if (-dy <= maxJumpH || arcCheckJump(bot, botPos, arcStep, ownerPos.y)) {
+                    // Owner reachable in one jump, OR arc finds an intermediate platform
                     entry.jumpCooldown = cfg.JUMP_COOLDOWN;
                     initiateJump(entry, bot, dx);
                     return;
                 }
-                // Owner too high for a single jump — use longer cooldown so rope logic
-                // gets priority and we don't spam-jump into a wall
-                entry.jumpCooldown = cfg.JUMP_COOLDOWN * 3;
+                // Stuck recovery: try jumping backward if there's a platform behind us that's higher
+                if (entry.rawChaseTicks > 0) {
+                    int backStep = -arcStep;
+                    if (Math.abs(dx) <= cfg.STUCK_WALKBACK_LIMIT
+                            && arcCheckJump(bot, botPos, backStep, ownerPos.y)) {
+                        entry.jumpCooldown = cfg.JUMP_COOLDOWN;
+                        initiateJump(entry, bot, backStep);
+                        return;
+                    }
+                }
+                // No reachable platform — back off so rope logic gets priority next tick
+                entry.jumpCooldown = entry.rawChaseTicks > 0 ? cfg.JUMP_COOLDOWN : cfg.JUMP_COOLDOWN * 3;
             }
         }
 
@@ -636,21 +678,25 @@ public class BotManager {
 
     /**
      * Simulates the jump arc from {@code from} stepping {@code stepX} per tick.
-     * Returns true if the bot would land on a foothold closer to {@code targetY}
-     * than its current position — meaning the jump is actually useful.
+     * Returns true if the bot would land on a foothold meaningfully higher than
+     * its current position (gaining at least JUMP_Y_THRESH px of height).
+     *
+     * Uses the same prevY→newY crossing pattern as tickAirborne's landing check
+     * so platforms are never missed due to arc position quantisation.
      */
     private boolean arcCheckJump(Character bot, Point from, int stepX, int targetY) {
         float vy = -cfg.JUMP_FORCE;
         int x = from.x, y = from.y;
         for (int t = 0; t < 25; t++) {
+            int prevY = y;
             vy = Math.min(vy + cfg.GRAVITY, cfg.MAX_FALL);
             x += stepX;
             y += (int) vy;
-            if (vy > 0) { // descending — check for landing
-                Point floor = bot.getMap().getPointBelow(new Point(x, y - 1));
-                if (floor != null && floor.y <= y + 5) {
-                    // Would land here — useful only if it brings us meaningfully closer to target
-                    return Math.abs(floor.y - targetY) < Math.abs(from.y - targetY) - cfg.JUMP_Y_THRESH;
+            if (vy > 0) { // descending — use prevY as search origin (mirrors tickAirborne)
+                Point floor = bot.getMap().getPointBelow(new Point(x, prevY));
+                if (floor != null && floor.y <= y) {
+                    // Would land here — useful if we gain meaningful height toward target
+                    return floor.y < from.y - cfg.JUMP_Y_THRESH;
                 }
             }
         }
