@@ -42,7 +42,7 @@ public class BotManager {
         public float MAX_FALL     = 50f;   // terminal fall velocity px/tick
 
         // Jump control
-        public int   JUMP_Y_THRESH = 35;   // jump when target is this many px higher
+        public int   JUMP_Y_THRESH = 30;   // jump when target is this many px higher
         public int   JUMP_COOLDOWN = 10;   // ticks between jump attempts (~1s at 100ms)
         public int   MAX_SNAP_DROP = 16;   // px downward before going airborne (covers 45° with STEP=13)
         public int   MAX_SLOPE_UP  = 26;   // px of upward rise per step considered a walkable slope
@@ -483,14 +483,18 @@ public class BotManager {
             }
         }
 
-        // Proactive jump — when path is blocked OR at same X but owner is above
+        // Proactive jump — path blocked, same X, or owner is significantly above (y-chase priority)
         if (dy < -cfg.JUMP_Y_THRESH && entry.jumpCooldown == 0) {
-            int stepX = calcStepX(entry, botPos.x, ownerPos.x);
-            if (stepX == 0 || !isPathWalkable(bot, botPos, stepX)) {
-                int arcStep = stepX != 0 ? stepX : (dx >= 0 ? cfg.STEP : -cfg.STEP);
+            int stepX    = calcStepX(entry, botPos.x, ownerPos.x);
+            boolean blocked  = stepX == 0 || !isPathWalkable(bot, botPos, stepX);
+            boolean farAbove = dy < -cfg.JUMP_Y_THRESH * 2; // owner is clearly on a higher platform
+            if (blocked || farAbove) {
+                int arcStep  = stepX != 0 ? stepX : (dx >= 0 ? cfg.STEP : -cfg.STEP);
                 int maxJumpH = (int) (cfg.JUMP_FORCE * cfg.JUMP_FORCE / (2 * cfg.GRAVITY));
-                if (-dy <= maxJumpH || arcCheckJump(bot, botPos, arcStep, ownerPos.y)) {
-                    // Owner reachable in one jump, OR arc finds an intermediate platform
+                if (-dy <= maxJumpH
+                        || arcCheckJump(bot, botPos, arcStep, ownerPos.y)
+                        || arcCheckJump(bot, botPos, 0, ownerPos.y)) {
+                    // Reachable directly, diagonally, or via vertical arc
                     entry.jumpCooldown = cfg.JUMP_COOLDOWN;
                     initiateJump(entry, bot, dx);
                     return;
@@ -621,11 +625,18 @@ public class BotManager {
     private void initiateJump(BotEntry entry, Character bot, int dx) {
         entry.velY        = -cfg.JUMP_FORCE;
         entry.inAir       = true;
-        entry.seekingRope = false; // regular jump — don't grab ropes mid-arc
-        entry.airVelX     = dx >= 0 ? cfg.STEP : -cfg.STEP;
-        bot.setStance(dx >= 0 ? 6 : 7);
+        entry.seekingRope = false;
         int jumpVelY = -(int) ((cfg.JUMP_FORCE - cfg.GRAVITY) * (1000f / cfg.TICK_MS));
-        broadcastMovement(bot, dx >= 0 ? cfg.WALK_VEL : -cfg.WALK_VEL, jumpVelY);
+        if (Math.abs(dx) < cfg.STOP_DIST) {
+            // Owner directly above — jump straight up (no horizontal drift)
+            entry.airVelX = 0;
+            bot.setStance(6);
+            broadcastMovement(bot, 0, jumpVelY);
+        } else {
+            entry.airVelX = dx >= 0 ? cfg.STEP : -cfg.STEP;
+            bot.setStance(dx >= 0 ? 6 : 7);
+            broadcastMovement(bot, dx >= 0 ? cfg.WALK_VEL : -cfg.WALK_VEL, jumpVelY);
+        }
     }
 
     private void initiateRopeJump(BotEntry entry, Character bot, int dx) {
