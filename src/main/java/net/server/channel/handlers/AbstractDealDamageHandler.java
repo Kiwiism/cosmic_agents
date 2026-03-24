@@ -942,7 +942,7 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
         return attackInfo;
     }
 
-    private void removeExplodedMesos(MapleMap map, AttackInfo attack) {
+    private static void removeExplodedMesos(MapleMap map, AttackInfo attack) {
         int index = 0;
         for (Integer mesoId : attack.explodedMesos) {
             MapObject mapobject = map.getMapObject(mesoId);
