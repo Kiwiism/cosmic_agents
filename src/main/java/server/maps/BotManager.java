@@ -249,7 +249,16 @@ public class BotManager {
 
         // Keep physics running when idle; grinding runs its own navigation loop
         if (!entry.following && !entry.grinding) {
-            if (entry.inAir) tickAirborne(entry, targetPos);
+            if (entry.inAir) {
+                tickAirborne(entry, targetPos);
+            } else if (!entry.climbing) {
+                // On ground — snap to stand stance once so walking/jumping animation clears
+                if (bot.getStance() != 5) {
+                    bot.setStance(5);
+                    broadcastMovement(bot, 0, 0);
+                }
+            }
+            // If climbing, bot idles on the rope — no stance change needed (16/17 is already idle)
             return;
         }
 
@@ -847,12 +856,12 @@ public class BotManager {
         attack.numDamage = 1;
         attack.numAttackedAndDamage = (1 << 4) | 1;
         attack.speed = 4;
-        attack.stance = bot.getPosition().x <= target.getPosition().x ? 2 : 3;
+        // bit 7 = facing left (0x80), matching real client attack packet encoding
+        attack.stance = bot.getPosition().x > target.getPosition().x ? 0x80 : 0x00;
         attack.targets = new HashMap<>();
         attack.targets.put(target.getObjectId(),
                 new AbstractDealDamageHandler.AttackTarget((short) 0, List.of(damage)));
 
-        bot.setStance(attack.stance);
         CloseRangeDamageHandler.applyCloseRangeEffects(attack, bot, bot.getClient());
 
         entry.attackCooldown = cfg.ATTACK_COOLDOWN;
@@ -916,11 +925,14 @@ public class BotManager {
             if (vy > 0) { // descending — use prevY as search origin (mirrors tickAirborne)
                 Point floor = bot.getMap().getPointBelow(new Point(x, prevY));
                 if (floor != null && floor.y <= y) {
-                    return true;
+                    // assume sideway jump toward target always useful
+                    if (stepX != 0) {
+                        return true;
+                    }
                     // Useful if we gain height OR land near target's platform (same-level gap jump)
 //                    boolean usefulHorizontalJump = stepX != 0 && Math.abs(floor.y - from.y) <= cfg.JUMP_Y_THRESH;
-//                    boolean hasYGains = floor.y < from.y - cfg.JUMP_Y_THRESH;
-//                    return hasYGains || usefulHorizontalJump;
+                    boolean hasYGains = floor.y < from.y - cfg.JUMP_Y_THRESH;
+                    return hasYGains;
                 }
             }
         }
