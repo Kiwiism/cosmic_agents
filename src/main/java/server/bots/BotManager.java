@@ -356,22 +356,20 @@ public class BotManager {
             }
             entry.grindTarget = target;
             Point tp = target.getPosition();
-            int dx = Math.abs(tp.x - botPos.x);
-            int dy = botPos.y - tp.y; // positive = target is higher on screen (above bot)
+            BotCombatManager.AttackPlan attackPlan = BotCombatManager.planAttack(entry, bot, target);
 
             if (!entry.climbing) {
-                boolean inHRange = dx <= BotCombatManager.cfg.ATTACK_RANGE_X;
-                boolean inVRange = dy >= -BotCombatManager.cfg.ATTACK_DOWN_MAX && dy <= BotCombatManager.cfg.ATTACK_RANGE_Y;
-                boolean jumpable = dy > BotCombatManager.cfg.ATTACK_RANGE_Y && dy <= BotCombatManager.cfg.ATTACK_JUMP_Y;
-
-                if (inHRange && inVRange) {
+                if (BotCombatManager.isTargetInAttackRange(attackPlan, bot, target)) {
                     // In range — attack if grounded, or during ascent of a jump
                     if (!entry.inAir || entry.velY < 0) {
-                        BotCombatManager.attackMonster(entry, bot, target);
+                        BotCombatManager.attackMonster(entry, bot, attackPlan);
                         if (!entry.inAir) return;
                         // airborne: fall through so tickAirborne still runs this tick
                     }
-                } else if (!entry.inAir && inHRange && jumpable && entry.jumpCooldown == 0) {
+                } else if (attackPlan.skillId == 0
+                        && !entry.inAir
+                        && BotCombatManager.isTargetJumpable(botPos, tp)
+                        && entry.jumpCooldown == 0) {
                     // Target is above but within jump height — jump toward it
                     BotMovementManager.initiateJump(entry, bot, tp.x - botPos.x);
                     return;

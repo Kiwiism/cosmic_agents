@@ -1204,7 +1204,11 @@ public class StatEffect {
         }
     }
 
-    private Rectangle calculateBoundingBox(Point posFrom, boolean facingLeft) {
+    public boolean hasBoundingBox() {
+        return lt != null && rb != null;
+    }
+
+    public Rectangle calculateBoundingBox(Point posFrom, boolean facingLeft) {
         Point mylt;
         Point myrb;
         if (facingLeft) {
