@@ -2,6 +2,8 @@ package server.bots;
 
 import client.Character;
 import server.life.Monster;
+import server.maps.Foothold;
+import server.maps.Rope;
 
 import java.awt.*;
 import java.util.ArrayList;

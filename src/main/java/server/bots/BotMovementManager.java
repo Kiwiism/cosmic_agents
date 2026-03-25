@@ -1,11 +1,9 @@
 package server.bots;
 
 import client.Character;
-import io.netty.buffer.Unpooled;
-import net.packet.ByteBufInPacket;
-import net.packet.InPacket;
-import net.packet.Packet;
-import tools.PacketCreator;
+import server.maps.Foothold;
+import server.maps.MapleMap;
+import server.maps.Rope;
 
 import java.awt.*;
 import java.util.HashMap;
