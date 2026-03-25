@@ -1,5 +1,6 @@
 package server.maps;
 
+import client.BotClient;
 import client.Character;
 import client.Job;
 import client.Skill;
@@ -30,6 +31,7 @@ import server.life.Monster;
 import tools.PacketCreator;
 
 import java.awt.*;
+import java.sql.SQLException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -135,10 +137,24 @@ public class BotManager {
     private final Map<Integer, BotEntry> bots = new ConcurrentHashMap<>();
 
     // TODO: Extract to BotChatManager or something, unbloat this file
+
+    // --- helper prefix used in several info patterns ---
+    // matches optional preamble: "what's / what is / tell me / show me / check / how's"
+    // followed by "your/ur" — glued before each info keyword
+    private static final String INFO_PFX =
+            "(?:(?:what.?s?|what\\s+is|tell\\s+me|show\\s+me|check|how.?s?)\\s+)?(?:your|ur)\\s+";
+
     private static final Pattern FOLLOW_PATTERN = Pattern.compile(
-            "\\b(follow( me)?|come( here)?|f me)\\b", Pattern.CASE_INSENSITIVE);
+            "\\b(follow(\\s+(me|here|pls|please|now))?|come(\\s+(here|to\\s+me|with\\s+me|closer|on|back))?|"
+            + "get\\s+over\\s+here|f\\s+me|(pls|please)\\s+follow)\\b",
+            Pattern.CASE_INSENSITIVE);
+
     private static final Pattern STOP_PATTERN = Pattern.compile(
-            "\\b(stop|stay|wait|halt|hold)\\b", Pattern.CASE_INSENSITIVE);
+            "\\b(stop(\\s+(moving|it|now|pls|please))?|stay(\\s+(here|there|put))?|"
+            + "wait(\\s+(here|up|for\\s+me|a\\s+(sec|moment|bit)))?|"
+            + "hold(\\s+(on|up|still|it))?|halt|freeze|don.?t\\s+move|stand\\s+(still|by)|"
+            + "chill(\\s+here)?|idle|park(\\s+here)?)\\b",
+            Pattern.CASE_INSENSITIVE);
 
     private static final List<String> FOLLOW_REPLIES = List.of(
             "ok", "k", "sure", "omw", "got it", "coming",
@@ -148,8 +164,14 @@ public class BotManager {
             "ok", "k", "sure", "alright", "got it", "stopping",
             "ok ill wait here", "ill be here", "np", "standing by",
             "understood", "ok boss");
+
     private static final Pattern GRIND_PATTERN = Pattern.compile(
-            "\\b(farm|grind|kill mobs?)\\b", Pattern.CASE_INSENSITIVE);
+            "\\b(go\\s+|start\\s+|begin\\s+|let.?s\\s+)?(farm(ing)?|grind(ing)?|hunt(ing)?|train(ing)?)\\b"
+            + "|\\b(kill|fight)\\s+(mobs?|monsters?|stuff)\\b"
+            + "|\\btime\\s+to\\s+(farm|grind|hunt)\\b"
+            + "|\\bgo\\s+get\\s+(exp|xp)\\b",
+            Pattern.CASE_INSENSITIVE);
+
     private static final Pattern JOB_SELECT_PATTERN = Pattern.compile(
             "\\b(warrior|fighter|page|spearman|sader|crusader|hero|dk|drk|dark knight|paladin|" +
             "mage|magician|wizard|cleric|healer|fp|il|fp mage|il mage|fp arch|il arch|priest|bishop|" +
@@ -157,41 +179,76 @@ public class BotManager {
             "thief|assassin|sin|bandit|dit|hermit|chief bandit|cb|shadower|shad|night lord|nl|" +
             "pirate|brawler|gunslinger|gun|marauder|outlaw|bucc|buccaneer|corsair|" +
             "white knight|wk|dragon knight)\\b", Pattern.CASE_INSENSITIVE);
+
     private static final List<String> GRIND_REPLIES = List.of(
             "ok", "on it", "lets get it", "farming time", "got it",
             "sure", "ok boss", "time to grind");
     private static final List<String> DEATH_REPLIES = List.of(
             "oops im dead", "gg", "rip me", "oww", "i died lol",
             "welp", "ouchh", "nooo", "ok i died", "i'll be right back");
+
     private static final Pattern GREETING_PATTERN = Pattern.compile(
-            "\\b(hi+|hey+|hello|sup|yo+|howdy|hiya|whats up|what's up|wassup)\\b",
+            "\\b(hi+|hey+|hello+|sup|yo+|howdy|hiya|heya|hai|ello|"
+            + "whats?\\s*up|waz+up|wassup|hows?\\s+it\\s+going|"
+            + "(good\\s+)?(morning|evening|afternoon)|"
+            + "how\\s+(are|r)\\s+(you|u|ya)(\\s+doing)?|"
+            + "what.?s\\s+(good|up|new|poppin.?))\\b",
             Pattern.CASE_INSENSITIVE);
+
     private static final Pattern STATS_PATTERN = Pattern.compile(
-            "\\byour (stats?|str|dex|int|luk|level)\\b|\\bwhat are your stats\\b",
+            INFO_PFX + "(stats?|str(ength)?|dex(terity)?|int(elligence)?|luk|level|lv)\\b"
+            + "|\\bwhat\\s+(are|r)\\s+(your|ur)\\s+stats\\b"
+            + "|\\bwhat\\s+(level|lv)\\s+(are|r)\\s+(you|u)\\b"
+            + "|\\bhow\\s+(strong|tough|good)\\s+(are|r)\\s+(you|u)\\b"
+            + "|\\bur\\s+(stats?|level|lv|str|dex|int|luk)\\b",
             Pattern.CASE_INSENSITIVE);
+
     private static final Pattern RANGE_PATTERN = Pattern.compile(
-            "\\byour (range|dmg|damage)\\b|\\bhow much (dmg|damage)\\b",
+            INFO_PFX + "(range|dmg|damage|dps|min.?max|attack\\s+range)\\b"
+            + "|\\bhow\\s+much\\s+(dmg|damage)\\s+(do|can)\\s+(you|u)\\s+(do|deal|hit)\\b"
+            + "|\\bhow\\s+hard\\s+(do|can)\\s+(you|u)\\s+hit\\b"
+            + "|\\bur\\s+(range|dmg|damage|dps)\\b",
             Pattern.CASE_INSENSITIVE);
+
     private static final Pattern BUILD_PATTERN = Pattern.compile(
-            "\\byour build\\b|\\bcurrent build\\b",
+            INFO_PFX + "build\\b"
+            + "|\\b(current|what.?s\\s+(the|your|ur))\\s+build\\b"
+            + "|\\bhow\\s+(much|many)\\s+ap\\s+(do\\s+(you|u)\\s+have|left|remaining)\\b"
+            + "|\\b(ap\\s+left|remaining\\s+ap)\\b"
+            + "|\\bur\\s+build\\b",
             Pattern.CASE_INSENSITIVE);
+
     private static final Pattern INVENTORY_PATTERN = Pattern.compile(
-            "\\byour (loot|inv|inventory|items|equips?)\\b|\\bwhat do you have\\b",
+            INFO_PFX + "(loot|inv|inventory|items?|equips?|gear|bag|stuff)\\b"
+            + "|\\bwhat\\s+(do\\s+(you|u)\\s+have|are\\s+(you|u)\\s+carrying|gear\\s+do\\s+(you|u)\\s+have)\\b"
+            + "|\\b(how\\s+many|check\\s+(your|ur))\\s+items?\\b"
+            + "|\\bur\\s+(inv|inventory|items?|equips?|gear)\\b",
             Pattern.CASE_INSENSITIVE);
+
     private static final Pattern SCROLLS_PATTERN = Pattern.compile(
-            "\\byour scrolls\\b|\\bany scrolls\\b|\\bdo you have (any )?scrolls\\b",
+            INFO_PFX + "scrolls?\\b"
+            + "|\\b(any|do\\s+(you|u)\\s+have(\\s+any)?|got(\\s+any)?|"
+            + "carrying(\\s+any)?|you\\s+got(\\s+any)?)\\s+scrolls?\\b"
+            + "|\\bhow\\s+many\\s+scrolls?\\b"
+            + "|\\bscrolls?\\s+on\\s+(you|u|ya)\\b",
             Pattern.CASE_INSENSITIVE);
+
     private static final Pattern AP_PURE_STR_PATTERN = Pattern.compile(
-            "\\bpure str\\b", Pattern.CASE_INSENSITIVE);
+            "\\bpure\\s+str\\b", Pattern.CASE_INSENSITIVE);
     private static final Pattern AP_FIXED_DEX_PATTERN = Pattern.compile(
             "\\b(\\d+)\\s*dex\\b", Pattern.CASE_INSENSITIVE);
     private static final Pattern AP_CHANGE_BUILD_PATTERN = Pattern.compile(
-            "\\bchange build\\b", Pattern.CASE_INSENSITIVE);
+            "\\b(change|switch|update|reset|new)\\s+(your\\s+|ur\\s+)?build\\b",
+            Pattern.CASE_INSENSITIVE);
     private static final Pattern LOGOUT_PATTERN = Pattern.compile(
-            "\\b(log off|logout|log out|disconnect|save and (relog|log ?off|logout)|relog)\\b",
+            "\\b((save\\s+and\\s+)?log\\s*(off|out)|disconnect|(pls|please)\\s+log(\\s+me)?\\s+(off|out))\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern RELOG_PATTERN = Pattern.compile(
+            "\\b(relog|save\\s+and\\s+relog|reconnect|log\\s+back\\s+in)\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern LOGOUT_CONFIRM_PATTERN = Pattern.compile(
-            "\\b(yes|yep|yeah|yea|y|ok|sure|confirm|do it)\\b", Pattern.CASE_INSENSITIVE);
+            "\\b(yes|yep|yeah|yea|y|ok|sure|confirm|do\\s+it|go\\s+(ahead|for\\s+it))\\b",
+            Pattern.CASE_INSENSITIVE);
 
     // TODO: Extract Ap/Sp/Job/build related code to BotBuildManager or something, unbloat this file
     /**
@@ -289,8 +346,8 @@ public class BotManager {
         ApBuild apBuild       = null;   // null = not chosen yet
         boolean apPromptSent  = false;  // prevent re-prompting before owner responds
 
-        // Logout / relog
-        boolean pendingLogout = false;  // true = waiting for owner confirmation
+        // Pending two-step action: null, "logout", or "relog"
+        String pendingAction = null;
 
         // Message queue — sends with ~5s spacing between messages
         final ArrayDeque<String> msgQueue = new ArrayDeque<>();
@@ -353,31 +410,61 @@ public class BotManager {
         if (entry == null) return;
 
         // Logout / relog — two-step confirmation
-        if (LOGOUT_PATTERN.matcher(message).find()) {
+        if (RELOG_PATTERN.matcher(message).find()) {
             TimerManager.getInstance().schedule(() -> {
-                entry.pendingLogout = true;
+                entry.pendingAction = "relog";
                 entry.following = false;
                 entry.grinding  = false;
                 List<String> prompts = List.of(
-                        "log off? you sure? say yes to confirm",
-                        "relog? type yes to confirm",
-                        "save and log off? say yes if you're sure");
+                        "relog? say yes to confirm",
+                        "save and relog? type yes",
+                        "relogging? say yes to go ahead");
                 botSay(entry.bot, randomReply(prompts));
             }, 1000);
             return;
         }
-        if (entry.pendingLogout) {
+        if (LOGOUT_PATTERN.matcher(message).find()) {
+            TimerManager.getInstance().schedule(() -> {
+                entry.pendingAction = "logout";
+                entry.following = false;
+                entry.grinding  = false;
+                List<String> prompts = List.of(
+                        "log off? you sure? say yes to confirm",
+                        "save and log off? say yes if you're sure",
+                        "logging off? type yes to confirm");
+                botSay(entry.bot, randomReply(prompts));
+            }, 1000);
+            return;
+        }
+        if (entry.pendingAction != null) {
             if (LOGOUT_CONFIRM_PATTERN.matcher(message).find()) {
-                TimerManager.getInstance().schedule(() -> {
-                    List<String> byes = List.of("ok! saving and logging off~", "cya! logging off now", "ok bye!!");
-                    botSay(entry.bot, randomReply(byes));
+                String action = entry.pendingAction;
+                entry.pendingAction = null;
+                if ("relog".equals(action)) {
                     TimerManager.getInstance().schedule(() -> {
-                        entry.bot.saveCharToDB(true);
-                        entry.bot.getClient().disconnect(false, false);
-                    }, 3000);
-                }, 1000);
+                        botSay(entry.bot, randomReply(List.of("brb!", "relogging~", "one sec, relogging")));
+                        int charId      = entry.bot.getId();
+                        int ownerCharId = entry.owner.getId();
+                        int world       = entry.bot.getClient().getWorld();
+                        int channel     = entry.bot.getClient().getChannel();
+                        TimerManager.getInstance().schedule(() -> {
+                            entry.bot.saveCharToDB(true);
+                            entry.bot.getClient().disconnect(false, false);
+                            TimerManager.getInstance().schedule(
+                                    () -> reloginBot(charId, ownerCharId, world, channel), 10_000);
+                        }, 2000);
+                    }, 1000);
+                } else {
+                    TimerManager.getInstance().schedule(() -> {
+                        botSay(entry.bot, randomReply(List.of("ok! saving and logging off~", "cya!!", "ok bye!!")));
+                        TimerManager.getInstance().schedule(() -> {
+                            entry.bot.saveCharToDB(true);
+                            entry.bot.getClient().disconnect(false, false);
+                        }, 2000);
+                    }, 1000);
+                }
             } else {
-                entry.pendingLogout = false;
+                entry.pendingAction = null;
                 TimerManager.getInstance().schedule(() ->
                         botSay(entry.bot, "ok nvm, staying!"), 800);
             }
@@ -1245,6 +1332,42 @@ public class BotManager {
             botSay(bot, randomReply(DEATH_REPLIES));
             entry.deadUntil = System.currentTimeMillis() + cfg.BOT_DEAD_MS;
             resetEntryState(entry);
+        }
+    }
+
+    private void reloginBot(int charId, int ownerCharId, int world, int channel) {
+        Character owner = Server.getInstance()
+                .getWorld(world)
+                .getPlayerStorage()
+                .getCharacterById(ownerCharId);
+        if (owner == null) return; // owner logged off — skip
+
+        try {
+            BotClient botClient = new BotClient(world, channel);
+            Character botChar = Character.loadCharFromDB(charId, botClient, true);
+            botClient.setPlayer(botChar);
+            botClient.setAccID(botChar.getAccountID());
+
+            MapleMap map = owner.getMap();
+            Point pos = map.getPointBelow(new Point(owner.getPosition().x, owner.getPosition().y - 1));
+            if (pos == null) pos = owner.getPosition();
+
+            botChar.setMapId(map.getId());
+            botChar.newClient(botClient);
+            botChar.recalcLocalStats();
+            botChar.setPosition(pos);
+
+            var channelServer = Server.getInstance().getChannel(world, channel);
+            channelServer.addPlayer(botChar);
+            channelServer.getWorldServer().addPlayer(botChar);
+            botChar.setEnteredChannelWorld();
+            map.addPlayer(botChar);
+            botChar.broadcastStance();
+
+            registerBot(ownerCharId, owner, botChar);
+            TimerManager.getInstance().schedule(() -> botSay(botChar, "back!!"), 1000);
+        } catch (SQLException e) {
+            log.warn("reloginBot: failed to reload charId={}", charId, e);
         }
     }
 
