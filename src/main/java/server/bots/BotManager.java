@@ -20,7 +20,6 @@ import tools.PacketCreator;
 
 import java.awt.*;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,67 +42,6 @@ public class BotManager {
      * be hotswapped in debug mode without the JVM inlining the values.
      */
     public static class Config {
-        // Movement
-        public int   TICK_MS      = 100;   // ms between ticks (matches real v83 ~100ms packet rate)
-        public int   STEP         = 13;    // px/tick walk step (133px/s * 0.1s)
-        public int   WALK_VEL     = 133;   // px/s written into xv for client interpolation
-        public int   STOP_DIST    = 30;    // stop moving when within this many px
-        public int   FOLLOW_DIST  = 80;    // only start chasing when farther than this (hysteresis)
-
-        // Physics
-        public float GRAVITY      = 15f;   // px/tick² (downward acceleration)
-        public float JUMP_FORCE   = 60f;   // initial upward velocity px/tick
-        public float JUMP_FORCE_DOWNWARD   = 16f;   // initial upward velocity px/tick
-        public float JUMP_FORCE_ROPE   = 16f;   // initial upward velocity px/tick
-        public float MAX_FALL     = 50f;   // terminal fall velocity px/tick
-        public float KNOCKBACK_RISE = 18f; // upward velocity applied on mob knockback (~1/3 jump)
-
-        // Jump control
-        public int   JUMP_Y_THRESH = 30;   // jump when target is this many px higher
-        public int   JUMP_COOLDOWN = 10;   // ticks between jump attempts (~1s at 100ms)
-        public int   ARC_LEAD_STEPS = 3;  // extra arc checks from 1–N steps ahead (widens jump detection)
-        public int   MAX_SNAP_DROP = 16;   // px downward before going airborne (covers 45° with STEP=13)
-        public int   MAX_SLOPE_UP  = 26;   // px of upward rise per step considered a walkable slope
-
-        // Rope climbing
-        public int   CLIMB_SPEED  = 10;    // px/tick upward (~51px per 510ms observed in real packets)
-        public int   CLIMB_VEL    = 130;   // unused for broadcast (real packets use xv=0 yv=0 on rope)
-        public int   ROPE_SEEK_X  = 150;   // horizontal search radius for ropes
-        public int   ROPE_GRAB_X   = 22;    // max X distance to grab/start climbing a rope
-        public int   TELEPORT_DIST = 2000; // Manhattan distance before bot teleports to owner
-        public int   DEAD_STANCE   = 0;    // stance for tombstone (death) state
-        public int   STAND_STANCE  = 5;    // default standing stance
-        public int   PRONE_STANCE  = 10;   // stance before down-jump: confirmed state=10 = down-held/crouch on ground
-        public int   LEDGE_SEEK_X  = 150; // px; if foothold edge is within this radius, walk off it instead of down-jumping
-
-        // Stuck recovery
-        public int   STUCK_CHECK_INTERVAL = 30;  // ticks between stuck-position checks
-        public int   STUCK_CHASE_TICKS    = 60;  // ticks of raw-chase mode after stuck detected
-        public int   STUCK_MIN_MOVE       = 20;  // px; moved less than this in N ticks = stuck
-        public int   STUCK_WALKBACK_LIMIT = 200; // px; max backward travel allowed during raw-chase
-
-        // Waypoint (1-hop pathfinding to a rope outside normal detection range)
-        public int   WAYPOINT_SEEK_X  = 1000;  // expanded rope search radius when setting a waypoint
-        public int   WAYPOINT_TIMEOUT = 80;    // ticks before an unreached waypoint expires (~8s)
-        public int   WAYPOINT_MIN_DY  = 400;   // px; min height above bot before considering a waypoint rope
-
-        // Grind mode
-        public int   ATTACK_RANGE_X     = 80;   // px; horizontal attack reach
-        public int   ATTACK_RANGE_Y     = 50;    // px; vertical reach upward (tight — same level to slightly above)
-        public int   ATTACK_DOWN_MAX    = 20;    // px; max downward tolerance (no attacking far below)
-        public int   ATTACK_JUMP_Y      = 130;   // px; jump toward target if it is this far above and in X range
-        public int   ATTACK_COOLDOWN    = 10;    // ticks between attacks (~800ms at 100ms/tick)
-        public int   GRIND_SEEK_RANGE   = 800;   // px; monster search radius
-        public int   AOE_MOB_THRESHOLD  = 2;     // nearby mobs needed to prefer AoE skill over single-target
-        // TODO: Aoe range/area/hitbox for attack and skill should be read from actual game data
-        public long  AOE_RANGE_SQ       = 90000L; // px² AoE sweep radius (~300px)
-
-        // Mob damage taken
-        public int   MOB_TOUCH_HALF_W = 40;    // px; approximate half-width of mob bounding box
-        public int   MOB_TOUCH_HALF_H = 30;    // px; approximate half-height of mob bounding box
-        public int   MOB_HIT_COOLDOWN = 15;    // ticks between mob hits (~1.5s)
-        public long  BOT_DEAD_MS      = 10_000L; // ms bot stays dead before respawning
-
         // Passive loot
         public int   LOOT_RADIUS      = 100;   // px; pickup items within this box radius
         public int   INV_FULL_WARN_CD = 100;   // ticks between "inventory full" complaints
@@ -149,7 +87,7 @@ public class BotManager {
         });
         int botCharId = bot.getId();
         ScheduledFuture<?> task = TimerManager.getInstance().register(
-                () -> tick(ownerCharId, botCharId), cfg.TICK_MS);
+                () -> tick(ownerCharId, botCharId), BotMovementManager.cfg.TICK_MS);
         BotEntry entry = new BotEntry(bot, owner, task);
         entries.add(entry);
         TimerManager.getInstance().schedule(() -> BotChatManager.checkBotStatus(entry, bot), 2000);
@@ -338,9 +276,9 @@ public class BotManager {
         // Dead state: skip AI until respawn timer expires.
         // Also catch stale hp=0 (e.g. deadUntil was lost on save/reconnect) — re-enter dead state.
         if (entry.deadUntil == 0 && bot.getHp() <= 0) {
-            bot.setStance(cfg.DEAD_STANCE);
+            bot.setStance(BotMovementManager.cfg.DEAD_STANCE);
             BotMovementManager.broadcastMovement(bot, 0, 0);
-            entry.deadUntil = System.currentTimeMillis() + cfg.BOT_DEAD_MS;
+            entry.deadUntil = System.currentTimeMillis() + BotCombatManager.cfg.BOT_DEAD_MS;
             BotMovementManager.resetEntryState(entry);
         }
         if (entry.deadUntil > 0) {
@@ -381,14 +319,14 @@ public class BotManager {
         if (entry.following) {
             if (bot.getMapId() != owner.getMapId()) {
                 Point spawn = new Point(owner.getPosition().x, owner.getPosition().y - 10);
-                bot.setStance(cfg.STAND_STANCE); // ensure spawn packet shows stand stance, not walk
+                bot.setStance(BotMovementManager.cfg.STAND_STANCE); // ensure spawn packet shows stand stance, not walk
                 bot.changeMap(owner.getMap(), spawn);
                 BotMovementManager.resetEntryState(entry);
                 return;
             }
         }
         // Teleport if hopelessly far — applies to both follow and grind (catches falling off map)
-        if (Math.abs(botPos.x - targetPos.x) + Math.abs(botPos.y - targetPos.y) > cfg.TELEPORT_DIST) {
+        if (Math.abs(botPos.x - targetPos.x) + Math.abs(botPos.y - targetPos.y) > BotMovementManager.cfg.TELEPORT_DIST) {
             Point spawn = new Point(targetPos.x, targetPos.y - 10);
             bot.setPosition(spawn);
             BotMovementManager.resetEntryState(entry);
@@ -405,7 +343,7 @@ public class BotManager {
         // Grind mode: navigate toward nearest monster, attack when in range
         if (entry.grinding) {
             // Stick to current target while it's alive and in range; only re-pick when needed
-            double seekRangeSq = (double) cfg.GRIND_SEEK_RANGE * cfg.GRIND_SEEK_RANGE;
+            double seekRangeSq = (double) BotCombatManager.cfg.GRIND_SEEK_RANGE * BotCombatManager.cfg.GRIND_SEEK_RANGE;
             Monster target = entry.grindTarget;
             if (target == null || !target.isAlive()
                     || target.getPosition().distanceSq(botPos) > seekRangeSq) {
@@ -422,9 +360,9 @@ public class BotManager {
             int dy = botPos.y - tp.y; // positive = target is higher on screen (above bot)
 
             if (!entry.climbing) {
-                boolean inHRange = dx <= cfg.ATTACK_RANGE_X;
-                boolean inVRange = dy >= -cfg.ATTACK_DOWN_MAX && dy <= cfg.ATTACK_RANGE_Y;
-                boolean jumpable = dy > cfg.ATTACK_RANGE_Y && dy <= cfg.ATTACK_JUMP_Y;
+                boolean inHRange = dx <= BotCombatManager.cfg.ATTACK_RANGE_X;
+                boolean inVRange = dy >= -BotCombatManager.cfg.ATTACK_DOWN_MAX && dy <= BotCombatManager.cfg.ATTACK_RANGE_Y;
+                boolean jumpable = dy > BotCombatManager.cfg.ATTACK_RANGE_Y && dy <= BotCombatManager.cfg.ATTACK_JUMP_Y;
 
                 if (inHRange && inVRange) {
                     // In range — attack if grounded, or during ascent of a jump
@@ -504,7 +442,7 @@ public class BotManager {
         Point spawnPos = bot.getMap().getPointBelow(new Point(ownerPos.x, ownerPos.y - 1));
         bot.setPosition(spawnPos != null ? spawnPos : ownerPos);
         BotMovementManager.resetEntryState(entry);
-        bot.setStance(cfg.STAND_STANCE); // clears tombstone for nearby clients
+        bot.setStance(BotMovementManager.cfg.STAND_STANCE); // clears tombstone for nearby clients
         BotMovementManager.broadcastMovement(bot, 0, 0);
         botSay(bot, "back!");
     }

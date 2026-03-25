@@ -1,15 +1,71 @@
 package server.bots;
 
 import client.Character;
+import io.netty.buffer.Unpooled;
+import net.packet.ByteBufInPacket;
+import net.packet.InPacket;
+import net.packet.Packet;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Rope;
+import tools.PacketCreator;
 
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
 class BotMovementManager {
+
+    static class Config {
+        // Tick
+        public int   TICK_MS      = 100;   // ms between ticks
+
+        // Movement
+        public int   STEP         = 13;    // px/tick walk step
+        public int   WALK_VEL     = 133;   // px/s for client interpolation
+        public int   STOP_DIST    = 30;    // stop moving within this many px
+        public int   FOLLOW_DIST  = 80;    // start chasing when farther than this
+
+        // Physics
+        public float GRAVITY      = 15f;
+        public float JUMP_FORCE   = 60f;
+        public float JUMP_FORCE_DOWNWARD = 16f;
+        public float JUMP_FORCE_ROPE     = 16f;
+        public float MAX_FALL     = 50f;
+
+        // Jump control
+        public int   JUMP_Y_THRESH  = 30;
+        public int   JUMP_COOLDOWN  = 10;
+        public int   ARC_LEAD_STEPS = 3;
+        public int   MAX_SNAP_DROP  = 16;
+        public int   MAX_SLOPE_UP   = 26;
+
+        // Rope climbing
+        public int   CLIMB_SPEED  = 10;
+        public int   CLIMB_VEL    = 130;
+        public int   ROPE_SEEK_X  = 150;
+        public int   ROPE_GRAB_X  = 22;
+        public int   TELEPORT_DIST = 2000;
+
+        // Stances
+        public int   DEAD_STANCE  = 0;
+        public int   STAND_STANCE = 5;
+        public int   PRONE_STANCE = 10;
+        public int   LEDGE_SEEK_X = 150;
+
+        // Stuck recovery
+        public int   STUCK_CHECK_INTERVAL = 30;
+        public int   STUCK_CHASE_TICKS    = 60;
+        public int   STUCK_MIN_MOVE       = 20;
+        public int   STUCK_WALKBACK_LIMIT = 200;
+
+        // Waypoint
+        public int   WAYPOINT_SEEK_X  = 1000;
+        public int   WAYPOINT_TIMEOUT = 80;
+        public int   WAYPOINT_MIN_DY  = 400;
+    }
+
+    static Config cfg = new Config();
 
     static void resetEntryState(BotEntry entry) {
         entry.inAir             = true;
@@ -33,7 +89,7 @@ class BotMovementManager {
     // -------------------------------------------------------------------------
 
     static void tickClimbing(BotEntry entry, Point targetPos) {
-        BotManager.Config cfg = BotManager.cfg;
+        Config cfg = BotMovementManager.cfg;
         Character bot = entry.bot;
         Point botPos  = bot.getPosition();
         int dy      = targetPos.y - botPos.y;
@@ -90,7 +146,7 @@ class BotMovementManager {
 
     /** Jump off the current rope position toward dx direction. */
     static void jumpOffRope(BotEntry entry, Character bot, int dx) {
-        BotManager.Config cfg = BotManager.cfg;
+        Config cfg = BotMovementManager.cfg;
         entry.climbing        = false;
         entry.inAir           = true;
         entry.velY            = -cfg.JUMP_FORCE_ROPE;
@@ -108,7 +164,7 @@ class BotMovementManager {
     // -------------------------------------------------------------------------
 
     static void tickAirborne(BotEntry entry, Point targetPos) {
-        BotManager.Config cfg = BotManager.cfg;
+        Config cfg = BotMovementManager.cfg;
         if (entry.downJumpGracePeriodMS > 0L) {
             entry.downJumpGracePeriodMS = Math.max(0L, entry.downJumpGracePeriodMS - cfg.TICK_MS);
         }
@@ -172,7 +228,7 @@ class BotMovementManager {
     // -------------------------------------------------------------------------
 
     static void tickGrounded(BotEntry entry, Point targetPos) {
-        BotManager.Config cfg = BotManager.cfg;
+        Config cfg = BotMovementManager.cfg;
         Character bot = entry.bot;
         Point botPos  = bot.getPosition();
         int dx = targetPos.x - botPos.x;
@@ -459,7 +515,7 @@ class BotMovementManager {
     }
 
     static float calculateMaxJumpHeight() {
-        BotManager.Config cfg = BotManager.cfg;
+        Config cfg = BotMovementManager.cfg;
         return cfg.JUMP_FORCE * cfg.JUMP_FORCE / (2 * cfg.GRAVITY);
     }
 
@@ -472,7 +528,7 @@ class BotMovementManager {
      * only starts moving once distance exceeds FOLLOW_DIST, stops at STOP_DIST.
      */
     static int calcStepX(BotEntry entry, int botX, int targetX) {
-        BotManager.Config cfg = BotManager.cfg;
+        Config cfg = BotMovementManager.cfg;
         int dx   = targetX - botX;
         int absDx = Math.abs(dx);
 
@@ -492,7 +548,7 @@ class BotMovementManager {
      * the acceptable slope range (i.e. the path is walkable, not a cliff/wall).
      */
     static boolean isPathWalkable(Character bot, Point botPos, int stepX) {
-        BotManager.Config cfg = BotManager.cfg;
+        Config cfg = BotMovementManager.cfg;
         Point next = bot.getMap().getPointBelow(new Point(botPos.x + stepX, botPos.y - cfg.MAX_SLOPE_UP));
         if (next == null) return false;
         int dy = next.y - botPos.y;
@@ -501,7 +557,7 @@ class BotMovementManager {
     }
 
     static void initiateJump(BotEntry entry, Character bot, int dx) {
-        BotManager.Config cfg = BotManager.cfg;
+        Config cfg = BotMovementManager.cfg;
         entry.velY        = -cfg.JUMP_FORCE;
         entry.inAir       = true;
         entry.seekingRope = false;
@@ -519,7 +575,7 @@ class BotMovementManager {
     }
 
     static void initiateRopeJump(BotEntry entry, Character bot, int dx) {
-        BotManager.Config cfg = BotManager.cfg;
+        Config cfg = BotMovementManager.cfg;
         entry.velY        = -cfg.JUMP_FORCE;
         entry.inAir       = true;
         entry.seekingRope = true;
@@ -536,7 +592,7 @@ class BotMovementManager {
      * exact Y — this allows multi-rope scenarios where the bot chains several ropes.
      */
     static Rope findNearbyRope(Character bot, Point botPos) {
-        BotManager.Config cfg = BotManager.cfg;
+        Config cfg = BotMovementManager.cfg;
         Rope best     = null;
         int  bestDist = cfg.ROPE_SEEK_X + 1;
         // Max upward reach: v0²/(2g) — how high the bot can jump to catch the rope bottom
@@ -554,7 +610,7 @@ class BotMovementManager {
 
     /** Finds the nearest rope whose top is above the bot, within WAYPOINT_SEEK_X radius. */
     static Rope findWaypointRope(Character bot, Point botPos) {
-        BotManager.Config cfg = BotManager.cfg;
+        Config cfg = BotMovementManager.cfg;
         Rope best    = null;
         int  bestDist = cfg.WAYPOINT_SEEK_X + 1;
         for (Rope r : bot.getMap().getRopes()) {
@@ -576,7 +632,7 @@ class BotMovementManager {
      * so platforms are never missed due to arc position quantisation.
      */
     static boolean arcCheckJump(Character bot, Point from, int stepX, int targetX, int targetY) {
-        BotManager.Config cfg = BotManager.cfg;
+        Config cfg = BotMovementManager.cfg;
         float vy = -cfg.JUMP_FORCE;
         int x = from.x, y = from.y;
         for (int t = 0; t < 40; t++) {
@@ -610,7 +666,7 @@ class BotMovementManager {
      *   numCmds(1) cmd(1) x(2) y(2) xv(2) yv(2) fh(2) stance(1) duration(2)
      */
     static void broadcastMovement(Character bot, int velX, int velY) {
-        BotManager.Config cfg = BotManager.cfg;
+        Config cfg = BotMovementManager.cfg;
         byte[] d = new byte[15];
         d[0] = 1; // numCmds
         // d[1] = 0 = AbsoluteLifeMovement cmd (already 0)
@@ -624,7 +680,7 @@ class BotMovementManager {
         d[12] = (byte) bot.getStance();
         d[13] = (byte) (cfg.TICK_MS & 0xFF); d[14] = (byte) (cfg.TICK_MS >> 8);
         InPacket ip  = new ByteBufInPacket(Unpooled.wrappedBuffer(d));
-        Packet   pkt = PacketCreator.movePlayer(bot.getId(), ip, d.length);
+        Packet pkt = PacketCreator.movePlayer(bot.getId(), ip, d.length);
         bot.getMap().broadcastMessage(bot, pkt, false);
     }
 

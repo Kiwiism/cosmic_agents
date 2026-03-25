@@ -17,6 +17,31 @@ import java.util.concurrent.ThreadLocalRandom;
 
 class BotCombatManager {
 
+    static class Config {
+        // Physics (combat use only)
+        public float KNOCKBACK_RISE = 18f;
+
+        // Attack range
+        public int   ATTACK_RANGE_X  = 80;
+        public int   ATTACK_RANGE_Y  = 50;
+        public int   ATTACK_DOWN_MAX = 20;
+        public int   ATTACK_JUMP_Y   = 130;
+        public int   ATTACK_COOLDOWN = 10;
+
+        // Grind / AoE
+        public int   GRIND_SEEK_RANGE  = 800;
+        public int   AOE_MOB_THRESHOLD = 2;
+        public long  AOE_RANGE_SQ      = 90000L;
+
+        // Mob damage
+        public int   MOB_TOUCH_HALF_W = 40;
+        public int   MOB_TOUCH_HALF_H = 30;
+        public int   MOB_HIT_COOLDOWN = 15;
+        public long  BOT_DEAD_MS      = 10_000L;
+    }
+
+    static Config cfg = new Config();
+
     private static final List<String> DEATH_REPLIES = List.of(
             "oops im dead", "gg", "rip me", "oww", "i died lol",
             "welp", "ouchh", "nooo", "ok i died", "i'll be right back");
@@ -29,12 +54,12 @@ class BotCombatManager {
         if (bot.getHp() <= 0) return;
 
         Point botPos = bot.getPosition();
-        BotManager.Config cfg = BotManager.cfg;
+        Config cc = BotCombatManager.cfg;
         for (Monster mob : bot.getMap().getAllMonsters()) {
             if (!mob.isAlive()) continue;
             Point mp = mob.getPosition();
-            if (Math.abs(botPos.x - mp.x) <= cfg.MOB_TOUCH_HALF_W
-                    && Math.abs(botPos.y - mp.y) <= cfg.MOB_TOUCH_HALF_H) {
+            if (Math.abs(botPos.x - mp.x) <= cc.MOB_TOUCH_HALF_W
+                    && Math.abs(botPos.y - mp.y) <= cc.MOB_TOUCH_HALF_H) {
                 applyMobHit(entry, bot, mob);
                 return;
             }
@@ -46,7 +71,8 @@ class BotCombatManager {
      * Damage = PADamage ± 15% (v83 mob attack approximation; no server-side WDEF available).
      */
     static void applyMobHit(BotEntry entry, Character bot, Monster mob) {
-        BotManager.Config cfg = BotManager.cfg;
+        Config cc = BotCombatManager.cfg;
+        BotMovementManager.Config mc = BotMovementManager.cfg;
         int pa  = mob.getPADamage();
         int max = Math.max(1, pa * 115 / 100);
         int min = Math.max(1, pa *  85 / 100);
@@ -65,19 +91,19 @@ class BotCombatManager {
         int   kbX = bp.x + (dir == 0 ? 30 : -30);
         bot.setPosition(new Point(kbX, bp.y));
         BotMovementManager.resetEntryState(entry);
-        entry.velY    = -cfg.KNOCKBACK_RISE;
-        entry.airVelX = (dir == 0 ? 1 : -1) * cfg.STEP;
-        int velXBcast = entry.airVelX * (1000 / cfg.TICK_MS);
-        int velYBcast = (int) (-entry.velY * (1000f / cfg.TICK_MS));
+        entry.velY    = -cc.KNOCKBACK_RISE;
+        entry.airVelX = (dir == 0 ? 1 : -1) * mc.STEP;
+        int velXBcast = entry.airVelX * (1000 / mc.TICK_MS);
+        int velYBcast = (int) (-entry.velY * (1000f / mc.TICK_MS));
         BotMovementManager.broadcastMovement(bot, velXBcast, velYBcast);
 
-        entry.mobHitCooldown = cfg.MOB_HIT_COOLDOWN;
+        entry.mobHitCooldown = cc.MOB_HIT_COOLDOWN;
 
         if (bot.getHp() <= 0) {
-            bot.setStance(cfg.DEAD_STANCE);
+            bot.setStance(mc.DEAD_STANCE);
             BotMovementManager.broadcastMovement(bot, 0, 0);
             BotManager.getInstance().botSay(bot, BotManager.randomReply(DEATH_REPLIES));
-            entry.deadUntil = System.currentTimeMillis() + cfg.BOT_DEAD_MS;
+            entry.deadUntil = System.currentTimeMillis() + cc.BOT_DEAD_MS;
             BotMovementManager.resetEntryState(entry);
         }
     }
@@ -162,7 +188,7 @@ class BotCombatManager {
     /** Returns a random monster from the nearest 3 within seek range, so multiple bots spread across targets. */
     static Monster findGrindTarget(Character bot) {
         Point botPos = bot.getPosition();
-        double rangeSq = (double) BotManager.cfg.GRIND_SEEK_RANGE * BotManager.cfg.GRIND_SEEK_RANGE;
+        double rangeSq = (double) BotCombatManager.cfg.GRIND_SEEK_RANGE * BotCombatManager.cfg.GRIND_SEEK_RANGE;
         List<Monster> candidates = new ArrayList<>();
         for (Monster m : bot.getMap().getAllMonsters()) {
             if (m.isAlive() && m.getPosition().distanceSq(botPos) <= rangeSq) candidates.add(m);
@@ -190,12 +216,12 @@ class BotCombatManager {
         if (entry.aoeSkillId != 0 && !bot.skillIsCooling(entry.aoeSkillId)) {
             List<Monster> nearby = new ArrayList<>();
             for (Monster m : bot.getMap().getAllMonsters()) {
-                if (m.isAlive() && distSq(m.getPosition(), target.getPosition()) <= BotManager.cfg.AOE_RANGE_SQ) {
+                if (m.isAlive() && distSq(m.getPosition(), target.getPosition()) <= BotCombatManager.cfg.AOE_RANGE_SQ) {
                     nearby.add(m);
                     if (nearby.size() >= entry.aoeSkillMobs) break;
                 }
             }
-            if (nearby.size() >= BotManager.cfg.AOE_MOB_THRESHOLD) {
+            if (nearby.size() >= BotCombatManager.cfg.AOE_MOB_THRESHOLD) {
                 chosenSkill = entry.aoeSkillId;
                 chosenLevel = bot.getSkillLevel(chosenSkill);
                 numDmg      = Math.max(1, SkillFactory.getSkill(chosenSkill).getEffect(chosenLevel).getAttackCount());
@@ -238,7 +264,7 @@ class BotCombatManager {
         }
 
         CloseRangeDamageHandler.applyCloseRangeEffects(attack, bot, bot.getClient());
-        entry.attackCooldown = BotManager.cfg.ATTACK_COOLDOWN;
+        entry.attackCooldown = BotCombatManager.cfg.ATTACK_COOLDOWN;
     }
 
     private static AbstractDealDamageHandler.AttackTarget makeTarget(int hits, int minDmg, int maxDmg) {
