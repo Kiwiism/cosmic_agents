@@ -94,6 +94,13 @@ class BotChatManager {
             + "|\\bhow\\s+many\\s+scrolls?\\b"
             + "|\\bscrolls?\\s+on\\s+(you|u|ya)\\b",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern POTIONS_PATTERN = Pattern.compile(
+            INFO_PFX + "(pots?|potions?|hp\\s+pots?|mp\\s+pots?|supplies)\\b"
+            + "|\\b(any|do\\s+(you|u)\\s+have(\\s+any)?|got(\\s+any)?|how\\s+many)"
+            +   "\\s+(pots?|potions?|hp\\s+pots?|mp\\s+pots?)\\b"
+            + "|\\b(pots?|potions?)\\s+left\\b"
+            + "|\\bur\\s+(pots?|potions?|supplies)\\b",
+            Pattern.CASE_INSENSITIVE);
 
     private static final Pattern AP_PURE_STR_PATTERN = Pattern.compile(
             "\\bpure\\s+str\\b", Pattern.CASE_INSENSITIVE);
@@ -248,6 +255,8 @@ class BotChatManager {
             TimerManager.getInstance().schedule(() -> reportInventory(entry, entry.bot), 1000);
         if (SCROLLS_PATTERN.matcher(message).find())
             TimerManager.getInstance().schedule(() -> reportScrolls(entry, entry.bot), 1000);
+        if (POTIONS_PATTERN.matcher(message).find())
+            TimerManager.getInstance().schedule(() -> reportPotions(entry, entry.bot), 1000);
 
         // Job advancement — check if message contains a valid job selection
         if (JOB_SELECT_PATTERN.matcher(message).find()) {
@@ -359,6 +368,28 @@ class BotChatManager {
         queueBotSay(entry, count > 0
                 ? "I have " + count + " scroll" + (count != 1 ? "s" : "") + " on me"
                 : "no scrolls on me");
+    }
+
+    private static void reportPotions(BotEntry entry, Character bot) {
+        int hp = 0, mp = 0;
+        for (Item item : bot.getInventory(InventoryType.USE).list()) {
+            int id = item.getItemId();
+            int qty = item.getQuantity();
+            if (id >= 2000000 && id < 2001000) hp += qty;      // HP potions
+            else if (id >= 2001000 && id < 2002000) mp += qty; // MP potions
+        }
+        String msg;
+        if (hp == 0 && mp == 0) {
+            msg = "no pots on me rn";
+        } else if (mp == 0) {
+            msg = "I have " + hp + " hp pot" + (hp != 1 ? "s" : "") + ", no mp pots";
+        } else if (hp == 0) {
+            msg = "no hp pots, " + mp + " mp pot" + (mp != 1 ? "s" : "");
+        } else {
+            msg = "I have " + hp + " hp pot" + (hp != 1 ? "s" : "")
+                + " and " + mp + " mp pot" + (mp != 1 ? "s" : "");
+        }
+        queueBotSay(entry, msg);
     }
 
     /** Maps a chat keyword to the correct next Job given bot's current job and level. Returns null if not valid. */
