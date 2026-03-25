@@ -9,6 +9,7 @@ import server.TimerManager;
 import java.awt.*;
 
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -123,22 +124,26 @@ class BotChatManager {
             "\\b(trade|trade\\s*me|send|give|transfer|give\\s*me)\\b",
             Pattern.CASE_INSENSITIVE);
 
+    // Shared verb prefix for all drop/give/trade category commands
+    private static final String DROP_VERB =
+            "(?:drop|toss|give(?:\\s+(?:me|us))?|trade(?:\\s+(?:me|us))?|pass(?:\\s+me)?)";
+
     // Drop category commands
     private static final Pattern DROP_SCROLLS_PATTERN = Pattern.compile(
-            "\\b(?:drop|toss|give(?:\\s+(?:me|us))?)\\s+(?:(?:your|ur|my|all)\\s+)?scrolls?\\b",
+            "\\b" + DROP_VERB + "\\s+(?:(?:your|ur|my|all)\\s+)?scrolls?\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern DROP_POTS_PATTERN = Pattern.compile(
-            "\\b(?:drop|toss|give(?:\\s+(?:me|us))?)\\s+(?:(?:your|ur|my|all)\\s+)?(?:pots?|potions?|supplies)\\b",
+            "\\b" + DROP_VERB + "\\s+(?:(?:your|ur|my|all)\\s+)?(?:pots?|potions?|supplies)\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern DROP_EQUIPS_PATTERN = Pattern.compile(
-            "\\b(?:drop|toss|give(?:\\s+(?:me|us))?|pass(?:\\s+me)?)\\s+(?:(?:your|ur|my|all)\\s+)?(?:equips?|equipment|gear)\\b",
+            "\\b" + DROP_VERB + "\\s+(?:(?:your|ur|my|all)\\s+)?(?:equips?|equipment|gear)\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern DROP_ETC_PATTERN = Pattern.compile(
-            "\\b(?:drop|toss|throw)\\s+(?:(?:your|ur|my|all)\\s+)?(?:etc|junk|misc(?:ellaneous)?)\\b",
+            "\\b" + DROP_VERB + "\\s+(?:(?:your|ur|my|all)\\s+)?(?:etc|junk|misc(?:ellaneous)?)\\b",
             Pattern.CASE_INSENSITIVE);
     // Generic drop by item name — captured group 1 is the name; processed only if category patterns don't match
     private static final Pattern DROP_ITEM_PATTERN = Pattern.compile(
-            "\\bdrop\\s+(?:(?:your|ur|my)\\s+)?([\\w][\\w '\\-]{1,39})$",
+            "\\b" + DROP_VERB + "\\s+(?:(?:your|ur|my)\\s+)?([\\w][\\w '\\-]{1,39})$",
             Pattern.CASE_INSENSITIVE);
     // Inventory slot query
     private static final Pattern INV_SLOTS_PATTERN = Pattern.compile(
@@ -341,9 +346,8 @@ class BotChatManager {
                 final String cat = dropCategory;
                 entry.pendingAction       = "item_choice";
                 entry.pendingDropCategory = cat;
-                TimerManager.getInstance().schedule(() ->
-                        BotManager.getInstance().botSay(entry.bot,
-                                "drop to ground or trade to you? say 'drop', 'trade', or 'cancel'"), 600);
+                TimerManager.getInstance().schedule(
+                        () -> BotManager.getInstance().botSay(entry.bot, dropOrTradePrompt(cat)), 600);
             }
         }
 
@@ -499,6 +503,26 @@ class BotChatManager {
                 + " and " + mp + " mp pot" + (mp != 1 ? "s" : "");
         }
         queueBotSay(entry, msg);
+    }
+
+    private static final String[] DROP_OR_TRADE_PROMPTS = {
+        "ok, giving you my %s - drop or trade?",
+        "sure! %s - drop or trade?",
+        "got it, %s - drop or trade?",
+        "just to confirm, drop or trade my %s?",
+        "dropping or trading my %s?",
+    };
+
+    private static String dropOrTradePrompt(String category) {
+        String what = switch (category) {
+            case "scrolls" -> "scrolls";
+            case "pots"    -> "pots";
+            case "equips"  -> "equips";
+            case "etc"     -> "etc items";
+            default        -> category.startsWith("name:") ? "'" + category.substring(5) + "'" : "those items";
+        };
+        String fmt = DROP_OR_TRADE_PROMPTS[ThreadLocalRandom.current().nextInt(DROP_OR_TRADE_PROMPTS.length)];
+        return String.format(fmt, what);
     }
 
     /** Maps a chat keyword to the correct next Job given bot's current job and level. Returns null if not valid. */
