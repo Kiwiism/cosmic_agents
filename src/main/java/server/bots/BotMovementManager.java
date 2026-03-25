@@ -401,8 +401,9 @@ class BotMovementManager {
                         return;
                     }
                 }
-                // No reachable platform — try setting a waypoint to a rope outside normal range
-                if (farAbove && entry.waypointRope == null) {
+                // No reachable platform — try setting a waypoint to a rope outside normal range.
+                // Only trigger when target is significantly above (WAYPOINT_MIN_DY), not just farAbove.
+                if (farAbove && -dy >= cfg.WAYPOINT_MIN_DY && entry.waypointRope == null && entry.jumpCooldown == 0) {
                     Rope wp = findWaypointRope(bot, botPos);
                     if (wp != null) {
                         entry.waypointRope  = wp;
@@ -585,13 +586,11 @@ class BotMovementManager {
             y += (int) vy;
             if (vy > 0) { // descending — use prevY as search origin (mirrors tickAirborne)
                 Point floor = bot.getMap().getPointBelow(new Point(x, prevY));
-                if (floor != null && floor.y <= y) {
-                    if (stepX != 0) {
-                        // Reject if the arc overshoots the target — bot would land past owner
-                        boolean overshoot = (stepX > 0 && x > targetX) || (stepX < 0 && x < targetX);
-                        return !overshoot;
-                    }
-                    return floor.y < from.y - cfg.JUMP_Y_THRESH;
+                if (floor != null && floor.y <= y && floor.y < from.y) {
+                    // Any upward Y gain is useful. Reject only if the arc overshoots target X.
+                    boolean overshoot = stepX != 0
+                            && ((stepX > 0 && x > targetX) || (stepX < 0 && x < targetX));
+                    return !overshoot;
                 }
             }
         }

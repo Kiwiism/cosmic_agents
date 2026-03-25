@@ -93,8 +93,9 @@ public class BotManager {
         public int   STUCK_WALKBACK_LIMIT = 200; // px; max backward travel allowed during raw-chase
 
         // Waypoint (1-hop pathfinding to a rope outside normal detection range)
-        public int   WAYPOINT_SEEK_X  = 1500;  // expanded rope search radius when setting a waypoint
-        public int   WAYPOINT_TIMEOUT = 80;   // ticks before an unreached waypoint expires (~8s)
+        public int   WAYPOINT_SEEK_X  = 1000;  // expanded rope search radius when setting a waypoint
+        public int   WAYPOINT_TIMEOUT = 80;    // ticks before an unreached waypoint expires (~8s)
+        public int   WAYPOINT_MIN_DY  = 400;   // px; min height above bot before considering a waypoint rope
 
         // Grind mode
         public int   ATTACK_RANGE_X     = 150;   // px; horizontal attack reach
