@@ -33,8 +33,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class BotManager {
     // TODO: list from most important to least important
@@ -98,8 +101,8 @@ public class BotManager {
         public int   WAYPOINT_MIN_DY  = 400;   // px; min height above bot before considering a waypoint rope
 
         // Grind mode
-        public int   ATTACK_RANGE_X     = 150;   // px; horizontal attack reach
-        public int   ATTACK_RANGE_Y     = 60;    // px; vertical reach upward (tight — same level to slightly above)
+        public int   ATTACK_RANGE_X     = 80;   // px; horizontal attack reach
+        public int   ATTACK_RANGE_Y     = 50;    // px; vertical reach upward (tight — same level to slightly above)
         public int   ATTACK_DOWN_MAX    = 20;    // px; max downward tolerance (no attacking far below)
         public int   ATTACK_JUMP_Y      = 130;   // px; jump toward target if it is this far above and in X range
         public int   ATTACK_COOLDOWN    = 10;    // ticks between attacks (~800ms at 100ms/tick)
@@ -109,8 +112,8 @@ public class BotManager {
         public long  AOE_RANGE_SQ       = 90000L; // px² AoE sweep radius (~300px)
 
         // Mob damage taken
-        public int   MOB_TOUCH_HALF_W = 60;    // px; approximate half-width of mob bounding box
-        public int   MOB_TOUCH_HALF_H = 80;    // px; approximate half-height of mob bounding box
+        public int   MOB_TOUCH_HALF_W = 40;    // px; approximate half-width of mob bounding box
+        public int   MOB_TOUCH_HALF_H = 30;    // px; approximate half-height of mob bounding box
         public int   MOB_HIT_COOLDOWN = 15;    // ticks between mob hits (~1.5s)
         public long  BOT_DEAD_MS      = 10_000L; // ms bot stays dead before respawning
 
@@ -131,7 +134,12 @@ public class BotManager {
 
     public static BotManager getInstance() { return instance; }
 
-    private final Map<Integer, BotEntry> bots = new ConcurrentHashMap<>();
+    // ownerCharId → list of owned bot entries (1:N)
+    private final Map<Integer, List<BotEntry>> bots = new ConcurrentHashMap<>();
+
+    // Dismiss command: "dismiss <name>" or "remove <name>"
+    private static final Pattern DISMISS_PATTERN = Pattern.compile(
+            "\\b(dismiss|remove)\\s+(\\S+)\\b", Pattern.CASE_INSENSITIVE);
 
     private static final List<String> DEATH_REPLIES = List.of(
             "oops im dead", "gg", "rip me", "oww", "i died lol",
@@ -146,50 +154,113 @@ public class BotManager {
     // -------------------------------------------------------------------------
 
     public void registerBot(int ownerCharId, Character owner, Character bot) {
-        BotEntry old = bots.remove(ownerCharId);
-        if (old != null) old.task.cancel(false);
-
+        List<BotEntry> entries = bots.computeIfAbsent(ownerCharId, k -> new CopyOnWriteArrayList<>());
+        // Replace if same bot character is already registered (e.g. relog)
+        entries.removeIf(e -> {
+            if (e.bot.getId() == bot.getId()) { e.task.cancel(false); return true; }
+            return false;
+        });
+        int botCharId = bot.getId();
         ScheduledFuture<?> task = TimerManager.getInstance().register(
-                () -> tick(ownerCharId, bot), cfg.TICK_MS);
+                () -> tick(ownerCharId, botCharId), cfg.TICK_MS);
         BotEntry entry = new BotEntry(bot, owner, task);
-        bots.put(ownerCharId, entry);
+        entries.add(entry);
         TimerManager.getInstance().schedule(() -> BotChatManager.checkBotStatus(entry, bot), 2000);
     }
 
     public void removeBot(int ownerCharId) {
-        BotEntry entry = bots.remove(ownerCharId);
-        if (entry != null) entry.task.cancel(false);
+        List<BotEntry> entries = bots.remove(ownerCharId);
+        if (entries != null) entries.forEach(e -> e.task.cancel(false));
     }
 
-    /** Cancel and remove a bot by the bot character's own ID (used during shutdown). */
+    /** Cancel and remove a bot by the bot character's own ID (used during shutdown/disconnect). */
     public void removeBotByCharId(int botCharId) {
-        bots.entrySet().removeIf(e -> {
-            if (e.getValue().bot.getId() == botCharId) {
-                e.getValue().task.cancel(false);
-                return true;
-            }
-            return false;
-        });
+        for (List<BotEntry> entries : bots.values()) {
+            entries.removeIf(e -> {
+                if (e.bot.getId() == botCharId) { e.task.cancel(false); return true; }
+                return false;
+            });
+        }
+    }
+
+    /** Dismiss a specific bot by name, saving and disconnecting it. Returns false if not found. */
+    public boolean dismissBot(int ownerCharId, String botName) {
+        List<BotEntry> entries = bots.get(ownerCharId);
+        if (entries == null) return false;
+        BotEntry found = null;
+        for (BotEntry e : entries) {
+            if (e.bot.getName().equalsIgnoreCase(botName)) { found = e; break; }
+        }
+        if (found == null) return false;
+        BotEntry entry = found;
+        entries.remove(entry);
+        entry.task.cancel(false);
+        TimerManager.getInstance().schedule(() -> {
+            botSay(entry.bot, randomReply(List.of("cya!", "ok bye!!", "see ya~", "later!")));
+            TimerManager.getInstance().schedule(() -> {
+                entry.bot.saveCharToDB(true);
+                entry.bot.getClient().disconnect(false, false);
+            }, 2000);
+        }, 500);
+        return true;
     }
 
     public Character getBot(int ownerCharId) {
-        BotEntry entry = bots.get(ownerCharId);
-        return entry != null ? entry.bot : null;
+        List<BotEntry> entries = bots.get(ownerCharId);
+        return (entries != null && !entries.isEmpty()) ? entries.get(0).bot : null;
     }
 
     public void handleChat(Character owner, String message) {
-        BotEntry entry = bots.get(owner.getId());
-        if (entry == null) return;
-        BotChatManager.handleChat(entry, message);
+        List<BotEntry> entries = bots.get(owner.getId());
+        if (entries == null || entries.isEmpty()) return;
+
+        // Dismiss command: "dismiss Jason" / "remove Jason"
+        Matcher dm = DISMISS_PATTERN.matcher(message);
+        if (dm.find()) {
+            String name = dm.group(2);
+            if (dismissBot(owner.getId(), name)) {
+                owner.yellowMessage("Bot '" + name + "' dismissed.");
+            } else {
+                owner.yellowMessage("No bot named '" + name + "' in your group.");
+            }
+            return;
+        }
+
+        // Name-prefix routing: "Jason pots?" → only Jason responds
+        String lowerMsg = message.toLowerCase();
+        for (BotEntry entry : entries) {
+            String name = entry.bot.getName().toLowerCase();
+            if (lowerMsg.startsWith(name) && lowerMsg.length() > name.length()) {
+                char next = lowerMsg.charAt(name.length());
+                if (next == ' ' || next == ',' || next == '!' || next == '?') {
+                    String rest = message.substring(name.length()).replaceFirst("^[,!?\\s]+", "").trim();
+                    if (!rest.isEmpty()) {
+                        BotChatManager.handleChat(entry, rest);
+                        return;
+                    }
+                }
+            }
+        }
+
+        // No name prefix — broadcast to all bots
+        for (BotEntry entry : entries) {
+            BotChatManager.handleChat(entry, message);
+        }
     }
 
     // -------------------------------------------------------------------------
     // Main tick
     // -------------------------------------------------------------------------
 
-    private void tick(int ownerCharId, Character bot) {
-        BotEntry entry = bots.get(ownerCharId);
+    private void tick(int ownerCharId, int botCharId) {
+        List<BotEntry> entries = bots.get(ownerCharId);
+        if (entries == null) return;
+        BotEntry entry = null;
+        for (BotEntry e : entries) {
+            if (e.bot.getId() == botCharId) { entry = e; break; }
+        }
         if (entry == null) return;
+        Character bot = entry.bot;
 
         Character owner = entry.owner;
         if (owner == null || owner.getId() != ownerCharId || !owner.isLoggedinWorld()) {
