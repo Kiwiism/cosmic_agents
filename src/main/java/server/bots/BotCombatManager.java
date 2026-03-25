@@ -1,5 +1,6 @@
 package server.bots;
 
+import client.BuffStat;
 import client.Character;
 import client.Skill;
 import client.SkillFactory;
@@ -501,9 +502,10 @@ class BotCombatManager {
             int variantOffset = ThreadLocalRandom.current().nextInt(variantCount);
             int display = baseDirection + variantOffset;
             int direction = facingLeft ? display + 11 : display;
+            int effectiveAttackSpeed = resolveEffectiveAttackSpeed(profile.getAttackSpeed(), null);
             return new BasicAttackData(hitBox, display, direction, direction,
-                    normalizeAttackSpeed(profile.getAttackSpeed()),
-                    toCooldownTicks(profile.getAttackDelayMillis()));
+                    effectiveAttackSpeed,
+                    toCooldownTicks(adjustAttackDelayMillis(profile.getAttackDelayMillis(), profile.getAttackSpeed(), effectiveAttackSpeed)));
         }
 
         private static BasicAttackData fallback(boolean facingLeft) {
@@ -559,7 +561,7 @@ class BotCombatManager {
             return 4;
         }
 
-        return normalizeAttackSpeed(attackProfile.getAttackSpeed());
+        return resolveEffectiveAttackSpeed(attackProfile.getAttackSpeed(), bot);
     }
 
     private static int normalizeAttackSpeed(int attackSpeed) {
@@ -567,6 +569,38 @@ class BotCombatManager {
             return 4;
         }
         return attackSpeed;
+    }
+
+    private static int resolveEffectiveAttackSpeed(int baseAttackSpeed, Character bot) {
+        int normalizedBaseSpeed = normalizeAttackSpeed(baseAttackSpeed);
+        if (bot == null) {
+            return normalizedBaseSpeed;
+        }
+
+        Integer booster = bot.getBuffedValue(BuffStat.BOOSTER);
+        if (booster == null) {
+            return normalizedBaseSpeed;
+        }
+
+        return Math.max(2, normalizedBaseSpeed + booster);
+    }
+
+    private static int adjustAttackDelayMillis(int baseDelayMillis, int baseAttackSpeed, int effectiveAttackSpeed) {
+        if (baseDelayMillis <= 0) {
+            return 0;
+        }
+
+        float baseSpeedFactor = toAttackSpeedFactor(normalizeAttackSpeed(baseAttackSpeed));
+        float effectiveSpeedFactor = toAttackSpeedFactor(effectiveAttackSpeed);
+        if (baseSpeedFactor <= 0f || effectiveSpeedFactor <= 0f) {
+            return baseDelayMillis;
+        }
+
+        return Math.max(1, Math.round(baseDelayMillis * (baseSpeedFactor / effectiveSpeedFactor)));
+    }
+
+    private static float toAttackSpeedFactor(int attackSpeed) {
+        return 1.7f - (attackSpeed / 10f);
     }
 
     private static AbstractDealDamageHandler.AttackTarget makeTarget(int hits, int minDmg, int maxDmg) {
