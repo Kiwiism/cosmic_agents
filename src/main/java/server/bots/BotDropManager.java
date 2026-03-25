@@ -27,7 +27,7 @@ class BotDropManager {
             startTradeTransfer(category, entry, bot);
         } else {
             dropCategory(category, entry, bot);
-            entry.lootInhibitTicks = 200; // ~20s: prevents bot re-looting its own floor drops
+            entry.lootInhibitTicks = BotMovementManager.scaleLegacyTicks(200); // ~20s: prevents bot re-looting its own floor drops
         }
     }
 

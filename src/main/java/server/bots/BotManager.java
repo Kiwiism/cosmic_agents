@@ -42,14 +42,16 @@ public class BotManager {
      * be hotswapped in debug mode without the JVM inlining the values.
      */
     public static class Config {
+        public int   AI_TICK_MS       = 100;   // ms between heavier bot decision passes
+
         // Passive loot
         public int   LOOT_RADIUS      = 100;   // px; pickup items within this box radius
-        public int   INV_FULL_WARN_CD = 100;   // ticks between "inventory full" complaints
+        public int   INV_FULL_WARN_CD = 100;   // legacy 100ms ticks between "inventory full" complaints
 
         // Potion management
         public int   POT_LOW_WARN     = 100;   // warn on grind start below this count
         public int   POT_STOP         = 10;    // stop grinding below this HP pot count
-        public int   POT_CHECK_TICKS  = 20;    // ticks between potion recount/rebind
+        public int   POT_CHECK_TICKS  = 20;    // legacy 100ms ticks between potion recount/rebind
         public float AUTOPOT_HP_THRESH = 0.7f; // use HP pot when HP falls below this ratio
         public float AUTOPOT_MP_THRESH = 0.5f; // use MP pot when MP falls below this ratio
     }
@@ -259,6 +261,7 @@ public class BotManager {
         if (entry == null) return;
         if (entry.skipTicks > 0) { entry.skipTicks--; return; }
         Character bot = entry.bot;
+        boolean runAiTick = consumeAiTick(entry);
 
         Character owner = entry.owner;
         if (owner == null || owner.getId() != ownerCharId || !owner.isLoggedinWorld()) {
@@ -298,8 +301,10 @@ public class BotManager {
         BotBuildManager.checkLevelUp(entry, bot);
         BotChatManager.tickAfkCheck(entry, owner);
         BotDropManager.tickTrade(entry, bot);
-        BotCombatManager.rebuildSkillCacheIfNeeded(entry, bot);
-        BotCombatManager.tickBuffs(entry, bot);
+        if (runAiTick) {
+            BotCombatManager.rebuildSkillCacheIfNeeded(entry, bot);
+            BotCombatManager.tickBuffs(entry, bot);
+        }
 
         if (!entry.following && !entry.grinding) {
             if (entry.inAir) {
@@ -347,7 +352,7 @@ public class BotManager {
             Monster target = entry.grindTarget;
             if (target == null || !target.isAlive()
                     || target.getPosition().distanceSq(botPos) > seekRangeSq) {
-                target = BotCombatManager.findGrindTarget(bot);
+                target = runAiTick ? BotCombatManager.findGrindTarget(bot) : null;
             }
             if (target == null) {
                 if (entry.inAir) BotMovementManager.tickAirborne(entry, targetPos);
@@ -539,7 +544,7 @@ public class BotManager {
                 if (inv != null && inv.isFull()) {
                     if (entry.invFullWarnCooldown <= 0) {
                         botSay(bot, type.name().toLowerCase() + " inventory is full!");
-                        entry.invFullWarnCooldown = cfg.INV_FULL_WARN_CD;
+                        entry.invFullWarnCooldown = BotMovementManager.scaleLegacyTicks(cfg.INV_FULL_WARN_CD);
                     }
                     continue;
                 }
@@ -555,7 +560,7 @@ public class BotManager {
     /** Periodically rebinds autopot and stops grinding when HP pots are critically low. */
     private void tickPotionCheck(BotEntry entry, Character bot) {
         if (entry.potCheckTimer > 0) { entry.potCheckTimer--; return; }
-        entry.potCheckTimer = cfg.POT_CHECK_TICKS;
+        entry.potCheckTimer = BotMovementManager.scaleLegacyTicks(cfg.POT_CHECK_TICKS);
 
         setupAutopotForBot(bot);
 
@@ -574,5 +579,15 @@ public class BotManager {
 
     void botSay(Character bot, String text) {
         bot.getMap().broadcastMessage(PacketCreator.getChatText(bot.getId(), text, false, 0));
+    }
+
+    private boolean consumeAiTick(BotEntry entry) {
+        entry.aiTickAccumulatorMs += BotMovementManager.cfg.TICK_MS;
+        if (entry.aiTickAccumulatorMs < cfg.AI_TICK_MS) {
+            return false;
+        }
+
+        entry.aiTickAccumulatorMs -= cfg.AI_TICK_MS;
+        return true;
     }
 }

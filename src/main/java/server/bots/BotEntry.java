@@ -118,6 +118,7 @@ class BotEntry {
     final int followOffsetX = ThreadLocalRandom.current().nextInt(-100, 101);
     // Staggered tick start: skip first N ticks so bots don't all move in lockstep
     int skipTicks = ThreadLocalRandom.current().nextInt(0, 5);
+    int aiTickAccumulatorMs = 0;
 
     BotEntry(Character bot, Character owner, ScheduledFuture<?> task) {
         this.bot = bot;

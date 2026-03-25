@@ -15,10 +15,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 class BotMovementManager {
+    private static final int LEGACY_TICK_MS = 100;
 
     static class Config {
         // Tick
-        public int   TICK_MS      = 100;   // ms between ticks
+        public int   TICK_MS      = 50;   // ms between movement simulation ticks
 
         // Movement
         public int   STEP         = 13;    // px/tick walk step
@@ -66,6 +67,14 @@ class BotMovementManager {
     }
 
     static Config cfg = new Config();
+
+    static int scaleLegacyTicks(int legacyTickCount) {
+        if (legacyTickCount <= 0) {
+            return 0;
+        }
+
+        return Math.max(1, (legacyTickCount * LEGACY_TICK_MS + cfg.TICK_MS - 1) / cfg.TICK_MS);
+    }
 
     static void resetEntryState(BotEntry entry) {
         entry.inAir             = true;
@@ -152,8 +161,8 @@ class BotMovementManager {
         entry.velY            = -cfg.JUMP_FORCE_ROPE;
         entry.seekingRope     = false;
         entry.airVelX         = dx > 0 ? cfg.STEP : dx < 0 ? -cfg.STEP : 0;
-        entry.ropeGrabCooldown = cfg.JUMP_COOLDOWN + 2; // stay off rope long enough to clear it
-        entry.jumpCooldown    = cfg.JUMP_COOLDOWN;
+        entry.ropeGrabCooldown = scaleLegacyTicks(cfg.JUMP_COOLDOWN + 2); // stay off rope long enough to clear it
+        entry.jumpCooldown    = scaleLegacyTicks(cfg.JUMP_COOLDOWN);
         bot.setStance(dx >= 0 ? 6 : 7);
         int jumpVelY = (int) -cfg.JUMP_FORCE_ROPE;
         broadcastMovement(bot, dx >= 0 ? cfg.WALK_VEL : -cfg.WALK_VEL, jumpVelY);
@@ -247,12 +256,12 @@ class BotMovementManager {
         // Stuck detection — check every STUCK_CHECK_INTERVAL ticks whether we've moved enough
         if (entry.lastStuckCheckPos == null) entry.lastStuckCheckPos = botPos;
         entry.stuckCheckTimer++;
-        if (entry.stuckCheckTimer >= cfg.STUCK_CHECK_INTERVAL) {
+        if (entry.stuckCheckTimer >= scaleLegacyTicks(cfg.STUCK_CHECK_INTERVAL)) {
             int moved = Math.abs(botPos.x - entry.lastStuckCheckPos.x)
                     + Math.abs(botPos.y - entry.lastStuckCheckPos.y);
             // Only flag stuck if we haven't moved AND owner is still far away
             if (moved < cfg.STUCK_MIN_MOVE && Math.abs(dx) > cfg.FOLLOW_DIST) {
-                entry.rawChaseTicks = cfg.STUCK_CHASE_TICKS;
+                entry.rawChaseTicks = scaleLegacyTicks(cfg.STUCK_CHASE_TICKS);
             }
             entry.stuckCheckTimer   = 0;
             entry.lastStuckCheckPos = botPos;
@@ -278,7 +287,7 @@ class BotMovementManager {
                         bot.setStance(entry.climbRope.isLadder() ? 17 : 16);
                         broadcastMovement(bot, 0, 0);
                     } else {
-                        entry.jumpCooldown = cfg.JUMP_COOLDOWN;
+                        entry.jumpCooldown = scaleLegacyTicks(cfg.JUMP_COOLDOWN);
                         initiateRopeJump(entry, bot, wdx);
                     }
                     return;
@@ -306,7 +315,7 @@ class BotMovementManager {
             entry.inAir           = true;
             entry.velY            = -cfg.JUMP_FORCE_DOWNWARD; // slight upward force before gravity pulls through floor
             entry.airVelX         = 0;
-            entry.jumpCooldown    = cfg.JUMP_COOLDOWN;
+            entry.jumpCooldown    = scaleLegacyTicks(cfg.JUMP_COOLDOWN);
             bot.setPosition(new Point(botPos.x, botPos.y));
             bot.setStance(dx >= 0 ? 6 : 7);
             broadcastMovement(bot, 0, (int) entry.velY);
@@ -379,7 +388,7 @@ class BotMovementManager {
                         // No jumpable platform — commit to rope approach
                         int maxHTravel = cfg.STEP * (int) (2 * cfg.JUMP_FORCE / cfg.GRAVITY);
                         if (Math.abs(rdx) <= maxHTravel) {
-                            entry.jumpCooldown = cfg.JUMP_COOLDOWN;
+                            entry.jumpCooldown = scaleLegacyTicks(cfg.JUMP_COOLDOWN);
                             initiateRopeJump(entry, bot, rdx);
                             return;
                         }
@@ -443,7 +452,7 @@ class BotMovementManager {
                     }
                 }
                 if (winDir != Integer.MIN_VALUE) {
-                    entry.jumpCooldown = cfg.JUMP_COOLDOWN;
+                    entry.jumpCooldown = scaleLegacyTicks(cfg.JUMP_COOLDOWN);
                     initiateJump(entry, bot, winDir);
                     return;
                 }
@@ -452,7 +461,7 @@ class BotMovementManager {
                     int backStep = -arcStep;
                     if (Math.abs(dx) <= cfg.STUCK_WALKBACK_LIMIT
                             && arcCheckJump(bot, botPos, backStep, targetPos.x, targetPos.y)) {
-                        entry.jumpCooldown = cfg.JUMP_COOLDOWN;
+                        entry.jumpCooldown = scaleLegacyTicks(cfg.JUMP_COOLDOWN);
                         initiateJump(entry, bot, backStep);
                         return;
                     }
@@ -463,10 +472,12 @@ class BotMovementManager {
                     Rope wp = findWaypointRope(bot, botPos);
                     if (wp != null) {
                         entry.waypointRope  = wp;
-                        entry.waypointTimer = cfg.WAYPOINT_TIMEOUT;
+                        entry.waypointTimer = scaleLegacyTicks(cfg.WAYPOINT_TIMEOUT);
                     }
                 }
-                entry.jumpCooldown = entry.rawChaseTicks > 0 ? cfg.JUMP_COOLDOWN : cfg.JUMP_COOLDOWN * 3;
+                entry.jumpCooldown = entry.rawChaseTicks > 0
+                        ? scaleLegacyTicks(cfg.JUMP_COOLDOWN)
+                        : scaleLegacyTicks(cfg.JUMP_COOLDOWN * 3);
             }
         }
 

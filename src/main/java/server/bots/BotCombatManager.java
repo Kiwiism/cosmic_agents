@@ -143,7 +143,7 @@ class BotCombatManager {
         int velYBcast = (int) (-entry.velY * (1000f / mc.TICK_MS));
         BotMovementManager.broadcastMovement(bot, velXBcast, velYBcast);
 
-        entry.mobHitCooldown = cc.MOB_HIT_COOLDOWN;
+        entry.mobHitCooldown = BotMovementManager.scaleLegacyTicks(cc.MOB_HIT_COOLDOWN);
 
         if (bot.getHp() <= 0) {
             bot.setStance(mc.DEAD_STANCE);
