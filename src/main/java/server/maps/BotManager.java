@@ -1685,7 +1685,8 @@ public class BotManager {
     }
 
     private void reportInventory(BotEntry entry, Character bot) {
-        int count = bot.getInventory(InventoryType.EQUIP).size();
+        int slots = bot.getInventory(InventoryType.EQUIP).getSlotLimit();
+        int count = slots - bot.getInventory(InventoryType.EQUIP).getNumFreeSlot();
         queueBotSay(entry, "I have " + count + " item" + (count != 1 ? "s" : "") + " in my equip inventory");
     }
 
