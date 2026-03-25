@@ -41,10 +41,7 @@ import java.util.regex.Pattern;
 
 public class BotManager {
     // TODO: list from most important to least important
-    // TODO: rework autoAssignSp/getSpPriority/related, implement per level build order, should be backward compatible format(hasn't assigned in many levels), sp should have prompts if multiple options are available (see Hero.java)
-    // TODO: Option to ask bot for their current stats/damage range/current buid/inventory
     // TODO: Option to respec bot ap/sp
-    // TODO: Option to ask bot to change ap/sp build
     // TODO: Make bot auto scan/autoequip the "best" equipment they have + can equip in their inventory
     // TODO: Option to ask bot to drop their entire equip inventory/only scrolls/only potions/specific item/ etc, some useful options, remember to skip untradable/quest items
     // TODO: some kind of help command/question on available interactions available (can ask to drop, respec, change build, check stats, etc)
@@ -775,6 +772,7 @@ public class BotManager {
         Point botPos = bot.getPosition();
         for (MapItem drop : bot.getMap().getDroppedItems()) {
             if (!drop.canBePickedBy(bot)) continue;
+            if (System.currentTimeMillis() - drop.getDropTime() < 1000) continue; // wait 1s after spawn
             Point dp = drop.getPosition();
             if (Math.abs(dp.x - botPos.x) > cfg.LOOT_RADIUS
                     || Math.abs(dp.y - botPos.y) > cfg.LOOT_RADIUS) continue;
