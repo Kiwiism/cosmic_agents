@@ -3,6 +3,8 @@ package server.bots;
 import client.Character;
 import client.Skill;
 import client.SkillFactory;
+import client.inventory.InventoryType;
+import client.inventory.Item;
 import net.server.channel.handlers.AbstractDealDamageHandler;
 import net.server.channel.handlers.CloseRangeDamageHandler;
 import server.StatEffect;
@@ -46,7 +48,7 @@ class BotCombatManager {
         // Physics (combat use only)
         public float KNOCKBACK_RISE = 18f;
 
-        // Attack range
+        // Basic attack fallback when weapon data cannot produce a real normal-attack hit box.
         public int   ATTACK_RANGE_X  = 80;
         public int   ATTACK_RANGE_Y  = 50;
         public int   ATTACK_DOWN_MAX = 20;
@@ -230,7 +232,9 @@ class BotCombatManager {
         if (skillAttack != null) {
             return skillAttack;
         }
-        return new AttackPlan(0, 0, 1, null, List.of(target));
+
+        Rectangle basicAttackHitBox = calculateBasicAttackHitBox(bot, target);
+        return new AttackPlan(0, 0, 1, basicAttackHitBox, List.of(target));
     }
 
     static boolean isTargetInAttackRange(AttackPlan attackPlan, Character bot, Monster target) {
@@ -374,6 +378,22 @@ class BotCombatManager {
         return inHRange && inVRange;
     }
 
+    private static Rectangle calculateBasicAttackHitBox(Character bot, Monster primaryTarget) {
+        Item weapon = bot.getInventory(InventoryType.EQUIPPED).getItem((short) -11);
+        if (weapon == null) {
+            return null;
+        }
+
+        BotAttackDataProvider.NormalAttackProfile attackProfile =
+                BotAttackDataProvider.getInstance().getNormalAttackProfile(weapon.getItemId());
+        if (attackProfile == null || !attackProfile.hasBoundingBox()) {
+            return null;
+        }
+
+        boolean facingLeft = primaryTarget.getPosition().x < bot.getPosition().x;
+        return attackProfile.calculateBoundingBox(bot.getPosition(), facingLeft);
+    }
+
     private static AbstractDealDamageHandler.AttackTarget makeTarget(int hits, int minDmg, int maxDmg) {
         List<Integer> lines = new ArrayList<>(hits);
         for (int i = 0; i < hits; i++) {
@@ -384,4 +404,3 @@ class BotCombatManager {
         return new AbstractDealDamageHandler.AttackTarget((short) 305, lines);
     }
 }
-
