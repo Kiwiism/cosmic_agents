@@ -33,6 +33,8 @@ class BotMovementManager {
         public float JUMP_FORCE_DOWNWARD = 16f;
         public float JUMP_FORCE_ROPE     = 16f;
         public float MAX_FALL     = 50f;
+        public float GROUND_ACCEL = 4.5f;
+        public float GROUND_FRICTION = 3.0f;
 
         // Jump control
         public int   JUMP_Y_THRESH    = 30;
@@ -120,10 +122,46 @@ class BotMovementManager {
         return scaleDistanceForTick(cfg.JUMP_FORCE_ROPE);
     }
 
+    static float groundAccelPerTick() {
+        return scaleDistanceForTick(cfg.GROUND_ACCEL);
+    }
+
+    static float groundFrictionPerTick() {
+        return scaleDistanceForTick(cfg.GROUND_FRICTION);
+    }
+
+    static void stopGroundMotion(BotEntry entry) {
+        entry.groundVelX = 0f;
+        entry.groundXCarry = 0f;
+    }
+
+    static int updateGroundStep(BotEntry entry, int desiredDirection) {
+        float maxSpeed = walkStep();
+        float accel = groundAccelPerTick();
+        float friction = groundFrictionPerTick();
+
+        if (desiredDirection > 0) {
+            entry.groundVelX = Math.min(maxSpeed, entry.groundVelX + accel);
+        } else if (desiredDirection < 0) {
+            entry.groundVelX = Math.max(-maxSpeed, entry.groundVelX - accel);
+        } else if (entry.groundVelX > 0f) {
+            entry.groundVelX = Math.max(0f, entry.groundVelX - friction);
+        } else if (entry.groundVelX < 0f) {
+            entry.groundVelX = Math.min(0f, entry.groundVelX + friction);
+        }
+
+        entry.groundXCarry += entry.groundVelX;
+        int stepX = Math.round(entry.groundXCarry);
+        entry.groundXCarry -= stepX;
+        return stepX;
+    }
+
     static void resetEntryState(BotEntry entry) {
         entry.inAir             = true;
         entry.climbing          = false;
         entry.velY              = 0f;
+        entry.groundVelX        = 0f;
+        entry.groundXCarry      = 0f;
         entry.airVelX           = 0;
         entry.wasMovingX        = false;
         entry.seekingRope       = false;
@@ -163,6 +201,7 @@ class BotMovementManager {
             if (ground != null && ground.y <= botPos.y + cfg.CLIMB_SPEED + 2) {
                 entry.inAir = false;
                 entry.velY  = 0f;
+                stopGroundMotion(entry);
                 bot.setPosition(new Point(botPos.x, ground.y));
                 bot.setStance(5);
                 broadcastMovement(bot, 0, 0);
@@ -203,6 +242,7 @@ class BotMovementManager {
         entry.climbing        = false;
         entry.inAir           = true;
         entry.velY            = -ropeJumpForcePerTick();
+        stopGroundMotion(entry);
         entry.seekingRope     = false;
         int walkStep = walkStep();
         entry.airVelX         = dx > 0 ? walkStep : dx < 0 ? -walkStep : 0;
@@ -236,6 +276,7 @@ class BotMovementManager {
                     entry.climbing    = true;
                     entry.inAir       = false;
                     entry.velY        = 0f;
+                    stopGroundMotion(entry);
                     entry.seekingRope = false;
                     entry.climbRope   = rope;
                     bot.setPosition(new Point(rope.x(), botPos.y));
@@ -258,6 +299,7 @@ class BotMovementManager {
                 entry.inAir       = false;
                 entry.velY        = 0f;
                 entry.jumpCooldownMs = 0;
+                stopGroundMotion(entry);
                 entry.seekingRope = false;
                 entry.airVelX     = 0;
                 bot.setPosition(new Point(newX, floorPt.y));
@@ -293,6 +335,7 @@ class BotMovementManager {
         if (currentFh == null) {
             entry.inAir = true;
             entry.velY  = 0f;
+            stopGroundMotion(entry);
             return;
         }
 
@@ -395,6 +438,7 @@ class BotMovementManager {
                         broadcastMovement(bot, dropStepX > 0 ? cfg.WALK_VEL : -cfg.WALK_VEL, 0);
                     } else {
                         entry.inAir   = true;
+                        stopGroundMotion(entry);
                         entry.airVelX = dropStepX;
                         entry.velY    = 0f;
                     }
@@ -416,6 +460,7 @@ class BotMovementManager {
                 // Already within rope extent — climb directly
                 if (Math.abs(rdx) < cfg.ROPE_GRAB_X
                         && botPos.y >= rope.topY() && botPos.y <= rope.bottomY()) {
+                    stopGroundMotion(entry);
                     entry.climbing  = true;
                     entry.climbRope = rope;
                     bot.setPosition(new Point(rope.x(), botPos.y));
@@ -530,14 +575,26 @@ class BotMovementManager {
         }
 
         // Close enough — stand still (STOP_DIST < FOLLOW_DIST gives a dead zone)
-        if (Math.abs(dx) < cfg.STOP_DIST && Math.abs(dy) < cfg.STOP_DIST) {
+        boolean closeEnough = Math.abs(dx) < cfg.STOP_DIST && Math.abs(dy) < cfg.STOP_DIST;
+        int desiredDirection;
+        if (closeEnough) {
             entry.wasMovingX = false;
+            desiredDirection = 0;
+        } else {
+            int desiredStepX = calcStepX(entry, botPos.x, targetPos.x);
+            desiredDirection = Integer.compare(desiredStepX, 0);
+        }
+        int stepX = updateGroundStep(entry, desiredDirection);
+        if (closeEnough && stepX == 0) {
             bot.setStance(5);
             broadcastMovement(bot, 0, 0);
             return;
         }
-
-        int stepX = calcStepX(entry, botPos.x, targetPos.x);
+        if (desiredDirection != 0 && stepX == 0) {
+            bot.setStance(desiredDirection > 0 ? 2 : 3);
+            broadcastMovement(bot, desiredDirection > 0 ? cfg.WALK_VEL : -cfg.WALK_VEL, 0);
+            return;
+        }
         int newX  = botPos.x + stepX;
 
         // Normal ground walk — snap Y to terrain at newX
@@ -548,6 +605,7 @@ class BotMovementManager {
             if (dy > cfg.JUMP_Y_THRESH) {
                 // Owner is below — intentional descent, fall through
                 entry.inAir  = true;
+                stopGroundMotion(entry);
                 entry.airVelX = stepX;
                 entry.velY   = 0f;
             } else if (entry.jumpCooldownMs == 0 && stepX != 0
@@ -556,6 +614,7 @@ class BotMovementManager {
                 initiateJump(entry, bot, dx);
             } else {
                 // No valid landing — abort step, stand at edge
+                stopGroundMotion(entry);
                 bot.setStance(5);
                 broadcastMovement(bot, 0, 0);
             }
@@ -618,6 +677,7 @@ class BotMovementManager {
 
     static void initiateJump(BotEntry entry, Character bot, int dx) {
         Config cfg = BotMovementManager.cfg;
+        stopGroundMotion(entry);
         entry.velY        = -jumpForcePerTick();
         entry.inAir       = true;
         entry.seekingRope = false;
@@ -637,6 +697,7 @@ class BotMovementManager {
 
     static void initiateRopeJump(BotEntry entry, Character bot, int dx) {
         Config cfg = BotMovementManager.cfg;
+        stopGroundMotion(entry);
         entry.velY        = -jumpForcePerTick();
         entry.inAir       = true;
         entry.seekingRope = true;

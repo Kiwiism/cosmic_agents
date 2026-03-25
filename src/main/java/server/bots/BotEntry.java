@@ -23,6 +23,8 @@ class BotEntry {
 
     // Physics
     float velY      = 0f;
+    float groundVelX = 0f;
+    float groundXCarry = 0f;
     boolean inAir   = false;
     int jumpCooldownMs = 0;
 
@@ -100,7 +102,6 @@ class BotEntry {
     int        pendingTradeTimerMs  = 0;     // context-dependent timer (reset on state change)
     boolean    pendingTradeAllAdded = false; // all items in batch added; waiting for owner OK
     boolean    pendingTradeBotDone  = false; // bot has called completeTrade this batch
-
     // Message queue — sends with ~5s spacing between messages
     final ArrayDeque<String> msgQueue = new ArrayDeque<>();
     boolean msgSending = false;
@@ -119,9 +120,9 @@ class BotEntry {
     // Staggered tick start: skip the first few hundred ms so bots don't all move in lockstep
     int skipDelayMs = ThreadLocalRandom.current().nextInt(0, 501);
     int aiTickAccumulatorMs = 0;
+    boolean debugPromptSent = false;
 
     BotEntry(Character bot, Character owner, ScheduledFuture<?> task) {
-    boolean debugPromptSent = false;
         this.bot = bot;
         this.owner = owner;
         this.task = task;
