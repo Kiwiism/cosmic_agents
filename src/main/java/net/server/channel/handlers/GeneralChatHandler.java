@@ -30,7 +30,7 @@ import net.packet.InPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.ChatLogger;
-import server.maps.BotManager;
+import server.bots.BotManager;
 import tools.PacketCreator;
 
 public final class GeneralChatHandler extends AbstractPacketHandler {

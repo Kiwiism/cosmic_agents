@@ -1,4 +1,4 @@
-package server.maps;
+package server.bots;
 
 import client.Character;
 import io.netty.buffer.Unpooled;

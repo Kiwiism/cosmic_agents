@@ -1,4 +1,4 @@
-package server.maps;
+package server.bots;
 
 import client.BotClient;
 import client.Character;

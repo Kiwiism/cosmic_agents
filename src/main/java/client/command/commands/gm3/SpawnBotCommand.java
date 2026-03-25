@@ -6,7 +6,7 @@ import client.Client;
 import client.DefaultDates;
 import client.command.Command;
 import client.creator.BotCreator;
-import server.maps.BotManager;
+import server.bots.BotManager;
 import server.maps.MapleMap;
 import tools.BCrypt;
 import tools.DatabaseConnection;
