@@ -54,12 +54,13 @@ class BotEntry {
     int   waypointTimer = 0;
 
     // Grind mode
-    boolean grinding       = false;
+    volatile boolean grinding = false;
     Monster grindTarget    = null;
     int     attackCooldown = 0;
 
-    // Skill cache — rebuilt on job change
-    int          cachedSkillJob = -1;
+    // Skill cache — rebuilt on job or level change
+    int          cachedSkillJob   = -1;
+    int          cachedSkillLevel = -1;
     int          attackSkillId  = 0;   // best single-target attack skill (0 = basic attack)
     int          aoeSkillId     = 0;   // best AoE attack skill (0 = none)
     int          aoeSkillMobs   = 1;   // mobCount of the chosen AoE skill

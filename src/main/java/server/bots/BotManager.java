@@ -769,6 +769,7 @@ public class BotManager {
     /** Picks up lootable drops within LOOT_RADIUS — runs every tick in all modes. */
     private void tickPassiveLoot(BotEntry entry, Character bot) {
         if (entry.lootInhibitTicks > 0) { entry.lootInhibitTicks--; return; }
+        if (entry.pendingTradeCategory != null) return; // don't loot while trading — keeps inventory state consistent
         if (entry.invFullWarnCooldown > 0) entry.invFullWarnCooldown--;
         Point botPos = bot.getPosition();
         for (MapItem drop : bot.getMap().getDroppedItems()) {
@@ -842,8 +843,10 @@ public class BotManager {
     // -------------------------------------------------------------------------
 
     private void rebuildSkillCacheIfNeeded(BotEntry entry, Character bot) {
-        if (entry.cachedSkillJob == bot.getJob().getId()) return;
-        entry.cachedSkillJob = bot.getJob().getId();
+        if (entry.cachedSkillJob   == bot.getJob().getId()
+                && entry.cachedSkillLevel == bot.getLevel()) return;
+        entry.cachedSkillJob   = bot.getJob().getId();
+        entry.cachedSkillLevel = bot.getLevel();
 
         entry.attackSkillId = 0;
         entry.aoeSkillId    = 0;

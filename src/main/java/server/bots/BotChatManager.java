@@ -143,7 +143,7 @@ class BotChatManager {
             Pattern.CASE_INSENSITIVE);
     // Generic drop by item name — captured group 1 is the name; processed only if category patterns don't match
     private static final Pattern DROP_ITEM_PATTERN = Pattern.compile(
-            "\\b" + DROP_VERB + "\\s+(?:(?:your|ur|my)\\s+)?([\\w][\\w '\\-]{1,39})$",
+            "\\b" + DROP_VERB + "\\s+(?:(?:your|ur|my)\\s+)?([\\w][\\w '\\-]{1,39})[?!.,]?\\s*$",
             Pattern.CASE_INSENSITIVE);
     // Inventory slot query
     private static final Pattern INV_SLOTS_PATTERN = Pattern.compile(
@@ -227,9 +227,11 @@ class BotChatManager {
                 entry.pendingAction = null;
                 if ("relog".equals(action)) {
                     TimerManager.getInstance().schedule(() -> {
+                        Character o = entry.owner;
+                        if (o == null) return; // owner logged out before relog fired
                         BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(List.of("brb!", "relogging~", "one sec, relogging")));
                         int charId      = entry.bot.getId();
-                        int ownerCharId = entry.owner.getId();
+                        int ownerCharId = o.getId();
                         int world       = entry.bot.getClient().getWorld();
                         int channel     = entry.bot.getClient().getChannel();
                         TimerManager.getInstance().schedule(() -> {
