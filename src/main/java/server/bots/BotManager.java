@@ -22,6 +22,8 @@ import server.ItemInformationProvider;
 import server.StatEffect;
 import server.TimerManager;
 import server.life.Monster;
+import server.maps.MapItem;
+import server.maps.MapleMap;
 import tools.PacketCreator;
 
 import java.awt.*;
@@ -173,7 +175,7 @@ public class BotManager {
     public void handleChat(Character owner, String message) {
         BotEntry entry = bots.get(owner.getId());
         if (entry == null) return;
-        BotChatManager.handleChat(entry, owner, message);
+        BotChatManager.handleChat(entry, message);
     }
 
     // -------------------------------------------------------------------------

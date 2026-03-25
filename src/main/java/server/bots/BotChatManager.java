@@ -56,12 +56,6 @@ class BotChatManager {
             "pirate|brawler|gunslinger|gun|marauder|outlaw|bucc|buccaneer|corsair|" +
             "white knight|wk|dragon knight)\\b", Pattern.CASE_INSENSITIVE);
 
-    private static final List<String> GRIND_REPLIES = List.of(
-            "ok", "on it", "lets get it", "farming time", "got it",
-            "sure", "ok boss", "time to grind");
-    private static final List<String> DEATH_REPLIES = List.of(
-            "oops im dead", "gg", "rip me", "oww", "i died lol",
-            "welp", "ouchh", "nooo", "ok i died", "i'll be right back");
 
     private static final Pattern GREETING_PATTERN = Pattern.compile(
             "\\b(hi+|hey+|hello+|sup|yo+|howdy|hiya|heya|hai|ello|"
@@ -123,7 +117,7 @@ class BotChatManager {
     private static final List<String> WB_REPLIES = List.of(
             "wb", "wb!", "welcome back", "oh ur back", "hey ur back", "welcome back!!");
 
-    static void handleChat(BotEntry entry, Character owner, String message) {
+    static void handleChat(BotEntry entry, String message) {
         // Logout / relog — two-step confirmation
         if (RELOG_PATTERN.matcher(message).find()) {
             TimerManager.getInstance().schedule(() -> {
