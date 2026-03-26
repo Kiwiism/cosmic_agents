@@ -20,6 +20,13 @@ class BotDropManager {
     private static final Set<Integer> manualTradeGreetingSent = ConcurrentHashMap.newKeySet();
     private static final List<String> TRADE_THANKS = List.of(
             "ty!", "thanks!", "thank you!", "tyty", "appreciate it!", "tysm!");
+    private static final String[] NO_ITEMS_PROMPTS = {
+            "i don't have any %s",
+            "no %s on me rn",
+            "don't have any %s right now",
+            "i'm out of %s",
+            "none of that on me right now"
+    };
 
     static void tickManualTrade(BotEntry entry, Character bot) {
         if (entry.pendingTradeCategory != null) return;
@@ -108,11 +115,29 @@ class BotDropManager {
         }
         List<Item> items = collectItems(category, bot);
         if (items.isEmpty()) {
-            BotManager.getInstance().botSay(bot, "nothing to trade!");
+            BotManager.getInstance().botSay(bot, noItemsReply(category));
             return;
         }
         entry.pendingTradeCategory = category;
         openNextBatch(entry, bot, items);
+    }
+
+    static boolean hasTransferableItems(String category, Character bot) {
+        return !collectItems(category, bot).isEmpty();
+    }
+
+    static String noItemsReply(String category) {
+        String what = switch (category) {
+            case "scrolls" -> "scrolls";
+            case "pots" -> "pots";
+            case "use" -> "use items";
+            case "equips" -> "equips";
+            case "etc" -> "etc items";
+            default -> category.startsWith("name:") ? category.substring(5) : "those items";
+        };
+
+        String fmt = NO_ITEMS_PROMPTS[ThreadLocalRandom.current().nextInt(NO_ITEMS_PROMPTS.length)];
+        return String.format(fmt, what);
     }
 
     /** Opens a trade for the first ≤9 items; remaining items are re-collected next batch. */

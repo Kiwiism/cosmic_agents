@@ -584,6 +584,12 @@ class BotChatManager {
 
     private static void handleTransferCommand(BotEntry entry, TransferCommand transferCommand) {
         String category = transferCommand.category;
+        if (!BotDropManager.hasTransferableItems(category, entry.bot)) {
+            TimerManager.getInstance().schedule(
+                    () -> BotManager.getInstance().botSay(entry.bot, BotDropManager.noItemsReply(category)), 600);
+            return;
+        }
+
         switch (transferCommand.mode) {
             case TRADE -> TimerManager.getInstance().schedule(
                     () -> BotDropManager.startTradeTransfer(category, entry, entry.bot), 600);

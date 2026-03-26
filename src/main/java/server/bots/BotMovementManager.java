@@ -291,24 +291,7 @@ class BotMovementManager {
         int newX      = botPos.x + entry.airVelX;
 
         // Mid-air rope catch — only when we intentionally jumped for a rope
-        entry.ropeGrabCooldownMs = tickDown(entry.ropeGrabCooldownMs);
-        if (entry.seekingRope && entry.ropeGrabCooldownMs == 0) {
-            for (Rope rope : bot.getMap().getRopes()) {
-                if (Math.abs(rope.x() - botPos.x) <= cfg.ROPE_GRAB_X
-                        && botPos.y >= rope.topY() && botPos.y <= rope.bottomY()) {
-                    entry.climbing    = true;
-                    entry.inAir       = false;
-                    entry.velY        = 0f;
-                    stopGroundMotion(entry);
-                    entry.seekingRope = false;
-                    entry.climbRope   = rope;
-                    bot.setPosition(new Point(rope.x(), botPos.y));
-                    bot.setStance(entry.climbRope.isLadder() ? 17 : 16);
-                    broadcastMovement(bot, 0, 0);
-                    return;
-                }
-            }
-        }
+        if (successfullyGrabbedRope(entry, bot, botPos, cfg)) return;
 
         entry.velY = Math.min(entry.velY + gravityPerTick(), maxFallPerTick());
         entry.physY += entry.velY;
@@ -344,6 +327,28 @@ class BotMovementManager {
         bot.setStance(entry.airVelX >= 0 ? 6 : 7);
         int velYBcast = (int) (entry.velY * (1000f / cfg.TICK_MS));
         broadcastMovement(bot, velXBcast, velYBcast);
+    }
+
+    private static boolean successfullyGrabbedRope(BotEntry entry, Character bot, Point botPos, Config cfg) {
+        entry.ropeGrabCooldownMs = tickDown(entry.ropeGrabCooldownMs);
+        if (entry.seekingRope && entry.ropeGrabCooldownMs == 0) {
+            for (Rope rope : bot.getMap().getRopes()) {
+                if (Math.abs(rope.x() - botPos.x) <= cfg.ROPE_GRAB_X
+                        && botPos.y >= rope.topY() && botPos.y <= rope.bottomY()) {
+                    entry.climbing    = true;
+                    entry.inAir       = false;
+                    entry.velY        = 0f;
+                    stopGroundMotion(entry);
+                    entry.seekingRope = false;
+                    entry.climbRope   = rope;
+                    bot.setPosition(new Point(rope.x(), botPos.y));
+                    bot.setStance(entry.climbRope.isLadder() ? 17 : 16);
+                    broadcastMovement(bot, 0, 0);
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     // -------------------------------------------------------------------------
