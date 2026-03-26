@@ -239,6 +239,10 @@ public class Trade {
         return new LinkedList<>(items);
     }
 
+    public boolean hasAnyOffer() {
+        return meso > 0 || !items.isEmpty();
+    }
+
     public int getExchangeMesos() {
         return exchangeMeso;
     }

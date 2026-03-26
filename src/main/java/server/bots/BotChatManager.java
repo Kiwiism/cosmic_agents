@@ -95,20 +95,29 @@ class BotChatManager {
             + "|\\bshow\\s+(me\\s+)?debug\\s+stats\\b"
             + "|\\bwhat.?s\\s+(your|ur)\\s+attack\\s+cooldown\\b",
             Pattern.CASE_INSENSITIVE);
+    private static final String SCROLL_WORDS = "scrolls?";
+    private static final String POTION_WORDS = "(?:pots?|potions?|hp\\s+pots?|mp\\s+pots?|supplies)";
+    private static final String USE_WORDS = "(?:use|use\\s+items?|consumables?)";
+    private static final String EQUIP_WORDS = "(?:equips?|equipment|gear)";
+    private static final String ETC_WORDS = "(?:etc|junk|misc(?:ellaneous)?)";
 
     private static final Pattern SCROLLS_PATTERN = Pattern.compile(
             "\\b(any|do\\s+(you|u)\\s+have(\\s+any)?|got(\\s+any)?|"
-            + "carrying(\\s+any)?|you\\s+got(\\s+any)?)\\s+scrolls?\\b"
+            + "carrying(\\s+any)?|you\\s+got(\\s+any)?)\\s+" + SCROLL_WORDS + "\\b"
             + "|\\bhow\\s+many\\s+scrolls?\\b"
             + "|\\bscrolls?\\s+on\\s+(you|u|ya)\\b"
             + "|\\b(your|ur)\\s+scrolls?\\b"
             + "|^\\s*scrolls?\\s*\\??\\s*$",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern POTIONS_PATTERN = Pattern.compile(
-            INFO_PFX + "(pots?|potions?|hp\\s+pots?|mp\\s+pots?|supplies)\\b"
+            INFO_PFX + POTION_WORDS + "\\b"
             + "|\\b(any|do\\s+(you|u)\\s+have(\\s+any)?|got(\\s+any)?|how\\s+many)"
-            +   "\\s+(pots?|potions?|hp\\s+pots?|mp\\s+pots?)\\b"
+            +   "\\s+" + POTION_WORDS + "\\b"
             + "|\\b(pots?|potions?)\\s+left\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern UNEQUIP_PATTERN = Pattern.compile(
+            "\\b(unequip|take\\s+off|remove)\\s+(?:everything|all|all\\s+(?:your|ur|my)\\s+gear|gear|equipment|equips?)\\b"
+            + "|\\bstrip\\s+(?:down|everything|all)\\b",
             Pattern.CASE_INSENSITIVE);
 
     // SP variant selection — only matched when spVariantPromptSent=true and spVariant=null
@@ -130,25 +139,67 @@ class BotChatManager {
             Pattern.CASE_INSENSITIVE);
 
     // Shared verb prefix for all drop/give/trade category commands
-    private static final String DROP_VERB =
-            "(?:drop|toss|give(?:\\s+(?:me|us))?|trade(?:\\s+(?:me|us))?|pass(?:\\s+me)?)";
 
     // Drop category commands
-    private static final Pattern DROP_SCROLLS_PATTERN = Pattern.compile(
-            "\\b" + DROP_VERB + "\\s+(?:(?:your|ur|my|all)\\s+)?scrolls?\\b",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern DROP_POTS_PATTERN = Pattern.compile(
-            "\\b" + DROP_VERB + "\\s+(?:(?:your|ur|my|all)\\s+)?(?:pots?|potions?|supplies)\\b",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern DROP_EQUIPS_PATTERN = Pattern.compile(
-            "\\b" + DROP_VERB + "\\s+(?:(?:your|ur|my|all)\\s+)?(?:equips?|equipment|gear)\\b",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern DROP_ETC_PATTERN = Pattern.compile(
-            "\\b" + DROP_VERB + "\\s+(?:(?:your|ur|my|all)\\s+)?(?:etc|junk|misc(?:ellaneous)?)\\b",
-            Pattern.CASE_INSENSITIVE);
     // Generic drop by item name — captured group 1 is the name; processed only if category patterns don't match
-    private static final Pattern DROP_ITEM_PATTERN = Pattern.compile(
-            "\\b" + DROP_VERB + "\\s+(?:(?:your|ur|my)\\s+)?([\\w][\\w '\\-]{1,39})[?!.,]?\\s*$",
+    private static final String TRADE_CMD_VERB = "(?:trade(?:\\s+(?:me|us))?)";
+    private static final String DROP_CMD_VERB = "(?:drop|toss)";
+    private static final String ASK_CMD_VERB = "(?:give(?:\\s+(?:me|us))?|pass(?:\\s+me)?)";
+    private static final String TRANSFER_OWNER = "(?:(?:your|ur|my|all)\\s+)?";
+    private static final String TRANSFER_RECIPIENT = "(?:(?:me|us)\\s+)?";
+    private static final Pattern TRADE_SCROLLS_COMMAND_PATTERN = Pattern.compile(
+            "\\b" + TRADE_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + SCROLL_WORDS + "\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern TRADE_POTS_COMMAND_PATTERN = Pattern.compile(
+            "\\b" + TRADE_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + POTION_WORDS + "\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern TRADE_USE_COMMAND_PATTERN = Pattern.compile(
+            "\\b" + TRADE_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + USE_WORDS + "\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern TRADE_EQUIPS_COMMAND_PATTERN = Pattern.compile(
+            "\\b" + TRADE_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + EQUIP_WORDS + "\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern TRADE_ETC_COMMAND_PATTERN = Pattern.compile(
+            "\\b" + TRADE_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + ETC_WORDS + "\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern TRADE_ITEM_COMMAND_PATTERN = Pattern.compile(
+            "\\b" + TRADE_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + "(?:(?:your|ur|my)\\s+)?([\\w][\\w '\\-]{1,39})[?!.,]?\\s*$",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern DROP_SCROLLS_COMMAND_PATTERN = Pattern.compile(
+            "\\b" + DROP_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + SCROLL_WORDS + "\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern DROP_POTS_COMMAND_PATTERN = Pattern.compile(
+            "\\b" + DROP_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + POTION_WORDS + "\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern DROP_USE_COMMAND_PATTERN = Pattern.compile(
+            "\\b" + DROP_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + USE_WORDS + "\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern DROP_EQUIPS_COMMAND_PATTERN = Pattern.compile(
+            "\\b" + DROP_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + EQUIP_WORDS + "\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern DROP_ETC_COMMAND_PATTERN = Pattern.compile(
+            "\\b" + DROP_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + ETC_WORDS + "\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern DROP_ITEM_COMMAND_PATTERN = Pattern.compile(
+            "\\b" + DROP_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + "(?:(?:your|ur|my)\\s+)?([\\w][\\w '\\-]{1,39})[?!.,]?\\s*$",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern ASK_SCROLLS_COMMAND_PATTERN = Pattern.compile(
+            "\\b" + ASK_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + SCROLL_WORDS + "\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern ASK_POTS_COMMAND_PATTERN = Pattern.compile(
+            "\\b" + ASK_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + POTION_WORDS + "\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern ASK_USE_COMMAND_PATTERN = Pattern.compile(
+            "\\b" + ASK_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + USE_WORDS + "\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern ASK_EQUIPS_COMMAND_PATTERN = Pattern.compile(
+            "\\b" + ASK_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + EQUIP_WORDS + "\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern ASK_ETC_COMMAND_PATTERN = Pattern.compile(
+            "\\b" + ASK_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + ETC_WORDS + "\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern ASK_ITEM_COMMAND_PATTERN = Pattern.compile(
+            "\\b" + ASK_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + "(?:(?:your|ur|my)\\s+)?([\\w][\\w '\\-]{1,39})[?!.,]?\\s*$",
             Pattern.CASE_INSENSITIVE);
     // Inventory slot query
     private static final Pattern INV_SLOTS_PATTERN = Pattern.compile(
@@ -174,6 +225,22 @@ class BotChatManager {
             "hey", "hi", "sup", "yo", "heya", "hii", "hey!!", "hi!!");
     private static final List<String> WB_REPLIES = List.of(
             "wb", "wb!", "welcome back", "oh ur back", "hey ur back", "welcome back!!");
+
+    private enum TransferMode {
+        TRADE,
+        DROP_CONFIRM,
+        CHOICE
+    }
+
+    private static final class TransferCommand {
+        private final TransferMode mode;
+        private final String category;
+
+        private TransferCommand(TransferMode mode, String category) {
+            this.mode = mode;
+            this.category = category;
+        }
+    }
 
     static void handleChat(BotEntry entry, String message) {
         // Logout / relog — two-step confirmation
@@ -226,6 +293,19 @@ class BotChatManager {
                 }
                 return;
             }
+            if ("drop_confirm".equals(entry.pendingAction)) {
+                String category = entry.pendingDropCategory;
+                entry.pendingAction = null;
+                entry.pendingDropCategory = null;
+                if (LOGOUT_CONFIRM_PATTERN.matcher(message).find()) {
+                    TimerManager.getInstance().schedule(
+                            () -> BotDropManager.executeChoice(category, false, entry, entry.bot), 500);
+                } else {
+                    TimerManager.getInstance().schedule(
+                            () -> BotManager.getInstance().botSay(entry.bot, "ok! keeping them"), 500);
+                }
+                return;
+            }
 
             if (LOGOUT_CONFIRM_PATTERN.matcher(message).find()) {
                 String action = entry.pendingAction;
@@ -262,6 +342,15 @@ class BotChatManager {
                 TimerManager.getInstance().schedule(() ->
                         BotManager.getInstance().botSay(entry.bot, cancelMsg), 800);
             }
+            return;
+        }
+
+        if (UNEQUIP_PATTERN.matcher(message).find()) {
+            TimerManager.getInstance().schedule(() -> {
+                entry.following = false;
+                entry.grinding = false;
+                BotManager.getInstance().botSay(entry.bot, BotEquipManager.unequipAll(entry.bot));
+            }, 600);
             return;
         }
 
@@ -338,24 +427,10 @@ class BotChatManager {
             }
         }
 
-        // Drop commands — prompt "drop or trade?" for all categories; name-match is fallback
-        {
-            String dropCategory = null;
-            if      (DROP_SCROLLS_PATTERN.matcher(message).find()) dropCategory = "scrolls";
-            else if (DROP_POTS_PATTERN   .matcher(message).find()) dropCategory = "pots";
-            else if (DROP_EQUIPS_PATTERN .matcher(message).find()) dropCategory = "equips";
-            else if (DROP_ETC_PATTERN    .matcher(message).find()) dropCategory = "etc";
-            else {
-                Matcher dm = DROP_ITEM_PATTERN.matcher(message);
-                if (dm.find()) dropCategory = "name:" + dm.group(1).trim();
-            }
-            if (dropCategory != null) {
-                final String cat = dropCategory;
-                entry.pendingAction       = "item_choice";
-                entry.pendingDropCategory = cat;
-                TimerManager.getInstance().schedule(
-                        () -> BotManager.getInstance().botSay(entry.bot, dropOrTradePrompt(cat)), 600);
-            }
+        TransferCommand transferCommand = matchTransferCommand(message);
+        if (transferCommand != null) {
+            handleTransferCommand(entry, transferCommand);
+            return;
         }
 
         // Info commands
@@ -522,6 +597,78 @@ class BotChatManager {
         queueBotSay(entry, BotCombatManager.describeDebugStats(entry, bot));
     }
 
+    private static void handleTransferCommand(BotEntry entry, TransferCommand transferCommand) {
+        String category = transferCommand.category;
+        switch (transferCommand.mode) {
+            case TRADE -> TimerManager.getInstance().schedule(
+                    () -> BotDropManager.startTradeTransfer(category, entry, entry.bot), 600);
+            case DROP_CONFIRM -> {
+                entry.pendingAction = "drop_confirm";
+                entry.pendingDropCategory = category;
+                TimerManager.getInstance().schedule(
+                        () -> BotManager.getInstance().botSay(entry.bot, confirmDropPrompt(category)), 600);
+            }
+            case CHOICE -> {
+                entry.pendingAction = "item_choice";
+                entry.pendingDropCategory = category;
+                TimerManager.getInstance().schedule(
+                        () -> BotManager.getInstance().botSay(entry.bot, dropOrTradePrompt(category)), 600);
+            }
+        }
+    }
+
+    private static TransferCommand matchTransferCommand(String message) {
+        String tradeCategory = matchTradeCategory(message);
+        if (tradeCategory != null) {
+            return new TransferCommand(TransferMode.TRADE, tradeCategory);
+        }
+
+        String dropCategory = matchDropCategory(message);
+        if (dropCategory != null) {
+            return new TransferCommand(TransferMode.DROP_CONFIRM, dropCategory);
+        }
+
+        String choiceCategory = matchChoiceCategory(message);
+        if (choiceCategory != null) {
+            return new TransferCommand(TransferMode.CHOICE, choiceCategory);
+        }
+
+        return null;
+    }
+
+    private static String matchTradeCategory(String message) {
+        if (TRADE_SCROLLS_COMMAND_PATTERN.matcher(message).find()) return "scrolls";
+        if (TRADE_POTS_COMMAND_PATTERN.matcher(message).find()) return "pots";
+        if (TRADE_USE_COMMAND_PATTERN.matcher(message).find()) return "use";
+        if (TRADE_EQUIPS_COMMAND_PATTERN.matcher(message).find()) return "equips";
+        if (TRADE_ETC_COMMAND_PATTERN.matcher(message).find()) return "etc";
+
+        Matcher matcher = TRADE_ITEM_COMMAND_PATTERN.matcher(message);
+        return matcher.find() ? "name:" + matcher.group(1).trim() : null;
+    }
+
+    private static String matchDropCategory(String message) {
+        if (DROP_SCROLLS_COMMAND_PATTERN.matcher(message).find()) return "scrolls";
+        if (DROP_POTS_COMMAND_PATTERN.matcher(message).find()) return "pots";
+        if (DROP_USE_COMMAND_PATTERN.matcher(message).find()) return "use";
+        if (DROP_EQUIPS_COMMAND_PATTERN.matcher(message).find()) return "equips";
+        if (DROP_ETC_COMMAND_PATTERN.matcher(message).find()) return "etc";
+
+        Matcher matcher = DROP_ITEM_COMMAND_PATTERN.matcher(message);
+        return matcher.find() ? "name:" + matcher.group(1).trim() : null;
+    }
+
+    private static String matchChoiceCategory(String message) {
+        if (ASK_SCROLLS_COMMAND_PATTERN.matcher(message).find()) return "scrolls";
+        if (ASK_POTS_COMMAND_PATTERN.matcher(message).find()) return "pots";
+        if (ASK_USE_COMMAND_PATTERN.matcher(message).find()) return "use";
+        if (ASK_EQUIPS_COMMAND_PATTERN.matcher(message).find()) return "equips";
+        if (ASK_ETC_COMMAND_PATTERN.matcher(message).find()) return "etc";
+
+        Matcher matcher = ASK_ITEM_COMMAND_PATTERN.matcher(message);
+        return matcher.find() ? "name:" + matcher.group(1).trim() : null;
+    }
+
     private static final String[] DROP_OR_TRADE_PROMPTS = {
         "ok, giving you my %s - drop or trade?",
         "sure! %s - drop or trade?",
@@ -534,12 +681,25 @@ class BotChatManager {
         String what = switch (category) {
             case "scrolls" -> "scrolls";
             case "pots"    -> "pots";
+            case "use"     -> "use items";
             case "equips"  -> "equips";
             case "etc"     -> "etc items";
             default        -> category.startsWith("name:") ? "'" + category.substring(5) + "'" : "those items";
         };
         String fmt = DROP_OR_TRADE_PROMPTS[ThreadLocalRandom.current().nextInt(DROP_OR_TRADE_PROMPTS.length)];
         return String.format(fmt, what);
+    }
+
+    private static String confirmDropPrompt(String category) {
+        String what = switch (category) {
+            case "scrolls" -> "scrolls";
+            case "pots"    -> "pots";
+            case "use"     -> "use items";
+            case "equips"  -> "equips";
+            case "etc"     -> "etc items";
+            default        -> category.startsWith("name:") ? "'" + category.substring(5) + "'" : "those items";
+        };
+        return "drop my " + what + "? say yes to confirm";
     }
 
     /** Maps a chat keyword to the correct next Job given bot's current job and level. Returns null if not valid. */

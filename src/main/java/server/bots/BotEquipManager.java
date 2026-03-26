@@ -74,6 +74,34 @@ class BotEquipManager {
         }
     }
 
+    static String unequipAll(Character bot) {
+        ItemInformationProvider ii = ItemInformationProvider.getInstance();
+        Inventory eqpInv = bot.getInventory(InventoryType.EQUIP);
+        Inventory eqdInv = bot.getInventory(InventoryType.EQUIPPED);
+
+        List<Short> equippedSlots = new ArrayList<>();
+        for (Item item : eqdInv.list()) {
+            if (ii.isCash(item.getItemId())) continue;
+            equippedSlots.add(item.getPosition());
+        }
+        if (equippedSlots.isEmpty()) return "nothing to unequip";
+
+        int freeSlots = eqpInv.getNumFreeSlot();
+        if (freeSlots < equippedSlots.size()) {
+            return "need " + equippedSlots.size() + " free equip slots, only have " + freeSlots;
+        }
+
+        equippedSlots.sort(Short::compare);
+        for (short src : equippedSlots) {
+            short dst = eqpInv.getNextFreeSlot();
+            if (dst < 0) {
+                return "ran out of equip slots while unequipping";
+            }
+            InventoryManipulator.handleItemMove(bot.getClient(), InventoryType.EQUIP, src, dst, (short) 1);
+        }
+        return "unequipped " + equippedSlots.size() + " item" + (equippedSlots.size() != 1 ? "s" : "");
+    }
+
     private static void autoEquipRings(Character bot, ItemInformationProvider ii, WeaponType wt,
                                         List<Equip> candidates, Inventory eqdInv) {
         List<Equip> pool = new ArrayList<>(candidates);

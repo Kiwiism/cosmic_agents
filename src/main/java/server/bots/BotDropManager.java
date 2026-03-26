@@ -18,6 +18,8 @@ import java.util.function.Predicate;
 
 class BotDropManager {
     private static final Set<Integer> manualTradeGreetingSent = ConcurrentHashMap.newKeySet();
+    private static final List<String> TRADE_THANKS = List.of(
+            "ty!", "thanks!", "thank you!", "tyty", "appreciate it!", "tysm!");
 
     static void tickManualTrade(BotEntry entry, Character bot) {
         if (entry.pendingTradeCategory != null) return;
@@ -51,7 +53,7 @@ class BotDropManager {
         }
 
         if (trade.isPartnerConfirmed()) {
-            Trade.completeTrade(bot);
+            completeTradeAndThank(bot, trade);
         }
     }
 
@@ -145,7 +147,6 @@ class BotDropManager {
             // Start next batch
             List<Item> next = collectItems(entry.pendingTradeCategory, bot);
             if (next.isEmpty()) {
-                BotManager.getInstance().botSay(bot, "all done trading!");
                 resetTradeState(entry);
             } else {
                 openNextBatch(entry, bot, next);
@@ -232,7 +233,7 @@ class BotDropManager {
         if (!entry.pendingTradeBotDone) {
             entry.pendingTradeTimerMs += BotMovementManager.cfg.TICK_MS;
             if (trade.isPartnerConfirmed()) {
-                Trade.completeTrade(bot);
+                completeTradeAndThank(bot, trade);
                 entry.pendingTradeBotDone = true;
                 entry.pendingTradeTimerMs = 0;
             } else if (entry.pendingTradeTimerMs > 60_000) { // 60 s timeout
@@ -259,6 +260,14 @@ class BotDropManager {
         entry.pendingTradeBotDone  = false;
     }
 
+    private static void completeTradeAndThank(Character bot, Trade trade) {
+        boolean receivedSomething = trade.getPartner() != null && trade.getPartner().hasAnyOffer();
+        Trade.completeTrade(bot);
+        if (receivedSomething) {
+            BotManager.getInstance().botSay(bot, BotManager.randomReply(TRADE_THANKS));
+        }
+    }
+
     // ─── Item collection helpers ──────────────────────────────────────────────
 
     private static List<Item> collectItems(String category, Character bot) {
@@ -268,6 +277,7 @@ class BotDropManager {
                     item -> item.getItemId() >= 2040000 && item.getItemId() < 2050000);
             case "pots"    -> collectFromBag(bot, result, InventoryType.USE,
                     item -> item.getItemId() >= 2000000 && item.getItemId() < 2023000);
+            case "use"     -> collectFromBag(bot, result, InventoryType.USE, item -> true);
             case "equips"  -> collectFromBag(bot, result, InventoryType.EQUIP, item -> true);
             case "etc"     -> collectFromBag(bot, result, InventoryType.ETC,   item -> true);
             default -> {
