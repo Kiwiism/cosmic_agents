@@ -388,6 +388,8 @@ class BotMovementManager {
 
         // ── AI decisions (every LOGIC_TICK_MS) ───────────────────────────────
         if (runAiTick) {
+            boolean footholdRouteAvailable = hasFootholdRouteTowardTarget(entry, bot, botPos, currentFh, targetPos);
+
             // Stuck detection
             if (entry.stuckCheckElapsedMs >= cfg.STUCK_CHECK_INTERVAL_MS) {
                 int moved = Math.abs(botPos.x - entry.lastStuckCheckPos.x)
@@ -401,7 +403,7 @@ class BotMovementManager {
 
             // Waypoint navigation
             if (entry.waypointRope != null) {
-                if (dy >= -cfg.JUMP_Y_THRESH * 2) {
+                if (dy >= -cfg.JUMP_Y_THRESH * 2 || footholdRouteAvailable) {
                     entry.waypointRope = null; // owner no longer far above
                 } else if (entry.waypointTimerMs == 0) {
                     entry.waypointRope = null; // timed out
@@ -471,8 +473,10 @@ class BotMovementManager {
             }
 
             // Rope logic
-            if (dy < -cfg.JUMP_Y_THRESH * 2 && Math.abs(dy) >= Math.abs(dx)) {
-                Rope rope = findNearbyRope(bot, botPos);
+            if (dy < -cfg.JUMP_Y_THRESH * 2
+                    && Math.abs(dy) >= Math.abs(dx)
+                    && !footholdRouteAvailable) {
+                Rope rope = findNearbyRope(bot, botPos, targetPos);
                 if (rope != null) {
                     int rdx = rope.x() - botPos.x;
                     if (Math.abs(rdx) < cfg.ROPE_GRAB_X
@@ -488,9 +492,7 @@ class BotMovementManager {
                     if (entry.jumpCooldownMs == 0) {
                         int stepLimit = walkStep(bot.getMap());
                         int arcStep = dx >= 0 ? stepLimit : -stepLimit;
-                        boolean jumpWorks = arcCheckJump(bot, botPos, arcStep, targetPos.x, targetPos.y)
-                                || arcCheckJump(bot, botPos, -arcStep, targetPos.x, targetPos.y)
-                                || arcCheckJump(bot, botPos, 0, targetPos.x, targetPos.y);
+                        boolean jumpWorks = canAdvanceByJump(bot, botPos, targetPos, arcStep);
                         if (!jumpWorks) {
                             int maxHTravel = stepLimit * (int) (2 * jumpForcePerTick() / gravityPerTick());
                             if (Math.abs(rdx) <= maxHTravel) {
@@ -524,7 +526,7 @@ class BotMovementManager {
 
             // Proactive jump
             if (dy < -cfg.JUMP_Y_THRESH && entry.jumpCooldownMs == 0) {
-                int stepXai   = calcStepX(entry, bot.getMap(), botPos.x, targetPos.x);
+                int stepXai   = updateStepX(entry, bot.getMap(), botPos.x, targetPos.x);
                 boolean blocked  = stepXai == 0 || !isPathWalkable(bot, botPos, stepXai);
                 boolean farAbove = dy < -cfg.JUMP_Y_THRESH * 2;
                 if (blocked) {
@@ -567,7 +569,7 @@ class BotMovementManager {
                         }
                     }
                     if (farAbove && -dy >= cfg.WAYPOINT_MIN_DY && entry.waypointRope == null) {
-                        Rope wp = findWaypointRope(bot, botPos);
+                        Rope wp = findWaypointRope(bot, botPos, targetPos);
                         if (wp != null) {
                             entry.waypointRope    = wp;
                             entry.waypointTimerMs = delayAfterCurrentTick(cfg.WAYPOINT_TIMEOUT_MS);
@@ -585,7 +587,7 @@ class BotMovementManager {
                 entry.wasMovingX          = false;
                 entry.lastDesiredDirection = 0;
             } else {
-                entry.lastDesiredDirection = Integer.compare(calcStepX(entry, bot.getMap(), botPos.x, targetPos.x), 0);
+                entry.lastDesiredDirection = Integer.compare(updateStepX(entry, bot.getMap(), botPos.x, targetPos.x), 0);
             }
         } // end runAiTick
 
@@ -606,11 +608,9 @@ class BotMovementManager {
         }
         Point snapped = bot.getMap().getPointBelow(new Point(newXPhys, botPos.y - cfg.MAX_SLOPE_UP));
         if (snapped == null || snapped.y > botPos.y + cfg.MAX_SNAP_DROP) {
-            if (dy > cfg.JUMP_Y_THRESH) {
-                startAirborneMotion(entry, bot, 0f, stepX, false);
-            } else if (runAiTick && entry.jumpCooldownMs == 0 && stepX != 0
+            if (runAiTick && entry.jumpCooldownMs == 0 && stepX != 0 && dy <= cfg.JUMP_Y_THRESH
                     && arcCheckJump(bot, botPos, stepX, targetPos.x, targetPos.y)) {
-                initiateJump(entry, bot, dx);
+                initiateJump(entry, bot, stepX);
             } else {
                 stopGroundMotion(entry);
                 entry.physX = botPos.x;
@@ -638,11 +638,25 @@ class BotMovementManager {
     // Helpers
     // -------------------------------------------------------------------------
 
+    static int calcStepX(MapleMap map, int botX, int targetX, boolean wasMovingX) {
+        Config cfg = BotMovementManager.cfg;
+        int dx   = targetX - botX;
+        int absDx = Math.abs(dx);
+
+        if (absDx <= cfg.STOP_DIST) {
+            return 0;
+        }
+        if (!wasMovingX && absDx <= cfg.FOLLOW_DIST) {
+            return 0; // inside dead zone โ€” don't start until sufficiently far
+        }
+        return Math.min(absDx, walkStep(map)) * (dx >= 0 ? 1 : -1);
+    }
+
     /**
      * Returns the X step toward targetX, with hysteresis to prevent jitter:
      * only starts moving once distance exceeds FOLLOW_DIST, stops at STOP_DIST.
      */
-    static int calcStepX(BotEntry entry, MapleMap map, int botX, int targetX) {
+    static int updateStepX(BotEntry entry, MapleMap map, int botX, int targetX) {
         Config cfg = BotMovementManager.cfg;
         int dx   = targetX - botX;
         int absDx = Math.abs(dx);
@@ -733,36 +747,100 @@ class BotMovementManager {
      * within jump reach below.  No longer requires the rope to reach the owner's
      * exact Y — this allows multi-rope scenarios where the bot chains several ropes.
      */
-    static Rope findNearbyRope(Character bot, Point botPos) {
+    static Rope findNearbyRope(Character bot, Point botPos, Point targetPos) {
         Config cfg = BotMovementManager.cfg;
         Rope best     = null;
-        int  bestDist = cfg.ROPE_SEEK_X + 1;
+        int  bestScore = Integer.MAX_VALUE;
         // Max upward reach: v0²/(2g) — how high the bot can jump to catch the rope bottom
         int jumpReach = (int) calculateMaxJumpHeight();
         for (Rope r : bot.getMap().getRopes()) {
             int dist = Math.abs(r.x() - botPos.x);
             // Rope must go above bot (topY < botPos.y) and its bottom must be reachable
-            if (dist < bestDist && r.topY() < botPos.y && r.bottomY() >= botPos.y - jumpReach) {
-                bestDist = dist;
-                best     = r;
+            if (dist <= cfg.ROPE_SEEK_X && r.topY() < botPos.y && r.bottomY() >= botPos.y - jumpReach) {
+                int score = scoreRopeForTarget(botPos, targetPos, r);
+                if (score < bestScore) {
+                    bestScore = score;
+                    best     = r;
+                }
             }
         }
         return best;
     }
 
     /** Finds the nearest rope whose top is above the bot, within WAYPOINT_SEEK_X radius. */
-    static Rope findWaypointRope(Character bot, Point botPos) {
+    static Rope findWaypointRope(Character bot, Point botPos, Point targetPos) {
         Config cfg = BotMovementManager.cfg;
         Rope best    = null;
-        int  bestDist = cfg.WAYPOINT_SEEK_X + 1;
+        int  bestScore = Integer.MAX_VALUE;
         for (Rope r : bot.getMap().getRopes()) {
             int dist = Math.abs(r.x() - botPos.x);
-            if (dist < bestDist && r.topY() < botPos.y && r.bottomY() > botPos.y - calculateMaxJumpHeight()) {
-                bestDist = dist;
-                best     = r;
+            if (dist <= cfg.WAYPOINT_SEEK_X && r.topY() < botPos.y && r.bottomY() > botPos.y - calculateMaxJumpHeight()) {
+                int score = scoreRopeForTarget(botPos, targetPos, r);
+                if (score < bestScore) {
+                    bestScore = score;
+                    best     = r;
+                }
             }
         }
         return best;
+    }
+
+    private static int scoreRopeForTarget(Point botPos, Point targetPos, Rope rope) {
+        int botDist = Math.abs(rope.x() - botPos.x);
+        int targetDist = Math.abs(targetPos.x - rope.x());
+        int score = botDist * 2 + targetDist;
+
+        int ropeDir = Integer.compare(rope.x() - botPos.x, 0);
+        int targetDir = Integer.compare(targetPos.x - botPos.x, 0);
+        if (targetDir != 0 && ropeDir != 0 && ropeDir != targetDir) {
+            score += cfg.ROPE_SEEK_X;
+        }
+        if (rope.topY() > targetPos.y) {
+            score += Math.min(cfg.WAYPOINT_SEEK_X, rope.topY() - targetPos.y);
+        }
+
+        return score;
+    }
+
+    private static boolean hasFootholdRouteTowardTarget(BotEntry entry, Character bot, Point botPos, Foothold currentFh, Point targetPos) {
+        MapleMap map = bot.getMap();
+        if (isSameFoothold(map, currentFh, targetPos)) {
+            return true;
+        }
+
+        int stepX = calcStepX(map, botPos.x, targetPos.x, entry.wasMovingX);
+        if (stepX != 0 && isPathWalkable(bot, botPos, stepX)) {
+            return true;
+        }
+
+        return targetPos.y < botPos.y - cfg.JUMP_Y_THRESH
+                && entry.jumpCooldownMs == 0
+                && canAdvanceByJump(bot, botPos, targetPos, stepX);
+    }
+
+    private static boolean isSameFoothold(MapleMap map, Foothold currentFh, Point targetPos) {
+        if (currentFh == null) {
+            return false;
+        }
+
+        Foothold targetFh = map.getFootholds().findBelow(new Point(targetPos.x, targetPos.y - cfg.MAX_SLOPE_UP));
+        return targetFh != null && currentFh.getId() == targetFh.getId();
+    }
+
+    private static boolean canAdvanceByJump(Character bot, Point botPos, Point targetPos, int preferredStepX) {
+        int towardStep = preferredStepX;
+        if (towardStep == 0) {
+            int walkStep = walkStep(bot.getMap());
+            towardStep = Integer.compare(targetPos.x - botPos.x, 0) * walkStep;
+        }
+
+        if (towardStep != 0 && arcCheckJump(bot, botPos, towardStep, targetPos.x, targetPos.y)) {
+            return true;
+        }
+        if (arcCheckJump(bot, botPos, 0, targetPos.x, targetPos.y)) {
+            return true;
+        }
+        return towardStep != 0 && arcCheckJump(bot, botPos, -towardStep, targetPos.x, targetPos.y);
     }
 
     /**
