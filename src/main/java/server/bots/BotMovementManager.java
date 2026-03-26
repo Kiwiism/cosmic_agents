@@ -18,7 +18,7 @@ class BotMovementManager {
 
     static class Config {
         // Tick — the only tick-coupled value; everything else is in real-world units
-        public int   TICK_MS      = 16;   // ms between movement simulation ticks
+        public int   TICK_MS      = 50;   // ms between movement simulation ticks
 
         // Movement (px/s for velocities; px distances are tick-independent)
         public int   WALK_VEL     = 150;   // px/s for movement packet broadcast
@@ -728,7 +728,7 @@ class BotMovementManager {
         double physY = from.y;
         int    x     = from.x;
         int    prevIntY = from.y;
-        for (int t = 0; t < 40; t++) {
+        for (int t = 0; t < (1500 / cfg.TICK_MS); t++) {
             vy = Math.min(vy + gravityPerTick(), maxFallPerTick());
             x += stepX;
             physY += vy;

@@ -11,7 +11,10 @@
       "Bash(grep -rn \"HpRecover\\\\|hpRecover\\\\|hpRegen\\\\|mp_recover\\\\|addHP.*regen\\\\|recoverHp\\\\|naturallyRecoverHp\\\\|HpMpRecovery\\\\|startRecov\" D:/GameServers/Maplestory/Cosmic/src/main/java --include=*.java -l)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(grep:*)",
+      "Bash(find /d/GameServers/Maplestory/OpenStory -type d -name *ot*)"
     ]
   }
 }
