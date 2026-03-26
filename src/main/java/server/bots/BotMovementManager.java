@@ -724,25 +724,26 @@ class BotMovementManager {
      */
     static boolean arcCheckJump(Character bot, Point from, int stepX, int targetX, int targetY) {
         Config cfg = BotMovementManager.cfg;
-        float vy = -jumpForcePerTick();
-        int x = from.x, y = from.y;
+        float  vy    = -jumpForcePerTick();
+        double physY = from.y;
+        int    x     = from.x;
+        int    prevIntY = from.y;
         for (int t = 0; t < 40; t++) {
-            int prevY = y;
             vy = Math.min(vy + gravityPerTick(), maxFallPerTick());
             x += stepX;
-            y += (int) vy;
-            if (vy > 0) { // descending — use prevY as search origin (mirrors tickAirborne)
-                Point floor = bot.getMap().getPointBelow(new Point(x, prevY));
-                if (floor != null && floor.y <= y && floor.y < from.y) {
-                    // Overshoot: only reject if landing is near targetY AND bot crosses over targetX.
-                    // Backward jumps that gain Y (landing far from targetY) are always allowed.
-                    boolean nearTargetY  = Math.abs(floor.y - targetY) <= 100;
-                    boolean crossedX     = (from.x < targetX && x > targetX)
-                                        || (from.x > targetX && x < targetX);
-                    boolean overshoot    = stepX != 0 && nearTargetY && crossedX;
+            physY += vy;
+            int intY = (int) Math.round(physY);
+            if (vy > 0) { // descending — mirrors tickAirborne landing check
+                Point floor = bot.getMap().getPointBelow(new Point(x, prevIntY + 1));
+                if (floor != null && floor.y <= intY && floor.y < from.y) {
+                    boolean nearTargetY = Math.abs(floor.y - targetY) <= 100;
+                    boolean crossedX    = (from.x < targetX && x > targetX)
+                                       || (from.x > targetX && x < targetX);
+                    boolean overshoot   = stepX != 0 && nearTargetY && crossedX;
                     return !overshoot;
                 }
             }
+            prevIntY = intY;
         }
         return false;
     }
