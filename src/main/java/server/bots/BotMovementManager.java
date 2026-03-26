@@ -220,15 +220,12 @@ class BotMovementManager {
                 bot.setStance(5);
                 broadcastMovement(bot, 0, 0);
             } else {
-                entry.inAir = true;
-                entry.velY  = 0f;
+                startAirborneMotion(entry, bot, 0f, 0, false);
             }
             return;
         }
         if (botPos.y >= entry.climbRope.bottomY() + 3) {
-            entry.climbing = false;
-            entry.inAir    = true;
-            entry.velY     = 0f;
+            startAirborneMotion(entry, bot, 0f, 0, false);
             bot.setStance(6);
             broadcastMovement(bot, 0, 0);
             return;
@@ -262,18 +259,14 @@ class BotMovementManager {
     /** Jump off the current rope position toward dx direction. */
     static void jumpOffRope(BotEntry entry, Character bot, int dx) {
         Config cfg = BotMovementManager.cfg;
-        entry.climbing        = false;
-        entry.inAir           = true;
-        entry.velY            = -ropeJumpForcePerTick();
-        stopGroundMotion(entry);
-        entry.seekingRope     = false;
         int walkStep = walkStep(bot.getMap());
-        entry.airVelX         = dx > 0 ? walkStep : dx < 0 ? -walkStep : 0;
+        int airVelX = dx > 0 ? walkStep : dx < 0 ? -walkStep : 0;
+        startAirborneMotion(entry, bot, -ropeJumpForcePerTick(), airVelX, false);
         entry.ropeGrabCooldownMs = delayAfterCurrentTick(cfg.JUMP_COOLDOWN_MS + 200); // stay off rope long enough to clear it
         entry.jumpCooldownMs    = delayAfterCurrentTick(cfg.JUMP_COOLDOWN_MS);
         bot.setStance(dx >= 0 ? 6 : 7);
         int jumpVelY = Math.round(-cfg.JUMP_ROPE_PXS);
-        broadcastMovement(bot, velocityFromDeltaX(entry.airVelX), jumpVelY);
+        broadcastMovement(bot, velocityFromDeltaX(airVelX), jumpVelY);
     }
 
     // -------------------------------------------------------------------------
@@ -370,9 +363,7 @@ class BotMovementManager {
         Foothold currentFh = bot.getMap().getFootholds()
                 .findBelow(new Point(botPos.x, botPos.y - cfg.MAX_SLOPE_UP));
         if (currentFh == null) {
-            entry.inAir = true;
-            entry.velY  = 0f;
-            stopGroundMotion(entry);
+            startAirborneMotion(entry, bot, 0f, 0, false);
             return;
         }
 
@@ -387,11 +378,7 @@ class BotMovementManager {
         if (entry.downJumpPending) {
             entry.downJumpPending    = false;
             entry.downJumpGracePeriodMS = 300L;
-            entry.inAir              = true;
-            entry.physX              = botPos.x;
-            entry.physY              = botPos.y;
-            entry.velY               = -downJumpForcePerTick();
-            entry.airVelX            = 0;
+            startAirborneMotion(entry, bot, -downJumpForcePerTick(), 0, false);
             entry.jumpCooldownMs     = delayAfterCurrentTick(cfg.JUMP_COOLDOWN_MS);
             bot.setPosition(new Point(botPos.x, botPos.y));
             bot.setStance(dx >= 0 ? 6 : 7);
@@ -472,10 +459,7 @@ class BotMovementManager {
                             bot.setStance(dropStepX > 0 ? 2 : 3);
                             broadcastMovement(bot, velocityFromDeltaX(dropStepX), 0);
                         } else {
-                            entry.inAir   = true;
-                            stopGroundMotion(entry);
-                            entry.airVelX = dropStepX;
-                            entry.velY    = 0f;
+                            startAirborneMotion(entry, bot, 0f, dropStepX, false);
                         }
                         return;
                     }
@@ -623,11 +607,7 @@ class BotMovementManager {
         Point snapped = bot.getMap().getPointBelow(new Point(newXPhys, botPos.y - cfg.MAX_SLOPE_UP));
         if (snapped == null || snapped.y > botPos.y + cfg.MAX_SNAP_DROP) {
             if (dy > cfg.JUMP_Y_THRESH) {
-                entry.inAir   = true;
-                stopGroundMotion(entry);
-                entry.airVelX = stepX;
-                entry.velY    = 0f;
-                entry.physY   = botPos.y;
+                startAirborneMotion(entry, bot, 0f, stepX, false);
             } else if (runAiTick && entry.jumpCooldownMs == 0 && stepX != 0
                     && arcCheckJump(bot, botPos, stepX, targetPos.x, targetPos.y)) {
                 initiateJump(entry, bot, dx);
@@ -702,15 +682,21 @@ class BotMovementManager {
         return roundedAirPosition(entry);
     }
 
+    static void startAirborneMotion(BotEntry entry, Character bot, float initialVelY, int airVelX, boolean seekingRope) {
+        Point pos = bot.getPosition();
+        entry.climbing = false;
+        entry.inAir = true;
+        entry.physX = pos.x;
+        entry.physY = pos.y;
+        entry.velY = initialVelY;
+        stopGroundMotion(entry);
+        entry.seekingRope = seekingRope;
+        entry.airVelX = airVelX;
+    }
+
     static void initiateJump(BotEntry entry, Character bot, int dx) {
         Config cfg = BotMovementManager.cfg;
-        Point p = bot.getPosition();
-        entry.physX = p.x;
-        entry.physY = p.y;
-        stopGroundMotion(entry);
-        entry.velY        = -jumpForcePerTick();
-        entry.inAir       = true;
-        entry.seekingRope = false;
+        startAirborneMotion(entry, bot, -jumpForcePerTick(), 0, false);
         int jumpVelY = Math.round(-cfg.JUMP_SPEED_PXS); // px/s for movement packet
         if (dx == 0) {
             // Vertical jump — only when explicitly 0 (winDir=0 or owner directly above)
@@ -727,18 +713,12 @@ class BotMovementManager {
 
     static void initiateRopeJump(BotEntry entry, Character bot, int dx) {
         Config cfg = BotMovementManager.cfg;
-        Point p = bot.getPosition();
-        entry.physX = p.x;
-        entry.physY = p.y;
-        stopGroundMotion(entry);
-        entry.velY        = -jumpForcePerTick();
-        entry.inAir       = true;
-        entry.seekingRope = true;
         int walkStep = walkStep(bot.getMap());
-        entry.airVelX     = dx > 0 ? walkStep : dx < 0 ? -walkStep : 0;
+        int airVelX = dx > 0 ? walkStep : dx < 0 ? -walkStep : 0;
+        startAirborneMotion(entry, bot, -jumpForcePerTick(), airVelX, true);
         bot.setStance(dx >= 0 ? 6 : 7);
         int jumpVelY  = -(int) ((jumpForcePerTick() - gravityPerTick()) * (1000f / cfg.TICK_MS));
-        int velXBcast = velocityFromDeltaX(entry.airVelX);
+        int velXBcast = velocityFromDeltaX(airVelX);
         broadcastMovement(bot, velXBcast, jumpVelY);
     }
 

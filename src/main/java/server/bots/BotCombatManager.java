@@ -138,8 +138,8 @@ class BotCombatManager {
         int kbX = bp.x + (dir == 0 ? 30 : -30);
         bot.setPosition(new Point(kbX, bp.y));
         BotMovementManager.resetEntryState(entry);
-        entry.velY = -cc.KNOCKBACK_RISE;
-        entry.airVelX = (dir == 0 ? 1 : -1) * BotMovementManager.walkStep(bot.getMap());
+        int airVelX = (dir == 0 ? 1 : -1) * BotMovementManager.walkStep(bot.getMap());
+        BotMovementManager.startAirborneMotion(entry, bot, -cc.KNOCKBACK_RISE, airVelX, false);
         int velXBcast = entry.airVelX * (1000 / mc.TICK_MS);
         int velYBcast = (int) (-entry.velY * (1000f / mc.TICK_MS));
         BotMovementManager.broadcastMovement(bot, velXBcast, velYBcast);
