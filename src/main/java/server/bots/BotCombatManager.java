@@ -103,13 +103,9 @@ class BotCombatManager {
         }
         if (bot.getHp() <= 0) return;
 
-        Point botPos = bot.getPosition();
-        Config cc = BotCombatManager.cfg;
         for (Monster mob : bot.getMap().getAllMonsters()) {
             if (!mob.isAlive()) continue;
-            Point mp = mob.getPosition();
-            if (Math.abs(botPos.x - mp.x) <= cc.MOB_TOUCH_HALF_W
-                    && Math.abs(botPos.y - mp.y) <= cc.MOB_TOUCH_HALF_H) {
+            if (isMobTouchingBot(bot, mob)) {
                 applyMobHit(entry, bot, mob);
                 return;
             }
@@ -271,7 +267,7 @@ class BotCombatManager {
 
     static boolean isTargetInAttackRange(AttackPlan attackPlan, Character bot, Monster target) {
         if (attackPlan.hasHitBox()) {
-            return attackPlan.hitBox.contains(target.getPosition());
+            return doesHitBoxIntersectMonster(attackPlan.hitBox, target);
         }
         return isBasicAttackInRange(bot.getPosition(), target.getPosition());
     }
@@ -369,7 +365,7 @@ class BotCombatManager {
 
         StatEffect effect = skill.getEffect(skillLevel);
         Rectangle hitBox = calculateSkillHitBox(effect, bot, primaryTarget);
-        if (hitBox == null || !hitBox.contains(primaryTarget.getPosition())) {
+        if (hitBox == null || !doesHitBoxIntersectMonster(hitBox, primaryTarget)) {
             return null;
         }
 
@@ -390,7 +386,7 @@ class BotCombatManager {
     }
 
     private static List<Monster> collectTargetsInHitBox(Character bot, Monster primaryTarget, Rectangle hitBox, int maxTargets) {
-        if (!hitBox.contains(primaryTarget.getPosition())) {
+        if (!doesHitBoxIntersectMonster(hitBox, primaryTarget)) {
             return List.of();
         }
 
@@ -405,7 +401,7 @@ class BotCombatManager {
             if (!monster.isAlive() || monster.getObjectId() == primaryTarget.getObjectId()) {
                 continue;
             }
-            if (!hitBox.contains(monster.getPosition())) {
+            if (!doesHitBoxIntersectMonster(hitBox, monster)) {
                 continue;
             }
             secondaryTargets.add(monster);
@@ -427,6 +423,40 @@ class BotCombatManager {
         boolean inHRange = dx <= BotCombatManager.cfg.ATTACK_RANGE_X;
         boolean inVRange = dy >= -BotCombatManager.cfg.ATTACK_DOWN_MAX && dy <= BotCombatManager.cfg.ATTACK_RANGE_Y;
         return inHRange && inVRange;
+    }
+
+    private static boolean isMobTouchingBot(Character bot, Monster mob) {
+        Rectangle botBounds = getBotTouchBounds(bot);
+        Rectangle mobBounds = BotMobHitboxProvider.getInstance().getMobBounds(mob);
+        if (mobBounds != null) {
+            return mobBounds.intersects(botBounds);
+        }
+
+        Point botPos = bot.getPosition();
+        Point mobPos = mob.getPosition();
+        Config cc = BotCombatManager.cfg;
+        return Math.abs(botPos.x - mobPos.x) <= cc.MOB_TOUCH_HALF_W
+                && Math.abs(botPos.y - mobPos.y) <= cc.MOB_TOUCH_HALF_H;
+    }
+
+    private static Rectangle getBotTouchBounds(Character bot) {
+        Point botPos = bot.getPosition();
+        int halfWidth = BotCombatManager.cfg.MOB_TOUCH_HALF_W;
+        int halfHeight = BotCombatManager.cfg.MOB_TOUCH_HALF_H;
+        return new Rectangle(botPos.x - halfWidth, botPos.y - halfHeight, halfWidth * 2, halfHeight * 2);
+    }
+
+    private static boolean doesHitBoxIntersectMonster(Rectangle hitBox, Monster monster) {
+        if (hitBox == null || monster == null) {
+            return false;
+        }
+
+        Rectangle mobBounds = BotMobHitboxProvider.getInstance().getMobBounds(monster);
+        if (mobBounds != null) {
+            return hitBox.intersects(mobBounds) || hitBox.contains(monster.getPosition());
+        }
+
+        return hitBox.contains(monster.getPosition());
     }
 
     private static BasicAttackData buildBasicAttackData(Character bot, Monster primaryTarget) {
