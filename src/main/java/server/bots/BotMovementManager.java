@@ -288,20 +288,20 @@ class BotMovementManager {
 
         Character bot = entry.bot;
         Point botPos  = bot.getPosition();
-        int newX      = botPos.x + entry.airVelX;
+        Point prevPos = roundedAirPosition(entry);
 
         // Mid-air rope catch — only when we intentionally jumped for a rope
         if (successfullyGrabbedRope(entry, bot, botPos, cfg)) return;
 
-        entry.velY = Math.min(entry.velY + gravityPerTick(), maxFallPerTick());
-        entry.physY += entry.velY;
-        int newY = (int) Math.round(entry.physY);
+        Point nextPos = advanceAirbornePosition(entry);
+        int newX = nextPos.x;
+        int newY = nextPos.y;
 
         // Landing check — search strictly below current Y to avoid immediately re-landing
         // Also dont land after down jump grace period
         // on the foothold we just left (botPos.y + 1, not botPos.y - 1)
         if (entry.velY > 0 && entry.downJumpGracePeriodMS == 0) {
-            Point floorPt = bot.getMap().getPointBelow(new Point(newX, botPos.y + 1));
+            Point floorPt = bot.getMap().getPointBelow(new Point(newX, prevPos.y + 1));
             if (floorPt != null && floorPt.y <= newY) {
                 entry.inAir       = false;
                 entry.velY        = 0f;
@@ -320,7 +320,6 @@ class BotMovementManager {
             }
         }
 
-        entry.physY = newY; // keep in sync after rounding
         bot.setPosition(new Point(newX, newY));
         // Use locked airVelX for stance + broadcast — not the owner direction (which can flip mid-arc)
         int velXBcast = velocityFromDeltaX(entry.airVelX);
@@ -692,6 +691,17 @@ class BotMovementManager {
         return dy <= cfg.MAX_SNAP_DROP && dy >= -cfg.MAX_SLOPE_UP;
     }
 
+    static Point roundedAirPosition(BotEntry entry) {
+        return new Point((int) Math.round(entry.physX), (int) Math.round(entry.physY));
+    }
+
+    static Point advanceAirbornePosition(BotEntry entry) {
+        entry.physX += entry.airVelX;
+        entry.velY = Math.min(entry.velY + gravityPerTick(), maxFallPerTick());
+        entry.physY += entry.velY;
+        return roundedAirPosition(entry);
+    }
+
     static void initiateJump(BotEntry entry, Character bot, int dx) {
         Config cfg = BotMovementManager.cfg;
         Point p = bot.getPosition();
@@ -780,13 +790,14 @@ class BotMovementManager {
     static boolean arcCheckJump(Character bot, Point from, int stepX, int targetX, int targetY) {
         Config cfg = BotMovementManager.cfg;
         float  vy    = -jumpForcePerTick();
+        double physX = from.x;
         double physY = from.y;
-        int    x     = from.x;
         int    prevIntY = from.y;
         for (int t = 0; t < (1500 / cfg.TICK_MS); t++) {
+            physX += stepX;
             vy = Math.min(vy + gravityPerTick(), maxFallPerTick());
-            x += stepX;
             physY += vy;
+            int x = (int) Math.round(physX);
             int intY = (int) Math.round(physY);
             if (vy > 0) { // descending — mirrors tickAirborne landing check
                 Point floor = bot.getMap().getPointBelow(new Point(x, prevIntY + 1));
