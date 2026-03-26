@@ -430,11 +430,34 @@ class BotCombatManager {
             return BasicAttackData.fallback(primaryTarget.getPosition().x < bot.getPosition().x);
         }
 
+        WeaponType weaponType = server.ItemInformationProvider.getInstance().getWeaponType(weapon.getItemId());
         boolean facingLeft = primaryTarget.getPosition().x < bot.getPosition().x;
         Rectangle hitBox = attackProfile.hasBoundingBox()
                 ? attackProfile.calculateBoundingBox(bot.getPosition(), facingLeft)
                 : null;
-        return BasicAttackData.fromProfile(attackProfile, hitBox, facingLeft, bot);
+        return BasicAttackData.fromProfile(attackProfile, weaponType, hitBox, facingLeft, bot);
+    }
+
+    /**
+     * Maps a weapon type to the primary body animation stance name used for that weapon,
+     * matching OpenStory's {@code CharLook::getattackstance} attack-type groupings.
+     * The returned string is a key in {@code Character/00002000.img} (BodyDrawInfo).
+     */
+    private static String primaryAttackStance(WeaponType weaponType) {
+        if (weaponType == null) {
+            return "swingO1";
+        }
+        return switch (weaponType) {
+            case BOW                            -> "shoot1";
+            case CROSSBOW                       -> "shoot2";
+            case SPEAR_SWING, POLE_ARM_SWING    -> "swingP1";
+            case SPEAR_STAB,  POLE_ARM_STAB     -> "stabT1";
+            case GENERAL2H_SWING, SWORD2H       -> "swingT1";
+            case GENERAL2H_STAB                 -> "stabT1";
+            case GUN                            -> "shot";
+            // 1H swords, axes, BW, daggers, wands, staves, claws, knuckles (attack types 1, 6, 7)
+            default                             -> "swingO1";
+        };
     }
 
     private static void applyAttackRoute(AttackRoute route, AbstractDealDamageHandler.AttackInfo attack, Character bot) {
@@ -498,7 +521,7 @@ class BotCombatManager {
     }
 
     private record BasicAttackData(Rectangle hitBox, int display, int direction, int rangedDirection, int speed, int cooldownMs) {
-        private static BasicAttackData fromProfile(BotAttackDataProvider.NormalAttackProfile profile, Rectangle hitBox, boolean facingLeft, Character bot) {
+        private static BasicAttackData fromProfile(BotAttackDataProvider.NormalAttackProfile profile, WeaponType weaponType, Rectangle hitBox, boolean facingLeft, Character bot) {
             int baseDirection = profile.getAttack();
             if (baseDirection <= 0) {
                 return fallback(facingLeft, hitBox);
@@ -509,9 +532,19 @@ class BotCombatManager {
             int display = baseDirection + variantOffset;
             int direction = facingLeft ? display + 11 : display;
             int effectiveAttackSpeed = resolveEffectiveAttackSpeed(profile.getAttackSpeed(), bot);
+
+            // Use body animation timing (Character/00002000.img stance frame delays), matching
+            // OpenStory's BodyDrawInfo → Char::get_attackdelay pipeline. Fall back to the
+            // weapon/afterimage WZ delay only when the body anim data is unavailable.
+            String stance = primaryAttackStance(weaponType);
+            int rawDelayMs = BotAttackDataProvider.getInstance().getBodyStanceDurationMs(stance);
+            if (rawDelayMs <= 0) {
+                rawDelayMs = profile.getAttackDelayMillis();
+            }
+
             return new BasicAttackData(hitBox, display, direction, direction,
                     effectiveAttackSpeed,
-                    toCooldownMs(adjustAttackDelayMillis(profile.getAttackDelayMillis(), profile.getAttackSpeed(), effectiveAttackSpeed)));
+                    toCooldownMs(adjustAttackDelayMillis(rawDelayMs, profile.getAttackSpeed(), effectiveAttackSpeed)));
         }
 
         private static BasicAttackData fallback(boolean facingLeft) {
@@ -591,13 +624,15 @@ class BotCombatManager {
             return 0;
         }
 
-        float baseSpeedFactor = toAttackSpeedFactor(normalizeAttackSpeed(baseAttackSpeed));
+        // Mirror OpenStory Char::get_attackdelay: effectiveDelay = rawDelay / (1.7 - speed/10).
+        // baseDelayMillis is the raw WZ animation duration; divide by the effective speed factor
+        // (which already incorporates any booster offset) to get the actual cooldown.
         float effectiveSpeedFactor = toAttackSpeedFactor(effectiveAttackSpeed);
-        if (baseSpeedFactor <= 0f || effectiveSpeedFactor <= 0f) {
+        if (effectiveSpeedFactor <= 0f) {
             return baseDelayMillis;
         }
 
-        return Math.max(1, Math.round(baseDelayMillis * (baseSpeedFactor / effectiveSpeedFactor)));
+        return Math.max(1, Math.round(baseDelayMillis / effectiveSpeedFactor));
     }
 
     private static float toAttackSpeedFactor(int attackSpeed) {

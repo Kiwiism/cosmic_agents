@@ -111,8 +111,65 @@ final class BotAttackDataProvider {
     }
 
     private final Map<Integer, NormalAttackProfile> normalAttackProfiles = new HashMap<>();
+    private volatile Map<String, Integer> bodyStanceDurations = null;
 
     private BotAttackDataProvider() {
+    }
+
+    /**
+     * Returns the total animation duration in milliseconds for the given body stance
+     * (e.g. "swingO1", "shoot1"), loaded from {@code Character/00002000.img.xml}.
+     * This mirrors OpenStory's {@code BodyDrawInfo::get_delay} summed over all stance frames,
+     * which is the authoritative timing source used by {@code Char::get_attackdelay}.
+     * Returns 0 if the stance is not found.
+     */
+    int getBodyStanceDurationMs(String stanceName) {
+        if (bodyStanceDurations == null) {
+            synchronized (this) {
+                if (bodyStanceDurations == null) {
+                    bodyStanceDurations = loadBodyStanceDurations();
+                }
+            }
+        }
+        return bodyStanceDurations.getOrDefault(stanceName, 0);
+    }
+
+    private Map<String, Integer> loadBodyStanceDurations() {
+        Path bodyFile = WZFiles.CHARACTER.getFile().resolve("00002000.img.xml");
+        if (!Files.isRegularFile(bodyFile)) {
+            log.warn("Bot attack timing: body animation file not found at {}", bodyFile);
+            return Map.of();
+        }
+
+        Document doc = parseXmlDocument(bodyFile);
+        if (doc == null) {
+            return Map.of();
+        }
+
+        Map<String, Integer> durations = new HashMap<>();
+        for (Element stanceEl : getNamedChildren(doc.getDocumentElement())) {
+            String stanceName = stanceEl.getAttribute("name");
+            if (stanceName.isBlank()) {
+                continue;
+            }
+
+            int totalDelay = 0;
+            for (Element frameEl : getNamedChildren(stanceEl)) {
+                // Frames with an "action" child are action-redirect frames (no direct delay)
+                if (findNamedChild(frameEl, "action") != null) {
+                    continue;
+                }
+                // Default 100 ms matches OpenStory's BodyDrawInfo fallback
+                totalDelay += getIntValue(findNamedChild(frameEl, "delay"), 100);
+            }
+
+            if (totalDelay > 0) {
+                durations.put(stanceName, totalDelay);
+            }
+        }
+
+        log.info("Bot attack timing: loaded {} body stances from {}", durations.size(), bodyFile.getFileName());
+        return Map.copyOf(durations);
     }
 
     NormalAttackProfile getNormalAttackProfile(int itemId) {
@@ -145,17 +202,23 @@ final class BotAttackDataProvider {
         int attack = getIntValue(findNamedChild(info, "attack"), 0);
         int reqLevel = getIntValue(findNamedChild(info, "reqLevel"), 0);
 
-        AttackBoundsData boundsData = loadAfterimageBounds(afterImage, reqLevel);
-        if (boundsData == null) {
-            boundsData = loadWeaponActionBounds(weaponRoot, weaponFile);
-        }
+        AttackBoundsData afterImageData = loadAfterimageBounds(afterImage, reqLevel);
+        AttackBoundsData weaponActionData = loadWeaponActionBounds(weaponRoot, weaponFile);
 
-        if (boundsData == null) {
+        // Prefer afterimage for hit bounds (cleaner per-level data), but always use weapon
+        // action delay for timing — afterimage frame delays only cover the trail display window
+        // and are far shorter than the full swing animation.
+        AttackBoundsData forBounds = afterImageData != null ? afterImageData : weaponActionData;
+        if (forBounds == null) {
             return new NormalAttackProfile(attackSpeed, attack, 0, afterImage, null, List.of(), weaponFile.toString());
         }
 
-        return new NormalAttackProfile(attackSpeed, attack, boundsData.attackDelayMillis, afterImage, boundsData.bounds,
-                boundsData.sourceActions, boundsData.sourcePath);
+        int delay = weaponActionData != null && weaponActionData.attackDelayMillis > 0
+                ? weaponActionData.attackDelayMillis
+                : afterImageData != null ? afterImageData.attackDelayMillis : 0;
+
+        return new NormalAttackProfile(attackSpeed, attack, delay, afterImage, forBounds.bounds,
+                forBounds.sourceActions, forBounds.sourcePath);
     }
 
     private AttackBoundsData loadAfterimageBounds(String afterImage, int reqLevel) {
