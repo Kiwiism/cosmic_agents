@@ -22,10 +22,11 @@ class BotEntry {
     final ScheduledFuture<?> task;
 
     // Physics
-    float velY      = 0f;
-    float groundVelX = 0f;
-    float groundXCarry = 0f;
-    boolean inAir   = false;
+    float  velY  = 0f;
+    double hspeed = 0.0;   // horizontal velocity in px/tick (OpenStory inertia model)
+    double physX  = 0.0;   // sub-pixel accumulated X position
+    double physY  = 0.0;   // sub-pixel accumulated Y position
+    boolean inAir = false;
     int jumpCooldownMs = 0;
 
     // Rope climbing

@@ -18,7 +18,7 @@ class BotMovementManager {
 
     static class Config {
         // Tick — the only tick-coupled value; everything else is in real-world units
-        public int   TICK_MS      = 50;   // ms between movement simulation ticks
+        public int   TICK_MS      = 16;   // ms between movement simulation ticks
 
         // Movement (px/s for velocities; px distances are tick-independent)
         public int   WALK_VEL     = 150;   // px/s for movement packet broadcast
@@ -35,9 +35,13 @@ class BotMovementManager {
         public float JUMP_DOWN_PXS     = 320.0f;  // small downward push for platform drop-through
         public float JUMP_ROPE_PXS     = 375.0f;  // 3.0  / 0.008  — rope jump = jump_force / 1.5
         public float MAX_FALL_PXS      = 670.0f;  // terminal fall speed
-        public float WALK_SPEED_PXS    = 150.0f;  // 1.2  / 0.008  — walk at 100 SPEED
-        public float GROUND_ACCEL_PXS2 = 1000.0f; // reach max walk speed in ~3 ticks at 50ms
-        public float GROUND_FRIC_PXS2  = 1500.0f; // stop from max walk speed in ~2 ticks at 50ms
+        // OpenStory ground friction model (Physics.cpp)
+        // hforce applied each tick; inertia drag = FRICTION+SLOPEFACTOR * (hspeed/GROUNDSLIP)
+        // Max hspeed reached when hforce == drag: hspeed_max = hforce * GROUNDSLIP / (FRICTION+SLOPEFACTOR)
+        public double HFORCE_PXS   = 20.0;  // 0.16 px/8ms * (1000/8) — walk force per second
+        public double GROUNDSLIP   = 3.0;   // OpenStory Physics.cpp
+        public double FRICTION     = 0.3;   // OpenStory Physics.cpp
+        public double SLOPEFACTOR  = 0.1;   // OpenStory Physics.cpp
 
         // Jump control
         public int   JUMP_Y_THRESH    = 30;
@@ -47,8 +51,7 @@ class BotMovementManager {
         public int   MAX_SLOPE_UP   = 26;
 
         // Rope climbing
-        public float CLIMB_SPEED_PXS  = 200.0f;  // rope climb speed (px/s)
-        public int   CLIMB_VEL        = 130;
+        public float CLIMB_SPEED_PXS  = 100.0f;  // rope climb speed (px/s)
         public int   ROPE_SEEK_X      = 150;
         public int   ROPE_GRAB_X      = 22;
         public int   TELEPORT_DIST    = 2000;
@@ -91,7 +94,6 @@ class BotMovementManager {
     static float tickS() { return cfg.TICK_MS / 1000f; }
 
     // Velocities (px/s) → px/tick: linear scaling
-    static int   walkStep()             { return Math.max(1, Math.round(cfg.WALK_SPEED_PXS * tickS())); }
     static float maxFallPerTick()       { return cfg.MAX_FALL_PXS   * tickS(); }
     static float jumpForcePerTick()     { return cfg.JUMP_SPEED_PXS * tickS(); }
     static float downJumpForcePerTick() { return cfg.JUMP_DOWN_PXS  * tickS(); }
@@ -99,42 +101,37 @@ class BotMovementManager {
     static int   climbStepPerTick()     { return Math.max(1, Math.round(cfg.CLIMB_SPEED_PXS * tickS())); }
 
     // Accelerations (px/s²) → px/tick: quadratic scaling (a·t²)
-    static float gravityPerTick()        { float t = tickS(); return cfg.GRAVITY_PXS2      * t * t; }
-    static float groundAccelPerTick()    { float t = tickS(); return cfg.GROUND_ACCEL_PXS2 * t * t; }
-    static float groundFrictionPerTick() { float t = tickS(); return cfg.GROUND_FRIC_PXS2  * t * t; }
+    static float gravityPerTick() { float t = tickS(); return cfg.GRAVITY_PXS2 * t * t; }
 
-    static void stopGroundMotion(BotEntry entry) {
-        entry.groundVelX = 0f;
-        entry.groundXCarry = 0f;
+    // OpenStory inertia-based ground physics
+    // hforce per tick = HFORCE_PXS * t; drag = (FRICTION+SLOPEFACTOR) * hspeed/GROUNDSLIP
+    static double hForcePerTick() { return cfg.HFORCE_PXS * tickS(); }
+    // Theoretical max hspeed: hforce = drag → hspeed_max = hforce * GROUNDSLIP / (FRICTION+SLOPEFACTOR)
+    static double maxHSpeed()     { return hForcePerTick() * cfg.GROUNDSLIP / (cfg.FRICTION + cfg.SLOPEFACTOR); }
+    static int   walkStep()       { return Math.max(1, (int) Math.round(maxHSpeed())); }
+
+    static void applyGroundPhysics(BotEntry entry, int desiredDir) {
+        double hforce = desiredDir * hForcePerTick();
+        // Stop threshold: if no input and barely moving, snap to zero (scaled from OpenStory 8ms)
+        if (hforce == 0.0 && Math.abs(entry.hspeed) < 0.1 * cfg.TICK_MS / 8.0) {
+            entry.hspeed = 0.0;
+            return;
+        }
+        double inertia = entry.hspeed / cfg.GROUNDSLIP;
+        entry.hspeed += hforce - (cfg.FRICTION + cfg.SLOPEFACTOR) * inertia;
     }
 
-    static int updateGroundStep(BotEntry entry, int desiredDirection) {
-        float maxSpeed = walkStep();
-        float accel = groundAccelPerTick();
-        float friction = groundFrictionPerTick();
-
-        if (desiredDirection > 0) {
-            entry.groundVelX = Math.min(maxSpeed, entry.groundVelX + accel);
-        } else if (desiredDirection < 0) {
-            entry.groundVelX = Math.max(-maxSpeed, entry.groundVelX - accel);
-        } else if (entry.groundVelX > 0f) {
-            entry.groundVelX = Math.max(0f, entry.groundVelX - friction);
-        } else if (entry.groundVelX < 0f) {
-            entry.groundVelX = Math.min(0f, entry.groundVelX + friction);
-        }
-
-        entry.groundXCarry += entry.groundVelX;
-        int stepX = Math.round(entry.groundXCarry);
-        entry.groundXCarry -= stepX;
-        return stepX;
+    static void stopGroundMotion(BotEntry entry) {
+        entry.hspeed = 0.0;
     }
 
     static void resetEntryState(BotEntry entry) {
         entry.inAir             = true;
         entry.climbing          = false;
         entry.velY              = 0f;
-        entry.groundVelX        = 0f;
-        entry.groundXCarry      = 0f;
+        entry.hspeed            = 0.0;
+        entry.physX             = 0.0;
+        entry.physY             = 0.0;
         entry.airVelX           = 0;
         entry.wasMovingX        = false;
         entry.seekingRope       = false;
@@ -265,7 +262,8 @@ class BotMovementManager {
         }
 
         entry.velY = Math.min(entry.velY + gravityPerTick(), maxFallPerTick());
-        int newY   = botPos.y + (int) entry.velY;
+        entry.physY += entry.velY;
+        int newY = (int) Math.round(entry.physY);
 
         // Landing check — search strictly below current Y to avoid immediately re-landing
         // Also dont land after down jump grace period
@@ -275,6 +273,8 @@ class BotMovementManager {
             if (floorPt != null && floorPt.y <= newY) {
                 entry.inAir       = false;
                 entry.velY        = 0f;
+                entry.physX       = newX;
+                entry.physY       = floorPt.y;
                 entry.jumpCooldownMs = 0;
                 stopGroundMotion(entry);
                 entry.seekingRope = false;
@@ -288,6 +288,7 @@ class BotMovementManager {
             }
         }
 
+        entry.physY = newY; // keep in sync after rounding
         bot.setPosition(new Point(newX, newY));
         // Use locked airVelX for stance + broadcast — not the owner direction (which can flip mid-arc)
         int velXBcast = entry.airVelX > 0 ? cfg.WALK_VEL : entry.airVelX < 0 ? -cfg.WALK_VEL : 0;
@@ -306,6 +307,11 @@ class BotMovementManager {
         Point botPos  = bot.getPosition();
         int dx = targetPos.x - botPos.x;
         int dy = targetPos.y - botPos.y; // negative = owner is higher on screen
+
+        // Sync physX to actual position when idle (after teleport, map change, or first ground tick)
+        if (entry.hspeed == 0.0 && (int) Math.round(entry.physX) != botPos.x) {
+            entry.physX = botPos.x;
+        }
 
         // Always: validate foothold
         Foothold currentFh = bot.getMap().getFootholds()
@@ -329,6 +335,8 @@ class BotMovementManager {
             entry.downJumpPending    = false;
             entry.downJumpGracePeriodMS = 300L;
             entry.inAir              = true;
+            entry.physX              = botPos.x;
+            entry.physY              = botPos.y;
             entry.velY               = -downJumpForcePerTick();
             entry.airVelX            = 0;
             entry.jumpCooldownMs     = delayAfterCurrentTick(cfg.JUMP_COOLDOWN_MS);
@@ -543,7 +551,10 @@ class BotMovementManager {
         } // end runAiTick
 
         // ── Always: apply walk step using cached direction ────────────────────
-        int stepX = updateGroundStep(entry, entry.lastDesiredDirection);
+        applyGroundPhysics(entry, entry.lastDesiredDirection);
+        entry.physX += entry.hspeed;
+        int newXPhys = (int) Math.round(entry.physX);
+        int stepX = newXPhys - botPos.x;
         if (entry.lastDesiredDirection == 0 && stepX == 0) {
             bot.setStance(5);
             broadcastMovement(bot, 0, 0);
@@ -554,19 +565,20 @@ class BotMovementManager {
             broadcastMovement(bot, entry.lastDesiredDirection > 0 ? cfg.WALK_VEL : -cfg.WALK_VEL, 0);
             return;
         }
-        int newX = botPos.x + stepX;
-        Point snapped = bot.getMap().getPointBelow(new Point(newX, botPos.y - cfg.MAX_SLOPE_UP));
+        Point snapped = bot.getMap().getPointBelow(new Point(newXPhys, botPos.y - cfg.MAX_SLOPE_UP));
         if (snapped == null || snapped.y > botPos.y + cfg.MAX_SNAP_DROP) {
             if (dy > cfg.JUMP_Y_THRESH) {
                 entry.inAir   = true;
                 stopGroundMotion(entry);
                 entry.airVelX = stepX;
                 entry.velY    = 0f;
+                entry.physY   = botPos.y;
             } else if (runAiTick && entry.jumpCooldownMs == 0 && stepX != 0
                     && arcCheckJump(bot, botPos, stepX, targetPos.x, targetPos.y)) {
                 initiateJump(entry, bot, dx);
             } else {
                 stopGroundMotion(entry);
+                entry.physX = botPos.x;
                 bot.setStance(5);
                 broadcastMovement(bot, 0, 0);
             }
@@ -577,7 +589,7 @@ class BotMovementManager {
         if (stepX > 0)      { newStance = 2; velX =  cfg.WALK_VEL; }
         else if (stepX < 0) { newStance = 3; velX = -cfg.WALK_VEL; }
         else                 { newStance = 5; velX = 0; }
-        bot.setPosition(new Point(newX, snapped.y));
+        bot.setPosition(new Point(newXPhys, snapped.y));
         bot.setStance(newStance);
         broadcastMovement(bot, velX, 0);
     }
@@ -627,6 +639,9 @@ class BotMovementManager {
 
     static void initiateJump(BotEntry entry, Character bot, int dx) {
         Config cfg = BotMovementManager.cfg;
+        Point p = bot.getPosition();
+        entry.physX = p.x;
+        entry.physY = p.y;
         stopGroundMotion(entry);
         entry.velY        = -jumpForcePerTick();
         entry.inAir       = true;
@@ -647,6 +662,9 @@ class BotMovementManager {
 
     static void initiateRopeJump(BotEntry entry, Character bot, int dx) {
         Config cfg = BotMovementManager.cfg;
+        Point p = bot.getPosition();
+        entry.physX = p.x;
+        entry.physY = p.y;
         stopGroundMotion(entry);
         entry.velY        = -jumpForcePerTick();
         entry.inAir       = true;
