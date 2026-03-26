@@ -403,11 +403,11 @@ public class BotManager {
         }
 
         if (entry.climbing) {
-            BotMovementManager.tickClimbing(entry, targetPos);
+            BotMovementManager.tickClimbing(entry, targetPos, runAiTick);
         } else if (entry.inAir) {
             BotMovementManager.tickAirborne(entry, targetPos);
         } else {
-            BotMovementManager.tickGrounded(entry, targetPos);
+            BotMovementManager.tickGrounded(entry, targetPos, runAiTick);
         }
     }
 

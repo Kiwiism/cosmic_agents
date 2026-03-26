@@ -120,6 +120,10 @@ class BotEntry {
     // Staggered tick start: skip the first few hundred ms so bots don't all move in lockstep
     int skipDelayMs = ThreadLocalRandom.current().nextInt(0, 501);
     int aiTickAccumulatorMs = 0;
+
+    // Cached AI decisions — updated on logic tick, applied every movement tick
+    int     lastDesiredDirection = 0;     // -1 left, 0 stop/idle, 1 right
+    boolean climbIdle            = false; // true when holding position on rope
     boolean debugPromptSent = false;
 
     BotEntry(Character bot, Character owner, ScheduledFuture<?> task) {
