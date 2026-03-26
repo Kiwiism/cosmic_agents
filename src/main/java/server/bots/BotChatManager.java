@@ -2,18 +2,28 @@ package server.bots;
 
 import client.Character;
 import client.Job;
+import client.Skill;
+import client.SkillFactory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
+import constants.game.GameConstants;
 import server.TimerManager;
 
 import java.awt.*;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 class BotChatManager {
+    private static final String SKILL_TREE_CHOICE_ACTION = "skill_tree_choice";
+
+    private record LearnedSkill(int id, String name, int level) {}
 
     // --- helper prefix used in several info patterns ---
     // optional preamble: "what's/tell me/check … your/ur" or nothing at all
@@ -80,9 +90,15 @@ class BotChatManager {
             Pattern.CASE_INSENSITIVE);
 
     private static final Pattern BUILD_PATTERN = Pattern.compile(
-            INFO_PFX + "(build|ap|sp|skill(s)?)\\b"
+            INFO_PFX + "(build|ap|sp)\\b"
             + "|\\bwhat.?s\\s+(your|ur)\\s+build\\b"
             + "|\\bhow\\s+(did|do)\\s+(you|u)\\s+(build|assign|spend)\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern SKILLS_PATTERN = Pattern.compile(
+            INFO_PFX + "(skills?|skill\\s+trees?|skill\\s+tabs?)\\b"
+            + "|\\bwhat\\s+skills?\\s+do\\s+(you|u)\\s+have\\b"
+            + "|\\bshow\\s+me\\s+(your|ur)\\s+skills?\\b"
+            + "|^\\s*skills\\s*\\??\\s*$",
             Pattern.CASE_INSENSITIVE);
 
     private static final Pattern INVENTORY_PATTERN = Pattern.compile(
@@ -292,6 +308,10 @@ class BotChatManager {
                 }
                 return;
             }
+            if (SKILL_TREE_CHOICE_ACTION.equals(entry.pendingAction)) {
+                handleSkillTreeChoice(entry, entry.bot, message);
+                return;
+            }
             if (LOGOUT_CONFIRM_PATTERN.matcher(message).find()) {
                 String action = entry.pendingAction;
                 entry.pendingAction = null;
@@ -419,6 +439,10 @@ class BotChatManager {
         }
 
         // Info commands
+        if (SKILLS_PATTERN.matcher(message).find()) {
+            TimerManager.getInstance().schedule(() -> reportSkills(entry, entry.bot), 1000);
+            return;
+        }
         if (STATS_PATTERN.matcher(message).find())
             TimerManager.getInstance().schedule(() -> reportStats(entry, entry.bot), 1000);
         if (RANGE_PATTERN.matcher(message).find())
@@ -537,6 +561,23 @@ class BotChatManager {
                 bot.getRemainingAp()));
     }
 
+    private static void reportSkills(BotEntry entry, Character bot) {
+        Map<Integer, List<LearnedSkill>> skillTrees = collectLearnedSkillTrees(bot);
+        if (skillTrees.isEmpty()) {
+            queueBotSay(entry, "no job skills yet");
+            return;
+        }
+
+        if (skillTrees.size() == 1) {
+            Map.Entry<Integer, List<LearnedSkill>> onlyTree = skillTrees.entrySet().iterator().next();
+            queueSkillTreeReport(entry, onlyTree.getKey(), onlyTree.getValue());
+            return;
+        }
+
+        entry.pendingAction = SKILL_TREE_CHOICE_ACTION;
+        queueBotSay(entry, skillTreeChoicePrompt(skillTrees));
+    }
+
     private static void reportInventory(BotEntry entry, Character bot) {
         queueBotSay(entry, BotDropManager.inventorySummary(bot));
     }
@@ -580,6 +621,190 @@ class BotChatManager {
 
     private static void reportDebugStats(BotEntry entry, Character bot) {
         queueBotSay(entry, BotCombatManager.describeDebugStats(entry, bot));
+    }
+
+    private static void handleSkillTreeChoice(BotEntry entry, Character bot, String message) {
+        Map<Integer, List<LearnedSkill>> skillTrees = collectLearnedSkillTrees(bot);
+        if (skillTrees.isEmpty()) {
+            entry.pendingAction = null;
+            queueBotSay(entry, "no job skills yet");
+            return;
+        }
+
+        if (skillTrees.size() == 1) {
+            entry.pendingAction = null;
+            Map.Entry<Integer, List<LearnedSkill>> onlyTree = skillTrees.entrySet().iterator().next();
+            queueSkillTreeReport(entry, onlyTree.getKey(), onlyTree.getValue());
+            return;
+        }
+
+        Integer treeId = resolveSkillTreeChoice(message, skillTrees);
+        if (treeId == null) {
+            queueBotSay(entry, skillTreeChoicePrompt(skillTrees));
+            return;
+        }
+
+        entry.pendingAction = null;
+        queueSkillTreeReport(entry, treeId, skillTrees.get(treeId));
+    }
+
+    private static Map<Integer, List<LearnedSkill>> collectLearnedSkillTrees(Character bot) {
+        Map<Integer, List<LearnedSkill>> skillTrees = new TreeMap<>();
+        for (Map.Entry<Skill, Character.SkillEntry> entry : bot.getSkills().entrySet()) {
+            Skill skill = entry.getKey();
+            Character.SkillEntry skillEntry = entry.getValue();
+            if (skill == null || skillEntry == null || skillEntry.skillevel <= 0) {
+                continue;
+            }
+
+            int skillId = skill.getId();
+            if (skill.isBeginnerSkill() || GameConstants.isHiddenSkills(skillId)) {
+                continue;
+            }
+
+            int treeId = skillId / 10000;
+            skillTrees.computeIfAbsent(treeId, ignored -> new ArrayList<>())
+                    .add(new LearnedSkill(skillId, skillName(skillId), skillEntry.skillevel));
+        }
+
+        for (List<LearnedSkill> skills : skillTrees.values()) {
+            skills.sort(Comparator.comparingInt(LearnedSkill::id));
+        }
+        return skillTrees;
+    }
+
+    private static void queueSkillTreeReport(BotEntry entry, int treeId, List<LearnedSkill> skills) {
+        if (skills == null || skills.isEmpty()) {
+            queueBotSay(entry, "no learned skills in " + skillTreeLabel(treeId));
+            return;
+        }
+
+        String label = skillTreeLabel(treeId);
+        String prefix = label + ": ";
+        String followupPrefix = "more " + label + ": ";
+        StringBuilder line = new StringBuilder(prefix);
+        int countOnLine = 0;
+
+        for (LearnedSkill skill : skills) {
+            String piece = skill.name() + " lv" + skill.level();
+            boolean needsSeparator = countOnLine > 0;
+            int extraChars = piece.length() + (needsSeparator ? 2 : 0);
+            if ((line.length() + extraChars > 100 || countOnLine >= 3) && countOnLine > 0) {
+                queueBotSay(entry, line.toString());
+                line = new StringBuilder(followupPrefix);
+                countOnLine = 0;
+                needsSeparator = false;
+            }
+
+            if (needsSeparator) {
+                line.append(", ");
+            }
+            line.append(piece);
+            countOnLine++;
+        }
+
+        if (countOnLine > 0) {
+            queueBotSay(entry, line.toString());
+        }
+    }
+
+    private static Integer resolveSkillTreeChoice(String message, Map<Integer, List<LearnedSkill>> skillTrees) {
+        Matcher matcher = Pattern.compile("\\b(\\d{3,4})\\b").matcher(message);
+        while (matcher.find()) {
+            int treeId = Integer.parseInt(matcher.group(1));
+            if (skillTrees.containsKey(treeId)) {
+                return treeId;
+            }
+        }
+
+        String normalizedMessage = normalizeChoiceText(message);
+        List<Integer> matches = new ArrayList<>();
+        for (int treeId : skillTrees.keySet()) {
+            if (matchesSkillTreeChoice(normalizedMessage, treeId)) {
+                matches.add(treeId);
+            }
+        }
+        return matches.size() == 1 ? matches.get(0) : null;
+    }
+
+    private static boolean matchesSkillTreeChoice(String normalizedMessage, int treeId) {
+        String fullLabel = normalizeChoiceText(skillTreeLabel(treeId));
+        if (!fullLabel.isEmpty() && normalizedMessage.contains(fullLabel)) {
+            return true;
+        }
+
+        Job job = Job.getById(treeId);
+        if (job == null) {
+            return false;
+        }
+
+        String baseLabel = normalizeChoiceText(jobDisplayName(job));
+        return !baseLabel.isEmpty() && normalizedMessage.contains(baseLabel);
+    }
+
+    private static String skillTreeChoicePrompt(Map<Integer, List<LearnedSkill>> skillTrees) {
+        List<String> labels = new ArrayList<>();
+        for (int treeId : skillTrees.keySet()) {
+            labels.add(skillTreeLabel(treeId));
+        }
+        return "which skill tree? " + String.join(", ", labels);
+    }
+
+    private static String skillTreeLabel(int treeId) {
+        Job job = Job.getById(treeId);
+        if (job == null) {
+            return "tree " + treeId;
+        }
+
+        return switch (job) {
+            case NOBLESSE -> "noblesse (" + treeId + ")";
+            case DAWNWARRIOR1 -> "dawn warrior 1st job (" + treeId + ")";
+            case DAWNWARRIOR2 -> "dawn warrior 2nd job (" + treeId + ")";
+            case DAWNWARRIOR3 -> "dawn warrior 3rd job (" + treeId + ")";
+            case DAWNWARRIOR4 -> "dawn warrior 4th job (" + treeId + ")";
+            case BLAZEWIZARD1 -> "blaze wizard 1st job (" + treeId + ")";
+            case BLAZEWIZARD2 -> "blaze wizard 2nd job (" + treeId + ")";
+            case BLAZEWIZARD3 -> "blaze wizard 3rd job (" + treeId + ")";
+            case BLAZEWIZARD4 -> "blaze wizard 4th job (" + treeId + ")";
+            case WINDARCHER1 -> "wind archer 1st job (" + treeId + ")";
+            case WINDARCHER2 -> "wind archer 2nd job (" + treeId + ")";
+            case WINDARCHER3 -> "wind archer 3rd job (" + treeId + ")";
+            case WINDARCHER4 -> "wind archer 4th job (" + treeId + ")";
+            case NIGHTWALKER1 -> "night walker 1st job (" + treeId + ")";
+            case NIGHTWALKER2 -> "night walker 2nd job (" + treeId + ")";
+            case NIGHTWALKER3 -> "night walker 3rd job (" + treeId + ")";
+            case NIGHTWALKER4 -> "night walker 4th job (" + treeId + ")";
+            case THUNDERBREAKER1 -> "thunder breaker 1st job (" + treeId + ")";
+            case THUNDERBREAKER2 -> "thunder breaker 2nd job (" + treeId + ")";
+            case THUNDERBREAKER3 -> "thunder breaker 3rd job (" + treeId + ")";
+            case THUNDERBREAKER4 -> "thunder breaker 4th job (" + treeId + ")";
+            case LEGEND -> "legend (" + treeId + ")";
+            case ARAN1 -> "aran 1st job (" + treeId + ")";
+            case ARAN2 -> "aran 2nd job (" + treeId + ")";
+            case ARAN3 -> "aran 3rd job (" + treeId + ")";
+            case ARAN4 -> "aran 4th job (" + treeId + ")";
+            case EVAN -> "evan (" + treeId + ")";
+            case EVAN1 -> "evan 1st job (" + treeId + ")";
+            case EVAN2 -> "evan 2nd job (" + treeId + ")";
+            case EVAN3 -> "evan 3rd job (" + treeId + ")";
+            case EVAN4 -> "evan 4th job (" + treeId + ")";
+            case EVAN5 -> "evan 5th job (" + treeId + ")";
+            case EVAN6 -> "evan 6th job (" + treeId + ")";
+            case EVAN7 -> "evan 7th job (" + treeId + ")";
+            case EVAN8 -> "evan 8th job (" + treeId + ")";
+            case EVAN9 -> "evan 9th job (" + treeId + ")";
+            case EVAN10 -> "evan 10th job (" + treeId + ")";
+            default -> jobDisplayName(job) + " (" + treeId + ")";
+        };
+    }
+
+    private static String normalizeChoiceText(String text) {
+        return text.toLowerCase().replaceAll("[^a-z0-9]+", " ").trim().replaceAll("\\s+", " ");
+    }
+
+    private static String skillName(int skillId) {
+        String name = SkillFactory.getSkillName(skillId);
+        return name != null && !name.isBlank() ? name : String.valueOf(skillId);
     }
 
     private static void handleTransferCommand(BotEntry entry, TransferCommand transferCommand) {
@@ -751,6 +976,20 @@ class BotChatManager {
             case BISHOP      -> "bishop";       case BOWMASTER   -> "bowmaster";
             case MARKSMAN    -> "marksman";     case NIGHTLORD   -> "night lord";
             case SHADOWER    -> "shadower";     case BUCCANEER   -> "buccaneer";
+            case NOBLESSE    -> "noblesse";
+            case DAWNWARRIOR1 -> "dawn warrior";   case DAWNWARRIOR2 -> "dawn warrior";
+            case DAWNWARRIOR3 -> "dawn warrior";   case DAWNWARRIOR4 -> "dawn warrior";
+            case BLAZEWIZARD1 -> "blaze wizard";   case BLAZEWIZARD2 -> "blaze wizard";
+            case BLAZEWIZARD3 -> "blaze wizard";   case BLAZEWIZARD4 -> "blaze wizard";
+            case WINDARCHER1  -> "wind archer";    case WINDARCHER2  -> "wind archer";
+            case WINDARCHER3  -> "wind archer";    case WINDARCHER4  -> "wind archer";
+            case NIGHTWALKER1 -> "night walker";   case NIGHTWALKER2 -> "night walker";
+            case NIGHTWALKER3 -> "night walker";   case NIGHTWALKER4 -> "night walker";
+            case THUNDERBREAKER1 -> "thunder breaker"; case THUNDERBREAKER2 -> "thunder breaker";
+            case THUNDERBREAKER3 -> "thunder breaker"; case THUNDERBREAKER4 -> "thunder breaker";
+            case LEGEND       -> "legend";
+            case ARAN1        -> "aran";         case ARAN2        -> "aran";
+            case ARAN3        -> "aran";         case ARAN4        -> "aran";
             case CORSAIR     -> "corsair";
             default -> job.name().toLowerCase();
         };
