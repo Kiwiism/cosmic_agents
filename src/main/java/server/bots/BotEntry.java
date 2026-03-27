@@ -129,6 +129,7 @@ class BotEntry {
     boolean climbIdle            = false; // true when holding position on rope
     Point   navTargetPos         = null;
     BotNavigationGraph.Edge navEdge = null;
+    int navTargetRegionId = -1;
     boolean debugPromptSent = false;
 
     BotEntry(Character bot, Character owner, ScheduledFuture<?> task) {

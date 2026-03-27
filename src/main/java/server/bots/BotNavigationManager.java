@@ -4,9 +4,11 @@ import client.Character;
 import server.maps.Portal;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
@@ -39,19 +41,26 @@ final class BotNavigationManager {
             return new NavigationDirective(rawTargetPos, false);
         }
 
-        if (!runAiTick && entry.navTargetPos != null) {
-            return new NavigationDirective(new Point(entry.navTargetPos), false);
+        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(bot.getMap());
+        Point botPos = bot.getPosition();
+        int startRegionId = graph.findRegionId(bot.getMap(), botPos);
+        int targetRegionId = graph.findRegionId(bot.getMap(), rawTargetPos);
+
+        BotNavigationGraph.Edge edge = reuseCommittedEdge(graph, entry, startRegionId, targetRegionId);
+        if (edge == null && runAiTick && startRegionId >= 0 && targetRegionId >= 0 && startRegionId != targetRegionId) {
+            edge = findNextEdge(graph, bot, startRegionId, targetRegionId, rawTargetPos);
+            if (edge != null) {
+                entry.navEdge = edge;
+                entry.navTargetRegionId = targetRegionId;
+            }
         }
 
-        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(bot.getMap());
-        BotNavigationGraph.Edge edge = findNextEdge(graph, bot, bot.getPosition(), rawTargetPos);
         if (edge == null) {
             clearNavigation(entry);
             return new NavigationDirective(rawTargetPos, false);
         }
 
-        entry.navEdge = edge;
-        if (runAiTick && edge.type == BotNavigationGraph.EdgeType.PORTAL && isReadyForEdge(bot.getPosition(), edge)) {
+        if (runAiTick && edge.type == BotNavigationGraph.EdgeType.PORTAL && isReadyForEdge(botPos, edge)) {
             if (usePortal(bot, edge.portalId)) {
                 clearNavigation(entry);
                 BotMovementManager.resetEntryState(entry);
@@ -59,16 +68,43 @@ final class BotNavigationManager {
             }
         }
 
-        entry.navTargetPos = selectWaypoint(bot.getPosition(), edge, rawTargetPos);
+        entry.navTargetPos = selectWaypoint(botPos, edge);
         return new NavigationDirective(new Point(entry.navTargetPos), false);
     }
 
     private static void clearNavigation(BotEntry entry) {
         entry.navEdge = null;
         entry.navTargetPos = null;
+        entry.navTargetRegionId = -1;
     }
 
-    private static Point selectWaypoint(Point botPos, BotNavigationGraph.Edge edge, Point rawTargetPos) {
+    private static BotNavigationGraph.Edge reuseCommittedEdge(BotNavigationGraph graph,
+                                                              BotEntry entry,
+                                                              int startRegionId,
+                                                              int targetRegionId) {
+        BotNavigationGraph.Edge edge = entry.navEdge;
+        if (edge == null) {
+            return null;
+        }
+        if (targetRegionId < 0 || entry.navTargetRegionId != targetRegionId) {
+            return null;
+        }
+        if (!isEdgeUsable(graph, entry.bot, edge)) {
+            return null;
+        }
+        if (startRegionId == edge.toRegionId && !entry.inAir && !entry.climbing) {
+            return null;
+        }
+        if (startRegionId == edge.fromRegionId) {
+            return edge;
+        }
+        if ((entry.inAir || entry.climbing) && (startRegionId < 0 || startRegionId != edge.toRegionId)) {
+            return edge;
+        }
+        return null;
+    }
+
+    private static Point selectWaypoint(Point botPos, BotNavigationGraph.Edge edge) {
         if (edge.type == BotNavigationGraph.EdgeType.WALK) {
             return new Point(edge.endPoint);
         }
@@ -78,13 +114,11 @@ final class BotNavigationManager {
         return edge.type == BotNavigationGraph.EdgeType.PORTAL ? new Point(edge.startPoint) : new Point(edge.endPoint);
     }
 
-    private static BotNavigationGraph.Edge findNextEdge(BotNavigationGraph graph, Character bot, Point startPos, Point targetPos) {
-        int startRegionId = graph.findRegionId(bot.getMap(), startPos);
-        int targetRegionId = graph.findRegionId(bot.getMap(), targetPos);
-        if (startRegionId < 0 || targetRegionId < 0 || startRegionId == targetRegionId) {
-            return null;
-        }
-
+    private static BotNavigationGraph.Edge findNextEdge(BotNavigationGraph graph,
+                                                        Character bot,
+                                                        int startRegionId,
+                                                        int targetRegionId,
+                                                        Point targetPos) {
         PriorityQueue<SearchNode> open = new PriorityQueue<>(Comparator.comparingInt(node -> node.score));
         Map<Integer, Integer> gScore = new HashMap<>();
         Map<Integer, Integer> cameFrom = new HashMap<>();
@@ -122,17 +156,58 @@ final class BotNavigationManager {
             }
         }
 
-        if (!cameByEdge.containsKey(targetRegionId)) {
+        List<BotNavigationGraph.Edge> path = reconstructPath(startRegionId, targetRegionId, cameFrom, cameByEdge);
+        if (path.isEmpty()) {
             return null;
         }
+        return collapseLeadingWalkEdges(path);
+    }
 
-        int cursor = targetRegionId;
-        BotNavigationGraph.Edge firstEdge = cameByEdge.get(cursor);
-        while (cameFrom.containsKey(cursor) && cameFrom.get(cursor) != startRegionId) {
-            cursor = cameFrom.get(cursor);
-            firstEdge = cameByEdge.get(cursor);
+    private static List<BotNavigationGraph.Edge> reconstructPath(int startRegionId,
+                                                                 int targetRegionId,
+                                                                 Map<Integer, Integer> cameFrom,
+                                                                 Map<Integer, BotNavigationGraph.Edge> cameByEdge) {
+        if (!cameByEdge.containsKey(targetRegionId)) {
+            return List.of();
         }
-        return firstEdge;
+
+        List<BotNavigationGraph.Edge> path = new ArrayList<>();
+        int cursor = targetRegionId;
+        while (cursor != startRegionId) {
+            BotNavigationGraph.Edge edge = cameByEdge.get(cursor);
+            if (edge == null) {
+                return List.of();
+            }
+
+            path.add(0, edge);
+            Integer previousRegionId = cameFrom.get(cursor);
+            if (previousRegionId == null) {
+                return List.of();
+            }
+            cursor = previousRegionId;
+        }
+        return path;
+    }
+
+    private static BotNavigationGraph.Edge collapseLeadingWalkEdges(List<BotNavigationGraph.Edge> path) {
+        BotNavigationGraph.Edge first = path.get(0);
+        if (first.type != BotNavigationGraph.EdgeType.WALK) {
+            return first;
+        }
+
+        BotNavigationGraph.Edge lastWalk = first;
+        int totalCost = first.cost;
+        for (int i = 1; i < path.size(); i++) {
+            BotNavigationGraph.Edge edge = path.get(i);
+            if (edge.type != BotNavigationGraph.EdgeType.WALK) {
+                break;
+            }
+            lastWalk = edge;
+            totalCost += edge.cost;
+        }
+
+        return new BotNavigationGraph.Edge(first.fromRegionId, lastWalk.toRegionId, BotNavigationGraph.EdgeType.WALK,
+                first.startPoint, lastWalk.endPoint, 0, 0, totalCost);
     }
 
     private static boolean isEdgeUsable(BotNavigationGraph graph, Character bot, BotNavigationGraph.Edge edge) {
@@ -182,7 +257,7 @@ final class BotNavigationManager {
     }
 
     private static int heuristic(BotNavigationGraph.Region region, Point targetPos) {
-        Point center = region.centerPoint();
-        return Math.abs(targetPos.x - center.x) + Math.abs(targetPos.y - center.y);
+        Point anchor = region.pointAt(targetPos.x);
+        return Math.abs(targetPos.x - anchor.x) + Math.abs(targetPos.y - anchor.y);
     }
 }

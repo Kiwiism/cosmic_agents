@@ -194,6 +194,7 @@ class BotMovementManager {
         entry.attackCooldownMs  = 0;
         entry.navTargetPos      = null;
         entry.navEdge           = null;
+        entry.navTargetRegionId = -1;
     }
 
     // -------------------------------------------------------------------------
