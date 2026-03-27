@@ -468,7 +468,7 @@ class BotCombatManager {
             return null;
         }
 
-        return bot.getMap().getFootholds().findBelow(new Point(position.x, position.y - BotMovementManager.cfg.MAX_SLOPE_UP));
+        return BotPhysicsEngine.findGroundFoothold(bot.getMap(), position);
     }
 
     private static boolean isMobTouchingBot(Character bot, Monster mob) {

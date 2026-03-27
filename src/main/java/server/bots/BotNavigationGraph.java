@@ -217,11 +217,7 @@ final class BotNavigationGraph implements Serializable {
             return -1;
         }
 
-        Foothold foothold = map.getFootholds().findBelow(position);
-        if (foothold == null) {
-            Point probe = new Point(position.x, position.y - BotMovementManager.cfg.MAX_SLOPE_UP);
-            foothold = map.getFootholds().findBelow(probe);
-        }
+        Foothold foothold = BotPhysicsEngine.findGroundFoothold(map, position);
         if (foothold == null) {
             return -1;
         }

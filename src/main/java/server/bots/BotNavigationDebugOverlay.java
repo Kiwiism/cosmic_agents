@@ -75,12 +75,11 @@ public final class BotNavigationDebugOverlay {
             return "Bot nav overlay unavailable: no supported mist skill effect is loaded on this server build.";
         }
 
-        BotEntry entry = findBotEntry(viewer, botName);
-        if (entry == null) {
-            return botName == null
-                    ? "No owned bot found. Spawn one first or use !botnav path <botName>."
-                    : "No owned bot named '" + botName + "' found.";
+        BotSelection selection = selectBotEntry(viewer, botName);
+        if (selection.errorMessage != null) {
+            return selection.errorMessage;
         }
+        BotEntry entry = selection.entry;
 
         Character bot = entry.bot;
         if (bot.getMapId() != viewer.getMapId()) {
@@ -134,12 +133,28 @@ public final class BotNavigationDebugOverlay {
         overlay.drawApproxRegion(region, type);
     }
 
-    private static BotEntry findBotEntry(Character viewer, String botName) {
+    private static BotSelection selectBotEntry(Character viewer, String botName) {
         BotManager botManager = BotManager.getInstance();
         if (botName == null || botName.isBlank()) {
-            return botManager.getFirstBotEntry(viewer.getId());
+            List<BotEntry> entries = botManager.getBotEntries(viewer.getId());
+            if (entries.isEmpty()) {
+                return new BotSelection(null, "No owned bot found. Spawn one first or use !botnav path <botName>.");
+            }
+            if (entries.size() > 1) {
+                String names = entries.stream()
+                        .map(botEntry -> botEntry.bot.getName())
+                        .sorted(String::compareToIgnoreCase)
+                        .reduce((left, right) -> left + ", " + right)
+                        .orElse("");
+                return new BotSelection(null, "Multiple owned bots: " + names + ". Use !botnav path <botName>.");
+            }
+            return new BotSelection(entries.getFirst(), null);
         }
-        return botManager.getBotEntry(viewer.getId(), botName);
+        BotEntry entry = botManager.getBotEntry(viewer.getId(), botName);
+        if (entry == null) {
+            return new BotSelection(null, "No owned bot named '" + botName + "' found.");
+        }
+        return new BotSelection(entry, null);
     }
 
     private static Point resolveRawTargetPos(BotEntry entry) {
@@ -167,9 +182,20 @@ public final class BotNavigationDebugOverlay {
                                            BotEntry entry,
                                            OverlayBuilder overlay) {
         String currentEdge = entry.navEdge == null ? "none" : entry.navEdge.type.name();
+        String status;
+        if (startRegionId == targetRegionId && entry.navEdge == null) {
+            status = "same-region/local";
+        } else if (entry.navEdge != null) {
+            status = "committed";
+        } else if (path.isEmpty()) {
+            status = "no-path";
+        } else {
+            status = "path-only";
+        }
         return "Bot nav path for '" + bot.getName() + "': region " + startRegionId + " -> " + targetRegionId
                 + ", edges=" + path.size()
                 + ", committed=" + currentEdge
+                + ", status=" + status
                 + ", mists=" + overlay.objectIds().size()
                 + (overlay.truncated() ? " (truncated)" : "")
                 + ", auto-clear " + (AUTO_CLEAR_MS / 1000) + "s.";
@@ -244,6 +270,9 @@ public final class BotNavigationDebugOverlay {
             this.objectIds = new ArrayList<>(objectIds);
             this.clearTask = clearTask;
         }
+    }
+
+    private record BotSelection(BotEntry entry, String errorMessage) {
     }
 
     private static final class OverlayBuilder {

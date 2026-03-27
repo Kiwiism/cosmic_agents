@@ -3,6 +3,7 @@ package server.bots;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import server.maps.MapleMap;
+import server.maps.Foothold;
 import server.maps.Rope;
 
 import java.awt.*;
@@ -13,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 class BotPhysicsEngineTest {
     private static MapleMap henesys;
@@ -135,5 +137,76 @@ class BotPhysicsEngineTest {
         assertEquals(0, entry.ropeGrabCooldownMs);
         assertEquals(0, entry.downJumpGracePeriodMS);
         assertTrue(BotPhysicsEngine.canLand(entry));
+    }
+
+    @Test
+    void shouldPreferExactGroundFootholdWhenOffsetLookupWouldChooseDifferentPlatform() {
+        StandingLookupCase lookupCase = findStandingLookupCaseWhereOffsetDiffers(ellinia);
+
+        assertNotNull(lookupCase, "Expected at least one standing point where offset-only lookup picks a different foothold");
+        assertNotEquals(lookupCase.exactFoothold().getId(), lookupCase.offsetFoothold().getId());
+        assertEquals(lookupCase.exactFoothold().getId(),
+                BotPhysicsEngine.findGroundFoothold(ellinia, lookupCase.point()).getId());
+    }
+
+    @Test
+    void shouldSimulateDownJumpLandingWithGraceInsteadOfImmediatePlatformBelow() {
+        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(ellinia);
+        BotNavigationGraph.Edge dropEdge = findFirstStraightDropEdge(graph);
+
+        assertNotNull(dropEdge, "Expected at least one straight down-jump drop edge in Ellinia");
+
+        BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateDownJumpLanding(ellinia, dropEdge.startPoint);
+
+        assertNotNull(landing);
+        assertEquals(dropEdge.endPoint, landing.point());
+        assertEquals(dropEdge.toRegionId, graph.regionIdByFootholdId.getOrDefault(landing.foothold().getId(), -1));
+    }
+
+    private static StandingLookupCase findStandingLookupCaseWhereOffsetDiffers(MapleMap map) {
+        for (Foothold foothold : map.getFootholds().getAllFootholds()) {
+            if (foothold.isWall()) {
+                continue;
+            }
+
+            int minX = Math.min(foothold.getX1(), foothold.getX2());
+            int maxX = Math.max(foothold.getX1(), foothold.getX2());
+            if (maxX - minX < 2) {
+                continue;
+            }
+
+            for (int x = minX + 1; x < maxX; x += 4) {
+                Point point = new Point(x, footingY(foothold, x));
+                Foothold exact = map.getFootholds().findBelow(point);
+                Foothold offset = map.getFootholds().findBelow(new Point(point.x, point.y - BotPhysicsEngine.cfg.MAX_SLOPE_UP));
+                if (exact != null && offset != null && exact.getId() != offset.getId()) {
+                    return new StandingLookupCase(point, exact, offset);
+                }
+            }
+        }
+        return null;
+    }
+
+    private static BotNavigationGraph.Edge findFirstStraightDropEdge(BotNavigationGraph graph) {
+        for (BotNavigationGraph.Region region : graph.regions) {
+            for (BotNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
+                if (edge.type == BotNavigationGraph.EdgeType.DROP && edge.launchStepX == 0) {
+                    return edge;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static int footingY(Foothold foothold, int x) {
+        if (foothold.getX1() == foothold.getX2()) {
+            return Math.min(foothold.getY1(), foothold.getY2());
+        }
+
+        double ratio = (x - foothold.getX1()) / (double) (foothold.getX2() - foothold.getX1());
+        return (int) Math.round(foothold.getY1() + (foothold.getY2() - foothold.getY1()) * ratio);
+    }
+
+    private record StandingLookupCase(Point point, Foothold exactFoothold, Foothold offsetFoothold) {
     }
 }

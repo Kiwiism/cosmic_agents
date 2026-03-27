@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 final class BotNavigationGraphProvider {
     private static final Logger log = LoggerFactory.getLogger(BotNavigationGraphProvider.class);
 
-    private static final int GRAPH_VERSION = 6;
+    private static final int GRAPH_VERSION = 7;
     private static final int WALK_CONNECTION_GAP_PX = 12;
     private static final int ENDPOINT_ANCHOR_SPACING_PX = 16;
     private static final double REGION_MERGE_MIN_CONTINUATION_COSINE = 0.94;
@@ -249,19 +249,26 @@ final class BotNavigationGraphProvider {
                                      Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
                                      Set<String> edgeKeys) {
         for (Point anchor : anchorPoints(from, featureXsByRegionId.getOrDefault(from.id, List.of()))) {
-            BotNavigationGraph.Region below = findRegionBelow(map, regionsById, regionIdByFootholdId, new Point(anchor.x, anchor.y + 1));
+            int dropStepX = dropLaunchStep(from, map, anchor);
+            BotPhysicsEngine.JumpLanding landing = dropStepX == 0
+                    ? BotPhysicsEngine.simulateDownJumpLanding(map, anchor)
+                    : BotPhysicsEngine.simulateFallLanding(map, anchor, dropStepX);
+            if (landing == null) {
+                continue;
+            }
+
+            int toRegionId = regionIdByFootholdId.getOrDefault(landing.foothold().getId(), -1);
+            BotNavigationGraph.Region below = regionsById.get(toRegionId);
             if (below == null || below.id == from.id) {
                 continue;
             }
 
-            Point landing = below.pointAt(anchor.x);
-            if (landing.y <= anchor.y + 4) {
+            if (landing.point().y <= anchor.y + 4) {
                 continue;
             }
 
-            int dropStepX = dropLaunchStep(from, map, anchor);
-            int dropCost = estimateDropCost(anchor, landing) + (dropStepX == 0 ? 300 : 0);
-            addEdge(from.id, below.id, BotNavigationGraph.EdgeType.DROP, anchor, landing, dropStepX, 0, dropCost, outgoing, edgeKeys);
+            int dropCost = estimateDropCost(anchor, landing.point()) + (dropStepX == 0 ? 300 : 0);
+            addEdge(from.id, below.id, BotNavigationGraph.EdgeType.DROP, anchor, landing.point(), dropStepX, 0, dropCost, outgoing, edgeKeys);
         }
     }
 

@@ -185,9 +185,7 @@ class BotMovementManager {
                 }
             }
 
-            boolean climbIdle = !entry.grinding
-                    && Math.abs(dy) < cfg.FOLLOW_DIST
-                    && Math.abs(dxOwner) < cfg.FOLLOW_DIST * 2;
+            boolean climbIdle = shouldHoldClimbIdle(entry, dy, dxOwner);
             if (climbIdle) {
                 BotPhysicsEngine.holdClimb(entry);
                 broadcastMovement(entry);
@@ -258,6 +256,15 @@ class BotMovementManager {
         return landingRegionId == entry.navEdge.toRegionId;
     }
 
+    static boolean shouldHoldClimbIdle(BotEntry entry, int dy, int dxOwner) {
+        if (entry.navEdge != null && entry.navEdge.type == BotNavigationGraph.EdgeType.CLIMB) {
+            return false;
+        }
+        return !entry.grinding
+                && Math.abs(dy) < cfg.FOLLOW_DIST
+                && Math.abs(dxOwner) < cfg.FOLLOW_DIST * 2;
+    }
+
     private static boolean isCommittedClimbDown(BotEntry entry, Point botPos) {
         return entry.navEdge != null
                 && entry.navEdge.type == BotNavigationGraph.EdgeType.CLIMB
@@ -324,8 +331,7 @@ class BotMovementManager {
             BotPhysicsEngine.tickMotionTimers(entry);
             BotPhysicsEngine.syncGroundPosition(entry, botPos.x);
 
-            Foothold currentFh = bot.getMap().getFootholds()
-                    .findBelow(new Point(botPos.x, botPos.y - BotPhysicsEngine.cfg.MAX_SLOPE_UP));
+            Foothold currentFh = BotPhysicsEngine.findGroundFoothold(bot.getMap(), botPos);
             if (currentFh == null) {
                 BotPhysicsEngine.beginFall(entry, bot, 0);
                 broadcastMovement(entry);

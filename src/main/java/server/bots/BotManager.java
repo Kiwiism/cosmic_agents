@@ -208,6 +208,14 @@ public class BotManager {
         return (entries != null && !entries.isEmpty()) ? entries.get(0) : null;
     }
 
+    List<BotEntry> getBotEntries(int ownerCharId) {
+        List<BotEntry> entries = bots.get(ownerCharId);
+        if (entries == null || entries.isEmpty()) {
+            return List.of();
+        }
+        return List.copyOf(entries);
+    }
+
     BotEntry getBotEntry(int ownerCharId, String botName) {
         List<BotEntry> entries = bots.get(ownerCharId);
         if (entries == null || botName == null) {

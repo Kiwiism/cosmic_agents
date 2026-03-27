@@ -139,6 +139,16 @@ class BotNavigationGraphProviderTest {
                 || edge.type == BotNavigationGraph.EdgeType.WALK));
     }
 
+    @Test
+    void shouldAllowStraightDropExecutionFromCurrentXWhenLandingRegionMatches() {
+        StraightDropCase dropCase = findStraightDropCaseWithAlternativeStart(elliniaGraph, ellinia);
+
+        assertNotNull(dropCase, "Expected at least one straight drop edge with an alternate same-region start point");
+        assertNotEquals(dropCase.edge().startPoint.x, dropCase.alternativeStart().x);
+        assertTrue(BotNavigationManager.canExecuteDropFromCurrentPosition(
+                elliniaGraph, ellinia, dropCase.alternativeStart(), dropCase.edge()));
+    }
+
     private static List<BotNavigationGraph.Edge> findPath(BotNavigationGraph graph,
                                                           MapleMap map,
                                                           Point start,
@@ -191,5 +201,51 @@ class BotNavigationGraphProviderTest {
             }
         }
         return count;
+    }
+
+    private static StraightDropCase findStraightDropCaseWithAlternativeStart(BotNavigationGraph graph, MapleMap map) {
+        for (BotNavigationGraph.Region region : graph.regions) {
+            for (BotNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
+                if (edge.type != BotNavigationGraph.EdgeType.DROP || edge.launchStepX != 0) {
+                    continue;
+                }
+
+                Point alternative = findAlternativeStraightDropStart(graph, map, edge);
+                if (alternative != null) {
+                    return new StraightDropCase(edge, alternative);
+                }
+            }
+        }
+        return null;
+    }
+
+    private static Point findAlternativeStraightDropStart(BotNavigationGraph graph,
+                                                          MapleMap map,
+                                                          BotNavigationGraph.Edge edge) {
+        BotNavigationGraph.Region region = graph.getRegion(edge.fromRegionId);
+        if (region == null) {
+            return null;
+        }
+
+        for (int x = region.minX; x <= region.maxX; x += 4) {
+            Point start = region.pointAt(x);
+            if (Math.abs(start.x - edge.startPoint.x) < 12) {
+                continue;
+            }
+
+            BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateDownJumpLanding(map, start);
+            if (landing == null) {
+                continue;
+            }
+
+            int landingRegionId = graph.regionIdByFootholdId.getOrDefault(landing.foothold().getId(), -1);
+            if (landingRegionId == edge.toRegionId) {
+                return start;
+            }
+        }
+        return null;
+    }
+
+    private record StraightDropCase(BotNavigationGraph.Edge edge, Point alternativeStart) {
     }
 }

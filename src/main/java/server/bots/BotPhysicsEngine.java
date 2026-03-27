@@ -116,6 +116,18 @@ final class BotPhysicsEngine {
         }
     }
 
+    static Foothold findGroundFoothold(MapleMap map, Point position) {
+        if (map == null || map.getFootholds() == null || position == null) {
+            return null;
+        }
+
+        Foothold foothold = map.getFootholds().findBelow(position);
+        if (foothold != null) {
+            return foothold;
+        }
+        return map.getFootholds().findBelow(new Point(position.x, position.y - cfg.MAX_SLOPE_UP));
+    }
+
     static void stopGroundMotion(BotEntry entry) {
         entry.hspeed = 0.0;
     }
@@ -387,11 +399,19 @@ final class BotPhysicsEngine {
     }
 
     static JumpLanding simulateJumpLanding(MapleMap map, Point from, int stepX) {
-        return simulateLanding(map, from, -jumpForcePerTick(), stepX);
+        return simulateLanding(map, from, -jumpForcePerTick(), stepX, 0L);
+    }
+
+    static JumpLanding simulateDownJumpLanding(MapleMap map, Point from) {
+        return simulateLanding(map, from, -downJumpForcePerTick(), 0, cfg.DOWN_JUMP_GRACE_MS);
+    }
+
+    static JumpLanding simulateFallLanding(MapleMap map, Point from, int stepX) {
+        return simulateLanding(map, from, 0f, stepX, 0L);
     }
 
     static JumpLanding simulateRopeJumpLanding(MapleMap map, Point from, int stepX) {
-        return simulateLanding(map, from, -ropeJumpForcePerTick(), stepX);
+        return simulateLanding(map, from, -ropeJumpForcePerTick(), stepX, 0L);
     }
 
     private static void launchAirborne(BotEntry entry,
@@ -508,13 +528,22 @@ final class BotPhysicsEngine {
         return walkStep(map) * airtimeTicks;
     }
 
-    private static JumpLanding simulateLanding(MapleMap map, Point from, float initialVelY, int stepX) {
+    private static JumpLanding simulateLanding(MapleMap map,
+                                               Point from,
+                                               float initialVelY,
+                                               int stepX,
+                                               long landingGraceMs) {
         float velocityY = initialVelY;
         double physX = from.x;
         double physY = from.y;
         int previousIntY = from.y;
+        long remainingLandingGraceMs = Math.max(0L, landingGraceMs);
 
         for (int tick = 0; tick < (1500 / cfg.TICK_MS); tick++) {
+            if (remainingLandingGraceMs > 0L) {
+                remainingLandingGraceMs = Math.max(0L, remainingLandingGraceMs - cfg.TICK_MS);
+            }
+
             physX += stepX;
             float gravity = gravityPerTick();
             physY += velocityY + 0.5f * gravity;
@@ -522,7 +551,7 @@ final class BotPhysicsEngine {
 
             int x = (int) Math.round(physX);
             int intY = (int) Math.round(physY);
-            if (velocityY > 0) {
+            if (velocityY > 0 && remainingLandingGraceMs == 0L) {
                 Point probe = new Point(x, previousIntY + 1);
                 Point floor = map.getPointBelow(probe);
                 if (floor != null && floor.y <= intY) {
