@@ -1,7 +1,6 @@
 package server.bots;
 
 import client.Character;
-import client.Skill;
 import client.SkillFactory;
 import constants.skills.Evan;
 import constants.skills.FPMage;
@@ -29,19 +28,16 @@ public final class BotNavigationDebugOverlay {
     private static final int PATH_THICKNESS = 6;
     private static final int DOTTED_SPACING = 22;
 
-    private static final Skill SMOKE_SKILL = SkillFactory.getSkill(Shadower.SMOKE_SCREEN);
-    private static final Skill POISON_SKILL = SkillFactory.getSkill(FPMage.POISON_MIST);
-    private static final Skill RECOVERY_SKILL = SkillFactory.getSkill(Evan.RECOVERY_AURA);
-    private static final StatEffect SMOKE_EFFECT = SMOKE_SKILL.getEffect(1);
-    private static final StatEffect POISON_EFFECT = POISON_SKILL.getEffect(1);
-    private static final StatEffect RECOVERY_EFFECT = RECOVERY_SKILL.getEffect(1);
-
     private static final Map<Integer, OverlayState> overlaysByViewerId = new ConcurrentHashMap<>();
 
     private BotNavigationDebugOverlay() {
     }
 
     public static synchronized String showGraph(Character viewer) {
+        if (!overlayEffectsAvailable()) {
+            return "Bot nav overlay unavailable: no supported mist skill effect is loaded on this server build.";
+        }
+
         OverlayBuilder overlay = new OverlayBuilder(viewer);
         BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(viewer.getMap());
         Set<Point> nodes = new HashSet<>();
@@ -83,6 +79,10 @@ public final class BotNavigationDebugOverlay {
     }
 
     public static synchronized String showPath(Character viewer, String botName) {
+        if (!overlayEffectsAvailable()) {
+            return "Bot nav overlay unavailable: no supported mist skill effect is loaded on this server build.";
+        }
+
         BotEntry entry = findBotEntry(viewer, botName);
         if (entry == null) {
             return botName == null
@@ -217,6 +217,20 @@ public final class BotNavigationDebugOverlay {
         return edge.type + ":" + first.x + ":" + first.y + ":" + second.x + ":" + second.y;
     }
 
+    private static boolean overlayEffectsAvailable() {
+        return firstAvailableEffect(Evan.RECOVERY_AURA, FPMage.POISON_MIST, Shadower.SMOKE_SCREEN) != null;
+    }
+
+    private static StatEffect firstAvailableEffect(int... skillIds) {
+        for (int skillId : skillIds) {
+            var skill = SkillFactory.getSkill(skillId);
+            if (skill != null) {
+                return skill.getEffect(1);
+            }
+        }
+        return null;
+    }
+
     private static OverlayType overlayTypeForEdge(BotNavigationGraph.EdgeType edgeType) {
         return switch (edgeType) {
             case DROP, PORTAL -> OverlayType.TRANSITION;
@@ -316,9 +330,9 @@ public final class BotNavigationDebugOverlay {
 
         private StatEffect effectFor(OverlayType type) {
             return switch (type) {
-                case REGION, CURRENT_EDGE -> SMOKE_EFFECT;
-                case TRANSITION, NODE -> POISON_EFFECT;
-                case PATH -> RECOVERY_EFFECT;
+                case REGION, CURRENT_EDGE -> firstAvailableEffect(Shadower.SMOKE_SCREEN, FPMage.POISON_MIST);
+                case TRANSITION, NODE -> firstAvailableEffect(FPMage.POISON_MIST, Shadower.SMOKE_SCREEN);
+                case PATH -> firstAvailableEffect(Evan.RECOVERY_AURA, FPMage.POISON_MIST, Shadower.SMOKE_SCREEN);
             };
         }
     }
