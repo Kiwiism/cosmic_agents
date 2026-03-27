@@ -237,6 +237,10 @@ class BotMovementManager {
 
         // AI: jump off rope / update idle state
         if (runAiTick) {
+            if (shouldJumpOffCommittedClimb(entry, botPos)) {
+                jumpOffRope(entry, bot, entry.navEdge.launchStepX);
+                return;
+            }
             if (Math.abs(dxOwner) > cfg.FOLLOW_DIST && entry.jumpCooldownMs == 0
                     && entry.climbRope.bottomY() < targetPos.y) {
                 jumpOffRope(entry, bot, dxOwner);
@@ -253,8 +257,12 @@ class BotMovementManager {
             broadcastMovement(bot, 0, 0);
             return;
         }
-        int newY = (dy < 0) || (entry.climbRope.topY() < botPos.y + 200) ? botPos.y - climbStepPerTick()
-                          : Math.min(botPos.y + climbStepPerTick(), entry.climbRope.bottomY());
+        boolean committedClimbDown = isCommittedClimbDown(entry, botPos);
+        int newY = committedClimbDown
+                ? Math.min(botPos.y + climbStepPerTick(), entry.climbRope.bottomY())
+                : ((dy < 0) || (entry.climbRope.topY() < botPos.y + 200)
+                ? botPos.y - climbStepPerTick()
+                : Math.min(botPos.y + climbStepPerTick(), entry.climbRope.bottomY()));
         bot.setPosition(new Point(entry.climbRope.x(), newY));
         bot.setStance(entry.climbRope.isLadder() ? 17 : 16);
         broadcastMovement(bot, 0, 0);
@@ -271,6 +279,33 @@ class BotMovementManager {
         bot.setStance(dx >= 0 ? 6 : 7);
         int jumpVelY = Math.round(-cfg.JUMP_ROPE_PXS);
         broadcastMovement(bot, velocityFromDeltaX(airVelX), jumpVelY);
+    }
+
+    private static boolean shouldJumpOffCommittedClimb(BotEntry entry, Point botPos) {
+        if (entry.navEdge == null || entry.navEdge.type != BotNavigationGraph.EdgeType.CLIMB) {
+            return false;
+        }
+        if (entry.navEdge.launchStepX == 0 || entry.jumpCooldownMs != 0) {
+            return false;
+        }
+        if (botPos.y > entry.climbRope.topY() + cfg.JUMP_Y_THRESH) {
+            return false;
+        }
+
+        BotMovementManager.JumpLanding landing = simulateRopeJumpLanding(entry.bot.getMap(), botPos, entry.navEdge.launchStepX);
+        if (landing == null) {
+            return false;
+        }
+
+        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(entry.bot.getMap());
+        int landingRegionId = graph.regionIdByFootholdId.getOrDefault(landing.foothold().getId(), -1);
+        return landingRegionId == entry.navEdge.toRegionId;
+    }
+
+    private static boolean isCommittedClimbDown(BotEntry entry, Point botPos) {
+        return entry.navEdge != null
+                && entry.navEdge.type == BotNavigationGraph.EdgeType.CLIMB
+                && entry.navEdge.endPoint.y > botPos.y + 8;
     }
 
     // -------------------------------------------------------------------------
@@ -641,9 +676,31 @@ class BotMovementManager {
         return jumpForce * jumpForce / (2 * gravityPerTick());
     }
 
+    static int maxJumpHorizontalTravel(MapleMap map) {
+        return maxHorizontalTravel(map, jumpForcePerTick());
+    }
+
+    static int maxRopeJumpHorizontalTravel(MapleMap map) {
+        return maxHorizontalTravel(map, ropeJumpForcePerTick());
+    }
+
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
+
+    static boolean canReachRopeFromGround(MapleMap map, Point from, Rope rope) {
+        int dx = Math.abs(rope.x() - from.x);
+        if (dx <= cfg.ROPE_GRAB_X && from.y >= rope.topY() && from.y <= rope.bottomY()) {
+            return true;
+        }
+        if (rope.topY() >= from.y) {
+            return false;
+        }
+
+        int jumpReach = (int) calculateMaxJumpHeight();
+        return rope.bottomY() >= from.y - jumpReach
+                && dx <= maxJumpHorizontalTravel(map);
+    }
 
     static int calcStepX(MapleMap map, int botX, int targetX, boolean wasMovingX) {
         Config cfg = BotMovementManager.cfg;
@@ -879,9 +936,22 @@ class BotMovementManager {
     }
 
     static JumpLanding simulateJumpLanding(MapleMap map, Point from, int stepX) {
+        return simulateLanding(map, from, -jumpForcePerTick(), stepX);
+    }
+
+    static JumpLanding simulateRopeJumpLanding(MapleMap map, Point from, int stepX) {
+        return simulateLanding(map, from, -ropeJumpForcePerTick(), stepX);
+    }
+
+    private static int maxHorizontalTravel(MapleMap map, float launchSpeedPerTick) {
+        int airtimeTicks = Math.max(1, (int) Math.ceil((2 * launchSpeedPerTick) / gravityPerTick()));
+        return walkStep(map) * airtimeTicks;
+    }
+
+    private static JumpLanding simulateLanding(MapleMap map, Point from, float initialVelY, int stepX) {
         Config cfg = BotMovementManager.cfg;
 
-        float vy = -jumpForcePerTick();
+        float vy = initialVelY;
         double physX = from.x;
         double physY = from.y;
         int prevIntY = from.y;

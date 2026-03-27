@@ -525,9 +525,17 @@ class BotChatManager {
         String jobPrompt = BotBuildManager.buildJobPrompt(entry, bot);
         if (jobPrompt != null) queueBotSay(entry, jobPrompt);
         String spPrompt = BotBuildManager.buildSpVariantPrompt(entry, bot);
-        if (spPrompt != null) queueBotSay(entry, spPrompt);
+        if (spPrompt != null) {
+            queueBotSay(entry, spPrompt);
+        } else {
+            BotBuildManager.autoAssignSp(entry, bot);
+        }
         String apPrompt = BotBuildManager.buildApPrompt(entry, bot);
-        if (apPrompt != null) queueBotSay(entry, apPrompt);
+        if (apPrompt != null) {
+            queueBotSay(entry, apPrompt);
+        } else {
+            BotBuildManager.autoAssignAp(entry, bot);
+        }
         if (!entry.debugPromptSent) {
             queueBotSay(entry, "ask me for debug stats if you want my attack cooldown");
             entry.debugPromptSent = true;

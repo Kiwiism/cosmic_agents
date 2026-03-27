@@ -1,21 +1,11 @@
 package server.bots;
 
-import provider.Data;
-import provider.DataProvider;
-import provider.DataProviderFactory;
-import provider.DataTool;
-import provider.wz.WZFiles;
 import server.maps.Foothold;
-import server.maps.FootholdTree;
 import server.maps.MapleMap;
-import server.maps.Portal;
-import server.maps.PortalFactory;
-import server.maps.Rope;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -31,20 +21,28 @@ public final class BotNavigationProbe {
 
         int mapId = Integer.parseInt(args[0]);
         boolean rebuild = false;
+        boolean listRopes = false;
         List<Point> points = new ArrayList<>();
         List<Point> jumps = new ArrayList<>();
+        List<PathProbe> paths = new ArrayList<>();
+        List<Integer> regions = new ArrayList<>();
+        List<RegionPathProbe> regionPaths = new ArrayList<>();
 
         for (int i = 1; i < args.length; i++) {
             String arg = args[i];
             switch (arg) {
                 case "--rebuild" -> rebuild = true;
+                case "--ropes" -> listRopes = true;
                 case "--point" -> points.add(parsePoint(nextArg(args, ++i, "--point")));
                 case "--jump" -> jumps.add(parsePoint(nextArg(args, ++i, "--jump")));
+                case "--path" -> paths.add(parsePath(nextArg(args, ++i, "--path")));
+                case "--region" -> regions.add(Integer.parseInt(nextArg(args, ++i, "--region")));
+                case "--path-region" -> regionPaths.add(parseRegionPath(nextArg(args, ++i, "--path-region")));
                 default -> throw new IllegalArgumentException("Unknown arg: " + arg);
             }
         }
 
-        MapleMap map = loadMapGeometry(mapId);
+        MapleMap map = BotNavigationMapLoader.loadMapGeometry(mapId);
         BotNavigationGraph graph = rebuild
                 ? BotNavigationGraphProvider.rebuildGraph(map)
                 : BotNavigationGraphProvider.getGraph(map);
@@ -56,11 +54,24 @@ public final class BotNavigationProbe {
         for (Point point : jumps) {
             probeJump(map, graph, point);
         }
+        for (int regionId : regions) {
+            probeRegion(graph, regionId);
+        }
+        if (listRopes) {
+            probeRopes(graph, map);
+        }
+        for (PathProbe path : paths) {
+            probePath(map, graph, path);
+        }
+        for (RegionPathProbe regionPath : regionPaths) {
+            probeRegionPath(graph, regionPath);
+        }
     }
 
     private static void printUsage() {
-        System.out.println("Usage: BotNavigationProbe <mapId> [--rebuild] [--point x,y] [--jump x,y]");
-        System.out.println("Example: BotNavigationProbe 100000000 --rebuild --point 1080,334 --jump 1080,334 --jump 990,334");
+        System.out.println("Usage: BotNavigationProbe <mapId> [--rebuild] [--point x,y] [--jump x,y] [--path x1,y1:x2,y2]");
+        System.out.println("       BotNavigationProbe <mapId> [--region id] [--path-region fromRegion:toRegion] [--ropes]");
+        System.out.println("Example: BotNavigationProbe 100000000 --rebuild --point 1080,334 --jump 1080,334 --path 990,334:938,274");
     }
 
     private static String nextArg(String[] args, int index, String flag) {
@@ -76,6 +87,22 @@ public final class BotNavigationProbe {
             throw new IllegalArgumentException("Expected point as x,y but got: " + raw);
         }
         return new Point(Integer.parseInt(parts[0].trim()), Integer.parseInt(parts[1].trim()));
+    }
+
+    private static PathProbe parsePath(String raw) {
+        String[] parts = raw.split(":", 2);
+        if (parts.length != 2) {
+            throw new IllegalArgumentException("Expected path as x1,y1:x2,y2 but got: " + raw);
+        }
+        return new PathProbe(parsePoint(parts[0]), parsePoint(parts[1]));
+    }
+
+    private static RegionPathProbe parseRegionPath(String raw) {
+        String[] parts = raw.split(":", 2);
+        if (parts.length != 2) {
+            throw new IllegalArgumentException("Expected region path as fromRegion:toRegion but got: " + raw);
+        }
+        return new RegionPathProbe(Integer.parseInt(parts[0].trim()), Integer.parseInt(parts[1].trim()));
     }
 
     private static void printSummary(MapleMap map, BotNavigationGraph graph) {
@@ -130,8 +157,8 @@ public final class BotNavigationProbe {
 
         System.out.println("  nearby jump edges:");
         for (BotNavigationGraph.Edge edge : nearbyJumpEdges) {
-            System.out.printf("    %d,%d -> %d,%d  stepX=%d  toRegion=%d%n",
-                    edge.startPoint.x, edge.startPoint.y, edge.endPoint.x, edge.endPoint.y, edge.launchStepX, edge.toRegionId);
+            System.out.printf("    %d,%d -> %d,%d  %s  toRegion=%d%n",
+                    edge.startPoint.x, edge.startPoint.y, edge.endPoint.x, edge.endPoint.y, edgeDetails(edge), edge.toRegionId);
         }
     }
 
@@ -162,9 +189,115 @@ public final class BotNavigationProbe {
 
         System.out.println("  graph jump edges near start:");
         for (BotNavigationGraph.Edge edge : nearbyJumpEdges) {
-            System.out.printf("    %d,%d -> %d,%d  stepX=%d  toRegion=%d%n",
-                    edge.startPoint.x, edge.startPoint.y, edge.endPoint.x, edge.endPoint.y, edge.launchStepX, edge.toRegionId);
+            System.out.printf("    %d,%d -> %d,%d  %s  toRegion=%d%n",
+                    edge.startPoint.x, edge.startPoint.y, edge.endPoint.x, edge.endPoint.y, edgeDetails(edge), edge.toRegionId);
         }
+    }
+
+    private static void probeRegion(BotNavigationGraph graph, int regionId) {
+        BotNavigationGraph.Region region = graph.getRegion(regionId);
+        System.out.printf("%nRegion %d%n", regionId);
+        if (region == null) {
+            System.out.println("  missing");
+            return;
+        }
+
+        Map<BotNavigationGraph.EdgeType, Integer> counts = new EnumMap<>(BotNavigationGraph.EdgeType.class);
+        for (BotNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
+            counts.merge(edge.type, 1, Integer::sum);
+        }
+
+        System.out.printf("  span=[%d,%d] y=[%d,%d] segments=%d center=%d,%d%n",
+                region.minX, region.maxX, region.minY, region.maxY, region.segments.size(),
+                region.centerPoint().x, region.centerPoint().y);
+        System.out.printf("  outgoing %s%n", counts);
+    }
+
+    private static void probeRopes(BotNavigationGraph graph, MapleMap map) {
+        System.out.printf("%nRopes (%d)%n", map.getRopes().size());
+        int index = 0;
+        for (server.maps.Rope rope : map.getRopes()) {
+            index++;
+            int climbEdges = countClimbEdgesForRope(graph, rope);
+            System.out.printf("  %d. x=%d top=%d bottom=%d climbEdges=%d%n",
+                    index, rope.x(), rope.topY(), rope.bottomY(), climbEdges);
+        }
+    }
+
+    private static void probePath(MapleMap map, BotNavigationGraph graph, PathProbe pathProbe) {
+        int startRegionId = graph.findRegionId(map, pathProbe.start);
+        int targetRegionId = graph.findRegionId(map, pathProbe.target);
+        List<BotNavigationGraph.Edge> path = startRegionId < 0 || targetRegionId < 0 || startRegionId == targetRegionId
+                ? List.of()
+                : BotNavigationManager.findPath(graph, map, pathProbe.start, startRegionId, targetRegionId, pathProbe.target);
+
+        System.out.printf("%nPath probe %d,%d -> %d,%d  regions %d -> %d%n",
+                pathProbe.start.x, pathProbe.start.y, pathProbe.target.x, pathProbe.target.y, startRegionId, targetRegionId);
+        if (path.isEmpty()) {
+            System.out.println("  no path");
+            return;
+        }
+
+        for (int i = 0; i < path.size(); i++) {
+            BotNavigationGraph.Edge edge = path.get(i);
+            System.out.printf("  %d. %s %d,%d -> %d,%d  %s  toRegion=%d  cost=%d%n",
+                    i + 1, edge.type, edge.startPoint.x, edge.startPoint.y, edge.endPoint.x, edge.endPoint.y,
+                    edgeDetails(edge), edge.toRegionId, edge.cost);
+        }
+    }
+
+    private static void probeRegionPath(BotNavigationGraph graph, RegionPathProbe regionPath) {
+        BotNavigationGraph.Region targetRegion = graph.getRegion(regionPath.targetRegionId);
+        Point targetPoint = targetRegion == null ? null : targetRegion.centerPoint();
+        BotNavigationGraph.Region startRegion = graph.getRegion(regionPath.startRegionId);
+        Point startPoint = startRegion == null ? null : startRegion.centerPoint();
+        List<BotNavigationGraph.Edge> path = targetPoint == null
+                ? List.of()
+                : BotNavigationManager.findPath(graph, BotNavigationMapLoader.loadMapGeometry(graph.mapId),
+                startPoint, regionPath.startRegionId, regionPath.targetRegionId, targetPoint);
+
+        System.out.printf("%nRegion path %d -> %d%n", regionPath.startRegionId, regionPath.targetRegionId);
+        if (startPoint == null || targetPoint == null || path.isEmpty()) {
+            System.out.println("  no path");
+            return;
+        }
+
+        System.out.printf("  target center %d,%d%n", targetPoint.x, targetPoint.y);
+        for (int i = 0; i < path.size(); i++) {
+            BotNavigationGraph.Edge edge = path.get(i);
+            System.out.printf("  %d. %s %d,%d -> %d,%d  %s  toRegion=%d  cost=%d%n",
+                    i + 1, edge.type, edge.startPoint.x, edge.startPoint.y, edge.endPoint.x, edge.endPoint.y,
+                    edgeDetails(edge), edge.toRegionId, edge.cost);
+        }
+    }
+
+    private static String edgeDetails(BotNavigationGraph.Edge edge) {
+        List<String> parts = new ArrayList<>();
+        if (edge.launchStepX != 0) {
+            parts.add("stepX=" + edge.launchStepX);
+        }
+        if (edge.portalId != 0) {
+            parts.add("portal=" + edge.portalId);
+        }
+        if (edge.ropeX != 0 || edge.ropeTopY != 0 || edge.ropeBottomY != 0) {
+            parts.add("rope=" + edge.ropeX + "," + edge.ropeTopY + "->" + edge.ropeBottomY);
+        }
+        return parts.isEmpty() ? "-" : String.join(" ", parts);
+    }
+
+    private static int countClimbEdgesForRope(BotNavigationGraph graph, server.maps.Rope rope) {
+        int count = 0;
+        for (BotNavigationGraph.Region region : graph.regions) {
+            for (BotNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
+                if (edge.type != BotNavigationGraph.EdgeType.CLIMB) {
+                    continue;
+                }
+                if (edge.ropeX == rope.x() && edge.ropeTopY == rope.topY() && edge.ropeBottomY == rope.bottomY()) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 
     private static List<BotNavigationGraph.Edge> findNearbyEdges(BotNavigationGraph graph,
@@ -191,129 +324,9 @@ public final class BotNavigationProbe {
         return nearby;
     }
 
-    private static MapleMap loadMapGeometry(int mapId) {
-        DataProvider mapSource = DataProviderFactory.getDataProvider(WZFiles.MAP);
-        Data mapData = mapSource.getData(getMapName(mapId));
-        if (mapData == null) {
-            throw new IllegalArgumentException("Map data not found for " + mapId);
-        }
-
-        Data infoData = mapData.getChildByPath("info");
-        String link = DataTool.getString(infoData.getChildByPath("link"), "");
-        if (!link.isEmpty()) {
-            mapData = mapSource.getData(getMapName(Integer.parseInt(link)));
-            infoData = mapData.getChildByPath("info");
-        }
-
-        float monsterRate = 0.0f;
-        Data mobRate = infoData.getChildByPath("mobRate");
-        if (mobRate != null) {
-            monsterRate = (Float) mobRate.getData();
-        }
-
-        MapleMap map = new MapleMap(mapId, 0, 0, DataTool.getInt("returnMap", infoData, mapId), monsterRate);
-        loadBounds(map, mapData, infoData);
-        loadPortals(map, mapData);
-        loadFootholds(map, mapData);
-        loadRopes(map, mapData);
-
-        Data footholdSpeedData = infoData.getChildByPath("fs");
-        if (footholdSpeedData != null) {
-            map.setFootholdSpeed(DataTool.getFloat(footholdSpeedData));
-        }
-        return map;
+    private record PathProbe(Point start, Point target) {
     }
 
-    private static void loadBounds(MapleMap map, Data mapData, Data infoData) {
-        int top = DataTool.getInt(infoData.getChildByPath("VRTop"));
-        int bottom = DataTool.getInt(infoData.getChildByPath("VRBottom"));
-        if (top == bottom) {
-            Data minimapData = mapData.getChildByPath("miniMap");
-            if (minimapData != null) {
-                int px = DataTool.getInt(minimapData.getChildByPath("centerX")) * -1;
-                int py = DataTool.getInt(minimapData.getChildByPath("centerY")) * -1;
-                int height = DataTool.getInt(minimapData.getChildByPath("height"));
-                int width = DataTool.getInt(minimapData.getChildByPath("width"));
-                map.setMapPointBoundings(px, py, height, width);
-                return;
-            }
-
-            int dist = 1 << 18;
-            map.setMapPointBoundings(-dist / 2, -dist / 2, dist, dist);
-            return;
-        }
-
-        int left = DataTool.getInt(infoData.getChildByPath("VRLeft"));
-        int right = DataTool.getInt(infoData.getChildByPath("VRRight"));
-        map.setMapLineBoundings(top, bottom, left, right);
-    }
-
-    private static void loadPortals(MapleMap map, Data mapData) {
-        Data portalData = mapData.getChildByPath("portal");
-        if (portalData == null) {
-            return;
-        }
-
-        PortalFactory portalFactory = new PortalFactory();
-        for (Data portal : portalData) {
-            Portal created = portalFactory.makePortal(DataTool.getInt(portal.getChildByPath("pt")), portal);
-            map.addPortal(created);
-        }
-    }
-
-    private static void loadFootholds(MapleMap map, Data mapData) {
-        List<Foothold> footholds = new LinkedList<>();
-        Point lowerBound = new Point();
-        Point upperBound = new Point();
-
-        Data footholdData = mapData.getChildByPath("foothold");
-        if (footholdData == null) {
-            map.setFootholds(new FootholdTree(new Point(), new Point()));
-            return;
-        }
-
-        for (Data footRoot : footholdData) {
-            for (Data footCategory : footRoot) {
-                for (Data footHold : footCategory) {
-                    int x1 = DataTool.getInt(footHold.getChildByPath("x1"));
-                    int y1 = DataTool.getInt(footHold.getChildByPath("y1"));
-                    int x2 = DataTool.getInt(footHold.getChildByPath("x2"));
-                    int y2 = DataTool.getInt(footHold.getChildByPath("y2"));
-                    Foothold foothold = new Foothold(new Point(x1, y1), new Point(x2, y2), Integer.parseInt(footHold.getName()));
-                    foothold.setPrev(DataTool.getInt(footHold.getChildByPath("prev")));
-                    foothold.setNext(DataTool.getInt(footHold.getChildByPath("next")));
-                    footholds.add(foothold);
-                    lowerBound.x = Math.min(lowerBound.x, Math.min(x1, x2));
-                    lowerBound.y = Math.min(lowerBound.y, Math.min(y1, y2));
-                    upperBound.x = Math.max(upperBound.x, Math.max(x1, x2));
-                    upperBound.y = Math.max(upperBound.y, Math.max(y1, y2));
-                }
-            }
-        }
-
-        FootholdTree tree = new FootholdTree(lowerBound, upperBound);
-        for (Foothold foothold : footholds) {
-            tree.insert(foothold);
-        }
-        map.setFootholds(tree);
-    }
-
-    private static void loadRopes(MapleMap map, Data mapData) {
-        Data ropeData = mapData.getChildByPath("ladderRope");
-        if (ropeData == null) {
-            return;
-        }
-
-        for (Data rope : ropeData) {
-            int x = DataTool.getInt(rope.getChildByPath("x"));
-            int y1 = DataTool.getInt(rope.getChildByPath("y1"));
-            int y2 = DataTool.getInt(rope.getChildByPath("y2"));
-            boolean ladder = DataTool.getInt(rope.getChildByPath("l"), 0) == 1;
-            map.addRope(new Rope(x, y1, y2, ladder));
-        }
-    }
-
-    private static String getMapName(int mapId) {
-        return "Map/Map" + (mapId / 100000000) + "/" + String.format("%09d", mapId) + ".img";
+    private record RegionPathProbe(int startRegionId, int targetRegionId) {
     }
 }

@@ -14,20 +14,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
 
 class BotDropManager {
     private static final Set<Integer> manualTradeGreetingSent = ConcurrentHashMap.newKeySet();
-    private static final List<String> TRADE_THANKS = List.of(
+    private static final List<String> TRADE_INVITATION_MSGS = List.of(
+            "k", "ok", "kk", "sure", "k, I inv", "k i inv");
+    private static final List<String> TRADE_THANKS_MSGS = List.of(
             "ty!", "thanks!", "thank you!", "tyty", "appreciate it!", "tysm!");
-    private static final String[] NO_ITEMS_PROMPTS = {
+    private static final List<String> NO_ITEMS_MSGS = List.of(
             "i don't have any %s",
             "no %s on me rn",
             "don't have any %s right now",
             "i'm out of %s",
             "none of that on me right now"
-    };
+    );
+    private static final List<String> ALL_DONE_MSGS = List.of(
+            "that's all!", "done adding stuff!", "all set!", "everything's in!"
+    );
 
     static void tickManualTrade(BotEntry entry, Character bot) {
         if (entry.pendingTradeCategory != null) return;
@@ -92,10 +96,6 @@ class BotDropManager {
 
     // ─── Trade actions (actual trade window) ─────────────────────────────────
 
-    private static final String[] ALL_DONE_MSGS = {
-        "that's all!", "done adding stuff!", "all set!", "everything's in!"
-    };
-
     /**
      * Kicks off a trade sequence for the given category.
      * Items are batched ≤9 per trade window; subsequent batches open new trades automatically.
@@ -158,7 +158,7 @@ class BotDropManager {
             }
         };
 
-        String fmt = NO_ITEMS_PROMPTS[ThreadLocalRandom.current().nextInt(NO_ITEMS_PROMPTS.length)];
+        String fmt = BotManager.randomReply(NO_ITEMS_MSGS);
         return String.format(fmt, what);
     }
 
@@ -178,7 +178,7 @@ class BotDropManager {
         entry.pendingTradeBotDone  = false;
         Trade.startTrade(bot);
         Trade.inviteTrade(bot, owner);
-        BotManager.getInstance().botSay(bot, "trade request sent!");
+        BotManager.getInstance().botSay(bot, BotManager.randomReply(TRADE_INVITATION_MSGS));
     }
 
     /** Called every bot simulation tick while a trade sequence is in progress. */
@@ -260,7 +260,7 @@ class BotDropManager {
                 // All items added — say so in trade chat and wait for owner OK
                 entry.pendingTradeAllAdded = true;
                 entry.pendingTradeTimerMs  = 0;
-                String msg = ALL_DONE_MSGS[ThreadLocalRandom.current().nextInt(ALL_DONE_MSGS.length)];
+                String msg = BotManager.randomReply(ALL_DONE_MSGS);
                 trade.chat(msg);
                 return;
             }
@@ -327,7 +327,7 @@ class BotDropManager {
         boolean receivedSomething = trade.getPartner() != null && trade.getPartner().hasAnyOffer();
         Trade.completeTrade(bot);
         if (receivedSomething) {
-            BotManager.getInstance().botSay(bot, BotManager.randomReply(TRADE_THANKS));
+            BotManager.getInstance().botSay(bot, BotManager.randomReply(TRADE_THANKS_MSGS));
         }
     }
 

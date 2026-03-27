@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 final class BotNavigationGraphProvider {
     private static final Logger log = LoggerFactory.getLogger(BotNavigationGraphProvider.class);
 
-    private static final int GRAPH_VERSION = 3;
+    private static final int GRAPH_VERSION = 4;
     private static final int REGION_MERGE_GAP_PX = 8;
     private static final int WALK_CONNECTION_GAP_PX = 12;
     private static final int ENDPOINT_ANCHOR_SPACING_PX = 16;
@@ -120,7 +120,7 @@ final class BotNavigationGraphProvider {
         }
 
         for (Rope rope : map.getRopes()) {
-            addClimbEdges(rope, map, regionsById, regionIdByFootholdId, outgoing, edgeKeys);
+            addClimbEdges(rope, map, regionsById, regionIdByFootholdId, featureXsByRegionId, outgoing, edgeKeys);
         }
 
         for (Portal portal : map.getPortals()) {
@@ -262,7 +262,10 @@ final class BotNavigationGraphProvider {
             if (landing.y <= anchor.y + 4) {
                 continue;
             }
-            addEdge(from.id, below.id, BotNavigationGraph.EdgeType.DROP, anchor, landing, 0, 0, estimateDropCost(anchor, landing), outgoing, edgeKeys);
+
+            int dropStepX = dropLaunchStep(from, map, anchor);
+            int dropCost = estimateDropCost(anchor, landing) + (dropStepX == 0 ? 300 : 0);
+            addEdge(from.id, below.id, BotNavigationGraph.EdgeType.DROP, anchor, landing, dropStepX, 0, dropCost, outgoing, edgeKeys);
         }
     }
 
@@ -300,19 +303,131 @@ final class BotNavigationGraphProvider {
                                       MapleMap map,
                                       Map<Integer, BotNavigationGraph.Region> regionsById,
                                       Map<Integer, Integer> regionIdByFootholdId,
+                                      Map<Integer, List<Integer>> featureXsByRegionId,
                                       Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
                                       Set<String> edgeKeys) {
-        BotNavigationGraph.Region bottom = findRegionBelow(map, regionsById, regionIdByFootholdId, new Point(rope.x(), rope.bottomY() - 1));
-        BotNavigationGraph.Region top = findRegionBelow(map, regionsById, regionIdByFootholdId, new Point(rope.x(), rope.topY() - 1));
-        if (bottom == null || top == null || bottom.id == top.id) {
+        Map<Integer, RopeAccess> bottomAccesses = findBottomRopeAccesses(rope, map, regionsById, featureXsByRegionId);
+        Map<Integer, RopeExit> topExits = findTopRopeExits(rope, map, regionsById, regionIdByFootholdId);
+        if (bottomAccesses.isEmpty() || topExits.isEmpty()) {
             return;
         }
 
-        Point start = bottom.pointAt(rope.x());
-        Point end = top.pointAt(rope.x());
-        int cost = estimateClimbCost(start, end);
-        addEdge(bottom.id, top.id, BotNavigationGraph.EdgeType.CLIMB, start, end, 0, 0, cost, outgoing, edgeKeys);
-        addEdge(top.id, bottom.id, BotNavigationGraph.EdgeType.CLIMB, end, start, 0, 0, cost, outgoing, edgeKeys);
+        for (RopeAccess bottom : bottomAccesses.values()) {
+            for (RopeExit top : topExits.values()) {
+                if (bottom.regionId == top.regionId) {
+                    continue;
+                }
+
+                int cost = estimateClimbTraversalCost(rope, bottom.point, top.point, top.exitStepX);
+                addEdge(bottom.regionId, top.regionId, BotNavigationGraph.EdgeType.CLIMB, bottom.point, top.point,
+                        top.exitStepX, 0, rope.x(), rope.topY(), rope.bottomY(), cost, outgoing, edgeKeys);
+                addEdge(top.regionId, bottom.regionId, BotNavigationGraph.EdgeType.CLIMB, top.point, bottom.point,
+                        0, 0, rope.x(), rope.topY(), rope.bottomY(), cost, outgoing, edgeKeys);
+            }
+        }
+    }
+
+    private static Map<Integer, RopeAccess> findBottomRopeAccesses(Rope rope,
+                                                                   MapleMap map,
+                                                                   Map<Integer, BotNavigationGraph.Region> regionsById,
+                                                                   Map<Integer, List<Integer>> featureXsByRegionId) {
+        Map<Integer, RopeAccess> accesses = new HashMap<>();
+        for (BotNavigationGraph.Region region : regionsById.values()) {
+            for (Point anchor : anchorPoints(region, featureXsByRegionId.getOrDefault(region.id, List.of()))) {
+                if (!BotMovementManager.canReachRopeFromGround(map, anchor, rope)) {
+                    continue;
+                }
+
+                RopeAccess candidate = new RopeAccess(region.id, anchor);
+                RopeAccess existing = accesses.get(region.id);
+                if (existing == null || scoreBottomRopeAccess(candidate, rope) < scoreBottomRopeAccess(existing, rope)) {
+                    accesses.put(region.id, candidate);
+                }
+            }
+        }
+        return accesses;
+    }
+
+    private static Map<Integer, RopeExit> findTopRopeExits(Rope rope,
+                                                           MapleMap map,
+                                                           Map<Integer, BotNavigationGraph.Region> regionsById,
+                                                           Map<Integer, Integer> regionIdByFootholdId) {
+        Map<Integer, RopeExit> exits = new HashMap<>();
+
+        RegionPoint directExit = findNearbyRegionBelow(map, regionsById, regionIdByFootholdId,
+                rope.x(), rope.topY() - 1, Math.max(BotMovementManager.cfg.ROPE_GRAB_X, 28));
+        if (directExit != null) {
+            exits.put(directExit.region.id, new RopeExit(directExit.region.id, directExit.point, 0));
+        }
+
+        Point ropeTop = new Point(rope.x(), rope.topY());
+        int jumpStep = BotMovementManager.walkStep(map);
+        for (int exitStepX : new int[]{-jumpStep, 0, jumpStep}) {
+            BotMovementManager.JumpLanding landing = BotMovementManager.simulateRopeJumpLanding(map, ropeTop, exitStepX);
+            if (landing == null) {
+                continue;
+            }
+
+            int regionId = regionIdByFootholdId.getOrDefault(landing.foothold().getId(), -1);
+            BotNavigationGraph.Region region = regionsById.get(regionId);
+            if (region == null) {
+                continue;
+            }
+
+            RopeExit candidate = new RopeExit(region.id, landing.point(), exitStepX);
+            RopeExit existing = exits.get(region.id);
+            if (existing == null || scoreTopRopeExit(candidate, rope) < scoreTopRopeExit(existing, rope)) {
+                exits.put(region.id, candidate);
+            }
+        }
+
+        return exits;
+    }
+
+    private static RegionPoint findNearbyRegionBelow(MapleMap map,
+                                                     Map<Integer, BotNavigationGraph.Region> regionsById,
+                                                     Map<Integer, Integer> regionIdByFootholdId,
+                                                     int centerX,
+                                                     int probeY,
+                                                     int radius) {
+        RegionPoint best = null;
+        int bestScore = Integer.MAX_VALUE;
+        for (int dx = 0; dx <= radius; dx++) {
+            for (int direction : dx == 0 ? new int[]{0} : new int[]{-1, 1}) {
+                int sampleX = centerX + dx * direction;
+                BotNavigationGraph.Region region = findRegionBelow(map, regionsById, regionIdByFootholdId, new Point(sampleX, probeY));
+                if (region == null) {
+                    continue;
+                }
+
+                Point point = region.pointAt(sampleX);
+                int score = Math.abs(point.x - centerX) * 2 + Math.abs(point.y - probeY);
+                if (score < bestScore) {
+                    best = new RegionPoint(region, point);
+                    bestScore = score;
+                }
+            }
+        }
+        return best;
+    }
+
+    private static int scoreBottomRopeAccess(RopeAccess access, Rope rope) {
+        return Math.abs(access.point.x - rope.x()) * 2 + Math.max(0, access.point.y - rope.bottomY());
+    }
+
+    private static int scoreTopRopeExit(RopeExit exit, Rope rope) {
+        return Math.abs(exit.point.x - rope.x()) * 2
+                + Math.abs(exit.point.y - rope.topY())
+                + (exit.exitStepX == 0 ? 0 : 40);
+    }
+
+    private static int estimateClimbTraversalCost(Rope rope, Point start, Point end, int exitStepX) {
+        Point ropeBottom = new Point(rope.x(), Math.min(Math.max(start.y, rope.topY()), rope.bottomY()));
+        Point ropeTop = new Point(rope.x(), rope.topY());
+        int entryCost = estimateWalkCost(start, ropeBottom);
+        int climbCost = estimateClimbCost(ropeBottom, ropeTop);
+        int exitCost = exitStepX == 0 ? estimateWalkCost(ropeTop, end) : estimateJumpCost(ropeTop, end);
+        return entryCost + climbCost + exitCost;
     }
 
     private static void addPortalEdges(Portal portal,
@@ -464,14 +579,33 @@ final class BotNavigationGraphProvider {
                                 int cost,
                                 Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
                                 Set<String> edgeKeys) {
+        addEdge(fromRegionId, toRegionId, type, startPoint, endPoint, launchStepX, portalId,
+                0, 0, 0, cost, outgoing, edgeKeys);
+    }
+
+    private static void addEdge(int fromRegionId,
+                                int toRegionId,
+                                BotNavigationGraph.EdgeType type,
+                                Point startPoint,
+                                Point endPoint,
+                                int launchStepX,
+                                int portalId,
+                                int ropeX,
+                                int ropeTopY,
+                                int ropeBottomY,
+                                int cost,
+                                Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
+                                Set<String> edgeKeys) {
         String key = fromRegionId + ":" + toRegionId + ":" + type + ":" + startPoint.x + ":" + startPoint.y + ":"
-                + endPoint.x + ":" + endPoint.y + ":" + launchStepX + ":" + portalId;
+                + endPoint.x + ":" + endPoint.y + ":" + launchStepX + ":" + portalId + ":"
+                + ropeX + ":" + ropeTopY + ":" + ropeBottomY;
         if (!edgeKeys.add(key)) {
             return;
         }
 
         outgoing.computeIfAbsent(fromRegionId, ignored -> new ArrayList<>())
-                .add(new BotNavigationGraph.Edge(fromRegionId, toRegionId, type, startPoint, endPoint, launchStepX, portalId, cost));
+                .add(new BotNavigationGraph.Edge(fromRegionId, toRegionId, type, startPoint, endPoint,
+                        launchStepX, portalId, ropeX, ropeTopY, ropeBottomY, cost));
     }
 
     private static EndpointConnection closestEndpointConnection(Foothold first, Foothold second) {
@@ -531,11 +665,34 @@ final class BotNavigationGraphProvider {
         return 200 + Math.max(100, (int) Math.round((Math.abs(end.y - start.y) * 1000.0) / Math.max(1, BotMovementManager.cfg.MAX_FALL_PXS)));
     }
 
+    private static int dropLaunchStep(BotNavigationGraph.Region region, MapleMap map, Point anchor) {
+        Point left = region.leftPoint();
+        if (Math.abs(anchor.x - left.x) <= ENDPOINT_ANCHOR_SPACING_PX && Math.abs(anchor.y - left.y) <= 12) {
+            return -BotMovementManager.walkStep(map);
+        }
+
+        Point right = region.rightPoint();
+        if (Math.abs(anchor.x - right.x) <= ENDPOINT_ANCHOR_SPACING_PX && Math.abs(anchor.y - right.y) <= 12) {
+            return BotMovementManager.walkStep(map);
+        }
+
+        return 0;
+    }
+
     private static int estimateClimbCost(Point start, Point end) {
         return 150 + Math.max(100, (int) Math.round((Math.abs(end.y - start.y) * 1000.0) / Math.max(1, BotMovementManager.cfg.CLIMB_SPEED_PXS)));
     }
 
     private record EndpointConnection(Point from, Point to) {
+    }
+
+    private record RegionPoint(BotNavigationGraph.Region region, Point point) {
+    }
+
+    private record RopeAccess(int regionId, Point point) {
+    }
+
+    private record RopeExit(int regionId, Point point, int exitStepX) {
     }
 
     private static final class UnionFind {

@@ -100,8 +100,8 @@ class BotBuildManager {
      * For Hero specifically, SP is held until the owner chooses "1h" or "2h".
      */
     static void autoAssignSp(BotEntry entry, Character bot) {
-        // Hold Hero SP until owner responds to the variant prompt
-        if (bot.getJob() == Job.HERO && entry.spVariantPromptSent && entry.spVariant == null) return;
+        // Hold Hero SP until owner chooses a variant, regardless of when the prompt was sent.
+        if (bot.getJob() == Job.HERO && entry.spVariant == null) return;
 
         List<BuildStep> steps = getBuildOrder(bot.getJob(), entry.spVariant);
         if (steps == null) return;
@@ -301,7 +301,11 @@ class BotBuildManager {
         if (entry.lastKnownLevel == lvl) return;
         int prev = entry.lastKnownLevel;
         entry.lastKnownLevel = lvl;
-        if (prev == -1) return;  // initial sync on first tick
+        if (prev == -1) {
+            autoAssignSp(entry, bot);
+            autoAssignAp(entry, bot);
+            return;
+        }
 
         // Send job/build prompts first — some (Hero SP variant) gate SP spending
         if (lvl == 8 || lvl == 10 || lvl == 30 || lvl == 70 || lvl == 120) {

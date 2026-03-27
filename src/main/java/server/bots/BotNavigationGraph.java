@@ -150,6 +150,9 @@ final class BotNavigationGraph implements Serializable {
         final Point endPoint;
         final int launchStepX;
         final int portalId;
+        final int ropeX;
+        final int ropeTopY;
+        final int ropeBottomY;
         final int cost;
 
         Edge(int fromRegionId,
@@ -159,6 +162,9 @@ final class BotNavigationGraph implements Serializable {
              Point endPoint,
              int launchStepX,
              int portalId,
+             int ropeX,
+             int ropeTopY,
+             int ropeBottomY,
              int cost) {
             this.fromRegionId = fromRegionId;
             this.toRegionId = toRegionId;
@@ -167,6 +173,9 @@ final class BotNavigationGraph implements Serializable {
             this.endPoint = new Point(endPoint);
             this.launchStepX = launchStepX;
             this.portalId = portalId;
+            this.ropeX = ropeX;
+            this.ropeTopY = ropeTopY;
+            this.ropeBottomY = ropeBottomY;
             this.cost = cost;
         }
     }
