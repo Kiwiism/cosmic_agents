@@ -92,6 +92,16 @@ class BotNavigationGraphProviderTest {
     }
 
     @Test
+    void shouldFindElliniaPathFromLowerPlatformToUpperLeftSlope() {
+        List<BotNavigationGraph.Edge> path = findPath(elliniaGraph, ellinia, new Point(-445, -55), new Point(-491, -426));
+        int targetRegionId = elliniaGraph.findRegionId(ellinia, new Point(-491, -426));
+
+        assertFalse(path.isEmpty());
+        assertEquals(targetRegionId, path.getLast().toRegionId);
+        assertTrue(path.stream().anyMatch(edge -> edge.type == BotNavigationGraph.EdgeType.CLIMB));
+    }
+
+    @Test
     void shouldGenerateElliniaJumpEdgeFromLowerRightPlatformToPlatformAbove() {
         BotNavigationGraph.Edge edge = findNearbyEdge(elliniaGraph, ellinia, new Point(1355, -888),
                 BotNavigationGraph.EdgeType.JUMP, 24, 16);

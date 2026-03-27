@@ -364,28 +364,13 @@ final class BotNavigationManager {
 
     private static boolean isEdgeUsable(BotNavigationGraph graph, MapleMap map, BotNavigationGraph.Edge edge) {
         return switch (edge.type) {
-            case WALK, DROP, CLIMB -> true;
-            case JUMP -> landsOnExpectedRegion(graph, map, edge);
+            case WALK, JUMP, DROP, CLIMB -> true;
             case PORTAL -> {
                 Portal portal = map.getPortal(edge.portalId);
                 yield portal != null && portal.getPortalStatus();
             }
             case FLASH_JUMP, TELEPORT -> false;
         };
-    }
-
-    private static boolean landsOnExpectedRegion(BotNavigationGraph graph, Character bot, BotNavigationGraph.Edge edge) {
-        return landsOnExpectedRegion(graph, bot.getMap(), edge);
-    }
-
-    private static boolean landsOnExpectedRegion(BotNavigationGraph graph, MapleMap map, BotNavigationGraph.Edge edge) {
-        BotMovementManager.JumpLanding landing = BotMovementManager.simulateJumpLanding(map, edge.startPoint, edge.launchStepX);
-        if (landing == null) {
-            return false;
-        }
-
-        int landingRegionId = graph.regionIdByFootholdId.getOrDefault(landing.foothold().getId(), -1);
-        return landingRegionId == edge.toRegionId;
     }
 
     private static boolean usePortal(Character bot, int portalId) {
