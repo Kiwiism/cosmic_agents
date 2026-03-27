@@ -195,6 +195,7 @@ class BotMovementManager {
         entry.navTargetPos      = null;
         entry.navEdge           = null;
         entry.navTargetRegionId = -1;
+        entry.navPreciseTarget  = false;
     }
 
     // -------------------------------------------------------------------------
@@ -356,6 +357,8 @@ class BotMovementManager {
         Point botPos  = bot.getPosition();
         int dx = targetPos.x - botPos.x;
         int dy = targetPos.y - botPos.y; // negative = owner is higher on screen
+        int stopDist = entry.navPreciseTarget ? 4 : cfg.STOP_DIST;
+        int followDist = entry.navPreciseTarget ? 4 : cfg.FOLLOW_DIST;
 
         // Sync physX to actual position when idle (after teleport, map change, or first ground tick)
         if (entry.hspeed == 0.0 && (int) Math.round(entry.physX) != botPos.x) {
@@ -397,7 +400,7 @@ class BotMovementManager {
             if (entry.stuckCheckElapsedMs >= cfg.STUCK_CHECK_INTERVAL_MS) {
                 int moved = Math.abs(botPos.x - entry.lastStuckCheckPos.x)
                         + Math.abs(botPos.y - entry.lastStuckCheckPos.y);
-                if (moved < cfg.STUCK_MIN_MOVE && Math.abs(dx) > cfg.FOLLOW_DIST) {
+                if (moved < cfg.STUCK_MIN_MOVE && Math.abs(dx) > followDist) {
                     entry.rawChaseMs = cfg.STUCK_CHASE_MS;
                 }
                 entry.stuckCheckElapsedMs = 0;
@@ -529,7 +532,7 @@ class BotMovementManager {
 
             // Proactive jump
             if (dy < -cfg.JUMP_Y_THRESH && entry.jumpCooldownMs == 0) {
-                int stepXai   = updateStepX(entry, bot.getMap(), botPos.x, targetPos.x);
+                int stepXai   = updateStepX(entry, bot.getMap(), botPos.x, targetPos.x, stopDist, followDist);
                 boolean blocked  = stepXai == 0 || !isPathWalkable(bot, botPos, stepXai);
                 boolean farAbove = dy < -cfg.JUMP_Y_THRESH * 2;
                 if (blocked) {
@@ -585,12 +588,13 @@ class BotMovementManager {
             }
 
             // Cache desired direction for movement ticks between logic ticks
-            boolean closeEnough = Math.abs(dx) < cfg.STOP_DIST && Math.abs(dy) < cfg.STOP_DIST;
+            boolean closeEnough = Math.abs(dx) < stopDist && Math.abs(dy) < stopDist;
             if (closeEnough) {
                 entry.wasMovingX          = false;
                 entry.lastDesiredDirection = 0;
             } else {
-                entry.lastDesiredDirection = Integer.compare(updateStepX(entry, bot.getMap(), botPos.x, targetPos.x), 0);
+                entry.lastDesiredDirection = Integer.compare(
+                        updateStepX(entry, bot.getMap(), botPos.x, targetPos.x, stopDist, followDist), 0);
             }
         } // end runAiTick
 
@@ -643,13 +647,17 @@ class BotMovementManager {
 
     static int calcStepX(MapleMap map, int botX, int targetX, boolean wasMovingX) {
         Config cfg = BotMovementManager.cfg;
+        return calcStepX(map, botX, targetX, wasMovingX, cfg.STOP_DIST, cfg.FOLLOW_DIST);
+    }
+
+    static int calcStepX(MapleMap map, int botX, int targetX, boolean wasMovingX, int stopDist, int followDist) {
         int dx   = targetX - botX;
         int absDx = Math.abs(dx);
 
-        if (absDx <= cfg.STOP_DIST) {
+        if (absDx <= stopDist) {
             return 0;
         }
-        if (!wasMovingX && absDx <= cfg.FOLLOW_DIST) {
+        if (!wasMovingX && absDx <= followDist) {
             return 0; // inside dead zone โ€” don't start until sufficiently far
         }
         return Math.min(absDx, walkStep(map)) * (dx >= 0 ? 1 : -1);
@@ -661,14 +669,18 @@ class BotMovementManager {
      */
     static int updateStepX(BotEntry entry, MapleMap map, int botX, int targetX) {
         Config cfg = BotMovementManager.cfg;
+        return updateStepX(entry, map, botX, targetX, cfg.STOP_DIST, cfg.FOLLOW_DIST);
+    }
+
+    static int updateStepX(BotEntry entry, MapleMap map, int botX, int targetX, int stopDist, int followDist) {
         int dx   = targetX - botX;
         int absDx = Math.abs(dx);
 
-        if (absDx <= cfg.STOP_DIST) {
+        if (absDx <= stopDist) {
             entry.wasMovingX = false;
             return 0;
         }
-        if (!entry.wasMovingX && absDx <= cfg.FOLLOW_DIST) {
+        if (!entry.wasMovingX && absDx <= followDist) {
             return 0; // inside dead zone — don't start until sufficiently far
         }
         entry.wasMovingX = true;
@@ -811,7 +823,9 @@ class BotMovementManager {
             return true;
         }
 
-        int stepX = calcStepX(map, botPos.x, targetPos.x, entry.wasMovingX);
+        int stopDist = entry.navPreciseTarget ? 4 : cfg.STOP_DIST;
+        int followDist = entry.navPreciseTarget ? 4 : cfg.FOLLOW_DIST;
+        int stepX = calcStepX(map, botPos.x, targetPos.x, entry.wasMovingX, stopDist, followDist);
         if (stepX != 0 && isPathWalkable(bot, botPos, stepX)) {
             return true;
         }

@@ -132,6 +132,7 @@ class BotEntry {
     Point   navTargetPos         = null;
     BotNavigationGraph.Edge navEdge = null;
     int navTargetRegionId = -1;
+    boolean navPreciseTarget = false;
     boolean debugPromptSent = false;
 
     BotEntry(Character bot, Character owner, ScheduledFuture<?> task) {

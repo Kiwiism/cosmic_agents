@@ -60,15 +60,13 @@ final class BotNavigationManager {
             return new NavigationDirective(rawTargetPos, false);
         }
 
-        if (runAiTick && edge.type == BotNavigationGraph.EdgeType.PORTAL && isReadyForEdge(botPos, edge)) {
-            if (usePortal(bot, edge.portalId)) {
-                clearNavigation(entry);
-                BotMovementManager.resetEntryState(entry);
-                return new NavigationDirective(rawTargetPos, true);
-            }
+        NavigationDirective executionDirective = tryExecuteEdge(entry, bot, botPos, rawTargetPos, edge, runAiTick);
+        if (executionDirective != null) {
+            return executionDirective;
         }
 
-        entry.navTargetPos = selectWaypoint(botPos, edge);
+        entry.navPreciseTarget = shouldUsePreciseTarget(entry, botPos, edge);
+        entry.navTargetPos = selectWaypoint(entry, botPos, edge);
         return new NavigationDirective(new Point(entry.navTargetPos), false);
     }
 
@@ -76,6 +74,7 @@ final class BotNavigationManager {
         entry.navEdge = null;
         entry.navTargetPos = null;
         entry.navTargetRegionId = -1;
+        entry.navPreciseTarget = false;
     }
 
     private static BotNavigationGraph.Edge reuseCommittedEdge(BotNavigationGraph graph,
@@ -104,14 +103,86 @@ final class BotNavigationManager {
         return null;
     }
 
-    private static Point selectWaypoint(Point botPos, BotNavigationGraph.Edge edge) {
-        if (edge.type == BotNavigationGraph.EdgeType.WALK) {
-            return new Point(edge.endPoint);
+    private static NavigationDirective tryExecuteEdge(BotEntry entry,
+                                                      Character bot,
+                                                      Point botPos,
+                                                      Point rawTargetPos,
+                                                      BotNavigationGraph.Edge edge,
+                                                      boolean runAiTick) {
+        if (!runAiTick || !isReadyForEdge(botPos, edge)) {
+            return null;
         }
-        if (!isReadyForEdge(botPos, edge)) {
-            return new Point(edge.startPoint);
+
+        return switch (edge.type) {
+            case JUMP -> tryExecuteJump(entry, bot, rawTargetPos, edge);
+            case DROP -> tryExecuteDrop(entry, bot, rawTargetPos, edge);
+            case PORTAL -> tryExecutePortal(entry, bot, rawTargetPos, edge);
+            default -> null;
+        };
+    }
+
+    private static NavigationDirective tryExecuteJump(BotEntry entry,
+                                                      Character bot,
+                                                      Point rawTargetPos,
+                                                      BotNavigationGraph.Edge edge) {
+        if (entry.inAir || entry.climbing || entry.jumpCooldownMs != 0) {
+            return null;
         }
-        return edge.type == BotNavigationGraph.EdgeType.PORTAL ? new Point(edge.startPoint) : new Point(edge.endPoint);
+
+        entry.navPreciseTarget = false;
+        entry.navTargetPos = new Point(edge.endPoint);
+        entry.jumpCooldownMs = BotMovementManager.delayAfterCurrentTick(BotMovementManager.cfg.JUMP_COOLDOWN_MS);
+        BotMovementManager.initiateJump(entry, bot, edge.launchStepX);
+        return new NavigationDirective(rawTargetPos, true);
+    }
+
+    private static NavigationDirective tryExecuteDrop(BotEntry entry,
+                                                      Character bot,
+                                                      Point rawTargetPos,
+                                                      BotNavigationGraph.Edge edge) {
+        if (entry.inAir || entry.climbing || entry.downJumpPending || entry.jumpCooldownMs != 0) {
+            return null;
+        }
+
+        entry.navPreciseTarget = false;
+        entry.navTargetPos = new Point(edge.endPoint);
+        entry.downJumpPending = true;
+        bot.setStance(BotMovementManager.cfg.PRONE_STANCE);
+        BotMovementManager.broadcastMovement(bot, 0, 0);
+        return new NavigationDirective(rawTargetPos, true);
+    }
+
+    private static NavigationDirective tryExecutePortal(BotEntry entry,
+                                                        Character bot,
+                                                        Point rawTargetPos,
+                                                        BotNavigationGraph.Edge edge) {
+        if (!usePortal(bot, edge.portalId)) {
+            return null;
+        }
+
+        clearNavigation(entry);
+        BotMovementManager.resetEntryState(entry);
+        return new NavigationDirective(rawTargetPos, true);
+    }
+
+    private static boolean shouldUsePreciseTarget(BotEntry entry, Point botPos, BotNavigationGraph.Edge edge) {
+        if (entry.inAir || entry.climbing) {
+            return false;
+        }
+        return switch (edge.type) {
+            case WALK -> false;
+            case JUMP, DROP, PORTAL, FLASH_JUMP, TELEPORT, CLIMB -> !isReadyForEdge(botPos, edge);
+        };
+    }
+
+    private static Point selectWaypoint(BotEntry entry, Point botPos, BotNavigationGraph.Edge edge) {
+        return switch (edge.type) {
+            case WALK -> new Point(edge.endPoint);
+            case JUMP, DROP, PORTAL, FLASH_JUMP, TELEPORT -> entry.inAir ? new Point(edge.endPoint) : new Point(edge.startPoint);
+            case CLIMB -> entry.climbing || isReadyForEdge(botPos, edge)
+                    ? new Point(edge.endPoint)
+                    : new Point(edge.startPoint);
+        };
     }
 
     private static BotNavigationGraph.Edge findNextEdge(BotNavigationGraph graph,
