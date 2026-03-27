@@ -40,39 +40,44 @@ final class BotNavigationManager {
     }
 
     static NavigationDirective resolveTarget(BotEntry entry, Point rawTargetPos, boolean runAiTick) {
-        Character bot = entry.bot;
-        if (bot.getMap().getFootholds() == null) {
-            clearNavigation(entry);
-            return new NavigationDirective(rawTargetPos, false);
-        }
-
-        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(bot.getMap());
-        Point botPos = bot.getPosition();
-        int startRegionId = graph.findRegionId(bot.getMap(), botPos);
-        int targetRegionId = graph.findRegionId(bot.getMap(), rawTargetPos);
-
-        BotNavigationGraph.Edge edge = reuseCommittedEdge(graph, entry, startRegionId, targetRegionId);
-        if (edge == null && runAiTick && startRegionId >= 0 && targetRegionId >= 0 && startRegionId != targetRegionId) {
-            edge = findNextEdge(graph, bot, startRegionId, targetRegionId, rawTargetPos);
-            if (edge != null) {
-                entry.navEdge = edge;
-                entry.navTargetRegionId = targetRegionId;
+        long startedAt = System.nanoTime();
+        try {
+            Character bot = entry.bot;
+            if (bot.getMap().getFootholds() == null) {
+                clearNavigation(entry);
+                return new NavigationDirective(rawTargetPos, false);
             }
-        }
 
-        if (edge == null) {
-            clearNavigation(entry);
-            return new NavigationDirective(rawTargetPos, false);
-        }
+            BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(bot.getMap());
+            Point botPos = bot.getPosition();
+            int startRegionId = graph.findRegionId(bot.getMap(), botPos);
+            int targetRegionId = graph.findRegionId(bot.getMap(), rawTargetPos);
 
-        NavigationDirective executionDirective = tryExecuteEdge(entry, bot, botPos, rawTargetPos, edge, runAiTick);
-        if (executionDirective != null) {
-            return executionDirective;
-        }
+            BotNavigationGraph.Edge edge = reuseCommittedEdge(graph, entry, startRegionId, targetRegionId);
+            if (edge == null && runAiTick && startRegionId >= 0 && targetRegionId >= 0 && startRegionId != targetRegionId) {
+                edge = findNextEdge(graph, bot, startRegionId, targetRegionId, rawTargetPos);
+                if (edge != null) {
+                    entry.navEdge = edge;
+                    entry.navTargetRegionId = targetRegionId;
+                }
+            }
 
-        entry.navPreciseTarget = shouldUsePreciseTarget(entry, botPos, edge);
-        entry.navTargetPos = selectWaypoint(entry, botPos, edge);
-        return new NavigationDirective(new Point(entry.navTargetPos), false);
+            if (edge == null) {
+                clearNavigation(entry);
+                return new NavigationDirective(rawTargetPos, false);
+            }
+
+            NavigationDirective executionDirective = tryExecuteEdge(entry, bot, botPos, rawTargetPos, edge, runAiTick);
+            if (executionDirective != null) {
+                return executionDirective;
+            }
+
+            entry.navPreciseTarget = shouldUsePreciseTarget(entry, botPos, edge);
+            entry.navTargetPos = selectWaypoint(entry, botPos, edge);
+            return new NavigationDirective(new Point(entry.navTargetPos), false);
+        } finally {
+            BotPerformanceMonitor.record("nav-resolve", System.nanoTime() - startedAt);
+        }
     }
 
     private static void clearNavigation(BotEntry entry) {
@@ -153,15 +158,13 @@ final class BotNavigationManager {
         entry.navPreciseTarget = false;
         entry.navTargetPos = new Point(edge.endPoint);
         if (edge.launchStepX != 0) {
-            BotMovementManager.startAirborneMotion(entry, bot, 0f, edge.launchStepX, false);
-            bot.setStance(edge.launchStepX >= 0 ? 2 : 3);
-            BotMovementManager.broadcastMovement(bot, BotMovementManager.velocityFromDeltaX(edge.launchStepX), 0);
+            BotPhysicsEngine.beginFall(entry, bot, edge.launchStepX);
+            BotMovementManager.broadcastMovement(entry);
             return new NavigationDirective(rawTargetPos, true);
         }
 
-        entry.downJumpPending = true;
-        bot.setStance(BotMovementManager.cfg.PRONE_STANCE);
-        BotMovementManager.broadcastMovement(bot, 0, 0);
+        BotPhysicsEngine.queueDownJump(entry, bot);
+        BotMovementManager.broadcastMovement(entry);
         return new NavigationDirective(rawTargetPos, true);
     }
 
@@ -256,51 +259,56 @@ final class BotNavigationManager {
                                                   int startRegionId,
                                                   int targetRegionId,
                                                   Point targetPos) {
-        PriorityQueue<SearchNode> open = new PriorityQueue<>(Comparator.comparingInt(node -> node.score));
-        Map<SearchState, Integer> gScore = new HashMap<>();
-        Map<SearchState, SearchState> cameFrom = new HashMap<>();
-        Map<SearchState, BotNavigationGraph.Edge> cameByEdge = new HashMap<>();
-        SearchState startState = new SearchState(startRegionId, new Point(startPos));
-        SearchState bestGoalState = null;
-        int bestGoalCost = Integer.MAX_VALUE;
+        long startedAt = System.nanoTime();
+        try {
+            PriorityQueue<SearchNode> open = new PriorityQueue<>(Comparator.comparingInt(node -> node.score));
+            Map<SearchState, Integer> gScore = new HashMap<>();
+            Map<SearchState, SearchState> cameFrom = new HashMap<>();
+            Map<SearchState, BotNavigationGraph.Edge> cameByEdge = new HashMap<>();
+            SearchState startState = new SearchState(startRegionId, new Point(startPos));
+            SearchState bestGoalState = null;
+            int bestGoalCost = Integer.MAX_VALUE;
 
-        gScore.put(startState, 0);
-        open.add(new SearchNode(startState, 0, heuristic(startPos, targetPos)));
+            gScore.put(startState, 0);
+            open.add(new SearchNode(startState, 0, heuristic(startPos, targetPos)));
 
-        while (!open.isEmpty()) {
-            SearchNode current = open.poll();
-            if (current.cost != gScore.getOrDefault(current.state, Integer.MAX_VALUE)) {
-                continue;
-            }
-
-            if (current.state.regionId == targetRegionId) {
-                int goalCost = current.cost + intraRegionTravelCost(current.state.point, targetPos);
-                if (goalCost < bestGoalCost) {
-                    bestGoalCost = goalCost;
-                    bestGoalState = current.state;
-                }
-            }
-
-            for (BotNavigationGraph.Edge edge : graph.getOutgoing(current.state.regionId)) {
-                if (!isEdgeUsable(graph, map, edge)) {
+            while (!open.isEmpty()) {
+                SearchNode current = open.poll();
+                if (current.cost != gScore.getOrDefault(current.state, Integer.MAX_VALUE)) {
                     continue;
                 }
 
-                int tentativeCost = current.cost + intraRegionTravelCost(current.state.point, edge.startPoint) + edge.cost;
-                SearchState nextState = new SearchState(edge.toRegionId, edge.endPoint);
-                if (tentativeCost >= gScore.getOrDefault(nextState, Integer.MAX_VALUE)) {
-                    continue;
+                if (current.state.regionId == targetRegionId) {
+                    int goalCost = current.cost + intraRegionTravelCost(current.state.point, targetPos);
+                    if (goalCost < bestGoalCost) {
+                        bestGoalCost = goalCost;
+                        bestGoalState = current.state;
+                    }
                 }
 
-                gScore.put(nextState, tentativeCost);
-                cameFrom.put(nextState, current.state);
-                cameByEdge.put(nextState, edge);
-                int fScore = tentativeCost + heuristic(edge.endPoint, targetPos);
-                open.add(new SearchNode(nextState, tentativeCost, fScore));
+                for (BotNavigationGraph.Edge edge : graph.getOutgoing(current.state.regionId)) {
+                    if (!isEdgeUsable(graph, map, edge)) {
+                        continue;
+                    }
+
+                    int tentativeCost = current.cost + intraRegionTravelCost(current.state.point, edge.startPoint) + edge.cost;
+                    SearchState nextState = new SearchState(edge.toRegionId, edge.endPoint);
+                    if (tentativeCost >= gScore.getOrDefault(nextState, Integer.MAX_VALUE)) {
+                        continue;
+                    }
+
+                    gScore.put(nextState, tentativeCost);
+                    cameFrom.put(nextState, current.state);
+                    cameByEdge.put(nextState, edge);
+                    int fScore = tentativeCost + heuristic(edge.endPoint, targetPos);
+                    open.add(new SearchNode(nextState, tentativeCost, fScore));
+                }
             }
+
+            return reconstructPath(startState, bestGoalState, cameFrom, cameByEdge);
+        } finally {
+            BotPerformanceMonitor.recordPathfind(System.nanoTime() - startedAt);
         }
-
-        return reconstructPath(startState, bestGoalState, cameFrom, cameByEdge);
     }
 
     private static List<BotNavigationGraph.Edge> reconstructPath(SearchState startState,
@@ -434,14 +442,8 @@ final class BotNavigationManager {
     }
 
     private static void startClimbing(BotEntry entry, Character bot, Rope rope, int climbY) {
-        entry.climbing = true;
-        entry.climbRope = rope;
-        entry.inAir = false;
-        entry.velY = 0f;
-        BotMovementManager.stopGroundMotion(entry);
-        bot.setPosition(new Point(rope.x(), climbY));
-        bot.setStance(rope.isLadder() ? 17 : 16);
-        BotMovementManager.broadcastMovement(bot, 0, 0);
+        BotPhysicsEngine.attachToRope(entry, bot, rope, climbY);
+        BotMovementManager.broadcastMovement(entry);
     }
 
     private static int clampToRope(int y, Rope rope) {

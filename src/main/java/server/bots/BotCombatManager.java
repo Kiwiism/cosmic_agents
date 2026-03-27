@@ -119,7 +119,6 @@ class BotCombatManager {
      */
     static void applyMobHit(BotEntry entry, Character bot, Monster mob) {
         Config cc = BotCombatManager.cfg;
-        BotMovementManager.Config mc = BotMovementManager.cfg;
         int dmg = rollPhysicalMobDamage(bot, mob);
 
         bot.addMPHP(-dmg, 0);
@@ -133,19 +132,16 @@ class BotCombatManager {
         // Knock the bot back and hand motion over to the normal airborne physics.
         Point bp = bot.getPosition();
         int kbX = bp.x + (dir == 0 ? 30 : -30);
-        bot.setPosition(new Point(kbX, bp.y));
         BotMovementManager.resetEntryState(entry);
         int airVelX = (dir == 0 ? 1 : -1) * BotMovementManager.walkStep(bot.getMap());
-        BotMovementManager.startAirborneMotion(entry, bot, -cfg.KNOCKBACK_RISE, airVelX, false);
-        int velXBcast = entry.airVelX * (1000 / mc.TICK_MS);
-        int velYBcast = (int) (-entry.velY * (1000f / mc.TICK_MS));
-        BotMovementManager.broadcastMovement(bot, velXBcast, velYBcast);
+        BotPhysicsEngine.beginKnockback(entry, bot, new Point(kbX, bp.y), -cfg.KNOCKBACK_RISE, airVelX);
+        BotMovementManager.broadcastMovement(entry);
 
         entry.mobHitCooldownMs = BotMovementManager.delayAfterCurrentTick(cc.MOB_HIT_COOLDOWN_MS);
 
         if (bot.getHp() <= 0) {
-            bot.setStance(mc.DEAD_STANCE);
-            BotMovementManager.broadcastMovement(bot, 0, 0);
+            BotPhysicsEngine.markDead(entry, bot);
+            BotMovementManager.broadcastMovement(entry);
             BotManager.getInstance().botSay(bot, BotManager.randomReply(DEATH_REPLIES));
             entry.deadUntil = System.currentTimeMillis() + cc.BOT_DEAD_MS;
             BotMovementManager.resetEntryState(entry);
@@ -235,36 +231,46 @@ class BotCombatManager {
 
     /** Returns a random monster from the nearest 3 within seek range, so multiple bots spread across targets. */
     static Monster findGrindTarget(Character bot) {
-        Point botPos = bot.getPosition();
-        double rangeSq = (double) BotCombatManager.cfg.GRIND_SEEK_RANGE * BotCombatManager.cfg.GRIND_SEEK_RANGE;
-        Foothold botFoothold = findGroundFoothold(botPos, bot);
-        List<Monster> candidates = new ArrayList<>();
-        for (Monster m : bot.getMap().getAllMonsters()) {
-            if (m.isAlive() && m.getPosition().distanceSq(botPos) <= rangeSq) {
-                candidates.add(m);
+        long startedAt = System.nanoTime();
+        try {
+            Point botPos = bot.getPosition();
+            double rangeSq = (double) BotCombatManager.cfg.GRIND_SEEK_RANGE * BotCombatManager.cfg.GRIND_SEEK_RANGE;
+            Foothold botFoothold = findGroundFoothold(botPos, bot);
+            List<Monster> candidates = new ArrayList<>();
+            for (Monster m : bot.getMap().getAllMonsters()) {
+                if (m.isAlive() && m.getPosition().distanceSq(botPos) <= rangeSq) {
+                    candidates.add(m);
+                }
             }
-        }
-        if (candidates.isEmpty()) return null;
+            if (candidates.isEmpty()) return null;
 
-        candidates.sort((a, b) -> compareGrindTargets(bot, botPos, botFoothold, a, b));
-        return candidates.get(ThreadLocalRandom.current().nextInt(Math.min(3, candidates.size())));
+            candidates.sort((a, b) -> compareGrindTargets(bot, botPos, botFoothold, a, b));
+            return candidates.get(ThreadLocalRandom.current().nextInt(Math.min(3, candidates.size())));
+        } finally {
+            BotPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
+        }
     }
 
     static AttackPlan planAttack(BotEntry entry, Character bot, Monster target) {
-        AttackPlan aoeAttack = planAoeAttack(entry, bot, target);
-        if (aoeAttack != null) {
-            return aoeAttack;
-        }
+        long startedAt = System.nanoTime();
+        try {
+            AttackPlan aoeAttack = planAoeAttack(entry, bot, target);
+            if (aoeAttack != null) {
+                return aoeAttack;
+            }
 
-        AttackPlan skillAttack = planSingleTargetSkill(entry, bot, target);
-        if (skillAttack != null) {
-            return skillAttack;
-        }
+            AttackPlan skillAttack = planSingleTargetSkill(entry, bot, target);
+            if (skillAttack != null) {
+                return skillAttack;
+            }
 
-        BasicAttackData basicAttackData = buildBasicAttackData(bot, target);
-        return new AttackPlan(0, 0, 1, basicAttackData.hitBox, List.of(target), determineBasicAttackRoute(bot),
-                basicAttackData.display, basicAttackData.direction, basicAttackData.rangedDirection,
-                basicAttackData.speed, basicAttackData.cooldownMs);
+            BasicAttackData basicAttackData = buildBasicAttackData(bot, target);
+            return new AttackPlan(0, 0, 1, basicAttackData.hitBox, List.of(target), determineBasicAttackRoute(bot),
+                    basicAttackData.display, basicAttackData.direction, basicAttackData.rangedDirection,
+                    basicAttackData.speed, basicAttackData.cooldownMs);
+        } finally {
+            BotPerformanceMonitor.record("combat-plan", System.nanoTime() - startedAt);
+        }
     }
 
     static boolean isTargetInAttackRange(AttackPlan attackPlan, Character bot, Monster target) {

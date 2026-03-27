@@ -403,8 +403,8 @@ public class BotManager {
         // Dead state: skip AI until respawn timer expires.
         // Also catch stale hp=0 (e.g. deadUntil was lost on save/reconnect) — re-enter dead state.
         if (entry.deadUntil == 0 && bot.getHp() <= 0) {
-            bot.setStance(BotMovementManager.cfg.DEAD_STANCE);
-            BotMovementManager.broadcastMovement(bot, 0, 0);
+            BotPhysicsEngine.markDead(entry, bot);
+            BotMovementManager.broadcastMovement(entry);
             entry.deadUntil = System.currentTimeMillis() + BotCombatManager.cfg.BOT_DEAD_MS;
             BotMovementManager.resetEntryState(entry);
         }
@@ -432,18 +432,19 @@ public class BotManager {
             BotCombatManager.rebuildSkillCacheIfNeeded(entry, bot);
             BotCombatManager.tickBuffs(entry, bot);
         }
-        if (tickActionLocked(entry, targetPos)) {
+        if (tickActionLocked(entry)) {
             return;
         }
 
         if (!entry.following && !entry.grinding) {
             if (entry.inAir) {
-                BotMovementManager.tickAirborne(entry, targetPos);
+                BotMovementManager.tickAirborne(entry);
             } else if (!entry.climbing) {
                 // On ground — snap to stand stance once so walking/jumping animation clears
-                if (bot.getStance() != 5) {
-                    bot.setStance(5);
-                    BotMovementManager.broadcastMovement(bot, 0, 0);
+                if (BotPhysicsEngine.resolveStance(entry) != BotPhysicsEngine.cfg.STAND_STANCE
+                        || bot.getStance() != BotPhysicsEngine.cfg.STAND_STANCE) {
+                    BotPhysicsEngine.idleOnGround(entry, bot);
+                    BotMovementManager.broadcastMovement(entry);
                 }
             }
             // If climbing, bot idles on the rope — no stance change needed (16/17 is already idle)
@@ -454,7 +455,7 @@ public class BotManager {
         if (entry.following) {
             if (bot.getMapId() != owner.getMapId()) {
                 Point spawn = new Point(owner.getPosition().x, owner.getPosition().y - 10);
-                bot.setStance(BotMovementManager.cfg.STAND_STANCE); // ensure spawn packet shows stand stance, not walk
+                BotPhysicsEngine.idleOnGround(entry, bot);
                 bot.changeMap(owner.getMap(), spawn);
                 BotMovementManager.resetEntryState(entry);
                 return;
@@ -463,9 +464,9 @@ public class BotManager {
         // Teleport if hopelessly far — applies to both follow and grind (catches falling off map)
         if (Math.abs(botPos.x - targetPos.x) + Math.abs(botPos.y - targetPos.y) > BotMovementManager.cfg.TELEPORT_DIST) {
             Point spawn = new Point(targetPos.x, targetPos.y - 10);
-            bot.setPosition(spawn);
+            BotPhysicsEngine.teleportTo(entry, bot, spawn);
             BotMovementManager.resetEntryState(entry);
-            BotMovementManager.broadcastMovement(bot, 0, 0);
+            BotMovementManager.broadcastMovement(entry);
             return;
         }
 
@@ -485,8 +486,12 @@ public class BotManager {
                 target = runAiTick ? BotCombatManager.findGrindTarget(bot) : null;
             }
             if (target == null) {
-                if (entry.inAir) BotMovementManager.tickAirborne(entry, targetPos);
-                else { bot.setStance(5); BotMovementManager.broadcastMovement(bot, 0, 0); }
+                if (entry.inAir) {
+                    BotMovementManager.tickAirborne(entry);
+                } else {
+                    BotPhysicsEngine.idleOnGround(entry, bot);
+                    BotMovementManager.broadcastMovement(entry);
+                }
                 return;
             }
             entry.grindTarget = target;
@@ -527,18 +532,18 @@ public class BotManager {
         if (entry.climbing) {
             BotMovementManager.tickClimbing(entry, targetPos, runAiTick);
         } else if (entry.inAir) {
-            BotMovementManager.tickAirborne(entry, targetPos);
+            BotMovementManager.tickAirborne(entry);
         } else {
-            BotMovementManager.tickGrounded(entry, targetPos, runAiTick);
+            BotMovementManager.tickGrounded(entry, targetPos);
         }
     }
 
-    private boolean tickActionLocked(BotEntry entry, Point targetPos) {
+    private boolean tickActionLocked(BotEntry entry) {
         if (entry.attackCooldownMs <= 0) {
             return false;
         }
         if (entry.inAir) {
-            BotMovementManager.tickAirborne(entry, targetPos);
+            BotMovementManager.tickAirborne(entry);
         }
         return true;
     }
@@ -589,10 +594,9 @@ public class BotManager {
         }
         Point ownerPos = owner.getPosition();
         Point spawnPos = bot.getMap().getPointBelow(new Point(ownerPos.x, ownerPos.y - 1));
-        bot.setPosition(spawnPos != null ? spawnPos : ownerPos);
+        BotPhysicsEngine.teleportTo(entry, bot, spawnPos != null ? spawnPos : ownerPos);
         BotMovementManager.resetEntryState(entry);
-        bot.setStance(BotMovementManager.cfg.STAND_STANCE); // clears tombstone for nearby clients
-        BotMovementManager.broadcastMovement(bot, 0, 0);
+        BotMovementManager.broadcastMovement(entry);
         botSay(bot, "back!");
     }
 
@@ -787,7 +791,8 @@ public class BotManager {
             return false;
         }
 
-        return entry.lastDesiredDirection == 0 && bot.getStance() == BotMovementManager.cfg.STAND_STANCE;
+        return entry.lastDesiredDirection == 0
+                && BotPhysicsEngine.resolveStance(entry) == BotPhysicsEngine.cfg.STAND_STANCE;
     }
 
     private int getFlatHpRecoveryBonus(Character bot, int skillId) {
