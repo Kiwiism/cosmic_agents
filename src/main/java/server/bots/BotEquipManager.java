@@ -20,6 +20,32 @@ class BotEquipManager {
 
     private static final short[] RING_SLOTS = {-12, -13, -15, -16};
 
+    static final class EquipRecommendation {
+        private final short targetSlot;
+        private final Equip current;
+        private final Equip candidate;
+
+        private EquipRecommendation(short targetSlot, Equip current, Equip candidate) {
+            this.targetSlot = targetSlot;
+            this.current = current;
+            this.candidate = candidate;
+        }
+
+        short targetSlot() {
+            return targetSlot;
+        }
+
+        Equip current() {
+            return current;
+        }
+
+        Equip candidate() {
+            return candidate;
+        }
+    }
+
+    private record EquipScore(int damage, int defense, int statSum) {}
+
     /**
      * Scans the bot's EQUIP inventory and equips any item that improves current gear.
      * Scoring priority: max damage > total defense > total stat sum.
@@ -74,6 +100,86 @@ class BotEquipManager {
         }
     }
 
+    static List<EquipRecommendation> findRecommendedEquips(Character receiver, Character holder) {
+        ItemInformationProvider ii = ItemInformationProvider.getInstance();
+        Inventory holderEquipInv = holder.getInventory(InventoryType.EQUIP);
+        Inventory receiverEquippedInv = receiver.getInventory(InventoryType.EQUIPPED);
+
+        WeaponType weaponType = currentWeaponType(receiver, ii);
+        Map<Short, List<Equip>> bySlot = new LinkedHashMap<>();
+        for (Item item : holderEquipInv.list()) {
+            if (!(item instanceof Equip equip) || ii.isCash(item.getItemId())) {
+                continue;
+            }
+
+            String textSlot = ii.getEquipmentSlot(item.getItemId());
+            EquipSlot eslot = EquipSlot.getFromTextSlot(textSlot);
+            if (eslot == EquipSlot.PET_EQUIP) {
+                continue;
+            }
+
+            short primary = (short) eslot.getPrimarySlot();
+            if (primary == 0) {
+                continue;
+            }
+            if (!ii.canWearEquipment(receiver, equip, primary)) {
+                continue;
+            }
+
+            bySlot.computeIfAbsent(primary, ignored -> new ArrayList<>()).add(equip);
+        }
+
+        List<EquipRecommendation> recommendations = new ArrayList<>();
+
+        List<Short> nonRingSlots = bySlot.keySet().stream()
+                .filter(slot -> !isRingSlot(slot))
+                .sorted((a, b) -> a == -11 ? -1 : b == -11 ? 1 : Short.compare(a, b))
+                .collect(Collectors.toList());
+        for (short slot : nonRingSlots) {
+            Equip current = (Equip) receiverEquippedInv.getItem(slot);
+            Equip best = findBest(receiver, ii, weaponType, current, bySlot.get(slot));
+            if (best != null && best != current && isBetterThanCurrent(receiver, ii, weaponType, current, best)) {
+                recommendations.add(new EquipRecommendation(slot, current, best));
+            }
+        }
+
+        if (bySlot.containsKey((short) -12)) {
+            recommendations.addAll(findRecommendedRings(receiver, ii, weaponType, bySlot.get((short) -12), receiverEquippedInv));
+        }
+
+        return recommendations;
+    }
+
+    static List<Item> collectRecommendedItems(Character receiver, Character holder) {
+        return new ArrayList<>(findRecommendedEquips(receiver, holder).stream()
+                .map(EquipRecommendation::candidate)
+                .toList());
+    }
+
+    static String recommendationSummary(Character receiver, Character holder, int maxItems) {
+        List<EquipRecommendation> recommendations = findRecommendedEquips(receiver, holder);
+        if (recommendations.isEmpty()) {
+            return null;
+        }
+
+        ItemInformationProvider ii = ItemInformationProvider.getInstance();
+        StringBuilder summary = new StringBuilder("better gear for you: ");
+        int count = Math.min(maxItems, recommendations.size());
+        for (int i = 0; i < count; i++) {
+            EquipRecommendation recommendation = recommendations.get(i);
+            if (i > 0) {
+                summary.append(", ");
+            }
+            summary.append(slotLabel(recommendation.targetSlot()))
+                    .append(" -> ")
+                    .append(ii.getName(recommendation.candidate().getItemId()));
+        }
+        if (recommendations.size() > count) {
+            summary.append(" +").append(recommendations.size() - count).append(" more");
+        }
+        return summary.toString();
+    }
+
     static String unequipAll(Character bot) {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         Inventory eqpInv = bot.getInventory(InventoryType.EQUIP);
@@ -118,6 +224,24 @@ class BotEquipManager {
         }
     }
 
+    private static List<EquipRecommendation> findRecommendedRings(Character receiver, ItemInformationProvider ii, WeaponType wt,
+                                                                  List<Equip> candidates, Inventory receiverEquippedInv) {
+        List<EquipRecommendation> recommendations = new ArrayList<>();
+        List<Equip> pool = new ArrayList<>(candidates);
+        for (short ringSlot : RING_SLOTS) {
+            Equip current = (Equip) receiverEquippedInv.getItem(ringSlot);
+            List<Equip> eligible = pool.stream()
+                    .filter(candidate -> ii.canWearEquipment(receiver, candidate, ringSlot))
+                    .collect(Collectors.toList());
+            Equip best = findBest(receiver, ii, wt, current, eligible);
+            if (best != null && best != current && isBetterThanCurrent(receiver, ii, wt, current, best)) {
+                recommendations.add(new EquipRecommendation(ringSlot, current, best));
+                pool.remove(best);
+            }
+        }
+        return recommendations;
+    }
+
     // -------------------------------------------------------------------------
 
     private static Equip findBest(Character bot, ItemInformationProvider ii, WeaponType wt,
@@ -125,21 +249,40 @@ class BotEquipManager {
         if (candidates == null || candidates.isEmpty()) return null;
 
         Equip best    = current;
-        int bestDmg   = dmgScore(bot, ii, wt, current, current); // delta=0 = baseline
-        int bestDef   = defScore(current);
-        int bestSum   = statSum(current);
+        EquipScore bestScore = scoreEquip(bot, ii, wt, current, current);
 
         for (Equip c : candidates) {
-            int dmg = dmgScore(bot, ii, wt, current, c);
-            int def = defScore(c);
-            int sum = statSum(c);
-            if (dmg > bestDmg
-                    || (dmg == bestDmg && def > bestDef)
-                    || (dmg == bestDmg && def == bestDef && sum > bestSum)) {
-                best = c; bestDmg = dmg; bestDef = def; bestSum = sum;
+            EquipScore candidateScore = scoreEquip(bot, ii, wt, current, c);
+            if (compareScores(candidateScore, bestScore) > 0) {
+                best = c;
+                bestScore = candidateScore;
             }
         }
         return best;
+    }
+
+    private static boolean isBetterThanCurrent(Character bot, ItemInformationProvider ii, WeaponType wt,
+                                               Equip current, Equip candidate) {
+        return compareScores(scoreEquip(bot, ii, wt, current, candidate), scoreEquip(bot, ii, wt, current, current)) > 0;
+    }
+
+    private static EquipScore scoreEquip(Character bot, ItemInformationProvider ii, WeaponType wt,
+                                         Equip replacing, Equip candidate) {
+        return new EquipScore(dmgScore(bot, ii, wt, replacing, candidate), defScore(candidate), statSum(candidate));
+    }
+
+    private static int compareScores(EquipScore left, EquipScore right) {
+        int cmp = Integer.compare(left.damage(), right.damage());
+        if (cmp != 0) {
+            return cmp;
+        }
+
+        cmp = Integer.compare(left.defense(), right.defense());
+        if (cmp != 0) {
+            return cmp;
+        }
+
+        return Integer.compare(left.statSum(), right.statSum());
     }
 
     /**
@@ -191,6 +334,29 @@ class BotEquipManager {
     private static boolean isRingSlot(short slot) {
         for (short rs : RING_SLOTS) if (slot == rs) return true;
         return false;
+    }
+
+    private static String slotLabel(short slot) {
+        return switch (slot) {
+            case -11 -> "weapon";
+            case -10 -> "shield";
+            case -9 -> "cape";
+            case -8 -> "top";
+            case -7 -> "shoes";
+            case -6 -> "bottom";
+            case -5 -> "glove";
+            case -4 -> "pants";
+            case -3 -> "face";
+            case -2 -> "eye";
+            case -1 -> "hat";
+            case -12, -13, -15, -16 -> "ring";
+            case -17 -> "pendant";
+            case -18 -> "tamed mob";
+            case -19 -> "saddle";
+            case -20 -> "medal";
+            case -21 -> "belt";
+            default -> "slot " + slot;
+        };
     }
 
     private static WeaponType currentWeaponType(Character bot, ItemInformationProvider ii) {

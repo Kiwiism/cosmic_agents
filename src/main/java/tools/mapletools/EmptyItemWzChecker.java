@@ -406,7 +406,7 @@ public class EmptyItemWzChecker {
     }
 
     private static void generateStringWzFile(String filePath, int depth) throws IOException {
-        fileReader = new InputStreamReader(new FileInputStream(WZFiles.DIRECTORY + filePath), StandardCharsets.UTF_8);
+        fileReader = new InputStreamReader(new FileInputStream(WZFiles.getDirectory() + filePath), StandardCharsets.UTF_8);
         bufferedReader = new BufferedReader(fileReader);
         printWriter = new PrintWriter(OUTPUT_PATH + filePath, StandardCharsets.UTF_8);
         currentDepth = 2 + depth;

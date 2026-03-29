@@ -22,6 +22,7 @@ import java.util.regex.Pattern;
 
 class BotChatManager {
     private static final String SKILL_TREE_CHOICE_ACTION = "skill_tree_choice";
+    private static final String RECOMMENDED_TRADE_ACTION = "recommended_trade_offer";
 
     private record LearnedSkill(int id, String name, int level) {}
 
@@ -111,6 +112,31 @@ class BotChatManager {
             + "|\\bshow\\s+(me\\s+)?debug\\s+stats\\b"
             + "|\\bwhat.?s\\s+(your|ur)\\s+attack\\s+cooldown\\b",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern HELP_PATTERN = Pattern.compile(
+            "\\b(help|commands?|what\\s+can\\s+you\\s+do|how\\s+do\\s+i\\s+use\\s+you)\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern RECOMMENDED_GEAR_PATTERN = Pattern.compile(
+            "\\b(any\\s+upgrades?|better\\s+gear|recommended\\s+gear|gear\\s+recommendations?|"
+            + "any\\s+(better|recommended)\\s+(gear|equips?|equipment))\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern SUPPORT_ON_PATTERN = Pattern.compile(
+            "\\b(support\\s+(me|us|party)|support\\s+on|auto\\s+support)\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern SUPPORT_OFF_PATTERN = Pattern.compile(
+            "\\b(support\\s+off|stop\\s+support(ing)?|no\\s+support)\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern BUFFS_ON_PATTERN = Pattern.compile(
+            "\\b(buffs?\\s+(me|us|party)|buffs?\\s+on|auto\\s+buffs?)\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern BUFFS_OFF_PATTERN = Pattern.compile(
+            "\\b(buffs?\\s+off|stop\\s+buff(ing)?|no\\s+buffs?)\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern HEALS_ON_PATTERN = Pattern.compile(
+            "\\b(heals?\\s+(me|us|party)|heals?\\s+on|auto\\s+heals?)\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern HEALS_OFF_PATTERN = Pattern.compile(
+            "\\b(heals?\\s+off|stop\\s+heal(ing)?|no\\s+heals?)\\b",
+            Pattern.CASE_INSENSITIVE);
     private static final String SCROLL_WORDS = "scrolls?";
     private static final String POTION_WORDS = "(?:pots?|potions?|hp\\s+pots?|mp\\s+pots?|supplies)";
     private static final String USE_WORDS = "(?:use|use\\s+items?|consumables?)";
@@ -197,6 +223,11 @@ class BotChatManager {
     private static final Pattern TRADE_ETC_COMMAND_PATTERN = Pattern.compile(
             "\\b" + TRADE_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + ETC_WORDS + "\\b",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern TRADE_RECOMMENDED_COMMAND_PATTERN = Pattern.compile(
+            "\\b" + TRADE_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT
+            + "(?:(?:your|ur|my)\\s+)?"
+            + "(?:(?:recommended|better)\\s+(?:gear|equips?|equipment)|upgrades?|recommended\\s+items?)\\b",
+            Pattern.CASE_INSENSITIVE);
     private static final Pattern TRADE_ITEM_COMMAND_PATTERN = Pattern.compile(
             "\\b" + TRADE_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + "(?:(?:your|ur|my)\\s+)?([\\w][\\w '\\-]{1,39})[?!.,]?\\s*$",
             Pattern.CASE_INSENSITIVE);
@@ -255,6 +286,9 @@ class BotChatManager {
     private static final Pattern LOGOUT_CONFIRM_PATTERN = Pattern.compile(
             "\\b(yes|yep|yeah|yea|y|ok|sure|confirm|do\\s+it|go\\s+(ahead|for\\s+it))\\b",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern NEGATIVE_CONFIRM_PATTERN = Pattern.compile(
+            "\\b(no|nope|nah|nvm|never\\s*mind|dont|don't|not\\s+now|skip)\\b",
+            Pattern.CASE_INSENSITIVE);
 
     private static final List<String> GREETING_REPLIES = List.of(
             "hey", "hi", "sup", "yo", "heya", "hii", "hey!!", "hi!!");
@@ -304,7 +338,26 @@ class BotChatManager {
             }, 1000);
             return;
         }
-        if (entry.pendingAction != null) {
+        if (RECOMMENDED_TRADE_ACTION.equals(entry.pendingAction)) {
+            if (LOGOUT_CONFIRM_PATTERN.matcher(message).find()) {
+                entry.pendingAction = null;
+                entry.pendingDropCategory = null;
+                entry.nextGearSuggestionAt = System.currentTimeMillis() + 60_000L;
+                TimerManager.getInstance().schedule(
+                        () -> BotDropManager.startTradeTransfer("recommended", entry, entry.bot), 500);
+                return;
+            }
+            if (NEGATIVE_CONFIRM_PATTERN.matcher(message).find()) {
+                entry.pendingAction = null;
+                entry.pendingDropCategory = null;
+                entry.nextGearSuggestionAt = System.currentTimeMillis() + 30_000L;
+                TimerManager.getInstance().schedule(
+                        () -> BotManager.getInstance().botSay(entry.bot, "ok, keeping it for now"), 500);
+                return;
+            }
+        }
+
+        if (entry.pendingAction != null && !RECOMMENDED_TRADE_ACTION.equals(entry.pendingAction)) {
             // Item-choice: three-way "drop / trade / cancel" — handled independently of yes/no
             if ("item_choice".equals(entry.pendingAction)) {
                 String category = entry.pendingDropCategory;
@@ -369,6 +422,54 @@ class BotChatManager {
             return;
         }
 
+        if (HELP_PATTERN.matcher(message).find()) {
+            TimerManager.getInstance().schedule(() -> reportHelp(entry), 600);
+            return;
+        }
+        if (SUPPORT_OFF_PATTERN.matcher(message).find()) {
+            TimerManager.getInstance().schedule(() -> {
+                entry.supportBuffsEnabled = false;
+                entry.supportHealsEnabled = false;
+                BotManager.getInstance().botSay(entry.bot, "ok, support off");
+            }, 600);
+            return;
+        }
+        if (SUPPORT_ON_PATTERN.matcher(message).find()) {
+            TimerManager.getInstance().schedule(() -> {
+                entry.supportBuffsEnabled = true;
+                entry.supportHealsEnabled = true;
+                BotManager.getInstance().botSay(entry.bot, "ok, support on");
+            }, 600);
+            return;
+        }
+        if (BUFFS_OFF_PATTERN.matcher(message).find()) {
+            TimerManager.getInstance().schedule(() -> {
+                entry.supportBuffsEnabled = false;
+                BotManager.getInstance().botSay(entry.bot, "ok, no party buffs");
+            }, 600);
+            return;
+        }
+        if (BUFFS_ON_PATTERN.matcher(message).find()) {
+            TimerManager.getInstance().schedule(() -> {
+                entry.supportBuffsEnabled = true;
+                BotManager.getInstance().botSay(entry.bot, "ok, ill keep buffs up");
+            }, 600);
+            return;
+        }
+        if (HEALS_OFF_PATTERN.matcher(message).find()) {
+            TimerManager.getInstance().schedule(() -> {
+                entry.supportHealsEnabled = false;
+                BotManager.getInstance().botSay(entry.bot, "ok, no heals");
+            }, 600);
+            return;
+        }
+        if (HEALS_ON_PATTERN.matcher(message).find()) {
+            TimerManager.getInstance().schedule(() -> {
+                entry.supportHealsEnabled = true;
+                BotManager.getInstance().botSay(entry.bot, "ok, ill heal when needed");
+            }, 600);
+            return;
+        }
         if (UNEQUIP_PATTERN.matcher(message).find()) {
             TimerManager.getInstance().schedule(() -> {
                 entry.following = false;
@@ -458,6 +559,10 @@ class BotChatManager {
         }
 
         // Info commands
+        if (RECOMMENDED_GEAR_PATTERN.matcher(message).find()) {
+            TimerManager.getInstance().schedule(() -> reportRecommendedGear(entry, entry.bot), 600);
+            return;
+        }
         if (SKILLS_PATTERN.matcher(message).find()) {
             TimerManager.getInstance().schedule(() -> reportSkills(entry, entry.bot), 1000);
             return;
@@ -540,6 +645,7 @@ class BotChatManager {
             queueBotSay(entry, "ask me for debug stats if you want my attack cooldown");
             entry.debugPromptSent = true;
         }
+        maybeSuggestRecommendedGear(entry, bot);
     }
 
     /** Detects owner AFK (same position ≥5 min) and says "wb" when they return. */
@@ -675,6 +781,82 @@ class BotChatManager {
 
     private static void reportDebugStats(BotEntry entry, Character bot) {
         queueBotSay(entry, BotCombatManager.describeDebugStats(entry, bot));
+    }
+
+    private static void reportHelp(BotEntry entry) {
+        queueBotSay(entry, "commands: follow, stop, grind, stats, skills, inventory, slots, scrolls, pots, debug stats");
+        queueBotSay(entry, "support: support on/off, buffs on/off, heals on/off");
+        queueBotSay(entry, "gear: ask 'any upgrades?' or say 'trade recommended gear'");
+        queueBotSay(entry, "trade: mesos, scrolls, pots, equips, etc, or named items");
+    }
+
+    private static void reportRecommendedGear(BotEntry entry, Character bot) {
+        Character owner = entry.owner;
+        if (owner == null) {
+            queueBotSay(entry, "can't check your gear rn");
+            return;
+        }
+
+        String summary = BotEquipManager.recommendationSummary(owner, bot, 4);
+        if (summary == null) {
+            queueBotSay(entry, "no better gear for you rn");
+            return;
+        }
+
+        queueBotSay(entry, summary);
+        queueBotSay(entry, "say 'trade recommended gear' if you want it");
+        entry.nextGearSuggestionAt = System.currentTimeMillis() + 60_000L;
+    }
+
+    private static void maybeSuggestRecommendedGear(BotEntry entry, Character bot) {
+        Character owner = entry.owner;
+        long now = System.currentTimeMillis();
+        if (owner == null || now < entry.nextGearSuggestionAt) {
+            return;
+        }
+
+        String summary = BotEquipManager.recommendationSummary(owner, bot, 3);
+        if (summary == null) {
+            return;
+        }
+
+        queueBotSay(entry, summary);
+        queueBotSay(entry, "say 'trade recommended gear' if you want it");
+        entry.nextGearSuggestionAt = now + 60_000L;
+    }
+
+    static void scheduleRecommendedGearPrompt(BotEntry entry, Character bot, long delayMs) {
+        Character owner = entry.owner;
+        long now = System.currentTimeMillis();
+        if (owner == null || now < entry.nextGearSuggestionAt || entry.pendingGearPromptAt > now) {
+            return;
+        }
+
+        long scheduledAt = now + Math.max(0L, delayMs);
+        entry.pendingGearPromptAt = scheduledAt;
+        TimerManager.getInstance().schedule(() -> promptRecommendedGearAfterLoot(entry, bot, scheduledAt), delayMs);
+    }
+
+    private static void promptRecommendedGearAfterLoot(BotEntry entry, Character bot, long scheduledAt) {
+        if (entry.pendingGearPromptAt != scheduledAt) {
+            return;
+        }
+        entry.pendingGearPromptAt = 0L;
+
+        Character owner = entry.owner;
+        if (owner == null || entry.pendingAction != null || entry.pendingTradeCategory != null) {
+            return;
+        }
+
+        String summary = BotEquipManager.recommendationSummary(owner, bot, 3);
+        if (summary == null) {
+            return;
+        }
+
+        entry.pendingAction = RECOMMENDED_TRADE_ACTION;
+        entry.pendingDropCategory = "recommended";
+        queueBotSay(entry, summary + ", you want it?");
+        entry.nextGearSuggestionAt = System.currentTimeMillis() + 60_000L;
     }
 
     private static void handleSkillTreeChoice(BotEntry entry, Character bot, String message) {
@@ -903,7 +1085,7 @@ class BotChatManager {
             return;
         }
 
-        if (!BotDropManager.hasTransferableItems(category, entry.bot)) {
+        if (!BotDropManager.hasTransferableItems(category, entry, entry.bot)) {
             TimerManager.getInstance().schedule(
                     () -> BotManager.getInstance().botSay(entry.bot, BotDropManager.noItemsReply(category)), 600);
             return;
@@ -939,6 +1121,7 @@ class BotChatManager {
         String mesoCategory = matchTradeMesoCategory(message);
         if (mesoCategory != null) return mesoCategory;
 
+        if (TRADE_RECOMMENDED_COMMAND_PATTERN.matcher(message).find()) return "recommended";
         if (TRADE_SCROLLS_COMMAND_PATTERN.matcher(message).find()) return "scrolls";
         if (TRADE_POTS_COMMAND_PATTERN.matcher(message).find()) return "pots";
         if (TRADE_USE_COMMAND_PATTERN.matcher(message).find()) return "use";

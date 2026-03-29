@@ -439,6 +439,7 @@ public class BotManager {
         if (runAiTick) {
             BotCombatManager.rebuildSkillCacheIfNeeded(entry, bot);
             BotCombatManager.tickBuffs(entry, bot);
+            BotCombatManager.tickSupportHealing(entry, bot);
         }
         if (tickActionLocked(entry)) {
             return;
@@ -720,7 +721,11 @@ public class BotManager {
                     continue;
                 }
             }
+            int pickedItemId = drop.getItemId();
             bot.pickupItem(drop);
+            if (pickedItemId > 0 && ItemConstants.getInventoryType(pickedItemId) == InventoryType.EQUIP) {
+                BotChatManager.scheduleRecommendedGearPrompt(entry, bot, 5_000L);
+            }
         }
     }
 

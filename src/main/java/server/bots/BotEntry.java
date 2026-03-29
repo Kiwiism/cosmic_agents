@@ -63,8 +63,13 @@ class BotEntry {
     int attackSkillId = 0;
     int aoeSkillId = 0;
     int aoeSkillMobs = 1;
+    int healSkillId = 0;
     List<Integer> buffSkillIds = new ArrayList<>();
     final Map<Integer, Long> nextBuffAt = new HashMap<>();
+    final Map<Integer, Long> nextSupportBuffAt = new HashMap<>();
+    long nextSupportHealAt = 0L;
+    boolean supportBuffsEnabled = true;
+    boolean supportHealsEnabled = true;
 
     // Damage taken
     long deadUntil = 0;
@@ -125,6 +130,8 @@ class BotEntry {
     int navTargetRegionId = -1;
     boolean navPreciseTarget = false;
     boolean debugPromptSent = false;
+    long nextGearSuggestionAt = 0L;
+    long pendingGearPromptAt = 0L;
 
     // Movement packet cache so repeated no-op packets are suppressed
     boolean movementBroadcastValid = false;

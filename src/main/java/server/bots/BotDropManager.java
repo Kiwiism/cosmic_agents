@@ -119,7 +119,7 @@ class BotDropManager {
             BotManager.getInstance().botSay(bot, "you're already in a trade!");
             return;
         }
-        List<Item> items = collectItems(category, bot);
+        List<Item> items = collectItems(category, entry, bot);
         if (items.isEmpty()) {
             BotManager.getInstance().botSay(bot, noItemsReply(category));
             return;
@@ -128,7 +128,7 @@ class BotDropManager {
         openNextBatch(entry, bot, items);
     }
 
-    static boolean hasTransferableItems(String category, Character bot) {
+    static boolean hasTransferableItems(String category, BotEntry entry, Character bot) {
         if (isMesoCategory(category)) {
             int currentMesos = bot.getMeso();
             if (currentMesos <= 0) {
@@ -139,12 +139,13 @@ class BotDropManager {
             return requestedMesos <= 0 || currentMesos >= requestedMesos;
         }
 
-        return !collectItems(category, bot).isEmpty();
+        return !collectItems(category, entry, bot).isEmpty();
     }
 
     static String noItemsReply(String category) {
         String what = switch (category) {
             case "mesos" -> "mesos";
+            case "recommended" -> "better gear for you";
             case "scrolls" -> "scrolls";
             case "pots" -> "pots";
             case "use" -> "use items";
@@ -194,7 +195,7 @@ class BotDropManager {
                 return;
             }
             // Start next batch
-            List<Item> next = collectItems(entry.pendingTradeCategory, bot);
+            List<Item> next = collectItems(entry.pendingTradeCategory, entry, bot);
             if (next.isEmpty()) {
                 resetTradeState(entry);
             } else {
@@ -377,9 +378,15 @@ class BotDropManager {
 
     // ─── Item collection helpers ──────────────────────────────────────────────
 
-    private static List<Item> collectItems(String category, Character bot) {
+    private static List<Item> collectItems(String category, BotEntry entry, Character bot) {
         List<Item> result = new ArrayList<>();
         switch (category) {
+            case "recommended" -> {
+                Character owner = entry.owner;
+                if (owner != null) {
+                    result.addAll(BotEquipManager.collectRecommendedItems(owner, bot));
+                }
+            }
             case "scrolls" -> collectFromBag(bot, result, InventoryType.USE,
                     item -> item.getItemId() >= 2040000 && item.getItemId() < 2050000);
             case "pots"    -> collectFromBag(bot, result, InventoryType.USE,

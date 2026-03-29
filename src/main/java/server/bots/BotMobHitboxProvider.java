@@ -24,6 +24,7 @@ final class BotMobHitboxProvider {
     private static final BotMobHitboxProvider instance = new BotMobHitboxProvider();
 
     private final Map<Integer, Rectangle> standBoundsByMobId = new ConcurrentHashMap<>();
+    private volatile Path cachedMobRoot = null;
 
     static BotMobHitboxProvider getInstance() {
         return instance;
@@ -38,12 +39,29 @@ final class BotMobHitboxProvider {
     }
 
     Rectangle getMobBounds(int mobId, Point position, boolean facingLeft) {
+        ensureCurrentMobRoot();
         Rectangle modelBounds = standBoundsByMobId.computeIfAbsent(mobId, this::loadStandBounds);
         if (modelBounds == null) {
             return null;
         }
 
         return calculateWorldBounds(modelBounds, position, facingLeft);
+    }
+
+    private void ensureCurrentMobRoot() {
+        Path currentMobRoot = WZFiles.MOB.getFile();
+        Path previousMobRoot = cachedMobRoot;
+        if (previousMobRoot != null && previousMobRoot.equals(currentMobRoot)) {
+            return;
+        }
+
+        synchronized (standBoundsByMobId) {
+            if (cachedMobRoot != null && cachedMobRoot.equals(currentMobRoot)) {
+                return;
+            }
+            standBoundsByMobId.clear();
+            cachedMobRoot = currentMobRoot;
+        }
     }
 
     private Rectangle loadStandBounds(int mobId) {

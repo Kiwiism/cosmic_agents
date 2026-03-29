@@ -7,6 +7,21 @@ import client.SkillFactory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.WeaponType;
+import constants.skills.Assassin;
+import constants.skills.Bandit;
+import constants.skills.Bowmaster;
+import constants.skills.Buccaneer;
+import constants.skills.Cleric;
+import constants.skills.Corsair;
+import constants.skills.DawnWarrior;
+import constants.skills.Fighter;
+import constants.skills.GM;
+import constants.skills.Marksman;
+import constants.skills.NightWalker;
+import constants.skills.Priest;
+import constants.skills.Spearman;
+import constants.skills.SuperGM;
+import constants.skills.ThunderBreaker;
 import net.server.channel.handlers.AbstractDealDamageHandler;
 import net.server.channel.handlers.CloseRangeDamageHandler;
 import net.server.channel.handlers.MagicDamageHandler;
@@ -21,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 class BotCombatManager {
@@ -88,9 +104,40 @@ class BotCombatManager {
         public int   MOB_TOUCH_HALF_H = 30;
         public int   MOB_HIT_COOLDOWN_MS = 1500;
         public long  BOT_DEAD_MS      = 10_000L;
+
+        // Support
+        public int   SUPPORT_RANGE = 400;
+        public int   SUPPORT_VERTICAL_RANGE = 220;
+        public int   SUPPORT_REBUFF_CD_MS = 3_000;
+        public int   SUPPORT_HEAL_CD_MS = 2_000;
+        public float SUPPORT_HEAL_RATIO = 0.75f;
+        public int   SUPPORT_HEAL_MISSING_HP = 250;
     }
 
     static Config cfg = new Config();
+    private static final Set<Integer> PARTY_SUPPORT_SKILL_IDS = Set.of(
+            Assassin.HASTE,
+            Bandit.HASTE,
+            NightWalker.HASTE,
+            Fighter.RAGE,
+            DawnWarrior.RAGE,
+            Cleric.BLESS,
+            Priest.HOLY_SYMBOL,
+            Spearman.HYPER_BODY,
+            Buccaneer.PIRATES_RAGE,
+            Buccaneer.SPEED_INFUSION,
+            Corsair.SPEED_INFUSION,
+            ThunderBreaker.SPEED_INFUSION,
+            Bowmaster.SHARP_EYES,
+            Marksman.SHARP_EYES,
+            GM.HASTE,
+            GM.BLESS,
+            GM.HYPER_BODY,
+            SuperGM.HASTE,
+            SuperGM.BLESS,
+            SuperGM.HOLY_SYMBOL,
+            SuperGM.HYPER_BODY
+    );
 
     private static final List<String> DEATH_REPLIES = List.of(
             "oops im dead", "gg", "rip me", "oww", "i died lol",
@@ -163,6 +210,7 @@ class BotCombatManager {
         entry.attackSkillId = 0;
         entry.aoeSkillId = 0;
         entry.aoeSkillMobs = 1;
+        entry.healSkillId = 0;
         entry.buffSkillIds.clear();
 
         int bestAtkHits = 0;
@@ -176,6 +224,10 @@ class BotCombatManager {
             int atk = fx.getAttackCount();
             int mobs = fx.getMobCount();
             int dur = fx.getDuration();
+
+            if (isHealSkill(skill.getId())) {
+                entry.healSkillId = skill.getId();
+            }
 
             if (atk > 0) {
                 if (mobs >= 2) {
@@ -205,9 +257,13 @@ class BotCombatManager {
         if (entry.attackCooldownMs > 0) return;
         if (!entry.following && !entry.grinding) return;
         if (entry.buffSkillIds.isEmpty()) return;
-        if (bot.getMap().getAllMonsters().stream().noneMatch(Monster::isAlive)) return;
 
         long now = System.currentTimeMillis();
+        if (entry.supportBuffsEnabled && trySupportBuff(entry, bot, now)) {
+            return;
+        }
+        if (bot.getMap().getAllMonsters().stream().noneMatch(Monster::isAlive)) return;
+
         for (int skillId : entry.buffSkillIds) {
             if (now < entry.nextBuffAt.getOrDefault(skillId, 0L)) continue;
             if (bot.skillIsCooling(skillId)) continue;
@@ -217,15 +273,32 @@ class BotCombatManager {
             if (lvl <= 0) continue;
 
             StatEffect fx = skill.getEffect(lvl);
-            fx.applyTo(bot, null);
-
-            long dur = fx.getDuration();
-            entry.nextBuffAt.put(skillId, now + (long) (dur * 0.9));
-            entry.attackCooldownMs = Math.max(entry.attackCooldownMs, toCooldownMs(resolveSkillAttackDelayMillis(skill)));
-            if (fx.getCooldown() > 0) {
-                bot.addCooldown(skillId, now, fx.getCooldown() * 1000L);
-            }
+            castSupportSkill(entry, bot, skill, fx, now);
             return;
+        }
+    }
+
+    static void tickSupportHealing(BotEntry entry, Character bot) {
+        if (entry.attackCooldownMs > 0) return;
+        if (!entry.supportHealsEnabled) return;
+        if (!entry.following && !entry.grinding) return;
+        if (entry.healSkillId == 0 || bot.skillIsCooling(entry.healSkillId)) return;
+
+        long now = System.currentTimeMillis();
+        if (now < entry.nextSupportHealAt) return;
+        if (!hasNearbyPartyMemberNeedingHeal(bot)) return;
+
+        Skill skill = SkillFactory.getSkill(entry.healSkillId);
+        int lvl = bot.getSkillLevel(skill);
+        if (lvl <= 0) return;
+
+        StatEffect fx = skill.getEffect(lvl);
+        fx.applyTo(bot);
+
+        entry.nextSupportHealAt = now + cfg.SUPPORT_HEAL_CD_MS;
+        entry.attackCooldownMs = Math.max(entry.attackCooldownMs, toCooldownMs(resolveSkillAttackDelayMillis(skill)));
+        if (fx.getCooldown() > 0) {
+            bot.addCooldown(entry.healSkillId, now, fx.getCooldown() * 1000L);
         }
     }
 
@@ -753,5 +826,112 @@ class BotCombatManager {
                 "debug: route %s, atk speed %d, atk cd %.2fs, remaining %.2fs, tick %dms, ai %dms, target %s",
                 route, speed, cooldownSeconds, remainingSeconds,
                 BotMovementManager.cfg.TICK_MS, BotManager.cfg.AI_TICK_MS, targetName);
+    }
+
+    private static boolean trySupportBuff(BotEntry entry, Character bot, long now) {
+        for (int skillId : entry.buffSkillIds) {
+            if (!isPartySupportSkill(skillId)) {
+                continue;
+            }
+            if (bot.skillIsCooling(skillId)) {
+                continue;
+            }
+            if (now < entry.nextSupportBuffAt.getOrDefault(skillId, 0L)) {
+                continue;
+            }
+
+            Skill skill = SkillFactory.getSkill(skillId);
+            int lvl = bot.getSkillLevel(skill);
+            if (lvl <= 0) {
+                continue;
+            }
+
+            StatEffect fx = skill.getEffect(lvl);
+            if (!hasNearbyPartyMemberMissingBuff(bot, fx)) {
+                continue;
+            }
+
+            castSupportSkill(entry, bot, skill, fx, now);
+            entry.nextSupportBuffAt.put(skillId, now + cfg.SUPPORT_REBUFF_CD_MS);
+            return true;
+        }
+
+        return false;
+    }
+
+    private static void castSupportSkill(BotEntry entry, Character bot, Skill skill, StatEffect fx, long now) {
+        fx.applyTo(bot, null);
+
+        long dur = fx.getDuration();
+        if (dur > 0) {
+            entry.nextBuffAt.put(skill.getId(), now + (long) (dur * 0.9));
+        }
+        entry.attackCooldownMs = Math.max(entry.attackCooldownMs, toCooldownMs(resolveSkillAttackDelayMillis(skill)));
+        if (fx.getCooldown() > 0) {
+            bot.addCooldown(skill.getId(), now, fx.getCooldown() * 1000L);
+        }
+    }
+
+    private static boolean hasNearbyPartyMemberMissingBuff(Character bot, StatEffect fx) {
+        if (fx.getStatups().isEmpty()) {
+            return false;
+        }
+
+        for (Character target : getNearbyPartyMembers(bot)) {
+            for (var statup : fx.getStatups()) {
+                if (target.getBuffedValue(statup.getLeft()) == null) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean hasNearbyPartyMemberNeedingHeal(Character bot) {
+        for (Character target : getNearbyPartyMembers(bot)) {
+            int maxHp = target.getCurrentMaxHp();
+            if (maxHp <= 0) {
+                continue;
+            }
+
+            int missingHp = maxHp - target.getHp();
+            if (missingHp >= cfg.SUPPORT_HEAL_MISSING_HP
+                    && target.getHp() <= Math.round(maxHp * cfg.SUPPORT_HEAL_RATIO)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static List<Character> getNearbyPartyMembers(Character bot) {
+        List<Character> nearby = new ArrayList<>();
+        Point botPos = bot.getPosition();
+        double rangeSq = (double) cfg.SUPPORT_RANGE * cfg.SUPPORT_RANGE;
+        for (Character member : bot.getPartyMembersOnSameMap()) {
+            if (member == null || member.getId() == bot.getId() || !member.isAlive()) {
+                continue;
+            }
+
+            Point memberPos = member.getPosition();
+            if (Math.abs(memberPos.y - botPos.y) > cfg.SUPPORT_VERTICAL_RANGE) {
+                continue;
+            }
+            if (memberPos.distanceSq(botPos) > rangeSq) {
+                continue;
+            }
+
+            nearby.add(member);
+        }
+        return nearby;
+    }
+
+    private static boolean isPartySupportSkill(int skillId) {
+        return PARTY_SUPPORT_SKILL_IDS.contains(skillId);
+    }
+
+    private static boolean isHealSkill(int skillId) {
+        return skillId == Cleric.HEAL || skillId == SuperGM.HEAL_PLUS_DISPEL;
     }
 }
