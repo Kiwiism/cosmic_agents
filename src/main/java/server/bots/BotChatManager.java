@@ -598,7 +598,7 @@ class BotChatManager {
                         "sure, going " + jobName,
                         "ok changing to " + jobName + "...");
                 BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(replies));
-                TimerManager.getInstance().schedule(() -> entry.bot.changeJob(advJob), 1000);
+                TimerManager.getInstance().schedule(() -> BotStarterKitManager.advanceJob(entry.bot, entry.owner, advJob), 1000);
             }
         }
     }

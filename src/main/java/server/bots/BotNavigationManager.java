@@ -429,7 +429,7 @@ final class BotNavigationManager {
         return path;
     }
 
-    private static BotNavigationGraph.Edge collapseLeadingWalkEdges(List<BotNavigationGraph.Edge> path) {
+    static BotNavigationGraph.Edge collapseLeadingWalkEdges(List<BotNavigationGraph.Edge> path) {
         BotNavigationGraph.Edge first = path.get(0);
         if (first.type != BotNavigationGraph.EdgeType.WALK) {
             return first;
@@ -437,6 +437,7 @@ final class BotNavigationManager {
 
         BotNavigationGraph.Edge lastWalk = first;
         int totalCost = first.cost;
+        int walkCount = 1;
         for (int i = 1; i < path.size(); i++) {
             BotNavigationGraph.Edge edge = path.get(i);
             if (edge.type != BotNavigationGraph.EdgeType.WALK) {
@@ -444,10 +445,22 @@ final class BotNavigationManager {
             }
             lastWalk = edge;
             totalCost += edge.cost;
+            walkCount++;
         }
 
-        return new BotNavigationGraph.Edge(first.fromRegionId, lastWalk.toRegionId, BotNavigationGraph.EdgeType.WALK,
+        if (!isNoMovementWalk(first.startPoint, lastWalk.endPoint)) {
+            return new BotNavigationGraph.Edge(first.fromRegionId, lastWalk.toRegionId, BotNavigationGraph.EdgeType.WALK,
                 first.startPoint, lastWalk.endPoint, 0, 0, 0, 0, 0, totalCost);
+        }
+
+        if (walkCount >= path.size()) {
+            return null;
+        }
+
+        BotNavigationGraph.Edge next = path.get(walkCount);
+        return new BotNavigationGraph.Edge(first.fromRegionId, next.toRegionId, next.type,
+                next.startPoint, next.endPoint, next.launchStepX, next.portalId,
+                next.ropeX, next.ropeTopY, next.ropeBottomY, totalCost + next.cost);
     }
 
     private static boolean isEdgeUsable(BotNavigationGraph graph, Character bot, BotNavigationGraph.Edge edge) {
@@ -521,6 +534,10 @@ final class BotNavigationManager {
 
     private static int heuristic(Point from, Point targetPos) {
         return intraRegionTravelCost(from, targetPos);
+    }
+
+    private static boolean isNoMovementWalk(Point start, Point end) {
+        return Math.abs(end.x - start.x) <= 4 && Math.abs(end.y - start.y) <= 4;
     }
 
     private static boolean canGrabRopeAtCurrentPosition(Point botPos, Rope rope) {
