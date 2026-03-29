@@ -124,8 +124,28 @@ class BotDropManager {
             BotManager.getInstance().botSay(bot, noItemsReply(category));
             return;
         }
-        entry.pendingTradeCategory = category;
-        openNextBatch(entry, bot, items);
+        startTradeSequence(category, owner, items, 0, false, entry, bot);
+    }
+
+    static void startTradeTransfer(Item item, Character recipient, BotEntry entry, Character bot) {
+        if (recipient == null) {
+            BotManager.getInstance().botSay(bot, "can't find who to trade!");
+            return;
+        }
+        if (!hasItem(bot, item)) {
+            BotManager.getInstance().botSay(bot, "don't have it anymore");
+            return;
+        }
+        if (bot.getTrade() != null || entry.pendingTradeCategory != null) {
+            BotManager.getInstance().botSay(bot, "already in a trade!");
+            return;
+        }
+        if (recipient.getTrade() != null) {
+            BotManager.getInstance().botSay(bot, recipient.getName() + " is already in a trade!");
+            return;
+        }
+
+        startTradeSequence("loot_offer", recipient, List.of(item), 0, true, entry, bot);
     }
 
     static boolean hasTransferableItems(String category, BotEntry entry, Character bot) {
@@ -164,21 +184,38 @@ class BotDropManager {
     }
 
     /** Opens a trade for the first ≤9 items; remaining items are re-collected next batch. */
-    private static void openNextBatch(BotEntry entry, Character bot, List<Item> items) {
-        Character owner = entry.owner;
-        if (owner == null || owner.getTrade() != null) {
-            cancelTradeSequence(entry, bot, "you moved or are already in a trade, stopping");
+    private static void startTradeSequence(String category,
+                                           Character recipient,
+                                           List<Item> items,
+                                           int mesos,
+                                           boolean singleBatch,
+                                           BotEntry entry,
+                                           Character bot) {
+        if (recipient == null) {
+            BotManager.getInstance().botSay(bot, "can't find who to trade!");
             return;
         }
-        entry.pendingTradeItems    = items.size() > 9 ? new ArrayList<>(items.subList(0, 9)) : items;
-        entry.pendingTradeMeso     = 0;
+        entry.pendingTradeCategory = category;
+        entry.pendingTradeRecipientId = recipient.getId();
+        entry.pendingTradeSingleBatch = singleBatch;
+        openTradeBatch(entry, bot, items, mesos);
+    }
+
+    private static void openTradeBatch(BotEntry entry, Character bot, List<Item> items, int mesos) {
+        Character recipient = resolveTradeRecipient(entry, bot);
+        if (recipient == null || recipient.getTrade() != null) {
+            cancelTradeSequence(entry, bot, "can't trade right now, stopping");
+            return;
+        }
+        entry.pendingTradeItems    = items.size() > 9 ? new ArrayList<>(items.subList(0, 9)) : new ArrayList<>(items);
+        entry.pendingTradeMeso     = mesos;
         entry.pendingTradeIdx      = 0;
         entry.pendingTradeTimerMs  = 0;
         entry.pendingTradeMesoAdded = false;
         entry.pendingTradeAllAdded = false;
         entry.pendingTradeBotDone  = false;
         Trade.startTrade(bot);
-        Trade.inviteTrade(bot, owner);
+        Trade.inviteTrade(bot, recipient);
         BotManager.getInstance().botSay(bot, BotManager.randomReply(TRADE_INVITATION_MSGS));
     }
 
@@ -190,16 +227,19 @@ class BotDropManager {
 
         // ── PAUSE between batches (items == null) ──────────────────────────
         if (entry.pendingTradeItems == null) {
+            if (entry.pendingTradeSingleBatch) {
+                resetTradeState(entry);
+                return;
+            }
             if (entry.pendingTradeTimerMs > 0) {
                 entry.pendingTradeTimerMs = BotMovementManager.tickDown(entry.pendingTradeTimerMs);
                 return;
             }
-            // Start next batch
             List<Item> next = collectItems(entry.pendingTradeCategory, entry, bot);
             if (next.isEmpty()) {
                 resetTradeState(entry);
             } else {
-                openNextBatch(entry, bot, next);
+                openTradeBatch(entry, bot, next, 0);
             }
             return;
         }
@@ -208,10 +248,14 @@ class BotDropManager {
         if (trade == null) {
             if (entry.pendingTradeBotDone) {
                 // Both sides confirmed — sequence complete or cancelled after bot OK
+                if (entry.pendingTradeSingleBatch) {
+                    resetTradeState(entry);
+                    return;
+                }
                 entry.pendingTradeItems    = null;
                 entry.pendingTradeAllAdded = false;
                 entry.pendingTradeBotDone  = false;
-                entry.pendingTradeTimerMs  = BotMovementManager.delayAfterCurrentTick(1_000); // 1 s pause then try next batch
+                entry.pendingTradeTimerMs  = BotMovementManager.delayAfterCurrentTick(1_000);
             } else if (entry.pendingTradeAllAdded) {
                 // Owner cancelled after items were added (items returned to bot)
                 BotManager.getInstance().botSay(bot, "trade cancelled");
@@ -316,12 +360,14 @@ class BotDropManager {
     private static void resetTradeState(BotEntry entry) {
         entry.pendingTradeCategory = null;
         entry.pendingTradeItems    = null;
+        entry.pendingTradeRecipientId = 0;
         entry.pendingTradeMeso     = 0;
         entry.pendingTradeIdx      = 0;
         entry.pendingTradeTimerMs  = 0;
         entry.pendingTradeMesoAdded = false;
         entry.pendingTradeAllAdded = false;
         entry.pendingTradeBotDone  = false;
+        entry.pendingTradeSingleBatch = false;
     }
 
     private static void completeTradeAndThank(Character bot, Trade trade) {
@@ -363,17 +409,7 @@ class BotDropManager {
             return;
         }
 
-        entry.pendingTradeCategory = category;
-        entry.pendingTradeItems = List.of();
-        entry.pendingTradeMeso = requestedMesos > 0 ? requestedMesos : currentMesos;
-        entry.pendingTradeIdx = 0;
-        entry.pendingTradeTimerMs = 0;
-        entry.pendingTradeMesoAdded = false;
-        entry.pendingTradeAllAdded = false;
-        entry.pendingTradeBotDone = false;
-        Trade.startTrade(bot);
-        Trade.inviteTrade(bot, owner);
-        BotManager.getInstance().botSay(bot, "trade request sent!");
+        startTradeSequence(category, owner, List.of(), requestedMesos > 0 ? requestedMesos : currentMesos, true, entry, bot);
     }
 
     // ─── Item collection helpers ──────────────────────────────────────────────
@@ -418,6 +454,51 @@ class BotDropManager {
             Item item = inv.getItem(slot);
             if (item != null && isSafeToDrop(item) && filter.test(item)) result.add(item);
         }
+    }
+
+    static boolean hasItem(Character bot, Item item) {
+        if (bot == null || item == null) {
+            return false;
+        }
+
+        Inventory inv = bot.getInventory(item.getInventoryType());
+        if (inv == null) {
+            return false;
+        }
+
+        Item current = inv.getItem(item.getPosition());
+        return current == item;
+    }
+
+    private static Character resolveTradeRecipient(BotEntry entry, Character bot) {
+        int recipientId = entry.pendingTradeRecipientId;
+        if (recipientId <= 0) {
+            return entry.owner;
+        }
+
+        Character owner = entry.owner;
+        if (owner != null && owner.getId() == recipientId) {
+            return owner;
+        }
+
+        if (bot.getMap() != null) {
+            Character mapRecipient = bot.getMap().getCharacterById(recipientId);
+            if (mapRecipient != null) {
+                return mapRecipient;
+            }
+        }
+
+        if (owner == null || owner.getParty() == null) {
+            return null;
+        }
+
+        for (Character member : owner.getPartyMembersOnline()) {
+            if (member != null && member.getId() == recipientId) {
+                return member;
+            }
+        }
+
+        return null;
     }
 
     // ─── Drop actions (floor) ─────────────────────────────────────────────────

@@ -93,17 +93,22 @@ class BotEntry {
     // Pending two-step action
     String pendingAction = null;
     String pendingDropCategory = null;
+    Item pendingLootOfferItem = null;
+    int pendingLootOfferRecipientId = 0;
+    long pendingLootOfferExpiresAt = 0L;
     int lootInhibitMs = 0;
 
     // Trade queue
     String pendingTradeCategory = null;
     List<Item> pendingTradeItems = null;
+    int pendingTradeRecipientId = 0;
     int pendingTradeMeso = 0;
     int pendingTradeIdx = 0;
     int pendingTradeTimerMs = 0;
     boolean pendingTradeMesoAdded = false;
     boolean pendingTradeAllAdded = false;
     boolean pendingTradeBotDone = false;
+    boolean pendingTradeSingleBatch = false;
 
     // Message queue
     final ArrayDeque<String> msgQueue = new ArrayDeque<>();

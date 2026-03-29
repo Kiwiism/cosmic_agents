@@ -1,5 +1,6 @@
 package server.bots;
 
+import client.BotClient;
 import client.Character;
 import client.Job;
 import client.Skill;
@@ -7,6 +8,7 @@ import client.SkillFactory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import constants.game.GameConstants;
+import server.ItemInformationProvider;
 import server.TimerManager;
 
 import java.awt.*;
@@ -338,25 +340,6 @@ class BotChatManager {
             }, 1000);
             return;
         }
-        if (RECOMMENDED_TRADE_ACTION.equals(entry.pendingAction)) {
-            if (LOGOUT_CONFIRM_PATTERN.matcher(message).find()) {
-                entry.pendingAction = null;
-                entry.pendingDropCategory = null;
-                entry.nextGearSuggestionAt = System.currentTimeMillis() + 60_000L;
-                TimerManager.getInstance().schedule(
-                        () -> BotDropManager.startTradeTransfer("recommended", entry, entry.bot), 500);
-                return;
-            }
-            if (NEGATIVE_CONFIRM_PATTERN.matcher(message).find()) {
-                entry.pendingAction = null;
-                entry.pendingDropCategory = null;
-                entry.nextGearSuggestionAt = System.currentTimeMillis() + 30_000L;
-                TimerManager.getInstance().schedule(
-                        () -> BotManager.getInstance().botSay(entry.bot, "ok, keeping it for now"), 500);
-                return;
-            }
-        }
-
         if (entry.pendingAction != null && !RECOMMENDED_TRADE_ACTION.equals(entry.pendingAction)) {
             // Item-choice: three-way "drop / trade / cancel" — handled independently of yes/no
             if ("item_choice".equals(entry.pendingAction)) {
@@ -825,38 +808,134 @@ class BotChatManager {
         entry.nextGearSuggestionAt = now + 60_000L;
     }
 
-    static void scheduleRecommendedGearPrompt(BotEntry entry, Character bot, long delayMs) {
+    static void scheduleLootOfferPrompt(BotEntry entry, Character bot, Item item, long delayMs) {
         Character owner = entry.owner;
         long now = System.currentTimeMillis();
-        if (owner == null || now < entry.nextGearSuggestionAt || entry.pendingGearPromptAt > now) {
+        if (owner == null || item == null || entry.pendingGearPromptAt > now) {
             return;
         }
 
         long scheduledAt = now + Math.max(0L, delayMs);
         entry.pendingGearPromptAt = scheduledAt;
-        TimerManager.getInstance().schedule(() -> promptRecommendedGearAfterLoot(entry, bot, scheduledAt), delayMs);
+        TimerManager.getInstance().schedule(() -> promptLootOfferAfterLoot(entry, bot, item, scheduledAt), delayMs);
     }
 
-    private static void promptRecommendedGearAfterLoot(BotEntry entry, Character bot, long scheduledAt) {
+    static boolean handlePendingLootOfferResponse(BotEntry entry, Character speaker, String message) {
+        expirePendingLootOffer(entry);
+        if (!RECOMMENDED_TRADE_ACTION.equals(entry.pendingAction)
+                || speaker == null
+                || speaker.getId() != entry.pendingLootOfferRecipientId) {
+            return false;
+        }
+
+        if (LOGOUT_CONFIRM_PATTERN.matcher(message).find()) {
+            Item item = entry.pendingLootOfferItem;
+            clearPendingLootOffer(entry);
+            TimerManager.getInstance().schedule(
+                    () -> BotDropManager.startTradeTransfer(item, speaker, entry, entry.bot), 500);
+            return true;
+        }
+        if (NEGATIVE_CONFIRM_PATTERN.matcher(message).find()) {
+            clearPendingLootOffer(entry);
+            TimerManager.getInstance().schedule(
+                    () -> BotManager.getInstance().botSay(entry.bot, "ok, keeping it for now"), 500);
+            return true;
+        }
+
+        return false;
+    }
+
+    static void expirePendingLootOffer(BotEntry entry) {
+        if (RECOMMENDED_TRADE_ACTION.equals(entry.pendingAction)
+                && entry.pendingLootOfferExpiresAt > 0L
+                && System.currentTimeMillis() >= entry.pendingLootOfferExpiresAt) {
+            clearPendingLootOffer(entry);
+        }
+    }
+
+    private static void promptLootOfferAfterLoot(BotEntry entry, Character bot, Item item, long scheduledAt) {
         if (entry.pendingGearPromptAt != scheduledAt) {
             return;
         }
         entry.pendingGearPromptAt = 0L;
 
         Character owner = entry.owner;
-        if (owner == null || entry.pendingAction != null || entry.pendingTradeCategory != null) {
+        if (owner == null
+                || entry.pendingAction != null
+                || entry.pendingTradeCategory != null
+                || !BotDropManager.hasItem(bot, item)) {
             return;
         }
 
-        String summary = BotEquipManager.recommendationSummary(owner, bot, 3);
-        if (summary == null) {
+        Character recipient = findLootOfferRecipient(entry, bot, item);
+        if (recipient == null) {
             return;
         }
 
         entry.pendingAction = RECOMMENDED_TRADE_ACTION;
-        entry.pendingDropCategory = "recommended";
-        queueBotSay(entry, summary + ", you want it?");
-        entry.nextGearSuggestionAt = System.currentTimeMillis() + 60_000L;
+        entry.pendingDropCategory = null;
+        entry.pendingLootOfferItem = item;
+        entry.pendingLootOfferRecipientId = recipient.getId();
+        entry.pendingLootOfferExpiresAt = System.currentTimeMillis() + 30_000L;
+        queueBotSay(entry, buildLootOfferPrompt(recipient, owner, item));
+    }
+
+    static String buildLootOfferPrompt(String recipientName, String itemName, boolean targetIsOwner) {
+        List<String> prompts = targetIsOwner
+                ? List.of(
+                        "I have %s, you want?",
+                        "picked up %s, want it?",
+                        "I got %s for you, want?")
+                : List.of(
+                        "%s, I have %s, you want?",
+                        "%s, picked up %s, want it?",
+                        "%s, I got %s if you want it");
+        String format = BotManager.randomReply(prompts);
+        return targetIsOwner ? String.format(format, itemName) : String.format(format, recipientName, itemName);
+    }
+
+    private static String buildLootOfferPrompt(Character recipient, Character owner, Item item) {
+        ItemInformationProvider ii = ItemInformationProvider.getInstance();
+        String itemName = ii.getName(item.getItemId());
+        if (itemName == null || itemName.isBlank()) {
+            itemName = String.valueOf(item.getItemId());
+        }
+        boolean targetIsOwner = owner != null && recipient.getId() == owner.getId();
+        return buildLootOfferPrompt(recipient.getName(), itemName, targetIsOwner);
+    }
+
+    private static Character findLootOfferRecipient(BotEntry entry, Character bot, Item item) {
+        Character owner = entry.owner;
+        if (owner == null) {
+            return null;
+        }
+        if (BotEquipManager.findRecommendationForItem(owner, bot, item) != null) {
+            return owner;
+        }
+
+        for (Character member : owner.getPartyMembersOnSameMap()) {
+            if (member == null
+                    || member.getId() == owner.getId()
+                    || member.getId() == bot.getId()
+                    || member.getClient() instanceof BotClient) {
+                continue;
+            }
+            if (BotEquipManager.findRecommendationForItem(member, bot, item) != null) {
+                return member;
+            }
+        }
+
+        return null;
+    }
+
+    private static void clearPendingLootOffer(BotEntry entry) {
+        if (RECOMMENDED_TRADE_ACTION.equals(entry.pendingAction)) {
+            entry.pendingAction = null;
+        }
+        entry.pendingDropCategory = null;
+        entry.pendingLootOfferItem = null;
+        entry.pendingLootOfferRecipientId = 0;
+        entry.pendingLootOfferExpiresAt = 0L;
     }
 
     private static void handleSkillTreeChoice(BotEntry entry, Character bot, String message) {

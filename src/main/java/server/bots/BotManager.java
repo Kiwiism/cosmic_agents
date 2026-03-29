@@ -319,6 +319,10 @@ public class BotManager {
     }
 
     public void handleChat(Character owner, String message) {
+        if (handlePendingLootOfferResponse(owner, message)) {
+            return;
+        }
+
         // Recruit must work even when owner has no bots yet
         Matcher rm = RECRUIT_PATTERN.matcher(message);
         if (rm.find()) {
@@ -376,6 +380,52 @@ public class BotManager {
         }
     }
 
+    private boolean handlePendingLootOfferResponse(Character speaker, String message) {
+        List<BotEntry> matches = new ArrayList<>();
+        String lowerMessage = message.toLowerCase();
+
+        for (List<BotEntry> entries : bots.values()) {
+            for (BotEntry entry : entries) {
+                BotChatManager.expirePendingLootOffer(entry);
+                if (!isPendingLootOfferTarget(entry, speaker)) {
+                    continue;
+                }
+
+                String botName = entry.bot.getName().toLowerCase();
+                if (lowerMessage.startsWith(botName) && lowerMessage.length() > botName.length()) {
+                    char next = lowerMessage.charAt(botName.length());
+                    if (next == ' ' || next == ',' || next == '!' || next == '?') {
+                        String rest = message.substring(botName.length()).replaceFirst("^[,!?\\s]+", "").trim();
+                        return !rest.isEmpty() && BotChatManager.handlePendingLootOfferResponse(entry, speaker, rest);
+                    }
+                }
+
+                matches.add(entry);
+            }
+        }
+
+        if (matches.size() == 1) {
+            return BotChatManager.handlePendingLootOfferResponse(matches.get(0), speaker, message);
+        }
+        if (matches.size() > 1 && looksLikeConfirmation(message)) {
+            speaker.dropMessage(5, "More than one bot is waiting on you. Say '<botname> yes' or '<botname> no'.");
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean isPendingLootOfferTarget(BotEntry entry, Character speaker) {
+        return entry != null
+                && entry.pendingLootOfferRecipientId == speaker.getId()
+                && entry.bot.getMapId() == speaker.getMapId();
+    }
+
+    private boolean looksLikeConfirmation(String message) {
+        String normalized = message.trim().toLowerCase();
+        return normalized.matches(".*\\b(yes|yep|yeah|yea|y|ok|sure|confirm|no|nope|nah|nvm|never\\s*mind|dont|don't|not\\s+now|skip)\\b.*");
+    }
+
     // -------------------------------------------------------------------------
     // Main tick
     // -------------------------------------------------------------------------
@@ -393,6 +443,7 @@ public class BotManager {
             return;
         }
         Character bot = entry.bot;
+        BotChatManager.expirePendingLootOffer(entry);
         boolean runAiTick = consumeAiTick(entry);
 
         Character owner = entry.owner;
@@ -721,10 +772,14 @@ public class BotManager {
                     continue;
                 }
             }
+            Item pickedItem = drop.getItem();
             int pickedItemId = drop.getItemId();
             bot.pickupItem(drop);
-            if (pickedItemId > 0 && ItemConstants.getInventoryType(pickedItemId) == InventoryType.EQUIP) {
-                BotChatManager.scheduleRecommendedGearPrompt(entry, bot, 5_000L);
+            if (pickedItem != null
+                    && pickedItemId > 0
+                    && ItemConstants.getInventoryType(pickedItemId) == InventoryType.EQUIP
+                    && BotDropManager.hasItem(bot, pickedItem)) {
+                BotChatManager.scheduleLootOfferPrompt(entry, bot, pickedItem, 5_000L);
             }
         }
     }

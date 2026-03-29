@@ -2,7 +2,10 @@ package server.bots;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Set;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BotChatManagerTest {
     @Test
@@ -37,5 +40,23 @@ class BotChatManagerTest {
         assertEquals("recommended", BotChatManager.matchTradeCategory("trade recommended gear"));
         assertEquals("recommended", BotChatManager.matchTradeCategory("trade me upgrades"));
         assertEquals("recommended", BotChatManager.matchTradeCategory("trade better equipment"));
+    }
+
+    @Test
+    void shouldBuildOwnerLootOfferPrompt() {
+        String prompt = BotChatManager.buildLootOfferPrompt("Owner", "Blue Moon", true);
+        assertTrue(Set.of(
+                "I have Blue Moon, you want?",
+                "picked up Blue Moon, want it?",
+                "I got Blue Moon for you, want?").contains(prompt));
+    }
+
+    @Test
+    void shouldBuildPartyLootOfferPrompt() {
+        String prompt = BotChatManager.buildLootOfferPrompt("Alice", "Blue Moon", false);
+        assertTrue(Set.of(
+                "Alice, I have Blue Moon, you want?",
+                "Alice, picked up Blue Moon, want it?",
+                "Alice, I got Blue Moon if you want it").contains(prompt));
     }
 }

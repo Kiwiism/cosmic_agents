@@ -156,6 +156,45 @@ class BotEquipManager {
                 .toList());
     }
 
+    static EquipRecommendation findRecommendationForItem(Character receiver, Character holder, Item holderItem) {
+        if (!(holderItem instanceof Equip candidate)) {
+            return null;
+        }
+
+        ItemInformationProvider ii = ItemInformationProvider.getInstance();
+        if (ii.isCash(candidate.getItemId())) {
+            return null;
+        }
+
+        String textSlot = ii.getEquipmentSlot(candidate.getItemId());
+        EquipSlot slot = EquipSlot.getFromTextSlot(textSlot);
+        if (slot == EquipSlot.PET_EQUIP) {
+            return null;
+        }
+
+        short primarySlot = (short) slot.getPrimarySlot();
+        if (primarySlot == 0) {
+            return null;
+        }
+
+        WeaponType weaponType = currentWeaponType(receiver, ii);
+        Inventory receiverEquippedInv = receiver.getInventory(InventoryType.EQUIPPED);
+        if (isRingSlot(primarySlot)) {
+            return findRecommendedRingForItem(receiver, ii, weaponType, candidate, receiverEquippedInv);
+        }
+
+        if (!ii.canWearEquipment(receiver, candidate, primarySlot)) {
+            return null;
+        }
+
+        Equip current = (Equip) receiverEquippedInv.getItem(primarySlot);
+        if (!isBetterThanCurrent(receiver, ii, weaponType, current, candidate)) {
+            return null;
+        }
+
+        return new EquipRecommendation(primarySlot, current, candidate);
+    }
+
     static String recommendationSummary(Character receiver, Character holder, int maxItems) {
         List<EquipRecommendation> recommendations = findRecommendedEquips(receiver, holder);
         if (recommendations.isEmpty()) {
@@ -240,6 +279,34 @@ class BotEquipManager {
             }
         }
         return recommendations;
+    }
+
+    private static EquipRecommendation findRecommendedRingForItem(Character receiver,
+                                                                  ItemInformationProvider ii,
+                                                                  WeaponType wt,
+                                                                  Equip candidate,
+                                                                  Inventory receiverEquippedInv) {
+        EquipRecommendation bestRecommendation = null;
+        EquipScore bestScore = null;
+        for (short ringSlot : RING_SLOTS) {
+            if (!ii.canWearEquipment(receiver, candidate, ringSlot)) {
+                continue;
+            }
+
+            Equip current = (Equip) receiverEquippedInv.getItem(ringSlot);
+            EquipScore currentScore = scoreEquip(receiver, ii, wt, current, current);
+            EquipScore candidateScore = scoreEquip(receiver, ii, wt, current, candidate);
+            if (compareScores(candidateScore, currentScore) <= 0) {
+                continue;
+            }
+
+            if (bestRecommendation == null || compareScores(candidateScore, bestScore) > 0) {
+                bestRecommendation = new EquipRecommendation(ringSlot, current, candidate);
+                bestScore = candidateScore;
+            }
+        }
+
+        return bestRecommendation;
     }
 
     // -------------------------------------------------------------------------
