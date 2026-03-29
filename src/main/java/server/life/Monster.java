@@ -1735,6 +1735,10 @@ public class Monster extends AbstractLoadedLife {
         return stats.getPADamage();
     }
 
+    public int getAccuracy() {
+        return stats.getAccuracy();
+    }
+
     public int getAvoidability() {
         return stats.getAvoidability();
     }

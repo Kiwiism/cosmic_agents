@@ -25,6 +25,11 @@ final class BotCombatFormulaProvider {
         return Math.max(0, derivedAccuracy + getFlatAccuracy(bot));
     }
 
+    int getTotalAvoidability(Character bot) {
+        int derivedAvoidability = (int) Math.floor(bot.getTotalDex() * 0.25d + bot.getTotalLuk() * 0.5d);
+        return Math.max(0, derivedAvoidability + getFlatAvoidability(bot));
+    }
+
     double calculateMobHitChance(Character bot, Monster monster) {
         return calculateMobHitChance(getTotalAccuracy(bot), bot.getLevel(), monster.getLevel(), monster.getAvoidability());
     }
@@ -34,6 +39,26 @@ final class BotCombatFormulaProvider {
         double hitChance = accuracy / (((1.84d + 0.07d * levelDelta) * monsterAvoidability) + 1.0d);
         hitChance = Math.max(MIN_HIT_CHANCE, hitChance);
         return Math.min(MAX_HIT_CHANCE, hitChance);
+    }
+
+    double calculateBotAvoidChance(Character bot, Monster monster) {
+        return calculateBotAvoidChance(monster.getAccuracy(), monster.getLevel(), bot.getLevel(), getTotalAvoidability(bot));
+    }
+
+    double calculateBotAvoidChance(int monsterAccuracy, int monsterLevel, int botLevel, int botAvoidability) {
+        int levelDelta = Math.max(0, botLevel - monsterLevel);
+        double hitChance = monsterAccuracy / (((1.84d + 0.07d * levelDelta) * botAvoidability) + 1.0d);
+        hitChance = Math.max(MIN_HIT_CHANCE, hitChance);
+        return Math.min(MAX_HIT_CHANCE, hitChance);
+    }
+
+    boolean doesMobHit(Character bot, Monster monster) {
+        return doesMobHit(calculateBotAvoidChance(bot, monster));
+    }
+
+    boolean doesMobHit(double hitChance) {
+        double normalizedHitChance = Math.max(0.0d, Math.min(MAX_HIT_CHANCE, hitChance));
+        return ThreadLocalRandom.current().nextDouble() <= normalizedHitChance;
     }
 
     List<Integer> rollDamageLines(Character bot, Monster monster, int hits, int minDamage, int maxDamage) {
@@ -76,5 +101,22 @@ final class BotCombatFormulaProvider {
             }
         }
         return buffAccuracy + equipAccuracy;
+    }
+
+    private int getFlatAvoidability(Character bot) {
+        Integer buffedAvoidability = bot.getBuffedValue(BuffStat.AVOID);
+        int buffAvoidability = buffedAvoidability != null ? buffedAvoidability : 0;
+        var equippedInventory = bot.getInventory(InventoryType.EQUIPPED);
+        if (equippedInventory == null) {
+            return buffAvoidability;
+        }
+
+        int equipAvoidability = 0;
+        for (Item item : equippedInventory) {
+            if (item instanceof Equip equip) {
+                equipAvoidability += equip.getAvoid();
+            }
+        }
+        return buffAvoidability + equipAvoidability;
     }
 }

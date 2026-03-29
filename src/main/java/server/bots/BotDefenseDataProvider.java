@@ -159,6 +159,9 @@ final class BotDefenseDataProvider {
         if (physicalAttackDamage <= 0) {
             return 1;
         }
+        if (!BotCombatFormulaProvider.getInstance().doesMobHit(bot, mob)) {
+            return 0;
+        }
 
         int standardPdd = getStandardPdd(bot.getJob(), bot.getLevel());
         int wdef = Math.max(0, bot.getTotalWdef());

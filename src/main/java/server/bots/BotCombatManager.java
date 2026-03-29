@@ -166,11 +166,19 @@ class BotCombatManager {
     static void applyMobHit(BotEntry entry, Character bot, Monster mob) {
         Config cc = BotCombatManager.cfg;
         int dmg = rollPhysicalMobDamage(bot, mob);
+        int dir = mob.getPosition().x < bot.getPosition().x ? 0 : 1;
+
+        if (dmg <= 0) {
+            bot.getMap().broadcastMessage(bot,
+                    PacketCreator.damagePlayer(-1, mob.getId(), bot.getId(), 0, 0,
+                            dir, false, 0, false, 0, 0, 0), false);
+            entry.mobHitCooldownMs = BotMovementManager.delayAfterCurrentTick(cc.MOB_HIT_COOLDOWN_MS);
+            return;
+        }
 
         bot.addMPHP(-dmg, 0);
 
         // direction: 0 = hit from left (knocked right), 1 = hit from right (knocked left)
-        int dir = mob.getPosition().x < bot.getPosition().x ? 0 : 1;
         bot.getMap().broadcastMessage(bot,
                 PacketCreator.damagePlayer(-1, mob.getId(), bot.getId(), dmg, 0,
                         dir, false, 0, false, 0, 0, 0), false);
