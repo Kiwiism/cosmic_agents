@@ -139,7 +139,9 @@ public class BotManager {
         entry.following = false;
         entry.grinding  = false;
         TimerManager.getInstance().schedule(() ->
-                botSay(entry.bot, randomReply(List.of("ok", "sure", "alright", "gotcha"))), 500);
+                botSay(entry.bot, randomReply(List.of(
+                        "ok", "sure", "alright", "gotcha",
+                        "later!", "see ya", "take care", "cya", "peace out"))), 500);
         return true;
     }
 
@@ -275,7 +277,13 @@ public class BotManager {
                 "what you got?",
                 "trade?",
                 "show me",
-                "lets see"));
+                "lets see",
+                "whatcha got",
+                "tryna trade?",
+                "yes?",
+                "sup",
+                "ooh what is it",
+                "what's up"));
     }
 
     private List<Character> getPartyBots(Character source) {
@@ -727,7 +735,10 @@ public class BotManager {
 
     private static final List<String> GRIND_REPLIES = List.of(
             "ok", "on it", "lets get it", "farming time", "got it",
-            "sure", "ok boss", "time to grind");
+            "sure", "ok boss", "time to grind",
+            "lets farm", "hunting time", "aye, killing stuff",
+            "lezgo", "gonna get some kills", "on it boss",
+            "time to work", "lets do this");
 
     /** Builds grind-start reply with low-potion warning when below POT_LOW_WARN. */
     String grindStartMessage(Character bot) {

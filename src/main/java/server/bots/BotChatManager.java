@@ -48,12 +48,14 @@ class BotChatManager {
 
     private static final List<String> FOLLOW_REPLIES = List.of(
             "ok", "k", "sure", "omw", "got it", "coming",
-            "roger", "yep", "alright",
-            "aye", "lets go!", "as you wish", "ok boss");
+            "roger", "yep", "alright", "aye", "lets go!", "as you wish", "ok boss",
+            "on my way", "right behind you", "np", "kk omw", "w8 up",
+            "gotchu", "moving now", "aye aye");
     private static final List<String> STOP_REPLIES = List.of(
             "ok", "k", "sure", "alright", "got it", "stopping",
             "ok ill wait here", "ill be here", "np", "standing by",
-            "understood", "ok boss");
+            "understood", "ok boss", "staying put", "chilling here",
+            "resting", "aye aye", "on it", "noted");
 
     private static final Pattern GRIND_PATTERN = Pattern.compile(
             "\\b(go\\s+|start\\s+|begin\\s+|let.?s\\s+)?(farm(ing)?|grind(ing)?|hunt(ing)?|train(ing)?)\\b"
@@ -296,9 +298,12 @@ class BotChatManager {
             Pattern.CASE_INSENSITIVE);
 
     private static final List<String> GREETING_REPLIES = List.of(
-            "hey", "hi", "sup", "yo", "heya", "hii", "hey!!", "hi!!");
+            "hey", "hi", "sup", "yo", "heya", "hii", "hey!!", "hi!!",
+            "heyo", "ello", "o/", "hai", "eyy", "henlo", "o hey");
     private static final List<String> WB_REPLIES = List.of(
-            "wb", "wb!", "welcome back", "oh ur back", "hey ur back", "welcome back!!");
+            "wb", "wb!", "welcome back", "oh ur back", "hey ur back", "welcome back!!",
+            "wb~", "there you are", "oh hey", "finally lol", "took ya a bit",
+            "hey you're back", "oh wb!");
 
     private enum TransferMode {
         TRADE,

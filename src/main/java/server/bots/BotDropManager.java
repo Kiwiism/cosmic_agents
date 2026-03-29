@@ -14,23 +14,37 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
 
 class BotDropManager {
     private static final Set<Integer> manualTradeGreetingSent = ConcurrentHashMap.newKeySet();
     private static final List<String> TRADE_INVITATION_MSGS = List.of(
-            "k", "ok", "kk", "sure", "k, I inv", "k i inv");
+            "k", "ok", "kk", "sure", "k, I inv", "k i inv",
+            "omw", "inv u", "one sec", "coming");
     private static final List<String> TRADE_THANKS_MSGS = List.of(
-            "ty!", "thanks!", "thank you!", "tyty", "appreciate it!", "tysm!");
+            "ty!", "thanks!", "thank you!", "tyty", "appreciate it!", "tysm!",
+            "nice ty", "ooh ty!", "thx!!", "much appreciated");
+    private static final List<String> TRADE_FREEBIE_QUIPS = List.of(
+            "i better get paid for that eventually lol",
+            "you really should be paying me for that",
+            "free delivery, where's my tip",
+            "don't say i never gave you anything",
+            "i'm basically your personal shopper at this point",
+            "doing this for free smh");
     private static final List<String> NO_ITEMS_MSGS = List.of(
             "i don't have any %s",
             "no %s on me rn",
             "don't have any %s right now",
             "i'm out of %s",
-            "none of that on me right now"
+            "none of that on me right now",
+            "fresh out of %s",
+            "wish i had %s but nope",
+            "checked, no %s"
     );
     private static final List<String> ALL_DONE_MSGS = List.of(
-            "that's all!", "done adding stuff!", "all set!", "everything's in!"
+            "that's all!", "done adding stuff!", "all set!", "everything's in!",
+            "that's everything!", "done!", "added it all", "check it out"
     );
 
     static void tickManualTrade(BotEntry entry, Character bot) {
@@ -375,6 +389,8 @@ class BotDropManager {
         Trade.completeTrade(bot);
         if (receivedSomething) {
             BotManager.getInstance().botSay(bot, BotManager.randomReply(TRADE_THANKS_MSGS));
+        } else if (ThreadLocalRandom.current().nextInt(100) < 20) {
+            BotManager.getInstance().botSay(bot, BotManager.randomReply(TRADE_FREEBIE_QUIPS));
         }
     }
 
