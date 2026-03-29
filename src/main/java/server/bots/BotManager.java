@@ -515,8 +515,6 @@ public class BotManager {
                     BotMovementManager.broadcastMovement(entry);
                 }
             }
-            // If climbing, bot idles on the rope — no stance change needed (16/17 is already idle)
-            tickIdleEmote(entry, bot);
             return;
         }
 
@@ -735,17 +733,6 @@ public class BotManager {
         } else {
             bot.getKeymap().remove(92);
             bot.setAutopotMpAlert(0f);
-        }
-    }
-
-    // Default face expressions 1-7: 1=smile, 2=troubled, 3=impressed, 4=angry, 5=vomit, 6=wink, 7=bow
-    private static final int[] IDLE_EMOTES = {1, 1, 2, 6};
-
-    private static void tickIdleEmote(BotEntry entry, Character bot) {
-        entry.idleEmoteTimerMs = BotMovementManager.tickDown(entry.idleEmoteTimerMs);
-        if (entry.idleEmoteTimerMs <= 0) {
-            entry.idleEmoteTimerMs = ThreadLocalRandom.current().nextInt(25_000, 45_001);
-            bot.changeFaceExpression(IDLE_EMOTES[ThreadLocalRandom.current().nextInt(IDLE_EMOTES.length)]);
         }
     }
 
