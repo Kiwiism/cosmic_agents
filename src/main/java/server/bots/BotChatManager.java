@@ -802,14 +802,12 @@ class BotChatManager {
             return;
         }
 
-        String summary = BotEquipManager.recommendationSummary(owner, bot, 4);
-        if (summary == null) {
+        if (BotEquipManager.findRecommendedEquips(owner, bot).isEmpty()) {
             queueBotSay(entry, "no better gear for you rn");
             return;
         }
 
-        queueBotSay(entry, summary);
-        queueBotSay(entry, "say 'trade recommended gear' if you want it");
+        queueBotSay(entry, "yes, say 'trade recommended gear' if you want it");
         entry.nextGearSuggestionAt = System.currentTimeMillis() + 60_000L;
     }
 
@@ -820,13 +818,12 @@ class BotChatManager {
             return;
         }
 
-        String summary = BotEquipManager.recommendationSummary(owner, bot, 3);
-        if (summary == null) {
+        List<BotEquipManager.EquipRecommendation> recs = BotEquipManager.findRecommendedEquips(owner, bot);
+        if (recs.isEmpty()) {
             return;
         }
 
-        queueBotSay(entry, summary);
-        queueBotSay(entry, "say 'trade recommended gear' if you want it");
+        queueBotSay(entry, "I have better gear for you, say 'trade recommended gear'");
         entry.nextGearSuggestionAt = now + 60_000L;
     }
 

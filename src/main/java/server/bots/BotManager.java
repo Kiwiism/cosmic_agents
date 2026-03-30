@@ -668,6 +668,19 @@ public class BotManager {
             entry.lastMapId = bot.getMapId();
         }
 
+        // Follow mode: attack monsters already in attack range without chasing
+        if (entry.following && runAiTick && !entry.inAir && !entry.climbing
+                && Math.abs(botPos.x - owner.getPosition().x) <= BotMovementManager.cfg.FOLLOW_DIST * 5) {
+            Monster followTarget = BotCombatManager.findGrindTarget(bot);
+            if (followTarget != null) {
+                BotCombatManager.AttackPlan ap = BotCombatManager.planAttack(entry, bot, followTarget);
+                if (BotCombatManager.isTargetInAttackRange(ap, bot, followTarget)) {
+                    BotCombatManager.attackMonster(entry, bot, ap);
+                    if (!entry.inAir) return;
+                }
+            }
+        }
+
         // Grind mode: navigate toward nearest monster, attack when in range
         if (entry.grinding) {
             // Stick to current target while it's alive and in range; only re-pick when needed
