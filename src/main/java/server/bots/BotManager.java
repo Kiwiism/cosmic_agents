@@ -9,6 +9,7 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.keybind.KeyBinding;
+import constants.id.ItemId;
 import constants.inventory.ItemConstants;
 import constants.skills.Crusader;
 import constants.skills.DawnWarrior;
@@ -975,7 +976,7 @@ public class BotManager {
         Point botPos = bot.getPosition();
         for (MapItem drop : bot.getMap().getDroppedItems()) {
             if (!drop.canBePickedBy(bot)) continue;
-            if (System.currentTimeMillis() - drop.getDropTime() < 1000) continue; // wait 1s after spawn
+            if (System.currentTimeMillis() - drop.getDropTime() < 3000) continue; // wait 3s after spawn
             Point dp = drop.getPosition();
             if (Math.abs(dp.x - botPos.x) > cfg.LOOT_RADIUS
                     || Math.abs(dp.y - botPos.y) > cfg.LOOT_RADIUS) continue;
@@ -992,7 +993,11 @@ public class BotManager {
             }
             Item pickedItem = drop.getItem();
             int pickedItemId = drop.getItemId();
-            bot.pickupItem(drop);
+            if (ItemId.isNxCard(pickedItemId) && entry.owner != null && entry.owner.getMap() == bot.getMap()) {
+                entry.owner.pickupItem(drop);
+            } else {
+                bot.pickupItem(drop);
+            }
             if (pickedItem != null
                     && pickedItemId > 0
                     && ItemConstants.getInventoryType(pickedItemId) == InventoryType.EQUIP
