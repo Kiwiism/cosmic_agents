@@ -108,8 +108,72 @@ public class BotManager {
         registerBotInternal(ownerCharId, owner, bot, false);
     }
 
-    public void registerSpawnedBot(int ownerCharId, Character owner, Character bot) {
-        registerBotInternal(ownerCharId, owner, bot, true);
+    public BotEntry registerSpawnedBot(int ownerCharId, Character owner, Character bot) {
+        return registerBotInternal(ownerCharId, owner, bot, true);
+    }
+
+    public record SpawnResult(boolean success, Character bot, boolean autoRegistered, String errorMessage) {
+        static SpawnResult ok(Character bot, boolean autoRegistered) {
+            return new SpawnResult(true, bot, autoRegistered, null);
+        }
+        static SpawnResult fail(String msg) {
+            return new SpawnResult(false, null, false, msg);
+        }
+    }
+
+    /** Spawn a registered bot for the given owner, placing it at the owner's current position in follow mode. */
+    public SpawnResult spawnBotForOwner(Character owner, String botName) {
+        BotOwnershipService ownershipService = BotOwnershipService.getInstance();
+        BotOwnershipService.ResolvedCharacter resolved = ownershipService.resolveCharacterByName(botName);
+        if (resolved == null) {
+            return SpawnResult.fail("No character named '" + botName + "' exists.");
+        }
+        if (resolved.isOnline() && !resolved.isOnlineAsBot()) {
+            return SpawnResult.fail("'" + botName + "' is currently being played by a real player.");
+        }
+        BotOwnershipService.AuthorizationResult auth = ownershipService.ensureCanControl(owner, resolved);
+        if (!auth.allowed()) {
+            return SpawnResult.fail(auth.failureMessage());
+        }
+        MapleMap map = owner.getMap();
+        Point pos = resolveSpawnPosition(map, owner.getPosition());
+        if (resolved.isOnline()) {
+            Character botChar = resolved.onlineCharacter();
+            Character activeOwner = getActiveOwnerByBotCharId(botChar.getId());
+            if (activeOwner != null && activeOwner.getId() != owner.getId()) {
+                return SpawnResult.fail("Bot '" + botName + "' is controlled by " + activeOwner.getName() + ".");
+            }
+            BotEntry entry = activeOwner == null
+                    ? registerSpawnedBot(owner.getId(), owner, botChar)
+                    : getBotEntry(owner.getId(), botChar.getId());
+            if (botChar.getMapId() != map.getId()) {
+                botChar.forceChangeMap(map, map.findClosestPortal(pos));
+            }
+            botChar.setPosition(pos);
+            botChar.broadcastStance();
+            botChar.updatePartyMemberHP();
+            if (entry != null) entry.following = true;
+            return SpawnResult.ok(botChar, auth.autoRegistered());
+        } else {
+            try {
+                Character botChar = loadOfflineBot(resolved.id(), owner.getClient().getWorld(), owner.getClient().getChannel(), map, pos);
+                BotEntry entry = registerSpawnedBot(owner.getId(), owner, botChar);
+                entry.following = true;
+                return SpawnResult.ok(botChar, auth.autoRegistered());
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return SpawnResult.fail("Failed to load bot character '" + botName + "'.");
+            }
+        }
+    }
+
+    private BotEntry getBotEntry(int ownerCharId, int botCharId) {
+        List<BotEntry> entries = bots.get(ownerCharId);
+        if (entries == null) return null;
+        for (BotEntry e : entries) {
+            if (e.bot.getId() == botCharId) return e;
+        }
+        return null;
     }
 
     public Character loadOfflineBot(int charId, int world, int channel, MapleMap targetMap, Point desiredPosition) throws SQLException {
@@ -146,7 +210,7 @@ public class BotManager {
         return groundPoint != null ? groundPoint : desiredPosition;
     }
 
-    private void registerBotInternal(int ownerCharId, Character owner, Character bot, boolean normalizeSpawnState) {
+    private BotEntry registerBotInternal(int ownerCharId, Character owner, Character bot, boolean normalizeSpawnState) {
         List<BotEntry> entries = bots.computeIfAbsent(ownerCharId, k -> new CopyOnWriteArrayList<>());
         // Replace if same bot character is already registered (e.g. relog)
         entries.removeIf(e -> {
@@ -162,6 +226,7 @@ public class BotManager {
             normalizeSpawnedBot(entry);
         }
         TimerManager.getInstance().schedule(() -> BotChatManager.checkBotStatus(entry, bot), 2000);
+        return entry;
     }
 
     private void normalizeSpawnedBot(BotEntry entry) {

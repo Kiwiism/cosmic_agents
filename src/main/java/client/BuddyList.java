@@ -162,6 +162,19 @@ public class BuddyList {
                 ps.setInt(1, characterId);
                 ps.executeUpdate();
             }
+
+            // Show registered bots as always-online so the buddy list invite option is available
+            try (PreparedStatement ps = con.prepareStatement("SELECT bot_char_id FROM bot_owners WHERE owner_char_id = ?")) {
+                ps.setInt(1, characterId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        BuddylistEntry entry = get(rs.getInt("bot_char_id"));
+                        if (entry != null) {
+                            entry.setChannel(1);
+                        }
+                    }
+                }
+            }
         } catch (SQLException ex) {
             ex.printStackTrace();
         }

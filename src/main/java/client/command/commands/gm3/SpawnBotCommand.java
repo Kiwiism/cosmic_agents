@@ -9,11 +9,9 @@ import client.creator.BotCreator;
 import net.server.world.Party;
 import server.bots.BotManager;
 import server.bots.BotOwnershipService;
-import server.maps.MapleMap;
 import tools.BCrypt;
 import tools.DatabaseConnection;
 
-import java.awt.Point;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -40,8 +38,6 @@ public class SpawnBotCommand extends Command {
         // params are lowercased by CommandsExecutor; use lastCommandMessage to preserve casing
         String[] rawArgs = player.getLastCommandMessage().trim().split("[ ]", 2);
         String botName = rawArgs[0];
-        MapleMap adminMap = player.getMap();
-        Point adminPos = player.getPosition();
         boolean createRequested = params.length >= 2 && params[1].equals("confirm");
 
         BotOwnershipService.ResolvedCharacter bot = ownershipService.resolveCharacterByName(botName);
@@ -80,63 +76,16 @@ public class SpawnBotCommand extends Command {
             }
         }
 
-        if (bot.isOnline()) {
-            if (!bot.isOnlineAsBot()) {
-                player.yellowMessage("'" + botName + "' is currently being played by a real player — cannot spawn as bot.");
-                return;
-            }
-        }
-
-        BotOwnershipService.AuthorizationResult auth = ownershipService.ensureCanControl(player, bot);
-        if (!auth.allowed()) {
-            player.yellowMessage(auth.failureMessage());
+        BotManager.SpawnResult result = botManager.spawnBotForOwner(player, botName);
+        if (!result.success()) {
+            player.yellowMessage(result.errorMessage());
             return;
         }
-
-        if (bot.isOnline()) {
-            Character existingChr = bot.onlineCharacter();
-            Character activeOwner = botManager.getActiveOwnerByBotCharId(existingChr.getId());
-            if (activeOwner != null && activeOwner.getId() != player.getId()) {
-                player.yellowMessage("Bot '" + existingChr.getName() + "' is currently being controlled by " + activeOwner.getName() + ".");
-                return;
-            }
-
-            if (activeOwner == null) {
-                botManager.registerSpawnedBot(player.getId(), player, existingChr);
-            }
-            teleportBotToPlayer(existingChr, adminMap, botManager.resolveSpawnPosition(adminMap, adminPos));
-            joinBotToPlayerParty(player, existingChr);
-            if (auth.autoRegistered()) {
-                player.yellowMessage("Bot '" + existingChr.getName() + "' auto-registered to " + player.getName() + " because it is on the same account.");
-            }
-            player.yellowMessage("Bot '" + botName + "' teleported to your position.");
-            return;
+        joinBotToPlayerParty(player, result.bot());
+        if (result.autoRegistered()) {
+            player.yellowMessage("Bot '" + result.bot().getName() + "' auto-registered to " + player.getName() + " because it is on the same account.");
         }
-
-        // Load character from DB and spawn it into the current map
-        try {
-            Point spawnPos = botManager.resolveSpawnPosition(adminMap, adminPos);
-            Character botChar = botManager.loadOfflineBot(bot.id(), c.getWorld(), c.getChannel(), adminMap, spawnPos);
-
-            botManager.registerSpawnedBot(player.getId(), player, botChar);
-            joinBotToPlayerParty(player, botChar);
-            if (auth.autoRegistered()) {
-                player.yellowMessage("Bot '" + botChar.getName() + "' auto-registered to " + player.getName() + " because it is on the same account.");
-            }
-            player.yellowMessage("Bot '" + botName + "' spawned. Say 'follow me' or 'stop' to control it.");
-        } catch (SQLException e) {
-            player.yellowMessage("Failed to load bot character '" + botName + "'.");
-            e.printStackTrace();
-        }
-    }
-
-    private void teleportBotToPlayer(Character bot, MapleMap adminMap, Point spawnPos) {
-        if (bot.getMapId() != adminMap.getId()) {
-            bot.forceChangeMap(adminMap, adminMap.findClosestPortal(spawnPos));
-        }
-        bot.setPosition(spawnPos);
-        bot.broadcastStance();
-        bot.updatePartyMemberHP();
+        player.yellowMessage("Bot '" + result.bot().getName() + "' spawned. Say 'follow me' or 'stop' to control it.");
     }
 
     private void joinBotToPlayerParty(Character player, Character bot) {
