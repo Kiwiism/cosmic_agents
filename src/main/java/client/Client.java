@@ -1115,26 +1115,7 @@ public class Client extends ChannelInboundHandlerAdapter {
     }
 
     public boolean deleteCharacter(int cid, int senderAccId) {
-        try {
-            Character chr = Character.loadCharFromDB(cid, this, false);
-
-            Integer partyid = chr.getWorldServer().getCharacterPartyid(cid);
-            if (partyid != null) {
-                this.setPlayer(chr);
-
-                Party party = chr.getWorldServer().getParty(partyid);
-                chr.setParty(party);
-                chr.getMPC();
-                chr.leaveParty();   // thanks Vcoc for pointing out deleted characters would still stay in a party
-
-                this.setPlayer(null);
-            }
-
-            return Character.deleteCharFromDB(chr, senderAccId);
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            return false;
-        }
+        return CharacterDeletionService.deleteCharacter(cid, senderAccId).isSuccess();
     }
 
     public String getAccountName() {

@@ -255,7 +255,7 @@ final class BotNavigationGraph implements Serializable {
         return findRopeRegionId(position);
     }
 
-    private int findRopeRegionId(Point position) {
+    int findRopeRegionId(Point position) {
         for (Region region : regions) {
             if (!region.isRopeRegion) {
                 continue;

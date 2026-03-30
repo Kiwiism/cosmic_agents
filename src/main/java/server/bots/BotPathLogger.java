@@ -78,7 +78,7 @@ final class BotPathLogger {
 
         BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(entry.bot.getMap());
         Point botPos = entry.bot.getPosition();
-        int botRegionId = graph.findRegionId(entry.bot.getMap(), botPos);
+        int botRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, entry.bot.getMap(), botPos);
         int ownerRegionId = graph.findRegionId(entry.bot.getMap(), ownerPos);
 
         StringBuilder sb = new StringBuilder(4096);

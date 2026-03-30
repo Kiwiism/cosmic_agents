@@ -50,7 +50,7 @@ final class BotNavigationManager {
 
             BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(bot.getMap());
             Point botPos = bot.getPosition();
-            int startRegionId = graph.findRegionId(bot.getMap(), botPos);
+            int startRegionId = resolveCurrentRegionId(graph, entry, bot.getMap(), botPos);
             int targetRegionId = graph.findRegionId(bot.getMap(), rawTargetPos);
 
             BotNavigationGraph.Edge edge = reuseCommittedEdge(graph, entry, startRegionId, targetRegionId);
@@ -121,9 +121,6 @@ final class BotNavigationManager {
         // While climbing, always keep the edge — findGroundFoothold gives false positives
         // (returns the platform below/behind the rope as the "current" region), which would
         // otherwise drop the exit edge the moment the bot enters the destination region's Y range.
-        if (entry.climbing) {
-            return edge;
-        }
         if (entry.inAir && (startRegionId < 0 || startRegionId != edge.toRegionId)) {
             return edge;
         }
@@ -228,7 +225,7 @@ final class BotNavigationManager {
 
         if (canGrabRopeAtCurrentPosition(botPos, rope)
                 || canGrabRopeFromTopPlatform(edge, botPos, rope)) {
-            startClimbing(entry, bot, rope, botPos.y);
+            startClimbing(entry, bot, rope, edge.endPoint.y);
             return new NavigationDirective(rawTargetPos, true);
         }
 
@@ -259,7 +256,7 @@ final class BotNavigationManager {
         if (toRegion != null && toRegion.isRopeRegion) {
             // Rope-to-rope: jump to the other rope
             Rope targetRope = findRopeForRegion(bot.getMap(), toRegion);
-            if (targetRope == null) {
+            if (targetRope == null || isSameRope(entry.climbRope, targetRope)) {
                 return null;
             }
             BotMovementManager.jumpOffRope(entry, bot, edge.launchStepX);
@@ -621,6 +618,22 @@ final class BotNavigationManager {
         BotMovementManager.broadcastMovement(entry);
     }
 
+    static int resolveCurrentRegionId(BotNavigationGraph graph,
+                                      BotEntry entry,
+                                      MapleMap map,
+                                      Point botPos) {
+        if (entry.climbing && entry.climbRope != null) {
+            // Rope climbing state is authoritative. Ground lookup below a rope often resolves to
+            // the nearby platform instead of the rope region, which can replan from the wrong side
+            // of the rope and bounce between entry/exit climb edges.
+            int ropeRegionId = graph.findRopeRegionId(new Point(entry.climbRope.x(), botPos.y));
+            if (ropeRegionId >= 0) {
+                return ropeRegionId;
+            }
+        }
+        return graph.findRegionId(map, botPos);
+    }
+
     private static boolean isRopeEntryEdge(BotNavigationGraph graph, BotNavigationGraph.Edge edge) {
         if (edge.type != BotNavigationGraph.EdgeType.CLIMB) {
             return false;
@@ -633,5 +646,13 @@ final class BotNavigationManager {
 
     private static Rope findRopeForRegion(MapleMap map, BotNavigationGraph.Region region) {
         return BotNavigationGraphProvider.findRopeFromRegion(map, region);
+    }
+
+    private static boolean isSameRope(Rope left, Rope right) {
+        return left != null && right != null
+                && left.x() == right.x()
+                && left.topY() == right.topY()
+                && left.bottomY() == right.bottomY()
+                && left.isLadder() == right.isLadder();
     }
 }

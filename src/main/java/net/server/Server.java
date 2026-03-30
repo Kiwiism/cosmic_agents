@@ -1363,9 +1363,28 @@ public class Server {
         lgnRLock.lock();
         try {
             Set<Integer> accChars = accountChars.get(accountid);
-            return accChars.contains(chrid);
+            return accChars != null && accChars.contains(chrid);
         } finally {
             lgnRLock.unlock();
+        }
+    }
+
+    public boolean validateCharacterOwnership(Integer accountid, Integer chrid) {
+        if (haveCharacterEntry(accountid, chrid)) {
+            return true;
+        }
+
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement("SELECT 1 FROM characters WHERE accountid = ? AND id = ?")) {
+            ps.setInt(1, accountid);
+            ps.setInt(2, chrid);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            log.error("Failed to validate ownership for accId {} chrId {}", accountid, chrid, e);
+            return false;
         }
     }
 
@@ -1444,10 +1463,15 @@ public class Server {
     public void deleteCharacterEntry(Integer accountid, Integer chrid) {
         lgnWLock.lock();
         try {
-            accountCharacterCount.put(accountid, (short) (accountCharacterCount.get(accountid) - 1));
+            Short characterCount = accountCharacterCount.get(accountid);
+            if (characterCount != null) {
+                accountCharacterCount.put(accountid, (short) (characterCount - 1));
+            }
 
             Set<Integer> accChars = accountChars.get(accountid);
-            accChars.remove(chrid);
+            if (accChars != null) {
+                accChars.remove(chrid);
+            }
 
             Integer world = worldChars.remove(chrid);
             if (world != null) {

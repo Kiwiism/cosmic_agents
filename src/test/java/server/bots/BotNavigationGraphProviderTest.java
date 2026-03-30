@@ -190,6 +190,21 @@ class BotNavigationGraphProviderTest {
         assertNull(entry.navEdge);
     }
 
+    @Test
+    void shouldResolveCurrentRegionFromRopeWhileBotIsClimbing() {
+        RopeEntryReuseCase reuseCase = findRopeEntryReuseCase(elliniaGraph, ellinia);
+
+        assertNotNull(reuseCase, "Expected a rope-entry edge whose attach point still resolves to ground");
+        assertNotEquals(reuseCase.edge().toRegionId, elliniaGraph.findRegionId(ellinia, reuseCase.botPosition()));
+
+        BotEntry entry = new BotEntry(mockBot(reuseCase.botPosition(), ellinia), null, null);
+        entry.climbing = true;
+        entry.climbRope = reuseCase.rope();
+
+        assertEquals(reuseCase.edge().toRegionId,
+                BotNavigationManager.resolveCurrentRegionId(elliniaGraph, entry, ellinia, reuseCase.botPosition()));
+    }
+
     private static List<BotNavigationGraph.Edge> findPath(BotNavigationGraph graph,
                                                           MapleMap map,
                                                           Point start,
