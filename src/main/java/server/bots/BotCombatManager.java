@@ -363,32 +363,19 @@ class BotCombatManager {
         }
     }
 
-    /**
-     * Returns a random monster from the nearest 3 candidates.
-     * Prefer local mobs inside seek range, but fall back to the nearest alive mob on the map
-     * so grind mode still walks toward enemies instead of idling when nothing is nearby yet.
-     */
+    /** Returns a random monster from the nearest 3 within seek range, so multiple bots spread across targets. */
     static Monster findGrindTarget(Character bot) {
         long startedAt = System.nanoTime();
         try {
             Point botPos = bot.getPosition();
             double rangeSq = (double) BotCombatManager.cfg.GRIND_SEEK_RANGE * BotCombatManager.cfg.GRIND_SEEK_RANGE;
             Foothold botFoothold = findGroundFoothold(botPos, bot);
-            List<Monster> nearbyCandidates = new ArrayList<>();
-            List<Monster> farCandidates = new ArrayList<>();
+            List<Monster> candidates = new ArrayList<>();
             for (Monster m : bot.getMap().getAllMonsters()) {
-                if (!m.isAlive()) {
-                    continue;
-                }
-
-                if (m.getPosition().distanceSq(botPos) <= rangeSq) {
-                    nearbyCandidates.add(m);
-                } else {
-                    farCandidates.add(m);
+                if (m.isAlive() && m.getPosition().distanceSq(botPos) <= rangeSq) {
+                    candidates.add(m);
                 }
             }
-
-            List<Monster> candidates = !nearbyCandidates.isEmpty() ? nearbyCandidates : farCandidates;
             if (candidates.isEmpty()) return null;
 
             candidates.sort((a, b) -> compareGrindTargets(bot, botPos, botFoothold, a, b));
@@ -435,32 +422,6 @@ class BotCombatManager {
 
         int dy = botPos.y - targetPos.y;
         return dy > BotCombatManager.cfg.ATTACK_RANGE_Y && dy <= BotCombatManager.cfg.ATTACK_JUMP_Y;
-    }
-
-    static Point resolveAttackApproachPoint(AttackPlan attackPlan, Character bot, Monster target) {
-        Point botPos = bot.getPosition();
-        Point targetPos = target.getPosition();
-        Rectangle hitBox = attackPlan != null ? attackPlan.hitBox : null;
-        Rectangle mobBounds = BotMobHitboxProvider.getInstance().getMobBounds(target);
-        if (hitBox != null && mobBounds != null) {
-            int relTop = hitBox.y - botPos.y;
-            int relBottom = hitBox.y + hitBox.height - botPos.y;
-            int minBotY = mobBounds.y - relBottom;
-            int maxBotY = mobBounds.y + mobBounds.height - relTop;
-            if (botPos.y >= minBotY && botPos.y <= maxBotY) {
-                int relLeft = hitBox.x - botPos.x;
-                int relRight = hitBox.x + hitBox.width - botPos.x;
-                int minBotX = mobBounds.x - relRight;
-                int maxBotX = mobBounds.x + mobBounds.width - relLeft;
-                int desiredX = clamp(botPos.x, minBotX, maxBotX);
-                return new Point(desiredX, targetPos.y);
-            }
-        }
-
-        int direction = Integer.compare(targetPos.x - botPos.x, 0);
-        int desiredOffsetX = Math.max(0, cfg.ATTACK_RANGE_X / 3);
-        int desiredX = direction == 0 ? targetPos.x : targetPos.x - direction * desiredOffsetX;
-        return new Point(desiredX, targetPos.y);
     }
 
     static void attackMonster(BotEntry entry, Character bot, AttackPlan attackPlan) {
@@ -645,13 +606,6 @@ class BotCombatManager {
         }
 
         return BotPhysicsEngine.findGroundFoothold(bot.getMap(), position);
-    }
-
-    private static int clamp(int value, int min, int max) {
-        if (min > max) {
-            return value;
-        }
-        return Math.max(min, Math.min(max, value));
     }
 
     private static boolean isMobTouchingBot(Character bot, Monster mob) {

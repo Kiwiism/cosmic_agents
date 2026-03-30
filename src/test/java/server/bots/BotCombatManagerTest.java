@@ -12,7 +12,6 @@ import server.life.Monster;
 import server.maps.MapleMap;
 
 import java.awt.*;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -124,32 +123,6 @@ class BotCombatManagerTest {
         assertFalse(entry.climbing);
     }
 
-    @Test
-    void shouldUseCloserPreciseApproachPointWhenTargetIsOutOfRange() {
-        MapleMap map = mock(MapleMap.class);
-        Character bot = mockBot(new Point(-608, 2039), map, 20_000, null);
-        Monster mob = mockMob(new Point(-525, 2094), 9300004);
-
-        Point approach = BotCombatManager.resolveAttackApproachPoint(null, bot, mob);
-
-        assertEquals(new Point(-551, 2094), approach);
-    }
-
-    @Test
-    void shouldFallbackToNearestAliveMobOutsideSeekRangeWhenGrinding() {
-        MapleMap map = mock(MapleMap.class);
-        Character bot = mockBot(new Point(0, 0), map, 20_000, null);
-        Monster nearDeadMob = mockMob(new Point(100, 0), 9300005, false);
-        Monster farAliveMob = mockMob(new Point(1200, 0), 9300006, true);
-
-        when(map.getAllMonsters()).thenReturn(List.of(nearDeadMob, farAliveMob));
-        when(map.getFootholds()).thenReturn(null);
-
-        Monster target = BotCombatManager.findGrindTarget(bot);
-
-        assertEquals(farAliveMob, target);
-    }
-
     private static void assertDamageDirection(MapleMap map, Character bot, int expectedBroadcasts, int expectedDirection) {
         ArgumentCaptor<Packet> packets = ArgumentCaptor.forClass(Packet.class);
         verify(map, times(expectedBroadcasts)).broadcastMessage(eq(bot), packets.capture(), eq(false));
@@ -195,14 +168,9 @@ class BotCombatManagerTest {
     }
 
     private static Monster mockMob(Point position, int id) {
-        return mockMob(position, id, true);
-    }
-
-    private static Monster mockMob(Point position, int id, boolean alive) {
         Monster mob = mock(Monster.class);
         when(mob.getPosition()).thenReturn(new Point(position));
         when(mob.getId()).thenReturn(id);
-        when(mob.isAlive()).thenReturn(alive);
         when(mob.getPADamage()).thenReturn(1_000);
         when(mob.getLevel()).thenReturn(1);
         when(mob.getAccuracy()).thenReturn(9_999);

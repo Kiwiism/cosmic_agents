@@ -773,7 +773,13 @@ public class BotManager {
 
         // Grind mode: navigate toward nearest monster, attack when in range
         if (entry.grinding) {
-            Monster target = resolveGrindTarget(entry, bot, runAiTick);
+            // Stick to current target while it's alive and in range; only re-pick when needed
+            double seekRangeSq = (double) BotCombatManager.cfg.GRIND_SEEK_RANGE * BotCombatManager.cfg.GRIND_SEEK_RANGE;
+            Monster target = entry.grindTarget;
+            if (target == null || !target.isAlive()
+                    || target.getPosition().distanceSq(botPos) > seekRangeSq) {
+                target = runAiTick ? BotCombatManager.findGrindTarget(bot) : null;
+            }
             if (target == null) {
                 if (entry.inAir) {
                     BotMovementManager.tickAirborne(entry);
@@ -786,7 +792,6 @@ public class BotManager {
             entry.grindTarget = target;
             Point tp = target.getPosition();
             BotCombatManager.AttackPlan attackPlan = BotCombatManager.planAttack(entry, bot, target);
-            boolean requiresPreciseCombatApproach = false;
 
             if (!entry.climbing) {
                 if (BotCombatManager.isTargetInAttackRange(attackPlan, bot, target)) {
@@ -803,16 +808,9 @@ public class BotManager {
                     // Target is above but within jump height — jump toward it
                     BotMovementManager.initiateJump(entry, bot, tp.x - botPos.x);
                     return;
-                } else if (!entry.inAir) {
-                    requiresPreciseCombatApproach = true;
                 }
             }
-            targetPos = requiresPreciseCombatApproach
-                    ? BotCombatManager.resolveAttackApproachPoint(attackPlan, bot, target)
-                    : tp;
-            if (requiresPreciseCombatApproach) {
-                entry.navPreciseTarget = true;
-            }
+            targetPos = tp;
         }
 
         BotNavigationManager.NavigationDirective navDirective = BotNavigationManager.resolveTarget(entry, targetPos, runAiTick);
@@ -823,7 +821,7 @@ public class BotManager {
 
         // Spread bots out on the same platform — only when no cross-region nav edge is active,
         // so precise jump/climb/portal waypoints aren't disrupted.
-        if ((entry.following || entry.grinding) && entry.navEdge == null && !entry.navPreciseTarget) {
+        if ((entry.following || entry.grinding) && entry.navEdge == null) {
             targetPos = new Point(targetPos.x + entry.followOffsetX, targetPos.y);
         }
 
@@ -1202,16 +1200,4 @@ public class BotManager {
         return true;
     }
 
-    static Monster resolveGrindTarget(BotEntry entry, Character bot, boolean runAiTick) {
-        // Stick to the current grind target until it dies or leaves the map.
-        // Using seek range only for initial acquisition caused bots to drop a valid
-        // chase target on the next non-AI tick, so they would repeatedly idle instead
-        // of walking toward distant mobs.
-        Monster target = entry.grindTarget;
-        if (target != null && target.isAlive() && target.getMap() == bot.getMap()) {
-            return target;
-        }
-
-        return runAiTick ? BotCombatManager.findGrindTarget(bot) : null;
-    }
 }
