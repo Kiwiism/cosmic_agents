@@ -111,9 +111,12 @@ public class BuddylistModifyHandler extends AbstractPacketHandler {
                     }
                     if (charWithId != null) {
                         // Bot shortcut: skip pending request, add immediately as always-online
-                        if (BotOwnershipService.getInstance().isAuthorizedOwner(charWithId.getId(), player.getId())) {
+                        BotOwnershipService ownershipService = BotOwnershipService.getInstance();
+                        BotOwnershipService.ResolvedCharacter resolved = ownershipService.resolveCharacterById(charWithId.getId());
+                        if (resolved != null && ownershipService.ensureCanControl(player, resolved).allowed()) {
                             buddylist.put(new BuddylistEntry(charWithId.getName(), group, charWithId.getId(), 1, true));
                             c.sendPacket(PacketCreator.updateBuddylist(buddylist.getBuddies()));
+                            c.sendPacket(PacketCreator.updateBuddyChannel(charWithId.getId(), c.getChannel()));
                             return;
                         }
                         BuddyAddResult buddyAddResult = null;

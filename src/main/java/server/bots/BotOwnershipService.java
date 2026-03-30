@@ -123,6 +123,28 @@ public final class BotOwnershipService {
         }
     }
 
+    public ResolvedCharacter resolveCharacterById(int charId) {
+        for (var world : Server.getInstance().getWorlds()) {
+            Character online = world.getPlayerStorage().getCharacterById(charId);
+            if (online != null) {
+                return new ResolvedCharacter(charId, online.getName(), online.getAccountID(), online);
+            }
+        }
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(
+                     "SELECT name, accountid FROM characters WHERE id = ?")) {
+            ps.setInt(1, charId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new ResolvedCharacter(charId, rs.getString("name"), rs.getInt("accountid"), null);
+                }
+            }
+        } catch (SQLException e) {
+            return null;
+        }
+        return null;
+    }
+
     private Character findOnlineCharacter(String name) {
         for (var world : Server.getInstance().getWorlds()) {
             Character online = world.getPlayerStorage().getCharacterByName(name);
