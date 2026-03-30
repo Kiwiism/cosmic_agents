@@ -638,7 +638,7 @@ public class InventoryManipulator {
         }
 
         if (target != null) {
-            restoreSwappedEquip(eqpInv, target, src, dst, mods);
+            restoreSwappedEquip(eqpInv, target, src);
         }
         if (chr.getBuffedValue(BuffStat.BOOSTER) != null && ItemConstants.isWeapon(source.getItemId())) {
             chr.cancelBuffStats(BuffStat.BOOSTER);
@@ -710,7 +710,7 @@ public class InventoryManipulator {
         }
     }
 
-    private static void restoreSwappedEquip(Inventory eqpInv, Equip target, short preferredSlot, short oldPos, List<ModifyInventory> mods) {
+    private static void restoreSwappedEquip(Inventory eqpInv, Equip target, short preferredSlot) {
         short returnSlot = preferredSlot;
         if (eqpInv.getItem(returnSlot) != null) {
             returnSlot = eqpInv.getNextFreeSlot();
@@ -721,7 +721,6 @@ public class InventoryManipulator {
 
         target.setPosition(returnSlot);
         eqpInv.addItemFromDB(target);
-        mods.add(new ModifyInventory(2, target, oldPos));
     }
 
     private static boolean isDisappearingItemDrop(Item it) {
