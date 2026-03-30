@@ -25,7 +25,6 @@ import client.BotClient;
 import server.bots.BotManager;
 import client.Character;
 import client.Client;
-import config.YamlConfig;
 import net.AbstractPacketHandler;
 import net.packet.InPacket;
 import net.server.coordinator.world.InviteCoordinator;
@@ -83,16 +82,6 @@ public final class PartyOperationHandler extends AbstractPacketHandler {
                     if (spawnResult.success()) invited = spawnResult.bot();
                 }
                 if (invited != null) {
-                    boolean isBot = invited.getClient() instanceof BotClient;
-                    if (!isBot && invited.getLevel() < 10 && (!YamlConfig.config.server.USE_PARTY_FOR_STARTERS || player.getLevel() >= 10)) { //min requirement is level 10
-                        c.sendPacket(PacketCreator.serverNotice(5, "The player you have invited does not meet the requirements."));
-                        return;
-                    }
-                    if (!isBot && YamlConfig.config.server.USE_PARTY_FOR_STARTERS && invited.getLevel() >= 10 && player.getLevel() < 10) {    //trying to invite high level
-                        c.sendPacket(PacketCreator.serverNotice(5, "The player you have invited does not meet the requirements."));
-                        return;
-                    }
-
                     if (invited.getParty() == null) {
                         if (party == null) {
                             if (!Party.createParty(player, false)) {
