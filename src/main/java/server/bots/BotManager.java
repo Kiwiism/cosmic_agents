@@ -170,9 +170,15 @@ public class BotManager {
     }
 
     public void joinBotToOwnerParty(Character owner, Character bot) {
-        if (bot.getParty() != null) {
-            bot.updatePartyMemberHP();
-            return;
+        net.server.world.Party botParty = bot.getParty();
+        if (botParty != null) {
+            net.server.world.Party ownerParty = owner.getParty();
+            if (ownerParty != null && botParty.getId() == ownerParty.getId()) {
+                bot.updatePartyMemberHP();
+                return;
+            }
+            // Bot is in a different party — leave it first
+            Party.leaveParty(botParty, bot.getClient());
         }
         net.server.world.Party ownerParty = owner.getParty();
         if (ownerParty == null) {
