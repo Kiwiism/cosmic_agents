@@ -36,6 +36,7 @@ import client.command.commands.gm0.JoinEventCommand;
 import client.command.commands.gm0.LeaveEventCommand;
 import client.command.commands.gm0.MapOwnerClaimCommand;
 import client.command.commands.gm0.OnlineCommand;
+import client.command.commands.gm0.RegisterBotCommand;
 import client.command.commands.gm0.RanksCommand;
 import client.command.commands.gm0.RatesCommand;
 import client.command.commands.gm0.ReadPointsCommand;
@@ -372,6 +373,8 @@ public class CommandsExecutor {
         addCommand("enableauth", EnableAuthCommand.class);
         addCommand("toggleexp", ToggleExpCommand.class);
         addCommand("mylawn", MapOwnerClaimCommand.class);
+        addCommand("registerbot", RegisterBotCommand.class);
+        addCommand("spawnbot", SpawnBotCommand.class);
         addCommand("bosshp", BossHpCommand.class);
         addCommand("mobhp", MobHpCommand.class);
         addCommand("dress", DressingRoomCommand.class);
@@ -443,7 +446,6 @@ public class CommandsExecutor {
         addCommand("debuff", 3, DebuffCommand.class);
         addCommand("fly", 3, FlyCommand.class);
         addCommand("spawn", 3, SpawnCommand.class);
-        addCommand("spawnbot", 3, SpawnBotCommand.class);
         addCommand(new String[]{"deletechar", "delchar"}, 3, DeleteCharCommand.class);
         addCommand("botnav", 3, BotNavCommand.class);
         addCommand("mutemap", 3, MuteMapCommand.class);

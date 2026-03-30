@@ -105,6 +105,48 @@ public class BotManager {
     // -------------------------------------------------------------------------
 
     public void registerBot(int ownerCharId, Character owner, Character bot) {
+        registerBotInternal(ownerCharId, owner, bot, false);
+    }
+
+    public void registerSpawnedBot(int ownerCharId, Character owner, Character bot) {
+        registerBotInternal(ownerCharId, owner, bot, true);
+    }
+
+    public Character loadOfflineBot(int charId, int world, int channel, MapleMap targetMap, Point desiredPosition) throws SQLException {
+        BotClient botClient = new BotClient(world, channel);
+        Character botChar = Character.loadCharFromDB(charId, botClient, true);
+        botClient.setPlayer(botChar);
+        botClient.setAccID(botChar.getAccountID());
+
+        MapleMap spawnMap = targetMap != null
+                ? targetMap
+                : Server.getInstance().getChannel(world, channel).getMapFactory().getMap(botChar.getMapId());
+        Point spawnPos = resolveSpawnPosition(spawnMap, desiredPosition != null ? desiredPosition : botChar.getPosition());
+
+        botChar.setMapId(spawnMap.getId());
+        botChar.newClient(botClient);
+        botChar.recalcLocalStats();
+        botChar.setPosition(spawnPos);
+
+        var channelServer = Server.getInstance().getChannel(world, channel);
+        channelServer.addPlayer(botChar);
+        channelServer.getWorldServer().addPlayer(botChar);
+        botChar.setEnteredChannelWorld();
+        spawnMap.addPlayer(botChar);
+        botChar.visitMap(spawnMap);
+        return botChar;
+    }
+
+    public Point resolveSpawnPosition(MapleMap map, Point desiredPosition) {
+        if (map == null || desiredPosition == null) {
+            return desiredPosition;
+        }
+
+        Point groundPoint = BotPhysicsEngine.findGroundPoint(map, new Point(desiredPosition.x, desiredPosition.y - 1));
+        return groundPoint != null ? groundPoint : desiredPosition;
+    }
+
+    private void registerBotInternal(int ownerCharId, Character owner, Character bot, boolean normalizeSpawnState) {
         List<BotEntry> entries = bots.computeIfAbsent(ownerCharId, k -> new CopyOnWriteArrayList<>());
         // Replace if same bot character is already registered (e.g. relog)
         entries.removeIf(e -> {
@@ -116,7 +158,32 @@ public class BotManager {
                 () -> tick(ownerCharId, botCharId), BotMovementManager.cfg.TICK_MS);
         BotEntry entry = new BotEntry(bot, owner, task);
         entries.add(entry);
+        if (normalizeSpawnState) {
+            normalizeSpawnedBot(entry);
+        }
         TimerManager.getInstance().schedule(() -> BotChatManager.checkBotStatus(entry, bot), 2000);
+    }
+
+    private void normalizeSpawnedBot(BotEntry entry) {
+        Character bot = entry.bot;
+        Point spawnPos = resolveSpawnPosition(bot.getMap(), bot.getPosition());
+        if (bot.getHp() <= 0) {
+            bot.updateHp(Math.max(1, bot.getCurrentMaxHp()));
+        }
+
+        BotPhysicsEngine.teleportTo(entry, bot, spawnPos != null ? spawnPos : bot.getPosition());
+        BotMovementManager.clearNavigationState(entry);
+        entry.grindTarget = null;
+        entry.attackCooldownMs = 0;
+        entry.deadUntil = 0;
+        entry.lastMapId = bot.getMapId();
+        entry.fhIndex = BotMovementManager.buildFhIndex(bot.getMap());
+        entry.skipDelayMs = 0;
+        entry.aiTickAccumulatorMs = 0;
+        entry.lastDesiredDirection = 0;
+        entry.movementBroadcastValid = false;
+        BotMovementManager.broadcastMovement(entry);
+        bot.updatePartyMemberHP();
     }
 
     public void removeBot(int ownerCharId) {
@@ -155,12 +222,25 @@ public class BotManager {
         return true;
     }
 
-    /** Recruit an ownerless bot by name into the owner's group. */
-    public boolean recruitBot(int ownerCharId, Character owner, String botName) {
+    /** Recruit an ownerless bot by name into the owner's group. Returns an error string on failure, null on success. */
+    public String recruitBot(int ownerCharId, Character owner, String botName) {
         Character bot = findOwnerlessBot(botName, owner.getWorld());
-        if (bot == null) return false;
-        registerBot(ownerCharId, owner, bot);
-        return true;
+        if (bot == null) return "No ownerless bot named '" + botName + "' found.";
+
+        BotOwnershipService.AuthorizationResult auth =
+                BotOwnershipService.getInstance().ensureCanControl(
+                        owner,
+                        new BotOwnershipService.ResolvedCharacter(
+                                bot.getId(),
+                                bot.getName(),
+                                bot.getAccountID(),
+                                bot));
+        if (!auth.allowed()) {
+            return auth.failureMessage();
+        }
+
+        registerSpawnedBot(ownerCharId, owner, bot);
+        return null;
     }
 
     /** Transfer a bot from this owner to another player in the same map. Returns an error string on failure, null on success. */
@@ -178,6 +258,18 @@ public class BotManager {
         if (target == null) return "Player '" + targetName + "' not found in this map.";
         if (target.getId() == ownerCharId) return "That's you.";
 
+        BotOwnershipService.AuthorizationResult auth =
+                BotOwnershipService.getInstance().ensureCanControl(
+                        target,
+                        new BotOwnershipService.ResolvedCharacter(
+                                found.bot.getId(),
+                                found.bot.getName(),
+                                found.bot.getAccountID(),
+                                found.bot));
+        if (!auth.allowed()) {
+            return auth.failureMessage();
+        }
+
         // Disown from current owner
         Character bot = found.bot;
         entries.remove(found);
@@ -189,6 +281,17 @@ public class BotManager {
         registerBot(target.getId(), target, bot);
         TimerManager.getInstance().schedule(() ->
                 botSay(bot, randomReply(List.of("ok!", "sure!", "hey " + target.getName() + "!", "hi " + target.getName() + "!"))), 800);
+        return null;
+    }
+
+    public Character getActiveOwnerByBotCharId(int botCharId) {
+        for (List<BotEntry> entries : bots.values()) {
+            for (BotEntry entry : entries) {
+                if (entry.bot.getId() == botCharId) {
+                    return entry.owner;
+                }
+            }
+        }
         return null;
     }
 
@@ -345,10 +448,11 @@ public class BotManager {
         Matcher rm = RECRUIT_PATTERN.matcher(message);
         if (rm.find()) {
             String name = rm.group(2);
-            if (recruitBot(owner.getId(), owner, name)) {
+            String err = recruitBot(owner.getId(), owner, name);
+            if (err == null) {
                 owner.yellowMessage("Bot '" + name + "' recruited!");
             } else {
-                owner.yellowMessage("No ownerless bot named '" + name + "' found.");
+                owner.yellowMessage(err);
             }
             return;
         }
@@ -645,28 +749,11 @@ public class BotManager {
         if (owner == null) return; // owner logged off — skip
 
         try {
-            BotClient botClient = new BotClient(world, channel);
-            Character botChar = Character.loadCharFromDB(charId, botClient, true);
-            botClient.setPlayer(botChar);
-            botClient.setAccID(botChar.getAccountID());
-
             MapleMap map = owner.getMap();
-            Point pos = map.getPointBelow(new Point(owner.getPosition().x, owner.getPosition().y - 1));
-            if (pos == null) pos = owner.getPosition();
+            Point pos = resolveSpawnPosition(map, owner.getPosition());
+            Character botChar = loadOfflineBot(charId, world, channel, map, pos);
 
-            botChar.setMapId(map.getId());
-            botChar.newClient(botClient);
-            botChar.recalcLocalStats();
-            botChar.setPosition(pos);
-
-            var channelServer = Server.getInstance().getChannel(world, channel);
-            channelServer.addPlayer(botChar);
-            channelServer.getWorldServer().addPlayer(botChar);
-            botChar.setEnteredChannelWorld();
-            map.addPlayer(botChar);
-            botChar.broadcastStance();
-
-            registerBot(ownerCharId, owner, botChar);
+            registerSpawnedBot(ownerCharId, owner, botChar);
             TimerManager.getInstance().schedule(() -> {
                 botSay(botChar, "back!!");
                 botChar.changeFaceExpression(Emote.HAPPY.getValue());
