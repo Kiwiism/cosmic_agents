@@ -328,7 +328,7 @@ final class BotNavigationManager {
         }
         BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(entry.bot.getMap());
         return switch (edge.type) {
-            case WALK -> false;
+            case WALK -> shouldUsePreciseWalkTarget(edge);
             case JUMP -> !canExecuteJumpFromCurrentPosition(graph, entry.bot.getMap(), botPos, edge);
             case DROP -> !canExecuteDropFromCurrentPosition(graph, entry.bot.getMap(), botPos, edge);
             case CLIMB -> entry.climbing
@@ -555,6 +555,12 @@ final class BotNavigationManager {
 
     private static int heuristic(Point from, Point targetPos) {
         return intraRegionTravelCost(from, targetPos);
+    }
+
+    static boolean shouldUsePreciseWalkTarget(BotNavigationGraph.Edge edge) {
+        return edge != null
+                && edge.type == BotNavigationGraph.EdgeType.WALK
+                && !isNoMovementWalk(edge.startPoint, edge.endPoint);
     }
 
     private static boolean isNoMovementWalk(Point start, Point end) {

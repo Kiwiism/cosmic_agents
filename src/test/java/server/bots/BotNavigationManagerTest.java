@@ -67,4 +67,21 @@ class BotNavigationManagerTest {
         assertTrue(BotNavigationManager.isTopStepOffExit(rope, new Point(675, 145), topExit));
         assertFalse(BotNavigationManager.isTopStepOffExit(rope, new Point(675, 215), bottomExit));
     }
+
+    @Test
+    void shouldUsePreciseTargetForCommittedWalkRegionHandoffs() {
+        BotNavigationGraph.Edge walkHandoff = new BotNavigationGraph.Edge(
+                343, 341, BotNavigationGraph.EdgeType.WALK,
+                new Point(28, -1167), new Point(13, -1170),
+                0, 0, 0, 0, 0, 100
+        );
+        BotNavigationGraph.Edge noMoveWalk = new BotNavigationGraph.Edge(
+                343, 342, BotNavigationGraph.EdgeType.WALK,
+                new Point(28, -1167), new Point(28, -1167),
+                0, 0, 0, 0, 0, 50
+        );
+
+        assertTrue(BotNavigationManager.shouldUsePreciseWalkTarget(walkHandoff));
+        assertFalse(BotNavigationManager.shouldUsePreciseWalkTarget(noMoveWalk));
+    }
 }
