@@ -773,13 +773,7 @@ public class BotManager {
 
         // Grind mode: navigate toward nearest monster, attack when in range
         if (entry.grinding) {
-            // Stick to current target while it's alive and in range; only re-pick when needed
-            double seekRangeSq = (double) BotCombatManager.cfg.GRIND_SEEK_RANGE * BotCombatManager.cfg.GRIND_SEEK_RANGE;
-            Monster target = entry.grindTarget;
-            if (target == null || !target.isAlive()
-                    || target.getPosition().distanceSq(botPos) > seekRangeSq) {
-                target = runAiTick ? BotCombatManager.findGrindTarget(bot) : null;
-            }
+            Monster target = resolveGrindTarget(entry, bot, runAiTick);
             if (target == null) {
                 if (entry.inAir) {
                     BotMovementManager.tickAirborne(entry);
@@ -1206,5 +1200,18 @@ public class BotManager {
 
         entry.aiTickAccumulatorMs -= cfg.AI_TICK_MS;
         return true;
+    }
+
+    static Monster resolveGrindTarget(BotEntry entry, Character bot, boolean runAiTick) {
+        // Stick to the current grind target until it dies or leaves the map.
+        // Using seek range only for initial acquisition caused bots to drop a valid
+        // chase target on the next non-AI tick, so they would repeatedly idle instead
+        // of walking toward distant mobs.
+        Monster target = entry.grindTarget;
+        if (target != null && target.isAlive() && target.getMap() == bot.getMap()) {
+            return target;
+        }
+
+        return runAiTick ? BotCombatManager.findGrindTarget(bot) : null;
     }
 }
