@@ -363,19 +363,32 @@ class BotCombatManager {
         }
     }
 
-    /** Returns a random monster from the nearest 3 within seek range, so multiple bots spread across targets. */
+    /**
+     * Returns a random monster from the nearest 3 candidates.
+     * Prefer local mobs inside seek range, but fall back to the nearest alive mob on the map
+     * so grind mode still walks toward enemies instead of idling when nothing is nearby yet.
+     */
     static Monster findGrindTarget(Character bot) {
         long startedAt = System.nanoTime();
         try {
             Point botPos = bot.getPosition();
             double rangeSq = (double) BotCombatManager.cfg.GRIND_SEEK_RANGE * BotCombatManager.cfg.GRIND_SEEK_RANGE;
             Foothold botFoothold = findGroundFoothold(botPos, bot);
-            List<Monster> candidates = new ArrayList<>();
+            List<Monster> nearbyCandidates = new ArrayList<>();
+            List<Monster> farCandidates = new ArrayList<>();
             for (Monster m : bot.getMap().getAllMonsters()) {
-                if (m.isAlive() && m.getPosition().distanceSq(botPos) <= rangeSq) {
-                    candidates.add(m);
+                if (!m.isAlive()) {
+                    continue;
+                }
+
+                if (m.getPosition().distanceSq(botPos) <= rangeSq) {
+                    nearbyCandidates.add(m);
+                } else {
+                    farCandidates.add(m);
                 }
             }
+
+            List<Monster> candidates = !nearbyCandidates.isEmpty() ? nearbyCandidates : farCandidates;
             if (candidates.isEmpty()) return null;
 
             candidates.sort((a, b) -> compareGrindTargets(bot, botPos, botFoothold, a, b));

@@ -7,6 +7,7 @@ import constants.skills.FPMage;
 import constants.skills.Shadower;
 import server.StatEffect;
 import server.TimerManager;
+import server.life.Monster;
 import server.maps.MapleMap;
 import server.maps.Mist;
 import tools.PacketCreator;
@@ -180,6 +181,12 @@ public final class BotNavigationDebugOverlay {
         if (entry.grinding && entry.grindTarget != null && entry.grindTarget.isAlive()
                 && entry.grindTarget.getMap() == entry.bot.getMap()) {
             return entry.grindTarget.getPosition();
+        }
+        if (entry.grinding) {
+            Monster fallbackTarget = BotCombatManager.findGrindTarget(entry.bot);
+            if (fallbackTarget != null) {
+                return fallbackTarget.getPosition();
+            }
         }
         if (entry.owner != null) {
             return entry.owner.getPosition();
