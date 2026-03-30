@@ -189,11 +189,7 @@ class BotCombatManager {
         entry.mobHitCooldownMs = BotMovementManager.delayAfterCurrentTick(cc.MOB_HIT_COOLDOWN_MS);
 
         if (bot.getHp() <= 0) {
-            BotPhysicsEngine.markDead(entry, bot);
-            BotMovementManager.broadcastMovement(entry);
-            BotManager.getInstance().botSay(bot, BotManager.randomReply(DEATH_REPLIES));
-            entry.deadUntil = System.currentTimeMillis() + cc.BOT_DEAD_MS;
-            BotMovementManager.resetEntryState(entry);
+            enterDeadState(entry, bot, true);
             return;
         }
 
@@ -201,7 +197,7 @@ class BotCombatManager {
             return;
         }
 
-        clearMobHitActionState(entry);
+        clearActionState(entry);
         if (entry.inAir) {
             BotPhysicsEngine.applyAirKnockback(entry, bot, knockback.airVelX());
         } else {
@@ -239,7 +235,17 @@ class BotCombatManager {
         return openStoryStepValue * (BotMovementManager.cfg.TICK_MS / 8.0f);
     }
 
-    private static void clearMobHitActionState(BotEntry entry) {
+    static void enterDeadState(BotEntry entry, Character bot, boolean announceDeath) {
+        clearActionState(entry);
+        BotPhysicsEngine.markDead(entry, bot);
+        BotMovementManager.broadcastMovement(entry);
+        entry.deadUntil = System.currentTimeMillis() + cfg.BOT_DEAD_MS;
+        if (announceDeath) {
+            BotManager.getInstance().botSay(bot, BotManager.randomReply(DEATH_REPLIES));
+        }
+    }
+
+    private static void clearActionState(BotEntry entry) {
         entry.grindTarget = null;
         entry.attackCooldownMs = 0;
         BotMovementManager.clearNavigationState(entry);

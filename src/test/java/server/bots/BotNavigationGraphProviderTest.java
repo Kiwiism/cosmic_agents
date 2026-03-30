@@ -390,7 +390,7 @@ class BotNavigationGraphProviderTest {
     private static Character mockBot(Point startPosition, MapleMap map) {
         Character bot = mock(Character.class);
         AtomicReference<Point> position = new AtomicReference<>(new Point(startPosition));
-        AtomicInteger stance = new AtomicInteger(BotPhysicsEngine.cfg.STAND_STANCE);
+        AtomicInteger stance = new AtomicInteger(BotPhysicsEngine.cfg.STAND_RIGHT_STANCE);
 
         when(bot.getPosition()).thenAnswer(invocation -> new Point(position.get()));
         doAnswer(invocation -> {

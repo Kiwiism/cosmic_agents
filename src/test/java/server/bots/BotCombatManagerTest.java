@@ -82,6 +82,22 @@ class BotCombatManagerTest {
         assertDamageDirection(map, bot, 1, 0);
     }
 
+    @Test
+    void shouldKeepDirectionAwareDeadStanceAfterFatalMobHit() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 1, null);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.facingDir = -1;
+        Monster mob = mockMob(new Point(140, 200), 9300003);
+
+        BotCombatManager.applyMobHit(entry, bot, mob);
+
+        assertEquals(BotPhysicsEngine.cfg.DEAD_LEFT_STANCE, bot.getStance());
+        assertTrue(entry.deadUntil > 0);
+        assertFalse(entry.inAir);
+        assertFalse(entry.climbing);
+    }
+
     private static void assertDamageDirection(MapleMap map, Character bot, int expectedBroadcasts, int expectedDirection) {
         ArgumentCaptor<Packet> packets = ArgumentCaptor.forClass(Packet.class);
         verify(map, times(expectedBroadcasts)).broadcastMessage(eq(bot), packets.capture(), eq(false));
@@ -93,7 +109,7 @@ class BotCombatManagerTest {
         Character bot = mock(Character.class);
         AtomicReference<Point> position = new AtomicReference<>(new Point(startPosition));
         AtomicInteger hp = new AtomicInteger(startingHp);
-        AtomicInteger stance = new AtomicInteger(BotPhysicsEngine.cfg.STAND_STANCE);
+        AtomicInteger stance = new AtomicInteger(BotPhysicsEngine.cfg.STAND_RIGHT_STANCE);
 
         when(bot.getPosition()).thenAnswer(invocation -> new Point(position.get()));
         doAnswer(invocation -> {

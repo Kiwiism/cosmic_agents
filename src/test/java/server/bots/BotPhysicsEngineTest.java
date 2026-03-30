@@ -90,7 +90,7 @@ class BotPhysicsEngineTest {
         assertEquals(20.0, entry.physY);
         assertEquals(0, entry.movementVelX);
         assertEquals(0, entry.movementVelY);
-        assertEquals(BotPhysicsEngine.cfg.STAND_STANCE, BotPhysicsEngine.resolveStance(entry));
+        assertEquals(BotPhysicsEngine.cfg.STAND_RIGHT_STANCE, BotPhysicsEngine.resolveStance(entry));
     }
 
     @Test
@@ -106,6 +106,29 @@ class BotPhysicsEngineTest {
         assertEquals(-180, snapshot.velX());
         assertEquals(-240, snapshot.velY());
         assertEquals(BotPhysicsEngine.cfg.JUMP_LEFT_STANCE, snapshot.stance());
+    }
+
+    @Test
+    void shouldResolveIdleGroundStanceFromLastFacingDirection() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        entry.facingDir = 1;
+        assertEquals(BotPhysicsEngine.cfg.STAND_RIGHT_STANCE, BotPhysicsEngine.resolveStance(entry));
+
+        entry.facingDir = -1;
+        assertEquals(BotPhysicsEngine.cfg.STAND_LEFT_STANCE, BotPhysicsEngine.resolveStance(entry));
+    }
+
+    @Test
+    void shouldResolveDeadStanceFromLastFacingDirection() {
+        Character bot = mockBot(new Point(10, 20), null, 0);
+        BotEntry entry = new BotEntry(bot, null, null);
+
+        entry.facingDir = 1;
+        assertEquals(BotPhysicsEngine.cfg.DEAD_RIGHT_STANCE, BotPhysicsEngine.resolveStance(entry));
+
+        entry.facingDir = -1;
+        assertEquals(BotPhysicsEngine.cfg.DEAD_LEFT_STANCE, BotPhysicsEngine.resolveStance(entry));
     }
 
     @Test
@@ -175,7 +198,7 @@ class BotPhysicsEngineTest {
         assertFalse(entry.inAir);
         assertFalse(entry.climbing);
         assertEquals(new Point(100, 0), bot.getPosition());
-        assertEquals(BotPhysicsEngine.cfg.STAND_STANCE, bot.getStance());
+        assertEquals(BotPhysicsEngine.cfg.STAND_RIGHT_STANCE, bot.getStance());
     }
 
     @Test
@@ -268,9 +291,13 @@ class BotPhysicsEngineTest {
     }
 
     private static Character mockBot(Point startPosition, MapleMap map) {
+        return mockBot(startPosition, map, 100);
+    }
+
+    private static Character mockBot(Point startPosition, MapleMap map, int hp) {
         Character bot = mock(Character.class);
         AtomicReference<Point> position = new AtomicReference<>(new Point(startPosition));
-        AtomicInteger stance = new AtomicInteger(BotPhysicsEngine.cfg.STAND_STANCE);
+        AtomicInteger stance = new AtomicInteger(BotPhysicsEngine.cfg.STAND_RIGHT_STANCE);
 
         when(bot.getPosition()).thenAnswer(invocation -> new Point(position.get()));
         doAnswer(invocation -> {
@@ -278,7 +305,7 @@ class BotPhysicsEngineTest {
             return null;
         }).when(bot).setPosition(any(Point.class));
         when(bot.getMap()).thenReturn(map);
-        when(bot.getHp()).thenReturn(100);
+        when(bot.getHp()).thenReturn(hp);
         when(bot.getStance()).thenAnswer(invocation -> stance.get());
         doAnswer(invocation -> {
             stance.set(invocation.getArgument(0));

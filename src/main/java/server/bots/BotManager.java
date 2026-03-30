@@ -481,10 +481,7 @@ public class BotManager {
         // Dead state: skip AI until respawn timer expires.
         // Also catch stale hp=0 (e.g. deadUntil was lost on save/reconnect) — re-enter dead state.
         if (entry.deadUntil == 0 && bot.getHp() <= 0) {
-            BotPhysicsEngine.markDead(entry, bot);
-            BotMovementManager.broadcastMovement(entry);
-            entry.deadUntil = System.currentTimeMillis() + BotCombatManager.cfg.BOT_DEAD_MS;
-            BotMovementManager.resetEntryState(entry);
+            BotCombatManager.enterDeadState(entry, bot, false);
         }
         if (entry.deadUntil > 0) {
             if (System.currentTimeMillis() >= entry.deadUntil) {
@@ -498,6 +495,12 @@ public class BotManager {
 
         // These run in all modes (idle, follow, grind)
         BotCombatManager.tickMobDamage(entry, bot);
+        if (bot.getHp() <= 0) {
+            if (entry.deadUntil == 0) {
+                BotCombatManager.enterDeadState(entry, bot, false);
+            }
+            return;
+        }
         tickPassiveLoot(entry, bot);
         tickPotionCheck(entry, bot);
         tickPassiveMpRecovery(entry, bot);
@@ -520,8 +523,9 @@ public class BotManager {
                 BotMovementManager.tickAirborne(entry);
             } else if (!entry.climbing) {
                 // On ground — snap to stand stance once so walking/jumping animation clears
-                if (BotPhysicsEngine.resolveStance(entry) != BotPhysicsEngine.cfg.STAND_STANCE
-                        || bot.getStance() != BotPhysicsEngine.cfg.STAND_STANCE) {
+                int expectedIdleStance = BotPhysicsEngine.resolveIdleGroundStance(entry);
+                if (BotPhysicsEngine.resolveStance(entry) != expectedIdleStance
+                        || bot.getStance() != expectedIdleStance) {
                     BotPhysicsEngine.idleOnGround(entry, bot);
                     BotMovementManager.broadcastMovement(entry);
                 }
@@ -893,7 +897,7 @@ public class BotManager {
         }
 
         return entry.lastDesiredDirection == 0
-                && BotPhysicsEngine.resolveStance(entry) == BotPhysicsEngine.cfg.STAND_STANCE;
+                && BotPhysicsEngine.isStandingStance(BotPhysicsEngine.resolveStance(entry));
     }
 
     private int getFlatHpRecoveryBonus(Character bot, int skillId) {

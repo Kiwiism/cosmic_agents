@@ -32,10 +32,12 @@ final class BotPhysicsEngine {
         public int MAX_SLOPE_UP = 26;
         public int DOWN_JUMP_GRACE_MS = 350;
 
-        public int DEAD_STANCE = 0;
+        public int DEAD_RIGHT_STANCE = 18;
+        public int DEAD_LEFT_STANCE = 19;
         public int WALK_RIGHT_STANCE = 2;
         public int WALK_LEFT_STANCE = 3;
-        public int STAND_STANCE = 5;
+        public int STAND_RIGHT_STANCE = 4;
+        public int STAND_LEFT_STANCE = 5;
         public int JUMP_RIGHT_STANCE = 6;
         public int JUMP_LEFT_STANCE = 7;
         public int PRONE_STANCE = 10;
@@ -364,7 +366,7 @@ final class BotPhysicsEngine {
     static int resolveStance(BotEntry entry) {
         Character bot = entry.bot;
         if (bot != null && bot.getHp() <= 0) {
-            return cfg.DEAD_STANCE;
+            return resolveDeadStance(entry);
         }
         if (entry.climbing) {
             return entry.climbRope != null && entry.climbRope.isLadder()
@@ -383,7 +385,19 @@ final class BotPhysicsEngine {
         if (entry.movementVelX < 0) {
             return cfg.WALK_LEFT_STANCE;
         }
-        return cfg.STAND_STANCE;
+        return resolveIdleGroundStance(entry);
+    }
+
+    static int resolveIdleGroundStance(BotEntry entry) {
+        return entry.facingDir >= 0 ? cfg.STAND_RIGHT_STANCE : cfg.STAND_LEFT_STANCE;
+    }
+
+    static int resolveDeadStance(BotEntry entry) {
+        return entry.facingDir >= 0 ? cfg.DEAD_RIGHT_STANCE : cfg.DEAD_LEFT_STANCE;
+    }
+
+    static boolean isStandingStance(int stance) {
+        return stance == cfg.STAND_RIGHT_STANCE || stance == cfg.STAND_LEFT_STANCE;
     }
 
     static void syncCharacterState(BotEntry entry) {
