@@ -66,6 +66,7 @@ import client.command.commands.gm2.ClearDropsCommand;
 import client.command.commands.gm2.ClearSavedLocationsCommand;
 import client.command.commands.gm2.ClearSlotCommand;
 import client.command.commands.gm2.DcCommand;
+import client.command.commands.gm2.DupeCommand;
 import client.command.commands.gm2.EmpowerMeCommand;
 import client.command.commands.gm2.GachaListCommand;
 import client.command.commands.gm2.GmShopCommand;
@@ -421,6 +422,7 @@ public class CommandsExecutor {
         addCommand("gmshop", 2, GmShopCommand.class);
         addCommand("heal", 2, HealCommand.class);
         addCommand("item", 2, ItemCommand.class);
+        addCommand("dupe", 2, DupeCommand.class);
         addCommand("drop", 2, ItemDropCommand.class);
         addCommand("level", 2, LevelCommand.class);
         addCommand("levelpro", 2, LevelProCommand.class);
