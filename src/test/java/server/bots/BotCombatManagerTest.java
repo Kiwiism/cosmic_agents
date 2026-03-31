@@ -150,6 +150,24 @@ class BotCombatManagerTest {
         assertEquals(new Rectangle(-30, 150, 130, 70), hitBox);
     }
 
+    @Test
+    void shouldFallbackToBasicAttackTimingWhenSkillAnimationDelayMissing() {
+        BotCombatManager.SkillAttackTiming timing =
+                BotCombatManager.resolveSkillAttackTiming(0, true, 4, 4, 300, 590);
+
+        assertEquals(300, timing.hitDelayMs());
+        assertEquals(590, timing.cooldownMs());
+    }
+
+    @Test
+    void shouldNotUnlockSkillFasterThanBasicAttackCooldown() {
+        BotCombatManager.SkillAttackTiming timing =
+                BotCombatManager.resolveSkillAttackTiming(450, true, 4, 4, 300, 590);
+
+        assertEquals(173, timing.hitDelayMs());
+        assertEquals(590, timing.cooldownMs());
+    }
+
     private static void assertDamageDirection(MapleMap map, Character bot, int expectedBroadcasts, int expectedDirection) {
         ArgumentCaptor<Packet> packets = ArgumentCaptor.forClass(Packet.class);
         verify(map, times(expectedBroadcasts)).broadcastMessage(eq(bot), packets.capture(), eq(false));

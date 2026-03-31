@@ -491,6 +491,7 @@ class BotCombatManager {
         int attackCount = Math.max(1, effect.getAttackCount());
         AttackRoute route = determineSkillRoute(bot, entry.aoeSkillId);
         boolean facingLeft = primaryTarget.getPosition().x < bot.getPosition().x;
+        BasicAttackData fallbackAttackData = buildBasicAttackData(bot, primaryTarget);
         CloseRangePacketFields closeRangePacketFields = route == AttackRoute.CLOSE
                 ? mimicCloseRangePacketFields(sampleCloseRangeAttackAction(bot, getEquippedWeaponType(bot)),
                 basicAttackSpec(getEquippedWeaponType(bot)).primaryAction(), 6, facingLeft)
@@ -498,11 +499,11 @@ class BotCombatManager {
         int direction = route == AttackRoute.CLOSE
                 ? closeRangePacketFields.direction()
                 : (facingLeft ? 17 : 6);
-        int skillDelayMs = resolveSkillAttackDelayMillis(skill);
+        SkillAttackTiming skillTiming = resolveSkillAttackTiming(skill, route, bot, fallbackAttackData);
         return new AttackPlan(entry.aoeSkillId, skillLevel, attackCount, hitBox, targets,
                 route, route == AttackRoute.CLOSE ? closeRangePacketFields.display() : 0,
                 direction, direction, route == AttackRoute.CLOSE ? closeRangePacketFields.stance() : 0,
-                resolveWeaponAttackSpeed(bot), defaultHitDelayMs(skillDelayMs), toCooldownMs(skillDelayMs));
+                resolveWeaponAttackSpeed(bot), skillTiming.hitDelayMs(), skillTiming.cooldownMs());
     }
 
     private static AttackPlan planSingleTargetSkill(BotEntry entry, Character bot, Monster primaryTarget) {
@@ -525,6 +526,7 @@ class BotCombatManager {
         int attackCount = Math.max(1, effect.getAttackCount());
         AttackRoute route = determineSkillRoute(bot, entry.attackSkillId);
         boolean facingLeft = primaryTarget.getPosition().x < bot.getPosition().x;
+        BasicAttackData fallbackAttackData = buildBasicAttackData(bot, primaryTarget);
         CloseRangePacketFields closeRangePacketFields = route == AttackRoute.CLOSE
                 ? mimicCloseRangePacketFields(sampleCloseRangeAttackAction(bot, getEquippedWeaponType(bot)),
                 basicAttackSpec(getEquippedWeaponType(bot)).primaryAction(), 6, facingLeft)
@@ -532,11 +534,11 @@ class BotCombatManager {
         int direction = route == AttackRoute.CLOSE
                 ? closeRangePacketFields.direction()
                 : (facingLeft ? 17 : 6);
-        int skillDelayMs = resolveSkillAttackDelayMillis(skill);
+        SkillAttackTiming skillTiming = resolveSkillAttackTiming(skill, route, bot, fallbackAttackData);
         return new AttackPlan(entry.attackSkillId, skillLevel, attackCount, hitBox, List.of(primaryTarget),
                 route, route == AttackRoute.CLOSE ? closeRangePacketFields.display() : 0,
                 direction, direction, route == AttackRoute.CLOSE ? closeRangePacketFields.stance() : 0,
-                resolveWeaponAttackSpeed(bot), defaultHitDelayMs(skillDelayMs), toCooldownMs(skillDelayMs));
+                resolveWeaponAttackSpeed(bot), skillTiming.hitDelayMs(), skillTiming.cooldownMs());
     }
 
     private static Rectangle calculateSkillHitBox(StatEffect effect, Character bot, Monster primaryTarget) {
@@ -963,11 +965,43 @@ class BotCombatManager {
     record CloseRangePacketFields(int display, int direction, int stance) {
     }
 
+    record SkillAttackTiming(int hitDelayMs, int cooldownMs) {
+    }
+
     private static int resolveSkillAttackDelayMillis(Skill skill) {
         if (skill == null) {
             return 0;
         }
         return Math.max(0, skill.getAnimationTime());
+    }
+
+    static SkillAttackTiming resolveSkillAttackTiming(Skill skill, AttackRoute route, Character bot,
+                                                      BasicAttackData fallbackAttackData) {
+        int fallbackHitDelayMs = fallbackAttackData != null ? fallbackAttackData.hitDelayMs : defaultHitDelayMs(600);
+        int fallbackCooldownMs = fallbackAttackData != null ? fallbackAttackData.cooldownMs : toCooldownMs(600);
+        int rawSkillDelayMs = resolveSkillAttackDelayMillis(skill);
+        if (rawSkillDelayMs <= 0) {
+            return new SkillAttackTiming(fallbackHitDelayMs, fallbackCooldownMs);
+        }
+
+        return resolveSkillAttackTiming(rawSkillDelayMs,
+                route == AttackRoute.CLOSE || route == AttackRoute.RANGED,
+                resolveBaseWeaponAttackSpeed(bot), resolveWeaponAttackSpeed(bot),
+                fallbackHitDelayMs, fallbackCooldownMs);
+    }
+
+    static SkillAttackTiming resolveSkillAttackTiming(int rawSkillDelayMs, boolean attackSpeedAdjusted,
+                                                      int baseWeaponAttackSpeed, int effectiveWeaponAttackSpeed,
+                                                      int fallbackHitDelayMs, int fallbackCooldownMs) {
+        if (rawSkillDelayMs <= 0) {
+            return new SkillAttackTiming(fallbackHitDelayMs, fallbackCooldownMs);
+        }
+
+        int adjustedSkillDelayMs = attackSpeedAdjusted
+                ? adjustAttackDelayMillis(rawSkillDelayMs, baseWeaponAttackSpeed, effectiveWeaponAttackSpeed)
+                : rawSkillDelayMs;
+        return new SkillAttackTiming(defaultHitDelayMs(adjustedSkillDelayMs),
+                Math.max(toCooldownMs(adjustedSkillDelayMs), fallbackCooldownMs));
     }
 
     private static int toCooldownMs(int attackDelayMillis) {
@@ -982,6 +1016,10 @@ class BotCombatManager {
     }
 
     private static int resolveWeaponAttackSpeed(Character bot) {
+        return resolveEffectiveAttackSpeed(resolveBaseWeaponAttackSpeed(bot), bot);
+    }
+
+    private static int resolveBaseWeaponAttackSpeed(Character bot) {
         Item weapon = bot.getInventory(InventoryType.EQUIPPED).getItem((short) -11);
         if (weapon == null) {
             return 4;
@@ -993,7 +1031,7 @@ class BotCombatManager {
             return 4;
         }
 
-        return resolveEffectiveAttackSpeed(attackProfile.getAttackSpeed(), bot);
+        return attackProfile.getAttackSpeed();
     }
 
     private static int normalizeAttackSpeed(int attackSpeed) {
