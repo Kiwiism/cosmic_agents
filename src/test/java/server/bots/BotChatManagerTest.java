@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BotChatManagerTest {
@@ -46,6 +47,31 @@ class BotChatManagerTest {
         assertEquals("recommended", BotChatManager.matchTradeCategory("trade recommended gear"));
         assertEquals("recommended", BotChatManager.matchTradeCategory("trade me upgrades"));
         assertEquals("recommended", BotChatManager.matchTradeCategory("trade better equipment"));
+    }
+
+    @Test
+    void shouldMatchMesoQueries() {
+        assertTrue(BotChatManager.isMesoQuery("meso?"));
+        assertTrue(BotChatManager.isMesoQuery("mesos?"));
+        assertTrue(BotChatManager.isMesoQuery("cash?"));
+        assertTrue(BotChatManager.isMesoQuery("how much cash do you have"));
+        assertTrue(BotChatManager.isMesoQuery("your mesos"));
+        assertFalse(BotChatManager.isMesoQuery("trade mesos"));
+    }
+
+    @Test
+    void shouldFormatCompactMesos() {
+        assertEquals("999", BotChatManager.formatCompactMesos(999));
+        assertEquals("6k", BotChatManager.formatCompactMesos(6_000));
+        assertEquals("3.5k", BotChatManager.formatCompactMesos(3_500));
+        assertEquals("2.1m", BotChatManager.formatCompactMesos(2_100_000));
+    }
+
+    @Test
+    void shouldBuildMesoReportUsingCompactAmounts() {
+        assertTrue(BotChatManager.buildMesoReport(6_000).contains("6k"));
+        assertTrue(BotChatManager.buildMesoReport(3_500).contains("3.5k"));
+        assertTrue(BotChatManager.buildMesoReport(2_100_000).contains("2.1m"));
     }
 
     @Test

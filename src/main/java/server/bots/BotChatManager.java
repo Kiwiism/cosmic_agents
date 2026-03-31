@@ -16,6 +16,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ThreadLocalRandom;
@@ -162,6 +163,15 @@ class BotChatManager {
             +   "\\s+" + POTION_WORDS + "\\b"
             + "|\\b(pots?|potions?)\\s+left\\b",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern MESOS_PATTERN = Pattern.compile(
+            "^\\s*(?:meso|mesos|cash)\\s*[?!.,]*\\s*$"
+            + "|\\bhow\\s+much\\s+(?:meso|mesos|cash)\\b"
+            + "|\\bwhat.?s\\s+(?:your|ur)\\s+(?:meso|mesos|cash)\\b"
+            + "|\\bshow\\s+me\\s+(?:your|ur)\\s+(?:meso|mesos|cash)\\b"
+            + "|\\b(?:your|ur)\\s+(?:meso|mesos|cash)\\b"
+            + "|\\b(?:meso|mesos|cash)\\s+(?:left|on\\s+(?:you|u|ya))\\b"
+            + "|\\b(?:do\\s+(you|u)\\s+have|got(?:\\s+any)?|(you|u)\\s+got)\\s+(?:any\\s+)?(?:meso|mesos|cash)\\b",
+            Pattern.CASE_INSENSITIVE);
     private static final Pattern UNEQUIP_PATTERN = Pattern.compile(
             "\\b(unequip|take\\s+off|remove)\\s+(?:everything|all|all\\s+(?:your|ur|my)\\s+gear|gear|equipment|equips?)\\b"
             + "|\\bstrip\\s+(?:down|everything|all)\\b",
@@ -307,6 +317,11 @@ class BotChatManager {
             "wb", "wb!", "welcome back", "oh ur back", "hey ur back", "welcome back!!",
             "wb~", "there you are", "oh hey", "finally lol", "took ya a bit",
             "hey you're back", "oh wb!");
+    private static final List<String> MESO_REPLIES = List.of(
+            "I have %s",
+            "got %s on me",
+            "im at %s rn",
+            "sitting on %s");
 
     private enum TransferMode {
         TRADE,
@@ -585,6 +600,8 @@ class BotChatManager {
             TimerManager.getInstance().schedule(() -> reportBuild(entry, entry.bot), 1000);
         if (INVENTORY_PATTERN.matcher(message).find())
             TimerManager.getInstance().schedule(() -> reportInventory(entry, entry.bot), 1000);
+        if (isMesoQuery(message))
+            TimerManager.getInstance().schedule(() -> reportMesos(entry, entry.bot), 1000);
         if (INV_SLOTS_PATTERN.matcher(message).find())
             TimerManager.getInstance().schedule(() -> reportInventorySlots(entry, entry.bot), 1000);
         if (SCROLLS_PATTERN.matcher(message).find())
@@ -755,6 +772,10 @@ class BotChatManager {
         queueBotSay(entry, BotDropManager.inventorySummary(bot));
     }
 
+    private static void reportMesos(BotEntry entry, Character bot) {
+        queueBotSay(entry, buildMesoReport(bot.getMeso()));
+    }
+
     private static void reportInventorySlots(BotEntry entry, Character bot) {
         queueBotSay(entry, BotDropManager.slotsReport(bot));
     }
@@ -792,12 +813,49 @@ class BotChatManager {
         queueBotSay(entry, msg);
     }
 
+    static boolean isMesoQuery(String message) {
+        return MESOS_PATTERN.matcher(message).find();
+    }
+
+    static String buildMesoReport(int mesos) {
+        String amount = formatCompactMesos(mesos);
+        String pattern = MESO_REPLIES.get(ThreadLocalRandom.current().nextInt(MESO_REPLIES.size()));
+        return String.format(pattern, amount);
+    }
+
+    static String formatCompactMesos(int mesos) {
+        if (mesos < 1_000) {
+            return String.valueOf(mesos);
+        }
+
+        double value = mesos;
+        String[] suffixes = {"k", "m", "b"};
+        int suffixIndex = -1;
+
+        while (value >= 1_000d && suffixIndex < suffixes.length - 1) {
+            value /= 1_000d;
+            suffixIndex++;
+        }
+
+        double rounded = Math.round(value * 10d) / 10d;
+        if (rounded >= 1_000d && suffixIndex < suffixes.length - 1) {
+            rounded = Math.round((rounded / 1_000d) * 10d) / 10d;
+            suffixIndex++;
+        }
+
+        if (Math.floor(rounded) == rounded) {
+            return String.format(Locale.ROOT, "%.0f%s", rounded, suffixes[suffixIndex]);
+        }
+
+        return String.format(Locale.ROOT, "%.1f%s", rounded, suffixes[suffixIndex]);
+    }
+
     private static void reportDebugStats(BotEntry entry, Character bot) {
         queueBotSay(entry, BotCombatManager.describeDebugStats(entry, bot));
     }
 
     private static void reportHelp(BotEntry entry) {
-        queueBotSay(entry, "commands: follow, stop, grind, stats, skills, inventory, slots, scrolls, pots, debug stats, respec");
+        queueBotSay(entry, "commands: follow, stop, grind, stats, skills, inventory, mesos, slots, scrolls, pots, debug stats, respec");
         queueBotSay(entry, "support: support on/off, buffs on/off, heals on/off");
         queueBotSay(entry, "gear: ask 'any upgrades?' or say 'trade recommended gear'");
         queueBotSay(entry, "trade: mesos, scrolls, pots, equips, etc, or named items");

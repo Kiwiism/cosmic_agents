@@ -142,7 +142,7 @@ public class StatEffect {
     private boolean skill;
     private List<Pair<BuffStat, Integer>> statups;
     private Map<MonsterStatus, Integer> monsterStatus;
-    private int x, y, mobCount, moneyCon, cooldown, morphId = 0, ghost, fatigue, berserk, booster;
+    private int x, y, range, mobCount, moneyCon, cooldown, morphId = 0, ghost, fatigue, berserk, booster;
     private double prop;
     private int itemCon, itemConNo;
     private int damage, attackCount, fixdamage;
@@ -269,6 +269,7 @@ public class StatEffect {
         ret.cureDebuffs = cure;
         ret.nuffSkill = DataTool.getInt("nuffSkill", source, 0);
 
+        ret.range = DataTool.getInt("range", source, 0);
         ret.mobCount = DataTool.getInt("mobCount", source, 1);
         ret.cooldown = DataTool.getInt("cooltime", source, 0);
         ret.morphId = DataTool.getInt("morph", source, 0);
@@ -1905,6 +1906,10 @@ public class StatEffect {
 
     public int getY() {
         return y;
+    }
+
+    public int getRange() {
+        return range;
     }
 
     public int getDamage() {

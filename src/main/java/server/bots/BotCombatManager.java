@@ -540,12 +540,25 @@ class BotCombatManager {
     }
 
     private static Rectangle calculateSkillHitBox(StatEffect effect, Character bot, Monster primaryTarget) {
-        if (!effect.hasBoundingBox()) {
+        boolean facingLeft = primaryTarget.getPosition().x < bot.getPosition().x;
+        if (effect.hasBoundingBox()) {
+            return effect.calculateBoundingBox(bot.getPosition(), facingLeft);
+        }
+
+        return fallbackCloseRangeSkillHitBox(effect, bot, facingLeft);
+    }
+
+    static Rectangle fallbackCloseRangeSkillHitBox(StatEffect effect, Character bot, boolean facingLeft) {
+        if (effect == null || bot == null || determineWeaponRoute(getEquippedWeaponType(bot)) != AttackRoute.CLOSE) {
             return null;
         }
 
-        boolean facingLeft = primaryTarget.getPosition().x < bot.getPosition().x;
-        return effect.calculateBoundingBox(bot.getPosition(), facingLeft);
+        Point origin = bot.getPosition();
+        int horizontalRange = Math.max(cfg.ATTACK_RANGE_X, effect.getRange());
+        int top = origin.y - cfg.ATTACK_RANGE_Y;
+        int height = cfg.ATTACK_RANGE_Y + cfg.ATTACK_DOWN_MAX;
+        int left = facingLeft ? origin.x - horizontalRange : origin.x;
+        return new Rectangle(left, top, horizontalRange, height);
     }
 
     private static List<Monster> collectTargetsInHitBox(Character bot, Monster primaryTarget, Rectangle hitBox, int maxTargets) {

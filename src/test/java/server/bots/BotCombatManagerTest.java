@@ -3,15 +3,18 @@ package server.bots;
 import client.BuffStat;
 import client.Character;
 import client.Job;
+import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.WeaponType;
 import net.packet.Packet;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import server.StatEffect;
 import server.life.Monster;
 import server.maps.MapleMap;
 
 import java.awt.*;
+import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -123,6 +126,30 @@ class BotCombatManagerTest {
         assertFalse(entry.climbing);
     }
 
+    @Test
+    void shouldCreateFallbackHitBoxForCloseRangeSkillWithoutBoundingBox() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        StatEffect effect = mock(StatEffect.class);
+        when(effect.getRange()).thenReturn(0);
+
+        Rectangle hitBox = BotCombatManager.fallbackCloseRangeSkillHitBox(effect, bot, false);
+
+        assertEquals(new Rectangle(100, 150, 80, 70), hitBox);
+    }
+
+    @Test
+    void shouldExpandFallbackHitBoxUsingSkillRange() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        StatEffect effect = mock(StatEffect.class);
+        when(effect.getRange()).thenReturn(130);
+
+        Rectangle hitBox = BotCombatManager.fallbackCloseRangeSkillHitBox(effect, bot, true);
+
+        assertEquals(new Rectangle(-30, 150, 130, 70), hitBox);
+    }
+
     private static void assertDamageDirection(MapleMap map, Character bot, int expectedBroadcasts, int expectedDirection) {
         ArgumentCaptor<Packet> packets = ArgumentCaptor.forClass(Packet.class);
         verify(map, times(expectedBroadcasts)).broadcastMessage(eq(bot), packets.capture(), eq(false));
@@ -132,6 +159,7 @@ class BotCombatManagerTest {
 
     private static Character mockBot(Point startPosition, MapleMap map, int startingHp, Integer stancePercent) {
         Character bot = mock(Character.class);
+        Inventory equipped = mock(Inventory.class);
         AtomicReference<Point> position = new AtomicReference<>(new Point(startPosition));
         AtomicInteger hp = new AtomicInteger(startingHp);
         AtomicInteger stance = new AtomicInteger(BotPhysicsEngine.cfg.STAND_RIGHT_STANCE);
@@ -160,7 +188,9 @@ class BotCombatManagerTest {
         when(bot.getTotalDex()).thenReturn(4);
         when(bot.getTotalInt()).thenReturn(4);
         when(bot.getTotalLuk()).thenReturn(4);
-        when(bot.getInventory(InventoryType.EQUIPPED)).thenReturn(null);
+        when(bot.getInventory(InventoryType.EQUIPPED)).thenReturn(equipped);
+        when(equipped.getItem((short) -11)).thenReturn(null);
+        when(equipped.iterator()).thenReturn(Collections.emptyIterator());
         if (stancePercent != null) {
             when(bot.getBuffedValue(BuffStat.STANCE)).thenReturn(stancePercent);
         }
@@ -174,6 +204,7 @@ class BotCombatManagerTest {
         when(mob.getPADamage()).thenReturn(1_000);
         when(mob.getLevel()).thenReturn(1);
         when(mob.getAccuracy()).thenReturn(9_999);
+        when(mob.isAlive()).thenReturn(true);
         return mob;
     }
 }
