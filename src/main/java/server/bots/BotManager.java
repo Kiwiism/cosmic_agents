@@ -19,6 +19,8 @@ import constants.skills.WhiteKnight;
 import net.packet.Packet;
 import net.server.Server;
 import net.server.world.Party;
+import net.server.world.PartyCharacter;
+import net.server.world.PartyOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.ItemInformationProvider;
@@ -176,6 +178,11 @@ public class BotManager {
         if (botParty != null) {
             net.server.world.Party ownerParty = owner.getParty();
             if (ownerParty != null && botParty.getId() == ownerParty.getId()) {
+                // Ensure the party member entry is marked online with a live character reference
+                PartyCharacter pchar = new PartyCharacter(bot);
+                pchar.setChannel(bot.getClient().getChannel());
+                pchar.setMapId(bot.getMapId());
+                bot.getWorldServer().updateParty(ownerParty.getId(), PartyOperation.LOG_ONOFF, pchar);
                 bot.updatePartyMemberHP();
                 return;
             }
@@ -274,7 +281,9 @@ public class BotManager {
         entry.lastDesiredDirection = 0;
         entry.movementBroadcastValid = false;
         BotMovementManager.broadcastMovement(entry);
-        bot.updatePartyMemberHP();
+        if (entry.owner != null) {
+            joinBotToOwnerParty(entry.owner, bot);
+        }
     }
 
     public void removeBot(int ownerCharId) {
