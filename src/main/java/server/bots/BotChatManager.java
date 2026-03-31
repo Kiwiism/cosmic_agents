@@ -10,6 +10,7 @@ import client.inventory.Item;
 import constants.game.GameConstants;
 import server.ItemInformationProvider;
 import server.TimerManager;
+import server.Trade;
 
 import java.awt.*;
 
@@ -197,6 +198,13 @@ public class BotChatManager {
             "\\bpure\\s+str\\b", Pattern.CASE_INSENSITIVE);
     private static final Pattern AP_FIXED_DEX_PATTERN = Pattern.compile(
             "\\b(\\d+)\\s*dex\\b", Pattern.CASE_INSENSITIVE);
+    // Bare trade invite — whole-message match so "trade me" isn't swallowed by TRADE_ITEM_COMMAND_PATTERN
+    private static final Pattern TRADE_INVITE_PATTERN = Pattern.compile(
+            "^\\s*trade(\\s+(me|pls|please))?\\s*[?!.,]*\\s*$",
+            Pattern.CASE_INSENSITIVE);
+    private static final List<String> TRADE_INVITE_REPLIES = List.of(
+            "ok", "sure", "k", "one sec", "coming to trade", "np", "k opening trade");
+
     // Drop-choice responses (matched only when pendingAction = "item_choice")
     private static final Pattern DROP_CHOICE_DROP_PATTERN = Pattern.compile(
             "\\b(drop\\s*(it|them|to\\s+ground)?|floor|ground)\\b",
@@ -595,6 +603,22 @@ public class BotChatManager {
                     }
                 }
             }
+        }
+
+        if (TRADE_INVITE_PATTERN.matcher(message).find()) {
+            Character bot = entry.bot;
+            Character owner = entry.owner;
+            if (owner != null && bot.getTrade() == null && owner.getTrade() == null
+                    && entry.pendingTradeCategory == null) {
+                TimerManager.getInstance().schedule(() -> {
+                    BotManager.getInstance().botSay(bot, BotManager.randomReply(TRADE_INVITE_REPLIES));
+                    TimerManager.getInstance().schedule(() -> {
+                        Trade.startTrade(bot);
+                        Trade.inviteTrade(bot, owner);
+                    }, 800 + ThreadLocalRandom.current().nextInt(0, 400));
+                }, 600 + ThreadLocalRandom.current().nextInt(0, 400));
+            }
+            return;
         }
 
         TransferCommand transferCommand = matchTransferCommand(message);
