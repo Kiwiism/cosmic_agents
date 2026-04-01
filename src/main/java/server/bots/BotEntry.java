@@ -15,6 +15,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -153,7 +154,8 @@ public class BotEntry {
     boolean navPreciseTarget = false;
     boolean debugPromptSent = false;
     long nextGearSuggestionAt = 0L;
-    long nextUpgradeRequestAt = 0L;
+    boolean spawnUpgradeCheckDone = false;
+    final Set<Integer> requestedUpgradeItemIds = ConcurrentHashMap.newKeySet();
     boolean pendingLootOfferBotRequesting = false; // true = bot asked for owner's item
 
     // Path logging (debug)

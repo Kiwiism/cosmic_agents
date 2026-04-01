@@ -432,6 +432,14 @@ public class BotManager {
         return List.copyOf(entries);
     }
 
+    /** Called when the owner picks up or receives an item; notifies bots that might want it. */
+    public void notifyOwnerGainedItem(Character owner, Item item) {
+        if (ItemConstants.getInventoryType(item.getItemId()) != InventoryType.EQUIP) return;
+        for (BotEntry entry : getBotEntries(owner.getId())) {
+            BotChatManager.notifyOwnerGainedEquip(entry, entry.bot, item);
+        }
+    }
+
     BotEntry getBotEntry(int ownerCharId, String botName) {
         List<BotEntry> entries = bots.get(ownerCharId);
         if (entries == null || botName == null) {
@@ -720,9 +728,6 @@ public class BotManager {
             BotCombatManager.rebuildSkillCacheIfNeeded(entry, bot);
             BotCombatManager.tickBuffs(entry, bot);
             BotCombatManager.tickSupportHealing(entry, bot);
-        }
-        if (runAiTick) {
-            BotChatManager.tickIdleUpgradeRequest(entry, bot);
         }
         if (tickActionLocked(entry)) {
             return;

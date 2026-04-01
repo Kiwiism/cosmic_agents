@@ -717,6 +717,18 @@ public class BotChatManager {
             entry.debugPromptSent = true;
         }
         maybeSuggestRecommendedGear(entry, bot);
+        if (!entry.spawnUpgradeCheckDone) {
+            entry.spawnUpgradeCheckDone = true;
+            Character owner = entry.owner;
+            if (owner != null && !isOwnerIdle(entry)) {
+                List<BotEquipManager.EquipRecommendation> recs = BotEquipManager.findRecommendedEquips(bot, owner);
+                if (!recs.isEmpty()) {
+                    Item candidate = recs.get(0).candidate();
+                    entry.requestedUpgradeItemIds.add(candidate.getItemId());
+                    requestUpgradeFromOwner(entry, bot, owner, candidate);
+                }
+            }
+        }
     }
 
     /** Detects owner AFK (same position ≥5 min) and says "wb" when they return. */
@@ -940,23 +952,28 @@ public class BotChatManager {
         entry.nextGearSuggestionAt = now + 60_000L;
     }
 
-    static void tickIdleUpgradeRequest(BotEntry entry, Character bot) {
+    /** Returns true when the owner hasn't moved in ≥5 min (AFK). Skip chat interactions. */
+    static boolean isOwnerIdle(BotEntry entry) {
+        return entry.ownerWasAfk;
+    }
+
+    /**
+     * Called when the owner gains an equip item (loot, buy, etc.).
+     * If it is an upgrade for the bot and hasn't been requested before, ask for it once.
+     */
+    static void notifyOwnerGainedEquip(BotEntry entry, Character bot, Item item) {
+        if (isOwnerIdle(entry)) return;
+        if (entry.requestedUpgradeItemIds.contains(item.getItemId())) return;
+        if (entry.pendingAction != null || entry.pendingTradeCategory != null) return;
         Character owner = entry.owner;
-        long now = System.currentTimeMillis();
-        if (owner == null
-                || now < entry.nextUpgradeRequestAt
-                || entry.pendingAction != null
-                || entry.pendingTradeCategory != null) {
-            return;
-        }
+        if (owner == null) return;
 
         List<BotEquipManager.EquipRecommendation> recs = BotEquipManager.findRecommendedEquips(bot, owner);
-        if (recs.isEmpty()) {
-            entry.nextUpgradeRequestAt = now + 5 * 60_000L;
-            return;
-        }
+        boolean isUpgrade = recs.stream().anyMatch(r -> r.candidate().getItemId() == item.getItemId());
+        if (!isUpgrade) return;
 
-        requestUpgradeFromOwner(entry, bot, owner, recs.get(0).candidate());
+        entry.requestedUpgradeItemIds.add(item.getItemId());
+        requestUpgradeFromOwner(entry, bot, owner, item);
     }
 
     private static void requestUpgradeFromOwner(BotEntry entry, Character bot, Character owner, Item ownerItem) {
@@ -970,7 +987,6 @@ public class BotChatManager {
         entry.pendingLootOfferRecipientId = owner.getId();
         entry.pendingLootOfferExpiresAt = System.currentTimeMillis() + 45_000L;
         entry.pendingLootOfferBotRequesting = true;
-        entry.nextUpgradeRequestAt = System.currentTimeMillis() + 10 * 60_000L;
 
         List<String> prompts = List.of(
                 "hey, that " + itemName + " would be an upgrade for me, can i have it pls?",
@@ -997,7 +1013,7 @@ public class BotChatManager {
     static void scheduleLootOfferPrompt(BotEntry entry, Character bot, Item item, long delayMs) {
         Character owner = entry.owner;
         long now = System.currentTimeMillis();
-        if (owner == null || item == null || entry.pendingGearPromptAt > now) {
+        if (owner == null || item == null || entry.pendingGearPromptAt > now || isOwnerIdle(entry)) {
             return;
         }
 

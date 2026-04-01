@@ -2168,6 +2168,7 @@ public class Character extends AbstractCharacterObject {
                         if (mItem.getItemId() == ItemId.ARPQ_SPIRIT_JEWEL) {
                             updateAriantScore();
                         }
+                        server.bots.BotManager.getInstance().notifyOwnerGainedItem(this, mItem);
                     } else {
                         sendPacket(PacketCreator.enableActions());
                         return;
