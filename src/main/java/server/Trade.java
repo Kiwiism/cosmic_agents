@@ -86,6 +86,10 @@ public class Trade {
         this.number = number;
     }
 
+    public byte getNumber() {
+        return number;
+    }
+
     public static int getFee(long meso) {
         long fee = 0;
         if (meso >= 100000000) {
