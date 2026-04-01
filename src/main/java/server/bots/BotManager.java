@@ -722,8 +722,6 @@ public class BotManager {
         BotDropManager.tickTrade(entry, bot);
         BotDropManager.tickManualTrade(entry, bot);
         BotPqHooks.tick(entry, bot, owner);
-        if (BotPqHooks.requiresGrind(entry, bot) && !entry.grinding) entry.grinding = true;
-        if (BotPqHooks.requiresFollow(entry, bot) && !entry.following) { entry.following = true; entry.grinding = false; }
         if (BotPqHooks.isNpcLocked(entry)) return;
         BotCombatManager.tickActionLock(entry);
         if (runAiTick) {
@@ -786,6 +784,8 @@ public class BotManager {
             BotPhysicsEngine.teleportTo(entry, bot, ground != null ? ground : cur);
             BotMovementManager.resetEntryState(entry);
             BotMovementManager.broadcastMovement(entry);
+            if (BotPqHooks.requiresGrind(entry, bot)) { entry.grinding = true; entry.following = false; }
+            else if (BotPqHooks.requiresFollow(entry, bot)) { entry.following = true; entry.grinding = false; }
             return;
         }
 
