@@ -973,10 +973,10 @@ public class BotChatManager {
         entry.nextUpgradeRequestAt = System.currentTimeMillis() + 10 * 60_000L;
 
         List<String> prompts = List.of(
-                "hey " + owner.getName() + ", that " + itemName + " would be an upgrade for me, trade it? (yes/no)",
-                owner.getName() + " your " + itemName + " would be better on me! trade it over? (yes/no)",
-                "I could use that " + itemName + " of yours " + owner.getName() + ", mind trading? (yes/no)",
-                owner.getName() + " that " + itemName + " is an upgrade for me, want to trade? (yes/no)");
+                "hey " + owner.getName() + ", that " + itemName + " would be an upgrade for me, can i have it pls?",
+                "Your " + itemName + " would be better on me! trade it over?",
+                "I could use that " + itemName + " of yours ;)",
+                "that " + itemName + " is an upgrade for me, want to trade?");
         queueBotSay(entry, BotManager.randomReply(prompts));
     }
 
@@ -1018,7 +1018,7 @@ public class BotChatManager {
                 clearPendingLootOffer(entry);
                 TimerManager.getInstance().schedule(
                         () -> BotManager.getInstance().botSay(entry.bot,
-                                "ok! open a trade with me and drop it in"), 500);
+                                "ty! inv me?"), 500);
             } else {
                 Item item = entry.pendingLootOfferItem;
                 clearPendingLootOffer(entry);
