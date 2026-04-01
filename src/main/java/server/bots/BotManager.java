@@ -705,6 +705,7 @@ public class BotManager {
             }
             return;
         }
+        tickReleaseMonsterControl(bot);
         tickPassiveLoot(entry, bot);
         tickPotionCheck(entry, bot);
         tickPassiveMpRecovery(entry, bot);
@@ -1021,6 +1022,35 @@ public class BotManager {
     }
 
     // -------------------------------------------------------------------------
+    // Monster control hand-off
+    // -------------------------------------------------------------------------
+
+    /**
+     * Bots can't drive mob AI (BotClient.sendPacket is a no-op), so any monster
+     * assigned to a bot as controller would freeze. Hand off immediately to the
+     * nearest real player, or release control if no real player is in the map.
+     */
+    private static void tickReleaseMonsterControl(Character bot) {
+        java.util.Collection<Monster> controlled = bot.getControlledMonsters();
+        if (controlled.isEmpty()) return;
+
+        Character realPlayer = null;
+        for (Character chr : bot.getMap().getAllPlayers()) {
+            if (!(chr.getClient() instanceof BotClient)) {
+                realPlayer = chr;
+                break;
+            }
+        }
+
+        for (Monster monster : controlled) {
+            if (realPlayer != null) {
+                monster.aggroSwitchController(realPlayer, false);
+            } else {
+                monster.aggroRemoveController();
+            }
+        }
+    }
+
     // Passive loot
     // -------------------------------------------------------------------------
 
