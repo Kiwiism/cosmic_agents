@@ -786,6 +786,7 @@ public class BotManager {
             BotMovementManager.broadcastMovement(entry);
             if (BotPqHooks.requiresGrind(entry, bot)) { entry.grinding = true; entry.following = false; }
             else if (BotPqHooks.requiresFollow(entry, bot)) { entry.following = true; entry.grinding = false; }
+            else { entry.kpq.stage5Claimed = false; } // left KPQ — reset for next run
             return;
         }
 

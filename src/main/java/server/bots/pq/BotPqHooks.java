@@ -13,6 +13,7 @@ public final class BotPqHooks {
 
     public static void tick(BotEntry entry, Character bot, Character owner) {
         BotKpqStage1.tick(entry, bot, owner);
+        BotKpqStage5.tick(entry, bot);
     }
 
     /**
