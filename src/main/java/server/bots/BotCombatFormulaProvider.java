@@ -26,8 +26,9 @@ final class BotCombatFormulaProvider {
     }
 
     int getTotalMagicAccuracy(Character bot) {
-        int derivedMagicAccuracy = (int) Math.floor(bot.getTotalInt() * 0.1d)
-                + (int) Math.floor(bot.getTotalLuk() * 0.1d);
+        // Magic accuracy = 5 × (floor(INT/10) + floor(LUK/10))  — per cat123/Eric client research
+        int derivedMagicAccuracy = 5 * ((int) Math.floor(bot.getTotalInt() / 10.0)
+                + (int) Math.floor(bot.getTotalLuk() / 10.0));
         return Math.max(0, derivedMagicAccuracy);
     }
 
@@ -52,22 +53,25 @@ final class BotCombatFormulaProvider {
     }
 
     double calculatePhysicalMobHitChance(int accuracy, int botLevel, int monsterLevel, int monsterAvoidability) {
+        // Source: cat123/Eric client research (RaGEZONE, Mar 2026)
+        // accuracy_rate = accuracy * 100 / (levelDelta * 10 + 255)
+        // hit if random(0.7, 1.3) * accuracy_rate >= avoid
+        // => hitChance = (1.3 - avoid/accuracy_rate) / 0.6
         int levelDelta = Math.max(0, monsterLevel - botLevel);
-        double hitChance = accuracy / (((1.84d + 0.07d * levelDelta) * monsterAvoidability) + 1.0d);
-        hitChance = Math.max(MIN_HIT_CHANCE, hitChance);
-        return Math.min(MAX_HIT_CHANCE, hitChance);
+        if (monsterAvoidability <= 0) return MAX_HIT_CHANCE;
+        double accuracyRate = accuracy * 100.0 / (levelDelta * 10 + 255);
+        double hitChance = (1.3 - monsterAvoidability / accuracyRate) / 0.6;
+        return Math.max(MIN_HIT_CHANCE, Math.min(MAX_HIT_CHANCE, hitChance));
     }
 
     double calculateMagicMobHitChance(int magicAccuracy, int botLevel, int monsterLevel, int monsterAvoidability) {
+        // Same accuracy_rate scaling as physical; random bounds are (0.5, 1.2) for magic
+        // => hitChance = (1.2 - avoid/accuracy_rate) / 0.7
         int levelDelta = Math.max(0, monsterLevel - botLevel);
-        double requiredAccuracyForGuaranteedHit = (monsterAvoidability + 1.0d) * (1.0d + (levelDelta / 24.0d));
-        if (requiredAccuracyForGuaranteedHit <= 0.0d) {
-            return MAX_HIT_CHANCE;
-        }
-
-        double hitChance = magicAccuracy / requiredAccuracyForGuaranteedHit;
-        hitChance = Math.max(MIN_HIT_CHANCE, hitChance);
-        return Math.min(MAX_HIT_CHANCE, hitChance);
+        if (monsterAvoidability <= 0) return MAX_HIT_CHANCE;
+        double accuracyRate = magicAccuracy * 100.0 / (levelDelta * 10 + 255);
+        double hitChance = (1.2 - monsterAvoidability / accuracyRate) / 0.7;
+        return Math.max(MIN_HIT_CHANCE, Math.min(MAX_HIT_CHANCE, hitChance));
     }
 
     double calculateBotAvoidChance(Character bot, Monster monster) {
