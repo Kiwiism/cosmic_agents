@@ -230,7 +230,7 @@ class BotMovementManager {
                 && Math.abs(dxOwner) < cfg.FOLLOW_DIST * 2;
     }
 
-    static void tickAirborne(BotEntry entry) {
+    static void tickAirborne(BotEntry entry, Point targetPos) {
         long startedAt = System.nanoTime();
         try {
             BotPhysicsEngine.tickMotionTimers(entry);
@@ -243,12 +243,18 @@ class BotMovementManager {
                 return;
             }
 
+            // Air steering — nudge horizontal velocity toward target each tick.
+            // Applied even during edge navigation (allows course correction mid-air).
+            if (targetPos != null) {
+                BotPhysicsEngine.applyAirSteering(entry, targetPos.x - botPos.x);
+            }
+
             Point nextPos = BotPhysicsEngine.advanceAirbornePosition(entry, bot);
 
             // Wall foothold collision — stop horizontal movement if a wall foothold
             // blocks the path at the previous Y level.  This prevents knockback and
             // jump drift from pushing the bot through (or off) a map wall.
-            if (entry.airVelX != 0) {
+            if (entry.airVelX != 0 || entry.airSteerVelX != 0) {
                 int prevX = previousPos.x;
                 int nextX = nextPos.x;
                 int scanY = previousPos.y;
@@ -257,6 +263,7 @@ class BotMovementManager {
                 if (wallFrom.x < wallTo.x
                         && bot.getMap().getFootholds().findWall(wallFrom, wallTo) != null) {
                     entry.airVelX = 0;
+                    entry.airSteerVelX = 0.0;
                     entry.physX   = prevX;
                     nextPos = new Point(prevX, nextPos.y);
                     bot.setPosition(nextPos);

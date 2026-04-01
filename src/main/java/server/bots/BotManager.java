@@ -735,7 +735,7 @@ public class BotManager {
 
         if (!entry.following && !entry.grinding && entry.moveTarget == null) {
             if (entry.inAir) {
-                BotMovementManager.tickAirborne(entry);
+                BotMovementManager.tickAirborne(entry, null);
             } else if (!entry.climbing) {
                 // On ground — snap to stand stance once so walking/jumping animation clears
                 int expectedIdleStance = BotPhysicsEngine.resolveIdleGroundStance(entry);
@@ -813,7 +813,7 @@ public class BotManager {
                     if (entry.climbing) {
                         BotMovementManager.tickClimbing(entry, pqNav.targetPos, runAiTick);
                     } else if (entry.inAir) {
-                        BotMovementManager.tickAirborne(entry);
+                        BotMovementManager.tickAirborne(entry, pqNav.targetPos);
                     } else {
                         BotMovementManager.tickGrounded(entry, pqNav.targetPos);
                     }
@@ -829,7 +829,7 @@ public class BotManager {
             }
             if (target == null) {
                 if (entry.inAir) {
-                    BotMovementManager.tickAirborne(entry);
+                    BotMovementManager.tickAirborne(entry, targetPos);
                 } else {
                     BotPhysicsEngine.idleOnGround(entry, bot);
                     BotMovementManager.broadcastMovement(entry);
@@ -876,7 +876,7 @@ public class BotManager {
         if (entry.climbing) {
             BotMovementManager.tickClimbing(entry, targetPos, runAiTick);
         } else if (entry.inAir) {
-            BotMovementManager.tickAirborne(entry);
+            BotMovementManager.tickAirborne(entry, targetPos);
         } else {
             BotMovementManager.tickGrounded(entry, targetPos);
         }
@@ -898,7 +898,7 @@ public class BotManager {
             return false;
         }
         if (entry.inAir) {
-            BotMovementManager.tickAirborne(entry);
+            BotMovementManager.tickAirborne(entry, null);
         }
         return true;
     }

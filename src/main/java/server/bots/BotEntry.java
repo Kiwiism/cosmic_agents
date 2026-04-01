@@ -46,8 +46,10 @@ public class BotEntry {
     // Horizontal movement hysteresis
     boolean wasMovingX = false;
 
-    // Committed horizontal step while airborne
+    // Committed horizontal step while airborne (set at launch, never changed mid-air)
     int airVelX = 0;
+    // Accumulated air-steering correction (gradually adjusted toward target each tick)
+    double airSteerVelX = 0.0;
 
     // Movement intent
     boolean climbUpIntent = false;

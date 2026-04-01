@@ -25,6 +25,8 @@ final class BotPhysicsEngine {
         public double GROUNDSLIP = 3.0;
         public double FRICTION = 0.3;
         public double SLOPEFACTOR = 0.1;
+        public double AIR_STEER_ACCEL = 0.5;   // px/tick added per tick toward target
+        public double AIR_STEER_MAX   = 1.5;  // cap on air-steering speed (px/tick)
 
         public float CLIMB_SPEED_PXS = 100.0f;
         public int ROPE_GRAB_X = 22;
@@ -178,6 +180,7 @@ final class BotPhysicsEngine {
         entry.climbUpIntent = false;
         entry.velY = 0f;
         entry.airVelX = 0;
+        entry.airSteerVelX = 0.0;
         entry.physX = position.x;
         entry.physY = position.y;
         stopGroundMotion(entry);
@@ -240,6 +243,7 @@ final class BotPhysicsEngine {
         stopGroundMotion(entry);
         entry.climbUpIntent = false;
         entry.airVelX = airVelX;
+        entry.airSteerVelX = 0.0;
         entry.downJumpPending = false;
         entry.blockedRopeGrab = null;
         setMovementVelocity(entry, velocityFromDeltaX(airVelX), velocityFromAirStep(entry.velY));
@@ -328,6 +332,7 @@ final class BotPhysicsEngine {
         entry.climbUpIntent = false;
         entry.velY = 0f;
         entry.airVelX = 0;
+        entry.airSteerVelX = 0.0;
         entry.physX = position.x;
         entry.physY = position.y;
         entry.downJumpPending = false;
@@ -345,6 +350,7 @@ final class BotPhysicsEngine {
         entry.climbUpIntent = false;
         entry.velY = 0f;
         entry.airVelX = 0;
+        entry.airSteerVelX = 0.0;
         entry.physX = position.x;
         entry.physY = position.y;
         entry.downJumpPending = false;
@@ -358,8 +364,15 @@ final class BotPhysicsEngine {
         return new Point((int) Math.round(entry.physX), (int) Math.round(entry.physY));
     }
 
+    static void applyAirSteering(BotEntry entry, int targetDx) {
+        if (targetDx == 0) return;
+        double accel = targetDx > 0 ? cfg.AIR_STEER_ACCEL : -cfg.AIR_STEER_ACCEL;
+        entry.airSteerVelX = Math.max(-cfg.AIR_STEER_MAX,
+                Math.min(cfg.AIR_STEER_MAX, entry.airSteerVelX + accel));
+    }
+
     static Point advanceAirbornePosition(BotEntry entry, Character bot) {
-        entry.physX += entry.airVelX;
+        entry.physX += entry.airVelX + entry.airSteerVelX;
         float gravity = gravityPerTick();
         entry.physY += entry.velY + 0.5f * gravity;
         entry.velY = Math.min(entry.velY + gravity, maxFallPerTick());
@@ -491,6 +504,7 @@ final class BotPhysicsEngine {
         stopGroundMotion(entry);
         entry.climbUpIntent = climbUpIntent;
         entry.airVelX = airVelX;
+        entry.airSteerVelX = 0.0;
         entry.downJumpPending = false;
         setMovementVelocity(entry, velocityFromDeltaX(airVelX), velocityFromAirStep(initialVelY));
         syncCharacterState(entry);
@@ -538,6 +552,7 @@ final class BotPhysicsEngine {
         entry.climbUpIntent = false;
         entry.velY = 0f;
         entry.airVelX = 0;
+        entry.airSteerVelX = 0.0;
         entry.physX = position.x;
         entry.physY = position.y;
         entry.downJumpPending = false;
@@ -557,6 +572,7 @@ final class BotPhysicsEngine {
         entry.physY = position.y;
         entry.groundPhysicsCarryMs = 0.0;
         entry.airVelX = 0;
+        entry.airSteerVelX = 0.0;
         entry.wasMovingX = false;
         entry.climbUpIntent = false;
         entry.blockedRopeGrab = null;
