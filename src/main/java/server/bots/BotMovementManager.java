@@ -239,32 +239,6 @@ class BotMovementManager {
             }
 
             Point nextPos = BotPhysicsEngine.advanceAirbornePosition(entry, bot);
-
-            // Clamp to map horizontal bounds — prevents bot from drifting off the side
-            // of the map during knockback or jump with airVelX.
-            Rectangle mapArea = bot.getMap().getMapArea();
-            if (mapArea.width > 0) {
-                int minX = mapArea.x;
-                int maxX = mapArea.x + mapArea.width;
-                if (nextPos.x < minX || nextPos.x > maxX) {
-                    int clampedX = Math.max(minX, Math.min(maxX, nextPos.x));
-                    entry.physX = clampedX;
-                    entry.airVelX = 0;
-                    nextPos = new Point(clampedX, nextPos.y);
-                    bot.setPosition(nextPos);
-                }
-            }
-
-            // Bottom boundary safety net — snap to ground if bot fell through the map.
-            if (mapArea.height > 0 && nextPos.y > mapArea.y + mapArea.height + 200) {
-                Point ground = BotPhysicsEngine.findGroundPoint(bot.getMap(),
-                        new Point(nextPos.x, mapArea.y + mapArea.height - 1));
-                Point safe = ground != null ? ground : new Point(nextPos.x, mapArea.y + mapArea.height);
-                BotPhysicsEngine.teleportTo(entry, bot, safe);
-                broadcastMovement(entry);
-                return;
-            }
-
             if (entry.velY > 0 && BotPhysicsEngine.canLand(entry)) {
                 Point floorPoint = bot.getMap().getPointBelow(new Point(nextPos.x, previousPos.y + 1));
                 if (floorPoint != null && floorPoint.y <= nextPos.y) {
