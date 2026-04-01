@@ -566,11 +566,13 @@ final class BotNavigationManager {
         }
 
         // Fallback: if the bot stopped slightly off the anchor (within isReadyForEdge JUMP tolerance),
-        // try simulating from the edge's recorded start point instead. This avoids a 1-4px positional
+        // try simulating from the edge's recorded start point instead. This avoids 1-4px positional
         // drift causing the simulated landing to miss the target foothold.
+        // For vertical jumps (launchStepX==0) the tolerance is much tighter: horizontal position
+        // is the sole determinant of landing foothold, so 9px offset causes an infinite bounce loop.
         int dx = Math.abs(botPos.x - edge.startPoint.x);
         int dy = Math.abs(botPos.y - edge.startPoint.y);
-        if (dx <= 10 && dy <= BotMovementManager.cfg.JUMP_Y_THRESH) {
+        if (isWithinJumpFallbackTolerance(edge, dx, dy)) {
             BotPhysicsEngine.JumpLanding anchorLanding = BotPhysicsEngine.simulateJumpLanding(map, edge.startPoint, edge.launchStepX);
             if (anchorLanding != null) {
                 int regionId = graph.regionIdByFootholdId.getOrDefault(anchorLanding.foothold().getId(), -1);
@@ -579,6 +581,13 @@ final class BotNavigationManager {
         }
 
         return false;
+    }
+
+    /** Exposed for testing. Vertical jumps use a tight X tolerance (3px) because landing
+     *  foothold is determined purely by horizontal position; horizontal jumps use 10px. */
+    static boolean isWithinJumpFallbackTolerance(BotNavigationGraph.Edge edge, int dx, int dy) {
+        int xTol = edge.launchStepX == 0 ? 3 : 10;
+        return dx <= xTol && dy <= BotMovementManager.cfg.JUMP_Y_THRESH;
     }
 
     private static int intraRegionTravelCost(Point from, Point to) {

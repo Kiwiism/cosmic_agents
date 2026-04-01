@@ -868,6 +868,11 @@ public class BotManager {
             targetPos = new Point(targetPos.x + entry.followOffsetX, targetPos.y);
         }
 
+        // "Move here" needs tight positioning — force precise stop dist for ground movement.
+        if (entry.moveTargetPrecise && entry.navEdge == null) {
+            entry.navPreciseTarget = true;
+        }
+
         if (entry.climbing) {
             BotMovementManager.tickClimbing(entry, targetPos, runAiTick);
         } else if (entry.inAir) {
@@ -879,9 +884,11 @@ public class BotManager {
         // Clear moveTarget once the bot has arrived
         if (entry.moveTarget != null) {
             Point bp = bot.getPosition();
-            if (Math.abs(bp.x - entry.moveTarget.x) <= BotMovementManager.cfg.STOP_DIST
-                    && Math.abs(bp.y - entry.moveTarget.y) <= BotMovementManager.cfg.STOP_DIST) {
+            int arrivalDist = entry.moveTargetPrecise ? 8 : BotMovementManager.cfg.STOP_DIST;
+            if (Math.abs(bp.x - entry.moveTarget.x) <= arrivalDist
+                    && Math.abs(bp.y - entry.moveTarget.y) <= arrivalDist) {
                 entry.moveTarget = null;
+                entry.moveTargetPrecise = false;
             }
         }
     }

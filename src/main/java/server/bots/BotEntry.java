@@ -135,6 +135,7 @@ public class BotEntry {
 
     // "Move here" target — bot navigates to this fixed point, then idles until cleared
     Point moveTarget = null;
+    boolean moveTargetPrecise = false; // true when triggered by "move here" — uses tight stop dist
 
     // Party-quest state (one slot per PQ type; null = not in that PQ)
     public server.bots.pq.BotKpqState kpq = new server.bots.pq.BotKpqState();

@@ -85,4 +85,32 @@ class BotNavigationManagerTest {
         assertTrue(BotNavigationManager.shouldUsePreciseWalkTarget(walkHandoff));
         assertFalse(BotNavigationManager.shouldUsePreciseWalkTarget(noMoveWalk));
     }
+
+    @Test
+    void shouldRejectVerticalJumpFallbackWhenBotIsNinePxFromAnchor() {
+        // Regression: GASH pathlog 2026-04-01 — bot at x=-906, vertical jump anchor at x=-915 (dx=9,
+        // launchStepX=0). Old code used dx<=10 for all jumps; bot was within tolerance, fallback fired,
+        // jump executed from wrong X, landed back on same platform, re-executed forever.
+        BotNavigationGraph.Edge verticalJump = new BotNavigationGraph.Edge(
+                284, 276, BotNavigationGraph.EdgeType.JUMP,
+                new Point(-915, 486), new Point(-915, 425),
+                0, 0, 0, 0, 0, 850
+        );
+
+        // dx=9 must be rejected for a vertical jump — bot must walk to anchor first
+        assertFalse(BotNavigationManager.isWithinJumpFallbackTolerance(verticalJump, 9, 0));
+        // tiny genuine drift (≤3px) is still accepted
+        assertTrue(BotNavigationManager.isWithinJumpFallbackTolerance(verticalJump, 3, 0));
+        assertTrue(BotNavigationManager.isWithinJumpFallbackTolerance(verticalJump, 0, 0));
+
+        // Horizontal jumps keep the 10px tolerance — stepX carries the bot to the landing foothold
+        BotNavigationGraph.Edge horizontalJump = new BotNavigationGraph.Edge(
+                21, 20, BotNavigationGraph.EdgeType.JUMP,
+                new Point(957, 465), new Point(1021, 405),
+                8, 0, 0, 0, 0, 850
+        );
+        assertTrue(BotNavigationManager.isWithinJumpFallbackTolerance(horizontalJump, 9, 0));
+        assertTrue(BotNavigationManager.isWithinJumpFallbackTolerance(horizontalJump, 10, 0));
+        assertFalse(BotNavigationManager.isWithinJumpFallbackTolerance(horizontalJump, 11, 0));
+    }
 }

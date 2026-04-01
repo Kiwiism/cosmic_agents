@@ -42,7 +42,7 @@ public class BotChatManager {
             Pattern.CASE_INSENSITIVE);
 
     private static final Pattern MOVE_HERE_PATTERN = Pattern.compile(
-            "\\b(move\\s+(here|there)|go\\s+(here|there))\\b",
+            "\\b(move\\s+(here|there)|go\\s+(here|there)|here|move)\\b",
             Pattern.CASE_INSENSITIVE);
 
     private static final Pattern STOP_PATTERN = Pattern.compile(
@@ -525,6 +525,7 @@ public class BotChatManager {
                     entry.following = false;
                     entry.grinding = false;
                     entry.moveTarget = dest;
+                    entry.moveTargetPrecise = true;
                     BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(MOVE_HERE_REPLIES));
                 }, 1000 + ThreadLocalRandom.current().nextInt(0, 500));
             }
