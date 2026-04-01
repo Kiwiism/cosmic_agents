@@ -454,7 +454,7 @@ final class BotPhysicsEngine {
             return false;
         }
 
-        int jumpReach = (int) calculateMaxJumpHeight();
+        int jumpReach = (int) Math.ceil(calculateMaxJumpHeight());
         return rope.bottomY() >= from.y - jumpReach
                 && dx <= maxJumpHorizontalTravel(map);
     }

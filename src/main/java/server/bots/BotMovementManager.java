@@ -286,7 +286,7 @@ class BotMovementManager {
             if (Math.abs(rope.x() - botPos.x) > BotPhysicsEngine.cfg.ROPE_GRAB_X) {
                 continue;
             }
-            if (botPos.y < rope.topY() || botPos.y > rope.bottomY()) {
+            if (botPos.y < rope.topY() || botPos.y > rope.bottomY() + 2) {
                 continue;
             }
 
