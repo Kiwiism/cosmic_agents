@@ -1115,7 +1115,7 @@ public class BotManager {
                     && pickedItemId > 0
                     && ItemConstants.getInventoryType(pickedItemId) == InventoryType.EQUIP
                     && BotDropManager.hasItem(bot, pickedItem)) {
-                BotEquipManager.autoEquip(bot, entry.owner, null);
+                BotEquipManager.autoEquip(bot, entry.owner, entry.pendingLootOfferItem);
                 if (BotDropManager.hasItem(bot, pickedItem)) {
                     BotChatManager.scheduleLootOfferPrompt(entry, bot, pickedItem, 5_000L);
                 }

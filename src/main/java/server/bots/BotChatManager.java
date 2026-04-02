@@ -1079,9 +1079,17 @@ public class BotChatManager {
                                 "ty! inv me?"), 500);
             } else {
                 Item item = entry.pendingLootOfferItem;
-                clearPendingLootOffer(entry);
-                TimerManager.getInstance().schedule(
-                        () -> BotDropManager.startTradeTransfer(item, speaker, entry, entry.bot), 500);
+                // Clear the action/expiry but keep pendingLootOfferItem set so autoEquip
+                // won't equip it during the 500 ms delay before the trade opens.
+                entry.pendingAction = null;
+                entry.pendingDropCategory = null;
+                entry.pendingLootOfferExpiresAt = 0L;
+                entry.pendingLootOfferBotRequesting = false;
+                entry.pendingLootOfferRecipientId = 0;
+                TimerManager.getInstance().schedule(() -> {
+                    entry.pendingLootOfferItem = null;
+                    BotDropManager.startTradeTransfer(item, speaker, entry, entry.bot);
+                }, 500);
             }
             return true;
         }
