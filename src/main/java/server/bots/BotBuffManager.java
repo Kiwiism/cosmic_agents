@@ -9,22 +9,24 @@ import client.inventory.manipulator.InventoryManipulator;
 import server.ItemInformationProvider;
 import server.StatEffect;
 import server.life.Monster;
+import tools.DatabaseConnection;
 import tools.Pair;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.*;
 
 /**
  * Manages automatic use of buff consumable items from the bot's USE inventory.
  *
- * Safe list: shop-buyable USE items in the 2000000–2009999 range priced 2–10 000 mesos.
+ * Safe list: items actually sold in NPC shops (shopitems DB) in the 2000000–2009999 range.
  * Items are grouped by their primary BuffStat. Cheap mode picks the weakest; max picks the best.
  *
  * Default: off. Configured via chat ("potbuff on/off", "potbuff cheap/max").
  */
 public final class BotBuffManager {
 
-    private static final int  MIN_PRICE = 2;        // exclude 1-meso GM-shop entries
-    private static final int  MAX_PRICE = 10_000;
     private static final long TICK_MS   = 3_000;
     private static final double ACC_HIT_THRESHOLD = 0.60;
 
@@ -37,19 +39,26 @@ public final class BotBuffManager {
 
     // ── init ────────────────────────────────────────────────────────────────
 
-    /** Called once (lazily) to build the safe-buff list from WZ/XML data. */
+    /** Called once (lazily) to build the safe-buff list from shop DB + WZ effect data. */
     public static synchronized void ensureInit() {
         if (initialized) return;
         initialized = true;
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         Map<BuffStat, List<int[]>> candidates = new LinkedHashMap<>(); // stat -> [[itemId, statValue]]
 
-        // Scan the buff potion range (2000000–2009999)
-        for (int itemId : ii.getItemIdsInRange(2000000, 2009999, false)) {
-            int price;
-            try { price = ii.getPrice(itemId, 1); } catch (Exception e) { continue; }
-            if (price < MIN_PRICE || price > MAX_PRICE) continue;
+        // Only include items actually sold in NPC shops (shopitems table is ground truth)
+        Set<Integer> shopSoldIds = new HashSet<>();
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(
+                     "SELECT DISTINCT itemid FROM shopitems WHERE itemid >= 2000000 AND itemid < 2010000")) {
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) shopSoldIds.add(rs.getInt("itemid"));
+            }
+        } catch (Exception e) {
+            System.err.println("[BotBuff] Failed to load shop items from DB: " + e.getMessage());
+        }
 
+        for (int itemId : shopSoldIds) {
             StatEffect fx;
             try { fx = ii.getItemEffect(itemId); } catch (Exception e) { continue; }
             if (fx == null || fx.getStatups().isEmpty()) continue;
