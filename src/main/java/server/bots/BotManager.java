@@ -728,6 +728,7 @@ public class BotManager {
             BotCombatManager.rebuildSkillCacheIfNeeded(entry, bot);
             BotCombatManager.tickBuffs(entry, bot);
             BotCombatManager.tickSupportHealing(entry, bot);
+            BotBuffManager.tick(entry, bot);
         }
         if (tickActionLocked(entry)) {
             return;

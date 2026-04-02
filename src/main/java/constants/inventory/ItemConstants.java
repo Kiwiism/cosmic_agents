@@ -79,6 +79,11 @@ public final class ItemConstants {
         return itemId / 1000 == 2000;
     }
 
+    /** Equip upgrade scrolls (2040000–2049999). */
+    public static boolean isEquipScroll(int itemId) {
+        return itemId >= 2040000 && itemId < 2050000;
+    }
+
     public static boolean isFood(int itemId) {
         int useType = itemId / 1000;
         return useType == 2022 || useType == 2010 || useType == 2020;

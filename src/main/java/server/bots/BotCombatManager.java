@@ -325,7 +325,7 @@ class BotCombatManager {
         if (entry.buffSkillIds.isEmpty()) return;
 
         long now = System.currentTimeMillis();
-        if (entry.supportBuffsEnabled && trySupportBuff(entry, bot, now)) {
+        if (trySupportBuff(entry, bot, now)) {
             return;
         }
         if (bot.getMap().getAllMonsters().stream().noneMatch(Monster::isAlive)) return;

@@ -8,6 +8,7 @@ import client.inventory.manipulator.InventoryManipulator;
 import constants.game.GameConstants;
 import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
+import server.StatEffect;
 import server.Trade;
 import tools.PacketCreator;
 
@@ -110,6 +111,7 @@ class BotDropManager {
         switch (category) {
             case "scrolls" -> dropScrolls(entry, bot);
             case "pots"    -> dropPotions(entry, bot);
+            case "buff"    -> dropBuffPots(entry, bot);
             case "equips"  -> dropEquips(entry, bot);
             case "etc"     -> dropEtc(entry, bot);
             default -> { if (category.startsWith("name:")) dropByName(entry, bot, category.substring(5)); }
@@ -194,6 +196,7 @@ class BotDropManager {
             case "recommended" -> "better gear for you";
             case "scrolls" -> "scrolls";
             case "pots" -> "pots";
+            case "buff" -> "buff pots";
             case "use" -> "use items";
             case "equips" -> "equips";
             case "etc" -> "etc items";
@@ -463,10 +466,15 @@ class BotDropManager {
                 }
             }
             case "scrolls" -> collectFromBag(bot, result, InventoryType.USE,
-                    item -> item.getItemId() >= 2040000 && item.getItemId() < 2050000);
+                    item -> ItemConstants.isEquipScroll(item.getItemId()));
             case "pots"    -> collectFromBag(bot, result, InventoryType.USE,
-                    item -> item.getItemId() >= 2000000 && item.getItemId() < 2023000);
-            case "use"     -> collectFromBag(bot, result, InventoryType.USE, item -> true);
+                    item -> isRecoveryPotion(item.getItemId()));
+            case "buff"    -> collectFromBag(bot, result, InventoryType.USE,
+                    item -> isBuffConsumable(item.getItemId()));
+            case "use"     -> collectFromBag(bot, result, InventoryType.USE, item -> {
+                int id = item.getItemId();
+                return !isRecoveryPotion(id) && !isBuffConsumable(id) && !ItemConstants.isEquipScroll(id);
+            });
             case "equips"  -> collectFromBag(bot, result, InventoryType.EQUIP,
                     item -> !entry.ownerGivenItems.contains(item));
             case "etc"     -> collectFromBag(bot, result, InventoryType.ETC,   item -> true);
@@ -485,6 +493,23 @@ class BotDropManager {
             }
         }
         return result;
+    }
+
+    private static StatEffect itemEffect(int itemId) {
+        try { return ItemInformationProvider.getInstance().getItemEffect(itemId); }
+        catch (Exception e) { return null; }
+    }
+
+    private static boolean isRecoveryPotion(int itemId) {
+        StatEffect fx = itemEffect(itemId);
+        if (fx == null) return false;
+        boolean heals = fx.getHp() > 0 || fx.getMp() > 0 || fx.getHpRate() > 0 || fx.getMpRate() > 0;
+        return heals && fx.getStatups().isEmpty();
+    }
+
+    private static boolean isBuffConsumable(int itemId) {
+        StatEffect fx = itemEffect(itemId);
+        return fx != null && !fx.getStatups().isEmpty();
     }
 
     private static void collectFromBag(Character bot, List<Item> result,
@@ -545,13 +570,13 @@ class BotDropManager {
 
     static void dropScrolls(BotEntry entry, Character bot) {
         int count = dropFromBag(bot, InventoryType.USE,
-                item -> item.getItemId() >= 2040000 && item.getItemId() < 2050000);
+                item -> ItemConstants.isEquipScroll(item.getItemId()));
         reply(bot, count, "scroll");
     }
 
     static void dropPotions(BotEntry entry, Character bot) {
         int count = dropFromBag(bot, InventoryType.USE,
-                item -> item.getItemId() >= 2000000 && item.getItemId() < 2023000);
+                item -> isRecoveryPotion(item.getItemId()));
         reply(bot, count, "potion");
     }
 
@@ -560,6 +585,12 @@ class BotDropManager {
         BotManager.getInstance().botSay(bot,
                 count > 0 ? "dropped " + count + " equip" + (count != 1 ? "s" : "") + "!"
                           : "equip bag is already empty");
+    }
+
+    static void dropBuffPots(BotEntry entry, Character bot) {
+        int count = dropFromBag(bot, InventoryType.USE,
+                item -> isBuffConsumable(item.getItemId()));
+        reply(bot, count, "buff pot");
     }
 
     static void dropEtc(BotEntry entry, Character bot) {
@@ -613,8 +644,8 @@ class BotDropManager {
                 int scrolls = 0, pots = 0;
                 for (Item item : inv.list()) {
                     int id = item.getItemId();
-                    if (id >= 2040000 && id < 2050000) scrolls += item.getQuantity();
-                    else if (id >= 2000000 && id < 2023000) pots += item.getQuantity();
+                    if (ItemConstants.isEquipScroll(id)) scrolls += item.getQuantity();
+                    else if (isRecoveryPotion(id)) pots += item.getQuantity();
                 }
                 if (scrolls > 0 || pots > 0) {
                     sb.append(" (");

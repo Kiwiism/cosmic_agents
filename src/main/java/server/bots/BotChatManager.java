@@ -8,6 +8,7 @@ import client.SkillFactory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import constants.game.GameConstants;
+import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
 import server.TimerManager;
 import server.Trade;
@@ -138,20 +139,30 @@ public class BotChatManager {
     private static final Pattern SUPPORT_OFF_PATTERN = Pattern.compile(
             "\\b(support\\s+off|stop\\s+support(ing)?|no\\s+support)\\b",
             Pattern.CASE_INSENSITIVE);
-    private static final Pattern BUFFS_ON_PATTERN = Pattern.compile(
-            "\\b(buffs?\\s+(me|us|party)|buffs?\\s+on|auto\\s+buffs?)\\b",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern BUFFS_OFF_PATTERN = Pattern.compile(
-            "\\b(buffs?\\s+off|stop\\s+buff(ing)?|no\\s+buffs?)\\b",
-            Pattern.CASE_INSENSITIVE);
     private static final Pattern HEALS_ON_PATTERN = Pattern.compile(
             "\\b(heals?\\s+(me|us|party)|heals?\\s+on|auto\\s+heals?)\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern HEALS_OFF_PATTERN = Pattern.compile(
             "\\b(heals?\\s+off|stop\\s+heal(ing)?|no\\s+heals?)\\b",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern BUFF_ON_PATTERN = Pattern.compile(
+            "\\bbuff\\s+(pots?\\s+)?on\\b|\\bauto\\s+buff\\s+pots?\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern BUFF_OFF_PATTERN = Pattern.compile(
+            "\\bbuff\\s+(pots?\\s+)?off\\b|\\bno\\s+buff\\s+pots?\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern BUFF_CHEAP_PATTERN = Pattern.compile(
+            "\\bbuff\\s+(pots?\\s+)?cheap\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern BUFF_MAX_PATTERN = Pattern.compile(
+            "\\bbuff\\s+(pots?\\s+)?(max|best|good)\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern BUFF_LIST_PATTERN = Pattern.compile(
+            "\\bbuff\\s+(pots?\\s+)?list\\b",
+            Pattern.CASE_INSENSITIVE);
     private static final String SCROLL_WORDS = "scrolls?";
     private static final String POTION_WORDS = "(?:pots?|potions?|hp\\s+pots?|mp\\s+pots?|supplies)";
+    private static final String BUFF_WORDS   = "(?:buff\\s+pots?|buff\\s+potions?|buffs?\\s+items?)";
     private static final String USE_WORDS = "(?:use|use\\s+items?|consumables?)";
     private static final String EQUIP_WORDS = "(?:equips?|equipment|gear)";
     private static final String ETC_WORDS = "(?:etc|junk|misc(?:ellaneous)?)";
@@ -254,6 +265,15 @@ public class BotChatManager {
             Pattern.CASE_INSENSITIVE);
     private static final Pattern TRADE_ETC_COMMAND_PATTERN = Pattern.compile(
             "\\b" + TRADE_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + ETC_WORDS + "\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern TRADE_BUFF_COMMAND_PATTERN = Pattern.compile(
+            "\\b" + TRADE_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + BUFF_WORDS + "\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern DROP_BUFF_COMMAND_PATTERN = Pattern.compile(
+            "\\b" + DROP_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + BUFF_WORDS + "\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern ASK_BUFF_COMMAND_PATTERN = Pattern.compile(
+            "\\b" + ASK_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + BUFF_WORDS + "\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern TRADE_RECOMMENDED_COMMAND_PATTERN = Pattern.compile(
             "\\b" + TRADE_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT
@@ -452,7 +472,6 @@ public class BotChatManager {
         }
         if (SUPPORT_OFF_PATTERN.matcher(message).find()) {
             TimerManager.getInstance().schedule(() -> {
-                entry.supportBuffsEnabled = false;
                 entry.supportHealsEnabled = false;
                 BotManager.getInstance().botSay(entry.bot, "ok, support off");
             }, 600);
@@ -460,23 +479,8 @@ public class BotChatManager {
         }
         if (SUPPORT_ON_PATTERN.matcher(message).find()) {
             TimerManager.getInstance().schedule(() -> {
-                entry.supportBuffsEnabled = true;
                 entry.supportHealsEnabled = true;
                 BotManager.getInstance().botSay(entry.bot, "ok, support on");
-            }, 600);
-            return;
-        }
-        if (BUFFS_OFF_PATTERN.matcher(message).find()) {
-            TimerManager.getInstance().schedule(() -> {
-                entry.supportBuffsEnabled = false;
-                BotManager.getInstance().botSay(entry.bot, "ok, no party buffs");
-            }, 600);
-            return;
-        }
-        if (BUFFS_ON_PATTERN.matcher(message).find()) {
-            TimerManager.getInstance().schedule(() -> {
-                entry.supportBuffsEnabled = true;
-                BotManager.getInstance().botSay(entry.bot, "ok, ill keep buffs up");
             }, 600);
             return;
         }
@@ -491,6 +495,43 @@ public class BotChatManager {
             TimerManager.getInstance().schedule(() -> {
                 entry.supportHealsEnabled = true;
                 BotManager.getInstance().botSay(entry.bot, "ok, ill heal when needed");
+            }, 600);
+            return;
+        }
+        if (BUFF_OFF_PATTERN.matcher(message).find()) {
+            TimerManager.getInstance().schedule(() -> {
+                entry.buffConsumablesEnabled = false;
+                BotManager.getInstance().botSay(entry.bot, "ok, no buff pots");
+            }, 600);
+            return;
+        }
+        if (BUFF_ON_PATTERN.matcher(message).find()) {
+            TimerManager.getInstance().schedule(() -> {
+                entry.buffConsumablesEnabled = true;
+                String mode = entry.buffCheapMode ? "cheap" : "max";
+                BotManager.getInstance().botSay(entry.bot, "ok, using buff pots (" + mode + ")");
+            }, 600);
+            return;
+        }
+        if (BUFF_CHEAP_PATTERN.matcher(message).find()) {
+            TimerManager.getInstance().schedule(() -> {
+                entry.buffCheapMode = true;
+                BotManager.getInstance().botSay(entry.bot, "ok, using cheapest buff pots");
+            }, 600);
+            return;
+        }
+        if (BUFF_MAX_PATTERN.matcher(message).find()) {
+            TimerManager.getInstance().schedule(() -> {
+                entry.buffCheapMode = false;
+                BotManager.getInstance().botSay(entry.bot, "ok, using best buff pots");
+            }, 600);
+            return;
+        }
+        if (BUFF_LIST_PATTERN.matcher(message).find()) {
+            TimerManager.getInstance().schedule(() -> {
+                String summary = BotBuffManager.getSafeListSummary();
+                System.out.println("[BotBuff] Requested by " + entry.owner.getName() + ":\n" + summary);
+                BotManager.getInstance().botSay(entry.bot, "buff list printed to console (" + summary.lines().count() + " entries)");
             }, 600);
             return;
         }
@@ -841,7 +882,7 @@ public class BotChatManager {
         int count = 0;
         for (Item item : bot.getInventory(InventoryType.USE).list()) {
             int id = item.getItemId();
-            if (id >= 2040000 && id < 2050000) count += item.getQuantity();
+            if (ItemConstants.isEquipScroll(id)) count += item.getQuantity();
         }
         queueBotSay(entry, count > 0
                 ? "I have " + count + " scroll" + (count != 1 ? "s" : "") + " on me"
@@ -911,7 +952,7 @@ public class BotChatManager {
 
     private static void reportHelp(BotEntry entry) {
         queueBotSay(entry, "commands: follow, stop, move here, grind, stats, skills, inventory, mesos, slots, scrolls, pots, debug stats, respec");
-        queueBotSay(entry, "support: support on/off, buffs on/off, heals on/off");
+        queueBotSay(entry, "support: support on/off, heals on/off, buff on/off, buff cheap/max");
         queueBotSay(entry, "gear: ask 'any upgrades?' or say 'trade recommended gear'");
         queueBotSay(entry, "trade: mesos, scrolls, pots, equips, etc, or named items");
     }
@@ -1414,6 +1455,7 @@ public class BotChatManager {
         if (TRADE_RECOMMENDED_COMMAND_PATTERN.matcher(message).find()) return "recommended";
         if (TRADE_SCROLLS_COMMAND_PATTERN.matcher(message).find()) return "scrolls";
         if (TRADE_POTS_COMMAND_PATTERN.matcher(message).find()) return "pots";
+        if (TRADE_BUFF_COMMAND_PATTERN.matcher(message).find()) return "buff";
         if (TRADE_USE_COMMAND_PATTERN.matcher(message).find()) return "use";
         if (TRADE_EQUIPS_COMMAND_PATTERN.matcher(message).find()) return "equips";
         if (TRADE_ETC_COMMAND_PATTERN.matcher(message).find()) return "etc";
@@ -1487,6 +1529,7 @@ public class BotChatManager {
     static String matchChoiceCategory(String message) {
         if (DROP_SCROLLS_COMMAND_PATTERN.matcher(message).find()) return "scrolls";
         if (DROP_POTS_COMMAND_PATTERN.matcher(message).find()) return "pots";
+        if (DROP_BUFF_COMMAND_PATTERN.matcher(message).find()) return "buff";
         if (DROP_USE_COMMAND_PATTERN.matcher(message).find()) return "use";
         if (DROP_EQUIPS_COMMAND_PATTERN.matcher(message).find()) return "equips";
         if (DROP_ETC_COMMAND_PATTERN.matcher(message).find()) return "etc";
@@ -1495,6 +1538,7 @@ public class BotChatManager {
 
         if (ASK_SCROLLS_COMMAND_PATTERN.matcher(message).find()) return "scrolls";
         if (ASK_POTS_COMMAND_PATTERN.matcher(message).find()) return "pots";
+        if (ASK_BUFF_COMMAND_PATTERN.matcher(message).find()) return "buff";
         if (ASK_USE_COMMAND_PATTERN.matcher(message).find()) return "use";
         if (ASK_EQUIPS_COMMAND_PATTERN.matcher(message).find()) return "equips";
         if (ASK_ETC_COMMAND_PATTERN.matcher(message).find()) return "etc";
@@ -1515,6 +1559,7 @@ public class BotChatManager {
         String what = switch (category) {
             case "scrolls" -> "scrolls";
             case "pots"    -> "pots";
+            case "buff"    -> "buff pots";
             case "use"     -> "use items";
             case "equips"  -> "equips";
             case "etc"     -> "etc items";

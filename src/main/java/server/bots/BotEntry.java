@@ -75,7 +75,6 @@ public class BotEntry {
     final Map<Integer, Long> nextBuffAt = new HashMap<>();
     final Map<Integer, Long> nextSupportBuffAt = new HashMap<>();
     long nextSupportHealAt = 0L;
-    boolean supportBuffsEnabled = true;
     boolean supportHealsEnabled = true;
 
     // Damage taken
@@ -138,6 +137,11 @@ public class BotEntry {
     // "Move here" target — bot navigates to this fixed point, then idles until cleared
     Point moveTarget = null;
     boolean moveTargetPrecise = false; // true when triggered by "move here" — uses tight stop dist
+
+    // Buff consumables (toggleable; cheap = weakest buff of each type, max = strongest)
+    boolean buffConsumablesEnabled = false;
+    boolean buffCheapMode          = true;
+    long    lastBuffScanMs         = 0;
 
     // Party-quest state (one slot per PQ type; null = not in that PQ)
     public server.bots.pq.BotKpqState kpq = new server.bots.pq.BotKpqState();
