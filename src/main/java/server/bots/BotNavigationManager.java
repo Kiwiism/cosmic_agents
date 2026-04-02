@@ -188,9 +188,7 @@ final class BotNavigationManager {
         // vertically in place forever — don't fire, let it walk to the actual start point.
         if (edge.launchStepX != 0) {
             int nextX = botPos.x + edge.launchStepX;
-            Point wallFrom = new Point(Math.min(botPos.x, nextX), botPos.y);
-            Point wallTo   = new Point(Math.max(botPos.x, nextX), botPos.y);
-            if (wallFrom.x < wallTo.x && bot.getMap().getFootholds().findWall(wallFrom, wallTo) != null) {
+            if (BotPhysicsEngine.hasAirWallCollision(bot.getMap(), botPos, new Point(nextX, botPos.y))) {
                 entry.lastEdgeBlockReason = "jump-wall";
                 return null;
             }

@@ -251,13 +251,77 @@ class BotPhysicsEngineTest {
     }
 
     @Test
+    void shouldLandOnIntermediateBumpInsteadOfTunnelingToLowerFloor() {
+        MapleMap map = createEmptyTestMap(910000003);
+        server.maps.FootholdTree footholds = map.getFootholds();
+        footholds.insert(new Foothold(new Point(0, 110), new Point(20, 110), 1));
+        footholds.insert(new Foothold(new Point(4, 102), new Point(6, 102), 2));
+
+        BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.findAirLanding(
+                map,
+                new Point(0, 100),
+                new Point(8, 105)
+        );
+
+        assertNotNull(landing);
+        assertEquals(new Point(4, 102), landing.point());
+        assertEquals(2, landing.foothold().getId());
+    }
+
+    @Test
+    void shouldUseIntermediateBumpLandingInFallSimulation() {
+        MapleMap map = createEmptyTestMap(910000004);
+        server.maps.FootholdTree footholds = map.getFootholds();
+        footholds.insert(new Foothold(new Point(0, 110), new Point(20, 110), 1));
+        footholds.insert(new Foothold(new Point(4, 102), new Point(6, 102), 2));
+
+        BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateFallLanding(map, new Point(0, 100), 8);
+
+        assertNotNull(landing);
+        assertEquals(new Point(4, 102), landing.point());
+        assertEquals(2, landing.foothold().getId());
+    }
+
+    @Test
+    void shouldDeflectLandingMomentumAlongSlope() {
+        MapleMap map = createEmptyTestMap(910000007);
+        server.maps.FootholdTree footholds = map.getFootholds();
+        footholds.insert(new Foothold(new Point(0, 100), new Point(10, 110), 1));
+
+        Character bot = mockBot(new Point(5, 94), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.inAir = true;
+        entry.physX = 5;
+        entry.physY = 94;
+        entry.velY = 8f;
+        entry.airVelX = 0;
+
+        Point previousPos = new Point(5, 94);
+        Point nextPos = new Point(5, 105);
+        BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.findAirLanding(map, previousPos, nextPos);
+
+        assertNotNull(landing);
+        BotPhysicsEngine.landOnGround(entry, bot, landing.point(), landing.foothold(),
+                nextPos.x - previousPos.x, nextPos.y - previousPos.y);
+
+        assertEquals(landing.point(), bot.getPosition());
+        assertTrue(entry.movementVelX > 0);
+        assertTrue(entry.hspeed > 0.0);
+    }
+
+    @Test
     void shouldPreferExactGroundFootholdWhenOffsetLookupWouldChooseDifferentPlatform() {
         StandingLookupCase lookupCase = findStandingLookupCaseWhereOffsetDiffers(ellinia);
 
         assertNotNull(lookupCase, "Expected at least one standing point where offset-only lookup picks a different foothold");
         assertNotEquals(lookupCase.exactFoothold().getId(), lookupCase.offsetFoothold().getId());
-        assertEquals(lookupCase.exactFoothold().getId(),
-                BotPhysicsEngine.findGroundFoothold(ellinia, lookupCase.point()).getId());
+        Point chosenGround = BotPhysicsEngine.findGroundPoint(ellinia, lookupCase.point());
+        Foothold chosenFoothold = BotPhysicsEngine.findGroundFoothold(ellinia, lookupCase.point());
+
+        assertNotNull(chosenGround);
+        assertNotNull(chosenFoothold);
+        assertEquals(chosenFoothold.getId(),
+                ellinia.getFootholds().findBelow(new Point(chosenGround.x, chosenGround.y)).getId());
     }
 
     @Test

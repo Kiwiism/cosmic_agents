@@ -2,6 +2,7 @@ package server.bots;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
+import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Rope;
 
@@ -137,6 +138,70 @@ class BotMovementManagerTest {
         BotMovementManager.tickClimbing(entry, new Point(-157, -25), false);
 
         assertEquals(new Point(-157, -23), bot.getPosition());
+    }
+
+    @Test
+    void shouldLandOnIntermediateBumpDuringAirborneTick() {
+        MapleMap map = new MapleMap(910000005, 0, 0, 910000005, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 110), new Point(20, 110), 1));
+        footholds.insert(new Foothold(new Point(4, 102), new Point(6, 102), 2));
+        map.setFootholds(footholds);
+
+        Character bot = mock(Character.class);
+        AtomicReference<Point> position = new AtomicReference<>(new Point(0, 100));
+        when(bot.getPosition()).thenAnswer(invocation -> new Point(position.get()));
+        doAnswer(invocation -> {
+            position.set(new Point(invocation.getArgument(0)));
+            return null;
+        }).when(bot).setPosition(any(Point.class));
+        when(bot.getMap()).thenReturn(map);
+        when(bot.getId()).thenReturn(1);
+        when(bot.getHp()).thenReturn(100);
+
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.inAir = true;
+        entry.physX = 0;
+        entry.physY = 100;
+        entry.velY = 0f;
+        entry.airVelX = 8;
+
+        BotMovementManager.tickAirborne(entry, null);
+
+        assertEquals(new Point(4, 102), bot.getPosition());
+        assertFalse(entry.inAir);
+    }
+
+    @Test
+    void shouldKeepHorizontalMomentumWhenDroppingPastWallEndpoint() {
+        MapleMap map = new MapleMap(910000006, 0, 0, 910000006, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 0), new Point(20, 0), 1));
+        footholds.insert(new Foothold(new Point(0, 0), new Point(0, 80), 2));
+        map.setFootholds(footholds);
+
+        Character bot = mock(Character.class);
+        AtomicReference<Point> position = new AtomicReference<>(new Point(0, 0));
+        when(bot.getPosition()).thenAnswer(invocation -> new Point(position.get()));
+        doAnswer(invocation -> {
+            position.set(new Point(invocation.getArgument(0)));
+            return null;
+        }).when(bot).setPosition(any(Point.class));
+        when(bot.getMap()).thenReturn(map);
+        when(bot.getId()).thenReturn(1);
+        when(bot.getHp()).thenReturn(100);
+
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.inAir = true;
+        entry.physX = 0;
+        entry.physY = 0;
+        entry.velY = 0f;
+        entry.airVelX = -8;
+
+        BotMovementManager.tickAirborne(entry, null);
+
+        assertTrue(bot.getPosition().x < 0);
+        assertEquals(-8, entry.airVelX);
     }
 
     @Test

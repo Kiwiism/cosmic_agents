@@ -71,6 +71,18 @@ final class BotPhysicsEngine {
         }
     }
 
+    enum AirCollisionType {
+        NONE,
+        WALL,
+        LAND
+    }
+
+    record AirCollision(AirCollisionType type, Point point, Foothold foothold, double progress) {
+        static AirCollision none() {
+            return new AirCollision(AirCollisionType.NONE, null, null, Double.POSITIVE_INFINITY);
+        }
+    }
+
     static Config cfg = new Config();
 
     private BotPhysicsEngine() {
@@ -259,8 +271,33 @@ final class BotPhysicsEngine {
     }
 
     static void landOnGround(BotEntry entry, Character bot, Point position) {
+        landOnGround(entry, bot, position, null, 0.0, 0.0);
+    }
+
+    static void landOnGround(BotEntry entry,
+                             Character bot,
+                             Point position,
+                             Foothold foothold,
+                             double incomingDeltaX,
+                             double incomingDeltaY) {
         bot.setPosition(position);
-        idleOnGround(entry, bot);
+        entry.inAir = false;
+        entry.climbing = false;
+        entry.climbRope = null;
+        entry.crouching = false;
+        entry.climbUpIntent = false;
+        entry.velY = 0f;
+        entry.airVelX = 0;
+        entry.airSteerVelX = 0.0;
+        entry.physX = position.x;
+        entry.physY = position.y;
+        entry.downJumpPending = false;
+        entry.downJumpGracePeriodMS = 0L;
+        entry.groundPhysicsCarryMs = 0.0;
+        entry.blockedRopeGrab = null;
+        entry.hspeed = landingGroundHSpeed(bot.getMap(), foothold, incomingDeltaX, incomingDeltaY);
+        setMovementVelocity(entry, velocityFromDeltaX(tickDeltaFromGroundHSpeed(bot.getMap(), entry.hspeed)), 0);
+        syncCharacterState(entry);
     }
 
     static void attachToRope(BotEntry entry, Character bot, Rope rope, int y) {
@@ -385,15 +422,31 @@ final class BotPhysicsEngine {
         entry.physY += entry.velY + 0.5f * gravity;
         entry.velY = Math.min(entry.velY + gravity, maxFallPerTick());
 
-        Point nextPosition = roundedAirPosition(entry);
-        bot.setPosition(nextPosition);
+        return roundedAirPosition(entry);
+    }
+
+    static void applyAirbornePosition(BotEntry entry, Character bot, Point position) {
+        bot.setPosition(position);
         entry.inAir = true;
         entry.climbing = false;
         entry.climbRope = null;
         entry.crouching = false;
         setMovementVelocity(entry, velocityFromDeltaX(entry.airVelX), velocityFromAirStep(entry.velY));
         syncCharacterState(entry);
-        return nextPosition;
+    }
+
+    static void collideWithAirWall(BotEntry entry, Character bot, Point collisionPoint) {
+        entry.airVelX = 0;
+        entry.airSteerVelX = 0.0;
+        entry.physX = collisionPoint.x;
+        entry.physY = collisionPoint.y;
+        bot.setPosition(collisionPoint);
+        entry.inAir = true;
+        entry.climbing = false;
+        entry.climbRope = null;
+        entry.crouching = false;
+        setMovementVelocity(entry, 0, velocityFromAirStep(entry.velY));
+        syncCharacterState(entry);
     }
 
     static MovementSnapshot movementSnapshot(BotEntry entry) {
@@ -494,6 +547,32 @@ final class BotPhysicsEngine {
 
     static JumpLanding simulateRopeJumpLanding(MapleMap map, Point from, int stepX) {
         return simulateLanding(map, from, -ropeJumpForcePerTick(), stepX, 0L);
+    }
+
+    static JumpLanding findAirLanding(MapleMap map, Point previousPos, Point nextPos) {
+        AirCollision collision = resolveAirCollision(map, previousPos, nextPos);
+        return collision.type() == AirCollisionType.LAND
+                ? new JumpLanding(collision.point(), collision.foothold())
+                : null;
+    }
+
+    static boolean hasAirWallCollision(MapleMap map, Point previousPos, Point nextPos) {
+        return resolveAirCollision(map, previousPos, nextPos).type == AirCollisionType.WALL;
+    }
+
+    static AirCollision resolveAirCollision(MapleMap map, Point previousPos, Point nextPos) {
+        if (map == null || map.getFootholds() == null || previousPos == null || nextPos == null) {
+            return AirCollision.none();
+        }
+        AirCollision wall = findWallCollision(map, previousPos, nextPos);
+        AirCollision landing = findGroundCollision(map, previousPos, nextPos);
+        if (wall.type == AirCollisionType.NONE) {
+            return landing;
+        }
+        if (landing.type == AirCollisionType.NONE) {
+            return wall;
+        }
+        return wall.progress <= landing.progress ? wall : landing;
     }
 
     private static void launchAirborne(BotEntry entry,
@@ -664,6 +743,132 @@ final class BotPhysicsEngine {
         return walkStep(map) * airtimeTicks;
     }
 
+    private static AirCollision findGroundCollision(MapleMap map, Point previousPos, Point nextPos) {
+        if (nextPos.y < previousPos.y) {
+            return AirCollision.none();
+        }
+
+        int startX = previousPos.x;
+        int endX = nextPos.x;
+        int dir = Integer.compare(endX, startX);
+        if (dir == 0) {
+            return landingAtX(map, previousPos, nextPos, endX, 1.0);
+        }
+
+        int steps = Math.abs(endX - startX);
+        for (int i = 0; i <= steps; i++) {
+            int x = startX + dir * i;
+            double progress = i / (double) steps;
+            AirCollision landing = landingAtX(map, previousPos, nextPos, x, progress);
+            if (landing.type == AirCollisionType.LAND) {
+                return landing;
+            }
+        }
+        return AirCollision.none();
+    }
+
+    private static AirCollision findWallCollision(MapleMap map, Point previousPos, Point nextPos) {
+        if (previousPos.x == nextPos.x) {
+            return AirCollision.none();
+        }
+
+        AirCollision best = AirCollision.none();
+        for (Foothold foothold : map.getFootholds().getAllFootholds()) {
+            if (!foothold.isWall()) {
+                continue;
+            }
+            AirCollision collision = wallCollision(foothold, previousPos, nextPos);
+            if (collision.type() == AirCollisionType.WALL && collision.progress() < best.progress()) {
+                best = collision;
+            }
+        }
+        return best;
+    }
+
+    private static AirCollision landingAtX(MapleMap map,
+                                           Point previousPos,
+                                           Point nextPos,
+                                           int x,
+                                           double progress) {
+        Point probe = new Point(x, previousPos.y + 1);
+        Point floor = map.getPointBelow(probe);
+        if (floor == null) {
+            return AirCollision.none();
+        }
+
+        int yAtX = (int) Math.round(previousPos.y + (nextPos.y - previousPos.y) * progress);
+        if (floor.y < previousPos.y || floor.y > yAtX) {
+            return AirCollision.none();
+        }
+
+        Foothold foothold = map.getFootholds().findBelow(probe);
+        if (foothold == null) {
+            return AirCollision.none();
+        }
+
+        return new AirCollision(AirCollisionType.LAND, new Point(x, floor.y), foothold, progress);
+    }
+
+    private static AirCollision wallCollision(Foothold wall, Point previousPos, Point nextPos) {
+        int wallX = wall.getX1();
+        int startX = previousPos.x;
+        int endX = nextPos.x;
+        if (startX == endX) {
+            return AirCollision.none();
+        }
+
+        double progress = (wallX - startX) / (double) (endX - startX);
+        // Ignore the wall exactly at the takeoff point; this is the ledge-edge case
+        // where a drop would otherwise look like an immediate side collision.
+        if (progress <= 0.0 || progress > 1.0) {
+            return AirCollision.none();
+        }
+
+        double yAtWall = previousPos.y + (nextPos.y - previousPos.y) * progress;
+        int minY = Math.min(wall.getY1(), wall.getY2());
+        int maxY = Math.max(wall.getY1(), wall.getY2());
+        if (yAtWall < minY || yAtWall > maxY) {
+            return AirCollision.none();
+        }
+
+        return new AirCollision(AirCollisionType.WALL,
+                new Point(wallX, (int) Math.round(yAtWall)),
+                wall,
+                progress);
+    }
+
+    private static double landingGroundHSpeed(MapleMap map,
+                                              Foothold foothold,
+                                              double incomingDeltaX,
+                                              double incomingDeltaY) {
+        double landingDeltaX = incomingDeltaX;
+        if (foothold != null && !foothold.isWall() && foothold.slope() != 0.0) {
+            double tangentX = foothold.getX2() - foothold.getX1();
+            double tangentY = foothold.getY2() - foothold.getY1();
+            double tangentLength = Math.hypot(tangentX, tangentY);
+            if (tangentLength > 0.0) {
+                double unitX = tangentX / tangentLength;
+                double unitY = tangentY / tangentLength;
+                double dot = incomingDeltaX * unitX + incomingDeltaY * unitY;
+                landingDeltaX = unitX * dot;
+            }
+        }
+
+        double maxDeltaPerTick = Math.max(1.0, walkStep(map));
+        landingDeltaX = Math.max(-maxDeltaPerTick, Math.min(maxDeltaPerTick, landingDeltaX));
+        return groundHSpeedFromTickDelta(map, landingDeltaX);
+    }
+
+    private static double groundHSpeedFromTickDelta(MapleMap map, double deltaXPerTick) {
+        double stepsPerTick = Math.max(1.0, (cfg.TICK_MS * mapGroundSpeedScale(map)) / CLIENT_GROUND_STEP_MS);
+        return deltaXPerTick / stepsPerTick;
+    }
+
+    private static double tickDeltaFromGroundHSpeed(MapleMap map, double groundHSpeed) {
+        double stepsPerTick = Math.max(1.0, (cfg.TICK_MS * mapGroundSpeedScale(map)) / CLIENT_GROUND_STEP_MS);
+        return groundHSpeed * stepsPerTick;
+    }
+
     private static Point simulateRopeGrab(MapleMap map,
                                           Point from,
                                           float initialVelY,
@@ -697,15 +902,17 @@ final class BotPhysicsEngine {
 
             int x = (int) Math.round(physX);
             int intY = (int) Math.round(physY);
-            if (velocityY > 0 && remainingLandingGraceMs == 0L) {
-                Point probe = new Point(x, previousIntY + 1);
-                Point floor = map.getPointBelow(probe);
-                if (floor != null && floor.y <= intY) {
-                    Foothold foothold = map.getFootholds().findBelow(probe);
-                    if (foothold != null) {
-                        return null;
-                    }
-                }
+            AirCollision collision = resolveAirCollision(map, new Point((int) Math.round(physX - stepX), previousIntY),
+                    new Point(x, intY));
+            if (collision.type() == AirCollisionType.WALL) {
+                physX = collision.point().x;
+                physY = collision.point().y;
+                stepX = 0;
+                previousIntY = collision.point().y;
+                continue;
+            }
+            if (collision.type() == AirCollisionType.LAND && remainingLandingGraceMs == 0L) {
+                    return null;
             }
 
             previousIntY = intY;
@@ -743,15 +950,17 @@ final class BotPhysicsEngine {
 
             int x = (int) Math.round(physX);
             int intY = (int) Math.round(physY);
-            if (velocityY > 0 && remainingLandingGraceMs == 0L) {
-                Point probe = new Point(x, previousIntY + 1);
-                Point floor = map.getPointBelow(probe);
-                if (floor != null && floor.y <= intY) {
-                    Foothold foothold = map.getFootholds().findBelow(probe);
-                    if (foothold != null) {
-                        return new JumpLanding(new Point(x, floor.y), foothold);
-                    }
-                }
+            AirCollision collision = resolveAirCollision(map, new Point((int) Math.round(physX - stepX), previousIntY),
+                    new Point(x, intY));
+            if (collision.type() == AirCollisionType.WALL) {
+                physX = collision.point().x;
+                physY = collision.point().y;
+                stepX = 0;
+                previousIntY = collision.point().y;
+                continue;
+            }
+            if (collision.type() == AirCollisionType.LAND && remainingLandingGraceMs == 0L) {
+                return new JumpLanding(collision.point(), collision.foothold());
             }
 
             previousIntY = intY;

@@ -78,7 +78,7 @@ class BotNavigationGraphProviderTest {
         assertEquals(1, path.size());
         assertEquals(BotNavigationGraph.EdgeType.JUMP, path.getFirst().type);
         assertEquals(new Point(1080, 334), path.getFirst().startPoint);
-        assertEquals(new Point(1144, 275), path.getFirst().endPoint);
+        assertEquals(new Point(1139, 275), path.getFirst().endPoint);
     }
 
     @Test
@@ -87,7 +87,7 @@ class BotNavigationGraphProviderTest {
 
         assertEquals(1, path.size());
         assertEquals(BotNavigationGraph.EdgeType.JUMP, path.getFirst().type);
-        assertEquals(new Point(926, 274), path.getFirst().endPoint);
+        assertEquals(new Point(932, 274), path.getFirst().endPoint);
     }
 
     @Test
@@ -105,7 +105,7 @@ class BotNavigationGraphProviderTest {
     }
 
     @Test
-    void shouldNotMergeElliniaPivotFootholdsIntoOneRegion() {
+    void shouldKeepElliniaPivotFootholdsInOneWalkRegion() {
         Point leftSlopePoint = new Point(-508, -421);
         Point rightSlopePoint = new Point(-464, -422);
 
@@ -114,18 +114,14 @@ class BotNavigationGraphProviderTest {
 
         assertTrue(leftRegionId > 0);
         assertTrue(rightRegionId > 0);
-        assertNotEquals(leftRegionId, rightRegionId);
+        assertEquals(leftRegionId, rightRegionId);
     }
 
     @Test
-    void shouldKeepElliniaPivotFootholdsWalkConnectedAfterSplit() {
-        // Pivot footholds form a valley (~20° angle at junction) so they are split into separate
-        // regions. A WALK edge must be generated across the split so the bot can traverse them on foot.
-        // The destination (-390,-400) is the second pivot foothold — just past the split point.
+    void shouldTreatElliniaPivotFootholdTraversalAsSameRegion() {
         List<BotNavigationGraph.Edge> path = findPath(elliniaGraph, ellinia, new Point(-508, -421), new Point(-390, -400));
 
-        assertFalse(path.isEmpty());
-        assertTrue(path.stream().allMatch(edge -> edge.type == BotNavigationGraph.EdgeType.WALK));
+        assertTrue(path.isEmpty());
     }
 
     @Test
@@ -145,7 +141,7 @@ class BotNavigationGraphProviderTest {
 
         assertNotNull(edge);
         assertEquals(new Point(1355, -888), edge.startPoint);
-        assertEquals(new Point(1299, -955), edge.endPoint);
+        assertEquals(new Point(1305, -956), edge.endPoint);
     }
 
     @Test
