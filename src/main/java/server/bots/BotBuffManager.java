@@ -9,81 +9,29 @@ import client.inventory.manipulator.InventoryManipulator;
 import server.ItemInformationProvider;
 import server.StatEffect;
 import server.life.Monster;
-import tools.DatabaseConnection;
 import tools.Pair;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.*;
 
 /**
  * Manages automatic use of buff consumable items from the bot's USE inventory.
  *
- * Safe list: items actually sold in NPC shops (shopitems DB) in the 2000000–2009999 range.
- * Items are grouped by their primary BuffStat. Cheap mode picks the weakest; max picks the best.
+ * Validity check: BotDropManager.isBuffConsumable (has statups) — same predicate used by
+ * inv? and the trade/drop "buff" category, so all commands are consistent.
+ * Items are grouped by primary BuffStat from the bot's current inventory.
+ * Cheap mode picks the weakest per stat; max picks the strongest.
  *
- * Default: off. Configured via chat ("potbuff on/off", "potbuff cheap/max").
+ * Default: off. Configured via chat ("buff on/off", "buff cheap/max").
  */
 public final class BotBuffManager {
 
-    private static final long TICK_MS   = 3_000;
+    private static final long   TICK_MS           = 3_000;
     private static final double ACC_HIT_THRESHOLD = 0.60;
 
-    // primary BuffStat -> {cheapItemId, bestItemId}
-    private static final Map<BuffStat, int[]>    safeItems = new LinkedHashMap<>();
-    private static final Map<Integer, StatEffect> fxCache  = new HashMap<>();
-    private static volatile boolean initialized            = false;
+    // Cache StatEffect lookups to avoid repeated WZ reads
+    private static final Map<Integer, StatEffect> fxCache = new HashMap<>();
 
     private BotBuffManager() {}
-
-    // ── init ────────────────────────────────────────────────────────────────
-
-    /** Called once (lazily) to build the safe-buff list from shop DB + WZ effect data. */
-    public static synchronized void ensureInit() {
-        if (initialized) return;
-        initialized = true;
-        ItemInformationProvider ii = ItemInformationProvider.getInstance();
-        Map<BuffStat, List<int[]>> candidates = new LinkedHashMap<>(); // stat -> [[itemId, statValue]]
-
-        // Only include items actually sold in NPC shops at a normal price (10 < price <= 10000).
-        // shopitems.price = 0 means "use WZ info/price". GM shops sell rare buffs at 1 meso — excluded.
-        Map<Integer, Integer> shopPrices = new HashMap<>(); // itemId -> lowest explicit shop price (0 = use WZ)
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(
-                     "SELECT itemid, MIN(price) AS min_price FROM shopitems" +
-                     " WHERE itemid >= 2000000 AND itemid < 2010000 GROUP BY itemid")) {
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) shopPrices.put(rs.getInt("itemid"), rs.getInt("min_price"));
-            }
-        } catch (Exception e) {
-            System.err.println("[BotBuff] Failed to load shop items from DB: " + e.getMessage());
-        }
-
-        for (Map.Entry<Integer, Integer> shopEntry : shopPrices.entrySet()) {
-            int itemId   = shopEntry.getKey();
-            int shopPrice = shopEntry.getValue();
-            // price=0 means shop defers to WZ; resolve actual price
-            int price = shopPrice > 0 ? shopPrice : ii.getPrice(itemId, 1);
-            if (price <= 10 || price > 10_000) continue;
-            StatEffect fx;
-            try { fx = ii.getItemEffect(itemId); } catch (Exception e) { continue; }
-            if (fx == null || fx.getStatups().isEmpty()) continue;
-
-            Pair<BuffStat, Integer> primary = fx.getStatups().get(0);
-            candidates.computeIfAbsent(primary.getLeft(), k -> new ArrayList<>())
-                      .add(new int[]{itemId, primary.getRight()});
-            fxCache.put(itemId, fx);
-        }
-
-        for (Map.Entry<BuffStat, List<int[]>> e : candidates.entrySet()) {
-            List<int[]> list = e.getValue();
-            list.sort(Comparator.comparingInt(a -> a[1]));
-            safeItems.put(e.getKey(), new int[]{list.get(0)[0], list.get(list.size() - 1)[0]});
-        }
-
-        System.out.println("[BotBuff] Safe buff list built: " + safeItems.size() + " buff type(s).");
-    }
 
     // ── tick ────────────────────────────────────────────────────────────────
 
@@ -93,37 +41,85 @@ public final class BotBuffManager {
         if (now - entry.lastBuffScanMs < TICK_MS) return;
         entry.lastBuffScanMs = now;
 
-        ensureInit();
+        // Build per-stat selection from what the bot actually has in bag
+        Map<BuffStat, Item> selected = buildSelection(bot, entry.buffCheapMode);
 
-        Inventory use = bot.getInventory(InventoryType.USE);
-        for (Map.Entry<BuffStat, int[]> e : safeItems.entrySet()) {
+        for (Map.Entry<BuffStat, Item> e : selected.entrySet()) {
             BuffStat stat = e.getKey();
-
-            // Don't use if already buffed with this stat
             if (bot.getBuffedValue(stat) != null) continue;
-
-            // ACC potions only when hit rate against current mobs is below threshold
             if (stat == BuffStat.ACC && !needsAccBuff(entry, bot)) continue;
 
-            int itemId = entry.buffCheapMode ? e.getValue()[0] : e.getValue()[1];
-            Item item = use.findById(itemId);
-            if (item == null || item.getQuantity() <= 0) continue;
-
-            StatEffect fx = fxCache.get(itemId);
+            Item item = e.getValue();
+            StatEffect fx = fxCache.get(item.getItemId());
             if (fx == null) continue;
 
             fx.applyTo(bot);
             InventoryManipulator.removeFromSlot(bot.getClient(), InventoryType.USE,
                     item.getPosition(), (short) 1, false, true);
-            return; // one buff potion per tick cycle
+            return; // one buff per tick cycle
         }
+    }
+
+    // ── chat ────────────────────────────────────────────────────────────────
+
+    /**
+     * Returns a chat-line showing buff items the bot currently has in inventory,
+     * with quantities, based on cheap/max mode. Example:
+     *   "buff pots on (cheap): sniper pill x3, warrior potion x5"
+     */
+    public static String getChatSummary(boolean enabled, boolean cheapMode, Character bot) {
+        Map<BuffStat, Item> selected = buildSelection(bot, cheapMode);
+        ItemInformationProvider ii = ItemInformationProvider.getInstance();
+        StringBuilder sb = new StringBuilder();
+        sb.append("buff pots ").append(enabled ? "on" : "off")
+          .append(" (").append(cheapMode ? "cheap" : "max").append("): ");
+        boolean first = true;
+        for (Item item : selected.values()) {
+            String name = ii.getName(item.getItemId());
+            if (name == null) name = String.valueOf(item.getItemId());
+            if (!first) sb.append(", ");
+            sb.append(name.toLowerCase()).append(" x").append(item.getQuantity());
+            first = false;
+        }
+        if (first) sb.append("none in bag");
+        return sb.toString();
     }
 
     // ── helpers ─────────────────────────────────────────────────────────────
 
     /**
+     * Scans the bot's USE inventory and returns one item per primary BuffStat,
+     * choosing the weakest (cheap) or strongest (max) when duplicates exist.
+     */
+    private static Map<BuffStat, Item> buildSelection(Character bot, boolean cheapMode) {
+        Inventory use = bot.getInventory(InventoryType.USE);
+        Map<BuffStat, Item>    best    = new LinkedHashMap<>();
+        Map<BuffStat, Integer> bestVal = new HashMap<>();
+
+        for (short slot = 1; slot <= use.getSlotLimit(); slot++) {
+            Item item = use.getItem(slot);
+            if (item == null || item.getQuantity() <= 0) continue;
+            int id = item.getItemId();
+            if (!BotDropManager.isBuffConsumable(id)) continue;
+
+            StatEffect fx = fxCache.computeIfAbsent(id, BotDropManager::itemEffect);
+            if (fx == null || fx.getStatups().isEmpty()) continue;
+
+            Pair<BuffStat, Integer> primary = fx.getStatups().get(0);
+            BuffStat stat = primary.getLeft();
+            int val       = primary.getRight();
+
+            Integer prev = bestVal.get(stat);
+            if (prev == null || (cheapMode ? val < prev : val > prev)) {
+                best.put(stat, item);
+                bestVal.put(stat, val);
+            }
+        }
+        return best;
+    }
+
+    /**
      * Returns true when the bot's hit rate against the reference mob is below ACC_HIT_THRESHOLD.
-     * Uses the grind target if available; falls back to any live monster on the map.
      */
     private static boolean needsAccBuff(BotEntry entry, Character bot) {
         Monster ref = entry.grindTarget;
@@ -133,53 +129,6 @@ public final class BotBuffManager {
             }
         }
         if (ref == null) return false;
-        double hitRate = BotCombatFormulaProvider.getInstance().calculateMobHitChance(bot, ref);
-        return hitRate < ACC_HIT_THRESHOLD;
-    }
-
-    // ── chat / debug ───────────────────────────────────────────────────────
-
-    /**
-     * Returns a chat-line showing only buff items the bot currently has in inventory,
-     * with quantities, based on cheap/max mode. Example:
-     *   "buff pots on (cheap): warrior potion x3, accuracy potion x12"
-     */
-    public static String getChatSummary(boolean enabled, boolean cheapMode, Character bot) {
-        ensureInit();
-        if (safeItems.isEmpty()) return "no buff pots available in shop data";
-        ItemInformationProvider ii = ItemInformationProvider.getInstance();
-        Inventory use = bot.getInventory(InventoryType.USE);
-        StringBuilder sb = new StringBuilder();
-        sb.append("buff pots ").append(enabled ? "on" : "off")
-          .append(" (").append(cheapMode ? "cheap" : "max").append("): ");
-        boolean first = true;
-        for (Map.Entry<BuffStat, int[]> e : safeItems.entrySet()) {
-            int itemId = cheapMode ? e.getValue()[0] : e.getValue()[1];
-            Item item = use.findById(itemId);
-            if (item == null || item.getQuantity() <= 0) continue;
-            String name = ii.getName(itemId);
-            if (name == null) name = String.valueOf(itemId);
-            if (!first) sb.append(", ");
-            sb.append(name.toLowerCase()).append(" x").append(item.getQuantity());
-            first = false;
-        }
-        if (first) sb.append("none in bag");
-        return sb.toString();
-    }
-
-    /** Returns a printable summary of the safe buff list. */
-    public static String getSafeListSummary() {
-        ensureInit();
-        if (safeItems.isEmpty()) return "No safe buff items loaded.";
-        ItemInformationProvider ii = ItemInformationProvider.getInstance();
-        StringBuilder sb = new StringBuilder("Safe buff list (" + safeItems.size() + " type(s)):\n");
-        for (Map.Entry<BuffStat, int[]> e : safeItems.entrySet()) {
-            int cheapId = e.getValue()[0];
-            int bestId  = e.getValue()[1];
-            sb.append("  ").append(e.getKey().name())
-              .append(": cheap=").append(ii.getName(cheapId)).append("(").append(cheapId).append(")")
-              .append("  best=").append(ii.getName(bestId)).append("(").append(bestId).append(")\n");
-        }
-        return sb.toString().trim();
+        return BotCombatFormulaProvider.getInstance().calculateMobHitChance(bot, ref) < ACC_HIT_THRESHOLD;
     }
 }
