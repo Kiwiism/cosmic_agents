@@ -32,6 +32,8 @@ class BotNavigationGraphProviderTest {
     private static BotNavigationGraph elliniaGraph;
     private static MapleMap perion;
     private static BotNavigationGraph perionGraph;
+    private static MapleMap kerning;
+    private static BotNavigationGraph kerningGraph;
     private static MapleMap swamp1;
     private static BotNavigationGraph swamp1Graph;
 
@@ -47,6 +49,9 @@ class BotNavigationGraphProviderTest {
 
         perion = BotNavigationMapLoader.loadMapGeometry(102000000);
         perionGraph = BotNavigationGraphProvider.rebuildGraph(perion);
+
+        kerning = BotNavigationMapLoader.loadMapGeometry(103000000);
+        kerningGraph = BotNavigationGraphProvider.rebuildGraph(kerning);
 
         swamp1 = BotNavigationMapLoader.loadMapGeometry(107000000);
         swamp1Graph = BotNavigationGraphProvider.rebuildGraph(swamp1);
@@ -102,6 +107,16 @@ class BotNavigationGraphProviderTest {
         assertTrue(ownerRegionId > 0, "Owner position (2596,1696) must resolve to a valid region");
         assertTrue(botRegionId > 0, "Bot position (2573,1935) must resolve to a valid region");
         assertNotEquals(ownerRegionId, botRegionId, "Owner on upper platform and bot on lower platform must be in different regions");
+    }
+
+    @Test
+    void shouldGenerateJumpPathToTinyKerningFoothold() {
+        List<BotNavigationGraph.Edge> path = findPath(kerningGraph, kerning, new Point(-254, 2), new Point(-254, -53));
+
+        assertEquals(1, path.size());
+        assertEquals(BotNavigationGraph.EdgeType.JUMP, path.getFirst().type);
+        assertEquals(136, path.getFirst().toRegionId);
+        assertEquals(new Point(-243, -53), path.getFirst().endPoint);
     }
 
     @Test

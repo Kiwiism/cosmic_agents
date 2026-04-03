@@ -115,7 +115,7 @@ final class BotNavigationGraphProvider {
             regionsById.put(ropeRegion.id, ropeRegion);
         }
 
-        Map<Integer, List<Integer>> featureXsByRegionId = buildFeatureXsByRegionId(map, regionIdByFootholdId);
+        Map<Integer, List<Integer>> featureXsByRegionId = buildFeatureXsByRegionId(map, regions, regionIdByFootholdId);
         Map<Integer, List<BotNavigationGraph.Edge>> outgoing = new HashMap<>();
         Set<String> edgeKeys = new HashSet<>();
 
@@ -535,6 +535,7 @@ final class BotNavigationGraphProvider {
     }
 
     private static Map<Integer, List<Integer>> buildFeatureXsByRegionId(MapleMap map,
+                                                                        List<BotNavigationGraph.Region> regions,
                                                                         Map<Integer, Integer> regionIdByFootholdId) {
         Map<Integer, Set<Integer>> featureXs = new HashMap<>();
 
@@ -555,6 +556,15 @@ final class BotNavigationGraphProvider {
             }
         }
 
+        for (BotNavigationGraph.Region region : regions) {
+            if (region.isRopeRegion || region.width() > 64) {
+                continue;
+            }
+            projectRegionXsToRegionBelow(featureXs, map, regionIdByFootholdId, region.leftPoint());
+            projectRegionXsToRegionBelow(featureXs, map, regionIdByFootholdId, region.centerPoint());
+            projectRegionXsToRegionBelow(featureXs, map, regionIdByFootholdId, region.rightPoint());
+        }
+
         Map<Integer, List<Integer>> featuresByRegionId = new HashMap<>();
         for (Map.Entry<Integer, Set<Integer>> entry : featureXs.entrySet()) {
             List<Integer> xs = new ArrayList<>(entry.getValue());
@@ -562,6 +572,16 @@ final class BotNavigationGraphProvider {
             featuresByRegionId.put(entry.getKey(), xs);
         }
         return featuresByRegionId;
+    }
+
+    private static void projectRegionXsToRegionBelow(Map<Integer, Set<Integer>> featureXs,
+                                                     MapleMap map,
+                                                     Map<Integer, Integer> regionIdByFootholdId,
+                                                     Point point) {
+        if (point == null) {
+            return;
+        }
+        addFeatureX(featureXs, findRegionIdBelow(map, regionIdByFootholdId, new Point(point.x, point.y + 1)), point.x);
     }
 
     private static void addFeatureX(Map<Integer, Set<Integer>> featureXs, int regionId, int x) {
