@@ -378,8 +378,22 @@ final class BotNavigationManager {
     private static Point selectWaypoint(BotEntry entry, Point botPos, BotNavigationGraph.Edge edge) {
         return switch (edge.type) {
             case WALK -> new Point(edge.endPoint);
-            case JUMP, DROP, PORTAL, CLIMB -> entry.inAir ? new Point(edge.endPoint) : new Point(edge.startPoint);
+            case CLIMB -> selectClimbWaypoint(entry, botPos, edge);
+            case JUMP, DROP, PORTAL -> entry.inAir ? new Point(edge.endPoint) : new Point(edge.startPoint);
         };
+    }
+
+    static Point selectClimbWaypoint(BotEntry entry, Point botPos, BotNavigationGraph.Edge edge) {
+        if (entry.inAir) {
+            return new Point(edge.endPoint);
+        }
+        if (entry.climbing) {
+            BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(entry.bot.getMap());
+            if (canExecuteClimbExitFromCurrentPosition(graph, entry.bot.getMap(), botPos, edge)) {
+                return new Point(botPos);
+            }
+        }
+        return new Point(edge.startPoint);
     }
 
     private static BotNavigationGraph.Edge findNextEdge(BotNavigationGraph graph,

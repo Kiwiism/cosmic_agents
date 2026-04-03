@@ -1,11 +1,13 @@
 package server.bots;
 
 import client.Character;
+import org.junit.jupiter.api.BeforeAll;
 import server.maps.MapleMap;
 import server.maps.Rope;
 import org.junit.jupiter.api.Test;
 
 import java.awt.*;
+import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,6 +19,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class BotNavigationManagerTest {
+    private static MapleMap elliniaDungeon;
+
+    @BeforeAll
+    static void loadMaps() {
+        System.setProperty("wz-path", Path.of("wz").toAbsolutePath().toString());
+        elliniaDungeon = BotNavigationMapLoader.loadMapGeometry(103000000);
+        BotNavigationGraphProvider.rebuildGraph(elliniaDungeon);
+    }
+
     @Test
     void shouldPromoteFirstActionableEdgePastLeadingZeroDistanceWalks() {
         BotNavigationGraph.Edge collapsed = BotNavigationManager.collapseLeadingWalkEdges(List.of(
@@ -158,5 +169,25 @@ class BotNavigationManagerTest {
         assertTrue(BotNavigationManager.isWithinJumpFallbackTolerance(horizontalJump, 9, 0));
         assertTrue(BotNavigationManager.isWithinJumpFallbackTolerance(horizontalJump, 10, 0));
         assertFalse(BotNavigationManager.isWithinJumpFallbackTolerance(horizontalJump, 11, 0));
+    }
+
+    @Test
+    void shouldHoldCurrentPositionForExecutableClimbExit() {
+        Character bot = mock(Character.class);
+        when(bot.getMap()).thenReturn(elliniaDungeon);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.climbing = true;
+        entry.climbRope = new Rope(-1251, -137, 2, true);
+
+        BotNavigationGraph.Edge climbExit = new BotNavigationGraph.Edge(
+                189, 157, BotNavigationGraph.EdgeType.CLIMB,
+                new Point(-1251, -107), new Point(-1132, 156),
+                8, 0, -1251, -137, 2, 650
+        );
+
+        assertEquals(new Point(-1251, -104),
+                BotNavigationManager.selectClimbWaypoint(entry, new Point(-1251, -104), climbExit));
+        assertEquals(new Point(-1251, -107),
+                BotNavigationManager.selectClimbWaypoint(entry, new Point(-1251, -109), climbExit));
     }
 }
