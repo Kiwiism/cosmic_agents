@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 final class BotNavigationGraphProvider {
     private static final Logger log = LoggerFactory.getLogger(BotNavigationGraphProvider.class);
 
-    private static final int GRAPH_VERSION = 16;
+    private static final int GRAPH_VERSION = 17;
     private static final int WALK_CONNECTION_GAP_PX = 12;
     private static final int ENDPOINT_ANCHOR_SPACING_PX = 10;
     private static final int ROPE_ANCHOR_INTERVAL_PX = 30;
@@ -272,7 +272,7 @@ final class BotNavigationGraphProvider {
                 continue;
             }
 
-            int dropCost = estimateDropCost(anchor, landing.point()) + (dropStepX == 0 ? 300 : 0);
+            int dropCost = estimateDropCost(anchor, landing.point()) + (dropStepX == 0 ? 100 : 0);
             addEdge(from.id, below.id, BotNavigationGraph.EdgeType.DROP, anchor, landing.point(), dropStepX, 0, dropCost, outgoing, edgeKeys);
         }
     }
@@ -558,15 +558,22 @@ final class BotNavigationGraphProvider {
             return;
         }
 
-        BotNavigationGraph.Region from = findRegionBelow(map, regionsById, regionIdByFootholdId, portal.getPosition());
-        BotNavigationGraph.Region to = findRegionBelow(map, regionsById, regionIdByFootholdId, targetPortal.getPosition());
+        // Portal WZ positions can sit a few pixels below the foothold surface they belong to,
+        // causing findBelow to skip the correct foothold and land on the next lower platform.
+        // Probe MAX_SNAP_DROP above the portal position so findBelow always finds the right foothold.
+        int snapUp = BotPhysicsEngine.cfg.MAX_SNAP_DROP;
+        BotNavigationGraph.Region from = findRegionBelow(map, regionsById, regionIdByFootholdId,
+                new Point(portal.getPosition().x, portal.getPosition().y - snapUp));
+        BotNavigationGraph.Region to = findRegionBelow(map, regionsById, regionIdByFootholdId,
+                new Point(targetPortal.getPosition().x, targetPortal.getPosition().y - snapUp));
         if (from == null || to == null || from.id == to.id) {
             return;
         }
 
         Point start = from.pointAt(portal.getPosition().x);
         Point end = to.pointAt(targetPortal.getPosition().x);
-        addEdge(from.id, to.id, BotNavigationGraph.EdgeType.PORTAL, start, end, 0, portal.getId(), 100, outgoing, edgeKeys);
+        // Portals are instant teleports — cost is effectively 0 travel time.
+        addEdge(from.id, to.id, BotNavigationGraph.EdgeType.PORTAL, start, end, 0, portal.getId(), 1, outgoing, edgeKeys);
     }
 
     private static Map<Integer, List<Integer>> buildFeatureXsByRegionId(MapleMap map,
@@ -580,14 +587,17 @@ final class BotNavigationGraphProvider {
         }
 
         for (Portal portal : map.getPortals()) {
-            addFeatureX(featureXs, findRegionIdBelow(map, regionIdByFootholdId, portal.getPosition()), portal.getPosition().x);
+            int snapUp = BotPhysicsEngine.cfg.MAX_SNAP_DROP;
+            Point portalProbe = new Point(portal.getPosition().x, portal.getPosition().y - snapUp);
+            addFeatureX(featureXs, findRegionIdBelow(map, regionIdByFootholdId, portalProbe), portal.getPosition().x);
             if (portal.getTargetMapId() != map.getId()) {
                 continue;
             }
 
             Portal targetPortal = map.getPortal(portal.getTarget());
             if (targetPortal != null) {
-                addFeatureX(featureXs, findRegionIdBelow(map, regionIdByFootholdId, targetPortal.getPosition()), targetPortal.getPosition().x);
+                Point targetProbe = new Point(targetPortal.getPosition().x, targetPortal.getPosition().y - snapUp);
+                addFeatureX(featureXs, findRegionIdBelow(map, regionIdByFootholdId, targetProbe), targetPortal.getPosition().x);
             }
         }
 
