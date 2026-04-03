@@ -31,6 +31,155 @@ final class BotNavigationGraphProvider {
     private static final double REGION_MERGE_MIN_CONTINUATION_COSINE = 0.5; // 1 = straight, 0 = 90degree, negative = u-turn
     private static final Path CACHE_DIR = Path.of("cache", "bot-nav", "v" + GRAPH_VERSION);
     private static final Map<Integer, BotNavigationGraph> GRAPHS = new ConcurrentHashMap<>();
+    private static final Map<Integer, GraphBuildReport> LAST_BUILD_REPORTS = new ConcurrentHashMap<>();
+    private static final ThreadLocal<BuildProfileBuilder> ACTIVE_BUILD_PROFILE = new ThreadLocal<>();
+
+    static final class GraphBuildReport {
+        final int mapId;
+        final int footholdCount;
+        final int walkableFootholdCount;
+        final int ropeCount;
+        final int regionCount;
+        final int totalEdgeCount;
+        final int walkEdgeCount;
+        final int jumpEdgeCount;
+        final int dropEdgeCount;
+        final int climbEdgeCount;
+        final int portalEdgeCount;
+        final long collectFootholdsNs;
+        final long buildRegionsNs;
+        final long addRopeRegionsNs;
+        final long buildFeatureXsNs;
+        final long buildWalkEdgesNs;
+        final long buildDropEdgesNs;
+        final long buildJumpEdgesNs;
+        final long buildRopeEntryEdgesNs;
+        final long buildRopeExitEdgesNs;
+        final long buildPortalEdgesNs;
+        final long totalBuildNs;
+        final long jumpWindowProbeCount;
+        final long jumpWindowBoundarySearchCount;
+
+        GraphBuildReport(int mapId,
+                         int footholdCount,
+                         int walkableFootholdCount,
+                         int ropeCount,
+                         int regionCount,
+                         int totalEdgeCount,
+                         int walkEdgeCount,
+                         int jumpEdgeCount,
+                         int dropEdgeCount,
+                         int climbEdgeCount,
+                         int portalEdgeCount,
+                         long collectFootholdsNs,
+                         long buildRegionsNs,
+                         long addRopeRegionsNs,
+                         long buildFeatureXsNs,
+                         long buildWalkEdgesNs,
+                         long buildDropEdgesNs,
+                         long buildJumpEdgesNs,
+                         long buildRopeEntryEdgesNs,
+                         long buildRopeExitEdgesNs,
+                         long buildPortalEdgesNs,
+                         long totalBuildNs,
+                         long jumpWindowProbeCount,
+                         long jumpWindowBoundarySearchCount) {
+            this.mapId = mapId;
+            this.footholdCount = footholdCount;
+            this.walkableFootholdCount = walkableFootholdCount;
+            this.ropeCount = ropeCount;
+            this.regionCount = regionCount;
+            this.totalEdgeCount = totalEdgeCount;
+            this.walkEdgeCount = walkEdgeCount;
+            this.jumpEdgeCount = jumpEdgeCount;
+            this.dropEdgeCount = dropEdgeCount;
+            this.climbEdgeCount = climbEdgeCount;
+            this.portalEdgeCount = portalEdgeCount;
+            this.collectFootholdsNs = collectFootholdsNs;
+            this.buildRegionsNs = buildRegionsNs;
+            this.addRopeRegionsNs = addRopeRegionsNs;
+            this.buildFeatureXsNs = buildFeatureXsNs;
+            this.buildWalkEdgesNs = buildWalkEdgesNs;
+            this.buildDropEdgesNs = buildDropEdgesNs;
+            this.buildJumpEdgesNs = buildJumpEdgesNs;
+            this.buildRopeEntryEdgesNs = buildRopeEntryEdgesNs;
+            this.buildRopeExitEdgesNs = buildRopeExitEdgesNs;
+            this.buildPortalEdgesNs = buildPortalEdgesNs;
+            this.totalBuildNs = totalBuildNs;
+            this.jumpWindowProbeCount = jumpWindowProbeCount;
+            this.jumpWindowBoundarySearchCount = jumpWindowBoundarySearchCount;
+        }
+    }
+
+    private static final class BuildProfileBuilder {
+        private final int mapId;
+        private final long buildStartedAtNs = System.nanoTime();
+        private int footholdCount;
+        private int walkableFootholdCount;
+        private int ropeCount;
+        private int regionCount;
+        private int totalEdgeCount;
+        private int walkEdgeCount;
+        private int jumpEdgeCount;
+        private int dropEdgeCount;
+        private int climbEdgeCount;
+        private int portalEdgeCount;
+        private long collectFootholdsNs;
+        private long buildRegionsNs;
+        private long addRopeRegionsNs;
+        private long buildFeatureXsNs;
+        private long buildWalkEdgesNs;
+        private long buildDropEdgesNs;
+        private long buildJumpEdgesNs;
+        private long buildRopeEntryEdgesNs;
+        private long buildRopeExitEdgesNs;
+        private long buildPortalEdgesNs;
+        private long jumpWindowProbeCount;
+        private long jumpWindowBoundarySearchCount;
+
+        private BuildProfileBuilder(int mapId) {
+            this.mapId = mapId;
+        }
+
+        private void recordEdge(BotNavigationGraph.EdgeType type) {
+            totalEdgeCount++;
+            switch (type) {
+                case WALK -> walkEdgeCount++;
+                case JUMP -> jumpEdgeCount++;
+                case DROP -> dropEdgeCount++;
+                case CLIMB -> climbEdgeCount++;
+                case PORTAL -> portalEdgeCount++;
+            }
+        }
+
+        private GraphBuildReport finish() {
+            return new GraphBuildReport(
+                    mapId,
+                    footholdCount,
+                    walkableFootholdCount,
+                    ropeCount,
+                    regionCount,
+                    totalEdgeCount,
+                    walkEdgeCount,
+                    jumpEdgeCount,
+                    dropEdgeCount,
+                    climbEdgeCount,
+                    portalEdgeCount,
+                    collectFootholdsNs,
+                    buildRegionsNs,
+                    addRopeRegionsNs,
+                    buildFeatureXsNs,
+                    buildWalkEdgesNs,
+                    buildDropEdgesNs,
+                    buildJumpEdgesNs,
+                    buildRopeEntryEdgesNs,
+                    buildRopeExitEdgesNs,
+                    buildPortalEdgesNs,
+                    System.nanoTime() - buildStartedAtNs,
+                    jumpWindowProbeCount,
+                    jumpWindowBoundarySearchCount);
+        }
+    }
 
     private record JumpLaunchWindow(int minX, int maxX, Point startPoint, Point endPoint) {
     }
@@ -94,58 +243,114 @@ final class BotNavigationGraphProvider {
     }
 
     private static BotNavigationGraph buildGraph(MapleMap map) {
-        List<Foothold> footholds = map.getFootholds() == null ? List.of() : map.getFootholds().getAllFootholds();
-        Map<Integer, Foothold> footholdsById = new HashMap<>();
-        List<Foothold> walkableFootholds = new ArrayList<>();
-        for (Foothold foothold : footholds) {
-            footholdsById.put(foothold.getId(), foothold);
-            if (!foothold.isWall()) {
-                walkableFootholds.add(foothold);
+        BuildProfileBuilder profile = new BuildProfileBuilder(map.getId());
+        ACTIVE_BUILD_PROFILE.set(profile);
+        try {
+            List<Foothold> footholds = map.getFootholds() == null ? List.of() : map.getFootholds().getAllFootholds();
+            Map<Integer, Foothold> footholdsById = new HashMap<>();
+            List<Foothold> walkableFootholds = new ArrayList<>();
+            long phaseStartedAt = System.nanoTime();
+            for (Foothold foothold : footholds) {
+                footholdsById.put(foothold.getId(), foothold);
+                if (!foothold.isWall()) {
+                    walkableFootholds.add(foothold);
+                }
             }
-        }
+            profile.collectFootholdsNs = System.nanoTime() - phaseStartedAt;
+            profile.footholdCount = footholds.size();
+            profile.walkableFootholdCount = walkableFootholds.size();
+            profile.ropeCount = map.getRopes().size();
 
-        List<BotNavigationGraph.Region> regions = new ArrayList<>();
-        Map<Integer, BotNavigationGraph.Region> regionsById = new HashMap<>();
-        Map<Integer, Integer> regionIdByFootholdId = new HashMap<>();
-        buildRegions(walkableFootholds, footholdsById, regions, regionsById, regionIdByFootholdId);
+            List<BotNavigationGraph.Region> regions = new ArrayList<>();
+            Map<Integer, BotNavigationGraph.Region> regionsById = new HashMap<>();
+            Map<Integer, Integer> regionIdByFootholdId = new HashMap<>();
+            phaseStartedAt = System.nanoTime();
+            buildRegions(walkableFootholds, footholdsById, regions, regionsById, regionIdByFootholdId);
+            profile.buildRegionsNs = System.nanoTime() - phaseStartedAt;
 
-        int nextRegionId = regions.stream().mapToInt(r -> r.id).max().orElse(0) + 1;
-        for (Rope rope : map.getRopes()) {
-            BotNavigationGraph.Region ropeRegion = new BotNavigationGraph.Region(
-                    nextRegionId++, rope.x(), rope.topY(), rope.bottomY(), rope.isLadder());
-            regions.add(ropeRegion);
-            regionsById.put(ropeRegion.id, ropeRegion);
-        }
-
-        Map<Integer, List<Integer>> featureXsByRegionId = buildFeatureXsByRegionId(map, regions, regionIdByFootholdId);
-        Map<Integer, List<BotNavigationGraph.Edge>> outgoing = new HashMap<>();
-        Set<String> edgeKeys = new HashSet<>();
-
-        for (Foothold foothold : walkableFootholds) {
-            addWalkEdges(foothold, footholdsById, regionsById, regionIdByFootholdId, outgoing, edgeKeys);
-        }
-
-        for (BotNavigationGraph.Region region : regions) {
-            if (region.isRopeRegion) {
-                continue;
+            phaseStartedAt = System.nanoTime();
+            int nextRegionId = regions.stream().mapToInt(r -> r.id).max().orElse(0) + 1;
+            for (Rope rope : map.getRopes()) {
+                BotNavigationGraph.Region ropeRegion = new BotNavigationGraph.Region(
+                        nextRegionId++, rope.x(), rope.topY(), rope.bottomY(), rope.isLadder());
+                regions.add(ropeRegion);
+                regionsById.put(ropeRegion.id, ropeRegion);
             }
-            addDropEdges(region, map, regionsById, regionIdByFootholdId, featureXsByRegionId, outgoing, edgeKeys);
-            addJumpEdges(region, map, regionsById, regionIdByFootholdId, featureXsByRegionId, outgoing, edgeKeys);
-        }
+            profile.addRopeRegionsNs = System.nanoTime() - phaseStartedAt;
+            profile.regionCount = regions.size();
 
-        for (BotNavigationGraph.Region region : regions) {
-            if (!region.isRopeRegion) {
-                continue;
+            phaseStartedAt = System.nanoTime();
+            Map<Integer, List<Integer>> featureXsByRegionId = buildFeatureXsByRegionId(map, regions, regionIdByFootholdId);
+            profile.buildFeatureXsNs = System.nanoTime() - phaseStartedAt;
+            Map<Integer, List<BotNavigationGraph.Edge>> outgoing = new HashMap<>();
+            Set<String> edgeKeys = new HashSet<>();
+
+            phaseStartedAt = System.nanoTime();
+            for (Foothold foothold : walkableFootholds) {
+                addWalkEdges(foothold, footholdsById, regionsById, regionIdByFootholdId, outgoing, edgeKeys);
             }
-            addRopeEntryEdges(region, map, regionsById, featureXsByRegionId, outgoing, edgeKeys);
-            addRopeExitEdges(region, map, regionsById, regionIdByFootholdId, outgoing, edgeKeys);
-        }
+            profile.buildWalkEdgesNs = System.nanoTime() - phaseStartedAt;
 
-        for (Portal portal : map.getPortals()) {
-            addPortalEdges(portal, map, regionsById, regionIdByFootholdId, outgoing, edgeKeys);
-        }
+            phaseStartedAt = System.nanoTime();
+            for (BotNavigationGraph.Region region : regions) {
+                if (region.isRopeRegion) {
+                    continue;
+                }
+                addDropEdges(region, map, regionsById, regionIdByFootholdId, featureXsByRegionId, outgoing, edgeKeys);
+            }
+            profile.buildDropEdgesNs = System.nanoTime() - phaseStartedAt;
 
-        return new BotNavigationGraph(map.getId(), GRAPH_VERSION, regions, regionsById, regionIdByFootholdId, outgoing);
+            phaseStartedAt = System.nanoTime();
+            for (BotNavigationGraph.Region region : regions) {
+                if (region.isRopeRegion) {
+                    continue;
+                }
+                addJumpEdges(region, map, regionsById, regionIdByFootholdId, featureXsByRegionId, outgoing, edgeKeys);
+            }
+            profile.buildJumpEdgesNs = System.nanoTime() - phaseStartedAt;
+
+            phaseStartedAt = System.nanoTime();
+            for (BotNavigationGraph.Region region : regions) {
+                if (!region.isRopeRegion) {
+                    continue;
+                }
+                addRopeEntryEdges(region, map, regionsById, featureXsByRegionId, outgoing, edgeKeys);
+            }
+            profile.buildRopeEntryEdgesNs = System.nanoTime() - phaseStartedAt;
+
+            phaseStartedAt = System.nanoTime();
+            for (BotNavigationGraph.Region region : regions) {
+                if (!region.isRopeRegion) {
+                    continue;
+                }
+                addRopeExitEdges(region, map, regionsById, regionIdByFootholdId, outgoing, edgeKeys);
+            }
+            profile.buildRopeExitEdgesNs = System.nanoTime() - phaseStartedAt;
+
+            phaseStartedAt = System.nanoTime();
+            for (Portal portal : map.getPortals()) {
+                addPortalEdges(portal, map, regionsById, regionIdByFootholdId, outgoing, edgeKeys);
+            }
+            profile.buildPortalEdgesNs = System.nanoTime() - phaseStartedAt;
+
+            BotNavigationGraph graph = new BotNavigationGraph(map.getId(), GRAPH_VERSION, regions, regionsById, regionIdByFootholdId, outgoing);
+            GraphBuildReport report = profile.finish();
+            LAST_BUILD_REPORTS.put(map.getId(), report);
+            log.debug("Built bot nav graph map {} in {} ms (regions={}, edges={}, jump={} ms, probes={})",
+                    map.getId(),
+                    String.format("%.2f", report.totalBuildNs / 1_000_000.0),
+                    report.regionCount,
+                    report.totalEdgeCount,
+                    String.format("%.2f", report.buildJumpEdgesNs / 1_000_000.0),
+                    report.jumpWindowProbeCount);
+            return graph;
+        } finally {
+            ACTIVE_BUILD_PROFILE.remove();
+        }
+    }
+
+    static GraphBuildReport getLastBuildReport(int mapId) {
+        return LAST_BUILD_REPORTS.get(mapId);
     }
 
     private static void buildRegions(List<Foothold> footholds,
@@ -347,6 +552,10 @@ final class BotNavigationGraphProvider {
                                               int launchStepX,
                                               int targetRegionId,
                                               boolean searchLeft) {
+        BuildProfileBuilder profile = ACTIVE_BUILD_PROFILE.get();
+        if (profile != null) {
+            profile.jumpWindowBoundarySearchCount++;
+        }
         int validX = anchorX;
         int invalidX = anchorX;
         int step = 1;
@@ -388,6 +597,10 @@ final class BotNavigationGraphProvider {
                                              Point start,
                                              int launchStepX,
                                              int targetRegionId) {
+        BuildProfileBuilder profile = ACTIVE_BUILD_PROFILE.get();
+        if (profile != null) {
+            profile.jumpWindowProbeCount++;
+        }
         BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateJumpLanding(map, start, launchStepX);
         if (landing == null) {
             return false;
@@ -806,6 +1019,10 @@ final class BotNavigationGraphProvider {
         outgoing.computeIfAbsent(fromRegionId, ignored -> new ArrayList<>())
                 .add(new BotNavigationGraph.Edge(fromRegionId, toRegionId, type, startPoint, endPoint,
                         launchMinX, launchMaxX, launchStepX, portalId, ropeX, ropeTopY, ropeBottomY, cost));
+        BuildProfileBuilder profile = ACTIVE_BUILD_PROFILE.get();
+        if (profile != null) {
+            profile.recordEdge(type);
+        }
     }
 
     private static EndpointConnection closestEndpointConnection(Foothold first, Foothold second) {

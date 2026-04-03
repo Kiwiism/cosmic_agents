@@ -13,6 +13,16 @@ public final class BotNavigationProbe {
     private BotNavigationProbe() {
     }
 
+    public static List<String> rebuildGraphReport(MapleMap map) {
+        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
+        return formatBuildReport(graph, BotNavigationGraphProvider.getLastBuildReport(map.getId()));
+    }
+
+    public static List<String> lastBuildReport(MapleMap map) {
+        return formatBuildReport(BotNavigationGraphProvider.getGraph(map),
+                BotNavigationGraphProvider.getLastBuildReport(map.getId()));
+    }
+
     public static void main(String[] args) {
         if (args.length == 0) {
             printUsage();
@@ -48,6 +58,11 @@ public final class BotNavigationProbe {
                 : BotNavigationGraphProvider.getGraph(map);
 
         printSummary(map, graph);
+        if (rebuild) {
+            for (String line : formatBuildReport(graph, BotNavigationGraphProvider.getLastBuildReport(map.getId()))) {
+                System.out.println(line);
+            }
+        }
         for (Point point : points) {
             probePoint(map, graph, point);
         }
@@ -127,6 +142,53 @@ public final class BotNavigationProbe {
 
         System.out.printf("Map %d  walkStep=%d  regions=%d  edges walk=%d jump=%d drop=%d climb=%d portal=%d%n",
                 map.getId(), BotMovementManager.walkStep(map), graph.regions.size(), walkEdges, jumpEdges, dropEdges, climbEdges, portalEdges);
+    }
+
+    private static List<String> formatBuildReport(BotNavigationGraph graph,
+                                                  BotNavigationGraphProvider.GraphBuildReport report) {
+        if (report == null) {
+            return List.of("Bot nav build report unavailable.");
+        }
+
+        List<String> lines = new ArrayList<>();
+        lines.add(String.format(
+                "Bot nav rebuild map=%d total=%.2fms regions=%d edges=%d footholds=%d walkable=%d ropes=%d",
+                report.mapId,
+                nanosToMs(report.totalBuildNs),
+                report.regionCount,
+                report.totalEdgeCount,
+                report.footholdCount,
+                report.walkableFootholdCount,
+                report.ropeCount));
+        lines.add(String.format(
+                "Phases: collect=%.2f regions=%.2f ropeRegions=%.2f features=%.2f walk=%.2f drop=%.2f jump=%.2f ropeIn=%.2f ropeOut=%.2f portal=%.2f ms",
+                nanosToMs(report.collectFootholdsNs),
+                nanosToMs(report.buildRegionsNs),
+                nanosToMs(report.addRopeRegionsNs),
+                nanosToMs(report.buildFeatureXsNs),
+                nanosToMs(report.buildWalkEdgesNs),
+                nanosToMs(report.buildDropEdgesNs),
+                nanosToMs(report.buildJumpEdgesNs),
+                nanosToMs(report.buildRopeEntryEdgesNs),
+                nanosToMs(report.buildRopeExitEdgesNs),
+                nanosToMs(report.buildPortalEdgesNs)));
+        lines.add(String.format(
+                "Edges: walk=%d jump=%d drop=%d climb=%d portal=%d | jumpWindow probes=%d boundarySearches=%d",
+                report.walkEdgeCount,
+                report.jumpEdgeCount,
+                report.dropEdgeCount,
+                report.climbEdgeCount,
+                report.portalEdgeCount,
+                report.jumpWindowProbeCount,
+                report.jumpWindowBoundarySearchCount));
+        if (graph != null) {
+            lines.add(String.format("Cache: version=%d map=%d regions=%d", graph.version, graph.mapId, graph.regions.size()));
+        }
+        return lines;
+    }
+
+    private static double nanosToMs(long nanos) {
+        return nanos / 1_000_000.0;
     }
 
     private static void probePoint(MapleMap map, BotNavigationGraph graph, Point point) {

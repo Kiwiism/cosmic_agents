@@ -141,6 +141,7 @@ import client.command.commands.gm3.PosCommand;
 import client.command.commands.gm3.QuestCompleteCommand;
 import client.command.commands.gm3.QuestResetCommand;
 import client.command.commands.gm3.QuestStartCommand;
+import client.command.commands.gm3.RegenNavCommand;
 import client.command.commands.gm3.ReloadDropsCommand;
 import client.command.commands.gm3.ReloadEventsCommand;
 import client.command.commands.gm3.ReloadMapCommand;
@@ -452,6 +453,7 @@ public class CommandsExecutor {
         addCommand("spawn", 3, SpawnCommand.class);
         addCommand(new String[]{"deletechar", "delchar"}, 3, DeleteCharCommand.class);
         addCommand("botnav", 3, BotNavCommand.class);
+        addCommand("regennav", 3, RegenNavCommand.class);
         addCommand("mutemap", 3, MuteMapCommand.class);
         addCommand("checkdmg", 3, CheckDmgCommand.class);
         addCommand("inmap", 3, InMapCommand.class);

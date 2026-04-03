@@ -127,6 +127,19 @@ class BotNavigationGraphProviderTest {
     }
 
     @Test
+    void shouldCaptureGraphBuildReportForRebuild() {
+        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(kpqS1);
+        BotNavigationGraphProvider.GraphBuildReport report = BotNavigationGraphProvider.getLastBuildReport(kpqS1.getId());
+
+        assertNotNull(report);
+        assertEquals(kpqS1.getId(), report.mapId);
+        assertEquals(graph.regions.size(), report.regionCount);
+        assertTrue(report.totalBuildNs > 0);
+        assertTrue(report.totalEdgeCount > 0);
+        assertTrue(report.jumpWindowProbeCount > 0);
+    }
+
+    @Test
     void shouldPrecomputeLaunchWindowForKerningConstructionSlopeJump() {
         List<BotNavigationGraph.Edge> path = findPath(kpqS1Graph, kpqS1,
                 new Point(449, 113), new Point(1, -341));
