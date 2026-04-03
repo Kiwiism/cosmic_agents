@@ -331,16 +331,7 @@ class BotMovementManager {
                 return;
             }
 
-            // While grinding, clamp target X away from foothold edges so knockback
-            // doesn't send the bot off the platform (same issue real players face).
-            // Skip when a navEdge is active — the bot intentionally walks to the edge then.
-            if (entry.grinding && entry.navEdge == null) {
-                int safeLeft  = currentFh.getX1() + cfg.GRIND_EDGE_MARGIN;
-                int safeRight = currentFh.getX2() - cfg.GRIND_EDGE_MARGIN;
-                if (safeLeft < safeRight) {
-                    targetPos = new Point(Math.max(safeLeft, Math.min(safeRight, targetPos.x)), targetPos.y);
-                }
-            }
+            targetPos = adjustGrindingTargetPosition(entry, currentFh, targetPos);
 
             MoveAction action = planGroundAction(entry, botPos, targetPos);
             applyGroundAction(entry, currentFh, action);
@@ -360,6 +351,28 @@ class BotMovementManager {
             return 1;
         }
         return 4;
+    }
+
+    static Point adjustGrindingTargetPosition(BotEntry entry, Foothold currentFh, Point targetPos) {
+        if (!entry.grinding || entry.navEdge != null || currentFh == null || targetPos == null) {
+            return targetPos;
+        }
+
+        // Keep the anti-ledge margin only for truly local same-foothold combat.
+        // When the target is elsewhere in the same merged walk region, the bot must
+        // be allowed to walk through foothold joints and platform edges to reach it.
+        Foothold targetFh = BotPhysicsEngine.findGroundFoothold(entry.bot.getMap(), targetPos);
+        if (targetFh == null || targetFh.getId() != currentFh.getId()) {
+            return targetPos;
+        }
+
+        int safeLeft = currentFh.getX1() + cfg.GRIND_EDGE_MARGIN;
+        int safeRight = currentFh.getX2() - cfg.GRIND_EDGE_MARGIN;
+        if (safeLeft >= safeRight) {
+            return targetPos;
+        }
+
+        return new Point(Math.max(safeLeft, Math.min(safeRight, targetPos.x)), targetPos.y);
     }
 
     private static MoveAction planGroundAction(BotEntry entry, Point botPos, Point targetPos) {

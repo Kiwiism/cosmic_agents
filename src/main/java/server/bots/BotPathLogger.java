@@ -80,13 +80,14 @@ final class BotPathLogger {
 
         BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(entry.bot.getMap());
         Point botPos = entry.bot.getPosition();
+        Point pathTargetPos = resolvePathTargetPos(entry, ownerPos);
         int botRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, entry.bot.getMap(), botPos);
-        int ownerRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, entry.bot.getMap(), ownerPos);
+        int targetRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, entry.bot.getMap(), pathTargetPos);
 
         StringBuilder sb = new StringBuilder(4096);
         appendHeader(sb, now, note);
-        appendCurrentState(sb, entry, ownerPos, botPos, botRegionId, ownerRegionId);
-        appendCurrentPath(sb, entry, ownerPos, ownerRegionId, botRegionId, graph);
+        appendCurrentState(sb, entry, pathTargetPos, botPos, botRegionId, targetRegionId);
+        appendCurrentPath(sb, entry, pathTargetPos, targetRegionId, botRegionId, graph);
         appendHistory(sb);
 
         try {
@@ -157,6 +158,14 @@ final class BotPathLogger {
             }
         }
         sb.append("\n");
+    }
+
+    private Point resolvePathTargetPos(BotEntry entry, Point ownerPos) {
+        if (entry.grinding && entry.grindTarget != null && entry.grindTarget.isAlive()
+                && entry.grindTarget.getMap() == entry.bot.getMap()) {
+            return entry.grindTarget.getPosition();
+        }
+        return ownerPos;
     }
 
     private void appendHistory(StringBuilder sb) {

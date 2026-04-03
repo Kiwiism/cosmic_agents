@@ -19,6 +19,47 @@ import static org.mockito.Mockito.when;
 
 class BotMovementManagerTest {
     @Test
+    void shouldClampGrindingTargetAwayFromCurrentFootholdEdgeForSameFootholdCombat() {
+        MapleMap map = new MapleMap(910000007, 0, 0, 910000007, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        Foothold foothold = new Foothold(new Point(0, 100), new Point(200, 100), 1);
+        footholds.insert(foothold);
+        map.setFootholds(footholds);
+
+        Character bot = mock(Character.class);
+        when(bot.getMap()).thenReturn(map);
+
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.grinding = true;
+
+        Point adjusted = BotMovementManager.adjustGrindingTargetPosition(entry, foothold, new Point(190, 100));
+
+        assertEquals(new Point(160, 100), adjusted);
+    }
+
+    @Test
+    void shouldNotClampGrindingTargetWhenTargetIsOnDifferentFoothold() {
+        MapleMap map = new MapleMap(910000008, 0, 0, 910000008, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        Foothold leftFoothold = new Foothold(new Point(-200, 100), new Point(0, 100), 1);
+        Foothold rightFoothold = new Foothold(new Point(1, 100), new Point(200, 100), 2);
+        footholds.insert(leftFoothold);
+        footholds.insert(rightFoothold);
+        map.setFootholds(footholds);
+
+        Character bot = mock(Character.class);
+        when(bot.getMap()).thenReturn(map);
+
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.grinding = true;
+
+        Point targetPos = new Point(190, 100);
+        Point adjusted = BotMovementManager.adjustGrindingTargetPosition(entry, leftFoothold, targetPos);
+
+        assertEquals(targetPos, adjusted);
+    }
+
+    @Test
     void shouldNotHoldClimbIdleWhileCommittedClimbEdgeIsActive() {
         BotEntry entry = new BotEntry(null, null, null);
         entry.navEdge = new BotNavigationGraph.Edge(
