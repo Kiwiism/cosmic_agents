@@ -74,6 +74,9 @@ public class BotManager {
         public int   BASE_MP_RECOVERY = 3;
         public float AUTOPOT_HP_THRESH = 0.7f; // use HP pot when HP falls below this ratio
         public float AUTOPOT_MP_THRESH = 0.5f; // use MP pot when MP falls below this ratio
+
+        // Follow stagger: each bot is offset this many px from the owner (index-based, alternating left/right)
+        public int FOLLOW_STAGGER = 60;
     }
 
     /** Singleton config — replace with `cfg = new Config()` after hotswapping to reset. */
@@ -83,11 +86,33 @@ public class BotManager {
 
     // ownerCharId → list of owned bot entries (1:N)
     private final Map<Integer, List<BotEntry>> bots = new ConcurrentHashMap<>();
+    // ownerCharId → current formation (in-memory only, defaults to stagger)
+    private final Map<Integer, FormationState> ownerFormations = new ConcurrentHashMap<>();
+
+    enum FormationType { STAGGER, RANDOM, STACK, SPREAD, LEFT, RIGHT }
+
+    record FormationState(FormationType type, int px) {
+        static FormationState defaultStagger() { return new FormationState(FormationType.STAGGER, cfg.FOLLOW_STAGGER); }
+        int offsetFor(int idx) {
+            return switch (type) {
+                case STAGGER -> (idx % 2 == 0 ? 1 : -1) * (idx / 2 + 1) * px;
+                case RANDOM  -> ThreadLocalRandom.current().nextInt(-px, px + 1);
+                case STACK   -> 0;
+                // idx 0 = owner, then alternating ±: 0, +px, -px, +2px, -2px …
+                case SPREAD  -> idx == 0 ? 0 : (idx % 2 == 1 ? 1 : -1) * ((idx + 1) / 2) * px;
+                case LEFT    -> -(idx + 1) * px;
+                case RIGHT   ->  (idx + 1) * px;
+            };
+        }
+    }
 
     private static final Pattern DISMISS_PATTERN = Pattern.compile(
             "\\b(dismiss|disown|release)\\s+(\\S+)\\b", Pattern.CASE_INSENSITIVE);
     private static final Pattern RECRUIT_PATTERN = Pattern.compile(
             "\\b(recruit|adopt|hire|claim)\\s+(\\S+)\\b", Pattern.CASE_INSENSITIVE);
+    private static final Pattern FORMATION_PATTERN = Pattern.compile(
+            "\\bformation\\b(?:\\s+(stagger|split|random|stack|spread|tight|loose|left|right)(?:\\s+(\\d+|tight|loose))?)?",
+            Pattern.CASE_INSENSITIVE);
     // Reserve `give ...` for item requests handled by BotChatManager.
     private static final Pattern TRANSFER_PATTERN = Pattern.compile(
             "\\btransfer\\s+(\\S+)(?:\\s+to)?\\s+(\\S+)\\b", Pattern.CASE_INSENSITIVE);
@@ -256,6 +281,8 @@ public class BotManager {
                 () -> tick(ownerCharId, botCharId), BotMovementManager.cfg.TICK_MS);
         BotEntry entry = new BotEntry(bot, owner, task);
         entries.add(entry);
+        FormationState fs = ownerFormations.getOrDefault(ownerCharId, FormationState.defaultStagger());
+        entry.followOffsetX = fs.offsetFor(entries.size() - 1);
         if (normalizeSpawnState) {
             normalizeSpawnedBot(entry);
         }
@@ -571,6 +598,47 @@ public class BotManager {
             String err = giveBot(owner.getId(), owner, transferCommand.botName(), transferCommand.targetName());
             if (err != null) owner.yellowMessage(err);
             else owner.yellowMessage("Bot '" + transferCommand.botName() + "' transferred to " + transferCommand.targetName() + ".");
+            return;
+        }
+
+        // Formation command
+        Matcher fm = FORMATION_PATTERN.matcher(message);
+        if (fm.find()) {
+            String typeStr = fm.group(1);
+            List<BotEntry> fEntries = bots.get(owner.getId());
+            if (typeStr == null) {
+                String help = "formations: stagger/split/random/spread/left/right <px>, stack, tight, loose";
+                if (fEntries != null && !fEntries.isEmpty()) BotChatManager.queueBotSay(fEntries.get(0), help);
+                else owner.yellowMessage(help);
+                return;
+            }
+            String pxToken = fm.group(2);
+            int defaultPx = pxToken == null          ? cfg.FOLLOW_STAGGER
+                          : pxToken.equalsIgnoreCase("tight") ? 30
+                          : pxToken.equalsIgnoreCase("loose") ? 120
+                          : Integer.parseInt(pxToken);
+            FormationType type;
+            int px = defaultPx;
+            switch (typeStr.toLowerCase()) {
+                case "tight"          -> { type = FormationType.STAGGER; px = 30; }
+                case "loose"          -> { type = FormationType.STAGGER; px = 120; }
+                case "stack"          -> { type = FormationType.STACK;   px = 0; }
+                case "spread"         -> { type = FormationType.SPREAD;  px = defaultPx; }
+                case "left"           -> { type = FormationType.LEFT;    px = defaultPx; }
+                case "right"          -> { type = FormationType.RIGHT;   px = defaultPx; }
+                case "random"         -> { type = FormationType.RANDOM;  px = defaultPx; }
+                case "split","stagger"-> { type = FormationType.STAGGER; px = defaultPx; }
+                default               -> { type = FormationType.STAGGER; px = defaultPx; }
+            }
+            FormationState fs = new FormationState(type, px);
+            ownerFormations.put(owner.getId(), fs);
+            if (fEntries != null) {
+                for (int i = 0; i < fEntries.size(); i++) fEntries.get(i).followOffsetX = fs.offsetFor(i);
+                if (!fEntries.isEmpty()) {
+                    String label = typeStr.toLowerCase() + (px > 0 ? " " + px + "px" : "");
+                    BotChatManager.queueBotSay(fEntries.get(0), "formation: " + label);
+                }
+            }
             return;
         }
 

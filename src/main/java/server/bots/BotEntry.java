@@ -129,8 +129,8 @@ public class BotEntry {
     int lastMapId = -1;
     Map<Integer, Foothold> fhIndex = new HashMap<>();
 
-    // Human-like spacing and stagger
-    final int followOffsetX = ThreadLocalRandom.current().nextInt(-100, 101);
+    // Human-like spacing and stagger — assigned at registration based on bot index
+    int followOffsetX = 0;
     int skipDelayMs = ThreadLocalRandom.current().nextInt(0, 501);
     int aiTickAccumulatorMs = 0;
 
