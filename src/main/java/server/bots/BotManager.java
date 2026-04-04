@@ -93,10 +93,11 @@ public class BotManager {
 
     record FormationState(FormationType type, int px) {
         static FormationState defaultStagger() { return new FormationState(FormationType.STAGGER, cfg.FOLLOW_STAGGER); }
-        int offsetFor(int idx) {
+        int offsetFor(int idx, int total) {
             return switch (type) {
                 case STAGGER -> (idx % 2 == 0 ? 1 : -1) * (idx / 2 + 1) * px;
-                case RANDOM  -> ThreadLocalRandom.current().nextInt(-px, px + 1);
+                // range scales with total so avg spread matches stagger: ±(px/2 * total)
+                case RANDOM  -> { int range = px * total / 2; yield range > 0 ? ThreadLocalRandom.current().nextInt(-range, range + 1) : 0; }
                 case STACK   -> 0;
                 // idx 0 = owner, then alternating ±: 0, +px, -px, +2px, -2px …
                 case SPREAD  -> idx == 0 ? 0 : (idx % 2 == 1 ? 1 : -1) * ((idx + 1) / 2) * px;
@@ -282,7 +283,7 @@ public class BotManager {
         BotEntry entry = new BotEntry(bot, owner, task);
         entries.add(entry);
         FormationState fs = ownerFormations.getOrDefault(ownerCharId, FormationState.defaultStagger());
-        entry.followOffsetX = fs.offsetFor(entries.size() - 1);
+        entry.followOffsetX = fs.offsetFor(entries.size() - 1, entries.size());
         if (normalizeSpawnState) {
             normalizeSpawnedBot(entry);
         }
@@ -633,7 +634,7 @@ public class BotManager {
             FormationState fs = new FormationState(type, px);
             ownerFormations.put(owner.getId(), fs);
             if (fEntries != null) {
-                for (int i = 0; i < fEntries.size(); i++) fEntries.get(i).followOffsetX = fs.offsetFor(i);
+                for (int i = 0; i < fEntries.size(); i++) fEntries.get(i).followOffsetX = fs.offsetFor(i, fEntries.size());
                 if (!fEntries.isEmpty()) {
                     String label = typeStr.toLowerCase() + (px > 0 ? " " + px + "px" : "");
                     BotChatManager.queueBotSay(fEntries.get(0), "formation: " + label);
