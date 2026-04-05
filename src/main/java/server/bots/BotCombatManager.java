@@ -9,16 +9,25 @@ import client.inventory.Item;
 import client.inventory.WeaponType;
 import constants.skills.Assassin;
 import constants.skills.Bandit;
+import constants.skills.BlazeWizard;
 import constants.skills.Bowmaster;
 import constants.skills.Buccaneer;
 import constants.skills.Cleric;
 import constants.skills.Corsair;
 import constants.skills.DawnWarrior;
+import constants.skills.DragonKnight;
+import constants.skills.Evan;
 import constants.skills.Fighter;
+import constants.skills.FPMage;
 import constants.skills.GM;
+import constants.skills.Hermit;
+import constants.skills.ILMage;
 import constants.skills.Marksman;
+import constants.skills.NightLord;
 import constants.skills.NightWalker;
 import constants.skills.Priest;
+import constants.skills.Rogue;
+import constants.skills.Shadower;
 import constants.skills.Spearman;
 import constants.skills.SuperGM;
 import constants.skills.ThunderBreaker;
@@ -41,7 +50,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 class BotCombatManager {
 
-    private enum AttackRoute {
+    enum AttackRoute {
         CLOSE,
         RANGED,
         MAGIC
@@ -441,11 +450,6 @@ class BotCombatManager {
             return;
         }
 
-        int watk = bot.getTotalWatk();
-        int maxDmg = Math.max(1, bot.calculateMaxBaseDamage(watk));
-        int minDmg = Math.max(1, bot.calculateMinBaseDamage(watk));
-
-        Monster primaryTarget = attackPlan.primaryTarget();
         int numAttacked = attackPlan.targets.size();
         AbstractDealDamageHandler.AttackInfo attack = new AbstractDealDamageHandler.AttackInfo();
         attack.skill = attackPlan.skillId;
@@ -459,14 +463,19 @@ class BotCombatManager {
         attack.direction = attackPlan.direction;
         attack.rangedirection = attackPlan.rangedDirection;
         attack.ranged = attackPlan.route == AttackRoute.RANGED;
-        attack.magic = attackPlan.route == AttackRoute.MAGIC;
+        DamageProfile damageProfile = resolveDamageProfile(bot, attackPlan.skillId, attackPlan.skillLevel,
+                attackPlan.route == AttackRoute.MAGIC);
+        attack.magic = damageProfile.magicAttack();
         attack.targets = new HashMap<>();
 
-        boolean isMagic = attackPlan.route == AttackRoute.MAGIC;
         for (Monster target : attackPlan.targets) {
-            int[] adj = applyMonsterDefense(bot, target, minDmg, maxDmg, isMagic);
+            int[] adj = damageProfile.alwaysHit()
+                    ? new int[]{damageProfile.minDamage(), damageProfile.maxDamage()}
+                    : applyMonsterDefense(bot, target, damageProfile.minDamage(), damageProfile.maxDamage(),
+                    damageProfile.magicAttack());
             attack.targets.put(target.getObjectId(),
-                    makeTarget(bot, target, attackPlan.numDamage, adj[0], adj[1], attackPlan.hitDelayMs, isMagic));
+                    makeTarget(bot, target, attackPlan.numDamage, adj[0], adj[1], attackPlan.hitDelayMs,
+                            damageProfile.magicAttack(), damageProfile.alwaysHit()));
         }
 
         applyAttackRoute(attackPlan.route, attack, bot);
@@ -966,7 +975,7 @@ class BotCombatManager {
     }
 
     private static AttackRoute determineBasicAttackRoute(Character bot) {
-        return determineWeaponRoute(getEquippedWeaponType(bot));
+        return determineBasicWeaponRoute(getEquippedWeaponType(bot));
     }
 
     private static boolean canUseRangedAttackRoute(AttackRoute route, WeaponType weaponType, Point botPos, Point targetPos) {
@@ -984,6 +993,17 @@ class BotCombatManager {
         }
 
         return determineWeaponRoute(weaponType);
+    }
+
+    static AttackRoute determineBasicWeaponRoute(WeaponType weaponType) {
+        if (weaponType == null) {
+            return AttackRoute.CLOSE;
+        }
+
+        return switch (weaponType) {
+            case BOW, CROSSBOW, CLAW, GUN -> AttackRoute.RANGED;
+            default -> AttackRoute.CLOSE;
+        };
     }
 
     private static AttackRoute determineWeaponRoute(WeaponType weaponType) {
@@ -1061,7 +1081,7 @@ class BotCombatManager {
             List<String> candidateActions = resolveAttackActions(attackSpec, profile.getSourceActions());
             String action = sampleAttackAction(candidateActions, fallbackAction);
             int variantOffset = Math.max(0, attackSpec.actions().indexOf(action));
-            AttackRoute route = useDegenerateCloseRange ? AttackRoute.CLOSE : determineWeaponRoute(weaponType);
+            AttackRoute route = useDegenerateCloseRange ? AttackRoute.CLOSE : determineBasicWeaponRoute(weaponType);
             boolean closeRangeRoute = route == AttackRoute.CLOSE;
             CloseRangePacketFields closeRangePacketFields = mimicCloseRangePacketFields(action, fallbackAction, facingLeft);
             int display = closeRangeRoute ? closeRangePacketFields.display() : baseDisplay + variantOffset;
@@ -1101,7 +1121,7 @@ class BotCombatManager {
             BasicAttackSpec attackSpec = basicAttackSpec(weaponType, useDegenerateCloseRange);
             String action = sampleAttackAction(attackSpec.actions(), attackSpec.primaryAction());
             int variantOffset = Math.max(0, attackSpec.actions().indexOf(action));
-            AttackRoute route = useDegenerateCloseRange ? AttackRoute.CLOSE : determineWeaponRoute(weaponType);
+            AttackRoute route = useDegenerateCloseRange ? AttackRoute.CLOSE : determineBasicWeaponRoute(weaponType);
             boolean closeRangeRoute = route == AttackRoute.CLOSE;
             CloseRangePacketFields closeRangePacketFields =
                     mimicCloseRangePacketFields(action, attackSpec.primaryAction(), facingLeft);
@@ -1145,6 +1165,9 @@ class BotCombatManager {
     }
 
     record SkillAttackTiming(int hitDelayMs, int cooldownMs) {
+    }
+
+    record DamageProfile(int minDamage, int maxDamage, boolean magicAttack, boolean alwaysHit) {
     }
 
     private static int resolveSkillAttackDelayMillis(Skill skill) {
@@ -1288,11 +1311,123 @@ class BotCombatManager {
 
     private static AbstractDealDamageHandler.AttackTarget makeTarget(Character bot, Monster monster, int hits,
                                                                      int minDmg, int maxDmg, int hitDelayMs,
-                                                                     boolean magicAttack) {
-        List<Integer> lines = BotCombatFormulaProvider.getInstance()
-                .rollDamageLines(bot, monster, hits, minDmg, maxDmg, magicAttack);
+                                                                     boolean magicAttack, boolean alwaysHit) {
+        List<Integer> lines = alwaysHit
+                ? BotCombatFormulaProvider.getInstance().rollDamageLines(hits, minDmg, maxDmg, 1.0d)
+                : BotCombatFormulaProvider.getInstance().rollDamageLines(bot, monster, hits, minDmg, maxDmg, magicAttack);
         int normalizedHitDelay = Math.max(0, Math.min(Short.MAX_VALUE, hitDelayMs));
         return new AbstractDealDamageHandler.AttackTarget((short) normalizedHitDelay, lines);
+    }
+
+    static DamageProfile resolveDamageProfile(Character bot, int skillId, int skillLevel, boolean magicAttack) {
+        Skill skill = skillId != 0 ? SkillFactory.getSkill(skillId) : null;
+        StatEffect effect = skill != null && skillLevel > 0 ? skill.getEffect(skillLevel) : null;
+        return resolveDamageProfile(bot, skillId, effect, magicAttack);
+    }
+
+    static DamageProfile resolveDamageProfile(Character bot, int skillId, StatEffect effect, boolean magicAttack) {
+        if (effect != null && effect.getFixDamage() > 0) {
+            int fixedDamage = Math.max(1, effect.getFixDamage());
+            return new DamageProfile(fixedDamage, fixedDamage, magicAttack, true);
+        }
+
+        return magicAttack
+                ? resolveMagicDamageProfile(bot, skillId, effect)
+                : resolvePhysicalDamageProfile(bot, skillId, effect);
+    }
+
+    private static DamageProfile resolvePhysicalDamageProfile(Character bot, int skillId, StatEffect effect) {
+        int watk = Math.max(0, bot.getTotalWatk());
+        long maxDamage;
+        long minDamage;
+
+        if (skillId == Rogue.LUCKY_SEVEN
+                || skillId == NightWalker.LUCKY_SEVEN
+                || skillId == NightLord.TRIPLE_THROW
+                || skillId == NightWalker.TRIPLE_THROW) {
+            maxDamage = (long) (bot.getTotalLuk() * 5L) * (long) Math.ceil(watk / 100.0d);
+            minDamage = Math.max(1L, Math.round(maxDamage * 0.8d));
+        } else if (skillId == DragonKnight.DRAGON_ROAR) {
+            maxDamage = (long) (bot.getTotalStr() * 4L + bot.getTotalDex()) * (long) Math.ceil(watk / 100.0d);
+            minDamage = Math.max(1L, Math.round(maxDamage * 0.8d));
+        } else if (skillId == NightLord.VENOMOUS_STAR || skillId == Shadower.VENOMOUS_STAB) {
+            maxDamage = (long) Math.ceil((18.5d * (bot.getTotalStr() + bot.getTotalLuk()) + bot.getTotalDex() * 2.0d)
+                    / 100.0d * bot.calculateMaxBaseDamage(watk));
+            minDamage = Math.max(1L, Math.round(maxDamage * 0.8d));
+        } else if (skillId == Hermit.SHADOW_MESO && effect != null) {
+            maxDamage = (long) Math.floor(effect.getMoneyCon() * 10.0d * 1.5d);
+            minDamage = maxDamage;
+        } else {
+            maxDamage = bot.calculateMaxBaseDamage(watk);
+            minDamage = bot.calculateMinBaseDamage(watk);
+        }
+
+        if (skillId != 0 && effect != null && skillId != Hermit.SHADOW_MESO) {
+            int skillDamage = effect.getDamage();
+            if (skillDamage > 0) {
+                maxDamage = maxDamage * skillDamage / 100L;
+                minDamage = minDamage * skillDamage / 100L;
+            }
+        }
+
+        return normalizeDamageProfile(minDamage, maxDamage, false, false);
+    }
+
+    private static DamageProfile resolveMagicDamageProfile(Character bot, int skillId, StatEffect effect) {
+        long maxDamage;
+        if (skillId == Cleric.HEAL && effect != null) {
+            maxDamage = Math.round((bot.getTotalInt() * 4.8d + bot.getTotalLuk() * 4.0d)
+                    * bot.getTotalMagic() / 1000.0d);
+            maxDamage = maxDamage * Math.max(0, effect.getHp()) / 100L;
+        } else {
+            maxDamage = bot.calculateMaxBaseMagicDamage(bot.getTotalMagic());
+            maxDamage = applyMagicAmplification(bot, maxDamage);
+            if (effect != null && effect.getMatk() > 0) {
+                maxDamage *= effect.getMatk();
+            }
+        }
+
+        // The server exposes a reliable magic max-damage formula, but not a paired min-damage helper.
+        // Use a conservative range so bots do not collapse into fixed-value spell hits.
+        long minDamage = Math.max(1L, Math.round(maxDamage * 0.8d));
+        return normalizeDamageProfile(minDamage, maxDamage, true, false);
+    }
+
+    private static long applyMagicAmplification(Character bot, long baseDamage) {
+        int amplificationSkillId = switch (bot.getJob()) {
+            case IL_ARCHMAGE, IL_MAGE -> ILMage.ELEMENT_AMPLIFICATION;
+            case FP_ARCHMAGE, FP_MAGE -> FPMage.ELEMENT_AMPLIFICATION;
+            case BLAZEWIZARD3, BLAZEWIZARD4 -> BlazeWizard.ELEMENT_AMPLIFICATION;
+            case EVAN7, EVAN8, EVAN9, EVAN10 -> Evan.MAGIC_AMPLIFICATION;
+            default -> 0;
+        };
+        if (amplificationSkillId == 0) {
+            return baseDamage;
+        }
+
+        Skill amplificationSkill = SkillFactory.getSkill(amplificationSkillId);
+        if (amplificationSkill == null) {
+            return baseDamage;
+        }
+
+        int amplificationLevel = bot.getSkillLevel(amplificationSkill);
+        if (amplificationLevel <= 0) {
+            return baseDamage;
+        }
+
+        StatEffect amplificationEffect = amplificationSkill.getEffect(amplificationLevel);
+        return baseDamage * amplificationEffect.getY() / 100L;
+    }
+
+    private static DamageProfile normalizeDamageProfile(long minDamage, long maxDamage,
+                                                        boolean magicAttack, boolean alwaysHit) {
+        int normalizedMax = clampDamage(maxDamage);
+        int normalizedMin = Math.min(normalizedMax, clampDamage(minDamage));
+        return new DamageProfile(normalizedMin, normalizedMax, magicAttack, alwaysHit);
+    }
+
+    private static int clampDamage(long damage) {
+        return (int) Math.max(1L, Math.min(Integer.MAX_VALUE, damage));
     }
 
     static String describeDebugStats(BotEntry entry, Character bot) {

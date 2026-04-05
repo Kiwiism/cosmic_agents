@@ -72,6 +72,73 @@ class BotCombatManagerTest {
     }
 
     @Test
+    void shouldTreatBasicStaffAttacksAsCloseRange() {
+        assertEquals(BotCombatManager.AttackRoute.CLOSE, BotCombatManager.determineBasicWeaponRoute(WeaponType.STAFF));
+    }
+
+    @Test
+    void shouldScalePhysicalSkillDamageFromBaseWeaponRange() {
+        Character bot = mockDamageBot();
+        StatEffect effect = mock(StatEffect.class);
+        when(bot.getTotalWatk()).thenReturn(100);
+        when(bot.calculateMaxBaseDamage(100)).thenReturn(1_000);
+        when(bot.calculateMinBaseDamage(100)).thenReturn(500);
+        when(effect.getDamage()).thenReturn(260);
+
+        BotCombatManager.DamageProfile profile = BotCombatManager.resolveDamageProfile(bot, 1001005, effect, false);
+
+        assertEquals(1_300, profile.minDamage());
+        assertEquals(2_600, profile.maxDamage());
+        assertFalse(profile.magicAttack());
+        assertFalse(profile.alwaysHit());
+    }
+
+    @Test
+    void shouldUseThrowingSkillBaseFormula() {
+        Character bot = mockDamageBot();
+        StatEffect effect = mock(StatEffect.class);
+        when(bot.getTotalWatk()).thenReturn(90);
+        when(bot.getTotalLuk()).thenReturn(200);
+        when(effect.getDamage()).thenReturn(150);
+
+        BotCombatManager.DamageProfile profile =
+                BotCombatManager.resolveDamageProfile(bot, constants.skills.Rogue.LUCKY_SEVEN, effect, false);
+
+        assertEquals(1_200, profile.minDamage());
+        assertEquals(1_500, profile.maxDamage());
+    }
+
+    @Test
+    void shouldUseMagicBaseDamageForMagicSkills() {
+        Character bot = mockDamageBot();
+        StatEffect effect = mock(StatEffect.class);
+        when(bot.getTotalMagic()).thenReturn(250);
+        when(bot.calculateMaxBaseMagicDamage(250)).thenReturn(600);
+        when(effect.getMatk()).thenReturn((short) 3);
+
+        BotCombatManager.DamageProfile profile =
+                BotCombatManager.resolveDamageProfile(bot, 2101004, effect, true);
+
+        assertEquals(1_440, profile.minDamage());
+        assertEquals(1_800, profile.maxDamage());
+        assertTrue(profile.magicAttack());
+        assertFalse(profile.alwaysHit());
+    }
+
+    @Test
+    void shouldTreatFixedDamageSkillsAsAlwaysHit() {
+        Character bot = mockDamageBot();
+        StatEffect effect = mock(StatEffect.class);
+        when(effect.getFixDamage()).thenReturn(777);
+
+        BotCombatManager.DamageProfile profile = BotCombatManager.resolveDamageProfile(bot, 0, effect, false);
+
+        assertEquals(777, profile.minDamage());
+        assertEquals(777, profile.maxDamage());
+        assertTrue(profile.alwaysHit());
+    }
+
+    @Test
     void shouldMatchOpenStoryGroundMobKnockbackWhenHitFromRight() {
         MapleMap map = mock(MapleMap.class);
         Character bot = mockBot(new Point(100, 200), map, 20_000, null);
@@ -239,6 +306,12 @@ class BotCombatManagerTest {
         verify(map, times(expectedBroadcasts)).broadcastMessage(eq(bot), packets.capture(), eq(false));
         byte[] payload = packets.getAllValues().get(0).getBytes();
         assertEquals(expectedDirection, Byte.toUnsignedInt(payload[15]));
+    }
+
+    private static Character mockDamageBot() {
+        Character bot = mock(Character.class);
+        when(bot.getJob()).thenReturn(Job.BEGINNER);
+        return bot;
     }
 
     private static Character mockBot(Point startPosition, MapleMap map, int startingHp, Integer stancePercent) {
