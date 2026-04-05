@@ -64,7 +64,7 @@ public enum EquipSlot {
     }
 
     public static EquipSlot getFromTextSlot(String slot) {
-        if (!slot.isEmpty()) {
+        if (slot != null && !slot.isEmpty()) {
             for (EquipSlot c : values()) {
                 if (c.getName() != null) {
                     if (c.getName().equals(slot)) {
