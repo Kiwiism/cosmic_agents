@@ -975,7 +975,9 @@ public class BotManager {
                     return;
                 }
             }
-            targetPos = tp;
+            targetPos = BotCombatManager.shouldRetreatFromNearbyTarget(bot, target)
+                    ? BotCombatManager.retreatTargetPosition(botPos, tp)
+                    : tp;
         }
 
         BotNavigationManager.NavigationDirective navDirective = BotNavigationManager.resolveTarget(entry, targetPos, runAiTick);

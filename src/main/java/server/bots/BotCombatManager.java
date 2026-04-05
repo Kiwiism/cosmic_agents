@@ -105,6 +105,9 @@ class BotCombatManager {
         public int   ATTACK_DOWN_MAX = 20;
         public int   ATTACK_JUMP_Y   = 130;
         public int   ATTACK_JUMP_X_EXTRA = 60;
+        public int   RANGED_DEGENERATE_RANGE_X = 140;
+        public int   RANGED_DEGENERATE_RANGE_Y = 70;
+        public int   RANGED_RETREAT_DISTANCE_X = 120;
 
         // Grind / AoE
         public int   GRIND_SEEK_RANGE  = 800;
@@ -404,7 +407,7 @@ class BotCombatManager {
             }
 
             BasicAttackData basicAttackData = buildBasicAttackData(bot, target);
-            return new AttackPlan(0, 0, 1, basicAttackData.hitBox, List.of(target), determineBasicAttackRoute(bot),
+            return new AttackPlan(0, 0, 1, basicAttackData.hitBox, List.of(target), basicAttackData.route,
                     basicAttackData.display, basicAttackData.direction, basicAttackData.rangedDirection, basicAttackData.stance,
                     basicAttackData.speed, basicAttackData.hitDelayMs, basicAttackData.cooldownMs);
         } finally {
@@ -501,9 +504,12 @@ class BotCombatManager {
 
         int attackCount = Math.max(1, effect.getAttackCount());
         AttackRoute route = determineSkillRoute(bot, entry.aoeSkillId);
+        WeaponType weaponType = getEquippedWeaponType(bot);
+        if (!canUseRangedAttackRoute(route, weaponType, bot.getPosition(), primaryTarget.getPosition())) {
+            return null;
+        }
         boolean facingLeft = primaryTarget.getPosition().x < bot.getPosition().x;
         BasicAttackData fallbackAttackData = buildBasicAttackData(bot, primaryTarget);
-        WeaponType weaponType = getEquippedWeaponType(bot);
         BasicAttackSpec attackSpec = resolveWeaponAttackSpec(bot, weaponType);
         String action = resolveSkillAttackAction(bot, skill, skillLevel, weaponType);
         String fallbackAction = attackSpec.primaryAction();
@@ -539,9 +545,12 @@ class BotCombatManager {
 
         int attackCount = Math.max(1, effect.getAttackCount());
         AttackRoute route = determineSkillRoute(bot, entry.attackSkillId);
+        WeaponType weaponType = getEquippedWeaponType(bot);
+        if (!canUseRangedAttackRoute(route, weaponType, bot.getPosition(), primaryTarget.getPosition())) {
+            return null;
+        }
         boolean facingLeft = primaryTarget.getPosition().x < bot.getPosition().x;
         BasicAttackData fallbackAttackData = buildBasicAttackData(bot, primaryTarget);
-        WeaponType weaponType = getEquippedWeaponType(bot);
         BasicAttackSpec attackSpec = resolveWeaponAttackSpec(bot, weaponType);
         String action = resolveSkillAttackAction(bot, skill, skillLevel, weaponType);
         String fallbackAction = attackSpec.primaryAction();
@@ -618,6 +627,44 @@ class BotCombatManager {
         boolean inHRange = dx <= BotCombatManager.cfg.ATTACK_RANGE_X;
         boolean inVRange = dy >= -BotCombatManager.cfg.ATTACK_DOWN_MAX && dy <= BotCombatManager.cfg.ATTACK_RANGE_Y;
         return inHRange && inVRange;
+    }
+
+    static boolean shouldDegenerateRangedAttack(WeaponType weaponType, Point botPos, Point targetPos) {
+        if (!isDegenerateCapableRangedWeapon(weaponType) || botPos == null || targetPos == null) {
+            return false;
+        }
+
+        int dx = Math.abs(targetPos.x - botPos.x);
+        int dy = Math.abs(targetPos.y - botPos.y);
+        return dx <= BotCombatManager.cfg.RANGED_DEGENERATE_RANGE_X
+                && dy <= BotCombatManager.cfg.RANGED_DEGENERATE_RANGE_Y;
+    }
+
+    static boolean shouldRetreatFromNearbyTarget(WeaponType weaponType, Point botPos, Point targetPos) {
+        return shouldDegenerateRangedAttack(weaponType, botPos, targetPos)
+                && !isBasicAttackInRange(botPos, targetPos);
+    }
+
+    static boolean shouldRetreatFromNearbyTarget(Character bot, Monster target) {
+        if (bot == null || target == null) {
+            return false;
+        }
+        return shouldRetreatFromNearbyTarget(getEquippedWeaponType(bot), bot.getPosition(), target.getPosition());
+    }
+
+    static Point retreatTargetPosition(Point botPos, Point targetPos) {
+        if (botPos == null) {
+            return targetPos == null ? null : new Point(targetPos);
+        }
+        if (targetPos == null) {
+            return new Point(botPos);
+        }
+
+        int direction = Integer.compare(botPos.x, targetPos.x);
+        if (direction == 0) {
+            direction = 1;
+        }
+        return new Point(botPos.x + direction * BotCombatManager.cfg.RANGED_RETREAT_DISTANCE_X, botPos.y);
     }
 
     private static int compareGrindTargets(Character bot, Point botPos, Foothold botFoothold, Monster left, Monster right) {
@@ -711,10 +758,7 @@ class BotCombatManager {
 
         WeaponType weaponType = server.ItemInformationProvider.getInstance().getWeaponType(weapon.getItemId());
         boolean facingLeft = primaryTarget.getPosition().x < bot.getPosition().x;
-        Rectangle hitBox = attackProfile.hasBoundingBox()
-                ? attackProfile.calculateBoundingBox(bot.getPosition(), facingLeft)
-                : null;
-        return BasicAttackData.fromProfile(attackProfile, weaponType, hitBox, facingLeft, bot);
+        return BasicAttackData.fromProfile(attackProfile, weaponType, facingLeft, bot, primaryTarget.getPosition());
     }
 
     static record BasicAttackSpec(int display, List<String> actions) {
@@ -740,6 +784,20 @@ class BotCombatManager {
      * OpenStory's {@code CharLook::getattackstance} regular-attack selection.
      */
     static BasicAttackSpec basicAttackSpec(int attackGroup, WeaponType fallbackWeaponType) {
+        return basicAttackSpec(attackGroup, fallbackWeaponType, false);
+    }
+
+    static BasicAttackSpec basicAttackSpec(int attackGroup, WeaponType fallbackWeaponType, boolean degenerate) {
+        if (degenerate) {
+            return switch (attackGroup) {
+                case 3 -> new BasicAttackSpec(3, List.of("swingT1", "swingT3"));
+                case 4 -> new BasicAttackSpec(4, List.of("swingT1", "stabT1"));
+                case 7 -> new BasicAttackSpec(7, List.of("swingT1", "stabT1"));
+                case 9 -> new BasicAttackSpec(9, List.of("swingP1", "stabT2"));
+                default -> basicAttackSpec(fallbackWeaponType, false);
+            };
+        }
+
         return switch (attackGroup) {
             case 1 -> new BasicAttackSpec(1, List.of("stabO1", "stabO2", "swingO1", "swingO2", "swingO3"));
             case 2 -> new BasicAttackSpec(2, List.of("stabT1", "swingP1"));
@@ -754,8 +812,21 @@ class BotCombatManager {
     }
 
     static BasicAttackSpec basicAttackSpec(WeaponType weaponType) {
+        return basicAttackSpec(weaponType, false);
+    }
+
+    static BasicAttackSpec basicAttackSpec(WeaponType weaponType, boolean degenerate) {
         if (weaponType == null) {
             return new BasicAttackSpec(1, List.of("stabO1", "stabO2", "swingO1", "swingO2", "swingO3"));
+        }
+        if (degenerate) {
+            return switch (weaponType) {
+                case BOW -> new BasicAttackSpec(3, List.of("swingT1", "swingT3"));
+                case CROSSBOW -> new BasicAttackSpec(4, List.of("swingT1", "stabT1"));
+                case CLAW -> new BasicAttackSpec(7, List.of("swingT1", "stabT1"));
+                case GUN -> new BasicAttackSpec(9, List.of("swingP1", "stabT2"));
+                default -> basicAttackSpec(weaponType, false);
+            };
         }
         return switch (weaponType) {
             case BOW -> new BasicAttackSpec(3, List.of("shoot1"));
@@ -898,6 +969,10 @@ class BotCombatManager {
         return determineWeaponRoute(getEquippedWeaponType(bot));
     }
 
+    private static boolean canUseRangedAttackRoute(AttackRoute route, WeaponType weaponType, Point botPos, Point targetPos) {
+        return route != AttackRoute.RANGED || !shouldDegenerateRangedAttack(weaponType, botPos, targetPos);
+    }
+
     private static AttackRoute determineSkillRoute(Character bot, int skillId) {
         if (isRangedSkill(skillId)) {
             return AttackRoute.RANGED;
@@ -955,20 +1030,39 @@ class BotCombatManager {
         };
     }
 
+    private static boolean isDegenerateCapableRangedWeapon(WeaponType weaponType) {
+        return weaponType == WeaponType.BOW
+                || weaponType == WeaponType.CROSSBOW
+                || weaponType == WeaponType.CLAW
+                || weaponType == WeaponType.GUN;
+    }
+
+    private static Rectangle closeRangeBasicHitBox(Point origin, boolean facingLeft) {
+        int horizontalRange = BotCombatManager.cfg.ATTACK_RANGE_X;
+        int top = origin.y - BotCombatManager.cfg.ATTACK_RANGE_Y;
+        int height = BotCombatManager.cfg.ATTACK_RANGE_Y + BotCombatManager.cfg.ATTACK_DOWN_MAX;
+        int left = facingLeft ? origin.x - horizontalRange : origin.x;
+        return new Rectangle(left, top, horizontalRange, height);
+    }
+
     private record BasicAttackData(Rectangle hitBox, int display, int direction, int rangedDirection,
-                                   int stance, int speed, int hitDelayMs, int cooldownMs) {
-        private static BasicAttackData fromProfile(BotAttackDataProvider.NormalAttackProfile profile, WeaponType weaponType, Rectangle hitBox, boolean facingLeft, Character bot) {
+                                   int stance, int speed, int hitDelayMs, int cooldownMs, AttackRoute route) {
+        private static BasicAttackData fromProfile(BotAttackDataProvider.NormalAttackProfile profile, WeaponType weaponType,
+                                                   boolean facingLeft, Character bot, Point targetPos) {
             int baseDisplay = profile.getAttack();
-            BasicAttackSpec attackSpec = basicAttackSpec(baseDisplay, weaponType);
+            boolean useDegenerateCloseRange = shouldDegenerateRangedAttack(weaponType,
+                    bot != null ? bot.getPosition() : null, targetPos);
+            BasicAttackSpec attackSpec = basicAttackSpec(baseDisplay, weaponType, useDegenerateCloseRange);
             if (baseDisplay <= 0) {
-                return fallback(facingLeft, hitBox, profile.getAttackSpeed(), weaponType, bot);
+                return fallback(facingLeft, profile.getAttackSpeed(), weaponType, bot, targetPos);
             }
 
             String fallbackAction = attackSpec.primaryAction();
             List<String> candidateActions = resolveAttackActions(attackSpec, profile.getSourceActions());
             String action = sampleAttackAction(candidateActions, fallbackAction);
             int variantOffset = Math.max(0, attackSpec.actions().indexOf(action));
-            boolean closeRangeRoute = determineWeaponRoute(weaponType) == AttackRoute.CLOSE;
+            AttackRoute route = useDegenerateCloseRange ? AttackRoute.CLOSE : determineWeaponRoute(weaponType);
+            boolean closeRangeRoute = route == AttackRoute.CLOSE;
             CloseRangePacketFields closeRangePacketFields = mimicCloseRangePacketFields(action, fallbackAction, facingLeft);
             int display = closeRangeRoute ? closeRangePacketFields.display() : baseDisplay + variantOffset;
             int direction = closeRangeRoute
@@ -988,20 +1082,27 @@ class BotCombatManager {
             int cooldownMs = toCooldownMs(adjustAttackDelayMillis(rawAnimationDelayMs, profile.getAttackSpeed(), effectiveAttackSpeed));
             int hitDelayMs = adjustAttackDelayMillis(rawHitDelayMs, profile.getAttackSpeed(), effectiveAttackSpeed);
             int stance = closeRangeRoute ? closeRangePacketFields.stance() : attackStanceId(action);
+            Rectangle hitBox = closeRangeRoute
+                    ? closeRangeBasicHitBox(bot.getPosition(), facingLeft)
+                    : profile.hasBoundingBox() ? profile.calculateBoundingBox(bot.getPosition(), facingLeft) : null;
 
-            return new BasicAttackData(hitBox, display, direction, direction, stance, effectiveAttackSpeed, hitDelayMs, cooldownMs);
+            return new BasicAttackData(hitBox, display, direction, direction, stance, effectiveAttackSpeed,
+                    hitDelayMs, cooldownMs, route);
         }
 
         private static BasicAttackData fallback(boolean facingLeft) {
-            return fallback(facingLeft, null, 4, null, null);
+            return fallback(facingLeft, 4, null, null, null);
         }
 
-        private static BasicAttackData fallback(boolean facingLeft, Rectangle hitBox, int baseAttackSpeed,
-                                                WeaponType weaponType, Character bot) {
-            BasicAttackSpec attackSpec = basicAttackSpec(weaponType);
+        private static BasicAttackData fallback(boolean facingLeft, int baseAttackSpeed,
+                                                WeaponType weaponType, Character bot, Point targetPos) {
+            boolean useDegenerateCloseRange = shouldDegenerateRangedAttack(weaponType,
+                    bot != null ? bot.getPosition() : null, targetPos);
+            BasicAttackSpec attackSpec = basicAttackSpec(weaponType, useDegenerateCloseRange);
             String action = sampleAttackAction(attackSpec.actions(), attackSpec.primaryAction());
             int variantOffset = Math.max(0, attackSpec.actions().indexOf(action));
-            boolean closeRangeRoute = determineWeaponRoute(weaponType) == AttackRoute.CLOSE;
+            AttackRoute route = useDegenerateCloseRange ? AttackRoute.CLOSE : determineWeaponRoute(weaponType);
+            boolean closeRangeRoute = route == AttackRoute.CLOSE;
             CloseRangePacketFields closeRangePacketFields =
                     mimicCloseRangePacketFields(action, attackSpec.primaryAction(), facingLeft);
             int display = closeRangeRoute ? closeRangePacketFields.display() : attackSpec.display() + variantOffset;
@@ -1014,10 +1115,14 @@ class BotCombatManager {
                 rawAnimationDelayMs = 600;
             }
             int adjustedAnimationDelayMs = adjustAttackDelayMillis(rawAnimationDelayMs, baseAttackSpeed, effectiveAttackSpeed);
+            Rectangle hitBox = closeRangeRoute && bot != null
+                    ? closeRangeBasicHitBox(bot.getPosition(), facingLeft)
+                    : null;
 
             return new BasicAttackData(hitBox, display, direction, direction,
                     closeRangeRoute ? closeRangePacketFields.stance() : attackSpec.stanceIdForVariant(variantOffset),
-                    effectiveAttackSpeed, defaultHitDelayMs(adjustedAnimationDelayMs), toCooldownMs(adjustedAnimationDelayMs));
+                    effectiveAttackSpeed, defaultHitDelayMs(adjustedAnimationDelayMs), toCooldownMs(adjustedAnimationDelayMs),
+                    route);
         }
 
         private static int countMoveVariants(List<String> sourceActions) {

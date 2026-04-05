@@ -54,6 +54,11 @@ class BotCombatManagerTest {
         assertEquals(5, twoHandedSpec.display());
         assertTrue(twoHandedSpec.actions().contains("swingT1"));
         assertTrue(twoHandedSpec.actions().contains("stabO1"));
+
+        BotCombatManager.BasicAttackSpec degenerateBowSpec = BotCombatManager.basicAttackSpec(WeaponType.BOW, true);
+        assertEquals(3, degenerateBowSpec.display());
+        assertTrue(degenerateBowSpec.actions().contains("swingT1"));
+        assertTrue(degenerateBowSpec.actions().contains("swingT3"));
     }
 
     @Test
@@ -186,6 +191,31 @@ class BotCombatManagerTest {
 
         assertEquals(173, timing.hitDelayMs());
         assertEquals(BotMovementManager.delayAfterCurrentTick(347), timing.cooldownMs());
+    }
+
+    @Test
+    void shouldUseDegenerateCloseAttackPoolForBowAtPointBlankRange() {
+        assertTrue(BotCombatManager.shouldDegenerateRangedAttack(WeaponType.BOW, new Point(100, 200), new Point(145, 200)));
+        BotCombatManager.BasicAttackSpec bowSpec = BotCombatManager.basicAttackSpec(WeaponType.BOW, true);
+
+        assertEquals(3, bowSpec.display());
+        assertTrue(bowSpec.actions().contains("swingT1"));
+        assertTrue(bowSpec.actions().contains("swingT3"));
+    }
+
+    @Test
+    void shouldKeepBowOutOfDegenerateModeWhenTargetIsNotCrowding() {
+        assertFalse(BotCombatManager.shouldDegenerateRangedAttack(WeaponType.BOW, new Point(100, 200), new Point(300, 200)));
+        BotCombatManager.BasicAttackSpec bowSpec = BotCombatManager.basicAttackSpec(WeaponType.BOW, false);
+
+        assertEquals("shoot1", bowSpec.primaryAction());
+    }
+
+    @Test
+    void shouldRetreatFromNearbyRangedTargetsOutsideMeleeReach() {
+        assertTrue(BotCombatManager.shouldRetreatFromNearbyTarget(WeaponType.BOW, new Point(100, 200), new Point(220, 200)));
+        assertEquals(new Point(-20, 200), BotCombatManager.retreatTargetPosition(new Point(100, 200), new Point(220, 200)));
+        assertFalse(BotCombatManager.shouldRetreatFromNearbyTarget(WeaponType.BOW, new Point(100, 200), new Point(145, 200)));
     }
 
     @Test
