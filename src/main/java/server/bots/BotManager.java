@@ -975,8 +975,9 @@ public class BotManager {
                     return;
                 }
             }
-            targetPos = BotCombatManager.shouldRetreatFromNearbyTarget(bot, target)
-                    ? BotCombatManager.retreatTargetPosition(botPos, tp)
+            targetPos = BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(
+                    BotAttackExecutionProvider.getEquippedWeaponType(bot), botPos, tp)
+                    ? BotAttackExecutionProvider.retreatTargetPosition(botPos, tp)
                     : tp;
         }
 

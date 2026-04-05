@@ -34,28 +34,28 @@ import static org.mockito.Mockito.when;
 class BotCombatManagerTest {
     @Test
     void shouldMatchOpenStoryBasicAttackStanceIds() {
-        assertEquals(23, BotCombatManager.attackStanceId("swingO1"));
-        assertEquals(11, BotCombatManager.attackStanceId("shoot1"));
-        assertEquals(10, BotCombatManager.attackStanceId("shot"));
-        assertEquals(0, BotCombatManager.attackStanceId("stand1"));
+        assertEquals(23, BotAttackExecutionProvider.attackStanceId("swingO1"));
+        assertEquals(11, BotAttackExecutionProvider.attackStanceId("shoot1"));
+        assertEquals(10, BotAttackExecutionProvider.attackStanceId("shot"));
+        assertEquals(0, BotAttackExecutionProvider.attackStanceId("stand1"));
     }
 
     @Test
     void shouldUseOpenStoryFallbackAttackGroupsByWeaponType() {
-        BotCombatManager.BasicAttackSpec gunSpec = BotCombatManager.basicAttackSpec(WeaponType.GUN);
+        BotAttackExecutionProvider.BasicAttackSpec gunSpec = BotAttackExecutionProvider.basicAttackSpec(WeaponType.GUN);
         assertEquals(9, gunSpec.display());
         assertEquals("handgun", gunSpec.primaryAction());
 
-        BotCombatManager.BasicAttackSpec bowSpec = BotCombatManager.basicAttackSpec(WeaponType.BOW);
+        BotAttackExecutionProvider.BasicAttackSpec bowSpec = BotAttackExecutionProvider.basicAttackSpec(WeaponType.BOW);
         assertEquals(3, bowSpec.display());
         assertEquals("shoot1", bowSpec.primaryAction());
 
-        BotCombatManager.BasicAttackSpec twoHandedSpec = BotCombatManager.basicAttackSpec(WeaponType.SWORD2H);
+        BotAttackExecutionProvider.BasicAttackSpec twoHandedSpec = BotAttackExecutionProvider.basicAttackSpec(WeaponType.SWORD2H);
         assertEquals(5, twoHandedSpec.display());
         assertTrue(twoHandedSpec.actions().contains("swingT1"));
         assertTrue(twoHandedSpec.actions().contains("stabO1"));
 
-        BotCombatManager.BasicAttackSpec degenerateBowSpec = BotCombatManager.basicAttackSpec(WeaponType.BOW, true);
+        BotAttackExecutionProvider.BasicAttackSpec degenerateBowSpec = BotAttackExecutionProvider.basicAttackSpec(WeaponType.BOW, true);
         assertEquals(3, degenerateBowSpec.display());
         assertTrue(degenerateBowSpec.actions().contains("swingT1"));
         assertTrue(degenerateBowSpec.actions().contains("swingT3"));
@@ -66,14 +66,14 @@ class BotCombatManagerTest {
         Skill skill = new Skill(3121004);
         skill.setAction0("doublefire");
 
-        String action = BotCombatManager.resolveSkillAttackAction(null, skill, 1, WeaponType.BOW);
+        String action = BotAttackExecutionProvider.resolveSkillAttackAction(null, skill, 1, WeaponType.BOW);
 
         assertEquals("doublefire", action);
     }
 
     @Test
     void shouldTreatBasicStaffAttacksAsCloseRange() {
-        assertEquals(BotCombatManager.AttackRoute.CLOSE, BotCombatManager.determineBasicWeaponRoute(WeaponType.STAFF));
+        assertEquals(BotCombatManager.AttackRoute.CLOSE, BotAttackExecutionProvider.determineBasicWeaponRoute(WeaponType.STAFF));
     }
 
     @Test
@@ -173,8 +173,8 @@ class BotCombatManagerTest {
 
     @Test
     void shouldFallbackToBasicAttackTimingWhenSkillAnimationDelayMissing() {
-        BotCombatManager.SkillAttackTiming timing =
-                BotCombatManager.resolveSkillAttackTiming(0, 4, 4, 300, 590);
+        BotAttackExecutionProvider.SkillAttackTiming timing =
+                BotAttackExecutionProvider.resolveSkillAttackTiming(0, 4, 4, 300, 590);
 
         assertEquals(300, timing.hitDelayMs());
         assertEquals(590, timing.cooldownMs());
@@ -182,8 +182,8 @@ class BotCombatManagerTest {
 
     @Test
     void shouldNotUnlockSkillFasterThanBasicAttackCooldown() {
-        BotCombatManager.SkillAttackTiming timing =
-                BotCombatManager.resolveSkillAttackTiming(450, 4, 4, 300, 590);
+        BotAttackExecutionProvider.SkillAttackTiming timing =
+                BotAttackExecutionProvider.resolveSkillAttackTiming(450, 4, 4, 300, 590);
 
         assertEquals(173, timing.hitDelayMs());
         assertEquals(590, timing.cooldownMs());
@@ -191,8 +191,8 @@ class BotCombatManagerTest {
 
     @Test
     void shouldApplyAttackSpeedScalingToSkillAnimationTiming() {
-        BotCombatManager.SkillAttackTiming timing =
-                BotCombatManager.resolveSkillAttackTiming(520, 4, 2, 120, 0);
+        BotAttackExecutionProvider.SkillAttackTiming timing =
+                BotAttackExecutionProvider.resolveSkillAttackTiming(520, 4, 2, 120, 0);
 
         assertEquals(173, timing.hitDelayMs());
         assertEquals(BotMovementManager.delayAfterCurrentTick(347), timing.cooldownMs());
@@ -200,8 +200,8 @@ class BotCombatManagerTest {
 
     @Test
     void shouldUseDegenerateCloseAttackPoolForBowAtPointBlankRange() {
-        assertTrue(BotCombatManager.shouldDegenerateRangedAttack(WeaponType.BOW, new Point(100, 200), new Point(145, 200)));
-        BotCombatManager.BasicAttackSpec bowSpec = BotCombatManager.basicAttackSpec(WeaponType.BOW, true);
+        assertTrue(BotAttackExecutionProvider.shouldDegenerateRangedAttack(WeaponType.BOW, new Point(100, 200), new Point(145, 200)));
+        BotAttackExecutionProvider.BasicAttackSpec bowSpec = BotAttackExecutionProvider.basicAttackSpec(WeaponType.BOW, true);
 
         assertEquals(3, bowSpec.display());
         assertTrue(bowSpec.actions().contains("swingT1"));
@@ -210,17 +210,17 @@ class BotCombatManagerTest {
 
     @Test
     void shouldKeepBowOutOfDegenerateModeWhenTargetIsNotCrowding() {
-        assertFalse(BotCombatManager.shouldDegenerateRangedAttack(WeaponType.BOW, new Point(100, 200), new Point(300, 200)));
-        BotCombatManager.BasicAttackSpec bowSpec = BotCombatManager.basicAttackSpec(WeaponType.BOW, false);
+        assertFalse(BotAttackExecutionProvider.shouldDegenerateRangedAttack(WeaponType.BOW, new Point(100, 200), new Point(300, 200)));
+        BotAttackExecutionProvider.BasicAttackSpec bowSpec = BotAttackExecutionProvider.basicAttackSpec(WeaponType.BOW, false);
 
         assertEquals("shoot1", bowSpec.primaryAction());
     }
 
     @Test
     void shouldRetreatFromNearbyRangedTargetsOutsideMeleeReach() {
-        assertTrue(BotCombatManager.shouldRetreatFromNearbyTarget(WeaponType.BOW, new Point(100, 200), new Point(220, 200)));
-        assertEquals(new Point(-20, 200), BotCombatManager.retreatTargetPosition(new Point(100, 200), new Point(220, 200)));
-        assertFalse(BotCombatManager.shouldRetreatFromNearbyTarget(WeaponType.BOW, new Point(100, 200), new Point(145, 200)));
+        assertTrue(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, new Point(100, 200), new Point(220, 200)));
+        assertEquals(new Point(-20, 200), BotAttackExecutionProvider.retreatTargetPosition(new Point(100, 200), new Point(220, 200)));
+        assertFalse(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, new Point(100, 200), new Point(145, 200)));
     }
 
     @Test
