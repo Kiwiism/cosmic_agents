@@ -92,16 +92,22 @@ final class BotPhysicsEngine {
         }
     }
 
-    enum AirCollisionType {
+    private enum AirCollisionType {
         NONE,
         WALL,
         LAND
     }
 
-    record AirCollision(AirCollisionType type, Point point, Foothold foothold, double progress) {
+    private record AirCollision(AirCollisionType type, Point point, Foothold foothold, double progress) {
         static AirCollision none() {
             return new AirCollision(AirCollisionType.NONE, null, null, Double.POSITIVE_INFINITY);
         }
+    }
+
+    enum AirborneStepResult {
+        WALL,
+        LANDED,
+        CONTINUE
     }
 
     static Config cfg = new Config();
@@ -151,6 +157,20 @@ final class BotPhysicsEngine {
         if (entry.hspeed == 0.0 && (int) Math.round(entry.physX) != x) {
             entry.physX = x;
         }
+    }
+
+    /**
+     * Syncs ground position, then returns the foothold the bot is standing on.
+     * If no foothold is found the bot has walked off the edge — physics starts a fall and this
+     * returns null. Movement must check for null and return early without applying ground actions.
+     */
+    static Foothold syncAndDetectGround(BotEntry entry, Character bot) {
+        syncGroundPosition(entry, bot.getPosition().x);
+        Foothold fh = findGroundFoothold(bot.getMap(), bot.getPosition());
+        if (fh == null) {
+            beginFall(entry, bot, 0);
+        }
+        return fh;
     }
 
     static Foothold findGroundFoothold(MapleMap map, Point position) {
@@ -517,7 +537,12 @@ final class BotPhysicsEngine {
         entry.downJumpGracePeriodMS = cfg.DOWN_JUMP_GRACE_MS;
     }
 
-    static void beginFall(BotEntry entry, Character bot, int airVelX) {
+    /** Called by navigation when a DROP edge is executed — bot intentionally walks off a ledge. */
+    static void executeDrop(BotEntry entry, Character bot, int airVelX) {
+        beginFall(entry, bot, airVelX);
+    }
+
+    private static void beginFall(BotEntry entry, Character bot, int airVelX) {
         entry.blockedRopeGrab = null;
         launchAirborne(entry, bot, bot.getPosition(), 0f, airVelX, false);
     }
@@ -546,11 +571,11 @@ final class BotPhysicsEngine {
         syncCharacterState(entry);
     }
 
-    static void landOnGround(BotEntry entry, Character bot, Point position) {
+    private static void landOnGround(BotEntry entry, Character bot, Point position) {
         landOnGround(entry, bot, position, null, 0.0, 0.0);
     }
 
-    static void landOnGround(BotEntry entry,
+    private static void landOnGround(BotEntry entry,
                              Character bot,
                              Point position,
                              Foothold foothold,
@@ -713,7 +738,7 @@ final class BotPhysicsEngine {
         syncCharacterState(entry);
     }
 
-    static Point roundedAirPosition(BotEntry entry) {
+    private static Point roundedAirPosition(BotEntry entry) {
         return new Point((int) Math.round(entry.physX), (int) Math.round(entry.physY));
     }
 
@@ -724,7 +749,7 @@ final class BotPhysicsEngine {
                 Math.min(cfg.AIR_STEER_MAX, entry.airSteerVelX + accel));
     }
 
-    static Point advanceAirbornePosition(BotEntry entry, Character bot) {
+    private static Point advanceAirbornePosition(BotEntry entry, Character bot) {
         entry.physX += entry.airVelX + entry.airSteerVelX;
         float gravity = gravityPerTick();
         entry.physY += entry.velY + 0.5f * gravity;
@@ -733,7 +758,7 @@ final class BotPhysicsEngine {
         return roundedAirPosition(entry);
     }
 
-    static void applyAirbornePosition(BotEntry entry, Character bot, Point position) {
+    private static void applyAirbornePosition(BotEntry entry, Character bot, Point position) {
         bot.setPosition(position);
         entry.inAir = true;
         entry.climbing = false;
@@ -743,7 +768,29 @@ final class BotPhysicsEngine {
         syncCharacterState(entry);
     }
 
-    static void collideWithAirWall(BotEntry entry, Character bot, Point collisionPoint) {
+    /**
+     * One physics step for an airborne bot: advance position, resolve wall/floor collision, apply result.
+     * All collision outcome methods (landOnGround, collideWithAirWall, applyAirbornePosition) are
+     * private — movement must not call them directly.
+     */
+    static AirborneStepResult stepAirborne(BotEntry entry, Character bot) {
+        Point previousPos = roundedAirPosition(entry);
+        Point nextPos = advanceAirbornePosition(entry, bot);
+        AirCollision collision = resolveAirCollision(bot.getMap(), previousPos, nextPos);
+        if (collision.type() == AirCollisionType.WALL) {
+            collideWithAirWall(entry, bot, collision.point());
+            return AirborneStepResult.WALL;
+        }
+        if (collision.type() == AirCollisionType.LAND && canLand(entry)) {
+            landOnGround(entry, bot, collision.point(), collision.foothold(),
+                    nextPos.x - previousPos.x, nextPos.y - previousPos.y);
+            return AirborneStepResult.LANDED;
+        }
+        applyAirbornePosition(entry, bot, nextPos);
+        return AirborneStepResult.CONTINUE;
+    }
+
+    private static void collideWithAirWall(BotEntry entry, Character bot, Point collisionPoint) {
         entry.airVelX = 0;
         entry.airSteerVelX = 0.0;
         entry.physX = collisionPoint.x;
@@ -857,18 +904,14 @@ final class BotPhysicsEngine {
         return simulateLanding(map, from, -ropeJumpForcePerTick(), stepX, 0L);
     }
 
-    static JumpLanding findAirLanding(MapleMap map, Point previousPos, Point nextPos) {
+    private static JumpLanding findAirLanding(MapleMap map, Point previousPos, Point nextPos) {
         AirCollision collision = resolveAirCollision(map, previousPos, nextPos);
         return collision.type() == AirCollisionType.LAND
                 ? new JumpLanding(collision.point(), collision.foothold())
                 : null;
     }
 
-    static boolean hasAirWallCollision(MapleMap map, Point previousPos, Point nextPos) {
-        return resolveAirCollision(map, previousPos, nextPos).type == AirCollisionType.WALL;
-    }
-
-    static AirCollision resolveAirCollision(MapleMap map, Point previousPos, Point nextPos) {
+    private static AirCollision resolveAirCollision(MapleMap map, Point previousPos, Point nextPos) {
         if (map == null || map.getFootholds() == null || previousPos == null || nextPos == null) {
             return AirCollision.none();
         }
@@ -911,7 +954,11 @@ final class BotPhysicsEngine {
             if (landing != null) {
                 landOnGround(entry, bot, landing);
             } else {
-                beginFall(entry, bot, 0);
+                // Top of a rope always connects to a foothold in valid map data.
+                // If none is found, clamp to topY and hold rather than falling — the bot will
+                // recover on re-path. Falling here would cause the oscillation bug where the bot
+                // climbs to the top, falls, re-grabs the rope, and loops indefinitely.
+                setClimbPosition(entry, bot, rope, rope.topY());
             }
             return true;
         }

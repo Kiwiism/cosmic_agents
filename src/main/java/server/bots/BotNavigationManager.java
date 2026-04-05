@@ -103,9 +103,14 @@ final class BotNavigationManager {
         if (edge == null) {
             return null;
         }
-        if (targetRegionId < 0 || entry.navTargetRegionId != targetRegionId) {
+        if (targetRegionId < 0) {
             return null;
         }
+        // Update stored target in-place rather than discarding. The Y-snap offset causes
+        // followBase.x to differ between AI and non-AI ticks, making targetRegionId fluctuate
+        // even when the owner hasn't meaningfully moved. Relying on structural checks below
+        // (start-region match, usability, arrival) is sufficient to detect actual invalidity.
+        entry.navTargetRegionId = targetRegionId;
         if (!isEdgeUsable(graph, entry.bot, edge)) {
             return null;
         }
@@ -125,13 +130,15 @@ final class BotNavigationManager {
         // While climbing, always keep the edge — findGroundFoothold gives false positives
         // (returns the platform below/behind the rope as the "current" region), which would
         // otherwise drop the exit edge the moment the bot enters the destination region's Y range.
-        if (entry.inAir && (startRegionId < 0 || startRegionId != edge.toRegionId)) {
+        if (entry.climbing && (startRegionId < 0 || startRegionId != edge.toRegionId)) {
             return edge;
         }
         // DROP/JUMP arcs may enter the destination region before the bot touches down.
-        // Keep the edge until landing so the bot doesn't replan mid-arc.
-        if (entry.inAir && (edge.type == BotNavigationGraph.EdgeType.DROP
-                || edge.type == BotNavigationGraph.EdgeType.JUMP)) {
+        // Keep the edge until landing. Only retain if the bot is in a region consistent with
+        // this arc (destination or unmapped) — prevents looping in a wrong region mid-air.
+        if (entry.inAir && (startRegionId < 0 || startRegionId == edge.toRegionId)
+                && (edge.type == BotNavigationGraph.EdgeType.DROP
+                    || edge.type == BotNavigationGraph.EdgeType.JUMP)) {
             return edge;
         }
         return null;
@@ -182,17 +189,6 @@ final class BotNavigationManager {
             return null;
         }
 
-        // Pre-launch wall check: mirrors tickAirborne's wall detection.
-        // If the first horizontal step is immediately blocked, the bot would bounce
-        // vertically in place forever — don't fire, let it walk to the actual start point.
-        if (edge.launchStepX != 0) {
-            int nextX = botPos.x + edge.launchStepX;
-            if (BotPhysicsEngine.hasAirWallCollision(bot.getMap(), botPos, new Point(nextX, botPos.y))) {
-                entry.lastEdgeBlockReason = "jump-wall";
-                return null;
-            }
-        }
-
         entry.lastEdgeBlockReason = null;
         entry.navPreciseTarget = false;
         entry.navTargetPos = new Point(edge.endPoint);
@@ -218,7 +214,7 @@ final class BotNavigationManager {
         entry.navPreciseTarget = false;
         entry.navTargetPos = new Point(edge.endPoint);
         if (edge.launchStepX != 0) {
-            BotPhysicsEngine.beginFall(entry, bot, edge.launchStepX);
+            BotPhysicsEngine.executeDrop(entry, bot, edge.launchStepX);
             BotMovementManager.broadcastMovement(entry);
             return new NavigationDirective(rawTargetPos, true);
         }
@@ -304,13 +300,11 @@ final class BotNavigationManager {
         }
 
         if (edge.launchStepX == 0) {
-            if (isTopStepOffExit(entry.climbRope, botPos, edge)) {
-                BotPhysicsEngine.landOnGround(entry, bot, edge.endPoint);
-            } else {
-                BotPhysicsEngine.beginFall(entry, bot, 0);
-            }
-            BotMovementManager.broadcastMovement(entry);
-            return new NavigationDirective(rawTargetPos, true);
+            // launchStepX==0 means step off the top of the rope onto the foothold above.
+            // Physics already handles this: resolveClimbBoundary lands the bot when it reaches
+            // topY. Nav just lets the bot climb — the edge completes when the bot transitions
+            // to the destination region after physics lands it.
+            return null;
         }
 
         // Jump off rope
@@ -393,11 +387,18 @@ final class BotNavigationManager {
         if (entry.inAir) {
             return new Point(edge.endPoint);
         }
-        if (entry.climbing) {
+        if (entry.climbing && edge.launchStepX != 0) {
+            // Jump-off and rope-to-rope exits: hold at launch anchor so tryExecuteClimbExit fires.
             BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(entry.bot.getMap());
             if (canExecuteClimbExitFromCurrentPosition(graph, entry.bot.getMap(), botPos, edge)) {
                 return new Point(botPos);
             }
+        }
+        if (entry.climbing) {
+            // launchStepX==0: target endPoint — physics lands the bot via resolveClimbBoundary
+            // when it reaches topY. Targeting startPoint causes oscillation because the bot
+            // repeatedly overshoots the entry anchor Y and re-approaches from above/below.
+            return new Point(edge.endPoint);
         }
         return new Point(edge.startPoint);
     }

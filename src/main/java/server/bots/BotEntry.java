@@ -168,6 +168,14 @@ public class BotEntry {
     BotPathLogger pathLogger = null;
     String lastNavDecision = "-";
     long pendingGearPromptAt = 0L;
+    // Last known owner position (set each tick in BotManager, read by pathLogger)
+    Point lastOwnerPos = null;
+
+    // Stuck detection & unstuck
+    int stuckMs = 0;
+    int unstuckCooldownMs = 0;
+    int stuckCheckX = Integer.MIN_VALUE;
+    int stuckCheckY = Integer.MIN_VALUE;
 
     // Movement packet cache so repeated no-op packets are suppressed
     boolean movementBroadcastValid = false;

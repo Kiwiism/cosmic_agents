@@ -23,14 +23,16 @@ final class BotPathLogger {
     private record TickRecord(
             long elapsedMs,
             int botX, int botY,
-            int ownerX, int ownerY,
+            int ownerX, int ownerY,      // raw owner position (no formation offset, no snap)
+            int targetX, int targetY,    // resolved follow target (formation + snap applied)
             int botRegionId,
             String physState,
             String navEdge,
             String navDecision,  // reuse / new / exec / clear / same-region / no-path / no-ai
             String navTarget,
             boolean consumedTick,
-            boolean stuck
+            boolean stuck,
+            boolean unstuck              // true if an unstuck action fired this tick
     ) {}
 
     private final String botName;
@@ -43,14 +45,16 @@ final class BotPathLogger {
         this.mapId = mapId;
     }
 
-    void record(BotEntry entry, Point rawTargetPos, int botRegionId, boolean consumedTick) {
+    void record(BotEntry entry, Point resolvedTargetPos, int botRegionId, boolean consumedTick) {
         Point botPos = entry.bot.getPosition();
+        Point ownerPos = entry.lastOwnerPos != null ? entry.lastOwnerPos : resolvedTargetPos;
         long elapsed = System.currentTimeMillis() - startMs;
 
         TickRecord rec = new TickRecord(
                 elapsed,
                 botPos.x, botPos.y,
-                rawTargetPos.x, rawTargetPos.y,
+                ownerPos.x, ownerPos.y,
+                resolvedTargetPos.x, resolvedTargetPos.y,
                 botRegionId,
                 physState(entry),
                 navEdgeSummary(entry),
@@ -59,7 +63,8 @@ final class BotPathLogger {
                         : entry.lastNavDecision,
                 navTargetSummary(entry),
                 consumedTick,
-                computeStuck(botPos.x, botPos.y)
+                computeStuck(botPos.x, botPos.y),
+                entry.unstuckCooldownMs > 0 && consumedTick
         );
 
         if (history.size() >= MAX_TICKS) {
@@ -115,13 +120,18 @@ final class BotPathLogger {
         sb.append("\n");
     }
 
-    private void appendCurrentState(StringBuilder sb, BotEntry entry, Point ownerPos,
+    private void appendCurrentState(StringBuilder sb, BotEntry entry, Point resolvedTargetPos,
                                     Point botPos, int botRegionId, int ownerRegionId) {
+        Point ownerPos = entry.lastOwnerPos != null ? entry.lastOwnerPos : resolvedTargetPos;
         sb.append("--- CURRENT STATE ---\n");
-        sb.append("Bot:   (").append(botPos.x).append(", ").append(botPos.y)
+        sb.append("Bot:    (").append(botPos.x).append(", ").append(botPos.y)
                 .append(")  region=").append(botRegionId).append("\n");
-        sb.append("Owner: (").append(ownerPos.x).append(", ").append(ownerPos.y)
+        sb.append("Owner:  (").append(ownerPos.x).append(", ").append(ownerPos.y)
                 .append(")  region=").append(ownerRegionId).append("\n");
+        if (!ownerPos.equals(resolvedTargetPos)) {
+            sb.append("Target: (").append(resolvedTargetPos.x).append(", ").append(resolvedTargetPos.y)
+                    .append(")  [after formation+snap]\n");
+        }
         sb.append("Physics:    ").append(physState(entry)).append("\n");
         sb.append("Nav edge:   ").append(navEdgeSummary(entry)).append("\n");
         sb.append("Nav target: ").append(navTargetSummary(entry))
@@ -134,7 +144,8 @@ final class BotPathLogger {
         sb.append("Cooldowns:  jumpMs=").append(entry.jumpCooldownMs)
                 .append("  ropeGrabMs=").append(entry.ropeGrabCooldownMs).append("\n");
         sb.append("Mode:       ").append(entry.following ? "follow" : entry.grinding ? "grind" : "idle").append("\n");
-        sb.append("Stuck:      ").append(computeStuck(botPos.x, botPos.y) ? "YES ***" : "no").append("\n");
+        boolean isStuck = entry.stuckMs >= 500 || computeStuck(botPos.x, botPos.y);
+        sb.append("Stuck:      ").append(isStuck ? "YES (" + entry.stuckMs + "ms) ***" : "no").append("\n");
         sb.append("\n");
     }
 
@@ -171,17 +182,22 @@ final class BotPathLogger {
     private void appendHistory(StringBuilder sb) {
         sb.append("--- TICK HISTORY (oldest first, ").append(history.size()).append(" ticks) ---\n");
         for (TickRecord rec : history) {
-            sb.append(String.format("[+%5dms] bot=(%4d,%4d) owner=(%4d,%4d) r=%-3d  %-38s  nav=%-6s %-50s  tgt=%s%s%s%n",
+            boolean targetDiffers = rec.targetX != rec.ownerX || rec.targetY != rec.ownerY;
+            String targetSuffix = targetDiffers
+                    ? String.format(" ftgt=(%d,%d)", rec.targetX, rec.targetY) : "";
+            sb.append(String.format("[+%5dms] bot=(%4d,%4d) own=(%4d,%4d)%s r=%-3d  %-38s  nav=%-6s %-50s  tgt=%s%s%s%s%n",
                     rec.elapsedMs,
                     rec.botX, rec.botY,
                     rec.ownerX, rec.ownerY,
+                    targetSuffix,
                     rec.botRegionId,
                     rec.physState,
                     rec.navDecision,
                     rec.navEdge,
                     rec.navTarget,
                     rec.consumedTick ? " [exec]" : "",
-                    rec.stuck ? " *** STUCK ***" : ""));
+                    rec.unstuck ? " *** UNSTUCK ***" : rec.stuck ? " *** STUCK ***" : "",
+                    ""));
         }
     }
 

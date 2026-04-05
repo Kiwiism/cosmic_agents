@@ -13,6 +13,7 @@ import tools.PacketCreator;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 class BotMovementManager {
     enum ActionType {
@@ -148,12 +149,7 @@ class BotMovementManager {
         long startedAt = System.nanoTime();
         try {
             Character bot = entry.bot;
-            if (entry.climbRope == null) {
-                BotPhysicsEngine.beginFall(entry, bot, 0);
-                broadcastMovement(entry);
-                return;
-            }
-
+            // Null rope is handled inside advanceClimb/holdClimb — they call beginFall internally.
             BotPhysicsEngine.tickMotionTimers(entry);
             Point botPos = bot.getPosition();
             int dy = targetPos.y - botPos.y;
@@ -235,7 +231,6 @@ class BotMovementManager {
 
             Character bot = entry.bot;
             Point botPos = bot.getPosition();
-            Point previousPos = BotPhysicsEngine.roundedAirPosition(entry);
 
             if (successfullyGrabbedRope(entry, bot, botPos)) {
                 return;
@@ -249,30 +244,24 @@ class BotMovementManager {
                 BotPhysicsEngine.applyAirSteering(entry, targetPos.x - botPos.x);
             }
 
-            Point nextPos = BotPhysicsEngine.advanceAirbornePosition(entry, bot);
-            BotPhysicsEngine.AirCollision collision = BotPhysicsEngine.resolveAirCollision(bot.getMap(), previousPos, nextPos);
-            if (collision.type() == BotPhysicsEngine.AirCollisionType.WALL) {
-                BotPhysicsEngine.collideWithAirWall(entry, bot, collision.point());
+            BotPhysicsEngine.AirborneStepResult result = BotPhysicsEngine.stepAirborne(entry, bot);
+            if (result == BotPhysicsEngine.AirborneStepResult.WALL) {
                 if (successfullyGrabbedRope(entry, bot, bot.getPosition())) {
                     return;
                 }
                 broadcastMovement(entry);
                 return;
             }
-
-            if (collision.type() == BotPhysicsEngine.AirCollisionType.LAND && BotPhysicsEngine.canLand(entry)) {
-                BotPhysicsEngine.landOnGround(entry, bot, collision.point(), collision.foothold(),
-                        nextPos.x - previousPos.x, nextPos.y - previousPos.y);
+            if (result == BotPhysicsEngine.AirborneStepResult.LANDED) {
                 entry.jumpCooldownMs = 0;
                 broadcastMovement(entry);
                 return;
             }
 
-            BotPhysicsEngine.applyAirbornePosition(entry, bot, nextPos);
-            if (successfullyGrabbedRope(entry, bot, nextPos)) {
+            // CONTINUE — position advanced, check for rope grab at new position
+            if (successfullyGrabbedRope(entry, bot, bot.getPosition())) {
                 return;
             }
-
             broadcastMovement(entry);
         } finally {
             BotPerformanceMonitor.record("move-air", System.nanoTime() - startedAt);
@@ -326,18 +315,16 @@ class BotMovementManager {
         long startedAt = System.nanoTime();
         try {
             Character bot = entry.bot;
-            Point botPos = bot.getPosition();
 
             BotPhysicsEngine.tickMotionTimers(entry);
-            BotPhysicsEngine.syncGroundPosition(entry, botPos.x);
 
-            Foothold currentFh = BotPhysicsEngine.findGroundFoothold(bot.getMap(), botPos);
+            Foothold currentFh = BotPhysicsEngine.syncAndDetectGround(entry, bot);
             if (currentFh == null) {
-                BotPhysicsEngine.beginFall(entry, bot, 0);
                 broadcastMovement(entry);
                 return;
             }
 
+            Point botPos = bot.getPosition();
             entry.jumpCooldownMs = tickDown(entry.jumpCooldownMs);
             if (entry.downJumpPending) {
                 performDownJump(entry);
@@ -360,6 +347,11 @@ class BotMovementManager {
      * the exact entry anchor for jump/climb simulations to succeed reliably.
      */
     static int preciseNavStopDist(BotNavigationGraph.Edge navEdge) {
+        if (navEdge != null && navEdge.type == BotNavigationGraph.EdgeType.JUMP) {
+            // Bot must walk INTO the launch window, not just near it. isWithinJumpLaunchWindow is
+            // a strict >= check, so stopDist=1 would halt the bot exactly 1px before the window.
+            return 0;
+        }
         if (navEdge != null && navEdge.type != BotNavigationGraph.EdgeType.WALK) {
             return 1;
         }
@@ -490,6 +482,30 @@ class BotMovementManager {
             airVelX = dx >= 0 ? walkStep : -walkStep;
         }
         BotPhysicsEngine.beginGroundJump(entry, bot, airVelX);
+        broadcastMovement(entry);
+    }
+
+    /**
+     * Fires a random recovery action when the bot has been stuck in the same spot.
+     * Clears the nav edge so A* replans on the next AI tick.
+     */
+    static void tickUnstuck(BotEntry entry) {
+        Character bot = entry.bot;
+        int walkStep = BotPhysicsEngine.walkStep(bot.getMap());
+        switch (ThreadLocalRandom.current().nextInt(3)) {
+            case 0 -> { // jump left
+                BotPhysicsEngine.beginGroundJump(entry, bot, -walkStep);
+                entry.jumpCooldownMs = delayAfterCurrentTick(cfg.JUMP_COOLDOWN_MS);
+            }
+            case 1 -> { // jump right
+                BotPhysicsEngine.beginGroundJump(entry, bot, walkStep);
+                entry.jumpCooldownMs = delayAfterCurrentTick(cfg.JUMP_COOLDOWN_MS);
+            }
+            default -> // down-jump (also works as a plain crouch-step when no drop is present)
+                BotPhysicsEngine.queueDownJump(entry, bot);
+        }
+        clearNavigationState(entry);
+        entry.unstuckCooldownMs = delayAfterCurrentTick(2000);
         broadcastMovement(entry);
     }
 

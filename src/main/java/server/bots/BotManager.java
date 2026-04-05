@@ -819,6 +819,7 @@ public class BotManager {
         // Apply formation X offset before Y-snap so the snap resolves at the bot's actual target X.
         // Offset is skipped when a nav edge is active (waypoint navigation takes precedence).
         Point ownerPos = owner.getPosition();
+        entry.lastOwnerPos = ownerPos; // raw owner pos before formation offset/snap — used by path logger
         Point followBase = entry.navEdge == null
                 ? new Point(ownerPos.x + entry.followOffsetX, ownerPos.y)
                 : ownerPos;
@@ -1003,6 +1004,8 @@ public class BotManager {
             BotMovementManager.tickGrounded(entry, targetPos);
         }
 
+        tickStuckDetection(entry);
+
         // Clear moveTarget once the bot has arrived
         if (entry.moveTarget != null) {
             Point bp = bot.getPosition();
@@ -1012,6 +1015,40 @@ public class BotManager {
                 entry.moveTarget = null;
                 entry.moveTargetPrecise = false;
             }
+        }
+    }
+
+    private static void tickStuckDetection(BotEntry entry) {
+        entry.unstuckCooldownMs = BotMovementManager.tickDown(entry.unstuckCooldownMs);
+
+        // Only detect/act while actively navigating — idling near owner is not stuck.
+        if (entry.inAir || entry.climbing || (entry.navEdge == null && entry.moveTarget == null)) {
+            entry.stuckMs = 0;
+            entry.stuckCheckX = Integer.MIN_VALUE;
+            return;
+        }
+
+        Point botPos = entry.bot.getPosition();
+        if (entry.stuckCheckX == Integer.MIN_VALUE) {
+            entry.stuckCheckX = botPos.x;
+            entry.stuckCheckY = botPos.y;
+            return;
+        }
+
+        boolean moved = Math.abs(botPos.x - entry.stuckCheckX) > 8
+                || Math.abs(botPos.y - entry.stuckCheckY) > 8;
+        if (moved) {
+            entry.stuckMs = 0;
+            entry.stuckCheckX = botPos.x;
+            entry.stuckCheckY = botPos.y;
+        } else {
+            entry.stuckMs += BotPhysicsEngine.cfg.TICK_MS;
+        }
+
+        if (entry.stuckMs >= 500 && entry.unstuckCooldownMs == 0) {
+            entry.stuckMs = 0;
+            entry.stuckCheckX = Integer.MIN_VALUE;
+            BotMovementManager.tickUnstuck(entry);
         }
     }
 
