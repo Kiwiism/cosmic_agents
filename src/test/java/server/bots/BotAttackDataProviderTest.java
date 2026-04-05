@@ -1,6 +1,8 @@
 package server.bots;
 
 import org.junit.jupiter.api.Test;
+import server.bots.combat.BotAttackDataProvider;
+
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

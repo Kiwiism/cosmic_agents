@@ -1,6 +1,7 @@
-package server.bots;
+package server.bots.combat;
 
 import client.Character;
+import constants.game.CharacterStance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -19,18 +20,18 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-final class BotCharacterHitboxProvider {
+public final class BotCharacterHitboxProvider {
     private static final Logger log = LoggerFactory.getLogger(BotCharacterHitboxProvider.class);
     private static final BotCharacterHitboxProvider instance = new BotCharacterHitboxProvider();
 
     private final Map<String, Rectangle> boundsByAction = new ConcurrentHashMap<>();
     private volatile Path cachedCharacterRoot = null;
 
-    static BotCharacterHitboxProvider getInstance() {
+    public static BotCharacterHitboxProvider getInstance() {
         return instance;
     }
 
-    Rectangle getBotBounds(Character bot) {
+    public Rectangle getBotBounds(Character bot) {
         if (bot == null) {
             return null;
         }
@@ -38,10 +39,10 @@ final class BotCharacterHitboxProvider {
         return getBotBounds(bot.getStance(), bot.getPosition());
     }
 
-    Rectangle getBotBounds(int stance, Point position) {
+    public Rectangle getBotBounds(int stance, Point position) {
         ensureCurrentCharacterRoot();
 
-        String action = resolveActionName(stance);
+        String action = CharacterStance.bodyHitboxAction(stance);
         Rectangle modelBounds = boundsByAction.computeIfAbsent(action, this::loadActionBounds);
         if (modelBounds == null && !"stand1".equals(action)) {
             modelBounds = boundsByAction.computeIfAbsent("stand1", this::loadActionBounds);
@@ -50,7 +51,7 @@ final class BotCharacterHitboxProvider {
             return null;
         }
 
-        return calculateWorldBounds(modelBounds, position, isFacingLeft(stance));
+        return calculateWorldBounds(modelBounds, position, CharacterStance.isFacingLeft(stance));
     }
 
     private void ensureCurrentCharacterRoot() {
@@ -158,35 +159,6 @@ final class BotCharacterHitboxProvider {
             child = child.getNextSibling();
         }
         return null;
-    }
-
-    private static String resolveActionName(int stance) {
-        if (stance == BotPhysicsEngine.cfg.WALK_RIGHT_STANCE || stance == BotPhysicsEngine.cfg.WALK_LEFT_STANCE) {
-            return "walk1";
-        }
-        if (stance == BotPhysicsEngine.cfg.JUMP_RIGHT_STANCE || stance == BotPhysicsEngine.cfg.JUMP_LEFT_STANCE) {
-            return "jump";
-        }
-        if (stance == BotPhysicsEngine.cfg.PRONE_STANCE) {
-            return "prone";
-        }
-        if (stance == BotPhysicsEngine.cfg.ROPE_STANCE) {
-            return "rope";
-        }
-        if (stance == BotPhysicsEngine.cfg.LADDER_STANCE) {
-            return "ladder";
-        }
-        if (stance == BotPhysicsEngine.cfg.DEAD_RIGHT_STANCE || stance == BotPhysicsEngine.cfg.DEAD_LEFT_STANCE) {
-            return "dead";
-        }
-        return "stand1";
-    }
-
-    private static boolean isFacingLeft(int stance) {
-        return stance == BotPhysicsEngine.cfg.WALK_LEFT_STANCE
-                || stance == BotPhysicsEngine.cfg.STAND_LEFT_STANCE
-                || stance == BotPhysicsEngine.cfg.JUMP_LEFT_STANCE
-                || stance == BotPhysicsEngine.cfg.DEAD_LEFT_STANCE;
     }
 
     private Document parseXmlDocument(Path path) {

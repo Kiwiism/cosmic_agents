@@ -8,7 +8,6 @@ import constants.game.GameConstants;
 import constants.skills.Warrior;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;

@@ -8,6 +8,7 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import org.junit.jupiter.api.Test;
 import server.StatEffect;
+import server.bots.combat.BotCombatFormulaProvider;
 
 import java.util.List;
 

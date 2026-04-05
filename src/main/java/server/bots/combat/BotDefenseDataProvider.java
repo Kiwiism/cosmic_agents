@@ -1,4 +1,4 @@
-package server.bots;
+package server.bots.combat;
 
 import client.Character;
 import client.Job;
@@ -10,7 +10,7 @@ import java.util.NavigableMap;
 import java.util.TreeMap;
 import java.util.concurrent.ThreadLocalRandom;
 
-final class BotDefenseDataProvider {
+public final class BotDefenseDataProvider {
     private static final double MIN_DAMAGE_FACTOR = 0.008d;
     private static final double MAX_DAMAGE_FACTOR = 0.0085d;
     private static final BotDefenseDataProvider instance = new BotDefenseDataProvider();
@@ -26,7 +26,7 @@ final class BotDefenseDataProvider {
 
     private final Map<JobFamily, NavigableMap<Integer, Integer>> standardPddTables = new EnumMap<>(JobFamily.class);
 
-    static BotDefenseDataProvider getInstance() {
+    public static BotDefenseDataProvider getInstance() {
         return instance;
     }
 
@@ -154,7 +154,7 @@ final class BotDefenseDataProvider {
         ));
     }
 
-    int rollPhysicalTouchDamage(Character bot, Monster mob) {
+    public int rollPhysicalTouchDamage(Character bot, Monster mob) {
         int physicalAttackDamage = Math.max(0, mob.getPADamage());
         if (physicalAttackDamage <= 0) {
             return 1;
@@ -176,7 +176,7 @@ final class BotDefenseDataProvider {
         return Math.max(1, (int) Math.floor(damage));
     }
 
-    int getStandardPdd(Job job, int level) {
+    public int getStandardPdd(Job job, int level) {
         NavigableMap<Integer, Integer> table = standardPddTables.get(resolveJobFamily(job));
         if (table == null || table.isEmpty()) {
             return 0;

@@ -7,6 +7,7 @@ import client.Skill;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.WeaponType;
+import constants.game.CharacterStance;
 import net.packet.Packet;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -141,7 +142,7 @@ class BotCombatManagerTest {
 
         BotCombatManager.applyMobHit(entry, bot, mob);
 
-        assertEquals(BotPhysicsEngine.cfg.DEAD_LEFT_STANCE, bot.getStance());
+        assertEquals(CharacterStance.DEAD_LEFT_STANCE, bot.getStance());
         assertTrue(entry.deadUntil > 0);
         assertFalse(entry.inAir);
         assertFalse(entry.climbing);
@@ -251,7 +252,7 @@ class BotCombatManagerTest {
         Inventory equipped = mock(Inventory.class);
         AtomicReference<Point> position = new AtomicReference<>(new Point(startPosition));
         AtomicInteger hp = new AtomicInteger(startingHp);
-        AtomicInteger stance = new AtomicInteger(BotPhysicsEngine.cfg.STAND_RIGHT_STANCE);
+        AtomicInteger stance = new AtomicInteger(CharacterStance.STAND_RIGHT_STANCE);
 
         when(bot.getPosition()).thenAnswer(invocation -> new Point(position.get()));
         doAnswer(invocation -> {

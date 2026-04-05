@@ -10,6 +10,7 @@ import net.server.channel.handlers.AbstractDealDamageHandler;
 import net.server.channel.handlers.CloseRangeDamageHandler;
 import net.server.channel.handlers.MagicDamageHandler;
 import net.server.channel.handlers.RangedAttackHandler;
+import server.bots.combat.BotAttackDataProvider;
 
 import java.awt.*;
 import java.util.ArrayList;

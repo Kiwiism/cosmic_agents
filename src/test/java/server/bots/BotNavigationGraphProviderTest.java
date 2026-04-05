@@ -1,6 +1,7 @@
 package server.bots;
 
 import client.Character;
+import constants.game.CharacterStance;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import server.maps.MapleMap;
@@ -305,7 +306,7 @@ class BotNavigationGraphProviderTest {
         assertNotEquals(reuseCase.edge().toRegionId, elliniaGraph.findRegionId(ellinia, reuseCase.botPosition()));
 
         Character owner = mockBot(reuseCase.botPosition(), ellinia);
-        when(owner.getStance()).thenReturn(BotPhysicsEngine.cfg.ROPE_STANCE);
+        when(owner.getStance()).thenReturn(CharacterStance.ROPE_STANCE);
 
         BotEntry entry = new BotEntry(mockBot(reuseCase.rawTarget(), ellinia), owner, null);
         entry.following = true;
@@ -528,7 +529,7 @@ class BotNavigationGraphProviderTest {
     private static Character mockBot(Point startPosition, MapleMap map) {
         Character bot = mock(Character.class);
         AtomicReference<Point> position = new AtomicReference<>(new Point(startPosition));
-        AtomicInteger stance = new AtomicInteger(BotPhysicsEngine.cfg.STAND_RIGHT_STANCE);
+        AtomicInteger stance = new AtomicInteger(CharacterStance.STAND_RIGHT_STANCE);
 
         when(bot.getPosition()).thenAnswer(invocation -> new Point(position.get()));
         doAnswer(invocation -> {

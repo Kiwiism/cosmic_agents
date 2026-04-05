@@ -13,7 +13,6 @@ import constants.skills.Page;
 import constants.skills.Spearman;
 import constants.skills.Warrior;
 import constants.skills.WhiteKnight;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -25,9 +24,9 @@ class BotBuildManager {
      * dexTarget = 0 means pure STR (no DEX investment beyond base).
      * dexTarget > 0 means fill DEX to that value first, then all STR.
      */
-    static class ApBuild {
+    public static class ApBuild {
         final int dexTarget;
-        ApBuild(int dexTarget) { this.dexTarget = dexTarget; }
+        public ApBuild(int dexTarget) { this.dexTarget = dexTarget; }
     }
 
     /**
@@ -36,7 +35,7 @@ class BotBuildManager {
      * Processing the full list top-to-bottom (skipping already-done steps) is backward-compatible:
      * a bot that missed many levels catches up by draining all available SP in sequence.
      */
-    record BuildStep(int skillId, int targetLevel) {}
+    public record BuildStep(int skillId, int targetLevel) {}
 
     private static BuildStep s(int id, int to) { return new BuildStep(id, to); }
 

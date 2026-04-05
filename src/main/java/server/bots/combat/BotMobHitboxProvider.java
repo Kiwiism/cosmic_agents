@@ -1,4 +1,4 @@
-package server.bots;
+package server.bots.combat;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,18 +19,18 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-final class BotMobHitboxProvider {
+public final class BotMobHitboxProvider {
     private static final Logger log = LoggerFactory.getLogger(BotMobHitboxProvider.class);
     private static final BotMobHitboxProvider instance = new BotMobHitboxProvider();
 
     private final Map<Integer, Rectangle> standBoundsByMobId = new ConcurrentHashMap<>();
     private volatile Path cachedMobRoot = null;
 
-    static BotMobHitboxProvider getInstance() {
+    public static BotMobHitboxProvider getInstance() {
         return instance;
     }
 
-    Rectangle getMobBounds(Monster mob) {
+    public Rectangle getMobBounds(Monster mob) {
         if (mob == null) {
             return null;
         }
@@ -38,7 +38,7 @@ final class BotMobHitboxProvider {
         return getMobBounds(mob.getId(), mob.getPosition(), mob.isFacingLeft());
     }
 
-    Rectangle getMobBounds(int mobId, Point position, boolean facingLeft) {
+    public Rectangle getMobBounds(int mobId, Point position, boolean facingLeft) {
         ensureCurrentMobRoot();
         Rectangle modelBounds = standBoundsByMobId.computeIfAbsent(mobId, this::loadStandBounds);
         if (modelBounds == null) {

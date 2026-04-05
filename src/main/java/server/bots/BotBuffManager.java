@@ -8,6 +8,7 @@ import client.inventory.Item;
 import client.inventory.manipulator.InventoryManipulator;
 import server.ItemInformationProvider;
 import server.StatEffect;
+import server.bots.combat.BotCombatFormulaProvider;
 import server.life.Monster;
 import tools.Pair;
 
@@ -23,7 +24,7 @@ import java.util.*;
  *
  * Default: off. Configured via chat ("buff on/off", "buff cheap/max").
  */
-public final class BotBuffManager {
+final class BotBuffManager {
 
     private static final long   TICK_MS           = 3_000;
     private static final double ACC_HIT_THRESHOLD = 0.60;

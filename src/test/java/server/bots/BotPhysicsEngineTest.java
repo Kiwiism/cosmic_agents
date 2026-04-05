@@ -1,6 +1,7 @@
 package server.bots;
 
 import client.Character;
+import constants.game.CharacterStance;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import server.maps.MapleMap;
@@ -109,7 +110,7 @@ class BotPhysicsEngineTest {
         assertEquals(20.0, entry.physY);
         assertEquals(0, entry.movementVelX);
         assertEquals(0, entry.movementVelY);
-        assertEquals(BotPhysicsEngine.cfg.STAND_RIGHT_STANCE, BotPhysicsEngine.resolveStance(entry));
+        assertEquals(CharacterStance.STAND_RIGHT_STANCE, BotPhysicsEngine.resolveStance(entry));
     }
 
     @Test
@@ -124,7 +125,7 @@ class BotPhysicsEngineTest {
 
         assertEquals(-180, snapshot.velX());
         assertEquals(-240, snapshot.velY());
-        assertEquals(BotPhysicsEngine.cfg.JUMP_LEFT_STANCE, snapshot.stance());
+        assertEquals(CharacterStance.JUMP_LEFT_STANCE, snapshot.stance());
     }
 
     @Test
@@ -132,10 +133,10 @@ class BotPhysicsEngineTest {
         BotEntry entry = new BotEntry(null, null, null);
 
         entry.facingDir = 1;
-        assertEquals(BotPhysicsEngine.cfg.STAND_RIGHT_STANCE, BotPhysicsEngine.resolveStance(entry));
+        assertEquals(CharacterStance.STAND_RIGHT_STANCE, BotPhysicsEngine.resolveStance(entry));
 
         entry.facingDir = -1;
-        assertEquals(BotPhysicsEngine.cfg.STAND_LEFT_STANCE, BotPhysicsEngine.resolveStance(entry));
+        assertEquals(CharacterStance.STAND_LEFT_STANCE, BotPhysicsEngine.resolveStance(entry));
     }
 
     @Test
@@ -144,10 +145,10 @@ class BotPhysicsEngineTest {
         BotEntry entry = new BotEntry(bot, null, null);
 
         entry.facingDir = 1;
-        assertEquals(BotPhysicsEngine.cfg.DEAD_RIGHT_STANCE, BotPhysicsEngine.resolveStance(entry));
+        assertEquals(CharacterStance.DEAD_RIGHT_STANCE, BotPhysicsEngine.resolveStance(entry));
 
         entry.facingDir = -1;
-        assertEquals(BotPhysicsEngine.cfg.DEAD_LEFT_STANCE, BotPhysicsEngine.resolveStance(entry));
+        assertEquals(CharacterStance.DEAD_LEFT_STANCE, BotPhysicsEngine.resolveStance(entry));
     }
 
     @Test
@@ -160,8 +161,8 @@ class BotPhysicsEngineTest {
         ropeEntry.climbing = true;
         ropeEntry.climbRope = new Rope(100, 0, 40, false);
 
-        assertEquals(BotPhysicsEngine.cfg.LADDER_STANCE, BotPhysicsEngine.resolveStance(ladderEntry));
-        assertEquals(BotPhysicsEngine.cfg.ROPE_STANCE, BotPhysicsEngine.resolveStance(ropeEntry));
+        assertEquals(CharacterStance.LADDER_STANCE, BotPhysicsEngine.resolveStance(ladderEntry));
+        assertEquals(CharacterStance.ROPE_STANCE, BotPhysicsEngine.resolveStance(ropeEntry));
     }
 
     @Test
@@ -217,7 +218,7 @@ class BotPhysicsEngineTest {
         assertFalse(entry.inAir);
         assertFalse(entry.climbing);
         assertEquals(new Point(100, 0), bot.getPosition());
-        assertEquals(BotPhysicsEngine.cfg.STAND_RIGHT_STANCE, bot.getStance());
+        assertEquals(CharacterStance.STAND_RIGHT_STANCE, bot.getStance());
     }
 
     @Test
@@ -455,7 +456,7 @@ class BotPhysicsEngineTest {
     private static Character mockBot(Point startPosition, MapleMap map, int hp) {
         Character bot = mock(Character.class);
         AtomicReference<Point> position = new AtomicReference<>(new Point(startPosition));
-        AtomicInteger stance = new AtomicInteger(BotPhysicsEngine.cfg.STAND_RIGHT_STANCE);
+        AtomicInteger stance = new AtomicInteger(CharacterStance.STAND_RIGHT_STANCE);
 
         when(bot.getPosition()).thenAnswer(invocation -> new Point(position.get()));
         doAnswer(invocation -> {

@@ -2,6 +2,7 @@ package server.bots;
 
 import client.Job;
 import org.junit.jupiter.api.Test;
+import server.bots.combat.BotDefenseDataProvider;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

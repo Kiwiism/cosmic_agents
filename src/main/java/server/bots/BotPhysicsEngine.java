@@ -1,6 +1,7 @@
 package server.bots;
 
 import client.Character;
+import constants.game.CharacterStance;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Rope;
@@ -37,18 +38,6 @@ final class BotPhysicsEngine {
         public int MAX_SNAP_DROP = 16;
         public int MAX_SLOPE_UP = 26;
         public int DOWN_JUMP_GRACE_MS = 350;
-
-        public int DEAD_RIGHT_STANCE = 18;
-        public int DEAD_LEFT_STANCE = 19;
-        public int WALK_RIGHT_STANCE = 2;
-        public int WALK_LEFT_STANCE = 3;
-        public int STAND_RIGHT_STANCE = 4;
-        public int STAND_LEFT_STANCE = 5;
-        public int JUMP_RIGHT_STANCE = 6;
-        public int JUMP_LEFT_STANCE = 7;
-        public int PRONE_STANCE = 10;
-        public int ROPE_STANCE = 16;
-        public int LADDER_STANCE = 17;
     }
 
     record GroundMotion(int stepX, boolean lostGround) {
@@ -819,34 +808,34 @@ final class BotPhysicsEngine {
         }
         if (entry.climbing) {
             return entry.climbRope != null && entry.climbRope.isLadder()
-                    ? cfg.LADDER_STANCE
-                    : cfg.ROPE_STANCE;
+                    ? CharacterStance.LADDER_STANCE
+                    : CharacterStance.ROPE_STANCE;
         }
         if (entry.crouching) {
-            return cfg.PRONE_STANCE;
+            return CharacterStance.PRONE_STANCE;
         }
         if (entry.inAir) {
-            return entry.facingDir >= 0 ? cfg.JUMP_RIGHT_STANCE : cfg.JUMP_LEFT_STANCE;
+            return entry.facingDir >= 0 ? CharacterStance.JUMP_RIGHT_STANCE : CharacterStance.JUMP_LEFT_STANCE;
         }
         if (entry.movementVelX > 0) {
-            return cfg.WALK_RIGHT_STANCE;
+            return CharacterStance.WALK_RIGHT_STANCE;
         }
         if (entry.movementVelX < 0) {
-            return cfg.WALK_LEFT_STANCE;
+            return CharacterStance.WALK_LEFT_STANCE;
         }
         return resolveIdleGroundStance(entry);
     }
 
     static int resolveIdleGroundStance(BotEntry entry) {
-        return entry.facingDir >= 0 ? cfg.STAND_RIGHT_STANCE : cfg.STAND_LEFT_STANCE;
+        return entry.facingDir >= 0 ? CharacterStance.STAND_RIGHT_STANCE : CharacterStance.STAND_LEFT_STANCE;
     }
 
     static int resolveDeadStance(BotEntry entry) {
-        return entry.facingDir >= 0 ? cfg.DEAD_RIGHT_STANCE : cfg.DEAD_LEFT_STANCE;
+        return entry.facingDir >= 0 ? CharacterStance.DEAD_RIGHT_STANCE : CharacterStance.DEAD_LEFT_STANCE;
     }
 
     static boolean isStandingStance(int stance) {
-        return stance == cfg.STAND_RIGHT_STANCE || stance == cfg.STAND_LEFT_STANCE;
+        return CharacterStance.isStanding(stance);
     }
 
     static void syncCharacterState(BotEntry entry) {

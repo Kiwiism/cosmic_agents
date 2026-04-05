@@ -1,6 +1,7 @@
 package server.bots;
 
 import client.Character;
+import constants.game.CharacterStance;
 import server.maps.MapleMap;
 import server.maps.Portal;
 import server.maps.Rope;
@@ -855,7 +856,7 @@ final class BotNavigationManager {
             return -1;
         }
 
-        if (isRopeOrLadderStance(character.getStance())) {
+        if (CharacterStance.isClimbing(character.getStance())) {
             int ropeRegionId = graph.findRopeRegionId(position);
             if (ropeRegionId >= 0) {
                 return ropeRegionId;
@@ -877,10 +878,6 @@ final class BotNavigationManager {
 
     private static boolean shouldPreferRopeRegion(MapleMap map, Point position) {
         return BotPhysicsEngine.isGroundFarBelow(map, position);
-    }
-
-    private static boolean isRopeOrLadderStance(int stance) {
-        return stance == BotPhysicsEngine.cfg.ROPE_STANCE || stance == BotPhysicsEngine.cfg.LADDER_STANCE;
     }
 
     private static boolean isRopeEntryEdge(BotNavigationGraph graph, BotNavigationGraph.Edge edge) {

@@ -1,4 +1,4 @@
-package server.bots;
+package server.bots.combat;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,16 +22,16 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-final class BotAttackDataProvider {
+public final class BotAttackDataProvider {
     private static final Logger log = LoggerFactory.getLogger(BotAttackDataProvider.class);
     private static final BotAttackDataProvider instance = new BotAttackDataProvider();
     private static final Map<String, Integer> BODY_ACTION_ID_OVERRIDES = createBodyActionIdOverrides();
 
-    static BotAttackDataProvider getInstance() {
+    public static BotAttackDataProvider getInstance() {
         return instance;
     }
 
-    static final class NormalAttackProfile {
+    public static final class NormalAttackProfile {
         private final int attackSpeed;
         private final int attack;
         private final int attackDelayMillis;
@@ -53,35 +53,35 @@ final class BotAttackDataProvider {
             this.afterimageFirstFramesByAction = Map.copyOf(afterimageFirstFramesByAction);
         }
 
-        int getAttackSpeed() {
+        public int getAttackSpeed() {
             return attackSpeed;
         }
 
-        int getAttack() {
+        public int getAttack() {
             return attack;
         }
 
-        int getAttackDelayMillis() {
+        public int getAttackDelayMillis() {
             return attackDelayMillis;
         }
 
-        String getAfterImage() {
+        public String getAfterImage() {
             return afterImage;
         }
 
-        boolean hasBoundingBox() {
+        public boolean hasBoundingBox() {
             return rightFacingBounds != null;
         }
 
-        List<String> getSourceActions() {
+        public List<String> getSourceActions() {
             return sourceActions;
         }
 
-        String getSourcePath() {
+        public String getSourcePath() {
             return sourcePath;
         }
 
-        String getActionForVariant(int variantOffset, String fallbackAction) {
+        public String getActionForVariant(int variantOffset, String fallbackAction) {
             if (sourceActions.isEmpty()) {
                 return fallbackAction;
             }
@@ -89,11 +89,11 @@ final class BotAttackDataProvider {
             return sourceActions.get(normalizedIndex);
         }
 
-        int getAfterimageFirstFrame(String actionName) {
+        public int getAfterimageFirstFrame(String actionName) {
             return afterimageFirstFramesByAction.getOrDefault(actionName, 0);
         }
 
-        Rectangle calculateBoundingBox(Point origin, boolean facingLeft) {
+        public Rectangle calculateBoundingBox(Point origin, boolean facingLeft) {
             if (rightFacingBounds == null) {
                 return null;
             }
@@ -308,12 +308,12 @@ final class BotAttackDataProvider {
      * which is the authoritative timing source used by {@code Char::get_attackdelay}.
      * Returns 0 if the stance is not found.
      */
-    int getBodyStanceDurationMs(String stanceName) {
+    public int getBodyStanceDurationMs(String stanceName) {
         BodyStanceTiming timing = getBodyStanceTiming(stanceName);
         return timing != null ? timing.totalDelayMillis() : 0;
     }
 
-    int getBodyStanceDelayBeforeFrameMs(String stanceName, int firstFrame) {
+    public int getBodyStanceDelayBeforeFrameMs(String stanceName, int firstFrame) {
         BodyStanceTiming timing = getBodyStanceTiming(stanceName);
         if (timing == null || firstFrame <= 0) {
             return 0;
@@ -327,12 +327,12 @@ final class BotAttackDataProvider {
         return delay;
     }
 
-    int getBodyActionDurationMs(String actionName) {
+    public int getBodyActionDurationMs(String actionName) {
         BodyActionTiming timing = getBodyActionTiming(actionName);
         return timing != null ? timing.totalDelayMillis() : 0;
     }
 
-    int getBodyActionAttackDelayMs(String actionName, int attackIndex) {
+    public int getBodyActionAttackDelayMs(String actionName, int attackIndex) {
         BodyActionTiming timing = getBodyActionTiming(actionName);
         if (timing == null || attackIndex < 0 || attackIndex >= timing.attackFrameDelays().size()) {
             return -1;
@@ -340,7 +340,7 @@ final class BotAttackDataProvider {
         return timing.attackFrameDelays().get(attackIndex);
     }
 
-    int getBodyActionId(String actionName) {
+    public int getBodyActionId(String actionName) {
         if (actionName == null || actionName.isBlank()) {
             return -1;
         }
@@ -517,7 +517,7 @@ final class BotAttackDataProvider {
         return Map.copyOf(actionIds);
     }
 
-    NormalAttackProfile getNormalAttackProfile(int itemId) {
+    public NormalAttackProfile getNormalAttackProfile(int itemId) {
         ensureCurrentCharacterRoot();
         if (normalAttackProfiles.containsKey(itemId)) {
             return normalAttackProfiles.get(itemId);
