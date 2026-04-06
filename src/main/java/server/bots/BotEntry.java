@@ -170,6 +170,8 @@ public class BotEntry {
     long pendingGearPromptAt = 0L;
     // Last known owner position (set each tick in BotManager, read by pathLogger)
     Point lastOwnerPos = null;
+    boolean lastTickWasAi = false;
+    long lastTickAtMs = 0L;
 
     // Stuck detection & unstuck
     int stuckMs = 0;

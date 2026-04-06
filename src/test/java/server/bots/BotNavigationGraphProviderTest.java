@@ -175,6 +175,21 @@ class BotNavigationGraphProviderTest {
     }
 
     @Test
+    void shouldMergeSharedEndpointWalkConnectionEvenForSharpSlopeContinuation() {
+        MapleMap map = createEmptyTestMap(910000014);
+        server.maps.FootholdTree footholds = map.getFootholds();
+        footholds.insert(new server.maps.Foothold(new Point(0, 10), new Point(10, 10), 1));
+        footholds.insert(new server.maps.Foothold(new Point(10, 10), new Point(20, -20), 2));
+
+        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
+        int leftRegionId = graph.findRegionId(map, new Point(4, 10));
+        int rightRegionId = graph.findRegionId(map, new Point(16, -8));
+
+        assertEquals(leftRegionId, rightRegionId);
+        assertTrue(findPath(graph, map, new Point(4, 10), new Point(16, -8)).isEmpty());
+    }
+
+    @Test
     void shouldFindElliniaPathFromLowerPlatformToUpperLeftSlope() {
         List<BotNavigationGraph.Edge> path = findPath(elliniaGraph, ellinia, new Point(-445, -55), new Point(-491, -426));
         int targetRegionId = elliniaGraph.findRegionId(ellinia, new Point(-491, -426));

@@ -69,20 +69,27 @@ final class BotNavigationManager {
                         : startRegionId < 0 || targetRegionId < 0 ? "no-region"
                         : startRegionId == targetRegionId ? "same-region" : "no-path";
                 clearNavigation(entry);
+                if (entry.pathLogger != null) {
+                    entry.pathLogger.record(entry, BotManager.getInstance().captureTargetSnapshot(entry), startRegionId, false, runAiTick);
+                }
                 return new NavigationDirective(rawTargetPos, false);
             }
 
             NavigationDirective executionDirective = tryExecuteEdge(entry, bot, botPos, rawTargetPos, edge, runAiTick);
             if (executionDirective != null) {
                 entry.lastNavDecision = "exec";
-                if (entry.pathLogger != null) entry.pathLogger.record(entry, rawTargetPos, startRegionId, true);
+                if (entry.pathLogger != null) {
+                    entry.pathLogger.record(entry, BotManager.getInstance().captureTargetSnapshot(entry), startRegionId, true, runAiTick);
+                }
                 return executionDirective;
             }
 
             entry.lastNavDecision = edgeReused ? "reuse" : "new";
             entry.navPreciseTarget = shouldUsePreciseTarget(entry, botPos, edge);
             entry.navTargetPos = selectWaypoint(entry, botPos, edge);
-            if (entry.pathLogger != null) entry.pathLogger.record(entry, rawTargetPos, startRegionId, false);
+            if (entry.pathLogger != null) {
+                entry.pathLogger.record(entry, BotManager.getInstance().captureTargetSnapshot(entry), startRegionId, false, runAiTick);
+            }
             return new NavigationDirective(new Point(entry.navTargetPos), false);
         } finally {
             BotPerformanceMonitor.record("nav-resolve", System.nanoTime() - startedAt);
@@ -756,8 +763,8 @@ final class BotNavigationManager {
     }
 
     private static int intraRegionTravelCost(Point from, Point to) {
-        int travel = Math.abs(to.x - from.x) + Math.abs(to.y - from.y);
-        return Math.max(0, (int) Math.round((travel * 1000.0) / Math.max(1, BotMovementManager.cfg.WALK_VEL)));
+        int dx = Math.abs(to.x - from.x);
+        return Math.max(0, (int) Math.round((dx * 1000.0) / Math.max(1, BotMovementManager.cfg.WALK_VEL)));
     }
 
     private static int intraRegionTravelCost(BotNavigationGraph graph, int regionId, Point from, Point to) {

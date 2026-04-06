@@ -7,7 +7,6 @@ import constants.skills.FPMage;
 import constants.skills.Shadower;
 import server.StatEffect;
 import server.TimerManager;
-import server.life.Monster;
 import server.maps.MapleMap;
 import server.maps.Mist;
 import tools.PacketCreator;
@@ -87,12 +86,13 @@ public final class BotNavigationDebugOverlay {
             return "Bot '" + bot.getName() + "' is on map " + bot.getMapId() + ", not your current map.";
         }
 
-        Point rawTargetPos = resolveRawTargetPos(entry);
+        BotManager.TargetSnapshot targetSnapshot = BotManager.getInstance().captureTargetSnapshot(entry);
+        Point targetPos = targetSnapshot.primaryTargetPos();
         BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(bot.getMap());
         int startRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, bot.getMap(), bot.getPosition());
-        int targetRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, bot.getMap(), rawTargetPos);
+        int targetRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, bot.getMap(), targetPos);
         List<BotNavigationGraph.Edge> path = startRegionId >= 0 && targetRegionId >= 0 && startRegionId != targetRegionId
-                ? BotNavigationManager.findPath(graph, bot, startRegionId, targetRegionId, rawTargetPos)
+                ? BotNavigationManager.findPath(graph, bot, startRegionId, targetRegionId, targetPos)
                 : List.of();
 
         OverlayBuilder overlay = new OverlayBuilder(viewer);
@@ -112,7 +112,7 @@ public final class BotNavigationDebugOverlay {
         }
 
         overlay.drawNode(bot.getPosition(), OverlayType.CURRENT_EDGE, NODE_SIZE + 4);
-        overlay.drawNode(rawTargetPos, OverlayType.TRANSITION, NODE_SIZE + 4);
+        overlay.drawNode(targetPos, OverlayType.TRANSITION, NODE_SIZE + 4);
         if (entry.navTargetPos != null) {
             overlay.drawNode(entry.navTargetPos, OverlayType.PATH, NODE_SIZE + 2);
         }
@@ -141,8 +141,8 @@ public final class BotNavigationDebugOverlay {
 
         BotPathLogger logger = entry.pathLogger;
         entry.pathLogger = null;
-        Point ownerPos = resolveRawTargetPos(entry);
-        String filePath = logger.dumpToFile(entry, ownerPos, note);
+        BotManager.TargetSnapshot targetSnapshot = BotManager.getInstance().captureTargetSnapshot(entry);
+        String filePath = logger.dumpToFile(entry, targetSnapshot, note);
         return "Path log for '" + entry.bot.getName() + "' dumped: " + filePath;
     }
 
@@ -175,23 +175,6 @@ public final class BotNavigationDebugOverlay {
             return new BotSelection(null, "No owned bot named '" + botName + "' found.");
         }
         return new BotSelection(entry, null);
-    }
-
-    private static Point resolveRawTargetPos(BotEntry entry) {
-        if (entry.grinding && entry.grindTarget != null && entry.grindTarget.isAlive()
-                && entry.grindTarget.getMap() == entry.bot.getMap()) {
-            return entry.grindTarget.getPosition();
-        }
-        if (entry.grinding) {
-            Monster fallbackTarget = BotCombatManager.findGrindTarget(entry.bot);
-            if (fallbackTarget != null) {
-                return fallbackTarget.getPosition();
-            }
-        }
-        if (entry.owner != null) {
-            return entry.owner.getPosition();
-        }
-        return entry.bot.getPosition();
     }
 
     private static String buildGraphMessage(BotNavigationGraph graph, OverlayBuilder overlay) {

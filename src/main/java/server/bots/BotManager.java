@@ -104,6 +104,23 @@ public class BotManager {
         }
     }
 
+    record TargetSnapshot(FormationState formation,
+                          Point rawOwnerPos,
+                          Point followBasePos,
+                          Point followTargetPos,
+                          Point moveTargetPos,
+                          Point grindTargetPos,
+                          Point primaryTargetPos,
+                          String primaryTargetSource) {
+        Point steeringTargetPos(BotEntry entry) {
+            return entry.navTargetPos != null ? new Point(entry.navTargetPos) : new Point(primaryTargetPos);
+        }
+
+        String steeringTargetSource(BotEntry entry) {
+            return entry.navTargetPos != null ? "nav-waypoint" : primaryTargetSource;
+        }
+    }
+
     private static final Pattern DISMISS_PATTERN = Pattern.compile(
             "\\b(dismiss|disown|release)\\s+(\\S+)\\b", Pattern.CASE_INSENSITIVE);
     private static final Pattern RECRUIT_PATTERN = Pattern.compile(
@@ -792,6 +809,57 @@ public class BotManager {
         return new Point(targetX, ownerPos.y);
     }
 
+    FormationState formationStateFor(BotEntry entry) {
+        Character owner = entry.owner;
+        if (owner == null) {
+            return FormationState.defaultStagger();
+        }
+        return ownerFormations.getOrDefault(owner.getId(), FormationState.defaultStagger());
+    }
+
+    TargetSnapshot captureTargetSnapshot(BotEntry entry) {
+        Character bot = entry.bot;
+        Character owner = entry.owner;
+        Point fallbackPos = bot.getPosition();
+        Point rawOwnerPos = owner != null ? owner.getPosition() : fallbackPos;
+        FormationState formation = formationStateFor(entry);
+        Point followBasePos = entry.navEdge == null
+                ? new Point(rawOwnerPos.x + entry.followOffsetX, rawOwnerPos.y)
+                : new Point(rawOwnerPos);
+        Point followTargetPos = resolveFollowTargetPos(followBasePos, rawOwnerPos, formation.snapRange(), bot.getMap());
+        Point moveTargetPos = entry.moveTarget == null ? null : new Point(entry.moveTarget);
+        Monster activeGrindTarget = entry.grindTarget != null
+                && entry.grindTarget.isAlive()
+                && entry.grindTarget.getMap() == bot.getMap()
+                ? entry.grindTarget
+                : entry.grinding ? BotCombatManager.findGrindTarget(bot) : null;
+        Point grindTargetPos = activeGrindTarget == null ? null : new Point(activeGrindTarget.getPosition());
+        Point primaryTargetPos;
+        String primaryTargetSource;
+        if (moveTargetPos != null) {
+            primaryTargetPos = moveTargetPos;
+            primaryTargetSource = "move-target";
+        } else if (grindTargetPos != null) {
+            primaryTargetPos = grindTargetPos;
+            primaryTargetSource = "grind-target";
+        } else if (entry.following) {
+            primaryTargetPos = followTargetPos;
+            primaryTargetSource = "follow-target";
+        } else {
+            primaryTargetPos = rawOwnerPos;
+            primaryTargetSource = "owner-raw";
+        }
+        return new TargetSnapshot(
+                formation,
+                new Point(rawOwnerPos),
+                new Point(followBasePos),
+                new Point(followTargetPos),
+                moveTargetPos,
+                grindTargetPos,
+                new Point(primaryTargetPos),
+                primaryTargetSource);
+    }
+
     // Main tick
     // -------------------------------------------------------------------------
 
@@ -810,6 +878,8 @@ public class BotManager {
         Character bot = entry.bot;
         BotChatManager.expirePendingLootOffer(entry);
         boolean runAiTick = consumeAiTick(entry);
+        entry.lastTickWasAi = runAiTick;
+        entry.lastTickAtMs = System.currentTimeMillis();
 
         Character owner = entry.owner;
         if (owner == null || owner.getId() != ownerCharId || !owner.isLoggedinWorld()) {
@@ -836,18 +906,11 @@ public class BotManager {
             return;
         }
 
-        Point botPos    = bot.getPosition();
-        int snapRange = ownerFormations.getOrDefault(ownerCharId, FormationState.defaultStagger()).snapRange();
-        // Apply formation X offset before Y-snap so the snap resolves at the bot's actual target X.
-        // Offset is skipped when a nav edge is active (waypoint navigation takes precedence).
-        Point ownerPos = owner.getPosition();
-        entry.lastOwnerPos = ownerPos; // raw owner pos before formation offset/snap — used by path logger
-        Point followBase = entry.navEdge == null
-                ? new Point(ownerPos.x + entry.followOffsetX, ownerPos.y)
-                : ownerPos;
-        Point targetPos = entry.moveTarget != null ? entry.moveTarget
-                : entry.following ? resolveFollowTargetPos(followBase, ownerPos, snapRange, bot.getMap())
-                : ownerPos;
+        Point botPos = bot.getPosition();
+        TargetSnapshot targetSnapshot = captureTargetSnapshot(entry);
+        Point ownerPos = targetSnapshot.rawOwnerPos();
+        entry.lastOwnerPos = new Point(ownerPos); // raw owner pos before formation offset/snap — used by path logger
+        Point targetPos = targetSnapshot.primaryTargetPos();
 
         // These run in all modes (idle, follow, grind)
         BotCombatManager.tickMobDamage(entry, bot);

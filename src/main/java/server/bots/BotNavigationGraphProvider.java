@@ -28,7 +28,6 @@ final class BotNavigationGraphProvider {
     private static final int GRAPH_VERSION = 17;
     private static final int ENDPOINT_ANCHOR_SPACING_PX = 10;
     private static final int ROPE_ANCHOR_INTERVAL_PX = 30;
-    private static final double REGION_MERGE_MIN_CONTINUATION_COSINE = 0.5; // 1 = straight, 0 = 90degree, negative = u-turn
     private static final Path CACHE_DIR = Path.of("cache", "bot-nav", "v" + GRAPH_VERSION);
     private static final Map<Integer, BotNavigationGraph> GRAPHS = new ConcurrentHashMap<>();
     private static final Map<Integer, GraphBuildReport> LAST_BUILD_REPORTS = new ConcurrentHashMap<>();
@@ -476,7 +475,9 @@ final class BotNavigationGraphProvider {
                 continue;
             }
 
-            int dropCost = estimateDropCost(anchor, landing.point()) + (dropStepX == 0 ? 100 : 0);
+            int dropCost = dropStepX == 0
+                    ? BotPhysicsEngine.estimateDownJumpLandingTimeMs(map, anchor)
+                    : BotPhysicsEngine.estimateFallLandingTimeMs(map, anchor, dropStepX);
             addEdge(from.id, below.id, BotNavigationGraph.EdgeType.DROP, anchor, landing.point(), dropStepX, 0, dropCost, outgoing, edgeKeys);
         }
     }
@@ -514,7 +515,7 @@ final class BotNavigationGraphProvider {
                 addEdge(from.id, to.id, BotNavigationGraph.EdgeType.JUMP,
                         launchWindow.startPoint(), launchWindow.endPoint(),
                         launchWindow.minX(), launchWindow.maxX(),
-                        launchStepX, 0, estimateJumpCost(launchWindow.startPoint(), launchWindow.endPoint()),
+                        launchStepX, 0, BotPhysicsEngine.estimateJumpLandingTimeMs(map, launchWindow.startPoint(), launchStepX),
                         outgoing, edgeKeys);
             }
         }
@@ -627,8 +628,6 @@ final class BotNavigationGraphProvider {
                 continue;
             }
 
-            Point bestEntry = null;
-            int bestScore = Integer.MAX_VALUE;
             for (Point anchor : anchorPoints(ground, featureXsByRegionId.getOrDefault(ground.id, List.of()))) {
                 boolean canGrab = Math.abs(anchor.x - ropeX) <= BotMovementManager.cfg.ROPE_GRAB_X
                         && anchor.y >= rope.topY() && anchor.y <= rope.bottomY();
@@ -636,21 +635,31 @@ final class BotNavigationGraphProvider {
                 boolean canTopStep = anchor.y <= rope.topY() + BotMovementManager.cfg.JUMP_Y_THRESH
                         && Math.abs(anchor.x - ropeX) <= BotMovementManager.cfg.ROPE_GRAB_X;
 
-                if (canGrab || canJumpGrab || canTopStep) {
-                    int score = Math.abs(anchor.x - ropeX) * 2 + Math.abs(anchor.y - rope.bottomY());
-                    if (score < bestScore) {
-                        bestScore = score;
-                        bestEntry = anchor;
+                if (canGrab) {
+                    Point ropePoint = new Point(ropeX, Math.max(rope.topY(), Math.min(anchor.y, rope.bottomY())));
+                    addEdge(ground.id, ropeRegion.id, BotNavigationGraph.EdgeType.CLIMB,
+                            anchor, ropePoint, 0, 0, 0, outgoing, edgeKeys);
+                    continue;
+                }
+
+                if (canTopStep) {
+                    Point ropeGrab = BotPhysicsEngine.simulateDownJumpRopeGrab(map, anchor, rope);
+                    if (ropeGrab != null) {
+                        int cost = BotPhysicsEngine.estimateDownJumpRopeGrabTimeMs(map, anchor, rope);
+                        addEdge(ground.id, ropeRegion.id, BotNavigationGraph.EdgeType.CLIMB,
+                                anchor, ropeGrab, 0, 0, cost, outgoing, edgeKeys);
                     }
                 }
-            }
 
-            if (bestEntry != null) {
-                int entryY = Math.max(rope.topY(), Math.min(bestEntry.y, rope.bottomY()));
-                Point ropePoint = new Point(ropeX, entryY);
-                int cost = estimateWalkCost(bestEntry, new Point(ropeX, bestEntry.y)) + 200;
-                addEdge(ground.id, ropeRegion.id, BotNavigationGraph.EdgeType.CLIMB,
-                        bestEntry, ropePoint, 0, 0, cost, outgoing, edgeKeys);
+                if (canJumpGrab) {
+                    int jumpStep = Integer.compare(ropeX - anchor.x, 0) * BotMovementManager.walkStep(map);
+                    Point ropeGrab = BotPhysicsEngine.simulateGroundJumpRopeGrab(map, anchor, jumpStep, rope);
+                    if (ropeGrab != null) {
+                        int cost = BotPhysicsEngine.estimateGroundJumpRopeGrabTimeMs(map, anchor, jumpStep, rope);
+                        addEdge(ground.id, ropeRegion.id, BotNavigationGraph.EdgeType.CLIMB,
+                                anchor, ropeGrab, 0, 0, cost, outgoing, edgeKeys);
+                    }
+                }
             }
         }
     }
@@ -689,7 +698,7 @@ final class BotNavigationGraphProvider {
                     continue;
                 }
 
-                int cost = estimateRopeExitJumpCost();
+                int cost = BotPhysicsEngine.estimateRopeJumpLandingTimeMs(map, ropePoint, stepX);
                 addEdge(ropeRegion.id, toRegion.id, BotNavigationGraph.EdgeType.CLIMB,
                         ropePoint, landing.point(), stepX, 0, cost, outgoing, edgeKeys);
             }
@@ -719,7 +728,7 @@ final class BotNavigationGraphProvider {
                     continue;
                 }
 
-                int cost = estimateRopeExitJumpCost() + 150;
+                int cost = BotPhysicsEngine.estimateRopeJumpGrabTimeMs(map, ropePoint, launchDir, targetRope);
                 addEdge(ropeRegion.id, otherRope.id, BotNavigationGraph.EdgeType.CLIMB,
                         ropePoint, ropeGrab, launchDir, 0, cost, outgoing, edgeKeys);
             }
@@ -749,9 +758,8 @@ final class BotNavigationGraphProvider {
                 }
 
                 Point ropePoint = new Point(rope.x(), rope.topY());
-                int cost = estimateWalkCost(ropePoint, landPoint);
                 addEdge(ropeRegion.id, ground.id, BotNavigationGraph.EdgeType.CLIMB,
-                        ropePoint, landPoint, 0, 0, cost, outgoing, edgeKeys);
+                        ropePoint, landPoint, 0, 0, 0, outgoing, edgeKeys);
                 return;
             }
         }
@@ -820,8 +828,7 @@ final class BotNavigationGraphProvider {
 
         Point start = from.pointAt(portal.getPosition().x);
         Point end = to.pointAt(targetPortal.getPosition().x);
-        // Portals are instant teleports — cost is effectively 0 travel time.
-        addEdge(from.id, to.id, BotNavigationGraph.EdgeType.PORTAL, start, end, 0, portal.getId(), 1, outgoing, edgeKeys);
+        addEdge(from.id, to.id, BotNavigationGraph.EdgeType.PORTAL, start, end, 0, portal.getId(), 0, outgoing, edgeKeys);
     }
 
     private static Map<Integer, List<Integer>> buildFeatureXsByRegionId(MapleMap map,
@@ -1069,43 +1076,6 @@ final class BotNavigationGraphProvider {
         return null;
     }
 
-    private static boolean hasCompatiblePlatformShape(Foothold first, Foothold second, Point sharedPoint) {
-        if (first.isWall() || second.isWall() || sharedPoint == null) {
-            return false;
-        }
-
-        Point firstOther = otherEndpoint(first, sharedPoint);
-        Point secondOther = otherEndpoint(second, sharedPoint);
-        if (firstOther == null || secondOther == null) {
-            return false;
-        }
-
-        double firstDx = sharedPoint.x - firstOther.x;
-        double firstDy = sharedPoint.y - firstOther.y;
-        double secondDx = secondOther.x - sharedPoint.x;
-        double secondDy = secondOther.y - sharedPoint.y;
-        double firstLength = Math.hypot(firstDx, firstDy);
-        double secondLength = Math.hypot(secondDx, secondDy);
-        if (firstLength == 0.0 || secondLength == 0.0) {
-            return false;
-        }
-
-        double continuationCosine = ((firstDx * secondDx) + (firstDy * secondDy)) / (firstLength * secondLength);
-        return continuationCosine >= REGION_MERGE_MIN_CONTINUATION_COSINE;
-    }
-
-    private static Point otherEndpoint(Foothold foothold, Point sharedPoint) {
-        Point first = new Point(foothold.getX1(), foothold.getY1());
-        Point second = new Point(foothold.getX2(), foothold.getY2());
-        if (first.equals(sharedPoint)) {
-            return second;
-        }
-        if (second.equals(sharedPoint)) {
-            return first;
-        }
-        return null;
-    }
-
     private static int footholdMinX(Foothold foothold) {
         return Math.min(foothold.getX1(), foothold.getX2());
     }
@@ -1127,29 +1097,11 @@ final class BotNavigationGraphProvider {
     }
 
     private static int estimateWalkCost(Point start, Point end) {
-        return Math.max(50, (int) Math.round((Math.abs(end.x - start.x) * 1000.0) / Math.max(1, BotMovementManager.cfg.WALK_VEL)));
+        return estimateHorizontalTravelTimeMs(Math.abs(end.x - start.x));
     }
 
-    private static int estimateJumpCost(Point start, Point end) {
-        // Use real jump airtime from BotPhysicsEngine physics constants.
-        // Not charging horizontal distance means diagonal jumps (launchStepX != 0) cost
-        // the same as vertical jumps — A* naturally prefers them because the bot doesn't
-        // also need to walk horizontally to align under the target first.
-        return 300 + jumpAirtimeCostMs(BotPhysicsEngine.jumpForcePerTick());
-    }
-
-    private static int estimateRopeExitJumpCost() {
-        return 300 + jumpAirtimeCostMs(BotPhysicsEngine.ropeJumpForcePerTick());
-    }
-
-    private static int jumpAirtimeCostMs(float launchForce) {
-        float gravity = BotPhysicsEngine.gravityPerTick();
-        int ticks = Math.max(1, (int) Math.ceil(2.0 * launchForce / gravity));
-        return ticks * BotPhysicsEngine.cfg.TICK_MS;
-    }
-
-    private static int estimateDropCost(Point start, Point end) {
-        return 200 + Math.max(100, (int) Math.round((Math.abs(end.y - start.y) * 1000.0) / Math.max(1, BotMovementManager.cfg.MAX_FALL_PXS)));
+    private static int estimateHorizontalTravelTimeMs(int dx) {
+        return Math.max(0, (int) Math.round((dx * 1000.0) / Math.max(1, BotMovementManager.cfg.WALK_VEL)));
     }
 
     private static int dropLaunchStep(BotNavigationGraph.Region region, MapleMap map, Point anchor) {
