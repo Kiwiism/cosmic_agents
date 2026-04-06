@@ -911,12 +911,7 @@ public class BotManager {
     // -------------------------------------------------------------------------
 
     private void tick(int ownerCharId, int botCharId) {
-        List<BotEntry> entries = bots.get(ownerCharId);
-        if (entries == null) return;
-        BotEntry entry = null;
-        for (BotEntry e : entries) {
-            if (e.bot.getId() == botCharId) { entry = e; break; }
-        }
+        BotEntry entry = getBotEntry(ownerCharId, botCharId);
         if (entry == null) return;
         if (entry.skipDelayMs > 0) {
             entry.skipDelayMs = BotMovementManager.tickDown(entry.skipDelayMs);
@@ -928,14 +923,7 @@ public class BotManager {
         entry.lastTickWasAi = runAiTick;
         entry.lastTickAtMs = System.currentTimeMillis();
 
-        Character owner = entry.owner;
-        if (owner == null || owner.getId() != ownerCharId || !owner.isLoggedinWorld()) {
-            owner = Server.getInstance()
-                    .getWorld(bot.getWorld())
-                    .getPlayerStorage()
-                    .getCharacterById(ownerCharId);
-            entry.owner = owner;
-        }
+        Character owner = resolveTickOwner(entry, ownerCharId);
         if (owner == null) {
             entry.following = false;
             return;
@@ -943,13 +931,7 @@ public class BotManager {
 
         // Dead state: skip AI until respawn timer expires.
         // Also catch stale hp=0 (e.g. deadUntil was lost on save/reconnect) — re-enter dead state.
-        if (entry.deadUntil == 0 && bot.getHp() <= 0) {
-            BotCombatManager.enterDeadState(entry, bot, false);
-        }
-        if (entry.deadUntil > 0) {
-            if (System.currentTimeMillis() >= entry.deadUntil) {
-                respawnBot(entry, bot, owner);
-            }
+        if (handleDeadTick(entry, bot, owner)) {
             return;
         }
 
@@ -960,71 +942,20 @@ public class BotManager {
         Point targetPos = targetSnapshot.primaryTargetPos();
 
         // These run in all modes (idle, follow, grind)
-        BotCombatManager.tickMobDamage(entry, bot);
-        if (bot.getHp() <= 0) {
-            if (entry.deadUntil == 0) {
-                BotCombatManager.enterDeadState(entry, bot, false);
-            }
-            return;
-        }
-        tickReleaseMonsterControl(bot);
-        tickPassiveLoot(entry, bot);
-        tickPotionCheck(entry, bot);
-        tickPassiveMpRecovery(entry, bot);
-        BotBuildManager.checkLevelUp(entry, bot);
-        BotChatManager.tickAfkCheck(entry, owner);
-        BotDropManager.tickTrade(entry, bot);
-        BotDropManager.tickManualTrade(entry, bot);
-        BotPqHooks.tick(entry, bot, owner);
-        if (BotPqHooks.isNpcLocked(entry)) return;
-        BotCombatManager.tickActionLock(entry);
-        if (runAiTick) {
-            BotCombatManager.rebuildSkillCacheIfNeeded(entry, bot);
-            BotCombatManager.tickBuffs(entry, bot);
-            BotCombatManager.tickSupportHealing(entry, bot);
-            BotBuffManager.tick(entry, bot);
-        }
-        if (tickActionLocked(entry)) {
+        if (runCommonTickSystems(entry, bot, owner, runAiTick)) {
             return;
         }
 
-        if (!entry.following && !entry.grinding && entry.moveTarget == null) {
-            if (entry.inAir) {
-                BotMovementManager.tickAirborne(entry, null);
-            } else if (!entry.climbing) {
-                // On ground — snap to stand stance once so walking/jumping animation clears
-                int expectedIdleStance = BotPhysicsEngine.resolveIdleGroundStance(entry);
-                if (BotPhysicsEngine.resolveStance(entry) != expectedIdleStance
-                        || bot.getStance() != expectedIdleStance) {
-                    BotPhysicsEngine.idleOnGround(entry, bot);
-                    BotMovementManager.broadcastMovement(entry);
-                }
-            }
+        if (tickIdleEntry(entry, bot)) {
             return;
         }
 
         // Map change and teleport checks only apply when following owner
-        if (entry.following) {
-            if (bot.getMapId() != owner.getMapId()) {
-                Point spawn = BotPhysicsEngine.findGroundPoint(owner.getMap(), new Point(ownerPos.x, ownerPos.y - 1));
-                if (spawn == null) {
-                    spawn = ownerPos;
-                }
-                BotPhysicsEngine.idleOnGround(entry, bot);
-                bot.changeMap(owner.getMap(), spawn);
-                BotMovementManager.resetEntryState(entry);
-                return;
-            }
+        if (syncFollowMap(entry, bot, owner, ownerPos)) {
+            return;
         }
         // Teleport if hopelessly far — applies to both follow and grind (catches falling off map)
-        if (Math.abs(botPos.x - targetPos.x) + Math.abs(botPos.y - targetPos.y) > BotMovementManager.cfg.TELEPORT_DIST) {
-            Point spawn = BotPhysicsEngine.findGroundPoint(bot.getMap(), new Point(targetPos.x, targetPos.y - 1));
-            if (spawn == null) {
-                spawn = targetPos;
-            }
-            BotPhysicsEngine.teleportTo(entry, bot, spawn);
-            BotMovementManager.resetEntryStateAfterTeleport(entry);
-            BotMovementManager.broadcastMovement(entry);
+        if (recoverTeleportDistance(entry, bot, targetPos)) {
             return;
         }
 
@@ -1132,6 +1063,114 @@ public class BotManager {
             entry.navPreciseTarget = true;
         }
 
+        tickMovementPhase(entry, targetPos, runAiTick);
+        tickStuckDetection(entry);
+        clearReachedMoveTarget(entry);
+    }
+
+    private Character resolveTickOwner(BotEntry entry, int ownerCharId) {
+        Character owner = entry.owner;
+        if (owner == null || owner.getId() != ownerCharId || !owner.isLoggedinWorld()) {
+            owner = Server.getInstance()
+                    .getWorld(entry.bot.getWorld())
+                    .getPlayerStorage()
+                    .getCharacterById(ownerCharId);
+            entry.owner = owner;
+        }
+        return owner;
+    }
+
+    private boolean handleDeadTick(BotEntry entry, Character bot, Character owner) {
+        if (entry.deadUntil == 0 && bot.getHp() <= 0) {
+            BotCombatManager.enterDeadState(entry, bot, false);
+        }
+        if (entry.deadUntil == 0) {
+            return false;
+        }
+        if (System.currentTimeMillis() >= entry.deadUntil) {
+            respawnBot(entry, bot, owner);
+        }
+        return true;
+    }
+
+    private boolean runCommonTickSystems(BotEntry entry, Character bot, Character owner, boolean runAiTick) {
+        BotCombatManager.tickMobDamage(entry, bot);
+        if (bot.getHp() <= 0) {
+            if (entry.deadUntil == 0) {
+                BotCombatManager.enterDeadState(entry, bot, false);
+            }
+            return true;
+        }
+        tickReleaseMonsterControl(bot);
+        tickPassiveLoot(entry, bot);
+        tickPotionCheck(entry, bot);
+        tickPassiveMpRecovery(entry, bot);
+        BotBuildManager.checkLevelUp(entry, bot);
+        BotChatManager.tickAfkCheck(entry, owner);
+        BotDropManager.tickTrade(entry, bot);
+        BotDropManager.tickManualTrade(entry, bot);
+        BotPqHooks.tick(entry, bot, owner);
+        if (BotPqHooks.isNpcLocked(entry)) {
+            return true;
+        }
+        BotCombatManager.tickActionLock(entry);
+        if (runAiTick) {
+            BotCombatManager.rebuildSkillCacheIfNeeded(entry, bot);
+            BotCombatManager.tickBuffs(entry, bot);
+            BotCombatManager.tickSupportHealing(entry, bot);
+            BotBuffManager.tick(entry, bot);
+        }
+        return tickActionLocked(entry);
+    }
+
+    private boolean tickIdleEntry(BotEntry entry, Character bot) {
+        if (entry.following || entry.grinding || entry.moveTarget != null) {
+            return false;
+        }
+        if (entry.inAir) {
+            BotMovementManager.tickAirborne(entry, null);
+        } else if (!entry.climbing) {
+            int expectedIdleStance = BotPhysicsEngine.resolveIdleGroundStance(entry);
+            if (BotPhysicsEngine.resolveStance(entry) != expectedIdleStance
+                    || bot.getStance() != expectedIdleStance) {
+                BotPhysicsEngine.idleOnGround(entry, bot);
+                BotMovementManager.broadcastMovement(entry);
+            }
+        }
+        return true;
+    }
+
+    private boolean syncFollowMap(BotEntry entry, Character bot, Character owner, Point ownerPos) {
+        if (!entry.following || bot.getMapId() == owner.getMapId()) {
+            return false;
+        }
+        Point spawn = BotPhysicsEngine.findGroundPoint(owner.getMap(), new Point(ownerPos.x, ownerPos.y - 1));
+        if (spawn == null) {
+            spawn = ownerPos;
+        }
+        BotPhysicsEngine.idleOnGround(entry, bot);
+        bot.changeMap(owner.getMap(), spawn);
+        BotMovementManager.resetEntryState(entry);
+        return true;
+    }
+
+    private boolean recoverTeleportDistance(BotEntry entry, Character bot, Point targetPos) {
+        Point botPos = bot.getPosition();
+        if (Math.abs(botPos.x - targetPos.x) + Math.abs(botPos.y - targetPos.y)
+                <= BotMovementManager.cfg.TELEPORT_DIST) {
+            return false;
+        }
+        Point spawn = BotPhysicsEngine.findGroundPoint(bot.getMap(), new Point(targetPos.x, targetPos.y - 1));
+        if (spawn == null) {
+            spawn = targetPos;
+        }
+        BotPhysicsEngine.teleportTo(entry, bot, spawn);
+        BotMovementManager.resetEntryStateAfterTeleport(entry);
+        BotMovementManager.broadcastMovement(entry);
+        return true;
+    }
+
+    private void tickMovementPhase(BotEntry entry, Point targetPos, boolean runAiTick) {
         if (entry.climbing) {
             BotMovementManager.tickClimbing(entry, targetPos, runAiTick);
         } else if (entry.inAir) {
@@ -1139,18 +1178,18 @@ public class BotManager {
         } else {
             BotMovementManager.tickGrounded(entry, targetPos);
         }
+    }
 
-        tickStuckDetection(entry);
-
-        // Clear moveTarget once the bot has arrived
-        if (entry.moveTarget != null) {
-            Point bp = bot.getPosition();
-            int arrivalDist = entry.moveTargetPrecise ? 8 : BotMovementManager.cfg.STOP_DIST;
-            if (Math.abs(bp.x - entry.moveTarget.x) <= arrivalDist
-                    && Math.abs(bp.y - entry.moveTarget.y) <= arrivalDist) {
-                entry.moveTarget = null;
-                entry.moveTargetPrecise = false;
-            }
+    private void clearReachedMoveTarget(BotEntry entry) {
+        if (entry.moveTarget == null) {
+            return;
+        }
+        Point botPos = entry.bot.getPosition();
+        int arrivalDist = entry.moveTargetPrecise ? 8 : BotMovementManager.cfg.STOP_DIST;
+        if (Math.abs(botPos.x - entry.moveTarget.x) <= arrivalDist
+                && Math.abs(botPos.y - entry.moveTarget.y) <= arrivalDist) {
+            entry.moveTarget = null;
+            entry.moveTargetPrecise = false;
         }
     }
 
