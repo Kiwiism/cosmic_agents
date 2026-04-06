@@ -181,7 +181,9 @@ final class BotNavigationManager {
                 if (fromRegion != null && fromRegion.isRopeRegion) {
                     Rope rope = findRopeForRegion(bot.getMap(), fromRegion);
                     if (rope != null && canGrabRopeAtCurrentPosition(botPos, rope)) {
-                        startClimbing(entry, bot, rope, edge.startPoint.y);
+                        // Attach at bot's current Y — tickClimbing will drive it down to startPoint.
+                        // Using edge.startPoint.y would teleport the bot rather than letting it climb.
+                        startClimbing(entry, bot, rope, botPos.y);
                         return new NavigationDirective(rawTargetPos, true);
                     }
                 }
@@ -257,10 +259,25 @@ final class BotNavigationManager {
             return null;
         }
 
-        if (canGrabRopeAtCurrentPosition(botPos, rope)
-                || canGrabRopeFromTopPlatform(edge, botPos, rope)) {
+        if (canGrabRopeAtCurrentPosition(botPos, rope)) {
+            // Bot is already within the rope's Y range — attach at its current Y, not the edge
+            // endPoint. Using endPoint.y (rope top) would teleport a bot at the bottom of the
+            // rope all the way to the top instantly.
             entry.lastEdgeBlockReason = null;
-            startClimbing(entry, bot, rope, edge.endPoint.y);
+            startClimbing(entry, bot, rope, botPos.y);
+            return new NavigationDirective(rawTargetPos, true);
+        }
+        if (canGrabRopeFromTopPlatform(edge, botPos, rope)) {
+            // Bot is on a platform above the rope top. Do NOT call startClimbing here —
+            // that would teleport the bot downward. Instead queue a down-jump and let
+            // physics carry the bot to the rope; canGrabRopeAtCurrentPosition will attach
+            // once the bot's Y enters the rope range.
+            entry.lastEdgeBlockReason = null;
+            if (entry.jumpCooldownMs == 0) {
+                entry.jumpCooldownMs = BotMovementManager.delayAfterCurrentTick(BotMovementManager.cfg.JUMP_COOLDOWN_MS);
+                BotPhysicsEngine.queueDownJump(entry, bot);
+                BotMovementManager.broadcastMovement(entry);
+            }
             return new NavigationDirective(rawTargetPos, true);
         }
 

@@ -28,6 +28,7 @@ import server.StatEffect;
 import server.TimerManager;
 import server.life.Monster;
 import server.bots.pq.BotPqHooks;
+import server.maps.Foothold;
 import server.maps.MapItem;
 import server.maps.MapleMap;
 import server.quest.Quest;
@@ -750,24 +751,45 @@ public class BotManager {
 
     // -------------------------------------------------------------------------
     /**
-     * Resolve the follow target by snapping Y to a platform at followBase.x within
-     * snapRange pixels of followBase.y (the owner's Y). Because each bot's X offset
-     * differs, bots naturally land on different small platforms when they exist at
-     * their respective target positions. Falls back to raw followBase if no platform
-     * is found within range (bot stays on the owner's platform).
+     * Resolve the follow target by sweeping for a real platform at followBase.x within
+     * snapRange pixels of ownerPos.y. If a platform exists there, the bot may stand on
+     * a platform different from the owner's (formation spread). If no platform is found
+     * within range, or snap is disabled, fall back to the owner's foothold with X clamped
+     * so the bot never targets a position that isn't on a real standing surface.
      */
-    private static Point resolveFollowTargetPos(Point followBase, int snapRange, MapleMap map) {
-        if (snapRange <= 0 || map == null) return followBase;
-        // Two probes: one at ownerY (closest below), one at ownerY-snapRange (topmost in range,
-        // may be above ownerY). Pick whichever has smaller |dy| from ownerY.
-        Point below = BotPhysicsEngine.findGroundPoint(map, followBase);
-        Point above = BotPhysicsEngine.findGroundPoint(map, new Point(followBase.x, followBase.y - snapRange));
-        boolean belowOk = below != null && Math.abs(below.y - followBase.y) <= snapRange;
-        boolean aboveOk = above != null && Math.abs(above.y - followBase.y) <= snapRange;
-        if (!belowOk && !aboveOk) return followBase;
-        if (!belowOk) return above;
-        if (!aboveOk) return below;
-        return Math.abs(below.y - followBase.y) <= Math.abs(above.y - followBase.y) ? below : above;
+    private static Point resolveFollowTargetPos(Point followBase, Point ownerPos, int snapRange, MapleMap map) {
+        if (snapRange > 0 && map != null) {
+            // Two probes: one at ownerY (finds platform at or below), one above by snapRange.
+            // Compare distances to ownerPos.y (not followBase.y, which is always ownerPos.y here,
+            // but keeping the comparison explicit guards against future changes).
+            Point below = BotPhysicsEngine.findGroundPoint(map, followBase);
+            Point above = BotPhysicsEngine.findGroundPoint(map, new Point(followBase.x, ownerPos.y - snapRange));
+            boolean belowOk = below != null && Math.abs(below.y - ownerPos.y) <= snapRange;
+            boolean aboveOk = above != null && Math.abs(above.y - ownerPos.y) <= snapRange;
+            if (belowOk || aboveOk) {
+                if (!belowOk) return above;
+                if (!aboveOk) return below;
+                return Math.abs(below.y - ownerPos.y) <= Math.abs(above.y - ownerPos.y) ? below : above;
+            }
+        }
+        // No platform found within snap range at the offset X — or snap is disabled.
+        // Fall back to the owner's foothold with X clamped so we never target an (x,y) that
+        // isn't on a real foothold, which would cause findRegionId to return the wrong region.
+        return clampedOnOwnerFoothold(followBase.x, ownerPos, map);
+    }
+
+    /**
+     * Clamps targetX to the owner's foothold X range and returns a point at ownerPos.y.
+     * Used as the fallback follow target when the offset position has no valid platform.
+     */
+    private static Point clampedOnOwnerFoothold(int targetX, Point ownerPos, MapleMap map) {
+        Foothold ownerFh = BotPhysicsEngine.findGroundFoothold(map, ownerPos);
+        if (ownerFh != null) {
+            int x1 = Math.min(ownerFh.getX1(), ownerFh.getX2());
+            int x2 = Math.max(ownerFh.getX1(), ownerFh.getX2());
+            targetX = Math.max(x1, Math.min(x2, targetX));
+        }
+        return new Point(targetX, ownerPos.y);
     }
 
     // Main tick
@@ -824,7 +846,7 @@ public class BotManager {
                 ? new Point(ownerPos.x + entry.followOffsetX, ownerPos.y)
                 : ownerPos;
         Point targetPos = entry.moveTarget != null ? entry.moveTarget
-                : entry.following ? resolveFollowTargetPos(followBase, snapRange, bot.getMap())
+                : entry.following ? resolveFollowTargetPos(followBase, ownerPos, snapRange, bot.getMap())
                 : ownerPos;
 
         // These run in all modes (idle, follow, grind)
