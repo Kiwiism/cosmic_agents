@@ -180,6 +180,12 @@ class BotMovementManager {
                 return;
             }
 
+            if (shouldSnapToClimbTarget(entry, targetPos, dy)) {
+                BotPhysicsEngine.attachToRope(entry, bot, entry.climbRope, targetPos.y);
+                broadcastMovement(entry);
+                return;
+            }
+
             // Committed climb edges must reach the exact launch anchor so execution can hand off.
             MoveAction action = dy < 0
                     ? MoveAction.climbUp()
@@ -228,6 +234,19 @@ class BotMovementManager {
         return !entry.grinding
                 && Math.abs(dy) < cfg.STOP_DIST
                 && Math.abs(dxOwner) < cfg.FOLLOW_DIST * 2;
+    }
+
+    static boolean shouldSnapToClimbTarget(BotEntry entry, Point targetPos, int dy) {
+        if (entry == null || !entry.climbing || entry.climbRope == null || targetPos == null || dy == 0) {
+            return false;
+        }
+        if (!entry.navPreciseTarget) {
+            return false;
+        }
+        if (targetPos.x != entry.climbRope.x()) {
+            return false;
+        }
+        return Math.abs(dy) < BotPhysicsEngine.climbStepPerTick();
     }
 
     static void tickAirborne(BotEntry entry, Point targetPos) {

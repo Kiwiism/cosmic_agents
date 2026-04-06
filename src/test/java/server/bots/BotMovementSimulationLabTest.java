@@ -122,6 +122,36 @@ class BotMovementSimulationLabTest {
                 "stale rope exit should not keep the bot oscillating for a full second");
     }
 
+    @Test
+    void shouldResolveBashRopeOscillationDumpBySnappingPreciseClimbAnchor() {
+        MapleMap map = BotNavigationMapLoader.loadMapGeometry(103000800);
+        BotNavigationGraphProvider.rebuildGraph(map);
+        BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);
+        lab.spawnActor("OWNER", 30, map, new Point(-437, -859));
+        lab.spawnBot("BASH", 31, map, new Point(-437, -1142));
+        lab.setMoveTarget("BASH", new Point(-241, -899), true);
+        lab.setAiAccumulator("BASH", 50);
+        Rope rope = map.getRopes().stream()
+                .filter(candidate -> candidate.x() == -437 && candidate.topY() == -1471 && candidate.bottomY() == 84)
+                .findFirst()
+                .orElseThrow();
+        lab.attachBotToRope("BASH", rope, -1142);
+        lab.setNavState("BASH", new BotNavigationGraph.Edge(
+                25, 2, BotNavigationGraph.EdgeType.CLIMB,
+                new Point(-437, -1141), new Point(-477, -1166),
+                -8, 0, -437, -1471, 84, 250
+        ), 6, true);
+
+        lab.step(8);
+
+        List<String> trace = lab.formatRecentTrace("BASH", 8);
+
+        assertTrue(trace.stream().anyMatch(line -> line.contains("bot=(-437,-1141)")),
+                "bot should snap to the precise climb anchor instead of oscillating around it");
+        assertTrue(trace.stream().noneMatch(line -> line.contains("bot=(-437,-1137)")),
+                "bot should not overshoot the rope anchor by a full climb step");
+    }
+
     private static MapleMap createFlatMap(int mapId, int x1, int x2, int y) {
         MapleMap map = new MapleMap(mapId, 0, 0, mapId, 1.0f);
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(

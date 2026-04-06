@@ -187,6 +187,36 @@ class BotMovementManagerTest {
     }
 
     @Test
+    void shouldSnapCommittedClimbEdgeWhenAnchorIsWithinSingleClimbStep() {
+        Character bot = mock(Character.class);
+        MapleMap map = mock(MapleMap.class);
+        AtomicReference<Point> position = new AtomicReference<>(new Point(-437, -1142));
+        when(bot.getPosition()).thenAnswer(invocation -> new Point(position.get()));
+        doAnswer(invocation -> {
+            position.set(new Point(invocation.getArgument(0)));
+            return null;
+        }).when(bot).setPosition(any(Point.class));
+        when(bot.getMap()).thenReturn(map);
+        when(bot.getId()).thenReturn(1);
+        when(bot.getHp()).thenReturn(100);
+
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.climbing = true;
+        entry.climbRope = new Rope(-437, -1471, 84, false);
+        entry.navEdge = new BotNavigationGraph.Edge(
+                25, 2, BotNavigationGraph.EdgeType.CLIMB,
+                new Point(-437, -1141), new Point(-477, -1166),
+                -8, 0, -437, -1471, 84, 250
+        );
+        entry.navPreciseTarget = true;
+
+        BotMovementManager.tickClimbing(entry, new Point(-437, -1141), true);
+
+        assertEquals(new Point(-437, -1141), bot.getPosition(),
+                "climb movement should snap to a precise anchor that is closer than one climb step");
+    }
+
+    @Test
     void shouldUseEdgeSpecificPreciseStopDist() {
         // Regression: pathlog-CRASH-2026-04-02 — bot 2px from CLIMB entry (969 vs 967),
         // stopDist=4 caused it to idle short of the entry, blocking canExecuteClimbEntry forever.
