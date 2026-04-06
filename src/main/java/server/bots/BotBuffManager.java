@@ -5,131 +5,300 @@ import client.Character;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
-import client.inventory.manipulator.InventoryManipulator;
+import net.server.channel.handlers.UseItemHandler;
+import net.server.PlayerBuffValueHolder;
 import server.ItemInformationProvider;
 import server.StatEffect;
 import server.bots.combat.BotCombatFormulaProvider;
 import server.life.Monster;
 import tools.Pair;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.StringJoiner;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Manages automatic use of buff consumable items from the bot's USE inventory.
  *
- * Validity check: BotDropManager.isBuffConsumable (has statups) — same predicate used by
+ * Validity check: BotDropManager.isBuffConsumable (has statups) - same predicate used by
  * inv? and the trade/drop "buff" category, so all commands are consistent.
- * Items are grouped by primary BuffStat from the bot's current inventory.
- * Cheap mode picks the weakest per stat; max picks the strongest.
  *
  * Default: off. Configured via chat ("buff on/off", "buff cheap/max").
  */
 final class BotBuffManager {
 
-    private static final long   TICK_MS           = 3_000;
+    private static final long TICK_MS = 3_000;
     private static final double ACC_HIT_THRESHOLD = 0.60;
 
-    // Cache StatEffect lookups to avoid repeated WZ reads
-    private static final Map<Integer, StatEffect> fxCache = new HashMap<>();
+    // Shared across bot ticks, so keep the cache concurrent.
+    private static final Map<Integer, StatEffect> fxCache = new ConcurrentHashMap<>();
+
+    private record SelectedBuff(Item item, StatEffect effect, List<BuffStat> statKey, int score) {}
+
+    private record ActiveBuff(int itemId, String name, StatEffect effect, int remainingMs) {}
 
     private BotBuffManager() {}
 
-    // ── tick ────────────────────────────────────────────────────────────────
-
     public static void tick(BotEntry entry, Character bot) {
         if (!entry.buffConsumablesEnabled) return;
+
         long now = System.currentTimeMillis();
         if (now - entry.lastBuffScanMs < TICK_MS) return;
         entry.lastBuffScanMs = now;
 
-        // Build per-stat selection from what the bot actually has in bag
-        Map<BuffStat, Item> selected = buildSelection(bot, entry.buffCheapMode);
-
-        for (Map.Entry<BuffStat, Item> e : selected.entrySet()) {
-            BuffStat stat = e.getKey();
-            if (bot.getBuffedValue(stat) != null) continue;
-            if (stat == BuffStat.ACC && !needsAccBuff(entry, bot)) continue;
-
-            Item item = e.getValue();
-            StatEffect fx = fxCache.get(item.getItemId());
-            if (fx == null) continue;
-
-            fx.applyTo(bot);
-            InventoryManipulator.removeFromSlot(bot.getClient(), InventoryType.USE,
-                    item.getPosition(), (short) 1, false, true);
-            return; // one buff per tick cycle
+        List<SelectedBuff> selected = buildSelection(bot, entry.buffCheapMode);
+        if (selected.isEmpty()) {
+            noteDecision(entry, "no buff pots in bag");
+            return;
         }
+
+        for (SelectedBuff choice : selected) {
+            if (!needsAnyBuffStat(entry, bot, choice.effect())) {
+                continue;
+            }
+
+            Item item = choice.item();
+            short beforeQty = item.getQuantity();
+            String itemName = itemName(item.getItemId());
+
+            if (!UseItemHandler.consumeUseItem(bot, item.getPosition(), item.getItemId())) {
+                noteDecision(entry, "tried " + itemName + " but apply failed");
+                continue;
+            }
+
+            noteDecision(entry, "used " + itemName + " " + beforeQty + "->" + item.getQuantity()
+                    + " [" + formatStatList(choice.effect()) + "]");
+            return;
+        }
+
+        noteDecision(entry, "buff pots ready, but all matching stats are already active");
     }
 
-    // ── chat ────────────────────────────────────────────────────────────────
-
-    /**
-     * Returns a chat-line showing buff items the bot currently has in inventory,
-     * with quantities, based on cheap/max mode. Example:
-     *   "buff pots on (cheap): sniper pill x3, warrior potion x5"
-     */
     public static String getChatSummary(boolean enabled, boolean cheapMode, Character bot) {
-        Map<BuffStat, Item> selected = buildSelection(bot, cheapMode);
-        ItemInformationProvider ii = ItemInformationProvider.getInstance();
-        StringBuilder sb = new StringBuilder();
-        sb.append("buff pots ").append(enabled ? "on" : "off")
-          .append(" (").append(cheapMode ? "cheap" : "max").append("): ");
-        boolean first = true;
-        for (Item item : selected.values()) {
-            String name = ii.getName(item.getItemId());
-            if (name == null) name = String.valueOf(item.getItemId());
-            if (!first) sb.append(", ");
-            sb.append(name.toLowerCase()).append(" x").append(item.getQuantity());
-            first = false;
-        }
-        if (first) sb.append("none in bag");
-        return sb.toString();
+        List<ActiveBuff> active = collectActiveItemBuffs(bot);
+        List<SelectedBuff> available = buildSelection(bot, cheapMode);
+
+        return "buff pots " + (enabled ? "on" : "off")
+                + " (" + (cheapMode ? "cheap" : "max") + ")"
+                + ": active " + summarizeActive(active, 2)
+                + "; bag " + summarizeAvailable(available, 2);
     }
 
-    // ── helpers ─────────────────────────────────────────────────────────────
+    public static List<String> getDebugLines(BotEntry entry, Character bot) {
+        List<String> lines = new ArrayList<>(3);
+        String lastAction = entry.lastBuffActionSummary;
+        if (entry.lastBuffActionAtMs > 0) {
+            long ageMs = Math.max(0L, System.currentTimeMillis() - entry.lastBuffActionAtMs);
+            lastAction += " (" + formatAge(ageMs) + " ago)";
+        }
 
-    /**
-     * Scans the bot's USE inventory and returns one item per primary BuffStat,
-     * choosing the weakest (cheap) or strongest (max) when duplicates exist.
-     */
-    private static Map<BuffStat, Item> buildSelection(Character bot, boolean cheapMode) {
+        lines.add("buff pots " + (entry.buffConsumablesEnabled ? "on" : "off")
+                + " (" + (entry.buffCheapMode ? "cheap" : "max") + "), last: " + lastAction);
+        lines.add("active: " + summarizeActive(collectActiveItemBuffs(bot), 5));
+        lines.add("bag: " + summarizeAvailable(buildSelection(bot, entry.buffCheapMode), 5));
+        return lines;
+    }
+
+    private static List<SelectedBuff> buildSelection(Character bot, boolean cheapMode) {
         Inventory use = bot.getInventory(InventoryType.USE);
-        Map<BuffStat, Item>    best    = new LinkedHashMap<>();
-        Map<BuffStat, Integer> bestVal = new HashMap<>();
+        Map<List<BuffStat>, SelectedBuff> best = new LinkedHashMap<>();
 
         for (short slot = 1; slot <= use.getSlotLimit(); slot++) {
             Item item = use.getItem(slot);
             if (item == null || item.getQuantity() <= 0) continue;
-            int id = item.getItemId();
-            if (!BotDropManager.isBuffConsumable(id)) continue;
 
-            StatEffect fx = fxCache.computeIfAbsent(id, BotDropManager::itemEffect);
+            int itemId = item.getItemId();
+            if (!BotDropManager.isBuffConsumable(itemId)) continue;
+
+            StatEffect fx = fxCache.computeIfAbsent(itemId, BotDropManager::itemEffect);
             if (fx == null || fx.getStatups().isEmpty()) continue;
 
-            Pair<BuffStat, Integer> primary = fx.getStatups().get(0);
-            BuffStat stat = primary.getLeft();
-            int val       = primary.getRight();
+            List<BuffStat> statKey = buildStatKey(fx);
+            if (statKey.isEmpty()) continue;
 
-            Integer prev = bestVal.get(stat);
-            if (prev == null || (cheapMode ? val < prev : val > prev)) {
-                best.put(stat, item);
-                bestVal.put(stat, val);
+            SelectedBuff candidate = new SelectedBuff(item, fx, statKey, scoreEffect(fx));
+            SelectedBuff current = best.get(statKey);
+            if (current == null || isBetterChoice(candidate, current, cheapMode)) {
+                best.put(statKey, candidate);
             }
         }
-        return best;
+
+        List<SelectedBuff> result = new ArrayList<>(best.values());
+        result.sort((left, right) -> {
+            int scoreCmp = cheapMode
+                    ? Integer.compare(left.score(), right.score())
+                    : Integer.compare(right.score(), left.score());
+            if (scoreCmp != 0) {
+                return scoreCmp;
+            }
+            return itemName(left.item().getItemId()).compareTo(itemName(right.item().getItemId()));
+        });
+        return result;
     }
 
-    /**
-     * Returns true when the bot's hit rate against the reference mob is below ACC_HIT_THRESHOLD.
-     */
+    private static boolean needsAnyBuffStat(BotEntry entry, Character bot, StatEffect fx) {
+        for (Pair<BuffStat, Integer> statup : fx.getStatups()) {
+            BuffStat stat = statup.getLeft();
+            if (bot.getBuffedValue(stat) != null) {
+                continue;
+            }
+            if (stat == BuffStat.ACC && !needsAccBuff(entry, bot)) {
+                continue;
+            }
+            return true;
+        }
+        return false;
+    }
+
     private static boolean needsAccBuff(BotEntry entry, Character bot) {
         Monster ref = entry.grindTarget;
         if (ref == null) {
-            for (Monster m : bot.getMap().getAllMonsters()) {
-                if (m.isAlive()) { ref = m; break; }
+            for (Monster monster : bot.getMap().getAllMonsters()) {
+                if (monster.isAlive()) {
+                    ref = monster;
+                    break;
+                }
             }
         }
         if (ref == null) return false;
         return BotCombatFormulaProvider.getInstance().calculateMobHitChance(bot, ref) < ACC_HIT_THRESHOLD;
+    }
+
+    private static List<ActiveBuff> collectActiveItemBuffs(Character bot) {
+        ItemInformationProvider ii = ItemInformationProvider.getInstance();
+        List<ActiveBuff> active = new ArrayList<>();
+
+        for (PlayerBuffValueHolder holder : bot.getAllBuffs()) {
+            StatEffect effect = holder.effect;
+            if (effect == null || effect.isSkill()) {
+                continue;
+            }
+
+            int itemId = effect.getSourceId();
+            if (!BotDropManager.isBuffConsumable(itemId)) {
+                continue;
+            }
+
+            int remainingMs = effect.getDuration() > 0
+                    ? Math.max(0, effect.getDuration() - holder.usedTime)
+                    : 0;
+            active.add(new ActiveBuff(itemId,
+                    safeName(ii.getName(itemId), itemId),
+                    effect,
+                    remainingMs));
+        }
+
+        active.sort(Comparator.comparing(ActiveBuff::name));
+        return active;
+    }
+
+    private static List<BuffStat> buildStatKey(StatEffect fx) {
+        List<BuffStat> key = new ArrayList<>();
+        for (Pair<BuffStat, Integer> statup : fx.getStatups()) {
+            BuffStat stat = statup.getLeft();
+            if (!key.contains(stat)) {
+                key.add(stat);
+            }
+        }
+        key.sort(Comparator.naturalOrder());
+        return key;
+    }
+
+    private static int scoreEffect(StatEffect fx) {
+        int score = 0;
+        for (Pair<BuffStat, Integer> statup : fx.getStatups()) {
+            score += Math.abs(statup.getRight());
+        }
+        return score;
+    }
+
+    private static boolean isBetterChoice(SelectedBuff candidate, SelectedBuff current, boolean cheapMode) {
+        if (candidate.score() != current.score()) {
+            return cheapMode ? candidate.score() < current.score() : candidate.score() > current.score();
+        }
+
+        if (candidate.effect().getDuration() != current.effect().getDuration()) {
+            return cheapMode
+                    ? candidate.effect().getDuration() < current.effect().getDuration()
+                    : candidate.effect().getDuration() > current.effect().getDuration();
+        }
+
+        return cheapMode
+                ? candidate.item().getItemId() < current.item().getItemId()
+                : candidate.item().getItemId() > current.item().getItemId();
+    }
+
+    private static String summarizeActive(List<ActiveBuff> active, int limit) {
+        if (active.isEmpty()) {
+            return "none";
+        }
+
+        StringJoiner joiner = new StringJoiner(", ");
+        int count = Math.min(limit, active.size());
+        for (int i = 0; i < count; i++) {
+            ActiveBuff buff = active.get(i);
+            String suffix = buff.remainingMs() > 0 ? " " + formatAge(buff.remainingMs()) + " left" : "";
+            joiner.add(buff.name() + " [" + formatStatList(buff.effect()) + suffix + "]");
+        }
+        if (active.size() > limit) {
+            joiner.add("+" + (active.size() - limit) + " more");
+        }
+        return joiner.toString().toLowerCase(Locale.ROOT);
+    }
+
+    private static String summarizeAvailable(List<SelectedBuff> available, int limit) {
+        if (available.isEmpty()) {
+            return "none in bag";
+        }
+
+        StringJoiner joiner = new StringJoiner(", ");
+        int count = Math.min(limit, available.size());
+        for (int i = 0; i < count; i++) {
+            SelectedBuff buff = available.get(i);
+            joiner.add(itemName(buff.item().getItemId()) + " x" + buff.item().getQuantity()
+                    + " [" + formatStatList(buff.effect()) + "]");
+        }
+        if (available.size() > limit) {
+            joiner.add("+" + (available.size() - limit) + " more");
+        }
+        return joiner.toString().toLowerCase(Locale.ROOT);
+    }
+
+    private static String formatStatList(StatEffect fx) {
+        StringJoiner joiner = new StringJoiner("/");
+        for (Pair<BuffStat, Integer> statup : fx.getStatups()) {
+            int value = statup.getRight();
+            joiner.add(statup.getLeft().name() + (value >= 0 ? "+" : "") + value);
+        }
+        return joiner.toString();
+    }
+
+    private static String formatAge(long ms) {
+        long totalSeconds = Math.max(0L, ms / 1000L);
+        long minutes = totalSeconds / 60L;
+        long seconds = totalSeconds % 60L;
+        if (minutes <= 0) {
+            return seconds + "s";
+        }
+        return minutes + "m" + seconds + "s";
+    }
+
+    private static void noteDecision(BotEntry entry, String summary) {
+        entry.lastBuffActionAtMs = System.currentTimeMillis();
+        entry.lastBuffActionSummary = summary;
+    }
+
+    private static String itemName(int itemId) {
+        return safeName(ItemInformationProvider.getInstance().getName(itemId), itemId);
+    }
+
+    private static String safeName(String name, int itemId) {
+        return name == null || name.isBlank() ? String.valueOf(itemId) : name;
     }
 }

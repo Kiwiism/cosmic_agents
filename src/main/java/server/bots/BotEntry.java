@@ -142,6 +142,8 @@ public class BotEntry {
     boolean buffConsumablesEnabled = false;
     boolean buffCheapMode          = true;
     long    lastBuffScanMs         = 0;
+    long    lastBuffActionAtMs     = 0L;
+    String  lastBuffActionSummary  = "no buff scans yet";
 
     // Party-quest state (one slot per PQ type; null = not in that PQ)
     public server.bots.pq.BotKpqState kpq = new server.bots.pq.BotKpqState();

@@ -42,40 +42,48 @@ public final class UseItemHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         Character chr = c.getPlayer();
-
-        if (!chr.isAlive()) {
-            c.sendPacket(PacketCreator.enableActions());
-            return;
-        }
-        ItemInformationProvider ii = ItemInformationProvider.getInstance();
         p.readInt();
         short slot = p.readShort();
         int itemId = p.readInt();
+
+        consumeUseItem(chr, slot, itemId);
+    }
+
+    public static boolean consumeUseItem(Character chr, short slot, int itemId) {
+        Client c = chr.getClient();
+
+        if (!chr.isAlive()) {
+            c.sendPacket(PacketCreator.enableActions());
+            return false;
+        }
+
+        ItemInformationProvider ii = ItemInformationProvider.getInstance();
         Item toUse = chr.getInventory(InventoryType.USE).getItem(slot);
         if (toUse != null && toUse.getQuantity() > 0 && toUse.getItemId() == itemId) {
             if (itemId == ItemId.ALL_CURE_POTION) {
                 chr.dispelDebuffs();
                 remove(c, slot);
-                return;
+                return true;
             } else if (itemId == ItemId.EYEDROP) {
                 chr.dispelDebuff(Disease.DARKNESS);
                 remove(c, slot);
-                return;
+                return true;
             } else if (itemId == ItemId.TONIC) {
                 chr.dispelDebuff(Disease.WEAKEN);
                 chr.dispelDebuff(Disease.SLOW);
                 remove(c, slot);
-                return;
+                return true;
             } else if (itemId == ItemId.HOLY_WATER) {
                 chr.dispelDebuff(Disease.SEAL);
                 chr.dispelDebuff(Disease.CURSE);
                 remove(c, slot);
-                return;
+                return true;
             } else if (ItemConstants.isTownScroll(itemId)) {
                 if (ii.getItemEffect(toUse.getItemId()).applyTo(chr)) {
                     remove(c, slot);
+                    return true;
                 }
-                return;
+                return false;
             }
 
             remove(c, slot);
@@ -88,10 +96,14 @@ public final class UseItemHandler extends AbstractPacketHandler {
                     mse.applyTo(player);
                 }
             }
+            return true;
         }
+
+        c.sendPacket(PacketCreator.enableActions());
+        return false;
     }
 
-    private void remove(Client c, short slot) {
+    private static void remove(Client c, short slot) {
         InventoryManipulator.removeFromSlot(c, InventoryType.USE, slot, (short) 1, false);
         c.sendPacket(PacketCreator.enableActions());
     }

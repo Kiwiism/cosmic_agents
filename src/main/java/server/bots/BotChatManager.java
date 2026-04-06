@@ -163,6 +163,9 @@ public class BotChatManager {
     private static final Pattern BUFF_LIST_PATTERN = Pattern.compile(
             "\\bbuff\\s+(pots?\\s+)?list\\b|\\bbuffs?\\s*\\?|\\bwhat\\s+buffs?\\b|\\bwhich\\s+buffs?\\b",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern BUFF_DEBUG_PATTERN = Pattern.compile(
+            "\\bbuff\\s+debug\\b|\\bdebug\\s+buffs?\\b|\\bactive\\s+buffs?\\b",
+            Pattern.CASE_INSENSITIVE);
     private static final String SCROLL_WORDS = "scrolls?";
     private static final String POTION_WORDS = "(?:pots?|potions?|hp\\s+pots?|mp\\s+pots?|supplies)";
     private static final String BUFF_WORDS   = "(?:buff\\s+pots?|buff\\s+potions?|buffs?\\s+items?)";
@@ -504,6 +507,7 @@ public class BotChatManager {
         if (BUFF_OFF_PATTERN.matcher(message).find()) {
             TimerManager.getInstance().schedule(() -> {
                 entry.buffConsumablesEnabled = false;
+                entry.lastBuffScanMs = 0;
                 BotManager.getInstance().botSay(entry.bot, "ok, no buff pots");
             }, 600);
             return;
@@ -511,6 +515,7 @@ public class BotChatManager {
         if (BUFF_ON_PATTERN.matcher(message).find()) {
             TimerManager.getInstance().schedule(() -> {
                 entry.buffConsumablesEnabled = true;
+                entry.lastBuffScanMs = 0;
                 String mode = entry.buffCheapMode ? "cheap" : "max";
                 BotManager.getInstance().botSay(entry.bot, "ok, using buff pots (" + mode + ")");
             }, 600);
@@ -519,6 +524,7 @@ public class BotChatManager {
         if (BUFF_CHEAP_PATTERN.matcher(message).find()) {
             TimerManager.getInstance().schedule(() -> {
                 entry.buffCheapMode = true;
+                entry.lastBuffScanMs = 0;
                 BotManager.getInstance().botSay(entry.bot, "ok, using cheapest buff pots");
             }, 600);
             return;
@@ -526,6 +532,7 @@ public class BotChatManager {
         if (BUFF_MAX_PATTERN.matcher(message).find()) {
             TimerManager.getInstance().schedule(() -> {
                 entry.buffCheapMode = false;
+                entry.lastBuffScanMs = 0;
                 BotManager.getInstance().botSay(entry.bot, "ok, using best buff pots");
             }, 600);
             return;
@@ -535,6 +542,10 @@ public class BotChatManager {
                 String summary = BotBuffManager.getChatSummary(entry.buffConsumablesEnabled, entry.buffCheapMode, entry.bot);
                 BotManager.getInstance().botSay(entry.bot, summary);
             }, 600);
+            return;
+        }
+        if (BUFF_DEBUG_PATTERN.matcher(message).find()) {
+            TimerManager.getInstance().schedule(() -> reportBuffDebug(entry, entry.bot), 600);
             return;
         }
         if (isRespecCommand(message)) {
@@ -952,9 +963,15 @@ public class BotChatManager {
         queueBotSay(entry, BotCombatManager.describeDebugStats(entry, bot));
     }
 
+    private static void reportBuffDebug(BotEntry entry, Character bot) {
+        for (String line : BotBuffManager.getDebugLines(entry, bot)) {
+            queueBotSay(entry, line);
+        }
+    }
+
     private static void reportHelp(BotEntry entry) {
         queueBotSay(entry, "commands: follow, stop, move here, grind, stats, skills, inventory, mesos, slots, scrolls, pots, debug stats, respec");
-        queueBotSay(entry, "support: support on/off, heals on/off, buff on/off, buff cheap/max");
+        queueBotSay(entry, "support: support on/off, heals on/off, buff on/off, buff cheap/max, buff debug");
         queueBotSay(entry, "gear: ask 'any upgrades?' or say 'trade recommended gear'");
         queueBotSay(entry, "trade: mesos, scrolls, pots, equips, etc, or named items");
     }
