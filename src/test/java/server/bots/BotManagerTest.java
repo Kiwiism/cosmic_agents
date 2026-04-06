@@ -4,10 +4,18 @@ import client.Character;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import server.StatEffect;
+import server.maps.Foothold;
+import server.maps.FootholdTree;
+import server.maps.MapleMap;
+import server.maps.Rope;
+
+import java.awt.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -90,5 +98,70 @@ class BotManagerTest {
 
         assertEquals(14, counts[0]);
         assertEquals(11, counts[1]);
+    }
+
+    @Test
+    void shouldUseCombatRetreatTargetOnlyWithinSameGroundRegion() {
+        MapleMap map = createEmptyTestMap(910000020);
+        FootholdTree footholds = map.getFootholds();
+        footholds.insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
+        BotNavigationGraphProvider.rebuildGraph(map);
+
+        Character bot = mock(Character.class);
+        when(bot.getMap()).thenReturn(map);
+        BotEntry entry = new BotEntry(bot, null, null);
+
+        assertTrue(BotManager.shouldUseLocalCombatRetreatTarget(
+                entry,
+                new Point(100, 100),
+                new Point(130, 100),
+                new Point(60, 100)));
+    }
+
+    @Test
+    void shouldRejectCombatRetreatTargetWhenMonsterIsInDifferentRegion() {
+        MapleMap map = createEmptyTestMap(910000021);
+        FootholdTree footholds = map.getFootholds();
+        footholds.insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
+        footholds.insert(new Foothold(new Point(0, 40), new Point(200, 40), 2));
+        BotNavigationGraphProvider.rebuildGraph(map);
+
+        Character bot = mock(Character.class);
+        when(bot.getMap()).thenReturn(map);
+        BotEntry entry = new BotEntry(bot, null, null);
+
+        assertFalse(BotManager.shouldUseLocalCombatRetreatTarget(
+                entry,
+                new Point(100, 100),
+                new Point(100, 40),
+                new Point(60, 100)));
+    }
+
+    @Test
+    void shouldRejectCombatRetreatTargetWhileClimbing() {
+        MapleMap map = createEmptyTestMap(910000022);
+        FootholdTree footholds = map.getFootholds();
+        footholds.insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
+        footholds.insert(new Foothold(new Point(0, 40), new Point(200, 40), 2));
+        map.addRope(new Rope(100, 40, 100, false));
+        BotNavigationGraphProvider.rebuildGraph(map);
+
+        Character bot = mock(Character.class);
+        when(bot.getMap()).thenReturn(map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.climbing = true;
+        entry.climbRope = new Rope(100, 40, 100, false);
+
+        assertFalse(BotManager.shouldUseLocalCombatRetreatTarget(
+                entry,
+                new Point(100, 100),
+                new Point(140, 40),
+                new Point(60, 100)));
+    }
+
+    private static MapleMap createEmptyTestMap(int mapId) {
+        MapleMap map = new MapleMap(mapId, 0, 0, mapId, 1.0f);
+        map.setFootholds(new FootholdTree(new Point(-2000, -2000), new Point(2000, 2000)));
+        return map;
     }
 }

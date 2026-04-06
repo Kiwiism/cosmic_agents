@@ -313,9 +313,7 @@ public class BotManager {
         }
 
         BotPhysicsEngine.teleportTo(entry, bot, spawnPos != null ? spawnPos : bot.getPosition());
-        BotMovementManager.clearNavigationState(entry);
-        entry.grindTarget = null;
-        entry.attackCooldownMs = 0;
+        BotMovementManager.resetEntryStateAfterTeleport(entry);
         entry.deadUntil = 0;
         entry.lastMapId = bot.getMapId();
         entry.fhIndex = BotMovementManager.buildFhIndex(bot.getMap());
@@ -348,12 +346,8 @@ public class BotManager {
     public boolean dismissBot(int ownerCharId, String botName) {
         List<BotEntry> entries = bots.get(ownerCharId);
         if (entries == null) return false;
-        BotEntry found = null;
-        for (BotEntry e : entries) {
-            if (e.bot.getName().equalsIgnoreCase(botName)) { found = e; break; }
-        }
-        if (found == null) return false;
-        BotEntry entry = found;
+        BotEntry entry = getBotEntry(ownerCharId, botName);
+        if (entry == null) return false;
         entries.remove(entry);
         entry.task.cancel(false);
         entry.following = false;
@@ -390,10 +384,7 @@ public class BotManager {
     public String giveBot(int ownerCharId, Character owner, String botName, String targetName) {
         List<BotEntry> entries = bots.get(ownerCharId);
         if (entries == null) return "You have no bots.";
-        BotEntry found = null;
-        for (BotEntry e : entries) {
-            if (e.bot.getName().equalsIgnoreCase(botName)) { found = e; break; }
-        }
+        BotEntry found = getBotEntry(ownerCharId, botName);
         if (found == null) return "No bot named '" + botName + "' in your group.";
 
         // Find target player in the same map
@@ -443,15 +434,7 @@ public class BotManager {
         for (var ch : Server.getInstance().getWorld(world).getChannels()) {
             Character c = ch.getPlayerStorage().getCharacterByName(name);
             if (c == null || !(c.getClient() instanceof BotClient)) continue;
-            // Check not already owned
-            boolean owned = false;
-            outer:
-            for (List<BotEntry> entries : bots.values()) {
-                for (BotEntry e : entries) {
-                    if (e.bot.getId() == c.getId()) { owned = true; break outer; }
-                }
-            }
-            if (!owned) return c;
+            if (getActiveOwnerByBotCharId(c.getId()) == null) return c;
         }
         return null;
     }
@@ -875,6 +858,55 @@ public class BotManager {
                 primaryTargetSource);
     }
 
+    static Point selectGrindNavigationTarget(BotEntry entry, Point botPos, Point combatTargetPos) {
+        if (entry == null || botPos == null || combatTargetPos == null) {
+            return combatTargetPos;
+        }
+
+        Character bot = entry.bot;
+        if (bot == null) {
+            return combatTargetPos;
+        }
+
+        if (!BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(
+                BotAttackExecutionProvider.getEquippedWeaponType(bot), botPos, combatTargetPos)) {
+            return combatTargetPos;
+        }
+
+        Point retreatPos = BotAttackExecutionProvider.retreatTargetPosition(botPos, combatTargetPos);
+        return shouldUseLocalCombatRetreatTarget(entry, botPos, combatTargetPos, retreatPos)
+                ? retreatPos
+                : combatTargetPos;
+    }
+
+    static boolean shouldUseLocalCombatRetreatTarget(BotEntry entry,
+                                                     Point botPos,
+                                                     Point combatTargetPos,
+                                                     Point retreatPos) {
+        if (entry == null || botPos == null || combatTargetPos == null || retreatPos == null) {
+            return false;
+        }
+        if (entry.climbing || entry.inAir || entry.navEdge != null) {
+            return false;
+        }
+
+        Character bot = entry.bot;
+        MapleMap map = bot != null ? bot.getMap() : null;
+        if (map == null || map.getFootholds() == null) {
+            return false;
+        }
+
+        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(map);
+        int botRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, map, botPos);
+        int combatTargetRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, map, combatTargetPos);
+        if (botRegionId < 0 || combatTargetRegionId < 0 || botRegionId != combatTargetRegionId) {
+            return false;
+        }
+
+        int retreatRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, map, retreatPos);
+        return retreatRegionId == botRegionId;
+    }
+
     // Main tick
     // -------------------------------------------------------------------------
 
@@ -991,7 +1023,7 @@ public class BotManager {
                 spawn = targetPos;
             }
             BotPhysicsEngine.teleportTo(entry, bot, spawn);
-            BotMovementManager.resetEntryState(entry);
+            BotMovementManager.resetEntryStateAfterTeleport(entry);
             BotMovementManager.broadcastMovement(entry);
             return;
         }
@@ -1004,7 +1036,7 @@ public class BotManager {
             Point cur = bot.getPosition();
             Point ground = BotPhysicsEngine.findGroundPoint(bot.getMap(), new Point(cur.x, cur.y - 1));
             BotPhysicsEngine.teleportTo(entry, bot, ground != null ? ground : cur);
-            BotMovementManager.resetEntryState(entry);
+            BotMovementManager.resetEntryStateAfterTeleport(entry);
             BotMovementManager.broadcastMovement(entry);
             if (BotPqHooks.requiresGrind(entry, bot)) { entry.grinding = true; entry.following = false; }
             else if (BotPqHooks.requiresFollow(entry, bot)) { entry.following = true; entry.grinding = false; }
@@ -1075,10 +1107,11 @@ public class BotManager {
                     return;
                 }
             }
-            targetPos = BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(
-                    BotAttackExecutionProvider.getEquippedWeaponType(bot), botPos, tp)
-                    ? BotAttackExecutionProvider.retreatTargetPosition(botPos, tp)
-                    : tp;
+            // Retreat positioning is a local combat adjustment, not an inter-region path target.
+            // Feeding a synthetic same-Y retreat point into nav while the monster is elsewhere
+            // can make rope/ladder bots path back onto the nearby foothold instead of toward
+            // the monster's actual region.
+            targetPos = selectGrindNavigationTarget(entry, botPos, tp);
         }
 
         BotNavigationManager.NavigationDirective navDirective = BotNavigationManager.resolveTarget(entry, targetPos, runAiTick);
@@ -1198,7 +1231,7 @@ public class BotManager {
         Point ownerPos = owner.getPosition();
         Point spawnPos = bot.getMap().getPointBelow(new Point(ownerPos.x, ownerPos.y - 1));
         BotPhysicsEngine.teleportTo(entry, bot, spawnPos != null ? spawnPos : ownerPos);
-        BotMovementManager.resetEntryState(entry);
+        BotMovementManager.resetEntryStateAfterTeleport(entry);
         BotMovementManager.broadcastMovement(entry);
         botSay(bot, "back!");
         bot.changeFaceExpression(Emote.GLARE.getValue());
