@@ -314,7 +314,9 @@ class BotMovementManager {
             return true;
         }
         return entry.navEdge.type != BotNavigationGraph.EdgeType.JUMP
-                && entry.navEdge.type != BotNavigationGraph.EdgeType.DROP;
+                && entry.navEdge.type != BotNavigationGraph.EdgeType.DROP
+                && !(entry.navEdge.type == BotNavigationGraph.EdgeType.CLIMB
+                && entry.navEdge.launchStepX != 0);
     }
 
     static void tickGrounded(BotEntry entry, Point targetPos) {
@@ -369,21 +371,28 @@ class BotMovementManager {
             return targetPos;
         }
 
-        // Keep the anti-ledge margin only for truly local same-foothold combat.
-        // When the target is elsewhere in the same merged walk region, the bot must
-        // be allowed to walk through foothold joints and platform edges to reach it.
-        Foothold targetFh = BotPhysicsEngine.findGroundFoothold(entry.bot.getMap(), targetPos);
-        if (targetFh == null || targetFh.getId() != currentFh.getId()) {
+        MapleMap map = entry.bot.getMap();
+        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(map);
+        Point botPos = entry.bot.getPosition();
+        int currentRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, map, botPos);
+        int targetRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, map, targetPos);
+        if (currentRegionId < 0 || currentRegionId != targetRegionId) {
             return targetPos;
         }
 
-        int safeLeft = currentFh.getX1() + cfg.GRIND_EDGE_MARGIN;
-        int safeRight = currentFh.getX2() - cfg.GRIND_EDGE_MARGIN;
+        BotNavigationGraph.Region currentRegion = graph.getRegion(currentRegionId);
+        if (currentRegion == null || currentRegion.isRopeRegion) {
+            return targetPos;
+        }
+
+        int safeLeft = currentRegion.minX + cfg.GRIND_EDGE_MARGIN;
+        int safeRight = currentRegion.maxX - cfg.GRIND_EDGE_MARGIN;
         if (safeLeft >= safeRight) {
             return targetPos;
         }
 
-        return new Point(Math.max(safeLeft, Math.min(safeRight, targetPos.x)), targetPos.y);
+        int clampedX = Math.max(safeLeft, Math.min(safeRight, targetPos.x));
+        return currentRegion.pointAt(clampedX);
     }
 
     private static MoveAction planGroundAction(BotEntry entry, Point botPos, Point targetPos) {

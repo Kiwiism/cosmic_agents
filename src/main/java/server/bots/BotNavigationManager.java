@@ -57,11 +57,12 @@ final class BotNavigationManager {
             Point botPos = bot.getPosition();
             int startRegionId = resolveCurrentRegionId(graph, entry, bot.getMap(), botPos);
             int targetRegionId = resolveTargetRegionId(graph, entry, bot.getMap(), rawTargetPos);
+            Point pathTargetPos = adjustPathTarget(entry, graph, targetRegionId, rawTargetPos);
 
             BotNavigationGraph.Edge edge = reuseCommittedEdge(graph, entry, startRegionId, targetRegionId);
             boolean edgeReused = (edge != null);
             if (edge == null && runAiTick && startRegionId >= 0 && targetRegionId >= 0 && startRegionId != targetRegionId) {
-                edge = findNextEdge(graph, bot, startRegionId, targetRegionId, rawTargetPos);
+                edge = findNextEdge(graph, bot, startRegionId, targetRegionId, pathTargetPos);
                 if (edge != null) {
                     entry.navEdge = edge;
                     entry.navTargetRegionId = targetRegionId;
@@ -157,6 +158,12 @@ final class BotNavigationManager {
         if (entry.inAir && (startRegionId < 0 || startRegionId == edge.toRegionId)
                 && (edge.type == BotNavigationGraph.EdgeType.DROP
                     || edge.type == BotNavigationGraph.EdgeType.JUMP)) {
+            return edge;
+        }
+        if (entry.inAir && edge.type == BotNavigationGraph.EdgeType.CLIMB && edge.launchStepX != 0) {
+            // Rope-exit jump arcs use the same sampled ballistic model as JUMP/DROP edges.
+            // Keep the committed edge until the bot actually lands or grabs a rope again;
+            // otherwise mid-air replans can steer the bot off the authored landing path.
             return edge;
         }
         return null;
@@ -829,6 +836,29 @@ final class BotNavigationManager {
     private static void setEdgeExecutionTarget(BotEntry entry, BotNavigationGraph.Edge edge) {
         entry.navPreciseTarget = false;
         entry.navTargetPos = new Point(edge.endPoint);
+    }
+
+    private static Point adjustPathTarget(BotEntry entry,
+                                          BotNavigationGraph graph,
+                                          int targetRegionId,
+                                          Point rawTargetPos) {
+        if (rawTargetPos == null || !entry.grinding || targetRegionId < 0) {
+            return rawTargetPos;
+        }
+
+        BotNavigationGraph.Region targetRegion = graph.getRegion(targetRegionId);
+        if (targetRegion == null || targetRegion.isRopeRegion) {
+            return rawTargetPos;
+        }
+
+        int safeLeft = targetRegion.minX + BotMovementManager.cfg.GRIND_EDGE_MARGIN;
+        int safeRight = targetRegion.maxX - BotMovementManager.cfg.GRIND_EDGE_MARGIN;
+        if (safeLeft >= safeRight) {
+            return rawTargetPos;
+        }
+
+        int clampedX = Math.max(safeLeft, Math.min(safeRight, rawTargetPos.x));
+        return targetRegion.pointAt(clampedX);
     }
 
     private static int landingRegionId(BotNavigationGraph graph, BotPhysicsEngine.JumpLanding landing) {

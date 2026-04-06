@@ -248,4 +248,23 @@ class BotNavigationManagerTest {
         assertEquals(new Point(-1251, -107),
                 BotNavigationManager.selectClimbWaypoint(entry, new Point(-1251, -104), climbExit));
     }
+
+    @Test
+    void shouldKeepCommittedRopeExitClimbEdgeWhileAirborne() {
+        Character bot = mock(Character.class);
+        when(bot.getMap()).thenReturn(mock(MapleMap.class));
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.inAir = true;
+        entry.navEdge = new BotNavigationGraph.Edge(
+                25, 14, BotNavigationGraph.EdgeType.CLIMB,
+                new Point(-437, -181), new Point(-473, -211),
+                -8, 0, -437, -1471, 84, 250
+        );
+        entry.navTargetRegionId = 14;
+        BotNavigationGraph graph = mock(BotNavigationGraph.class);
+
+        BotNavigationGraph.Edge reused = BotNavigationManager.reuseCommittedEdge(graph, entry, 20, 14);
+
+        assertEquals(entry.navEdge, reused);
+    }
 }

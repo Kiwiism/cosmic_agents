@@ -26,9 +26,9 @@ class BotMovementManagerTest {
         Foothold foothold = new Foothold(new Point(0, 100), new Point(200, 100), 1);
         footholds.insert(foothold);
         map.setFootholds(footholds);
+        BotNavigationGraphProvider.rebuildGraph(map);
 
-        Character bot = mock(Character.class);
-        when(bot.getMap()).thenReturn(map);
+        Character bot = mockBot(new Point(100, 100), map);
 
         BotEntry entry = new BotEntry(bot, null, null);
         entry.grinding = true;
@@ -47,9 +47,9 @@ class BotMovementManagerTest {
         footholds.insert(leftFoothold);
         footholds.insert(rightFoothold);
         map.setFootholds(footholds);
+        BotNavigationGraphProvider.rebuildGraph(map);
 
-        Character bot = mock(Character.class);
-        when(bot.getMap()).thenReturn(map);
+        Character bot = mockBot(new Point(-100, 100), map);
 
         BotEntry entry = new BotEntry(bot, null, null);
         entry.grinding = true;
@@ -58,6 +58,69 @@ class BotMovementManagerTest {
         Point adjusted = BotMovementManager.adjustGrindingTargetPosition(entry, leftFoothold, targetPos);
 
         assertEquals(targetPos, adjusted);
+    }
+
+    @Test
+    void shouldClampGrindingTargetAcrossEntireCurrentRegionInsteadOfSingleFoothold() {
+        MapleMap map = new MapleMap(910000023, 0, 0, 910000023, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        Foothold leftFoothold = new Foothold(new Point(-200, 100), new Point(0, 100), 1);
+        Foothold rightFoothold = new Foothold(new Point(0, 100), new Point(200, 100), 2);
+        leftFoothold.setNext(2);
+        rightFoothold.setPrev(1);
+        footholds.insert(leftFoothold);
+        footholds.insert(rightFoothold);
+        map.setFootholds(footholds);
+        BotNavigationGraphProvider.rebuildGraph(map);
+
+        Character bot = mockBot(new Point(-150, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.grinding = true;
+
+        Point adjusted = BotMovementManager.adjustGrindingTargetPosition(entry, leftFoothold, new Point(190, 100));
+
+        assertEquals(new Point(160, 100), adjusted);
+    }
+
+    @Test
+    void shouldNotClampGrindingTargetForSmallRegion() {
+        MapleMap map = new MapleMap(910000024, 0, 0, 910000024, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        Foothold foothold = new Foothold(new Point(0, 100), new Point(60, 100), 1);
+        footholds.insert(foothold);
+        map.setFootholds(footholds);
+        BotNavigationGraphProvider.rebuildGraph(map);
+
+        Character bot = mockBot(new Point(20, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.grinding = true;
+
+        Point targetPos = new Point(55, 100);
+        Point adjusted = BotMovementManager.adjustGrindingTargetPosition(entry, foothold, targetPos);
+
+        assertEquals(targetPos, adjusted);
+    }
+
+    @Test
+    void shouldNotAirSteerCommittedRopeExitClimbArc() {
+        MapleMap map = new MapleMap(910000025, 0, 0, 910000025, 1.0f);
+        map.setFootholds(new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000)));
+        Character bot = mockBot(new Point(0, 0), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.inAir = true;
+        entry.airVelX = -8;
+        entry.physX = 0;
+        entry.physY = 0;
+        entry.velY = -10f;
+        entry.navEdge = new BotNavigationGraph.Edge(
+                25, 14, BotNavigationGraph.EdgeType.CLIMB,
+                new Point(-437, -181), new Point(-473, -211),
+                -8, 0, -437, -1471, 84, 250
+        );
+
+        BotMovementManager.tickAirborne(entry, new Point(300, 0));
+
+        assertEquals(0.0, entry.airSteerVelX);
     }
 
     @Test
@@ -333,5 +396,19 @@ class BotMovementManagerTest {
         assertTrue(entry.climbUpIntent);
         assertEquals(0, entry.ropeGrabCooldownMs);
         assertEquals(668, entry.blockedRopeGrab.x());
+    }
+
+    private static Character mockBot(Point startPosition, MapleMap map) {
+        Character bot = mock(Character.class);
+        AtomicReference<Point> position = new AtomicReference<>(new Point(startPosition));
+        when(bot.getPosition()).thenAnswer(invocation -> new Point(position.get()));
+        doAnswer(invocation -> {
+            position.set(new Point(invocation.getArgument(0)));
+            return null;
+        }).when(bot).setPosition(any(Point.class));
+        when(bot.getMap()).thenReturn(map);
+        when(bot.getId()).thenReturn(1);
+        when(bot.getHp()).thenReturn(100);
+        return bot;
     }
 }
