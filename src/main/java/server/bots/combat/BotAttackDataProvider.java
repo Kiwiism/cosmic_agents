@@ -36,22 +36,18 @@ public final class BotAttackDataProvider {
     public static final class NormalAttackProfile {
         private final int attackSpeed;
         private final int attack;
-        private final int attackDelayMillis;
         private final String afterImage;
         private final Rectangle rightFacingBounds;
         private final List<String> sourceActions;
-        private final String sourcePath;
         private final Map<String, Integer> afterimageFirstFramesByAction;
 
-        private NormalAttackProfile(int attackSpeed, int attack, int attackDelayMillis, String afterImage, Rectangle rightFacingBounds,
-                                    List<String> sourceActions, String sourcePath, Map<String, Integer> afterimageFirstFramesByAction) {
+        private NormalAttackProfile(int attackSpeed, int attack, String afterImage, Rectangle rightFacingBounds,
+                                    List<String> sourceActions, Map<String, Integer> afterimageFirstFramesByAction) {
             this.attackSpeed = attackSpeed;
             this.attack = attack;
-            this.attackDelayMillis = attackDelayMillis;
             this.afterImage = afterImage;
             this.rightFacingBounds = rightFacingBounds != null ? new Rectangle(rightFacingBounds) : null;
             this.sourceActions = List.copyOf(sourceActions);
-            this.sourcePath = sourcePath;
             this.afterimageFirstFramesByAction = Map.copyOf(afterimageFirstFramesByAction);
         }
 
@@ -61,10 +57,6 @@ public final class BotAttackDataProvider {
 
         public int getAttack() {
             return attack;
-        }
-
-        public int getAttackDelayMillis() {
-            return attackDelayMillis;
         }
 
         public String getAfterImage() {
@@ -77,10 +69,6 @@ public final class BotAttackDataProvider {
 
         public List<String> getSourceActions() {
             return sourceActions;
-        }
-
-        public String getSourcePath() {
-            return sourcePath;
         }
 
         public String getActionForVariant(int variantOffset, String fallbackAction) {
@@ -135,17 +123,13 @@ public final class BotAttackDataProvider {
 
     private static final class AttackBoundsData {
         private final Rectangle bounds;
-        private final int attackDelayMillis;
         private final List<String> sourceActions;
-        private final String sourcePath;
         private final Map<String, Integer> firstFramesByAction;
 
-        private AttackBoundsData(Rectangle bounds, int attackDelayMillis, List<String> sourceActions, String sourcePath,
+        private AttackBoundsData(Rectangle bounds, List<String> sourceActions,
                                  Map<String, Integer> firstFramesByAction) {
             this.bounds = new Rectangle(bounds);
-            this.attackDelayMillis = attackDelayMillis;
             this.sourceActions = List.copyOf(sourceActions);
-            this.sourcePath = sourcePath;
             this.firstFramesByAction = Map.copyOf(firstFramesByAction);
         }
     }
@@ -649,23 +633,16 @@ public final class BotAttackDataProvider {
         int reqLevel = getIntValue(findNamedChild(info, "reqLevel"), 0);
 
         AttackBoundsData afterImageData = loadAfterimageBounds(afterImage, reqLevel);
-        AttackBoundsData weaponActionData = loadWeaponActionBounds(weaponRoot, weaponFile);
+        if (afterImageData == null) {
+            return new NormalAttackProfile(attackSpeed, attack, afterImage, null, List.of(), Map.of());
+        }
 
         // Prefer afterimage for hit bounds (cleaner per-level data), but always use weapon
         // action delay for timing — afterimage frame delays only cover the trail display window
         // and are far shorter than the full swing animation.
-        AttackBoundsData forBounds = afterImageData != null ? afterImageData : weaponActionData;
-        if (forBounds == null) {
-            return new NormalAttackProfile(attackSpeed, attack, 0, afterImage, null, List.of(), weaponFile.toString(), Map.of());
-        }
+        return new NormalAttackProfile(attackSpeed, attack, afterImage, afterImageData.bounds,
+                afterImageData.sourceActions, afterImageData.firstFramesByAction);
 
-        int delay = weaponActionData != null && weaponActionData.attackDelayMillis > 0
-                ? weaponActionData.attackDelayMillis
-                : afterImageData != null ? afterImageData.attackDelayMillis : 0;
-
-        return new NormalAttackProfile(attackSpeed, attack, delay, afterImage, forBounds.bounds,
-                forBounds.sourceActions, forBounds.sourcePath,
-                afterImageData != null ? afterImageData.firstFramesByAction : Map.of());
     }
 
     private AttackBoundsData loadAfterimageBounds(String afterImage, int reqLevel) {
@@ -692,8 +669,6 @@ public final class BotAttackDataProvider {
         }
 
         Rectangle bounds = null;
-        int totalDelay = 0;
-        int delayedActions = 0;
         Set<String> actionNames = new LinkedHashSet<>();
         Map<String, Integer> firstFramesByAction = new HashMap<>();
         for (Element action : getNamedChildren(levelBucket)) {
@@ -712,19 +687,13 @@ public final class BotAttackDataProvider {
             String actionName = action.getAttribute("name");
             actionNames.add(actionName);
             firstFramesByAction.put(actionName, findAfterimageFirstFrame(action));
-            int actionDelay = sumActionDelayMillis(action);
-            if (actionDelay > 0) {
-                totalDelay += actionDelay;
-                delayedActions++;
-            }
         }
 
         if (bounds == null) {
             return null;
         }
 
-        return new AttackBoundsData(bounds, averageDelay(totalDelay, delayedActions), new ArrayList<>(actionNames),
-                afterimageFile.toString(), firstFramesByAction);
+        return new AttackBoundsData(bounds, new ArrayList<>(actionNames), firstFramesByAction);
     }
 
     private Element findBestLevelBucket(Element root, int requestedBucket) {
@@ -768,44 +737,6 @@ public final class BotAttackDataProvider {
         return new Rectangle(normalizedLeft, topY, normalizedRight - normalizedLeft, bottomY - topY);
     }
 
-    private AttackBoundsData loadWeaponActionBounds(Element root, Path weaponFile) {
-        Rectangle bounds = null;
-        int totalDelay = 0;
-        int delayedActions = 0;
-        Set<String> actionNames = new LinkedHashSet<>();
-
-        for (Element child : getNamedChildren(root)) {
-            String actionName = child.getAttribute("name");
-            if (!isBasicAttackAction(actionName)) {
-                continue;
-            }
-
-            for (Element frame : getNamedChildren(child)) {
-                Element weaponCanvas = resolveWeaponCanvas(frame);
-                Rectangle frameBounds = calculateFrameBounds(weaponCanvas);
-                if (frameBounds == null) {
-                    continue;
-                }
-
-                bounds = bounds == null ? new Rectangle(frameBounds) : bounds.union(frameBounds);
-                actionNames.add(actionName);
-            }
-
-            int actionDelay = sumActionDelayMillis(child);
-            if (actionDelay > 0) {
-                totalDelay += actionDelay;
-                delayedActions++;
-            }
-        }
-
-        if (bounds == null) {
-            return null;
-        }
-
-        return new AttackBoundsData(bounds, averageDelay(totalDelay, delayedActions), new ArrayList<>(actionNames),
-                weaponFile.toString(), Map.of());
-    }
-
     private int findAfterimageFirstFrame(Element action) {
         int bestFrame = 0;
         boolean found = false;
@@ -823,60 +754,6 @@ public final class BotAttackDataProvider {
         }
 
         return found ? bestFrame : 0;
-    }
-
-    private static boolean isBasicAttackAction(String actionName) {
-        return actionName.startsWith("swing")
-                || actionName.startsWith("stab")
-                || actionName.startsWith("shoot");
-    }
-
-    private Element resolveWeaponCanvas(Element frame) {
-        Element weapon = findNamedChild(frame, "weapon");
-        if (weapon == null) {
-            return null;
-        }
-
-        if ("uol".equals(weapon.getTagName())) {
-            String path = weapon.getAttribute("value");
-            if (path == null || path.isBlank()) {
-                return null;
-            }
-
-            Element resolved = resolveRelativePath(frame, path);
-            return resolved != null && "canvas".equals(resolved.getTagName()) ? resolved : null;
-        }
-
-        return "canvas".equals(weapon.getTagName()) ? weapon : null;
-    }
-
-    private Rectangle calculateFrameBounds(Element weaponCanvas) {
-        if (weaponCanvas == null) {
-            return null;
-        }
-
-        int width = getIntAttribute(weaponCanvas, "width", 0);
-        int height = getIntAttribute(weaponCanvas, "height", 0);
-        if (width <= 0 || height <= 0) {
-            return null;
-        }
-
-        Element origin = findNamedChild(weaponCanvas, "origin");
-        if (origin == null) {
-            return null;
-        }
-
-        Element map = findNamedChild(weaponCanvas, "map");
-        Element anchor = findNamedChild(map, "navel");
-        if (anchor == null) {
-            anchor = findNamedChild(map, "hand");
-        }
-
-        int anchorX = getIntAttribute(anchor, "x", 0);
-        int anchorY = getIntAttribute(anchor, "y", 0);
-        int originX = getIntAttribute(origin, "x", 0);
-        int originY = getIntAttribute(origin, "y", 0);
-        return new Rectangle(anchorX - originX, anchorY - originY, width, height);
     }
 
     private Element resolveRelativePath(Element start, String path) {

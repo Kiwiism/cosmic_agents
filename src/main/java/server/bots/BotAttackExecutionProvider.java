@@ -11,6 +11,7 @@ import net.server.channel.handlers.CloseRangeDamageHandler;
 import net.server.channel.handlers.MagicDamageHandler;
 import net.server.channel.handlers.RangedAttackHandler;
 import server.bots.combat.BotAttackDataProvider;
+import server.bots.combat.BotAttackTiming;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -78,12 +79,12 @@ final class BotAttackExecutionProvider {
 
         int rawAnimationDelayMs = provider.getBodyStanceDurationMs(action);
         if (rawAnimationDelayMs <= 0) {
-            rawAnimationDelayMs = profile.getAttackDelayMillis();
+            rawAnimationDelayMs = 600;
         }
         int rawHitDelayMs = provider.getBodyStanceDelayBeforeFrameMs(action, profile.getAfterimageFirstFrame(action));
 
-        int cooldownMs = toCooldownMs(adjustAttackDelayMillis(rawAnimationDelayMs, profile.getAttackSpeed(), effectiveAttackSpeed));
-        int hitDelayMs = adjustAttackDelayMillis(rawHitDelayMs, profile.getAttackSpeed(), effectiveAttackSpeed);
+        int cooldownMs = toCooldownMs(adjustAttackDelayMillis(rawAnimationDelayMs, effectiveAttackSpeed));
+        int hitDelayMs = adjustAttackDelayMillis(rawHitDelayMs, effectiveAttackSpeed);
         int stance = closeRangeRoute ? closeRangePacketFields.stance() : provider.getAttackStanceId(action);
         Rectangle hitBox = closeRangeRoute
                 ? closeRangeBasicHitBox(bot.getPosition(), facingLeft)
@@ -116,7 +117,7 @@ final class BotAttackExecutionProvider {
         if (rawAnimationDelayMs <= 0) {
             rawAnimationDelayMs = 600;
         }
-        int adjustedAnimationDelayMs = adjustAttackDelayMillis(rawAnimationDelayMs, baseAttackSpeed, effectiveAttackSpeed);
+        int adjustedAnimationDelayMs = adjustAttackDelayMillis(rawAnimationDelayMs, effectiveAttackSpeed);
         Rectangle hitBox = closeRangeRoute && bot != null
                 ? closeRangeBasicHitBox(bot.getPosition(), facingLeft)
                 : null;
@@ -255,23 +256,22 @@ final class BotAttackExecutionProvider {
         int fallbackHitDelayMs = fallbackAttackData != null ? fallbackAttackData.hitDelayMs() : defaultHitDelayMs(600);
         int fallbackCooldownMs = fallbackAttackData != null ? fallbackAttackData.cooldownMs() : toCooldownMs(600);
         return resolveSkillAttackTiming(action, resolveWeaponAttackProfile(bot), resolveSkillAttackDelayMillis(skill),
-                resolveBaseWeaponAttackSpeed(bot), resolveWeaponAttackSpeed(bot),
+                resolveWeaponAttackSpeed(bot),
                 fallbackHitDelayMs, fallbackCooldownMs);
     }
 
     static SkillAttackTiming resolveSkillAttackTiming(String action,
                                                       BotAttackDataProvider.NormalAttackProfile weaponAttackProfile,
                                                       int rawSkillDelayMs,
-                                                      int baseWeaponAttackSpeed, int effectiveWeaponAttackSpeed,
+                                                      int effectiveWeaponAttackSpeed,
                                                       int fallbackHitDelayMs, int fallbackCooldownMs) {
         BotAttackDataProvider provider = BotAttackDataProvider.getInstance();
         int rawActionCooldownMs = provider.getBodyActionDurationMs(action);
         if (rawActionCooldownMs > 0) {
             int rawActionHitDelayMs = provider.getBodyActionAttackDelayMs(action, 0);
-            int adjustedActionCooldownMs = adjustAttackDelayMillis(rawActionCooldownMs,
-                    baseWeaponAttackSpeed, effectiveWeaponAttackSpeed);
+            int adjustedActionCooldownMs = adjustAttackDelayMillis(rawActionCooldownMs, effectiveWeaponAttackSpeed);
             int adjustedActionHitDelayMs = rawActionHitDelayMs >= 0
-                    ? adjustAttackDelayMillis(rawActionHitDelayMs, baseWeaponAttackSpeed, effectiveWeaponAttackSpeed)
+                    ? adjustAttackDelayMillis(rawActionHitDelayMs, effectiveWeaponAttackSpeed)
                     : defaultHitDelayMs(adjustedActionCooldownMs);
             return new SkillAttackTiming(adjustedActionHitDelayMs,
                     Math.max(toCooldownMs(adjustedActionCooldownMs), fallbackCooldownMs));
@@ -281,28 +281,26 @@ final class BotAttackExecutionProvider {
         if (rawStanceCooldownMs > 0) {
             int firstFrame = weaponAttackProfile != null ? weaponAttackProfile.getAfterimageFirstFrame(action) : 0;
             int rawStanceHitDelayMs = provider.getBodyStanceDelayBeforeFrameMs(action, firstFrame);
-            int adjustedStanceCooldownMs = adjustAttackDelayMillis(rawStanceCooldownMs,
-                    baseWeaponAttackSpeed, effectiveWeaponAttackSpeed);
+            int adjustedStanceCooldownMs = adjustAttackDelayMillis(rawStanceCooldownMs, effectiveWeaponAttackSpeed);
             int adjustedStanceHitDelayMs = rawStanceHitDelayMs > 0
-                    ? adjustAttackDelayMillis(rawStanceHitDelayMs, baseWeaponAttackSpeed, effectiveWeaponAttackSpeed)
+                    ? adjustAttackDelayMillis(rawStanceHitDelayMs, effectiveWeaponAttackSpeed)
                     : fallbackHitDelayMs;
             return new SkillAttackTiming(adjustedStanceHitDelayMs,
                     Math.max(toCooldownMs(adjustedStanceCooldownMs), fallbackCooldownMs));
         }
 
-        return resolveSkillAttackTiming(rawSkillDelayMs, baseWeaponAttackSpeed, effectiveWeaponAttackSpeed,
+        return resolveSkillAttackTiming(rawSkillDelayMs, effectiveWeaponAttackSpeed,
                 fallbackHitDelayMs, fallbackCooldownMs);
     }
 
     static SkillAttackTiming resolveSkillAttackTiming(int rawSkillDelayMs,
-                                                      int baseWeaponAttackSpeed, int effectiveWeaponAttackSpeed,
+                                                      int effectiveWeaponAttackSpeed,
                                                       int fallbackHitDelayMs, int fallbackCooldownMs) {
         if (rawSkillDelayMs <= 0) {
             return new SkillAttackTiming(fallbackHitDelayMs, fallbackCooldownMs);
         }
 
-        int adjustedSkillDelayMs =
-                adjustAttackDelayMillis(rawSkillDelayMs, baseWeaponAttackSpeed, effectiveWeaponAttackSpeed);
+        int adjustedSkillDelayMs = adjustAttackDelayMillis(rawSkillDelayMs, effectiveWeaponAttackSpeed);
         return new SkillAttackTiming(defaultHitDelayMs(adjustedSkillDelayMs),
                 Math.max(toCooldownMs(adjustedSkillDelayMs), fallbackCooldownMs));
     }
@@ -449,10 +447,7 @@ final class BotAttackExecutionProvider {
     }
 
     private static int normalizeAttackSpeed(int attackSpeed) {
-        if (attackSpeed <= 0) {
-            return 4;
-        }
-        return attackSpeed;
+        return BotAttackTiming.normalizeAttackSpeed(attackSpeed);
     }
 
     private static int resolveEffectiveAttackSpeed(int baseAttackSpeed, Character bot) {
@@ -469,20 +464,11 @@ final class BotAttackExecutionProvider {
         return Math.max(2, normalizedBaseSpeed + booster);
     }
 
-    private static int adjustAttackDelayMillis(int baseDelayMillis, int baseAttackSpeed, int effectiveAttackSpeed) {
-        if (baseDelayMillis <= 0) {
-            return 0;
-        }
-
-        float effectiveSpeedFactor = toAttackSpeedFactor(effectiveAttackSpeed);
-        if (effectiveSpeedFactor <= 0f) {
-            return baseDelayMillis;
-        }
-
-        return Math.max(1, Math.round(baseDelayMillis / effectiveSpeedFactor));
+    private static int adjustAttackDelayMillis(int baseDelayMillis, int effectiveAttackSpeed) {
+        return BotAttackTiming.adjustDelayMillis(baseDelayMillis, effectiveAttackSpeed);
     }
 
     private static float toAttackSpeedFactor(int attackSpeed) {
-        return 1.7f - (attackSpeed / 10f);
+        return BotAttackTiming.toAttackSpeedFactor(attackSpeed);
     }
 }

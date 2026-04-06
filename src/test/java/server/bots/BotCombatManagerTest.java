@@ -219,7 +219,7 @@ class BotCombatManagerTest {
     @Test
     void shouldFallbackToBasicAttackTimingWhenSkillAnimationDelayMissing() {
         BotAttackExecutionProvider.SkillAttackTiming timing =
-                BotAttackExecutionProvider.resolveSkillAttackTiming(0, 4, 4, 300, 590);
+                BotAttackExecutionProvider.resolveSkillAttackTiming(0, 4, 300, 590);
 
         assertEquals(300, timing.hitDelayMs());
         assertEquals(590, timing.cooldownMs());
@@ -228,7 +228,7 @@ class BotCombatManagerTest {
     @Test
     void shouldNotUnlockSkillFasterThanBasicAttackCooldown() {
         BotAttackExecutionProvider.SkillAttackTiming timing =
-                BotAttackExecutionProvider.resolveSkillAttackTiming(450, 4, 4, 300, 590);
+                BotAttackExecutionProvider.resolveSkillAttackTiming(450, 4, 300, 590);
 
         assertEquals(173, timing.hitDelayMs());
         assertEquals(590, timing.cooldownMs());
@@ -237,7 +237,7 @@ class BotCombatManagerTest {
     @Test
     void shouldApplyAttackSpeedScalingToSkillAnimationTiming() {
         BotAttackExecutionProvider.SkillAttackTiming timing =
-                BotAttackExecutionProvider.resolveSkillAttackTiming(520, 4, 2, 120, 0);
+                BotAttackExecutionProvider.resolveSkillAttackTiming(520, 2, 120, 0);
 
         assertEquals(173, timing.hitDelayMs());
         assertEquals(BotMovementManager.delayAfterCurrentTick(347), timing.cooldownMs());

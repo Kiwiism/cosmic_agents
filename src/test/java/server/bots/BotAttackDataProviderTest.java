@@ -48,7 +48,7 @@ class BotAttackDataProviderTest {
         int rawActionHitDelayMs = provider.getBodyActionAttackDelayMs("doublefire", 0);
         int rawActionDurationMs = provider.getBodyActionDurationMs("doublefire");
         BotAttackExecutionProvider.SkillAttackTiming timing =
-                BotAttackExecutionProvider.resolveSkillAttackTiming("doublefire", null, 999, 4, 4, 300, 590);
+                BotAttackExecutionProvider.resolveSkillAttackTiming("doublefire", null, 999, 4, 300, 590);
 
         assertTrue(rawActionDurationMs > 0);
         assertTrue(rawActionHitDelayMs >= 0);
@@ -68,7 +68,7 @@ class BotAttackDataProviderTest {
         int rawStanceDurationMs = provider.getBodyStanceDurationMs("swingO1");
 
         BotAttackExecutionProvider.SkillAttackTiming timing =
-                BotAttackExecutionProvider.resolveSkillAttackTiming("swingO1", profile, 999, 4, 4, 0, 0);
+                BotAttackExecutionProvider.resolveSkillAttackTiming("swingO1", profile, 999, 4, 0, 0);
 
         assertTrue(rawStanceDurationMs > 0);
         assertTrue(rawStanceHitDelayMs > 0);

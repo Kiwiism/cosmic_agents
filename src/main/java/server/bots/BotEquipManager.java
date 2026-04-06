@@ -531,16 +531,18 @@ class BotEquipManager {
      * Returns 0 if no WZ profile is available — caller skips DPS scaling.
      */
     private static int weaponCycleMs(int itemId) {
-        BotAttackDataProvider.NormalAttackProfile profile =
-                BotAttackDataProvider.getInstance().getNormalAttackProfile(itemId);
-        if (profile == null || profile.getAttackDelayMillis() <= 0) {
+        BotAttackDataProvider provider = BotAttackDataProvider.getInstance();
+        BotAttackDataProvider.NormalAttackProfile profile = provider.getNormalAttackProfile(itemId);
+        if (profile == null) {
             return 0;
         }
-        float speedFactor = 1.7f - (profile.getAttackSpeed() / 10f);
-        if (speedFactor <= 0f) {
-            return profile.getAttackDelayMillis();
+        WeaponType weaponType = ItemInformationProvider.getInstance().getWeaponType(itemId);
+        BotAttackDataProvider.AttackAnimationSpec attackSpec = provider.getBasicAttackSpec(profile.getAttack(), weaponType);
+        int rawAnimationDelayMs = provider.getBodyStanceDurationMs(attackSpec.primaryAction());
+        if (rawAnimationDelayMs <= 0) {
+            return 0;
         }
-        return Math.max(1, Math.round(profile.getAttackDelayMillis() / speedFactor));
+        return server.bots.combat.BotAttackTiming.adjustDelayMillis(rawAnimationDelayMs, profile.getAttackSpeed());
     }
 
     private static int delta(Equip candidate, Equip replacing, ToIntFunction<Equip> getter) {
