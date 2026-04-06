@@ -5,6 +5,7 @@ import client.Character;
 import client.Skill;
 import client.SkillFactory;
 import client.inventory.WeaponType;
+import constants.game.GameConstants;
 import constants.skills.Assassin;
 import constants.skills.Bandit;
 import constants.skills.Bowmaster;
@@ -283,6 +284,8 @@ class BotCombatManager {
         entry.buffSkillIds.clear();
 
         int bestAtkHits = 0;
+        int bestAtkPriority = Integer.MIN_VALUE;
+        int bestAtkDamage = Integer.MIN_VALUE;
         int bestAoeScore = 0;
 
         for (Skill skill : bot.getSkills().keySet()) {
@@ -306,8 +309,11 @@ class BotCombatManager {
                         entry.aoeSkillId = skill.getId();
                         entry.aoeSkillMobs = mobs;
                     }
-                } else if (atk > bestAtkHits) {
+                } else if (shouldUseAsBestSingleTargetSkill(bot, skill, fx, atk,
+                        bestAtkHits, bestAtkPriority, bestAtkDamage, entry.attackSkillId)) {
                     bestAtkHits = atk;
+                    bestAtkPriority = singleTargetSkillPriority(bot, skill);
+                    bestAtkDamage = fx.getDamage();
                     entry.attackSkillId = skill.getId();
                 }
                 continue;
@@ -345,6 +351,40 @@ class BotCombatManager {
             castSupportSkill(entry, bot, skill, fx, now);
             return;
         }
+    }
+
+    private static boolean shouldUseAsBestSingleTargetSkill(Character bot, Skill skill, StatEffect effect,
+                                                            int attackCount, int bestAttackCount,
+                                                            int bestPriority, int bestDamage,
+                                                            int currentBestSkillId) {
+        if (attackCount > bestAttackCount) {
+            return true;
+        }
+        if (attackCount < bestAttackCount) {
+            return false;
+        }
+
+        int priority = singleTargetSkillPriority(bot, skill);
+        if (priority != bestPriority) {
+            return priority > bestPriority;
+        }
+
+        int damage = effect != null ? effect.getDamage() : 0;
+        if (damage != bestDamage) {
+            return damage > bestDamage;
+        }
+
+        return currentBestSkillId == 0 || skill.getId() < currentBestSkillId;
+    }
+
+    private static int singleTargetSkillPriority(Character bot, Skill skill) {
+        if (skill == null) {
+            return Integer.MIN_VALUE;
+        }
+        if (skill.isBeginnerSkill()) {
+            return 0;
+        }
+        return GameConstants.isInJobTree(skill.getId(), bot.getJob().getId()) ? 2 : 1;
     }
 
     static void tickSupportHealing(BotEntry entry, Character bot) {

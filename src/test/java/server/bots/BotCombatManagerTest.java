@@ -8,6 +8,8 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.WeaponType;
 import constants.game.CharacterStance;
+import constants.skills.Beginner;
+import constants.skills.Warrior;
 import net.packet.Packet;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -17,6 +19,8 @@ import server.life.Monster;
 import server.maps.MapleMap;
 
 import java.awt.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -73,6 +77,43 @@ class BotCombatManagerTest {
         String action = BotAttackExecutionProvider.resolveSkillAttackAction(null, skill, 1, WeaponType.BOW);
 
         assertEquals("doublefire", action);
+    }
+
+    @Test
+    void shouldPreferPowerStrikeOverBeginnerAttackForSingleTargetSlot() {
+        Character bot = mockBot(new Point(100, 200), mock(MapleMap.class), 20_000, null);
+        when(bot.getJob()).thenReturn(Job.WARRIOR);
+        when(bot.getLevel()).thenReturn(16);
+
+        Skill threeSnails = skillWithAttack(Beginner.THREE_SNAILS, 1, 1, 40);
+        Skill powerStrike = skillWithAttack(Warrior.POWER_STRIKE, 1, 1, 260);
+        Skill slashBlast = skillWithAttack(Warrior.SLASH_BLAST, 1, 6, 130);
+
+        Map<Skill, Character.SkillEntry> skills = new LinkedHashMap<>();
+        skills.put(threeSnails, null);
+        skills.put(powerStrike, null);
+        skills.put(slashBlast, null);
+
+        when(bot.getSkills()).thenReturn(skills);
+        doAnswer(invocation -> {
+            Skill skill = invocation.getArgument(0);
+            if (skill.getId() == threeSnails.getId()) {
+                return (byte) 1;
+            }
+            if (skill.getId() == powerStrike.getId()) {
+                return (byte) 1;
+            }
+            if (skill.getId() == slashBlast.getId()) {
+                return (byte) 1;
+            }
+            return (byte) 0;
+        }).when(bot).getSkillLevel(any(Skill.class));
+
+        BotEntry entry = new BotEntry(bot, null, null);
+        BotCombatManager.rebuildSkillCacheIfNeeded(entry, bot);
+
+        assertEquals(Warrior.POWER_STRIKE, entry.attackSkillId);
+        assertEquals(Warrior.SLASH_BLAST, entry.aoeSkillId);
     }
 
     @Test
@@ -299,5 +340,16 @@ class BotCombatManagerTest {
         when(mob.getAccuracy()).thenReturn(9_999);
         when(mob.isAlive()).thenReturn(true);
         return mob;
+    }
+
+    private static Skill skillWithAttack(int skillId, int attackCount, int mobCount, int damage) {
+        Skill skill = new Skill(skillId);
+        StatEffect effect = mock(StatEffect.class);
+        when(effect.getAttackCount()).thenReturn(attackCount);
+        when(effect.getMobCount()).thenReturn(mobCount);
+        when(effect.getDamage()).thenReturn(damage);
+        when(effect.getDuration()).thenReturn(0);
+        skill.addLevelEffect(effect);
+        return skill;
     }
 }
