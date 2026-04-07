@@ -6,6 +6,7 @@ import client.Skill;
 import client.SkillFactory;
 import client.inventory.WeaponType;
 import constants.game.GameConstants;
+import constants.skills.Archer;
 import constants.skills.Assassin;
 import constants.skills.Bandit;
 import constants.skills.Bowmaster;
@@ -18,9 +19,11 @@ import constants.skills.GM;
 import constants.skills.Marksman;
 import constants.skills.NightWalker;
 import constants.skills.Priest;
+import constants.skills.Rogue;
 import constants.skills.Spearman;
 import constants.skills.SuperGM;
 import constants.skills.ThunderBreaker;
+import constants.skills.WindArcher;
 import net.server.channel.handlers.AbstractDealDamageHandler;
 import server.StatEffect;
 import server.bots.combat.BotAttackDataProvider;
@@ -36,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -128,6 +132,18 @@ class BotCombatManager {
     }
 
     static Config cfg = new Config();
+    // Journey client CharStats::get_range() returns Rectangle(-projectilerange, -5, -50, 50).
+    private static final int CLIENT_PROJECTILE_BASE_RANGE = 400;
+    private static final int CLIENT_PROJECTILE_NEAR_INSET = 5;
+    private static final int CLIENT_PROJECTILE_TOP = 50;
+    private static final int CLIENT_PROJECTILE_BOTTOM = 50;
+    private static final List<Integer> PASSIVE_PROJECTILE_RANGE_SKILL_IDS = List.of(
+            Archer.EYE_OF_AMAZON,
+            4000001,
+            Rogue.KEEN_EYES,
+            WindArcher.EYE_OF_AMAZON,
+            NightWalker.KEEN_EYES
+    );
     private static final Set<Integer> PARTY_SUPPORT_SKILL_IDS = Set.of(
             Assassin.HASTE,
             Bandit.HASTE,
@@ -538,7 +554,8 @@ class BotCombatManager {
         }
 
         StatEffect effect = skill.getEffect(skillLevel);
-        Rectangle hitBox = calculateSkillHitBox(effect, bot, primaryTarget);
+        AttackRoute route = BotAttackExecutionProvider.determineSkillRoute(bot, entry.aoeSkillId);
+        Rectangle hitBox = calculateSkillHitBox(effect, bot, primaryTarget, route);
         if (hitBox == null) {
             return null;
         }
@@ -549,7 +566,6 @@ class BotCombatManager {
         }
 
         int attackCount = Math.max(1, effect.getAttackCount());
-        AttackRoute route = BotAttackExecutionProvider.determineSkillRoute(bot, entry.aoeSkillId);
         WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(bot);
         if (!BotAttackExecutionProvider.canUseRangedAttackRoute(route, weaponType, bot.getPosition(), primaryTarget.getPosition())) {
             return null;
@@ -569,7 +585,8 @@ class BotCombatManager {
                 BotAttackExecutionProvider.resolveSkillAttackTiming(skill, action, bot, fallbackAttackData);
         return new AttackPlan(entry.aoeSkillId, skillLevel, attackCount, hitBox, targets,
                 route, route == AttackRoute.CLOSE ? closeRangePacketFields.display() : 0,
-                direction, direction, route == AttackRoute.CLOSE ? closeRangePacketFields.stance() : 0,
+                direction, direction,
+                route == AttackRoute.CLOSE ? closeRangePacketFields.stance() : BotAttackExecutionProvider.packetStanceId(action, fallbackAction),
                 fallbackAttackData.speed(), skillTiming.hitDelayMs(), skillTiming.cooldownMs());
     }
 
@@ -585,13 +602,13 @@ class BotCombatManager {
         }
 
         StatEffect effect = skill.getEffect(skillLevel);
-        Rectangle hitBox = calculateSkillHitBox(effect, bot, primaryTarget);
+        AttackRoute route = BotAttackExecutionProvider.determineSkillRoute(bot, entry.attackSkillId);
+        Rectangle hitBox = calculateSkillHitBox(effect, bot, primaryTarget, route);
         if (hitBox == null || !doesHitBoxIntersectMonster(hitBox, primaryTarget)) {
             return null;
         }
 
         int attackCount = Math.max(1, effect.getAttackCount());
-        AttackRoute route = BotAttackExecutionProvider.determineSkillRoute(bot, entry.attackSkillId);
         WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(bot);
         if (!BotAttackExecutionProvider.canUseRangedAttackRoute(route, weaponType, bot.getPosition(), primaryTarget.getPosition())) {
             return null;
@@ -611,17 +628,18 @@ class BotCombatManager {
                 BotAttackExecutionProvider.resolveSkillAttackTiming(skill, action, bot, fallbackAttackData);
         return new AttackPlan(entry.attackSkillId, skillLevel, attackCount, hitBox, List.of(primaryTarget),
                 route, route == AttackRoute.CLOSE ? closeRangePacketFields.display() : 0,
-                direction, direction, route == AttackRoute.CLOSE ? closeRangePacketFields.stance() : 0,
+                direction, direction,
+                route == AttackRoute.CLOSE ? closeRangePacketFields.stance() : BotAttackExecutionProvider.packetStanceId(action, fallbackAction),
                 fallbackAttackData.speed(), skillTiming.hitDelayMs(), skillTiming.cooldownMs());
     }
 
-    private static Rectangle calculateSkillHitBox(StatEffect effect, Character bot, Monster primaryTarget) {
+    private static Rectangle calculateSkillHitBox(StatEffect effect, Character bot, Monster primaryTarget, AttackRoute route) {
         boolean facingLeft = primaryTarget.getPosition().x < bot.getPosition().x;
         if (effect.hasBoundingBox()) {
             return effect.calculateBoundingBox(bot.getPosition(), facingLeft);
         }
 
-        return fallbackCloseRangeSkillHitBox(effect, bot, facingLeft);
+        return fallbackSkillHitBox(effect, bot, facingLeft, route);
     }
 
     static Rectangle fallbackCloseRangeSkillHitBox(StatEffect effect, Character bot, boolean facingLeft) {
@@ -636,6 +654,70 @@ class BotCombatManager {
         int height = cfg.ATTACK_RANGE_Y + cfg.ATTACK_DOWN_MAX;
         int left = facingLeft ? origin.x - horizontalRange : origin.x;
         return new Rectangle(left, top, horizontalRange, height);
+    }
+
+    static Rectangle fallbackSkillHitBox(StatEffect effect, Character bot, boolean facingLeft, AttackRoute route) {
+        if (route == AttackRoute.CLOSE) {
+            return fallbackCloseRangeSkillHitBox(effect, bot, facingLeft);
+        }
+        if (effect == null || bot == null) {
+            return null;
+        }
+
+        return clientProjectileHitBox(bot, facingLeft, projectileRangeScale(effect));
+    }
+
+    static Rectangle clientProjectileHitBox(Character bot, boolean facingLeft, float horizontalScale) {
+        if (bot == null || bot.getPosition() == null) {
+            return null;
+        }
+
+        Point origin = bot.getPosition();
+        int projectileRange = CLIENT_PROJECTILE_BASE_RANGE + passiveProjectileRangeBonus(bot);
+        int farEdge = Math.max(CLIENT_PROJECTILE_NEAR_INSET, Math.round(projectileRange * Math.max(0f, horizontalScale)));
+        int left = facingLeft ? origin.x - farEdge : origin.x + CLIENT_PROJECTILE_NEAR_INSET;
+        int right = facingLeft ? origin.x - CLIENT_PROJECTILE_NEAR_INSET : origin.x + farEdge;
+        return new Rectangle(left, origin.y - CLIENT_PROJECTILE_TOP, right - left,
+                CLIENT_PROJECTILE_TOP + CLIENT_PROJECTILE_BOTTOM);
+    }
+
+    static float projectileRangeScale(StatEffect effect) {
+        return effect != null && effect.getRange() > 0 ? effect.getRange() / 100.0f : 1.0f;
+    }
+
+    static int passiveProjectileRangeBonus(Character bot) {
+        if (bot == null) {
+            return 0;
+        }
+
+        int bonus = 0;
+        for (int skillId : PASSIVE_PROJECTILE_RANGE_SKILL_IDS) {
+            Skill skill = resolveLearnedSkill(bot, skillId);
+            if (skill == null) {
+                continue;
+            }
+
+            int level = bot.getSkillLevel(skill);
+            if (level <= 0) {
+                continue;
+            }
+
+            bonus += Math.max(0, skill.getEffect(level).getRange());
+        }
+        return bonus;
+    }
+
+    private static Skill resolveLearnedSkill(Character bot, int skillId) {
+        Map<Skill, Character.SkillEntry> skills = bot.getSkills();
+        if (skills != null) {
+            for (Skill learned : skills.keySet()) {
+                if (learned != null && learned.getId() == skillId) {
+                    return learned;
+                }
+            }
+        }
+
+        return SkillFactory.getSkill(skillId);
     }
 
     private static List<Monster> collectTargetsInHitBox(Character bot, Monster primaryTarget, Rectangle hitBox, int maxTargets) {

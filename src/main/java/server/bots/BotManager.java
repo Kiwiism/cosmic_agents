@@ -1088,10 +1088,16 @@ public class BotManager {
                 && Math.abs(botPos.x - owner.getPosition().x) <= BotMovementManager.cfg.FOLLOW_DIST * 5) {
             Monster followTarget = BotCombatManager.findGrindTarget(bot);
             if (followTarget != null) {
-                BotCombatManager.AttackPlan ap = BotCombatManager.planAttack(entry, bot, followTarget);
-                if (BotCombatManager.isTargetInAttackRange(ap, bot, followTarget)) {
-                    BotCombatManager.attackMonster(entry, bot, ap);
-                    if (!entry.inAir) return;
+                Point followTargetPos = followTarget.getPosition();
+                if (BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(
+                        BotAttackExecutionProvider.getEquippedWeaponType(bot), botPos, followTargetPos)) {
+                    targetPos = selectGrindNavigationTarget(entry, botPos, followTargetPos);
+                } else {
+                    BotCombatManager.AttackPlan ap = BotCombatManager.planAttack(entry, bot, followTarget);
+                    if (BotCombatManager.isTargetInAttackRange(ap, bot, followTarget)) {
+                        BotCombatManager.attackMonster(entry, bot, ap);
+                        if (!entry.inAir) return;
+                    }
                 }
             }
         }
@@ -1132,9 +1138,11 @@ public class BotManager {
             entry.grindTarget = target;
             Point tp = target.getPosition();
             BotCombatManager.AttackPlan attackPlan = BotCombatManager.planAttack(entry, bot, target);
+            boolean shouldRetreatForRangedSpacing = BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(
+                    BotAttackExecutionProvider.getEquippedWeaponType(bot), botPos, tp);
 
             if (!entry.climbing) {
-                if (BotCombatManager.isTargetInAttackRange(attackPlan, bot, target)) {
+                if (!shouldRetreatForRangedSpacing && BotCombatManager.isTargetInAttackRange(attackPlan, bot, target)) {
                     // In range — attack if grounded, or during ascent of a jump
                     BotCombatManager.attackMonster(entry, bot, attackPlan);
                     if (!entry.inAir) return;

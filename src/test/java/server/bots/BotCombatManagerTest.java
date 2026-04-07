@@ -8,6 +8,7 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.WeaponType;
 import constants.game.CharacterStance;
+import constants.skills.Archer;
 import constants.skills.Beginner;
 import constants.skills.Warrior;
 import net.packet.Packet;
@@ -217,6 +218,61 @@ class BotCombatManagerTest {
     }
 
     @Test
+    void shouldCreateFallbackHitBoxForRangedSkillWithoutBoundingBox() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        StatEffect effect = mock(StatEffect.class);
+        when(effect.getRange()).thenReturn(0);
+
+        Rectangle hitBox = BotCombatManager.fallbackSkillHitBox(effect, bot, false, BotCombatManager.AttackRoute.RANGED);
+
+        assertEquals(new Rectangle(105, 150, 395, 100), hitBox);
+    }
+
+    @Test
+    void shouldCreateFallbackHitBoxForMagicSkillWithoutBoundingBox() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        StatEffect effect = mock(StatEffect.class);
+        when(effect.getRange()).thenReturn(0);
+
+        Rectangle hitBox = BotCombatManager.fallbackSkillHitBox(effect, bot, true, BotCombatManager.AttackRoute.MAGIC);
+
+        assertEquals(new Rectangle(-300, 150, 395, 100), hitBox);
+    }
+
+    @Test
+    void shouldScaleFallbackProjectileHitBoxUsingSkillRangeMultiplier() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        StatEffect effect = mock(StatEffect.class);
+        when(effect.getRange()).thenReturn(150);
+
+        Rectangle hitBox = BotCombatManager.fallbackSkillHitBox(effect, bot, false, BotCombatManager.AttackRoute.MAGIC);
+
+        assertEquals(new Rectangle(105, 150, 595, 100), hitBox);
+    }
+
+    @Test
+    void shouldAddPassiveRangeSkillsToProjectileRange() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        Skill eyeOfAmazon = new Skill(Archer.EYE_OF_AMAZON);
+        StatEffect effect = mock(StatEffect.class);
+        when(effect.getRange()).thenReturn(120);
+        eyeOfAmazon.addLevelEffect(effect);
+
+        Map<Skill, Character.SkillEntry> skills = new LinkedHashMap<>();
+        skills.put(eyeOfAmazon, null);
+        when(bot.getSkills()).thenReturn(skills);
+        when(bot.getSkillLevel(eyeOfAmazon)).thenReturn((byte) 1);
+
+        Rectangle hitBox = BotCombatManager.clientProjectileHitBox(bot, false, 1.0f);
+
+        assertEquals(new Rectangle(105, 150, 515, 100), hitBox);
+    }
+
+    @Test
     void shouldFallbackToBasicAttackTimingWhenSkillAnimationDelayMissing() {
         BotAttackExecutionProvider.SkillAttackTiming timing =
                 BotAttackExecutionProvider.resolveSkillAttackTiming(0, 4, 300, 590);
@@ -262,10 +318,11 @@ class BotCombatManagerTest {
     }
 
     @Test
-    void shouldRetreatFromNearbyRangedTargetsOutsideMeleeReach() {
+    void shouldRetreatFromNearbyRangedTargetsInsideDegenerateBand() {
         assertTrue(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, new Point(100, 200), new Point(220, 200)));
         assertEquals(new Point(-20, 200), BotAttackExecutionProvider.retreatTargetPosition(new Point(100, 200), new Point(220, 200)));
-        assertFalse(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, new Point(100, 200), new Point(145, 200)));
+        assertTrue(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, new Point(100, 200), new Point(145, 200)));
+        assertFalse(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, new Point(100, 200), new Point(300, 200)));
     }
 
     @Test

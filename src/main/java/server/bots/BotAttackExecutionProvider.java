@@ -85,10 +85,12 @@ final class BotAttackExecutionProvider {
 
         int cooldownMs = toCooldownMs(adjustAttackDelayMillis(rawAnimationDelayMs, effectiveAttackSpeed));
         int hitDelayMs = adjustAttackDelayMillis(rawHitDelayMs, effectiveAttackSpeed);
-        int stance = closeRangeRoute ? closeRangePacketFields.stance() : provider.getAttackStanceId(action);
+        int stance = closeRangeRoute ? closeRangePacketFields.stance() : packetStanceId(action, fallbackAction);
         Rectangle hitBox = closeRangeRoute
                 ? closeRangeBasicHitBox(bot.getPosition(), facingLeft)
-                : profile.hasBoundingBox() ? profile.calculateBoundingBox(bot.getPosition(), facingLeft) : null;
+                : profile.hasBoundingBox()
+                ? profile.calculateBoundingBox(bot.getPosition(), facingLeft)
+                : rangedBasicHitBox(route, bot, facingLeft);
 
         return new BasicAttackData(hitBox, display, direction, direction, stance, effectiveAttackSpeed,
                 hitDelayMs, cooldownMs, route);
@@ -120,10 +122,10 @@ final class BotAttackExecutionProvider {
         int adjustedAnimationDelayMs = adjustAttackDelayMillis(rawAnimationDelayMs, effectiveAttackSpeed);
         Rectangle hitBox = closeRangeRoute && bot != null
                 ? closeRangeBasicHitBox(bot.getPosition(), facingLeft)
-                : null;
+                : bot != null ? rangedBasicHitBox(route, bot, facingLeft) : null;
 
         return new BasicAttackData(hitBox, display, direction, direction,
-                closeRangeRoute ? closeRangePacketFields.stance() : provider.getAttackStanceId(attackSpec.actionForVariant(variantOffset)),
+                closeRangeRoute ? closeRangePacketFields.stance() : packetStanceId(action, attackSpec.primaryAction()),
                 effectiveAttackSpeed, defaultHitDelayMs(adjustedAnimationDelayMs), toCooldownMs(adjustedAnimationDelayMs),
                 route);
     }
@@ -149,6 +151,21 @@ final class BotAttackExecutionProvider {
         return new CloseRangePacketFields(0,
                 basicAttackDirectionId(actionName, fallbackAction),
                 facingLeft ? 0x80 : 0x00);
+    }
+
+    static int packetStanceId(String actionName, String fallbackAction) {
+        BotAttackDataProvider provider = BotAttackDataProvider.getInstance();
+        int stanceId = provider.getAttackStanceId(actionName);
+        if (stanceId > 0) {
+            return stanceId;
+        }
+        if (fallbackAction != null && !fallbackAction.equals(actionName)) {
+            int fallbackStanceId = provider.getAttackStanceId(fallbackAction);
+            if (fallbackStanceId > 0) {
+                return fallbackStanceId;
+            }
+        }
+        return 0;
     }
 
     static List<String> resolveAttackActions(BotAttackDataProvider.AttackAnimationSpec attackSpec, List<String> sourceActions) {
@@ -242,8 +259,7 @@ final class BotAttackExecutionProvider {
     }
 
     static boolean shouldRetreatFromNearbyTarget(WeaponType weaponType, Point botPos, Point targetPos) {
-        return shouldDegenerateRangedAttack(weaponType, botPos, targetPos)
-                && !isBasicAttackInRange(botPos, targetPos);
+        return shouldDegenerateRangedAttack(weaponType, botPos, targetPos);
     }
 
     static Point retreatTargetPosition(Point botPos, Point targetPos) {
@@ -392,6 +408,14 @@ final class BotAttackExecutionProvider {
         int height = BotCombatManager.cfg.ATTACK_RANGE_Y + BotCombatManager.cfg.ATTACK_DOWN_MAX;
         int left = facingLeft ? origin.x - horizontalRange : origin.x;
         return new Rectangle(left, top, horizontalRange, height);
+    }
+
+    private static Rectangle rangedBasicHitBox(BotCombatManager.AttackRoute route, Character bot, boolean facingLeft) {
+        if (bot == null || bot.getPosition() == null) {
+            return null;
+        }
+
+        return BotCombatManager.clientProjectileHitBox(bot, facingLeft, 1.0f);
     }
 
     private static boolean isBasicAttackInRange(Point botPos, Point targetPos) {
