@@ -24,7 +24,6 @@ import constants.skills.ThunderBreaker;
 import net.server.channel.handlers.AbstractDealDamageHandler;
 import server.StatEffect;
 import server.bots.combat.BotAttackDataProvider;
-import server.bots.combat.BotCharacterHitboxProvider;
 import server.bots.combat.BotCombatFormulaProvider;
 import server.bots.combat.BotDefenseDataProvider;
 import server.bots.combat.BotMobHitboxProvider;
@@ -115,8 +114,7 @@ class BotCombatManager {
         public int   AOE_MOB_THRESHOLD = 2;
 
         // Mob damage
-        public int   MOB_TOUCH_HALF_W = 40;
-        public int   MOB_TOUCH_HALF_H = 30;
+        public int   MOB_TOUCH_SWEEP_HEIGHT = 50;
         public int   MOB_HIT_COOLDOWN_MS = 1500;
         public long  BOT_DEAD_MS      = 10_000L;
 
@@ -159,18 +157,23 @@ class BotCombatManager {
 
     /** Check every alive monster on the map; if bot is inside its bounding box, apply a hit. */
     static void tickMobDamage(BotEntry entry, Character bot) {
-        if (entry.mobHitCooldownMs > 0) {
-            entry.mobHitCooldownMs = BotMovementManager.tickDown(entry.mobHitCooldownMs);
-            return;
-        }
-        if (bot.getHp() <= 0) return;
-
-        for (Monster mob : bot.getMap().getAllMonsters()) {
-            if (!mob.isAlive()) continue;
-            if (isMobTouchingBot(bot, mob)) {
-                applyMobHit(entry, bot, mob);
+        Point botPos = bot.getPosition();
+        try {
+            if (entry.mobHitCooldownMs > 0) {
+                entry.mobHitCooldownMs = BotMovementManager.tickDown(entry.mobHitCooldownMs);
                 return;
             }
+            if (bot.getHp() <= 0) return;
+
+            for (Monster mob : bot.getMap().getAllMonsters()) {
+                if (!mob.isAlive()) continue;
+                if (isMobTouchingBot(entry, bot, mob)) {
+                    applyMobHit(entry, bot, mob);
+                    return;
+                }
+            }
+        } finally {
+            rememberMobTouchCheck(entry, bot, botPos);
         }
     }
 
@@ -713,30 +716,44 @@ class BotCombatManager {
         return BotPhysicsEngine.findGroundFoothold(bot.getMap(), position);
     }
 
-    private static boolean isMobTouchingBot(Character bot, Monster mob) {
-        Rectangle botBounds = getBotTouchBounds(bot);
+    static boolean isMobTouchingBot(BotEntry entry, Character bot, Monster mob) {
+        Rectangle botBounds = getBotTouchBounds(entry, bot);
         Rectangle mobBounds = BotMobHitboxProvider.getInstance().getMobBounds(mob);
-        if (mobBounds != null) {
-            return mobBounds.intersects(botBounds);
+        if (mobBounds == null) {
+            return false;
         }
-
-        Point botPos = bot.getPosition();
-        Point mobPos = mob.getPosition();
-        Config cc = BotCombatManager.cfg;
-        return Math.abs(botPos.x - mobPos.x) <= cc.MOB_TOUCH_HALF_W
-                && Math.abs(botPos.y - mobPos.y) <= cc.MOB_TOUCH_HALF_H;
+        return mobBounds.intersects(botBounds);
     }
 
-    private static Rectangle getBotTouchBounds(Character bot) {
-        Rectangle bounds = BotCharacterHitboxProvider.getInstance().getBotBounds(bot);
-        if (bounds != null) {
-            return bounds;
+    static Rectangle getBotTouchBounds(BotEntry entry, Character bot) {
+        Point currentPos = bot.getPosition();
+        Point previousPos = currentPos;
+        if (entry != null
+                && entry.lastMobTouchCheckPos != null
+                && entry.lastMobTouchMapId == bot.getMapId()) {
+            previousPos = entry.lastMobTouchCheckPos;
         }
 
-        Point botPos = bot.getPosition();
-        int halfWidth = BotCombatManager.cfg.MOB_TOUCH_HALF_W;
-        int halfHeight = BotCombatManager.cfg.MOB_TOUCH_HALF_H;
-        return new Rectangle(botPos.x - halfWidth, botPos.y - halfHeight, halfWidth * 2, halfHeight * 2);
+        // Mirror the client touch check: sweep the player's foot position between ticks
+        // and use a fixed height above the feet instead of the full character sprite.
+        int left = Math.min(previousPos.x, currentPos.x);
+        int right = Math.max(previousPos.x, currentPos.x);
+        int top = Math.min(previousPos.y, currentPos.y) - BotCombatManager.cfg.MOB_TOUCH_SWEEP_HEIGHT;
+        int bottom = Math.max(previousPos.y, currentPos.y);
+        return inclusiveRectangle(left, top, right, bottom);
+    }
+
+    private static Rectangle inclusiveRectangle(int left, int top, int right, int bottom) {
+        return new Rectangle(left, top, Math.max(1, right - left + 1), Math.max(1, bottom - top + 1));
+    }
+
+    private static void rememberMobTouchCheck(BotEntry entry, Character bot, Point position) {
+        if (entry == null || bot == null || position == null) {
+            return;
+        }
+
+        entry.lastMobTouchCheckPos = new Point(position);
+        entry.lastMobTouchMapId = bot.getMapId();
     }
 
     private static boolean doesHitBoxIntersectMonster(Rectangle hitBox, Monster monster) {

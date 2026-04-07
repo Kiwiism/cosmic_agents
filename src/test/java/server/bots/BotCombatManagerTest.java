@@ -284,6 +284,39 @@ class BotCombatManagerTest {
         assertFalse(BotCombatManager.isTargetJumpable(true, new Point(100, 200), new Point(170, 60)));
     }
 
+    @Test
+    void shouldUseClientStyleMobTouchSweepForStationaryBot() {
+        Character bot = mockBot(new Point(100, 200), mock(MapleMap.class), 20_000, null);
+        BotEntry entry = new BotEntry(bot, null, null);
+
+        Rectangle bounds = BotCombatManager.getBotTouchBounds(entry, bot);
+
+        assertEquals(new Rectangle(100, 150, 1, 51), bounds);
+    }
+
+    @Test
+    void shouldIgnoreMobThatOnlyBrushesBotSpriteSide() {
+        Character bot = mockBot(new Point(100, 200), mock(MapleMap.class), 20_000, null);
+        BotEntry entry = new BotEntry(bot, null, null);
+        Monster mob = mockMob(new Point(122, 200), 100100);
+        when(mob.isFacingLeft()).thenReturn(false);
+
+        assertFalse(BotCombatManager.isMobTouchingBot(entry, bot, mob));
+    }
+
+    @Test
+    void shouldDetectMobTouchAcrossBotMovementSweep() {
+        Character bot = mockBot(new Point(120, 200), mock(MapleMap.class), 20_000, null);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.lastMobTouchCheckPos = new Point(80, 200);
+        entry.lastMobTouchMapId = 0;
+        when(bot.getMapId()).thenReturn(0);
+        Monster mob = mockMob(new Point(96, 200), 100100);
+        when(mob.isFacingLeft()).thenReturn(false);
+
+        assertTrue(BotCombatManager.isMobTouchingBot(entry, bot, mob));
+    }
+
     private static void assertDamageDirection(MapleMap map, Character bot, int expectedBroadcasts, int expectedDirection) {
         ArgumentCaptor<Packet> packets = ArgumentCaptor.forClass(Packet.class);
         verify(map, times(expectedBroadcasts)).broadcastMessage(eq(bot), packets.capture(), eq(false));
@@ -315,6 +348,7 @@ class BotCombatManagerTest {
             return null;
         }).when(bot).setStance(anyInt());
         when(bot.getId()).thenReturn(1);
+        when(bot.getMapId()).thenReturn(0);
         when(bot.getJob()).thenReturn(Job.BEGINNER);
         when(bot.getLevel()).thenReturn(200);
         when(bot.getTotalWdef()).thenReturn(0);

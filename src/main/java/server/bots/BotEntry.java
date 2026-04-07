@@ -80,6 +80,8 @@ public class BotEntry {
     // Damage taken
     long deadUntil = 0;
     int mobHitCooldownMs = 0;
+    Point lastMobTouchCheckPos = null;
+    int lastMobTouchMapId = -1;
 
     // Loot and potions
     int potCheckTimerMs = 0;

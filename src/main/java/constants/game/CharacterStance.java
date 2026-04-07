@@ -43,25 +43,4 @@ public final class CharacterStance {
         return stance == DEAD_RIGHT_STANCE || stance == DEAD_LEFT_STANCE;
     }
 
-    public static String bodyHitboxAction(int stance) {
-        if (isWalking(stance)) {
-            return "walk1";
-        }
-        if (isJumping(stance)) {
-            return "jump";
-        }
-        if (stance == PRONE_STANCE) {
-            return "prone";
-        }
-        if (stance == ROPE_STANCE) {
-            return "rope";
-        }
-        if (stance == LADDER_STANCE) {
-            return "ladder";
-        }
-        if (isDead(stance)) {
-            return "dead";
-        }
-        return "stand1";
-    }
 }
