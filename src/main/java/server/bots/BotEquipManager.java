@@ -10,8 +10,15 @@ import client.inventory.WeaponType;
 import client.inventory.manipulator.InventoryManipulator;
 import constants.inventory.EquipSlot;
 import constants.inventory.ItemConstants;
+import constants.skills.Crusader;
+import constants.skills.DragonKnight;
+import constants.skills.Fighter;
+import constants.skills.Page;
+import constants.skills.Paladin;
 import constants.skills.Pirate;
 import constants.skills.Rogue;
+import constants.skills.Spearman;
+import constants.skills.WhiteKnight;
 import server.ItemInformationProvider;
 import server.bots.combat.BotAttackDataProvider;
 
@@ -635,8 +642,42 @@ class BotEquipManager {
 
         return switch (job) {
             case BOWMAN -> weaponType == WeaponType.BOW || weaponType == WeaponType.CROSSBOW;
-            case FIGHTER, CRUSADER, HERO, PAGE, WHITEKNIGHT, PALADIN -> isSword(weaponType);
-            case SPEARMAN, DRAGONKNIGHT, DARKKNIGHT -> weaponType == WeaponType.SPEAR_STAB;
+            case FIGHTER -> matchesWarriorWeaponFamily(bot,
+                    isSword(weaponType), isGeneralWeapon(weaponType),
+                    new int[]{Fighter.SWORD_MASTERY, Fighter.SWORD_BOOSTER},
+                    new int[]{Fighter.AXE_MASTERY, Fighter.AXE_BOOSTER});
+            case CRUSADER -> matchesWarriorWeaponFamily(bot,
+                    isSword(weaponType), isGeneralWeapon(weaponType),
+                    new int[]{Crusader.SWORD_COMA, Crusader.SWORD_PANIC},
+                    new int[]{Crusader.AXE_COMA, Crusader.AXE_PANIC});
+            case HERO -> matchesWarriorWeaponFamily(bot,
+                    isSword(weaponType), isGeneralWeapon(weaponType),
+                    new int[]{Crusader.SWORD_COMA, Crusader.SWORD_PANIC},
+                    new int[]{Crusader.AXE_COMA, Crusader.AXE_PANIC});
+            case PAGE -> matchesWarriorWeaponFamily(bot,
+                    isSword(weaponType), isGeneralWeapon(weaponType),
+                    new int[]{Page.SWORD_MASTERY, Page.SWORD_BOOSTER},
+                    new int[]{Page.BW_MASTERY, Page.BW_BOOSTER});
+            case WHITEKNIGHT -> matchesWarriorWeaponFamily(bot,
+                    isSword(weaponType), isGeneralWeapon(weaponType),
+                    new int[]{WhiteKnight.SWORD_FIRE_CHARGE, WhiteKnight.SWORD_ICE_CHARGE, WhiteKnight.SWORD_LIT_CHARGE},
+                    new int[]{WhiteKnight.BW_FIRE_CHARGE, WhiteKnight.BW_ICE_CHARGE, WhiteKnight.BW_LIT_CHARGE});
+            case PALADIN -> matchesWarriorWeaponFamily(bot,
+                    isSword(weaponType), isGeneralWeapon(weaponType),
+                    new int[]{Paladin.SWORD_HOLY_CHARGE},
+                    new int[]{Paladin.BW_HOLY_CHARGE});
+            case SPEARMAN -> matchesWarriorWeaponFamily(bot,
+                    isSpearWeapon(weaponType), isPolearmWeapon(weaponType),
+                    new int[]{Spearman.SPEAR_MASTERY, Spearman.SPEAR_BOOSTER},
+                    new int[]{Spearman.POLEARM_MASTERY, Spearman.POLEARM_BOOSTER});
+            case DRAGONKNIGHT -> matchesWarriorWeaponFamily(bot,
+                    isSpearWeapon(weaponType), isPolearmWeapon(weaponType),
+                    new int[]{DragonKnight.SPEAR_CRUSHER, DragonKnight.SPEAR_DRAGON_FURY},
+                    new int[]{DragonKnight.POLE_ARM_CRUSHER, DragonKnight.POLE_ARM_DRAGON_FURY});
+            case DARKKNIGHT -> matchesWarriorWeaponFamily(bot,
+                    isSpearWeapon(weaponType), isPolearmWeapon(weaponType),
+                    new int[]{DragonKnight.SPEAR_CRUSHER, DragonKnight.SPEAR_DRAGON_FURY},
+                    new int[]{DragonKnight.POLE_ARM_CRUSHER, DragonKnight.POLE_ARM_DRAGON_FURY});
             case MAGICIAN, FP_WIZARD, FP_MAGE, FP_ARCHMAGE, IL_WIZARD, IL_MAGE, IL_ARCHMAGE, CLERIC, PRIEST, BISHOP ->
                     weaponType == WeaponType.WAND || weaponType == WeaponType.STAFF;
             case HUNTER, RANGER, BOWMASTER -> weaponType == WeaponType.BOW;
@@ -656,8 +697,48 @@ class BotEquipManager {
         return isWeaponCompatible(bot, ii.getWeaponType(equip.getItemId())) ? equip : null;
     }
 
+    private static boolean matchesWarriorWeaponFamily(Character bot,
+                                                      boolean firstFamilyMatch,
+                                                      boolean secondFamilyMatch,
+                                                      int[] firstFamilySkills,
+                                                      int[] secondFamilySkills) {
+        boolean firstFamilyChosen = hasAnySkill(bot, firstFamilySkills);
+        boolean secondFamilyChosen = hasAnySkill(bot, secondFamilySkills);
+        if (firstFamilyChosen && !secondFamilyChosen) {
+            return firstFamilyMatch;
+        }
+        if (secondFamilyChosen && !firstFamilyChosen) {
+            return secondFamilyMatch;
+        }
+        return firstFamilyMatch || secondFamilyMatch;
+    }
+
+    private static boolean hasAnySkill(Character bot, int... skillIds) {
+        for (int skillId : skillIds) {
+            if (bot.getSkillLevel(skillId) > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static boolean isSword(WeaponType weaponType) {
         return weaponType == WeaponType.SWORD1H || weaponType == WeaponType.SWORD2H;
+    }
+
+    private static boolean isGeneralWeapon(WeaponType weaponType) {
+        return weaponType == WeaponType.GENERAL1H_SWING
+                || weaponType == WeaponType.GENERAL1H_STAB
+                || weaponType == WeaponType.GENERAL2H_SWING
+                || weaponType == WeaponType.GENERAL2H_STAB;
+    }
+
+    private static boolean isSpearWeapon(WeaponType weaponType) {
+        return weaponType == WeaponType.SPEAR_STAB || weaponType == WeaponType.SPEAR_SWING;
+    }
+
+    private static boolean isPolearmWeapon(WeaponType weaponType) {
+        return weaponType == WeaponType.POLE_ARM_SWING || weaponType == WeaponType.POLE_ARM_STAB;
     }
 
     private static boolean isThiefDagger(WeaponType weaponType) {
