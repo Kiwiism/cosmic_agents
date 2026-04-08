@@ -9,7 +9,6 @@ import constants.game.GameConstants;
 import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
 import server.StatEffect;
-import server.TimerManager;
 import server.Trade;
 import tools.PacketCreator;
 
@@ -444,17 +443,15 @@ class BotDropManager {
         }
         boolean receivedSomething = trade.getPartner() != null && trade.getPartner().hasAnyOffer();
         Trade.completeTrade(bot);
-        long replyDelay = 800 + ThreadLocalRandom.current().nextInt(0, 500);
+        long replyDelay = BotManager.randMs(800, 1300);
         if (receivedSomething) {
             bot.changeFaceExpression(Emote.HAPPY.getValue());
-            TimerManager.getInstance().schedule(
-                    () -> BotManager.getInstance().botSay(bot, BotManager.randomReply(TRADE_THANKS_MSGS)),
-                    replyDelay);
+            BotManager.after(replyDelay, () ->
+                    BotManager.getInstance().botSay(bot, BotManager.randomReply(TRADE_THANKS_MSGS)));
         } else if (ThreadLocalRandom.current().nextInt(100) < 20) {
             bot.changeFaceExpression(ThreadLocalRandom.current().nextBoolean() ? Emote.GLARE.getValue() : Emote.ANNOYED.getValue());
-            TimerManager.getInstance().schedule(
-                    () -> BotManager.getInstance().botSay(bot, BotManager.randomReply(TRADE_FREEBIE_QUIPS)),
-                    replyDelay);
+            BotManager.after(replyDelay, () ->
+                    BotManager.getInstance().botSay(bot, BotManager.randomReply(TRADE_FREEBIE_QUIPS)));
         }
     }
 

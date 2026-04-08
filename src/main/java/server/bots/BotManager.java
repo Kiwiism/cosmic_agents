@@ -248,6 +248,16 @@ public class BotManager {
         return list.get(ThreadLocalRandom.current().nextInt(list.size()));
     }
 
+    /** Schedule {@code r} to run after {@code ms} milliseconds. */
+    static ScheduledFuture<?> after(long ms, Runnable r) {
+        return TimerManager.getInstance().schedule(r, ms);
+    }
+
+    /** Uniform random delay in [lo, hi) ms — use wherever a fixed delay would feel robotic. */
+    static long randMs(int lo, int hi) {
+        return lo + ThreadLocalRandom.current().nextInt(hi - lo);
+    }
+
     // -------------------------------------------------------------------------
     // Public API
     // -------------------------------------------------------------------------
@@ -402,7 +412,7 @@ public class BotManager {
         if (normalizeSpawnState) {
             normalizeSpawnedBot(entry);
         }
-        TimerManager.getInstance().schedule(() -> BotChatManager.checkBotStatus(entry, bot), 2000);
+        after(randMs(2000, 2100), () -> BotChatManager.checkBotStatus(entry, bot));
         return entry;
     }
 
@@ -453,10 +463,10 @@ public class BotManager {
         entry.task.cancel(false);
         entry.following = false;
         entry.grinding  = false;
-        TimerManager.getInstance().schedule(() ->
+        after(randMs(400, 600), () ->
                 botSay(entry.bot, randomReply(List.of(
                         "ok", "sure", "alright", "gotcha",
-                        "later!", "see ya", "take care", "cya", "peace out"))), 500);
+                        "later!", "see ya", "take care", "cya", "peace out"))));
         return true;
     }
 
@@ -514,8 +524,8 @@ public class BotManager {
 
         // Register under new owner
         registerBot(target.getId(), target, bot);
-        TimerManager.getInstance().schedule(() ->
-                botSay(bot, randomReply(List.of("ok!", "sure!", "hey " + target.getName() + "!", "hi " + target.getName() + "!"))), 800);
+        after(randMs(700, 900), () ->
+                botSay(bot, randomReply(List.of("ok!", "sure!", "hey " + target.getName() + "!", "hi " + target.getName() + "!"))));
         return null;
     }
 
@@ -1424,10 +1434,10 @@ public class BotManager {
             Character botChar = loadOfflineBot(charId, world, channel, map, pos);
 
             registerSpawnedBot(ownerCharId, owner, botChar);
-            TimerManager.getInstance().schedule(() -> {
+            after(randMs(900, 1100), () -> {
                 botSay(botChar, "back!!");
                 botChar.changeFaceExpression(Emote.HAPPY.getValue());
-            }, 1000);
+            });
         } catch (SQLException e) {
             log.warn("reloginBot: failed to reload charId={}", charId, e);
         }
@@ -1778,15 +1788,14 @@ public class BotManager {
         final Character needyBot  = bot;
 
         if (qualifies) {
-            TimerManager.getInstance().schedule(() -> {
+            after(randMs(2000, 3000), () -> {
                 if (donorBot.getTrade() != null || donorEntry.pendingTradeCategory != null) return;
                 List<Item> items = BotDropManager.collectPotShareItems(donorBot, forHp, maxQty);
                 if (items.isEmpty()) return;
                 botSay(donorBot, randomReply(forHp ? POT_OFFER_HP_MSGS : POT_OFFER_MP_MSGS));
-                TimerManager.getInstance().schedule(
-                        () -> BotDropManager.startPotShareTransfer(items, needyBot, donorEntry, donorBot),
-                        1_000L);
-            }, 2_000 + ThreadLocalRandom.current().nextInt(0, 1_000));
+                after(randMs(900, 1100), () ->
+                        BotDropManager.startPotShareTransfer(items, needyBot, donorEntry, donorBot));
+            });
         } else {
             String ownerName = owner.getName();
             List<String> noQualMsgs = List.of(
@@ -1794,9 +1803,8 @@ public class BotManager {
                     "wish i could help, try " + ownerName + "?",
                     "i'm low too :/ check with " + ownerName,
                     "barely have any myself, ask " + ownerName);
-            TimerManager.getInstance().schedule(() ->
-                    botSay(donorBot, randomReply(noQualMsgs)),
-                    4_000 + ThreadLocalRandom.current().nextInt(0, 2_000));
+            after(randMs(4000, 6000), () ->
+                    botSay(donorBot, randomReply(noQualMsgs)));
         }
         return true;
     }

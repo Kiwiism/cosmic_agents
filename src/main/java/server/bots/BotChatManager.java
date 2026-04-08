@@ -10,7 +10,6 @@ import client.inventory.Item;
 import constants.game.GameConstants;
 import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
-import server.TimerManager;
 import server.Trade;
 import java.awt.*;
 
@@ -403,7 +402,7 @@ public class BotChatManager {
         markOwnerActive(entry);
         // Logout / relog — two-step confirmation
         if (RELOG_PATTERN.matcher(message).find()) {
-            TimerManager.getInstance().schedule(() -> {
+            BotManager.after(BotManager.randMs(900, 1100), () -> {
                 entry.pendingAction = "relog";
                 entry.following = false;
                 entry.grinding  = false;
@@ -412,11 +411,11 @@ public class BotChatManager {
                         "save and relog? type yes",
                         "relogging? say yes to go ahead");
                 BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(prompts));
-            }, 1000);
+            });
             return;
         }
         if (LOGOUT_PATTERN.matcher(message).find()) {
-            TimerManager.getInstance().schedule(() -> {
+            BotManager.after(BotManager.randMs(900, 1100), () -> {
                 entry.pendingAction = "logout";
                 entry.following = false;
                 entry.grinding  = false;
@@ -425,7 +424,7 @@ public class BotChatManager {
                         "save and log off? say yes if you're sure",
                         "logging off? type yes to confirm");
                 BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(prompts));
-            }, 1000);
+            });
             return;
         }
         if (entry.pendingAction != null && !RECOMMENDED_TRADE_ACTION.equals(entry.pendingAction)) {
@@ -435,19 +434,19 @@ public class BotChatManager {
                 if (DROP_CHOICE_TRADE_PATTERN.matcher(message).find()) {
                     entry.pendingAction       = null;
                     entry.pendingDropCategory = null;
-                    TimerManager.getInstance().schedule(
-                            () -> BotDropManager.executeChoice(category, true, entry, entry.bot), 500);
+                    BotManager.after(BotManager.randMs(400, 600),
+                            () -> BotDropManager.executeChoice(category, true, entry, entry.bot));
                 } else if (DROP_CHOICE_DROP_PATTERN.matcher(message).find()) {
                     entry.pendingAction       = null;
                     entry.pendingDropCategory = null;
-                    TimerManager.getInstance().schedule(
-                            () -> BotDropManager.executeChoice(category, false, entry, entry.bot), 500);
+                    BotManager.after(BotManager.randMs(400, 600),
+                            () -> BotDropManager.executeChoice(category, false, entry, entry.bot));
                 } else {
                     // any other response = cancel
                     entry.pendingAction       = null;
                     entry.pendingDropCategory = null;
-                    TimerManager.getInstance().schedule(
-                            () -> BotManager.getInstance().botSay(entry.bot, "ok! keeping them"), 500);
+                    BotManager.after(BotManager.randMs(400, 600),
+                            () -> BotManager.getInstance().botSay(entry.bot, "ok! keeping them"));
                 }
                 return;
             }
@@ -459,7 +458,7 @@ public class BotChatManager {
                 String action = entry.pendingAction;
                 entry.pendingAction = null;
                 if ("relog".equals(action)) {
-                    TimerManager.getInstance().schedule(() -> {
+                    BotManager.after(BotManager.randMs(900, 1100), () -> {
                         Character o = entry.owner;
                         if (o == null) return; // owner logged out before relog fired
                         BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(List.of("brb!", "relogging~", "one sec, relogging")));
@@ -467,116 +466,116 @@ public class BotChatManager {
                         int ownerCharId = o.getId();
                         int world       = entry.bot.getClient().getWorld();
                         int channel     = entry.bot.getClient().getChannel();
-                        TimerManager.getInstance().schedule(() -> {
+                        BotManager.after(BotManager.randMs(1800, 2200), () -> {
                             entry.bot.saveCharToDB(true);
                             entry.bot.getClient().disconnect(false, false);
-                            TimerManager.getInstance().schedule(
-                                    () -> BotManager.getInstance().reloginBot(charId, ownerCharId, world, channel), 10_000);
-                        }, 2000);
-                    }, 1000);
+                            BotManager.after(BotManager.randMs(10000, 10100),
+                                    () -> BotManager.getInstance().reloginBot(charId, ownerCharId, world, channel));
+                        });
+                    });
                 } else {
-                    TimerManager.getInstance().schedule(() -> {
+                    BotManager.after(BotManager.randMs(900, 1100), () -> {
                         BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(List.of("ok! saving and logging off~", "cya!!", "ok bye!!")));
-                        TimerManager.getInstance().schedule(() -> {
+                        BotManager.after(BotManager.randMs(1800, 2200), () -> {
                             entry.bot.saveCharToDB(true);
                             entry.bot.getClient().disconnect(false, false);
-                        }, 2000);
-                    }, 1000);
+                        });
+                    });
                 }
             } else {
                 String action = entry.pendingAction;
                 entry.pendingAction = null;
                 String cancelMsg = action != null && action.startsWith("drop") ? "ok! keeping them" : "ok nvm, staying!";
-                TimerManager.getInstance().schedule(() ->
-                        BotManager.getInstance().botSay(entry.bot, cancelMsg), 800);
+                BotManager.after(BotManager.randMs(700, 900), () ->
+                        BotManager.getInstance().botSay(entry.bot, cancelMsg));
             }
             return;
         }
 
         if (HELP_PATTERN.matcher(message).find()) {
-            TimerManager.getInstance().schedule(() -> reportHelp(entry), 600);
+            BotManager.after(BotManager.randMs(500, 700), () -> reportHelp(entry));
             return;
         }
         if (SUPPORT_OFF_PATTERN.matcher(message).find()) {
-            TimerManager.getInstance().schedule(() -> {
+            BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.supportHealsEnabled = false;
                 BotManager.getInstance().botSay(entry.bot, "ok, support off");
-            }, 600);
+            });
             return;
         }
         if (SUPPORT_ON_PATTERN.matcher(message).find()) {
-            TimerManager.getInstance().schedule(() -> {
+            BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.supportHealsEnabled = true;
                 BotManager.getInstance().botSay(entry.bot, "ok, support on");
-            }, 600);
+            });
             return;
         }
         if (HEALS_OFF_PATTERN.matcher(message).find()) {
-            TimerManager.getInstance().schedule(() -> {
+            BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.supportHealsEnabled = false;
                 BotManager.getInstance().botSay(entry.bot, "ok, no heals");
-            }, 600);
+            });
             return;
         }
         if (HEALS_ON_PATTERN.matcher(message).find()) {
-            TimerManager.getInstance().schedule(() -> {
+            BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.supportHealsEnabled = true;
                 BotManager.getInstance().botSay(entry.bot, "ok, ill heal when needed");
-            }, 600);
+            });
             return;
         }
         if (BUFF_OFF_PATTERN.matcher(message).find()) {
-            TimerManager.getInstance().schedule(() -> {
+            BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.buffConsumablesEnabled = false;
                 entry.lastBuffScanMs = 0;
                 BotManager.getInstance().botSay(entry.bot, "ok, no buff pots");
-            }, 600);
+            });
             return;
         }
         if (BUFF_ON_PATTERN.matcher(message).find()) {
-            TimerManager.getInstance().schedule(() -> {
+            BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.buffConsumablesEnabled = true;
                 entry.lastBuffScanMs = 0;
                 String mode = entry.buffCheapMode ? "cheap" : "max";
                 BotManager.getInstance().botSay(entry.bot, "ok, using buff pots (" + mode + ")");
-            }, 600);
+            });
             return;
         }
         if (BUFF_CHEAP_PATTERN.matcher(message).find()) {
-            TimerManager.getInstance().schedule(() -> {
+            BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.buffCheapMode = true;
                 entry.lastBuffScanMs = 0;
                 BotManager.getInstance().botSay(entry.bot, "ok, using cheapest buff pots");
-            }, 600);
+            });
             return;
         }
         if (BUFF_MAX_PATTERN.matcher(message).find()) {
-            TimerManager.getInstance().schedule(() -> {
+            BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.buffCheapMode = false;
                 entry.lastBuffScanMs = 0;
                 BotManager.getInstance().botSay(entry.bot, "ok, using best buff pots");
-            }, 600);
+            });
             return;
         }
         if (BUFF_LIST_PATTERN.matcher(message).find()) {
-            TimerManager.getInstance().schedule(() -> {
+            BotManager.after(BotManager.randMs(500, 700), () -> {
                 String summary = BotBuffManager.getChatSummary(entry.buffConsumablesEnabled, entry.buffCheapMode, entry.bot);
                 BotManager.getInstance().botSay(entry.bot, summary);
-            }, 600);
+            });
             return;
         }
         if (BUFF_DEBUG_PATTERN.matcher(message).find()) {
-            TimerManager.getInstance().schedule(() -> reportBuffDebug(entry, entry.bot), 600);
+            BotManager.after(BotManager.randMs(500, 700), () -> reportBuffDebug(entry, entry.bot));
             return;
         }
         if (isApRespecCommand(message)) {
-            TimerManager.getInstance().schedule(() ->
-                    BotManager.getInstance().botSay(entry.bot, BotBuildManager.respecAp(entry, entry.bot)), 600);
+            BotManager.after(BotManager.randMs(500, 700), () ->
+                    BotManager.getInstance().botSay(entry.bot, BotBuildManager.respecAp(entry, entry.bot)));
             return;
         }
         if (isRespecCommand(message)) {
-            TimerManager.getInstance().schedule(() ->
-                    BotManager.getInstance().botSay(entry.bot, BotBuildManager.respecSp(entry, entry.bot)), 600);
+            BotManager.after(BotManager.randMs(500, 700), () ->
+                    BotManager.getInstance().botSay(entry.bot, BotBuildManager.respecSp(entry, entry.bot)));
             return;
         }
         Matcher unequipSlotMatcher = UNEQUIP_SLOT_PATTERN.matcher(message);
@@ -584,67 +583,68 @@ public class BotChatManager {
             String slotName = unequipSlotMatcher.group(2);
             short[] slots = BotEquipManager.slotsFromName(slotName);
             if (slots.length > 0) {
-                TimerManager.getInstance().schedule(() ->
-                        BotManager.getInstance().botSay(entry.bot, BotEquipManager.unequipSlot(entry.bot, slots)), 600);
+                BotManager.after(BotManager.randMs(500, 700), () ->
+                        BotManager.getInstance().botSay(entry.bot, BotEquipManager.unequipSlot(entry.bot, slots)));
                 return;
             }
         }
         if (UNEQUIP_PATTERN.matcher(message).find()) {
-            TimerManager.getInstance().schedule(() -> {
+            BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.following = false;
                 entry.grinding = false;
                 BotManager.getInstance().botSay(entry.bot, BotEquipManager.unequipAll(entry.bot));
-            }, 600);
+            });
             return;
         }
 
         if (MOVE_HERE_PATTERN.matcher(message).find()) {
             Point dest = entry.owner != null ? new Point(entry.owner.getPosition()) : null;
             if (dest != null) {
-                TimerManager.getInstance().schedule(() -> {
+                BotManager.after(BotManager.randMs(1000, 1500), () -> {
                     entry.following = false;
                     entry.grinding = false;
                     entry.moveTarget = dest;
                     entry.moveTargetPrecise = true;
                     BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(MOVE_HERE_REPLIES));
-                }, 1000 + ThreadLocalRandom.current().nextInt(0, 500));
+                });
             }
         } else if (FOLLOW_PATTERN.matcher(message).find()) {
-            TimerManager.getInstance().schedule(() -> {
+            BotManager.after(BotManager.randMs(1500, 2000), () -> {
                 entry.grinding = false;
                 entry.moveTarget = null;
                 BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
                 BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(FOLLOW_REPLIES));
                 BotManager.getInstance().checkPotShareOnModeStart(entry, entry.bot);
-                TimerManager.getInstance().schedule(() -> entry.following = true, 250 + ThreadLocalRandom.current().nextInt(0, 500));
-            }, 1500 + ThreadLocalRandom.current().nextInt(0, 500));
+                BotManager.after(BotManager.randMs(250, 750), () -> entry.following = true);
+            });
         } else if (GRIND_PATTERN.matcher(message).find()) {
-            TimerManager.getInstance().schedule(() -> {
+            BotManager.after(BotManager.randMs(1500, 2000), () -> {
                 entry.following = false;
                 entry.moveTarget = null;
                 BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
                 BotManager.getInstance().setupAutopotForBot(entry.bot);
                 BotManager.getInstance().botSay(entry.bot, BotManager.getInstance().grindStartMessage(entry.bot));
                 BotManager.getInstance().checkPotShareOnModeStart(entry, entry.bot);
-                TimerManager.getInstance().schedule(() -> {
+                BotManager.after(BotManager.randMs(250, 750), () -> {
                     entry.grinding = true;
                     checkBotStatus(entry, entry.bot);
-                }, 250 + ThreadLocalRandom.current().nextInt(0, 500));
-            }, 1500 + ThreadLocalRandom.current().nextInt(0, 500));
+                });
+            });
         } else if (STOP_PATTERN.matcher(message).find()) {
-            TimerManager.getInstance().schedule(() -> {
+            BotManager.after(BotManager.randMs(900, 1100), () -> {
                 entry.following = false;
                 entry.grinding  = false;
                 entry.moveTarget = null;
                 BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
-                TimerManager.getInstance().schedule(() -> BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(STOP_REPLIES)), 1500);
-            }, 1000);
+                BotManager.after(BotManager.randMs(1400, 1600), () ->
+                        BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(STOP_REPLIES)));
+            });
         } else if (GREETING_PATTERN.matcher(message).find()) {
-            TimerManager.getInstance().schedule(() -> {
+            BotManager.after(BotManager.randMs(900, 1100), () -> {
                 entry.bot.changeFaceExpression(Emote.HAPPY.getValue());
                 queueBotSay(entry, BotManager.randomReply(GREETING_REPLIES));
                 checkBotStatus(entry, entry.bot);
-            }, 1000);
+            });
         }
 
         // SP build variant selection — only matched when waiting for an answer (Hero 1h vs 2h)
@@ -676,13 +676,13 @@ public class BotChatManager {
             Character owner = entry.owner;
             if (owner != null && bot.getTrade() == null && owner.getTrade() == null
                     && entry.pendingTradeCategory == null) {
-                TimerManager.getInstance().schedule(() -> {
+                BotManager.after(BotManager.randMs(600, 1000), () -> {
                     BotManager.getInstance().botSay(bot, BotManager.randomReply(TRADE_INVITE_REPLIES));
-                    TimerManager.getInstance().schedule(() -> {
+                    BotManager.after(BotManager.randMs(800, 1200), () -> {
                         Trade.startTrade(bot);
                         Trade.inviteTrade(bot, owner);
-                    }, 800 + ThreadLocalRandom.current().nextInt(0, 400));
-                }, 600 + ThreadLocalRandom.current().nextInt(0, 400));
+                    });
+                });
             }
             return;
         }
@@ -695,35 +695,35 @@ public class BotChatManager {
 
         // Info commands
         if (REQUEST_UPGRADE_PATTERN.matcher(message).find()) {
-            TimerManager.getInstance().schedule(() -> handleRequestUpgradeCommand(entry, entry.bot), 600);
+            BotManager.after(BotManager.randMs(500, 700), () -> handleRequestUpgradeCommand(entry, entry.bot));
             return;
         }
         if (RECOMMENDED_GEAR_PATTERN.matcher(message).find()) {
-            TimerManager.getInstance().schedule(() -> reportRecommendedGear(entry, entry.bot), 600);
+            BotManager.after(BotManager.randMs(500, 700), () -> reportRecommendedGear(entry, entry.bot));
             return;
         }
         if (SKILLS_PATTERN.matcher(message).find()) {
-            TimerManager.getInstance().schedule(() -> reportSkills(entry, entry.bot), 1000);
+            BotManager.after(BotManager.randMs(900, 1100), () -> reportSkills(entry, entry.bot));
             return;
         }
         if (STATS_PATTERN.matcher(message).find())
-            TimerManager.getInstance().schedule(() -> reportStats(entry, entry.bot), 1000);
+            BotManager.after(BotManager.randMs(900, 1100), () -> reportStats(entry, entry.bot));
         if (RANGE_PATTERN.matcher(message).find())
-            TimerManager.getInstance().schedule(() -> reportRange(entry, entry.bot), 1000);
+            BotManager.after(BotManager.randMs(900, 1100), () -> reportRange(entry, entry.bot));
         if (BUILD_PATTERN.matcher(message).find())
-            TimerManager.getInstance().schedule(() -> reportBuild(entry, entry.bot), 1000);
+            BotManager.after(BotManager.randMs(900, 1100), () -> reportBuild(entry, entry.bot));
         if (INVENTORY_PATTERN.matcher(message).find())
-            TimerManager.getInstance().schedule(() -> reportInventory(entry, entry.bot), 1000);
+            BotManager.after(BotManager.randMs(900, 1100), () -> reportInventory(entry, entry.bot));
         if (isMesoQuery(message))
-            TimerManager.getInstance().schedule(() -> reportMesos(entry, entry.bot), 1000);
+            BotManager.after(BotManager.randMs(900, 1100), () -> reportMesos(entry, entry.bot));
         if (INV_SLOTS_PATTERN.matcher(message).find())
-            TimerManager.getInstance().schedule(() -> reportInventorySlots(entry, entry.bot), 1000);
+            BotManager.after(BotManager.randMs(900, 1100), () -> reportInventorySlots(entry, entry.bot));
         if (SCROLLS_PATTERN.matcher(message).find())
-            TimerManager.getInstance().schedule(() -> reportScrolls(entry, entry.bot), 1000);
+            BotManager.after(BotManager.randMs(900, 1100), () -> reportScrolls(entry, entry.bot));
         if (POTIONS_PATTERN.matcher(message).find())
-            TimerManager.getInstance().schedule(() -> reportPotions(entry, entry.bot), 1000);
+            BotManager.after(BotManager.randMs(900, 1100), () -> reportPotions(entry, entry.bot));
         if (DEBUG_STATS_PATTERN.matcher(message).find())
-            TimerManager.getInstance().schedule(() -> reportDebugStats(entry, entry.bot), 1000);
+            BotManager.after(BotManager.randMs(900, 1100), () -> reportDebugStats(entry, entry.bot));
 
         // Job advancement — check if message contains a valid job selection
         if (JOB_SELECT_PATTERN.matcher(message).find()) {
@@ -737,7 +737,7 @@ public class BotChatManager {
                         "sure, going " + jobName,
                         "ok changing to " + jobName + "...");
                 BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(replies));
-                TimerManager.getInstance().schedule(() -> BotStarterKitManager.advanceJob(entry.bot, entry.owner, advJob), 1000);
+                BotManager.after(BotManager.randMs(900, 1100), () -> BotStarterKitManager.advanceJob(entry.bot, entry.owner, advJob));
             }
         }
     }
@@ -763,7 +763,7 @@ public class BotChatManager {
             if (msg == null) { entry.msgSending = false; return; }
         }
         BotManager.getInstance().botSay(entry.bot, msg);
-        TimerManager.getInstance().schedule(() -> drainMsgQueue(entry), 5000);
+        BotManager.after(BotManager.randMs(4900, 5100), () -> drainMsgQueue(entry));
     }
 
     // Status check — called on spawn, grind start, greeting, and level-up
@@ -812,11 +812,10 @@ public class BotChatManager {
             if (entry.ownerWasAfk) {
                 entry.ownerWasAfk = false;
                 final Character bot = entry.bot;
-                TimerManager.getInstance().schedule(
-                        () -> {
+                BotManager.after(BotManager.randMs(1800, 2200), () -> {
                     bot.changeFaceExpression(ThreadLocalRandom.current().nextBoolean() ? 2 : 3);
                     BotManager.getInstance().botSay(bot, BotManager.randomReply(WB_REPLIES));
-                }, 2000);
+                });
             }
             entry.ownerAfkPos     = pos;
             entry.ownerAfkSinceMs = now;
@@ -1197,7 +1196,7 @@ public class BotChatManager {
 
         long scheduledAt = now + Math.max(0L, delayMs);
         entry.pendingGearPromptAt = scheduledAt;
-        TimerManager.getInstance().schedule(() -> promptLootOfferAfterLoot(entry, bot, item, scheduledAt), delayMs);
+        BotManager.after(delayMs, () -> promptLootOfferAfterLoot(entry, bot, item, scheduledAt));
     }
 
     static boolean handlePendingLootOfferResponse(BotEntry entry, Character speaker, String message) {
@@ -1211,9 +1210,8 @@ public class BotChatManager {
         if (LOGOUT_CONFIRM_PATTERN.matcher(message).find()) {
             if (entry.pendingLootOfferBotRequesting) {
                 clearPendingLootOffer(entry);
-                TimerManager.getInstance().schedule(
-                        () -> BotManager.getInstance().botSay(entry.bot,
-                                "ty! inv me?"), 500);
+                BotManager.after(BotManager.randMs(400, 600), () ->
+                        BotManager.getInstance().botSay(entry.bot, "ty! inv me?"));
             } else {
                 Item item = entry.pendingLootOfferItem;
                 // Clear the action/expiry but keep pendingLootOfferItem set so autoEquip
@@ -1223,17 +1221,17 @@ public class BotChatManager {
                 entry.pendingLootOfferExpiresAt = 0L;
                 entry.pendingLootOfferBotRequesting = false;
                 entry.pendingLootOfferRecipientId = 0;
-                TimerManager.getInstance().schedule(() -> {
+                BotManager.after(BotManager.randMs(900, 1100), () -> {
                     entry.pendingLootOfferItem = null;
                     BotDropManager.startTradeTransfer(item, speaker, entry, entry.bot);
-                }, 1_000);
+                });
             }
             return true;
         }
         if (NEGATIVE_CONFIRM_PATTERN.matcher(message).find()) {
             clearPendingLootOffer(entry);
-            TimerManager.getInstance().schedule(
-                    () -> BotManager.getInstance().botSay(entry.bot, "ok, keeping it for now"), 500);
+            BotManager.after(BotManager.randMs(400, 600), () ->
+                    BotManager.getInstance().botSay(entry.bot, "ok, keeping it for now"));
             return true;
         }
 
@@ -1276,7 +1274,7 @@ public class BotChatManager {
 
         // If recipient is a same-owner bot, auto-accept after 2 s on their behalf
         if (recipient.getClient() instanceof BotClient) {
-            TimerManager.getInstance().schedule(() -> autoAcceptLootOffer(entry, recipient), 2_000L);
+            BotManager.after(BotManager.randMs(1800, 2200), () -> autoAcceptLootOffer(entry, recipient));
         }
     }
 
@@ -1574,25 +1572,25 @@ public class BotChatManager {
     private static void handleTransferCommand(BotEntry entry, TransferCommand transferCommand) {
         String category = transferCommand.category;
         if (transferCommand.mode == TransferMode.TRADE && BotDropManager.isMesoCategory(category)) {
-            TimerManager.getInstance().schedule(
-                    () -> BotDropManager.startTradeTransfer(category, entry, entry.bot), 600);
+            BotManager.after(BotManager.randMs(500, 700), () ->
+                    BotDropManager.startTradeTransfer(category, entry, entry.bot));
             return;
         }
 
         if (!BotDropManager.hasTransferableItems(category, entry, entry.bot)) {
-            TimerManager.getInstance().schedule(
-                    () -> BotManager.getInstance().botSay(entry.bot, BotDropManager.noItemsReply(category)), 600);
+            BotManager.after(BotManager.randMs(500, 700), () ->
+                    BotManager.getInstance().botSay(entry.bot, BotDropManager.noItemsReply(category)));
             return;
         }
 
         switch (transferCommand.mode) {
-            case TRADE -> TimerManager.getInstance().schedule(
-                    () -> BotDropManager.startTradeTransfer(category, entry, entry.bot), 600);
+            case TRADE -> BotManager.after(BotManager.randMs(500, 700), () ->
+                    BotDropManager.startTradeTransfer(category, entry, entry.bot));
             case CHOICE -> {
                 entry.pendingAction = "item_choice";
                 entry.pendingDropCategory = category;
-                TimerManager.getInstance().schedule(
-                        () -> BotManager.getInstance().botSay(entry.bot, dropOrTradePrompt(category)), 600);
+                BotManager.after(BotManager.randMs(500, 700), () ->
+                        BotManager.getInstance().botSay(entry.bot, dropOrTradePrompt(category)));
             }
         }
     }
