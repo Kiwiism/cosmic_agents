@@ -377,6 +377,13 @@ class BotDropManager {
             entry.pendingTradeIdx++;
             entry.pendingTradeTimerMs = BotMovementManager.delayAfterCurrentTick(500); // 500 ms before next
 
+            // For pot_share: cap quantity so the donor keeps enough pots
+            short tradeQty = item.getQuantity();
+            if (entry.pendingPotShareBudget > 0) {
+                tradeQty = (short) Math.min(tradeQty, entry.pendingPotShareBudget);
+                entry.pendingPotShareBudget -= tradeQty;
+            }
+
             InventoryType invType = item.getInventoryType();
             Inventory inv = bot.getInventory(invType);
             Item current  = inv.getItem(item.getPosition());
@@ -384,11 +391,11 @@ class BotDropManager {
 
             Item tradeItem = item.copy();
             tradeItem.setPosition((short) (idx + 1)); // trade-window slot 1-9
-            tradeItem.setQuantity(item.getQuantity());
+            tradeItem.setQuantity(tradeQty);
 
             if (trade.addItem(tradeItem)) {
                 InventoryManipulator.removeFromSlot(bot.getClient(),
-                        invType, item.getPosition(), item.getQuantity(), false);
+                        invType, item.getPosition(), tradeQty, false);
                 bot.sendPacket(PacketCreator.getTradeItemAdd((byte) 0, tradeItem));
                 if (trade.getPartner() != null) {
                     trade.getPartner().getChr().sendPacket(PacketCreator.getTradeItemAdd((byte) 1, tradeItem));
@@ -432,6 +439,7 @@ class BotDropManager {
         entry.pendingTradeAllAdded = false;
         entry.pendingTradeBotDone  = false;
         entry.pendingTradeSingleBatch = false;
+        entry.pendingPotShareBudget = 0;
     }
 
     private static void completeTradeAndThank(BotEntry entry, Character bot, Trade trade) {
@@ -806,10 +814,11 @@ class BotDropManager {
     }
 
     /** Initiates a bot-to-bot pot-share trade (single batch; donor auto-confirms). */
-    static void startPotShareTransfer(List<Item> items, Character recipient, BotEntry entry, Character bot) {
+    static void startPotShareTransfer(List<Item> items, Character recipient, BotEntry entry, Character bot, int maxQty) {
         if (items.isEmpty()) return;
         if (bot.getTrade() != null || entry.pendingTradeCategory != null) return;
         if (recipient.getTrade() != null) return;
+        entry.pendingPotShareBudget = maxQty;
         startTradeSequence("pot_share", recipient, items, 0, true, entry, bot);
     }
 }

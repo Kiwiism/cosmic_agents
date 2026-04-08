@@ -1798,7 +1798,7 @@ public class BotManager {
                 if (items.isEmpty()) return;
                 botSay(donorBot, randomReply(forHp ? POT_OFFER_HP_MSGS : POT_OFFER_MP_MSGS));
                 after(randMs(900, 1100), () ->
-                        BotDropManager.startPotShareTransfer(items, needyBot, donorEntry, donorBot));
+                        BotDropManager.startPotShareTransfer(items, needyBot, donorEntry, donorBot, maxQty));
             });
         } else {
             // Best donor is also low — nobody can help; back off for 10 min

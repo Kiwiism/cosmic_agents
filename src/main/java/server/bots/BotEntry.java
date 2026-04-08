@@ -119,6 +119,7 @@ public class BotEntry {
     boolean pendingTradeAllAdded = false;
     boolean pendingTradeBotDone = false;
     boolean pendingTradeSingleBatch = false;
+    int     pendingPotShareBudget = 0; // max total qty to donate; 0 = no cap (normal trades)
 
     // Message queue
     final ArrayDeque<String> msgQueue = new ArrayDeque<>();
