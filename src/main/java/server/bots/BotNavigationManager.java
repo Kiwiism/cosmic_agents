@@ -942,6 +942,13 @@ final class BotNavigationManager {
                 return ropeRegionId;
             }
         }
+        if (entry.inAir) {
+            // Airborne points do not have a meaningful "current region". A ground lookup from an
+            // in-flight point resolves to whatever foothold is below the arc, which can be an
+            // unrelated upper platform. That makes runtime navigation discard the committed jump
+            // edge even though the authored graph and ballistic landing simulation still agree.
+            return -1;
+        }
         return graph.findRegionId(map, botPos);
     }
 

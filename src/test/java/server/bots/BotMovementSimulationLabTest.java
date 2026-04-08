@@ -152,6 +152,30 @@ class BotMovementSimulationLabTest {
                 "bot should not overshoot the rope anchor by a full climb step");
     }
 
+    @Test
+    void shouldKeepPetWalkingRoadJumpCommittedWhileAirborne() {
+        MapleMap map = BotNavigationMapLoader.loadMapGeometry(100000202);
+        BotNavigationGraphProvider.rebuildGraph(map);
+        BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);
+        lab.spawnActor("OWNER", 40, map, new Point(-1799, -926));
+        lab.spawnBot("JOHN", 41, map, new Point(-1366, -664));
+        lab.setFollow("JOHN", "OWNER");
+        lab.setFormation("OWNER", BotManager.FormationType.STAGGER, 60, 200);
+        lab.setFollowOffset("JOHN", 180);
+        lab.setAiAccumulator("JOHN", 50);
+        lab.primeMapState("JOHN");
+
+        lab.step(17);
+
+        List<String> trace = lab.formatRecentTrace("JOHN", 17);
+        assertTrue(trace.stream()
+                        .filter(line -> line.contains("phys=AIR"))
+                        .allMatch(line -> line.contains("edge=JUMP r32->r38 (-1341,-664)->(-1250,-633) stepX=8")),
+                "airborne jump should keep the committed r32->r38 edge until landing");
+        assertTrue(trace.stream().noneMatch(line -> line.contains("phys=AIR") && line.contains("edge=none")),
+                "mid-air jump ticks should not drop navigation and re-enable free air steering");
+    }
+
     private static MapleMap createFlatMap(int mapId, int x1, int x2, int y) {
         MapleMap map = new MapleMap(mapId, 0, 0, mapId, 1.0f);
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(
