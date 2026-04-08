@@ -506,12 +506,16 @@ final class BotPhysicsEngine {
     }
 
     static void beginKnockback(BotEntry entry, Character bot, Point position, float initialVelY, int airVelX) {
+        int preservedFacingDir = entry.facingDir;
         bot.setPosition(position);
         entry.blockedRopeGrab = null;
-        launchAirborne(entry, bot, position, initialVelY, airVelX, false);
+        launchAirborne(entry, bot, position, initialVelY, airVelX, true);
+        entry.facingDir = preservedFacingDir;
+        syncCharacterState(entry);
     }
 
     static void applyAirKnockback(BotEntry entry, Character bot, int airVelX) {
+        int preservedFacingDir = entry.facingDir;
         Point position = bot.getPosition();
         entry.inAir = true;
         entry.climbing = false;
@@ -520,12 +524,13 @@ final class BotPhysicsEngine {
         entry.physX = position.x;
         entry.physY = position.y;
         stopGroundMotion(entry);
-        entry.climbUpIntent = false;
+        entry.climbUpIntent = true;
         entry.airVelX = airVelX;
         entry.airSteerVelX = 0.0;
         entry.downJumpPending = false;
         entry.blockedRopeGrab = null;
         setMovementVelocity(entry, velocityFromDeltaX(airVelX), velocityFromAirStep(entry.velY));
+        entry.facingDir = preservedFacingDir;
         syncCharacterState(entry);
     }
 
@@ -705,6 +710,10 @@ final class BotPhysicsEngine {
         double accel = targetDx > 0 ? cfg.AIR_STEER_ACCEL : -cfg.AIR_STEER_ACCEL;
         entry.airSteerVelX = Math.max(-cfg.AIR_STEER_MAX,
                 Math.min(cfg.AIR_STEER_MAX, entry.airSteerVelX + accel));
+        // Client jump stance follows the held steering direction, not the preserved horizontal
+        // launch momentum. Updating facing here makes airborne debug output line up with what the
+        // client is visually trying to do, even before the net X velocity changes sign.
+        entry.facingDir = targetDx > 0 ? 1 : -1;
     }
 
     private static Point advanceAirbornePosition(BotEntry entry, Character bot) {

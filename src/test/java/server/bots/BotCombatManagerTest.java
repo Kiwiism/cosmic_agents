@@ -128,14 +128,18 @@ class BotCombatManagerTest {
         Character bot = mockBot(new Point(100, 200), map, 20_000, null);
         Monster mob = mockMob(new Point(140, 200), 9300000);
         BotEntry entry = new BotEntry(bot, null, null);
+        entry.facingDir = 1;
 
         BotCombatManager.applyMobHit(entry, bot, mob);
 
         assertTrue(entry.inAir);
         assertFalse(entry.climbing);
+        assertTrue(entry.climbUpIntent);
         assertEquals(new Point(100, 200), bot.getPosition());
         assertEquals(-Math.round(1.5f * BotMovementManager.cfg.TICK_MS / 8.0f), entry.airVelX);
         assertEquals(-3.5f * BotMovementManager.cfg.TICK_MS / 8.0f, entry.velY, 1.0e-4f);
+        assertEquals(1, entry.facingDir);
+        assertEquals(CharacterStance.JUMP_RIGHT_STANCE, bot.getStance());
         assertDamageDirection(map, bot, 2, 0);
     }
 
@@ -150,13 +154,17 @@ class BotCombatManagerTest {
         entry.physY = 200;
         entry.velY = 12.5f;
         entry.airVelX = -4;
+        entry.facingDir = -1;
 
         BotCombatManager.applyMobHit(entry, bot, mob);
 
         assertTrue(entry.inAir);
+        assertTrue(entry.climbUpIntent);
         assertEquals(new Point(100, 200), bot.getPosition());
         assertEquals(12.5f, entry.velY, 1.0e-4f);
         assertEquals(Math.round(1.5f * BotMovementManager.cfg.TICK_MS / 8.0f), entry.airVelX);
+        assertEquals(-1, entry.facingDir);
+        assertEquals(CharacterStance.JUMP_LEFT_STANCE, bot.getStance());
         assertDamageDirection(map, bot, 2, 1);
     }
 

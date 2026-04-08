@@ -152,6 +152,22 @@ class BotPhysicsEngineTest {
     }
 
     @Test
+    void shouldFaceAirSteeringDirectionEvenWhenMomentumIsOpposite() {
+        BotEntry entry = new BotEntry(null, null, null);
+        entry.inAir = true;
+        entry.airVelX = 8;
+        entry.movementVelX = BotPhysicsEngine.velocityFromDeltaX(entry.airVelX);
+        entry.facingDir = 1;
+
+        BotPhysicsEngine.applyAirSteering(entry, -40);
+
+        assertTrue(entry.airSteerVelX < 0.0);
+        assertEquals(-1, entry.facingDir);
+        assertEquals(CharacterStance.JUMP_LEFT_STANCE, BotPhysicsEngine.resolveStance(entry));
+        assertTrue(entry.movementVelX > 0, "launch momentum should remain unchanged by steering intent");
+    }
+
+    @Test
     void shouldUseLadderAndRopeStancesFromClimbState() {
         BotEntry ladderEntry = new BotEntry(null, null, null);
         ladderEntry.climbing = true;
