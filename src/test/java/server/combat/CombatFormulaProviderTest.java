@@ -159,28 +159,30 @@ class CombatFormulaProviderTest {
     }
 
     @Test
-    void shouldUseMagicDamageBaseFormulaMatchingAntiCheat() {
-        // Formula: ceil((matk * ceil(matk/1000) + matk) / 30) + ceil(totalInt/200)
-        // matk=3000, totalInt=0: ceil((3000*3+3000)/30) + 0 = ceil(400) = 400
-        // With getMatk()=5: max = 2000, min = round(2000*0.8) = 1600
+    void shouldUseMagicBaseDamageFormulaWithActualMastery() {
+        // MAX: ceil((3000*3+3000)/30) + 0 = 400; * getMatk()=5 → 2000
+        // MIN: mastery=50% → ceil((3000*3 + 3000*0.5*0.9)/30) = ceil(345) = 345; * 5 → 1725
         Character bot = mockDamageBot();
         StatEffect effect = mock(StatEffect.class);
         when(bot.getTotalMagic()).thenReturn(3000);
         when(bot.getTotalInt()).thenReturn(0);
+        when(effect.getX()).thenReturn(50);   // 50% mastery from skill data
         when(effect.getMatk()).thenReturn((short) 5);
 
         CombatFormulaProvider.DamageProfile profile = provider.resolveDamageProfile(bot, 2101004, effect, true);
 
-        assertEquals(1_600, profile.minDamage());
+        assertEquals(1_725, profile.minDamage());
         assertEquals(2_000, profile.maxDamage());
         assertTrue(profile.magicAttack());
         assertFalse(profile.alwaysHit());
     }
 
     @Test
-    void shouldExposeStandaloneMagicDamageBaseMethod() {
-        // matk=3000, totalInt=200: ceil((3000*3+3000)/30) + ceil(200/200) = 400 + 1 = 401
+    void shouldExposeStandaloneMagicDamageBaseMethods() {
+        // MAX: matk=3000, totalInt=200 → ceil((3000*3+3000)/30) + ceil(200/200) = 400 + 1 = 401
         assertEquals(401L, provider.magicDamageBase(3000, 200));
+        // MIN: matk=3000, totalInt=0, mastery=0.5 → ceil((9000+1350)/30) = ceil(345) = 345
+        assertEquals(345L, provider.magicDamageBaseMin(3000, 0, 0.5));
     }
 
     @Test

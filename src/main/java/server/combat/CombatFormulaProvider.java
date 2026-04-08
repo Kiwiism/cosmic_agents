@@ -39,13 +39,22 @@ public final class CombatFormulaProvider {
     }
 
     /**
-     * Standard spell damage base, matching the anti-cheat formula in AbstractDealDamageHandler.
-     * Formula: ceil((matk * ceil(matk/1000) + matk) / 30) + ceil(totalInt/200)
-     * Equivalent to: (Magic² / 1000 + Magic) / 30 + INT / 200
+     * Standard spell damage MAX base.
+     * Formula: ceil((Magic² / 1000 + Magic) / 30 + INT / 200)
+     * All arithmetic is float; single outer ceil avoids split-ceil rounding errors.
      */
     public long magicDamageBase(int matk, int totalInt) {
-        return (long) (Math.ceil((matk * Math.ceil(matk / 1000.0) + matk) / 30.0)
-                + Math.ceil(totalInt / 200.0));
+        return (long) Math.ceil((matk * matk / 1000.0 + matk) / 30.0 + totalInt / 200.0);
+    }
+
+    /**
+     * Standard spell damage MIN base.
+     * Formula: ceil((Magic² / 1000 + Magic * Mastery * 0.9) / 30 + INT / 200)
+     *
+     * @param mastery mastery factor in [0.0, 1.0] — from skill data x field divided by 100
+     */
+    public long magicDamageBaseMin(int matk, int totalInt, double mastery) {
+        return (long) Math.ceil((matk * matk / 1000.0 + matk * mastery * 0.9) / 30.0 + totalInt / 200.0);
     }
 
     public int getTotalAccuracy(Character bot) {
@@ -221,20 +230,34 @@ public final class CombatFormulaProvider {
 
     private DamageProfile resolveMagicDamageProfile(Character bot, int skillId, StatEffect effect) {
         long maxDamage;
+        long minDamage;
         if (skillId == Cleric.HEAL && effect != null) {
             maxDamage = Math.round((bot.getTotalInt() * 4.8d + bot.getTotalLuk() * 4.0d)
                     * bot.getTotalMagic() / 1000.0d);
             maxDamage = maxDamage * Math.max(0, effect.getHp()) / 100L;
+            minDamage = Math.max(1L, Math.round(maxDamage * 0.8d));
         } else {
-            // Standard spell formula — same as anti-cheat in AbstractDealDamageHandler.parseDamage
-            maxDamage = magicDamageBase(bot.getTotalMagic(), bot.getTotalInt());
+            int matk = bot.getTotalMagic();
+            int totalInt = bot.getTotalInt();
+            // Mastery from skill data x field (integer percent, e.g. 15 → 15%).
+            // Falls back to minimum mastery (10%) when no skill effect is available.
+            double mastery = effect != null ? Math.max(0.1, effect.getX() / 100.0) : 0.1;
+
+            // MAX formula — same as anti-cheat in AbstractDealDamageHandler.parseDamage
+            maxDamage = magicDamageBase(matk, totalInt);
             maxDamage = applyMagicAmplification(bot, maxDamage);
             if (effect != null && effect.getMatk() > 0) {
                 maxDamage *= effect.getMatk();
             }
-        }
 
-        long minDamage = Math.max(1L, Math.round(maxDamage * 0.8d));
+            // MIN formula — uses actual spell mastery from skill data
+            minDamage = magicDamageBaseMin(matk, totalInt, mastery);
+            minDamage = applyMagicAmplification(bot, minDamage);
+            if (effect != null && effect.getMatk() > 0) {
+                minDamage *= effect.getMatk();
+            }
+            minDamage = Math.max(1L, minDamage);
+        }
         return normalizeDamageProfile(minDamage, maxDamage, true, false);
     }
 
