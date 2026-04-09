@@ -201,6 +201,7 @@ public class ServerConfig {
     public int GODLY_STATS_DROP_CHANCE;
     public int GODLY_STATS_MAKER_CHANCE;
     public int GODLY_STATS_QUEST_CHANCE;
+    public int GODLY_STATS_NPC_CHANCE;
     public double GODLY_STATS_BONUS_SCALING;
     public int GODLY_STATS_MIN_BONUS;
     public double GODLY_STATS_HPMP_SCALING;

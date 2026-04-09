@@ -1171,6 +1171,10 @@ public class ItemInformationProvider {
     }
 
     public Equip randomizeStats(Equip equip) {
+        return randomizeStats(equip, true);
+    }
+
+    public Equip randomizeStats(Equip equip, boolean checkGodly) {
         equip.setStr(getRandStat(equip.getStr(), 5));
         equip.setDex(getRandStat(equip.getDex(), 5));
         equip.setInt(getRandStat(equip.getInt(), 5));
@@ -1185,7 +1189,7 @@ public class ItemInformationProvider {
         equip.setMdef(getRandStat(equip.getMdef(), 10));
         equip.setHp(getRandStat(equip.getHp(), 10));
         equip.setMp(getRandStat(equip.getMp(), 10));
-        if (YamlConfig.config.server.GODLY_STATS_ENABLED && ItemInformationProvider.rollSuccessChance(YamlConfig.config.server.GODLY_STATS_DROP_CHANCE)) {
+        if (checkGodly && YamlConfig.config.server.GODLY_STATS_ENABLED && ItemInformationProvider.rollSuccessChance(YamlConfig.config.server.GODLY_STATS_DROP_CHANCE)) {
             randomizeGodlyStats(equip);
         }
         return equip;
