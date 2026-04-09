@@ -85,7 +85,7 @@ public class BotEntry {
     // Shop auto-buy (triggered once per map change)
     volatile boolean shopVisitPending = false;
     volatile Point shopNpcPos = null;
-    int shopInteractDist = 400;
+    volatile Point shopTargetPos = null;
     int shopApproachDelayMs = 0;
     boolean shopSequenceActive = false;
 

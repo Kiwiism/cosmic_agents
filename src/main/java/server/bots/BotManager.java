@@ -1086,9 +1086,9 @@ public class BotManager {
             return;
         }
 
-        // Shop visit: navigate to NPC before resuming normal flow
+        // Shop visit: navigate to approach point before resuming normal flow
         if (BotShopManager.tickShopVisit(entry, bot)) {
-            targetPos = entry.shopNpcPos;
+            targetPos = entry.shopTargetPos != null ? entry.shopTargetPos : entry.shopNpcPos;
         }
 
         // Follow mode: attack monsters already in attack range without chasing
@@ -1341,9 +1341,9 @@ public class BotManager {
             return;
         }
 
-        // Shop visit: navigate to NPC before resuming normal flow
+        // Shop visit: navigate to approach point before resuming normal flow
         if (BotShopManager.tickShopVisit(entry, bot)) {
-            targetPos = entry.shopNpcPos;
+            targetPos = entry.shopTargetPos != null ? entry.shopTargetPos : entry.shopNpcPos;
         }
 
         stepMovementCore(entry, targetPos, runAiTick, applyGrindSpread);

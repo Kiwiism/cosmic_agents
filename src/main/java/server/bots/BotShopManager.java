@@ -12,6 +12,7 @@ import server.ShopFactory;
 import server.ShopItem;
 import server.StatEffect;
 import server.life.NPC;
+import server.maps.Foothold;
 import server.maps.MapObject;
 import server.maps.MapObjectType;
 
@@ -19,11 +20,13 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 final class BotShopManager {
 
-    private static final int SHOP_INTERACT_DIST_MIN = 100;
-    private static final int SHOP_INTERACT_DIST_MAX = 601;
+    private static final int SHOP_MANHATTAN_RADIUS = 200;
+    private static final int SHOP_ARRIVE_DIST = 50;
+    private static final int SHOP_NPC_SEARCH_DIST = 601;
     private static final int SHOP_APPROACH_DELAY_MAX_MS = 5001;
     private static final int SHOP_STEP_DELAY_MIN_MS = 3000;
     private static final int SHOP_STEP_DELAY_MAX_MS = 6001;
@@ -69,7 +72,7 @@ final class BotShopManager {
 
         entry.shopVisitPending = true;
         entry.shopNpcPos = match.npcPos;
-        entry.shopInteractDist = (int) BotManager.randMs(SHOP_INTERACT_DIST_MIN, SHOP_INTERACT_DIST_MAX);
+        entry.shopTargetPos = pickShopApproachPoint(match.npcPos, bot);
         entry.shopApproachDelayMs = (int) BotManager.randMs(0, SHOP_APPROACH_DELAY_MAX_MS);
     }
 
@@ -87,7 +90,8 @@ final class BotShopManager {
         }
 
         Point botPos = bot.getPosition();
-        if (botPos.distanceSq(entry.shopNpcPos) <= (long) entry.shopInteractDist * entry.shopInteractDist) {
+        Point target = entry.shopTargetPos != null ? entry.shopTargetPos : entry.shopNpcPos;
+        if (botPos.distanceSq(target) <= (long) SHOP_ARRIVE_DIST * SHOP_ARRIVE_DIST) {
             if (!entry.shopSequenceActive) {
                 entry.shopSequenceActive = true;
                 Point npcPos = entry.shopNpcPos;
@@ -418,14 +422,14 @@ final class BotShopManager {
                 && entry.shopSequenceActive
                 && npcPos != null
                 && bot.getMap() != null
-                && bot.getPosition().distanceSq(npcPos) <= (long) entry.shopInteractDist * entry.shopInteractDist
+                && bot.getPosition().distanceSq(entry.shopTargetPos != null ? entry.shopTargetPos : npcPos) <= (long) SHOP_ARRIVE_DIST * SHOP_ARRIVE_DIST
                 && findNpcNear(bot, npcPos) != null;
     }
 
     private static void clearShopState(BotEntry entry) {
         entry.shopVisitPending = false;
         entry.shopNpcPos = null;
-        entry.shopInteractDist = 400;
+        entry.shopTargetPos = null;
         entry.shopApproachDelayMs = 0;
         entry.shopSequenceActive = false;
     }
@@ -434,9 +438,38 @@ final class BotShopManager {
         return BotManager.randMs(SHOP_STEP_DELAY_MIN_MS, SHOP_STEP_DELAY_MAX_MS);
     }
 
+    private static Point pickShopApproachPoint(Point npcPos, Character bot) {
+        var footholds = bot.getMap().getFootholds();
+        if (footholds == null) {
+            return npcPos;
+        }
+        List<Point> candidates = new ArrayList<>();
+        for (Foothold fh : footholds.getAllFootholds()) {
+            int fx1 = fh.getX1(), fy1 = fh.getY1();
+            int fx2 = fh.getX2(), fy2 = fh.getY2();
+            if (fx1 == fx2) {
+                continue; // wall foothold
+            }
+            int xMin = Math.min(fx1, fx2);
+            int xMax = Math.max(fx1, fx2);
+            int step = Math.max(1, (xMax - xMin) / 20);
+            for (int x = xMin; x <= xMax; x += step) {
+                double t = (double) (x - fx1) / (fx2 - fx1);
+                int y = (int) (fy1 + t * (fy2 - fy1));
+                if (Math.abs(x - npcPos.x) + Math.abs(y - npcPos.y) <= SHOP_MANHATTAN_RADIUS) {
+                    candidates.add(new Point(x, y));
+                }
+            }
+        }
+        if (candidates.isEmpty()) {
+            return npcPos;
+        }
+        return candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
+    }
+
     private static NPC findNpcNear(Character bot, Point pos) {
         for (MapObject obj : bot.getMap().getMapObjectsInRange(
-                pos, SHOP_INTERACT_DIST_MAX * SHOP_INTERACT_DIST_MAX,
+                pos, SHOP_NPC_SEARCH_DIST * SHOP_NPC_SEARCH_DIST,
                 Arrays.asList(MapObjectType.NPC))) {
             NPC npc = (NPC) obj;
             if (npc.hasShop()) {
