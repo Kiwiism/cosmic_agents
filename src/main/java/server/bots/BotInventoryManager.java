@@ -823,7 +823,7 @@ class BotInventoryManager {
     }
 
     static boolean isSafeToDrop(Item item) {
-        if (item.isUntradeable()) return false;
+        if (item.isUntradeable() && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) return false;
         if (ItemInformationProvider.getInstance().isQuestItem(item.getItemId())) return false;
         return true;
     }
