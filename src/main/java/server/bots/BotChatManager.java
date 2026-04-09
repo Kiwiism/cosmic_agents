@@ -745,13 +745,22 @@ public class BotChatManager {
     // -------------------------------------------------------------------------
 
     public static void queueBotSay(BotEntry entry, String message) {
+        queueBotSayWithEstimatedDelay(entry, message);
+    }
+
+    static long queueBotSayWithEstimatedDelay(BotEntry entry, String message) {
+        long estimatedDelayMs;
         synchronized (entry.msgQueue) {
+            estimatedDelayMs = entry.msgSending
+                    ? (long) (entry.msgQueue.size() + 1) * 5_200L
+                    : 0L;
             entry.msgQueue.add(message);
             if (!entry.msgSending) {
                 entry.msgSending = true;
                 drainMsgQueue(entry);
             }
         }
+        return estimatedDelayMs;
     }
 
     private static void drainMsgQueue(BotEntry entry) {

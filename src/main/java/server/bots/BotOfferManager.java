@@ -20,10 +20,13 @@ final class BotOfferManager {
 
     private BotOfferManager() {}
 
-    static boolean hasPendingOffer(BotEntry entry) {
+    static boolean hasOfferReservation(BotEntry entry) {
         return entry.pendingLootOfferItem != null
-                && entry.pendingLootOfferRecipientId > 0
-                && entry.pendingLootOfferExpiresAt > 0L;
+                && entry.pendingLootOfferRecipientId > 0;
+    }
+
+    static boolean hasPendingOffer(BotEntry entry) {
+        return hasOfferReservation(entry) && entry.pendingLootOfferExpiresAt > 0L;
     }
 
     static void notifyOwnerGainedEquip(BotEntry entry, Character bot, Item item) {
@@ -33,7 +36,7 @@ final class BotOfferManager {
         if (entry.requestedUpgradeItemIds.contains(item.getItemId())) {
             return;
         }
-        if (entry.pendingAction != null || entry.pendingTradeCategory != null || hasPendingOffer(entry)) {
+        if (entry.pendingAction != null || entry.pendingTradeCategory != null || hasOfferReservation(entry)) {
             return;
         }
         Character owner = entry.owner;
@@ -56,7 +59,7 @@ final class BotOfferManager {
         if (owner == null) {
             return;
         }
-        if (entry.pendingAction != null || entry.pendingTradeCategory != null || hasPendingOffer(entry)) {
+        if (entry.pendingAction != null || entry.pendingTradeCategory != null || hasOfferReservation(entry)) {
             BotManager.getInstance().botSay(bot, "busy rn, ask me again in a bit");
             return;
         }
@@ -106,13 +109,31 @@ final class BotOfferManager {
     static void scheduleLootOfferPrompt(BotEntry entry, Character bot, Item item, long delayMs) {
         Character owner = entry.owner;
         long now = System.currentTimeMillis();
-        if (owner == null || item == null || entry.pendingGearPromptAt > now || BotChatManager.isOwnerIdle(entry)) {
+        if (owner == null
+                || item == null
+                || entry.pendingGearPromptAt > now
+                || BotChatManager.isOwnerIdle(entry)
+                || entry.pendingAction != null
+                || entry.pendingTradeCategory != null
+                || hasOfferReservation(entry)
+                || !BotInventoryManager.hasItem(bot, item)) {
             return;
         }
 
+        Character recipient = findLootOfferRecipient(entry, bot, item);
+        if (recipient == null) {
+            return;
+        }
+
+        entry.pendingDropCategory = null;
+        entry.pendingLootOfferItem = item;
+        entry.pendingLootOfferRecipientId = recipient.getId();
+        entry.pendingLootOfferExpiresAt = 0L;
+        entry.pendingLootOfferBotRequesting = false;
+
         long scheduledAt = now + Math.max(0L, delayMs);
         entry.pendingGearPromptAt = scheduledAt;
-        BotManager.after(delayMs, () -> promptLootOfferAfterLoot(entry, bot, item, scheduledAt));
+        BotManager.after(delayMs, () -> promptLootOfferAfterLoot(entry, bot, item, recipient.getId(), scheduledAt));
     }
 
     static boolean handlePendingOfferResponse(BotEntry entry, Character speaker, String message) {
@@ -179,7 +200,7 @@ final class BotOfferManager {
     }
 
     private static boolean offerGearItem(BotEntry entry, Character bot, Character recipient, Item item) {
-        if (entry.pendingAction != null || entry.pendingTradeCategory != null || hasPendingOffer(entry)
+        if (entry.pendingAction != null || entry.pendingTradeCategory != null || hasOfferReservation(entry)
                 || !BotInventoryManager.hasItem(bot, item)) {
             return false;
         }
@@ -188,28 +209,30 @@ final class BotOfferManager {
         entry.pendingLootOfferRecipientId = recipient.getId();
         entry.pendingLootOfferExpiresAt = System.currentTimeMillis() + 30_000L;
         entry.pendingLootOfferBotRequesting = false;
-        BotChatManager.queueBotSay(entry, buildLootOfferPrompt(recipient, entry.owner, item));
-        scheduleBotLootOfferAutoAccept(entry, recipient);
+        long promptDelayMs = BotChatManager.queueBotSayWithEstimatedDelay(entry, buildLootOfferPrompt(recipient, entry.owner, item));
+        scheduleBotLootOfferAutoAccept(entry, recipient, promptDelayMs);
         return true;
     }
 
-    private static void promptLootOfferAfterLoot(BotEntry entry, Character bot, Item item, long scheduledAt) {
+    private static void promptLootOfferAfterLoot(BotEntry entry, Character bot, Item item, int recipientId, long scheduledAt) {
         if (entry.pendingGearPromptAt != scheduledAt) {
             return;
         }
         entry.pendingGearPromptAt = 0L;
 
-        Character owner = entry.owner;
-        if (owner == null
-                || entry.pendingAction != null
-                || entry.pendingTradeCategory != null
-                || hasPendingOffer(entry)
-                || !BotInventoryManager.hasItem(bot, item)) {
+        if (entry.pendingLootOfferItem != item || entry.pendingLootOfferRecipientId != recipientId) {
+            clearPendingOffer(entry);
             return;
         }
 
-        Character recipient = findLootOfferRecipient(entry, bot, item);
-        if (recipient == null) {
+        Character owner = entry.owner;
+        Character recipient = resolveReservedOfferRecipient(entry, bot, recipientId);
+        if (owner == null
+                || entry.pendingAction != null
+                || entry.pendingTradeCategory != null
+                || recipient == null
+                || !BotInventoryManager.hasItem(bot, item)) {
+            clearPendingOffer(entry);
             return;
         }
 
@@ -218,15 +241,16 @@ final class BotOfferManager {
         entry.pendingLootOfferRecipientId = recipient.getId();
         entry.pendingLootOfferExpiresAt = System.currentTimeMillis() + 30_000L;
         entry.pendingLootOfferBotRequesting = false;
-        BotChatManager.queueBotSay(entry, buildLootOfferPrompt(recipient, owner, item));
-        scheduleBotLootOfferAutoAccept(entry, recipient);
+        long promptDelayMs = BotChatManager.queueBotSayWithEstimatedDelay(entry, buildLootOfferPrompt(recipient, owner, item));
+        scheduleBotLootOfferAutoAccept(entry, recipient, promptDelayMs);
     }
 
-    private static void scheduleBotLootOfferAutoAccept(BotEntry entry, Character recipient) {
+    private static void scheduleBotLootOfferAutoAccept(BotEntry entry, Character recipient, long promptDelayMs) {
         if (!(recipient.getClient() instanceof BotClient)) {
             return;
         }
-        BotManager.after(BotManager.randMs(1800, 2200), () -> autoAcceptLootOffer(entry, recipient));
+        long replyDelayMs = promptDelayMs + BotManager.randMs(1800, 2200);
+        BotManager.after(replyDelayMs, () -> autoAcceptLootOffer(entry, recipient));
     }
 
     private static void autoAcceptLootOffer(BotEntry entry, Character recipientBot) {
@@ -280,6 +304,27 @@ final class BotOfferManager {
             }
             if (BotEquipManager.findRecommendationForItem(member, bot, item) != null) {
                 return member;
+            }
+        }
+        return null;
+    }
+
+    private static Character resolveReservedOfferRecipient(BotEntry entry, Character bot, int recipientId) {
+        Character owner = entry.owner;
+        if (owner != null && owner.getId() == recipientId) {
+            return owner;
+        }
+        if (bot.getMap() != null) {
+            Character onMap = bot.getMap().getCharacterById(recipientId);
+            if (onMap != null) {
+                return onMap;
+            }
+        }
+        if (owner != null) {
+            for (Character member : owner.getPartyMembersOnSameMap()) {
+                if (member != null && member.getId() == recipientId) {
+                    return member;
+                }
             }
         }
         return null;

@@ -832,6 +832,7 @@ public class BotManager {
 
     private boolean isPendingLootOfferTarget(BotEntry entry, Character speaker) {
         return entry != null
+                && BotOfferManager.hasPendingOffer(entry)
                 && entry.pendingLootOfferRecipientId == speaker.getId()
                 && entry.bot.getMapId() == speaker.getMapId();
     }
