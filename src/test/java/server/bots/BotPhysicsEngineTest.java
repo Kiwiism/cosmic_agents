@@ -182,26 +182,22 @@ class BotPhysicsEngineTest {
     }
 
     @Test
-    void shouldTickDownRopeCooldownAndDownJumpGraceInsidePhysicsEngine() {
+    void shouldTickDownDownJumpGraceInsidePhysicsEngine() {
         BotEntry entry = new BotEntry(null, null, null);
-        entry.ropeGrabCooldownMs = 120;
         entry.downJumpGracePeriodMS = 120;
 
         BotPhysicsEngine.tickMotionTimers(entry);
 
-        assertEquals(70, entry.ropeGrabCooldownMs);
         assertEquals(70, entry.downJumpGracePeriodMS);
         assertFalse(BotPhysicsEngine.canLand(entry));
 
         BotPhysicsEngine.tickMotionTimers(entry);
 
-        assertEquals(20, entry.ropeGrabCooldownMs);
         assertEquals(20, entry.downJumpGracePeriodMS);
         assertFalse(BotPhysicsEngine.canLand(entry));
 
         BotPhysicsEngine.tickMotionTimers(entry);
 
-        assertEquals(0, entry.ropeGrabCooldownMs);
         assertEquals(0, entry.downJumpGracePeriodMS);
         assertTrue(BotPhysicsEngine.canLand(entry));
     }

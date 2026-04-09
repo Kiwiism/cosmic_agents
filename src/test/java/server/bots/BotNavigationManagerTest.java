@@ -208,8 +208,8 @@ class BotNavigationManagerTest {
                 516, 523, -8, 0, 0, 0, 0, 850
         );
 
-        assertEquals(new Point(520, 107), BotNavigationManager.selectJumpWaypoint(entry, new Point(449, 113), jump));
-        assertEquals(new Point(520, 107), BotNavigationManager.selectJumpWaypoint(entry, new Point(540, 113), jump));
+        assertEquals(new Point(516, 107), BotNavigationManager.selectJumpWaypoint(entry, new Point(449, 113), jump));
+        assertEquals(new Point(523, 107), BotNavigationManager.selectJumpWaypoint(entry, new Point(540, 113), jump));
         assertEquals(new Point(520, 107), BotNavigationManager.selectJumpWaypoint(entry, new Point(520, 113), jump));
     }
 
@@ -255,7 +255,7 @@ class BotNavigationManagerTest {
     }
 
     @Test
-    void shouldHoldCurrentPositionOnceClimbExitLaunchAnchorIsReached() {
+    void shouldHoldCurrentPositionOnceClimbExitLaunchWindowIsReached() {
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(elliniaDungeon);
         BotEntry entry = new BotEntry(bot, null, null);
@@ -270,18 +270,17 @@ class BotNavigationManagerTest {
 
         assertEquals(new Point(-1251, -107),
                 BotNavigationManager.selectClimbWaypoint(entry, new Point(-1251, -107), climbExit));
-        assertEquals(new Point(-1251, -107),
+        assertEquals(new Point(-1251, -109),
                 BotNavigationManager.selectClimbWaypoint(entry, new Point(-1251, -109), climbExit));
     }
 
     @Test
-    void shouldKeepSteeringToClimbLaunchAnchorWhileExitCooldownBlocksExecution() {
+    void shouldKeepSteeringToClimbLaunchAnchorWhileBelowExitAnchor() {
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(elliniaDungeon);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.climbing = true;
         entry.climbRope = new Rope(-1251, -137, 2, true);
-        entry.jumpCooldownMs = 300;
 
         BotNavigationGraph.Edge climbExit = new BotNavigationGraph.Edge(
                 189, 157, BotNavigationGraph.EdgeType.CLIMB,

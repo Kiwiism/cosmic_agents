@@ -123,7 +123,7 @@ class BotMovementSimulationLabTest {
     }
 
     @Test
-    void shouldResolveBashRopeOscillationDumpBySnappingPreciseClimbAnchor() {
+    void shouldResolveBashRopeOscillationDumpByExecutingImmediatelyFromRopeAnchorWindow() {
         MapleMap map = BotNavigationMapLoader.loadMapGeometry(103000800);
         BotNavigationGraphProvider.rebuildGraph(map);
         BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);
@@ -146,10 +146,37 @@ class BotMovementSimulationLabTest {
 
         List<String> trace = lab.formatRecentTrace("BASH", 8);
 
-        assertTrue(trace.stream().anyMatch(line -> line.contains("bot=(-437,-1141)")),
-                "bot should snap to the precise climb anchor instead of oscillating around it");
+        assertTrue(trace.stream().anyMatch(line -> line.contains("nav=exec") && line.contains("edge=CLIMB r25->r2")),
+                "bot should execute the rope exit immediately once it is inside the authored launch window");
         assertTrue(trace.stream().noneMatch(line -> line.contains("bot=(-437,-1137)")),
-                "bot should not overshoot the rope anchor by a full climb step");
+                "bot should not oscillate around the rope anchor before the exit jump");
+    }
+
+    @Test
+    void shouldExecuteJohnSecondJumpOnSameAiTickItReachesLaunchPoint() {
+        MapleMap map = BotNavigationMapLoader.loadMapGeometry(101020001);
+        BotNavigationGraphProvider.rebuildGraph(map);
+        BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);
+        lab.spawnActor("OWNER", 50, map, new Point(115, -1521));
+        lab.spawnBot("JOHN", 51, map, new Point(114, -1091));
+        lab.setFollow("JOHN", "OWNER");
+        lab.setFormation("OWNER", BotManager.FormationType.STAGGER, 60, 200);
+        lab.setFollowOffset("JOHN", 180);
+        lab.setAiAccumulator("JOHN", 50);
+        lab.setNavState("JOHN", new BotNavigationGraph.Edge(
+                28, 27, BotNavigationGraph.EdgeType.JUMP,
+                new Point(148, -1098), new Point(148, -1150),
+                0, 0, 0, 0, 0, 400
+        ), 19, true);
+
+        lab.step(20);
+
+        List<String> trace = lab.formatRecentTrace("JOHN", 20);
+
+        assertTrue(trace.stream().anyMatch(line -> line.contains("nav=exec") && line.contains("edge=JUMP r27->r25")),
+                "bot should immediately execute the second jump once grounded movement reaches its launch point");
+        assertTrue(trace.stream().noneMatch(line -> line.contains("phys=AIR") && line.contains("edge=JUMP r27->r25") && line.contains("airVelX=-4")),
+                "bot should no longer walk off the ledge into a plain fall before executing the authored jump");
     }
 
     @Test

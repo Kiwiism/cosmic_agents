@@ -1146,8 +1146,7 @@ public class BotManager {
                     BotCombatManager.attackMonster(entry, bot, attackPlan);
                     if (!entry.inAir) return;
                 } else if (!entry.inAir
-                        && BotCombatManager.isTargetJumpable(attackPlan.isCloseRangeRoute(), botPos, tp)
-                        && entry.jumpCooldownMs == 0) {
+                        && BotCombatManager.isTargetJumpable(attackPlan.isCloseRangeRoute(), botPos, tp)) {
                     // Target is above but within jump height — jump toward it
                     BotMovementManager.initiateJump(entry, bot, tp.x - botPos.x);
                     return;
@@ -1336,6 +1335,9 @@ public class BotManager {
         }
 
         tickMovementPhase(entry, steeringTarget, runAiTick);
+        if (runAiTick && !entry.inAir && !entry.climbing) {
+            BotNavigationManager.tryExecuteCommittedEdgeAfterGroundMovement(entry, targetPos);
+        }
         tickStuckDetection(entry);
         clearReachedMoveTarget(entry);
     }

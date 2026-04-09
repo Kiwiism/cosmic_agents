@@ -80,7 +80,6 @@ class BotMovementManager {
         public int GRIND_EDGE_MARGIN = 40; // keep bot this many px from foothold edge while grinding
 
         public int JUMP_Y_THRESH = 30;
-        public int JUMP_COOLDOWN_MS = 1000;
         public int TELEPORT_DIST = 4000;
         public int FOLLOW_Y_CAP = 200; // max vertical distance for Y-snapped follow target
     }
@@ -163,11 +162,9 @@ class BotMovementManager {
             int dy = targetPos.y - botPos.y;
             int dxOwner = targetPos.x - entry.climbRope.x();
 
-            entry.jumpCooldownMs = tickDown(entry.jumpCooldownMs);
-
             // If not navigating, allow jumping off when target is far away horizontally
             if (runAiTick && entry.navEdge == null
-                    && Math.abs(dxOwner) > cfg.FOLLOW_DIST && entry.jumpCooldownMs == 0
+                    && Math.abs(dxOwner) > cfg.FOLLOW_DIST
                     && entry.climbRope.bottomY() < targetPos.y) {
                 jumpOffRope(entry, bot, dxOwner);
                 return;
@@ -199,8 +196,6 @@ class BotMovementManager {
     static void jumpOffRope(BotEntry entry, Character bot, int dx) {
         int airVelX = resolveAirVelocityX(bot.getMap(), dx);
         BotPhysicsEngine.beginJumpOffRope(entry, bot, airVelX);
-//        entry.ropeGrabCooldownMs = delayAfterCurrentTick(cfg.JUMP_COOLDOWN_MS + 200);
-        entry.jumpCooldownMs = delayAfterCurrentTick(cfg.JUMP_COOLDOWN_MS);
         broadcastMovement(entry);
     }
 
@@ -208,7 +203,6 @@ class BotMovementManager {
         Rope sourceRope = entry.climbRope;
         int airVelX = resolveAirVelocityX(bot.getMap(), dx);
         BotPhysicsEngine.beginRopeTransferJump(entry, bot, sourceRope, airVelX);
-        entry.jumpCooldownMs = delayAfterCurrentTick(cfg.JUMP_COOLDOWN_MS);
         broadcastMovement(entry);
     }
 
@@ -294,7 +288,7 @@ class BotMovementManager {
     }
 
     private static boolean successfullyGrabbedRope(BotEntry entry, Character bot, Point botPos) {
-        if (!entry.climbUpIntent || entry.ropeGrabCooldownMs != 0) {
+        if (!entry.climbUpIntent) {
             return false;
         }
 
@@ -352,7 +346,6 @@ class BotMovementManager {
             }
 
             Point botPos = bot.getPosition();
-            entry.jumpCooldownMs = tickDown(entry.jumpCooldownMs);
             if (entry.downJumpPending) {
                 performDownJump(entry);
                 return;
@@ -475,7 +468,6 @@ class BotMovementManager {
 
     private static void performDownJump(BotEntry entry) {
         BotPhysicsEngine.beginDownJump(entry, entry.bot);
-        entry.jumpCooldownMs = delayAfterCurrentTick(cfg.JUMP_COOLDOWN_MS);
         broadcastMovement(entry);
     }
 
@@ -522,14 +514,8 @@ class BotMovementManager {
         Character bot = entry.bot;
         int walkStep = BotPhysicsEngine.walkStep(bot.getMap());
         switch (ThreadLocalRandom.current().nextInt(3)) {
-            case 0 -> { // jump left
-                BotPhysicsEngine.beginGroundJump(entry, bot, -walkStep);
-                entry.jumpCooldownMs = delayAfterCurrentTick(cfg.JUMP_COOLDOWN_MS);
-            }
-            case 1 -> { // jump right
-                BotPhysicsEngine.beginGroundJump(entry, bot, walkStep);
-                entry.jumpCooldownMs = delayAfterCurrentTick(cfg.JUMP_COOLDOWN_MS);
-            }
+            case 0 -> BotPhysicsEngine.beginGroundJump(entry, bot, -walkStep); // jump left
+            case 1 -> BotPhysicsEngine.beginGroundJump(entry, bot, walkStep); // jump right
             default -> // down-jump (also works as a plain crouch-step when no drop is present)
                 BotPhysicsEngine.queueDownJump(entry, bot);
         }

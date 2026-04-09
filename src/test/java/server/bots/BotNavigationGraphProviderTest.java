@@ -232,13 +232,16 @@ class BotNavigationGraphProviderTest {
     }
 
     @Test
-    void shouldAllowStraightDropExecutionFromCurrentXWhenLandingRegionMatches() {
+    void shouldRequireStraightDropExecutionNearItsAuthoredAnchor() {
         StraightDropCase dropCase = findStraightDropCaseWithAlternativeStart(elliniaGraph, ellinia);
 
         assertNotNull(dropCase, "Expected at least one straight drop edge with an alternate same-region start point");
         assertNotEquals(dropCase.edge().startPoint.x, dropCase.alternativeStart().x);
         assertTrue(BotNavigationManager.canExecuteDropFromCurrentPosition(
-                elliniaGraph, ellinia, dropCase.alternativeStart(), dropCase.edge()));
+                elliniaGraph, ellinia, dropCase.edge().startPoint, dropCase.edge()));
+        assertEquals(Math.abs(dropCase.alternativeStart().x - dropCase.edge().startPoint.x) <= 14,
+                BotNavigationManager.canExecuteDropFromCurrentPosition(
+                        elliniaGraph, ellinia, dropCase.alternativeStart(), dropCase.edge()));
     }
 
     @Test

@@ -605,9 +605,6 @@ final class BotPhysicsEngine {
     }
 
     static void tickMotionTimers(BotEntry entry) {
-        if (entry.ropeGrabCooldownMs > 0) {
-            entry.ropeGrabCooldownMs = Math.max(0, entry.ropeGrabCooldownMs - cfg.TICK_MS);
-        }
         if (entry.downJumpGracePeriodMS > 0L) {
             entry.downJumpGracePeriodMS = Math.max(0L, entry.downJumpGracePeriodMS - cfg.TICK_MS);
         }

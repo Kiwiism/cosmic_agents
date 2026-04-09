@@ -198,8 +198,6 @@ final class BotPathLogger {
             sb.append("  at=").append(entry.lastTickAtMs);
         }
         sb.append("\n");
-        sb.append("Cooldowns:  jumpMs=").append(entry.jumpCooldownMs)
-                .append("  ropeGrabMs=").append(entry.ropeGrabCooldownMs).append("\n");
         sb.append("Mode:       ").append(entry.following ? "follow" : entry.grinding ? "grind" : "idle").append("\n");
         boolean isStuck = entry.stuckMs >= 500 || computeStuck(botPos.x, botPos.y);
         sb.append("Stuck:      ").append(isStuck ? "YES (" + entry.stuckMs + "ms) ***" : "no").append("\n");

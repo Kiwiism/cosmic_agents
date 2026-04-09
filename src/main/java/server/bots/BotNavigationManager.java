@@ -109,6 +109,21 @@ final class BotNavigationManager {
         }
     }
 
+    static boolean tryExecuteCommittedEdgeAfterGroundMovement(BotEntry entry, Point rawTargetPos) {
+        if (entry == null || entry.bot == null || entry.navEdge == null || entry.inAir || entry.climbing) {
+            return false;
+        }
+
+        NavigationDirective directive = tryExecuteEdge(
+                entry, entry.bot, entry.bot.getPosition(), rawTargetPos, entry.navEdge, true);
+        if (directive == null || !directive.consumedTick) {
+            return false;
+        }
+
+        entry.lastNavDecision = "exec";
+        return true;
+    }
+
     private static void clearNavigation(BotEntry entry) {
         BotMovementManager.clearNavigationState(entry);
     }
@@ -169,10 +184,6 @@ final class BotNavigationManager {
             return null;
         }
         if (entry.climbing && isRopeEntryEdge(graph, edge)) {
-            return null;
-        }
-        if (!entry.inAir && edge.type == BotNavigationGraph.EdgeType.JUMP
-                && !canReachJumpLaunchWindowFromCurrentPosition(graph, entry.bot.getMap(), entry.bot.getPosition(), edge)) {
             return null;
         }
         if (startRegionId == edge.toRegionId && !entry.inAir && !entry.climbing) {
@@ -236,7 +247,7 @@ final class BotNavigationManager {
                                                       Character bot,
                                                       Point rawTargetPos,
                                                       BotNavigationGraph.Edge edge) {
-        if (entry.inAir || entry.climbing || entry.jumpCooldownMs != 0) {
+        if (entry.inAir || entry.climbing) {
             return null;
         }
         BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(bot.getMap());
@@ -262,7 +273,6 @@ final class BotNavigationManager {
 
         entry.lastEdgeBlockReason = null;
         setEdgeExecutionTarget(entry, edge);
-        entry.jumpCooldownMs = BotMovementManager.delayAfterCurrentTick(BotMovementManager.cfg.JUMP_COOLDOWN_MS);
         BotMovementManager.initiateJump(entry, bot, edge.launchStepX);
         return new NavigationDirective(rawTargetPos, true);
     }
@@ -272,7 +282,7 @@ final class BotNavigationManager {
                                                       Point botPos,
                                                       Point rawTargetPos,
                                                       BotNavigationGraph.Edge edge) {
-        if (entry.inAir || entry.climbing || entry.downJumpPending || entry.jumpCooldownMs != 0) {
+        if (entry.inAir || entry.climbing || entry.downJumpPending) {
             return null;
         }
 
@@ -339,17 +349,13 @@ final class BotNavigationManager {
             // physics carry the bot to the rope; canGrabRopeAtCurrentPosition will attach
             // once the bot's Y enters the rope range.
             entry.lastEdgeBlockReason = null;
-            if (entry.jumpCooldownMs == 0) {
-                entry.jumpCooldownMs = BotMovementManager.delayAfterCurrentTick(BotMovementManager.cfg.JUMP_COOLDOWN_MS);
-                BotPhysicsEngine.queueDownJump(entry, bot);
-                BotMovementManager.broadcastMovement(entry);
-            }
+            BotPhysicsEngine.queueDownJump(entry, bot);
+            BotMovementManager.broadcastMovement(entry);
             return new NavigationDirective(rawTargetPos, true);
         }
 
-        if (entry.jumpCooldownMs == 0 && BotMovementManager.canReachRopeFromGround(bot.getMap(), botPos, rope)) {
+        if (isReadyForEdge(botPos, edge)) {
             entry.lastEdgeBlockReason = null;
-            entry.jumpCooldownMs = BotMovementManager.delayAfterCurrentTick(BotMovementManager.cfg.JUMP_COOLDOWN_MS);
             BotMovementManager.initiateRopeJump(entry, bot, rope.x() - botPos.x);
             return new NavigationDirective(rawTargetPos, true);
         }
@@ -363,10 +369,6 @@ final class BotNavigationManager {
                                                             Point botPos,
                                                             Point rawTargetPos,
                                                             BotNavigationGraph.Edge edge) {
-        if (entry.jumpCooldownMs != 0) {
-            return null;
-        }
-
         BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(bot.getMap());
         if (!canExecuteClimbExitFromCurrentPosition(graph, bot.getMap(), botPos, edge)) {
             return null;
@@ -403,18 +405,7 @@ final class BotNavigationManager {
         if (edge.type != BotNavigationGraph.EdgeType.DROP) {
             return false;
         }
-
-        // Walk-off drops (launchStepX != 0) must start from near the platform edge, not mid-platform.
-        // This mirrors the 14px tolerance used by isReadyForEdge for DROP edges, ensuring the graph
-        // builder's edge placement and the runtime execution check share the same positional constraint.
-        if (edge.launchStepX != 0 && Math.abs(botPos.x - edge.startPoint.x) > EDGE_READY_X_TOLERANCE) {
-            return false;
-        }
-
-        int landingRegionId = landingRegionId(graph, edge.launchStepX == 0
-                ? BotPhysicsEngine.simulateDownJumpLanding(map, botPos)
-                : BotPhysicsEngine.simulateFallLanding(map, botPos, edge.launchStepX));
-        return landingRegionId == edge.toRegionId;
+        return isReadyForEdge(botPos, edge);
     }
 
     private static NavigationDirective tryExecutePortal(BotEntry entry,
@@ -434,15 +425,18 @@ final class BotNavigationManager {
         if (entry.inAir) {
             return false;
         }
-        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(entry.bot.getMap());
         return switch (edge.type) {
             case WALK -> shouldUsePreciseWalkTarget(edge);
-            case JUMP -> !canExecuteJumpFromCurrentPosition(graph, entry.bot.getMap(), botPos, edge);
-            case DROP -> !canExecuteDropFromCurrentPosition(graph, entry.bot.getMap(), botPos, edge);
+            case JUMP -> !canExecuteJumpFromCurrentPosition(BotNavigationGraphProvider.getGraph(entry.bot.getMap()),
+                    entry.bot.getMap(), botPos, edge);
+            case DROP -> !canExecuteDropFromCurrentPosition(BotNavigationGraphProvider.getGraph(entry.bot.getMap()),
+                    entry.bot.getMap(), botPos, edge);
             case CLIMB -> entry.climbing
-                    ? !canExecuteClimbExitFromCurrentPosition(graph, entry.bot.getMap(), botPos, edge)
+                    ? !canExecuteClimbExitFromCurrentPosition(BotNavigationGraphProvider.getGraph(entry.bot.getMap()),
+                    entry.bot.getMap(), botPos, edge)
                     : !canExecuteClimbEntryFromCurrentPosition(entry.bot.getMap(), botPos, edge,
-                    findRopeForRegion(entry.bot.getMap(), graph.getRegion(edge.toRegionId)));
+                    findRopeForRegion(entry.bot.getMap(),
+                            BotNavigationGraphProvider.getGraph(entry.bot.getMap()).getRegion(edge.toRegionId)));
             case PORTAL -> !isReadyForEdge(botPos, edge);
         };
     }
@@ -458,8 +452,14 @@ final class BotNavigationManager {
 
     static Point selectJumpWaypoint(BotEntry entry, Point botPos, BotNavigationGraph.Edge edge) {
         BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(entry.bot.getMap());
-        Point reachable = findReachableJumpLaunchPoint(graph, entry.bot.getMap(), botPos, edge);
-        return reachable != null ? reachable : new Point(edge.startPoint);
+        BotNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);
+        if (fromRegion == null || fromRegion.isRopeRegion) {
+            return new Point(edge.startPoint);
+        }
+        int targetX = edge.containsLaunchX(botPos.x)
+                ? botPos.x
+                : botPos.x < edge.launchMinX ? edge.launchMinX : edge.launchMaxX;
+        return fromRegion.pointAt(targetX);
     }
 
     static Point selectClimbWaypoint(BotEntry entry, Point botPos, BotNavigationGraph.Edge edge) {
@@ -468,16 +468,13 @@ final class BotNavigationManager {
         }
         if (entry.climbing && edge.launchStepX != 0) {
             // Jump-off and rope-to-rope exits: only hold position when the exit can execute
-            // immediately. If cooldown is still active, keep steering toward the authored launch
-            // anchor; otherwise the bot can idle on the rope forever with targetPos == botPos.
+            // immediately; otherwise keep steering toward the authored launch anchor.
             // Graphgen and physics both treat edge.startPoint as the required on-rope launch Y;
             // steering toward edge.endPoint here would be a runtime-only model mismatch because
             // a climbing bot cannot physically approach the off-rope landing point.
-            if (entry.jumpCooldownMs == 0) {
-                BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(entry.bot.getMap());
-                if (canExecuteClimbExitFromCurrentPosition(graph, entry.bot.getMap(), botPos, edge)) {
-                    return new Point(botPos);
-                }
+            BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(entry.bot.getMap());
+            if (canExecuteClimbExitFromCurrentPosition(graph, entry.bot.getMap(), botPos, edge)) {
+                return new Point(botPos);
             }
             return new Point(edge.startPoint);
         }
@@ -688,72 +685,7 @@ final class BotNavigationManager {
         if (edge.type != BotNavigationGraph.EdgeType.JUMP) {
             return false;
         }
-
-        if (!isWithinJumpLaunchWindow(graph, botPos, edge)) {
-            return false;
-        }
-
-        return landingRegionId(graph, BotPhysicsEngine.simulateJumpLanding(map, botPos, edge.launchStepX)) == edge.toRegionId;
-    }
-
-    private static boolean canReachJumpLaunchWindowFromCurrentPosition(BotNavigationGraph graph,
-                                                                       MapleMap map,
-                                                                       Point botPos,
-                                                                       BotNavigationGraph.Edge edge) {
-        return findReachableJumpLaunchPoint(graph, map, botPos, edge) != null;
-    }
-
-    private static Point findReachableJumpLaunchPoint(BotNavigationGraph graph,
-                                                      MapleMap map,
-                                                      Point botPos,
-                                                      BotNavigationGraph.Edge edge) {
-        if (botPos == null || edge.type != BotNavigationGraph.EdgeType.JUMP) {
-            return null;
-        }
-
-        BotNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);
-        if (fromRegion == null || fromRegion.isRopeRegion) {
-            return null;
-        }
-
-        int preferredX = edge.containsLaunchX(botPos.x)
-                ? botPos.x
-                : (edge.launchMinX + edge.launchMaxX) / 2;
-        for (int offset = 0; offset <= edge.launchMaxX - edge.launchMinX; offset++) {
-            int leftX = preferredX - offset;
-            if (leftX >= edge.launchMinX) {
-                Point candidate = fromRegion.pointAt(leftX);
-                if (isReachableJumpLaunchPoint(graph, map, edge, botPos, candidate)) {
-                    return candidate;
-                }
-            }
-
-            if (offset == 0) {
-                continue;
-            }
-
-            int rightX = preferredX + offset;
-            if (rightX <= edge.launchMaxX) {
-                Point candidate = fromRegion.pointAt(rightX);
-                if (isReachableJumpLaunchPoint(graph, map, edge, botPos, candidate)) {
-                    return candidate;
-                }
-            }
-        }
-
-        return null;
-    }
-
-    private static boolean isReachableJumpLaunchPoint(BotNavigationGraph graph,
-                                                      MapleMap map,
-                                                      BotNavigationGraph.Edge edge,
-                                                      Point fromPos,
-                                                      Point candidate) {
-        if (candidate == null || !isReachableWithinRegion(graph, map, edge.fromRegionId, fromPos, candidate)) {
-            return false;
-        }
-
-        return landingRegionId(graph, BotPhysicsEngine.simulateJumpLanding(map, candidate, edge.launchStepX)) == edge.toRegionId;
+        return isWithinJumpLaunchWindow(graph, botPos, edge);
     }
 
     private static boolean isReachableWithinRegion(BotNavigationGraph graph,
@@ -853,7 +785,7 @@ final class BotNavigationManager {
                                                                    Rope rope) {
         return rope != null && (canGrabRopeAtCurrentPosition(botPos, rope)
                 || canGrabRopeFromTopPlatform(edge, botPos, rope)
-                || BotMovementManager.canReachRopeFromGround(map, botPos, rope));
+                || isReadyForEdge(botPos, edge));
     }
 
     private static boolean canExecuteClimbExitFromCurrentPosition(BotNavigationGraph graph,
@@ -873,20 +805,15 @@ final class BotNavigationManager {
 
         BotNavigationGraph.Region toRegion = graph.getRegion(edge.toRegionId);
         if (toRegion != null && toRegion.isRopeRegion) {
-            Rope rope = findRopeForRegion(map, toRegion);
-            return BotPhysicsEngine.simulateRopeJumpGrab(map, botPos, edge.launchStepX, rope) != null;
+            return Math.abs(botPos.y - edge.startPoint.y) <= BotMovementManager.cfg.JUMP_Y_THRESH * 2;
         }
 
         if (edge.launchStepX == 0) {
-            Point ground = BotPhysicsEngine.findGroundPoint(map, new Point(botPos.x, botPos.y - 3));
-            if (ground == null || Math.abs(ground.y - botPos.y) > BotMovementManager.cfg.JUMP_Y_THRESH * 2) {
-                return false;
-            }
-
-            return graph.findRegionId(map, ground) == edge.toRegionId;
+            Rope rope = findRopeForRegion(map, graph.getRegion(edge.fromRegionId));
+            return rope != null && isTopStepOffExit(rope, botPos, edge);
         }
 
-        return landingRegionId(graph, BotPhysicsEngine.simulateRopeJumpLanding(map, botPos, edge.launchStepX)) == edge.toRegionId;
+        return Math.abs(botPos.y - edge.startPoint.y) <= BotMovementManager.cfg.JUMP_Y_THRESH * 2;
     }
 
     private static void startClimbing(BotEntry entry, Character bot, Rope rope, int climbY) {
