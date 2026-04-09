@@ -458,20 +458,19 @@ server:
       9001105: Rescue Gaga!  # Grandpa moon bunny
 
     # NuTNNuT's custom features
-
     # Scroll Success Bonus: adds a flat bonus % to all scroll success chances
     SCROLL_SUCCESS_BONUS_ENABLED: true
     SCROLL_SUCCESS_BONUS: 10             # Flat % added to every scroll's success chance (capped at 100)
 
-    # Chaos Scroll No Negative: when true, black/dark crystal chaos stats only improve (never decrease)
-    CHAOS_SCROLL_NO_NEGATIVE: true
+    # Maker Skills:
+    MAKER_CRYSTAL_ONLY_IMPROVE: true    # Black/Dark crystal only improves stats and never decreases, vanilla: false
 
-    # Godly Stats: chance for equipment to receive bonus stats beyond base randomization
+    # Godly Stats: chance for equipment to receive random bonus stats (like free-pre-applied chaos scroll)
     GODLY_STATS_ENABLED: true
-    GODLY_STATS_DROP_CHANCE: 20          # % chance for dropped equips (randomizeStats)
-    GODLY_STATS_MAKER_CHANCE: 20         # % chance for maker equips with stimulant (randomizeUpgradeStats)
-    GODLY_STATS_QUEST_CHANCE: 100        # % chance for quest reward equips (100 = always)
-    GODLY_STATS_BONUS_SCALING: 0.1       # Max stat bonus = reqLevel * scaling (e.g. 0.1 = reqLevel/10)
+    GODLY_STATS_DROP_CHANCE: 20          # % chance for dropped
+    GODLY_STATS_MAKER_CHANCE: 20         # % chance for maker skill (with stimulant)
+    GODLY_STATS_QUEST_CHANCE: 100        # % chance for quest reward equips
+    GODLY_STATS_BONUS_SCALING: 0.1       # 0.1 -> lv 100 gear gain up to 10 str/dex/int/luk/atk/etc. (only if the stat already exists, like chaos scroll)
     GODLY_STATS_MIN_BONUS: 5             # Minimum max stat bonus
-    GODLY_STATS_HPMP_SCALING: 1.0        # Max HP/MP bonus = reqLevel * scaling
+    GODLY_STATS_HPMP_SCALING: 1.0        # 1 -> lv 100 gear gain up to 100 bonus max HP/MP (even if equip had no hp/mp bonus)
     GODLY_STATS_MIN_HPMP_BONUS: 30       # Minimum max HP/MP bonus

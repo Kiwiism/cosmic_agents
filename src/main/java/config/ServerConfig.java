@@ -194,8 +194,8 @@ public class ServerConfig {
     // Scroll Success Bonus
     public boolean SCROLL_SUCCESS_BONUS_ENABLED;
     public int SCROLL_SUCCESS_BONUS;
-    // Chaos Scroll - No Negative Stats (scrollOptionEquipWithChaos only)
-    public boolean CHAOS_SCROLL_NO_NEGATIVE;
+    // Maker Skills
+    public boolean MAKER_CRYSTAL_ONLY_IMPROVE;
     // Godly Stats on Equip Drops/Rewards
     public boolean GODLY_STATS_ENABLED;
     public int GODLY_STATS_DROP_CHANCE;

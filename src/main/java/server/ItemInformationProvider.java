@@ -648,7 +648,7 @@ public class ItemInformationProvider {
         // option: watk, matk, wdef, mdef, spd, jump, hp, mp - black crystal - 1/2/3
         //   stat: dex, luk, str, int, avoid, acc - dark crystal - 2/3/5
 
-        boolean noNeg = YamlConfig.config.server.CHAOS_SCROLL_NO_NEGATIVE;
+        boolean noNeg = YamlConfig.config.server.MAKER_CRYSTAL_ONLY_IMPROVE;
         if (option) {
             nEquip.setWatk(getMaximumShortMaxIfOverflow(0, noNeg ? getRandUpgradedStat(nEquip.getWatk(), range) : (short)(nEquip.getWatk() + chscrollRandomizedStat(range))));
             nEquip.setWdef(getMaximumShortMaxIfOverflow(0, noNeg ? getRandUpgradedStat(nEquip.getWdef(), range) : (short)(nEquip.getWdef() + chscrollRandomizedStat(range))));

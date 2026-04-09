@@ -1,6 +1,12 @@
 ﻿# Cosmic
 Cosmic is a server emulator for Global MapleStory (GMS) version 83.
 
+## This fork's custom features (check config.yaml)
+- BOTS, I know you are here because of my AI companion bots :) check [README_SERVER_BOTS.md](README_SERVER_BOTS.md)
+- Scroll Success Bonus: adds a flat bonus % to all scroll success chances
+- Maker Skills: Black/Dark crystal only improves stats and never decreases
+- Godly Stats: chance for equipment to receive random bonus stats (like free-pre-applied chaos scroll, inspired by MapleRoyals)
+
 ## Introduction
 
 Cosmic launched on March 2021. It is based on code from a long line of server emulators spanning over a decade - starting with OdinMS (2008) and ending with HeavenMS (2019).
