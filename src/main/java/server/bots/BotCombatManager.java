@@ -187,6 +187,11 @@ class BotCombatManager {
             "no ammo left, coming to you",
             "need ammo!! walking back",
             "im out of ammo, heading to you");
+    private static final List<String> MP_POTS_OUT_MSGS = List.of(
+            "out of MP pots! heading back",
+            "no MP pots left, coming to you",
+            "need MP pots!! walking back",
+            "im out of MP pots, heading to you");
 
     /** Check every alive monster on the map; if bot is inside its bounding box, apply a hit. */
     static void tickMobDamage(BotEntry entry, Character bot) {
@@ -523,7 +528,7 @@ class BotCombatManager {
         if (entry.attackCooldownMs > 0) {
             return;
         }
-        if (entry.noAmmo && attackPlan.route == AttackRoute.RANGED) {
+        if (entry.noAmmo) {
             return;
         }
         if (attackPlan.skillId != 0 && !canUseSkill(bot, attackPlan.skillId, attackPlan.skillLevel)) {
@@ -991,9 +996,28 @@ class BotCombatManager {
      */
     static void tickAmmoCheck(BotEntry entry, Character bot) {
         WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(bot);
-        if (!isRangedAmmoWeapon(weaponType)) {
+        boolean mage = weaponType == WeaponType.WAND || weaponType == WeaponType.STAFF;
+        if (!mage && !isRangedAmmoWeapon(weaponType)) {
             entry.noAmmo = false;
             entry.ammoWarnSent = false;
+            return;
+        }
+
+        if (mage) {
+            int[] pots = BotPotionManager.countPotions(bot);
+            int mpPots = pots[1];
+            if (mpPots > 0) {
+                entry.noAmmo = false;
+                return;
+            }
+            if (!entry.noAmmo) {
+                entry.noAmmo = true;
+                if (entry.grinding) {
+                    entry.grinding = false;
+                    entry.following = true;
+                    BotManager.getInstance().botSay(bot, BotManager.randomReply(MP_POTS_OUT_MSGS));
+                }
+            }
             return;
         }
 
