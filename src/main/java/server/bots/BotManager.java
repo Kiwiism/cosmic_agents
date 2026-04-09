@@ -400,7 +400,7 @@ public class BotManager {
         if (normalizeSpawnState) {
             normalizeSpawnedBot(entry);
         }
-        after(randMs(2000, 2100), () -> BotChatManager.checkBotStatus(entry, bot));
+        after(randMs(30_000, 31_000), () -> BotChatManager.checkBotStatus(entry, bot));
         return entry;
     }
 
@@ -1080,7 +1080,14 @@ public class BotManager {
             if (BotPqHooks.requiresGrind(entry, bot)) { entry.grinding = true; entry.following = false; }
             else if (BotPqHooks.requiresFollow(entry, bot)) { entry.following = true; entry.grinding = false; }
             else { entry.kpq.stage5Claimed = false; } // left KPQ — reset for next run
+            BotShopManager.onMapChange(entry, bot);
+            BotChatManager.checkBotStatus(entry, bot);
             return;
+        }
+
+        // Shop visit: navigate to NPC before resuming normal flow
+        if (BotShopManager.tickShopVisit(entry, bot)) {
+            targetPos = entry.shopNpcPos;
         }
 
         // Follow mode: attack monsters already in attack range without chasing
@@ -1328,7 +1335,14 @@ public class BotManager {
             BotPhysicsEngine.teleportTo(entry, bot, ground != null ? ground : cur);
             BotMovementManager.resetEntryStateAfterTeleport(entry);
             BotMovementManager.broadcastMovement(entry);
+            BotShopManager.onMapChange(entry, bot);
+            BotChatManager.checkBotStatus(entry, bot);
             return;
+        }
+
+        // Shop visit: navigate to NPC before resuming normal flow
+        if (BotShopManager.tickShopVisit(entry, bot)) {
+            targetPos = entry.shopNpcPos;
         }
 
         stepMovementCore(entry, targetPos, runAiTick, applyGrindSpread);

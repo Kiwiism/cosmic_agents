@@ -82,6 +82,10 @@ public class BotEntry {
     boolean ammoWarnSent = false;
     boolean degenAttackDone = false; // force retreat after an accidental close-range hit
 
+    // Shop auto-buy (triggered once per map change)
+    volatile boolean shopVisitPending = false;
+    volatile Point shopNpcPos = null;
+
     // Damage taken
     long deadUntil = 0;
     int mobHitCooldownMs = 0;

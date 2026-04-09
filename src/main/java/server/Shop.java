@@ -38,6 +38,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -78,9 +79,75 @@ public class Shop {
         items.add(item);
     }
 
+    public List<ShopItem> getItems() {
+        return Collections.unmodifiableList(items);
+    }
+
     public void sendShop(Client c) {
         c.getPlayer().setShop(this);
         c.sendPacket(PacketCreator.getNPCShop(c, getNpcId(), items));
+    }
+
+    public enum TransactionResult { SUCCESS, NOT_ENOUGH_MESO, NO_SPACE, INVALID }
+
+    /** Core buy logic without response packets. Usable by bots.
+     *  For rechargeable items, {@code quantity} is ignored — one slotMax stack is purchased. */
+    public TransactionResult buyDirect(client.Character player, short slot, int itemId, short quantity) {
+        ShopItem item = findBySlot(slot);
+        if (item == null || item.getItemId() != itemId) {
+            return TransactionResult.INVALID;
+        }
+        if (item.getPrice() <= 0) {
+            return TransactionResult.INVALID; // bots only use meso purchases
+        }
+        ItemInformationProvider ii = ItemInformationProvider.getInstance();
+        Client c = player.getClient();
+        if (!ItemConstants.isRechargeable(itemId)) {
+            int amount = (int) Math.min((float) item.getPrice() * quantity, Integer.MAX_VALUE);
+            if (player.getMeso() < amount) {
+                return TransactionResult.NOT_ENOUGH_MESO;
+            }
+            if (!InventoryManipulator.checkSpace(c, itemId, quantity, "")) {
+                return TransactionResult.NO_SPACE;
+            }
+            InventoryManipulator.addById(c, itemId, quantity, "", -1);
+            player.gainMeso(-amount, false);
+        } else {
+            short slotMax = ii.getSlotMax(c, item.getItemId());
+            if (player.getMeso() < item.getPrice()) {
+                return TransactionResult.NOT_ENOUGH_MESO;
+            }
+            if (!InventoryManipulator.checkSpace(c, itemId, slotMax, "")) {
+                return TransactionResult.NO_SPACE;
+            }
+            InventoryManipulator.addById(c, itemId, slotMax, "", -1);
+            player.gainMeso(-item.getPrice(), false);
+        }
+        return TransactionResult.SUCCESS;
+    }
+
+    /** Core recharge logic without response packets. Usable by bots. */
+    public TransactionResult rechargeDirect(client.Character player, short slot) {
+        ItemInformationProvider ii = ItemInformationProvider.getInstance();
+        Item item = player.getInventory(InventoryType.USE).getItem(slot);
+        if (item == null || !ItemConstants.isRechargeable(item.getItemId())) {
+            return TransactionResult.INVALID;
+        }
+        short slotMax = ii.getSlotMax(player.getClient(), item.getItemId());
+        if (item.getQuantity() < 0) {
+            return TransactionResult.INVALID;
+        }
+        if (item.getQuantity() >= slotMax) {
+            return TransactionResult.SUCCESS; // already full
+        }
+        int price = (int) Math.ceil(ii.getUnitPrice(item.getItemId()) * (slotMax - item.getQuantity()));
+        if (player.getMeso() < price) {
+            return TransactionResult.NOT_ENOUGH_MESO;
+        }
+        item.setQuantity(slotMax);
+        player.forceUpdateItem(item);
+        player.gainMeso(-price, false, true, false);
+        return TransactionResult.SUCCESS;
     }
 
     public void buy(Client c, short slot, int itemId, short quantity) {

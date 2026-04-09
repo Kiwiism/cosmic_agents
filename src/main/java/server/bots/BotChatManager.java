@@ -783,6 +783,7 @@ public class BotChatManager {
             BotBuildManager.autoAssignAp(entry, bot);
         }
         maybeSuggestRecommendedGear(entry, bot);
+        maybeSuggestGearToSiblings(entry, bot);
         if (!entry.spawnUpgradeCheckDone) {
             entry.spawnUpgradeCheckDone = true;
             Character owner = entry.owner;
@@ -1132,6 +1133,28 @@ public class BotChatManager {
         entry.nextGearSuggestionAt = now + 60_000L;
     }
 
+    /** Check if this bot has gear that would be an upgrade for a sibling bot. */
+    private static void maybeSuggestGearToSiblings(BotEntry entry, Character bot) {
+        Character owner = entry.owner;
+        long now = System.currentTimeMillis();
+        if (owner == null || now < entry.nextGearSuggestionAt) {
+            return;
+        }
+
+        List<BotEntry> siblings = BotManager.getInstance().getBotEntries(owner.getId());
+        for (BotEntry sibling : siblings) {
+            if (sibling == entry || sibling.bot == null || sibling.bot.getMapId() != bot.getMapId()) {
+                continue;
+            }
+            List<BotEquipManager.EquipRecommendation> recs = BotEquipManager.findRecommendedEquips(sibling.bot, bot);
+            if (!recs.isEmpty()) {
+                offerGearItem(entry, bot, sibling.bot, recs.get(0).candidate());
+                entry.nextGearSuggestionAt = now + 60_000L;
+                return;
+            }
+        }
+    }
+
     /** Returns true when the owner hasn't moved in ≥5 min (AFK). Skip chat interactions. */
     static boolean isOwnerIdle(BotEntry entry) {
         return entry.ownerWasAfk;
@@ -1194,7 +1217,7 @@ public class BotChatManager {
         requestUpgradeFromOwner(entry, bot, owner, candidate);
     }
 
-    private static void offerGearItem(BotEntry entry, Character bot, Character owner, Item item) {
+    private static void offerGearItem(BotEntry entry, Character bot, Character recipient, Item item) {
         if (entry.pendingAction != null || entry.pendingTradeCategory != null
                 || !BotInventoryManager.hasItem(bot, item)) {
             return;
@@ -1202,9 +1225,9 @@ public class BotChatManager {
         entry.pendingAction = RECOMMENDED_TRADE_ACTION;
         entry.pendingDropCategory = null;
         entry.pendingLootOfferItem = item;
-        entry.pendingLootOfferRecipientId = owner.getId();
+        entry.pendingLootOfferRecipientId = recipient.getId();
         entry.pendingLootOfferExpiresAt = System.currentTimeMillis() + 30_000L;
-        queueBotSay(entry, buildLootOfferPrompt(owner, owner, item));
+        queueBotSay(entry, buildLootOfferPrompt(recipient, entry.owner, item));
     }
 
     static void scheduleLootOfferPrompt(BotEntry entry, Character bot, Item item, long delayMs) {
