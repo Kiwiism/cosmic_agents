@@ -19,14 +19,17 @@ final class BotPhysicsEngine {
     static class Config {
         public int TICK_MS = 50;
 
-        public int WALK_VEL = 150;
+        // Values below calibrated against real-client CP_USER_MOVE packet captures
+        // (monitored-packets logs for speed=100/jump=100 walk, long-fall terminal
+        // velocity, and rope climb/jump). Old values kept in comments for reference.
+        public int WALK_VEL = 125;                  // was 150 (real client walkSpeed = 125 px/s)
 
-        public float GRAVITY_PXS2 = 2187.5f;
-        public float JUMP_SPEED_PXS = 562.5f;
-        public float JUMP_DOWN_PXS = 320.0f;
-        public float JUMP_ROPE_PXS = 375.0f;
-        public float MAX_FALL_PXS = 670.0f;
-        public double HFORCE_PXS = 20.0;
+        public float GRAVITY_PXS2 = 2000.0f;        // was 2187.5f (measured: exactly 2000 px/s^2)
+        public float JUMP_SPEED_PXS = 555.0f;       // was 562.5f  (measured: -555 px/s jump kick)
+        public float JUMP_DOWN_PXS = 320.0f;        // unused by real client: down-jump starts with vy≈0, gravity only
+        public float JUMP_ROPE_PXS = 375.0f;        // rope-jump finding (NOT applied): real client kick = (±162, -277) — fixed vx 162, vy 277
+        public float MAX_FALL_PXS = 670.0f;         // confirmed exact (terminal velocity sustained in long-fall log)
+        public double HFORCE_PXS = 16.667;          // was 20.0 (yields 125 px/s walk via hF*GROUNDSLIP/(FRICTION+SLOPEFACTOR))
         public double GROUNDSLIP = 3.0;
         public double FRICTION = 0.3;
         public double SLOPEFACTOR = 0.1;
