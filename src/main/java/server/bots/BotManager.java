@@ -398,7 +398,9 @@ public class BotManager {
         BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), entry.movementProfile);
         entries.add(entry);
         FormationState fs = ownerFormations.getOrDefault(ownerCharId, FormationState.defaultStagger());
-        entry.followOffsetX = fs.offsetFor(entries.size() - 1, entries.size());
+        for (int i = 0; i < entries.size(); i++) {
+            entries.get(i).followOffsetX = fs.offsetFor(i, entries.size());
+        }
         if (normalizeSpawnState) {
             normalizeSpawnedBot(entry);
         }
