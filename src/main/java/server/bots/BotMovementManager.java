@@ -178,6 +178,8 @@ class BotMovementManager {
         entry.attackCooldownMs = 0;
         entry.graphWarmupFallback = false;
         entry.observedOwnerStepX = 0;
+        entry.observedOwnerStepY = 0;
+        BotFollowAnticsManager.clear(entry);
         clearNavigationState(entry);
         entry.movementBroadcastValid = false;
     }
@@ -398,7 +400,6 @@ class BotMovementManager {
                 }
                 targetPos = BotFallbackMovementManager.resolveSteeringTarget(entry, botPos, targetPos);
             }
-
             MoveAction action = planGroundAction(entry, botPos, targetPos);
             applyGroundAction(entry, currentFh, action);
         } finally {
@@ -499,6 +500,9 @@ class BotMovementManager {
         if (entry.graphWarmupFallback) {
             int localStopDist = Math.min(stopDist, 12);
             return updateStepX(entry, entry.bot.getMap(), botPos.x, targetPos.x, localStopDist, localStopDist);
+        }
+        if (entry.movementProfile.totalSpeedStat() > BotMovementProfile.BASE_TOTAL_STAT) {
+            return updateStepX(entry, entry.bot.getMap(), botPos.x, targetPos.x, stopDist, followDist);
         }
         if (shouldUsePacedFollowController(entry, botPos, targetPos)) {
             return updatePacedFollowStepX(entry, entry.bot.getMap(), botPos.x, targetPos.x, stopDist, followDist);

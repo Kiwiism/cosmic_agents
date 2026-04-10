@@ -1380,6 +1380,9 @@ public class BotManager {
         if (entry.moveTargetPrecise && entry.navEdge == null) {
             entry.navPreciseTarget = true;
         }
+        if (BotFollowAnticsManager.tryHandleTick(entry, steeringTarget, runAiTick)) {
+            return;
+        }
 
         tickMovementPhase(entry, steeringTarget, runAiTick);
         if (runAiTick && !entry.inAir && !entry.climbing) {
@@ -1417,6 +1420,7 @@ public class BotManager {
             return;
         }
         entry.observedOwnerStepX = entry.lastOwnerPos == null ? 0 : ownerPos.x - entry.lastOwnerPos.x;
+        entry.observedOwnerStepY = entry.lastOwnerPos == null ? 0 : ownerPos.y - entry.lastOwnerPos.y;
     }
 
     private static void tickStuckDetection(BotEntry entry) {

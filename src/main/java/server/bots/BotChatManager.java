@@ -646,6 +646,7 @@ public class BotChatManager {
         } else if (GREETING_PATTERN.matcher(message).find()) {
             BotManager.after(BotManager.randMs(900, 1100), () -> {
                 entry.bot.changeFaceExpression(Emote.HAPPY.getValue());
+                BotFollowAnticsManager.maybeStartGreetingAntic(entry, ThreadLocalRandom.current().nextInt(100));
                 queueBotSay(entry, BotManager.randomReply(GREETING_REPLIES));
                 checkBotStatus(entry, entry.bot);
             });

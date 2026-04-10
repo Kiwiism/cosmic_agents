@@ -181,6 +181,13 @@ public class BotEntry {
     boolean navPreciseTarget = false;
     boolean graphWarmupFallback = false;
     int observedOwnerStepX = 0;
+    int observedOwnerStepY = 0;
+    BotFollowAnticMode followAnticMode = BotFollowAnticMode.NONE;
+    long followAnticUntilMs = 0L;
+    long nextFollowAnticActionAtMs = 0L;
+    long nextFollowAnticAtMs = 0L;
+    long nextIdleFollowAnticRollAtMs = 0L;
+    int followAnticAirSteerDir = 0;
     long nextGearSuggestionAt = 0L;
     boolean spawnUpgradeCheckDone = false;
     final Set<Integer> requestedUpgradeItemIds = ConcurrentHashMap.newKeySet();

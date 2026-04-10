@@ -476,6 +476,45 @@ class BotMovementManagerTest {
     }
 
     @Test
+    void shouldUseFullWalkStepForFastFollowBotsInsteadOfPacing() {
+        MapleMap map = new MapleMap(910000034, 0, 0, 910000034, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(0, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.following = true;
+        entry.wasMovingX = true;
+        entry.movementProfile = new BotMovementProfile(140, 100);
+        entry.observedOwnerStepX = 4;
+
+        int walkStep = BotPhysicsEngine.walkStep(map, entry.movementProfile);
+        int step = BotMovementManager.resolveGroundStepX(
+                entry, new Point(0, 100), new Point(60, 100), BotMovementManager.cfg.STOP_DIST, BotMovementManager.cfg.FOLLOW_DIST);
+
+        assertEquals(walkStep, step,
+                "fast follow bots should keep full walk speed instead of being micro-throttled");
+    }
+
+    @Test
+    void shouldHoldProneWhileFollowAnticIsActive() {
+        MapleMap map = new MapleMap(910000036, 0, 0, 910000036, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.following = true;
+        entry.movementProfile = new BotMovementProfile(140, 100);
+        BotFollowAnticsManager.startAntic(entry, BotFollowAnticMode.PRONE, System.currentTimeMillis(), 3000);
+
+        assertTrue(BotFollowAnticsManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertTrue(entry.crouching);
+    }
+
+    @Test
     void shouldNotApplyAirSteeringDuringCommittedNavJump() {
         MapleMap map = new MapleMap(910000009, 0, 0, 910000009, 1.0f);
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));

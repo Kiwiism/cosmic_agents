@@ -75,6 +75,20 @@ class BotChatManagerTest {
     }
 
     @Test
+    void shouldTriggerGreetingAnticHalfTheTimeWhileFollowing() {
+        BotEntry entry = new BotEntry(null, null, null);
+        entry.following = true;
+
+        assertTrue(BotFollowAnticsManager.maybeStartGreetingAntic(entry, 0));
+        assertFalse(entry.followAnticMode == BotFollowAnticMode.NONE);
+
+        BotFollowAnticsManager.clear(entry);
+
+        assertFalse(BotFollowAnticsManager.maybeStartGreetingAntic(entry, 99));
+        assertEquals(BotFollowAnticMode.NONE, entry.followAnticMode);
+    }
+
+    @Test
     void shouldFormatCompactMesos() {
         assertEquals("999", BotChatManager.formatCompactMesos(999));
         assertEquals("6k", BotChatManager.formatCompactMesos(6_000));

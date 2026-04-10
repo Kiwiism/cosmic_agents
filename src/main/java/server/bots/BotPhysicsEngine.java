@@ -490,6 +490,13 @@ final class BotPhysicsEngine {
         syncCharacterState(entry);
     }
 
+    static void proneOnGround(BotEntry entry, Character bot) {
+        idleOnGround(entry, bot);
+        entry.crouching = true;
+        entry.downJumpPending = false;
+        syncCharacterState(entry);
+    }
+
     static void queueDownJump(BotEntry entry, Character bot) {
         idleOnGround(entry, bot);
         entry.downJumpPending = true;
