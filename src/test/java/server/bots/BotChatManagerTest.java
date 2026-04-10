@@ -1,12 +1,17 @@
 package server.bots;
 
+import client.Character;
 import org.junit.jupiter.api.Test;
+import server.maps.MapleMap;
 
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class BotChatManagerTest {
     @Test
@@ -60,6 +65,15 @@ class BotChatManagerTest {
     }
 
     @Test
+    void shouldMatchMovementStatQueries() {
+        assertTrue(BotChatManager.isMovementStatsQuery("speed?"));
+        assertTrue(BotChatManager.isMovementStatsQuery("jump?"));
+        assertTrue(BotChatManager.isMovementStatsQuery("movement stats"));
+        assertTrue(BotChatManager.isMovementStatsQuery("how fast are you"));
+        assertFalse(BotChatManager.isMovementStatsQuery("trade mesos"));
+    }
+
+    @Test
     void shouldFormatCompactMesos() {
         assertEquals("999", BotChatManager.formatCompactMesos(999));
         assertEquals("6k", BotChatManager.formatCompactMesos(6_000));
@@ -72,6 +86,29 @@ class BotChatManagerTest {
         assertTrue(BotChatManager.buildMesoReport(6_000).contains("6k"));
         assertTrue(BotChatManager.buildMesoReport(3_500).contains("3.5k"));
         assertTrue(BotChatManager.buildMesoReport(2_100_000).contains("2.1m"));
+    }
+
+    @Test
+    void shouldBuildMovementStatsReportUsingGameStatsAndDerivedPhysics() {
+        Character bot = mock(Character.class);
+        MapleMap map = mock(MapleMap.class);
+        when(bot.getMap()).thenReturn(map);
+        when(bot.getTotalMoveSpeedStat()).thenReturn(120);
+        when(bot.getTotalJumpStat()).thenReturn(110);
+
+        List<String> report = BotChatManager.buildMovementStatsReport(bot);
+
+        assertEquals(3, report.size());
+        assertTrue(report.get(0).contains("speed 120%"));
+        assertTrue(report.get(0).contains("jump 110%"));
+        assertTrue(report.get(1).contains("walk 180.0 px/s"));
+        assertTrue(report.get(1).contains("9 px/tick"));
+        assertTrue(report.get(1).contains("climb 5"));
+        assertTrue(report.get(1).contains("hforce 24.0"));
+        assertTrue(report.get(2).contains("jump 30.9"));
+        assertTrue(report.get(2).contains("rope 20.6"));
+        assertTrue(report.get(2).contains("max 87.5 px"));
+        assertTrue(report.get(2).contains("reach 108/72 px"));
     }
 
     @Test

@@ -10,6 +10,7 @@ import constants.game.GameConstants;
 import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
 import server.Trade;
+import server.maps.MapleMap;
 import java.awt.*;
 
 import java.util.ArrayList;
@@ -98,6 +99,11 @@ public class BotChatManager {
             INFO_PFX + "(range|damage|dmg|dps|watk|atk)\\b"
             + "|\\bwhat.?s\\s+(your|ur)\\s+(range|damage|dmg)\\b"
             + "|\\bhow\\s+(strong|powerful)\\s+(are|r)\\s+(you|u)\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern MOVEMENT_STATS_PATTERN = Pattern.compile(
+            INFO_PFX + "(?:move\\s*speed|movespeed|speed|jump|movement|mobility)(?:\\s+stats?)?\\b"
+            + "|\\bwhat.?s\\s+(your|ur)\\s+(?:move\\s*speed|movespeed|speed|jump)\\b"
+            + "|\\bhow\\s+fast\\s+(are|r)\\s+(you|u)\\b",
             Pattern.CASE_INSENSITIVE);
 
     private static final Pattern BUILD_PATTERN = Pattern.compile(
@@ -706,6 +712,8 @@ public class BotChatManager {
         }
         if (matchesWholeCommand(STATS_PATTERN, message))
             BotManager.after(BotManager.randMs(900, 1100), () -> reportStats(entry, entry.bot));
+        if (isMovementStatsQuery(message))
+            BotManager.after(BotManager.randMs(900, 1100), () -> reportMovementStats(entry, entry.bot));
         if (matchesWholeCommand(RANGE_PATTERN, message))
             BotManager.after(BotManager.randMs(900, 1100), () -> reportRange(entry, entry.bot));
         if (matchesWholeCommand(BUILD_PATTERN, message))
@@ -845,6 +853,12 @@ public class BotChatManager {
         queueBotSay(entry, String.format("my dmg is %d-%d, watk %d", minDmg, maxDmg, watk));
     }
 
+    private static void reportMovementStats(BotEntry entry, Character bot) {
+        for (String line : buildMovementStatsReport(bot)) {
+            queueBotSay(entry, line);
+        }
+    }
+
     private static void reportBuild(BotEntry entry, Character bot) {
         queueBotSay(entry, String.format("build: str %d / dex %d / int %d / luk %d, %d ap left",
                 bot.getStr(), bot.getDex(), bot.getInt(), bot.getLuk(),
@@ -948,6 +962,49 @@ public class BotChatManager {
         return String.format(pattern, amount);
     }
 
+    static boolean isMovementStatsQuery(String message) {
+        return matchesWholeCommand(MOVEMENT_STATS_PATTERN, message);
+    }
+
+    static List<String> buildMovementStatsReport(Character bot) {
+        if (bot == null) {
+            return List.of("cant read my movement stats rn");
+        }
+
+        BotMovementProfile profile = BotMovementProfile.fromCharacter(bot);
+        MapleMap map = bot.getMap();
+        int speedStat = bot.getTotalMoveSpeedStat();
+        int jumpStat = bot.getTotalJumpStat();
+        String speedLine = String.format(Locale.ROOT, "speed %d%% jump %d%%", speedStat, jumpStat);
+
+        if (map == null) {
+            return List.of(
+                    speedLine,
+                    String.format(Locale.ROOT, "walk %.1f px/s, hforce %.1f, climb %d px/tick",
+                            profile.walkVelocityPxs(), profile.hForcePxs(), BotPhysicsEngine.climbStepPerTick()),
+                    String.format(Locale.ROOT, "jump %.1f/tick, rope %.1f/tick, max jump %.1f px",
+                            BotPhysicsEngine.jumpForcePerTick(profile),
+                            BotPhysicsEngine.ropeJumpForcePerTick(profile),
+                            BotPhysicsEngine.calculateMaxJumpHeight(profile))
+            );
+        }
+
+        return List.of(
+                speedLine,
+                String.format(Locale.ROOT, "walk %.1f px/s, %d px/tick, climb %d, hforce %.1f",
+                        profile.walkVelocityPxs(),
+                        BotMovementManager.walkStep(map, profile),
+                        BotPhysicsEngine.climbStepPerTick(),
+                        profile.hForcePxs()),
+                String.format(Locale.ROOT, "jump %.1f, rope %.1f, max %.1f px, reach %d/%d px",
+                        BotPhysicsEngine.jumpForcePerTick(profile),
+                        BotPhysicsEngine.ropeJumpForcePerTick(profile),
+                        BotPhysicsEngine.calculateMaxJumpHeight(profile),
+                        BotPhysicsEngine.maxJumpHorizontalTravel(map, profile),
+                        BotPhysicsEngine.maxRopeJumpHorizontalTravel(map, profile))
+        );
+    }
+
     static String formatCompactMesos(int mesos) {
         if (mesos < 1_000) {
             return String.valueOf(mesos);
@@ -986,7 +1043,7 @@ public class BotChatManager {
     }
 
     private static void reportHelp(BotEntry entry) {
-        queueBotSay(entry, "commands: follow, stop, move here, grind, stats, skills, inventory, mesos, slots, scrolls, pots, debug stats, respec, respec ap");
+        queueBotSay(entry, "commands: follow, stop, move here, grind, stats, speed, skills, inventory, mesos, slots, scrolls, pots, debug stats, respec, respec ap");
         queueBotSay(entry, "support: support on/off, heals on/off, buff on/off, buff cheap/max, buff debug");
         queueBotSay(entry, "gear: ask 'any upgrades?' or say 'trade recommended gear'");
         queueBotSay(entry, "trade: mesos, scrolls, pots, equips, etc, or named items");
