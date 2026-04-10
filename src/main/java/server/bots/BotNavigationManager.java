@@ -120,7 +120,7 @@ final class BotNavigationManager {
         // discard a DROP/JUMP edge whose toRegionId matches the bot's current region. Without this
         // check, tryExecuteDrop re-fires from the landing platform where there's no lower foothold,
         // sending the bot out of the map.
-        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(entry.bot.getMap());
+        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(entry.bot.getMap(), entry.movementProfile);
         Point botPos = entry.bot.getPosition();
         int startRegionId = resolveCurrentRegionId(graph, entry, entry.bot.getMap(), botPos);
         BotNavigationGraph.Edge edge = reuseCommittedEdge(graph, entry, startRegionId, entry.navTargetRegionId);
@@ -300,18 +300,18 @@ final class BotNavigationManager {
             return null;
         }
 
+        if (edge.launchStepX != 0) {
+            // Walk-off drops are not an explicit action. Keep steering in the authored direction
+            // and let ground physics carry the bot into a fall with preserved momentum.
+            return null;
+        }
+
         BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(bot.getMap(), entry.movementProfile);
         if (!canExecuteDropFromCurrentPosition(graph, bot.getMap(), botPos, edge)) {
             return null;
         }
 
         setEdgeExecutionTarget(entry, edge);
-        if (edge.launchStepX != 0) {
-            BotPhysicsEngine.executeDrop(entry, bot, edge.launchStepX);
-            BotMovementManager.broadcastMovement(entry);
-            return new NavigationDirective(rawTargetPos, true);
-        }
-
         BotPhysicsEngine.queueDownJump(entry, bot);
         BotMovementManager.broadcastMovement(entry);
         return new NavigationDirective(rawTargetPos, true);
@@ -419,7 +419,13 @@ final class BotNavigationManager {
         if (edge.type != BotNavigationGraph.EdgeType.DROP) {
             return false;
         }
-        return isReadyForEdge(botPos, edge);
+        if (edge.launchStepX != 0) {
+            return false;
+        }
+        if (!isReadyForEdge(botPos, edge)) {
+            return false;
+        }
+        return true;
     }
 
     private static NavigationDirective tryExecutePortal(BotEntry entry,
@@ -443,7 +449,8 @@ final class BotNavigationManager {
             case WALK -> shouldUsePreciseWalkTarget(edge);
             case JUMP -> !canExecuteJumpFromCurrentPosition(BotNavigationGraphProvider.getGraph(entry.bot.getMap(), entry.movementProfile),
                     entry.bot.getMap(), botPos, edge);
-            case DROP -> !canExecuteDropFromCurrentPosition(BotNavigationGraphProvider.getGraph(entry.bot.getMap(), entry.movementProfile),
+            case DROP -> edge.launchStepX == 0
+                    && !canExecuteDropFromCurrentPosition(BotNavigationGraphProvider.getGraph(entry.bot.getMap(), entry.movementProfile),
                     entry.bot.getMap(), botPos, edge);
             case CLIMB -> entry.climbing
                     ? !canExecuteClimbExitFromCurrentPosition(BotNavigationGraphProvider.getGraph(entry.bot.getMap(), entry.movementProfile),
@@ -460,7 +467,8 @@ final class BotNavigationManager {
             case WALK -> new Point(edge.endPoint);
             case CLIMB -> selectClimbWaypoint(entry, botPos, edge);
             case JUMP -> entry.inAir ? new Point(edge.endPoint) : selectJumpWaypoint(entry, botPos, edge);
-            case DROP, PORTAL -> entry.inAir ? new Point(edge.endPoint) : new Point(edge.startPoint);
+            case DROP -> entry.inAir || edge.launchStepX != 0 ? new Point(edge.endPoint) : new Point(edge.startPoint);
+            case PORTAL -> entry.inAir ? new Point(edge.endPoint) : new Point(edge.startPoint);
         };
     }
 

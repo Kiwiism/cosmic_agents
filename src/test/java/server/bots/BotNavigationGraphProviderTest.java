@@ -255,6 +255,18 @@ class BotNavigationGraphProviderTest {
     }
 
     @Test
+    void shouldTreatWalkOffDropsAsDirectionalMovementInsteadOfExecutableAnchors() {
+        LedgeDropCase dropCase = findLedgeDropCaseWithWalkableEarlyStart(elliniaGraph, ellinia);
+
+        assertNotNull(dropCase, "Expected at least one ledge drop with a still-walkable early start");
+        assertTrue(BotPhysicsEngine.canWalkGroundStep(ellinia, dropCase.earlyStart(), dropCase.edge().launchStepX));
+        assertFalse(BotNavigationManager.canExecuteDropFromCurrentPosition(
+                elliniaGraph, ellinia, dropCase.edge().startPoint, dropCase.edge()));
+        assertFalse(BotNavigationManager.canExecuteDropFromCurrentPosition(
+                elliniaGraph, ellinia, dropCase.earlyStart(), dropCase.edge()));
+    }
+
+    @Test
     void shouldAllowJumpExecutionFromAlternativeStartWhenLandingRegionMatches() {
         AlternativeJumpCase jumpCase = findJumpCaseWithAlternativeStart(henesysGraph, henesys);
 
@@ -443,6 +455,55 @@ class BotNavigationGraphProviderTest {
         return null;
     }
 
+    private static LedgeDropCase findLedgeDropCaseWithWalkableEarlyStart(BotNavigationGraph graph, MapleMap map) {
+        for (BotNavigationGraph.Region region : graph.regions) {
+            for (BotNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
+                if (edge.type != BotNavigationGraph.EdgeType.DROP || edge.launchStepX == 0) {
+                    continue;
+                }
+
+                Point earlyStart = findWalkableEarlyDropStart(graph, map, edge);
+                if (earlyStart != null) {
+                    return new LedgeDropCase(edge, earlyStart);
+                }
+            }
+        }
+        return null;
+    }
+
+    private static Point findWalkableEarlyDropStart(BotNavigationGraph graph,
+                                                    MapleMap map,
+                                                    BotNavigationGraph.Edge edge) {
+        BotNavigationGraph.Region region = graph.getRegion(edge.fromRegionId);
+        if (region == null) {
+            return null;
+        }
+
+        int direction = Integer.signum(edge.launchStepX);
+        if (direction == 0) {
+            return null;
+        }
+
+        for (int delta = 1; delta <= 14; delta++) {
+            int candidateX = edge.startPoint.x - (direction * delta);
+            if (candidateX < region.minX || candidateX > region.maxX) {
+                continue;
+            }
+
+            Point candidate = region.pointAt(candidateX);
+            if (candidate == null || candidate.equals(edge.startPoint)) {
+                continue;
+            }
+            if (graph.findRegionId(map, candidate) != edge.fromRegionId) {
+                continue;
+            }
+            if (BotPhysicsEngine.canWalkGroundStep(map, candidate, edge.launchStepX)) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
     private static AlternativeJumpCase findJumpCaseWithAlternativeStart(BotNavigationGraph graph, MapleMap map) {
         for (BotNavigationGraph.Region region : graph.regions) {
             for (BotNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
@@ -564,6 +625,9 @@ class BotNavigationGraphProviderTest {
     }
 
     private record StraightDropCase(BotNavigationGraph.Edge edge, Point alternativeStart) {
+    }
+
+    private record LedgeDropCase(BotNavigationGraph.Edge edge, Point earlyStart) {
     }
 
     private record AlternativeJumpCase(BotNavigationGraph.Edge edge, Point alternativeStart) {

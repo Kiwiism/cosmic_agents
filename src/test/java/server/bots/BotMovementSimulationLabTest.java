@@ -9,6 +9,7 @@ import java.awt.*;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -207,6 +208,33 @@ class BotMovementSimulationLabTest {
                 "mid-air jump ticks should not drop navigation and re-enable free air steering");
     }
 
+    @Test
+    void shouldWalkOffLedgeDropsViaGroundPhysicsWithoutExplicitDropExec() {
+        MapleMap map = BotNavigationMapLoader.loadMapGeometry(101000000);
+        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
+        LedgeDropScenario scenario = findLedgeDropScenario(graph, map);
+
+        assertNotNull(scenario, "Expected at least one walk-off drop with a still-grounded start point");
+
+        BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);
+        lab.spawnBot("DROPPER", 60, map, scenario.startPoint());
+        lab.setMoveTarget("DROPPER", scenario.edge().endPoint, true);
+        lab.setNavState("DROPPER", scenario.edge(), scenario.edge().toRegionId, false);
+        lab.setAiAccumulator("DROPPER", 50);
+
+        lab.step(20);
+
+        List<String> trace = lab.formatRecentTrace("DROPPER", 20);
+        String edgeToken = String.format("edge=DROP r%d->r%d", scenario.edge().fromRegionId, scenario.edge().toRegionId);
+
+        assertTrue(trace.stream().anyMatch(line -> line.contains("phys=AIR") && line.contains(edgeToken)),
+                "bot should leave the ledge and keep the committed drop edge while airborne");
+        assertFalse(trace.stream().anyMatch(line -> line.contains("nav=exec") && line.contains(edgeToken)),
+                "walk-off drops should not require an explicit DROP execution step");
+        assertEquals(scenario.edge().toRegionId, graph.findRegionId(map, lab.position("DROPPER")),
+                "bot should land in the destination region after walking off the ledge");
+    }
+
     private static MapleMap createFlatMap(int mapId, int x1, int x2, int y) {
         MapleMap map = new MapleMap(mapId, 0, 0, mapId, 1.0f);
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(
@@ -215,5 +243,54 @@ class BotMovementSimulationLabTest {
         footholds.insert(new Foothold(new Point(x1, y), new Point(x2, y), 1));
         map.setFootholds(footholds);
         return map;
+    }
+
+    private static LedgeDropScenario findLedgeDropScenario(BotNavigationGraph graph, MapleMap map) {
+        for (BotNavigationGraph.Region region : graph.regions) {
+            for (BotNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
+                if (edge.type != BotNavigationGraph.EdgeType.DROP || edge.launchStepX == 0) {
+                    continue;
+                }
+
+                Point startPoint = findWalkableStartBeforeLedge(graph, map, edge);
+                if (startPoint != null) {
+                    return new LedgeDropScenario(edge, startPoint);
+                }
+            }
+        }
+        return null;
+    }
+
+    private static Point findWalkableStartBeforeLedge(BotNavigationGraph graph,
+                                                      MapleMap map,
+                                                      BotNavigationGraph.Edge edge) {
+        BotNavigationGraph.Region region = graph.getRegion(edge.fromRegionId);
+        if (region == null) {
+            return null;
+        }
+
+        int direction = Integer.signum(edge.launchStepX);
+        if (direction == 0) {
+            return null;
+        }
+
+        for (int delta = 6; delta <= 18; delta += 2) {
+            int candidateX = edge.startPoint.x - (direction * delta);
+            if (candidateX < region.minX || candidateX > region.maxX) {
+                continue;
+            }
+
+            Point candidate = region.pointAt(candidateX);
+            if (candidate == null || graph.findRegionId(map, candidate) != edge.fromRegionId) {
+                continue;
+            }
+            if (BotPhysicsEngine.canWalkGroundStep(map, candidate, edge.launchStepX)) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    private record LedgeDropScenario(BotNavigationGraph.Edge edge, Point startPoint) {
     }
 }

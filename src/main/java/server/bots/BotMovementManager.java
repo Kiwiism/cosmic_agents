@@ -390,8 +390,8 @@ class BotMovementManager {
     /**
      * Stop-distance used when navPreciseTarget is true.
      * WALK edges use 4px to absorb terrain micro-bumps on sloped footholds.
-     * All other edge types (JUMP, DROP, CLIMB, PORTAL) use 1px — the bot must reach
-     * the exact entry anchor for jump/climb simulations to succeed reliably.
+     * All other precise edge types (JUMP, straight DROP, CLIMB, PORTAL) use 1px — the bot
+     * must reach the exact entry anchor for jump/climb simulations to succeed reliably.
      */
     static int preciseNavStopDist(BotNavigationGraph.Edge navEdge) {
         if (navEdge != null && navEdge.type == BotNavigationGraph.EdgeType.JUMP) {
@@ -444,6 +444,14 @@ class BotMovementManager {
         }
         boolean canWalkStep = BotPhysicsEngine.canWalkGroundStep(entry.bot.getMap(), botPos, stepX);
         if (!canWalkStep) {
+            if (entry.navEdge != null
+                    && entry.navEdge.type == BotNavigationGraph.EdgeType.DROP
+                    && entry.navEdge.launchStepX != 0
+                    && Integer.signum(stepX) == Integer.signum(entry.navEdge.launchStepX)) {
+                // Walk-off drops should keep walking in the authored direction until physics
+                // detects lost ground and transitions into a fall with preserved momentum.
+                return MoveAction.walk(stepX);
+            }
             // Only committed WALK edges get cleared here. Other edge types intentionally allow
             // walking to rope/jump/drop entries where a generic ground-step preview can produce
             // false negatives, especially around rope platforms and ledges.
