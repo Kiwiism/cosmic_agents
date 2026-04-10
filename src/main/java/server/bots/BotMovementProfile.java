@@ -6,11 +6,12 @@ import java.io.Serializable;
 
 record BotMovementProfile(int totalSpeedStat, int totalJumpStat) implements Serializable {
     static final int BASE_TOTAL_STAT = 100;
+    static final int STAT_BUCKET_SIZE = 5;
     static final BotMovementProfile BASE = new BotMovementProfile(BASE_TOTAL_STAT, BASE_TOTAL_STAT);
 
     BotMovementProfile {
-        totalSpeedStat = Math.max(1, totalSpeedStat);
-        totalJumpStat = Math.max(1, totalJumpStat);
+        totalSpeedStat = bucketStat(totalSpeedStat);
+        totalJumpStat = bucketStat(totalJumpStat);
     }
 
     static BotMovementProfile base() {
@@ -22,6 +23,14 @@ record BotMovementProfile(int totalSpeedStat, int totalJumpStat) implements Seri
             return BASE;
         }
         return new BotMovementProfile(character.getTotalMoveSpeedStat(), character.getTotalJumpStat());
+    }
+
+    private static int bucketStat(int stat) {
+        int clamped = Math.max(1, stat);
+        if (clamped < STAT_BUCKET_SIZE) {
+            return clamped;
+        }
+        return clamped - Math.floorMod(clamped, STAT_BUCKET_SIZE);
     }
 
     double speedMultiplier() {

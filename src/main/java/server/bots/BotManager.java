@@ -395,6 +395,7 @@ public class BotManager {
                 () -> tick(ownerCharId, botCharId), BotMovementManager.cfg.TICK_MS);
         BotEntry entry = new BotEntry(bot, owner, task);
         entry.movementProfile = BotMovementProfile.fromCharacter(bot);
+        BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), entry.movementProfile);
         entries.add(entry);
         FormationState fs = ownerFormations.getOrDefault(ownerCharId, FormationState.defaultStagger());
         entry.followOffsetX = fs.offsetFor(entries.size() - 1, entries.size());
@@ -1006,7 +1007,11 @@ public class BotManager {
             return false;
         }
 
-        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(map, entry.movementProfile);
+        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map, entry.movementProfile);
+        if (graph == null) {
+            BotNavigationGraphProvider.warmGraphAsync(map, entry.movementProfile);
+            return false;
+        }
         int botRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, map, botPos);
         int combatTargetRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, map, combatTargetPos);
         if (botRegionId < 0 || combatTargetRegionId < 0 || botRegionId != combatTargetRegionId) {
@@ -1080,6 +1085,7 @@ public class BotManager {
             Point ground = BotPhysicsEngine.findGroundPoint(bot.getMap(), new Point(cur.x, cur.y - 1));
             BotPhysicsEngine.teleportTo(entry, bot, ground != null ? ground : cur);
             BotMovementManager.resetEntryStateAfterTeleport(entry);
+            BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), entry.movementProfile);
             BotMovementManager.broadcastMovement(entry);
             if (BotPqHooks.requiresGrind(entry, bot)) { entry.grinding = true; entry.following = false; }
             else if (BotPqHooks.requiresFollow(entry, bot)) { entry.following = true; entry.grinding = false; }

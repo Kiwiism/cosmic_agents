@@ -151,6 +151,14 @@ class BotMovementManager {
             return false;
         }
 
+        MapleMap map = entry.bot != null ? entry.bot.getMap() : null;
+        if (map != null && map.getFootholds() != null) {
+            if (BotNavigationGraphProvider.peekGraph(map, updated) == null) {
+                BotNavigationGraphProvider.warmGraphAsync(map, updated);
+                return false;
+            }
+        }
+
         entry.movementProfile = updated;
         clearNavigationState(entry);
         return true;
@@ -411,7 +419,11 @@ class BotMovementManager {
         }
 
         MapleMap map = entry.bot.getMap();
-        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(map, entry.movementProfile);
+        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map, entry.movementProfile);
+        if (graph == null) {
+            BotNavigationGraphProvider.warmGraphAsync(map, entry.movementProfile);
+            return targetPos;
+        }
         Point botPos = entry.bot.getPosition();
         int currentRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, map, botPos);
         int targetRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, map, targetPos);
@@ -435,19 +447,18 @@ class BotMovementManager {
     }
 
     private static MoveAction planGroundAction(BotEntry entry, Point botPos, Point targetPos) {
-        int stopDist = entry.navPreciseTarget ? preciseNavStopDist(entry.navEdge) : cfg.STOP_DIST;
+        boolean directionalDrop = isDirectionalDropEdge(entry.navEdge);
+        int stopDist = directionalDrop ? 0 : entry.navPreciseTarget ? preciseNavStopDist(entry.navEdge) : cfg.STOP_DIST;
         // No hysteresis when navigating to an edge — always move toward the waypoint
-        int followDist = (entry.navEdge != null || entry.navPreciseTarget) ? stopDist : cfg.FOLLOW_DIST;
+        int followDist = directionalDrop ? 0
+                : (entry.navEdge != null || entry.navPreciseTarget) ? stopDist : cfg.FOLLOW_DIST;
         int stepX = updateStepX(entry, entry.bot.getMap(), botPos.x, targetPos.x, stopDist, followDist);
         if (stepX == 0) {
             return MoveAction.idle();
         }
         boolean canWalkStep = BotPhysicsEngine.canWalkGroundStep(entry.bot.getMap(), botPos, stepX);
         if (!canWalkStep) {
-            if (entry.navEdge != null
-                    && entry.navEdge.type == BotNavigationGraph.EdgeType.DROP
-                    && entry.navEdge.launchStepX != 0
-                    && Integer.signum(stepX) == Integer.signum(entry.navEdge.launchStepX)) {
+            if (directionalDrop && Integer.signum(stepX) == Integer.signum(entry.navEdge.launchStepX)) {
                 // Walk-off drops should keep walking in the authored direction until physics
                 // detects lost ground and transitions into a fall with preserved momentum.
                 return MoveAction.walk(stepX);
@@ -461,6 +472,12 @@ class BotMovementManager {
             return MoveAction.idle();
         }
         return MoveAction.walk(stepX);
+    }
+
+    private static boolean isDirectionalDropEdge(BotNavigationGraph.Edge navEdge) {
+        return navEdge != null
+                && navEdge.type == BotNavigationGraph.EdgeType.DROP
+                && navEdge.launchStepX != 0;
     }
 
     private static void applyGroundAction(BotEntry entry, Foothold currentFh, MoveAction action) {

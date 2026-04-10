@@ -243,15 +243,18 @@ class BotNavigationGraphProviderTest {
 
     @Test
     void shouldRequireStraightDropExecutionNearItsAuthoredAnchor() {
-        StraightDropCase dropCase = findStraightDropCaseWithAlternativeStart(elliniaGraph, ellinia);
+        BotNavigationGraph.Edge dropEdge = new BotNavigationGraph.Edge(
+                1, 2, BotNavigationGraph.EdgeType.DROP,
+                new Point(100, 100), new Point(100, 160),
+                0, 0, 0, 0, 0, 100
+        );
 
-        assertNotNull(dropCase, "Expected at least one straight drop edge with an alternate same-region start point");
-        assertNotEquals(dropCase.edge().startPoint.x, dropCase.alternativeStart().x);
         assertTrue(BotNavigationManager.canExecuteDropFromCurrentPosition(
-                elliniaGraph, ellinia, dropCase.edge().startPoint, dropCase.edge()));
-        assertEquals(Math.abs(dropCase.alternativeStart().x - dropCase.edge().startPoint.x) <= 14,
-                BotNavigationManager.canExecuteDropFromCurrentPosition(
-                        elliniaGraph, ellinia, dropCase.alternativeStart(), dropCase.edge()));
+                null, null, new Point(100, 100), dropEdge));
+        assertTrue(BotNavigationManager.canExecuteDropFromCurrentPosition(
+                null, null, new Point(114, 100), dropEdge));
+        assertFalse(BotNavigationManager.canExecuteDropFromCurrentPosition(
+                null, null, new Point(115, 100), dropEdge));
     }
 
     @Test
@@ -410,49 +413,6 @@ class BotNavigationGraphProviderTest {
         MapleMap map = new MapleMap(mapId, 0, 0, mapId, 1.0f);
         map.setFootholds(new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000)));
         return map;
-    }
-
-    private static StraightDropCase findStraightDropCaseWithAlternativeStart(BotNavigationGraph graph, MapleMap map) {
-        for (BotNavigationGraph.Region region : graph.regions) {
-            for (BotNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
-                if (edge.type != BotNavigationGraph.EdgeType.DROP || edge.launchStepX != 0) {
-                    continue;
-                }
-
-                Point alternative = findAlternativeStraightDropStart(graph, map, edge);
-                if (alternative != null) {
-                    return new StraightDropCase(edge, alternative);
-                }
-            }
-        }
-        return null;
-    }
-
-    private static Point findAlternativeStraightDropStart(BotNavigationGraph graph,
-                                                          MapleMap map,
-                                                          BotNavigationGraph.Edge edge) {
-        BotNavigationGraph.Region region = graph.getRegion(edge.fromRegionId);
-        if (region == null) {
-            return null;
-        }
-
-        for (int x = region.minX; x <= region.maxX; x += 4) {
-            Point start = region.pointAt(x);
-            if (Math.abs(start.x - edge.startPoint.x) < 12) {
-                continue;
-            }
-
-            BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateDownJumpLanding(map, start);
-            if (landing == null) {
-                continue;
-            }
-
-            int landingRegionId = graph.regionIdByFootholdId.getOrDefault(landing.foothold().getId(), -1);
-            if (landingRegionId == edge.toRegionId) {
-                return start;
-            }
-        }
-        return null;
     }
 
     private static LedgeDropCase findLedgeDropCaseWithWalkableEarlyStart(BotNavigationGraph graph, MapleMap map) {
@@ -622,9 +582,6 @@ class BotNavigationGraphProviderTest {
         assertEquals(expectedRegionId,
                 graph.regionIdByFootholdId.getOrDefault(landing.foothold().getId(), -1),
                 "jump edge should land in the expected destination region");
-    }
-
-    private record StraightDropCase(BotNavigationGraph.Edge edge, Point alternativeStart) {
     }
 
     private record LedgeDropCase(BotNavigationGraph.Edge edge, Point earlyStart) {

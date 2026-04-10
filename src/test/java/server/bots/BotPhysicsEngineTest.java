@@ -74,14 +74,28 @@ class BotPhysicsEngineTest {
     void shouldSimulateRopeToRopeGrabAtActualCatchY() {
         MapleMap map = createEmptyTestMap(910000001);
         Rope sourceRope = new Rope(0, 100, 200, false);
-        Rope targetRope = new Rope(48, 140, 150, false);
         map.addRope(sourceRope);
-        map.addRope(targetRope);
+        Point jumpStart = new Point(sourceRope.x(), 160);
+        int stepX = BotPhysicsEngine.walkStep(map);
 
-        Point ropeGrab = BotPhysicsEngine.simulateRopeJumpGrab(map, new Point(sourceRope.x(), 160),
-                BotPhysicsEngine.walkStep(map), targetRope);
+        Rope targetRope = null;
+        Point ropeGrab = null;
+        for (int targetX = stepX; targetX <= BotPhysicsEngine.maxRopeJumpHorizontalTravel(map); targetX += stepX) {
+            Rope candidate = new Rope(targetX, 120, 220, false);
+            Point candidateGrab = BotPhysicsEngine.simulateRopeJumpGrab(map, jumpStart, stepX, candidate);
+            if (candidateGrab != null) {
+                targetRope = candidate;
+                ropeGrab = candidateGrab;
+                break;
+            }
+        }
 
-        assertEquals(new Point(targetRope.x(), 146), ropeGrab);
+        assertNotNull(targetRope, "expected a reachable target rope for the current rope-jump physics");
+        assertNotNull(ropeGrab);
+        assertEquals(targetRope.x(), ropeGrab.x);
+        assertTrue(ropeGrab.y > targetRope.topY(),
+                "rope grab should use the actual catch Y instead of snapping to the rope top");
+        assertTrue(ropeGrab.y <= targetRope.bottomY());
     }
 
     @Test

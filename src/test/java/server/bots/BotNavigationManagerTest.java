@@ -13,12 +13,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -255,6 +258,28 @@ class BotNavigationManagerTest {
     }
 
     @Test
+    void shouldHoldPositionWhileMovementGraphWarmsInBackground() {
+        MapleMap map = new MapleMap(910000030, 0, 0, 910000030, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(20, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.movementProfile = new BotMovementProfile(105, 105);
+
+        BotNavigationManager.NavigationDirective directive =
+                BotNavigationManager.resolveTarget(entry, new Point(180, 100), true);
+
+        assertFalse(directive.consumedTick);
+        assertEquals(new Point(20, 100), directive.targetPos);
+        assertEquals("graph-warmup", entry.lastNavDecision);
+        assertNull(entry.navEdge);
+
+        BotNavigationGraphProvider.getGraph(map, entry.movementProfile);
+    }
+
+    @Test
     void shouldHoldCurrentPositionOnceClimbExitLaunchWindowIsReached() {
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(elliniaDungeon);
@@ -309,5 +334,21 @@ class BotNavigationManagerTest {
         BotNavigationGraph.Edge reused = BotNavigationManager.reuseCommittedEdge(graph, entry, 20, 14);
 
         assertEquals(entry.navEdge, reused);
+    }
+
+    private static Character mockBot(Point startPosition, MapleMap map) {
+        Character bot = mock(Character.class);
+        AtomicReference<Point> position = new AtomicReference<>(new Point(startPosition));
+        when(bot.getPosition()).thenAnswer(invocation -> new Point(position.get()));
+        doAnswer(invocation -> {
+            position.set(new Point(invocation.getArgument(0)));
+            return null;
+        }).when(bot).setPosition(any(Point.class));
+        when(bot.getMap()).thenReturn(map);
+        when(bot.getId()).thenReturn(1);
+        when(bot.getHp()).thenReturn(100);
+        when(bot.getTotalMoveSpeedStat()).thenReturn(100);
+        when(bot.getTotalJumpStat()).thenReturn(100);
+        return bot;
     }
 }

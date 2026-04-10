@@ -156,7 +156,7 @@ class BotMovementSimulationLabTest {
     }
 
     @Test
-    void shouldExecuteJohnSecondJumpOnSameAiTickItReachesLaunchPoint() {
+    void shouldCommitJohnSecondJumpOnTheNextAiTickAfterLanding() {
         MapleMap map = BotNavigationMapLoader.loadMapGeometry(101020001);
         BotNavigationGraphProvider.rebuildGraph(map);
         BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);
@@ -177,15 +177,18 @@ class BotMovementSimulationLabTest {
         List<String> trace = lab.formatRecentTrace("JOHN", 20);
 
         assertTrue(trace.stream().anyMatch(line -> line.contains("nav=exec")
-                        && line.contains("phys=AIR")
+                        && line.contains("edge=JUMP r28->r27")),
+                "seeded jump edge should execute once the bot reaches its launch point");
+        assertTrue(trace.stream().anyMatch(line -> line.contains("nav=new")
+                        && line.contains("phys=GND")
                         && line.contains("edge=JUMP r27->r")),
-                "bot should immediately chain into another authored jump after landing from the first jump");
+                "after landing, the next AI tick should commit the next authored jump from the new region");
         assertTrue(trace.stream().noneMatch(line -> line.contains("phys=AIR") && line.contains("edge=none")),
                 "bot should not drop navigation and enter an uncommitted fall between chained jumps");
     }
 
     @Test
-    void shouldKeepPetWalkingRoadJumpCommittedWhileAirborne() {
+    void shouldUsePetWalkingRoadLocalWalkOffDrop() {
         MapleMap map = BotNavigationMapLoader.loadMapGeometry(100000202);
         BotNavigationGraphProvider.rebuildGraph(map);
         BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);
@@ -200,12 +203,14 @@ class BotMovementSimulationLabTest {
         lab.step(17);
 
         List<String> trace = lab.formatRecentTrace("JOHN", 17);
-        assertTrue(trace.stream()
-                        .filter(line -> line.contains("phys=AIR"))
-                        .allMatch(line -> line.contains("edge=JUMP r32->r38 (-1341,-664)->(-1250,-633) stepX=8")),
-                "airborne jump should keep the committed r32->r38 edge until landing");
-        assertTrue(trace.stream().noneMatch(line -> line.contains("phys=AIR") && line.contains("edge=none")),
-                "mid-air jump ticks should not drop navigation and re-enable free air steering");
+        assertTrue(trace.stream().anyMatch(line -> line.contains("phys=GND") && line.contains("edge=DROP")),
+                "bot should commit a local drop edge while approaching the ledge");
+        assertTrue(trace.stream().anyMatch(line -> line.contains("phys=AIR")),
+                "bot should eventually leave the ledge and fall through normal physics");
+        assertFalse(trace.stream().anyMatch(line -> line.contains("nav=exec") && line.contains("edge=DROP")),
+                "walk-off drops should not require an explicit DROP execution step");
+        assertFalse(trace.stream().anyMatch(line -> line.contains("graph-warmup")),
+                "simulation uses a prebuilt graph and should not pause on graph warmup");
     }
 
     @Test
@@ -222,13 +227,15 @@ class BotMovementSimulationLabTest {
         lab.setNavState("DROPPER", scenario.edge(), scenario.edge().toRegionId, false);
         lab.setAiAccumulator("DROPPER", 50);
 
-        lab.step(20);
+        lab.step(40);
 
-        List<String> trace = lab.formatRecentTrace("DROPPER", 20);
+        List<String> trace = lab.formatRecentTrace("DROPPER", 40);
         String edgeToken = String.format("edge=DROP r%d->r%d", scenario.edge().fromRegionId, scenario.edge().toRegionId);
 
-        assertTrue(trace.stream().anyMatch(line -> line.contains("phys=AIR") && line.contains(edgeToken)),
-                "bot should leave the ledge and keep the committed drop edge while airborne");
+        assertTrue(trace.stream().anyMatch(line -> line.contains("phys=GND") && line.contains(edgeToken)),
+                "bot should follow the authored drop edge while walking toward the ledge");
+        assertTrue(trace.stream().anyMatch(line -> line.contains("phys=AIR")),
+                "bot should leave the ledge and fall through physics");
         assertFalse(trace.stream().anyMatch(line -> line.contains("nav=exec") && line.contains(edgeToken)),
                 "walk-off drops should not require an explicit DROP execution step");
         assertEquals(scenario.edge().toRegionId, graph.findRegionId(map, lab.position("DROPPER")),

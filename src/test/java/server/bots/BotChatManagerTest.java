@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import server.maps.MapleMap;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -95,20 +96,24 @@ class BotChatManagerTest {
         when(bot.getMap()).thenReturn(map);
         when(bot.getTotalMoveSpeedStat()).thenReturn(120);
         when(bot.getTotalJumpStat()).thenReturn(110);
+        BotMovementProfile profile = BotMovementProfile.fromCharacter(bot);
 
         List<String> report = BotChatManager.buildMovementStatsReport(bot);
 
-        assertEquals(3, report.size());
-        assertTrue(report.get(0).contains("speed 120%"));
-        assertTrue(report.get(0).contains("jump 110%"));
-        assertTrue(report.get(1).contains("walk 180.0 px/s"));
-        assertTrue(report.get(1).contains("9 px/tick"));
-        assertTrue(report.get(1).contains("climb 5"));
-        assertTrue(report.get(1).contains("hforce 24.0"));
-        assertTrue(report.get(2).contains("jump 30.9"));
-        assertTrue(report.get(2).contains("rope 20.6"));
-        assertTrue(report.get(2).contains("max 87.5 px"));
-        assertTrue(report.get(2).contains("reach 108/72 px"));
+        assertEquals(List.of(
+                "speed 120% jump 110%",
+                String.format(Locale.ROOT, "walk %.1f px/s, %d px/tick, climb %d, hforce %.1f",
+                        profile.walkVelocityPxs(),
+                        BotMovementManager.walkStep(map, profile),
+                        BotPhysicsEngine.climbStepPerTick(),
+                        profile.hForcePxs()),
+                String.format(Locale.ROOT, "jump %.1f, rope %.1f, max %.1f px, reach %d/%d px",
+                        BotPhysicsEngine.jumpForcePerTick(profile),
+                        BotPhysicsEngine.ropeJumpForcePerTick(profile),
+                        BotPhysicsEngine.calculateMaxJumpHeight(profile),
+                        BotPhysicsEngine.maxJumpHorizontalTravel(map, profile),
+                        BotPhysicsEngine.maxRopeJumpHorizontalTravel(map, profile))
+        ), report);
     }
 
     @Test

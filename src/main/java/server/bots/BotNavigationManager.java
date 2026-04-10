@@ -53,7 +53,17 @@ final class BotNavigationManager {
                 return new NavigationDirective(rawTargetPos, false);
             }
 
-            BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(bot.getMap(), entry.movementProfile);
+            BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(bot.getMap(), entry.movementProfile);
+            if (graph == null) {
+                BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), entry.movementProfile);
+                entry.lastNavDecision = "graph-warmup";
+                clearNavigation(entry);
+                Point holdPos = bot.getPosition();
+                if (entry.pathLogger != null) {
+                    entry.pathLogger.record(entry, BotManager.getInstance().captureTargetSnapshot(entry), -1, false, runAiTick);
+                }
+                return new NavigationDirective(new Point(holdPos), false);
+            }
             Point botPos = bot.getPosition();
             int startRegionId = resolveCurrentRegionId(graph, entry, bot.getMap(), botPos);
             int targetRegionId = resolveTargetRegionId(graph, entry, bot.getMap(), rawTargetPos);
@@ -120,7 +130,11 @@ final class BotNavigationManager {
         // discard a DROP/JUMP edge whose toRegionId matches the bot's current region. Without this
         // check, tryExecuteDrop re-fires from the landing platform where there's no lower foothold,
         // sending the bot out of the map.
-        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(entry.bot.getMap(), entry.movementProfile);
+        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(entry.bot.getMap(), entry.movementProfile);
+        if (graph == null) {
+            BotNavigationGraphProvider.warmGraphAsync(entry.bot.getMap(), entry.movementProfile);
+            return false;
+        }
         Point botPos = entry.bot.getPosition();
         int startRegionId = resolveCurrentRegionId(graph, entry, entry.bot.getMap(), botPos);
         BotNavigationGraph.Edge edge = reuseCommittedEdge(graph, entry, startRegionId, entry.navTargetRegionId);

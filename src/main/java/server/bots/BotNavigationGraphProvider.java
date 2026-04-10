@@ -20,7 +20,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 final class BotNavigationGraphProvider {
     private static final Logger log = LoggerFactory.getLogger(BotNavigationGraphProvider.class);
@@ -31,9 +34,15 @@ final class BotNavigationGraphProvider {
     private static final int MAX_PROFILED_JUMP_REGIONS = 5;
     private static final Path CACHE_DIR = Path.of("cache", "bot-nav", "v" + GRAPH_VERSION);
     private static final Map<GraphCacheKey, BotNavigationGraph> GRAPHS = new ConcurrentHashMap<>();
+    private static final Map<GraphCacheKey, CompletableFuture<BotNavigationGraph>> PENDING_GRAPHS = new ConcurrentHashMap<>();
     private static final Map<GraphCacheKey, GraphBuildReport> LAST_BUILD_REPORTS = new ConcurrentHashMap<>();
     private static final Map<Integer, Set<Integer>> COLLIDABLE_WALL_IDS_BY_MAP_ID = new ConcurrentHashMap<>();
     private static final ThreadLocal<BuildProfileBuilder> ACTIVE_BUILD_PROFILE = new ThreadLocal<>();
+    private static final ExecutorService GRAPH_WARMUP_EXECUTOR = Executors.newSingleThreadExecutor(r -> {
+        Thread thread = new Thread(r, "bot-nav-graph-warmup");
+        thread.setDaemon(true);
+        return thread;
+    });
 
     private record GraphCacheKey(int mapId, int totalSpeedStat, int totalJumpStat) {
         static GraphCacheKey from(int mapId, BotMovementProfile profile) {
@@ -266,18 +275,47 @@ final class BotNavigationGraphProvider {
     }
 
     static BotNavigationGraph getGraph(MapleMap map, BotMovementProfile movementProfile) {
+        if (map == null) {
+            return null;
+        }
         GraphCacheKey key = GraphCacheKey.from(map.getId(), movementProfile);
-        return GRAPHS.computeIfAbsent(key, ignored -> loadOrBuildGraph(map, movementProfile));
+        BotNavigationGraph cached = GRAPHS.get(key);
+        if (cached != null) {
+            return cached;
+        }
+        return getOrStartGraphLoad(map, movementProfile, key, false).join();
     }
 
     /** Returns the cached graph without triggering a build. */
     static BotNavigationGraph peekGraph(MapleMap map) {
+        if (map == null) {
+            return null;
+        }
         for (Map.Entry<GraphCacheKey, BotNavigationGraph> entry : GRAPHS.entrySet()) {
             if (entry.getKey().mapId() == map.getId()) {
                 return entry.getValue();
             }
         }
         return null;
+    }
+
+    /** Returns the cached graph for the requested profile without triggering a build. */
+    static BotNavigationGraph peekGraph(MapleMap map, BotMovementProfile movementProfile) {
+        if (map == null) {
+            return null;
+        }
+        return GRAPHS.get(GraphCacheKey.from(map.getId(), movementProfile));
+    }
+
+    static void warmGraphAsync(MapleMap map, BotMovementProfile movementProfile) {
+        if (map == null) {
+            return;
+        }
+        GraphCacheKey key = GraphCacheKey.from(map.getId(), movementProfile);
+        if (GRAPHS.containsKey(key)) {
+            return;
+        }
+        getOrStartGraphLoad(map, movementProfile, key, true);
     }
 
     static BotNavigationGraph rebuildGraph(MapleMap map) {
@@ -288,12 +326,59 @@ final class BotNavigationGraphProvider {
         GraphCacheKey key = GraphCacheKey.from(map.getId(), movementProfile);
         BotNavigationGraph rebuilt = buildGraph(map, movementProfile);
         GRAPHS.put(key, rebuilt);
+        CompletableFuture<BotNavigationGraph> pending = PENDING_GRAPHS.remove(key);
+        if (pending != null) {
+            pending.complete(rebuilt);
+        }
         saveGraph(rebuilt);
         return rebuilt;
     }
 
-    private static BotNavigationGraph loadOrBuildGraph(MapleMap map, BotMovementProfile movementProfile) {
-        GraphCacheKey key = GraphCacheKey.from(map.getId(), movementProfile);
+    private static CompletableFuture<BotNavigationGraph> getOrStartGraphLoad(MapleMap map,
+                                                                             BotMovementProfile movementProfile,
+                                                                             GraphCacheKey key,
+                                                                             boolean async) {
+        BotNavigationGraph cached = GRAPHS.get(key);
+        if (cached != null) {
+            return CompletableFuture.completedFuture(cached);
+        }
+
+        CompletableFuture<BotNavigationGraph> existing = PENDING_GRAPHS.get(key);
+        if (existing != null) {
+            return existing;
+        }
+
+        CompletableFuture<BotNavigationGraph> future = new CompletableFuture<>();
+        CompletableFuture<BotNavigationGraph> race = PENDING_GRAPHS.putIfAbsent(key, future);
+        if (race != null) {
+            return race;
+        }
+
+        Runnable task = () -> {
+            try {
+                BotNavigationGraph graph = loadOrBuildGraph(map, movementProfile, key);
+                GRAPHS.put(key, graph);
+                future.complete(graph);
+            } catch (Throwable t) {
+                future.completeExceptionally(t);
+                log.warn("Failed to warm bot nav graph for map {} speed={} jump={}",
+                        key.mapId(), key.totalSpeedStat(), key.totalJumpStat(), t);
+            } finally {
+                PENDING_GRAPHS.remove(key, future);
+            }
+        };
+
+        if (async) {
+            GRAPH_WARMUP_EXECUTOR.execute(task);
+        } else {
+            task.run();
+        }
+        return future;
+    }
+
+    private static BotNavigationGraph loadOrBuildGraph(MapleMap map,
+                                                       BotMovementProfile movementProfile,
+                                                       GraphCacheKey key) {
         BotNavigationGraph cached = loadGraph(key);
         if (cached != null) {
             return cached;

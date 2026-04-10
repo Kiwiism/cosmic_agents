@@ -428,6 +428,46 @@ class BotMovementManagerTest {
         assertEquals(668, entry.blockedRopeGrab.x());
     }
 
+    @Test
+    void shouldDeferMovementProfileSwapUntilBucketGraphIsReady() {
+        MapleMap map = new MapleMap(910000027, 0, 0, 910000027, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(20, 100), map);
+        when(bot.getTotalMoveSpeedStat()).thenReturn(109);
+        when(bot.getTotalJumpStat()).thenReturn(107);
+
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.movementProfile = BotMovementProfile.base();
+
+        BotMovementProfile targetProfile = BotMovementProfile.fromCharacter(bot);
+        assertEquals(new BotMovementProfile(105, 105), targetProfile);
+        assertFalse(BotMovementManager.refreshMovementProfile(entry),
+                "profile swap should wait until the new bucket graph is cached");
+        assertEquals(BotMovementProfile.base(), entry.movementProfile);
+
+        entry.navEdge = new BotNavigationGraph.Edge(
+                1, 2, BotNavigationGraph.EdgeType.JUMP,
+                new Point(20, 100), new Point(80, 40),
+                8, 0, 0, 0, 0, 300
+        );
+        entry.navTargetPos = new Point(20, 100);
+        entry.navTargetRegionId = 2;
+        entry.navPreciseTarget = true;
+
+        BotNavigationGraphProvider.getGraph(map, targetProfile);
+
+        assertTrue(BotMovementManager.refreshMovementProfile(entry),
+                "profile swap should commit once the bucket graph is ready");
+        assertEquals(targetProfile, entry.movementProfile);
+        assertNull(entry.navEdge);
+        assertNull(entry.navTargetPos);
+        assertEquals(-1, entry.navTargetRegionId);
+        assertFalse(entry.navPreciseTarget);
+    }
+
     private static Character mockBot(Point startPosition, MapleMap map) {
         Character bot = mock(Character.class);
         AtomicReference<Point> position = new AtomicReference<>(new Point(startPosition));
