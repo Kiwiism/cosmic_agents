@@ -26,7 +26,7 @@ final class BotPhysicsEngine {
 
         public float GRAVITY_PXS2 = 2000.0f;        // was 2187.5f (measured: exactly 2000 px/s^2)
         public float JUMP_SPEED_PXS = 555.0f;       // was 562.5f  (measured: -555 px/s jump kick)
-        public float JUMP_DOWN_PXS = 320.0f;        // unused by real client: down-jump starts with vy≈0, gravity only
+        public float JUMP_DOWN_PXS = 196.0f;        // was 320 (measured: -196 px/s upward kick; old value caused re-land on origin platform)
         public float JUMP_ROPE_PXS = 375.0f;        // rope-jump finding (NOT applied): real client kick = (±162, -277) — fixed vx 162, vy 277
         public float MAX_FALL_PXS = 670.0f;         // confirmed exact (terminal velocity sustained in long-fall log)
         public double HFORCE_PXS = 16.667;          // was 20.0 (yields 125 px/s walk via hF*GROUNDSLIP/(FRICTION+SLOPEFACTOR))
