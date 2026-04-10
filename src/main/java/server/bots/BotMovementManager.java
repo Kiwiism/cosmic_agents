@@ -654,11 +654,9 @@ class BotMovementManager {
     static void tickUnstuck(BotEntry entry) {
         Character bot = entry.bot;
         int walkStep = BotPhysicsEngine.walkStep(bot.getMap(), entry.movementProfile);
-        switch (ThreadLocalRandom.current().nextInt(3)) {
+        switch (ThreadLocalRandom.current().nextInt(2)) {
             case 0 -> BotPhysicsEngine.beginGroundJump(entry, bot, -walkStep); // jump left
-            case 1 -> BotPhysicsEngine.beginGroundJump(entry, bot, walkStep); // jump right
-            default -> // down-jump (also works as a plain crouch-step when no drop is present)
-                BotPhysicsEngine.queueDownJump(entry, bot);
+            default -> BotPhysicsEngine.beginGroundJump(entry, bot, walkStep); // jump right
         }
         clearNavigationState(entry);
         entry.unstuckCooldownMs = delayAfterCurrentTick(5000);

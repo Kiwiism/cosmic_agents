@@ -307,6 +307,31 @@ final class BotNavigationGraphProvider {
         return GRAPHS.get(GraphCacheKey.from(map.getId(), movementProfile));
     }
 
+    /** Returns the closest cached graph for this map when the exact profile graph is unavailable. */
+    static BotNavigationGraph peekClosestGraph(MapleMap map, BotMovementProfile movementProfile) {
+        if (map == null) {
+            return null;
+        }
+
+        GraphCacheKey requested = GraphCacheKey.from(map.getId(), movementProfile);
+        BotNavigationGraph bestGraph = null;
+        int bestDistance = Integer.MAX_VALUE;
+        for (Map.Entry<GraphCacheKey, BotNavigationGraph> entry : GRAPHS.entrySet()) {
+            GraphCacheKey key = entry.getKey();
+            if (key.mapId() != requested.mapId()) {
+                continue;
+            }
+
+            int distance = Math.abs(key.totalSpeedStat() - requested.totalSpeedStat())
+                    + Math.abs(key.totalJumpStat() - requested.totalJumpStat());
+            if (bestGraph == null || distance < bestDistance) {
+                bestGraph = entry.getValue();
+                bestDistance = distance;
+            }
+        }
+        return bestGraph;
+    }
+
     static void warmGraphAsync(MapleMap map, BotMovementProfile movementProfile) {
         if (map == null) {
             return;
@@ -535,13 +560,14 @@ final class BotNavigationGraphProvider {
                     map.getId(), GRAPH_VERSION, movementProfile, regions, regionsById, regionIdByFootholdId, outgoing, collidableWallIds);
             GraphBuildReport report = buildProfile.finish();
             LAST_BUILD_REPORTS.put(GraphCacheKey.from(map.getId(), movementProfile), report);
-            log.debug("Built bot nav graph map {} speed={} jump={} in {} ms (regions={}, edges={}, jump={} ms, jumpSamples={}, cacheHits={})",
+            log.debug("Built bot nav graph map {} speed={} jump={} in {} ms (regions={}, edges={}, drop={} ms, jump={} ms, jumpSamples={}, cacheHits={})",
                     map.getId(),
                     movementProfile.totalSpeedStat(),
                     movementProfile.totalJumpStat(),
                     String.format("%.2f", report.totalBuildNs / 1_000_000.0),
                     report.regionCount,
                     report.totalEdgeCount,
+                    String.format("%.2f", report.buildDropEdgesNs / 1_000_000.0),
                     String.format("%.2f", report.buildJumpEdgesNs / 1_000_000.0),
                     report.jumpSampleCount,
                     report.jumpCacheHitCount);
@@ -670,15 +696,15 @@ final class BotNavigationGraphProvider {
                                      Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
                                      Set<String> edgeKeys,
                                      BotMovementProfile movementProfile) {
+        addDirectionalDropEdge(from, map, regionsById, regionIdByFootholdId, -1, outgoing, edgeKeys, movementProfile);
+        addDirectionalDropEdge(from, map, regionsById, regionIdByFootholdId, 1, outgoing, edgeKeys, movementProfile);
+
         for (Point anchor : anchors) {
-            int dropStepX = dropLaunchStep(from, map, anchor, movementProfile);
-            DirectionalDropBuild directionalDrop = null;
-            Point edgeStartPoint = anchor;
-            BotPhysicsEngine.JumpLanding landing = dropStepX == 0
-                    ? BotPhysicsEngine.simulateDownJumpLanding(map, anchor)
-                    : ((directionalDrop = findDirectionalDropBuild(from, map, anchor, Integer.signum(dropStepX), movementProfile)) != null
-                    ? directionalDrop.walkOff().landing()
-                    : null);
+            if (dropLaunchStep(from, map, anchor, movementProfile) != 0) {
+                continue;
+            }
+
+            BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateDownJumpLanding(map, anchor);
             if (landing == null) {
                 continue;
             }
@@ -693,15 +719,43 @@ final class BotNavigationGraphProvider {
                 continue;
             }
 
-            int dropCost = dropStepX == 0
-                    ? BotPhysicsEngine.estimateDownJumpLandingTimeMs(map, anchor)
-                    : directionalDrop.walkOff().travelTimeMs();
-            if (directionalDrop != null) {
-                edgeStartPoint = directionalDrop.startPoint();
-                dropStepX = directionalDrop.walkOff().launchStepX();
-            }
-            addEdge(from.id, below.id, BotNavigationGraph.EdgeType.DROP, edgeStartPoint, landing.point(), dropStepX, 0, dropCost, outgoing, edgeKeys);
+            int dropCost = BotPhysicsEngine.estimateDownJumpLandingTimeMs(map, anchor);
+            addEdge(from.id, below.id, BotNavigationGraph.EdgeType.DROP, anchor, landing.point(), 0, 0, dropCost, outgoing, edgeKeys);
         }
+    }
+
+    private static void addDirectionalDropEdge(BotNavigationGraph.Region from,
+                                               MapleMap map,
+                                               Map<Integer, BotNavigationGraph.Region> regionsById,
+                                               Map<Integer, Integer> regionIdByFootholdId,
+                                               int direction,
+                                               Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
+                                               Set<String> edgeKeys,
+                                               BotMovementProfile movementProfile) {
+        Point endpoint = direction < 0 ? from.leftPoint() : from.rightPoint();
+        DirectionalDropBuild directionalDrop = findDirectionalDropBuild(from, map, endpoint, direction, movementProfile);
+        if (directionalDrop == null) {
+            return;
+        }
+
+        BotPhysicsEngine.JumpLanding landing = directionalDrop.walkOff().landing();
+        int toRegionId = regionIdByFootholdId.getOrDefault(landing.foothold().getId(), -1);
+        BotNavigationGraph.Region below = regionsById.get(toRegionId);
+        if (below == null || below.id == from.id) {
+            return;
+        }
+        if (landing.point().y <= directionalDrop.startPoint().y + 4) {
+            return;
+        }
+
+        addEdge(from.id, below.id, BotNavigationGraph.EdgeType.DROP,
+                directionalDrop.startPoint(),
+                landing.point(),
+                directionalDrop.walkOff().launchStepX(),
+                0,
+                directionalDrop.walkOff().travelTimeMs(),
+                outgoing,
+                edgeKeys);
     }
 
     private static DirectionalDropBuild findDirectionalDropBuild(BotNavigationGraph.Region from,

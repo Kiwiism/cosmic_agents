@@ -55,7 +55,7 @@ final class BotNavigationManager {
                 return new NavigationDirective(rawTargetPos, false);
             }
 
-            BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(bot.getMap(), entry.movementProfile);
+            BotNavigationGraph graph = resolveActiveGraph(bot.getMap(), entry.movementProfile);
             if (graph == null) {
                 BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), entry.movementProfile);
                 entry.graphWarmupFallback = true;
@@ -66,6 +66,10 @@ final class BotNavigationManager {
                     entry.pathLogger.record(entry, BotManager.getInstance().captureTargetSnapshot(entry), -1, false, runAiTick);
                 }
                 return new NavigationDirective(fallbackTarget, false);
+            }
+            if (BotNavigationGraphProvider.peekGraph(bot.getMap(), entry.movementProfile) == null) {
+                BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), entry.movementProfile);
+                entry.lastNavDecision = "graph-fallback-profile";
             }
             entry.graphWarmupFallback = false;
             Point botPos = bot.getPosition();
@@ -102,7 +106,7 @@ final class BotNavigationManager {
                 return new NavigationDirective(rawTargetPos, false);
             }
 
-            NavigationDirective executionDirective = tryExecuteEdge(entry, bot, botPos, rawTargetPos, edge, runAiTick);
+            NavigationDirective executionDirective = tryExecuteEdge(graph, entry, bot, botPos, rawTargetPos, edge, runAiTick);
             if (executionDirective != null) {
                 entry.lastNavDecision = "exec";
                 if (entry.pathLogger != null) {
@@ -112,7 +116,7 @@ final class BotNavigationManager {
             }
 
             entry.lastNavDecision = edgeReused ? "reuse" : "new";
-            entry.navPreciseTarget = shouldUsePreciseTarget(entry, botPos, edge);
+            entry.navPreciseTarget = shouldUsePreciseTarget(graph, entry, botPos, edge);
             entry.navTargetPos = selectWaypoint(entry, graph, botPos, edge);
             if (entry.pathLogger != null) {
                 entry.pathLogger.record(entry, BotManager.getInstance().captureTargetSnapshot(entry), startRegionId, false, runAiTick);
@@ -134,7 +138,7 @@ final class BotNavigationManager {
         // discard a DROP/JUMP edge whose toRegionId matches the bot's current region. Without this
         // check, tryExecuteDrop re-fires from the landing platform where there's no lower foothold,
         // sending the bot out of the map.
-        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(entry.bot.getMap(), entry.movementProfile);
+        BotNavigationGraph graph = resolveActiveGraph(entry.bot.getMap(), entry.movementProfile);
         if (graph == null) {
             BotNavigationGraphProvider.warmGraphAsync(entry.bot.getMap(), entry.movementProfile);
             return false;
@@ -147,7 +151,7 @@ final class BotNavigationManager {
             return false;
         }
 
-        NavigationDirective directive = tryExecuteEdge(entry, entry.bot, botPos, rawTargetPos, edge, true);
+        NavigationDirective directive = tryExecuteEdge(graph, entry, entry.bot, botPos, rawTargetPos, edge, true);
         if (directive == null || !directive.consumedTick) {
             return false;
         }
@@ -256,7 +260,8 @@ final class BotNavigationManager {
         return null;
     }
 
-    private static NavigationDirective tryExecuteEdge(BotEntry entry,
+    private static NavigationDirective tryExecuteEdge(BotNavigationGraph graph,
+                                                      BotEntry entry,
                                                       Character bot,
                                                       Point botPos,
                                                       Point rawTargetPos,
@@ -267,22 +272,22 @@ final class BotNavigationManager {
         }
 
         return switch (edge.type) {
-            case JUMP -> tryExecuteJump(entry, bot, rawTargetPos, edge);
-            case DROP -> tryExecuteDrop(entry, bot, botPos, rawTargetPos, edge);
-            case CLIMB -> tryExecuteClimb(entry, bot, botPos, rawTargetPos, edge);
+            case JUMP -> tryExecuteJump(graph, entry, bot, rawTargetPos, edge);
+            case DROP -> tryExecuteDrop(graph, entry, bot, botPos, rawTargetPos, edge);
+            case CLIMB -> tryExecuteClimb(graph, entry, bot, botPos, rawTargetPos, edge);
             case PORTAL -> isReadyForEdge(botPos, edge) ? tryExecutePortal(entry, bot, rawTargetPos, edge) : null;
             default -> null;
         };
     }
 
-    private static NavigationDirective tryExecuteJump(BotEntry entry,
+    private static NavigationDirective tryExecuteJump(BotNavigationGraph graph,
+                                                      BotEntry entry,
                                                       Character bot,
                                                       Point rawTargetPos,
                                                       BotNavigationGraph.Edge edge) {
         if (entry.inAir || entry.climbing) {
             return null;
         }
-        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(bot.getMap(), entry.movementProfile);
         Point botPos = bot.getPosition();
         if (!canExecuteJumpFromCurrentPosition(graph, bot.getMap(), botPos, edge)) {
             // Bot may be standing at the top of a rope region whose bottom is the jump entry.
@@ -309,7 +314,8 @@ final class BotNavigationManager {
         return new NavigationDirective(rawTargetPos, true);
     }
 
-    private static NavigationDirective tryExecuteDrop(BotEntry entry,
+    private static NavigationDirective tryExecuteDrop(BotNavigationGraph graph,
+                                                      BotEntry entry,
                                                       Character bot,
                                                       Point botPos,
                                                       Point rawTargetPos,
@@ -324,7 +330,6 @@ final class BotNavigationManager {
             return null;
         }
 
-        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(bot.getMap(), entry.movementProfile);
         if (!canExecuteDropFromCurrentPosition(graph, bot.getMap(), botPos, edge)) {
             return null;
         }
@@ -335,7 +340,8 @@ final class BotNavigationManager {
         return new NavigationDirective(rawTargetPos, true);
     }
 
-    private static NavigationDirective tryExecuteClimb(BotEntry entry,
+    private static NavigationDirective tryExecuteClimb(BotNavigationGraph graph,
+                                                       BotEntry entry,
                                                        Character bot,
                                                        Point botPos,
                                                        Point rawTargetPos,
@@ -345,18 +351,18 @@ final class BotNavigationManager {
         }
 
         if (entry.climbing) {
-            return tryExecuteClimbExit(entry, bot, botPos, rawTargetPos, edge);
+            return tryExecuteClimbExit(graph, entry, bot, botPos, rawTargetPos, edge);
         } else {
-            return tryExecuteClimbEntry(entry, bot, botPos, rawTargetPos, edge);
+            return tryExecuteClimbEntry(graph, entry, bot, botPos, rawTargetPos, edge);
         }
     }
 
-    private static NavigationDirective tryExecuteClimbEntry(BotEntry entry,
+    private static NavigationDirective tryExecuteClimbEntry(BotNavigationGraph graph,
+                                                             BotEntry entry,
                                                              Character bot,
                                                              Point botPos,
                                                              Point rawTargetPos,
                                                              BotNavigationGraph.Edge edge) {
-        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(bot.getMap(), entry.movementProfile);
         BotNavigationGraph.Region toRegion = graph.getRegion(edge.toRegionId);
         Rope rope = findRopeForRegion(bot.getMap(), toRegion);
         if (rope == null) {
@@ -396,12 +402,12 @@ final class BotNavigationManager {
         return null;
     }
 
-    private static NavigationDirective tryExecuteClimbExit(BotEntry entry,
+    private static NavigationDirective tryExecuteClimbExit(BotNavigationGraph graph,
+                                                            BotEntry entry,
                                                             Character bot,
                                                             Point botPos,
                                                             Point rawTargetPos,
                                                             BotNavigationGraph.Edge edge) {
-        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(bot.getMap(), entry.movementProfile);
         if (!canExecuteClimbExitFromCurrentPosition(graph, bot.getMap(), botPos, edge)) {
             return null;
         }
@@ -459,24 +465,23 @@ final class BotNavigationManager {
         return new NavigationDirective(rawTargetPos, true);
     }
 
-    private static boolean shouldUsePreciseTarget(BotEntry entry, Point botPos, BotNavigationGraph.Edge edge) {
+    private static boolean shouldUsePreciseTarget(BotNavigationGraph graph,
+                                                  BotEntry entry,
+                                                  Point botPos,
+                                                  BotNavigationGraph.Edge edge) {
         if (entry.inAir) {
             return false;
         }
         return switch (edge.type) {
             case WALK -> shouldUsePreciseWalkTarget(edge);
-            case JUMP -> !canExecuteJumpFromCurrentPosition(BotNavigationGraphProvider.getGraph(entry.bot.getMap(), entry.movementProfile),
-                    entry.bot.getMap(), botPos, edge);
+            case JUMP -> !canExecuteJumpFromCurrentPosition(graph, entry.bot.getMap(), botPos, edge);
             case DROP -> edge.launchStepX == 0
-                    && !canExecuteDropFromCurrentPosition(BotNavigationGraphProvider.getGraph(entry.bot.getMap(), entry.movementProfile),
-                    entry.bot.getMap(), botPos, edge);
+                    && !canExecuteDropFromCurrentPosition(graph, entry.bot.getMap(), botPos, edge);
             case CLIMB -> entry.climbing
                     ? edge.launchStepX != 0
-                    && !canExecuteClimbExitFromCurrentPosition(BotNavigationGraphProvider.getGraph(entry.bot.getMap(), entry.movementProfile),
-                    entry.bot.getMap(), botPos, edge)
+                    && !canExecuteClimbExitFromCurrentPosition(graph, entry.bot.getMap(), botPos, edge)
                     : !canExecuteClimbEntryFromCurrentPosition(entry.bot.getMap(), botPos, edge,
-                    findRopeForRegion(entry.bot.getMap(),
-                            BotNavigationGraphProvider.getGraph(entry.bot.getMap(), entry.movementProfile).getRegion(edge.toRegionId)));
+                    findRopeForRegion(entry.bot.getMap(), graph.getRegion(edge.toRegionId)));
             case PORTAL -> !isReadyForEdge(botPos, edge);
         };
     }
@@ -484,7 +489,7 @@ final class BotNavigationManager {
     private static Point selectWaypoint(BotEntry entry, BotNavigationGraph graph, Point botPos, BotNavigationGraph.Edge edge) {
         return switch (edge.type) {
             case WALK -> new Point(edge.endPoint);
-            case CLIMB -> selectClimbWaypoint(entry, botPos, edge);
+            case CLIMB -> selectClimbWaypoint(graph, entry, botPos, edge);
             case JUMP -> entry.inAir ? new Point(edge.endPoint) : selectJumpWaypoint(graph, botPos, edge);
             case DROP -> selectDropWaypoint(entry, graph, botPos, edge);
             case PORTAL -> entry.inAir ? new Point(edge.endPoint) : new Point(edge.startPoint);
@@ -508,6 +513,11 @@ final class BotNavigationManager {
     }
 
     static Point selectClimbWaypoint(BotEntry entry, Point botPos, BotNavigationGraph.Edge edge) {
+        BotNavigationGraph graph = resolveActiveGraph(entry.bot.getMap(), entry.movementProfile);
+        return selectClimbWaypoint(graph, entry, botPos, edge);
+    }
+
+    static Point selectClimbWaypoint(BotNavigationGraph graph, BotEntry entry, Point botPos, BotNavigationGraph.Edge edge) {
         if (entry.inAir) {
             return new Point(edge.endPoint);
         }
@@ -517,8 +527,7 @@ final class BotNavigationManager {
             // Graphgen and physics both treat edge.startPoint as the required on-rope launch Y;
             // steering toward edge.endPoint here would be a runtime-only model mismatch because
             // a climbing bot cannot physically approach the off-rope landing point.
-            BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(entry.bot.getMap(), entry.movementProfile);
-            if (canExecuteClimbExitFromCurrentPosition(graph, entry.bot.getMap(), botPos, edge)) {
+            if (graph != null && canExecuteClimbExitFromCurrentPosition(graph, entry.bot.getMap(), botPos, edge)) {
                 return new Point(botPos);
             }
             return new Point(edge.startPoint);
@@ -532,6 +541,14 @@ final class BotNavigationManager {
             return new Point(ropeX, edge.endPoint.y);
         }
         return new Point(edge.startPoint);
+    }
+
+    private static BotNavigationGraph resolveActiveGraph(MapleMap map, BotMovementProfile movementProfile) {
+        BotNavigationGraph exact = BotNavigationGraphProvider.peekGraph(map, movementProfile);
+        if (exact != null) {
+            return exact;
+        }
+        return BotNavigationGraphProvider.peekClosestGraph(map, movementProfile);
     }
 
     static Point selectDropWaypoint(BotEntry entry,

@@ -515,6 +515,22 @@ class BotMovementManagerTest {
     }
 
     @Test
+    void shouldNotUseDownJumpForUnstuckRecovery() {
+        MapleMap map = new MapleMap(910000037, 0, 0, 910000037, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+
+        BotMovementManager.tickUnstuck(entry);
+
+        assertFalse(entry.downJumpPending, "unstuck recovery should only use lateral jumps");
+        assertTrue(entry.inAir, "unstuck recovery should launch the bot instead of crouching in place");
+    }
+
+    @Test
     void shouldNotApplyAirSteeringDuringCommittedNavJump() {
         MapleMap map = new MapleMap(910000009, 0, 0, 910000009, 1.0f);
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));

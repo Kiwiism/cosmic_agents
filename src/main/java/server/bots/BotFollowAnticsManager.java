@@ -77,6 +77,7 @@ final class BotFollowAnticsManager {
         if (entry == null
                 || entry.followAnticMode != BotFollowAnticMode.NONE
                 || !entry.following
+                || BotChatManager.isOwnerIdle(entry)
                 || entry.grinding
                 || entry.moveTarget != null
                 || entry.navEdge != null
@@ -94,6 +95,7 @@ final class BotFollowAnticsManager {
 
     private static boolean isEligible(BotEntry entry, Point botPos, Point targetPos) {
         return entry.following
+                && !BotChatManager.isOwnerIdle(entry)
                 && !entry.grinding
                 && entry.moveTarget == null
                 && entry.navEdge == null

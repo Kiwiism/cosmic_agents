@@ -89,6 +89,16 @@ class BotChatManagerTest {
     }
 
     @Test
+    void shouldNotTriggerGreetingAnticWhileOwnerIsAfk() {
+        BotEntry entry = new BotEntry(null, null, null);
+        entry.following = true;
+        entry.ownerWasAfk = true;
+
+        assertFalse(BotFollowAnticsManager.maybeStartGreetingAntic(entry, 0));
+        assertEquals(BotFollowAnticMode.NONE, entry.followAnticMode);
+    }
+
+    @Test
     void shouldFormatCompactMesos() {
         assertEquals("999", BotChatManager.formatCompactMesos(999));
         assertEquals("6k", BotChatManager.formatCompactMesos(6_000));
