@@ -58,7 +58,8 @@ final class BotAttackExecutionProvider {
         int baseDisplay = profile.getAttack();
         BotAttackDataProvider provider = BotAttackDataProvider.getInstance();
         boolean useDegenerateCloseRange = shouldDegenerateRangedAttack(weaponType,
-                bot != null ? bot.getPosition() : null, targetPosition);
+                bot != null ? bot.getPosition() : null, targetPosition)
+                || shouldDegenerateForNoAmmo(weaponType, bot);
         BotAttackDataProvider.AttackAnimationSpec attackSpec =
                 provider.getBasicAttackSpec(baseDisplay, weaponType, useDegenerateCloseRange);
         if (baseDisplay <= 0) {
@@ -103,7 +104,8 @@ final class BotAttackExecutionProvider {
                                                            WeaponType weaponType, Character bot, Point targetPosition) {
         BotAttackDataProvider provider = BotAttackDataProvider.getInstance();
         boolean useDegenerateCloseRange = shouldDegenerateRangedAttack(weaponType,
-                bot != null ? bot.getPosition() : null, targetPosition);
+                bot != null ? bot.getPosition() : null, targetPosition)
+                || shouldDegenerateForNoAmmo(weaponType, bot);
         BotAttackDataProvider.AttackAnimationSpec attackSpec = provider.getBasicAttackSpec(weaponType, useDegenerateCloseRange);
         String action = sampleAttackAction(attackSpec.actions(), attackSpec.primaryAction());
         int variantOffset = Math.max(0, attackSpec.actions().indexOf(action));
@@ -418,6 +420,13 @@ final class BotAttackExecutionProvider {
                 || weaponType == WeaponType.CROSSBOW
                 || weaponType == WeaponType.CLAW
                 || weaponType == WeaponType.GUN;
+    }
+
+    private static boolean shouldDegenerateForNoAmmo(WeaponType weaponType, Character bot) {
+        if (bot == null || !isDegenerateCapableRangedWeapon(weaponType)) {
+            return false;
+        }
+        return BotCombatManager.countAmmo(bot, weaponType) <= 0;
     }
 
     private static Rectangle closeRangeBasicHitBox(Point origin, boolean facingLeft) {
