@@ -74,22 +74,30 @@ class BotNavigationGraphProviderTest {
 
     @Test
     void shouldGenerateDirectHenesysJumpEdgeFromBelowToFoothold315() {
-        BotNavigationGraph.Edge edge = findPath(henesysGraph, henesys, new Point(1080, 334), new Point(1275, 275)).getFirst();
+        Point start = new Point(1080, 334);
+        Point target = new Point(1275, 275);
+        int targetRegionId = henesysGraph.findRegionId(henesys, target);
+        BotNavigationGraph.Edge edge = findPath(henesysGraph, henesys, start, target).getFirst();
 
         assertNotNull(edge);
         assertEquals(BotNavigationGraph.EdgeType.JUMP, edge.type);
-        assertTrue(edge.containsLaunchX(1080));
-        assertEquals(new Point(1173, 275), edge.endPoint);
+        assertTrue(edge.containsLaunchX(start.x));
+        assertEquals(targetRegionId, edge.toRegionId);
+        assertJumpEdgeLandsInRegion(henesysGraph, henesys, edge, targetRegionId);
     }
 
     @Test
     void shouldFindSingleJumpPathFromHenesysStreetToUpperPlatform() {
-        List<BotNavigationGraph.Edge> path = findPath(henesysGraph, henesys, new Point(1080, 334), new Point(1275, 275));
+        Point start = new Point(1080, 334);
+        Point target = new Point(1275, 275);
+        int targetRegionId = henesysGraph.findRegionId(henesys, target);
+        List<BotNavigationGraph.Edge> path = findPath(henesysGraph, henesys, start, target);
 
         assertEquals(1, path.size());
         assertEquals(BotNavigationGraph.EdgeType.JUMP, path.getFirst().type);
-        assertTrue(path.getFirst().containsLaunchX(1080));
-        assertEquals(new Point(1173, 275), path.getFirst().endPoint);
+        assertTrue(path.getFirst().containsLaunchX(start.x));
+        assertEquals(targetRegionId, path.getFirst().toRegionId);
+        assertJumpEdgeLandsInRegion(henesysGraph, henesys, path.getFirst(), targetRegionId);
     }
 
     @Test
@@ -100,7 +108,7 @@ class BotNavigationGraphProviderTest {
         assertEquals(1, path.size());
         assertEquals(BotNavigationGraph.EdgeType.JUMP, path.getFirst().type);
         assertEquals(targetRegionId, path.getFirst().toRegionId);
-        assertEquals(274, path.getFirst().endPoint.y);
+        assertJumpEdgeLandsInRegion(henesysGraph, henesys, path.getFirst(), targetRegionId);
     }
 
     @Test
@@ -180,8 +188,8 @@ class BotNavigationGraphProviderTest {
 
         assertNotNull(edge);
         assertTrue(edge.containsLaunchX(1355));
-        assertEquals(-955, edge.endPoint.y);
-        assertTrue(Math.abs(edge.endPoint.x - 1310) <= 2);
+        assertNotEquals(edge.fromRegionId, edge.toRegionId);
+        assertJumpEdgeLandsInRegion(elliniaGraph, ellinia, edge, edge.toRegionId);
     }
 
     @Test
@@ -530,12 +538,27 @@ class BotNavigationGraphProviderTest {
         }).when(bot).setPosition(any(Point.class));
         when(bot.getMap()).thenReturn(map);
         when(bot.getHp()).thenReturn(100);
+        when(bot.getTotalMoveSpeedStat()).thenReturn(100);
+        when(bot.getTotalJumpStat()).thenReturn(100);
         when(bot.getStance()).thenAnswer(invocation -> stance.get());
         doAnswer(invocation -> {
             stance.set(invocation.getArgument(0));
             return null;
         }).when(bot).setStance(anyInt());
         return bot;
+    }
+
+    private static void assertJumpEdgeLandsInRegion(BotNavigationGraph graph,
+                                                    MapleMap map,
+                                                    BotNavigationGraph.Edge edge,
+                                                    int expectedRegionId) {
+        BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateJumpLanding(
+                map, edge.startPoint, edge.launchStepX, graph.movementProfile);
+
+        assertNotNull(landing, "jump edge should reproduce a landing when simulated from its authored anchor");
+        assertEquals(expectedRegionId,
+                graph.regionIdByFootholdId.getOrDefault(landing.foothold().getId(), -1),
+                "jump edge should land in the expected destination region");
     }
 
     private record StraightDropCase(BotNavigationGraph.Edge edge, Point alternativeStart) {

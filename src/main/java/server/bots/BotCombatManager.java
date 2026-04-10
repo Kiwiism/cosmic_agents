@@ -510,7 +510,7 @@ class BotCombatManager {
         return isBasicAttackInRange(bot.getPosition(), target.getPosition());
     }
 
-    static boolean isTargetJumpable(boolean closeRangeRoute, Point botPos, Point targetPos) {
+    static boolean isTargetJumpable(BotMovementProfile movementProfile, boolean closeRangeRoute, Point botPos, Point targetPos) {
         if (!closeRangeRoute || botPos == null || targetPos == null) {
             return false;
         }
@@ -521,7 +521,13 @@ class BotCombatManager {
         }
 
         int dy = botPos.y - targetPos.y;
-        return dy > BotCombatManager.cfg.ATTACK_RANGE_Y && dy <= BotCombatManager.cfg.ATTACK_JUMP_Y;
+        int maxJumpHeight = Math.max(BotCombatManager.cfg.ATTACK_JUMP_Y,
+                (int) Math.ceil(BotPhysicsEngine.calculateMaxJumpHeight(movementProfile)));
+        return dy > BotCombatManager.cfg.ATTACK_RANGE_Y && dy <= maxJumpHeight;
+    }
+
+    static boolean isTargetJumpable(boolean closeRangeRoute, Point botPos, Point targetPos) {
+        return isTargetJumpable(BotMovementProfile.base(), closeRangeRoute, botPos, targetPos);
     }
 
     static void attackMonster(BotEntry entry, Character bot, AttackPlan attackPlan) {

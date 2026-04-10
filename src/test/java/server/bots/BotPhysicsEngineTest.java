@@ -409,6 +409,8 @@ class BotPhysicsEngineTest {
         }).when(bot).setPosition(any(Point.class));
         when(bot.getMap()).thenReturn(map);
         when(bot.getHp()).thenReturn(hp);
+        when(bot.getTotalMoveSpeedStat()).thenReturn(100);
+        when(bot.getTotalJumpStat()).thenReturn(100);
         when(bot.getStance()).thenAnswer(invocation -> stance.get());
         doAnswer(invocation -> {
             stance.set(invocation.getArgument(0));

@@ -109,6 +109,10 @@ class BotMovementManager {
         return BotPhysicsEngine.walkStep(map);
     }
 
+    static int walkStep(MapleMap map, BotMovementProfile profile) {
+        return BotPhysicsEngine.walkStep(map, profile);
+    }
+
     static int velocityFromDeltaX(double deltaX) {
         return BotPhysicsEngine.velocityFromDeltaX(deltaX);
     }
@@ -121,12 +125,35 @@ class BotMovementManager {
         return wrapLanding(BotPhysicsEngine.simulateJumpLanding(map, from, stepX));
     }
 
+    static JumpLanding simulateJumpLanding(MapleMap map, Point from, int stepX, BotMovementProfile profile) {
+        return wrapLanding(BotPhysicsEngine.simulateJumpLanding(map, from, stepX, profile));
+    }
+
     static JumpLanding simulateRopeJumpLanding(MapleMap map, Point from, int stepX) {
         return wrapLanding(BotPhysicsEngine.simulateRopeJumpLanding(map, from, stepX));
     }
 
+    static JumpLanding simulateRopeJumpLanding(MapleMap map, Point from, int stepX, BotMovementProfile profile) {
+        return wrapLanding(BotPhysicsEngine.simulateRopeJumpLanding(map, from, stepX, profile));
+    }
+
     static boolean canReachRopeFromGround(MapleMap map, Point from, Rope rope) {
         return BotPhysicsEngine.canReachRopeFromGround(map, from, rope);
+    }
+
+    static boolean canReachRopeFromGround(MapleMap map, Point from, Rope rope, BotMovementProfile profile) {
+        return BotPhysicsEngine.canReachRopeFromGround(map, from, rope, profile);
+    }
+
+    static boolean refreshMovementProfile(BotEntry entry) {
+        BotMovementProfile updated = BotMovementProfile.fromCharacter(entry.bot);
+        if (updated.equals(entry.movementProfile)) {
+            return false;
+        }
+
+        entry.movementProfile = updated;
+        clearNavigationState(entry);
+        return true;
     }
 
     static void resetEntryState(BotEntry entry) {
@@ -194,14 +221,14 @@ class BotMovementManager {
     }
 
     static void jumpOffRope(BotEntry entry, Character bot, int dx) {
-        int airVelX = resolveAirVelocityX(bot.getMap(), dx);
+        int airVelX = resolveAirVelocityX(bot.getMap(), entry.movementProfile, dx);
         BotPhysicsEngine.beginJumpOffRope(entry, bot, airVelX);
         broadcastMovement(entry);
     }
 
     static void jumpToRope(BotEntry entry, Character bot, int dx) {
         Rope sourceRope = entry.climbRope;
-        int airVelX = resolveAirVelocityX(bot.getMap(), dx);
+        int airVelX = resolveAirVelocityX(bot.getMap(), entry.movementProfile, dx);
         BotPhysicsEngine.beginRopeTransferJump(entry, bot, sourceRope, airVelX);
         broadcastMovement(entry);
     }
@@ -384,7 +411,7 @@ class BotMovementManager {
         }
 
         MapleMap map = entry.bot.getMap();
-        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(map);
+        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(map, entry.movementProfile);
         Point botPos = entry.bot.getPosition();
         int currentRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, map, botPos);
         int targetRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, map, targetPos);
@@ -472,10 +499,14 @@ class BotMovementManager {
     }
 
     static int calcStepX(MapleMap map, int botX, int targetX, boolean wasMovingX) {
-        return calcStepX(map, botX, targetX, wasMovingX, cfg.STOP_DIST, cfg.FOLLOW_DIST);
+        return calcStepX(map, BotMovementProfile.base(), botX, targetX, wasMovingX, cfg.STOP_DIST, cfg.FOLLOW_DIST);
     }
 
     static int calcStepX(MapleMap map, int botX, int targetX, boolean wasMovingX, int stopDist, int followDist) {
+        return calcStepX(map, BotMovementProfile.base(), botX, targetX, wasMovingX, stopDist, followDist);
+    }
+
+    static int calcStepX(MapleMap map, BotMovementProfile profile, int botX, int targetX, boolean wasMovingX, int stopDist, int followDist) {
         int dx = targetX - botX;
         int absDx = Math.abs(dx);
         if (absDx <= stopDist) {
@@ -484,7 +515,7 @@ class BotMovementManager {
         if (!wasMovingX && absDx <= followDist) {
             return 0;
         }
-        return Math.min(absDx, BotPhysicsEngine.walkStep(map)) * (dx >= 0 ? 1 : -1);
+        return Math.min(absDx, BotPhysicsEngine.walkStep(map, profile)) * (dx >= 0 ? 1 : -1);
     }
 
     static int updateStepX(BotEntry entry, MapleMap map, int botX, int targetX) {
@@ -492,7 +523,7 @@ class BotMovementManager {
     }
 
     static int updateStepX(BotEntry entry, MapleMap map, int botX, int targetX, int stopDist, int followDist) {
-        int stepX = calcStepX(map, botX, targetX, entry.wasMovingX, stopDist, followDist);
+        int stepX = calcStepX(map, entry.movementProfile, botX, targetX, entry.wasMovingX, stopDist, followDist);
         if (stepX == 0) {
             entry.wasMovingX = false;
             return 0;
@@ -502,7 +533,7 @@ class BotMovementManager {
     }
 
     static void initiateJump(BotEntry entry, Character bot, int dx) {
-        BotPhysicsEngine.beginGroundJump(entry, bot, resolveAirVelocityX(bot.getMap(), dx));
+        BotPhysicsEngine.beginGroundJump(entry, bot, resolveAirVelocityX(bot.getMap(), entry.movementProfile, dx));
         broadcastMovement(entry);
     }
 
@@ -512,7 +543,7 @@ class BotMovementManager {
      */
     static void tickUnstuck(BotEntry entry) {
         Character bot = entry.bot;
-        int walkStep = BotPhysicsEngine.walkStep(bot.getMap());
+        int walkStep = BotPhysicsEngine.walkStep(bot.getMap(), entry.movementProfile);
         switch (ThreadLocalRandom.current().nextInt(3)) {
             case 0 -> BotPhysicsEngine.beginGroundJump(entry, bot, -walkStep); // jump left
             case 1 -> BotPhysicsEngine.beginGroundJump(entry, bot, walkStep); // jump right
@@ -525,15 +556,15 @@ class BotMovementManager {
     }
 
     static void initiateRopeJump(BotEntry entry, Character bot, int dx) {
-        BotPhysicsEngine.beginClimbUpJump(entry, bot, resolveAirVelocityX(bot.getMap(), dx));
+        BotPhysicsEngine.beginClimbUpJump(entry, bot, resolveAirVelocityX(bot.getMap(), entry.movementProfile, dx));
         broadcastMovement(entry);
     }
 
-    private static int resolveAirVelocityX(MapleMap map, int dx) {
+    private static int resolveAirVelocityX(MapleMap map, BotMovementProfile profile, int dx) {
         if (dx == 0) {
             return 0;
         }
-        int walkStep = BotPhysicsEngine.walkStep(map);
+        int walkStep = BotPhysicsEngine.walkStep(map, profile);
         return dx > 0 ? walkStep : -walkStep;
     }
 

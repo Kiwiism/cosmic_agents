@@ -327,10 +327,18 @@ class BotCombatManagerTest {
 
     @Test
     void shouldRetreatFromNearbyRangedTargetsInsideDegenerateBand() {
-        assertTrue(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, new Point(100, 200), new Point(220, 200)));
-        assertEquals(new Point(-20, 200), BotAttackExecutionProvider.retreatTargetPosition(new Point(100, 200), new Point(220, 200)));
-        assertTrue(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, new Point(100, 200), new Point(145, 200)));
-        assertFalse(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, new Point(100, 200), new Point(300, 200)));
+        Point botPos = new Point(100, 200);
+        Point retreatBandTarget = new Point(100 + BotCombatManager.cfg.RANGED_RETREAT_THRESHOLD_X, 200);
+        Point pointBlankTarget = new Point(145, 200);
+        Point degenerateButNonRetreatTarget = new Point(100 + BotCombatManager.cfg.RANGED_RETREAT_THRESHOLD_X + 1, 200);
+
+        assertTrue(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, botPos, retreatBandTarget));
+        assertEquals(new Point(100 - BotCombatManager.cfg.RANGED_RETREAT_DISTANCE_X, 200),
+                BotAttackExecutionProvider.retreatTargetPosition(botPos, retreatBandTarget));
+        assertTrue(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, botPos, pointBlankTarget));
+        assertTrue(BotAttackExecutionProvider.shouldDegenerateRangedAttack(WeaponType.BOW, botPos, degenerateButNonRetreatTarget));
+        assertFalse(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, botPos, degenerateButNonRetreatTarget));
+        assertFalse(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, botPos, new Point(300, 200)));
     }
 
     @Test
@@ -416,6 +424,8 @@ class BotCombatManagerTest {
         when(bot.getMapId()).thenReturn(0);
         when(bot.getJob()).thenReturn(Job.BEGINNER);
         when(bot.getLevel()).thenReturn(200);
+        when(bot.getTotalMoveSpeedStat()).thenReturn(100);
+        when(bot.getTotalJumpStat()).thenReturn(100);
         when(bot.getTotalWdef()).thenReturn(0);
         when(bot.getTotalStr()).thenReturn(4);
         when(bot.getTotalDex()).thenReturn(4);
@@ -448,6 +458,7 @@ class BotCombatManagerTest {
         when(effect.getMobCount()).thenReturn(mobCount);
         when(effect.getDamage()).thenReturn(damage);
         when(effect.getDuration()).thenReturn(0);
+        when(effect.getMpCon()).thenReturn((short) 1);
         skill.addLevelEffect(effect);
         return skill;
     }

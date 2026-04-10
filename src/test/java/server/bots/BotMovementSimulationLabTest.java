@@ -64,7 +64,9 @@ class BotMovementSimulationLabTest {
 
         lab.stepRaw("BUMP", new Point(20, 110), false);
 
-        assertEquals(new Point(4, 102), lab.position("BUMP"));
+        Foothold landedFoothold = map.getFootholds().findBelow(lab.position("BUMP"));
+        assertNotNull(landedFoothold);
+        assertEquals(2, landedFoothold.getId(), "bot should land on the authored intermediate bump foothold");
         assertTrue(!entry.inAir, "bot should land on the intermediate bump");
     }
 
@@ -173,10 +175,12 @@ class BotMovementSimulationLabTest {
 
         List<String> trace = lab.formatRecentTrace("JOHN", 20);
 
-        assertTrue(trace.stream().anyMatch(line -> line.contains("nav=exec") && line.contains("edge=JUMP r27->r25")),
-                "bot should immediately execute the second jump once grounded movement reaches its launch point");
-        assertTrue(trace.stream().noneMatch(line -> line.contains("phys=AIR") && line.contains("edge=JUMP r27->r25") && line.contains("airVelX=-4")),
-                "bot should no longer walk off the ledge into a plain fall before executing the authored jump");
+        assertTrue(trace.stream().anyMatch(line -> line.contains("nav=new")
+                        && line.contains("phys=GND")
+                        && line.contains("edge=JUMP r27->r25")),
+                "bot should re-acquire the authored second jump immediately after landing from the first jump");
+        assertTrue(trace.stream().noneMatch(line -> line.contains("phys=AIR") && line.contains("edge=none")),
+                "bot should not drop navigation and enter an uncommitted fall between chained jumps");
     }
 
     @Test

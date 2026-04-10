@@ -24,6 +24,7 @@ public class BotEntry {
     volatile Character owner;
     volatile boolean following = false;
     final ScheduledFuture<?> task;
+    BotMovementProfile movementProfile = BotMovementProfile.base();
 
     // Physics
     float velY = 0f;

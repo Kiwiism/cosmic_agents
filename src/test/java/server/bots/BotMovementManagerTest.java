@@ -439,6 +439,8 @@ class BotMovementManagerTest {
         when(bot.getMap()).thenReturn(map);
         when(bot.getId()).thenReturn(1);
         when(bot.getHp()).thenReturn(100);
+        when(bot.getTotalMoveSpeedStat()).thenReturn(100);
+        when(bot.getTotalJumpStat()).thenReturn(100);
         return bot;
     }
 }

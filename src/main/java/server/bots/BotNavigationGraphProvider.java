@@ -25,18 +25,28 @@ import java.util.concurrent.ConcurrentHashMap;
 final class BotNavigationGraphProvider {
     private static final Logger log = LoggerFactory.getLogger(BotNavigationGraphProvider.class);
 
-    private static final int GRAPH_VERSION = 18;
+    private static final int GRAPH_VERSION = 19;
     private static final int ENDPOINT_ANCHOR_SPACING_PX = 10;
     private static final int ROPE_ANCHOR_INTERVAL_PX = 30;
     private static final int MAX_PROFILED_JUMP_REGIONS = 5;
     private static final Path CACHE_DIR = Path.of("cache", "bot-nav", "v" + GRAPH_VERSION);
-    private static final Map<Integer, BotNavigationGraph> GRAPHS = new ConcurrentHashMap<>();
-    private static final Map<Integer, GraphBuildReport> LAST_BUILD_REPORTS = new ConcurrentHashMap<>();
+    private static final Map<GraphCacheKey, BotNavigationGraph> GRAPHS = new ConcurrentHashMap<>();
+    private static final Map<GraphCacheKey, GraphBuildReport> LAST_BUILD_REPORTS = new ConcurrentHashMap<>();
+    private static final Map<Integer, Set<Integer>> COLLIDABLE_WALL_IDS_BY_MAP_ID = new ConcurrentHashMap<>();
     private static final ThreadLocal<BuildProfileBuilder> ACTIVE_BUILD_PROFILE = new ThreadLocal<>();
+
+    private record GraphCacheKey(int mapId, int totalSpeedStat, int totalJumpStat) {
+        static GraphCacheKey from(int mapId, BotMovementProfile profile) {
+            BotMovementProfile effective = profile == null ? BotMovementProfile.base() : profile;
+            return new GraphCacheKey(mapId, effective.totalSpeedStat(), effective.totalJumpStat());
+        }
+    }
 
     static final class GraphBuildReport {
         final long buildAnchorPointsNs;
         final int mapId;
+        final int totalSpeedStat;
+        final int totalJumpStat;
         final int footholdCount;
         final int walkableFootholdCount;
         final int ropeCount;
@@ -65,6 +75,8 @@ final class BotNavigationGraphProvider {
         final List<JumpRegionProfile> slowestJumpRegions;
 
         GraphBuildReport(int mapId,
+                         int totalSpeedStat,
+                         int totalJumpStat,
                          int footholdCount,
                          int walkableFootholdCount,
                          int ropeCount,
@@ -94,6 +106,8 @@ final class BotNavigationGraphProvider {
                          List<JumpRegionProfile> slowestJumpRegions) {
             this.buildAnchorPointsNs = buildAnchorPointsNs;
             this.mapId = mapId;
+            this.totalSpeedStat = totalSpeedStat;
+            this.totalJumpStat = totalJumpStat;
             this.footholdCount = footholdCount;
             this.walkableFootholdCount = walkableFootholdCount;
             this.ropeCount = ropeCount;
@@ -135,6 +149,8 @@ final class BotNavigationGraphProvider {
     private static final class BuildProfileBuilder {
         private long buildAnchorPointsNs;
         private final int mapId;
+        private final int totalSpeedStat;
+        private final int totalJumpStat;
         private final long buildStartedAtNs = System.nanoTime();
         private int footholdCount;
         private int walkableFootholdCount;
@@ -162,8 +178,10 @@ final class BotNavigationGraphProvider {
         private long jumpBoundaryRefineProbeCount;
         private final List<JumpRegionProfile> slowestJumpRegions = new ArrayList<>();
 
-        private BuildProfileBuilder(int mapId) {
+        private BuildProfileBuilder(int mapId, BotMovementProfile movementProfile) {
             this.mapId = mapId;
+            this.totalSpeedStat = movementProfile.totalSpeedStat();
+            this.totalJumpStat = movementProfile.totalJumpStat();
         }
 
         private void recordEdge(BotNavigationGraph.EdgeType type) {
@@ -201,6 +219,8 @@ final class BotNavigationGraphProvider {
         private GraphBuildReport finish() {
             return new GraphBuildReport(
                     mapId,
+                    totalSpeedStat,
+                    totalJumpStat,
                     footholdCount,
                     walkableFootholdCount,
                     ropeCount,
@@ -242,34 +262,50 @@ final class BotNavigationGraphProvider {
     }
 
     static BotNavigationGraph getGraph(MapleMap map) {
-        return GRAPHS.computeIfAbsent(map.getId(), ignored -> loadOrBuildGraph(map));
+        return getGraph(map, BotMovementProfile.base());
+    }
+
+    static BotNavigationGraph getGraph(MapleMap map, BotMovementProfile movementProfile) {
+        GraphCacheKey key = GraphCacheKey.from(map.getId(), movementProfile);
+        return GRAPHS.computeIfAbsent(key, ignored -> loadOrBuildGraph(map, movementProfile));
     }
 
     /** Returns the cached graph without triggering a build. */
     static BotNavigationGraph peekGraph(MapleMap map) {
-        return GRAPHS.get(map.getId());
+        for (Map.Entry<GraphCacheKey, BotNavigationGraph> entry : GRAPHS.entrySet()) {
+            if (entry.getKey().mapId() == map.getId()) {
+                return entry.getValue();
+            }
+        }
+        return null;
     }
 
     static BotNavigationGraph rebuildGraph(MapleMap map) {
-        BotNavigationGraph rebuilt = buildGraph(map);
-        GRAPHS.put(map.getId(), rebuilt);
+        return rebuildGraph(map, BotMovementProfile.base());
+    }
+
+    static BotNavigationGraph rebuildGraph(MapleMap map, BotMovementProfile movementProfile) {
+        GraphCacheKey key = GraphCacheKey.from(map.getId(), movementProfile);
+        BotNavigationGraph rebuilt = buildGraph(map, movementProfile);
+        GRAPHS.put(key, rebuilt);
         saveGraph(rebuilt);
         return rebuilt;
     }
 
-    private static BotNavigationGraph loadOrBuildGraph(MapleMap map) {
-        BotNavigationGraph cached = loadGraph(map.getId());
+    private static BotNavigationGraph loadOrBuildGraph(MapleMap map, BotMovementProfile movementProfile) {
+        GraphCacheKey key = GraphCacheKey.from(map.getId(), movementProfile);
+        BotNavigationGraph cached = loadGraph(key);
         if (cached != null) {
             return cached;
         }
 
-        BotNavigationGraph built = buildGraph(map);
+        BotNavigationGraph built = buildGraph(map, movementProfile);
         saveGraph(built);
         return built;
     }
 
-    private static BotNavigationGraph loadGraph(int mapId) {
-        Path file = graphFile(mapId);
+    private static BotNavigationGraph loadGraph(GraphCacheKey key) {
+        Path file = graphFile(key);
         if (!Files.isRegularFile(file)) {
             return null;
         }
@@ -279,12 +315,16 @@ final class BotNavigationGraphProvider {
             if (!(loaded instanceof BotNavigationGraph graph)) {
                 return null;
             }
-            if (graph.version != GRAPH_VERSION || graph.mapId != mapId) {
+            if (graph.version != GRAPH_VERSION
+                    || graph.mapId != key.mapId()
+                    || graph.movementProfile.totalSpeedStat() != key.totalSpeedStat()
+                    || graph.movementProfile.totalJumpStat() != key.totalJumpStat()) {
                 return null;
             }
             return graph;
         } catch (IOException | ClassNotFoundException e) {
-            log.debug("Failed to load bot nav graph cache for map {}", mapId, e);
+            log.debug("Failed to load bot nav graph cache for map {} speed={} jump={}",
+                    key.mapId(), key.totalSpeedStat(), key.totalJumpStat(), e);
             return null;
         }
     }
@@ -292,7 +332,7 @@ final class BotNavigationGraphProvider {
     private static void saveGraph(BotNavigationGraph graph) {
         try {
             Files.createDirectories(CACHE_DIR);
-            try (ObjectOutputStream out = new ObjectOutputStream(Files.newOutputStream(graphFile(graph.mapId)))) {
+            try (ObjectOutputStream out = new ObjectOutputStream(Files.newOutputStream(graphFile(GraphCacheKey.from(graph.mapId, graph.movementProfile))))) {
                 out.writeObject(graph);
             }
         } catch (IOException e) {
@@ -300,13 +340,14 @@ final class BotNavigationGraphProvider {
         }
     }
 
-    private static Path graphFile(int mapId) {
-        return CACHE_DIR.resolve(mapId + ".bin");
+    private static Path graphFile(GraphCacheKey key) {
+        return CACHE_DIR.resolve(key.mapId() + "-s" + key.totalSpeedStat() + "-j" + key.totalJumpStat() + ".bin");
     }
 
-    private static BotNavigationGraph buildGraph(MapleMap map) {
-        BuildProfileBuilder profile = new BuildProfileBuilder(map.getId());
-        ACTIVE_BUILD_PROFILE.set(profile);
+    private static BotNavigationGraph buildGraph(MapleMap map, BotMovementProfile movementProfile) {
+        movementProfile = movementProfile == null ? BotMovementProfile.base() : movementProfile;
+        BuildProfileBuilder buildProfile = new BuildProfileBuilder(map.getId(), movementProfile);
+        ACTIVE_BUILD_PROFILE.set(buildProfile);
         try {
             List<Foothold> footholds = map.getFootholds() == null ? List.of() : map.getFootholds().getAllFootholds();
             Map<Integer, Foothold> footholdsById = new HashMap<>();
@@ -324,17 +365,18 @@ final class BotNavigationGraphProvider {
                     collidableWallIds.add(foothold.getId());
                 }
             }
-            profile.collectFootholdsNs = System.nanoTime() - phaseStartedAt;
-            profile.footholdCount = footholds.size();
-            profile.walkableFootholdCount = walkableFootholds.size();
-            profile.ropeCount = map.getRopes().size();
+            buildProfile.collectFootholdsNs = System.nanoTime() - phaseStartedAt;
+            buildProfile.footholdCount = footholds.size();
+            buildProfile.walkableFootholdCount = walkableFootholds.size();
+            buildProfile.ropeCount = map.getRopes().size();
+            COLLIDABLE_WALL_IDS_BY_MAP_ID.put(map.getId(), new HashSet<>(collidableWallIds));
 
             List<BotNavigationGraph.Region> regions = new ArrayList<>();
             Map<Integer, BotNavigationGraph.Region> regionsById = new HashMap<>();
             Map<Integer, Integer> regionIdByFootholdId = new HashMap<>();
             phaseStartedAt = System.nanoTime();
             buildRegions(walkableFootholds, footholdsById, regions, regionsById, regionIdByFootholdId);
-            profile.buildRegionsNs = System.nanoTime() - phaseStartedAt;
+            buildProfile.buildRegionsNs = System.nanoTime() - phaseStartedAt;
 
             phaseStartedAt = System.nanoTime();
             int nextRegionId = regions.stream().mapToInt(r -> r.id).max().orElse(0) + 1;
@@ -344,15 +386,15 @@ final class BotNavigationGraphProvider {
                 regions.add(ropeRegion);
                 regionsById.put(ropeRegion.id, ropeRegion);
             }
-            profile.addRopeRegionsNs = System.nanoTime() - phaseStartedAt;
-            profile.regionCount = regions.size();
+            buildProfile.addRopeRegionsNs = System.nanoTime() - phaseStartedAt;
+            buildProfile.regionCount = regions.size();
 
             phaseStartedAt = System.nanoTime();
             Map<Integer, List<Integer>> featureXsByRegionId = buildFeatureXsByRegionId(map, regions, regionIdByFootholdId);
-            profile.buildFeatureXsNs = System.nanoTime() - phaseStartedAt;
+            buildProfile.buildFeatureXsNs = System.nanoTime() - phaseStartedAt;
             phaseStartedAt = System.nanoTime();
-            Map<Integer, List<Point>> anchorsByRegionId = buildAnchorsByRegionId(regions, featureXsByRegionId);
-            profile.buildAnchorPointsNs = System.nanoTime() - phaseStartedAt;
+            Map<Integer, List<Point>> anchorsByRegionId = buildAnchorsByRegionId(regions, featureXsByRegionId, movementProfile);
+            buildProfile.buildAnchorPointsNs = System.nanoTime() - phaseStartedAt;
             List<BotNavigationGraph.Region> groundRegions = new ArrayList<>();
             List<BotNavigationGraph.Region> ropeRegions = new ArrayList<>();
             for (BotNavigationGraph.Region region : regions) {
@@ -368,47 +410,50 @@ final class BotNavigationGraphProvider {
 
             phaseStartedAt = System.nanoTime();
             for (Foothold foothold : walkableFootholds) {
-                addWalkEdges(foothold, footholdsById, regionsById, regionIdByFootholdId, outgoing, edgeKeys);
+                addWalkEdges(foothold, footholdsById, regionsById, regionIdByFootholdId, outgoing, edgeKeys, movementProfile);
             }
-            profile.buildWalkEdgesNs = System.nanoTime() - phaseStartedAt;
+            buildProfile.buildWalkEdgesNs = System.nanoTime() - phaseStartedAt;
 
             phaseStartedAt = System.nanoTime();
             for (BotNavigationGraph.Region region : groundRegions) {
                 addDropEdges(region, map, regionsById, regionIdByFootholdId,
-                        anchorsByRegionId.getOrDefault(region.id, List.of()), outgoing, edgeKeys);
+                        anchorsByRegionId.getOrDefault(region.id, List.of()), outgoing, edgeKeys, movementProfile);
             }
-            profile.buildDropEdgesNs = System.nanoTime() - phaseStartedAt;
+            buildProfile.buildDropEdgesNs = System.nanoTime() - phaseStartedAt;
 
             phaseStartedAt = System.nanoTime();
             for (BotNavigationGraph.Region region : groundRegions) {
                 addJumpEdges(region, map, regionsById, regionIdByFootholdId,
-                        anchorsByRegionId.getOrDefault(region.id, List.of()), outgoing, edgeKeys);
+                        anchorsByRegionId.getOrDefault(region.id, List.of()), outgoing, edgeKeys, movementProfile);
             }
-            profile.buildJumpEdgesNs = System.nanoTime() - phaseStartedAt;
+            buildProfile.buildJumpEdgesNs = System.nanoTime() - phaseStartedAt;
 
             phaseStartedAt = System.nanoTime();
             for (BotNavigationGraph.Region region : ropeRegions) {
-                addRopeEntryEdges(region, groundRegions, ropeByRegionId, map, anchorsByRegionId, outgoing, edgeKeys);
+                addRopeEntryEdges(region, groundRegions, ropeByRegionId, map, anchorsByRegionId, outgoing, edgeKeys, movementProfile);
             }
-            profile.buildRopeEntryEdgesNs = System.nanoTime() - phaseStartedAt;
+            buildProfile.buildRopeEntryEdgesNs = System.nanoTime() - phaseStartedAt;
 
             phaseStartedAt = System.nanoTime();
             for (BotNavigationGraph.Region region : ropeRegions) {
-                addRopeExitEdges(region, ropeRegions, ropeByRegionId, map, regionsById, regionIdByFootholdId, outgoing, edgeKeys);
+                addRopeExitEdges(region, ropeRegions, ropeByRegionId, map, regionsById, regionIdByFootholdId, outgoing, edgeKeys, movementProfile);
             }
-            profile.buildRopeExitEdgesNs = System.nanoTime() - phaseStartedAt;
+            buildProfile.buildRopeExitEdgesNs = System.nanoTime() - phaseStartedAt;
 
             phaseStartedAt = System.nanoTime();
             for (Portal portal : map.getPortals()) {
                 addPortalEdges(portal, map, regionsById, regionIdByFootholdId, outgoing, edgeKeys);
             }
-            profile.buildPortalEdgesNs = System.nanoTime() - phaseStartedAt;
+            buildProfile.buildPortalEdgesNs = System.nanoTime() - phaseStartedAt;
 
-            BotNavigationGraph graph = new BotNavigationGraph(map.getId(), GRAPH_VERSION, regions, regionsById, regionIdByFootholdId, outgoing, collidableWallIds);
-            GraphBuildReport report = profile.finish();
-            LAST_BUILD_REPORTS.put(map.getId(), report);
-            log.debug("Built bot nav graph map {} in {} ms (regions={}, edges={}, jump={} ms, jumpSamples={}, cacheHits={})",
+            BotNavigationGraph graph = new BotNavigationGraph(
+                    map.getId(), GRAPH_VERSION, movementProfile, regions, regionsById, regionIdByFootholdId, outgoing, collidableWallIds);
+            GraphBuildReport report = buildProfile.finish();
+            LAST_BUILD_REPORTS.put(GraphCacheKey.from(map.getId(), movementProfile), report);
+            log.debug("Built bot nav graph map {} speed={} jump={} in {} ms (regions={}, edges={}, jump={} ms, jumpSamples={}, cacheHits={})",
                     map.getId(),
+                    movementProfile.totalSpeedStat(),
+                    movementProfile.totalJumpStat(),
                     String.format("%.2f", report.totalBuildNs / 1_000_000.0),
                     report.regionCount,
                     report.totalEdgeCount,
@@ -422,7 +467,15 @@ final class BotNavigationGraphProvider {
     }
 
     static GraphBuildReport getLastBuildReport(int mapId) {
-        return LAST_BUILD_REPORTS.get(mapId);
+        return getLastBuildReport(mapId, BotMovementProfile.base());
+    }
+
+    static GraphBuildReport getLastBuildReport(int mapId, BotMovementProfile movementProfile) {
+        return LAST_BUILD_REPORTS.get(GraphCacheKey.from(mapId, movementProfile));
+    }
+
+    static Set<Integer> getCachedCollidableWallIds(int mapId) {
+        return COLLIDABLE_WALL_IDS_BY_MAP_ID.get(mapId);
     }
 
     private static void buildRegions(List<Foothold> footholds,
@@ -483,9 +536,10 @@ final class BotNavigationGraphProvider {
                                      Map<Integer, BotNavigationGraph.Region> regionsById,
                                      Map<Integer, Integer> regionIdByFootholdId,
                                      Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
-                                     Set<String> edgeKeys) {
-        addWalkEdge(foothold, footholdsById.get(foothold.getPrev()), regionsById, regionIdByFootholdId, outgoing, edgeKeys);
-        addWalkEdge(foothold, footholdsById.get(foothold.getNext()), regionsById, regionIdByFootholdId, outgoing, edgeKeys);
+                                     Set<String> edgeKeys,
+                                     BotMovementProfile movementProfile) {
+        addWalkEdge(foothold, footholdsById.get(foothold.getPrev()), regionsById, regionIdByFootholdId, outgoing, edgeKeys, movementProfile);
+        addWalkEdge(foothold, footholdsById.get(foothold.getNext()), regionsById, regionIdByFootholdId, outgoing, edgeKeys, movementProfile);
     }
 
     private static void addWalkEdge(Foothold fromFoothold,
@@ -493,7 +547,8 @@ final class BotNavigationGraphProvider {
                                     Map<Integer, BotNavigationGraph.Region> regionsById,
                                     Map<Integer, Integer> regionIdByFootholdId,
                                     Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
-                                    Set<String> edgeKeys) {
+                                    Set<String> edgeKeys,
+                                    BotMovementProfile movementProfile) {
         if (fromFoothold == null || targetFoothold == null || targetFoothold.isWall()) {
             return;
         }
@@ -517,7 +572,7 @@ final class BotNavigationGraphProvider {
 
         Point start = from.pointAt(connection.from.x);
         Point end = to.pointAt(connection.to.x);
-        int cost = estimateWalkCost(start, end);
+        int cost = estimateWalkCost(start, end, movementProfile);
         addEdge(from.id, to.id, BotNavigationGraph.EdgeType.WALK, start, end, 0, 0, cost, outgoing, edgeKeys);
         addEdge(to.id, from.id, BotNavigationGraph.EdgeType.WALK, end, start, 0, 0, cost, outgoing, edgeKeys);
     }
@@ -528,9 +583,10 @@ final class BotNavigationGraphProvider {
                                      Map<Integer, Integer> regionIdByFootholdId,
                                      List<Point> anchors,
                                      Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
-                                     Set<String> edgeKeys) {
+                                     Set<String> edgeKeys,
+                                     BotMovementProfile movementProfile) {
         for (Point anchor : anchors) {
-            int dropStepX = dropLaunchStep(from, map, anchor);
+            int dropStepX = dropLaunchStep(from, map, anchor, movementProfile);
             BotPhysicsEngine.JumpLanding landing = dropStepX == 0
                     ? BotPhysicsEngine.simulateDownJumpLanding(map, anchor)
                     : BotPhysicsEngine.simulateFallLanding(map, anchor, dropStepX);
@@ -561,9 +617,10 @@ final class BotNavigationGraphProvider {
                                      Map<Integer, Integer> regionIdByFootholdId,
                                      List<Point> anchors,
                                      Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
-                                     Set<String> edgeKeys) {
+                                     Set<String> edgeKeys,
+                                     BotMovementProfile movementProfile) {
         long startedAt = System.nanoTime();
-        int jumpStep = BotPhysicsEngine.walkStep(map);
+        int jumpStep = BotPhysicsEngine.walkStep(map, movementProfile);
         JumpBuildStats stats = new JumpBuildStats();
         for (Point anchor : anchors) {
             for (int launchStepX : new int[]{-jumpStep, 0, jumpStep}) {
@@ -574,7 +631,7 @@ final class BotNavigationGraphProvider {
                 stats.sampleCount++;
                 stats.cacheMisses++;
 
-                BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateJumpLanding(map, anchor, launchStepX);
+                BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateJumpLanding(map, anchor, launchStepX, movementProfile);
                 if (landing == null) {
                     continue;
                 }
@@ -589,7 +646,7 @@ final class BotNavigationGraphProvider {
                 }
 
                 JumpLaunchWindow launchWindow = expandJumpLaunchWindow(from, map, regionIdByFootholdId,
-                        anchor.x, launchStepX, to.id, stats);
+                        anchor.x, launchStepX, to.id, stats, movementProfile);
                 if (launchWindow == null) {
                     continue;
                 }
@@ -597,7 +654,7 @@ final class BotNavigationGraphProvider {
                 addEdge(from.id, to.id, BotNavigationGraph.EdgeType.JUMP,
                         launchWindow.startPoint(), launchWindow.endPoint(),
                         launchWindow.minX(), launchWindow.maxX(),
-                        launchStepX, 0, BotPhysicsEngine.estimateJumpLandingTimeMs(map, launchWindow.startPoint(), launchStepX),
+                        launchStepX, 0, BotPhysicsEngine.estimateJumpLandingTimeMs(map, launchWindow.startPoint(), launchStepX, movementProfile),
                         outgoing, edgeKeys);
                 stats.edgeCount++;
             }
@@ -617,13 +674,14 @@ final class BotNavigationGraphProvider {
     }
 
     private static Map<Integer, List<Point>> buildAnchorsByRegionId(List<BotNavigationGraph.Region> regions,
-                                                                    Map<Integer, List<Integer>> featureXsByRegionId) {
+                                                                    Map<Integer, List<Integer>> featureXsByRegionId,
+                                                                    BotMovementProfile movementProfile) {
         Map<Integer, List<Point>> anchorsByRegionId = new HashMap<>();
         for (BotNavigationGraph.Region region : regions) {
             if (region.isRopeRegion) {
                 continue;
             }
-            anchorsByRegionId.put(region.id, anchorPoints(region, featureXsByRegionId.getOrDefault(region.id, List.of())));
+            anchorsByRegionId.put(region.id, anchorPoints(region, featureXsByRegionId.getOrDefault(region.id, List.of()), movementProfile));
         }
         return anchorsByRegionId;
     }
@@ -634,9 +692,10 @@ final class BotNavigationGraphProvider {
                                                            int anchorX,
                                                            int launchStepX,
                                                            int targetRegionId,
-                                                           JumpBuildStats stats) {
-        int minX = findJumpLaunchBoundary(from, map, regionIdByFootholdId, anchorX, launchStepX, targetRegionId, true, stats);
-        int maxX = findJumpLaunchBoundary(from, map, regionIdByFootholdId, anchorX, launchStepX, targetRegionId, false, stats);
+                                                           JumpBuildStats stats,
+                                                           BotMovementProfile movementProfile) {
+        int minX = findJumpLaunchBoundary(from, map, regionIdByFootholdId, anchorX, launchStepX, targetRegionId, true, stats, movementProfile);
+        int maxX = findJumpLaunchBoundary(from, map, regionIdByFootholdId, anchorX, launchStepX, targetRegionId, false, stats, movementProfile);
 
         int representativeX = (minX + maxX) / 2;
         Point representativeStart = from.pointAt(representativeX);
@@ -647,7 +706,7 @@ final class BotNavigationGraphProvider {
         stats.sampleCount++;
         stats.cacheMisses++;
         BotPhysicsEngine.JumpLanding representativeLanding =
-                BotPhysicsEngine.simulateJumpLanding(map, representativeStart, launchStepX);
+                BotPhysicsEngine.simulateJumpLanding(map, representativeStart, launchStepX, movementProfile);
         if (representativeLanding == null) {
             return null;
         }
@@ -667,7 +726,8 @@ final class BotNavigationGraphProvider {
                                               int launchStepX,
                                               int targetRegionId,
                                               boolean searchLeft,
-                                              JumpBuildStats stats) {
+                                              JumpBuildStats stats,
+                                              BotMovementProfile movementProfile) {
         int validX = anchorX;
         int invalidX = anchorX;
         int step = 1;
@@ -680,7 +740,7 @@ final class BotNavigationGraphProvider {
                 break;
             }
 
-            if (!landsJumpInRegion(map, regionIdByFootholdId, from.pointAt(probeX), launchStepX, targetRegionId, stats)) {
+            if (!landsJumpInRegion(map, regionIdByFootholdId, from.pointAt(probeX), launchStepX, targetRegionId, stats, movementProfile)) {
                 invalidX = probeX;
                 break;
             }
@@ -698,7 +758,7 @@ final class BotNavigationGraphProvider {
             if (profile != null) {
                 profile.recordJumpBoundaryRefineProbe();
             }
-            boolean valid = landsJumpInRegion(map, regionIdByFootholdId, from.pointAt(probeX), launchStepX, targetRegionId, stats);
+            boolean valid = landsJumpInRegion(map, regionIdByFootholdId, from.pointAt(probeX), launchStepX, targetRegionId, stats, movementProfile);
             if (valid) {
                 validX = probeX;
             } else {
@@ -713,14 +773,15 @@ final class BotNavigationGraphProvider {
                                              Point start,
                                              int launchStepX,
                                              int targetRegionId,
-                                             JumpBuildStats stats) {
+                                             JumpBuildStats stats,
+                                             BotMovementProfile movementProfile) {
         BuildProfileBuilder profile = ACTIVE_BUILD_PROFILE.get();
         if (profile != null) {
             profile.recordJumpSample(false);
         }
         stats.sampleCount++;
         stats.cacheMisses++;
-        BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateJumpLanding(map, start, launchStepX);
+        BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateJumpLanding(map, start, launchStepX, movementProfile);
         if (landing == null) {
             return false;
         }
@@ -735,7 +796,8 @@ final class BotNavigationGraphProvider {
                                           MapleMap map,
                                           Map<Integer, List<Point>> anchorsByRegionId,
                                           Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
-                                          Set<String> edgeKeys) {
+                                          Set<String> edgeKeys,
+                                          BotMovementProfile movementProfile) {
         Rope rope = ropeByRegionId.get(ropeRegion.id);
         if (rope == null) {
             return;
@@ -746,7 +808,7 @@ final class BotNavigationGraphProvider {
             for (Point anchor : anchorsByRegionId.getOrDefault(ground.id, List.of())) {
                 boolean canGrab = Math.abs(anchor.x - ropeX) <= BotMovementManager.cfg.ROPE_GRAB_X
                         && anchor.y >= rope.topY() && anchor.y <= rope.bottomY();
-                boolean canJumpGrab = BotMovementManager.canReachRopeFromGround(map, anchor, rope);
+                boolean canJumpGrab = BotMovementManager.canReachRopeFromGround(map, anchor, rope, movementProfile);
                 boolean canTopStep = anchor.y <= rope.topY() + BotMovementManager.cfg.JUMP_Y_THRESH
                         && Math.abs(anchor.x - ropeX) <= BotMovementManager.cfg.ROPE_GRAB_X;
 
@@ -767,10 +829,10 @@ final class BotNavigationGraphProvider {
                 }
 
                 if (canJumpGrab) {
-                    int jumpStep = Integer.compare(ropeX - anchor.x, 0) * BotMovementManager.walkStep(map);
-                    Point ropeGrab = BotPhysicsEngine.simulateGroundJumpRopeGrab(map, anchor, jumpStep, rope);
+                    int jumpStep = Integer.compare(ropeX - anchor.x, 0) * BotMovementManager.walkStep(map, movementProfile);
+                    Point ropeGrab = BotPhysicsEngine.simulateGroundJumpRopeGrab(map, anchor, jumpStep, rope, movementProfile);
                     if (ropeGrab != null) {
-                        int cost = BotPhysicsEngine.estimateGroundJumpRopeGrabTimeMs(map, anchor, jumpStep, rope);
+                        int cost = BotPhysicsEngine.estimateGroundJumpRopeGrabTimeMs(map, anchor, jumpStep, rope, movementProfile);
                         addEdge(ground.id, ropeRegion.id, BotNavigationGraph.EdgeType.CLIMB,
                                 anchor, ropeGrab, 0, 0, cost, outgoing, edgeKeys);
                     }
@@ -788,15 +850,16 @@ final class BotNavigationGraphProvider {
                                          Map<Integer, BotNavigationGraph.Region> regionsById,
                                          Map<Integer, Integer> regionIdByFootholdId,
                                          Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
-                                         Set<String> edgeKeys) {
+                                         Set<String> edgeKeys,
+                                         BotMovementProfile movementProfile) {
         Rope rope = ropeByRegionId.get(ropeRegion.id);
         if (rope == null) {
             return;
         }
 
         int ropeX = rope.x();
-        int jumpStep = BotMovementManager.walkStep(map);
-        int maxRopeJumpDx = BotPhysicsEngine.maxRopeJumpHorizontalTravel(map);
+        int jumpStep = BotMovementManager.walkStep(map, movementProfile);
+        int maxRopeJumpDx = BotPhysicsEngine.maxRopeJumpHorizontalTravel(map, movementProfile);
 
         // Direct step-off at the top of the rope
         addTopStepOffEdge(ropeRegion, rope, map, regionsById, regionIdByFootholdId, outgoing, edgeKeys);
@@ -805,7 +868,7 @@ final class BotNavigationGraphProvider {
         for (int anchorY : ropeAnchorYs(rope)) {
             Point ropePoint = new Point(ropeX, anchorY);
             for (int stepX : new int[]{-jumpStep, 0, jumpStep}) {
-                BotMovementManager.JumpLanding landing = BotMovementManager.simulateRopeJumpLanding(map, ropePoint, stepX);
+                BotMovementManager.JumpLanding landing = BotMovementManager.simulateRopeJumpLanding(map, ropePoint, stepX, movementProfile);
                 if (landing == null) {
                     continue;
                 }
@@ -816,7 +879,7 @@ final class BotNavigationGraphProvider {
                     continue;
                 }
 
-                int cost = BotPhysicsEngine.estimateRopeJumpLandingTimeMs(map, ropePoint, stepX);
+                int cost = BotPhysicsEngine.estimateRopeJumpLandingTimeMs(map, ropePoint, stepX, movementProfile);
                 addEdge(ropeRegion.id, toRegion.id, BotNavigationGraph.EdgeType.CLIMB,
                         ropePoint, landing.point(), stepX, 0, cost, outgoing, edgeKeys);
             }
@@ -841,12 +904,12 @@ final class BotNavigationGraphProvider {
                 }
 
                 int launchDir = targetRope.x() > ropeX ? jumpStep : -jumpStep;
-                Point ropeGrab = BotPhysicsEngine.simulateRopeJumpGrab(map, ropePoint, launchDir, targetRope);
+                Point ropeGrab = BotPhysicsEngine.simulateRopeJumpGrab(map, ropePoint, launchDir, targetRope, movementProfile);
                 if (ropeGrab == null) {
                     continue;
                 }
 
-                int cost = BotPhysicsEngine.estimateRopeJumpGrabTimeMs(map, ropePoint, launchDir, targetRope);
+                int cost = BotPhysicsEngine.estimateRopeJumpGrabTimeMs(map, ropePoint, launchDir, targetRope, movementProfile);
                 addEdge(ropeRegion.id, otherRope.id, BotNavigationGraph.EdgeType.CLIMB,
                         ropePoint, ropeGrab, launchDir, 0, cost, outgoing, edgeKeys);
             }
@@ -1046,11 +1109,11 @@ final class BotNavigationGraphProvider {
         return regionsById.get(regionId);
     }
 
-    private static List<Point> anchorPoints(BotNavigationGraph.Region region, List<Integer> featureXs) {
+    private static List<Point> anchorPoints(BotNavigationGraph.Region region, List<Integer> featureXs, BotMovementProfile movementProfile) {
         List<Point> points = new ArrayList<>();
         addAnchor(points, region.leftPoint());
         // Near-edge anchors for better jump/drop accuracy at platform boundaries
-        int edgeInset = Math.max(8, (int) Math.round(BotMovementManager.cfg.WALK_VEL * BotPhysicsEngine.cfg.TICK_MS / 1000.0));
+        int edgeInset = Math.max(8, (int) Math.round(movementProfile.walkVelocityPxs() * BotPhysicsEngine.cfg.TICK_MS / 1000.0));
         if (region.width() > edgeInset * 2) {
             addAnchor(points, region.pointAt(region.minX + edgeInset), ENDPOINT_ANCHOR_SPACING_PX);
             addAnchor(points, region.pointAt(region.maxX - edgeInset), ENDPOINT_ANCHOR_SPACING_PX);
@@ -1226,22 +1289,26 @@ final class BotNavigationGraphProvider {
     }
 
     private static int estimateWalkCost(Point start, Point end) {
-        return estimateHorizontalTravelTimeMs(Math.abs(end.x - start.x));
+        return estimateWalkCost(start, end, BotMovementProfile.base());
     }
 
-    private static int estimateHorizontalTravelTimeMs(int dx) {
-        return Math.max(0, (int) Math.round((dx * 1000.0) / Math.max(1, BotMovementManager.cfg.WALK_VEL)));
+    private static int estimateWalkCost(Point start, Point end, BotMovementProfile movementProfile) {
+        return estimateHorizontalTravelTimeMs(Math.abs(end.x - start.x), movementProfile);
     }
 
-    private static int dropLaunchStep(BotNavigationGraph.Region region, MapleMap map, Point anchor) {
+    private static int estimateHorizontalTravelTimeMs(int dx, BotMovementProfile movementProfile) {
+        return Math.max(0, (int) Math.round((dx * 1000.0) / Math.max(1.0, movementProfile.walkVelocityPxs())));
+    }
+
+    private static int dropLaunchStep(BotNavigationGraph.Region region, MapleMap map, Point anchor, BotMovementProfile movementProfile) {
         Point left = region.leftPoint();
         if (Math.abs(anchor.x - left.x) <= ENDPOINT_ANCHOR_SPACING_PX && Math.abs(anchor.y - left.y) <= 12) {
-            return -BotMovementManager.walkStep(map);
+            return -BotMovementManager.walkStep(map, movementProfile);
         }
 
         Point right = region.rightPoint();
         if (Math.abs(anchor.x - right.x) <= ENDPOINT_ANCHOR_SPACING_PX && Math.abs(anchor.y - right.y) <= 12) {
-            return BotMovementManager.walkStep(map);
+            return BotMovementManager.walkStep(map, movementProfile);
         }
 
         return 0;

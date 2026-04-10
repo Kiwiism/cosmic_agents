@@ -97,7 +97,7 @@ final class BotPathLogger {
         LocalDateTime now = LocalDateTime.now();
         String filename = "pathlog-" + botName + "-" + now.format(FILE_FMT) + ".txt";
 
-        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(entry.bot.getMap());
+        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(entry.bot.getMap(), BotMovementProfile.fromCharacter(entry.bot));
         Point botPos = entry.bot.getPosition();
         Point goalTargetPos = targetSnapshot.primaryTargetPos();
         Point steeringTargetPos = targetSnapshot.steeringTargetPos(entry);

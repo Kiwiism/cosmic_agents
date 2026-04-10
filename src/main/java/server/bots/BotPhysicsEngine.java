@@ -104,6 +104,10 @@ final class BotPhysicsEngine {
     private BotPhysicsEngine() {
     }
 
+    private static BotMovementProfile profileOrBase(BotMovementProfile profile) {
+        return profile != null ? profile : BotMovementProfile.base();
+    }
+
     static float tickS() {
         return cfg.TICK_MS / 1000f;
     }
@@ -116,12 +120,20 @@ final class BotPhysicsEngine {
         return cfg.JUMP_SPEED_PXS * tickS();
     }
 
+    static float jumpForcePerTick(BotMovementProfile profile) {
+        return profileOrBase(profile).jumpSpeedPxs() * tickS();
+    }
+
     static float downJumpForcePerTick() {
         return cfg.JUMP_DOWN_PXS * tickS();
     }
 
     static float ropeJumpForcePerTick() {
         return cfg.JUMP_ROPE_PXS * tickS();
+    }
+
+    static float ropeJumpForcePerTick(BotMovementProfile profile) {
+        return profileOrBase(profile).ropeJumpSpeedPxs() * tickS();
     }
 
     static int climbStepPerTick() {
@@ -134,7 +146,11 @@ final class BotPhysicsEngine {
     }
 
     static int walkStep(MapleMap map) {
-        double step = maxHSpeedPerClientStep() * cfg.TICK_MS * mapGroundSpeedScale(map) / CLIENT_GROUND_STEP_MS;
+        return walkStep(map, BotMovementProfile.base());
+    }
+
+    static int walkStep(MapleMap map, BotMovementProfile profile) {
+        double step = maxHSpeedPerClientStep(profile) * cfg.TICK_MS * mapGroundSpeedScale(map) / CLIENT_GROUND_STEP_MS;
         return Math.max(1, (int) Math.round(step));
     }
 
@@ -471,22 +487,22 @@ final class BotPhysicsEngine {
 
     static void beginGroundJump(BotEntry entry, Character bot, int airVelX) {
         entry.blockedRopeGrab = null;
-        launchAirborne(entry, bot, bot.getPosition(), -jumpForcePerTick(), airVelX, false);
+        launchAirborne(entry, bot, bot.getPosition(), -jumpForcePerTick(entry.movementProfile), airVelX, false);
     }
 
     static void beginClimbUpJump(BotEntry entry, Character bot, int airVelX) {
         entry.blockedRopeGrab = null;
-        launchAirborne(entry, bot, bot.getPosition(), -jumpForcePerTick(), airVelX, true);
+        launchAirborne(entry, bot, bot.getPosition(), -jumpForcePerTick(entry.movementProfile), airVelX, true);
     }
 
     static void beginJumpOffRope(BotEntry entry, Character bot, int airVelX) {
         entry.blockedRopeGrab = null;
-        launchAirborne(entry, bot, bot.getPosition(), -ropeJumpForcePerTick(), airVelX, false);
+        launchAirborne(entry, bot, bot.getPosition(), -ropeJumpForcePerTick(entry.movementProfile), airVelX, false);
     }
 
     static void beginRopeTransferJump(BotEntry entry, Character bot, Rope sourceRope, int airVelX) {
         entry.blockedRopeGrab = sourceRope;
-        launchAirborne(entry, bot, bot.getPosition(), -ropeJumpForcePerTick(), airVelX, true);
+        launchAirborne(entry, bot, bot.getPosition(), -ropeJumpForcePerTick(entry.movementProfile), airVelX, true);
     }
 
     static void beginDownJump(BotEntry entry, Character bot) {
@@ -559,8 +575,8 @@ final class BotPhysicsEngine {
         entry.downJumpGracePeriodMS = 0L;
         entry.groundPhysicsCarryMs = 0.0;
         entry.blockedRopeGrab = null;
-        entry.hspeed = landingGroundHSpeed(bot.getMap(), foothold, incomingDeltaX, incomingDeltaY);
-        setMovementVelocity(entry, velocityFromDeltaX(tickDeltaFromGroundHSpeed(bot.getMap(), entry.hspeed)), 0);
+        entry.hspeed = landingGroundHSpeed(bot.getMap(), foothold, incomingDeltaX, incomingDeltaY, entry.movementProfile);
+        setMovementVelocity(entry, velocityFromDeltaX(tickDeltaFromGroundHSpeed(bot.getMap(), entry.hspeed, entry.movementProfile)), 0);
         syncCharacterState(entry);
     }
 
@@ -618,7 +634,7 @@ final class BotPhysicsEngine {
         MapleMap map = bot.getMap();
         Point currentPos = bot.getPosition();
         GroundStepResult step = simulateGroundMotion(map, currentPos, foothold, desiredDir,
-                new GroundTravelState(entry.physX, entry.hspeed, entry.groundPhysicsCarryMs));
+                new GroundTravelState(entry.physX, entry.hspeed, entry.groundPhysicsCarryMs), entry.movementProfile);
 
         // Snap-up to a *different* foothold means the bot walked off the edge and a separate
         // platform happens to be within MAX_SLOPE_UP above. That is not an uphill slope of the
@@ -656,12 +672,13 @@ final class BotPhysicsEngine {
                                                  Point currentPos,
                                                  Foothold foothold,
                                                  int desiredDir,
-                                                 GroundTravelState state) {
+                                                 GroundTravelState state,
+                                                 BotMovementProfile profile) {
         if (map == null || currentPos == null || foothold == null || state == null) {
             return new GroundStepResult(currentPos, foothold, state, 0, 0, true);
         }
 
-        GroundTravelState displaced = applyGroundDisplacement(map, foothold, desiredDir, state);
+        GroundTravelState displaced = applyGroundDisplacement(map, foothold, desiredDir, state, profile);
         int newX = (int) Math.round(displaced.physX());
         int stepX = newX - currentPos.x;
         GroundStepPreview preview = previewGroundStep(map, currentPos, foothold, newX);
@@ -802,24 +819,44 @@ final class BotPhysicsEngine {
     }
 
     static float calculateMaxJumpHeight() {
-        float jumpForce = jumpForcePerTick();
+        return calculateMaxJumpHeight(BotMovementProfile.base());
+    }
+
+    static float calculateMaxJumpHeight(BotMovementProfile profile) {
+        float jumpForce = jumpForcePerTick(profile);
         return jumpForce * jumpForce / (2 * gravityPerTick());
     }
 
     static int maxJumpHorizontalTravel(MapleMap map) {
-        return maxHorizontalTravel(map, jumpForcePerTick());
+        return maxJumpHorizontalTravel(map, BotMovementProfile.base());
+    }
+
+    static int maxJumpHorizontalTravel(MapleMap map, BotMovementProfile profile) {
+        return maxHorizontalTravel(map, profile, jumpForcePerTick(profile));
     }
 
     static int maxRopeJumpHorizontalTravel(MapleMap map) {
-        return maxHorizontalTravel(map, ropeJumpForcePerTick());
+        return maxRopeJumpHorizontalTravel(map, BotMovementProfile.base());
+    }
+
+    static int maxRopeJumpHorizontalTravel(MapleMap map, BotMovementProfile profile) {
+        return maxHorizontalTravel(map, profile, ropeJumpForcePerTick(profile));
     }
 
     static Point simulateRopeJumpGrab(MapleMap map, Point from, int stepX, Rope targetRope) {
-        return simulateRopeGrab(map, from, -ropeJumpForcePerTick(), stepX, targetRope, 0L);
+        return simulateRopeJumpGrab(map, from, stepX, targetRope, BotMovementProfile.base());
+    }
+
+    static Point simulateRopeJumpGrab(MapleMap map, Point from, int stepX, Rope targetRope, BotMovementProfile profile) {
+        return simulateRopeGrab(map, from, -ropeJumpForcePerTick(profile), stepX, targetRope, 0L);
     }
 
     static Point simulateGroundJumpRopeGrab(MapleMap map, Point from, int stepX, Rope targetRope) {
-        return simulateRopeGrab(map, from, -jumpForcePerTick(), stepX, targetRope, 0L);
+        return simulateGroundJumpRopeGrab(map, from, stepX, targetRope, BotMovementProfile.base());
+    }
+
+    static Point simulateGroundJumpRopeGrab(MapleMap map, Point from, int stepX, Rope targetRope, BotMovementProfile profile) {
+        return simulateRopeGrab(map, from, -jumpForcePerTick(profile), stepX, targetRope, 0L);
     }
 
     static Point simulateDownJumpRopeGrab(MapleMap map, Point from, Rope targetRope) {
@@ -827,6 +864,10 @@ final class BotPhysicsEngine {
     }
 
     static boolean canReachRopeFromGround(MapleMap map, Point from, Rope rope) {
+        return canReachRopeFromGround(map, from, rope, BotMovementProfile.base());
+    }
+
+    static boolean canReachRopeFromGround(MapleMap map, Point from, Rope rope, BotMovementProfile profile) {
         int dx = Math.abs(rope.x() - from.x);
         if (dx <= cfg.ROPE_GRAB_X && from.y >= rope.topY() && from.y <= rope.bottomY()) {
             return true;
@@ -835,13 +876,17 @@ final class BotPhysicsEngine {
             return false;
         }
 
-        int jumpReach = (int) Math.ceil(calculateMaxJumpHeight());
+        int jumpReach = (int) Math.ceil(calculateMaxJumpHeight(profile));
         return rope.bottomY() >= from.y - jumpReach
-                && dx <= maxJumpHorizontalTravel(map);
+                && dx <= maxJumpHorizontalTravel(map, profile);
     }
 
     static JumpLanding simulateJumpLanding(MapleMap map, Point from, int stepX) {
-        return simulateLanding(map, from, -jumpForcePerTick(), stepX, 0L);
+        return simulateJumpLanding(map, from, stepX, BotMovementProfile.base());
+    }
+
+    static JumpLanding simulateJumpLanding(MapleMap map, Point from, int stepX, BotMovementProfile profile) {
+        return simulateLanding(map, from, -jumpForcePerTick(profile), stepX, 0L);
     }
 
     static JumpLanding simulateDownJumpLanding(MapleMap map, Point from) {
@@ -853,11 +898,19 @@ final class BotPhysicsEngine {
     }
 
     static JumpLanding simulateRopeJumpLanding(MapleMap map, Point from, int stepX) {
-        return simulateLanding(map, from, -ropeJumpForcePerTick(), stepX, 0L);
+        return simulateRopeJumpLanding(map, from, stepX, BotMovementProfile.base());
+    }
+
+    static JumpLanding simulateRopeJumpLanding(MapleMap map, Point from, int stepX, BotMovementProfile profile) {
+        return simulateLanding(map, from, -ropeJumpForcePerTick(profile), stepX, 0L);
     }
 
     static int estimateJumpLandingTimeMs(MapleMap map, Point from, int stepX) {
-        return estimateLandingTimeMs(map, from, -jumpForcePerTick(), stepX, 0L);
+        return estimateJumpLandingTimeMs(map, from, stepX, BotMovementProfile.base());
+    }
+
+    static int estimateJumpLandingTimeMs(MapleMap map, Point from, int stepX, BotMovementProfile profile) {
+        return estimateLandingTimeMs(map, from, -jumpForcePerTick(profile), stepX, 0L);
     }
 
     static int estimateDownJumpLandingTimeMs(MapleMap map, Point from) {
@@ -869,11 +922,19 @@ final class BotPhysicsEngine {
     }
 
     static int estimateRopeJumpLandingTimeMs(MapleMap map, Point from, int stepX) {
-        return estimateLandingTimeMs(map, from, -ropeJumpForcePerTick(), stepX, 0L);
+        return estimateRopeJumpLandingTimeMs(map, from, stepX, BotMovementProfile.base());
+    }
+
+    static int estimateRopeJumpLandingTimeMs(MapleMap map, Point from, int stepX, BotMovementProfile profile) {
+        return estimateLandingTimeMs(map, from, -ropeJumpForcePerTick(profile), stepX, 0L);
     }
 
     static int estimateGroundJumpRopeGrabTimeMs(MapleMap map, Point from, int stepX, Rope targetRope) {
-        return estimateRopeGrabTimeMs(map, from, -jumpForcePerTick(), stepX, targetRope, 0L);
+        return estimateGroundJumpRopeGrabTimeMs(map, from, stepX, targetRope, BotMovementProfile.base());
+    }
+
+    static int estimateGroundJumpRopeGrabTimeMs(MapleMap map, Point from, int stepX, Rope targetRope, BotMovementProfile profile) {
+        return estimateRopeGrabTimeMs(map, from, -jumpForcePerTick(profile), stepX, targetRope, 0L);
     }
 
     static int estimateDownJumpRopeGrabTimeMs(MapleMap map, Point from, Rope targetRope) {
@@ -881,7 +942,11 @@ final class BotPhysicsEngine {
     }
 
     static int estimateRopeJumpGrabTimeMs(MapleMap map, Point from, int stepX, Rope targetRope) {
-        return estimateRopeGrabTimeMs(map, from, -ropeJumpForcePerTick(), stepX, targetRope, 0L);
+        return estimateRopeJumpGrabTimeMs(map, from, stepX, targetRope, BotMovementProfile.base());
+    }
+
+    static int estimateRopeJumpGrabTimeMs(MapleMap map, Point from, int stepX, Rope targetRope, BotMovementProfile profile) {
+        return estimateRopeGrabTimeMs(map, from, -ropeJumpForcePerTick(profile), stepX, targetRope, 0L);
     }
 
     private static JumpLanding findAirLanding(MapleMap map, Point previousPos, Point nextPos) {
@@ -1019,7 +1084,8 @@ final class BotPhysicsEngine {
     private static GroundTravelState applyGroundDisplacement(MapleMap map,
                                                              Foothold foothold,
                                                              int desiredDir,
-                                                             GroundTravelState state) {
+                                                             GroundTravelState state,
+                                                             BotMovementProfile profile) {
         GroundStepCounter counter = groundPhysicsSteps(state.carryMs(), map);
         if (counter.steps() == 0) {
             return state;
@@ -1028,7 +1094,7 @@ final class BotPhysicsEngine {
         double physX = state.physX();
         double hspeed = state.hspeed();
         for (int i = 0; i < counter.steps(); i++) {
-            hspeed = applyGroundPhysicsStep(hspeed, foothold, desiredDir);
+            hspeed = applyGroundPhysicsStep(hspeed, foothold, desiredDir, profile);
             physX += hspeed;
         }
         return new GroundTravelState(physX, hspeed, counter.carryMs());
@@ -1044,8 +1110,8 @@ final class BotPhysicsEngine {
         return new GroundStepCounter(steps, nextCarryMs);
     }
 
-    private static double applyGroundPhysicsStep(double hspeed, Foothold foothold, int desiredDir) {
-        double hforce = desiredDir * maxHForcePerClientStep();
+    private static double applyGroundPhysicsStep(double hspeed, Foothold foothold, int desiredDir, BotMovementProfile profile) {
+        double hforce = desiredDir * maxHForcePerClientStep(profile);
         if (hforce == 0.0 && Math.abs(hspeed) < 0.1) {
             return 0.0;
         }
@@ -1084,17 +1150,17 @@ final class BotPhysicsEngine {
         return footholdSpeed;
     }
 
-    private static double maxHForcePerClientStep() {
-        return cfg.HFORCE_PXS * CLIENT_GROUND_STEP_S;
+    private static double maxHForcePerClientStep(BotMovementProfile profile) {
+        return profileOrBase(profile).hForcePxs() * CLIENT_GROUND_STEP_S;
     }
 
-    private static double maxHSpeedPerClientStep() {
-        return maxHForcePerClientStep() * cfg.GROUNDSLIP / (cfg.FRICTION + cfg.SLOPEFACTOR);
+    private static double maxHSpeedPerClientStep(BotMovementProfile profile) {
+        return maxHForcePerClientStep(profile) * cfg.GROUNDSLIP / (cfg.FRICTION + cfg.SLOPEFACTOR);
     }
 
-    private static int maxHorizontalTravel(MapleMap map, float launchSpeedPerTick) {
+    private static int maxHorizontalTravel(MapleMap map, BotMovementProfile profile, float launchSpeedPerTick) {
         int airtimeTicks = Math.max(1, (int) Math.ceil((2 * launchSpeedPerTick) / gravityPerTick()));
-        return walkStep(map) * airtimeTicks;
+        return walkStep(map, profile) * airtimeTicks;
     }
 
     private static AirCollision findGroundCollision(MapleMap map, Point previousPos, Point nextPos) {
@@ -1146,9 +1212,9 @@ final class BotPhysicsEngine {
      * is still being built.
      */
     private static java.util.Set<Integer> getCollidableWallIds(MapleMap map) {
-        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map);
-        if (graph != null) {
-            return graph.collidableWallIds;
+        java.util.Set<Integer> cached = BotNavigationGraphProvider.getCachedCollidableWallIds(map.getId());
+        if (cached != null) {
+            return cached;
         }
         java.util.List<Foothold> all = map.getFootholds().getAllFootholds();
         java.util.Map<Integer, Foothold> byId = new java.util.HashMap<>(all.size());
@@ -1219,7 +1285,8 @@ final class BotPhysicsEngine {
     private static double landingGroundHSpeed(MapleMap map,
                                               Foothold foothold,
                                               double incomingDeltaX,
-                                              double incomingDeltaY) {
+                                              double incomingDeltaY,
+                                              BotMovementProfile profile) {
         double landingDeltaX = incomingDeltaX;
         if (foothold != null && !foothold.isWall() && foothold.slope() != 0.0) {
             double tangentX = foothold.getX2() - foothold.getX1();
@@ -1233,19 +1300,20 @@ final class BotPhysicsEngine {
             }
         }
 
-        double maxDeltaPerTick = Math.max(1.0, walkStep(map));
+        double maxDeltaPerTick = Math.max(1.0, walkStep(map, profile));
         landingDeltaX = Math.max(-maxDeltaPerTick, Math.min(maxDeltaPerTick, landingDeltaX));
-        return groundHSpeedFromTickDelta(map, landingDeltaX);
+        return groundHSpeedFromTickDelta(map, landingDeltaX, profile);
     }
 
-    private static double groundHSpeedFromTickDelta(MapleMap map, double deltaXPerTick) {
+    private static double groundHSpeedFromTickDelta(MapleMap map, double deltaXPerTick, BotMovementProfile profile) {
         double stepsPerTick = Math.max(1.0, (cfg.TICK_MS * mapGroundSpeedScale(map)) / CLIENT_GROUND_STEP_MS);
-        return deltaXPerTick / stepsPerTick;
+        return Math.max(-maxHSpeedPerClientStep(profile), Math.min(maxHSpeedPerClientStep(profile), deltaXPerTick / stepsPerTick));
     }
 
-    private static double tickDeltaFromGroundHSpeed(MapleMap map, double groundHSpeed) {
+    private static double tickDeltaFromGroundHSpeed(MapleMap map, double groundHSpeed, BotMovementProfile profile) {
         double stepsPerTick = Math.max(1.0, (cfg.TICK_MS * mapGroundSpeedScale(map)) / CLIENT_GROUND_STEP_MS);
-        return groundHSpeed * stepsPerTick;
+        double clampedHSpeed = Math.max(-maxHSpeedPerClientStep(profile), Math.min(maxHSpeedPerClientStep(profile), groundHSpeed));
+        return clampedHSpeed * stepsPerTick;
     }
 
     private static Point simulateRopeGrab(MapleMap map,

@@ -43,7 +43,7 @@ public final class BotNavigationDebugOverlay {
         }
 
         OverlayBuilder overlay = new OverlayBuilder(viewer);
-        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(viewer.getMap());
+        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(viewer.getMap(), BotMovementProfile.fromCharacter(viewer));
         Set<String> drawnEdges = new HashSet<>();
 
         for (BotNavigationGraph.Region region : graph.regions) {
@@ -88,7 +88,7 @@ public final class BotNavigationDebugOverlay {
 
         BotManager.TargetSnapshot targetSnapshot = BotManager.getInstance().captureTargetSnapshot(entry);
         Point targetPos = targetSnapshot.primaryTargetPos();
-        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(bot.getMap());
+        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(bot.getMap(), BotMovementProfile.fromCharacter(bot));
         int startRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, bot.getMap(), bot.getPosition());
         int targetRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, bot.getMap(), targetPos);
         List<BotNavigationGraph.Edge> path = startRegionId >= 0 && targetRegionId >= 0 && startRegionId != targetRegionId

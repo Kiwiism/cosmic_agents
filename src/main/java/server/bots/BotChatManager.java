@@ -187,7 +187,7 @@ public class BotChatManager {
             Pattern.CASE_INSENSITIVE);
     private static final Pattern MESOS_PATTERN = Pattern.compile(
             "^\\s*(?:meso|mesos|cash)\\s*[?!.,]*\\s*$"
-            + "|\\bhow\\s+much\\s+(?:meso|mesos|cash)\\b"
+            + "|\\bhow\\s+much\\s+(?:meso|mesos|cash)(?:\\s+do\\s+(?:you|u)\\s+have)?\\b"
             + "|\\bwhat.?s\\s+(?:your|ur)\\s+(?:meso|mesos|cash)\\b"
             + "|\\bshow\\s+me\\s+(?:your|ur)\\s+(?:meso|mesos|cash)\\b"
             + "|\\b(?:your|ur)\\s+(?:meso|mesos|cash)\\b"

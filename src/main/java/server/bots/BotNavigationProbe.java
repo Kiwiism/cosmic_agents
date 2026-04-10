@@ -15,12 +15,13 @@ public final class BotNavigationProbe {
 
     public static List<String> rebuildGraphReport(MapleMap map) {
         BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
-        return formatBuildReport(graph, BotNavigationGraphProvider.getLastBuildReport(map.getId()));
+        return formatBuildReport(graph, BotNavigationGraphProvider.getLastBuildReport(map.getId(), graph.movementProfile));
     }
 
     public static List<String> lastBuildReport(MapleMap map) {
-        return formatBuildReport(BotNavigationGraphProvider.getGraph(map),
-                BotNavigationGraphProvider.getLastBuildReport(map.getId()));
+        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(map);
+        return formatBuildReport(graph,
+                BotNavigationGraphProvider.getLastBuildReport(map.getId(), graph.movementProfile));
     }
 
     public static void main(String[] args) {
@@ -59,7 +60,7 @@ public final class BotNavigationProbe {
 
         printSummary(map, graph);
         if (rebuild) {
-            for (String line : formatBuildReport(graph, BotNavigationGraphProvider.getLastBuildReport(map.getId()))) {
+            for (String line : formatBuildReport(graph, BotNavigationGraphProvider.getLastBuildReport(map.getId(), graph.movementProfile))) {
                 System.out.println(line);
             }
         }
@@ -140,8 +141,12 @@ public final class BotNavigationProbe {
             }
         }
 
-        System.out.printf("Map %d  walkStep=%d  regions=%d  edges walk=%d jump=%d drop=%d climb=%d portal=%d%n",
-                map.getId(), BotMovementManager.walkStep(map), graph.regions.size(), walkEdges, jumpEdges, dropEdges, climbEdges, portalEdges);
+        System.out.printf("Map %d  speed=%d jump=%d walkStep=%d  regions=%d  edges walk=%d jump=%d drop=%d climb=%d portal=%d%n",
+                map.getId(),
+                graph.movementProfile.totalSpeedStat(),
+                graph.movementProfile.totalJumpStat(),
+                BotMovementManager.walkStep(map, graph.movementProfile),
+                graph.regions.size(), walkEdges, jumpEdges, dropEdges, climbEdges, portalEdges);
     }
 
     private static List<String> formatBuildReport(BotNavigationGraph graph,
@@ -152,8 +157,10 @@ public final class BotNavigationProbe {
 
         List<String> lines = new ArrayList<>();
         lines.add(String.format(
-                "Bot nav rebuild map=%d total=%.2fms regions=%d edges=%d footholds=%d walkable=%d ropes=%d",
+                "Bot nav rebuild map=%d speed=%d jump=%d total=%.2fms regions=%d edges=%d footholds=%d walkable=%d ropes=%d",
                 report.mapId,
+                report.totalSpeedStat,
+                report.totalJumpStat,
                 nanosToMs(report.totalBuildNs),
                 report.regionCount,
                 report.totalEdgeCount,
@@ -199,7 +206,8 @@ public final class BotNavigationProbe {
             lines.add(slowRegions.toString());
         }
         if (graph != null) {
-            lines.add(String.format("Cache: version=%d map=%d regions=%d", graph.version, graph.mapId, graph.regions.size()));
+            lines.add(String.format("Cache: version=%d map=%d speed=%d jump=%d regions=%d",
+                    graph.version, graph.mapId, graph.movementProfile.totalSpeedStat(), graph.movementProfile.totalJumpStat(), graph.regions.size()));
         }
         return lines;
     }
@@ -242,12 +250,12 @@ public final class BotNavigationProbe {
     }
 
     private static void probeJump(MapleMap map, BotNavigationGraph graph, Point point) {
-        int walkStep = BotMovementManager.walkStep(map);
+        int walkStep = BotMovementManager.walkStep(map, graph.movementProfile);
         int regionId = graph.findRegionId(map, point);
 
         System.out.printf("%nJump probe %d,%d  region=%d%n", point.x, point.y, regionId);
         for (int stepX : new int[]{-walkStep, 0, walkStep}) {
-            BotMovementManager.JumpLanding landing = BotMovementManager.simulateJumpLanding(map, point, stepX);
+            BotMovementManager.JumpLanding landing = BotMovementManager.simulateJumpLanding(map, point, stepX, graph.movementProfile);
             if (landing == null) {
                 System.out.printf("  stepX=%d -> no landing%n", stepX);
                 continue;

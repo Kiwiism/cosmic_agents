@@ -394,6 +394,7 @@ public class BotManager {
         ScheduledFuture<?> task = TimerManager.getInstance().register(
                 () -> tick(ownerCharId, botCharId), BotMovementManager.cfg.TICK_MS);
         BotEntry entry = new BotEntry(bot, owner, task);
+        entry.movementProfile = BotMovementProfile.fromCharacter(bot);
         entries.add(entry);
         FormationState fs = ownerFormations.getOrDefault(ownerCharId, FormationState.defaultStagger());
         entry.followOffsetX = fs.offsetFor(entries.size() - 1, entries.size());
@@ -881,7 +882,7 @@ public class BotManager {
      */
     private static Point clampedOnOwnerRegion(int targetX, Character owner, Point ownerPos, MapleMap map) {
         if (map != null) {
-            BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(map);
+            BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(map, BotMovementProfile.base());
             int ownerRegionId = owner != null
                     ? BotNavigationManager.resolveCharacterRegionId(graph, map, owner)
                     : graph.findRegionId(map, ownerPos);
@@ -1005,7 +1006,7 @@ public class BotManager {
             return false;
         }
 
-        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(map);
+        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(map, entry.movementProfile);
         int botRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, map, botPos);
         int combatTargetRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, map, combatTargetPos);
         if (botRegionId < 0 || combatTargetRegionId < 0 || botRegionId != combatTargetRegionId) {
@@ -1043,6 +1044,8 @@ public class BotManager {
         if (handleDeadTick(entry, bot, owner)) {
             return;
         }
+
+        BotMovementManager.refreshMovementProfile(entry);
 
         Point botPos = bot.getPosition();
         TargetSnapshot targetSnapshot = captureTargetSnapshot(entry);
@@ -1168,7 +1171,7 @@ public class BotManager {
                     }
                     if (!entry.inAir) return;
                 } else if (!entry.inAir
-                        && BotCombatManager.isTargetJumpable(attackPlan.isCloseRangeRoute(), botPos, tp)) {
+                        && BotCombatManager.isTargetJumpable(entry.movementProfile, attackPlan.isCloseRangeRoute(), botPos, tp)) {
                     // Target is above but within jump height — jump toward it
                     BotMovementManager.initiateJump(entry, bot, tp.x - botPos.x);
                     return;

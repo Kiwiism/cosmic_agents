@@ -76,7 +76,7 @@ class BotChatManagerTest {
 
     @Test
     void shouldBuildOwnerLootOfferPrompt() {
-        String prompt = BotChatManager.buildLootOfferPrompt("Owner", "Blue Moon", true);
+        String prompt = BotOfferManager.buildLootOfferPrompt("Owner", "Blue Moon", true);
         assertTrue(Set.of(
                 "I have Blue Moon, you want?",
                 "picked up Blue Moon, want it?",
@@ -85,7 +85,7 @@ class BotChatManagerTest {
 
     @Test
     void shouldBuildPartyLootOfferPrompt() {
-        String prompt = BotChatManager.buildLootOfferPrompt("Alice", "Blue Moon", false);
+        String prompt = BotOfferManager.buildLootOfferPrompt("Alice", "Blue Moon", false);
         assertTrue(Set.of(
                 "Alice, I have Blue Moon, you want?",
                 "Alice, picked up Blue Moon, want it?",

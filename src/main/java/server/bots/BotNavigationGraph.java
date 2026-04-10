@@ -230,6 +230,7 @@ final class BotNavigationGraph implements Serializable {
 
     final int mapId;
     final int version;
+    final BotMovementProfile movementProfile;
     final List<Region> regions;
     final Map<Integer, Region> regionsById;
     final Map<Integer, Integer> regionIdByFootholdId;
@@ -238,6 +239,7 @@ final class BotNavigationGraph implements Serializable {
 
     BotNavigationGraph(int mapId,
                        int version,
+                       BotMovementProfile movementProfile,
                        List<Region> regions,
                        Map<Integer, Region> regionsById,
                        Map<Integer, Integer> regionIdByFootholdId,
@@ -245,6 +247,7 @@ final class BotNavigationGraph implements Serializable {
                        java.util.Set<Integer> collidableWallIds) {
         this.mapId = mapId;
         this.version = version;
+        this.movementProfile = movementProfile;
         this.regions = new ArrayList<>(regions);
         this.regionsById = new HashMap<>(regionsById);
         this.regionIdByFootholdId = new HashMap<>(regionIdByFootholdId);
@@ -253,6 +256,16 @@ final class BotNavigationGraph implements Serializable {
             this.outgoingByRegionId.put(entry.getKey(), new ArrayList<>(entry.getValue()));
         }
         this.collidableWallIds = new java.util.HashSet<>(collidableWallIds);
+    }
+
+    BotNavigationGraph(int mapId,
+                       int version,
+                       List<Region> regions,
+                       Map<Integer, Region> regionsById,
+                       Map<Integer, Integer> regionIdByFootholdId,
+                       Map<Integer, List<Edge>> outgoingByRegionId,
+                       java.util.Set<Integer> collidableWallIds) {
+        this(mapId, version, BotMovementProfile.base(), regions, regionsById, regionIdByFootholdId, outgoingByRegionId, collidableWallIds);
     }
 
     Region getRegion(int regionId) {
