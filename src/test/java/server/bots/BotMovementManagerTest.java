@@ -532,6 +532,52 @@ class BotMovementManagerTest {
     }
 
     @Test
+    void shouldAlternateDirectionalFollowAnticJumps() {
+        MapleMap map = new MapleMap(910000039, 0, 0, 910000039, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.following = true;
+        entry.movementProfile = new BotMovementProfile(140, 100);
+        BotFollowAnticsManager.startAntic(entry, BotFollowAnticMode.DIAGONAL_JUMP, System.currentTimeMillis(), 3000);
+
+        assertTrue(BotFollowAnticsManager.tryHandleTick(entry, new Point(110, 100), true));
+        int firstJumpVelX = entry.airVelX;
+        assertTrue(firstJumpVelX != 0, "diagonal jump antic should launch with horizontal momentum");
+
+        BotPhysicsEngine.idleOnGround(entry, bot);
+        entry.nextFollowAnticActionAtMs = 0L;
+
+        assertTrue(BotFollowAnticsManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertEquals(-Integer.signum(firstJumpVelX), Integer.signum(entry.airVelX),
+                "diagonal jump antic should alternate jump direction on the next grounded launch");
+    }
+
+    @Test
+    void shouldKeepJumpAnticRunningWhileAirborne() {
+        MapleMap map = new MapleMap(910000040, 0, 0, 910000040, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.following = true;
+        entry.movementProfile = new BotMovementProfile(140, 100);
+        BotFollowAnticsManager.startAntic(entry, BotFollowAnticMode.JUMP, System.currentTimeMillis(), 3000);
+
+        assertTrue(BotFollowAnticsManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertTrue(entry.inAir);
+
+        assertTrue(BotFollowAnticsManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertEquals(BotFollowAnticMode.JUMP, entry.followAnticMode,
+                "jump antics should not clear themselves while their first jump is still airborne");
+    }
+
+    @Test
     void shouldNotUseDownJumpForUnstuckRecovery() {
         MapleMap map = new MapleMap(910000037, 0, 0, 910000037, 1.0f);
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));

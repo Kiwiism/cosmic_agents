@@ -559,6 +559,10 @@ final class BotNavigationManager {
             return entry.inAir ? new Point(edge.endPoint) : new Point(edge.startPoint);
         }
 
+        if (hasReachedDirectionalDropRunway(botPos, edge)) {
+            return new Point(edge.endPoint);
+        }
+
         BotNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);
         if (fromRegion == null || fromRegion.isRopeRegion) {
             return new Point(edge.endPoint);
@@ -575,6 +579,17 @@ final class BotNavigationManager {
             return new Point(edge.endPoint);
         }
         return new Point(edge.startPoint);
+    }
+
+    private static boolean hasReachedDirectionalDropRunway(Point botPos, BotNavigationGraph.Edge edge) {
+        if (botPos == null || edge == null || edge.launchStepX == 0) {
+            return false;
+        }
+
+        int direction = Integer.signum(edge.launchStepX);
+        return direction > 0
+                ? botPos.x >= edge.startPoint.x
+                : botPos.x <= edge.startPoint.x;
     }
 
     private static boolean matchesDirectionalDrop(BotNavigationGraph.Edge edge,

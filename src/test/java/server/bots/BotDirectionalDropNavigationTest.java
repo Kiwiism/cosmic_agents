@@ -17,17 +17,17 @@ import static org.mockito.Mockito.when;
 
 class BotDirectionalDropNavigationTest {
     @Test
-    void shouldBacktrackToDirectionalDropRunwayWhenCommittedTooCloseToLip() {
+    void shouldKeepDirectionalDropDirectionWhileBotIsStillOnRunway() {
         DropTestFixture fixture = createDirectionalDropFixture(910000040);
-        Character bot = mockBot(new Point(fixture.edge.startPoint.x + 2, fixture.edge.startPoint.y), fixture.map);
+        Character bot = mockBot(new Point(fixture.edge.startPoint.x - 2, fixture.edge.startPoint.y), fixture.map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.physX = bot.getPosition().x;
         entry.physY = bot.getPosition().y;
 
         Point waypoint = BotNavigationManager.selectDropWaypoint(entry, fixture.graph, bot.getPosition(), fixture.edge);
 
-        assertEquals(fixture.edge.startPoint, waypoint,
-                "bot should backtrack to the graph-authored drop control anchor instead of half-stepping off the lip");
+        assertEquals(fixture.edge.endPoint, waypoint,
+                "directional drops should keep the held walk direction while the bot is already on the runway");
     }
 
     @Test
@@ -44,10 +44,30 @@ class BotDirectionalDropNavigationTest {
                 "once the walk-off already has enough runway, nav should keep feeding the landing-side direction");
     }
 
+    @Test
+    void shouldKeepDirectionalDropDirectionAfterCrossingNegativeRunwayAnchor() {
+        DropTestFixture fixture = createDirectionalDropFixture(910000042, false);
+        Character bot = mockBot(new Point(fixture.edge.startPoint.x - 5, fixture.edge.startPoint.y), fixture.map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.physX = bot.getPosition().x;
+        entry.physY = bot.getPosition().y;
+
+        Point waypoint = BotNavigationManager.selectDropWaypoint(entry, fixture.graph, bot.getPosition(), fixture.edge);
+
+        assertEquals(fixture.edge.endPoint, waypoint,
+                "once the bot has crossed the negative-direction drop anchor, nav should keep holding the drop direction");
+    }
+
     private static DropTestFixture createDirectionalDropFixture(int mapId) {
+        return createDirectionalDropFixture(mapId, true);
+    }
+
+    private static DropTestFixture createDirectionalDropFixture(int mapId, boolean dropRight) {
         MapleMap map = new MapleMap(mapId, 0, 0, mapId, 1.0f);
         Foothold upper = new Foothold(new Point(0, 100), new Point(100, 100), 1);
-        Foothold lower = new Foothold(new Point(106, 160), new Point(280, 160), 2);
+        Foothold lower = dropRight
+                ? new Foothold(new Point(106, 160), new Point(280, 160), 2)
+                : new Foothold(new Point(-180, 160), new Point(-6, 160), 2);
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
         footholds.insert(upper);
         footholds.insert(lower);
@@ -56,7 +76,8 @@ class BotDirectionalDropNavigationTest {
         BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
         BotNavigationGraph.Edge edge = graph.regions.stream()
                 .flatMap(region -> graph.getOutgoing(region.id).stream())
-                .filter(candidate -> candidate.type == BotNavigationGraph.EdgeType.DROP && candidate.launchStepX > 0)
+                .filter(candidate -> candidate.type == BotNavigationGraph.EdgeType.DROP
+                        && (dropRight ? candidate.launchStepX > 0 : candidate.launchStepX < 0))
                 .filter(candidate -> candidate.endPoint.y > candidate.startPoint.y)
                 .findFirst()
                 .orElse(null);

@@ -189,6 +189,8 @@ public class BotEntry {
     long nextFollowAnticAtMs = 0L;
     long nextIdleFollowAnticRollAtMs = 0L;
     int followAnticAirSteerDir = 0;
+    int followAnticJumpDir = 0;
+    long nextFollowAnticVisualAtMs = 0L;
     long nextGearSuggestionAt = 0L;
     boolean spawnUpgradeCheckDone = false;
     final Set<Integer> requestedUpgradeItemIds = ConcurrentHashMap.newKeySet();

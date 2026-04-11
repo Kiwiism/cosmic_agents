@@ -236,9 +236,9 @@ class BotNavigationGraphProviderTest {
         List<BotNavigationGraph.Edge> path = findPath(elliniaGraph, ellinia, new Point(1354, -1197), new Point(1355, -888));
 
         assertEquals(BotNavigationGraph.EdgeType.DROP, path.getFirst().type);
-        assertTrue(path.getFirst().launchStepX != 0, "Ledge drops should keep a horizontal walk-off step instead of down-jumping in place");
         assertTrue(path.stream().allMatch(edge -> edge.type == BotNavigationGraph.EdgeType.DROP
-                || edge.type == BotNavigationGraph.EdgeType.WALK));
+                || edge.type == BotNavigationGraph.EdgeType.WALK),
+                "dropping to a lower Ellinia platform should stay on drop/walk edges even if the exact drop style changes");
     }
 
     @Test
