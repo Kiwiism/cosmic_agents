@@ -28,7 +28,7 @@ import java.util.concurrent.Executors;
 final class BotNavigationGraphProvider {
     private static final Logger log = LoggerFactory.getLogger(BotNavigationGraphProvider.class);
 
-    private static final int GRAPH_VERSION = 24;
+    private static final int GRAPH_VERSION = 25;
     private static final int ENDPOINT_ANCHOR_SPACING_PX = 10;
     private static final int ROPE_ANCHOR_INTERVAL_PX = 30;
     private static final int MAX_PROFILED_JUMP_REGIONS = 5;
@@ -261,6 +261,9 @@ final class BotNavigationGraphProvider {
     }
 
     private record JumpLaunchWindow(int minX, int maxX, Point startPoint, Point endPoint) {
+    }
+
+    private record JumpLaunchWindowBounds(int minX, int maxX) {
     }
 
     private static final class JumpBuildStats {
@@ -511,7 +514,7 @@ final class BotNavigationGraphProvider {
             Map<Integer, List<Integer>> featureXsByRegionId = buildFeatureXsByRegionId(map, regions, regionIdByFootholdId);
             buildProfile.buildFeatureXsNs = System.nanoTime() - phaseStartedAt;
             phaseStartedAt = System.nanoTime();
-            Map<Integer, List<Point>> anchorsByRegionId = buildAnchorsByRegionId(regions, featureXsByRegionId, movementProfile);
+            Map<Integer, List<Point>> anchorsByRegionId = buildAnchorsByRegionId(map, regions, featureXsByRegionId, movementProfile);
             buildProfile.buildAnchorPointsNs = System.nanoTime() - phaseStartedAt;
             List<BotNavigationGraph.Region> groundRegions = new ArrayList<>();
             List<BotNavigationGraph.Region> ropeRegions = new ArrayList<>();
@@ -895,7 +898,8 @@ final class BotNavigationGraphProvider {
         }
     }
 
-    private static Map<Integer, List<Point>> buildAnchorsByRegionId(List<BotNavigationGraph.Region> regions,
+    private static Map<Integer, List<Point>> buildAnchorsByRegionId(MapleMap map,
+                                                                    List<BotNavigationGraph.Region> regions,
                                                                     Map<Integer, List<Integer>> featureXsByRegionId,
                                                                     BotMovementProfile movementProfile) {
         Map<Integer, List<Point>> anchorsByRegionId = new HashMap<>();
@@ -903,7 +907,7 @@ final class BotNavigationGraphProvider {
             if (region.isRopeRegion) {
                 continue;
             }
-            anchorsByRegionId.put(region.id, anchorPoints(region, featureXsByRegionId.getOrDefault(region.id, List.of()), movementProfile));
+            anchorsByRegionId.put(region.id, anchorPoints(map, region, featureXsByRegionId.getOrDefault(region.id, List.of()), movementProfile));
         }
         return anchorsByRegionId;
     }
@@ -921,11 +925,12 @@ final class BotNavigationGraphProvider {
                 true, stats, jumpLandingCache, movementProfile);
         int maxX = findJumpLaunchBoundary(from, map, regionIdByFootholdId, anchorX, launchStepX, targetRegionId,
                 false, stats, jumpLandingCache, movementProfile);
-        minX = trimJumpLaunchBoundary(from, map, minX, maxX, true);
-        maxX = trimJumpLaunchBoundary(from, map, minX, maxX, false);
-        if (minX > maxX) {
+        JumpLaunchWindowBounds launchBounds = trimJumpLaunchBoundary(from, map, minX, maxX, anchorX);
+        if (launchBounds == null) {
             return null;
         }
+        minX = launchBounds.minX();
+        maxX = launchBounds.maxX();
 
         int representativeX = (minX + maxX) / 2;
         Point representativeStart = from.pointAt(representativeX);
@@ -995,18 +1000,38 @@ final class BotNavigationGraphProvider {
         return validX;
     }
 
-    private static int trimJumpLaunchBoundary(BotNavigationGraph.Region from,
-                                              MapleMap map,
-                                              int minX,
-                                              int maxX,
-                                              boolean trimLeft) {
-        int step = trimLeft ? 1 : -1;
-        for (int x = trimLeft ? minX : maxX; x >= minX && x <= maxX; x += step) {
-            if (isApproachableJumpLaunchX(from, map, x)) {
-                return x;
+    private static JumpLaunchWindowBounds trimJumpLaunchBoundary(BotNavigationGraph.Region from,
+                                                                 MapleMap map,
+                                                                 int minX,
+                                                                 int maxX,
+                                                                 int preferredX) {
+        int startX = Math.max(minX, Math.min(maxX, preferredX));
+        int firstX = -1;
+        for (int radius = 0; radius <= Math.max(startX - minX, maxX - startX); radius++) {
+            int leftX = startX - radius;
+            if (leftX >= minX && isApproachableJumpLaunchX(from, map, leftX)) {
+                firstX = leftX;
+                break;
+            }
+            int rightX = startX + radius;
+            if (rightX <= maxX && rightX != leftX && isApproachableJumpLaunchX(from, map, rightX)) {
+                firstX = rightX;
+                break;
             }
         }
-        return trimLeft ? maxX + 1 : minX - 1;
+        if (firstX < 0) {
+            return null;
+        }
+
+        int left = firstX;
+        while (left > minX && isApproachableJumpLaunchX(from, map, left - 1)) {
+            left--;
+        }
+        int right = firstX;
+        while (right < maxX && isApproachableJumpLaunchX(from, map, right + 1)) {
+            right++;
+        }
+        return new JumpLaunchWindowBounds(left, right);
     }
 
     private static boolean isApproachableJumpLaunchX(BotNavigationGraph.Region from, MapleMap map, int launchX) {
@@ -1365,7 +1390,10 @@ final class BotNavigationGraphProvider {
         return regionsById.get(regionId);
     }
 
-    private static List<Point> anchorPoints(BotNavigationGraph.Region region, List<Integer> featureXs, BotMovementProfile movementProfile) {
+    private static List<Point> anchorPoints(MapleMap map,
+                                            BotNavigationGraph.Region region,
+                                            List<Integer> featureXs,
+                                            BotMovementProfile movementProfile) {
         List<Point> points = new ArrayList<>();
         addAnchor(points, region.leftPoint());
         // Near-edge anchors for better jump/drop accuracy at platform boundaries
@@ -1373,6 +1401,13 @@ final class BotNavigationGraphProvider {
         if (region.width() > edgeInset * 2) {
             addAnchor(points, region.pointAt(region.minX + edgeInset), ENDPOINT_ANCHOR_SPACING_PX);
             addAnchor(points, region.pointAt(region.maxX - edgeInset), ENDPOINT_ANCHOR_SPACING_PX);
+        }
+        int ticksToApex = Math.max(1, (int) Math.ceil(
+                BotPhysicsEngine.jumpForcePerTick(movementProfile) / Math.max(0.001f, BotPhysicsEngine.gravityPerTick())));
+        int jumpInset = Math.max(edgeInset * 3, BotPhysicsEngine.walkStep(map, movementProfile) * ticksToApex);
+        if (region.width() > jumpInset * 2) {
+            addAnchor(points, region.pointAt(region.minX + jumpInset), ENDPOINT_ANCHOR_SPACING_PX);
+            addAnchor(points, region.pointAt(region.maxX - jumpInset), ENDPOINT_ANCHOR_SPACING_PX);
         }
         for (BotNavigationGraph.Segment segment : region.segments) {
             addAnchor(points, new Point(segment.x1, segment.y1), ENDPOINT_ANCHOR_SPACING_PX);

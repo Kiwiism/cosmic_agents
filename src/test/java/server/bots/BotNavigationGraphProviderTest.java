@@ -112,6 +112,16 @@ class BotNavigationGraphProviderTest {
     }
 
     @Test
+    void shouldGenerateLocalHenesysJumpEdgesNearRightWall() {
+        int lowerRegionId = henesysGraph.findRegionId(henesys, new Point(3711, 454));
+        int middleRegionId = henesysGraph.findRegionId(henesys, new Point(3532, 394));
+        int upperRegionId = henesysGraph.findRegionId(henesys, new Point(3352, 334));
+
+        assertHasHenesysJumpEdge(lowerRegionId, middleRegionId);
+        assertHasHenesysJumpEdge(middleRegionId, upperRegionId);
+    }
+
+    @Test
     void shouldResolveOwnerToUpperPlatformWhenPositionHasSubpixelRounding() {
         // Regression: pathlog-SLASH-2026-04-02T125933 — owner at (2596,1696), bot at (2573,1935),
         // both resolved to region 187. findGroundFoothold returned the lower foothold because the
@@ -407,6 +417,13 @@ class BotNavigationGraphProviderTest {
             }
         }
         return count;
+    }
+
+    private static void assertHasHenesysJumpEdge(int fromRegionId, int toRegionId) {
+        assertTrue(henesysGraph.getOutgoing(fromRegionId).stream()
+                        .anyMatch(edge -> edge.type == BotNavigationGraph.EdgeType.JUMP
+                                && edge.toRegionId == toRegionId),
+                "Expected Henesys jump edge r" + fromRegionId + "->r" + toRegionId);
     }
 
     private static MapleMap createEmptyTestMap(int mapId) {
