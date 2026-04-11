@@ -352,6 +352,19 @@ final class BotPhysicsEngine {
         return preview != null && !preview.lostGround() && !preview.blocked();
     }
 
+    static boolean isGroundStepBlockedByWall(MapleMap map, Point currentPos, int stepX) {
+        if (map == null || currentPos == null || stepX == 0) {
+            return false;
+        }
+        Foothold foothold = findGroundFoothold(map, currentPos);
+        GroundStepPreview preview = previewGroundStep(map, currentPos, foothold, currentPos.x + stepX);
+        return preview != null && preview.blocked();
+    }
+
+    static boolean isGroundRunwayBlockedByWall(MapleMap map, Point from, Point to) {
+        return findWallCollision(map, from, to).type() == AirCollisionType.WALL;
+    }
+
     static boolean isGroundFarBelow(MapleMap map, Point position) {
         if (map == null || position == null) {
             return true;
@@ -1455,8 +1468,10 @@ final class BotPhysicsEngine {
             return AirCollision.none();
         }
 
+        int dir = Integer.compare(endX, startX);
+        int safeX = wallX - dir;
         return new AirCollision(AirCollisionType.WALL,
-                new Point(wallX, (int) Math.round(yAtWall)),
+                new Point(safeX, (int) Math.round(yAtWall)),
                 wall,
                 progress);
     }

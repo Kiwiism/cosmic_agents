@@ -532,6 +532,36 @@ class BotPhysicsEngineTest {
                 "ground movement should not phase through collidable stair/platform walls");
     }
 
+    @Test
+    void shouldKeepAirborneBotOnNearSideOfCollidableWall() {
+        MapleMap map = createEmptyTestMap(910000052);
+        server.maps.FootholdTree footholds = map.getFootholds();
+        Foothold lower = new Foothold(new Point(0, 100), new Point(50, 100), 1);
+        Foothold wall = new Foothold(new Point(50, 80), new Point(50, 100), 2);
+        Foothold upper = new Foothold(new Point(50, 80), new Point(120, 80), 3);
+        wall.setNext(lower.getId());
+        wall.setPrev(upper.getId());
+        footholds.insert(lower);
+        footholds.insert(wall);
+        footholds.insert(upper);
+
+        Character bot = mockBot(new Point(56, 90), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.inAir = true;
+        entry.physX = 56;
+        entry.physY = 90;
+        entry.velY = 0f;
+        entry.airVelX = -8;
+
+        assertEquals(BotPhysicsEngine.AirborneStepResult.WALL, BotPhysicsEngine.stepAirborne(entry, bot));
+        assertTrue(bot.getPosition().x > 50, "wall collision should place the bot on the near side, not inside the wall");
+
+        entry.airSteerVelX = -BotPhysicsEngine.cfg.AIR_STEER_MAX;
+        BotPhysicsEngine.stepAirborne(entry, bot);
+
+        assertTrue(bot.getPosition().x > 50, "continued air steering into the wall must not cross to the far side");
+    }
+
     private record StandingLookupCase(Point point, Foothold exactFoothold, Foothold offsetFoothold) {
     }
 }

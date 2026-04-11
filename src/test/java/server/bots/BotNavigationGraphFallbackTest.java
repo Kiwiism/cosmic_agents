@@ -42,6 +42,28 @@ class BotNavigationGraphFallbackTest {
                 "nav should stay on graph-based routing instead of dropping straight into heuristics");
     }
 
+    @Test
+    void shouldNotGenerateDirectionalDropThroughCollidableWall() {
+        MapleMap map = new MapleMap(910000051, 0, 0, 910000051, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        Foothold lower = new Foothold(new Point(0, 100), new Point(50, 100), 1);
+        Foothold wall = new Foothold(new Point(50, 80), new Point(50, 100), 2);
+        Foothold upper = new Foothold(new Point(50, 80), new Point(140, 80), 3);
+        wall.setNext(lower.getId());
+        wall.setPrev(upper.getId());
+        footholds.insert(lower);
+        footholds.insert(wall);
+        footholds.insert(upper);
+        map.setFootholds(footholds);
+
+        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map, BotMovementProfile.base());
+        int upperRegionId = graph.findRegionId(map, new Point(100, 80));
+
+        assertFalse(graph.getOutgoing(upperRegionId).stream()
+                        .anyMatch(edge -> edge.type == BotNavigationGraph.EdgeType.DROP && edge.launchStepX < 0),
+                "a collidable wall at the platform side is not a walk-off ledge");
+    }
+
     private static Character mockBot(Point startPosition, MapleMap map) {
         Character bot = mock(Character.class);
         AtomicReference<Point> position = new AtomicReference<>(new Point(startPosition));

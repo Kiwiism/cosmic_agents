@@ -28,7 +28,7 @@ import java.util.concurrent.Executors;
 final class BotNavigationGraphProvider {
     private static final Logger log = LoggerFactory.getLogger(BotNavigationGraphProvider.class);
 
-    private static final int GRAPH_VERSION = 22;
+    private static final int GRAPH_VERSION = 23;
     private static final int ENDPOINT_ANCHOR_SPACING_PX = 10;
     private static final int ROPE_ANCHOR_INTERVAL_PX = 30;
     private static final int MAX_PROFILED_JUMP_REGIONS = 5;
@@ -765,6 +765,9 @@ final class BotNavigationGraphProvider {
             return;
         }
         Point startPoint = from.pointAt(launchX);
+        if (BotPhysicsEngine.isGroundRunwayBlockedByWall(map, startPoint, endpoint)) {
+            return;
+        }
 
         // Ballistic fall from ledge at max walk velocity — single simulation call.
         int stepX = BotPhysicsEngine.walkStep(map, movementProfile) * direction;

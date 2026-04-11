@@ -469,16 +469,19 @@ class BotMovementManager {
         }
         boolean canWalkStep = BotPhysicsEngine.canWalkGroundStep(entry.bot.getMap(), botPos, stepX);
         if (!canWalkStep) {
-            if ((directionalDrop && Integer.signum(stepX) == Integer.signum(entry.navEdge.launchStepX))
-                    || BotFallbackMovementManager.shouldWalkOffLedge(entry, botPos, targetPos, stepX)) {
+            boolean blockedByWall = BotPhysicsEngine.isGroundStepBlockedByWall(entry.bot.getMap(), botPos, stepX);
+            if (!blockedByWall
+                    && ((directionalDrop && Integer.signum(stepX) == Integer.signum(entry.navEdge.launchStepX))
+                    || BotFallbackMovementManager.shouldWalkOffLedge(entry, botPos, targetPos, stepX))) {
                 // Walk-off drops should keep walking in the authored direction until physics
                 // detects lost ground and transitions into a fall with preserved momentum.
                 return MoveAction.walk(stepX);
             }
-            // Only committed WALK edges get cleared here. Other edge types intentionally allow
-            // walking to rope/jump/drop entries where a generic ground-step preview can produce
-            // false negatives, especially around rope platforms and ledges.
-            if (entry.navEdge != null && entry.navEdge.type == BotNavigationGraph.EdgeType.WALK) {
+            // Wall-blocked nav edges are stale or invalid. Clear them so the next AI tick can
+            // replan instead of holding a walk stance into the wall.
+            if (blockedByWall && entry.navEdge != null) {
+                clearNavigationState(entry);
+            } else if (entry.navEdge != null && entry.navEdge.type == BotNavigationGraph.EdgeType.WALK) {
                 clearNavigationState(entry);
             }
             return MoveAction.idle();
