@@ -112,6 +112,25 @@ class BotNavigationGraphProviderTest {
     }
 
     @Test
+    void shouldNotLaunchHenesysLeftPlatformJumpFromWallBlockedBoundary() {
+        Point blockedStart = new Point(939, 334);
+        int blockedStartRegionId = henesysGraph.findRegionId(henesys, blockedStart);
+        List<BotNavigationGraph.Edge> path = findPath(henesysGraph, henesys, blockedStart, new Point(420, 274));
+
+        assertFalse(path.isEmpty());
+        assertEquals(BotNavigationGraph.EdgeType.JUMP, path.getFirst().type);
+        assertFalse(path.getFirst().containsLaunchX(blockedStart.x),
+                "wall-blocked boundary position should be outside the jump launch window");
+
+        BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateJumpLanding(
+                henesys, blockedStart, path.getFirst().launchStepX, henesysGraph.movementProfile);
+        assertNotNull(landing);
+        assertEquals(blockedStartRegionId,
+                henesysGraph.regionIdByFootholdId.getOrDefault(landing.foothold().getId(), -1),
+                "jumping from the blocked boundary should not be treated as a valid upper-platform launch");
+    }
+
+    @Test
     void shouldGenerateLocalHenesysJumpEdgesNearRightWall() {
         int lowerRegionId = henesysGraph.findRegionId(henesys, new Point(3711, 454));
         int middleRegionId = henesysGraph.findRegionId(henesys, new Point(3532, 394));
