@@ -7,7 +7,9 @@ public final class CharacterStance {
     public static final int STAND_LEFT_STANCE = 5;
     public static final int JUMP_RIGHT_STANCE = 6;
     public static final int JUMP_LEFT_STANCE = 7;
-    public static final int PRONE_STANCE = 10;
+    public static final int PRONE_RIGHT_STANCE = 10;
+    public static final int PRONE_LEFT_STANCE = 11;
+    public static final int PRONE_STANCE = PRONE_RIGHT_STANCE;
     public static final int ROPE_STANCE = 16;
     public static final int LADDER_STANCE = 17;
     public static final int DEAD_RIGHT_STANCE = 18;
@@ -20,6 +22,7 @@ public final class CharacterStance {
         return stance == WALK_LEFT_STANCE
                 || stance == STAND_LEFT_STANCE
                 || stance == JUMP_LEFT_STANCE
+                || stance == PRONE_LEFT_STANCE
                 || stance == DEAD_LEFT_STANCE;
     }
 
@@ -33,6 +36,10 @@ public final class CharacterStance {
 
     public static boolean isJumping(int stance) {
         return stance == JUMP_RIGHT_STANCE || stance == JUMP_LEFT_STANCE;
+    }
+
+    public static boolean isProne(int stance) {
+        return stance == PRONE_RIGHT_STANCE || stance == PRONE_LEFT_STANCE;
     }
 
     public static boolean isClimbing(int stance) {

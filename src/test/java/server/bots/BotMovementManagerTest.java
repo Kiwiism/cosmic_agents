@@ -1,12 +1,14 @@
 package server.bots;
 
 import client.Character;
+import constants.game.CharacterStance;
 import org.junit.jupiter.api.Test;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Rope;
 
 import java.awt.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -14,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -566,13 +569,18 @@ class BotMovementManagerTest {
 
         assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         assertEquals(-1, entry.facingDir, "prone fidget should keep the current facing direction");
+        assertEquals(CharacterStance.PRONE_LEFT_STANCE, bot.getStance(),
+                "prone fidget should send left-facing prone stance");
 
         BotFidgetManager.clear(entry);
         entry.facingDir = -1;
+        entry.crouching = false;
         BotFidgetManager.startFidget(entry, BotFidgetMode.SPAM_PRONE, System.currentTimeMillis(), 3000);
 
         assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         assertEquals(-1, entry.facingDir, "spam-prone fidget should not synthesize a turn input");
+        assertEquals(CharacterStance.PRONE_LEFT_STANCE, bot.getStance(),
+                "spam-prone fidget should send left-facing prone stance");
     }
 
     @Test
@@ -903,11 +911,17 @@ class BotMovementManagerTest {
     private static Character mockBot(Point startPosition, MapleMap map) {
         Character bot = mock(Character.class);
         AtomicReference<Point> position = new AtomicReference<>(new Point(startPosition));
+        AtomicInteger stance = new AtomicInteger();
         when(bot.getPosition()).thenAnswer(invocation -> new Point(position.get()));
         doAnswer(invocation -> {
             position.set(new Point(invocation.getArgument(0)));
             return null;
         }).when(bot).setPosition(any(Point.class));
+        when(bot.getStance()).thenAnswer(invocation -> stance.get());
+        doAnswer(invocation -> {
+            stance.set(invocation.getArgument(0));
+            return null;
+        }).when(bot).setStance(anyInt());
         when(bot.getMap()).thenReturn(map);
         when(bot.getId()).thenReturn(1);
         when(bot.getHp()).thenReturn(100);

@@ -910,7 +910,7 @@ final class BotPhysicsEngine {
                     : CharacterStance.ROPE_STANCE;
         }
         if (entry.crouching) {
-            return CharacterStance.PRONE_STANCE;
+            return entry.facingDir >= 0 ? CharacterStance.PRONE_RIGHT_STANCE : CharacterStance.PRONE_LEFT_STANCE;
         }
         if (entry.inAir) {
             return entry.facingDir >= 0 ? CharacterStance.JUMP_RIGHT_STANCE : CharacterStance.JUMP_LEFT_STANCE;

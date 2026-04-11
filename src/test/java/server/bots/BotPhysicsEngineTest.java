@@ -156,6 +156,18 @@ class BotPhysicsEngineTest {
     }
 
     @Test
+    void shouldResolveProneStanceFromLastFacingDirection() {
+        BotEntry entry = new BotEntry(null, null, null);
+        entry.crouching = true;
+
+        entry.facingDir = 1;
+        assertEquals(CharacterStance.PRONE_RIGHT_STANCE, BotPhysicsEngine.resolveStance(entry));
+
+        entry.facingDir = -1;
+        assertEquals(CharacterStance.PRONE_LEFT_STANCE, BotPhysicsEngine.resolveStance(entry));
+    }
+
+    @Test
     void shouldResolveDeadStanceFromLastFacingDirection() {
         Character bot = mockBot(new Point(10, 20), null, 0);
         BotEntry entry = new BotEntry(bot, null, null);
