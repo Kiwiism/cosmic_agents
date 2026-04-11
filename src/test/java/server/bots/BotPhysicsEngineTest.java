@@ -515,6 +515,23 @@ class BotPhysicsEngineTest {
         assertTrue(entry.movementVelX > 0, "movement packet should carry non-zero horizontal velocity on the ledge-drop tick");
     }
 
+    @Test
+    void shouldBlockGroundStepThroughCollidableWall() {
+        MapleMap map = createEmptyTestMap(910000049);
+        server.maps.FootholdTree footholds = map.getFootholds();
+        Foothold lower = new Foothold(new Point(0, 100), new Point(50, 100), 1);
+        Foothold wall = new Foothold(new Point(50, 80), new Point(50, 100), 2);
+        Foothold upper = new Foothold(new Point(50, 80), new Point(120, 80), 3);
+        wall.setNext(lower.getId());
+        wall.setPrev(upper.getId());
+        footholds.insert(lower);
+        footholds.insert(wall);
+        footholds.insert(upper);
+
+        assertFalse(BotPhysicsEngine.canWalkGroundStep(map, new Point(44, 100), 12),
+                "ground movement should not phase through collidable stair/platform walls");
+    }
+
     private record StandingLookupCase(Point point, Foothold exactFoothold, Foothold offsetFoothold) {
     }
 }

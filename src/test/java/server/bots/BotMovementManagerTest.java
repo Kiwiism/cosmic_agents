@@ -440,6 +440,30 @@ class BotMovementManagerTest {
     }
 
     @Test
+    void shouldJumpOntoReachablePlatformWhenFallbackWalksIntoWall() {
+        MapleMap map = new MapleMap(910000050, 0, 0, 910000050, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        Foothold lower = new Foothold(new Point(0, 100), new Point(50, 100), 1);
+        Foothold wall = new Foothold(new Point(50, 80), new Point(50, 100), 2);
+        Foothold upper = new Foothold(new Point(50, 80), new Point(120, 80), 3);
+        wall.setNext(lower.getId());
+        wall.setPrev(upper.getId());
+        footholds.insert(lower);
+        footholds.insert(wall);
+        footholds.insert(upper);
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(44, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.graphWarmupFallback = true;
+
+        BotMovementManager.tickGrounded(entry, new Point(90, 80));
+
+        assertTrue(entry.inAir, "fallback should jump when a wall blocks walking but a platform is reachable");
+        assertEquals(BotPhysicsEngine.walkStep(map, entry.movementProfile), entry.airVelX);
+    }
+
+    @Test
     void shouldAttachNearbyRopeDuringGraphWarmupFallbackWhenTargetIsAbove() {
         MapleMap map = new MapleMap(910000032, 0, 0, 910000032, 1.0f);
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));

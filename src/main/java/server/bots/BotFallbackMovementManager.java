@@ -156,11 +156,34 @@ final class BotFallbackMovementManager {
         }
 
         MapleMap map = entry.bot.getMap();
-        int dx = steeringTarget.x - botPos.x;
-        int dy = steeringTarget.y - botPos.y;
-        int maxJumpTravel = BotPhysicsEngine.maxJumpHorizontalTravel(map, entry.movementProfile);
-        float maxJumpHeight = BotPhysicsEngine.calculateMaxJumpHeight(entry.movementProfile);
-        return Math.abs(dx) <= maxJumpTravel + BotMovementManager.cfg.FOLLOW_DIST
-                && dy >= -(maxJumpHeight + BotPhysicsEngine.cfg.MAX_SNAP_DROP);
+        int direction = Integer.signum(stepX);
+        int jumpStep = direction * BotPhysicsEngine.walkStep(map, entry.movementProfile);
+        BotPhysicsEngine.JumpLanding landing =
+                BotPhysicsEngine.simulateJumpLanding(map, botPos, jumpStep, entry.movementProfile);
+        return isUsefulJumpProbeLanding(botPos, steeringTarget, direction, landing);
+    }
+
+    private static boolean isUsefulJumpProbeLanding(Point botPos,
+                                                    Point steeringTarget,
+                                                    int direction,
+                                                    BotPhysicsEngine.JumpLanding landing) {
+        if (landing == null || landing.point() == null || direction == 0) {
+            return false;
+        }
+        Point landingPoint = landing.point();
+        int landingDx = landingPoint.x - botPos.x;
+        if (Integer.signum(landingDx) != direction) {
+            return false;
+        }
+
+        int distanceBefore = Math.abs(steeringTarget.x - botPos.x);
+        int distanceAfter = Math.abs(steeringTarget.x - landingPoint.x);
+        if (distanceAfter >= distanceBefore) {
+            return false;
+        }
+
+        boolean targetIsAboveOrLevel = steeringTarget.y <= botPos.y + BotPhysicsEngine.cfg.MAX_SNAP_DROP;
+        boolean landingIsAboveOrLevel = landingPoint.y <= botPos.y + BotPhysicsEngine.cfg.MAX_SNAP_DROP;
+        return targetIsAboveOrLevel && landingIsAboveOrLevel;
     }
 }

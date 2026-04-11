@@ -63,7 +63,7 @@ final class BotPhysicsEngine {
     private record GroundRegionSample(Point point, Foothold foothold) {
     }
 
-    private record GroundStepPreview(int baseY, Point point, Foothold foothold, boolean lostGround) {
+    private record GroundStepPreview(int baseY, Point point, Foothold foothold, boolean lostGround, boolean blocked) {
     }
 
     private record WalkRegionLookup(int mapId,
@@ -335,7 +335,7 @@ final class BotPhysicsEngine {
         }
         Foothold foothold = findGroundFoothold(map, currentPos);
         GroundStepPreview preview = previewGroundStep(map, currentPos, foothold, currentPos.x + stepX);
-        return preview != null && !preview.lostGround();
+        return preview != null && !preview.lostGround() && !preview.blocked();
     }
 
     static boolean isGroundFarBelow(MapleMap map, Point position) {
@@ -486,6 +486,11 @@ final class BotPhysicsEngine {
                 ? standingPoint.y
                 : currentPos.y;
 
+        AirCollision wall = findWallCollision(map, currentPos, new Point(nextX, baseY));
+        if (wall.type() == AirCollisionType.WALL) {
+            return new GroundStepPreview(baseY, currentPos, foothold, false, true);
+        }
+
         Point snappedPoint;
         Foothold snappedFoothold;
         boolean lostGround;
@@ -503,7 +508,7 @@ final class BotPhysicsEngine {
                     : map.getFootholds().findBelow(new Point(nextX, snappedPoint.y + 1));
         }
 
-        return new GroundStepPreview(baseY, snappedPoint, snappedFoothold, lostGround);
+        return new GroundStepPreview(baseY, snappedPoint, snappedFoothold, lostGround, false);
     }
 
     private static int distanceToSegmentX(BotNavigationGraph.Segment segment, int x) {
@@ -763,6 +768,10 @@ final class BotPhysicsEngine {
         GroundStepPreview preview = previewGroundStep(map, currentPos, foothold, newX);
         if (preview == null) {
             return new GroundStepResult(currentPos, foothold, state, 0, 0, true);
+        }
+
+        if (preview.blocked()) {
+            return new GroundStepResult(currentPos, foothold, initialGroundTravelState(currentPos), 0, 0, false);
         }
 
         if (preview.lostGround()) {
@@ -1314,6 +1323,9 @@ final class BotPhysicsEngine {
     }
 
     private static AirCollision findWallCollision(MapleMap map, Point previousPos, Point nextPos) {
+        if (map == null || map.getFootholds() == null) {
+            return AirCollision.none();
+        }
         if (previousPos.x == nextPos.x) {
             return AirCollision.none();
         }
