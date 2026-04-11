@@ -10,12 +10,15 @@ final class BotPerformanceMonitor {
     static final class Config {
         public boolean ENABLED = true;
         public int LOG_INTERVAL_MS = 15000;
+        public double SLOW_SAMPLE_MS = 5.0;
     }
 
     private static final class Stat {
         long count = 0;
         long totalNs = 0;
         long maxNs = 0;
+        long slowCount = 0;
+        long slowTotalNs = 0;
     }
 
     private static final Logger log = LoggerFactory.getLogger(BotPerformanceMonitor.class);
@@ -24,6 +27,15 @@ final class BotPerformanceMonitor {
 
     private static long nextLogAtMs = System.currentTimeMillis() + cfg.LOG_INTERVAL_MS;
     private static final Map<String, Stat> statsBySection = new LinkedHashMap<>();
+    private static final Map<String, String> SECTION_NOTES = Map.of(
+            "move-ground", "ground physics, foothold collision, fallback steering, and movement packet sync",
+            "move-air", "air physics, foothold landing checks, and air steering",
+            "move-climb", "rope/ladder attachment, climb movement, and dismount checks",
+            "nav-resolve", "region lookup, graph/path selection, edge reuse, and waypoint selection",
+            "pathfind", "A* search over the current bot navigation graph",
+            "combat-target-search", "monster scan, distance filtering, foothold lookup, and candidate sorting",
+            "combat-plan", "skill/basic attack route selection and hitbox construction"
+    );
 
     private BotPerformanceMonitor() {
     }
@@ -38,6 +50,10 @@ final class BotPerformanceMonitor {
             stat.count++;
             stat.totalNs += elapsedNs;
             stat.maxNs = Math.max(stat.maxNs, elapsedNs);
+            if (elapsedNs >= slowThresholdNs()) {
+                stat.slowCount++;
+                stat.slowTotalNs += elapsedNs;
+            }
             maybeLog();
         }
     }
@@ -52,17 +68,23 @@ final class BotPerformanceMonitor {
             return;
         }
 
-        StringBuilder line = new StringBuilder("bot-perf ");
+        StringBuilder line = new StringBuilder("bot-perf slow>=")
+                .append(String.format("%.3f", cfg.SLOW_SAMPLE_MS))
+                .append("ms ");
         boolean first = true;
         for (Map.Entry<String, Stat> entry : statsBySection.entrySet()) {
+            Stat stat = entry.getValue();
+            if (stat.maxNs < slowThresholdNs()) {
+                continue;
+            }
             if (!first) {
                 line.append(" | ");
             }
             first = false;
 
-            Stat stat = entry.getValue();
             double averageMs = stat.totalNs / (double) Math.max(1L, stat.count) / 1_000_000.0;
             double maxMs = stat.maxNs / 1_000_000.0;
+            double slowAverageMs = stat.slowTotalNs / (double) Math.max(1L, stat.slowCount) / 1_000_000.0;
             line.append(entry.getKey())
                     .append(" avg=")
                     .append(String.format("%.3f", averageMs))
@@ -71,11 +93,26 @@ final class BotPerformanceMonitor {
                     .append(String.format("%.3f", maxMs))
                     .append("ms")
                     .append(" n=")
-                    .append(stat.count);
+                    .append(stat.count)
+                    .append(" slow=")
+                    .append(stat.slowCount)
+                    .append("/")
+                    .append(stat.count)
+                    .append(" slowAvg=")
+                    .append(String.format("%.3f", slowAverageMs))
+                    .append("ms")
+                    .append(" note=")
+                    .append(SECTION_NOTES.getOrDefault(entry.getKey(), "instrumented bot subsystem"));
         }
 
-        log.info(line.toString());
+        if (!first) {
+            log.info(line.toString());
+        }
         statsBySection.clear();
         nextLogAtMs = now + cfg.LOG_INTERVAL_MS;
+    }
+
+    private static long slowThresholdNs() {
+        return (long) (Math.max(0.0, cfg.SLOW_SAMPLE_MS) * 1_000_000.0);
     }
 }
