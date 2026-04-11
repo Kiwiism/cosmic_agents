@@ -46,7 +46,7 @@ final class BotFidgetManager {
             return handleActiveTick(entry, botPos, targetPos, now);
         }
 
-        if (!isEligible(entry, botPos, targetPos, true)) {
+        if (!isEligible(entry, botPos, targetPos)) {
             return false;
         }
 
@@ -159,15 +159,15 @@ final class BotFidgetManager {
         return true;
     }
 
-    private static boolean isEligible(BotEntry entry, Point botPos, Point targetPos, boolean requireFastFollow) {
-        return isEligible(entry, botPos, targetPos, requireFastFollow, false);
+    private static boolean isEligible(BotEntry entry, Point botPos, Point targetPos) {
+        return isEligible(entry, botPos, targetPos, false);
     }
 
     private static boolean isEligible(BotEntry entry,
                                       Point botPos,
                                       Point targetPos,
-                                      boolean requireFastFollow,
                                       boolean allowAirborneJumpFidget) {
+        boolean airborneJumpFidget = entry.inAir && allowAirborneJumpFidget && isJumpFidget(entry.fidgetMode);
         return entry.following
                 && !BotChatManager.isOwnerIdle(entry)
                 && !entry.grinding
@@ -176,15 +176,13 @@ final class BotFidgetManager {
                 && !entry.navPreciseTarget
                 && !entry.graphWarmupFallback
                 && !entry.climbing
-                && (!entry.inAir || (allowAirborneJumpFidget && isJumpFidget(entry.fidgetMode)))
+                && (!entry.inAir || airborneJumpFidget)
                 && !entry.downJumpPending
-                && (!requireFastFollow || entry.movementProfile.totalSpeedStat() > BotMovementProfile.BASE_TOTAL_STAT)
-                && Math.abs(targetPos.y - botPos.y) <= BotMovementManager.cfg.JUMP_Y_THRESH * 2;
+                && (airborneJumpFidget || Math.abs(targetPos.y - botPos.y) <= BotMovementManager.cfg.JUMP_Y_THRESH * 2);
     }
 
     private static boolean shouldKeepRunning(BotEntry entry, Point botPos, Point targetPos, long now) {
-        boolean requireFastFollow = entry.fidgetTrigger != BotFidgetTrigger.SOCIAL;
-        if (!isEligible(entry, botPos, targetPos, requireFastFollow, true) || now >= entry.fidgetUntilMs) {
+        if (!isEligible(entry, botPos, targetPos, true) || now >= entry.fidgetUntilMs) {
             return false;
         }
         int walkStep = BotPhysicsEngine.walkStep(entry.bot.getMap(), entry.movementProfile);

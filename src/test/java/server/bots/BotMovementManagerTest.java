@@ -569,6 +569,23 @@ class BotMovementManagerTest {
     }
 
     @Test
+    void shouldAllowAutoFollowFidgetsAtBaseMoveSpeed() {
+        MapleMap map = new MapleMap(910000047, 0, 0, 910000047, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.following = true;
+        entry.movementProfile = new BotMovementProfile(100, 100);
+        BotFidgetManager.startFidget(entry, BotFidgetMode.PRONE, System.currentTimeMillis(), 3000, BotFidgetTrigger.AUTO_FOLLOW);
+
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertTrue(entry.crouching, "base-speed follow fidgets should not be blocked by a speed-stat guard");
+    }
+
+    @Test
     void shouldAlternateDirectionalFidgetJumps() {
         MapleMap map = new MapleMap(910000039, 0, 0, 910000039, 1.0f);
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
@@ -609,9 +626,10 @@ class BotMovementManagerTest {
         assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         assertTrue(entry.inAir);
 
+        bot.setPosition(new Point(100, 0));
         assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         assertEquals(BotFidgetMode.JUMP, entry.fidgetMode,
-                "jump fidgets should not clear themselves while their first jump is still airborne");
+                "jump fidgets should not clear themselves while airborne above the ground target");
     }
 
     @Test

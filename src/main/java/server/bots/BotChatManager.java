@@ -648,11 +648,8 @@ public class BotChatManager {
             });
         } else if (isFidgetCommand(message)) {
             BotManager.after(BotManager.randMs(250, 500), () -> {
-                if (BotFidgetManager.maybeStartSocialFidget(entry)) {
-                    BotManager.getInstance().botSay(entry.bot, "ok");
-                } else {
-                    BotManager.getInstance().botSay(entry.bot, "cant rn");
-                }
+                entry.bot.changeFaceExpression(randomFidgetExpression());
+                BotFidgetManager.maybeStartSocialFidget(entry);
             });
         } else if (GREETING_PATTERN.matcher(message).find()) {
             BotManager.after(BotManager.randMs(900, 1100), () -> {
@@ -1218,6 +1215,11 @@ public class BotChatManager {
 
     static boolean isFidgetCommand(String message) {
         return message != null && FIDGET_PATTERN.matcher(message).find();
+    }
+
+    static int randomFidgetExpression() {
+        int[] expressions = {2, 3, 5, 6, 7};
+        return expressions[ThreadLocalRandom.current().nextInt(expressions.length)];
     }
 
     private static void handleRequestUpgradeCommand(BotEntry entry, Character bot) {

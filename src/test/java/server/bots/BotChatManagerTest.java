@@ -97,6 +97,9 @@ class BotChatManagerTest {
         assertTrue(BotChatManager.isFidgetCommand("fidget"));
         assertTrue(BotChatManager.isFidgetCommand("fidget!"));
         assertFalse(BotChatManager.isFidgetCommand("please fidget"));
+        for (int i = 0; i < 100; i++) {
+            assertTrue(Set.of(2, 3, 5, 6, 7).contains(BotChatManager.randomFidgetExpression()));
+        }
 
         assertTrue(BotFidgetManager.maybeStartSocialFidget(entry));
         assertFalse(entry.fidgetMode == BotFidgetMode.NONE);
