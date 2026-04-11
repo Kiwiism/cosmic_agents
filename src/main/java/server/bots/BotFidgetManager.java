@@ -9,7 +9,7 @@ import java.awt.*;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
-enum BotFollowAnticMode {
+enum BotFidgetMode {
     NONE,
     WAIT,
     JUMP,
@@ -19,15 +19,15 @@ enum BotFollowAnticMode {
     SPAM_SIDEWAYS
 }
 
-enum BotFollowAnticTrigger {
+enum BotFidgetTrigger {
     NONE,
     AUTO_FOLLOW,
     IDLE,
     SOCIAL
 }
 
-final class BotFollowAnticsManager {
-    private BotFollowAnticsManager() {
+final class BotFidgetManager {
+    private BotFidgetManager() {
     }
 
     static boolean tryHandleTick(BotEntry entry, Point targetPos, boolean runAiTick) {
@@ -38,9 +38,9 @@ final class BotFollowAnticsManager {
 
         Point botPos = entry.bot.getPosition();
         long now = System.currentTimeMillis();
-        if (entry.followAnticMode != BotFollowAnticMode.NONE) {
+        if (entry.fidgetMode != BotFidgetMode.NONE) {
             if (!shouldKeepRunning(entry, botPos, targetPos, now)) {
-                finishAntic(entry, botPos);
+                finishFidget(entry, botPos);
                 return false;
             }
             return handleActiveTick(entry, botPos, targetPos, now);
@@ -51,12 +51,12 @@ final class BotFollowAnticsManager {
         }
 
         if (runAiTick) {
-            maybeRollIdleAntic(entry, botPos, targetPos, now);
+            maybeRollIdleFidget(entry, botPos, targetPos, now);
         }
-        if (entry.followAnticMode == BotFollowAnticMode.NONE) {
-            maybeStartSpeedMismatchAntic(entry, botPos, targetPos, now, runAiTick);
+        if (entry.fidgetMode == BotFidgetMode.NONE) {
+            maybeStartSpeedMismatchFidget(entry, botPos, targetPos, now, runAiTick);
         }
-        if (entry.followAnticMode == BotFollowAnticMode.NONE) {
+        if (entry.fidgetMode == BotFidgetMode.NONE) {
             return false;
         }
 
@@ -68,26 +68,26 @@ final class BotFollowAnticsManager {
             return;
         }
 
-        entry.followAnticMode = BotFollowAnticMode.NONE;
-        entry.followAnticTrigger = BotFollowAnticTrigger.NONE;
-        entry.followAnticUntilMs = 0L;
-        entry.nextFollowAnticActionAtMs = 0L;
-        entry.followAnticAirSteerDir = 0;
-        entry.followAnticJumpDir = 0;
-        entry.followAnticMoveDir = 0;
-        entry.followAnticSpamAirSteer = false;
-        entry.nextFollowAnticJumpAtMs = 0L;
-        entry.followAnticOriginPos = null;
-        entry.nextFollowAnticVisualAtMs = 0L;
+        entry.fidgetMode = BotFidgetMode.NONE;
+        entry.fidgetTrigger = BotFidgetTrigger.NONE;
+        entry.fidgetUntilMs = 0L;
+        entry.nextFidgetActionAtMs = 0L;
+        entry.fidgetAirSteerDir = 0;
+        entry.fidgetJumpDir = 0;
+        entry.fidgetMoveDir = 0;
+        entry.fidgetSpamAirSteer = false;
+        entry.nextFidgetJumpAtMs = 0L;
+        entry.fidgetOriginPos = null;
+        entry.nextFidgetVisualAtMs = 0L;
     }
 
-    private static void finishAntic(BotEntry entry, Point botPos) {
+    private static void finishFidget(BotEntry entry, Point botPos) {
         if (entry == null) {
             return;
         }
 
-        BotFollowAnticTrigger trigger = entry.followAnticTrigger;
-        Point origin = entry.followAnticOriginPos == null ? null : new Point(entry.followAnticOriginPos);
+        BotFidgetTrigger trigger = entry.fidgetTrigger;
+        Point origin = entry.fidgetOriginPos == null ? null : new Point(entry.fidgetOriginPos);
         clear(entry);
         if (shouldReturnToOrigin(trigger, origin, botPos)) {
             entry.moveTarget = origin;
@@ -96,8 +96,8 @@ final class BotFollowAnticsManager {
         }
     }
 
-    private static boolean shouldReturnToOrigin(BotFollowAnticTrigger trigger, Point origin, Point botPos) {
-        if (trigger != BotFollowAnticTrigger.IDLE && trigger != BotFollowAnticTrigger.SOCIAL) {
+    private static boolean shouldReturnToOrigin(BotFidgetTrigger trigger, Point origin, Point botPos) {
+        if (trigger != BotFidgetTrigger.IDLE && trigger != BotFidgetTrigger.SOCIAL) {
             return false;
         }
         if (origin == null || botPos == null) {
@@ -106,43 +106,43 @@ final class BotFollowAnticsManager {
         return Math.abs(botPos.x - origin.x) > 8 || Math.abs(botPos.y - origin.y) > 8;
     }
 
-    static void startAntic(BotEntry entry, BotFollowAnticMode mode, long now, int durationMs) {
-        startAntic(entry, mode, now, durationMs, BotFollowAnticTrigger.AUTO_FOLLOW);
+    static void startFidget(BotEntry entry, BotFidgetMode mode, long now, int durationMs) {
+        startFidget(entry, mode, now, durationMs, BotFidgetTrigger.AUTO_FOLLOW);
     }
 
-    static void startAntic(BotEntry entry,
-                           BotFollowAnticMode mode,
+    static void startFidget(BotEntry entry,
+                           BotFidgetMode mode,
                            long now,
                            int durationMs,
-                           BotFollowAnticTrigger trigger) {
-        if (entry == null || mode == null || mode == BotFollowAnticMode.NONE) {
+                           BotFidgetTrigger trigger) {
+        if (entry == null || mode == null || mode == BotFidgetMode.NONE) {
             return;
         }
 
-        entry.followAnticMode = mode;
-        entry.followAnticTrigger = trigger == null ? BotFollowAnticTrigger.AUTO_FOLLOW : trigger;
-        entry.followAnticUntilMs = now + Math.max(2000, durationMs);
-        entry.nextFollowAnticActionAtMs = now;
-        entry.followAnticAirSteerDir = ThreadLocalRandom.current().nextBoolean() ? 1 : -1;
-        entry.followAnticJumpDir = entry.followAnticAirSteerDir == 0 ? 1 : entry.followAnticAirSteerDir;
-        entry.followAnticMoveDir = entry.followAnticAirSteerDir;
-        entry.followAnticSpamAirSteer = isJumpAntic(mode) && ThreadLocalRandom.current().nextInt(100) < 35;
-        entry.nextFollowAnticJumpAtMs = now;
-        entry.followAnticOriginPos = entry.bot == null ? null : new Point(entry.bot.getPosition());
-        entry.nextFollowAnticVisualAtMs = now + BotManager.randMs(500, 1200);
-        entry.nextFollowAnticAtMs = now + BotManager.randMs(4000, 8000);
+        entry.fidgetMode = mode;
+        entry.fidgetTrigger = trigger == null ? BotFidgetTrigger.AUTO_FOLLOW : trigger;
+        entry.fidgetUntilMs = now + Math.max(2000, durationMs);
+        entry.nextFidgetActionAtMs = now;
+        entry.fidgetAirSteerDir = ThreadLocalRandom.current().nextBoolean() ? 1 : -1;
+        entry.fidgetJumpDir = entry.fidgetAirSteerDir == 0 ? 1 : entry.fidgetAirSteerDir;
+        entry.fidgetMoveDir = entry.fidgetAirSteerDir;
+        entry.fidgetSpamAirSteer = isJumpFidget(mode) && ThreadLocalRandom.current().nextInt(100) < 35;
+        entry.nextFidgetJumpAtMs = now;
+        entry.fidgetOriginPos = entry.bot == null ? null : new Point(entry.bot.getPosition());
+        entry.nextFidgetVisualAtMs = now + BotManager.randMs(500, 1200);
+        entry.nextFidgetAtMs = now + BotManager.randMs(4000, 8000);
     }
 
-    static boolean maybeStartGreetingAntic(BotEntry entry, int roll) {
+    static boolean maybeStartGreetingFidget(BotEntry entry, int roll) {
         if (roll >= 50) {
             return false;
         }
-        return maybeStartSocialAntic(entry);
+        return maybeStartSocialFidget(entry);
     }
 
-    static boolean maybeStartSocialAntic(BotEntry entry) {
+    static boolean maybeStartSocialFidget(BotEntry entry) {
         if (entry == null
-                || entry.followAnticMode != BotFollowAnticMode.NONE
+                || entry.fidgetMode != BotFidgetMode.NONE
                 || !entry.following
                 || BotChatManager.isOwnerIdle(entry)
                 || entry.grinding
@@ -155,7 +155,7 @@ final class BotFollowAnticsManager {
             return false;
         }
 
-        startRandomAntic(entry, System.currentTimeMillis(), (int) BotManager.randMs(2000, 5000), BotFollowAnticTrigger.SOCIAL);
+        startRandomFidget(entry, System.currentTimeMillis(), (int) BotManager.randMs(2000, 5000), BotFidgetTrigger.SOCIAL);
         return true;
     }
 
@@ -167,7 +167,7 @@ final class BotFollowAnticsManager {
                                       Point botPos,
                                       Point targetPos,
                                       boolean requireFastFollow,
-                                      boolean allowAirborneJumpAntic) {
+                                      boolean allowAirborneJumpFidget) {
         return entry.following
                 && !BotChatManager.isOwnerIdle(entry)
                 && !entry.grinding
@@ -176,15 +176,15 @@ final class BotFollowAnticsManager {
                 && !entry.navPreciseTarget
                 && !entry.graphWarmupFallback
                 && !entry.climbing
-                && (!entry.inAir || (allowAirborneJumpAntic && isJumpAntic(entry.followAnticMode)))
+                && (!entry.inAir || (allowAirborneJumpFidget && isJumpFidget(entry.fidgetMode)))
                 && !entry.downJumpPending
                 && (!requireFastFollow || entry.movementProfile.totalSpeedStat() > BotMovementProfile.BASE_TOTAL_STAT)
                 && Math.abs(targetPos.y - botPos.y) <= BotMovementManager.cfg.JUMP_Y_THRESH * 2;
     }
 
     private static boolean shouldKeepRunning(BotEntry entry, Point botPos, Point targetPos, long now) {
-        boolean requireFastFollow = entry.followAnticTrigger != BotFollowAnticTrigger.SOCIAL;
-        if (!isEligible(entry, botPos, targetPos, requireFastFollow, true) || now >= entry.followAnticUntilMs) {
+        boolean requireFastFollow = entry.fidgetTrigger != BotFidgetTrigger.SOCIAL;
+        if (!isEligible(entry, botPos, targetPos, requireFastFollow, true) || now >= entry.fidgetUntilMs) {
             return false;
         }
         int walkStep = BotPhysicsEngine.walkStep(entry.bot.getMap(), entry.movementProfile);
@@ -192,50 +192,50 @@ final class BotFollowAnticsManager {
         return absDx <= BotMovementManager.cfg.FOLLOW_DIST + walkStep * 3;
     }
 
-    private static boolean isJumpAntic(BotFollowAnticMode mode) {
-        return mode == BotFollowAnticMode.JUMP || mode == BotFollowAnticMode.DIAGONAL_JUMP;
+    private static boolean isJumpFidget(BotFidgetMode mode) {
+        return mode == BotFidgetMode.JUMP || mode == BotFidgetMode.DIAGONAL_JUMP;
     }
 
-    private static void maybeRollIdleAntic(BotEntry entry, Point botPos, Point targetPos, long now) {
+    private static void maybeRollIdleFidget(BotEntry entry, Point botPos, Point targetPos, long now) {
         if (!entry.lastTickWasAi || !isOwnerMostlyIdle(entry)) {
             return;
         }
         if (Math.abs(targetPos.x - botPos.x) > BotMovementManager.cfg.FOLLOW_DIST) {
             return;
         }
-        if (entry.nextIdleFollowAnticRollAtMs == 0L) {
-            entry.nextIdleFollowAnticRollAtMs = now + BotManager.randMs(30_000, 60_000);
+        if (entry.nextIdleFidgetRollAtMs == 0L) {
+            entry.nextIdleFidgetRollAtMs = now + BotManager.randMs(30_000, 60_000);
             return;
         }
-        if (now < entry.nextIdleFollowAnticRollAtMs) {
+        if (now < entry.nextIdleFidgetRollAtMs) {
             return;
         }
 
-        entry.nextIdleFollowAnticRollAtMs = now + BotManager.randMs(30_000, 60_000);
+        entry.nextIdleFidgetRollAtMs = now + BotManager.randMs(30_000, 60_000);
         if (ThreadLocalRandom.current().nextInt(100) >= 20) {
             return;
         }
 
-        startRandomAntic(entry, now, (int) BotManager.randMs(2000, 10_000), BotFollowAnticTrigger.IDLE);
+        startRandomFidget(entry, now, (int) BotManager.randMs(2000, 10_000), BotFidgetTrigger.IDLE);
     }
 
-    private static void maybeStartSpeedMismatchAntic(BotEntry entry, Point botPos, Point targetPos, long now, boolean runAiTick) {
-        if (!runAiTick || now < entry.nextFollowAnticAtMs) {
+    private static void maybeStartSpeedMismatchFidget(BotEntry entry, Point botPos, Point targetPos, long now, boolean runAiTick) {
+        if (!runAiTick || now < entry.nextFidgetAtMs) {
             return;
         }
-        if (!shouldStartSpeedMismatchAntic(entry, botPos, targetPos)) {
+        if (!shouldStartSpeedMismatchFidget(entry, botPos, targetPos)) {
             return;
         }
 
-        entry.nextFollowAnticAtMs = now + BotManager.randMs(1500, 3000);
+        entry.nextFidgetAtMs = now + BotManager.randMs(1500, 3000);
         if (ThreadLocalRandom.current().nextInt(100) >= 35) {
             return;
         }
 
-        startRandomAntic(entry, now, (int) BotManager.randMs(2000, 4500), BotFollowAnticTrigger.AUTO_FOLLOW);
+        startRandomFidget(entry, now, (int) BotManager.randMs(2000, 4500), BotFidgetTrigger.AUTO_FOLLOW);
     }
 
-    static boolean shouldStartSpeedMismatchAntic(BotEntry entry, Point botPos, Point targetPos) {
+    static boolean shouldStartSpeedMismatchFidget(BotEntry entry, Point botPos, Point targetPos) {
         if (entry == null || entry.bot == null || botPos == null || targetPos == null) {
             return false;
         }
@@ -254,25 +254,25 @@ final class BotFollowAnticsManager {
         return Math.abs(entry.observedOwnerStepX) <= 1 && Math.abs(entry.observedOwnerStepY) <= 1;
     }
 
-    static void startRandomAntic(BotEntry entry, long now, int durationMs) {
-        startRandomAntic(entry, now, durationMs, BotFollowAnticTrigger.AUTO_FOLLOW);
+    static void startRandomFidget(BotEntry entry, long now, int durationMs) {
+        startRandomFidget(entry, now, durationMs, BotFidgetTrigger.AUTO_FOLLOW);
     }
 
-    static void startRandomAntic(BotEntry entry, long now, int durationMs, BotFollowAnticTrigger trigger) {
-        BotFollowAnticMode mode = switch (ThreadLocalRandom.current().nextInt(6)) {
-            case 0 -> BotFollowAnticMode.WAIT;
-            case 1 -> BotFollowAnticMode.JUMP;
-            case 2 -> BotFollowAnticMode.DIAGONAL_JUMP;
-            case 3 -> BotFollowAnticMode.PRONE;
-            case 4 -> BotFollowAnticMode.SPAM_PRONE;
-            default -> BotFollowAnticMode.SPAM_SIDEWAYS;
+    static void startRandomFidget(BotEntry entry, long now, int durationMs, BotFidgetTrigger trigger) {
+        BotFidgetMode mode = switch (ThreadLocalRandom.current().nextInt(6)) {
+            case 0 -> BotFidgetMode.WAIT;
+            case 1 -> BotFidgetMode.JUMP;
+            case 2 -> BotFidgetMode.DIAGONAL_JUMP;
+            case 3 -> BotFidgetMode.PRONE;
+            case 4 -> BotFidgetMode.SPAM_PRONE;
+            default -> BotFidgetMode.SPAM_SIDEWAYS;
         };
-        startAntic(entry, mode, now, durationMs, trigger);
+        startFidget(entry, mode, now, durationMs, trigger);
     }
 
     private static boolean handleActiveTick(BotEntry entry, Point botPos, Point targetPos, long now) {
         if (entry.climbing) {
-            finishAntic(entry, botPos);
+            finishFidget(entry, botPos);
             return false;
         }
         if (entry.inAir) {
@@ -284,24 +284,24 @@ final class BotFollowAnticsManager {
     }
 
     private static void tickActiveAirborne(BotEntry entry, long now) {
-        if ((entry.followAnticMode != BotFollowAnticMode.JUMP
-                && entry.followAnticMode != BotFollowAnticMode.DIAGONAL_JUMP)
-                || now < entry.nextFollowAnticActionAtMs) {
+        if ((entry.fidgetMode != BotFidgetMode.JUMP
+                && entry.fidgetMode != BotFidgetMode.DIAGONAL_JUMP)
+                || now < entry.nextFidgetActionAtMs) {
             return;
         }
-        if (!entry.followAnticSpamAirSteer) {
+        if (!entry.fidgetSpamAirSteer) {
             return;
         }
 
         int steerDir = ThreadLocalRandom.current().nextBoolean() ? 1 : -1;
-        entry.followAnticAirSteerDir = steerDir;
+        entry.fidgetAirSteerDir = steerDir;
         BotPhysicsEngine.applyAirSteering(entry, steerDir * 30);
-        entry.nextFollowAnticActionAtMs = now + BotManager.randMs(150, 350);
+        entry.nextFidgetActionAtMs = now + BotManager.randMs(150, 350);
     }
 
     private static boolean executeGrounded(BotEntry entry, Point botPos, Point targetPos, long now) {
         Character bot = entry.bot;
-        return switch (entry.followAnticMode) {
+        return switch (entry.fidgetMode) {
             case WAIT -> {
                 BotPhysicsEngine.idleOnGround(entry, bot);
                 BotMovementManager.broadcastMovement(entry);
@@ -314,14 +314,14 @@ final class BotFollowAnticsManager {
                 yield true;
             }
             case SPAM_PRONE -> {
-                if (now >= entry.nextFollowAnticActionAtMs) {
+                if (now >= entry.nextFidgetActionAtMs) {
                     if (entry.crouching) {
                         BotPhysicsEngine.idleOnGround(entry, bot);
                     } else {
                         BotPhysicsEngine.proneOnGround(entry, bot);
                     }
                     BotMovementManager.broadcastMovement(entry);
-                    entry.nextFollowAnticActionAtMs = now + BotManager.randMs(120, 350);
+                    entry.nextFidgetActionAtMs = now + BotManager.randMs(120, 350);
                 }
                 maybeBroadcastProneAttackVisual(entry, now);
                 yield true;
@@ -331,8 +331,8 @@ final class BotFollowAnticsManager {
                 yield true;
             }
             case JUMP -> {
-                if (now >= entry.nextFollowAnticJumpAtMs) {
-                    initiateAnticJump(entry, bot, botPos, targetPos, now, false);
+                if (now >= entry.nextFidgetJumpAtMs) {
+                    initiateFidgetJump(entry, bot, botPos, targetPos, now, false);
                 } else {
                     BotPhysicsEngine.idleOnGround(entry, bot);
                     BotMovementManager.broadcastMovement(entry);
@@ -340,8 +340,8 @@ final class BotFollowAnticsManager {
                 yield true;
             }
             case DIAGONAL_JUMP -> {
-                if (now >= entry.nextFollowAnticJumpAtMs) {
-                    initiateAnticJump(entry, bot, botPos, targetPos, now, true);
+                if (now >= entry.nextFidgetJumpAtMs) {
+                    initiateFidgetJump(entry, bot, botPos, targetPos, now, true);
                 } else {
                     BotPhysicsEngine.idleOnGround(entry, bot);
                     BotMovementManager.broadcastMovement(entry);
@@ -352,7 +352,7 @@ final class BotFollowAnticsManager {
         };
     }
 
-    private static void initiateAnticJump(BotEntry entry,
+    private static void initiateFidgetJump(BotEntry entry,
                                           Character bot,
                                           Point botPos,
                                           Point targetPos,
@@ -363,8 +363,8 @@ final class BotFollowAnticsManager {
         if (diagonal) {
             int jumpDir = nextDiagonalJumpDir(entry, botPos);
             jumpDx = jumpDir * walkStep;
-            entry.followAnticJumpDir = -jumpDir;
-            entry.followAnticAirSteerDir = jumpDir;
+            entry.fidgetJumpDir = -jumpDir;
+            entry.fidgetAirSteerDir = jumpDir;
         } else {
             int dx = targetPos.x - botPos.x;
             jumpDx = switch (ThreadLocalRandom.current().nextInt(3)) {
@@ -372,15 +372,15 @@ final class BotFollowAnticsManager {
                 case 1 -> dx == 0 ? walkStep : Integer.signum(dx) * walkStep;
                 default -> (ThreadLocalRandom.current().nextBoolean() ? 1 : -1) * walkStep;
             };
-            entry.followAnticAirSteerDir = Integer.signum(jumpDx);
+            entry.fidgetAirSteerDir = Integer.signum(jumpDx);
         }
 
         BotMovementManager.initiateJump(entry, bot, jumpDx);
-        entry.nextFollowAnticJumpAtMs = now + BotManager.randMs(200, 400);
+        entry.nextFidgetJumpAtMs = now + BotManager.randMs(200, 400);
     }
 
     private static int nextDiagonalJumpDir(BotEntry entry, Point botPos) {
-        Point origin = entry.followAnticOriginPos;
+        Point origin = entry.fidgetOriginPos;
         if (origin != null && botPos != null) {
             int dxFromOrigin = botPos.x - origin.x;
             int bias = Math.max(8, BotPhysicsEngine.walkStep(entry.bot.getMap(), entry.movementProfile));
@@ -391,22 +391,22 @@ final class BotFollowAnticsManager {
                 return 1;
             }
         }
-        return entry.followAnticJumpDir == 0
+        return entry.fidgetJumpDir == 0
                 ? (ThreadLocalRandom.current().nextBoolean() ? 1 : -1)
-                : entry.followAnticJumpDir;
+                : entry.fidgetJumpDir;
     }
 
     private static void tickSidewaysMovement(BotEntry entry, Character bot, Point botPos, long now) {
-        if (now >= entry.nextFollowAnticActionAtMs || entry.followAnticMoveDir == 0) {
-            entry.followAnticMoveDir = nextSidewaysDir(entry, botPos);
-            entry.nextFollowAnticActionAtMs = now + BotManager.randMs(250, 650);
+        if (now >= entry.nextFidgetActionAtMs || entry.fidgetMoveDir == 0) {
+            entry.fidgetMoveDir = nextSidewaysDir(entry, botPos);
+            entry.nextFidgetActionAtMs = now + BotManager.randMs(250, 650);
         }
 
-        int dir = entry.followAnticMoveDir == 0 ? 1 : entry.followAnticMoveDir;
+        int dir = entry.fidgetMoveDir == 0 ? 1 : entry.fidgetMoveDir;
         int walkStep = BotPhysicsEngine.walkStep(bot.getMap(), entry.movementProfile);
         if (!BotPhysicsEngine.canWalkGroundStep(bot.getMap(), botPos, dir * walkStep)) {
             dir = -dir;
-            entry.followAnticMoveDir = dir;
+            entry.fidgetMoveDir = dir;
             if (!BotPhysicsEngine.canWalkGroundStep(bot.getMap(), botPos, dir * walkStep)) {
                 BotPhysicsEngine.idleOnGround(entry, bot);
                 BotMovementManager.broadcastMovement(entry);
@@ -426,7 +426,7 @@ final class BotFollowAnticsManager {
     }
 
     private static int nextSidewaysDir(BotEntry entry, Point botPos) {
-        Point origin = entry.followAnticOriginPos;
+        Point origin = entry.fidgetOriginPos;
         int walkStep = BotPhysicsEngine.walkStep(entry.bot.getMap(), entry.movementProfile);
         if (origin != null && botPos != null) {
             int dxFromOrigin = botPos.x - origin.x;
@@ -438,18 +438,18 @@ final class BotFollowAnticsManager {
                 return 1;
             }
         }
-        return entry.followAnticMoveDir == 0
+        return entry.fidgetMoveDir == 0
                 ? (ThreadLocalRandom.current().nextBoolean() ? 1 : -1)
-                : -entry.followAnticMoveDir;
+                : -entry.fidgetMoveDir;
     }
 
     private static void maybeBroadcastProneAttackVisual(BotEntry entry, long now) {
         if (entry == null || entry.bot == null || entry.bot.getMap() == null
-                || !entry.crouching || now < entry.nextFollowAnticVisualAtMs) {
+                || !entry.crouching || now < entry.nextFidgetVisualAtMs) {
             return;
         }
 
-        entry.nextFollowAnticVisualAtMs = now + BotManager.randMs(700, 1600);
+        entry.nextFidgetVisualAtMs = now + BotManager.randMs(700, 1600);
         if (ThreadLocalRandom.current().nextInt(100) >= 35) {
             return;
         }

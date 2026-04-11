@@ -179,7 +179,7 @@ class BotMovementManager {
         entry.graphWarmupFallback = false;
         entry.observedOwnerStepX = 0;
         entry.observedOwnerStepY = 0;
-        BotFollowAnticsManager.clear(entry);
+        BotFidgetManager.clear(entry);
         clearNavigationState(entry);
         entry.movementBroadcastValid = false;
     }

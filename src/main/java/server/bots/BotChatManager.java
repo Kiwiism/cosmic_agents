@@ -648,7 +648,7 @@ public class BotChatManager {
             });
         } else if (isFidgetCommand(message)) {
             BotManager.after(BotManager.randMs(250, 500), () -> {
-                if (BotFollowAnticsManager.maybeStartSocialAntic(entry)) {
+                if (BotFidgetManager.maybeStartSocialFidget(entry)) {
                     BotManager.getInstance().botSay(entry.bot, "ok");
                 } else {
                     BotManager.getInstance().botSay(entry.bot, "cant rn");
@@ -657,7 +657,7 @@ public class BotChatManager {
         } else if (GREETING_PATTERN.matcher(message).find()) {
             BotManager.after(BotManager.randMs(900, 1100), () -> {
                 entry.bot.changeFaceExpression(Emote.HAPPY.getValue());
-                BotFollowAnticsManager.maybeStartGreetingAntic(entry, ThreadLocalRandom.current().nextInt(100));
+                BotFidgetManager.maybeStartGreetingFidget(entry, ThreadLocalRandom.current().nextInt(100));
                 queueBotSay(entry, BotManager.randomReply(GREETING_REPLIES));
                 checkBotStatus(entry, entry.bot);
             });

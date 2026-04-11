@@ -75,22 +75,22 @@ class BotChatManagerTest {
     }
 
     @Test
-    void shouldTriggerGreetingAnticHalfTheTimeWhileFollowing() {
+    void shouldTriggerGreetingFidgetHalfTheTimeWhileFollowing() {
         BotEntry entry = new BotEntry(null, null, null);
         entry.following = true;
 
-        assertTrue(BotFollowAnticsManager.maybeStartGreetingAntic(entry, 0));
-        assertFalse(entry.followAnticMode == BotFollowAnticMode.NONE);
-        assertEquals(BotFollowAnticTrigger.SOCIAL, entry.followAnticTrigger);
+        assertTrue(BotFidgetManager.maybeStartGreetingFidget(entry, 0));
+        assertFalse(entry.fidgetMode == BotFidgetMode.NONE);
+        assertEquals(BotFidgetTrigger.SOCIAL, entry.fidgetTrigger);
 
-        BotFollowAnticsManager.clear(entry);
+        BotFidgetManager.clear(entry);
 
-        assertFalse(BotFollowAnticsManager.maybeStartGreetingAntic(entry, 99));
-        assertEquals(BotFollowAnticMode.NONE, entry.followAnticMode);
+        assertFalse(BotFidgetManager.maybeStartGreetingFidget(entry, 99));
+        assertEquals(BotFidgetMode.NONE, entry.fidgetMode);
     }
 
     @Test
-    void shouldTriggerFidgetAnticWithoutGreetingRoll() {
+    void shouldTriggerFidgetCommandWithoutGreetingRoll() {
         BotEntry entry = new BotEntry(null, null, null);
         entry.following = true;
 
@@ -98,19 +98,19 @@ class BotChatManagerTest {
         assertTrue(BotChatManager.isFidgetCommand("fidget!"));
         assertFalse(BotChatManager.isFidgetCommand("please fidget"));
 
-        assertTrue(BotFollowAnticsManager.maybeStartSocialAntic(entry));
-        assertFalse(entry.followAnticMode == BotFollowAnticMode.NONE);
-        assertEquals(BotFollowAnticTrigger.SOCIAL, entry.followAnticTrigger);
+        assertTrue(BotFidgetManager.maybeStartSocialFidget(entry));
+        assertFalse(entry.fidgetMode == BotFidgetMode.NONE);
+        assertEquals(BotFidgetTrigger.SOCIAL, entry.fidgetTrigger);
     }
 
     @Test
-    void shouldNotTriggerGreetingAnticWhileOwnerIsAfk() {
+    void shouldNotTriggerGreetingFidgetWhileOwnerIsAfk() {
         BotEntry entry = new BotEntry(null, null, null);
         entry.following = true;
         entry.ownerWasAfk = true;
 
-        assertFalse(BotFollowAnticsManager.maybeStartGreetingAntic(entry, 0));
-        assertEquals(BotFollowAnticMode.NONE, entry.followAnticMode);
+        assertFalse(BotFidgetManager.maybeStartGreetingFidget(entry, 0));
+        assertEquals(BotFidgetMode.NONE, entry.fidgetMode);
     }
 
     @Test

@@ -1398,7 +1398,7 @@ public class BotManager {
         if (entry.moveTargetPrecise && entry.navEdge == null) {
             entry.navPreciseTarget = true;
         }
-        if (BotFollowAnticsManager.tryHandleTick(entry, steeringTarget, runAiTick)) {
+        if (BotFidgetManager.tryHandleTick(entry, steeringTarget, runAiTick)) {
             return;
         }
 

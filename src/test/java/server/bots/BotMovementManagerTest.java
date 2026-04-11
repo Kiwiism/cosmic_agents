@@ -516,7 +516,7 @@ class BotMovementManagerTest {
     }
 
     @Test
-    void shouldNotUseSpeedMismatchAnticWhenOwnerIsIdle() {
+    void shouldNotUseSpeedMismatchFidgetWhenOwnerIsIdle() {
         MapleMap map = new MapleMap(910000041, 0, 0, 910000041, 1.0f);
         Character bot = mockBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
@@ -525,17 +525,17 @@ class BotMovementManagerTest {
         entry.observedOwnerStepX = 0;
         entry.observedOwnerStepY = 0;
 
-        assertFalse(BotFollowAnticsManager.shouldStartSpeedMismatchAntic(entry, new Point(100, 100), new Point(110, 100)),
-                "idle owners should use the long idle-antic roll, not the active follow speed-mismatch antic");
+        assertFalse(BotFidgetManager.shouldStartSpeedMismatchFidget(entry, new Point(100, 100), new Point(110, 100)),
+                "idle owners should use the long idle-fidget roll, not the active follow speed-mismatch fidget");
 
         entry.observedOwnerStepX = 4;
 
-        assertTrue(BotFollowAnticsManager.shouldStartSpeedMismatchAntic(entry, new Point(100, 100), new Point(110, 100)),
-                "slow-but-moving owners remain eligible for speed-mismatch follow antics");
+        assertTrue(BotFidgetManager.shouldStartSpeedMismatchFidget(entry, new Point(100, 100), new Point(110, 100)),
+                "slow-but-moving owners remain eligible for speed-mismatch follow fidgets");
     }
 
     @Test
-    void shouldHoldProneWhileFollowAnticIsActive() {
+    void shouldHoldProneWhileFidgetIsActive() {
         MapleMap map = new MapleMap(910000036, 0, 0, 910000036, 1.0f);
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
         footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
@@ -545,14 +545,14 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
         entry.movementProfile = new BotMovementProfile(140, 100);
-        BotFollowAnticsManager.startAntic(entry, BotFollowAnticMode.PRONE, System.currentTimeMillis(), 3000);
+        BotFidgetManager.startFidget(entry, BotFidgetMode.PRONE, System.currentTimeMillis(), 3000);
 
-        assertTrue(BotFollowAnticsManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         assertTrue(entry.crouching);
     }
 
     @Test
-    void shouldAllowSocialFollowAnticsAtBaseMoveSpeed() {
+    void shouldAllowSocialFidgetsAtBaseMoveSpeed() {
         MapleMap map = new MapleMap(910000038, 0, 0, 910000038, 1.0f);
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
         footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
@@ -562,14 +562,14 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
         entry.movementProfile = new BotMovementProfile(100, 100);
-        BotFollowAnticsManager.startAntic(entry, BotFollowAnticMode.PRONE, System.currentTimeMillis(), 3000, BotFollowAnticTrigger.SOCIAL);
+        BotFidgetManager.startFidget(entry, BotFidgetMode.PRONE, System.currentTimeMillis(), 3000, BotFidgetTrigger.SOCIAL);
 
-        assertTrue(BotFollowAnticsManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         assertTrue(entry.crouching);
     }
 
     @Test
-    void shouldAlternateDirectionalFollowAnticJumps() {
+    void shouldAlternateDirectionalFidgetJumps() {
         MapleMap map = new MapleMap(910000039, 0, 0, 910000039, 1.0f);
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
         footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
@@ -579,22 +579,22 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
         entry.movementProfile = new BotMovementProfile(140, 100);
-        BotFollowAnticsManager.startAntic(entry, BotFollowAnticMode.DIAGONAL_JUMP, System.currentTimeMillis(), 3000);
+        BotFidgetManager.startFidget(entry, BotFidgetMode.DIAGONAL_JUMP, System.currentTimeMillis(), 3000);
 
-        assertTrue(BotFollowAnticsManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         int firstJumpVelX = entry.airVelX;
-        assertTrue(firstJumpVelX != 0, "diagonal jump antic should launch with horizontal momentum");
+        assertTrue(firstJumpVelX != 0, "diagonal jump fidget should launch with horizontal momentum");
 
         BotPhysicsEngine.idleOnGround(entry, bot);
-        entry.nextFollowAnticJumpAtMs = 0L;
+        entry.nextFidgetJumpAtMs = 0L;
 
-        assertTrue(BotFollowAnticsManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         assertEquals(-Integer.signum(firstJumpVelX), Integer.signum(entry.airVelX),
-                "diagonal jump antic should alternate jump direction on the next grounded launch");
+                "diagonal jump fidget should alternate jump direction on the next grounded launch");
     }
 
     @Test
-    void shouldKeepJumpAnticRunningWhileAirborne() {
+    void shouldKeepJumpFidgetRunningWhileAirborne() {
         MapleMap map = new MapleMap(910000040, 0, 0, 910000040, 1.0f);
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
         footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
@@ -604,18 +604,18 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
         entry.movementProfile = new BotMovementProfile(140, 100);
-        BotFollowAnticsManager.startAntic(entry, BotFollowAnticMode.JUMP, System.currentTimeMillis(), 3000);
+        BotFidgetManager.startFidget(entry, BotFidgetMode.JUMP, System.currentTimeMillis(), 3000);
 
-        assertTrue(BotFollowAnticsManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         assertTrue(entry.inAir);
 
-        assertTrue(BotFollowAnticsManager.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(BotFollowAnticMode.JUMP, entry.followAnticMode,
-                "jump antics should not clear themselves while their first jump is still airborne");
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertEquals(BotFidgetMode.JUMP, entry.fidgetMode,
+                "jump fidgets should not clear themselves while their first jump is still airborne");
     }
 
     @Test
-    void shouldRepeatJumpAnticAfterLandingUntilDurationEnds() {
+    void shouldRepeatJumpFidgetAfterLandingUntilDurationEnds() {
         MapleMap map = new MapleMap(910000042, 0, 0, 910000042, 1.0f);
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
         footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
@@ -625,21 +625,21 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
         entry.movementProfile = new BotMovementProfile(140, 100);
-        BotFollowAnticsManager.startAntic(entry, BotFollowAnticMode.JUMP, System.currentTimeMillis(), 3000);
+        BotFidgetManager.startFidget(entry, BotFidgetMode.JUMP, System.currentTimeMillis(), 3000);
 
-        assertTrue(BotFollowAnticsManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         assertTrue(entry.inAir);
 
         BotPhysicsEngine.idleOnGround(entry, bot);
-        entry.nextFollowAnticActionAtMs = Long.MAX_VALUE;
-        entry.nextFollowAnticJumpAtMs = 0L;
+        entry.nextFidgetActionAtMs = Long.MAX_VALUE;
+        entry.nextFidgetJumpAtMs = 0L;
 
-        assertTrue(BotFollowAnticsManager.tryHandleTick(entry, new Point(110, 100), true));
-        assertTrue(entry.inAir, "grounded jump antics should launch again even if air steering is cooling down");
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertTrue(entry.inAir, "grounded jump fidgets should launch again even if air steering is cooling down");
     }
 
     @Test
-    void shouldOnlySpamAirSteerWhenJumpAnticRollEnablesIt() {
+    void shouldOnlySpamAirSteerWhenJumpFidgetRollEnablesIt() {
         MapleMap map = new MapleMap(910000046, 0, 0, 910000046, 1.0f);
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
         footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
@@ -649,28 +649,28 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
         entry.movementProfile = new BotMovementProfile(140, 100);
-        BotFollowAnticsManager.startAntic(entry, BotFollowAnticMode.JUMP, System.currentTimeMillis(), 3000);
-        BotFollowAnticsManager.tryHandleTick(entry, new Point(110, 100), true);
+        BotFidgetManager.startFidget(entry, BotFidgetMode.JUMP, System.currentTimeMillis(), 3000);
+        BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true);
 
-        entry.followAnticSpamAirSteer = false;
+        entry.fidgetSpamAirSteer = false;
         entry.airSteerVelX = 0.0;
-        entry.nextFollowAnticActionAtMs = 0L;
+        entry.nextFidgetActionAtMs = 0L;
 
-        assertTrue(BotFollowAnticsManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         assertEquals(0.0, entry.airSteerVelX,
-                "non-spam jump antics should not reroll random air steering every airborne tick");
+                "non-spam jump fidgets should not reroll random air steering every airborne tick");
 
-        entry.followAnticSpamAirSteer = true;
+        entry.fidgetSpamAirSteer = true;
         entry.airSteerVelX = 0.0;
-        entry.nextFollowAnticActionAtMs = 0L;
+        entry.nextFidgetActionAtMs = 0L;
 
-        assertTrue(BotFollowAnticsManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         assertTrue(entry.airSteerVelX != 0.0,
-                "spam-air-steer jump antics should press random side input on their own delay");
+                "spam-air-steer jump fidgets should press random side input on their own delay");
     }
 
     @Test
-    void shouldSpamSidewaysDuringFollowAnticWithoutDroppingFollowMode() {
+    void shouldSpamSidewaysDuringFidgetWithoutDroppingFollowMode() {
         MapleMap map = new MapleMap(910000043, 0, 0, 910000043, 1.0f);
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
         footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
@@ -680,59 +680,59 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
         entry.movementProfile = new BotMovementProfile(140, 100);
-        BotFollowAnticsManager.startAntic(entry, BotFollowAnticMode.SPAM_SIDEWAYS, System.currentTimeMillis(), 3000);
+        BotFidgetManager.startFidget(entry, BotFidgetMode.SPAM_SIDEWAYS, System.currentTimeMillis(), 3000);
 
-        assertTrue(BotFollowAnticsManager.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(BotFollowAnticMode.SPAM_SIDEWAYS, entry.followAnticMode);
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertEquals(BotFidgetMode.SPAM_SIDEWAYS, entry.fidgetMode);
         assertTrue(entry.lastDesiredDirection != 0, "sideway spam should hold a left/right movement input");
         assertTrue(entry.following, "sideway spam should not convert follow mode into a manual move command");
     }
 
     @Test
-    void shouldContinueFollowingAfterAutoFollowAnticEnds() {
+    void shouldContinueFollowingAfterAutoFidgetEnds() {
         MapleMap map = new MapleMap(910000044, 0, 0, 910000044, 1.0f);
         Character bot = mockBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
         entry.movementProfile = new BotMovementProfile(140, 100);
         long now = System.currentTimeMillis();
-        BotFollowAnticsManager.startAntic(entry, BotFollowAnticMode.SPAM_SIDEWAYS, now, 2000);
+        BotFidgetManager.startFidget(entry, BotFidgetMode.SPAM_SIDEWAYS, now, 2000);
         bot.setPosition(new Point(130, 100));
-        entry.followAnticUntilMs = now - 1;
+        entry.fidgetUntilMs = now - 1;
 
-        assertFalse(BotFollowAnticsManager.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(BotFollowAnticMode.NONE, entry.followAnticMode);
-        assertNull(entry.moveTarget, "speed-mismatch follow antics should resume following immediately");
+        assertFalse(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertEquals(BotFidgetMode.NONE, entry.fidgetMode);
+        assertNull(entry.moveTarget, "speed-mismatch follow fidgets should resume following immediately");
         assertFalse(entry.moveTargetPrecise);
     }
 
     @Test
-    void shouldReturnToAnticOriginWithPreciseMoveTargetAfterIdleOrSocialAnticEnds() {
+    void shouldReturnToFidgetOriginWithPreciseMoveTargetAfterIdleOrSocialFidgetEnds() {
         MapleMap map = new MapleMap(910000045, 0, 0, 910000045, 1.0f);
         Character bot = mockBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
         entry.movementProfile = new BotMovementProfile(140, 100);
         long now = System.currentTimeMillis();
-        BotFollowAnticsManager.startAntic(entry, BotFollowAnticMode.SPAM_SIDEWAYS, now, 2000, BotFollowAnticTrigger.SOCIAL);
+        BotFidgetManager.startFidget(entry, BotFidgetMode.SPAM_SIDEWAYS, now, 2000, BotFidgetTrigger.SOCIAL);
         bot.setPosition(new Point(130, 100));
-        entry.followAnticUntilMs = now - 1;
+        entry.fidgetUntilMs = now - 1;
 
-        assertFalse(BotFollowAnticsManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertFalse(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         assertEquals(new Point(100, 100), entry.moveTarget,
-                "social antic cleanup should reuse the precise move-target path from the here command");
+                "social fidget cleanup should reuse the precise move-target path from the here command");
         assertTrue(entry.moveTargetPrecise);
 
         entry.moveTarget = null;
         entry.moveTargetPrecise = false;
         bot.setPosition(new Point(130, 100));
-        BotFollowAnticsManager.startAntic(entry, BotFollowAnticMode.SPAM_SIDEWAYS, now, 2000, BotFollowAnticTrigger.IDLE);
+        BotFidgetManager.startFidget(entry, BotFidgetMode.SPAM_SIDEWAYS, now, 2000, BotFidgetTrigger.IDLE);
         bot.setPosition(new Point(160, 100));
-        entry.followAnticUntilMs = now - 1;
+        entry.fidgetUntilMs = now - 1;
 
-        assertFalse(BotFollowAnticsManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertFalse(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         assertEquals(new Point(130, 100), entry.moveTarget,
-                "idle antic cleanup should return to its own recorded origin");
+                "idle fidget cleanup should return to its own recorded origin");
         assertTrue(entry.moveTargetPrecise);
     }
 
