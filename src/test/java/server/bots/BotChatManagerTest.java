@@ -2,6 +2,7 @@ package server.bots;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
+import server.maps.FieldLimit;
 import server.maps.MapleMap;
 
 import java.util.List;
@@ -156,6 +157,20 @@ class BotChatManagerTest {
                         BotPhysicsEngine.maxJumpHorizontalTravel(map, profile),
                         BotPhysicsEngine.maxRopeJumpHorizontalTravel(map, profile))
         ), report);
+    }
+
+    @Test
+    void shouldReportForcedMovementStatsOnMovementSkillLimitMaps() {
+        Character bot = mock(Character.class);
+        MapleMap map = mock(MapleMap.class);
+        when(map.getFieldLimit()).thenReturn((int) FieldLimit.MOVEMENTSKILLS.getValue());
+        when(bot.getMap()).thenReturn(map);
+        when(bot.getTotalMoveSpeedStat()).thenReturn(140);
+        when(bot.getTotalJumpStat()).thenReturn(125);
+
+        List<String> report = BotChatManager.buildMovementStatsReport(bot);
+
+        assertEquals("speed 100% jump 100% (map forced; raw 140%/125%)", report.getFirst());
     }
 
     @Test

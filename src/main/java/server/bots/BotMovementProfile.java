@@ -1,6 +1,8 @@
 package server.bots;
 
 import client.Character;
+import server.maps.FieldLimit;
+import server.maps.MapleMap;
 
 import java.io.Serializable;
 
@@ -22,7 +24,15 @@ record BotMovementProfile(int totalSpeedStat, int totalJumpStat) implements Seri
         if (character == null) {
             return BASE;
         }
+        if (hasForcedBaseMovementStats(character)) {
+            return BASE;
+        }
         return new BotMovementProfile(character.getTotalMoveSpeedStat(), character.getTotalJumpStat());
+    }
+
+    private static boolean hasForcedBaseMovementStats(Character character) {
+        MapleMap map = character.getMap();
+        return map != null && FieldLimit.MOVEMENTSKILLS.check(map.getFieldLimit());
     }
 
     private static int bucketStat(int stat) {

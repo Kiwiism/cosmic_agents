@@ -10,6 +10,7 @@ import constants.game.GameConstants;
 import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
 import server.Trade;
+import server.maps.FieldLimit;
 import server.maps.MapleMap;
 import java.awt.*;
 
@@ -982,9 +983,9 @@ public class BotChatManager {
 
         BotMovementProfile profile = BotMovementProfile.fromCharacter(bot);
         MapleMap map = bot.getMap();
-        int speedStat = bot.getTotalMoveSpeedStat();
-        int jumpStat = bot.getTotalJumpStat();
-        String speedLine = String.format(Locale.ROOT, "speed %d%% jump %d%%", speedStat, jumpStat);
+        int rawSpeedStat = bot.getTotalMoveSpeedStat();
+        int rawJumpStat = bot.getTotalJumpStat();
+        String speedLine = movementStatLine(map, profile, rawSpeedStat, rawJumpStat);
 
         if (map == null) {
             return List.of(
@@ -1012,6 +1013,20 @@ public class BotChatManager {
                         BotPhysicsEngine.maxJumpHorizontalTravel(map, profile),
                         BotPhysicsEngine.maxRopeJumpHorizontalTravel(map, profile))
         );
+    }
+
+    private static String movementStatLine(MapleMap map,
+                                           BotMovementProfile profile,
+                                           int rawSpeedStat,
+                                           int rawJumpStat) {
+        if (map != null && FieldLimit.MOVEMENTSKILLS.check(map.getFieldLimit())
+                && (rawSpeedStat != profile.totalSpeedStat() || rawJumpStat != profile.totalJumpStat())) {
+            return String.format(Locale.ROOT,
+                    "speed %d%% jump %d%% (map forced; raw %d%%/%d%%)",
+                    profile.totalSpeedStat(), profile.totalJumpStat(), rawSpeedStat, rawJumpStat);
+        }
+        return String.format(Locale.ROOT, "speed %d%% jump %d%%",
+                profile.totalSpeedStat(), profile.totalJumpStat());
     }
 
     static String formatCompactMesos(int mesos) {
