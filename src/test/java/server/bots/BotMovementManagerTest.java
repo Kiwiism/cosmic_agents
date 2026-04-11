@@ -869,11 +869,12 @@ class BotMovementManagerTest {
     }
 
     @Test
-    void shouldDeferMovementProfileSwapUntilBucketGraphIsReady() {
+    void shouldSwapMovementProfileWhileBucketGraphWarms() {
         MapleMap map = new MapleMap(910000027, 0, 0, 910000027, 1.0f);
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
         footholds.insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
         map.setFootholds(footholds);
+        BotNavigationGraphProvider.rebuildGraph(map, BotMovementProfile.base());
 
         Character bot = mockBot(new Point(20, 100), map);
         when(bot.getTotalMoveSpeedStat()).thenReturn(109);
@@ -884,10 +885,6 @@ class BotMovementManagerTest {
 
         BotMovementProfile targetProfile = BotMovementProfile.fromCharacter(bot);
         assertEquals(new BotMovementProfile(105, 105), targetProfile);
-        assertFalse(BotMovementManager.refreshMovementProfile(entry),
-                "profile swap should wait until the new bucket graph is cached");
-        assertEquals(BotMovementProfile.base(), entry.movementProfile);
-
         entry.navEdge = new BotNavigationGraph.Edge(
                 1, 2, BotNavigationGraph.EdgeType.JUMP,
                 new Point(20, 100), new Point(80, 40),
@@ -897,10 +894,8 @@ class BotMovementManagerTest {
         entry.navTargetRegionId = 2;
         entry.navPreciseTarget = true;
 
-        BotNavigationGraphProvider.getGraph(map, targetProfile);
-
         assertTrue(BotMovementManager.refreshMovementProfile(entry),
-                "profile swap should commit once the bucket graph is ready");
+                "profile swap should commit immediately and let nav use closest graph while the exact graph warms");
         assertEquals(targetProfile, entry.movementProfile);
         assertNull(entry.navEdge);
         assertNull(entry.navTargetPos);

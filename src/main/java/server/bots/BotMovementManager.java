@@ -152,11 +152,10 @@ class BotMovementManager {
         }
 
         MapleMap map = entry.bot != null ? entry.bot.getMap() : null;
-        if (map != null && map.getFootholds() != null) {
-            if (BotNavigationGraphProvider.peekGraph(map, updated) == null) {
-                BotNavigationGraphProvider.warmGraphAsync(map, updated);
-                return false;
-            }
+        if (map != null
+                && map.getFootholds() != null
+                && BotNavigationGraphProvider.peekGraph(map, updated) == null) {
+            BotNavigationGraphProvider.warmGraphAsync(map, updated);
         }
 
         entry.movementProfile = updated;
