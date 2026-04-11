@@ -1037,6 +1037,24 @@ public class BotManager {
             return;
         }
         Character bot = entry.bot;
+
+        // Guard: bot was removed from its map externally (e.g. a prior disconnect race).
+        // Stop ticking and clean up rather than NPE-spamming TimerManager workers.
+        if (bot.getMap() == null) {
+            removeBotByCharId(botCharId);
+            return;
+        }
+
+        // Heartbeat: keep the bot's lastPacket fresh and broadcast a standing-in-place
+        // movement packet every 10 minutes so the server never considers the bot idle.
+        // Covers all modes: idle, follow, and grind.
+        long nowMs = System.currentTimeMillis();
+        if (nowMs - entry.lastHeartbeatAtMs >= 600_000L) {
+            entry.lastHeartbeatAtMs = nowMs;
+            bot.getClient().updateLastPacket();
+            BotMovementManager.broadcastMovement(entry);
+        }
+
         BotOfferManager.expirePendingOffer(entry);
         boolean runAiTick = consumeAiTick(entry);
         entry.lastTickWasAi = runAiTick;

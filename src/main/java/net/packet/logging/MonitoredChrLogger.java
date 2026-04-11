@@ -81,7 +81,7 @@ public class MonitoredChrLogger {
 
     private static boolean isRecvBlocked(RecvOpcode op) {
         return switch (op) {
-            case MOVE_PLAYER, GENERAL_CHAT, TAKE_DAMAGE, MOVE_PET, MOVE_LIFE, NPC_ACTION, FACE_EXPRESSION -> true;
+            case GENERAL_CHAT, TAKE_DAMAGE, MOVE_PET, MOVE_LIFE, NPC_ACTION, FACE_EXPRESSION -> true;
             default -> false;
         };
     }

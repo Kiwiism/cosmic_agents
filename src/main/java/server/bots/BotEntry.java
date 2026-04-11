@@ -204,6 +204,7 @@ public class BotEntry {
     Point lastOwnerPos = null;
     boolean lastTickWasAi = false;
     long lastTickAtMs = 0L;
+    long lastHeartbeatAtMs = 0L;
 
     // Stuck detection & unstuck
     int stuckMs = 0;

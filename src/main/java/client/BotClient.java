@@ -32,4 +32,14 @@ public class BotClient extends Client {
     public void disconnectSession() {
         // no-op: bot has no ioChannel — calling ioChannel.disconnect() would NPE
     }
+
+    /**
+     * Always report "just now" so TimeoutTask never considers this bot inactive.
+     * Bots have no real network I/O and must never be auto-disconnected by the
+     * inactivity checker.
+     */
+    @Override
+    public long getLastPacket() {
+        return System.currentTimeMillis();
+    }
 }
