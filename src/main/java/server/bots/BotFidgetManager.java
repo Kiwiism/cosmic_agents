@@ -27,6 +27,10 @@ enum BotFidgetTrigger {
 }
 
 final class BotFidgetManager {
+    private static final int SPAM_BASE_DELAY_MIN_MS = 100;
+    private static final int SPAM_BASE_DELAY_MAX_MS = 250;
+    private static final int SPAM_JITTER_MS = 50;
+
     private BotFidgetManager() {
     }
 
@@ -76,6 +80,7 @@ final class BotFidgetManager {
         entry.fidgetJumpDir = 0;
         entry.fidgetMoveDir = 0;
         entry.fidgetSpamAirSteer = false;
+        entry.fidgetActionBaseDelayMs = 0;
         entry.nextFidgetJumpAtMs = 0L;
         entry.fidgetOriginPos = null;
         entry.nextFidgetVisualAtMs = 0L;
@@ -127,6 +132,7 @@ final class BotFidgetManager {
         entry.fidgetJumpDir = entry.fidgetAirSteerDir == 0 ? 1 : entry.fidgetAirSteerDir;
         entry.fidgetMoveDir = entry.fidgetAirSteerDir;
         entry.fidgetSpamAirSteer = isJumpFidget(mode) && ThreadLocalRandom.current().nextInt(100) < 35;
+        entry.fidgetActionBaseDelayMs = randomActionBaseDelayMs(mode, entry.fidgetSpamAirSteer);
         entry.nextFidgetJumpAtMs = now;
         entry.fidgetOriginPos = entry.bot == null ? null : new Point(entry.bot.getPosition());
         entry.nextFidgetVisualAtMs = now + BotManager.randMs(500, 1200);
@@ -294,7 +300,7 @@ final class BotFidgetManager {
         int steerDir = ThreadLocalRandom.current().nextBoolean() ? 1 : -1;
         entry.fidgetAirSteerDir = steerDir;
         BotPhysicsEngine.applyAirSteering(entry, steerDir * 30);
-        entry.nextFidgetActionAtMs = now + BotManager.randMs(150, 350);
+        entry.nextFidgetActionAtMs = now + jitteredDelayMs(entry.fidgetActionBaseDelayMs);
     }
 
     private static boolean executeGrounded(BotEntry entry, Point botPos, Point targetPos, long now) {
@@ -397,7 +403,7 @@ final class BotFidgetManager {
     private static void tickSidewaysMovement(BotEntry entry, Character bot, Point botPos, long now) {
         if (now >= entry.nextFidgetActionAtMs || entry.fidgetMoveDir == 0) {
             entry.fidgetMoveDir = nextSidewaysDir(entry, botPos);
-            entry.nextFidgetActionAtMs = now + BotManager.randMs(250, 650);
+            entry.nextFidgetActionAtMs = now + jitteredDelayMs(entry.fidgetActionBaseDelayMs);
         }
 
         int dir = entry.fidgetMoveDir == 0 ? 1 : entry.fidgetMoveDir;
@@ -439,6 +445,27 @@ final class BotFidgetManager {
         return entry.fidgetMoveDir == 0
                 ? (ThreadLocalRandom.current().nextBoolean() ? 1 : -1)
                 : -entry.fidgetMoveDir;
+    }
+
+    private static int randomActionBaseDelayMs(BotFidgetMode mode, boolean spamAirSteer) {
+        if (mode == BotFidgetMode.SPAM_SIDEWAYS) {
+            return randomTickAlignedBaseDelayMs();
+        }
+        if (isJumpFidget(mode) && spamAirSteer) {
+            return randomTickAlignedBaseDelayMs();
+        }
+        return 0;
+    }
+
+    private static int randomTickAlignedBaseDelayMs() {
+        int ticks = ThreadLocalRandom.current().nextInt(SPAM_BASE_DELAY_MIN_MS / BotPhysicsEngine.cfg.TICK_MS,
+                SPAM_BASE_DELAY_MAX_MS / BotPhysicsEngine.cfg.TICK_MS + 1);
+        return ticks * BotPhysicsEngine.cfg.TICK_MS;
+    }
+
+    private static long jitteredDelayMs(int baseDelayMs) {
+        int base = baseDelayMs > 0 ? baseDelayMs : SPAM_BASE_DELAY_MIN_MS;
+        return base + (ThreadLocalRandom.current().nextBoolean() ? SPAM_JITTER_MS : 0);
     }
 
     private static void maybeBroadcastProneAttackVisual(BotEntry entry, long now) {

@@ -552,6 +552,30 @@ class BotMovementManagerTest {
     }
 
     @Test
+    void shouldNotChangeDirectionForProneFidgets() {
+        MapleMap map = new MapleMap(910000048, 0, 0, 910000048, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.following = true;
+        entry.facingDir = -1;
+        BotFidgetManager.startFidget(entry, BotFidgetMode.PRONE, System.currentTimeMillis(), 3000);
+
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertEquals(-1, entry.facingDir, "prone fidget should keep the current facing direction");
+
+        BotFidgetManager.clear(entry);
+        entry.facingDir = -1;
+        BotFidgetManager.startFidget(entry, BotFidgetMode.SPAM_PRONE, System.currentTimeMillis(), 3000);
+
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertEquals(-1, entry.facingDir, "spam-prone fidget should not synthesize a turn input");
+    }
+
+    @Test
     void shouldAllowSocialFidgetsAtBaseMoveSpeed() {
         MapleMap map = new MapleMap(910000038, 0, 0, 910000038, 1.0f);
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
@@ -679,12 +703,16 @@ class BotMovementManagerTest {
                 "non-spam jump fidgets should not reroll random air steering every airborne tick");
 
         entry.fidgetSpamAirSteer = true;
+        entry.fidgetActionBaseDelayMs = 100;
         entry.airSteerVelX = 0.0;
         entry.nextFidgetActionAtMs = 0L;
+        long before = System.currentTimeMillis();
 
         assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         assertTrue(entry.airSteerVelX != 0.0,
                 "spam-air-steer jump fidgets should press random side input on their own delay");
+        long delay = entry.nextFidgetActionAtMs - before;
+        assertTrue(delay == 100 || delay == 150, "air-steer spam should use a tick-aligned 0/50ms jitter");
     }
 
     @Test
@@ -699,10 +727,16 @@ class BotMovementManagerTest {
         entry.following = true;
         entry.movementProfile = new BotMovementProfile(140, 100);
         BotFidgetManager.startFidget(entry, BotFidgetMode.SPAM_SIDEWAYS, System.currentTimeMillis(), 3000);
+        assertTrue(entry.fidgetActionBaseDelayMs >= 100 && entry.fidgetActionBaseDelayMs <= 250);
+        assertEquals(0, entry.fidgetActionBaseDelayMs % BotPhysicsEngine.cfg.TICK_MS);
 
+        long before = System.currentTimeMillis();
         assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         assertEquals(BotFidgetMode.SPAM_SIDEWAYS, entry.fidgetMode);
         assertTrue(entry.lastDesiredDirection != 0, "sideway spam should hold a left/right movement input");
+        long delay = entry.nextFidgetActionAtMs - before;
+        assertTrue(delay == entry.fidgetActionBaseDelayMs || delay == entry.fidgetActionBaseDelayMs + 50,
+                "sideway spam should use tick-aligned 0/50ms jitter around its per-fidget base interval");
         assertTrue(entry.following, "sideway spam should not convert follow mode into a manual move command");
     }
 

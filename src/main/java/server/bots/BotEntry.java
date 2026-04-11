@@ -192,6 +192,7 @@ public class BotEntry {
     int fidgetJumpDir = 0;
     int fidgetMoveDir = 0;
     boolean fidgetSpamAirSteer = false;
+    int fidgetActionBaseDelayMs = 0;
     long nextFidgetJumpAtMs = 0L;
     Point fidgetOriginPos = null;
     long nextFidgetVisualAtMs = 0L;
