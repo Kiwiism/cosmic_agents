@@ -8,12 +8,11 @@ import client.inventory.InventoryType;
 import client.inventory.Item;
 import constants.game.GameConstants;
 import constants.inventory.ItemConstants;
-import server.ItemInformationProvider;
 import server.Trade;
 import server.maps.FieldLimit;
 import server.maps.MapleMap;
-import java.awt.*;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -372,12 +371,12 @@ public class BotChatManager {
             Pattern.CASE_INSENSITIVE);
 
     private static final List<String> GREETING_REPLIES = List.of(
-            "hey", "hi", "sup", "yo", "heya", "hii", "hey!!", "hi!!",
-            "heyo", "ello", "o/", "hai", "eyy", "henlo", "o hey");
+            "hey", "hi", "sup", "yo", "heya", "hii", "hey!!", "hi!!", "hai", "haii",
+            "heyo", "ello", "o/", "hai", "eyy", "henlo", "o hey", "yo dude", "hey there", "hi there", "hi guys", "what's up", "howdy", "how's it going");
     private static final List<String> WB_REPLIES = List.of(
             "wb", "wb!", "welcome back", "oh ur back", "hey ur back", "welcome back!!",
-            "wb~", "there you are", "oh hey", "finally lol", "took ya a bit",
-            "hey you're back", "oh wb!");
+            "wb~", "there you are", "oh hey", "finally lol", "took ya a bit", "wb lol", "where were you lol", "ready to roll?", "lets continue!",
+            "hey you're back", "oh wb!", "been waiting for you", "waiting on you", "ready to go?", "ready?", "back already?", "back?", "u back?");
     private static final List<String> MESO_REPLIES = List.of(
             "I have %s",
             "got %s on me",
