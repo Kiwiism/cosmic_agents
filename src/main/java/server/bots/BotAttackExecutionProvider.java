@@ -282,6 +282,30 @@ final class BotAttackExecutionProvider {
                 && dy <= BotCombatManager.cfg.RANGED_DEGENERATE_RANGE_Y;
     }
 
+    static boolean isAnyMobNearerThanTarget(Character bot, Point botPos, Point targetPos) {
+        if (bot == null || botPos == null || targetPos == null) {
+            return false;
+        }
+        WeaponType wt = getEquippedWeaponType(bot);
+        if (!isDegenerateCapableRangedWeapon(wt)) {
+            return false;
+        }
+        int threshX = BotCombatManager.cfg.RANGED_RETREAT_THRESHOLD_X;
+        int threshY = BotCombatManager.cfg.RANGED_DEGENERATE_RANGE_Y;
+        double targetDistSq = targetPos.distanceSq(botPos);
+        for (server.life.Monster m : bot.getMap().getAllMonsters()) {
+            if (!m.isAlive()) continue;
+            Point mp = m.getPosition();
+            if (mp.distanceSq(botPos) >= targetDistSq) continue;
+            int dx = Math.abs(mp.x - botPos.x);
+            int dy = Math.abs(mp.y - botPos.y);
+            if (dx <= threshX && dy <= threshY) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     static Point retreatTargetPosition(Point botPos, Point targetPos) {
         int retreatDirection = targetPos.x >= botPos.x ? -1 : 1;
         return new Point(botPos.x + retreatDirection * BotCombatManager.cfg.RANGED_RETREAT_DISTANCE_X, botPos.y);

@@ -1165,7 +1165,8 @@ public class BotManager {
                 Point followTargetPos = followTarget.getPosition();
                 WeaponType followWeaponType = BotAttackExecutionProvider.getEquippedWeaponType(bot);
                 boolean followRetreat = entry.degenAttackDone
-                        || BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(followWeaponType, botPos, followTargetPos);
+                        || BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(followWeaponType, botPos, followTargetPos)
+                        || BotAttackExecutionProvider.isAnyMobNearerThanTarget(bot, botPos, followTargetPos);
                 if (followRetreat) {
                     targetPos = selectGrindNavigationTarget(entry, botPos, followTargetPos);
                     entry.degenAttackDone = false;
@@ -1200,16 +1201,18 @@ public class BotManager {
                 }
                 return;
             }
-            // Stick to current target while it's alive and in range; only re-pick when needed
             double seekRangeSq = (double) BotCombatManager.cfg.GRIND_SEEK_RANGE * BotCombatManager.cfg.GRIND_SEEK_RANGE;
             Monster target = entry.grindTarget;
-            if (target != null && runAiTick && !BotCombatManager.isReachableGrindTarget(entry, bot, target)) {
-                target = null;
-                entry.grindTarget = null;
-            }
-            if (target == null || !target.isAlive()
+            if (runAiTick) {
+                Monster closest = BotCombatManager.findClosestAliveMonster(bot, seekRangeSq);
+                if (closest != null && BotCombatManager.isReachableGrindTarget(entry, bot, closest)) {
+                    target = closest;
+                } else {
+                    target = BotCombatManager.findGrindTarget(entry, bot);
+                }
+            } else if (target == null || !target.isAlive()
                     || target.getPosition().distanceSq(botPos) > seekRangeSq) {
-                target = runAiTick ? BotCombatManager.findGrindTarget(entry, bot) : null;
+                target = null;
             }
             if (target == null) {
                 if (entry.inAir) {

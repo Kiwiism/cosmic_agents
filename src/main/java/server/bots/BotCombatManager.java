@@ -529,7 +529,11 @@ class BotCombatManager {
             }
 
             BotAttackExecutionProvider.BasicAttackData basicAttackData = buildBasicAttackData(bot, target);
-            return new AttackPlan(0, 0, 1, basicAttackData.hitBox(), List.of(target), basicAttackData.route(),
+            Monster effective = resolveEffectivePrimary(bot, target, basicAttackData.hitBox());
+            if (effective != target) {
+                basicAttackData = buildBasicAttackData(bot, effective);
+            }
+            return new AttackPlan(0, 0, 1, basicAttackData.hitBox(), List.of(effective), basicAttackData.route(),
                     basicAttackData.display(), basicAttackData.direction(), basicAttackData.rangedDirection(), basicAttackData.stance(),
                     basicAttackData.speed(), basicAttackData.hitDelayMs(), basicAttackData.cooldownMs());
         } finally {
@@ -632,6 +636,7 @@ class BotCombatManager {
             return null;
         }
 
+        primaryTarget = resolveEffectivePrimary(bot, primaryTarget, hitBox);
         List<Monster> targets = collectTargetsInHitBox(bot, primaryTarget, hitBox, Math.max(1, effect.getMobCount()));
         if (targets.size() < BotCombatManager.cfg.AOE_MOB_THRESHOLD) {
             return null;
@@ -679,7 +684,12 @@ class BotCombatManager {
         }
         AttackRoute route = BotAttackExecutionProvider.determineSkillRoute(bot, entry.attackSkillId);
         Rectangle hitBox = calculateSkillHitBox(effect, bot, primaryTarget, route);
-        if (hitBox == null || !doesHitBoxIntersectMonster(hitBox, primaryTarget)) {
+        if (hitBox == null) {
+            return null;
+        }
+
+        primaryTarget = resolveEffectivePrimary(bot, primaryTarget, hitBox);
+        if (!doesHitBoxIntersectMonster(hitBox, primaryTarget)) {
             return null;
         }
 
@@ -1045,6 +1055,50 @@ class BotCombatManager {
         }
 
         return hitBox.contains(monster.getPosition());
+    }
+
+    private static boolean isForwardProjectileHitBox(Rectangle hitBox, Point botPos) {
+        if (hitBox == null || botPos == null) {
+            return false;
+        }
+        return botPos.x < hitBox.getMinX() || botPos.x > hitBox.getMaxX();
+    }
+
+    static Monster resolveEffectivePrimary(Character bot, Monster fallback, Rectangle hitBox) {
+        Point botPos = bot.getPosition();
+        if (!isForwardProjectileHitBox(hitBox, botPos)) {
+            return fallback;
+        }
+        Monster closest = null;
+        double closestDistSq = Double.MAX_VALUE;
+        for (Monster m : bot.getMap().getAllMonsters()) {
+            if (!m.isAlive() || !doesHitBoxIntersectMonster(hitBox, m)) {
+                continue;
+            }
+            double distSq = m.getPosition().distanceSq(botPos);
+            if (distSq < closestDistSq) {
+                closestDistSq = distSq;
+                closest = m;
+            }
+        }
+        return closest != null ? closest : fallback;
+    }
+
+    static Monster findClosestAliveMonster(Character bot, double maxRangeSq) {
+        Point botPos = bot.getPosition();
+        Monster closest = null;
+        double closestDistSq = maxRangeSq;
+        for (Monster m : bot.getMap().getAllMonsters()) {
+            if (!m.isAlive()) {
+                continue;
+            }
+            double distSq = m.getPosition().distanceSq(botPos);
+            if (distSq < closestDistSq) {
+                closestDistSq = distSq;
+                closest = m;
+            }
+        }
+        return closest;
     }
 
     private static BotAttackExecutionProvider.BasicAttackData buildBasicAttackData(Character bot, Monster primaryTarget) {
