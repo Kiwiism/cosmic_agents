@@ -677,6 +677,25 @@ final class BotNavigationManager {
                                                   int startRegionId,
                                                   int targetRegionId,
                                                   Point targetPos) {
+        return findPath(graph, map, startPos, startRegionId, targetRegionId, targetPos, null);
+    }
+
+    static List<BotNavigationGraph.Edge> findPathForTargetScore(BotNavigationGraph graph,
+                                                                MapleMap map,
+                                                                Point startPos,
+                                                                int startRegionId,
+                                                                int targetRegionId,
+                                                                Point targetPos) {
+        return findPath(graph, map, startPos, startRegionId, targetRegionId, targetPos, "target-score");
+    }
+
+    private static List<BotNavigationGraph.Edge> findPath(BotNavigationGraph graph,
+                                                          MapleMap map,
+                                                          Point startPos,
+                                                          int startRegionId,
+                                                          int targetRegionId,
+                                                          Point targetPos,
+                                                          String pathfindCaller) {
         long startedAt = System.nanoTime();
         try {
             PriorityQueue<SearchNode> open = new PriorityQueue<>(Comparator.comparingInt(node -> node.score));
@@ -725,7 +744,7 @@ final class BotNavigationManager {
 
             return reconstructPath(startState, bestGoalState, cameFrom, cameByEdge);
         } finally {
-            BotPerformanceMonitor.recordPathfind(System.nanoTime() - startedAt);
+            BotPerformanceMonitor.recordPathfind(pathfindCaller, System.nanoTime() - startedAt);
         }
     }
 

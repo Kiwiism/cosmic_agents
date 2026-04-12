@@ -5,6 +5,8 @@ import io.netty.buffer.Unpooled;
 import net.packet.ByteBufInPacket;
 import net.packet.InPacket;
 import net.packet.Packet;
+import server.bots.combat.BotMobHitboxProvider;
+import server.life.Monster;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Rope;
@@ -78,6 +80,7 @@ class BotMovementManager {
         public int STOP_DIST = 30;
         public int FOLLOW_DIST = 80;
         public int GRIND_EDGE_MARGIN = 40; // keep bot this many px from foothold edge while grinding
+        public int MOB_AVOID_LOOKAHEAD_STEPS = 3;
 
         public int JUMP_Y_THRESH = 30;
         public int TELEPORT_DIST = 4000;
@@ -174,6 +177,7 @@ class BotMovementManager {
 
     private static void clearTransientState(BotEntry entry) {
         entry.grindTarget = null;
+        entry.nextGrindTargetSearchAtMs = 0L;
         entry.attackCooldownMs = 0;
         entry.graphWarmupFallback = false;
         entry.observedOwnerStepX = 0;
@@ -361,6 +365,9 @@ class BotMovementManager {
     }
 
     private static boolean shouldApplyAirSteering(BotEntry entry) {
+        if (entry.fixedAirArc) {
+            return false;
+        }
         if (entry.downJumpGracePeriodMS != 0L) {
             return false;
         }
@@ -399,7 +406,7 @@ class BotMovementManager {
                 }
                 targetPos = BotFallbackMovementManager.resolveSteeringTarget(entry, botPos, targetPos);
             }
-            MoveAction action = planGroundAction(entry, botPos, targetPos);
+            MoveAction action = planGroundAction(entry, currentFh, botPos, targetPos);
             applyGroundAction(entry, currentFh, action);
         } finally {
             BotPerformanceMonitor.record("move-ground", System.nanoTime() - startedAt);
@@ -457,7 +464,7 @@ class BotMovementManager {
         return currentRegion.pointAt(clampedX);
     }
 
-    private static MoveAction planGroundAction(BotEntry entry, Point botPos, Point targetPos) {
+    private static MoveAction planGroundAction(BotEntry entry, Foothold currentFh, Point botPos, Point targetPos) {
         boolean directionalDrop = isDirectionalDropEdge(entry.navEdge);
         int stopDist = directionalDrop ? 0 : entry.navPreciseTarget ? preciseNavStopDist(entry.navEdge) : cfg.STOP_DIST;
         // No hysteresis when navigating to an edge — always move toward the waypoint
@@ -486,7 +493,103 @@ class BotMovementManager {
             }
             return MoveAction.idle();
         }
+        if (shouldJumpToAvoidMob(entry, currentFh, botPos, stepX)) {
+            return MoveAction.jump(stepX);
+        }
         return MoveAction.walk(stepX);
+    }
+
+    private static boolean shouldJumpToAvoidMob(BotEntry entry, Foothold currentFh, Point botPos, int stepX) {
+        if (entry == null || entry.bot == null || currentFh == null || botPos == null || stepX == 0) {
+            return false;
+        }
+        if ((!entry.following && !entry.grinding) || entry.navEdge != null || entry.navPreciseTarget) {
+            return false;
+        }
+
+        Monster blockingMob = firstBlockingMobInWalkLane(entry, currentFh, botPos, stepX);
+        if (blockingMob == null) {
+            return false;
+        }
+
+        return simulatedJumpLandsInCurrentRegion(entry, currentFh, botPos, stepX);
+    }
+
+    private static Monster firstBlockingMobInWalkLane(BotEntry entry, Foothold currentFh, Point botPos, int stepX) {
+        MapleMap map = entry.bot.getMap();
+        int direction = Integer.signum(stepX);
+        int lookahead = Math.max(Math.abs(stepX),
+                BotPhysicsEngine.walkStep(map, entry.movementProfile) * Math.max(1, cfg.MOB_AVOID_LOOKAHEAD_STEPS));
+        int laneEndX = botPos.x + direction * lookahead;
+        Rectangle lane = inclusiveRectangle(
+                Math.min(botPos.x, laneEndX),
+                botPos.y - BotCombatManager.cfg.MOB_TOUCH_SWEEP_HEIGHT,
+                Math.max(botPos.x, laneEndX),
+                botPos.y);
+
+        Monster nearest = null;
+        int nearestDistance = Integer.MAX_VALUE;
+        for (Monster mob : map.getAllMonsters()) {
+            if (!mob.isAlive() || !isMobInCurrentGroundRegion(entry, currentFh, mob)) {
+                continue;
+            }
+
+            Rectangle bounds = BotMobHitboxProvider.getInstance().getMobBounds(mob);
+            if (bounds == null) {
+                bounds = inclusiveRectangle(mob.getPosition().x, mob.getPosition().y, mob.getPosition().x, mob.getPosition().y);
+            }
+            if (!lane.intersects(bounds) && !lane.contains(mob.getPosition())) {
+                continue;
+            }
+
+            int mobEdgeX = direction > 0 ? bounds.x : bounds.x + bounds.width;
+            int distance = Math.max(0, direction > 0 ? mobEdgeX - botPos.x : botPos.x - mobEdgeX);
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                nearest = mob;
+            }
+        }
+        return nearest;
+    }
+
+    private static boolean isMobInCurrentGroundRegion(BotEntry entry, Foothold currentFh, Monster mob) {
+        Foothold mobFoothold = BotPhysicsEngine.findGroundFoothold(entry.bot.getMap(), mob.getPosition());
+        if (mobFoothold != null && mobFoothold.getId() == currentFh.getId()) {
+            return true;
+        }
+
+        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(entry.bot.getMap(), entry.movementProfile);
+        if (graph == null) {
+            return false;
+        }
+
+        int currentRegionId = BotNavigationManager.resolveCurrentRegionId(
+                graph, entry, entry.bot.getMap(), entry.bot.getPosition());
+        int mobRegionId = BotNavigationManager.resolveTargetRegionId(
+                graph, entry, entry.bot.getMap(), mob.getPosition());
+        return currentRegionId >= 0 && currentRegionId == mobRegionId;
+    }
+
+    private static boolean simulatedJumpLandsInCurrentRegion(BotEntry entry, Foothold currentFh, Point botPos, int stepX) {
+        MapleMap map = entry.bot.getMap();
+        int airVelX = resolveAirVelocityX(map, entry.movementProfile, stepX);
+        JumpLanding landing = simulateJumpLanding(map, botPos, airVelX, entry.movementProfile);
+        if (landing == null || landing.point() == null || landing.foothold() == null) {
+            return false;
+        }
+
+        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map, entry.movementProfile);
+        if (graph == null) {
+            return landing.foothold().getId() == currentFh.getId();
+        }
+
+        int currentRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, map, botPos);
+        int landingRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, map, landing.point());
+        return currentRegionId >= 0 && currentRegionId == landingRegionId;
+    }
+
+    private static Rectangle inclusiveRectangle(int left, int top, int right, int bottom) {
+        return new Rectangle(left, top, Math.max(1, right - left + 1), Math.max(1, bottom - top + 1));
     }
 
     private static boolean isDirectionalDropEdge(BotNavigationGraph.Edge navEdge) {
@@ -516,6 +619,10 @@ class BotMovementManager {
         if (action.type() == ActionType.CROUCH) {
             BotPhysicsEngine.queueDownJump(entry, bot);
             broadcastMovement(entry);
+            return;
+        }
+        if (action.type() == ActionType.JUMP) {
+            initiateFixedArcJump(entry, bot, action.stepX());
             return;
         }
 
@@ -586,6 +693,11 @@ class BotMovementManager {
     static void initiateJump(BotEntry entry, Character bot, int dx) {
         BotPhysicsEngine.beginGroundJump(entry, bot, resolveAirVelocityX(bot.getMap(), entry.movementProfile, dx));
         broadcastMovement(entry);
+    }
+
+    private static void initiateFixedArcJump(BotEntry entry, Character bot, int dx) {
+        initiateJump(entry, bot, dx);
+        entry.fixedAirArc = true;
     }
 
     /**

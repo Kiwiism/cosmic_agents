@@ -51,6 +51,7 @@ public class BotEntry {
     int airVelX = 0;
     // Accumulated air-steering correction (gradually adjusted toward target each tick)
     double airSteerVelX = 0.0;
+    boolean fixedAirArc = false;
 
     // Movement intent
     boolean climbUpIntent = false;
@@ -63,6 +64,7 @@ public class BotEntry {
     // Grind mode
     volatile boolean grinding = false;
     Monster grindTarget = null;
+    long nextGrindTargetSearchAtMs = 0L;
     int attackCooldownMs = 0;
 
     // Skill cache

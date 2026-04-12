@@ -988,7 +988,7 @@ public class BotManager {
                 && entry.grindTarget.isAlive()
                 && entry.grindTarget.getMap() == bot.getMap()
                 ? entry.grindTarget
-                : entry.grinding ? BotCombatManager.findGrindTarget(entry, bot) : null;
+                : null;
         Point grindTargetPos = activeGrindTarget == null ? null : new Point(activeGrindTarget.getPosition());
         Point primaryTargetPos;
         String primaryTargetSource;
@@ -998,6 +998,9 @@ public class BotManager {
         } else if (grindTargetPos != null) {
             primaryTargetPos = grindTargetPos;
             primaryTargetSource = "grind-target";
+        } else if (entry.grinding) {
+            primaryTargetPos = fallbackPos;
+            primaryTargetSource = "grind-idle";
         } else if (entry.following) {
             primaryTargetPos = followTargetPos;
             primaryTargetSource = "follow-target";
@@ -1169,7 +1172,7 @@ public class BotManager {
         // Follow mode: attack monsters already in attack range without chasing
         if (entry.following && !entry.noAmmo && runAiTick && !entry.climbing
                 && Math.abs(botPos.x - owner.getPosition().x) <= BotMovementManager.cfg.FOLLOW_DIST * 5) {
-            Monster followTarget = BotCombatManager.findGrindTarget(entry, bot);
+            Monster followTarget = BotCombatManager.findFollowAttackTarget(entry, bot);
             if (followTarget != null) {
                 Point followTargetPos = followTarget.getPosition();
                 WeaponType followWeaponType = BotAttackExecutionProvider.getEquippedWeaponType(bot);
@@ -1212,18 +1215,18 @@ public class BotManager {
             }
             double seekRangeSq = (double) BotCombatManager.cfg.GRIND_SEEK_RANGE * BotCombatManager.cfg.GRIND_SEEK_RANGE;
             Monster target = entry.grindTarget;
-            if (runAiTick) {
-                Monster closest = BotCombatManager.findClosestAliveMonster(bot, seekRangeSq);
-                if (closest != null && BotCombatManager.isReachableGrindTarget(entry, bot, closest)) {
-                    target = closest;
-                } else {
-                    target = BotCombatManager.findGrindTarget(entry, bot);
-                }
-            } else if (target == null || !target.isAlive()
+            if (target == null || !target.isAlive()
+                    || target.getMap() != bot.getMap()
                     || target.getPosition().distanceSq(botPos) > seekRangeSq) {
                 target = null;
             }
+            long now = System.currentTimeMillis();
+            if (runAiTick && (target == null || now >= entry.nextGrindTargetSearchAtMs)) {
+                target = BotCombatManager.findGrindTarget(entry, bot);
+                entry.nextGrindTargetSearchAtMs = now + BotCombatManager.cfg.GRIND_RETARGET_INTERVAL_MS;
+            }
             if (target == null) {
+                entry.grindTarget = null;
                 if (entry.inAir) {
                     BotMovementManager.tickAirborne(entry, targetPos);
                 } else {

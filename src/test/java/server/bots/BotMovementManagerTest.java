@@ -3,11 +3,13 @@ package server.bots;
 import client.Character;
 import constants.game.CharacterStance;
 import org.junit.jupiter.api.Test;
+import server.life.Monster;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Rope;
 
 import java.awt.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -18,7 +20,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 class BotMovementManagerTest {
@@ -327,6 +331,48 @@ class BotMovementManagerTest {
 
         assertNull(entry.navEdge);
         assertEquals(new Point(8, 100), bot.getPosition());
+    }
+
+    @Test
+    void shouldJumpForwardWhenMobBlocksWalkLaneAndLandingStaysInCurrentRegion() {
+        MapleMap map = spy(new MapleMap(910009048, 0, 0, 910009048, 1.0f));
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
+        map.setFootholds(footholds);
+        BotNavigationGraphProvider.rebuildGraph(map);
+        doReturn(List.of(mockMob(new Point(130, 100), 100100))).when(map).getAllMonsters();
+
+        Character bot = mockBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.following = true;
+
+        BotMovementManager.tickGrounded(entry, new Point(250, 100));
+
+        assertTrue(entry.inAir, "grounded follow movement should jump over a mob blocking the walk lane");
+        assertEquals(BotPhysicsEngine.walkStep(map, entry.movementProfile), entry.airVelX);
+
+        BotMovementManager.tickAirborne(entry, new Point(250, 100));
+
+        assertEquals(0.0, entry.airSteerVelX, 0.0001,
+                "mob-avoid jumps should keep the simulated fixed forward arc");
+    }
+
+    @Test
+    void shouldNotJumpOverBlockingMobWhenSimulatedLandingLeavesCurrentRegion() {
+        MapleMap map = spy(new MapleMap(910009049, 0, 0, 910009049, 1.0f));
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(140, 100), 1));
+        map.setFootholds(footholds);
+        BotNavigationGraphProvider.rebuildGraph(map);
+        doReturn(List.of(mockMob(new Point(120, 100), 100100))).when(map).getAllMonsters();
+
+        Character bot = mockBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.following = true;
+
+        BotMovementManager.tickGrounded(entry, new Point(190, 100));
+
+        assertFalse(entry.inAir, "mob-avoid jump should be skipped when simulation would leave the current platform region");
     }
 
     @Test
@@ -947,5 +993,14 @@ class BotMovementManagerTest {
         when(bot.getTotalMoveSpeedStat()).thenReturn(100);
         when(bot.getTotalJumpStat()).thenReturn(100);
         return bot;
+    }
+
+    private static Monster mockMob(Point position, int id) {
+        Monster mob = mock(Monster.class);
+        when(mob.getPosition()).thenReturn(new Point(position));
+        when(mob.getId()).thenReturn(id);
+        when(mob.isAlive()).thenReturn(true);
+        when(mob.isFacingLeft()).thenReturn(false);
+        return mob;
     }
 }

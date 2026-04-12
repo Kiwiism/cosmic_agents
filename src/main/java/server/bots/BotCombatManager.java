@@ -124,6 +124,7 @@ class BotCombatManager {
 
         // Grind / AoE
         public int   GRIND_SEEK_RANGE  = 800;
+        public int   GRIND_RETARGET_INTERVAL_MS = 400;
         public int   AOE_MOB_THRESHOLD = 2;
 
         // Mob damage
@@ -472,12 +473,7 @@ class BotCombatManager {
             Point botPos = bot.getPosition();
             double rangeSq = (double) BotCombatManager.cfg.GRIND_SEEK_RANGE * BotCombatManager.cfg.GRIND_SEEK_RANGE;
             Foothold botFoothold = findGroundFoothold(botPos, bot);
-            List<Monster> candidates = new ArrayList<>();
-            for (Monster m : bot.getMap().getAllMonsters()) {
-                if (m.isAlive() && m.getPosition().distanceSq(botPos) <= rangeSq) {
-                    candidates.add(m);
-                }
-            }
+            List<Monster> candidates = aliveMonstersInRange(bot, botPos, rangeSq);
             if (candidates.isEmpty()) return null;
 
             List<ScoredGrindTarget> scoredTargets = scoreGrindTargets(entry, bot, botPos, botFoothold, candidates);
@@ -503,6 +499,35 @@ class BotCombatManager {
         }
     }
 
+    /** Follow mode should only attack local mobs; it should not run pathfinding or chase across the map. */
+    static Monster findFollowAttackTarget(BotEntry entry, Character bot) {
+        long startedAt = System.nanoTime();
+        try {
+            Point botPos = bot.getPosition();
+            double range = Math.max(CLIENT_PROJECTILE_BASE_RANGE + passiveProjectileRangeBonus(bot),
+                    BotCombatManager.cfg.ATTACK_RANGE_X + BotCombatManager.cfg.ATTACK_JUMP_X_EXTRA);
+            List<Monster> candidates = aliveMonstersInRange(bot, botPos, range * range);
+            if (candidates.isEmpty()) {
+                return null;
+            }
+
+            Foothold botFoothold = findGroundFoothold(botPos, bot);
+            GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, botPos);
+            List<ScoredGrindTarget> localTargets = new ArrayList<>();
+            for (Monster candidate : candidates) {
+                if (!isLocalCombatTarget(graphContext, bot, botFoothold, candidate)) {
+                    continue;
+                }
+                long localScore = grindTargetScore(bot, botPos, botFoothold, candidate);
+                localTargets.add(new ScoredGrindTarget(candidate, localScore, localScore,
+                        candidate.getPosition().distanceSq(botPos)));
+            }
+            return pickFromBestTargets(localTargets);
+        } finally {
+            BotPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
+        }
+    }
+
     static boolean isReachableGrindTarget(BotEntry entry, Character bot, Monster target) {
         if (target == null || !target.isAlive()) {
             return false;
@@ -512,7 +537,7 @@ class BotCombatManager {
         }
 
         GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, bot.getPosition());
-        return !graphContext.available() || graphRoundTripCost(graphContext, target) < UNREACHABLE_GRAPH_COST;
+        return !graphContext.available() || graphTargetCost(graphContext, target) < UNREACHABLE_GRAPH_COST;
     }
 
     static AttackPlan planAttack(BotEntry entry, Character bot, Monster target) {
@@ -864,19 +889,111 @@ class BotCombatManager {
                                                              Foothold botFoothold,
                                                              List<Monster> candidates) {
         GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, botPos);
+        List<ScoredGrindTarget> currentRegionTargets = new ArrayList<>();
+        for (Monster candidate : candidates) {
+            if (!isLocalCombatTarget(graphContext, bot, botFoothold, candidate)) {
+                continue;
+            }
+            long localScore = grindTargetScore(bot, botPos, botFoothold, candidate);
+            currentRegionTargets.add(new ScoredGrindTarget(candidate, localScore, localScore,
+                    candidate.getPosition().distanceSq(botPos)));
+        }
+        if (!currentRegionTargets.isEmpty()) {
+            return currentRegionTargets;
+        }
+
+        return graphContext.available()
+                ? scoreTargetRegions(graphContext, bot, botPos, botFoothold, candidates)
+                : scoreLocalTargets(bot, botPos, botFoothold, candidates);
+    }
+
+    private static List<Monster> aliveMonstersInRange(Character bot, Point botPos, double rangeSq) {
+        List<Monster> candidates = new ArrayList<>();
+        for (Monster m : bot.getMap().getAllMonsters()) {
+            if (m.isAlive() && m.getPosition().distanceSq(botPos) <= rangeSq) {
+                candidates.add(m);
+            }
+        }
+        return candidates;
+    }
+
+    private static boolean isLocalCombatTarget(GrindGraphContext context,
+                                               Character bot,
+                                               Foothold botFoothold,
+                                               Monster target) {
+        if (botFoothold != null) {
+            Foothold targetFoothold = findGroundFoothold(target.getPosition(), bot);
+            if (targetFoothold != null && targetFoothold.getId() == botFoothold.getId()) {
+                return true;
+            }
+        }
+        if (!context.available()) {
+            return false;
+        }
+
+        int targetRegionId = BotNavigationManager.resolveTargetRegionId(
+                context.graph(), context.entry(), context.map(), target.getPosition());
+        return targetRegionId >= 0 && targetRegionId == context.startRegionId();
+    }
+
+    private static List<ScoredGrindTarget> scoreLocalTargets(Character bot,
+                                                             Point botPos,
+                                                             Foothold botFoothold,
+                                                             List<Monster> candidates) {
         List<ScoredGrindTarget> scoredTargets = new ArrayList<>(candidates.size());
         for (Monster candidate : candidates) {
             long localScore = grindTargetScore(bot, botPos, botFoothold, candidate);
-            long graphCost = graphContext.available()
-                    ? graphRoundTripCost(graphContext, candidate)
-                    : localScore;
-            scoredTargets.add(new ScoredGrindTarget(candidate, graphCost, localScore,
+            scoredTargets.add(new ScoredGrindTarget(candidate, localScore, localScore,
                     candidate.getPosition().distanceSq(botPos)));
         }
         return scoredTargets;
     }
 
-    private static long graphRoundTripCost(GrindGraphContext context, Monster target) {
+    private static List<ScoredGrindTarget> scoreTargetRegions(GrindGraphContext context,
+                                                              Character bot,
+                                                              Point botPos,
+                                                              Foothold botFoothold,
+                                                              List<Monster> candidates) {
+        Map<Integer, GrindTargetGroup> groupsByRegionId = new HashMap<>();
+        for (Monster candidate : candidates) {
+            Point targetPos = candidate.getPosition();
+            int targetRegionId = BotNavigationManager.resolveTargetRegionId(
+                    context.graph(), context.entry(), context.map(), targetPos);
+            if (targetRegionId < 0) {
+                continue;
+            }
+
+            long localScore = grindTargetScore(bot, botPos, botFoothold, candidate);
+            GrindTargetGroup group = groupsByRegionId.computeIfAbsent(targetRegionId, GrindTargetGroup::new);
+            group.add(candidate, localScore, targetPos.distanceSq(botPos));
+        }
+
+        List<ScoredGrindTarget> scoredTargets = new ArrayList<>(groupsByRegionId.size());
+        for (GrindTargetGroup group : groupsByRegionId.values()) {
+            long pathCost = graphPathCost(context.graph(), context.map(), context.startPos(), context.startRegionId(),
+                    group.bestMonster().getPosition(), group.regionId(), context.profile());
+            long crowdBonus = Math.min(3_000L, (long) Math.max(0, group.mobCount() - 1) * 400L);
+            long graphScore = pathCost >= UNREACHABLE_GRAPH_COST
+                    ? UNREACHABLE_GRAPH_COST
+                    : Math.max(0L, pathCost - crowdBonus);
+            scoredTargets.add(new ScoredGrindTarget(group.bestMonster(), graphScore, group.bestLocalScore(),
+                    group.bestDistanceSq()));
+        }
+        return scoredTargets;
+    }
+
+    private static Monster pickFromBestTargets(List<ScoredGrindTarget> scoredTargets) {
+        if (scoredTargets.isEmpty()) {
+            return null;
+        }
+        scoredTargets.sort(Comparator
+                .comparingLong(ScoredGrindTarget::graphCost)
+                .thenComparingLong(ScoredGrindTarget::localScore)
+                .thenComparingDouble(ScoredGrindTarget::distanceSq));
+        return scoredTargets.get(ThreadLocalRandom.current().nextInt(Math.min(3, scoredTargets.size()))).monster();
+    }
+
+    private static long graphTargetCost(GrindGraphContext context, Monster target) {
         Point targetPos = target.getPosition();
         int targetRegionId = BotNavigationManager.resolveTargetRegionId(
                 context.graph(), context.entry(), context.map(), targetPos);
@@ -884,19 +1001,8 @@ class BotCombatManager {
             return UNREACHABLE_GRAPH_COST;
         }
 
-        long reachCost = graphPathCost(context.graph(), context.map(), context.startPos(), context.startRegionId(),
+        return graphPathCost(context.graph(), context.map(), context.startPos(), context.startRegionId(),
                 targetPos, targetRegionId, context.profile());
-        if (reachCost >= UNREACHABLE_GRAPH_COST) {
-            return UNREACHABLE_GRAPH_COST;
-        }
-
-        long returnCost = graphPathCost(context.graph(), context.map(), targetPos, targetRegionId,
-                context.startPos(), context.startRegionId(), context.profile());
-        if (returnCost >= UNREACHABLE_GRAPH_COST) {
-            return UNREACHABLE_GRAPH_COST;
-        }
-
-        return reachCost + returnCost;
     }
 
     private static long graphPathCost(BotNavigationGraph graph,
@@ -913,7 +1019,7 @@ class BotCombatManager {
             return estimateLocalTravelCostMs(startPos, targetPos, profile);
         }
 
-        List<BotNavigationGraph.Edge> path = BotNavigationManager.findPath(
+        List<BotNavigationGraph.Edge> path = BotNavigationManager.findPathForTargetScore(
                 graph, map, startPos, startRegionId, targetRegionId, targetPos);
         if (path.isEmpty()) {
             return UNREACHABLE_GRAPH_COST;
@@ -962,6 +1068,49 @@ class BotCombatManager {
     }
 
     private record ScoredGrindTarget(Monster monster, long graphCost, long localScore, double distanceSq) {
+    }
+
+    private static final class GrindTargetGroup {
+        private final int regionId;
+        private int mobCount;
+        private Monster bestMonster;
+        private long bestLocalScore = Long.MAX_VALUE;
+        private double bestDistanceSq = Double.MAX_VALUE;
+
+        private GrindTargetGroup(int regionId) {
+            this.regionId = regionId;
+        }
+
+        private void add(Monster monster, long localScore, double distanceSq) {
+            mobCount++;
+            if (bestMonster == null
+                    || localScore < bestLocalScore
+                    || (localScore == bestLocalScore && distanceSq < bestDistanceSq)) {
+                bestMonster = monster;
+                bestLocalScore = localScore;
+                bestDistanceSq = distanceSq;
+            }
+        }
+
+        private int regionId() {
+            return regionId;
+        }
+
+        private int mobCount() {
+            return mobCount;
+        }
+
+        private Monster bestMonster() {
+            return bestMonster;
+        }
+
+        private long bestLocalScore() {
+            return bestLocalScore;
+        }
+
+        private double bestDistanceSq() {
+            return bestDistanceSq;
+        }
     }
 
     private record GrindGraphContext(BotEntry entry,

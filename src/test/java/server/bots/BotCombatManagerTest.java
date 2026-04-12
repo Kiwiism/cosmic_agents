@@ -17,9 +17,11 @@ import org.mockito.ArgumentCaptor;
 import server.StatEffect;
 import server.bots.combat.BotAttackDataProvider;
 import server.life.Monster;
+import server.maps.Foothold;
 import server.maps.MapleMap;
 
 import java.awt.*;
+import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Collections;
@@ -32,8 +34,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -388,6 +392,25 @@ class BotCombatManagerTest {
         when(mob.isFacingLeft()).thenReturn(false);
 
         assertTrue(BotCombatManager.isMobTouchingBot(entry, bot, mob));
+    }
+
+    @Test
+    void shouldPreferCurrentFootholdTargetBeforePathScoringOtherRegions() {
+        MapleMap map = spy(new MapleMap(910009050, 0, 0, 910009050, 1.0f));
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
+        footholds.insert(new Foothold(new Point(0, 200), new Point(300, 200), 2));
+        map.setFootholds(footholds);
+        BotNavigationGraphProvider.rebuildGraph(map);
+
+        Character bot = mockBot(new Point(100, 100), map, 20_000, null);
+        Monster currentFootholdMob = mockMob(new Point(180, 100), 100100);
+        Monster otherRegionMob = mockMob(new Point(105, 200), 100100);
+        doReturn(List.of(otherRegionMob, currentFootholdMob)).when(map).getAllMonsters();
+
+        Monster target = BotCombatManager.findGrindTarget(new BotEntry(bot, null, null), bot);
+
+        assertEquals(currentFootholdMob, target);
     }
 
     private static void assertDamageDirection(MapleMap map, Character bot, int expectedBroadcasts, int expectedDirection) {

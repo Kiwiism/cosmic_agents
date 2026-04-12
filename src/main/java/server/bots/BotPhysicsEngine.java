@@ -575,6 +575,7 @@ final class BotPhysicsEngine {
         entry.velY = 0f;
         entry.airVelX = 0;
         entry.airSteerVelX = 0.0;
+        entry.fixedAirArc = false;
         entry.lastDesiredDirection = 0;
         entry.physX = position.x;
         entry.physY = position.y;
@@ -660,6 +661,7 @@ final class BotPhysicsEngine {
         entry.climbUpIntent = true;
         entry.airVelX = airVelX;
         entry.airSteerVelX = 0.0;
+        entry.fixedAirArc = false;
         entry.downJumpPending = false;
         entry.blockedRopeGrab = null;
         setMovementVelocity(entry, velocityFromDeltaX(airVelX), velocityFromAirStep(entry.velY));
@@ -686,6 +688,7 @@ final class BotPhysicsEngine {
         entry.velY = 0f;
         entry.airVelX = 0;
         entry.airSteerVelX = 0.0;
+        entry.fixedAirArc = false;
         entry.physX = position.x;
         entry.physY = position.y;
         entry.downJumpPending = false;
@@ -771,6 +774,7 @@ final class BotPhysicsEngine {
         entry.velY = 0f;
         entry.airVelX = 0;
         entry.airSteerVelX = 0.0;
+        entry.fixedAirArc = false;
         entry.physX = position.x;
         entry.physY = position.y;
         entry.hspeed = step.state().hspeed();
@@ -922,6 +926,7 @@ final class BotPhysicsEngine {
     private static void collideWithAirWall(BotEntry entry, Character bot, Point collisionPoint) {
         entry.airVelX = 0;
         entry.airSteerVelX = 0.0;
+        entry.fixedAirArc = false;
         entry.physX = collisionPoint.x;
         entry.physY = collisionPoint.y;
         bot.setPosition(collisionPoint);
@@ -1161,6 +1166,7 @@ final class BotPhysicsEngine {
         entry.climbUpIntent = climbUpIntent;
         entry.airVelX = airVelX;
         entry.airSteerVelX = 0.0;
+        entry.fixedAirArc = false;
         entry.downJumpPending = false;
         setMovementVelocity(entry, velocityFromDeltaX(airVelX), velocityFromAirStep(initialVelY));
         syncCharacterState(entry);
@@ -1213,6 +1219,7 @@ final class BotPhysicsEngine {
         entry.velY = 0f;
         entry.airVelX = 0;
         entry.airSteerVelX = 0.0;
+        entry.fixedAirArc = false;
         entry.physX = position.x;
         entry.physY = position.y;
         entry.downJumpPending = false;
@@ -1233,6 +1240,7 @@ final class BotPhysicsEngine {
         entry.groundPhysicsCarryMs = 0.0;
         entry.airVelX = 0;
         entry.airSteerVelX = 0.0;
+        entry.fixedAirArc = false;
         entry.wasMovingX = false;
         entry.lastDesiredDirection = 0;
         entry.climbUpIntent = false;

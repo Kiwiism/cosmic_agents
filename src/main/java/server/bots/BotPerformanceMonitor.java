@@ -25,7 +25,8 @@ final class BotPerformanceMonitor {
     private static final Object LOCK = new Object();
     static Config cfg = new Config();
 
-    private static long nextLogAtMs = System.currentTimeMillis() + cfg.LOG_INTERVAL_MS;
+    private static long lastLogAtMs = System.currentTimeMillis();
+    private static long nextLogAtMs = lastLogAtMs + cfg.LOG_INTERVAL_MS;
     private static final Map<String, Stat> statsBySection = new LinkedHashMap<>();
     private static final Map<String, String> SECTION_NOTES = Map.of(
             "move-ground", "ground physics, foothold collision, fallback steering, and movement packet sync",
@@ -33,6 +34,7 @@ final class BotPerformanceMonitor {
             "move-climb", "rope/ladder attachment, climb movement, and dismount checks",
             "nav-resolve", "region lookup, graph/path selection, edge reuse, and waypoint selection",
             "pathfind", "A* search over the current bot navigation graph",
+            "pathfind-target-score", "A* called while ranking grind target regions",
             "combat-target-search", "monster scan, distance filtering, foothold lookup, and candidate sorting",
             "combat-plan", "skill/basic attack route selection and hitbox construction"
     );
@@ -62,12 +64,21 @@ final class BotPerformanceMonitor {
         record("pathfind", elapsedNs);
     }
 
+    static void recordPathfind(String caller, long elapsedNs) {
+        if (caller == null || caller.isBlank()) {
+            recordPathfind(elapsedNs);
+            return;
+        }
+        record("pathfind-" + caller, elapsedNs);
+    }
+
     private static void maybeLog() {
         long now = System.currentTimeMillis();
         if (now < nextLogAtMs || statsBySection.isEmpty()) {
             return;
         }
 
+        double intervalSeconds = Math.max(0.001, (now - lastLogAtMs) / 1000.0);
         StringBuilder line = new StringBuilder("bot-perf slow>=")
                 .append(String.format("%.3f", cfg.SLOW_SAMPLE_MS))
                 .append("ms ");
@@ -83,12 +94,20 @@ final class BotPerformanceMonitor {
             first = false;
 
             double averageMs = stat.totalNs / (double) Math.max(1L, stat.count) / 1_000_000.0;
+            double totalMs = stat.totalNs / 1_000_000.0;
             double maxMs = stat.maxNs / 1_000_000.0;
             double slowAverageMs = stat.slowTotalNs / (double) Math.max(1L, stat.slowCount) / 1_000_000.0;
             line.append(entry.getKey())
                     .append(" avg=")
                     .append(String.format("%.3f", averageMs))
                     .append("ms")
+                    .append(" total=")
+                    .append(String.format("%.3f", totalMs))
+                    .append("ms")
+                    .append(" cps=")
+                    .append(String.format("%.1f", stat.count / intervalSeconds))
+                    .append(" cpuMsPerSec=")
+                    .append(String.format("%.3f", totalMs / intervalSeconds))
                     .append(" max=")
                     .append(String.format("%.3f", maxMs))
                     .append("ms")
@@ -102,14 +121,26 @@ final class BotPerformanceMonitor {
                     .append(String.format("%.3f", slowAverageMs))
                     .append("ms")
                     .append(" note=")
-                    .append(SECTION_NOTES.getOrDefault(entry.getKey(), "instrumented bot subsystem"));
+                    .append(noteFor(entry.getKey()));
         }
 
         if (!first) {
             log.info(line.toString());
         }
         statsBySection.clear();
+        lastLogAtMs = now;
         nextLogAtMs = now + cfg.LOG_INTERVAL_MS;
+    }
+
+    private static String noteFor(String section) {
+        String note = SECTION_NOTES.get(section);
+        if (note != null) {
+            return note;
+        }
+        if (section != null && section.startsWith("pathfind-")) {
+            return "A* search over the current bot navigation graph";
+        }
+        return "instrumented bot subsystem";
     }
 
     private static long slowThresholdNs() {
