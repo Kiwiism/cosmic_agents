@@ -416,6 +416,35 @@ class BotNavigationGraphProviderTest {
         assertEquals(ownerRegionId, path.getFirst().toRegionId);
     }
 
+    @Test
+    void shouldTrimJumpWindowAtInvalidInteriorWallBoundary() {
+        MapleMap map = BotNavigationMapLoader.loadMapGeometry(100000202);
+        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
+        Point badLaunch = new Point(-1422, -642);
+        int fromRegionId = graph.findRegionId(map, badLaunch);
+        int targetRegionId = graph.findRegionId(map, new Point(-1375, -664));
+
+        assertEquals(36, fromRegionId);
+        assertEquals(32, targetRegionId);
+
+        BotPhysicsEngine.JumpLanding badLanding = BotPhysicsEngine.simulateJumpLanding(
+                map, badLaunch, BotPhysicsEngine.walkStep(map), graph.movementProfile);
+        assertNotNull(badLanding);
+        assertEquals(fromRegionId, graph.regionIdByFootholdId.getOrDefault(badLanding.foothold().getId(), -1),
+                "logged bad launch should bounce back to the original region");
+
+        assertTrue(graph.getOutgoing(fromRegionId).stream()
+                        .anyMatch(edge -> edge.type == BotNavigationGraph.EdgeType.JUMP
+                                && edge.toRegionId == targetRegionId
+                                && edge.containsLaunchX(-1427)),
+                "nearby valid launch point should still route to the target platform");
+        assertFalse(graph.getOutgoing(fromRegionId).stream()
+                        .anyMatch(edge -> edge.type == BotNavigationGraph.EdgeType.JUMP
+                                && edge.toRegionId == targetRegionId
+                                && edge.containsLaunchX(badLaunch.x)),
+                "jump launch windows must not include X positions that no longer land in the target region");
+    }
+
     private static List<BotNavigationGraph.Edge> findPath(BotNavigationGraph graph,
                                                           MapleMap map,
                                                           Point start,

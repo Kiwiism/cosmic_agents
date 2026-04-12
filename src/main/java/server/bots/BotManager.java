@@ -298,10 +298,10 @@ public class BotManager {
             if (botChar.getMapId() != map.getId()) {
                 botChar.forceChangeMap(map, map.findClosestPortal(pos));
             }
-            botChar.setPosition(pos);
-            botChar.broadcastStance();
-            botChar.updatePartyMemberHP();
-            if (entry != null) entry.following = true;
+            placeSpawnedOnlineBot(entry, botChar, map, pos);
+            if (entry != null) {
+                entry.following = true;
+            }
             return SpawnResult.ok(botChar, auth.autoRegistered());
         } else {
             try {
@@ -381,6 +381,30 @@ public class BotManager {
         botChar.visitMap(spawnMap);
         botChar.diseaseExpireTask();
         return botChar;
+    }
+
+    static void placeSpawnedOnlineBot(BotEntry entry, Character botChar, MapleMap spawnMap, Point spawnPos) {
+        if (entry == null) {
+            botChar.setPosition(spawnPos);
+            botChar.broadcastStance();
+            botChar.updatePartyMemberHP();
+            return;
+        }
+
+        BotPhysicsEngine.teleportTo(entry, botChar, spawnPos);
+        BotMovementManager.resetEntryStateAfterTeleport(entry);
+        entry.deadUntil = 0;
+        entry.lastMapId = spawnMap != null ? spawnMap.getId() : botChar.getMapId();
+        if (spawnMap != null && spawnMap.getFootholds() != null) {
+            entry.fhIndex = BotMovementManager.buildFhIndex(spawnMap);
+            BotNavigationGraphProvider.warmGraphAsync(spawnMap, entry.movementProfile);
+        }
+        entry.skipDelayMs = 0;
+        entry.aiTickAccumulatorMs = 0;
+        entry.lastDesiredDirection = 0;
+        entry.movementBroadcastValid = false;
+        BotMovementManager.broadcastMovement(entry);
+        botChar.updatePartyMemberHP();
     }
 
     public Point resolveSpawnPosition(MapleMap map, Point desiredPosition) {

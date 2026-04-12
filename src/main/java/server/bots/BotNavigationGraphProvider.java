@@ -28,7 +28,7 @@ import java.util.concurrent.Executors;
 final class BotNavigationGraphProvider {
     private static final Logger log = LoggerFactory.getLogger(BotNavigationGraphProvider.class);
 
-    private static final int GRAPH_VERSION = 29;
+    private static final int GRAPH_VERSION = 30;
     private static final int ENDPOINT_ANCHOR_SPACING_PX = 10;
     private static final int ROPE_ANCHOR_INTERVAL_PX = 30;
     private static final int MAX_PROFILED_JUMP_REGIONS = 5;
@@ -925,7 +925,8 @@ final class BotNavigationGraphProvider {
                 true, stats, jumpLandingCache, movementProfile);
         int maxX = findJumpLaunchBoundary(from, map, regionIdByFootholdId, anchorX, launchStepX, targetRegionId,
                 false, stats, jumpLandingCache, movementProfile);
-        JumpLaunchWindowBounds launchBounds = trimJumpLaunchBoundary(from, map, minX, maxX, anchorX);
+        JumpLaunchWindowBounds launchBounds = trimJumpLaunchBoundary(from, map, regionIdByFootholdId, minX, maxX,
+                anchorX, launchStepX, targetRegionId, stats, jumpLandingCache, movementProfile);
         if (launchBounds == null) {
             return null;
         }
@@ -1002,21 +1003,29 @@ final class BotNavigationGraphProvider {
 
     private static JumpLaunchWindowBounds trimJumpLaunchBoundary(BotNavigationGraph.Region from,
                                                                  MapleMap map,
+                                                                 Map<Integer, Integer> regionIdByFootholdId,
                                                                  int minX,
                                                                  int maxX,
-                                                                 int preferredX) {
+                                                                 int preferredX,
+                                                                 int launchStepX,
+                                                                 int targetRegionId,
+                                                                 JumpBuildStats stats,
+                                                                 JumpLandingCache jumpLandingCache,
+                                                                 BotMovementProfile movementProfile) {
         int startX = Math.max(minX, Math.min(maxX, preferredX));
         int firstX = 0;
         boolean foundFirstX = false;
         for (int radius = 0; radius <= Math.max(startX - minX, maxX - startX); radius++) {
             int leftX = startX - radius;
-            if (leftX >= minX && isApproachableJumpLaunchX(from, map, leftX)) {
+            if (leftX >= minX && isValidJumpLaunchX(from, map, regionIdByFootholdId, leftX,
+                    launchStepX, targetRegionId, stats, jumpLandingCache, movementProfile)) {
                 firstX = leftX;
                 foundFirstX = true;
                 break;
             }
             int rightX = startX + radius;
-            if (rightX <= maxX && rightX != leftX && isApproachableJumpLaunchX(from, map, rightX)) {
+            if (rightX <= maxX && rightX != leftX && isValidJumpLaunchX(from, map, regionIdByFootholdId, rightX,
+                    launchStepX, targetRegionId, stats, jumpLandingCache, movementProfile)) {
                 firstX = rightX;
                 foundFirstX = true;
                 break;
@@ -1027,14 +1036,30 @@ final class BotNavigationGraphProvider {
         }
 
         int left = firstX;
-        while (left > minX && isApproachableJumpLaunchX(from, map, left - 1)) {
+        while (left > minX && isValidJumpLaunchX(from, map, regionIdByFootholdId, left - 1,
+                launchStepX, targetRegionId, stats, jumpLandingCache, movementProfile)) {
             left--;
         }
         int right = firstX;
-        while (right < maxX && isApproachableJumpLaunchX(from, map, right + 1)) {
+        while (right < maxX && isValidJumpLaunchX(from, map, regionIdByFootholdId, right + 1,
+                launchStepX, targetRegionId, stats, jumpLandingCache, movementProfile)) {
             right++;
         }
         return new JumpLaunchWindowBounds(left, right);
+    }
+
+    private static boolean isValidJumpLaunchX(BotNavigationGraph.Region from,
+                                              MapleMap map,
+                                              Map<Integer, Integer> regionIdByFootholdId,
+                                              int launchX,
+                                              int launchStepX,
+                                              int targetRegionId,
+                                              JumpBuildStats stats,
+                                              JumpLandingCache jumpLandingCache,
+                                              BotMovementProfile movementProfile) {
+        return isApproachableJumpLaunchX(from, map, launchX)
+                && landsJumpInRegion(map, regionIdByFootholdId, from.pointAt(launchX), launchStepX, targetRegionId,
+                        stats, jumpLandingCache, movementProfile);
     }
 
     private static boolean isApproachableJumpLaunchX(BotNavigationGraph.Region from, MapleMap map, int launchX) {

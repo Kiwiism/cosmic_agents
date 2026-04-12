@@ -789,8 +789,10 @@ class BotMovementManagerTest {
         assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         assertTrue(entry.airSteerVelX != 0.0,
                 "spam-air-steer jump fidgets should press random side input on their own delay");
-        long delay = entry.nextFidgetActionAtMs - before;
-        assertTrue(delay == 100 || delay == 150, "air-steer spam should use a tick-aligned 0/50ms jitter");
+        long after = System.currentTimeMillis();
+        assertTrue(entry.nextFidgetActionAtMs >= before + 100
+                        && entry.nextFidgetActionAtMs <= after + 150,
+                "air-steer spam should use a tick-aligned 0/50ms jitter");
     }
 
     @Test
@@ -812,8 +814,9 @@ class BotMovementManagerTest {
         assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         assertEquals(BotFidgetMode.SPAM_SIDEWAYS, entry.fidgetMode);
         assertTrue(entry.lastDesiredDirection != 0, "sideway spam should hold a left/right movement input");
-        long delay = entry.nextFidgetActionAtMs - before;
-        assertTrue(delay == entry.fidgetActionBaseDelayMs || delay == entry.fidgetActionBaseDelayMs + 50,
+        long after = System.currentTimeMillis();
+        assertTrue(entry.nextFidgetActionAtMs >= before + entry.fidgetActionBaseDelayMs
+                        && entry.nextFidgetActionAtMs <= after + entry.fidgetActionBaseDelayMs + 50,
                 "sideway spam should use tick-aligned 0/50ms jitter around its per-fidget base interval");
         assertTrue(entry.following, "sideway spam should not convert follow mode into a manual move command");
     }
