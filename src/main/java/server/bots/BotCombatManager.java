@@ -515,7 +515,8 @@ class BotCombatManager {
             GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, botPos);
             List<ScoredGrindTarget> localTargets = new ArrayList<>();
             for (Monster candidate : candidates) {
-                if (!isLocalCombatTarget(graphContext, bot, botFoothold, candidate)) {
+                if (!isLocalCombatTarget(graphContext, bot, botFoothold, candidate)
+                        && !isImmediateProjectileTarget(entry, bot, candidate)) {
                     continue;
                 }
                 long localScore = grindTargetScore(bot, botPos, botFoothold, candidate);
@@ -537,6 +538,9 @@ class BotCombatManager {
         }
 
         GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, bot.getPosition());
+        if (isImmediateProjectileTarget(entry, bot, target)) {
+            return true;
+        }
         return !graphContext.available() || graphTargetCost(graphContext, target) < UNREACHABLE_GRAPH_COST;
     }
 
@@ -891,7 +895,8 @@ class BotCombatManager {
         GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, botPos);
         List<ScoredGrindTarget> currentRegionTargets = new ArrayList<>();
         for (Monster candidate : candidates) {
-            if (!isLocalCombatTarget(graphContext, bot, botFoothold, candidate)) {
+            if (!isLocalCombatTarget(graphContext, bot, botFoothold, candidate)
+                    && !isImmediateProjectileTarget(entry, bot, candidate)) {
                 continue;
             }
             long localScore = grindTargetScore(bot, botPos, botFoothold, candidate);
@@ -934,6 +939,55 @@ class BotCombatManager {
         int targetRegionId = BotNavigationManager.resolveTargetRegionId(
                 context.graph(), context.entry(), context.map(), target.getPosition());
         return targetRegionId >= 0 && targetRegionId == context.startRegionId();
+    }
+
+    private static boolean isImmediateProjectileTarget(BotEntry entry, Character bot, Monster target) {
+        if (entry == null || entry.noAmmo || bot == null || target == null || !target.isAlive()) {
+            return false;
+        }
+
+        Point botPos = bot.getPosition();
+        Point targetPos = target.getPosition();
+        WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(bot);
+        if (BotAttackExecutionProvider.determineBasicWeaponRoute(weaponType) == AttackRoute.RANGED
+                && !BotAttackExecutionProvider.shouldDegenerateRangedAttack(weaponType, botPos, targetPos)) {
+            Rectangle hitBox = clientProjectileHitBox(bot, targetPos.x < botPos.x, 1.0f);
+            if (doesHitBoxIntersectMonster(hitBox, target)) {
+                return true;
+            }
+        }
+
+        return isImmediateProjectileSkillTarget(entry, bot, target);
+    }
+
+    private static boolean isImmediateProjectileSkillTarget(BotEntry entry, Character bot, Monster target) {
+        if (entry.attackSkillId == 0 || bot.skillIsCooling(entry.attackSkillId)) {
+            return false;
+        }
+
+        Skill skill = SkillFactory.getSkill(entry.attackSkillId);
+        int skillLevel = skill == null ? 0 : bot.getSkillLevel(skill);
+        if (skillLevel <= 0) {
+            return false;
+        }
+
+        StatEffect effect = skill.getEffect(skillLevel);
+        if (effect == null || !effect.canPaySkillCost(bot)) {
+            return false;
+        }
+
+        AttackRoute route = BotAttackExecutionProvider.determineSkillRoute(bot, entry.attackSkillId);
+        if (route != AttackRoute.RANGED && route != AttackRoute.MAGIC) {
+            return false;
+        }
+
+        Rectangle hitBox = calculateSkillHitBox(effect, bot, target, route);
+        if (hitBox == null || !doesHitBoxIntersectMonster(hitBox, target)) {
+            return false;
+        }
+
+        WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(bot);
+        return BotAttackExecutionProvider.canUseRangedAttackRoute(route, weaponType, bot.getPosition(), target.getPosition());
     }
 
     private static List<ScoredGrindTarget> scoreLocalTargets(Character bot,

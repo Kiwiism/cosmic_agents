@@ -13,6 +13,8 @@ import constants.skills.Beginner;
 import constants.skills.Warrior;
 import net.packet.Packet;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.ArgumentCaptor;
 import server.StatEffect;
 import server.bots.combat.BotAttackDataProvider;
@@ -411,6 +413,31 @@ class BotCombatManagerTest {
         Monster target = BotCombatManager.findGrindTarget(new BotEntry(bot, null, null), bot);
 
         assertEquals(currentFootholdMob, target);
+    }
+
+    @Test
+    void shouldUseRangedHitBoxTargetOutsideCurrentRegionWithoutPathingThere() {
+        MapleMap map = spy(new MapleMap(910009051, 0, 0, 910009051, 1.0f));
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
+        footholds.insert(new Foothold(new Point(250, 130), new Point(450, 130), 2));
+        map.setFootholds(footholds);
+        BotNavigationGraphProvider.rebuildGraph(map);
+
+        Character bot = mockBot(new Point(100, 100), map, 20_000, null);
+        Monster otherRegionMob = mockMob(new Point(300, 130), 100100);
+        doReturn(List.of(otherRegionMob)).when(map).getAllMonsters();
+
+        BotEntry entry = new BotEntry(bot, null, null);
+
+        try (MockedStatic<BotAttackExecutionProvider> attackExecution =
+                     Mockito.mockStatic(BotAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS)) {
+            attackExecution.when(() -> BotAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.BOW);
+
+            assertEquals(otherRegionMob, BotCombatManager.findFollowAttackTarget(entry, bot));
+            assertEquals(otherRegionMob, BotCombatManager.findGrindTarget(entry, bot));
+            assertTrue(BotCombatManager.isReachableGrindTarget(entry, bot, otherRegionMob));
+        }
     }
 
     private static void assertDamageDirection(MapleMap map, Character bot, int expectedBroadcasts, int expectedDirection) {

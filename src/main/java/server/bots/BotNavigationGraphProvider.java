@@ -1041,10 +1041,40 @@ final class BotNavigationGraphProvider {
         if (from == null || from.isRopeRegion || map == null) {
             return false;
         }
+        Point launchPoint = from.pointAt(launchX);
+        if (isBlockedWallBoundaryLaunch(map, launchPoint)) {
+            return false;
+        }
         if (launchX > from.minX && canWalkToLaunchX(from, map, launchX - 1, launchX)) {
             return true;
         }
         return launchX < from.maxX && canWalkToLaunchX(from, map, launchX + 1, launchX);
+    }
+
+    private static boolean isBlockedWallBoundaryLaunch(MapleMap map, Point launchPoint) {
+        if (map == null || map.getFootholds() == null || launchPoint == null) {
+            return false;
+        }
+
+        Set<Integer> collidableWallIds = getCachedCollidableWallIds(map.getId());
+        if (collidableWallIds == null || collidableWallIds.isEmpty()) {
+            return false;
+        }
+
+        for (Foothold foothold : map.getFootholds().getAllFootholds()) {
+            if (!foothold.isWall()
+                    || !collidableWallIds.contains(foothold.getId())
+                    || foothold.getX1() != launchPoint.x) {
+                continue;
+            }
+
+            int minY = Math.min(foothold.getY1(), foothold.getY2());
+            int maxY = Math.max(foothold.getY1(), foothold.getY2());
+            if (launchPoint.y > minY && launchPoint.y <= maxY) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean canWalkToLaunchX(BotNavigationGraph.Region from, MapleMap map, int fromX, int launchX) {

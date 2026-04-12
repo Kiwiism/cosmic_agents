@@ -66,7 +66,7 @@ class BotNavigationGraphFallbackTest {
     }
 
     @Test
-    void shouldNotGenerateJumpFromUnapproachableWallBoundaryLaunchPoint() {
+    void shouldNotGenerateJumpWindowFromUnapproachableWallBoundaryLaunchPoint() {
         MapleMap map = new MapleMap(910000053, 0, 0, 910000053, 1.0f);
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
         Foothold upper = new Foothold(new Point(0, 60), new Point(50, 60), 1);
@@ -85,8 +85,9 @@ class BotNavigationGraphFallbackTest {
 
         assertFalse(graph.getOutgoing(lowerRegionId).stream()
                         .anyMatch(edge -> edge.type == BotNavigationGraph.EdgeType.JUMP
-                                && edge.toRegionId == upperRegionId),
-                "jump launch windows must not require walking into a collidable wall boundary");
+                                && edge.toRegionId == upperRegionId
+                                && edge.containsLaunchX(50)),
+                "jump launch windows must not include a collidable wall boundary");
     }
 
     private static Character mockBot(Point startPosition, MapleMap map) {

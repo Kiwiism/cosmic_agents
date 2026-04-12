@@ -141,8 +141,8 @@ class CombatFormulaProviderTest {
     }
 
     @Test
-    void shouldUseLuckySeven5xMaxAnd2point5xMinFormula() {
-        // Formula: MAX = LUK * 5 * ceil(watk/100), MIN = LUK * 2.5 * ceil(watk/100)
+    void shouldUseLuckySevenWatkScaledFormula() {
+        // Formula: MAX = LUK * 5 * watk / 100, MIN = LUK * 2.5 * watk / 100
         Character bot = mockDamageBot();
         StatEffect effect = mock(StatEffect.class);
         when(bot.getTotalWatk()).thenReturn(90);
@@ -152,10 +152,10 @@ class CombatFormulaProviderTest {
         CombatFormulaProvider.DamageProfile profile =
                 provider.resolveDamageProfile(bot, constants.skills.Rogue.LUCKY_SEVEN, effect, false);
 
-        // base max = 200*5*ceil(90/100)=1000, base min = round(1000*0.5)=500
-        // after skill 150%: max=1500, min=750
-        assertEquals(750, profile.minDamage());
-        assertEquals(1_500, profile.maxDamage());
+        // base max = ceil(200*5*90/100)=900, base min = round(900*0.5)=450
+        // after skill 150%: max=1350, min=675
+        assertEquals(675, profile.minDamage());
+        assertEquals(1_350, profile.maxDamage());
     }
 
     @Test
