@@ -108,6 +108,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -151,7 +152,11 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
     }
 
     // TODO: add position
-    public record AttackTarget(short delay, List<Integer> damageLines) {}
+    public record AttackTarget(short delay, List<Integer> damageLines, Set<Integer> critLineIndices) {
+        public AttackTarget(short delay, List<Integer> damageLines) {
+            this(delay, damageLines, Set.of());
+        }
+    }
 
     public static void applyAttack(AttackInfo attack, final Character player, int attackCount) {
         final MapleMap map = player.getMap();

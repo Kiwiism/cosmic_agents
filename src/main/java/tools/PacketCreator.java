@@ -2396,8 +2396,11 @@ public class PacketCreator {
                 if (skill == ChiefBandit.MESO_EXPLOSION) {
                     p.writeByte(value.damageLines().size());
                 }
-                for (Integer damageLine : value.damageLines()) {
-                    p.writeInt(damageLine);
+                List<Integer> lines = value.damageLines();
+                Set<Integer> crits = value.critLineIndices();
+                for (int i = 0; i < lines.size(); i++) {
+                    int encoded = crits.contains(i) ? (lines.get(i) | 0x80000000) : lines.get(i);
+                    p.writeInt(encoded);
                 }
             }
         }

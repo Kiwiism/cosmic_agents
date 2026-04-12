@@ -29,7 +29,9 @@ import server.StatEffect;
 import server.life.Monster;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class CombatFormulaProvider {
@@ -198,19 +200,21 @@ public final class CombatFormulaProvider {
                 ? new int[]{damageProfile.minDamage(), damageProfile.maxDamage()}
                 : applyMonsterDefense(bot, monster, damageProfile.minDamage(), damageProfile.maxDamage(),
                 damageProfile.magicAttack());
-        List<Integer> lines;
+        int normalizedHitDelay = Math.max(0, Math.min(Short.MAX_VALUE, hitDelayMs));
         if (damageProfile.alwaysHit()) {
-            lines = rollDamageLines(hits, adjustedDamage[0], adjustedDamage[1], 1.0d);
+            List<Integer> lines = rollDamageLines(hits, adjustedDamage[0], adjustedDamage[1], 1.0d);
+            return new AbstractDealDamageHandler.AttackTarget((short) normalizedHitDelay, lines);
         } else if (!damageProfile.magicAttack()) {
             CritProfile crit = resolveCritProfile(bot);
             double hitChance = calculateMobHitChance(bot, monster, false);
-            lines = rollDamageLines(hits, adjustedDamage[0], adjustedDamage[1],
+            CritDamageResult result = rollDamageLinesWithCrit(hits, adjustedDamage[0], adjustedDamage[1],
                     hitChance, crit.critChance(), crit.critMultiplier());
+            return new AbstractDealDamageHandler.AttackTarget((short) normalizedHitDelay,
+                    result.lines(), result.critIndices());
         } else {
-            lines = rollDamageLines(bot, monster, hits, adjustedDamage[0], adjustedDamage[1], true);
+            List<Integer> lines = rollDamageLines(bot, monster, hits, adjustedDamage[0], adjustedDamage[1], true);
+            return new AbstractDealDamageHandler.AttackTarget((short) normalizedHitDelay, lines);
         }
-        int normalizedHitDelay = Math.max(0, Math.min(Short.MAX_VALUE, hitDelayMs));
-        return new AbstractDealDamageHandler.AttackTarget((short) normalizedHitDelay, lines);
     }
 
     /**
@@ -239,19 +243,21 @@ public final class CombatFormulaProvider {
         return new CritProfile(Math.min(1.0, critChance), critMultiplier);
     }
 
+    private record CritDamageResult(List<Integer> lines, Set<Integer> critIndices) {}
+
     /**
-     * Rolls damage lines with per-hit critical evaluation.
-     * Each hit first checks hitChance (miss → 0), then rolls a base value in [min, max],
-     * then independently checks critChance. On crit, damage = floor(base × critMultiplier),
-     * capped at 99999 (standard MapleStory single-hit cap).
+     * Rolls damage lines with per-hit critical evaluation. Returns both the clean damage list
+     * and the set of indices that were critical (for visual encoding in the broadcast packet).
+     * On crit, damage = floor(base × critMultiplier), capped at 99999.
      */
-    List<Integer> rollDamageLines(int hits, int minDamage, int maxDamage,
-                                  double hitChance, double critChance, double critMultiplier) {
+    private CritDamageResult rollDamageLinesWithCrit(int hits, int minDamage, int maxDamage,
+                                                     double hitChance, double critChance, double critMultiplier) {
         int normalizedMinDamage = Math.max(0, minDamage);
         int normalizedMaxDamage = Math.max(normalizedMinDamage, maxDamage);
         double normalizedHitChance = Math.max(0.0d, Math.min(MAX_HIT_CHANCE, hitChance));
 
         List<Integer> damageLines = new ArrayList<>(Math.max(0, hits));
+        Set<Integer> critIndices = new HashSet<>();
         ThreadLocalRandom random = ThreadLocalRandom.current();
         for (int i = 0; i < hits; i++) {
             if (random.nextDouble() > normalizedHitChance) {
@@ -263,10 +269,11 @@ public final class CombatFormulaProvider {
                     : normalizedMaxDamage;
             if (critChance > 0 && random.nextDouble() < critChance) {
                 base = (int) Math.min(99999, Math.floor(base * critMultiplier));
+                critIndices.add(i);
             }
             damageLines.add(base);
         }
-        return damageLines;
+        return new CritDamageResult(damageLines, critIndices);
     }
 
     private boolean canJobCrit(Character bot) {
