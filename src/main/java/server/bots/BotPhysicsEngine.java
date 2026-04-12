@@ -575,6 +575,7 @@ final class BotPhysicsEngine {
         entry.velY = 0f;
         entry.airVelX = 0;
         entry.airSteerVelX = 0.0;
+        entry.lastDesiredDirection = 0;
         entry.physX = position.x;
         entry.physY = position.y;
         stopGroundMotion(entry);
@@ -1233,6 +1234,7 @@ final class BotPhysicsEngine {
         entry.airVelX = 0;
         entry.airSteerVelX = 0.0;
         entry.wasMovingX = false;
+        entry.lastDesiredDirection = 0;
         entry.climbUpIntent = false;
         entry.blockedRopeGrab = null;
         entry.ropeGrabCooldownMs = 0;

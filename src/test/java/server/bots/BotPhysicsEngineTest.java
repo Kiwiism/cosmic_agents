@@ -111,6 +111,7 @@ class BotPhysicsEngineTest {
         entry.physY = 88;
         entry.movementVelX = 123;
         entry.movementVelY = -456;
+        entry.lastDesiredDirection = -1;
         entry.downJumpPending = true;
         entry.downJumpGracePeriodMS = 350;
 
@@ -126,7 +127,24 @@ class BotPhysicsEngineTest {
         assertEquals(20.0, entry.physY);
         assertEquals(0, entry.movementVelX);
         assertEquals(0, entry.movementVelY);
+        assertEquals(0, entry.lastDesiredDirection);
         assertEquals(CharacterStance.STAND_RIGHT_STANCE, BotPhysicsEngine.resolveStance(entry));
+    }
+
+    @Test
+    void shouldClearWalkIntentWhenIdlingOnGround() {
+        Character bot = mockBot(new Point(10, 20), null);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.lastDesiredDirection = -1;
+        entry.facingDir = -1;
+        entry.movementVelX = -125;
+
+        BotPhysicsEngine.idleOnGround(entry, bot);
+
+        assertEquals(0, entry.lastDesiredDirection);
+        assertEquals(0, entry.movementVelX);
+        assertEquals(CharacterStance.STAND_LEFT_STANCE, BotPhysicsEngine.resolveStance(entry));
+        assertEquals(CharacterStance.STAND_LEFT_STANCE, bot.getStance());
     }
 
     @Test
