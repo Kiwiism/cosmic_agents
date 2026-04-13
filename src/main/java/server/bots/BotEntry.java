@@ -166,6 +166,10 @@ public class BotEntry {
     long    lastBuffActionAtMs     = 0L;
     String  lastBuffActionSummary  = "no buff scans yet";
 
+    // Skill buff tracking (always enabled; tracks last decision for debug)
+    long   lastSkillBuffActionAtMs    = 0L;
+    String lastSkillBuffActionSummary = "no skill buff checks yet";
+
     // Party-quest state (one slot per PQ type; null = not in that PQ)
     public server.bots.pq.BotKpqState kpq = new server.bots.pq.BotKpqState();
 

@@ -178,6 +178,9 @@ public class BotChatManager {
     private static final Pattern BUFF_DEBUG_PATTERN = Pattern.compile(
             "\\bbuff\\s+debug\\b|\\bdebug\\s+buffs?\\b|\\bactive\\s+buffs?\\b",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern SKILL_BUFF_DEBUG_PATTERN = Pattern.compile(
+            "\\bskill\\s+buff\\s+debug\\b|\\bdebug\\s+skill\\s+buffs?\\b|\\bskill\\s+buffs?\\s*\\?\\s*$",
+            Pattern.CASE_INSENSITIVE);
     private static final String SCROLL_WORDS = "scrolls?";
     private static final String POTION_WORDS = "(?:pots?|potions?|hp\\s+pots?|mp\\s+pots?|supplies)";
     private static final String BUFF_WORDS   = "(?:buff\\s+pots?|buff\\s+potions?|buffs?\\s+items?)";
@@ -579,6 +582,10 @@ public class BotChatManager {
         }
         if (matchesWholeCommand(BUFF_DEBUG_PATTERN, message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> reportBuffDebug(entry, entry.bot));
+            return;
+        }
+        if (matchesWholeCommand(SKILL_BUFF_DEBUG_PATTERN, message)) {
+            BotManager.after(BotManager.randMs(500, 700), () -> reportSkillBuffDebug(entry, entry.bot));
             return;
         }
         if (isApRespecCommand(message)) {
@@ -1093,9 +1100,15 @@ public class BotChatManager {
         }
     }
 
+    private static void reportSkillBuffDebug(BotEntry entry, Character bot) {
+        for (String line : BotCombatManager.getSkillBuffDebugLines(entry, bot)) {
+            queueBotSay(entry, line);
+        }
+    }
+
     private static void reportHelp(BotEntry entry) {
         queueBotSay(entry, "commands: follow, stop, move here, fidget, grind, stats, speed, skills, inventory, mesos, slots, scrolls, pots, debug stats, crit, respec, respec ap");
-        queueBotSay(entry, "support: support on/off, heals on/off, buff on/off, buff cheap/max, buff debug");
+        queueBotSay(entry, "support: support on/off, heals on/off, buff on/off, buff cheap/max, buff debug, skill buff debug");
         queueBotSay(entry, "gear: ask 'any upgrades?' or say 'trade recommended gear'");
         queueBotSay(entry, "trade: mesos, scrolls, pots, equips, etc, or named items");
     }

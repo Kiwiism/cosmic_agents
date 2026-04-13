@@ -27,12 +27,13 @@ import constants.skills.Spearman;
 import constants.skills.SuperGM;
 import constants.skills.ThunderBreaker;
 import constants.skills.WindArcher;
+import net.server.PlayerBuffValueHolder;
 import net.server.channel.handlers.AbstractDealDamageHandler;
 import server.StatEffect;
 import server.bots.combat.BotAttackDataProvider;
-import server.combat.CombatFormulaProvider;
 import server.bots.combat.BotDefenseDataProvider;
 import server.bots.combat.BotMobHitboxProvider;
+import server.combat.CombatFormulaProvider;
 import server.life.Monster;
 import server.maps.Foothold;
 import server.maps.MapleMap;
@@ -43,8 +44,10 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.concurrent.ThreadLocalRandom;
 
 class BotCombatManager {
@@ -346,7 +349,7 @@ class BotCombatManager {
                 entry.healSkillId = skill.getId();
             }
 
-            if (fx.getMpCon() > 0) {  // mpCon > 0 identifies real attack/active skills; attackCount defaults to 1 for all skills
+            if (fx.getDamage() > 0 && !fx.isOverTime()) {  // damage > 0 identifies damaging skills
                 if (mobs >= 2) {
                     int score = mobs * atk;
                     if (score > bestAoeScore) {
@@ -364,7 +367,10 @@ class BotCombatManager {
                 continue;
             }
 
-            if (dur <= 0) {
+            // isOverTime() reflects the same SkillFactory whitelist that explicitly names buff skills
+            // (Magic Guard, Bless, Iron Body, etc.); more reliable than checking duration which can
+            // be -1000 when WZ has no "time" field.
+            if (!fx.isOverTime()) {
                 continue;
             }
 
@@ -375,8 +381,14 @@ class BotCombatManager {
 
     static void tickBuffs(BotEntry entry, Character bot) {
         if (entry.attackCooldownMs > 0) return;
-        if (!entry.following && !entry.grinding) return;
-        if (entry.buffSkillIds.isEmpty()) return;
+        if (!entry.following && !entry.grinding) {
+            noteSkillBuffDecision(entry, "idle (not following or grinding)");
+            return;
+        }
+        if (entry.buffSkillIds.isEmpty()) {
+            noteSkillBuffDecision(entry, "no buff skills in cache");
+            return;
+        }
 
         long now = System.currentTimeMillis();
         if (trySupportBuff(entry, bot, now)) {
@@ -397,6 +409,7 @@ class BotCombatManager {
                 return;
             }
         }
+        noteSkillBuffDecision(entry, "all skill buffs active or on cooldown");
     }
 
     private static boolean shouldUseAsBestSingleTargetSkill(Character bot, Skill skill, StatEffect effect,
@@ -1311,6 +1324,71 @@ class BotCombatManager {
         return BotAttackExecutionProvider.buildBasicAttackData(bot, primaryTarget.getPosition());
     }
 
+    private static void noteSkillBuffDecision(BotEntry entry, String summary) {
+        entry.lastSkillBuffActionAtMs = System.currentTimeMillis();
+        entry.lastSkillBuffActionSummary = summary;
+    }
+
+    static List<String> getSkillBuffDebugLines(BotEntry entry, Character bot) {
+        long now = System.currentTimeMillis();
+
+        // Line 1: last decision
+        String lastAction = entry.lastSkillBuffActionSummary;
+        if (entry.lastSkillBuffActionAtMs > 0) {
+            long ageMs = Math.max(0L, now - entry.lastSkillBuffActionAtMs);
+            lastAction += " (" + formatBuffAge(ageMs) + " ago)";
+        }
+
+        // Line 2: active skill buffs
+        StringJoiner activeJoiner = new StringJoiner(", ");
+        for (PlayerBuffValueHolder holder : bot.getAllBuffs()) {
+            StatEffect effect = holder.effect;
+            if (effect == null || !effect.isSkill()) continue;
+            int skillId = effect.getSourceId();
+            String remaining = effect.getDuration() > 0
+                    ? " " + formatBuffAge(Math.max(0, effect.getDuration() - holder.usedTime)) + " left"
+                    : "";
+            activeJoiner.add(skillLabel(skillId) + remaining);
+        }
+        String activeLine = activeJoiner.length() == 0 ? "none" : activeJoiner.toString().toLowerCase(Locale.ROOT);
+
+        // Line 3: cached buff skills with ready/cooldown status
+        StringJoiner availJoiner = new StringJoiner(", ");
+        for (int skillId : entry.buffSkillIds) {
+            boolean cooling = bot.skillIsCooling(skillId);
+            long nextAt = entry.nextBuffAt.getOrDefault(skillId, 0L);
+            String status;
+            if (cooling) {
+                status = "cd";
+            } else if (now < nextAt) {
+                status = "rebuff " + formatBuffAge(nextAt - now);
+            } else {
+                status = "ready";
+            }
+            availJoiner.add(skillLabel(skillId) + " (" + status + ")");
+        }
+        String availLine = availJoiner.length() == 0 ? "none cached" : availJoiner.toString().toLowerCase(Locale.ROOT);
+
+        return List.of(
+                "skill buffs: last: " + lastAction,
+                "active: " + activeLine,
+                "cached: " + availLine
+        );
+    }
+
+    private static String formatBuffAge(long ms) {
+        long totalSeconds = Math.max(0L, ms / 1000L);
+        long minutes = totalSeconds / 60L;
+        long seconds = totalSeconds % 60L;
+        if (minutes <= 0) return seconds + "s";
+        return minutes + "m" + seconds + "s";
+    }
+
+    private static String skillLabel(int skillId) {
+        String name = SkillFactory.getSkillName(skillId);
+        return (name != null && !name.isBlank()) ? name : "skill#" + skillId;
+    }
+
     static String describeDebugStats(BotEntry entry, Character bot) {
         Monster target = entry.grindTarget;
         if (target == null || !target.isAlive()) {
@@ -1364,9 +1442,11 @@ class BotCombatManager {
 
     private static boolean castSupportSkill(BotEntry entry, Character bot, Skill skill, StatEffect fx, long now) {
         if (!fx.canPaySkillCost(bot)) {
+            noteSkillBuffDecision(entry, "can't pay cost for " + skillLabel(skill.getId()));
             return false;
         }
         if (!fx.applyTo(bot, null)) {
+            noteSkillBuffDecision(entry, "apply failed for " + skillLabel(skill.getId()));
             return false;
         }
 
@@ -1380,10 +1460,12 @@ class BotCombatManager {
                 BotAttackExecutionProvider.getEquippedWeaponType(bot));
         BotAttackExecutionProvider.SkillAttackTiming skillTiming =
                 BotAttackExecutionProvider.resolveSkillAttackTiming(skill, action, bot, fallbackAttackData);
-        entry.attackCooldownMs = Math.max(entry.attackCooldownMs, skillTiming.cooldownMs());
+        int animMs = skill.getAnimationTime() > 0 ? skill.getAnimationTime() : 1000;
+        entry.attackCooldownMs = Math.max(entry.attackCooldownMs, Math.max(skillTiming.cooldownMs(), animMs));
         if (fx.getCooldown() > 0) {
             bot.addCooldown(skill.getId(), now, fx.getCooldown() * 1000L);
         }
+        noteSkillBuffDecision(entry, "cast " + skillLabel(skill.getId()));
         return true;
     }
 

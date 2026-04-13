@@ -53,6 +53,8 @@ final class BotBuffManager {
         if (now - entry.lastBuffScanMs < TICK_MS) return;
         entry.lastBuffScanMs = now;
 
+        if (bot.getMap().getAllMonsters().stream().noneMatch(Monster::isAlive)) return;
+
         List<SelectedBuff> selected = buildSelection(bot, entry.buffCheapMode);
         if (selected.isEmpty()) {
             noteDecision(entry, "no buff pots in bag");

@@ -1904,6 +1904,10 @@ public class StatEffect {
         return duration;
     }
 
+    public boolean isOverTime() {
+        return overTime;
+    }
+
     public List<Pair<BuffStat, Integer>> getStatups() {
         return statups;
     }
