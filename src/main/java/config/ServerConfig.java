@@ -201,10 +201,15 @@ public class ServerConfig {
     public int GODLY_STATS_DROP_CHANCE;
     public int GODLY_STATS_MAKER_CHANCE;
     public int GODLY_STATS_QUEST_CHANCE;
+    public int GODLY_STATS_NPC_CHANCE;
     public double GODLY_STATS_BONUS_SCALING;
     public int GODLY_STATS_MIN_BONUS;
     public double GODLY_STATS_HPMP_SCALING;
     public int GODLY_STATS_MIN_HPMP_BONUS;
+    // Allow Untradeable Items to be Traded
+    public boolean UNTRADEABLE_ITEMS_TRADEABLE;
+    // Disable one-of-a-kind item restriction (info/only == 1)
+    public boolean DISABLE_ONE_OF_A_KIND_CHECK;
 
     //Beginner Skills Configuration
     public boolean USE_ULTRA_NIMBLE_FEET;

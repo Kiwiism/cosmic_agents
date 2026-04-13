@@ -553,7 +553,7 @@ public class InventoryManipulator {
             return;
         }
         boolean itemChanged = false;
-        if (ii.isUntradeableOnEquip(source.getItemId())) {
+        if (ii.isUntradeableOnEquip(source.getItemId()) && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) {
             short flag = source.getFlag();      // thanks BHB for noticing flags missing after equipping these
             flag |= ItemConstants.UNTRADEABLE;
             source.setFlag(flag);
@@ -726,7 +726,11 @@ public class InventoryManipulator {
     private static boolean isDisappearingItemDrop(Item it) {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         if (ii.isDropRestricted(it.getItemId())) {
-            return true;
+            // Quest items always disappear; loot-restricted (tradeBlock) items respect the flag
+            if (ii.isQuestItem(it.getItemId()) || !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) {
+                return true;
+            }
+            return false;
         } else if (ii.isCash(it.getItemId())) {
             if (YamlConfig.config.server.USE_ENFORCE_UNMERCHABLE_CASH) {     // thanks Ari for noticing cash drops not available server-side
                 return true;
@@ -845,7 +849,8 @@ public class InventoryManipulator {
     }
 
     private static boolean isDroppedItemRestricted(Item it) {
-        return YamlConfig.config.server.USE_ERASE_UNTRADEABLE_DROP && it.isUntradeable();
+        return YamlConfig.config.server.USE_ERASE_UNTRADEABLE_DROP && it.isUntradeable()
+                && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE;
     }
 
     public static boolean isSandboxItem(Item it) {

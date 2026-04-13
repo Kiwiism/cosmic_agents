@@ -14,12 +14,17 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -164,6 +169,50 @@ class BotManagerTest {
     }
 
     @Test
+    void shouldResetPhysicsWhenOnlineBotIsSpawnedAtOwnerPosition() {
+        MapleMap map = createEmptyTestMap(910000023);
+        map.getFootholds().insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
+        Character bot = mockMovingBot(new Point(20, 100), map);
+        BotEntry entry = new BotEntry(bot, mock(Character.class), null);
+        entry.inAir = true;
+        entry.physX = -999;
+        entry.physY = -999;
+        entry.velY = 20f;
+        entry.airVelX = 6;
+        entry.navTargetPos = new Point(120, 100);
+
+        BotManager.placeSpawnedOnlineBot(entry, bot, map, new Point(80, 100));
+
+        assertEquals(new Point(80, 100), bot.getPosition());
+        assertFalse(entry.inAir);
+        assertEquals(80.0, entry.physX);
+        assertEquals(100.0, entry.physY);
+        assertEquals(0, entry.airVelX);
+        assertNull(entry.navTargetPos);
+        assertEquals(map.getId(), entry.lastMapId);
+    }
+
+    @Test
+    void shouldUseFollowIdleFastPathOnlyWhileParkedNearTarget() {
+        MapleMap map = createEmptyTestMap(910000024);
+        map.getFootholds().insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
+        Character bot = mockMovingBot(new Point(80, 100), map);
+        BotEntry entry = new BotEntry(bot, mock(Character.class), null);
+        entry.following = true;
+
+        assertTrue(BotManager.tryFollowIdleMovementFastPath(entry, bot, new Point(100, 100), 1_000L));
+        assertEquals("idle-fast", entry.lastNavDecision);
+        assertTrue(BotManager.tryFollowIdleMovementFastPath(entry, bot, new Point(100, 100), 1_500L),
+                "idle follow bots should skip per-tick nav/ground movement between periodic checks");
+        assertFalse(BotManager.tryFollowIdleMovementFastPath(entry, bot, new Point(100, 100), 2_000L),
+                "idle fast path should allow a periodic full movement/nav check");
+
+        entry.observedOwnerStepX = 1;
+        assertFalse(BotManager.tryFollowIdleMovementFastPath(entry, bot, new Point(100, 100), 2_100L),
+                "owner movement should force normal movement resolution");
+    }
+
+    @Test
     void shouldKeepTenMinutePotShareBackoffSeparateForHpAndMp() throws Exception {
         BotManager manager = BotManager.getInstance();
         MapleMap map = mock(MapleMap.class);
@@ -220,6 +269,30 @@ class BotManagerTest {
         MapleMap map = new MapleMap(mapId, 0, 0, mapId, 1.0f);
         map.setFootholds(new FootholdTree(new Point(-2000, -2000), new Point(2000, 2000)));
         return map;
+    }
+
+    private static Character mockMovingBot(Point startPosition, MapleMap map) {
+        Character bot = mock(Character.class);
+        AtomicReference<Point> position = new AtomicReference<>(new Point(startPosition));
+        AtomicInteger stance = new AtomicInteger(0);
+
+        when(bot.getId()).thenReturn(88);
+        when(bot.getMap()).thenReturn(map);
+        when(bot.getMapId()).thenReturn(map.getId());
+        when(bot.getPosition()).thenAnswer(invocation -> new Point(position.get()));
+        doAnswer(invocation -> {
+            position.set(new Point(invocation.getArgument(0)));
+            return null;
+        }).when(bot).setPosition(any(Point.class));
+        when(bot.getHp()).thenReturn(100);
+        when(bot.getTotalMoveSpeedStat()).thenReturn(100);
+        when(bot.getTotalJumpStat()).thenReturn(100);
+        when(bot.getStance()).thenAnswer(invocation -> stance.get());
+        doAnswer(invocation -> {
+            stance.set(invocation.getArgument(0));
+            return null;
+        }).when(bot).setStance(anyInt());
+        return bot;
     }
 
     private static Field field(Class<?> type, String name) throws Exception {

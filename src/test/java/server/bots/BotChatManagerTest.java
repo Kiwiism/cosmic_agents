@@ -1,12 +1,19 @@
 package server.bots;
 
+import client.Character;
 import org.junit.jupiter.api.Test;
+import server.maps.FieldLimit;
+import server.maps.MapleMap;
 
+import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class BotChatManagerTest {
     @Test
@@ -60,6 +67,57 @@ class BotChatManagerTest {
     }
 
     @Test
+    void shouldMatchMovementStatQueries() {
+        assertTrue(BotChatManager.isMovementStatsQuery("speed?"));
+        assertTrue(BotChatManager.isMovementStatsQuery("jump?"));
+        assertTrue(BotChatManager.isMovementStatsQuery("movement stats"));
+        assertTrue(BotChatManager.isMovementStatsQuery("how fast are you"));
+        assertFalse(BotChatManager.isMovementStatsQuery("trade mesos"));
+    }
+
+    @Test
+    void shouldTriggerGreetingFidgetHalfTheTimeWhileFollowing() {
+        BotEntry entry = new BotEntry(null, null, null);
+        entry.following = true;
+
+        assertTrue(BotFidgetManager.maybeStartGreetingFidget(entry, 0));
+        assertFalse(entry.fidgetMode == BotFidgetMode.NONE);
+        assertEquals(BotFidgetTrigger.SOCIAL, entry.fidgetTrigger);
+
+        BotFidgetManager.clear(entry);
+
+        assertFalse(BotFidgetManager.maybeStartGreetingFidget(entry, 99));
+        assertEquals(BotFidgetMode.NONE, entry.fidgetMode);
+    }
+
+    @Test
+    void shouldTriggerFidgetCommandWithoutGreetingRoll() {
+        BotEntry entry = new BotEntry(null, null, null);
+        entry.following = true;
+
+        assertTrue(BotChatManager.isFidgetCommand("fidget"));
+        assertTrue(BotChatManager.isFidgetCommand("fidget!"));
+        assertFalse(BotChatManager.isFidgetCommand("please fidget"));
+        for (int i = 0; i < 100; i++) {
+            assertTrue(Set.of(2, 3, 5, 6, 7).contains(BotChatManager.randomFidgetExpression()));
+        }
+
+        assertTrue(BotFidgetManager.maybeStartSocialFidget(entry));
+        assertFalse(entry.fidgetMode == BotFidgetMode.NONE);
+        assertEquals(BotFidgetTrigger.SOCIAL, entry.fidgetTrigger);
+    }
+
+    @Test
+    void shouldNotTriggerGreetingFidgetWhileOwnerIsAfk() {
+        BotEntry entry = new BotEntry(null, null, null);
+        entry.following = true;
+        entry.ownerWasAfk = true;
+
+        assertFalse(BotFidgetManager.maybeStartGreetingFidget(entry, 0));
+        assertEquals(BotFidgetMode.NONE, entry.fidgetMode);
+    }
+
+    @Test
     void shouldFormatCompactMesos() {
         assertEquals("999", BotChatManager.formatCompactMesos(999));
         assertEquals("6k", BotChatManager.formatCompactMesos(6_000));
@@ -75,8 +133,49 @@ class BotChatManagerTest {
     }
 
     @Test
+    void shouldBuildMovementStatsReportUsingGameStatsAndDerivedPhysics() {
+        Character bot = mock(Character.class);
+        MapleMap map = mock(MapleMap.class);
+        when(bot.getMap()).thenReturn(map);
+        when(bot.getTotalMoveSpeedStat()).thenReturn(120);
+        when(bot.getTotalJumpStat()).thenReturn(110);
+        BotMovementProfile profile = BotMovementProfile.fromCharacter(bot);
+
+        List<String> report = BotChatManager.buildMovementStatsReport(bot);
+
+        assertEquals(List.of(
+                "speed 120% jump 110%",
+                String.format(Locale.ROOT, "walk %.1f px/s, %d px/tick, climb %d, hforce %.1f",
+                        profile.walkVelocityPxs(),
+                        BotMovementManager.walkStep(map, profile),
+                        BotPhysicsEngine.climbStepPerTick(),
+                        profile.hForcePxs()),
+                String.format(Locale.ROOT, "jump %.1f, rope %.1f, max %.1f px, reach %d/%d px",
+                        BotPhysicsEngine.jumpForcePerTick(profile),
+                        BotPhysicsEngine.ropeJumpForcePerTick(profile),
+                        BotPhysicsEngine.calculateMaxJumpHeight(profile),
+                        BotPhysicsEngine.maxJumpHorizontalTravel(map, profile),
+                        BotPhysicsEngine.maxRopeJumpHorizontalTravel(map, profile))
+        ), report);
+    }
+
+    @Test
+    void shouldReportForcedMovementStatsOnMovementSkillLimitMaps() {
+        Character bot = mock(Character.class);
+        MapleMap map = mock(MapleMap.class);
+        when(map.getFieldLimit()).thenReturn((int) FieldLimit.MOVEMENTSKILLS.getValue());
+        when(bot.getMap()).thenReturn(map);
+        when(bot.getTotalMoveSpeedStat()).thenReturn(140);
+        when(bot.getTotalJumpStat()).thenReturn(125);
+
+        List<String> report = BotChatManager.buildMovementStatsReport(bot);
+
+        assertEquals("speed 100% jump 100% (map forced; raw 140%/125%)", report.getFirst());
+    }
+
+    @Test
     void shouldBuildOwnerLootOfferPrompt() {
-        String prompt = BotChatManager.buildLootOfferPrompt("Owner", "Blue Moon", true);
+        String prompt = BotOfferManager.buildLootOfferPrompt("Owner", "Blue Moon", true);
         assertTrue(Set.of(
                 "I have Blue Moon, you want?",
                 "picked up Blue Moon, want it?",
@@ -85,7 +184,7 @@ class BotChatManagerTest {
 
     @Test
     void shouldBuildPartyLootOfferPrompt() {
-        String prompt = BotChatManager.buildLootOfferPrompt("Alice", "Blue Moon", false);
+        String prompt = BotOfferManager.buildLootOfferPrompt("Alice", "Blue Moon", false);
         assertTrue(Set.of(
                 "Alice, I have Blue Moon, you want?",
                 "Alice, picked up Blue Moon, want it?",

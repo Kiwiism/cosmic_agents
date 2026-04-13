@@ -315,6 +315,8 @@ public final class BotAttackDataProvider {
         // Claw ranged attack uses the second swingO block in actions.txt (IDs 24/25/26),
         // not the standard sword swingO block (IDs 5/6/7).
         Map<String, Integer> overrides = new HashMap<>();
+        overrides.put("stabO1", 16);
+        overrides.put("stabO2", 17);
         overrides.put("swingO1", 24);
         overrides.put("swingO2", 25);
         overrides.put("swingO3", 26);
@@ -351,7 +353,7 @@ public final class BotAttackDataProvider {
             return switch (attackGroup) {
                 case 3 -> new AttackAnimationSpec(3, List.of("swingT1", "swingT3"));
                 case 4 -> new AttackAnimationSpec(4, List.of("swingT1", "stabT1"));
-                case 7 -> new AttackAnimationSpec(7, List.of("swingT1", "stabT1"));
+                case 7 -> new AttackAnimationSpec(7, List.of("stabO1", "stabO2"));
                 case 9 -> new AttackAnimationSpec(9, List.of("swingP1", "stabT2"));
                 default -> getBasicAttackSpec(fallbackWeaponType, false);
             };
@@ -364,7 +366,7 @@ public final class BotAttackDataProvider {
             case 4 -> new AttackAnimationSpec(4, List.of("shoot2"));
             case 5 -> new AttackAnimationSpec(5, List.of("stabO1", "stabO2", "swingT1", "swingT2", "swingT3"));
             case 6 -> new AttackAnimationSpec(6, List.of("swingO1", "swingO2"));
-            case 7 -> new AttackAnimationSpec(7, List.of("swingO1", "swingO2"));
+            case 7 -> new AttackAnimationSpec(7, List.of("swingO1", "swingO2", "swingO3"));
             case 9 -> new AttackAnimationSpec(9, List.of("handgun"));
             default -> getBasicAttackSpec(fallbackWeaponType);
         };
@@ -395,7 +397,7 @@ public final class BotAttackDataProvider {
             case GENERAL2H_SWING, GENERAL2H_STAB, SWORD2H ->
                     new AttackAnimationSpec(5, List.of("stabO1", "stabO2", "swingT1", "swingT2", "swingT3"));
             case WAND, STAFF -> new AttackAnimationSpec(6, List.of("swingO1", "swingO2"));
-            case CLAW -> new AttackAnimationSpec(7, List.of("swingO1", "swingO2"));
+            case CLAW -> new AttackAnimationSpec(7, List.of("swingO1", "swingO2", "swingO3"));
             case GUN -> new AttackAnimationSpec(9, List.of("handgun"));
             default -> new AttackAnimationSpec(1, List.of("stabO1", "stabO2", "swingO1", "swingO2", "swingO3"));
         };

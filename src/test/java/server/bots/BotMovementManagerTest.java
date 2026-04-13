@@ -1,12 +1,16 @@
 package server.bots;
 
 import client.Character;
+import constants.game.CharacterStance;
 import org.junit.jupiter.api.Test;
+import server.life.Monster;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Rope;
 
 import java.awt.*;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -14,8 +18,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 class BotMovementManagerTest {
@@ -217,6 +224,52 @@ class BotMovementManagerTest {
     }
 
     @Test
+    void shouldNotSnapPreciseClimbTargetOutsideRopeSpan() {
+        BotEntry entry = new BotEntry(null, null, null);
+        entry.climbing = true;
+        entry.climbRope = new Rope(3398, 126, 332, false);
+        entry.navPreciseTarget = true;
+
+        assertFalse(BotMovementManager.shouldSnapToClimbTarget(entry, new Point(3398, 124), -2));
+        assertFalse(BotMovementManager.shouldSnapToClimbTarget(entry, new Point(3398, 332), 2));
+    }
+
+    @Test
+    void shouldKeepClimbingUntilPhysicsDismountsTopStepOffExit() {
+        Character bot = mock(Character.class);
+        MapleMap map = mock(MapleMap.class);
+        AtomicReference<Point> position = new AtomicReference<>(new Point(3398, 126));
+        when(bot.getPosition()).thenAnswer(invocation -> new Point(position.get()));
+        doAnswer(invocation -> {
+            position.set(new Point(invocation.getArgument(0)));
+            return null;
+        }).when(bot).setPosition(any(Point.class));
+        when(bot.getMap()).thenReturn(map);
+        when(bot.getId()).thenReturn(1);
+        when(bot.getHp()).thenReturn(100);
+        when(map.getPointBelow(any(Point.class))).thenAnswer(invocation -> {
+            Point probe = invocation.getArgument(0);
+            return new Point(probe.x, 124);
+        });
+
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.climbing = true;
+        entry.climbRope = new Rope(3398, 126, 332, false);
+        entry.navEdge = new BotNavigationGraph.Edge(
+                53, 25, BotNavigationGraph.EdgeType.CLIMB,
+                new Point(3398, 156), new Point(3443, 124),
+                0, 0, 3398, 126, 332, 400
+        );
+        entry.navPreciseTarget = true;
+
+        BotMovementManager.tickClimbing(entry, new Point(3398, 124), true);
+
+        assertEquals(new Point(3398, 124), bot.getPosition());
+        assertFalse(entry.climbing);
+        assertFalse(entry.inAir);
+    }
+
+    @Test
     void shouldUseEdgeSpecificPreciseStopDist() {
         // Regression: pathlog-CRASH-2026-04-02 — bot 2px from CLIMB entry (969 vs 967),
         // stopDist=4 caused it to idle short of the entry, blocking canExecuteClimbEntry forever.
@@ -278,6 +331,48 @@ class BotMovementManagerTest {
 
         assertNull(entry.navEdge);
         assertEquals(new Point(8, 100), bot.getPosition());
+    }
+
+    @Test
+    void shouldJumpForwardWhenMobBlocksWalkLaneAndLandingStaysInCurrentRegion() {
+        MapleMap map = spy(new MapleMap(910009048, 0, 0, 910009048, 1.0f));
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
+        map.setFootholds(footholds);
+        BotNavigationGraphProvider.rebuildGraph(map);
+        doReturn(List.of(mockMob(new Point(130, 100), 100100))).when(map).getAllMonsters();
+
+        Character bot = mockBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.following = true;
+
+        BotMovementManager.tickGrounded(entry, new Point(250, 100));
+
+        assertTrue(entry.inAir, "grounded follow movement should jump over a mob blocking the walk lane");
+        assertEquals(BotPhysicsEngine.walkStep(map, entry.movementProfile), entry.airVelX);
+
+        BotMovementManager.tickAirborne(entry, new Point(250, 100));
+
+        assertEquals(0.0, entry.airSteerVelX, 0.0001,
+                "mob-avoid jumps should keep the simulated fixed forward arc");
+    }
+
+    @Test
+    void shouldNotJumpOverBlockingMobWhenSimulatedLandingLeavesCurrentRegion() {
+        MapleMap map = spy(new MapleMap(910009049, 0, 0, 910009049, 1.0f));
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(140, 100), 1));
+        map.setFootholds(footholds);
+        BotNavigationGraphProvider.rebuildGraph(map);
+        doReturn(List.of(mockMob(new Point(120, 100), 100100))).when(map).getAllMonsters();
+
+        Character bot = mockBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.following = true;
+
+        BotMovementManager.tickGrounded(entry, new Point(190, 100));
+
+        assertFalse(entry.inAir, "mob-avoid jump should be skipped when simulation would leave the current platform region");
     }
 
     @Test
@@ -373,6 +468,424 @@ class BotMovementManagerTest {
     }
 
     @Test
+    void shouldJumpAcrossSmallGapDuringGraphWarmupFallback() {
+        MapleMap map = new MapleMap(910000031, 0, 0, 910000031, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(40, 100), 1));
+        footholds.insert(new Foothold(new Point(80, 100), new Point(140, 100), 2));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(36, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.graphWarmupFallback = true;
+
+        BotMovementManager.tickGrounded(entry, new Point(110, 100));
+
+        assertTrue(entry.inAir, "graph warmup fallback should jump small same-level gaps instead of freezing");
+        assertEquals(BotPhysicsEngine.walkStep(map, entry.movementProfile), entry.airVelX);
+    }
+
+    @Test
+    void shouldJumpOntoReachablePlatformWhenFallbackWalksIntoWall() {
+        MapleMap map = new MapleMap(910000050, 0, 0, 910000050, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        Foothold lower = new Foothold(new Point(0, 100), new Point(50, 100), 1);
+        Foothold wall = new Foothold(new Point(50, 60), new Point(50, 100), 2);
+        Foothold upper = new Foothold(new Point(50, 60), new Point(120, 60), 3);
+        wall.setNext(lower.getId());
+        wall.setPrev(upper.getId());
+        footholds.insert(lower);
+        footholds.insert(wall);
+        footholds.insert(upper);
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(44, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.graphWarmupFallback = true;
+
+        BotMovementManager.tickGrounded(entry, new Point(90, 60));
+
+        assertTrue(entry.inAir, "fallback should jump when a wall blocks walking but a platform is reachable");
+        assertEquals(BotPhysicsEngine.walkStep(map, entry.movementProfile), entry.airVelX);
+    }
+
+    @Test
+    void shouldAttachNearbyRopeDuringGraphWarmupFallbackWhenTargetIsAbove() {
+        MapleMap map = new MapleMap(910000032, 0, 0, 910000032, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 120), new Point(200, 120), 1));
+        map.setFootholds(footholds);
+        map.addRope(new Rope(100, 40, 120, false));
+
+        Character bot = mockBot(new Point(100, 120), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.graphWarmupFallback = true;
+
+        BotMovementManager.tickGrounded(entry, new Point(100, 40));
+
+        assertTrue(entry.climbing, "graph warmup fallback should use a nearby rope for vertical travel");
+        assertEquals(new Point(100, 120), bot.getPosition());
+    }
+
+    @Test
+    void shouldUseStopFollowHysteresisInsteadOfPacingSameRegionFollowMovement() {
+        MapleMap map = new MapleMap(910000033, 0, 0, 910000033, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(0, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.following = true;
+        entry.observedOwnerStepX = 4;
+
+        int stoppedStep = BotMovementManager.resolveGroundStepX(
+                entry, new Point(0, 100), new Point(20, 100), BotMovementManager.cfg.STOP_DIST, BotMovementManager.cfg.FOLLOW_DIST);
+        assertEquals(0, stoppedStep,
+                "follow should stop anywhere inside STOP_DIST instead of micro-throttling to an exact point");
+
+        int walkStep = BotPhysicsEngine.walkStep(map, entry.movementProfile);
+        int followStep = BotMovementManager.resolveGroundStepX(
+                entry, new Point(0, 100), new Point(90, 100), BotMovementManager.cfg.STOP_DIST, BotMovementManager.cfg.FOLLOW_DIST);
+
+        assertEquals(walkStep, followStep,
+                "follow should restart at FOLLOW_DIST using normal full-speed movement");
+    }
+
+    @Test
+    void shouldUseFullWalkStepForFastFollowBotsInsteadOfPacing() {
+        MapleMap map = new MapleMap(910000034, 0, 0, 910000034, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(0, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.following = true;
+        entry.wasMovingX = true;
+        entry.movementProfile = new BotMovementProfile(140, 100);
+        entry.observedOwnerStepX = 4;
+
+        int walkStep = BotPhysicsEngine.walkStep(map, entry.movementProfile);
+        int step = BotMovementManager.resolveGroundStepX(
+                entry, new Point(0, 100), new Point(60, 100), BotMovementManager.cfg.STOP_DIST, BotMovementManager.cfg.FOLLOW_DIST);
+
+        assertEquals(walkStep, step,
+                "fast follow bots should keep full walk speed instead of being micro-throttled");
+    }
+
+    @Test
+    void shouldShowStandingStanceWhileGroundVelocityDeceleratesWithoutMoveInput() {
+        MapleMap map = new MapleMap(910000035, 0, 0, 910000035, 1.0f);
+        Character bot = mockBot(new Point(0, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.inAir = false;
+        entry.movementVelX = 80;
+        entry.lastDesiredDirection = 0;
+        entry.facingDir = 1;
+
+        assertTrue(BotPhysicsEngine.isStandingStance(BotPhysicsEngine.resolveStance(entry)),
+                "residual ground velocity should not force a walking stance when no move key is held");
+    }
+
+    @Test
+    void shouldNotUseSpeedMismatchFidgetWhenOwnerIsIdle() {
+        MapleMap map = new MapleMap(910000041, 0, 0, 910000041, 1.0f);
+        Character bot = mockBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.following = true;
+        entry.movementProfile = new BotMovementProfile(140, 100);
+        entry.observedOwnerStepX = 0;
+        entry.observedOwnerStepY = 0;
+
+        assertFalse(BotFidgetManager.shouldStartSpeedMismatchFidget(entry, new Point(100, 100), new Point(110, 100)),
+                "idle owners should use the long idle-fidget roll, not the active follow speed-mismatch fidget");
+
+        entry.observedOwnerStepX = 4;
+
+        assertTrue(BotFidgetManager.shouldStartSpeedMismatchFidget(entry, new Point(100, 100), new Point(110, 100)),
+                "slow-but-moving owners remain eligible for speed-mismatch follow fidgets");
+    }
+
+    @Test
+    void shouldHoldProneWhileFidgetIsActive() {
+        MapleMap map = new MapleMap(910000036, 0, 0, 910000036, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.following = true;
+        entry.movementProfile = new BotMovementProfile(140, 100);
+        BotFidgetManager.startFidget(entry, BotFidgetMode.PRONE, System.currentTimeMillis(), 3000);
+
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertTrue(entry.crouching);
+    }
+
+    @Test
+    void shouldNotChangeDirectionForProneFidgets() {
+        MapleMap map = new MapleMap(910000048, 0, 0, 910000048, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.following = true;
+        entry.facingDir = -1;
+        BotFidgetManager.startFidget(entry, BotFidgetMode.PRONE, System.currentTimeMillis(), 3000);
+
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertEquals(-1, entry.facingDir, "prone fidget should keep the current facing direction");
+        assertEquals(CharacterStance.PRONE_LEFT_STANCE, bot.getStance(),
+                "prone fidget should send left-facing prone stance");
+
+        BotFidgetManager.clear(entry);
+        entry.facingDir = -1;
+        entry.crouching = false;
+        BotFidgetManager.startFidget(entry, BotFidgetMode.SPAM_PRONE, System.currentTimeMillis(), 3000);
+
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertEquals(-1, entry.facingDir, "spam-prone fidget should not synthesize a turn input");
+        assertEquals(CharacterStance.PRONE_LEFT_STANCE, bot.getStance(),
+                "spam-prone fidget should send left-facing prone stance");
+    }
+
+    @Test
+    void shouldAllowSocialFidgetsAtBaseMoveSpeed() {
+        MapleMap map = new MapleMap(910000038, 0, 0, 910000038, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.following = true;
+        entry.movementProfile = new BotMovementProfile(100, 100);
+        BotFidgetManager.startFidget(entry, BotFidgetMode.PRONE, System.currentTimeMillis(), 3000, BotFidgetTrigger.SOCIAL);
+
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertTrue(entry.crouching);
+    }
+
+    @Test
+    void shouldAllowAutoFollowFidgetsAtBaseMoveSpeed() {
+        MapleMap map = new MapleMap(910000047, 0, 0, 910000047, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.following = true;
+        entry.movementProfile = new BotMovementProfile(100, 100);
+        BotFidgetManager.startFidget(entry, BotFidgetMode.PRONE, System.currentTimeMillis(), 3000, BotFidgetTrigger.AUTO_FOLLOW);
+
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertTrue(entry.crouching, "base-speed follow fidgets should not be blocked by a speed-stat guard");
+    }
+
+    @Test
+    void shouldAlternateDirectionalFidgetJumps() {
+        MapleMap map = new MapleMap(910000039, 0, 0, 910000039, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.following = true;
+        entry.movementProfile = new BotMovementProfile(140, 100);
+        BotFidgetManager.startFidget(entry, BotFidgetMode.DIAGONAL_JUMP, System.currentTimeMillis(), 3000);
+
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
+        int firstJumpVelX = entry.airVelX;
+        assertTrue(firstJumpVelX != 0, "diagonal jump fidget should launch with horizontal momentum");
+
+        BotPhysicsEngine.idleOnGround(entry, bot);
+        entry.nextFidgetJumpAtMs = 0L;
+
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertEquals(-Integer.signum(firstJumpVelX), Integer.signum(entry.airVelX),
+                "diagonal jump fidget should alternate jump direction on the next grounded launch");
+    }
+
+    @Test
+    void shouldKeepJumpFidgetRunningWhileAirborne() {
+        MapleMap map = new MapleMap(910000040, 0, 0, 910000040, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.following = true;
+        entry.movementProfile = new BotMovementProfile(140, 100);
+        BotFidgetManager.startFidget(entry, BotFidgetMode.JUMP, System.currentTimeMillis(), 3000);
+
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertTrue(entry.inAir);
+
+        bot.setPosition(new Point(100, 0));
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertEquals(BotFidgetMode.JUMP, entry.fidgetMode,
+                "jump fidgets should not clear themselves while airborne above the ground target");
+    }
+
+    @Test
+    void shouldRepeatJumpFidgetAfterLandingUntilDurationEnds() {
+        MapleMap map = new MapleMap(910000042, 0, 0, 910000042, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.following = true;
+        entry.movementProfile = new BotMovementProfile(140, 100);
+        BotFidgetManager.startFidget(entry, BotFidgetMode.JUMP, System.currentTimeMillis(), 3000);
+
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertTrue(entry.inAir);
+
+        BotPhysicsEngine.idleOnGround(entry, bot);
+        entry.nextFidgetActionAtMs = Long.MAX_VALUE;
+        entry.nextFidgetJumpAtMs = 0L;
+
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertTrue(entry.inAir, "grounded jump fidgets should launch again even if air steering is cooling down");
+    }
+
+    @Test
+    void shouldOnlySpamAirSteerWhenJumpFidgetRollEnablesIt() {
+        MapleMap map = new MapleMap(910000046, 0, 0, 910000046, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.following = true;
+        entry.movementProfile = new BotMovementProfile(140, 100);
+        BotFidgetManager.startFidget(entry, BotFidgetMode.JUMP, System.currentTimeMillis(), 3000);
+        BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true);
+
+        entry.fidgetSpamAirSteer = false;
+        entry.airSteerVelX = 0.0;
+        entry.nextFidgetActionAtMs = 0L;
+
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertEquals(0.0, entry.airSteerVelX,
+                "non-spam jump fidgets should not reroll random air steering every airborne tick");
+
+        entry.fidgetSpamAirSteer = true;
+        entry.fidgetActionBaseDelayMs = 100;
+        entry.airSteerVelX = 0.0;
+        entry.nextFidgetActionAtMs = 0L;
+        long before = System.currentTimeMillis();
+
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertTrue(entry.airSteerVelX != 0.0,
+                "spam-air-steer jump fidgets should press random side input on their own delay");
+        long after = System.currentTimeMillis();
+        assertTrue(entry.nextFidgetActionAtMs >= before + 100
+                        && entry.nextFidgetActionAtMs <= after + 150,
+                "air-steer spam should use a tick-aligned 0/50ms jitter");
+    }
+
+    @Test
+    void shouldSpamSidewaysDuringFidgetWithoutDroppingFollowMode() {
+        MapleMap map = new MapleMap(910000043, 0, 0, 910000043, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.following = true;
+        entry.movementProfile = new BotMovementProfile(140, 100);
+        BotFidgetManager.startFidget(entry, BotFidgetMode.SPAM_SIDEWAYS, System.currentTimeMillis(), 3000);
+        assertTrue(entry.fidgetActionBaseDelayMs >= 100 && entry.fidgetActionBaseDelayMs <= 250);
+        assertEquals(0, entry.fidgetActionBaseDelayMs % BotPhysicsEngine.cfg.TICK_MS);
+
+        long before = System.currentTimeMillis();
+        assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertEquals(BotFidgetMode.SPAM_SIDEWAYS, entry.fidgetMode);
+        assertTrue(entry.lastDesiredDirection != 0, "sideway spam should hold a left/right movement input");
+        long after = System.currentTimeMillis();
+        assertTrue(entry.nextFidgetActionAtMs >= before + entry.fidgetActionBaseDelayMs
+                        && entry.nextFidgetActionAtMs <= after + entry.fidgetActionBaseDelayMs + 50,
+                "sideway spam should use tick-aligned 0/50ms jitter around its per-fidget base interval");
+        assertTrue(entry.following, "sideway spam should not convert follow mode into a manual move command");
+    }
+
+    @Test
+    void shouldContinueFollowingAfterAutoFidgetEnds() {
+        MapleMap map = new MapleMap(910000044, 0, 0, 910000044, 1.0f);
+        Character bot = mockBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.following = true;
+        entry.movementProfile = new BotMovementProfile(140, 100);
+        long now = System.currentTimeMillis();
+        BotFidgetManager.startFidget(entry, BotFidgetMode.SPAM_SIDEWAYS, now, 2000);
+        bot.setPosition(new Point(130, 100));
+        entry.fidgetUntilMs = now - 1;
+
+        assertFalse(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertEquals(BotFidgetMode.NONE, entry.fidgetMode);
+        assertNull(entry.moveTarget, "speed-mismatch follow fidgets should resume following immediately");
+        assertFalse(entry.moveTargetPrecise);
+    }
+
+    @Test
+    void shouldReturnToFidgetOriginWithPreciseMoveTargetAfterIdleOrSocialFidgetEnds() {
+        MapleMap map = new MapleMap(910000045, 0, 0, 910000045, 1.0f);
+        Character bot = mockBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.following = true;
+        entry.movementProfile = new BotMovementProfile(140, 100);
+        long now = System.currentTimeMillis();
+        BotFidgetManager.startFidget(entry, BotFidgetMode.SPAM_SIDEWAYS, now, 2000, BotFidgetTrigger.SOCIAL);
+        bot.setPosition(new Point(130, 100));
+        entry.fidgetUntilMs = now - 1;
+
+        assertFalse(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertEquals(new Point(100, 100), entry.moveTarget,
+                "social fidget cleanup should reuse the precise move-target path from the here command");
+        assertTrue(entry.moveTargetPrecise);
+
+        entry.moveTarget = null;
+        entry.moveTargetPrecise = false;
+        bot.setPosition(new Point(130, 100));
+        BotFidgetManager.startFidget(entry, BotFidgetMode.SPAM_SIDEWAYS, now, 2000, BotFidgetTrigger.IDLE);
+        bot.setPosition(new Point(160, 100));
+        entry.fidgetUntilMs = now - 1;
+
+        assertFalse(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
+        assertEquals(new Point(130, 100), entry.moveTarget,
+                "idle fidget cleanup should return to its own recorded origin");
+        assertTrue(entry.moveTargetPrecise);
+    }
+
+    @Test
+    void shouldNotUseDownJumpForUnstuckRecovery() {
+        MapleMap map = new MapleMap(910000037, 0, 0, 910000037, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+
+        BotMovementManager.tickUnstuck(entry);
+
+        assertFalse(entry.downJumpPending, "unstuck recovery should only use lateral jumps");
+        assertTrue(entry.inAir, "unstuck recovery should launch the bot instead of crouching in place");
+    }
+
+    @Test
     void shouldNotApplyAirSteeringDuringCommittedNavJump() {
         MapleMap map = new MapleMap(910000009, 0, 0, 910000009, 1.0f);
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
@@ -428,17 +941,69 @@ class BotMovementManagerTest {
         assertEquals(668, entry.blockedRopeGrab.x());
     }
 
+    @Test
+    void shouldSwapMovementProfileWhileBucketGraphWarms() {
+        MapleMap map = new MapleMap(910000027, 0, 0, 910000027, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
+        map.setFootholds(footholds);
+        BotNavigationGraphProvider.rebuildGraph(map, BotMovementProfile.base());
+
+        Character bot = mockBot(new Point(20, 100), map);
+        when(bot.getTotalMoveSpeedStat()).thenReturn(109);
+        when(bot.getTotalJumpStat()).thenReturn(107);
+
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.movementProfile = BotMovementProfile.base();
+
+        BotMovementProfile targetProfile = BotMovementProfile.fromCharacter(bot);
+        assertEquals(new BotMovementProfile(105, 105), targetProfile);
+        entry.navEdge = new BotNavigationGraph.Edge(
+                1, 2, BotNavigationGraph.EdgeType.JUMP,
+                new Point(20, 100), new Point(80, 40),
+                8, 0, 0, 0, 0, 300
+        );
+        entry.navTargetPos = new Point(20, 100);
+        entry.navTargetRegionId = 2;
+        entry.navPreciseTarget = true;
+
+        assertTrue(BotMovementManager.refreshMovementProfile(entry),
+                "profile swap should commit immediately and let nav use closest graph while the exact graph warms");
+        assertEquals(targetProfile, entry.movementProfile);
+        assertNull(entry.navEdge);
+        assertNull(entry.navTargetPos);
+        assertEquals(-1, entry.navTargetRegionId);
+        assertFalse(entry.navPreciseTarget);
+    }
+
     private static Character mockBot(Point startPosition, MapleMap map) {
         Character bot = mock(Character.class);
         AtomicReference<Point> position = new AtomicReference<>(new Point(startPosition));
+        AtomicInteger stance = new AtomicInteger();
         when(bot.getPosition()).thenAnswer(invocation -> new Point(position.get()));
         doAnswer(invocation -> {
             position.set(new Point(invocation.getArgument(0)));
             return null;
         }).when(bot).setPosition(any(Point.class));
+        when(bot.getStance()).thenAnswer(invocation -> stance.get());
+        doAnswer(invocation -> {
+            stance.set(invocation.getArgument(0));
+            return null;
+        }).when(bot).setStance(anyInt());
         when(bot.getMap()).thenReturn(map);
         when(bot.getId()).thenReturn(1);
         when(bot.getHp()).thenReturn(100);
+        when(bot.getTotalMoveSpeedStat()).thenReturn(100);
+        when(bot.getTotalJumpStat()).thenReturn(100);
         return bot;
+    }
+
+    private static Monster mockMob(Point position, int id) {
+        Monster mob = mock(Monster.class);
+        when(mob.getPosition()).thenReturn(new Point(position));
+        when(mob.getId()).thenReturn(id);
+        when(mob.isAlive()).thenReturn(true);
+        when(mob.isFacingLeft()).thenReturn(false);
+        return mob;
     }
 }

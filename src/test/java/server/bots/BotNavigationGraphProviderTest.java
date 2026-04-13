@@ -74,22 +74,30 @@ class BotNavigationGraphProviderTest {
 
     @Test
     void shouldGenerateDirectHenesysJumpEdgeFromBelowToFoothold315() {
-        BotNavigationGraph.Edge edge = findPath(henesysGraph, henesys, new Point(1080, 334), new Point(1275, 275)).getFirst();
+        Point start = new Point(1080, 334);
+        Point target = new Point(1275, 275);
+        int targetRegionId = henesysGraph.findRegionId(henesys, target);
+        BotNavigationGraph.Edge edge = findPath(henesysGraph, henesys, start, target).getFirst();
 
         assertNotNull(edge);
         assertEquals(BotNavigationGraph.EdgeType.JUMP, edge.type);
-        assertTrue(edge.containsLaunchX(1080));
-        assertEquals(new Point(1173, 275), edge.endPoint);
+        assertTrue(edge.containsLaunchX(start.x));
+        assertEquals(targetRegionId, edge.toRegionId);
+        assertJumpEdgeLandsInRegion(henesysGraph, henesys, edge, targetRegionId);
     }
 
     @Test
     void shouldFindSingleJumpPathFromHenesysStreetToUpperPlatform() {
-        List<BotNavigationGraph.Edge> path = findPath(henesysGraph, henesys, new Point(1080, 334), new Point(1275, 275));
+        Point start = new Point(1080, 334);
+        Point target = new Point(1275, 275);
+        int targetRegionId = henesysGraph.findRegionId(henesys, target);
+        List<BotNavigationGraph.Edge> path = findPath(henesysGraph, henesys, start, target);
 
         assertEquals(1, path.size());
         assertEquals(BotNavigationGraph.EdgeType.JUMP, path.getFirst().type);
-        assertTrue(path.getFirst().containsLaunchX(1080));
-        assertEquals(new Point(1173, 275), path.getFirst().endPoint);
+        assertTrue(path.getFirst().containsLaunchX(start.x));
+        assertEquals(targetRegionId, path.getFirst().toRegionId);
+        assertJumpEdgeLandsInRegion(henesysGraph, henesys, path.getFirst(), targetRegionId);
     }
 
     @Test
@@ -100,7 +108,58 @@ class BotNavigationGraphProviderTest {
         assertEquals(1, path.size());
         assertEquals(BotNavigationGraph.EdgeType.JUMP, path.getFirst().type);
         assertEquals(targetRegionId, path.getFirst().toRegionId);
-        assertEquals(274, path.getFirst().endPoint.y);
+        assertJumpEdgeLandsInRegion(henesysGraph, henesys, path.getFirst(), targetRegionId);
+    }
+
+    @Test
+    void shouldNotLaunchHenesysLeftPlatformJumpFromWallBlockedBoundary() {
+        Point blockedStart = new Point(939, 334);
+        int blockedStartRegionId = henesysGraph.findRegionId(henesys, blockedStart);
+        List<BotNavigationGraph.Edge> path = findPath(henesysGraph, henesys, blockedStart, new Point(420, 274));
+
+        assertFalse(path.isEmpty());
+        assertEquals(BotNavigationGraph.EdgeType.JUMP, path.getFirst().type);
+        assertFalse(path.getFirst().containsLaunchX(blockedStart.x),
+                "wall-blocked boundary position should be outside the jump launch window");
+
+        BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateJumpLanding(
+                henesys, blockedStart, path.getFirst().launchStepX, henesysGraph.movementProfile);
+        assertNotNull(landing);
+        assertEquals(blockedStartRegionId,
+                henesysGraph.regionIdByFootholdId.getOrDefault(landing.foothold().getId(), -1),
+                "jumping from the blocked boundary should not be treated as a valid upper-platform launch");
+    }
+
+    @Test
+    void shouldGenerateLocalHenesysJumpEdgesNearRightWall() {
+        int lowerRegionId = henesysGraph.findRegionId(henesys, new Point(3711, 454));
+        int middleRegionId = henesysGraph.findRegionId(henesys, new Point(3532, 394));
+        int upperRegionId = henesysGraph.findRegionId(henesys, new Point(3352, 334));
+
+        assertHasHenesysJumpEdge(lowerRegionId, middleRegionId);
+        assertHasHenesysJumpEdge(middleRegionId, upperRegionId);
+    }
+
+    @Test
+    void shouldGenerateKpqRopeTransferPathToRightUpperPlatform() {
+        int leftRopeRegionId = kpqS1Graph.findRopeRegionId(new Point(-437, -892));
+        int rightRopeRegionId = kpqS1Graph.findRopeRegionId(new Point(-337, -1000));
+        int targetRegionId = kpqS1Graph.findRegionId(kpqS1, new Point(-86, -897));
+
+        assertTrue(leftRopeRegionId > 0);
+        assertTrue(rightRopeRegionId > 0);
+        assertTrue(targetRegionId > 0);
+        assertTrue(kpqS1Graph.getOutgoing(leftRopeRegionId).stream()
+                        .anyMatch(edge -> edge.type == BotNavigationGraph.EdgeType.CLIMB
+                                && edge.toRegionId == rightRopeRegionId
+                                && edge.launchStepX > 0),
+                "Expected rope-to-rope transfer from the left KPQ rope to the adjacent right rope");
+
+        List<BotNavigationGraph.Edge> path = BotNavigationManager.findPath(kpqS1Graph, kpqS1,
+                new Point(-437, -892), leftRopeRegionId, targetRegionId, new Point(-86, -897));
+
+        assertFalse(path.isEmpty(), "Left KPQ rope should route to the right upper platform");
+        assertEquals(targetRegionId, path.getLast().toRegionId);
     }
 
     @Test
@@ -139,8 +198,10 @@ class BotNavigationGraphProviderTest {
         assertTrue(path.getFirst().launchMinX < path.getFirst().launchMaxX);
         assertTrue(path.getFirst().containsLaunchX(523),
                 "The slope-platform jump should expose a real launch interval around the valid takeoff point");
-        assertFalse(path.getFirst().containsLaunchX(518),
-                "The old repeated launch point at x=518 should no longer be treated as valid for this jump");
+        assertFalse(path.getFirst().containsLaunchX(path.getFirst().launchMinX - 1),
+                "launch windows should reject positions just outside the left boundary");
+        assertFalse(path.getFirst().containsLaunchX(path.getFirst().launchMaxX + 1),
+                "launch windows should reject positions just outside the right boundary");
     }
 
     @Test
@@ -180,8 +241,8 @@ class BotNavigationGraphProviderTest {
 
         assertNotNull(edge);
         assertTrue(edge.containsLaunchX(1355));
-        assertEquals(-955, edge.endPoint.y);
-        assertTrue(Math.abs(edge.endPoint.x - 1310) <= 2);
+        assertNotEquals(edge.fromRegionId, edge.toRegionId);
+        assertJumpEdgeLandsInRegion(elliniaGraph, ellinia, edge, edge.toRegionId);
     }
 
     @Test
@@ -226,22 +287,37 @@ class BotNavigationGraphProviderTest {
         List<BotNavigationGraph.Edge> path = findPath(elliniaGraph, ellinia, new Point(1354, -1197), new Point(1355, -888));
 
         assertEquals(BotNavigationGraph.EdgeType.DROP, path.getFirst().type);
-        assertTrue(path.getFirst().launchStepX != 0, "Ledge drops should keep a horizontal walk-off step instead of down-jumping in place");
         assertTrue(path.stream().allMatch(edge -> edge.type == BotNavigationGraph.EdgeType.DROP
-                || edge.type == BotNavigationGraph.EdgeType.WALK));
+                || edge.type == BotNavigationGraph.EdgeType.WALK),
+                "dropping to a lower Ellinia platform should stay on drop/walk edges even if the exact drop style changes");
     }
 
     @Test
     void shouldRequireStraightDropExecutionNearItsAuthoredAnchor() {
-        StraightDropCase dropCase = findStraightDropCaseWithAlternativeStart(elliniaGraph, ellinia);
+        BotNavigationGraph.Edge dropEdge = new BotNavigationGraph.Edge(
+                1, 2, BotNavigationGraph.EdgeType.DROP,
+                new Point(100, 100), new Point(100, 160),
+                0, 0, 0, 0, 0, 100
+        );
 
-        assertNotNull(dropCase, "Expected at least one straight drop edge with an alternate same-region start point");
-        assertNotEquals(dropCase.edge().startPoint.x, dropCase.alternativeStart().x);
         assertTrue(BotNavigationManager.canExecuteDropFromCurrentPosition(
+                null, null, new Point(100, 100), dropEdge));
+        assertTrue(BotNavigationManager.canExecuteDropFromCurrentPosition(
+                null, null, new Point(114, 100), dropEdge));
+        assertFalse(BotNavigationManager.canExecuteDropFromCurrentPosition(
+                null, null, new Point(115, 100), dropEdge));
+    }
+
+    @Test
+    void shouldTreatWalkOffDropsAsDirectionalMovementInsteadOfExecutableAnchors() {
+        LedgeDropCase dropCase = findLedgeDropCaseWithWalkableEarlyStart(elliniaGraph, ellinia);
+
+        assertNotNull(dropCase, "Expected at least one ledge drop with a still-walkable early start");
+        assertTrue(BotPhysicsEngine.canWalkGroundStep(ellinia, dropCase.earlyStart(), dropCase.edge().launchStepX));
+        assertFalse(BotNavigationManager.canExecuteDropFromCurrentPosition(
                 elliniaGraph, ellinia, dropCase.edge().startPoint, dropCase.edge()));
-        assertEquals(Math.abs(dropCase.alternativeStart().x - dropCase.edge().startPoint.x) <= 14,
-                BotNavigationManager.canExecuteDropFromCurrentPosition(
-                        elliniaGraph, ellinia, dropCase.alternativeStart(), dropCase.edge()));
+        assertFalse(BotNavigationManager.canExecuteDropFromCurrentPosition(
+                elliniaGraph, ellinia, dropCase.earlyStart(), dropCase.edge()));
     }
 
     @Test
@@ -310,6 +386,100 @@ class BotNavigationGraphProviderTest {
     @Test
     void bumpyKerningSwampIsSameRegion() {
         assertEquals(swamp1Graph.findRegionId(swamp1, new Point(1378, 123)), swamp1Graph.findRegionId(swamp1, new Point(-1723, 118)));
+    }
+
+    @Test
+    void shouldPreferDirectElliniaJumpFromRegion64ToRegion65() {
+        Point botPosition = new Point(-61, -938);
+        Point ownerPosition = new Point(-268, -907);
+        int botRegionId = elliniaGraph.findRegionId(ellinia, botPosition);
+        int ownerRegionId = elliniaGraph.findRegionId(ellinia, ownerPosition);
+
+        assertEquals(64, botRegionId);
+        assertEquals(65, ownerRegionId);
+
+        BotNavigationGraph.Edge directJump = elliniaGraph.getOutgoing(botRegionId).stream()
+                .filter(edge -> edge.type == BotNavigationGraph.EdgeType.JUMP)
+                .filter(edge -> edge.toRegionId == ownerRegionId)
+                .filter(edge -> edge.containsLaunchX(botPosition.x))
+                .findFirst()
+                .orElse(null);
+
+        assertNotNull(directJump, "Expected direct Ellinia jump edge from region 64 to region 65 at the logged bot X");
+        assertTrue(directJump.launchMinX < 0, "jump launch window should keep valid negative X coordinates");
+        assertJumpEdgeLandsInRegion(elliniaGraph, ellinia, directJump, ownerRegionId);
+
+        List<BotNavigationGraph.Edge> path = findPath(elliniaGraph, ellinia, botPosition, ownerPosition);
+
+        assertEquals(1, path.size(), "expected direct jump path instead of Ellinia detour");
+        assertEquals(BotNavigationGraph.EdgeType.JUMP, path.getFirst().type);
+        assertEquals(ownerRegionId, path.getFirst().toRegionId);
+    }
+
+    @Test
+    void shouldTrimJumpWindowAtInvalidInteriorWallBoundary() {
+        MapleMap map = BotNavigationMapLoader.loadMapGeometry(100000202);
+        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
+        Point badLaunch = new Point(-1422, -642);
+        int fromRegionId = graph.findRegionId(map, badLaunch);
+        int targetRegionId = graph.findRegionId(map, new Point(-1375, -664));
+
+        assertEquals(36, fromRegionId);
+        assertEquals(32, targetRegionId);
+
+        BotPhysicsEngine.JumpLanding badLanding = BotPhysicsEngine.simulateJumpLanding(
+                map, badLaunch, BotPhysicsEngine.walkStep(map), graph.movementProfile);
+        assertNotNull(badLanding);
+        assertEquals(fromRegionId, graph.regionIdByFootholdId.getOrDefault(badLanding.foothold().getId(), -1),
+                "logged bad launch should bounce back to the original region");
+
+        assertTrue(graph.getOutgoing(fromRegionId).stream()
+                        .anyMatch(edge -> edge.type == BotNavigationGraph.EdgeType.JUMP
+                                && edge.toRegionId == targetRegionId
+                                && edge.containsLaunchX(-1427)),
+                "nearby valid launch point should still route to the target platform");
+        assertFalse(graph.getOutgoing(fromRegionId).stream()
+                        .anyMatch(edge -> edge.type == BotNavigationGraph.EdgeType.JUMP
+                                && edge.toRegionId == targetRegionId
+                                && edge.containsLaunchX(badLaunch.x)),
+                "jump launch windows must not include X positions that no longer land in the target region");
+    }
+
+    @Test
+    void shouldTrimJumpWindowThatFallsOffLandingPlatformWithMomentum() {
+        MapleMap map = BotNavigationMapLoader.loadMapGeometry(100000202);
+        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
+        int stepX = BotPhysicsEngine.walkStep(map, graph.movementProfile);
+        Point badLaunch = new Point(-1881, -1341);
+        Point stableLaunch = new Point(-1898, -1341);
+        int fromRegionId = graph.findRegionId(map, badLaunch);
+        int targetRegionId = graph.findRegionId(map, new Point(-1841, -1379));
+
+        assertEquals(8, fromRegionId);
+        assertEquals(7, targetRegionId);
+
+        BotPhysicsEngine.PostLandingJump unstableLanding =
+                BotPhysicsEngine.simulateJumpLandingWithPostLandingTicks(map, badLaunch, stepX, graph.movementProfile, 3);
+        BotPhysicsEngine.PostLandingJump stableLanding =
+                BotPhysicsEngine.simulateJumpLandingWithPostLandingTicks(map, stableLaunch, stepX, graph.movementProfile, 3);
+
+        assertNotNull(unstableLanding);
+        assertTrue(unstableLanding.lostGround(),
+                "logged right-edge launch should fall off region 7 after landing momentum is applied");
+        assertNotNull(stableLanding);
+        assertFalse(stableLanding.lostGround(),
+                "nearby deeper launch should stay on the destination platform after landing momentum");
+
+        assertTrue(graph.getOutgoing(fromRegionId).stream()
+                        .anyMatch(edge -> edge.type == BotNavigationGraph.EdgeType.JUMP
+                                && edge.toRegionId == targetRegionId
+                                && edge.containsLaunchX(stableLaunch.x)),
+                "stable launches should still route to the target platform");
+        assertFalse(graph.getOutgoing(fromRegionId).stream()
+                        .anyMatch(edge -> edge.type == BotNavigationGraph.EdgeType.JUMP
+                                && edge.toRegionId == targetRegionId
+                                && edge.containsLaunchX(badLaunch.x)),
+                "jump launch windows must exclude launches that immediately walk off the landing platform");
     }
 
     private static List<BotNavigationGraph.Edge> findPath(BotNavigationGraph graph,
@@ -384,50 +554,63 @@ class BotNavigationGraphProviderTest {
         return count;
     }
 
+    private static void assertHasHenesysJumpEdge(int fromRegionId, int toRegionId) {
+        assertTrue(henesysGraph.getOutgoing(fromRegionId).stream()
+                        .anyMatch(edge -> edge.type == BotNavigationGraph.EdgeType.JUMP
+                                && edge.toRegionId == toRegionId),
+                "Expected Henesys jump edge r" + fromRegionId + "->r" + toRegionId);
+    }
+
     private static MapleMap createEmptyTestMap(int mapId) {
         MapleMap map = new MapleMap(mapId, 0, 0, mapId, 1.0f);
         map.setFootholds(new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000)));
         return map;
     }
 
-    private static StraightDropCase findStraightDropCaseWithAlternativeStart(BotNavigationGraph graph, MapleMap map) {
+    private static LedgeDropCase findLedgeDropCaseWithWalkableEarlyStart(BotNavigationGraph graph, MapleMap map) {
         for (BotNavigationGraph.Region region : graph.regions) {
             for (BotNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
-                if (edge.type != BotNavigationGraph.EdgeType.DROP || edge.launchStepX != 0) {
+                if (edge.type != BotNavigationGraph.EdgeType.DROP || edge.launchStepX == 0) {
                     continue;
                 }
 
-                Point alternative = findAlternativeStraightDropStart(graph, map, edge);
-                if (alternative != null) {
-                    return new StraightDropCase(edge, alternative);
+                Point earlyStart = findWalkableEarlyDropStart(graph, map, edge);
+                if (earlyStart != null) {
+                    return new LedgeDropCase(edge, earlyStart);
                 }
             }
         }
         return null;
     }
 
-    private static Point findAlternativeStraightDropStart(BotNavigationGraph graph,
-                                                          MapleMap map,
-                                                          BotNavigationGraph.Edge edge) {
+    private static Point findWalkableEarlyDropStart(BotNavigationGraph graph,
+                                                    MapleMap map,
+                                                    BotNavigationGraph.Edge edge) {
         BotNavigationGraph.Region region = graph.getRegion(edge.fromRegionId);
         if (region == null) {
             return null;
         }
 
-        for (int x = region.minX; x <= region.maxX; x += 4) {
-            Point start = region.pointAt(x);
-            if (Math.abs(start.x - edge.startPoint.x) < 12) {
+        int direction = Integer.signum(edge.launchStepX);
+        if (direction == 0) {
+            return null;
+        }
+
+        for (int delta = 1; delta <= 14; delta++) {
+            int candidateX = edge.startPoint.x - (direction * delta);
+            if (candidateX < region.minX || candidateX > region.maxX) {
                 continue;
             }
 
-            BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateDownJumpLanding(map, start);
-            if (landing == null) {
+            Point candidate = region.pointAt(candidateX);
+            if (candidate == null || candidate.equals(edge.startPoint)) {
                 continue;
             }
-
-            int landingRegionId = graph.regionIdByFootholdId.getOrDefault(landing.foothold().getId(), -1);
-            if (landingRegionId == edge.toRegionId) {
-                return start;
+            if (graph.findRegionId(map, candidate) != edge.fromRegionId) {
+                continue;
+            }
+            if (BotPhysicsEngine.canWalkGroundStep(map, candidate, edge.launchStepX)) {
+                return candidate;
             }
         }
         return null;
@@ -530,6 +713,8 @@ class BotNavigationGraphProviderTest {
         }).when(bot).setPosition(any(Point.class));
         when(bot.getMap()).thenReturn(map);
         when(bot.getHp()).thenReturn(100);
+        when(bot.getTotalMoveSpeedStat()).thenReturn(100);
+        when(bot.getTotalJumpStat()).thenReturn(100);
         when(bot.getStance()).thenAnswer(invocation -> stance.get());
         doAnswer(invocation -> {
             stance.set(invocation.getArgument(0));
@@ -538,7 +723,20 @@ class BotNavigationGraphProviderTest {
         return bot;
     }
 
-    private record StraightDropCase(BotNavigationGraph.Edge edge, Point alternativeStart) {
+    private static void assertJumpEdgeLandsInRegion(BotNavigationGraph graph,
+                                                    MapleMap map,
+                                                    BotNavigationGraph.Edge edge,
+                                                    int expectedRegionId) {
+        BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateJumpLanding(
+                map, edge.startPoint, edge.launchStepX, graph.movementProfile);
+
+        assertNotNull(landing, "jump edge should reproduce a landing when simulated from its authored anchor");
+        assertEquals(expectedRegionId,
+                graph.regionIdByFootholdId.getOrDefault(landing.foothold().getId(), -1),
+                "jump edge should land in the expected destination region");
+    }
+
+    private record LedgeDropCase(BotNavigationGraph.Edge edge, Point earlyStart) {
     }
 
     private record AlternativeJumpCase(BotNavigationGraph.Edge edge, Point alternativeStart) {

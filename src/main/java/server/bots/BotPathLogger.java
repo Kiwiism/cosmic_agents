@@ -9,6 +9,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
+import server.maps.MapleMap;
 
 /**
  * Records per-tick navigation snapshots for a single bot and dumps them to a human-readable file.
@@ -37,6 +38,12 @@ final class BotPathLogger {
             boolean consumedTick,
             boolean stuck,
             boolean unstuck
+    ) {}
+
+    private record GraphSnapshot(
+            BotMovementProfile requestedProfile,
+            BotNavigationGraph graph,
+            String source
     ) {}
 
     private final String botName;
@@ -97,28 +104,29 @@ final class BotPathLogger {
         LocalDateTime now = LocalDateTime.now();
         String filename = "pathlog-" + botName + "-" + now.format(FILE_FMT) + ".txt";
 
-        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(entry.bot.getMap());
+        GraphSnapshot graphSnapshot = resolveGraphSnapshot(entry);
+        BotNavigationGraph graph = graphSnapshot.graph();
         Point botPos = entry.bot.getPosition();
         Point goalTargetPos = targetSnapshot.primaryTargetPos();
         Point steeringTargetPos = targetSnapshot.steeringTargetPos(entry);
-        int botRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, entry.bot.getMap(), botPos);
-        int rawOwnerRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, entry.bot.getMap(), targetSnapshot.rawOwnerPos());
-        int followBaseRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, entry.bot.getMap(), targetSnapshot.followBasePos());
-        int followTargetRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, entry.bot.getMap(), targetSnapshot.followTargetPos());
-        int goalRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, entry.bot.getMap(), goalTargetPos);
-        int steeringTargetRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, entry.bot.getMap(), steeringTargetPos);
+        int botRegionId = resolveCurrentRegionId(graph, entry, botPos);
+        int rawOwnerRegionId = resolveTargetRegionId(graph, entry, targetSnapshot.rawOwnerPos());
+        int followBaseRegionId = resolveTargetRegionId(graph, entry, targetSnapshot.followBasePos());
+        int followTargetRegionId = resolveTargetRegionId(graph, entry, targetSnapshot.followTargetPos());
+        int goalRegionId = resolveTargetRegionId(graph, entry, goalTargetPos);
+        int steeringTargetRegionId = resolveTargetRegionId(graph, entry, steeringTargetPos);
         int moveTargetRegionId = targetSnapshot.moveTargetPos() == null
                 ? -1
-                : BotNavigationManager.resolveTargetRegionId(graph, entry, entry.bot.getMap(), targetSnapshot.moveTargetPos());
+                : resolveTargetRegionId(graph, entry, targetSnapshot.moveTargetPos());
         int grindTargetRegionId = targetSnapshot.grindTargetPos() == null
                 ? -1
-                : BotNavigationManager.resolveTargetRegionId(graph, entry, entry.bot.getMap(), targetSnapshot.grindTargetPos());
+                : resolveTargetRegionId(graph, entry, targetSnapshot.grindTargetPos());
 
         StringBuilder sb = new StringBuilder(4096);
         appendHeader(sb, now, note);
         appendCurrentState(sb, entry, targetSnapshot, botPos, botRegionId, rawOwnerRegionId,
                 followBaseRegionId, followTargetRegionId, goalRegionId, steeringTargetPos, steeringTargetRegionId,
-                moveTargetRegionId, grindTargetRegionId);
+                moveTargetRegionId, grindTargetRegionId, graphSnapshot);
         appendCurrentPath(sb, entry, targetSnapshot, goalRegionId, rawOwnerRegionId, botRegionId, graph);
         appendHistory(sb);
 
@@ -130,6 +138,39 @@ final class BotPathLogger {
         } catch (IOException e) {
             return "Failed to write log: " + e.getMessage();
         }
+    }
+
+    private static GraphSnapshot resolveGraphSnapshot(BotEntry entry) {
+        MapleMap map = entry.bot.getMap();
+        BotMovementProfile requestedProfile = entry.movementProfile == null
+                ? BotMovementProfile.fromCharacter(entry.bot)
+                : entry.movementProfile;
+        BotNavigationGraph exact = BotNavigationGraphProvider.peekGraph(map, requestedProfile);
+        if (exact != null) {
+            return new GraphSnapshot(requestedProfile, exact, "exact");
+        }
+
+        BotNavigationGraph closest = BotNavigationGraphProvider.peekClosestGraph(map, requestedProfile);
+        if (closest != null) {
+            return new GraphSnapshot(requestedProfile, closest, "closest");
+        }
+
+        BotNavigationGraphProvider.warmGraphAsync(map, requestedProfile);
+        return new GraphSnapshot(requestedProfile, null, "none/warming");
+    }
+
+    private static int resolveCurrentRegionId(BotNavigationGraph graph, BotEntry entry, Point point) {
+        if (graph == null) {
+            return -1;
+        }
+        return BotNavigationManager.resolveCurrentRegionId(graph, entry, entry.bot.getMap(), point);
+    }
+
+    private static int resolveTargetRegionId(BotNavigationGraph graph, BotEntry entry, Point point) {
+        if (graph == null) {
+            return -1;
+        }
+        return BotNavigationManager.resolveTargetRegionId(graph, entry, entry.bot.getMap(), point);
     }
 
     private void appendHeader(StringBuilder sb, LocalDateTime now, String note) {
@@ -155,10 +196,12 @@ final class BotPathLogger {
                                     Point steeringTargetPos,
                                     int steeringTargetRegionId,
                                     int moveTargetRegionId,
-                                    int grindTargetRegionId) {
+                                    int grindTargetRegionId,
+                                    GraphSnapshot graphSnapshot) {
         sb.append("--- CURRENT STATE ---\n");
         sb.append("Bot:        ").append(pointRegionStr(botPos, botRegionId)).append("\n");
         sb.append("Owner raw:  ").append(pointRegionStr(targetSnapshot.rawOwnerPos(), rawOwnerRegionId)).append("\n");
+        appendMovementGraphState(sb, entry, graphSnapshot);
         sb.append("Formation:  ").append(targetSnapshot.formation().type().name().toLowerCase())
                 .append(" px=").append(targetSnapshot.formation().px())
                 .append(" snap=").append(targetSnapshot.formation().snapRange())
@@ -204,6 +247,37 @@ final class BotPathLogger {
         sb.append("\n");
     }
 
+    private void appendMovementGraphState(StringBuilder sb, BotEntry entry, GraphSnapshot graphSnapshot) {
+        BotMovementProfile requested = graphSnapshot.requestedProfile();
+        sb.append("Movement:   speed=").append(requested.totalSpeedStat()).append("%")
+                .append(" jump=").append(requested.totalJumpStat()).append("%")
+                .append(" rawSpeed=").append(entry.bot.getTotalMoveSpeedStat()).append("%")
+                .append(" rawJump=").append(entry.bot.getTotalJumpStat()).append("%")
+                .append(" walkStep=").append(BotPhysicsEngine.walkStep(entry.bot.getMap(), requested))
+                .append(" walkVel=").append(String.format("%.1f", requested.walkVelocityPxs()))
+                .append(" jumpForce=").append(String.format("%.1f", requested.jumpSpeedPxs()))
+                .append("\n");
+        BotNavigationGraph graph = graphSnapshot.graph();
+        if (graph == null) {
+            sb.append("Graph:      none/warming requestedSpeed=").append(requested.totalSpeedStat()).append("%")
+                    .append(" requestedJump=").append(requested.totalJumpStat()).append("%\n");
+        } else {
+            BotMovementProfile graphProfile = graph.movementProfile;
+            sb.append("Graph:      ").append(graphSnapshot.source())
+                    .append(" version=").append(graph.version)
+                    .append(" speed=").append(graphProfile.totalSpeedStat()).append("%")
+                    .append(" jump=").append(graphProfile.totalJumpStat()).append("%");
+            if (!graphProfile.equals(requested)) {
+                sb.append(" requestedSpeed=").append(requested.totalSpeedStat()).append("%")
+                        .append(" requestedJump=").append(requested.totalJumpStat()).append("%");
+            }
+            sb.append("\n");
+        }
+        sb.append("Fallback:   heuristic=").append(entry.graphWarmupFallback ? "yes" : "no")
+                .append(" closestGraph=").append("closest".equals(graphSnapshot.source()) ? "yes" : "no")
+                .append("\n");
+    }
+
     private void appendCurrentPath(StringBuilder sb,
                                    BotEntry entry,
                                    BotManager.TargetSnapshot targetSnapshot,
@@ -228,6 +302,10 @@ final class BotPathLogger {
                             int targetRegionId,
                             int botRegionId,
                             BotNavigationGraph graph) {
+        if (graph == null) {
+            sb.append("  graph unavailable - exact graph warming and no closest cached graph\n");
+            return;
+        }
         if (botRegionId < 0 || targetRegionId < 0) {
             sb.append("  unknown region  botRegion=").append(botRegionId)
                     .append(" targetRegion=").append(targetRegionId).append("\n");

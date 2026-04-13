@@ -261,7 +261,7 @@ final class BotOfferManager {
         handlePendingOfferResponse(entry, recipientBot, "yes");
     }
 
-    private static String buildLootOfferPrompt(String recipientName, String itemName, boolean targetIsOwner) {
+    static String buildLootOfferPrompt(String recipientName, String itemName, boolean targetIsOwner) {
         List<String> prompts = targetIsOwner
                 ? List.of(
                         "I have %s, you want?",

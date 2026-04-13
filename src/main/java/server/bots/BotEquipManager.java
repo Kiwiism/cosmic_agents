@@ -1,5 +1,6 @@
 package server.bots;
 
+import config.YamlConfig;
 import client.Character;
 import client.Job;
 import client.inventory.Equip;
@@ -153,6 +154,9 @@ class BotEquipManager {
             if (!(item instanceof Equip equip) || ii.isCash(item.getItemId())) {
                 continue;
             }
+            if (item.isUntradeable() && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) {
+                continue;
+            }
 
             String textSlot = ii.getEquipmentSlot(item.getItemId());
             EquipSlot eslot = EquipSlot.getFromTextSlot(textSlot);
@@ -231,6 +235,9 @@ class BotEquipManager {
 
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         if (ii.isCash(candidate.getItemId())) {
+            return null;
+        }
+        if (holderItem.isUntradeable() && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) {
             return null;
         }
 

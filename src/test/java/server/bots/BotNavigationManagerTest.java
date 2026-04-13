@@ -13,12 +13,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -183,20 +186,22 @@ class BotNavigationManagerTest {
                 516, 523, -8, 0, 0, 0, 0, 850
         );
 
-        assertFalse(BotNavigationManager.isWithinJumpLaunchWindow(graph, new Point(515, 107), jump));
+        assertFalse(BotNavigationManager.isWithinJumpLaunchWindow(graph, new Point(513, 107), jump));
+        assertFalse(BotNavigationManager.isWithinJumpLaunchWindow(graph, new Point(514, 107), jump));
         assertTrue(BotNavigationManager.isWithinJumpLaunchWindow(graph, new Point(516, 107), jump));
         assertTrue(BotNavigationManager.isWithinJumpLaunchWindow(graph, new Point(523, 107), jump));
-        assertFalse(BotNavigationManager.isWithinJumpLaunchWindow(graph, new Point(524, 107), jump));
+        assertFalse(BotNavigationManager.isWithinJumpLaunchWindow(graph, new Point(525, 107), jump));
+        assertFalse(BotNavigationManager.isWithinJumpLaunchWindow(graph, new Point(526, 107), jump));
         assertFalse(BotNavigationManager.isWithinJumpLaunchWindow(graph, new Point(520, 160), jump));
     }
 
     @Test
-    void shouldApproachCenterOfJumpLaunchWindowWhenOutsideIt() {
+    void shouldPickStableJumpLaunchTargetInsideWindow() {
         MapleMap map = new MapleMap(910000010, 0, 0, 910000010, 1.0f);
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
         footholds.insert(new Foothold(new Point(500, 107), new Point(530, 107), 1));
         map.setFootholds(footholds);
-        BotNavigationGraphProvider.rebuildGraph(map);
+        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
 
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(map);
@@ -208,9 +213,18 @@ class BotNavigationManagerTest {
                 516, 523, -8, 0, 0, 0, 0, 850
         );
 
-        assertEquals(new Point(516, 107), BotNavigationManager.selectJumpWaypoint(entry, new Point(449, 113), jump));
-        assertEquals(new Point(523, 107), BotNavigationManager.selectJumpWaypoint(entry, new Point(540, 113), jump));
-        assertEquals(new Point(520, 107), BotNavigationManager.selectJumpWaypoint(entry, new Point(520, 113), jump));
+        Point firstTarget = BotNavigationManager.selectJumpWaypoint(entry, new Point(449, 113), jump);
+        Point secondTarget = BotNavigationManager.selectJumpWaypoint(entry, new Point(540, 113), jump);
+        Point thirdTarget = BotNavigationManager.selectJumpWaypoint(entry, new Point(520, 113), jump);
+
+        assertTrue(firstTarget.x >= 519 && firstTarget.x <= 520);
+        assertEquals(107, firstTarget.y);
+        assertEquals(firstTarget, secondTarget);
+        assertEquals(firstTarget, thirdTarget);
+
+        assertEquals(new Point(516, 107), BotNavigationManager.selectJumpWaypoint(graph, new Point(449, 113), jump));
+        assertEquals(new Point(523, 107), BotNavigationManager.selectJumpWaypoint(graph, new Point(540, 113), jump));
+        assertEquals(new Point(520, 107), BotNavigationManager.selectJumpWaypoint(graph, new Point(520, 113), jump));
     }
 
     @Test
@@ -252,6 +266,29 @@ class BotNavigationManagerTest {
                 "pathfinding should prefer the entry closest to the left-side in-region target");
         assertEquals(List.of(rightEntry), rightPath,
                 "pathfinding should prefer the entry closest to the clamped interior target, not a fixed nearest edge");
+    }
+
+    @Test
+    void shouldUseRawTargetWhileMovementGraphWarmsInBackground() {
+        MapleMap map = new MapleMap(910000030, 0, 0, 910000030, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(20, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.movementProfile = new BotMovementProfile(105, 105);
+
+        BotNavigationManager.NavigationDirective directive =
+                BotNavigationManager.resolveTarget(entry, new Point(180, 100), true);
+
+        assertFalse(directive.consumedTick);
+        assertEquals(new Point(180, 100), directive.targetPos);
+        assertEquals("graph-warmup", entry.lastNavDecision);
+        assertTrue(entry.graphWarmupFallback);
+        assertNull(entry.navEdge);
+
+        BotNavigationGraphProvider.getGraph(map, entry.movementProfile);
     }
 
     @Test
@@ -309,5 +346,21 @@ class BotNavigationManagerTest {
         BotNavigationGraph.Edge reused = BotNavigationManager.reuseCommittedEdge(graph, entry, 20, 14);
 
         assertEquals(entry.navEdge, reused);
+    }
+
+    private static Character mockBot(Point startPosition, MapleMap map) {
+        Character bot = mock(Character.class);
+        AtomicReference<Point> position = new AtomicReference<>(new Point(startPosition));
+        when(bot.getPosition()).thenAnswer(invocation -> new Point(position.get()));
+        doAnswer(invocation -> {
+            position.set(new Point(invocation.getArgument(0)));
+            return null;
+        }).when(bot).setPosition(any(Point.class));
+        when(bot.getMap()).thenReturn(map);
+        when(bot.getId()).thenReturn(1);
+        when(bot.getHp()).thenReturn(100);
+        when(bot.getTotalMoveSpeedStat()).thenReturn(100);
+        when(bot.getTotalJumpStat()).thenReturn(100);
+        return bot;
     }
 }

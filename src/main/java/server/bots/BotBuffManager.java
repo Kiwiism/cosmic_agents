@@ -2,6 +2,7 @@ package server.bots;
 
 import client.BuffStat;
 import client.Character;
+import client.Job;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
@@ -52,6 +53,8 @@ final class BotBuffManager {
         if (now - entry.lastBuffScanMs < TICK_MS) return;
         entry.lastBuffScanMs = now;
 
+        if (bot.getMap().getAllMonsters().stream().noneMatch(Monster::isAlive)) return;
+
         List<SelectedBuff> selected = buildSelection(bot, entry.buffCheapMode);
         if (selected.isEmpty()) {
             noteDecision(entry, "no buff pots in bag");
@@ -73,7 +76,7 @@ final class BotBuffManager {
             }
 
             noteDecision(entry, "used " + itemName + " " + beforeQty + "->" + item.getQuantity()
-                    + " [" + formatStatList(choice.effect()) + "]");
+                    + " [" + formatStatList(bot, choice.effect()) + "]");
             return;
         }
 
@@ -86,8 +89,8 @@ final class BotBuffManager {
 
         return "buff pots " + (enabled ? "on" : "off")
                 + " (" + (cheapMode ? "cheap" : "max") + ")"
-                + ": active " + summarizeActive(active, 2)
-                + "; bag " + summarizeAvailable(available, 2);
+                + ": active " + summarizeActive(active, 2, bot)
+                + "; bag " + summarizeAvailable(available, 2, bot);
     }
 
     public static List<String> getDebugLines(BotEntry entry, Character bot) {
@@ -100,8 +103,8 @@ final class BotBuffManager {
 
         lines.add("buff pots " + (entry.buffConsumablesEnabled ? "on" : "off")
                 + " (" + (entry.buffCheapMode ? "cheap" : "max") + "), last: " + lastAction);
-        lines.add("active: " + summarizeActive(collectActiveItemBuffs(bot), 5));
-        lines.add("bag: " + summarizeAvailable(buildSelection(bot, entry.buffCheapMode), 5));
+        lines.add("active: " + summarizeActive(collectActiveItemBuffs(bot), 5, bot));
+        lines.add("bag: " + summarizeAvailable(buildSelection(bot, entry.buffCheapMode), 5, bot));
         return lines;
     }
 
@@ -119,10 +122,10 @@ final class BotBuffManager {
             StatEffect fx = fxCache.computeIfAbsent(itemId, BotInventoryManager::itemEffect);
             if (fx == null || fx.getStatups().isEmpty()) continue;
 
-            List<BuffStat> statKey = buildStatKey(fx);
+            List<BuffStat> statKey = buildStatKey(bot, fx);
             if (statKey.isEmpty()) continue;
 
-            SelectedBuff candidate = new SelectedBuff(item, fx, statKey, scoreEffect(fx));
+            SelectedBuff candidate = new SelectedBuff(item, fx, statKey, scoreEffect(bot, fx));
             SelectedBuff current = best.get(statKey);
             if (current == null || isBetterChoice(candidate, current, cheapMode)) {
                 best.put(statKey, candidate);
@@ -146,6 +149,9 @@ final class BotBuffManager {
         for (Pair<BuffStat, Integer> statup : fx.getStatups()) {
             BuffStat stat = statup.getLeft();
             if (bot.getBuffedValue(stat) != null) {
+                continue;
+            }
+            if (!isRelevantBuffStat(bot, stat)) {
                 continue;
             }
             if (stat == BuffStat.ACC && !needsAccBuff(entry, bot)) {
@@ -184,6 +190,9 @@ final class BotBuffManager {
             if (!BotInventoryManager.isBuffConsumable(itemId)) {
                 continue;
             }
+            if (buildStatKey(bot, effect).isEmpty()) {
+                continue;
+            }
 
             int remainingMs = effect.getDuration() > 0
                     ? Math.max(0, effect.getDuration() - holder.usedTime)
@@ -198,11 +207,11 @@ final class BotBuffManager {
         return active;
     }
 
-    private static List<BuffStat> buildStatKey(StatEffect fx) {
+    private static List<BuffStat> buildStatKey(Character bot, StatEffect fx) {
         List<BuffStat> key = new ArrayList<>();
         for (Pair<BuffStat, Integer> statup : fx.getStatups()) {
             BuffStat stat = statup.getLeft();
-            if (!key.contains(stat)) {
+            if (isRelevantBuffStat(bot, stat) && !key.contains(stat)) {
                 key.add(stat);
             }
         }
@@ -210,12 +219,25 @@ final class BotBuffManager {
         return key;
     }
 
-    private static int scoreEffect(StatEffect fx) {
+    private static int scoreEffect(Character bot, StatEffect fx) {
         int score = 0;
         for (Pair<BuffStat, Integer> statup : fx.getStatups()) {
-            score += Math.abs(statup.getRight());
+            if (isRelevantBuffStat(bot, statup.getLeft())) {
+                score += Math.abs(statup.getRight());
+            }
         }
         return score;
+    }
+
+    static boolean isRelevantBuffStat(Character bot, BuffStat stat) {
+        boolean mageJob = bot.getJobStyle() == Job.MAGICIAN;
+        if (stat == BuffStat.WATK) {
+            return !mageJob;
+        }
+        if (stat == BuffStat.MATK) {
+            return mageJob;
+        }
+        return true;
     }
 
     private static boolean isBetterChoice(SelectedBuff candidate, SelectedBuff current, boolean cheapMode) {
@@ -234,7 +256,7 @@ final class BotBuffManager {
                 : candidate.item().getItemId() > current.item().getItemId();
     }
 
-    private static String summarizeActive(List<ActiveBuff> active, int limit) {
+    private static String summarizeActive(List<ActiveBuff> active, int limit, Character bot) {
         if (active.isEmpty()) {
             return "none";
         }
@@ -244,7 +266,7 @@ final class BotBuffManager {
         for (int i = 0; i < count; i++) {
             ActiveBuff buff = active.get(i);
             String suffix = buff.remainingMs() > 0 ? " " + formatAge(buff.remainingMs()) + " left" : "";
-            joiner.add(buff.name() + " [" + formatStatList(buff.effect()) + suffix + "]");
+            joiner.add(buff.name() + " [" + formatStatList(bot, buff.effect()) + suffix + "]");
         }
         if (active.size() > limit) {
             joiner.add("+" + (active.size() - limit) + " more");
@@ -252,7 +274,7 @@ final class BotBuffManager {
         return joiner.toString().toLowerCase(Locale.ROOT);
     }
 
-    private static String summarizeAvailable(List<SelectedBuff> available, int limit) {
+    private static String summarizeAvailable(List<SelectedBuff> available, int limit, Character bot) {
         if (available.isEmpty()) {
             return "none in bag";
         }
@@ -262,7 +284,7 @@ final class BotBuffManager {
         for (int i = 0; i < count; i++) {
             SelectedBuff buff = available.get(i);
             joiner.add(itemName(buff.item().getItemId()) + " x" + buff.item().getQuantity()
-                    + " [" + formatStatList(buff.effect()) + "]");
+                    + " [" + formatStatList(bot, buff.effect()) + "]");
         }
         if (available.size() > limit) {
             joiner.add("+" + (available.size() - limit) + " more");
@@ -270,9 +292,12 @@ final class BotBuffManager {
         return joiner.toString().toLowerCase(Locale.ROOT);
     }
 
-    private static String formatStatList(StatEffect fx) {
+    private static String formatStatList(Character bot, StatEffect fx) {
         StringJoiner joiner = new StringJoiner("/");
         for (Pair<BuffStat, Integer> statup : fx.getStatups()) {
+            if (!isRelevantBuffStat(bot, statup.getLeft())) {
+                continue;
+            }
             int value = statup.getRight();
             joiner.add(statup.getLeft().name() + (value >= 0 ? "+" : "") + value);
         }

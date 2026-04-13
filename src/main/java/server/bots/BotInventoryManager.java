@@ -6,6 +6,7 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.manipulator.InventoryManipulator;
+import config.YamlConfig;
 import constants.game.GameConstants;
 import constants.id.ItemId;
 import constants.inventory.ItemConstants;
@@ -823,7 +824,7 @@ class BotInventoryManager {
     }
 
     static boolean isSafeToDrop(Item item) {
-        if (item.isUntradeable()) return false;
+        if (item.isUntradeable() && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) return false;
         if (ItemInformationProvider.getInstance().isQuestItem(item.getItemId())) return false;
         return true;
     }

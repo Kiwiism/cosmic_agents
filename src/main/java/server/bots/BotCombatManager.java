@@ -27,14 +27,16 @@ import constants.skills.Spearman;
 import constants.skills.SuperGM;
 import constants.skills.ThunderBreaker;
 import constants.skills.WindArcher;
+import net.server.PlayerBuffValueHolder;
 import net.server.channel.handlers.AbstractDealDamageHandler;
 import server.StatEffect;
 import server.bots.combat.BotAttackDataProvider;
-import server.combat.CombatFormulaProvider;
 import server.bots.combat.BotDefenseDataProvider;
 import server.bots.combat.BotMobHitboxProvider;
+import server.combat.CombatFormulaProvider;
 import server.life.Monster;
 import server.maps.Foothold;
+import server.maps.MapleMap;
 import tools.PacketCreator;
 
 import java.awt.*;
@@ -42,11 +44,14 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.concurrent.ThreadLocalRandom;
 
 class BotCombatManager {
+    private static final long UNREACHABLE_GRAPH_COST = Long.MAX_VALUE / 4;
 
     enum AttackRoute {
         CLOSE,
@@ -118,10 +123,11 @@ class BotCombatManager {
         public int   RANGED_RETREAT_DISTANCE_X = 120;
 
         // Ammo
-        public int   AMMO_LOW_WARN = 200;
+        public int   AMMO_LOW_WARN = 500;
 
         // Grind / AoE
         public int   GRIND_SEEK_RANGE  = 800;
+        public int   GRIND_RETARGET_INTERVAL_MS = 400;
         public int   AOE_MOB_THRESHOLD = 2;
 
         // Mob damage
@@ -303,6 +309,7 @@ class BotCombatManager {
     private static void clearActionState(BotEntry entry) {
         entry.grindTarget = null;
         entry.attackCooldownMs = 0;
+        entry.moveWindowMs = 0;
         BotMovementManager.clearNavigationState(entry);
         entry.movementBroadcastValid = false;
     }
@@ -342,7 +349,7 @@ class BotCombatManager {
                 entry.healSkillId = skill.getId();
             }
 
-            if (fx.getMpCon() > 0) {  // mpCon > 0 identifies real attack/active skills; attackCount defaults to 1 for all skills
+            if (fx.getDamage() > 0 && !fx.isOverTime()) {  // damage > 0 identifies damaging skills
                 if (mobs >= 2) {
                     int score = mobs * atk;
                     if (score > bestAoeScore) {
@@ -360,7 +367,10 @@ class BotCombatManager {
                 continue;
             }
 
-            if (dur <= 0) {
+            // isOverTime() reflects the same SkillFactory whitelist that explicitly names buff skills
+            // (Magic Guard, Bless, Iron Body, etc.); more reliable than checking duration which can
+            // be -1000 when WZ has no "time" field.
+            if (!fx.isOverTime()) {
                 continue;
             }
 
@@ -371,8 +381,14 @@ class BotCombatManager {
 
     static void tickBuffs(BotEntry entry, Character bot) {
         if (entry.attackCooldownMs > 0) return;
-        if (!entry.following && !entry.grinding) return;
-        if (entry.buffSkillIds.isEmpty()) return;
+        if (!entry.following && !entry.grinding) {
+            noteSkillBuffDecision(entry, "idle (not following or grinding)");
+            return;
+        }
+        if (entry.buffSkillIds.isEmpty()) {
+            noteSkillBuffDecision(entry, "no buff skills in cache");
+            return;
+        }
 
         long now = System.currentTimeMillis();
         if (trySupportBuff(entry, bot, now)) {
@@ -393,6 +409,7 @@ class BotCombatManager {
                 return;
             }
         }
+        noteSkillBuffDecision(entry, "all skill buffs active or on cooldown");
     }
 
     private static boolean shouldUseAsBestSingleTargetSkill(Character bot, Skill skill, StatEffect effect,
@@ -459,26 +476,86 @@ class BotCombatManager {
         }
     }
 
-    /** Returns a random monster from the nearest 3 within seek range, so multiple bots spread across targets. */
     static Monster findGrindTarget(Character bot) {
+        return findGrindTarget(null, bot);
+    }
+
+    /** Returns a random monster from the most convenient 3 reachable targets, so multiple bots spread. */
+    static Monster findGrindTarget(BotEntry entry, Character bot) {
         long startedAt = System.nanoTime();
         try {
             Point botPos = bot.getPosition();
             double rangeSq = (double) BotCombatManager.cfg.GRIND_SEEK_RANGE * BotCombatManager.cfg.GRIND_SEEK_RANGE;
             Foothold botFoothold = findGroundFoothold(botPos, bot);
-            List<Monster> candidates = new ArrayList<>();
-            for (Monster m : bot.getMap().getAllMonsters()) {
-                if (m.isAlive() && m.getPosition().distanceSq(botPos) <= rangeSq) {
-                    candidates.add(m);
-                }
-            }
+            List<Monster> candidates = aliveMonstersInRange(bot, botPos, rangeSq);
             if (candidates.isEmpty()) return null;
 
-            candidates.sort((a, b) -> compareGrindTargets(bot, botPos, botFoothold, a, b));
-            return candidates.get(ThreadLocalRandom.current().nextInt(Math.min(3, candidates.size())));
+            List<ScoredGrindTarget> scoredTargets = scoreGrindTargets(entry, bot, botPos, botFoothold, candidates);
+            if (scoredTargets.isEmpty()) {
+                return null;
+            }
+
+            scoredTargets.sort(Comparator
+                    .comparingLong(ScoredGrindTarget::graphCost)
+                    .thenComparingLong(ScoredGrindTarget::localScore)
+                    .thenComparingDouble(ScoredGrindTarget::distanceSq));
+            List<ScoredGrindTarget> reachableTargets = scoredTargets.stream()
+                    .filter(target -> target.graphCost() < UNREACHABLE_GRAPH_COST)
+                    .toList();
+            List<ScoredGrindTarget> selectable = reachableTargets.isEmpty() ? scoredTargets : reachableTargets;
+            if (selectable.getFirst().graphCost() >= UNREACHABLE_GRAPH_COST) {
+                return null;
+            }
+
+            return selectable.get(ThreadLocalRandom.current().nextInt(Math.min(3, selectable.size()))).monster();
         } finally {
             BotPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
         }
+    }
+
+    /** Follow mode should only attack local mobs; it should not run pathfinding or chase across the map. */
+    static Monster findFollowAttackTarget(BotEntry entry, Character bot) {
+        long startedAt = System.nanoTime();
+        try {
+            Point botPos = bot.getPosition();
+            double range = Math.max(CLIENT_PROJECTILE_BASE_RANGE + passiveProjectileRangeBonus(bot),
+                    BotCombatManager.cfg.ATTACK_RANGE_X + BotCombatManager.cfg.ATTACK_JUMP_X_EXTRA);
+            List<Monster> candidates = aliveMonstersInRange(bot, botPos, range * range);
+            if (candidates.isEmpty()) {
+                return null;
+            }
+
+            Foothold botFoothold = findGroundFoothold(botPos, bot);
+            GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, botPos);
+            List<ScoredGrindTarget> localTargets = new ArrayList<>();
+            for (Monster candidate : candidates) {
+                if (!isLocalCombatTarget(graphContext, bot, botFoothold, candidate)
+                        && !isImmediateProjectileTarget(entry, bot, candidate)) {
+                    continue;
+                }
+                long localScore = grindTargetScore(bot, botPos, botFoothold, candidate);
+                localTargets.add(new ScoredGrindTarget(candidate, localScore, localScore,
+                        candidate.getPosition().distanceSq(botPos)));
+            }
+            return pickFromBestTargets(localTargets);
+        } finally {
+            BotPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
+        }
+    }
+
+    static boolean isReachableGrindTarget(BotEntry entry, Character bot, Monster target) {
+        if (target == null || !target.isAlive()) {
+            return false;
+        }
+        if (entry == null || bot == null) {
+            return true;
+        }
+
+        GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, bot.getPosition());
+        if (isImmediateProjectileTarget(entry, bot, target)) {
+            return true;
+        }
+        return !graphContext.available() || graphTargetCost(graphContext, target) < UNREACHABLE_GRAPH_COST;
     }
 
     static AttackPlan planAttack(BotEntry entry, Character bot, Monster target) {
@@ -495,7 +572,11 @@ class BotCombatManager {
             }
 
             BotAttackExecutionProvider.BasicAttackData basicAttackData = buildBasicAttackData(bot, target);
-            return new AttackPlan(0, 0, 1, basicAttackData.hitBox(), List.of(target), basicAttackData.route(),
+            Monster effective = resolveEffectivePrimary(bot, target, basicAttackData.hitBox());
+            if (effective != target) {
+                basicAttackData = buildBasicAttackData(bot, effective);
+            }
+            return new AttackPlan(0, 0, 1, basicAttackData.hitBox(), List.of(effective), basicAttackData.route(),
                     basicAttackData.display(), basicAttackData.direction(), basicAttackData.rangedDirection(), basicAttackData.stance(),
                     basicAttackData.speed(), basicAttackData.hitDelayMs(), basicAttackData.cooldownMs());
         } finally {
@@ -510,7 +591,7 @@ class BotCombatManager {
         return isBasicAttackInRange(bot.getPosition(), target.getPosition());
     }
 
-    static boolean isTargetJumpable(boolean closeRangeRoute, Point botPos, Point targetPos) {
+    static boolean isTargetJumpable(BotMovementProfile movementProfile, boolean closeRangeRoute, Point botPos, Point targetPos) {
         if (!closeRangeRoute || botPos == null || targetPos == null) {
             return false;
         }
@@ -521,7 +602,13 @@ class BotCombatManager {
         }
 
         int dy = botPos.y - targetPos.y;
-        return dy > BotCombatManager.cfg.ATTACK_RANGE_Y && dy <= BotCombatManager.cfg.ATTACK_JUMP_Y;
+        int maxJumpHeight = Math.max(BotCombatManager.cfg.ATTACK_JUMP_Y,
+                (int) Math.ceil(BotPhysicsEngine.calculateMaxJumpHeight(movementProfile)));
+        return dy > BotCombatManager.cfg.ATTACK_RANGE_Y && dy <= maxJumpHeight;
+    }
+
+    static boolean isTargetJumpable(boolean closeRangeRoute, Point botPos, Point targetPos) {
+        return isTargetJumpable(BotMovementProfile.base(), closeRangeRoute, botPos, targetPos);
     }
 
     static void attackMonster(BotEntry entry, Character bot, AttackPlan attackPlan) {
@@ -565,10 +652,12 @@ class BotCombatManager {
     }
 
     static void tickActionLock(BotEntry entry) {
-        if (entry.attackCooldownMs <= 0) {
-            return;
+        if (entry.attackCooldownMs > 0) {
+            entry.attackCooldownMs = BotMovementManager.tickDown(entry.attackCooldownMs);
+        } else if (entry.moveWindowMs > 0) {
+            // Movement window: animation done, bot may walk but not attack yet.
+            entry.moveWindowMs = BotMovementManager.tickDown(entry.moveWindowMs);
         }
-        entry.attackCooldownMs = BotMovementManager.tickDown(entry.attackCooldownMs);
     }
 
     private static AttackPlan planAoeAttack(BotEntry entry, Character bot, Monster primaryTarget) {
@@ -592,6 +681,7 @@ class BotCombatManager {
             return null;
         }
 
+        primaryTarget = resolveEffectivePrimary(bot, primaryTarget, hitBox);
         List<Monster> targets = collectTargetsInHitBox(bot, primaryTarget, hitBox, Math.max(1, effect.getMobCount()));
         if (targets.size() < BotCombatManager.cfg.AOE_MOB_THRESHOLD) {
             return null;
@@ -639,7 +729,12 @@ class BotCombatManager {
         }
         AttackRoute route = BotAttackExecutionProvider.determineSkillRoute(bot, entry.attackSkillId);
         Rectangle hitBox = calculateSkillHitBox(effect, bot, primaryTarget, route);
-        if (hitBox == null || !doesHitBoxIntersectMonster(hitBox, primaryTarget)) {
+        if (hitBox == null) {
+            return null;
+        }
+
+        primaryTarget = resolveEffectivePrimary(bot, primaryTarget, hitBox);
+        if (!doesHitBoxIntersectMonster(hitBox, primaryTarget)) {
             return null;
         }
 
@@ -709,6 +804,10 @@ class BotCombatManager {
 
         Point origin = bot.getPosition();
         int projectileRange = CLIENT_PROJECTILE_BASE_RANGE + passiveProjectileRangeBonus(bot);
+        WeaponType wt = BotAttackExecutionProvider.getEquippedWeaponType(bot);
+        if (wt == WeaponType.CLAW) {
+            projectileRange -= 150;
+        }
         int farEdge = Math.max(CLIENT_PROJECTILE_NEAR_INSET, Math.round(projectileRange * Math.max(0f, horizontalScale)));
         int left = facingLeft ? origin.x - farEdge : origin.x + CLIENT_PROJECTILE_NEAR_INSET;
         int right = facingLeft ? origin.x - CLIENT_PROJECTILE_NEAR_INSET : origin.x + farEdge;
@@ -804,14 +903,210 @@ class BotCombatManager {
         return Math.max(1, Math.max(effect.getAttackCount(), effect.getBulletCount()));
     }
 
-    private static int compareGrindTargets(Character bot, Point botPos, Foothold botFoothold, Monster left, Monster right) {
-        long leftScore = grindTargetScore(bot, botPos, botFoothold, left);
-        long rightScore = grindTargetScore(bot, botPos, botFoothold, right);
-        if (leftScore != rightScore) {
-            return Long.compare(leftScore, rightScore);
+    private static List<ScoredGrindTarget> scoreGrindTargets(BotEntry entry,
+                                                             Character bot,
+                                                             Point botPos,
+                                                             Foothold botFoothold,
+                                                             List<Monster> candidates) {
+        GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, botPos);
+        List<ScoredGrindTarget> currentRegionTargets = new ArrayList<>();
+        for (Monster candidate : candidates) {
+            if (!isLocalCombatTarget(graphContext, bot, botFoothold, candidate)
+                    && !isImmediateProjectileTarget(entry, bot, candidate)) {
+                continue;
+            }
+            long localScore = grindTargetScore(bot, botPos, botFoothold, candidate);
+            currentRegionTargets.add(new ScoredGrindTarget(candidate, localScore, localScore,
+                    candidate.getPosition().distanceSq(botPos)));
+        }
+        if (!currentRegionTargets.isEmpty()) {
+            return currentRegionTargets;
         }
 
-        return Double.compare(left.getPosition().distanceSq(botPos), right.getPosition().distanceSq(botPos));
+        return graphContext.available()
+                ? scoreTargetRegions(graphContext, bot, botPos, botFoothold, candidates)
+                : scoreLocalTargets(bot, botPos, botFoothold, candidates);
+    }
+
+    private static List<Monster> aliveMonstersInRange(Character bot, Point botPos, double rangeSq) {
+        List<Monster> candidates = new ArrayList<>();
+        for (Monster m : bot.getMap().getAllMonsters()) {
+            if (m.isAlive() && m.getPosition().distanceSq(botPos) <= rangeSq) {
+                candidates.add(m);
+            }
+        }
+        return candidates;
+    }
+
+    private static boolean isLocalCombatTarget(GrindGraphContext context,
+                                               Character bot,
+                                               Foothold botFoothold,
+                                               Monster target) {
+        if (botFoothold != null) {
+            Foothold targetFoothold = findGroundFoothold(target.getPosition(), bot);
+            if (targetFoothold != null && targetFoothold.getId() == botFoothold.getId()) {
+                return true;
+            }
+        }
+        if (!context.available()) {
+            return false;
+        }
+
+        int targetRegionId = BotNavigationManager.resolveTargetRegionId(
+                context.graph(), context.entry(), context.map(), target.getPosition());
+        return targetRegionId >= 0 && targetRegionId == context.startRegionId();
+    }
+
+    private static boolean isImmediateProjectileTarget(BotEntry entry, Character bot, Monster target) {
+        if (entry == null || entry.noAmmo || bot == null || target == null || !target.isAlive()) {
+            return false;
+        }
+
+        Point botPos = bot.getPosition();
+        Point targetPos = target.getPosition();
+        WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(bot);
+        if (BotAttackExecutionProvider.determineBasicWeaponRoute(weaponType) == AttackRoute.RANGED
+                && !BotAttackExecutionProvider.shouldDegenerateRangedAttack(weaponType, botPos, targetPos)) {
+            Rectangle hitBox = clientProjectileHitBox(bot, targetPos.x < botPos.x, 1.0f);
+            if (doesHitBoxIntersectMonster(hitBox, target)) {
+                return true;
+            }
+        }
+
+        return isImmediateProjectileSkillTarget(entry, bot, target);
+    }
+
+    private static boolean isImmediateProjectileSkillTarget(BotEntry entry, Character bot, Monster target) {
+        if (entry.attackSkillId == 0 || bot.skillIsCooling(entry.attackSkillId)) {
+            return false;
+        }
+
+        Skill skill = SkillFactory.getSkill(entry.attackSkillId);
+        int skillLevel = skill == null ? 0 : bot.getSkillLevel(skill);
+        if (skillLevel <= 0) {
+            return false;
+        }
+
+        StatEffect effect = skill.getEffect(skillLevel);
+        if (effect == null || !effect.canPaySkillCost(bot)) {
+            return false;
+        }
+
+        AttackRoute route = BotAttackExecutionProvider.determineSkillRoute(bot, entry.attackSkillId);
+        if (route != AttackRoute.RANGED && route != AttackRoute.MAGIC) {
+            return false;
+        }
+
+        Rectangle hitBox = calculateSkillHitBox(effect, bot, target, route);
+        if (hitBox == null || !doesHitBoxIntersectMonster(hitBox, target)) {
+            return false;
+        }
+
+        WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(bot);
+        return BotAttackExecutionProvider.canUseRangedAttackRoute(route, weaponType, bot.getPosition(), target.getPosition());
+    }
+
+    private static List<ScoredGrindTarget> scoreLocalTargets(Character bot,
+                                                             Point botPos,
+                                                             Foothold botFoothold,
+                                                             List<Monster> candidates) {
+        List<ScoredGrindTarget> scoredTargets = new ArrayList<>(candidates.size());
+        for (Monster candidate : candidates) {
+            long localScore = grindTargetScore(bot, botPos, botFoothold, candidate);
+            scoredTargets.add(new ScoredGrindTarget(candidate, localScore, localScore,
+                    candidate.getPosition().distanceSq(botPos)));
+        }
+        return scoredTargets;
+    }
+
+    private static List<ScoredGrindTarget> scoreTargetRegions(GrindGraphContext context,
+                                                              Character bot,
+                                                              Point botPos,
+                                                              Foothold botFoothold,
+                                                              List<Monster> candidates) {
+        Map<Integer, GrindTargetGroup> groupsByRegionId = new HashMap<>();
+        for (Monster candidate : candidates) {
+            Point targetPos = candidate.getPosition();
+            int targetRegionId = BotNavigationManager.resolveTargetRegionId(
+                    context.graph(), context.entry(), context.map(), targetPos);
+            if (targetRegionId < 0) {
+                continue;
+            }
+
+            long localScore = grindTargetScore(bot, botPos, botFoothold, candidate);
+            GrindTargetGroup group = groupsByRegionId.computeIfAbsent(targetRegionId, GrindTargetGroup::new);
+            group.add(candidate, localScore, targetPos.distanceSq(botPos));
+        }
+
+        List<ScoredGrindTarget> scoredTargets = new ArrayList<>(groupsByRegionId.size());
+        for (GrindTargetGroup group : groupsByRegionId.values()) {
+            long pathCost = graphPathCost(context.graph(), context.map(), context.startPos(), context.startRegionId(),
+                    group.bestMonster().getPosition(), group.regionId(), context.profile());
+            long crowdBonus = Math.min(3_000L, (long) Math.max(0, group.mobCount() - 1) * 400L);
+            long graphScore = pathCost >= UNREACHABLE_GRAPH_COST
+                    ? UNREACHABLE_GRAPH_COST
+                    : Math.max(0L, pathCost - crowdBonus);
+            scoredTargets.add(new ScoredGrindTarget(group.bestMonster(), graphScore, group.bestLocalScore(),
+                    group.bestDistanceSq()));
+        }
+        return scoredTargets;
+    }
+
+    private static Monster pickFromBestTargets(List<ScoredGrindTarget> scoredTargets) {
+        if (scoredTargets.isEmpty()) {
+            return null;
+        }
+        scoredTargets.sort(Comparator
+                .comparingLong(ScoredGrindTarget::graphCost)
+                .thenComparingLong(ScoredGrindTarget::localScore)
+                .thenComparingDouble(ScoredGrindTarget::distanceSq));
+        return scoredTargets.get(ThreadLocalRandom.current().nextInt(Math.min(3, scoredTargets.size()))).monster();
+    }
+
+    private static long graphTargetCost(GrindGraphContext context, Monster target) {
+        Point targetPos = target.getPosition();
+        int targetRegionId = BotNavigationManager.resolveTargetRegionId(
+                context.graph(), context.entry(), context.map(), targetPos);
+        if (targetRegionId < 0) {
+            return UNREACHABLE_GRAPH_COST;
+        }
+
+        return graphPathCost(context.graph(), context.map(), context.startPos(), context.startRegionId(),
+                targetPos, targetRegionId, context.profile());
+    }
+
+    private static long graphPathCost(BotNavigationGraph graph,
+                                      MapleMap map,
+                                      Point startPos,
+                                      int startRegionId,
+                                      Point targetPos,
+                                      int targetRegionId,
+                                      BotMovementProfile profile) {
+        if (startPos == null || targetPos == null || startRegionId < 0 || targetRegionId < 0) {
+            return UNREACHABLE_GRAPH_COST;
+        }
+        if (startRegionId == targetRegionId) {
+            return estimateLocalTravelCostMs(startPos, targetPos, profile);
+        }
+
+        List<BotNavigationGraph.Edge> path = BotNavigationManager.findPathForTargetScore(
+                graph, map, startPos, startRegionId, targetRegionId, targetPos);
+        if (path.isEmpty()) {
+            return UNREACHABLE_GRAPH_COST;
+        }
+
+        long cost = 0;
+        for (BotNavigationGraph.Edge edge : path) {
+            cost += edge.cost;
+        }
+        return cost;
+    }
+
+    private static long estimateLocalTravelCostMs(Point from, Point to, BotMovementProfile profile) {
+        int dx = Math.abs(to.x - from.x);
+        int dy = Math.abs(to.y - from.y);
+        double walkVelocity = Math.max(1.0, profile.walkVelocityPxs());
+        return Math.round(dx * 1000.0 / walkVelocity) + dy * 4L;
     }
 
     private static long grindTargetScore(Character bot, Point botPos, Foothold botFoothold, Monster target) {
@@ -840,6 +1135,92 @@ class BotCombatManager {
         }
 
         return BotPhysicsEngine.findGroundFoothold(bot.getMap(), position);
+    }
+
+    private record ScoredGrindTarget(Monster monster, long graphCost, long localScore, double distanceSq) {
+    }
+
+    private static final class GrindTargetGroup {
+        private final int regionId;
+        private int mobCount;
+        private Monster bestMonster;
+        private long bestLocalScore = Long.MAX_VALUE;
+        private double bestDistanceSq = Double.MAX_VALUE;
+
+        private GrindTargetGroup(int regionId) {
+            this.regionId = regionId;
+        }
+
+        private void add(Monster monster, long localScore, double distanceSq) {
+            mobCount++;
+            if (bestMonster == null
+                    || localScore < bestLocalScore
+                    || (localScore == bestLocalScore && distanceSq < bestDistanceSq)) {
+                bestMonster = monster;
+                bestLocalScore = localScore;
+                bestDistanceSq = distanceSq;
+            }
+        }
+
+        private int regionId() {
+            return regionId;
+        }
+
+        private int mobCount() {
+            return mobCount;
+        }
+
+        private Monster bestMonster() {
+            return bestMonster;
+        }
+
+        private long bestLocalScore() {
+            return bestLocalScore;
+        }
+
+        private double bestDistanceSq() {
+            return bestDistanceSq;
+        }
+    }
+
+    private record GrindGraphContext(BotEntry entry,
+                                     MapleMap map,
+                                     BotNavigationGraph graph,
+                                     BotMovementProfile profile,
+                                     Point startPos,
+                                     int startRegionId) {
+        static GrindGraphContext resolve(BotEntry entry, Character bot, Point botPos) {
+            if (entry == null || bot == null || bot.getMap() == null || bot.getMap().getFootholds() == null) {
+                return unavailable(entry, bot, botPos);
+            }
+
+            BotMovementProfile profile = entry.movementProfile == null ? BotMovementProfile.fromCharacter(bot) : entry.movementProfile;
+            BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(bot.getMap(), profile);
+            if (graph == null) {
+                BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), profile);
+                graph = BotNavigationGraphProvider.peekClosestGraph(bot.getMap(), profile);
+            }
+            if (graph == null) {
+                return unavailable(entry, bot, botPos);
+            }
+
+            int startRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, bot.getMap(), botPos);
+            if (startRegionId < 0) {
+                return unavailable(entry, bot, botPos);
+            }
+            return new GrindGraphContext(entry, bot.getMap(), graph, profile, new Point(botPos), startRegionId);
+        }
+
+        private static GrindGraphContext unavailable(BotEntry entry, Character bot, Point botPos) {
+            MapleMap map = bot == null ? null : bot.getMap();
+            BotMovementProfile profile = entry == null ? BotMovementProfile.base() : entry.movementProfile;
+            Point startPos = botPos == null ? null : new Point(botPos);
+            return new GrindGraphContext(entry, map, null, profile, startPos, -1);
+        }
+
+        boolean available() {
+            return graph != null && map != null && startPos != null && startRegionId >= 0 && entry != null;
+        }
     }
 
     static boolean isMobTouchingBot(BotEntry entry, Character bot, Monster mob) {
@@ -895,8 +1276,117 @@ class BotCombatManager {
         return hitBox.contains(monster.getPosition());
     }
 
+    private static boolean isForwardProjectileHitBox(Rectangle hitBox, Point botPos) {
+        if (hitBox == null || botPos == null) {
+            return false;
+        }
+        return botPos.x < hitBox.getMinX() || botPos.x > hitBox.getMaxX();
+    }
+
+    static Monster resolveEffectivePrimary(Character bot, Monster fallback, Rectangle hitBox) {
+        Point botPos = bot.getPosition();
+        if (!isForwardProjectileHitBox(hitBox, botPos)) {
+            return fallback;
+        }
+        Monster closest = null;
+        double closestDistSq = Double.MAX_VALUE;
+        for (Monster m : bot.getMap().getAllMonsters()) {
+            if (!m.isAlive() || !doesHitBoxIntersectMonster(hitBox, m)) {
+                continue;
+            }
+            double distSq = m.getPosition().distanceSq(botPos);
+            if (distSq < closestDistSq) {
+                closestDistSq = distSq;
+                closest = m;
+            }
+        }
+        return closest != null ? closest : fallback;
+    }
+
+    static Monster findClosestAliveMonster(Character bot, double maxRangeSq) {
+        Point botPos = bot.getPosition();
+        Monster closest = null;
+        double closestDistSq = maxRangeSq;
+        for (Monster m : bot.getMap().getAllMonsters()) {
+            if (!m.isAlive()) {
+                continue;
+            }
+            double distSq = m.getPosition().distanceSq(botPos);
+            if (distSq < closestDistSq) {
+                closestDistSq = distSq;
+                closest = m;
+            }
+        }
+        return closest;
+    }
+
     private static BotAttackExecutionProvider.BasicAttackData buildBasicAttackData(Character bot, Monster primaryTarget) {
         return BotAttackExecutionProvider.buildBasicAttackData(bot, primaryTarget.getPosition());
+    }
+
+    private static void noteSkillBuffDecision(BotEntry entry, String summary) {
+        entry.lastSkillBuffActionAtMs = System.currentTimeMillis();
+        entry.lastSkillBuffActionSummary = summary;
+    }
+
+    static List<String> getSkillBuffDebugLines(BotEntry entry, Character bot) {
+        long now = System.currentTimeMillis();
+
+        // Line 1: last decision
+        String lastAction = entry.lastSkillBuffActionSummary;
+        if (entry.lastSkillBuffActionAtMs > 0) {
+            long ageMs = Math.max(0L, now - entry.lastSkillBuffActionAtMs);
+            lastAction += " (" + formatBuffAge(ageMs) + " ago)";
+        }
+
+        // Line 2: active skill buffs
+        StringJoiner activeJoiner = new StringJoiner(", ");
+        for (PlayerBuffValueHolder holder : bot.getAllBuffs()) {
+            StatEffect effect = holder.effect;
+            if (effect == null || !effect.isSkill()) continue;
+            int skillId = effect.getSourceId();
+            String remaining = effect.getDuration() > 0
+                    ? " " + formatBuffAge(Math.max(0, effect.getDuration() - holder.usedTime)) + " left"
+                    : "";
+            activeJoiner.add(skillLabel(skillId) + remaining);
+        }
+        String activeLine = activeJoiner.length() == 0 ? "none" : activeJoiner.toString().toLowerCase(Locale.ROOT);
+
+        // Line 3: cached buff skills with ready/cooldown status
+        StringJoiner availJoiner = new StringJoiner(", ");
+        for (int skillId : entry.buffSkillIds) {
+            boolean cooling = bot.skillIsCooling(skillId);
+            long nextAt = entry.nextBuffAt.getOrDefault(skillId, 0L);
+            String status;
+            if (cooling) {
+                status = "cd";
+            } else if (now < nextAt) {
+                status = "rebuff " + formatBuffAge(nextAt - now);
+            } else {
+                status = "ready";
+            }
+            availJoiner.add(skillLabel(skillId) + " (" + status + ")");
+        }
+        String availLine = availJoiner.length() == 0 ? "none cached" : availJoiner.toString().toLowerCase(Locale.ROOT);
+
+        return List.of(
+                "skill buffs: last: " + lastAction,
+                "active: " + activeLine,
+                "cached: " + availLine
+        );
+    }
+
+    private static String formatBuffAge(long ms) {
+        long totalSeconds = Math.max(0L, ms / 1000L);
+        long minutes = totalSeconds / 60L;
+        long seconds = totalSeconds % 60L;
+        if (minutes <= 0) return seconds + "s";
+        return minutes + "m" + seconds + "s";
+    }
+
+    private static String skillLabel(int skillId) {
+        String name = SkillFactory.getSkillName(skillId);
+        return (name != null && !name.isBlank()) ? name : "skill#" + skillId;
     }
 
     static String describeDebugStats(BotEntry entry, Character bot) {
@@ -952,9 +1442,11 @@ class BotCombatManager {
 
     private static boolean castSupportSkill(BotEntry entry, Character bot, Skill skill, StatEffect fx, long now) {
         if (!fx.canPaySkillCost(bot)) {
+            noteSkillBuffDecision(entry, "can't pay cost for " + skillLabel(skill.getId()));
             return false;
         }
         if (!fx.applyTo(bot, null)) {
+            noteSkillBuffDecision(entry, "apply failed for " + skillLabel(skill.getId()));
             return false;
         }
 
@@ -968,10 +1460,12 @@ class BotCombatManager {
                 BotAttackExecutionProvider.getEquippedWeaponType(bot));
         BotAttackExecutionProvider.SkillAttackTiming skillTiming =
                 BotAttackExecutionProvider.resolveSkillAttackTiming(skill, action, bot, fallbackAttackData);
-        entry.attackCooldownMs = Math.max(entry.attackCooldownMs, skillTiming.cooldownMs());
+        int animMs = skill.getAnimationTime() > 0 ? skill.getAnimationTime() : 1000;
+        entry.attackCooldownMs = Math.max(entry.attackCooldownMs, Math.max(skillTiming.cooldownMs(), animMs));
         if (fx.getCooldown() > 0) {
             bot.addCooldown(skill.getId(), now, fx.getCooldown() * 1000L);
         }
+        noteSkillBuffDecision(entry, "cast " + skillLabel(skill.getId()));
         return true;
     }
 

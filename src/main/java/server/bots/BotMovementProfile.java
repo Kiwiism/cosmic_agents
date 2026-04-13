@@ -1,0 +1,69 @@
+package server.bots;
+
+import client.Character;
+import server.maps.FieldLimit;
+import server.maps.MapleMap;
+
+import java.io.Serializable;
+
+record BotMovementProfile(int totalSpeedStat, int totalJumpStat) implements Serializable {
+    static final int BASE_TOTAL_STAT = 100;
+    static final int STAT_BUCKET_SIZE = 5;
+    static final BotMovementProfile BASE = new BotMovementProfile(BASE_TOTAL_STAT, BASE_TOTAL_STAT);
+
+    BotMovementProfile {
+        totalSpeedStat = bucketStat(totalSpeedStat);
+        totalJumpStat = bucketStat(totalJumpStat);
+    }
+
+    static BotMovementProfile base() {
+        return BASE;
+    }
+
+    static BotMovementProfile fromCharacter(Character character) {
+        if (character == null) {
+            return BASE;
+        }
+        if (hasForcedBaseMovementStats(character)) {
+            return BASE;
+        }
+        return new BotMovementProfile(character.getTotalMoveSpeedStat(), character.getTotalJumpStat());
+    }
+
+    private static boolean hasForcedBaseMovementStats(Character character) {
+        MapleMap map = character.getMap();
+        return map != null && FieldLimit.MOVEMENTSKILLS.check(map.getFieldLimit());
+    }
+
+    private static int bucketStat(int stat) {
+        int clamped = Math.max(1, stat);
+        if (clamped < STAT_BUCKET_SIZE) {
+            return clamped;
+        }
+        return clamped - Math.floorMod(clamped, STAT_BUCKET_SIZE);
+    }
+
+    double speedMultiplier() {
+        return totalSpeedStat / (double) BASE_TOTAL_STAT;
+    }
+
+    double jumpMultiplier() {
+        return totalJumpStat / (double) BASE_TOTAL_STAT;
+    }
+
+    double walkVelocityPxs() {
+        return BotMovementManager.cfg.WALK_VEL * speedMultiplier();
+    }
+
+    double hForcePxs() {
+        return BotPhysicsEngine.cfg.HFORCE_PXS * speedMultiplier();
+    }
+
+    float jumpSpeedPxs() {
+        return (float) (BotPhysicsEngine.cfg.JUMP_SPEED_PXS * jumpMultiplier());
+    }
+
+    float ropeJumpSpeedPxs() {
+        return (float) (BotPhysicsEngine.cfg.JUMP_ROPE_PXS * jumpMultiplier());
+    }
+}

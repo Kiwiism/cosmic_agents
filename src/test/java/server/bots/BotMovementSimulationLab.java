@@ -1,6 +1,9 @@
 package server.bots;
 
 import client.Character;
+import client.Job;
+import client.inventory.Inventory;
+import client.inventory.InventoryType;
 import org.mockito.stubbing.Answer;
 import server.maps.MapleMap;
 import server.maps.Rope;
@@ -8,6 +11,7 @@ import server.maps.Rope;
 import java.awt.*;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -52,6 +56,9 @@ final class BotMovementSimulationLab {
         Character bot = spawnActor(name, id, map, startPosition);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.skipDelayMs = 0;
+        entry.lastMapId = map.getId();
+        entry.fhIndex = BotMovementManager.buildFhIndex(map);
+        entry.movementProfile = BotMovementProfile.fromCharacter(bot);
         bots.put(name, entry);
         return entry;
     }
@@ -148,8 +155,7 @@ final class BotMovementSimulationLab {
                         pendingStep.entry(),
                         pendingStep.targetSnapshot().primaryTargetPos(),
                         pendingStep.targetSnapshot().rawOwnerPos(),
-                        pendingStep.runAiTick(),
-                        false);
+                        pendingStep.runAiTick());
                 trace.add(TraceFrame.capture(
                         trace.size(),
                         elapsedMs,
@@ -161,10 +167,6 @@ final class BotMovementSimulationLab {
     }
 
     void stepRaw(String botName, Point targetPos, boolean runAiTick) {
-        stepRaw(botName, targetPos, runAiTick, false);
-    }
-
-    void stepRaw(String botName, Point targetPos, boolean runAiTick, boolean applyGrindSpread) {
         BotEntry entry = requireBot(botName);
         elapsedMs += BotMovementManager.cfg.TICK_MS;
         entry.lastTickWasAi = runAiTick;
@@ -173,7 +175,7 @@ final class BotMovementSimulationLab {
         BotManager.TargetSnapshot targetSnapshot = manager.captureTargetSnapshot(entry);
         Point ownerPos = targetSnapshot.rawOwnerPos();
         entry.lastOwnerPos = new Point(ownerPos);
-        manager.stepMovementOnly(entry, new Point(targetPos), ownerPos, runAiTick, applyGrindSpread);
+        manager.stepMovementOnly(entry, new Point(targetPos), ownerPos, runAiTick);
         trace.add(TraceFrame.capture(trace.size(), elapsedMs, botName, entry, manager.captureTargetSnapshot(entry)));
     }
 
@@ -256,6 +258,7 @@ final class BotMovementSimulationLab {
 
     private static Character mockCharacter(String name, int id, MapleMap initialMap, Point startPosition) {
         Character character = mock(Character.class);
+        Inventory equipped = mock(Inventory.class);
         AtomicReference<Point> position = new AtomicReference<>(new Point(startPosition));
         AtomicReference<MapleMap> map = new AtomicReference<>(initialMap);
         AtomicInteger hp = new AtomicInteger(100);
@@ -277,6 +280,15 @@ final class BotMovementSimulationLab {
             stance.set(invocation.getArgument(0));
             return null;
         }).when(character).setStance(anyInt());
+        when(character.getJob()).thenReturn(Job.BEGINNER);
+        when(character.getLevel()).thenReturn(1);
+        when(character.getSkills()).thenReturn(Map.of());
+        when(character.getRemainingSps()).thenReturn(new int[5]);
+        when(character.getInventory(InventoryType.EQUIPPED)).thenReturn(equipped);
+        when(equipped.getItem((short) -11)).thenReturn(null);
+        when(equipped.iterator()).thenReturn(Collections.emptyIterator());
+        when(character.getTotalMoveSpeedStat()).thenReturn(100);
+        when(character.getTotalJumpStat()).thenReturn(100);
         when(character.isLoggedinWorld()).thenReturn(true);
         doAnswer(invocation -> {
             map.set(invocation.getArgument(0));

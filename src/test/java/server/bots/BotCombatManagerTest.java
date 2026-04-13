@@ -13,13 +13,17 @@ import constants.skills.Beginner;
 import constants.skills.Warrior;
 import net.packet.Packet;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.ArgumentCaptor;
 import server.StatEffect;
 import server.bots.combat.BotAttackDataProvider;
 import server.life.Monster;
+import server.maps.Foothold;
 import server.maps.MapleMap;
 
 import java.awt.*;
+import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Collections;
@@ -32,8 +36,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -327,10 +333,18 @@ class BotCombatManagerTest {
 
     @Test
     void shouldRetreatFromNearbyRangedTargetsInsideDegenerateBand() {
-        assertTrue(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, new Point(100, 200), new Point(220, 200)));
-        assertEquals(new Point(-20, 200), BotAttackExecutionProvider.retreatTargetPosition(new Point(100, 200), new Point(220, 200)));
-        assertTrue(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, new Point(100, 200), new Point(145, 200)));
-        assertFalse(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, new Point(100, 200), new Point(300, 200)));
+        Point botPos = new Point(100, 200);
+        Point retreatBandTarget = new Point(100 + BotCombatManager.cfg.RANGED_RETREAT_THRESHOLD_X, 200);
+        Point pointBlankTarget = new Point(145, 200);
+        Point degenerateButNonRetreatTarget = new Point(100 + BotCombatManager.cfg.RANGED_RETREAT_THRESHOLD_X + 1, 200);
+
+        assertTrue(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, botPos, retreatBandTarget));
+        assertEquals(new Point(100 - BotCombatManager.cfg.RANGED_RETREAT_DISTANCE_X, 200),
+                BotAttackExecutionProvider.retreatTargetPosition(botPos, retreatBandTarget));
+        assertTrue(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, botPos, pointBlankTarget));
+        assertTrue(BotAttackExecutionProvider.shouldDegenerateRangedAttack(WeaponType.BOW, botPos, degenerateButNonRetreatTarget));
+        assertFalse(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, botPos, degenerateButNonRetreatTarget));
+        assertFalse(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, botPos, new Point(300, 200)));
     }
 
     @Test
@@ -382,6 +396,50 @@ class BotCombatManagerTest {
         assertTrue(BotCombatManager.isMobTouchingBot(entry, bot, mob));
     }
 
+    @Test
+    void shouldPreferCurrentFootholdTargetBeforePathScoringOtherRegions() {
+        MapleMap map = spy(new MapleMap(910009050, 0, 0, 910009050, 1.0f));
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
+        footholds.insert(new Foothold(new Point(0, 200), new Point(300, 200), 2));
+        map.setFootholds(footholds);
+        BotNavigationGraphProvider.rebuildGraph(map);
+
+        Character bot = mockBot(new Point(100, 100), map, 20_000, null);
+        Monster currentFootholdMob = mockMob(new Point(180, 100), 100100);
+        Monster otherRegionMob = mockMob(new Point(105, 200), 100100);
+        doReturn(List.of(otherRegionMob, currentFootholdMob)).when(map).getAllMonsters();
+
+        Monster target = BotCombatManager.findGrindTarget(new BotEntry(bot, null, null), bot);
+
+        assertEquals(currentFootholdMob, target);
+    }
+
+    @Test
+    void shouldUseRangedHitBoxTargetOutsideCurrentRegionWithoutPathingThere() {
+        MapleMap map = spy(new MapleMap(910009051, 0, 0, 910009051, 1.0f));
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
+        footholds.insert(new Foothold(new Point(250, 130), new Point(450, 130), 2));
+        map.setFootholds(footholds);
+        BotNavigationGraphProvider.rebuildGraph(map);
+
+        Character bot = mockBot(new Point(100, 100), map, 20_000, null);
+        Monster otherRegionMob = mockMob(new Point(300, 130), 100100);
+        doReturn(List.of(otherRegionMob)).when(map).getAllMonsters();
+
+        BotEntry entry = new BotEntry(bot, null, null);
+
+        try (MockedStatic<BotAttackExecutionProvider> attackExecution =
+                     Mockito.mockStatic(BotAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS)) {
+            attackExecution.when(() -> BotAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.BOW);
+
+            assertEquals(otherRegionMob, BotCombatManager.findFollowAttackTarget(entry, bot));
+            assertEquals(otherRegionMob, BotCombatManager.findGrindTarget(entry, bot));
+            assertTrue(BotCombatManager.isReachableGrindTarget(entry, bot, otherRegionMob));
+        }
+    }
+
     private static void assertDamageDirection(MapleMap map, Character bot, int expectedBroadcasts, int expectedDirection) {
         ArgumentCaptor<Packet> packets = ArgumentCaptor.forClass(Packet.class);
         verify(map, times(expectedBroadcasts)).broadcastMessage(eq(bot), packets.capture(), eq(false));
@@ -416,6 +474,8 @@ class BotCombatManagerTest {
         when(bot.getMapId()).thenReturn(0);
         when(bot.getJob()).thenReturn(Job.BEGINNER);
         when(bot.getLevel()).thenReturn(200);
+        when(bot.getTotalMoveSpeedStat()).thenReturn(100);
+        when(bot.getTotalJumpStat()).thenReturn(100);
         when(bot.getTotalWdef()).thenReturn(0);
         when(bot.getTotalStr()).thenReturn(4);
         when(bot.getTotalDex()).thenReturn(4);
@@ -448,6 +508,7 @@ class BotCombatManagerTest {
         when(effect.getMobCount()).thenReturn(mobCount);
         when(effect.getDamage()).thenReturn(damage);
         when(effect.getDuration()).thenReturn(0);
+        when(effect.getMpCon()).thenReturn((short) 1);
         skill.addLevelEffect(effect);
         return skill;
     }

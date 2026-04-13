@@ -5406,6 +5406,44 @@ public class Character extends AbstractCharacterObject {
         return localwatk;
     }
 
+    /**
+     * Returns the effective Maple movement-speed stat (base 100 plus equip and active SPEED buffs).
+     * Bot movement uses this as a multiplier over its current physics baseline.
+     */
+    public int getTotalMoveSpeedStat() {
+        int total = 100;
+        for (Item item : getInventory(InventoryType.EQUIPPED)) {
+            if (item instanceof Equip equip) {
+                total += equip.getSpeed();
+            }
+        }
+
+        Integer speedBuff = getBuffedValue(BuffStat.SPEED);
+        if (speedBuff != null) {
+            total += speedBuff;
+        }
+        return Math.max(1, total);
+    }
+
+    /**
+     * Returns the effective Maple jump stat (base 100 plus equip and active JUMP buffs).
+     * Bot jump height uses this as a multiplier over its current physics baseline.
+     */
+    public int getTotalJumpStat() {
+        int total = 100;
+        for (Item item : getInventory(InventoryType.EQUIPPED)) {
+            if (item instanceof Equip equip) {
+                total += equip.getJump();
+            }
+        }
+
+        Integer jumpBuff = getBuffedValue(BuffStat.JUMP);
+        if (jumpBuff != null) {
+            total += jumpBuff;
+        }
+        return Math.max(1, total);
+    }
+
     public int getTotalWdef() {
         return localwdef;
     }

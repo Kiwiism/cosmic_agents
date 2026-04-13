@@ -24,6 +24,7 @@ public class BotEntry {
     volatile Character owner;
     volatile boolean following = false;
     final ScheduledFuture<?> task;
+    BotMovementProfile movementProfile = BotMovementProfile.base();
 
     // Physics
     float velY = 0f;
@@ -50,6 +51,7 @@ public class BotEntry {
     int airVelX = 0;
     // Accumulated air-steering correction (gradually adjusted toward target each tick)
     double airSteerVelX = 0.0;
+    boolean fixedAirArc = false;
 
     // Movement intent
     boolean climbUpIntent = false;
@@ -62,7 +64,9 @@ public class BotEntry {
     // Grind mode
     volatile boolean grinding = false;
     Monster grindTarget = null;
+    long nextGrindTargetSearchAtMs = 0L;
     int attackCooldownMs = 0;
+    int moveWindowMs = 0;    // movement-only gap after attack animation; attacks blocked, walking allowed
 
     // Skill cache
     int cachedSkillJob = -1;
@@ -162,6 +166,10 @@ public class BotEntry {
     long    lastBuffActionAtMs     = 0L;
     String  lastBuffActionSummary  = "no buff scans yet";
 
+    // Skill buff tracking (always enabled; tracks last decision for debug)
+    long   lastSkillBuffActionAtMs    = 0L;
+    String lastSkillBuffActionSummary = "no skill buff checks yet";
+
     // Party-quest state (one slot per PQ type; null = not in that PQ)
     public server.bots.pq.BotKpqState kpq = new server.bots.pq.BotKpqState();
 
@@ -176,8 +184,27 @@ public class BotEntry {
     int lastDesiredDirection = 0;
     Point navTargetPos = null;
     BotNavigationGraph.Edge navEdge = null;
+    BotNavigationGraph.Edge navJumpLaunchEdge = null;
+    int navJumpLaunchX = Integer.MIN_VALUE;
     int navTargetRegionId = -1;
     boolean navPreciseTarget = false;
+    boolean graphWarmupFallback = false;
+    int observedOwnerStepX = 0;
+    int observedOwnerStepY = 0;
+    BotFidgetMode fidgetMode = BotFidgetMode.NONE;
+    BotFidgetTrigger fidgetTrigger = BotFidgetTrigger.NONE;
+    long fidgetUntilMs = 0L;
+    long nextFidgetActionAtMs = 0L;
+    long nextFidgetAtMs = 0L;
+    long nextIdleFidgetRollAtMs = 0L;
+    int fidgetAirSteerDir = 0;
+    int fidgetJumpDir = 0;
+    int fidgetMoveDir = 0;
+    boolean fidgetSpamAirSteer = false;
+    int fidgetActionBaseDelayMs = 0;
+    long nextFidgetJumpAtMs = 0L;
+    Point fidgetOriginPos = null;
+    long nextFidgetVisualAtMs = 0L;
     long nextGearSuggestionAt = 0L;
     boolean spawnUpgradeCheckDone = false;
     final Set<Integer> requestedUpgradeItemIds = ConcurrentHashMap.newKeySet();
@@ -191,6 +218,8 @@ public class BotEntry {
     Point lastOwnerPos = null;
     boolean lastTickWasAi = false;
     long lastTickAtMs = 0L;
+    long lastHeartbeatAtMs = 0L;
+    long nextFollowIdleMovementCheckAtMs = 0L;
 
     // Stuck detection & unstuck
     int stuckMs = 0;

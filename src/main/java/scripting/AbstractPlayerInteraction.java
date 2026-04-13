@@ -647,11 +647,12 @@ public class AbstractPlayerInteraction {
                 return null;
             }
             if (ItemConstants.getInventoryType(id) == InventoryType.EQUIP) {
-                if (randomStats) {
-                    InventoryManipulator.addFromDrop(c, ii.randomizeStats((Equip) item), false, petId);
-                } else {
-                    InventoryManipulator.addFromDrop(c, item, false, petId);
+                Equip eqp = randomStats ? ii.randomizeStats((Equip) item, false) : (Equip) item;
+                if (YamlConfig.config.server.GODLY_STATS_ENABLED &&
+                        ItemInformationProvider.rollSuccessChance(YamlConfig.config.server.GODLY_STATS_NPC_CHANCE)) {
+                    ii.randomizeGodlyStats(eqp);
                 }
+                InventoryManipulator.addFromDrop(c, eqp, false, petId);
             } else {
                 InventoryManipulator.addFromDrop(c, item, false, petId);
             }

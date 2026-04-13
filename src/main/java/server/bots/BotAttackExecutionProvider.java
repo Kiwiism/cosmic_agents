@@ -58,7 +58,8 @@ final class BotAttackExecutionProvider {
         int baseDisplay = profile.getAttack();
         BotAttackDataProvider provider = BotAttackDataProvider.getInstance();
         boolean useDegenerateCloseRange = shouldDegenerateRangedAttack(weaponType,
-                bot != null ? bot.getPosition() : null, targetPosition);
+                bot != null ? bot.getPosition() : null, targetPosition)
+                || shouldDegenerateForNoAmmo(weaponType, bot);
         BotAttackDataProvider.AttackAnimationSpec attackSpec =
                 provider.getBasicAttackSpec(baseDisplay, weaponType, useDegenerateCloseRange);
         if (baseDisplay <= 0) {
@@ -103,7 +104,8 @@ final class BotAttackExecutionProvider {
                                                            WeaponType weaponType, Character bot, Point targetPosition) {
         BotAttackDataProvider provider = BotAttackDataProvider.getInstance();
         boolean useDegenerateCloseRange = shouldDegenerateRangedAttack(weaponType,
-                bot != null ? bot.getPosition() : null, targetPosition);
+                bot != null ? bot.getPosition() : null, targetPosition)
+                || shouldDegenerateForNoAmmo(weaponType, bot);
         BotAttackDataProvider.AttackAnimationSpec attackSpec = provider.getBasicAttackSpec(weaponType, useDegenerateCloseRange);
         String action = sampleAttackAction(attackSpec.actions(), attackSpec.primaryAction());
         int variantOffset = Math.max(0, attackSpec.actions().indexOf(action));
@@ -280,6 +282,30 @@ final class BotAttackExecutionProvider {
                 && dy <= BotCombatManager.cfg.RANGED_DEGENERATE_RANGE_Y;
     }
 
+    static boolean isAnyMobNearerThanTarget(Character bot, Point botPos, Point targetPos) {
+        if (bot == null || botPos == null || targetPos == null) {
+            return false;
+        }
+        WeaponType wt = getEquippedWeaponType(bot);
+        if (!isDegenerateCapableRangedWeapon(wt)) {
+            return false;
+        }
+        int threshX = BotCombatManager.cfg.RANGED_RETREAT_THRESHOLD_X;
+        int threshY = BotCombatManager.cfg.RANGED_DEGENERATE_RANGE_Y;
+        double targetDistSq = targetPos.distanceSq(botPos);
+        for (server.life.Monster m : bot.getMap().getAllMonsters()) {
+            if (!m.isAlive()) continue;
+            Point mp = m.getPosition();
+            if (mp.distanceSq(botPos) >= targetDistSq) continue;
+            int dx = Math.abs(mp.x - botPos.x);
+            int dy = Math.abs(mp.y - botPos.y);
+            if (dx <= threshX && dy <= threshY) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     static Point retreatTargetPosition(Point botPos, Point targetPos) {
         int retreatDirection = targetPos.x >= botPos.x ? -1 : 1;
         return new Point(botPos.x + retreatDirection * BotCombatManager.cfg.RANGED_RETREAT_DISTANCE_X, botPos.y);
@@ -418,6 +444,13 @@ final class BotAttackExecutionProvider {
                 || weaponType == WeaponType.CROSSBOW
                 || weaponType == WeaponType.CLAW
                 || weaponType == WeaponType.GUN;
+    }
+
+    private static boolean shouldDegenerateForNoAmmo(WeaponType weaponType, Character bot) {
+        if (bot == null || !isDegenerateCapableRangedWeapon(weaponType)) {
+            return false;
+        }
+        return BotCombatManager.countAmmo(bot, weaponType) <= 0;
     }
 
     private static Rectangle closeRangeBasicHitBox(Point origin, boolean facingLeft) {

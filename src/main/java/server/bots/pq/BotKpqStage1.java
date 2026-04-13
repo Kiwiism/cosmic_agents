@@ -74,6 +74,15 @@ final class BotKpqStage1 {
         return entry.kpq.state >= SECOND_WALK;
     }
 
+    /**
+     * True during GRINDING when a nearby coupon has been located.
+     * This is a soft nav hint — the bot should still fight mobs opportunistically
+     * and only drift toward the coupon when idle.
+     */
+    static boolean isCouponSeeking(BotEntry entry) {
+        return entry.kpq.state == GRINDING && entry.kpq.navTarget != null;
+    }
+
     static boolean isNpcLocked(BotEntry entry) {
         return entry.kpq.state == FIRST_WAIT || entry.kpq.state == SECOND_WAIT;
     }

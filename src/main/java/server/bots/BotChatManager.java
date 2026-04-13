@@ -8,10 +8,12 @@ import client.inventory.InventoryType;
 import client.inventory.Item;
 import constants.game.GameConstants;
 import constants.inventory.ItemConstants;
-import server.ItemInformationProvider;
 import server.Trade;
-import java.awt.*;
+import server.combat.CombatFormulaProvider;
+import server.maps.FieldLimit;
+import server.maps.MapleMap;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -88,6 +90,9 @@ public class BotChatManager {
             + "how\\s+(are|r)\\s+(you|u|ya)(\\s+doing)?|"
             + "what.?s\\s+(good|up|new|poppin.?))\\b",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern FIDGET_PATTERN = Pattern.compile(
+            "^\\s*fidget\\s*[?!.,]*\\s*$",
+            Pattern.CASE_INSENSITIVE);
 
     private static final Pattern STATS_PATTERN = Pattern.compile(
             INFO_PFX + "(stats?|str(ength)?|dex(terity)?|int(elligence)?|luk|level|lv)\\b"
@@ -98,6 +103,11 @@ public class BotChatManager {
             INFO_PFX + "(range|damage|dmg|dps|watk|atk)\\b"
             + "|\\bwhat.?s\\s+(your|ur)\\s+(range|damage|dmg)\\b"
             + "|\\bhow\\s+(strong|powerful)\\s+(are|r)\\s+(you|u)\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern MOVEMENT_STATS_PATTERN = Pattern.compile(
+            INFO_PFX + "(?:move\\s*speed|movespeed|speed|jump|movement|mobility)(?:\\s+stats?)?\\b"
+            + "|\\bwhat.?s\\s+(your|ur)\\s+(?:move\\s*speed|movespeed|speed|jump)\\b"
+            + "|\\bhow\\s+fast\\s+(are|r)\\s+(you|u)\\b",
             Pattern.CASE_INSENSITIVE);
 
     private static final Pattern BUILD_PATTERN = Pattern.compile(
@@ -121,6 +131,11 @@ public class BotChatManager {
             INFO_PFX + "(debug\\s+stats?|attack\\s+cooldown|atk\\s+cooldown)\\b"
             + "|\\bshow\\s+(me\\s+)?debug\\s+stats\\b"
             + "|\\bwhat.?s\\s+(your|ur)\\s+attack\\s+cooldown\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern CRIT_DEBUG_PATTERN = Pattern.compile(
+            "\\bcrit\\s*(debug|stats?|rate|chance|info)?\\s*\\??\\s*$"
+            + "|\\bdo\\s+you\\s+(crit|get\\s+crits?)\\b"
+            + "|\\bwhat.?s\\s+(your|ur)\\s+crit\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern HELP_PATTERN = Pattern.compile(
             "\\b(help|commands?|what\\s+can\\s+you\\s+do|how\\s+do\\s+i\\s+use\\s+you)\\b",
@@ -163,6 +178,9 @@ public class BotChatManager {
     private static final Pattern BUFF_DEBUG_PATTERN = Pattern.compile(
             "\\bbuff\\s+debug\\b|\\bdebug\\s+buffs?\\b|\\bactive\\s+buffs?\\b",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern SKILL_BUFF_DEBUG_PATTERN = Pattern.compile(
+            "\\bskill\\s+buff\\s+debug\\b|\\bdebug\\s+skill\\s+buffs?\\b|\\bskill\\s+buffs?\\s*\\?\\s*$",
+            Pattern.CASE_INSENSITIVE);
     private static final String SCROLL_WORDS = "scrolls?";
     private static final String POTION_WORDS = "(?:pots?|potions?|hp\\s+pots?|mp\\s+pots?|supplies)";
     private static final String BUFF_WORDS   = "(?:buff\\s+pots?|buff\\s+potions?|buffs?\\s+items?)";
@@ -187,7 +205,7 @@ public class BotChatManager {
             Pattern.CASE_INSENSITIVE);
     private static final Pattern MESOS_PATTERN = Pattern.compile(
             "^\\s*(?:meso|mesos|cash)\\s*[?!.,]*\\s*$"
-            + "|\\bhow\\s+much\\s+(?:meso|mesos|cash)\\b"
+            + "|\\bhow\\s+much\\s+(?:meso|mesos|cash)(?:\\s+do\\s+(?:you|u)\\s+have)?\\b"
             + "|\\bwhat.?s\\s+(?:your|ur)\\s+(?:meso|mesos|cash)\\b"
             + "|\\bshow\\s+me\\s+(?:your|ur)\\s+(?:meso|mesos|cash)\\b"
             + "|\\b(?:your|ur)\\s+(?:meso|mesos|cash)\\b"
@@ -362,12 +380,12 @@ public class BotChatManager {
             Pattern.CASE_INSENSITIVE);
 
     private static final List<String> GREETING_REPLIES = List.of(
-            "hey", "hi", "sup", "yo", "heya", "hii", "hey!!", "hi!!",
-            "heyo", "ello", "o/", "hai", "eyy", "henlo", "o hey");
+            "hey", "hi", "sup", "yo", "heya", "hii", "hey!!", "hi!!", "hai", "haii",
+            "heyo", "ello", "o/", "hai", "eyy", "henlo", "o hey", "yo dude", "hey there", "hi there", "hi guys", "what's up", "howdy", "how's it going");
     private static final List<String> WB_REPLIES = List.of(
             "wb", "wb!", "welcome back", "oh ur back", "hey ur back", "welcome back!!",
-            "wb~", "there you are", "oh hey", "finally lol", "took ya a bit",
-            "hey you're back", "oh wb!");
+            "wb~", "there you are", "oh hey", "finally lol", "took ya a bit", "wb lol", "where were you lol", "ready to roll?", "lets continue!",
+            "hey you're back", "oh wb!", "been waiting for you", "waiting on you", "ready to go?", "ready?", "back already?", "back?", "u back?");
     private static final List<String> MESO_REPLIES = List.of(
             "I have %s",
             "got %s on me",
@@ -566,6 +584,10 @@ public class BotChatManager {
             BotManager.after(BotManager.randMs(500, 700), () -> reportBuffDebug(entry, entry.bot));
             return;
         }
+        if (matchesWholeCommand(SKILL_BUFF_DEBUG_PATTERN, message)) {
+            BotManager.after(BotManager.randMs(500, 700), () -> reportSkillBuffDebug(entry, entry.bot));
+            return;
+        }
         if (isApRespecCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () ->
                     BotManager.getInstance().botSay(entry.bot, BotBuildManager.respecAp(entry, entry.bot)));
@@ -637,9 +659,15 @@ public class BotChatManager {
                 BotManager.after(BotManager.randMs(1400, 1600), () ->
                         BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(STOP_REPLIES)));
             });
+        } else if (isFidgetCommand(message)) {
+            BotManager.after(BotManager.randMs(250, 500), () -> {
+                entry.bot.changeFaceExpression(randomFidgetExpression());
+                BotFidgetManager.maybeStartSocialFidget(entry);
+            });
         } else if (GREETING_PATTERN.matcher(message).find()) {
             BotManager.after(BotManager.randMs(900, 1100), () -> {
                 entry.bot.changeFaceExpression(Emote.HAPPY.getValue());
+                BotFidgetManager.maybeStartGreetingFidget(entry, ThreadLocalRandom.current().nextInt(100));
                 queueBotSay(entry, BotManager.randomReply(GREETING_REPLIES));
                 checkBotStatus(entry, entry.bot);
             });
@@ -706,6 +734,8 @@ public class BotChatManager {
         }
         if (matchesWholeCommand(STATS_PATTERN, message))
             BotManager.after(BotManager.randMs(900, 1100), () -> reportStats(entry, entry.bot));
+        if (isMovementStatsQuery(message))
+            BotManager.after(BotManager.randMs(900, 1100), () -> reportMovementStats(entry, entry.bot));
         if (matchesWholeCommand(RANGE_PATTERN, message))
             BotManager.after(BotManager.randMs(900, 1100), () -> reportRange(entry, entry.bot));
         if (matchesWholeCommand(BUILD_PATTERN, message))
@@ -722,6 +752,8 @@ public class BotChatManager {
             BotManager.after(BotManager.randMs(900, 1100), () -> reportPotions(entry, entry.bot));
         if (matchesWholeCommand(DEBUG_STATS_PATTERN, message))
             BotManager.after(BotManager.randMs(900, 1100), () -> reportDebugStats(entry, entry.bot));
+        if (matchesWholeCommand(CRIT_DEBUG_PATTERN, message))
+            BotManager.after(BotManager.randMs(900, 1100), () -> reportCritDebug(entry, entry.bot));
 
         // Job advancement — check if message contains a valid job selection
         if (JOB_SELECT_PATTERN.matcher(message).find()) {
@@ -845,6 +877,12 @@ public class BotChatManager {
         queueBotSay(entry, String.format("my dmg is %d-%d, watk %d", minDmg, maxDmg, watk));
     }
 
+    private static void reportMovementStats(BotEntry entry, Character bot) {
+        for (String line : buildMovementStatsReport(bot)) {
+            queueBotSay(entry, line);
+        }
+    }
+
     private static void reportBuild(BotEntry entry, Character bot) {
         queueBotSay(entry, String.format("build: str %d / dex %d / int %d / luk %d, %d ap left",
                 bot.getStr(), bot.getDex(), bot.getInt(), bot.getLuk(),
@@ -948,6 +986,63 @@ public class BotChatManager {
         return String.format(pattern, amount);
     }
 
+    static boolean isMovementStatsQuery(String message) {
+        return matchesWholeCommand(MOVEMENT_STATS_PATTERN, message);
+    }
+
+    static List<String> buildMovementStatsReport(Character bot) {
+        if (bot == null) {
+            return List.of("cant read my movement stats rn");
+        }
+
+        BotMovementProfile profile = BotMovementProfile.fromCharacter(bot);
+        MapleMap map = bot.getMap();
+        int rawSpeedStat = bot.getTotalMoveSpeedStat();
+        int rawJumpStat = bot.getTotalJumpStat();
+        String speedLine = movementStatLine(map, profile, rawSpeedStat, rawJumpStat);
+
+        if (map == null) {
+            return List.of(
+                    speedLine,
+                    String.format(Locale.ROOT, "walk %.1f px/s, hforce %.1f, climb %d px/tick",
+                            profile.walkVelocityPxs(), profile.hForcePxs(), BotPhysicsEngine.climbStepPerTick()),
+                    String.format(Locale.ROOT, "jump %.1f/tick, rope %.1f/tick, max jump %.1f px",
+                            BotPhysicsEngine.jumpForcePerTick(profile),
+                            BotPhysicsEngine.ropeJumpForcePerTick(profile),
+                            BotPhysicsEngine.calculateMaxJumpHeight(profile))
+            );
+        }
+
+        return List.of(
+                speedLine,
+                String.format(Locale.ROOT, "walk %.1f px/s, %d px/tick, climb %d, hforce %.1f",
+                        profile.walkVelocityPxs(),
+                        BotMovementManager.walkStep(map, profile),
+                        BotPhysicsEngine.climbStepPerTick(),
+                        profile.hForcePxs()),
+                String.format(Locale.ROOT, "jump %.1f, rope %.1f, max %.1f px, reach %d/%d px",
+                        BotPhysicsEngine.jumpForcePerTick(profile),
+                        BotPhysicsEngine.ropeJumpForcePerTick(profile),
+                        BotPhysicsEngine.calculateMaxJumpHeight(profile),
+                        BotPhysicsEngine.maxJumpHorizontalTravel(map, profile),
+                        BotPhysicsEngine.maxRopeJumpHorizontalTravel(map, profile))
+        );
+    }
+
+    private static String movementStatLine(MapleMap map,
+                                           BotMovementProfile profile,
+                                           int rawSpeedStat,
+                                           int rawJumpStat) {
+        if (map != null && FieldLimit.MOVEMENTSKILLS.check(map.getFieldLimit())
+                && (rawSpeedStat != profile.totalSpeedStat() || rawJumpStat != profile.totalJumpStat())) {
+            return String.format(Locale.ROOT,
+                    "speed %d%% jump %d%% (map forced; raw %d%%/%d%%)",
+                    profile.totalSpeedStat(), profile.totalJumpStat(), rawSpeedStat, rawJumpStat);
+        }
+        return String.format(Locale.ROOT, "speed %d%% jump %d%%",
+                profile.totalSpeedStat(), profile.totalJumpStat());
+    }
+
     static String formatCompactMesos(int mesos) {
         if (mesos < 1_000) {
             return String.valueOf(mesos);
@@ -979,15 +1074,41 @@ public class BotChatManager {
         queueBotSay(entry, BotCombatManager.describeDebugStats(entry, bot));
     }
 
+    private static void reportCritDebug(BotEntry entry, Character bot) {
+        CombatFormulaProvider formula = CombatFormulaProvider.getInstance();
+        CombatFormulaProvider.CritProfile crit = formula.resolveCritProfile(bot);
+        CombatFormulaProvider.DamageProfile dmg = formula.resolveDamageProfile(bot, 0, 0, false);
+
+        int critPct = (int) Math.round(crit.critChance() * 100);
+        if (critPct == 0) {
+            queueBotSay(entry, "i can't crit (my job doesn't have a crit passive)");
+            return;
+        }
+
+        int critMin = (int) Math.min(99999, Math.floor(dmg.minDamage() * crit.critMultiplier()));
+        int critMax = (int) Math.min(99999, Math.floor(dmg.maxDamage() * crit.critMultiplier()));
+        queueBotSay(entry, String.format(
+                "crit: %d%% chance, %.2fx multiplier | base %d-%d | crit %d-%d",
+                critPct, crit.critMultiplier(),
+                dmg.minDamage(), dmg.maxDamage(),
+                critMin, critMax));
+    }
+
     private static void reportBuffDebug(BotEntry entry, Character bot) {
         for (String line : BotBuffManager.getDebugLines(entry, bot)) {
             queueBotSay(entry, line);
         }
     }
 
+    private static void reportSkillBuffDebug(BotEntry entry, Character bot) {
+        for (String line : BotCombatManager.getSkillBuffDebugLines(entry, bot)) {
+            queueBotSay(entry, line);
+        }
+    }
+
     private static void reportHelp(BotEntry entry) {
-        queueBotSay(entry, "commands: follow, stop, move here, grind, stats, skills, inventory, mesos, slots, scrolls, pots, debug stats, respec, respec ap");
-        queueBotSay(entry, "support: support on/off, heals on/off, buff on/off, buff cheap/max, buff debug");
+        queueBotSay(entry, "commands: follow, stop, move here, fidget, grind, stats, speed, skills, inventory, mesos, slots, scrolls, pots, debug stats, crit, respec, respec ap");
+        queueBotSay(entry, "support: support on/off, heals on/off, buff on/off, buff cheap/max, buff debug, skill buff debug");
         queueBotSay(entry, "gear: ask 'any upgrades?' or say 'trade recommended gear'");
         queueBotSay(entry, "trade: mesos, scrolls, pots, equips, etc, or named items");
     }
@@ -1145,6 +1266,15 @@ public class BotChatManager {
     /** Returns true when the owner hasn't moved in ≥5 min (AFK). Skip chat interactions. */
     static boolean isOwnerIdle(BotEntry entry) {
         return entry.ownerWasAfk;
+    }
+
+    static boolean isFidgetCommand(String message) {
+        return message != null && FIDGET_PATTERN.matcher(message).find();
+    }
+
+    static int randomFidgetExpression() {
+        int[] expressions = {2, 3, 5, 6, 7};
+        return expressions[ThreadLocalRandom.current().nextInt(expressions.length)];
     }
 
     private static void handleRequestUpgradeCommand(BotEntry entry, Character bot) {
