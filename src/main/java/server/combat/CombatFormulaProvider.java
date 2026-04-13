@@ -233,8 +233,8 @@ public final class CombatFormulaProvider {
      * the known crit passive set. No job-type filter — works correctly regardless of job
      * advancement level or future skill additions.
      *
-     * <p>Crit chance comes from the passive skill's x-field (e.g. Critical Shot lv20 → 40%).
-     * Multiplier = 1.0 (base hit) + 1.0 if a passive is leveled (+100% crit bonus) + SE bonus%.
+     * <p>Crit chance from the passive's {@code prop} field (e.g. Critical Shot lv20 prop=40 → 40%).
+     * Crit multiplier from {@code damage} field (e.g. lv20 damage=200 → 2.0×), plus SE bonus additively.
      * All additive per line; magic attacks skip this entirely.
      */
     public CritProfile resolveCritProfile(Character bot) {
@@ -248,8 +248,9 @@ public final class CombatFormulaProvider {
             if (skill == null) continue;
             StatEffect effect = skill.getEffect(level);
             if (effect == null) continue;
-            critChance = Math.min(1.0, critChance + effect.getX() / 100.0);
-            critMultiplier += 1.0; // standard passive: +100% crit damage
+            // prop = crit chance [0,1]; damage = total crit multiplier % (e.g. 200 → 2.0x)
+            critChance = Math.min(1.0, critChance + effect.getProp());
+            critMultiplier = effect.getDamage() / 100.0;
             break; // only one crit passive applies per bot
         }
 

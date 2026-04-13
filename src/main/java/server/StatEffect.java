@@ -1916,6 +1916,11 @@ public class StatEffect {
         return x;
     }
 
+    /** Returns the skill's proc/crit chance in [0.0, 1.0] (WZ {@code prop} field ÷ 100). */
+    public double getProp() {
+        return prop;
+    }
+
     public int getY() {
         return y;
     }
