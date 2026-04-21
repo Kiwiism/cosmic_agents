@@ -36,11 +36,14 @@ import server.bots.combat.BotMobHitboxProvider;
 import server.combat.CombatFormulaProvider;
 import server.life.Monster;
 import server.maps.Foothold;
+import server.maps.MapObject;
+import server.maps.MapObjectType;
 import server.maps.MapleMap;
 import tools.PacketCreator;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -347,6 +350,7 @@ class BotCombatManager {
 
             if (isHealSkill(skill.getId())) {
                 entry.healSkillId = skill.getId();
+                continue;  // not an attack skill; offensive use against undead handled in tickSupportHealing
             }
 
             if (fx.getDamage() > 0 && !fx.isOverTime()) {  // damage > 0 identifies damaging skills
@@ -449,19 +453,17 @@ class BotCombatManager {
 
         long now = System.currentTimeMillis();
         if (now < entry.nextSupportHealAt) return;
-        if (!hasNearbyPartyMemberNeedingHeal(bot)) return;
 
         Skill skill = SkillFactory.getSkill(entry.healSkillId);
         int lvl = bot.getSkillLevel(skill);
         if (lvl <= 0) return;
-
         StatEffect fx = skill.getEffect(lvl);
-        if (!fx.canPaySkillCost(bot)) {
-            return;
-        }
-        if (!fx.applyTo(bot)) {
-            return;
-        }
+
+        boolean partyNeedsHeal = hasNearbyPartyMemberNeedingHeal(bot);
+        List<Monster> undeadTargets = getUndeadMobsInHealRange(bot, fx);
+        if (!partyNeedsHeal && undeadTargets.isEmpty()) return;
+
+        if (!fx.canPaySkillCost(bot) || !fx.applyTo(bot)) return;
 
         entry.nextSupportHealAt = now + cfg.SUPPORT_HEAL_CD_MS;
         BotAttackExecutionProvider.BasicAttackData fallbackAttackData =
@@ -474,6 +476,61 @@ class BotCombatManager {
         if (fx.getCooldown() > 0) {
             bot.addCooldown(entry.healSkillId, now, fx.getCooldown() * 1000L);
         }
+
+        if (!undeadTargets.isEmpty()) {
+            sendHealAttack(entry.healSkillId, lvl, bot, undeadTargets, fallbackAttackData, skillTiming);
+        }
+    }
+
+    /**
+     * Sends a skill attack packet targeting undead mobs with Heal damage.
+     * Called after fx.applyTo() has already handled the party heal and MP cost,
+     * so we build the AttackInfo directly rather than going through attackMonster()
+     * (which would re-check MP via canUseSkill and fail).
+     */
+    private static void sendHealAttack(int healSkillId, int lvl, Character bot,
+            List<Monster> undeadTargets,
+            BotAttackExecutionProvider.BasicAttackData fallbackAttackData,
+            BotAttackExecutionProvider.SkillAttackTiming skillTiming) {
+        AttackRoute route = BotAttackExecutionProvider.determineSkillRoute(bot, healSkillId);
+        CombatFormulaProvider.DamageProfile damageProfile = CombatFormulaProvider.getInstance()
+                .resolveDamageProfile(bot, healSkillId, lvl, true);
+        AbstractDealDamageHandler.AttackInfo attack = new AbstractDealDamageHandler.AttackInfo();
+        attack.skill = healSkillId;
+        attack.skilllevel = lvl;
+        attack.numDamage = 1;
+        attack.numAttacked = undeadTargets.size();
+        attack.numAttackedAndDamage = (undeadTargets.size() << 4) | 1;
+        attack.speed = fallbackAttackData.speed();
+        attack.stance = 0;
+        attack.display = 0;
+        boolean facingLeft = bot.isFacingLeft();
+        attack.direction = facingLeft ? -128 : 0;
+        attack.rangedirection = facingLeft ? -128 : 0;
+        attack.ranged = false;
+        attack.magic = damageProfile.magicAttack();
+        attack.targets = new HashMap<>();
+        for (Monster target : undeadTargets) {
+            attack.targets.put(target.getObjectId(),
+                    CombatFormulaProvider.getInstance().makeTarget(
+                            bot, target, 1, damageProfile, skillTiming.hitDelayMs()));
+        }
+        BotAttackExecutionProvider.applyAttackRoute(route, attack, bot);
+    }
+
+    private static List<Monster> getUndeadMobsInHealRange(Character bot, StatEffect fx) {
+        Rectangle bounds = fx.calculateBoundingBox(bot.getPosition(), bot.isFacingLeft());
+        List<MapObject> objects = bot.getMap().getMapObjectsInRect(bounds, Arrays.asList(MapObjectType.MONSTER));
+        List<Monster> undead = new ArrayList<>();
+        int cap = fx.getMobCount();
+        for (MapObject mo : objects) {
+            Monster m = (Monster) mo;
+            if (m.isAlive() && m.getStats().isUndead()) {
+                undead.add(m);
+                if (undead.size() >= cap) break;
+            }
+        }
+        return undead;
     }
 
     static Monster findGrindTarget(Character bot) {

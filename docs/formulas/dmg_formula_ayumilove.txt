@@ -237,3 +237,19 @@ Cumulative damage = 3 * (1 - (2/3) ^ (total number of hits))
  
 Barrage, last 2 hits only (credit to Fiel): 2 ^ (ordinal number of hit - 4)
 Total damage multiplier: 10
+
+
+added
+If you add Sharp Eyes +40% critical damage to your existing critical throw then that works like
+
+(562 ~ 1003) * 1.6 for drain
++ ((562 ~ 1003) * 1.4) for critical
+
+If you didn't have Critical Throw and it was only Sharp Eyes,
+
+(562 ~ 1003) * 1.6 for drain
++ ((562 ~ 1003) * 0.4) for critical
+Hope this helps
+Also the critical damage can apply for each line of a skill with multiple lines.
+
+So for example in the case of an archer third job using Strafe you can get the +100% critical damage up to four times.
