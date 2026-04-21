@@ -1,7 +1,10 @@
 package server.bots.build;
 
 import client.Job;
+import client.Skill;
+import client.SkillFactory;
 import constants.skills.Crusader;
+import constants.skills.DarkKnight;
 import constants.skills.DragonKnight;
 import constants.skills.Fighter;
 import constants.skills.Hero;
@@ -26,12 +29,18 @@ public final class WarriorBuilds {
             case WHITEKNIGHT -> whiteKnightBuild();
             case SPEARMAN -> spearmanBuild();
             case DRAGONKNIGHT -> dragonKnightBuild();
+            case DARKKNIGHT -> darkKnightBuild();
             default -> null;
         };
     }
 
     private static BuildStep s(int id, int to) {
         return new BuildStep(id, to);
+    }
+
+    private static int max(int skillId) {
+        Skill skill = SkillFactory.getSkill(skillId);
+        return skill != null ? skill.getMaxLevel() : 30;
     }
 
     private static List<BuildStep> warriorBuild() {
@@ -127,24 +136,58 @@ public final class WarriorBuilds {
         );
     }
 
+    // https://royals.ms/forum/threads/a-guide-to-dark-knight-2026.230387/
     private static List<BuildStep> spearmanBuild() {
         return List.of(
-                s(Spearman.HYPER_BODY, 30),
-                s(Spearman.SPEAR_MASTERY, 20),
-                s(Spearman.IRON_WILL, 20),
-                s(Spearman.SPEAR_BOOSTER, 20)
+                s(Spearman.SPEAR_MASTERY, 5),
+                s(Spearman.SPEAR_BOOSTER, 2),
+                s(Spearman.SPEAR_BOOSTER, 11),
+                s(Spearman.SPEAR_MASTERY, max(Spearman.SPEAR_MASTERY)),
+                s(Spearman.SPEAR_BOOSTER, max(Spearman.SPEAR_BOOSTER)),
+                s(Spearman.IRON_WILL, 3),
+                s(Spearman.HYPER_BODY, max(Spearman.HYPER_BODY)),
+                s(Spearman.POLEARM_MASTERY, max(Spearman.POLEARM_MASTERY)),
+                s(Spearman.POLEARM_BOOSTER, max(Spearman.POLEARM_BOOSTER))
         );
     }
 
     private static List<BuildStep> dragonKnightBuild() {
         return List.of(
-                s(DragonKnight.DRAGON_ROAR, 30),
-                s(DragonKnight.DRAGON_BLOOD, 30),
-                s(DragonKnight.SPEAR_CRUSHER, 30),
-                s(DragonKnight.SPEAR_DRAGON_FURY, 30),
-                s(DragonKnight.SACRIFICE, 20),
-                s(DragonKnight.POWER_CRASH, 20),
-                s(DragonKnight.ELEMENTAL_RESISTANCE, 20)
+                s(DragonKnight.SPEAR_CRUSHER, 1),
+                s(DragonKnight.SPEAR_CRUSHER, max(DragonKnight.SPEAR_CRUSHER)),
+                s(DragonKnight.SACRIFICE, 1),
+                s(DragonKnight.SACRIFICE, 3),
+                s(DragonKnight.DRAGON_ROAR, max(DragonKnight.DRAGON_ROAR)),
+                s(DragonKnight.SPEAR_DRAGON_FURY, 1),
+                s(DragonKnight.SPEAR_DRAGON_FURY, max(DragonKnight.SPEAR_DRAGON_FURY)),
+                s(DragonKnight.ELEMENTAL_RESISTANCE, 1),
+                s(DragonKnight.ELEMENTAL_RESISTANCE, max(DragonKnight.ELEMENTAL_RESISTANCE)),
+                s(DragonKnight.SACRIFICE, 5),
+                s(DragonKnight.SACRIFICE, 15),
+                s(DragonKnight.DRAGON_BLOOD, 3),
+                s(DragonKnight.POWER_CRASH, 2),
+                s(DragonKnight.POWER_CRASH, max(DragonKnight.POWER_CRASH))
+        );
+    }
+
+    private static List<BuildStep> darkKnightBuild() {
+        return List.of(
+                s(DarkKnight.RUSH, 1),
+                s(DarkKnight.BERSERK, 1),
+                s(DarkKnight.BEHOLDER, 1),
+                s(DarkKnight.BERSERK, max(DarkKnight.BERSERK)),
+                s(DarkKnight.STANCE, 1),
+                s(DarkKnight.STANCE, max(DarkKnight.STANCE)),
+                s(DarkKnight.MONSTER_MAGNET, 1),
+                s(DarkKnight.MONSTER_MAGNET, max(DarkKnight.MONSTER_MAGNET)),
+                s(DarkKnight.ACHILLES, 1),
+                s(DarkKnight.ACHILLES, max(DarkKnight.ACHILLES)),
+                s(DarkKnight.BEHOLDER, 2),
+                s(DarkKnight.BEHOLDER, max(DarkKnight.BEHOLDER)),
+                s(DarkKnight.MAPLE_WARRIOR, 10),
+                s(DarkKnight.RUSH, 5),
+                s(DarkKnight.RUSH, max(DarkKnight.RUSH)),
+                s(DarkKnight.HEROS_WILL, 5)
         );
     }
 }
