@@ -412,8 +412,12 @@ public final class CombatFormulaProvider {
         if (bonusDmgBuff != 100) {
             damage = (long) Math.ceil(damage * bonusDmgBuff / 100.0f);
         }
-        if (chr.getSkillLevel(DarkKnight.BERSERK) > 0 && chr.getHp() * 10 <= chr.getMaxHp()) {
-            damage *= 2;
+        int berserkLvl = chr.getSkillLevel(DarkKnight.BERSERK);
+        if (berserkLvl > 0) {
+            int hpThreshold = SkillFactory.getSkill(DarkKnight.BERSERK).getEffect(berserkLvl).getX();
+            if (chr.getHp() * 100 / chr.getCurrentMaxHp() < hpThreshold) {
+                damage *= 2;
+            }
         }
         return damage;
     }
