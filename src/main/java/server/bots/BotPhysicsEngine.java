@@ -979,7 +979,24 @@ final class BotPhysicsEngine {
         if (entry.bot != null && entry.bot.getStance() != stance) {
             entry.bot.setStance(stance);
         }
-        return new MovementSnapshot(entry.movementVelX, entry.movementVelY, stance);
+        // Broadcast-only alert substitution. The server-side Character.stance above keeps the
+        // logical stance (STAND/WALK/etc.); only the wire byte gets ALERT when the alert timer
+        // is active. Mirrors maplestory-wasm CharLook.cpp substituting Stance::ALERT for STAND1/2
+        // while TimedBool alerted is set_for(5000).
+        return new MovementSnapshot(entry.movementVelX, entry.movementVelY, broadcastStance(entry, stance));
+    }
+
+    private static int broadcastStance(BotEntry entry, int baseStance) {
+        if (System.currentTimeMillis() >= entry.alertedUntilMs) {
+            return baseStance;
+        }
+        if (baseStance == CharacterStance.STAND_RIGHT_STANCE) {
+            return CharacterStance.ALERT_RIGHT_STANCE;
+        }
+        if (baseStance == CharacterStance.STAND_LEFT_STANCE) {
+            return CharacterStance.ALERT_LEFT_STANCE;
+        }
+        return baseStance;
     }
 
     static int resolveStance(BotEntry entry) {

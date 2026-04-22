@@ -7,6 +7,8 @@ public final class CharacterStance {
     public static final int STAND_LEFT_STANCE = 5;
     public static final int JUMP_RIGHT_STANCE = 6;
     public static final int JUMP_LEFT_STANCE = 7;
+    public static final int ALERT_RIGHT_STANCE = 8;
+    public static final int ALERT_LEFT_STANCE = 9;
     public static final int PRONE_RIGHT_STANCE = 10;
     public static final int PRONE_LEFT_STANCE = 11;
     public static final int PRONE_STANCE = PRONE_RIGHT_STANCE;

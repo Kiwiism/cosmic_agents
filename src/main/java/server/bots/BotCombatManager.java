@@ -255,6 +255,7 @@ class BotCombatManager {
                     PacketCreator.damagePlayer(-1, mob.getId(), bot.getId(), 0, 0,
                             knockback.direction(), false, 0, false, 0, 0, 0), false);
             entry.mobHitCooldownMs = BotMovementManager.delayAfterCurrentTick(cc.MOB_HIT_COOLDOWN_MS);
+            markAlerted(entry);
             return;
         }
 
@@ -267,6 +268,7 @@ class BotCombatManager {
                         knockback.direction(), false, 0, false, 0, 0, 0), false);
 
         entry.mobHitCooldownMs = BotMovementManager.delayAfterCurrentTick(cc.MOB_HIT_COOLDOWN_MS);
+        markAlerted(entry);
 
         if (bot.getHp() <= 0) {
             enterDeadState(entry, bot, true);
@@ -513,6 +515,7 @@ class BotCombatManager {
         // to hit — the packet carries an empty targets map in that case, which is what a real client
         // does when a player presses Heal with no mob in range.
         sendHealAttack(entry.healSkillId, lvl, bot, undeadTargets, fallbackAttackData, skillTiming);
+        markAlerted(entry);
         return true;
     }
 
@@ -761,6 +764,7 @@ class BotCombatManager {
 
         BotAttackExecutionProvider.applyAttackRoute(attackPlan.route, attack, bot);
         entry.attackCooldownMs = Math.max(entry.attackCooldownMs, attackPlan.cooldownMs);
+        markAlerted(entry);
     }
 
     static void tickActionLock(BotEntry entry) {
@@ -770,6 +774,14 @@ class BotCombatManager {
             // Movement window: animation done, bot may walk but not attack yet.
             entry.moveWindowMs = BotMovementManager.tickDown(entry.moveWindowMs);
         }
+    }
+
+    // Matches maplestory-wasm CharLook::set_alerted(5000): called on attack, skill cast, and
+    // damage taken. Always an absolute reset to now+5s (never additive), mirroring TimedBool::set_for.
+    private static final long ALERT_DURATION_MS = 5000L;
+
+    static void markAlerted(BotEntry entry) {
+        entry.alertedUntilMs = System.currentTimeMillis() + ALERT_DURATION_MS;
     }
 
     private static AttackPlan planAoeAttack(BotEntry entry, Character bot, Monster primaryTarget) {
@@ -1622,6 +1634,7 @@ class BotCombatManager {
                 BotAttackExecutionProvider.resolveSkillAttackTiming(skill, action, bot, fallbackAttackData);
         int animMs = skill.getAnimationTime() > 0 ? skill.getAnimationTime() : 1000;
         entry.attackCooldownMs = Math.max(entry.attackCooldownMs, Math.max(skillTiming.cooldownMs(), animMs));
+        markAlerted(entry);
         noteSkillBuffDecision(entry, "cast " + skillLabel(skill.getId()));
         return true;
     }

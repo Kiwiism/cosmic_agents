@@ -96,6 +96,11 @@ public class BotEntry {
     // Damage taken
     long deadUntil = 0;
     int mobHitCooldownMs = 0;
+    // Client-side alert-stance emulation: when currentTimeMillis < alertedUntilMs the bot's
+    // broadcast stance gets STAND→ALERT substituted so observers see the alert pose.
+    // Mirrors CharLook::alerted (TimedBool, 5000ms) in maplestory-wasm. Absolute reset on each
+    // trigger (attack/hit/heal/buff), never additive.
+    long alertedUntilMs = 0L;
     Point lastMobTouchCheckPos = null;
     int lastMobTouchMapId = -1;
 
