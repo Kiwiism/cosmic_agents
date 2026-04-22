@@ -736,13 +736,15 @@ class BotMovementManager {
         int x = bot.getPosition().x;
         int y = bot.getPosition().y;
         BotPhysicsEngine.MovementSnapshot snapshot = BotPhysicsEngine.movementSnapshot(entry);
+        int fhId = resolveBroadcastFhId(entry, bot);
 
         if (entry.movementBroadcastValid
                 && entry.lastBroadcastX == x
                 && entry.lastBroadcastY == y
                 && entry.lastBroadcastVelX == snapshot.velX()
                 && entry.lastBroadcastVelY == snapshot.velY()
-                && entry.lastBroadcastStance == snapshot.stance()) {
+                && entry.lastBroadcastStance == snapshot.stance()
+                && entry.lastBroadcastFh == fhId) {
             return;
         }
 
@@ -752,10 +754,23 @@ class BotMovementManager {
         entry.lastBroadcastVelX = snapshot.velX();
         entry.lastBroadcastVelY = snapshot.velY();
         entry.lastBroadcastStance = snapshot.stance();
-        sendMovementPacket(bot, snapshot);
+        entry.lastBroadcastFh = fhId;
+        sendMovementPacket(bot, snapshot, fhId);
     }
 
-    private static void sendMovementPacket(Character bot, BotPhysicsEngine.MovementSnapshot snapshot) {
+    // Real clients report the foothold ID they're standing on in every move packet; the
+    // client uses it to pick the render z-layer. Without it, bots draw on the top layer
+    // (in front of tiles/walls). While airborne, clients keep sending the last-known
+    // ground fh, so cache it on the bot entry.
+    private static int resolveBroadcastFhId(BotEntry entry, Character bot) {
+        Foothold fh = BotPhysicsEngine.findGroundFoothold(bot.getMap(), bot.getPosition());
+        if (fh != null) {
+            entry.lastGroundFhId = fh.getId();
+        }
+        return entry.lastGroundFhId;
+    }
+
+    private static void sendMovementPacket(Character bot, BotPhysicsEngine.MovementSnapshot snapshot, int fhId) {
         byte[] data = new byte[15];
         data[0] = 1;
         int x = bot.getPosition().x;
@@ -768,6 +783,8 @@ class BotMovementManager {
         data[7] = (byte) (snapshot.velX() >> 8);
         data[8] = (byte) (snapshot.velY() & 0xFF);
         data[9] = (byte) (snapshot.velY() >> 8);
+        data[10] = (byte) (fhId & 0xFF);
+        data[11] = (byte) (fhId >> 8);
         data[12] = (byte) snapshot.stance();
         data[13] = (byte) (BotPhysicsEngine.cfg.TICK_MS & 0xFF);
         data[14] = (byte) (BotPhysicsEngine.cfg.TICK_MS >> 8);

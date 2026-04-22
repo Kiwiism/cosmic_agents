@@ -237,6 +237,8 @@ public class BotEntry {
     int lastBroadcastVelX = 0;
     int lastBroadcastVelY = 0;
     int lastBroadcastStance = 0;
+    int lastBroadcastFh = 0;
+    int lastGroundFhId = 0;
 
     BotEntry(Character bot, Character owner, ScheduledFuture<?> task) {
         this.bot = bot;
