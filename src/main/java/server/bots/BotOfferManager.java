@@ -78,6 +78,10 @@ final class BotOfferManager {
             return false;
         }
 
+        // Self-equip first so any item that would upgrade the bot stays on the bot
+        // rather than being offered to the owner.
+        BotEquipManager.autoEquip(bot, owner, entry.pendingLootOfferItem);
+
         List<BotEquipManager.EquipRecommendation> recs = BotEquipManager.findRecommendedEquips(owner, bot);
         if (recs.isEmpty()) {
             return false;
@@ -91,6 +95,10 @@ final class BotOfferManager {
         if (owner == null) {
             return false;
         }
+
+        // Self-equip first: priority is self → owner → sibling, so don't hand gear
+        // to a sibling if this bot could actually wear it.
+        BotEquipManager.autoEquip(bot, owner, entry.pendingLootOfferItem);
 
         List<BotEntry> siblings = BotManager.getInstance().getBotEntries(owner.getId());
         for (BotEntry sibling : siblings) {
