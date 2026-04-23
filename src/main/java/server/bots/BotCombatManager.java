@@ -65,6 +65,13 @@ import java.util.concurrent.ThreadLocalRandom;
 class BotCombatManager {
     private static final long UNREACHABLE_GRAPH_COST = Long.MAX_VALUE / 4;
 
+    // Skills that bots must never cast — stealth makes them untargetable by monsters,
+    // breaking combat entirely.
+    private static final Set<Integer> BUFF_BLACKLIST = Set.of(
+            Rogue.DARK_SIGHT,
+            NightWalker.DARK_SIGHT
+    );
+
     enum AttackRoute {
         CLOSE,
         RANGED,
@@ -246,15 +253,78 @@ class BotCombatManager {
      * Uses the bot's shared character WDEF cache instead of ignoring defense entirely.
      */
     static void applyMobHit(BotEntry entry, Character bot, Monster mob) {
-        Config cc = BotCombatManager.cfg;
         int dmg = rollPhysicalMobDamage(bot, mob);
+        MobHitKnockback kb = resolveMobHitKnockback(bot.getPosition(), mob.getPosition());
+        applyDamage(entry, bot, dmg, -1, mob.getId(), kb.direction(), kb.airVelX());
+    }
+
+    /**
+     * Apply fall damage on landing. Distance is peak-to-landing descent in pixels
+     * (BotPhysicsEngine tracks {@code entry.fallPeakPhysY} each airborne tick and
+     * passes the delta here). Distance-based rather than velocity-based because
+     * terminal velocity is reached after only ~112px of fall, so velocity saturates
+     * immediately while real-client damage keeps scaling with drop height.
+     *
+     * No packet is broadcast below threshold — matches real-client behaviour for
+     * small jumps (no DAMAGE_PLAYER observed in monitored-packets logs).
+     *
+     * Broadcast direction is hardcoded to 0 because every captured real-client fall
+     * sample used direction=0. Physics knockback still derives from bot facing so
+     * the recoil arc points backward along the bot's movement direction.
+     */
+    static void applyFallDamage(BotEntry entry, Character bot, float fallDistancePx) {
+        if (bot.getHp() <= 0) return;
+        if (entry.mobHitCooldownMs > 0) return; // damage invincibility window
+        int dmg = fallDamageFromDistance(fallDistancePx);
+        if (dmg <= 0) return;
+        int dirSign = entry.facingDir >= 0 ? 1 : -1;
+        int airVelX = Math.round(-dirSign * scaledOpenStoryStep(cfg.KNOCKBACK_HSPEED));
+        applyDamage(entry, bot, dmg, -3, 0, 0, airVelX);
+    }
+
+    /**
+     * Fall-damage curve — two-regime piecewise linear, fit against real-client samples:
+     *   916 → 8, 1094 → 26, 1132 → 28, 1421 → 29, 3861 → 35.
+     * Below threshold: no damage, no packet. Steep rise up to breakpoint (~29 dmg),
+     * then shallow linear growth beyond (real client keeps scaling for very deep falls).
+     * O(1) — no simulation, no allocation.
+     */
+    static final float FALL_DIST_THRESHOLD_PX   = 830.0f;  // below: 0 dmg, no packet
+    static final float FALL_DIST_BREAKPOINT_PX  = 1130.0f; // end of steep regime
+    static final int   FALL_DMG_AT_BREAKPOINT   = 29;      // matches most observed samples
+    static final float FALL_DIST_PER_DMG_BEYOND = 455.0f;  // +1 dmg per 455 px past breakpoint
+
+    static int fallDamageFromDistance(float distancePx) {
+        if (distancePx <= FALL_DIST_THRESHOLD_PX) return 0;
+        if (distancePx <= FALL_DIST_BREAKPOINT_PX) {
+            double frac = (distancePx - FALL_DIST_THRESHOLD_PX)
+                    / (FALL_DIST_BREAKPOINT_PX - FALL_DIST_THRESHOLD_PX);
+            return (int) Math.max(1, Math.round(frac * FALL_DMG_AT_BREAKPOINT));
+        }
+        double extra = (distancePx - FALL_DIST_BREAKPOINT_PX) / FALL_DIST_PER_DMG_BEYOND;
+        return FALL_DMG_AT_BREAKPOINT + (int) Math.round(extra);
+    }
+
+    /**
+     * Core damage application: HP loss, DAMAGE_PLAYER broadcast, alert pose, knockback.
+     * Shared by mob-touch (damageFrom=-1) and fall (damageFrom=-3). Call via helpers
+     * {@link #applyMobHit} / {@link #applyFallDamage} so magic numbers stay out of call sites.
+     *
+     * @param broadcastDirection direction byte in DAMAGE_PLAYER packet (0 or 1).
+     *                           Mob-hit: derived from attacker side.
+     *                           Fall:    always 0 (observed in real-client samples).
+     * @param knockbackAirVelX   signed horizontal impulse for physics knockback (px/tick-step).
+     */
+    private static void applyDamage(BotEntry entry, Character bot, int dmg,
+                                    int damageFrom, int monsterId,
+                                    int broadcastDirection, int knockbackAirVelX) {
+        Config cc = BotCombatManager.cfg;
         Point botPos = bot.getPosition();
-        MobHitKnockback knockback = resolveMobHitKnockback(botPos, mob.getPosition());
 
         if (dmg <= 0) {
             bot.getMap().broadcastMessage(bot,
-                    PacketCreator.damagePlayer(-1, mob.getId(), bot.getId(), 0, 0,
-                            knockback.direction(), false, 0, false, 0, 0, 0), false);
+                    PacketCreator.damagePlayer(damageFrom, monsterId, bot.getId(), 0, 0,
+                            broadcastDirection, false, 0, false, 0, 0, 0), false);
             entry.mobHitCooldownMs = BotMovementManager.delayAfterCurrentTick(cc.MOB_HIT_COOLDOWN_MS);
             markAlerted(entry);
             return;
@@ -262,11 +332,9 @@ class BotCombatManager {
 
         bot.addMPHPAndTriggerAutopot(-dmg, 0);
 
-        // OpenStory touch attacks use the mob's position as attack origin:
-        // direction 0 means the hit came from the right and knocks the player left.
         bot.getMap().broadcastMessage(bot,
-                PacketCreator.damagePlayer(-1, mob.getId(), bot.getId(), dmg, 0,
-                        knockback.direction(), false, 0, false, 0, 0, 0), false);
+                PacketCreator.damagePlayer(damageFrom, monsterId, bot.getId(), dmg, 0,
+                        broadcastDirection, false, 0, false, 0, 0, 0), false);
 
         entry.mobHitCooldownMs = BotMovementManager.delayAfterCurrentTick(cc.MOB_HIT_COOLDOWN_MS);
         markAlerted(entry);
@@ -282,9 +350,9 @@ class BotCombatManager {
 
         clearActionState(entry);
         if (entry.inAir) {
-            BotPhysicsEngine.applyAirKnockback(entry, bot, knockback.airVelX());
+            BotPhysicsEngine.applyAirKnockback(entry, bot, knockbackAirVelX);
         } else {
-            BotPhysicsEngine.beginKnockback(entry, bot, botPos, -scaledOpenStoryStep(cfg.KNOCKBACK_VFORCE), knockback.airVelX());
+            BotPhysicsEngine.beginKnockback(entry, bot, botPos, -scaledOpenStoryStep(cfg.KNOCKBACK_VFORCE), knockbackAirVelX);
         }
         BotMovementManager.broadcastMovement(entry);
     }
@@ -397,6 +465,7 @@ class BotCombatManager {
                 continue;
             }
 
+            if (BUFF_BLACKLIST.contains(skill.getId())) continue;
             entry.buffSkillIds.add(skill.getId());
             entry.nextBuffAt.putIfAbsent(skill.getId(), 0L);
         }

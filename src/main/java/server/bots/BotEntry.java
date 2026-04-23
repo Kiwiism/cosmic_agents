@@ -32,6 +32,10 @@ public class BotEntry {
     double physX = 0.0;
     double physY = 0.0;
     double groundPhysicsCarryMs = 0.0;
+    // Peak (min-y = highest point) reached during current airborne period. Used by landOnGround
+    // to compute fall distance for fall-damage. Positive infinity when grounded / uninitialised;
+    // first airborne-tick lowers it to physY and subsequent ticks keep tracking the peak.
+    double fallPeakPhysY = Double.POSITIVE_INFINITY;
     boolean inAir = false;
     int jumpCooldownMs = 0;
     int movementVelX = 0;

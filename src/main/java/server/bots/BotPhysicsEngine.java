@@ -685,6 +685,11 @@ final class BotPhysicsEngine {
                              Foothold foothold,
                              double incomingDeltaX,
                              double incomingDeltaY) {
+        // Fall distance = descent from peak-air-point down to landing point.
+        // `fallPeakPhysY` was maintained in advanceAirbornePosition for this airborne period.
+        double fallDistance = Double.isFinite(entry.fallPeakPhysY)
+                ? Math.max(0.0, position.y - entry.fallPeakPhysY)
+                : 0.0;
         bot.setPosition(position);
         entry.inAir = false;
         entry.climbing = false;
@@ -704,6 +709,12 @@ final class BotPhysicsEngine {
         entry.hspeed = landingGroundHSpeed(bot.getMap(), foothold, incomingDeltaX, incomingDeltaY, entry.movementProfile);
         setMovementVelocity(entry, velocityFromDeltaX(tickDeltaFromGroundHSpeed(bot.getMap(), entry.hspeed, entry.movementProfile)), 0);
         syncCharacterState(entry);
+
+        // Fall-damage check triggers exactly once, at the landing transition, using the
+        // peak-to-landing descent distance. Below-threshold landings are no-ops (no packet).
+        // Reset peak AFTER the check so the next airborne period starts fresh.
+        BotCombatManager.applyFallDamage(entry, bot, (float) fallDistance);
+        entry.fallPeakPhysY = Double.POSITIVE_INFINITY;
     }
 
     static void attachToRope(BotEntry entry, Character bot, Rope rope, int y) {
@@ -923,6 +934,9 @@ final class BotPhysicsEngine {
         float gravity = gravityPerTick();
         entry.physY += entry.velY + 0.5f * gravity;
         entry.velY = Math.min(entry.velY + gravity, maxFallPerTick());
+        if (entry.physY < entry.fallPeakPhysY) {
+            entry.fallPeakPhysY = entry.physY;
+        }
 
         return roundedAirPosition(entry);
     }

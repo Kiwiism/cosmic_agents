@@ -2729,6 +2729,7 @@ public class MapleMap {
     }
 
     private void broadcastMessage(Character source, Packet packet, double rangeSq, Point rangedFrom) {
+        net.packet.logging.MonitoredChrLogger.logBroadcastIfMonitored(source, packet.getBytes());
         chrRLock.lock();
         try {
             for (Character chr : characters) {
