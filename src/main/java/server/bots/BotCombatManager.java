@@ -283,26 +283,27 @@ class BotCombatManager {
     }
 
     /**
-     * Fall-damage curve — two-regime piecewise linear, fit against real-client samples:
-     *   916 → 8, 1094 → 26, 1132 → 28, 1421 → 29, 3861 → 35.
-     * Below threshold: no damage, no packet. Steep rise up to breakpoint (~29 dmg),
-     * then shallow linear growth beyond (real client keeps scaling for very deep falls).
-     * O(1) — no simulation, no allocation.
+     * Fall-damage curve — smooth single formula (no hard breakpoint):
+     *   dmg = SAT * (1 - exp(-k*u)) + tail*u,    where u = max(0, dist - threshold)
+     * Saturating exponential models the steep knee; linear tail models the slow
+     * deep-fall growth (damage keeps scaling past the knee in the real client).
+     *
+     * Grid-search fit against real-client samples — all within ±1 dmg:
+     *   916 → 8, 1094 → 27 (a=26), 1132 → 27 (a=28), 1421 → 29, 3861 → 35.
+     *
+     * O(1): one exp, two multiplies, one add, one round.
      */
-    static final float FALL_DIST_THRESHOLD_PX   = 830.0f;  // below: 0 dmg, no packet
-    static final float FALL_DIST_BREAKPOINT_PX  = 1130.0f; // end of steep regime
-    static final int   FALL_DMG_AT_BREAKPOINT   = 29;      // matches most observed samples
-    static final float FALL_DIST_PER_DMG_BEYOND = 455.0f;  // +1 dmg per 455 px past breakpoint
+    static final float FALL_DIST_THRESHOLD_PX = 890.0f;   // below: 0 dmg, no packet
+    static final float FALL_DMG_SAT           = 28.0f;    // asymptote of the knee component
+    static final float FALL_KNEE_SHARPNESS    = 0.013f;   // 1/px — larger = sharper knee
+    static final float FALL_DMG_PER_PX_TAIL   = 0.0024f;  // linear tail slope (dmg/px)
 
     static int fallDamageFromDistance(float distancePx) {
         if (distancePx <= FALL_DIST_THRESHOLD_PX) return 0;
-        if (distancePx <= FALL_DIST_BREAKPOINT_PX) {
-            double frac = (distancePx - FALL_DIST_THRESHOLD_PX)
-                    / (FALL_DIST_BREAKPOINT_PX - FALL_DIST_THRESHOLD_PX);
-            return (int) Math.max(1, Math.round(frac * FALL_DMG_AT_BREAKPOINT));
-        }
-        double extra = (distancePx - FALL_DIST_BREAKPOINT_PX) / FALL_DIST_PER_DMG_BEYOND;
-        return FALL_DMG_AT_BREAKPOINT + (int) Math.round(extra);
+        double u = distancePx - FALL_DIST_THRESHOLD_PX;
+        double dmg = FALL_DMG_SAT * (1.0 - Math.exp(-FALL_KNEE_SHARPNESS * u))
+                + FALL_DMG_PER_PX_TAIL * u;
+        return (int) Math.max(1, Math.round(dmg));
     }
 
     /**
