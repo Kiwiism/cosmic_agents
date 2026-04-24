@@ -546,7 +546,7 @@ class BotCombatManager {
      * the heal animation play (matches real player behaviour when Heal is pressed with no mob in range).
      */
     static boolean tickSupportHealing(BotEntry entry, Character bot) {
-        if (entry.attackCooldownMs > 0 || entry.moveWindowMs > 0) return false;
+        if (entry.attackCooldownMs > 0) return false;
         if (!entry.supportHealsEnabled) return false;
         if (!entry.following && !entry.grinding) return false;
         if (entry.healSkillId == 0 || bot.skillIsCooling(entry.healSkillId)) return false;
@@ -578,7 +578,7 @@ class BotCombatManager {
         BotAttackExecutionProvider.SkillAttackTiming skillTiming =
                 BotAttackExecutionProvider.resolveSkillAttackTiming(skill, action, bot, fallbackAttackData);
         entry.attackCooldownMs = Math.max(entry.attackCooldownMs, skillTiming.cooldownMs());
-        if (fx.getCooldown() > 0) {
+        if (partyNeedsHeal && fx.getCooldown() > 0) {
             bot.addCooldown(entry.healSkillId, now, fx.getCooldown() * 1000L);
         }
 
@@ -880,6 +880,14 @@ class BotCombatManager {
             return null;
         }
 
+        // Strike-point-anchored skills have their hitBox centered on the target. The AoE radius
+        // does not prove the bot can actually reach the strike point — gate separately on the
+        // bot's basic weapon range.
+        if (isStrikePointAnchoredAoeSkill(entry.aoeSkillId)
+                && !isPrimaryReachableByBasicWeapon(bot, primaryTarget, route)) {
+            return null;
+        }
+
         // For strike-point-anchored explosions (e.g. Arrow Bomb) the bbox is already centered on
         // the primary target; shifting primary to the closest-in-hitBox would move the packet's
         // "strike point" away from the actual hit location. Skip resolveEffectivePrimary for them.
@@ -937,6 +945,14 @@ class BotCombatManager {
         AttackRoute route = BotAttackExecutionProvider.determineSkillRoute(bot, entry.attackSkillId);
         Rectangle hitBox = calculateSkillHitBox(effect, bot, primaryTarget, route, entry.attackSkillId);
         if (hitBox == null) {
+            return null;
+        }
+
+        // Strike-point-anchored skills have their hitBox centered on the target, so the
+        // subsequent intersect check passes trivially. Verify the bot can actually reach the
+        // target with its basic weapon range before letting the skill fire.
+        if (isStrikePointAnchoredAoeSkill(entry.attackSkillId)
+                && !isPrimaryReachableByBasicWeapon(bot, primaryTarget, route)) {
             return null;
         }
 
@@ -1508,6 +1524,30 @@ class BotCombatManager {
         }
 
         return hitBox.contains(monster.getPosition());
+    }
+
+    // Strike-point-anchored skills (e.g. Arrow Bomb) center their bbox on the target, so
+    // doesHitBoxIntersectMonster(hitBox, target) is trivially true and does not gate reach.
+    // Use the bot's basic weapon rectangle as a separate reach check. MAGIC route is left
+    // ungated for now — untested.
+    private static boolean isPrimaryReachableByBasicWeapon(Character bot, Monster target, AttackRoute route) {
+        if (bot == null || target == null || bot.getPosition() == null || target.getPosition() == null) {
+            return false;
+        }
+        boolean facingLeft = target.getPosition().x < bot.getPosition().x;
+        Rectangle basicReach;
+        if (route == AttackRoute.RANGED) {
+            basicReach = clientProjectileHitBox(bot, facingLeft, 1.0f);
+        } else if (route == AttackRoute.CLOSE) {
+            Point origin = bot.getPosition();
+            int left = facingLeft ? origin.x - cfg.ATTACK_RANGE_X : origin.x;
+            int top = origin.y - cfg.ATTACK_RANGE_Y;
+            int height = cfg.ATTACK_RANGE_Y + cfg.ATTACK_DOWN_MAX;
+            basicReach = new Rectangle(left, top, cfg.ATTACK_RANGE_X, height);
+        } else {
+            return true;
+        }
+        return basicReach != null && doesHitBoxIntersectMonster(basicReach, target);
     }
 
     private static boolean isForwardProjectileHitBox(Rectangle hitBox, Point botPos) {
