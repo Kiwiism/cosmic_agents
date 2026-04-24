@@ -1018,10 +1018,6 @@ class BotCombatManager {
 
         Point origin = bot.getPosition();
         int projectileRange = CLIENT_PROJECTILE_BASE_RANGE + passiveProjectileRangeBonus(bot);
-        WeaponType wt = BotAttackExecutionProvider.getEquippedWeaponType(bot);
-        if (wt == WeaponType.CLAW) {
-            projectileRange -= 150;
-        }
         int farEdge = Math.max(CLIENT_PROJECTILE_NEAR_INSET, Math.round(projectileRange * Math.max(0f, horizontalScale)));
         int left = facingLeft ? origin.x - farEdge : origin.x + CLIENT_PROJECTILE_NEAR_INSET;
         int right = facingLeft ? origin.x - CLIENT_PROJECTILE_NEAR_INSET : origin.x + farEdge;
