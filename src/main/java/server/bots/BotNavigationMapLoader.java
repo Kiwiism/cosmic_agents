@@ -112,6 +112,7 @@ final class BotNavigationMapLoader {
                     Foothold foothold = new Foothold(new Point(x1, y1), new Point(x2, y2), Integer.parseInt(footHold.getName()));
                     foothold.setPrev(DataTool.getInt(footHold.getChildByPath("prev")));
                     foothold.setNext(DataTool.getInt(footHold.getChildByPath("next")));
+                    foothold.setForbidFallDown(DataTool.getInt(footHold.getChildByPath("forbidFallDown"), 0) != 0);
                     footholds.add(foothold);
                     lowerBound.x = Math.min(lowerBound.x, Math.min(x1, x2));
                     lowerBound.y = Math.min(lowerBound.y, Math.min(y1, y2));

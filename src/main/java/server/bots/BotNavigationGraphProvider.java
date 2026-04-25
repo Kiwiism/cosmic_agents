@@ -28,7 +28,7 @@ import java.util.concurrent.Executors;
 final class BotNavigationGraphProvider {
     private static final Logger log = LoggerFactory.getLogger(BotNavigationGraphProvider.class);
 
-    private static final int GRAPH_VERSION = 32;
+    private static final int GRAPH_VERSION = 33;
     private static final int ENDPOINT_ANCHOR_SPACING_PX = 10;
     private static final int ROPE_ANCHOR_INTERVAL_PX = 30;
     private static final int JUMP_POST_LANDING_STABILITY_TICKS = 3;
@@ -717,6 +717,11 @@ final class BotNavigationGraphProvider {
                 continue;
             }
 
+            // WZ marks platforms that cannot be down-jumped through with foothold/forbidFallDown=1.
+            if (from.isForbidFallDownAt(anchor.x)) {
+                continue;
+            }
+
             BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateDownJumpLanding(map, anchor);
             if (landing == null) {
                 continue;
@@ -749,6 +754,9 @@ final class BotNavigationGraphProvider {
             return;
         }
         Point endpoint = direction < 0 ? from.leftPoint() : from.rightPoint();
+        if (from.isForbidFallDownAt(endpoint.x)) {
+            return;
+        }
 
         // O(1) runway: place the edge startPoint so the bot has room to accelerate
         // to (near) max walk speed before walking off. No candidate iteration, no

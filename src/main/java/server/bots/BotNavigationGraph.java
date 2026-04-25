@@ -27,6 +27,7 @@ final class BotNavigationGraph implements Serializable {
         final int y2;
         final int minX;
         final int maxX;
+        final boolean forbidFallDown;
 
         Segment(Foothold foothold) {
             this.footholdId = foothold.getId();
@@ -36,6 +37,7 @@ final class BotNavigationGraph implements Serializable {
             this.y2 = foothold.getY2();
             this.minX = Math.min(x1, x2);
             this.maxX = Math.max(x1, x2);
+            this.forbidFallDown = foothold.isForbidFallDown();
         }
 
         boolean containsX(int x) {
@@ -141,6 +143,13 @@ final class BotNavigationGraph implements Serializable {
             }
             Segment bestSegment = findBestSegment(x);
             return bestSegment.pointAt(x);
+        }
+
+        boolean isForbidFallDownAt(int x) {
+            if (isRopeRegion || segments.isEmpty()) {
+                return false;
+            }
+            return findBestSegment(x).forbidFallDown;
         }
 
         private Segment findBestSegment(int x) {

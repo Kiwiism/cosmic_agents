@@ -31,6 +31,7 @@ public class Foothold implements Comparable<Foothold> {
     private final Point p2;
     private final int id;
     private int next, prev;
+    private boolean forbidFallDown;
 
     public Foothold(Point p1, Point p2, int id) {
         this.p1 = p1;
@@ -136,5 +137,13 @@ public class Foothold implements Comparable<Foothold> {
 
     public void setPrev(int prev) {
         this.prev = prev;
+    }
+
+    public boolean isForbidFallDown() {
+        return forbidFallDown;
+    }
+
+    public void setForbidFallDown(boolean forbidFallDown) {
+        this.forbidFallDown = forbidFallDown;
     }
 }
