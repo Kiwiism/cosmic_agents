@@ -50,12 +50,25 @@ final class BotPhysicsEngine {
         // Initial values are first-pass derivations; calibrate against real-client
         // CP_USER_MOVE captures in Aqua Road and update these constants in place.
         public float SWIM_VEL_PXS = 125.0f;          // horizontal cruise (defaults to walk speed)
-        public float SWIM_VEL_VERT_PXS = 125.0f;     // vertical cruise
         public float SWIM_GRAVITY_PXS2 = 428.0f;     // 2000 * (0.03 / 0.14): weak downward pull underwater
         public float SWIM_FRICTION_HZ = 1.6f;        // applied symmetrically to vx, vy each second
-        public float SWIM_ACCEL_PXS2 = 600.0f;       // how hard the bot pushes toward target (≈0.2s to cruise)
+        public float SWIM_ACCEL_PXS2 = 600.0f;       // horizontal push when steering (≈0.2s to cruise)
         public float SWIM_MAX_SPEED_PXS = 250.0f;    // hard cap on either axis
-        public int SWIM_ARRIVAL_RADIUS_PX = 8;       // stop pushing when within this many px on both axes
+        public int SWIM_ARRIVAL_RADIUS_PX = 8;       // stop pushing horizontally inside this band
+
+        // Discrete swim controls (mirror real client: steer L/R, JUMP burst, UP/DOWN held).
+        public float SWIM_JUMP_BURST_PXS = 555.0f;   // one-shot upward kick (matches land jump impulse)
+        // Sink-velocity caps (terminal velocity). Same shape as wasm steady-state
+        // model where each hold gives a different vspeed equilibrium under
+        // friction, but expressed as direct caps for stability and simplicity.
+        // Calibrate later against real-client capture; ratios mirror wasm
+        // (UP ≪ NONE ≪ DOWN).
+        public float SWIM_DOWN_MAX_SPEED_PXS = 480.0f; // DOWN held: faster than natural terminal
+        public float SWIM_UP_MAX_SINK_PXS = 40.0f;    // UP held: slow descent (matches "press UP to hover")
+        public int SWIM_JUMP_COOLDOWN_MS = 700;      // gate against burst-jump spam
+        public int SWIM_LEVEL_BAND_PX = 30;          // |dy| <= this = "same level" → UP hold
+        public int SWIM_DOWN_BAND_PX = 120;          // dy in (level, this] = free sink; > this = DOWN hold
+        public int SWIM_JUMP_TRIGGER_DY_PX = 100;    // dy <= -this px = trigger JUMP burst (with cooldown)
     }
 
     record GroundMotion(int stepX, boolean lostGround) {
@@ -618,6 +631,12 @@ final class BotPhysicsEngine {
 
     static void beginGroundJump(BotEntry entry, Character bot, int airVelX) {
         entry.blockedRopeGrab = null;
+        // In swim maps, physics owns horizontal motion — drop any committed
+        // airVelX/fixedAirArc the caller passed so swim integrator can steer.
+        // Movement layer expresses *intent only* in water.
+        if (bot.getMap() != null && bot.getMap().isSwim()) {
+            airVelX = 0;
+        }
         launchAirborne(entry, bot, bot.getPosition(), -jumpForcePerTick(entry.movementProfile), airVelX, false);
     }
 
@@ -931,69 +950,104 @@ final class BotPhysicsEngine {
         return new Point((int) Math.round(entry.physX), (int) Math.round(entry.physY));
     }
 
-    static void applySwimMotion(BotEntry entry, Point targetPos) {
+    /**
+     * Intent-driven swim integrator. Mirrors wasm Physics::move_swimming, but
+     * the only inputs are discrete intents on {@link BotEntry}:
+     *   swimMoveDir       — -1/0/+1 horizontal steer
+     *   swimVerticalHold  — -1 (UP slow sink) / 0 (free sink) / +1 (DOWN fast sink)
+     *   swimJumpRequested — one-shot upward burst (consumed here)
+     *
+     * Movement layer never writes velY/hspeed directly — the engine owns physics.
+     * On contact with a foothold floor the bot transitions out of swim mode
+     * (entry.inAir = false) so the next tick routes through tickGrounded and the
+     * bot walks normally on the platform. This matches the real client behavior
+     * where SWIMMING physics applies only while airborne underwater.
+     */
+    static void applySwimMotion(BotEntry entry) {
         Character bot = entry.bot;
         MapleMap map = bot.getMap();
         Point pos = bot.getPosition();
         double t = tickS();
 
         // First tick after entering swim mode: rebase the integrator on the bot's
-        // authoritative position and discard land-mode velocity carried in from the
-        // prior map / grounded state.
+        // authoritative position and discard any committed-airborne state from
+        // the launch (airVelX, fixedAirArc) — swim physics owns motion now.
         if (!entry.swimming) {
             entry.physX = pos.x;
             entry.physY = pos.y;
-            entry.hspeed = 0.0;
-            entry.velY = 0f;
             entry.airVelX = 0;
             entry.airSteerVelX = 0.0;
             entry.fixedAirArc = false;
             entry.downJumpPending = false;
             entry.downJumpGracePeriodMS = 0L;
+            // Preserve velY/hspeed from launch — a jump-off-platform should
+            // still arc upward under swim physics (matches wasm: NORMAL kick
+            // immediately followed by SWIMMING integration).
         }
 
-        // Desired velocity from arrival vector — zero when within arrival radius on both axes.
-        double dx = 0.0;
-        double dy = 0.0;
-        if (targetPos != null) {
-            int rx = targetPos.x - pos.x;
-            int ry = targetPos.y - pos.y;
-            int radius = cfg.SWIM_ARRIVAL_RADIUS_PX;
-            if (Math.abs(rx) > radius || Math.abs(ry) > radius) {
-                double mag = Math.sqrt((double) rx * rx + (double) ry * ry);
-                if (mag > 0.0) {
-                    dx = rx / mag * cfg.SWIM_VEL_PXS;
-                    dy = ry / mag * cfg.SWIM_VEL_VERT_PXS;
-                }
-            }
+        double vx = entry.hspeed;
+        double vy = entry.velY;
+
+        // --- Vertical control ---
+        // Discrete inputs only: JUMP burst (one-shot), UP/DOWN held (caps the
+        // sink terminal velocity). Mirrors wasm's force-model steady-states
+        // (UP ≈ slow rise, NONE ≈ slow sink, DOWN ≈ fast sink) but expressed
+        // as direct velocity caps for stability — gravity always integrates
+        // at full strength, the cap clamps the result.
+        if (entry.swimJumpRequested) {
+            vy = -cfg.SWIM_JUMP_BURST_PXS;
+            entry.swimJumpRequested = false;
         }
 
-        // Approach target velocity at SWIM_ACCEL_PXS2.
-        double accelStep = cfg.SWIM_ACCEL_PXS2 * t;
-        double vx = entry.hspeed + clampMagnitude(dx - entry.hspeed, accelStep);
-        double vy = entry.velY + clampMagnitude(dy - entry.velY, accelStep);
+        // --- Horizontal control ---
+        if (entry.swimMoveDir != 0) {
+            double accelStep = cfg.SWIM_ACCEL_PXS2 * t * Integer.signum(entry.swimMoveDir);
+            vx += accelStep;
+        }
 
-        // Symmetric water drag.
+        // Symmetric water drag (wasm SWIMFRICTION = 0.08/tick = 1.6/s).
         double dragRetention = Math.max(0.0, 1.0 - cfg.SWIM_FRICTION_HZ * t);
         vx *= dragRetention;
         vy *= dragRetention;
 
-        // Weak gravity (bot sinks slightly when idle).
+        // Apply gravity (always full strength; intent affects only the cap).
         vy += cfg.SWIM_GRAVITY_PXS2 * t;
 
-        // Speed cap on each axis.
+        // Horizontal cap.
         vx = Math.max(-cfg.SWIM_MAX_SPEED_PXS, Math.min(cfg.SWIM_MAX_SPEED_PXS, vx));
-        vy = Math.max(-cfg.SWIM_MAX_SPEED_PXS, Math.min(cfg.SWIM_MAX_SPEED_PXS, vy));
+        if (entry.swimMoveDir != 0) {
+            double cap = cfg.SWIM_VEL_PXS;
+            if (vx >  cap && entry.swimMoveDir > 0) vx =  cap;
+            if (vx < -cap && entry.swimMoveDir < 0) vx = -cap;
+        }
+        // Vertical sink cap — discrete intent picks the terminal velocity:
+        //   UP held   → slow descent (SWIM_UP_MAX_SINK_PXS)
+        //   NONE      → natural terminal (SWIM_MAX_SPEED_PXS)
+        //   DOWN held → faster than natural (SWIM_DOWN_MAX_SPEED_PXS)
+        // Upward velocity (vy < 0) is unaffected so jump bursts still arc up.
+        double sinkCap = switch (Integer.signum(entry.swimVerticalHold)) {
+            case -1 -> cfg.SWIM_UP_MAX_SINK_PXS;
+            case  1 -> cfg.SWIM_DOWN_MAX_SPEED_PXS;
+            default -> cfg.SWIM_MAX_SPEED_PXS;
+        };
+        vy = Math.max(-cfg.SWIM_MAX_SPEED_PXS, Math.min(sinkCap, vy));
 
         double nextX = entry.physX + vx * t;
         double nextY = entry.physY + vy * t;
 
-        // Floor clamp via foothold tree.
-        Point floor = map.getPointBelow(new Point((int) Math.round(nextX), (int) Math.round(nextY)));
-        if (floor != null && nextY > floor.y) {
-            nextY = floor.y;
-            if (vy > 0.0) {
+        // Sweep-style landing: probe getPointBelow at the bot's *current*
+        // position so a fast sink doesn't tunnel through a foothold between
+        // physY and nextY. If the supporting foothold's y lies in (physY,
+        // nextY], clamp the bot to it and transition out of swim mode.
+        boolean landed = false;
+        if (vy > 0.0) {
+            int probeX = (int) Math.round(nextX);
+            int startY = (int) Math.round(entry.physY);
+            Point floor = map.getPointBelow(new Point(probeX, startY));
+            if (floor != null && floor.y > startY && floor.y <= (long) Math.ceil(nextY) + 1) {
+                nextY = floor.y;
                 vy = 0.0;
+                landed = true;
             }
         }
 
@@ -1001,19 +1055,29 @@ final class BotPhysicsEngine {
         entry.velY = (float) vy;
         entry.physX = nextX;
         entry.physY = nextY;
-        entry.swimming = true;
-        entry.inAir = false;
         entry.crouching = false;
         entry.movementVelX = (int) Math.round(vx);
         entry.movementVelY = (int) Math.round(vy);
-        if (targetPos != null) {
-            int rx = targetPos.x - pos.x;
-            if (rx > cfg.SWIM_ARRIVAL_RADIUS_PX) {
-                entry.facingDir = 1;
-            } else if (rx < -cfg.SWIM_ARRIVAL_RADIUS_PX) {
-                entry.facingDir = -1;
-            }
+
+        if (landed) {
+            // Hand off to grounded physics next tick — bot walks normally on
+            // the platform (matches wasm: PlayerFlyState.update_state when
+            // onground && is_underwater → WALK/STAND/PRONE under NORMAL physics).
+            entry.swimming = false;
+            entry.inAir = false;
+            entry.airVelX = 0;
+            entry.airSteerVelX = 0.0;
+            entry.fixedAirArc = false;
+            entry.fallPeakPhysY = Double.POSITIVE_INFINITY;
+        } else {
+            entry.swimming = true;
+            entry.inAir = true;
         }
+
+        // Facing follows horizontal intent (or current vx if coasting).
+        if (entry.swimMoveDir > 0) entry.facingDir = 1;
+        else if (entry.swimMoveDir < 0) entry.facingDir = -1;
+
         bot.setPosition(new Point((int) Math.round(nextX), (int) Math.round(nextY)));
     }
 

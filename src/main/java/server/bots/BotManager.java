@@ -926,11 +926,15 @@ public class BotManager {
                 BotNavigationGraph.Region ownerRegion = graph.getRegion(ownerRegionId);
                 if (ownerRegion != null) {
                     if (ownerRegion.isRopeRegion) {
+                        // Find nearest rope at the post-formation offset position.
+                        // If no rope is nearby, fall back to the owner's own rope so
+                        // the bot still climbs up to follow rather than standing
+                        // on the platform below.
                         BotNavigationGraph.Region nearestRope = findNearestRopeAtY(graph, targetX, ownerPos.y);
-                        if (nearestRope != null) {
-                            return new Point(nearestRope.minX, ownerPos.y);
+                        if (nearestRope == null) {
+                            nearestRope = ownerRegion;
                         }
-                        return new Point(ownerPos.x, ownerPos.y);
+                        return new Point(nearestRope.minX, ownerPos.y);
                     } else {
                         int clampedX = Math.max(ownerRegion.minX, Math.min(ownerRegion.maxX, targetX));
                         return ownerRegion.pointAt(clampedX);
@@ -1253,7 +1257,7 @@ public class BotManager {
                 if (!pqNav.consumedTick) {
                     if (entry.climbing) {
                         BotMovementManager.tickClimbing(entry, pqNav.targetPos, runAiTick);
-                    } else if (isSwimMap(entry)) {
+                    } else if (isSwimMap(entry) && entry.inAir) {
                         BotMovementManager.tickSwimming(entry, pqNav.targetPos);
                     } else if (entry.inAir) {
                         BotMovementManager.tickAirborne(entry, pqNav.targetPos);
@@ -1281,7 +1285,7 @@ public class BotManager {
                     // No mob in seek range — drift toward the nearby coupon drop instead of idling.
                     targetPos = entry.kpq.navTarget;
                     // falls through to stepMovementCore below
-                } else if (isSwimMap(entry)) {
+                } else if (isSwimMap(entry) && entry.inAir) {
                     BotMovementManager.tickSwimming(entry, targetPos);
                     return;
                 } else if (entry.inAir) {
@@ -1407,7 +1411,7 @@ public class BotManager {
         if (entry.following || entry.grinding || entry.moveTarget != null) {
             return false;
         }
-        if (isSwimMap(entry) && !entry.climbing) {
+        if (isSwimMap(entry) && entry.inAir && !entry.climbing) {
             BotMovementManager.tickSwimming(entry, null);
         } else if (entry.inAir) {
             BotMovementManager.tickAirborne(entry, null);
@@ -1589,7 +1593,7 @@ public class BotManager {
     private void tickMovementPhase(BotEntry entry, Point targetPos, boolean runAiTick) {
         if (entry.climbing) {
             BotMovementManager.tickClimbing(entry, targetPos, runAiTick);
-        } else if (isSwimMap(entry)) {
+        } else if (isSwimMap(entry) && entry.inAir) {
             BotMovementManager.tickSwimming(entry, targetPos);
         } else if (entry.inAir) {
             BotMovementManager.tickAirborne(entry, targetPos);
@@ -1663,7 +1667,7 @@ public class BotManager {
         if (entry.attackCooldownMs <= 0) {
             return false;
         }
-        if (isSwimMap(entry) && !entry.climbing) {
+        if (isSwimMap(entry) && entry.inAir && !entry.climbing) {
             BotMovementManager.tickSwimming(entry, null);
         } else if (entry.inAir) {
             BotMovementManager.tickAirborne(entry, null);

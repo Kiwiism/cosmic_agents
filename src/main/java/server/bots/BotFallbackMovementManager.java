@@ -40,6 +40,16 @@ final class BotFallbackMovementManager {
             }
         }
 
+        // In swim maps, leap upward off the platform to chase an airborne
+        // target above (e.g. owner swimming overhead). Once airborne, swim
+        // physics owns motion and steers horizontally toward the target.
+        // Without this, bot stays grounded forever since walking on platforms
+        // never closes vertical distance to a swimming target.
+        if (shouldJumpUpIntoSwim(entry, botPos, targetPos)) {
+            BotMovementManager.initiateJump(entry, bot, 0);
+            return true;
+        }
+
         Point steeringTarget = rope == null ? targetPos : new Point(rope.x(), targetPos.y);
         int stepX = BotMovementManager.resolveGroundStepX(entry, botPos, steeringTarget,
                 BotMovementManager.cfg.STOP_DIST, BotMovementManager.cfg.FOLLOW_DIST);
@@ -59,6 +69,22 @@ final class BotFallbackMovementManager {
         }
 
         return false;
+    }
+
+    private static boolean shouldJumpUpIntoSwim(BotEntry entry, Point botPos, Point targetPos) {
+        if (entry == null || entry.bot == null || botPos == null || targetPos == null) {
+            return false;
+        }
+        if (entry.inAir || entry.climbing || entry.jumpCooldownMs > 0 || entry.downJumpPending) {
+            return false;
+        }
+        MapleMap map = entry.bot.getMap();
+        if (map == null || !map.isSwim()) {
+            return false;
+        }
+        // Target must be sufficiently above bot. dy < 0 = target higher in MS coords.
+        int dy = targetPos.y - botPos.y;
+        return dy < -Math.max(BotMovementManager.cfg.JUMP_Y_THRESH * 2, 60);
     }
 
     static boolean shouldWalkOffLedge(BotEntry entry, Point botPos, Point targetPos, int stepX) {
@@ -128,10 +154,15 @@ final class BotFallbackMovementManager {
     }
 
     private static boolean canDirectlyAttachToRope(Point botPos, Rope rope) {
+        // Allow attach when bot is within rope's Y range, OR slightly above
+        // rope.topY (within MAX_SNAP_DROP) so a player standing on a platform
+        // whose surface meets the rope's head can transition into climbing
+        // without first going airborne — same "press DOWN to grab from top"
+        // motion as the real client. attachY snaps to rope.topY in the caller.
         return botPos != null
                 && rope != null
                 && Math.abs(botPos.x - rope.x()) <= BotPhysicsEngine.cfg.ROPE_GRAB_X
-                && botPos.y >= rope.topY()
+                && botPos.y >= rope.topY() - BotPhysicsEngine.cfg.MAX_SNAP_DROP
                 && botPos.y <= rope.bottomY() + BotPhysicsEngine.cfg.MAX_SNAP_DROP;
     }
 

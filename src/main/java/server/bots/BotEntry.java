@@ -44,6 +44,15 @@ public class BotEntry {
     boolean crouching = false;
     boolean swimming = false;
 
+    // Swim intent — set by movement layer, consumed by physics engine. Movement
+    // expresses "what the bot is trying to do"; physics integrates accordingly.
+    // Mirrors how the real client only exposes discrete inputs (steer L/R,
+    // jump-burst, hold UP/DOWN) — no continuous velocity overrides.
+    int swimMoveDir = 0;                 // -1 left, 0 none, +1 right
+    int swimVerticalHold = 0;            // -1 = UP held (slow sink), 0 = none, +1 = DOWN held (fast sink)
+    boolean swimJumpRequested = false;   // one-shot upward burst
+    long swimNextJumpAtMs = 0L;          // cooldown gate
+
     // Rope climbing
     boolean climbing = false;
     Rope climbRope = null;

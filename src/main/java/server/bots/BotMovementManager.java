@@ -387,10 +387,57 @@ class BotMovementManager {
         long startedAt = System.nanoTime();
         try {
             BotPhysicsEngine.tickMotionTimers(entry);
-            BotPhysicsEngine.applySwimMotion(entry, targetPos);
+            computeSwimIntents(entry, targetPos);
+            BotPhysicsEngine.applySwimMotion(entry);
             broadcastMovement(entry);
         } finally {
             BotPerformanceMonitor.record("move-swim", System.nanoTime() - startedAt);
+        }
+    }
+
+    /**
+     * Translate a nav target into the discrete swim controls the real client exposes:
+     * steer L/R (continuous), JUMP burst (one-shot), UP/DOWN held.
+     * No continuous velocity steering — physics integrates the intents.
+     */
+    private static void computeSwimIntents(BotEntry entry, Point targetPos) {
+        // Default to "no input": bot drifts under swim gravity.
+        entry.swimMoveDir = 0;
+        entry.swimVerticalHold = 0;
+
+        if (targetPos == null) {
+            // Idle in water — hold UP so the bot doesn't sink endlessly.
+            entry.swimVerticalHold = -1;
+            return;
+        }
+
+        Point pos = entry.bot.getPosition();
+        int dx = targetPos.x - pos.x;
+        int dy = targetPos.y - pos.y;
+
+        // Horizontal steer.
+        int hRadius = BotPhysicsEngine.cfg.SWIM_ARRIVAL_RADIUS_PX;
+        if (dx >  hRadius) entry.swimMoveDir =  1;
+        else if (dx < -hRadius) entry.swimMoveDir = -1;
+
+        // Vertical intent.
+        //   dy <= -SWIM_JUMP_TRIGGER_DY_PX  → fire JUMP burst (cooldown-gated) + UP hold
+        //   dy in [-trigger, -level]        → UP hold (slow sink, climbs slowly via jump)
+        //   |dy| <= level                   → UP hold (maintain altitude — preferred near level)
+        //   level < dy <= down              → no hold (free sink)
+        //   dy > down                       → DOWN hold (fast sink)
+        long now = System.currentTimeMillis();
+        if (dy <= -BotPhysicsEngine.cfg.SWIM_JUMP_TRIGGER_DY_PX
+                && now >= entry.swimNextJumpAtMs) {
+            entry.swimJumpRequested = true;
+            entry.swimNextJumpAtMs = now + BotPhysicsEngine.cfg.SWIM_JUMP_COOLDOWN_MS;
+            entry.swimVerticalHold = -1;
+        } else if (dy <= BotPhysicsEngine.cfg.SWIM_LEVEL_BAND_PX) {
+            entry.swimVerticalHold = -1;       // at or above level → hold UP
+        } else if (dy <= BotPhysicsEngine.cfg.SWIM_DOWN_BAND_PX) {
+            entry.swimVerticalHold = 0;        // slightly below → free sink
+        } else {
+            entry.swimVerticalHold = 1;        // far below → DOWN hold
         }
     }
 

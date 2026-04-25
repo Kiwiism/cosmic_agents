@@ -60,9 +60,13 @@ final class BotNavigationManager {
                 return new NavigationDirective(rawTargetPos, false);
             }
             if (bot.getMap().isSwim()) {
-                // Swim maps use free-water physics; bot drifts directly toward the target via
-                // tickSwimming. Foothold-based regions/edges (walk, jump, drop, rope) don't apply.
-                entry.graphWarmupFallback = false;
+                // Swim maps don't use a swim-aware nav graph. Airborne motion is handled
+                // by the swim integrator (tickSwimming); on platforms we still need
+                // ledge-drops, ropes, and ground jumps. Engage the heuristic fallback —
+                // it walks off ledges into water, picks up nearby ropes, and jumps onto
+                // higher platforms when useful. tickSwimming consults targetPos directly,
+                // so the same rawTargetPos works for both grounded and airborne paths.
+                entry.graphWarmupFallback = true;
                 clearNavigation(entry);
                 return new NavigationDirective(rawTargetPos, false);
             }
@@ -1139,8 +1143,23 @@ final class BotNavigationManager {
         }
 
         Character owner = entry.owner;
-        if (!entry.grinding && owner != null && owner.getMap() == map && targetPos.equals(owner.getPosition())) {
-            return resolveCharacterRegionId(graph, map, owner);
+        if (!entry.grinding && owner != null && owner.getMap() == map) {
+            // Follow mode + owner climbing: prioritise a rope target. The follow
+            // resolver may have already snapped targetPos to a rope's X, so the
+            // exact equality check below would miss — explicitly look for a rope
+            // at targetPos, and fall back to the owner's own rope region if none
+            // is found there. This keeps the bot climbing onto rope alongside
+            // the owner instead of clamping to the platform below the rope.
+            if (CharacterStance.isClimbing(owner.getStance())) {
+                int ropeRegionId = graph.findRopeRegionId(targetPos);
+                if (ropeRegionId >= 0) {
+                    return ropeRegionId;
+                }
+                return resolveCharacterRegionId(graph, map, owner);
+            }
+            if (targetPos.equals(owner.getPosition())) {
+                return resolveCharacterRegionId(graph, map, owner);
+            }
         }
 
         return resolvePointTargetRegionId(graph, map, targetPos);
