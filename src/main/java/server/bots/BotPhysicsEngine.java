@@ -1035,19 +1035,23 @@ final class BotPhysicsEngine {
         double nextX = entry.physX + vx * t;
         double nextY = entry.physY + vy * t;
 
-        // Sweep-style landing: probe getPointBelow at the bot's *current*
-        // position so a fast sink doesn't tunnel through a foothold between
-        // physY and nextY. If the supporting foothold's y lies in (physY,
-        // nextY], clamp the bot to it and transition out of swim mode.
+        // Use the same sweep-based collision resolution as airborne physics:
+        // resolveAirCollision handles wall segments and scans every pixel along
+        // the horizontal span for floor crossings, preventing tunnelling through
+        // slopes and thin platforms.
         boolean landed = false;
-        if (vy > 0.0) {
-            int probeX = (int) Math.round(nextX);
-            int startY = (int) Math.round(entry.physY);
-            Point floor = map.getPointBelow(new Point(probeX, startY));
-            if (floor != null && floor.y > startY && floor.y <= (long) Math.ceil(nextY) + 1) {
-                nextY = floor.y;
+        {
+            Point prevPt = new Point((int) Math.round(entry.physX), (int) Math.round(entry.physY));
+            Point nextPt = new Point((int) Math.round(nextX), (int) Math.round(nextY));
+            AirCollision collision = resolveAirCollision(map, prevPt, nextPt);
+            if (collision.type() == AirCollisionType.LAND) {
+                nextX = collision.point().x;
+                nextY = collision.point().y;
                 vy = 0.0;
                 landed = true;
+            } else if (collision.type() == AirCollisionType.WALL) {
+                nextX = collision.point().x;
+                vx = 0.0;
             }
         }
 

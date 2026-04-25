@@ -421,14 +421,15 @@ class BotMovementManager {
         else if (dx < -hRadius) entry.swimMoveDir = -1;
 
         // Vertical intent.
-        //   dy <= -SWIM_JUMP_TRIGGER_DY_PX  → fire JUMP burst (cooldown-gated) + UP hold
-        //   dy in [-trigger, -level]        → UP hold (slow sink, climbs slowly via jump)
-        //   |dy| <= level                   → UP hold (maintain altitude — preferred near level)
-        //   level < dy <= down              → no hold (free sink)
-        //   dy > down                       → DOWN hold (fast sink)
+        //   dy < 0          → fire JUMP burst (cooldown-gated) + UP hold; lets bot overshoot
+        //                     above the target and land naturally under swim gravity
+        //   dy in [0, level] → UP hold (maintain altitude — bot drifts down to floor naturally)
+        //   level < dy <= down → no hold (free sink)
+        //   dy > down          → DOWN hold (fast sink)
         long now = System.currentTimeMillis();
-        if (dy <= -BotPhysicsEngine.cfg.SWIM_JUMP_TRIGGER_DY_PX
-                && now >= entry.swimNextJumpAtMs) {
+        if (dy < 0 && now >= entry.swimNextJumpAtMs) {
+            // Target is above the bot — UP hold alone can't fight gravity, so
+            // burst-jump above the target level and let physics land naturally.
             entry.swimJumpRequested = true;
             entry.swimNextJumpAtMs = now + BotPhysicsEngine.cfg.SWIM_JUMP_COOLDOWN_MS;
             entry.swimVerticalHold = -1;
