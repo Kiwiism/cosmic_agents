@@ -59,6 +59,13 @@ final class BotNavigationManager {
                 clearNavigation(entry);
                 return new NavigationDirective(rawTargetPos, false);
             }
+            if (bot.getMap().isSwim()) {
+                // Swim maps use free-water physics; bot drifts directly toward the target via
+                // tickSwimming. Foothold-based regions/edges (walk, jump, drop, rope) don't apply.
+                entry.graphWarmupFallback = false;
+                clearNavigation(entry);
+                return new NavigationDirective(rawTargetPos, false);
+            }
 
             BotNavigationGraph graph = resolveActiveGraph(bot.getMap(), entry.movementProfile);
             if (graph == null) {
