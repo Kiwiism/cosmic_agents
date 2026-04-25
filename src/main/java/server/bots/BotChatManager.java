@@ -39,6 +39,9 @@ public class BotChatManager {
             "\\b(follow(\\s+(me|here|pls|please|now))?|come(\\s+(here|to\\s+me|with\\s+me|closer|on|back))?|"
             + "get\\s+over\\s+here|f\\s+me|(pls|please)\\s+follow)\\b",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern FOLLOW_TARGET_PATTERN = Pattern.compile(
+            "^\\s*follow\\s+(\\S+?)(?:\\s+(?:pls|please|now))?\\s*[?!.,]*\\s*$",
+            Pattern.CASE_INSENSITIVE);
 
     private static final Pattern MOVE_HERE_PATTERN = Pattern.compile(
             "\\b(move\\s+(here|there)|go\\s+(here|there)|here|move)\\b",
@@ -216,8 +219,16 @@ public class BotChatManager {
             "\\b(unequip|take\\s+off|remove)\\s+(?:everything|all|all\\s+(?:your|ur|my)\\s+gear|gear|equipment|equips?)\\b"
             + "|\\bstrip\\s+(?:down|everything|all)\\b",
             Pattern.CASE_INSENSITIVE);
+    private static final String EQUIP_SLOT_WORDS =
+            "(?:weapon|wep|shield|offhand|cape|hat|helm(?:et)?|top|shirt|overall|bottom|pants|shoes|boots|"
+            + "gloves?|face(?:\\s*acc(?:essory)?)?|eye(?:\\s*(?:acc(?:essory)?|piece))?|"
+            + "earrings?|rings?\\s*[1-4]?|pendant|medal|belt)";
     private static final Pattern UNEQUIP_SLOT_PATTERN = Pattern.compile(
-            "\\b(unequip|take\\s+off|remove)\\s+(weapon|wep|shield|offhand|cape|hat|helm(?:et)?|top|shirt|bottom|pants|shoes|boots|gloves?|face(?:\\s*acc(?:essory)?)?|eye(?:\\s*(?:acc(?:essory)?|piece))?|rings?\\s*[1-4]?|pendant|medal|belt)\\b",
+            "\\b(unequip|take\\s+off|remove)\\s+(" + EQUIP_SLOT_WORDS + ")\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern TRADE_VIEW_SLOT_COMMAND_PATTERN = Pattern.compile(
+            "\\b(?:can\\s+i\\s+(?:c|see)|let\\s+me\\s+(?:c|see)|show(?:\\s+me)?)\\s+"
+            + "(?:(?:u|ur|yo|your)\\s+)?(" + EQUIP_SLOT_WORDS + ")\\b[?!.,]*\\s*$",
             Pattern.CASE_INSENSITIVE);
 
     // SP variant selection — only matched when spVariantPromptSent=true and spVariant=null
@@ -621,6 +632,7 @@ public class BotChatManager {
             Point dest = entry.owner != null ? new Point(entry.owner.getPosition()) : null;
             if (dest != null) {
                 BotManager.after(BotManager.randMs(1000, 1500), () -> {
+                    entry.followTargetId = 0;
                     entry.following = false;
                     entry.grinding = false;
                     entry.moveTarget = dest;
@@ -630,6 +642,7 @@ public class BotChatManager {
             }
         } else if (FOLLOW_PATTERN.matcher(message).find()) {
             BotManager.after(BotManager.randMs(1500, 2000), () -> {
+                entry.followTargetId = 0;
                 entry.grinding = false;
                 entry.moveTarget = null;
                 BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
@@ -639,6 +652,7 @@ public class BotChatManager {
             });
         } else if (GRIND_PATTERN.matcher(message).find()) {
             BotManager.after(BotManager.randMs(1500, 2000), () -> {
+                entry.followTargetId = 0;
                 entry.following = false;
                 entry.moveTarget = null;
                 BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
@@ -652,6 +666,7 @@ public class BotChatManager {
             });
         } else if (STOP_PATTERN.matcher(message).find()) {
             BotManager.after(BotManager.randMs(900, 1100), () -> {
+                entry.followTargetId = 0;
                 entry.following = false;
                 entry.grinding  = false;
                 entry.moveTarget = null;
@@ -1550,9 +1565,29 @@ public class BotChatManager {
         if (TRADE_USE_COMMAND_PATTERN.matcher(message).find()) return "use";
         if (TRADE_EQUIPS_COMMAND_PATTERN.matcher(message).find()) return "equips";
         if (TRADE_ETC_COMMAND_PATTERN.matcher(message).find()) return "etc";
+        Matcher viewSlotMatcher = TRADE_VIEW_SLOT_COMMAND_PATTERN.matcher(message);
+        if (viewSlotMatcher.find()) return "name:" + viewSlotMatcher.group(1).trim();
 
         Matcher matcher = TRADE_ITEM_COMMAND_PATTERN.matcher(message);
         return matcher.find() ? "name:" + matcher.group(1).trim() : null;
+    }
+
+    static String matchFollowTarget(String message) {
+        Matcher matcher = FOLLOW_TARGET_PATTERN.matcher(message);
+        if (!matcher.find()) {
+            return null;
+        }
+
+        String target = matcher.group(1);
+        if (target == null) {
+            return null;
+        }
+
+        String normalized = target.trim().toLowerCase(Locale.ROOT);
+        return switch (normalized) {
+            case "me", "here", "pls", "please", "now" -> null;
+            default -> target.trim();
+        };
     }
 
     private static String matchTradeMesoCategory(String message) {

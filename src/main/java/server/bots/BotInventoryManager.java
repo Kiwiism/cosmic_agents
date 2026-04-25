@@ -20,13 +20,17 @@ import tools.PacketCreator;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
 
 class BotInventoryManager {
+    private record PreparedTradeItems(List<Item> items, String errorMessage) {}
+
     private static final Set<Integer> manualTradeGreetingSent = ConcurrentHashMap.newKeySet();
     private static final List<String> TRADE_INVITATION_MSGS = List.of(
             "k", "ok", "kk", "sure", "k, I inv", "k i inv",
@@ -273,12 +277,17 @@ class BotInventoryManager {
             BotManager.getInstance().botSay(bot, "you're already in a trade!");
             return;
         }
-        List<Item> items = collectItems(category, entry, bot);
+        PreparedTradeItems prepared = prepareTradeItems(category, entry, bot);
+        if (prepared.errorMessage() != null) {
+            BotManager.getInstance().botSay(bot, prepared.errorMessage());
+            return;
+        }
+        List<Item> items = prepared.items();
         if (items.isEmpty()) {
             BotManager.getInstance().botSay(bot, noItemsReply(category));
             return;
         }
-        startTradeSequence(category, owner, items, 0, false, entry, bot);
+        startTradeSequence(category, owner, items, 0, !entry.pendingTradeRestoreSlots.isEmpty(), entry, bot);
     }
 
     static void startTradeTransfer(Item item, Character recipient, BotEntry entry, Character bot) {
@@ -311,6 +320,13 @@ class BotInventoryManager {
 
             int requestedMesos = requestedTradeMesos(category);
             return requestedMesos <= 0 || currentMesos >= requestedMesos;
+        }
+
+        if (category != null && category.startsWith("name:")) {
+            String fragment = category.substring(5);
+            if (hasEquippedSlotItems(bot, fragment)) {
+                return true;
+            }
         }
 
         return !collectItems(category, entry, bot).isEmpty();
@@ -386,7 +402,7 @@ class BotInventoryManager {
         // ── PAUSE between batches (items == null) ──────────────────────────
         if (entry.pendingTradeItems == null) {
             if (entry.pendingTradeSingleBatch) {
-                resetTradeState(entry);
+                resetTradeState(entry, bot);
                 return;
             }
             if (entry.pendingTradeTimerMs > 0) {
@@ -395,7 +411,7 @@ class BotInventoryManager {
             }
             List<Item> next = collectItems(entry.pendingTradeCategory, entry, bot);
             if (next.isEmpty()) {
-                resetTradeState(entry);
+                resetTradeState(entry, bot);
             } else {
                 openTradeBatch(entry, bot, next, 0);
             }
@@ -407,7 +423,7 @@ class BotInventoryManager {
             if (entry.pendingTradeBotDone) {
                 // Both sides confirmed — sequence complete or cancelled after bot OK
                 if (entry.pendingTradeSingleBatch) {
-                    resetTradeState(entry);
+                    resetTradeState(entry, bot);
                     return;
                 }
                 entry.pendingTradeItems    = null;
@@ -417,11 +433,11 @@ class BotInventoryManager {
             } else if (entry.pendingTradeAllAdded) {
                 // Owner cancelled after items were added (items returned to bot)
                 BotManager.getInstance().botSay(bot, "trade cancelled");
-                resetTradeState(entry);
+                resetTradeState(entry, bot);
             } else {
                 // Owner declined invite
                 BotManager.getInstance().botSay(bot, "trade declined");
-                resetTradeState(entry);
+                resetTradeState(entry, bot);
             }
             return;
         }
@@ -432,7 +448,7 @@ class BotInventoryManager {
             if (entry.pendingTradeTimerMs > 30_000) {
                 BotManager.getInstance().botSay(bot, "trade request timed out");
                 Trade.cancelTrade(bot, Trade.TradeResult.NO_RESPONSE);
-                resetTradeState(entry);
+                resetTradeState(entry, bot);
             }
             return;
         }
@@ -512,7 +528,7 @@ class BotInventoryManager {
             } else if (entry.pendingTradeTimerMs > 60_000) { // 60 s timeout
                 BotManager.getInstance().botSay(bot, "trade timed out, cancelling");
                 Trade.cancelTrade(bot, Trade.TradeResult.NO_RESPONSE);
-                resetTradeState(entry);
+                resetTradeState(entry, bot);
             }
         }
         // pendingTradeBotDone=true: wait for bot.getTrade() to become null (handled above)
@@ -521,10 +537,11 @@ class BotInventoryManager {
     private static void cancelTradeSequence(BotEntry entry, Character bot, String msg) {
         BotManager.getInstance().botSay(bot, msg);
         if (bot.getTrade() != null) Trade.cancelTrade(bot, Trade.TradeResult.NO_RESPONSE);
-        resetTradeState(entry);
+        resetTradeState(entry, bot);
     }
 
-    private static void resetTradeState(BotEntry entry) {
+    private static void resetTradeState(BotEntry entry, Character bot) {
+        restoreTemporarilyUnequippedItems(entry, bot);
         entry.pendingTradeCategory = null;
         entry.pendingTradeItems    = null;
         entry.pendingTradeRecipientId = 0;
@@ -598,6 +615,116 @@ class BotInventoryManager {
 
     // ─── Item collection helpers ──────────────────────────────────────────────
 
+    private static PreparedTradeItems prepareTradeItems(String category, BotEntry entry, Character bot) {
+        if (category != null && category.startsWith("name:")) {
+            String fragment = category.substring(5).trim();
+            PreparedTradeItems equippedSlotItems = prepareEquippedSlotTradeItems(fragment, entry, bot);
+            if (equippedSlotItems.errorMessage() != null || !equippedSlotItems.items().isEmpty()) {
+                return equippedSlotItems;
+            }
+            return new PreparedTradeItems(collectNamedItems(fragment, bot), null);
+        }
+
+        return new PreparedTradeItems(collectItems(category, entry, bot), null);
+    }
+
+    private static List<Item> collectNamedItems(String fragment, Character bot) {
+        List<Item> result = new ArrayList<>();
+        String lower = fragment.toLowerCase();
+        ItemInformationProvider ii = ItemInformationProvider.getInstance();
+        for (InventoryType t : List.of(
+                InventoryType.EQUIP, InventoryType.USE, InventoryType.ETC, InventoryType.SETUP)) {
+            collectFromBag(bot, result, t, item -> {
+                String name = ii.getName(item.getItemId());
+                return name != null && name.toLowerCase().contains(lower);
+            });
+        }
+        return result;
+    }
+
+    private static boolean hasEquippedSlotItems(Character bot, String fragment) {
+        short[] slots = BotEquipManager.slotsFromName(fragment);
+        if (slots.length == 0) {
+            return false;
+        }
+
+        Inventory equipped = bot.getInventory(InventoryType.EQUIPPED);
+        ItemInformationProvider ii = ItemInformationProvider.getInstance();
+        for (short slot : slots) {
+            Item item = equipped.getItem(slot);
+            if (item != null && !ii.isCash(item.getItemId())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static PreparedTradeItems prepareEquippedSlotTradeItems(String fragment, BotEntry entry, Character bot) {
+        short[] slots = BotEquipManager.slotsFromName(fragment);
+        if (slots.length == 0) {
+            return new PreparedTradeItems(List.of(), null);
+        }
+
+        Inventory equipped = bot.getInventory(InventoryType.EQUIPPED);
+        Inventory equipBag = bot.getInventory(InventoryType.EQUIP);
+        ItemInformationProvider ii = ItemInformationProvider.getInstance();
+        List<Short> occupiedSlots = new ArrayList<>();
+        for (short slot : slots) {
+            Item item = equipped.getItem(slot);
+            if (item != null && !ii.isCash(item.getItemId())) {
+                occupiedSlots.add(slot);
+            }
+        }
+        if (occupiedSlots.isEmpty()) {
+            return new PreparedTradeItems(List.of(), null);
+        }
+        if (equipBag.getNumFreeSlot() < occupiedSlots.size()) {
+            return new PreparedTradeItems(List.of(), "equip bag full");
+        }
+
+        occupiedSlots.sort(Short::compare);
+        List<Item> result = new ArrayList<>();
+        for (short srcSlot : occupiedSlots) {
+            short dstSlot = equipBag.getNextFreeSlot();
+            if (dstSlot < 0) {
+                restoreTemporarilyUnequippedItems(entry, bot);
+                return new PreparedTradeItems(List.of(), "ran out of equip slots");
+            }
+
+            InventoryManipulator.handleItemMove(bot.getClient(), InventoryType.EQUIP, srcSlot, dstSlot, (short) 1);
+            Item moved = equipBag.getItem(dstSlot);
+            if (moved == null) {
+                restoreTemporarilyUnequippedItems(entry, bot);
+                return new PreparedTradeItems(List.of(), "couldn't prepare equipped item for trade");
+            }
+
+            entry.pendingTradeRestoreSlots.put(moved, srcSlot);
+            result.add(moved);
+        }
+
+        return new PreparedTradeItems(result, null);
+    }
+
+    private static void restoreTemporarilyUnequippedItems(BotEntry entry, Character bot) {
+        if (bot == null || entry.pendingTradeRestoreSlots.isEmpty()) {
+            entry.pendingTradeRestoreSlots.clear();
+            return;
+        }
+
+        Inventory equipped = bot.getInventory(InventoryType.EQUIPPED);
+        List<Map.Entry<Item, Short>> restoreEntries = new ArrayList<>(entry.pendingTradeRestoreSlots.entrySet());
+        restoreEntries.sort(Comparator.comparingInt(Map.Entry::getValue));
+        for (Map.Entry<Item, Short> restoreEntry : restoreEntries) {
+            Item item = restoreEntry.getKey();
+            short dstSlot = restoreEntry.getValue();
+            if (!hasItem(bot, item) || equipped.getItem(dstSlot) != null) {
+                continue;
+            }
+            InventoryManipulator.handleItemMove(bot.getClient(), InventoryType.EQUIP, item.getPosition(), dstSlot, (short) 1);
+        }
+        entry.pendingTradeRestoreSlots.clear();
+    }
+
     private static List<Item> collectItems(String category, BotEntry entry, Character bot) {
         List<Item> result = new ArrayList<>();
         switch (category) {
@@ -622,15 +749,7 @@ class BotInventoryManager {
             case "etc"     -> collectFromBag(bot, result, InventoryType.ETC,   item -> true);
             default -> {
                 if (category.startsWith("name:")) {
-                    String lower = category.substring(5).toLowerCase();
-                    ItemInformationProvider ii = ItemInformationProvider.getInstance();
-                    for (InventoryType t : List.of(
-                            InventoryType.EQUIP, InventoryType.USE, InventoryType.ETC, InventoryType.SETUP)) {
-                        collectFromBag(bot, result, t, item -> {
-                            String name = ii.getName(item.getItemId());
-                            return name != null && name.toLowerCase().contains(lower);
-                        });
-                    }
+                    result.addAll(collectNamedItems(category.substring(5), bot));
                 }
             }
         }

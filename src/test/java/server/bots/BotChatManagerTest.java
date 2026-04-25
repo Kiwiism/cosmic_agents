@@ -11,6 +11,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -41,6 +42,21 @@ class BotChatManagerTest {
     @Test
     void shouldStillParseNamedItemTrades() {
         assertEquals("name:chaos scroll", BotChatManager.matchTradeCategory("trade chaos scroll"));
+    }
+
+    @Test
+    void shouldParseViewEquipmentRequestsAsTradeCommands() {
+        assertEquals("name:hat", BotChatManager.matchTradeCategory("show me your hat"));
+        assertEquals("name:ring 2", BotChatManager.matchTradeCategory("let me see ur ring 2"));
+        assertEquals("name:weapon", BotChatManager.matchTradeCategory("can i c yo weapon"));
+    }
+
+    @Test
+    void shouldParseFollowTargetCommandsWithoutBreakingPlainFollow() {
+        assertEquals("clawer", BotChatManager.matchFollowTarget("follow clawer"));
+        assertEquals("Clawer", BotChatManager.matchFollowTarget("follow Clawer please"));
+        assertNull(BotChatManager.matchFollowTarget("follow me"));
+        assertNull(BotChatManager.matchFollowTarget("follow here"));
     }
 
     @Test

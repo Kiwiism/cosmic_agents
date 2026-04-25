@@ -23,6 +23,7 @@ public class BotEntry {
     final Character bot;
     volatile Character owner;
     volatile boolean following = false;
+    volatile int followTargetId = 0; // 0 = owner
     final ScheduledFuture<?> task;
     BotMovementProfile movementProfile = BotMovementProfile.base();
 
@@ -155,6 +156,7 @@ public class BotEntry {
     boolean pendingTradeBotDone = false;
     boolean pendingTradeSingleBatch = false;
     int     pendingPotShareBudget = 0; // max total qty to donate; 0 = no cap (normal trades)
+    Map<Item, Short> pendingTradeRestoreSlots = new IdentityHashMap<>();
 
     // Message queue
     final ArrayDeque<String> msgQueue = new ArrayDeque<>();

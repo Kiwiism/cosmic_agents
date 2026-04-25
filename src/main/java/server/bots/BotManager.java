@@ -129,6 +129,8 @@ public class BotManager {
 
     private record TargetedBotMatch(BotEntry entry, String commandText, String feedbackMessage) {}
 
+    private record FollowTargetMatch(Character target, String feedbackMessage) {}
+
     static BotTransferCommand matchBotTransferCommand(String message) {
         Matcher matcher = TRANSFER_PATTERN.matcher(message);
         if (!matcher.find()) {
@@ -233,6 +235,110 @@ public class BotManager {
         }
 
         return new TargetedBotMatch(null, null, null);
+    }
+
+    private FollowTargetMatch resolveFollowTarget(Character owner, String targetToken) {
+        if (owner == null || targetToken == null || targetToken.isBlank()) {
+            return new FollowTargetMatch(null, "Can't follow that target.");
+        }
+
+        List<Character> candidates = new ArrayList<>();
+        if (owner.isLoggedinWorld()) {
+            candidates.add(owner);
+        }
+        if (owner.getParty() != null) {
+            for (Character member : owner.getPartyMembersOnline()) {
+                if (member == null || !member.isLoggedinWorld() || member.getId() == owner.getId()) {
+                    continue;
+                }
+                candidates.add(member);
+            }
+        }
+        for (BotEntry sibling : getBotEntries(owner.getId())) {
+            Character siblingBot = sibling.bot;
+            if (siblingBot == null || !siblingBot.isLoggedinWorld()) {
+                continue;
+            }
+            boolean duplicate = false;
+            for (Character candidate : candidates) {
+                if (candidate.getId() == siblingBot.getId()) {
+                    duplicate = true;
+                    break;
+                }
+            }
+            if (!duplicate) {
+                candidates.add(siblingBot);
+            }
+        }
+
+        for (Character candidate : candidates) {
+            if (candidate.getName().equalsIgnoreCase(targetToken)) {
+                return new FollowTargetMatch(candidate, null);
+            }
+        }
+
+        if (targetToken.length() < MIN_PREFIX_TARGET_LENGTH) {
+            return new FollowTargetMatch(null, "Follow target must use at least " + MIN_PREFIX_TARGET_LENGTH + " letters.");
+        }
+
+        List<Character> prefixMatches = new ArrayList<>();
+        for (Character candidate : candidates) {
+            if (candidate.getName().regionMatches(true, 0, targetToken, 0, targetToken.length())) {
+                prefixMatches.add(candidate);
+            }
+        }
+        if (prefixMatches.size() == 1) {
+            return new FollowTargetMatch(prefixMatches.get(0), null);
+        }
+        if (prefixMatches.size() > 1) {
+            StringBuilder message = new StringBuilder("Ambiguous follow target '")
+                    .append(targetToken)
+                    .append("': ");
+            for (int i = 0; i < prefixMatches.size(); i++) {
+                if (i > 0) {
+                    message.append(", ");
+                }
+                message.append(prefixMatches.get(i).getName());
+            }
+            return new FollowTargetMatch(null, message.toString());
+        }
+
+        return new FollowTargetMatch(null, "Can't follow '" + targetToken + "'. Target must be a same-party character or one of your active bots.");
+    }
+
+    private boolean applyFollowTargetCommand(Character owner, List<BotEntry> entries, String targetToken) {
+        FollowTargetMatch followTarget = resolveFollowTarget(owner, targetToken);
+        if (followTarget.target() == null) {
+            if (followTarget.feedbackMessage() != null) {
+                owner.yellowMessage(followTarget.feedbackMessage());
+            }
+            return true;
+        }
+
+        Character target = followTarget.target();
+        for (BotEntry entry : entries) {
+            if (entry == null || entry.bot == null || entry.bot.getId() == target.getId()) {
+                continue;
+            }
+            BotChatManager.queueBotSay(entry, randomReply(List.of(
+                    "ok",
+                    "k",
+                    "sure",
+                    "omw",
+                    "got it",
+                    "following " + target.getName(),
+                    "ok, following " + target.getName()
+            )));
+            after(randMs(250, 750), () -> {
+                entry.followTargetId = owner.getId() == target.getId() ? 0 : target.getId();
+                entry.grinding = false;
+                entry.moveTarget = null;
+                BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
+                BotPotionManager.checkPotShareOnModeStart(entry, entry.bot);
+                entry.following = true;
+            });
+        }
+        return true;
     }
 
     static String randomReply(List<String> list) {
@@ -820,11 +926,22 @@ public class BotManager {
         // Name-prefix routing: "Jason pots?" → only Jason responds
         TargetedBotMatch targetedBot = resolveTargetedBot(entries, message);
         if (targetedBot.entry != null) {
+            String followTargetToken = BotChatManager.matchFollowTarget(targetedBot.commandText());
+            if (followTargetToken != null) {
+                applyFollowTargetCommand(owner, List.of(targetedBot.entry), followTargetToken);
+                return;
+            }
             BotChatManager.handleChat(targetedBot.entry, targetedBot.commandText);
             return;
         }
         if (targetedBot.feedbackMessage != null) {
             owner.yellowMessage(targetedBot.feedbackMessage);
+            return;
+        }
+
+        String followTargetToken = BotChatManager.matchFollowTarget(message);
+        if (followTargetToken != null) {
+            applyFollowTargetCommand(owner, entries, followTargetToken);
             return;
         }
 
@@ -987,6 +1104,33 @@ public class BotManager {
         return ownerFormations.getOrDefault(owner.getId(), FormationState.defaultStagger());
     }
 
+    private Character resolveFollowAnchor(BotEntry entry, Character owner) {
+        if (owner == null) {
+            return null;
+        }
+
+        int targetId = entry.followTargetId;
+        if (targetId <= 0 || targetId == owner.getId() || targetId == entry.bot.getId()) {
+            return owner;
+        }
+
+        if (owner.getParty() != null) {
+            for (Character member : owner.getPartyMembersOnline()) {
+                if (member != null && member.getId() == targetId && member.isLoggedinWorld()) {
+                    return member;
+                }
+            }
+        }
+
+        for (BotEntry sibling : getBotEntries(owner.getId())) {
+            if (sibling.bot != null && sibling.bot.getId() == targetId && sibling.bot.isLoggedinWorld()) {
+                return sibling.bot;
+            }
+        }
+
+        return owner;
+    }
+
     void setFormationState(Character owner, FormationType type, int px, int snapRange, List<BotEntry> entries) {
         if (owner == null) {
             return;
@@ -1006,11 +1150,13 @@ public class BotManager {
     TargetSnapshot captureTargetSnapshot(BotEntry entry) {
         Character bot = entry.bot;
         Character owner = entry.owner;
+        Character followAnchor = resolveFollowAnchor(entry, owner);
         Point fallbackPos = bot.getPosition();
         Point rawOwnerPos = owner != null ? owner.getPosition() : fallbackPos;
+        Point rawFollowAnchorPos = followAnchor != null ? followAnchor.getPosition() : rawOwnerPos;
         FormationState formation = formationStateFor(entry);
-        Point followBasePos = new Point(rawOwnerPos.x + entry.followOffsetX, rawOwnerPos.y);
-        Point followTargetPos = resolveFollowTargetPos(followBasePos, owner, rawOwnerPos, formation.snapRange(), bot.getMap());
+        Point followBasePos = new Point(rawFollowAnchorPos.x + entry.followOffsetX, rawFollowAnchorPos.y);
+        Point followTargetPos = resolveFollowTargetPos(followBasePos, followAnchor, rawFollowAnchorPos, formation.snapRange(), bot.getMap());
         Point moveTargetPos = entry.moveTarget == null ? null : new Point(entry.moveTarget);
         Monster activeGrindTarget = entry.grindTarget != null
                 && entry.grindTarget.isAlive()
@@ -1149,6 +1295,7 @@ public class BotManager {
         BotMovementManager.refreshMovementProfile(entry);
 
         Point botPos = bot.getPosition();
+        Character followAnchor = resolveFollowAnchor(entry, owner);
         TargetSnapshot targetSnapshot = captureTargetSnapshot(entry);
         Point ownerPos = targetSnapshot.rawOwnerPos();
         updateObservedOwnerMotion(entry, ownerPos);
@@ -1164,8 +1311,8 @@ public class BotManager {
             return;
         }
 
-        // Map change and teleport checks only apply when following owner
-        if (syncFollowMap(entry, bot, owner, ownerPos)) {
+        // Map change and teleport checks only apply when following a live anchor
+        if (syncFollowMap(entry, bot, followAnchor, targetSnapshot.followTargetPos())) {
             return;
         }
         // Teleport if hopelessly far — applies to both follow and grind (catches falling off map)
@@ -1199,7 +1346,9 @@ public class BotManager {
 
         // Follow mode: attack monsters already in attack range without chasing
         if (entry.following && !entry.noAmmo && runAiTick && !entry.climbing
-                && Math.abs(botPos.x - owner.getPosition().x) <= BotMovementManager.cfg.FOLLOW_DIST * 5) {
+                && followAnchor != null
+                && bot.getMapId() == followAnchor.getMapId()
+                && Math.abs(botPos.x - followAnchor.getPosition().x) <= BotMovementManager.cfg.FOLLOW_DIST * 5) {
             Monster followTarget = BotCombatManager.findFollowAttackTarget(entry, bot);
             if (followTarget != null) {
                 Point followTargetPos = followTarget.getPosition();
@@ -1426,16 +1575,16 @@ public class BotManager {
         return true;
     }
 
-    private boolean syncFollowMap(BotEntry entry, Character bot, Character owner, Point ownerPos) {
-        if (!entry.following || bot.getMapId() == owner.getMapId()) {
+    private boolean syncFollowMap(BotEntry entry, Character bot, Character followAnchor, Point followTargetPos) {
+        if (!entry.following || followAnchor == null || bot.getMapId() == followAnchor.getMapId()) {
             return false;
         }
-        Point spawn = BotPhysicsEngine.findGroundPoint(owner.getMap(), new Point(ownerPos.x, ownerPos.y - 1));
+        Point spawn = BotPhysicsEngine.findGroundPoint(followAnchor.getMap(), new Point(followTargetPos.x, followTargetPos.y - 1));
         if (spawn == null) {
-            spawn = ownerPos;
+            spawn = followTargetPos;
         }
         BotPhysicsEngine.idleOnGround(entry, bot);
-        bot.changeMap(owner.getMap(), spawn);
+        bot.changeMap(followAnchor.getMap(), spawn);
         BotMovementManager.resetEntryState(entry);
         return true;
     }
