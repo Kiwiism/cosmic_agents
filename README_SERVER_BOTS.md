@@ -58,6 +58,7 @@ jason stop - only jason will stop
 | Say | Effect |
 |---|---|
 | `follow` / `follow me` / `come here` / `come` | Bot follows you |
+| `follow <name>` | follows party member or sibling bot |
 | `stop` / `stay` / `wait` / `hold on` / `idle` / `park here` | Bot stops moving |
 | `move here` / `go here` / `move` / `here` | Bot moves to your exact position and stops (Handy for party quest puzzles) |
 | `grind` / `farm` / `hunt` / `kill mobs` / `auto on` | Bot starts combat AI |
@@ -98,7 +99,7 @@ TODO: actually filter by class / type / skills they can use
 | Say | Effect |
 |---|---|
 | `any upgrades?` / `better gear` / `recommended gear` | Check if bot has better gear available for you |
-| `request?` / `do you need anything` / `what do you need` | Check if you have better gear available for the bot |
+| `request?` / `need anything?` / `what do you need` | Check if you have better gear available for the bot |
 | `trade recommended gear` / `trade upgrades` | Bot trades its recommended gear to you |
 | `trade <item name>` | can also do this
 
@@ -117,6 +118,8 @@ Verbs: `trade [me] <type/name>`, `give [me] <type/name>`, `drop <type/name>`, `p
 | `trade buff` / `give me buff items` | Trade buff potions |
 | `trade 100k` / `give mesos` | Trade mesos |
 | `trade <item name>` | Trade a named item |
+| `trade <slot>` | Unequip then trade the item ex. `trade hat` |
+| `show me your <slot>` / `can I see your <slot>` | Unequip then trade the item ex. `show me your hat` |
 | `drop scrolls` / `drop equips` / etc | Drop category to ground |
 | `unequip everything` | Unequip all gear |
 | `unequip hat` / `unequip weapon` / etc | Unequip a specific slot |
