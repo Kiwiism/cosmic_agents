@@ -1312,7 +1312,7 @@ public class BotManager {
         }
 
         // Map change and teleport checks only apply when following a live anchor
-        if (syncFollowMap(entry, bot, followAnchor, targetSnapshot.followTargetPos())) {
+        if (syncFollowMap(entry, bot, followAnchor)) {
             return;
         }
         // Teleport if hopelessly far — applies to both follow and grind (catches falling off map)
@@ -1575,16 +1575,21 @@ public class BotManager {
         return true;
     }
 
-    private boolean syncFollowMap(BotEntry entry, Character bot, Character followAnchor, Point followTargetPos) {
+    private boolean syncFollowMap(BotEntry entry, Character bot, Character followAnchor) {
         if (!entry.following || followAnchor == null || bot.getMapId() == followAnchor.getMapId()) {
             return false;
         }
-        Point spawn = BotPhysicsEngine.findGroundPoint(followAnchor.getMap(), new Point(followTargetPos.x, followTargetPos.y - 1));
+        // Ground against the anchor's actual position in their NEW map. The previously-passed
+        // followTargetPos was computed from the bot's OLD map (foothold snaps, formation offsets),
+        // so it could land off-map in the new map and cause far-away/OOB spawns.
+        MapleMap targetMap = followAnchor.getMap();
+        Point anchorPos = followAnchor.getPosition();
+        Point spawn = BotPhysicsEngine.findGroundPoint(targetMap, new Point(anchorPos.x, anchorPos.y - 1));
         if (spawn == null) {
-            spawn = followTargetPos;
+            spawn = anchorPos;
         }
         BotPhysicsEngine.idleOnGround(entry, bot);
-        bot.changeMap(followAnchor.getMap(), spawn);
+        bot.changeMap(targetMap, spawn);
         BotMovementManager.resetEntryState(entry);
         return true;
     }
@@ -1637,7 +1642,7 @@ public class BotManager {
             return;
         }
 
-        if (owner != null && syncFollowMap(entry, bot, owner, ownerPos)) {
+        if (owner != null && syncFollowMap(entry, bot, owner)) {
             return;
         }
         if (recoverTeleportDistance(entry, bot, targetPos)) {
