@@ -15,6 +15,7 @@ final class BotPhysicsEngine {
     private static final double CLIENT_GROUND_STEP_MS = 8.0;
     private static final double CLIENT_GROUND_STEP_S = CLIENT_GROUND_STEP_MS / 1000.0;
     private static final int REGION_STITCH_GAP_PX = 2;
+    private static final int SYNTHETIC_MAP_BOUND_SIZE = 1 << 18;
     // Max horizontal gap between adjacent foothold endpoints that the bot can walk across.
     // Shared with BotNavigationGraphProvider so walk-edge generation and physics agree.
     static final int WALK_GAP_PX = 12;
@@ -1759,7 +1760,7 @@ final class BotPhysicsEngine {
         }
 
         int dir = Integer.compare(nextPos.x, previousPos.x);
-        int boundaryX = dir > 0 ? area.x + area.width : area.x;
+        int boundaryX = dir > 0 ? effectiveRightBoundaryX(map, area) : effectiveLeftBoundaryX(map, area);
         if (dir > 0 && (previousPos.x > boundaryX || nextPos.x <= boundaryX)) {
             return AirCollision.none();
         }
@@ -1777,6 +1778,29 @@ final class BotPhysicsEngine {
                 new Point(boundaryX, (int) Math.round(yAtBoundary)),
                 null,
                 progress);
+    }
+
+    private static int effectiveLeftBoundaryX(MapleMap map, Rectangle area) {
+        if (!isSyntheticMapArea(area) || !hasUsableFootholdXBounds(map)) {
+            return area.x;
+        }
+        return map.getFootholds().getMinDropX();
+    }
+
+    private static int effectiveRightBoundaryX(MapleMap map, Rectangle area) {
+        if (!isSyntheticMapArea(area) || !hasUsableFootholdXBounds(map)) {
+            return area.x + area.width;
+        }
+        return map.getFootholds().getMaxDropX();
+    }
+
+    private static boolean isSyntheticMapArea(Rectangle area) {
+        return area.width >= SYNTHETIC_MAP_BOUND_SIZE && area.height >= SYNTHETIC_MAP_BOUND_SIZE;
+    }
+
+    private static boolean hasUsableFootholdXBounds(MapleMap map) {
+        return map.getFootholds() != null
+                && map.getFootholds().getMinDropX() < map.getFootholds().getMaxDropX();
     }
 
     /**

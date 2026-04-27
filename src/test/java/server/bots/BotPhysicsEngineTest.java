@@ -640,6 +640,30 @@ class BotPhysicsEngineTest {
         assertTrue(bot.getPosition().x > 50, "continued air steering into the wall must not cross to the far side");
     }
 
+    @Test
+    void shouldUseFootholdXBoundsWhenMapHasSyntheticBounds() {
+        MapleMap map = createEmptyTestMap(910000056);
+        map.setMapPointBoundings(-(1 << 17), -(1 << 17), 1 << 18, 1 << 18);
+
+        server.maps.FootholdTree footholds = map.getFootholds();
+        footholds.insert(new Foothold(new Point(-399, 95), new Point(399, 95), 1));
+
+        assertEquals(-399, footholds.getMinDropX());
+        assertEquals(399, footholds.getMaxDropX());
+
+        Character bot = mockBot(new Point(-389, 61), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.inAir = true;
+        entry.physX = -389;
+        entry.physY = 61;
+        entry.velY = -11.9f;
+        entry.airVelX = -11;
+
+        assertEquals(BotPhysicsEngine.AirborneStepResult.WALL, BotPhysicsEngine.stepAirborne(entry, bot));
+        assertEquals(-399, bot.getPosition().x);
+        assertEquals(0, entry.airVelX);
+    }
+
     private record StandingLookupCase(Point point, Foothold exactFoothold, Foothold offsetFoothold) {
     }
 }
