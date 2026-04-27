@@ -670,6 +670,11 @@ final class BotPhysicsEngine {
             entry.airSteerVelX = 0.0;
             entry.fixedAirArc = false;
             entry.downJumpPending = false;
+            entry.swimJumpRequested = false;
+            // The first impulse off a foothold is the small ground jump. A
+            // mid-water swim burst may follow later, but not on the next swim
+            // tick just because the steering target is still above the bot.
+            entry.swimNextJumpAtMs = System.currentTimeMillis() + cfg.SWIM_JUMP_COOLDOWN_MS;
             setMovementVelocity(entry, 0, Math.round(entry.velY));
             syncCharacterState(entry);
             return;
