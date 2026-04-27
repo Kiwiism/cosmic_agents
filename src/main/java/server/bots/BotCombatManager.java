@@ -929,6 +929,9 @@ class BotCombatManager {
             return null;
         }
         AttackRoute route = BotAttackExecutionProvider.determineSkillRoute(bot, entry.aoeSkillId);
+        if (isStrikePointAnchoredAoeSkill(entry.aoeSkillId)) {
+            primaryTarget = resolveStrikePointPrimaryByBasicWeapon(bot, primaryTarget, route);
+        }
         Rectangle hitBox = calculateSkillHitBox(effect, bot, primaryTarget, route, entry.aoeSkillId);
         if (hitBox == null) {
             return null;
@@ -942,9 +945,8 @@ class BotCombatManager {
             return null;
         }
 
-        // For strike-point-anchored explosions (e.g. Arrow Bomb) the bbox is already centered on
-        // the primary target; shifting primary to the closest-in-hitBox would move the packet's
-        // "strike point" away from the actual hit location. Skip resolveEffectivePrimary for them.
+        // Strike-point-anchored skills already resolved the projectile's first-hit mob before
+        // building the explosion box; non-anchored skills still use their own skill hitBox.
         if (!isStrikePointAnchoredAoeSkill(entry.aoeSkillId)) {
             primaryTarget = resolveEffectivePrimary(bot, primaryTarget, hitBox);
         }
@@ -1599,6 +1601,27 @@ class BotCombatManager {
             return true;
         }
         return basicReach != null && doesHitBoxIntersectMonster(basicReach, target);
+    }
+
+    private static Monster resolveStrikePointPrimaryByBasicWeapon(Character bot, Monster fallback, AttackRoute route) {
+        if (bot == null || fallback == null || bot.getPosition() == null || fallback.getPosition() == null) {
+            return fallback;
+        }
+
+        boolean facingLeft = fallback.getPosition().x < bot.getPosition().x;
+        Rectangle basicReach;
+        if (route == AttackRoute.RANGED) {
+            basicReach = clientProjectileHitBox(bot, facingLeft, 1.0f);
+        } else if (route == AttackRoute.CLOSE) {
+            Point origin = bot.getPosition();
+            int left = facingLeft ? origin.x - cfg.ATTACK_RANGE_X : origin.x;
+            int top = origin.y - cfg.ATTACK_RANGE_Y;
+            int height = cfg.ATTACK_RANGE_Y + cfg.ATTACK_DOWN_MAX;
+            basicReach = new Rectangle(left, top, cfg.ATTACK_RANGE_X, height);
+        } else {
+            return fallback;
+        }
+        return resolveEffectivePrimary(bot, fallback, basicReach);
     }
 
     private static boolean isForwardProjectileHitBox(Rectangle hitBox, Point botPos) {

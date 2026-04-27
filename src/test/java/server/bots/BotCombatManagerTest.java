@@ -39,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -435,6 +436,35 @@ class BotCombatManagerTest {
     }
 
     @Test
+    void shouldAnchorArrowBombOnClosestMobInProjectilePath() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        Monster closest = mockMob(new Point(260, 200), 9300300);
+        Monster splash = mockMob(new Point(275, 200), 9300301);
+        Monster farSelected = mockMob(new Point(390, 200), 9300302);
+        doReturn(List.of(farSelected, splash, closest)).when(map).getAllMonsters();
+
+        Skill arrowBomb = skillWithAnchoredAoe(Hunter.ARROW_BOMB, 1, 6, 260);
+        when(bot.getSkillLevel(arrowBomb)).thenReturn((byte) 1);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.aoeSkillId = Hunter.ARROW_BOMB;
+
+        try (MockedStatic<SkillFactory> skillFactory = Mockito.mockStatic(SkillFactory.class);
+             MockedStatic<BotAttackExecutionProvider> attackExecution =
+                     Mockito.mockStatic(BotAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS)) {
+            skillFactory.when(() -> SkillFactory.getSkill(Hunter.ARROW_BOMB)).thenReturn(arrowBomb);
+            attackExecution.when(() -> BotAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.BOW);
+
+            BotCombatManager.AttackPlan plan = BotCombatManager.planAttack(entry, bot, farSelected);
+
+            assertEquals(Hunter.ARROW_BOMB, plan.skillId);
+            assertEquals(closest, plan.targets.get(0));
+            assertTrue(plan.targets.contains(splash));
+            assertFalse(plan.targets.contains(farSelected));
+        }
+    }
+
+    @Test
     void shouldRejectJumpAttackWhenTargetIsTooHighOrTooFar() {
         assertFalse(BotCombatManager.isTargetJumpable(true, new Point(100, 200), new Point(241, 135)));
         assertFalse(BotCombatManager.isTargetJumpable(true, new Point(100, 200), new Point(170, 60)));
@@ -598,6 +628,17 @@ class BotCombatManagerTest {
         when(effect.getMpCon()).thenReturn((short) 1);
         when(effect.canPaySkillCost(any(Character.class))).thenReturn(true);
         skill.addLevelEffect(effect);
+        return skill;
+    }
+
+    private static Skill skillWithAnchoredAoe(int skillId, int attackCount, int mobCount, int damage) {
+        Skill skill = skillWithAttack(skillId, attackCount, mobCount, damage);
+        StatEffect effect = skill.getEffect(1);
+        when(effect.hasBoundingBox()).thenReturn(true);
+        when(effect.calculateBoundingBox(any(Point.class), anyBoolean())).thenAnswer(invocation -> {
+            Point anchor = invocation.getArgument(0);
+            return new Rectangle(anchor.x - 30, anchor.y - 50, 80, 100);
+        });
         return skill;
     }
 }
