@@ -329,7 +329,7 @@ final class BotPotionManager {
         if (entry.inAir || entry.climbing) {
             return false;
         }
-        return entry.lastDesiredDirection == 0
+        return entry.moveDir == 0
                 && BotPhysicsEngine.isStandingStance(BotPhysicsEngine.resolveStance(entry));
     }
 

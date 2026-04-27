@@ -113,7 +113,7 @@ class BotPhysicsEngineTest {
         entry.physY = 88;
         entry.movementVelX = 123;
         entry.movementVelY = -456;
-        entry.lastDesiredDirection = -1;
+        entry.moveDir = -1;
         entry.downJumpPending = true;
         entry.downJumpGracePeriodMS = 350;
 
@@ -129,7 +129,7 @@ class BotPhysicsEngineTest {
         assertEquals(20.0, entry.physY);
         assertEquals(0, entry.movementVelX);
         assertEquals(0, entry.movementVelY);
-        assertEquals(0, entry.lastDesiredDirection);
+        assertEquals(0, entry.moveDir);
         assertEquals(CharacterStance.STAND_RIGHT_STANCE, BotPhysicsEngine.resolveStance(entry));
     }
 
@@ -137,13 +137,13 @@ class BotPhysicsEngineTest {
     void shouldClearWalkIntentWhenIdlingOnGround() {
         Character bot = mockBot(new Point(10, 20), null);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.lastDesiredDirection = -1;
+        entry.moveDir = -1;
         entry.facingDir = -1;
         entry.movementVelX = -125;
 
         BotPhysicsEngine.idleOnGround(entry, bot);
 
-        assertEquals(0, entry.lastDesiredDirection);
+        assertEquals(0, entry.moveDir);
         assertEquals(0, entry.movementVelX);
         assertEquals(CharacterStance.STAND_LEFT_STANCE, BotPhysicsEngine.resolveStance(entry));
         assertEquals(CharacterStance.STAND_LEFT_STANCE, bot.getStance());
@@ -201,18 +201,25 @@ class BotPhysicsEngineTest {
 
     @Test
     void shouldFaceAirSteeringDirectionEvenWhenMomentumIsOpposite() {
-        BotEntry entry = new BotEntry(null, null, null);
+        MapleMap map = mock(MapleMap.class);
+        when(map.getFootholds()).thenReturn(null);
+        when(map.getRopes()).thenReturn(List.of());
+
+        Character bot = mockBot(new Point(100, 200), map);
+        BotEntry entry = new BotEntry(bot, null, null);
         entry.inAir = true;
         entry.airVelX = 8;
         entry.movementVelX = BotPhysicsEngine.velocityFromDeltaX(entry.airVelX);
         entry.facingDir = 1;
+        entry.physX = 100;
+        entry.physY = 200;
+        entry.moveDir = -1;  // set intent for air steering left
 
-        BotPhysicsEngine.applyAirSteering(entry, -40);
+        BotPhysicsEngine.stepAirborne(entry, bot);
 
-        assertTrue(entry.airSteerVelX < 0.0);
-        assertEquals(-1, entry.facingDir);
+        assertTrue(entry.airSteerVelX < 0.0, "left steer intent should produce negative airSteerVelX");
+        assertEquals(-1, entry.facingDir, "facing should follow steer direction, not momentum");
         assertEquals(CharacterStance.JUMP_LEFT_STANCE, BotPhysicsEngine.resolveStance(entry));
-        assertTrue(entry.movementVelX > 0, "launch momentum should remain unchanged by steering intent");
     }
 
     @Test
@@ -257,7 +264,8 @@ class BotPhysicsEngineTest {
         Rope rope = new Rope(100, 0, 40, false);
         BotPhysicsEngine.attachToRope(entry, bot, rope, rope.bottomY());
 
-        BotPhysicsEngine.advanceClimb(entry, bot, 1);
+        entry.climbVerticalDir = 1;  // intent: climb down
+        BotPhysicsEngine.advanceClimb(entry, bot);
 
         assertTrue(entry.inAir);
         assertFalse(entry.climbing);
@@ -294,7 +302,8 @@ class BotPhysicsEngineTest {
         when(foothold.slope()).thenReturn(0.0);
 
         BotPhysicsEngine.resetMotion(entry, bot.getPosition());
-        BotPhysicsEngine.GroundMotion motion = BotPhysicsEngine.applyGroundMotion(entry, bot, foothold, 0);
+        entry.moveDir = 0;  // intent: idle
+        BotPhysicsEngine.GroundMotion motion = BotPhysicsEngine.applyGroundMotion(entry, bot, foothold);
 
         assertFalse(motion.lostGround());
         assertEquals(0, motion.stepX());
@@ -348,12 +357,13 @@ class BotPhysicsEngineTest {
         Character bot = mockBot(start, kpqS1);
         BotEntry entry = new BotEntry(bot, null, null);
         BotPhysicsEngine.resetMotion(entry, bot.getPosition());
+        entry.moveDir = 1;  // intent: walk right
 
         Foothold currentFoothold = BotPhysicsEngine.findGroundFoothold(kpqS1, bot.getPosition());
         assertNotNull(currentFoothold);
 
         for (int i = 0; i < 40 && bot.getPosition().x < target.x; i++) {
-            BotPhysicsEngine.GroundMotion motion = BotPhysicsEngine.applyGroundMotion(entry, bot, currentFoothold, 1);
+            BotPhysicsEngine.GroundMotion motion = BotPhysicsEngine.applyGroundMotion(entry, bot, currentFoothold);
             assertFalse(motion.lostGround(), "Walking across the same KPQ region should not lose ground because of the nearby upper platform");
             currentFoothold = BotPhysicsEngine.findGroundFoothold(kpqS1, bot.getPosition());
             assertNotNull(currentFoothold);
@@ -538,8 +548,9 @@ class BotPhysicsEngineTest {
         BotPhysicsEngine.resetMotion(entry, bot.getPosition());
         entry.physX = 14;
         entry.hspeed = 0;
+        entry.moveDir = 1;  // intent: walk right
 
-        BotPhysicsEngine.GroundMotion motion = BotPhysicsEngine.applyGroundMotion(entry, bot, platform, 1);
+        BotPhysicsEngine.GroundMotion motion = BotPhysicsEngine.applyGroundMotion(entry, bot, platform);
 
         assertTrue(motion.lostGround());
         assertTrue(entry.inAir, "walk-off should transition directly into airborne state");

@@ -508,7 +508,7 @@ public class BotManager {
         }
         entry.skipDelayMs = 0;
         entry.aiTickAccumulatorMs = 0;
-        entry.lastDesiredDirection = 0;
+        entry.moveDir = 0;
         entry.movementBroadcastValid = false;
         BotMovementManager.broadcastMovement(entry);
         botChar.updatePartyMemberHP();
@@ -562,7 +562,7 @@ public class BotManager {
         entry.fhIndex = BotMovementManager.buildFhIndex(bot.getMap());
         entry.skipDelayMs = 0;
         entry.aiTickAccumulatorMs = 0;
-        entry.lastDesiredDirection = 0;
+        entry.moveDir = 0;
         entry.movementBroadcastValid = false;
         BotMovementManager.broadcastMovement(entry);
         if (entry.owner != null) {
@@ -1731,7 +1731,7 @@ public class BotManager {
         if (entry.shopVisitPending || entry.shopSequenceActive || entry.kpq.navTarget != null) {
             return false;
         }
-        if (entry.wasMovingX || entry.lastDesiredDirection != 0 || entry.movementVelX != 0 || entry.movementVelY != 0) {
+        if (entry.wasMovingX || entry.moveDir != 0 || entry.movementVelX != 0 || entry.movementVelY != 0) {
             return false;
         }
         if (entry.observedOwnerStepX != 0 || entry.observedOwnerStepY != 0) {

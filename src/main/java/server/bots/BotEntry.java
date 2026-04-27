@@ -54,10 +54,21 @@ public class BotEntry {
     boolean swimJumpRequested = false;   // one-shot upward burst
     long swimNextJumpAtMs = 0L;          // cooldown gate
 
+    // Movement intent — set by movement/fidget layer, consumed by physics engine.
+    // Maps to the same left/right key hold used by the real client for both
+    // ground walking and air steering. Physics reads this in the active mode:
+    //   - Ground: applyGroundMotion() integrates through force/friction model
+    //   - Airborne: stepAirborne() applies air steering accel (gated by fixedAirArc)
+    // Mutually exclusive by state (inAir vs grounded), so one field suffices.
+    int moveDir = 0;                     // -1 left, 0 none, +1 right
+
     // Rope climbing
     boolean climbing = false;
     Rope climbRope = null;
     Rope blockedRopeGrab = null;
+
+    // Climb intent — set by movement layer, consumed by physics engine.
+    int climbVerticalDir = 0;            // -1 up, 0 idle, +1 down
 
     // Horizontal movement hysteresis
     boolean wasMovingX = false;
@@ -202,7 +213,6 @@ public class BotEntry {
     String lastEdgeBlockReason = null;
 
     // Cached movement state shared across ticks
-    int lastDesiredDirection = 0;
     Point navTargetPos = null;
     BotNavigationGraph.Edge navEdge = null;
     BotNavigationGraph.Edge navJumpLaunchEdge = null;

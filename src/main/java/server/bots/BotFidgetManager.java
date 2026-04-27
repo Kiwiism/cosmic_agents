@@ -299,7 +299,7 @@ final class BotFidgetManager {
 
         int steerDir = ThreadLocalRandom.current().nextBoolean() ? 1 : -1;
         entry.fidgetAirSteerDir = steerDir;
-        BotPhysicsEngine.applyAirSteering(entry, steerDir * 30);
+        entry.moveDir = steerDir;
         entry.nextFidgetActionAtMs = now + jitteredDelayMs(entry.fidgetActionBaseDelayMs);
     }
 
@@ -424,8 +424,8 @@ final class BotFidgetManager {
             return;
         }
 
-        entry.lastDesiredDirection = dir;
-        BotPhysicsEngine.applyGroundMotion(entry, bot, currentFh, dir);
+        entry.moveDir = dir;
+        BotPhysicsEngine.applyGroundMotion(entry, bot, currentFh);
         BotMovementManager.broadcastMovement(entry);
     }
 

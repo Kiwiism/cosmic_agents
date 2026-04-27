@@ -589,7 +589,7 @@ class BotCombatManager {
         markAlerted(entry);
         entry.moveWindowMs = Math.max(entry.moveWindowMs, cfg.HEAL_MOVE_WINDOW_MS);
         // Stop walk-in-place: broadcast STAND→ALERT immediately on the heal tick.
-        entry.lastDesiredDirection = 0;
+        entry.moveDir = 0;
         BotMovementManager.broadcastMovement(entry);
         return true;
     }

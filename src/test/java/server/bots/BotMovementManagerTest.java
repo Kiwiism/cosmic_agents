@@ -581,7 +581,7 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.inAir = false;
         entry.movementVelX = 80;
-        entry.lastDesiredDirection = 0;
+        entry.moveDir = 0;
         entry.facingDir = 1;
 
         assertTrue(BotPhysicsEngine.isStandingStance(BotPhysicsEngine.resolveStance(entry)),
@@ -813,7 +813,7 @@ class BotMovementManagerTest {
         long before = System.currentTimeMillis();
         assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         assertEquals(BotFidgetMode.SPAM_SIDEWAYS, entry.fidgetMode);
-        assertTrue(entry.lastDesiredDirection != 0, "sideway spam should hold a left/right movement input");
+        assertTrue(entry.moveDir != 0, "sideway spam should hold a left/right movement input");
         long after = System.currentTimeMillis();
         assertTrue(entry.nextFidgetActionAtMs >= before + entry.fidgetActionBaseDelayMs
                         && entry.nextFidgetActionAtMs <= after + entry.fidgetActionBaseDelayMs + 50,

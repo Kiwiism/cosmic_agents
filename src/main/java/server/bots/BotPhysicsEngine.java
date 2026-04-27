@@ -621,7 +621,7 @@ final class BotPhysicsEngine {
         entry.airVelX = 0;
         entry.airSteerVelX = 0.0;
         entry.fixedAirArc = false;
-        entry.lastDesiredDirection = 0;
+        entry.moveDir = 0;
         entry.physX = position.x;
         entry.physY = position.y;
         stopGroundMotion(entry);
@@ -795,14 +795,18 @@ final class BotPhysicsEngine {
         setClimbPosition(entry, bot, rope, ropeY);
     }
 
-    static void advanceClimb(BotEntry entry, Character bot, int verticalDir) {
+   /**
+     * Intent-driven climb integrator. Reads {@link BotEntry#climbVerticalDir} for vertical
+     * direction (-1=up, 0=idle, +1=down). Movement layer sets intent before calling.
+     */
+    static void advanceClimb(BotEntry entry, Character bot) {
         Rope rope = entry.climbRope;
         if (rope == null) {
             beginFall(entry, bot, 0);
             return;
         }
 
-        int climbDir = Integer.compare(verticalDir, 0);
+        int climbDir = Integer.compare(entry.climbVerticalDir, 0);
         if (climbDir == 0) {
             holdClimb(entry, bot);
             return;
@@ -840,9 +844,15 @@ final class BotPhysicsEngine {
         return entry.downJumpGracePeriodMS == 0L;
     }
 
-    static GroundMotion applyGroundMotion(BotEntry entry, Character bot, Foothold foothold, int desiredDir) {
+  /**
+     * Intent-driven ground integrator. Reads {@link BotEntry#moveDir} for horizontal
+     * steer direction (-1/0/+1). Physics owns velocity integration via force/friction model.
+     * Movement layer sets intent before calling; physics never returns velocity to movement.
+     */
+    static GroundMotion applyGroundMotion(BotEntry entry, Character bot, Foothold foothold) {
         MapleMap map = bot.getMap();
         Point currentPos = bot.getPosition();
+        int desiredDir = entry.moveDir;
         GroundStepResult step = simulateGroundMotion(map, currentPos, foothold, desiredDir,
                 new GroundTravelState(entry.physX, entry.hspeed, entry.groundPhysicsCarryMs), entry.movementProfile);
 
@@ -1164,14 +1174,15 @@ final class BotPhysicsEngine {
         return value;
     }
 
-    static void applyAirSteering(BotEntry entry, int targetDx) {
-        if (targetDx == 0) return;
-        double accel = targetDx > 0 ? cfg.AIR_STEER_ACCEL : -cfg.AIR_STEER_ACCEL;
+    /** Apply air steering acceleration based on discrete steer direction. */
+    private static void applyAirSteering(BotEntry entry, int steerDir) {
+        if (steerDir == 0) return;
+        double accel = steerDir > 0 ? cfg.AIR_STEER_ACCEL : -cfg.AIR_STEER_ACCEL;
         entry.airSteerVelX = Math.clamp(entry.airSteerVelX + accel, -cfg.AIR_STEER_MAX, cfg.AIR_STEER_MAX);
         // Client jump stance follows the held steering direction, not the preserved horizontal
         // launch momentum. Updating facing here makes airborne debug output line up with what the
         // client is visually trying to do, even before the net X velocity changes sign.
-        entry.facingDir = targetDx > 0 ? 1 : -1;
+        entry.facingDir = steerDir > 0 ? 1 : -1;
     }
 
     private static Point advanceAirbornePosition(BotEntry entry, Character bot) {
@@ -1192,16 +1203,28 @@ final class BotPhysicsEngine {
         entry.climbing = false;
         entry.climbRope = null;
         entry.crouching = false;
+        // Preserve facing set by air steering (moveDir intent) - setMovementVelocity would
+        // overwrite it based on momentum velocity, which is wrong for airborne steering.
+        int facingDir = entry.facingDir;
         setMovementVelocity(entry, velocityFromDeltaX(entry.airVelX), velocityFromAirStep(entry.velY));
+        entry.facingDir = facingDir;
         syncCharacterState(entry);
     }
 
-    /**
-     * One physics step for an airborne bot: advance position, resolve wall/floor collision, apply result.
-     * All collision outcome methods (landOnGround, collideWithAirWall, applyAirbornePosition) are
-     * private — movement must not call them directly.
+  /**
+     * Intent-driven airborne integrator. Reads {@link BotEntry#moveDir} for horizontal
+     * air steering (-1/0/+1). Movement layer gates steering for committed nav trajectories
+     * (fixedAirArc, JUMP/DROP edges) by setting moveDir=0.
+     *
+     * One physics step: apply air steering from intent, advance position, resolve collision, apply result.
+     * All collision outcome methods are private — movement must not call them directly.
      */
     static AirborneStepResult stepAirborne(BotEntry entry, Character bot) {
+        // Apply air steering from intent. Movement sets moveDir=0 for committed trajectories.
+        if (entry.moveDir != 0) {
+            applyAirSteering(entry, entry.moveDir);
+        }
+
         Point previousPos = roundedAirPosition(entry);
         Point nextPos = advanceAirbornePosition(entry, bot);
         AirCollision collision = resolveAirCollision(bot.getMap(), previousPos, nextPos);
@@ -1277,10 +1300,10 @@ final class BotPhysicsEngine {
         if (entry.inAir) {
             return entry.facingDir >= 0 ? CharacterStance.JUMP_RIGHT_STANCE : CharacterStance.JUMP_LEFT_STANCE;
         }
-        if (entry.lastDesiredDirection > 0) {
+        if (entry.moveDir > 0) {
             return CharacterStance.WALK_RIGHT_STANCE;
         }
-        if (entry.lastDesiredDirection < 0) {
+        if (entry.moveDir < 0) {
             return CharacterStance.WALK_LEFT_STANCE;
         }
         return resolveIdleGroundStance(entry);
@@ -1496,6 +1519,10 @@ final class BotPhysicsEngine {
         entry.airSteerVelX = 0.0;
         entry.fixedAirArc = false;
         entry.downJumpPending = false;
+        // Clear ground movement intent when going airborne - unified moveDir serves both
+        // ground and air, so ground walk direction must not bleed into air steering.
+        // Movement manager will set moveDir for air steering if shouldApplyAirSteering allows.
+        entry.moveDir = 0;
         setMovementVelocity(entry, velocityFromDeltaX(airVelX), velocityFromAirStep(initialVelY));
         syncCharacterState(entry);
     }
@@ -1570,7 +1597,7 @@ final class BotPhysicsEngine {
         entry.airSteerVelX = 0.0;
         entry.fixedAirArc = false;
         entry.wasMovingX = false;
-        entry.lastDesiredDirection = 0;
+        entry.moveDir = 0;
         entry.climbUpIntent = false;
         entry.blockedRopeGrab = null;
         entry.ropeGrabCooldownMs = 0;

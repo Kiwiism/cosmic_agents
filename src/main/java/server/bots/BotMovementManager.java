@@ -251,16 +251,16 @@ class BotMovementManager {
     }
 
     private static void applyClimbAction(BotEntry entry, Character bot, MoveAction action) {
-        int climbDir = switch (action.type()) {
+        entry.climbVerticalDir = switch (action.type()) {
             case CLIMB_UP -> -1;
             case CLIMB_DOWN -> 1;
             default -> 0;
         };
 
-        if (climbDir == 0) {
+        if (entry.climbVerticalDir == 0) {
             BotPhysicsEngine.holdClimb(entry, bot);
         } else {
-            BotPhysicsEngine.advanceClimb(entry, bot, climbDir);
+            BotPhysicsEngine.advanceClimb(entry, bot);
         }
         broadcastMovement(entry);
     }
@@ -303,12 +303,13 @@ class BotMovementManager {
                 return;
             }
 
-            // Air steering is only for freeform airborne control.
-            // Committed nav jumps/drops must follow the same fixed ballistic path used by
-            // graph generation and canExecuteJumpFromCurrentPosition; steering here causes
-            // diagonal jumps onto sloped/angled platforms to overshoot or undershoot.
-            if (targetPos != null && shouldApplyAirSteering(entry)) {
-                BotPhysicsEngine.applyAirSteering(entry, targetPos.x - botPos.x);
+            // Set air steering intent. Gated by shouldApplyAirSteering to preserve
+            // fixed ballistic path for committed nav jumps/drops.
+            // If fidget manager already set moveDir (non-zero), preserve it.
+            if (entry.moveDir == 0 && targetPos != null && shouldApplyAirSteering(entry)) {
+                int dx = targetPos.x - botPos.x;
+                entry.moveDir = Math.abs(dx) > BotPhysicsEngine.cfg.SWIM_ARRIVAL_RADIUS_PX
+                        ? Integer.signum(dx) : 0;
             }
 
             BotPhysicsEngine.AirborneStepResult result = BotPhysicsEngine.stepAirborne(entry, bot);
@@ -723,7 +724,7 @@ class BotMovementManager {
 
     private static void applyGroundAction(BotEntry entry, Foothold currentFh, MoveAction action) {
         Character bot = entry.bot;
-        entry.lastDesiredDirection = switch (action.type()) {
+        entry.moveDir = switch (action.type()) {
             case WALK, JUMP -> Integer.compare(action.stepX(), 0);
             default -> 0;
         };
@@ -739,7 +740,7 @@ class BotMovementManager {
         }
 
         BotPhysicsEngine.GroundMotion motion =
-                BotPhysicsEngine.applyGroundMotion(entry, bot, currentFh, entry.lastDesiredDirection);
+                BotPhysicsEngine.applyGroundMotion(entry, bot, currentFh);
         if (motion.lostGround()) {
             broadcastMovement(entry);
             return;
