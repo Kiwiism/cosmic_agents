@@ -6,6 +6,7 @@ import client.Skill;
 import client.SkillFactory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
+import constants.game.ExpTable;
 import constants.game.GameConstants;
 import constants.inventory.ItemConstants;
 import server.Trade;
@@ -205,6 +206,12 @@ public class BotChatManager {
             + "|\\b(any|do\\s+(you|u)\\s+have(\\s+any)?|got(\\s+any)?|how\\s+many)"
             +   "\\s+" + POTION_WORDS + "\\b"
             + "|\\b(pots?|potions?)\\s+left\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern EXP_PATTERN = Pattern.compile(
+            "^\\s*(?:exp|xp|experience)\\s*[?!.,]*\\s*$"
+            + "|\\bhow\\s+much\\s+(?:exp|xp|experience)(?:\\s+do\\s+(?:you|u)\\s+have)?\\b"
+            + "|\\bwhat.?s\\s+(?:your|ur)\\s+(?:exp|xp|experience)\\b"
+            + "|\\b(?:your|ur)\\s+(?:exp|xp|experience)\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern MESOS_PATTERN = Pattern.compile(
             "^\\s*(?:meso|mesos|cash)\\s*[?!.,]*\\s*$"
@@ -759,6 +766,8 @@ public class BotChatManager {
             BotManager.after(BotManager.randMs(900, 1100), () -> reportInventory(entry, entry.bot));
         if (isMesoQuery(message))
             BotManager.after(BotManager.randMs(900, 1100), () -> reportMesos(entry, entry.bot));
+        if (matchesWholeCommand(EXP_PATTERN, message))
+            BotManager.after(BotManager.randMs(900, 1100), () -> reportExp(entry, entry.bot));
         if (matchesWholeCommand(INV_SLOTS_PATTERN, message))
             BotManager.after(BotManager.randMs(900, 1100), () -> reportInventorySlots(entry, entry.bot));
         if (matchesWholeCommand(SCROLLS_PATTERN, message))
@@ -956,6 +965,23 @@ public class BotChatManager {
         queueBotSay(entry, buildMesoReport(bot.getMeso()));
     }
 
+    private static void reportExp(BotEntry entry, Character bot) {
+        queueBotSay(entry, buildExpReport(bot.getExp(), bot.getLevel()));
+    }
+
+    static String buildExpReport(int currentExp, int level) {
+        int needed = ExpTable.getExpNeededForLevel(level);
+        if (needed <= 0) {
+            return "0%";
+        }
+        double pct = (currentExp / (double) needed) * 100.0;
+        String formatted = String.format(Locale.ROOT, "%.2f", pct);
+        if (formatted.contains(".")) {
+            formatted = formatted.replaceAll("0+$", "").replaceAll("\\.$", "");
+        }
+        return formatted + "%";
+    }
+
     private static void reportInventorySlots(BotEntry entry, Character bot) {
         queueBotSay(entry, BotInventoryManager.slotsReport(bot));
     }
@@ -1122,7 +1148,7 @@ public class BotChatManager {
     }
 
     private static void reportHelp(BotEntry entry) {
-        queueBotSay(entry, "commands: follow, stop, move here, fidget, grind, stats, speed, skills, inventory, mesos, slots, scrolls, pots, debug stats, crit, respec, respec ap");
+        queueBotSay(entry, "commands: follow, stop, move here, fidget, grind, stats, speed, skills, inventory, mesos, exp, slots, scrolls, pots, debug stats, crit, respec, respec ap");
         queueBotSay(entry, "support: support on/off, heals on/off, buff on/off, buff cheap/max, buff debug, skill buff debug");
         queueBotSay(entry, "gear: ask 'any upgrades?' or say 'trade recommended gear'");
         queueBotSay(entry, "trade: mesos, scrolls, pots, equips, etc, or named items");
