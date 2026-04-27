@@ -992,6 +992,14 @@ final class BotPhysicsEngine {
             // Preserve velY/hspeed from launch — a jump-off-platform should
             // still arc upward under swim physics (matches wasm: NORMAL kick
             // immediately followed by SWIMMING integration).
+        } else if (Math.abs(entry.physX - pos.x) > 2 || Math.abs(entry.physY - pos.y) > 2) {
+            // External teleport (mob-touch knockback, !warp, position correction)
+            // moved the authoritative position out from under the integrator.
+            // Without rebase, the next sweep starts from a stale physX/physY and
+            // can advance through a foothold without registering the floor —
+            // bot tunnels straight through the platform. Resync to the truth.
+            entry.physX = pos.x;
+            entry.physY = pos.y;
         }
 
         double vx = entry.hspeed;
@@ -999,7 +1007,17 @@ final class BotPhysicsEngine {
 
         // --- Vertical control ---
         if (entry.swimJumpRequested) {
-            vy = -cfg.SWIM_JUMP_BURST_PXS;
+            // Swim-jump impulse scales with character SPEED stat, not jump stat.
+            // Per JustJump@CVecCtrl @ 0x9b1d3d swim branch:
+            //   swim_jump = stat[+0x6c] × physcfg[+0x48] × speedScale × 5.0
+            // stat[+0x6c] is the speed-related field (cf. walk path stat[+0x84]
+            // for jump). At base 100 stat both are 1.0; jumpMultiplier would be
+            // wrong here for any speed-buffed/jump-buffed character.
+            float burst = cfg.SWIM_JUMP_BURST_PXS;
+            if (entry.movementProfile != null) {
+                burst *= (float) entry.movementProfile.speedMultiplier();
+            }
+            vy = -burst;
             entry.swimJumpRequested = false;
         }
 

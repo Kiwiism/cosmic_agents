@@ -1025,6 +1025,14 @@ public class BotManager {
                 return Math.abs(below.y - ownerPos.y) <= Math.abs(above.y - ownerPos.y) ? below : above;
             }
         }
+        // Swim maps: when no platform within snapRange, fall back to the raw
+        // owner position (mid-water target) instead of clampedOnOwnerRegion.
+        // The latter snaps Y to the nearest floor below owner, which on open-
+        // water Aqua Road sections is hundreds of pixels down — bot would
+        // sink to a floor instead of swimming up to the owner.
+        if (map != null && map.isSwim()) {
+            return new Point(followBase.x, ownerPos.y);
+        }
         return clampedOnOwnerRegion(followBase.x, owner, ownerPos, map);
     }
 
