@@ -5,6 +5,7 @@ import client.Character;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
+import client.inventory.WeaponType;
 import client.inventory.manipulator.InventoryManipulator;
 import config.YamlConfig;
 import constants.game.GameConstants;
@@ -116,12 +117,14 @@ class BotInventoryManager {
                 bot.pickupItem(drop);
             }
             cleanupBotLootGhostDrop(bot, drop);
-            if (pickedItem != null
-                    && pickedItemId > 0
-                    && ItemConstants.getInventoryType(pickedItemId) == InventoryType.EQUIP
-                    && hasItem(bot, pickedItem)) {
-                BotEquipManager.autoEquip(bot, entry.owner, entry.pendingLootOfferItem);
-                if (hasItem(bot, pickedItem)) {
+            if (pickedItem != null && pickedItemId > 0 && hasItem(bot, pickedItem)) {
+                InventoryType pickedType = ItemConstants.getInventoryType(pickedItemId);
+                if (pickedType == InventoryType.EQUIP) {
+                    BotEquipManager.autoEquip(bot, entry.owner, entry.pendingLootOfferItem);
+                    if (hasItem(bot, pickedItem)) {
+                        BotOfferManager.scheduleLootOfferPrompt(entry, bot, pickedItem, 5_000L);
+                    }
+                } else if (ItemConstants.isThrowingStar(pickedItemId)) {
                     BotOfferManager.scheduleLootOfferPrompt(entry, bot, pickedItem, 5_000L);
                 }
             }
@@ -388,7 +391,8 @@ class BotInventoryManager {
         Trade.startTrade(bot);
         Trade.inviteTrade(bot, recipient);
         // pot_share already announced itself ("got some HP pots, inv u") — skip the redundant "k i inv"
-        if (!"pot_share".equals(entry.pendingTradeCategory)) {
+        if (!"pot_share".equals(entry.pendingTradeCategory)
+                && !"ammo_share".equals(entry.pendingTradeCategory)) {
             BotManager.getInstance().botSay(bot, BotManager.randomReply(TRADE_INVITATION_MSGS));
         }
     }
@@ -489,12 +493,7 @@ class BotInventoryManager {
             entry.pendingTradeIdx++;
             entry.pendingTradeTimerMs = BotMovementManager.delayAfterCurrentTick(500); // 500 ms before next
 
-            // For pot_share: cap quantity so the donor keeps enough pots
-            short tradeQty = item.getQuantity();
-            if (entry.pendingPotShareBudget > 0) {
-                tradeQty = (short) Math.min(tradeQty, entry.pendingPotShareBudget);
-                entry.pendingPotShareBudget -= tradeQty;
-            }
+            short tradeQty = capTradeQuantityByShareBudget(entry, item.getQuantity());
 
             InventoryType invType = item.getInventoryType();
             Inventory inv = bot.getInventory(invType);
@@ -553,6 +552,15 @@ class BotInventoryManager {
         entry.pendingTradeBotDone  = false;
         entry.pendingTradeSingleBatch = false;
         entry.pendingPotShareBudget = 0;
+    }
+
+    static short capTradeQuantityByShareBudget(BotEntry entry, short availableQty) {
+        if (entry.pendingPotShareBudget <= 0) {
+            return availableQty;
+        }
+        short tradeQty = (short) Math.min(availableQty, entry.pendingPotShareBudget);
+        entry.pendingPotShareBudget -= tradeQty;
+        return tradeQty;
     }
 
     private static void completeTradeAndThank(BotEntry entry, Character bot, Trade trade) {
@@ -1035,5 +1043,50 @@ class BotInventoryManager {
         if (recipient.getTrade() != null) return;
         entry.pendingPotShareBudget = maxQty;
         startTradeSequence("pot_share", recipient, items, 0, true, entry, bot);
+    }
+
+    static List<Item> collectAmmoShareItems(Character donorBot, WeaponType needyWeaponType, int maxQty) {
+        if (maxQty <= 0) return List.of();
+        List<Item> candidates = new ArrayList<>();
+        Inventory useInv = donorBot.getInventory(InventoryType.USE);
+        for (short slot = 1; slot <= useInv.getSlotLimit(); slot++) {
+            Item item = useInv.getItem(slot);
+            if (item == null || !isAmmoForWeapon(item.getItemId(), needyWeaponType)) {
+                continue;
+            }
+            candidates.add(item);
+        }
+        candidates.sort(Comparator
+                .comparingInt((Item item) -> ItemInformationProvider.getInstance().getWatkForProjectile(item.getItemId()))
+                .thenComparingInt(Item::getItemId));
+
+        List<Item> result = new ArrayList<>();
+        int totalQty = 0;
+        for (Item item : candidates) {
+            result.add(item);
+            totalQty += item.getQuantity();
+            if (result.size() >= 9 || totalQty >= maxQty) {
+                break;
+            }
+        }
+        return result;
+    }
+
+    static void startAmmoShareTransfer(List<Item> items, Character recipient, BotEntry entry, Character bot, int maxQty) {
+        if (items.isEmpty()) return;
+        if (bot.getTrade() != null || entry.pendingTradeCategory != null) return;
+        if (recipient.getTrade() != null) return;
+        entry.pendingPotShareBudget = maxQty;
+        startTradeSequence("ammo_share", recipient, items, 0, true, entry, bot);
+    }
+
+    private static boolean isAmmoForWeapon(int itemId, WeaponType weaponType) {
+        return switch (weaponType) {
+            case BOW -> ItemConstants.isArrowForBow(itemId);
+            case CROSSBOW -> ItemConstants.isArrowForCrossBow(itemId);
+            case CLAW -> ItemConstants.isThrowingStar(itemId);
+            case GUN -> ItemConstants.isBullet(itemId);
+            default -> false;
+        };
     }
 }

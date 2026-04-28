@@ -6,6 +6,7 @@ import client.Skill;
 import client.SkillFactory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
+import client.inventory.WeaponType;
 import constants.game.ExpTable;
 import constants.game.GameConstants;
 import constants.inventory.ItemConstants;
@@ -151,6 +152,18 @@ public class BotChatManager {
     private static final Pattern REQUEST_UPGRADE_PATTERN = Pattern.compile(
             "\\brequest\\s*\\?|\\bneed\\s+anything\\b|\\bdo\\s+you\\s+need\\s+(anything|something)\\b"
             + "|\\bwhat\\s+do\\s+you\\s+need\\b|\\bwhat.?s\\s+(on\\s+your\\s+)?wish\\s*list\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern NEED_HP_POT_PATTERN = Pattern.compile(
+            "\\bneed\\s+(?:hp|health)\\s+pots?\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern NEED_MP_POT_PATTERN = Pattern.compile(
+            "\\bneed\\s+(?:mp|mana)\\s+pots?\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern NEED_POT_PATTERN = Pattern.compile(
+            "\\bneed\\s+(?:some\\s+)?(?:pots?|potions?|supplies)\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern NEED_AMMO_PATTERN = Pattern.compile(
+            "\\bneed\\s+(?:ammo|arrows?|bolts?)\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern SUPPORT_ON_PATTERN = Pattern.compile(
             "\\b(support\\s+(me|us|party)|support\\s+on|auto\\s+support)\\b",
@@ -528,6 +541,22 @@ public class BotChatManager {
 
         if (matchesWholeCommand(HELP_PATTERN, message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> reportHelp(entry));
+            return;
+        }
+        if (NEED_HP_POT_PATTERN.matcher(message).find()) {
+            BotManager.after(BotManager.randMs(500, 700), () -> handleNeedPotionCommand(entry, true));
+            return;
+        }
+        if (NEED_MP_POT_PATTERN.matcher(message).find()) {
+            BotManager.after(BotManager.randMs(500, 700), () -> handleNeedPotionCommand(entry, false));
+            return;
+        }
+        if (NEED_POT_PATTERN.matcher(message).find()) {
+            BotManager.after(BotManager.randMs(500, 700), () -> handleNeedAnyPotionCommand(entry));
+            return;
+        }
+        if (NEED_AMMO_PATTERN.matcher(message).find()) {
+            BotManager.after(BotManager.randMs(500, 700), () -> handleNeedAmmoCommand(entry));
             return;
         }
         if (SUPPORT_OFF_PATTERN.matcher(message).find()) {
@@ -1151,6 +1180,7 @@ public class BotChatManager {
         queueBotSay(entry, "commands: follow, stop, move here, fidget, grind, stats, speed, skills, inventory, mesos, exp, slots, scrolls, pots, debug stats, crit, respec, respec ap");
         queueBotSay(entry, "support: support on/off, heals on/off, buff on/off, buff cheap/max, buff debug, skill buff debug");
         queueBotSay(entry, "gear: ask 'any upgrades?' or say 'trade recommended gear'");
+        queueBotSay(entry, "supplies: need hp pot, need mp pot, need pot, need ammo");
         queueBotSay(entry, "trade: mesos, scrolls, pots, equips, etc, or named items");
     }
 
@@ -1320,6 +1350,47 @@ public class BotChatManager {
 
     private static void handleRequestUpgradeCommand(BotEntry entry, Character bot) {
         BotOfferManager.requestBestUpgradeFromOwner(entry, bot);
+    }
+
+    private static void handleNeedAnyPotionCommand(BotEntry entry) {
+        int[] pots = BotPotionManager.countPotions(entry.bot);
+        handleNeedPotionCommand(entry, pots[0] <= pots[1]);
+    }
+
+    private static void handleNeedPotionCommand(BotEntry entry, boolean forHp) {
+        int[] pots = BotPotionManager.countPotions(entry.bot);
+        int count = forHp ? pots[0] : pots[1];
+        if (count >= BotManager.cfg.POT_LOW_WARN) {
+            queueBotSay(entry, "i still have " + count + (forHp ? " hp" : " mp") + " pots");
+            return;
+        }
+        if (BotPotionManager.requestPotShare(entry, entry.bot, forHp)) {
+            if (forHp) {
+                entry.potShareRequestedHp = true;
+            } else {
+                entry.potShareRequestedMp = true;
+            }
+        } else {
+            queueBotSay(entry, "can't ask for " + (forHp ? "hp" : "mp") + " pots rn");
+        }
+    }
+
+    private static void handleNeedAmmoCommand(BotEntry entry) {
+        WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(entry.bot);
+        if (weaponType != WeaponType.BOW && weaponType != WeaponType.CROSSBOW) {
+            queueBotSay(entry, "i don't use shareable arrow ammo rn");
+            return;
+        }
+        int ammo = BotCombatManager.countAmmo(entry.bot, weaponType);
+        if (ammo >= BotCombatManager.cfg.AMMO_LOW_WARN) {
+            queueBotSay(entry, "i still have " + ammo + " ammo");
+            return;
+        }
+        if (BotAmmoManager.requestAmmoShare(entry, entry.bot, weaponType, ammo)) {
+            entry.ammoShareRequested = true;
+        } else {
+            queueBotSay(entry, "can't ask for ammo rn");
+        }
     }
 
     private static void handleSkillTreeChoice(BotEntry entry, Character bot, String message) {

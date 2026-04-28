@@ -1,14 +1,20 @@
 package server.bots;
 
 import client.Character;
+import client.BuffStat;
+import client.inventory.Inventory;
+import client.inventory.InventoryType;
 import client.inventory.Item;
+import client.inventory.WeaponType;
 import constants.game.CharacterStance;
+import org.mockito.MockedStatic;
 import org.junit.jupiter.api.Test;
 import server.StatEffect;
 import server.maps.Foothold;
 import server.maps.FootholdTree;
 import server.maps.MapleMap;
 import server.maps.Rope;
+import testutil.Items;
 
 import java.awt.*;
 import java.lang.reflect.Field;
@@ -27,6 +33,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 class BotManagerTest {
@@ -310,6 +317,87 @@ class BotManagerTest {
         }
     }
 
+    @Test
+    void shouldPreferNonAmmoUsersWhenSharingArrows() throws Exception {
+        BotManager manager = BotManager.getInstance();
+        Character owner = mock(Character.class);
+        Character needy = ammoBot(10, 1000, 100);
+        Character nonBow800 = ammoBot(11, 1000, 800);
+        Character nonBow600 = ammoBot(12, 1000, 600);
+        Character bow3000 = ammoBot(13, 1000, 3000);
+        Character ignored499 = ammoBot(14, 1000, 499);
+
+        when(owner.getId()).thenReturn(77);
+
+        BotEntry needyEntry = new BotEntry(needy, owner, null);
+        BotEntry nonBow800Entry = new BotEntry(nonBow800, owner, null);
+        BotEntry nonBow600Entry = new BotEntry(nonBow600, owner, null);
+        BotEntry bow3000Entry = new BotEntry(bow3000, owner, null);
+        BotEntry ignored499Entry = new BotEntry(ignored499, owner, null);
+
+        @SuppressWarnings("unchecked")
+        Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
+        bots.put(owner.getId(), List.of(needyEntry, nonBow600Entry, bow3000Entry, ignored499Entry, nonBow800Entry));
+
+        try (MockedStatic<BotAttackExecutionProvider> attacks = mockStatic(BotAttackExecutionProvider.class, invocation -> {
+            Character character = invocation.getArgument(0);
+            if (character == needy || character == bow3000) {
+                return WeaponType.BOW;
+            }
+            return WeaponType.SWORD1H;
+        })) {
+
+            BotAmmoManager.AmmoDonorPlan plan = BotAmmoManager.selectAmmoDonor(needyEntry, needy, WeaponType.BOW);
+
+            assertNotNull(plan);
+            assertEquals(nonBow800Entry, plan.entry());
+            assertEquals(800, plan.donationQty());
+            assertFalse(plan.donorNeedsSameAmmo());
+        } finally {
+            bots.remove(owner.getId());
+        }
+    }
+
+    @Test
+    void shouldOnlyDonateHalfSurplusFromSameAmmoUser() throws Exception {
+        BotManager manager = BotManager.getInstance();
+        Character owner = mock(Character.class);
+        Character needy = ammoBot(10, 1000, 100);
+        Character bow3000 = ammoBot(13, 1000, 3000);
+
+        when(owner.getId()).thenReturn(78);
+
+        BotEntry needyEntry = new BotEntry(needy, owner, null);
+        BotEntry bow3000Entry = new BotEntry(bow3000, owner, null);
+
+        @SuppressWarnings("unchecked")
+        Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
+        bots.put(owner.getId(), List.of(needyEntry, bow3000Entry));
+
+        try (MockedStatic<BotAttackExecutionProvider> attacks = mockStatic(BotAttackExecutionProvider.class,
+                invocation -> WeaponType.BOW)) {
+            BotAmmoManager.AmmoDonorPlan plan = BotAmmoManager.selectAmmoDonor(needyEntry, needy, WeaponType.BOW);
+
+            assertNotNull(plan);
+            assertEquals(bow3000Entry, plan.entry());
+            assertTrue(plan.donorNeedsSameAmmo());
+            assertEquals(1250, plan.donationQty());
+        } finally {
+            bots.remove(owner.getId());
+        }
+    }
+
+    @Test
+    void shouldSplitSingleAmmoStackByShareBudget() {
+        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        entry.pendingPotShareBudget = 2250;
+
+        short tradeQty = BotInventoryManager.capTradeQuantityByShareBudget(entry, (short) 5000);
+
+        assertEquals(2250, tradeQty);
+        assertEquals(0, entry.pendingPotShareBudget);
+    }
+
     private static MapleMap createEmptyTestMap(int mapId) {
         MapleMap map = new MapleMap(mapId, 0, 0, mapId, 1.0f);
         map.setFootholds(new FootholdTree(new Point(-2000, -2000), new Point(2000, 2000)));
@@ -337,6 +425,17 @@ class BotManagerTest {
             stance.set(invocation.getArgument(0));
             return null;
         }).when(bot).setStance(anyInt());
+        return bot;
+    }
+
+    private static Character ammoBot(int id, int mapId, int arrowCount) {
+        Character bot = mock(Character.class);
+        Inventory use = new Inventory(bot, InventoryType.USE, (byte) 24);
+        use.addItem(Items.itemWithQuantity(2060000, arrowCount));
+        when(bot.getId()).thenReturn(id);
+        when(bot.getMapId()).thenReturn(mapId);
+        when(bot.getInventory(InventoryType.USE)).thenReturn(use);
+        when(bot.getBuffedValue(any(BuffStat.class))).thenReturn(null);
         return bot;
     }
 

@@ -172,6 +172,7 @@ final class BotPotionManager {
         if (!entry.grinding && !entry.following) {
             return;
         }
+        BotAmmoManager.tickAmmoShareCheck(entry, bot);
 
         int[] pots = countPotions(bot);
         if (pots[0] >= BotManager.cfg.POT_LOW_WARN) {
@@ -200,6 +201,7 @@ final class BotPotionManager {
     static void checkPotShareOnModeStart(BotEntry entry, Character bot) {
         entry.potShareRequestedHp = false;
         entry.potShareRequestedMp = false;
+        BotAmmoManager.checkAmmoShareOnModeStart(entry, bot);
         int[] pots = countPotions(bot);
         if (pots[0] < BotManager.cfg.POT_LOW_WARN && requestPotShare(entry, bot, true)) {
             entry.potShareRequestedHp = true;
@@ -232,7 +234,7 @@ final class BotPotionManager {
         bot.addMPHP(hpRecovery, mpRecovery);
     }
 
-    private static boolean requestPotShare(BotEntry entry, Character bot, boolean forHp) {
+    static boolean requestPotShare(BotEntry entry, Character bot, boolean forHp) {
         Character owner = entry.owner;
         if (owner == null || bot.getTrade() != null || entry.pendingTradeCategory != null) {
             return false;

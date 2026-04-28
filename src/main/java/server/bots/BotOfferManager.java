@@ -2,7 +2,11 @@ package server.bots;
 
 import client.BotClient;
 import client.Character;
+import client.inventory.Inventory;
+import client.inventory.InventoryType;
 import client.inventory.Item;
+import client.inventory.WeaponType;
+import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
 
 import java.util.List;
@@ -83,11 +87,12 @@ final class BotOfferManager {
         BotEquipManager.autoEquip(bot, owner, entry.pendingLootOfferItem);
 
         List<BotEquipManager.EquipRecommendation> recs = BotEquipManager.findRecommendedEquips(owner, bot);
-        if (recs.isEmpty()) {
-            return false;
+        if (!recs.isEmpty()) {
+            return offerGearItem(entry, bot, owner, recs.get(0).candidate());
         }
 
-        return offerGearItem(entry, bot, owner, recs.get(0).candidate());
+        Item throwingStar = findBestThrowingStarOffer(owner, bot);
+        return throwingStar != null && offerGearItem(entry, bot, owner, throwingStar);
     }
 
     static boolean offerBestGearToSibling(BotEntry entry, Character bot) {
@@ -111,7 +116,12 @@ final class BotOfferManager {
             }
         }
 
-        return false;
+        Character starRecipient = findWeakestThrowingStarRecipient(owner, bot);
+        if (starRecipient == null) {
+            return false;
+        }
+        Item throwingStar = findBestThrowingStarOffer(starRecipient, bot);
+        return throwingStar != null && offerGearItem(entry, bot, starRecipient, throwingStar);
     }
 
     static void scheduleLootOfferPrompt(BotEntry entry, Character bot, Item item, long delayMs) {
@@ -297,24 +307,121 @@ final class BotOfferManager {
         if (owner == null) {
             return null;
         }
+        if (ItemConstants.isThrowingStar(item.getItemId())) {
+            if (isBetterThrowingStarForRecipient(owner, bot, item)) {
+                return owner;
+            }
+            return findWeakestThrowingStarRecipient(owner, bot, item);
+        }
+
         if (BotEquipManager.findRecommendationForItem(owner, bot, item) != null) {
             return owner;
         }
 
-        BotOwnershipService ownership = BotOwnershipService.getInstance();
-        for (Character member : owner.getPartyMembersOnSameMap()) {
-            if (member == null
-                    || member.getId() == owner.getId()
-                    || member.getId() == bot.getId()
-                    || !(member.getClient() instanceof BotClient)
-                    || !ownership.isAuthorizedOwner(member.getId(), owner.getId())) {
-                continue;
-            }
+        for (Character member : eligibleBotRecipients(owner, bot)) {
             if (BotEquipManager.findRecommendationForItem(member, bot, item) != null) {
                 return member;
             }
         }
         return null;
+    }
+
+    private static boolean isRecommendedForRecipient(Character recipient, Character donor, Item item) {
+        if (ItemConstants.getInventoryType(item.getItemId()) == InventoryType.EQUIP) {
+            return BotEquipManager.findRecommendationForItem(recipient, donor, item) != null;
+        }
+        return isBetterThrowingStarForRecipient(recipient, donor, item);
+    }
+
+    private static Character findWeakestThrowingStarRecipient(Character owner, Character donor) {
+        Character bestRecipient = null;
+        int bestCurrentWatk = Integer.MAX_VALUE;
+        for (Character member : eligibleBotRecipients(owner, donor)) {
+            Item candidate = findBestThrowingStarOffer(member, donor);
+            if (candidate == null) {
+                continue;
+            }
+            int currentWatk = bestThrowingStarAttack(member);
+            if (currentWatk < bestCurrentWatk) {
+                bestRecipient = member;
+                bestCurrentWatk = currentWatk;
+            }
+        }
+        return bestRecipient;
+    }
+
+    private static Character findWeakestThrowingStarRecipient(Character owner, Character donor, Item item) {
+        Character bestRecipient = null;
+        int bestCurrentWatk = Integer.MAX_VALUE;
+        for (Character member : eligibleBotRecipients(owner, donor)) {
+            if (!isBetterThrowingStarForRecipient(member, donor, item)) {
+                continue;
+            }
+            int currentWatk = bestThrowingStarAttack(member);
+            if (currentWatk < bestCurrentWatk) {
+                bestRecipient = member;
+                bestCurrentWatk = currentWatk;
+            }
+        }
+        return bestRecipient;
+    }
+
+    private static List<Character> eligibleBotRecipients(Character owner, Character donor) {
+        BotOwnershipService ownership = BotOwnershipService.getInstance();
+        return owner.getPartyMembersOnSameMap().stream()
+                .filter(member -> member != null)
+                .filter(member -> member.getId() != owner.getId())
+                .filter(member -> member.getId() != donor.getId())
+                .filter(member -> member.getClient() instanceof BotClient)
+                .filter(member -> ownership.isAuthorizedOwner(member.getId(), owner.getId()))
+                .toList();
+    }
+
+    private static Item findBestThrowingStarOffer(Character recipient, Character donor) {
+        Inventory useInv = donor.getInventory(InventoryType.USE);
+        Item best = null;
+        int bestWatk = 0;
+        for (Item item : useInv.list()) {
+            if (!isBetterThrowingStarForRecipient(recipient, donor, item)) {
+                continue;
+            }
+            int watk = throwingStarAttack(item);
+            if (watk > bestWatk) {
+                best = item;
+                bestWatk = watk;
+            }
+        }
+        return best;
+    }
+
+    static boolean isBetterThrowingStarForRecipient(Character recipient, Character donor, Item candidate) {
+        if (candidate == null || !ItemConstants.isThrowingStar(candidate.getItemId())) {
+            return false;
+        }
+        if (BotAttackExecutionProvider.getEquippedWeaponType(recipient) != WeaponType.CLAW) {
+            return false;
+        }
+        int candidateWatk = throwingStarAttack(candidate);
+        if (candidateWatk < bestThrowingStarAttack(recipient)) {
+            return false;
+        }
+        return BotAttackExecutionProvider.getEquippedWeaponType(donor) != WeaponType.CLAW
+                || candidateWatk < bestThrowingStarAttack(donor);
+    }
+
+    private static int bestThrowingStarAttack(Character character) {
+        Inventory useInv = character.getInventory(InventoryType.USE);
+        int best = 0;
+        for (Item item : useInv.list()) {
+            if (ItemConstants.isThrowingStar(item.getItemId())) {
+                best = Math.max(best, throwingStarAttack(item));
+            }
+        }
+        return best;
+    }
+
+    private static int throwingStarAttack(Item item) {
+        return ItemInformationProvider.getInstance().getWatkForProjectile(item.getItemId());
     }
 
     private static Character resolveReservedOfferRecipient(BotEntry entry, Character bot, int recipientId) {
