@@ -252,11 +252,59 @@ final class BotPotionManager {
 
         BotManager.getInstance().botSay(bot, BotManager.randomReply(forHp ? POT_REQUEST_HP_MSGS : POT_REQUEST_MP_MSGS));
 
-        List<BotEntry> siblings = BotManager.getInstance().getBotEntries(owner.getId());
+        PotDonorPlan plan = selectPotDonor(owner, bot, entry, forHp);
+        if (plan == null) {
+            categoryBackoff.put(owner.getId(), now + 10 * 60_000L);
+            return true;
+        }
+
+        if (!plan.qualifies()) {
+            categoryBackoff.put(owner.getId(), now + 10 * 60_000L);
+            String ownerName = owner.getName();
+            List<String> noQualMessages = List.of(
+                    "low too, maybe " + ownerName + " has some?",
+                    "wish i could help, try " + ownerName + "?",
+                    "i'm low too :/ check with " + ownerName,
+                    "barely have any myself, ask " + ownerName);
+            BotManager.after(BotManager.randMs(4000, 6000), () ->
+                    BotManager.getInstance().botSay(plan.entry().bot, BotManager.randomReply(noQualMessages)));
+        } else {
+            schedulePotShare(plan, bot, forHp, BotManager.randMs(2000, 3000));
+        }
+        return true;
+    }
+
+    static boolean offerPotShareToOwner(BotEntry entry, boolean forHp) {
+        Character owner = entry.owner;
+        if (owner == null || owner.getTrade() != null) {
+            return false;
+        }
+
+        long now = System.currentTimeMillis();
+        Map<Integer, Long> categoryBackoff = forHp ? potShareHpBackoffUntil : potShareMpBackoffUntil;
+        if (now < categoryBackoff.getOrDefault(owner.getId(), 0L)) {
+            return false;
+        }
+        if (now < potShareCooldownUntil.getOrDefault(owner.getId(), 0L)) {
+            return false;
+        }
+        potShareCooldownUntil.put(owner.getId(), now + 30_000L);
+
+        PotDonorPlan plan = selectPotDonor(owner, owner, null, forHp);
+        if (plan == null || !plan.qualifies()) {
+            categoryBackoff.put(owner.getId(), now + 10 * 60_000L);
+            return false;
+        }
+
+        schedulePotShare(plan, owner, forHp, BotManager.randMs(900, 1400));
+        return true;
+    }
+
+    private static PotDonorPlan selectPotDonor(Character owner, Character recipient, BotEntry excludedEntry, boolean forHp) {
         BotEntry bestEntry = null;
         int bestCount = 0;
-        for (BotEntry sibling : siblings) {
-            if (sibling == entry || sibling.bot == null || sibling.bot.getMapId() != bot.getMapId()) {
+        for (BotEntry sibling : BotManager.getInstance().getBotEntries(owner.getId())) {
+            if (sibling == excludedEntry || sibling.bot == null || sibling.bot.getMapId() != recipient.getMapId()) {
                 continue;
             }
             int[] pots = countPotions(sibling.bot);
@@ -266,42 +314,35 @@ final class BotPotionManager {
                 bestEntry = sibling;
             }
         }
+        return bestEntry != null ? new PotDonorPlan(bestEntry, bestCount) : null;
+    }
 
-        if (bestEntry == null) {
-            categoryBackoff.put(owner.getId(), now + 10 * 60_000L);
-            return true;
-        }
-
-        BotEntry donorEntry = bestEntry;
+    private static void schedulePotShare(PotDonorPlan plan, Character recipient, boolean forHp, long initialDelayMs) {
+        BotEntry donorEntry = plan.entry();
         Character donorBot = donorEntry.bot;
-        boolean qualifies = bestCount > BotManager.cfg.POT_LOW_WARN * 3;
-        int maxQty = bestCount / 3;
-        Character needyBot = bot;
-        if (qualifies) {
-            BotManager.after(BotManager.randMs(2000, 3000), () -> {
-                if (donorBot.getTrade() != null || donorEntry.pendingTradeCategory != null) {
-                    return;
-                }
-                List<Item> items = BotInventoryManager.collectPotShareItems(donorBot, forHp, maxQty);
-                if (items.isEmpty()) {
-                    return;
-                }
-                BotManager.getInstance().botSay(donorBot, BotManager.randomReply(forHp ? POT_OFFER_HP_MSGS : POT_OFFER_MP_MSGS));
-                BotManager.after(BotManager.randMs(900, 1100), () ->
-                        BotInventoryManager.startPotShareTransfer(items, needyBot, donorEntry, donorBot, maxQty));
-            });
-        } else {
-            categoryBackoff.put(owner.getId(), now + 10 * 60_000L);
-            String ownerName = owner.getName();
-            List<String> noQualMessages = List.of(
-                    "low too, maybe " + ownerName + " has some?",
-                    "wish i could help, try " + ownerName + "?",
-                    "i'm low too :/ check with " + ownerName,
-                    "barely have any myself, ask " + ownerName);
-            BotManager.after(BotManager.randMs(4000, 6000), () ->
-                    BotManager.getInstance().botSay(donorBot, BotManager.randomReply(noQualMessages)));
+        int maxQty = plan.donationQty();
+        BotManager.after(initialDelayMs, () -> {
+            if (donorBot.getTrade() != null || donorEntry.pendingTradeCategory != null || recipient.getTrade() != null) {
+                return;
+            }
+            List<Item> items = BotInventoryManager.collectPotShareItems(donorBot, forHp, maxQty);
+            if (items.isEmpty()) {
+                return;
+            }
+            BotManager.getInstance().botSay(donorBot, BotManager.randomReply(forHp ? POT_OFFER_HP_MSGS : POT_OFFER_MP_MSGS));
+            BotManager.after(BotManager.randMs(900, 1100), () ->
+                    BotInventoryManager.startPotShareTransfer(items, recipient, donorEntry, donorBot, maxQty));
+        });
+    }
+
+    private record PotDonorPlan(BotEntry entry, int count) {
+        boolean qualifies() {
+            return count > BotManager.cfg.POT_LOW_WARN * 3;
         }
-        return true;
+
+        int donationQty() {
+            return count / 3;
+        }
     }
 
     private static int calculatePassiveHpRecovery(BotEntry entry, Character bot) {

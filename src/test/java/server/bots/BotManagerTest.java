@@ -398,6 +398,18 @@ class BotManagerTest {
         assertEquals(0, entry.pendingPotShareBudget);
     }
 
+    @Test
+    void shouldMatchNaturalSupplyRequestPhrases() {
+        assertTrue(BotChatManager.isNeedPotCommand("nned pot"));
+        assertTrue(BotChatManager.isNeedPotCommand("need some pots"));
+        assertTrue(BotChatManager.isNeedPotCommand("anybody got pot"));
+        assertTrue(BotChatManager.isNeedPotCommand("low on pots"));
+        assertTrue(BotChatManager.isNeedHpPotCommand("anyone have hp pots"));
+        assertTrue(BotChatManager.isNeedMpPotCommand("running low on mana potions"));
+        assertTrue(BotChatManager.isNeedAmmoCommand("anybody got arrows"));
+        assertTrue(BotChatManager.isNeedAmmoCommand("low on ammo"));
+    }
+
     private static MapleMap createEmptyTestMap(int mapId) {
         MapleMap map = new MapleMap(mapId, 0, 0, mapId, 1.0f);
         map.setFootholds(new FootholdTree(new Point(-2000, -2000), new Point(2000, 2000)));

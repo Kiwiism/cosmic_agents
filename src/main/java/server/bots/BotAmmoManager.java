@@ -78,22 +78,33 @@ final class BotAmmoManager {
             return true;
         }
 
-        BotEntry donorEntry = plan.entry();
-        Character donorBot = donorEntry.bot;
-        Character needyBot = bot;
-        int maxQty = plan.donationQty();
-        BotManager.after(BotManager.randMs(2000, 3000), () -> {
-            if (donorBot.getTrade() != null || donorEntry.pendingTradeCategory != null) {
-                return;
-            }
-            List<Item> items = BotInventoryManager.collectAmmoShareItems(donorBot, weaponType, maxQty);
-            if (items.isEmpty()) {
-                return;
-            }
-            BotManager.getInstance().botSay(donorBot, BotManager.randomReply(AMMO_OFFER_MSGS));
-            BotManager.after(BotManager.randMs(900, 1100), () ->
-                    BotInventoryManager.startAmmoShareTransfer(items, needyBot, donorEntry, donorBot, maxQty));
-        });
+        scheduleAmmoShare(plan, bot, weaponType, BotManager.randMs(2000, 3000));
+        return true;
+    }
+
+    static boolean offerAmmoShareToOwner(BotEntry entry, WeaponType weaponType) {
+        Character owner = entry.owner;
+        if (owner == null || owner.getTrade() != null || !canRequestShare(weaponType)) {
+            return false;
+        }
+
+        long now = System.currentTimeMillis();
+        String backoffKey = owner.getId() + ":" + weaponType.name();
+        if (now < ammoShareBackoffUntil.getOrDefault(backoffKey, 0L)) {
+            return false;
+        }
+        if (now < ammoShareCooldownUntil.getOrDefault(owner.getId(), 0L)) {
+            return false;
+        }
+        ammoShareCooldownUntil.put(owner.getId(), now + 30_000L);
+
+        AmmoDonorPlan plan = selectAmmoDonorForRecipient(owner, weaponType);
+        if (plan == null) {
+            ammoShareBackoffUntil.put(backoffKey, now + 10 * 60_000L);
+            return false;
+        }
+
+        scheduleAmmoShare(plan, owner, weaponType, BotManager.randMs(900, 1400));
         return true;
     }
 
@@ -102,10 +113,20 @@ final class BotAmmoManager {
         if (owner == null || !canRequestShare(needyWeaponType)) {
             return null;
         }
+        return selectAmmoDonor(owner.getId(), needyBot.getMapId(), needyEntry, needyWeaponType);
+    }
 
+    static AmmoDonorPlan selectAmmoDonorForRecipient(Character recipient, WeaponType needyWeaponType) {
+        if (recipient == null || !canRequestShare(needyWeaponType)) {
+            return null;
+        }
+        return selectAmmoDonor(recipient.getId(), recipient.getMapId(), null, needyWeaponType);
+    }
+
+    private static AmmoDonorPlan selectAmmoDonor(int ownerId, int mapId, BotEntry excludedEntry, WeaponType needyWeaponType) {
         AmmoDonorPlan best = null;
-        for (BotEntry sibling : BotManager.getInstance().getBotEntries(owner.getId())) {
-            if (sibling == needyEntry || sibling.bot == null || sibling.bot.getMapId() != needyBot.getMapId()) {
+        for (BotEntry sibling : BotManager.getInstance().getBotEntries(ownerId)) {
+            if (sibling == excludedEntry || sibling.bot == null || sibling.bot.getMapId() != mapId) {
                 continue;
             }
             Character donorBot = sibling.bot;
@@ -125,6 +146,24 @@ final class BotAmmoManager {
             }
         }
         return best;
+    }
+
+    private static void scheduleAmmoShare(AmmoDonorPlan plan, Character recipient, WeaponType weaponType, long initialDelayMs) {
+        BotEntry donorEntry = plan.entry();
+        Character donorBot = donorEntry.bot;
+        int maxQty = plan.donationQty();
+        BotManager.after(initialDelayMs, () -> {
+            if (donorBot.getTrade() != null || donorEntry.pendingTradeCategory != null || recipient.getTrade() != null) {
+                return;
+            }
+            List<Item> items = BotInventoryManager.collectAmmoShareItems(donorBot, weaponType, maxQty);
+            if (items.isEmpty()) {
+                return;
+            }
+            BotManager.getInstance().botSay(donorBot, BotManager.randomReply(AMMO_OFFER_MSGS));
+            BotManager.after(BotManager.randMs(900, 1100), () ->
+                    BotInventoryManager.startAmmoShareTransfer(items, recipient, donorEntry, donorBot, maxQty));
+        });
     }
 
     private static boolean isBetterDonor(AmmoDonorPlan candidate, AmmoDonorPlan best) {

@@ -154,17 +154,36 @@ public class BotChatManager {
             + "|\\bwhat\\s+do\\s+you\\s+need\\b|\\bwhat.?s\\s+(on\\s+your\\s+)?wish\\s*list\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern NEED_HP_POT_PATTERN = Pattern.compile(
-            "\\bneed\\s+(?:hp|health)\\s+pots?\\b",
+            "\\b(?:need|nned|low\\s+on|out\\s+of|running\\s+low\\s+on)\\s+(?:some\\s+)?(?:hp|health)\\s+(?:pots?|potions?|supplies)\\b"
+            + "|\\b(?:any(?:body|one)?|someone|somebody|u|you)\\s+(?:got|have|has)\\s+(?:any\\s+|some\\s+)?(?:hp|health)\\s+(?:pots?|potions?)\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern NEED_MP_POT_PATTERN = Pattern.compile(
-            "\\bneed\\s+(?:mp|mana)\\s+pots?\\b",
+            "\\b(?:need|nned|low\\s+on|out\\s+of|running\\s+low\\s+on)\\s+(?:some\\s+)?(?:mp|mana)\\s+(?:pots?|potions?|supplies)\\b"
+            + "|\\b(?:any(?:body|one)?|someone|somebody|u|you)\\s+(?:got|have|has)\\s+(?:any\\s+|some\\s+)?(?:mp|mana)\\s+(?:pots?|potions?)\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern NEED_POT_PATTERN = Pattern.compile(
-            "\\bneed\\s+(?:some\\s+)?(?:pots?|potions?|supplies)\\b",
+            "\\b(?:need|nned|low\\s+on|out\\s+of|running\\s+low\\s+on)\\s+(?:some\\s+)?(?:pots?|potions?|supplies)\\b"
+            + "|\\b(?:any(?:body|one)?|someone|somebody|u|you)\\s+(?:got|have|has)\\s+(?:any\\s+|some\\s+)?(?:pots?|potions?|supplies)\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern NEED_AMMO_PATTERN = Pattern.compile(
-            "\\bneed\\s+(?:ammo|arrows?|bolts?)\\b",
+            "\\b(?:need|nned|low\\s+on|out\\s+of|running\\s+low\\s+on)\\s+(?:some\\s+)?(?:ammo|arrows?|bolts?)\\b"
+            + "|\\b(?:any(?:body|one)?|someone|somebody|u|you)\\s+(?:got|have|has)\\s+(?:any\\s+|some\\s+)?(?:ammo|arrows?|bolts?)\\b",
             Pattern.CASE_INSENSITIVE);
+    private static final List<String> POT_SHARE_BUSY_REPLIES = List.of(
+            "can't ask for %s pots rn",
+            "not a good time to ask for %s pots",
+            "can't request %s pots yet",
+            "give me a sec before asking for %s pots");
+    private static final List<String> AMMO_SHARE_BUSY_REPLIES = List.of(
+            "can't ask for ammo rn",
+            "not a good time to ask for ammo",
+            "can't request ammo yet",
+            "give me a sec before asking for ammo");
+    private static final List<String> AMMO_NOT_NEEDED_REPLIES = List.of(
+            "i don't use shareable arrow ammo rn",
+            "i don't need arrows or bolts rn",
+            "ammo sharing is only for arrows and bolts",
+            "not using bow ammo rn");
     private static final Pattern SUPPORT_ON_PATTERN = Pattern.compile(
             "\\b(support\\s+(me|us|party)|support\\s+on|auto\\s+support)\\b",
             Pattern.CASE_INSENSITIVE);
@@ -1348,48 +1367,66 @@ public class BotChatManager {
         return expressions[ThreadLocalRandom.current().nextInt(expressions.length)];
     }
 
+    static boolean isNeedHpPotCommand(String message) {
+        return NEED_HP_POT_PATTERN.matcher(message).find();
+    }
+
+    static boolean isNeedMpPotCommand(String message) {
+        return NEED_MP_POT_PATTERN.matcher(message).find();
+    }
+
+    static boolean isNeedPotCommand(String message) {
+        return NEED_POT_PATTERN.matcher(message).find();
+    }
+
+    static boolean isNeedAmmoCommand(String message) {
+        return NEED_AMMO_PATTERN.matcher(message).find();
+    }
+
     private static void handleRequestUpgradeCommand(BotEntry entry, Character bot) {
         BotOfferManager.requestBestUpgradeFromOwner(entry, bot);
     }
 
     private static void handleNeedAnyPotionCommand(BotEntry entry) {
-        int[] pots = BotPotionManager.countPotions(entry.bot);
+        if (entry.owner == null) {
+            queueBotSay(entry, "can't check your pots rn");
+            return;
+        }
+        int[] pots = BotPotionManager.countPotions(entry.owner);
         handleNeedPotionCommand(entry, pots[0] <= pots[1]);
     }
 
     private static void handleNeedPotionCommand(BotEntry entry, boolean forHp) {
-        int[] pots = BotPotionManager.countPotions(entry.bot);
-        int count = forHp ? pots[0] : pots[1];
-        if (count >= BotManager.cfg.POT_LOW_WARN) {
-            queueBotSay(entry, "i still have " + count + (forHp ? " hp" : " mp") + " pots");
-            return;
-        }
-        if (BotPotionManager.requestPotShare(entry, entry.bot, forHp)) {
-            if (forHp) {
-                entry.potShareRequestedHp = true;
-            } else {
-                entry.potShareRequestedMp = true;
-            }
+        if (BotPotionManager.offerPotShareToOwner(entry, forHp)) {
+            queueBotSay(entry, BotManager.randomReply(List.of(
+                    "checking who has spare " + (forHp ? "hp" : "mp") + " pots",
+                    "ok, asking for " + (forHp ? "hp" : "mp") + " pots",
+                    "one sec, finding " + (forHp ? "hp" : "mp") + " pots")));
         } else {
-            queueBotSay(entry, "can't ask for " + (forHp ? "hp" : "mp") + " pots rn");
+            String type = forHp ? "hp" : "mp";
+            queueBotSay(entry, String.format(BotManager.randomReply(POT_SHARE_BUSY_REPLIES), type));
         }
     }
 
     private static void handleNeedAmmoCommand(BotEntry entry) {
-        WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(entry.bot);
+        Character owner = entry.owner;
+        if (owner == null) {
+            queueBotSay(entry, "can't check your ammo rn");
+            return;
+        }
+        WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(owner);
         if (weaponType != WeaponType.BOW && weaponType != WeaponType.CROSSBOW) {
-            queueBotSay(entry, "i don't use shareable arrow ammo rn");
+            queueBotSay(entry, BotManager.randomReply(AMMO_NOT_NEEDED_REPLIES));
             return;
         }
-        int ammo = BotCombatManager.countAmmo(entry.bot, weaponType);
-        if (ammo >= BotCombatManager.cfg.AMMO_LOW_WARN) {
-            queueBotSay(entry, "i still have " + ammo + " ammo");
-            return;
-        }
-        if (BotAmmoManager.requestAmmoShare(entry, entry.bot, weaponType, ammo)) {
-            entry.ammoShareRequested = true;
+        if (BotAmmoManager.offerAmmoShareToOwner(entry, weaponType)) {
+            queueBotSay(entry, BotManager.randomReply(List.of(
+                    "checking who has spare ammo",
+                    "ok, asking for ammo",
+                    "one sec, finding ammo",
+                    "lemme see who has extra ammo")));
         } else {
-            queueBotSay(entry, "can't ask for ammo rn");
+            queueBotSay(entry, BotManager.randomReply(AMMO_SHARE_BUSY_REPLIES));
         }
     }
 
