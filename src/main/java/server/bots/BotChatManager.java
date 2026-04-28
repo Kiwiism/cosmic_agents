@@ -440,6 +440,19 @@ public class BotChatManager {
             "wb", "wb!", "welcome back", "oh ur back", "hey ur back", "welcome back!!",
             "wb~", "there you are", "oh hey", "finally lol", "took ya a bit", "wb lol", "where were you lol", "ready to roll?", "lets continue!",
             "hey you're back", "oh wb!", "been waiting for you", "waiting on you", "ready to go?", "ready?", "back already?", "back?", "u back?");
+    // %s = current map name (bot is in town since the offline-return warp put it there).
+    // Sent via party chat so the owner sees it across maps when they reconnect.
+    private static final List<String> WB_OFFLINE_PARTY_TEMPLATES = List.of(
+            "wb! we've been waiting at %s since u went offline",
+            "yoo wb, chillin at %s for a while now",
+            "back online? we parked at %s",
+            "wb, took a break in %s when u dropped",
+            "hey wb! waiting in %s",
+            "wb!! we're at %s",
+            "yo wb, headed to %s when u afk'd",
+            "oh wb, been camping at %s",
+            "wb~ we're in %s, come grab us",
+            "hey ur back!! we're at %s");
     private static final List<String> MESO_REPLIES = List.of(
             "I have %s",
             "got %s on me",
@@ -692,11 +705,7 @@ public class BotChatManager {
             Point dest = entry.owner != null ? new Point(entry.owner.getPosition()) : null;
             if (dest != null) {
                 BotManager.after(BotManager.randMs(1000, 1500), () -> {
-                    entry.followTargetId = 0;
-                    entry.following = false;
-                    entry.grinding = false;
-                    entry.moveTarget = dest;
-                    entry.moveTargetPrecise = true;
+                    BotManager.getInstance().issueMoveTo(entry, dest, true);
                     BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(MOVE_HERE_REPLIES));
                 });
             }
@@ -916,6 +925,28 @@ public class BotChatManager {
                 }
             }
         }
+    }
+
+    /**
+     * Announces the bot's town location via party chat after the owner reconnects
+     * (or revives) following a 5+ min offline-or-dead window during which the bot
+     * scrolled to town. Party chat reaches the owner even if they spawn back into
+     * a different map.
+     */
+    static void announceOwnerReturnedFromOffline(BotEntry entry) {
+        final Character bot = entry.bot;
+        if (bot == null) {
+            return;
+        }
+        String mapName = bot.getMap() != null ? bot.getMap().getMapName() : null;
+        if (mapName == null || mapName.isBlank()) {
+            mapName = "town";
+        }
+        final String text = String.format(BotManager.randomReply(WB_OFFLINE_PARTY_TEMPLATES), mapName);
+        BotManager.after(BotManager.randMs(1500, 2500), () -> {
+            bot.changeFaceExpression(ThreadLocalRandom.current().nextBoolean() ? 2 : 3);
+            BotManager.getInstance().botSayParty(bot, text);
+        });
     }
 
     /** Detects owner AFK (same position ≥5 min) and says "wb" when they return. */

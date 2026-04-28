@@ -29,6 +29,7 @@ import net.packet.InPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.ChatLogger;
+import server.bots.BotManager;
 import tools.PacketCreator;
 import tools.PacketCreator.WhisperFlag;
 
@@ -106,5 +107,9 @@ public final class WhisperHandler extends AbstractPacketHandler {
 
         boolean hidden = target.isHidden() && target.gmLevel() > user.gmLevel();
         user.sendPacket(PacketCreator.getWhisperResult(target.getName(), !hidden));
+
+        // Whisper-driven bot command: if the recipient is a bot owned by the sender,
+        // route the message into the bot command pipeline (no name-prefix needed).
+        BotManager.getInstance().handleWhisperToBot(user, target, message);
     }
 }

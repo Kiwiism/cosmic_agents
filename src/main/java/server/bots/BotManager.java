@@ -7,6 +7,7 @@ import client.QuestStatus;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.WeaponType;
+import client.inventory.manipulator.InventoryManipulator;
 import constants.game.CharacterStance;
 import constants.inventory.ItemConstants;
 import net.server.Server;
@@ -15,6 +16,8 @@ import net.server.world.PartyCharacter;
 import net.server.world.PartyOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.ItemInformationProvider;
+import server.StatEffect;
 import server.TimerManager;
 import server.bots.pq.BotPqHooks;
 import server.life.Monster;
@@ -64,6 +67,9 @@ public class BotManager {
 
         // Follow stagger: each bot is offset this many px from the owner (index-based, alternating left/right)
         public int FOLLOW_STAGGER = 60;
+
+        // Owner inactivity (offline or dead) before bot scrolls/warps to nearest town and idles.
+        public long OWNER_INACTIVE_TOWN_RETURN_MS = 5L * 60_000L;
     }
 
     /** Singleton config — replace with `cfg = new Config()` after hotswapping to reset. */
@@ -75,6 +81,10 @@ public class BotManager {
     private final Map<Integer, List<BotEntry>> bots = new ConcurrentHashMap<>();
     // ownerCharId → current formation (in-memory only, defaults to stagger)
     private final Map<Integer, FormationState> ownerFormations = new ConcurrentHashMap<>();
+    // ownerCharId → cluster-anchor town position. First bot to warp picks a random
+    // portal in the return map; later bots warp to a randomized nearby offset.
+    // Cleared when the owner becomes active again.
+    private final Map<Integer, Point> townClusterAnchors = new ConcurrentHashMap<>();
     enum FormationType { STAGGER, RANDOM, STACK, SPREAD, LEFT, RIGHT }
 
     record FormationState(FormationType type, int px, int snapRange) {
@@ -1309,8 +1319,20 @@ public class BotManager {
         entry.lastTickAtMs = System.currentTimeMillis();
 
         Character owner = resolveTickOwner(entry, ownerCharId);
+        if (handleOwnerOfflineOrDead(entry, bot, owner, nowMs, ownerCharId)) {
+            return;
+        }
         if (owner == null) {
             entry.following = false;
+            // Owner-offline pass-through: when entry.moveTarget is set (currently by
+            // the offline-town cluster, but any caller of issueMoveTo) the bot still
+            // walks toward it. Same field and movement core as the player "here"
+            // command — only the tick gate differs because the regular pipeline is
+            // tightly coupled to `owner` for combat/follow/heal logic that's all
+            // skipped here.
+            if (entry.moveTarget != null) {
+                tickStandaloneMoveTarget(entry, bot, runAiTick);
+            }
             return;
         }
 
@@ -1537,6 +1559,174 @@ public class BotManager {
             entry.owner = owner;
         }
         return owner;
+    }
+
+    /**
+     * If the owner has been offline or dead for >= 5 minutes, scroll/warp the
+     * bot to the nearest town and idle there. Prevents pot drain, death-loops
+     * with no anchor, and silent grinding while the owner is unable to leech.
+     *
+     * Returns true when a town warp was performed this tick (caller should
+     * short-circuit; map-change reset runs on the next tick).
+     */
+    private boolean handleOwnerOfflineOrDead(BotEntry entry, Character bot, Character owner, long nowMs, int ownerCharId) {
+        boolean inactive = (owner == null) || (owner.getHp() <= 0);
+
+        if (!inactive) {
+            if (entry.ownerOfflineOrDeadSinceMs != 0 || entry.ownerReturnedToTown) {
+                boolean justReturnedFromTown = entry.ownerReturnedToTown;
+                entry.ownerOfflineOrDeadSinceMs = 0;
+                entry.ownerReturnedToTown = false;
+                // Cancel any in-flight cluster walk: while owner was offline the
+                // only setter of moveTarget was the offline-town path, so clearing
+                // here is safe and avoids stale state when owner reconnects.
+                entry.moveTarget = null;
+                entry.moveTargetPrecise = false;
+                // Race-safe single-representative wb: each bot tries to remove the
+                // group's anchor entry; only the winner (first to observe owner
+                // active) speaks. Other bots find the anchor already cleared and
+                // skip the announcement, so the party sees one wb line, not N.
+                Point removedAnchor = townClusterAnchors.remove(ownerCharId);
+                if (justReturnedFromTown && removedAnchor != null) {
+                    BotChatManager.announceOwnerReturnedFromOffline(entry);
+                }
+            }
+            return false;
+        }
+
+        if (entry.ownerReturnedToTown) {
+            return false;
+        }
+
+        if (entry.ownerOfflineOrDeadSinceMs == 0) {
+            entry.ownerOfflineOrDeadSinceMs = nowMs;
+            return false;
+        }
+
+        if (nowMs - entry.ownerOfflineOrDeadSinceMs < cfg.OWNER_INACTIVE_TOWN_RETURN_MS) {
+            return false;
+        }
+
+        return scrollBotToTown(entry, bot, ownerCharId);
+    }
+
+    private boolean scrollBotToTown(BotEntry entry, Character bot, int ownerCharId) {
+        MapleMap currentMap = bot.getMap();
+        if (currentMap == null) {
+            return false;
+        }
+        MapleMap returnMap = currentMap.getReturnMap();
+        if (returnMap == null || returnMap.getId() == currentMap.getId()) {
+            // No return map (e.g. some PQ/town maps): mark handled to avoid re-evaluating every tick.
+            entry.ownerReturnedToTown = true;
+            return false;
+        }
+
+        BotPhysicsEngine.idleOnGround(entry, bot);
+
+        // Every bot uses the same path: applyTo handles scroll-consume + random
+        // portal warp. Falls back to a plain changeMap when the bot has no scroll.
+        if (!tryUseReturnScroll(bot)) {
+            bot.changeMap(returnMap);
+        }
+
+        // Capture the cluster anchor at the first bot's post-warp position.
+        // Subsequent bots get a random ±150px X offset around the anchor as their
+        // physical move target via the same machinery as the player "here" command.
+        Point post = new Point(bot.getPosition());
+        Point prior = townClusterAnchors.putIfAbsent(ownerCharId, post);
+        if (prior != null) {
+            int offsetX = ThreadLocalRandom.current().nextInt(-150, 151);
+            Point candidate = new Point(prior.x + offsetX, prior.y - 1);
+            Point ground = BotPhysicsEngine.findGroundPoint(returnMap, candidate);
+            issueMoveTo(entry, ground != null ? ground : new Point(prior), true);
+        }
+
+        BotMovementManager.resetEntryState(entry);
+        entry.grinding = false;
+        entry.following = false;
+        entry.ownerReturnedToTown = true;
+        return true;
+    }
+
+    /**
+     * Public hook: tell a bot to walk to a fixed point using the same field and
+     * pipeline as the player "here" command. No owner reference required, so it
+     * works for bots whose owner is offline (e.g. owner-inactive town clustering)
+     * as well as any future code-driven "go here" feature.
+     *
+     * Movement runs through the regular tick when the owner is online, and
+     * through tickStandaloneMoveTarget when the owner is offline. Arrival is
+     * detected by the existing clearReachedMoveTarget logic.
+     */
+    public void issueMoveTo(BotEntry entry, Point dest, boolean precise) {
+        if (entry == null || dest == null) {
+            return;
+        }
+        entry.followTargetId = 0;
+        entry.following = false;
+        entry.grinding = false;
+        entry.moveTarget = new Point(dest);
+        entry.moveTargetPrecise = precise;
+    }
+
+    /**
+     * Apply Return Scroll - Nearest Town (item 2030000) via StatEffect.applyTo.
+     * The standard scroll effect handles random-portal warp inside applyTo;
+     * we only need to remove the consumable afterwards (mirrors ScrollHandler).
+     * Returns false when no 2030000 is in the bot's USE inventory or applyTo failed.
+     */
+    private boolean tryUseReturnScroll(Character bot) {
+        var use = bot.getInventory(InventoryType.USE);
+        if (use == null) {
+            return false;
+        }
+        for (Item item : use.list()) {
+            if (item == null || item.getQuantity() <= 0) {
+                continue;
+            }
+            if (item.getItemId() != 2030000) {
+                continue;
+            }
+            StatEffect effect;
+            try {
+                effect = ItemInformationProvider.getInstance().getItemEffect(2030000);
+            } catch (Exception e) {
+                return false;
+            }
+            if (effect == null || !effect.applyTo(bot)) {
+                return false;
+            }
+            InventoryManipulator.removeFromSlot(bot.getClient(), InventoryType.USE, item.getPosition(), (short) 1, false);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Owner-offline tick path for entry.moveTarget — drives the bot to its
+     * point using the same stepMovementCore as the regular pipeline. The
+     * regular tick handles moveTarget when owner is online; this is the
+     * minimal version for owner-null sessions (currently the offline-town
+     * cluster walk). Arrival is auto-detected by clearReachedMoveTarget
+     * inside stepMovementCore.
+     */
+    private void tickStandaloneMoveTarget(BotEntry entry, Character bot, boolean runAiTick) {
+        // Just warped in (likely via applyTo): rebuild physics state once.
+        if (entry.lastMapId != bot.getMapId()) {
+            entry.fhIndex = BotMovementManager.buildFhIndex(bot.getMap());
+            entry.lastMapId = bot.getMapId();
+            Point cur = bot.getPosition();
+            Point ground = BotPhysicsEngine.findGroundPoint(bot.getMap(), new Point(cur.x, cur.y - 1));
+            BotPhysicsEngine.teleportTo(entry, bot, ground != null ? ground : cur);
+            BotMovementManager.resetEntryStateAfterTeleport(entry);
+            BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), entry.movementProfile);
+            BotMovementManager.broadcastMovement(entry);
+            return;
+        }
+
+        BotMovementManager.refreshMovementProfile(entry);
+        stepMovementCore(entry, entry.moveTarget, runAiTick);
     }
 
     private boolean handleDeadTick(BotEntry entry, Character bot, Character owner) {
@@ -1958,6 +2148,38 @@ public class BotManager {
 
     void botSay(Character bot, String text) {
         bot.getMap().broadcastMessage(PacketCreator.getChatText(bot.getId(), text, false, 0));
+    }
+
+    /**
+     * Broadcasts via party chat so the owner sees the message even when they're
+     * on a different map. Falls back to map chat if the bot has no party.
+     */
+    void botSayParty(Character bot, String text) {
+        Party party = bot.getParty();
+        if (party != null && bot.getClient() != null && bot.getClient().getWorldServer() != null) {
+            bot.getClient().getWorldServer().partyChat(party, text, bot.getName());
+        } else {
+            botSay(bot, text);
+        }
+    }
+
+    /**
+     * Whisper-driven command to a specific owned bot. Bypasses the global name-
+     * prefix routing in handleChat because the whisper target already identifies
+     * the bot uniquely. No-op if target isn't a bot owned by the speaker.
+     */
+    public void handleWhisperToBot(Character owner, Character target, String message) {
+        if (owner == null || target == null || message == null) {
+            return;
+        }
+        if (!(target.getClient() instanceof BotClient)) {
+            return;
+        }
+        BotEntry entry = getBotEntry(owner.getId(), target.getId());
+        if (entry == null) {
+            return;
+        }
+        BotChatManager.handleChat(entry, message);
     }
 
     private boolean consumeAiTick(BotEntry entry) {

@@ -179,6 +179,12 @@ public class BotEntry {
     long ownerAfkSinceMs = 0;
     boolean ownerWasAfk = false;
 
+    // Owner-offline-or-dead detection: after a sustained period (5 min) the bot
+    // scrolls/warps to the nearest town and idles, instead of grinding pots dry
+    // or death-looping with no anchor.
+    long ownerOfflineOrDeadSinceMs = 0;
+    boolean ownerReturnedToTown = false;
+
     // Foothold index, rebuilt on map change
     int lastMapId = -1;
     Map<Integer, Foothold> fhIndex = new HashMap<>();
