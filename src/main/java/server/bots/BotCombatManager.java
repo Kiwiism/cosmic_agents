@@ -1911,8 +1911,7 @@ class BotCombatManager {
             if (!entry.noAmmo) {
                 entry.noAmmo = true;
                 if (entry.grinding) {
-                    entry.grinding = false;
-                    entry.following = true;
+                    BotManager.getInstance().issueFollowOwner(entry);
                     BotManager.getInstance().botSay(bot, BotManager.randomReply(MP_POTS_OUT_MSGS));
                 }
             }
@@ -1935,8 +1934,7 @@ class BotCombatManager {
         if (ammo <= 0 && !entry.noAmmo) {
             entry.noAmmo = true;
             if (entry.grinding) {
-                entry.grinding = false;
-                entry.following = true;
+                BotManager.getInstance().issueFollowOwner(entry);
                 BotManager.getInstance().botSay(bot, BotManager.randomReply(AMMO_OUT_MSGS));
             }
         }

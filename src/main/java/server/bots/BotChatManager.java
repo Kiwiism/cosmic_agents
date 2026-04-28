@@ -487,8 +487,7 @@ public class BotChatManager {
         if (RELOG_PATTERN.matcher(message).find()) {
             BotManager.after(BotManager.randMs(900, 1100), () -> {
                 entry.pendingAction = "relog";
-                entry.following = false;
-                entry.grinding  = false;
+                BotManager.getInstance().issueStop(entry);
                 List<String> prompts = List.of(
                         "relog? say yes to confirm",
                         "save and relog? type yes",
@@ -500,8 +499,7 @@ public class BotChatManager {
         if (LOGOUT_PATTERN.matcher(message).find()) {
             BotManager.after(BotManager.randMs(900, 1100), () -> {
                 entry.pendingAction = "logout";
-                entry.following = false;
-                entry.grinding  = false;
+                BotManager.getInstance().issueStop(entry);
                 List<String> prompts = List.of(
                         "log off? you sure? say yes to confirm",
                         "save and log off? say yes if you're sure",
@@ -694,8 +692,7 @@ public class BotChatManager {
         }
         if (UNEQUIP_PATTERN.matcher(message).find()) {
             BotManager.after(BotManager.randMs(500, 700), () -> {
-                entry.following = false;
-                entry.grinding = false;
+                BotManager.getInstance().issueStop(entry);
                 BotManager.getInstance().botSay(entry.bot, BotEquipManager.unequipAll(entry.bot));
             });
             return;
@@ -711,34 +708,25 @@ public class BotChatManager {
             }
         } else if (FOLLOW_PATTERN.matcher(message).find()) {
             BotManager.after(BotManager.randMs(1500, 2000), () -> {
-                entry.followTargetId = 0;
-                entry.grinding = false;
-                entry.moveTarget = null;
                 BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
                 BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(FOLLOW_REPLIES));
                 BotPotionManager.checkPotShareOnModeStart(entry, entry.bot);
-                BotManager.after(BotManager.randMs(250, 750), () -> entry.following = true);
+                BotManager.after(BotManager.randMs(250, 750), () -> BotManager.getInstance().issueFollowOwner(entry));
             });
         } else if (GRIND_PATTERN.matcher(message).find()) {
             BotManager.after(BotManager.randMs(1500, 2000), () -> {
-                entry.followTargetId = 0;
-                entry.following = false;
-                entry.moveTarget = null;
                 BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
                 BotPotionManager.setupAutopotForBot(entry.bot);
                 BotManager.getInstance().botSay(entry.bot, BotPotionManager.grindStartMessage(entry.bot));
                 BotPotionManager.checkPotShareOnModeStart(entry, entry.bot);
                 BotManager.after(BotManager.randMs(250, 750), () -> {
-                    entry.grinding = true;
+                    BotManager.getInstance().issueGrind(entry);
                     checkBotStatus(entry, entry.bot);
                 });
             });
         } else if (STOP_PATTERN.matcher(message).find()) {
             BotManager.after(BotManager.randMs(900, 1100), () -> {
-                entry.followTargetId = 0;
-                entry.following = false;
-                entry.grinding  = false;
-                entry.moveTarget = null;
+                BotManager.getInstance().issueStop(entry);
                 BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
                 BotManager.after(BotManager.randMs(1400, 1600), () ->
                         BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(STOP_REPLIES)));

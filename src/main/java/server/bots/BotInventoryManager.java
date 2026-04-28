@@ -697,10 +697,9 @@ class BotInventoryManager {
         if (normalized.isEmpty()) {
             return "";
         }
-        List<String> tokens = new ArrayList<>();
-        for (String token : normalized.split(" ")) {
-            tokens.add(singularizeToken(token));
-        }
+        List<String> tokens = new ArrayList<>(List.of(normalized.split(" ")));
+        int lastIndex = tokens.size() - 1;
+        tokens.set(lastIndex, singularizeToken(tokens.get(lastIndex)));
         return String.join(" ", tokens).trim();
     }
 

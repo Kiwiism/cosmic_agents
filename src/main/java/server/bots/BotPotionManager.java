@@ -191,8 +191,7 @@ final class BotPotionManager {
             return;
         }
         if (pots[0] < BotManager.cfg.POT_STOP && bot.getHp() < bot.getMaxHp() * 0.4f) {
-            entry.grinding = false;
-            entry.following = true;
+            BotManager.getInstance().issueFollowOwner(entry);
             BotManager.getInstance().botSay(bot, "low on pots!! walking to you");
             bot.changeFaceExpression(Emote.GLARE.getValue());
         }

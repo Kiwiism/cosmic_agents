@@ -1,18 +1,23 @@
 package server.bots.pq;
 
 import client.Character;
+import server.bots.BotScript;
+import server.bots.BotScriptRunner;
 import server.bots.BotEntry;
+
+import java.util.List;
 
 /**
  * Single call-site for all per-map party-quest bot automation.
  * BotManager calls {@link #tick} once per bot tick; each PQ class handles its own map range.
  */
 public final class BotPqHooks {
+    private static final List<BotScript> SCRIPTS = List.of(BotKpqStage1.script());
 
     private BotPqHooks() {}
 
     public static void tick(BotEntry entry, Character bot, Character owner) {
-        BotKpqStage1.tick(entry, bot, owner);
+        BotScriptRunner.tick(entry, bot, owner, SCRIPTS);
         BotKpqStage5.tick(entry, bot);
     }
 

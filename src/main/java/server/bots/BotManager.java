@@ -343,12 +343,9 @@ public class BotManager {
                     "ok, following " + target.getName()
             )));
             after(randMs(250, 750), () -> {
-                entry.followTargetId = owner.getId() == target.getId() ? 0 : target.getId();
-                entry.grinding = false;
-                entry.moveTarget = null;
                 BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
                 BotPotionManager.checkPotShareOnModeStart(entry, entry.bot);
-                entry.following = true;
+                issueFollow(entry, target);
             });
         }
         return true;
@@ -419,14 +416,14 @@ public class BotManager {
             }
             placeSpawnedOnlineBot(entry, botChar, map, pos);
             if (entry != null) {
-                entry.following = true;
+                issueFollowOwner(entry);
             }
             return SpawnResult.ok(botChar, auth.autoRegistered());
         } else {
             try {
                 Character botChar = loadOfflineBot(resolved.id(), owner.getClient().getWorld(), owner.getClient().getChannel(), map, pos);
                 BotEntry entry = registerSpawnedBot(owner.getId(), owner, botChar);
-                entry.following = true;
+                issueFollowOwner(entry);
                 return SpawnResult.ok(botChar, auth.autoRegistered());
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -605,8 +602,7 @@ public class BotManager {
         if (entry == null) return false;
         entries.remove(entry);
         entry.task.cancel(false);
-        entry.following = false;
-        entry.grinding  = false;
+        issueStop(entry);
         after(randMs(400, 600), () ->
                 botSay(entry.bot, randomReply(List.of(
                         "ok", "sure", "alright", "gotcha",
@@ -663,8 +659,7 @@ public class BotManager {
         Character bot = found.bot;
         entries.remove(found);
         found.task.cancel(false);
-        found.following = false;
-        found.grinding  = false;
+        issueStop(found);
 
         // Register under new owner
         registerBot(target.getId(), target, bot);
@@ -1381,8 +1376,8 @@ public class BotManager {
             BotMovementManager.resetEntryStateAfterTeleport(entry);
             BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), entry.movementProfile);
             BotMovementManager.broadcastMovement(entry);
-            if (BotPqHooks.requiresGrind(entry, bot)) { entry.grinding = true; entry.following = false; }
-            else if (BotPqHooks.requiresFollow(entry, bot)) { entry.following = true; entry.grinding = false; }
+            if (BotPqHooks.requiresGrind(entry, bot)) { issueGrind(entry); }
+            else if (BotPqHooks.requiresFollow(entry, bot)) { issueFollowOwner(entry); }
             else { entry.kpq.stage5Claimed = false; } // left KPQ — reset for next run
             BotShopManager.onMapChange(entry, bot);
             BotChatManager.checkBotStatus(entry, bot);
@@ -1643,8 +1638,7 @@ public class BotManager {
         }
 
         BotMovementManager.resetEntryState(entry);
-        entry.grinding = false;
-        entry.following = false;
+        issueStop(entry);
         entry.ownerReturnedToTown = true;
         return true;
     }
@@ -1663,11 +1657,220 @@ public class BotManager {
         if (entry == null || dest == null) {
             return;
         }
+        clearScriptTasks(entry);
+        startMoveTo(entry, dest, precise);
+    }
+
+    private void startMoveTo(BotEntry entry, Point dest, boolean precise) {
+        clearMode(entry);
+        entry.moveTarget = new Point(dest);
+        entry.moveTargetPrecise = precise;
+    }
+
+    /**
+     * Public hook: return the bot to ordinary owner-follow mode. Scripted map
+     * automation and chat commands should use this instead of writing mode
+     * fields directly.
+     */
+    public void issueFollowOwner(BotEntry entry) {
+        issueFollow(entry, entry != null ? entry.owner : null);
+    }
+
+    /**
+     * Public hook: follow a concrete party/member/bot target. Passing the owner
+     * (or null) means regular owner-follow.
+     */
+    public void issueFollow(BotEntry entry, Character target) {
+        if (entry == null) {
+            return;
+        }
+        clearScriptTasks(entry);
+        startFollow(entry, target);
+    }
+
+    private void startFollow(BotEntry entry, Character target) {
+        Character owner = entry.owner;
+        entry.followTargetId = owner != null && target != null && owner.getId() != target.getId()
+                ? target.getId()
+                : 0;
+        entry.grinding = false;
+        entry.moveTarget = null;
+        entry.moveTargetPrecise = false;
+        entry.following = true;
+    }
+
+    /**
+     * Public hook: enter autonomous grind/combat mode using the same setup as
+     * player chat commands. This deliberately clears fixed movement and follow
+     * targets so scripted "grind" steps do not run in parallel with a stale
+     * navigation command.
+     */
+    public void issueGrind(BotEntry entry) {
+        if (entry == null) {
+            return;
+        }
+        clearScriptTasks(entry);
+        startGrind(entry);
+    }
+
+    private void startGrind(BotEntry entry) {
+        entry.followTargetId = 0;
+        entry.following = false;
+        entry.moveTarget = null;
+        entry.moveTargetPrecise = false;
+        entry.grinding = true;
+    }
+
+    /** Public hook: stop all scripted movement/combat mode and idle in place. */
+    public void issueStop(BotEntry entry) {
+        if (entry == null) {
+            return;
+        }
+        clearScriptTasks(entry);
+        startStop(entry);
+    }
+
+    private void startStop(BotEntry entry) {
+        clearMode(entry);
+        entry.moveTarget = null;
+        entry.moveTargetPrecise = false;
+    }
+
+    /**
+     * Public hook for map scripts: drop up to {@code quantity} from the first
+     * stack of {@code itemId}. Use {@code quantity <= 0} to drop the whole stack.
+     */
+    public boolean issueDropItem(BotEntry entry, InventoryType type, int itemId, short quantity) {
+        if (entry == null || entry.bot == null || type == null) {
+            return false;
+        }
+        var inventory = entry.bot.getInventory(type);
+        if (inventory == null) {
+            return false;
+        }
+        Item item = inventory.findById(itemId);
+        if (item == null || item.getQuantity() <= 0) {
+            return false;
+        }
+        short dropQuantity = quantity <= 0 ? item.getQuantity() : (short) Math.min(quantity, item.getQuantity());
+        InventoryManipulator.drop(entry.bot.getClient(), type, item.getPosition(), dropQuantity);
+        return true;
+    }
+
+    public void clearScriptTasks(BotEntry entry) {
+        if (entry == null) {
+            return;
+        }
+        entry.scriptTasks.clear();
+        entry.activeScriptTask = null;
+    }
+
+    public void queueTask(BotEntry entry, BotTask task) {
+        if (entry == null || task == null) {
+            return;
+        }
+        entry.scriptTasks.add(task);
+    }
+
+    public void queueMoveTo(BotEntry entry, Point point, boolean precise) {
+        queueTask(entry, BotTask.moveTo(point, precise));
+    }
+
+    public void queueMoveThenDropItem(BotEntry entry, Point point, boolean precise, InventoryType type, int itemId, short quantity) {
+        queueTask(entry, BotTask.moveTo(point, precise));
+        queueTask(entry, BotTask.dropItem(type, itemId, quantity));
+    }
+
+    public void queueFollowThenDropItem(BotEntry entry, Character target, int nearPx, InventoryType type, int itemId, short quantity) {
+        queueTask(entry, BotTask.followUntilNear(target, nearPx));
+        queueTask(entry, BotTask.dropItem(type, itemId, quantity));
+    }
+
+    public boolean hasQueuedTasks(BotEntry entry) {
+        return entry != null && (entry.activeScriptTask != null || !entry.scriptTasks.isEmpty());
+    }
+
+    private static void clearMode(BotEntry entry) {
         entry.followTargetId = 0;
         entry.following = false;
         entry.grinding = false;
-        entry.moveTarget = new Point(dest);
-        entry.moveTargetPrecise = precise;
+    }
+
+    private static boolean isNear(Point source, Point target, int dist) {
+        return source != null && target != null
+                && Math.abs(source.x - target.x) <= dist
+                && Math.abs(source.y - target.y) <= dist;
+    }
+
+    private void tickScriptTasks(BotEntry entry) {
+        if (entry == null || entry.bot == null) {
+            return;
+        }
+
+        while (true) {
+            if (entry.activeScriptTask == null) {
+                entry.activeScriptTask = entry.scriptTasks.poll();
+                if (entry.activeScriptTask == null) {
+                    return;
+                }
+                startScriptTask(entry, entry.activeScriptTask);
+            }
+
+            if (!isScriptTaskComplete(entry, entry.activeScriptTask)) {
+                return;
+            }
+            entry.activeScriptTask = null;
+        }
+    }
+
+    private void startScriptTask(BotEntry entry, BotTask task) {
+        switch (task.type) {
+            case MOVE_TO -> startMoveTo(entry, task.point, task.precise);
+            case FOLLOW_OWNER -> startFollow(entry, entry.owner);
+            case FOLLOW_TARGET -> startFollow(entry, resolveFollowCharacterById(entry, task.targetCharacterId));
+            case FOLLOW_UNTIL_NEAR -> startFollow(entry, resolveFollowCharacterById(entry, task.targetCharacterId));
+            case GRIND -> startGrind(entry);
+            case STOP -> startStop(entry);
+            case DROP_ITEM -> issueDropItem(entry, task.inventoryType, task.itemId, task.quantity);
+        }
+    }
+
+    private boolean isScriptTaskComplete(BotEntry entry, BotTask task) {
+        return switch (task.type) {
+            case MOVE_TO -> entry.moveTarget == null || isNear(entry.bot.getPosition(), task.point,
+                    task.precise ? 8 : BotMovementManager.cfg.STOP_DIST);
+            case FOLLOW_UNTIL_NEAR -> {
+                Character target = resolveFollowCharacterById(entry, task.targetCharacterId);
+                yield target != null
+                        && entry.bot.getMapId() == target.getMapId()
+                        && isNear(entry.bot.getPosition(), target.getPosition(), task.nearPx);
+            }
+            case FOLLOW_OWNER, FOLLOW_TARGET, GRIND, STOP, DROP_ITEM -> true;
+        };
+    }
+
+    private Character resolveFollowCharacterById(BotEntry entry, int targetCharacterId) {
+        if (entry == null || targetCharacterId <= 0) {
+            return entry != null ? entry.owner : null;
+        }
+        if (entry.owner != null && entry.owner.getId() == targetCharacterId) {
+            return entry.owner;
+        }
+        if (entry.owner != null && entry.owner.getParty() != null) {
+            for (Character member : entry.owner.getPartyMembersOnline()) {
+                if (member != null && member.getId() == targetCharacterId && member.isLoggedinWorld()) {
+                    return member;
+                }
+            }
+        }
+        if (entry.owner != null) {
+            for (BotEntry sibling : getBotEntries(entry.owner.getId())) {
+                if (sibling.bot != null && sibling.bot.getId() == targetCharacterId && sibling.bot.isLoggedinWorld()) {
+                    return sibling.bot;
+                }
+            }
+        }
+        return entry.owner;
     }
 
     /**
@@ -1759,6 +1962,7 @@ public class BotManager {
         BotInventoryManager.tickTrade(entry, bot);
         BotInventoryManager.tickManualTrade(entry, bot);
         BotPqHooks.tick(entry, bot, owner);
+        tickScriptTasks(entry);
         if (BotPqHooks.isNpcLocked(entry)) {
             return true;
         }

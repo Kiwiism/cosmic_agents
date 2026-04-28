@@ -174,6 +174,11 @@ public class BotEntry {
     final ArrayDeque<String> msgQueue = new ArrayDeque<>();
     boolean msgSending = false;
 
+    // Generic scripted task queue. Per-map scripts enqueue small primitives
+    // (move, follow, grind, drop) and the shared manager executes them.
+    final ArrayDeque<BotTask> scriptTasks = new ArrayDeque<>();
+    BotTask activeScriptTask = null;
+
     // AFK detection
     Point ownerAfkPos = null;
     long ownerAfkSinceMs = 0;
@@ -211,6 +216,7 @@ public class BotEntry {
 
     // Party-quest state (one slot per PQ type; null = not in that PQ)
     public server.bots.pq.BotKpqState kpq = new server.bots.pq.BotKpqState();
+    public BotScriptRuntime script = new BotScriptRuntime();
 
     // Equips received from the owner in a trade — excluded from automatic re-offer batches.
     // Cleared when owner explicitly requests all equips back.

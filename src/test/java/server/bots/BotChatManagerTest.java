@@ -42,6 +42,7 @@ class BotChatManagerTest {
     @Test
     void shouldStillParseNamedItemTrades() {
         assertEquals("name:chaos scroll", BotChatManager.matchTradeCategory("trade chaos scroll"));
+        assertEquals("name:chaos scroll", BotChatManager.matchTradeCategory("trade chaos scrolls"));
     }
 
     @Test
