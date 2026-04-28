@@ -273,30 +273,36 @@ final class BotPotionManager {
         return true;
     }
 
-    static boolean offerPotShareToOwner(BotEntry entry, boolean forHp) {
+    enum OwnerPotShareResult {
+        OFFERED,
+        NO_DONOR,
+        BLOCKED
+    }
+
+    static OwnerPotShareResult offerPotShareToOwner(BotEntry entry, boolean forHp) {
         Character owner = entry.owner;
         if (owner == null || owner.getTrade() != null) {
-            return false;
+            return OwnerPotShareResult.BLOCKED;
         }
 
         long now = System.currentTimeMillis();
         Map<Integer, Long> categoryBackoff = forHp ? potShareHpBackoffUntil : potShareMpBackoffUntil;
         if (now < categoryBackoff.getOrDefault(owner.getId(), 0L)) {
-            return false;
+            return OwnerPotShareResult.BLOCKED;
         }
         if (now < potShareCooldownUntil.getOrDefault(owner.getId(), 0L)) {
-            return false;
+            return OwnerPotShareResult.BLOCKED;
         }
         potShareCooldownUntil.put(owner.getId(), now + 30_000L);
 
         PotDonorPlan plan = selectPotDonor(owner, owner, null, forHp);
         if (plan == null || !plan.qualifies()) {
             categoryBackoff.put(owner.getId(), now + 10 * 60_000L);
-            return false;
+            return OwnerPotShareResult.NO_DONOR;
         }
 
         schedulePotShare(plan, owner, forHp, BotManager.randMs(900, 1400));
-        return true;
+        return OwnerPotShareResult.OFFERED;
     }
 
     private static PotDonorPlan selectPotDonor(Character owner, Character recipient, BotEntry excludedEntry, boolean forHp) {

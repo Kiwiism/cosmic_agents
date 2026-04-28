@@ -169,11 +169,6 @@ public class BotChatManager {
             "\\b(?:need|nned|low\\s+on|out\\s+of|running\\s+low\\s+on)\\s+(?:some\\s+)?(?:ammo|arrows?|bolts?)\\b"
             + "|\\b(?:any(?:body|one)?|someone|somebody|u|you)\\s+(?:got|have|has)\\s+(?:any\\s+|some\\s+)?(?:ammo|arrows?|bolts?)\\b",
             Pattern.CASE_INSENSITIVE);
-    private static final List<String> POT_SHARE_BUSY_REPLIES = List.of(
-            "can't ask for %s pots rn",
-            "not a good time to ask for %s pots",
-            "can't request %s pots yet",
-            "give me a sec before asking for %s pots");
     private static final List<String> AMMO_SHARE_BUSY_REPLIES = List.of(
             "can't ask for ammo rn",
             "not a good time to ask for ammo",
@@ -184,6 +179,17 @@ public class BotChatManager {
             "i don't need arrows or bolts rn",
             "ammo sharing is only for arrows and bolts",
             "not using bow ammo rn");
+    private static final List<String> OWNER_POT_SHORTAGE_REPLIES = List.of(
+            "almost out of %s pots too, i thought u were our shopper?",
+            "i checked, nobody has spare %s pots. that's kinda your department lol",
+            "we're low on %s pots too, boss",
+            "no spare %s pots in the squad rn",
+            "everyone's light on %s pots, might need a shop run",
+            "i'd help, but we're all thin on %s pots",
+            "no one has enough %s pots to share rn",
+            "we're not holding extra %s pots, thought you packed supplies",
+            "can't find spare %s pots. maybe time to restock?",
+            "almost dry on %s pots too, don't look at me");
     private static final Pattern SUPPORT_ON_PATTERN = Pattern.compile(
             "\\b(support\\s+(me|us|party)|support\\s+on|auto\\s+support)\\b",
             Pattern.CASE_INSENSITIVE);
@@ -1419,7 +1425,6 @@ public class BotChatManager {
 
     private static void handleNeedAnyPotionCommand(BotEntry entry) {
         if (entry.owner == null) {
-            queueBotSay(entry, "can't check your pots rn");
             return;
         }
         int[] pots = BotPotionManager.countPotions(entry.owner);
@@ -1427,14 +1432,10 @@ public class BotChatManager {
     }
 
     private static void handleNeedPotionCommand(BotEntry entry, boolean forHp) {
-        if (BotPotionManager.offerPotShareToOwner(entry, forHp)) {
-            queueBotSay(entry, BotManager.randomReply(List.of(
-                    "checking who has spare " + (forHp ? "hp" : "mp") + " pots",
-                    "ok, asking for " + (forHp ? "hp" : "mp") + " pots",
-                    "one sec, finding " + (forHp ? "hp" : "mp") + " pots")));
-        } else {
+        BotPotionManager.OwnerPotShareResult result = BotPotionManager.offerPotShareToOwner(entry, forHp);
+        if (result == BotPotionManager.OwnerPotShareResult.NO_DONOR) {
             String type = forHp ? "hp" : "mp";
-            queueBotSay(entry, String.format(BotManager.randomReply(POT_SHARE_BUSY_REPLIES), type));
+            queueBotSay(entry, String.format(BotManager.randomReply(OWNER_POT_SHORTAGE_REPLIES), type));
         }
     }
 
