@@ -792,7 +792,7 @@ final class BotPhysicsEngine {
     }
 
     static void attachToRope(BotEntry entry, Character bot, Rope rope, int y) {
-        int ropeY = Math.clamp(y, rope.topY(), rope.bottomY());
+        int ropeY = Math.clamp(y, firstClimbableY(rope), rope.bottomY());
         setClimbPosition(entry, bot, rope, ropeY);
     }
 
@@ -1386,7 +1386,7 @@ final class BotPhysicsEngine {
 
     static boolean canReachRopeFromGround(MapleMap map, Point from, Rope rope, BotMovementProfile profile) {
         int dx = Math.abs(rope.x() - from.x);
-        if (dx <= cfg.ROPE_GRAB_X && from.y >= rope.topY() && from.y <= rope.bottomY()) {
+        if (dx <= cfg.ROPE_GRAB_X && from.y >= firstClimbableY(rope) && from.y <= rope.bottomY()) {
             return true;
         }
         if (rope.topY() >= from.y) {
@@ -1538,7 +1538,7 @@ final class BotPhysicsEngine {
                 // If none is found, clamp to topY and hold rather than falling — the bot will
                 // recover on re-path. Falling here would cause the oscillation bug where the bot
                 // climbs to the top, falls, re-grabs the rope, and loops indefinitely.
-                setClimbPosition(entry, bot, rope, rope.topY());
+                setClimbPosition(entry, bot, rope, firstClimbableY(rope));
             }
             return true;
         }
@@ -1562,6 +1562,10 @@ final class BotPhysicsEngine {
         }
 
         return ground.y <= rope.topY() + climbStepPerTick() + 2 ? ground : null;
+    }
+
+    static int firstClimbableY(Rope rope) {
+        return Math.min(rope.bottomY(), rope.topY() + 1);
     }
 
     private static void setClimbPosition(BotEntry entry, Character bot, Rope rope, int y) {
@@ -2030,7 +2034,7 @@ final class BotPhysicsEngine {
 
     private static boolean canGrabRopeAtPoint(Point position, Rope rope) {
         return Math.abs(position.x - rope.x()) <= cfg.ROPE_GRAB_X
-                && position.y >= rope.topY()
+                && position.y >= firstClimbableY(rope)
                 && position.y <= rope.bottomY();
     }
 

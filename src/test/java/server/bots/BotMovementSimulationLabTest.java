@@ -215,7 +215,7 @@ class BotMovementSimulationLabTest {
 
     @Test
     void shouldWalkOffLedgeDropsViaGroundPhysicsWithoutExplicitDropExec() {
-        MapleMap map = BotNavigationMapLoader.loadMapGeometry(101000000);
+        MapleMap map = createWalkOffDropMap(910000401);
         BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
         LedgeDropScenario scenario = findLedgeDropScenario(graph, map);
 
@@ -248,6 +248,17 @@ class BotMovementSimulationLabTest {
                 new Point(x1 - 200, y - 200),
                 new Point(x2 + 200, y + 200));
         footholds.insert(new Foothold(new Point(x1, y), new Point(x2, y), 1));
+        map.setFootholds(footholds);
+        return map;
+    }
+
+    private static MapleMap createWalkOffDropMap(int mapId) {
+        MapleMap map = new MapleMap(mapId, 0, 0, mapId, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(
+                new Point(-200, -200),
+                new Point(400, 400));
+        footholds.insert(new Foothold(new Point(0, 0), new Point(100, 0), 1));
+        footholds.insert(new Foothold(new Point(100, 120), new Point(220, 120), 2));
         map.setFootholds(footholds);
         return map;
     }

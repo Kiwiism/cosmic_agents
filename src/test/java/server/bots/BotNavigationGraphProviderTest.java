@@ -4,6 +4,7 @@ import client.Character;
 import constants.game.CharacterStance;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Rope;
 
@@ -29,8 +30,6 @@ import static org.mockito.Mockito.when;
 class BotNavigationGraphProviderTest {
     private static MapleMap henesys;
     private static BotNavigationGraph henesysGraph;
-    private static MapleMap ellinia;
-    private static BotNavigationGraph elliniaGraph;
     private static MapleMap perion;
     private static BotNavigationGraph perionGraph;
     private static MapleMap kerning;
@@ -46,9 +45,6 @@ class BotNavigationGraphProviderTest {
 
         henesys = BotNavigationMapLoader.loadMapGeometry(100000000);
         henesysGraph = BotNavigationGraphProvider.rebuildGraph(henesys);
-
-        ellinia = BotNavigationMapLoader.loadMapGeometry(101000000);
-        elliniaGraph = BotNavigationGraphProvider.rebuildGraph(ellinia);
 
         perion = BotNavigationMapLoader.loadMapGeometry(102000000);
         perionGraph = BotNavigationGraphProvider.rebuildGraph(perion);
@@ -205,12 +201,12 @@ class BotNavigationGraphProviderTest {
     }
 
     @Test
-    void shouldKeepElliniaPivotFootholdsInOneWalkRegion() {
-        Point leftSlopePoint = new Point(-508, -421);
-        Point rightSlopePoint = new Point(-464, -422);
+    void shouldKeepConnectedPivotFootholdsInOneWalkRegion() {
+        MapleMap map = connectedPivotMap(910000201);
+        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
 
-        int leftRegionId = elliniaGraph.findRegionId(ellinia, leftSlopePoint);
-        int rightRegionId = elliniaGraph.findRegionId(ellinia, rightSlopePoint);
+        int leftRegionId = graph.findRegionId(map, new Point(-508, -421));
+        int rightRegionId = graph.findRegionId(map, new Point(-464, -422));
 
         assertTrue(leftRegionId > 0);
         assertTrue(rightRegionId > 0);
@@ -218,16 +214,21 @@ class BotNavigationGraphProviderTest {
     }
 
     @Test
-    void shouldTreatElliniaPivotFootholdTraversalAsSameRegion() {
-        List<BotNavigationGraph.Edge> path = findPath(elliniaGraph, ellinia, new Point(-508, -421), new Point(-390, -400));
+    void shouldTreatConnectedPivotFootholdTraversalAsSameRegion() {
+        MapleMap map = connectedPivotMap(910000202);
+        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
+
+        List<BotNavigationGraph.Edge> path = findPath(graph, map, new Point(-508, -421), new Point(-390, -400));
 
         assertTrue(path.isEmpty());
     }
 
     @Test
-    void shouldFindElliniaPathFromLowerPlatformToUpperLeftSlope() {
-        List<BotNavigationGraph.Edge> path = findPath(elliniaGraph, ellinia, new Point(-445, -55), new Point(-491, -426));
-        int targetRegionId = elliniaGraph.findRegionId(ellinia, new Point(-491, -426));
+    void shouldFindSyntheticPathFromLowerPlatformToUpperSlopeViaRope() {
+        MapleMap map = ropeToUpperPlatformMap(910000203);
+        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
+        List<BotNavigationGraph.Edge> path = findPath(graph, map, new Point(50, 100), new Point(50, 0));
+        int targetRegionId = graph.findRegionId(map, new Point(50, 0));
 
         assertFalse(path.isEmpty());
         assertEquals(targetRegionId, path.getLast().toRegionId);
@@ -235,21 +236,26 @@ class BotNavigationGraphProviderTest {
     }
 
     @Test
-    void shouldGenerateElliniaJumpEdgeFromLowerRightPlatformToPlatformAbove() {
-        BotNavigationGraph.Edge edge = findNearbyEdge(elliniaGraph, ellinia, new Point(1355, -888),
+    void shouldGenerateSyntheticJumpEdgeFromLowerPlatformToPlatformAbove() {
+        MapleMap map = twoPlatformJumpMap(910000204);
+        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
+        Point launch = new Point(40, 100);
+        BotNavigationGraph.Edge edge = findNearbyEdge(graph, map, launch,
                 BotNavigationGraph.EdgeType.JUMP, 40, 16);
 
         assertNotNull(edge);
-        assertTrue(edge.containsLaunchX(1355));
+        assertTrue(edge.containsLaunchX(launch.x));
         assertNotEquals(edge.fromRegionId, edge.toRegionId);
-        assertJumpEdgeLandsInRegion(elliniaGraph, ellinia, edge, edge.toRegionId);
+        assertJumpEdgeLandsInRegion(graph, map, edge, edge.toRegionId);
     }
 
     @Test
-    void shouldGenerateElliniaClimbEdgesForTownRopes() {
-        int climbEdgeCount = countEdges(elliniaGraph, BotNavigationGraph.EdgeType.CLIMB);
+    void shouldGenerateSyntheticClimbEdgesForRopes() {
+        MapleMap map = ropeToUpperPlatformMap(910000205);
+        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
+        int climbEdgeCount = countEdges(graph, BotNavigationGraph.EdgeType.CLIMB);
 
-        assertTrue(climbEdgeCount > 0, "Ellinia town should expose climb edges for at least some ropes");
+        assertTrue(climbEdgeCount > 0, "synthetic rope map should expose climb edges");
     }
 
     @Test
@@ -272,24 +278,28 @@ class BotNavigationGraphProviderTest {
     }
 
     @Test
-    void shouldPreferElliniaLocalRightSideJumpChainOverFarLeftDetour() {
-        List<BotNavigationGraph.Edge> path = findPath(elliniaGraph, ellinia, new Point(1355, -888), new Point(1354, -1197));
-        int targetRegionId = elliniaGraph.findRegionId(ellinia, new Point(1354, -1197));
+    void shouldPreferSyntheticLocalJumpChainOverDetour() {
+        MapleMap map = jumpChainMap(910000206);
+        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
+        List<BotNavigationGraph.Edge> path = findPath(graph, map, new Point(40, 100), new Point(190, 0));
+        int targetRegionId = graph.findRegionId(map, new Point(190, 0));
 
         assertFalse(path.isEmpty());
         assertTrue(path.stream().allMatch(edge -> edge.type == BotNavigationGraph.EdgeType.JUMP));
-        assertTrue(path.getFirst().containsLaunchX(1355));
+        assertTrue(path.getFirst().containsLaunchX(40));
         assertEquals(targetRegionId, path.getLast().toRegionId);
     }
 
     @Test
-    void shouldPreferElliniaLedgeDropsOverDownJumpsWhenDroppingStraightDown() {
-        List<BotNavigationGraph.Edge> path = findPath(elliniaGraph, ellinia, new Point(1354, -1197), new Point(1355, -888));
+    void shouldPreferSyntheticLedgeDropsOverDownJumpsWhenDroppingStraightDown() {
+        MapleMap map = ledgeDropMap(910000207);
+        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
+        List<BotNavigationGraph.Edge> path = findPath(graph, map, new Point(95, 0), new Point(120, 120));
 
         assertEquals(BotNavigationGraph.EdgeType.DROP, path.getFirst().type);
         assertTrue(path.stream().allMatch(edge -> edge.type == BotNavigationGraph.EdgeType.DROP
                 || edge.type == BotNavigationGraph.EdgeType.WALK),
-                "dropping to a lower Ellinia platform should stay on drop/walk edges even if the exact drop style changes");
+                "dropping to a lower platform should stay on drop/walk edges even if the exact drop style changes");
     }
 
     @Test
@@ -310,14 +320,16 @@ class BotNavigationGraphProviderTest {
 
     @Test
     void shouldTreatWalkOffDropsAsDirectionalMovementInsteadOfExecutableAnchors() {
-        LedgeDropCase dropCase = findLedgeDropCaseWithWalkableEarlyStart(elliniaGraph, ellinia);
+        MapleMap map = ledgeDropMap(910000208);
+        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
+        LedgeDropCase dropCase = findLedgeDropCaseWithWalkableEarlyStart(graph, map);
 
         assertNotNull(dropCase, "Expected at least one ledge drop with a still-walkable early start");
-        assertTrue(BotPhysicsEngine.canWalkGroundStep(ellinia, dropCase.earlyStart(), dropCase.edge().launchStepX));
+        assertTrue(BotPhysicsEngine.canWalkGroundStep(map, dropCase.earlyStart(), dropCase.edge().launchStepX));
         assertFalse(BotNavigationManager.canExecuteDropFromCurrentPosition(
-                elliniaGraph, ellinia, dropCase.edge().startPoint, dropCase.edge()));
+                graph, map, dropCase.edge().startPoint, dropCase.edge()));
         assertFalse(BotNavigationManager.canExecuteDropFromCurrentPosition(
-                elliniaGraph, ellinia, dropCase.earlyStart(), dropCase.edge()));
+                graph, map, dropCase.earlyStart(), dropCase.edge()));
     }
 
     @Test
@@ -332,16 +344,18 @@ class BotNavigationGraphProviderTest {
 
     @Test
     void shouldDiscardCommittedRopeEntryEdgeAfterBotHasAttachedToRope() {
-        RopeEntryReuseCase reuseCase = findRopeEntryReuseCase(elliniaGraph, ellinia);
+        MapleMap map = topRopeEntryMap(910000209);
+        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
+        RopeEntryReuseCase reuseCase = findRopeEntryReuseCase(graph, map);
 
         assertNotNull(reuseCase, "Expected a rope-entry edge whose top attachment point resolves to a non-rope region");
 
-        Character bot = mockBot(reuseCase.botPosition(), ellinia);
+        Character bot = mockBot(reuseCase.botPosition(), map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.climbing = true;
         entry.climbRope = reuseCase.rope();
         entry.navEdge = reuseCase.edge();
-        entry.navTargetRegionId = elliniaGraph.findRegionId(ellinia, reuseCase.rawTarget());
+        entry.navTargetRegionId = graph.findRegionId(map, reuseCase.rawTarget());
 
         BotNavigationManager.NavigationDirective directive =
                 BotNavigationManager.resolveTarget(entry, reuseCase.rawTarget(), false);
@@ -353,34 +367,38 @@ class BotNavigationGraphProviderTest {
 
     @Test
     void shouldResolveCurrentRegionFromRopeWhileBotIsClimbing() {
-        RopeEntryReuseCase reuseCase = findRopeEntryReuseCase(elliniaGraph, ellinia);
+        MapleMap map = topRopeEntryMap(910000210);
+        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
+        RopeEntryReuseCase reuseCase = findRopeEntryReuseCase(graph, map);
 
         assertNotNull(reuseCase, "Expected a rope-entry edge whose attach point still resolves to ground");
-        assertNotEquals(reuseCase.edge().toRegionId, elliniaGraph.findRegionId(ellinia, reuseCase.botPosition()));
+        assertNotEquals(reuseCase.edge().toRegionId, graph.findRegionId(map, reuseCase.botPosition()));
 
-        BotEntry entry = new BotEntry(mockBot(reuseCase.botPosition(), ellinia), null, null);
+        BotEntry entry = new BotEntry(mockBot(reuseCase.botPosition(), map), null, null);
         entry.climbing = true;
         entry.climbRope = reuseCase.rope();
 
         assertEquals(reuseCase.edge().toRegionId,
-                BotNavigationManager.resolveCurrentRegionId(elliniaGraph, entry, ellinia, reuseCase.botPosition()));
+                BotNavigationManager.resolveCurrentRegionId(graph, entry, map, reuseCase.botPosition()));
     }
 
     @Test
     void shouldResolveFollowTargetFromOwnerRopeRegionWhileOwnerIsHanging() {
-        RopeEntryReuseCase reuseCase = findRopeEntryReuseCase(elliniaGraph, ellinia);
+        MapleMap map = topRopeEntryMap(910000211);
+        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
+        RopeEntryReuseCase reuseCase = findRopeEntryReuseCase(graph, map);
 
         assertNotNull(reuseCase, "Expected a rope-entry edge whose rope point still resolves to ground");
-        assertNotEquals(reuseCase.edge().toRegionId, elliniaGraph.findRegionId(ellinia, reuseCase.botPosition()));
+        assertNotEquals(reuseCase.edge().toRegionId, graph.findRegionId(map, reuseCase.botPosition()));
 
-        Character owner = mockBot(reuseCase.botPosition(), ellinia);
+        Character owner = mockBot(reuseCase.botPosition(), map);
         when(owner.getStance()).thenReturn(CharacterStance.ROPE_STANCE);
 
-        BotEntry entry = new BotEntry(mockBot(reuseCase.rawTarget(), ellinia), owner, null);
+        BotEntry entry = new BotEntry(mockBot(reuseCase.rawTarget(), map), owner, null);
         entry.following = true;
 
         assertEquals(reuseCase.edge().toRegionId,
-                BotNavigationManager.resolveTargetRegionId(elliniaGraph, entry, ellinia, owner.getPosition()));
+                BotNavigationManager.resolveTargetRegionId(graph, entry, map, owner.getPosition()));
     }
 
     @Test
@@ -389,29 +407,28 @@ class BotNavigationGraphProviderTest {
     }
 
     @Test
-    void shouldPreferDirectElliniaJumpFromRegion64ToRegion65() {
-        Point botPosition = new Point(-61, -938);
-        Point ownerPosition = new Point(-268, -907);
-        int botRegionId = elliniaGraph.findRegionId(ellinia, botPosition);
-        int ownerRegionId = elliniaGraph.findRegionId(ellinia, ownerPosition);
+    void shouldPreferDirectSyntheticJumpWithNegativeLaunchWindow() {
+        MapleMap map = negativeJumpMap(910000212);
+        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
+        Point botPosition = new Point(-60, 100);
+        Point ownerPosition = new Point(-210, 40);
+        int botRegionId = graph.findRegionId(map, botPosition);
+        int ownerRegionId = graph.findRegionId(map, ownerPosition);
 
-        assertEquals(64, botRegionId);
-        assertEquals(65, ownerRegionId);
-
-        BotNavigationGraph.Edge directJump = elliniaGraph.getOutgoing(botRegionId).stream()
+        BotNavigationGraph.Edge directJump = graph.getOutgoing(botRegionId).stream()
                 .filter(edge -> edge.type == BotNavigationGraph.EdgeType.JUMP)
                 .filter(edge -> edge.toRegionId == ownerRegionId)
                 .filter(edge -> edge.containsLaunchX(botPosition.x))
                 .findFirst()
                 .orElse(null);
 
-        assertNotNull(directJump, "Expected direct Ellinia jump edge from region 64 to region 65 at the logged bot X");
+        assertNotNull(directJump, "Expected direct synthetic jump edge at the logged bot X");
         assertTrue(directJump.launchMinX < 0, "jump launch window should keep valid negative X coordinates");
-        assertJumpEdgeLandsInRegion(elliniaGraph, ellinia, directJump, ownerRegionId);
+        assertJumpEdgeLandsInRegion(graph, map, directJump, ownerRegionId);
 
-        List<BotNavigationGraph.Edge> path = findPath(elliniaGraph, ellinia, botPosition, ownerPosition);
+        List<BotNavigationGraph.Edge> path = findPath(graph, map, botPosition, ownerPosition);
 
-        assertEquals(1, path.size(), "expected direct jump path instead of Ellinia detour");
+        assertEquals(1, path.size(), "expected direct jump path instead of detour");
         assertEquals(BotNavigationGraph.EdgeType.JUMP, path.getFirst().type);
         assertEquals(ownerRegionId, path.getFirst().toRegionId);
     }
@@ -564,6 +581,61 @@ class BotNavigationGraphProviderTest {
     private static MapleMap createEmptyTestMap(int mapId) {
         MapleMap map = new MapleMap(mapId, 0, 0, mapId, 1.0f);
         map.setFootholds(new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000)));
+        return map;
+    }
+
+    private static MapleMap connectedPivotMap(int mapId) {
+        MapleMap map = createEmptyTestMap(mapId);
+        Foothold left = new Foothold(new Point(-520, -421), new Point(-480, -421), 1);
+        Foothold right = new Foothold(new Point(-480, -421), new Point(-380, -400), 2);
+        left.setNext(right.getId());
+        right.setPrev(left.getId());
+        map.getFootholds().insert(left);
+        map.getFootholds().insert(right);
+        return map;
+    }
+
+    private static MapleMap ropeToUpperPlatformMap(int mapId) {
+        MapleMap map = createEmptyTestMap(mapId);
+        map.getFootholds().insert(new Foothold(new Point(0, 100), new Point(120, 100), 1));
+        map.getFootholds().insert(new Foothold(new Point(0, 0), new Point(120, 0), 2));
+        map.addRope(new Rope(50, 0, 100, false));
+        return map;
+    }
+
+    private static MapleMap twoPlatformJumpMap(int mapId) {
+        MapleMap map = createEmptyTestMap(mapId);
+        map.getFootholds().insert(new Foothold(new Point(0, 100), new Point(120, 100), 1));
+        map.getFootholds().insert(new Foothold(new Point(40, 40), new Point(200, 40), 2));
+        return map;
+    }
+
+    private static MapleMap jumpChainMap(int mapId) {
+        MapleMap map = createEmptyTestMap(mapId);
+        map.getFootholds().insert(new Foothold(new Point(0, 100), new Point(80, 100), 1));
+        map.getFootholds().insert(new Foothold(new Point(80, 50), new Point(160, 50), 2));
+        map.getFootholds().insert(new Foothold(new Point(160, 0), new Point(240, 0), 3));
+        return map;
+    }
+
+    private static MapleMap ledgeDropMap(int mapId) {
+        MapleMap map = createEmptyTestMap(mapId);
+        map.getFootholds().insert(new Foothold(new Point(0, 0), new Point(100, 0), 1));
+        map.getFootholds().insert(new Foothold(new Point(100, 120), new Point(220, 120), 2));
+        return map;
+    }
+
+    private static MapleMap topRopeEntryMap(int mapId) {
+        MapleMap map = createEmptyTestMap(mapId);
+        map.getFootholds().insert(new Foothold(new Point(80, 100), new Point(120, 100), 1));
+        map.addRope(new Rope(100, 100, 200, false));
+        return map;
+    }
+
+    private static MapleMap negativeJumpMap(int mapId) {
+        MapleMap map = createEmptyTestMap(mapId);
+        map.getFootholds().insert(new Foothold(new Point(-120, 100), new Point(-20, 100), 1));
+        map.getFootholds().insert(new Foothold(new Point(-300, 40), new Point(20, 40), 2));
         return map;
     }
 

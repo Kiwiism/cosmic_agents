@@ -28,7 +28,6 @@ import static org.mockito.Mockito.when;
 
 class BotPhysicsEngineTest {
     private static MapleMap henesys;
-    private static MapleMap ellinia;
     private static MapleMap elliniaWeaponStore;
     private static MapleMap kerning;
     private static MapleMap kpqS1;
@@ -38,7 +37,6 @@ class BotPhysicsEngineTest {
     static void loadMaps() {
         System.setProperty("wz-path", Path.of("wz").toAbsolutePath().toString());
         henesys = BotNavigationMapLoader.loadMapGeometry(100000000);
-        ellinia = BotNavigationMapLoader.loadMapGeometry(101000000);
         elliniaWeaponStore = BotNavigationMapLoader.loadMapGeometry(101000001);
         kerning = BotNavigationMapLoader.loadMapGeometry(103000000);
         kpqS1 = BotNavigationMapLoader.loadMapGeometry(103000800);
@@ -59,17 +57,16 @@ class BotPhysicsEngineTest {
     }
 
     @Test
-    void shouldTreatNearbyElliniaRopeAsReachableAndFarOffsetAsUnreachable() {
-        Rope rope = ellinia.getRopes().stream()
-                .filter(candidate -> candidate.topY() < candidate.bottomY())
-                .findFirst()
-                .orElseThrow();
+    void shouldTreatNearbySyntheticRopeAsReachableAndFarOffsetAsUnreachable() {
+        MapleMap map = createEmptyTestMap(910000101);
+        Rope rope = new Rope(100, 40, 160, false);
+        map.addRope(rope);
 
-        Point nearPoint = new Point(rope.x() - BotPhysicsEngine.walkStep(ellinia), rope.bottomY());
-        Point farPoint = new Point(rope.x() - BotPhysicsEngine.maxJumpHorizontalTravel(ellinia) - 50, rope.bottomY());
+        Point nearPoint = new Point(rope.x() - BotPhysicsEngine.walkStep(map), rope.bottomY());
+        Point farPoint = new Point(rope.x() - BotPhysicsEngine.maxJumpHorizontalTravel(map) - 50, rope.bottomY());
 
-        assertTrue(BotPhysicsEngine.canReachRopeFromGround(ellinia, nearPoint, rope));
-        assertFalse(BotPhysicsEngine.canReachRopeFromGround(ellinia, farPoint, rope));
+        assertTrue(BotPhysicsEngine.canReachRopeFromGround(map, nearPoint, rope));
+        assertFalse(BotPhysicsEngine.canReachRopeFromGround(map, farPoint, rope));
     }
 
     @Test
@@ -273,7 +270,7 @@ class BotPhysicsEngineTest {
     }
 
     @Test
-    void shouldLandOnTopPlatformWhenHoldingAtRopeTop() {
+    void shouldTreatRopeTopAsDismountBoundaryNotAttachPosition() {
         MapleMap map = mock(MapleMap.class);
         when(map.getPointBelow(any(Point.class))).thenAnswer(invocation -> new Point(100, 0));
         Character bot = mockBot(new Point(100, 0), map);
@@ -281,7 +278,16 @@ class BotPhysicsEngineTest {
         Rope rope = new Rope(100, 0, 40, false);
         BotPhysicsEngine.attachToRope(entry, bot, rope, rope.topY());
 
+        assertTrue(entry.climbing);
+        assertEquals(new Point(100, 1), bot.getPosition());
+
         BotPhysicsEngine.holdClimb(entry, bot);
+
+        assertTrue(entry.climbing);
+        assertEquals(new Point(100, 1), bot.getPosition());
+
+        entry.climbVerticalDir = -1;
+        BotPhysicsEngine.advanceClimb(entry, bot);
 
         assertFalse(entry.inAir);
         assertFalse(entry.climbing);
@@ -411,17 +417,22 @@ class BotPhysicsEngineTest {
 
     @Test
     void shouldPreferExactGroundFootholdWhenOffsetLookupWouldChooseDifferentPlatform() {
-        StandingLookupCase lookupCase = findStandingLookupCaseWhereOffsetDiffers(ellinia);
+        MapleMap map = createEmptyTestMap(910000102);
+        Foothold exactGround = new Foothold(new Point(0, 100), new Point(120, 100), 1);
+        Foothold nearbyUpper = new Foothold(new Point(0, 92), new Point(120, 92), 2);
+        map.getFootholds().insert(exactGround);
+        map.getFootholds().insert(nearbyUpper);
+        StandingLookupCase lookupCase = findStandingLookupCaseWhereOffsetDiffers(map);
 
         assertNotNull(lookupCase, "Expected at least one standing point where offset-only lookup picks a different foothold");
         assertNotEquals(lookupCase.exactFoothold().getId(), lookupCase.offsetFoothold().getId());
-        Point chosenGround = BotPhysicsEngine.findGroundPoint(ellinia, lookupCase.point());
-        Foothold chosenFoothold = BotPhysicsEngine.findGroundFoothold(ellinia, lookupCase.point());
+        Point chosenGround = BotPhysicsEngine.findGroundPoint(map, lookupCase.point());
+        Foothold chosenFoothold = BotPhysicsEngine.findGroundFoothold(map, lookupCase.point());
 
         assertNotNull(chosenGround);
         assertNotNull(chosenFoothold);
         assertEquals(chosenFoothold.getId(),
-                ellinia.getFootholds().findBelow(new Point(chosenGround.x, chosenGround.y)).getId());
+                map.getFootholds().findBelow(new Point(chosenGround.x, chosenGround.y)).getId());
     }
 
     private static StandingLookupCase findStandingLookupCaseWhereOffsetDiffers(MapleMap map) {

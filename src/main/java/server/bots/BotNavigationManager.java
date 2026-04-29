@@ -435,6 +435,11 @@ final class BotNavigationManager {
             startClimbing(entry, bot, rope, botPos.y);
             return new NavigationDirective(rawTargetPos, true);
         }
+        if (canAttachToRopeFromTopPlatform(edge, botPos, rope)) {
+            entry.lastEdgeBlockReason = null;
+            startClimbing(entry, bot, rope, edge.endPoint.y);
+            return new NavigationDirective(rawTargetPos, true);
+        }
         if (canGrabRopeFromTopPlatform(edge, botPos, rope)) {
             // Bot is on a platform above the rope top. Do NOT call startClimbing here —
             // that would teleport the bot downward. Instead queue a down-jump and let
@@ -446,9 +451,9 @@ final class BotNavigationManager {
             return new NavigationDirective(rawTargetPos, true);
         }
 
-        if (isReadyForEdge(botPos, edge)) {
+        if (canExecuteGroundRopeJumpEntryFromCurrentPosition(botPos, edge)) {
             entry.lastEdgeBlockReason = null;
-            BotMovementManager.initiateRopeJump(entry, bot, rope.x() - botPos.x);
+            BotMovementManager.initiateRopeJump(entry, bot, edge.launchStepX);
             return new NavigationDirective(rawTargetPos, true);
         }
 
@@ -486,6 +491,10 @@ final class BotNavigationManager {
         }
 
         // Jump off rope
+        Rope sourceRope = findRopeForRegion(bot.getMap(), graph.getRegion(edge.fromRegionId));
+        if (isTopRopeJumpExitReady(sourceRope, botPos, edge) && botPos.y != edge.startPoint.y) {
+            startClimbing(entry, bot, sourceRope, edge.startPoint.y);
+        }
         BotMovementManager.jumpOffRope(entry, bot, edge.launchStepX);
         return new NavigationDirective(rawTargetPos, true);
     }
@@ -1027,8 +1036,15 @@ final class BotNavigationManager {
 
     private static boolean canGrabRopeAtCurrentPosition(Point botPos, Rope rope) {
         return Math.abs(botPos.x - rope.x()) <= BotMovementManager.cfg.ROPE_GRAB_X
-                && botPos.y >= rope.topY()
+                && botPos.y >= BotPhysicsEngine.firstClimbableY(rope)
                 && botPos.y <= rope.bottomY();
+    }
+
+    private static boolean canAttachToRopeFromTopPlatform(BotNavigationGraph.Edge edge, Point botPos, Rope rope) {
+        return Math.abs(botPos.x - rope.x()) <= BotMovementManager.cfg.ROPE_GRAB_X
+                && edge.endPoint.y == BotPhysicsEngine.firstClimbableY(rope)
+                && botPos.y < rope.topY()
+                && rope.topY() - botPos.y <= BotPhysicsEngine.cfg.MAX_SNAP_DROP;
     }
 
     private static boolean canGrabRopeFromTopPlatform(BotNavigationGraph.Edge edge, Point botPos, Rope rope) {
@@ -1041,8 +1057,18 @@ final class BotNavigationManager {
                                                                    BotNavigationGraph.Edge edge,
                                                                    Rope rope) {
         return rope != null && (canGrabRopeAtCurrentPosition(botPos, rope)
+                || canAttachToRopeFromTopPlatform(edge, botPos, rope)
                 || canGrabRopeFromTopPlatform(edge, botPos, rope)
-                || isReadyForEdge(botPos, edge));
+                || canExecuteGroundRopeJumpEntryFromCurrentPosition(botPos, edge));
+    }
+
+    private static boolean canExecuteGroundRopeJumpEntryFromCurrentPosition(Point botPos,
+                                                                           BotNavigationGraph.Edge edge) {
+        if (botPos == null || edge == null || edge.type != BotNavigationGraph.EdgeType.CLIMB) {
+            return false;
+        }
+        return edge.containsLaunchX(botPos.x)
+                && Math.abs(botPos.y - edge.startPoint.y) <= BotMovementManager.cfg.JUMP_Y_THRESH * 2;
     }
 
     private static boolean canExecuteClimbExitFromCurrentPosition(BotNavigationGraph graph,
@@ -1053,11 +1079,14 @@ final class BotNavigationManager {
             return false;
         }
 
-        // Rope-exit jump edges are authored from a specific climb height. Allow launching from
-        // that height or higher on the rope, but never from below it where the jump arc drops
-        // under the intended platform and runtime/graph behavior diverge.
-        if (edge.launchStepX != 0 && botPos.y > edge.startPoint.y) {
-            return false;
+        if (edge.launchStepX != 0 && botPos.y != edge.startPoint.y) {
+            Rope rope = findRopeForRegion(map, graph.getRegion(edge.fromRegionId));
+            if (!isTopRopeJumpExitReady(rope, botPos, edge)) {
+                // Rope-exit jump edges are authored from a specific climb height. Launching from
+                // any other Y changes the ballistic arc; climb movement reaches the authored
+                // first climbable pixel before this executes.
+                return false;
+            }
         }
 
         BotNavigationGraph.Region toRegion = graph.getRegion(edge.toRegionId);
@@ -1071,6 +1100,18 @@ final class BotNavigationManager {
         }
 
         return Math.abs(botPos.y - edge.startPoint.y) <= BotMovementManager.cfg.JUMP_Y_THRESH * 2;
+    }
+
+    private static boolean isTopRopeJumpExitReady(Rope rope, Point botPos, BotNavigationGraph.Edge edge) {
+        if (rope == null || botPos == null || edge == null || edge.launchStepX == 0) {
+            return false;
+        }
+        int firstClimbableY = BotPhysicsEngine.firstClimbableY(rope);
+        return edge.startPoint.x == rope.x()
+                && edge.startPoint.y == firstClimbableY
+                && botPos.x == rope.x()
+                && botPos.y >= firstClimbableY
+                && botPos.y <= firstClimbableY + BotPhysicsEngine.climbStepPerTick() + 2;
     }
 
     private static void startClimbing(BotEntry entry, Character bot, Rope rope, int climbY) {
@@ -1117,11 +1158,12 @@ final class BotNavigationManager {
                                       BotEntry entry,
                                       MapleMap map,
                                       Point botPos) {
-        if (entry.climbing && entry.climbRope != null) {
+        if (entry.climbing || (entry.bot != null && CharacterStance.isClimbing(entry.bot.getStance()))) {
             // Rope climbing state is authoritative. Ground lookup below a rope often resolves to
             // the nearby platform instead of the rope region, which can replan from the wrong side
             // of the rope and bounce between entry/exit climb edges.
-            int ropeRegionId = graph.findRopeRegionId(new Point(entry.climbRope.x(), botPos.y));
+            int ropeX = entry.climbRope != null ? entry.climbRope.x() : botPos.x;
+            int ropeRegionId = graph.findRopeRegionId(new Point(ropeX, botPos.y));
             if (ropeRegionId >= 0) {
                 return ropeRegionId;
             }
