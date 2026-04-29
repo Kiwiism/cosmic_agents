@@ -5,8 +5,11 @@ import client.Skill;
 import client.SkillFactory;
 import constants.skills.Archer;
 import constants.skills.Bowmaster;
+import constants.skills.Crossbowman;
 import constants.skills.Hunter;
+import constants.skills.Marksman;
 import constants.skills.Ranger;
+import constants.skills.Sniper;
 import java.util.List;
 
 public final class BowmanBuilds {
@@ -20,6 +23,9 @@ public final class BowmanBuilds {
             case HUNTER -> hunterBuild();
             case RANGER -> rangerBuild();
             case BOWMASTER -> bowmasterBuild();
+            case CROSSBOWMAN -> crossbowmanBuild();
+            case SNIPER -> sniperBuild();
+            case MARKSMAN -> marksmanBuild();
             default -> null;
         };
     }
@@ -45,6 +51,7 @@ public final class BowmanBuilds {
         );
     }
 
+//    https://forum.maplelegends.com/index.php?threads/comprehensive-guide-from-archer-to-bowmaster.2749/
     private static List<BuildStep> hunterBuild() {
         return List.of(
                 s(Hunter.ARROW_BOMB, 1),
@@ -57,14 +64,12 @@ public final class BowmanBuilds {
                 s(Hunter.POWER_KNOCKBACK, 20),
                 s(Hunter.BOW_BOOSTER, 7),
                 s(Hunter.SOUL_ARROW, 3),
-                s(Hunter.BOW_BOOSTER, 10),
                 s(Hunter.BOW_BOOSTER, 12),
                 s(Hunter.SOUL_ARROW, 4),
                 s(Hunter.BOW_BOOSTER, 14),
                 s(Hunter.SOUL_ARROW, 5),
                 s(Hunter.BOW_BOOSTER, 16),
                 s(Hunter.SOUL_ARROW, 6),
-                s(Hunter.BOW_BOOSTER, 19),
                 s(Hunter.BOW_BOOSTER, 20),
                 s(Hunter.SOUL_ARROW, 7),
                 s(Archer.FOCUS, 10),
@@ -100,6 +105,33 @@ public final class BowmanBuilds {
         );
     }
 
+//    https://royals.ms/forum/threads/a-comprehensive-guide-to-marksman.89785/
+    private static List<BuildStep> crossbowmanBuild() {
+        return List.of(
+                s(Crossbowman.CROSSBOW_MASTERY, 5),
+                s(Crossbowman.CROSSBOW_BOOSTER, 6),
+                s(Crossbowman.CROSSBOW_MASTERY, 20),
+                s(Crossbowman.IRON_ARROW, 30),
+                s(Crossbowman.SOUL_ARROW, 20),
+                s(Crossbowman.CROSSBOW_BOOSTER, 20),
+                s(Crossbowman.POWER_KNOCKBACK, 20)
+        );
+    }
+
+    private static List<BuildStep> sniperBuild() {
+        return List.of(
+                s(Sniper.PUPPET, 5),
+                s(Sniper.GOLDEN_EAGLE, 1),
+                s(Sniper.STRAFE, 30),
+                s(Sniper.ARROW_ERUPTION, 30),
+                s(Sniper.BLIZZARD, 30),
+                s(Sniper.GOLDEN_EAGLE, 15),
+                s(Sniper.PUPPET, 20),
+                s(Sniper.MORTAL_BLOW, max(Sniper.MORTAL_BLOW)),
+                s(Sniper.THRUST, max(Sniper.THRUST))
+        );
+    }
+
     private static List<BuildStep> bowmasterBuild() {
         return List.of(
                 s(Bowmaster.HURRICANE, 1),
@@ -127,5 +159,29 @@ public final class BowmanBuilds {
                 s(Bowmaster.HAMSTRING, max(Bowmaster.HAMSTRING)),
                 s(Bowmaster.MAPLE_WARRIOR, max(Bowmaster.MAPLE_WARRIOR))
         );
+    }
+
+    private static List<BuildStep> marksmanBuild() {
+        return List.of(
+                s(Marksman.DRAGONS_BREATH, 1),
+                s(Marksman.FROST_PREY, 1),
+                s(Marksman.PIERCING_ARROW, 1),
+                s(Marksman.SNIPE, 1),
+                s(Marksman.SHARP_EYES, 6),
+                s(Marksman.MARKSMAN_BOOST, 6),
+                s(Marksman.SHARP_EYES, 10),
+                s(Marksman.MARKSMAN_BOOST, 10),
+                s(Marksman.SHARP_EYES, 20),
+                s(Marksman.MARKSMAN_BOOST, 20),
+                s(Marksman.SHARP_EYES, 30),
+                s(Marksman.MARKSMAN_BOOST, 30),
+                s(Marksman.PIERCING_ARROW, 30),
+                s(Marksman.MAPLE_WARRIOR, 30),
+                s(Marksman.SNIPE, max(Marksman.SNIPE)),
+                s(Marksman.FROST_PREY, max(Marksman.FROST_PREY)),
+                s(Marksman.DRAGONS_BREATH, max(Marksman.DRAGONS_BREATH)),
+                s(Marksman.BLIND, max(Marksman.BLIND)),
+                s(Marksman.HEROS_WILL, 5)
+                );
     }
 }
