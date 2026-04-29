@@ -197,6 +197,7 @@ public class BotEntry {
     // or death-looping with no anchor.
     long ownerOfflineOrDeadSinceMs = 0;
     boolean ownerReturnedToTown = false;
+    boolean ownerAwaySafeMode = false;
 
     // Foothold index, rebuilt on map change
     int lastMapId = -1;

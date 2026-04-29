@@ -433,13 +433,33 @@ public class BotChatManager {
             "\\b(respec\\s+ap|reset\\s+ap|rebuild\\s+ap|fix\\s+ap(?:\\s+build)?)\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern LOGOUT_PATTERN = Pattern.compile(
-            "\\b((save\\s+and\\s+)?log\\s*(off|out)|disconnect|(pls|please)\\s+log(\\s+me)?\\s+(off|out))\\b",
+            "(?:(?:i\\s+)?(?:(?:have|got|need)\\s+to|gotta)\\s+)?"
+            + "(?:(?:save\\s+and\\s+)?log\\s*(?:off|out)|disconnect|log\\s+me\\s+(?:off|out))",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern RELOG_PATTERN = Pattern.compile(
-            "\\b(relog|save\\s+and\\s+relog|reconnect|log\\s+back\\s+in)\\b",
+            "(?:(?:i\\s+)?(?:(?:have|got|need)\\s+to|gotta)\\s+)?"
+            + "(?:relog|save\\s+and\\s+relog|reconnect|log\\s+back\\s+in)",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern AWAY_PATTERN = Pattern.compile(
+            "(?:(?:gtg|g2g)"
+            + "|(?:i\\s+)?(?:(?:have|got|need)\\s+to|gotta)\\s+go"
+            + "|(?:i\\s+)?(?:(?:have|got|gotta|need)\\s+to\\s+)?(?:leave|bounce)"
+            + "|(?:(?:i\\s+am|i['’]?m|im)\\s+)?(?:brb|afk)"
+            + "|(?:be\\s+right\\s+back|back\\s+in\\s+(?:a\\s+)?(?:bit|sec|minute|min))"
+            + "|(?:(?:i\\s+am|i['’]?m|im)\\s+)?(?:off|logging\\s+out\\s+soon)"
+            + "|(?:i\\s+)?(?:have|got|gotta)\\s+to\\s+(?:head\\s+out|run))",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern LOGOUT_CONFIRM_PATTERN = Pattern.compile(
             "\\b(yes|yep|yeah|yea|y|ok|sure|confirm|do\\s+it|go\\s+(ahead|for\\s+it))\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern AWAY_TOWN_CONFIRM_PATTERN = Pattern.compile(
+            "^(?:yes|yep|yeah|yea|y|ok|sure|confirm|town|nearest\\s+town|go\\s+town|go\\s+to\\s+town)$",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern AWAY_STAY_CONFIRM_PATTERN = Pattern.compile(
+            "^(?:stay|stay\\s+here|here|idle|wait\\s+here)$",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern AWAY_LOGOUT_CONFIRM_PATTERN = Pattern.compile(
+            "^(?:logout|log\\s*out|log\\s*off|disconnect|save\\s+and\\s+log\\s*(?:out|off))$",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern NEGATIVE_CONFIRM_PATTERN = Pattern.compile(
             "\\b(no|nope|nah|nvm|never\\s*mind|dont|don't|not\\s+now|skip)\\b",
@@ -496,7 +516,7 @@ public class BotChatManager {
     static void handleChat(BotEntry entry, String message) {
         markOwnerActive(entry);
         // Logout / relog — two-step confirmation
-        if (RELOG_PATTERN.matcher(message).find()) {
+        if (entry.pendingAction == null && matchesWholeCommand(RELOG_PATTERN, message)) {
             BotManager.after(BotManager.randMs(900, 1100), () -> {
                 entry.pendingAction = "relog";
                 BotManager.getInstance().issueStop(entry);
@@ -508,7 +528,7 @@ public class BotChatManager {
             });
             return;
         }
-        if (LOGOUT_PATTERN.matcher(message).find()) {
+        if (entry.pendingAction == null && matchesWholeCommand(LOGOUT_PATTERN, message)) {
             BotManager.after(BotManager.randMs(900, 1100), () -> {
                 entry.pendingAction = "logout";
                 BotManager.getInstance().issueStop(entry);
@@ -520,7 +540,18 @@ public class BotChatManager {
             });
             return;
         }
+        if (entry.pendingAction == null && matchesWholeCommand(AWAY_PATTERN, message)) {
+            if (!BotManager.getInstance().isFirstBotEntry(entry)) {
+                return;
+            }
+            BotManager.after(BotManager.randMs(900, 1100), () -> promptOwnerAway(entry));
+            return;
+        }
         if (entry.pendingAction != null) {
+            if ("owner_away".equals(entry.pendingAction)) {
+                handleOwnerAwayChoice(entry, message);
+                return;
+            }
             // Item-choice: three-way "drop / trade / cancel" — handled independently of yes/no
             if ("item_choice".equals(entry.pendingAction)) {
                 String category = entry.pendingDropCategory;
@@ -861,6 +892,72 @@ public class BotChatManager {
                 BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(replies));
                 BotManager.after(BotManager.randMs(900, 1100), () -> BotStarterKitManager.advanceJob(entry.bot, entry.owner, advJob));
             }
+        }
+    }
+
+    private static void promptOwnerAway(BotEntry entry) {
+        entry.pendingAction = "owner_away";
+        BotManager.getInstance().issueStop(entry);
+        if (BotManager.getInstance().shouldOfferTownForAwayCommand(entry)) {
+            BotManager.getInstance().botSay(entry.bot,
+                    "ok, want us to wait at nearest town or logout? say yes/town or logout");
+        } else {
+            BotManager.getInstance().botSay(entry.bot,
+                    "ok, want us to stay safe here or logout? say yes/stay or logout");
+        }
+    }
+
+    private static void handleOwnerAwayChoice(BotEntry entry, String message) {
+        String choice = normalizeCommandText(message);
+        boolean townOffered = BotManager.getInstance().shouldOfferTownForAwayCommand(entry);
+        entry.pendingAction = null;
+
+        if (AWAY_LOGOUT_CONFIRM_PATTERN.matcher(choice).matches()) {
+            BotManager.after(BotManager.randMs(700, 900), () -> {
+                BotManager.getInstance().botSay(entry.bot, "ok, logging us out");
+                logoutOwnerBots(entry);
+            });
+            return;
+        }
+
+        if (AWAY_TOWN_CONFIRM_PATTERN.matcher(choice).matches()) {
+            int ownerId = entry.owner != null ? entry.owner.getId() : 0;
+            if (ownerId != 0) {
+                BotManager.getInstance().issueOwnerAwaySafeModeForOwner(ownerId, townOffered);
+            }
+            BotManager.after(BotManager.randMs(700, 900), () ->
+                    BotManager.getInstance().botSay(entry.bot, townOffered
+                            ? "ok, heading to town and waiting"
+                            : "ok, staying safe here"));
+            return;
+        }
+
+        if (AWAY_STAY_CONFIRM_PATTERN.matcher(choice).matches() && !townOffered) {
+            int ownerId = entry.owner != null ? entry.owner.getId() : 0;
+            if (ownerId != 0) {
+                BotManager.getInstance().issueOwnerAwaySafeModeForOwner(ownerId, false);
+            }
+            BotManager.after(BotManager.randMs(700, 900), () ->
+                    BotManager.getInstance().botSay(entry.bot, "ok, staying safe here"));
+            return;
+        }
+
+        BotManager.after(BotManager.randMs(700, 900), () ->
+                BotManager.getInstance().botSay(entry.bot, "ok nvm, staying with you"));
+    }
+
+    private static void logoutOwnerBots(BotEntry entry) {
+        Character owner = entry.owner;
+        if (owner == null) {
+            return;
+        }
+
+        for (BotEntry owned : BotManager.getInstance().getBotEntries(owner.getId())) {
+            BotManager.getInstance().issueStop(owned);
+            BotManager.after(BotManager.randMs(1200, 1800), () -> {
+                owned.bot.saveCharToDB(true);
+                owned.bot.getClient().disconnect(false, false);
+            });
         }
     }
 

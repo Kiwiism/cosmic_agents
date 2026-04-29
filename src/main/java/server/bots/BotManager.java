@@ -1470,6 +1470,9 @@ public class BotManager {
         }
         if (owner == null) {
             entry.following = false;
+            if (groundAfterMapChange(entry, bot)) {
+                return;
+            }
             // Owner-offline pass-through: when entry.moveTarget is set (currently by
             // the offline-town cluster, but any caller of issueMoveTo) the bot still
             // walks toward it. Same field and movement core as the player "here"
@@ -1478,6 +1481,8 @@ public class BotManager {
             // skipped here.
             if (entry.moveTarget != null) {
                 tickStandaloneMoveTarget(entry, bot, runAiTick);
+            } else {
+                tickIdleEntry(entry, bot);
             }
             return;
         }
@@ -1768,10 +1773,14 @@ public class BotManager {
         boolean inactive = (owner == null) || (owner.getHp() <= 0);
 
         if (!inactive) {
+            if (entry.ownerAwaySafeMode && entry.ownerOfflineOrDeadSinceMs == 0) {
+                return false;
+            }
             if (entry.ownerOfflineOrDeadSinceMs != 0 || entry.ownerReturnedToTown) {
                 boolean justReturnedFromTown = entry.ownerReturnedToTown;
                 entry.ownerOfflineOrDeadSinceMs = 0;
                 entry.ownerReturnedToTown = false;
+                entry.ownerAwaySafeMode = false;
                 // Cancel any in-flight cluster walk: while owner was offline the
                 // only setter of moveTarget was the offline-town path, so clearing
                 // here is safe and avoids stale state when owner reconnects.
@@ -1790,6 +1799,9 @@ public class BotManager {
         }
 
         if (entry.ownerReturnedToTown) {
+            if (entry.ownerAwaySafeMode && entry.ownerOfflineOrDeadSinceMs == 0) {
+                entry.ownerOfflineOrDeadSinceMs = nowMs;
+            }
             return false;
         }
 
@@ -1859,9 +1871,9 @@ public class BotManager {
         entry.moveTarget = null;
         entry.moveTargetPrecise = false;
         entry.grindTarget = null;
-        entry.noAmmo = false;
         entry.degenAttackDone = false;
         entry.buffConsumablesEnabled = false;
+        entry.ownerAwaySafeMode = true;
         townClusterAnchors.remove(ownerCharId);
     }
 
@@ -2180,20 +2192,28 @@ public class BotManager {
      */
     private void tickStandaloneMoveTarget(BotEntry entry, Character bot, boolean runAiTick) {
         // Just warped in (likely via applyTo): rebuild physics state once.
-        if (entry.lastMapId != bot.getMapId()) {
-            entry.fhIndex = BotMovementManager.buildFhIndex(bot.getMap());
-            entry.lastMapId = bot.getMapId();
-            Point cur = bot.getPosition();
-            Point ground = BotPhysicsEngine.findGroundPoint(bot.getMap(), new Point(cur.x, cur.y - 1));
-            BotPhysicsEngine.teleportTo(entry, bot, ground != null ? ground : cur);
-            BotMovementManager.resetEntryStateAfterTeleport(entry);
-            BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), entry.movementProfile);
-            BotMovementManager.broadcastMovement(entry);
+        if (groundAfterMapChange(entry, bot)) {
             return;
         }
 
         BotMovementManager.refreshMovementProfile(entry);
         stepMovementCore(entry, entry.moveTarget, runAiTick);
+    }
+
+    private boolean groundAfterMapChange(BotEntry entry, Character bot) {
+        if (entry.lastMapId == bot.getMapId()) {
+            return false;
+        }
+
+        entry.fhIndex = BotMovementManager.buildFhIndex(bot.getMap());
+        entry.lastMapId = bot.getMapId();
+        Point cur = bot.getPosition();
+        Point ground = BotPhysicsEngine.findGroundPoint(bot.getMap(), new Point(cur.x, cur.y - 1));
+        BotPhysicsEngine.teleportTo(entry, bot, ground != null ? ground : cur);
+        BotMovementManager.resetEntryStateAfterTeleport(entry);
+        BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), entry.movementProfile);
+        BotMovementManager.broadcastMovement(entry);
+        return true;
     }
 
     private boolean handleDeadTick(BotEntry entry, Character bot, Character owner) {
