@@ -1502,6 +1502,7 @@ public class BotManager {
         updateObservedOwnerMotion(entry, ownerPos);
         entry.lastOwnerPos = new Point(ownerPos); // raw owner pos before formation offset/snap — used by path logger
         Point targetPos = targetSnapshot.primaryTargetPos();
+        clearFollowActionMoveWindowIfSettled(entry, botPos, targetSnapshot);
 
         // These run in all modes (idle, follow, grind)
         if (runCommonTickSystems(entry, bot, owner, runAiTick)) {
@@ -1596,6 +1597,7 @@ public class BotManager {
                         entry.moveWindowMs = followDx > BotMovementManager.cfg.FOLLOW_DIST * 3 ? 1000
                                            : followDx > BotMovementManager.cfg.FOLLOW_DIST     ? 200
                                            : 0;
+                        clearFollowActionMoveWindowIfSettled(entry, botPos, targetSnapshot);
                         if (ap.isCloseRangeRoute() && BotCombatManager.isRangedAmmoWeapon(followWeaponType)) {
                             entry.degenAttackDone = true;
                         }
@@ -1722,31 +1724,38 @@ public class BotManager {
                     return;
                 }
             }
-            // Soft kite: pre-emptive step away when target is closing through the comfort
-            // band just outside the retreat trigger. Only valid sample if the target hasn't
-            // changed since last tick (swap or kill resets the baseline).
-            int sampledDx = (target.getObjectId() == entry.lastTargetObjectId) ? entry.lastTargetDx : -1;
-            boolean softKite = !shouldRetreatForRangedSpacing && crossRegionRetreatPos == null
-                    && !entry.inAir && !entry.climbing
-                    && BotAttackExecutionProvider.shouldSoftKite(grindWeaponType, botPos, tp, sampledDx);
-            entry.lastTargetDx = Math.abs(tp.x - botPos.x);
-            entry.lastTargetObjectId = target.getObjectId();
-
             // Retreat positioning is a local combat adjustment, not an inter-region path target.
             // Feeding a synthetic same-Y retreat point into nav while the monster is elsewhere
             // can make rope/ladder bots path back onto the nearby foothold instead of toward
             // the monster's actual region.
             targetPos = crossRegionRetreatPos != null
                     ? crossRegionRetreatPos
-                    : softKite
-                        ? BotAttackExecutionProvider.softKiteTargetPosition(bot, botPos, tp)
-                        : selectGrindNavigationTarget(entry, botPos, tp);
+                    : selectGrindNavigationTarget(entry, botPos, tp);
             if (entry.degenAttackDone && shouldRetreatForRangedSpacing) {
                 entry.degenAttackDone = false;
             }
         }
 
         stepMovementCore(entry, targetPos, runAiTick);
+    }
+
+    private static void clearFollowActionMoveWindowIfSettled(BotEntry entry,
+                                                             Point botPos,
+                                                             TargetSnapshot targetSnapshot) {
+        if (entry == null || !entry.following || entry.moveWindowMs <= 0 || botPos == null || targetSnapshot == null) {
+            return;
+        }
+
+        Point followTargetPos = targetSnapshot.followTargetPos();
+        if (followTargetPos == null) {
+            return;
+        }
+
+        int followStopBand = Math.max(BotMovementManager.cfg.STOP_DIST, BotMovementManager.cfg.FOLLOW_DIST);
+        if (Math.abs(botPos.x - followTargetPos.x) <= followStopBand
+                && Math.abs(botPos.y - followTargetPos.y) <= BotMovementManager.cfg.FOLLOW_Y_CAP) {
+            entry.moveWindowMs = 0;
+        }
     }
 
     private Character resolveTickOwner(BotEntry entry, int ownerCharId) {

@@ -115,8 +115,6 @@ public class BotEntry {
     boolean degenAttackDone = false; // force retreat after an accidental close-range hit
     long retreatHoldUntilMs = 0L; // hysteresis: lock the local retreat goal for a short window
     Point retreatHoldPos = null;  // the locked retreat target — reused while hold is active
-    int lastTargetDx = -1;        // soft-kite: previous-tick dx to grind target, -1 if no sample
-    int lastTargetObjectId = -1;  // soft-kite: oid of target sampled into lastTargetDx
 
     // Shop auto-buy (triggered once per map change)
     volatile boolean shopVisitPending = false;

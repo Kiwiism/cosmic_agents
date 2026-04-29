@@ -670,7 +670,7 @@ class BotCombatManager {
         return findGrindTarget(null, bot);
     }
 
-    /** Returns a random monster from the most convenient 3 reachable targets, so multiple bots spread. */
+    /** Returns the most convenient reachable target (deterministic — closest/best score wins). */
     static Monster findGrindTarget(BotEntry entry, Character bot) {
         long startedAt = System.nanoTime();
         try {
@@ -697,7 +697,7 @@ class BotCombatManager {
                 return null;
             }
 
-            return selectable.get(ThreadLocalRandom.current().nextInt(Math.min(3, selectable.size()))).monster();
+            return selectable.get(0).monster();
         } finally {
             BotPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
         }
@@ -1363,7 +1363,7 @@ class BotCombatManager {
                 .comparingLong(ScoredGrindTarget::graphCost)
                 .thenComparingLong(ScoredGrindTarget::localScore)
                 .thenComparingDouble(ScoredGrindTarget::distanceSq));
-        return scoredTargets.get(ThreadLocalRandom.current().nextInt(Math.min(3, scoredTargets.size()))).monster();
+        return scoredTargets.get(0).monster();
     }
 
     private static long graphTargetCost(GrindGraphContext context, Monster target) {

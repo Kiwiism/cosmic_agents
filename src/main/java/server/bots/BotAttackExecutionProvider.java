@@ -271,37 +271,6 @@ final class BotAttackExecutionProvider {
                 && dy <= BotCombatManager.cfg.RANGED_DEGENERATE_RANGE_Y;
     }
 
-    /**
-     * Soft-kite: trigger a small pre-emptive step away when the target is CLOSING through
-     * the comfort band just outside retreat — prevents the bot from ever entering the
-     * degenerate range. Comfort band is [RANGED_RETREAT_THRESHOLD_X, threshold+50].
-     */
-    static boolean shouldSoftKite(WeaponType weaponType, Point botPos, Point targetPos, int previousDx) {
-        if (!isDegenerateCapableRangedWeapon(weaponType) || botPos == null || targetPos == null) {
-            return false;
-        }
-        if (previousDx < 0) {
-            return false;
-        }
-        int dx = Math.abs(targetPos.x - botPos.x);
-        int dy = Math.abs(targetPos.y - botPos.y);
-        if (dy > BotCombatManager.cfg.RANGED_DEGENERATE_RANGE_Y) {
-            return false;
-        }
-        int kiteMin = BotCombatManager.cfg.RANGED_RETREAT_THRESHOLD_X;
-        int kiteMax = kiteMin + 50;
-        if (dx < kiteMin || dx > kiteMax) {
-            return false;
-        }
-        return dx < previousDx;
-    }
-
-    static Point softKiteTargetPosition(Character bot, Point botPos, Point targetPos) {
-        int direction = pickRetreatDirection(bot, botPos, targetPos);
-        int step = BotCombatManager.cfg.RANGED_DEGENERATE_RANGE_X + 30;
-        return new Point(botPos.x + direction * step, botPos.y);
-    }
-
     static boolean shouldRetreatFromNearbyTarget(WeaponType weaponType, Point botPos, Point targetPos) {
         if (!isDegenerateCapableRangedWeapon(weaponType) || botPos == null || targetPos == null) {
             return false;
