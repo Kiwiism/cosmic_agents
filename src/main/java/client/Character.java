@@ -3237,6 +3237,9 @@ public class Character extends AbstractCharacterObject {
         long total = Math.max(gain + equip + party, -exp.get());
 
         if (level < getMaxLevel() && (allowExpGain || this.getEventInstance() != null)) {
+            // EXP debug tracking
+            ExpDebugTracker.recordExpGain(this, (int) gain, party, equip);
+
             long leftover = 0;
             long nextExp = exp.get() + total;
 

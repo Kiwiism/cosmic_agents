@@ -68,6 +68,7 @@ import client.command.commands.gm2.ClearSlotCommand;
 import client.command.commands.gm2.DcCommand;
 import client.command.commands.gm2.DupeCommand;
 import client.command.commands.gm2.EmpowerMeCommand;
+import client.command.commands.gm2.ExpDebugCommand;
 import client.command.commands.gm2.GachaListCommand;
 import client.command.commands.gm2.GmShopCommand;
 import client.command.commands.gm2.HealCommand;
@@ -411,6 +412,7 @@ public class CommandsExecutor {
         addCommand("sp", 2, SpCommand.class);
         addCommand("ap", 2, ApCommand.class);
         addCommand("empowerme", 2, EmpowerMeCommand.class);
+        addCommand("expdebug", 2, ExpDebugCommand.class);
         addCommand("buffmap", 2, BuffMapCommand.class);
         addCommand("buff", 2, BuffCommand.class);
         addCommand("bomb", 2, BombCommand.class);
