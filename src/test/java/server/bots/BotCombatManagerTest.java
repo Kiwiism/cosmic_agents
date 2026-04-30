@@ -181,6 +181,36 @@ class BotCombatManagerTest {
     }
 
     @Test
+    void shouldCapSingleTargetOverkillWhenAoeDoesMoreUsefulDamage() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        Skill powerStrike = skillWithAttack(Warrior.POWER_STRIKE, 1, 1, 260);
+        Skill slashBlast = skillWithAttack(Warrior.SLASH_BLAST, 1, 6, 120);
+        Monster primary = mockMob(new Point(140, 200), 9300200);
+        Monster secondary = mockMob(new Point(150, 200), 9300201);
+        when(primary.getHp()).thenReturn(100);
+        when(map.getAllMonsters()).thenReturn(List.of(primary, secondary));
+        doAnswer(invocation -> {
+            Skill skill = invocation.getArgument(0);
+            return (byte) (skill.getId() == powerStrike.getId() || skill.getId() == slashBlast.getId() ? 1 : 0);
+        }).when(bot).getSkillLevel(any(Skill.class));
+
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.attackSkillId = powerStrike.getId();
+        entry.aoeSkillId = slashBlast.getId();
+
+        try (MockedStatic<SkillFactory> skillFactory = Mockito.mockStatic(SkillFactory.class)) {
+            skillFactory.when(() -> SkillFactory.getSkill(powerStrike.getId())).thenReturn(powerStrike);
+            skillFactory.when(() -> SkillFactory.getSkill(slashBlast.getId())).thenReturn(slashBlast);
+
+            BotCombatManager.AttackPlan plan = BotCombatManager.planAttack(entry, bot, primary);
+
+            assertEquals(Warrior.SLASH_BLAST, plan.skillId);
+            assertEquals(List.of(primary, secondary), plan.targets);
+        }
+    }
+
+    @Test
     void shouldTreatBasicStaffAttacksAsCloseRange() {
         assertEquals(BotCombatManager.AttackRoute.CLOSE, BotAttackExecutionProvider.determineBasicWeaponRoute(WeaponType.STAFF));
     }
@@ -615,6 +645,7 @@ class BotCombatManagerTest {
         when(mob.getAvoidability()).thenReturn(0);
         when(mob.getWdef()).thenReturn(0);
         when(mob.getMdef()).thenReturn(0);
+        when(mob.getHp()).thenReturn(10_000);
         when(mob.isAlive()).thenReturn(true);
         return mob;
     }

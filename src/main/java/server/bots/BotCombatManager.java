@@ -832,10 +832,22 @@ class BotCombatManager {
                 attackPlan.route == AttackRoute.MAGIC);
         double total = 0.0d;
         for (Monster target : attackPlan.targets) {
-            total += CombatFormulaProvider.getInstance().estimateExpectedDamage(bot, target, attackPlan.numDamage,
+            double expectedDamage = CombatFormulaProvider.getInstance().estimateExpectedDamage(bot, target, attackPlan.numDamage,
                     attackPlan.skillId, damageProfile);
+            total += capDamageByCurrentHp(expectedDamage, target);
         }
         return total;
+    }
+
+    private static double capDamageByCurrentHp(double expectedDamage, Monster target) {
+        if (target == null) {
+            return expectedDamage;
+        }
+        int currentHp = target.getHp();
+        if (currentHp <= 0) {
+            return 0.0d;
+        }
+        return Math.min(expectedDamage, currentHp);
     }
 
     static boolean isTargetInAttackRange(AttackPlan attackPlan, Character bot, Monster target) {
