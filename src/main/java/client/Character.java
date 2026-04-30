@@ -9209,36 +9209,7 @@ public class Character extends AbstractCharacterObject {
     }
 
     private void runAutopotAction(short slot, int itemId) {
-        if (client instanceof BotClient) {
-            runBotAutopotAction(slot, itemId);
-            return;
-        }
         PetAutopotProcessor.runAutopotAction(client, slot, itemId);
-    }
-
-    private void runBotAutopotAction(short slot, int itemId) {
-        if (!isAlive()) {
-            return;
-        }
-        Inventory useInv = getInventory(InventoryType.USE);
-        if (useInv == null) {
-            return;
-        }
-        Item item = useInv.getItem(slot);
-        if (item == null || item.getItemId() != itemId || item.getQuantity() <= 0) {
-            item = useInv.findById(itemId);
-        }
-        if (item == null || item.getQuantity() <= 0) {
-            return;
-        }
-
-        StatEffect stat = ItemInformationProvider.getInstance().getItemEffect(item.getItemId());
-        if (stat == null) {
-            return;
-        }
-
-        InventoryManipulator.removeFromSlot(client, InventoryType.USE, item.getPosition(), (short) 1, false);
-        stat.applyTo(this);
     }
 
     public void setInventory(InventoryType type, Inventory inv) {
