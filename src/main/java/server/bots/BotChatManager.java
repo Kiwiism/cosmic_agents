@@ -49,7 +49,9 @@ public class BotChatManager {
             "(?:move\\s+(?:here|there)|go\\s+(?:here|there)|here|move)(?:\\s+(?:now|pls|please))?",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern FARM_HERE_PATTERN = Pattern.compile(
-            "(?:farm|grind|hunt|train)\\s+here(?:\\s+(?:now|pls|please))?",
+            "(?:(?:farm|grind|hunt|train)\\s+here"
+            + "|(?:go\\s+)?(?:sentry|camp|guard|defend|post\\s+up|anchor)(?:\\s+(?:here|mode))?)"
+            + "(?:\\s+(?:now|pls|please))?",
             Pattern.CASE_INSENSITIVE);
 
     private static final Pattern STOP_PATTERN = Pattern.compile(

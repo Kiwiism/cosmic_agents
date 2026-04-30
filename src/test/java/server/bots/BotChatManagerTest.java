@@ -73,6 +73,22 @@ class BotChatManagerTest {
         assertTrue(BotChatManager.isFarmHereCommand("farm here"));
         assertTrue(BotChatManager.isFarmHereCommand("grind here please"));
         assertFalse(BotChatManager.isFarmHereCommand("Im going to farm here today"));
+
+        assertTrue(BotChatManager.isFarmHereCommand("sentry"));
+        assertTrue(BotChatManager.isFarmHereCommand("go sentry"));
+        assertTrue(BotChatManager.isFarmHereCommand("sentry here"));
+        assertTrue(BotChatManager.isFarmHereCommand("sentry mode"));
+        assertTrue(BotChatManager.isFarmHereCommand("go sentry mode"));
+        assertTrue(BotChatManager.isFarmHereCommand("camp"));
+        assertTrue(BotChatManager.isFarmHereCommand("camp here"));
+        assertTrue(BotChatManager.isFarmHereCommand("guard mode"));
+        assertTrue(BotChatManager.isFarmHereCommand("go defend mode"));
+        assertTrue(BotChatManager.isFarmHereCommand("post up"));
+        assertTrue(BotChatManager.isFarmHereCommand("post up here"));
+        assertTrue(BotChatManager.isFarmHereCommand("anchor here"));
+        assertTrue(BotChatManager.isFarmHereCommand("anchor"));
+        assertFalse(BotChatManager.isFarmHereCommand("Im going to camp today"));
+        assertFalse(BotChatManager.isFarmHereCommand("setting up camp"));
     }
 
     @Test
