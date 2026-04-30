@@ -237,7 +237,7 @@ public final class RangedAttackHandler extends AbstractDealDamageHandler {
             if (slot < 0) {
                 log.warn("<ERROR> Projectile to use was unable to be found.");
             } else {
-                InventoryManipulator.removeFromSlot(c, InventoryType.USE, slot, bulletConsume, false, true);
+                consumeProjectile(chr, c, slot, bulletConsume);
             }
         }
 
@@ -264,6 +264,26 @@ public final class RangedAttackHandler extends AbstractDealDamageHandler {
         }
 
         return new ProjectileContext(true, bulletCount, visibleProjectile);
+    }
+
+    static void consumeProjectile(Character chr, Client c, short slot, short bulletConsume) {
+        if (chr == null) {
+            return;
+        }
+        if (c != null && c.getPlayer() == chr) {
+            InventoryManipulator.removeFromSlot(c, InventoryType.USE, slot, bulletConsume, false, true);
+            return;
+        }
+
+        Inventory inv = chr.getInventory(InventoryType.USE);
+        if (inv == null) {
+            return;
+        }
+        Item item = inv.getItem(slot);
+        if (item == null) {
+            return;
+        }
+        inv.removeItem(slot, bulletConsume, ItemConstants.isRechargeable(item.getItemId()));
     }
 
     private static Packet createAttackPacket(AttackInfo attack, Character chr, int visibleProjectile) {

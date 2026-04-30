@@ -1934,11 +1934,13 @@ public class BotManager {
                     ? selectCrossRegionRetreatTarget(entry, botPos, tp)
                     : null;
 
+            boolean attackAttemptedInRange = false;
             if (!entry.climbing) {
                 boolean couponSeeking = BotPqHooks.isCouponSeeking(entry);
                 if (attackGateOpen && BotCombatManager.isTargetInAttackRange(attackPlan, bot, target)
                         && BotCombatManager.canUseAttackPlanNow(entry, grindWeaponType, attackPlan)
                         && (!couponSeeking || entry.moveWindowMs <= 0)) {
+                    attackAttemptedInRange = true;
                     // In range — attack if grounded, or during ascent of a jump
                     int prevCooldown = entry.attackCooldownMs;
                     BotCombatManager.attackMonster(entry, bot, attackPlan);
@@ -1974,6 +1976,7 @@ public class BotManager {
             // already in firing position.
             if (target != null && !entry.inAir && !entry.climbing
                     && !shouldRetreatForRangedSpacing && crossRegionRetreatPos == null
+                    && !attackAttemptedInRange
                     && BotCombatManager.isTargetInAttackRange(attackPlan, bot, target)) {
                 BotPhysicsEngine.idleOnGround(entry, bot);
                 BotMovementManager.broadcastMovement(entry);

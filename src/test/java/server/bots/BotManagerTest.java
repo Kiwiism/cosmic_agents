@@ -278,6 +278,39 @@ class BotManagerTest {
     }
 
     @Test
+    void shouldKeepMovingWhenInRangeRangedAttackDoesNotFire() {
+        MapleMap map = createEmptyTestMap(910000062);
+        map.getFootholds().insert(new Foothold(new Point(-200, 100), new Point(200, 100), 1));
+        Character bot = mockMovingBot(new Point(100, 100), map);
+        Monster target = mockMob(new Point(-50, 100), 9300500);
+        when(target.getMap()).thenReturn(map);
+
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.grinding = true;
+        entry.grindTarget = target;
+        entry.lastMapId = map.getId();
+        BotCombatManager.AttackPlan rangedPlan = new BotCombatManager.AttackPlan(
+                0, 0, 1, new Rectangle(-200, 50, 300, 100),
+                List.of(target), BotCombatManager.AttackRoute.RANGED,
+                0, 11, 11, 11, 4, 300, 600);
+
+        try (MockedStatic<BotAttackExecutionProvider> attacks =
+                     mockStatic(BotAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS);
+             MockedStatic<BotCombatManager> combat =
+                     mockStatic(BotCombatManager.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
+            attacks.when(() -> BotAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.CLAW);
+            combat.when(() -> BotCombatManager.planAttack(entry, bot, target)).thenReturn(rangedPlan);
+            combat.when(() -> BotCombatManager.isTargetInAttackRange(rangedPlan, bot, target)).thenReturn(true);
+            combat.when(() -> BotCombatManager.canUseAttackPlanNow(entry, WeaponType.CLAW, rangedPlan)).thenReturn(true);
+            combat.when(() -> BotCombatManager.attackMonster(entry, bot, rangedPlan)).thenAnswer(invocation -> null);
+
+            BotManager.getInstance().stepMovementOnly(entry, target.getPosition(), target.getPosition(), false);
+        }
+
+        assertTrue(bot.getPosition().x < 100);
+    }
+
+    @Test
     void shouldResetPhysicsWhenOnlineBotIsSpawnedAtOwnerPosition() {
         MapleMap map = createEmptyTestMap(910000023);
         map.getFootholds().insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
