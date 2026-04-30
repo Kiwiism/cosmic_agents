@@ -163,6 +163,10 @@ class BotCombatManager {
         // Heal is also gated by moveWindowMs > 0, so it cannot fire mid-attack-movement-window.
         public float SUPPORT_HEAL_TARGET_RATIO = 0.90f;
         public int   HEAL_MOVE_WINDOW_MS = 600;
+        // Jump-heal: while following, if the leader is at least this many px ahead horizontally,
+        // kick a diagonal jump toward them just before the heal cast so the bot keeps closing
+        // distance instead of stopping to plant the heal animation. 0 disables.
+        public int   JUMP_HEAL_LEADER_AHEAD_PX = 80;
     }
 
     static Config cfg = new Config();
@@ -568,6 +572,21 @@ class BotCombatManager {
         List<Monster> undeadTargets = getUndeadMobsInHealRange(bot, fx);
         if (!partyNeedsHeal && undeadTargets.isEmpty()) return false;
 
+        // Jump-heal: when following and the leader has pulled ahead, kick a diagonal jump toward
+        // them right before the cast. The top guard already permits casts while inAir, so the
+        // heal animation plays mid-flight instead of forcing a planted stand-and-cast.
+        boolean jumpHealing = false;
+        if (entry.following && !entry.inAir && cfg.JUMP_HEAL_LEADER_AHEAD_PX > 0) {
+            Character anchor = BotManager.getInstance().resolveFollowAnchor(entry, entry.owner);
+            if (anchor != null && anchor != bot && anchor.getMap() == bot.getMap()) {
+                int dx = anchor.getPosition().x - bot.getPosition().x;
+                if (Math.abs(dx) >= cfg.JUMP_HEAL_LEADER_AHEAD_PX) {
+                    BotMovementManager.initiateJump(entry, bot, dx);
+                    jumpHealing = true;
+                }
+            }
+        }
+
         if (!fx.canPaySkillCost(bot) || !fx.applyTo(bot)) return false;
 
         long now = System.currentTimeMillis();
@@ -588,9 +607,13 @@ class BotCombatManager {
         sendHealAttack(entry.healSkillId, lvl, bot, undeadTargets, fallbackAttackData, skillTiming);
         markAlerted(entry);
         entry.moveWindowMs = Math.max(entry.moveWindowMs, cfg.HEAL_MOVE_WINDOW_MS);
-        // Stop walk-in-place: broadcast STAND→ALERT immediately on the heal tick.
-        entry.moveDir = 0;
-        BotMovementManager.broadcastMovement(entry);
+        if (!jumpHealing) {
+            // Stop walk-in-place: broadcast STAND→ALERT immediately on the heal tick.
+            // Skipped on jump-heal — initiateJump already broadcast the airborne stance and
+            // zeroing moveDir here would cancel the diagonal air-steering toward the leader.
+            entry.moveDir = 0;
+            BotMovementManager.broadcastMovement(entry);
+        }
         return true;
     }
 
