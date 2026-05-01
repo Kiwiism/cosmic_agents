@@ -100,7 +100,7 @@ class BotEquipManager {
         // slots; for the weapon slot we ALSO retain items where only the stat req is unmet
         // (job/level/fame pass) so they can win via the lookahead pool.
         Map<Short, List<Equip>> bySlot = new LinkedHashMap<>();
-        List<Equip> weaponLookaheadPool = new ArrayList<>();
+        List<Equip> weaponLookaheadPool = buildWeaponLookaheadPool(bot, ii, eqpInv);
         for (Item item : eqpInv.list()) {
             if (ii.isCash(item.getItemId())) continue;
             if (item == pendingOffer) continue;
@@ -115,9 +115,6 @@ class BotEquipManager {
                 if (!isWeaponCompatible(bot, ii.getWeaponType(equip.getItemId()))) continue;
                 if (wearableNow) {
                     bySlot.computeIfAbsent(primary, k -> new ArrayList<>()).add(equip);
-                    weaponLookaheadPool.add(equip);
-                } else if (statOnlyBlocked(bot, ii, equip)) {
-                    weaponLookaheadPool.add(equip);
                 }
             } else if (wearableNow) {
                 bySlot.computeIfAbsent(primary, k -> new ArrayList<>()).add(equip);
@@ -191,7 +188,8 @@ class BotEquipManager {
 
         // Ring slots: greedy — find best unequipped ring per slot from a shared pool
         if (bySlot.containsKey((short) -12)) {
-            if (autoEquipRings(bot, ii, weaponType, bySlot.get((short) -12), eqdInv, mobProfile)) {
+            if (autoEquipRings(bot, ii, weaponType, bySlot.get((short) -12), eqdInv, mobProfile,
+                                weaponLookaheadPool)) {
                 changed = true;
             }
         }
@@ -209,6 +207,30 @@ class BotEquipManager {
                 Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4, bot.getFame());
     }
 
+    /**
+     * Builds a weapon lookahead pool from the given equip inventory. Includes both
+     * currently-wearable weapons and stat-only-blocked weapons so that non-weapon slot
+     * scoring can benchmark against any weapon the character could unlock.
+     */
+    private static List<Equip> buildWeaponLookaheadPool(Character bot, ItemInformationProvider ii, Inventory equipInv) {
+        List<Equip> pool = new ArrayList<>();
+        for (Item item : equipInv.list()) {
+            if (ii.isCash(item.getItemId())) continue;
+            if (!(item instanceof Equip equip)) continue;
+            String textSlot = ii.getEquipmentSlot(item.getItemId());
+            EquipSlot eslot = EquipSlot.getFromTextSlot(textSlot);
+            short primary = (short) eslot.getPrimarySlot();
+            if (primary != (short) -11) continue;
+            if (!isWeaponCompatible(bot, ii.getWeaponType(equip.getItemId()))) continue;
+            if (ii.canWearEquipment(bot, equip, primary)) {
+                pool.add(equip);
+            } else if (statOnlyBlocked(bot, ii, equip)) {
+                pool.add(equip);
+            }
+        }
+        return pool;
+    }
+
     static List<EquipRecommendation> findRecommendedEquips(Character receiver, Character holder) {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         Inventory holderEquipInv = holder.getInventory(InventoryType.EQUIP);
@@ -222,21 +244,7 @@ class BotEquipManager {
         // the receiver could unlock, not just the currently-equipped weapon. Without this, a
         // +STR ring could be recommended over a +ACC ring even when the +ACC ring unlocks a
         // higher-tier weapon producing more expected DPS (hitrate-adjusted).
-        List<Equip> weaponLookaheadPool = new ArrayList<>();
-        for (Item item : receiverEquipInv.list()) {
-            if (ii.isCash(item.getItemId())) continue;
-            if (!(item instanceof Equip equip)) continue;
-            String textSlot = ii.getEquipmentSlot(item.getItemId());
-            EquipSlot eslot = EquipSlot.getFromTextSlot(textSlot);
-            short primary = (short) eslot.getPrimarySlot();
-            if (primary != (short) -11) continue;
-            if (!isWeaponCompatible(receiver, ii.getWeaponType(equip.getItemId()))) continue;
-            if (ii.canWearEquipment(receiver, equip, primary)) {
-                weaponLookaheadPool.add(equip);
-            } else if (statOnlyBlocked(receiver, ii, equip)) {
-                weaponLookaheadPool.add(equip);
-            }
-        }
+        List<Equip> weaponLookaheadPool = buildWeaponLookaheadPool(receiver, ii, receiverEquipInv);
 
         Map<Short, List<Equip>> bySlot = new LinkedHashMap<>();
         for (Item item : holderEquipInv.list()) {
@@ -355,21 +363,7 @@ class BotEquipManager {
         MapDamageProfile mobProfile = MapDamageProfile.snapshot(receiver);
 
         // Build weapon lookahead pool from receiver's unequipped weapons (mirrors findRecommendedEquips).
-        List<Equip> weaponLookaheadPool = new ArrayList<>();
-        for (Item item : receiverEquipInv.list()) {
-            if (ii.isCash(item.getItemId())) continue;
-            if (!(item instanceof Equip eq)) continue;
-            String tSlot = ii.getEquipmentSlot(item.getItemId());
-            EquipSlot eSlot = EquipSlot.getFromTextSlot(tSlot);
-            short p = (short) eSlot.getPrimarySlot();
-            if (p != (short) -11) continue;
-            if (!isWeaponCompatible(receiver, ii.getWeaponType(eq.getItemId()))) continue;
-            if (ii.canWearEquipment(receiver, eq, p)) {
-                weaponLookaheadPool.add(eq);
-            } else if (statOnlyBlocked(receiver, ii, eq)) {
-                weaponLookaheadPool.add(eq);
-            }
-        }
+        List<Equip> weaponLookaheadPool = buildWeaponLookaheadPool(receiver, ii, receiverEquipInv);
 
         if (isRingSlot(primarySlot)) {
             return findRecommendedRingForItem(receiver, ii, weaponType, candidate, receiverEquippedInv, mobProfile, weaponLookaheadPool);
@@ -515,7 +509,8 @@ class BotEquipManager {
 
     private static boolean autoEquipRings(Character bot, ItemInformationProvider ii, WeaponType wt,
                                            List<Equip> candidates, Inventory eqdInv,
-                                           MapDamageProfile mobProfile) {
+                                           MapDamageProfile mobProfile,
+                                           List<Equip> weaponLookaheadPool) {
         boolean changed = false;
         List<Equip> pool = new ArrayList<>(candidates);
         Equip effectiveWeapon = compatibleWeaponOrNull(bot, ii, (Equip) eqdInv.getItem((short) -11));
@@ -524,7 +519,8 @@ class BotEquipManager {
             List<Equip> eligible = pool.stream()
                     .filter(c -> ii.canWearEquipment(bot, c, rs))
                     .collect(Collectors.toList());
-            Equip best = findBestWithLookahead(bot, ii, wt, current, eligible, mobProfile, null, effectiveWeapon);
+            Equip best = findBestWithLookahead(bot, ii, wt, current, eligible, mobProfile,
+                                                weaponLookaheadPool, effectiveWeapon);
             if (best != null && best != current) {
                 InventoryManipulator.handleItemMove(bot.getClient(), InventoryType.EQUIP, best.getPosition(), rs, (short) 1);
                 pool.remove(best);
