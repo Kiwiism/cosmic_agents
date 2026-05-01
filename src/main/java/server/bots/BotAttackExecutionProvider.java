@@ -90,10 +90,12 @@ final class BotAttackExecutionProvider {
         int cooldownMs = toCooldownMs(adjustAttackDelayMillis(rawAnimationDelayMs, effectiveAttackSpeed));
         int hitDelayMs = adjustAttackDelayMillis(rawHitDelayMs, effectiveAttackSpeed);
         int stance = attackPacketStance(facingLeft);
+        // Ranged route must use clientProjectileHitBox so the bot's reach scales with
+        // CLIENT_PROJECTILE_BASE_RANGE + Keen-Eyes bonus. The weapon's afterimage WZ data
+        // (e.g. claws share swordOL with melee, which has lt/rb vectors) reports a near-body
+        // swing rect that would cap basic claw/bow/etc. reach at ~80 px.
         Rectangle hitBox = closeRangeRoute
                 ? closeRangeBasicHitBox(bot.getPosition(), facingLeft)
-                : profile.hasBoundingBox()
-                ? profile.calculateBoundingBox(bot.getPosition(), facingLeft)
                 : rangedBasicHitBox(route, bot, facingLeft);
 
         return new BasicAttackData(hitBox, display, direction, direction, stance, effectiveAttackSpeed,
