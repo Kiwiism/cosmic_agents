@@ -649,21 +649,17 @@ class BotCombatManager {
         attack.numAttacked = undeadTargets.size();
         attack.numAttackedAndDamage = (undeadTargets.size() << 4) | 1;
         attack.speed = fallbackAttackData.speed();
-        // Real cleric Heal packet (captured in monitored-packets-cleric-heal-only.log) encodes:
-        //   direction byte = bodyActionId("alert2") = 41 (0x29) — makes other clients render the
-        //                    caster in the magic-casting "alert2" pose rather than stance 0 (idle
-        //                    frame 0) which looked like walking-in-place.
-        //   stance    byte = facingLeft ? 0x80 : 0x00 — close-range facing mask. Ranged/magic
-        //                    attacks on this server's non-Heal paths use clientAttackStanceId for
-        //                    this byte, but the live packet clearly uses the close-range mask, so
-        //                    we mimic that layout via mimicCloseRangePacketFields.
+        // Real cleric Heal packet (captured in monitored-packets-cleric-heal-only.log) encodes
+        // the direction byte as bodyActionId("alert2") = 41 (0x29) so other clients render the
+        // caster in the magic-casting "alert2" pose rather than the idle-frame default. The
+        // stance byte is the shared facing mask used by every attack-plan builder.
         boolean facingLeft = bot.isFacingLeft();
         BotAttackExecutionProvider.CloseRangePacketFields castFields =
                 BotAttackExecutionProvider.mimicCloseRangePacketFields("alert2", "alert2", facingLeft);
         attack.display = castFields.display();
         attack.direction = castFields.bodyActionId();
-        attack.stance = castFields.facingMask();
-        attack.rangedirection = castFields.facingMask();
+        attack.stance = BotAttackExecutionProvider.attackPacketStance(facingLeft);
+        attack.rangedirection = BotAttackExecutionProvider.attackPacketStance(facingLeft);
         attack.ranged = false;
         attack.magic = damageProfile.magicAttack();
         attack.targets = new HashMap<>();
@@ -1012,7 +1008,7 @@ class BotCombatManager {
         return new AttackPlan(entry.aoeSkillId, skillLevel, attackCount, hitBox, targets,
                 route, route == AttackRoute.CLOSE ? closeRangePacketFields.display() : 0,
                 direction, direction,
-                route == AttackRoute.CLOSE ? closeRangePacketFields.facingMask() : facingLeft ? -128 : 0,
+                BotAttackExecutionProvider.attackPacketStance(facingLeft),
                 fallbackAttackData.speed(), skillTiming.hitDelayMs(), skillTiming.cooldownMs());
     }
 
@@ -1071,7 +1067,7 @@ class BotCombatManager {
         return new AttackPlan(entry.attackSkillId, skillLevel, attackCount, hitBox, List.of(primaryTarget),
                 route, route == AttackRoute.CLOSE ? closeRangePacketFields.display() : 0,
                 direction, direction,
-                route == AttackRoute.CLOSE ? closeRangePacketFields.facingMask() : facingLeft ? -128 : 0,
+                BotAttackExecutionProvider.attackPacketStance(facingLeft),
                 fallbackAttackData.speed(), skillTiming.hitDelayMs(), skillTiming.cooldownMs());
     }
 

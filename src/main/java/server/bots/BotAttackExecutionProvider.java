@@ -89,7 +89,7 @@ final class BotAttackExecutionProvider {
 
         int cooldownMs = toCooldownMs(adjustAttackDelayMillis(rawAnimationDelayMs, effectiveAttackSpeed));
         int hitDelayMs = adjustAttackDelayMillis(rawHitDelayMs, effectiveAttackSpeed);
-        int stance = closeRangeRoute ? closeRangePacketFields.facingMask() : clientAttackStanceId(action, fallbackAction);
+        int stance = attackPacketStance(facingLeft);
         Rectangle hitBox = closeRangeRoute
                 ? closeRangeBasicHitBox(bot.getPosition(), facingLeft)
                 : profile.hasBoundingBox()
@@ -130,7 +130,7 @@ final class BotAttackExecutionProvider {
                 : bot != null ? rangedBasicHitBox(route, bot, facingLeft) : null;
 
         return new BasicAttackData(hitBox, display, direction, direction,
-                closeRangeRoute ? closeRangePacketFields.facingMask() : clientAttackStanceId(action, attackSpec.primaryAction()),
+                attackPacketStance(facingLeft),
                 effectiveAttackSpeed, defaultHitDelayMs(adjustedAnimationDelayMs), toCooldownMs(adjustedAnimationDelayMs),
                 route);
     }
@@ -164,21 +164,13 @@ final class BotAttackExecutionProvider {
                 facingLeft ? 0x80 : 0x00);
     }
 
-    // These ids match the WASM client's Stance::Id enum for attack stances and are used
-    // by packet byte 3 on ranged/magic routes.
-    static int clientAttackStanceId(String actionName, String fallbackAction) {
-        BotAttackDataProvider provider = BotAttackDataProvider.getInstance();
-        int stanceId = provider.getAttackStanceId(actionName);
-        if (stanceId > 0) {
-            return stanceId;
-        }
-        if (fallbackAction != null && !fallbackAction.equals(actionName)) {
-            int fallbackStanceId = provider.getAttackStanceId(fallbackAction);
-            if (fallbackStanceId > 0) {
-                return fallbackStanceId;
-            }
-        }
-        return 0;
+    // Packet byte 3 on every attack route (close-range, ranged, magic) is purely the
+    // facing-direction bit. Per logs/monitored-packets-assasin-* the v83 client renders
+    // nothing when this byte carries a non-zero action id on a ranged star throw, even
+    // though the server still applies damage. Single source of truth for all attack-plan
+    // builders so basic and skill packets stay in lockstep.
+    static int attackPacketStance(boolean facingLeft) {
+        return facingLeft ? 0x80 : 0x00;
     }
 
     static List<String> resolveAttackActions(BotAttackDataProvider.AttackAnimationSpec attackSpec, List<String> sourceActions) {
