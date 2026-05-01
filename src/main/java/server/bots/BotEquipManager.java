@@ -742,10 +742,22 @@ class BotEquipManager {
         if (loss != null) sim = sim.swap(loss, null);
         if (gain != null) sim = sim.swap(null, gain);
 
+        // Lock in candidate-as-weapon early so the unlock probe uses the right weapon type
+        // when scoring damage-driven slot unlocks.
+        boolean candidateIsWeapon = candidate != null && ItemConstants.isWeapon(candidate.getItemId());
+        Equip simWeapon = currentWeapon;
+        WeaponType simWt = wt;
+        if (candidateIsWeapon) {
+            simWeapon = candidate;
+            WeaponType cWt = ii.getWeaponType(candidate.getItemId());
+            if (cWt != null) simWt = cWt;
+        }
+
         // Iteratively probe non-weapon slot unlocks: a candidate's stats may unlock a hat,
         // whose stats in turn unlock pants, etc. Each pass lets the simulated state catch
         // up; we re-run the weapon probe afterward so weapon damage reflects the final
-        // post-unlock stat totals.
+        // post-unlock stat totals. Selection metric is projected damage (magic for mages),
+        // so a +11-secondary item doesn't beat a +10-main one when main drives more damage.
         int defDelta = 0;
         int statDelta = 0;
         if (lookaheadBySlot != null && !lookaheadBySlot.isEmpty()) {
@@ -759,14 +771,12 @@ class BotEquipManager {
                 short gs = primarySlotOf(ii, gain);
                 if (gs != 0) simSlot.put(gs, gain);
             }
-            // Equipping an overall via candidate displaces pants in the simulated state.
             if (candidate != null && isOverall(candidate, ii)) simSlot.remove((short) -6);
 
             Set<Equip> applied = new HashSet<>();
             boolean changed = true;
             while (changed) {
                 changed = false;
-                // Iterate slots in deterministic order for repeatable scoring.
                 List<Short> slots = lookaheadBySlot.keySet().stream().sorted().collect(Collectors.toList());
                 for (Short slotKey : slots) {
                     short slot = slotKey;
@@ -774,21 +784,23 @@ class BotEquipManager {
                     List<Equip> pool = lookaheadBySlot.get(slot);
                     if (pool == null || pool.isEmpty()) continue;
                     Equip currentInSlot = simSlot.get(slot);
-                    int currentContrib = usefulStatSum(currentInSlot, sim.job());
+                    int currentObj = unlockObjective(sim, ii, simWt, mobProfile);
                     Equip bestUnlock = null;
-                    int bestContrib = currentContrib;
+                    StatSnapshot bestTrial = sim;
+                    int bestObj = currentObj;
                     for (Equip cand : pool) {
                         if (applied.contains(cand)) continue;
                         if (cand == currentInSlot) continue;
                         if (!ii.meetsEquipRequirements(cand, sim.job(), sim.level(),
                                 sim.str(), sim.dex(), sim.int_(), sim.luk(), sim.fame())) continue;
-                        int contrib = usefulStatSum(cand, sim.job());
-                        if (contrib > bestContrib) { bestContrib = contrib; bestUnlock = cand; }
+                        StatSnapshot trial = sim.swap(currentInSlot, cand);
+                        int obj = unlockObjective(trial, ii, simWt, mobProfile);
+                        if (obj > bestObj) { bestObj = obj; bestUnlock = cand; bestTrial = trial; }
                     }
                     if (bestUnlock != null) {
-                        sim = sim.swap(currentInSlot, bestUnlock);
+                        sim = bestTrial;
                         defDelta += defScore(bestUnlock) - defScore(currentInSlot);
-                        statDelta += bestContrib - currentContrib;
+                        statDelta += usefulStatSum(bestUnlock, sim.job()) - usefulStatSum(currentInSlot, sim.job());
                         applied.add(bestUnlock);
                         simSlot.put(slot, bestUnlock);
                         changed = true;
@@ -797,17 +809,10 @@ class BotEquipManager {
             }
         }
 
-        // Weapon probe: existing semantics — if candidate is itself a weapon, fix it; else
-        // probe the weapon pool (under post-unlock stats) for the highest-damage option.
+        // Weapon probe: existing semantics — if candidate is a weapon, simWt is already set;
+        // else probe the weapon pool under post-unlock stats for the highest-damage option.
         List<Equip> weaponPool = lookaheadBySlot != null ? lookaheadBySlot.get((short) -11) : null;
-        boolean candidateIsWeapon = candidate != null && ItemConstants.isWeapon(candidate.getItemId());
-        Equip simWeapon = currentWeapon;
-        WeaponType simWt = wt;
-        if (candidateIsWeapon) {
-            simWeapon = candidate;
-            WeaponType cWt = ii.getWeaponType(candidate.getItemId());
-            if (cWt != null) simWt = cWt;
-        } else if (weaponPool != null && !weaponPool.isEmpty()) {
+        if (!candidateIsWeapon && weaponPool != null && !weaponPool.isEmpty()) {
             int baselineDmg = damageWith(sim, ii, simWt, mobProfile);
             int bestDmg = baselineDmg;
             StatSnapshot bestSim = sim;
@@ -843,6 +848,19 @@ class BotEquipManager {
         int cycleMs = simWeapon != null ? weaponCycleMs(simWeapon.getItemId()) : 0;
         if (cycleMs > 0) dmg = (int) (dmg * 1000.0 / cycleMs);
         return new EquipScore(dmg, def, stat);
+    }
+
+    /**
+     * Single objective for non-weapon unlock selection: damage for physical jobs, magic
+     * score for mages, 0 when no weapon is in play. Aligns probe selection with the same
+     * metric used to score the candidate as a whole, so a +secondary unlock can't beat a
+     * +primary unlock when primary drives more damage.
+     */
+    private static int unlockObjective(StatSnapshot sim, ItemInformationProvider ii,
+                                        WeaponType simWt, MapDamageProfile mobProfile) {
+        if (isMageJob(sim.job())) return magicScore(sim);
+        if (simWt == null) return 0;
+        return damageWith(sim, ii, simWt, mobProfile);
     }
 
     private static short primarySlotOf(ItemInformationProvider ii, Equip e) {
