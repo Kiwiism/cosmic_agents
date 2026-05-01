@@ -820,7 +820,8 @@ class BotMovementManagerTest {
         long before = System.currentTimeMillis();
         assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         assertEquals(BotFidgetMode.SPAM_SIDEWAYS, entry.fidgetMode);
-        assertTrue(entry.moveDir != 0, "sideway spam should hold a left/right movement input");
+        assertTrue(entry.fidgetMoveDir != 0, "sideway spam should keep an active sideways fidget direction");
+        assertTrue(bot.getPosition().x != 100, "sideway spam should cause sideways motion during the tick");
         long after = System.currentTimeMillis();
         assertTrue(entry.nextFidgetActionAtMs >= before + entry.fidgetActionBaseDelayMs
                         && entry.nextFidgetActionAtMs <= after + entry.fidgetActionBaseDelayMs + 50,
