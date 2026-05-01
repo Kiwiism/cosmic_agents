@@ -769,6 +769,8 @@ public class BotChatManager {
         } else if (isFollowCommand(message)) {
             BotManager.after(BotManager.randMs(1500, 2000), () -> {
                 BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
+                entry.nextGearSuggestionAt = 0;
+                maybeSuggestGearToSiblings(entry, entry.bot);
                 BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(FOLLOW_REPLIES));
                 BotPotionManager.checkPotShareOnModeStart(entry, entry.bot);
                 BotManager.after(BotManager.randMs(250, 750), () -> BotManager.getInstance().issueFollowOwner(entry));
@@ -776,6 +778,8 @@ public class BotChatManager {
         } else if (isGrindCommand(message)) {
             BotManager.after(BotManager.randMs(1500, 2000), () -> {
                 BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
+                entry.nextGearSuggestionAt = 0;
+                maybeSuggestGearToSiblings(entry, entry.bot);
                 BotPotionManager.setupAutopotForBot(entry.bot);
                 BotManager.getInstance().botSay(entry.bot, BotPotionManager.grindStartMessage(entry.bot));
                 BotPotionManager.checkPotShareOnModeStart(entry, entry.bot);
@@ -788,6 +792,8 @@ public class BotChatManager {
             BotManager.after(BotManager.randMs(900, 1100), () -> {
                 BotManager.getInstance().issueStop(entry);
                 BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
+                entry.nextGearSuggestionAt = 0;
+                maybeSuggestGearToSiblings(entry, entry.bot);
                 BotManager.after(BotManager.randMs(1400, 1600), () ->
                         BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(STOP_REPLIES)));
             });

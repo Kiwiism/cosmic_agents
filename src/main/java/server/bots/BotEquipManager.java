@@ -178,6 +178,22 @@ class BotEquipManager {
                 if (compareScores(scoreEquipFull(bot, ii, weaponType, effectiveCurrent, best, pants, mobProfile, lookahead, effectiveWeapon),
                                   scoreEquipFull(bot, ii, weaponType, effectiveCurrent, effectiveCurrent, null, mobProfile, lookahead, effectiveWeapon)) <= 0) best = effectiveCurrent;
             }
+            // Top+pants combo may beat an overall even when no top beats it alone.
+            if (slot == (short) -5 && best == effectiveCurrent && isOverall(current, ii)) {
+                List<Equip> topCands = bySlot.getOrDefault(slot, List.of()).stream()
+                        .filter(e -> !isOverall(e, ii)).collect(Collectors.toList());
+                List<Equip> pantsCands = bySlot.getOrDefault((short) -6, List.of());
+                if (!topCands.isEmpty() && !pantsCands.isEmpty()) {
+                    Equip bestTop = findBestWithLookahead(bot, ii, weaponType, null, topCands, mobProfile, lookahead, effectiveWeapon);
+                    Equip bestPants = findBestWithLookahead(bot, ii, weaponType, null, pantsCands, mobProfile, lookahead, effectiveWeapon);
+                    if (bestTop != null && bestPants != null &&
+                            compareScores(
+                                scoreEquipFull(bot, ii, weaponType, current, bestTop, null, mobProfile, lookahead, effectiveWeapon),
+                                scoreEquipFull(bot, ii, weaponType, current, current, bestPants, mobProfile, lookahead, effectiveWeapon)) > 0) {
+                        best = bestTop;
+                    }
+                }
+            }
             if (best != null && best != current) {
                 InventoryManipulator.handleItemMove(bot.getClient(), InventoryType.EQUIP, best.getPosition(), slot, (short) 1);
                 changed = true;
@@ -314,6 +330,22 @@ class BotEquipManager {
                 if (compareScores(scoreEquipFull(receiver, ii, weaponType, effectiveCurrent, best, pants, mobProfile, lookahead, effectiveWeapon),
                                   scoreEquipFull(receiver, ii, weaponType, effectiveCurrent, effectiveCurrent, null, mobProfile, lookahead, effectiveWeapon)) <= 0) best = effectiveCurrent;
             }
+            // Top+pants combo may beat an overall even when no top beats it alone.
+            if (slot == (short) -5 && best == effectiveCurrent && isOverall(current, ii)) {
+                List<Equip> topCands = bySlot.getOrDefault(slot, List.of()).stream()
+                        .filter(e -> !isOverall(e, ii)).collect(Collectors.toList());
+                List<Equip> pantsCands = bySlot.getOrDefault((short) -6, List.of());
+                if (!topCands.isEmpty() && !pantsCands.isEmpty()) {
+                    Equip bestTop = findBestWithLookahead(receiver, ii, weaponType, null, topCands, mobProfile, lookahead, effectiveWeapon);
+                    Equip bestPants = findBestWithLookahead(receiver, ii, weaponType, null, pantsCands, mobProfile, lookahead, effectiveWeapon);
+                    if (bestTop != null && bestPants != null &&
+                            compareScores(
+                                scoreEquipFull(receiver, ii, weaponType, current, bestTop, null, mobProfile, lookahead, effectiveWeapon),
+                                scoreEquipFull(receiver, ii, weaponType, current, current, bestPants, mobProfile, lookahead, effectiveWeapon)) > 0) {
+                        best = bestTop;
+                    }
+                }
+            }
             if (best != null && best != current) {
                 recommendations.add(new EquipRecommendation(slot, current, best));
                 if (slot == (short) -5) overallRec = isOverall(best, ii);
@@ -382,6 +414,25 @@ class BotEquipManager {
             if (weapon != null && ii.isTwoHanded(weapon.getItemId())) return null;
         }
 
+        // Pants need a top — when an overall is worn, only suggest if pants+best-available-top beats it.
+        if (primarySlot == (short) -6 && isOverall(receiverEquippedInv.getItem((short) -5), ii)) {
+            Equip overall = (Equip) receiverEquippedInv.getItem((short) -5);
+            Equip effWeapon = compatibleWeaponOrNull(receiver, ii, (Equip) receiverEquippedInv.getItem((short) -11));
+            List<Equip> topCands = new ArrayList<>();
+            for (Item it : receiverEquipInv.list()) {
+                if (!(it instanceof Equip e)) continue;
+                String ts = ii.getEquipmentSlot(e.getItemId());
+                if (ts == null) continue;
+                short ps = (short) EquipSlot.getFromTextSlot(ts).getPrimarySlot();
+                if (ps == (short) -5 && !isOverall(e, ii) && ii.canWearEquipment(receiver, e, ps)) topCands.add(e);
+            }
+            if (topCands.isEmpty()) return null;
+            Equip bestTop = findBestWithLookahead(receiver, ii, weaponType, null, topCands, mobProfile, weaponLookaheadPool, effWeapon);
+            if (bestTop == null || compareScores(
+                    scoreEquipFull(receiver, ii, weaponType, overall, bestTop, null, mobProfile, weaponLookaheadPool, effWeapon),
+                    scoreEquipFull(receiver, ii, weaponType, overall, overall, candidate, mobProfile, weaponLookaheadPool, effWeapon)) <= 0) return null;
+        }
+
         Equip current = (Equip) receiverEquippedInv.getItem(primarySlot);
         if (primarySlot == (short) -11) {
             current = compatibleWeaponOrNull(receiver, ii, current);
@@ -390,6 +441,11 @@ class BotEquipManager {
         // Lookahead applies only when scoring non-weapon slots.
         List<Equip> lookahead = primarySlot == (short) -11 ? null : weaponLookaheadPool;
         EquipScore candidateScore = scoreEquipFull(receiver, ii, weaponType, current, candidate, null, mobProfile, lookahead, effectiveWeapon);
+        // Overall displaces pants — score candidate against current top+pants combined.
+        if (primarySlot == (short) -5 && isOverall(candidate, ii)) {
+            Equip pants = (Equip) receiverEquippedInv.getItem((short) -6);
+            candidateScore = scoreEquipFull(receiver, ii, weaponType, current, candidate, pants, mobProfile, lookahead, effectiveWeapon);
+        }
         EquipScore currentScore = scoreEquipFull(receiver, ii, weaponType, current, current, null, mobProfile, lookahead, effectiveWeapon);
         if (compareScores(candidateScore, currentScore) <= 0) {
             return null;
