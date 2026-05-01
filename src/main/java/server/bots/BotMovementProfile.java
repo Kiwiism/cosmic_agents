@@ -9,11 +9,15 @@ import java.io.Serializable;
 record BotMovementProfile(int totalSpeedStat, int totalJumpStat) implements Serializable {
     static final int BASE_TOTAL_STAT = 100;
     static final int STAT_BUCKET_SIZE = 5;
+    static final int MAX_EFFECTIVE_SPEED_STAT = 200;
+    static final int MAX_EFFECTIVE_JUMP_STAT = 123;
     static final BotMovementProfile BASE = new BotMovementProfile(BASE_TOTAL_STAT, BASE_TOTAL_STAT);
 
     BotMovementProfile {
         totalSpeedStat = bucketStat(totalSpeedStat);
         totalJumpStat = bucketStat(totalJumpStat);
+        totalSpeedStat = Math.min(totalSpeedStat, MAX_EFFECTIVE_SPEED_STAT);
+        totalJumpStat = Math.min(totalJumpStat, MAX_EFFECTIVE_JUMP_STAT);
     }
 
     static BotMovementProfile base() {

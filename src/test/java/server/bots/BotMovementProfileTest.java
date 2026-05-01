@@ -28,6 +28,14 @@ class BotMovementProfileTest {
     }
 
     @Test
+    void shouldCapEffectivePhysicsStats() {
+        BotMovementProfile profile = new BotMovementProfile(240, 130);
+
+        assertEquals(200, profile.totalSpeedStat());
+        assertEquals(123, profile.totalJumpStat());
+    }
+
+    @Test
     void shouldUseBaseStatsWhenMapForcesMovementSkillLimit() {
         MapleMap map = new MapleMap(100000202, 0, 0, 100000000, 1.0f);
         map.setFieldLimit((int) FieldLimit.MOVEMENTSKILLS.getValue());
