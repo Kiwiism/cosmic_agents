@@ -8,9 +8,12 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -105,25 +108,12 @@ public class ExpDebugTracker {
      */
     public static List<ExpSession> startPartyTracking(Character leader) {
         List<ExpSession> sessions = new ArrayList<>();
-        List<Character> members = new ArrayList<>();
-
-        // Add the leader
-        members.add(leader);
-
-        // Add party members on same map
-        if (leader.getParty() != null) {
-            for (PartyCharacter pc : leader.getParty().getMembers()) {
-                Character member = pc.getPlayer();
-                if (member != null && member.isAlive() && member.getMapId() == leader.getMapId()) {
-                    members.add(member);
-                }
-            }
-        }
+        Map<Integer, Character> members = getTrackedPartyMembers(leader);
 
         // Party members already include bots (bots join via party system)
         // No additional bot discovery needed
 
-        for (Character member : members) {
+        for (Character member : members.values()) {
             boolean isBot = member.getClient() instanceof BotClient;
             ExpSession session = new ExpSession(member.getId(), member.getName(), member.getLevel(), isBot);
             ExpSession existing = activeSessions.putIfAbsent(member.getId(), session);
@@ -149,18 +139,7 @@ public class ExpDebugTracker {
      */
     public static List<ExpSession> stopPartyTracking(Character leader) {
         List<ExpSession> sessions = new ArrayList<>();
-        List<Integer> memberIds = new ArrayList<>();
-
-        memberIds.add(leader.getId());
-
-        if (leader.getParty() != null) {
-            for (PartyCharacter pc : leader.getParty().getMembers()) {
-                Character member = pc.getPlayer();
-                if (member != null) {
-                    memberIds.add(member.getId());
-                }
-            }
-        }
+        Set<Integer> memberIds = getTrackedPartyMemberIds(leader);
 
         // Party members already include bots (no separate discovery needed)
 
@@ -180,8 +159,36 @@ public class ExpDebugTracker {
      */
     public static List<ExpSession> getPartyTrackingSessions(Character leader) {
         List<ExpSession> sessions = new ArrayList<>();
-        List<Integer> memberIds = new ArrayList<>();
+        Set<Integer> memberIds = getTrackedPartyMemberIds(leader);
 
+        for (int id : memberIds) {
+            ExpSession session = activeSessions.get(id);
+            if (session != null && session.active) {
+                sessions.add(session);
+            }
+        }
+
+        return sessions;
+    }
+
+    private static Map<Integer, Character> getTrackedPartyMembers(Character leader) {
+        Map<Integer, Character> members = new LinkedHashMap<>();
+        members.put(leader.getId(), leader);
+
+        if (leader.getParty() != null) {
+            for (PartyCharacter pc : leader.getParty().getMembers()) {
+                Character member = pc.getPlayer();
+                if (member != null && member.isAlive() && member.getMapId() == leader.getMapId()) {
+                    members.put(member.getId(), member);
+                }
+            }
+        }
+
+        return members;
+    }
+
+    private static Set<Integer> getTrackedPartyMemberIds(Character leader) {
+        Set<Integer> memberIds = new LinkedHashSet<>();
         memberIds.add(leader.getId());
 
         if (leader.getParty() != null) {
@@ -193,14 +200,7 @@ public class ExpDebugTracker {
             }
         }
 
-        for (int id : memberIds) {
-            ExpSession session = activeSessions.get(id);
-            if (session != null && session.active) {
-                sessions.add(session);
-            }
-        }
-
-        return sessions;
+        return memberIds;
     }
 
     /**
