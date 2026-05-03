@@ -30,7 +30,7 @@ final class BotShopManager {
     private static final int SHOP_APPROACH_DELAY_MAX_MS = 5001;
     private static final int SHOP_STEP_DELAY_MIN_MS = 2000;
     private static final int SHOP_STEP_DELAY_MAX_MS = 4001;
-    private static final long SHOP_VISIT_TIMEOUT_MS = 90_000L;
+    private static final long SHOP_VISIT_TIMEOUT_MS = 30_000L;
     private static final long SHOP_SEQUENCE_TIMEOUT_MS = 45_000L;
     private static final int POT_TRIGGER_THRESHOLD = 4; // 80% of target (5) for early trigger
     private static final int POT_TARGET_THRESHOLD = 5; // full target when buying at shop
@@ -106,7 +106,7 @@ final class BotShopManager {
 
         entry.shopVisitPending = true;
         entry.shopNpcPos = match.npcPos;
-        entry.shopTargetPos = pickShopApproachPoint(match.npcPos, bot);
+        entry.shopTargetPos = pickShopApproachPoint(match.npcPos, entry, bot);
         entry.shopApproachDelayMs = (int) BotManager.randMs(0, SHOP_APPROACH_DELAY_MAX_MS);
         entry.shopVisitStartedAtMs = System.currentTimeMillis();
         entry.shopSequenceStartedAtMs = 0L;
@@ -122,8 +122,14 @@ final class BotShopManager {
         }
         long now = System.currentTimeMillis();
         if (entry.shopVisitStartedAtMs > 0 && now - entry.shopVisitStartedAtMs > SHOP_VISIT_TIMEOUT_MS) {
-            clearShopState(entry);
-            return false;
+            if (!entry.shopSequenceActive && entry.shopNpcPos != null && findNpcNear(bot, entry.shopNpcPos) != null) {
+                entry.shopTargetPos = bot.getPosition();
+                entry.shopApproachDelayMs = 0;
+            } else {
+                BotManager.getInstance().botSay(bot, "couldn't reach shop in time");
+                clearShopState(entry);
+                return false;
+            }
         }
         if (entry.shopSequenceActive
                 && entry.shopSequenceStartedAtMs > 0
@@ -532,7 +538,7 @@ final class BotShopManager {
         });
     }
 
-    private static Point pickShopApproachPoint(Point npcPos, Character bot) {
+    private static Point pickShopApproachPoint(Point npcPos, BotEntry entry, Character bot) {
         var footholds = bot.getMap().getFootholds();
         if (footholds == null) {
             return npcPos;
@@ -557,6 +563,32 @@ final class BotShopManager {
         }
         if (candidates.isEmpty()) {
             return npcPos;
+        }
+        BotMovementProfile profile = entry.movementProfile != null
+                ? entry.movementProfile : BotMovementProfile.fromCharacter(bot);
+        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(bot.getMap(), profile);
+        if (graph == null) {
+            graph = BotNavigationGraphProvider.peekClosestGraph(bot.getMap(), profile);
+        }
+        if (graph != null) {
+            Point botPos = bot.getPosition();
+            int startRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, bot.getMap(), botPos);
+            if (startRegionId >= 0) {
+                List<Point> reachable = new ArrayList<>();
+                for (Point candidate : candidates) {
+                    int targetRegionId = BotNavigationManager.resolveTargetRegionId(
+                            graph, entry, bot.getMap(), candidate);
+                    if (targetRegionId < 0) continue;
+                    if (startRegionId == targetRegionId
+                            || !BotNavigationManager.findPath(graph, bot.getMap(), botPos,
+                                    startRegionId, targetRegionId, candidate).isEmpty()) {
+                        reachable.add(candidate);
+                    }
+                }
+                if (!reachable.isEmpty()) {
+                    candidates = reachable;
+                }
+            }
         }
         return candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
     }
