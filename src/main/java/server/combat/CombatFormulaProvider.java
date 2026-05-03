@@ -746,9 +746,10 @@ public final class CombatFormulaProvider {
     private int getFlatAccuracy(Character bot) {
         Integer buffedAccuracy = bot.getBuffedValue(BuffStat.ACC);
         int buffAccuracy = buffedAccuracy != null ? buffedAccuracy : 0;
+        int passiveSkillAccuracy = getPassiveSkillAccuracy(bot);
         var equippedInventory = bot.getInventory(InventoryType.EQUIPPED);
         if (equippedInventory == null) {
-            return buffAccuracy;
+            return buffAccuracy + passiveSkillAccuracy;
         }
 
         int equipAccuracy = 0;
@@ -757,7 +758,58 @@ public final class CombatFormulaProvider {
                 equipAccuracy += equip.getAcc();
             }
         }
-        return buffAccuracy + equipAccuracy;
+        return buffAccuracy + passiveSkillAccuracy + equipAccuracy;
+    }
+
+    /**
+     * Weapon Mastery skill IDs. In v83 WZ, these store the per-level accuracy bonus in the
+     * `x` field (and the mastery percent tier in `mastery`); the `acc` field is absent.
+     * Non-weapon "mastery" skills (Shield/High/Magic/Stun) don't grant weapon accuracy and
+     * are intentionally excluded.
+     */
+    private static final Set<Integer> WEAPON_MASTERY_SKILLS = Set.of(
+            constants.skills.Fighter.SWORD_MASTERY,
+            constants.skills.Fighter.AXE_MASTERY,
+            constants.skills.Page.SWORD_MASTERY,
+            constants.skills.Page.BW_MASTERY,
+            constants.skills.Spearman.SPEAR_MASTERY,
+            constants.skills.Spearman.POLEARM_MASTERY,
+            constants.skills.Hunter.BOW_MASTERY,
+            constants.skills.Crossbowman.CROSSBOW_MASTERY,
+            constants.skills.Assassin.CLAW_MASTERY,
+            constants.skills.Bandit.DAGGER_MASTERY,
+            constants.skills.Brawler.KNUCKLER_MASTERY,
+            constants.skills.Gunslinger.GUN_MASTERY,
+            constants.skills.DawnWarrior.SWORD_MASTERY,
+            constants.skills.WindArcher.BOW_MASTERY,
+            constants.skills.NightWalker.CLAW_MASTERY,
+            constants.skills.ThunderBreaker.KNUCKLER_MASTERY,
+            constants.skills.Aran.POLEARM_MASTERY
+    );
+
+    /**
+     * Sum of accuracy from leveled passive skills (mastery `x` field + any `acc` field on
+     * other passives) that the client adds to its hit formula but the server otherwise
+     * never sees. Active buffs contribute via {@link BuffStat#ACC} and are skipped here.
+     */
+    public int getPassiveSkillAccuracy(Character bot) {
+        int total = 0;
+        try {
+            for (var entry : bot.getSkills().entrySet()) {
+                int level = entry.getValue().skillevel;
+                if (level <= 0) continue;
+                Skill skill = entry.getKey();
+                StatEffect effect = skill.getEffect(level);
+                if (effect == null || effect.isOverTime()) continue;
+                total += effect.getAcc();
+                if (WEAPON_MASTERY_SKILLS.contains(skill.getId())) {
+                    total += effect.getX();
+                }
+            }
+        } catch (Throwable t) {
+            return 0;
+        }
+        return total;
     }
 
     private int getFlatAvoidability(Character bot) {

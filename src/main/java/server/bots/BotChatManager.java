@@ -286,6 +286,12 @@ public class BotChatManager {
     private static final Pattern UNEQUIP_SLOT_PATTERN = Pattern.compile(
             "\\b(unequip|take\\s+off|remove)\\s+(" + EQUIP_SLOT_WORDS + ")\\b",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern AUTOEQUIP_DEBUG_PATTERN = Pattern.compile(
+            "\\b(?:auto[\\-\\s]?equip|optimi[sz]e\\s+(?:gear|equip(?:s|ment)?))\\s+(?:debug|verbose|why|explain)\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern AUTOEQUIP_PATTERN = Pattern.compile(
+            "\\b(?:auto[\\-\\s]?equip|optimi[sz]e\\s+(?:gear|equip(?:s|ment)?))\\b",
+            Pattern.CASE_INSENSITIVE);
     private static final Pattern TRADE_VIEW_SLOT_COMMAND_PATTERN = Pattern.compile(
             "\\b(?:can\\s+i\\s+(?:c|see)|let\\s+me\\s+(?:c|see)|show(?:\\s+me)?)\\s+"
             + "(?:(?:u|ur|yo|your)\\s+)?(" + EQUIP_SLOT_WORDS + ")\\b[?!.,]*\\s*$",
@@ -746,6 +752,24 @@ public class BotChatManager {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 BotManager.getInstance().issueStop(entry);
                 BotManager.getInstance().botSay(entry.bot, BotEquipManager.unequipAll(entry.bot));
+            });
+            return;
+        }
+        // Debug match must run BEFORE the plain autoequip match (else "autoequip debug" is
+        // swallowed by the plain pattern).
+        if (AUTOEQUIP_DEBUG_PATTERN.matcher(message).find()) {
+            BotManager.after(BotManager.randMs(400, 600), () -> {
+                List<String> lines = BotEquipManager.autoEquipDebug(entry.bot);
+                for (String line : lines) {
+                    BotManager.getInstance().botSay(entry.bot, line);
+                }
+            });
+            return;
+        }
+        if (AUTOEQUIP_PATTERN.matcher(message).find()) {
+            BotManager.after(BotManager.randMs(400, 600), () -> {
+                BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
+                BotManager.getInstance().botSay(entry.bot, "ok, gear optimized");
             });
             return;
         }

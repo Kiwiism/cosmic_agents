@@ -1900,6 +1900,10 @@ public class StatEffect {
         return watk;
     }
 
+    public short getAcc() {
+        return acc;
+    }
+
     public int getDuration() {
         return duration;
     }

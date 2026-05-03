@@ -249,7 +249,7 @@ class BotChatManagerTest {
         String report = BotChatManager.buildRangeReport(bot,
                 new BotEquipManager.MapDamageProfile(100, 40, 48));
 
-        assertEquals("my dmg is 50-99, watk 20, acc 100, hit 47% vs strongest lv48 mob", report);
+        assertEquals("my dmg is 50-99, watk 20, acc 100 | hit 47% vs hardest mob (avd 40)", report);
     }
 
     @Test
@@ -264,7 +264,7 @@ class BotChatManagerTest {
         String report = BotChatManager.buildRangeReport(bot,
                 new BotEquipManager.MapDamageProfile(100, 30, 50));
 
-        assertEquals("my dmg is 3-9, matk 200, magic acc 75, hit 26% vs strongest lv50 mob", report);
+        assertEquals("my dmg is 3-9, matk 200, magic acc 75 | hit 26% vs hardest mob (avd 30)", report);
     }
 
     @Test

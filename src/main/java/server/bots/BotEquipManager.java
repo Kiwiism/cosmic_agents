@@ -20,6 +20,8 @@ import constants.skills.Pirate;
 import constants.skills.Rogue;
 import constants.skills.Spearman;
 import constants.skills.WhiteKnight;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import server.ItemInformationProvider;
 import server.bots.combat.BotAttackDataProvider;
 import server.combat.CombatFormulaProvider;
@@ -41,9 +43,15 @@ import java.util.stream.Collectors;
 
 class BotEquipManager {
 
+    private static final Logger log = LoggerFactory.getLogger(BotEquipManager.class);
+    private static final java.nio.file.Path EQUIP_LOG_DIR = java.nio.file.Path.of("logs", "bot-equip");
+    private static final java.time.format.DateTimeFormatter EQUIP_LOG_FILE_FMT =
+            java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HHmmss");
+    private static final java.time.format.DateTimeFormatter EQUIP_LOG_HEADER_FMT =
+            java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final short[] RING_SLOTS = {-12, -13, -15, -16};
-    /** Cap autoEquip cascade depth; in practice converges in 2-3. */
-    private static final int MAX_AUTO_EQUIP_PASSES = 6;
+    /** Hard cap on Pareto-frontier size per DP step to bound worst-case runtime. */
+    private static final int MAX_PARETO_STATES = 500;
 
     static final class EquipRecommendation {
         private final short targetSlot;
@@ -69,151 +77,629 @@ class BotEquipManager {
         }
     }
 
-    private record EquipScore(int damage, int defense, int statSum) {}
+    record EquipScore(int damage, int defense, int statSum) {}
 
     /**
-     * Scans the bot's EQUIP inventory and equips any item that improves current gear.
-     * Scoring is mob-aware (uses avg map-mob defense + avoidability when available) and
-     * does single-step lookahead at the weapon slot: a non-weapon candidate is allowed
-     * to win if its stat boost would unlock a higher-tier weapon currently failing only
-     * on stat requirements. Wraps the slot loop in a fixed-point iteration so cascade
-     * upgrades after each commit are picked up on the next pass.
+     * Pareto-frontier DP across equipment slots. Outer loop iterates each viable weapon
+     * (currently-wearable + stat-only-blocked, dominance-pruned); inner DP enumerates non-
+     * weapon non-ring slot picks while pruning Pareto-dominated stat states. Each chosen
+     * item must satisfy its requirements against the FINAL state (Option A: final-stat
+     * model), which captures cross-slot stat chains that unlock otherwise-unreachable gear.
      *
-     * Scoring priority: damage (mob-adjusted, DPS-scaled) > defense > stat sum.
-     * Cash items are skipped. Called on mode change (follow / stop / grind).
-     * {@code pendingOffer} is excluded so a pending gear offer to the owner stays tradeable.
+     * Scoring (lex): damage > defense > useful-stat sum. Physical damage = max-base ×
+     * expected-after-def × hit-chance × 1000 / weapon-cycle-ms. Mage damage = round(int*1.1)
+     * + magic. Mob benchmark = highest-avoid mob on the bot's map.
+     *
+     * Rings are picked greedily after the main DP commits (4 slots over a small shared pool;
+     * ring stat contribution rarely unlocks armor). Cash and {@code pendingOffer} excluded.
+     * Called on mode change (follow / stop / grind).
      */
     static void autoEquip(Character bot, Character owner, Item pendingOffer) {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         Inventory eqpInv = bot.getInventory(InventoryType.EQUIP);
         Inventory eqdInv = bot.getInventory(InventoryType.EQUIPPED);
-        for (int pass = 0; pass < MAX_AUTO_EQUIP_PASSES; pass++) {
-            if (!autoEquipPass(bot, ii, eqpInv, eqdInv, pendingOffer)) {
-                return;
+        MapDamageProfile mob = MapDamageProfile.snapshotByAvoid(bot);
+
+        Map<Short, List<Equip>> bySlot = collectAutoEquipCandidates(bot, ii, eqpInv, eqdInv, pendingOffer);
+        Map<Short, Equip> currentBySlot = new HashMap<>();
+        for (Item it : eqdInv.list()) {
+            if (it instanceof Equip e && !ii.isCash(e.getItemId())) {
+                currentBySlot.put(e.getPosition(), e);
             }
+        }
+
+        // Non-ring, non-weapon slots in canonical order — also include slots that only have
+        // an equipped item so the validator sees them.
+        Set<Short> dpSlotSet = new HashSet<>();
+        for (Short s : bySlot.keySet()) {
+            if (s != (short) -11 && !isRingSlot(s)) dpSlotSet.add(s);
+        }
+        for (Short s : currentBySlot.keySet()) {
+            if (s != (short) -11 && !isRingSlot(s)) dpSlotSet.add(s);
+        }
+        List<Short> dpSlots = new ArrayList<>(dpSlotSet);
+        // Descending order so top (-5) is processed before pants (-6); the overall→pants
+        // block at slot -6 reads picks[-5], which must already be set.
+        dpSlots.sort((a, b) -> Short.compare(b, a));
+
+        // Outer weapon pool: currently-wearable + stat-only-blocked + currently equipped.
+        List<Equip> weaponPool = new ArrayList<>(bySlot.getOrDefault((short) -11, List.of()));
+        Equip currentWeapon = compatibleWeaponOrNull(bot, ii, (Equip) eqdInv.getItem((short) -11));
+        if (currentWeapon != null && !weaponPool.contains(currentWeapon)) weaponPool.add(currentWeapon);
+        if (weaponPool.isEmpty()) weaponPool.add(null);
+
+        StatSnapshot naked = nakedBase(bot, ii, eqdInv);
+
+        Map<Short, Equip> bestPicks = null;
+        EquipScore bestScore = null;
+        Equip bestWeapon = currentWeapon;
+        boolean anyCapHit = false;
+        for (Equip w : weaponPool) {
+            DpResult r = solveForWeapon(bot, ii, naked, w, dpSlots, currentBySlot, bySlot, mob);
+            if (r == null) continue;
+            if (r.paretoCapHit()) anyCapHit = true;
+            if (bestScore == null || compareScores(r.score(), bestScore) > 0) {
+                bestScore = r.score();
+                bestPicks = r.picks();
+                bestWeapon = w;
+            }
+        }
+
+        if (bestPicks != null) {
+            applyEquipPlan(bot, ii, eqdInv, currentBySlot, bestPicks, bestWeapon, dpSlots);
+        }
+
+        if (anyCapHit) {
+            // DP frontier overflowed — too many Pareto-incomparable items in the bot's bag for
+            // the optimizer to exhaustively enumerate. The chosen set is best-effort under an
+            // admissible-bound truncation; the owner should clean up redundant gear.
+            try {
+                BotManager.getInstance().botSay(bot,
+                        "inventory's too cluttered, cant fully optimize gear — try selling/dropping spares");
+            } catch (Throwable ignored) {
+                // Don't let a chat error block the equip pass.
+            }
+        }
+
+        // Rings — greedy under post-DP equipped state.
+        if (bySlot.containsKey((short) -12)) {
+            Map<Short, List<Equip>> lookaheadAfter = buildLookaheadBySlot(bot, ii, eqpInv);
+            autoEquipRings(bot, ii, currentWeaponType(bot, ii), bySlot.get((short) -12),
+                           eqdInv, mob, lookaheadAfter);
         }
     }
 
-    /** Returns true if any slot was upgraded during this pass (caller should run again). */
-    private static boolean autoEquipPass(Character bot, ItemInformationProvider ii,
-                                         Inventory eqpInv, Inventory eqdInv, Item pendingOffer) {
-        WeaponType weaponType = currentWeaponType(bot, ii);
+    /**
+     * Diagnostic dump of what {@link #autoEquip} would do, without applying any moves.
+     * Returns multiple short lines suitable for sequential bot chat. Includes mob benchmark,
+     * naked stats, per-weapon score (top 3), changed slots vs current, and pareto-cap status.
+     */
+    static List<String> autoEquipDebug(Character bot) {
+        ItemInformationProvider ii = ItemInformationProvider.getInstance();
+        Inventory eqpInv = bot.getInventory(InventoryType.EQUIP);
+        Inventory eqdInv = bot.getInventory(InventoryType.EQUIPPED);
+        MapDamageProfile mob = MapDamageProfile.snapshotByAvoid(bot);
 
-        // Group unequipped candidates by primary equip slot. Currently-wearable for non-weapon
-        // slots; for the weapon slot we ALSO retain items where only the stat req is unmet
-        // (job/level/fame pass) so they can win via the lookahead pool.
+        List<String> out = new ArrayList<>();
+        if (mob == null) {
+            out.add("autoequip: no mob context (in town?) — cant benchmark");
+        } else {
+            out.add("autoequip mob: avd " + mob.mobAvoid()
+                    + " wdef " + mob.mobWdef() + " lv " + mob.mobLevel());
+        }
+
+        Map<Short, List<Equip>> bySlot = collectAutoEquipCandidates(bot, ii, eqpInv, eqdInv, null);
+        Map<Short, Equip> currentBySlot = new HashMap<>();
+        for (Item it : eqdInv.list()) {
+            if (it instanceof Equip e && !ii.isCash(e.getItemId())) currentBySlot.put(e.getPosition(), e);
+        }
+
+        Set<Short> dpSlotSet = new HashSet<>();
+        for (Short s : bySlot.keySet()) if (s != (short) -11 && !isRingSlot(s)) dpSlotSet.add(s);
+        for (Short s : currentBySlot.keySet()) if (s != (short) -11 && !isRingSlot(s)) dpSlotSet.add(s);
+        List<Short> dpSlots = new ArrayList<>(dpSlotSet);
+        // Descending order so top (-5) is processed before pants (-6); the overall→pants
+        // block at slot -6 reads picks[-5], which must already be set.
+        dpSlots.sort((a, b) -> Short.compare(b, a));
+
+        List<Equip> weaponPool = new ArrayList<>(bySlot.getOrDefault((short) -11, List.of()));
+        Equip currentWeapon = compatibleWeaponOrNull(bot, ii, (Equip) eqdInv.getItem((short) -11));
+        if (currentWeapon != null && !weaponPool.contains(currentWeapon)) weaponPool.add(currentWeapon);
+        if (weaponPool.isEmpty()) weaponPool.add(null);
+
+        StatSnapshot naked = nakedBase(bot, ii, eqdInv);
+        out.add("naked: str " + naked.str() + " dex " + naked.dex() + " int " + naked.int_()
+                + " luk " + naked.luk() + " watk " + naked.watk() + " mag " + naked.magic()
+                + " acc " + naked.totalAcc());
+
+        record Branch(Equip weapon, DpResult result) {}
+        List<Branch> branches = new ArrayList<>();
+        boolean anyCap = false;
+        for (Equip w : weaponPool) {
+            DpResult r = solveForWeapon(bot, ii, naked, w, dpSlots, currentBySlot, bySlot, mob);
+            if (r != null) {
+                branches.add(new Branch(w, r));
+                if (r.paretoCapHit()) anyCap = true;
+            }
+        }
+        branches.sort((a, b) -> compareScores(b.result().score(), a.result().score()));
+
+        if (branches.isEmpty()) {
+            out.add("autoequip: no feasible set found");
+            return out;
+        }
+
+        int show = Math.min(3, branches.size());
+        for (int i = 0; i < show; i++) {
+            Branch b = branches.get(i);
+            String wName = b.weapon() == null ? "(no weapon)" : ii.getName(b.weapon().getItemId());
+            EquipScore s = b.result().score();
+            String tag = i == 0 ? "*" : " ";
+            out.add(tag + " W=" + wName + " dmg=" + s.damage() + " def=" + s.defense()
+                    + " stat=" + s.statSum());
+        }
+
+        // Diff vs current for the winning branch.
+        Branch best = branches.get(0);
+        List<String> diffs = new ArrayList<>();
+        for (Map.Entry<Short, Equip> e : best.result().picks().entrySet()) {
+            Equip cur = currentBySlot.get(e.getKey());
+            if (cur != e.getValue()) {
+                diffs.add(slotLabel(e.getKey()) + ":"
+                        + (cur == null ? "-" : ii.getName(cur.getItemId()))
+                        + ">" + ii.getName(e.getValue().getItemId()));
+            }
+        }
+        Equip currentWp = (Equip) eqdInv.getItem((short) -11);
+        if (best.weapon() != currentWp) {
+            diffs.add(0, "weapon:" + (currentWp == null ? "-" : ii.getName(currentWp.getItemId()))
+                    + ">" + (best.weapon() == null ? "-" : ii.getName(best.weapon().getItemId())));
+        }
+        if (diffs.isEmpty()) {
+            out.add("changes: none (already optimal)");
+        } else {
+            // Chunk into lines of ≤3 changes to avoid one giant message.
+            for (int i = 0; i < diffs.size(); i += 3) {
+                out.add("change: " + String.join(", ", diffs.subList(i, Math.min(i + 3, diffs.size()))));
+            }
+        }
+        if (anyCap) out.add("WARN: pareto cap hit, result is best-effort");
+
+        // Full dump to disk — chat is too narrow for inventory + per-branch breakdown.
+        String filePath = writeAutoEquipDumpFile(bot, ii, eqpInv, eqdInv, mob, naked,
+                bySlot, dpSlots, weaponPool, branches, anyCap);
+        if (filePath != null) out.add("dump: " + filePath);
+
+        String botName = bot != null ? bot.getName() : "?";
+        log.info("autoEquipDebug[{}]:\n  {}", botName, String.join("\n  ", out));
+        return out;
+    }
+
+    /**
+     * Writes a comprehensive autoEquip decision dump to {@code logs/bot-equip/}, mirroring the
+     * format of {@link BotPathLogger}. Captures everything the optimizer saw: mob profile,
+     * naked stats, currently-equipped items with stats/reqs, candidate inventory items with
+     * stats/reqs, and per-weapon-branch DP results with chosen picks. Returns absolute path.
+     */
+    @SuppressWarnings("unchecked")
+    private static String writeAutoEquipDumpFile(Character bot, ItemInformationProvider ii,
+            Inventory eqpInv, Inventory eqdInv, MapDamageProfile mob, StatSnapshot naked,
+            Map<Short, List<Equip>> bySlot, List<Short> dpSlots, List<Equip> weaponPool,
+            List<?> branches, boolean anyCap) {
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        String botName = bot != null ? bot.getName() : "unknown";
+        String safeName = botName.replaceAll("[^a-zA-Z0-9_-]", "_");
+        String filename = "equiplog-" + safeName + "-" + now.format(EQUIP_LOG_FILE_FMT) + ".txt";
+
+        StringBuilder sb = new StringBuilder(8192);
+        sb.append("=== autoEquip dump ===\n");
+        sb.append("time:    ").append(now.format(EQUIP_LOG_HEADER_FMT)).append('\n');
+        sb.append("bot:     ").append(botName)
+          .append(" job=").append(bot != null ? bot.getJob() : "?")
+          .append(" lv=").append(bot != null ? bot.getLevel() : 0)
+          .append(" fame=").append(bot != null ? bot.getFame() : 0).append('\n');
+        sb.append("map:     ").append(safeMapId(bot)).append('\n');
+        sb.append("mob:     ");
+        if (mob == null) sb.append("(no mob context)\n");
+        else sb.append("avd=").append(mob.mobAvoid())
+                .append(" wdef=").append(mob.mobWdef())
+                .append(" lv=").append(mob.mobLevel()).append('\n');
+        sb.append("naked:   str=").append(naked.str())
+          .append(" dex=").append(naked.dex())
+          .append(" int=").append(naked.int_())
+          .append(" luk=").append(naked.luk())
+          .append(" watk=").append(naked.watk())
+          .append(" mag=").append(naked.magic())
+          .append(" acc=").append(naked.totalAcc()).append('\n');
+
+        sb.append("\n--- equipped ---\n");
+        sb.append(itemHeader());
+        for (Item it : eqdInv.list()) {
+            if (it instanceof Equip e) appendItemRow(sb, ii, e, e.getPosition());
+        }
+
+        sb.append("\n--- inventory (equip bag) ---\n");
+        sb.append(itemHeader());
+        for (Item it : eqpInv.list()) {
+            if (it instanceof Equip e) appendItemRow(sb, ii, e, e.getPosition());
+        }
+
+        sb.append("\n--- candidate pools by slot ---\n");
+        for (Map.Entry<Short, List<Equip>> en : bySlot.entrySet()) {
+            sb.append(slotLabel(en.getKey())).append(" (").append(en.getKey()).append("): ");
+            if (en.getValue().isEmpty()) sb.append("(empty)\n");
+            else {
+                sb.append(en.getValue().size()).append(" cands: ");
+                List<String> names = new ArrayList<>();
+                for (Equip e : en.getValue()) names.add(ii.getName(e.getItemId()) + "#" + e.getPosition());
+                sb.append(String.join(", ", names)).append('\n');
+            }
+        }
+
+        sb.append("\n--- weapon branches (sorted by score) ---\n");
+        // branches is List<Branch> (record local to autoEquipDebug); reflect via toString fallback.
+        // For type safety, recompute here from the same inputs:
+        Equip currentWp = (Equip) eqdInv.getItem((short) -11);
+        Map<Short, Equip> currentBySlot = new HashMap<>();
+        for (Item it : eqdInv.list()) {
+            if (it instanceof Equip e && !ii.isCash(e.getItemId())) currentBySlot.put(e.getPosition(), e);
+        }
+        record Br(Equip w, DpResult r) {}
+        List<Br> sorted = new ArrayList<>();
+        for (Equip w : weaponPool) {
+            DpResult r = solveForWeapon(bot, ii, naked, w, dpSlots, currentBySlot, bySlot, mob);
+            if (r != null) sorted.add(new Br(w, r));
+        }
+        sorted.sort((a, b) -> compareScores(b.r().score(), a.r().score()));
+        for (int i = 0; i < sorted.size(); i++) {
+            Br b = sorted.get(i);
+            String wName = b.w() == null ? "(none)" : ii.getName(b.w().getItemId());
+            EquipScore s = b.r().score();
+            sb.append(i == 0 ? "[*] " : "[ ] ").append(wName)
+              .append(" id=").append(b.w() == null ? 0 : b.w().getItemId())
+              .append(" dmg=").append(s.damage())
+              .append(" def=").append(s.defense())
+              .append(" stat=").append(s.statSum())
+              .append(b.r().paretoCapHit() ? " (pareto-cap)" : "").append('\n');
+            for (Map.Entry<Short, Equip> pick : b.r().picks().entrySet()) {
+                Equip cur = currentBySlot.get(pick.getKey());
+                String marker = cur == pick.getValue() ? "  =" : "  >";
+                sb.append(marker).append(' ').append(slotLabel(pick.getKey())).append(": ");
+                if (cur != pick.getValue() && cur != null) {
+                    sb.append(ii.getName(cur.getItemId())).append(" -> ");
+                }
+                sb.append(ii.getName(pick.getValue().getItemId())).append('\n');
+            }
+        }
+
+        sb.append("\n--- summary ---\n");
+        if (sorted.isEmpty()) {
+            sb.append("no feasible set found\n");
+        } else {
+            Br winner = sorted.get(0);
+            sb.append("winner weapon: ").append(winner.w() == null ? "(none)" : ii.getName(winner.w().getItemId())).append('\n');
+            sb.append("current weapon: ").append(currentWp == null ? "(none)" : ii.getName(currentWp.getItemId())).append('\n');
+            sb.append("pareto-cap-hit: ").append(anyCap).append('\n');
+        }
+
+        try {
+            java.nio.file.Files.createDirectories(EQUIP_LOG_DIR);
+            java.nio.file.Path file = EQUIP_LOG_DIR.resolve(filename);
+            java.nio.file.Files.writeString(file, sb.toString());
+            return file.toAbsolutePath().toString();
+        } catch (java.io.IOException e) {
+            log.warn("Failed to write autoEquip dump", e);
+            return null;
+        }
+    }
+
+    private static String itemHeader() {
+        return String.format("%-3s %-30s %-7s %4s %4s %4s %4s %4s %4s %4s %4s %4s %4s %5s %5s   reqs%n",
+                "pos", "name", "slot", "STR", "DEX", "INT", "LUK", "WAK", "MAK", "WDF", "MDF", "ACC", "AVD", "HP", "MP");
+    }
+
+    private static void appendItemRow(StringBuilder sb, ItemInformationProvider ii, Equip e, short pos) {
+        String name = ii.getName(e.getItemId());
+        if (name == null) name = "id=" + e.getItemId();
+        if (name.length() > 30) name = name.substring(0, 30);
+        String textSlot = ii.getEquipmentSlot(e.getItemId());
+        sb.append(String.format("%-3d %-30s %-7s %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %5d %5d   ",
+                pos, name, textSlot == null ? "?" : textSlot,
+                e.getStr(), e.getDex(), e.getInt(), e.getLuk(),
+                e.getWatk(), e.getMatk(), e.getWdef(), e.getMdef(),
+                e.getAcc(), e.getAvoid(), e.getHp(), e.getMp()));
+        // Reqs from WZ stat map.
+        Map<String, Integer> stats = ii.getEquipStats(e.getItemId());
+        if (stats != null) {
+            int rl = ii.getEquipLevelReq(e.getItemId());
+            int rj = stats.getOrDefault("reqJob", 0);
+            int rs = stats.getOrDefault("reqSTR", 0);
+            int rd = stats.getOrDefault("reqDEX", 0);
+            int ri = stats.getOrDefault("reqINT", 0);
+            int rk = stats.getOrDefault("reqLUK", 0);
+            int rp = stats.getOrDefault("reqPOP", 0);
+            sb.append("lv").append(rl).append(" job").append(rj);
+            if (rs > 0) sb.append(" str").append(rs);
+            if (rd > 0) sb.append(" dex").append(rd);
+            if (ri > 0) sb.append(" int").append(ri);
+            if (rk > 0) sb.append(" luk").append(rk);
+            if (rp > 0) sb.append(" pop").append(rp);
+        }
+        sb.append('\n');
+    }
+
+    private static int safeMapId(Character bot) {
+        if (bot == null) return -1;
+        try { return bot.getMap() != null ? bot.getMap().getId() : -1; }
+        catch (Throwable t) { return -1; }
+    }
+
+    /**
+     * Builds per-slot candidate pools for the optimizer. Includes currently-wearable items,
+     * stat-only-blocked items (DP may unlock them), and currently-equipped items (so DP can
+     * choose to keep them). Per-slot dominance-pruned with reqs honored.
+     */
+    private static Map<Short, List<Equip>> collectAutoEquipCandidates(
+            Character bot, ItemInformationProvider ii, Inventory eqpInv,
+            Inventory eqdInv, Item pendingOffer) {
         Map<Short, List<Equip>> bySlot = new LinkedHashMap<>();
-        Map<Short, List<Equip>> lookaheadBySlot = buildLookaheadBySlot(bot, ii, eqpInv);
         for (Item item : eqpInv.list()) {
             if (ii.isCash(item.getItemId())) continue;
             if (item == pendingOffer) continue;
+            if (!(item instanceof Equip equip)) continue;
             String textSlot = ii.getEquipmentSlot(item.getItemId());
             EquipSlot eslot = EquipSlot.getFromTextSlot(textSlot);
-            if (eslot == EquipSlot.PET_EQUIP) continue;
+            if (eslot == null || eslot == EquipSlot.PET_EQUIP) continue;
             short primary = (short) eslot.getPrimarySlot();
             if (primary == 0) continue;
-            Equip equip = (Equip) item;
-            boolean wearableNow = ii.canWearEquipment(bot, equip, primary);
-            if (primary == (short) -11) {
-                if (!isWeaponCompatible(bot, ii.getWeaponType(equip.getItemId()))) continue;
-                if (wearableNow) {
-                    bySlot.computeIfAbsent(primary, k -> new ArrayList<>()).add(equip);
-                }
-            } else if (wearableNow) {
+            if (primary == (short) -11
+                    && !isWeaponCompatible(bot, ii.getWeaponType(equip.getItemId()))) continue;
+            if (ii.canWearEquipment(bot, equip, primary) || statOnlyBlocked(bot, ii, equip)) {
                 bySlot.computeIfAbsent(primary, k -> new ArrayList<>()).add(equip);
             }
         }
-
-        // Per-slot dominance pruning over currently-wearable candidates. Within a wearable pool
-        // dropping items strictly beaten on every stat is safe — legality already passed.
-        // Lookahead-only weapons are NOT pruned (their reqs differ).
+        // Include currently-equipped items (they're already legal).
+        for (Item it : eqdInv.list()) {
+            if (!(it instanceof Equip e) || ii.isCash(e.getItemId())) continue;
+            short pos = e.getPosition();
+            if (pos == (short) -11
+                    && !isWeaponCompatible(bot, ii.getWeaponType(e.getItemId()))) continue;
+            short key = isRingSlot(pos) ? (short) -12 : pos;
+            List<Equip> pool = bySlot.computeIfAbsent(key, k -> new ArrayList<>());
+            if (!pool.contains(e)) pool.add(e);
+        }
         for (Map.Entry<Short, List<Equip>> e : bySlot.entrySet()) {
-            e.setValue(pruneDominated(e.getValue()));
+            e.setValue(pruneDominatedWithReqs(ii, e.getValue()));
         }
+        return bySlot;
+    }
 
-        // Ensure we also check slots that only have an equipped item (no unequipped candidate)
-        for (Item item : eqdInv.list()) {
-            if (ii.isCash(item.getItemId())) continue;
-            short slot = item.getPosition();
-            short key = isRingSlot(slot) ? -12 : slot;
-            bySlot.computeIfAbsent(key, k -> new ArrayList<>());
+    record DpResult(Map<Short, Equip> picks, EquipScore score, boolean paretoCapHit) {
+        DpResult(Map<Short, Equip> picks, EquipScore score) { this(picks, score, false); }
+    }
+
+    /**
+     * Narrow surface of {@link ItemInformationProvider} that the optimizer's DP needs.
+     * Tests stub these directly with lambdas — Mockito cannot instrument II in unit tests
+     * because of its static WZ-data initializer.
+     */
+    interface OptimizerHooks {
+        boolean isTwoHanded(int itemId);
+        WeaponType getWeaponType(int itemId);
+        boolean isOverall(int itemId);
+        boolean meetsReqs(Equip equip, Job job, int level, int str, int dex, int int_, int luk, int fame);
+
+        static OptimizerHooks from(ItemInformationProvider ii) {
+            return new OptimizerHooks() {
+                @Override public boolean isTwoHanded(int itemId) { return ii.isTwoHanded(itemId); }
+                @Override public WeaponType getWeaponType(int itemId) { return ii.getWeaponType(itemId); }
+                @Override public boolean isOverall(int itemId) {
+                    return "MaPn".equals(ii.getEquipmentSlot(itemId));
+                }
+                @Override public boolean meetsReqs(Equip e, Job job, int lvl, int s, int d, int i, int l, int f) {
+                    return ii.meetsEquipRequirements(e, job, lvl, s, d, i, l, f);
+                }
+            };
         }
+    }
 
-        MapDamageProfile mobProfile = MapDamageProfile.snapshot(bot);
+    /**
+     * Pareto-DP across {@code dpSlots} for a fixed weapon. Frontier carries (StatSnapshot,
+     * def, hp, mp, statSum, picks[]); per-slot transition tries each candidate plus an
+     * "empty" option, then prunes dominated states. Slot-collision constraints (2H↔shield,
+     * overall↔pants) enforced inline. Returns the best validated final state, or null.
+     */
+    static DpResult solveForWeapon(Character bot, ItemInformationProvider ii,
+                                            StatSnapshot naked, Equip weapon,
+                                            List<Short> dpSlots,
+                                            Map<Short, Equip> currentBySlot,
+                                            Map<Short, List<Equip>> bySlot,
+                                            MapDamageProfile mob) {
+        return solveForWeapon(bot, OptimizerHooks.from(ii), naked, weapon, dpSlots,
+                              currentBySlot, bySlot, mob);
+    }
 
-        // Sort slots: weapon (-11) first so damage scoring reflects the new weapon;
-        // overall/top (-5) before pants (-6) so overall blocks pants correctly.
-        List<Short> nonRingSlots = bySlot.keySet().stream()
-                .filter(s -> !isRingSlot(s))
-                .sorted((a, b) -> {
-                    if (a == -11) return -1; if (b == -11) return 1;
-                    if (a == -5)  return -1; if (b == -5)  return 1;
-                    return Short.compare(a, b);
-                })
-                .collect(Collectors.toList());
+    static DpResult solveForWeapon(Character bot, OptimizerHooks hooks,
+                                            StatSnapshot naked, Equip weapon,
+                                            List<Short> dpSlots,
+                                            Map<Short, Equip> currentBySlot,
+                                            Map<Short, List<Equip>> bySlot,
+                                            MapDamageProfile mob) {
+        StatSnapshot init = weapon != null ? naked.swap(null, weapon) : naked;
+        boolean is2H = weapon != null && hooks.isTwoHanded(weapon.getItemId());
+        WeaponType wt = weapon != null ? hooks.getWeaponType(weapon.getItemId()) : null;
+        boolean[] capHit = {false};
 
-        boolean changed = false;
-        boolean overallEquipped = isOverall(eqdInv.getItem((short) -5), ii);
-        for (short slot : nonRingSlots) {
-            // Skip shield if a 2H weapon is active — would unequip the weapon causing a loop.
-            Item wSlot = eqdInv.getItem((short) -11);
-            if (slot == (short) -10 && wSlot != null && ii.isTwoHanded(wSlot.getItemId())) continue;
-            // Skip pants if an overall occupies the top+bottom slot.
-            if (slot == (short) -6 && overallEquipped) continue;
+        int n = dpSlots.size();
+        int overallIdx = dpSlots.indexOf((short) -5);
+        DpNode start = new DpNode(init, 0, 0, 0, 0, new Equip[n]);
+        List<DpNode> frontier = new ArrayList<>();
+        frontier.add(start);
 
-            Equip current = (Equip) eqdInv.getItem(slot);
-            Equip effectiveCurrent = slot == (short) -11 ? compatibleWeaponOrNull(bot, ii, current) : current;
-            Equip currentWeapon = (Equip) eqdInv.getItem((short) -11);
-            Equip effectiveWeapon = compatibleWeaponOrNull(bot, ii, currentWeapon);
-            // Lookahead applies only when scoring non-weapon slots.
-            Map<Short, List<Equip>> lookahead = slot == (short) -11 ? null : lookaheadBySlot;
-            Equip best = findBestWithLookahead(bot, ii, weaponType, effectiveCurrent,
-                                                bySlot.get(slot), mobProfile, lookahead, effectiveWeapon);
-            // 2H weapon displaces shield — only upgrade if 2H beats current weapon+shield combined.
-            if (slot == (short) -11 && best != null && best != current && ii.isTwoHanded(best.getItemId())) {
-                Equip shield = (Equip) eqdInv.getItem((short) -10);
-                if (compareScores(scoreEquipFull(bot, ii, weaponType, effectiveCurrent, best, shield, mobProfile, null, effectiveWeapon),
-                                  scoreEquipFull(bot, ii, weaponType, effectiveCurrent, effectiveCurrent, null, mobProfile, null, effectiveWeapon)) <= 0) best = effectiveCurrent;
-            }
-            // Overall displaces pants — only upgrade if overall beats current top+pants combined.
-            if (slot == (short) -5 && best != null && best != current && isOverall(best, ii)) {
-                Equip pants = (Equip) eqdInv.getItem((short) -6);
-                if (compareScores(scoreEquipFull(bot, ii, weaponType, effectiveCurrent, best, pants, mobProfile, lookahead, effectiveWeapon),
-                                  scoreEquipFull(bot, ii, weaponType, effectiveCurrent, effectiveCurrent, null, mobProfile, lookahead, effectiveWeapon)) <= 0) best = effectiveCurrent;
-            }
-            // Top+pants combo may beat an overall even when no top beats it alone.
-            // Joint top×pants enumeration captures cases where the pair's stats unlock a
-            // stronger weapon via lookahead. Equipping just the top here leaves the leg slot
-            // empty; the slot=-6 iteration (now unblocked since overall was removed) re-picks
-            // the best pants under the new state — which converges to the same pants the
-            // joint enumeration chose.
-            if (slot == (short) -5 && best == effectiveCurrent && isOverall(current, ii)) {
-                List<Equip> topCands = bySlot.getOrDefault(slot, List.of()).stream()
-                        .filter(e -> !isOverall(e, ii)).collect(Collectors.toList());
-                List<Equip> pantsCands = bySlot.getOrDefault((short) -6, List.of());
-                TopPantsCombo combo = bestTopPantsCombo(bot, ii, weaponType, current, topCands, pantsCands,
-                                                       mobProfile, lookahead, effectiveWeapon);
-                if (combo != null && compareScores(combo.score(),
-                        scoreEquipFull(bot, ii, weaponType, current, current, null, mobProfile, lookahead, effectiveWeapon)) > 0) {
-                    best = combo.top();
+        for (int i = 0; i < n; i++) {
+            short slot = dpSlots.get(i);
+            List<Equip> pool = bySlot.getOrDefault(slot, List.of());
+            List<DpNode> next = new ArrayList<>(Math.max(8, frontier.size() * (pool.size() + 1)));
+            for (DpNode prev : frontier) {
+                // Empty option always available — always carry forward.
+                next.add(prev);
+                if (slot == (short) -10 && is2H) continue; // shield blocked by 2H weapon
+                boolean blockedByOverall = (slot == (short) -6 && overallIdx >= 0
+                        && prev.picks[overallIdx] != null
+                        && hooks.isOverall(prev.picks[overallIdx].getItemId()));
+                if (blockedByOverall) continue;
+                for (Equip cand : pool) {
+                    if (cand == null) continue;
+                    StatSnapshot ns = prev.snap.swap(null, cand);
+                    int nDef = prev.def + cand.getWdef() + cand.getMdef();
+                    int nHp = prev.hp + cand.getHp();
+                    int nMp = prev.mp + cand.getMp();
+                    int nStat = prev.statSum + usefulStatSum(cand, ns.job());
+                    Equip[] picks = prev.picks.clone();
+                    picks[i] = cand;
+                    next.add(new DpNode(ns, nDef, nHp, nMp, nStat, picks));
                 }
             }
-            if (best != null && best != current) {
-                InventoryManipulator.handleItemMove(bot.getClient(), InventoryType.EQUIP, best.getPosition(), slot, (short) 1);
-                changed = true;
-                if (slot == -11) weaponType = currentWeaponType(bot, ii);
-                if (slot == -5)  overallEquipped = isOverall(eqdInv.getItem((short) -5), ii);
-            }
+            frontier = paretoPruneNodes(next, capHit);
         }
 
-        // Ring slots: greedy — find best unequipped ring per slot from a shared pool
-        if (bySlot.containsKey((short) -12)) {
-            if (autoEquipRings(bot, ii, weaponType, bySlot.get((short) -12), eqdInv, mobProfile,
-                                lookaheadBySlot)) {
-                changed = true;
+        DpNode best = null;
+        EquipScore bestScore = null;
+        for (DpNode node : frontier) {
+            if (!validateReqs(hooks, node, dpSlots, weapon)) continue;
+            EquipScore s = scoreNode(node, weapon, wt, mob);
+            if (bestScore == null || compareScores(s, bestScore) > 0) {
+                bestScore = s;
+                best = node;
             }
         }
-        return changed;
+        if (best == null) return null;
+
+        Map<Short, Equip> picks = new LinkedHashMap<>();
+        for (int i = 0; i < n; i++) {
+            if (best.picks[i] != null) picks.put(dpSlots.get(i), best.picks[i]);
+        }
+        return new DpResult(picks, bestScore, capHit[0]);
+    }
+
+    private static final class DpNode {
+        final StatSnapshot snap;
+        final int def, hp, mp, statSum;
+        final Equip[] picks;
+        DpNode(StatSnapshot snap, int def, int hp, int mp, int statSum, Equip[] picks) {
+            this.snap = snap; this.def = def; this.hp = hp; this.mp = mp;
+            this.statSum = statSum; this.picks = picks;
+        }
+    }
+
+    private static List<DpNode> paretoPruneNodes(List<DpNode> nodes, boolean[] capHitOut) {
+        if (nodes.size() <= 1) return nodes;
+        List<int[]> vecs = new ArrayList<>(nodes.size());
+        for (DpNode n : nodes) vecs.add(nodeVec(n));
+        List<DpNode> kept = new ArrayList<>();
+        for (int i = 0; i < nodes.size(); i++) {
+            int[] a = vecs.get(i);
+            boolean dominated = false;
+            for (int j = 0; j < nodes.size(); j++) {
+                if (i == j) continue;
+                if (vecDominates(vecs.get(j), a)) { dominated = true; break; }
+            }
+            if (!dominated) kept.add(nodes.get(i));
+        }
+        if (kept.size() > MAX_PARETO_STATES) {
+            // Admissible bound: total of damage-relevant stats. Keeps states with the most
+            // raw firepower potential; drops Pareto-front fringe under load.
+            kept.sort((x, y) -> Integer.compare(damagePotential(y), damagePotential(x)));
+            kept = new ArrayList<>(kept.subList(0, MAX_PARETO_STATES));
+            if (capHitOut != null && capHitOut.length > 0) capHitOut[0] = true;
+        }
+        return kept;
+    }
+
+    private static int damagePotential(DpNode n) {
+        StatSnapshot s = n.snap;
+        return s.str() + s.dex() + s.int_() + s.luk() + s.watk() + s.magic() + n.def;
+    }
+
+    private static int[] nodeVec(DpNode n) {
+        StatSnapshot s = n.snap;
+        return new int[]{s.str(), s.dex(), s.int_(), s.luk(), s.watk(), s.magic(),
+                          s.totalAcc(), n.def, n.hp, n.mp, n.statSum};
+    }
+
+    private static boolean vecDominates(int[] b, int[] a) {
+        boolean strict = false;
+        for (int i = 0; i < b.length; i++) {
+            if (b[i] < a[i]) return false;
+            if (b[i] > a[i]) strict = true;
+        }
+        return strict;
+    }
+
+    private static boolean validateReqs(OptimizerHooks hooks, DpNode node,
+                                         List<Short> dpSlots, Equip weapon) {
+        StatSnapshot s = node.snap;
+        if (weapon != null && !hooks.meetsReqs(weapon, s.job(), s.level(),
+                s.str(), s.dex(), s.int_(), s.luk(), s.fame())) return false;
+        for (int i = 0; i < dpSlots.size(); i++) {
+            Equip p = node.picks[i];
+            if (p == null) continue;
+            if (!hooks.meetsReqs(p, s.job(), s.level(),
+                    s.str(), s.dex(), s.int_(), s.luk(), s.fame())) return false;
+        }
+        return true;
+    }
+
+    private static EquipScore scoreNode(DpNode node, Equip weapon, WeaponType wt, MapDamageProfile mob) {
+        if (isMageJob(node.snap.job())) {
+            return new EquipScore(magicScore(node.snap), node.def, node.statSum);
+        }
+        if (wt == null) return new EquipScore(0, node.def, node.statSum);
+        int dmg = damageWith(node.snap, null, wt, mob);
+        int cycleMs = weapon != null ? weaponCycleMs(weapon.getItemId()) : 0;
+        if (cycleMs > 0) dmg = (int) (dmg * 1000.0 / cycleMs);
+        return new EquipScore(dmg, node.def, node.statSum);
+    }
+
+    /** Naked stat snapshot: bot totals minus all currently-equipped non-cash gear. */
+    private static StatSnapshot nakedBase(Character bot, ItemInformationProvider ii, Inventory eqdInv) {
+        StatSnapshot sim = StatSnapshot.of(bot);
+        for (Item it : eqdInv.list()) {
+            if (it instanceof Equip e && !ii.isCash(e.getItemId())) sim = sim.swap(e, null);
+        }
+        return sim;
+    }
+
+    /**
+     * Emits equip moves to realize the optimizer's chosen set. Conservative: only emits a
+     * move when the target differs from the currently-equipped item AND the target sits in
+     * the EQUIP inventory (positive position). Manipulator handles displacement of the old
+     * item (and 2H↔shield / overall↔pants auto-unequips). Does NOT proactively unequip
+     * gear when target is empty — that would downgrade without a replacement.
+     */
+    private static void applyEquipPlan(Character bot, ItemInformationProvider ii, Inventory eqdInv,
+                                        Map<Short, Equip> currentBySlot, Map<Short, Equip> picks,
+                                        Equip targetWeapon, List<Short> dpSlots) {
+        // Order: weapon first (handles 2H↔1H eviction), overall before pants, then others.
+        List<Short> order = new ArrayList<>();
+        order.add((short) -11);
+        if (dpSlots.contains((short) -5)) order.add((short) -5);
+        if (dpSlots.contains((short) -6)) order.add((short) -6);
+        for (Short s : dpSlots) {
+            if (s != (short) -5 && s != (short) -6) order.add(s);
+        }
+        Map<Short, Equip> full = new HashMap<>(picks);
+        full.put((short) -11, targetWeapon);
+        for (Short slot : order) {
+            Equip target = full.get(slot);
+            Equip current = currentBySlot.get(slot);
+            if (target == null) continue;
+            if (target == current) continue;
+            short pos = target.getPosition();
+            if (pos <= 0) continue; // already in an EQUIPPED slot — skip to avoid swap loops
+            InventoryManipulator.handleItemMove(bot.getClient(), InventoryType.EQUIP,
+                    pos, slot, (short) 1);
+        }
     }
 
     /**
@@ -314,7 +800,7 @@ class BotEquipManager {
             e.setValue(pruneDominated(e.getValue()));
         }
 
-        MapDamageProfile mobProfile = MapDamageProfile.snapshot(receiver);
+        MapDamageProfile mobProfile = MapDamageProfile.snapshotByAvoid(receiver);
         List<EquipRecommendation> recommendations = new ArrayList<>();
 
         List<Short> nonRingSlots = bySlot.keySet().stream()
@@ -412,7 +898,7 @@ class BotEquipManager {
         WeaponType weaponType = currentWeaponType(receiver, ii);
         Inventory receiverEquippedInv = receiver.getInventory(InventoryType.EQUIPPED);
         Inventory receiverEquipInv = receiver.getInventory(InventoryType.EQUIP);
-        MapDamageProfile mobProfile = MapDamageProfile.snapshot(receiver);
+        MapDamageProfile mobProfile = MapDamageProfile.snapshotByAvoid(receiver);
 
         // Build weapon lookahead pool from receiver's unequipped weapons (mirrors findRecommendedEquips).
         Map<Short, List<Equip>> lookaheadBySlot = buildLookaheadBySlot(receiver, ii, receiverEquipInv);
@@ -960,18 +1446,23 @@ class BotEquipManager {
      * Returns 0 if no WZ profile is available — caller skips DPS scaling.
      */
     private static int weaponCycleMs(int itemId) {
-        BotAttackDataProvider provider = BotAttackDataProvider.getInstance();
-        BotAttackDataProvider.NormalAttackProfile profile = provider.getNormalAttackProfile(itemId);
-        if (profile == null) {
+        try {
+            BotAttackDataProvider provider = BotAttackDataProvider.getInstance();
+            BotAttackDataProvider.NormalAttackProfile profile = provider.getNormalAttackProfile(itemId);
+            if (profile == null) {
+                return 0;
+            }
+            WeaponType weaponType = ItemInformationProvider.getInstance().getWeaponType(itemId);
+            BotAttackDataProvider.AttackAnimationSpec attackSpec = provider.getBasicAttackSpec(profile.getAttack(), weaponType);
+            int rawAnimationDelayMs = provider.getBodyStanceDurationMs(attackSpec.primaryAction());
+            if (rawAnimationDelayMs <= 0) {
+                return 0;
+            }
+            return server.bots.combat.BotAttackTiming.adjustDelayMillis(rawAnimationDelayMs, profile.getAttackSpeed());
+        } catch (Throwable t) {
+            // WZ data may not be initialized in unit-test contexts; fall back to no DPS scaling.
             return 0;
         }
-        WeaponType weaponType = ItemInformationProvider.getInstance().getWeaponType(itemId);
-        BotAttackDataProvider.AttackAnimationSpec attackSpec = provider.getBasicAttackSpec(profile.getAttack(), weaponType);
-        int rawAnimationDelayMs = provider.getBodyStanceDurationMs(attackSpec.primaryAction());
-        if (rawAnimationDelayMs <= 0) {
-            return 0;
-        }
-        return server.bots.combat.BotAttackTiming.adjustDelayMillis(rawAnimationDelayMs, profile.getAttackSpeed());
     }
 
     private static int defScore(Equip e)  { return e != null ? e.getWdef() + e.getMdef() : 0; }
@@ -988,7 +1479,9 @@ class BotEquipManager {
     }
 
     private static int magicScore(StatSnapshot sim) {
-        return sim.magic() * 100 + sim.int_();
+        // Weights INT and MAGIC almost equally — INT*1.1 nudges main-stat ties toward INT
+        // (matches v83 mage growth where INT scales magic damage and unlocks better gear).
+        return (int) Math.round(sim.int_() * 1.1d) + sim.magic();
     }
 
     static boolean isMageJob(Job job) {
@@ -1008,11 +1501,11 @@ class BotEquipManager {
             case -11 -> "weapon";
             case -10 -> "shield";
             case -9 -> "cape";
-            case -8 -> "top";
+            case -8 -> "glove";
             case -7 -> "shoes";
-            case -6 -> "bottom";
-            case -5 -> "glove";
-            case -4 -> "pants";
+            case -6 -> "pants";
+            case -5 -> "top";
+            case -4 -> "earring";
             case -3 -> "face";
             case -2 -> "eye";
             case -1 -> "hat";
@@ -1175,7 +1668,7 @@ class BotEquipManager {
      * {@code flatAcc} = total accuracy minus its derived (dex/luk) component, so {@link #swap}
      * can recompute total accuracy after stat changes without re-reading the live bot state.
      */
-    private record StatSnapshot(int str, int dex, int int_, int luk, int watk, int magic, int flatAcc,
+    record StatSnapshot(int str, int dex, int int_, int luk, int watk, int magic, int flatAcc,
                                 int level, int fame, Job job) {
         static StatSnapshot of(Character bot) {
             int totalAcc = CombatFormulaProvider.getInstance().getTotalAccuracy(bot);

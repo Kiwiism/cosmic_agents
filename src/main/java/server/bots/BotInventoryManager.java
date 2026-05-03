@@ -583,6 +583,7 @@ class BotInventoryManager {
     }
 
     private static void resetTradeState(BotEntry entry, Character bot) {
+        boolean hadRestores = !entry.pendingTradeRestoreSlots.isEmpty();
         restoreTemporarilyUnequippedItems(entry, bot);
         entry.pendingTradeCategory = null;
         entry.pendingTradeItems    = null;
@@ -595,6 +596,14 @@ class BotInventoryManager {
         entry.pendingTradeBotDone  = false;
         entry.pendingTradeSingleBatch = false;
         entry.pendingPotShareBudget = 0;
+        // Safety net: if any items were temporarily unequipped for a trade that ended without
+        // completing (declined invite / cancel / timeout), the per-slot restore above may fail
+        // (slot occupied, item lost via window-swap bookkeeping). Re-run autoEquip so empty
+        // slots get refilled from the bot's bag — prevents leaving the bot wearing e.g. pants
+        // without a top after a declined trade.
+        if (hadRestores && bot != null) {
+            BotEquipManager.autoEquip(bot, entry.owner, null);
+        }
     }
 
     static void rememberTradeWindowItemForRestore(BotEntry entry, Item inventoryItem, Item tradeItem) {
