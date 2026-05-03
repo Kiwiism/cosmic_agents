@@ -1032,8 +1032,9 @@ class BotInventoryManager {
      * then own-class items sorted worst-to-best so the owner receives the least useful
      * gear early and can cancel once they have what they want.
      *
-     * "Own class" = bot's job/level/fame meets the item's requirements (stat reqs ignored;
-     * those may be unlocked by gear the bot already wears). Everything else is foreign.
+     * "Own class" = job requirement matches (or none) — level, stat, and fame reqs
+     * are ignored so high-level own-class gear the bot can't yet wear still sorts after
+     * foreign items rather than before them.
      */
     private static List<Item> sortEquipsForTrade(List<Item> items, Character bot) {
         if (items.size() <= 1) return items;
@@ -1041,7 +1042,7 @@ class BotInventoryManager {
         List<Item> foreign = new ArrayList<>();
         List<Item> own = new ArrayList<>();
         for (Item item : items) {
-            if (!(item instanceof Equip equip) || !BotEquipManager.statOnlyBlocked(bot, ii, equip)) {
+            if (!(item instanceof Equip equip) || !isOwnClassEquip(bot, ii, equip)) {
                 foreign.add(item);
             } else {
                 own.add(item);
@@ -1056,6 +1057,13 @@ class BotInventoryManager {
         result.addAll(foreign);
         result.addAll(own);
         return result;
+    }
+
+    /** Job-only wearability gate: level/stat/fame reqs treated as satisfied. */
+    private static boolean isOwnClassEquip(Character bot, ItemInformationProvider ii, Equip equip) {
+        return ii.meetsEquipRequirements(equip, bot.getJob(), Short.MAX_VALUE,
+                Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4,
+                Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4, Short.MAX_VALUE);
     }
 
     /** Score used to order own-class equips worst-to-best: 4*watk + matk + main + sec/2. */
