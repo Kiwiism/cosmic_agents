@@ -144,9 +144,23 @@ class BotEquipManager {
                 bestWeapon = w;
             }
         }
+        // Every weapon failed reqs — fall back to a no-weapon plan so the armor pass still runs.
+        if (bestPicks == null && !weaponPool.contains(null)) {
+            DpResult r = solveForWeapon(bot, ii, naked, null, dpSlots, currentBySlot, bySlot, mob);
+            if (r != null) {
+                bestScore = r.score();
+                bestPicks = r.picks();
+                bestWeapon = null;
+                if (r.paretoCapHit()) anyCapHit = true;
+            }
+        }
 
         if (bestPicks != null) {
             applyEquipPlan(bot, ii, eqdInv, currentBySlot, bestPicks, bestWeapon, dpSlots);
+            // Sweep currently-equipped items whose reqs aren't met against the bot's now-final
+            // stats. This catches gear left equipped via prior trade-debug or stat changes that
+            // would otherwise stick because applyEquipPlan only emits moves into occupied slots.
+            unequipInfeasibleEquipped(bot, ii);
         }
 
         if (anyCapHit) {
@@ -222,48 +236,53 @@ class BotEquipManager {
                 if (r.paretoCapHit()) anyCap = true;
             }
         }
+        // Last-resort fallback: every weapon's reqs failed against the bare snapshot. Try a
+        // no-weapon branch so we still produce a best-effort armor plan instead of giving up.
+        if (branches.isEmpty() && !weaponPool.contains(null)) {
+            DpResult r = solveForWeapon(bot, ii, naked, null, dpSlots, currentBySlot, bySlot, mob);
+            if (r != null) branches.add(new Branch(null, r));
+        }
         branches.sort((a, b) -> compareScores(b.result().score(), a.result().score()));
 
         if (branches.isEmpty()) {
-            out.add("autoequip: no feasible set found");
-            return out;
-        }
-
-        int show = Math.min(3, branches.size());
-        for (int i = 0; i < show; i++) {
-            Branch b = branches.get(i);
-            String wName = b.weapon() == null ? "(no weapon)" : ii.getName(b.weapon().getItemId());
-            EquipScore s = b.result().score();
-            String tag = i == 0 ? "*" : " ";
-            out.add(tag + " W=" + wName + " dmg=" + s.damage() + " def=" + s.defense()
-                    + " stat=" + s.statSum());
-        }
-
-        // Diff vs current for the winning branch.
-        Branch best = branches.get(0);
-        List<String> diffs = new ArrayList<>();
-        for (Map.Entry<Short, Equip> e : best.result().picks().entrySet()) {
-            Equip cur = currentBySlot.get(e.getKey());
-            if (cur != e.getValue()) {
-                diffs.add(slotLabel(e.getKey()) + ":"
-                        + (cur == null ? "-" : ii.getName(cur.getItemId()))
-                        + ">" + ii.getName(e.getValue().getItemId()));
-            }
-        }
-        Equip currentWp = (Equip) eqdInv.getItem((short) -11);
-        if (best.weapon() != currentWp) {
-            diffs.add(0, "weapon:" + (currentWp == null ? "-" : ii.getName(currentWp.getItemId()))
-                    + ">" + (best.weapon() == null ? "-" : ii.getName(best.weapon().getItemId())));
-        }
-        if (diffs.isEmpty()) {
-            out.add("changes: none (already optimal)");
+            out.add("autoequip: no weapon found and no items wearable");
         } else {
-            // Chunk into lines of ≤3 changes to avoid one giant message.
-            for (int i = 0; i < diffs.size(); i += 3) {
-                out.add("change: " + String.join(", ", diffs.subList(i, Math.min(i + 3, diffs.size()))));
+            int show = Math.min(3, branches.size());
+            for (int i = 0; i < show; i++) {
+                Branch b = branches.get(i);
+                String wName = b.weapon() == null ? "(no weapon)" : ii.getName(b.weapon().getItemId());
+                EquipScore s = b.result().score();
+                String tag = i == 0 ? "*" : " ";
+                out.add(tag + " W=" + wName + " dmg=" + s.damage() + " def=" + s.defense()
+                        + " stat=" + s.statSum());
             }
+
+            // Diff vs current for the winning branch.
+            Branch best = branches.get(0);
+            List<String> diffs = new ArrayList<>();
+            for (Map.Entry<Short, Equip> e : best.result().picks().entrySet()) {
+                Equip cur = currentBySlot.get(e.getKey());
+                if (cur != e.getValue()) {
+                    diffs.add(slotLabel(e.getKey()) + ":"
+                            + (cur == null ? "-" : ii.getName(cur.getItemId()))
+                            + ">" + ii.getName(e.getValue().getItemId()));
+                }
+            }
+            Equip currentWp = (Equip) eqdInv.getItem((short) -11);
+            if (best.weapon() != currentWp) {
+                diffs.add(0, "weapon:" + (currentWp == null ? "-" : ii.getName(currentWp.getItemId()))
+                        + ">" + (best.weapon() == null ? "-" : ii.getName(best.weapon().getItemId())));
+            }
+            if (diffs.isEmpty()) {
+                out.add("changes: none (already optimal)");
+            } else {
+                // Chunk into lines of ≤3 changes to avoid one giant message.
+                for (int i = 0; i < diffs.size(); i += 3) {
+                    out.add("change: " + String.join(", ", diffs.subList(i, Math.min(i + 3, diffs.size()))));
+                }
+            }
+            if (anyCap) out.add("WARN: pareto cap hit, result is best-effort");
         }
-        if (anyCap) out.add("WARN: pareto cap hit, result is best-effort");
 
         // Full dump to disk — chat is too narrow for inventory + per-branch breakdown.
         String filePath = writeAutoEquipDumpFile(bot, ii, eqpInv, eqdInv, mob, naked,
@@ -573,6 +592,23 @@ class BotEquipManager {
                 best = node;
             }
         }
+        // Best-effort fallback: Pareto pruning may have dropped the all-empty state in favor
+        // of higher-stat states that include picks whose reqs aren't met against the final
+        // snapshot (e.g. boots needing dex60 when no item in the pool adds dex). Rather than
+        // reporting "no feasible set", relax each frontier node by dropping infeasible picks
+        // (cascading until stable) and pick the best-scoring result. Returns null only if the
+        // weapon itself fails reqs against the bare snapshot — caller can try a null weapon.
+        if (best == null) {
+            for (DpNode node : frontier) {
+                DpNode relaxed = relaxToFeasible(hooks, node, dpSlots, weapon);
+                if (relaxed == null) continue;
+                EquipScore s = scoreNode(relaxed, weapon, wt, mob);
+                if (bestScore == null || compareScores(s, bestScore) > 0) {
+                    bestScore = s;
+                    best = relaxed;
+                }
+            }
+        }
         if (best == null) return null;
 
         Map<Short, Equip> picks = new LinkedHashMap<>();
@@ -648,6 +684,39 @@ class BotEquipManager {
                     s.str(), s.dex(), s.int_(), s.luk(), s.fame())) return false;
         }
         return true;
+    }
+
+    /**
+     * Iteratively drops picks whose reqs aren't met against the current snapshot until the
+     * remaining set is self-consistent. Cascading: dropping a stat-giving pick may invalidate
+     * another. Returns null iff the weapon itself fails reqs against the bare snapshot.
+     */
+    private static DpNode relaxToFeasible(OptimizerHooks hooks, DpNode node,
+                                           List<Short> dpSlots, Equip weapon) {
+        StatSnapshot s = node.snap;
+        int def = node.def, hp = node.hp, mp = node.mp, statSum = node.statSum;
+        Equip[] picks = node.picks.clone();
+        boolean changed = true;
+        while (changed) {
+            changed = false;
+            for (int i = 0; i < dpSlots.size(); i++) {
+                Equip p = picks[i];
+                if (p == null) continue;
+                if (!hooks.meetsReqs(p, s.job(), s.level(),
+                        s.str(), s.dex(), s.int_(), s.luk(), s.fame())) {
+                    s = s.swap(p, null);
+                    def -= p.getWdef() + p.getMdef();
+                    hp -= p.getHp();
+                    mp -= p.getMp();
+                    statSum -= usefulStatSum(p, s.job());
+                    picks[i] = null;
+                    changed = true;
+                }
+            }
+        }
+        if (weapon != null && !hooks.meetsReqs(weapon, s.job(), s.level(),
+                s.str(), s.dex(), s.int_(), s.luk(), s.fame())) return null;
+        return new DpNode(s, def, hp, mp, statSum, picks);
     }
 
     private static EquipScore scoreNode(DpNode node, Equip weapon, WeaponType wt, MapDamageProfile mob) {
@@ -1012,6 +1081,25 @@ class BotEquipManager {
             InventoryManipulator.handleItemMove(bot.getClient(), InventoryType.EQUIP, src, dst, (short) 1);
         }
         return "unequipped " + equippedSlots.size() + " item" + (equippedSlots.size() != 1 ? "s" : "");
+    }
+
+    /**
+     * Unequips any currently-worn non-cash item whose reqs no longer hold against the bot's
+     * current totals. Used after {@link #applyEquipPlan} to clean up gear the optimizer chose
+     * to leave bare (e.g. boots whose dex prereq was satisfied only by a now-removed overall).
+     */
+    private static void unequipInfeasibleEquipped(Character bot, ItemInformationProvider ii) {
+        Inventory eqdInv = bot.getInventory(InventoryType.EQUIPPED);
+        List<Short> bad = new ArrayList<>();
+        for (Item it : eqdInv.list()) {
+            if (!(it instanceof Equip e)) continue;
+            if (ii.isCash(e.getItemId())) continue;
+            if (!ii.canWearEquipment(bot, e, e.getPosition())) bad.add(e.getPosition());
+        }
+        if (bad.isEmpty()) return;
+        short[] arr = new short[bad.size()];
+        for (int i = 0; i < arr.length; i++) arr[i] = bad.get(i);
+        unequipSlot(bot, arr);
     }
 
     static String unequipSlot(Character bot, short[] slots) {
