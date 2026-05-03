@@ -54,7 +54,7 @@ class BotEquipManager {
             java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final short[] RING_SLOTS = {-12, -13, -15, -16};
     /** Hard cap on Pareto-frontier size per DP step to bound worst-case runtime. */
-    private static final int MAX_PARETO_STATES = 500;
+    private static final int MAX_PARETO_STATES = 1000;
 
     static final class EquipRecommendation {
         private final short targetSlot;
@@ -111,19 +111,7 @@ class BotEquipManager {
             }
         }
 
-        // Non-ring, non-weapon slots in canonical order — also include slots that only have
-        // an equipped item so the validator sees them.
-        Set<Short> dpSlotSet = new HashSet<>();
-        for (Short s : bySlot.keySet()) {
-            if (s != (short) -11 && !isRingSlot(s)) dpSlotSet.add(s);
-        }
-        for (Short s : currentBySlot.keySet()) {
-            if (s != (short) -11 && !isRingSlot(s)) dpSlotSet.add(s);
-        }
-        List<Short> dpSlots = new ArrayList<>(dpSlotSet);
-        // Descending order so top (-5) is processed before pants (-6); the overall→pants
-        // block at slot -6 reads picks[-5], which must already be set.
-        dpSlots.sort((a, b) -> Short.compare(b, a));
+        List<Short> dpSlots = buildDpSlots(bySlot, currentBySlot);
 
         // Outer weapon pool: currently-wearable + stat-only-blocked + currently equipped.
         List<Equip> weaponPool = new ArrayList<>(bySlot.getOrDefault((short) -11, List.of()));
@@ -177,13 +165,27 @@ class BotEquipManager {
                 // Don't let a chat error block the equip pass.
             }
         }
+    }
 
-        // Rings — greedy under post-DP equipped state.
-        if (bySlot.containsKey((short) -12)) {
-            Map<Short, List<Equip>> lookaheadAfter = buildLookaheadBySlot(bot, ii, eqpInv);
-            autoEquipRings(bot, ii, currentWeaponType(bot, ii), bySlot.get((short) -12),
-                           eqdInv, mob, lookaheadAfter);
+    /**
+     * Builds the ordered DP slot list from the merged candidate + currently-equipped slot
+     * sets. All four ring slots are included whenever any ring is in the pool, so the DP can
+     * place rings into now-empty positions. Sort is descending so {@code -5} (top) is solved
+     * before {@code -6} (pants) — the overall→pants block at -6 reads picks[-5].
+     */
+    private static List<Short> buildDpSlots(Map<Short, List<Equip>> bySlot,
+                                             Map<Short, Equip> currentBySlot) {
+        Set<Short> set = new HashSet<>();
+        for (Short s : bySlot.keySet()) if (s != (short) -11 && !isRingSlot(s)) set.add(s);
+        for (Short s : currentBySlot.keySet()) if (s != (short) -11 && !isRingSlot(s)) set.add(s);
+        boolean hasRings = !bySlot.getOrDefault((short) -12, List.of()).isEmpty();
+        if (!hasRings) {
+            for (Short s : currentBySlot.keySet()) if (isRingSlot(s)) { hasRings = true; break; }
         }
+        if (hasRings) for (short rs : RING_SLOTS) set.add(rs);
+        List<Short> out = new ArrayList<>(set);
+        out.sort((a, b) -> Short.compare(b, a));
+        return out;
     }
 
     /**
@@ -211,13 +213,7 @@ class BotEquipManager {
             if (it instanceof Equip e && !ii.isCash(e.getItemId())) currentBySlot.put(e.getPosition(), e);
         }
 
-        Set<Short> dpSlotSet = new HashSet<>();
-        for (Short s : bySlot.keySet()) if (s != (short) -11 && !isRingSlot(s)) dpSlotSet.add(s);
-        for (Short s : currentBySlot.keySet()) if (s != (short) -11 && !isRingSlot(s)) dpSlotSet.add(s);
-        List<Short> dpSlots = new ArrayList<>(dpSlotSet);
-        // Descending order so top (-5) is processed before pants (-6); the overall→pants
-        // block at slot -6 reads picks[-5], which must already be set.
-        dpSlots.sort((a, b) -> Short.compare(b, a));
+        List<Short> dpSlots = buildDpSlots(bySlot, currentBySlot);
 
         List<Equip> weaponPool = new ArrayList<>(bySlot.getOrDefault((short) -11, List.of()));
         Equip currentWeapon = compatibleWeaponOrNull(bot, ii, (Equip) eqdInv.getItem((short) -11));
@@ -524,11 +520,13 @@ class BotEquipManager {
             EquipSlot eslot = EquipSlot.getFromTextSlot(ts);
             if (eslot == null || eslot == EquipSlot.PET_EQUIP) continue;
             short pslot = (short) eslot.getPrimarySlot();
-            if (pslot == 0 || isRingSlot(pslot)) continue;
+            if (pslot == 0) continue;
             if (pslot == (short) -11
                     && !isWeaponCompatible(bot, ii.getWeaponType(ex.getItemId()))) continue;
             if (!ii.canWearEquipment(bot, ex, pslot) && !statOnlyBlocked(bot, ii, ex)) continue;
-            List<Equip> pool = bySlot.computeIfAbsent(pslot, k -> new ArrayList<>());
+            // Rings live in the shared -12 pool regardless of which equipped position they came from.
+            short key = isRingSlot(pslot) ? (short) -12 : pslot;
+            List<Equip> pool = bySlot.computeIfAbsent(key, k -> new ArrayList<>());
             if (!pool.contains(ex)) pool.add(ex);
         }
         // Re-prune so newly-added extras can knock out dominated incumbents (and vice versa).
@@ -541,11 +539,7 @@ class BotEquipManager {
             if (it instanceof Equip e && !ii.isCash(e.getItemId())) currentBySlot.put(e.getPosition(), e);
         }
 
-        Set<Short> dpSlotSet = new HashSet<>();
-        for (Short s : bySlot.keySet()) if (s != (short) -11 && !isRingSlot(s)) dpSlotSet.add(s);
-        for (Short s : currentBySlot.keySet()) if (s != (short) -11 && !isRingSlot(s)) dpSlotSet.add(s);
-        List<Short> dpSlots = new ArrayList<>(dpSlotSet);
-        dpSlots.sort((a, b) -> Short.compare(b, a));
+        List<Short> dpSlots = buildDpSlots(bySlot, currentBySlot);
 
         List<Equip> weaponPool = new ArrayList<>(bySlot.getOrDefault((short) -11, List.of()));
         Equip currentWeapon = compatibleWeaponOrNull(bot, ii, (Equip) eqdInv.getItem((short) -11));
@@ -632,7 +626,13 @@ class BotEquipManager {
 
         for (int i = 0; i < n; i++) {
             short slot = dpSlots.get(i);
-            List<Equip> pool = bySlot.getOrDefault(slot, List.of());
+            // Rings share a single pool keyed at -12; cross-slot dedupe prevents the same ring
+            // instance being placed in two ring slots. The 4 ring positions are otherwise
+            // interchangeable for stats, so the DP just picks up to 4 rings from the pool.
+            boolean ringSlot = isRingSlot(slot);
+            List<Equip> pool = ringSlot
+                    ? bySlot.getOrDefault((short) -12, List.of())
+                    : bySlot.getOrDefault(slot, List.of());
             List<DpNode> next = new ArrayList<>(Math.max(8, frontier.size() * (pool.size() + 1)));
             for (DpNode prev : frontier) {
                 // Empty option always available — always carry forward.
@@ -642,8 +642,14 @@ class BotEquipManager {
                         && prev.picks[overallIdx] != null
                         && hooks.isOverall(prev.picks[overallIdx].getItemId()));
                 if (blockedByOverall) continue;
+                candLoop:
                 for (Equip cand : pool) {
                     if (cand == null) continue;
+                    if (ringSlot) {
+                        for (int j = 0; j < i; j++) {
+                            if (isRingSlot(dpSlots.get(j)) && prev.picks[j] == cand) continue candLoop;
+                        }
+                    }
                     StatSnapshot ns = prev.snap.swap(null, cand);
                     int nDef = prev.def + cand.getWdef() + cand.getMdef();
                     int nHp = prev.hp + cand.getHp();
@@ -850,64 +856,23 @@ class BotEquipManager {
      * True if the bot meets job/level/fame for {@code equip} but fails only on stat
      * requirements. Used to seed the weapon lookahead pool.
      */
-    private static boolean statOnlyBlocked(Character bot, ItemInformationProvider ii, Equip equip) {
+    static boolean statOnlyBlocked(Character bot, ItemInformationProvider ii, Equip equip) {
         // Pass huge stat values: if it still fails, level/job/fame is blocking, skip.
         return ii.meetsEquipRequirements(equip, bot.getJob(), bot.getLevel(),
                 Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4,
                 Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4, bot.getFame());
     }
 
-    /**
-     * Builds a slot-keyed lookahead pool from the given equip inventory. Slot {@code -11}
-     * holds weapons (currently-wearable + stat-only-blocked) so non-weapon scoring can
-     * project damage under any weapon the character could unlock. Other non-ring slots
-     * hold stat-only-blocked items only — currently-wearable non-weapons are presumed to
-     * already be on the character (autoEquip handles them); the lookahead only models
-     * items the character could wear if a candidate's stats unlocked them. Ring slots
-     * are omitted (rings are scored greedily across slots, not via lookahead).
-     * Each slot's list is dominance-pruned: an item B prunes A only if B's stats ≥ A's
-     * AND B's job/level/stat reqs ≤ A's, so a weaker-but-easier item isn't dropped.
-     */
-    private static Map<Short, List<Equip>> buildLookaheadBySlot(Character bot, ItemInformationProvider ii, Inventory equipInv) {
-        Map<Short, List<Equip>> bySlot = new HashMap<>();
-        for (Item item : equipInv.list()) {
-            if (ii.isCash(item.getItemId())) continue;
-            if (!(item instanceof Equip equip)) continue;
-            String textSlot = ii.getEquipmentSlot(item.getItemId());
-            if (textSlot == null) continue;
-            EquipSlot eslot = EquipSlot.getFromTextSlot(textSlot);
-            if (eslot == EquipSlot.PET_EQUIP) continue;
-            short primary = (short) eslot.getPrimarySlot();
-            if (primary == 0) continue;
-            if (isRingSlot(primary)) continue;
-            if (primary == (short) -11) {
-                if (!isWeaponCompatible(bot, ii.getWeaponType(equip.getItemId()))) continue;
-                if (ii.canWearEquipment(bot, equip, primary) || statOnlyBlocked(bot, ii, equip)) {
-                    bySlot.computeIfAbsent(primary, k -> new ArrayList<>()).add(equip);
-                }
-            } else {
-                if (ii.canWearEquipment(bot, equip, primary)) continue;
-                if (!statOnlyBlocked(bot, ii, equip)) continue;
-                bySlot.computeIfAbsent(primary, k -> new ArrayList<>()).add(equip);
-            }
-        }
-        for (Map.Entry<Short, List<Equip>> e : bySlot.entrySet()) {
-            e.setValue(pruneDominatedWithReqs(ii, e.getValue()));
-        }
-        return bySlot;
-    }
-
     static List<EquipRecommendation> findRecommendedEquips(Character receiver, Character holder) {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         Inventory holderEquipInv = holder.getInventory(InventoryType.EQUIP);
         Inventory receiverEquippedInv = receiver.getInventory(InventoryType.EQUIPPED);
-        Inventory receiverEquipInv = receiver.getInventory(InventoryType.EQUIP);
 
-        // Single source of truth: the autoEquip DP. Add the holder's tradeable items to the
-        // receiver's pool, run the optimizer, and recommend only the picks that came from the
-        // holder. This guarantees the bot never asks for an item it wouldn't actually equip.
+        // Single source of truth: the autoEquip DP. Add the holder's tradeable items (incl.
+        // rings) to the receiver's pool, run the optimizer, and recommend only the picks that
+        // came from the holder. This guarantees the bot never asks for an item it wouldn't
+        // actually equip.
         Set<Equip> holderItems = Collections.newSetFromMap(new IdentityHashMap<>());
-        Set<Equip> holderRings = Collections.newSetFromMap(new IdentityHashMap<>());
         for (Item item : holderEquipInv.list()) {
             if (!(item instanceof Equip equip) || ii.isCash(item.getItemId())) continue;
             if (item.isUntradeable() && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) continue;
@@ -915,14 +880,11 @@ class BotEquipManager {
             if (textSlot == null) continue;
             EquipSlot eslot = EquipSlot.getFromTextSlot(textSlot);
             if (eslot == null || eslot == EquipSlot.PET_EQUIP) continue;
-            short pslot = (short) eslot.getPrimarySlot();
-            if (pslot == 0) continue;
-            if (isRingSlot(pslot)) holderRings.add(equip);
-            else holderItems.add(equip);
+            if (eslot.getPrimarySlot() == 0) continue;
+            holderItems.add(equip);
         }
 
         List<EquipRecommendation> recommendations = new ArrayList<>();
-
         OptimizerResult opt = runOptimizerWithExtras(receiver, holderItems);
         if (opt.weapon() != null && holderItems.contains(opt.weapon())) {
             Equip cur = (Equip) receiverEquippedInv.getItem((short) -11);
@@ -934,23 +896,6 @@ class BotEquipManager {
                 recommendations.add(new EquipRecommendation(p.getKey(), cur, p.getValue()));
             }
         }
-
-        // Rings still use the legacy greedy scorer (DP excludes rings).
-        if (!holderRings.isEmpty()) {
-            WeaponType weaponType = currentWeaponType(receiver, ii);
-            MapDamageProfile mobProfile = MapDamageProfile.snapshotByAvoid(receiver);
-            Map<Short, List<Equip>> lookaheadBySlot = buildLookaheadBySlot(receiver, ii, receiverEquipInv);
-            List<Equip> ringCands = new ArrayList<>();
-            for (Equip r : holderRings) {
-                if (ii.canWearEquipment(receiver, r, (short) -12)) ringCands.add(r);
-            }
-            if (!ringCands.isEmpty()) {
-                ringCands = pruneDominated(ringCands);
-                recommendations.addAll(findRecommendedRings(receiver, ii, weaponType, ringCands,
-                        receiverEquippedInv, mobProfile, lookaheadBySlot));
-            }
-        }
-
         return recommendations;
     }
 
@@ -975,16 +920,6 @@ class BotEquipManager {
         if (primarySlot == 0) return null;
 
         Inventory receiverEquippedInv = receiver.getInventory(InventoryType.EQUIPPED);
-
-        if (isRingSlot(primarySlot)) {
-            // Rings: legacy scorer (DP excludes rings).
-            Inventory receiverEquipInv = receiver.getInventory(InventoryType.EQUIP);
-            WeaponType weaponType = currentWeaponType(receiver, ii);
-            MapDamageProfile mobProfile = MapDamageProfile.snapshotByAvoid(receiver);
-            Map<Short, List<Equip>> lookaheadBySlot = buildLookaheadBySlot(receiver, ii, receiverEquipInv);
-            return findRecommendedRingForItem(receiver, ii, weaponType, candidate, receiverEquippedInv,
-                    mobProfile, lookaheadBySlot);
-        }
 
         // Run the DP with the candidate added to the receiver's pool — recommend iff the
         // optimizer actually chose to equip it. This is the same oracle autoEquip uses, so
@@ -1129,292 +1064,6 @@ class BotEquipManager {
             case "belt" -> new short[]{-22};
             default -> new short[0];
         };
-    }
-
-    private static boolean autoEquipRings(Character bot, ItemInformationProvider ii, WeaponType wt,
-                                           List<Equip> candidates, Inventory eqdInv,
-                                           MapDamageProfile mobProfile,
-                                           Map<Short, List<Equip>> lookaheadBySlot) {
-        boolean changed = false;
-        List<Equip> pool = new ArrayList<>(candidates);
-        Equip effectiveWeapon = compatibleWeaponOrNull(bot, ii, (Equip) eqdInv.getItem((short) -11));
-        for (short rs : RING_SLOTS) {
-            Equip current = (Equip) eqdInv.getItem(rs);
-            List<Equip> eligible = pool.stream()
-                    .filter(c -> ii.canWearEquipment(bot, c, rs))
-                    .collect(Collectors.toList());
-            Equip best = findBestWithLookahead(bot, ii, wt, current, eligible, mobProfile,
-                                                lookaheadBySlot, effectiveWeapon);
-            if (best != null && best != current) {
-                InventoryManipulator.handleItemMove(bot.getClient(), InventoryType.EQUIP, best.getPosition(), rs, (short) 1);
-                pool.remove(best);
-                changed = true;
-            }
-        }
-        return changed;
-    }
-
-    private static List<EquipRecommendation> findRecommendedRings(Character receiver, ItemInformationProvider ii, WeaponType wt,
-                                                                  List<Equip> candidates, Inventory receiverEquippedInv,
-                                                                  MapDamageProfile mobProfile,
-                                                                  Map<Short, List<Equip>> lookaheadBySlot) {
-        List<EquipRecommendation> recommendations = new ArrayList<>();
-        List<Equip> pool = new ArrayList<>(candidates);
-        Equip effectiveWeapon = compatibleWeaponOrNull(receiver, ii, (Equip) receiverEquippedInv.getItem((short) -11));
-        for (short ringSlot : RING_SLOTS) {
-            Equip current = (Equip) receiverEquippedInv.getItem(ringSlot);
-            List<Equip> eligible = pool.stream()
-                    .filter(candidate -> ii.canWearEquipment(receiver, candidate, ringSlot))
-                    .collect(Collectors.toList());
-            Equip best = findBestWithLookahead(receiver, ii, wt, current, eligible, mobProfile, lookaheadBySlot, effectiveWeapon);
-            if (best != null && best != current) {
-                recommendations.add(new EquipRecommendation(ringSlot, current, best));
-                pool.remove(best);
-            }
-        }
-        return recommendations;
-    }
-
-    private static EquipRecommendation findRecommendedRingForItem(Character receiver,
-                                                                  ItemInformationProvider ii,
-                                                                  WeaponType wt,
-                                                                  Equip candidate,
-                                                                  Inventory receiverEquippedInv,
-                                                                  MapDamageProfile mobProfile,
-                                                                  Map<Short, List<Equip>> lookaheadBySlot) {
-        EquipRecommendation bestRecommendation = null;
-        EquipScore bestScore = null;
-        Equip effectiveWeapon = compatibleWeaponOrNull(receiver, ii, (Equip) receiverEquippedInv.getItem((short) -11));
-        for (short ringSlot : RING_SLOTS) {
-            if (!ii.canWearEquipment(receiver, candidate, ringSlot)) {
-                continue;
-            }
-
-            Equip current = (Equip) receiverEquippedInv.getItem(ringSlot);
-            EquipScore currentScore = scoreEquipFull(receiver, ii, wt, current, current, null, mobProfile, lookaheadBySlot, effectiveWeapon);
-            EquipScore candidateScore = scoreEquipFull(receiver, ii, wt, current, candidate, null, mobProfile, lookaheadBySlot, effectiveWeapon);
-            if (compareScores(candidateScore, currentScore) <= 0) {
-                continue;
-            }
-
-            if (bestRecommendation == null || compareScores(candidateScore, bestScore) > 0) {
-                bestRecommendation = new EquipRecommendation(ringSlot, current, candidate);
-                bestScore = candidateScore;
-            }
-        }
-
-        return bestRecommendation;
-    }
-
-    // -------------------------------------------------------------------------
-
-    /**
-     * Picks the best candidate for a slot. {@code lookaheadBySlot} is non-null only when
-     * scoring a non-weapon slot — its contents are weapons (currently wearable + stat-blocked)
-     * that the candidate may unlock. Pass null to disable lookahead.
-     */
-    private static Equip findBestWithLookahead(Character bot, ItemInformationProvider ii, WeaponType wt,
-                                                Equip current, List<Equip> candidates,
-                                                MapDamageProfile mobProfile,
-                                                Map<Short, List<Equip>> lookaheadBySlot, Equip currentWeapon) {
-        if (candidates == null || candidates.isEmpty()) return null;
-        Equip best = current;
-        EquipScore bestScore = scoreEquipFull(bot, ii, wt, current, current, null, mobProfile,
-                                              lookaheadBySlot, currentWeapon);
-        for (Equip c : candidates) {
-            EquipScore cs = scoreEquipFull(bot, ii, wt, current, c, null, mobProfile,
-                                            lookaheadBySlot, currentWeapon);
-            if (compareScores(cs, bestScore) > 0) {
-                best = c;
-                bestScore = cs;
-            }
-        }
-        return best;
-    }
-
-    /**
-     * Mob-aware score with optional weapon-slot lookahead. {@code loss} simulates an extra
-     * displaced item (pants on overall, shield on 2H). When {@code lookaheadBySlot} is
-     * non-null and the candidate is not itself a weapon, this method probes the pool for
-     * the best weapon wearable under the simulated stat totals; if that beats the current
-     * weapon, the score reflects the unlocked weapon's damage. Otherwise behavior matches
-     * a straight "swap candidate for replacing" damage projection.
-     */
-    private static EquipScore scoreEquipFull(Character bot, ItemInformationProvider ii, WeaponType wt,
-                                              Equip replacing, Equip candidate, Equip loss,
-                                              MapDamageProfile mobProfile,
-                                              Map<Short, List<Equip>> lookaheadBySlot, Equip currentWeapon) {
-        return scoreEquipCombo(bot, ii, wt, replacing, candidate, loss, null,
-                               mobProfile, lookaheadBySlot, currentWeapon);
-    }
-
-    private record TopPantsCombo(Equip top, Equip pants, EquipScore score) {}
-
-    /**
-     * Joint enumeration of top × pants pairs. Each pair is scored as "swap {@code overall}
-     * for the top, gain the pants" so the combined stats feed into damage, weapon lookahead
-     * (a pant that unlocks a stronger weapon when paired with a specific top is detected),
-     * and def/statSum tiebreakers. Returns null if either list is empty.
-     */
-    private static TopPantsCombo bestTopPantsCombo(Character bot, ItemInformationProvider ii, WeaponType wt,
-                                                    Equip overall, List<Equip> tops, List<Equip> pants,
-                                                    MapDamageProfile mobProfile,
-                                                    Map<Short, List<Equip>> lookaheadBySlot, Equip currentWeapon) {
-        if (tops == null || tops.isEmpty() || pants == null || pants.isEmpty()) return null;
-        TopPantsCombo best = null;
-        for (Equip t : tops) {
-            for (Equip p : pants) {
-                EquipScore s = scoreEquipCombo(bot, ii, wt, overall, t, null, p,
-                                                mobProfile, lookaheadBySlot, currentWeapon);
-                if (best == null || compareScores(s, best.score()) > 0) {
-                    best = new TopPantsCombo(t, p, s);
-                }
-            }
-        }
-        return best;
-    }
-
-    /**
-     * Like {@link #scoreEquipFull} but with an additional {@code gain} item added to the
-     * simulated state. Used to score combos that occupy multiple slots — e.g. swapping an
-     * overall for a top while simultaneously equipping pants. The {@code gain}'s stats
-     * contribute to damage and to the def/statSum tiebreakers.
-     */
-    private static EquipScore scoreEquipCombo(Character bot, ItemInformationProvider ii, WeaponType wt,
-                                               Equip replacing, Equip candidate, Equip loss, Equip gain,
-                                               MapDamageProfile mobProfile,
-                                               Map<Short, List<Equip>> lookaheadBySlot, Equip currentWeapon) {
-        StatSnapshot sim = StatSnapshot.of(bot).swap(replacing, candidate);
-        if (loss != null) sim = sim.swap(loss, null);
-        if (gain != null) sim = sim.swap(null, gain);
-
-        // Lock in candidate-as-weapon early so the unlock probe uses the right weapon type
-        // when scoring damage-driven slot unlocks.
-        boolean candidateIsWeapon = candidate != null && ItemConstants.isWeapon(candidate.getItemId());
-        Equip simWeapon = currentWeapon;
-        WeaponType simWt = wt;
-        if (candidateIsWeapon) {
-            simWeapon = candidate;
-            WeaponType cWt = ii.getWeaponType(candidate.getItemId());
-            if (cWt != null) simWt = cWt;
-        }
-
-        // Iteratively probe non-weapon slot unlocks: a candidate's stats may unlock a hat,
-        // whose stats in turn unlock pants, etc. Each pass lets the simulated state catch
-        // up; we re-run the weapon probe afterward so weapon damage reflects the final
-        // post-unlock stat totals. Selection metric is projected damage (magic for mages),
-        // so a +11-secondary item doesn't beat a +10-main one when main drives more damage.
-        int defDelta = 0;
-        int statDelta = 0;
-        if (lookaheadBySlot != null && !lookaheadBySlot.isEmpty()) {
-            Map<Short, Equip> simSlot = new HashMap<>();
-            for (Item it : bot.getInventory(InventoryType.EQUIPPED).list()) {
-                if (it instanceof Equip e) simSlot.put(it.getPosition(), e);
-            }
-            if (replacing != null) simSlot.put(replacing.getPosition(), candidate);
-            if (loss != null)      simSlot.remove(loss.getPosition());
-            if (gain != null) {
-                short gs = primarySlotOf(ii, gain);
-                if (gs != 0) simSlot.put(gs, gain);
-            }
-            if (candidate != null && isOverall(candidate, ii)) simSlot.remove((short) -6);
-
-            Set<Equip> applied = new HashSet<>();
-            boolean changed = true;
-            while (changed) {
-                changed = false;
-                List<Short> slots = lookaheadBySlot.keySet().stream().sorted().collect(Collectors.toList());
-                for (Short slotKey : slots) {
-                    short slot = slotKey;
-                    if (slot == (short) -11) continue;
-                    List<Equip> pool = lookaheadBySlot.get(slot);
-                    if (pool == null || pool.isEmpty()) continue;
-                    Equip currentInSlot = simSlot.get(slot);
-                    int currentObj = unlockObjective(sim, ii, simWt, mobProfile);
-                    Equip bestUnlock = null;
-                    StatSnapshot bestTrial = sim;
-                    int bestObj = currentObj;
-                    for (Equip cand : pool) {
-                        if (applied.contains(cand)) continue;
-                        if (cand == currentInSlot) continue;
-                        if (!ii.meetsEquipRequirements(cand, sim.job(), sim.level(),
-                                sim.str(), sim.dex(), sim.int_(), sim.luk(), sim.fame())) continue;
-                        StatSnapshot trial = sim.swap(currentInSlot, cand);
-                        int obj = unlockObjective(trial, ii, simWt, mobProfile);
-                        if (obj > bestObj) { bestObj = obj; bestUnlock = cand; bestTrial = trial; }
-                    }
-                    if (bestUnlock != null) {
-                        sim = bestTrial;
-                        defDelta += defScore(bestUnlock) - defScore(currentInSlot);
-                        statDelta += usefulStatSum(bestUnlock, sim.job()) - usefulStatSum(currentInSlot, sim.job());
-                        applied.add(bestUnlock);
-                        simSlot.put(slot, bestUnlock);
-                        changed = true;
-                    }
-                }
-            }
-        }
-
-        // Weapon probe: existing semantics — if candidate is a weapon, simWt is already set;
-        // else probe the weapon pool under post-unlock stats for the highest-damage option.
-        List<Equip> weaponPool = lookaheadBySlot != null ? lookaheadBySlot.get((short) -11) : null;
-        if (!candidateIsWeapon && weaponPool != null && !weaponPool.isEmpty()) {
-            int baselineDmg = damageWith(sim, ii, simWt, mobProfile);
-            int bestDmg = baselineDmg;
-            StatSnapshot bestSim = sim;
-            for (Equip w : weaponPool) {
-                if (w == currentWeapon) continue;
-                if (!ii.meetsEquipRequirements(w, sim.job(), sim.level(),
-                        sim.str(), sim.dex(), sim.int_(), sim.luk(), sim.fame())) continue;
-                StatSnapshot simWithW = sim.swap(currentWeapon, w);
-                WeaponType wt2 = ii.getWeaponType(w.getItemId());
-                int d = damageWith(simWithW, ii, wt2 != null ? wt2 : simWt, mobProfile);
-                int cycleMs = weaponCycleMs(w.getItemId());
-                if (cycleMs > 0) d = (int) (d * 1000.0 / cycleMs);
-                if (d > bestDmg) {
-                    bestDmg = d;
-                    simWeapon = w;
-                    simWt = wt2 != null ? wt2 : simWt;
-                    bestSim = simWithW;
-                }
-            }
-            sim = bestSim;
-        }
-
-        int def = defScore(candidate) + defScore(gain) + defDelta;
-        int stat = usefulStatSum(candidate, sim.job()) + usefulStatSum(gain, sim.job()) + statDelta;
-        if (isMageJob(sim.job())) {
-            return new EquipScore(magicScore(sim), def, stat);
-        }
-        if (simWt == null) {
-            return new EquipScore(0, def, stat);
-        }
-        int dmg = damageWith(sim, ii, simWt, mobProfile);
-        // DPS scaling: scale by the cycle of the weapon currently in the simulated state.
-        int cycleMs = simWeapon != null ? weaponCycleMs(simWeapon.getItemId()) : 0;
-        if (cycleMs > 0) dmg = (int) (dmg * 1000.0 / cycleMs);
-        return new EquipScore(dmg, def, stat);
-    }
-
-    /**
-     * Single objective for non-weapon unlock selection: damage for physical jobs, magic
-     * score for mages, 0 when no weapon is in play. Aligns probe selection with the same
-     * metric used to score the candidate as a whole, so a +secondary unlock can't beat a
-     * +primary unlock when primary drives more damage.
-     */
-    private static int unlockObjective(StatSnapshot sim, ItemInformationProvider ii,
-                                        WeaponType simWt, MapDamageProfile mobProfile) {
-        if (isMageJob(sim.job())) return magicScore(sim);
-        if (simWt == null) return 0;
-        return damageWith(sim, ii, simWt, mobProfile);
-    }
-
-    private static short primarySlotOf(ItemInformationProvider ii, Equip e) {
-        if (e == null) return 0;
-        String ts = ii.getEquipmentSlot(e.getItemId());
-        if (ts == null) return 0;
-        EquipSlot es = EquipSlot.getFromTextSlot(ts);
-        return es == null ? 0 : (short) es.getPrimarySlot();
     }
 
     private static int compareScores(EquipScore left, EquipScore right) {
@@ -1582,11 +1231,6 @@ class BotEquipManager {
         };
     }
 
-    private static boolean isOverall(Item item, ItemInformationProvider ii) {
-        if (item == null) return false;
-        return "MaPn".equals(ii.getEquipmentSlot(item.getItemId()));
-    }
-
     static boolean isWeaponCompatible(Character bot, WeaponType weaponType) {
         if (weaponType == null || weaponType == WeaponType.NOT_A_WEAPON) {
             return true;
@@ -1719,11 +1363,6 @@ class BotEquipManager {
         return weaponType == WeaponType.DAGGER_OTHER || weaponType == WeaponType.DAGGER_THIEVES;
     }
 
-    private static WeaponType currentWeaponType(Character bot, ItemInformationProvider ii) {
-        Item w = bot.getInventory(InventoryType.EQUIPPED).getItem((short) -11);
-        return w != null ? ii.getWeaponType(w.getItemId()) : null;
-    }
-
     // ---- helper records / pruning ------------------------------------------------------
 
     /**
@@ -1848,20 +1487,6 @@ class BotEquipManager {
      * passed for every item, so the surviving Pareto front preserves all useful trade-offs.
      * Skipped when the pool has 0 or 1 items.
      */
-    private static List<Equip> pruneDominated(List<Equip> items) {
-        if (items == null || items.size() <= 1) return items;
-        List<Equip> kept = new ArrayList<>(items.size());
-        for (Equip a : items) {
-            boolean dominated = false;
-            for (Equip b : items) {
-                if (a == b) continue;
-                if (dominates(b, a)) { dominated = true; break; }
-            }
-            if (!dominated) kept.add(a);
-        }
-        return kept.isEmpty() ? items : kept;
-    }
-
     private static boolean dominates(Equip b, Equip a) {
         int[] bs = statVec(b);
         int[] as = statVec(a);
