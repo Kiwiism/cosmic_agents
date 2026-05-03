@@ -304,15 +304,13 @@ class BotInventoryManager {
             BotManager.getInstance().botSay(bot, "don't have it anymore");
             return;
         }
-        if (bot.getTrade() != null || entry.pendingTradeCategory != null) {
-            BotManager.getInstance().botSay(bot, "already in a trade!");
+        if (bot.getTrade() != null || entry.pendingTradeCategory != null || recipient.getTrade() != null) {
+            if (entry.pendingBotTradeRetry == null) {
+                entry.pendingBotTradeRetry = () -> startTradeTransfer(item, recipient, entry, bot);
+                entry.pendingBotTradeRetryMs = BotMovementManager.delayAfterCurrentTick(2_000);
+            }
             return;
         }
-        if (recipient.getTrade() != null) {
-            BotManager.getInstance().botSay(bot, recipient.getName() + " is already in a trade!");
-            return;
-        }
-
         startTradeSequence("loot_offer", recipient, List.of(item), 0, true, entry, bot);
     }
 
@@ -436,6 +434,17 @@ class BotInventoryManager {
 
     /** Called every bot simulation tick while a trade sequence is in progress. */
     static void tickTrade(BotEntry entry, Character bot) {
+        // Fire a queued bot-initiated retry once this bot is free and the delay expires.
+        if (entry.pendingTradeCategory == null && entry.pendingBotTradeRetry != null) {
+            if (entry.pendingBotTradeRetryMs > 0) {
+                entry.pendingBotTradeRetryMs = BotMovementManager.tickDown(entry.pendingBotTradeRetryMs);
+                return;
+            }
+            Runnable retry = entry.pendingBotTradeRetry;
+            entry.pendingBotTradeRetry = null;
+            retry.run();
+            return;
+        }
         if (entry.pendingTradeCategory == null) return;
 
         Trade trade = bot.getTrade();
@@ -1188,8 +1197,13 @@ class BotInventoryManager {
     /** Initiates a bot-to-bot pot-share trade (single batch; donor auto-confirms). */
     static void startPotShareTransfer(List<Item> items, Character recipient, BotEntry entry, Character bot, int maxQty) {
         if (items.isEmpty()) return;
-        if (bot.getTrade() != null || entry.pendingTradeCategory != null) return;
-        if (recipient.getTrade() != null) return;
+        if (bot.getTrade() != null || entry.pendingTradeCategory != null || recipient.getTrade() != null) {
+            if (entry.pendingBotTradeRetry == null) {
+                entry.pendingBotTradeRetry = () -> startPotShareTransfer(items, recipient, entry, bot, maxQty);
+                entry.pendingBotTradeRetryMs = BotMovementManager.delayAfterCurrentTick(2_000);
+            }
+            return;
+        }
         entry.pendingPotShareBudget = maxQty;
         startTradeSequence("pot_share", recipient, items, 0, true, entry, bot);
     }
@@ -1223,8 +1237,13 @@ class BotInventoryManager {
 
     static void startAmmoShareTransfer(List<Item> items, Character recipient, BotEntry entry, Character bot, int maxQty) {
         if (items.isEmpty()) return;
-        if (bot.getTrade() != null || entry.pendingTradeCategory != null) return;
-        if (recipient.getTrade() != null) return;
+        if (bot.getTrade() != null || entry.pendingTradeCategory != null || recipient.getTrade() != null) {
+            if (entry.pendingBotTradeRetry == null) {
+                entry.pendingBotTradeRetry = () -> startAmmoShareTransfer(items, recipient, entry, bot, maxQty);
+                entry.pendingBotTradeRetryMs = BotMovementManager.delayAfterCurrentTick(2_000);
+            }
+            return;
+        }
         entry.pendingPotShareBudget = maxQty;
         startTradeSequence("ammo_share", recipient, items, 0, true, entry, bot);
     }

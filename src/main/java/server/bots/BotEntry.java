@@ -163,6 +163,12 @@ public class BotEntry {
     long pendingLootOfferExpiresAt = 0L;
     int lootInhibitMs = 0;
 
+    // Bot-initiated trade retry: when a pot-share / ammo-share / loot-offer is blocked
+    // because the sender or recipient is already in a trade, the attempt is stored here
+    // and re-fired once the sender's trade clears and the delay expires.
+    Runnable pendingBotTradeRetry = null;
+    int pendingBotTradeRetryMs = 0;
+
     // Trade queue
     String pendingTradeCategory = null;
     List<Item> pendingTradeItems = null;
