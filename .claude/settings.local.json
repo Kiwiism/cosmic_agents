@@ -20,7 +20,13 @@
       "Bash(cmd:*)",
       "WebSearch",
       "Read(//tmp/**)",
-      "Bash(/c/apache-maven/bin/mvn compile *)"
+      "Bash(/c/apache-maven/bin/mvn compile *)",
+      "Bash(\"C:\\\\Program Files\\\\Java\\\\jdk-21\\\\bin\\\\javac.exe\" -version)",
+      "Bash(\"C:\\\\Program Files\\\\Java\\\\jdk-17\\\\bin\\\\javac.exe\" -version)",
+      "Bash(cd /d D:\\\\GameServers\\\\Maplestory\\\\Cosmic)",
+      "Bash(\"C:\\\\apache-maven-3.9.6\\\\bin\\\\mvn.cmd\" -q -o compile -DskipTests)",
+      "Bash(git -C \"D:\\\\GameServers\\\\Maplestory\\\\Cosmic\" diff --stat)",
+      "Bash(git -C \"D:\\\\GameServers\\\\Maplestory\\\\Cosmic\" log --oneline -3)"
     ]
   }
 }
