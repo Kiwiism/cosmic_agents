@@ -306,8 +306,7 @@ public class BotChatManager {
     // "pure <stat>" matches only the class whose primary stat it names.
     // Bare "pure" (no stat qualifier) matches all classes via the negative lookahead,
     // and the per-class job gate in handleApBuildSelection ensures only the right bot acts.
-    private static final String PURE_NO_STAT =
-            "\\bpure\\b(?!\\s+(?:str|dex|int|luk)\\b)";
+    private static final String PURE_NO_STAT = "^\\s*pure\\s*$";
     private static final Pattern AP_PURE_STR_PATTERN = Pattern.compile(
             "\\bpure\\s+str\\b|\\bdexless\\b|" + PURE_NO_STAT, Pattern.CASE_INSENSITIVE);
     private static final Pattern AP_DEXLESS_PATTERN = Pattern.compile(
