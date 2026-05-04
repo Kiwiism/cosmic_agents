@@ -649,11 +649,11 @@ class BotInventoryManager {
         if (receivedSomething) {
             bot.changeFaceExpression(Emote.HAPPY.getValue());
             BotManager.after(replyDelay, () ->
-                    BotManager.getInstance().botReply(entry, BotManager.randomReply(TRADE_THANKS_MSGS)));
+                    BotManager.getInstance().botSay(entry, BotManager.randomReply(TRADE_THANKS_MSGS)));
         } else if (ThreadLocalRandom.current().nextInt(100) < 20) {
             bot.changeFaceExpression(ThreadLocalRandom.current().nextBoolean() ? Emote.GLARE.getValue() : Emote.ANNOYED.getValue());
             BotManager.after(replyDelay, () ->
-                    BotManager.getInstance().botReply(entry, BotManager.randomReply(TRADE_FREEBIE_QUIPS)));
+                    BotManager.getInstance().botSay(entry, BotManager.randomReply(TRADE_FREEBIE_QUIPS)));
         }
     }
 
