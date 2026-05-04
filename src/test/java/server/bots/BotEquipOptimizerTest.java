@@ -166,6 +166,83 @@ class BotEquipOptimizerTest {
                 "expected no feasible state for W1 when chain is too short to clear DEX 60 req");
     }
 
+    @Test
+    void statGatedItemDoesNotPruneFeasibleFallback() {
+        // Reproduces Clawer-2026-05-03 bug: glove pool has Orihalcon Arbion (req dex70 luk95,
+        // +7 LUK +14 WDEF +53 HP +49 MP), Purple Work Gloves (no req, +4 LUK +1 WDEF +48 HP
+        // +43 MP), Red Marker (no req, +3 INT +7 WDEF). Bot is Assassin dex=50 luk=152.
+        // Without the snapshot-feasibility guard in paretoPruneNodes, Arbion vec-dominates
+        // PWG on every dim, PWG is pruned, Arbion later fails validateReqs (dex 50 < 70) and
+        // relaxes to no-glove, then Red Marker beats no-glove on the def tie. Correct: PWG.
+        final int CLAW_ID = 1472000;
+        final int ARBION_ID = 1082140, PWG_ID = 1082002, RED_MARKER_ID = 1082023;
+
+        Character bot = mock(Character.class);
+        when(bot.getJob()).thenReturn(Job.ASSASSIN);
+        when(bot.getLevel()).thenReturn(38);
+        when(bot.getFame()).thenReturn(0);
+
+        Equip claw = mock(Equip.class);
+        when(claw.getItemId()).thenReturn(CLAW_ID);
+        when(claw.getWatk()).thenReturn((short) 35);
+        when(claw.getPosition()).thenReturn((short) -11);
+
+        Equip arbion = mock(Equip.class);
+        when(arbion.getItemId()).thenReturn(ARBION_ID);
+        when(arbion.getLuk()).thenReturn((short) 7);
+        when(arbion.getWdef()).thenReturn((short) 14);
+        when(arbion.getHp()).thenReturn((short) 53);
+        when(arbion.getMp()).thenReturn((short) 49);
+        when(arbion.getPosition()).thenReturn((short) 1);
+
+        Equip pwg = mock(Equip.class);
+        when(pwg.getItemId()).thenReturn(PWG_ID);
+        when(pwg.getLuk()).thenReturn((short) 4);
+        when(pwg.getWdef()).thenReturn((short) 1);
+        when(pwg.getHp()).thenReturn((short) 48);
+        when(pwg.getMp()).thenReturn((short) 43);
+        when(pwg.getPosition()).thenReturn((short) 2);
+
+        Equip redMarker = mock(Equip.class);
+        when(redMarker.getItemId()).thenReturn(RED_MARKER_ID);
+        when(redMarker.getInt()).thenReturn((short) 3);
+        when(redMarker.getWdef()).thenReturn((short) 7);
+        when(redMarker.getPosition()).thenReturn((short) 3);
+
+        BotEquipManager.OptimizerHooks hooks = new BotEquipManager.OptimizerHooks() {
+            @Override public boolean isTwoHanded(int itemId) { return false; }
+            @Override public WeaponType getWeaponType(int itemId) {
+                return itemId == CLAW_ID ? WeaponType.CLAW : null;
+            }
+            @Override public boolean isOverall(int itemId) { return false; }
+            @Override public boolean meetsReqs(Equip e, Job job, int lvl, int s, int d, int i, int l, int f) {
+                if (e.getItemId() == ARBION_ID) return d >= 70 && l >= 95;
+                return true;
+            }
+        };
+
+        Map<Short, Equip> currentBySlot = new HashMap<>();
+        currentBySlot.put((short) -11, claw);
+        Map<Short, List<Equip>> bySlot = new LinkedHashMap<>();
+        bySlot.put(S_GLOVE, List.of(arbion, pwg, redMarker));
+
+        BotEquipManager.StatSnapshot naked = new BotEquipManager.StatSnapshot(
+                /*str*/ 4, /*dex*/ 50, /*int_*/ 4, /*luk*/ 152,
+                /*watk*/ 0, /*magic*/ 0, /*flatAcc*/ 0,
+                /*level*/ 38, /*fame*/ 0, Job.ASSASSIN);
+        BotEquipManager.MapDamageProfile mob =
+                new BotEquipManager.MapDamageProfile(/*wdef*/ 70, /*avoid*/ 0, /*level*/ 40);
+
+        BotEquipManager.DpResult result = BotEquipManager.solveForWeapon(
+                bot, hooks, naked, claw, List.of(S_GLOVE), currentBySlot, bySlot, mob);
+
+        assertNotNull(result, "expected a feasible plan");
+        Equip pick = result.picks().get(S_GLOVE);
+        assertNotNull(pick, "expected a glove pick");
+        assertEquals(PWG_ID, pick.getItemId(),
+                "Stat-gated Arbion must not prune feasible PWG fallback; got itemId=" + pick.getItemId());
+    }
+
     // ------------------------------------------------------------------ helpers
 
     private static List<Short> asList(short[] arr) {

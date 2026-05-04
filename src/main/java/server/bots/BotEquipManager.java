@@ -660,7 +660,7 @@ class BotEquipManager {
                     next.add(new DpNode(ns, nDef, nHp, nMp, nStat, picks));
                 }
             }
-            frontier = paretoPruneNodes(next, capHit);
+            frontier = paretoPruneNodes(next, capHit, hooks, dpSlots);
         }
 
         DpNode best = null;
@@ -709,7 +709,8 @@ class BotEquipManager {
         }
     }
 
-    private static List<DpNode> paretoPruneNodes(List<DpNode> nodes, boolean[] capHitOut) {
+    private static List<DpNode> paretoPruneNodes(List<DpNode> nodes, boolean[] capHitOut,
+                                                   OptimizerHooks hooks, List<Short> dpSlots) {
         if (nodes.size() <= 1) return nodes;
         List<int[]> vecs = new ArrayList<>(nodes.size());
         for (DpNode n : nodes) vecs.add(nodeVec(n));
@@ -719,7 +720,14 @@ class BotEquipManager {
             boolean dominated = false;
             for (int j = 0; j < nodes.size(); j++) {
                 if (i == j) continue;
-                if (vecDominates(vecs.get(j), a)) { dominated = true; break; }
+                DpNode b = nodes.get(j);
+                // Only allow b to prune a if b's picks already meet their stat requirements
+                // against b's partial snapshot. A speculative node whose items are stat-gated
+                // (e.g. dex70 glove when dex=50) must not eliminate the fallback that would
+                // otherwise be chosen after relaxToFeasible drops the infeasible pick.
+                if (vecDominates(vecs.get(j), a) && allPicksMeetReqs(b, hooks, dpSlots)) {
+                    dominated = true; break;
+                }
             }
             if (!dominated) kept.add(nodes.get(i));
         }
@@ -751,6 +759,18 @@ class BotEquipManager {
             if (b[i] > a[i]) strict = true;
         }
         return strict;
+    }
+
+    private static boolean allPicksMeetReqs(DpNode node, OptimizerHooks hooks, List<Short> dpSlots) {
+        StatSnapshot s = node.snap;
+        for (int i = 0; i < dpSlots.size(); i++) {
+            Equip p = node.picks[i];
+            if (p == null) continue;
+            if (!hooks.meetsReqs(p, s.job(), s.level(), s.str(), s.dex(), s.int_(), s.luk(), s.fame())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static boolean validateReqs(OptimizerHooks hooks, DpNode node,
