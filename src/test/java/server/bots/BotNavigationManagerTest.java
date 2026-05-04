@@ -31,14 +31,24 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class BotNavigationManagerTest {
-    private static MapleMap kerning;
+    private static volatile MapleMap kerningCached;
+
+    private static MapleMap kerning() {
+        MapleMap v = kerningCached;
+        if (v != null) return v;
+        synchronized (BotNavigationManagerTest.class) {
+            if (kerningCached == null) {
+                kerningCached = BotNavigationMapLoader.loadMapGeometry(103000000);
+            }
+            return kerningCached;
+        }
+    }
 
     @BeforeAll
     static void loadMaps() {
         // Avoid loading big maps; create a functionally equivalent synthetic test when possible.
+        // Map fixtures are lazy-loaded on first use.
         System.setProperty("wz-path", Path.of("wz").toAbsolutePath().toString());
-        kerning = BotNavigationMapLoader.loadMapGeometry(103000000);
-        BotNavigationGraphProvider.rebuildGraph(kerning);
     }
 
     @Test
@@ -405,7 +415,7 @@ class BotNavigationManagerTest {
     @Test
     void shouldHoldCurrentPositionOnlyAtNonTopClimbExitLaunchAnchor() {
         Character bot = mock(Character.class);
-        when(bot.getMap()).thenReturn(kerning);
+        when(bot.getMap()).thenReturn(kerning());
         BotEntry entry = new BotEntry(bot, null, null);
         entry.climbing = true;
         entry.climbRope = new Rope(-1251, -137, 2, true);
@@ -425,7 +435,7 @@ class BotNavigationManagerTest {
     @Test
     void shouldKeepSteeringToClimbLaunchAnchorWhileBelowExitAnchor() {
         Character bot = mock(Character.class);
-        when(bot.getMap()).thenReturn(kerning);
+        when(bot.getMap()).thenReturn(kerning());
         BotEntry entry = new BotEntry(bot, null, null);
         entry.climbing = true;
         entry.climbRope = new Rope(-1251, -137, 2, true);
@@ -443,7 +453,7 @@ class BotNavigationManagerTest {
     @Test
     void shouldKeepSteeringToNonTopRopeExitAnchorWhileAboveExitAnchor() {
         Character bot = mock(Character.class);
-        when(bot.getMap()).thenReturn(kerning);
+        when(bot.getMap()).thenReturn(kerning());
         BotEntry entry = new BotEntry(bot, null, null);
         entry.climbing = true;
         entry.climbRope = new Rope(707, -769, -455, false);

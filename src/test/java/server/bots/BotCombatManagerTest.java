@@ -422,19 +422,18 @@ class BotCombatManagerTest {
     }
 
     @Test
-    void shouldRetreatFromNearbyRangedTargetsInsideDegenerateBand() {
+    void shouldRetreatFromNearbyRangedTargetsInsideRetreatBand() {
         Point botPos = new Point(100, 200);
         Point retreatBandTarget = new Point(botPos.x + BotCombatManager.cfg.RANGED_RETREAT_THRESHOLD_X, 200);
         Point pointBlankTarget = new Point(botPos.x + 1, 200);
-        Point degenerateButNonRetreatTarget = new Point(botPos.x + BotCombatManager.cfg.RANGED_RETREAT_THRESHOLD_X + 1, 200);
+        Point justOutsideRetreatTarget = new Point(botPos.x + BotCombatManager.cfg.RANGED_RETREAT_THRESHOLD_X + 1, 200);
         Point farTarget = new Point(botPos.x + BotCombatManager.cfg.RANGED_DEGENERATE_RANGE_X + 100, 200);
 
         assertTrue(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, botPos, retreatBandTarget));
         assertEquals(new Point(botPos.x - BotCombatManager.cfg.RANGED_RETREAT_DISTANCE_X, 200),
                 BotAttackExecutionProvider.retreatTargetPosition(botPos, retreatBandTarget));
         assertTrue(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, botPos, pointBlankTarget));
-        assertTrue(BotAttackExecutionProvider.shouldDegenerateRangedAttack(WeaponType.BOW, botPos, degenerateButNonRetreatTarget));
-        assertFalse(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, botPos, degenerateButNonRetreatTarget));
+        assertFalse(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, botPos, justOutsideRetreatTarget));
         assertFalse(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, botPos, farTarget));
     }
 

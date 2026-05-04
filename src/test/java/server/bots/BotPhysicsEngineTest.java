@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -27,24 +28,40 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class BotPhysicsEngineTest {
-    private static MapleMap henesys;
-    private static MapleMap elliniaWeaponStore;
-    private static MapleMap kerning;
-    private static MapleMap kerningPharmacy;
-    private static MapleMap kpqS1;
-    private static MapleMap mushroomShrine;
-    private static MapleMap sleepyForest;
+    private static final Supplier<MapleMap> henesysS = lazyMap(100000000);
+    private static final Supplier<MapleMap> elliniaWeaponStoreS = lazyMap(101000001);
+    private static final Supplier<MapleMap> kerningS = lazyMap(103000000);
+    private static final Supplier<MapleMap> kerningPharmacyS = lazyMap(103000002);
+    private static final Supplier<MapleMap> kpqS1S = lazyMap(103000800);
+    private static final Supplier<MapleMap> mushroomShrineS = lazyMap(800000000);
+    private static final Supplier<MapleMap> sleepyForestS = lazyMap(105040400);
+
+    private static MapleMap henesys() { return henesysS.get(); }
+    private static MapleMap elliniaWeaponStore() { return elliniaWeaponStoreS.get(); }
+    private static MapleMap kerning() { return kerningS.get(); }
+    private static MapleMap kerningPharmacy() { return kerningPharmacyS.get(); }
+    private static MapleMap kpqS1() { return kpqS1S.get(); }
+    private static MapleMap mushroomShrine() { return mushroomShrineS.get(); }
+    private static MapleMap sleepyForest() { return sleepyForestS.get(); }
+
+    private static Supplier<MapleMap> lazyMap(int mapId) {
+        Supplier<MapleMap> delegate = () -> BotNavigationMapLoader.loadMapGeometry(mapId);
+        return new Supplier<>() {
+            private volatile MapleMap value;
+            @Override public MapleMap get() {
+                MapleMap v = value;
+                if (v != null) return v;
+                synchronized (this) {
+                    if (value == null) value = delegate.get();
+                    return value;
+                }
+            }
+        };
+    }
 
     @BeforeAll
-    static void loadMaps() {
+    static void initWzPath() {
         System.setProperty("wz-path", Path.of("wz").toAbsolutePath().toString());
-        henesys = BotNavigationMapLoader.loadMapGeometry(100000000);
-        elliniaWeaponStore = BotNavigationMapLoader.loadMapGeometry(101000001);
-        kerning = BotNavigationMapLoader.loadMapGeometry(103000000);
-        kerningPharmacy = BotNavigationMapLoader.loadMapGeometry(103000002);
-        kpqS1 = BotNavigationMapLoader.loadMapGeometry(103000800);
-        mushroomShrine = BotNavigationMapLoader.loadMapGeometry(800000000);
-        sleepyForest = BotNavigationMapLoader.loadMapGeometry(105040400);
     }
 
     @Test
@@ -54,7 +71,7 @@ class BotPhysicsEngineTest {
 
     @Test
     void shouldSimulateKnownHenesysVerticalJumpLanding() {
-        BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateJumpLanding(henesys, new Point(1080, 334), 0);
+        BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateJumpLanding(henesys(), new Point(1080, 334), 0);
 
         assertNotNull(landing);
         assertEquals(new Point(1080, 275), landing.point());
@@ -357,27 +374,27 @@ class BotPhysicsEngineTest {
 
     @Test
     void shouldKeepWalkingAcrossKpqPlatformEvenWithNearbyPlatformAbove() {
-        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(kpqS1);
+        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(kpqS1());
         Point start = new Point(-335, 116);
         Point target = new Point(-170, 103);
-        int startRegionId = graph.findRegionId(kpqS1, start);
+        int startRegionId = graph.findRegionId(kpqS1(), start);
 
-        assertEquals(startRegionId, graph.findRegionId(kpqS1, target));
+        assertEquals(startRegionId, graph.findRegionId(kpqS1(), target));
 
-        Character bot = mockBot(start, kpqS1);
+        Character bot = mockBot(start, kpqS1());
         BotEntry entry = new BotEntry(bot, null, null);
         BotPhysicsEngine.resetMotion(entry, bot.getPosition());
         entry.moveDir = 1;  // intent: walk right
 
-        Foothold currentFoothold = BotPhysicsEngine.findGroundFoothold(kpqS1, bot.getPosition());
+        Foothold currentFoothold = BotPhysicsEngine.findGroundFoothold(kpqS1(), bot.getPosition());
         assertNotNull(currentFoothold);
 
         for (int i = 0; i < 40 && bot.getPosition().x < target.x; i++) {
             BotPhysicsEngine.GroundMotion motion = BotPhysicsEngine.applyGroundMotion(entry, bot, currentFoothold);
             assertFalse(motion.lostGround(), "Walking across the same KPQ region should not lose ground because of the nearby upper platform");
-            currentFoothold = BotPhysicsEngine.findGroundFoothold(kpqS1, bot.getPosition());
+            currentFoothold = BotPhysicsEngine.findGroundFoothold(kpqS1(), bot.getPosition());
             assertNotNull(currentFoothold);
-            assertEquals(startRegionId, graph.findRegionId(kpqS1, bot.getPosition()));
+            assertEquals(startRegionId, graph.findRegionId(kpqS1(), bot.getPosition()));
         }
 
         assertTrue(bot.getPosition().x > start.x);
@@ -400,7 +417,7 @@ class BotPhysicsEngineTest {
     @Test
     void shouldLandApexJumpOnSleepyForestUpperPlatform() {
         BotPhysicsEngine.JumpLanding landing =
-                BotPhysicsEngine.simulateJumpLanding(sleepyForest, new Point(197, -14), 8);
+                BotPhysicsEngine.simulateJumpLanding(sleepyForest(), new Point(197, -14), 8);
 
         assertNotNull(landing);
         assertTrue(landing.point().y < 0,
@@ -410,10 +427,10 @@ class BotPhysicsEngineTest {
     @Test
     void shouldKeepAirborneBotInsideMapSideBoundary() {
         Point start = new Point(376, 182);
-        int stepX = BotPhysicsEngine.walkStep(elliniaWeaponStore);
+        int stepX = BotPhysicsEngine.walkStep(elliniaWeaponStore());
 
         BotPhysicsEngine.JumpLanding landing =
-                BotPhysicsEngine.simulateJumpLanding(elliniaWeaponStore, start, stepX);
+                BotPhysicsEngine.simulateJumpLanding(elliniaWeaponStore(), start, stepX);
 
         assertNotNull(landing, "rightward shop jump should hit the map boundary and fall back to the platform");
         assertEquals(new Point(400, 182), landing.point());
@@ -654,9 +671,9 @@ class BotPhysicsEngineTest {
 
     @Test
     void shouldCacheKerningPharmacyBlockedUndersidesAtGraphBuild() {
-        BotNavigationGraphProvider.rebuildGraph(kerningPharmacy);
+        BotNavigationGraphProvider.rebuildGraph(kerningPharmacy());
 
-        java.util.Set<Integer> collidableFromBelowIds = BotNavigationGraphProvider.getCachedCollidableFromBelowIds(kerningPharmacy.getId());
+        java.util.Set<Integer> collidableFromBelowIds = BotNavigationGraphProvider.getCachedCollidableFromBelowIds(kerningPharmacy().getId());
 
         assertNotNull(collidableFromBelowIds);
         assertTrue(collidableFromBelowIds.contains(1), "left pharmacy box lower edge should block jumps from below");
@@ -666,9 +683,9 @@ class BotPhysicsEngineTest {
 
     @Test
     void shouldCacheMushroomShrineDoughnutUndersidesAtGraphBuild() {
-        BotNavigationGraphProvider.rebuildGraph(mushroomShrine);
+        BotNavigationGraphProvider.rebuildGraph(mushroomShrine());
 
-        java.util.Set<Integer> collidableFromBelowIds = BotNavigationGraphProvider.getCachedCollidableFromBelowIds(mushroomShrine.getId());
+        java.util.Set<Integer> collidableFromBelowIds = BotNavigationGraphProvider.getCachedCollidableFromBelowIds(mushroomShrine().getId());
 
         assertNotNull(collidableFromBelowIds);
         assertTrue(collidableFromBelowIds.contains(248), "outer doughnut lower edge should block jumps from below");
