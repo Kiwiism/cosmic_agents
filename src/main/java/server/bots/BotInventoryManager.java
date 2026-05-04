@@ -62,6 +62,22 @@ class BotInventoryManager {
             "that's all!", "done adding stuff!", "all set!", "everything's in!",
             "that's everything!", "done!", "added it all", "check it out"
     );
+    private static final List<String> TRADE_RESERVED_FOR_OTHER_MSGS = List.of(
+            "these might be needed by others, maybe don't sell them",
+            "careful with these, they could be for someone else",
+            "heads up, I was saving those for someone — don't lose them",
+            "these might go to someone else, hold onto them for now",
+            "those are kinda spoken for, keep them safe ok?",
+            "just so you know, I had plans for those"
+    );
+    private static final List<String> TRADE_RESERVED_FOR_SELF_MSGS = List.of(
+            "I might need those later, don't lose them ok?",
+            "those could be an upgrade for me eventually, don't toss them",
+            "I was thinking I'd use those someday, keep them somewhere",
+            "heads up, I kinda wanted those for myself",
+            "those might fit me later, maybe hold onto them",
+            "just so you know, I had my eye on those"
+    );
 
     static void tickPassiveLoot(BotEntry entry, Character bot) {
         if (entry.lootInhibitMs > 0) {
@@ -273,6 +289,10 @@ class BotInventoryManager {
             BotManager.getInstance().botReply(entry, "you're already in a trade!");
             return;
         }
+        if ("equips".equals(category)) {
+            startEquipsGroupTradeTransfer(owner, entry, bot);
+            return;
+        }
         PreparedTradeItems prepared = prepareTradeItems(category, entry, bot);
         if (prepared.errorMessage() != null) {
             BotManager.getInstance().botReply(entry, prepared.errorMessage());
@@ -453,7 +473,14 @@ class BotInventoryManager {
             }
             List<Item> next = collectItems(entry.pendingTradeCategory, entry, bot);
             if (next.isEmpty()) {
-                resetTradeState(entry, bot);
+                String advanced = nextEquipsGroup(entry.pendingTradeCategory, entry, bot);
+                if (advanced != null) {
+                    entry.pendingTradeCategory = advanced;
+                    entry.pendingTradeCategoryMsg = equipsGroupMsg(advanced);
+                    openTradeBatch(entry, bot, collectItems(advanced, entry, bot), 0);
+                } else {
+                    resetTradeState(entry, bot);
+                }
             } else {
                 openTradeBatch(entry, bot, next, 0);
             }
@@ -528,6 +555,14 @@ class BotInventoryManager {
                 return;
             }
 
+            // Send group announcement before the first item
+            if (idx == 0 && entry.pendingTradeCategoryMsg != null) {
+                trade.chat(entry.pendingTradeCategoryMsg);
+                entry.pendingTradeCategoryMsg = null;
+                entry.pendingTradeTimerMs = BotMovementManager.delayAfterCurrentTick(600);
+                return;
+            }
+
             // Add next item
             Item item = items.get(idx);
             entry.pendingTradeIdx++;
@@ -589,6 +624,7 @@ class BotInventoryManager {
         boolean hadRestores = !entry.pendingTradeRestoreSlots.isEmpty();
         restoreTemporarilyUnequippedItems(entry, bot);
         entry.pendingTradeCategory = null;
+        entry.pendingTradeCategoryMsg = null;
         entry.pendingTradeItems    = null;
         entry.pendingTradeRecipientId = 0;
         entry.pendingTradeMeso     = 0;
@@ -844,16 +880,15 @@ class BotInventoryManager {
                 return !isRecoveryPotion(id) && !isBuffConsumable(id) && !ItemConstants.isEquipScroll(id);
             });
             case "equips" -> {
-                collectFromBag(bot, result, InventoryType.EQUIP,
-                        item -> true);
-                List<Item> sorted = sortEquipsForTrade(result, bot);
-                result.clear();
-                result.addAll(sorted);
+                for (EquipsGroup g : EquipsGroup.values()) result.addAll(collectEquipsGroup(g, entry, bot));
             }
             case "trash" -> result.addAll(collectTrashEquips(entry, bot));
             case "etc"     -> collectFromBag(bot, result, InventoryType.ETC,   item -> true);
             default -> {
-                if (category.startsWith("name:")) {
+                EquipsGroup eg = EquipsGroup.fromCategory(category);
+                if (eg != null) {
+                    result.addAll(collectEquipsGroup(eg, entry, bot));
+                } else if (category.startsWith("name:")) {
                     result.addAll(collectNamedItems(category.substring(5), bot));
                 }
             }
@@ -1062,13 +1097,77 @@ class BotInventoryManager {
         return result;
     }
 
-    private static List<Item> collectTrashEquips(BotEntry entry, Character bot) {
+    private enum EquipsGroup {
+        NORMAL, RESERVED_FOR_OTHER, RESERVED_FOR_SELF;
+
+        String categoryString() { return "equips:" + name().toLowerCase(); }
+
+        static EquipsGroup fromCategory(String category) {
+            if (category == null || !category.startsWith("equips:")) return null;
+            try { return valueOf(category.substring("equips:".length()).toUpperCase()); }
+            catch (IllegalArgumentException e) { return null; }
+        }
+
+        EquipsGroup next() {
+            EquipsGroup[] vals = values();
+            int next = ordinal() + 1;
+            return next < vals.length ? vals[next] : null;
+        }
+    }
+
+    private static List<Item> collectEquipsGroup(EquipsGroup group, BotEntry entry, Character bot) {
+        List<Item> all = new ArrayList<>();
+        collectFromBag(bot, all, InventoryType.EQUIP, item -> true);
         Set<Item> selfKeep = BotEquipManager.collectPotentialSelfUpgradeItems(bot);
-        List<Item> result = new ArrayList<>();
-        collectFromBag(bot, result, InventoryType.EQUIP, item ->
-                !selfKeep.contains(item)
-                        && !BotOfferManager.isReservedForOtherRecipients(entry, bot, item));
-        return sortEquipsForTrade(result, bot);
+        List<Item> groupItems = new ArrayList<>();
+        for (Item item : all) {
+            boolean isSelf  = selfKeep.contains(item);
+            boolean isOther = !isSelf && BotOfferManager.isReservedForOtherRecipients(entry, bot, item);
+            boolean isNone  = !isSelf && !isOther;
+            if ((group == EquipsGroup.NORMAL            && isNone)
+             || (group == EquipsGroup.RESERVED_FOR_OTHER && isOther)
+             || (group == EquipsGroup.RESERVED_FOR_SELF  && isSelf)) {
+                groupItems.add(item);
+            }
+        }
+        return sortEquipsForTrade(groupItems, bot);
+    }
+
+    private static String equipsGroupMsg(String category) {
+        EquipsGroup group = EquipsGroup.fromCategory(category);
+        if (group == null) return null;
+        return switch (group) {
+            case RESERVED_FOR_OTHER -> BotManager.randomReply(TRADE_RESERVED_FOR_OTHER_MSGS);
+            case RESERVED_FOR_SELF  -> BotManager.randomReply(TRADE_RESERVED_FOR_SELF_MSGS);
+            default -> null;
+        };
+    }
+
+    private static String nextEquipsGroup(String category, BotEntry entry, Character bot) {
+        EquipsGroup current = EquipsGroup.fromCategory(category);
+        if (current == null) return null;
+        for (EquipsGroup g = current.next(); g != null; g = g.next()) {
+            if (!collectEquipsGroup(g, entry, bot).isEmpty()) return g.categoryString();
+        }
+        return null;
+    }
+
+    private static void startEquipsGroupTradeTransfer(Character owner, BotEntry entry, Character bot) {
+        for (EquipsGroup group : EquipsGroup.values()) {
+            List<Item> items = collectEquipsGroup(group, entry, bot);
+            if (!items.isEmpty()) {
+                String category = group.categoryString();
+                startTradeSequence(category, owner, items, 0, false, entry, bot);
+                String msg = equipsGroupMsg(category);
+                if (msg != null) entry.pendingTradeCategoryMsg = msg;
+                return;
+            }
+        }
+        BotManager.getInstance().botReply(entry, noItemsReply("equips"));
+    }
+
+    private static List<Item> collectTrashEquips(BotEntry entry, Character bot) {
+        return collectEquipsGroup(EquipsGroup.NORMAL, entry, bot);
     }
 
     /** Job-only wearability gate: level/stat/fame reqs treated as satisfied. */
