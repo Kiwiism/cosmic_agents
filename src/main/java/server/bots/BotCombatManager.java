@@ -577,7 +577,7 @@ class BotCombatManager {
         // them right before the cast. The top guard already permits casts while inAir, so the
         // heal animation plays mid-flight instead of forcing a planted stand-and-cast.
         boolean jumpHealing = false;
-        if (entry.following && !entry.inAir && cfg.JUMP_HEAL_LEADER_AHEAD_PX > 0) {
+        if (entry.following && !entry.inAir && !entry.climbing && cfg.JUMP_HEAL_LEADER_AHEAD_PX > 0) {
             Character anchor = BotManager.getInstance().resolveFollowAnchor(entry, entry.owner);
             if (anchor != null && anchor != bot && anchor.getMap() == bot.getMap()) {
                 int dx = anchor.getPosition().x - bot.getPosition().x;
