@@ -539,7 +539,7 @@ public class BotChatManager {
                         "relog? say yes to confirm",
                         "save and relog? type yes",
                         "relogging? say yes to go ahead");
-                BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(prompts));
+                BotManager.getInstance().botReply(entry, BotManager.randomReply(prompts));
             });
             return;
         }
@@ -551,7 +551,7 @@ public class BotChatManager {
                         "log off? you sure? say yes to confirm",
                         "save and log off? say yes if you're sure",
                         "logging off? type yes to confirm");
-                BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(prompts));
+                BotManager.getInstance().botReply(entry, BotManager.randomReply(prompts));
             });
             return;
         }
@@ -586,7 +586,7 @@ public class BotChatManager {
                     entry.pendingAction       = null;
                     entry.pendingDropCategory = null;
                     BotManager.after(BotManager.randMs(400, 600),
-                            () -> BotManager.getInstance().botSay(entry.bot, "ok! keeping them"));
+                            () -> BotManager.getInstance().botReply(entry, "ok! keeping them"));
                 }
                 return;
             }
@@ -601,7 +601,7 @@ public class BotChatManager {
                     BotManager.after(BotManager.randMs(900, 1100), () -> {
                         Character o = entry.owner;
                         if (o == null) return; // owner logged out before relog fired
-                        BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(List.of("brb!", "relogging~", "one sec, relogging")));
+                        BotManager.getInstance().botReply(entry, BotManager.randomReply(List.of("brb!", "relogging~", "one sec, relogging")));
                         int charId      = entry.bot.getId();
                         int ownerCharId = o.getId();
                         int world       = entry.bot.getClient().getWorld();
@@ -615,7 +615,7 @@ public class BotChatManager {
                     });
                 } else {
                     BotManager.after(BotManager.randMs(900, 1100), () -> {
-                        BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(List.of("ok! saving and logging off~", "cya!!", "ok bye!!")));
+                        BotManager.getInstance().botReply(entry, BotManager.randomReply(List.of("ok! saving and logging off~", "cya!!", "ok bye!!")));
                         BotManager.after(BotManager.randMs(1800, 2200), () -> {
                             entry.bot.saveCharToDB(true);
                             entry.bot.getClient().disconnect(false, false);
@@ -627,7 +627,7 @@ public class BotChatManager {
                 entry.pendingAction = null;
                 String cancelMsg = action != null && action.startsWith("drop") ? "ok! keeping them" : "ok nvm, staying!";
                 BotManager.after(BotManager.randMs(700, 900), () ->
-                        BotManager.getInstance().botSay(entry.bot, cancelMsg));
+                        BotManager.getInstance().botReply(entry, cancelMsg));
             }
             return;
         }
@@ -655,28 +655,28 @@ public class BotChatManager {
         if (SUPPORT_OFF_PATTERN.matcher(message).find()) {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.supportHealsEnabled = false;
-                BotManager.getInstance().botSay(entry.bot, "ok, support off");
+                BotManager.getInstance().botReply(entry, "ok, support off");
             });
             return;
         }
         if (SUPPORT_ON_PATTERN.matcher(message).find()) {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.supportHealsEnabled = true;
-                BotManager.getInstance().botSay(entry.bot, "ok, support on");
+                BotManager.getInstance().botReply(entry, "ok, support on");
             });
             return;
         }
         if (HEALS_OFF_PATTERN.matcher(message).find()) {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.supportHealsEnabled = false;
-                BotManager.getInstance().botSay(entry.bot, "ok, no heals");
+                BotManager.getInstance().botReply(entry, "ok, no heals");
             });
             return;
         }
         if (HEALS_ON_PATTERN.matcher(message).find()) {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.supportHealsEnabled = true;
-                BotManager.getInstance().botSay(entry.bot, "ok, ill heal when needed");
+                BotManager.getInstance().botReply(entry, "ok, ill heal when needed");
             });
             return;
         }
@@ -684,7 +684,7 @@ public class BotChatManager {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.buffConsumablesEnabled = false;
                 entry.lastBuffScanMs = 0;
-                BotManager.getInstance().botSay(entry.bot, "ok, no buff pots");
+                BotManager.getInstance().botReply(entry, "ok, no buff pots");
             });
             return;
         }
@@ -693,7 +693,7 @@ public class BotChatManager {
                 entry.buffConsumablesEnabled = true;
                 entry.lastBuffScanMs = 0;
                 String mode = entry.buffCheapMode ? "cheap" : "max";
-                BotManager.getInstance().botSay(entry.bot, "ok, using buff pots (" + mode + ")");
+                BotManager.getInstance().botReply(entry, "ok, using buff pots (" + mode + ")");
             });
             return;
         }
@@ -701,7 +701,7 @@ public class BotChatManager {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.buffCheapMode = true;
                 entry.lastBuffScanMs = 0;
-                BotManager.getInstance().botSay(entry.bot, "ok, using cheapest buff pots");
+                BotManager.getInstance().botReply(entry, "ok, using cheapest buff pots");
             });
             return;
         }
@@ -709,14 +709,14 @@ public class BotChatManager {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.buffCheapMode = false;
                 entry.lastBuffScanMs = 0;
-                BotManager.getInstance().botSay(entry.bot, "ok, using best buff pots");
+                BotManager.getInstance().botReply(entry, "ok, using best buff pots");
             });
             return;
         }
         if (matchesWholeCommand(BUFF_LIST_PATTERN, message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 String summary = BotBuffManager.getChatSummary(entry.buffConsumablesEnabled, entry.buffCheapMode, entry.bot);
-                BotManager.getInstance().botSay(entry.bot, summary);
+                BotManager.getInstance().botReply(entry, summary);
             });
             return;
         }
@@ -730,12 +730,12 @@ public class BotChatManager {
         }
         if (isApRespecCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () ->
-                    BotManager.getInstance().botSay(entry.bot, BotBuildManager.respecAp(entry, entry.bot)));
+                    BotManager.getInstance().botReply(entry, BotBuildManager.respecAp(entry, entry.bot)));
             return;
         }
         if (isRespecCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () ->
-                    BotManager.getInstance().botSay(entry.bot, BotBuildManager.respecSp(entry, entry.bot)));
+                    BotManager.getInstance().botReply(entry, BotBuildManager.respecSp(entry, entry.bot)));
             return;
         }
         Matcher unequipSlotMatcher = UNEQUIP_SLOT_PATTERN.matcher(message);
@@ -744,14 +744,14 @@ public class BotChatManager {
             short[] slots = BotEquipManager.slotsFromName(slotName);
             if (slots.length > 0) {
                 BotManager.after(BotManager.randMs(500, 700), () ->
-                        BotManager.getInstance().botSay(entry.bot, BotEquipManager.unequipSlot(entry.bot, slots)));
+                        BotManager.getInstance().botReply(entry, BotEquipManager.unequipSlot(entry.bot, slots)));
                 return;
             }
         }
         if (UNEQUIP_PATTERN.matcher(message).find()) {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 BotManager.getInstance().issueStop(entry);
-                BotManager.getInstance().botSay(entry.bot, BotEquipManager.unequipAll(entry.bot));
+                BotManager.getInstance().botReply(entry, BotEquipManager.unequipAll(entry.bot));
             });
             return;
         }
@@ -761,7 +761,7 @@ public class BotChatManager {
             BotManager.after(BotManager.randMs(400, 600), () -> {
                 List<String> lines = BotEquipManager.autoEquipDebug(entry.bot);
                 for (String line : lines) {
-                    BotManager.getInstance().botSay(entry.bot, line);
+                    BotManager.getInstance().botReply(entry, line);
                 }
             });
             return;
@@ -769,7 +769,7 @@ public class BotChatManager {
         if (AUTOEQUIP_PATTERN.matcher(message).find()) {
             BotManager.after(BotManager.randMs(400, 600), () -> {
                 BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
-                BotManager.getInstance().botSay(entry.bot, "ok, gear optimized");
+                BotManager.getInstance().botReply(entry, "ok, gear optimized");
             });
             return;
         }
@@ -779,7 +779,7 @@ public class BotChatManager {
             if (dest != null) {
                 BotManager.after(BotManager.randMs(1000, 1500), () -> {
                     BotManager.getInstance().issueFarmHere(entry, dest);
-                    BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(MOVE_HERE_REPLIES));
+                    BotManager.getInstance().botReply(entry, BotManager.randomReply(MOVE_HERE_REPLIES));
                 });
             }
         } else if (isMoveHereCommand(message)) {
@@ -787,7 +787,7 @@ public class BotChatManager {
             if (dest != null) {
                 BotManager.after(BotManager.randMs(1000, 1500), () -> {
                     BotManager.getInstance().issueMoveTo(entry, dest, true);
-                    BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(MOVE_HERE_REPLIES));
+                    BotManager.getInstance().botReply(entry, BotManager.randomReply(MOVE_HERE_REPLIES));
                 });
             }
         } else if (isFollowCommand(message)) {
@@ -795,7 +795,7 @@ public class BotChatManager {
                 BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
                 entry.nextGearSuggestionAt = 0;
                 maybeSuggestGearToSiblings(entry, entry.bot);
-                BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(FOLLOW_REPLIES));
+                BotManager.getInstance().botReply(entry, BotManager.randomReply(FOLLOW_REPLIES));
                 BotPotionManager.checkPotShareOnModeStart(entry, entry.bot);
                 BotManager.after(BotManager.randMs(250, 750), () -> BotManager.getInstance().issueFollowOwner(entry));
             });
@@ -805,7 +805,7 @@ public class BotChatManager {
                 entry.nextGearSuggestionAt = 0;
                 maybeSuggestGearToSiblings(entry, entry.bot);
                 BotPotionManager.setupAutopotForBot(entry.bot);
-                BotManager.getInstance().botSay(entry.bot, BotPotionManager.grindStartMessage(entry.bot));
+                BotManager.getInstance().botReply(entry, BotPotionManager.grindStartMessage(entry.bot));
                 BotPotionManager.checkPotShareOnModeStart(entry, entry.bot);
                 BotManager.after(BotManager.randMs(250, 750), () -> {
                     BotManager.getInstance().issueGrind(entry);
@@ -819,7 +819,7 @@ public class BotChatManager {
                 entry.nextGearSuggestionAt = 0;
                 maybeSuggestGearToSiblings(entry, entry.bot);
                 BotManager.after(BotManager.randMs(1400, 1600), () ->
-                        BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(STOP_REPLIES)));
+                        BotManager.getInstance().botReply(entry, BotManager.randomReply(STOP_REPLIES)));
             });
         } else if (isFidgetCommand(message)) {
             BotManager.after(BotManager.randMs(250, 500), () -> {
@@ -839,11 +839,11 @@ public class BotChatManager {
         if (entry.spVariantPromptSent && entry.spVariant == null) {
             if (SP_1H_PATTERN.matcher(message).find()) {
                 entry.spVariant = "1h";
-                BotManager.getInstance().botSay(entry.bot, "ok! going 1h sword build, Brandish first");
+                BotManager.getInstance().botReply(entry, "ok! going 1h sword build, Brandish first");
                 BotBuildManager.autoAssignSp(entry, entry.bot);
             } else if (SP_2H_PATTERN.matcher(message).find()) {
                 entry.spVariant = "2h";
-                BotManager.getInstance().botSay(entry.bot, "ok! going 2h build, interleaving AC early for faster charges");
+                BotManager.getInstance().botReply(entry, "ok! going 2h build, interleaving AC early for faster charges");
                 BotBuildManager.autoAssignSp(entry, entry.bot);
             }
         }
@@ -854,7 +854,7 @@ public class BotChatManager {
             entry.apBuild      = null;
             entry.apPromptSent = false;
             String prompt = BotBuildManager.requestApBuildPrompt(entry, entry.bot);
-            if (prompt != null) BotManager.getInstance().botSay(entry.bot, prompt);
+            if (prompt != null) BotManager.getInstance().botReply(entry, prompt);
         } else if (entry.apPromptSent) {
             handleApBuildSelection(entry, message);
         }
@@ -865,7 +865,7 @@ public class BotChatManager {
             if (owner != null && bot.getTrade() == null && owner.getTrade() == null
                     && entry.pendingTradeCategory == null) {
                 BotManager.after(BotManager.randMs(600, 1000), () -> {
-                    BotManager.getInstance().botSay(bot, BotManager.randomReply(TRADE_INVITE_REPLIES));
+                    BotManager.getInstance().botReply(entry, BotManager.randomReply(TRADE_INVITE_REPLIES));
                     BotManager.after(BotManager.randMs(800, 1200), () -> {
                         Trade.startTrade(bot);
                         Trade.inviteTrade(bot, owner);
@@ -938,7 +938,7 @@ public class BotChatManager {
                         "ok " + jobName + " it is!",
                         "sure, going " + jobName,
                         "ok changing to " + jobName + "...");
-                BotManager.getInstance().botSay(entry.bot, BotManager.randomReply(replies));
+                BotManager.getInstance().botReply(entry, BotManager.randomReply(replies));
                 BotManager.after(BotManager.randMs(900, 1100), () -> BotStarterKitManager.advanceJob(entry.bot, entry.owner, advJob));
             }
         }
@@ -948,10 +948,10 @@ public class BotChatManager {
         entry.pendingAction = "owner_away";
         BotManager.getInstance().issueStop(entry);
         if (BotManager.getInstance().shouldOfferTownForAwayCommand(entry)) {
-            BotManager.getInstance().botSay(entry.bot,
+            BotManager.getInstance().botReply(entry,
                     "ok, want us to wait at nearest town or logout? say yes/town or logout");
         } else {
-            BotManager.getInstance().botSay(entry.bot,
+            BotManager.getInstance().botReply(entry,
                     "ok, want us to stay safe here or logout? say yes/stay or logout");
         }
     }
@@ -963,7 +963,7 @@ public class BotChatManager {
 
         if (AWAY_LOGOUT_CONFIRM_PATTERN.matcher(choice).matches()) {
             BotManager.after(BotManager.randMs(700, 900), () -> {
-                BotManager.getInstance().botSay(entry.bot, "ok, logging us out");
+                BotManager.getInstance().botReply(entry, "ok, logging us out");
                 logoutOwnerBots(entry);
             });
             return;
@@ -975,7 +975,7 @@ public class BotChatManager {
                 BotManager.getInstance().issueOwnerAwaySafeModeForOwner(ownerId, townOffered);
             }
             BotManager.after(BotManager.randMs(700, 900), () ->
-                    BotManager.getInstance().botSay(entry.bot, townOffered
+                    BotManager.getInstance().botReply(entry, townOffered
                             ? "ok, heading to town and waiting"
                             : "ok, staying safe here"));
             return;
@@ -987,12 +987,12 @@ public class BotChatManager {
                 BotManager.getInstance().issueOwnerAwaySafeModeForOwner(ownerId, false);
             }
             BotManager.after(BotManager.randMs(700, 900), () ->
-                    BotManager.getInstance().botSay(entry.bot, "ok, staying safe here"));
+                    BotManager.getInstance().botReply(entry, "ok, staying safe here"));
             return;
         }
 
         BotManager.after(BotManager.randMs(700, 900), () ->
-                BotManager.getInstance().botSay(entry.bot, "ok nvm, staying with you"));
+                BotManager.getInstance().botReply(entry, "ok nvm, staying with you"));
     }
 
     private static void logoutOwnerBots(BotEntry entry) {
@@ -1039,7 +1039,7 @@ public class BotChatManager {
             msg = entry.msgQueue.poll();
             if (msg == null) { entry.msgSending = false; return; }
         }
-        BotManager.getInstance().botSay(entry.bot, msg);
+        BotManager.getInstance().botReply(entry, msg);
         BotManager.after(BotManager.randMs(4900, 5100), () -> drainMsgQueue(entry));
     }
 
@@ -1112,7 +1112,7 @@ public class BotChatManager {
                 final Character bot = entry.bot;
                 BotManager.after(BotManager.randMs(1800, 2200), () -> {
                     bot.changeFaceExpression(ThreadLocalRandom.current().nextBoolean() ? 2 : 3);
-                    BotManager.getInstance().botSay(bot, BotManager.randomReply(WB_REPLIES));
+                    BotManager.getInstance().botReply(entry, BotManager.randomReply(WB_REPLIES));
                 });
             }
             entry.ownerAfkPos     = pos;
@@ -1541,7 +1541,7 @@ public class BotChatManager {
 
     private static void applyApBuildChoice(BotEntry entry, BotBuildManager.ApBuild build, String confirmMsg, String alreadyMsg) {
         if (sameApBuild(entry.apBuild, build)) {
-            BotManager.getInstance().botSay(entry.bot, alreadyMsg);
+            BotManager.getInstance().botReply(entry, alreadyMsg);
             return;
         }
         BotBuildManager.setApBuild(entry, build, confirmMsg);
@@ -1906,7 +1906,7 @@ public class BotChatManager {
 
         if (!BotInventoryManager.hasTransferableItems(category, entry, entry.bot)) {
             BotManager.after(BotManager.randMs(500, 700), () ->
-                    BotManager.getInstance().botSay(entry.bot, BotInventoryManager.noItemsReply(category)));
+                    BotManager.getInstance().botReply(entry, BotInventoryManager.noItemsReply(category)));
             return;
         }
 
@@ -1917,7 +1917,7 @@ public class BotChatManager {
                 entry.pendingAction = "item_choice";
                 entry.pendingDropCategory = category;
                 BotManager.after(BotManager.randMs(500, 700), () ->
-                        BotManager.getInstance().botSay(entry.bot, dropOrTradePrompt(
+                        BotManager.getInstance().botReply(entry, dropOrTradePrompt(
                                 category, BotInventoryManager.countTransferableItems(category, entry, entry.bot))));
             }
         }
@@ -1928,14 +1928,14 @@ public class BotChatManager {
         int count = BotInventoryManager.countTransferableItems(category, entry, entry.bot);
         if (count <= 0) {
             BotManager.after(BotManager.randMs(500, 700), () ->
-                    BotManager.getInstance().botSay(entry.bot, BotInventoryManager.noItemsReply(category)));
+                    BotManager.getInstance().botReply(entry, BotInventoryManager.noItemsReply(category)));
             return;
         }
 
         entry.pendingAction = "item_choice";
         entry.pendingDropCategory = category;
         BotManager.after(BotManager.randMs(500, 700), () ->
-                BotManager.getInstance().botSay(entry.bot, dropOrTradePrompt(category, count)));
+                BotManager.getInstance().botReply(entry, dropOrTradePrompt(category, count)));
     }
 
     private static TransferCommand matchTransferCommand(String message) {

@@ -68,7 +68,7 @@ public final class GeneralChatHandler extends AbstractPacketHandler {
                 ChatLogger.log(c, "GM General", s);
             }
 
-            BotManager.getInstance().handleChat(chr, s);
+            BotManager.getInstance().handleChat(chr, s, server.bots.ReplyChannel.MAP);
             chr.getAutobanManager().spam(7);
         }
     }

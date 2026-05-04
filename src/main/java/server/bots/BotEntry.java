@@ -155,6 +155,10 @@ public class BotEntry {
     String spVariant = null;
     boolean spVariantPromptSent = false;
 
+    // Reply channel — tracks the chat channel the last owner command arrived on.
+    // Bot replies are routed to this channel until the next command changes it.
+    volatile ReplyChannel replyChannel = ReplyChannel.MAP;
+
     // Pending two-step action
     String pendingAction = null;
     String pendingDropCategory = null;

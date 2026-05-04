@@ -672,7 +672,7 @@ public class BotManager {
         entry.task.cancel(false);
         issueStop(entry);
         after(randMs(400, 600), () ->
-                botSay(entry.bot, randomReply(List.of(
+                botReply(entry, randomReply(List.of(
                         "ok", "sure", "alright", "gotcha",
                         "later!", "see ya", "take care", "cya", "peace out"))));
         return true;
@@ -891,7 +891,7 @@ public class BotManager {
         return constants.id.NpcId.MAPLE_ADMINISTRATOR;
     }
 
-    public void handleChat(Character owner, String message) {
+    public void handleChat(Character owner, String message, ReplyChannel channel) {
         if (handlePendingLootOfferResponse(owner, message)) {
             return;
         }
@@ -1007,6 +1007,7 @@ public class BotManager {
                 applyFollowTargetCommand(owner, List.of(targetedBot.entry), followTargetToken);
                 return;
             }
+            targetedBot.entry.replyChannel = channel;
             BotChatManager.handleChat(targetedBot.entry, targetedBot.commandText);
             return;
         }
@@ -1023,6 +1024,7 @@ public class BotManager {
 
         // No name prefix — broadcast to all bots
         for (BotEntry entry : entries) {
+            entry.replyChannel = channel;
             BotChatManager.handleChat(entry, message);
         }
     }
@@ -3230,6 +3232,31 @@ public class BotManager {
         bot.getMap().broadcastMessage(PacketCreator.getChatText(bot.getId(), text, false, 0));
     }
 
+    /** Bot-to-bot visible say — routes MAP→map broadcast, PARTY→party, WHISPER→party fallback. */
+    void botSay(BotEntry entry, String text) {
+        switch (entry.replyChannel) {
+            case PARTY, WHISPER -> botSayParty(entry.bot, text);
+            default -> botSay(entry.bot, text);
+        }
+    }
+
+    /** Owner-directed reply — routes MAP→map broadcast, PARTY→party, WHISPER→whisper to owner. */
+    void botReply(BotEntry entry, String text) {
+        switch (entry.replyChannel) {
+            case PARTY -> botSayParty(entry.bot, text);
+            case WHISPER -> {
+                Character owner = entry.owner;
+                if (owner != null && owner.getClient() != null) {
+                    owner.sendPacket(PacketCreator.getWhisperReceive(
+                            entry.bot.getName(),
+                            entry.bot.getClient().getChannel() - 1,
+                            false, text));
+                }
+            }
+            default -> botSay(entry.bot, text);
+        }
+    }
+
     /**
      * Broadcasts via party chat so the owner sees the message even when they're
      * on a different map. Falls back to map chat if the bot has no party.
@@ -3259,6 +3286,7 @@ public class BotManager {
         if (entry == null) {
             return;
         }
+        entry.replyChannel = ReplyChannel.WHISPER;
         BotChatManager.handleChat(entry, message);
     }
 
