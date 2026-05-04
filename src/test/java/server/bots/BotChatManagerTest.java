@@ -106,6 +106,16 @@ class BotChatManagerTest {
     }
 
     @Test
+    void shouldParseTrashGearTrades() {
+        assertEquals("trash", BotChatManager.matchTradeCategory("trade trash"));
+        assertEquals("trash", BotChatManager.matchTradeCategory("trade my trash"));
+        assertEquals("trash", BotChatManager.matchTradeCategory("trade junk"));
+        assertEquals("trash", BotChatManager.matchTradeCategory("show me your junk"));
+        assertEquals("trash", BotChatManager.matchTradeCategory("show your junk"));
+        assertEquals("trash", BotChatManager.matchTradeCategory("show ur junk"));
+    }
+
+    @Test
     void shouldMatchMesoQueries() {
         assertTrue(BotChatManager.isMesoQuery("meso?"));
         assertTrue(BotChatManager.isMesoQuery("mesos?"));

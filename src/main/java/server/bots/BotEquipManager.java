@@ -1081,6 +1081,49 @@ class BotEquipManager {
                 || findRecommendationForItem(bot, bot, item, RecommendationScope.FUTURE) != null;
     }
 
+    static Set<Item> collectPotentialSelfUpgradeItems(Character bot) {
+        ItemInformationProvider ii = ItemInformationProvider.getInstance();
+        Inventory equipInv = bot.getInventory(InventoryType.EQUIP);
+        Inventory equippedInv = bot.getInventory(InventoryType.EQUIPPED);
+        Map<Short, List<Equip>> bySlot = new LinkedHashMap<>();
+        Set<Item> bagItems = Collections.newSetFromMap(new IdentityHashMap<>());
+
+        for (Item item : equipInv.list()) {
+            if (!(item instanceof Equip equip) || ii.isCash(item.getItemId())) continue;
+            String textSlot = ii.getEquipmentSlot(item.getItemId());
+            if (textSlot == null) continue;
+            EquipSlot slot = EquipSlot.getFromTextSlot(textSlot);
+            if (slot == null || slot == EquipSlot.PET_EQUIP) continue;
+            short primarySlot = (short) slot.getPrimarySlot();
+            if (primarySlot == 0) continue;
+            if (primarySlot == (short) -11
+                    && !isWeaponCompatible(bot, ii.getWeaponType(equip.getItemId()))) continue;
+            if (!futureOnlyBlocked(bot, ii, equip)) continue;
+            short key = isRingSlot(primarySlot) ? (short) -12 : primarySlot;
+            bySlot.computeIfAbsent(key, k -> new ArrayList<>()).add(equip);
+            bagItems.add(item);
+        }
+        for (Item item : equippedInv.list()) {
+            if (!(item instanceof Equip equip) || ii.isCash(item.getItemId())) continue;
+            short position = equip.getPosition();
+            if (position == (short) -11
+                    && !isWeaponCompatible(bot, ii.getWeaponType(equip.getItemId()))) continue;
+            if (!futureOnlyBlocked(bot, ii, equip)) continue;
+            short key = isRingSlot(position) ? (short) -12 : position;
+            bySlot.computeIfAbsent(key, k -> new ArrayList<>()).add(equip);
+        }
+
+        Set<Item> keep = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (List<Equip> pool : bySlot.values()) {
+            for (Equip equip : pruneDominatedSameTrackWithReqs(ii, pool)) {
+                if (bagItems.contains(equip)) {
+                    keep.add(equip);
+                }
+            }
+        }
+        return keep;
+    }
+
     static String recommendationSummary(Character receiver, Character holder, int maxItems) {
         List<EquipRecommendation> recommendations = findRecommendedEquips(receiver, holder);
         if (recommendations.isEmpty()) {
@@ -1650,6 +1693,24 @@ class BotEquipManager {
                 if (a == b) continue;
                 if (!sameFutureTrack(ii, a, b)) continue;
                 if (dominates(b, a)) { dominated = true; break; }
+            }
+            if (!dominated) kept.add(a);
+        }
+        return kept.isEmpty() ? items : kept;
+    }
+
+    private static List<Equip> pruneDominatedSameTrackWithReqs(ItemInformationProvider ii, List<Equip> items) {
+        if (items == null || items.size() <= 1) return items;
+        List<Equip> kept = new ArrayList<>(items.size());
+        for (Equip a : items) {
+            boolean dominated = false;
+            for (Equip b : items) {
+                if (a == b) continue;
+                if (!sameFutureTrack(ii, a, b)) continue;
+                if (dominates(b, a) && reqsAtLeastAsEasy(ii, b, a)) {
+                    dominated = true;
+                    break;
+                }
             }
             if (!dominated) kept.add(a);
         }

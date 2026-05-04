@@ -379,6 +379,7 @@ class BotInventoryManager {
             case "buff" -> "buff pots";
             case "use" -> "use items";
             case "equips" -> "equips";
+            case "trash" -> "trash equips";
             case "etc" -> "etc items";
             default -> {
                 if (category.startsWith("mesos:")) {
@@ -857,6 +858,7 @@ class BotInventoryManager {
                 result.clear();
                 result.addAll(sorted);
             }
+            case "trash" -> result.addAll(collectTrashEquips(entry, bot));
             case "etc"     -> collectFromBag(bot, result, InventoryType.ETC,   item -> true);
             default -> {
                 if (category.startsWith("name:")) {
@@ -1066,6 +1068,16 @@ class BotInventoryManager {
         result.addAll(foreign);
         result.addAll(own);
         return result;
+    }
+
+    private static List<Item> collectTrashEquips(BotEntry entry, Character bot) {
+        Set<Item> selfKeep = BotEquipManager.collectPotentialSelfUpgradeItems(bot);
+        List<Item> result = new ArrayList<>();
+        collectFromBag(bot, result, InventoryType.EQUIP, item ->
+                !entry.ownerGivenItems.contains(item)
+                        && !selfKeep.contains(item)
+                        && !BotOfferManager.isReservedForOtherRecipients(entry, bot, item));
+        return sortEquipsForTrade(result, bot);
     }
 
     /** Job-only wearability gate: level/stat/fame reqs treated as satisfied. */

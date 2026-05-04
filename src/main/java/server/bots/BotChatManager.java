@@ -375,6 +375,13 @@ public class BotChatManager {
     private static final Pattern TRADE_EQUIPS_COMMAND_PATTERN = Pattern.compile(
             "\\b" + TRADE_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + EQUIP_WORDS + "\\b",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern TRADE_TRASH_COMMAND_PATTERN = Pattern.compile(
+            "\\b" + TRADE_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT
+            + "(?:(?:your|ur|my)\\s+)?(?:trash|junk)\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern SHOW_JUNK_COMMAND_PATTERN = Pattern.compile(
+            "^\\s*show(?:\\s+me)?\\s+(?:(?:your|ur)\\s+)?junk[?!.,]*\\s*$",
+            Pattern.CASE_INSENSITIVE);
     private static final Pattern TRADE_ETC_COMMAND_PATTERN = Pattern.compile(
             "\\b" + TRADE_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + ETC_WORDS + "\\b",
             Pattern.CASE_INSENSITIVE);
@@ -881,7 +888,7 @@ public class BotChatManager {
 
         TransferCommand transferCommand = matchTransferCommand(message);
         if (transferCommand != null) {
-            handleTransferCommand(entry, transferCommand);
+            handleTransferCommand(entry, transferCommand, message);
             return;
         }
 
@@ -1900,8 +1907,14 @@ public class BotChatManager {
         return name != null && !name.isBlank() ? name : String.valueOf(skillId);
     }
 
-    private static void handleTransferCommand(BotEntry entry, TransferCommand transferCommand) {
+    private static void handleTransferCommand(BotEntry entry, TransferCommand transferCommand, String message) {
         String category = transferCommand.category;
+        if (transferCommand.mode == TransferMode.TRADE
+                && "trash".equals(category)
+                && message != null
+                && SHOW_JUNK_COMMAND_PATTERN.matcher(message).matches()) {
+            BotManager.getInstance().botReply(entry, "that sounded weird but ok");
+        }
         if (transferCommand.mode == TransferMode.TRADE && BotInventoryManager.isMesoCategory(category)) {
             BotManager.after(BotManager.randMs(500, 700), () ->
                     BotInventoryManager.startTradeTransfer(category, entry, entry.bot));
@@ -1975,6 +1988,7 @@ public class BotChatManager {
     static String matchTradeCategory(String message) {
         String mesoCategory = matchTradeMesoCategory(message);
         if (mesoCategory != null) return mesoCategory;
+        if (message != null && SHOW_JUNK_COMMAND_PATTERN.matcher(message).matches()) return "trash";
 
         if (TRADE_RECOMMENDED_COMMAND_PATTERN.matcher(message).find()) return "recommended";
         if (TRADE_SCROLLS_COMMAND_PATTERN.matcher(message).find()) return "scrolls";
@@ -1982,6 +1996,7 @@ public class BotChatManager {
         if (TRADE_BUFF_COMMAND_PATTERN.matcher(message).find()) return "buff";
         if (TRADE_USE_COMMAND_PATTERN.matcher(message).find()) return "use";
         if (TRADE_EQUIPS_COMMAND_PATTERN.matcher(message).find()) return "equips";
+        if (TRADE_TRASH_COMMAND_PATTERN.matcher(message).find()) return "trash";
         if (TRADE_ETC_COMMAND_PATTERN.matcher(message).find()) return "etc";
         Matcher viewSlotMatcher = TRADE_VIEW_SLOT_COMMAND_PATTERN.matcher(message);
         if (viewSlotMatcher.find()) return "name:" + BotInventoryManager.normalizeItemQuery(viewSlotMatcher.group(1));

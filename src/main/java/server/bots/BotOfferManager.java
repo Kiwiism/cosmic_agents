@@ -501,6 +501,43 @@ final class BotOfferManager {
         return null;
     }
 
+    static boolean isReservedForOtherRecipients(BotEntry entry, Character donor, Item item) {
+        if (entry == null || donor == null || item == null) {
+            return false;
+        }
+
+        Character owner = entry.owner;
+        if (owner == null) {
+            return false;
+        }
+
+        if (ItemConstants.isThrowingStar(item.getItemId())) {
+            if (isBetterThrowingStarForRecipient(owner, donor, item)) {
+                return true;
+            }
+            for (Character member : eligibleBotRecipients(owner, donor)) {
+                if (isBetterThrowingStarForRecipient(member, donor, item)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        if (ItemConstants.getInventoryType(item.getItemId()) != InventoryType.EQUIP) {
+            return false;
+        }
+
+        if (gearOfferNeed(owner, donor, item) != null) {
+            return true;
+        }
+        for (Character member : eligibleBotRecipients(owner, donor)) {
+            if (gearOfferNeed(member, donor, item) != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static Character findWeakestThrowingStarRecipient(Character owner, Character donor) {
         Character bestRecipient = null;
         int bestCurrentWatk = Integer.MAX_VALUE;
