@@ -296,21 +296,6 @@ class BotChatManagerTest {
     }
 
     @Test
-    void shouldBuildFutureLootOfferPromptVariants() {
-        String ownerPrompt = BotOfferManager.buildLootOfferPrompt("Owner", "Blue Moon", true, true);
-        assertTrue(Set.of(
-                "I have Blue Moon, you might need it later, want?",
-                "picked up Blue Moon, could be useful later, want it?",
-                "I got Blue Moon for later if you want it").contains(ownerPrompt));
-
-        String partyPrompt = BotOfferManager.buildLootOfferPrompt("Alice", "Blue Moon", false, true);
-        assertTrue(Set.of(
-                "Alice, you might need Blue Moon later, want it?",
-                "Alice, picked up Blue Moon, could help later if you want it",
-                "Alice, I got Blue Moon for later if you want it").contains(partyPrompt));
-    }
-
-    @Test
     void shouldMatchRespecCommands() {
         assertTrue(BotChatManager.isRespecCommand("respec"));
         assertTrue(BotChatManager.isRespecCommand("reset skills"));

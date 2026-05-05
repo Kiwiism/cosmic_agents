@@ -366,6 +366,49 @@ class BotEquipManagerTest {
         return e;
     }
 
+    @Test
+    void pureIntOverallUsefulToMageSiblingButNotToAssassin() {
+        // Reproduces Blue-Calas scenario: a mage overall has positive INT (mage-relevant)
+        // but zero LUK/DEX/WATK, so it has no relevant stat for an Assassin.
+        // This validates the Pareto predicate shared by self-reserve and sibling-reserve.
+        Equip pureInt = mageOverall(/*int*/ 7, /*luk*/ 0);
+
+        Set<Equip> usefulToMage = BotEquipManager.selectItemsBeatingBaseline(
+                BotEquipManager.relevantStatsFor(Job.MAGICIAN), List.of(pureInt), List.of());
+        Set<Equip> usefulToSin = BotEquipManager.selectItemsBeatingBaseline(
+                BotEquipManager.relevantStatsFor(Job.ASSASSIN), List.of(pureInt), List.of());
+
+        assertTrue(usefulToMage.contains(pureInt),
+                "INT overall beats empty baseline for mage sibling");
+        assertFalse(usefulToSin.contains(pureInt),
+                "INT-only overall has no LUK/DEX/WATK — not useful to Assassin");
+    }
+
+    @Test
+    void siblingItemNotUsefulWhenEquippedBaselineDominates() {
+        Equip blueCalas    = mageOverall(/*int*/ 7,  /*luk*/ 0);
+        Equip betterOverall = mageOverall(/*int*/ 10, /*luk*/ 0);
+
+        Set<Equip> useful = BotEquipManager.selectItemsBeatingBaseline(
+                BotEquipManager.relevantStatsFor(Job.MAGICIAN),
+                List.of(blueCalas), List.of(betterOverall));
+
+        assertFalse(useful.contains(blueCalas),
+                "item should not be reserved when mage sibling already wears a strictly better overall");
+    }
+
+    private static Equip mageOverall(int int_, int luk) {
+        Equip e = mock(Equip.class);
+        when(e.getStr()).thenReturn((short) 0);
+        when(e.getDex()).thenReturn((short) 0);
+        when(e.getInt()).thenReturn((short) int_);
+        when(e.getLuk()).thenReturn((short) luk);
+        when(e.getWatk()).thenReturn((short) 0);
+        when(e.getMatk()).thenReturn((short) 0);
+        when(e.getAcc()).thenReturn((short) 0);
+        return e;
+    }
+
     private static Set<Equip> identitySet(Equip... items) {
         Set<Equip> set = java.util.Collections.newSetFromMap(new IdentityHashMap<>());
         for (Equip e : items) set.add(e);

@@ -978,14 +978,6 @@ class BotEquipManager {
         return findRecommendedEquips(receiver, holder, RecommendationScope.FUTURE);
     }
 
-    static List<EquipRecommendation> findRecommendedEquipsFromItems(Character receiver, Collection<Equip> holderItems) {
-        return buildRecommendations(receiver, holderItems, RecommendationScope.IMMEDIATE);
-    }
-
-    static List<EquipRecommendation> findFutureRecommendedEquipsFromItems(Character receiver, Collection<Equip> holderItems) {
-        return buildRecommendations(receiver, holderItems, RecommendationScope.FUTURE);
-    }
-
     private static List<EquipRecommendation> findRecommendedEquips(Character receiver, Character holder,
                                                                    RecommendationScope scope) {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
@@ -1185,50 +1177,35 @@ class BotEquipManager {
         return strictlyGreater;
     }
 
+    /**
+     * True if {@code item} (from any inventory) is a potential upgrade for {@code recipient}:
+     * job-eligible, has at least one relevant stat, and not dominated by what the recipient
+     * currently has equipped in the same WZ text-slot. Shared by self-reserve, sibling-reserve,
+     * and the sibling gear-offer check so all three use identical criteria.
+     */
+    static boolean isEquipUsefulToBot(Character recipient, ItemInformationProvider ii, Equip item) {
+        if (!isOwnClassEquip(recipient, ii, item)) return false;
+        String slot = textSlotKey(ii, item);
+        if (slot == null) return false;
+        if (isWeaponSlot(slot) && !isWeaponCompatible(recipient, ii.getWeaponType(item.getItemId()))) return false;
+        EnumSet<RelevantStat> relevant = relevantStatsFor(recipient.getJob());
+        if (!hasPositiveRelevant(relevant, item)) return false;
+        Inventory equippedInv = recipient.getInventory(InventoryType.EQUIPPED);
+        List<Equip> baseline = new ArrayList<>();
+        for (Item it : equippedInv.list()) {
+            if (!(it instanceof Equip e) || ii.isCash(e.getItemId())) continue;
+            if (slot.equals(textSlotKey(ii, e))) baseline.add(e);
+        }
+        return !anyDominates(relevant, baseline, item);
+    }
+
     static Set<Item> collectPotentialSelfUpgradeItems(Character bot) {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         Inventory equipInv = bot.getInventory(InventoryType.EQUIP);
-        Inventory equippedInv = bot.getInventory(InventoryType.EQUIPPED);
-        StatSnapshot naked = nakedBase(bot, ii, equippedInv);
-        EnumSet<RelevantStat> relevant = relevantStatsFor(bot.getJob());
-
-        // Bucket by WZ text-slot ("Ma" top, "MaPn" overall, "Pn" pants, "Wp" weapon, ...)
-        // so different tracks don't dominate each other — an overall and a top both live at
-        // primary slot -5 but represent mutually-exclusive equip choices and shouldn't be
-        // Pareto-compared.
-        Map<String, List<Equip>> bagBySlot = new LinkedHashMap<>();
-        Map<String, List<Equip>> baselineBySlot = new LinkedHashMap<>();
-
+        Set<Item> keep = Collections.newSetFromMap(new IdentityHashMap<>());
         for (Item item : equipInv.list()) {
             if (!(item instanceof Equip equip) || ii.isCash(item.getItemId())) continue;
-            String slot = textSlotKey(ii, equip);
-            if (slot == null) continue;
-            if (isWeaponSlot(slot)
-                    && !isWeaponCompatible(bot, ii.getWeaponType(equip.getItemId()))) continue;
-            if (!isOwnClassEquip(bot, ii, equip)) continue;
-            bagBySlot.computeIfAbsent(slot, k -> new ArrayList<>()).add(equip);
-            if (meetsReqsNaked(bot, ii, naked, equip)) {
-                baselineBySlot.computeIfAbsent(slot, k -> new ArrayList<>()).add(equip);
-            }
-        }
-        for (Item item : equippedInv.list()) {
-            if (!(item instanceof Equip equip) || ii.isCash(item.getItemId())) continue;
-            String slot = textSlotKey(ii, equip);
-            if (slot == null) continue;
-            if (isWeaponSlot(slot)
-                    && !isWeaponCompatible(bot, ii.getWeaponType(equip.getItemId()))) continue;
-            if (!isOwnClassEquip(bot, ii, equip)) continue;
-            // Equipped items count as wearable-now (they ARE worn) — feed them into baseline,
-            // but never into the candidate set (worn items aren't tradeable here).
-            if (meetsReqsNaked(bot, ii, naked, equip)) {
-                baselineBySlot.computeIfAbsent(slot, k -> new ArrayList<>()).add(equip);
-            }
-        }
-
-        Set<Item> keep = Collections.newSetFromMap(new IdentityHashMap<>());
-        for (Map.Entry<String, List<Equip>> entry : bagBySlot.entrySet()) {
-            List<Equip> baseline = baselineBySlot.getOrDefault(entry.getKey(), List.of());
-            keep.addAll(selectItemsBeatingBaseline(relevant, entry.getValue(), baseline));
+            if (isEquipUsefulToBot(bot, ii, equip)) keep.add(equip);
         }
         return keep;
     }
