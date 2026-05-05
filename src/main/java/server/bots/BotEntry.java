@@ -228,7 +228,7 @@ public class BotEntry {
     // Buff consumables (toggleable; cheap = weakest buff of each type, max = strongest)
     boolean buffConsumablesEnabled = false;
     boolean buffCheapMode          = true;
-    boolean proactiveUpgradeOffers = false;
+    boolean proactiveUpgradeOffers = true;
     long    lastBuffScanMs         = 0;
     long    lastBuffActionAtMs     = 0L;
     String  lastBuffActionSummary  = "no buff scans yet";
