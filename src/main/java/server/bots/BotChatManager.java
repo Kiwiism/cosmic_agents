@@ -62,6 +62,9 @@ public class BotChatManager {
             + "|(?:go\\s+)?(?:sentry|camp|guard|defend|post\\s+up|anchor)(?:\\s+(?:here|mode))?)"
             + "(?:\\s+(?:now|pls|please))?",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern PATROL_PATTERN = Pattern.compile(
+            "(?:patrol|roam|wander)(?:\\s+(?:here|the\\s+area|around))?(?:\\s+(?:now|pls|please))?",
+            Pattern.CASE_INSENSITIVE);
 
     private static final Pattern STOP_PATTERN = Pattern.compile(
             "\\b(stop(\\s+(moving|it|now|pls|please))?|stay(\\s+(here|there|put))?|"
@@ -853,6 +856,14 @@ public class BotChatManager {
                     BotManager.getInstance().botReply(entry, BotManager.randomReply(MOVE_HERE_REPLIES));
                 });
             }
+        } else if (isPatrolCommand(message)) {
+            Point ownerPos = entry.owner != null ? new Point(entry.owner.getPosition()) : null;
+            if (ownerPos != null) {
+                BotManager.after(BotManager.randMs(1000, 1500), () -> {
+                    BotManager.getInstance().issuePatrol(entry, ownerPos);
+                    BotManager.getInstance().botReply(entry, BotManager.randomReply(MOVE_HERE_REPLIES));
+                });
+            }
         } else if (isMoveHereCommand(message)) {
             Point dest = entry.owner != null ? new Point(entry.owner.getPosition()) : null;
             if (dest != null) {
@@ -1539,6 +1550,10 @@ public class BotChatManager {
 
     static boolean isFarmHereCommand(String message) {
         return matchesWholeCommand(FARM_HERE_PATTERN, message);
+    }
+
+    static boolean isPatrolCommand(String message) {
+        return matchesWholeCommand(PATROL_PATTERN, message);
     }
 
     static boolean isMoveHereCommand(String message) {

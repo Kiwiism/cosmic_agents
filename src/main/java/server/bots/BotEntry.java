@@ -224,6 +224,10 @@ public class BotEntry {
     // "Farm here" anchor — bot returns to this fixed point and only takes local attacks.
     Point farmAnchor = null;
     int farmAnchorMapId = -1;
+    // "Patrol" region — bot wanders within this nav region and attacks opportunistically.
+    int patrolRegionId = -1;    // BotNavigationGraph.Region id; -1 = inactive
+    int patrolMapId = -1;
+    Point patrolWanderTarget = null;
 
     // Buff consumables (toggleable; cheap = weakest buff of each type, max = strongest)
     boolean buffConsumablesEnabled = false;

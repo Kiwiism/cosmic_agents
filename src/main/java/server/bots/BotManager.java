@@ -1672,6 +1672,21 @@ public class BotManager {
         return new Point(botPos.x + entry.wanderDirection * 200, botPos.y);
     }
 
+    private static Point resolvePatrolWanderTarget(BotEntry entry, Point botPos, MapleMap map) {
+        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map);
+        BotNavigationGraph.Region region = graph != null ? graph.getRegion(entry.patrolRegionId) : null;
+        if (region == null || region.isRopeRegion || region.width() == 0) {
+            return resolveNoGrindTargetPosition(entry, botPos);
+        }
+        Point wander = entry.patrolWanderTarget;
+        if (wander == null || isNear(botPos, wander, BotMovementManager.cfg.STOP_DIST)) {
+            int x = ThreadLocalRandom.current().nextInt(region.minX, region.maxX + 1);
+            wander = region.pointAt(x);
+            entry.patrolWanderTarget = wander;
+        }
+        return wander;
+    }
+
     // Main tick
     // -------------------------------------------------------------------------
 
@@ -1756,6 +1771,7 @@ public class BotManager {
         updateObservedOwnerMotion(entry, ownerPos);
         entry.lastOwnerPos = new Point(ownerPos); // raw owner pos before formation offset/snap — used by path logger
         clearFarmAnchorOnMapChange(entry, bot);
+        clearPatrolOnMapChange(entry, bot);
         Point targetPos = targetSnapshot.primaryTargetPos();
         clearFollowActionMoveWindowIfSettled(entry, botPos, targetSnapshot);
 
@@ -1891,7 +1907,9 @@ public class BotManager {
                     ? null
                     : BotCombatManager.planAttack(entry, bot, target);
             if (runAiTick && shouldSearchForGrindTarget(entry, bot, target, attackPlan, now)) {
-                Monster searchedTarget = BotCombatManager.findGrindTarget(entry, bot);
+                Monster searchedTarget = entry.patrolRegionId >= 0
+                        ? BotCombatManager.findPatrolTarget(entry, bot)
+                        : BotCombatManager.findGrindTarget(entry, bot);
                 if (searchedTarget != null || target == null) {
                     target = searchedTarget;
                     attackPlan = null;
@@ -1921,12 +1939,15 @@ public class BotManager {
                 }
             }
             if (target == null) {
-                targetPos = resolveNoGrindTargetPosition(entry, botPos);
+                targetPos = entry.patrolRegionId >= 0
+                        ? resolvePatrolWanderTarget(entry, botPos, bot.getMap())
+                        : resolveNoGrindTargetPosition(entry, botPos);
                 stepMovementCore(entry, targetPos, runAiTick);
                 return;
             }
             entry.grindTarget = target;
             entry.wanderDirection = 0;
+            entry.patrolWanderTarget = null;
             Point tp = target.getPosition();
             Monster rangedPriorityTarget = selectPriorityRangedAttackTarget(entry, bot, botPos, target);
             if (rangedPriorityTarget != null && rangedPriorityTarget != target) {
@@ -2450,6 +2471,29 @@ public class BotManager {
         BotMovementManager.clearNavigationState(entry);
     }
 
+    public void issuePatrol(BotEntry entry, Point ownerPos) {
+        if (entry == null || ownerPos == null || entry.bot == null) {
+            return;
+        }
+        MapleMap map = entry.bot.getMap();
+        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map);
+        int regionId = graph != null ? graph.findRegionId(map, ownerPos) : -1;
+        if (regionId < 0) {
+            botReply(entry, "can't find a patrol region here");
+            return;
+        }
+        clearScriptTasks(entry);
+        BotShopManager.cancelShopVisit(entry);
+        startPatrol(entry, regionId);
+    }
+
+    private void startPatrol(BotEntry entry, int regionId) {
+        startGrind(entry);          // sets grinding = true, clears other modes including any prior patrolRegionId
+        entry.patrolRegionId = regionId;
+        entry.patrolMapId = entry.bot.getMapId();
+        entry.patrolWanderTarget = null;
+    }
+
     /**
      * Public hook: return the bot to ordinary owner-follow mode. Scripted map
      * automation and chat commands should use this instead of writing mode
@@ -2655,6 +2699,9 @@ public class BotManager {
         entry.grinding = false;
         entry.farmAnchor = null;
         entry.farmAnchorMapId = -1;
+        entry.patrolRegionId = -1;
+        entry.patrolMapId = -1;
+        entry.patrolWanderTarget = null;
     }
 
     private static boolean isNear(Point source, Point target, int dist) {
@@ -3183,6 +3230,17 @@ public class BotManager {
                 entry.moveTarget = null;
                 entry.moveTargetPrecise = false;
             }
+        }
+    }
+
+    private static void clearPatrolOnMapChange(BotEntry entry, Character bot) {
+        if (entry == null || bot == null || entry.patrolRegionId < 0) {
+            return;
+        }
+        if (entry.patrolMapId != bot.getMapId()) {
+            entry.patrolRegionId = -1;
+            entry.patrolMapId = -1;
+            entry.patrolWanderTarget = null;
         }
     }
 
