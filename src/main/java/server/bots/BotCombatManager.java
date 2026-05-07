@@ -750,8 +750,15 @@ class BotCombatManager {
             MapleMap map = graphContext.map();
             int patrolId = entry.patrolRegionId;
 
+            // 1-hop expansion: only inter-region edges count as a hop. Self-loop edges
+            // (intra-region portals where fromRegionId == toRegionId) are free traversals
+            // within the patrol region itself — A* uses them to shortcut long walks but
+            // they don't expose new regions, so skip them here to keep intent explicit.
             Set<Integer> adjacentIds = new HashSet<>();
             for (BotNavigationGraph.Edge edge : graph.getOutgoing(patrolId)) {
+                if (edge.fromRegionId == edge.toRegionId) {
+                    continue;
+                }
                 adjacentIds.add(edge.toRegionId);
             }
 

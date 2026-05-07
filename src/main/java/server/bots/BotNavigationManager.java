@@ -112,7 +112,11 @@ final class BotNavigationManager {
                     }
                 }
             }
-            if (edge == null && runAiTick && startRegionId >= 0 && targetRegionId >= 0 && startRegionId != targetRegionId) {
+            if (edge == null && runAiTick && startRegionId >= 0 && targetRegionId >= 0) {
+                // Same-region planning is intentionally allowed: intra-region portals appear as
+                // self-loop edges (fromRegionId == toRegionId) and A* picks them when the
+                // walk-to-entry + walk-from-exit cost beats the direct walk. findPath returns
+                // an empty path when direct walk wins, falling through to direct steering.
                 edge = findNextEdge(graph, bot, startRegionId, targetRegionId, pathTargetPos);
                 if (edge != null) {
                     entry.navEdge = edge;
@@ -319,7 +323,11 @@ final class BotNavigationManager {
         if (entry.climbing && isRopeEntryEdge(graph, edge)) {
             return null;
         }
-        if (startRegionId == edge.toRegionId && !entry.inAir && !entry.climbing) {
+        if (startRegionId == edge.toRegionId && !entry.inAir && !entry.climbing
+                && edge.fromRegionId != edge.toRegionId) {
+            // Self-loop edges (intra-region portals) inherently start and end in the same
+            // region. Completion is signalled by execution (tryExecutePortal teleporting the
+            // bot), not by a region change — don't retire on region match.
             return null;
         }
         // Once the resolved target is back in the bot's current region, any committed edge that
