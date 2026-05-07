@@ -48,7 +48,7 @@ import static org.mockito.Mockito.when;
 class BotManagerTest {
     @Test
     void shouldParseTransferBotCommands() {
-        BotManager.BotTransferCommand command = BotManager.matchBotTransferCommand("transfer Jason to Bob");
+        BotCommandParser.BotTransferCommand command = BotCommandParser.matchBotTransferCommand("transfer Jason to Bob");
 
         assertNotNull(command);
         assertEquals("Jason", command.botName());
@@ -57,7 +57,7 @@ class BotManagerTest {
 
     @Test
     void shouldStillAllowTransferWithoutTo() {
-        BotManager.BotTransferCommand command = BotManager.matchBotTransferCommand("transfer Jason Bob");
+        BotCommandParser.BotTransferCommand command = BotCommandParser.matchBotTransferCommand("transfer Jason Bob");
 
         assertNotNull(command);
         assertEquals("Jason", command.botName());
@@ -66,9 +66,49 @@ class BotManagerTest {
 
     @Test
     void shouldNotTreatGivePhrasesAsBotTransfers() {
-        assertNull(BotManager.matchBotTransferCommand("give Jason Bob"));
-        assertNull(BotManager.matchBotTransferCommand("give me flaming feather"));
-        assertNull(BotManager.matchBotTransferCommand("give flaming feather"));
+        assertNull(BotCommandParser.matchBotTransferCommand("give Jason Bob"));
+        assertNull(BotCommandParser.matchBotTransferCommand("give me flaming feather"));
+        assertNull(BotCommandParser.matchBotTransferCommand("give flaming feather"));
+    }
+
+    @Test
+    void shouldResolveTargetedBotByPrefix() {
+        BotEntry jason = botEntryNamed("Jason");
+        BotEntry bob = botEntryNamed("Bob");
+
+        BotCommandParser.TargetedBotMatch match = BotCommandParser.resolveTargetedBot(
+                List.of(jason, bob), "Ja pots?");
+
+        assertEquals(jason, match.entry());
+        assertEquals("pots?", match.commandText());
+        assertNull(match.feedbackMessage());
+    }
+
+    @Test
+    void shouldResolveTargetedBotBySlot() {
+        BotEntry jason = botEntryNamed("Jason");
+        BotEntry bob = botEntryNamed("Bob");
+
+        BotCommandParser.TargetedBotMatch match = BotCommandParser.resolveTargetedBot(
+                List.of(jason, bob), "2 follow Alice");
+
+        assertEquals(bob, match.entry());
+        assertEquals("follow Alice", match.commandText());
+        assertNull(match.feedbackMessage());
+    }
+
+    @Test
+    void shouldReturnFeedbackForAmbiguousTargetedBotPrefix() {
+        BotEntry jane = botEntryNamed("Jane");
+        BotEntry jason = botEntryNamed("Jason");
+
+        BotCommandParser.TargetedBotMatch match = BotCommandParser.resolveTargetedBot(
+                List.of(jane, jason), "Ja yes");
+
+        assertNull(match.entry());
+        assertNull(match.commandText());
+        assertEquals("Ambiguous bot prefix 'Ja': 1: Jane, 2: Jason. Use the full name or a slot number.",
+                match.feedbackMessage());
     }
 
     @Test
@@ -960,6 +1000,12 @@ class BotManagerTest {
             return null;
         }).when(bot).setStance(anyInt());
         return bot;
+    }
+
+    private static BotEntry botEntryNamed(String name) {
+        Character bot = mock(Character.class);
+        when(bot.getName()).thenReturn(name);
+        return new BotEntry(bot, null, null);
     }
 
     private static Monster mockMob(Point position, int id) {
