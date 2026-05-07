@@ -53,17 +53,36 @@ class BotInventoryManager {
     private static final Set<Integer> manualTradeGreetingSent = ConcurrentHashMap.newKeySet();
     private static final List<String> TRADE_INVITATION_MSGS = List.of(
             "k", "ok", "kk", "sure", "k, I inv", "k i inv",
-            "omw", "inv u", "one sec", "coming");
+            "omw", "inv u", "one sec", "coming",
+            "inv me", "trade me", "aight inv", "ok inv me",
+            "pull up", "slide trade", "ill trade u", "opening trade",
+            "trade time", "sending trade", "im here", "ready when u are");
     private static final List<String> TRADE_THANKS_MSGS = List.of(
             "ty!", "thanks!", "thank you!", "tyty", "appreciate it!", "tysm!",
-            "nice ty", "ooh ty!", "thx!!", "much appreciated");
+            "nice ty", "ooh ty!", "thx!!", "much appreciated",
+            "sweet ty", "ay ty", "perfect ty", "huge ty", "sick ty", "legend");
     private static final List<String> TRADE_FREEBIE_QUIPS = List.of(
             "i better get paid for that eventually lol",
             "you really should be paying me for that",
             "free delivery, where's my tip",
             "don't say i never gave you anything",
             "i'm basically your personal shopper at this point",
-            "doing this for free smh");
+            "doing this for free smh",
+            "enjoy",
+            "hope u like it",
+            ":)",
+            "there u go",
+            "have fun",
+            "that should help",
+            "use it well",
+            "all yours",
+            "take good care of it",
+            "its in there",
+            "delivered",
+            "enjoy the loot",
+            "hope that helps",
+            "treat it nicely",
+            "consider that a gift");
     private static final List<String> NO_ITEMS_MSGS = List.of(
             "i don't have any %s",
             "no %s on me rn",
@@ -547,6 +566,7 @@ class BotInventoryManager {
         entry.pendingTradeCategory = category;
         entry.pendingTradeRecipientId = recipient.getId();
         entry.pendingTradeSingleBatch = singleBatch;
+        entry.pendingTradeInviteAnnounced = false;
         openTradeBatch(entry, bot, items, mesos);
     }
 
@@ -566,8 +586,10 @@ class BotInventoryManager {
         Trade.startTrade(bot);
         Trade.inviteTrade(bot, recipient);
         // pot_share already announced itself ("got some HP pots, inv u") — skip the redundant "k i inv"
-        if (!"pot_share".equals(entry.pendingTradeCategory)
+        if (!entry.pendingTradeInviteAnnounced
+                && !"pot_share".equals(entry.pendingTradeCategory)
                 && !"ammo_share".equals(entry.pendingTradeCategory)) {
+            entry.pendingTradeInviteAnnounced = true;
             BotManager.getInstance().botReply(entry, BotManager.randomReply(TRADE_INVITATION_MSGS));
         }
     }
@@ -762,6 +784,7 @@ class BotInventoryManager {
         entry.pendingTradeAllAdded = false;
         entry.pendingTradeBotDone  = false;
         entry.pendingTradeSingleBatch = false;
+        entry.pendingTradeInviteAnnounced = false;
         entry.pendingPotShareBudget = 0;
         entry.ownerGivenItems.clear();
         // Safety net: if any items were temporarily unequipped for a trade that ended without

@@ -4,11 +4,21 @@
 ## Features
 
 - follow, trade, loot
-- fight, use skill, auto assign ap/sp, buffs (Only 1st jobs configured/tested)
+- auto fight/grind, use skill, auto assign ap/sp, buffs (Only 1st jobs + select 2nd job configured/tested)
 - auto buy/resupply potions/ammo if shop available within the same map
+- auto share potions/ammo among themselves and to owner(if requested) when running low while farming
+- auto equip and optimize own gear loadout - including chaining stats bonus to unlock higher requirement equips and weapons, allowing dexless/strless/lukless builds
+- auto share equipment upgrades with owner and other sibling bots (auto compare stats directly against recipient's inventory)
+- auto sort equipment from junk equip so selling trash equips become manageable. (auto sell may come later when I trust it enough to not sell something useful)
 - auto complete any quest the owner turn in (with rewards)
 - Party Quest Automation(currently only KPQ 1st stage + auto accept rewards 5th stage)
 - Each bot is a real character you can log in as, can spawn your alts as bots
+
+## Bot Maintenance Guide
+
+1. Give them mesos, take them shopping to resupply pots/ammo - can also manually give a bot some excess and they will auto distribute among themselves.
+2. use `inv?` command to check inventory spaces, `trade <equip/use/etc/...>` or `trade trash` to get those items(no auto sell for now)
+3. use `brb` or `logout` command to send bot to town safely or despawn
 
 ## Creating a Bot
 

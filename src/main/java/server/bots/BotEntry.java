@@ -185,6 +185,7 @@ public class BotEntry {
     boolean pendingTradeAllAdded = false;
     boolean pendingTradeBotDone = false;
     boolean pendingTradeSingleBatch = false;
+    boolean pendingTradeInviteAnnounced = false;
     String  pendingTradeCategoryMsg = null;
     int     pendingPotShareBudget = 0; // max total qty to donate; 0 = no cap (normal trades)
     Map<Item, Short> pendingTradeRestoreSlots = new IdentityHashMap<>();
