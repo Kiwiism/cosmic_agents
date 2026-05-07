@@ -215,11 +215,20 @@ class BotNavigationGraphProviderTest {
         assertFalse(path.isEmpty());
         assertEquals(BotNavigationGraph.EdgeType.JUMP, path.getFirst().type);
         assertTrue(path.getFirst().launchMinX < path.getFirst().launchMaxX);
-        assertTrue(path.getFirst().containsLaunchX(523),
+
+        int fromRegionId = path.getFirst().fromRegionId;
+        int toRegionId = path.getFirst().toRegionId;
+        BotNavigationGraph.Edge edgeContaining523 = kpqS1Graph().getOutgoing(fromRegionId).stream()
+                .filter(edge -> edge.type == BotNavigationGraph.EdgeType.JUMP
+                        && edge.toRegionId == toRegionId
+                        && edge.containsLaunchX(523))
+                .findFirst()
+                .orElse(null);
+        assertNotNull(edgeContaining523,
                 "The slope-platform jump should expose a real launch interval around the valid takeoff point");
-        assertFalse(path.getFirst().containsLaunchX(path.getFirst().launchMinX - 1),
+        assertFalse(edgeContaining523.containsLaunchX(edgeContaining523.launchMinX - 1),
                 "launch windows should reject positions just outside the left boundary");
-        assertFalse(path.getFirst().containsLaunchX(path.getFirst().launchMaxX + 1),
+        assertFalse(edgeContaining523.containsLaunchX(edgeContaining523.launchMaxX + 1),
                 "launch windows should reject positions just outside the right boundary");
     }
 
@@ -604,6 +613,49 @@ class BotNavigationGraphProviderTest {
                                 && edge.toRegionId == targetRegionId
                                 && edge.containsLaunchX(badLaunch.x)),
                 "jump window must exclude launches that hit the doughnut underside");
+    }
+
+    @Test
+    void shouldDiscoverJumpEdgesAcrossWideIntermediatePlatform() {
+        // Regression: pathlog-Clawer-2026-05-07T062632 — at base profile (100%) the bot at
+        // (965,0) on r=114 had no direct JUMP edge to r=137 (owner foothold) and no JUMP edge
+        // to the intermediate platform r=132 above r=137. A* fell back to a 4-edge climb
+        // detour. Both jumps are physically achievable in-client; the missing edges were a
+        // graph-generation gap caused by buildFeatureXsByRegionId only projecting endpoints
+        // of platforms with width <= 64 down to the region below. r=132 is wider than 64px,
+        // so its right edge at x≈886 was never seeded as a feature anchor on r=114, leaving
+        // the narrow launch windows for both jumps with zero sampled anchors.
+        BotNavigationGraph graph = kerningGraph();
+        MapleMap map = kerning();
+
+        Point launchPoint = new Point(965, 0);
+        Point directLandingPoint = new Point(841, 6);
+        Point intermediateLandingPoint = new Point(880, -30);
+
+        int fromRegionId = graph.findRegionId(map, launchPoint);
+        int directRegionId = graph.findRegionId(map, directLandingPoint);
+        int intermediateRegionId = graph.findRegionId(map, intermediateLandingPoint);
+
+        assertTrue(fromRegionId > 0, "launch region should resolve");
+        assertTrue(directRegionId > 0, "direct landing region should resolve");
+        assertTrue(intermediateRegionId > 0, "intermediate platform region should resolve");
+        assertNotEquals(fromRegionId, directRegionId);
+        assertNotEquals(fromRegionId, intermediateRegionId);
+        assertNotEquals(directRegionId, intermediateRegionId);
+
+        List<BotNavigationGraph.Edge> outgoing = graph.getOutgoing(fromRegionId);
+
+        assertTrue(outgoing.stream()
+                        .anyMatch(edge -> edge.type == BotNavigationGraph.EdgeType.JUMP
+                                && edge.toRegionId == intermediateRegionId),
+                "JUMP edge from r" + fromRegionId + " landing on intermediate platform r"
+                        + intermediateRegionId + " must be discovered");
+
+        assertTrue(outgoing.stream()
+                        .anyMatch(edge -> edge.type == BotNavigationGraph.EdgeType.JUMP
+                                && edge.toRegionId == directRegionId),
+                "Direct JUMP edge from r" + fromRegionId + " over the intermediate platform to r"
+                        + directRegionId + " must be discovered");
     }
 
     private static List<BotNavigationGraph.Edge> findPath(BotNavigationGraph graph,
