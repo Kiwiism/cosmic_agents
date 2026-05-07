@@ -72,6 +72,58 @@ class BotManagerTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void shouldSkipOwnerGainOfferScanForOwnBotTradeItems() throws Exception {
+        BotManager manager = BotManager.getInstance();
+        Character owner = mock(Character.class);
+        Character sourceBot = mock(Character.class);
+        Character observerBot = mock(Character.class);
+        BotEntry sourceEntry = new BotEntry(sourceBot, owner, null);
+        BotEntry observerEntry = new BotEntry(observerBot, owner, null);
+        Item tradedEquip = new Item(1002000, (short) 1, (short) 1);
+
+        when(owner.getId()).thenReturn(77);
+        when(sourceBot.getId()).thenReturn(10);
+        when(sourceBot.getClient()).thenReturn(new client.BotClient(0, 0));
+        when(observerBot.getId()).thenReturn(11);
+
+        Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
+        bots.put(owner.getId(), List.of(sourceEntry, observerEntry));
+
+        try (MockedStatic<BotOfferManager> offers = mockStatic(BotOfferManager.class)) {
+            manager.notifyOwnerGainedTradeItem(owner, tradedEquip, sourceBot);
+
+            offers.verifyNoInteractions();
+        } finally {
+            bots.remove(owner.getId());
+        }
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldNotifyBotsForNonOwnBotTradeItems() throws Exception {
+        BotManager manager = BotManager.getInstance();
+        Character owner = mock(Character.class);
+        Character observerBot = mock(Character.class);
+        Character sourcePlayer = mock(Character.class);
+        BotEntry observerEntry = new BotEntry(observerBot, owner, null);
+        Item tradedEquip = new Item(1002000, (short) 1, (short) 1);
+
+        when(owner.getId()).thenReturn(78);
+
+        Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
+        bots.put(owner.getId(), List.of(observerEntry));
+
+        try (MockedStatic<BotOfferManager> offers = mockStatic(BotOfferManager.class)) {
+            manager.notifyOwnerGainedTradeItem(owner, tradedEquip, sourcePlayer);
+
+            offers.verify(() -> BotOfferManager.notifyOwnerGainedEquip(observerEntry, observerBot, tradedEquip));
+        } finally {
+            bots.remove(owner.getId());
+        }
+    }
+
+    @Test
     void shouldResolveTargetedBotByPrefix() {
         BotEntry jason = botEntryNamed("Jason");
         BotEntry bob = botEntryNamed("Bob");

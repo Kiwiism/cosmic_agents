@@ -669,10 +669,27 @@ public class BotManager {
 
     /** Called when the owner picks up or receives an item; notifies bots that might want it. */
     public void notifyOwnerGainedItem(Character owner, Item item) {
+        if (owner == null || item == null) return;
         if (ItemConstants.getInventoryType(item.getItemId()) != InventoryType.EQUIP) return;
         for (BotEntry entry : getBotEntries(owner.getId())) {
             BotOfferManager.notifyOwnerGainedEquip(entry, entry.bot, item);
         }
+    }
+
+    /** Called when a trade recipient receives an item; skips circular own-bot trade scans. */
+    public void notifyOwnerGainedTradeItem(Character recipient, Item item, Character source) {
+        if (isItemFromOwnedBot(recipient, source)) {
+            return;
+        }
+        notifyOwnerGainedItem(recipient, item);
+    }
+
+    private boolean isItemFromOwnedBot(Character owner, Character source) {
+        if (owner == null || source == null || !(source.getClient() instanceof BotClient)) {
+            return false;
+        }
+        Character activeOwner = getActiveOwnerByBotCharId(source.getId());
+        return activeOwner != null && activeOwner.getId() == owner.getId();
     }
 
     BotEntry getBotEntry(int ownerCharId, String botName) {

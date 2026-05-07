@@ -59,9 +59,7 @@ final class BotOfferManager {
             return;
         }
 
-        List<BotEquipManager.EquipRecommendation> recs = BotEquipManager.findRecommendedEquips(bot, owner);
-        boolean isUpgrade = recs.stream().anyMatch(r -> r.candidate().getItemId() == item.getItemId());
-        if (!isUpgrade) {
+        if (BotEquipManager.findRecommendationForItem(bot, owner, item) == null) {
             return;
         }
 
