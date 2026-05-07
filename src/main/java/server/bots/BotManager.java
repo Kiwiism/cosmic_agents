@@ -150,6 +150,8 @@ public class BotManager {
             Pattern.CASE_INSENSITIVE);
     private static final int MIN_PREFIX_TARGET_LENGTH = 2;
     private static final int PLATFORM_EDGE_INSET_PX = 12;
+    private static final int BOT_TICK_FAILURE_LIMIT = 3;
+    private static final long BOT_TICK_FAILURE_WINDOW_MS = 10_000L;
 
     private Character resolveFollowTarget(Character owner, String targetToken) {
         if (owner == null || targetToken == null || targetToken.isBlank()) {
@@ -1657,8 +1659,12 @@ public class BotManager {
 
     private void tick(int ownerCharId, int botCharId) {
         long startedAt = BotPerformanceMonitor.enabled() ? System.nanoTime() : 0L;
+        BotEntry entry = getBotEntry(ownerCharId, botCharId);
         try {
-            tickCore(ownerCharId, botCharId);
+            tickCore(entry, ownerCharId, botCharId);
+            resetBotTickFailures(entry);
+        } catch (Throwable t) {
+            handleBotTickFailure(entry, ownerCharId, botCharId, t);
         } finally {
             if (startedAt != 0L) {
                 BotPerformanceMonitor.record("tick-total", System.nanoTime() - startedAt);
@@ -1666,8 +1672,7 @@ public class BotManager {
         }
     }
 
-    private void tickCore(int ownerCharId, int botCharId) {
-        BotEntry entry = getBotEntry(ownerCharId, botCharId);
+    private void tickCore(BotEntry entry, int ownerCharId, int botCharId) {
         if (entry == null) return;
         if (entry.airshowActive) return;
         if (entry.skipDelayMs > 0) {
@@ -2003,6 +2008,71 @@ public class BotManager {
         }
 
         stepMovementCore(entry, targetPos, runAiTick);
+    }
+
+    private void handleBotTickFailure(BotEntry entry, int ownerCharId, int botCharId, Throwable t) {
+        if (entry == null) {
+            log.error("Bot tick failed for missing entry ownerCharId={} botCharId={}", ownerCharId, botCharId, t);
+            return;
+        }
+
+        long now = System.currentTimeMillis();
+        if (now - entry.tickFailureWindowStartedAtMs > BOT_TICK_FAILURE_WINDOW_MS) {
+            entry.tickFailureWindowStartedAtMs = now;
+            entry.tickFailureCount = 0;
+        }
+        entry.tickFailureCount++;
+
+        Character bot = entry.bot;
+        Character owner = entry.owner;
+        String botName = bot != null ? bot.getName() : "?";
+        String ownerName = owner != null ? owner.getName() : "?";
+        int mapId = bot != null ? bot.getMapId() : -1;
+
+        clearBotVolatileActions(entry);
+        if (entry.tickFailureCount >= BOT_TICK_FAILURE_LIMIT) {
+            log.error("Disabling bot '{}' after {} tick failures within {} ms (owner={}, map={}, grinding={}, following={})",
+                    botName, entry.tickFailureCount, BOT_TICK_FAILURE_WINDOW_MS, ownerName, mapId,
+                    entry.grinding, entry.following, t);
+            removeBotByCharId(botCharId);
+            return;
+        }
+
+        if (entry.tickFailureCount == 2) {
+            forceBotIdleAfterTickFailure(entry);
+        }
+
+        log.warn("Bot '{}' tick failed {}/{} (owner={}, map={}, grinding={}, following={})",
+                botName, entry.tickFailureCount, BOT_TICK_FAILURE_LIMIT, ownerName, mapId,
+                entry.grinding, entry.following, t);
+    }
+
+    private static void resetBotTickFailures(BotEntry entry) {
+        if (entry == null || entry.tickFailureCount == 0) {
+            return;
+        }
+        entry.tickFailureCount = 0;
+        entry.tickFailureWindowStartedAtMs = 0L;
+    }
+
+    private static void clearBotVolatileActions(BotEntry entry) {
+        entry.pendingAction = null;
+        entry.pendingDropCategory = null;
+        entry.grindTarget = null;
+        entry.grindLootTarget = null;
+        entry.patrolWanderTarget = null;
+        BotMovementManager.resetEntryStateAfterTeleport(entry);
+    }
+
+    private void forceBotIdleAfterTickFailure(BotEntry entry) {
+        issueStop(entry);
+        try {
+            botReply(entry, "unrecoverable error caught, idling");
+        } catch (Throwable chatError) {
+            Character bot = entry.bot;
+            log.warn("Failed to send bot failure idle message for '{}'",
+                    bot != null ? bot.getName() : "?", chatError);
+        }
     }
 
     static Monster selectPriorityRangedAttackTarget(BotEntry entry,

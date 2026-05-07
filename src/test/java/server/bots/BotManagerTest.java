@@ -422,6 +422,56 @@ class BotManagerTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void shouldDisableBotAfterRepeatedTickFailures() throws Exception {
+        BotManager manager = BotManager.getInstance();
+        Character owner = mock(Character.class);
+        Character bot = mock(Character.class);
+        ScheduledFuture<?> task = mock(ScheduledFuture.class);
+
+        when(owner.getId()).thenReturn(77);
+        when(owner.getName()).thenReturn("Owner");
+        when(bot.getId()).thenReturn(88);
+        when(bot.getName()).thenReturn("Bot");
+        when(bot.getMapId()).thenReturn(100000000);
+
+        BotEntry entry = new BotEntry(bot, owner, task);
+        entry.pendingAction = "drop";
+        entry.pendingDropCategory = "equips";
+        entry.grindLootTarget = mock(MapItem.class);
+        entry.following = true;
+        entry.grinding = true;
+        entry.moveTarget = new Point(100, 100);
+
+        Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
+        bots.put(owner.getId(), new CopyOnWriteArrayList<>(List.of(entry)));
+        Method failureHandler = method(BotManager.class, "handleBotTickFailure",
+                BotEntry.class, int.class, int.class, Throwable.class);
+
+        try {
+            failureHandler.invoke(manager, entry, owner.getId(), bot.getId(), new NullPointerException("bad drop"));
+            assertTrue(bots.containsKey(owner.getId()));
+            assertNull(entry.pendingAction);
+            assertNull(entry.pendingDropCategory);
+            assertNull(entry.grindLootTarget);
+            assertTrue(entry.following);
+            assertTrue(entry.grinding);
+
+            failureHandler.invoke(manager, entry, owner.getId(), bot.getId(), new NullPointerException("bad drop"));
+            assertTrue(bots.containsKey(owner.getId()));
+            assertFalse(entry.following);
+            assertFalse(entry.grinding);
+            assertNull(entry.moveTarget);
+
+            failureHandler.invoke(manager, entry, owner.getId(), bot.getId(), new NullPointerException("bad drop"));
+            assertFalse(bots.containsKey(owner.getId()));
+            verify(task).cancel(false);
+        } finally {
+            bots.remove(owner.getId());
+        }
+    }
+
+    @Test
     void shouldUseFollowIdleFastPathOnlyWhileParkedNearTarget() {
         MapleMap map = createEmptyTestMap(910000024);
         map.getFootholds().insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
@@ -1049,5 +1099,11 @@ class BotManagerTest {
         Field field = type.getDeclaredField(name);
         field.setAccessible(true);
         return field;
+    }
+
+    private static Method method(Class<?> type, String name, Class<?>... parameterTypes) throws Exception {
+        Method method = type.getDeclaredMethod(name, parameterTypes);
+        method.setAccessible(true);
+        return method;
     }
 }

@@ -296,6 +296,8 @@ public class BotEntry {
     long lastTickAtMs = 0L;
     long lastHeartbeatAtMs = 0L;
     long nextFollowIdleMovementCheckAtMs = 0L;
+    int tickFailureCount = 0;
+    long tickFailureWindowStartedAtMs = 0L;
 
     // Stuck detection & unstuck
     int stuckMs = 0;

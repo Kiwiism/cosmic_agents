@@ -87,7 +87,7 @@ public class ItemDropCommand extends Command {
 
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
 
-        if (ii.getName(itemId) == null) {
+        if (ii.getName(itemId) == null || !ii.hasData(itemId)) {
             player.yellowMessage("Item id '" + params[0] + "' does not exist.");
             return;
         }
