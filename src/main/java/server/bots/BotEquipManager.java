@@ -56,7 +56,7 @@ class BotEquipManager {
             java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final short[] RING_SLOTS = {-12, -13, -15, -16};
     /** Hard cap on Pareto-frontier size per DP step to bound worst-case runtime. */
-    private static final int MAX_PARETO_STATES = 1000;
+    private static final int MAX_PARETO_STATES = 2000;
 
     static final class EquipRecommendation {
         private final short targetSlot;
@@ -954,7 +954,12 @@ class BotEquipManager {
      */
     static boolean statOnlyBlocked(Character bot, ItemInformationProvider ii, Equip equip) {
         // Pass huge stat values: if it still fails, level/job/fame is blocking, skip.
-        return ii.meetsEquipRequirements(equip, bot.getJob(), bot.getLevel(),
+        return statOnlyBlocked(bot, EquipUsefulnessHooks.from(ii), equip);
+    }
+
+    static boolean statOnlyBlocked(Character bot, EquipUsefulnessHooks hooks, Equip equip) {
+        // Pass huge stat values: if it still fails, level/job/fame is blocking, skip.
+        return hooks.meetsReqs(equip, bot.getJob(), bot.getLevel(),
                 Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4,
                 Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4, bot.getFame());
     }
@@ -1239,14 +1244,23 @@ class BotEquipManager {
         if (!isOwnClassEquip(recipient, hooks, item)) return false;
         String slot = textSlotKey(hooks, item);
         if (slot == null) return false;
-        if (isWeaponSlot(slot) && !isWeaponCompatible(recipient, hooks.getWeaponType(item.getItemId()))) return false;
+        String weaponTrack = null;
+        if (isWeaponSlot(slot)) {
+            weaponTrack = weaponUsefulnessTrackKey(recipient, hooks.getWeaponType(item.getItemId()));
+            if (weaponTrack == null) return false;
+        }
         EnumSet<RelevantStat> relevant = relevantStatsFor(recipient.getJob());
         if (!hasPositiveRelevant(relevant, item)) return false;
         Inventory equippedInv = recipient.getInventory(InventoryType.EQUIPPED);
         List<Equip> baseline = new ArrayList<>();
         for (Item it : equippedInv.list()) {
             if (!(it instanceof Equip e) || hooks.isCash(e.getItemId())) continue;
-            if (slot.equals(textSlotKey(hooks, e))) baseline.add(e);
+            if (!slot.equals(textSlotKey(hooks, e))) continue;
+            if (weaponTrack != null) {
+                String equippedTrack = weaponUsefulnessTrackKey(recipient, hooks.getWeaponType(e.getItemId()));
+                if (!weaponTrack.equals(equippedTrack)) continue;
+            }
+            baseline.add(e);
         }
         return !anyDominates(relevant, baseline, item);
     }
@@ -1254,7 +1268,13 @@ class BotEquipManager {
     static Set<Item> collectPotentialSelfUpgradeItems(Character bot) {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         Set<Item> keep = Collections.newSetFromMap(new IdentityHashMap<>());
-        keep.addAll(selectOwnedItemsForSelfReserve(bot, SelfReserveHooks.from(ii), collectOwnedBagEquips(bot, ii)));
+        List<Equip> bagEquips = collectOwnedBagEquips(bot, ii);
+        Set<Equip> selected = selectOwnedItemsForSelfReserve(bot, SelfReserveHooks.from(ii), collectOwnedEquips(bot, ii));
+        for (Equip equip : bagEquips) {
+            if (selected.contains(equip)) {
+                keep.add(equip);
+            }
+        }
         return keep;
     }
 
@@ -1282,7 +1302,7 @@ class BotEquipManager {
                 boolean dominated = false;
                 for (Equip other : trackItems) {
                     if (other == candidate) continue;
-                    if (dominatesForSelfReserve(hooks, relevant, other, candidate)) {
+                    if (dominatesForSelfReserve(hooks, relevant, bot, other, candidate)) {
                         dominated = true;
                         break;
                     }
@@ -1316,16 +1336,49 @@ class BotEquipManager {
         String slot = textSlotKey(hooks, equip);
         if (slot == null) return null;
         if (!isWeaponSlot(slot)) return slot;
-        WeaponType wt = hooks.getWeaponType(equip.getItemId());
-        if (!isWeaponCompatible(bot, wt)) return null;
-        return slot + ":" + wt;
+        String weaponTrack = weaponUsefulnessTrackKey(bot, hooks.getWeaponType(equip.getItemId()));
+        return weaponTrack != null ? slot + ":" + weaponTrack : null;
+    }
+
+    private static String weaponUsefulnessTrackKey(Character bot, WeaponType weaponType) {
+        if (!isWeaponCompatible(bot, weaponType)) return null;
+        if (weaponType == null || weaponType == WeaponType.NOT_A_WEAPON) return "non-weapon";
+        if (isSword(weaponType)) return "sword";
+        if (isGeneralWeapon(weaponType)) return "general";
+        if (isSpearWeapon(weaponType)) return "spear";
+        if (isPolearmWeapon(weaponType)) return "polearm";
+        if (isThiefDagger(weaponType)) return "thief-dagger";
+        return switch (weaponType) {
+            case BOW -> "bow";
+            case CROSSBOW -> "crossbow";
+            case CLAW -> "claw";
+            case GUN -> "gun";
+            case KNUCKLE -> "knuckle";
+            case WAND -> "wand";
+            case STAFF -> "staff";
+            default -> weaponType.name();
+        };
     }
 
     private static boolean dominatesForSelfReserve(SelfReserveHooks hooks, EnumSet<RelevantStat> relevant,
-                                                   Equip better, Equip worse) {
-        if (!paretoDominates(relevant, better, worse)) return false;
-        if (!reqsAtLeastAsEasy(hooks, better, worse)) return false;
+                                                   Character bot, Equip better, Equip worse) {
+        boolean relevantDominates = paretoDominates(relevant, better, worse);
+        boolean duplicateTieBreakDominates = sameRequirementSignature(hooks, better, worse)
+                && better.getItemId() == worse.getItemId()
+                && relevantStatsEqual(relevant, better, worse)
+                && usefulStatSum(better, bot.getJob()) > usefulStatSum(worse, bot.getJob());
+        if (!relevantDominates && !duplicateTieBreakDominates) return false;
+        if (!reqsAtLeastAsEasy(hooks, better, worse)
+                && !hooks.meetsReqs(better, bot.getJob(), bot.getLevel(),
+                                    bot.getStr(), bot.getDex(), bot.getInt(), bot.getLuk(), bot.getFame())) return false;
         if (sameRequirementSignature(hooks, better, worse) && better.getItemId() != worse.getItemId()) return false;
+        return true;
+    }
+
+    private static boolean relevantStatsEqual(EnumSet<RelevantStat> relevant, Equip a, Equip b) {
+        for (RelevantStat stat : relevant) {
+            if (stat.of(a) != stat.of(b)) return false;
+        }
         return true;
     }
 

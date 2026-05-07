@@ -17,13 +17,14 @@ import net.packet.Packet;
 import server.ItemInformationProvider;
 import server.StatEffect;
 import server.Trade;
-import server.bots.pq.BotPqHooks;
 import server.maps.MapItem;
+import server.maps.MapleMap;
 import tools.PacketCreator;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -91,18 +92,8 @@ class BotInventoryManager {
         entry.invFullWarnCooldownMs = BotMovementManager.tickDown(entry.invFullWarnCooldownMs);
         Point botPos = bot.getPosition();
         for (MapItem drop : bot.getMap().getDroppedItems()) {
-            if (drop.isPickedUp() || bot.getMap().getMapObject(drop.getObjectId()) != drop) {
+            if (!BotLootEligibility.isPresent(bot.getMap(), drop)) {
                 cleanupBotLootGhostDrop(bot, drop);
-                continue;
-            }
-            if (!drop.canBePickedBy(bot)) {
-                continue;
-            }
-            if (drop.getItemId() == 4001008) {
-                continue;
-            }
-            if (drop.getItemId() == 4001007 && (BotPqHooks.shouldSkipCouponLoot(entry)
-                    || (entry.kpq.couponTarget > 0 && bot.getItemQuantity(4001007, false) >= entry.kpq.couponTarget))) {
                 continue;
             }
             if (System.currentTimeMillis() - drop.getDropTime() < 3000) {
@@ -112,6 +103,18 @@ class BotInventoryManager {
             Point dropPos = drop.getPosition();
             if (Math.abs(dropPos.x - botPos.x) > BotManager.cfg.LOOT_RADIUS
                     || Math.abs(dropPos.y - botPos.y) > BotManager.cfg.LOOT_RADIUS) {
+                continue;
+            }
+
+            if (!BotLootEligibility.canBotLoot(entry, bot, drop)) {
+                if (drop.getMeso() <= 0 && drop.getItemId() > 0) {
+                    InventoryType type = ItemConstants.getInventoryType(drop.getItemId());
+                    Inventory inventory = bot.getInventory(type);
+                    if (inventory != null && inventory.isFull() && entry.invFullWarnCooldownMs <= 0) {
+                        BotManager.getInstance().botReply(entry, type.name().toLowerCase() + " inventory is full!");
+                        entry.invFullWarnCooldownMs = BotMovementManager.delayAfterCurrentTick(BotManager.cfg.INV_FULL_WARN_CD_MS);
+                    }
+                }
                 continue;
             }
 
@@ -147,6 +150,86 @@ class BotInventoryManager {
                 }
             }
         }
+    }
+
+    /**
+     * Returns the nearest lootable drop within GRIND_SEEK_RANGE, with no region
+     * restriction. Returns null when any inventory is full or no eligible drop exists.
+     */
+    static MapItem findNearestGrindLootTarget(BotEntry entry, Character bot) {
+        if (bot == null || hasAnyInventoryFull(bot)) return null;
+        MapleMap map = bot.getMap();
+        if (map == null) return null;
+
+        long now = System.currentTimeMillis();
+        Point botPos = bot.getPosition();
+        double seekRangeSq = (double) BotCombatManager.cfg.GRIND_SEEK_RANGE * BotCombatManager.cfg.GRIND_SEEK_RANGE;
+        MapItem nearest = null;
+        double nearestDistSq = Double.MAX_VALUE;
+
+        for (MapItem drop : map.getDroppedItems()) {
+            if (!BotLootEligibility.canBotTargetLoot(entry, bot, map, drop, now)) continue;
+            if (BotManager.isGrindLootRetrySuppressed(entry, drop, now)) continue;
+            Point dropPos = drop.getPosition();
+            if (Math.abs(dropPos.x - botPos.x) <= BotManager.cfg.LOOT_RADIUS
+                    && Math.abs(dropPos.y - botPos.y) <= BotManager.cfg.LOOT_RADIUS) {
+                continue;
+            }
+            double distSq = dropPos.distanceSq(botPos);
+            if (distSq > seekRangeSq || distSq >= nearestDistSq) continue;
+            nearestDistSq = distSq;
+            nearest = drop;
+        }
+        return nearest;
+    }
+
+    static boolean hasAnyInventoryFull(Character bot) {
+        if (bot == null) return false;
+        for (InventoryType type : new InventoryType[]{
+                InventoryType.EQUIP, InventoryType.USE, InventoryType.SETUP, InventoryType.ETC}) {
+            Inventory inv = bot.getInventory(type);
+            if (inv != null && inv.isFull()) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns the position of the nearest lootable drop within the patrol region
+     * and its immediate neighbours (1 graph hop). Returns null when no eligible
+     * drop exists, the graph is unavailable, or any inventory is full.
+     */
+    static Point findNearestPatrolLootTarget(BotEntry entry, int patrolRegionId) {
+        Character bot = entry.bot;
+        if (bot == null) return null;
+        if (hasAnyInventoryFull(bot)) return null;
+        MapleMap map = bot.getMap();
+        if (map == null) return null;
+
+        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map);
+        if (graph == null) return null;
+
+        Set<Integer> allowed = new HashSet<>();
+        allowed.add(patrolRegionId);
+        for (BotNavigationGraph.Edge edge : graph.getOutgoing(patrolRegionId)) {
+            allowed.add(edge.toRegionId);
+        }
+
+        long now = System.currentTimeMillis();
+        Point botPos = bot.getPosition();
+        Point nearest = null;
+        double nearestDistSq = Double.MAX_VALUE;
+
+        for (MapItem drop : map.getDroppedItems()) {
+            if (!BotLootEligibility.canBotTargetLoot(entry, bot, map, drop, now)) continue;
+            Point dropPos = drop.getPosition();
+            if (!allowed.contains(graph.findRegionId(map, dropPos))) continue;
+            double distSq = dropPos.distanceSq(botPos);
+            if (distSq < nearestDistSq) {
+                nearestDistSq = distSq;
+                nearest = dropPos;
+            }
+        }
+        return nearest;
     }
 
     static void tickManualTrade(BotEntry entry, Character bot) {
@@ -260,6 +343,7 @@ class BotInventoryManager {
             case "pots"    -> dropPotions(entry, bot);
             case "buff"    -> dropBuffPots(entry, bot);
             case "equips"  -> dropEquips(entry, bot);
+            case "trash"   -> dropTrashEquips(entry, bot);
             case "etc"     -> dropEtc(entry, bot);
             default -> { if (category.startsWith("name:")) dropByName(entry, bot, category.substring(5)); }
         }
@@ -988,6 +1072,14 @@ class BotInventoryManager {
                           : "equip bag is already empty");
     }
 
+    static void dropTrashEquips(BotEntry entry, Character bot) {
+        Set<Item> trash = new java.util.HashSet<>(collectTrashEquips(entry, bot));
+        int count = dropFromBag(bot, InventoryType.EQUIP, trash::contains);
+        BotManager.getInstance().botReply(entry,
+                count > 0 ? "dropped " + count + " trash equip" + (count != 1 ? "s" : "") + "!"
+                          : "no trash equips to drop");
+    }
+
     static void dropBuffPots(BotEntry entry, Character bot) {
         int count = dropFromBag(bot, InventoryType.USE,
                 item -> isBuffConsumable(item.getItemId()));
@@ -1174,7 +1266,7 @@ class BotInventoryManager {
         return BotEquipManager.isOwnClassEquip(bot, ii, equip);
     }
 
-    /** Score used to order own-class equips worst-to-best: 4*watk + matk + main + sec/2. */
+    /** Score used to order own-class equips worst-to-best: 4*watk + matk + main + sec. */
     private static int equipTradeScore(Equip e, Job job) {
         int main, sec;
         if (BotEquipManager.isMageJob(job)) {
@@ -1187,7 +1279,7 @@ class BotInventoryManager {
         } else {
             main = e.getStr(); sec = e.getDex();
         }
-        return 4 * e.getWatk() + e.getMatk() + main + sec / 2;
+        return 4 * e.getWatk() + e.getMatk() + main + sec;
     }
 
     private static int dropFromBag(Character bot, InventoryType type, Predicate<Item> filter) {

@@ -28,7 +28,7 @@ import java.util.concurrent.Executors;
 final class BotNavigationGraphProvider {
     private static final Logger log = LoggerFactory.getLogger(BotNavigationGraphProvider.class);
 
-    private static final int GRAPH_VERSION = 39;
+    private static final int GRAPH_VERSION = 41;
     private static final int ENDPOINT_ANCHOR_SPACING_PX = 10;
     private static final int DOWN_JUMP_PRELAUNCH_WINDOW_PX = 20;
     private static final int SAME_SOLID_NEST_GAP_PX = 8;
@@ -1554,13 +1554,13 @@ final class BotNavigationGraphProvider {
                 if (canGrab) {
                     Point ropePoint = new Point(ropeX, Math.max(firstClimbableY, Math.min(anchor.y, rope.bottomY())));
                     addEdge(ground.id, ropeRegion.id, BotNavigationGraph.EdgeType.CLIMB,
-                            anchor, ropePoint, 0, 0, 0, outgoing, edgeKeys);
+                            anchor, ropePoint, 0, 0, BotPhysicsEngine.cfg.TICK_MS, outgoing, edgeKeys);
                     continue;
                 }
 
                 if (canTopGrab) {
                     addEdge(ground.id, ropeRegion.id, BotNavigationGraph.EdgeType.CLIMB,
-                            anchor, new Point(ropeX, firstClimbableY), 0, 0, 0, outgoing, edgeKeys);
+                            anchor, new Point(ropeX, firstClimbableY), 0, 0, BotPhysicsEngine.cfg.TICK_MS, outgoing, edgeKeys);
                     continue;
                 }
 
@@ -1690,7 +1690,7 @@ final class BotNavigationGraphProvider {
 
         Point ropePoint = new Point(rope.x(), rope.topY());
         addEdge(ropeRegion.id, ground.id, BotNavigationGraph.EdgeType.CLIMB,
-                ropePoint, landPoint, 0, 0, 0, outgoing, edgeKeys);
+                ropePoint, landPoint, 0, 0, BotPhysicsEngine.cfg.TICK_MS, outgoing, edgeKeys);
     }
     private static List<Integer> ropeAnchorYs(Rope rope) {
         List<Integer> ys = new ArrayList<>();
@@ -1766,7 +1766,7 @@ final class BotNavigationGraphProvider {
                 new Point(portal.getPosition().x, portal.getPosition().y - snapUp));
         BotNavigationGraph.Region to = findRegionBelow(map, regionsById, regionIdByFootholdId,
                 new Point(targetPortal.getPosition().x, targetPortal.getPosition().y - snapUp));
-        if (from == null || to == null || from.id == to.id) {
+        if (from == null || to == null) {
             return;
         }
 
@@ -1803,12 +1803,18 @@ final class BotNavigationGraphProvider {
         }
 
         for (BotNavigationGraph.Region region : regions) {
-            if (region.isRopeRegion || region.width() > 64) {
+            if (region.isRopeRegion) {
                 continue;
             }
+            // Left/right endpoints of any platform are X positions where a jump trajectory
+            // from the region below qualitatively changes (clears the platform vs. lands on it).
+            // Without these as feature anchors, narrow launch windows for "jump-over" or
+            // "land-on-intermediate" edges can have zero seeded samples and be missed.
             projectRegionXsToRegionBelow(featureXs, map, regionIdByFootholdId, region.leftPoint());
-            projectRegionXsToRegionBelow(featureXs, map, regionIdByFootholdId, region.centerPoint());
             projectRegionXsToRegionBelow(featureXs, map, regionIdByFootholdId, region.rightPoint());
+            if (region.width() <= 64) {
+                projectRegionXsToRegionBelow(featureXs, map, regionIdByFootholdId, region.centerPoint());
+            }
         }
 
         Map<Integer, List<Integer>> featuresByRegionId = new HashMap<>();
@@ -1881,6 +1887,21 @@ final class BotNavigationGraphProvider {
         if (region.width() > jumpInset * 2) {
             addAnchor(points, region.pointAt(region.minX + jumpInset), ENDPOINT_ANCHOR_SPACING_PX);
             addAnchor(points, region.pointAt(region.maxX - jumpInset), ENDPOINT_ANCHOR_SPACING_PX);
+        }
+        // Interior densification: narrow launch windows for jumps over or onto platforms above
+        // can sit in the middle of a wide region with no naturally-derived feature X. Without
+        // dense interior sampling, findJumpBoundary has no seed and the edge is missed entirely.
+        // Spacing matches walkStep so a launch window as narrow as a single pre-launch tick
+        // (≈walkStep px) is guaranteed at least one seed sample. Repeated sims are absorbed by
+        // jumpLandingCache.
+        int walkStep = BotPhysicsEngine.walkStep(map, movementProfile);
+        int interiorSpacing = Math.max(walkStep, 1);
+        if (region.width() > edgeInset * 2) {
+            for (int x = region.minX + edgeInset;
+                 x <= region.maxX - edgeInset;
+                 x += interiorSpacing) {
+                addAnchor(points, region.pointAt(x), 0);
+            }
         }
         for (BotNavigationGraph.Segment segment : region.segments) {
             addAnchor(points, new Point(segment.x1, segment.y1), ENDPOINT_ANCHOR_SPACING_PX);

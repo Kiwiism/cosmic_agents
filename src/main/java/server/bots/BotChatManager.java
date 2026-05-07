@@ -62,6 +62,9 @@ public class BotChatManager {
             + "|(?:go\\s+)?(?:sentry|camp|guard|defend|post\\s+up|anchor)(?:\\s+(?:here|mode))?)"
             + "(?:\\s+(?:now|pls|please))?",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern PATROL_PATTERN = Pattern.compile(
+            "(?:patrol|roam|wander)(?:\\s+(?:here|the\\s+area|around))?(?:\\s+(?:now|pls|please))?",
+            Pattern.CASE_INSENSITIVE);
 
     private static final Pattern STOP_PATTERN = Pattern.compile(
             "\\b(stop(\\s+(moving|it|now|pls|please))?|stay(\\s+(here|there|put))?|"
@@ -283,7 +286,8 @@ public class BotChatManager {
     private static final String BUFF_WORDS   = "(?:buff\\s+pots?|buff\\s+potions?|buffs?\\s+items?)";
     private static final String USE_WORDS = "(?:use|use\\s+items?|consumables?)";
     private static final String EQUIP_WORDS = "(?:equips?|equipment|gear)";
-    private static final String ETC_WORDS = "(?:etc|junk|misc(?:ellaneous)?)";
+    private static final String ETC_WORDS = "(?:etc|misc(?:ellaneous)?)";
+    private static final String TRASH_WORDS = "(?:trash|junk)";
     private static final String MESO_WORDS = "mesos?";
 
     private static final Pattern SCROLLS_PATTERN = Pattern.compile(
@@ -417,7 +421,7 @@ public class BotChatManager {
             Pattern.CASE_INSENSITIVE);
     private static final Pattern TRADE_TRASH_COMMAND_PATTERN = Pattern.compile(
             "\\b" + TRADE_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT
-            + "(?:(?:your|ur|my)\\s+)?(?:trash|junk)\\b",
+            + "(?:(?:your|ur|my)\\s+)?" + TRASH_WORDS + "\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern SHOW_JUNK_COMMAND_PATTERN = Pattern.compile(
             "^\\s*show(?:\\s+me)?\\s+(?:(?:your|ur)\\s+)?junk[?!.,]*\\s*$",
@@ -453,6 +457,9 @@ public class BotChatManager {
             Pattern.CASE_INSENSITIVE);
     private static final Pattern DROP_EQUIPS_COMMAND_PATTERN = Pattern.compile(
             "\\b" + DROP_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + EQUIP_WORDS + "\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern DROP_TRASH_COMMAND_PATTERN = Pattern.compile(
+            "\\b" + DROP_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + "(?:(?:your|ur|my)\\s+)?" + TRASH_WORDS + "\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern DROP_ETC_COMMAND_PATTERN = Pattern.compile(
             "\\b" + DROP_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + ETC_WORDS + "\\b",
@@ -850,6 +857,14 @@ public class BotChatManager {
             if (dest != null) {
                 BotManager.after(BotManager.randMs(1000, 1500), () -> {
                     BotManager.getInstance().issueFarmHere(entry, dest);
+                    BotManager.getInstance().botReply(entry, BotManager.randomReply(MOVE_HERE_REPLIES));
+                });
+            }
+        } else if (isPatrolCommand(message)) {
+            Point ownerPos = entry.owner != null ? new Point(entry.owner.getPosition()) : null;
+            if (ownerPos != null) {
+                BotManager.after(BotManager.randMs(1000, 1500), () -> {
+                    BotManager.getInstance().issuePatrol(entry, ownerPos);
                     BotManager.getInstance().botReply(entry, BotManager.randomReply(MOVE_HERE_REPLIES));
                 });
             }
@@ -1541,6 +1556,10 @@ public class BotChatManager {
         return matchesWholeCommand(FARM_HERE_PATTERN, message);
     }
 
+    static boolean isPatrolCommand(String message) {
+        return matchesWholeCommand(PATROL_PATTERN, message);
+    }
+
     static boolean isMoveHereCommand(String message) {
         return matchesWholeCommand(MOVE_HERE_PATTERN, message);
     }
@@ -2175,6 +2194,7 @@ public class BotChatManager {
         if (DROP_BUFF_COMMAND_PATTERN.matcher(message).find()) return "buff";
         if (DROP_USE_COMMAND_PATTERN.matcher(message).find()) return "use";
         if (DROP_EQUIPS_COMMAND_PATTERN.matcher(message).find()) return "equips";
+        if (DROP_TRASH_COMMAND_PATTERN.matcher(message).find()) return "trash";
         if (DROP_ETC_COMMAND_PATTERN.matcher(message).find()) return "etc";
         Matcher dropMatcher = DROP_ITEM_COMMAND_PATTERN.matcher(message);
         if (dropMatcher.find()) return "name:" + BotInventoryManager.normalizeItemQuery(dropMatcher.group(1));

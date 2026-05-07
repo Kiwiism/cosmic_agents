@@ -219,6 +219,42 @@ class BotCombatManagerTest {
     }
 
     @Test
+    void shouldSkipPartySupportBuffsWhenMapHasNoLivingMobs() {
+        MapleMap map = mock(MapleMap.class);
+        when(map.getAllMonsters()).thenReturn(List.of());
+
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        Character ally = mock(Character.class);
+        when(ally.getId()).thenReturn(2);
+        when(ally.isAlive()).thenReturn(true);
+        when(ally.getPosition()).thenReturn(new Point(120, 200));
+        when(ally.getBuffedValue(BuffStat.WATK)).thenReturn(null);
+        when(bot.getPartyMembersOnSameMap()).thenReturn(List.of(ally));
+
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.following = true;
+        entry.buffSkillIds.add(Cleric.BLESS);
+        entry.nextSupportBuffAt.put(Cleric.BLESS, 0L);
+
+        Skill bless = new Skill(Cleric.BLESS);
+        StatEffect effect = mock(StatEffect.class);
+        when(effect.isOverTime()).thenReturn(true);
+        when(effect.getStatups()).thenReturn(List.of(new tools.Pair<>(BuffStat.WATK, 10)));
+        bless.addLevelEffect(effect);
+        when(bot.getSkillLevel(any(Skill.class))).thenReturn((byte) 1);
+
+        try (MockedStatic<SkillFactory> skillFactory = Mockito.mockStatic(SkillFactory.class)) {
+            skillFactory.when(() -> SkillFactory.getSkill(Cleric.BLESS)).thenReturn(bless);
+
+            BotCombatManager.tickBuffs(entry, bot);
+        }
+
+        assertEquals("no skill buff checks yet", entry.lastSkillBuffActionSummary);
+        assertFalse(entry.nextSupportBuffAt.containsKey(Cleric.BLESS) && entry.nextSupportBuffAt.get(Cleric.BLESS) > 0L);
+        assertEquals(0, entry.attackCooldownMs);
+    }
+
+    @Test
     void shouldMatchOpenStoryGroundMobKnockbackWhenHitFromRight() {
         MapleMap map = mock(MapleMap.class);
         Character bot = mockBot(new Point(100, 200), map, 20_000, null);

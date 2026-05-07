@@ -25,6 +25,7 @@ import server.bots.pq.BotPqHooks;
 import server.life.Monster;
 import server.life.MobSkill;
 import server.maps.Foothold;
+import server.maps.MapItem;
 import server.maps.MapleMap;
 import server.quest.Quest;
 import tools.PacketCreator;
@@ -76,6 +77,11 @@ public class BotManager {
         // Grind recovery is looser than follow recovery so bots can work nearby platforms,
         // but still get pulled back to a same-map party anchor if they fall far out of bounds.
         public int GRIND_PARTY_TELEPORT_DIST_MULTIPLIER = 2;
+
+        // Grind loot convenience: loot competes with mob navigation only when
+        // lootDistSq < mobDistSq * ratio. 0.09 ≈ loot within 30% of mob distance.
+        public float GRIND_LOOT_CONVENIENCE_RATIO = 0.09f;
+        public int   GRIND_LOOT_RETRY_SUPPRESS_MS = 5_000;
 
         // Debug aid: keep stuck detection/logging active, but disable automatic recovery jumps
         // so pathing failures remain visible in logs and at runtime.
@@ -142,124 +148,10 @@ public class BotManager {
     private static final Pattern FORMATION_PATTERN = Pattern.compile(
             "\\b(?:formation|form)\\b(?:\\s+(stagger|split|random|stack|spread|tight|loose|left|right|snap)(?:\\s+(\\d+|tight|loose|on|off))?)?",
             Pattern.CASE_INSENSITIVE);
-    // Reserve `give ...` for item requests handled by BotChatManager.
-    private static final Pattern TRANSFER_PATTERN = Pattern.compile(
-            "\\btransfer\\s+(\\S+)(?:\\s+to)?\\s+(\\S+)\\b", Pattern.CASE_INSENSITIVE);
     private static final int MIN_PREFIX_TARGET_LENGTH = 2;
-    private static final int MAX_NUMERIC_TARGET_SLOT = 5;
     private static final int PLATFORM_EDGE_INSET_PX = 12;
-
-    record BotTransferCommand(String botName, String targetName) {}
-
-    private record TargetedBotCommand(String targetToken, String commandText) {}
-
-    private record TargetedBotMatch(BotEntry entry, String commandText, String feedbackMessage) {}
-
-    static BotTransferCommand matchBotTransferCommand(String message) {
-        Matcher matcher = TRANSFER_PATTERN.matcher(message);
-        if (!matcher.find()) {
-            return null;
-        }
-
-        return new BotTransferCommand(matcher.group(1), matcher.group(2));
-    }
-
-    private static TargetedBotCommand parseTargetedBotCommand(String message) {
-        if (message == null) {
-            return null;
-        }
-
-        String trimmed = message.stripLeading();
-        if (trimmed.isEmpty()) {
-            return null;
-        }
-
-        int separatorIndex = 0;
-        while (separatorIndex < trimmed.length() && !isTargetSeparator(trimmed.charAt(separatorIndex))) {
-            separatorIndex++;
-        }
-        if (separatorIndex == 0 || separatorIndex >= trimmed.length()) {
-            return null;
-        }
-
-        String commandText = trimmed.substring(separatorIndex).replaceFirst("^[,!?\\s]+", "").trim();
-        if (commandText.isEmpty()) {
-            return null;
-        }
-
-        return new TargetedBotCommand(trimmed.substring(0, separatorIndex), commandText);
-    }
-
-    private static boolean isTargetSeparator(char ch) {
-        return java.lang.Character.isWhitespace(ch) || ch == ',' || ch == '!' || ch == '?';
-    }
-
-    private static boolean isNumericTarget(String targetToken) {
-        return !targetToken.isEmpty() && targetToken.chars().allMatch(java.lang.Character::isDigit);
-    }
-
-    private static String buildAmbiguousPrefixMessage(String prefix, List<BotEntry> matches) {
-        StringBuilder message = new StringBuilder("Ambiguous bot prefix '")
-                .append(prefix)
-                .append("': ");
-        for (int i = 0; i < matches.size(); i++) {
-            if (i > 0) {
-                message.append(", ");
-            }
-            message.append(i + 1).append(": ").append(matches.get(i).bot.getName());
-        }
-        message.append(". Use the full name or a slot number.");
-        return message.toString();
-    }
-
-    private static TargetedBotMatch resolveTargetedBot(List<BotEntry> entries, String message) {
-        if (entries == null || entries.isEmpty()) {
-            return new TargetedBotMatch(null, null, null);
-        }
-
-        TargetedBotCommand targetedCommand = parseTargetedBotCommand(message);
-        if (targetedCommand == null) {
-            return new TargetedBotMatch(null, null, null);
-        }
-
-        String targetToken = targetedCommand.targetToken();
-        for (BotEntry entry : entries) {
-            if (entry.bot.getName().equalsIgnoreCase(targetToken)) {
-                return new TargetedBotMatch(entry, targetedCommand.commandText(), null);
-            }
-        }
-
-        if (isNumericTarget(targetToken)) {
-            int slot = Integer.parseInt(targetToken);
-            if (slot < 1 || slot > MAX_NUMERIC_TARGET_SLOT) {
-                return new TargetedBotMatch(null, null, null);
-            }
-            if (slot > entries.size()) {
-                return new TargetedBotMatch(null, null, "No bot in slot " + slot + ".");
-            }
-            return new TargetedBotMatch(entries.get(slot - 1), targetedCommand.commandText(), null);
-        }
-
-        if (targetToken.length() < MIN_PREFIX_TARGET_LENGTH) {
-            return new TargetedBotMatch(null, null, null);
-        }
-
-        List<BotEntry> prefixMatches = new ArrayList<>();
-        for (BotEntry entry : entries) {
-            if (entry.bot.getName().regionMatches(true, 0, targetToken, 0, targetToken.length())) {
-                prefixMatches.add(entry);
-            }
-        }
-
-        if (prefixMatches.size() == 1) {
-            return new TargetedBotMatch(prefixMatches.get(0), targetedCommand.commandText(), null);
-        }
-        if (prefixMatches.size() > 1) {
-            return new TargetedBotMatch(null, null, buildAmbiguousPrefixMessage(targetToken, prefixMatches));
-        }
-
-        return new TargetedBotMatch(null, null, null);
-    }
+    private static final int BOT_TICK_FAILURE_LIMIT = 3;
+    private static final long BOT_TICK_FAILURE_WINDOW_MS = 10_000L;
 
     private Character resolveFollowTarget(Character owner, String targetToken) {
         if (owner == null || targetToken == null || targetToken.isBlank()) {
@@ -438,7 +330,7 @@ public class BotManager {
                 issueFollowOwner(entry);
                 return SpawnResult.ok(botChar, auth.autoRegistered());
             } catch (SQLException e) {
-                e.printStackTrace();
+                log.warn("Failed to load bot character '{}' for owner '{}'", botName, owner.getName(), e);
                 return SpawnResult.fail("Failed to load bot character '" + botName + "'.");
             }
         }
@@ -777,10 +669,27 @@ public class BotManager {
 
     /** Called when the owner picks up or receives an item; notifies bots that might want it. */
     public void notifyOwnerGainedItem(Character owner, Item item) {
+        if (owner == null || item == null) return;
         if (ItemConstants.getInventoryType(item.getItemId()) != InventoryType.EQUIP) return;
         for (BotEntry entry : getBotEntries(owner.getId())) {
             BotOfferManager.notifyOwnerGainedEquip(entry, entry.bot, item);
         }
+    }
+
+    /** Called when a trade recipient receives an item; skips circular own-bot trade scans. */
+    public void notifyOwnerGainedTradeItem(Character recipient, Item item, Character source) {
+        if (isItemFromOwnedBot(recipient, source)) {
+            return;
+        }
+        notifyOwnerGainedItem(recipient, item);
+    }
+
+    private boolean isItemFromOwnedBot(Character owner, Character source) {
+        if (owner == null || source == null || !(source.getClient() instanceof BotClient)) {
+            return false;
+        }
+        Character activeOwner = getActiveOwnerByBotCharId(source.getId());
+        return activeOwner != null && activeOwner.getId() == owner.getId();
     }
 
     BotEntry getBotEntry(int ownerCharId, String botName) {
@@ -909,7 +818,7 @@ public class BotManager {
             return;
         }
 
-        BotTransferCommand transferCommand = matchBotTransferCommand(message);
+        BotCommandParser.BotTransferCommand transferCommand = BotCommandParser.matchBotTransferCommand(message);
         if (transferCommand != null) {
             String err = giveBot(owner.getId(), owner, transferCommand.botName(), transferCommand.targetName());
             if (err != null) owner.yellowMessage(err);
@@ -1000,19 +909,19 @@ public class BotManager {
         }
 
         // Name-prefix routing: "Jason pots?" → only Jason responds
-        TargetedBotMatch targetedBot = resolveTargetedBot(entries, message);
-        if (targetedBot.entry != null) {
+        BotCommandParser.TargetedBotMatch targetedBot = BotCommandParser.resolveTargetedBot(entries, message);
+        if (targetedBot.entry() != null) {
             String followTargetToken = BotChatManager.matchFollowTarget(targetedBot.commandText());
             if (followTargetToken != null) {
-                applyFollowTargetCommand(owner, List.of(targetedBot.entry), followTargetToken);
+                applyFollowTargetCommand(owner, List.of(targetedBot.entry()), followTargetToken);
                 return;
             }
-            targetedBot.entry.replyChannel = channel;
-            BotChatManager.handleChat(targetedBot.entry, targetedBot.commandText);
+            targetedBot.entry().replyChannel = channel;
+            BotChatManager.handleChat(targetedBot.entry(), targetedBot.commandText());
             return;
         }
-        if (targetedBot.feedbackMessage != null) {
-            owner.yellowMessage(targetedBot.feedbackMessage);
+        if (targetedBot.feedbackMessage() != null) {
+            owner.yellowMessage(targetedBot.feedbackMessage());
             return;
         }
 
@@ -1042,12 +951,12 @@ public class BotManager {
             }
         }
 
-        TargetedBotMatch targetedBot = resolveTargetedBot(matches, message);
-        if (targetedBot.entry != null) {
-            return BotOfferManager.handlePendingOfferResponse(targetedBot.entry, speaker, targetedBot.commandText);
+        BotCommandParser.TargetedBotMatch targetedBot = BotCommandParser.resolveTargetedBot(matches, message);
+        if (targetedBot.entry() != null) {
+            return BotOfferManager.handlePendingOfferResponse(targetedBot.entry(), speaker, targetedBot.commandText());
         }
-        if (targetedBot.feedbackMessage != null) {
-            speaker.dropMessage(5, targetedBot.feedbackMessage);
+        if (targetedBot.feedbackMessage() != null) {
+            speaker.dropMessage(5, targetedBot.feedbackMessage());
             return true;
         }
 
@@ -1663,8 +1572,11 @@ public class BotManager {
         if (entry == null || botPos == null) {
             return botPos;
         }
-        if (BotPqHooks.isCouponSeeking(entry)) {
-            return entry.kpq.navTarget;
+        if (entry.grindLootTarget != null) {
+            Point lootPos = activeGrindLootPosition(entry, botPos);
+            if (lootPos != null) {
+                return lootPos;
+            }
         }
         if (entry.wanderDirection == 0) {
             entry.wanderDirection = ThreadLocalRandom.current().nextBoolean() ? 1 : -1;
@@ -1672,13 +1584,104 @@ public class BotManager {
         return new Point(botPos.x + entry.wanderDirection * 200, botPos.y);
     }
 
+    private static Point activeGrindLootPosition(BotEntry entry, Point botPos) {
+        MapItem loot = entry.grindLootTarget;
+        if (loot == null || botPos == null) {
+            entry.grindLootTarget = null;
+            return null;
+        }
+        Character bot = entry.bot;
+        if (loot.isPickedUp() || bot == null || bot.getMap() == null
+                || bot.getMap().getMapObject(loot.getObjectId()) != loot) {
+            entry.grindLootTarget = null;
+            return null;
+        }
+        if (!BotLootEligibility.canBotLoot(entry, bot, loot)) {
+            entry.grindLootTarget = null;
+            return null;
+        }
+        Point lootPos = loot.getPosition();
+        if (Math.abs(lootPos.x - botPos.x) <= cfg.LOOT_RADIUS
+                && Math.abs(lootPos.y - botPos.y) <= cfg.LOOT_RADIUS) {
+            suppressGrindLootRetry(entry, loot);
+            entry.grindLootTarget = null;
+            return null;
+        }
+        return lootPos;
+    }
+
+    static void suppressGrindLootRetry(BotEntry entry, MapItem loot) {
+        if (entry == null || loot == null) {
+            return;
+        }
+        entry.ignoredGrindLootObjectId = loot.getObjectId();
+        entry.ignoredGrindLootUntilMs = System.currentTimeMillis() + cfg.GRIND_LOOT_RETRY_SUPPRESS_MS;
+    }
+
+    static boolean isGrindLootRetrySuppressed(BotEntry entry, MapItem loot, long now) {
+        if (entry == null || loot == null || entry.ignoredGrindLootObjectId <= 0) {
+            return false;
+        }
+        if (now >= entry.ignoredGrindLootUntilMs) {
+            entry.ignoredGrindLootObjectId = 0;
+            entry.ignoredGrindLootUntilMs = 0L;
+            return false;
+        }
+        return entry.ignoredGrindLootObjectId == loot.getObjectId();
+    }
+
+    static double activeLootTravelDistSq(Point botPos, Point lootPos) {
+        if (botPos == null || lootPos == null) {
+            return Double.MAX_VALUE;
+        }
+        int dx = Math.max(0, Math.abs(lootPos.x - botPos.x) - cfg.LOOT_RADIUS);
+        int dy = Math.max(0, Math.abs(lootPos.y - botPos.y) - cfg.LOOT_RADIUS);
+        return (double) dx * dx + (double) dy * dy;
+    }
+
+    static Point convenientLootTarget(BotEntry entry, Point botPos, Point mobPos) {
+        Point lootPos = activeGrindLootPosition(entry, botPos);
+        if (lootPos == null) {
+            return null;
+        }
+        double lootDistSq = activeLootTravelDistSq(botPos, lootPos);
+        double mobDistSq = mobPos.distanceSq(botPos);
+        return lootDistSq < mobDistSq * cfg.GRIND_LOOT_CONVENIENCE_RATIO ? lootPos : null;
+    }
+
+    private static Point resolvePatrolWanderTarget(BotEntry entry, Point botPos, MapleMap map) {
+        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map);
+        BotNavigationGraph.Region region = graph != null ? graph.getRegion(entry.patrolRegionId) : null;
+        if (region == null || region.isRopeRegion || region.width() == 0) {
+            return resolveNoGrindTargetPosition(entry, botPos);
+        }
+        // Seek loot before roaming
+        Point lootTarget = BotInventoryManager.findNearestPatrolLootTarget(entry, entry.patrolRegionId);
+        if (lootTarget != null) {
+            entry.patrolWanderTarget = lootTarget;
+            return lootTarget;
+        }
+        // Roam within region
+        Point wander = entry.patrolWanderTarget;
+        if (wander == null || isNear(botPos, wander, BotMovementManager.cfg.STOP_DIST)) {
+            int x = ThreadLocalRandom.current().nextInt(region.minX, region.maxX + 1);
+            wander = region.pointAt(x);
+            entry.patrolWanderTarget = wander;
+        }
+        return wander;
+    }
+
     // Main tick
     // -------------------------------------------------------------------------
 
     private void tick(int ownerCharId, int botCharId) {
         long startedAt = BotPerformanceMonitor.enabled() ? System.nanoTime() : 0L;
+        BotEntry entry = getBotEntry(ownerCharId, botCharId);
         try {
-            tickCore(ownerCharId, botCharId);
+            tickCore(entry, ownerCharId, botCharId);
+            resetBotTickFailures(entry);
+        } catch (Throwable t) {
+            handleBotTickFailure(entry, ownerCharId, botCharId, t);
         } finally {
             if (startedAt != 0L) {
                 BotPerformanceMonitor.record("tick-total", System.nanoTime() - startedAt);
@@ -1686,8 +1689,7 @@ public class BotManager {
         }
     }
 
-    private void tickCore(int ownerCharId, int botCharId) {
-        BotEntry entry = getBotEntry(ownerCharId, botCharId);
+    private void tickCore(BotEntry entry, int ownerCharId, int botCharId) {
         if (entry == null) return;
         if (entry.airshowActive) return;
         if (entry.skipDelayMs > 0) {
@@ -1756,6 +1758,7 @@ public class BotManager {
         updateObservedOwnerMotion(entry, ownerPos);
         entry.lastOwnerPos = new Point(ownerPos); // raw owner pos before formation offset/snap — used by path logger
         clearFarmAnchorOnMapChange(entry, bot);
+        clearPatrolOnMapChange(entry, bot);
         Point targetPos = targetSnapshot.primaryTargetPos();
         clearFollowActionMoveWindowIfSettled(entry, botPos, targetSnapshot);
 
@@ -1860,25 +1863,6 @@ public class BotManager {
 
         // Grind mode: navigate toward nearest monster, attack when in range
         if (entry.grinding) {
-            // PQ nav override: walking to NPC or owner — skip monster seeking entirely.
-            // Coupon-seeking (soft hint) is excluded: the bot should still fight mobs
-            // opportunistically and only drift toward the coupon when idle.
-            if (entry.kpq.navTarget != null && !BotPqHooks.isCouponSeeking(entry)) {
-                targetPos = entry.kpq.navTarget;
-                BotNavigationManager.NavigationDirective pqNav = BotNavigationManager.resolveTarget(entry, targetPos, runAiTick);
-                if (!pqNav.consumedTick) {
-                    if (entry.climbing) {
-                        BotMovementManager.tickClimbing(entry, pqNav.targetPos, runAiTick);
-                    } else if (isSwimMap(entry) && entry.inAir) {
-                        BotMovementManager.tickSwimming(entry, pqNav.targetPos);
-                    } else if (entry.inAir) {
-                        BotMovementManager.tickAirborne(entry, pqNav.targetPos);
-                    } else {
-                        BotMovementManager.tickGrounded(entry, pqNav.targetPos);
-                    }
-                }
-                return;
-            }
             double seekRangeSq = (double) BotCombatManager.cfg.GRIND_SEEK_RANGE * BotCombatManager.cfg.GRIND_SEEK_RANGE;
             Monster target = entry.grindTarget;
             if (target == null || !target.isAlive()
@@ -1890,21 +1874,30 @@ public class BotManager {
             BotCombatManager.AttackPlan attackPlan = target == null
                     ? null
                     : BotCombatManager.planAttack(entry, bot, target);
+            // Validate cached loot target
+            if (entry.grindLootTarget != null) {
+                MapItem loot = entry.grindLootTarget;
+                if (loot.isPickedUp() || bot.getMap().getMapObject(loot.getObjectId()) != loot) {
+                    entry.grindLootTarget = null;
+                }
+            }
             if (runAiTick && shouldSearchForGrindTarget(entry, bot, target, attackPlan, now)) {
-                Monster searchedTarget = BotCombatManager.findGrindTarget(entry, bot);
+                Monster searchedTarget = entry.patrolRegionId >= 0
+                        ? BotCombatManager.findPatrolTarget(entry, bot)
+                        : BotCombatManager.findGrindTarget(entry, bot);
                 if (searchedTarget != null || target == null) {
                     target = searchedTarget;
                     attackPlan = null;
                 }
                 entry.nextGrindTargetSearchAtMs = now + BotCombatManager.cfg.GRIND_RETARGET_INTERVAL_MS;
             }
+            // Search for a convenient loot drop every AI tick (grind mode only)
+            if (runAiTick && entry.patrolRegionId < 0) {
+                entry.grindLootTarget = BotInventoryManager.findNearestGrindLootTarget(entry, bot);
+            }
             if (target == null) {
                 entry.grindTarget = null;
-                if (BotPqHooks.isCouponSeeking(entry)) {
-                    // No mob in seek range — drift toward the nearby coupon drop instead of idling.
-                    targetPos = entry.kpq.navTarget;
-                    // falls through to stepMovementCore below
-                } else if (isSwimMap(entry) && entry.inAir) {
+                if (isSwimMap(entry) && entry.inAir) {
                     BotMovementManager.tickSwimming(entry, targetPos);
                     return;
                 } else if (entry.inAir) {
@@ -1921,12 +1914,15 @@ public class BotManager {
                 }
             }
             if (target == null) {
-                targetPos = resolveNoGrindTargetPosition(entry, botPos);
+                targetPos = entry.patrolRegionId >= 0
+                        ? resolvePatrolWanderTarget(entry, botPos, bot.getMap())
+                        : resolveNoGrindTargetPosition(entry, botPos);
                 stepMovementCore(entry, targetPos, runAiTick);
                 return;
             }
             entry.grindTarget = target;
             entry.wanderDirection = 0;
+            entry.patrolWanderTarget = null;
             Point tp = target.getPosition();
             Monster rangedPriorityTarget = selectPriorityRangedAttackTarget(entry, bot, botPos, target);
             if (rangedPriorityTarget != null && rangedPriorityTarget != target) {
@@ -1971,23 +1967,13 @@ public class BotManager {
 
             boolean attackAttemptedInRange = false;
             if (!entry.climbing) {
-                boolean couponSeeking = BotPqHooks.isCouponSeeking(entry);
                 if (attackGateOpen && BotCombatManager.isTargetInAttackRange(attackPlan, bot, target)
-                        && BotCombatManager.canUseAttackPlanNow(entry, grindWeaponType, attackPlan)
-                        && (!couponSeeking || entry.moveWindowMs <= 0)) {
+                        && BotCombatManager.canUseAttackPlanNow(entry, grindWeaponType, attackPlan)) {
                     attackAttemptedInRange = true;
                     // In range — attack if grounded, or during ascent of a jump
                     int prevCooldown = entry.attackCooldownMs;
                     BotCombatManager.attackMonster(entry, bot, attackPlan);
                     boolean attacked = entry.attackCooldownMs != prevCooldown;
-                    // After attacking in coupon-seek mode, add a movement window based on
-                    // distance to the coupon so the bot walks toward it between attacks.
-                    if (attacked && couponSeeking && entry.kpq.navTarget != null) {
-                        int couponDx = Math.abs(botPos.x - entry.kpq.navTarget.x);
-                        entry.moveWindowMs = couponDx > BotMovementManager.cfg.FOLLOW_DIST * 3 ? 1000
-                                           : couponDx > BotMovementManager.cfg.FOLLOW_DIST     ? 200
-                                           : 0;
-                    }
                     // If a ranged bot just did a degenerate close-range hit, force retreat next tick
                     if (attacked && attackPlan.isCloseRangeRoute()
                             && BotCombatManager.isRangedAmmoWeapon(grindWeaponType)) {
@@ -2031,9 +2017,79 @@ public class BotManager {
                     && !BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(grindWeaponType, botPos, tp)) {
                 entry.degenAttackDone = false;
             }
+            // Small detour: take a very close loot drop on the way when not retreating.
+            if (crossRegionRetreatPos == null && !shouldRetreatForRangedSpacing && entry.patrolRegionId < 0) {
+                Point lootPos = convenientLootTarget(entry, botPos, tp);
+                if (lootPos != null) targetPos = lootPos;
+            }
         }
 
         stepMovementCore(entry, targetPos, runAiTick);
+    }
+
+    private void handleBotTickFailure(BotEntry entry, int ownerCharId, int botCharId, Throwable t) {
+        if (entry == null) {
+            log.error("Bot tick failed for missing entry ownerCharId={} botCharId={}", ownerCharId, botCharId, t);
+            return;
+        }
+
+        long now = System.currentTimeMillis();
+        if (now - entry.tickFailureWindowStartedAtMs > BOT_TICK_FAILURE_WINDOW_MS) {
+            entry.tickFailureWindowStartedAtMs = now;
+            entry.tickFailureCount = 0;
+        }
+        entry.tickFailureCount++;
+
+        Character bot = entry.bot;
+        Character owner = entry.owner;
+        String botName = bot != null ? bot.getName() : "?";
+        String ownerName = owner != null ? owner.getName() : "?";
+        int mapId = bot != null ? bot.getMapId() : -1;
+
+        clearBotVolatileActions(entry);
+        if (entry.tickFailureCount >= BOT_TICK_FAILURE_LIMIT) {
+            log.error("Disabling bot '{}' after {} tick failures within {} ms (owner={}, map={}, grinding={}, following={})",
+                    botName, entry.tickFailureCount, BOT_TICK_FAILURE_WINDOW_MS, ownerName, mapId,
+                    entry.grinding, entry.following, t);
+            removeBotByCharId(botCharId);
+            return;
+        }
+
+        if (entry.tickFailureCount == 2) {
+            forceBotIdleAfterTickFailure(entry);
+        }
+
+        log.warn("Bot '{}' tick failed {}/{} (owner={}, map={}, grinding={}, following={})",
+                botName, entry.tickFailureCount, BOT_TICK_FAILURE_LIMIT, ownerName, mapId,
+                entry.grinding, entry.following, t);
+    }
+
+    private static void resetBotTickFailures(BotEntry entry) {
+        if (entry == null || entry.tickFailureCount == 0) {
+            return;
+        }
+        entry.tickFailureCount = 0;
+        entry.tickFailureWindowStartedAtMs = 0L;
+    }
+
+    private static void clearBotVolatileActions(BotEntry entry) {
+        entry.pendingAction = null;
+        entry.pendingDropCategory = null;
+        entry.grindTarget = null;
+        entry.grindLootTarget = null;
+        entry.patrolWanderTarget = null;
+        BotMovementManager.resetEntryStateAfterTeleport(entry);
+    }
+
+    private void forceBotIdleAfterTickFailure(BotEntry entry) {
+        issueStop(entry);
+        try {
+            botReply(entry, "unrecoverable error caught, idling");
+        } catch (Throwable chatError) {
+            Character bot = entry.bot;
+            log.warn("Failed to send bot failure idle message for '{}'",
+                    bot != null ? bot.getName() : "?", chatError);
+        }
     }
 
     static Monster selectPriorityRangedAttackTarget(BotEntry entry,
@@ -2358,7 +2414,6 @@ public class BotManager {
         entry.degenAttackDone = false;
         entry.buffConsumablesEnabled = false;
         entry.ownerAwaySafeMode = true;
-        townClusterAnchors.remove(ownerCharId);
     }
 
     private boolean scrollBotToTown(BotEntry entry, Character bot, int ownerCharId) {
@@ -2382,22 +2437,75 @@ public class BotManager {
         }
         groundAfterMapChange(entry, bot);
 
-        // Capture the cluster anchor at the first bot's post-warp position.
-        // Subsequent bots get a random ±150px X offset around the anchor as their
-        // physical move target via the same machinery as the player "here" command.
+        // Capture the cluster anchor at the first bot's post-warp position, then let
+        // every bot walk to the deterministic formation slot around that anchor. This
+        // mirrors the owner's current follow formation instead of stacking everyone on
+        // the same portal landing point.
         Point post = new Point(bot.getPosition());
-        Point prior = townClusterAnchors.putIfAbsent(ownerCharId, post);
-        if (prior != null) {
-            int offsetX = ThreadLocalRandom.current().nextInt(-150, 151);
-            Point candidate = new Point(prior.x + offsetX, prior.y - 1);
-            Point ground = BotPhysicsEngine.findGroundPoint(returnMap, candidate);
-            issueMoveTo(entry, ground != null ? ground : new Point(prior), true);
+        Point anchor = townClusterAnchors.putIfAbsent(ownerCharId, post);
+        if (anchor == null) {
+            anchor = post;
         }
+        Point target = resolveTownClusterTarget(entry, ownerCharId, returnMap, anchor);
 
         BotMovementManager.resetEntryState(entry);
-        issueStop(entry);
+        startMoveTo(entry, target, true);
         entry.ownerReturnedToTown = true;
         return true;
+    }
+
+    private Point resolveTownClusterTarget(BotEntry entry, int ownerCharId, MapleMap map, Point anchor) {
+        Point base = anchor != null ? new Point(anchor) : new Point(entry.bot.getPosition());
+        if (entry == null || entry.bot == null || map == null) {
+            return base;
+        }
+
+        List<BotEntry> entries = getBotEntries(ownerCharId);
+        int idx = 0;
+        for (int i = 0; i < entries.size(); i++) {
+            if (entries.get(i) == entry) {
+                idx = i;
+                break;
+            }
+        }
+
+        FormationState formation = ownerFormations.getOrDefault(ownerCharId, FormationState.defaultStagger());
+        int offsetX = formation.offsetFor(idx, Math.max(1, entries.size()));
+        int targetX = base.x + offsetX;
+
+        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map, entry.movementProfile);
+        if (graph != null) {
+            int anchorRegionId = graph.findRegionId(map, base);
+            BotNavigationGraph.Region anchorRegion = graph.getRegion(anchorRegionId);
+            if (anchorRegion != null && !anchorRegion.isRopeRegion) {
+                int edgeMargin = PLATFORM_EDGE_INSET_PX;
+                int minX = anchorRegion.minX;
+                int maxX = anchorRegion.maxX;
+                if (maxX - minX > 2 * edgeMargin) {
+                    minX += edgeMargin;
+                    maxX -= edgeMargin;
+                }
+                int clampedX = Math.max(minX, Math.min(maxX, targetX));
+                return anchorRegion.pointAt(clampedX);
+            }
+        }
+
+        Rectangle area = map.getMapArea();
+        int minX = area != null ? area.x : targetX;
+        int maxX = area != null ? area.x + area.width : targetX;
+        if (map.getFootholds() != null && map.getFootholds().getMinDropX() < map.getFootholds().getMaxDropX()) {
+            minX = map.getFootholds().getMinDropX();
+            maxX = map.getFootholds().getMaxDropX();
+        }
+
+        int clampedX = Math.max(minX, Math.min(maxX, targetX));
+        Point ground = BotPhysicsEngine.findGroundPoint(map, new Point(clampedX, base.y - 1));
+        if (ground != null) {
+            return ground;
+        }
+
+        Point anchorGround = BotPhysicsEngine.findGroundPoint(map, new Point(base.x, base.y - 1));
+        return anchorGround != null ? anchorGround : base;
     }
 
     /**
@@ -2448,6 +2556,29 @@ public class BotManager {
         entry.retreatHoldPos = null;
         entry.wanderDirection = 0;
         BotMovementManager.clearNavigationState(entry);
+    }
+
+    public void issuePatrol(BotEntry entry, Point ownerPos) {
+        if (entry == null || ownerPos == null || entry.bot == null) {
+            return;
+        }
+        MapleMap map = entry.bot.getMap();
+        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map);
+        int regionId = graph != null ? graph.findRegionId(map, ownerPos) : -1;
+        if (regionId < 0) {
+            botReply(entry, "can't find a patrol region here");
+            return;
+        }
+        clearScriptTasks(entry);
+        BotShopManager.cancelShopVisit(entry);
+        startPatrol(entry, regionId);
+    }
+
+    private void startPatrol(BotEntry entry, int regionId) {
+        startGrind(entry);          // sets grinding = true, clears other modes including any prior patrolRegionId
+        entry.patrolRegionId = regionId;
+        entry.patrolMapId = entry.bot.getMapId();
+        entry.patrolWanderTarget = null;
     }
 
     /**
@@ -2508,6 +2639,7 @@ public class BotManager {
         entry.farmAnchor = null;
         entry.farmAnchorMapId = -1;
         entry.grindTarget = null;
+        entry.grindLootTarget = null;
         entry.nextGrindTargetSearchAtMs = 0L;
         entry.moveWindowMs = 0;
         entry.degenAttackDone = false;
@@ -2655,6 +2787,10 @@ public class BotManager {
         entry.grinding = false;
         entry.farmAnchor = null;
         entry.farmAnchorMapId = -1;
+        entry.patrolRegionId = -1;
+        entry.patrolMapId = -1;
+        entry.patrolWanderTarget = null;
+        entry.grindLootTarget = null;
     }
 
     private static boolean isNear(Point source, Point target, int dist) {
@@ -3096,7 +3232,7 @@ public class BotManager {
         if (entry.navEdge != null || entry.navPreciseTarget || entry.fidgetMode != BotFidgetMode.NONE) {
             return false;
         }
-        if (entry.shopVisitPending || entry.shopSequenceActive || entry.kpq.navTarget != null) {
+        if (entry.shopVisitPending || entry.shopSequenceActive) {
             return false;
         }
         if (entry.wasMovingX || entry.moveDir != 0 || entry.movementVelX != 0 || entry.movementVelY != 0) {
@@ -3183,6 +3319,17 @@ public class BotManager {
                 entry.moveTarget = null;
                 entry.moveTargetPrecise = false;
             }
+        }
+    }
+
+    private static void clearPatrolOnMapChange(BotEntry entry, Character bot) {
+        if (entry == null || bot == null || entry.patrolRegionId < 0) {
+            return;
+        }
+        if (entry.patrolMapId != bot.getMapId()) {
+            entry.patrolRegionId = -1;
+            entry.patrolMapId = -1;
+            entry.patrolWanderTarget = null;
         }
     }
 

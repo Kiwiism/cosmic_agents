@@ -177,7 +177,7 @@ final class BotPotionManager {
         AutopotChoice choice = computeAutopotChoice(bot);
 
         if (choice.hpItemId() > 0) {
-            bot.changeKeybinding(91, new KeyBinding(2, choice.hpItemId()));
+            bot.changeKeybinding(91, new KeyBinding(7, choice.hpItemId()));
             bot.setAutopotHpAlert(BotManager.cfg.AUTOPOT_HP_THRESH);
         } else {
             bot.getKeymap().remove(91);
@@ -185,7 +185,7 @@ final class BotPotionManager {
         }
 
         if (choice.mpItemId() > 0) {
-            bot.changeKeybinding(92, new KeyBinding(2, choice.mpItemId()));
+            bot.changeKeybinding(92, new KeyBinding(7, choice.mpItemId()));
             bot.setAutopotMpAlert(BotManager.cfg.AUTOPOT_MP_THRESH);
         } else {
             bot.getKeymap().remove(92);

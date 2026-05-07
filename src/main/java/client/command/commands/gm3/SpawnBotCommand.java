@@ -6,6 +6,8 @@ import client.Client;
 import client.DefaultDates;
 import client.command.Command;
 import client.creator.BotCreator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import server.bots.BotManager;
 import server.bots.BotOwnershipService;
 import tools.BCrypt;
@@ -20,6 +22,8 @@ import java.sql.Date;
 import java.sql.Timestamp;
 
 public class SpawnBotCommand extends Command {
+    private static final Logger log = LoggerFactory.getLogger(SpawnBotCommand.class);
+
     {
         setDescription("Spawn an authorized character as a bot companion.");
     }
@@ -107,7 +111,7 @@ public class SpawnBotCommand extends Command {
                 return BotAccountResolution.created(createdAccountId);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.warn("Failed to create or reuse bot account '{}'", name, e);
         }
         return BotAccountResolution.failure("Failed to create or reuse the bot account for '" + name + "'.");
     }

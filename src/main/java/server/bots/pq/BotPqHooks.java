@@ -39,15 +39,6 @@ public final class BotPqHooks {
         return BotKpqStage1.shouldSkipCouponLoot(entry);
     }
 
-    /**
-     * True during KPQ stage 1 grinding when a nearby coupon drop has been located.
-     * Caller should treat this as a soft movement hint, not a hard nav override — the bot
-     * should still fight mobs opportunistically and drift toward the coupon only when idle.
-     */
-    public static boolean isCouponSeeking(BotEntry entry) {
-        return BotKpqStage1.isCouponSeeking(entry);
-    }
-
     /** Returns true if the bot is in a PQ map that should default to follow mode (KPQ stages 2-5). */
     public static boolean requiresFollow(BotEntry entry, Character bot) {
         int mapId = bot.getMapId();

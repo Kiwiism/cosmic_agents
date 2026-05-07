@@ -55,6 +55,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -487,12 +488,12 @@ class BotCombatManager {
             noteSkillBuffDecision(entry, "no buff skills in cache");
             return;
         }
+        if (bot.getMap().getAllMonsters().stream().noneMatch(Monster::isAlive)) return;
 
         long now = System.currentTimeMillis();
         if (trySupportBuff(entry, bot, now)) {
             return;
         }
-        if (bot.getMap().getAllMonsters().stream().noneMatch(Monster::isAlive)) return;
 
         for (int skillId : entry.buffSkillIds) {
             if (now < entry.nextBuffAt.getOrDefault(skillId, 0L)) continue;
@@ -717,6 +718,85 @@ class BotCombatManager {
                 return null;
             }
 
+            return selectable.get(0).monster();
+        } finally {
+            BotPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
+        }
+    }
+
+    /**
+     * Patrol mode: find the best grind target restricted to the patrol region and its
+     * immediate neighbours (1 graph hop). Tries the home region first; expands to
+     * adjacent regions only when the home region has no candidates.
+     */
+    static Monster findPatrolTarget(BotEntry entry, Character bot) {
+        long startedAt = System.nanoTime();
+        try {
+            if (entry == null || bot == null || entry.patrolRegionId < 0) {
+                return null;
+            }
+            Point botPos = bot.getPosition();
+            double rangeSq = (double) cfg.GRIND_SEEK_RANGE * cfg.GRIND_SEEK_RANGE;
+            Foothold botFoothold = findGroundFoothold(botPos, bot);
+            List<Monster> candidates = aliveMonstersInRange(bot, botPos, rangeSq);
+            if (candidates.isEmpty()) {
+                return null;
+            }
+            GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, botPos);
+            if (!graphContext.available()) {
+                return null;
+            }
+            BotNavigationGraph graph = graphContext.graph();
+            MapleMap map = graphContext.map();
+            int patrolId = entry.patrolRegionId;
+
+            // 1-hop expansion: only inter-region edges count as a hop. Self-loop edges
+            // (intra-region portals where fromRegionId == toRegionId) are free traversals
+            // within the patrol region itself — A* uses them to shortcut long walks but
+            // they don't expose new regions, so skip them here to keep intent explicit.
+            Set<Integer> adjacentIds = new HashSet<>();
+            for (BotNavigationGraph.Edge edge : graph.getOutgoing(patrolId)) {
+                if (edge.fromRegionId == edge.toRegionId) {
+                    continue;
+                }
+                adjacentIds.add(edge.toRegionId);
+            }
+
+            // Phase 1: home region only
+            List<Monster> filtered = new ArrayList<>();
+            for (Monster m : candidates) {
+                if (graph.findRegionId(map, m.getPosition()) == patrolId) {
+                    filtered.add(m);
+                }
+            }
+            // Phase 2: expand to adjacent if home region is empty
+            if (filtered.isEmpty()) {
+                for (Monster m : candidates) {
+                    int mId = graph.findRegionId(map, m.getPosition());
+                    if (mId == patrolId || adjacentIds.contains(mId)) {
+                        filtered.add(m);
+                    }
+                }
+            }
+            if (filtered.isEmpty()) {
+                return null;
+            }
+
+            List<ScoredGrindTarget> scored = scoreGrindTargets(entry, bot, botPos, botFoothold, filtered);
+            if (scored.isEmpty()) {
+                return null;
+            }
+            scored.sort(Comparator
+                    .comparingLong(ScoredGrindTarget::graphCost)
+                    .thenComparingLong(ScoredGrindTarget::localScore)
+                    .thenComparingDouble(ScoredGrindTarget::distanceSq));
+            List<ScoredGrindTarget> reachable = scored.stream()
+                    .filter(t -> t.graphCost() < UNREACHABLE_GRAPH_COST)
+                    .toList();
+            List<ScoredGrindTarget> selectable = reachable.isEmpty() ? scored : reachable;
+            if (selectable.getFirst().graphCost() >= UNREACHABLE_GRAPH_COST) {
+                return null;
+            }
             return selectable.get(0).monster();
         } finally {
             BotPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);

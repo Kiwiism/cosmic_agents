@@ -59,9 +59,7 @@ final class BotOfferManager {
             return;
         }
 
-        List<BotEquipManager.EquipRecommendation> recs = BotEquipManager.findRecommendedEquips(bot, owner);
-        boolean isUpgrade = recs.stream().anyMatch(r -> r.candidate().getItemId() == item.getItemId());
-        if (!isUpgrade) {
+        if (BotEquipManager.findRecommendationForItem(bot, owner, item) == null) {
             return;
         }
 
@@ -459,6 +457,7 @@ final class BotOfferManager {
 
     private static GearOfferChoice findBestGearOffer(BotEntry entry, Character recipient, Character donor) {
         List<Equip> offerable = collectOfferableEquips(donor);
+        offerable.removeIf(equip -> !isWeaponOfferCompatible(recipient, equip));
         List<BotEquipManager.EquipRecommendation> current =
                 BotEquipManager.findRecommendedEquipsFromItems(recipient, offerable);
         if (!current.isEmpty()) {
@@ -494,6 +493,9 @@ final class BotOfferManager {
         return offerable;
     }
     private static GearOfferNeed gearOfferNeed(BotEntry entry, Character recipient, Character donor, Item item) {
+        if (!isWeaponOfferCompatible(recipient, item)) {
+            return null;
+        }
         if (BotEquipManager.findRecommendationForItem(recipient, donor, item) != null) {
             return GearOfferNeed.CURRENT;
         }
@@ -503,6 +505,21 @@ final class BotOfferManager {
             }
         }
         return null;
+    }
+
+    static boolean isWeaponOfferCompatible(Character recipient, Item item) {
+        if (!(item instanceof Equip equip)) {
+            return true;
+        }
+        ItemInformationProvider ii = ItemInformationProvider.getInstance();
+        if (!ItemConstants.isWeapon(equip.getItemId())) {
+            return true;
+        }
+        return isWeaponOfferCompatible(recipient, ii.getWeaponType(equip.getItemId()));
+    }
+
+    static boolean isWeaponOfferCompatible(Character recipient, WeaponType weaponType) {
+        return BotEquipManager.isWeaponCompatible(recipient, weaponType);
     }
 
     static boolean isReservedForOtherRecipients(BotEntry entry, Character donor, Item item) {

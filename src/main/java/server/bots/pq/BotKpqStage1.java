@@ -6,12 +6,10 @@ import client.inventory.manipulator.InventoryManipulator;
 import scripting.event.EventInstanceManager;
 import server.bots.BotChatManager;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 import server.bots.BotScript;
 import server.bots.BotScriptContext;
 import server.bots.BotScriptStep;
 import server.life.NPC;
-import server.maps.MapItem;
 
 import java.awt.*;
 import java.util.List;
@@ -43,10 +41,6 @@ final class BotKpqStage1 {
     private static final int NEAR_NPC_PX = 80;
     private static final int NEAR_OWNER_PX = 80;
     private static final long WAIT_MS = 1800;
-    private static final int COUPON_SEEK_RANGE = 600;
-    private static final int COUPON_SEEK_MAX_PATH_COST = 250;
-    private static final int COUPON_SEEK_FALLBACK_RANGE_X = 240;
-    private static final int COUPON_SEEK_FALLBACK_RANGE_Y = 120;
 
     private static final BotScript SCRIPT = new BotScript() {
         private final List<BotScriptStep> steps = List.of(
@@ -105,12 +99,6 @@ final class BotKpqStage1 {
         return entry.kpq.state >= SECOND_WALK;
     }
 
-    static boolean isCouponSeeking(BotEntry entry) {
-        // Coupon pursuit now runs through scripted move tasks with local-opportunity combat
-        // rather than through the general grind-mode seek hooks in BotManager.
-        return false;
-    }
-
     static boolean isNpcLocked(BotEntry entry) {
         return entry.kpq.state == FIRST_WAIT || entry.kpq.state == SECOND_WAIT;
     }
@@ -163,42 +151,10 @@ final class BotKpqStage1 {
             have = need;
         }
 
-        MapItem groundCoupon = findNearestDrop(ctx.bot, ITEM_COUPON, COUPON_SEEK_RANGE);
-        Point desiredSeekTarget = groundCoupon == null ? null : groundCoupon.getPosition();
-        if (desiredSeekTarget != null && !ctx.isCheapMoveTarget(
-                desiredSeekTarget,
-                COUPON_SEEK_MAX_PATH_COST,
-                COUPON_SEEK_FALLBACK_RANGE_X,
-                COUPON_SEEK_FALLBACK_RANGE_Y)) {
-            desiredSeekTarget = null;
-        }
-        refreshCouponSeekTask(ctx, desiredSeekTarget);
-
         int milestone = (have / 5) * 5;
         if (milestone > ctx.entry.kpq.lastReportedCoupons) {
             ctx.entry.kpq.lastReportedCoupons = milestone;
             BotChatManager.queueBotSay(ctx.entry, have + " / " + need);
-        }
-    }
-
-    private static void refreshCouponSeekTask(BotScriptContext ctx, Point desiredSeekTarget) {
-        Point currentSeekTarget = ctx.entry.kpq.navTarget;
-        if (desiredSeekTarget == null) {
-            if (currentSeekTarget != null) {
-                ctx.manager.issueGrind(ctx.entry);
-            }
-            ctx.entry.kpq.navTarget = null;
-            return;
-        }
-
-        boolean changed = currentSeekTarget == null || !currentSeekTarget.equals(desiredSeekTarget);
-        if (changed) {
-            ctx.manager.issueGrind(ctx.entry);
-            ctx.entry.kpq.navTarget = new Point(desiredSeekTarget);
-        }
-
-        if (ctx.tasksDone() && !near(ctx.bot, desiredSeekTarget, BotManager.cfg.LOOT_RADIUS)) {
-            ctx.queueMoveToWithLocalCombat(desiredSeekTarget, false);
         }
     }
 
@@ -207,10 +163,6 @@ final class BotKpqStage1 {
         if (need <= 0 || ctx.bot.getItemQuantity(ITEM_COUPON, false) < need) {
             return false;
         }
-        if (ctx.entry.kpq.navTarget != null) {
-            ctx.manager.issueGrind(ctx.entry);
-        }
-        ctx.entry.kpq.navTarget = null;
         BotChatManager.queueBotSay(ctx.entry, "Got " + need + "!");
         return true;
     }
@@ -233,30 +185,11 @@ final class BotKpqStage1 {
         ctx.queueDrop(InventoryType.ETC, ITEM_PASS, (short) 1);
     }
 
-    private static MapItem findNearestDrop(Character bot, int itemId, int range) {
-        Point pos = bot.getPosition();
-        MapItem nearest = null;
-        double bestDist = Double.MAX_VALUE;
-        for (MapItem drop : bot.getMap().getDroppedItems()) {
-            if (drop.getItemId() != itemId || drop.isPickedUp()) continue;
-            if (!drop.canBePickedBy(bot)) continue;
-            Point dp = drop.getPosition();
-            if (Math.abs(dp.x - pos.x) > range || Math.abs(dp.y - pos.y) > range) continue;
-            double dist = pos.distanceSq(dp);
-            if (dist < bestDist) {
-                bestDist = dist;
-                nearest = drop;
-            }
-        }
-        return nearest;
-    }
-
     private static void reset(BotEntry entry) {
         entry.kpq.state = IDLE;
         entry.kpq.couponTarget = -1;
         entry.kpq.waitUntilMs = 0;
         entry.kpq.lastReportedCoupons = 0;
-        entry.kpq.navTarget = null;
         entry.script.reset(null);
     }
 

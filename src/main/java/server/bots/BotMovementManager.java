@@ -231,6 +231,21 @@ class BotMovementManager {
                 return;
             }
 
+            if (!runAiTick && entry.navEdge == null) {
+                // No committed nav edge → no AI-decided climb intent. On non-AI ticks the
+                // navDirective falls through to the raw follow target (resolveTarget can't run
+                // findNextEdge here), and using its dy to choose a direction can dismount the bot
+                // off the rope-top onto the foothold above — pathlog-Preston-2026-05-07 oscillation.
+                // Integrate the cached intent instead; the next AI tick will refresh direction.
+                if (entry.climbVerticalDir == 0) {
+                    BotPhysicsEngine.holdClimb(entry, bot);
+                } else {
+                    BotPhysicsEngine.advanceClimb(entry, bot);
+                }
+                broadcastMovement(entry);
+                return;
+            }
+
             // Committed climb edges must reach the exact launch anchor so execution can hand off.
             MoveAction action = dy < 0
                     ? MoveAction.climbUp()

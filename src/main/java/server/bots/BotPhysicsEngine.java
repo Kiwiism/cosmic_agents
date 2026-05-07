@@ -795,6 +795,7 @@ final class BotPhysicsEngine {
 
     static void attachToRope(BotEntry entry, Character bot, Rope rope, int y) {
         int ropeY = Math.clamp(y, firstClimbableY(rope), rope.bottomY());
+        entry.climbVerticalDir = 0;
         setClimbPosition(entry, bot, rope, ropeY);
     }
 

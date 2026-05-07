@@ -6,6 +6,7 @@ import client.inventory.Equip;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.WeaponType;
+import constants.skills.Assassin;
 import constants.skills.Crusader;
 import constants.skills.DragonKnight;
 import constants.skills.Fighter;
@@ -278,7 +279,7 @@ class BotEquipManagerTest {
         Equip strictlyWorseDex = glove(0, 9, 0);   // dominated by pureDex
 
         List<Equip> bagItems = List.of(balanced99, dexHeavy108, lukHeavy101,
-                                       strictlyWorseLuk, strictlyWorseDex);
+                strictlyWorseLuk, strictlyWorseDex);
 
         Set<Equip> keep = BotEquipManager.selectItemsBeatingBaseline(
                 BotEquipManager.relevantStatsFor(Job.ASSASSIN), bagItems, baseline);
@@ -444,6 +445,94 @@ class BotEquipManagerTest {
     }
 
     @Test
+    void bagGloveNotReservedWhenEquippedGloveAlreadyDominatesJohnCase() {
+        Character bot = mock(Character.class);
+        when(bot.getJob()).thenReturn(Job.HUNTER);
+
+        Equip equippedBlueWork = equipWithIdStats(1082001, 0, 7, 0);
+        Equip bagMithrilScaler = equipWithIdStats(1082047, 0, 2, 0);
+
+        BotEquipManager.SelfReserveHooks hooks = mock(BotEquipManager.SelfReserveHooks.class);
+        stubReserveItem(hooks, Job.HUNTER, equippedBlueWork, "Gv", 10, 0, 0, 0, 0, 0, 0);
+        stubReserveItem(hooks, Job.HUNTER, bagMithrilScaler, "Gv", 35, 4, 0, 115, 0, 0, 0);
+
+        Set<Equip> keep = BotEquipManager.selectOwnedItemsForSelfReserve(bot, hooks,
+                List.of(equippedBlueWork, bagMithrilScaler));
+
+        assertTrue(keep.contains(equippedBlueWork), "equipped baseline glove should stay in the reserve set");
+        assertFalse(keep.contains(bagMithrilScaler),
+                "bag glove should not be reserved when equipped glove already dominates it");
+    }
+
+    @Test
+    void shouldReserveSwordUpgradeEvenWhenEquippedAxeIsStronger() {
+        Character bot = mock(Character.class);
+        when(bot.getJob()).thenReturn(Job.FIGHTER);
+        when(bot.getSkillLevel(Fighter.SWORD_MASTERY)).thenReturn(1);
+        when(bot.getSkillLevel(Fighter.SWORD_BOOSTER)).thenReturn(0);
+        when(bot.getSkillLevel(Fighter.AXE_MASTERY)).thenReturn(0);
+        when(bot.getSkillLevel(Fighter.AXE_BOOSTER)).thenReturn(0);
+        when(bot.getInventory(InventoryType.EQUIPPED)).thenReturn(mock(Inventory.class));
+
+        Inventory equipped = bot.getInventory(InventoryType.EQUIPPED);
+        Equip equippedAxe = equipWithIdStats(1300001, 12, 0, 0);
+        Equip candidateSword = equipWithIdStats(1300002, 8, 0, 0);
+        when(equipped.list()).thenReturn(List.of(equippedAxe));
+
+        BotEquipManager.EquipUsefulnessHooks hooks = mock(BotEquipManager.EquipUsefulnessHooks.class);
+        when(hooks.isCash(1300001)).thenReturn(false);
+        when(hooks.isCash(1300002)).thenReturn(false);
+        when(hooks.getEquipmentSlot(1300001)).thenReturn("Wp");
+        when(hooks.getEquipmentSlot(1300002)).thenReturn("Wp");
+        when(hooks.getWeaponType(1300001)).thenReturn(WeaponType.GENERAL1H_SWING);
+        when(hooks.getWeaponType(1300002)).thenReturn(WeaponType.SWORD1H);
+        when(hooks.meetsReqs(equippedAxe, Job.FIGHTER, Short.MAX_VALUE,
+                Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4,
+                Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4, Short.MAX_VALUE)).thenReturn(true);
+        when(hooks.meetsReqs(candidateSword, Job.FIGHTER, Short.MAX_VALUE,
+                Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4,
+                Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4, Short.MAX_VALUE)).thenReturn(true);
+
+        assertTrue(BotEquipManager.shouldReserveOwnedItem(bot, hooks, candidateSword),
+                "equipped axe should not block a sword-spec fighter from reserving a sword");
+    }
+
+    @Test
+    void shouldReserveSwordAndAxeWhenBuildHasBothMasteries() {
+        Character bot = mock(Character.class);
+        when(bot.getJob()).thenReturn(Job.FIGHTER);
+        when(bot.getSkillLevel(Fighter.SWORD_MASTERY)).thenReturn(1);
+        when(bot.getSkillLevel(Fighter.SWORD_BOOSTER)).thenReturn(0);
+        when(bot.getSkillLevel(Fighter.AXE_MASTERY)).thenReturn(1);
+        when(bot.getSkillLevel(Fighter.AXE_BOOSTER)).thenReturn(0);
+        when(bot.getInventory(InventoryType.EQUIPPED)).thenReturn(mock(Inventory.class));
+
+        Inventory equipped = bot.getInventory(InventoryType.EQUIPPED);
+        Equip equippedSword = equipWithIdStats(1400001, 10, 0, 0);
+        Equip candidateAxe = equipWithIdStats(1300001, 8, 0, 0);
+        when(equipped.list()).thenReturn(List.of(equippedSword));
+
+        BotEquipManager.EquipUsefulnessHooks hooks = mock(BotEquipManager.EquipUsefulnessHooks.class);
+        when(hooks.isCash(1400001)).thenReturn(false);
+        when(hooks.isCash(1300001)).thenReturn(false);
+        when(hooks.getEquipmentSlot(1400001)).thenReturn("Wp");
+        when(hooks.getEquipmentSlot(1300001)).thenReturn("Wp");
+        when(hooks.getWeaponType(1400001)).thenReturn(WeaponType.SWORD1H);
+        when(hooks.getWeaponType(1300001)).thenReturn(WeaponType.GENERAL1H_SWING);
+        when(hooks.meetsReqs(equippedSword, Job.FIGHTER, Short.MAX_VALUE,
+                Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4,
+                Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4, Short.MAX_VALUE)).thenReturn(true);
+        when(hooks.meetsReqs(candidateAxe, Job.FIGHTER, Short.MAX_VALUE,
+                Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4,
+                Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4, Short.MAX_VALUE)).thenReturn(true);
+
+        assertTrue(BotEquipManager.shouldReserveOwnedItem(bot, hooks, equippedSword),
+                "dual-mastery fighter should keep sword family");
+        assertTrue(BotEquipManager.shouldReserveOwnedItem(bot, hooks, candidateAxe),
+                "dual-mastery fighter should also keep axe family");
+    }
+
+    @Test
     void selfReserveSameReqSameItemIdKeepsOnlyBestIvoryCopies() {
         Character bot = mock(Character.class);
         when(bot.getJob()).thenReturn(Job.SPEARMAN);
@@ -472,6 +561,32 @@ class BotEquipManagerTest {
         assertTrue(keep.contains(ivoryPant6));
         assertFalse(keep.contains(ivoryPant2));
         assertFalse(keep.contains(ivoryPant1));
+    }
+
+    @Test
+    void selfReserveSameReqSameRelevantStatsKeepsBestDuplicateByFullStats() {
+        Character bot = mock(Character.class);
+        when(bot.getJob()).thenReturn(Job.ASSASSIN);
+        when(bot.getSkillLevel(Assassin.CLAW_MASTERY)).thenReturn(1);
+        when(bot.getSkillLevel(Assassin.CLAW_BOOSTER)).thenReturn(0);
+
+        Equip bronzeWdef0 = clawWithStats(1472010, 2, 21, 0);
+        Equip bronzeWdef1 = clawWithStats(1472010, 2, 21, 1);
+        Equip bronzeWdef2 = clawWithStats(1472010, 2, 21, 2);
+
+        BotEquipManager.SelfReserveHooks hooks = mock(BotEquipManager.SelfReserveHooks.class);
+        stubReserveItem(hooks, Job.ASSASSIN, bronzeWdef0, "Wp", 35, 8, 0, 70, 0, 95, 0);
+        stubReserveItem(hooks, Job.ASSASSIN, bronzeWdef1, "Wp", 35, 8, 0, 70, 0, 95, 0);
+        stubReserveItem(hooks, Job.ASSASSIN, bronzeWdef2, "Wp", 35, 8, 0, 70, 0, 95, 0);
+        when(hooks.getWeaponType(1472010)).thenReturn(WeaponType.CLAW);
+
+        Set<Equip> keep = BotEquipManager.selectOwnedItemsForSelfReserve(bot, hooks,
+                List.of(bronzeWdef0, bronzeWdef1, bronzeWdef2));
+
+        assertFalse(keep.contains(bronzeWdef0));
+        assertFalse(keep.contains(bronzeWdef1));
+        assertTrue(keep.contains(bronzeWdef2),
+                "same-id same-req duplicate with equal LUK/WATK should keep only best full-stat copy");
     }
 
     @Test
@@ -513,6 +628,30 @@ class BotEquipManagerTest {
                 "proactive future pool should not keep a strictly worse glove with higher level/job reqs");
     }
 
+    @Test
+    void statOnlyBlockedAllowsMissingStatsButRejectsLevelOrFameBlockedItems() {
+        Character bot = mock(Character.class);
+        when(bot.getJob()).thenReturn(Job.ASSASSIN);
+        when(bot.getLevel()).thenReturn(43);
+        when(bot.getFame()).thenReturn(1);
+
+        Equip statBlocked = mock(Equip.class);
+        Equip levelBlocked = mock(Equip.class);
+        BotEquipManager.EquipUsefulnessHooks hooks = mock(BotEquipManager.EquipUsefulnessHooks.class);
+
+        when(hooks.meetsReqs(statBlocked, Job.ASSASSIN, 43,
+                Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4,
+                Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4, 1)).thenReturn(true);
+        when(hooks.meetsReqs(levelBlocked, Job.ASSASSIN, 43,
+                Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4,
+                Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4, 1)).thenReturn(false);
+
+        assertTrue(BotEquipManager.statOnlyBlocked(bot, hooks, statBlocked),
+                "immediate optimizer may consider gear that only needs more stats");
+        assertFalse(BotEquipManager.statOnlyBlocked(bot, hooks, levelBlocked),
+                "immediate optimizer must skip gear blocked by current level/job/fame");
+    }
+
     private static Equip mageOverall(int int_, int luk) {
         Equip e = mock(Equip.class);
         when(e.getStr()).thenReturn((short) 0);
@@ -522,6 +661,26 @@ class BotEquipManagerTest {
         when(e.getWatk()).thenReturn((short) 0);
         when(e.getMatk()).thenReturn((short) 0);
         when(e.getAcc()).thenReturn((short) 0);
+        return e;
+    }
+
+    private static Equip clawWithStats(int itemId, int luk, int watk, int wdef) {
+        Equip e = mock(Equip.class);
+        when(e.getItemId()).thenReturn(itemId);
+        when(e.getStr()).thenReturn((short) 0);
+        when(e.getDex()).thenReturn((short) 0);
+        when(e.getInt()).thenReturn((short) 0);
+        when(e.getLuk()).thenReturn((short) luk);
+        when(e.getWatk()).thenReturn((short) watk);
+        when(e.getMatk()).thenReturn((short) 0);
+        when(e.getWdef()).thenReturn((short) wdef);
+        when(e.getMdef()).thenReturn((short) 0);
+        when(e.getAcc()).thenReturn((short) 0);
+        when(e.getAvoid()).thenReturn((short) 0);
+        when(e.getHp()).thenReturn((short) 0);
+        when(e.getMp()).thenReturn((short) 0);
+        when(e.getSpeed()).thenReturn((short) 0);
+        when(e.getJump()).thenReturn((short) 0);
         return e;
     }
 

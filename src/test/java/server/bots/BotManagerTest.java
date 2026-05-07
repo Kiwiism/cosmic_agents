@@ -14,6 +14,7 @@ import server.StatEffect;
 import server.life.Monster;
 import server.maps.Foothold;
 import server.maps.FootholdTree;
+import server.maps.MapItem;
 import server.maps.MapleMap;
 import server.maps.Rope;
 import testutil.Items;
@@ -37,15 +38,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class BotManagerTest {
     @Test
     void shouldParseTransferBotCommands() {
-        BotManager.BotTransferCommand command = BotManager.matchBotTransferCommand("transfer Jason to Bob");
+        BotCommandParser.BotTransferCommand command = BotCommandParser.matchBotTransferCommand("transfer Jason to Bob");
 
         assertNotNull(command);
         assertEquals("Jason", command.botName());
@@ -54,7 +57,7 @@ class BotManagerTest {
 
     @Test
     void shouldStillAllowTransferWithoutTo() {
-        BotManager.BotTransferCommand command = BotManager.matchBotTransferCommand("transfer Jason Bob");
+        BotCommandParser.BotTransferCommand command = BotCommandParser.matchBotTransferCommand("transfer Jason Bob");
 
         assertNotNull(command);
         assertEquals("Jason", command.botName());
@@ -63,9 +66,101 @@ class BotManagerTest {
 
     @Test
     void shouldNotTreatGivePhrasesAsBotTransfers() {
-        assertNull(BotManager.matchBotTransferCommand("give Jason Bob"));
-        assertNull(BotManager.matchBotTransferCommand("give me flaming feather"));
-        assertNull(BotManager.matchBotTransferCommand("give flaming feather"));
+        assertNull(BotCommandParser.matchBotTransferCommand("give Jason Bob"));
+        assertNull(BotCommandParser.matchBotTransferCommand("give me flaming feather"));
+        assertNull(BotCommandParser.matchBotTransferCommand("give flaming feather"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldSkipOwnerGainOfferScanForOwnBotTradeItems() throws Exception {
+        BotManager manager = BotManager.getInstance();
+        Character owner = mock(Character.class);
+        Character sourceBot = mock(Character.class);
+        Character observerBot = mock(Character.class);
+        BotEntry sourceEntry = new BotEntry(sourceBot, owner, null);
+        BotEntry observerEntry = new BotEntry(observerBot, owner, null);
+        Item tradedEquip = new Item(1002000, (short) 1, (short) 1);
+
+        when(owner.getId()).thenReturn(77);
+        when(sourceBot.getId()).thenReturn(10);
+        when(sourceBot.getClient()).thenReturn(new client.BotClient(0, 0));
+        when(observerBot.getId()).thenReturn(11);
+
+        Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
+        bots.put(owner.getId(), List.of(sourceEntry, observerEntry));
+
+        try (MockedStatic<BotOfferManager> offers = mockStatic(BotOfferManager.class)) {
+            manager.notifyOwnerGainedTradeItem(owner, tradedEquip, sourceBot);
+
+            offers.verifyNoInteractions();
+        } finally {
+            bots.remove(owner.getId());
+        }
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldNotifyBotsForNonOwnBotTradeItems() throws Exception {
+        BotManager manager = BotManager.getInstance();
+        Character owner = mock(Character.class);
+        Character observerBot = mock(Character.class);
+        Character sourcePlayer = mock(Character.class);
+        BotEntry observerEntry = new BotEntry(observerBot, owner, null);
+        Item tradedEquip = new Item(1002000, (short) 1, (short) 1);
+
+        when(owner.getId()).thenReturn(78);
+
+        Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
+        bots.put(owner.getId(), List.of(observerEntry));
+
+        try (MockedStatic<BotOfferManager> offers = mockStatic(BotOfferManager.class)) {
+            manager.notifyOwnerGainedTradeItem(owner, tradedEquip, sourcePlayer);
+
+            offers.verify(() -> BotOfferManager.notifyOwnerGainedEquip(observerEntry, observerBot, tradedEquip));
+        } finally {
+            bots.remove(owner.getId());
+        }
+    }
+
+    @Test
+    void shouldResolveTargetedBotByPrefix() {
+        BotEntry jason = botEntryNamed("Jason");
+        BotEntry bob = botEntryNamed("Bob");
+
+        BotCommandParser.TargetedBotMatch match = BotCommandParser.resolveTargetedBot(
+                List.of(jason, bob), "Ja pots?");
+
+        assertEquals(jason, match.entry());
+        assertEquals("pots?", match.commandText());
+        assertNull(match.feedbackMessage());
+    }
+
+    @Test
+    void shouldResolveTargetedBotBySlot() {
+        BotEntry jason = botEntryNamed("Jason");
+        BotEntry bob = botEntryNamed("Bob");
+
+        BotCommandParser.TargetedBotMatch match = BotCommandParser.resolveTargetedBot(
+                List.of(jason, bob), "2 follow Alice");
+
+        assertEquals(bob, match.entry());
+        assertEquals("follow Alice", match.commandText());
+        assertNull(match.feedbackMessage());
+    }
+
+    @Test
+    void shouldReturnFeedbackForAmbiguousTargetedBotPrefix() {
+        BotEntry jane = botEntryNamed("Jane");
+        BotEntry jason = botEntryNamed("Jason");
+
+        BotCommandParser.TargetedBotMatch match = BotCommandParser.resolveTargetedBot(
+                List.of(jane, jason), "Ja yes");
+
+        assertNull(match.entry());
+        assertNull(match.commandText());
+        assertEquals("Ambiguous bot prefix 'Ja': 1: Jane, 2: Jason. Use the full name or a slot number.",
+                match.feedbackMessage());
     }
 
     @Test
@@ -379,6 +474,56 @@ class BotManagerTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void shouldDisableBotAfterRepeatedTickFailures() throws Exception {
+        BotManager manager = BotManager.getInstance();
+        Character owner = mock(Character.class);
+        Character bot = mock(Character.class);
+        ScheduledFuture<?> task = mock(ScheduledFuture.class);
+
+        when(owner.getId()).thenReturn(77);
+        when(owner.getName()).thenReturn("Owner");
+        when(bot.getId()).thenReturn(88);
+        when(bot.getName()).thenReturn("Bot");
+        when(bot.getMapId()).thenReturn(100000000);
+
+        BotEntry entry = new BotEntry(bot, owner, task);
+        entry.pendingAction = "drop";
+        entry.pendingDropCategory = "equips";
+        entry.grindLootTarget = mock(MapItem.class);
+        entry.following = true;
+        entry.grinding = true;
+        entry.moveTarget = new Point(100, 100);
+
+        Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
+        bots.put(owner.getId(), new CopyOnWriteArrayList<>(List.of(entry)));
+        Method failureHandler = method(BotManager.class, "handleBotTickFailure",
+                BotEntry.class, int.class, int.class, Throwable.class);
+
+        try {
+            failureHandler.invoke(manager, entry, owner.getId(), bot.getId(), new NullPointerException("bad drop"));
+            assertTrue(bots.containsKey(owner.getId()));
+            assertNull(entry.pendingAction);
+            assertNull(entry.pendingDropCategory);
+            assertNull(entry.grindLootTarget);
+            assertTrue(entry.following);
+            assertTrue(entry.grinding);
+
+            failureHandler.invoke(manager, entry, owner.getId(), bot.getId(), new NullPointerException("bad drop"));
+            assertTrue(bots.containsKey(owner.getId()));
+            assertFalse(entry.following);
+            assertFalse(entry.grinding);
+            assertNull(entry.moveTarget);
+
+            failureHandler.invoke(manager, entry, owner.getId(), bot.getId(), new NullPointerException("bad drop"));
+            assertFalse(bots.containsKey(owner.getId()));
+            verify(task).cancel(false);
+        } finally {
+            bots.remove(owner.getId());
+        }
+    }
+
+    @Test
     void shouldUseFollowIdleFastPathOnlyWhileParkedNearTarget() {
         MapleMap map = createEmptyTestMap(910000024);
         map.getFootholds().insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
@@ -436,6 +581,125 @@ class BotManagerTest {
         assertTrue(direction == -1 || direction == 1);
         assertEquals(new Point(100 + direction * 200, 100), first);
         assertEquals(first, second);
+    }
+
+    @Test
+    void shouldIgnoreCachedGrindLootInsidePassiveLootRadiusWhenNoMobTarget() {
+        Character bot = mockMovingBot(new Point(100, 100), createEmptyTestMap(910000034));
+        BotEntry entry = new BotEntry(bot, mock(Character.class), null);
+        entry.wanderDirection = 1;
+        MapItem nearbyLoot = mockLoot(1, new Point(100 + BotManager.cfg.LOOT_RADIUS, 100));
+        entry.grindLootTarget = nearbyLoot;
+
+        Point target = BotManager.resolveNoGrindTargetPosition(entry, bot.getPosition());
+
+        assertEquals(new Point(300, 100), target);
+        assertNull(entry.grindLootTarget);
+    }
+
+    @Test
+    void shouldOnlyActivelySeekGrindLootOutsidePassiveLootRadius() {
+        MapleMap map = spy(createEmptyTestMap(910000035));
+        Character bot = mockMovingBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, mock(Character.class), null);
+        MapItem passiveLoot = mockLoot(1, new Point(100 + BotManager.cfg.LOOT_RADIUS, 100));
+        MapItem activeLoot = mockLoot(2, new Point(100 + BotManager.cfg.LOOT_RADIUS + 1, 100));
+        int passiveLootObjectId = passiveLoot.getObjectId();
+        int activeLootObjectId = activeLoot.getObjectId();
+        doReturn(List.of(passiveLoot, activeLoot)).when(map).getDroppedItems();
+        doReturn(passiveLoot).when(map).getMapObject(passiveLootObjectId);
+        doReturn(activeLoot).when(map).getMapObject(activeLootObjectId);
+
+        assertEquals(activeLoot, BotInventoryManager.findNearestGrindLootTarget(entry, bot));
+    }
+
+    @Test
+    void shouldTemporarilyIgnoreGrindLootThatRemainsAfterEnteringPassiveLootRadius() {
+        MapleMap map = spy(createEmptyTestMap(910000037));
+        Character bot = mockMovingBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, mock(Character.class), null);
+        MapItem loot = mockLoot(1, new Point(100 + BotManager.cfg.LOOT_RADIUS, 100));
+        int lootObjectId = loot.getObjectId();
+        entry.wanderDirection = 1;
+        entry.grindLootTarget = loot;
+        doReturn(List.of(loot)).when(map).getDroppedItems();
+        doReturn(loot).when(map).getMapObject(lootObjectId);
+
+        BotManager.resolveNoGrindTargetPosition(entry, bot.getPosition());
+        bot.setPosition(new Point(99, 100));
+
+        assertNull(BotInventoryManager.findNearestGrindLootTarget(entry, bot));
+    }
+
+    @Test
+    void shouldNotActivelySeekGrindLootWhenAnyInventoryIsFull() {
+        MapleMap map = spy(createEmptyTestMap(910000038));
+        Character bot = mockMovingBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, mock(Character.class), null);
+        MapItem loot = mockLoot(1, new Point(100 + BotManager.cfg.LOOT_RADIUS + 1, 100));
+        Inventory fullEquip = mock(Inventory.class);
+        when(fullEquip.isFull()).thenReturn(true);
+        when(bot.getInventory(InventoryType.EQUIP)).thenReturn(fullEquip);
+        doReturn(List.of(loot)).when(map).getDroppedItems();
+
+        assertNull(BotInventoryManager.findNearestGrindLootTarget(entry, bot));
+    }
+
+    @Test
+    void shouldNotActivelySeekKpqPassDrops() {
+        MapleMap map = spy(createEmptyTestMap(910000039));
+        Character bot = mockMovingBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, mock(Character.class), null);
+        MapItem pass = mockLoot(1, new Point(100 + BotManager.cfg.LOOT_RADIUS + 1, 100), 4001008, 0, 0);
+        int passObjectId = pass.getObjectId();
+        doReturn(List.of(pass)).when(map).getDroppedItems();
+        doReturn(pass).when(map).getMapObject(passObjectId);
+
+        assertNull(BotInventoryManager.findNearestGrindLootTarget(entry, bot));
+    }
+
+    @Test
+    void shouldNotActivelySeekSkippedKpqCouponDrops() {
+        MapleMap map = spy(createEmptyTestMap(910000040));
+        Character bot = mockMovingBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, mock(Character.class), null);
+        entry.kpq.state = 4; // KPQ stage 1 SECOND_WALK: coupons should no longer be looted.
+        MapItem coupon = mockLoot(1, new Point(100 + BotManager.cfg.LOOT_RADIUS + 1, 100), 4001007, 0, 0);
+        int couponObjectId = coupon.getObjectId();
+        doReturn(List.of(coupon)).when(map).getDroppedItems();
+        doReturn(coupon).when(map).getMapObject(couponObjectId);
+
+        assertNull(BotInventoryManager.findNearestGrindLootTarget(entry, bot));
+    }
+
+    @Test
+    void shouldNotActivelySeekUnneededQuestDrops() {
+        MapleMap map = spy(createEmptyTestMap(910000041));
+        Character bot = mockMovingBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, mock(Character.class), null);
+        MapItem questDrop = mockLoot(1, new Point(100 + BotManager.cfg.LOOT_RADIUS + 1, 100), 4000000, 0, 2000);
+        int questDropObjectId = questDrop.getObjectId();
+        when(bot.needQuestItem(2000, 4000000)).thenReturn(false);
+        doReturn(List.of(questDrop)).when(map).getDroppedItems();
+        doReturn(questDrop).when(map).getMapObject(questDropObjectId);
+
+        assertNull(BotInventoryManager.findNearestGrindLootTarget(entry, bot));
+    }
+
+    @Test
+    void shouldScoreGrindLootByTravelNeededBeyondPassiveLootRadius() {
+        MapleMap map = spy(createEmptyTestMap(910000036));
+        Character bot = mockMovingBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, mock(Character.class), null);
+        Point botPos = bot.getPosition();
+        Point mobPos = new Point(500, 100);
+        Point lootPos = new Point(100 + BotManager.cfg.LOOT_RADIUS + 21, 100);
+        MapItem loot = mockLoot(1, lootPos);
+        int lootObjectId = loot.getObjectId();
+        entry.grindLootTarget = loot;
+        doReturn(loot).when(map).getMapObject(lootObjectId);
+
+        assertEquals(lootPos, BotManager.convenientLootTarget(entry, botPos, mobPos));
     }
 
     @Test
@@ -819,10 +1083,11 @@ class BotManagerTest {
         Character bot = mock(Character.class);
         AtomicReference<Point> position = new AtomicReference<>(new Point(startPosition));
         AtomicInteger stance = new AtomicInteger(0);
+        int mapId = map.getId();
 
         when(bot.getId()).thenReturn(88);
         when(bot.getMap()).thenReturn(map);
-        when(bot.getMapId()).thenReturn(map.getId());
+        when(bot.getMapId()).thenReturn(mapId);
         when(bot.getPosition()).thenAnswer(invocation -> new Point(position.get()));
         doAnswer(invocation -> {
             position.set(new Point(invocation.getArgument(0)));
@@ -839,6 +1104,12 @@ class BotManagerTest {
         return bot;
     }
 
+    private static BotEntry botEntryNamed(String name) {
+        Character bot = mock(Character.class);
+        when(bot.getName()).thenReturn(name);
+        return new BotEntry(bot, null, null);
+    }
+
     private static Monster mockMob(Point position, int id) {
         Monster mob = mock(Monster.class);
         when(mob.getPosition()).thenReturn(new Point(position));
@@ -846,6 +1117,23 @@ class BotManagerTest {
         when(mob.getObjectId()).thenReturn(id);
         when(mob.isAlive()).thenReturn(true);
         return mob;
+    }
+
+    private static MapItem mockLoot(int objectId, Point position) {
+        return mockLoot(objectId, position, 0, 1, 0);
+    }
+
+    private static MapItem mockLoot(int objectId, Point position, int itemId, int meso, int questId) {
+        MapItem loot = mock(MapItem.class);
+        when(loot.getObjectId()).thenReturn(objectId);
+        when(loot.getPosition()).thenReturn(new Point(position));
+        when(loot.isPickedUp()).thenReturn(false);
+        when(loot.canBePickedBy(any(Character.class))).thenReturn(true);
+        when(loot.getDropTime()).thenReturn(System.currentTimeMillis() - 5_000L);
+        when(loot.getItemId()).thenReturn(itemId);
+        when(loot.getMeso()).thenReturn(meso);
+        when(loot.getQuest()).thenReturn(questId);
+        return loot;
     }
 
     private static Character ammoBot(int id, int mapId, int arrowCount) {
@@ -863,5 +1151,11 @@ class BotManagerTest {
         Field field = type.getDeclaredField(name);
         field.setAccessible(true);
         return field;
+    }
+
+    private static Method method(Class<?> type, String name, Class<?>... parameterTypes) throws Exception {
+        Method method = type.getDeclaredMethod(name, parameterTypes);
+        method.setAccessible(true);
+        return method;
     }
 }

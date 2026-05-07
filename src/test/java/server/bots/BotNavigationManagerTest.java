@@ -356,6 +356,52 @@ class BotNavigationManagerTest {
     }
 
     @Test
+    void shouldDropStaleCommittedGroundEdgeWhenLiveTargetRegionDiffersFromEdgeDestination() {
+        MapleMap map = mock(MapleMap.class);
+        BotNavigationGraph.Region source = new BotNavigationGraph.Region(
+                1, List.of(new BotNavigationGraph.Segment(new Foothold(new Point(0, 100), new Point(200, 100), 1))));
+        BotNavigationGraph.Region staleLower = new BotNavigationGraph.Region(
+                2, List.of(new BotNavigationGraph.Segment(new Foothold(new Point(0, 220), new Point(100, 220), 2))));
+        BotNavigationGraph.Region ownerUpper = new BotNavigationGraph.Region(
+                3, List.of(new BotNavigationGraph.Segment(new Foothold(new Point(90, 40), new Point(210, 40), 3))));
+        Map<Integer, BotNavigationGraph.Region> regionsById = new HashMap<>();
+        regionsById.put(1, source);
+        regionsById.put(2, staleLower);
+        regionsById.put(3, ownerUpper);
+
+        BotNavigationGraph.Edge staleDrop = new BotNavigationGraph.Edge(
+                1, 2, BotNavigationGraph.EdgeType.DROP,
+                new Point(20, 100), new Point(40, 220),
+                20, 20, 0, 0, 0, 0, 0, 300);
+        BotNavigationGraph.Edge directJump = new BotNavigationGraph.Edge(
+                1, 3, BotNavigationGraph.EdgeType.JUMP,
+                new Point(100, 100), new Point(140, 40),
+                90, 110, 6, 0, 0, 0, 0, 250);
+        BotNavigationGraph graph = new BotNavigationGraph(
+                910000213, 1, BotMovementProfile.base(),
+                List.of(source, staleLower, ownerUpper),
+                regionsById,
+                Map.of(1, 1, 2, 2, 3, 3),
+                Map.of(1, List.of(staleDrop, directJump)),
+                Set.of());
+
+        Point botPos = new Point(100, 100);
+        Point ownerPos = new Point(140, 40);
+        List<BotNavigationGraph.Edge> path = BotNavigationManager.findPath(
+                graph, map, botPos, 1, 3, ownerPos);
+        assertEquals(List.of(directJump), path,
+                "synthetic fixture should prefer the direct jump to the live owner region");
+
+        Character bot = mockBot(botPos, map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.navEdge = staleDrop;
+        entry.navTargetRegionId = staleDrop.toRegionId;
+
+        assertNull(BotNavigationManager.reuseCommittedEdge(graph, entry, 1, 3),
+                "non-AI reuse must drop stale grounded edges whose destination no longer matches the live target");
+    }
+
+    @Test
     void shouldRetainCommittedGroundEdgeWhenAlternativeLeadsToSameDestinationRegion() {
         BotNavigationGraph.Edge committedDrop = new BotNavigationGraph.Edge(
                 80, 83, BotNavigationGraph.EdgeType.DROP,
@@ -513,14 +559,18 @@ class BotNavigationManagerTest {
         Point target = new Point(1265, 331);
         int startRegionId = graph.findRegionId(lithHarbor, start);
         int targetRegionId = graph.findRopeRegionId(target);
-        List<BotNavigationGraph.Edge> path = BotNavigationManager.findPath(
-                graph, lithHarbor, start, startRegionId, targetRegionId, target);
-        assertFalse(path.isEmpty());
-        BotNavigationGraph.Edge ropeEntry = path.getFirst();
-        assertEquals(BotNavigationGraph.EdgeType.CLIMB, ropeEntry.type);
-        assertEquals(0, ropeEntry.launchStepX);
+        // The intent of this test is to verify out-of-launch-window rope entries are rejected.
+        // Look up the vertical (stepX=0) rope-entry edge in the graph directly rather than via
+        // findPath, which now picks the time-cheapest entry (often a horizontal jump-grab).
+        BotNavigationGraph.Edge ropeEntry = graph.getOutgoing(startRegionId).stream()
+                .filter(edge -> edge.type == BotNavigationGraph.EdgeType.CLIMB
+                        && edge.toRegionId == targetRegionId
+                        && edge.launchStepX == 0
+                        && edge.containsLaunchX(1257))
+                .findFirst()
+                .orElse(null);
+        assertNotNull(ropeEntry, "expected a vertical (stepX=0) rope-entry CLIMB edge containing x=1257");
         assertTrue(ropeEntry.launchMinX < ropeEntry.launchMaxX);
-        assertTrue(ropeEntry.containsLaunchX(1257));
 
         BotNavigationGraph.Region fromRegion = graph.getRegion(ropeEntry.fromRegionId);
         int outsideLaunchX = ropeEntry.launchMaxX < fromRegion.maxX
@@ -603,6 +653,54 @@ class BotNavigationManagerTest {
                 .orElseThrow();
 
         assertEquals(new Point(100, 100), topExit.endPoint);
+    }
+
+    @Test
+    void shouldNotDismountFromRopeTopOnNonAiTickWhenFollowTargetIsAbove() {
+        // Regression: pathlog-Preston-2026-05-07T034012 — bot at firstClimbableY of a rope
+        // whose top sits 1px below an above-foothold. Owner above the rope makes the raw follow
+        // target's dy negative, so on every non-AI physics tick tickClimbing computed
+        // climbVerticalDir=-1 and advanceClimb landed the bot onto the foothold above (climbing
+        // cleared). The following AI tick saw the bot in the foothold region and re-grabbed the
+        // rope. Region oscillated r=foothold ↔ r=rope at 50ms cadence for 10+ seconds.
+        //
+        // Climb direction is an AI-decided intent. Non-AI ticks must integrate the previously
+        // chosen climbVerticalDir, not derive a fresh direction from the raw follow target.
+        MapleMap map = new MapleMap(910000200, 0, 0, 910000200, 1.0f);
+        FootholdTree footholds = new FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        // Foothold above the rope top (y=0), 2px gap to rope.topY=2 — same geometry as Preston r114/r173.
+        footholds.insert(new Foothold(new Point(80, 0), new Point(120, 0), 1));
+        map.setFootholds(footholds);
+        Rope rope = new Rope(100, 2, 154, false);
+        map.addRope(rope);
+
+        Character bot = mockBot(new Point(100, 0), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.movementProfile = BotMovementProfile.base();
+
+        // Simulate the state right after AI tick attached the bot to the rope at firstClimbableY.
+        entry.climbVerticalDir = -1;
+        BotPhysicsEngine.attachToRope(entry, bot, rope, BotPhysicsEngine.firstClimbableY(rope));
+        assertTrue(entry.climbing);
+        assertEquals(BotPhysicsEngine.firstClimbableY(rope), bot.getPosition().y);
+        assertEquals(0, entry.climbVerticalDir, "fresh attach must not carry stale climb intent");
+
+        // Follow target far above the bot — without the fix, dy<0 forces climb-up which dismounts.
+        Point followTargetAbove = new Point(50, -54);
+
+        // No nav edge committed (rope-entry was just executed; reuseCommittedEdge would drop it
+        // because the bot is now in the rope region == edge.toRegionId). This is the no-edge
+        // window between AI ticks where the bug manifests.
+        entry.navEdge = null;
+
+        // Run one non-AI physics tick.
+        BotMovementManager.tickClimbing(entry, followTargetAbove, false);
+
+        assertTrue(entry.climbing,
+                "Non-AI tick must not dismount: AI is the only place climb direction is decided.");
+        assertEquals(rope, entry.climbRope);
+        assertEquals(new Point(100, BotPhysicsEngine.firstClimbableY(rope)), bot.getPosition(),
+                "Bot must hold position on the rope without AI-decided intent.");
     }
 
     private static Character mockBot(Point startPosition, MapleMap map) {
