@@ -88,9 +88,8 @@ final class BotShopManager {
         }
 
         WeaponType wt = BotAttackExecutionProvider.getEquippedWeaponType(bot);
-        boolean needsRecharge = isRechargeWeaponType(wt) && hasRechargeableInShop(bot);
-        int ammoTrigger = BotCombatManager.cfg.AMMO_LOW_WARN * AMMO_TRIGGER_THRESHOLD;
-        boolean needsAmmoForShop = needsAmmo(bot, wt) && BotCombatManager.countAmmo(bot, wt) < ammoTrigger && findAmmoItem(match.shop, wt) != null;
+        boolean needsRecharge = needsRechargeForShop(bot, wt, ammoTriggerThreshold());
+        boolean needsAmmoForShop = needsFixedAmmoForShop(bot, match.shop, wt, ammoTriggerThreshold());
         int[] pots = BotPotionManager.countPotions(bot);
         int potTrigger = BotManager.cfg.POT_LOW_WARN * POT_TRIGGER_THRESHOLD;
         boolean needsHpPots = pots[0] < potTrigger && findPotionItem(match.shop, bot, true) != null;
@@ -181,10 +180,10 @@ final class BotShopManager {
 
     private static boolean shopHasAnythingNeeded(Character bot, Shop shop) {
         WeaponType wt = BotAttackExecutionProvider.getEquippedWeaponType(bot);
-        if (needsAmmo(bot, wt) && findAmmoItem(shop, wt) != null) {
+        if (needsFixedAmmoForShop(bot, shop, wt, ammoTriggerThreshold())) {
             return true;
         }
-        if (isRechargeWeaponType(wt) && hasRechargeableInShop(bot)) {
+        if (needsRechargeForShop(bot, wt, ammoTriggerThreshold())) {
             return true;
         }
         int[] pots = BotPotionManager.countPotions(bot);
@@ -206,7 +205,7 @@ final class BotShopManager {
         WeaponType wt = BotAttackExecutionProvider.getEquippedWeaponType(bot);
         List<PurchaseAction> actions = new ArrayList<>();
 
-        if (isRechargeWeaponType(wt)) {
+        if (shouldRechargeWhileShopping(bot, wt)) {
             actions.add((sequence, shop) -> {
                 BuyReport recharge = doRecharge(bot, shop);
                 if (recharge.quantity() > 0) {
@@ -218,7 +217,7 @@ final class BotShopManager {
                 return sequence.withFirstShortfall(recharge);
             });
         }
-        if (needsAmmo(bot, wt)) {
+        if (shouldBuyFixedAmmoWhileShopping(bot, wt)) {
             actions.add((sequence, shop) -> appendBuyReport(sequence, buyAmmo(bot, shop, wt), "ammo"));
         }
         actions.add((sequence, shop) -> {
@@ -306,6 +305,36 @@ final class BotShopManager {
         return wt == WeaponType.BOW || wt == WeaponType.CROSSBOW;
     }
 
+    private static int ammoTriggerThreshold() {
+        return BotCombatManager.cfg.AMMO_LOW_WARN * AMMO_TRIGGER_THRESHOLD;
+    }
+
+    private static int ammoTargetThreshold() {
+        return BotCombatManager.cfg.AMMO_LOW_WARN * AMMO_TARGET_THRESHOLD;
+    }
+
+    private static boolean needsFixedAmmoForShop(Character bot, Shop shop, WeaponType wt, int threshold) {
+        if (!needsAmmo(bot, wt) || BotCombatManager.countAmmo(bot, wt) >= threshold) {
+            return false;
+        }
+        return shop == null || findAmmoItem(shop, wt) != null;
+    }
+
+    private static boolean needsRechargeForShop(Character bot, WeaponType wt, int threshold) {
+        if (!isRechargeWeaponType(wt) || BotCombatManager.countAmmo(bot, wt) >= threshold) {
+            return false;
+        }
+        return hasRechargeableAmmo(bot);
+    }
+
+    static boolean shouldRechargeWhileShopping(Character bot, WeaponType wt) {
+        return isRechargeWeaponType(wt) && hasRechargeableAmmo(bot);
+    }
+
+    static boolean shouldBuyFixedAmmoWhileShopping(Character bot, WeaponType wt) {
+        return needsAmmo(bot, wt) && BotCombatManager.countAmmo(bot, wt) < ammoTargetThreshold();
+    }
+
     private static boolean isRechargeWeaponType(WeaponType wt) {
         return wt == WeaponType.CLAW || wt == WeaponType.GUN;
     }
@@ -337,18 +366,15 @@ final class BotShopManager {
             return new BuyReport(0, 0, 0, ShortfallReason.NONE);
         }
 
-        int target = BotCombatManager.cfg.AMMO_LOW_WARN * AMMO_TARGET_THRESHOLD;
+        int target = ammoTargetThreshold();
         int current = BotCombatManager.countAmmo(bot, wt);
         return buyFixedCostItem(bot, shop, ammo, Math.max(0, target - current), 1000);
     }
 
-    private static boolean hasRechargeableInShop(Character bot) {
+    private static boolean hasRechargeableAmmo(Character bot) {
         for (Item item : bot.getInventory(InventoryType.USE).list()) {
             if (ItemConstants.isRechargeable(item.getItemId())) {
-                short slotMax = ItemInformationProvider.getInstance().getSlotMax(bot.getClient(), item.getItemId());
-                if (item.getQuantity() < slotMax * 4 / 5) {
-                    return true;
-                }
+                return true;
             }
         }
         return false;
