@@ -14,6 +14,8 @@ import constants.game.GameConstants;
 import constants.id.ItemId;
 import constants.inventory.ItemConstants;
 import net.packet.Packet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import server.ItemInformationProvider;
 import server.StatEffect;
 import server.Trade;
@@ -33,7 +35,20 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
 
 class BotInventoryManager {
+    private static final Logger log = LoggerFactory.getLogger(BotInventoryManager.class);
+    private static final long TRADE_COMMAND_PROFILE_WARN_NS = 50_000_000L;
     private record PreparedTradeItems(List<Item> items, String errorMessage) {}
+    private record EquipTradeGroups(List<Item> normal,
+                                    List<Item> reservedForOther,
+                                    List<Item> reservedForSelf) {
+        List<Item> itemsFor(EquipsGroup group) {
+            return switch (group) {
+                case NORMAL -> normal;
+                case RESERVED_FOR_OTHER -> reservedForOther;
+                case RESERVED_FOR_SELF -> reservedForSelf;
+            };
+        }
+    }
 
     private static final Set<Integer> manualTradeGreetingSent = ConcurrentHashMap.newKeySet();
     private static final List<String> TRADE_INVITATION_MSGS = List.of(
@@ -356,6 +371,7 @@ class BotInventoryManager {
      * Items are batched ≤9 per trade window; subsequent batches open new trades automatically.
      */
     static void startTradeTransfer(String category, BotEntry entry, Character bot) {
+        long startedAt = profileTradeCategory(category) ? System.nanoTime() : 0L;
         if (isMesoCategory(category)) {
             startTradeMesoTransfer(category, entry, bot);
             return;
@@ -374,10 +390,15 @@ class BotInventoryManager {
             return;
         }
         if ("equips".equals(category)) {
+            long equipsStartedAt = startedAt != 0L ? System.nanoTime() : 0L;
             startEquipsGroupTradeTransfer(owner, entry, bot);
+            logSlowTradeCommand(category, "startEquipsGroupTradeTransfer", entry, bot, equipsStartedAt);
+            logSlowTradeCommand(category, "startTradeTransfer", entry, bot, startedAt);
             return;
         }
+        long prepareStartedAt = startedAt != 0L ? System.nanoTime() : 0L;
         PreparedTradeItems prepared = prepareTradeItems(category, entry, bot);
+        logSlowTradeCommand(category, "prepareTradeItems", entry, bot, prepareStartedAt);
         if (prepared.errorMessage() != null) {
             BotManager.getInstance().botReply(entry, prepared.errorMessage());
             return;
@@ -388,6 +409,7 @@ class BotInventoryManager {
             return;
         }
         startTradeSequence(category, owner, items, 0, !entry.pendingTradeRestoreSlots.isEmpty(), entry, bot);
+        logSlowTradeCommand(category, "startTradeTransfer", entry, bot, startedAt);
     }
 
     static void startTradeTransfer(Item item, Character recipient, BotEntry entry, Character bot) {
@@ -428,6 +450,28 @@ class BotInventoryManager {
         }
 
         return !collectItems(category, entry, bot).isEmpty();
+    }
+
+    static boolean profileTradeCategory(String category) {
+        return "trash".equals(category) || "equips".equals(category);
+    }
+
+    static void logSlowTradeCommand(String category, String phase, BotEntry entry, Character bot, long startedAt) {
+        if (startedAt == 0L || !profileTradeCategory(category)) {
+            return;
+        }
+        long elapsedNs = System.nanoTime() - startedAt;
+        if (elapsedNs < TRADE_COMMAND_PROFILE_WARN_NS) {
+            return;
+        }
+        String botName = bot != null ? bot.getName() : "?";
+        String ownerName = entry != null && entry.owner != null ? entry.owner.getName() : "?";
+        log.warn("Slow bot trade command phase: category={} phase={} took {} ms bot={} owner={}",
+                category,
+                phase,
+                String.format("%.1f", elapsedNs / 1_000_000.0),
+                botName,
+                ownerName);
     }
 
     static int countTransferableItems(String category, BotEntry entry, Character bot) {
@@ -964,14 +1008,15 @@ class BotInventoryManager {
                 return !isRecoveryPotion(id) && !isBuffConsumable(id) && !ItemConstants.isEquipScroll(id);
             });
             case "equips" -> {
-                for (EquipsGroup g : EquipsGroup.values()) result.addAll(collectEquipsGroup(g, entry, bot));
+                EquipTradeGroups groups = classifyEquipTradeGroups(entry, bot);
+                for (EquipsGroup g : EquipsGroup.values()) result.addAll(groups.itemsFor(g));
             }
             case "trash" -> result.addAll(collectTrashEquips(entry, bot));
             case "etc"     -> collectFromBag(bot, result, InventoryType.ETC,   item -> true);
             default -> {
                 EquipsGroup eg = EquipsGroup.fromCategory(category);
                 if (eg != null) {
-                    result.addAll(collectEquipsGroup(eg, entry, bot));
+                    result.addAll(classifyEquipTradeGroups(entry, bot).itemsFor(eg));
                 } else if (category.startsWith("name:")) {
                     result.addAll(collectNamedItems(category.substring(5), bot));
                 }
@@ -1208,21 +1253,7 @@ class BotInventoryManager {
     }
 
     private static List<Item> collectEquipsGroup(EquipsGroup group, BotEntry entry, Character bot) {
-        List<Item> all = new ArrayList<>();
-        collectFromBag(bot, all, InventoryType.EQUIP, item -> true);
-        Set<Item> selfKeep = BotEquipManager.collectPotentialSelfUpgradeItems(bot);
-        List<Item> groupItems = new ArrayList<>();
-        for (Item item : all) {
-            boolean isSelf  = selfKeep.contains(item);
-            boolean isOther = !isSelf && BotOfferManager.isReservedForOtherRecipients(entry, bot, item);
-            boolean isNone  = !isSelf && !isOther;
-            if ((group == EquipsGroup.NORMAL            && isNone)
-             || (group == EquipsGroup.RESERVED_FOR_OTHER && isOther)
-             || (group == EquipsGroup.RESERVED_FOR_SELF  && isSelf)) {
-                groupItems.add(item);
-            }
-        }
-        return sortEquipsForTrade(groupItems, bot);
+        return classifyEquipTradeGroups(entry, bot).itemsFor(group);
     }
 
     private static String equipsGroupMsg(String category) {
@@ -1238,15 +1269,17 @@ class BotInventoryManager {
     private static String nextEquipsGroup(String category, BotEntry entry, Character bot) {
         EquipsGroup current = EquipsGroup.fromCategory(category);
         if (current == null) return null;
+        EquipTradeGroups groups = classifyEquipTradeGroups(entry, bot);
         for (EquipsGroup g = current.next(); g != null; g = g.next()) {
-            if (!collectEquipsGroup(g, entry, bot).isEmpty()) return g.categoryString();
+            if (!groups.itemsFor(g).isEmpty()) return g.categoryString();
         }
         return null;
     }
 
     private static void startEquipsGroupTradeTransfer(Character owner, BotEntry entry, Character bot) {
+        EquipTradeGroups groups = classifyEquipTradeGroups(entry, bot);
         for (EquipsGroup group : EquipsGroup.values()) {
-            List<Item> items = collectEquipsGroup(group, entry, bot);
+            List<Item> items = groups.itemsFor(group);
             if (!items.isEmpty()) {
                 String category = group.categoryString();
                 startTradeSequence(category, owner, items, 0, false, entry, bot);
@@ -1260,6 +1293,74 @@ class BotInventoryManager {
 
     private static List<Item> collectTrashEquips(BotEntry entry, Character bot) {
         return collectEquipsGroup(EquipsGroup.NORMAL, entry, bot);
+    }
+
+    private static EquipTradeGroups classifyEquipTradeGroups(BotEntry entry, Character bot) {
+        long startedAt = profileTradeCategory("equips") ? System.nanoTime() : 0L;
+        long bagScanStartedAt = startedAt != 0L ? System.nanoTime() : 0L;
+        List<Item> all = new ArrayList<>();
+        collectFromBag(bot, all, InventoryType.EQUIP, item -> true);
+        long bagScanNs = startedAt != 0L ? System.nanoTime() - bagScanStartedAt : 0L;
+        long selfKeepStartedAt = startedAt != 0L ? System.nanoTime() : 0L;
+        Set<Item> selfKeep = BotEquipManager.collectPotentialSelfUpgradeItems(bot);
+        long selfKeepNs = startedAt != 0L ? System.nanoTime() - selfKeepStartedAt : 0L;
+
+        List<Item> normal = new ArrayList<>();
+        List<Item> reservedForOther = new ArrayList<>();
+        List<Item> reservedForSelf = new ArrayList<>();
+        long reservedOtherNs = 0L;
+        int reservedOtherChecks = 0;
+        int reservedOtherHits = 0;
+        for (Item item : all) {
+            if (selfKeep.contains(item)) {
+                reservedForSelf.add(item);
+                continue;
+            }
+            long reservedOtherStartedAt = startedAt != 0L ? System.nanoTime() : 0L;
+            boolean isOther = BotOfferManager.isReservedForOtherRecipients(entry, bot, item);
+            if (startedAt != 0L) {
+                reservedOtherNs += System.nanoTime() - reservedOtherStartedAt;
+                reservedOtherChecks++;
+                if (isOther) {
+                    reservedOtherHits++;
+                }
+            }
+            if (isOther) {
+                reservedForOther.add(item);
+            } else {
+                normal.add(item);
+            }
+        }
+
+        long sortStartedAt = startedAt != 0L ? System.nanoTime() : 0L;
+        List<Item> normalSorted = sortEquipsForTrade(normal, bot);
+        List<Item> reservedForOtherSorted = sortEquipsForTrade(reservedForOther, bot);
+        List<Item> reservedForSelfSorted = sortEquipsForTrade(reservedForSelf, bot);
+        long sortNs = startedAt != 0L ? System.nanoTime() - sortStartedAt : 0L;
+        if (startedAt != 0L) {
+            long elapsedNs = System.nanoTime() - startedAt;
+            if (elapsedNs >= TRADE_COMMAND_PROFILE_WARN_NS) {
+                String botName = bot != null ? bot.getName() : "?";
+                String ownerName = entry != null && entry.owner != null ? entry.owner.getName() : "?";
+                log.warn(
+                        "Slow equip trade classification: took {} ms bot={} owner={} bagItems={} selfKeep={} normalItems={} reservedOtherItems={} reservedSelfItems={} bagScanMs={} selfKeepMs={} reservedOtherMs={} reservedOtherChecks={} reservedOtherHits={} sortMs={}",
+                        String.format("%.1f", elapsedNs / 1_000_000.0),
+                        botName,
+                        ownerName,
+                        all.size(),
+                        selfKeep.size(),
+                        normalSorted.size(),
+                        reservedForOtherSorted.size(),
+                        reservedForSelfSorted.size(),
+                        String.format("%.1f", bagScanNs / 1_000_000.0),
+                        String.format("%.1f", selfKeepNs / 1_000_000.0),
+                        String.format("%.1f", reservedOtherNs / 1_000_000.0),
+                        reservedOtherChecks,
+                        reservedOtherHits,
+                        String.format("%.1f", sortNs / 1_000_000.0));
+            }
+        }
+        return new EquipTradeGroups(normalSorted, reservedForOtherSorted, reservedForSelfSorted);
     }
 
     private static boolean isOwnClassEquip(Character bot, ItemInformationProvider ii, Equip equip) {

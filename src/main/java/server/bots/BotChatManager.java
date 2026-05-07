@@ -2024,7 +2024,12 @@ public class BotChatManager {
             return;
         }
 
-        if (!BotInventoryManager.hasTransferableItems(category, entry, entry.bot)) {
+        long hasItemsStartedAt = transferCommand.mode == TransferMode.TRADE
+                && BotInventoryManager.profileTradeCategory(category)
+                ? System.nanoTime() : 0L;
+        boolean hasItems = BotInventoryManager.hasTransferableItems(category, entry, entry.bot);
+        BotInventoryManager.logSlowTradeCommand(category, "hasTransferableItems", entry, entry.bot, hasItemsStartedAt);
+        if (!hasItems) {
             BotManager.after(BotManager.randMs(500, 700), () ->
                     BotManager.getInstance().botReply(entry, BotInventoryManager.noItemsReply(category)));
             return;
