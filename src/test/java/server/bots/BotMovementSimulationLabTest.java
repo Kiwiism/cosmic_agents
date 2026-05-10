@@ -117,10 +117,14 @@ class BotMovementSimulationLabTest {
 
         List<String> trace = lab.formatRecentTrace("SLASH", 10);
 
-        assertTrue(trace.stream().anyMatch(line -> line.contains("edge=CLIMB r160->r117")),
-                "AI replan should replace the stale rightward rope exit with the live best edge");
-        assertTrue(trace.stream().anyMatch(line -> line.contains("nav=exec") && line.contains("edge=CLIMB r160->r117")),
-                "bot should execute the refreshed climb exit instead of oscillating on the rope");
+        // The staged rightward exit is now executable directly: BotMovementManager.shouldSnapToClimbTarget
+        // snaps the bot to startPoint.y when within one climbStep — including at rope.bottomY()
+        // (pathlog-Leroy/John fix). The bot reaches the anchor exactly, the strict gate's
+        // botPos.y == edge.startPoint.y bypass passes, and the launch fires before any
+        // oscillation, so the previous "AI replan to a different destination" path is no longer
+        // exercised.
+        assertTrue(trace.stream().anyMatch(line -> line.contains("nav=exec") && line.contains("edge=CLIMB r160->")),
+                "bot should execute a rope exit from r160 instead of oscillating on the rope");
         assertTrue(trace.stream().noneMatch(line -> line.contains("bot=(366,-117)") && line.contains("edge=CLIMB r160->r116") && line.contains("nav=reuse") && line.contains("+1000ms")),
                 "stale rope exit should not keep the bot oscillating for a full second");
     }

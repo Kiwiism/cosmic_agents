@@ -1303,6 +1303,14 @@ final class BotNavigationManager {
     }
 
     private static boolean isTopRopeJumpExitReady(Rope rope, Point botPos, BotNavigationGraph.Edge edge) {
+        // Top-of-rope tolerance window only: the bot lands at firstClimbableY when grabbing
+        // from above (canTopGrab/canTopStep), and the launch arc is invariant within the first
+        // climbStep below the top. Non-top anchors are single-point launch windows whose arcs
+        // are precomputed by simulateRopeJumpLanding — launching from any other Y misses the
+        // destination. The bot reaches non-top anchors exactly via the precise-target snap in
+        // BotMovementManager.shouldSnapToClimbTarget (sub-tick clamp; the only one in the
+        // physics path), so the bypass `botPos.y == edge.startPoint.y` in
+        // canExecuteClimbExitFromCurrentPosition covers those without tolerance here.
         if (rope == null || botPos == null || edge == null || edge.launchStepX == 0) {
             return false;
         }

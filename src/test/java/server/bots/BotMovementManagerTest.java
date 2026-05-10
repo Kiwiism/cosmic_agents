@@ -230,8 +230,35 @@ class BotMovementManagerTest {
         entry.climbRope = new Rope(3398, 126, 332, false);
         entry.navPreciseTarget = true;
 
+        // Above the rope (y <= topY) and strictly below it (y > bottomY) must reject snap.
+        // Snap AT bottomY is allowed for rope-exit launch anchors authored at the rope bottom
+        // (pathlog-Leroy/John); see shouldSnapCommittedClimbEdgeAtRopeBottomYAnchor.
         assertFalse(BotMovementManager.shouldSnapToClimbTarget(entry, new Point(3398, 124), -2));
-        assertFalse(BotMovementManager.shouldSnapToClimbTarget(entry, new Point(3398, 332), 2));
+        assertFalse(BotMovementManager.shouldSnapToClimbTarget(entry, new Point(3398, 333), 1));
+    }
+
+    @Test
+    void shouldSnapCommittedClimbEdgeAtRopeBottomYAnchor() {
+        // pathlog-Leroy-2026-05-10T025338, pathlog-John-2026-05-10T050253:
+        // CLIMB exit edge with launchStepX != 0 and startPoint.y == rope.bottomY(). Bot grabbed
+        // mid-rope, climbed toward the anchor, every fixed-step climb landed past bottomY,
+        // beginFall(0,0) detached, and the loop repeated. The precise-target snap was the right
+        // mechanism — it just refused to fire at bottomY because of an over-strict bounds check.
+        Rope rope = new Rope(2352, 662, 863, false);
+        BotEntry entry = new BotEntry(null, null, null);
+        entry.climbing = true;
+        entry.climbRope = rope;
+        entry.navPreciseTarget = true;
+
+        // Bot within one climbStep of the anchor — natural step would overshoot bottomY.
+        int dyWithin = BotPhysicsEngine.climbStepPerTick() - 2;
+        assertTrue(BotMovementManager.shouldSnapToClimbTarget(
+                entry, new Point(2352, rope.bottomY()), dyWithin));
+        // dy >= climbStep: the natural step lands at-or-inside the (point) window. Old
+        // behavior — no snap, let the integrator advance.
+        int dyAtOrPastStep = BotPhysicsEngine.climbStepPerTick();
+        assertFalse(BotMovementManager.shouldSnapToClimbTarget(
+                entry, new Point(2352, rope.bottomY()), dyAtOrPastStep));
     }
 
     @Test

@@ -28,7 +28,7 @@ import java.util.concurrent.Executors;
 final class BotNavigationGraphProvider {
     private static final Logger log = LoggerFactory.getLogger(BotNavigationGraphProvider.class);
 
-    private static final int GRAPH_VERSION = 42;
+    private static final int GRAPH_VERSION = 44;
     private static final int ENDPOINT_ANCHOR_SPACING_PX = 10;
     private static final int DOWN_JUMP_PRELAUNCH_WINDOW_PX = 20;
     private static final int SAME_SOLID_NEST_GAP_PX = 8;
@@ -1696,29 +1696,15 @@ final class BotNavigationGraphProvider {
         List<Integer> ys = new ArrayList<>();
         int firstClimbableY = BotPhysicsEngine.firstClimbableY(rope);
         ys.add(firstClimbableY);
-        // The climb integrator advances by exactly climbStepPerTick() and detaches when
-        // candidateY > bottomY (no clamp). Only anchors aligned to that step starting from
-        // firstClimbableY are stably reachable; anything past lastStableY is unreachable as a
-        // launch position — the bot overshoots into a fall before jumpOffRope can fire.
-        int lastStableY = lastStableClimbY(rope, firstClimbableY);
         for (int y = rope.topY() + ROPE_ANCHOR_INTERVAL_PX; y < rope.bottomY(); y += ROPE_ANCHOR_INTERVAL_PX) {
-            if (y > firstClimbableY && y <= lastStableY) {
+            if (y > firstClimbableY) {
                 ys.add(y);
             }
         }
-        if (lastStableY > firstClimbableY && ys.getLast() != lastStableY) {
-            ys.add(lastStableY);
+        if (ys.getLast() != rope.bottomY()) {
+            ys.add(rope.bottomY());
         }
         return ys;
-    }
-
-    private static int lastStableClimbY(Rope rope, int firstClimbableY) {
-        int step = Math.max(1, BotPhysicsEngine.climbStepPerTick());
-        int travel = rope.bottomY() - firstClimbableY;
-        if (travel <= 0) {
-            return firstClimbableY;
-        }
-        return firstClimbableY + (travel / step) * step;
     }
 
     private static Map<Integer, Rope> buildRopeByRegionId(MapleMap map, List<BotNavigationGraph.Region> ropeRegions) {
