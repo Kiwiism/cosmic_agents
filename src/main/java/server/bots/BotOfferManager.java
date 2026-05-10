@@ -547,15 +547,31 @@ final class BotOfferManager {
         if (ItemConstants.getInventoryType(item.getItemId()) != InventoryType.EQUIP) {
             return false;
         }
-        if (gearOfferNeed(entry, owner, donor, item) != null) {
+        if (!(item instanceof Equip equip)) {
+            return false;
+        }
+        ItemInformationProvider ii = ItemInformationProvider.getInstance();
+        // Trade-classification path: only the FUTURE (Pareto self-reserve) check is used here.
+        // The IMMEDIATE optimizer-DP check that gearOfferNeed() also runs is intentionally
+        // skipped — it's expensive and its picks are essentially a subset of the FUTURE set,
+        // so it adds no signal for "should this item be held back from a player→bot trade?".
+        // Proactive offer paths still call gearOfferNeed() directly and keep both checks.
+        if (isFutureReservedForRecipient(owner, equip, ii)) {
             return true;
         }
         for (Character member : eligibleBotRecipients(owner, donor)) {
-            if (gearOfferNeed(entry, member, donor, item) != null) {
+            if (isFutureReservedForRecipient(member, equip, ii)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private static boolean isFutureReservedForRecipient(Character recipient, Equip equip, ItemInformationProvider ii) {
+        if (!isWeaponOfferCompatible(recipient, equip)) {
+            return false;
+        }
+        return BotEquipManager.wouldReserveIncomingItem(recipient, ii, equip);
     }
 
     private static Character findWeakestThrowingStarRecipient(Character owner, Character donor) {
