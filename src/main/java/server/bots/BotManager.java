@@ -704,7 +704,8 @@ public class BotManager {
                                          client.inventory.Equip.ScrollResult result,
                                          int scrollItemId,
                                          long delayMs) {
-        after(Math.max(0L, delayMs), () ->
+        long jitteredDelayMs = Math.max(0L, delayMs) + randMs(0, 2001);
+        after(jitteredDelayMs, () ->
                 BotScrollReactionManager.handleScrollEvent(source, result, scrollItemId, bots.values()));
     }
 
