@@ -2,6 +2,7 @@ package server.bots;
 
 import client.BuffStat;
 import client.Character;
+import client.Client;
 import client.Job;
 import client.Skill;
 import client.SkillFactory;
@@ -17,6 +18,8 @@ import constants.skills.ILWizard;
 import constants.skills.Magician;
 import constants.skills.Rogue;
 import constants.skills.Warrior;
+import net.server.channel.handlers.AbstractDealDamageHandler;
+import net.server.channel.handlers.MagicDamageHandler;
 import net.packet.Packet;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -281,6 +284,87 @@ class BotCombatManagerTest {
         BotCombatManager.rebuildSkillCacheIfNeeded(entry, bot);
 
         assertEquals(ILWizard.THUNDERBOLT, entry.aoeSkillId);
+    }
+
+    @Test
+    void shouldApplyMpEaterForBotMagicClawThroughSharedMagicHandler() {
+        MapleMap map = mock(MapleMap.class);
+        Monster target = mockMob(new Point(140, 200), 9300500);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        Client client = mock(Client.class);
+        when(bot.getClient()).thenReturn(client);
+        when(bot.getJob()).thenReturn(Job.IL_WIZARD);
+        when(map.isOwnershipRestricted(bot)).thenReturn(false);
+        when(map.getMonsterByOid(target.getObjectId())).thenReturn(target);
+        when(map.getMapObject(target.getObjectId())).thenReturn(target);
+        when(target.getSkills()).thenReturn(Set.of());
+
+        Skill magicClaw = skillWithAttack(Magician.MAGIC_CLAW, 2, 1, 40);
+        Skill mpEater = new Skill(ILWizard.MP_EATER);
+        StatEffect mpEaterEffect = mock(StatEffect.class);
+        mpEater.addLevelEffect(mpEaterEffect);
+
+        AbstractDealDamageHandler.AttackInfo attack = magicAttack(Magician.MAGIC_CLAW, 1, 2, target);
+
+        doAnswer(invocation -> {
+            Skill skill = invocation.getArgument(0);
+            return (byte) switch (skill.getId()) {
+                case Magician.MAGIC_CLAW, ILWizard.MP_EATER -> 1;
+                default -> 0;
+            };
+        }).when(bot).getSkillLevel(any(Skill.class));
+
+        try (MockedStatic<SkillFactory> skillFactory = Mockito.mockStatic(SkillFactory.class)) {
+            skillFactory.when(() -> SkillFactory.getSkill(Magician.MAGIC_CLAW)).thenReturn(magicClaw);
+            skillFactory.when(() -> SkillFactory.getSkill(ILWizard.MP_EATER)).thenReturn(mpEater);
+
+            MagicDamageHandler.applyMagicAttackEffects(attack, bot, client);
+        }
+
+        verify(mpEaterEffect).applyPassive(bot, target, 0);
+    }
+
+    @Test
+    void shouldApplyMpEaterForEachBotThunderboltTargetThroughSharedMagicHandler() {
+        MapleMap map = mock(MapleMap.class);
+        Monster first = mockMob(new Point(140, 200), 9300501);
+        Monster second = mockMob(new Point(180, 200), 9300502);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        Client client = mock(Client.class);
+        when(bot.getClient()).thenReturn(client);
+        when(bot.getJob()).thenReturn(Job.IL_WIZARD);
+        when(map.isOwnershipRestricted(bot)).thenReturn(false);
+        when(map.getMonsterByOid(first.getObjectId())).thenReturn(first);
+        when(map.getMonsterByOid(second.getObjectId())).thenReturn(second);
+        when(map.getMapObject(first.getObjectId())).thenReturn(first);
+        when(map.getMapObject(second.getObjectId())).thenReturn(second);
+        when(first.getSkills()).thenReturn(Set.of());
+        when(second.getSkills()).thenReturn(Set.of());
+
+        Skill thunderbolt = skillWithAttack(ILWizard.THUNDERBOLT, 1, 6, 115);
+        Skill mpEater = new Skill(ILWizard.MP_EATER);
+        StatEffect mpEaterEffect = mock(StatEffect.class);
+        mpEater.addLevelEffect(mpEaterEffect);
+
+        AbstractDealDamageHandler.AttackInfo attack = magicAttack(ILWizard.THUNDERBOLT, 1, 1, first, second);
+
+        doAnswer(invocation -> {
+            Skill skill = invocation.getArgument(0);
+            return (byte) switch (skill.getId()) {
+                case ILWizard.THUNDERBOLT, ILWizard.MP_EATER -> 1;
+                default -> 0;
+            };
+        }).when(bot).getSkillLevel(any(Skill.class));
+
+        try (MockedStatic<SkillFactory> skillFactory = Mockito.mockStatic(SkillFactory.class)) {
+            skillFactory.when(() -> SkillFactory.getSkill(ILWizard.THUNDERBOLT)).thenReturn(thunderbolt);
+            skillFactory.when(() -> SkillFactory.getSkill(ILWizard.MP_EATER)).thenReturn(mpEater);
+
+            MagicDamageHandler.applyMagicAttackEffects(attack, bot, client);
+        }
+
+        verify(mpEaterEffect).applyPassive(bot, first, 0);
+        verify(mpEaterEffect).applyPassive(bot, second, 0);
     }
 
     @Test
@@ -935,6 +1019,22 @@ class BotCombatManagerTest {
         when(effect.isOverTime()).thenReturn(false);
         skill.addLevelEffect(effect);
         return skill;
+    }
+
+    private static AbstractDealDamageHandler.AttackInfo magicAttack(int skillId, int skillLevel, int numDamage, Monster... targets) {
+        AbstractDealDamageHandler.AttackInfo attack = new AbstractDealDamageHandler.AttackInfo();
+        attack.skill = skillId;
+        attack.skilllevel = skillLevel;
+        attack.numDamage = numDamage;
+        attack.numAttacked = targets.length;
+        attack.numAttackedAndDamage = (targets.length << 4) | numDamage;
+        attack.magic = true;
+        attack.targets = new LinkedHashMap<>();
+        for (Monster target : targets) {
+            attack.targets.put(target.getObjectId(),
+                    new AbstractDealDamageHandler.AttackTarget((short) 0, List.of(100)));
+        }
+        return attack;
     }
 
     private static Skill skillWithAnchoredAoe(int skillId, int attackCount, int mobCount, int damage) {

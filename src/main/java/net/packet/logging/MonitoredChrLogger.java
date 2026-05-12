@@ -120,7 +120,7 @@ public class MonitoredChrLogger {
             return false;
         }
         return switch (op) {
-            case GENERAL_CHAT, TAKE_DAMAGE, MOVE_PET, MOVE_LIFE, NPC_ACTION, FACE_EXPRESSION -> true;
+            case GENERAL_CHAT, MOVE_PLAYER, TAKE_DAMAGE, MOVE_PET, MOVE_LIFE, NPC_ACTION, FACE_EXPRESSION -> true;
             default -> false;
         };
     }
