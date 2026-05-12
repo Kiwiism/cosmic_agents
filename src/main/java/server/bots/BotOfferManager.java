@@ -1,14 +1,13 @@
 package server.bots;
 
-import config.YamlConfig;
 import client.BotClient;
 import client.Character;
-import client.Job;
 import client.inventory.Equip;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.WeaponType;
+import config.YamlConfig;
 import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
 
@@ -24,7 +23,7 @@ final class BotOfferManager {
             "\\b(no|nope|nah|nvm|never\\s*mind|dont|don't|not\\s+now|skip)\\b",
             Pattern.CASE_INSENSITIVE);
     private static final List<String> BOT_ACCEPT_MSGS = List.of(
-            "sure!", "ok!", "ty!", "yes pls", "thx!", "ooh nice, ty", "yes!");
+            "sure!", "ok!", "yes", "y!", "y", "yes!", "yes pls", "yes please!", "yes please", "ooh nice, ty", "that would be great!", "that would be awesome!", "of course!");
 
     private enum GearOfferNeed {
         CURRENT,

@@ -54,36 +54,23 @@ class BotInventoryManager {
     private static final Set<Integer> manualTradeGreetingSent = ConcurrentHashMap.newKeySet();
     private static final List<String> TRADE_INVITATION_MSGS = List.of(
             "k", "ok", "kk", "sure", "k, I inv", "k i inv",
-            "omw", "inv u", "one sec", "coming",
-            "inv me", "trade me", "aight inv", "ok inv me",
+            "omw", "inv u", "one sec", "coming", "1sec", "1 sec",
+            "kkk", "aight", "aight inv", "alright", "alright inv",
             "pull up", "slide trade", "ill trade u", "opening trade",
             "trade time", "sending trade", "im here", "ready when u are");
     private static final List<String> TRADE_THANKS_MSGS = List.of(
             "ty!", "thanks!", "thank you!", "tyty", "appreciate it!", "tysm!",
-            "nice ty", "ooh ty!", "thx!!", "much appreciated",
+            "nice ty", "ooh ty!", "thx!!", "much appreciated", "thx", "wow thx", "I owe you one",
             "sweet ty", "ay ty", "perfect ty", "huge ty", "sick ty", "legend");
     private static final List<String> TRADE_FREEBIE_QUIPS = List.of(
-            "i better get paid for that eventually lol",
-            "you really should be paying me for that",
-            "free delivery, where's my tip",
-            "don't say i never gave you anything",
-            "i'm basically your personal shopper at this point",
-            "doing this for free smh",
-            "enjoy",
-            "hope u like it",
-            ":)",
-            "there u go",
-            "have fun",
-            "that should help",
-            "use it well",
-            "all yours",
-            "take good care of it",
-            "its in there",
-            "delivered",
-            "enjoy the loot",
-            "hope that helps",
-            "treat it nicely",
-            "consider that a gift");
+            "i better get paid for that eventually lol", "you really should be paying me for that :P",
+            "free delivery, where's my tip", "don't say i never gave you anything",
+            "i'm basically your personal shopper at this point", "doing this for free smh",
+            "enjoy", "hope u like it", "enjoy the loot",
+            ":)", ":D", "np", "npnp", "npnpnp", "np man enjoy",
+            "there u go", "have fun", "that should help",
+            "use it well", "all yours", "take good care of it",
+            "delivered", "hope that helps", "treat it nicely", "tell me if you find anything for me too");
     private static final List<String> NO_ITEMS_MSGS = List.of(
             "i don't have any %s",
             "no %s on me rn",
