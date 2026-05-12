@@ -13,17 +13,16 @@ import java.util.concurrent.ThreadLocalRandom;
 final class BotScrollReactionManager {
     private static final int REACTION_RADIUS_PX = 600;
     private static final int EMOTE_CHANCE_PCT = 20;
-    private static final int CHAT_CHANCE_PCT = 20;
+    private static final int CHAT_CHANCE_PCT = 15;
     private static final int FIDGET_CHANCE_PCT = 10;
-    private static final int REACTION_COOLDOWN_MS = 5_000;
+    private static final int REACTION_COOLDOWN_MS = 10_000;
     private static final int LOAD_DECAY_MS = 60_000;
     private static final int STREAK_WINDOW_MS = 45_000;
     private static final int STREAK_PRUNE_INTERVAL_MS = 60_000;
     private static final List<String> SCROLL_SUCCESS_REACTIONS = List.of(
-            "nice", "nice!",
-            "gz",
-            "clean", "clean!",
-            "juicy",
+            "nice", "nice!", "nice one", "yay", "yay!",
+            "clean", "clean!", "let's go gambling!",
+            "juicy", "good stuff",
             "anything good?",
             "whachu scrollin?",
             "thats a hit",
@@ -35,29 +34,22 @@ final class BotScrollReactionManager {
             "blessed", "dayum",
             "yoo nice", ":)", ":D", "again!", "do it again!");
     private static final List<String> SCROLL_FAIL_REACTIONS = List.of(
-            "rip", "f", "F",
-            "aw", "aww",
-            "bruh",
-            "oof",
-            "pain",
-            "rough",
-            "tragic",
-            "unlucky",
-            "dayum",
-            "scroll said no",
-            "maybe next one",
-            "happens");
+            "rip", "f", "F", "noo", "nooooo", "bad luck",
+            "aw", "aww", ":(", "sad",
+            "bruh", "oof", "pain", "rough",
+            "tragic", "unlucky", "dayum",
+            "scroll said no", "maybe next one", "happens");
     private static final List<String> SCROLL_SUCCESS_STREAK_REACTIONS = List.of(
-            "ok youre cookin", "you are cooking!!", "!!!!", "!!!!!!!!", "OMFG",
+            "ok youre cookin", "you are cooking!!", "!!!!", "!!!!!!!!", "OMFG", "OMGGG", "WOWZA",
             "thats a combo", "super combo", "woww", "WOWWWW", "HOLYYY", "HOLY", "holyyy", "sheeshhh", "omg!!", "wtf", "WTF", "WTF!!",
-            "cant miss rn", "no miss!", "CRAZY", "CRAZY!!",
+            "cant miss rn", "no miss!", "CRAZY", "CRAZY!!", "AMAZING", "HOW MANY WAS THAT!",
             "buddy is on a run", "today is your day!",
             "save some luck for us", "crazy", "that's crazyyyyy", "crazy man", "crazy! man",
             "another one?", "another one", "MORE", "MOARRR", "another one!", "again!again!", "again!", "AGAIN!",
             "daaaaaamn", "DAYUM!");
     private static final List<String> SCROLL_FAIL_STREAK_REACTIONS = List.of(
-            "ok thats cursed", "cursed", "bad luck",
-            "that streak is nasty", "damn", "fak",
+            "ok thats cursed", "cursed af", "90% of gambler something something",
+            "that streak is nasty", "nasty streak man", "fak",
             "nah id stop there", "not your day man",
             "map is eating your scrolls", "try a different map? xD", "change map bro",
             "someone break the curse",
