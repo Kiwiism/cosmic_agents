@@ -18,6 +18,7 @@ final class BotScrollReactionManager {
     private static final int REACTION_COOLDOWN_MS = 10_000;
     private static final int LOAD_DECAY_MS = 60_000;
     private static final int STREAK_WINDOW_MS = 45_000;
+    private static final int PER_BOT_REACTION_JITTER_MAX_MS = 2_000;
     private static final int STREAK_PRUNE_INTERVAL_MS = 60_000;
     private static final List<String> SCROLL_SUCCESS_REACTIONS = List.of(
             "nice", "nice!", "nice one", "yay", "yay!",
@@ -101,7 +102,9 @@ final class BotScrollReactionManager {
                 if (dx * dx + dy * dy > maxDistSq) {
                     continue;
                 }
-                maybeReact(entry, source.getId(), success, scrollSuccessRate, now);
+                long botDelayMs = BotManager.randMs(0, PER_BOT_REACTION_JITTER_MAX_MS + 1);
+                long reactionAtMs = now + botDelayMs;
+                BotManager.after(botDelayMs, () -> maybeReact(entry, source.getId(), success, scrollSuccessRate, reactionAtMs));
             }
         }
     }
