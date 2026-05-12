@@ -622,7 +622,7 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
 
                 ScrollResult scrollResult = scrolled.getLevel() > curlevel ? ScrollResult.SUCCESS : ScrollResult.FAIL;
                 player.getMap().broadcastMessage(PacketCreator.getScrollEffect(player.getId(), scrollResult, false, false));
-                BotManager.getInstance().notifyNearbyBotsOfScroll(player, scrollResult, uitem.getItemId());
+                BotManager.getInstance().notifyNearbyBotsOfScroll(player, scrollResult, uitem.getItemId(), 5_000L);
                 if (eSlot < 0 && (scrollResult == ScrollResult.SUCCESS)) {
                     player.equipChanged();
                 }

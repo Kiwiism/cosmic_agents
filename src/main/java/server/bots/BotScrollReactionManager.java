@@ -12,10 +12,10 @@ import java.util.concurrent.ThreadLocalRandom;
 
 final class BotScrollReactionManager {
     private static final int REACTION_RADIUS_PX = 600;
-    private static final int EMOTE_CHANCE_PCT = 16;
-    private static final int CHAT_CHANCE_PCT = 8;
-    private static final int FIDGET_CHANCE_PCT = 6;
-    private static final int REACTION_COOLDOWN_MS = 10_000;
+    private static final int EMOTE_CHANCE_PCT = 20;
+    private static final int CHAT_CHANCE_PCT = 20;
+    private static final int FIDGET_CHANCE_PCT = 10;
+    private static final int REACTION_COOLDOWN_MS = 5_000;
     private static final int LOAD_DECAY_MS = 60_000;
     private static final int STREAK_WINDOW_MS = 45_000;
     private static final int STREAK_PRUNE_INTERVAL_MS = 60_000;
@@ -126,7 +126,7 @@ final class BotScrollReactionManager {
             return;
         }
 
-        double chanceScale = reactionChanceScale(load)
+        double chanceScale = streak >= 2 ? 1.0 : reactionChanceScale(load)
                 * successRateChanceScale(scrollSuccessRate)
                 * streakChanceScale(streak, success, scrollSuccessRate);
         if (chanceScale <= 0.0) {
@@ -175,20 +175,20 @@ final class BotScrollReactionManager {
             return 1.0;
         }
         if (load <= 3.5) {
-            return 0.5;
+            return 0.6;
         }
         if (load <= 5.0) {
-            return 0.3;
+            return 0.4;
         }
-        return 0.2;
+        return 0.3;
     }
 
     static double successRateChanceScale(int scrollSuccessRate) {
         if (scrollSuccessRate <= 20) {
-            return 2;
+            return 3;
         }
         if (scrollSuccessRate <= 40) {
-            return 1.5;
+            return 2;
         }
         if (scrollSuccessRate <= 80) {
             return 1.0;
@@ -221,10 +221,15 @@ final class BotScrollReactionManager {
     }
 
     static double streakChanceScale(int streak, boolean success, int scrollSuccessRate) {
-        if (!success || streak < 2 || scrollSuccessRate >= 100) {
+        if (streak < 2 || scrollSuccessRate >= 100) {
             return 1.0;
         }
-        return Math.min(1.5, 1.0 + (0.2 * streak * streak));
+        if (success) {
+            double successRateInverse = 100.0 / scrollSuccessRate;
+            return Math.min(1.5, 1.0 + (0.2 * streak * streak) * successRateInverse);
+        } else {
+            return Math.min(1.5, 1.0 + (0.1 * streak * streak));
+        }
     }
 
     static boolean isStreakChatEligible(int streak, int scrollSuccessRate) {

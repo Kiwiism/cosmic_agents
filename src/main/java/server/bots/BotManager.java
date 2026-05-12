@@ -700,8 +700,12 @@ public class BotManager {
         return activeOwner != null && activeOwner.getId() == owner.getId();
     }
 
-    public void notifyNearbyBotsOfScroll(Character source, client.inventory.Equip.ScrollResult result, int scrollItemId) {
-        BotScrollReactionManager.handleScrollEvent(source, result, scrollItemId, bots.values());
+    public void notifyNearbyBotsOfScroll(Character source,
+                                         client.inventory.Equip.ScrollResult result,
+                                         int scrollItemId,
+                                         long delayMs) {
+        after(Math.max(0L, delayMs), () ->
+                BotScrollReactionManager.handleScrollEvent(source, result, scrollItemId, bots.values()));
     }
 
     BotEntry getBotEntry(int ownerCharId, String botName) {
