@@ -86,6 +86,7 @@ public class BotManager {
         // Debug aid: keep stuck detection/logging active, but disable automatic recovery jumps
         // so pathing failures remain visible in logs and at runtime.
         public boolean ENABLE_UNSTUCK = false;
+
     }
 
     /** Singleton config — replace with `cfg = new Config()` after hotswapping to reset. */
@@ -697,6 +698,10 @@ public class BotManager {
         }
         Character activeOwner = getActiveOwnerByBotCharId(source.getId());
         return activeOwner != null && activeOwner.getId() == owner.getId();
+    }
+
+    public void notifyNearbyBotsOfScroll(Character source, client.inventory.Equip.ScrollResult result, int scrollItemId) {
+        BotScrollReactionManager.handleScrollEvent(source, result, scrollItemId, bots.values());
     }
 
     BotEntry getBotEntry(int ownerCharId, String botName) {

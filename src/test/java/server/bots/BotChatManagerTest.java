@@ -169,6 +169,57 @@ class BotChatManagerTest {
     }
 
     @Test
+    void shouldProvideAtLeastTenScrollReactionMessagesPerOutcome() {
+        assertTrue(BotScrollReactionManager.successReactionCount() >= 10);
+        assertTrue(BotScrollReactionManager.failReactionCount() >= 10);
+        assertTrue(BotScrollReactionManager.successStreakReactionCount() >= 5);
+        assertTrue(BotScrollReactionManager.failStreakReactionCount() >= 5);
+    }
+
+    @Test
+    void shouldHeavilyReduceScrollReactionChanceDuringScrollBursts() {
+        BotEntry entry = new BotEntry(null, null, null);
+        long start = 1_000_000L;
+
+        double firstLoad = BotScrollReactionManager.recordReactionLoad(entry, start);
+        double secondLoad = BotScrollReactionManager.recordReactionLoad(entry, start + 10_000L);
+        double thirdLoad = BotScrollReactionManager.recordReactionLoad(entry, start + 20_000L);
+        double fourthLoad = BotScrollReactionManager.recordReactionLoad(entry, start + 30_000L);
+        double fifthLoad = BotScrollReactionManager.recordReactionLoad(entry, start + 40_000L);
+
+        assertEquals(1.0, BotScrollReactionManager.reactionChanceScale(firstLoad));
+        assertEquals(1.0, BotScrollReactionManager.reactionChanceScale(secondLoad));
+        assertEquals(0.35, BotScrollReactionManager.reactionChanceScale(thirdLoad));
+        assertTrue(fourthLoad > thirdLoad);
+        assertEquals(0.35, BotScrollReactionManager.reactionChanceScale(fourthLoad));
+        assertEquals(0.12, BotScrollReactionManager.reactionChanceScale(fifthLoad));
+    }
+
+    @Test
+    void shouldBiasReactionScaleByScrollSuccessRate() {
+        assertEquals(1.3, BotScrollReactionManager.successRateChanceScale(10));
+        assertEquals(1.18, BotScrollReactionManager.successRateChanceScale(30));
+        assertEquals(1.0, BotScrollReactionManager.successRateChanceScale(60));
+        assertEquals(0.18, BotScrollReactionManager.successRateChanceScale(100));
+    }
+
+    @Test
+    void shouldTrackStreaksAndDisableHundredPercentStreakChats() {
+        BotEntry entry = new BotEntry(null, null, null);
+        long start = 2_000_000L;
+
+        assertEquals(1, BotScrollReactionManager.updateReactionStreak(entry, true, start));
+        assertEquals(2, BotScrollReactionManager.updateReactionStreak(entry, true, start + 10_000L));
+        assertTrue(BotScrollReactionManager.isStreakChatEligible(2, 30));
+        assertFalse(BotScrollReactionManager.isStreakChatEligible(2, 100));
+
+        assertEquals(1, BotScrollReactionManager.updateReactionStreak(entry, false, start + 20_000L));
+        assertEquals(2, BotScrollReactionManager.updateReactionStreak(entry, false, start + 30_000L));
+        assertEquals(1, BotScrollReactionManager.updateReactionStreak(
+                entry, false, start + BotScrollReactionManager.streakWindowMs() + 40_000L));
+    }
+
+    @Test
     void shouldNotTriggerGreetingFidgetWhileOwnerIsAfk() {
         BotEntry entry = new BotEntry(null, null, null);
         entry.following = true;

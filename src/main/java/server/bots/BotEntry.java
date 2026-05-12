@@ -287,6 +287,12 @@ public class BotEntry {
     boolean spawnUpgradeCheckDone = false;
     final Set<Integer> requestedUpgradeItemIds = ConcurrentHashMap.newKeySet();
     boolean pendingLootOfferBotRequesting = false; // true = bot asked for owner's item
+    double recentScrollReactionLoad = 0.0;
+    long lastScrollReactionObservedAtMs = 0L;
+    long nextScrollReactionAtMs = 0L;
+    int scrollReactionStreak = 0;
+    boolean lastScrollReactionWasSuccess = false;
+    long lastScrollReactionOutcomeAtMs = 0L;
 
     // Path logging (debug)
     BotPathLogger pathLogger = null;

@@ -58,6 +58,7 @@ import server.ItemInformationProvider;
 import server.Shop;
 import server.ShopFactory;
 import server.TimerManager;
+import server.bots.BotManager;
 import server.maps.AbstractMapObject;
 import server.maps.FieldLimit;
 import server.maps.Kite;
@@ -621,6 +622,7 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
 
                 ScrollResult scrollResult = scrolled.getLevel() > curlevel ? ScrollResult.SUCCESS : ScrollResult.FAIL;
                 player.getMap().broadcastMessage(PacketCreator.getScrollEffect(player.getId(), scrollResult, false, false));
+                BotManager.getInstance().notifyNearbyBotsOfScroll(player, scrollResult, uitem.getItemId());
                 if (eSlot < 0 && (scrollResult == ScrollResult.SUCCESS)) {
                     player.equipChanged();
                 }
