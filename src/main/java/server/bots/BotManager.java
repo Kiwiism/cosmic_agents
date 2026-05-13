@@ -933,7 +933,19 @@ public class BotManager {
                 return;
             }
             targetedBot.entry().replyChannel = channel;
-            BotChatManager.handleChat(targetedBot.entry(), targetedBot.commandText());
+            String cmd = targetedBot.commandText();
+            if (server.bots.llm.BotLlmConfig.typoSuggesterEnabled) {
+                String typo = server.bots.llm.CommandTypoSuggester.suggest(cmd);
+                if (typo != null) {
+                    BotChatManager.queueBotReply(targetedBot.entry(), "did you mean '" + typo + "'?");
+                    return;
+                }
+            }
+            BotChatManager.handleChat(targetedBot.entry(), cmd);
+            if (server.bots.llm.BotLlmConfig.enabled
+                    && !server.bots.llm.CommandTypoSuggester.firstTokenLooksLikeCommand(cmd)) {
+                server.bots.llm.BotLlmReplyManager.maybeRespond(targetedBot.entry(), owner, cmd);
+            }
             return;
         }
         if (targetedBot.feedbackMessage() != null) {
@@ -961,7 +973,16 @@ public class BotManager {
             return;
         }
 
-        // No name prefix — broadcast to all bots
+        // No name prefix — typo-suggest once via the first bot, otherwise broadcast.
+        if (server.bots.llm.BotLlmConfig.typoSuggesterEnabled) {
+            String typo = server.bots.llm.CommandTypoSuggester.suggest(message);
+            if (typo != null) {
+                BotEntry first = entries.get(0);
+                first.replyChannel = channel;
+                BotChatManager.queueBotReply(first, "did you mean '" + typo + "'?");
+                return;
+            }
+        }
         for (BotEntry entry : entries) {
             entry.replyChannel = channel;
             BotChatManager.handleChat(entry, message);
@@ -3536,7 +3557,7 @@ public class BotManager {
     }
 
     /** Owner-directed reply — routes MAP→map broadcast, PARTY→party, WHISPER→whisper to owner. */
-    void botReply(BotEntry entry, String text) {
+    public void botReply(BotEntry entry, String text) {
         switch (entry.replyChannel) {
             case PARTY -> botSayParty(entry.bot, text);
             case WHISPER -> {

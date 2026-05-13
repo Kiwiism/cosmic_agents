@@ -338,4 +338,10 @@ public class BotEntry {
         this.owner = owner;
         this.task = task;
     }
+
+    // Accessors for code outside the server.bots package (e.g. server.bots.llm).
+    // Mutations stay package-private to preserve existing invariants.
+    public Character getBot() { return bot; }
+    public Character getOwner() { return owner; }
+    public ReplyChannel getReplyChannel() { return replyChannel; }
 }

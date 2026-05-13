@@ -32,3 +32,7 @@ tmp/
 .qwen/
 models/
 .m2/
+
+# LLM bot chat memory (per-bot plain-text JSONL + summaries)
+bots/llm-memory/
+

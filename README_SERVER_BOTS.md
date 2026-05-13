@@ -172,3 +172,18 @@ Verbs: `trade [me] <type/name>`, `give [me] <type/name>`, `drop <type/name>`, `p
 
 ## Notes
 - Bot characters can be logged into as normal accounts (user = bot name, password = `botbot`) to manually equip or manage inventory.
+
+## Optional: LLM chat replies
+
+Bots can hold short casual conversations with the owner using a tiny local model via [Ollama](https://ollama.com/). Purely cosmetic/for fun, doesn't affect any existing command or serve any gameplay purpose whatsoever.
+
+### Setup
+1. Install [Ollama](https://ollama.com/download).
+2.1 (Potato / VPS / No GPU) Pull a tiny model: `ollama pull qwen3.5:0.8b` (~1 GB download + 2 GB RAM required extra). 
+2.2 (Gaming PC / Dedicated GPU) Pull something bigger, maybe 2-5B model
+3. Edit `src/main/java/server/bots/llm/BotLlmConfig.java`, set `enabled = true`. Rebuild.
+
+### Behavior
+- LLM only fires when a message is **directly addressed** to a specific bot by name (`Jason hi`, `Leroy how are you`).
+- Each bot gets its own memory file at `bots/llm-memory/<botName>.jsonl` (gitignored). At 32 turns it auto-compacts the oldest to a 1-2 sentence `.summary.txt`.
+
