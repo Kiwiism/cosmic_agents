@@ -1,6 +1,5 @@
 package server.bots;
 
-import config.YamlConfig;
 import client.Character;
 import client.Job;
 import client.inventory.Equip;
@@ -9,8 +8,8 @@ import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.WeaponType;
 import client.inventory.manipulator.InventoryManipulator;
+import config.YamlConfig;
 import constants.inventory.EquipSlot;
-import constants.inventory.ItemConstants;
 import constants.skills.Crusader;
 import constants.skills.DragonKnight;
 import constants.skills.Fighter;
@@ -44,7 +43,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.ToIntFunction;
-import java.util.stream.Collectors;
 
 class BotEquipManager {
 
@@ -1583,8 +1581,8 @@ class BotEquipManager {
             case "ring4" -> new short[]{-16};
             case "petwear" -> new short[]{-14};
             case "pendant" -> new short[]{-17};
-            case "medal" -> new short[]{-21};
-            case "belt" -> new short[]{-22};
+            case "medal" -> new short[]{-49};
+            case "belt" -> new short[]{-50};
             default -> new short[0];
         };
     }
