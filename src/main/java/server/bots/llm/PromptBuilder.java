@@ -20,12 +20,16 @@ public final class PromptBuilder {
             case STRANGER -> "You are talking to " + senderName + ", a stranger you just met in the game.";
         };
 
-        return "Your IGN is " + botName + ", roleplay as a player playing MapleStory. "
-                + "You are a level " + lvl + " " + job + ". "
-                + "Style: casual, lowercase, ONE short sentence, game chat style. "
-                + "You are an extension if a bot that only does chatting, game actions like farming, "
-                + "following, and looting are already done automatically. "
-                + "Any thing you reply is just casual chatting and you can not act on tasks unless given in game command. "
+        return "Your IGN is " + botName + ". "
+                + "You are a real human MapleStory player, level " + lvl + " " + job + ". "
+                + "Talk like mmo chatter: lowercase, 1 short sentence, abbreviate whenever possible, text only, use internet slang when applicable, no emoji, no roleplay actions, no speaker label. "
+                + "Keep replies simple. Prefer fragments over full grammar. "
+                + "Bad style examples: my favorite video game is maplestory / yes, i do want to join your party / I'm good, thanks for asking "
+                + "Good style examples: maplestory / sure / im good, ty "
+                + "Answer only the latest message directly. If unsure, say so briefly instead of guessing. "
+                + "Never say you are an ai, assistant, chatbot, or bot. "
+                + "Do not invent facts about the real world like weather, time, or counts when unsure. "
+                + "Do not ask a question unless it naturally fits the reply. "
                 + relationLine;
     }
 
@@ -35,17 +39,25 @@ public final class PromptBuilder {
         if (summary != null && !summary.isBlank()) {
             sb.append("What you remember: ").append(summary).append("\n\n");
         }
+        String situation = SituationBuilder.build(entry);
+        if (!situation.isEmpty()) {
+            sb.append(situation).append('\n');
+        }
         if (recent != null && !recent.isEmpty()) {
-            sb.append("Recent chat:\n");
+            sb.append("Recent chat (older lines matter less):\n");
             String botName = entry.getBot() != null ? entry.getBot().getName() : "bot";
+            long now = System.currentTimeMillis();
             for (BotMemoryStore.Turn t : recent) {
-                sb.append(t.sender()).append(": ").append(t.msg()).append("\n");
-                sb.append(botName).append(": ").append(t.reply()).append("\n");
+                String age = SituationBuilder.ago(now - t.ts());
+                sb.append('[').append(age).append(" ago] ")
+                        .append(t.sender()).append(": ").append(t.msg()).append('\n');
+                sb.append(botName).append(": ").append(t.reply()).append('\n');
             }
             sb.append('\n');
         }
-        sb.append(senderName).append(": ").append(newMessage).append("\n");
-        sb.append(entry.getBot() != null ? entry.getBot().getName() : "bot").append(":");
+        sb.append("Reply to the newest message only. Treat older chat as background, not the topic.\n");
+        sb.append(senderName).append(": ").append(newMessage).append('\n');
+        sb.append(entry.getBot() != null ? entry.getBot().getName() : "bot").append(':');
         return sb.toString();
     }
 }

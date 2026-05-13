@@ -7,6 +7,7 @@ import server.bots.BotEntry;
 import server.bots.BotManager;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -93,7 +94,10 @@ public final class BotLlmReplyManager {
     private static void runReply(BotEntry entry, String senderName, SenderRelation relation, String message) {
         String botName = entry.getBot().getName();
         String summary = BotMemoryStore.loadSummary(botName);
-        List<BotMemoryStore.Turn> recent = BotMemoryStore.loadRecent(botName, BotLlmConfig.recentTurnsInPrompt);
+        // Prompt shows ALL uncompacted turns (cursor..end). The summary covers everything before
+        // cursor — together they're gap-free. Compaction (below) keeps the uncompacted window
+        // bounded to recentTurnsInPrompt..recentTurnsInPrompt+compactBatchSize turns.
+        List<BotMemoryStore.Turn> recent = BotMemoryStore.loadUncompacted(botName);
         String system = PromptBuilder.buildSystem(entry, relation, senderName);
         String prompt = PromptBuilder.buildPrompt(entry, senderName, message, summary, recent);
 
@@ -118,6 +122,13 @@ public final class BotLlmReplyManager {
             log.info("llm[{}] raw ({} ms, {} chars): {}", botName, elapsed, raw.get().length(), raw.get());
             log.info("llm[{}] sanitized ({} chars): {}", botName, reply.length(), reply);
         }
+//        if (looksLowQuality(message, reply)) {
+//            String fallback = fallbackReply(message);
+//            if (BotLlmConfig.debugLog) {
+//                log.info("llm[{}] rejected low-quality reply: {}, fallback: {}", botName, reply, fallback);
+//            }
+//            reply = fallback;
+//        }
         if (reply.isEmpty()) return;
 
         List<String> parts = splitForChat(reply, BotLlmConfig.maxReplyMessages,
@@ -136,11 +147,15 @@ public final class BotLlmReplyManager {
             }, (long) BotLlmConfig.multiMessageDelayMs * i, TimeUnit.MILLISECONDS);
         }
 
-        BotMemoryStore.appendTurn(botName,
-                new BotMemoryStore.Turn(System.currentTimeMillis(),
-                        relation.name().toLowerCase(), senderName, message, reply));
+        if (!looksLowQuality(message, reply)) {
+            BotMemoryStore.appendTurn(botName,
+                    new BotMemoryStore.Turn(System.currentTimeMillis(),
+                            relation.name().toLowerCase(), senderName, message, reply));
+        }
 
-        if (BotMemoryStore.countTurns(botName) >= BotLlmConfig.compactThresholdTurns) {
+        // Compact when uncompacted overflows the window. One LLM call per compactBatchSize turns.
+        if (BotMemoryStore.countUncompacted(botName)
+                > BotLlmConfig.recentTurnsInPrompt + BotLlmConfig.compactBatchSize) {
             EXEC.submit(() -> BotMemoryStore.compact(botName));
         }
     }
@@ -223,10 +238,74 @@ public final class BotLlmReplyManager {
         s = s.replaceAll("\\s+", " ").trim();
         // drop leading "Bot:" / "Reply:" preambles
         s = s.replaceFirst("^(?i)(reply|bot|response|assistant)\\s*:\\s*", "");
+        // remove emoji and most pictographic symbols; in-game chat should stay plain text
+        s = s.replaceAll("[\\p{So}\\x{1F300}-\\x{1FAFF}\\x{2600}-\\x{27BF}]", "").trim();
+        // keep the chat style consistent even when the model ignores the style instruction
+        s = s.toLowerCase(Locale.ROOT);
         int cap = BotLlmConfig.maxReplyChars();
         if (s.length() > cap) {
             s = s.substring(0, cap).trim();
         }
         return s;
+    }
+
+    private static boolean looksLowQuality(String message, String reply) {
+        if (reply == null) return true;
+        String trimmed = reply.trim();
+        if (trimmed.isEmpty()) return true;
+
+        String normalizedReply = trimmed.toLowerCase(Locale.ROOT);
+        String normalizedMessage = message == null ? "" : message.trim().toLowerCase(Locale.ROOT);
+
+        if (normalizedReply.contains("as an ai")
+                || normalizedReply.contains("language model")
+                || normalizedReply.contains("chatbot")
+                || normalizedReply.contains("i'm just a bot")
+                || normalizedReply.contains("i am just a bot")
+                || normalizedReply.contains("assistant")) {
+            return true;
+        }
+
+        if (normalizedMessage.endsWith("?") && normalizedReply.endsWith("?")) {
+            return true;
+        }
+
+        if (isEcho(normalizedMessage, normalizedReply)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static boolean isEcho(String message, String reply) {
+        if (reply.isEmpty()) return true;
+        String cleanMessage = message.replaceAll("[^a-z0-9\\s]", " ").replaceAll("\\s+", " ").trim();
+        String cleanReply = reply.replaceAll("[^a-z0-9\\s]", " ").replaceAll("\\s+", " ").trim();
+        if (cleanReply.isEmpty()) return true;
+        if (cleanReply.length() <= 16 && cleanMessage.contains(cleanReply)) {
+            return true;
+        }
+        String[] replyTokens = cleanReply.split(" ");
+        if (replyTokens.length <= 2) {
+            for (String token : replyTokens) {
+                if (!token.isEmpty() && !cleanMessage.contains(token)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private static String fallbackReply(String message) {
+        String normalized = message == null ? "" : message.toLowerCase(Locale.ROOT);
+        if (normalized.contains("how are you")) return "im good just chillin";
+        if (normalized.startsWith("hi") || normalized.startsWith("hey") || normalized.startsWith("hello")) {
+            return "yo";
+        }
+        if (normalized.contains("weather")) return "idk rn";
+        if (normalized.contains("how many")) return "idk tbh";
+        if (normalized.endsWith("?")) return "not sure tbh";
+        return "idk tbh";
     }
 }

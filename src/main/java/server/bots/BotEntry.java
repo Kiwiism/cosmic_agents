@@ -147,6 +147,17 @@ public class BotEntry {
     // movement snapshot ever fires — so the wire stance stays ALERT forever. The callback
     // pushes a fresh STAND broadcast once the timer expires.
     boolean alertResetScheduled = false;
+
+    // Most recent command the owner issued that handleChat actually matched.
+    // Used by SituationBuilder to give the LLM context like "owner told you to
+    // farm here 3 min ago" so 'what are you doing' answers stay coherent.
+    public volatile String lastOwnerCommand = null;
+    public volatile long lastOwnerCommandAtMs = 0L;
+
+    public boolean isGrinding() { return grinding; }
+    public boolean isFollowing() { return following; }
+    public java.awt.Point getFarmAnchor() { return farmAnchor; }
+    public int getFarmAnchorMapId() { return farmAnchorMapId; }
     Point lastMobTouchCheckPos = null;
     int lastMobTouchMapId = -1;
 

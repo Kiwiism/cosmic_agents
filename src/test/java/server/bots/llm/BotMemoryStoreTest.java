@@ -43,7 +43,7 @@ class BotMemoryStoreTest {
         BotMemoryStore.appendTurn("Jason",
                 new BotMemoryStore.Turn(2L, "stranger", "Player2", "yo bot", "hi stranger"));
 
-        List<BotMemoryStore.Turn> recent = BotMemoryStore.loadRecent("Jason", 5);
+        List<BotMemoryStore.Turn> recent = BotMemoryStore.loadUncompacted("Jason");
         assertEquals(2, recent.size());
         assertEquals("Player1", recent.get(0).sender());
         assertEquals("hi", recent.get(0).msg());
@@ -51,26 +51,25 @@ class BotMemoryStoreTest {
     }
 
     @Test
-    void loadRecentReturnsLastN() {
+    void loadUncompactedReturnsEverythingWhenNoCompactionRan() {
         for (int i = 0; i < 10; i++) {
             BotMemoryStore.appendTurn("B", new BotMemoryStore.Turn(i, "owner", "p", "m" + i, "r" + i));
         }
-        List<BotMemoryStore.Turn> recent = BotMemoryStore.loadRecent("B", 3);
-        assertEquals(3, recent.size());
-        assertEquals("m7", recent.get(0).msg());
-        assertEquals("r9", recent.get(2).reply());
+        List<BotMemoryStore.Turn> recent = BotMemoryStore.loadUncompacted("B");
+        assertEquals(10, recent.size());
+        assertEquals("m0", recent.get(0).msg());
+        assertEquals("r9", recent.get(9).reply());
     }
 
     @Test
-    void compactKeepsRecentLines() throws IOException {
-        BotLlmConfig.compactKeepRecentTurns = 3;
-        for (int i = 0; i < 10; i++) {
+    void compactPreservesJsonlHistory() throws IOException {
+        // Compact without Ollama available: cursor must NOT advance, jsonl untouched.
+        for (int i = 0; i < 20; i++) {
             BotMemoryStore.appendTurn("Z", new BotMemoryStore.Turn(i, "owner", "p", "m" + i, "r" + i));
         }
         BotMemoryStore.compact("Z");
-        assertEquals(3, BotMemoryStore.countTurns("Z"));
-        List<BotMemoryStore.Turn> recent = BotMemoryStore.loadRecent("Z", 5);
-        assertEquals("m7", recent.get(0).msg());
+        // Whether Ollama is up or not, the full jsonl history must survive.
+        assertEquals(20, BotMemoryStore.countTurns("Z"));
     }
 
     @Test
@@ -78,7 +77,7 @@ class BotMemoryStoreTest {
         String tricky = "hello \"world\" \\ \n new line";
         BotMemoryStore.appendTurn("C",
                 new BotMemoryStore.Turn(1L, "party", "Friend", tricky, "ok"));
-        List<BotMemoryStore.Turn> recent = BotMemoryStore.loadRecent("C", 5);
+        List<BotMemoryStore.Turn> recent = BotMemoryStore.loadUncompacted("C");
         assertEquals(1, recent.size());
         assertEquals(tricky, recent.get(0).msg());
     }

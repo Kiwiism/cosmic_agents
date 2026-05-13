@@ -26,11 +26,23 @@ public final class OllamaClient {
     private OllamaClient() {}
 
     public static Optional<String> generate(String prompt, String system) {
-        String body = buildBody(prompt, system);
+        return send(prompt, system, BotLlmConfig.maxPredictTokens, BotLlmConfig.requestTimeoutMs);
+    }
+
+    /** Variant for non-chat calls (e.g. memory summarization) where we want a bigger
+     *  token budget and a proportionally longer timeout. */
+    public static Optional<String> generateLong(String prompt, String system, int numPredict) {
+        // Rough scale: small CPU produces ~10 tok/s, so allow numPredict*200ms + base.
+        int timeoutMs = Math.max(BotLlmConfig.requestTimeoutMs, 5000 + numPredict * 200);
+        return send(prompt, system, numPredict, timeoutMs);
+    }
+
+    private static Optional<String> send(String prompt, String system, int numPredict, int timeoutMs) {
+        String body = buildBody(prompt, system, numPredict);
         HttpRequest req;
         try {
             req = HttpRequest.newBuilder(URI.create(BotLlmConfig.endpoint + "/api/generate"))
-                    .timeout(Duration.ofMillis(BotLlmConfig.requestTimeoutMs))
+                    .timeout(Duration.ofMillis(timeoutMs))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(body))
                     .build();
@@ -48,7 +60,7 @@ public final class OllamaClient {
             if (text == null || text.isBlank()) return Optional.empty();
             return Optional.of(text.trim());
         } catch (java.net.http.HttpTimeoutException te) {
-            log.info("ollama: timeout after {}ms", BotLlmConfig.requestTimeoutMs);
+            log.info("ollama: timeout after {}ms", timeoutMs);
             return Optional.empty();
         } catch (Exception e) {
             log.warn("ollama: send failed: {}", e.toString());
@@ -56,7 +68,7 @@ public final class OllamaClient {
         }
     }
 
-    private static String buildBody(String prompt, String system) {
+    private static String buildBody(String prompt, String system, int numPredict) {
         StringBuilder sb = new StringBuilder(384);
         sb.append('{');
         sb.append("\"model\":\"").append(jsonEscape(BotLlmConfig.model)).append("\",");
@@ -72,7 +84,7 @@ public final class OllamaClient {
             sb.append("\"think\":false,");
         }
         sb.append("\"options\":{")
-                .append("\"num_predict\":").append(BotLlmConfig.maxPredictTokens)
+                .append("\"num_predict\":").append(numPredict)
                 .append(",\"temperature\":").append(BotLlmConfig.temperature)
                 .append(",\"top_p\":").append(BotLlmConfig.topP)
                 .append(",\"top_k\":").append(BotLlmConfig.topK)

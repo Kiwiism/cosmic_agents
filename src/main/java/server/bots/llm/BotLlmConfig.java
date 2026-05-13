@@ -2,11 +2,11 @@ package server.bots.llm;
 
 public final class BotLlmConfig {
     public static volatile boolean enabled = true;
-    public static volatile boolean typoSuggesterEnabled = true;
+    public static volatile boolean typoSuggesterEnabled = false; // recommended off if LLM on, too many false positive and block LLM chat sometimes
 
     public static volatile String endpoint = "http://localhost:11434";
-    public static volatile String model = "qwen3.5:0.8b";
-    public static volatile int requestTimeoutMs = 15_000;
+    public static volatile String model = "gemma4:e2b";
+    public static volatile int requestTimeoutMs = 30_000;
     public static volatile int maxConcurrentGlobal = 4;
     // Hard ceiling on the FULL reply (sum across split messages). Computed
     // dynamically as maxReplyMessages * maxReplyCharsPerMessage so changing
@@ -33,7 +33,7 @@ public final class BotLlmConfig {
     // Hard cap on tokens generated. Reply is split across up to
     // maxReplyMessages chat messages of maxReplyCharsPerMessage chars each,
     // so size this to roughly cover the multi-message budget plus a bit.
-    public static volatile int maxPredictTokens = 120;
+    public static volatile int maxPredictTokens = 48;
 
     // Context window size. Our prompts stay under ~300 tokens; the default
     // 4096 wastes memory bandwidth. Lower = faster on CPU.
@@ -44,21 +44,18 @@ public final class BotLlmConfig {
     // survives via the compacted .summary.txt.
     public static volatile int recentTurnsInPrompt = 5;
 
-    // Sampling — defaults are Qwen3.5's official recommendation for
-    // non-thinking text tasks. Switch to the thinking preset (commented
-    // below) if disableThinking is set to false.
-    //
-    //  Non-thinking text (active):
-    //    temperature=1.0, top_p=1.0, top_k=20, min_p=0.0,
-    //    presence_penalty=2.0, repeat_penalty=1.0
-    //  Thinking text:
-    //    temperature=1.0, top_p=0.95, top_k=20, min_p=0.0,
-    //    presence_penalty=1.5, repeat_penalty=1.0
+    // Gemma4 official preset is temp=1.0 / top_p=0.95 / top_k=64 — tuned for general
+    // assistant use. For very short MMO chatter we tighten the tail slightly so the
+    // long-tail "weird picks" that hurt 50-token replies get clipped. Keep temperature
+    // at 1.0 since instruction-tuning was done there.
     public static volatile double temperature = 1.0;
-    public static volatile double topP = 1.0;
-    public static volatile int topK = 20;
+    public static volatile double topP = 0.9;
+    public static volatile int topK = 40;
     public static volatile double minP = 0.0;
-    public static volatile double presencePenalty = 2.0;
+    // presence_penalty was inherited from the Qwen3.5 non-thinking preset; Gemma doesn't
+    // recommend it and >0 on short replies causes "talks-around-the-word" outputs because
+    // common tokens (you/the/it) get pushed away after their first use.
+    public static volatile double presencePenalty = 0.0;
     public static volatile double repeatPenalty = 1.0;
 
     // Multi-message reply: long replies are split on sentence boundaries and
@@ -73,8 +70,17 @@ public final class BotLlmConfig {
     public static volatile boolean debugLog = true;
 
     public static volatile String memoryDir = "bots/llm-memory";
-    public static volatile int compactThresholdTurns = 32;
-    public static volatile int compactKeepRecentTurns = 8;
+    // Compaction is gap-free + history-preserving. The jsonl is append-only forever.
+    // A cursor sidecar tracks how many leading turns have been folded into the rolling
+    // summary. Compaction fires when (total - cursor) > recentTurnsInPrompt + compactBatchSize:
+    // the oldest compactBatchSize turns get summarized into summary.txt and the cursor
+    // advances. Bigger batch = fewer LLM calls per chat-active bot but more verbatim
+    // turns in the prompt. ONE LLM compact call per compactBatchSize turns.
+    public static volatile int compactBatchSize = 8;
+    // Token budget specifically for the summary-rewrite call. Larger than maxPredictTokens
+    // (which is sized for chat replies) so the rolling memory can actually carry detail.
+    // ~300 tokens ≈ 4-8 short sentences ≈ what fits comfortably in 800 chars.
+    public static volatile int summaryMaxPredictTokens = 300;
 
     private BotLlmConfig() {}
 }

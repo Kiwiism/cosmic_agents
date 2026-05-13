@@ -18,12 +18,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Per-bot conversation memory. Plain-text, on disk, gitignored.
- * - <name>.jsonl     : append-only turn log, one JSON-ish line per exchange
- * - <name>.summary.txt : compacted long-term memory, plain text
+ * - <name>.jsonl       : append-only turn log, one JSON-ish line per exchange.
+ *                        NEVER truncated — full history preserved for data hoarding.
+ * - <name>.summary.txt : rolling LLM-compacted summary of turns 0..cursor.
+ * - <name>.cursor      : integer; how many leading jsonl turns have been folded
+ *                        into summary. Advanced only on successful summarization.
  *
- * Compaction: when jsonl exceeds compactThresholdTurns, the oldest turns are
- * summarized (or just dropped if Ollama is unavailable) and the file is
- * truncated to keep only the newest compactKeepRecentTurns lines.
+ * Gap-free design: the prompt always shows ALL turns from cursor..end verbatim.
+ * Summary covers everything before cursor. Together they span the full history.
+ * Compaction fires when (total - cursor) exceeds recentTurnsInPrompt + compactBatchSize;
+ * it folds the oldest compactBatchSize uncompacted turns into the summary and advances
+ * the cursor by that amount. Failures leave the cursor untouched (try again next turn).
  */
 public final class BotMemoryStore {
     private static final Logger log = LoggerFactory.getLogger(BotMemoryStore.class);
@@ -57,19 +62,21 @@ public final class BotMemoryStore {
         }
     }
 
-    /** Returns the most recent N turns, oldest first. */
-    public static List<Turn> loadRecent(String botName, int n) {
+    /** Returns ALL uncompacted turns (cursor..end), oldest first. These plus the
+     *  summary together cover the bot's full conversation history with no gap. */
+    public static List<Turn> loadUncompacted(String botName) {
         Path p = jsonlPath(botName);
         if (!Files.exists(p)) return List.of();
+        int cursor = loadCursor(botName);
         try (BufferedReader br = Files.newBufferedReader(p, StandardCharsets.UTF_8)) {
             List<String> all = new ArrayList<>();
             String line;
             while ((line = br.readLine()) != null) {
                 if (!line.isBlank()) all.add(line);
             }
-            int from = Math.max(0, all.size() - n);
-            List<Turn> out = new ArrayList<>(all.size() - from);
-            for (int i = from; i < all.size(); i++) {
+            if (cursor > all.size()) cursor = all.size(); // sanity if cursor file got out of sync
+            List<Turn> out = new ArrayList<>(all.size() - cursor);
+            for (int i = cursor; i < all.size(); i++) {
                 Turn t = parseTurn(all.get(i));
                 if (t != null) out.add(t);
             }
@@ -104,10 +111,11 @@ public final class BotMemoryStore {
     }
 
     /**
-     * Compact: summarize oldest turns into the .summary file (best-effort via
-     * Ollama; falls back to drop-only on failure), then keep only the newest
-     * compactKeepRecentTurns lines in jsonl. Idempotent: held under a per-bot
-     * lock so concurrent calls noop.
+     * If uncompacted turns exceed recentTurnsInPrompt + compactBatchSize, fold the
+     * oldest compactBatchSize uncompacted turns into the rolling summary (previous
+     * summary is fed back in so "core memory" survives across compactions) and
+     * advance the cursor. The jsonl is never modified — history is preserved.
+     * On Ollama failure the cursor is NOT advanced; the next call retries.
      */
     public static void compact(String botName) {
         AtomicBoolean lock = COMPACTION_LOCKS.computeIfAbsent(botName, k -> new AtomicBoolean(false));
@@ -119,30 +127,30 @@ public final class BotMemoryStore {
             try (BufferedReader br = Files.newBufferedReader(p, StandardCharsets.UTF_8)) {
                 all = new ArrayList<>();
                 String line;
-                while ((line = br.readLine()) != null) all.add(line);
-            }
-            int keep = BotLlmConfig.compactKeepRecentTurns;
-            if (all.size() <= keep) return;
-
-            int splitAt = all.size() - keep;
-            List<String> oldLines = all.subList(0, splitAt);
-
-            String previousSummary = loadSummary(botName);
-            String newSummary = trySummarize(botName, previousSummary, oldLines);
-            if (newSummary != null && !newSummary.isBlank()) {
-                Files.writeString(summaryPath(botName), newSummary.trim() + "\n",
-                        StandardCharsets.UTF_8, StandardOpenOption.CREATE,
-                        StandardOpenOption.TRUNCATE_EXISTING);
-            }
-
-            try (BufferedWriter bw = Files.newBufferedWriter(p, StandardCharsets.UTF_8,
-                    StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
-                for (int i = splitAt; i < all.size(); i++) {
-                    bw.write(all.get(i));
-                    bw.write('\n');
+                while ((line = br.readLine()) != null) {
+                    if (!line.isBlank()) all.add(line);
                 }
             }
-            log.info("memory: compacted {} ({} → {} lines)", botName, all.size(), keep);
+            int cursor = loadCursor(botName);
+            if (cursor > all.size()) cursor = all.size();
+            int uncompacted = all.size() - cursor;
+            int keep = BotLlmConfig.recentTurnsInPrompt;
+            int batch = BotLlmConfig.compactBatchSize;
+            if (uncompacted <= keep + batch) return; // not enough to bother
+
+            List<String> oldLines = all.subList(cursor, cursor + batch);
+            String previousSummary = loadSummary(botName);
+            String newSummary = trySummarize(botName, previousSummary, oldLines);
+            if (newSummary == null || newSummary.isBlank()) {
+                log.info("memory: compact skipped for {} (summarizer unavailable, will retry)", botName);
+                return;
+            }
+            Files.writeString(summaryPath(botName), newSummary.trim() + "\n",
+                    StandardCharsets.UTF_8, StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING);
+            saveCursor(botName, cursor + batch);
+            log.info("memory: compacted {} (cursor {} -> {}, jsonl {} lines preserved)",
+                    botName, cursor, cursor + batch, all.size());
         } catch (IOException e) {
             log.warn("memory: compact failed for {}: {}", botName, e.toString());
         } finally {
@@ -150,21 +158,51 @@ public final class BotMemoryStore {
         }
     }
 
+    /** Number of uncompacted turns (total jsonl lines - cursor). Caller can use this
+     *  to decide whether to trigger compact() without re-reading the jsonl twice. */
+    public static int countUncompacted(String botName) {
+        return Math.max(0, countTurns(botName) - loadCursor(botName));
+    }
+
+    static int loadCursor(String botName) {
+        Path p = cursorPath(botName);
+        if (!Files.exists(p)) return 0;
+        try {
+            String s = Files.readString(p, StandardCharsets.UTF_8).trim();
+            return s.isEmpty() ? 0 : Math.max(0, Integer.parseInt(s));
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    static void saveCursor(String botName, int value) throws IOException {
+        Files.writeString(cursorPath(botName), Integer.toString(Math.max(0, value)),
+                StandardCharsets.UTF_8, StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING);
+    }
+
     private static String trySummarize(String botName, String previousSummary, List<String> oldLines) {
         if (!BotLlmConfig.enabled) return null;
         StringBuilder convo = new StringBuilder();
         if (!previousSummary.isBlank()) {
-            convo.append("Prior memory: ").append(previousSummary).append("\n\n");
+            convo.append("Prior memory (keep core facts from this; merge new chat into it, do not lose anything important):\n")
+                    .append(previousSummary).append("\n\n");
         }
-        convo.append("Recent chat to summarize:\n");
+        convo.append("New chat to fold in:\n");
         for (String l : oldLines) {
             Turn t = parseTurn(l);
             if (t == null) continue;
             convo.append(t.sender).append(" (").append(t.relation).append("): ").append(t.msg).append("\n");
             convo.append(botName).append(": ").append(t.reply).append("\n");
         }
-        String sys = "You compress chat memory. Reply with 1-2 short sentences capturing who the speakers are and what they care about. No preamble.";
-        return OllamaClient.generate(convo.toString(), sys).orElse(null);
+        String sys = "You maintain a rolling memory note about an MMO character named " + botName + ". "
+                + "Output ONLY the updated memory — no preamble, no quotes, no labels. "
+                + "Write 4-8 short factual sentences in third person. Persist across rewrites: "
+                + "who each speaker is (owner / party / strangers), their stated names, recurring topics, "
+                + "promises made, gear/items mentioned, places visited, jokes/nicknames, anything personal. "
+                + "Drop small-talk filler. If prior memory exists, integrate the new chat into it without "
+                + "discarding earlier facts unless directly contradicted. Stay under 800 chars.";
+        return OllamaClient.generateLong(convo.toString(), sys, BotLlmConfig.summaryMaxPredictTokens).orElse(null);
     }
 
     private static Path jsonlPath(String botName) {
@@ -173,6 +211,10 @@ public final class BotMemoryStore {
 
     private static Path summaryPath(String botName) {
         return Paths.get(BotLlmConfig.memoryDir, sanitize(botName) + ".summary.txt");
+    }
+
+    private static Path cursorPath(String botName) {
+        return Paths.get(BotLlmConfig.memoryDir, sanitize(botName) + ".cursor");
     }
 
     private static String sanitize(String name) {

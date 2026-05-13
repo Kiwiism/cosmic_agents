@@ -942,8 +942,14 @@ public class BotManager {
                 }
             }
             BotChatManager.handleChat(targetedBot.entry(), cmd);
+            boolean matched = BotChatManager.wasLastChatHandled();
+            if (matched && targetedBot.entry().getOwner() != null
+                    && owner.getId() == targetedBot.entry().getOwner().getId()) {
+                targetedBot.entry().lastOwnerCommand = cmd;
+                targetedBot.entry().lastOwnerCommandAtMs = System.currentTimeMillis();
+            }
             // Fall through to LLM only if no command pattern matched.
-            if (server.bots.llm.BotLlmConfig.enabled && !BotChatManager.wasLastChatHandled()) {
+            if (server.bots.llm.BotLlmConfig.enabled && !matched) {
                 server.bots.llm.BotLlmReplyManager.maybeRespond(targetedBot.entry(), owner, cmd);
             }
             return;
