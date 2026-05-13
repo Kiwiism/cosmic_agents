@@ -1018,6 +1018,28 @@ class BotCombatManager {
 
     static void markAlerted(BotEntry entry) {
         entry.alertedUntilMs = System.currentTimeMillis() + ALERT_DURATION_MS;
+        scheduleAlertReset(entry);
+    }
+
+    // Ensures the bot broadcasts a fresh STAND packet when the alert timer expires, even if
+    // it has stopped moving in the meantime (otherwise the last-sent ALERT wire stance sticks).
+    // Self-reschedules if markAlerted extended the deadline while we were waiting.
+    private static void scheduleAlertReset(BotEntry entry) {
+        if (entry.alertResetScheduled) return;
+        entry.alertResetScheduled = true;
+        long delay = Math.max(50L, entry.alertedUntilMs - System.currentTimeMillis() + 100L);
+        BotManager.after(delay, () -> {
+            long now = System.currentTimeMillis();
+            if (now < entry.alertedUntilMs) {
+                entry.alertResetScheduled = false;
+                scheduleAlertReset(entry);
+                return;
+            }
+            entry.alertResetScheduled = false;
+            try {
+                if (entry.bot != null) entry.bot.broadcastStance();
+            } catch (Throwable ignored) {}
+        });
     }
 
     private static AttackPlan planAoeAttack(BotEntry entry, Character bot, Monster primaryTarget) {
