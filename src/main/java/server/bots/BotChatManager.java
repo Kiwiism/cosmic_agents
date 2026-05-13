@@ -117,12 +117,15 @@ public class BotChatManager {
             "white knight|wk|dragon knight)\\b", Pattern.CASE_INSENSITIVE);
 
 
+    // Whole-message match (with optional trailing punctuation/whitespace) so
+    // longer chat like "hi how are you today" falls through to the LLM instead
+    // of being short-circuited by a canned greeting.
     private static final Pattern GREETING_PATTERN = Pattern.compile(
-            "\\b(hi+|hey+|hello+|sup|yo+|howdy|hiya|heya|hai|ello|"
+            "^\\s*(hi+|hey+|hello+|sup|yo+|howdy|hiya|heya|hai|ello|"
             + "whats?\\s*up|waz+up|wassup|hows?\\s+it\\s+going|"
             + "(good\\s+)?(morning|evening|afternoon)|"
             + "how\\s+(are|r)\\s+(you|u|ya)(\\s+doing)?|"
-            + "what.?s\\s+(good|up|new|poppin.?))\\b",
+            + "what.?s\\s+(good|up|new|poppin.?))\\s*[?!.,]*\\s*$",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern FIDGET_PATTERN = Pattern.compile(
             "^\\s*fidget\\s*[?!.,]*\\s*$",
@@ -922,7 +925,7 @@ public class BotChatManager {
                 entry.bot.changeFaceExpression(randomFidgetExpression());
                 BotFidgetManager.maybeStartSocialFidget(entry);
             });
-        } else if (GREETING_PATTERN.matcher(message).find()) {
+        } else if (GREETING_PATTERN.matcher(message).matches()) {
             BotManager.after(BotManager.randMs(900, 1100), () -> {
                 entry.bot.changeFaceExpression(Emote.HAPPY.getValue());
                 BotFidgetManager.maybeStartGreetingFidget(entry, ThreadLocalRandom.current().nextInt(100));
