@@ -1,7 +1,7 @@
 package server.bots.llm;
 
 public final class BotLlmConfig {
-    public static volatile boolean enabled = true;
+    public static volatile boolean enabled = false;
     public static volatile boolean typoSuggesterEnabled = false; // recommended off if LLM on, too many false positive and block LLM chat sometimes
 
     public static volatile String endpoint = "http://localhost:11434";
