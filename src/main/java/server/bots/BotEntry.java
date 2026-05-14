@@ -134,6 +134,8 @@ public class BotEntry {
     long shopVisitStartedAtMs = 0L;
     long shopSequenceStartedAtMs = 0L;
     boolean shopSellTrashPending = false;
+    Point shopStuckCheckPos = null;
+    long shopStuckCheckAtMs = 0L;
 
     // Damage taken
     long deadUntil = 0;

@@ -28,7 +28,7 @@ import java.util.concurrent.ThreadLocalRandom;
 final class BotShopManager {
 
     private static final int SHOP_MANHATTAN_RADIUS = 200;
-    private static final int SHOP_ARRIVE_DIST = 50;
+    private static final int SHOP_ARRIVE_DIST = 100;
     private static final int SHOP_NPC_SEARCH_DIST = 601;
     private static final int SHOP_APPROACH_DELAY_MAX_MS = 5001;
     private static final int SHOP_STEP_DELAY_MIN_MS = 2000;
@@ -36,6 +36,9 @@ final class BotShopManager {
     private static final int SELL_TRASH_STEP_DELAY_MS = 500;
     private static final long SHOP_VISIT_TIMEOUT_MS = 30_000L;
     private static final long SHOP_SEQUENCE_TIMEOUT_MS = 45_000L;
+    private static final int SHOP_STUCK_FALLBACK_DIST = 200;
+    private static final long SHOP_STUCK_FALLBACK_MS = 1000L;
+    private static final int SHOP_STUCK_MOVE_TOLERANCE_PX = 2;
     private static final int POT_TRIGGER_THRESHOLD = 4; // 80% of target (5) for early trigger
     private static final int POT_TARGET_THRESHOLD = 5; // full target when buying at shop
     private static final int AMMO_TRIGGER_THRESHOLD = 8;
@@ -176,7 +179,11 @@ final class BotShopManager {
 
         Point botPos = bot.getPosition();
         Point target = entry.shopTargetPos != null ? entry.shopTargetPos : entry.shopNpcPos;
-        if (botPos.distanceSq(target) <= (long) SHOP_ARRIVE_DIST * SHOP_ARRIVE_DIST) {
+        if (!entry.shopSequenceActive
+                && tryStuckFallback(entry, bot, botPos, target, now)) {
+            target = entry.shopTargetPos;
+        }
+        if (manhattan(botPos, target) <= SHOP_ARRIVE_DIST) {
             if (!entry.shopSequenceActive) {
                 entry.shopSequenceActive = true;
                 entry.shopSequenceStartedAtMs = System.currentTimeMillis();
@@ -188,6 +195,38 @@ final class BotShopManager {
         }
 
         return true;
+    }
+
+    private static boolean tryStuckFallback(BotEntry entry, Character bot, Point botPos, Point target, long now) {
+        if (target == null || entry.shopNpcPos == null) {
+            return false;
+        }
+        if (entry.shopStuckCheckPos == null) {
+            entry.shopStuckCheckPos = new Point(botPos);
+            entry.shopStuckCheckAtMs = now;
+            return false;
+        }
+        if (botPos.distanceSq(entry.shopStuckCheckPos)
+                > (long) SHOP_STUCK_MOVE_TOLERANCE_PX * SHOP_STUCK_MOVE_TOLERANCE_PX) {
+            entry.shopStuckCheckPos.setLocation(botPos);
+            entry.shopStuckCheckAtMs = now;
+            return false;
+        }
+        if (now - entry.shopStuckCheckAtMs < SHOP_STUCK_FALLBACK_MS) {
+            return false;
+        }
+        if (botPos.distanceSq(target) > (long) SHOP_STUCK_FALLBACK_DIST * SHOP_STUCK_FALLBACK_DIST) {
+            return false;
+        }
+        if (findNpcNear(bot, entry.shopNpcPos) == null) {
+            return false;
+        }
+        entry.shopTargetPos = new Point(botPos);
+        return true;
+    }
+
+    private static int manhattan(Point a, Point b) {
+        return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
     }
 
     private static NpcShopMatch findBestShop(Character bot, boolean allowAnyShop) {
@@ -642,7 +681,7 @@ final class BotShopManager {
                 && entry.shopSequenceActive
                 && npcPos != null
                 && bot.getMap() != null
-                && bot.getPosition().distanceSq(entry.shopTargetPos != null ? entry.shopTargetPos : npcPos) <= (long) SHOP_ARRIVE_DIST * SHOP_ARRIVE_DIST
+                && manhattan(bot.getPosition(), entry.shopTargetPos != null ? entry.shopTargetPos : npcPos) <= SHOP_ARRIVE_DIST
                 && findNpcNear(bot, npcPos) != null;
     }
 
@@ -659,6 +698,8 @@ final class BotShopManager {
         entry.shopVisitStartedAtMs = 0L;
         entry.shopSequenceStartedAtMs = 0L;
         entry.shopSellTrashPending = false;
+        entry.shopStuckCheckPos = null;
+        entry.shopStuckCheckAtMs = 0L;
     }
 
     private static long stepDelayMs() {
