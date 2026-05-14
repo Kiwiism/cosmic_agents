@@ -122,6 +122,7 @@ class BotEquipManager {
         }
 
         List<Short> dpSlots = buildDpSlots(bySlot, currentBySlot);
+        boolean[] reqRel = scanReqRelevantDims(bySlot, ii);
 
         // Outer weapon pool: currently-wearable + stat-only-blocked + currently equipped.
         List<Equip> weaponPool = new ArrayList<>(bySlot.getOrDefault((short) -11, List.of()));
@@ -136,7 +137,7 @@ class BotEquipManager {
         Equip bestWeapon = currentWeapon;
         boolean anyCapHit = false;
         for (Equip w : weaponPool) {
-            DpResult r = solveForWeapon(bot, ii, naked, w, dpSlots, currentBySlot, bySlot, mob);
+            DpResult r = solveForWeapon(bot, ii, naked, w, dpSlots, currentBySlot, bySlot, mob, reqRel);
             if (r == null) continue;
             if (r.paretoCapHit()) anyCapHit = true;
             if (bestScore == null || compareScores(r.score(), bestScore) > 0) {
@@ -147,7 +148,7 @@ class BotEquipManager {
         }
         // Every weapon failed reqs — fall back to a no-weapon plan so the armor pass still runs.
         if (bestPicks == null && !weaponPool.contains(null)) {
-            DpResult r = solveForWeapon(bot, ii, naked, null, dpSlots, currentBySlot, bySlot, mob);
+            DpResult r = solveForWeapon(bot, ii, naked, null, dpSlots, currentBySlot, bySlot, mob, reqRel);
             if (r != null) {
                 bestScore = r.score();
                 bestPicks = r.picks();
@@ -243,6 +244,7 @@ class BotEquipManager {
         }
 
         List<Short> dpSlots = buildDpSlots(bySlot, currentBySlot);
+        boolean[] reqRel = scanReqRelevantDims(bySlot, ii);
 
         List<Equip> weaponPool = new ArrayList<>(bySlot.getOrDefault((short) -11, List.of()));
         Equip currentWeapon = compatibleWeaponOrNull(bot, ii, (Equip) eqdInv.getItem((short) -11));
@@ -258,7 +260,7 @@ class BotEquipManager {
         List<Branch> branches = new ArrayList<>();
         boolean anyCap = false;
         for (Equip w : weaponPool) {
-            DpResult r = solveForWeapon(bot, ii, naked, w, dpSlots, currentBySlot, bySlot, mob);
+            DpResult r = solveForWeapon(bot, ii, naked, w, dpSlots, currentBySlot, bySlot, mob, reqRel);
             if (r != null) {
                 branches.add(new Branch(w, r));
                 if (r.paretoCapHit()) anyCap = true;
@@ -267,7 +269,7 @@ class BotEquipManager {
         // Last-resort fallback: every weapon's reqs failed against the bare snapshot. Try a
         // no-weapon branch so we still produce a best-effort armor plan instead of giving up.
         if (branches.isEmpty() && !weaponPool.contains(null)) {
-            DpResult r = solveForWeapon(bot, ii, naked, null, dpSlots, currentBySlot, bySlot, mob);
+            DpResult r = solveForWeapon(bot, ii, naked, null, dpSlots, currentBySlot, bySlot, mob, reqRel);
             if (r != null) branches.add(new Branch(null, r));
         }
         branches.sort((a, b) -> compareScores(b.result().score(), a.result().score()));
@@ -398,8 +400,9 @@ class BotEquipManager {
         }
         record Br(Equip w, DpResult r) {}
         List<Br> sorted = new ArrayList<>();
+        boolean[] reqRel = scanReqRelevantDims(bySlot, ii);
         for (Equip w : weaponPool) {
-            DpResult r = solveForWeapon(bot, ii, naked, w, dpSlots, currentBySlot, bySlot, mob);
+            DpResult r = solveForWeapon(bot, ii, naked, w, dpSlots, currentBySlot, bySlot, mob, reqRel);
             if (r != null) sorted.add(new Br(w, r));
         }
         sorted.sort((a, b) -> compareScores(b.r().score(), a.r().score()));
@@ -606,7 +609,7 @@ class BotEquipManager {
         EquipScore bestScore = null;
         Equip bestWeapon = null;
         for (Equip w : weaponPool) {
-            DpResult r = solveForWeapon(bot, hooks, naked, w, dpSlots, currentBySlot, bySlot, mob);
+            DpResult r = solveForWeapon(bot, hooks, naked, w, dpSlots, currentBySlot, bySlot, mob, reqRel);
             if (r == null) continue;
             if (bestScore == null || compareScores(r.score(), bestScore) > 0) {
                 bestScore = r.score();
@@ -615,7 +618,7 @@ class BotEquipManager {
             }
         }
         if (bestPicks == null && !weaponPool.contains(null)) {
-            DpResult r = solveForWeapon(bot, hooks, naked, null, dpSlots, currentBySlot, bySlot, mob);
+            DpResult r = solveForWeapon(bot, hooks, naked, null, dpSlots, currentBySlot, bySlot, mob, reqRel);
             if (r != null) { bestPicks = r.picks(); bestWeapon = null; }
         }
         return new OptimizerResult(bestWeapon, bestPicks != null ? bestPicks : Map.of());
@@ -715,8 +718,19 @@ class BotEquipManager {
                                             Map<Short, Equip> currentBySlot,
                                             Map<Short, List<Equip>> bySlot,
                                             MapDamageProfile mob) {
+        return solveForWeapon(bot, ii, naked, weapon, dpSlots, currentBySlot, bySlot,
+                mob, scanReqRelevantDims(bySlot, ii));
+    }
+
+    static DpResult solveForWeapon(Character bot, ItemInformationProvider ii,
+                                            StatSnapshot naked, Equip weapon,
+                                            List<Short> dpSlots,
+                                            Map<Short, Equip> currentBySlot,
+                                            Map<Short, List<Equip>> bySlot,
+                                            MapDamageProfile mob,
+                                            boolean[] reqRel) {
         return solveForWeapon(bot, OptimizerHooks.from(ii), naked, weapon, dpSlots,
-                              currentBySlot, bySlot, mob);
+                              currentBySlot, bySlot, mob, reqRel);
     }
 
     static DpResult solveForWeapon(Character bot, OptimizerHooks hooks,
@@ -725,11 +739,21 @@ class BotEquipManager {
                                             Map<Short, Equip> currentBySlot,
                                             Map<Short, List<Equip>> bySlot,
                                             MapDamageProfile mob) {
+        return solveForWeapon(bot, hooks, naked, weapon, dpSlots, currentBySlot, bySlot,
+                mob, scanReqRelevantDims(bySlot, hooks));
+    }
+
+    private static DpResult solveForWeapon(Character bot, OptimizerHooks hooks,
+                                            StatSnapshot naked, Equip weapon,
+                                            List<Short> dpSlots,
+                                            Map<Short, Equip> currentBySlot,
+                                            Map<Short, List<Equip>> bySlot,
+                                            MapDamageProfile mob,
+                                            boolean[] reqRel) {
         StatSnapshot init = weapon != null ? naked.swap(null, weapon) : naked;
         boolean is2H = weapon != null && hooks.isTwoHanded(weapon.getItemId());
         WeaponType wt = weapon != null ? hooks.getWeaponType(weapon.getItemId()) : null;
         boolean[] capHit = {false};
-        boolean[] reqRel = scanReqRelevantDims(bySlot, hooks);
 
         int n = dpSlots.size();
         int overallIdx = dpSlots.indexOf((short) -5);
