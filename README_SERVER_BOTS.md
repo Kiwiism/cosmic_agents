@@ -1,4 +1,3 @@
-
 # Bot System — Quick Start Guide
 
 ## Features
@@ -9,7 +8,7 @@
 - auto share potions/ammo among themselves and to owner(if requested) when running low while farming
 - auto equip and optimize own gear loadout - including chaining stats bonus to unlock higher requirement equips and weapons, allowing dexless/strless/lukless builds
 - auto share equipment upgrades with owner and other sibling bots (auto compare stats directly against recipient's inventory)
-- auto sort equipment from junk equip so selling trash equips become manageable. (auto sell may come later when I trust it enough to not sell something useful)
+- auto sort equipment from junk equip so selling trash equips become manageable. (sell trash command available)
 - auto complete any quest the owner turn in (with rewards)
 - Party Quest Automation(currently only KPQ 1st stage + auto accept rewards 5th stage)
 - Each bot is a real character you can log in as, can spawn your alts as bots
@@ -67,27 +66,28 @@ jason stop - only jason will stop
 
 | Say | Effect |
 |---|---|
-| `follow` / `follow me` / `come here` / `come` | Bot follows you |
+| `follow (me) (here)` / `come (here)` | Bot follows you |
 | `follow <name>` | follows party member or sibling bot |
 | `stop` / `stay` / `wait` / `hold on` / `idle` / `park here` | Bot stops moving |
 | `move here` / `go here` / `move` / `here` | Bot moves to your exact position and stops (Handy for party quest puzzles) |
-| `grind` / `farm` / `hunt` / `kill mobs` / `auto on` / `go get exp` | Bot starts combat AI |
-| `farm here` / `grind here` / `sentry` / `camp` / `guard mode` / `post up` / `anchor here` | Bot grinds from your current spot instead of following |
+| `grind` / `farm` / `hunt` / `kill mobs` / `auto on` / `go get exp` | Seek and kill mobs automatically map wide |
+| `patrol` / `roam` / `wander`| Prioritize farming at specified platform and nearby platforms only |
+| `sentry` / `camp` / `guard mode` / `post up` / `anchor here` / `farm here` / `grind here` /  | Stand at exact position, never chase, only attacking anything in range |
 | `fidget` | Trigger a small idle/social fidget |
 
 ### Info
 
 | Say | Effect |
 |---|---|
+| `inventory` / `inv` / `items` / `equips` | Inventory summary |
+| `slots` | Free inventory slot count |
 | `stats` / `str` / `dex` / `int` / `luk` / `level` | Level and stat summary |
 | `range` / `damage` / `dmg` / `watk` | Damage range and hardest-mob hit chance |
-| `speed` / `jump` / `movement stats` | Movement stat breakdown |
 | `build` / `ap` / `sp` | AP/SP allocation |
 | `skills` | Skill tree summary |
-| `inventory` / `inv` / `items` / `equips` | Inventory summary |
 | `mesos` / `cash` | Meso count |
+| `speed` / `jump` / `movement stats` | Movement stat breakdown |
 | `exp` / `xp` / `experience` | EXP progress |
-| `slots` | Free inventory slot count |
 | `scrolls` | Scrolls on hand |
 | `pots` / `potions` | HP/MP pot count |
 | `buffs?` / `buff list` | Buff-pot mode and active/available buff summary |
@@ -96,7 +96,7 @@ jason stop - only jason will stop
 | `pot debug` / `autopot debug` | Auto-pot selection/debug info |
 | `buff debug` / `active buffs` | Buff consumable debug state |
 | `skill buff debug` | Skill-buff debug state |
-| `help` / `commands` | Prints command list |
+| `help` / `commands` | Prints command list(super spammy) |
 
 ### Support (buffs & heals for the party)
 
@@ -150,16 +150,17 @@ Verbs: `trade [me] <type/name>`, `give [me] <type/name>`, `drop <type/name>`, `p
 | `trade pots` | Trade all potions |
 | `trade buff` | Trade buff potions |
 | `trade equips` | Trade all equips |
-| `trade trash` / `trade junk` | Trade only unreserved/disposable equips |
+| `trade trash` / `trade junk` / `show junk` | Trade only unreserved equips |
 | `trade use` | Trade all use-tab items |
 | `trade etc` | Trade etc/junk items |
 | `trade 100k` / `give mesos` | Trade mesos |
 | `trade <item name>` | Trade a named item |
-| `trade <slot>` | Unequip then trade the item ex. `trade hat` |
-| `show me your <slot>` / `can I see your <slot>` | Unequip then trade the item ex. `show me your hat` |
-| `show me your junk` / `show your junk` | Alias for `trade trash` |
-| `drop scrolls` / `drop equips` / etc | Drop category to ground |
+| `trade <slot>` | Unequip then trade the item ex. `trade hat`, `trade gloves` |
+| `drop <category>` | Drop category to ground (same syntax as trading, but drop instead, requires confirmation) |
+| `show (me) (your) <slot>` / `can I see your <slot>` | Unequip then trade the item ex. `show me your hat` 
 | `give me <item name>` / `pass me <item name>` | Same named-item trade flow with alternate verbs |
+| `sell trash` / `sell junk` | Sell unreserved equips, use with caution\* |
+\* sell trash command automatically excludes items with good stats and scrolled items (be careful as brown work glove and potentially many low stats but rare accessories will still be sold if not scrolled, who knows what other edge cases exists, when bot hold expensive accessories, manually trading and selling yourself will always be safer
 
 ### Build & Job
 
@@ -169,6 +170,12 @@ Verbs: `trade [me] <type/name>`, `give [me] <type/name>`, `drop <type/name>`, `p
 | `respec ap` / `reset ap`                  | Refund and re-assign AP |
 | `change build`                            | Re-prompt AP build selection |
 | job name in chat while prompted           | Pick the requested advancement/build option |
+
+### Debug Commands
+| Say                                       | Effect                  |
+|-------------------------------------------|-------------------------|
+| `!botperfdebug` | Toggle console spam on bot performance |
+| `!botnav`                  | Navigation debug command |
 
 ## Notes
 - Bot characters can be logged into as normal accounts (user = bot name, password = `botbot`) to manually equip or manage inventory.
