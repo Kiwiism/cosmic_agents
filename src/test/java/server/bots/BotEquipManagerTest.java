@@ -819,7 +819,7 @@ class BotEquipManagerTest {
     }
 
     @Test
-    void selfReserveRejectsGearBlockedByCurrentLevelOrFame() {
+    void selfReserveKeepsFutureGearBlockedByCurrentLevelOrFame() {
         Character bot = mock(Character.class);
         when(bot.getJob()).thenReturn(Job.ASSASSIN);
         when(bot.getLevel()).thenReturn(43);
@@ -854,14 +854,17 @@ class BotEquipManagerTest {
                 Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4,
                 Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4, Short.MAX_VALUE)).thenReturn(true);
 
-        Set<Equip> keep = BotEquipManager.selectOwnedItemsForSelfReserve(bot, hooks,
-                List.of(wearable, levelBlocked, fameBlocked));
+        Set<Equip> levelKeep = BotEquipManager.selectOwnedItemsForSelfReserve(bot, hooks,
+                List.of(wearable, levelBlocked));
+        Set<Equip> fameKeep = BotEquipManager.selectOwnedItemsForSelfReserve(bot, hooks,
+                List.of(wearable, fameBlocked));
 
-        assertTrue(keep.contains(wearable));
-        assertFalse(keep.contains(levelBlocked),
-                "self-reserve must not keep gear blocked by current level");
-        assertFalse(keep.contains(fameBlocked),
-                "self-reserve must not keep gear blocked by current fame");
+        assertTrue(levelKeep.contains(wearable));
+        assertTrue(levelKeep.contains(levelBlocked),
+                "self-reserve should keep future own-class gear blocked only by current level");
+        assertTrue(fameKeep.contains(wearable));
+        assertTrue(fameKeep.contains(fameBlocked),
+                "self-reserve should keep future own-class gear blocked only by current fame");
     }
 
     @Test

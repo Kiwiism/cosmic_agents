@@ -1493,7 +1493,7 @@ class BotEquipManager {
         Map<String, List<Equip>> byTrack = new LinkedHashMap<>();
         for (Equip equip : ownedItems) {
             if (equip == null || hooks.isCash(equip.getItemId())) continue;
-            if (!isOwnClassEquip(bot, hooks, equip)) continue;
+            if (!isFutureOwnClassEquip(bot, hooks, equip)) continue;
             if (!hasPositiveRelevant(relevant, equip)) continue;
             String track = selfReserveTrackKey(bot, hooks, equip);
             if (track == null) continue;
@@ -1601,6 +1601,12 @@ class BotEquipManager {
         return hooks.meetsReqs(equip, bot.getJob(), level,
                 Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4,
                 Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4, bot.getFame());
+    }
+
+    private static boolean isFutureOwnClassEquip(Character bot, EquipUsefulnessHooks hooks, Equip equip) {
+        return hooks.meetsReqs(equip, bot.getJob(), Short.MAX_VALUE,
+                Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4,
+                Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4, Short.MAX_VALUE);
     }
 
     private static String textSlotKey(EquipUsefulnessHooks hooks, Equip equip) {
