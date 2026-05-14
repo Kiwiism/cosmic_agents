@@ -365,22 +365,25 @@ final class BotShopManager {
             return;
         }
 
+        List<Item> plan = List.copyOf(items);
         scheduleShopStep(sequence.entry(), SELL_TRASH_STEP_DELAY_MS,
                 () -> runSellTrashStep(
                         sequence.entry(),
                         sequence.bot(),
                         sequence.npcPos(),
                         0,
-                        Collections.newSetFromMap(new IdentityHashMap<>())));
+                        Collections.newSetFromMap(new IdentityHashMap<>()),
+                        plan));
     }
 
-    private static void runSellTrashStep(BotEntry entry, Character bot, Point npcPos, int soldCount, Set<Item> failedItems) {
+    private static void runSellTrashStep(BotEntry entry, Character bot, Point npcPos, int soldCount, Set<Item> failedItems, List<Item> plan) {
         if (!isShopSequenceValid(entry, bot, npcPos)) {
             clearShopState(entry);
             return;
         }
 
-        List<Item> items = BotInventoryManager.collectSellTrashEquips(entry, bot).stream()
+        List<Item> items = plan.stream()
+                .filter(item -> BotInventoryManager.hasItem(bot, item))
                 .filter(item -> !failedItems.contains(item))
                 .toList();
         if (items.isEmpty()) {
@@ -400,7 +403,7 @@ final class BotShopManager {
         Item item = items.get(0);
         if (!BotInventoryManager.hasItem(bot, item)) {
             scheduleShopStep(entry, SELL_TRASH_STEP_DELAY_MS,
-                    () -> runSellTrashStep(entry, bot, npcPos, soldCount, failedItems));
+                    () -> runSellTrashStep(entry, bot, npcPos, soldCount, failedItems, plan));
             return;
         }
 
@@ -419,13 +422,13 @@ final class BotShopManager {
         if (BotInventoryManager.hasItem(bot, item)) {
             failedItems.add(item);
             scheduleShopStep(entry, SELL_TRASH_STEP_DELAY_MS,
-                    () -> runSellTrashStep(entry, bot, npcPos, soldCount, failedItems));
+                    () -> runSellTrashStep(entry, bot, npcPos, soldCount, failedItems, plan));
             return;
         }
 
         int nextSoldCount = soldCount + 1;
         scheduleShopStep(entry, SELL_TRASH_STEP_DELAY_MS,
-                () -> runSellTrashStep(entry, bot, npcPos, nextSoldCount, failedItems));
+                () -> runSellTrashStep(entry, bot, npcPos, nextSoldCount, failedItems, plan));
     }
 
     private static String buildSellTrashFailureMessage(int failedCount) {
