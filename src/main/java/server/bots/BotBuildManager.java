@@ -4,6 +4,8 @@ import client.Character;
 import client.Job;
 import client.Skill;
 import client.SkillFactory;
+import client.Stat;
+import client.processor.stat.AssignAPProcessor;
 import constants.game.GameConstants;
 import java.util.ArrayList;
 import java.util.List;
@@ -99,7 +101,12 @@ class BotBuildManager {
             return prompt != null ? prompt : "need your ap build first";
         }
 
-        if (!bot.assignStrDexIntLuk(4 - bot.getStr(), 4 - bot.getDex(), 4 - bot.getInt(), 4 - bot.getLuk())) {
+        int minStr = AssignAPProcessor.getMinStatFloor(bot.getJob(), Stat.STR);
+        int minDex = AssignAPProcessor.getMinStatFloor(bot.getJob(), Stat.DEX);
+        int minInt = AssignAPProcessor.getMinStatFloor(bot.getJob(), Stat.INT);
+        int minLuk = AssignAPProcessor.getMinStatFloor(bot.getJob(), Stat.LUK);
+
+        if (!bot.assignStrDexIntLuk(minStr - bot.getStr(), minDex - bot.getDex(), minInt - bot.getInt(), minLuk - bot.getLuk())) {
             return "couldnt rebuild my ap";
         }
 

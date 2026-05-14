@@ -1,6 +1,7 @@
 package client.processor.stat;
 
 import client.Job;
+import client.Stat;
 import org.junit.jupiter.api.Test;
 
 import java.util.function.BiFunction;
@@ -8,6 +9,25 @@ import java.util.function.BiFunction;
 import static org.junit.jupiter.api.Assertions.*;
 
 class AssignAPProcessorTest {
+
+    @Test
+    void getMinStatFloor() {
+        assertAll(
+                () -> assertEquals(4, AssignAPProcessor.getMinStatFloor(Job.BEGINNER, Stat.STR)),
+                () -> assertEquals(35, AssignAPProcessor.getMinStatFloor(Job.WARRIOR, Stat.STR)),
+                () -> assertEquals(35, AssignAPProcessor.getMinStatFloor(Job.CRUSADER, Stat.STR)),
+                () -> assertEquals(35, AssignAPProcessor.getMinStatFloor(Job.DAWNWARRIOR4, Stat.STR)),
+                () -> assertEquals(20, AssignAPProcessor.getMinStatFloor(Job.MAGICIAN, Stat.INT)),
+                () -> assertEquals(20, AssignAPProcessor.getMinStatFloor(Job.BLAZEWIZARD2, Stat.INT)),
+                () -> assertEquals(25, AssignAPProcessor.getMinStatFloor(Job.BOWMASTER, Stat.DEX)),
+                () -> assertEquals(25, AssignAPProcessor.getMinStatFloor(Job.ASSASSIN, Stat.DEX)),
+                () -> assertEquals(25, AssignAPProcessor.getMinStatFloor(Job.NIGHTWALKER3, Stat.DEX)),
+                () -> assertEquals(20, AssignAPProcessor.getMinStatFloor(Job.PIRATE, Stat.DEX)),
+                () -> assertEquals(20, AssignAPProcessor.getMinStatFloor(Job.THUNDERBREAKER4, Stat.DEX)),
+                () -> assertEquals(4, AssignAPProcessor.getMinStatFloor(Job.ASSASSIN, Stat.LUK)),
+                () -> assertEquals(4, AssignAPProcessor.getMinStatFloor(Job.MAGICIAN, Stat.DEX))
+        );
+    }
 
     @Test
     void getMinHp() {

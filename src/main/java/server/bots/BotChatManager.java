@@ -4,9 +4,11 @@ import client.Character;
 import client.Job;
 import client.Skill;
 import client.SkillFactory;
+import client.Stat;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.WeaponType;
+import client.processor.stat.AssignAPProcessor;
 import constants.game.ExpTable;
 import constants.game.GameConstants;
 import constants.inventory.ItemConstants;
@@ -1621,30 +1623,34 @@ public class BotChatManager {
         Job job = entry.bot.getJob();
 
         if (job.isA(Job.WARRIOR) && AP_PURE_STR_PATTERN.matcher(message).find()) {
+            int minDex = minStatFloor(job, Stat.DEX);
             applyApBuildChoice(entry,
                     new BotBuildManager.ApBuild(BotBuildManager.StatType.STR, BotBuildManager.StatType.DEX, 4),
-                    "dexless it is! dumping everything into str",
+                    "dexless it is! keeping dex at " + minDex + ", rest into str",
                     "already doing dexless!");
             return;
         }
         if (job.isA(Job.THIEF) && AP_DEXLESS_PATTERN.matcher(message).find()) {
+            int minDex = minStatFloor(job, Stat.DEX);
             applyApBuildChoice(entry,
                     new BotBuildManager.ApBuild(BotBuildManager.StatType.LUK, BotBuildManager.StatType.DEX, 4),
-                    "dexless it is! keeping dex at base, rest into luk",
+                    "dexless it is! keeping dex at " + minDex + ", rest into luk",
                     "already doing dexless!");
             return;
         }
         if (job.isA(Job.MAGICIAN) && AP_LUKLESS_PATTERN.matcher(message).find()) {
+            int minLuk = minStatFloor(job, Stat.LUK);
             applyApBuildChoice(entry,
                     new BotBuildManager.ApBuild(BotBuildManager.StatType.INT, BotBuildManager.StatType.LUK, 4),
-                    "lukless it is! keeping luk at base, rest into int",
+                    "lukless it is! keeping luk at " + minLuk + ", rest into int",
                     "already doing lukless!");
             return;
         }
         if (job.isA(Job.BOWMAN) && AP_STRLESS_PATTERN.matcher(message).find()) {
+            int minStr = minStatFloor(job, Stat.STR);
             applyApBuildChoice(entry,
                     new BotBuildManager.ApBuild(BotBuildManager.StatType.DEX, BotBuildManager.StatType.STR, 4),
-                    "strless it is! keeping str at base, rest into dex",
+                    "strless it is! keeping str at " + minStr + ", rest into dex",
                     "already doing strless!");
             return;
         }
@@ -1653,13 +1659,14 @@ public class BotChatManager {
             Matcher matcher = AP_FIXED_DEX_PATTERN.matcher(message);
             if (matcher.find()) {
                 int dexTarget = Integer.parseInt(matcher.group(1));
+                int legalDexTarget = Math.max(minStatFloor(job, Stat.DEX), dexTarget);
                 BotBuildManager.StatType primary = job.isA(Job.WARRIOR)
                         ? BotBuildManager.StatType.STR
                         : BotBuildManager.StatType.LUK;
                 applyApBuildChoice(entry,
                         new BotBuildManager.ApBuild(primary, BotBuildManager.StatType.DEX, dexTarget),
-                        "ok! keeping dex at " + Math.max(4, dexTarget) + ", rest into " + primary.name().toLowerCase(Locale.ROOT),
-                        "already doing " + Math.max(4, dexTarget) + " dex build!");
+                        "ok! keeping dex at " + legalDexTarget + ", rest into " + primary.name().toLowerCase(Locale.ROOT),
+                        "already doing " + legalDexTarget + " dex build!");
                 return;
             }
         }
@@ -1667,10 +1674,11 @@ public class BotChatManager {
             Matcher matcher = AP_FIXED_LUK_PATTERN.matcher(message);
             if (matcher.find()) {
                 int lukTarget = Integer.parseInt(matcher.group(1));
+                int legalLukTarget = Math.max(minStatFloor(job, Stat.LUK), lukTarget);
                 applyApBuildChoice(entry,
                         new BotBuildManager.ApBuild(BotBuildManager.StatType.INT, BotBuildManager.StatType.LUK, lukTarget),
-                        "ok! keeping luk at " + Math.max(4, lukTarget) + ", rest into int",
-                        "already doing " + Math.max(4, lukTarget) + " luk build!");
+                        "ok! keeping luk at " + legalLukTarget + ", rest into int",
+                        "already doing " + legalLukTarget + " luk build!");
                 return;
             }
         }
@@ -1678,12 +1686,17 @@ public class BotChatManager {
             Matcher matcher = AP_FIXED_STR_PATTERN.matcher(message);
             if (matcher.find()) {
                 int strTarget = Integer.parseInt(matcher.group(1));
+                int legalStrTarget = Math.max(minStatFloor(job, Stat.STR), strTarget);
                 applyApBuildChoice(entry,
                         new BotBuildManager.ApBuild(BotBuildManager.StatType.DEX, BotBuildManager.StatType.STR, strTarget),
-                        "ok! keeping str at " + Math.max(4, strTarget) + ", rest into dex",
-                        "already doing " + Math.max(4, strTarget) + " str build!");
+                        "ok! keeping str at " + legalStrTarget + ", rest into dex",
+                        "already doing " + legalStrTarget + " str build!");
             }
         }
+    }
+
+    private static int minStatFloor(Job job, Stat stat) {
+        return AssignAPProcessor.getMinStatFloor(job, stat);
     }
 
     private static void applyApBuildChoice(BotEntry entry, BotBuildManager.ApBuild build, String confirmMsg, String alreadyMsg) {

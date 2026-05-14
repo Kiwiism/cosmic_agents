@@ -384,6 +384,46 @@ class BotBuildManagerTest {
         assertEquals(0, remainingAp.get());
     }
 
+    @Test
+    void apRespecKeepsFirstJobRequiredDexForThiefBuilds() {
+        Character bot = mock(Character.class);
+        BotEntry entry = new BotEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
+        entry.apBuild = new BotBuildManager.ApBuild(BotBuildManager.StatType.LUK, BotBuildManager.StatType.DEX, 4);
+
+        AtomicInteger str = new AtomicInteger(20);
+        AtomicInteger dex = new AtomicInteger(60);
+        AtomicInteger intStat = new AtomicInteger(4);
+        AtomicInteger luk = new AtomicInteger(80);
+        AtomicInteger remainingAp = new AtomicInteger(0);
+
+        when(bot.getJob()).thenReturn(Job.ASSASSIN);
+        when(bot.getStr()).thenAnswer(invocation -> str.get());
+        when(bot.getDex()).thenAnswer(invocation -> dex.get());
+        when(bot.getInt()).thenAnswer(invocation -> intStat.get());
+        when(bot.getLuk()).thenAnswer(invocation -> luk.get());
+        when(bot.getRemainingAp()).thenAnswer(invocation -> remainingAp.get());
+        doAnswer(invocation -> {
+            int deltaStr = invocation.getArgument(0);
+            int deltaDex = invocation.getArgument(1);
+            int deltaInt = invocation.getArgument(2);
+            int deltaLuk = invocation.getArgument(3);
+            str.addAndGet(deltaStr);
+            dex.addAndGet(deltaDex);
+            intStat.addAndGet(deltaInt);
+            luk.addAndGet(deltaLuk);
+            remainingAp.addAndGet(-(deltaStr + deltaDex + deltaInt + deltaLuk));
+            return true;
+        }).when(bot).assignStrDexIntLuk(anyInt(), anyInt(), anyInt(), anyInt());
+
+        assertEquals("ok, rebuilt my ap using the bot build", BotBuildManager.respecAp(entry, bot));
+
+        assertEquals(4, str.get());
+        assertEquals(25, dex.get());
+        assertEquals(4, intStat.get());
+        assertEquals(131, luk.get());
+        assertEquals(0, remainingAp.get());
+    }
+
     private static void stubSkillState(Character bot, int[] remainingSps, Map<Integer, Integer> skillLevels) {
         when(bot.getRemainingSps()).thenReturn(remainingSps);
         when(bot.getSkillLevel(any(Skill.class))).thenAnswer(invocation -> {

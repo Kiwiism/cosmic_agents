@@ -483,6 +483,24 @@ public class AssignAPProcessor {
         return Stat.STR;
     }
 
+    public static int getMinStatFloor(Job job, Stat stat) {
+        return switch (stat) {
+            case STR -> job.isA(Job.WARRIOR) || job.isA(Job.DAWNWARRIOR1) ? 35 : 4;
+            case DEX -> {
+                if (job.isA(Job.THIEF) || job.isA(Job.NIGHTWALKER1) || job.isA(Job.BOWMAN) || job.isA(Job.WINDARCHER1)) {
+                    yield 25;
+                }
+                if (job.isA(Job.PIRATE) || job.isA(Job.THUNDERBREAKER1)) {
+                    yield 20;
+                }
+                yield 4;
+            }
+            case INT -> job.isA(Job.MAGICIAN) || job.isA(Job.BLAZEWIZARD1) ? 20 : 4;
+            case LUK -> 4;
+            default -> 4;
+        };
+    }
+
     public static boolean APResetAction(Client c, int APFrom, int APTo) {
         c.lockClient();
         try {
