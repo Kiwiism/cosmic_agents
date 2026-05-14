@@ -874,30 +874,35 @@ class BotMovementManager {
     }
 
     static void broadcastMovement(BotEntry entry) {
-        Character bot = entry.bot;
-        int x = bot.getPosition().x;
-        int y = bot.getPosition().y;
-        BotPhysicsEngine.MovementSnapshot snapshot = BotPhysicsEngine.movementSnapshot(entry);
-        int fhId = resolveBroadcastFhId(entry, bot);
+        long startedAt = BotPerformanceMonitor.start();
+        try {
+            Character bot = entry.bot;
+            int x = bot.getPosition().x;
+            int y = bot.getPosition().y;
+            BotPhysicsEngine.MovementSnapshot snapshot = BotPhysicsEngine.movementSnapshot(entry);
+            int fhId = resolveBroadcastFhId(entry, bot);
 
-        if (entry.movementBroadcastValid
-                && entry.lastBroadcastX == x
-                && entry.lastBroadcastY == y
-                && entry.lastBroadcastVelX == snapshot.velX()
-                && entry.lastBroadcastVelY == snapshot.velY()
-                && entry.lastBroadcastStance == snapshot.stance()
-                && entry.lastBroadcastFh == fhId) {
-            return;
+            if (entry.movementBroadcastValid
+                    && entry.lastBroadcastX == x
+                    && entry.lastBroadcastY == y
+                    && entry.lastBroadcastVelX == snapshot.velX()
+                    && entry.lastBroadcastVelY == snapshot.velY()
+                    && entry.lastBroadcastStance == snapshot.stance()
+                    && entry.lastBroadcastFh == fhId) {
+                return;
+            }
+
+            entry.movementBroadcastValid = true;
+            entry.lastBroadcastX = x;
+            entry.lastBroadcastY = y;
+            entry.lastBroadcastVelX = snapshot.velX();
+            entry.lastBroadcastVelY = snapshot.velY();
+            entry.lastBroadcastStance = snapshot.stance();
+            entry.lastBroadcastFh = fhId;
+            sendMovementPacket(bot, snapshot, fhId);
+        } finally {
+            BotPerformanceMonitor.recordSince("broadcast-move", startedAt);
         }
-
-        entry.movementBroadcastValid = true;
-        entry.lastBroadcastX = x;
-        entry.lastBroadcastY = y;
-        entry.lastBroadcastVelX = snapshot.velX();
-        entry.lastBroadcastVelY = snapshot.velY();
-        entry.lastBroadcastStance = snapshot.stance();
-        entry.lastBroadcastFh = fhId;
-        sendMovementPacket(bot, snapshot, fhId);
     }
 
     // Real clients report the foothold ID they're standing on in every move packet; the
