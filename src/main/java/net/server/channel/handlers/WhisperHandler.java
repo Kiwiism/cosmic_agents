@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.ChatLogger;
 import server.bots.BotManager;
+import server.bots.BotOwnershipService;
 import tools.PacketCreator;
 import tools.PacketCreator.WhisperFlag;
 
@@ -52,7 +53,13 @@ public final class WhisperHandler extends AbstractPacketHandler {
         Character target = c.getWorldServer().getPlayerStorage().getCharacterByName(name);
 
         if (target == null) {
-            c.sendPacket(PacketCreator.getWhisperResult(name, false));
+            // Bots should always appear online; suppress the not-found reply for any
+            // registered bot name (whisper-spam during the bot-spawn flow is noise).
+            BotOwnershipService ownership = BotOwnershipService.getInstance();
+            BotOwnershipService.ResolvedCharacter resolved = ownership.resolveCharacterByName(name);
+            if (resolved == null || ownership.getRegisteredOwnerId(resolved.id()) == null) {
+                c.sendPacket(PacketCreator.getWhisperResult(name, false));
+            }
             return;
         }
 
