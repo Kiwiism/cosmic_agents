@@ -2,22 +2,31 @@ package server.bots;
 
 import client.Character;
 import client.inventory.Equip;
+import client.inventory.Inventory;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.Trade;
+import server.maps.Foothold;
+import server.maps.MapItem;
+import server.maps.MapleMap;
 
+import java.awt.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.spy;
@@ -132,6 +141,69 @@ class BotInventoryManagerTest {
         assertTrue(BotInventoryManager.hasProtectedSellTrashStat(Map.of("reqJob", 16), pirateDex, 6));
         assertTrue(BotInventoryManager.hasProtectedSellTrashWeaponStat(Map.of("reqJob", 1), currentWarriorWeapon, baseWarriorWeapon));
         assertTrue(BotInventoryManager.hasProtectedSellTrashWeaponStat(Map.of("reqJob", 2), currentMageWeapon, baseMageWeapon));
+    }
+
+    @Test
+    void shouldExcludeOneWayPatrolNeighborFromLootRoamScope() {
+        MapleMap map = spy(new MapleMap(910009054, 0, 0, 910009054, 1.0f));
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        Foothold homeFoothold = new Foothold(new Point(0, 100), new Point(100, 100), 1);
+        Foothold oneWayFoothold = new Foothold(new Point(200, 140), new Point(300, 140), 2);
+        Foothold returnableFoothold = new Foothold(new Point(400, 100), new Point(500, 100), 3);
+        footholds.insert(homeFoothold);
+        footholds.insert(oneWayFoothold);
+        footholds.insert(returnableFoothold);
+        map.setFootholds(footholds);
+
+        BotNavigationGraph.Region homeRegion = new BotNavigationGraph.Region(
+                1, List.of(new BotNavigationGraph.Segment(homeFoothold)));
+        BotNavigationGraph.Region oneWayRegion = new BotNavigationGraph.Region(
+                2, List.of(new BotNavigationGraph.Segment(oneWayFoothold)));
+        BotNavigationGraph.Region returnableRegion = new BotNavigationGraph.Region(
+                3, List.of(new BotNavigationGraph.Segment(returnableFoothold)));
+        BotNavigationGraph graph = new BotNavigationGraph(
+                map.getId(),
+                1,
+                BotMovementProfile.base(),
+                List.of(homeRegion, oneWayRegion, returnableRegion),
+                Map.of(1, homeRegion, 2, oneWayRegion, 3, returnableRegion),
+                Map.of(1, 1, 2, 2, 3, 3),
+                Map.of(
+                        1, List.of(
+                                new BotNavigationGraph.Edge(1, 2, BotNavigationGraph.EdgeType.DROP,
+                                        new Point(100, 100), new Point(200, 140), 0, 0, 0, 0, 0, 100),
+                                new BotNavigationGraph.Edge(1, 3, BotNavigationGraph.EdgeType.WALK,
+                                        new Point(100, 100), new Point(400, 100), 0, 0, 0, 0, 0, 120)),
+                        3, List.of(new BotNavigationGraph.Edge(3, 1, BotNavigationGraph.EdgeType.WALK,
+                                new Point(400, 100), new Point(100, 100), 0, 0, 0, 0, 0, 120))),
+                Set.of());
+
+        Character bot = mock(Character.class);
+        when(bot.getMap()).thenReturn(map);
+        when(bot.getPosition()).thenReturn(new Point(50, 100));
+        when(bot.getInventory(any())).thenReturn((Inventory) null);
+        BotEntry entry = new BotEntry(bot, null, null);
+
+        MapItem oneWayLoot = mock(MapItem.class);
+        when(oneWayLoot.getPosition()).thenReturn(new Point(240, 140));
+        MapItem returnableLoot = mock(MapItem.class);
+        when(returnableLoot.getPosition()).thenReturn(new Point(440, 100));
+        doReturn(List.of(oneWayLoot, returnableLoot)).when(map).getDroppedItems();
+
+        try (MockedStatic<BotNavigationGraphProvider> graphProvider =
+                     mockStatic(BotNavigationGraphProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS);
+             MockedStatic<BotLootEligibility> lootEligibility =
+                     mockStatic(BotLootEligibility.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
+            graphProvider.when(() -> BotNavigationGraphProvider.peekGraph(map)).thenReturn(graph);
+            lootEligibility.when(() -> BotLootEligibility.canBotTargetLoot(
+                    eq(entry), eq(bot), eq(map), eq(oneWayLoot), anyLong())).thenReturn(true);
+            lootEligibility.when(() -> BotLootEligibility.canBotTargetLoot(
+                    eq(entry), eq(bot), eq(map), eq(returnableLoot), anyLong())).thenReturn(true);
+
+            Point target = BotInventoryManager.findNearestPatrolLootTarget(entry, 1);
+
+            assertEquals(new Point(440, 100), target);
+        }
     }
 
     @SuppressWarnings("unchecked")

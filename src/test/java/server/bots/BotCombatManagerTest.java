@@ -37,6 +37,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -48,6 +49,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
@@ -495,7 +497,7 @@ class BotCombatManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.facingDir = 1;
 
-        BotCombatManager.applyMobHit(entry, bot, mob);
+        runWithStubbedBotAfter(() -> BotCombatManager.applyMobHit(entry, bot, mob));
 
         assertTrue(entry.inAir);
         assertFalse(entry.climbing);
@@ -521,7 +523,7 @@ class BotCombatManagerTest {
         entry.airVelX = -4;
         entry.facingDir = -1;
 
-        BotCombatManager.applyMobHit(entry, bot, mob);
+        runWithStubbedBotAfter(() -> BotCombatManager.applyMobHit(entry, bot, mob));
 
         assertTrue(entry.inAir);
         assertTrue(entry.climbUpIntent);
@@ -540,7 +542,7 @@ class BotCombatManagerTest {
         Monster mob = mockMob(new Point(140, 200), 9300002);
         BotEntry entry = new BotEntry(bot, null, null);
 
-        BotCombatManager.applyMobHit(entry, bot, mob);
+        runWithStubbedBotAfter(() -> BotCombatManager.applyMobHit(entry, bot, mob));
 
         assertFalse(entry.inAir);
         assertFalse(entry.climbing);
@@ -558,7 +560,7 @@ class BotCombatManagerTest {
         entry.facingDir = -1;
         Monster mob = mockMob(new Point(140, 200), 9300003);
 
-        BotCombatManager.applyMobHit(entry, bot, mob);
+        runWithStubbedBotAfter(() -> BotCombatManager.applyMobHit(entry, bot, mob));
 
         assertEquals(CharacterStance.DEAD_LEFT_STANCE, bot.getStance());
         assertTrue(entry.deadUntil > 0);
@@ -910,11 +912,73 @@ class BotCombatManagerTest {
         }
     }
 
+    @Test
+    void shouldExcludeOneWayPatrolNeighborFromRoamTargeting() {
+        MapleMap map = spy(new MapleMap(910009053, 0, 0, 910009053, 1.0f));
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        Foothold homeFoothold = new Foothold(new Point(0, 100), new Point(100, 100), 1);
+        Foothold oneWayFoothold = new Foothold(new Point(200, 140), new Point(300, 140), 2);
+        Foothold returnableFoothold = new Foothold(new Point(400, 100), new Point(500, 100), 3);
+        footholds.insert(homeFoothold);
+        footholds.insert(oneWayFoothold);
+        footholds.insert(returnableFoothold);
+        map.setFootholds(footholds);
+
+        BotNavigationGraph.Region homeRegion = new BotNavigationGraph.Region(
+                1, List.of(new BotNavigationGraph.Segment(homeFoothold)));
+        BotNavigationGraph.Region oneWayRegion = new BotNavigationGraph.Region(
+                2, List.of(new BotNavigationGraph.Segment(oneWayFoothold)));
+        BotNavigationGraph.Region returnableRegion = new BotNavigationGraph.Region(
+                3, List.of(new BotNavigationGraph.Segment(returnableFoothold)));
+        BotNavigationGraph graph = new BotNavigationGraph(
+                map.getId(),
+                1,
+                BotMovementProfile.base(),
+                List.of(homeRegion, oneWayRegion, returnableRegion),
+                Map.of(1, homeRegion, 2, oneWayRegion, 3, returnableRegion),
+                Map.of(1, 1, 2, 2, 3, 3),
+                Map.of(
+                        1, List.of(
+                                new BotNavigationGraph.Edge(1, 2, BotNavigationGraph.EdgeType.DROP,
+                                        new Point(100, 100), new Point(200, 140), 0, 0, 0, 0, 0, 100),
+                                new BotNavigationGraph.Edge(1, 3, BotNavigationGraph.EdgeType.WALK,
+                                        new Point(100, 100), new Point(400, 100), 0, 0, 0, 0, 0, 120)),
+                        3, List.of(new BotNavigationGraph.Edge(3, 1, BotNavigationGraph.EdgeType.WALK,
+                                new Point(400, 100), new Point(100, 100), 0, 0, 0, 0, 0, 120))),
+                Set.of());
+
+        Character bot = mockBot(new Point(50, 100), map, 20_000, null);
+        Monster oneWayTarget = mockMob(new Point(240, 140), 9300402);
+        Monster returnableTarget = mockMob(new Point(440, 100), 9300403);
+        doReturn(List.of(oneWayTarget, returnableTarget)).when(map).getAllMonsters();
+
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.patrolRegionId = 1;
+
+        try (MockedStatic<BotNavigationGraphProvider> graphProvider =
+                     Mockito.mockStatic(BotNavigationGraphProvider.class, Mockito.CALLS_REAL_METHODS)) {
+            graphProvider.when(() -> BotNavigationGraphProvider.peekGraph(map, BotMovementProfile.base()))
+                    .thenReturn(graph);
+
+            Monster target = BotCombatManager.findPatrolTarget(entry, bot);
+
+            assertEquals(returnableTarget, target);
+        }
+    }
+
     private static void assertDamageDirection(MapleMap map, Character bot, int expectedBroadcasts, int expectedDirection) {
         ArgumentCaptor<Packet> packets = ArgumentCaptor.forClass(Packet.class);
         verify(map, times(expectedBroadcasts)).broadcastMessage(eq(bot), packets.capture(), eq(false));
         byte[] payload = packets.getAllValues().get(0).getBytes();
         assertEquals(expectedDirection, Byte.toUnsignedInt(payload[15]));
+    }
+
+    private static void runWithStubbedBotAfter(Runnable action) {
+        try (MockedStatic<BotManager> botManager = Mockito.mockStatic(BotManager.class, Mockito.CALLS_REAL_METHODS)) {
+            botManager.when(() -> BotManager.after(anyLong(), any(Runnable.class)))
+                    .thenReturn(mock(ScheduledFuture.class));
+            action.run();
+        }
     }
 
     private static Character mockBot(Point startPosition, MapleMap map, int startingHp, Integer stancePercent) {

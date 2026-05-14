@@ -232,9 +232,7 @@ class BotInventoryManager {
 
         Set<Integer> allowed = new HashSet<>();
         allowed.add(patrolRegionId);
-        for (BotNavigationGraph.Edge edge : graph.getOutgoing(patrolRegionId)) {
-            allowed.add(edge.toRegionId);
-        }
+        allowed.addAll(graph.getMutualAdjacentRegionIds(patrolRegionId));
 
         long now = System.currentTimeMillis();
         Point botPos = bot.getPosition();

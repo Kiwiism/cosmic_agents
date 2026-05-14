@@ -749,13 +749,7 @@ class BotCombatManager {
             // (intra-region portals where fromRegionId == toRegionId) are free traversals
             // within the patrol region itself — A* uses them to shortcut long walks but
             // they don't expose new regions, so skip them here to keep intent explicit.
-            Set<Integer> adjacentIds = new HashSet<>();
-            for (BotNavigationGraph.Edge edge : graph.getOutgoing(patrolId)) {
-                if (edge.fromRegionId == edge.toRegionId) {
-                    continue;
-                }
-                adjacentIds.add(edge.toRegionId);
-            }
+            Set<Integer> adjacentIds = graph.getMutualAdjacentRegionIds(patrolId);
 
             // Phase 1: home region only
             List<Monster> filtered = new ArrayList<>();

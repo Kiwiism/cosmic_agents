@@ -7,8 +7,10 @@ import java.awt.*;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 final class BotNavigationGraph implements Serializable {
     enum EdgeType {
@@ -318,6 +320,28 @@ final class BotNavigationGraph implements Serializable {
 
     List<Edge> getOutgoing(int regionId) {
         return outgoingByRegionId.getOrDefault(regionId, List.of());
+    }
+
+    boolean hasInterRegionEdge(int fromRegionId, int toRegionId) {
+        for (Edge edge : getOutgoing(fromRegionId)) {
+            if (edge.fromRegionId != edge.toRegionId && edge.toRegionId == toRegionId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    Set<Integer> getMutualAdjacentRegionIds(int regionId) {
+        Set<Integer> adjacent = new HashSet<>();
+        for (Edge edge : getOutgoing(regionId)) {
+            if (edge.fromRegionId == edge.toRegionId) {
+                continue;
+            }
+            if (hasInterRegionEdge(edge.toRegionId, regionId)) {
+                adjacent.add(edge.toRegionId);
+            }
+        }
+        return adjacent;
     }
 
     int findRegionId(MapleMap map, Point position) {
