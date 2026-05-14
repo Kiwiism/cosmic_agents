@@ -112,6 +112,9 @@ class BotChatManagerTest {
         assertEquals("trash", BotChatManager.matchTradeCategory("trade trash"));
         assertEquals("trash", BotChatManager.matchTradeCategory("trade my trash"));
         assertEquals("trash", BotChatManager.matchTradeCategory("trade junk"));
+        assertEquals("trash", BotChatManager.matchTradeCategory("got trash?"));
+        assertEquals("trash", BotChatManager.matchTradeCategory("have any junk?"));
+        assertNull(BotChatManager.matchItemQuery("got trash?"));
         assertEquals("trash", BotChatManager.matchTradeCategory("show me your junk"));
         assertEquals("trash", BotChatManager.matchTradeCategory("show your junk"));
         assertEquals("trash", BotChatManager.matchTradeCategory("show ur junk"));

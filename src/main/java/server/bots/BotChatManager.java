@@ -2186,16 +2186,13 @@ public class BotChatManager {
     }
 
     static String matchItemQuery(String message) {
-        Matcher matcher = ITEM_QUERY_PATTERN.matcher(message);
-        if (!matcher.find()) {
-            return null;
-        }
-        String itemName = BotInventoryManager.normalizeItemQuery(matcher.group(1));
-        if (itemName.isBlank()) {
-            return null;
-        }
+        String itemName = matchNormalizedItemQuery(message);
+        if (itemName == null) return null;
         String generic = itemName.toLowerCase(Locale.ROOT);
         if (generic.equals("pot") || generic.equals("potion")) {
+            return null;
+        }
+        if (Pattern.matches(TRASH_WORDS, generic)) {
             return null;
         }
         return itemName;
@@ -2205,6 +2202,7 @@ public class BotChatManager {
         String mesoCategory = matchTradeMesoCategory(message);
         if (mesoCategory != null) return mesoCategory;
         if (message != null && SHOW_JUNK_COMMAND_PATTERN.matcher(message).matches()) return "trash";
+        if ("trash".equals(matchItemQueryCategory(message))) return "trash";
 
         if (TRADE_RECOMMENDED_COMMAND_PATTERN.matcher(message).find()) return "recommended";
         if (TRADE_SCROLLS_COMMAND_PATTERN.matcher(message).find()) return "scrolls";
@@ -2321,6 +2319,22 @@ public class BotChatManager {
 
         Matcher matcher = ASK_ITEM_COMMAND_PATTERN.matcher(message);
         return matcher.find() ? "name:" + BotInventoryManager.normalizeItemQuery(matcher.group(1)) : null;
+    }
+
+    private static String matchNormalizedItemQuery(String message) {
+        Matcher matcher = ITEM_QUERY_PATTERN.matcher(message);
+        if (!matcher.find()) {
+            return null;
+        }
+        String itemName = BotInventoryManager.normalizeItemQuery(matcher.group(1));
+        return itemName.isBlank() ? null : itemName;
+    }
+
+    private static String matchItemQueryCategory(String message) {
+        String itemName = matchNormalizedItemQuery(message);
+        if (itemName == null) return null;
+        String generic = itemName.toLowerCase(Locale.ROOT);
+        return Pattern.matches(TRASH_WORDS, generic) ? "trash" : null;
     }
 
     private static final String[] DROP_OR_TRADE_PROMPTS = {
