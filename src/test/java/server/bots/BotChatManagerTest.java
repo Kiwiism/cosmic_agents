@@ -108,6 +108,13 @@ class BotChatManagerTest {
     }
 
     @Test
+    void shouldParseAmmoTrades() {
+        assertEquals("ammo", BotChatManager.matchTradeCategory("trade ammo"));
+        assertEquals("ammo", BotChatManager.matchTradeCategory("trade me your arrows"));
+        assertEquals("ammo", BotChatManager.matchTradeCategory("trade bullets"));
+    }
+
+    @Test
     void shouldParseTrashGearTrades() {
         assertEquals("trash", BotChatManager.matchTradeCategory("trade trash"));
         assertEquals("trash", BotChatManager.matchTradeCategory("trade my trash"));
@@ -323,9 +330,12 @@ class BotChatManagerTest {
     void shouldBuildOwnerLootOfferPrompt() {
         String prompt = BotOfferManager.buildLootOfferPrompt("Owner", "Blue Moon", true);
         assertTrue(Set.of(
-                "I have Blue Moon, you want?",
-                "picked up Blue Moon, want it?",
-                "I got Blue Moon for you, want?").contains(prompt));
+                "Owner, I have Blue Moon, you want?",
+                "Owner, picked up Blue Moon, want it?",
+                "Owner, I got Blue Moon if you want it",
+                "Owner, want Blue Moon?",
+                "Owner, I can trade you Blue Moon",
+                "Owner, grabbed Blue Moon for you if you want it").contains(prompt));
     }
 
     @Test
@@ -334,7 +344,10 @@ class BotChatManagerTest {
         assertTrue(Set.of(
                 "Alice, I have Blue Moon, you want?",
                 "Alice, picked up Blue Moon, want it?",
-                "Alice, I got Blue Moon if you want it").contains(prompt));
+                "Alice, I got Blue Moon if you want it",
+                "Alice, want Blue Moon?",
+                "Alice, I can trade you Blue Moon",
+                "Alice, grabbed Blue Moon for you if you want it").contains(prompt));
     }
 
     @Test

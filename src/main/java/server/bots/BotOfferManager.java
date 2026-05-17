@@ -306,37 +306,36 @@ final class BotOfferManager {
     }
 
     static String buildLootOfferPrompt(String recipientName, String itemName, boolean targetIsOwner) {
-        return buildLootOfferPrompt(recipientName, itemName, targetIsOwner, false);
+        return buildSharedLootOfferPrompt(recipientName, itemName, false);
     }
 
     static String buildLootOfferPrompt(String recipientName, String itemName, boolean targetIsOwner, boolean forLater) {
-        List<String> prompts = targetIsOwner
-                ? (forLater
-                ? List.of(
-                        "I have %s, you might need it later, want?",
-                        "picked up %s, could be useful later, want it?",
-                        "I got %s for later if you want it")
-                : List.of(
-                        "I have %s, you want?",
-                        "picked up %s, want it?",
-                        "I got %s for you, want?"))
-                : (forLater
+        return buildSharedLootOfferPrompt(recipientName, itemName, forLater);
+    }
+
+    private static String buildSharedLootOfferPrompt(String recipientName, String itemName, boolean forLater) {
+        List<String> prompts = forLater
                 ? List.of(
                         "%s, you might need %s later, want it?",
                         "%s, picked up %s, could help later if you want it",
-                        "%s, I got %s for later if you want it")
+                        "%s, I got %s for later if you want it",
+                        "%s, %s looks useful for later, want me to trade it over?",
+                        "%s, holding %s in case you want it later",
+                        "%s, saved %s for later if you want it")
                 : List.of(
                         "%s, I have %s, you want?",
                         "%s, picked up %s, want it?",
-                        "%s, I got %s if you want it"));
+                        "%s, I got %s if you want it",
+                        "%s, want %s?",
+                        "%s, I can trade you %s",
+                        "%s, grabbed %s for you if you want it");
         String format = BotManager.randomReply(prompts);
-        return targetIsOwner ? String.format(format, itemName) : String.format(format, recipientName, itemName);
+        return String.format(format, recipientName, itemName);
     }
 
     private static String buildLootOfferPrompt(Character recipient, Character owner, Item item, boolean forLater) {
         String itemDesc = formatItemSpecifier(item, recipient);
-        boolean targetIsOwner = owner != null && recipient.getId() == owner.getId();
-        return buildLootOfferPrompt(recipient.getName(), itemDesc, targetIsOwner, forLater);
+        return buildSharedLootOfferPrompt(recipient.getName(), itemDesc, forLater);
     }
 
     /**

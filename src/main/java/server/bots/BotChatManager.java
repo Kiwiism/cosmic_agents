@@ -301,6 +301,7 @@ public class BotChatManager {
     private static final String SCROLL_WORDS = "scrolls?";
     private static final String POTION_WORDS = "(?:pots?|potions?|hp\\s+pots?|mp\\s+pots?|supplies)";
     private static final String BUFF_WORDS   = "(?:buff\\s+pots?|buff\\s+potions?|buffs?\\s+items?)";
+    private static final String AMMO_WORDS = "(?:ammo|arrows?|bolts?|bullets?|stars?|throwing\\s+stars?)";
     private static final String USE_WORDS = "(?:use|use\\s+items?|consumables?)";
     private static final String EQUIP_WORDS = "(?:equips?|equipment|gear)";
     private static final String ETC_WORDS = "(?:etc|misc(?:ellaneous)?)";
@@ -451,6 +452,9 @@ public class BotChatManager {
             Pattern.CASE_INSENSITIVE);
     private static final Pattern TRADE_BUFF_COMMAND_PATTERN = Pattern.compile(
             "\\b" + TRADE_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + BUFF_WORDS + "\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern TRADE_AMMO_COMMAND_PATTERN = Pattern.compile(
+            "\\b" + TRADE_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + AMMO_WORDS + "\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern DROP_BUFF_COMMAND_PATTERN = Pattern.compile(
             "\\b" + DROP_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + BUFF_WORDS + "\\b",
@@ -2221,6 +2225,7 @@ public class BotChatManager {
         if (TRADE_SCROLLS_COMMAND_PATTERN.matcher(message).find()) return "scrolls";
         if (TRADE_POTS_COMMAND_PATTERN.matcher(message).find()) return "pots";
         if (TRADE_BUFF_COMMAND_PATTERN.matcher(message).find()) return "buff";
+        if (TRADE_AMMO_COMMAND_PATTERN.matcher(message).find()) return "ammo";
         if (TRADE_USE_COMMAND_PATTERN.matcher(message).find()) return "use";
         if (TRADE_EQUIPS_COMMAND_PATTERN.matcher(message).find()) return "equips";
         if (TRADE_TRASH_COMMAND_PATTERN.matcher(message).find()) return "trash";

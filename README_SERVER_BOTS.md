@@ -172,6 +172,7 @@ Verbs: `trade [me] <type/name>`, `give [me] <type/name>`, `drop <type/name>`, `p
 | `trade me scrolls` / `give me scrolls` | Trade all scrolls |
 | `trade pots` | Trade all potions |
 | `trade buff` | Trade buff potions |
+| `trade ammo` | Trade ammo |
 | `trade equips` | Trade all equips |
 | `trade trash` / `trade junk` / `show junk` | Trade only unreserved equips |
 | `trade use` | Trade all use-tab items |

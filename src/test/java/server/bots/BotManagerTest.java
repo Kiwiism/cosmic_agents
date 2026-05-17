@@ -1106,6 +1106,27 @@ class BotManagerTest {
         assertEquals("warrior potion", BotChatManager.matchItemQuery("anybody got warrior potions?"));
     }
 
+    @Test
+    void shouldPrioritizeRecipientDuplicatesWithinUseTradeBuckets() {
+        Character owner = mock(Character.class);
+        Inventory ownerUse = new Inventory(owner, InventoryType.USE, (byte) 24);
+        ownerUse.addItem(Items.itemWithQuantity(2030000, 1));
+        ownerUse.addItem(Items.itemWithQuantity(2040000, 1));
+        when(owner.getInventory(InventoryType.USE)).thenReturn(ownerUse);
+
+        List<Item> ordered = BotInventoryManager.prioritizeTradeUseItems(
+                List.of(
+                        Items.itemWithQuantity(2030001, 1),
+                        Items.itemWithQuantity(2030000, 1)),
+                List.of(
+                        Items.itemWithQuantity(2060000, 1),
+                        Items.itemWithQuantity(2040000, 1)),
+                owner);
+
+        assertEquals(List.of(2030000, 2030001, 2040000, 2060000),
+                ordered.stream().map(Item::getItemId).toList());
+    }
+
     private static BotCombatManager.AttackPlan basicClosePlan(Monster target) {
         return new BotCombatManager.AttackPlan(
                 0, 0, 1, null, List.of(target), BotCombatManager.AttackRoute.CLOSE,
