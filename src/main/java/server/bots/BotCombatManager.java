@@ -8,6 +8,7 @@ import client.SkillFactory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.WeaponType;
+import constants.game.CharacterStance;
 import constants.game.GameConstants;
 import constants.inventory.ItemConstants;
 import constants.skills.Archer;
@@ -1039,6 +1040,7 @@ class BotCombatManager {
 
         BotAttackExecutionProvider.applyAttackRoute(attackPlan.route, attack, bot);
         entry.attackCooldownMs = Math.max(entry.attackCooldownMs, attackPlan.cooldownMs);
+        entry.facingDir = CharacterStance.isFacingLeft(attackPlan.stance) ? -1 : 1;
         markAlerted(entry);
     }
 
