@@ -993,7 +993,10 @@ class BotEquipManager {
         for (int i = 0; i < dpSlots.size(); i++) {
             Equip p = node.picks[i];
             if (p == null) continue;
-            if (!hooks.meetsReqs(p, s.job(), s.level(), s.str(), s.dex(), s.int_(), s.luk(), s.fame())) {
+            StatSnapshot withoutSelf = s.swap(p, null);
+            if (!hooks.meetsReqs(p, withoutSelf.job(), withoutSelf.level(),
+                    withoutSelf.str(), withoutSelf.dex(), withoutSelf.int_(),
+                    withoutSelf.luk(), withoutSelf.fame())) {
                 return false;
             }
         }
