@@ -924,7 +924,8 @@ class BotCombatManager {
             basicAttackData = buildBasicAttackData(bot, pivoted);
             effective = pivoted;
         }
-        return new AttackPlan(0, 0, 1, basicAttackData.hitBox(), List.of(effective), basicAttackData.route(),
+        int numDamage = shadowPartnerHitMultiplier(bot, basicAttackData.route());
+        return new AttackPlan(0, 0, numDamage, basicAttackData.hitBox(), List.of(effective), basicAttackData.route(),
                 basicAttackData.display(), basicAttackData.direction(), basicAttackData.rangedDirection(), basicAttackData.stance(),
                 basicAttackData.speed(), basicAttackData.hitDelayMs(), basicAttackData.cooldownMs(),
                 damageWeaponTypeForAction(0, BotAttackExecutionProvider.getEquippedWeaponType(bot), basicAttackData.action()));
@@ -1176,9 +1177,13 @@ class BotCombatManager {
         // Ammo gate: ranged skills with bulletCount need that many arrows/stars/bullets in
         // the bot's USE inventory. canPaySkillCost only covers MP/HP. countAmmo returns
         // MAX_VALUE for non-ammo weapons and while Soul Arrow / Shadow Claw are active.
-        int bulletCount = effect.getBulletCount();
-        if (bulletCount > 0 && route == AttackRoute.RANGED
-                && countAmmo(bot, weaponType) < bulletCount) {
+        // Avenger / Iron Arrow set bulletConsume (e.g. 3 for Avenger) for ammo cost without
+        // changing the visible projectile count, so use the larger of the two. Shadow
+        // Partner doubles the actual consume (see RangedAttackHandler.bulletConsume *= 2).
+        int ammoCost = Math.max(effect.getBulletCount(), effect.getBulletConsume())
+                * shadowPartnerHitMultiplier(bot, route);
+        if (ammoCost > 0 && route == AttackRoute.RANGED
+                && countAmmo(bot, weaponType) < ammoCost) {
             return null;
         }
         if (isStrikePointAnchoredAoeSkill(skillId)) {
@@ -1201,7 +1206,7 @@ class BotCombatManager {
             return null;
         }
 
-        int attackCount = effectiveHitCount(effect);
+        int attackCount = effectiveHitCount(effect) * shadowPartnerHitMultiplier(bot, route);
         if (!BotAttackExecutionProvider.canUseRangedAttackRoute(route, weaponType, bot.getPosition(), primaryTarget.getPosition())) {
             return null;
         }
@@ -1434,6 +1439,22 @@ class BotCombatManager {
      */
     private static int effectiveHitCount(StatEffect effect) {
         return Math.max(1, Math.max(effect.getAttackCount(), effect.getBulletCount()));
+    }
+
+    // Shadow Partner (Hermit / NightWalker / DualBlade book) doubles the per-mob damage
+    // line count for ranged attacks: the client packs `numDamage * 2` into
+    // numAttackedAndDamage and the second half of each mob's lines are rolled at half
+    // damage. The server validates this in AbstractDealDamageHandler (`maxattack * 2`
+    // autoban headroom) and RangedAttackHandler (`bulletConsume * 2`). Bots inherit the
+    // multiplier automatically once the buff lands on them (future admin command).
+    // Melee and magic routes are left untouched here — Shadow Partner's melee/magic
+    // doubling for thief skills (e.g. Triple Throw is ranged-claw, so it covers itself)
+    // can be enabled per-skill later if needed.
+    private static int shadowPartnerHitMultiplier(Character bot, AttackRoute route) {
+        if (route != AttackRoute.RANGED || bot == null) {
+            return 1;
+        }
+        return bot.getBuffEffect(BuffStat.SHADOWPARTNER) != null ? 2 : 1;
     }
 
     /**
