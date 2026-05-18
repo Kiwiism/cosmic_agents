@@ -6,6 +6,8 @@ import client.Skill;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.WeaponType;
+import constants.skills.Crossbowman;
+import constants.skills.Hunter;
 import net.server.channel.handlers.AbstractDealDamageHandler;
 import net.server.channel.handlers.CloseRangeDamageHandler;
 import net.server.channel.handlers.MagicDamageHandler;
@@ -16,6 +18,7 @@ import server.bots.combat.BotAttackTiming;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 final class BotAttackExecutionProvider {
@@ -221,7 +224,20 @@ final class BotAttackExecutionProvider {
         return route != BotCombatManager.AttackRoute.RANGED || !shouldDegenerateRangedAttack(weaponType, botPos, targetPos);
     }
 
+    // Skills the bow/crossbow classes cast as a melee swing on the client (opcode 0x2C,
+    // broadcast via CLOSE_RANGE_ATTACK 0xBA) even though the equipped weapon is ranged.
+    // Power Knockback fires no projectile and uses skill.range as the close-range reach
+    // (e.g. 130 px at level 20). Treat them as CLOSE so reach gating and packet route match
+    // the v83 client.
+    private static final Set<Integer> FORCED_CLOSE_RANGE_SKILL_IDS = Set.of(
+            Hunter.POWER_KNOCKBACK,
+            Crossbowman.POWER_KNOCKBACK
+    );
+
     static BotCombatManager.AttackRoute determineSkillRoute(Character bot, int skillId) {
+        if (FORCED_CLOSE_RANGE_SKILL_IDS.contains(skillId)) {
+            return BotCombatManager.AttackRoute.CLOSE;
+        }
         if (isRangedSkill(skillId)) {
             return BotCombatManager.AttackRoute.RANGED;
         }

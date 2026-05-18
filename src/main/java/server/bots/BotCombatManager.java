@@ -1306,9 +1306,12 @@ class BotCombatManager {
         return STRIKE_POINT_ANCHORED_AOE_SKILL_IDS.contains(skillId);
     }
 
+    // Caller (fallbackSkillHitBox) already gates on route == CLOSE; we no longer require
+    // the bot's basic route to be CLOSE so bow/crossbow Power Knockback (a melee swing on
+    // the client) gets the proper rectangular reach instead of falling through to the
+    // 400 px ranged projectile box.
     static Rectangle fallbackCloseRangeSkillHitBox(StatEffect effect, Character bot, boolean facingLeft) {
-        if (effect == null || bot == null
-                || BotAttackExecutionProvider.determineBasicAttackRoute(bot) != AttackRoute.CLOSE) {
+        if (effect == null || bot == null) {
             return null;
         }
 
