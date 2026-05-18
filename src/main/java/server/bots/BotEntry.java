@@ -96,6 +96,9 @@ public class BotEntry {
     // Down-jump: true when crouch was shown last tick, jump fires this tick
     boolean downJumpPending = false;
     long downJumpGracePeriodMS = 0;
+    boolean ropeEntryPending = false;
+    Rope ropeEntryRope = null;
+    int ropeEntryY = 0;
 
     // Grind mode
     volatile boolean grinding = false;

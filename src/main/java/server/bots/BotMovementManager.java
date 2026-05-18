@@ -516,28 +516,13 @@ class BotMovementManager {
             }
 
             Point botPos = bot.getPosition();
+            if (entry.ropeEntryPending) {
+                performTopRopeEntry(entry);
+                return;
+            }
             if (entry.downJumpPending) {
                 performDownJump(entry);
                 return;
-            }
-
-            // Swim maps: if standing on a platform with the target directly
-            // below (e.g. owner mid-water under our feet), drop through. The
-            // grounded path otherwise just walks to the target X and stalls
-            // on the platform because there's no graph drop edge in swim
-            // (graph routing is short-circuited for swim maps).
-            if (targetPos != null
-                    && bot.getMap() != null
-                    && bot.getMap().isSwim()
-                    && !currentFh.isForbidFallDown()) {
-                int dy = targetPos.y - botPos.y;
-                int dx = Math.abs(targetPos.x - botPos.x);
-                if (dy > BotPhysicsEngine.cfg.SWIM_LEVEL_BAND_PX
-                        && dx <= BotPhysicsEngine.cfg.SWIM_ARRIVAL_RADIUS_PX * 4) {
-                    BotPhysicsEngine.queueDownJump(entry, bot);
-                    broadcastMovement(entry);
-                    return;
-                }
             }
 
             targetPos = adjustGrindingTargetPosition(entry, currentFh, targetPos);
@@ -797,6 +782,11 @@ class BotMovementManager {
 
     private static void performDownJump(BotEntry entry) {
         BotPhysicsEngine.beginDownJump(entry, entry.bot);
+        broadcastMovement(entry);
+    }
+
+    private static void performTopRopeEntry(BotEntry entry) {
+        BotPhysicsEngine.beginTopRopeEntry(entry, entry.bot);
         broadcastMovement(entry);
     }
 

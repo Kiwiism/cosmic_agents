@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
@@ -273,6 +274,44 @@ class BotPhysicsEngineTest {
 
         assertEquals(0, entry.downJumpGracePeriodMS);
         assertTrue(BotPhysicsEngine.canLand(entry));
+    }
+
+    @Test
+    void shouldNotBeginDownJumpFromForbidFallDownFoothold() {
+        MapleMap map = createEmptyTestMap(910000059);
+        server.maps.FootholdTree footholds = map.getFootholds();
+        Foothold upper = new Foothold(new Point(0, 100), new Point(100, 100), 1);
+        Foothold lower = new Foothold(new Point(0, 180), new Point(100, 180), 2);
+        upper.setForbidFallDown(true);
+        footholds.insert(upper);
+        footholds.insert(lower);
+
+        Character bot = mockBot(new Point(50, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        BotPhysicsEngine.resetMotion(entry, bot.getPosition());
+        BotPhysicsEngine.queueDownJump(entry, bot);
+
+        BotPhysicsEngine.beginDownJump(entry, bot);
+
+        assertFalse(entry.inAir);
+        assertFalse(entry.crouching);
+        assertFalse(entry.downJumpPending);
+        assertEquals(0L, entry.downJumpGracePeriodMS);
+        assertEquals(new Point(50, 100), bot.getPosition());
+        assertEquals(CharacterStance.STAND_RIGHT_STANCE, bot.getStance());
+    }
+
+    @Test
+    void shouldRejectSimulatedDownJumpFromForbidFallDownFoothold() {
+        MapleMap map = createEmptyTestMap(910000060);
+        server.maps.FootholdTree footholds = map.getFootholds();
+        Foothold upper = new Foothold(new Point(0, 100), new Point(100, 100), 1);
+        Foothold lower = new Foothold(new Point(0, 180), new Point(100, 180), 2);
+        upper.setForbidFallDown(true);
+        footholds.insert(upper);
+        footholds.insert(lower);
+
+        assertNull(BotPhysicsEngine.simulateDownJumpLanding(map, new Point(50, 100)));
     }
 
     @Test

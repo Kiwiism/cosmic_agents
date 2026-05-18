@@ -28,7 +28,7 @@ import java.util.concurrent.Executors;
 final class BotNavigationGraphProvider {
     private static final Logger log = LoggerFactory.getLogger(BotNavigationGraphProvider.class);
 
-    private static final int GRAPH_VERSION = 45;
+    private static final int GRAPH_VERSION = 46;
     private static final int ENDPOINT_ANCHOR_SPACING_PX = 10;
     private static final int DOWN_JUMP_PRELAUNCH_WINDOW_PX = 20;
     private static final int SAME_SOLID_NEST_GAP_PX = 8;
@@ -1378,7 +1378,9 @@ final class BotNavigationGraphProvider {
         if (isBlockedWallBoundaryLaunch(map, launchPoint)) {
             return null;
         }
-        if (from.isForbidFallDownAt(launchX) || dropLaunchStep(from, map, launchPoint, movementProfile) != 0) {
+        if (!BotPhysicsEngine.canStartDownJump(map, launchPoint)
+                || from.isForbidFallDownAt(launchX)
+                || dropLaunchStep(from, map, launchPoint, movementProfile) != 0) {
             return null;
         }
 

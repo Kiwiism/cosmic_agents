@@ -1,6 +1,7 @@
 package server.bots;
 
 import client.Character;
+import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Rope;
 
@@ -12,6 +13,10 @@ final class BotFallbackMovementManager {
 
     static Point resolveSteeringTarget(BotEntry entry, Point botPos, Point targetPos) {
         Rope rope = selectNearbyRope(entry, botPos, targetPos);
+        Point ledgeTarget = resolveFallbackLedgeTarget(entry, botPos, targetPos, rope);
+        if (ledgeTarget != null) {
+            return ledgeTarget;
+        }
         if (rope == null) {
             return targetPos;
         }
@@ -50,17 +55,17 @@ final class BotFallbackMovementManager {
             return true;
         }
 
+        if (shouldUseDownJump(entry, botPos, targetPos, rope)) {
+            BotPhysicsEngine.queueDownJump(entry, bot);
+            BotMovementManager.broadcastMovement(entry);
+            return true;
+        }
+
         Point steeringTarget = rope == null ? targetPos : new Point(rope.x(), targetPos.y);
         int stepX = BotMovementManager.resolveGroundStepX(entry, botPos, steeringTarget,
                 BotMovementManager.cfg.STOP_DIST, BotMovementManager.cfg.FOLLOW_DIST);
         if (stepX == 0 || BotPhysicsEngine.canWalkGroundStep(map, botPos, stepX)) {
             return false;
-        }
-
-        if (shouldUseDownJump(entry, botPos, targetPos, rope)) {
-            BotPhysicsEngine.queueDownJump(entry, bot);
-            BotMovementManager.broadcastMovement(entry);
-            return true;
         }
 
         if (shouldUseJump(entry, botPos, steeringTarget, stepX)) {
@@ -166,16 +171,89 @@ final class BotFallbackMovementManager {
                 && botPos.y <= rope.bottomY() + BotPhysicsEngine.cfg.MAX_SNAP_DROP;
     }
 
+    private static Point resolveFallbackLedgeTarget(BotEntry entry, Point botPos, Point targetPos, Rope rope) {
+        if (entry == null || entry.bot == null || botPos == null || targetPos == null || rope != null) {
+            return null;
+        }
+        MapleMap map = entry.bot.getMap();
+        if (!shouldConsiderFallbackDrop(entry, map, botPos, targetPos)) {
+            return null;
+        }
+
+        Foothold foothold = BotPhysicsEngine.findGroundFoothold(map, botPos);
+        if (foothold == null) {
+            return null;
+        }
+
+        Point left = walkOffTarget(map, foothold, entry.movementProfile, -1);
+        Point right = walkOffTarget(map, foothold, entry.movementProfile, 1);
+        Point best = chooseBetterLedgeTarget(botPos, targetPos, left, right);
+        if (best == null) {
+            return null;
+        }
+        return new Point(best.x, targetPos.y);
+    }
+
     private static boolean shouldUseDownJump(BotEntry entry, Point botPos, Point targetPos, Rope rope) {
         if (entry == null || botPos == null || targetPos == null || rope != null) {
             return false;
         }
-        int dy = targetPos.y - botPos.y;
-        if (dy < Math.max(BotPhysicsEngine.cfg.MAX_SNAP_DROP * 2, 60)) {
+        MapleMap map = entry.bot.getMap();
+        if (!shouldConsiderFallbackDrop(entry, map, botPos, targetPos)
+                || !BotPhysicsEngine.canStartDownJump(map, botPos)) {
             return false;
         }
         return Math.abs(targetPos.x - botPos.x) <= Math.max(BotMovementManager.cfg.FOLLOW_DIST,
-                BotPhysicsEngine.walkStep(entry.bot.getMap(), entry.movementProfile) * 4);
+                BotPhysicsEngine.walkStep(map, entry.movementProfile) * 4);
+    }
+
+    private static boolean shouldConsiderFallbackDrop(BotEntry entry, MapleMap map, Point botPos, Point targetPos) {
+        if (entry == null || map == null || botPos == null || targetPos == null) {
+            return false;
+        }
+        int dy = targetPos.y - botPos.y;
+        if (dy < Math.max(BotPhysicsEngine.cfg.MAX_SNAP_DROP * 3, 90)) {
+            return false;
+        }
+
+        Foothold currentFoothold = BotPhysicsEngine.findGroundFoothold(map, botPos);
+        Foothold targetFoothold = BotPhysicsEngine.findGroundFoothold(map, targetPos);
+        return currentFoothold == null
+                || targetFoothold == null
+                || currentFoothold.getId() != targetFoothold.getId();
+    }
+
+    private static Point walkOffTarget(MapleMap map, Foothold foothold, BotMovementProfile profile, int direction) {
+        if (map == null || foothold == null || direction == 0) {
+            return null;
+        }
+        Point endpoint = direction < 0
+                ? new Point(foothold.getX1(), foothold.getY1())
+                : new Point(foothold.getX2(), foothold.getY2());
+        int step = direction * Math.max(1, BotPhysicsEngine.walkStep(map, profile));
+        Point ahead = new Point(endpoint.x + step, endpoint.y);
+        return BotPhysicsEngine.isGroundFarBelow(map, ahead) ? ahead : null;
+    }
+
+    private static Point chooseBetterLedgeTarget(Point botPos, Point targetPos, Point left, Point right) {
+        if (left == null) {
+            return right;
+        }
+        if (right == null) {
+            return left;
+        }
+
+        int desiredDirection = Integer.compare(targetPos.x, botPos.x);
+        if (desiredDirection < 0 && left.x <= botPos.x) {
+            return left;
+        }
+        if (desiredDirection > 0 && right.x >= botPos.x) {
+            return right;
+        }
+
+        int leftScore = Math.abs(targetPos.x - left.x) + Math.abs(botPos.x - left.x);
+        int rightScore = Math.abs(targetPos.x - right.x) + Math.abs(botPos.x - right.x);
+        return leftScore <= rightScore ? left : right;
     }
 
     private static boolean shouldUseJump(BotEntry entry, Point botPos, Point steeringTarget, int stepX) {

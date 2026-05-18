@@ -620,6 +620,7 @@ final class BotPhysicsEngine {
         entry.climbRope = null;
         entry.crouching = false;
         entry.climbUpIntent = false;
+        clearRopeEntryIntent(entry);
         entry.velY = 0f;
         entry.airVelX = 0;
         entry.airSteerVelX = 0.0;
@@ -643,6 +644,14 @@ final class BotPhysicsEngine {
         idleOnGround(entry, bot);
         entry.downJumpPending = true;
         entry.crouching = true;
+        syncCharacterState(entry);
+    }
+
+    static void queueTopRopeEntry(BotEntry entry, Character bot, Rope rope, int y) {
+        idleOnGround(entry, bot);
+        entry.ropeEntryPending = true;
+        entry.ropeEntryRope = rope;
+        entry.ropeEntryY = y;
         syncCharacterState(entry);
     }
 
@@ -701,9 +710,32 @@ final class BotPhysicsEngine {
     }
 
     static void beginDownJump(BotEntry entry, Character bot) {
+        if (!canStartDownJump(bot.getMap(), bot.getPosition())) {
+            entry.downJumpPending = false;
+            entry.downJumpGracePeriodMS = 0L;
+            entry.crouching = false;
+            syncCharacterState(entry);
+            return;
+        }
         entry.blockedRopeGrab = null;
         launchAirborne(entry, bot, bot.getPosition(), -downJumpForcePerTick(), 0, false);
         entry.downJumpGracePeriodMS = cfg.DOWN_JUMP_GRACE_MS;
+    }
+
+    static void beginTopRopeEntry(BotEntry entry, Character bot) {
+        Rope rope = entry.ropeEntryRope;
+        int ropeY = entry.ropeEntryY;
+        clearRopeEntryIntent(entry);
+        if (rope == null || bot == null) {
+            syncCharacterState(entry);
+            return;
+        }
+        Point position = bot.getPosition();
+        if (position == null || Math.abs(position.x - rope.x()) > cfg.ROPE_GRAB_X) {
+            syncCharacterState(entry);
+            return;
+        }
+        attachToRope(entry, bot, rope, ropeY);
     }
 
     /** Called by navigation when a DROP edge is executed — bot intentionally walks off a ledge. */
@@ -778,6 +810,7 @@ final class BotPhysicsEngine {
         entry.fixedAirArc = false;
         entry.physX = position.x;
         entry.physY = position.y;
+        clearRopeEntryIntent(entry);
         entry.downJumpPending = false;
         entry.downJumpGracePeriodMS = 0L;
         entry.groundPhysicsCarryMs = 0.0;
@@ -1419,6 +1452,11 @@ final class BotPhysicsEngine {
                 && dx <= maxJumpHorizontalTravel(map, profile);
     }
 
+    static boolean canStartDownJump(MapleMap map, Point from) {
+        Foothold foothold = findGroundFoothold(map, from);
+        return foothold != null && !foothold.isForbidFallDown();
+    }
+
     static JumpLanding simulateJumpLanding(MapleMap map, Point from, int stepX) {
         return simulateJumpLanding(map, from, stepX, BotMovementProfile.base());
     }
@@ -1440,6 +1478,9 @@ final class BotPhysicsEngine {
     }
 
     static JumpLanding simulateDownJumpLanding(MapleMap map, Point from) {
+        if (!canStartDownJump(map, from)) {
+            return null;
+        }
         return simulateLanding(map, from, -downJumpForcePerTick(), 0, cfg.DOWN_JUMP_GRACE_MS);
     }
 
@@ -1542,6 +1583,7 @@ final class BotPhysicsEngine {
         entry.velY = initialVelY;
         stopGroundMotion(entry);
         entry.climbUpIntent = climbUpIntent;
+        clearRopeEntryIntent(entry);
         entry.airVelX = airVelX;
         entry.airSteerVelX = 0.0;
         entry.fixedAirArc = false;
@@ -1608,10 +1650,17 @@ final class BotPhysicsEngine {
         entry.fixedAirArc = false;
         entry.physX = position.x;
         entry.physY = position.y;
+        clearRopeEntryIntent(entry);
         entry.downJumpPending = false;
         stopGroundMotion(entry);
         setMovementVelocity(entry, 0, 0);
         syncCharacterState(entry);
+    }
+
+    private static void clearRopeEntryIntent(BotEntry entry) {
+        entry.ropeEntryPending = false;
+        entry.ropeEntryRope = null;
+        entry.ropeEntryY = 0;
     }
 
     private static void clearMovementState(BotEntry entry, Point position) {
@@ -1634,6 +1683,7 @@ final class BotPhysicsEngine {
         entry.ropeGrabCooldownMs = 0;
         entry.downJumpPending = false;
         entry.downJumpGracePeriodMS = 0L;
+        clearRopeEntryIntent(entry);
         setMovementVelocity(entry, 0, 0);
     }
 

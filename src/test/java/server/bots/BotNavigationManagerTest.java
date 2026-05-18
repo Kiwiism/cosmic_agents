@@ -703,6 +703,117 @@ class BotNavigationManagerTest {
                 "Bot must hold position on the rope without AI-decided intent.");
     }
 
+    @Test
+    void shouldUseExplicitRopeEntryInsteadOfDownJumpFromTopPlatform() {
+        MapleMap map = topRopeSyntheticMap(910000201);
+        BotNavigationGraphProvider.rebuildGraph(map);
+
+        Character bot = mockBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.movementProfile = BotMovementProfile.base();
+
+        BotNavigationManager.NavigationDirective directive =
+                BotNavigationManager.resolveTarget(entry, new Point(100, 150), true);
+
+        assertTrue(directive.consumedTick);
+        assertTrue(entry.ropeEntryPending);
+        assertFalse(entry.climbing);
+        assertFalse(entry.downJumpPending);
+        assertFalse(entry.crouching);
+
+        BotMovementManager.tickGrounded(entry, new Point(100, 150));
+
+        assertFalse(entry.ropeEntryPending);
+        assertTrue(entry.climbing);
+        assertEquals(new Point(100, 101), bot.getPosition());
+    }
+
+    @Test
+    void shouldUseDownJumpInSwimFallbackWhenTargetIsDirectlyBelow() {
+        MapleMap map = new MapleMap(910000202, 0, 0, 910000202, 1.0f);
+        map.setSwim(true);
+        FootholdTree footholds = new FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(120, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.movementProfile = BotMovementProfile.base();
+        entry.graphWarmupFallback = true;
+
+        Point target = new Point(130, 220);
+        boolean immediateAction = BotFallbackMovementManager.tryImmediateAction(entry, bot.getPosition(), target);
+
+        assertTrue(immediateAction);
+        assertTrue(entry.downJumpPending);
+    }
+
+    @Test
+    void shouldUseDownJumpInNonSwimFallbackWhenTargetIsDirectlyBelow() {
+        MapleMap map = new MapleMap(910000204, 0, 0, 910000204, 1.0f);
+        FootholdTree footholds = new FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
+        footholds.insert(new Foothold(new Point(20, 220), new Point(180, 220), 2));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(120, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.movementProfile = BotMovementProfile.base();
+        entry.graphWarmupFallback = true;
+
+        Point target = new Point(130, 220);
+        boolean immediateAction = BotFallbackMovementManager.tryImmediateAction(entry, bot.getPosition(), target);
+
+        assertTrue(immediateAction);
+        assertTrue(entry.downJumpPending);
+    }
+
+    @Test
+    void shouldSteerTowardNearestSwimWalkOffLedgeWhenFallbackCannotDownJump() {
+        MapleMap map = new MapleMap(910000203, 0, 0, 910000203, 1.0f);
+        map.setSwim(true);
+        FootholdTree footholds = new FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(120, 100), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.movementProfile = BotMovementProfile.base();
+        entry.graphWarmupFallback = true;
+
+        Point target = new Point(260, 220);
+        Point steeringTarget = BotFallbackMovementManager.resolveSteeringTarget(entry, bot.getPosition(), target);
+        boolean immediateAction = BotFallbackMovementManager.tryImmediateAction(entry, bot.getPosition(), target);
+
+        assertFalse(immediateAction);
+        assertFalse(entry.downJumpPending);
+        assertNotNull(steeringTarget);
+        assertTrue(steeringTarget.y > bot.getPosition().y);
+        assertTrue(steeringTarget.x > 200 || steeringTarget.x < 0,
+                "fallback should steer past a legal ledge so normal walk-off physics handles the drop");
+    }
+
+    @Test
+    void shouldNotPreemptivelyDownJumpWhileFollowingDownSameSlopeInFallback() {
+        MapleMap map = new MapleMap(910000205, 0, 0, 910000205, 1.0f);
+        FootholdTree footholds = new FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(400, 240), 1));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(40, 114), map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.movementProfile = BotMovementProfile.base();
+        entry.graphWarmupFallback = true;
+
+        Point target = new Point(320, 212);
+        Point steeringTarget = BotFallbackMovementManager.resolveSteeringTarget(entry, bot.getPosition(), target);
+        boolean immediateAction = BotFallbackMovementManager.tryImmediateAction(entry, bot.getPosition(), target);
+
+        assertFalse(immediateAction);
+        assertFalse(entry.downJumpPending);
+        assertEquals(target, steeringTarget);
+    }
+
     private static Character mockBot(Point startPosition, MapleMap map) {
         Character bot = mock(Character.class);
         AtomicReference<Point> position = new AtomicReference<>(new Point(startPosition));

@@ -513,12 +513,10 @@ final class BotNavigationManager {
             return new NavigationDirective(rawTargetPos, true);
         }
         if (canGrabRopeFromTopPlatform(edge, botPos, rope)) {
-            // Bot is on a platform above the rope top. Do NOT call startClimbing here —
-            // that would teleport the bot downward. Instead queue a down-jump and let
-            // physics carry the bot to the rope; canGrabRopeAtCurrentPosition will attach
-            // once the bot's Y enters the rope range.
+            // Top-of-rope entry is a separate intent from down-jump. Queue it and let grounded
+            // physics consume the request on the next tick, just like other input-driven actions.
             entry.lastEdgeBlockReason = null;
-            BotPhysicsEngine.queueDownJump(entry, bot);
+            BotPhysicsEngine.queueTopRopeEntry(entry, bot, rope, edge.endPoint.y);
             BotMovementManager.broadcastMovement(entry);
             return new NavigationDirective(rawTargetPos, true);
         }
