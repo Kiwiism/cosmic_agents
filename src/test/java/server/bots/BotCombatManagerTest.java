@@ -1082,7 +1082,7 @@ class BotCombatManagerTest {
     }
 
     @Test
-    void shouldPreferCurrentFootholdTargetBeforePathScoringOtherRegions() {
+    void shouldAllowPathScoringToBeatFarCurrentFootholdTarget() {
         MapleMap map = spy(new MapleMap(910009050, 0, 0, 910009050, 1.0f));
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
         footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
@@ -1097,7 +1097,7 @@ class BotCombatManagerTest {
 
         Monster target = BotCombatManager.findGrindTarget(new BotEntry(bot, null, null), bot);
 
-        assertEquals(currentFootholdMob, target);
+        assertEquals(otherRegionMob, target);
     }
 
     @Test

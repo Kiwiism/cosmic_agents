@@ -882,7 +882,10 @@ class BotCombatManager {
                 }
             }
 
-            candidates.add(planBasicAttack(bot, target));
+            AttackPlan basicAttack = planBasicAttack(bot, target);
+            if (basicAttack != null) {
+                candidates.add(basicAttack);
+            }
             return selectBestAttackPlan(bot, candidates);
         } finally {
             BotPerformanceMonitor.record("combat-plan", System.nanoTime() - startedAt);
@@ -910,10 +913,39 @@ class BotCombatManager {
         if (effective != target) {
             basicAttackData = buildBasicAttackData(bot, effective);
         }
+        if (!doesHitBoxIntersectMonster(basicAttackData.hitBox(), effective)) {
+            // Original facing is dry. Try the opposite facing: resolveEffectivePrimary only
+            // scans the forward hemisphere, so a closer mob on the other side would have
+            // been ignored. If one exists, pivot to it.
+            Monster pivoted = findReachableOnOppositeFacing(bot, target);
+            if (pivoted == null) {
+                return null;
+            }
+            basicAttackData = buildBasicAttackData(bot, pivoted);
+            effective = pivoted;
+        }
         return new AttackPlan(0, 0, 1, basicAttackData.hitBox(), List.of(effective), basicAttackData.route(),
                 basicAttackData.display(), basicAttackData.direction(), basicAttackData.rangedDirection(), basicAttackData.stance(),
                 basicAttackData.speed(), basicAttackData.hitDelayMs(), basicAttackData.cooldownMs(),
                 damageWeaponTypeForAction(0, BotAttackExecutionProvider.getEquippedWeaponType(bot), basicAttackData.action()));
+    }
+
+    private static Monster findReachableOnOppositeFacing(Character bot, Monster originalTarget) {
+        if (bot == null || originalTarget == null
+                || bot.getPosition() == null || originalTarget.getPosition() == null) {
+            return null;
+        }
+        Point botPos = bot.getPosition();
+        Point mirroredPos = new Point(2 * botPos.x - originalTarget.getPosition().x,
+                originalTarget.getPosition().y);
+        BotAttackExecutionProvider.BasicAttackData oppositeData =
+                BotAttackExecutionProvider.buildBasicAttackData(bot, mirroredPos);
+        Rectangle oppositeHitBox = oppositeData.hitBox();
+        if (oppositeHitBox == null) {
+            return null;
+        }
+        Monster mirrored = resolveEffectivePrimary(bot, originalTarget, oppositeHitBox);
+        return mirrored != originalTarget ? mirrored : null;
     }
 
     private static AttackPlan selectBestAttackPlan(Character bot, List<AttackPlan> candidates) {
@@ -1138,6 +1170,14 @@ class BotCombatManager {
             return null;
         }
         AttackRoute route = BotAttackExecutionProvider.determineSkillRoute(bot, skillId);
+        // Ammo gate: ranged skills with bulletCount need that many arrows/stars/bullets in
+        // the bot's USE inventory. canPaySkillCost only covers MP/HP. countAmmo returns
+        // MAX_VALUE for non-ammo weapons and while Soul Arrow / Shadow Claw are active.
+        int bulletCount = effect.getBulletCount();
+        if (bulletCount > 0 && route == AttackRoute.RANGED
+                && countAmmo(bot, weaponType) < bulletCount) {
+            return null;
+        }
         if (isStrikePointAnchoredAoeSkill(skillId)) {
             primaryTarget = resolveStrikePointPrimaryByBasicWeapon(bot, primaryTarget, route);
         }
@@ -1420,27 +1460,11 @@ class BotCombatManager {
                                                              Foothold botFoothold,
                                                              List<Monster> candidates) {
         GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, botPos);
-        List<ScoredGrindTarget> currentRegionTargets = new ArrayList<>();
-        for (Monster candidate : candidates) {
-            if (!isLocalCombatTarget(graphContext, bot, botFoothold, candidate)
-                    && !isImmediateProjectileTarget(entry, bot, candidate)) {
-                continue;
-            }
-            int targetRegionId = graphContext.available()
-                    ? BotNavigationManager.resolveTargetRegionId(graphContext.graph(), entry, graphContext.map(), candidate.getPosition())
-                    : -1;
-            long localScore = grindTargetScore(bot, botPos, botFoothold, candidate)
-                    + grindRegionOccupancyPenalty(graphContext, bot, targetRegionId);
-            currentRegionTargets.add(new ScoredGrindTarget(candidate, localScore, localScore,
-                    candidate.getPosition().distanceSq(botPos)));
-        }
-        if (!currentRegionTargets.isEmpty()) {
-            return currentRegionTargets;
+        if (!graphContext.available()) {
+            return scoreLocalTargets(bot, botPos, botFoothold, candidates);
         }
 
-        return graphContext.available()
-                ? scoreTargetRegions(graphContext, bot, botPos, botFoothold, candidates)
-                : scoreLocalTargets(bot, botPos, botFoothold, candidates);
+        return scoreTargetRegions(graphContext, bot, botPos, botFoothold, candidates);
     }
 
     private static List<Monster> aliveMonstersInRange(Character bot, Point botPos, double rangeSq) {
@@ -1826,19 +1850,11 @@ class BotCombatManager {
         if (bot == null || target == null || bot.getPosition() == null || target.getPosition() == null) {
             return false;
         }
-        boolean facingLeft = target.getPosition().x < bot.getPosition().x;
-        Rectangle basicReach;
-        if (route == AttackRoute.RANGED) {
-            basicReach = clientProjectileHitBox(bot, facingLeft, 1.0f);
-        } else if (route == AttackRoute.CLOSE) {
-            Point origin = bot.getPosition();
-            int left = facingLeft ? origin.x - cfg.ATTACK_RANGE_X : origin.x;
-            int top = origin.y - cfg.ATTACK_RANGE_Y;
-            int height = cfg.ATTACK_RANGE_Y + cfg.ATTACK_DOWN_MAX;
-            basicReach = new Rectangle(left, top, cfg.ATTACK_RANGE_X, height);
-        } else {
+        if (route != AttackRoute.RANGED && route != AttackRoute.CLOSE) {
             return true;
         }
+        boolean facingLeft = target.getPosition().x < bot.getPosition().x;
+        Rectangle basicReach = basicWeaponReachRect(bot, facingLeft, route);
         return basicReach != null && doesHitBoxIntersectMonster(basicReach, target);
     }
 
@@ -1846,21 +1862,37 @@ class BotCombatManager {
         if (bot == null || fallback == null || bot.getPosition() == null || fallback.getPosition() == null) {
             return fallback;
         }
-
+        if (route != AttackRoute.RANGED && route != AttackRoute.CLOSE) {
+            return fallback;
+        }
         boolean facingLeft = fallback.getPosition().x < bot.getPosition().x;
-        Rectangle basicReach;
+        Rectangle basicReach = basicWeaponReachRect(bot, facingLeft, route);
+        if (basicReach == null) {
+            return fallback;
+        }
+        return resolveEffectivePrimary(bot, fallback, basicReach);
+    }
+
+    /**
+     * Rect the bot's *basic* (un-skilled) weapon attack would cover for the given facing/route.
+     * RANGED -> projectile reach (400 px + passive bonuses); CLOSE -> ATTACK_RANGE_X/Y/DOWN_MAX
+     * around bot origin. Returns null for routes with no rect-based reach (e.g. MAGIC).
+     */
+    private static Rectangle basicWeaponReachRect(Character bot, boolean facingLeft, AttackRoute route) {
+        if (bot == null || bot.getPosition() == null) {
+            return null;
+        }
         if (route == AttackRoute.RANGED) {
-            basicReach = clientProjectileHitBox(bot, facingLeft, 1.0f);
-        } else if (route == AttackRoute.CLOSE) {
+            return clientProjectileHitBox(bot, facingLeft, 1.0f);
+        }
+        if (route == AttackRoute.CLOSE) {
             Point origin = bot.getPosition();
             int left = facingLeft ? origin.x - cfg.ATTACK_RANGE_X : origin.x;
             int top = origin.y - cfg.ATTACK_RANGE_Y;
             int height = cfg.ATTACK_RANGE_Y + cfg.ATTACK_DOWN_MAX;
-            basicReach = new Rectangle(left, top, cfg.ATTACK_RANGE_X, height);
-        } else {
-            return fallback;
+            return new Rectangle(left, top, cfg.ATTACK_RANGE_X, height);
         }
-        return resolveEffectivePrimary(bot, fallback, basicReach);
+        return null;
     }
 
     private static boolean isForwardProjectileHitBox(Rectangle hitBox, Point botPos) {

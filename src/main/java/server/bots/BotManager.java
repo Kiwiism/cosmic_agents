@@ -1658,7 +1658,7 @@ public class BotManager {
                 || !BotCombatManager.isTargetInAttackRange(currentAttackPlan, bot, currentTarget);
     }
 
-    static Point resolveNoGrindTargetPosition(BotEntry entry, Point botPos) {
+    static Point resolveNoGrindTargetPosition(BotEntry entry, Point botPos, MapleMap map) {
         if (entry == null || botPos == null) {
             return botPos;
         }
@@ -1668,10 +1668,31 @@ public class BotManager {
                 return lootPos;
             }
         }
+
+        BotNavigationGraph graph = map != null ? BotNavigationGraphProvider.peekGraph(map) : null;
+        int regionId = graph != null ? BotNavigationManager.resolveCurrentRegionId(graph, entry, map, botPos) : -1;
+        BotNavigationGraph.Region region = graph != null ? graph.getRegion(regionId) : null;
+        if (region != null && !region.isRopeRegion && region.width() > 0) {
+            Point wander = entry.patrolWanderTarget;
+            if (wander == null || isNear(botPos, wander, BotMovementManager.cfg.STOP_DIST)) {
+                int x = ThreadLocalRandom.current().nextInt(region.minX, region.maxX + 1);
+                wander = region.pointAt(x);
+                entry.patrolWanderTarget = wander;
+            }
+            return wander;
+        }
+
+        entry.patrolWanderTarget = null;
         if (entry.wanderDirection == 0) {
             entry.wanderDirection = ThreadLocalRandom.current().nextBoolean() ? 1 : -1;
         }
         return new Point(botPos.x + entry.wanderDirection * 200, botPos.y);
+    }
+
+    static Point resolveNoGrindTargetPosition(BotEntry entry, Point botPos) {
+        Character bot = entry != null ? entry.bot : null;
+        MapleMap map = bot != null ? bot.getMap() : null;
+        return resolveNoGrindTargetPosition(entry, botPos, map);
     }
 
     private static Point activeGrindLootPosition(BotEntry entry, Point botPos) {
@@ -1743,7 +1764,7 @@ public class BotManager {
         BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map);
         BotNavigationGraph.Region region = graph != null ? graph.getRegion(entry.patrolRegionId) : null;
         if (region == null || region.isRopeRegion || region.width() == 0) {
-            return resolveNoGrindTargetPosition(entry, botPos);
+            return resolveNoGrindTargetPosition(entry, botPos, map);
         }
         // Seek loot before roaming
         Point lootTarget = BotInventoryManager.findNearestPatrolLootTarget(entry, entry.patrolRegionId);
@@ -2107,7 +2128,7 @@ public class BotManager {
             if (target == null) {
                 targetPos = entry.patrolRegionId >= 0
                         ? resolvePatrolWanderTarget(entry, botPos, bot.getMap())
-                        : resolveNoGrindTargetPosition(entry, botPos);
+                        : resolveNoGrindTargetPosition(entry, botPos, bot.getMap());
                 stepMovementCore(entry, targetPos, runAiTick);
                 return;
             }
@@ -2264,7 +2285,7 @@ public class BotManager {
                 if (target == null) {
                     targetPos = entry.patrolRegionId >= 0
                             ? resolvePatrolWanderTarget(entry, botPos, bot.getMap())
-                            : resolveNoGrindTargetPosition(entry, botPos);
+                            : resolveNoGrindTargetPosition(entry, botPos, bot.getMap());
                     stepMovementCore(entry, targetPos, runAiTick);
                     return;
                 }
