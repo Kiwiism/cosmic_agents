@@ -488,7 +488,7 @@ class BotCombatManager {
             if (isActiveAttackSkill(skill, fx)) {
                 entry.attackSkillIds.add(skill.getId());
                 if (mobs >= 2) {
-                    long score = (long) Math.max(0, fx.getDamage()) * Math.max(1, atk) * Math.max(1, mobs);
+                    long score = (long) Math.max(0, fx.getDamagePercent()) * Math.max(1, atk) * Math.max(1, mobs);
                     if (score > bestAoeScore) {
                         bestAoeScore = score;
                         entry.aoeSkillId = skill.getId();
@@ -569,7 +569,7 @@ class BotCombatManager {
             return priority > bestPriority;
         }
 
-        int damage = effect != null ? effect.getDamage() : 0;
+        int damage = effect != null ? effect.getDamagePercent() : 0;
         int score = damage * attackCount;
         int bestScore = bestDamage * bestAttackCount;
         if (score != bestScore) {
@@ -2455,7 +2455,7 @@ class BotCombatManager {
         if (NON_DAMAGE_ACTIVE_SKILL_IDS.contains(skill.getId())) {
             return false;
         }
-        if (effect.isOverTime() || effect.getDamage() <= 0) {
+        if (effect.isOverTime() || !declaresOffense(effect)) {
             return false;
         }
         if (skill.getSkillType() == 1 || skill.getSkillType() == 3) {
@@ -2464,6 +2464,20 @@ class BotCombatManager {
         // v83 attack skills often omit a top-level action node; passive damage carriers do not
         // carry a client-paid cost. Use WZ skillType for explicit passives and cost as the fallback.
         return effect.getMpCon() > 0 || effect.getHpCon() > 0 || skill.isBeginnerSkill();
+    }
+
+    // Identifies skills the WZ source declares as offensive. Three WZ shapes cover every
+    // attack skill we know of in v83; combined with isOverTime() this rejects utility skills
+    // (Teleport, Magic Guard, Haste) that would otherwise pass numeric checks because the
+    // StatEffect loader defaults "damage" to 100 and "mad" to 0 when those keys are absent.
+    //   1. "damage" key present  → physical attack skill (Power Strike, Strafe, Iron Arrow).
+    //   2. "mad" key present     → magic attack skill (Magic Claw, Cold Beam, Thunder Bolt).
+    //   3. mobCount > 1 + bbox   → bomb/explosion skill that derives damage from "x" instead
+    //                              of "damage" (Hunter.ARROW_BOMB and similar).
+    private static boolean declaresOffense(StatEffect effect) {
+        return effect.hasDamage()
+                || effect.hasMatk()
+                || (effect.getMobCount() > 1 && effect.hasBoundingBox());
     }
 
     private static boolean isActiveSupportSkill(Skill skill, StatEffect effect) {

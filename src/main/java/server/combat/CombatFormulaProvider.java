@@ -699,7 +699,7 @@ public final class CombatFormulaProvider {
         }
 
         if (skillId != 0 && effect != null && skillId != Hermit.SHADOW_MESO) {
-            int skillDamage = effect.getDamage();
+            int skillDamage = effect.getDamagePercent();
             if (skillDamage > 0) {
                 maxDamage = maxDamage * skillDamage / 100L;
                 minDamage = minDamage * skillDamage / 100L;

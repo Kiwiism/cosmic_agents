@@ -146,6 +146,8 @@ public class StatEffect {
     private double prop;
     private int itemCon, itemConNo;
     private int damage, attackCount, fixdamage;
+    private boolean hasDamage;
+    private boolean hasMatk;
     private Point lt, rb;
     private short bulletCount, bulletConsume;
     private byte mapProtection;
@@ -306,6 +308,7 @@ public class StatEffect {
         ArrayList<Pair<BuffStat, Integer>> statups = new ArrayList<>();
         ret.watk = (short) DataTool.getInt("pad", source, 0);
         ret.wdef = (short) DataTool.getInt("pdd", source, 0);
+        ret.hasMatk = source.getChildByPath("mad") != null;
         ret.matk = (short) DataTool.getInt("mad", source, 0);
         ret.mdef = (short) DataTool.getInt("mdd", source, 0);
         ret.acc = (short) DataTool.getIntConvert("acc", source, 0);
@@ -483,6 +486,7 @@ public class StatEffect {
         ret.y = DataTool.getInt("y", source, 0);
         ret.mastery = DataTool.getInt("mastery", source, 0);
 
+        ret.hasDamage = source.getChildByPath("damage") != null;
         ret.damage = DataTool.getIntConvert("damage", source, 100);
         ret.fixdamage = DataTool.getIntConvert("fixdamage", source, -1);
         ret.attackCount = DataTool.getIntConvert("attackCount", source, 1);
@@ -1944,6 +1948,33 @@ public class StatEffect {
 
     public int getDamage() {
         return damage;
+    }
+
+    // True iff the WZ source explicitly declared a "damage" attribute. Physical
+    // attack skills always declare it; utility skills (Teleport, Magic Guard) omit it
+    // and read getDamage() == 100 only because of the loader default.
+    public boolean hasDamage() {
+        return hasDamage;
+    }
+
+    // True iff the WZ source explicitly declared a "mad" (magic attack) attribute.
+    // Magic attack skills (Magic Claw, Cold Beam, Energy Bolt, Thunder Bolt, ...) declare
+    // it instead of "damage". Some buffs also declare it for an MATK statup — gate with
+    // isOverTime() when using this to identify attack skills.
+    public boolean hasMatk() {
+        return hasMatk;
+    }
+
+    // Damage percentage to apply to the attacker's base damage. Most attack skills declare
+    // "damage" (returned as-is). Bomb/explosion skills like Hunter.ARROW_BOMB declare "x"
+    // instead — they have no "damage" key so getDamage() would default to 100, which would
+    // skip the skill's intended multiplier. Callers in the damage formula must use this
+    // method instead of getDamage() so bomb-family skills score correctly.
+    public int getDamagePercent() {
+        if (hasDamage) {
+            return damage;
+        }
+        return x > 0 ? x : damage;
     }
 
     public int getAttackCount() {

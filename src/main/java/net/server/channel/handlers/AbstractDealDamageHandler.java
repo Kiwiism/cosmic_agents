@@ -682,8 +682,10 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
                 calcDmgMax = effect.getMoneyCon() * 10;
                 calcDmgMax = (int) Math.floor(calcDmgMax * 1.5);
             } else {
-                // Normal damage formula for skills
-                calcDmgMax = calcDmgMax * effect.getDamage() / 100;
+                // Normal damage formula for skills. getDamagePercent() falls back to the
+                // skill's "x" attribute when WZ omits "damage" (Hunter.ARROW_BOMB family),
+                // avoiding a silent 100% multiplier from the loader default.
+                calcDmgMax = calcDmgMax * effect.getDamagePercent() / 100;
             }
         }
 
