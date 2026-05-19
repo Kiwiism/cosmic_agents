@@ -1131,6 +1131,38 @@ class BotCombatManagerTest {
     }
 
     @Test
+    void shouldPreferAoeClusterAnchorOverLoneCloseMobWhenBotHasAoeSkill() {
+        // bot at (100, 100). lone "low-hp" mob CLOSE in one direction, 3-mob cluster
+        // farther in the opposite direction. without an AoE skill the close lone mob
+        // wins on distance score; with an AoE skill, the cluster anchor must win so
+        // planAttack can fire an AoE plan that out-DPSes the basic single shot.
+        MapleMap map = spy(new MapleMap(910009060, 0, 0, 910009060, 1.0f));
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(-400, 100), new Point(400, 100), 1));
+        map.setFootholds(footholds);
+        BotNavigationGraphProvider.rebuildGraph(map);
+
+        Character bot = mockBot(new Point(100, 100), map, 20_000, null);
+        Monster loneClose = mockMob(new Point(160, 100), 100100);
+        Monster clusterAnchor = mockMob(new Point(-100, 100), 100100);
+        Monster clusterNeighbor1 = mockMob(new Point(-130, 100), 100100);
+        Monster clusterNeighbor2 = mockMob(new Point(-160, 100), 100100);
+        doReturn(List.of(loneClose, clusterAnchor, clusterNeighbor1, clusterNeighbor2))
+                .when(map).getAllMonsters();
+
+        BotEntry noAoeEntry = new BotEntry(bot, null, null);
+        // Sanity: without AoE skill, the lone close mob wins on plain distance score.
+        assertEquals(loneClose, BotCombatManager.findGrindTarget(noAoeEntry, bot));
+
+        BotEntry aoeEntry = new BotEntry(bot, null, null);
+        aoeEntry.aoeSkillId = Hunter.POWER_KNOCKBACK;
+        aoeEntry.aoeSkillMobs = 6;
+        // With AoE skill that hits up to 6, cluster anchor's bonus overcomes the lone
+        // mob's distance advantage and the bot switches target to the cluster.
+        assertEquals(clusterAnchor, BotCombatManager.findGrindTarget(aoeEntry, bot));
+    }
+
+    @Test
     void shouldPreferLessOccupiedGrindRegionWhenPathCostIsClose() throws Exception {
         MapleMap map = spy(new MapleMap(910009052, 0, 0, 910009052, 1.0f));
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));

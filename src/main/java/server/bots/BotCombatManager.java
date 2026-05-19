@@ -866,7 +866,8 @@ class BotCombatManager {
                         && !isImmediateProjectileTarget(entry, bot, candidate)) {
                     continue;
                 }
-                long localScore = grindTargetScore(bot, botPos, botFoothold, candidate);
+                long localScore = grindTargetScore(bot, botPos, botFoothold, candidate)
+                        - aoeClusterBonus(entry, candidate, candidates);
                 localTargets.add(new ScoredGrindTarget(candidate, localScore, localScore,
                         candidate.getPosition().distanceSq(botPos)));
             }
@@ -1530,10 +1531,10 @@ class BotCombatManager {
                                                              List<Monster> candidates) {
         GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, botPos);
         if (!graphContext.available()) {
-            return scoreLocalTargets(bot, botPos, botFoothold, candidates);
+            return scoreLocalTargets(entry, bot, botPos, botFoothold, candidates);
         }
 
-        return scoreTargetRegions(graphContext, bot, botPos, botFoothold, candidates);
+        return scoreTargetRegions(entry, graphContext, bot, botPos, botFoothold, candidates);
     }
 
     private static List<Monster> aliveMonstersInRange(Character bot, Point botPos, double rangeSq) {
@@ -1614,20 +1615,23 @@ class BotCombatManager {
         return BotAttackExecutionProvider.canUseRangedAttackRoute(route, weaponType, bot.getPosition(), target.getPosition());
     }
 
-    private static List<ScoredGrindTarget> scoreLocalTargets(Character bot,
+    private static List<ScoredGrindTarget> scoreLocalTargets(BotEntry entry,
+                                                             Character bot,
                                                              Point botPos,
                                                              Foothold botFoothold,
                                                              List<Monster> candidates) {
         List<ScoredGrindTarget> scoredTargets = new ArrayList<>(candidates.size());
         for (Monster candidate : candidates) {
-            long localScore = grindTargetScore(bot, botPos, botFoothold, candidate);
+            long localScore = grindTargetScore(bot, botPos, botFoothold, candidate)
+                    - aoeClusterBonus(entry, candidate, candidates);
             scoredTargets.add(new ScoredGrindTarget(candidate, localScore, localScore,
                     candidate.getPosition().distanceSq(botPos)));
         }
         return scoredTargets;
     }
 
-    private static List<ScoredGrindTarget> scoreTargetRegions(GrindGraphContext context,
+    private static List<ScoredGrindTarget> scoreTargetRegions(BotEntry entry,
+                                                              GrindGraphContext context,
                                                               Character bot,
                                                               Point botPos,
                                                               Foothold botFoothold,
@@ -1641,7 +1645,8 @@ class BotCombatManager {
                 continue;
             }
 
-            long localScore = grindTargetScore(bot, botPos, botFoothold, candidate);
+            long localScore = grindTargetScore(bot, botPos, botFoothold, candidate)
+                    - aoeClusterBonus(entry, candidate, candidates);
             GrindTargetGroup group = groupsByRegionId.computeIfAbsent(targetRegionId, GrindTargetGroup::new);
             group.add(candidate, localScore, targetPos.distanceSq(botPos));
         }
@@ -1737,6 +1742,49 @@ class BotCombatManager {
             score += 1200L;
         }
         return score;
+    }
+
+    // Cluster-density bonus: when the bot has an AoE skill, bias target selection toward
+    // mobs that anchor a cluster. The single-skill DPS scorer already prefers AoE plans
+    // over basic ones on the same target (selectBestAttackPlan), but it never sees the
+    // alternative cluster if target selection passed it over for a closer/lone mob.
+    //
+    // Returns a non-negative bonus that is subtracted from the candidate's localScore
+    // (lower score wins). Capped by the AoE skill's mobCount-1 so a 6-mob skill on a
+    // pile of 10 mobs doesn't crater scores past the natural distance/foothold penalties.
+    static final int AOE_CLUSTER_RADIUS_PX = 150;
+    static final long AOE_CLUSTER_BONUS_PER_MOB = 200L;
+
+    private static long aoeClusterBonus(BotEntry entry, Monster target, List<Monster> candidates) {
+        if (entry == null || entry.aoeSkillId == 0 || entry.aoeSkillMobs <= 1
+                || target == null || candidates == null || candidates.isEmpty()) {
+            return 0L;
+        }
+        Point tp = target.getPosition();
+        if (tp == null) {
+            return 0L;
+        }
+        long radiusSq = (long) AOE_CLUSTER_RADIUS_PX * AOE_CLUSTER_RADIUS_PX;
+        int cap = entry.aoeSkillMobs - 1;
+        int neighbors = 0;
+        for (Monster other : candidates) {
+            if (other == target || other == null || !other.isAlive()) {
+                continue;
+            }
+            Point op = other.getPosition();
+            if (op == null) {
+                continue;
+            }
+            long dx = (long) op.x - tp.x;
+            long dy = (long) op.y - tp.y;
+            if (dx * dx + dy * dy <= radiusSq) {
+                neighbors++;
+                if (neighbors >= cap) {
+                    break;
+                }
+            }
+        }
+        return neighbors * AOE_CLUSTER_BONUS_PER_MOB;
     }
 
     private static long grindRegionOccupancyPenalty(GrindGraphContext context, Character bot, int targetRegionId) {
