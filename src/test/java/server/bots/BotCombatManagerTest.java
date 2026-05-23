@@ -1012,7 +1012,7 @@ class BotCombatManagerTest {
         BotAttackExecutionProvider.SkillAttackTiming timing =
                 BotAttackExecutionProvider.resolveSkillAttackTiming(450, 4, 300, 590);
 
-        assertEquals(173, timing.hitDelayMs());
+        assertEquals(197, timing.hitDelayMs());
         assertEquals(590, timing.cooldownMs());
     }
 
@@ -1021,8 +1021,8 @@ class BotCombatManagerTest {
         BotAttackExecutionProvider.SkillAttackTiming timing =
                 BotAttackExecutionProvider.resolveSkillAttackTiming(520, 2, 120, 0);
 
-        assertEquals(173, timing.hitDelayMs());
-        assertEquals(347, timing.cooldownMs());
+        assertEquals(203, timing.hitDelayMs());
+        assertEquals(406, timing.cooldownMs());
     }
 
     @Test

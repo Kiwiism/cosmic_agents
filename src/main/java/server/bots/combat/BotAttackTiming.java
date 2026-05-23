@@ -1,6 +1,9 @@
 package server.bots.combat;
 
 public final class BotAttackTiming {
+    private static final float ATTACK_SPEED_BASE_FACTOR = 1.42f;
+    private static final float ATTACK_SPEED_TIER_FACTOR = 0.07f;
+
     private BotAttackTiming() {
     }
 
@@ -12,7 +15,7 @@ public final class BotAttackTiming {
     }
 
     public static float toAttackSpeedFactor(int attackSpeed) {
-        return 1.7f - (normalizeAttackSpeed(attackSpeed) / 10f);
+        return ATTACK_SPEED_BASE_FACTOR - (normalizeAttackSpeed(attackSpeed) * ATTACK_SPEED_TIER_FACTOR);
     }
 
     public static int adjustDelayMillis(int rawDelayMs, int attackSpeed) {

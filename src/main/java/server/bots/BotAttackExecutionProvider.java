@@ -661,12 +661,17 @@ final class BotAttackExecutionProvider {
             return normalizedBaseSpeed;
         }
 
+        int speedDelta = 0;
         Integer booster = bot.getBuffedValue(BuffStat.BOOSTER);
-        if (booster == null) {
-            return normalizedBaseSpeed;
+        if (booster != null) {
+            speedDelta += booster;
+        }
+        Integer speedInfusion = bot.getBuffedValue(BuffStat.SPEED_INFUSION);
+        if (speedInfusion != null) {
+            speedDelta += speedInfusion;
         }
 
-        return Math.max(2, normalizedBaseSpeed + booster);
+        return Math.max(2, normalizedBaseSpeed + speedDelta);
     }
 
     private static int adjustAttackDelayMillis(int baseDelayMillis, int effectiveAttackSpeed) {

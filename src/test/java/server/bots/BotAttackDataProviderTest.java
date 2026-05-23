@@ -2,6 +2,7 @@ package server.bots;
 
 import org.junit.jupiter.api.Test;
 import server.bots.combat.BotAttackDataProvider;
+import server.bots.combat.BotAttackTiming;
 
 import java.util.List;
 
@@ -94,10 +95,7 @@ class BotAttackDataProviderTest {
     }
 
     private static int adjustedDelay(int rawDelayMs) {
-        if (rawDelayMs <= 0) {
-            return 0;
-        }
-        return Math.max(1, Math.round(rawDelayMs / 1.3f));
+        return BotAttackTiming.adjustDelayMillis(rawDelayMs, 4);
     }
 
     @Test
