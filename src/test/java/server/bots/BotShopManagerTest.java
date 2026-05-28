@@ -16,6 +16,7 @@ import testutil.Items;
 
 import java.awt.*;
 import java.util.List;
+import java.util.function.IntUnaryOperator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -28,8 +29,8 @@ import static org.mockito.Mockito.when;
 
 class BotShopManagerTest {
     @Test
-    void shouldNotTriggerClawShopVisitWhenTotalStarsAreAboveThreshold() {
-        Character bot = clawBotWithStars(800, 1000, 1000, 1000, 1000, 1000);
+    void shouldNotTriggerClawShopVisitWhenBestStarIsAboveThreshold() {
+        Character bot = clawBotWithStars(800, 1000, 1000, 1000, 1000, 1000); // 5800 of the best star
         BotEntry entry = new BotEntry(bot, null, null);
         MapleMap map = bot.getMap();
         NPC npc = shopNpc(new Point(20, 0));
@@ -38,7 +39,8 @@ class BotShopManagerTest {
         when(map.getMapObjectsInRange(any(Point.class), anyDouble(), any())).thenReturn(List.of(npc));
         when(shop.getItems()).thenReturn(List.of());
 
-        try (MockedStatic<BotAttackExecutionProvider> attacks =
+        try (Seam seam = withStarStats();
+             MockedStatic<BotAttackExecutionProvider> attacks =
                      mockStatic(BotAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS);
              MockedStatic<BotPotionManager> potions = mockStatic(BotPotionManager.class);
              MockedStatic<ShopFactory> shops = mockStatic(ShopFactory.class)) {
@@ -55,8 +57,8 @@ class BotShopManagerTest {
     }
 
     @Test
-    void shouldTriggerClawShopVisitWhenTotalStarsAreBelowThreshold() {
-        Character bot = clawBotWithStars(800, 1000, 1000);
+    void shouldTriggerClawShopVisitWhenBestStarIsBelowThreshold() {
+        Character bot = clawBotWithStars(800, 1000, 1000); // 2800 of the best star
         BotEntry entry = new BotEntry(bot, null, null);
         MapleMap map = bot.getMap();
         NPC npc = shopNpc(new Point(20, 0));
@@ -65,7 +67,8 @@ class BotShopManagerTest {
         when(map.getMapObjectsInRange(any(Point.class), anyDouble(), any())).thenReturn(List.of(npc));
         when(shop.getItems()).thenReturn(List.of());
 
-        try (MockedStatic<BotAttackExecutionProvider> attacks =
+        try (Seam seam = withStarStats();
+             MockedStatic<BotAttackExecutionProvider> attacks =
                      mockStatic(BotAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS);
              MockedStatic<BotPotionManager> potions = mockStatic(BotPotionManager.class);
              MockedStatic<ShopFactory> shops = mockStatic(ShopFactory.class)) {
@@ -82,11 +85,28 @@ class BotShopManagerTest {
     }
 
     @Test
-    void shouldRechargeStarsWhileShoppingEvenWhenTotalStarsAreAboveTrigger() {
-        Character bot = clawBotWithStars(800, 1000, 1000, 1000, 1000, 1000);
+    void shouldTriggerRechargeForDepletedBestStarMaskedByWeakerStars() {
+        // Plenty of weak stars (id 2070000) plus a low stack of the BEST star (id 2070018).
+        // Total (5800) is above the trigger, but the best star (800) is below it.
+        Character bot = clawBotWithStarItems(new int[]{2070000, 2070000, 2070000, 2070000, 2070000},
+                new int[]{1000, 1000, 1000, 1000, 1000});
+        bot.getInventory(InventoryType.USE).addItem(Items.itemWithQuantity(2070018, 800));
 
-        assertFalse(entryWouldTriggerShopVisit(bot, WeaponType.CLAW));
-        assertTrue(BotShopManager.shouldRechargeWhileShopping(bot, WeaponType.CLAW));
+        try (Seam seam = withStarStats()) {
+            assertTrue(entryWouldTriggerShopVisit(bot, WeaponType.CLAW));
+            assertTrue(BotShopManager.shouldRechargeWhileShopping(bot, WeaponType.CLAW));
+        }
+    }
+
+    @Test
+    void shouldNotRechargeWhenBestStarIsHealthyDespiteLowWeakerStars() {
+        // Best star (2070018) is full and above threshold; a near-empty weak star must not trigger.
+        Character bot = clawBotWithStarItems(new int[]{2070000, 2070018}, new int[]{50, 5000});
+
+        try (Seam seam = withStarStats()) {
+            assertFalse(entryWouldTriggerShopVisit(bot, WeaponType.CLAW));
+            assertFalse(BotShopManager.shouldRechargeWhileShopping(bot, WeaponType.CLAW));
+        }
     }
 
     @Test
@@ -134,17 +154,43 @@ class BotShopManagerTest {
     }
 
     private static Character clawBotWithStars(int... quantities) {
+        int[] ids = new int[quantities.length];
+        for (int i = 0; i < ids.length; i++) {
+            ids[i] = 2070000;
+        }
+        return clawBotWithStarItems(ids, quantities);
+    }
+
+    private static Character clawBotWithStarItems(int[] ids, int[] quantities) {
         Character bot = mock(Character.class);
         MapleMap map = mock(MapleMap.class);
         Inventory use = new Inventory(bot, InventoryType.USE, (byte) 24);
-        for (int quantity : quantities) {
-            use.addItem(Items.itemWithQuantity(2070000, quantity));
+        for (int i = 0; i < ids.length; i++) {
+            use.addItem(Items.itemWithQuantity(ids[i], quantities[i]));
         }
         when(bot.getMap()).thenReturn(map);
         when(bot.getPosition()).thenReturn(new Point(0, 0));
         when(bot.getInventory(InventoryType.USE)).thenReturn(use);
         when(bot.getBuffedValue(any(BuffStat.class))).thenReturn(null);
         return bot;
+    }
+
+    // Stub the ItemInformationProvider-backed seam: star 2070018 is the strongest, all stacks
+    // are well under slot-max so any partial stack counts as refillable. Restored on close.
+    private static Seam withStarStats() {
+        IntUnaryOperator prevWatk = BotShopManager.projectileWatk;
+        BotShopManager.SlotMaxLookup prevSlot = BotShopManager.ammoSlotMax;
+        BotShopManager.projectileWatk = id -> id == 2070018 ? 50 : 10;
+        BotShopManager.ammoSlotMax = (bot, id) -> (short) 10000;
+        return new Seam(prevWatk, prevSlot);
+    }
+
+    private record Seam(IntUnaryOperator watk, BotShopManager.SlotMaxLookup slot) implements AutoCloseable {
+        @Override
+        public void close() {
+            BotShopManager.projectileWatk = watk;
+            BotShopManager.ammoSlotMax = slot;
+        }
     }
 
     private static Character bowBotWithArrows(int quantity) {

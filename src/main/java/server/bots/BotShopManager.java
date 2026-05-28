@@ -24,8 +24,21 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.IntUnaryOperator;
 
 final class BotShopManager {
+
+    // Test seam: ItemInformationProvider's WZ/DB static initializer can't run in unit tests,
+    // so projectile attack / slot-max lookups go through overridable hooks (see BotShopManagerTest).
+    @FunctionalInterface
+    interface SlotMaxLookup {
+        short slotMax(Character bot, int itemId);
+    }
+
+    static IntUnaryOperator projectileWatk =
+            id -> ItemInformationProvider.getInstance().getWatkForProjectile(id);
+    static SlotMaxLookup ammoSlotMax =
+            (bot, id) -> ItemInformationProvider.getInstance().getSlotMax(bot.getClient(), id);
 
     private static final int SHOP_MANHATTAN_RADIUS = 200;
     private static final int SHOP_ARRIVE_DIST = 100;
@@ -308,7 +321,7 @@ final class BotShopManager {
             if (sequence.entry().shopSellTrashPending) {
                 startSellTrashSequence(sequence);
             } else {
-                finishPurchaseSequence(sequence);
+                finishPurchaseSequence(sequence, true);
             }
             return;
         }
@@ -328,7 +341,7 @@ final class BotShopManager {
         scheduleShopStep(sequence.entry(), () -> runPurchaseStep(next, index + 1));
     }
 
-    private static void finishPurchaseSequence(PurchaseSequence sequence) {
+    private static void finishPurchaseSequence(PurchaseSequence sequence, boolean announceIfEmpty) {
         if (!isShopSequenceValid(sequence.entry(), sequence.bot(), sequence.npcPos())) {
             abortShop(sequence.entry(), sequence.bot(), "couldn't finish up at the shop");
             return;
@@ -341,6 +354,9 @@ final class BotShopManager {
             }
             if (sequence.firstShortfall() != null) {
                 BotManager.getInstance().botSay(sequence.bot(), buildShortfallMessage(sequence.firstShortfall()));
+            } else if (announceIfEmpty && sequence.bought().isEmpty()) {
+                // Never end a resupply visit silently: nothing was bought and nothing fell short.
+                BotManager.getInstance().botSay(sequence.bot(), "turned out I didn't need anything here");
             }
             clearShopState(sequence.entry());
         };
@@ -361,7 +377,7 @@ final class BotShopManager {
         if (items.isEmpty()) {
             sequence.entry().shopSellTrashPending = false;
             BotManager.getInstance().botSay(sequence.bot(), "no trash equips worth selling");
-            finishPurchaseSequence(sequence);
+            finishPurchaseSequence(sequence, false);
             return;
         }
 
@@ -399,7 +415,7 @@ final class BotShopManager {
             } else if (soldCount == 0) {
                 BotManager.getInstance().botSay(bot, "no trash equips worth selling");
             }
-            finishPurchaseSequence(new PurchaseSequence(entry, bot, npcPos, List.of(), bought, firstShortfall));
+            finishPurchaseSequence(new PurchaseSequence(entry, bot, npcPos, List.of(), bought, firstShortfall), false);
             return;
         }
 
@@ -468,15 +484,35 @@ final class BotShopManager {
         return shop == null || findAmmoItem(shop, wt) != null;
     }
 
+    // True when the bot's BEST rechargeable ammo (highest-attack star/bullet matching the
+    // weapon) is below the threshold AND has a partial stack that can actually be refilled.
+    // Keying on the best item means a pile of weaker stars can't mask a depleted good stack,
+    // and the partial-stack check stops pointless trips/silent no-ops when nothing is refillable.
     private static boolean needsRechargeForShop(Character bot, WeaponType wt, int threshold) {
-        if (!isRechargeWeaponType(wt) || BotCombatManager.countAmmo(bot, wt) >= threshold) {
+        if (!isRechargeWeaponType(wt)) {
             return false;
         }
-        return hasRechargeableAmmo(bot);
+        int bestId = bestRechargeAmmoId(bot, wt);
+        if (bestId < 0) {
+            return false;
+        }
+        short slotMax = ammoSlotMax.slotMax(bot, bestId);
+        int count = 0;
+        boolean refillable = false;
+        for (Item item : bot.getInventory(InventoryType.USE).list()) {
+            if (item.getItemId() != bestId) {
+                continue;
+            }
+            count += item.getQuantity();
+            if (item.getQuantity() < slotMax) {
+                refillable = true;
+            }
+        }
+        return refillable && count < threshold;
     }
 
     static boolean shouldRechargeWhileShopping(Character bot, WeaponType wt) {
-        return isRechargeWeaponType(wt) && hasRechargeableAmmo(bot);
+        return needsRechargeForShop(bot, wt, ammoTriggerThreshold());
     }
 
     static boolean shouldBuyFixedAmmoWhileShopping(Character bot, WeaponType wt) {
@@ -519,13 +555,29 @@ final class BotShopManager {
         return buyFixedCostItem(bot, shop, ammo, Math.max(0, target - current), 1000);
     }
 
-    private static boolean hasRechargeableAmmo(Character bot) {
+    private static int bestRechargeAmmoId(Character bot, WeaponType wt) {
+        int bestId = -1;
+        int bestAtk = -1;
         for (Item item : bot.getInventory(InventoryType.USE).list()) {
-            if (ItemConstants.isRechargeable(item.getItemId())) {
-                return true;
+            int id = item.getItemId();
+            if (!ItemConstants.isRechargeable(id) || !matchesRechargeWeapon(id, wt)) {
+                continue;
+            }
+            int atk = projectileWatk.applyAsInt(id);
+            if (atk > bestAtk) {
+                bestAtk = atk;
+                bestId = id;
             }
         }
-        return false;
+        return bestId;
+    }
+
+    private static boolean matchesRechargeWeapon(int itemId, WeaponType wt) {
+        return switch (wt) {
+            case CLAW -> ItemConstants.isThrowingStar(itemId);
+            case GUN -> ItemConstants.isBullet(itemId);
+            default -> false;
+        };
     }
 
     private static BuyReport doRecharge(Character bot, Shop shop) {
@@ -566,7 +618,11 @@ final class BotShopManager {
         int minRecover = (int) (maxStat * 0.10);
         int maxRecover = (int) (maxStat * 0.50);
 
-        ShopSlotItem best = null;
+        ShopSlotItem inBand = null;     // cheapest potion within [minRecover, maxRecover]
+        ShopSlotItem bestTooLow = null; // highest-recover potion below minRecover
+        int bestTooLowRecover = -1;
+        ShopSlotItem bestTooHigh = null; // lowest-recover potion above maxRecover
+        int bestTooHighRecover = Integer.MAX_VALUE;
         for (int i = 0; i < items.size(); i++) {
             ShopItem si = items.get(i);
             if (si.getPrice() <= 0) {
@@ -589,15 +645,30 @@ final class BotShopManager {
             }
 
             int recover = forHp ? fx.getHp() : fx.getMp();
-            if (recover <= 0 || recover < minRecover || recover > maxRecover) {
+            if (recover <= 0) {
                 continue;
             }
 
-            if (best == null || si.getPrice() < best.shopItem.getPrice()) {
-                best = new ShopSlotItem((short) i, si);
+            if (recover < minRecover) {
+                if (recover > bestTooLowRecover) {
+                    bestTooLowRecover = recover;
+                    bestTooLow = new ShopSlotItem((short) i, si);
+                }
+            } else if (recover > maxRecover) {
+                if (recover < bestTooHighRecover) {
+                    bestTooHighRecover = recover;
+                    bestTooHigh = new ShopSlotItem((short) i, si);
+                }
+            } else if (inBand == null || si.getPrice() < inBand.shopItem.getPrice()) {
+                inBand = new ShopSlotItem((short) i, si);
             }
         }
-        return best;
+        // Prefer a potion sized for this bot; otherwise fall back to the closest available:
+        // the strongest that's still too weak, or failing that the weakest that's too strong.
+        if (inBand != null) {
+            return inBand;
+        }
+        return bestTooLow != null ? bestTooLow : bestTooHigh;
     }
 
     private static BuyReport buyPotions(Character bot, Shop shop, boolean forHp) {
