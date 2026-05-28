@@ -151,7 +151,7 @@ final class BotShopManager {
             return false;
         }
         if (entry.shopNpcPos == null) {
-            clearShopState(entry);
+            abortShop(entry, bot, "lost track of the shop, never mind");
             return false;
         }
         long now = System.currentTimeMillis();
@@ -165,7 +165,7 @@ final class BotShopManager {
         if (entry.shopSequenceActive
                 && entry.shopSequenceStartedAtMs > 0
                 && now - entry.shopSequenceStartedAtMs > SHOP_SEQUENCE_TIMEOUT_MS) {
-            clearShopState(entry);
+            abortShop(entry, bot, "took too long at the shop, giving up");
             return false;
         }
         if (entry.shopApproachDelayMs > 0) {
@@ -259,7 +259,7 @@ final class BotShopManager {
 
     private static void executePurchases(BotEntry entry, Character bot, Point npcPos) {
         if (!isShopSequenceValid(entry, bot, npcPos)) {
-            clearShopState(entry);
+            abortShop(entry, bot, "couldn't get to the shopkeeper, never mind");
             return;
         }
 
@@ -301,7 +301,7 @@ final class BotShopManager {
 
     private static void runPurchaseStep(PurchaseSequence sequence, int index) {
         if (!isShopSequenceValid(sequence.entry(), sequence.bot(), sequence.npcPos())) {
-            clearShopState(sequence.entry());
+            abortShop(sequence.entry(), sequence.bot(), "couldn't stay at the shop to buy, never mind");
             return;
         }
         if (index >= sequence.actions().size()) {
@@ -315,12 +315,12 @@ final class BotShopManager {
 
         NPC npc = findNpcNear(sequence.bot(), sequence.npcPos());
         if (npc == null) {
-            clearShopState(sequence.entry());
+            abortShop(sequence.entry(), sequence.bot(), "the shopkeeper's gone, can't buy");
             return;
         }
         Shop shop = ShopFactory.getInstance().getShopForNPC(npc.getId());
         if (shop == null) {
-            clearShopState(sequence.entry());
+            abortShop(sequence.entry(), sequence.bot(), "this shop's closed, can't buy");
             return;
         }
 
@@ -330,13 +330,13 @@ final class BotShopManager {
 
     private static void finishPurchaseSequence(PurchaseSequence sequence) {
         if (!isShopSequenceValid(sequence.entry(), sequence.bot(), sequence.npcPos())) {
-            clearShopState(sequence.entry());
+            abortShop(sequence.entry(), sequence.bot(), "couldn't finish up at the shop");
             return;
         }
 
         Runnable finish = () -> {
             if (!isShopSequenceValid(sequence.entry(), sequence.bot(), sequence.npcPos())) {
-                clearShopState(sequence.entry());
+                abortShop(sequence.entry(), sequence.bot(), "couldn't finish up at the shop");
                 return;
             }
             if (sequence.firstShortfall() != null) {
@@ -373,12 +373,15 @@ final class BotShopManager {
                         sequence.npcPos(),
                         0,
                         Collections.newSetFromMap(new IdentityHashMap<>()),
-                        plan));
+                        plan,
+                        sequence.bought(),
+                        sequence.firstShortfall()));
     }
 
-    private static void runSellTrashStep(BotEntry entry, Character bot, Point npcPos, int soldCount, Set<Item> failedItems, List<Item> plan) {
+    private static void runSellTrashStep(BotEntry entry, Character bot, Point npcPos, int soldCount, Set<Item> failedItems, List<Item> plan,
+                                         List<String> bought, BuyReport firstShortfall) {
         if (!isShopSequenceValid(entry, bot, npcPos)) {
-            clearShopState(entry);
+            abortShop(entry, bot, "couldn't stay at the shop to sell, never mind");
             return;
         }
 
@@ -396,25 +399,25 @@ final class BotShopManager {
             } else if (soldCount == 0) {
                 BotManager.getInstance().botSay(bot, "no trash equips worth selling");
             }
-            finishPurchaseSequence(new PurchaseSequence(entry, bot, npcPos, List.of(), new ArrayList<>(), null));
+            finishPurchaseSequence(new PurchaseSequence(entry, bot, npcPos, List.of(), bought, firstShortfall));
             return;
         }
 
         Item item = items.get(0);
         if (!BotInventoryManager.hasItem(bot, item)) {
             scheduleShopStep(entry, SELL_TRASH_STEP_DELAY_MS,
-                    () -> runSellTrashStep(entry, bot, npcPos, soldCount, failedItems, plan));
+                    () -> runSellTrashStep(entry, bot, npcPos, soldCount, failedItems, plan, bought, firstShortfall));
             return;
         }
 
         NPC npc = findNpcNear(bot, npcPos);
         if (npc == null) {
-            clearShopState(entry);
+            abortShop(entry, bot, "the shopkeeper's gone, can't sell");
             return;
         }
         Shop shop = ShopFactory.getInstance().getShopForNPC(npc.getId());
         if (shop == null) {
-            clearShopState(entry);
+            abortShop(entry, bot, "this shop's closed, can't sell");
             return;
         }
 
@@ -422,13 +425,13 @@ final class BotShopManager {
         if (BotInventoryManager.hasItem(bot, item)) {
             failedItems.add(item);
             scheduleShopStep(entry, SELL_TRASH_STEP_DELAY_MS,
-                    () -> runSellTrashStep(entry, bot, npcPos, soldCount, failedItems, plan));
+                    () -> runSellTrashStep(entry, bot, npcPos, soldCount, failedItems, plan, bought, firstShortfall));
             return;
         }
 
         int nextSoldCount = soldCount + 1;
         scheduleShopStep(entry, SELL_TRASH_STEP_DELAY_MS,
-                () -> runSellTrashStep(entry, bot, npcPos, nextSoldCount, failedItems, plan));
+                () -> runSellTrashStep(entry, bot, npcPos, nextSoldCount, failedItems, plan, bought, firstShortfall));
     }
 
     private static String buildSellTrashFailureMessage(int failedCount) {
@@ -669,15 +672,29 @@ final class BotShopManager {
     }
 
     private static boolean isShopSequenceValid(BotEntry entry, Character bot, Point npcPos) {
-        return entry.shopVisitPending
-                && entry.shopSequenceActive
-                && npcPos != null
-                && bot.getMap() != null
-                && manhattan(bot.getPosition(), entry.shopTargetPos != null ? entry.shopTargetPos : npcPos) <= SHOP_ARRIVE_DIST
-                && findNpcNear(bot, npcPos) != null;
+        if (!entry.shopVisitPending || !entry.shopSequenceActive || npcPos == null || bot.getMap() == null) {
+            return false;
+        }
+        // Accept proximity to the approach point OR the NPC itself: the sequence can start
+        // via the stuck-at-NPC fallback, where the bot is near the NPC but not the approach point.
+        Point pos = bot.getPosition();
+        Point approach = entry.shopTargetPos != null ? entry.shopTargetPos : npcPos;
+        boolean atShop = manhattan(pos, approach) <= SHOP_ARRIVE_DIST
+                || manhattan(pos, npcPos) <= SHOP_ARRIVE_DIST;
+        return atShop && findNpcNear(bot, npcPos) != null;
     }
 
     static void cancelShopVisit(BotEntry entry) {
+        clearShopState(entry);
+    }
+
+    // Abort the shop visit and tell the owner why. Player commands cancel via
+    // cancelShopVisit (which clears shopVisitPending) and scheduleShopStep guards on
+    // that flag, so a cleared flag here means a concurrent player cancel — stay silent.
+    private static void abortShop(BotEntry entry, Character bot, String reason) {
+        if (entry.shopVisitPending) {
+            BotManager.getInstance().botSay(bot, reason);
+        }
         clearShopState(entry);
     }
 
@@ -710,7 +727,7 @@ final class BotShopManager {
             try {
                 step.run();
             } catch (RuntimeException exception) {
-                clearShopState(entry);
+                abortShop(entry, entry.bot, "ran into a problem at the shop");
                 throw exception;
             }
         });
