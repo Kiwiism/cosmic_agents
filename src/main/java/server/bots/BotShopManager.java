@@ -55,6 +55,7 @@ final class BotShopManager {
     private static final int POT_TARGET_THRESHOLD = 5; // full target when buying at shop
     private static final int AMMO_TRIGGER_THRESHOLD = 8;
     private static final int AMMO_TARGET_THRESHOLD = 10; // full target when buying at shop
+    private static final int RECHARGE_MAX_SETS = 10; // cap recharge to the best N own-type stacks
 
     private BotShopManager() {}
 
@@ -281,7 +282,7 @@ final class BotShopManager {
 
         if (shouldRechargeWhileShopping(bot, wt)) {
             actions.add((sequence, shop) -> {
-                BuyReport recharge = doRecharge(bot, shop);
+                BuyReport recharge = doRecharge(bot, shop, wt);
                 if (recharge.quantity() > 0) {
                     int recharged = recharge.quantity();
                     String ammoName = wt == WeaponType.GUN ? "bullets" : "throwing stars";
@@ -580,20 +581,32 @@ final class BotShopManager {
         };
     }
 
-    private static BuyReport doRecharge(Character bot, Shop shop) {
+    private static BuyReport doRecharge(Character bot, Shop shop, WeaponType wt) {
+        // Only recharge ammo matching the equipped weapon (claw->stars, gun->bullets) and only
+        // the best stacks by attack: recharging off-weapon or low-tier leftovers just wastes meso,
+        // and an off-weapon failure must never short-circuit the real ammo refill.
+        List<Item> refillable = new ArrayList<>();
+        for (Item item : bot.getInventory(InventoryType.USE).list()) {
+            int id = item.getItemId();
+            if (!ItemConstants.isRechargeable(id) || !matchesRechargeWeapon(id, wt)) {
+                continue;
+            }
+            if (item.getQuantity() >= ammoSlotMax.slotMax(bot, id)) {
+                continue;
+            }
+            refillable.add(item);
+        }
+        refillable.sort((a, b) -> Integer.compare(
+                projectileWatk.applyAsInt(b.getItemId()), projectileWatk.applyAsInt(a.getItemId())));
+
         int recharged = 0;
         int attempted = 0;
         int shortfallItemId = 0;
         ShortfallReason reason = ShortfallReason.NONE;
-        for (Item item : bot.getInventory(InventoryType.USE).list()) {
-            if (!ItemConstants.isRechargeable(item.getItemId())) {
-                continue;
+        for (Item item : refillable) {
+            if (recharged >= RECHARGE_MAX_SETS) {
+                break;
             }
-            short slotMax = ItemInformationProvider.getInstance().getSlotMax(bot.getClient(), item.getItemId());
-            if (item.getQuantity() >= slotMax) {
-                continue;
-            }
-
             Shop.TransactionResult result = shop.rechargeDirect(bot, item.getPosition());
             if (result == Shop.TransactionResult.SUCCESS) {
                 recharged++;
