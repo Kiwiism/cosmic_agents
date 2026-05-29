@@ -260,10 +260,10 @@ public class BotChatManager {
             "can't find spare ammo. maybe time to restock?",
             "almost dry on ammo too, don't look at me");
     private static final Pattern SUPPORT_ON_PATTERN = Pattern.compile(
-            "\\b(support\\s+(me|us|party)|support\\s+on|auto\\s+support)\\b",
+            "\\b(support\\s+(me|us|party)|support\\s+on|auto\\s+support|skill\\s+buffs?\\s+on)\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern SUPPORT_OFF_PATTERN = Pattern.compile(
-            "\\b(support\\s+off|stop\\s+support(ing)?|no\\s+support)\\b",
+            "\\b(support\\s+off|stop\\s+support(ing)?|no\\s+support|skill\\s+buffs?\\s+off|no\\s+skill\\s+buffs?|stop\\s+(skill\\s+)?buffing)\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern HEALS_ON_PATTERN = Pattern.compile(
             "\\b(heals?\\s+(me|us|party)|heals?\\s+on|auto\\s+heals?)\\b",
@@ -757,15 +757,15 @@ public class BotChatManager {
         }
         if (SUPPORT_OFF_PATTERN.matcher(message).find()) {
             BotManager.after(BotManager.randMs(500, 700), () -> {
-                entry.supportHealsEnabled = false;
-                BotManager.getInstance().botReply(entry, "ok, support off");
+                entry.skillBuffsEnabled = false;
+                BotManager.getInstance().botReply(entry, "ok, skill buffs off");
             });
             return;
         }
         if (SUPPORT_ON_PATTERN.matcher(message).find()) {
             BotManager.after(BotManager.randMs(500, 700), () -> {
-                entry.supportHealsEnabled = true;
-                BotManager.getInstance().botReply(entry, "ok, support on");
+                entry.skillBuffsEnabled = true;
+                BotManager.getInstance().botReply(entry, "ok, skill buffs on");
             });
             return;
         }
@@ -1582,7 +1582,7 @@ public class BotChatManager {
 
     private static void reportHelp(BotEntry entry) {
         queueBotReply(entry, "commands: follow, stop, move here, fidget, grind, stats, speed, skills, inventory, mesos, exp, slots, scrolls, pots, debug stats, crit, respec, respec ap");
-        queueBotReply(entry, "support: support on/off, heals on/off, buff on/off, buff cheap/max, proactive offers on/off, buff debug, skill buff debug");
+        queueBotReply(entry, "support: skill buffs on/off (= support on/off), heals on/off, buff on/off, buff cheap/max, proactive offers on/off, buff debug, skill buff debug");
         queueBotReply(entry, "gear: ask 'any upgrades?' or say 'trade recommended gear'");
         queueBotReply(entry, "supplies: need hp pot, need mp pot, need pot, need ammo");
         queueBotReply(entry, "trade: mesos, scrolls, pots, equips, etc, or named items");

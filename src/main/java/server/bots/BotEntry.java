@@ -121,6 +121,7 @@ public class BotEntry {
     final Map<Integer, Long> nextSupportBuffAt = new HashMap<>();
     long nextSupportHealAt = 0L;
     boolean supportHealsEnabled = true;
+    boolean skillBuffsEnabled = true;
 
     // Ammo
     boolean noAmmo = false;

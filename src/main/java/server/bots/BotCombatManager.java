@@ -525,6 +525,10 @@ class BotCombatManager {
 
     static void tickBuffs(BotEntry entry, Character bot) {
         if (entry.attackCooldownMs > 0) return;
+        if (!entry.skillBuffsEnabled) {
+            noteSkillBuffDecision(entry, "skill buffs disabled");
+            return;
+        }
         if (!entry.following && !entry.grinding) {
             noteSkillBuffDecision(entry, "idle (not following or grinding)");
             return;

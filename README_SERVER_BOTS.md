@@ -125,7 +125,7 @@ Follow mode behavior
 
 | Say | Effect |
 |---|---|
-| `support on` / `support off` | Toggle party support/heal behavior |
+| `support on` / `support off` (= `skill buffs on` / `skill buffs off`) | Toggle skill buff casting / rebuffing only |
 | `heals on` / `heals off` | Toggle HP heal casting on party members |
 | `buff on` / `buff off` | Toggle buff pot usage |
 | `buff cheap` | Use worst available buff pots |
