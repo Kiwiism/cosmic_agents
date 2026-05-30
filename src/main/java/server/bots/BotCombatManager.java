@@ -2492,16 +2492,21 @@ class BotCombatManager {
         if (skill == null || effect == null || !effect.isOverTime()) {
             return false;
         }
-        if (NON_DAMAGE_ACTIVE_SKILL_IDS.contains(skill.getId())) {
-            return false;
-        }
-        // The buff loop is duration-based: it sets nextBuffAt = now + duration*0.9 and only
-        // rebuffs once that timer elapses (castSupportSkill). A skill with no positive duration
-        // (no WZ "time" key, so getDuration() <= 0) never advances nextBuffAt, so it would recast
-        // every tick — infinite rebuffing. These are one-shot / instant effects (e.g. Dispel,
-        // Doom) that the WZ flags as buffs but that are not rebuffable; exclude them here so the
-        // single classifier stays the source of truth for both recompute() and tickBuffs().
-        if (effect.getDuration() <= 0) {
+        // Data-driven gate for "rebuffable self/party buff" — two WZ facts replace what used to
+        // need per-skill exclusion lists:
+        //   1. getDuration() > 0. The rebuff loop is timer-based: castSupportSkill sets
+        //      nextBuffAt = now + duration*0.9 and only recasts once that elapses. Skills with no
+        //      WZ "time" key load as duration -1000 (Dispel, Resurrection, Big Bang, MP Recovery,
+        //      Time Leap, Energy Drain), so they would never advance the timer and recast every
+        //      tick. These are one-shot / instant / charged effects, not rebuffable buffs.
+        //   2. getStatups() non-empty. A genuine buff declares at least one stat it grants the
+        //      caster/party (pad/pdd/mad/acc/eva/speed/jump/SUMMON/MORPH/...). Mob-targeting
+        //      debuffs (Threaten, Slow, Seal, Doom, Ninja Ambush) instead carry mobCount + a
+        //      bounding box and grant the caster no statup; the bot only has a self/party
+        //      SPECIAL_MOVE cast path, so firing them on a rebuff timer is wasted MP. This also
+        //      subsumes the old NON_DAMAGE_ACTIVE_SKILL_IDS exclusion here (the *Crash skills
+        //      carry no statup), so no skill-id list is needed on the support path.
+        if (effect.getDuration() <= 0 || effect.getStatups().isEmpty()) {
             return false;
         }
         return skill.getAction() || skill.getSkillType() == 2;

@@ -21,7 +21,8 @@ import java.util.regex.Pattern;
 
 /**
  * Debugging export: lists every skill in Skill.wz and how the bot classifies it
- * (ATTACK / AOE / HEAL / SUPPORT_BUFF / BLACKLISTED / NON_DURATION_BUFF / PASSIVE).
+ * (ATTACK / AOE_ATTACK / HEAL / SUPPORT_BUFF / BLACKLISTED / MOB_DEBUFF / CHARGED_ATTACK /
+ * INSTANT_UTILITY / PASSIVE), with the WZ description string for each.
  *
  * This is NOT a pass/fail regression test — it always passes. It exists so a human can
  * eyeball the bot's combat classification across the whole skill table and spot
@@ -36,10 +37,14 @@ import java.util.regex.Pattern;
 public class BotSkillClassificationExportTest {
 
     private static final Path WZ_SKILL_DIR = Path.of("wz", "Skill.wz");
+    private static final Path WZ_STRING_SKILL = Path.of("wz", "String.wz", "Skill.img.xml");
     private static final Path OUT_DIR = Path.of("tmp");
     private static final Pattern IMGDIR_ID = Pattern.compile("<imgdir name=\"(\\d{4,})\"");
 
-    private record Row(int id, String name, int job, String category, String issue,
+    /** WZ String.img desc text per skill id, loaded once. */
+    private final Map<Integer, String> descriptions = new java.util.HashMap<>();
+
+    private record Row(int id, String name, int job, String category, String issue, String desc,
                        int skillType, boolean action, boolean overTime, int durationMs,
                        int mpCon, int hpCon, boolean hasDamage, boolean hasMatk,
                        int mobCount, int hits, int statupCount, String statups) {}
@@ -47,6 +52,7 @@ public class BotSkillClassificationExportTest {
     @Test
     public void exportSkillClassification() throws IOException {
         SkillFactory.loadAllSkills();
+        loadDescriptions();
         TreeSet<Integer> ids = collectSkillIds();
         List<Row> rows = new ArrayList<>();
 
@@ -84,7 +90,7 @@ public class BotSkillClassificationExportTest {
             statups.append(s.getLeft().name()).append(s.getRight() >= 0 ? "+" : "").append(s.getRight());
         }
 
-        return new Row(id, name, job, category, issue,
+        return new Row(id, name, job, category, issue, descriptions.getOrDefault(id, ""),
                 skill.getSkillType(), skill.getAction(), fx.isOverTime(), fx.getDuration(),
                 fx.getMpCon(), fx.getHpCon(), fx.hasDamage(), fx.hasMatk(),
                 fx.getMobCount(), BotCombatManager.effectiveHitCount(fx),
@@ -92,9 +98,12 @@ public class BotSkillClassificationExportTest {
     }
 
     /**
-     * Mirrors the precedence in {@link BotCombatManager} recompute(): heal first, then attack,
-     * then (support test, with blacklist exclusion), else passive. The NON_DURATION_BUFF label
-     * surfaces skills the WZ flags as buffs but that the duration gate now excludes from rebuffing.
+     * Mirrors the precedence in {@link BotCombatManager} recompute(): heal → attack → support →
+     * passive, calling the real predicates. Skills the bot does NOT act on are sub-labelled
+     * data-drivenly (no skill-id lists) so a human can see WHY they were excluded:
+     *   MOB_DEBUFF      — overTime + duration + no caster statup (mobCount/bbox); Threaten/Slow/...
+     *   CHARGED_ATTACK  — overTime + no duration but declares damage/matk; Big Bang/Energy Drain.
+     *   INSTANT_UTILITY — overTime + no duration, no offense; Dispel/Resurrection/Time Leap/...
      */
     private String classify(Skill skill, StatEffect fx) {
         int id = skill.getId();
@@ -107,13 +116,12 @@ public class BotSkillClassificationExportTest {
         if (BotCombatManager.isActiveSupportSkill(skill, fx)) {
             return BotCombatManager.BUFF_BLACKLIST.contains(id) ? "BLACKLISTED" : "SUPPORT_BUFF";
         }
-        // Not acted upon by the bot. Distinguish WZ-flagged buffs excluded by the duration gate
-        // (the infinite-rebuff class) from genuine passives / utility skills.
-        boolean rawBuff = fx.isOverTime()
-                && (skill.getAction() || skill.getSkillType() == 2)
-                && !BotCombatManager.NON_DAMAGE_ACTIVE_SKILL_IDS.contains(id);
-        if (rawBuff && fx.getDuration() <= 0) {
-            return "NON_DURATION_BUFF";
+        boolean rawBuff = fx.isOverTime() && (skill.getAction() || skill.getSkillType() == 2);
+        if (rawBuff) {
+            if (fx.getDuration() <= 0) {
+                return (fx.hasDamage() || fx.hasMatk()) ? "CHARGED_ATTACK" : "INSTANT_UTILITY";
+            }
+            return "MOB_DEBUFF"; // duration but no caster statup (isActiveSupportSkill rejected it)
         }
         if (BotCombatManager.BUFF_BLACKLIST.contains(id)) {
             return "BLACKLISTED";
@@ -122,20 +130,37 @@ public class BotSkillClassificationExportTest {
     }
 
     private String detectIssue(Skill skill, StatEffect fx, String category) {
-        List<String> issues = new ArrayList<>();
-        // Formerly-infinite-rebuff skills: WZ buff flag + action but no positive duration. The
-        // duration gate in isActiveSupportSkill now keeps these out of the rebuff loop.
-        if (category.equals("NON_DURATION_BUFF")) {
-            issues.add("buff-flagged but no duration; excluded from rebuff loop");
+        // Every non-acted-on WZ buff variant carries a one-line reason so the flagged section
+        // documents why each is (correctly) kept out of the rebuff loop.
+        return switch (category) {
+            case "MOB_DEBUFF" ->
+                    "mob-targeting debuff (mobCount+bbox, no caster statup); excluded from rebuff loop";
+            case "CHARGED_ATTACK" ->
+                    "declares damage/matk but flagged overTime + no duration; not rebuffed, not used as attack";
+            case "INSTANT_UTILITY" ->
+                    "one-shot effect, no duration; excluded from rebuff loop";
+            default -> "";
+        };
+    }
+
+    private void loadDescriptions() throws IOException {
+        if (!Files.isRegularFile(WZ_STRING_SKILL)) {
+            return;
         }
-        // A rebuffable support skill that grants the caster no statup is almost always a
-        // mob-targeting debuff (Threaten/Slow/Seal/Doom/Ninja Ambush) — the bot casts it on a
-        // timer with no self-benefit and no target check. Bounded (has duration) but wasteful.
-        // Summons carry SUMMON+1 and morphs carry MORPH, so they do NOT trip this.
-        if (category.equals("SUPPORT_BUFF") && fx.getStatups().isEmpty()) {
-            issues.add("rebuffed on timer but grants caster no statup (mob debuff / utility?)");
+        String content = Files.readString(WZ_STRING_SKILL, StandardCharsets.UTF_8);
+        // <imgdir name="ID">...<string name="desc" value="..."/>
+        // Tempered match: between the skill imgdir and its desc, forbid another skill imgdir
+        // (3+ digit name) so a desc-less skill can't borrow the following skill's description.
+        Matcher m = Pattern.compile(
+                "<imgdir name=\"(\\d{3,})\">(?:(?!<imgdir name=\"\\d{3,}).)*?<string name=\"desc\" value=\"([^\"]*)\"")
+                .matcher(content);
+        while (m.find()) {
+            String d = m.group(2).replace("\\n", " ").replace("|", "/").trim();
+            if (d.length() > 160) {
+                d = d.substring(0, 157) + "...";
+            }
+            descriptions.putIfAbsent(Integer.parseInt(m.group(1)), d);
         }
-        return String.join("; ", issues);
     }
 
     private TreeSet<Integer> collectSkillIds() throws IOException {
@@ -158,7 +183,7 @@ public class BotSkillClassificationExportTest {
     private void writeTsv(List<Row> rows) throws IOException {
         StringBuilder sb = new StringBuilder();
         sb.append("id\tname\tjob\tcategory\tissue\tskillType\taction\toverTime\tdurationMs")
-                .append("\tmpCon\thpCon\thasDamage\thasMatk\tmobCount\thits\tstatupCount\tstatups\n");
+                .append("\tmpCon\thpCon\thasDamage\thasMatk\tmobCount\thits\tstatupCount\tstatups\tdesc\n");
         for (Row r : rows) {
             sb.append(r.id()).append('\t').append(r.name()).append('\t').append(r.job()).append('\t')
                     .append(r.category()).append('\t').append(r.issue()).append('\t')
@@ -167,7 +192,8 @@ public class BotSkillClassificationExportTest {
                     .append(r.mpCon()).append('\t').append(r.hpCon()).append('\t')
                     .append(r.hasDamage()).append('\t').append(r.hasMatk()).append('\t')
                     .append(r.mobCount()).append('\t').append(r.hits()).append('\t')
-                    .append(r.statupCount()).append('\t').append(r.statups()).append('\n');
+                    .append(r.statupCount()).append('\t').append(r.statups()).append('\t')
+                    .append(r.desc()).append('\n');
         }
         Files.writeString(OUT_DIR.resolve("bot-skill-classification.tsv"), sb.toString());
     }
@@ -191,23 +217,24 @@ public class BotSkillClassificationExportTest {
         // Issues first — the actionable section.
         List<Row> flagged = rows.stream().filter(r -> !r.issue().isEmpty()).toList();
         sb.append("\n## ⚠ Flagged for review (").append(flagged.size()).append(")\n\n");
-        sb.append("| id | name | job | category | durMs | statups | issue |\n");
-        sb.append("|----|------|-----|----------|-------|---------|-------|\n");
+        sb.append("| id | name | job | category | durMs | statups | issue | desc |\n");
+        sb.append("|----|------|-----|----------|-------|---------|-------|------|\n");
         for (Row r : flagged) {
             sb.append("| ").append(r.id()).append(" | ").append(r.name()).append(" | ").append(r.job())
                     .append(" | ").append(r.category()).append(" | ").append(r.durationMs())
-                    .append(" | ").append(r.statups()).append(" | ").append(r.issue()).append(" |\n");
+                    .append(" | ").append(r.statups()).append(" | ").append(r.issue())
+                    .append(" | ").append(r.desc()).append(" |\n");
         }
 
         for (Map.Entry<String, List<Row>> e : byCat.entrySet()) {
             sb.append("\n## ").append(e.getKey()).append(" (").append(e.getValue().size()).append(")\n\n");
-            sb.append("| id | name | job | durMs | mpCon | hits | mobs | statups |\n");
-            sb.append("|----|------|-----|-------|-------|------|------|---------|\n");
+            sb.append("| id | name | job | durMs | mpCon | hits | mobs | statups | desc |\n");
+            sb.append("|----|------|-----|-------|-------|------|------|---------|------|\n");
             for (Row r : e.getValue()) {
                 sb.append("| ").append(r.id()).append(" | ").append(r.name()).append(" | ").append(r.job())
                         .append(" | ").append(r.durationMs()).append(" | ").append(r.mpCon())
                         .append(" | ").append(r.hits()).append(" | ").append(r.mobCount())
-                        .append(" | ").append(r.statups()).append(" |\n");
+                        .append(" | ").append(r.statups()).append(" | ").append(r.desc()).append(" |\n");
             }
         }
         Files.writeString(OUT_DIR.resolve("bot-skill-classification.md"), sb.toString());

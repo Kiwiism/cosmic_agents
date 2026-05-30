@@ -360,11 +360,13 @@ class BotCombatManagerTest {
     void shouldClassifyInspectedSecondJobSkillsFromRealWzData() {
         SkillFactory.loadAllSkills();
 
+        // Slow is a mob-targeting debuff (mobCount + bbox, no caster statup), not a rebuffable
+        // self-buff: the bot only casts buffs via a self/party SPECIAL_MOVE, so it is excluded.
         assertRealWzCache(Job.IL_WIZARD, 35,
                 Set.of(ILWizard.MP_EATER, ILWizard.MEDITATION, ILWizard.SLOW, ILWizard.COLD_BEAM, ILWizard.THUNDERBOLT),
                 ILWizard.COLD_BEAM, ILWizard.THUNDERBOLT,
-                Set.of(ILWizard.MEDITATION, ILWizard.SLOW),
-                Set.of(ILWizard.MP_EATER));
+                Set.of(ILWizard.MEDITATION),
+                Set.of(ILWizard.MP_EATER, ILWizard.SLOW));
         assertRealWzCache(Job.CLERIC, 35,
                 Set.of(Cleric.MP_EATER, Cleric.HEAL, Cleric.INVINCIBLE, Cleric.BLESS, Cleric.HOLY_ARROW),
                 Cleric.HOLY_ARROW, 0,
@@ -1520,9 +1522,10 @@ class BotCombatManagerTest {
         skill.setAction(true);
         StatEffect effect = mock(StatEffect.class);
         when(effect.isOverTime()).thenReturn(true);
-        // Real support buffs carry a positive duration; the rebuff loop is duration-based and
-        // isActiveSupportSkill now requires it, so the mock must mirror that.
+        // Real support buffs are duration-based and grant the caster a statup; isActiveSupportSkill
+        // now requires both, so the mock must mirror that.
         when(effect.getDuration()).thenReturn(900_000);
+        when(effect.getStatups()).thenReturn(List.of(new tools.Pair<>(BuffStat.WDEF, 20)));
         skill.addLevelEffect(effect);
         return skill;
     }
