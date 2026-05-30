@@ -54,6 +54,7 @@ import server.maps.MapObject;
 import server.maps.MapObjectType;
 import server.maps.MapleMap;
 import tools.PacketCreator;
+import tools.Pair;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -463,6 +464,7 @@ class BotCombatManager {
         entry.attackSkillIds.clear();
         entry.healSkillId = 0;
         entry.buffSkillIds.clear();
+        entry.summonSkillIds.clear();
 
         int bestAtkHits = 0;
         int bestAtkPriority = Integer.MIN_VALUE;
@@ -500,6 +502,12 @@ class BotCombatManager {
                     bestAtkDamage = fx.getDamage();
                     entry.attackSkillId = skill.getId();
                 }
+                continue;
+            }
+
+            if (isSummonSkill(fx)) {
+                // Own bucket, not rebuffable — see BotEntry.summonSkillIds.
+                entry.summonSkillIds.add(skill.getId());
                 continue;
             }
 
@@ -2509,7 +2517,31 @@ class BotCombatManager {
         if (effect.getDuration() <= 0 || effect.getStatups().isEmpty()) {
             return false;
         }
+        // Summons are classified separately (entry.summonSkillIds): their only statup is
+        // SUMMON/PUPPET, and they cannot be cast through the rebuff loop (no spawn position).
+        if (isSummonSkill(effect)) {
+            return false;
+        }
         return skill.getAction() || skill.getSkillType() == 2;
+    }
+
+    /**
+     * Data-driven summon test: a summon's effect grants only the SUMMON (follow/circle hawk-type)
+     * or PUPPET (stationary decoy) buffstat — the WZ marks the summoned creature, not a caster
+     * stat boost. Detecting it from the statups avoids a per-skill id list and matches the
+     * server's spawn path (StatEffect.applyTo spawns the creature only when given a position).
+     */
+    static boolean isSummonSkill(StatEffect effect) {
+        if (effect == null) {
+            return false;
+        }
+        for (Pair<BuffStat, Integer> statup : effect.getStatups()) {
+            BuffStat stat = statup.getLeft();
+            if (stat == BuffStat.SUMMON || stat == BuffStat.PUPPET) {
+                return true;
+            }
+        }
+        return false;
     }
 
     static boolean isActiveHealSkill(Skill skill, StatEffect effect) {

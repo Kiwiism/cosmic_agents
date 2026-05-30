@@ -117,6 +117,11 @@ public class BotEntry {
     int aoeSkillMobs = 1;
     int healSkillId = 0;
     List<Integer> buffSkillIds = new ArrayList<>();
+    // Summon skills (Phoenix, Puppet, Beholder, ...) classified into their own bucket: they are
+    // NOT rebuffable (the bot has no summon-cast path that sends a spawn position, so casting them
+    // via the buff loop only burns MP without spawning the creature). Held here for a future
+    // place/condition-gated summon caster; the generic rebuff loop ignores this list.
+    final List<Integer> summonSkillIds = new ArrayList<>();
     final Map<Integer, Long> nextBuffAt = new HashMap<>();
     final Map<Integer, Long> nextSupportBuffAt = new HashMap<>();
     long nextSupportHealAt = 0L;

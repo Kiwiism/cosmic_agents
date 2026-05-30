@@ -12,6 +12,7 @@ import constants.game.CharacterStance;
 import constants.skills.Archer;
 import constants.skills.Assassin;
 import constants.skills.Beginner;
+import constants.skills.Bowmaster;
 import constants.skills.Cleric;
 import constants.skills.DragonKnight;
 import constants.skills.Hunter;
@@ -205,6 +206,35 @@ class BotCombatManagerTest {
 
         assertFalse(entry.buffSkillIds.contains(Cleric.MP_EATER));
         assertTrue(entry.buffSkillIds.contains(Cleric.BLESS));
+    }
+
+    @Test
+    void shouldClassifySummonIntoOwnBucketNotBuffs() {
+        SkillFactory.loadAllSkills();
+        Character bot = mockBot(new Point(100, 200), mock(MapleMap.class), 20_000, null);
+        when(bot.getJob()).thenReturn(Job.BOWMASTER);
+        when(bot.getLevel()).thenReturn(120);
+
+        // Phoenix is a CIRCLE_FOLLOW summon (SUMMON statup). Sharp Eyes is a real party buff.
+        Set<Integer> skillIds = Set.of(Bowmaster.PHOENIX, Bowmaster.SHARP_EYES);
+        Map<Skill, Character.SkillEntry> skills = new LinkedHashMap<>();
+        for (int skillId : skillIds) {
+            Skill skill = SkillFactory.getSkill(skillId);
+            assertTrue(skill != null, "missing real WZ skill " + skillId);
+            skills.put(skill, null);
+        }
+        when(bot.getSkills()).thenReturn(skills);
+        doAnswer(invocation -> {
+            Skill skill = invocation.getArgument(0);
+            return (byte) (skillIds.contains(skill.getId()) ? 1 : 0);
+        }).when(bot).getSkillLevel(any(Skill.class));
+
+        BotEntry entry = new BotEntry(bot, null, null);
+        BotCombatManager.rebuildSkillCacheIfNeeded(entry, bot);
+
+        assertTrue(entry.summonSkillIds.contains(Bowmaster.PHOENIX));
+        assertFalse(entry.buffSkillIds.contains(Bowmaster.PHOENIX));
+        assertTrue(entry.buffSkillIds.contains(Bowmaster.SHARP_EYES));
     }
 
     @Test

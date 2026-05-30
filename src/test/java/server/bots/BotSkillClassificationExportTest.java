@@ -21,8 +21,8 @@ import java.util.regex.Pattern;
 
 /**
  * Debugging export: lists every skill in Skill.wz and how the bot classifies it
- * (ATTACK / AOE_ATTACK / HEAL / SUPPORT_BUFF / BLACKLISTED / MOB_DEBUFF / CHARGED_ATTACK /
- * INSTANT_UTILITY / PASSIVE), with the WZ description string for each.
+ * (ATTACK / AOE_ATTACK / HEAL / SUPPORT_BUFF / SUMMON / BLACKLISTED / MOB_DEBUFF /
+ * CHARGED_ATTACK / INSTANT_UTILITY / PASSIVE), with the WZ description string for each.
  *
  * This is NOT a pass/fail regression test — it always passes. It exists so a human can
  * eyeball the bot's combat classification across the whole skill table and spot
@@ -113,6 +113,9 @@ public class BotSkillClassificationExportTest {
         if (BotCombatManager.isActiveAttackSkill(skill, fx)) {
             return fx.getMobCount() >= 2 ? "AOE_ATTACK" : "ATTACK";
         }
+        if (BotCombatManager.isSummonSkill(fx)) {
+            return "SUMMON";
+        }
         if (BotCombatManager.isActiveSupportSkill(skill, fx)) {
             return BotCombatManager.BUFF_BLACKLIST.contains(id) ? "BLACKLISTED" : "SUPPORT_BUFF";
         }
@@ -133,6 +136,8 @@ public class BotSkillClassificationExportTest {
         // Every non-acted-on WZ buff variant carries a one-line reason so the flagged section
         // documents why each is (correctly) kept out of the rebuff loop.
         return switch (category) {
+            case "SUMMON" ->
+                    "summon (SUMMON/PUPPET statup); own bucket, not rebuffed (needs spawn-pos cast path)";
             case "MOB_DEBUFF" ->
                     "mob-targeting debuff (mobCount+bbox, no caster statup); excluded from rebuff loop";
             case "CHARGED_ATTACK" ->
