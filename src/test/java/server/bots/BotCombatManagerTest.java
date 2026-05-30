@@ -1520,6 +1520,9 @@ class BotCombatManagerTest {
         skill.setAction(true);
         StatEffect effect = mock(StatEffect.class);
         when(effect.isOverTime()).thenReturn(true);
+        // Real support buffs carry a positive duration; the rebuff loop is duration-based and
+        // isActiveSupportSkill now requires it, so the mock must mirror that.
+        when(effect.getDuration()).thenReturn(900_000);
         skill.addLevelEffect(effect);
         return skill;
     }

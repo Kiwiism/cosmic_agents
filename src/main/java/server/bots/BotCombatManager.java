@@ -73,11 +73,11 @@ class BotCombatManager {
 
     // Skills that bots must never cast — stealth makes them untargetable by monsters,
     // breaking combat entirely.
-    private static final Set<Integer> BUFF_BLACKLIST = Set.of(
+    static final Set<Integer> BUFF_BLACKLIST = Set.of(
             Rogue.DARK_SIGHT,
             NightWalker.DARK_SIGHT
     );
-    private static final Set<Integer> NON_DAMAGE_ACTIVE_SKILL_IDS = Set.of(
+    static final Set<Integer> NON_DAMAGE_ACTIVE_SKILL_IDS = Set.of(
             Crusader.ARMOR_CRASH,
             WhiteKnight.MAGIC_CRASH,
             DragonKnight.POWER_CRASH
@@ -1488,7 +1488,7 @@ class BotCombatManager {
      * Uses the larger of attackCount and bulletCount from skill data —
      * claw skills like Lucky Seven store their projectile count in bulletCount.
      */
-    private static int effectiveHitCount(StatEffect effect) {
+    static int effectiveHitCount(StatEffect effect) {
         return Math.max(1, Math.max(effect.getAttackCount(), effect.getBulletCount()));
     }
 
@@ -2452,11 +2452,11 @@ class BotCombatManager {
         return nearby;
     }
 
-    private static boolean isPartySupportSkill(int skillId) {
+    static boolean isPartySupportSkill(int skillId) {
         return PARTY_SUPPORT_SKILL_IDS.contains(skillId);
     }
 
-    private static boolean isActiveAttackSkill(Skill skill, StatEffect effect) {
+    static boolean isActiveAttackSkill(Skill skill, StatEffect effect) {
         if (skill == null || effect == null) {
             return false;
         }
@@ -2488,21 +2488,30 @@ class BotCombatManager {
                 || (effect.getMobCount() > 1 && effect.hasBoundingBox());
     }
 
-    private static boolean isActiveSupportSkill(Skill skill, StatEffect effect) {
+    static boolean isActiveSupportSkill(Skill skill, StatEffect effect) {
         if (skill == null || effect == null || !effect.isOverTime()) {
             return false;
         }
         if (NON_DAMAGE_ACTIVE_SKILL_IDS.contains(skill.getId())) {
             return false;
         }
+        // The buff loop is duration-based: it sets nextBuffAt = now + duration*0.9 and only
+        // rebuffs once that timer elapses (castSupportSkill). A skill with no positive duration
+        // (no WZ "time" key, so getDuration() <= 0) never advances nextBuffAt, so it would recast
+        // every tick — infinite rebuffing. These are one-shot / instant effects (e.g. Dispel,
+        // Doom) that the WZ flags as buffs but that are not rebuffable; exclude them here so the
+        // single classifier stays the source of truth for both recompute() and tickBuffs().
+        if (effect.getDuration() <= 0) {
+            return false;
+        }
         return skill.getAction() || skill.getSkillType() == 2;
     }
 
-    private static boolean isActiveHealSkill(Skill skill, StatEffect effect) {
+    static boolean isActiveHealSkill(Skill skill, StatEffect effect) {
         return skill != null && effect != null && skill.getAction();
     }
 
-    private static boolean isHealSkill(int skillId) {
+    static boolean isHealSkill(int skillId) {
         return skillId == Cleric.HEAL || skillId == SuperGM.HEAL_PLUS_DISPEL;
     }
 }
