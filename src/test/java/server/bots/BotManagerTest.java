@@ -1212,6 +1212,24 @@ class BotManagerTest {
                 ordered.stream().map(Item::getItemId).toList());
     }
 
+    @Test
+    void shouldPrioritizeScrollTradeItemsRecipientAlreadyHasBeforeItemIdOrder() {
+        Character recipient = mock(Character.class);
+        Inventory recipientUse = new Inventory(recipient, InventoryType.USE, (byte) 24);
+        recipientUse.addItem(Items.itemWithQuantity(2040001, 1));
+        when(recipient.getInventory(InventoryType.USE)).thenReturn(recipientUse);
+
+        List<Item> ordered = BotInventoryManager.prioritizeScrollTradeItems(
+                List.of(
+                        Items.itemWithQuantity(2040002, 1),
+                        Items.itemWithQuantity(2040000, 1),
+                        Items.itemWithQuantity(2040001, 1)),
+                recipient);
+
+        assertEquals(List.of(2040001, 2040000, 2040002),
+                ordered.stream().map(Item::getItemId).toList());
+    }
+
     private static BotCombatManager.AttackPlan basicClosePlan(Monster target) {
         return new BotCombatManager.AttackPlan(
                 0, 0, 1, null, List.of(target), BotCombatManager.AttackRoute.CLOSE,

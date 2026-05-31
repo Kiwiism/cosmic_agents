@@ -1009,6 +1009,10 @@ class BotInventoryManager {
         return ordered;
     }
 
+    static List<Item> prioritizeScrollTradeItems(List<Item> items, Character recipient) {
+        return prioritizeRecipientDuplicateItemIds(items, InventoryType.USE, recipient);
+    }
+
     private static List<Item> collectNamedItems(String fragment, Character bot) {
         List<Item> result = new ArrayList<>();
         String normalizedFragment = normalizeItemQuery(fragment);
@@ -1155,8 +1159,11 @@ class BotInventoryManager {
                     result.addAll(BotEquipManager.collectRecommendedItems(owner, bot));
                 }
             }
-            case "scrolls" -> collectFromBag(bot, result, InventoryType.USE,
-                    item -> ItemConstants.isEquipScroll(item.getItemId()));
+            case "scrolls" -> {
+                collectFromBag(bot, result, InventoryType.USE,
+                        item -> ItemConstants.isEquipScroll(item.getItemId()));
+                result = prioritizeScrollTradeItems(result, entry.owner);
+            }
             case "pots"    -> collectFromBag(bot, result, InventoryType.USE,
                     item -> isRecoveryPotion(item.getItemId()));
             case "buff"    -> collectFromBag(bot, result, InventoryType.USE,
