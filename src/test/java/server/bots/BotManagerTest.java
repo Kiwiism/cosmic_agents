@@ -1204,11 +1204,34 @@ class BotManagerTest {
                         Items.itemWithQuantity(2030001, 1),
                         Items.itemWithQuantity(2030000, 1)),
                 List.of(
-                        Items.itemWithQuantity(2060000, 1),
                         Items.itemWithQuantity(2040000, 1)),
+                List.of(
+                        Items.itemWithQuantity(2060000, 1)),
                 owner);
 
         assertEquals(List.of(2030000, 2030001, 2040000, 2060000),
+                ordered.stream().map(Item::getItemId).toList());
+    }
+
+    @Test
+    void shouldRankPotionAndAmmoLastWithinUseTradeBuckets() {
+        Character owner = mock(Character.class);
+        Inventory ownerUse = new Inventory(owner, InventoryType.USE, (byte) 24);
+        ownerUse.addItem(Items.itemWithQuantity(2000000, 1)); // potion owner already has
+        ownerUse.addItem(Items.itemWithQuantity(2040000, 1)); // scroll owner already has
+        when(owner.getInventory(InventoryType.USE)).thenReturn(ownerUse);
+
+        List<Item> ordered = BotInventoryManager.prioritizeTradeUseItems(
+                List.of(Items.itemWithQuantity(2030000, 1)),
+                List.of(
+                        Items.itemWithQuantity(2040001, 1),
+                        Items.itemWithQuantity(2040000, 1)),
+                List.of(
+                        Items.itemWithQuantity(2000001, 1),
+                        Items.itemWithQuantity(2000000, 1)),
+                owner);
+
+        assertEquals(List.of(2030000, 2040000, 2040001, 2000000, 2000001),
                 ordered.stream().map(Item::getItemId).toList());
     }
 
