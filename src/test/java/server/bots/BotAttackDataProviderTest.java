@@ -4,9 +4,12 @@ import org.junit.jupiter.api.Test;
 import server.bots.combat.BotAttackDataProvider;
 import server.bots.combat.BotAttackTiming;
 
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -96,6 +99,27 @@ class BotAttackDataProviderTest {
 
     private static int adjustedDelay(int rawDelayMs) {
         return BotAttackTiming.adjustDelayMillis(rawDelayMs, 4);
+    }
+
+    @Test
+    void shouldExposePerActionAttackBoundsThatDifferBetweenStabAndSwing() {
+        BotAttackDataProvider provider = BotAttackDataProvider.getInstance();
+        BotAttackDataProvider.NormalAttackProfile profile = provider.getNormalAttackProfile(1302077);
+        assertNotNull(profile);
+        assertTrue(profile.hasBoundingBox());
+
+        Point origin = new Point(0, 0);
+        Rectangle swing = profile.calculateActionBoundingBox("swingO1", origin, false);
+        Rectangle stab = profile.calculateActionBoundingBox("stabO1", origin, false);
+        assertNotNull(swing);
+        assertNotNull(stab);
+        // A single moveset's overhead swing (tall) and stab (low/short) cover different areas, so
+        // the bot must gate the hit on the rolled action's own box, not the union envelope.
+        assertNotEquals(swing, stab);
+
+        // An unknown / non-afterimage action falls back to the unioned envelope (still valid).
+        Rectangle union = profile.calculateBoundingBox(origin, false);
+        assertEquals(union, profile.calculateActionBoundingBox("not-a-real-action", origin, false));
     }
 
     @Test

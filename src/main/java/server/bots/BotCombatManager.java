@@ -1225,10 +1225,14 @@ class BotCombatManager {
                 && countAmmo(bot, weaponType) < ammoCost) {
             return null;
         }
+        // Resolve the animated action once up front: weapon-action sampling is random, so the
+        // reach hitbox and the broadcast packet must share the same swing (a close skill without
+        // its own lt/rb gates the hit on this action's afterimage box).
+        String action = BotAttackExecutionProvider.resolveSkillAttackAction(bot, skill, skillLevel, weaponType);
         if (isStrikePointAnchoredAoeSkill(skillId)) {
             primaryTarget = resolveStrikePointPrimaryByBasicWeapon(bot, primaryTarget, route);
         }
-        Rectangle hitBox = calculateSkillHitBox(effect, bot, primaryTarget, route, skillId);
+        Rectangle hitBox = calculateSkillHitBox(effect, bot, primaryTarget, route, skillId, action);
         if (hitBox == null) {
             return null;
         }
@@ -1252,7 +1256,6 @@ class BotCombatManager {
         boolean facingLeft = primaryTarget.getPosition().x < bot.getPosition().x;
         BotAttackExecutionProvider.BasicAttackData fallbackAttackData = buildBasicAttackData(bot, primaryTarget);
         BotAttackDataProvider.AttackAnimationSpec attackSpec = BotAttackDataProvider.getInstance().getBasicAttackSpec(weaponType);
-        String action = BotAttackExecutionProvider.resolveSkillAttackAction(bot, skill, skillLevel, weaponType);
         String fallbackAction = attackSpec.primaryAction();
         BotAttackExecutionProvider.CloseRangePacketFields closeRangePacketFields = route == AttackRoute.CLOSE
                 ? BotAttackExecutionProvider.mimicCloseRangePacketFields(action, fallbackAction, facingLeft)
@@ -1334,7 +1337,7 @@ class BotCombatManager {
         return weaponType == WeaponType.POLE_ARM_SWING || weaponType == WeaponType.POLE_ARM_STAB;
     }
 
-    private static Rectangle calculateSkillHitBox(StatEffect effect, Character bot, Monster primaryTarget, AttackRoute route, int skillId) {
+    private static Rectangle calculateSkillHitBox(StatEffect effect, Character bot, Monster primaryTarget, AttackRoute route, int skillId, String action) {
         boolean facingLeft = primaryTarget.getPosition().x < bot.getPosition().x;
         if (effect.hasBoundingBox()) {
             Point anchor = isStrikePointAnchoredAoeSkill(skillId)
@@ -1343,7 +1346,7 @@ class BotCombatManager {
             return effect.calculateBoundingBox(anchor, facingLeft);
         }
 
-        return fallbackSkillHitBox(effect, bot, facingLeft, route, skillId);
+        return fallbackSkillHitBox(effect, bot, facingLeft, route, skillId, action);
     }
 
     static boolean isStrikePointAnchoredAoeSkill(int skillId) {
@@ -1354,9 +1357,19 @@ class BotCombatManager {
     // the bot's basic route to be CLOSE so bow/crossbow Power Knockback (a melee swing on
     // the client) gets the proper rectangular reach instead of falling through to the
     // 400 px ranged projectile box.
-    static Rectangle fallbackCloseRangeSkillHitBox(StatEffect effect, Character bot, boolean facingLeft) {
+    static Rectangle fallbackCloseRangeSkillHitBox(StatEffect effect, Character bot, String action, boolean facingLeft) {
         if (effect == null || bot == null) {
             return null;
+        }
+
+        // A true melee weapon carries an afterimage swing box (per-weapon, per-action). Use it and
+        // ignore the skill's WZ `range`, which the v83 client does not apply to these melee swings
+        // (e.g. Slash Blast reaches the same as the weapon's basic swing, not its 150 px `range`).
+        // Weapons with no swing box — bows/crossbows casting Power Knockback as a melee hit — fall
+        // through and keep `range` (e.g. 130 px) as their close reach.
+        Rectangle weaponBox = BotAttackExecutionProvider.closeRangeWeaponActionHitBox(bot, action, facingLeft);
+        if (weaponBox != null) {
+            return weaponBox;
         }
 
         Point origin = bot.getPosition();
@@ -1367,9 +1380,9 @@ class BotCombatManager {
         return new Rectangle(left, top, horizontalRange, height);
     }
 
-    static Rectangle fallbackSkillHitBox(StatEffect effect, Character bot, boolean facingLeft, AttackRoute route, int skillId) {
+    static Rectangle fallbackSkillHitBox(StatEffect effect, Character bot, boolean facingLeft, AttackRoute route, int skillId, String action) {
         if (route == AttackRoute.CLOSE) {
-            return fallbackCloseRangeSkillHitBox(effect, bot, facingLeft);
+            return fallbackCloseRangeSkillHitBox(effect, bot, action, facingLeft);
         }
         if (effect == null || bot == null) {
             return null;
@@ -1623,7 +1636,9 @@ class BotCombatManager {
             return false;
         }
 
-        Rectangle hitBox = calculateSkillHitBox(effect, bot, target, route, entry.attackSkillId);
+        // Route is gated to RANGED/MAGIC above, so the close-range (action-gated) path is never
+        // taken here — action is irrelevant for the projectile box.
+        Rectangle hitBox = calculateSkillHitBox(effect, bot, target, route, entry.attackSkillId, null);
         if (hitBox == null || !doesHitBoxIntersectMonster(hitBox, target)) {
             return false;
         }
