@@ -117,7 +117,7 @@ public class DressingRoomCashCommand extends Command {
 
             output = "\r\nShowing " + count + " results from page " + page + " / " + totalPage + ":\r\n\r\n" + output + "\r\n.";
 
-            c.getAbstractPlayerInteraction().npcTalk(NpcId.MAPLE_ADMINISTRATOR, output);
+            c.getAbstractPlayerInteraction().npcTalkDressingRoom(NpcId.MAPLE_ADMINISTRATOR, output);
         } finally {
             c.releaseClient();
         }

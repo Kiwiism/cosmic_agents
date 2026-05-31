@@ -36,6 +36,7 @@ import tools.Pair;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 
 public class WhoDropsCommand extends Command {
@@ -72,35 +73,54 @@ public class WhoDropsCommand extends Command {
                     continue;
                 }
                 count++;
-//              output.append("#v").append(itemId).append("#"); // Item Icon | CRASHES IF NO ICON (unused items / backported wz repacks)
-                output.append("#z").append(itemId).append("#"); // Item Name + Stats
-                output.append(" - #b").append(itemId); // Item ID
-                output.append("#k:\r\n");
-                try (Connection con = DatabaseConnection.getConnection();
-                     PreparedStatement ps = con.prepareStatement("SELECT dropperid FROM drop_data WHERE itemid = ? LIMIT 50")) {
-                    ps.setInt(1, itemId);
-
-                    try (ResultSet rs = ps.executeQuery()) {
-                        while (rs.next()) {
-                            int dropperid = rs.getInt("dropperid");
-                            String resultName = MonsterInformationProvider.getInstance().getMobNameFromId(dropperid);
-                            String level = "(" + LifeFactory.getMonsterLevel(dropperid) + ")";
-                            if (resultName != null) {
-                                output.append(resultName).append(level).append(", ");
-                            }
-                        }
-                    }
+                try {
+                    appendWhoDropsResult(output, itemId);
                 } catch (Exception e) {
                     player.dropMessage(6, "There was a problem retrieving the required data. Please try again.");
                     e.printStackTrace();
                     return;
                 }
-                output.append("\r\n\r\n");
             }
             output.insert(0, "Showing " + count + " of " + idNameList.size() + " results:\r\n\r\n");
             c.getAbstractPlayerInteraction().npcTalk(NpcId.MAPLE_ADMINISTRATOR, output.toString());
         } finally {
             c.releaseClient();
         }
+    }
+
+    public static String getExactItemDropsText(int itemId) {
+        StringBuilder output = new StringBuilder();
+        try {
+            appendWhoDropsResult(output, itemId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "There was a problem retrieving the required data. Please try again.";
+        }
+
+        output.insert(0, "Showing 1 of 1 results:\r\n\r\n");
+        return output.toString();
+    }
+
+    private static void appendWhoDropsResult(StringBuilder output, int itemId) throws SQLException {
+//      output.append("#v").append(itemId).append("#"); // Item Icon | CRASHES IF NO ICON (unused items / backported wz repacks)
+        output.append("#z").append(itemId).append("#"); // Item Name + Stats
+        output.append(" - #b").append(itemId); // Item ID
+        output.append("#k:\r\n");
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement("SELECT dropperid FROM drop_data WHERE itemid = ? LIMIT 50")) {
+            ps.setInt(1, itemId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int dropperid = rs.getInt("dropperid");
+                    String resultName = MonsterInformationProvider.getInstance().getMobNameFromId(dropperid);
+                    String level = "(" + LifeFactory.getMonsterLevel(dropperid) + ")";
+                    if (resultName != null) {
+                        output.append(resultName).append(level).append(", ");
+                    }
+                }
+            }
+        }
+        output.append("\r\n\r\n");
     }
 }
