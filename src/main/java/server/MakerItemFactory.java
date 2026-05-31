@@ -57,10 +57,10 @@ public class MakerItemFactory {
         return makerEntry;
     }
 
-    public static MakerItemCreateEntry generateLeftoverCrystalEntry(int fromLeftoverid, int crystalId) {
+    public static MakerItemCreateEntry generateLeftoverCrystalEntry(int fromLeftoverid, int crystalId, int makerRate) {
         MakerItemCreateEntry ret = new MakerItemCreateEntry(0, 0, 1);
         ret.addReqItem(fromLeftoverid, 100);
-        ret.addGainItem(crystalId, 2);
+        ret.addGainItem(crystalId, makerRate);   // crystals produced; maker_rate=1 is vanilla (2 => 2x)
         return ret;
     }
 

@@ -71,7 +71,8 @@ public class MakerProcessor {
                         return;
                     }
 
-                    recipe = MakerItemFactory.generateLeftoverCrystalEntry(fromLeftover, toCreate);
+                    int makerRate = YamlConfig.config.worlds.get(c.getWorld()).maker_rate;
+                    recipe = MakerItemFactory.generateLeftoverCrystalEntry(fromLeftover, toCreate, makerRate);
                 } else if (type == 4) {  // disassembling
                     p.readInt(); // 1... probably inventory type
                     pos = p.readInt();
