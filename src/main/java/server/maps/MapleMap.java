@@ -2132,7 +2132,8 @@ public class MapleMap {
 
     public final void spawnItemDrop(final MapObject dropper, final Character owner, final Item item, Point pos,
                                     final byte dropType, final boolean playerDrop) {
-        if (FieldLimit.DROP_LIMIT.check(this.getFieldLimit())) { // thanks Conrad for noticing some maps shouldn't have loots available
+        if (FieldLimit.DROP_LIMIT.check(this.getFieldLimit()) // thanks Conrad for noticing some maps shouldn't have loots available
+                && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) { // when everything is tradable, allow drops even on drop-limited maps (e.g. free market)
             this.disappearingItemDrop(dropper, owner, item, pos);
             return;
         }

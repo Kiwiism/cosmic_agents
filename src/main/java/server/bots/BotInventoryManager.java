@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import server.ItemInformationProvider;
 import server.StatEffect;
 import server.Trade;
+import server.maps.FieldLimit;
 import server.maps.MapItem;
 import server.maps.MapleMap;
 import tools.PacketCreator;
@@ -387,6 +388,13 @@ class BotInventoryManager {
     }
 
     private static void dropCategory(String category, BotEntry entry, Character bot) {
+        // When items aren't globally tradable, drops on drop-limited maps (e.g. free market)
+        // silently vanish. Refuse and tell the owner why instead of destroying the items.
+        if (!YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE
+                && FieldLimit.DROP_LIMIT.check(bot.getMap().getFieldLimit())) {
+            BotManager.getInstance().botReply(entry, "can't drop here - try another map or trade");
+            return;
+        }
         switch (category) {
             case "scrolls" -> dropScrolls(entry, bot);
             case "pots"    -> dropPotions(entry, bot);
