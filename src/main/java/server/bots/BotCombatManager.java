@@ -721,7 +721,7 @@ class BotCombatManager {
                 : null;
         boolean selfNeedsHeal = needsHeal(bot);
         boolean partyNeedsHeal = selfNeedsHeal || hasPartyMemberInBoundsNeedingHeal(bot, healBounds);
-        List<Monster> undeadTargets = getUndeadMobsInHealRange(bot, fx);
+        List<Monster> undeadTargets = getUndeadMobsInHealRange(bot, fx, healBounds);
         if (!partyNeedsHeal && undeadTargets.isEmpty()) return false;
 
         // Jump-heal: when following and the leader has pulled ahead, kick a diagonal jump toward
@@ -822,8 +822,10 @@ class BotCombatManager {
         BotAttackExecutionProvider.applyAttackRoute(route, attack, bot);
     }
 
-    private static List<Monster> getUndeadMobsInHealRange(Character bot, StatEffect fx) {
-        Rectangle bounds = fx.calculateBoundingBox(bot.getPosition(), bot.isFacingLeft());
+    private static List<Monster> getUndeadMobsInHealRange(Character bot, StatEffect fx, Rectangle bounds) {
+        if (bounds == null) {
+            return new ArrayList<>();
+        }
         List<MapObject> objects = bot.getMap().getMapObjectsInRect(bounds, Arrays.asList(MapObjectType.MONSTER));
         List<Monster> undead = new ArrayList<>();
         int cap = fx.getMobCount();
@@ -1133,10 +1135,6 @@ class BotCombatManager {
             return candidate.cooldownMs < currentBest.cooldownMs;
         }
         return candidate.skillId < currentBest.skillId;
-    }
-
-    private static double estimatePlanDamage(Character bot, AttackPlan attackPlan) {
-        return scoreAttackPlan(bot, attackPlan).usefulDamage;
     }
 
     private static double capDamageByCurrentHp(double expectedDamage, Monster target) {

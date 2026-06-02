@@ -452,13 +452,9 @@ final class BotPhysicsEngine {
         int bestScore = Integer.MAX_VALUE;
         boolean foundContainingSegment = false;
         for (BotNavigationGraph.Segment segment : region.segments) {
-            int dx = distanceToSegmentX(segment, x);
-            boolean containsX = segment.containsX(x);
-            if (!containsX && dx > REGION_STITCH_GAP_PX) {
-                continue;
-            }
-            if (containsX) {
+            if (segment.containsX(x)) {
                 foundContainingSegment = true;
+                break;
             }
         }
 
@@ -1538,14 +1534,6 @@ final class BotPhysicsEngine {
 
     static int estimateRopeJumpGrabTimeMs(MapleMap map, Point from, int stepX, Rope targetRope, BotMovementProfile profile) {
         return estimateRopeGrabTimeMs(map, from, -ropeJumpForcePerTick(profile), stepX, targetRope, 0L);
-    }
-
-    private static JumpLanding findAirLanding(MapleMap map, Point previousPos, Point nextPos) {
-        AirCollision collision = resolveAirCollision(map, previousPos, nextPos);
-        return collision.type() == AirCollisionType.LAND
-                ? new JumpLanding(collision.point(), collision.foothold(),
-                nextPos.x - previousPos.x, nextPos.y - previousPos.y)
-                : null;
     }
 
     private static AirCollision resolveAirCollision(MapleMap map, Point previousPos, Point nextPos) {

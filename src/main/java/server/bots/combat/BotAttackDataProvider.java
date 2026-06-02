@@ -23,6 +23,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static server.bots.combat.BotWzXml.findNamedChild;
+import static server.bots.combat.BotWzXml.getIntAttribute;
+import static server.bots.combat.BotWzXml.getIntValue;
+
 public final class BotAttackDataProvider {
     private static final Logger log = LoggerFactory.getLogger(BotAttackDataProvider.class);
     private static final BotAttackDataProvider instance = new BotAttackDataProvider();
@@ -887,30 +891,6 @@ public final class BotAttackDataProvider {
             child = child.getNextSibling();
         }
         return children;
-    }
-
-    private static Element findNamedChild(Element parent, String name) {
-        if (parent == null) {
-            return null;
-        }
-
-        for (Element child : getNamedChildren(parent)) {
-            if (name.equals(child.getAttribute("name"))) {
-                return child;
-            }
-        }
-        return null;
-    }
-
-    private static int getIntValue(Element element, int defaultValue) {
-        return getIntAttribute(element, "value", defaultValue);
-    }
-
-    private static int getIntAttribute(Element element, String attributeName, int defaultValue) {
-        if (element == null || !element.hasAttribute(attributeName)) {
-            return defaultValue;
-        }
-        return parseInt(element.getAttribute(attributeName), defaultValue);
     }
 
     private static int parseInt(String value, int defaultValue) {

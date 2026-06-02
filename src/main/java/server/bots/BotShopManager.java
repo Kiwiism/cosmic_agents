@@ -845,10 +845,7 @@ final class BotShopManager {
         }
         BotMovementProfile profile = entry.movementProfile != null
                 ? entry.movementProfile : BotMovementProfile.fromCharacter(bot);
-        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(bot.getMap(), profile);
-        if (graph == null) {
-            graph = BotNavigationGraphProvider.peekClosestGraph(bot.getMap(), profile);
-        }
+        BotNavigationGraph graph = BotNavigationGraphProvider.peekBestGraph(bot.getMap(), profile);
         if (graph != null) {
             Point botPos = bot.getPosition();
             int startRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, bot.getMap(), botPos);

@@ -241,7 +241,7 @@ class BotInventoryManager {
         MapleMap map = bot.getMap();
         if (map == null) return null;
 
-        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map);
+        BotNavigationGraph graph = BotNavigationGraphProvider.peekBestGraph(map, entry.movementProfile);
         if (graph == null) return null;
 
         Set<Integer> allowed = new HashSet<>();

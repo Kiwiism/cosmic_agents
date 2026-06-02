@@ -35,6 +35,8 @@ public final class BotNavigationProbe {
         boolean rebuild = false;
         boolean listRopes = false;
         boolean listUndersides = false;
+        boolean measure = false;
+        int measureCap = 0;
         List<Point> points = new ArrayList<>();
         List<Point> jumps = new ArrayList<>();
         List<PathProbe> paths = new ArrayList<>();
@@ -56,6 +58,10 @@ public final class BotNavigationProbe {
                 case "--edges" -> edgeRegions.add(Integer.parseInt(nextArg(args, ++i, "--edges")));
                 case "--path-region" -> regionPaths.add(parseRegionPath(nextArg(args, ++i, "--path-region")));
                 case "--foothold" -> footholdIds.add(Integer.parseInt(nextArg(args, ++i, "--foothold")));
+                case "--measure" -> {
+                    measure = true;
+                    measureCap = Integer.parseInt(nextArg(args, ++i, "--measure"));
+                }
                 default -> throw new IllegalArgumentException("Unknown arg: " + arg);
             }
         }
@@ -98,11 +104,102 @@ public final class BotNavigationProbe {
         for (RegionPathProbe regionPath : regionPaths) {
             probeRegionPath(graph, regionPath);
         }
+        if (measure) {
+            runMeasurement(map, graph, measureCap);
+        }
+    }
+
+    /**
+     * Sweeps region->region pairs comparing the production A* heuristic against the admissible
+     * (h=0) optimal search, quantifying how often the heuristic returns a longer path, by how
+     * much, and how often the optimal route took a portal the heuristic walked past. The expansion
+     * ratio is a proxy for the extra CPU an h=0 (Dijkstra) search would cost.
+     */
+    private static void runMeasurement(MapleMap map, BotNavigationGraph graph, int maxPairs) {
+        List<BotNavigationGraph.Region> regions = new ArrayList<>();
+        for (BotNavigationGraph.Region region : graph.regions) {
+            if (!region.isRopeRegion) {
+                regions.add(region);
+            }
+        }
+        long possiblePairs = (long) regions.size() * Math.max(0, regions.size() - 1);
+        int stride = 1;
+        if (maxPairs > 0 && possiblePairs > maxPairs) {
+            stride = (int) Math.ceil((double) possiblePairs / maxPairs);
+        }
+
+        int pairs = 0;
+        int reachable = 0;
+        int suboptimal = 0;
+        int portalSkipped = 0;
+        long totalDelta = 0;
+        int worstDelta = 0;
+        long currentExpandedTotal = 0;
+        long optimalExpandedTotal = 0;
+        List<String> examples = new ArrayList<>();
+
+        long counter = 0;
+        for (BotNavigationGraph.Region start : regions) {
+            Point startPoint = start.centerPoint();
+            for (BotNavigationGraph.Region target : regions) {
+                if (start.id == target.id) {
+                    continue;
+                }
+                if ((counter++ % stride) != 0) {
+                    continue;
+                }
+                pairs++;
+                BotNavigationManager.PathOptimality po = BotNavigationManager.measureOptimality(
+                        graph, map, startPoint, start.id, target.id, target.centerPoint());
+                if (!po.reachable()) {
+                    continue;
+                }
+                reachable++;
+                currentExpandedTotal += po.currentExpanded();
+                optimalExpandedTotal += po.optimalExpanded();
+                if (po.suboptimal()) {
+                    suboptimal++;
+                    totalDelta += po.costDelta();
+                    worstDelta = Math.max(worstDelta, po.costDelta());
+                    if (po.portalSkipped()) {
+                        portalSkipped++;
+                    }
+                    if (examples.size() < 30) {
+                        examples.add(String.format(
+                                "  region %d -> %d : current=%d optimal=%d delta=%d (%.1f%% longer)%s",
+                                start.id, target.id, po.currentCost(), po.optimalCost(), po.costDelta(),
+                                100.0 * po.costDelta() / po.optimalCost(),
+                                po.portalSkipped() ? "  [PORTAL SKIPPED]" : ""));
+                    }
+                }
+            }
+        }
+
+        System.out.printf("%n=== A* heuristic optimality measurement (map %d) ===%n", graph.mapId);
+        System.out.printf("walk regions=%d  pairs sampled=%d (stride=%d of %d possible)%n",
+                regions.size(), pairs, stride, possiblePairs);
+        System.out.printf("reachable pairs=%d%n", reachable);
+        System.out.printf("suboptimal paths=%d (%.2f%% of reachable)%n",
+                suboptimal, reachable == 0 ? 0.0 : 100.0 * suboptimal / reachable);
+        System.out.printf("  of which portal-skipped=%d%n", portalSkipped);
+        System.out.printf("avg cost delta over suboptimal=%.1f  worst delta=%d%n",
+                suboptimal == 0 ? 0.0 : (double) totalDelta / suboptimal, worstDelta);
+        System.out.printf("search expansion (CPU proxy): current avg=%.1f  h=0 avg=%.1f  ratio=%.2fx%n",
+                reachable == 0 ? 0.0 : (double) currentExpandedTotal / reachable,
+                reachable == 0 ? 0.0 : (double) optimalExpandedTotal / reachable,
+                currentExpandedTotal == 0 ? 0.0 : (double) optimalExpandedTotal / currentExpandedTotal);
+        if (!examples.isEmpty()) {
+            System.out.println("examples (up to 30):");
+            for (String example : examples) {
+                System.out.println(example);
+            }
+        }
     }
 
     private static void printUsage() {
         System.out.println("Usage: BotNavigationProbe <mapId> [--rebuild] [--point x,y] [--jump x,y] [--path x1,y1:x2,y2]");
         System.out.println("       BotNavigationProbe <mapId> [--region id] [--edges id] [--path-region fromRegion:toRegion] [--ropes] [--undersides] [--foothold id]");
+        System.out.println("       BotNavigationProbe <mapId> --measure <maxPairs>   (compare current A* heuristic vs admissible h=0 optimal; e.g. --measure 60000)");
         System.out.println("Example: BotNavigationProbe 100000000 --rebuild --point 1080,334 --jump 1080,334 --path 990,334:938,274");
     }
 

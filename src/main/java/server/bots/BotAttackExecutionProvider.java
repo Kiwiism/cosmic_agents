@@ -73,7 +73,6 @@ final class BotAttackExecutionProvider {
         String fallbackAction = attackSpec.primaryAction();
         List<String> candidateActions = resolveAttackActions(attackSpec, profile.getSourceActions());
         String action = sampleAttackAction(candidateActions, fallbackAction);
-        int variantOffset = Math.max(0, attackSpec.actions().indexOf(action));
         BotCombatManager.AttackRoute route = useDegenerateCloseRange
                 ? BotCombatManager.AttackRoute.CLOSE
                 : determineBasicWeaponRoute(weaponType);
@@ -120,7 +119,6 @@ final class BotAttackExecutionProvider {
                 || shouldDegenerateForNoAmmo(weaponType, bot);
         BotAttackDataProvider.AttackAnimationSpec attackSpec = provider.getBasicAttackSpec(weaponType, useDegenerateCloseRange);
         String action = sampleAttackAction(attackSpec.actions(), attackSpec.primaryAction());
-        int variantOffset = Math.max(0, attackSpec.actions().indexOf(action));
         BotCombatManager.AttackRoute route = useDegenerateCloseRange
                 ? BotCombatManager.AttackRoute.CLOSE
                 : determineBasicWeaponRoute(weaponType);
@@ -665,14 +663,6 @@ final class BotAttackExecutionProvider {
         return BotCombatManager.clientProjectileHitBox(bot, facingLeft, 1.0f);
     }
 
-    private static boolean isBasicAttackInRange(Point botPos, Point targetPos) {
-        int dx = Math.abs(targetPos.x - botPos.x);
-        int dy = botPos.y - targetPos.y;
-        boolean inHorizontalRange = dx <= BotCombatManager.cfg.ATTACK_RANGE_X;
-        boolean inVerticalRange = dy >= -BotCombatManager.cfg.ATTACK_DOWN_MAX && dy <= BotCombatManager.cfg.ATTACK_RANGE_Y;
-        return inHorizontalRange && inVerticalRange;
-    }
-
     private static int resolveSkillAttackDelayMillis(Skill skill) {
         if (skill == null) {
             return 0;
@@ -748,7 +738,4 @@ final class BotAttackExecutionProvider {
         return BotAttackTiming.adjustDelayMillis(baseDelayMillis, effectiveAttackSpeed);
     }
 
-    private static float toAttackSpeedFactor(int attackSpeed) {
-        return BotAttackTiming.toAttackSpeedFactor(attackSpeed);
-    }
 }
