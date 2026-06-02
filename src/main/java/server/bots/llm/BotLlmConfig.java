@@ -24,7 +24,7 @@ public final class BotLlmConfig {
 
     // Short cosmetic replies should finish quickly and never compete with gameplay.
     public static volatile int maxPredictTokens = 24;
-    public static volatile int numCtx = 2048;
+    public static volatile int numCtx = 4096;
     public static volatile int recentTurnsInPrompt = 3;
 
     // Qwen3.5 standard non-thinking sampler, kept tight for short chat.
