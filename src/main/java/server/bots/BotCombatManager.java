@@ -1931,34 +1931,35 @@ class BotCombatManager {
         if (botPos == null || tp == null) {
             return null;
         }
-        // Cheap geometry gates first (no scoring): sweet spot = centroid X of live mobs within the
-        // AoE cluster radius of the primary, clamped to the bounded-chase distance.
+        // Cheap geometry gate first (no scoring): the cluster of live mobs within the AoE radius of
+        // the primary. If it holds no more mobs than the fire-now plan already hits, bail.
         List<Monster> cluster = clusterMonsters(bot, primaryTarget);
         if (cluster.size() <= fireNowBest.targets.size()) {
-            return null; // nothing more to gather than the fire-now plan already hits
+            return null;
         }
         long sumX = 0L;
         for (Monster m : cluster) {
             sumX += m.getPosition().x;
         }
         int centroidX = (int) (sumX / cluster.size());
-        int dx = centroidX - botPos.x;
-        if (Math.abs(dx) > cfg.AOE_REPOSITION_MAX_DISTANCE_X) {
-            dx = Integer.signum(dx) * cfg.AOE_REPOSITION_MAX_DISTANCE_X;
-            centroidX = botPos.x + dx;
-        }
-        if (Math.abs(dx) <= cfg.AOE_REPOSITION_ARRIVAL_X) {
-            return null; // already centered — let the normal flow pick the AoE
-        }
-        // Rebuild the AoE candidate at the current position (the plan planAttack discards),
-        // translate its hitbox to the sweet spot, and re-collect targets. Bail before any scoring
-        // if the sweet spot wouldn't actually catch more mobs than firing now.
+        // Rebuild the AoE candidate at the current position (the plan planAttack discards) so we know
+        // the actual hitbox shape. The box extends *forward* from the bot (it does not straddle the
+        // anchor), so to cover the cluster we shift the box CENTER onto the centroid — not the bot
+        // onto the centroid, which would push a forward box past the mobs and catch none. The bot
+        // moves by the same shift, bounded by the chase distance.
         AttackPlan aoeNow = planSkillAttack(entry, bot, primaryTarget, entry.aoeSkillId);
         if (aoeNow == null || aoeNow.hitBox == null) {
             return null;
         }
+        int shift = centroidX - (int) Math.round(aoeNow.hitBox.getCenterX());
+        if (Math.abs(shift) > cfg.AOE_REPOSITION_MAX_DISTANCE_X) {
+            shift = Integer.signum(shift) * cfg.AOE_REPOSITION_MAX_DISTANCE_X;
+        }
+        if (Math.abs(shift) <= cfg.AOE_REPOSITION_ARRIVAL_X) {
+            return null; // box already covers the cluster — let the normal flow pick the AoE
+        }
         Rectangle shifted = new Rectangle(aoeNow.hitBox);
-        shifted.translate(dx, 0);
+        shifted.translate(shift, 0);
         Monster sweetPrimary = nearestMonster(cluster, centroidX, tp.y);
         if (sweetPrimary == null) {
             return null;
@@ -1982,11 +1983,11 @@ class BotCombatManager {
             if (cfg.AOE_REPOSITION_DEBUG) {
                 double pct = fireNowScore.rawDps > 0 ? sweetScore.rawDps / fireNowScore.rawDps * 100.0d : 0.0d;
                 log.info("AoE reposition[{}]: stepping {}px {} to hit {} mobs (vs {}) with {} for {}% DPS ({} vs {} dps)",
-                        bot.getName(), Math.abs(dx), dx < 0 ? "left" : "right",
+                        bot.getName(), Math.abs(shift), shift < 0 ? "left" : "right",
                         sweetTargets.size(), fireNowBest.targets.size(), skillLabel(entry.aoeSkillId),
                         Math.round(pct), Math.round(sweetScore.rawDps), Math.round(fireNowScore.rawDps));
             }
-            return new Point(centroidX, botPos.y);
+            return new Point(botPos.x + shift, botPos.y);
         }
         return null;
     }
@@ -2153,7 +2154,13 @@ class BotCombatManager {
         if (mobBounds == null) {
             return false;
         }
-        return mobBounds.intersects(botBounds);
+        // Only the lower half of the mob deals touch damage: keep the bottom half of the sprite
+        // bounds (v83 y grows downward, so the bottom is the max-y side). Lets the bot's
+        // feet/legs slip under a tall mob's upper body without taking contact damage.
+        int lowerHeight = Math.max(1, mobBounds.height / 2);
+        Rectangle mobLowerHalf = new Rectangle(mobBounds.x, mobBounds.y + mobBounds.height - lowerHeight,
+                mobBounds.width, lowerHeight);
+        return mobLowerHalf.intersects(botBounds);
     }
 
     static Rectangle getBotTouchBounds(BotEntry entry, Character bot) {
