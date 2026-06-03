@@ -105,7 +105,7 @@ final class BotMakerManager {
             return false;
         }
         if (MakerProcessor.getMakerSkillLevel(bot) < 1) {
-            BotManager.getInstance().botReply(entry, "I can't — I don't have the Maker skill");
+            BotManager.getInstance().botReply(entry, "I can't - I don't have the Maker skill");
             return false;
         }
         return true;
@@ -161,7 +161,7 @@ final class BotMakerManager {
 
         if (entry.activityEpoch != epoch) {   // player issued a new command — disrupt
             ACTIVE.remove(bot.getId());
-            BotManager.getInstance().botReply(entry, "ok, stopping — " + done + " " + plural(noun, done) + " done");
+            BotManager.getInstance().botReply(entry, "ok, stopping - " + done + " " + plural(noun, done) + " done");
             return;
         }
 
@@ -185,7 +185,7 @@ final class BotMakerManager {
 
         if (status == NO_MORE) {
             ACTIVE.remove(bot.getId());
-            BotManager.getInstance().botReply(entry, "done — " + done + " " + plural(noun, done));
+            BotManager.getInstance().botReply(entry, "done - " + done + " " + plural(noun, done));
             return;
         }
         if (status != 0) {
@@ -204,7 +204,7 @@ final class BotMakerManager {
             case 5 -> "my inventory's full";
             default -> "hit a snag";
         };
-        return reason + ", stopping — " + done + " " + plural(noun, done) + " done";
+        return reason + ", stopping - " + done + " " + plural(noun, done) + " done";
     }
 
     private static String plural(String noun, int count) {

@@ -742,7 +742,7 @@ final class BotShopManager {
         return switch (report.reason()) {
             case NO_SPACE -> report.quantity() <= 0
                     ? "no room in my bag for " + itemName
-                    : "only fit " + got + " " + itemName + " out of " + want + " — bag's full";
+                    : "only fit " + got + " " + itemName + " out of " + want + " - bag's full";
             case OTHER -> "shop wouldn't sell me " + itemName;
             case NO_MESO, NONE -> report.quantity() <= 0
                     ? "couldn't afford any " + itemName + " this trip"

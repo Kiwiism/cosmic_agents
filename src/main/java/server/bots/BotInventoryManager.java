@@ -101,7 +101,7 @@ class BotInventoryManager {
     private static final List<String> TRADE_RESERVED_FOR_OTHER_MSGS = List.of(
             "these might be needed by others, maybe don't sell them",
             "careful with these, they could be for someone else",
-            "heads up, I was saving those for someone — don't lose them",
+            "heads up, I was saving those for someone - don't lose them",
             "these might go to someone else, hold onto them for now",
             "those are kinda spoken for, keep them safe ok?",
             "just so you know, I had plans for those"

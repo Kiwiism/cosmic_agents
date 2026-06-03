@@ -12,6 +12,7 @@ import client.inventory.manipulator.InventoryManipulator;
 import client.keybind.KeyBinding;
 import constants.game.CharacterStance;
 import constants.inventory.ItemConstants;
+import constants.string.CharsetConstants;
 import net.server.Server;
 import net.server.world.Party;
 import net.server.world.PartyCharacter;
@@ -949,7 +950,7 @@ public class BotManager {
         if (dm.find()) {
             String name = dm.group(2);
             if (dismissBot(owner.getId(), name)) {
-                owner.yellowMessage("Bot '" + name + "' disowned — now idle.");
+                owner.yellowMessage("Bot '" + name + "' disowned - now idle.");
             } else {
                 owner.yellowMessage("No bot named '" + name + "' in your group.");
             }
@@ -3909,7 +3910,45 @@ public class BotManager {
     // -------------------------------------------------------------------------
 
     void botSay(Character bot, String text) {
-        bot.getMap().broadcastMessage(PacketCreator.getChatText(bot.getId(), text, false, 0));
+        bot.getMap().broadcastMessage(PacketCreator.getChatText(bot.getId(), sanitizeChat(text), false, 0));
+    }
+
+    // Common typographic chars an LLM/source string may slip in; the v83 client chat
+    // charset (usually US-ASCII) can't encode them, so they render as '?'. Map to ASCII.
+    private static final Map<java.lang.Character, String> CHAT_CHAR_FALLBACKS = Map.ofEntries(
+            Map.entry('—', "-"),    // em dash
+            Map.entry('–', "-"),    // en dash
+            Map.entry('‘', "'"),    // left single quote
+            Map.entry('’', "'"),    // right single quote / apostrophe
+            Map.entry('“', "\""),   // left double quote
+            Map.entry('”', "\""),   // right double quote
+            Map.entry('…', "..."),  // ellipsis
+            Map.entry(' ', " "));   // non-breaking space
+
+    private static final java.nio.charset.CharsetEncoder CHAT_ENCODER =
+            CharsetConstants.CHARSET.newEncoder();
+
+    /**
+     * Replaces characters the chat charset ({@link CharsetConstants#CHARSET}) can't encode —
+     * which the client renders as '?' — with ASCII equivalents, logging a warning so the
+     * offending source string can be located and fixed. Fast no-op for already-clean text.
+     */
+    static synchronized String sanitizeChat(String text) {
+        if (text == null || CHAT_ENCODER.canEncode(text)) {
+            return text;
+        }
+        StringBuilder sb = new StringBuilder(text.length());
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (CHAT_ENCODER.canEncode(c)) {
+                sb.append(c);
+            } else {
+                sb.append(CHAT_CHAR_FALLBACKS.getOrDefault(c, "?"));
+            }
+        }
+        String cleaned = sb.toString();
+        log.warn("Bot chat had non-encodable char(s) (would show as '?'): \"{}\" -> \"{}\"", text, cleaned);
+        return cleaned;
     }
 
     void botSay(Character bot, ReplyChannel channel, String text) {
@@ -3934,7 +3973,7 @@ public class BotManager {
                     owner.sendPacket(PacketCreator.getWhisperReceive(
                             entry.bot.getName(),
                             entry.bot.getClient().getChannel() - 1,
-                            false, text));
+                            false, sanitizeChat(text)));
                 }
             }
             default -> botSay(entry.bot, text);
@@ -3948,7 +3987,7 @@ public class BotManager {
     void botSayParty(Character bot, String text) {
         Party party = bot.getParty();
         if (party != null && bot.getClient() != null && bot.getClient().getWorldServer() != null) {
-            bot.getClient().getWorldServer().partyChat(party, text, bot.getName());
+            bot.getClient().getWorldServer().partyChat(party, sanitizeChat(text), bot.getName());
         } else {
             botSay(bot, text);
         }
