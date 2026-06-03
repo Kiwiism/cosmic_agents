@@ -29,6 +29,7 @@ import org.mockito.ArgumentCaptor;
 import server.StatEffect;
 import server.bots.combat.BotAttackDataProvider;
 import server.life.Monster;
+import server.life.MonsterStats;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 
@@ -58,6 +59,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -1107,6 +1109,59 @@ class BotCombatManagerTest {
     }
 
     @Test
+    void shouldNotTargetFriendlyMonsterWhenSearchingForClosestTarget() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        Monster friendly = mockFriendlyMob(new Point(140, 200), 9300500);
+        Monster hostile = mockMob(new Point(160, 200), 9300501);
+
+        // Only a friendly mob on the map -> no attackable target, even though it is in range.
+        when(map.getAllMonsters()).thenReturn(List.of(friendly));
+        assertNull(BotCombatManager.findClosestAliveMonster(bot, 1_000_000d));
+
+        // Friendly mob is closer, but the bot must skip it and pick the farther hostile mob.
+        when(map.getAllMonsters()).thenReturn(List.of(friendly, hostile));
+        assertEquals(hostile, BotCombatManager.findClosestAliveMonster(bot, 1_000_000d));
+    }
+
+    @Test
+    void shouldNotTakeContactDamageFromFriendlyMonster() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        Monster friendly = mockFriendlyMob(new Point(100, 200), 9300502);
+        when(map.getAllMonsters()).thenReturn(List.of(friendly));
+        BotEntry entry = new BotEntry(bot, null, null);
+
+        try (MockedStatic<BotCombatManager> combat =
+                     Mockito.mockStatic(BotCombatManager.class, Mockito.CALLS_REAL_METHODS)) {
+            combat.when(() -> BotCombatManager.isMobTouchingBot(any(BotEntry.class), any(Character.class),
+                    any(Monster.class))).thenReturn(true);
+            runWithStubbedBotAfter(() -> BotCombatManager.tickMobDamage(entry, bot));
+        }
+
+        assertEquals(20_000, bot.getHp());
+        verify(map, never()).broadcastMessage(any(Character.class), any(Packet.class), anyBoolean());
+    }
+
+    @Test
+    void shouldTakeContactDamageFromHostileMonster() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        Monster hostile = mockMob(new Point(100, 200), 9300503);
+        when(map.getAllMonsters()).thenReturn(List.of(hostile));
+        BotEntry entry = new BotEntry(bot, null, null);
+
+        try (MockedStatic<BotCombatManager> combat =
+                     Mockito.mockStatic(BotCombatManager.class, Mockito.CALLS_REAL_METHODS)) {
+            combat.when(() -> BotCombatManager.isMobTouchingBot(any(BotEntry.class), any(Character.class),
+                    any(Monster.class))).thenReturn(true);
+            runWithStubbedBotAfter(() -> BotCombatManager.tickMobDamage(entry, bot));
+        }
+
+        assertTrue(bot.getHp() < 20_000, "hostile contact should reduce bot HP");
+    }
+
+    @Test
     void shouldCreateFallbackHitBoxForCloseRangeSkillWithoutBoundingBox() {
         MapleMap map = mock(MapleMap.class);
         Character bot = mockBot(new Point(100, 200), map, 20_000, null);
@@ -1670,6 +1725,14 @@ class BotCombatManagerTest {
         when(mob.getHp()).thenReturn(10_000);
         when(mob.getMaxHp()).thenReturn(10_000);
         when(mob.isAlive()).thenReturn(true);
+        return mob;
+    }
+
+    private static Monster mockFriendlyMob(Point position, int id) {
+        Monster mob = mockMob(position, id);
+        MonsterStats stats = mock(MonsterStats.class);
+        when(stats.isFriendly()).thenReturn(true);
+        when(mob.getStats()).thenReturn(stats);
         return mob;
     }
 
