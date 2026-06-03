@@ -2320,6 +2320,8 @@ class BotCombatManager {
     }
 
     /** A living monster the bot may attack and be hit by — alive and not a friendly (escort/PQ) mob. */
+    // Thanks to ReinderKas for finding and implementing the friendly-mob
+    // interaction (escort/PQ mobs should not be attacked or deal contact damage).
     private static boolean isHostileLivingMonster(Monster monster) {
         return monster != null
                 && monster.isAlive()
