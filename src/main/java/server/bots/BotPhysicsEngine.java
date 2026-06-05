@@ -1872,17 +1872,30 @@ final class BotPhysicsEngine {
     }
 
     private static int effectiveLeftBoundaryX(MapleMap map, Rectangle area) {
-        if (!isSyntheticMapArea(area) || !hasUsableFootholdXBounds(map)) {
+        if (!hasUsableFootholdXBounds(map)) {
             return area.x;
         }
-        return map.getFootholds().getMinDropX();
+        int footholdMinX = map.getFootholds().getMinDropX();
+        // Synthetic (absurdly large) bounds: tighten inward to the foothold extent.
+        if (isSyntheticMapArea(area)) {
+            return footholdMinX;
+        }
+        // Real bounds: never let a walkable foothold pixel sit outside the side-collision
+        // wall. A foothold tip that overhangs area.x (e.g. map 261020500 fh#12 left tip at
+        // x=-712 while area.x=-711) would otherwise be a trap: a bot pushed onto that pixel
+        // is past mapSideBoundaryCollision's guard and falls into the floor-less void.
+        return Math.min(area.x, footholdMinX);
     }
 
     private static int effectiveRightBoundaryX(MapleMap map, Rectangle area) {
-        if (!isSyntheticMapArea(area) || !hasUsableFootholdXBounds(map)) {
+        if (!hasUsableFootholdXBounds(map)) {
             return area.x + area.width;
         }
-        return map.getFootholds().getMaxDropX();
+        int footholdMaxX = map.getFootholds().getMaxDropX();
+        if (isSyntheticMapArea(area)) {
+            return footholdMaxX;
+        }
+        return Math.max(area.x + area.width, footholdMaxX);
     }
 
     private static boolean isSyntheticMapArea(Rectangle area) {
