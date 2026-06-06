@@ -23,6 +23,11 @@ public class IpAddresses {
                 .anyMatch(pattern -> matchesPattern(pattern, inetAddress));
     }
 
+    public static boolean isTailscaleAddress(String inetAddress) {
+        // Tailscale CGNAT range 100.64.0.0/10  -> 100.64.x - 100.127.x
+        return inetAddress.matches("^100\\.(6[4-9]|[7-9]\\d|1[01]\\d|12[0-7])\\..*");
+    }
+
     private static boolean matchesPattern(Pattern pattern, String searchTerm) {
         return pattern.matcher(searchTerm).find();
     }

@@ -211,6 +211,7 @@ server:
     HOST: 182.52.44.189                 #WAN IPv4 address
     LANHOST: 192.168.50.10              #LAN IPv4 address
     LOCALHOST: 127.0.0.1            #Loopback IPv4 address
+    TAILSCALEHOST: 100.109.79.4         #Tailscale (100.64.0.0/10) IPv4 address
     GMSERVER: false
 
     #Other configuration
