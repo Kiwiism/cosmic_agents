@@ -288,7 +288,7 @@ class BotInventoryManagerTest {
                      mockStatic(BotNavigationGraphProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS);
              MockedStatic<BotLootEligibility> lootEligibility =
                      mockStatic(BotLootEligibility.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
-            graphProvider.when(() -> BotNavigationGraphProvider.peekGraph(map)).thenReturn(graph);
+            graphProvider.when(() -> BotNavigationGraphProvider.peekBestGraph(eq(map), any())).thenReturn(graph);
             lootEligibility.when(() -> BotLootEligibility.canBotTargetLoot(
                     eq(entry), eq(bot), eq(map), eq(oneWayLoot), anyLong())).thenReturn(true);
             lootEligibility.when(() -> BotLootEligibility.canBotTargetLoot(
@@ -346,7 +346,7 @@ class BotInventoryManagerTest {
                      mockStatic(BotNavigationGraphProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS);
              MockedStatic<BotManager> botManagers =
                      mockStatic(BotManager.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
-            graphProvider.when(() -> BotNavigationGraphProvider.peekGraph(map)).thenReturn(graph);
+            graphProvider.when(() -> BotNavigationGraphProvider.peekBestGraph(eq(map), any())).thenReturn(graph);
             botManagers.when(BotManager::getInstance).thenReturn(manager);
 
             assertEquals(new Point(240, 100), BotInventoryManager.findNearestPatrolLootTarget(entry, 1));
