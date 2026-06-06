@@ -134,12 +134,20 @@ class BotInventoryManagerTest {
         when(currentMageWeapon.getMatk()).thenReturn((short) 29);
         when(baseMageWeapon.getMatk()).thenReturn((short) 25);
 
-        assertTrue(!BotInventoryManager.hasProtectedSellTrashStat(Map.of("reqJob", 1), sellable, 6));
-        assertTrue(BotInventoryManager.hasProtectedSellTrashStat(Map.of("reqJob", 0), highIntAllJob, 6));
-        assertTrue(BotInventoryManager.hasProtectedSellTrashStat(Map.of("reqJob", 1), highDexWarrior, 6));
+        assertTrue(!BotInventoryManager.hasProtectedSellTrashStat(Map.of("reqJob", 1), sellable, 6, 10));
+        assertTrue(BotInventoryManager.hasProtectedSellTrashStat(Map.of("reqJob", 0), highIntAllJob, 6, 10));
+        assertTrue(BotInventoryManager.hasProtectedSellTrashStat(Map.of("reqJob", 1), highDexWarrior, 6, 10));
         assertTrue(BotInventoryManager.shouldKeepForSellTrash(null, nonWeaponWatk));
         assertTrue(BotInventoryManager.shouldKeepForSellTrash(null, scrolled));
-        assertTrue(BotInventoryManager.hasProtectedSellTrashStat(Map.of("reqJob", 16), pirateDex, 6));
+        assertTrue(BotInventoryManager.hasProtectedSellTrashStat(Map.of("reqJob", 16), pirateDex, 6, 10));
+
+        // Stat at or below the item's WZ base (not scrolled above base) and below the pure
+        // threshold => trash, even though it clears the old flat-6 bar.
+        assertTrue(!BotInventoryManager.hasProtectedSellTrashStat(Map.of("reqJob", 1, "DEX", 6), highDexWarrior, 6, 10));
+        // A high absolute stat (>= pure threshold) still protects, even sitting at base.
+        Equip pureHighDex = mock(Equip.class);
+        when(pureHighDex.getDex()).thenReturn((short) 10);
+        assertTrue(BotInventoryManager.hasProtectedSellTrashStat(Map.of("reqJob", 1, "DEX", 10), pureHighDex, 6, 10));
         assertTrue(BotInventoryManager.hasProtectedSellTrashWeaponStat(Map.of("reqJob", 1), currentWarriorWeapon, baseWarriorWeapon));
         assertTrue(BotInventoryManager.hasProtectedSellTrashWeaponStat(Map.of("reqJob", 2), currentMageWeapon, baseMageWeapon));
     }

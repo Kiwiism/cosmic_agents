@@ -1716,27 +1716,37 @@ class BotInventoryManager {
         } else if (equip.getWatk() > 0) {
             return true;
         }
-        return hasProtectedSellTrashStat(stats, equip, 6);
+        return hasProtectedSellTrashStat(stats, equip, 6, 10);
     }
 
-    static boolean hasProtectedSellTrashStat(Map<String, Integer> stats, Equip equip, int threshold) {
+    // A stat protects an equip from being trashed only if it has been improved above the item's
+    // WZ base (>= aboveBaseThreshold AND strictly above base), or it is high enough on its own
+    // (>= pureThreshold) regardless of base. Base stat values come straight from the WZ stats map
+    // (the "inc"-stripped STR/DEX/INT/LUK keys).
+    static boolean hasProtectedSellTrashStat(Map<String, Integer> stats, Equip equip, int aboveBaseThreshold, int pureThreshold) {
         if (stats == null || equip == null) {
             return false;
         }
 
+        boolean str = statProtected(equip.getStr(), stats.getOrDefault("STR", 0), aboveBaseThreshold, pureThreshold);
+        boolean dex = statProtected(equip.getDex(), stats.getOrDefault("DEX", 0), aboveBaseThreshold, pureThreshold);
+        boolean intt = statProtected(equip.getInt(), stats.getOrDefault("INT", 0), aboveBaseThreshold, pureThreshold);
+        boolean luk = statProtected(equip.getLuk(), stats.getOrDefault("LUK", 0), aboveBaseThreshold, pureThreshold);
+
         int reqJob = stats.getOrDefault("reqJob", 0);
         if (reqJob == 0) {
-            return equip.getStr() >= threshold
-                    || equip.getDex() >= threshold
-                    || equip.getInt() >= threshold
-                    || equip.getLuk() >= threshold;
+            return str || dex || intt || luk;
         }
 
-        return ((reqJob & 0x1) != 0 && (equip.getStr() >= threshold || equip.getDex() >= threshold))
-                || ((reqJob & 0x2) != 0 && (equip.getInt() >= threshold || equip.getLuk() >= threshold))
-                || ((reqJob & 0x4) != 0 && (equip.getDex() >= threshold || equip.getStr() >= threshold))
-                || ((reqJob & 0x8) != 0 && (equip.getLuk() >= threshold || equip.getDex() >= threshold))
-                || ((reqJob & 0x10) != 0 && (equip.getStr() >= threshold || equip.getDex() >= threshold));
+        return ((reqJob & 0x1) != 0 && (str || dex))
+                || ((reqJob & 0x2) != 0 && (intt || luk))
+                || ((reqJob & 0x4) != 0 && (dex || str))
+                || ((reqJob & 0x8) != 0 && (luk || dex))
+                || ((reqJob & 0x10) != 0 && (str || dex));
+    }
+
+    private static boolean statProtected(int value, int base, int aboveBaseThreshold, int pureThreshold) {
+        return value >= pureThreshold || (value >= aboveBaseThreshold && value > base);
     }
 
     static boolean hasProtectedSellTrashWeaponStat(Map<String, Integer> stats, Equip equip, Equip baseEquip) {
