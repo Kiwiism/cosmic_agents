@@ -23,6 +23,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static server.bots.combat.BotWzXml.findNamedChild;
+import static server.bots.combat.BotWzXml.getIntAttribute;
+import static server.bots.combat.BotWzXml.getIntValue;
+
 public final class BotAttackDataProvider {
     private static final Logger log = LoggerFactory.getLogger(BotAttackDataProvider.class);
     private static final BotAttackDataProvider instance = new BotAttackDataProvider();
@@ -40,15 +44,18 @@ public final class BotAttackDataProvider {
         private final int attack;
         private final String afterImage;
         private final Rectangle rightFacingBounds;
+        private final Map<String, Rectangle> rightFacingBoundsByAction;
         private final List<String> sourceActions;
         private final Map<String, Integer> afterimageFirstFramesByAction;
 
         private NormalAttackProfile(int attackSpeed, int attack, String afterImage, Rectangle rightFacingBounds,
+                                    Map<String, Rectangle> rightFacingBoundsByAction,
                                     List<String> sourceActions, Map<String, Integer> afterimageFirstFramesByAction) {
             this.attackSpeed = attackSpeed;
             this.attack = attack;
             this.afterImage = afterImage;
             this.rightFacingBounds = rightFacingBounds != null ? new Rectangle(rightFacingBounds) : null;
+            this.rightFacingBoundsByAction = Map.copyOf(rightFacingBoundsByAction);
             this.sourceActions = List.copyOf(sourceActions);
             this.afterimageFirstFramesByAction = Map.copyOf(afterimageFirstFramesByAction);
         }
@@ -86,6 +93,23 @@ public final class BotAttackDataProvider {
         }
 
         public Rectangle calculateBoundingBox(Point origin, boolean facingLeft) {
+            return toWorldBox(rightFacingBounds, origin, facingLeft);
+        }
+
+        // Per-action hitbox: a single moveset mixes actions with genuinely different reach
+        // (e.g. a spear stab is long+low while its overhead swing is tall+short). The bot rolls
+        // one action per swing and gates the hit on exactly that action's box, so it hits/misses
+        // like a real player instead of claiming the union envelope of every action. Falls back to
+        // the unioned bounds when the action is unknown / not in the afterimage.
+        public Rectangle calculateActionBoundingBox(String action, Point origin, boolean facingLeft) {
+            Rectangle bounds = action != null ? rightFacingBoundsByAction.get(action) : null;
+            if (bounds == null) {
+                bounds = rightFacingBounds;
+            }
+            return toWorldBox(bounds, origin, facingLeft);
+        }
+
+        private static Rectangle toWorldBox(Rectangle rightFacingBounds, Point origin, boolean facingLeft) {
             if (rightFacingBounds == null) {
                 return null;
             }
@@ -125,12 +149,14 @@ public final class BotAttackDataProvider {
 
     private static final class AttackBoundsData {
         private final Rectangle bounds;
+        private final Map<String, Rectangle> boundsByAction;
         private final List<String> sourceActions;
         private final Map<String, Integer> firstFramesByAction;
 
-        private AttackBoundsData(Rectangle bounds, List<String> sourceActions,
+        private AttackBoundsData(Rectangle bounds, Map<String, Rectangle> boundsByAction, List<String> sourceActions,
                                  Map<String, Integer> firstFramesByAction) {
             this.bounds = new Rectangle(bounds);
+            this.boundsByAction = Map.copyOf(boundsByAction);
             this.sourceActions = List.copyOf(sourceActions);
             this.firstFramesByAction = Map.copyOf(firstFramesByAction);
         }
@@ -679,12 +705,12 @@ public final class BotAttackDataProvider {
         AttackBoundsData afterImageData = loadAfterimageBounds(afterImage, reqLevel);
         if (afterImageData == null) {
             // Ranged weapons have no hitbox in afterimage (normal) — bounds stay null.
-            return new NormalAttackProfile(attackSpeed, attack, afterImage, null, weaponActions, Map.of());
+            return new NormalAttackProfile(attackSpeed, attack, afterImage, null, Map.of(), weaponActions, Map.of());
         }
 
         // Use afterimage for hit bounds (cleaner per-level data), weapon XML for action list.
         return new NormalAttackProfile(attackSpeed, attack, afterImage, afterImageData.bounds,
-                weaponActions, afterImageData.firstFramesByAction);
+                afterImageData.boundsByAction, weaponActions, afterImageData.firstFramesByAction);
 
     }
 
@@ -724,6 +750,7 @@ public final class BotAttackDataProvider {
 
         Rectangle bounds = null;
         Set<String> actionNames = new LinkedHashSet<>();
+        Map<String, Rectangle> boundsByAction = new HashMap<>();
         Map<String, Integer> firstFramesByAction = new HashMap<>();
         for (Element action : getNamedChildren(levelBucket)) {
             Element lt = findNamedChild(action, "lt");
@@ -740,6 +767,7 @@ public final class BotAttackDataProvider {
             bounds = bounds == null ? new Rectangle(actionBounds) : bounds.union(actionBounds);
             String actionName = action.getAttribute("name");
             actionNames.add(actionName);
+            boundsByAction.merge(actionName, actionBounds, Rectangle::union);
             firstFramesByAction.put(actionName, findAfterimageFirstFrame(action));
         }
 
@@ -747,7 +775,7 @@ public final class BotAttackDataProvider {
             return null;
         }
 
-        return new AttackBoundsData(bounds, new ArrayList<>(actionNames), firstFramesByAction);
+        return new AttackBoundsData(bounds, boundsByAction, new ArrayList<>(actionNames), firstFramesByAction);
     }
 
     private Element findBestLevelBucket(Element root, int requestedBucket) {
@@ -863,30 +891,6 @@ public final class BotAttackDataProvider {
             child = child.getNextSibling();
         }
         return children;
-    }
-
-    private static Element findNamedChild(Element parent, String name) {
-        if (parent == null) {
-            return null;
-        }
-
-        for (Element child : getNamedChildren(parent)) {
-            if (name.equals(child.getAttribute("name"))) {
-                return child;
-            }
-        }
-        return null;
-    }
-
-    private static int getIntValue(Element element, int defaultValue) {
-        return getIntAttribute(element, "value", defaultValue);
-    }
-
-    private static int getIntAttribute(Element element, String attributeName, int defaultValue) {
-        if (element == null || !element.hasAttribute(attributeName)) {
-            return defaultValue;
-        }
-        return parseInt(element.getAttribute(attributeName), defaultValue);
     }
 
     private static int parseInt(String value, int defaultValue) {

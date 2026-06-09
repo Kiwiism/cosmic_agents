@@ -358,6 +358,18 @@ final class BotNavigationGraphProvider {
         return bestGraph;
     }
 
+    /**
+     * Best cached graph for the requested profile: the exact-profile graph if cached, otherwise the
+     * closest cached profile for this map (by speed/jump distance), or {@code null} if none cached.
+     * Single source of truth for "which cached graph should a bot of this profile navigate against",
+     * replacing the bare {@link #peekGraph(MapleMap)} arbitrary-first-entry pick at profile-aware
+     * call sites and the open-coded exact-then-closest fallback duplicated across callers.
+     */
+    static BotNavigationGraph peekBestGraph(MapleMap map, BotMovementProfile movementProfile) {
+        BotNavigationGraph exact = peekGraph(map, movementProfile);
+        return exact != null ? exact : peekClosestGraph(map, movementProfile);
+    }
+
     static void warmGraphAsync(MapleMap map, BotMovementProfile movementProfile) {
         if (map == null) {
             return;
@@ -1791,6 +1803,10 @@ final class BotNavigationGraphProvider {
 
         Point start = from.pointAt(portal.getPosition().x);
         Point end = to.pointAt(targetPortal.getPosition().x);
+        // A single portal is instantaneous, so its base edge cost is 0. The only real time a
+        // portal costs is the post-use cooldown the bot pays when it chains straight into another
+        // portal; that is modelled path-dependently in BotNavigationManager's A* (the viaPortal
+        // state flag), not as a flat per-edge cost. See PORTAL_USE_COOLDOWN_MS.
         addEdge(from.id, to.id, BotNavigationGraph.EdgeType.PORTAL, start, end, 0, portal.getId(), 0, outgoing, edgeKeys);
     }
 

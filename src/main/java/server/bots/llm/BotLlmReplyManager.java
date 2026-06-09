@@ -37,6 +37,8 @@ public final class BotLlmReplyManager {
     /** Tracks per-bot in-flight requests so we don't queue more than one. */
     private static final java.util.concurrent.ConcurrentHashMap<Integer, AtomicInteger> inflightByBotId =
             new java.util.concurrent.ConcurrentHashMap<>();
+    private static final java.util.concurrent.ConcurrentHashMap<Integer, java.util.ArrayDeque<BotMemoryStore.Turn>> recentMemoryByBotId =
+            new java.util.concurrent.ConcurrentHashMap<>();
 
     private BotLlmReplyManager() {}
 
@@ -93,11 +95,15 @@ public final class BotLlmReplyManager {
 
     private static void runReply(BotEntry entry, String senderName, SenderRelation relation, String message) {
         String botName = entry.getBot().getName();
-        String summary = BotMemoryStore.loadSummary(botName);
+        int botId = entry.getBot().getId();
+        // Use disk-backed memory only when enabled; otherwise keep a tiny recent in-memory window.
+        String summary = BotLlmConfig.memoryEnabled ? BotMemoryStore.loadSummary(botName) : "";
         // Prompt shows ALL uncompacted turns (cursor..end). The summary covers everything before
         // cursor — together they're gap-free. Compaction (below) keeps the uncompacted window
         // bounded to recentTurnsInPrompt..recentTurnsInPrompt+compactBatchSize turns.
-        List<BotMemoryStore.Turn> recent = BotMemoryStore.loadUncompacted(botName);
+        List<BotMemoryStore.Turn> recent = BotLlmConfig.memoryEnabled
+                ? BotMemoryStore.loadUncompacted(botName)
+                : loadRecentMemory(botId, System.currentTimeMillis());
         String system = PromptBuilder.buildSystem(entry, relation, senderName);
         String prompt = PromptBuilder.buildPrompt(entry, senderName, message, summary, recent);
 
@@ -133,6 +139,7 @@ public final class BotLlmReplyManager {
 
         List<String> parts = splitForChat(reply, BotLlmConfig.maxReplyMessages,
                 BotLlmConfig.maxReplyCharsPerMessage);
+        if (parts.isEmpty()) return;
         if (BotLlmConfig.debugLog && parts.size() > 1) {
             log.info("llm[{}] split into {} messages", botName, parts.size());
         }
@@ -148,15 +155,48 @@ public final class BotLlmReplyManager {
         }
 
         if (!looksLowQuality(message, reply)) {
-            BotMemoryStore.appendTurn(botName,
-                    new BotMemoryStore.Turn(System.currentTimeMillis(),
-                            relation.name().toLowerCase(), senderName, message, reply));
+            BotMemoryStore.Turn turn = new BotMemoryStore.Turn(System.currentTimeMillis(),
+                    relation.name().toLowerCase(), senderName, message, reply);
+            if (BotLlmConfig.memoryEnabled) {
+                BotMemoryStore.appendTurn(botName, turn);
+            } else {
+                rememberRecent(botId, turn);
+            }
         }
 
         // Compact when uncompacted overflows the window. One LLM call per compactBatchSize turns.
-        if (BotMemoryStore.countUncompacted(botName)
+        if (BotLlmConfig.memoryEnabled && BotMemoryStore.countUncompacted(botName)
                 > BotLlmConfig.recentTurnsInPrompt + BotLlmConfig.compactBatchSize) {
             EXEC.submit(() -> BotMemoryStore.compact(botName));
+        }
+    }
+
+    private static List<BotMemoryStore.Turn> loadRecentMemory(int botId, long now) {
+        if (!BotLlmConfig.recentMemoryEnabled) return List.of();
+        java.util.ArrayDeque<BotMemoryStore.Turn> turns = recentMemoryByBotId.get(botId);
+        if (turns == null) return List.of();
+        synchronized (turns) {
+            pruneRecent(turns, now);
+            return turns.isEmpty() ? List.of() : new java.util.ArrayList<>(turns);
+        }
+    }
+
+    private static void rememberRecent(int botId, BotMemoryStore.Turn turn) {
+        if (!BotLlmConfig.recentMemoryEnabled || turn == null) return;
+        java.util.ArrayDeque<BotMemoryStore.Turn> turns =
+                recentMemoryByBotId.computeIfAbsent(botId, k -> new java.util.ArrayDeque<>());
+        synchronized (turns) {
+            turns.addLast(turn);
+            pruneRecent(turns, turn.ts());
+        }
+    }
+
+    private static void pruneRecent(java.util.ArrayDeque<BotMemoryStore.Turn> turns, long now) {
+        long maxAge = Math.max(0L, BotLlmConfig.recentMemoryMaxAgeMs);
+        int maxTurns = Math.max(0, BotLlmConfig.recentMemoryMaxTurns);
+        while (!turns.isEmpty() && (maxTurns == 0 || turns.size() > maxTurns
+                || now - turns.peekFirst().ts() > maxAge)) {
+            turns.removeFirst();
         }
     }
 

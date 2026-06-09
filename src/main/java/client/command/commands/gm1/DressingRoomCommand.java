@@ -149,7 +149,7 @@ public class DressingRoomCommand extends Command {
 
             output = "#kShowing " + count + " / " + result.size() + ":\r\n" + output;
 
-            c.getAbstractPlayerInteraction().npcTalk(NpcId.MAPLE_ADMINISTRATOR, output);
+            c.getAbstractPlayerInteraction().npcTalkDressingRoom(NpcId.MAPLE_ADMINISTRATOR, output);
         } finally {
             c.releaseClient();
         }

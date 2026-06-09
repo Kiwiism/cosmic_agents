@@ -325,6 +325,8 @@ public class Server {
         String[] hostAddress = getIP(world, channel).split(":");
         if (IpAddresses.isLocalAddress(remoteIp)) {
             hostAddress[0] = YamlConfig.config.server.LOCALHOST;
+        } else if (IpAddresses.isTailscaleAddress(remoteIp)) {
+            hostAddress[0] = YamlConfig.config.server.TAILSCALEHOST;
         } else if (IpAddresses.isLanAddress(remoteIp)) {
             hostAddress[0] = YamlConfig.config.server.LANHOST;
         }

@@ -29,6 +29,7 @@ import org.mockito.ArgumentCaptor;
 import server.StatEffect;
 import server.bots.combat.BotAttackDataProvider;
 import server.life.Monster;
+import server.life.MonsterStats;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 
@@ -47,6 +48,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -56,6 +59,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -749,6 +753,189 @@ class BotCombatManagerTest {
     }
 
     @Test
+    void shouldRepositionToClusterCentroidWhenAoeDpsBeatsSingleTarget() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        Skill powerStrike = skillWithAttack(Warrior.POWER_STRIKE, 1, 1, 260);
+        // AoE box authored bot-relative: at the bot (x=100) it covers x[20,180], catching only the
+        // edge mob; after the bot steps to the centroid the same box (translated) catches all three.
+        Skill slashBlast = skillWithAttackBox(Warrior.SLASH_BLAST, 4, 6, 50,
+                new Rectangle(20, 170, 160, 60));
+        Monster primary = mockMob(new Point(140, 200), 9300500);
+        Monster mid = mockMob(new Point(200, 200), 9300501);
+        Monster far = mockMob(new Point(260, 200), 9300502);
+        when(map.getAllMonsters()).thenReturn(List.of(primary, mid, far));
+        doAnswer(invocation -> {
+            Skill skill = invocation.getArgument(0);
+            return (byte) (skill.getId() == powerStrike.getId() || skill.getId() == slashBlast.getId() ? 1 : 0);
+        }).when(bot).getSkillLevel(any(Skill.class));
+
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.attackSkillId = powerStrike.getId();
+        entry.aoeSkillId = slashBlast.getId();
+        entry.aoeSkillMobs = 6;
+
+        try (MockedStatic<SkillFactory> skillFactory = Mockito.mockStatic(SkillFactory.class)) {
+            skillFactory.when(() -> SkillFactory.getSkill(powerStrike.getId())).thenReturn(powerStrike);
+            skillFactory.when(() -> SkillFactory.getSkill(slashBlast.getId())).thenReturn(slashBlast);
+
+            // At the bot's current position the AoE catches only the edge mob, so the single-target
+            // skill wins on DPS — this is the fire-now plan that would otherwise trigger immediately.
+            BotCombatManager.AttackPlan fireNow = BotCombatManager.planAttack(entry, bot, primary);
+            assertEquals(Warrior.POWER_STRIKE, fireNow.skillId);
+            assertEquals(List.of(primary), fireNow.targets);
+
+            Point reposition = BotCombatManager.aoeRepositionTarget(entry, bot, primary, fireNow);
+            assertNotNull(reposition, "should defer the single-target shot to step into the cluster");
+            assertEquals(200, reposition.x, "should walk to the 3-mob centroid (140+200+260)/3");
+        }
+    }
+
+    @Test
+    void shouldNotRepositionWhenToggleDisabled() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        Skill powerStrike = skillWithAttack(Warrior.POWER_STRIKE, 1, 1, 260);
+        Skill slashBlast = skillWithAttackBox(Warrior.SLASH_BLAST, 4, 6, 50,
+                new Rectangle(20, 170, 160, 60));
+        Monster primary = mockMob(new Point(140, 200), 9300540);
+        Monster mid = mockMob(new Point(200, 200), 9300541);
+        Monster far = mockMob(new Point(260, 200), 9300542);
+        when(map.getAllMonsters()).thenReturn(List.of(primary, mid, far));
+        doAnswer(invocation -> {
+            Skill skill = invocation.getArgument(0);
+            return (byte) (skill.getId() == powerStrike.getId() || skill.getId() == slashBlast.getId() ? 1 : 0);
+        }).when(bot).getSkillLevel(any(Skill.class));
+
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.attackSkillId = powerStrike.getId();
+        entry.aoeSkillId = slashBlast.getId();
+        entry.aoeSkillMobs = 6;
+
+        boolean original = BotCombatManager.cfg.AOE_REPOSITION_ENABLED;
+        BotCombatManager.cfg.AOE_REPOSITION_ENABLED = false;
+        try (MockedStatic<SkillFactory> skillFactory = Mockito.mockStatic(SkillFactory.class)) {
+            skillFactory.when(() -> SkillFactory.getSkill(powerStrike.getId())).thenReturn(powerStrike);
+            skillFactory.when(() -> SkillFactory.getSkill(slashBlast.getId())).thenReturn(slashBlast);
+
+            BotCombatManager.AttackPlan fireNow = BotCombatManager.planAttack(entry, bot, primary);
+            assertNull(BotCombatManager.aoeRepositionTarget(entry, bot, primary, fireNow));
+        } finally {
+            BotCombatManager.cfg.AOE_REPOSITION_ENABLED = original;
+        }
+    }
+
+    @Test
+    void shouldNotRepositionWhenNoAoeSkill() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        Skill powerStrike = skillWithAttack(Warrior.POWER_STRIKE, 1, 1, 260);
+        Monster primary = mockMob(new Point(140, 200), 9300510);
+        Monster mid = mockMob(new Point(200, 200), 9300511);
+        Monster far = mockMob(new Point(260, 200), 9300512);
+        when(map.getAllMonsters()).thenReturn(List.of(primary, mid, far));
+        when(bot.getSkillLevel(any(Skill.class))).thenReturn((byte) 1);
+
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.attackSkillId = powerStrike.getId();
+        // No aoeSkillId / aoeSkillMobs left at default 1.
+
+        try (MockedStatic<SkillFactory> skillFactory = Mockito.mockStatic(SkillFactory.class)) {
+            skillFactory.when(() -> SkillFactory.getSkill(powerStrike.getId())).thenReturn(powerStrike);
+
+            BotCombatManager.AttackPlan fireNow = BotCombatManager.planAttack(entry, bot, primary);
+            assertNull(BotCombatManager.aoeRepositionTarget(entry, bot, primary, fireNow));
+        }
+    }
+
+    @Test
+    void shouldNotRepositionWhenFireNowPlanIsAlreadyAoe() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        Monster primary = mockMob(new Point(140, 200), 9300520);
+        Monster mid = mockMob(new Point(200, 200), 9300521);
+        when(map.getAllMonsters()).thenReturn(List.of(primary, mid));
+
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.aoeSkillId = Warrior.SLASH_BLAST;
+        entry.aoeSkillMobs = 6;
+
+        // Fire-now plan is the AoE itself — nothing to upgrade by repositioning.
+        BotCombatManager.AttackPlan aoePlan = new BotCombatManager.AttackPlan(
+                Warrior.SLASH_BLAST, 1, 1, new Rectangle(20, 170, 160, 60), List.of(primary),
+                BotCombatManager.AttackRoute.CLOSE, 0, 0, 0, 0, 0, 0, 100, null);
+        assertNull(BotCombatManager.aoeRepositionTarget(entry, bot, primary, aoePlan));
+    }
+
+    @Test
+    void shouldNotRepositionForLoneMob() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        Skill powerStrike = skillWithAttack(Warrior.POWER_STRIKE, 1, 1, 260);
+        Skill slashBlast = skillWithAttackBox(Warrior.SLASH_BLAST, 4, 6, 50,
+                new Rectangle(20, 170, 160, 60));
+        Monster primary = mockMob(new Point(140, 200), 9300530);
+        when(map.getAllMonsters()).thenReturn(List.of(primary));
+        doAnswer(invocation -> {
+            Skill skill = invocation.getArgument(0);
+            return (byte) (skill.getId() == powerStrike.getId() || skill.getId() == slashBlast.getId() ? 1 : 0);
+        }).when(bot).getSkillLevel(any(Skill.class));
+
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.attackSkillId = powerStrike.getId();
+        entry.aoeSkillId = slashBlast.getId();
+        entry.aoeSkillMobs = 6;
+
+        try (MockedStatic<SkillFactory> skillFactory = Mockito.mockStatic(SkillFactory.class)) {
+            skillFactory.when(() -> SkillFactory.getSkill(powerStrike.getId())).thenReturn(powerStrike);
+            skillFactory.when(() -> SkillFactory.getSkill(slashBlast.getId())).thenReturn(slashBlast);
+
+            BotCombatManager.AttackPlan fireNow = BotCombatManager.planAttack(entry, bot, primary);
+            assertNull(BotCombatManager.aoeRepositionTarget(entry, bot, primary, fireNow));
+        }
+    }
+
+    @Test
+    void shouldDetectAoeBotSingleTargeting() {
+        Monster mob = mockMob(new Point(140, 200), 9300560);
+        BotEntry entry = new BotEntry(mock(Character.class), null, null);
+        entry.aoeSkillId = Warrior.SLASH_BLAST;
+        entry.aoeSkillMobs = 6;
+
+        BotCombatManager.AttackPlan singleTarget = new BotCombatManager.AttackPlan(
+                Warrior.POWER_STRIKE, 1, 1, new Rectangle(0, 0, 1, 1), List.of(mob),
+                BotCombatManager.AttackRoute.CLOSE, 0, 0, 0, 0, 0, 0, 100, null);
+        assertTrue(BotCombatManager.isAoeBotSingleTargeting(entry, singleTarget));
+
+        BotCombatManager.AttackPlan aoePlan = new BotCombatManager.AttackPlan(
+                Warrior.SLASH_BLAST, 1, 1, new Rectangle(0, 0, 1, 1), List.of(mob),
+                BotCombatManager.AttackRoute.CLOSE, 0, 0, 0, 0, 0, 0, 100, null);
+        assertFalse(BotCombatManager.isAoeBotSingleTargeting(entry, aoePlan));
+
+        entry.aoeSkillId = 0;
+        assertFalse(BotCombatManager.isAoeBotSingleTargeting(entry, singleTarget));
+    }
+
+    @Test
+    void shouldCountAoeClusterSizeCappedAtSkillMobs() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        Monster anchor = mockMob(new Point(140, 200), 9300570);
+        Monster near1 = mockMob(new Point(180, 200), 9300571);
+        Monster near2 = mockMob(new Point(220, 200), 9300572);
+        Monster far = mockMob(new Point(600, 200), 9300573); // outside AOE_CLUSTER_RADIUS_PX
+        when(map.getAllMonsters()).thenReturn(List.of(anchor, near1, near2, far));
+
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.aoeSkillId = Warrior.SLASH_BLAST;
+        entry.aoeSkillMobs = 6;
+        assertEquals(3, BotCombatManager.aoeClusterSize(entry, bot, anchor));
+
+        entry.aoeSkillMobs = 2; // cap below cluster size
+        assertEquals(2, BotCombatManager.aoeClusterSize(entry, bot, anchor));
+    }
+
+    @Test
     void shouldTreatBasicStaffAttacksAsCloseRange() {
         assertEquals(BotCombatManager.AttackRoute.CLOSE, BotAttackExecutionProvider.determineBasicWeaponRoute(WeaponType.STAFF));
     }
@@ -922,13 +1109,66 @@ class BotCombatManagerTest {
     }
 
     @Test
+    void shouldNotTargetFriendlyMonsterWhenSearchingForClosestTarget() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        Monster friendly = mockFriendlyMob(new Point(140, 200), 9300500);
+        Monster hostile = mockMob(new Point(160, 200), 9300501);
+
+        // Only a friendly mob on the map -> no attackable target, even though it is in range.
+        when(map.getAllMonsters()).thenReturn(List.of(friendly));
+        assertNull(BotCombatManager.findClosestAliveMonster(bot, 1_000_000d));
+
+        // Friendly mob is closer, but the bot must skip it and pick the farther hostile mob.
+        when(map.getAllMonsters()).thenReturn(List.of(friendly, hostile));
+        assertEquals(hostile, BotCombatManager.findClosestAliveMonster(bot, 1_000_000d));
+    }
+
+    @Test
+    void shouldNotTakeContactDamageFromFriendlyMonster() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        Monster friendly = mockFriendlyMob(new Point(100, 200), 9300502);
+        when(map.getAllMonsters()).thenReturn(List.of(friendly));
+        BotEntry entry = new BotEntry(bot, null, null);
+
+        try (MockedStatic<BotCombatManager> combat =
+                     Mockito.mockStatic(BotCombatManager.class, Mockito.CALLS_REAL_METHODS)) {
+            combat.when(() -> BotCombatManager.isMobTouchingBot(any(BotEntry.class), any(Character.class),
+                    any(Monster.class))).thenReturn(true);
+            runWithStubbedBotAfter(() -> BotCombatManager.tickMobDamage(entry, bot));
+        }
+
+        assertEquals(20_000, bot.getHp());
+        verify(map, never()).broadcastMessage(any(Character.class), any(Packet.class), anyBoolean());
+    }
+
+    @Test
+    void shouldTakeContactDamageFromHostileMonster() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        Monster hostile = mockMob(new Point(100, 200), 9300503);
+        when(map.getAllMonsters()).thenReturn(List.of(hostile));
+        BotEntry entry = new BotEntry(bot, null, null);
+
+        try (MockedStatic<BotCombatManager> combat =
+                     Mockito.mockStatic(BotCombatManager.class, Mockito.CALLS_REAL_METHODS)) {
+            combat.when(() -> BotCombatManager.isMobTouchingBot(any(BotEntry.class), any(Character.class),
+                    any(Monster.class))).thenReturn(true);
+            runWithStubbedBotAfter(() -> BotCombatManager.tickMobDamage(entry, bot));
+        }
+
+        assertTrue(bot.getHp() < 20_000, "hostile contact should reduce bot HP");
+    }
+
+    @Test
     void shouldCreateFallbackHitBoxForCloseRangeSkillWithoutBoundingBox() {
         MapleMap map = mock(MapleMap.class);
         Character bot = mockBot(new Point(100, 200), map, 20_000, null);
         StatEffect effect = mock(StatEffect.class);
         when(effect.getRange()).thenReturn(0);
 
-        Rectangle hitBox = BotCombatManager.fallbackCloseRangeSkillHitBox(effect, bot, false);
+        Rectangle hitBox = BotCombatManager.fallbackCloseRangeSkillHitBox(effect, bot, null, false);
 
         assertEquals(new Rectangle(100, 150, 80, 70), hitBox);
     }
@@ -940,7 +1180,7 @@ class BotCombatManagerTest {
         StatEffect effect = mock(StatEffect.class);
         when(effect.getRange()).thenReturn(130);
 
-        Rectangle hitBox = BotCombatManager.fallbackCloseRangeSkillHitBox(effect, bot, true);
+        Rectangle hitBox = BotCombatManager.fallbackCloseRangeSkillHitBox(effect, bot, null, true);
 
         assertEquals(new Rectangle(-30, 150, 130, 70), hitBox);
     }
@@ -952,7 +1192,7 @@ class BotCombatManagerTest {
         StatEffect effect = mock(StatEffect.class);
         when(effect.getRange()).thenReturn(0);
 
-        Rectangle hitBox = BotCombatManager.fallbackSkillHitBox(effect, bot, false, BotCombatManager.AttackRoute.RANGED, 0);
+        Rectangle hitBox = BotCombatManager.fallbackSkillHitBox(effect, bot, false, BotCombatManager.AttackRoute.RANGED, 0, null);
 
         assertEquals(new Rectangle(105, 150, 395, 100), hitBox);
     }
@@ -964,7 +1204,7 @@ class BotCombatManagerTest {
         StatEffect effect = mock(StatEffect.class);
         when(effect.getRange()).thenReturn(0);
 
-        Rectangle hitBox = BotCombatManager.fallbackSkillHitBox(effect, bot, true, BotCombatManager.AttackRoute.MAGIC, 0);
+        Rectangle hitBox = BotCombatManager.fallbackSkillHitBox(effect, bot, true, BotCombatManager.AttackRoute.MAGIC, 0, null);
 
         assertEquals(new Rectangle(-300, 150, 395, 100), hitBox);
     }
@@ -976,7 +1216,7 @@ class BotCombatManagerTest {
         StatEffect effect = mock(StatEffect.class);
         when(effect.getRange()).thenReturn(150);
 
-        Rectangle hitBox = BotCombatManager.fallbackSkillHitBox(effect, bot, false, BotCombatManager.AttackRoute.MAGIC, 0);
+        Rectangle hitBox = BotCombatManager.fallbackSkillHitBox(effect, bot, false, BotCombatManager.AttackRoute.MAGIC, 0, null);
 
         assertEquals(new Rectangle(105, 150, 595, 100), hitBox);
     }
@@ -990,7 +1230,7 @@ class BotCombatManagerTest {
 
         // Iron Arrow: yAbove=32, yBelow=-28 → rect from y=168 to y=172 (height 4)
         Rectangle hitBox = BotCombatManager.fallbackSkillHitBox(effect, bot, false,
-                BotCombatManager.AttackRoute.RANGED, constants.skills.Crossbowman.IRON_ARROW);
+                BotCombatManager.AttackRoute.RANGED, constants.skills.Crossbowman.IRON_ARROW, null);
 
         assertEquals(168, hitBox.y);
         assertEquals(4, hitBox.height);
@@ -1005,7 +1245,7 @@ class BotCombatManagerTest {
 
         // Avenger: yAbove=60, yBelow=0 → rect from y=140 to y=200 (height 60)
         Rectangle hitBox = BotCombatManager.fallbackSkillHitBox(effect, bot, false,
-                BotCombatManager.AttackRoute.RANGED, constants.skills.Hermit.AVENGER);
+                BotCombatManager.AttackRoute.RANGED, constants.skills.Hermit.AVENGER, null);
 
         assertEquals(140, hitBox.y);
         assertEquals(60, hitBox.height);
@@ -1485,6 +1725,14 @@ class BotCombatManagerTest {
         when(mob.getHp()).thenReturn(10_000);
         when(mob.getMaxHp()).thenReturn(10_000);
         when(mob.isAlive()).thenReturn(true);
+        return mob;
+    }
+
+    private static Monster mockFriendlyMob(Point position, int id) {
+        Monster mob = mockMob(position, id);
+        MonsterStats stats = mock(MonsterStats.class);
+        when(stats.isFriendly()).thenReturn(true);
+        when(mob.getStats()).thenReturn(stats);
         return mob;
     }
 

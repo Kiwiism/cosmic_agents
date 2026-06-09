@@ -134,12 +134,20 @@ class BotInventoryManagerTest {
         when(currentMageWeapon.getMatk()).thenReturn((short) 29);
         when(baseMageWeapon.getMatk()).thenReturn((short) 25);
 
-        assertTrue(!BotInventoryManager.hasProtectedSellTrashStat(Map.of("reqJob", 1), sellable, 6));
-        assertTrue(BotInventoryManager.hasProtectedSellTrashStat(Map.of("reqJob", 0), highIntAllJob, 6));
-        assertTrue(BotInventoryManager.hasProtectedSellTrashStat(Map.of("reqJob", 1), highDexWarrior, 6));
+        assertTrue(!BotInventoryManager.hasProtectedSellTrashStat(Map.of("reqJob", 1), sellable, 6, 10));
+        assertTrue(BotInventoryManager.hasProtectedSellTrashStat(Map.of("reqJob", 0), highIntAllJob, 6, 10));
+        assertTrue(BotInventoryManager.hasProtectedSellTrashStat(Map.of("reqJob", 1), highDexWarrior, 6, 10));
         assertTrue(BotInventoryManager.shouldKeepForSellTrash(null, nonWeaponWatk));
         assertTrue(BotInventoryManager.shouldKeepForSellTrash(null, scrolled));
-        assertTrue(BotInventoryManager.hasProtectedSellTrashStat(Map.of("reqJob", 16), pirateDex, 6));
+        assertTrue(BotInventoryManager.hasProtectedSellTrashStat(Map.of("reqJob", 16), pirateDex, 6, 10));
+
+        // Stat at or below the item's WZ base (not scrolled above base) and below the pure
+        // threshold => trash, even though it clears the old flat-6 bar.
+        assertTrue(!BotInventoryManager.hasProtectedSellTrashStat(Map.of("reqJob", 1, "DEX", 6), highDexWarrior, 6, 10));
+        // A high absolute stat (>= pure threshold) still protects, even sitting at base.
+        Equip pureHighDex = mock(Equip.class);
+        when(pureHighDex.getDex()).thenReturn((short) 10);
+        assertTrue(BotInventoryManager.hasProtectedSellTrashStat(Map.of("reqJob", 1, "DEX", 10), pureHighDex, 6, 10));
         assertTrue(BotInventoryManager.hasProtectedSellTrashWeaponStat(Map.of("reqJob", 1), currentWarriorWeapon, baseWarriorWeapon));
         assertTrue(BotInventoryManager.hasProtectedSellTrashWeaponStat(Map.of("reqJob", 2), currentMageWeapon, baseMageWeapon));
     }
@@ -280,7 +288,7 @@ class BotInventoryManagerTest {
                      mockStatic(BotNavigationGraphProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS);
              MockedStatic<BotLootEligibility> lootEligibility =
                      mockStatic(BotLootEligibility.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
-            graphProvider.when(() -> BotNavigationGraphProvider.peekGraph(map)).thenReturn(graph);
+            graphProvider.when(() -> BotNavigationGraphProvider.peekBestGraph(eq(map), any())).thenReturn(graph);
             lootEligibility.when(() -> BotLootEligibility.canBotTargetLoot(
                     eq(entry), eq(bot), eq(map), eq(oneWayLoot), anyLong())).thenReturn(true);
             lootEligibility.when(() -> BotLootEligibility.canBotTargetLoot(
@@ -289,6 +297,59 @@ class BotInventoryManagerTest {
             Point target = BotInventoryManager.findNearestPatrolLootTarget(entry, 1);
 
             assertEquals(new Point(440, 100), target);
+        }
+    }
+
+    @Test
+    void shouldPatrolTowardMobLootWhenBasePickupEligibilityAllowsIt() {
+        MapleMap map = spy(new MapleMap(910000053, 0, 0, 910000053, 1.0f));
+        Foothold foothold = new Foothold(new Point(0, 100), new Point(500, 100), 1);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-1000, -1000), new Point(1000, 2000));
+        footholds.insert(foothold);
+        map.setFootholds(footholds);
+
+        BotNavigationGraph.Region region = new BotNavigationGraph.Region(
+                1, List.of(new BotNavigationGraph.Segment(foothold)));
+        BotNavigationGraph graph = new BotNavigationGraph(
+                map.getId(),
+                1,
+                BotMovementProfile.base(),
+                List.of(region),
+                Map.of(1, region),
+                Map.of(1, 1),
+                Map.of(),
+                Set.of());
+
+        Character bot = mock(Character.class);
+        when(bot.getId()).thenReturn(88);
+        when(bot.getMap()).thenReturn(map);
+        when(bot.getPosition()).thenReturn(new Point(50, 100));
+        when(bot.getInventory(any())).thenReturn((Inventory) null);
+        BotEntry entry = new BotEntry(bot, null, null);
+
+        MapItem loot = mock(MapItem.class);
+        when(loot.getObjectId()).thenReturn(1);
+        when(loot.getPosition()).thenReturn(new Point(240, 100));
+        when(loot.isPickedUp()).thenReturn(false);
+        when(loot.canBePickedBy(any(Character.class))).thenReturn(true);
+        when(loot.getDropTime()).thenReturn(System.currentTimeMillis() - 16_000L);
+        when(loot.getOwnerId()).thenReturn(99);
+        when(loot.isPlayerDrop()).thenReturn(false);
+        when(loot.getItemId()).thenReturn(0);
+        when(loot.getMeso()).thenReturn(1);
+        doReturn(List.of(loot)).when(map).getDroppedItems();
+        doReturn(loot).when(map).getMapObject(1);
+
+        BotManager manager = mock(BotManager.class);
+
+        try (MockedStatic<BotNavigationGraphProvider> graphProvider =
+                     mockStatic(BotNavigationGraphProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS);
+             MockedStatic<BotManager> botManagers =
+                     mockStatic(BotManager.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
+            graphProvider.when(() -> BotNavigationGraphProvider.peekBestGraph(eq(map), any())).thenReturn(graph);
+            botManagers.when(BotManager::getInstance).thenReturn(manager);
+
+            assertEquals(new Point(240, 100), BotInventoryManager.findNearestPatrolLootTarget(entry, 1));
         }
     }
 

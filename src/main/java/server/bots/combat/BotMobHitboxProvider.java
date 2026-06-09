@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 import provider.wz.WZFiles;
 import server.life.Monster;
@@ -18,6 +17,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static server.bots.combat.BotWzXml.findNamedChild;
+import static server.bots.combat.BotWzXml.getIntAttribute;
+import static server.bots.combat.BotWzXml.getIntValue;
 
 public final class BotMobHitboxProvider {
     private static final Logger log = LoggerFactory.getLogger(BotMobHitboxProvider.class);
@@ -169,42 +172,4 @@ public final class BotMobHitboxProvider {
         }
     }
 
-    private static Element findNamedChild(Element parent, String name) {
-        if (parent == null) {
-            return null;
-        }
-
-        Node child = parent.getFirstChild();
-        while (child != null) {
-            if (child.getNodeType() == Node.ELEMENT_NODE) {
-                Element element = (Element) child;
-                if (name.equals(element.getAttribute("name"))) {
-                    return element;
-                }
-            }
-            child = child.getNextSibling();
-        }
-        return null;
-    }
-
-    private static int getIntAttribute(Element element, String name, int defaultValue) {
-        if (element == null) {
-            return defaultValue;
-        }
-
-        String value = element.getAttribute(name);
-        if (value == null || value.isBlank()) {
-            return defaultValue;
-        }
-
-        try {
-            return Integer.parseInt(value);
-        } catch (NumberFormatException ignored) {
-            return defaultValue;
-        }
-    }
-
-    private static int getIntValue(Element element, int defaultValue) {
-        return getIntAttribute(element, "value", defaultValue);
-    }
 }

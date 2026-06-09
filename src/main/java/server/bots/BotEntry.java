@@ -136,6 +136,8 @@ public class BotEntry {
     Point retreatHoldPos = null;  // the locked retreat target — reused while hold is active
     int breakoutDirection = 0;    // -1/+1 committed escape side while surrounded, 0 = not breaking out
     long breakoutUntilMs = 0L;    // hard safety timeout for the surround-breakout commitment
+    Point aoeRepositionAnchor = null; // committed AoE sweet-spot to walk to before firing, null = not repositioning
+    long aoeRepositionDeadlineMs = 0L; // bounded-chase timeout for the AoE reposition commitment
     int wanderDirection = 0;      // -1 left, +1 right, 0 = unset (picked when grind has no target)
 
     // Shop auto-buy (triggered once per map change)
@@ -147,12 +149,18 @@ public class BotEntry {
     long shopVisitStartedAtMs = 0L;
     long shopSequenceStartedAtMs = 0L;
     boolean shopSellTrashPending = false;
+    // bumped whenever a new player directive resets scripted state (follow/stop/move/farm/patrol/grind);
+    // background batches (Maker crafting / disassembly) capture it and self-interrupt when it changes
+    volatile int activityEpoch = 0;
     Point shopStuckCheckPos = null;
     long shopStuckCheckAtMs = 0L;
 
     // Damage taken
     long deadUntil = 0;
     int mobHitCooldownMs = 0;
+    // Absolute time until which this bot may not take another portal (set on portal use).
+    // Portal-only gate: does not block movement, attacks, or any other action.
+    long portalUseCooldownUntilMs = 0L;
     // Client-side alert-stance emulation: when currentTimeMillis < alertedUntilMs the bot's
     // broadcast stance gets STAND→ALERT substituted so observers see the alert pose.
     // Mirrors CharLook::alerted (TimedBool, 5000ms) in maplestory-wasm. Absolute reset on each

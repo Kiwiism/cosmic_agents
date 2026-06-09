@@ -23,7 +23,8 @@ worlds:
     meso_rate: 2
     drop_rate: 2
     boss_drop_rate: 2                      #NOTE: Boss drop rate OVERRIDES common drop rate, for bosses-only.
-    quest_rate: 1                           #Multiplier for Exp & Meso gains when completing a quest. Only available when USE_QUEST_RATE is true. Stacks with server Exp & Meso rates.
+    maker_rate: 1                         #CUSTOM: Monster Crystals produced from Maker leftover conversion. 1 = vanilla, 2 = 2x.
+    quest_rate: 1                          #Multiplier for Exp & Meso gains when completing a quest. Only available when USE_QUEST_RATE is true. Stacks with server Exp & Meso rates.
     fishing_rate: 2                        #Multiplier for success likelihood on meso thrown during fishing.
     travel_rate: 5                         #Means of transportation rides/departs using 1/N of the default time.
 
@@ -210,6 +211,7 @@ server:
     HOST: 182.52.44.189                 #WAN IPv4 address
     LANHOST: 192.168.50.10              #LAN IPv4 address
     LOCALHOST: 127.0.0.1            #Loopback IPv4 address
+    TAILSCALEHOST: 100.109.79.4         #Tailscale (100.64.0.0/10) IPv4 address
     GMSERVER: false
 
     #Other configuration

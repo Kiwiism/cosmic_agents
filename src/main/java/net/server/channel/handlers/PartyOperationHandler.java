@@ -104,7 +104,13 @@ public final class PartyOperationHandler extends AbstractPacketHandler {
                             c.sendPacket(PacketCreator.partyStatusMessage(17));
                         }
                     } else {
-                        c.sendPacket(PacketCreator.partyStatusMessage(16));
+                        // Suppress "already in party" noise when a bot was just force-joined by spawnBotForOwner
+                        boolean botAlreadyJoined = invited.getClient() instanceof BotClient
+                                && player.getParty() != null
+                                && invited.getParty().getId() == player.getParty().getId();
+                        if (!botAlreadyJoined) {
+                            c.sendPacket(PacketCreator.partyStatusMessage(16));
+                        }
                     }
                 } else {
                     c.sendPacket(PacketCreator.partyStatusMessage(19));

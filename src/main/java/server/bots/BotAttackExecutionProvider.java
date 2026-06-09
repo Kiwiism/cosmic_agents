@@ -3,6 +3,7 @@ package server.bots;
 import client.BuffStat;
 import client.Character;
 import client.Skill;
+import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.WeaponType;
@@ -72,7 +73,6 @@ final class BotAttackExecutionProvider {
         String fallbackAction = attackSpec.primaryAction();
         List<String> candidateActions = resolveAttackActions(attackSpec, profile.getSourceActions());
         String action = sampleAttackAction(candidateActions, fallbackAction);
-        int variantOffset = Math.max(0, attackSpec.actions().indexOf(action));
         BotCombatManager.AttackRoute route = useDegenerateCloseRange
                 ? BotCombatManager.AttackRoute.CLOSE
                 : determineBasicWeaponRoute(weaponType);
@@ -96,9 +96,15 @@ final class BotAttackExecutionProvider {
         // Ranged route must use clientProjectileHitBox so the bot's reach scales with
         // CLIENT_PROJECTILE_BASE_RANGE + Keen-Eyes bonus. The weapon's afterimage WZ data
         // (e.g. claws share swordOL with melee, which has lt/rb vectors) reports a near-body
-        // swing rect that would cap basic claw/bow/etc. reach at ~80 px.
+        // swing rect that would cap basic claw/bow/etc. reach at ~80 px — so a degenerate
+        // close-range hit (out-of-ammo bow/claw meleeing) stays on the flat fallback rect.
+        // A true melee weapon uses its sampled action's afterimage swing box: real per-weapon,
+        // per-action reach (spear stab long+low vs overhead swing tall+short).
+        Rectangle weaponActionHitBox = closeRangeRoute && !useDegenerateCloseRange
+                ? profile.calculateActionBoundingBox(action, bot.getPosition(), facingLeft)
+                : null;
         Rectangle hitBox = closeRangeRoute
-                ? closeRangeBasicHitBox(bot.getPosition(), facingLeft)
+                ? (weaponActionHitBox != null ? weaponActionHitBox : closeRangeBasicHitBox(bot.getPosition(), facingLeft))
                 : rangedBasicHitBox(route, bot, facingLeft);
 
         return new BasicAttackData(hitBox, display, direction, direction, action, stance, effectiveAttackSpeed,
@@ -113,7 +119,6 @@ final class BotAttackExecutionProvider {
                 || shouldDegenerateForNoAmmo(weaponType, bot);
         BotAttackDataProvider.AttackAnimationSpec attackSpec = provider.getBasicAttackSpec(weaponType, useDegenerateCloseRange);
         String action = sampleAttackAction(attackSpec.actions(), attackSpec.primaryAction());
-        int variantOffset = Math.max(0, attackSpec.actions().indexOf(action));
         BotCombatManager.AttackRoute route = useDegenerateCloseRange
                 ? BotCombatManager.AttackRoute.CLOSE
                 : determineBasicWeaponRoute(weaponType);
@@ -626,20 +631,36 @@ final class BotAttackExecutionProvider {
         return new Rectangle(left, top, horizontalRange, height);
     }
 
+    // Real melee reach comes from the equipped weapon's afterimage swing box (Character.wz),
+    // which is per-weapon (spear/polearm ~150 px, sword ~120, dagger/knuckle ~64) and per-action
+    // (stab vs overhead swing differ). Returns null when the weapon has no melee afterimage bounds
+    // (ranged weapons), so callers can keep their flat-rect / skill-range fallback.
+    static Rectangle closeRangeWeaponActionHitBox(Character bot, String action, boolean facingLeft) {
+        if (bot == null || bot.getPosition() == null) {
+            return null;
+        }
+        BotAttackDataProvider.NormalAttackProfile profile = equippedNormalAttackProfile(bot);
+        if (profile == null) {
+            return null;
+        }
+        return profile.calculateActionBoundingBox(action, bot.getPosition(), facingLeft);
+    }
+
+    private static BotAttackDataProvider.NormalAttackProfile equippedNormalAttackProfile(Character bot) {
+        Inventory equipped = bot.getInventory(InventoryType.EQUIPPED);
+        Item weapon = equipped != null ? equipped.getItem((short) -11) : null;
+        if (weapon == null) {
+            return null;
+        }
+        return BotAttackDataProvider.getInstance().getNormalAttackProfile(weapon.getItemId());
+    }
+
     private static Rectangle rangedBasicHitBox(BotCombatManager.AttackRoute route, Character bot, boolean facingLeft) {
         if (bot == null || bot.getPosition() == null) {
             return null;
         }
 
         return BotCombatManager.clientProjectileHitBox(bot, facingLeft, 1.0f);
-    }
-
-    private static boolean isBasicAttackInRange(Point botPos, Point targetPos) {
-        int dx = Math.abs(targetPos.x - botPos.x);
-        int dy = botPos.y - targetPos.y;
-        boolean inHorizontalRange = dx <= BotCombatManager.cfg.ATTACK_RANGE_X;
-        boolean inVerticalRange = dy >= -BotCombatManager.cfg.ATTACK_DOWN_MAX && dy <= BotCombatManager.cfg.ATTACK_RANGE_Y;
-        return inHorizontalRange && inVerticalRange;
     }
 
     private static int resolveSkillAttackDelayMillis(Skill skill) {
@@ -717,7 +738,4 @@ final class BotAttackExecutionProvider {
         return BotAttackTiming.adjustDelayMillis(baseDelayMillis, effectiveAttackSpeed);
     }
 
-    private static float toAttackSpeedFactor(int attackSpeed) {
-        return BotAttackTiming.toAttackSpeedFactor(attackSpeed);
-    }
 }

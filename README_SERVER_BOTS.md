@@ -1,5 +1,7 @@
 # Bot System — Quick Start Guide
 
+[Patch Notes](docs/bot/patch-notes/README.md)
+
 ## Features
 
 - follow, trade, loot
@@ -9,7 +11,9 @@
 - auto equip and optimize own gear loadout - including chaining stats bonus to unlock higher requirement equips and weapons, allowing dexless/strless/lukless builds
 - auto share equipment upgrades with owner and other sibling bots (auto compare stats directly against recipient's inventory)
 - auto sort equipment from junk equip so selling trash equips become manageable. (sell trash command available)
+- automation command for maker skill disassemble gear / craft monster crystals
 - auto complete any quest the owner turn in (with rewards)
+- AI LLM support (reply to chat, no effect on gameplay whatsoever)
 - Party Quest Automation(currently only KPQ 1st stage + auto accept rewards 5th stage)
 - Each bot is a real character you can log in as, can spawn your alts as bots
 
@@ -214,11 +218,12 @@ Bots can hold short casual conversations with the owner using a tiny local model
 
 | Requirements | Command to run | RAM Usage | Expected Intelligence |
 |---|---|---|---|
+| Light CPU / low RAM | `ollama run qwen3.5:0.8b` | ~2 GB | Good enough for short chatter |
 | Decent CPU | `ollama run gemma4:e2b` | ~7 GB | Decent |
 | Beefy CPU or Has GPU | `ollama run gemma4:e4b` | ~10+ GB | The more RAM the merrier |
 3. Edit `src/main/java/server/bots/llm/BotLlmConfig.java`, set `enabled = true` and `model = xxxx` matching your selected model. Rebuild/Restart server.
 
 ### Behavior
 - LLM only fires when a message is **directly addressed** to a specific bot by name (`Jason hi`, `Leroy how are you`).
-- Each bot gets its own memory file at `bots/llm-memory/<botName>.jsonl` (gitignored). At 32 turns it auto-compacts the oldest to a 1-2 sentence `.summary.txt`.
+- Bots remember the last few recent chat turns in memory for short context. Persistent disk memory is off by default for speed; set `BotLlmConfig.memoryEnabled = true` if bots should remember conversations across restarts.
 

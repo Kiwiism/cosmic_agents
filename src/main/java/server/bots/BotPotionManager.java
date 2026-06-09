@@ -304,19 +304,11 @@ final class BotPotionManager {
         BotPerformanceMonitor.recordSince("potion-count", startedAt);
 
         startedAt = BotPerformanceMonitor.start();
-        if (pots[0] >= BotManager.cfg.POT_LOW_WARN) {
-            entry.potShareRequestedHp = false;
-        } else if (!entry.potShareRequestedHp && requestPotShare(entry, bot, true)) {
-            entry.potShareRequestedHp = true;
-        }
+        requestLowPotShare(entry, bot, pots[0], true, false);
         BotPerformanceMonitor.recordSince("potion-share-hp", startedAt);
 
         startedAt = BotPerformanceMonitor.start();
-        if (pots[1] >= BotManager.cfg.POT_LOW_WARN) {
-            entry.potShareRequestedMp = false;
-        } else if (!entry.potShareRequestedMp && requestPotShare(entry, bot, false)) {
-            entry.potShareRequestedMp = true;
-        }
+        requestLowPotShare(entry, bot, pots[1], false, false);
         BotPerformanceMonitor.recordSince("potion-share-mp", startedAt);
 
         if (!entry.grinding) {
@@ -335,13 +327,50 @@ final class BotPotionManager {
         entry.potShareRequestedHp = false;
         entry.potShareRequestedMp = false;
         BotAmmoManager.checkAmmoShareOnModeStart(entry, bot);
-        int[] pots = countPotions(bot);
-        if (pots[0] < BotManager.cfg.POT_LOW_WARN && requestPotShare(entry, bot, true)) {
-            entry.potShareRequestedHp = true;
+        requestLowPotShares(entry, bot, false);
+    }
+
+    static boolean requestLowSuppliesFromOwnerAsk(BotEntry entry, Character bot) {
+        boolean requestedPots = requestLowPotShares(entry, bot, true);
+        boolean requestedAmmo = BotAmmoManager.requestLowAmmoShare(entry, bot, true);
+        return requestedPots || requestedAmmo;
+    }
+
+    private static boolean requestLowPotShares(BotEntry entry, Character bot, boolean bypassShareLimits) {
+        return requestLowPotShares(entry, bot, countPotions(bot), bypassShareLimits);
+    }
+
+    private static boolean requestLowPotShares(BotEntry entry, Character bot, int[] pots, boolean bypassShareLimits) {
+        boolean requestedHp = requestLowPotShare(entry, bot, pots[0], true, bypassShareLimits);
+        boolean requestedMp = requestLowPotShare(entry, bot, pots[1], false, bypassShareLimits);
+        return requestedHp || requestedMp;
+    }
+
+    private static boolean requestLowPotShare(BotEntry entry,
+                                              Character bot,
+                                              int count,
+                                              boolean forHp,
+                                              boolean bypassShareLimits) {
+        if (count >= BotManager.cfg.POT_LOW_WARN) {
+            if (forHp) {
+                entry.potShareRequestedHp = false;
+            } else {
+                entry.potShareRequestedMp = false;
+            }
+            return false;
         }
-        if (pots[1] < BotManager.cfg.POT_LOW_WARN && requestPotShare(entry, bot, false)) {
+
+        boolean alreadyRequested = forHp ? entry.potShareRequestedHp : entry.potShareRequestedMp;
+        if ((alreadyRequested && !bypassShareLimits)
+                || !requestPotShare(entry, bot, forHp, bypassShareLimits)) {
+            return false;
+        }
+        if (forHp) {
+            entry.potShareRequestedHp = true;
+        } else {
             entry.potShareRequestedMp = true;
         }
+        return true;
     }
 
     static void tickPassiveRecovery(BotEntry entry, Character bot) {
@@ -368,6 +397,10 @@ final class BotPotionManager {
     }
 
     static boolean requestPotShare(BotEntry entry, Character bot, boolean forHp) {
+        return requestPotShare(entry, bot, forHp, false);
+    }
+
+    static boolean requestPotShare(BotEntry entry, Character bot, boolean forHp, boolean bypassShareLimits) {
         long startedAt = BotPerformanceMonitor.start();
         Character owner = entry.owner;
         if (owner == null || bot.getTrade() != null || entry.pendingTradeCategory != null) {
@@ -377,27 +410,33 @@ final class BotPotionManager {
 
         long now = System.currentTimeMillis();
         Map<Integer, Long> categoryBackoff = forHp ? potShareHpBackoffUntil : potShareMpBackoffUntil;
-        if (now < categoryBackoff.getOrDefault(owner.getId(), 0L)) {
-            BotPerformanceMonitor.recordSince("potion-request", startedAt);
-            return false;
+        if (!bypassShareLimits) {
+            if (now < categoryBackoff.getOrDefault(owner.getId(), 0L)) {
+                BotPerformanceMonitor.recordSince("potion-request", startedAt);
+                return false;
+            }
+            if (now < potShareCooldownUntil.getOrDefault(owner.getId(), 0L)) {
+                BotPerformanceMonitor.recordSince("potion-request", startedAt);
+                return false;
+            }
+            potShareCooldownUntil.put(owner.getId(), now + 30_000L);
         }
-        if (now < potShareCooldownUntil.getOrDefault(owner.getId(), 0L)) {
-            BotPerformanceMonitor.recordSince("potion-request", startedAt);
-            return false;
-        }
-        potShareCooldownUntil.put(owner.getId(), now + 30_000L);
 
         BotManager.getInstance().botSay(bot, BotManager.randomReply(forHp ? POT_REQUEST_HP_MSGS : POT_REQUEST_MP_MSGS));
 
         PotDonorPlan plan = selectPotDonor(owner, bot, entry, forHp);
         if (plan == null) {
-            categoryBackoff.put(owner.getId(), now + 10 * 60_000L);
+            if (!bypassShareLimits) {
+                categoryBackoff.put(owner.getId(), now + 10 * 60_000L);
+            }
             BotPerformanceMonitor.recordSince("potion-request", startedAt);
             return true;
         }
 
         if (!plan.qualifies()) {
-            categoryBackoff.put(owner.getId(), now + 10 * 60_000L);
+            if (!bypassShareLimits) {
+                categoryBackoff.put(owner.getId(), now + 10 * 60_000L);
+            }
             String ownerName = owner.getName();
             List<String> noQualMessages = List.of(
                     "low too, maybe " + ownerName + " has some?",

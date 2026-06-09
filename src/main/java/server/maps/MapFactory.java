@@ -205,6 +205,7 @@ public class MapFactory {
                     Foothold fh = new Foothold(new Point(x1, y1), new Point(x2, y2), Integer.parseInt(footHold.getName()));
                     fh.setPrev(DataTool.getInt(footHold.getChildByPath("prev")));
                     fh.setNext(DataTool.getInt(footHold.getChildByPath("next")));
+                    fh.setForbidFallDown(DataTool.getInt(footHold.getChildByPath("forbidFallDown"), 0) != 0);
                     if (fh.getX1() < lBound.x) {
                         lBound.x = fh.getX1();
                     }

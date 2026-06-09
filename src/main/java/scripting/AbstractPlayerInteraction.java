@@ -1195,16 +1195,53 @@ public class AbstractPlayerInteraction {
     // Keyed by characterId — stores the pending list dialog text for the dressingroom script
     private static final java.util.concurrent.ConcurrentHashMap<Integer, String> pendingNpcTalkMessages =
             new java.util.concurrent.ConcurrentHashMap<>();
+    private static final java.util.concurrent.ConcurrentHashMap<Integer, Boolean> pendingDressingRoomSelections =
+            new java.util.concurrent.ConcurrentHashMap<>();
 
     /** Returns and removes the stored dialog text for the given character, or null if none. */
     public static String pollNpcTalkMessage(int characterId) {
         return pendingNpcTalkMessages.remove(characterId);
     }
 
+    public static boolean pollDressingRoomSelection(int characterId) {
+        return pendingDressingRoomSelections.remove(characterId) != null;
+    }
+
     public void npcTalk(int npcid, String message) {
         pendingNpcTalkMessages.put(c.getPlayer().getId(), message);
+        pendingDressingRoomSelections.remove(c.getPlayer().getId());
         NPCScriptManager.getInstance().dispose(c);
         NPCScriptManager.getInstance().start(c, npcid, "dressingroom", null);
+    }
+
+    public void npcTalkDressingRoom(int npcid, String message) {
+        pendingNpcTalkMessages.put(c.getPlayer().getId(), message);
+        pendingDressingRoomSelections.put(c.getPlayer().getId(), true);
+        NPCScriptManager.getInstance().dispose(c);
+        NPCScriptManager.getInstance().start(c, npcid, "dressingroom", null);
+    }
+
+    public boolean spawnDressingRoomItem(int id, boolean randomStats) {
+        ItemInformationProvider ii = ItemInformationProvider.getInstance();
+        if (ii.getName(id) == null || !ii.hasData(id)) {
+            getPlayer().dropMessage(5, "The item you selected doesn't exist.");
+            return false;
+        }
+
+        Item toDrop;
+        if (ItemConstants.getInventoryType(id) == InventoryType.EQUIP) {
+            Equip equip = (Equip) ii.getEquipById(id);
+            if (equip == null) {
+                getPlayer().dropMessage(5, "The item you selected doesn't exist.");
+                return false;
+            }
+            toDrop = randomStats ? ii.randomizeStats(equip) : equip;
+        } else {
+            toDrop = new Item(id, (short) 0, (short) 1);
+        }
+
+        getPlayer().getMap().spawnItemDrop(getPlayer(), getPlayer(), toDrop, getPlayer().getPosition(), true, true);
+        return true;
     }
 
     public long getCurrentTime() {

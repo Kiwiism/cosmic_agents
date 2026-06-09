@@ -210,6 +210,10 @@ final class BotOfferManager {
         }
     }
 
+    static void clearPendingOfferForOwnerAsk(BotEntry entry) {
+        clearPendingOffer(entry);
+    }
+
     private static void createOwnerUpgradeRequest(BotEntry entry, Character bot, Character owner, Item ownerItem) {
         // Audience for the specifier is the bot itself: it's describing why the item
         // is good for it, so format stats relative to the bot's job.
@@ -690,5 +694,6 @@ final class BotOfferManager {
         entry.pendingLootOfferRecipientId = 0;
         entry.pendingLootOfferExpiresAt = 0L;
         entry.pendingLootOfferBotRequesting = false;
+        entry.pendingGearPromptAt = 0L;
     }
 }

@@ -172,7 +172,7 @@ class BotEquipManager {
             // admissible-bound truncation; the owner should clean up redundant gear.
             try {
                 BotManager.getInstance().botSay(bot,
-                        "inventory's too cluttered, cant fully optimize gear — try selling/dropping spares");
+                        "inventory's too cluttered, cant fully optimize gear - try selling/dropping spares");
             } catch (Throwable ignored) {
                 // Don't let a chat error block the equip pass.
             }
@@ -232,7 +232,7 @@ class BotEquipManager {
 
         List<String> out = new ArrayList<>();
         if (mob == null) {
-            out.add("autoequip: no mob context (in town?) — cant benchmark");
+            out.add("autoequip: no mob context (in town?) - cant benchmark");
         } else {
             out.add("autoequip mob: avd " + mob.mobAvoid()
                     + " wdef " + mob.mobWdef() + " lv " + mob.mobLevel());

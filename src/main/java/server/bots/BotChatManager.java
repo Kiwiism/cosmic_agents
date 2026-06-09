@@ -190,6 +190,8 @@ public class BotChatManager {
             Pattern.CASE_INSENSITIVE);
     private static final Pattern REQUEST_UPGRADE_PATTERN = Pattern.compile(
             "\\brequest\\s*\\?|\\bneed\\s+anything\\b|\\bdo\\s+you\\s+need\\s+(anything|something)\\b"
+            + "|\\bdo\\s+you\\s+need\\s+(?:any\\s+)?(?:gear|equips?|equipment)\\s*(?:from\\s+me)?\\b"
+            + "|\\bneed\\s+(?:any\\s+)?(?:gear|equips?|equipment)\\s+from\\s+me\\b"
             + "|\\bwhat\\s+do\\s+you\\s+need\\b|\\bwhat.?s\\s+(on\\s+your\\s+)?wish\\s*list\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern NEED_HP_POT_PATTERN = Pattern.compile(
@@ -434,6 +436,12 @@ public class BotChatManager {
             Pattern.CASE_INSENSITIVE);
     private static final Pattern SELL_TRASH_COMMAND_PATTERN = Pattern.compile(
             "^\\s*(?:sell|vendor)\\s+(?:(?:my|ur|your)\\s+)?(?:trash|junk)\\s*[?!.,]*\\s*$",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern MAKE_CRYSTALS_COMMAND_PATTERN = Pattern.compile(
+            "^\\s*(?:make|craft|create)\\s+(?:some\\s+)?(?:mob|mon|monster|monsters|mobs)\\s+crystals?\\s*[?!.,]*\\s*$",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern DISASSEMBLE_TRASH_COMMAND_PATTERN = Pattern.compile(
+            "^\\s*(?:disassemble|dismantle|scrap|break\\s*down)\\s+(?:(?:my|ur|your)\\s+)?(?:trash|junk)(?:\\s+(?:equips?|gear))?\\s*[?!.,]*\\s*$",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern TRADE_USE_COMMAND_PATTERN = Pattern.compile(
             "\\b" + TRADE_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + USE_WORDS + "\\b",
@@ -1005,6 +1013,18 @@ public class BotChatManager {
             return;
         }
 
+        if (MAKE_CRYSTALS_COMMAND_PATTERN.matcher(message).matches()) {
+            BotManager.after(BotManager.randMs(500, 700), () ->
+                    BotMakerManager.handleMakeCrystals(entry));
+            return;
+        }
+
+        if (DISASSEMBLE_TRASH_COMMAND_PATTERN.matcher(message).matches()) {
+            BotManager.after(BotManager.randMs(500, 700), () ->
+                    BotMakerManager.handleDisassembleTrash(entry));
+            return;
+        }
+
         TransferCommand transferCommand = matchTransferCommand(message);
         if (transferCommand != null) {
             handleTransferCommand(entry, transferCommand, message);
@@ -1018,7 +1038,7 @@ public class BotChatManager {
         }
 
         // Info commands
-        if (matchesWholeCommand(REQUEST_UPGRADE_PATTERN, message)) {
+        if (isRequestUpgradeCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> handleRequestUpgradeCommand(entry, entry.bot));
             return;
         }
@@ -1633,34 +1653,34 @@ public class BotChatManager {
         Job job = entry.bot.getJob();
 
         if (job.isA(Job.WARRIOR) && AP_PURE_STR_PATTERN.matcher(message).find()) {
-            int minDex = minStatFloor(job, Stat.DEX);
+            int effectiveDex = Math.max(minStatFloor(job, Stat.DEX), entry.bot.getDex());
             applyApBuildChoice(entry,
                     new BotBuildManager.ApBuild(BotBuildManager.StatType.STR, BotBuildManager.StatType.DEX, 4),
-                    "dexless it is! keeping dex at " + minDex + ", rest into str",
+                    "dexless it is! keeping dex at " + effectiveDex + ", rest into str",
                     "already doing dexless!");
             return;
         }
         if (job.isA(Job.THIEF) && AP_DEXLESS_PATTERN.matcher(message).find()) {
-            int minDex = minStatFloor(job, Stat.DEX);
+            int effectiveDex = Math.max(minStatFloor(job, Stat.DEX), entry.bot.getDex());
             applyApBuildChoice(entry,
                     new BotBuildManager.ApBuild(BotBuildManager.StatType.LUK, BotBuildManager.StatType.DEX, 4),
-                    "dexless it is! keeping dex at " + minDex + ", rest into luk",
+                    "dexless it is! keeping dex at " + effectiveDex + ", rest into luk",
                     "already doing dexless!");
             return;
         }
         if (job.isA(Job.MAGICIAN) && AP_LUKLESS_PATTERN.matcher(message).find()) {
-            int minLuk = minStatFloor(job, Stat.LUK);
+            int effectiveLuk = Math.max(minStatFloor(job, Stat.LUK), entry.bot.getLuk());
             applyApBuildChoice(entry,
                     new BotBuildManager.ApBuild(BotBuildManager.StatType.INT, BotBuildManager.StatType.LUK, 4),
-                    "lukless it is! keeping luk at " + minLuk + ", rest into int",
+                    "lukless it is! keeping luk at " + effectiveLuk + ", rest into int",
                     "already doing lukless!");
             return;
         }
         if (job.isA(Job.BOWMAN) && AP_STRLESS_PATTERN.matcher(message).find()) {
-            int minStr = minStatFloor(job, Stat.STR);
+            int effectiveStr = Math.max(minStatFloor(job, Stat.STR), entry.bot.getStr());
             applyApBuildChoice(entry,
                     new BotBuildManager.ApBuild(BotBuildManager.StatType.DEX, BotBuildManager.StatType.STR, 4),
-                    "strless it is! keeping str at " + minStr + ", rest into dex",
+                    "strless it is! keeping str at " + effectiveStr + ", rest into dex",
                     "already doing strless!");
             return;
         }
@@ -1670,12 +1690,13 @@ public class BotChatManager {
             if (matcher.find()) {
                 int dexTarget = Integer.parseInt(matcher.group(1));
                 int legalDexTarget = Math.max(minStatFloor(job, Stat.DEX), dexTarget);
+                int effectiveDex = Math.max(legalDexTarget, entry.bot.getDex());
                 BotBuildManager.StatType primary = job.isA(Job.WARRIOR)
                         ? BotBuildManager.StatType.STR
                         : BotBuildManager.StatType.LUK;
                 applyApBuildChoice(entry,
                         new BotBuildManager.ApBuild(primary, BotBuildManager.StatType.DEX, dexTarget),
-                        "ok! keeping dex at " + legalDexTarget + ", rest into " + primary.name().toLowerCase(Locale.ROOT),
+                        "ok! keeping dex at " + effectiveDex + ", rest into " + primary.name().toLowerCase(Locale.ROOT),
                         "already doing " + legalDexTarget + " dex build!");
                 return;
             }
@@ -1685,9 +1706,10 @@ public class BotChatManager {
             if (matcher.find()) {
                 int lukTarget = Integer.parseInt(matcher.group(1));
                 int legalLukTarget = Math.max(minStatFloor(job, Stat.LUK), lukTarget);
+                int effectiveLuk = Math.max(legalLukTarget, entry.bot.getLuk());
                 applyApBuildChoice(entry,
                         new BotBuildManager.ApBuild(BotBuildManager.StatType.INT, BotBuildManager.StatType.LUK, lukTarget),
-                        "ok! keeping luk at " + legalLukTarget + ", rest into int",
+                        "ok! keeping luk at " + effectiveLuk + ", rest into int",
                         "already doing " + legalLukTarget + " luk build!");
                 return;
             }
@@ -1697,9 +1719,10 @@ public class BotChatManager {
             if (matcher.find()) {
                 int strTarget = Integer.parseInt(matcher.group(1));
                 int legalStrTarget = Math.max(minStatFloor(job, Stat.STR), strTarget);
+                int effectiveStr = Math.max(legalStrTarget, entry.bot.getStr());
                 applyApBuildChoice(entry,
                         new BotBuildManager.ApBuild(BotBuildManager.StatType.DEX, BotBuildManager.StatType.STR, strTarget),
-                        "ok! keeping str at " + legalStrTarget + ", rest into dex",
+                        "ok! keeping str at " + effectiveStr + ", rest into dex",
                         "already doing " + legalStrTarget + " str build!");
             }
         }
@@ -1826,6 +1849,10 @@ public class BotChatManager {
         return NEED_AMMO_PATTERN.matcher(message).find();
     }
 
+    static boolean isRequestUpgradeCommand(String message) {
+        return matchesWholeCommand(REQUEST_UPGRADE_PATTERN, message);
+    }
+
     /**
      * Group-wide supply requests ("need pots", "anyone have hp pots", "need arrows"
      * etc.) trigger a single response from the bot group. Broadcasting these to
@@ -1840,6 +1867,10 @@ public class BotChatManager {
     }
 
     private static void handleRequestUpgradeCommand(BotEntry entry, Character bot) {
+        BotOfferManager.clearPendingOfferForOwnerAsk(entry);
+        if (BotPotionManager.requestLowSuppliesFromOwnerAsk(entry, bot)) {
+            return;
+        }
         BotOfferManager.requestBestUpgradeFromOwner(entry, bot);
     }
 

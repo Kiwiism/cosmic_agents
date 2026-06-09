@@ -28,29 +28,40 @@ final class BotAmmoManager {
     private BotAmmoManager() {}
 
     static void tickAmmoShareCheck(BotEntry entry, Character bot) {
+        requestLowAmmoShare(entry, bot, false);
+    }
+
+    static boolean requestLowAmmoShare(BotEntry entry, Character bot, boolean bypassShareLimits) {
         WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(bot);
         if (!canRequestShare(weaponType)) {
             entry.ammoShareRequested = false;
-            return;
+            return false;
         }
 
         int ammo = BotCombatManager.countAmmo(bot, weaponType);
         if (ammo >= BotCombatManager.cfg.AMMO_LOW_WARN) {
             entry.ammoShareRequested = false;
-            return;
+            return false;
         }
 
-        if (!entry.ammoShareRequested && requestAmmoShare(entry, bot, weaponType, ammo)) {
+        if ((!entry.ammoShareRequested || bypassShareLimits)
+                && requestAmmoShare(entry, bot, weaponType, ammo, bypassShareLimits)) {
             entry.ammoShareRequested = true;
+            return true;
         }
+        return false;
     }
 
     static void checkAmmoShareOnModeStart(BotEntry entry, Character bot) {
         entry.ammoShareRequested = false;
-        tickAmmoShareCheck(entry, bot);
+        requestLowAmmoShare(entry, bot, false);
     }
 
     static boolean requestAmmoShare(BotEntry entry, Character bot, WeaponType weaponType, int currentAmmo) {
+        return requestAmmoShare(entry, bot, weaponType, currentAmmo, false);
+    }
+
+    static boolean requestAmmoShare(BotEntry entry, Character bot, WeaponType weaponType, int currentAmmo, boolean bypassShareLimits) {
         Character owner = entry.owner;
         if (owner == null || bot.getTrade() != null || entry.pendingTradeCategory != null) {
             return false;
@@ -61,20 +72,24 @@ final class BotAmmoManager {
 
         long now = System.currentTimeMillis();
         String backoffKey = owner.getId() + ":" + weaponType.name();
-        if (now < ammoShareBackoffUntil.getOrDefault(backoffKey, 0L)) {
-            return false;
+        if (!bypassShareLimits) {
+            if (now < ammoShareBackoffUntil.getOrDefault(backoffKey, 0L)) {
+                return false;
+            }
+            if (now < ammoShareCooldownUntil.getOrDefault(owner.getId(), 0L)) {
+                return false;
+            }
+            ammoShareCooldownUntil.put(owner.getId(), now + 30_000L);
         }
-        if (now < ammoShareCooldownUntil.getOrDefault(owner.getId(), 0L)) {
-            return false;
-        }
-        ammoShareCooldownUntil.put(owner.getId(), now + 30_000L);
 
         BotManager.getInstance().botSay(bot, BotManager.randomReply(
                 weaponType == WeaponType.BOW ? ARROW_REQUEST_MSGS : BOLT_REQUEST_MSGS));
 
         AmmoDonorPlan plan = selectAmmoDonor(entry, bot, weaponType);
         if (plan == null) {
-            ammoShareBackoffUntil.put(backoffKey, now + 10 * 60_000L);
+            if (!bypassShareLimits) {
+                ammoShareBackoffUntil.put(backoffKey, now + 10 * 60_000L);
+            }
             return true;
         }
 

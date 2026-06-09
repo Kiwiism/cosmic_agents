@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import server.ItemInformationProvider;
 import server.StatEffect;
 import server.Trade;
+import server.maps.FieldLimit;
 import server.maps.MapItem;
 import server.maps.MapleMap;
 import tools.PacketCreator;
@@ -100,7 +101,7 @@ class BotInventoryManager {
     private static final List<String> TRADE_RESERVED_FOR_OTHER_MSGS = List.of(
             "these might be needed by others, maybe don't sell them",
             "careful with these, they could be for someone else",
-            "heads up, I was saving those for someone — don't lose them",
+            "heads up, I was saving those for someone - don't lose them",
             "these might go to someone else, hold onto them for now",
             "those are kinda spoken for, keep them safe ok?",
             "just so you know, I had plans for those"
@@ -125,12 +126,10 @@ class BotInventoryManager {
 
         entry.invFullWarnCooldownMs = BotMovementManager.tickDown(entry.invFullWarnCooldownMs);
         Point botPos = bot.getPosition();
+        long now = System.currentTimeMillis();
         for (MapItem drop : bot.getMap().getDroppedItems()) {
             if (!BotLootEligibility.isPresent(bot.getMap(), drop)) {
                 cleanupBotLootGhostDrop(bot, drop);
-                continue;
-            }
-            if (System.currentTimeMillis() - drop.getDropTime() < 3000) {
                 continue;
             }
 
@@ -140,7 +139,10 @@ class BotInventoryManager {
                 continue;
             }
 
-            if (!BotLootEligibility.canBotLoot(entry, bot, drop)) {
+            if (!BotLootEligibility.canBotTargetLoot(entry, bot, bot.getMap(), drop, now)) {
+                if (BotLootEligibility.canBotLoot(entry, bot, drop)) {
+                    continue;
+                }
                 if (drop.getMeso() <= 0 && drop.getItemId() > 0) {
                     InventoryType type = ItemConstants.getInventoryType(drop.getItemId());
                     Inventory inventory = bot.getInventory(type);
@@ -239,7 +241,7 @@ class BotInventoryManager {
         MapleMap map = bot.getMap();
         if (map == null) return null;
 
-        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map);
+        BotNavigationGraph graph = BotNavigationGraphProvider.peekBestGraph(map, entry.movementProfile);
         if (graph == null) return null;
 
         Set<Integer> allowed = new HashSet<>();
@@ -387,6 +389,13 @@ class BotInventoryManager {
     }
 
     private static void dropCategory(String category, BotEntry entry, Character bot) {
+        // When items aren't globally tradable, drops on drop-limited maps (e.g. free market)
+        // silently vanish. Refuse and tell the owner why instead of destroying the items.
+        if (!YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE
+                && FieldLimit.DROP_LIMIT.check(bot.getMap().getFieldLimit())) {
+            BotManager.getInstance().botReply(entry, "can't drop here - try another map or trade");
+            return;
+        }
         switch (category) {
             case "scrolls" -> dropScrolls(entry, bot);
             case "pots"    -> dropPotions(entry, bot);
@@ -1707,27 +1716,37 @@ class BotInventoryManager {
         } else if (equip.getWatk() > 0) {
             return true;
         }
-        return hasProtectedSellTrashStat(stats, equip, 6);
+        return hasProtectedSellTrashStat(stats, equip, 6, 10);
     }
 
-    static boolean hasProtectedSellTrashStat(Map<String, Integer> stats, Equip equip, int threshold) {
+    // A stat protects an equip from being trashed only if it has been improved above the item's
+    // WZ base (>= aboveBaseThreshold AND strictly above base), or it is high enough on its own
+    // (>= pureThreshold) regardless of base. Base stat values come straight from the WZ stats map
+    // (the "inc"-stripped STR/DEX/INT/LUK keys).
+    static boolean hasProtectedSellTrashStat(Map<String, Integer> stats, Equip equip, int aboveBaseThreshold, int pureThreshold) {
         if (stats == null || equip == null) {
             return false;
         }
 
+        boolean str = statProtected(equip.getStr(), stats.getOrDefault("STR", 0), aboveBaseThreshold, pureThreshold);
+        boolean dex = statProtected(equip.getDex(), stats.getOrDefault("DEX", 0), aboveBaseThreshold, pureThreshold);
+        boolean intt = statProtected(equip.getInt(), stats.getOrDefault("INT", 0), aboveBaseThreshold, pureThreshold);
+        boolean luk = statProtected(equip.getLuk(), stats.getOrDefault("LUK", 0), aboveBaseThreshold, pureThreshold);
+
         int reqJob = stats.getOrDefault("reqJob", 0);
         if (reqJob == 0) {
-            return equip.getStr() >= threshold
-                    || equip.getDex() >= threshold
-                    || equip.getInt() >= threshold
-                    || equip.getLuk() >= threshold;
+            return str || dex || intt || luk;
         }
 
-        return ((reqJob & 0x1) != 0 && (equip.getStr() >= threshold || equip.getDex() >= threshold))
-                || ((reqJob & 0x2) != 0 && (equip.getInt() >= threshold || equip.getLuk() >= threshold))
-                || ((reqJob & 0x4) != 0 && (equip.getDex() >= threshold || equip.getStr() >= threshold))
-                || ((reqJob & 0x8) != 0 && (equip.getLuk() >= threshold || equip.getDex() >= threshold))
-                || ((reqJob & 0x10) != 0 && (equip.getStr() >= threshold || equip.getDex() >= threshold));
+        return ((reqJob & 0x1) != 0 && (str || dex))
+                || ((reqJob & 0x2) != 0 && (intt || luk))
+                || ((reqJob & 0x4) != 0 && (dex || str))
+                || ((reqJob & 0x8) != 0 && (luk || dex))
+                || ((reqJob & 0x10) != 0 && (str || dex));
+    }
+
+    private static boolean statProtected(int value, int base, int aboveBaseThreshold, int pureThreshold) {
+        return value >= pureThreshold || (value >= aboveBaseThreshold && value > base);
     }
 
     static boolean hasProtectedSellTrashWeaponStat(Map<String, Integer> stats, Equip equip, Equip baseEquip) {

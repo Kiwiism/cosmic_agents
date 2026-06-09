@@ -3,6 +3,7 @@ package server.bots;
 import client.Character;
 import client.Job;
 import client.inventory.Inventory;
+import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import server.maps.FieldLimit;
 import server.maps.MapleMap;
@@ -258,6 +259,14 @@ class BotChatManagerTest {
     }
 
     @Test
+    void shouldParseOwnerGearNeedQuestionsAsUpgradeRequests() {
+        assertTrue(BotChatManager.isRequestUpgradeCommand("do you need any gear from me?"));
+        assertTrue(BotChatManager.isRequestUpgradeCommand("need gear from me"));
+        assertTrue(BotChatManager.isRequestUpgradeCommand("do you need equipment"));
+        assertFalse(BotChatManager.isRequestUpgradeCommand("trade recommended gear"));
+    }
+
+    @Test
     void shouldBuildMovementStatsReportUsingGameStatsAndDerivedPhysics() {
         Character bot = mock(Character.class);
         MapleMap map = mock(MapleMap.class);
@@ -402,5 +411,25 @@ class BotChatManagerTest {
         for (BotChatManager.QueuedMessage message : entry.msgQueue) {
             assertTrue(message.ownerDirected);
         }
+    }
+
+    @Test
+    void shouldClearPendingOfferStateForOwnerAsk() {
+        BotEntry entry = new BotEntry(null, null, null);
+        entry.pendingDropCategory = "equips";
+        entry.pendingLootOfferItem = new Item(1002000, (short) 1, (short) 1);
+        entry.pendingLootOfferRecipientId = 123;
+        entry.pendingLootOfferExpiresAt = Long.MAX_VALUE;
+        entry.pendingLootOfferBotRequesting = true;
+        entry.pendingGearPromptAt = Long.MAX_VALUE;
+
+        BotOfferManager.clearPendingOfferForOwnerAsk(entry);
+
+        assertNull(entry.pendingDropCategory);
+        assertNull(entry.pendingLootOfferItem);
+        assertEquals(0, entry.pendingLootOfferRecipientId);
+        assertEquals(0L, entry.pendingLootOfferExpiresAt);
+        assertFalse(entry.pendingLootOfferBotRequesting);
+        assertEquals(0L, entry.pendingGearPromptAt);
     }
 }

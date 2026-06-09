@@ -742,7 +742,7 @@ final class BotShopManager {
         return switch (report.reason()) {
             case NO_SPACE -> report.quantity() <= 0
                     ? "no room in my bag for " + itemName
-                    : "only fit " + got + " " + itemName + " out of " + want + " — bag's full";
+                    : "only fit " + got + " " + itemName + " out of " + want + " - bag's full";
             case OTHER -> "shop wouldn't sell me " + itemName;
             case NO_MESO, NONE -> report.quantity() <= 0
                     ? "couldn't afford any " + itemName + " this trip"
@@ -845,10 +845,7 @@ final class BotShopManager {
         }
         BotMovementProfile profile = entry.movementProfile != null
                 ? entry.movementProfile : BotMovementProfile.fromCharacter(bot);
-        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(bot.getMap(), profile);
-        if (graph == null) {
-            graph = BotNavigationGraphProvider.peekClosestGraph(bot.getMap(), profile);
-        }
+        BotNavigationGraph graph = BotNavigationGraphProvider.peekBestGraph(bot.getMap(), profile);
         if (graph != null) {
             Point botPos = bot.getPosition();
             int startRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, bot.getMap(), botPos);

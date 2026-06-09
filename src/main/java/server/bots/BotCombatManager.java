@@ -37,12 +37,14 @@ import constants.skills.WindArcher;
 import io.netty.buffer.Unpooled;
 import net.PacketHandler;
 import net.PacketProcessor;
-import net.server.PlayerBuffValueHolder;
-import net.server.channel.handlers.AbstractDealDamageHandler;
 import net.opcodes.RecvOpcode;
 import net.packet.ByteBufInPacket;
 import net.packet.ByteBufOutPacket;
 import net.packet.InPacket;
+import net.server.PlayerBuffValueHolder;
+import net.server.channel.handlers.AbstractDealDamageHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import server.StatEffect;
 import server.bots.combat.BotAttackDataProvider;
 import server.bots.combat.BotDefenseDataProvider;
@@ -61,7 +63,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -70,6 +71,7 @@ import java.util.StringJoiner;
 import java.util.concurrent.ThreadLocalRandom;
 
 class BotCombatManager {
+    private static final Logger log = LoggerFactory.getLogger(BotCombatManager.class);
     private static final long UNREACHABLE_GRAPH_COST = Long.MAX_VALUE / 4;
 
     // Skills that bots must never cast — stealth makes them untargetable by monsters,
@@ -164,6 +166,15 @@ class BotCombatManager {
         public int   GRIND_SEEK_RANGE  = 800;
         public int   GRIND_RETARGET_INTERVAL_MS = 400;
         public int   AOE_MOB_THRESHOLD = 2;
+        // AoE repositioning: when the best fire-now plan is single-target but stepping into the
+        // cluster centroid would let the AoE skill beat it by this DPS factor, defer the shot and
+        // walk in. Bounded by distance/time so the bot never chases scattering mobs.
+        public boolean AOE_REPOSITION_ENABLED = true;
+        public boolean AOE_REPOSITION_DEBUG = false; // log each reposition decision to console
+        public double AOE_REPOSITION_DPS_FACTOR = 1.5d;
+        public int   AOE_REPOSITION_MAX_DISTANCE_X = 150;
+        public int   AOE_REPOSITION_ARRIVAL_X = 20;
+        public long  AOE_REPOSITION_MAX_MS = 800L;
         public int   GRIND_REGION_OCCUPANCY_PENALTY = 1200;
         public int   GRIND_REGION_OCCUPANCY_PENALTY_CAP = 3600;
 
@@ -188,6 +199,84 @@ class BotCombatManager {
     }
 
     static Config cfg = new Config();
+
+    /** Admin/debug (!botcfg): "FIELD = value" for every public combat config field, sorted. */
+    public static List<String> configFieldLines() {
+        List<String> out = new ArrayList<>();
+        for (java.lang.reflect.Field f : Config.class.getDeclaredFields()) {
+            if (!java.lang.reflect.Modifier.isPublic(f.getModifiers())) {
+                continue;
+            }
+            try {
+                out.add(f.getName() + " = " + f.get(cfg));
+            } catch (IllegalAccessException ignored) {
+            }
+        }
+        out.sort(String::compareTo);
+        return out;
+    }
+
+    /** Admin/debug (!botcfg): "FIELD = value" for one field (case-insensitive), or null if unknown. */
+    public static String configFieldLine(String name) {
+        for (java.lang.reflect.Field f : Config.class.getDeclaredFields()) {
+            if (java.lang.reflect.Modifier.isPublic(f.getModifiers()) && f.getName().equalsIgnoreCase(name)) {
+                try {
+                    return f.getName() + " = " + f.get(cfg);
+                } catch (IllegalAccessException e) {
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Admin/debug (!botcfg): set a combat config field by name (case-insensitive) on the live cfg.
+     * Returns a human-readable result; success messages start with "OK".
+     */
+    public static String setConfigField(String name, String rawValue) {
+        for (java.lang.reflect.Field f : Config.class.getDeclaredFields()) {
+            if (!java.lang.reflect.Modifier.isPublic(f.getModifiers()) || !f.getName().equalsIgnoreCase(name)) {
+                continue;
+            }
+            try {
+                Object parsed = parseConfigValue(f.getType(), rawValue.trim());
+                f.set(cfg, parsed);
+                return "OK: " + f.getName() + " = " + parsed;
+            } catch (NumberFormatException e) {
+                return "bad value '" + rawValue + "' for " + f.getName() + " (" + f.getType().getSimpleName() + ")";
+            } catch (IllegalAccessException e) {
+                return "cannot set " + f.getName();
+            }
+        }
+        return "unknown field: " + name;
+    }
+
+    private static Object parseConfigValue(Class<?> type, String v) {
+        if (type == boolean.class || type == Boolean.class) {
+            if (v.equalsIgnoreCase("true") || v.equals("1") || v.equalsIgnoreCase("on")) {
+                return Boolean.TRUE;
+            }
+            if (v.equalsIgnoreCase("false") || v.equals("0") || v.equalsIgnoreCase("off")) {
+                return Boolean.FALSE;
+            }
+            throw new NumberFormatException(v);
+        }
+        if (type == int.class || type == Integer.class) {
+            return Integer.parseInt(v);
+        }
+        if (type == long.class || type == Long.class) {
+            return Long.parseLong(v);
+        }
+        if (type == double.class || type == Double.class) {
+            return Double.parseDouble(v);
+        }
+        if (type == float.class || type == Float.class) {
+            return Float.parseFloat(v);
+        }
+        throw new NumberFormatException(v);
+    }
+
     // Journey client CharStats::get_range() returns Rectangle(-projectilerange, -5, -50, 50).
     static final int CLIENT_PROJECTILE_BASE_RANGE = 400;
     private static final int CLIENT_PROJECTILE_NEAR_INSET = 5;
@@ -277,7 +366,7 @@ class BotCombatManager {
             if (bot.getHp() <= 0) return;
 
             for (Monster mob : bot.getMap().getAllMonsters()) {
-                if (!mob.isAlive()) continue;
+                if (!isHostileLivingMonster(mob)) continue;
                 if (isMobTouchingBot(entry, bot, mob)) {
                     applyMobHit(entry, bot, mob);
                     return;
@@ -632,7 +721,7 @@ class BotCombatManager {
                 : null;
         boolean selfNeedsHeal = needsHeal(bot);
         boolean partyNeedsHeal = selfNeedsHeal || hasPartyMemberInBoundsNeedingHeal(bot, healBounds);
-        List<Monster> undeadTargets = getUndeadMobsInHealRange(bot, fx);
+        List<Monster> undeadTargets = getUndeadMobsInHealRange(bot, fx, healBounds);
         if (!partyNeedsHeal && undeadTargets.isEmpty()) return false;
 
         // Jump-heal: when following and the leader has pulled ahead, kick a diagonal jump toward
@@ -733,8 +822,10 @@ class BotCombatManager {
         BotAttackExecutionProvider.applyAttackRoute(route, attack, bot);
     }
 
-    private static List<Monster> getUndeadMobsInHealRange(Character bot, StatEffect fx) {
-        Rectangle bounds = fx.calculateBoundingBox(bot.getPosition(), bot.isFacingLeft());
+    private static List<Monster> getUndeadMobsInHealRange(Character bot, StatEffect fx, Rectangle bounds) {
+        if (bounds == null) {
+            return new ArrayList<>();
+        }
         List<MapObject> objects = bot.getMap().getMapObjectsInRect(bounds, Arrays.asList(MapObjectType.MONSTER));
         List<Monster> undead = new ArrayList<>();
         int cap = fx.getMobCount();
@@ -1046,10 +1137,6 @@ class BotCombatManager {
         return candidate.skillId < currentBest.skillId;
     }
 
-    private static double estimatePlanDamage(Character bot, AttackPlan attackPlan) {
-        return scoreAttackPlan(bot, attackPlan).usefulDamage;
-    }
-
     private static double capDamageByCurrentHp(double expectedDamage, Monster target) {
         if (target == null) {
             return expectedDamage;
@@ -1225,10 +1312,14 @@ class BotCombatManager {
                 && countAmmo(bot, weaponType) < ammoCost) {
             return null;
         }
+        // Resolve the animated action once up front: weapon-action sampling is random, so the
+        // reach hitbox and the broadcast packet must share the same swing (a close skill without
+        // its own lt/rb gates the hit on this action's afterimage box).
+        String action = BotAttackExecutionProvider.resolveSkillAttackAction(bot, skill, skillLevel, weaponType);
         if (isStrikePointAnchoredAoeSkill(skillId)) {
             primaryTarget = resolveStrikePointPrimaryByBasicWeapon(bot, primaryTarget, route);
         }
-        Rectangle hitBox = calculateSkillHitBox(effect, bot, primaryTarget, route, skillId);
+        Rectangle hitBox = calculateSkillHitBox(effect, bot, primaryTarget, route, skillId, action);
         if (hitBox == null) {
             return null;
         }
@@ -1252,7 +1343,6 @@ class BotCombatManager {
         boolean facingLeft = primaryTarget.getPosition().x < bot.getPosition().x;
         BotAttackExecutionProvider.BasicAttackData fallbackAttackData = buildBasicAttackData(bot, primaryTarget);
         BotAttackDataProvider.AttackAnimationSpec attackSpec = BotAttackDataProvider.getInstance().getBasicAttackSpec(weaponType);
-        String action = BotAttackExecutionProvider.resolveSkillAttackAction(bot, skill, skillLevel, weaponType);
         String fallbackAction = attackSpec.primaryAction();
         BotAttackExecutionProvider.CloseRangePacketFields closeRangePacketFields = route == AttackRoute.CLOSE
                 ? BotAttackExecutionProvider.mimicCloseRangePacketFields(action, fallbackAction, facingLeft)
@@ -1334,7 +1424,7 @@ class BotCombatManager {
         return weaponType == WeaponType.POLE_ARM_SWING || weaponType == WeaponType.POLE_ARM_STAB;
     }
 
-    private static Rectangle calculateSkillHitBox(StatEffect effect, Character bot, Monster primaryTarget, AttackRoute route, int skillId) {
+    private static Rectangle calculateSkillHitBox(StatEffect effect, Character bot, Monster primaryTarget, AttackRoute route, int skillId, String action) {
         boolean facingLeft = primaryTarget.getPosition().x < bot.getPosition().x;
         if (effect.hasBoundingBox()) {
             Point anchor = isStrikePointAnchoredAoeSkill(skillId)
@@ -1343,7 +1433,7 @@ class BotCombatManager {
             return effect.calculateBoundingBox(anchor, facingLeft);
         }
 
-        return fallbackSkillHitBox(effect, bot, facingLeft, route, skillId);
+        return fallbackSkillHitBox(effect, bot, facingLeft, route, skillId, action);
     }
 
     static boolean isStrikePointAnchoredAoeSkill(int skillId) {
@@ -1354,9 +1444,19 @@ class BotCombatManager {
     // the bot's basic route to be CLOSE so bow/crossbow Power Knockback (a melee swing on
     // the client) gets the proper rectangular reach instead of falling through to the
     // 400 px ranged projectile box.
-    static Rectangle fallbackCloseRangeSkillHitBox(StatEffect effect, Character bot, boolean facingLeft) {
+    static Rectangle fallbackCloseRangeSkillHitBox(StatEffect effect, Character bot, String action, boolean facingLeft) {
         if (effect == null || bot == null) {
             return null;
+        }
+
+        // A true melee weapon carries an afterimage swing box (per-weapon, per-action). Use it and
+        // ignore the skill's WZ `range`, which the v83 client does not apply to these melee swings
+        // (e.g. Slash Blast reaches the same as the weapon's basic swing, not its 150 px `range`).
+        // Weapons with no swing box — bows/crossbows casting Power Knockback as a melee hit — fall
+        // through and keep `range` (e.g. 130 px) as their close reach.
+        Rectangle weaponBox = BotAttackExecutionProvider.closeRangeWeaponActionHitBox(bot, action, facingLeft);
+        if (weaponBox != null) {
+            return weaponBox;
         }
 
         Point origin = bot.getPosition();
@@ -1367,9 +1467,9 @@ class BotCombatManager {
         return new Rectangle(left, top, horizontalRange, height);
     }
 
-    static Rectangle fallbackSkillHitBox(StatEffect effect, Character bot, boolean facingLeft, AttackRoute route, int skillId) {
+    static Rectangle fallbackSkillHitBox(StatEffect effect, Character bot, boolean facingLeft, AttackRoute route, int skillId, String action) {
         if (route == AttackRoute.CLOSE) {
-            return fallbackCloseRangeSkillHitBox(effect, bot, facingLeft);
+            return fallbackCloseRangeSkillHitBox(effect, bot, action, facingLeft);
         }
         if (effect == null || bot == null) {
             return null;
@@ -1465,7 +1565,7 @@ class BotCombatManager {
 
         List<Monster> secondaryTargets = new ArrayList<>();
         for (Monster monster : bot.getMap().getAllMonsters()) {
-            if (!monster.isAlive() || monster.getObjectId() == primaryTarget.getObjectId()) {
+            if (!isHostileLivingMonster(monster) || monster.getObjectId() == primaryTarget.getObjectId()) {
                 continue;
             }
             if (!doesHitBoxIntersectMonster(hitBox, monster)) {
@@ -1557,7 +1657,7 @@ class BotCombatManager {
     private static List<Monster> aliveMonstersInRange(Character bot, Point botPos, double rangeSq) {
         List<Monster> candidates = new ArrayList<>();
         for (Monster m : bot.getMap().getAllMonsters()) {
-            if (m.isAlive() && m.getPosition().distanceSq(botPos) <= rangeSq) {
+            if (isHostileLivingMonster(m) && m.getPosition().distanceSq(botPos) <= rangeSq) {
                 candidates.add(m);
             }
         }
@@ -1623,7 +1723,9 @@ class BotCombatManager {
             return false;
         }
 
-        Rectangle hitBox = calculateSkillHitBox(effect, bot, target, route, entry.attackSkillId);
+        // Route is gated to RANGED/MAGIC above, so the close-range (action-gated) path is never
+        // taken here — action is irrelevant for the projectile box.
+        Rectangle hitBox = calculateSkillHitBox(effect, bot, target, route, entry.attackSkillId, null);
         if (hitBox == null || !doesHitBoxIntersectMonster(hitBox, target)) {
             return false;
         }
@@ -1804,6 +1906,144 @@ class BotCombatManager {
         return neighbors * AOE_CLUSTER_BONUS_PER_MOB;
     }
 
+    /** True iff the bot has a multi-mob AoE skill but its chosen plan is single-target with room to hit more. */
+    static boolean isAoeBotSingleTargeting(BotEntry entry, AttackPlan plan) {
+        return entry != null && plan != null
+                && entry.aoeSkillId != 0 && entry.aoeSkillMobs > 1
+                && plan.skillId != entry.aoeSkillId
+                && plan.targets.size() < entry.aoeSkillMobs;
+    }
+
+    /** Live mobs within AoE cluster radius of the anchor (including itself), capped at the skill's mobCount. */
+    static int aoeClusterSize(BotEntry entry, Character bot, Monster anchor) {
+        if (entry == null || bot == null || anchor == null
+                || bot.getMap() == null || anchor.getPosition() == null) {
+            return 0;
+        }
+        return Math.min(clusterMonsters(bot, anchor).size(), Math.max(1, entry.aoeSkillMobs));
+    }
+
+    // AoE positioning: target selection (aoeClusterBonus) steers the bot toward a cluster, but the
+    // fire site still throws the single-target skill the instant one mob is in range — the AoE box
+    // at the cluster *edge* catches only that mob, so it ties the denominator and loses on per-hit
+    // damage. This returns a sweet-spot Point (the cluster centroid) to walk to when an AoE thrown
+    // from there would beat the fire-now plan's DPS by cfg.AOE_REPOSITION_DPS_FACTOR, else null
+    // (fire now). Bounded by AOE_REPOSITION_MAX_DISTANCE_X so it never chases scattering mobs.
+    static Point aoeRepositionTarget(BotEntry entry, Character bot, Monster primaryTarget, AttackPlan fireNowBest) {
+        if (!cfg.AOE_REPOSITION_ENABLED || entry == null || bot == null || primaryTarget == null
+                || entry.aoeSkillId == 0 || entry.aoeSkillMobs <= 1) {
+            return null;
+        }
+        // Only when the chosen plan is single-target with room to hit more — skip when the AoE is
+        // already the pick or the in-range cluster already maxes the skill's mobCount.
+        if (fireNowBest == null
+                || fireNowBest.skillId == entry.aoeSkillId
+                || fireNowBest.targets.size() >= entry.aoeSkillMobs) {
+            return null;
+        }
+        Point botPos = bot.getPosition();
+        Point tp = primaryTarget.getPosition();
+        if (botPos == null || tp == null) {
+            return null;
+        }
+        // Cheap geometry gate first (no scoring): the cluster of live mobs within the AoE radius of
+        // the primary. If it holds no more mobs than the fire-now plan already hits, bail.
+        List<Monster> cluster = clusterMonsters(bot, primaryTarget);
+        if (cluster.size() <= fireNowBest.targets.size()) {
+            return null;
+        }
+        long sumX = 0L;
+        for (Monster m : cluster) {
+            sumX += m.getPosition().x;
+        }
+        int centroidX = (int) (sumX / cluster.size());
+        // Rebuild the AoE candidate at the current position (the plan planAttack discards) so we know
+        // the actual hitbox shape. The box extends *forward* from the bot (it does not straddle the
+        // anchor), so to cover the cluster we shift the box CENTER onto the centroid — not the bot
+        // onto the centroid, which would push a forward box past the mobs and catch none. The bot
+        // moves by the same shift, bounded by the chase distance.
+        AttackPlan aoeNow = planSkillAttack(entry, bot, primaryTarget, entry.aoeSkillId);
+        if (aoeNow == null || aoeNow.hitBox == null) {
+            return null;
+        }
+        int shift = centroidX - (int) Math.round(aoeNow.hitBox.getCenterX());
+        if (Math.abs(shift) > cfg.AOE_REPOSITION_MAX_DISTANCE_X) {
+            shift = Integer.signum(shift) * cfg.AOE_REPOSITION_MAX_DISTANCE_X;
+        }
+        if (Math.abs(shift) <= cfg.AOE_REPOSITION_ARRIVAL_X) {
+            return null; // box already covers the cluster — let the normal flow pick the AoE
+        }
+        Rectangle shifted = new Rectangle(aoeNow.hitBox);
+        shifted.translate(shift, 0);
+        Monster sweetPrimary = nearestMonster(cluster, centroidX, tp.y);
+        if (sweetPrimary == null) {
+            return null;
+        }
+        List<Monster> sweetTargets = collectTargetsInHitBox(bot, sweetPrimary, shifted, entry.aoeSkillMobs);
+        if (sweetTargets.size() <= fireNowBest.targets.size()) {
+            return null; // repositioning wouldn't actually catch more mobs
+        }
+        // Geometry is promising — now pay for scoring. scoreAttackPlan is position-independent
+        // (target HP + damage profile), so the translated plan scores validly.
+        PlanScore fireNowScore = scoreAttackPlan(bot, fireNowBest);
+        // Preserve kill priority: if the fire-now plan already one-shots a full-HP target, just fire.
+        if (fireNowScore.minimumKillsFullHpTargets) {
+            return null;
+        }
+        AttackPlan sweetPlan = new AttackPlan(aoeNow.skillId, aoeNow.skillLevel, aoeNow.numDamage, shifted,
+                sweetTargets, aoeNow.route, aoeNow.display, aoeNow.direction, aoeNow.rangedDirection,
+                aoeNow.stance, aoeNow.speed, aoeNow.hitDelayMs, aoeNow.cooldownMs, aoeNow.damageWeaponType);
+        PlanScore sweetScore = scoreAttackPlan(bot, sweetPlan);
+        if (sweetScore.rawDps >= fireNowScore.rawDps * cfg.AOE_REPOSITION_DPS_FACTOR) {
+            if (cfg.AOE_REPOSITION_DEBUG) {
+                double pct = fireNowScore.rawDps > 0 ? sweetScore.rawDps / fireNowScore.rawDps * 100.0d : 0.0d;
+                log.info("AoE reposition[{}]: stepping {}px {} to hit {} mobs (vs {}) with {} for {}% DPS ({} vs {} dps)",
+                        bot.getName(), Math.abs(shift), shift < 0 ? "left" : "right",
+                        sweetTargets.size(), fireNowBest.targets.size(), skillLabel(entry.aoeSkillId),
+                        Math.round(pct), Math.round(sweetScore.rawDps), Math.round(fireNowScore.rawDps));
+            }
+            return new Point(botPos.x + shift, botPos.y);
+        }
+        return null;
+    }
+
+    private static List<Monster> clusterMonsters(Character bot, Monster primaryTarget) {
+        List<Monster> cluster = new ArrayList<>();
+        cluster.add(primaryTarget);
+        Point tp = primaryTarget.getPosition();
+        long radiusSq = (long) AOE_CLUSTER_RADIUS_PX * AOE_CLUSTER_RADIUS_PX;
+        for (Monster other : bot.getMap().getAllMonsters()) {
+            if (other == primaryTarget || !other.isAlive() || other.getPosition() == null) {
+                continue;
+            }
+            long dx = (long) other.getPosition().x - tp.x;
+            long dy = (long) other.getPosition().y - tp.y;
+            if (dx * dx + dy * dy <= radiusSq) {
+                cluster.add(other);
+            }
+        }
+        return cluster;
+    }
+
+    private static Monster nearestMonster(List<Monster> monsters, int x, int y) {
+        Monster best = null;
+        long bestDistSq = Long.MAX_VALUE;
+        for (Monster m : monsters) {
+            Point p = m.getPosition();
+            if (p == null) {
+                continue;
+            }
+            long dx = (long) p.x - x;
+            long dy = (long) p.y - y;
+            long distSq = dx * dx + dy * dy;
+            if (distSq < bestDistSq) {
+                bestDistSq = distSq;
+                best = m;
+            }
+        }
+        return best;
+    }
+
     private static long grindRegionOccupancyPenalty(GrindGraphContext context, Character bot, int targetRegionId) {
         if (!context.available() || context.entry().owner == null || bot == null || targetRegionId < 0) {
             return 0L;
@@ -1929,7 +2169,13 @@ class BotCombatManager {
         if (mobBounds == null) {
             return false;
         }
-        return mobBounds.intersects(botBounds);
+        // Only the lower half of the mob deals touch damage: keep the bottom half of the sprite
+        // bounds (v83 y grows downward, so the bottom is the max-y side). Lets the bot's
+        // feet/legs slip under a tall mob's upper body without taking contact damage.
+        int lowerHeight = Math.max(1, mobBounds.height / 2);
+        Rectangle mobLowerHalf = new Rectangle(mobBounds.x, mobBounds.y + mobBounds.height - lowerHeight,
+                mobBounds.width, lowerHeight);
+        return mobLowerHalf.intersects(botBounds);
     }
 
     static Rectangle getBotTouchBounds(BotEntry entry, Character bot) {
@@ -2044,7 +2290,7 @@ class BotCombatManager {
         Monster closest = null;
         double closestDistSq = Double.MAX_VALUE;
         for (Monster m : bot.getMap().getAllMonsters()) {
-            if (!m.isAlive() || !doesHitBoxIntersectMonster(hitBox, m)) {
+            if (!isHostileLivingMonster(m) || !doesHitBoxIntersectMonster(hitBox, m)) {
                 continue;
             }
             double distSq = m.getPosition().distanceSq(botPos);
@@ -2061,7 +2307,7 @@ class BotCombatManager {
         Monster closest = null;
         double closestDistSq = maxRangeSq;
         for (Monster m : bot.getMap().getAllMonsters()) {
-            if (!m.isAlive()) {
+            if (!isHostileLivingMonster(m)) {
                 continue;
             }
             double distSq = m.getPosition().distanceSq(botPos);
@@ -2071,6 +2317,15 @@ class BotCombatManager {
             }
         }
         return closest;
+    }
+
+    /** A living monster the bot may attack and be hit by — alive and not a friendly (escort/PQ) mob. */
+    // Thanks to ReinderKas for finding and implementing the friendly-mob
+    // interaction (escort/PQ mobs should not be attacked or deal contact damage).
+    private static boolean isHostileLivingMonster(Monster monster) {
+        return monster != null
+                && monster.isAlive()
+                && (monster.getStats() == null || !monster.getStats().isFriendly());
     }
 
     private static BotAttackExecutionProvider.BasicAttackData buildBasicAttackData(Character bot, Monster primaryTarget) {

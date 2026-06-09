@@ -101,6 +101,8 @@ import client.command.commands.gm2.WarpMapCommand;
 import client.command.commands.gm2.WhereaMiCommand;
 import client.command.commands.gm3.AirshowCommand;
 import client.command.commands.gm3.BanCommand;
+import client.command.commands.gm3.BotCfgCommand;
+import client.command.commands.gm3.BotLlmCommand;
 import client.command.commands.gm3.BotNavCommand;
 import client.command.commands.gm3.BotPerfDebugCommand;
 import client.command.commands.gm3.ChatCommand;
@@ -456,6 +458,8 @@ public class CommandsExecutor {
         addCommand("fly", 3, FlyCommand.class);
         addCommand("spawn", 3, SpawnCommand.class);
         addCommand(new String[]{"deletechar", "delchar"}, 3, DeleteCharCommand.class);
+        addCommand("botcfg", 3, BotCfgCommand.class);
+        addCommand("botllm", 3, BotLlmCommand.class);
         addCommand("botnav", 3, BotNavCommand.class);
         addCommand("botperfdebug", 3, BotPerfDebugCommand.class);
         addCommand("airshow", 3, AirshowCommand.class);

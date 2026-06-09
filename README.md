@@ -6,6 +6,8 @@ Cosmic is a server emulator for Global MapleStory (GMS) version 83.
 - Scroll Success Bonus: adds a flat bonus % to all scroll success chances
 - Maker Skills: Black/Dark crystal only improves stats and never decreases
 - Godly Stats: chance for equipment to receive random bonus stats (like free-pre-applied chaos scroll, inspired by MapleRoyals)
+- Progressive EXP rate (ex. 2x at lv1, 3x at lv 30, 4x at lv 70 ...)
+- All untradable items are tradable(by dropping, they wont disappear)
 
 ## Introduction
 

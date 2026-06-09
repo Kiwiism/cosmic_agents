@@ -676,6 +676,53 @@ class BotManagerTest {
     }
 
     @Test
+    void shouldKeepScanningForClusterWhenAoeBotSingleTargetsInRange() {
+        MapleMap map = createEmptyTestMap(910000128);
+        Character bot = mockMovingBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, mock(Character.class), null);
+        entry.nextGrindTargetSearchAtMs = 1_000L;
+        entry.aoeSkillId = constants.skills.Warrior.SLASH_BLAST;
+        entry.aoeSkillMobs = 6;
+        Monster target = mock(Monster.class);
+        when(target.getPosition()).thenReturn(new Point(140, 100));
+        BotCombatManager.AttackPlan singleTargetPlan = basicClosePlan(target);
+
+        // In range, but a multi-mob AoE bot stuck single-targeting should keep scanning for a cluster.
+        assertTrue(BotManager.shouldSearchForGrindTarget(entry, bot, target, singleTargetPlan, 1_000L));
+    }
+
+    @Test
+    void shouldAdoptSearchedTargetWhenNotCommitted() {
+        MapleMap map = createEmptyTestMap(910000129);
+        Character bot = mockMovingBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, mock(Character.class), null);
+        Monster current = mock(Monster.class);
+        when(current.getPosition()).thenReturn(new Point(300, 100)); // out of basic range
+        Monster searched = mock(Monster.class);
+        when(searched.getPosition()).thenReturn(new Point(160, 100));
+        BotCombatManager.AttackPlan plan = basicClosePlan(current);
+
+        assertTrue(BotManager.shouldSwitchToSearchedTarget(entry, bot, current, searched, plan));
+    }
+
+    @Test
+    void shouldNotSwitchInRangeTargetWhenClusterIsNotLarger() {
+        MapleMap map = createEmptyTestMap(910000130);
+        Character bot = mockMovingBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, mock(Character.class), null);
+        entry.aoeSkillId = constants.skills.Warrior.SLASH_BLAST;
+        entry.aoeSkillMobs = 6;
+        Monster current = mock(Monster.class);
+        when(current.getPosition()).thenReturn(new Point(140, 100)); // in basic range
+        Monster searched = mock(Monster.class);
+        when(searched.getPosition()).thenReturn(new Point(160, 100));
+        BotCombatManager.AttackPlan plan = basicClosePlan(current);
+
+        // Committed to an in-range target and the searched mob anchors no larger cluster (empty map).
+        assertFalse(BotManager.shouldSwitchToSearchedTarget(entry, bot, current, searched, plan));
+    }
+
+    @Test
     void shouldReuseWanderDirectionWhenGrindHasNoTarget() {
         Character bot = mockMovingBot(new Point(100, 100), createEmptyTestMap(910000030));
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
@@ -717,6 +764,55 @@ class BotManagerTest {
         doReturn(activeLoot).when(map).getMapObject(activeLootObjectId);
 
         assertEquals(activeLoot, BotInventoryManager.findNearestGrindLootTarget(entry, bot));
+    }
+
+    @Test
+    void shouldNotActivelySeekFreshGrindBotInventoryDrop() {
+        MapleMap map = spy(createEmptyTestMap(910000131));
+        Character bot = mockMovingBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, mock(Character.class), null);
+        MapItem loot = mockLoot(1, new Point(100 + BotManager.cfg.LOOT_RADIUS + 1, 100));
+        int lootObjectId = loot.getObjectId();
+        BotManager manager = mock(BotManager.class);
+        Character dropBotOwner = mock(Character.class);
+
+        when(loot.getOwnerId()).thenReturn(99);
+        when(loot.isPlayerDrop()).thenReturn(true);
+        when(loot.getDropTime()).thenReturn(System.currentTimeMillis() - 14_000L);
+        when(manager.getActiveOwnerByBotCharId(99)).thenReturn(dropBotOwner);
+        doReturn(List.of(loot)).when(map).getDroppedItems();
+        doReturn(loot).when(map).getMapObject(lootObjectId);
+
+        try (MockedStatic<BotManager> botManagers = mockStatic(BotManager.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
+            botManagers.when(BotManager::getInstance).thenReturn(manager);
+
+            assertNull(BotInventoryManager.findNearestGrindLootTarget(entry, bot));
+        }
+    }
+
+    @Test
+    void shouldClearFreshCachedGrindBotInventoryDrop() {
+        MapleMap map = spy(createEmptyTestMap(910000132));
+        Character bot = mockMovingBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, mock(Character.class), null);
+        MapItem loot = mockLoot(1, new Point(100 + BotManager.cfg.LOOT_RADIUS + 21, 100));
+        int lootObjectId = loot.getObjectId();
+        BotManager manager = mock(BotManager.class);
+        Character dropBotOwner = mock(Character.class);
+
+        entry.grindLootTarget = loot;
+        when(loot.getOwnerId()).thenReturn(99);
+        when(loot.isPlayerDrop()).thenReturn(true);
+        when(loot.getDropTime()).thenReturn(System.currentTimeMillis() - 14_000L);
+        when(manager.getActiveOwnerByBotCharId(99)).thenReturn(dropBotOwner);
+        doReturn(loot).when(map).getMapObject(lootObjectId);
+
+        try (MockedStatic<BotManager> botManagers = mockStatic(BotManager.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
+            botManagers.when(BotManager::getInstance).thenReturn(manager);
+
+            assertNull(BotManager.convenientLootTarget(entry, bot.getPosition(), new Point(500, 100)));
+            assertNull(entry.grindLootTarget);
+        }
     }
 
     @Test
@@ -1051,6 +1147,75 @@ class BotManagerTest {
             assertEquals(BotAmmoManager.OwnerAmmoShareResult.NO_DONOR,
                     BotAmmoManager.offerAmmoShareToOwner(entry, WeaponType.BOW),
                     "manual owner ammo requests should still attempt donor lookup while automatic share cooldowns are active");
+        } finally {
+            bots.remove(owner.getId());
+            sharedCooldown.remove(owner.getId());
+            backoff.remove(backoffKey);
+        }
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldLetPlayerAskedBotPotRequestBypassShareCooldowns() throws Exception {
+        BotManager manager = BotManager.getInstance();
+        MapleMap map = mock(MapleMap.class);
+        Character owner = mock(Character.class);
+        Character bot = mock(Character.class);
+        BotEntry entry = new BotEntry(bot, owner, null);
+
+        when(owner.getId()).thenReturn(81);
+        when(owner.getName()).thenReturn("Owner");
+        when(bot.getId()).thenReturn(82);
+        when(bot.getTrade()).thenReturn(null);
+        when(bot.getMap()).thenReturn(map);
+
+        Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
+        Map<Integer, Long> sharedCooldown = (Map<Integer, Long>) field(BotPotionManager.class, "potShareCooldownUntil").get(null);
+        Map<Integer, Long> hpBackoff = (Map<Integer, Long>) field(BotPotionManager.class, "potShareHpBackoffUntil").get(null);
+
+        bots.put(owner.getId(), List.of(entry));
+        sharedCooldown.put(owner.getId(), Long.MAX_VALUE);
+        hpBackoff.put(owner.getId(), Long.MAX_VALUE);
+
+        try {
+            assertTrue(BotPotionManager.requestPotShare(entry, bot, true, true),
+                    "player-asked bot supply checks should bypass automatic cooldown/backoff guards");
+            assertEquals(Long.MAX_VALUE, sharedCooldown.get(owner.getId()));
+            assertEquals(Long.MAX_VALUE, hpBackoff.get(owner.getId()));
+        } finally {
+            bots.remove(owner.getId());
+            sharedCooldown.remove(owner.getId());
+            hpBackoff.remove(owner.getId());
+        }
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldLetPlayerAskedBotAmmoRequestBypassShareCooldowns() throws Exception {
+        BotManager manager = BotManager.getInstance();
+        MapleMap map = mock(MapleMap.class);
+        Character owner = mock(Character.class);
+        Character bot = mock(Character.class);
+        BotEntry entry = new BotEntry(bot, owner, null);
+
+        when(owner.getId()).thenReturn(83);
+        when(bot.getTrade()).thenReturn(null);
+        when(bot.getMap()).thenReturn(map);
+
+        Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
+        Map<Integer, Long> sharedCooldown = (Map<Integer, Long>) field(BotAmmoManager.class, "ammoShareCooldownUntil").get(null);
+        Map<String, Long> backoff = (Map<String, Long>) field(BotAmmoManager.class, "ammoShareBackoffUntil").get(null);
+        String backoffKey = owner.getId() + ":" + WeaponType.BOW.name();
+
+        bots.put(owner.getId(), List.of(entry));
+        sharedCooldown.put(owner.getId(), Long.MAX_VALUE);
+        backoff.put(backoffKey, Long.MAX_VALUE);
+
+        try {
+            assertTrue(BotAmmoManager.requestAmmoShare(entry, bot, WeaponType.BOW, 0, true),
+                    "player-asked bot supply checks should bypass automatic cooldown/backoff guards");
+            assertEquals(Long.MAX_VALUE, sharedCooldown.get(owner.getId()));
+            assertEquals(Long.MAX_VALUE, backoff.get(backoffKey));
         } finally {
             bots.remove(owner.getId());
             sharedCooldown.remove(owner.getId());

@@ -24,6 +24,10 @@ final class BotNavigationManager {
     private static final int JUMP_READY_X_TOLERANCE = 10;
     private static final int EDGE_READY_X_TOLERANCE = 14;
     private static final int NO_MOVEMENT_WALK_TOLERANCE = 4;
+    // After a bot takes a portal, suppress further portal usage for this long. Prevents a bot from
+    // immediately re-entering a portal (e.g. bouncing back through the return portal). Gates ONLY
+    // portal execution — movement, attacks and every other action continue unaffected.
+    private static final long PORTAL_USE_COOLDOWN_MS = 250L;
     private static final long SLOW_PATHFIND_WARN_NS = 50_000_000L;
 
     /** Throttle warmup notifications per (ownerId -> mapId -> lastNotifyMs). */
@@ -51,7 +55,11 @@ final class BotNavigationManager {
         }
     }
 
-    private record SearchState(int regionId, Point point) {
+    // viaPortal: true when this state was reached by a PORTAL edge. It distinguishes "arrived here
+    // by teleport" from "arrived by walk/jump/etc." so the search can charge the portal cooldown to
+    // a portal that chains straight off another portal (see runSearch). The flag is part of the
+    // dedup key, so a region reachable both ways is explored under both costs.
+    private record SearchState(int regionId, Point point, boolean viaPortal) {
     }
 
     private record PathfindProfile(long elapsedNs,
@@ -589,10 +597,14 @@ final class BotNavigationManager {
                                                         Character bot,
                                                         Point rawTargetPos,
                                                         BotNavigationGraph.Edge edge) {
+        if (System.currentTimeMillis() < entry.portalUseCooldownUntilMs) {
+            return null;
+        }
         if (!usePortal(bot, edge.portalId)) {
             return null;
         }
 
+        entry.portalUseCooldownUntilMs = System.currentTimeMillis() + PORTAL_USE_COOLDOWN_MS;
         clearNavigation(entry);
         BotMovementManager.resetEntryState(entry);
         return new NavigationDirective(rawTargetPos, true);
@@ -684,11 +696,7 @@ final class BotNavigationManager {
     }
 
     private static BotNavigationGraph resolveActiveGraph(MapleMap map, BotMovementProfile movementProfile) {
-        BotNavigationGraph exact = BotNavigationGraphProvider.peekGraph(map, movementProfile);
-        if (exact != null) {
-            return exact;
-        }
-        return BotNavigationGraphProvider.peekClosestGraph(map, movementProfile);
+        return BotNavigationGraphProvider.peekBestGraph(map, movementProfile);
     }
 
     static Point selectDropWaypoint(BotEntry entry,
@@ -799,6 +807,16 @@ final class BotNavigationManager {
         return findPath(graph, map, startPos, startRegionId, targetRegionId, targetPos, "target-score");
     }
 
+    /**
+     * Production pathfinding heuristic toggle. When {@code true} (default) the search runs the
+     * admissible h=0 (Dijkstra) variant: optimal-cost paths, no portal-skipping. Flip to
+     * {@code false} to restore the legacy dx/walk-speed heuristic (faster per search, but on
+     * Kerning City ~19% of cross-region paths were non-optimal and ~7% walked past a usable
+     * portal — see {@code BotNavigationProbe --measure}). The legacy {@link #heuristic} and the
+     * {@link #runSearch} zeroHeuristic branch are both retained; this is the single knob.
+     */
+    static boolean useAdmissibleHeuristic = true;
+
     private static List<BotNavigationGraph.Edge> findPath(BotNavigationGraph graph,
                                                           MapleMap map,
                                                           Point startPos,
@@ -806,6 +824,26 @@ final class BotNavigationManager {
                                                           int targetRegionId,
                                                           Point targetPos,
                                                           String pathfindCaller) {
+        return runSearch(graph, map, startPos, startRegionId, targetRegionId, targetPos,
+                pathfindCaller, useAdmissibleHeuristic, true).path();
+    }
+
+    /**
+     * Core region-graph A* search. With {@code zeroHeuristic=true} it runs an admissible h=0
+     * search (degenerates to Dijkstra) that always returns the optimal-cost path; the default
+     * dx-based heuristic can over-estimate across zero-cost PORTAL edges (and faster-than-walk
+     * jumps) and return a longer route. {@code instrument=false} skips slow-path logging and the
+     * perf record so measurement callers can run the search twice cheaply.
+     */
+    static SearchOutcome runSearch(BotNavigationGraph graph,
+                                   MapleMap map,
+                                   Point startPos,
+                                   int startRegionId,
+                                   int targetRegionId,
+                                   Point targetPos,
+                                   String pathfindCaller,
+                                   boolean zeroHeuristic,
+                                   boolean instrument) {
         long startedAt = System.nanoTime();
         PathfindProfile profile = null;
         try {
@@ -813,7 +851,7 @@ final class BotNavigationManager {
             Map<SearchState, Integer> gScore = new HashMap<>();
             Map<SearchState, SearchState> cameFrom = new HashMap<>();
             Map<SearchState, BotNavigationGraph.Edge> cameByEdge = new HashMap<>();
-            SearchState startState = new SearchState(startRegionId, new Point(startPos));
+            SearchState startState = new SearchState(startRegionId, new Point(startPos), false);
             SearchState bestGoalState = null;
             int bestGoalCost = Integer.MAX_VALUE;
             int expandedNodes = 0;
@@ -824,7 +862,7 @@ final class BotNavigationManager {
             int openPeak = 1;
 
             gScore.put(startState, 0);
-            open.add(new SearchNode(startState, 0, heuristic(graph, startPos, targetPos)));
+            open.add(new SearchNode(startState, 0, zeroHeuristic ? 0 : heuristic(graph, startPos, targetPos)));
 
             while (!open.isEmpty()) {
                 SearchNode current = open.poll();
@@ -852,8 +890,19 @@ final class BotNavigationManager {
                     }
                     usableEdges++;
 
-                    int tentativeCost = current.cost + intraRegionTravelCost(graph, current.state.regionId, current.state.point, edge.startPoint) + edge.cost;
-                    SearchState nextState = new SearchState(edge.toRegionId, edge.endPoint);
+                    boolean isPortal = edge.type == BotNavigationGraph.EdgeType.PORTAL;
+                    // Portals are free on their own (edge.cost == 0). Charge PORTAL_USE_COOLDOWN_MS
+                    // only when the bot enters a portal *through the exit* of the one it just took —
+                    // i.e. it landed on a portal and immediately re-enters without walking. A
+                    // viaPortal state's point IS the previous portal's exit, so this is exactly when
+                    // that exit coincides with this portal's entry. That covers the "return to old
+                    // position" round-trip and co-located A>B>C hops, but NOT A>B>walk>C>D (the bot
+                    // walked off the exit first, so the entry points differ and it stays free).
+                    boolean enteredThroughExit = current.state.viaPortal
+                            && current.state.point.equals(edge.startPoint);
+                    int edgeCost = isPortal && enteredThroughExit ? (int) PORTAL_USE_COOLDOWN_MS : edge.cost;
+                    int tentativeCost = current.cost + intraRegionTravelCost(graph, current.state.regionId, current.state.point, edge.startPoint) + edgeCost;
+                    SearchState nextState = new SearchState(edge.toRegionId, edge.endPoint, isPortal);
                     if (tentativeCost >= gScore.getOrDefault(nextState, Integer.MAX_VALUE)) {
                         continue;
                     }
@@ -862,7 +911,7 @@ final class BotNavigationManager {
                     gScore.put(nextState, tentativeCost);
                     cameFrom.put(nextState, current.state);
                     cameByEdge.put(nextState, edge);
-                    int fScore = tentativeCost + heuristic(graph, edge.endPoint, targetPos);
+                    int fScore = tentativeCost + (zeroHeuristic ? 0 : heuristic(graph, edge.endPoint, targetPos));
                     open.add(new SearchNode(nextState, tentativeCost, fScore));
                     openPeak = Math.max(openPeak, open.size());
                 }
@@ -879,23 +928,76 @@ final class BotNavigationManager {
                     openPeak,
                     bestGoalCost,
                     path.size());
-            return path;
-        } finally {
-            if (profile == null) {
-                profile = new PathfindProfile(
-                        System.nanoTime() - startedAt,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        Integer.MAX_VALUE,
-                        0);
+            boolean usesPortal = false;
+            for (BotNavigationGraph.Edge edge : path) {
+                if (edge.type == BotNavigationGraph.EdgeType.PORTAL) {
+                    usesPortal = true;
+                    break;
+                }
             }
-            logSlowPathfind(graph, map, startPos, startRegionId, targetRegionId, targetPos, pathfindCaller, profile);
-            BotPerformanceMonitor.recordPathfind(pathfindCaller, System.nanoTime() - startedAt);
+            return new SearchOutcome(path, bestGoalCost, expandedNodes, usesPortal);
+        } finally {
+            if (instrument) {
+                if (profile == null) {
+                    profile = new PathfindProfile(
+                            System.nanoTime() - startedAt,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            Integer.MAX_VALUE,
+                            0);
+                }
+                logSlowPathfind(graph, map, startPos, startRegionId, targetRegionId, targetPos, pathfindCaller, profile);
+                BotPerformanceMonitor.recordPathfind(pathfindCaller, System.nanoTime() - startedAt);
+            }
         }
+    }
+
+    /** Result of a single {@link #runSearch} call. */
+    record SearchOutcome(List<BotNavigationGraph.Edge> path, int cost, int expandedNodes, boolean usesPortal) {
+    }
+
+    /** Side-by-side comparison of the production heuristic vs the admissible (h=0) optimal search. */
+    record PathOptimality(int currentCost, int optimalCost, boolean currentUsesPortal,
+                          boolean optimalUsesPortal, int currentExpanded, int optimalExpanded) {
+        boolean reachable() {
+            return currentCost != Integer.MAX_VALUE && optimalCost != Integer.MAX_VALUE;
+        }
+
+        boolean suboptimal() {
+            return reachable() && currentCost > optimalCost;
+        }
+
+        int costDelta() {
+            return reachable() ? currentCost - optimalCost : 0;
+        }
+
+        /** True when the heuristic walked a longer route while the optimal path took a portal. */
+        boolean portalSkipped() {
+            return suboptimal() && optimalUsesPortal && !currentUsesPortal;
+        }
+    }
+
+    /**
+     * Measurement helper: runs the same start/target search with the production heuristic and with
+     * the admissible h=0 heuristic, returning both costs so callers can quantify how often (and by
+     * how much) the current heuristic returns a non-optimal path. Not used on any production path.
+     */
+    static PathOptimality measureOptimality(BotNavigationGraph graph,
+                                            MapleMap map,
+                                            Point startPos,
+                                            int startRegionId,
+                                            int targetRegionId,
+                                            Point targetPos) {
+        SearchOutcome current = runSearch(graph, map, startPos, startRegionId, targetRegionId, targetPos,
+                "measure", false, false);
+        SearchOutcome optimal = runSearch(graph, map, startPos, startRegionId, targetRegionId, targetPos,
+                "measure", true, false);
+        return new PathOptimality(current.cost(), optimal.cost(), current.usesPortal(),
+                optimal.usesPortal(), current.expandedNodes(), optimal.expandedNodes());
     }
 
     private static void logSlowPathfind(BotNavigationGraph graph,

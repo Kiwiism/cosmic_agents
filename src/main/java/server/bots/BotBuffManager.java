@@ -36,6 +36,9 @@ final class BotBuffManager {
     private static final long TICK_MS = 3_000;
     private static final double ACC_HIT_THRESHOLD = 0.90;
 
+    /** Cheap mode skips WATK/MATK buffs stronger than this; pricier high-tier pots aren't worth it. */
+    static final int CHEAP_ATK_CAP = 12;
+
     // Shared across bot ticks, so keep the cache concurrent.
     private static final Map<Integer, StatEffect> fxCache = new ConcurrentHashMap<>();
 
@@ -120,6 +123,8 @@ final class BotBuffManager {
 
             List<BuffStat> statKey = buildStatKey(bot, fx);
             if (statKey.isEmpty()) continue;
+
+            if (cheapMode && exceedsCheapAtkCap(bot, fx)) continue;
 
             SelectedBuff candidate = new SelectedBuff(item, fx, statKey, scoreEffect(bot, fx));
             SelectedBuff current = best.get(statKey);
@@ -223,6 +228,19 @@ final class BotBuffManager {
             }
         }
         return score;
+    }
+
+    /** True if a relevant WATK/MATK statup exceeds {@link #CHEAP_ATK_CAP}; cheap mode skips these. */
+    static boolean exceedsCheapAtkCap(Character bot, StatEffect fx) {
+        for (Pair<BuffStat, Integer> statup : fx.getStatups()) {
+            BuffStat stat = statup.getLeft();
+            if ((stat == BuffStat.WATK || stat == BuffStat.MATK)
+                    && isRelevantBuffStat(bot, stat)
+                    && statup.getRight() > CHEAP_ATK_CAP) {
+                return true;
+            }
+        }
+        return false;
     }
 
     static boolean isRelevantBuffStat(Character bot, BuffStat stat) {

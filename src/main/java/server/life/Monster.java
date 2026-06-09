@@ -21,6 +21,7 @@
  */
 package server.life;
 
+import client.BotClient;
 import client.BuffStat;
 import client.Character;
 import client.Client;
@@ -1868,7 +1869,7 @@ public class Monster extends AbstractLoadedLife {
         Character newControllerWithPuppet = null;
 
         for (Character chr : getMap().getAllPlayers()) {
-            if (!chr.isHidden()) {
+            if (!chr.isHidden() && !(chr.getClient() instanceof BotClient)) {
                 int ctrlMonsSize = chr.getNumControlledMonsters();
 
                 if (isCharacterPuppetInVicinity(chr)) {
