@@ -179,22 +179,6 @@ public class BotChatManager {
             + "|\\bneed\\s+(?:any\\s+)?(?:gear|equips?|equipment)\\s+from\\s+me\\b"
             + "|\\bwhat\\s+do\\s+you\\s+need\\b|\\bwhat.?s\\s+(on\\s+your\\s+)?wish\\s*list\\b",
             Pattern.CASE_INSENSITIVE);
-    private static final Pattern NEED_HP_POT_PATTERN = Pattern.compile(
-            "\\b(?:need|nned|low\\s+on|out\\s+of|running\\s+low\\s+on)\\s+(?:some\\s+)?(?:hp|health)\\s+(?:pots?|potions?|supplies)\\b"
-            + "|\\b(?:any(?:body|one)?|someone|somebody|u|you)\\s+(?:got|have|has)\\s+(?:any\\s+|some\\s+)?(?:hp|health)\\s+(?:pots?|potions?)\\b",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern NEED_MP_POT_PATTERN = Pattern.compile(
-            "\\b(?:need|nned|low\\s+on|out\\s+of|running\\s+low\\s+on)\\s+(?:some\\s+)?(?:mp|mana)\\s+(?:pots?|potions?|supplies)\\b"
-            + "|\\b(?:any(?:body|one)?|someone|somebody|u|you)\\s+(?:got|have|has)\\s+(?:any\\s+|some\\s+)?(?:mp|mana)\\s+(?:pots?|potions?)\\b",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern NEED_POT_PATTERN = Pattern.compile(
-            "\\b(?:need|nned|low\\s+on|out\\s+of|running\\s+low\\s+on)\\s+(?:some\\s+)?(?:pots?|potions?|supplies)\\b"
-            + "|\\b(?:any(?:body|one)?|someone|somebody|u|you)\\s+(?:got|have|has)\\s+(?:any\\s+|some\\s+)?(?:pots?|potions?|supplies)\\b",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern NEED_AMMO_PATTERN = Pattern.compile(
-            "\\b(?:need|nned|low\\s+on|out\\s+of|running\\s+low\\s+on)\\s+(?:some\\s+)?(?:ammo|arrows?|bolts?)\\b"
-            + "|\\b(?:any(?:body|one)?|someone|somebody|u|you)\\s+(?:got|have|has)\\s+(?:any\\s+|some\\s+)?(?:ammo|arrows?|bolts?)\\b",
-            Pattern.CASE_INSENSITIVE);
     private static final List<String> AMMO_NOT_NEEDED_REPLIES = AgentDialogueCatalog.ammoNotNeededReplies();
 
     private static final Pattern FAME_PATTERN = Pattern.compile(
@@ -657,19 +641,19 @@ public class BotChatManager {
             BotManager.after(BotManager.randMs(500, 700), () -> reportHelp(entry));
             return;
         }
-        if (NEED_HP_POT_PATTERN.matcher(message).find()) {
+        if (AgentChatCommandClassifier.isNeedHpPotCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> handleNeedPotionCommand(entry, true));
             return;
         }
-        if (NEED_MP_POT_PATTERN.matcher(message).find()) {
+        if (AgentChatCommandClassifier.isNeedMpPotCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> handleNeedPotionCommand(entry, false));
             return;
         }
-        if (NEED_POT_PATTERN.matcher(message).find()) {
+        if (AgentChatCommandClassifier.isNeedPotCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> handleNeedAnyPotionCommand(entry));
             return;
         }
-        if (NEED_AMMO_PATTERN.matcher(message).find()) {
+        if (AgentChatCommandClassifier.isNeedAmmoCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> handleNeedAmmoCommand(entry));
             return;
         }
