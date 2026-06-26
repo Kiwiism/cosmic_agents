@@ -81,6 +81,8 @@ class AgentBuildDialogueClassifierTest {
 
     @Test
     void shouldClassifySpVariantChoices() {
+        assertEquals("1h", AgentBuildDialogueClassifier.ONE_HANDED_SP_VARIANT);
+        assertEquals("2h", AgentBuildDialogueClassifier.TWO_HANDED_SP_VARIANT);
         assertTrue(AgentBuildDialogueClassifier.isOneHandedSpVariant("1h"));
         assertTrue(AgentBuildDialogueClassifier.isTwoHandedSpVariant("2h"));
         assertFalse(AgentBuildDialogueClassifier.isOneHandedSpVariant("one handed"));

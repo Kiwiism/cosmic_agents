@@ -9,6 +9,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class AgentBuildDialogueClassifier {
+    public static final String ONE_HANDED_SP_VARIANT = "1h";
+    public static final String TWO_HANDED_SP_VARIANT = "2h";
+
     private static final Pattern JOB_SELECT_PATTERN = Pattern.compile(
             "\\b(warrior|fighter|page|spearman|sader|crusader|hero|dk|drk|dark knight|paladin|"
             + "mage|magician|wizard|cleric|healer|fp|il|fp mage|il mage|fp arch|il arch|priest|bishop|"
@@ -16,8 +19,8 @@ public final class AgentBuildDialogueClassifier {
             + "thief|assassin|sin|bandit|dit|hermit|chief bandit|cb|shadower|shad|night lord|nl|"
             + "pirate|brawler|gunslinger|gun|marauder|outlaw|bucc|buccaneer|corsair|"
             + "white knight|wk|dragon knight)\\b", Pattern.CASE_INSENSITIVE);
-    private static final Pattern SP_1H_PATTERN = Pattern.compile("\\b1h\\b", Pattern.CASE_INSENSITIVE);
-    private static final Pattern SP_2H_PATTERN = Pattern.compile("\\b2h\\b", Pattern.CASE_INSENSITIVE);
+    private static final Pattern SP_1H_PATTERN = Pattern.compile("\\b" + ONE_HANDED_SP_VARIANT + "\\b", Pattern.CASE_INSENSITIVE);
+    private static final Pattern SP_2H_PATTERN = Pattern.compile("\\b" + TWO_HANDED_SP_VARIANT + "\\b", Pattern.CASE_INSENSITIVE);
     private static final Pattern AP_CHANGE_BUILD_PATTERN = Pattern.compile(
             "\\b(change|switch|update|reset|new)\\s+(your\\s+|ur\\s+)?build\\b",
             Pattern.CASE_INSENSITIVE);

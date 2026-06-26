@@ -431,11 +431,11 @@ public class BotChatManager {
         // SP build variant selection — only matched when waiting for an answer (Hero 1h vs 2h)
         if (entry.spVariantPromptSent && entry.spVariant == null) {
             if (AgentBuildDialogueClassifier.isOneHandedSpVariant(message)) {
-                entry.spVariant = "1h";
+                entry.spVariant = AgentBuildDialogueClassifier.ONE_HANDED_SP_VARIANT;
                 BotManager.getInstance().botReply(entry, AgentDialogueCatalog.oneHandedSpVariantReply());
                 BotBuildManager.autoAssignSp(entry, entry.bot);
             } else if (AgentBuildDialogueClassifier.isTwoHandedSpVariant(message)) {
-                entry.spVariant = "2h";
+                entry.spVariant = AgentBuildDialogueClassifier.TWO_HANDED_SP_VARIANT;
                 BotManager.getInstance().botReply(entry, AgentDialogueCatalog.twoHandedSpVariantReply());
                 BotBuildManager.autoAssignSp(entry, entry.bot);
             }
