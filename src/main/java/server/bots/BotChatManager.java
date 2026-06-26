@@ -36,8 +36,6 @@ import server.agents.capabilities.dialogue.AgentSocialDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
 import server.agents.capabilities.dialogue.AgentSupplyRequestOutcomeFlow;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
-import server.agents.commands.AgentQueuedMessage;
-import server.agents.commands.AgentReplyQueue;
 import server.combat.CombatFormulaProvider;
 import server.maps.FieldLimit;
 import server.maps.MapleMap;
@@ -734,64 +732,19 @@ public class BotChatManager {
     // -------------------------------------------------------------------------
 
     public static void queueBotSay(BotEntry entry, String message) {
-        queueMessageWithEstimatedDelay(entry, message, false);
+        BotChatReplyRuntime.queueSay(entry, message);
     }
 
     static void queueBotReply(BotEntry entry, String message) {
-        queueMessageWithEstimatedDelay(entry, message, true);
+        BotChatReplyRuntime.queueReply(entry, message);
     }
 
     static long queueBotSayWithEstimatedDelay(BotEntry entry, String message) {
-        return queueMessageWithEstimatedDelay(entry, message, false);
+        return BotChatReplyRuntime.queueSayWithEstimatedDelay(entry, message);
     }
 
     static long queueBotReplyWithEstimatedDelay(BotEntry entry, String message) {
-        return queueMessageWithEstimatedDelay(entry, message, true);
-    }
-
-    private static long queueMessageWithEstimatedDelay(BotEntry entry, String message, boolean ownerDirected) {
-        return AgentReplyQueue.queueMessageWithEstimatedDelay(
-                replyQueueState(entry),
-                message,
-                ownerDirected,
-                replyQueueDispatcher(entry));
-    }
-
-    private static AgentReplyQueue.State replyQueueState(BotEntry entry) {
-        return new AgentReplyQueue.State() {
-            @Override
-            public java.util.Deque<AgentQueuedMessage> queue() {
-                return entry.msgQueue;
-            }
-
-            @Override
-            public boolean isSending() {
-                return entry.msgSending;
-            }
-
-            @Override
-            public void setSending(boolean sending) {
-                entry.msgSending = sending;
-            }
-        };
-    }
-
-    private static AgentReplyQueue.Dispatcher replyQueueDispatcher(BotEntry entry) {
-        return new AgentReplyQueue.Dispatcher() {
-            @Override
-            public void dispatch(AgentQueuedMessage message) {
-                if (message.ownerDirected()) {
-                    BotManager.getInstance().botReply(entry, message.text());
-                } else {
-                    BotManager.getInstance().botSay(entry, message.text());
-                }
-            }
-
-            @Override
-            public void scheduleNext(Runnable task, int delayMs) {
-                BotManager.after(delayMs, task);
-            }
-        };
+        return BotChatReplyRuntime.queueReplyWithEstimatedDelay(entry, message);
     }
 
     // Status check — called on spawn, grind start, greeting, and level-up
