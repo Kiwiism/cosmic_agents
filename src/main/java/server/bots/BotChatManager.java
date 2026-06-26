@@ -1154,11 +1154,11 @@ public class BotChatManager {
     private static void reportRecommendedGear(BotEntry entry, Character bot) {
         Character owner = entry.owner;
         if (owner == null) {
-            queueBotReply(entry, AgentDialogueCatalog.gearCheckUnavailableReply());
+            queueBotReply(entry, AgentChatEquipmentFlow.gearCheckUnavailableReply());
             return;
         }
         if (!BotOfferManager.offerBestRecommendedGear(entry, bot, owner)) {
-            queueBotReply(entry, AgentDialogueCatalog.noBetterGearReply());
+            queueBotReply(entry, AgentChatEquipmentFlow.noBetterGearReply());
         }
         entry.nextGearSuggestionAt = System.currentTimeMillis() + 60_000L;
     }

@@ -28,6 +28,14 @@ public final class AgentChatEquipmentFlow {
         return AgentDialogueCatalog.gearOptimizedReply();
     }
 
+    public static String gearCheckUnavailableReply() {
+        return AgentDialogueCatalog.gearCheckUnavailableReply();
+    }
+
+    public static String noBetterGearReply() {
+        return AgentDialogueCatalog.noBetterGearReply();
+    }
+
     public interface EquipmentCallbacks {
         boolean unequipSlot(String slotName);
 
