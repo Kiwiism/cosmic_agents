@@ -5,6 +5,8 @@ import client.Job;
 import client.inventory.Inventory;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
+import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
+import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.commands.AgentQueuedMessage;
 import server.maps.FieldLimit;
 import server.maps.MapleMap;
@@ -24,142 +26,142 @@ import static org.mockito.Mockito.when;
 class BotChatManagerTest {
     @Test
     void shouldParseTradeMesosAsAllWhenNoAmountIsSpecified() {
-        assertEquals("mesos", BotChatManager.matchTradeCategory("trade mesos"));
-        assertEquals("mesos", BotChatManager.matchTradeCategory("trade me all your mesos"));
+        assertEquals("mesos", AgentTradeDialogueClassifier.matchTradeCategory("trade mesos"));
+        assertEquals("mesos", AgentTradeDialogueClassifier.matchTradeCategory("trade me all your mesos"));
     }
 
     @Test
     void shouldParseTradeMesosWithExplicitAmounts() {
-        assertEquals("mesos:1000000", BotChatManager.matchTradeCategory("trade 1m mesos"));
-        assertEquals("mesos:1250000", BotChatManager.matchTradeCategory("trade 1,250,000 mesos"));
-        assertEquals("mesos:1500000", BotChatManager.matchTradeCategory("trade 1.5m mesos"));
+        assertEquals("mesos:1000000", AgentTradeDialogueClassifier.matchTradeCategory("trade 1m mesos"));
+        assertEquals("mesos:1250000", AgentTradeDialogueClassifier.matchTradeCategory("trade 1,250,000 mesos"));
+        assertEquals("mesos:1500000", AgentTradeDialogueClassifier.matchTradeCategory("trade 1.5m mesos"));
     }
 
     @Test
     void shouldParseAdditionalMesoTransferPhrasings() {
-        assertEquals("mesos:5000000", BotChatManager.matchTradeCategory("give me 5m"));
-        assertEquals("mesos:200000", BotChatManager.matchTradeCategory("gimme 200000"));
-        assertEquals("mesos", BotChatManager.matchTradeCategory("trade meso"));
-        assertEquals("mesos:10000000", BotChatManager.matchTradeCategory("give meso 10m"));
-        assertEquals("mesos:10000000", BotChatManager.matchTradeCategory("trade 10m"));
+        assertEquals("mesos:5000000", AgentTradeDialogueClassifier.matchTradeCategory("give me 5m"));
+        assertEquals("mesos:200000", AgentTradeDialogueClassifier.matchTradeCategory("gimme 200000"));
+        assertEquals("mesos", AgentTradeDialogueClassifier.matchTradeCategory("trade meso"));
+        assertEquals("mesos:10000000", AgentTradeDialogueClassifier.matchTradeCategory("give meso 10m"));
+        assertEquals("mesos:10000000", AgentTradeDialogueClassifier.matchTradeCategory("trade 10m"));
     }
 
     @Test
     void shouldStillParseNamedItemTrades() {
-        assertEquals("name:chaos scroll", BotChatManager.matchTradeCategory("trade chaos scroll"));
-        assertEquals("name:chaos scroll", BotChatManager.matchTradeCategory("trade chaos scrolls"));
+        assertEquals("name:chaos scroll", AgentTradeDialogueClassifier.matchTradeCategory("trade chaos scroll"));
+        assertEquals("name:chaos scroll", AgentTradeDialogueClassifier.matchTradeCategory("trade chaos scrolls"));
     }
 
     @Test
     void shouldParseViewEquipmentRequestsAsTradeCommands() {
-        assertEquals("name:hat", BotChatManager.matchTradeCategory("show me your hat"));
-        assertEquals("name:ring 2", BotChatManager.matchTradeCategory("let me see ur ring 2"));
-        assertEquals("name:weapon", BotChatManager.matchTradeCategory("can i c yo weapon"));
+        assertEquals("name:hat", AgentTradeDialogueClassifier.matchTradeCategory("show me your hat"));
+        assertEquals("name:ring 2", AgentTradeDialogueClassifier.matchTradeCategory("let me see ur ring 2"));
+        assertEquals("name:weapon", AgentTradeDialogueClassifier.matchTradeCategory("can i c yo weapon"));
     }
 
     @Test
     void shouldParseFollowTargetCommandsWithoutBreakingPlainFollow() {
-        assertEquals("clawer", BotChatManager.matchFollowTarget("follow clawer"));
-        assertEquals("Clawer", BotChatManager.matchFollowTarget("follow Clawer please"));
-        assertNull(BotChatManager.matchFollowTarget("follow me"));
-        assertNull(BotChatManager.matchFollowTarget("follow here"));
+        assertEquals("clawer", AgentChatCommandClassifier.matchFollowTarget("follow clawer"));
+        assertEquals("Clawer", AgentChatCommandClassifier.matchFollowTarget("follow Clawer please"));
+        assertNull(AgentChatCommandClassifier.matchFollowTarget("follow me"));
+        assertNull(AgentChatCommandClassifier.matchFollowTarget("follow here"));
     }
 
     @Test
     void shouldOnlyMatchMovementModeCommandsAsWholeCommands() {
-        assertTrue(BotChatManager.isMoveHereCommand("here"));
-        assertTrue(BotChatManager.isMoveHereCommand("move here!"));
-        assertFalse(BotChatManager.isMoveHereCommand("some random chat message here"));
+        assertTrue(AgentChatCommandClassifier.isMoveHereCommand("here"));
+        assertTrue(AgentChatCommandClassifier.isMoveHereCommand("move here!"));
+        assertFalse(AgentChatCommandClassifier.isMoveHereCommand("some random chat message here"));
 
-        assertTrue(BotChatManager.isGrindCommand("farm"));
-        assertTrue(BotChatManager.isGrindCommand("go grind"));
-        assertFalse(BotChatManager.isGrindCommand("Im going to the farm today"));
+        assertTrue(AgentChatCommandClassifier.isGrindCommand("farm"));
+        assertTrue(AgentChatCommandClassifier.isGrindCommand("go grind"));
+        assertFalse(AgentChatCommandClassifier.isGrindCommand("Im going to the farm today"));
 
-        assertTrue(BotChatManager.isFarmHereCommand("farm here"));
-        assertTrue(BotChatManager.isFarmHereCommand("grind here please"));
-        assertFalse(BotChatManager.isFarmHereCommand("Im going to farm here today"));
+        assertTrue(AgentChatCommandClassifier.isFarmHereCommand("farm here"));
+        assertTrue(AgentChatCommandClassifier.isFarmHereCommand("grind here please"));
+        assertFalse(AgentChatCommandClassifier.isFarmHereCommand("Im going to farm here today"));
 
-        assertTrue(BotChatManager.isFarmHereCommand("sentry"));
-        assertTrue(BotChatManager.isFarmHereCommand("go sentry"));
-        assertTrue(BotChatManager.isFarmHereCommand("sentry here"));
-        assertTrue(BotChatManager.isFarmHereCommand("sentry mode"));
-        assertTrue(BotChatManager.isFarmHereCommand("go sentry mode"));
-        assertTrue(BotChatManager.isFarmHereCommand("camp"));
-        assertTrue(BotChatManager.isFarmHereCommand("camp here"));
-        assertTrue(BotChatManager.isFarmHereCommand("guard mode"));
-        assertTrue(BotChatManager.isFarmHereCommand("go defend mode"));
-        assertTrue(BotChatManager.isFarmHereCommand("post up"));
-        assertTrue(BotChatManager.isFarmHereCommand("post up here"));
-        assertTrue(BotChatManager.isFarmHereCommand("anchor here"));
-        assertTrue(BotChatManager.isFarmHereCommand("anchor"));
-        assertFalse(BotChatManager.isFarmHereCommand("Im going to camp today"));
-        assertFalse(BotChatManager.isFarmHereCommand("setting up camp"));
+        assertTrue(AgentChatCommandClassifier.isFarmHereCommand("sentry"));
+        assertTrue(AgentChatCommandClassifier.isFarmHereCommand("go sentry"));
+        assertTrue(AgentChatCommandClassifier.isFarmHereCommand("sentry here"));
+        assertTrue(AgentChatCommandClassifier.isFarmHereCommand("sentry mode"));
+        assertTrue(AgentChatCommandClassifier.isFarmHereCommand("go sentry mode"));
+        assertTrue(AgentChatCommandClassifier.isFarmHereCommand("camp"));
+        assertTrue(AgentChatCommandClassifier.isFarmHereCommand("camp here"));
+        assertTrue(AgentChatCommandClassifier.isFarmHereCommand("guard mode"));
+        assertTrue(AgentChatCommandClassifier.isFarmHereCommand("go defend mode"));
+        assertTrue(AgentChatCommandClassifier.isFarmHereCommand("post up"));
+        assertTrue(AgentChatCommandClassifier.isFarmHereCommand("post up here"));
+        assertTrue(AgentChatCommandClassifier.isFarmHereCommand("anchor here"));
+        assertTrue(AgentChatCommandClassifier.isFarmHereCommand("anchor"));
+        assertFalse(AgentChatCommandClassifier.isFarmHereCommand("Im going to camp today"));
+        assertFalse(AgentChatCommandClassifier.isFarmHereCommand("setting up camp"));
     }
 
     @Test
     void shouldParseNamedItemGiveRequests() {
-        assertEquals("name:flaming feather", BotChatManager.matchChoiceCategory("give me flaming feather"));
-        assertEquals("name:flaming feather", BotChatManager.matchChoiceCategory("give flaming feather"));
+        assertEquals("name:flaming feather", AgentTradeDialogueClassifier.matchChoiceCategory("give me flaming feather"));
+        assertEquals("name:flaming feather", AgentTradeDialogueClassifier.matchChoiceCategory("give flaming feather"));
     }
 
     @Test
     void shouldParseRecommendedGearTrades() {
-        assertEquals("recommended", BotChatManager.matchTradeCategory("trade recommended gear"));
-        assertEquals("recommended", BotChatManager.matchTradeCategory("trade me upgrades"));
-        assertEquals("recommended", BotChatManager.matchTradeCategory("trade better equipment"));
+        assertEquals("recommended", AgentTradeDialogueClassifier.matchTradeCategory("trade recommended gear"));
+        assertEquals("recommended", AgentTradeDialogueClassifier.matchTradeCategory("trade me upgrades"));
+        assertEquals("recommended", AgentTradeDialogueClassifier.matchTradeCategory("trade better equipment"));
     }
 
     @Test
     void shouldParseAmmoTrades() {
-        assertEquals("ammo", BotChatManager.matchTradeCategory("trade ammo"));
-        assertEquals("ammo", BotChatManager.matchTradeCategory("trade me your arrows"));
-        assertEquals("ammo", BotChatManager.matchTradeCategory("trade bullets"));
+        assertEquals("ammo", AgentTradeDialogueClassifier.matchTradeCategory("trade ammo"));
+        assertEquals("ammo", AgentTradeDialogueClassifier.matchTradeCategory("trade me your arrows"));
+        assertEquals("ammo", AgentTradeDialogueClassifier.matchTradeCategory("trade bullets"));
     }
 
     @Test
     void shouldParseReservedEquipTradesWithOptionalPage() {
-        assertEquals("equips:reserved:1", BotChatManager.matchTradeCategory("trade reserve"));
-        assertEquals("equips:reserved:1", BotChatManager.matchTradeCategory("trade reserved"));
-        assertEquals("equips:reserved:3", BotChatManager.matchTradeCategory("trade reserve 3"));
-        assertEquals("equips:reserved:12", BotChatManager.matchTradeCategory("trade me your reserve 12"));
+        assertEquals("equips:reserved:1", AgentTradeDialogueClassifier.matchTradeCategory("trade reserve"));
+        assertEquals("equips:reserved:1", AgentTradeDialogueClassifier.matchTradeCategory("trade reserved"));
+        assertEquals("equips:reserved:3", AgentTradeDialogueClassifier.matchTradeCategory("trade reserve 3"));
+        assertEquals("equips:reserved:12", AgentTradeDialogueClassifier.matchTradeCategory("trade me your reserve 12"));
     }
 
     @Test
     void shouldParseTrashGearTrades() {
-        assertEquals("trash", BotChatManager.matchTradeCategory("trade trash"));
-        assertEquals("trash", BotChatManager.matchTradeCategory("trade my trash"));
-        assertEquals("trash", BotChatManager.matchTradeCategory("trade junk"));
-        assertEquals("trash", BotChatManager.matchTradeCategory("got trash?"));
-        assertEquals("trash", BotChatManager.matchTradeCategory("have any junk?"));
-        assertNull(BotChatManager.matchItemQuery("got trash?"));
-        assertEquals("trash", BotChatManager.matchTradeCategory("show me your junk"));
-        assertEquals("trash", BotChatManager.matchTradeCategory("show your junk"));
-        assertEquals("trash", BotChatManager.matchTradeCategory("show ur junk"));
+        assertEquals("trash", AgentTradeDialogueClassifier.matchTradeCategory("trade trash"));
+        assertEquals("trash", AgentTradeDialogueClassifier.matchTradeCategory("trade my trash"));
+        assertEquals("trash", AgentTradeDialogueClassifier.matchTradeCategory("trade junk"));
+        assertEquals("trash", AgentTradeDialogueClassifier.matchTradeCategory("got trash?"));
+        assertEquals("trash", AgentTradeDialogueClassifier.matchTradeCategory("have any junk?"));
+        assertNull(AgentTradeDialogueClassifier.matchItemQuery("got trash?"));
+        assertEquals("trash", AgentTradeDialogueClassifier.matchTradeCategory("show me your junk"));
+        assertEquals("trash", AgentTradeDialogueClassifier.matchTradeCategory("show your junk"));
+        assertEquals("trash", AgentTradeDialogueClassifier.matchTradeCategory("show ur junk"));
     }
 
     @Test
     void shouldNotParseSellTrashAsTradeTrash() {
-        assertNull(BotChatManager.matchTradeCategory("sell trash"));
-        assertNull(BotChatManager.matchTradeCategory("sell junk"));
+        assertNull(AgentTradeDialogueClassifier.matchTradeCategory("sell trash"));
+        assertNull(AgentTradeDialogueClassifier.matchTradeCategory("sell junk"));
     }
 
     @Test
     void shouldMatchMesoQueries() {
-        assertTrue(BotChatManager.isMesoQuery("meso?"));
-        assertTrue(BotChatManager.isMesoQuery("mesos?"));
-        assertTrue(BotChatManager.isMesoQuery("cash?"));
-        assertTrue(BotChatManager.isMesoQuery("how much cash do you have"));
-        assertTrue(BotChatManager.isMesoQuery("your mesos"));
-        assertFalse(BotChatManager.isMesoQuery("trade mesos"));
+        assertTrue(AgentChatCommandClassifier.isMesoQuery("meso?"));
+        assertTrue(AgentChatCommandClassifier.isMesoQuery("mesos?"));
+        assertTrue(AgentChatCommandClassifier.isMesoQuery("cash?"));
+        assertTrue(AgentChatCommandClassifier.isMesoQuery("how much cash do you have"));
+        assertTrue(AgentChatCommandClassifier.isMesoQuery("your mesos"));
+        assertFalse(AgentChatCommandClassifier.isMesoQuery("trade mesos"));
     }
 
     @Test
     void shouldMatchMovementStatQueries() {
-        assertTrue(BotChatManager.isMovementStatsQuery("speed?"));
-        assertTrue(BotChatManager.isMovementStatsQuery("jump?"));
-        assertTrue(BotChatManager.isMovementStatsQuery("movement stats"));
-        assertTrue(BotChatManager.isMovementStatsQuery("how fast are you"));
-        assertFalse(BotChatManager.isMovementStatsQuery("trade mesos"));
+        assertTrue(AgentChatCommandClassifier.isMovementStatsQuery("speed?"));
+        assertTrue(AgentChatCommandClassifier.isMovementStatsQuery("jump?"));
+        assertTrue(AgentChatCommandClassifier.isMovementStatsQuery("movement stats"));
+        assertTrue(AgentChatCommandClassifier.isMovementStatsQuery("how fast are you"));
+        assertFalse(AgentChatCommandClassifier.isMovementStatsQuery("trade mesos"));
     }
 
     @Test
@@ -182,9 +184,9 @@ class BotChatManagerTest {
         BotEntry entry = new BotEntry(null, null, null);
         entry.following = true;
 
-        assertTrue(BotChatManager.isFidgetCommand("fidget"));
-        assertTrue(BotChatManager.isFidgetCommand("fidget!"));
-        assertFalse(BotChatManager.isFidgetCommand("please fidget"));
+        assertTrue(AgentChatCommandClassifier.isFidgetCommand("fidget"));
+        assertTrue(AgentChatCommandClassifier.isFidgetCommand("fidget!"));
+        assertFalse(AgentChatCommandClassifier.isFidgetCommand("please fidget"));
         for (int i = 0; i < 100; i++) {
             assertTrue(Set.of(2, 3, 5, 6, 7).contains(BotChatManager.randomFidgetExpression()));
         }
@@ -252,19 +254,19 @@ class BotChatManagerTest {
 
     @Test
     void shouldParseProactiveOfferToggleCommands() {
-        assertTrue(BotChatManager.isProactiveOffersOnCommand("proactive offers on"));
-        assertTrue(BotChatManager.isProactiveOffersOnCommand("future upgrades on"));
-        assertTrue(BotChatManager.isProactiveOffersOffCommand("proactive offers off"));
-        assertTrue(BotChatManager.isProactiveOffersOffCommand("offers future off"));
-        assertFalse(BotChatManager.isProactiveOffersOnCommand("trade recommended gear"));
+        assertTrue(AgentChatCommandClassifier.isProactiveOffersOnCommand("proactive offers on"));
+        assertTrue(AgentChatCommandClassifier.isProactiveOffersOnCommand("future upgrades on"));
+        assertTrue(AgentChatCommandClassifier.isProactiveOffersOffCommand("proactive offers off"));
+        assertTrue(AgentChatCommandClassifier.isProactiveOffersOffCommand("offers future off"));
+        assertFalse(AgentChatCommandClassifier.isProactiveOffersOnCommand("trade recommended gear"));
     }
 
     @Test
     void shouldParseOwnerGearNeedQuestionsAsUpgradeRequests() {
-        assertTrue(BotChatManager.isRequestUpgradeCommand("do you need any gear from me?"));
-        assertTrue(BotChatManager.isRequestUpgradeCommand("need gear from me"));
-        assertTrue(BotChatManager.isRequestUpgradeCommand("do you need equipment"));
-        assertFalse(BotChatManager.isRequestUpgradeCommand("trade recommended gear"));
+        assertTrue(AgentChatCommandClassifier.isRequestUpgradeCommand("do you need any gear from me?"));
+        assertTrue(AgentChatCommandClassifier.isRequestUpgradeCommand("need gear from me"));
+        assertTrue(AgentChatCommandClassifier.isRequestUpgradeCommand("do you need equipment"));
+        assertFalse(AgentChatCommandClassifier.isRequestUpgradeCommand("trade recommended gear"));
     }
 
     @Test
@@ -370,17 +372,17 @@ class BotChatManagerTest {
 
     @Test
     void shouldMatchRespecCommands() {
-        assertTrue(BotChatManager.isRespecCommand("respec"));
-        assertTrue(BotChatManager.isRespecCommand("reset skills"));
-        assertTrue(BotChatManager.isRespecCommand("rebuild sp"));
+        assertTrue(AgentChatCommandClassifier.isRespecCommand("respec"));
+        assertTrue(AgentChatCommandClassifier.isRespecCommand("reset skills"));
+        assertTrue(AgentChatCommandClassifier.isRespecCommand("rebuild sp"));
     }
 
     @Test
     void shouldMatchApRespecCommands() {
-        assertTrue(BotChatManager.isApRespecCommand("respec ap"));
-        assertTrue(BotChatManager.isApRespecCommand("reset ap"));
-        assertTrue(BotChatManager.isApRespecCommand("rebuild ap"));
-        assertFalse(BotChatManager.isApRespecCommand("respec"));
+        assertTrue(AgentChatCommandClassifier.isApRespecCommand("respec ap"));
+        assertTrue(AgentChatCommandClassifier.isApRespecCommand("reset ap"));
+        assertTrue(AgentChatCommandClassifier.isApRespecCommand("rebuild ap"));
+        assertFalse(AgentChatCommandClassifier.isApRespecCommand("respec"));
     }
 
     @Test

@@ -315,12 +315,12 @@ public class BotChatManager {
             BotManager.after(BotManager.randMs(500, 700), () -> reportSkillBuffDebug(entry, entry.bot));
             return;
         }
-        if (isApRespecCommand(message)) {
+        if (AgentChatCommandClassifier.isApRespecCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () ->
                     BotManager.getInstance().botReply(entry, BotBuildManager.respecAp(entry, entry.bot)));
             return;
         }
-        if (isRespecCommand(message)) {
+        if (AgentChatCommandClassifier.isRespecCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () ->
                     BotManager.getInstance().botReply(entry, BotBuildManager.respecSp(entry, entry.bot)));
             return;
@@ -360,7 +360,7 @@ public class BotChatManager {
             return;
         }
 
-        if (isFarmHereCommand(message)) {
+        if (AgentChatCommandClassifier.isFarmHereCommand(message)) {
             Point dest = entry.owner != null ? new Point(entry.owner.getPosition()) : null;
             if (dest != null) {
                 BotManager.after(BotManager.randMs(1000, 1500), () -> {
@@ -369,7 +369,7 @@ public class BotChatManager {
                     BotManager.getInstance().botReply(entry, BotManager.randomReply(MOVE_HERE_REPLIES));
                 });
             }
-        } else if (isPatrolCommand(message)) {
+        } else if (AgentChatCommandClassifier.isPatrolCommand(message)) {
             Point ownerPos = entry.owner != null ? new Point(entry.owner.getPosition()) : null;
             if (ownerPos != null) {
                 BotManager.after(BotManager.randMs(1000, 1500), () -> {
@@ -378,7 +378,7 @@ public class BotChatManager {
                     BotManager.getInstance().botReply(entry, BotManager.randomReply(MOVE_HERE_REPLIES));
                 });
             }
-        } else if (isMoveHereCommand(message)) {
+        } else if (AgentChatCommandClassifier.isMoveHereCommand(message)) {
             Point dest = entry.owner != null ? new Point(entry.owner.getPosition()) : null;
             if (dest != null) {
                 BotManager.after(BotManager.randMs(1000, 1500), () -> {
@@ -386,7 +386,7 @@ public class BotChatManager {
                     BotManager.getInstance().botReply(entry, BotManager.randomReply(MOVE_HERE_REPLIES));
                 });
             }
-        } else if (isFollowCommand(message)) {
+        } else if (AgentChatCommandClassifier.isFollowCommand(message)) {
             BotManager.after(BotManager.randMs(1500, 2000), () -> {
                 BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
                 entry.nextGearSuggestionAt = 0;
@@ -395,7 +395,7 @@ public class BotChatManager {
                 BotPotionManager.checkPotShareOnModeStart(entry, entry.bot);
                 BotManager.after(BotManager.randMs(250, 750), () -> BotManager.getInstance().issueFollowOwner(entry));
             });
-        } else if (isGrindCommand(message)) {
+        } else if (AgentChatCommandClassifier.isGrindCommand(message)) {
             BotManager.after(BotManager.randMs(1500, 2000), () -> {
                 prepareActiveModeEntry(entry);
                 BotManager.getInstance().botReply(entry, BotPotionManager.grindStartMessage(entry.bot));
@@ -404,7 +404,7 @@ public class BotChatManager {
                     checkBotStatus(entry, entry.bot);
                 });
             });
-        } else if (isStopCommand(message)) {
+        } else if (AgentChatCommandClassifier.isStopCommand(message)) {
             BotManager.after(BotManager.randMs(900, 1100), () -> {
                 BotManager.getInstance().issueStop(entry);
                 BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
@@ -413,7 +413,7 @@ public class BotChatManager {
                 BotManager.after(BotManager.randMs(1400, 1600), () ->
                         BotManager.getInstance().botReply(entry, BotManager.randomReply(STOP_REPLIES)));
             });
-        } else if (isFidgetCommand(message)) {
+        } else if (AgentChatCommandClassifier.isFidgetCommand(message)) {
             BotManager.after(BotManager.randMs(250, 500), () -> {
                 entry.bot.changeFaceExpression(randomFidgetExpression());
                 BotFidgetManager.maybeStartSocialFidget(entry);
@@ -491,14 +491,14 @@ public class BotChatManager {
             return;
         }
 
-        String queriedItem = matchItemQuery(message);
+        String queriedItem = AgentTradeDialogueClassifier.matchItemQuery(message);
         if (queriedItem != null) {
             handleItemQuery(entry, queriedItem);
             return;
         }
 
         // Info commands
-        if (isRequestUpgradeCommand(message)) {
+        if (AgentChatCommandClassifier.isRequestUpgradeCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> handleRequestUpgradeCommand(entry, entry.bot));
             return;
         }
@@ -512,7 +512,7 @@ public class BotChatManager {
         }
         if (AgentChatCommandClassifier.isStatsQuery(message))
             BotManager.after(BotManager.randMs(900, 1100), () -> reportStats(entry, entry.bot));
-        if (isMovementStatsQuery(message))
+        if (AgentChatCommandClassifier.isMovementStatsQuery(message))
             BotManager.after(BotManager.randMs(900, 1100), () -> reportMovementStats(entry, entry.bot));
         if (AgentChatCommandClassifier.isRangeQuery(message))
             BotManager.after(BotManager.randMs(900, 1100), () -> reportRange(entry, entry.bot));
@@ -520,7 +520,7 @@ public class BotChatManager {
             BotManager.after(BotManager.randMs(900, 1100), () -> reportBuild(entry, entry.bot));
         if (AgentChatCommandClassifier.isInventoryQuery(message))
             BotManager.after(BotManager.randMs(900, 1100), () -> reportInventory(entry, entry.bot));
-        if (isMesoQuery(message))
+        if (AgentChatCommandClassifier.isMesoQuery(message))
             BotManager.after(BotManager.randMs(900, 1100), () -> reportMesos(entry, entry.bot));
         if (AgentChatCommandClassifier.isExpQuery(message))
             BotManager.after(BotManager.randMs(900, 1100), () -> reportExp(entry, entry.bot));
@@ -911,16 +911,8 @@ public class BotChatManager {
         return AgentDialogueReportFormatter.potionCount(hp, mp);
     }
 
-    static boolean isMesoQuery(String message) {
-        return AgentChatCommandClassifier.isMesoQuery(message);
-    }
-
     static String buildMesoReport(int mesos) {
         return AgentDialogueReportFormatter.mesoReport(mesos, MESO_REPLIES);
-    }
-
-    static boolean isMovementStatsQuery(String message) {
-        return AgentChatCommandClassifier.isMovementStatsQuery(message);
     }
 
     static List<String> buildMovementStatsReport(Character bot) {
@@ -1017,46 +1009,6 @@ public class BotChatManager {
         for (String line : AgentDialogueCatalog.helpLines()) {
             queueBotReply(entry, line);
         }
-    }
-
-    static boolean isRespecCommand(String message) {
-        return AgentChatCommandClassifier.isRespecCommand(message);
-    }
-
-    static boolean isApRespecCommand(String message) {
-        return AgentChatCommandClassifier.isApRespecCommand(message);
-    }
-
-    static boolean isFarmHereCommand(String message) {
-        return AgentChatCommandClassifier.isFarmHereCommand(message);
-    }
-
-    static boolean isPatrolCommand(String message) {
-        return AgentChatCommandClassifier.isPatrolCommand(message);
-    }
-
-    static boolean isMoveHereCommand(String message) {
-        return AgentChatCommandClassifier.isMoveHereCommand(message);
-    }
-
-    static boolean isProactiveOffersOnCommand(String message) {
-        return AgentChatCommandClassifier.isProactiveOffersOnCommand(message);
-    }
-
-    static boolean isProactiveOffersOffCommand(String message) {
-        return AgentChatCommandClassifier.isProactiveOffersOffCommand(message);
-    }
-
-    static boolean isFollowCommand(String message) {
-        return AgentChatCommandClassifier.isFollowCommand(message);
-    }
-
-    static boolean isGrindCommand(String message) {
-        return AgentChatCommandClassifier.isGrindCommand(message);
-    }
-
-    static boolean isStopCommand(String message) {
-        return AgentChatCommandClassifier.isStopCommand(message);
     }
 
     private static void handleApBuildSelection(BotEntry entry, String message) {
@@ -1212,43 +1164,9 @@ public class BotChatManager {
         return entry.ownerWasAfk;
     }
 
-    static boolean isFidgetCommand(String message) {
-        return AgentChatCommandClassifier.isFidgetCommand(message);
-    }
-
     static int randomFidgetExpression() {
         int[] expressions = {2, 3, 5, 6, 7};
         return expressions[ThreadLocalRandom.current().nextInt(expressions.length)];
-    }
-
-    static boolean isNeedHpPotCommand(String message) {
-        return AgentChatCommandClassifier.isNeedHpPotCommand(message);
-    }
-
-    static boolean isNeedMpPotCommand(String message) {
-        return AgentChatCommandClassifier.isNeedMpPotCommand(message);
-    }
-
-    static boolean isNeedPotCommand(String message) {
-        return AgentChatCommandClassifier.isNeedPotCommand(message);
-    }
-
-    static boolean isNeedAmmoCommand(String message) {
-        return AgentChatCommandClassifier.isNeedAmmoCommand(message);
-    }
-
-    static boolean isRequestUpgradeCommand(String message) {
-        return AgentChatCommandClassifier.isRequestUpgradeCommand(message);
-    }
-
-    /**
-     * Group-wide supply requests ("need pots", "anyone have hp pots", "need arrows"
-     * etc.) trigger a single response from the bot group. Broadcasting these to
-     * every entry causes duplicate replies and duplicate trades because each bot
-     * independently selects the same donor sibling.
-     */
-    static boolean isGroupSupplyRequest(String message) {
-        return AgentChatCommandClassifier.isGroupSupplyRequest(message);
     }
 
     private static void handleRequestUpgradeCommand(BotEntry entry, Character bot) {
@@ -1526,33 +1444,17 @@ public class BotChatManager {
     }
 
     private static TransferCommand matchTransferCommand(String message) {
-        String tradeCategory = matchTradeCategory(message);
+        String tradeCategory = AgentTradeDialogueClassifier.matchTradeCategory(message);
         if (tradeCategory != null) {
             return new TransferCommand(TransferMode.TRADE, tradeCategory);
         }
 
-        String choiceCategory = matchChoiceCategory(message);
+        String choiceCategory = AgentTradeDialogueClassifier.matchChoiceCategory(message);
         if (choiceCategory != null) {
             return new TransferCommand(TransferMode.CHOICE, choiceCategory);
         }
 
         return null;
-    }
-
-    static String matchItemQuery(String message) {
-        return AgentTradeDialogueClassifier.matchItemQuery(message);
-    }
-
-    static String matchTradeCategory(String message) {
-        return AgentTradeDialogueClassifier.matchTradeCategory(message);
-    }
-
-    static String matchFollowTarget(String message) {
-        return AgentChatCommandClassifier.matchFollowTarget(message);
-    }
-
-    static String matchChoiceCategory(String message) {
-        return AgentTradeDialogueClassifier.matchChoiceCategory(message);
     }
 
     private static String dropOrTradePrompt(String category, int count) {

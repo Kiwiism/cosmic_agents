@@ -10,6 +10,8 @@ import client.keybind.KeyBinding;
 import constants.game.CharacterStance;
 import org.mockito.MockedStatic;
 import org.junit.jupiter.api.Test;
+import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
+import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.StatEffect;
 import server.TimerManager;
 import server.life.Monster;
@@ -1338,22 +1340,22 @@ class BotManagerTest {
 
     @Test
     void shouldMatchNaturalSupplyRequestPhrases() {
-        assertTrue(BotChatManager.isNeedPotCommand("nned pot"));
-        assertTrue(BotChatManager.isNeedPotCommand("need some pots"));
-        assertTrue(BotChatManager.isNeedPotCommand("anybody got pot"));
-        assertTrue(BotChatManager.isNeedPotCommand("low on pots"));
-        assertTrue(BotChatManager.isNeedHpPotCommand("anyone have hp pots"));
-        assertTrue(BotChatManager.isNeedMpPotCommand("running low on mana potions"));
-        assertTrue(BotChatManager.isNeedAmmoCommand("anybody got arrows"));
-        assertTrue(BotChatManager.isNeedAmmoCommand("low on ammo"));
+        assertTrue(AgentChatCommandClassifier.isNeedPotCommand("nned pot"));
+        assertTrue(AgentChatCommandClassifier.isNeedPotCommand("need some pots"));
+        assertTrue(AgentChatCommandClassifier.isNeedPotCommand("anybody got pot"));
+        assertTrue(AgentChatCommandClassifier.isNeedPotCommand("low on pots"));
+        assertTrue(AgentChatCommandClassifier.isNeedHpPotCommand("anyone have hp pots"));
+        assertTrue(AgentChatCommandClassifier.isNeedMpPotCommand("running low on mana potions"));
+        assertTrue(AgentChatCommandClassifier.isNeedAmmoCommand("anybody got arrows"));
+        assertTrue(AgentChatCommandClassifier.isNeedAmmoCommand("low on ammo"));
     }
 
     @Test
     void shouldNormalizeNamedItemCommandsAndQueries() {
         assertEquals("warrior potion", BotInventoryManager.normalizeItemQuery("Warrior Potions?!"));
-        assertEquals("name:warrior potion", BotChatManager.matchChoiceCategory("drop warrior potions?"));
-        assertEquals("name:warrior potion", BotChatManager.matchTradeCategory("trade me warrior potions"));
-        assertEquals("warrior potion", BotChatManager.matchItemQuery("anybody got warrior potions?"));
+        assertEquals("name:warrior potion", AgentTradeDialogueClassifier.matchChoiceCategory("drop warrior potions?"));
+        assertEquals("name:warrior potion", AgentTradeDialogueClassifier.matchTradeCategory("trade me warrior potions"));
+        assertEquals("warrior potion", AgentTradeDialogueClassifier.matchItemQuery("anybody got warrior potions?"));
     }
 
     @Test

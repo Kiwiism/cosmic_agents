@@ -30,7 +30,7 @@ Reconstruction progress:
 - `server.bots.BotCommandParser` remains as a temporary compatibility adapter.
 - GM bot command entry classes still keep their visible command names, but their bodies now route through `server.agents.commands` bridge/executor classes.
 - Reply queue behavior now lives in `server.agents.commands.AgentReplyQueue`.
-- `server.bots.BotChatManager` still exposes the legacy queue methods and adapts bot runtime state into the Agent queue.
+- `server.bots.BotChatManager` still exposes the legacy queue methods and adapts bot runtime state into the Agent queue, but no longer exposes thin chat/trade classification wrapper methods.
 - Named random dialogue pools now live in `server.agents.capabilities.dialogue.AgentDialogueCatalog`.
 - BotChatManager no longer contains inline `randomReply(List.of(...))` pools; those variants are cataloged under Agent dialogue.
 - Away/logout, support/heal/buff/proactive toggle, SP variant, help, equipment recommendation, fame, skill-report fallback, and trade-choice fallback fixed prompt and confirmation lines also live in `AgentDialogueCatalog`.

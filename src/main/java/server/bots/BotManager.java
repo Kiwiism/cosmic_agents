@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import server.ItemInformationProvider;
 import server.StatEffect;
 import server.TimerManager;
+import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.bots.pq.BotPqHooks;
 import server.life.Monster;
 import server.life.MobSkill;
@@ -960,7 +961,7 @@ public class BotManager {
         // Name-prefix routing: "Jason pots?" → only Jason responds
         BotCommandParser.TargetedBotMatch targetedBot = BotCommandParser.resolveTargetedBot(entries, message);
         if (targetedBot.entry() != null) {
-            String followTargetToken = BotChatManager.matchFollowTarget(targetedBot.commandText());
+            String followTargetToken = AgentChatCommandClassifier.matchFollowTarget(targetedBot.commandText());
             if (followTargetToken != null) {
                 applyFollowTargetCommand(owner, List.of(targetedBot.entry()), followTargetToken);
                 return;
@@ -992,7 +993,7 @@ public class BotManager {
             return;
         }
 
-        String followTargetToken = BotChatManager.matchFollowTarget(message);
+        String followTargetToken = AgentChatCommandClassifier.matchFollowTarget(message);
         if (followTargetToken != null) {
             applyFollowTargetCommand(owner, entries, followTargetToken);
             return;
@@ -1003,7 +1004,7 @@ public class BotManager {
         // would have every bot run handleNeedPotionCommand independently, each
         // selecting the same best-stocked donor → duplicate offer messages and
         // duplicate trade requests to the owner.
-        if (BotChatManager.isGroupSupplyRequest(message)) {
+        if (AgentChatCommandClassifier.isGroupSupplyRequest(message)) {
             BotEntry responder = pickGroupSupplyResponder(owner, entries);
             if (responder != null) {
                 responder.replyChannel = channel;
