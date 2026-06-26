@@ -42,6 +42,10 @@ public final class AgentDialogueCatalog {
             "can't fame %s again yet, monthly limit",
             "monthly limit for %s, try again next month",
             "famed %s already this month, gotta wait");
+    private static final String FAME_TARGET_NOT_FOUND_TEMPLATE = "can't find %s on the map";
+    private static final String FAME_SELF_REPLY = "lol can't fame myself";
+    private static final String FAME_TOO_LOW_LEVEL_REPLY = "i'm too low level to fame";
+    private static final String FAME_FAILED_REPLY = "fame failed, might be at max already";
     private static final List<String> OWNER_POT_SHORTAGE_REPLIES = List.of(
             "almost out of %s pots too, i thought u were our shopper?",
             "i checked, nobody has spare %s pots. that's kinda your department lol",
@@ -167,6 +171,22 @@ public final class AgentDialogueCatalog {
 
     public static List<String> fameSamePersonReplies() {
         return FAME_SAME_PERSON_REPLIES;
+    }
+
+    public static String fameTargetNotFoundReply(String targetName) {
+        return String.format(FAME_TARGET_NOT_FOUND_TEMPLATE, targetName);
+    }
+
+    public static String fameSelfReply() {
+        return FAME_SELF_REPLY;
+    }
+
+    public static String fameTooLowLevelReply() {
+        return FAME_TOO_LOW_LEVEL_REPLY;
+    }
+
+    public static String fameFailedReply() {
+        return FAME_FAILED_REPLY;
     }
 
     public static List<String> ownerPotShortageReplies() {

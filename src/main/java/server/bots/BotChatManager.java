@@ -1869,15 +1869,15 @@ public class BotChatManager {
                     .findFirst().orElse(null);
         }
         if (target == null) {
-            BotManager.getInstance().botReply(entry, "can't find " + targetName + " on the map");
+            BotManager.getInstance().botReply(entry, AgentDialogueCatalog.fameTargetNotFoundReply(targetName));
             return;
         }
         if (target.getId() == bot.getId()) {
-            BotManager.getInstance().botReply(entry, "lol can't fame myself");
+            BotManager.getInstance().botReply(entry, AgentDialogueCatalog.fameSelfReply());
             return;
         }
         if (bot.getLevel() < 15) {
-            BotManager.getInstance().botReply(entry, "i'm too low level to fame");
+            BotManager.getInstance().botReply(entry, AgentDialogueCatalog.fameTooLowLevelReply());
             return;
         }
         Character.FameStatus status = bot.canGiveFame(target);
@@ -1896,7 +1896,7 @@ public class BotChatManager {
             String reply = template.contains("%s") ? String.format(template, target.getName()) : template;
             BotManager.getInstance().botReply(entry, reply);
         } else {
-            BotManager.getInstance().botReply(entry, "fame failed, might be at max already");
+            BotManager.getInstance().botReply(entry, AgentDialogueCatalog.fameFailedReply());
         }
     }
 }

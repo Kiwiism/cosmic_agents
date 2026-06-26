@@ -25,6 +25,10 @@ class AgentDialogueCatalogTest {
         assertTrue(AgentDialogueCatalog.followReplies().contains("w8 up"));
         assertTrue(AgentDialogueCatalog.ownerPotShortageReplies().contains("we're low on %s pots too, boss"));
         assertTrue(AgentDialogueCatalog.fameOkReplies().contains("famed %s"));
+        assertTrue(AgentDialogueCatalog.fameTargetNotFoundReply("Alice").contains("Alice on the map"));
+        assertTrue(AgentDialogueCatalog.fameSelfReply().contains("fame myself"));
+        assertTrue(AgentDialogueCatalog.fameTooLowLevelReply().contains("too low level"));
+        assertTrue(AgentDialogueCatalog.fameFailedReply().contains("fame failed"));
         assertTrue(AgentDialogueCatalog.welcomeBackOfflinePartyTemplates().contains("wb!! we're at %s"));
         assertTrue(AgentDialogueCatalog.relogConfirmPrompts().contains("save and relog? type yes"));
         assertTrue(AgentDialogueCatalog.logoutConfirmedReplies().contains("cya!!"));
