@@ -194,7 +194,7 @@ public class BotChatManager {
                 String action = entry.pendingAction;
                 entry.pendingAction = null;
                 String cancelMsg = AgentDialogueCatalog.pendingActionCancelReply(
-                        action != null && action.startsWith("drop"));
+                        AgentChatPendingAction.isDropAction(action));
                 BotManager.after(BotManager.randMs(700, 900), () ->
                         BotManager.getInstance().botReply(entry, cancelMsg));
             }

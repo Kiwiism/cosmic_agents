@@ -22,6 +22,9 @@ class AgentChatPendingActionTest {
         assertTrue(AgentChatPendingAction.isRelog("relog"));
         assertTrue(AgentChatPendingAction.isOwnerAway("owner_away"));
         assertTrue(AgentChatPendingAction.isItemChoice("item_choice"));
+        assertTrue(AgentChatPendingAction.isDropAction("drop"));
+        assertTrue(AgentChatPendingAction.isDropAction("drop_scrolls"));
         assertFalse(AgentChatPendingAction.isRelog("logout"));
+        assertFalse(AgentChatPendingAction.isDropAction(null));
     }
 }

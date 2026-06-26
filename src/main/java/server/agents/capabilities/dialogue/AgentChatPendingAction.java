@@ -6,6 +6,7 @@ public final class AgentChatPendingAction {
     public static final String LOGOUT = "logout";
     public static final String OWNER_AWAY = "owner_away";
     public static final String ITEM_CHOICE = "item_choice";
+    private static final String DROP_PREFIX = "drop";
 
     private AgentChatPendingAction() {
     }
@@ -24,5 +25,9 @@ public final class AgentChatPendingAction {
 
     public static boolean isItemChoice(String action) {
         return ITEM_CHOICE.equals(action);
+    }
+
+    public static boolean isDropAction(String action) {
+        return action != null && action.startsWith(DROP_PREFIX);
     }
 }
