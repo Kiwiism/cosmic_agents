@@ -15,6 +15,7 @@ import constants.inventory.ItemConstants;
 import server.Trade;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
+import server.agents.capabilities.dialogue.AgentEquipmentDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentUtilityDialogueClassifier;
 import server.agents.commands.AgentQueuedMessage;
@@ -238,23 +239,10 @@ public class BotChatManager {
             + "|\\b(?:meso|mesos|cash)\\s+(?:left|on\\s+(?:you|u|ya))\\b"
             + "|\\b(?:do\\s+(you|u)\\s+have|got(?:\\s+any)?|(you|u)\\s+got)\\s+(?:any\\s+)?(?:meso|mesos|cash)\\b",
             Pattern.CASE_INSENSITIVE);
-    private static final Pattern UNEQUIP_PATTERN = Pattern.compile(
-            "\\b(unequip|take\\s+off|remove)\\s+(?:everything|all|all\\s+(?:your|ur|my)\\s+gear|gear|equipment|equips?)\\b"
-            + "|\\bstrip\\s+(?:down|everything|all)\\b",
-            Pattern.CASE_INSENSITIVE);
     private static final String EQUIP_SLOT_WORDS =
             "(?:weapon|wep|shield|offhand|cape|hat|helm(?:et)?|top|shirt|overall|bottom|pants|shoes|boots|"
             + "gloves?|face(?:\\s*acc(?:essory)?)?|eye(?:\\s*(?:acc(?:essory)?|piece))?|"
             + "earrings?|rings?\\s*[1-4]?|pendant|medal|belt)";
-    private static final Pattern UNEQUIP_SLOT_PATTERN = Pattern.compile(
-            "\\b(unequip|take\\s+off|remove)\\s+(" + EQUIP_SLOT_WORDS + ")\\b",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern AUTOEQUIP_DEBUG_PATTERN = Pattern.compile(
-            "\\b(?:auto[\\-\\s]?equip|optimi[sz]e\\s+(?:gear|equip(?:s|ment)?))\\s+(?:debug|verbose|why|explain)\\b",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern AUTOEQUIP_PATTERN = Pattern.compile(
-            "\\b(?:auto[\\-\\s]?equip|optimi[sz]e\\s+(?:gear|equip(?:s|ment)?))\\b",
-            Pattern.CASE_INSENSITIVE);
     private static final Pattern TRADE_VIEW_SLOT_COMMAND_PATTERN = Pattern.compile(
             "\\b(?:can\\s+i\\s+(?:c|see)|let\\s+me\\s+(?:c|see)|show(?:\\s+me)?)\\s+"
             + "(?:(?:u|ur|yo|your)\\s+)?(" + EQUIP_SLOT_WORDS + ")\\b[?!.,]*\\s*$",
@@ -688,9 +676,8 @@ public class BotChatManager {
                     BotManager.getInstance().botReply(entry, BotBuildManager.respecSp(entry, entry.bot)));
             return;
         }
-        Matcher unequipSlotMatcher = UNEQUIP_SLOT_PATTERN.matcher(message);
-        if (unequipSlotMatcher.find()) {
-            String slotName = unequipSlotMatcher.group(2);
+        String slotName = AgentEquipmentDialogueClassifier.matchUnequipSlotName(message);
+        if (slotName != null) {
             short[] slots = BotEquipManager.slotsFromName(slotName);
             if (slots.length > 0) {
                 BotManager.after(BotManager.randMs(500, 700), () ->
@@ -698,7 +685,7 @@ public class BotChatManager {
                 return;
             }
         }
-        if (UNEQUIP_PATTERN.matcher(message).find()) {
+        if (AgentEquipmentDialogueClassifier.isUnequipAllCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 BotManager.getInstance().issueStop(entry);
                 BotManager.getInstance().botReply(entry, BotEquipManager.unequipAll(entry.bot));
@@ -707,7 +694,7 @@ public class BotChatManager {
         }
         // Debug match must run BEFORE the plain autoequip match (else "autoequip debug" is
         // swallowed by the plain pattern).
-        if (AUTOEQUIP_DEBUG_PATTERN.matcher(message).find()) {
+        if (AgentEquipmentDialogueClassifier.isAutoEquipDebugCommand(message)) {
             BotManager.after(BotManager.randMs(400, 600), () -> {
                 List<String> lines = BotEquipManager.autoEquipDebug(entry.bot);
                 for (String line : lines) {
@@ -716,7 +703,7 @@ public class BotChatManager {
             });
             return;
         }
-        if (AUTOEQUIP_PATTERN.matcher(message).find()) {
+        if (AgentEquipmentDialogueClassifier.isAutoEquipCommand(message)) {
             BotManager.after(BotManager.randMs(400, 600), () -> {
                 BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem, true);
                 BotManager.getInstance().botReply(entry, "ok, gear optimized");
