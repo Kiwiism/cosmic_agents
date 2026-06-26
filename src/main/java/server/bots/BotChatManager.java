@@ -19,6 +19,7 @@ import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueReportFormatter;
 import server.agents.capabilities.dialogue.AgentEquipmentDialogueClassifier;
+import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
 import server.agents.capabilities.dialogue.AgentSocialDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentUtilityDialogueClassifier;
@@ -131,73 +132,10 @@ public class BotChatManager {
             return;
         }
         if (entry.pendingAction != null) {
-            if (AgentChatPendingAction.isOwnerAway(entry.pendingAction)) {
-                handleOwnerAwayChoice(entry, message);
-                return;
-            }
-            // Item-choice: three-way "drop / trade / cancel" — handled independently of yes/no
-            if (AgentChatPendingAction.isItemChoice(entry.pendingAction)) {
-                String category = entry.pendingDropCategory;
-                String choice = AgentChatCommandClassifier.normalizeCommandText(message);
-                if (AgentTradeDialogueClassifier.isDropChoiceTradeCommand(choice)) {
-                    entry.pendingAction       = null;
-                    entry.pendingDropCategory = null;
-                    BotManager.after(BotManager.randMs(400, 600),
-                            () -> BotInventoryManager.executeChoice(category, true, entry, entry.bot));
-                } else if (AgentTradeDialogueClassifier.isDropChoiceDropCommand(choice)) {
-                    entry.pendingAction       = null;
-                    entry.pendingDropCategory = null;
-                    BotManager.after(BotManager.randMs(400, 600),
-                            () -> BotInventoryManager.executeChoice(category, false, entry, entry.bot));
-                } else {
-                    // any other response = cancel
-                    entry.pendingAction       = null;
-                    entry.pendingDropCategory = null;
-                    BotManager.after(BotManager.randMs(400, 600),
-                            () -> BotManager.getInstance().botReply(entry, AgentDialogueCatalog.keepDropChoiceReply()));
-                }
-                return;
-            }
-            if (AgentChatPendingAction.isSkillTreeChoice(entry.pendingAction)) {
-                handleSkillTreeChoice(entry, entry.bot, message);
-                return;
-            }
-            if (AgentChatCommandClassifier.isLogoutConfirm(message)) {
-                String action = entry.pendingAction;
-                entry.pendingAction = null;
-                if (AgentChatPendingAction.isRelog(action)) {
-                    BotManager.after(BotManager.randMs(900, 1100), () -> {
-                        Character o = entry.owner;
-                        if (o == null) return; // owner logged out before relog fired
-                        BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.relogConfirmedReplies()));
-                        int charId      = entry.bot.getId();
-                        int ownerCharId = o.getId();
-                        int world       = entry.bot.getClient().getWorld();
-                        int channel     = entry.bot.getClient().getChannel();
-                        BotManager.after(BotManager.randMs(1800, 2200), () -> {
-                            entry.bot.saveCharToDB(true);
-                            entry.bot.getClient().disconnect(false, false);
-                            BotManager.after(BotManager.randMs(10000, 10100),
-                                    () -> BotManager.getInstance().reloginBot(charId, ownerCharId, world, channel));
-                        });
-                    });
-                } else {
-                    BotManager.after(BotManager.randMs(900, 1100), () -> {
-                        BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.logoutConfirmedReplies()));
-                        BotManager.after(BotManager.randMs(1800, 2200), () -> {
-                            entry.bot.saveCharToDB(true);
-                            entry.bot.getClient().disconnect(false, false);
-                        });
-                    });
-                }
-            } else {
-                String action = entry.pendingAction;
-                entry.pendingAction = null;
-                String cancelMsg = AgentDialogueCatalog.pendingActionCancelReply(
-                        AgentChatPendingAction.isDropAction(action));
-                BotManager.after(BotManager.randMs(700, 900), () ->
-                        BotManager.getInstance().botReply(entry, cancelMsg));
-            }
+            AgentPendingChatActionFlow.handle(
+                    pendingActionState(entry),
+                    message,
+                    pendingActionCallbacks(entry));
             return;
         }
 
@@ -551,6 +489,101 @@ public class BotChatManager {
             }
         }
         LAST_CHAT_HANDLED.set(false);
+    }
+
+    private static AgentPendingChatActionFlow.PendingActionState pendingActionState(BotEntry entry) {
+        return new AgentPendingChatActionFlow.PendingActionState() {
+            @Override
+            public String pendingAction() {
+                return entry.pendingAction;
+            }
+
+            @Override
+            public String pendingDropCategory() {
+                return entry.pendingDropCategory;
+            }
+
+            @Override
+            public void clearPendingAction() {
+                entry.pendingAction = null;
+            }
+
+            @Override
+            public void clearPendingDropCategory() {
+                entry.pendingDropCategory = null;
+            }
+        };
+    }
+
+    private static AgentPendingChatActionFlow.PendingActionCallbacks pendingActionCallbacks(BotEntry entry) {
+        return new AgentPendingChatActionFlow.PendingActionCallbacks() {
+            @Override
+            public void handleOwnerAwayChoice(String message) {
+                BotChatManager.handleOwnerAwayChoice(entry, message);
+            }
+
+            @Override
+            public void executeItemChoice(String category, boolean trade) {
+                BotManager.after(BotManager.randMs(400, 600),
+                        () -> BotInventoryManager.executeChoice(category, trade, entry, entry.bot));
+            }
+
+            @Override
+            public void cancelItemChoice() {
+                BotManager.after(BotManager.randMs(400, 600),
+                        () -> BotManager.getInstance().botReply(entry, AgentDialogueCatalog.keepDropChoiceReply()));
+            }
+
+            @Override
+            public void handleSkillTreeChoice(String message) {
+                BotChatManager.handleSkillTreeChoice(entry, entry.bot, message);
+            }
+
+            @Override
+            public void confirmRelog() {
+                scheduleRelogConfirm(entry);
+            }
+
+            @Override
+            public void confirmLogout() {
+                scheduleLogoutConfirm(entry);
+            }
+
+            @Override
+            public void cancelPendingAction(boolean dropAction) {
+                String cancelMsg = AgentDialogueCatalog.pendingActionCancelReply(dropAction);
+                BotManager.after(BotManager.randMs(700, 900), () ->
+                        BotManager.getInstance().botReply(entry, cancelMsg));
+            }
+        };
+    }
+
+    private static void scheduleRelogConfirm(BotEntry entry) {
+        BotManager.after(BotManager.randMs(900, 1100), () -> {
+            Character o = entry.owner;
+            if (o == null) return; // owner logged out before relog fired
+            BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.relogConfirmedReplies()));
+            int charId      = entry.bot.getId();
+            int ownerCharId = o.getId();
+            int world       = entry.bot.getClient().getWorld();
+            int channel     = entry.bot.getClient().getChannel();
+            BotManager.after(BotManager.randMs(1800, 2200), () -> {
+                entry.bot.saveCharToDB(true);
+                entry.bot.getClient().disconnect(false, false);
+                BotManager.after(BotManager.randMs(10000, 10100),
+                        () -> BotManager.getInstance().reloginBot(charId, ownerCharId, world, channel));
+            });
+        });
+    }
+
+    private static void scheduleLogoutConfirm(BotEntry entry) {
+        BotManager.after(BotManager.randMs(900, 1100), () -> {
+            BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.logoutConfirmedReplies()));
+            BotManager.after(BotManager.randMs(1800, 2200), () -> {
+                entry.bot.saveCharToDB(true);
+                entry.bot.getClient().disconnect(false, false);
+            });
+        });
     }
 
     private static void promptOwnerAway(BotEntry entry) {
