@@ -39,6 +39,18 @@ class AgentInventoryDialogueReporterTest {
     }
 
     @Test
+    void shouldBuildSlotReportInLegacyInventoryOrder() {
+        Character agent = mock(Character.class);
+        stubInventory(agent, InventoryType.EQUIP, 24, 14);
+        stubInventory(agent, InventoryType.USE, 28, 20);
+        stubInventory(agent, InventoryType.ETC, 32, 29);
+        stubInventory(agent, InventoryType.SETUP, 36, 36);
+
+        assertEquals("equip: 10/24, use: 8/28, etc: 3/32, setup: 0/36",
+                AgentInventoryDialogueReporter.slotsReport(agent));
+    }
+
+    @Test
     void shouldResolveNoItemsCategoryLabelsLikeLegacyInventoryChat() {
         assertEquals("mesos", AgentInventoryDialogueReporter.noItemsCategoryLabel("mesos"));
         assertEquals("better gear for you", AgentInventoryDialogueReporter.noItemsCategoryLabel("recommended"));
@@ -63,5 +75,12 @@ class AgentInventoryDialogueReporterTest {
                 AgentInventoryDialogueReporter.noItemsReply("pots", List.of("no %s on me rn")));
         assertEquals("checked, no reserved equips",
                 AgentInventoryDialogueReporter.noItemsReply("equips:reserved:3", List.of("checked, no %s")));
+    }
+
+    private static void stubInventory(Character agent, InventoryType type, int totalSlots, int freeSlots) {
+        Inventory inventory = mock(Inventory.class);
+        when(agent.getInventory(type)).thenReturn(inventory);
+        when(inventory.getSlotLimit()).thenReturn((byte) totalSlots);
+        when(inventory.getNumFreeSlot()).thenReturn((short) freeSlots);
     }
 }

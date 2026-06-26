@@ -1060,7 +1060,7 @@ public class BotChatManager {
     }
 
     private static void reportInventorySlots(BotEntry entry, Character bot) {
-        queueBotReply(entry, BotInventoryManager.slotsReport(bot));
+        queueBotReply(entry, AgentInventoryDialogueReporter.slotsReport(bot));
     }
 
     private static void reportScrolls(BotEntry entry, Character bot) {

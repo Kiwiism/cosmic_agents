@@ -1297,16 +1297,7 @@ class BotInventoryManager {
 
     /** occupied/total for each bag: "equip: 10/24, use: 8/24, etc: 3/24, setup: 0/24" */
     static String slotsReport(Character bot) {
-        StringBuilder sb = new StringBuilder();
-        for (InventoryType type : List.of(
-                InventoryType.EQUIP, InventoryType.USE, InventoryType.ETC, InventoryType.SETUP)) {
-            Inventory inv = bot.getInventory(type);
-            int used  = inv.getSlotLimit() - inv.getNumFreeSlot();
-            int total = inv.getSlotLimit();
-            if (!sb.isEmpty()) sb.append(", ");
-            sb.append(type.name().toLowerCase()).append(": ").append(used).append('/').append(total);
-        }
-        return sb.toString();
+        return AgentInventoryDialogueReporter.slotsReport(bot);
     }
 
     /** Full bag summary: "equip 10/24 | use 8/24 (3 scrolls, 5 pots, 2 buffs) | etc 3/24" */

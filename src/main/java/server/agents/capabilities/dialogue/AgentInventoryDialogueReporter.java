@@ -1,6 +1,7 @@
 package server.agents.capabilities.dialogue;
 
 import client.Character;
+import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import constants.inventory.ItemConstants;
@@ -27,6 +28,21 @@ public final class AgentInventoryDialogueReporter {
 
     public static String scrollReport(Character agent) {
         return AgentDialogueReportFormatter.scrollCount(countEquipScrolls(agent));
+    }
+
+    public static String slotsReport(Character agent) {
+        StringBuilder sb = new StringBuilder();
+        for (InventoryType type : List.of(
+                InventoryType.EQUIP, InventoryType.USE, InventoryType.ETC, InventoryType.SETUP)) {
+            Inventory inv = agent.getInventory(type);
+            int used = inv.getSlotLimit() - inv.getNumFreeSlot();
+            int total = inv.getSlotLimit();
+            if (!sb.isEmpty()) {
+                sb.append(", ");
+            }
+            sb.append(type.name().toLowerCase()).append(": ").append(used).append('/').append(total);
+        }
+        return sb.toString();
     }
 
     public static String noItemsReply(String category) {
