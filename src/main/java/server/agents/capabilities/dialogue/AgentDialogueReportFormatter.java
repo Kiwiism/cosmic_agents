@@ -27,6 +27,14 @@ public final class AgentDialogueReportFormatter {
                 minDamage, maxDamage, attackLabel, attackStat, accuracyLabel, accuracy);
     }
 
+    public static String rangeAttackLabel(boolean magicAttack) {
+        return magicAttack ? "matk" : "watk";
+    }
+
+    public static String rangeAccuracyLabel(boolean magicAttack) {
+        return magicAttack ? "magic acc" : "acc";
+    }
+
     public static String rangeWithHit(String rangeReport, int hitPercent, int mobAvoid) {
         return String.format("%s | hit %d%% vs hardest mob (avd %d)", rangeReport, hitPercent, mobAvoid);
     }

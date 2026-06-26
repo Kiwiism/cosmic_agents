@@ -19,6 +19,10 @@ class AgentDialogueReportFormatterTest {
     void shouldFormatRangeReportsExactlyLikeLegacyChat() {
         String report = AgentDialogueReportFormatter.range(50, 99, "watk", 20, "acc", 100);
 
+        assertEquals("watk", AgentDialogueReportFormatter.rangeAttackLabel(false));
+        assertEquals("matk", AgentDialogueReportFormatter.rangeAttackLabel(true));
+        assertEquals("acc", AgentDialogueReportFormatter.rangeAccuracyLabel(false));
+        assertEquals("magic acc", AgentDialogueReportFormatter.rangeAccuracyLabel(true));
         assertEquals("my dmg is 50-99, watk 20, acc 100", report);
         assertEquals(
                 "my dmg is 50-99, watk 20, acc 100 | hit 47% vs hardest mob (avd 40)",

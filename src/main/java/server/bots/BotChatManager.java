@@ -792,27 +792,23 @@ public class BotChatManager {
         int accuracy;
         int minDmg;
         int maxDmg;
-        String attackLabel;
-        String accuracyLabel;
 
         if (magicAttack) {
             attackStat = bot.getTotalMagic();
             accuracy = formulas.getTotalMagicAccuracy(bot);
             maxDmg = (int) Math.max(1L, formulas.magicDamageBase(attackStat, bot.getTotalInt()));
             minDmg = (int) Math.max(1L, formulas.magicDamageBaseMin(attackStat, bot.getTotalInt(), 0.1d));
-            attackLabel = "matk";
-            accuracyLabel = "magic acc";
         } else {
             attackStat = bot.getTotalWatk();
             accuracy = formulas.getTotalAccuracy(bot);
             maxDmg = Math.max(1, bot.calculateMaxBaseDamage(attackStat));
             minDmg = Math.max(1, bot.calculateMinBaseDamage(attackStat, formulas.resolvePhysicalMastery(bot)));
-            attackLabel = "watk";
-            accuracyLabel = "acc";
         }
 
         String report = AgentDialogueReportFormatter.range(
-                minDmg, maxDmg, attackLabel, attackStat, accuracyLabel, accuracy);
+                minDmg, maxDmg,
+                AgentDialogueReportFormatter.rangeAttackLabel(magicAttack), attackStat,
+                AgentDialogueReportFormatter.rangeAccuracyLabel(magicAttack), accuracy);
         if (hitProfile == null) {
             return report;
         }
