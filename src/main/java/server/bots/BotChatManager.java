@@ -32,6 +32,7 @@ import server.agents.capabilities.dialogue.AgentChatWelcomeBackFlow;
 import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
 import server.agents.capabilities.dialogue.AgentSkillDialogueReporter;
 import server.agents.capabilities.dialogue.AgentSocialDialogueClassifier;
+import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.commands.AgentQueuedMessage;
 import server.agents.commands.AgentReplyQueue;
@@ -1069,7 +1070,7 @@ public class BotChatManager {
 
     private static void reportPotions(BotEntry entry, Character bot) {
         int[] counts = BotPotionManager.countPotions(bot);
-        queueBotReply(entry, AgentDialogueReportFormatter.potionReport(counts[0], counts[1]));
+        queueBotReply(entry, AgentSupplyDialogueReporter.potionReport(counts));
     }
 
     private static void reportPotDebug(BotEntry entry, Character bot) {
