@@ -37,4 +37,31 @@ class AgentInventoryDialogueReporterTest {
         assertEquals(0, AgentInventoryDialogueReporter.countEquipScrolls(agent));
         assertEquals("no scrolls on me", AgentInventoryDialogueReporter.scrollReport(agent));
     }
+
+    @Test
+    void shouldResolveNoItemsCategoryLabelsLikeLegacyInventoryChat() {
+        assertEquals("mesos", AgentInventoryDialogueReporter.noItemsCategoryLabel("mesos"));
+        assertEquals("better gear for you", AgentInventoryDialogueReporter.noItemsCategoryLabel("recommended"));
+        assertEquals("scrolls", AgentInventoryDialogueReporter.noItemsCategoryLabel("scrolls"));
+        assertEquals("pots", AgentInventoryDialogueReporter.noItemsCategoryLabel("pots"));
+        assertEquals("buff pots", AgentInventoryDialogueReporter.noItemsCategoryLabel("buff"));
+        assertEquals("use items", AgentInventoryDialogueReporter.noItemsCategoryLabel("use"));
+        assertEquals("ammo", AgentInventoryDialogueReporter.noItemsCategoryLabel("ammo"));
+        assertEquals("equips", AgentInventoryDialogueReporter.noItemsCategoryLabel("equips"));
+        assertEquals("trash equips", AgentInventoryDialogueReporter.noItemsCategoryLabel("trash"));
+        assertEquals("etc items", AgentInventoryDialogueReporter.noItemsCategoryLabel("etc"));
+        assertEquals("reserved equips", AgentInventoryDialogueReporter.noItemsCategoryLabel("equips:reserved:2"));
+        assertEquals("mesos", AgentInventoryDialogueReporter.noItemsCategoryLabel("mesos:1000"));
+        assertEquals("slime bubble", AgentInventoryDialogueReporter.noItemsCategoryLabel("name:slime bubble"));
+        assertEquals("those items", AgentInventoryDialogueReporter.noItemsCategoryLabel("unknown"));
+        assertEquals("those items", AgentInventoryDialogueReporter.noItemsCategoryLabel(null));
+    }
+
+    @Test
+    void shouldFormatNoItemsReplyWithProvidedTemplate() {
+        assertEquals("no pots on me rn",
+                AgentInventoryDialogueReporter.noItemsReply("pots", List.of("no %s on me rn")));
+        assertEquals("checked, no reserved equips",
+                AgentInventoryDialogueReporter.noItemsReply("equips:reserved:3", List.of("checked, no %s")));
+    }
 }

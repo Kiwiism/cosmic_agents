@@ -1385,7 +1385,7 @@ public class BotChatManager {
             return;
         }
         if (!result.hasItems()) {
-            BotManager.getInstance().botReply(entry, BotInventoryManager.noItemsReply(category));
+            BotManager.getInstance().botReply(entry, AgentInventoryDialogueReporter.noItemsReply(category));
             return;
         }
 
@@ -1441,7 +1441,7 @@ public class BotChatManager {
             return;
         }
         if (result.count() <= 0) {
-            BotManager.getInstance().botReply(entry, BotInventoryManager.noItemsReply(category));
+            BotManager.getInstance().botReply(entry, AgentInventoryDialogueReporter.noItemsReply(category));
             return;
         }
 

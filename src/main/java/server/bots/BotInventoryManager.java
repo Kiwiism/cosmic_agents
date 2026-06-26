@@ -16,6 +16,7 @@ import constants.inventory.ItemConstants;
 import net.packet.Packet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
 import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
 import server.ItemInformationProvider;
 import server.StatEffect;
@@ -85,16 +86,6 @@ class BotInventoryManager {
             "there u go", "have fun", "that should help",
             "use it well", "all yours", "take good care of it",
             "delivered", "hope that helps", "treat it nicely", "tell me if you find anything for me too");
-    private static final List<String> NO_ITEMS_MSGS = List.of(
-            "i don't have any %s",
-            "no %s on me rn",
-            "don't have any %s right now",
-            "i'm out of %s",
-            "none of that on me right now",
-            "fresh out of %s",
-            "wish i had %s but nope",
-            "checked, no %s"
-    );
     private static final List<String> ALL_DONE_MSGS = List.of(
             "that's all!", "done adding stuff!", "all set!", "everything's in!",
             "that's everything!", "done!", "added it all", "check it out"
@@ -570,30 +561,7 @@ class BotInventoryManager {
     }
 
     static String noItemsReply(String category) {
-        String what = switch (category) {
-            case "mesos" -> "mesos";
-            case "recommended" -> "better gear for you";
-            case "scrolls" -> "scrolls";
-            case "pots" -> "pots";
-            case "buff" -> "buff pots";
-            case "use" -> "use items";
-            case "ammo" -> "ammo";
-            case "equips" -> "equips";
-            case "trash" -> "trash equips";
-            case "etc" -> "etc items";
-            default -> {
-                if (isReservedEquipsCategory(category)) {
-                    yield "reserved equips";
-                }
-                if (category.startsWith("mesos:")) {
-                    yield "mesos";
-                }
-                yield category.startsWith("name:") ? category.substring(5) : "those items";
-            }
-        };
-
-        String fmt = BotManager.randomReply(NO_ITEMS_MSGS);
-        return String.format(fmt, what);
+        return AgentInventoryDialogueReporter.noItemsReply(category);
     }
 
     /** Opens a trade for the first ≤9 items; remaining items are re-collected next batch. */

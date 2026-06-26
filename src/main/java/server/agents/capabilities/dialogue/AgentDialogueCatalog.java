@@ -110,6 +110,15 @@ public final class AgentDialogueCatalog {
             "sure, %s - trade or drop?",
             "just to confirm, trade or drop my %s?",
             "want me to trade or drop %s?");
+    private static final List<String> NO_ITEMS_REPLIES = List.of(
+            "i don't have any %s",
+            "no %s on me rn",
+            "don't have any %s right now",
+            "i'm out of %s",
+            "none of that on me right now",
+            "fresh out of %s",
+            "wish i had %s but nope",
+            "checked, no %s");
     private static final List<String> RELOG_CONFIRM_PROMPTS = List.of(
             "relog? say yes to confirm",
             "save and relog? type yes",
@@ -272,6 +281,10 @@ public final class AgentDialogueCatalog {
 
     public static List<String> dropOrTradePrompts() {
         return DROP_OR_TRADE_PROMPTS;
+    }
+
+    public static List<String> noItemsReplies() {
+        return NO_ITEMS_REPLIES;
     }
 
     public static List<String> relogConfirmPrompts() {
