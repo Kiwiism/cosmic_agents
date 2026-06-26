@@ -20,6 +20,7 @@ import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueReportFormatter;
 import server.agents.capabilities.dialogue.AgentEquipmentDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentChatSessionRequestFlow;
+import server.agents.capabilities.dialogue.AgentChatToggleFlow;
 import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
 import server.agents.capabilities.dialogue.AgentSocialDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
@@ -145,79 +146,7 @@ public class BotChatManager {
             BotManager.after(BotManager.randMs(500, 900), () -> handleFameCommand(entry, fameTarget));
             return;
         }
-        if (AgentChatCommandClassifier.isSupportOffCommand(message)) {
-            BotManager.after(BotManager.randMs(500, 700), () -> {
-                entry.skillBuffsEnabled = false;
-                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.supportOffReply());
-            });
-            return;
-        }
-        if (AgentChatCommandClassifier.isSupportOnCommand(message)) {
-            BotManager.after(BotManager.randMs(500, 700), () -> {
-                entry.skillBuffsEnabled = true;
-                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.supportOnReply());
-            });
-            return;
-        }
-        if (AgentChatCommandClassifier.isHealsOffCommand(message)) {
-            BotManager.after(BotManager.randMs(500, 700), () -> {
-                entry.supportHealsEnabled = false;
-                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.healsOffReply());
-            });
-            return;
-        }
-        if (AgentChatCommandClassifier.isHealsOnCommand(message)) {
-            BotManager.after(BotManager.randMs(500, 700), () -> {
-                entry.supportHealsEnabled = true;
-                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.healsOnReply());
-            });
-            return;
-        }
-        if (AgentChatCommandClassifier.isBuffConsumablesOffCommand(message)) {
-            BotManager.after(BotManager.randMs(500, 700), () -> {
-                entry.buffConsumablesEnabled = false;
-                entry.lastBuffScanMs = 0;
-                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.buffConsumablesOffReply());
-            });
-            return;
-        }
-        if (AgentChatCommandClassifier.isBuffConsumablesOnCommand(message)) {
-            BotManager.after(BotManager.randMs(500, 700), () -> {
-                entry.buffConsumablesEnabled = true;
-                entry.lastBuffScanMs = 0;
-                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.buffConsumablesOnReply(
-                        AgentDialogueCatalog.buffConsumablesModeLabel(entry.buffCheapMode)));
-            });
-            return;
-        }
-        if (AgentChatCommandClassifier.isBuffConsumablesCheapCommand(message)) {
-            BotManager.after(BotManager.randMs(500, 700), () -> {
-                entry.buffCheapMode = true;
-                entry.lastBuffScanMs = 0;
-                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.buffConsumablesCheapReply());
-            });
-            return;
-        }
-        if (AgentChatCommandClassifier.isBuffConsumablesMaxCommand(message)) {
-            BotManager.after(BotManager.randMs(500, 700), () -> {
-                entry.buffCheapMode = false;
-                entry.lastBuffScanMs = 0;
-                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.buffConsumablesMaxReply());
-            });
-            return;
-        }
-        if (AgentChatCommandClassifier.isProactiveOffersOffCommand(message)) {
-            BotManager.after(BotManager.randMs(500, 700), () -> {
-                entry.proactiveUpgradeOffers = false;
-                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.proactiveOffersOffReply());
-            });
-            return;
-        }
-        if (AgentChatCommandClassifier.isProactiveOffersOnCommand(message)) {
-            BotManager.after(BotManager.randMs(500, 700), () -> {
-                entry.proactiveUpgradeOffers = true;
-                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.proactiveOffersOnReply());
-            });
+        if (AgentChatToggleFlow.handle(message, toggleCallbacks(entry))) {
             return;
         }
         if (AgentChatCommandClassifier.isBuffListQuery(message)) {
@@ -522,6 +451,61 @@ public class BotChatManager {
                     return;
                 }
                 BotManager.after(BotManager.randMs(900, 1100), () -> promptOwnerAway(entry));
+            }
+        };
+    }
+
+    private static AgentChatToggleFlow.ToggleCallbacks toggleCallbacks(BotEntry entry) {
+        return new AgentChatToggleFlow.ToggleCallbacks() {
+            @Override
+            public void setSupport(boolean enabled) {
+                BotManager.after(BotManager.randMs(500, 700), () -> {
+                    entry.skillBuffsEnabled = enabled;
+                    BotManager.getInstance().botReply(entry,
+                            enabled ? AgentDialogueCatalog.supportOnReply() : AgentDialogueCatalog.supportOffReply());
+                });
+            }
+
+            @Override
+            public void setHeals(boolean enabled) {
+                BotManager.after(BotManager.randMs(500, 700), () -> {
+                    entry.supportHealsEnabled = enabled;
+                    BotManager.getInstance().botReply(entry,
+                            enabled ? AgentDialogueCatalog.healsOnReply() : AgentDialogueCatalog.healsOffReply());
+                });
+            }
+
+            @Override
+            public void setBuffConsumables(boolean enabled) {
+                BotManager.after(BotManager.randMs(500, 700), () -> {
+                    entry.buffConsumablesEnabled = enabled;
+                    entry.lastBuffScanMs = 0;
+                    BotManager.getInstance().botReply(entry, enabled
+                            ? AgentDialogueCatalog.buffConsumablesOnReply(
+                                    AgentDialogueCatalog.buffConsumablesModeLabel(entry.buffCheapMode))
+                            : AgentDialogueCatalog.buffConsumablesOffReply());
+                });
+            }
+
+            @Override
+            public void setBuffConsumablesCheapMode(boolean cheapMode) {
+                BotManager.after(BotManager.randMs(500, 700), () -> {
+                    entry.buffCheapMode = cheapMode;
+                    entry.lastBuffScanMs = 0;
+                    BotManager.getInstance().botReply(entry, cheapMode
+                            ? AgentDialogueCatalog.buffConsumablesCheapReply()
+                            : AgentDialogueCatalog.buffConsumablesMaxReply());
+                });
+            }
+
+            @Override
+            public void setProactiveOffers(boolean enabled) {
+                BotManager.after(BotManager.randMs(500, 700), () -> {
+                    entry.proactiveUpgradeOffers = enabled;
+                    BotManager.getInstance().botReply(entry, enabled
+                            ? AgentDialogueCatalog.proactiveOffersOnReply()
+                            : AgentDialogueCatalog.proactiveOffersOffReply());
+                });
             }
         };
     }
