@@ -22,6 +22,7 @@ import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
 import server.agents.capabilities.dialogue.AgentChatUtilityFlow;
 import server.agents.capabilities.dialogue.AgentChatTransferFlow;
 import server.agents.capabilities.dialogue.AgentCharacterDialogueReporter;
+import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueReportFormatter;
 import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
@@ -1164,19 +1165,7 @@ public class BotChatManager {
         CombatFormulaProvider formula = CombatFormulaProvider.getInstance();
         CombatFormulaProvider.CritProfile crit = formula.resolveCritProfile(bot);
         CombatFormulaProvider.DamageProfile dmg = formula.resolveDamageProfile(bot, 0, 0, false);
-
-        int critPct = (int) Math.round(crit.critChance() * 100);
-        if (critPct == 0) {
-            queueBotReply(entry, AgentDialogueCatalog.noCritPassiveReply());
-            return;
-        }
-
-        int critMin = (int) Math.min(99999, Math.floor(dmg.minDamage() * crit.critMultiplier()));
-        int critMax = (int) Math.min(99999, Math.floor(dmg.maxDamage() * crit.critMultiplier()));
-        queueBotReply(entry, AgentDialogueReportFormatter.crit(
-                critPct, crit.critMultiplier(),
-                dmg.minDamage(), dmg.maxDamage(),
-                critMin, critMax));
+        queueBotReply(entry, AgentCombatDialogueReporter.critReport(crit, dmg));
     }
 
     private static void reportBuffDebug(BotEntry entry, Character bot) {
