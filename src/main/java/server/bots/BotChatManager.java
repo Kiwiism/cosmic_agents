@@ -19,6 +19,7 @@ import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueReportFormatter;
 import server.agents.capabilities.dialogue.AgentEquipmentDialogueClassifier;
+import server.agents.capabilities.dialogue.AgentChatSessionRequestFlow;
 import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
 import server.agents.capabilities.dialogue.AgentSocialDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
@@ -107,28 +108,8 @@ public class BotChatManager {
     static void handleChat(BotEntry entry, String message) {
         LAST_CHAT_HANDLED.set(true);
         markOwnerActive(entry);
-        // Logout / relog — two-step confirmation
-        if (entry.pendingAction == null && AgentChatCommandClassifier.isRelogRequest(message)) {
-            BotManager.after(BotManager.randMs(900, 1100), () -> {
-                entry.pendingAction = AgentChatPendingAction.RELOG;
-                BotManager.getInstance().issueStop(entry);
-                BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.relogConfirmPrompts()));
-            });
-            return;
-        }
-        if (entry.pendingAction == null && AgentChatCommandClassifier.isLogoutRequest(message)) {
-            BotManager.after(BotManager.randMs(900, 1100), () -> {
-                entry.pendingAction = AgentChatPendingAction.LOGOUT;
-                BotManager.getInstance().issueStop(entry);
-                BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.logoutConfirmPrompts()));
-            });
-            return;
-        }
-        if (entry.pendingAction == null && AgentChatCommandClassifier.isAwayRequest(message)) {
-            if (!BotManager.getInstance().isFirstBotEntry(entry)) {
-                return;
-            }
-            BotManager.after(BotManager.randMs(900, 1100), () -> promptOwnerAway(entry));
+        if (entry.pendingAction == null
+                && AgentChatSessionRequestFlow.handle(message, sessionRequestCallbacks(entry))) {
             return;
         }
         if (entry.pendingAction != null) {
@@ -511,6 +492,36 @@ public class BotChatManager {
             @Override
             public void clearPendingDropCategory() {
                 entry.pendingDropCategory = null;
+            }
+        };
+    }
+
+    private static AgentChatSessionRequestFlow.SessionRequestCallbacks sessionRequestCallbacks(BotEntry entry) {
+        return new AgentChatSessionRequestFlow.SessionRequestCallbacks() {
+            @Override
+            public void requestRelog() {
+                BotManager.after(BotManager.randMs(900, 1100), () -> {
+                    entry.pendingAction = AgentChatPendingAction.RELOG;
+                    BotManager.getInstance().issueStop(entry);
+                    BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.relogConfirmPrompts()));
+                });
+            }
+
+            @Override
+            public void requestLogout() {
+                BotManager.after(BotManager.randMs(900, 1100), () -> {
+                    entry.pendingAction = AgentChatPendingAction.LOGOUT;
+                    BotManager.getInstance().issueStop(entry);
+                    BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.logoutConfirmPrompts()));
+                });
+            }
+
+            @Override
+            public void requestAway() {
+                if (!BotManager.getInstance().isFirstBotEntry(entry)) {
+                    return;
+                }
+                BotManager.after(BotManager.randMs(900, 1100), () -> promptOwnerAway(entry));
             }
         };
     }
