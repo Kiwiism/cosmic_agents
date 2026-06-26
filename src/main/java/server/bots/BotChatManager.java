@@ -13,6 +13,7 @@ import constants.game.ExpTable;
 import constants.game.GameConstants;
 import constants.inventory.ItemConstants;
 import server.Trade;
+import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.commands.AgentQueuedMessage;
 import server.agents.commands.AgentReplyQueue;
@@ -1758,19 +1759,19 @@ public class BotChatManager {
     }
 
     static boolean isNeedHpPotCommand(String message) {
-        return NEED_HP_POT_PATTERN.matcher(message).find();
+        return AgentChatCommandClassifier.isNeedHpPotCommand(message);
     }
 
     static boolean isNeedMpPotCommand(String message) {
-        return NEED_MP_POT_PATTERN.matcher(message).find();
+        return AgentChatCommandClassifier.isNeedMpPotCommand(message);
     }
 
     static boolean isNeedPotCommand(String message) {
-        return NEED_POT_PATTERN.matcher(message).find();
+        return AgentChatCommandClassifier.isNeedPotCommand(message);
     }
 
     static boolean isNeedAmmoCommand(String message) {
-        return NEED_AMMO_PATTERN.matcher(message).find();
+        return AgentChatCommandClassifier.isNeedAmmoCommand(message);
     }
 
     static boolean isRequestUpgradeCommand(String message) {
@@ -1784,10 +1785,7 @@ public class BotChatManager {
      * independently selects the same donor sibling.
      */
     static boolean isGroupSupplyRequest(String message) {
-        return isNeedHpPotCommand(message)
-                || isNeedMpPotCommand(message)
-                || isNeedPotCommand(message)
-                || isNeedAmmoCommand(message);
+        return AgentChatCommandClassifier.isGroupSupplyRequest(message);
     }
 
     private static void handleRequestUpgradeCommand(BotEntry entry, Character bot) {
@@ -2227,21 +2225,7 @@ public class BotChatManager {
     }
 
     static String matchFollowTarget(String message) {
-        Matcher matcher = FOLLOW_TARGET_PATTERN.matcher(message);
-        if (!matcher.find()) {
-            return null;
-        }
-
-        String target = matcher.group(1);
-        if (target == null) {
-            return null;
-        }
-
-        String normalized = target.trim().toLowerCase(Locale.ROOT);
-        return switch (normalized) {
-            case "me", "here", "pls", "please", "now" -> null;
-            default -> target.trim();
-        };
+        return AgentChatCommandClassifier.matchFollowTarget(message);
     }
 
     private static String matchTradeMesoCategory(String message) {
