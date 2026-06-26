@@ -147,4 +147,24 @@ public final class AgentDialogueReportFormatter {
         String template = templates.get(ThreadLocalRandom.current().nextInt(templates.size()));
         return String.format(template, what);
     }
+
+    public static String jobChangeReply(String template, String jobName) {
+        return String.format(template, jobName);
+    }
+
+    public static String welcomeBackOfflineReply(String template, String mapName) {
+        return String.format(template, mapName);
+    }
+
+    public static String ownerPotShortageReply(String template, String type) {
+        return String.format(template, type);
+    }
+
+    public static String fameSamePersonReply(String template, String targetName) {
+        return String.format(template, targetName);
+    }
+
+    public static String fameOkReply(String template, String targetName) {
+        return template.contains("%s") ? String.format(template, targetName) : template;
+    }
 }

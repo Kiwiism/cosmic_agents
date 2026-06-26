@@ -88,4 +88,19 @@ class AgentDialogueReportFormatterTest {
                 AgentDialogueReportFormatter.dropOrTradePrompt(
                         "name:chaos scroll", 0, java.util.List.of("want me to trade or drop %s?")));
     }
+
+    @Test
+    void shouldApplyDialogueTemplatesExactlyLikeLegacyChat() {
+        assertEquals("ok, ill change to warrior!",
+                AgentDialogueReportFormatter.jobChangeReply("ok, ill change to %s!", "warrior"));
+        assertEquals("wb! we've been waiting at Henesys since u went offline",
+                AgentDialogueReportFormatter.welcomeBackOfflineReply(
+                        "wb! we've been waiting at %s since u went offline", "Henesys"));
+        assertEquals("we're low on hp pots too, boss",
+                AgentDialogueReportFormatter.ownerPotShortageReply("we're low on %s pots too, boss", "hp"));
+        assertEquals("already famed Alice this month",
+                AgentDialogueReportFormatter.fameSamePersonReply("already famed %s this month", "Alice"));
+        assertEquals("famed Alice", AgentDialogueReportFormatter.fameOkReply("famed %s", "Alice"));
+        assertEquals("done", AgentDialogueReportFormatter.fameOkReply("done", "Alice"));
+    }
 }

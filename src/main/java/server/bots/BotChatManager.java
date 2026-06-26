@@ -543,7 +543,8 @@ public class BotChatManager {
             Job advJob = resolveJobChange(entry.bot, message.toLowerCase());
             if (advJob != null) {
                 String jobName = jobDisplayName(advJob);
-                String reply = String.format(BotManager.randomReply(AgentDialogueCatalog.jobChangeReplyTemplates()), jobName);
+                String reply = AgentDialogueReportFormatter.jobChangeReply(
+                        BotManager.randomReply(AgentDialogueCatalog.jobChangeReplyTemplates()), jobName);
                 BotManager.getInstance().botReply(entry, reply);
                 BotManager.after(BotManager.randMs(900, 1100), () -> BotStarterKitManager.advanceJob(entry, advJob));
             }
@@ -725,7 +726,8 @@ public class BotChatManager {
         if (mapName == null || mapName.isBlank()) {
             mapName = "town";
         }
-        final String text = String.format(BotManager.randomReply(WB_OFFLINE_PARTY_TEMPLATES), mapName);
+        final String text = AgentDialogueReportFormatter.welcomeBackOfflineReply(
+                BotManager.randomReply(WB_OFFLINE_PARTY_TEMPLATES), mapName);
         BotManager.after(BotManager.randMs(1500, 2500), () -> {
             bot.changeFaceExpression(ThreadLocalRandom.current().nextBoolean() ? 2 : 3);
             BotManager.getInstance().botSayParty(bot, text);
@@ -1293,7 +1295,8 @@ public class BotChatManager {
         BotPotionManager.OwnerPotShareResult result = BotPotionManager.offerPotShareToOwner(entry, forHp);
         if (result == BotPotionManager.OwnerPotShareResult.NO_DONOR) {
             String type = forHp ? "hp" : "mp";
-            queueBotReply(entry, String.format(BotManager.randomReply(OWNER_POT_SHORTAGE_REPLIES), type));
+            queueBotReply(entry, AgentDialogueReportFormatter.ownerPotShortageReply(
+                    BotManager.randomReply(OWNER_POT_SHORTAGE_REPLIES), type));
         }
     }
 
@@ -1819,14 +1822,15 @@ public class BotChatManager {
             return;
         }
         if (status == Character.FameStatus.NOT_THIS_MONTH) {
-            String reply = String.format(BotManager.randomReply(FAME_SAME_PERSON_REPLIES), target.getName());
+            String reply = AgentDialogueReportFormatter.fameSamePersonReply(
+                    BotManager.randomReply(FAME_SAME_PERSON_REPLIES), target.getName());
             BotManager.getInstance().botReply(entry, reply);
             return;
         }
         if (target.gainFame(1, bot, 1)) {
             bot.hasGivenFame(target);
             String template = BotManager.randomReply(FAME_OK_REPLIES);
-            String reply = template.contains("%s") ? String.format(template, target.getName()) : template;
+            String reply = AgentDialogueReportFormatter.fameOkReply(template, target.getName());
             BotManager.getInstance().botReply(entry, reply);
         } else {
             BotManager.getInstance().botReply(entry, AgentDialogueCatalog.fameFailedReply());
