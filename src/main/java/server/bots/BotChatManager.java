@@ -64,7 +64,7 @@ public class BotChatManager {
     private record ItemQueryResult(int count) {}
     // %s = current map name (bot is in town since the offline-return warp put it there).
     // Sent via party chat so the owner sees it across maps when they reconnect.
-    private static void markOwnerActive(BotEntry entry) {
+    static void markOwnerActive(BotEntry entry) {
         Character owner = entry.owner;
         entry.ownerWasAfk = false;
         entry.ownerAfkSinceMs = System.currentTimeMillis();
@@ -81,129 +81,10 @@ public class BotChatManager {
     }
 
     static void handleChat(BotEntry entry, String message) {
-        LAST_CHAT_HANDLED.set(AgentChatOrchestrator.handle(message, chatOrchestratorContext(entry)));
+        LAST_CHAT_HANDLED.set(AgentChatOrchestrator.handle(message, new BotChatOrchestratorContext(entry)));
     }
 
-    private static AgentChatOrchestrator.Context chatOrchestratorContext(BotEntry entry) {
-        return new AgentChatOrchestrator.Context() {
-            @Override
-            public void markActive() {
-                markOwnerActive(entry);
-            }
-
-            @Override
-            public boolean hasPendingAction() {
-                return entry.pendingAction != null;
-            }
-
-            @Override
-            public AgentPendingChatActionFlow.PendingActionState pendingActionState() {
-                return BotChatManager.pendingActionState(entry);
-            }
-
-            @Override
-            public AgentPendingChatActionFlow.PendingActionCallbacks pendingActionCallbacks() {
-                return BotChatManager.pendingActionCallbacks(entry);
-            }
-
-            @Override
-            public AgentChatSessionRequestFlow.SessionRequestCallbacks sessionRequestCallbacks() {
-                return BotChatManager.sessionRequestCallbacks(entry);
-            }
-
-            @Override
-            public AgentChatSupplyRequestFlow.SupplyRequestCallbacks supplyRequestCallbacks() {
-                return BotChatManager.supplyRequestCallbacks(entry);
-            }
-
-            @Override
-            public AgentChatSocialFlow.SocialCallbacks socialCallbacks() {
-                return BotChatManager.socialCallbacks(entry);
-            }
-
-            @Override
-            public AgentChatToggleFlow.ToggleCallbacks toggleCallbacks() {
-                return BotChatManager.toggleCallbacks(entry);
-            }
-
-            @Override
-            public AgentChatBuffQueryFlow.BuffQueryCallbacks buffQueryCallbacks() {
-                return BotChatManager.buffQueryCallbacks(entry);
-            }
-
-            @Override
-            public AgentChatRespecFlow.RespecCallbacks respecCallbacks() {
-                return BotChatManager.respecCallbacks(entry);
-            }
-
-            @Override
-            public AgentChatEquipmentFlow.EquipmentCallbacks equipmentCallbacks() {
-                return BotChatManager.equipmentCallbacks(entry);
-            }
-
-            @Override
-            public AgentChatMovementFlow.MovementCallbacks movementCallbacks() {
-                return BotChatManager.movementCallbacks(entry);
-            }
-
-            @Override
-            public boolean isWaitingForSpVariant() {
-                return entry.spVariantPromptSent && entry.spVariant == null;
-            }
-
-            @Override
-            public AgentChatBuildFlow.SpVariantCallbacks spVariantCallbacks() {
-                return BotChatManager.spVariantCallbacks(entry);
-            }
-
-            @Override
-            public boolean isWaitingForApBuild() {
-                return entry.apPromptSent;
-            }
-
-            @Override
-            public AgentChatBuildFlow.ApBuildCallbacks apBuildCallbacks() {
-                return BotChatManager.apBuildCallbacks(entry);
-            }
-
-            @Override
-            public AgentChatUtilityFlow.UtilityCallbacks utilityCallbacks() {
-                return BotChatManager.utilityCallbacks(entry);
-            }
-
-            @Override
-            public void handleTransferCommand(AgentChatTransferFlow.TransferCommand transferCommand, String message) {
-                BotChatManager.handleTransferCommand(entry, transferCommand, message);
-            }
-
-            @Override
-            public AgentChatTransferFlow.ItemQueryCallbacks itemQueryCallbacks() {
-                return BotChatManager.itemQueryCallbacks(entry);
-            }
-
-            @Override
-            public AgentChatReportFlow.ReportCallbacks reportCallbacks() {
-                return BotChatManager.reportCallbacks(entry);
-            }
-
-            @Override
-            public Job currentJob() {
-                return entry.bot.getJob();
-            }
-
-            @Override
-            public int level() {
-                return entry.bot.getLevel();
-            }
-
-            @Override
-            public AgentChatJobAdvancementFlow.JobAdvancementCallbacks jobAdvancementCallbacks() {
-                return BotChatManager.jobAdvancementCallbacks(entry);
-            }
-        };
-    }
-
-    private static AgentPendingChatActionFlow.PendingActionState pendingActionState(BotEntry entry) {
+    static AgentPendingChatActionFlow.PendingActionState pendingActionState(BotEntry entry) {
         return new AgentPendingChatActionFlow.PendingActionState() {
             @Override
             public String pendingAction() {
@@ -227,7 +108,7 @@ public class BotChatManager {
         };
     }
 
-    private static AgentChatSessionRequestFlow.SessionRequestCallbacks sessionRequestCallbacks(BotEntry entry) {
+    static AgentChatSessionRequestFlow.SessionRequestCallbacks sessionRequestCallbacks(BotEntry entry) {
         return new AgentChatSessionRequestFlow.SessionRequestCallbacks() {
             @Override
             public void requestRelog() {
@@ -257,7 +138,7 @@ public class BotChatManager {
         };
     }
 
-    private static AgentChatToggleFlow.ToggleCallbacks toggleCallbacks(BotEntry entry) {
+    static AgentChatToggleFlow.ToggleCallbacks toggleCallbacks(BotEntry entry) {
         return new AgentChatToggleFlow.ToggleCallbacks() {
             @Override
             public void setSupport(boolean enabled) {
@@ -304,7 +185,7 @@ public class BotChatManager {
         };
     }
 
-    private static AgentChatBuffQueryFlow.BuffQueryCallbacks buffQueryCallbacks(BotEntry entry) {
+    static AgentChatBuffQueryFlow.BuffQueryCallbacks buffQueryCallbacks(BotEntry entry) {
         return new AgentChatBuffQueryFlow.BuffQueryCallbacks() {
             @Override
             public void reportBuffList() {
@@ -327,7 +208,7 @@ public class BotChatManager {
         };
     }
 
-    private static AgentChatRespecFlow.RespecCallbacks respecCallbacks(BotEntry entry) {
+    static AgentChatRespecFlow.RespecCallbacks respecCallbacks(BotEntry entry) {
         return new AgentChatRespecFlow.RespecCallbacks() {
             @Override
             public void respecAp() {
@@ -343,7 +224,7 @@ public class BotChatManager {
         };
     }
 
-    private static AgentChatEquipmentFlow.EquipmentCallbacks equipmentCallbacks(BotEntry entry) {
+    static AgentChatEquipmentFlow.EquipmentCallbacks equipmentCallbacks(BotEntry entry) {
         return new AgentChatEquipmentFlow.EquipmentCallbacks() {
             @Override
             public boolean unequipSlot(String slotName) {
@@ -384,7 +265,7 @@ public class BotChatManager {
         };
     }
 
-    private static AgentChatSupplyRequestFlow.SupplyRequestCallbacks supplyRequestCallbacks(BotEntry entry) {
+    static AgentChatSupplyRequestFlow.SupplyRequestCallbacks supplyRequestCallbacks(BotEntry entry) {
         return new AgentChatSupplyRequestFlow.SupplyRequestCallbacks() {
             @Override
             public void requestPotion(boolean hpPotion) {
@@ -403,11 +284,11 @@ public class BotChatManager {
         };
     }
 
-    private static AgentChatSocialFlow.SocialCallbacks socialCallbacks(BotEntry entry) {
+    static AgentChatSocialFlow.SocialCallbacks socialCallbacks(BotEntry entry) {
         return targetName -> BotManager.after(BotManager.randMs(500, 900), () -> handleFameCommand(entry, targetName));
     }
 
-    private static AgentChatMovementFlow.MovementCallbacks movementCallbacks(BotEntry entry) {
+    static AgentChatMovementFlow.MovementCallbacks movementCallbacks(BotEntry entry) {
         return new AgentChatMovementFlow.MovementCallbacks() {
             @Override
             public boolean farmHere() {
@@ -506,7 +387,7 @@ public class BotChatManager {
         };
     }
 
-    private static AgentChatUtilityFlow.UtilityCallbacks utilityCallbacks(BotEntry entry) {
+    static AgentChatUtilityFlow.UtilityCallbacks utilityCallbacks(BotEntry entry) {
         return new AgentChatUtilityFlow.UtilityCallbacks() {
             @Override
             public void tradeInvite() {
@@ -544,7 +425,7 @@ public class BotChatManager {
         };
     }
 
-    private static AgentChatBuildFlow.SpVariantCallbacks spVariantCallbacks(BotEntry entry) {
+    static AgentChatBuildFlow.SpVariantCallbacks spVariantCallbacks(BotEntry entry) {
         return new AgentChatBuildFlow.SpVariantCallbacks() {
             @Override
             public void oneHanded() {
@@ -562,7 +443,7 @@ public class BotChatManager {
         };
     }
 
-    private static AgentChatBuildFlow.ApBuildCallbacks apBuildCallbacks(BotEntry entry) {
+    static AgentChatBuildFlow.ApBuildCallbacks apBuildCallbacks(BotEntry entry) {
         return new AgentChatBuildFlow.ApBuildCallbacks() {
             @Override
             public void requestBuildPrompt() {
@@ -581,7 +462,7 @@ public class BotChatManager {
         };
     }
 
-    private static AgentChatReportFlow.ReportCallbacks reportCallbacks(BotEntry entry) {
+    static AgentChatReportFlow.ReportCallbacks reportCallbacks(BotEntry entry) {
         return new AgentChatReportFlow.ReportCallbacks() {
             @Override
             public void help() {
@@ -670,7 +551,7 @@ public class BotChatManager {
         };
     }
 
-    private static AgentChatJobAdvancementFlow.JobAdvancementCallbacks jobAdvancementCallbacks(BotEntry entry) {
+    static AgentChatJobAdvancementFlow.JobAdvancementCallbacks jobAdvancementCallbacks(BotEntry entry) {
         return advJob -> {
             String reply = AgentChatJobAdvancementFlow.jobChangeReply(advJob);
             BotManager.getInstance().botReply(entry, reply);
@@ -678,11 +559,11 @@ public class BotChatManager {
         };
     }
 
-    private static AgentChatTransferFlow.ItemQueryCallbacks itemQueryCallbacks(BotEntry entry) {
+    static AgentChatTransferFlow.ItemQueryCallbacks itemQueryCallbacks(BotEntry entry) {
         return itemName -> handleItemQuery(entry, itemName);
     }
 
-    private static AgentPendingChatActionFlow.PendingActionCallbacks pendingActionCallbacks(BotEntry entry) {
+    static AgentPendingChatActionFlow.PendingActionCallbacks pendingActionCallbacks(BotEntry entry) {
         return new AgentPendingChatActionFlow.PendingActionCallbacks() {
             @Override
             public void handleOwnerAwayChoice(String message) {
@@ -1323,7 +1204,7 @@ public class BotChatManager {
         }
     }
 
-    private static void handleTransferCommand(BotEntry entry, AgentChatTransferFlow.TransferCommand transferCommand, String message) {
+    static void handleTransferCommand(BotEntry entry, AgentChatTransferFlow.TransferCommand transferCommand, String message) {
         String category = transferCommand.category();
         if (AgentChatTransferFlow.shouldReplyWithWeirdTransfer(transferCommand, message)) {
             BotManager.getInstance().botReply(entry, AgentChatTransferFlow.weirdTransferReply());
