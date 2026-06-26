@@ -13,6 +13,7 @@ import constants.game.ExpTable;
 import constants.game.GameConstants;
 import constants.inventory.ItemConstants;
 import server.Trade;
+import server.agents.capabilities.dialogue.AgentBuildDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentEquipmentDialogueClassifier;
@@ -98,14 +99,6 @@ public class BotChatManager {
             + "|\\b(auto|attack)\\s*(on|mode)?\\b"
             + "|\\bstart\\s+(killing|attacking)\\b",
             Pattern.CASE_INSENSITIVE);
-
-    private static final Pattern JOB_SELECT_PATTERN = Pattern.compile(
-            "\\b(warrior|fighter|page|spearman|sader|crusader|hero|dk|drk|dark knight|paladin|" +
-            "mage|magician|wizard|cleric|healer|fp|il|fp mage|il mage|fp arch|il arch|priest|bishop|" +
-            "bowman|bowmen|archer|hunter|crossbow|xbow|sniper|ranger|bowmaster|bm|marksman|mm|" +
-            "thief|assassin|sin|bandit|dit|hermit|chief bandit|cb|shadower|shad|night lord|nl|" +
-            "pirate|brawler|gunslinger|gun|marauder|outlaw|bucc|buccaneer|corsair|" +
-            "white knight|wk|dragon knight)\\b", Pattern.CASE_INSENSITIVE);
 
     private static final Pattern FIDGET_PATTERN = Pattern.compile(
             "^\\s*fidget\\s*[?!.,]*\\s*$",
@@ -235,30 +228,6 @@ public class BotChatManager {
             + "(?:(?:u|ur|yo|your)\\s+)?(" + EQUIP_SLOT_WORDS + ")\\b[?!.,]*\\s*$",
             Pattern.CASE_INSENSITIVE);
 
-    // SP variant selection — only matched when spVariantPromptSent=true and spVariant=null
-    private static final Pattern SP_1H_PATTERN = Pattern.compile(
-            "\\b1h\\b", Pattern.CASE_INSENSITIVE);
-    private static final Pattern SP_2H_PATTERN = Pattern.compile(
-            "\\b2h\\b", Pattern.CASE_INSENSITIVE);
-
-    // "pure <stat>" matches only the class whose primary stat it names.
-    // Bare "pure" (no stat qualifier) matches all classes via the negative lookahead,
-    // and the per-class job gate in handleApBuildSelection ensures only the right bot acts.
-    private static final String PURE_NO_STAT = "^\\s*pure\\s*$";
-    private static final Pattern AP_PURE_STR_PATTERN = Pattern.compile(
-            "\\bpure\\s+str\\b|\\bdexless\\b|" + PURE_NO_STAT, Pattern.CASE_INSENSITIVE);
-    private static final Pattern AP_DEXLESS_PATTERN = Pattern.compile(
-            "\\bdexless\\b|\\bpure\\s+luk\\b|" + PURE_NO_STAT, Pattern.CASE_INSENSITIVE);
-    private static final Pattern AP_LUKLESS_PATTERN = Pattern.compile(
-            "\\blukless\\b|\\bpure\\s+int\\b|" + PURE_NO_STAT, Pattern.CASE_INSENSITIVE);
-    private static final Pattern AP_STRLESS_PATTERN = Pattern.compile(
-            "\\bstrless\\b|\\bpure\\s+dex\\b|" + PURE_NO_STAT, Pattern.CASE_INSENSITIVE);
-    private static final Pattern AP_FIXED_DEX_PATTERN = Pattern.compile(
-            "\\b(\\d+)\\s*dex\\b", Pattern.CASE_INSENSITIVE);
-    private static final Pattern AP_FIXED_LUK_PATTERN = Pattern.compile(
-            "\\b(\\d+)\\s*luk\\b", Pattern.CASE_INSENSITIVE);
-    private static final Pattern AP_FIXED_STR_PATTERN = Pattern.compile(
-            "\\b(\\d+)\\s*str\\b", Pattern.CASE_INSENSITIVE);
     private static final List<String> TRADE_INVITE_REPLIES = AgentDialogueCatalog.tradeInviteReplies();
 
     // Shared verb prefix for all drop/give/trade category commands
@@ -385,9 +354,6 @@ public class BotChatManager {
             + "|\\bhow\\s+full\\b",
             Pattern.CASE_INSENSITIVE);
 
-    private static final Pattern AP_CHANGE_BUILD_PATTERN = Pattern.compile(
-            "\\b(change|switch|update|reset|new)\\s+(your\\s+|ur\\s+)?build\\b",
-            Pattern.CASE_INSENSITIVE);
     private static final Pattern RESPEC_PATTERN = Pattern.compile(
             "\\b(respec|reset\\s+(skills?|sp)|rebuild\\s+(skills?|sp)|fix\\s+(skills?|sp|build))\\b",
             Pattern.CASE_INSENSITIVE);
@@ -758,11 +724,11 @@ public class BotChatManager {
 
         // SP build variant selection — only matched when waiting for an answer (Hero 1h vs 2h)
         if (entry.spVariantPromptSent && entry.spVariant == null) {
-            if (SP_1H_PATTERN.matcher(message).find()) {
+            if (AgentBuildDialogueClassifier.isOneHandedSpVariant(message)) {
                 entry.spVariant = "1h";
                 BotManager.getInstance().botReply(entry, "ok! going 1h sword build, Brandish first");
                 BotBuildManager.autoAssignSp(entry, entry.bot);
-            } else if (SP_2H_PATTERN.matcher(message).find()) {
+            } else if (AgentBuildDialogueClassifier.isTwoHandedSpVariant(message)) {
                 entry.spVariant = "2h";
                 BotManager.getInstance().botReply(entry, "ok! going 2h build, interleaving AC early for faster charges");
                 BotBuildManager.autoAssignSp(entry, entry.bot);
@@ -771,7 +737,7 @@ public class BotChatManager {
 
         // AP build selection — "change build" always triggers a re-prompt;
         // "dexless" / "X dex" only apply when bot is actively waiting for the answer (apPromptSent=true)
-        if (AP_CHANGE_BUILD_PATTERN.matcher(message).find()) {
+        if (AgentBuildDialogueClassifier.isApChangeBuildCommand(message)) {
             entry.apBuild      = null;
             entry.apPromptSent = false;
             String prompt = BotBuildManager.requestApBuildPrompt(entry, entry.bot);
@@ -867,7 +833,7 @@ public class BotChatManager {
             BotManager.after(BotManager.randMs(900, 1100), () -> reportPotDebug(entry, entry.bot));
 
         // Job advancement — check if message contains a valid job selection
-        if (JOB_SELECT_PATTERN.matcher(message).find()) {
+        if (AgentBuildDialogueClassifier.isJobSelectionCandidate(message)) {
             Job advJob = resolveJobChange(entry.bot, message.toLowerCase());
             if (advJob != null) {
                 String jobName = jobDisplayName(advJob);
@@ -1452,7 +1418,7 @@ public class BotChatManager {
     private static void handleApBuildSelection(BotEntry entry, String message) {
         Job job = entry.bot.getJob();
 
-        if (job.isA(Job.WARRIOR) && AP_PURE_STR_PATTERN.matcher(message).find()) {
+        if (job.isA(Job.WARRIOR) && AgentBuildDialogueClassifier.isPureStrBuildCommand(message)) {
             int effectiveDex = Math.max(minStatFloor(job, Stat.DEX), entry.bot.getDex());
             applyApBuildChoice(entry,
                     new BotBuildManager.ApBuild(BotBuildManager.StatType.STR, BotBuildManager.StatType.DEX, 4),
@@ -1460,7 +1426,7 @@ public class BotChatManager {
                     "already doing dexless!");
             return;
         }
-        if (job.isA(Job.THIEF) && AP_DEXLESS_PATTERN.matcher(message).find()) {
+        if (job.isA(Job.THIEF) && AgentBuildDialogueClassifier.isDexlessBuildCommand(message)) {
             int effectiveDex = Math.max(minStatFloor(job, Stat.DEX), entry.bot.getDex());
             applyApBuildChoice(entry,
                     new BotBuildManager.ApBuild(BotBuildManager.StatType.LUK, BotBuildManager.StatType.DEX, 4),
@@ -1468,7 +1434,7 @@ public class BotChatManager {
                     "already doing dexless!");
             return;
         }
-        if (job.isA(Job.MAGICIAN) && AP_LUKLESS_PATTERN.matcher(message).find()) {
+        if (job.isA(Job.MAGICIAN) && AgentBuildDialogueClassifier.isLuklessBuildCommand(message)) {
             int effectiveLuk = Math.max(minStatFloor(job, Stat.LUK), entry.bot.getLuk());
             applyApBuildChoice(entry,
                     new BotBuildManager.ApBuild(BotBuildManager.StatType.INT, BotBuildManager.StatType.LUK, 4),
@@ -1476,7 +1442,7 @@ public class BotChatManager {
                     "already doing lukless!");
             return;
         }
-        if (job.isA(Job.BOWMAN) && AP_STRLESS_PATTERN.matcher(message).find()) {
+        if (job.isA(Job.BOWMAN) && AgentBuildDialogueClassifier.isStrlessBuildCommand(message)) {
             int effectiveStr = Math.max(minStatFloor(job, Stat.STR), entry.bot.getStr());
             applyApBuildChoice(entry,
                     new BotBuildManager.ApBuild(BotBuildManager.StatType.DEX, BotBuildManager.StatType.STR, 4),
@@ -1486,9 +1452,8 @@ public class BotChatManager {
         }
 
         if (job.isA(Job.WARRIOR) || job.isA(Job.THIEF)) {
-            Matcher matcher = AP_FIXED_DEX_PATTERN.matcher(message);
-            if (matcher.find()) {
-                int dexTarget = Integer.parseInt(matcher.group(1));
+            Integer dexTarget = AgentBuildDialogueClassifier.matchFixedDexTarget(message);
+            if (dexTarget != null) {
                 int legalDexTarget = Math.max(minStatFloor(job, Stat.DEX), dexTarget);
                 int effectiveDex = Math.max(legalDexTarget, entry.bot.getDex());
                 BotBuildManager.StatType primary = job.isA(Job.WARRIOR)
@@ -1502,9 +1467,8 @@ public class BotChatManager {
             }
         }
         if (job.isA(Job.MAGICIAN)) {
-            Matcher matcher = AP_FIXED_LUK_PATTERN.matcher(message);
-            if (matcher.find()) {
-                int lukTarget = Integer.parseInt(matcher.group(1));
+            Integer lukTarget = AgentBuildDialogueClassifier.matchFixedLukTarget(message);
+            if (lukTarget != null) {
                 int legalLukTarget = Math.max(minStatFloor(job, Stat.LUK), lukTarget);
                 int effectiveLuk = Math.max(legalLukTarget, entry.bot.getLuk());
                 applyApBuildChoice(entry,
@@ -1515,9 +1479,8 @@ public class BotChatManager {
             }
         }
         if (job.isA(Job.BOWMAN)) {
-            Matcher matcher = AP_FIXED_STR_PATTERN.matcher(message);
-            if (matcher.find()) {
-                int strTarget = Integer.parseInt(matcher.group(1));
+            Integer strTarget = AgentBuildDialogueClassifier.matchFixedStrTarget(message);
+            if (strTarget != null) {
                 int legalStrTarget = Math.max(minStatFloor(job, Stat.STR), strTarget);
                 int effectiveStr = Math.max(legalStrTarget, entry.bot.getStr());
                 applyApBuildChoice(entry,
@@ -1818,9 +1781,7 @@ public class BotChatManager {
     }
 
     private static Integer resolveSkillTreeChoice(String message, Map<Integer, List<LearnedSkill>> skillTrees) {
-        Matcher matcher = Pattern.compile("\\b(\\d{3,4})\\b").matcher(message);
-        while (matcher.find()) {
-            int treeId = Integer.parseInt(matcher.group(1));
+        for (int treeId : AgentBuildDialogueClassifier.skillTreeChoiceIds(message)) {
             if (skillTrees.containsKey(treeId)) {
                 return treeId;
             }
