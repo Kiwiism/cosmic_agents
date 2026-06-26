@@ -464,7 +464,7 @@ public class BotChatManager {
                 if (owner != null && bot.getTrade() == null && owner.getTrade() == null
                         && entry.pendingTradeCategory == null) {
                     BotManager.after(BotManager.randMs(600, 1000), () -> {
-                        BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.tradeInviteReplies()));
+                        BotManager.getInstance().botReply(entry, AgentChatUtilityFlow.tradeInviteReply());
                         BotManager.after(BotManager.randMs(800, 1200), () -> {
                             Trade.startTrade(bot);
                             Trade.inviteTrade(bot, owner);

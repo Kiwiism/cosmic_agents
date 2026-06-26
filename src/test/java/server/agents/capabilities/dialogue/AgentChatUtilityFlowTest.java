@@ -28,6 +28,11 @@ class AgentChatUtilityFlowTest {
         assertEquals("", callbacks.events);
     }
 
+    @Test
+    void shouldSelectTradeInviteReplyFromUtilityDialoguePool() {
+        assertTrue(AgentDialogueCatalog.tradeInviteReplies().contains(AgentChatUtilityFlow.tradeInviteReply()));
+    }
+
     private static final class TestCallbacks implements AgentChatUtilityFlow.UtilityCallbacks {
         private String events = "";
 
