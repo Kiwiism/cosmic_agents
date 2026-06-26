@@ -15,7 +15,6 @@ import server.agents.capabilities.dialogue.AgentChatSocialFlow;
 import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
 import server.agents.capabilities.dialogue.AgentChatUtilityFlow;
 import server.agents.capabilities.dialogue.AgentChatTransferFlow;
-import server.agents.capabilities.dialogue.AgentFameDialogueFlow;
 import server.agents.capabilities.dialogue.AgentChatEquipmentFlow;
 import server.agents.capabilities.dialogue.AgentChatJobAdvancementFlow;
 import server.agents.capabilities.dialogue.AgentChatMovementFlow;
@@ -26,7 +25,6 @@ import server.agents.capabilities.dialogue.AgentChatWelcomeBackFlow;
 import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
 import server.agents.capabilities.dialogue.AgentSkillDialogueReporter;
 import server.agents.capabilities.dialogue.AgentSkillReportFlow;
-import server.agents.capabilities.dialogue.AgentSocialDialogueClassifier;
 
 import java.awt.*;
 import java.util.List;
@@ -216,7 +214,7 @@ public class BotChatManager {
     }
 
     static AgentChatSocialFlow.SocialCallbacks socialCallbacks(BotEntry entry) {
-        return targetName -> BotManager.after(BotManager.randMs(500, 900), () -> handleFameCommand(entry, targetName));
+        return BotChatSocialRuntime.socialCallbacks(entry);
     }
 
     static AgentChatMovementFlow.MovementCallbacks movementCallbacks(BotEntry entry) {
@@ -788,57 +786,4 @@ public class BotChatManager {
         BotChatTransferRuntime.handleTransferCommand(entry, transferCommand, message);
     }
 
-    private static void handleFameCommand(BotEntry entry, String targetName) {
-        Character bot = entry.bot;
-        Character target;
-        if (AgentSocialDialogueClassifier.isSelfFameTarget(targetName)) {
-            target = entry.owner;
-        } else {
-            target = bot.getMap().getCharacters().stream()
-                    .filter(c -> c.getName().equalsIgnoreCase(targetName))
-                    .findFirst().orElse(null);
-        }
-        Character fameTarget = target;
-        AgentFameDialogueFlow.handle(targetName, new AgentFameDialogueFlow.FameCallbacks() {
-            @Override
-            public boolean targetExists() {
-                return fameTarget != null;
-            }
-
-            @Override
-            public boolean targetIsSelf() {
-                return fameTarget != null && fameTarget.getId() == bot.getId();
-            }
-
-            @Override
-            public int agentLevel() {
-                return bot.getLevel();
-            }
-
-            @Override
-            public Character.FameStatus fameStatus() {
-                return bot.canGiveFame(fameTarget);
-            }
-
-            @Override
-            public boolean gainFame() {
-                return fameTarget.gainFame(1, bot, 1);
-            }
-
-            @Override
-            public void markFameGiven() {
-                bot.hasGivenFame(fameTarget);
-            }
-
-            @Override
-            public String targetDisplayName() {
-                return fameTarget.getName();
-            }
-
-            @Override
-            public void reply(String message) {
-                BotManager.getInstance().botReply(entry, message);
-            }
-        });
-    }
 }
