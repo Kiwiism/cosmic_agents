@@ -46,6 +46,8 @@ class AgentDialogueCatalogTest {
         assertTrue(AgentDialogueCatalog.proactiveOffersOnReply().contains("proactive upgrade offers on"));
         assertTrue(AgentDialogueCatalog.oneHandedSpVariantReply().contains("1h sword build"));
         assertTrue(AgentDialogueCatalog.twoHandedSpVariantReply().contains("2h build"));
+        assertTrue(AgentDialogueCatalog.helpLines().contains("gear: ask 'any upgrades?' or say 'trade recommended gear'"));
+        assertTrue(AgentDialogueCatalog.helpLines().contains("trade: mesos, scrolls, pots, equips, etc, or named items"));
         assertTrue(AgentDialogueCatalog.jobChangeReplyTemplates().contains("ok %s it is!"));
     }
 

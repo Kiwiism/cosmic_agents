@@ -122,6 +122,12 @@ public final class AgentDialogueCatalog {
     private static final String ONE_HANDED_SP_VARIANT_REPLY = "ok! going 1h sword build, Brandish first";
     private static final String TWO_HANDED_SP_VARIANT_REPLY =
             "ok! going 2h build, interleaving AC early for faster charges";
+    private static final List<String> HELP_LINES = List.of(
+            "commands: follow, stop, move here, fidget, grind, stats, speed, skills, inventory, mesos, exp, slots, scrolls, pots, debug stats, crit, respec, respec ap",
+            "support: skill buffs on/off (= support on/off), heals on/off, buff on/off, buff cheap/max, proactive offers on/off, buff debug, skill buff debug",
+            "gear: ask 'any upgrades?' or say 'trade recommended gear'",
+            "supplies: need hp pot, need mp pot, need pot, need ammo",
+            "trade: mesos, scrolls, pots, equips, etc, or named items");
     private static final List<String> JOB_CHANGE_REPLY_TEMPLATES = List.of(
             "ok, ill change to %s!",
             "alright becoming a %s then",
@@ -274,6 +280,10 @@ public final class AgentDialogueCatalog {
 
     public static String twoHandedSpVariantReply() {
         return TWO_HANDED_SP_VARIANT_REPLY;
+    }
+
+    public static List<String> helpLines() {
+        return HELP_LINES;
     }
 
     public static List<String> jobChangeReplyTemplates() {

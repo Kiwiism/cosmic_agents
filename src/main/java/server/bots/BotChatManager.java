@@ -1070,11 +1070,9 @@ public class BotChatManager {
     }
 
     private static void reportHelp(BotEntry entry) {
-        queueBotReply(entry, "commands: follow, stop, move here, fidget, grind, stats, speed, skills, inventory, mesos, exp, slots, scrolls, pots, debug stats, crit, respec, respec ap");
-        queueBotReply(entry, "support: skill buffs on/off (= support on/off), heals on/off, buff on/off, buff cheap/max, proactive offers on/off, buff debug, skill buff debug");
-        queueBotReply(entry, "gear: ask 'any upgrades?' or say 'trade recommended gear'");
-        queueBotReply(entry, "supplies: need hp pot, need mp pot, need pot, need ammo");
-        queueBotReply(entry, "trade: mesos, scrolls, pots, equips, etc, or named items");
+        for (String line : AgentDialogueCatalog.helpLines()) {
+            queueBotReply(entry, line);
+        }
     }
 
     static boolean isRespecCommand(String message) {
