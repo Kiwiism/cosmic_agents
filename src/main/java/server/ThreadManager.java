@@ -64,10 +64,14 @@ public class ThreadManager {
     }
 
     public void stop() {
+        if (tpe == null) {
+            return;
+        }
         tpe.shutdown();
         try {
             tpe.awaitTermination(5, MINUTES);
         } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
         }
     }
 
