@@ -16,6 +16,7 @@ import constants.inventory.ItemConstants;
 import net.packet.Packet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
 import server.ItemInformationProvider;
 import server.StatEffect;
 import server.Trade;
@@ -1054,31 +1055,7 @@ class BotInventoryManager {
     }
 
     static String normalizeItemQuery(String text) {
-        if (text == null) {
-            return "";
-        }
-        String normalized = text.toLowerCase()
-                .replaceAll("[?!.,]+$", "")
-                .replaceAll("[^a-z0-9 '\\-]+", " ")
-                .trim()
-                .replaceAll("\\s+", " ");
-        if (normalized.isEmpty()) {
-            return "";
-        }
-        List<String> tokens = new ArrayList<>(List.of(normalized.split(" ")));
-        int lastIndex = tokens.size() - 1;
-        tokens.set(lastIndex, singularizeToken(tokens.get(lastIndex)));
-        return String.join(" ", tokens).trim();
-    }
-
-    private static String singularizeToken(String token) {
-        if (token.length() <= 3 || !token.endsWith("s")) {
-            return token;
-        }
-        if (token.endsWith("ies") && token.length() > 4) {
-            return token.substring(0, token.length() - 3) + "y";
-        }
-        return token.substring(0, token.length() - 1);
+        return AgentItemQueryNormalizer.normalize(text);
     }
 
     private static boolean hasEquippedSlotItems(Character bot, String fragment) {

@@ -36,6 +36,7 @@ Reconstruction progress:
 - Follow-target chat classification and group supply request classification now live in `server.agents.capabilities.dialogue.AgentChatCommandClassifier`.
 - Movement-mode chat classification (`follow`, `stop`, `move here`, `grind`, patrol/farm-here, fidget) also lives in `AgentChatCommandClassifier`.
 - Meso/movement-stat queries, respec commands, proactive-offer toggles, and upgrade-request classification also live in `AgentChatCommandClassifier`.
+- Item query string normalization now lives in `server.agents.capabilities.dialogue.AgentItemQueryNormalizer`.
 - `server.bots.BotChatManager` still owns chat parsing and most direct response strings while it is split incrementally.
 - Bot runtime behavior still lives under `server.bots` and has not been functionally changed.
 
