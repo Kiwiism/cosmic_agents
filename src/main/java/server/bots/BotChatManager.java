@@ -540,7 +540,8 @@ public class BotChatManager {
 
         // Job advancement — check if message contains a valid job selection
         if (AgentBuildDialogueClassifier.isJobSelectionCandidate(message)) {
-            Job advJob = resolveJobChange(entry.bot, message.toLowerCase());
+            Job advJob = AgentBuildDialogueClassifier.resolveJobChange(
+                    entry.bot.getJob(), entry.bot.getLevel(), message.toLowerCase());
             if (advJob != null) {
                 String jobName = jobDisplayName(advJob);
                 String reply = AgentDialogueReportFormatter.jobChangeReply(
@@ -1689,68 +1690,6 @@ public class BotChatManager {
 
     private static String dropOrTradePrompt(String category, int count) {
         return AgentDialogueReportFormatter.dropOrTradePrompt(category, count, DROP_OR_TRADE_PROMPTS);
-    }
-
-    /** Maps a chat keyword to the correct next Job given bot's current job and level. Returns null if not valid. */
-    private static Job resolveJobChange(Character bot, String msg) {
-        Job cur = bot.getJob();
-        int lvl = bot.getLevel();
-
-        return switch (cur) {
-            case BEGINNER -> {
-                if (lvl >= 8  && msg.matches(".*\\b(mage|magician|wizard|cleric|healer|fp|il|fp mage|il mage)\\b.*")) yield Job.MAGICIAN;
-                if (lvl >= 10 && msg.matches(".*\\b(warrior|fighter|page|spearman|sader)\\b.*")) yield Job.WARRIOR;
-                if (lvl >= 10 && msg.matches(".*\\b(bowman|bowmen|archer|hunter|crossbow|xbow)\\b.*")) yield Job.BOWMAN;
-                if (lvl >= 10 && msg.matches(".*\\b(thief|assassin|sin|bandit|dit)\\b.*")) yield Job.THIEF;
-                if (lvl >= 10 && msg.matches(".*\\b(pirate|brawler|gunslinger|gun|bucc)\\b.*")) yield Job.PIRATE;
-                yield null;
-            }
-            // 2nd job
-            case WARRIOR -> lvl < 30 ? null :
-                    msg.matches(".*\\b(fighter|sader)\\b.*") ? Job.FIGHTER :
-                    msg.matches(".*\\bpage\\b.*") ? Job.PAGE :
-                    msg.matches(".*\\b(spearman|spear)\\b.*") ? Job.SPEARMAN : null;
-            case MAGICIAN -> lvl < 30 ? null :
-                    msg.matches(".*\\b(fp|fp wizard|fp mage|fire|f\\.p)\\b.*") ? Job.FP_WIZARD :
-                    msg.matches(".*\\b(il|il wizard|il mage|ice|i\\.l)\\b.*") ? Job.IL_WIZARD :
-                    msg.matches(".*\\b(cleric|healer|priest|bishop)\\b.*") ? Job.CLERIC : null;
-            case BOWMAN -> lvl < 30 ? null :
-                    msg.matches(".*\\b(hunter|bow)\\b.*") ? Job.HUNTER :
-                    msg.matches(".*\\b(crossbow|xbow|crossbowman)\\b.*") ? Job.CROSSBOWMAN : null;
-            case THIEF -> lvl < 30 ? null :
-                    msg.matches(".*\\b(assassin|sin)\\b.*") ? Job.ASSASSIN :
-                    msg.matches(".*\\b(bandit|dit)\\b.*") ? Job.BANDIT : null;
-            case PIRATE -> lvl < 30 ? null :
-                    msg.matches(".*\\b(brawler|knuckle)\\b.*") ? Job.BRAWLER :
-                    msg.matches(".*\\b(gunslinger|gun)\\b.*") ? Job.GUNSLINGER : null;
-            // 3rd job
-            case FIGHTER     -> lvl >= 70 && msg.matches(".*\\bcrusader\\b.*")                 ? Job.CRUSADER     : null;
-            case PAGE        -> lvl >= 70 && msg.matches(".*\\b(white knight|wk)\\b.*")         ? Job.WHITEKNIGHT  : null;
-            case SPEARMAN    -> lvl >= 70 && msg.matches(".*\\b(dragon knight|dk)\\b.*")        ? Job.DRAGONKNIGHT : null;
-            case FP_WIZARD   -> lvl >= 70 && msg.matches(".*\\b(fp mage|fp)\\b.*")              ? Job.FP_MAGE      : null;
-            case IL_WIZARD   -> lvl >= 70 && msg.matches(".*\\b(il mage|il)\\b.*")              ? Job.IL_MAGE      : null;
-            case CLERIC      -> lvl >= 70 && msg.matches(".*\\bpriest\\b.*")                    ? Job.PRIEST       : null;
-            case HUNTER      -> lvl >= 70 && msg.matches(".*\\branger\\b.*")                    ? Job.RANGER       : null;
-            case CROSSBOWMAN -> lvl >= 70 && msg.matches(".*\\bsniper\\b.*")                    ? Job.SNIPER       : null;
-            case ASSASSIN    -> lvl >= 70 && msg.matches(".*\\bhermit\\b.*")                    ? Job.HERMIT       : null;
-            case BANDIT      -> lvl >= 70 && msg.matches(".*\\b(chief bandit|cb|chief)\\b.*")   ? Job.CHIEFBANDIT  : null;
-            case BRAWLER     -> lvl >= 70 && msg.matches(".*\\bmarauder\\b.*")                  ? Job.MARAUDER     : null;
-            case GUNSLINGER  -> lvl >= 70 && msg.matches(".*\\boutlaw\\b.*")                    ? Job.OUTLAW       : null;
-            // 4th job
-            case CRUSADER    -> lvl >= 120 && msg.matches(".*\\bhero\\b.*")                         ? Job.HERO        : null;
-            case WHITEKNIGHT -> lvl >= 120 && msg.matches(".*\\bpaladin\\b.*")                      ? Job.PALADIN     : null;
-            case DRAGONKNIGHT -> lvl >= 120 && msg.matches(".*\\b(dark knight|drk)\\b.*")           ? Job.DARKKNIGHT  : null;
-            case FP_MAGE     -> lvl >= 120 && msg.matches(".*\\b(fp archmage|fp arch)\\b.*")        ? Job.FP_ARCHMAGE : null;
-            case IL_MAGE     -> lvl >= 120 && msg.matches(".*\\b(il archmage|il arch)\\b.*")        ? Job.IL_ARCHMAGE : null;
-            case PRIEST      -> lvl >= 120 && msg.matches(".*\\bbishop\\b.*")                       ? Job.BISHOP      : null;
-            case RANGER      -> lvl >= 120 && msg.matches(".*\\b(bowmaster|bm)\\b.*")               ? Job.BOWMASTER   : null;
-            case SNIPER      -> lvl >= 120 && msg.matches(".*\\b(marksman|mm)\\b.*")                ? Job.MARKSMAN    : null;
-            case HERMIT      -> lvl >= 120 && msg.matches(".*\\b(night lord|nl)\\b.*")              ? Job.NIGHTLORD   : null;
-            case CHIEFBANDIT -> lvl >= 120 && msg.matches(".*\\b(shadower|shad)\\b.*")              ? Job.SHADOWER    : null;
-            case MARAUDER    -> lvl >= 120 && msg.matches(".*\\b(buccaneer|bucc)\\b.*")             ? Job.BUCCANEER   : null;
-            case OUTLAW      -> lvl >= 120 && msg.matches(".*\\bcorsair\\b.*")                      ? Job.CORSAIR     : null;
-            default -> null;
-        };
     }
 
     static String jobDisplayName(Job job) {

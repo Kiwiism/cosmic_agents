@@ -1,5 +1,7 @@
 package server.agents.capabilities.dialogue;
 
+import client.Job;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -40,6 +42,61 @@ public final class AgentBuildDialogueClassifier {
 
     public static boolean isJobSelectionCandidate(String message) {
         return JOB_SELECT_PATTERN.matcher(message).find();
+    }
+
+    public static Job resolveJobChange(Job currentJob, int level, String message) {
+        return switch (currentJob) {
+            case BEGINNER -> {
+                if (level >= 8 && message.matches(".*\\b(mage|magician|wizard|cleric|healer|fp|il|fp mage|il mage)\\b.*")) yield Job.MAGICIAN;
+                if (level >= 10 && message.matches(".*\\b(warrior|fighter|page|spearman|sader)\\b.*")) yield Job.WARRIOR;
+                if (level >= 10 && message.matches(".*\\b(bowman|bowmen|archer|hunter|crossbow|xbow)\\b.*")) yield Job.BOWMAN;
+                if (level >= 10 && message.matches(".*\\b(thief|assassin|sin|bandit|dit)\\b.*")) yield Job.THIEF;
+                if (level >= 10 && message.matches(".*\\b(pirate|brawler|gunslinger|gun|bucc)\\b.*")) yield Job.PIRATE;
+                yield null;
+            }
+            case WARRIOR -> level < 30 ? null :
+                    message.matches(".*\\b(fighter|sader)\\b.*") ? Job.FIGHTER :
+                    message.matches(".*\\bpage\\b.*") ? Job.PAGE :
+                    message.matches(".*\\b(spearman|spear)\\b.*") ? Job.SPEARMAN : null;
+            case MAGICIAN -> level < 30 ? null :
+                    message.matches(".*\\b(fp|fp wizard|fp mage|fire|f\\.p)\\b.*") ? Job.FP_WIZARD :
+                    message.matches(".*\\b(il|il wizard|il mage|ice|i\\.l)\\b.*") ? Job.IL_WIZARD :
+                    message.matches(".*\\b(cleric|healer|priest|bishop)\\b.*") ? Job.CLERIC : null;
+            case BOWMAN -> level < 30 ? null :
+                    message.matches(".*\\b(hunter|bow)\\b.*") ? Job.HUNTER :
+                    message.matches(".*\\b(crossbow|xbow|crossbowman)\\b.*") ? Job.CROSSBOWMAN : null;
+            case THIEF -> level < 30 ? null :
+                    message.matches(".*\\b(assassin|sin)\\b.*") ? Job.ASSASSIN :
+                    message.matches(".*\\b(bandit|dit)\\b.*") ? Job.BANDIT : null;
+            case PIRATE -> level < 30 ? null :
+                    message.matches(".*\\b(brawler|knuckle)\\b.*") ? Job.BRAWLER :
+                    message.matches(".*\\b(gunslinger|gun)\\b.*") ? Job.GUNSLINGER : null;
+            case FIGHTER -> level >= 70 && message.matches(".*\\bcrusader\\b.*") ? Job.CRUSADER : null;
+            case PAGE -> level >= 70 && message.matches(".*\\b(white knight|wk)\\b.*") ? Job.WHITEKNIGHT : null;
+            case SPEARMAN -> level >= 70 && message.matches(".*\\b(dragon knight|dk)\\b.*") ? Job.DRAGONKNIGHT : null;
+            case FP_WIZARD -> level >= 70 && message.matches(".*\\b(fp mage|fp)\\b.*") ? Job.FP_MAGE : null;
+            case IL_WIZARD -> level >= 70 && message.matches(".*\\b(il mage|il)\\b.*") ? Job.IL_MAGE : null;
+            case CLERIC -> level >= 70 && message.matches(".*\\bpriest\\b.*") ? Job.PRIEST : null;
+            case HUNTER -> level >= 70 && message.matches(".*\\branger\\b.*") ? Job.RANGER : null;
+            case CROSSBOWMAN -> level >= 70 && message.matches(".*\\bsniper\\b.*") ? Job.SNIPER : null;
+            case ASSASSIN -> level >= 70 && message.matches(".*\\bhermit\\b.*") ? Job.HERMIT : null;
+            case BANDIT -> level >= 70 && message.matches(".*\\b(chief bandit|cb|chief)\\b.*") ? Job.CHIEFBANDIT : null;
+            case BRAWLER -> level >= 70 && message.matches(".*\\bmarauder\\b.*") ? Job.MARAUDER : null;
+            case GUNSLINGER -> level >= 70 && message.matches(".*\\boutlaw\\b.*") ? Job.OUTLAW : null;
+            case CRUSADER -> level >= 120 && message.matches(".*\\bhero\\b.*") ? Job.HERO : null;
+            case WHITEKNIGHT -> level >= 120 && message.matches(".*\\bpaladin\\b.*") ? Job.PALADIN : null;
+            case DRAGONKNIGHT -> level >= 120 && message.matches(".*\\b(dark knight|drk)\\b.*") ? Job.DARKKNIGHT : null;
+            case FP_MAGE -> level >= 120 && message.matches(".*\\b(fp archmage|fp arch)\\b.*") ? Job.FP_ARCHMAGE : null;
+            case IL_MAGE -> level >= 120 && message.matches(".*\\b(il archmage|il arch)\\b.*") ? Job.IL_ARCHMAGE : null;
+            case PRIEST -> level >= 120 && message.matches(".*\\bbishop\\b.*") ? Job.BISHOP : null;
+            case RANGER -> level >= 120 && message.matches(".*\\b(bowmaster|bm)\\b.*") ? Job.BOWMASTER : null;
+            case SNIPER -> level >= 120 && message.matches(".*\\b(marksman|mm)\\b.*") ? Job.MARKSMAN : null;
+            case HERMIT -> level >= 120 && message.matches(".*\\b(night lord|nl)\\b.*") ? Job.NIGHTLORD : null;
+            case CHIEFBANDIT -> level >= 120 && message.matches(".*\\b(shadower|shad)\\b.*") ? Job.SHADOWER : null;
+            case MARAUDER -> level >= 120 && message.matches(".*\\b(buccaneer|bucc)\\b.*") ? Job.BUCCANEER : null;
+            case OUTLAW -> level >= 120 && message.matches(".*\\bcorsair\\b.*") ? Job.CORSAIR : null;
+            default -> null;
+        };
     }
 
     public static boolean isOneHandedSpVariant(String message) {
