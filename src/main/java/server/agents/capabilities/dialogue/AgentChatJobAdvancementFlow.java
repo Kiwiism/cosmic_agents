@@ -2,6 +2,9 @@ package server.agents.capabilities.dialogue;
 
 import client.Job;
 
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+
 public final class AgentChatJobAdvancementFlow {
     private AgentChatJobAdvancementFlow() {
     }
@@ -18,6 +21,16 @@ public final class AgentChatJobAdvancementFlow {
 
         callbacks.advanceTo(advancement);
         return true;
+    }
+
+    public static String jobChangeReply(Job job) {
+        return AgentDialogueReportFormatter.jobChangeReply(
+                randomReply(AgentDialogueCatalog.jobChangeReplyTemplates()),
+                AgentDialogueReportFormatter.jobDisplayName(job));
+    }
+
+    private static String randomReply(List<String> replies) {
+        return replies.get(ThreadLocalRandom.current().nextInt(replies.size()));
     }
 
     public interface JobAdvancementCallbacks {

@@ -621,9 +621,7 @@ public class BotChatManager {
 
     private static AgentChatJobAdvancementFlow.JobAdvancementCallbacks jobAdvancementCallbacks(BotEntry entry) {
         return advJob -> {
-            String jobName = AgentDialogueReportFormatter.jobDisplayName(advJob);
-            String reply = AgentDialogueReportFormatter.jobChangeReply(
-                    BotManager.randomReply(AgentDialogueCatalog.jobChangeReplyTemplates()), jobName);
+            String reply = AgentChatJobAdvancementFlow.jobChangeReply(advJob);
             BotManager.getInstance().botReply(entry, reply);
             BotManager.after(BotManager.randMs(900, 1100), () -> BotStarterKitManager.advanceJob(entry, advJob));
         };
