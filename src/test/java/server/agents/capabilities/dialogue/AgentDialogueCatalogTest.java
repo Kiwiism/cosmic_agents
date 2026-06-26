@@ -44,6 +44,8 @@ class AgentDialogueCatalogTest {
         assertTrue(AgentDialogueCatalog.buffConsumablesMaxReply().contains("best buff pots"));
         assertTrue(AgentDialogueCatalog.proactiveOffersOffReply().contains("immediate upgrades"));
         assertTrue(AgentDialogueCatalog.proactiveOffersOnReply().contains("proactive upgrade offers on"));
+        assertTrue(AgentDialogueCatalog.oneHandedSpVariantReply().contains("1h sword build"));
+        assertTrue(AgentDialogueCatalog.twoHandedSpVariantReply().contains("2h build"));
         assertTrue(AgentDialogueCatalog.jobChangeReplyTemplates().contains("ok %s it is!"));
     }
 

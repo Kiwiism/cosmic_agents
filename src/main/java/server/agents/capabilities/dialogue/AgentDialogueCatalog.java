@@ -119,6 +119,9 @@ public final class AgentDialogueCatalog {
     private static final String BUFF_CONSUMABLES_MAX_REPLY = "ok, using best buff pots";
     private static final String PROACTIVE_OFFERS_OFF_REPLY = "ok, only offering immediate upgrades";
     private static final String PROACTIVE_OFFERS_ON_REPLY = "ok, proactive upgrade offers on";
+    private static final String ONE_HANDED_SP_VARIANT_REPLY = "ok! going 1h sword build, Brandish first";
+    private static final String TWO_HANDED_SP_VARIANT_REPLY =
+            "ok! going 2h build, interleaving AC early for faster charges";
     private static final List<String> JOB_CHANGE_REPLY_TEMPLATES = List.of(
             "ok, ill change to %s!",
             "alright becoming a %s then",
@@ -263,6 +266,14 @@ public final class AgentDialogueCatalog {
 
     public static String proactiveOffersOnReply() {
         return PROACTIVE_OFFERS_ON_REPLY;
+    }
+
+    public static String oneHandedSpVariantReply() {
+        return ONE_HANDED_SP_VARIANT_REPLY;
+    }
+
+    public static String twoHandedSpVariantReply() {
+        return TWO_HANDED_SP_VARIANT_REPLY;
     }
 
     public static List<String> jobChangeReplyTemplates() {

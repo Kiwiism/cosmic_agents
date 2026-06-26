@@ -430,11 +430,11 @@ public class BotChatManager {
         if (entry.spVariantPromptSent && entry.spVariant == null) {
             if (AgentBuildDialogueClassifier.isOneHandedSpVariant(message)) {
                 entry.spVariant = "1h";
-                BotManager.getInstance().botReply(entry, "ok! going 1h sword build, Brandish first");
+                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.oneHandedSpVariantReply());
                 BotBuildManager.autoAssignSp(entry, entry.bot);
             } else if (AgentBuildDialogueClassifier.isTwoHandedSpVariant(message)) {
                 entry.spVariant = "2h";
-                BotManager.getInstance().botReply(entry, "ok! going 2h build, interleaving AC early for faster charges");
+                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.twoHandedSpVariantReply());
                 BotBuildManager.autoAssignSp(entry, entry.bot);
             }
         }
