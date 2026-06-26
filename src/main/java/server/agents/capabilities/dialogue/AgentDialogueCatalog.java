@@ -109,6 +109,16 @@ public final class AgentDialogueCatalog {
     private static final String AWAY_TOWN_CONFIRM_REPLY = "ok, heading to town and waiting";
     private static final String AWAY_STAY_CONFIRM_REPLY = "ok, staying safe here";
     private static final String AWAY_CANCEL_REPLY = "ok nvm, staying with you";
+    private static final String SUPPORT_OFF_REPLY = "ok, skill buffs off";
+    private static final String SUPPORT_ON_REPLY = "ok, skill buffs on";
+    private static final String HEALS_OFF_REPLY = "ok, no heals";
+    private static final String HEALS_ON_REPLY = "ok, ill heal when needed";
+    private static final String BUFF_CONSUMABLES_OFF_REPLY = "ok, no buff pots";
+    private static final String BUFF_CONSUMABLES_ON_REPLY_TEMPLATE = "ok, using buff pots (%s)";
+    private static final String BUFF_CONSUMABLES_CHEAP_REPLY = "ok, using cheapest buff pots";
+    private static final String BUFF_CONSUMABLES_MAX_REPLY = "ok, using best buff pots";
+    private static final String PROACTIVE_OFFERS_OFF_REPLY = "ok, only offering immediate upgrades";
+    private static final String PROACTIVE_OFFERS_ON_REPLY = "ok, proactive upgrade offers on";
     private static final List<String> JOB_CHANGE_REPLY_TEMPLATES = List.of(
             "ok, ill change to %s!",
             "alright becoming a %s then",
@@ -213,6 +223,46 @@ public final class AgentDialogueCatalog {
 
     public static String awayCancelReply() {
         return AWAY_CANCEL_REPLY;
+    }
+
+    public static String supportOffReply() {
+        return SUPPORT_OFF_REPLY;
+    }
+
+    public static String supportOnReply() {
+        return SUPPORT_ON_REPLY;
+    }
+
+    public static String healsOffReply() {
+        return HEALS_OFF_REPLY;
+    }
+
+    public static String healsOnReply() {
+        return HEALS_ON_REPLY;
+    }
+
+    public static String buffConsumablesOffReply() {
+        return BUFF_CONSUMABLES_OFF_REPLY;
+    }
+
+    public static String buffConsumablesOnReply(String mode) {
+        return String.format(BUFF_CONSUMABLES_ON_REPLY_TEMPLATE, mode);
+    }
+
+    public static String buffConsumablesCheapReply() {
+        return BUFF_CONSUMABLES_CHEAP_REPLY;
+    }
+
+    public static String buffConsumablesMaxReply() {
+        return BUFF_CONSUMABLES_MAX_REPLY;
+    }
+
+    public static String proactiveOffersOffReply() {
+        return PROACTIVE_OFFERS_OFF_REPLY;
+    }
+
+    public static String proactiveOffersOnReply() {
+        return PROACTIVE_OFFERS_ON_REPLY;
     }
 
     public static List<String> jobChangeReplyTemplates() {

@@ -34,6 +34,16 @@ class AgentDialogueCatalogTest {
         assertTrue(AgentDialogueCatalog.awayTownConfirmReply().contains("heading to town"));
         assertTrue(AgentDialogueCatalog.awayStayConfirmReply().contains("staying safe here"));
         assertTrue(AgentDialogueCatalog.awayCancelReply().contains("staying with you"));
+        assertTrue(AgentDialogueCatalog.supportOffReply().contains("skill buffs off"));
+        assertTrue(AgentDialogueCatalog.supportOnReply().contains("skill buffs on"));
+        assertTrue(AgentDialogueCatalog.healsOffReply().contains("no heals"));
+        assertTrue(AgentDialogueCatalog.healsOnReply().contains("heal when needed"));
+        assertTrue(AgentDialogueCatalog.buffConsumablesOffReply().contains("no buff pots"));
+        assertTrue(AgentDialogueCatalog.buffConsumablesOnReply("cheap").contains("(cheap)"));
+        assertTrue(AgentDialogueCatalog.buffConsumablesCheapReply().contains("cheapest buff pots"));
+        assertTrue(AgentDialogueCatalog.buffConsumablesMaxReply().contains("best buff pots"));
+        assertTrue(AgentDialogueCatalog.proactiveOffersOffReply().contains("immediate upgrades"));
+        assertTrue(AgentDialogueCatalog.proactiveOffersOnReply().contains("proactive upgrade offers on"));
         assertTrue(AgentDialogueCatalog.jobChangeReplyTemplates().contains("ok %s it is!"));
     }
 

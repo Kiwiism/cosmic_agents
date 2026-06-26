@@ -227,28 +227,28 @@ public class BotChatManager {
         if (AgentChatCommandClassifier.isSupportOffCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.skillBuffsEnabled = false;
-                BotManager.getInstance().botReply(entry, "ok, skill buffs off");
+                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.supportOffReply());
             });
             return;
         }
         if (AgentChatCommandClassifier.isSupportOnCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.skillBuffsEnabled = true;
-                BotManager.getInstance().botReply(entry, "ok, skill buffs on");
+                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.supportOnReply());
             });
             return;
         }
         if (AgentChatCommandClassifier.isHealsOffCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.supportHealsEnabled = false;
-                BotManager.getInstance().botReply(entry, "ok, no heals");
+                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.healsOffReply());
             });
             return;
         }
         if (AgentChatCommandClassifier.isHealsOnCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.supportHealsEnabled = true;
-                BotManager.getInstance().botReply(entry, "ok, ill heal when needed");
+                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.healsOnReply());
             });
             return;
         }
@@ -256,7 +256,7 @@ public class BotChatManager {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.buffConsumablesEnabled = false;
                 entry.lastBuffScanMs = 0;
-                BotManager.getInstance().botReply(entry, "ok, no buff pots");
+                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.buffConsumablesOffReply());
             });
             return;
         }
@@ -265,7 +265,7 @@ public class BotChatManager {
                 entry.buffConsumablesEnabled = true;
                 entry.lastBuffScanMs = 0;
                 String mode = entry.buffCheapMode ? "cheap" : "max";
-                BotManager.getInstance().botReply(entry, "ok, using buff pots (" + mode + ")");
+                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.buffConsumablesOnReply(mode));
             });
             return;
         }
@@ -273,7 +273,7 @@ public class BotChatManager {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.buffCheapMode = true;
                 entry.lastBuffScanMs = 0;
-                BotManager.getInstance().botReply(entry, "ok, using cheapest buff pots");
+                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.buffConsumablesCheapReply());
             });
             return;
         }
@@ -281,21 +281,21 @@ public class BotChatManager {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.buffCheapMode = false;
                 entry.lastBuffScanMs = 0;
-                BotManager.getInstance().botReply(entry, "ok, using best buff pots");
+                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.buffConsumablesMaxReply());
             });
             return;
         }
         if (AgentChatCommandClassifier.isProactiveOffersOffCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.proactiveUpgradeOffers = false;
-                BotManager.getInstance().botReply(entry, "ok, only offering immediate upgrades");
+                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.proactiveOffersOffReply());
             });
             return;
         }
         if (AgentChatCommandClassifier.isProactiveOffersOnCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.proactiveUpgradeOffers = true;
-                BotManager.getInstance().botReply(entry, "ok, proactive upgrade offers on");
+                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.proactiveOffersOnReply());
             });
             return;
         }
