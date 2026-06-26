@@ -1015,32 +1015,40 @@ public class BotChatManager {
             int effectiveDex = Math.max(minStatFloor(job, Stat.DEX), entry.bot.getDex());
             applyApBuildChoice(entry,
                     new BotBuildManager.ApBuild(BotBuildManager.StatType.STR, BotBuildManager.StatType.DEX, 4),
-                    AgentDialogueReportFormatter.apPureBuildConfirm("dexless", "dex", effectiveDex, "str"),
-                    AgentDialogueReportFormatter.apPureBuildAlready("dexless"));
+                    AgentDialogueReportFormatter.apPureBuildConfirm(
+                            AgentDialogueReportFormatter.WARRIOR_DEXLESS_AP_BUILD, effectiveDex),
+                    AgentDialogueReportFormatter.apPureBuildAlready(
+                            AgentDialogueReportFormatter.WARRIOR_DEXLESS_AP_BUILD));
             return;
         }
         if (job.isA(Job.THIEF) && AgentBuildDialogueClassifier.isDexlessBuildCommand(message)) {
             int effectiveDex = Math.max(minStatFloor(job, Stat.DEX), entry.bot.getDex());
             applyApBuildChoice(entry,
                     new BotBuildManager.ApBuild(BotBuildManager.StatType.LUK, BotBuildManager.StatType.DEX, 4),
-                    AgentDialogueReportFormatter.apPureBuildConfirm("dexless", "dex", effectiveDex, "luk"),
-                    AgentDialogueReportFormatter.apPureBuildAlready("dexless"));
+                    AgentDialogueReportFormatter.apPureBuildConfirm(
+                            AgentDialogueReportFormatter.THIEF_DEXLESS_AP_BUILD, effectiveDex),
+                    AgentDialogueReportFormatter.apPureBuildAlready(
+                            AgentDialogueReportFormatter.THIEF_DEXLESS_AP_BUILD));
             return;
         }
         if (job.isA(Job.MAGICIAN) && AgentBuildDialogueClassifier.isLuklessBuildCommand(message)) {
             int effectiveLuk = Math.max(minStatFloor(job, Stat.LUK), entry.bot.getLuk());
             applyApBuildChoice(entry,
                     new BotBuildManager.ApBuild(BotBuildManager.StatType.INT, BotBuildManager.StatType.LUK, 4),
-                    AgentDialogueReportFormatter.apPureBuildConfirm("lukless", "luk", effectiveLuk, "int"),
-                    AgentDialogueReportFormatter.apPureBuildAlready("lukless"));
+                    AgentDialogueReportFormatter.apPureBuildConfirm(
+                            AgentDialogueReportFormatter.MAGICIAN_LUKLESS_AP_BUILD, effectiveLuk),
+                    AgentDialogueReportFormatter.apPureBuildAlready(
+                            AgentDialogueReportFormatter.MAGICIAN_LUKLESS_AP_BUILD));
             return;
         }
         if (job.isA(Job.BOWMAN) && AgentBuildDialogueClassifier.isStrlessBuildCommand(message)) {
             int effectiveStr = Math.max(minStatFloor(job, Stat.STR), entry.bot.getStr());
             applyApBuildChoice(entry,
                     new BotBuildManager.ApBuild(BotBuildManager.StatType.DEX, BotBuildManager.StatType.STR, 4),
-                    AgentDialogueReportFormatter.apPureBuildConfirm("strless", "str", effectiveStr, "dex"),
-                    AgentDialogueReportFormatter.apPureBuildAlready("strless"));
+                    AgentDialogueReportFormatter.apPureBuildConfirm(
+                            AgentDialogueReportFormatter.BOWMAN_STRLESS_AP_BUILD, effectiveStr),
+                    AgentDialogueReportFormatter.apPureBuildAlready(
+                            AgentDialogueReportFormatter.BOWMAN_STRLESS_AP_BUILD));
             return;
         }
 
@@ -1052,11 +1060,13 @@ public class BotChatManager {
                 BotBuildManager.StatType primary = job.isA(Job.WARRIOR)
                         ? BotBuildManager.StatType.STR
                         : BotBuildManager.StatType.LUK;
+                AgentDialogueReportFormatter.AgentApBuildDialogueProfile dialogueProfile = job.isA(Job.WARRIOR)
+                        ? AgentDialogueReportFormatter.WARRIOR_FIXED_DEX_AP_BUILD
+                        : AgentDialogueReportFormatter.THIEF_FIXED_DEX_AP_BUILD;
                 applyApBuildChoice(entry,
                         new BotBuildManager.ApBuild(primary, BotBuildManager.StatType.DEX, dexTarget),
-                        AgentDialogueReportFormatter.apFixedBuildConfirm(
-                                "dex", effectiveDex, AgentDialogueReportFormatter.statTypeName(primary.name())),
-                        AgentDialogueReportFormatter.apFixedBuildAlready(legalDexTarget, "dex"));
+                        AgentDialogueReportFormatter.apFixedBuildConfirm(dialogueProfile, effectiveDex),
+                        AgentDialogueReportFormatter.apFixedBuildAlready(dialogueProfile, legalDexTarget));
                 return;
             }
         }
@@ -1067,8 +1077,10 @@ public class BotChatManager {
                 int effectiveLuk = Math.max(legalLukTarget, entry.bot.getLuk());
                 applyApBuildChoice(entry,
                         new BotBuildManager.ApBuild(BotBuildManager.StatType.INT, BotBuildManager.StatType.LUK, lukTarget),
-                        AgentDialogueReportFormatter.apFixedBuildConfirm("luk", effectiveLuk, "int"),
-                        AgentDialogueReportFormatter.apFixedBuildAlready(legalLukTarget, "luk"));
+                        AgentDialogueReportFormatter.apFixedBuildConfirm(
+                                AgentDialogueReportFormatter.MAGICIAN_FIXED_LUK_AP_BUILD, effectiveLuk),
+                        AgentDialogueReportFormatter.apFixedBuildAlready(
+                                AgentDialogueReportFormatter.MAGICIAN_FIXED_LUK_AP_BUILD, legalLukTarget));
                 return;
             }
         }
@@ -1079,8 +1091,10 @@ public class BotChatManager {
                 int effectiveStr = Math.max(legalStrTarget, entry.bot.getStr());
                 applyApBuildChoice(entry,
                         new BotBuildManager.ApBuild(BotBuildManager.StatType.DEX, BotBuildManager.StatType.STR, strTarget),
-                        AgentDialogueReportFormatter.apFixedBuildConfirm("str", effectiveStr, "dex"),
-                        AgentDialogueReportFormatter.apFixedBuildAlready(legalStrTarget, "str"));
+                        AgentDialogueReportFormatter.apFixedBuildConfirm(
+                                AgentDialogueReportFormatter.BOWMAN_FIXED_STR_AP_BUILD, effectiveStr),
+                        AgentDialogueReportFormatter.apFixedBuildAlready(
+                                AgentDialogueReportFormatter.BOWMAN_FIXED_STR_AP_BUILD, legalStrTarget));
             }
         }
     }

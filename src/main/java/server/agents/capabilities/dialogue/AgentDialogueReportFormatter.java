@@ -15,6 +15,26 @@ public final class AgentDialogueReportFormatter {
     public record AgentSkillLine(int id, String name, int level) {
     }
 
+    public record AgentApBuildDialogueProfile(String buildName, String secondaryStat, String primaryStat) {
+    }
+
+    public static final AgentApBuildDialogueProfile WARRIOR_DEXLESS_AP_BUILD =
+            new AgentApBuildDialogueProfile("dexless", "dex", "str");
+    public static final AgentApBuildDialogueProfile THIEF_DEXLESS_AP_BUILD =
+            new AgentApBuildDialogueProfile("dexless", "dex", "luk");
+    public static final AgentApBuildDialogueProfile MAGICIAN_LUKLESS_AP_BUILD =
+            new AgentApBuildDialogueProfile("lukless", "luk", "int");
+    public static final AgentApBuildDialogueProfile BOWMAN_STRLESS_AP_BUILD =
+            new AgentApBuildDialogueProfile("strless", "str", "dex");
+    public static final AgentApBuildDialogueProfile WARRIOR_FIXED_DEX_AP_BUILD =
+            new AgentApBuildDialogueProfile("", "dex", "str");
+    public static final AgentApBuildDialogueProfile THIEF_FIXED_DEX_AP_BUILD =
+            new AgentApBuildDialogueProfile("", "dex", "luk");
+    public static final AgentApBuildDialogueProfile MAGICIAN_FIXED_LUK_AP_BUILD =
+            new AgentApBuildDialogueProfile("", "luk", "int");
+    public static final AgentApBuildDialogueProfile BOWMAN_FIXED_STR_AP_BUILD =
+            new AgentApBuildDialogueProfile("", "str", "dex");
+
     public static String stats(int level, String jobName, int str, int dex, int intStat, int luk,
                                int hp, int maxHp, int mp, int maxMp) {
         return String.format("lv%d %s | str %d dex %d int %d luk %d | hp %d/%d mp %d/%d",
@@ -181,16 +201,33 @@ public final class AgentDialogueReportFormatter {
                 + ", rest into " + primaryStat;
     }
 
+    public static String apPureBuildConfirm(AgentApBuildDialogueProfile profile, int effectiveSecondaryTarget) {
+        return apPureBuildConfirm(
+                profile.buildName(), profile.secondaryStat(), effectiveSecondaryTarget, profile.primaryStat());
+    }
+
     public static String apPureBuildAlready(String buildName) {
         return "already doing " + buildName + "!";
+    }
+
+    public static String apPureBuildAlready(AgentApBuildDialogueProfile profile) {
+        return apPureBuildAlready(profile.buildName());
     }
 
     public static String apFixedBuildConfirm(String secondaryStat, int effectiveSecondaryTarget, String primaryStat) {
         return "ok! keeping " + secondaryStat + " at " + effectiveSecondaryTarget + ", rest into " + primaryStat;
     }
 
+    public static String apFixedBuildConfirm(AgentApBuildDialogueProfile profile, int effectiveSecondaryTarget) {
+        return apFixedBuildConfirm(profile.secondaryStat(), effectiveSecondaryTarget, profile.primaryStat());
+    }
+
     public static String apFixedBuildAlready(int legalSecondaryTarget, String secondaryStat) {
         return "already doing " + legalSecondaryTarget + " " + secondaryStat + " build!";
+    }
+
+    public static String apFixedBuildAlready(AgentApBuildDialogueProfile profile, int legalSecondaryTarget) {
+        return apFixedBuildAlready(legalSecondaryTarget, profile.secondaryStat());
     }
 
     public static String statTypeName(String statTypeName) {

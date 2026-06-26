@@ -116,11 +116,37 @@ class AgentDialogueReportFormatterTest {
         assertEquals(
                 "dexless it is! keeping dex at 25, rest into luk",
                 AgentDialogueReportFormatter.apPureBuildConfirm("dexless", "dex", 25, "luk"));
+        assertEquals(
+                "dexless it is! keeping dex at 25, rest into luk",
+                AgentDialogueReportFormatter.apPureBuildConfirm(
+                        AgentDialogueReportFormatter.THIEF_DEXLESS_AP_BUILD, 25));
         assertEquals("already doing dexless!", AgentDialogueReportFormatter.apPureBuildAlready("dexless"));
+        assertEquals("already doing dexless!",
+                AgentDialogueReportFormatter.apPureBuildAlready(
+                        AgentDialogueReportFormatter.WARRIOR_DEXLESS_AP_BUILD));
         assertEquals(
                 "ok! keeping dex at 40, rest into str",
                 AgentDialogueReportFormatter.apFixedBuildConfirm("dex", 40, "str"));
+        assertEquals(
+                "ok! keeping dex at 40, rest into str",
+                AgentDialogueReportFormatter.apFixedBuildConfirm(
+                        AgentDialogueReportFormatter.WARRIOR_FIXED_DEX_AP_BUILD, 40));
         assertEquals("already doing 40 dex build!", AgentDialogueReportFormatter.apFixedBuildAlready(40, "dex"));
+        assertEquals("already doing 40 dex build!",
+                AgentDialogueReportFormatter.apFixedBuildAlready(
+                        AgentDialogueReportFormatter.THIEF_FIXED_DEX_AP_BUILD, 40));
+        assertEquals("lukless it is! keeping luk at 4, rest into int",
+                AgentDialogueReportFormatter.apPureBuildConfirm(
+                        AgentDialogueReportFormatter.MAGICIAN_LUKLESS_AP_BUILD, 4));
+        assertEquals("strless it is! keeping str at 4, rest into dex",
+                AgentDialogueReportFormatter.apPureBuildConfirm(
+                        AgentDialogueReportFormatter.BOWMAN_STRLESS_AP_BUILD, 4));
+        assertEquals("ok! keeping luk at 23, rest into int",
+                AgentDialogueReportFormatter.apFixedBuildConfirm(
+                        AgentDialogueReportFormatter.MAGICIAN_FIXED_LUK_AP_BUILD, 23));
+        assertEquals("ok! keeping str at 12, rest into dex",
+                AgentDialogueReportFormatter.apFixedBuildConfirm(
+                        AgentDialogueReportFormatter.BOWMAN_FIXED_STR_AP_BUILD, 12));
         assertEquals("luk", AgentDialogueReportFormatter.statTypeName("LUK"));
     }
 
