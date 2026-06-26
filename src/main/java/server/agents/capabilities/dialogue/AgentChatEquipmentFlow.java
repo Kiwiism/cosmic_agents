@@ -24,6 +24,10 @@ public final class AgentChatEquipmentFlow {
         return false;
     }
 
+    public static String gearOptimizedReply() {
+        return AgentDialogueCatalog.gearOptimizedReply();
+    }
+
     public interface EquipmentCallbacks {
         boolean unequipSlot(String slotName);
 

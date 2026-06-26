@@ -327,7 +327,7 @@ public class BotChatManager {
             public void autoEquip() {
                 BotManager.after(BotManager.randMs(400, 600), () -> {
                     BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem, true);
-                    BotManager.getInstance().botReply(entry, AgentDialogueCatalog.gearOptimizedReply());
+                    BotManager.getInstance().botReply(entry, AgentChatEquipmentFlow.gearOptimizedReply());
                 });
             }
         };

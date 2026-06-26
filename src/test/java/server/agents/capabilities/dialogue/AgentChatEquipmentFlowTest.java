@@ -37,6 +37,11 @@ class AgentChatEquipmentFlowTest {
         assertEquals("", callbacks.events);
     }
 
+    @Test
+    void shouldExposeAutoEquipReply() {
+        assertEquals(AgentDialogueCatalog.gearOptimizedReply(), AgentChatEquipmentFlow.gearOptimizedReply());
+    }
+
     private static final class TestCallbacks implements AgentChatEquipmentFlow.EquipmentCallbacks {
         private final boolean acceptSlot;
         private String events = "";
