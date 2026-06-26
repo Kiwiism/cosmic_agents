@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import client.Character;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 class AgentFameDialogueFlowTest {
     @Test
     void repliesWhenTargetIsMissing() {
@@ -48,7 +50,7 @@ class AgentFameDialogueFlowTest {
 
         AgentFameDialogueFlow.handle("Alice", callbacks);
 
-        assertEquals("cooldown reply", callbacks.reply);
+        assertTrue(AgentDialogueCatalog.fameCooldownReplies().contains(callbacks.reply));
         assertFalse(callbacks.gainFameCalled);
     }
 
@@ -59,7 +61,10 @@ class AgentFameDialogueFlowTest {
 
         AgentFameDialogueFlow.handle("Alice", callbacks);
 
-        assertEquals("same Alice", callbacks.reply);
+        List<String> possibleReplies = AgentDialogueCatalog.fameSamePersonReplies().stream()
+                .map(template -> AgentDialogueReportFormatter.fameSamePersonReply(template, "Alice"))
+                .toList();
+        assertTrue(possibleReplies.contains(callbacks.reply));
         assertFalse(callbacks.gainFameCalled);
     }
 
@@ -70,7 +75,10 @@ class AgentFameDialogueFlowTest {
 
         AgentFameDialogueFlow.handle("Alice", callbacks);
 
-        assertEquals("famed Alice", callbacks.reply);
+        List<String> possibleReplies = AgentDialogueCatalog.fameOkReplies().stream()
+                .map(template -> AgentDialogueReportFormatter.fameOkReply(template, "Alice"))
+                .toList();
+        assertTrue(possibleReplies.contains(callbacks.reply));
         assertTrue(callbacks.gainFameCalled);
         assertTrue(callbacks.markFameGivenCalled);
     }
@@ -131,21 +139,6 @@ class AgentFameDialogueFlowTest {
         @Override
         public String targetDisplayName() {
             return "Alice";
-        }
-
-        @Override
-        public String randomOkReply() {
-            return "famed %s";
-        }
-
-        @Override
-        public String randomFameCooldownReply() {
-            return "cooldown reply";
-        }
-
-        @Override
-        public String randomSamePersonReply() {
-            return "same %s";
         }
 
         @Override

@@ -1441,21 +1441,6 @@ public class BotChatManager {
             }
 
             @Override
-            public String randomOkReply() {
-                return BotManager.randomReply(AgentDialogueCatalog.fameOkReplies());
-            }
-
-            @Override
-            public String randomFameCooldownReply() {
-                return BotManager.randomReply(AgentDialogueCatalog.fameCooldownReplies());
-            }
-
-            @Override
-            public String randomSamePersonReply() {
-                return BotManager.randomReply(AgentDialogueCatalog.fameSamePersonReplies());
-            }
-
-            @Override
             public void reply(String message) {
                 BotManager.getInstance().botReply(entry, message);
             }

@@ -2,6 +2,9 @@ package server.agents.capabilities.dialogue;
 
 import client.Character;
 
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+
 public final class AgentFameDialogueFlow {
     private AgentFameDialogueFlow() {
     }
@@ -22,22 +25,26 @@ public final class AgentFameDialogueFlow {
 
         Character.FameStatus status = callbacks.fameStatus();
         if (status == Character.FameStatus.NOT_TODAY) {
-            callbacks.reply(callbacks.randomFameCooldownReply());
+            callbacks.reply(randomReply(AgentDialogueCatalog.fameCooldownReplies()));
             return;
         }
         if (status == Character.FameStatus.NOT_THIS_MONTH) {
             callbacks.reply(AgentDialogueReportFormatter.fameSamePersonReply(
-                    callbacks.randomSamePersonReply(), callbacks.targetDisplayName()));
+                    randomReply(AgentDialogueCatalog.fameSamePersonReplies()), callbacks.targetDisplayName()));
             return;
         }
 
         if (callbacks.gainFame()) {
             callbacks.markFameGiven();
             callbacks.reply(AgentDialogueReportFormatter.fameOkReply(
-                    callbacks.randomOkReply(), callbacks.targetDisplayName()));
+                    randomReply(AgentDialogueCatalog.fameOkReplies()), callbacks.targetDisplayName()));
         } else {
             callbacks.reply(AgentDialogueCatalog.fameFailedReply());
         }
+    }
+
+    private static String randomReply(List<String> replies) {
+        return replies.get(ThreadLocalRandom.current().nextInt(replies.size()));
     }
 
     public interface FameCallbacks {
@@ -54,12 +61,6 @@ public final class AgentFameDialogueFlow {
         void markFameGiven();
 
         String targetDisplayName();
-
-        String randomOkReply();
-
-        String randomFameCooldownReply();
-
-        String randomSamePersonReply();
 
         void reply(String message);
     }
