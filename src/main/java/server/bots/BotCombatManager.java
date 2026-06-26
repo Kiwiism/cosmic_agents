@@ -49,6 +49,7 @@ import server.StatEffect;
 import server.bots.combat.BotAttackDataProvider;
 import server.bots.combat.BotDefenseDataProvider;
 import server.bots.combat.BotMobHitboxProvider;
+import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.combat.CombatFormulaProvider;
 import server.life.Monster;
 import server.maps.Foothold;
@@ -2340,28 +2341,22 @@ class BotCombatManager {
     static List<String> getSkillBuffDebugLines(BotEntry entry, Character bot) {
         long now = System.currentTimeMillis();
 
-        // Line 1: last decision
-        String lastAction = entry.lastSkillBuffActionSummary;
-        if (entry.lastSkillBuffActionAtMs > 0) {
-            long ageMs = Math.max(0L, now - entry.lastSkillBuffActionAtMs);
-            lastAction += " (" + formatBuffAge(ageMs) + " ago)";
-        }
-
-        // Line 2: active skill buffs
-        StringJoiner activeJoiner = new StringJoiner(", ");
+        long lastActionAgeMs = entry.lastSkillBuffActionAtMs > 0
+                ? Math.max(0L, now - entry.lastSkillBuffActionAtMs)
+                : -1L;
+        List<AgentCombatDialogueReporter.ActiveSkillBuffDebugLine> activeBuffs = new ArrayList<>();
         for (PlayerBuffValueHolder holder : bot.getAllBuffs()) {
             StatEffect effect = holder.effect;
             if (effect == null || !effect.isSkill()) continue;
             int skillId = effect.getSourceId();
-            String remaining = effect.getDuration() > 0
-                    ? " " + formatBuffAge(Math.max(0, effect.getDuration() - holder.usedTime)) + " left"
-                    : "";
-            activeJoiner.add(skillLabel(skillId) + remaining);
+            long remainingMs = effect.getDuration() > 0
+                    ? Math.max(0, effect.getDuration() - holder.usedTime)
+                    : 0L;
+            activeBuffs.add(new AgentCombatDialogueReporter.ActiveSkillBuffDebugLine(
+                    skillLabel(skillId), remainingMs));
         }
-        String activeLine = activeJoiner.length() == 0 ? "none" : activeJoiner.toString().toLowerCase(Locale.ROOT);
 
-        // Line 3: cached buff skills with ready/cooldown status
-        StringJoiner availJoiner = new StringJoiner(", ");
+        List<AgentCombatDialogueReporter.CachedSkillBuffDebugLine> cachedBuffs = new ArrayList<>();
         for (int skillId : entry.buffSkillIds) {
             boolean cooling = bot.skillIsCooling(skillId);
             long nextAt = entry.nextBuffAt.getOrDefault(skillId, 0L);
@@ -2369,27 +2364,19 @@ class BotCombatManager {
             if (cooling) {
                 status = "cd";
             } else if (now < nextAt) {
-                status = "rebuff " + formatBuffAge(nextAt - now);
+                status = AgentCombatDialogueReporter.skillBuffRebuffStatus(nextAt - now);
             } else {
                 status = "ready";
             }
-            availJoiner.add(skillLabel(skillId) + " (" + status + ")");
+            cachedBuffs.add(new AgentCombatDialogueReporter.CachedSkillBuffDebugLine(skillLabel(skillId), status));
         }
-        String availLine = availJoiner.length() == 0 ? "none cached" : availJoiner.toString().toLowerCase(Locale.ROOT);
 
-        return List.of(
-                "skill buffs: last: " + lastAction,
-                "active: " + activeLine,
-                "cached: " + availLine
-        );
+        return AgentCombatDialogueReporter.skillBuffDebugLines(
+                entry.lastSkillBuffActionSummary, lastActionAgeMs, activeBuffs, cachedBuffs);
     }
 
     private static String formatBuffAge(long ms) {
-        long totalSeconds = Math.max(0L, ms / 1000L);
-        long minutes = totalSeconds / 60L;
-        long seconds = totalSeconds % 60L;
-        if (minutes <= 0) return seconds + "s";
-        return minutes + "m" + seconds + "s";
+        return AgentCombatDialogueReporter.formatBuffAge(ms);
     }
 
     private static String skillLabel(int skillId) {

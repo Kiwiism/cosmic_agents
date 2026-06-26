@@ -3,8 +3,18 @@ package server.agents.capabilities.dialogue;
 import client.Character;
 import server.combat.CombatFormulaProvider;
 
+import java.util.List;
+import java.util.Locale;
+import java.util.StringJoiner;
+
 public final class AgentCombatDialogueReporter {
     public record MobHitProfile(int mobLevel, int mobAvoid) {
+    }
+
+    public record ActiveSkillBuffDebugLine(String label, long remainingMs) {
+    }
+
+    public record CachedSkillBuffDebugLine(String label, String status) {
     }
 
     private AgentCombatDialogueReporter() {
@@ -59,5 +69,62 @@ public final class AgentCombatDialogueReporter {
                 critPct, crit.critMultiplier(),
                 damage.minDamage(), damage.maxDamage(),
                 critMin, critMax);
+    }
+
+    public static List<String> skillBuffDebugLines(String lastAction,
+                                                   long lastActionAgeMs,
+                                                   List<ActiveSkillBuffDebugLine> activeBuffs,
+                                                   List<CachedSkillBuffDebugLine> cachedBuffs) {
+        String formattedLastAction = lastAction;
+        if (lastActionAgeMs >= 0) {
+            formattedLastAction += " (" + formatBuffAge(lastActionAgeMs) + " ago)";
+        }
+
+        return List.of(
+                "skill buffs: last: " + formattedLastAction,
+                "active: " + activeSkillBuffLine(activeBuffs),
+                "cached: " + cachedSkillBuffLine(cachedBuffs)
+        );
+    }
+
+    public static String skillBuffRebuffStatus(long remainingMs) {
+        return "rebuff " + formatBuffAge(remainingMs);
+    }
+
+    public static String formatBuffAge(long ms) {
+        long totalSeconds = Math.max(0L, ms / 1000L);
+        long minutes = totalSeconds / 60L;
+        long seconds = totalSeconds % 60L;
+        if (minutes <= 0) {
+            return seconds + "s";
+        }
+        return minutes + "m" + seconds + "s";
+    }
+
+    private static String activeSkillBuffLine(List<ActiveSkillBuffDebugLine> activeBuffs) {
+        if (activeBuffs == null || activeBuffs.isEmpty()) {
+            return "none";
+        }
+
+        StringJoiner joiner = new StringJoiner(", ");
+        for (ActiveSkillBuffDebugLine buff : activeBuffs) {
+            String remaining = buff.remainingMs() > 0
+                    ? " " + formatBuffAge(buff.remainingMs()) + " left"
+                    : "";
+            joiner.add(buff.label() + remaining);
+        }
+        return joiner.toString().toLowerCase(Locale.ROOT);
+    }
+
+    private static String cachedSkillBuffLine(List<CachedSkillBuffDebugLine> cachedBuffs) {
+        if (cachedBuffs == null || cachedBuffs.isEmpty()) {
+            return "none cached";
+        }
+
+        StringJoiner joiner = new StringJoiner(", ");
+        for (CachedSkillBuffDebugLine buff : cachedBuffs) {
+            joiner.add(buff.label() + " (" + buff.status() + ")");
+        }
+        return joiner.toString().toLowerCase(Locale.ROOT);
     }
 }

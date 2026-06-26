@@ -75,4 +75,39 @@ class AgentCombatDialogueReporterTest {
 
         assertEquals("crit: 50% chance, 2.00x multiplier | base 60000-80000 | crit 99999-99999", report);
     }
+
+    @Test
+    void shouldBuildSkillBuffDebugLinesLikeLegacyChat() {
+        List<String> lines = AgentCombatDialogueReporter.skillBuffDebugLines(
+                "cast Haste",
+                125_000L,
+                List.of(new AgentCombatDialogueReporter.ActiveSkillBuffDebugLine("Haste", 61_000L)),
+                List.of(
+                        new AgentCombatDialogueReporter.CachedSkillBuffDebugLine("Haste", "cd"),
+                        new AgentCombatDialogueReporter.CachedSkillBuffDebugLine(
+                                "Bless", AgentCombatDialogueReporter.skillBuffRebuffStatus(5_000L))));
+
+        assertEquals(List.of(
+                "skill buffs: last: cast Haste (2m5s ago)",
+                "active: haste 1m1s left",
+                "cached: haste (cd), bless (rebuff 5s)"
+        ), lines);
+    }
+
+    @Test
+    void shouldBuildEmptySkillBuffDebugLinesLikeLegacyChat() {
+        assertEquals(List.of(
+                        "skill buffs: last: all skill buffs active or on cooldown",
+                        "active: none",
+                        "cached: none cached"),
+                AgentCombatDialogueReporter.skillBuffDebugLines(
+                        "all skill buffs active or on cooldown", -1L, List.of(), List.of()));
+    }
+
+    @Test
+    void shouldFormatBuffAgeLikeLegacyChat() {
+        assertEquals("0s", AgentCombatDialogueReporter.formatBuffAge(-10));
+        assertEquals("59s", AgentCombatDialogueReporter.formatBuffAge(59_999));
+        assertEquals("1m0s", AgentCombatDialogueReporter.formatBuffAge(60_000));
+    }
 }
