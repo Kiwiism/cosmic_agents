@@ -35,6 +35,7 @@ import server.agents.capabilities.dialogue.AgentSkillDialogueReporter;
 import server.agents.capabilities.dialogue.AgentSkillReportFlow;
 import server.agents.capabilities.dialogue.AgentSocialDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
+import server.agents.capabilities.dialogue.AgentSupplyRequestOutcomeFlow;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.commands.AgentQueuedMessage;
 import server.agents.commands.AgentReplyQueue;
@@ -1240,10 +1241,12 @@ public class BotChatManager {
 
     private static void handleNeedPotionCommand(BotEntry entry, boolean forHp) {
         BotPotionManager.OwnerPotShareResult result = BotPotionManager.offerPotShareToOwner(entry, forHp);
-        if (result == BotPotionManager.OwnerPotShareResult.NO_DONOR) {
-            queueBotReply(entry, AgentDialogueReportFormatter.ownerPotShortageReply(
-                    BotManager.randomReply(AgentDialogueCatalog.ownerPotShortageReplies()),
-                    AgentDialogueReportFormatter.potionTypeLabel(forHp)));
+        String reply = AgentSupplyRequestOutcomeFlow.potionShareReply(
+                result == BotPotionManager.OwnerPotShareResult.NO_DONOR,
+                forHp,
+                BotManager.randomReply(AgentDialogueCatalog.ownerPotShortageReplies()));
+        if (reply != null) {
+            queueBotReply(entry, reply);
         }
     }
 
@@ -1254,12 +1257,16 @@ public class BotChatManager {
         }
         WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(owner);
         if (weaponType != WeaponType.BOW && weaponType != WeaponType.CROSSBOW) {
-            queueBotReply(entry, BotManager.randomReply(AgentDialogueCatalog.ammoNotNeededReplies()));
+            queueBotReply(entry, AgentSupplyRequestOutcomeFlow.ammoNotNeededReply(
+                    BotManager.randomReply(AgentDialogueCatalog.ammoNotNeededReplies())));
             return;
         }
         BotAmmoManager.OwnerAmmoShareResult result = BotAmmoManager.offerAmmoShareToOwner(entry, weaponType);
-        if (result == BotAmmoManager.OwnerAmmoShareResult.NO_DONOR) {
-            queueBotReply(entry, BotManager.randomReply(AgentDialogueCatalog.ownerAmmoShortageReplies()));
+        String reply = AgentSupplyRequestOutcomeFlow.ammoShareReply(
+                result == BotAmmoManager.OwnerAmmoShareResult.NO_DONOR,
+                BotManager.randomReply(AgentDialogueCatalog.ownerAmmoShortageReplies()));
+        if (reply != null) {
+            queueBotReply(entry, reply);
         }
     }
 
