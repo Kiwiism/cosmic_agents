@@ -50,6 +50,22 @@ class AgentChatToggleFlowTest {
         assertEquals("", callbacks.events);
     }
 
+    @Test
+    void shouldExposeToggleReplies() {
+        assertEquals(AgentDialogueCatalog.supportOnReply(), AgentChatToggleFlow.supportReply(true));
+        assertEquals(AgentDialogueCatalog.supportOffReply(), AgentChatToggleFlow.supportReply(false));
+        assertEquals(AgentDialogueCatalog.healsOnReply(), AgentChatToggleFlow.healsReply(true));
+        assertEquals(AgentDialogueCatalog.healsOffReply(), AgentChatToggleFlow.healsReply(false));
+        assertEquals(
+                AgentDialogueCatalog.buffConsumablesOnReply(AgentDialogueCatalog.buffConsumablesModeLabel(true)),
+                AgentChatToggleFlow.buffConsumablesReply(true, true));
+        assertEquals(AgentDialogueCatalog.buffConsumablesOffReply(), AgentChatToggleFlow.buffConsumablesReply(false, true));
+        assertEquals(AgentDialogueCatalog.buffConsumablesCheapReply(), AgentChatToggleFlow.buffConsumablesModeReply(true));
+        assertEquals(AgentDialogueCatalog.buffConsumablesMaxReply(), AgentChatToggleFlow.buffConsumablesModeReply(false));
+        assertEquals(AgentDialogueCatalog.proactiveOffersOnReply(), AgentChatToggleFlow.proactiveOffersReply(true));
+        assertEquals(AgentDialogueCatalog.proactiveOffersOffReply(), AgentChatToggleFlow.proactiveOffersReply(false));
+    }
+
     private static final class TestCallbacks implements AgentChatToggleFlow.ToggleCallbacks {
         private String events = "";
 

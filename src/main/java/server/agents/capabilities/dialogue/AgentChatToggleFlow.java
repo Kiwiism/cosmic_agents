@@ -48,6 +48,32 @@ public final class AgentChatToggleFlow {
         return false;
     }
 
+    public static String supportReply(boolean enabled) {
+        return enabled ? AgentDialogueCatalog.supportOnReply() : AgentDialogueCatalog.supportOffReply();
+    }
+
+    public static String healsReply(boolean enabled) {
+        return enabled ? AgentDialogueCatalog.healsOnReply() : AgentDialogueCatalog.healsOffReply();
+    }
+
+    public static String buffConsumablesReply(boolean enabled, boolean cheapMode) {
+        return enabled
+                ? AgentDialogueCatalog.buffConsumablesOnReply(AgentDialogueCatalog.buffConsumablesModeLabel(cheapMode))
+                : AgentDialogueCatalog.buffConsumablesOffReply();
+    }
+
+    public static String buffConsumablesModeReply(boolean cheapMode) {
+        return cheapMode
+                ? AgentDialogueCatalog.buffConsumablesCheapReply()
+                : AgentDialogueCatalog.buffConsumablesMaxReply();
+    }
+
+    public static String proactiveOffersReply(boolean enabled) {
+        return enabled
+                ? AgentDialogueCatalog.proactiveOffersOnReply()
+                : AgentDialogueCatalog.proactiveOffersOffReply();
+    }
+
     public interface ToggleCallbacks {
         void setSupport(boolean enabled);
 

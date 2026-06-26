@@ -212,8 +212,7 @@ public class BotChatManager {
             public void setSupport(boolean enabled) {
                 BotManager.after(BotManager.randMs(500, 700), () -> {
                     entry.skillBuffsEnabled = enabled;
-                    BotManager.getInstance().botReply(entry,
-                            enabled ? AgentDialogueCatalog.supportOnReply() : AgentDialogueCatalog.supportOffReply());
+                    BotManager.getInstance().botReply(entry, AgentChatToggleFlow.supportReply(enabled));
                 });
             }
 
@@ -221,8 +220,7 @@ public class BotChatManager {
             public void setHeals(boolean enabled) {
                 BotManager.after(BotManager.randMs(500, 700), () -> {
                     entry.supportHealsEnabled = enabled;
-                    BotManager.getInstance().botReply(entry,
-                            enabled ? AgentDialogueCatalog.healsOnReply() : AgentDialogueCatalog.healsOffReply());
+                    BotManager.getInstance().botReply(entry, AgentChatToggleFlow.healsReply(enabled));
                 });
             }
 
@@ -231,10 +229,8 @@ public class BotChatManager {
                 BotManager.after(BotManager.randMs(500, 700), () -> {
                     entry.buffConsumablesEnabled = enabled;
                     entry.lastBuffScanMs = 0;
-                    BotManager.getInstance().botReply(entry, enabled
-                            ? AgentDialogueCatalog.buffConsumablesOnReply(
-                                    AgentDialogueCatalog.buffConsumablesModeLabel(entry.buffCheapMode))
-                            : AgentDialogueCatalog.buffConsumablesOffReply());
+                    BotManager.getInstance().botReply(entry, AgentChatToggleFlow.buffConsumablesReply(
+                            enabled, entry.buffCheapMode));
                 });
             }
 
@@ -243,9 +239,7 @@ public class BotChatManager {
                 BotManager.after(BotManager.randMs(500, 700), () -> {
                     entry.buffCheapMode = cheapMode;
                     entry.lastBuffScanMs = 0;
-                    BotManager.getInstance().botReply(entry, cheapMode
-                            ? AgentDialogueCatalog.buffConsumablesCheapReply()
-                            : AgentDialogueCatalog.buffConsumablesMaxReply());
+                    BotManager.getInstance().botReply(entry, AgentChatToggleFlow.buffConsumablesModeReply(cheapMode));
                 });
             }
 
@@ -253,9 +247,7 @@ public class BotChatManager {
             public void setProactiveOffers(boolean enabled) {
                 BotManager.after(BotManager.randMs(500, 700), () -> {
                     entry.proactiveUpgradeOffers = enabled;
-                    BotManager.getInstance().botReply(entry, enabled
-                            ? AgentDialogueCatalog.proactiveOffersOnReply()
-                            : AgentDialogueCatalog.proactiveOffersOffReply());
+                    BotManager.getInstance().botReply(entry, AgentChatToggleFlow.proactiveOffersReply(enabled));
                 });
             }
         };
