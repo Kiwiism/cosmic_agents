@@ -18,6 +18,7 @@ class AgentFoundationStructureTest {
                 "server.agents.runtime.AgentSession",
                 "server.agents.runtime.AgentTickScheduler",
                 "server.agents.commands.AgentCommandRouter",
+                "server.agents.commands.AgentCommandParser",
                 "server.agents.plans.AgentPlanRunner",
                 "server.agents.capabilities.AgentCapability",
                 "server.agents.events.AgentEventBus",

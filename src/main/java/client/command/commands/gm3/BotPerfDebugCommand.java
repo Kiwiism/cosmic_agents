@@ -3,7 +3,7 @@ package client.command.commands.gm3;
 import client.Character;
 import client.Client;
 import client.command.Command;
-import server.bots.BotPerformanceMonitor;
+import server.agents.commands.AgentLegacyCommandBridge;
 
 public class BotPerfDebugCommand extends Command {
     {
@@ -15,16 +15,16 @@ public class BotPerfDebugCommand extends Command {
         Character player = c.getPlayer();
         boolean nowEnabled;
         if (params.length == 0) {
-            nowEnabled = BotPerformanceMonitor.toggleEnabled();
+            nowEnabled = AgentLegacyCommandBridge.togglePerformanceMonitor();
         } else {
             String arg = params[0].toLowerCase();
             switch (arg) {
                 case "on":
-                    BotPerformanceMonitor.setEnabled(true);
+                    AgentLegacyCommandBridge.setPerformanceMonitorEnabled(true);
                     nowEnabled = true;
                     break;
                 case "off":
-                    BotPerformanceMonitor.setEnabled(false);
+                    AgentLegacyCommandBridge.setPerformanceMonitorEnabled(false);
                     nowEnabled = false;
                     break;
                 default:

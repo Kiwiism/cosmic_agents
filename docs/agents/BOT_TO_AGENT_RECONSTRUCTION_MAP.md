@@ -15,12 +15,12 @@ No production behavior is moved in this foundation step. This map is the initial
 | `src/main/java/client/BotClient.java` | `client.AgentClient` or `server.agents.integration.cosmic.CosmicAgentClientAdapter` | `MIGRATE_TO_AGENT` |
 | `src/main/java/client/creator/BotCreator.java` | `client.creator.AgentCreator` | `MIGRATE_TO_AGENT` |
 | `src/main/java/client/command/commands/gm0/RegisterBotCommand.java` | `server.agents.commands` or later deletion if ownership is removed | `LEGACY_PROFILE` |
-| `src/main/java/client/command/commands/gm3/SpawnBotCommand.java` | `server.agents.commands.AgentSpawnCommand` | `MIGRATE_TO_AGENT` |
+| `src/main/java/client/command/commands/gm3/SpawnBotCommand.java` | `server.agents.commands.AgentSpawnCommandExecutor` | `COMPATIBILITY_ALIAS_TEMPORARY` |
 | `src/main/java/client/command/commands/gm3/TakeBotOwnerCommand.java` | `server.agents.commands` or later deletion if ownership is removed | `LEGACY_PROFILE` |
-| `src/main/java/client/command/commands/gm3/BotCfgCommand.java` | `server.agents.commands.AgentConfigCommand` | `MIGRATE_TO_AGENT` |
-| `src/main/java/client/command/commands/gm3/BotLlmCommand.java` | `server.agents.commands.AgentLlmCommand` | `MIGRATE_TO_AGENT` |
-| `src/main/java/client/command/commands/gm3/BotNavCommand.java` | `server.agents.commands.AgentNavigationCommand` | `MIGRATE_TO_AGENT` |
-| `src/main/java/client/command/commands/gm3/BotPerfDebugCommand.java` | `server.agents.commands.AgentPerformanceDebugCommand` | `MIGRATE_TO_AGENT` |
+| `src/main/java/client/command/commands/gm3/BotCfgCommand.java` | `server.agents.commands.AgentLegacyCommandBridge` | `COMPATIBILITY_ALIAS_TEMPORARY` |
+| `src/main/java/client/command/commands/gm3/BotLlmCommand.java` | `server.agents.commands.AgentLegacyCommandBridge` | `COMPATIBILITY_ALIAS_TEMPORARY` |
+| `src/main/java/client/command/commands/gm3/BotNavCommand.java` | `server.agents.commands.AgentLegacyCommandBridge` | `COMPATIBILITY_ALIAS_TEMPORARY` |
+| `src/main/java/client/command/commands/gm3/BotPerfDebugCommand.java` | `server.agents.commands.AgentLegacyCommandBridge` | `COMPATIBILITY_ALIAS_TEMPORARY` |
 | `src/main/java/server/bots/BotAirshowManager.java` | `server.agents.capabilities.social.airshow` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/BotAmmoManager.java` | `server.agents.capabilities.supplies.AgentAmmoService` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/BotAttackExecutionProvider.java` | `server.agents.capabilities.combat.AgentAttackExecutionProvider` | `MIGRATE_TO_AGENT` |
@@ -28,7 +28,7 @@ No production behavior is moved in this foundation step. This map is the initial
 | `src/main/java/server/bots/BotBuildManager.java` | `server.agents.capabilities.build` and `server.agents.profiles.SkillBuildProfile` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
 | `src/main/java/server/bots/BotChatManager.java` | `server.agents.capabilities.dialogue`, `server.agents.commands`, `server.agents.events` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
 | `src/main/java/server/bots/BotCombatManager.java` | `server.agents.capabilities.combat` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
-| `src/main/java/server/bots/BotCommandParser.java` | `server.agents.commands.AgentCommandParser` | `MIGRATE_TO_AGENT` |
+| `src/main/java/server/bots/BotCommandParser.java` | `server.agents.commands.AgentCommandParser` | `COMPATIBILITY_ALIAS_TEMPORARY` |
 | `src/main/java/server/bots/BotEntry.java` | `server.agents.runtime.AgentSession` and capability state objects | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
 | `src/main/java/server/bots/BotEquipManager.java` | `server.agents.capabilities.equipment` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
 | `src/main/java/server/bots/BotFallbackMovementManager.java` | `server.agents.capabilities.movement.AgentFallbackMovementService` | `MIGRATE_TO_AGENT` |
@@ -61,7 +61,7 @@ No production behavior is moved in this foundation step. This map is the initial
 | `src/main/java/server/bots/BotStarterKitManager.java` | `server.agents.capabilities.inventory.AgentStarterKitService` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/BotTask.java` | `server.agents.plans.AgentPlanStep` or legacy plan adapter | `LEGACY_PROFILE` |
 | `src/main/java/server/bots/Emote.java` | `server.agents.capabilities.dialogue.AgentEmote` | `MIGRATE_TO_AGENT` |
-| `src/main/java/server/bots/ReplyChannel.java` | `server.agents.capabilities.dialogue.AgentReplyChannel` | `MIGRATE_TO_AGENT` |
+| `src/main/java/server/bots/ReplyChannel.java` | `server.agents.commands.AgentReplyChannel` | `COMPATIBILITY_ALIAS_TEMPORARY` |
 | `src/main/java/server/bots/build/BowmanBuilds.java` | `server.agents.profiles.SkillBuildProfile` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/build/BuildStep.java` | `server.agents.profiles.SkillBuildStep` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/build/MageBuilds.java` | `server.agents.profiles.SkillBuildProfile` | `MIGRATE_TO_AGENT` |
@@ -85,4 +85,3 @@ No production behavior is moved in this foundation step. This map is the initial
 | `src/main/java/server/bots/pq/BotKpqState.java` | `server.agents.capabilities.partyquest.kpq.AgentKpqState` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/pq/BotPqHooks.java` | `server.agents.capabilities.partyquest.AgentPartyQuestHooks` | `MIGRATE_TO_AGENT` |
 | `src/main/resources/db/tables/025-bot-ownership.sql` | `server.agents.legacy` documentation initially; later external registry or deletion | `LEGACY_PROFILE` |
-

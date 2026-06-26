@@ -18,7 +18,7 @@ Rules:
 Initial reconstruction order:
 
 1. Runtime shell and registry.
-2. Command parser/router boundaries.
+2. Command parser/router boundaries. Initial parser and GM command bridge completed; old bot runtime remains underneath.
 3. Movement and navigation.
 4. Combat.
 5. Loot and supplies.
@@ -27,4 +27,3 @@ Initial reconstruction order:
 8. Dialogue, social, and LLM.
 9. SPI/Cosmic gateway attachment.
 10. Delete old bot-shaped runtime once all callers use Agent modules.
-

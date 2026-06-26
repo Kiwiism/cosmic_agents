@@ -23,6 +23,14 @@ Current bot inventory:
 - Bot client/command integration files exist outside `server.bots`.
 - `src/main/java/server/agents` is a new neutral reconstruction target created on this branch.
 
+Reconstruction progress:
+
+- Foundation package skeleton exists.
+- Command parser behavior now lives in `server.agents.commands.AgentCommandParser`.
+- `server.bots.BotCommandParser` remains as a temporary compatibility adapter.
+- GM bot command entry classes still keep their visible command names, but their bodies now route through `server.agents.commands` bridge/executor classes.
+- Bot runtime behavior still lives under `server.bots` and has not been functionally changed.
+
 Important baseline note:
 
 `source/master` already includes NuTNNuT's merge commit `8987c5762 Merge branch 'experimental'`. For this reconstruction, that merged master is treated as the behavior baseline to preserve. Features can be removed later only after they are reconstructed into explicit Agent modules and their impact is understood.
@@ -34,4 +42,3 @@ Scope for this branch:
 - Do not pull in unrelated Cosmic gameplay or tooling changes as design goals.
 - Do not remove bot features yet unless a later explicit cleanup phase chooses to.
 - Do not let old bot ownership, manager, or task concepts define the final architecture.
-

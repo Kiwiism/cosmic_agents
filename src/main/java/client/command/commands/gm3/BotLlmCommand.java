@@ -3,7 +3,7 @@ package client.command.commands.gm3;
 import client.Character;
 import client.Client;
 import client.command.Command;
-import server.bots.llm.BotLlmConfig;
+import server.agents.commands.AgentLegacyCommandBridge;
 
 public class BotLlmCommand extends Command {
     {
@@ -15,23 +15,20 @@ public class BotLlmCommand extends Command {
         Character player = c.getPlayer();
         if (params.length < 1) {
             player.yellowMessage("Syntax: !botllm <on|true|off|false|debug>. Current: "
-                    + (BotLlmConfig.enabled ? "ON" : "OFF")
-                    + ", debug: " + (BotLlmConfig.debugLog ? "ON" : "OFF"));
+                    + (AgentLegacyCommandBridge.llmEnabled() ? "ON" : "OFF")
+                    + ", debug: " + (AgentLegacyCommandBridge.llmDebugLog() ? "ON" : "OFF"));
             return;
         }
 
         switch (params[0]) {
             case "on", "true" -> {
-                BotLlmConfig.enabled = true;
-                BotLlmConfig.debugLog = false;
+                AgentLegacyCommandBridge.setLlm(true, false);
             }
             case "off", "false" -> {
-                BotLlmConfig.enabled = false;
-                BotLlmConfig.debugLog = false;
+                AgentLegacyCommandBridge.setLlm(false, false);
             }
             case "debug" -> {
-                BotLlmConfig.enabled = true;
-                BotLlmConfig.debugLog = true;
+                AgentLegacyCommandBridge.setLlm(true, true);
             }
             default -> {
                 player.yellowMessage("Syntax: !botllm <on|true|off|false|debug>");
@@ -39,7 +36,7 @@ public class BotLlmCommand extends Command {
             }
         }
 
-        player.yellowMessage("bot llm chat: " + (BotLlmConfig.enabled ? "ON" : "OFF")
-                + ", debug: " + (BotLlmConfig.debugLog ? "ON" : "OFF"));
+        player.yellowMessage("bot llm chat: " + (AgentLegacyCommandBridge.llmEnabled() ? "ON" : "OFF")
+                + ", debug: " + (AgentLegacyCommandBridge.llmDebugLog() ? "ON" : "OFF"));
     }
 }

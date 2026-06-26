@@ -3,7 +3,7 @@ package client.command.commands.gm3;
 import client.Character;
 import client.Client;
 import client.command.Command;
-import server.bots.BotManager;
+import server.agents.commands.AgentLegacyCommandBridge;
 
 public class BotCfgCommand extends Command {
     {
@@ -15,17 +15,17 @@ public class BotCfgCommand extends Command {
         Character player = c.getPlayer();
         if (params.length == 0) {
             player.yellowMessage("bot combat config (live):");
-            for (String line : BotManager.botCombatConfigLines()) {
+            for (String line : AgentLegacyCommandBridge.combatConfigLines()) {
                 player.yellowMessage("  " + line);
             }
             player.yellowMessage("set: !botcfg <FIELD> <value>");
             return;
         }
         if (params.length == 1) {
-            String line = BotManager.botCombatConfigLine(params[0]);
+            String line = AgentLegacyCommandBridge.combatConfigLine(params[0]);
             player.yellowMessage(line != null ? line : "unknown field: " + params[0] + " (use !botcfg to list)");
             return;
         }
-        player.yellowMessage(BotManager.setBotCombatConfig(params[0], params[1]));
+        player.yellowMessage(AgentLegacyCommandBridge.setCombatConfig(params[0], params[1]));
     }
 }
