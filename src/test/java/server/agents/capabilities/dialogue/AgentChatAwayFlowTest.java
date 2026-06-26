@@ -50,6 +50,24 @@ class AgentChatAwayFlowTest {
         assertEquals("clear;cancel;", callbacks.events);
     }
 
+    @Test
+    void shouldPromptTownOrLogoutWhenTownIsOffered() {
+        TestPromptCallbacks callbacks = new TestPromptCallbacks();
+
+        AgentChatAwayFlow.promptOwnerAway(true, callbacks);
+
+        assertEquals("pending;stop;town;", callbacks.events);
+    }
+
+    @Test
+    void shouldPromptStayOrLogoutWhenTownIsNotOffered() {
+        TestPromptCallbacks callbacks = new TestPromptCallbacks();
+
+        AgentChatAwayFlow.promptOwnerAway(false, callbacks);
+
+        assertEquals("pending;stop;stay;", callbacks.events);
+    }
+
     private static final class TestCallbacks implements AgentChatAwayFlow.AwayChoiceCallbacks {
         private String events = "";
 
@@ -76,6 +94,30 @@ class AgentChatAwayFlowTest {
         @Override
         public void cancel() {
             events += "cancel;";
+        }
+    }
+
+    private static final class TestPromptCallbacks implements AgentChatAwayFlow.AwayPromptCallbacks {
+        private String events = "";
+
+        @Override
+        public void setPendingOwnerAway() {
+            events += "pending;";
+        }
+
+        @Override
+        public void stopAgent() {
+            events += "stop;";
+        }
+
+        @Override
+        public void replyTownOrLogout() {
+            events += "town;";
+        }
+
+        @Override
+        public void replyStayOrLogout() {
+            events += "stay;";
         }
     }
 }

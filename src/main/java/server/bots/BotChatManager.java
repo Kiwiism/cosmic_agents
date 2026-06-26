@@ -734,13 +734,33 @@ public class BotChatManager {
     }
 
     private static void promptOwnerAway(BotEntry entry) {
-        entry.pendingAction = AgentChatPendingAction.OWNER_AWAY;
-        BotManager.getInstance().issueStop(entry);
-        if (BotManager.getInstance().shouldOfferTownForAwayCommand(entry)) {
-            BotManager.getInstance().botReply(entry, AgentDialogueCatalog.awayTownOrLogoutPrompt());
-        } else {
-            BotManager.getInstance().botReply(entry, AgentDialogueCatalog.awayStayOrLogoutPrompt());
-        }
+        AgentChatAwayFlow.promptOwnerAway(
+                BotManager.getInstance().shouldOfferTownForAwayCommand(entry),
+                awayPromptCallbacks(entry));
+    }
+
+    private static AgentChatAwayFlow.AwayPromptCallbacks awayPromptCallbacks(BotEntry entry) {
+        return new AgentChatAwayFlow.AwayPromptCallbacks() {
+            @Override
+            public void setPendingOwnerAway() {
+                entry.pendingAction = AgentChatPendingAction.OWNER_AWAY;
+            }
+
+            @Override
+            public void stopAgent() {
+                BotManager.getInstance().issueStop(entry);
+            }
+
+            @Override
+            public void replyTownOrLogout() {
+                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.awayTownOrLogoutPrompt());
+            }
+
+            @Override
+            public void replyStayOrLogout() {
+                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.awayStayOrLogoutPrompt());
+            }
+        };
     }
 
     private static void handleOwnerAwayChoice(BotEntry entry, String message) {

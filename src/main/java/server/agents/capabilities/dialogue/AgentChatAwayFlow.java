@@ -26,6 +26,16 @@ public final class AgentChatAwayFlow {
         callbacks.cancel();
     }
 
+    public static void promptOwnerAway(boolean townOffered, AwayPromptCallbacks callbacks) {
+        callbacks.setPendingOwnerAway();
+        callbacks.stopAgent();
+        if (townOffered) {
+            callbacks.replyTownOrLogout();
+        } else {
+            callbacks.replyStayOrLogout();
+        }
+    }
+
     public interface AwayChoiceCallbacks {
         void clearPendingAction();
 
@@ -36,5 +46,15 @@ public final class AgentChatAwayFlow {
         void stay();
 
         void cancel();
+    }
+
+    public interface AwayPromptCallbacks {
+        void setPendingOwnerAway();
+
+        void stopAgent();
+
+        void replyTownOrLogout();
+
+        void replyStayOrLogout();
     }
 }
