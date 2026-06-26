@@ -23,6 +23,7 @@ class AgentDialogueCatalogTest {
     @Test
     void catalogPreservesExpectedLegacyLines() {
         assertTrue(AgentDialogueCatalog.followReplies().contains("w8 up"));
+        assertTrue(AgentDialogueCatalog.dropOrTradePrompts().contains("got %s, want me to trade or drop?"));
         assertTrue(AgentDialogueCatalog.ownerPotShortageReplies().contains("we're low on %s pots too, boss"));
         assertTrue(AgentDialogueCatalog.fameOkReplies().contains("famed %s"));
         assertTrue(AgentDialogueCatalog.fameTargetNotFoundReply("Alice").contains("Alice on the map"));

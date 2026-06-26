@@ -101,6 +101,12 @@ public final class AgentDialogueCatalog {
             "got %s on me",
             "im at %s rn",
             "sitting on %s");
+    private static final List<String> DROP_OR_TRADE_PROMPTS = List.of(
+            "got %s, want me to trade or drop?",
+            "i have %s, trade or drop?",
+            "sure, %s - trade or drop?",
+            "just to confirm, trade or drop my %s?",
+            "want me to trade or drop %s?");
     private static final List<String> RELOG_CONFIRM_PROMPTS = List.of(
             "relog? say yes to confirm",
             "save and relog? type yes",
@@ -251,6 +257,10 @@ public final class AgentDialogueCatalog {
 
     public static List<String> mesoReplies() {
         return MESO_REPLIES;
+    }
+
+    public static List<String> dropOrTradePrompts() {
+        return DROP_OR_TRADE_PROMPTS;
     }
 
     public static List<String> relogConfirmPrompts() {

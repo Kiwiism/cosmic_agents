@@ -56,4 +56,36 @@ class AgentDialogueReportFormatterTest {
 
         assertEquals("I have 6k", AgentDialogueReportFormatter.mesoReport(6_000, java.util.List.of("I have %s")));
     }
+
+    @Test
+    void shouldFormatMovementReportsExactlyLikeLegacyChat() {
+        assertEquals("speed 120% jump 110%", AgentDialogueReportFormatter.movementStatLine(120, 110));
+        assertEquals(
+                "speed 100% jump 100% (map forced; raw 140%/125%)",
+                AgentDialogueReportFormatter.movementStatLineForced(100, 100, 140, 125));
+        assertEquals(
+                "walk 125.5 px/s, hforce 1.2, climb 3 px/tick",
+                AgentDialogueReportFormatter.movementWalkNoMap(125.5d, 1.2d, 3));
+        assertEquals(
+                "jump 5.5/tick, rope 4.5/tick, max jump 42.0 px",
+                AgentDialogueReportFormatter.movementJumpNoMap(5.5d, 4.5d, 42.0d));
+        assertEquals(
+                "walk 125.5 px/s, 7 px/tick, climb 3, hforce 1.2",
+                AgentDialogueReportFormatter.movementWalkWithMap(125.5d, 7, 3, 1.2d));
+        assertEquals(
+                "jump 5.5, rope 4.5, max 42.0 px, reach 123/234 px",
+                AgentDialogueReportFormatter.movementJumpWithMap(5.5d, 4.5d, 42.0d, 123, 234));
+    }
+
+    @Test
+    void shouldFormatDropOrTradePromptsExactlyLikeLegacyChat() {
+        assertEquals(
+                "got 2 scrolls, want me to trade or drop?",
+                AgentDialogueReportFormatter.dropOrTradePrompt(
+                        "scrolls", 2, java.util.List.of("got %s, want me to trade or drop?")));
+        assertEquals(
+                "want me to trade or drop chaos scroll?",
+                AgentDialogueReportFormatter.dropOrTradePrompt(
+                        "name:chaos scroll", 0, java.util.List.of("want me to trade or drop %s?")));
+    }
 }

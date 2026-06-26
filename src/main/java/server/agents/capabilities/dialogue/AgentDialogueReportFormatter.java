@@ -100,4 +100,51 @@ public final class AgentDialogueReportFormatter {
         String pattern = templates.get(ThreadLocalRandom.current().nextInt(templates.size()));
         return String.format(pattern, amount);
     }
+
+    public static String movementStatLine(int totalSpeedStat, int totalJumpStat) {
+        return String.format(Locale.ROOT, "speed %d%% jump %d%%", totalSpeedStat, totalJumpStat);
+    }
+
+    public static String movementStatLineForced(int totalSpeedStat, int totalJumpStat, int rawSpeedStat, int rawJumpStat) {
+        return String.format(Locale.ROOT,
+                "speed %d%% jump %d%% (map forced; raw %d%%/%d%%)",
+                totalSpeedStat, totalJumpStat, rawSpeedStat, rawJumpStat);
+    }
+
+    public static String movementWalkNoMap(double walkVelocityPxs, double hForcePxs, int climbStepPerTick) {
+        return String.format(Locale.ROOT, "walk %.1f px/s, hforce %.1f, climb %d px/tick",
+                walkVelocityPxs, hForcePxs, climbStepPerTick);
+    }
+
+    public static String movementJumpNoMap(double jumpForcePerTick, double ropeJumpForcePerTick, double maxJumpHeight) {
+        return String.format(Locale.ROOT, "jump %.1f/tick, rope %.1f/tick, max jump %.1f px",
+                jumpForcePerTick, ropeJumpForcePerTick, maxJumpHeight);
+    }
+
+    public static String movementWalkWithMap(double walkVelocityPxs, int walkStep, int climbStep, double hForcePxs) {
+        return String.format(Locale.ROOT, "walk %.1f px/s, %d px/tick, climb %d, hforce %.1f",
+                walkVelocityPxs, walkStep, climbStep, hForcePxs);
+    }
+
+    public static String movementJumpWithMap(double jumpForcePerTick, double ropeJumpForcePerTick, double maxJumpHeight,
+                                             int maxJumpHorizontalTravel, int maxRopeJumpHorizontalTravel) {
+        return String.format(Locale.ROOT, "jump %.1f, rope %.1f, max %.1f px, reach %d/%d px",
+                jumpForcePerTick, ropeJumpForcePerTick, maxJumpHeight,
+                maxJumpHorizontalTravel, maxRopeJumpHorizontalTravel);
+    }
+
+    public static String dropOrTradePrompt(String category, int count, List<String> templates) {
+        String base = switch (category) {
+            case "scrolls" -> "scrolls";
+            case "pots" -> "pots";
+            case "buff" -> "buff pots";
+            case "use" -> "use items";
+            case "equips" -> "equips";
+            case "etc" -> "etc items";
+            default -> category.startsWith("name:") ? category.substring(5) : "those items";
+        };
+        String what = count > 0 ? count + " " + base : base;
+        String template = templates.get(ThreadLocalRandom.current().nextInt(templates.size()));
+        return String.format(template, what);
+    }
 }

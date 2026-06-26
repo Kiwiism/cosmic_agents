@@ -71,6 +71,7 @@ public class BotChatManager {
     // Sent via party chat so the owner sees it across maps when they reconnect.
     private static final List<String> WB_OFFLINE_PARTY_TEMPLATES = AgentDialogueCatalog.welcomeBackOfflinePartyTemplates();
     private static final List<String> MESO_REPLIES = AgentDialogueCatalog.mesoReplies();
+    private static final List<String> DROP_OR_TRADE_PROMPTS = AgentDialogueCatalog.dropOrTradePrompts();
 
     private enum TransferMode {
         TRADE,
@@ -944,9 +945,9 @@ public class BotChatManager {
         if (map == null) {
             return List.of(
                     speedLine,
-                    String.format(Locale.ROOT, "walk %.1f px/s, hforce %.1f, climb %d px/tick",
+                    AgentDialogueReportFormatter.movementWalkNoMap(
                             profile.walkVelocityPxs(), profile.hForcePxs(), BotPhysicsEngine.climbStepPerTick()),
-                    String.format(Locale.ROOT, "jump %.1f/tick, rope %.1f/tick, max jump %.1f px",
+                    AgentDialogueReportFormatter.movementJumpNoMap(
                             BotPhysicsEngine.jumpForcePerTick(profile),
                             BotPhysicsEngine.ropeJumpForcePerTick(profile),
                             BotPhysicsEngine.calculateMaxJumpHeight(profile))
@@ -955,12 +956,12 @@ public class BotChatManager {
 
         return List.of(
                 speedLine,
-                String.format(Locale.ROOT, "walk %.1f px/s, %d px/tick, climb %d, hforce %.1f",
+                AgentDialogueReportFormatter.movementWalkWithMap(
                         profile.walkVelocityPxs(),
                         BotMovementManager.walkStep(map, profile),
                         BotPhysicsEngine.climbStepPerTick(),
                         profile.hForcePxs()),
-                String.format(Locale.ROOT, "jump %.1f, rope %.1f, max %.1f px, reach %d/%d px",
+                AgentDialogueReportFormatter.movementJumpWithMap(
                         BotPhysicsEngine.jumpForcePerTick(profile),
                         BotPhysicsEngine.ropeJumpForcePerTick(profile),
                         BotPhysicsEngine.calculateMaxJumpHeight(profile),
@@ -975,12 +976,10 @@ public class BotChatManager {
                                            int rawJumpStat) {
         if (map != null && FieldLimit.MOVEMENTSKILLS.check(map.getFieldLimit())
                 && (rawSpeedStat != profile.totalSpeedStat() || rawJumpStat != profile.totalJumpStat())) {
-            return String.format(Locale.ROOT,
-                    "speed %d%% jump %d%% (map forced; raw %d%%/%d%%)",
+            return AgentDialogueReportFormatter.movementStatLineForced(
                     profile.totalSpeedStat(), profile.totalJumpStat(), rawSpeedStat, rawJumpStat);
         }
-        return String.format(Locale.ROOT, "speed %d%% jump %d%%",
-                profile.totalSpeedStat(), profile.totalJumpStat());
+        return AgentDialogueReportFormatter.movementStatLine(profile.totalSpeedStat(), profile.totalJumpStat());
     }
 
     static String formatCompactMesos(int mesos) {
@@ -1685,27 +1684,8 @@ public class BotChatManager {
         return AgentTradeDialogueClassifier.matchChoiceCategory(message);
     }
 
-    private static final String[] DROP_OR_TRADE_PROMPTS = {
-        "got %s, want me to trade or drop?",
-        "i have %s, trade or drop?",
-        "sure, %s - trade or drop?",
-        "just to confirm, trade or drop my %s?",
-        "want me to trade or drop %s?",
-    };
-
     private static String dropOrTradePrompt(String category, int count) {
-        String base = switch (category) {
-            case "scrolls" -> "scrolls";
-            case "pots"    -> "pots";
-            case "buff"    -> "buff pots";
-            case "use"     -> "use items";
-            case "equips"  -> "equips";
-            case "etc"     -> "etc items";
-            default        -> category.startsWith("name:") ? category.substring(5) : "those items";
-        };
-        String what = count > 0 ? count + " " + base : base;
-        String fmt = DROP_OR_TRADE_PROMPTS[ThreadLocalRandom.current().nextInt(DROP_OR_TRADE_PROMPTS.length)];
-        return String.format(fmt, what);
+        return AgentDialogueReportFormatter.dropOrTradePrompt(category, count, DROP_OR_TRADE_PROMPTS);
     }
 
     /** Maps a chat keyword to the correct next Job given bot's current job and level. Returns null if not valid. */
