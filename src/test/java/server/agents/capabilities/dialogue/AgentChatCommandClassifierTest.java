@@ -146,4 +146,21 @@ class AgentChatCommandClassifierTest {
         assertTrue(AgentChatCommandClassifier.isBuffConsumablesMaxCommand("buff pots max"));
         assertTrue(AgentChatCommandClassifier.isBuffConsumablesMaxCommand("buff good"));
     }
+
+    @Test
+    void shouldClassifySessionRequestsAndConfirmations() {
+        assertTrue(AgentChatCommandClassifier.isRelogRequest("save and relog"));
+        assertTrue(AgentChatCommandClassifier.isRelogRequest("gotta reconnect"));
+        assertTrue(AgentChatCommandClassifier.isLogoutRequest("save and logout"));
+        assertTrue(AgentChatCommandClassifier.isLogoutRequest("log me off"));
+        assertTrue(AgentChatCommandClassifier.isAwayRequest("gtg"));
+        assertTrue(AgentChatCommandClassifier.isAwayRequest("back in a min"));
+        assertFalse(AgentChatCommandClassifier.isAwayRequest("lets go grind"));
+
+        assertTrue(AgentChatCommandClassifier.isLogoutConfirm("yes, do it"));
+        assertTrue(AgentChatCommandClassifier.isAwayTownConfirm("go to town"));
+        assertTrue(AgentChatCommandClassifier.isAwayStayConfirm("stay here"));
+        assertTrue(AgentChatCommandClassifier.isAwayLogoutConfirm("save and logout"));
+        assertTrue(AgentChatCommandClassifier.isNegativeConfirm("nope"));
+    }
 }

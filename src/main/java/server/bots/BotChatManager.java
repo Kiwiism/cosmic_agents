@@ -445,39 +445,6 @@ public class BotChatManager {
     private static final Pattern AP_RESPEC_PATTERN = Pattern.compile(
             "\\b(respec\\s+ap|reset\\s+ap|rebuild\\s+ap|fix\\s+ap(?:\\s+build)?)\\b",
             Pattern.CASE_INSENSITIVE);
-    private static final Pattern LOGOUT_PATTERN = Pattern.compile(
-            "(?:(?:i\\s+)?(?:(?:have|got|need)\\s+to|gotta)\\s+)?"
-            + "(?:(?:save\\s+and\\s+)?log\\s*(?:off|out)|disconnect|log\\s+me\\s+(?:off|out))",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern RELOG_PATTERN = Pattern.compile(
-            "(?:(?:i\\s+)?(?:(?:have|got|need)\\s+to|gotta)\\s+)?"
-            + "(?:relog|save\\s+and\\s+relog|reconnect|log\\s+back\\s+in)",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern AWAY_PATTERN = Pattern.compile(
-            "(?:(?:gtg|g2g)"
-            + "|(?:i\\s+)?(?:(?:have|got|need)\\s+to|gotta)\\s+go"
-            + "|(?:i\\s+)?(?:(?:have|got|gotta|need)\\s+to\\s+)?(?:leave|bounce)"
-            + "|(?:(?:i\\s+am|i['’]?m|im)\\s+)?(?:brb|afk)"
-            + "|(?:be\\s+right\\s+back|back\\s+in\\s+(?:a\\s+)?(?:bit|sec|minute|min))"
-            + "|(?:(?:i\\s+am|i['’]?m|im)\\s+)?(?:off|logging\\s+out\\s+soon)"
-            + "|(?:i\\s+)?(?:have|got|gotta)\\s+to\\s+(?:head\\s+out|run))",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern LOGOUT_CONFIRM_PATTERN = Pattern.compile(
-            "\\b(yes|yep|yeah|yea|y|ok|sure|confirm|do\\s+it|go\\s+(ahead|for\\s+it))\\b",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern AWAY_TOWN_CONFIRM_PATTERN = Pattern.compile(
-            "^(?:yes|yep|yeah|yea|y|ok|sure|confirm|town|nearest\\s+town|go\\s+town|go\\s+to\\s+town)$",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern AWAY_STAY_CONFIRM_PATTERN = Pattern.compile(
-            "^(?:stay|stay\\s+here|here|idle|wait\\s+here)$",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern AWAY_LOGOUT_CONFIRM_PATTERN = Pattern.compile(
-            "^(?:logout|log\\s*out|log\\s*off|disconnect|save\\s+and\\s+log\\s*(?:out|off))$",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern NEGATIVE_CONFIRM_PATTERN = Pattern.compile(
-            "\\b(no|nope|nah|nvm|never\\s*mind|dont|don't|not\\s+now|skip)\\b",
-            Pattern.CASE_INSENSITIVE);
-
     private static final List<String> GREETING_REPLIES = AgentDialogueCatalog.greetingReplies();
     private static final List<String> WB_REPLIES = AgentDialogueCatalog.welcomeBackReplies();
     // %s = current map name (bot is in town since the offline-return warp put it there).
@@ -520,7 +487,7 @@ public class BotChatManager {
         LAST_CHAT_HANDLED.set(true);
         markOwnerActive(entry);
         // Logout / relog — two-step confirmation
-        if (entry.pendingAction == null && matchesWholeCommand(RELOG_PATTERN, message)) {
+        if (entry.pendingAction == null && AgentChatCommandClassifier.isRelogRequest(message)) {
             BotManager.after(BotManager.randMs(900, 1100), () -> {
                 entry.pendingAction = "relog";
                 BotManager.getInstance().issueStop(entry);
@@ -528,7 +495,7 @@ public class BotChatManager {
             });
             return;
         }
-        if (entry.pendingAction == null && matchesWholeCommand(LOGOUT_PATTERN, message)) {
+        if (entry.pendingAction == null && AgentChatCommandClassifier.isLogoutRequest(message)) {
             BotManager.after(BotManager.randMs(900, 1100), () -> {
                 entry.pendingAction = "logout";
                 BotManager.getInstance().issueStop(entry);
@@ -536,7 +503,7 @@ public class BotChatManager {
             });
             return;
         }
-        if (entry.pendingAction == null && matchesWholeCommand(AWAY_PATTERN, message)) {
+        if (entry.pendingAction == null && AgentChatCommandClassifier.isAwayRequest(message)) {
             if (!BotManager.getInstance().isFirstBotEntry(entry)) {
                 return;
             }
@@ -575,7 +542,7 @@ public class BotChatManager {
                 handleSkillTreeChoice(entry, entry.bot, message);
                 return;
             }
-            if (LOGOUT_CONFIRM_PATTERN.matcher(message).find()) {
+            if (AgentChatCommandClassifier.isLogoutConfirm(message)) {
                 String action = entry.pendingAction;
                 entry.pendingAction = null;
                 if ("relog".equals(action)) {
@@ -982,7 +949,7 @@ public class BotChatManager {
         boolean townOffered = BotManager.getInstance().shouldOfferTownForAwayCommand(entry);
         entry.pendingAction = null;
 
-        if (AWAY_LOGOUT_CONFIRM_PATTERN.matcher(choice).matches()) {
+        if (AgentChatCommandClassifier.isAwayLogoutConfirm(choice)) {
             BotManager.after(BotManager.randMs(700, 900), () -> {
                 BotManager.getInstance().botReply(entry, "ok, logging us out");
                 logoutOwnerBots(entry);
@@ -990,7 +957,7 @@ public class BotChatManager {
             return;
         }
 
-        if (AWAY_TOWN_CONFIRM_PATTERN.matcher(choice).matches()) {
+        if (AgentChatCommandClassifier.isAwayTownConfirm(choice)) {
             int ownerId = entry.owner != null ? entry.owner.getId() : 0;
             if (ownerId != 0) {
                 BotManager.getInstance().issueOwnerAwaySafeModeForOwner(ownerId, townOffered);
@@ -1002,7 +969,7 @@ public class BotChatManager {
             return;
         }
 
-        if (AWAY_STAY_CONFIRM_PATTERN.matcher(choice).matches() && !townOffered) {
+        if (AgentChatCommandClassifier.isAwayStayConfirm(choice) && !townOffered) {
             int ownerId = entry.owner != null ? entry.owner.getId() : 0;
             if (ownerId != 0) {
                 BotManager.getInstance().issueOwnerAwaySafeModeForOwner(ownerId, false);
@@ -1632,11 +1599,6 @@ public class BotChatManager {
                 && left.primaryStat == right.primaryStat
                 && left.secondaryStat == right.secondaryStat
                 && left.secondaryTarget == right.secondaryTarget;
-    }
-
-    private static boolean matchesWholeCommand(Pattern pattern, String message) {
-        String normalized = normalizeCommandText(message);
-        return !normalized.isEmpty() && pattern.matcher(normalized).matches();
     }
 
     private static String normalizeCommandText(String message) {

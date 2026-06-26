@@ -19,7 +19,7 @@ Initial reconstruction order:
 
 1. Runtime shell and registry.
 2. Command parser/router boundaries. Initial parser and GM command bridge completed; old bot runtime remains underneath.
-3. Chat/reply/dialogue boundaries. Reply queue primitive has moved to Agent commands; named random dialogue pools have moved to Agent dialogue catalog; movement/follow/fidget, supply-request/direct supply, query/toggle, support/heal/buff toggle, respec, upgrade-request, report/debug, and trade/drop/item classification have moved to Agent dialogue classifiers; item query normalization has moved to Agent dialogue; most chat flow orchestration and many direct response strings remain in bot compatibility code.
+3. Chat/reply/dialogue boundaries. Reply queue primitive has moved to Agent commands; named random dialogue pools have moved to Agent dialogue catalog; movement/follow/fidget, supply-request/direct supply, query/toggle, support/heal/buff toggle, logout/relog/away session request, respec, upgrade-request, report/debug, and trade/drop/item classification have moved to Agent dialogue classifiers; item query normalization has moved to Agent dialogue; most chat flow orchestration and many direct response strings remain in bot compatibility code.
 4. Movement and navigation.
 5. Combat.
 6. Loot and supplies.

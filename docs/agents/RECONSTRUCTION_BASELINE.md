@@ -35,7 +35,7 @@ Reconstruction progress:
 - BotChatManager no longer contains inline `randomReply(List.of(...))` pools; those variants are cataloged under Agent dialogue.
 - Follow-target chat classification, group supply request classification, and direct HP/MP/potion/ammo supply command classification now live in `server.agents.capabilities.dialogue.AgentChatCommandClassifier`.
 - Movement-mode chat classification (`follow`, `stop`, `move here`, `grind`, patrol/farm-here, fidget) also lives in `AgentChatCommandClassifier`.
-- Meso/movement-stat queries, respec commands, proactive-offer toggles, support/heal/buff toggles, and upgrade-request classification also live in `AgentChatCommandClassifier`.
+- Meso/movement-stat queries, respec commands, proactive-offer toggles, support/heal/buff toggles, logout/relog/away session requests, and upgrade-request classification also live in `AgentChatCommandClassifier`.
 - Item query string normalization now lives in `server.agents.capabilities.dialogue.AgentItemQueryNormalizer`.
 - Trade/drop/item query classification now lives in `server.agents.capabilities.dialogue.AgentTradeDialogueClassifier`.
 - Help, report, buff-list, and debug query classification now lives in `server.agents.capabilities.dialogue.AgentChatCommandClassifier`.
