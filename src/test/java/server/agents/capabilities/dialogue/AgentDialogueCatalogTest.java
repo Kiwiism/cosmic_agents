@@ -56,6 +56,8 @@ class AgentDialogueCatalogTest {
         assertTrue(AgentDialogueCatalog.healsOnReply().contains("heal when needed"));
         assertTrue(AgentDialogueCatalog.buffConsumablesOffReply().contains("no buff pots"));
         assertTrue(AgentDialogueCatalog.buffConsumablesOnReply("cheap").contains("(cheap)"));
+        assertEquals("cheap", AgentDialogueCatalog.buffConsumablesModeLabel(true));
+        assertEquals("max", AgentDialogueCatalog.buffConsumablesModeLabel(false));
         assertTrue(AgentDialogueCatalog.buffConsumablesCheapReply().contains("cheapest buff pots"));
         assertTrue(AgentDialogueCatalog.buffConsumablesMaxReply().contains("best buff pots"));
         assertTrue(AgentDialogueCatalog.proactiveOffersOffReply().contains("immediate upgrades"));

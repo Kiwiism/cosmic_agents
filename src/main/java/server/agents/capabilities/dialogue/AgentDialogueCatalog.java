@@ -338,6 +338,10 @@ public final class AgentDialogueCatalog {
         return String.format(BUFF_CONSUMABLES_ON_REPLY_TEMPLATE, mode);
     }
 
+    public static String buffConsumablesModeLabel(boolean cheapMode) {
+        return cheapMode ? "cheap" : "max";
+    }
+
     public static String buffConsumablesCheapReply() {
         return BUFF_CONSUMABLES_CHEAP_REPLY;
     }

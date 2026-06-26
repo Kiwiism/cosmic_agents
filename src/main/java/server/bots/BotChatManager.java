@@ -266,8 +266,8 @@ public class BotChatManager {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.buffConsumablesEnabled = true;
                 entry.lastBuffScanMs = 0;
-                String mode = entry.buffCheapMode ? "cheap" : "max";
-                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.buffConsumablesOnReply(mode));
+                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.buffConsumablesOnReply(
+                        AgentDialogueCatalog.buffConsumablesModeLabel(entry.buffCheapMode)));
             });
             return;
         }
