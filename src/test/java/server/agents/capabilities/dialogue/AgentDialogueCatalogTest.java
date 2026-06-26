@@ -6,6 +6,7 @@ import server.bots.BotChatManager;
 import java.lang.reflect.Field;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -31,6 +32,8 @@ class AgentDialogueCatalogTest {
         assertTrue(AgentDialogueCatalog.fameTooLowLevelReply().contains("too low level"));
         assertTrue(AgentDialogueCatalog.fameFailedReply().contains("fame failed"));
         assertTrue(AgentDialogueCatalog.keepDropChoiceReply().contains("keeping them"));
+        assertEquals("ok! keeping them", AgentDialogueCatalog.pendingActionCancelReply(true));
+        assertEquals("ok nvm, staying!", AgentDialogueCatalog.pendingActionCancelReply(false));
         assertTrue(AgentDialogueCatalog.noJobSkillsReply().contains("no job skills"));
         assertTrue(AgentDialogueCatalog.noJobSkillsWithSpReply(12).contains("12 SP left"));
         assertTrue(AgentDialogueCatalog.noBeginnerSkillsReply(3).contains("3 beginner SP left"));

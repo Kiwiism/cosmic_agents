@@ -47,6 +47,8 @@ public final class AgentDialogueCatalog {
     private static final String FAME_TOO_LOW_LEVEL_REPLY = "i'm too low level to fame";
     private static final String FAME_FAILED_REPLY = "fame failed, might be at max already";
     private static final String KEEP_DROP_CHOICE_REPLY = "ok! keeping them";
+    private static final String PENDING_DROP_CANCEL_REPLY = "ok! keeping them";
+    private static final String PENDING_ACTION_CANCEL_REPLY = "ok nvm, staying!";
     private static final String NO_JOB_SKILLS_REPLY = "no job skills yet";
     private static final String NO_JOB_SKILLS_WITH_SP_TEMPLATE = "no job skills yet %d SP left";
     private static final String NO_BEGINNER_SKILLS_TEMPLATE =
@@ -205,6 +207,10 @@ public final class AgentDialogueCatalog {
 
     public static String keepDropChoiceReply() {
         return KEEP_DROP_CHOICE_REPLY;
+    }
+
+    public static String pendingActionCancelReply(boolean dropAction) {
+        return dropAction ? PENDING_DROP_CANCEL_REPLY : PENDING_ACTION_CANCEL_REPLY;
     }
 
     public static String noJobSkillsReply() {

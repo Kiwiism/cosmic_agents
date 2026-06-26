@@ -193,7 +193,8 @@ public class BotChatManager {
             } else {
                 String action = entry.pendingAction;
                 entry.pendingAction = null;
-                String cancelMsg = action != null && action.startsWith("drop") ? "ok! keeping them" : "ok nvm, staying!";
+                String cancelMsg = AgentDialogueCatalog.pendingActionCancelReply(
+                        action != null && action.startsWith("drop"));
                 BotManager.after(BotManager.randMs(700, 900), () ->
                         BotManager.getInstance().botReply(entry, cancelMsg));
             }
