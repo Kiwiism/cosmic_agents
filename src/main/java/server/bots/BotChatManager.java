@@ -19,7 +19,6 @@ import server.agents.capabilities.dialogue.AgentChatUtilityFlow;
 import server.agents.capabilities.dialogue.AgentChatTransferFlow;
 import server.agents.capabilities.dialogue.AgentCharacterDialogueReporter;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
-import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueReportFormatter;
 import server.agents.capabilities.dialogue.AgentFameDialogueFlow;
 import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
