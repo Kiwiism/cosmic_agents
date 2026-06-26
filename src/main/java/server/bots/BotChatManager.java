@@ -189,12 +189,6 @@ public class BotChatManager {
     private static final List<String> FAME_SAME_PERSON_REPLIES = AgentDialogueCatalog.fameSamePersonReplies();
     private static final List<String> OWNER_POT_SHORTAGE_REPLIES = AgentDialogueCatalog.ownerPotShortageReplies();
     private static final List<String> OWNER_AMMO_SHORTAGE_REPLIES = AgentDialogueCatalog.ownerAmmoShortageReplies();
-    private static final Pattern PROACTIVE_OFFERS_ON_PATTERN = Pattern.compile(
-            "\\b(?:(?:proactive|future)\\s+(?:offers?|upgrades?)\\s+on|offers?\\s+(?:proactive|future)\\s+on)\\b",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern PROACTIVE_OFFERS_OFF_PATTERN = Pattern.compile(
-            "\\b(?:(?:proactive|future)\\s+(?:offers?|upgrades?)\\s+off|offers?\\s+(?:proactive|future)\\s+off)\\b",
-            Pattern.CASE_INSENSITIVE);
     private static final Pattern BUFF_LIST_PATTERN = Pattern.compile(
             "\\bbuff\\s+(pots?\\s+)?list\\b|\\bbuffs?\\s*\\?|\\bwhat\\s+buffs?\\b|\\bwhich\\s+buffs?\\b",
             Pattern.CASE_INSENSITIVE);
@@ -667,14 +661,14 @@ public class BotChatManager {
             });
             return;
         }
-        if (PROACTIVE_OFFERS_OFF_PATTERN.matcher(message).find()) {
+        if (AgentChatCommandClassifier.isProactiveOffersOffCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.proactiveUpgradeOffers = false;
                 BotManager.getInstance().botReply(entry, "ok, only offering immediate upgrades");
             });
             return;
         }
-        if (PROACTIVE_OFFERS_ON_PATTERN.matcher(message).find()) {
+        if (AgentChatCommandClassifier.isProactiveOffersOnCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.proactiveUpgradeOffers = true;
                 BotManager.getInstance().botReply(entry, "ok, proactive upgrade offers on");
