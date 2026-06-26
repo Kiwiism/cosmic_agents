@@ -18,4 +18,22 @@ class AgentSupplyDialogueReporterTest {
         assertEquals("no pots on me rn", AgentSupplyDialogueReporter.potionReport(null));
         assertEquals("I have 4 hp pots, no mp pots", AgentSupplyDialogueReporter.potionReport(new int[]{4}));
     }
+
+    @Test
+    void shouldFormatAutopotDebugReportLikeLegacyChat() {
+        assertEquals(
+                "pots: 12 hp / 8 mp | hp slot: Red Potion (FLAT_SINGLE/50) | mp slot: Blue Potion (RATE_SINGLE/30%)",
+                AgentSupplyDialogueReporter.autopotDebugReport(
+                        12,
+                        8,
+                        AgentSupplyDialogueReporter.autopotChoice("Red Potion", 2000000, "FLAT_SINGLE", 50.0d),
+                        AgentSupplyDialogueReporter.autopotChoice("Blue Potion", 2000003, "RATE_SINGLE", 0.30d)));
+    }
+
+    @Test
+    void shouldFormatMissingAutopotChoiceAsNone() {
+        assertEquals("none", AgentSupplyDialogueReporter.autopotChoice(null, 0, null, 0));
+        assertEquals("2000000 (FLAT_MIXED/100)",
+                AgentSupplyDialogueReporter.autopotChoice(null, 2000000, "FLAT_MIXED", 100.0d));
+    }
 }

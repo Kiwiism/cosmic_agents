@@ -12,6 +12,7 @@ import constants.skills.Magician;
 import constants.skills.Warrior;
 import constants.skills.WhiteKnight;
 import server.ItemInformationProvider;
+import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
 import server.StatEffect;
 
 import java.util.List;
@@ -238,9 +239,11 @@ final class BotPotionManager {
         int[] cnt = countPotions(bot);
         AutopotChoice choice = computeAutopotChoice(bot);
         ItemInformationProvider iip = ItemInformationProvider.getInstance();
-        return "pots: " + cnt[0] + " hp / " + cnt[1] + " mp"
-                + " | hp slot: " + describeChoice(iip, choice.hpItemId(), choice.hpRank())
-                + " | mp slot: " + describeChoice(iip, choice.mpItemId(), choice.mpRank());
+        return AgentSupplyDialogueReporter.autopotDebugReport(
+                cnt[0],
+                cnt[1],
+                describeChoice(iip, choice.hpItemId(), choice.hpRank()),
+                describeChoice(iip, choice.mpItemId(), choice.mpRank()));
     }
 
     private static String describeChoice(ItemInformationProvider iip, int itemId, PotionRanking rank) {
@@ -249,10 +252,7 @@ final class BotPotionManager {
         }
         String name = iip.getName(itemId);
         if (name == null) name = String.valueOf(itemId);
-        String value = rank.tier().name().startsWith("FLAT_")
-                ? String.valueOf((int) rank.value())
-                : String.format("%.0f%%", rank.value() * 100);
-        return name + " (" + rank.tier().name() + "/" + value + ")";
+        return AgentSupplyDialogueReporter.autopotChoice(name, itemId, rank.tier().name(), rank.value());
     }
 
     static String grindStartMessage(Character bot) {
