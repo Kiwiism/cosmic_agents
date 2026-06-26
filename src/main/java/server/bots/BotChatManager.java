@@ -138,7 +138,7 @@ public class BotChatManager {
             // Item-choice: three-way "drop / trade / cancel" — handled independently of yes/no
             if ("item_choice".equals(entry.pendingAction)) {
                 String category = entry.pendingDropCategory;
-                String choice = normalizeCommandText(message);
+                String choice = AgentChatCommandClassifier.normalizeCommandText(message);
                 if (AgentTradeDialogueClassifier.isDropChoiceTradeCommand(choice)) {
                     entry.pendingAction       = null;
                     entry.pendingDropCategory = null;
@@ -563,7 +563,7 @@ public class BotChatManager {
     }
 
     private static void handleOwnerAwayChoice(BotEntry entry, String message) {
-        String choice = normalizeCommandText(message);
+        String choice = AgentChatCommandClassifier.normalizeCommandText(message);
         boolean townOffered = BotManager.getInstance().shouldOfferTownForAwayCommand(entry);
         entry.pendingAction = null;
 
@@ -1154,21 +1154,6 @@ public class BotChatManager {
                 && left.primaryStat == right.primaryStat
                 && left.secondaryStat == right.secondaryStat
                 && left.secondaryTarget == right.secondaryTarget;
-    }
-
-    private static String normalizeCommandText(String message) {
-        if (message == null) {
-            return "";
-        }
-
-        return message.strip()
-                .replaceAll("^[\\p{Punct}\\s]+", "")
-                .replaceAll("[\\p{Punct}\\s]+$", "")
-                .replaceFirst("^(?:(?:please|pls|hey|yo)\\s+)+", "")
-                .replaceFirst("^(?:(?:can|could|will|would)\\s+you\\s+)", "")
-                .replaceFirst("^(?:(?:please|pls)\\s+)+", "")
-                .replaceFirst("\\s+(?:please|pls)$", "")
-                .replaceAll("\\s+", " ");
     }
 
     private static void reportRecommendedGear(BotEntry entry, Character bot) {

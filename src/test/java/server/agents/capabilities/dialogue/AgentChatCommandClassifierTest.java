@@ -9,6 +9,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentChatCommandClassifierTest {
     @Test
+    void shouldNormalizeCommandTextExactlyLikeLegacyChat() {
+        assertEquals("", AgentChatCommandClassifier.normalizeCommandText(null));
+        assertEquals("stop", AgentChatCommandClassifier.normalizeCommandText("  !!!please stop?? "));
+        assertEquals("follow me", AgentChatCommandClassifier.normalizeCommandText("yo can you follow me please"));
+        assertEquals("go town", AgentChatCommandClassifier.normalizeCommandText("pls pls go town pls"));
+        assertEquals("save and logout", AgentChatCommandClassifier.normalizeCommandText("...save   and   logout!!!"));
+    }
+
+    @Test
     void shouldParseFollowTargetCommandsWithoutBreakingPlainFollow() {
         assertEquals("clawer", AgentChatCommandClassifier.matchFollowTarget("follow clawer"));
         assertEquals("Clawer", AgentChatCommandClassifier.matchFollowTarget("follow Clawer please"));

@@ -37,6 +37,7 @@ Reconstruction progress:
 - Follow-target chat classification, group supply request classification, and direct HP/MP/potion/ammo supply command classification now live in `server.agents.capabilities.dialogue.AgentChatCommandClassifier`.
 - Movement-mode chat classification (`follow`, `stop`, `move here`, `grind`, patrol/farm-here, fidget) also lives in `AgentChatCommandClassifier`.
 - Meso/movement-stat queries, respec commands, proactive-offer toggles, support/heal/buff toggles, logout/relog/away session requests, and upgrade-request classification also live in `AgentChatCommandClassifier`.
+- Session-confirmation command normalization now lives in `AgentChatCommandClassifier`.
 - Item query string normalization now lives in `server.agents.capabilities.dialogue.AgentItemQueryNormalizer`.
 - Trade/drop/item query classification and pending drop-choice classification now live in `server.agents.capabilities.dialogue.AgentTradeDialogueClassifier`.
 - Bare trade-invite, sell-trash, and Maker utility command classification now lives in `server.agents.capabilities.dialogue.AgentUtilityDialogueClassifier`.

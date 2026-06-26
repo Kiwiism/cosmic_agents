@@ -466,7 +466,7 @@ public final class AgentChatCommandClassifier {
         return !normalized.isEmpty() && pattern.matcher(normalized).matches();
     }
 
-    private static String normalizeCommandText(String message) {
+    public static String normalizeCommandText(String message) {
         if (message == null) {
             return "";
         }
