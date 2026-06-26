@@ -102,6 +102,11 @@
     </changeSet>
 
     <changeSet id="25" author="Codex">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="bot_owners"/>
+            </not>
+        </preConditions>
         <sqlFile path="db/tables/025-bot-ownership.sql"/>
     </changeSet>
 

@@ -80,6 +80,9 @@ public class TimerManager implements TimerManagerMBean {
     }
 
     public void stop() {
+        if (ses == null) {
+            return;
+        }
         ses.shutdownNow();
     }
 
