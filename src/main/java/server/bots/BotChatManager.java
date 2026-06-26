@@ -14,6 +14,7 @@ import constants.game.GameConstants;
 import constants.inventory.ItemConstants;
 import server.Trade;
 import server.agents.capabilities.dialogue.AgentBuildDialogueClassifier;
+import server.agents.capabilities.dialogue.AgentChatBuffQueryFlow;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
@@ -149,19 +150,7 @@ public class BotChatManager {
         if (AgentChatToggleFlow.handle(message, toggleCallbacks(entry))) {
             return;
         }
-        if (AgentChatCommandClassifier.isBuffListQuery(message)) {
-            BotManager.after(BotManager.randMs(500, 700), () -> {
-                String summary = BotBuffManager.getChatSummary(entry.buffConsumablesEnabled, entry.buffCheapMode, entry.bot);
-                BotManager.getInstance().botReply(entry, summary);
-            });
-            return;
-        }
-        if (AgentChatCommandClassifier.isBuffDebugQuery(message)) {
-            BotManager.after(BotManager.randMs(500, 700), () -> reportBuffDebug(entry, entry.bot));
-            return;
-        }
-        if (AgentChatCommandClassifier.isSkillBuffDebugQuery(message)) {
-            BotManager.after(BotManager.randMs(500, 700), () -> reportSkillBuffDebug(entry, entry.bot));
+        if (AgentChatBuffQueryFlow.handle(message, buffQueryCallbacks(entry))) {
             return;
         }
         if (AgentChatCommandClassifier.isApRespecCommand(message)) {
@@ -506,6 +495,29 @@ public class BotChatManager {
                             ? AgentDialogueCatalog.proactiveOffersOnReply()
                             : AgentDialogueCatalog.proactiveOffersOffReply());
                 });
+            }
+        };
+    }
+
+    private static AgentChatBuffQueryFlow.BuffQueryCallbacks buffQueryCallbacks(BotEntry entry) {
+        return new AgentChatBuffQueryFlow.BuffQueryCallbacks() {
+            @Override
+            public void reportBuffList() {
+                BotManager.after(BotManager.randMs(500, 700), () -> {
+                    String summary = BotBuffManager.getChatSummary(
+                            entry.buffConsumablesEnabled, entry.buffCheapMode, entry.bot);
+                    BotManager.getInstance().botReply(entry, summary);
+                });
+            }
+
+            @Override
+            public void reportBuffDebug() {
+                BotManager.after(BotManager.randMs(500, 700), () -> BotChatManager.reportBuffDebug(entry, entry.bot));
+            }
+
+            @Override
+            public void reportSkillBuffDebug() {
+                BotManager.after(BotManager.randMs(500, 700), () -> BotChatManager.reportSkillBuffDebug(entry, entry.bot));
             }
         };
     }
