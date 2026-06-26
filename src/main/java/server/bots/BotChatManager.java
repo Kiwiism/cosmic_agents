@@ -649,7 +649,7 @@ public class BotChatManager {
             @Override
             public void cancelItemChoice() {
                 BotManager.after(BotManager.randMs(400, 600),
-                        () -> BotManager.getInstance().botReply(entry, AgentDialogueCatalog.keepDropChoiceReply()));
+                        () -> BotManager.getInstance().botReply(entry, AgentPendingChatActionFlow.keepDropChoiceReply()));
             }
 
             @Override
@@ -669,7 +669,7 @@ public class BotChatManager {
 
             @Override
             public void cancelPendingAction(boolean dropAction) {
-                String cancelMsg = AgentDialogueCatalog.pendingActionCancelReply(dropAction);
+                String cancelMsg = AgentPendingChatActionFlow.pendingActionCancelReply(dropAction);
                 BotManager.after(BotManager.randMs(700, 900), () ->
                         BotManager.getInstance().botReply(entry, cancelMsg));
             }

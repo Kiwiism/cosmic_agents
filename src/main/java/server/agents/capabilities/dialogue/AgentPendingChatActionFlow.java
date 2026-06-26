@@ -59,6 +59,14 @@ public final class AgentPendingChatActionFlow {
         callbacks.cancelItemChoice();
     }
 
+    public static String keepDropChoiceReply() {
+        return AgentDialogueCatalog.keepDropChoiceReply();
+    }
+
+    public static String pendingActionCancelReply(boolean dropAction) {
+        return AgentDialogueCatalog.pendingActionCancelReply(dropAction);
+    }
+
     public interface PendingActionState {
         String pendingAction();
 

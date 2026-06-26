@@ -108,6 +108,17 @@ class AgentPendingChatActionFlowTest {
         assertNull(state.pendingAction());
     }
 
+    @Test
+    void shouldExposePendingActionReplies() {
+        assertEquals(AgentDialogueCatalog.keepDropChoiceReply(), AgentPendingChatActionFlow.keepDropChoiceReply());
+        assertEquals(
+                AgentDialogueCatalog.pendingActionCancelReply(true),
+                AgentPendingChatActionFlow.pendingActionCancelReply(true));
+        assertEquals(
+                AgentDialogueCatalog.pendingActionCancelReply(false),
+                AgentPendingChatActionFlow.pendingActionCancelReply(false));
+    }
+
     private static final class TestState implements AgentPendingChatActionFlow.PendingActionState {
         private String pendingAction;
         private String pendingDropCategory;
