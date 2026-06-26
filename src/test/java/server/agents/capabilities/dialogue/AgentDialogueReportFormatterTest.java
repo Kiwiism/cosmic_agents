@@ -66,8 +66,9 @@ class AgentDialogueReportFormatterTest {
         assertEquals("2.1m", AgentDialogueReportFormatter.compactMesos(2_100_000));
 
         assertEquals("I have 6k", AgentDialogueReportFormatter.mesoReport(6_000, java.util.List.of("I have %s")));
-        assertEquals("6k", AgentDialogueReportFormatter.compactMesos(6_000));
         assertEquals(true, AgentDialogueReportFormatter.mesoReport(6_000).contains("6k"));
+        assertEquals(true, AgentDialogueReportFormatter.mesoReport(3_500).contains("3.5k"));
+        assertEquals(true, AgentDialogueReportFormatter.mesoReport(2_100_000).contains("2.1m"));
     }
 
     @Test

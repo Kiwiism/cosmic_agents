@@ -225,21 +225,6 @@ class BotChatManagerTest {
     }
 
     @Test
-    void shouldFormatCompactMesos() {
-        assertEquals("999", BotChatManager.formatCompactMesos(999));
-        assertEquals("6k", BotChatManager.formatCompactMesos(6_000));
-        assertEquals("3.5k", BotChatManager.formatCompactMesos(3_500));
-        assertEquals("2.1m", BotChatManager.formatCompactMesos(2_100_000));
-    }
-
-    @Test
-    void shouldBuildMesoReportUsingCompactAmounts() {
-        assertTrue(BotChatManager.buildMesoReport(6_000).contains("6k"));
-        assertTrue(BotChatManager.buildMesoReport(3_500).contains("3.5k"));
-        assertTrue(BotChatManager.buildMesoReport(2_100_000).contains("2.1m"));
-    }
-
-    @Test
     void shouldShowBuffDebugStateWithEnabledAndMode() {
         BotEntry entry = new BotEntry(null, null, null);
 

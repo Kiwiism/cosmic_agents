@@ -9,7 +9,6 @@ import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.WeaponType;
 import client.processor.stat.AssignAPProcessor;
-import constants.game.ExpTable;
 import constants.game.GameConstants;
 import constants.inventory.ItemConstants;
 import server.Trade;
@@ -1106,15 +1105,11 @@ public class BotChatManager {
     }
 
     private static void reportMesos(BotEntry entry, Character bot) {
-        queueBotReply(entry, buildMesoReport(bot.getMeso()));
+        queueBotReply(entry, AgentDialogueReportFormatter.mesoReport(bot.getMeso()));
     }
 
     private static void reportExp(BotEntry entry, Character bot) {
-        queueBotReply(entry, buildExpReport(bot.getExp(), bot.getLevel()));
-    }
-
-    static String buildExpReport(int currentExp, int level) {
-        return AgentDialogueReportFormatter.expReport(currentExp, level);
+        queueBotReply(entry, AgentDialogueReportFormatter.expReport(bot.getExp(), bot.getLevel()));
     }
 
     private static void reportInventorySlots(BotEntry entry, Character bot) {
@@ -1132,19 +1127,11 @@ public class BotChatManager {
 
     private static void reportPotions(BotEntry entry, Character bot) {
         int[] counts = BotPotionManager.countPotions(bot);
-        queueBotReply(entry, buildPotionReport(counts[0], counts[1]));
+        queueBotReply(entry, AgentDialogueReportFormatter.potionReport(counts[0], counts[1]));
     }
 
     private static void reportPotDebug(BotEntry entry, Character bot) {
         queueBotReply(entry, BotPotionManager.autopotDebugReport(bot));
-    }
-
-    static String buildPotionReport(int hp, int mp) {
-        return AgentDialogueReportFormatter.potionReport(hp, mp);
-    }
-
-    static String buildMesoReport(int mesos) {
-        return AgentDialogueReportFormatter.mesoReport(mesos);
     }
 
     static List<String> buildMovementStatsReport(Character bot) {
@@ -1196,10 +1183,6 @@ public class BotChatManager {
                     profile.totalSpeedStat(), profile.totalJumpStat(), rawSpeedStat, rawJumpStat);
         }
         return AgentDialogueReportFormatter.movementStatLine(profile.totalSpeedStat(), profile.totalJumpStat());
-    }
-
-    static String formatCompactMesos(int mesos) {
-        return AgentDialogueReportFormatter.compactMesos(mesos);
     }
 
     private static void reportDebugStats(BotEntry entry, Character bot) {
