@@ -26,4 +26,8 @@ public final class AgentSocialDialogueClassifier {
         Matcher matcher = FAME_PATTERN.matcher(message);
         return matcher.matches() ? matcher.group(1) : null;
     }
+
+    public static boolean isSelfFameTarget(String targetName) {
+        return "me".equalsIgnoreCase(targetName);
+    }
 }

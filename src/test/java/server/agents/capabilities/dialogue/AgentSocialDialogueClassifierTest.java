@@ -21,5 +21,8 @@ class AgentSocialDialogueClassifierTest {
         assertEquals("me", AgentSocialDialogueClassifier.matchFameTarget("fame me"));
         assertEquals("Clawer", AgentSocialDialogueClassifier.matchFameTarget("fame Clawer!"));
         assertNull(AgentSocialDialogueClassifier.matchFameTarget("give fame Clawer"));
+        assertTrue(AgentSocialDialogueClassifier.isSelfFameTarget("me"));
+        assertTrue(AgentSocialDialogueClassifier.isSelfFameTarget("ME"));
+        assertFalse(AgentSocialDialogueClassifier.isSelfFameTarget("Clawer"));
     }
 }

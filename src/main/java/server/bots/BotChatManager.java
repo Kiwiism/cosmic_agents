@@ -1475,7 +1475,7 @@ public class BotChatManager {
     private static void handleFameCommand(BotEntry entry, String targetName) {
         Character bot = entry.bot;
         Character target;
-        if (targetName.equalsIgnoreCase("me")) {
+        if (AgentSocialDialogueClassifier.isSelfFameTarget(targetName)) {
             target = entry.owner;
         } else {
             target = bot.getMap().getCharacters().stream()
