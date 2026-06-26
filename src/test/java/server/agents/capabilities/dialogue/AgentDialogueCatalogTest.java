@@ -40,6 +40,7 @@ class AgentDialogueCatalogTest {
         assertTrue(AgentDialogueCatalog.noLearnedSkillsInReply("warrior").contains("warrior"));
         assertTrue(AgentDialogueCatalog.noCritPassiveReply().contains("can't crit"));
         assertTrue(AgentDialogueCatalog.weirdTransferReply().contains("weird"));
+        assertEquals("cant read my movement stats rn", AgentDialogueCatalog.movementStatsUnavailableReply());
         assertTrue(AgentDialogueCatalog.welcomeBackOfflinePartyTemplates().contains("wb!! we're at %s"));
         assertTrue(AgentDialogueCatalog.relogConfirmPrompts().contains("save and relog? type yes"));
         assertTrue(AgentDialogueCatalog.logoutConfirmedReplies().contains("cya!!"));

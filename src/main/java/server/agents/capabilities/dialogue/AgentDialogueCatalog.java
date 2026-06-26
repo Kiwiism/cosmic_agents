@@ -56,6 +56,7 @@ public final class AgentDialogueCatalog {
     private static final String NO_LEARNED_SKILLS_IN_TEMPLATE = "no learned skills in %s";
     private static final String NO_CRIT_PASSIVE_REPLY = "i can't crit (my job doesn't have a crit passive)";
     private static final String WEIRD_TRANSFER_REPLY = "that sounded weird but ok";
+    private static final String MOVEMENT_STATS_UNAVAILABLE_REPLY = "cant read my movement stats rn";
     private static final List<String> OWNER_POT_SHORTAGE_REPLIES = List.of(
             "almost out of %s pots too, i thought u were our shopper?",
             "i checked, nobody has spare %s pots. that's kinda your department lol",
@@ -235,6 +236,10 @@ public final class AgentDialogueCatalog {
 
     public static String weirdTransferReply() {
         return WEIRD_TRANSFER_REPLY;
+    }
+
+    public static String movementStatsUnavailableReply() {
+        return MOVEMENT_STATS_UNAVAILABLE_REPLY;
     }
 
     public static List<String> ownerPotShortageReplies() {

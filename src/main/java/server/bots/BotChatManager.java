@@ -918,7 +918,7 @@ public class BotChatManager {
 
     static List<String> buildMovementStatsReport(Character bot) {
         if (bot == null) {
-            return List.of("cant read my movement stats rn");
+            return List.of(AgentDialogueCatalog.movementStatsUnavailableReply());
         }
 
         BotMovementProfile profile = BotMovementProfile.fromCharacter(bot);
