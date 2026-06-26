@@ -992,38 +992,11 @@ public class BotChatManager {
 
     private static String buildRangeReport(Character bot, BotEquipManager.MapDamageProfile mobProfile,
                                            BotEquipManager.MapDamageProfile hitProfile) {
-        CombatFormulaProvider formulas = CombatFormulaProvider.getInstance();
-        boolean magicAttack = BotEquipManager.isMageJob(bot.getJob());
-        int attackStat;
-        int accuracy;
-        int minDmg;
-        int maxDmg;
-
-        if (magicAttack) {
-            attackStat = bot.getTotalMagic();
-            accuracy = formulas.getTotalMagicAccuracy(bot);
-            maxDmg = (int) Math.max(1L, formulas.magicDamageBase(attackStat, bot.getTotalInt()));
-            minDmg = (int) Math.max(1L, formulas.magicDamageBaseMin(attackStat, bot.getTotalInt(), 0.1d));
-        } else {
-            attackStat = bot.getTotalWatk();
-            accuracy = formulas.getTotalAccuracy(bot);
-            maxDmg = Math.max(1, bot.calculateMaxBaseDamage(attackStat));
-            minDmg = Math.max(1, bot.calculateMinBaseDamage(attackStat, formulas.resolvePhysicalMastery(bot)));
-        }
-
-        String report = AgentDialogueReportFormatter.range(
-                minDmg, maxDmg,
-                AgentDialogueReportFormatter.rangeAttackLabel(magicAttack), attackStat,
-                AgentDialogueReportFormatter.rangeAccuracyLabel(magicAttack), accuracy);
-        if (hitProfile == null) {
-            return report;
-        }
-
-        double hitChance = magicAttack
-                ? formulas.calculateMagicMobHitChance(accuracy, bot.getLevel(), hitProfile.mobLevel(), hitProfile.mobAvoid())
-                : formulas.calculatePhysicalMobHitChance(accuracy, bot.getLevel(), hitProfile.mobLevel(), hitProfile.mobAvoid());
-        int hitPercent = (int) Math.round(hitChance * 100.0d);
-        return AgentDialogueReportFormatter.rangeWithHit(report, hitPercent, hitProfile.mobAvoid());
+        AgentCombatDialogueReporter.MobHitProfile agentHitProfile = hitProfile == null
+                ? null
+                : new AgentCombatDialogueReporter.MobHitProfile(hitProfile.mobLevel(), hitProfile.mobAvoid());
+        return AgentCombatDialogueReporter.rangeReport(
+                bot, BotEquipManager.isMageJob(bot.getJob()), agentHitProfile);
     }
 
     private static void reportMovementStats(BotEntry entry, Character bot) {

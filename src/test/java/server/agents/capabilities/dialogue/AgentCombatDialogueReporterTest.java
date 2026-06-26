@@ -1,11 +1,54 @@
 package server.agents.capabilities.dialogue;
 
+import client.Character;
+import client.Job;
+import client.inventory.Inventory;
 import org.junit.jupiter.api.Test;
 import server.combat.CombatFormulaProvider;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class AgentCombatDialogueReporterTest {
+    @Test
+    void shouldBuildPhysicalRangeReportFromEffectiveTotalsLikeLegacyChat() {
+        Character agent = mock(Character.class);
+        Inventory equipped = mock(Inventory.class);
+        when(agent.getJob()).thenReturn(Job.FIGHTER);
+        when(agent.getLevel()).thenReturn(48);
+        when(agent.getTotalWatk()).thenReturn(20);
+        when(agent.getTotalDex()).thenReturn(100);
+        when(agent.getTotalLuk()).thenReturn(40);
+        when(agent.getInventory(client.inventory.InventoryType.EQUIPPED)).thenReturn(equipped);
+        when(equipped.getItem((short) -11)).thenReturn(null);
+        when(equipped.iterator()).thenReturn(List.<client.inventory.Item>of().iterator());
+        when(agent.calculateMinBaseDamage(20, 0.1d)).thenReturn(50);
+        when(agent.calculateMaxBaseDamage(20)).thenReturn(99);
+
+        String report = AgentCombatDialogueReporter.rangeReport(
+                agent, false, new AgentCombatDialogueReporter.MobHitProfile(48, 40));
+
+        assertEquals("my dmg is 50-99, watk 20, acc 100 | hit 47% vs hardest mob (avd 40)", report);
+    }
+
+    @Test
+    void shouldBuildMageRangeReportFromEffectiveMagicTotalsLikeLegacyChat() {
+        Character agent = mock(Character.class);
+        when(agent.getJob()).thenReturn(Job.MAGICIAN);
+        when(agent.getLevel()).thenReturn(50);
+        when(agent.getTotalMagic()).thenReturn(200);
+        when(agent.getTotalInt()).thenReturn(100);
+        when(agent.getTotalLuk()).thenReturn(50);
+
+        String report = AgentCombatDialogueReporter.rangeReport(
+                agent, true, new AgentCombatDialogueReporter.MobHitProfile(50, 30));
+
+        assertEquals("my dmg is 3-9, matk 200, magic acc 75 | hit 26% vs hardest mob (avd 30)", report);
+    }
+
     @Test
     void shouldReportNoCritPassiveLikeLegacyChat() {
         String report = AgentCombatDialogueReporter.critReport(
