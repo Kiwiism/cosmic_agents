@@ -732,12 +732,12 @@ public class BotChatManager {
 
             @Override
             public void replyTownOrLogout() {
-                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.awayTownOrLogoutPrompt());
+                BotManager.getInstance().botReply(entry, AgentChatAwayFlow.townOrLogoutPrompt());
             }
 
             @Override
             public void replyStayOrLogout() {
-                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.awayStayOrLogoutPrompt());
+                BotManager.getInstance().botReply(entry, AgentChatAwayFlow.stayOrLogoutPrompt());
             }
         };
     }
@@ -759,7 +759,7 @@ public class BotChatManager {
             @Override
             public void logout() {
                 BotManager.after(BotManager.randMs(700, 900), () -> {
-                    BotManager.getInstance().botReply(entry, AgentDialogueCatalog.awayLogoutConfirmReply());
+                    BotManager.getInstance().botReply(entry, AgentChatAwayFlow.logoutConfirmReply());
                     logoutOwnerBots(entry);
                 });
             }
@@ -771,9 +771,7 @@ public class BotChatManager {
                     BotManager.getInstance().issueOwnerAwaySafeModeForOwner(ownerId, townOffered);
                 }
                 BotManager.after(BotManager.randMs(700, 900), () ->
-                        BotManager.getInstance().botReply(entry, townOffered
-                                ? AgentDialogueCatalog.awayTownConfirmReply()
-                                : AgentDialogueCatalog.awayStayConfirmReply()));
+                        BotManager.getInstance().botReply(entry, AgentChatAwayFlow.townOrStayConfirmReply(townOffered)));
             }
 
             @Override
@@ -783,13 +781,13 @@ public class BotChatManager {
                     BotManager.getInstance().issueOwnerAwaySafeModeForOwner(ownerId, false);
                 }
                 BotManager.after(BotManager.randMs(700, 900), () ->
-                        BotManager.getInstance().botReply(entry, AgentDialogueCatalog.awayStayConfirmReply()));
+                        BotManager.getInstance().botReply(entry, AgentChatAwayFlow.stayConfirmReply()));
             }
 
             @Override
             public void cancel() {
                 BotManager.after(BotManager.randMs(700, 900), () ->
-                        BotManager.getInstance().botReply(entry, AgentDialogueCatalog.awayCancelReply()));
+                        BotManager.getInstance().botReply(entry, AgentChatAwayFlow.cancelReply()));
             }
         };
     }

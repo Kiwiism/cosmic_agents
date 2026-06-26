@@ -68,6 +68,17 @@ class AgentChatAwayFlowTest {
         assertEquals("pending;stop;stay;", callbacks.events);
     }
 
+    @Test
+    void shouldExposeAwayReplies() {
+        assertEquals(AgentDialogueCatalog.awayTownOrLogoutPrompt(), AgentChatAwayFlow.townOrLogoutPrompt());
+        assertEquals(AgentDialogueCatalog.awayStayOrLogoutPrompt(), AgentChatAwayFlow.stayOrLogoutPrompt());
+        assertEquals(AgentDialogueCatalog.awayLogoutConfirmReply(), AgentChatAwayFlow.logoutConfirmReply());
+        assertEquals(AgentDialogueCatalog.awayTownConfirmReply(), AgentChatAwayFlow.townOrStayConfirmReply(true));
+        assertEquals(AgentDialogueCatalog.awayStayConfirmReply(), AgentChatAwayFlow.townOrStayConfirmReply(false));
+        assertEquals(AgentDialogueCatalog.awayStayConfirmReply(), AgentChatAwayFlow.stayConfirmReply());
+        assertEquals(AgentDialogueCatalog.awayCancelReply(), AgentChatAwayFlow.cancelReply());
+    }
+
     private static final class TestCallbacks implements AgentChatAwayFlow.AwayChoiceCallbacks {
         private String events = "";
 

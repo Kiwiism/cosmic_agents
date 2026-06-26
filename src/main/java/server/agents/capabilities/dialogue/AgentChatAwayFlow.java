@@ -36,6 +36,32 @@ public final class AgentChatAwayFlow {
         }
     }
 
+    public static String townOrLogoutPrompt() {
+        return AgentDialogueCatalog.awayTownOrLogoutPrompt();
+    }
+
+    public static String stayOrLogoutPrompt() {
+        return AgentDialogueCatalog.awayStayOrLogoutPrompt();
+    }
+
+    public static String logoutConfirmReply() {
+        return AgentDialogueCatalog.awayLogoutConfirmReply();
+    }
+
+    public static String townOrStayConfirmReply(boolean townOffered) {
+        return townOffered
+                ? AgentDialogueCatalog.awayTownConfirmReply()
+                : AgentDialogueCatalog.awayStayConfirmReply();
+    }
+
+    public static String stayConfirmReply() {
+        return AgentDialogueCatalog.awayStayConfirmReply();
+    }
+
+    public static String cancelReply() {
+        return AgentDialogueCatalog.awayCancelReply();
+    }
+
     public interface AwayChoiceCallbacks {
         void clearPendingAction();
 
