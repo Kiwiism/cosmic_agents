@@ -889,16 +889,7 @@ public class BotChatManager {
     }
 
     static String buildExpReport(int currentExp, int level) {
-        int needed = ExpTable.getExpNeededForLevel(level);
-        if (needed <= 0) {
-            return "0%";
-        }
-        double pct = (currentExp / (double) needed) * 100.0;
-        String formatted = String.format(Locale.ROOT, "%.2f", pct);
-        if (formatted.contains(".")) {
-            formatted = formatted.replaceAll("0+$", "").replaceAll("\\.$", "");
-        }
-        return formatted + "%";
+        return AgentDialogueReportFormatter.expPercent(currentExp, ExpTable.getExpNeededForLevel(level));
     }
 
     private static void reportInventorySlots(BotEntry entry, Character bot) {
@@ -911,9 +902,7 @@ public class BotChatManager {
             int id = item.getItemId();
             if (ItemConstants.isEquipScroll(id)) count += item.getQuantity();
         }
-        queueBotReply(entry, count > 0
-                ? "I have " + count + " scroll" + (count != 1 ? "s" : "") + " on me"
-                : "no scrolls on me");
+        queueBotReply(entry, AgentDialogueReportFormatter.scrollCount(count));
     }
 
     private static void reportPotions(BotEntry entry, Character bot) {
@@ -926,18 +915,7 @@ public class BotChatManager {
     }
 
     static String buildPotionReport(int hp, int mp) {
-        if (hp == 0 && mp == 0) {
-            return "no pots on me rn";
-        }
-        if (mp == 0) {
-            return "I have " + hp + " hp pot" + (hp != 1 ? "s" : "") + ", no mp pots";
-        }
-        if (hp == 0) {
-            return "no hp pots, " + mp + " mp pot" + (mp != 1 ? "s" : "");
-        }
-
-        return "I have " + hp + " hp pot" + (hp != 1 ? "s" : "")
-                + " and " + mp + " mp pot" + (mp != 1 ? "s" : "");
+        return AgentDialogueReportFormatter.potionCount(hp, mp);
     }
 
     static boolean isMesoQuery(String message) {
@@ -945,9 +923,7 @@ public class BotChatManager {
     }
 
     static String buildMesoReport(int mesos) {
-        String amount = formatCompactMesos(mesos);
-        String pattern = MESO_REPLIES.get(ThreadLocalRandom.current().nextInt(MESO_REPLIES.size()));
-        return String.format(pattern, amount);
+        return AgentDialogueReportFormatter.mesoReport(mesos, MESO_REPLIES);
     }
 
     static boolean isMovementStatsQuery(String message) {
@@ -1008,30 +984,7 @@ public class BotChatManager {
     }
 
     static String formatCompactMesos(int mesos) {
-        if (mesos < 1_000) {
-            return String.valueOf(mesos);
-        }
-
-        double value = mesos;
-        String[] suffixes = {"k", "m", "b"};
-        int suffixIndex = -1;
-
-        while (value >= 1_000d && suffixIndex < suffixes.length - 1) {
-            value /= 1_000d;
-            suffixIndex++;
-        }
-
-        double rounded = Math.round(value * 10d) / 10d;
-        if (rounded >= 1_000d && suffixIndex < suffixes.length - 1) {
-            rounded = Math.round((rounded / 1_000d) * 10d) / 10d;
-            suffixIndex++;
-        }
-
-        if (Math.floor(rounded) == rounded) {
-            return String.format(Locale.ROOT, "%.0f%s", rounded, suffixes[suffixIndex]);
-        }
-
-        return String.format(Locale.ROOT, "%.1f%s", rounded, suffixes[suffixIndex]);
+        return AgentDialogueReportFormatter.compactMesos(mesos);
     }
 
     private static void reportDebugStats(BotEntry entry, Character bot) {

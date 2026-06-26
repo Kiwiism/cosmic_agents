@@ -44,7 +44,7 @@ Reconstruction progress:
 - Greeting and fame-target chat classification now lives in `server.agents.capabilities.dialogue.AgentSocialDialogueClassifier`.
 - Job/build/AP/SP choice classification now lives in `server.agents.capabilities.dialogue.AgentBuildDialogueClassifier`.
 - Help, report, buff-list, and debug query classification now lives in `server.agents.capabilities.dialogue.AgentChatCommandClassifier`.
-- Stats/range/build/crit report text formatting now lives in `server.agents.capabilities.dialogue.AgentDialogueReportFormatter`.
+- Stats/range/build/crit/EXP/supply/meso report text formatting now lives in `server.agents.capabilities.dialogue.AgentDialogueReportFormatter`.
 - `server.bots.BotChatManager` still owns chat parsing and most direct response strings while it is split incrementally.
 - Bot runtime behavior still lives under `server.bots` and has not been functionally changed.
 
