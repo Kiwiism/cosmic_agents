@@ -2,7 +2,6 @@ package server.bots;
 
 import client.Character;
 import client.Job;
-import client.inventory.WeaponType;
 import server.Trade;
 import server.agents.capabilities.dialogue.AgentApBuildDialogueResolver;
 import server.agents.capabilities.dialogue.AgentBuildDialogueClassifier;
@@ -28,7 +27,6 @@ import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
 import server.agents.capabilities.dialogue.AgentSkillDialogueReporter;
 import server.agents.capabilities.dialogue.AgentSkillReportFlow;
 import server.agents.capabilities.dialogue.AgentSocialDialogueClassifier;
-import server.agents.capabilities.dialogue.AgentSupplyRequestOutcomeFlow;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 
 import java.awt.*;
@@ -229,22 +227,7 @@ public class BotChatManager {
     }
 
     static AgentChatSupplyRequestFlow.SupplyRequestCallbacks supplyRequestCallbacks(BotEntry entry) {
-        return new AgentChatSupplyRequestFlow.SupplyRequestCallbacks() {
-            @Override
-            public void requestPotion(boolean hpPotion) {
-                BotManager.after(BotManager.randMs(500, 700), () -> handleNeedPotionCommand(entry, hpPotion));
-            }
-
-            @Override
-            public void requestAnyPotion() {
-                BotManager.after(BotManager.randMs(500, 700), () -> handleNeedAnyPotionCommand(entry));
-            }
-
-            @Override
-            public void requestAmmo() {
-                BotManager.after(BotManager.randMs(500, 700), () -> handleNeedAmmoCommand(entry));
-            }
-        };
+        return BotChatSupplyRuntime.supplyRequestCallbacks(entry);
     }
 
     static AgentChatSocialFlow.SocialCallbacks socialCallbacks(BotEntry entry) {
@@ -434,7 +417,8 @@ public class BotChatManager {
 
             @Override
             public void requestUpgrade() {
-                BotManager.after(BotManager.randMs(500, 700), () -> handleRequestUpgradeCommand(entry, entry.bot));
+                BotManager.after(BotManager.randMs(500, 700), () ->
+                        BotChatSupplyRuntime.handleRequestUpgradeCommand(entry, entry.bot));
             }
 
             @Override
@@ -795,50 +779,6 @@ public class BotChatManager {
     static int randomFidgetExpression() {
         int[] expressions = {2, 3, 5, 6, 7};
         return expressions[ThreadLocalRandom.current().nextInt(expressions.length)];
-    }
-
-    private static void handleRequestUpgradeCommand(BotEntry entry, Character bot) {
-        BotOfferManager.clearPendingOfferForOwnerAsk(entry);
-        if (BotPotionManager.requestLowSuppliesFromOwnerAsk(entry, bot)) {
-            return;
-        }
-        BotOfferManager.requestBestUpgradeFromOwner(entry, bot);
-    }
-
-    private static void handleNeedAnyPotionCommand(BotEntry entry) {
-        if (entry.owner == null) {
-            return;
-        }
-        int[] pots = BotPotionManager.countPotions(entry.owner);
-        handleNeedPotionCommand(entry, pots[0] <= pots[1]);
-    }
-
-    private static void handleNeedPotionCommand(BotEntry entry, boolean forHp) {
-        BotPotionManager.OwnerPotShareResult result = BotPotionManager.offerPotShareToOwner(entry, forHp);
-        String reply = AgentSupplyRequestOutcomeFlow.potionShareReply(
-                result == BotPotionManager.OwnerPotShareResult.NO_DONOR,
-                forHp);
-        if (reply != null) {
-            queueBotReply(entry, reply);
-        }
-    }
-
-    private static void handleNeedAmmoCommand(BotEntry entry) {
-        Character owner = entry.owner;
-        if (owner == null) {
-            return;
-        }
-        WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(owner);
-        if (weaponType != WeaponType.BOW && weaponType != WeaponType.CROSSBOW) {
-            queueBotReply(entry, AgentSupplyRequestOutcomeFlow.ammoNotNeededReply());
-            return;
-        }
-        BotAmmoManager.OwnerAmmoShareResult result = BotAmmoManager.offerAmmoShareToOwner(entry, weaponType);
-        String reply = AgentSupplyRequestOutcomeFlow.ammoShareReply(
-                result == BotAmmoManager.OwnerAmmoShareResult.NO_DONOR);
-        if (reply != null) {
-            queueBotReply(entry, reply);
-        }
     }
 
     private static void handleSkillTreeChoice(BotEntry entry, Character bot, String message) {
