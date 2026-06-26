@@ -905,8 +905,7 @@ public class BotChatManager {
         if (bot == null) {
             return;
         }
-        final String text = AgentDialogueReportFormatter.welcomeBackOfflineReply(
-                BotManager.randomReply(AgentDialogueCatalog.welcomeBackOfflinePartyTemplates()),
+        final String text = AgentChatWelcomeBackFlow.welcomeBackOfflinePartyReply(
                 bot.getMap() != null ? bot.getMap().getMapName() : null);
         BotManager.after(BotManager.randMs(1500, 2500), () -> {
             bot.changeFaceExpression(ThreadLocalRandom.current().nextBoolean() ? 2 : 3);
@@ -962,7 +961,7 @@ public class BotChatManager {
             final Character bot = entry.bot;
             BotManager.after(BotManager.randMs(1800, 2200), () -> {
                 bot.changeFaceExpression(ThreadLocalRandom.current().nextBoolean() ? 2 : 3);
-                BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.welcomeBackReplies()));
+                BotManager.getInstance().botReply(entry, AgentChatWelcomeBackFlow.welcomeBackReply());
             });
         };
     }

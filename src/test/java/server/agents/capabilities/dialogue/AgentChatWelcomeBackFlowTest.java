@@ -3,6 +3,7 @@ package server.agents.capabilities.dialogue;
 import org.junit.jupiter.api.Test;
 
 import java.awt.Point;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -65,6 +66,33 @@ class AgentChatWelcomeBackFlowTest {
         assertSame(newPosition, state.position);
         assertEquals(2_000L, state.sinceMs);
         assertEquals(0, callbacks.returnedCount);
+    }
+
+    @Test
+    void welcomeBackReplyShouldUseLegacyCatalog() {
+        String reply = AgentChatWelcomeBackFlow.welcomeBackReply();
+
+        assertTrue(AgentDialogueCatalog.welcomeBackReplies().contains(reply));
+    }
+
+    @Test
+    void offlineWelcomeBackReplyShouldUseLegacyFormattedCatalog() {
+        String reply = AgentChatWelcomeBackFlow.welcomeBackOfflinePartyReply("Henesys");
+        List<String> possibleReplies = AgentDialogueCatalog.welcomeBackOfflinePartyTemplates().stream()
+                .map(template -> AgentDialogueReportFormatter.welcomeBackOfflineReply(template, "Henesys"))
+                .toList();
+
+        assertTrue(possibleReplies.contains(reply));
+    }
+
+    @Test
+    void offlineWelcomeBackReplyShouldPreserveTownFallback() {
+        String reply = AgentChatWelcomeBackFlow.welcomeBackOfflinePartyReply(null);
+        List<String> possibleReplies = AgentDialogueCatalog.welcomeBackOfflinePartyTemplates().stream()
+                .map(template -> AgentDialogueReportFormatter.welcomeBackOfflineReply(template, null))
+                .toList();
+
+        assertTrue(possibleReplies.contains(reply));
     }
 
     private static final class TestState implements AgentChatWelcomeBackFlow.AfkState {
