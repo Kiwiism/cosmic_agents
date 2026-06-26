@@ -28,6 +28,12 @@ class AgentDialogueCatalogTest {
         assertTrue(AgentDialogueCatalog.welcomeBackOfflinePartyTemplates().contains("wb!! we're at %s"));
         assertTrue(AgentDialogueCatalog.relogConfirmPrompts().contains("save and relog? type yes"));
         assertTrue(AgentDialogueCatalog.logoutConfirmedReplies().contains("cya!!"));
+        assertTrue(AgentDialogueCatalog.awayTownOrLogoutPrompt().contains("nearest town or logout"));
+        assertTrue(AgentDialogueCatalog.awayStayOrLogoutPrompt().contains("stay safe here or logout"));
+        assertTrue(AgentDialogueCatalog.awayLogoutConfirmReply().contains("logging us out"));
+        assertTrue(AgentDialogueCatalog.awayTownConfirmReply().contains("heading to town"));
+        assertTrue(AgentDialogueCatalog.awayStayConfirmReply().contains("staying safe here"));
+        assertTrue(AgentDialogueCatalog.awayCancelReply().contains("staying with you"));
         assertTrue(AgentDialogueCatalog.jobChangeReplyTemplates().contains("ok %s it is!"));
     }
 

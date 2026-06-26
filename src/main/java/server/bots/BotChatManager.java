@@ -553,11 +553,9 @@ public class BotChatManager {
         entry.pendingAction = "owner_away";
         BotManager.getInstance().issueStop(entry);
         if (BotManager.getInstance().shouldOfferTownForAwayCommand(entry)) {
-            BotManager.getInstance().botReply(entry,
-                    "ok, want us to wait at nearest town or logout? say yes/town or logout");
+            BotManager.getInstance().botReply(entry, AgentDialogueCatalog.awayTownOrLogoutPrompt());
         } else {
-            BotManager.getInstance().botReply(entry,
-                    "ok, want us to stay safe here or logout? say yes/stay or logout");
+            BotManager.getInstance().botReply(entry, AgentDialogueCatalog.awayStayOrLogoutPrompt());
         }
     }
 
@@ -568,7 +566,7 @@ public class BotChatManager {
 
         if (AgentChatCommandClassifier.isAwayLogoutConfirm(choice)) {
             BotManager.after(BotManager.randMs(700, 900), () -> {
-                BotManager.getInstance().botReply(entry, "ok, logging us out");
+                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.awayLogoutConfirmReply());
                 logoutOwnerBots(entry);
             });
             return;
@@ -581,8 +579,8 @@ public class BotChatManager {
             }
             BotManager.after(BotManager.randMs(700, 900), () ->
                     BotManager.getInstance().botReply(entry, townOffered
-                            ? "ok, heading to town and waiting"
-                            : "ok, staying safe here"));
+                            ? AgentDialogueCatalog.awayTownConfirmReply()
+                            : AgentDialogueCatalog.awayStayConfirmReply()));
             return;
         }
 
@@ -592,12 +590,12 @@ public class BotChatManager {
                 BotManager.getInstance().issueOwnerAwaySafeModeForOwner(ownerId, false);
             }
             BotManager.after(BotManager.randMs(700, 900), () ->
-                    BotManager.getInstance().botReply(entry, "ok, staying safe here"));
+                    BotManager.getInstance().botReply(entry, AgentDialogueCatalog.awayStayConfirmReply()));
             return;
         }
 
         BotManager.after(BotManager.randMs(700, 900), () ->
-                BotManager.getInstance().botReply(entry, "ok nvm, staying with you"));
+                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.awayCancelReply()));
     }
 
     private static void logoutOwnerBots(BotEntry entry) {

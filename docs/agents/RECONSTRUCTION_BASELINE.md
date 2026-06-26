@@ -33,6 +33,7 @@ Reconstruction progress:
 - `server.bots.BotChatManager` still exposes the legacy queue methods and adapts bot runtime state into the Agent queue.
 - Named random dialogue pools now live in `server.agents.capabilities.dialogue.AgentDialogueCatalog`.
 - BotChatManager no longer contains inline `randomReply(List.of(...))` pools; those variants are cataloged under Agent dialogue.
+- Away/logout fixed prompt and confirmation lines also live in `AgentDialogueCatalog`.
 - Follow-target chat classification, group supply request classification, and direct HP/MP/potion/ammo supply command classification now live in `server.agents.capabilities.dialogue.AgentChatCommandClassifier`.
 - Movement-mode chat classification (`follow`, `stop`, `move here`, `grind`, patrol/farm-here, fidget) also lives in `AgentChatCommandClassifier`.
 - Meso/movement-stat queries, respec commands, proactive-offer toggles, support/heal/buff toggles, logout/relog/away session requests, and upgrade-request classification also live in `AgentChatCommandClassifier`.
