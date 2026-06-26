@@ -19,7 +19,6 @@ import server.agents.capabilities.dialogue.AgentChatUtilityFlow;
 import server.agents.capabilities.dialogue.AgentChatTransferFlow;
 import server.agents.capabilities.dialogue.AgentCharacterDialogueReporter;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
-import server.agents.capabilities.dialogue.AgentDialogueReportFormatter;
 import server.agents.capabilities.dialogue.AgentFameDialogueFlow;
 import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
 import server.agents.capabilities.dialogue.AgentMovementDialogueReporter;
@@ -1001,9 +1000,9 @@ public class BotChatManager {
     }
 
     private static void reportSkills(BotEntry entry, Character bot) {
-        Map<Integer, List<AgentDialogueReportFormatter.AgentSkillLine>> skillTrees =
+        Map<Integer, List<AgentSkillReportFlow.SkillLine>> skillTrees =
                 AgentSkillDialogueReporter.collectLearnedSkillTrees(bot);
-        List<AgentDialogueReportFormatter.AgentSkillLine> beginnerSkills =
+        List<AgentSkillReportFlow.SkillLine> beginnerSkills =
                 AgentSkillDialogueReporter.collectLearnedBeginnerSkills(bot);
         int beginnerSpLeft = AgentSkillDialogueReporter.remainingBeginnerSp(bot);
         applySkillReportDecision(entry, AgentSkillReportFlow.reportSkills(
@@ -1254,7 +1253,7 @@ public class BotChatManager {
     }
 
     private static void handleSkillTreeChoice(BotEntry entry, Character bot, String message) {
-        Map<Integer, List<AgentDialogueReportFormatter.AgentSkillLine>> skillTrees =
+        Map<Integer, List<AgentSkillReportFlow.SkillLine>> skillTrees =
                 AgentSkillDialogueReporter.collectLearnedSkillTrees(bot);
         applySkillReportDecision(entry, AgentSkillReportFlow.resolveSkillTreeChoice(skillTrees, message));
     }

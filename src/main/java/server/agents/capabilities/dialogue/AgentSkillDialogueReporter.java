@@ -15,8 +15,8 @@ public final class AgentSkillDialogueReporter {
     private AgentSkillDialogueReporter() {
     }
 
-    public static Map<Integer, List<AgentDialogueReportFormatter.AgentSkillLine>> collectLearnedSkillTrees(Character agent) {
-        Map<Integer, List<AgentDialogueReportFormatter.AgentSkillLine>> skillTrees = new TreeMap<>();
+    public static Map<Integer, List<AgentSkillReportFlow.SkillLine>> collectLearnedSkillTrees(Character agent) {
+        Map<Integer, List<AgentSkillReportFlow.SkillLine>> skillTrees = new TreeMap<>();
         for (Map.Entry<Skill, Character.SkillEntry> entry : agent.getSkills().entrySet()) {
             Skill skill = entry.getKey();
             Character.SkillEntry skillEntry = entry.getValue();
@@ -31,18 +31,18 @@ public final class AgentSkillDialogueReporter {
 
             int treeId = skillId / 10000;
             skillTrees.computeIfAbsent(treeId, ignored -> new ArrayList<>())
-                    .add(new AgentDialogueReportFormatter.AgentSkillLine(
+                    .add(new AgentSkillReportFlow.SkillLine(
                             skillId, skillName(skillId), skillEntry.skillevel));
         }
 
-        for (List<AgentDialogueReportFormatter.AgentSkillLine> skills : skillTrees.values()) {
-            skills.sort(Comparator.comparingInt(AgentDialogueReportFormatter.AgentSkillLine::id));
+        for (List<AgentSkillReportFlow.SkillLine> skills : skillTrees.values()) {
+            skills.sort(Comparator.comparingInt(AgentSkillReportFlow.SkillLine::id));
         }
         return skillTrees;
     }
 
-    public static List<AgentDialogueReportFormatter.AgentSkillLine> collectLearnedBeginnerSkills(Character agent) {
-        List<AgentDialogueReportFormatter.AgentSkillLine> beginnerSkills = new ArrayList<>();
+    public static List<AgentSkillReportFlow.SkillLine> collectLearnedBeginnerSkills(Character agent) {
+        List<AgentSkillReportFlow.SkillLine> beginnerSkills = new ArrayList<>();
         for (Map.Entry<Skill, Character.SkillEntry> entry : agent.getSkills().entrySet()) {
             Skill skill = entry.getKey();
             Character.SkillEntry skillEntry = entry.getValue();
@@ -55,11 +55,11 @@ public final class AgentSkillDialogueReporter {
                 continue;
             }
 
-            beginnerSkills.add(new AgentDialogueReportFormatter.AgentSkillLine(
+            beginnerSkills.add(new AgentSkillReportFlow.SkillLine(
                     skillId, skillName(skillId), skillEntry.skillevel));
         }
 
-        beginnerSkills.sort(Comparator.comparingInt(AgentDialogueReportFormatter.AgentSkillLine::id));
+        beginnerSkills.sort(Comparator.comparingInt(AgentSkillReportFlow.SkillLine::id));
         return beginnerSkills;
     }
 

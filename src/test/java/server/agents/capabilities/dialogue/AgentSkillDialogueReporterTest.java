@@ -32,13 +32,13 @@ class AgentSkillDialogueReporterTest {
             skillFactory.when(() -> SkillFactory.getSkillName(1101005)).thenReturn("Rage");
             skillFactory.when(() -> SkillFactory.getSkillName(1100001)).thenReturn("Sword Mastery");
 
-            Map<Integer, List<AgentDialogueReportFormatter.AgentSkillLine>> report =
+            Map<Integer, List<AgentSkillReportFlow.SkillLine>> report =
                     AgentSkillDialogueReporter.collectLearnedSkillTrees(agent);
 
             assertEquals(List.of(110), List.copyOf(report.keySet()));
             assertEquals(List.of(
-                    new AgentDialogueReportFormatter.AgentSkillLine(1100001, "Sword Mastery", 10),
-                    new AgentDialogueReportFormatter.AgentSkillLine(1101005, "Rage", 20)),
+                    new AgentSkillReportFlow.SkillLine(1100001, "Sword Mastery", 10),
+                    new AgentSkillReportFlow.SkillLine(1101005, "Rage", 20)),
                     report.get(110));
         }
     }
@@ -57,7 +57,7 @@ class AgentSkillDialogueReporterTest {
             skillFactory.when(() -> SkillFactory.getSkillName(1000)).thenReturn("Three Snails");
 
             assertEquals(List.of(
-                    new AgentDialogueReportFormatter.AgentSkillLine(1000, "Three Snails", 3)),
+                    new AgentSkillReportFlow.SkillLine(1000, "Three Snails", 3)),
                     AgentSkillDialogueReporter.collectLearnedBeginnerSkills(agent));
         }
     }

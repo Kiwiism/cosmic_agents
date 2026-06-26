@@ -10,9 +10,9 @@ public final class AgentSkillReportFlow {
     public static SkillReportDecision reportSkills(
             boolean beginnerJob,
             int remainingSp,
-            List<AgentDialogueReportFormatter.AgentSkillLine> beginnerSkills,
+            List<SkillLine> beginnerSkills,
             int beginnerSpLeft,
-            Map<Integer, List<AgentDialogueReportFormatter.AgentSkillLine>> skillTrees) {
+            Map<Integer, List<SkillLine>> skillTrees) {
         if (beginnerJob) {
             return reportBeginnerSkills(beginnerSkills, beginnerSpLeft);
         }
@@ -22,7 +22,7 @@ public final class AgentSkillReportFlow {
         }
 
         if (skillTrees.size() == 1) {
-            Map.Entry<Integer, List<AgentDialogueReportFormatter.AgentSkillLine>> onlyTree =
+            Map.Entry<Integer, List<SkillLine>> onlyTree =
                     skillTrees.entrySet().iterator().next();
             return SkillReportDecision.replies(skillTreeReportLines(onlyTree.getKey(), onlyTree.getValue()));
         }
@@ -32,14 +32,14 @@ public final class AgentSkillReportFlow {
     }
 
     public static SkillReportDecision resolveSkillTreeChoice(
-            Map<Integer, List<AgentDialogueReportFormatter.AgentSkillLine>> skillTrees,
+            Map<Integer, List<SkillLine>> skillTrees,
             String message) {
         if (skillTrees.isEmpty()) {
             return SkillReportDecision.clearPendingReply(AgentDialogueCatalog.noJobSkillsReply());
         }
 
         if (skillTrees.size() == 1) {
-            Map.Entry<Integer, List<AgentDialogueReportFormatter.AgentSkillLine>> onlyTree =
+            Map.Entry<Integer, List<SkillLine>> onlyTree =
                     skillTrees.entrySet().iterator().next();
             return SkillReportDecision.clearPendingReplies(
                     skillTreeReportLines(onlyTree.getKey(), onlyTree.getValue()));
@@ -55,7 +55,7 @@ public final class AgentSkillReportFlow {
     }
 
     private static SkillReportDecision reportBeginnerSkills(
-            List<AgentDialogueReportFormatter.AgentSkillLine> beginnerSkills,
+            List<SkillLine> beginnerSkills,
             int beginnerSpLeft) {
         if (beginnerSkills.isEmpty()) {
             return SkillReportDecision.reply(AgentDialogueCatalog.noBeginnerSkillsReply(beginnerSpLeft));
@@ -67,13 +67,16 @@ public final class AgentSkillReportFlow {
 
     private static List<String> skillTreeReportLines(
             int treeId,
-            List<AgentDialogueReportFormatter.AgentSkillLine> skills) {
+            List<SkillLine> skills) {
         if (skills == null || skills.isEmpty()) {
             return List.of(AgentDialogueCatalog.noLearnedSkillsInReply(
                     AgentDialogueReportFormatter.skillTreeLabel(treeId)));
         }
 
         return AgentDialogueReportFormatter.skillTreeReportLines(treeId, skills);
+    }
+
+    public record SkillLine(int id, String name, int level) {
     }
 
     public record SkillReportDecision(

@@ -13,9 +13,6 @@ public final class AgentDialogueReportFormatter {
     private AgentDialogueReportFormatter() {
     }
 
-    public record AgentSkillLine(int id, String name, int level) {
-    }
-
     public record AgentApBuildDialogueProfile(String buildName, String secondaryStat, String primaryStat) {
     }
 
@@ -271,21 +268,21 @@ public final class AgentDialogueReportFormatter {
         return "which skill tree? " + String.join(", ", labels);
     }
 
-    public static String beginnerSkillReport(List<AgentSkillLine> skills, int beginnerSpLeft) {
+    public static String beginnerSkillReport(List<AgentSkillReportFlow.SkillLine> skills, int beginnerSpLeft) {
         StringBuilder line = new StringBuilder("beginner: ");
         for (int i = 0; i < skills.size(); i++) {
             if (i > 0) {
                 line.append(", ");
             }
 
-            AgentSkillLine skill = skills.get(i);
+            AgentSkillReportFlow.SkillLine skill = skills.get(i);
             line.append(skill.name()).append(" lv").append(skill.level());
         }
         line.append(" | ").append(beginnerSpLeft).append(" beginner SP left");
         return line.toString();
     }
 
-    public static List<String> skillTreeReportLines(int treeId, List<AgentSkillLine> skills) {
+    public static List<String> skillTreeReportLines(int treeId, List<AgentSkillReportFlow.SkillLine> skills) {
         List<String> lines = new ArrayList<>();
         String label = skillTreeLabel(treeId);
         String prefix = label + ": ";
@@ -293,7 +290,7 @@ public final class AgentDialogueReportFormatter {
         StringBuilder line = new StringBuilder(prefix);
         int countOnLine = 0;
 
-        for (AgentSkillLine skill : skills) {
+        for (AgentSkillReportFlow.SkillLine skill : skills) {
             String piece = skill.name() + " lv" + skill.level();
             boolean needsSeparator = countOnLine > 0;
             int extraChars = piece.length() + (needsSeparator ? 2 : 0);

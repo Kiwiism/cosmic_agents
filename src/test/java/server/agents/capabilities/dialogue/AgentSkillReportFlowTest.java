@@ -15,7 +15,7 @@ class AgentSkillReportFlowTest {
         AgentSkillReportFlow.SkillReportDecision decision = AgentSkillReportFlow.reportSkills(
                 true,
                 0,
-                List.of(new AgentDialogueReportFormatter.AgentSkillLine(1000, "Three Snails", 1)),
+                List.of(new AgentSkillReportFlow.SkillLine(1000, "Three Snails", 1)),
                 2,
                 Map.of());
 
@@ -88,10 +88,10 @@ class AgentSkillReportFlowTest {
         assertTrue(decision.clearPendingAction());
     }
 
-    private static Map<Integer, List<AgentDialogueReportFormatter.AgentSkillLine>> skillTrees(int... treeIds) {
-        Map<Integer, List<AgentDialogueReportFormatter.AgentSkillLine>> trees = new LinkedHashMap<>();
+    private static Map<Integer, List<AgentSkillReportFlow.SkillLine>> skillTrees(int... treeIds) {
+        Map<Integer, List<AgentSkillReportFlow.SkillLine>> trees = new LinkedHashMap<>();
         for (int treeId : treeIds) {
-            trees.put(treeId, List.of(new AgentDialogueReportFormatter.AgentSkillLine(1000000, "Power Strike", 10)));
+            trees.put(treeId, List.of(new AgentSkillReportFlow.SkillLine(1000000, "Power Strike", 10)));
         }
         return trees;
     }
