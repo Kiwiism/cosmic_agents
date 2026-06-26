@@ -46,6 +46,9 @@ class AgentDialogueCatalogTest {
         assertTrue(AgentDialogueCatalog.proactiveOffersOnReply().contains("proactive upgrade offers on"));
         assertTrue(AgentDialogueCatalog.oneHandedSpVariantReply().contains("1h sword build"));
         assertTrue(AgentDialogueCatalog.twoHandedSpVariantReply().contains("2h build"));
+        assertTrue(AgentDialogueCatalog.gearOptimizedReply().contains("gear optimized"));
+        assertTrue(AgentDialogueCatalog.gearCheckUnavailableReply().contains("can't check your gear"));
+        assertTrue(AgentDialogueCatalog.noBetterGearReply().contains("no better gear"));
         assertTrue(AgentDialogueCatalog.helpLines().contains("gear: ask 'any upgrades?' or say 'trade recommended gear'"));
         assertTrue(AgentDialogueCatalog.helpLines().contains("trade: mesos, scrolls, pots, equips, etc, or named items"));
         assertTrue(AgentDialogueCatalog.jobChangeReplyTemplates().contains("ok %s it is!"));

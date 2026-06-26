@@ -354,7 +354,7 @@ public class BotChatManager {
         if (AgentEquipmentDialogueClassifier.isAutoEquipCommand(message)) {
             BotManager.after(BotManager.randMs(400, 600), () -> {
                 BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem, true);
-                BotManager.getInstance().botReply(entry, "ok, gear optimized");
+                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.gearOptimizedReply());
             });
             return;
         }
@@ -1229,11 +1229,11 @@ public class BotChatManager {
     private static void reportRecommendedGear(BotEntry entry, Character bot) {
         Character owner = entry.owner;
         if (owner == null) {
-            queueBotReply(entry, "can't check your gear rn");
+            queueBotReply(entry, AgentDialogueCatalog.gearCheckUnavailableReply());
             return;
         }
         if (!BotOfferManager.offerBestRecommendedGear(entry, bot, owner)) {
-            queueBotReply(entry, "no better gear for you rn");
+            queueBotReply(entry, AgentDialogueCatalog.noBetterGearReply());
         }
         entry.nextGearSuggestionAt = System.currentTimeMillis() + 60_000L;
     }

@@ -122,6 +122,9 @@ public final class AgentDialogueCatalog {
     private static final String ONE_HANDED_SP_VARIANT_REPLY = "ok! going 1h sword build, Brandish first";
     private static final String TWO_HANDED_SP_VARIANT_REPLY =
             "ok! going 2h build, interleaving AC early for faster charges";
+    private static final String GEAR_OPTIMIZED_REPLY = "ok, gear optimized";
+    private static final String GEAR_CHECK_UNAVAILABLE_REPLY = "can't check your gear rn";
+    private static final String NO_BETTER_GEAR_REPLY = "no better gear for you rn";
     private static final List<String> HELP_LINES = List.of(
             "commands: follow, stop, move here, fidget, grind, stats, speed, skills, inventory, mesos, exp, slots, scrolls, pots, debug stats, crit, respec, respec ap",
             "support: skill buffs on/off (= support on/off), heals on/off, buff on/off, buff cheap/max, proactive offers on/off, buff debug, skill buff debug",
@@ -280,6 +283,18 @@ public final class AgentDialogueCatalog {
 
     public static String twoHandedSpVariantReply() {
         return TWO_HANDED_SP_VARIANT_REPLY;
+    }
+
+    public static String gearOptimizedReply() {
+        return GEAR_OPTIMIZED_REPLY;
+    }
+
+    public static String gearCheckUnavailableReply() {
+        return GEAR_CHECK_UNAVAILABLE_REPLY;
+    }
+
+    public static String noBetterGearReply() {
+        return NO_BETTER_GEAR_REPLY;
     }
 
     public static List<String> helpLines() {
