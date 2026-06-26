@@ -20,7 +20,7 @@ import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.dialogue.AgentChatRespecFlow;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueReportFormatter;
-import server.agents.capabilities.dialogue.AgentEquipmentDialogueClassifier;
+import server.agents.capabilities.dialogue.AgentChatEquipmentFlow;
 import server.agents.capabilities.dialogue.AgentChatSessionRequestFlow;
 import server.agents.capabilities.dialogue.AgentChatToggleFlow;
 import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
@@ -157,38 +157,7 @@ public class BotChatManager {
         if (AgentChatRespecFlow.handle(message, respecCallbacks(entry))) {
             return;
         }
-        String slotName = AgentEquipmentDialogueClassifier.matchUnequipSlotName(message);
-        if (slotName != null) {
-            short[] slots = BotEquipManager.slotsFromName(slotName);
-            if (slots.length > 0) {
-                BotManager.after(BotManager.randMs(500, 700), () ->
-                        BotManager.getInstance().botReply(entry, BotEquipManager.unequipSlot(entry.bot, slots)));
-                return;
-            }
-        }
-        if (AgentEquipmentDialogueClassifier.isUnequipAllCommand(message)) {
-            BotManager.after(BotManager.randMs(500, 700), () -> {
-                BotManager.getInstance().issueStop(entry);
-                BotManager.getInstance().botReply(entry, BotEquipManager.unequipAll(entry.bot));
-            });
-            return;
-        }
-        // Debug match must run BEFORE the plain autoequip match (else "autoequip debug" is
-        // swallowed by the plain pattern).
-        if (AgentEquipmentDialogueClassifier.isAutoEquipDebugCommand(message)) {
-            BotManager.after(BotManager.randMs(400, 600), () -> {
-                List<String> lines = BotEquipManager.autoEquipDebug(entry.bot);
-                for (String line : lines) {
-                    BotManager.getInstance().botReply(entry, line);
-                }
-            });
-            return;
-        }
-        if (AgentEquipmentDialogueClassifier.isAutoEquipCommand(message)) {
-            BotManager.after(BotManager.randMs(400, 600), () -> {
-                BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem, true);
-                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.gearOptimizedReply());
-            });
+        if (AgentChatEquipmentFlow.handle(message, equipmentCallbacks(entry))) {
             return;
         }
 
@@ -528,6 +497,47 @@ public class BotChatManager {
             public void respecSp() {
                 BotManager.after(BotManager.randMs(500, 700), () ->
                         BotManager.getInstance().botReply(entry, BotBuildManager.respecSp(entry, entry.bot)));
+            }
+        };
+    }
+
+    private static AgentChatEquipmentFlow.EquipmentCallbacks equipmentCallbacks(BotEntry entry) {
+        return new AgentChatEquipmentFlow.EquipmentCallbacks() {
+            @Override
+            public boolean unequipSlot(String slotName) {
+                short[] slots = BotEquipManager.slotsFromName(slotName);
+                if (slots.length == 0) {
+                    return false;
+                }
+                BotManager.after(BotManager.randMs(500, 700), () ->
+                        BotManager.getInstance().botReply(entry, BotEquipManager.unequipSlot(entry.bot, slots)));
+                return true;
+            }
+
+            @Override
+            public void unequipAll() {
+                BotManager.after(BotManager.randMs(500, 700), () -> {
+                    BotManager.getInstance().issueStop(entry);
+                    BotManager.getInstance().botReply(entry, BotEquipManager.unequipAll(entry.bot));
+                });
+            }
+
+            @Override
+            public void autoEquipDebug() {
+                BotManager.after(BotManager.randMs(400, 600), () -> {
+                    List<String> lines = BotEquipManager.autoEquipDebug(entry.bot);
+                    for (String line : lines) {
+                        BotManager.getInstance().botReply(entry, line);
+                    }
+                });
+            }
+
+            @Override
+            public void autoEquip() {
+                BotManager.after(BotManager.randMs(400, 600), () -> {
+                    BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem, true);
+                    BotManager.getInstance().botReply(entry, AgentDialogueCatalog.gearOptimizedReply());
+                });
             }
         };
     }
