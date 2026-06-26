@@ -5,6 +5,7 @@ import client.Job;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -40,5 +41,26 @@ class AgentCharacterDialogueReporterTest {
         assertEquals(
                 "build: str 12 / dex 13 / int 14 / luk 15, 6 ap left",
                 AgentCharacterDialogueReporter.buildReport(agent));
+    }
+
+    @Test
+    void shouldBuildMesoReportLikeLegacyChat() {
+        Character agent = mock(Character.class);
+        when(agent.getMeso()).thenReturn(6_000);
+
+        String report = AgentCharacterDialogueReporter.mesoReport(agent);
+
+        assertTrue(report.contains("6k"));
+    }
+
+    @Test
+    void shouldBuildExpReportLikeLegacyChat() {
+        Character agent = mock(Character.class);
+        when(agent.getExp()).thenReturn(125);
+        when(agent.getLevel()).thenReturn(5);
+
+        assertEquals(
+                AgentDialogueReportFormatter.expPercent(125, constants.game.ExpTable.getExpNeededForLevel(5)),
+                AgentCharacterDialogueReporter.expReport(agent));
     }
 }

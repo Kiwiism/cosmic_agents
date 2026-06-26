@@ -19,4 +19,12 @@ public final class AgentCharacterDialogueReporter {
                 agent.getStr(), agent.getDex(), agent.getInt(), agent.getLuk(),
                 agent.getRemainingAp());
     }
+
+    public static String mesoReport(Character agent) {
+        return AgentDialogueReportFormatter.mesoReport(agent.getMeso());
+    }
+
+    public static String expReport(Character agent) {
+        return AgentDialogueReportFormatter.expReport(agent.getExp(), agent.getLevel());
+    }
 }

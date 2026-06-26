@@ -1082,11 +1082,11 @@ public class BotChatManager {
     }
 
     private static void reportMesos(BotEntry entry, Character bot) {
-        queueBotReply(entry, AgentDialogueReportFormatter.mesoReport(bot.getMeso()));
+        queueBotReply(entry, AgentCharacterDialogueReporter.mesoReport(bot));
     }
 
     private static void reportExp(BotEntry entry, Character bot) {
-        queueBotReply(entry, AgentDialogueReportFormatter.expReport(bot.getExp(), bot.getLevel()));
+        queueBotReply(entry, AgentCharacterDialogueReporter.expReport(bot));
     }
 
     private static void reportInventorySlots(BotEntry entry, Character bot) {
