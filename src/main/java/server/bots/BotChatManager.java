@@ -23,6 +23,7 @@ import server.agents.capabilities.dialogue.AgentChatReportFlow;
 import server.agents.capabilities.dialogue.AgentChatSocialFlow;
 import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
 import server.agents.capabilities.dialogue.AgentChatUtilityFlow;
+import server.agents.capabilities.dialogue.AgentChatTransferFlow;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueReportFormatter;
 import server.agents.capabilities.dialogue.AgentChatEquipmentFlow;
@@ -82,21 +83,6 @@ public class BotChatManager {
     private static final List<String> WB_OFFLINE_PARTY_TEMPLATES = AgentDialogueCatalog.welcomeBackOfflinePartyTemplates();
     private static final List<String> MESO_REPLIES = AgentDialogueCatalog.mesoReplies();
     private static final List<String> DROP_OR_TRADE_PROMPTS = AgentDialogueCatalog.dropOrTradePrompts();
-
-    private enum TransferMode {
-        TRADE,
-        CHOICE
-    }
-
-    private static final class TransferCommand {
-        private final TransferMode mode;
-        private final String category;
-
-        private TransferCommand(TransferMode mode, String category) {
-            this.mode = mode;
-            this.category = category;
-        }
-    }
 
     private static void markOwnerActive(BotEntry entry) {
         Character owner = entry.owner;
@@ -163,7 +149,7 @@ public class BotChatManager {
             return;
         }
 
-        TransferCommand transferCommand = matchTransferCommand(message);
+        AgentChatTransferFlow.TransferCommand transferCommand = AgentChatTransferFlow.matchTransferCommand(message);
         if (transferCommand != null) {
             handleTransferCommand(entry, transferCommand, message);
             return;
@@ -1516,15 +1502,15 @@ public class BotChatManager {
         return name != null && !name.isBlank() ? name : String.valueOf(skillId);
     }
 
-    private static void handleTransferCommand(BotEntry entry, TransferCommand transferCommand, String message) {
-        String category = transferCommand.category;
-        if (transferCommand.mode == TransferMode.TRADE
+    private static void handleTransferCommand(BotEntry entry, AgentChatTransferFlow.TransferCommand transferCommand, String message) {
+        String category = transferCommand.category();
+        if (transferCommand.mode() == AgentChatTransferFlow.TransferMode.TRADE
                 && AgentTradeDialogueClassifier.isTrashCategory(category)
                 && message != null
                 && AgentTradeDialogueClassifier.isShowJunkCommand(message)) {
             BotManager.getInstance().botReply(entry, AgentDialogueCatalog.weirdTransferReply());
         }
-        if (transferCommand.mode == TransferMode.TRADE && BotInventoryManager.isMesoCategory(category)) {
+        if (transferCommand.mode() == AgentChatTransferFlow.TransferMode.TRADE && BotInventoryManager.isMesoCategory(category)) {
             BotManager.after(BotManager.randMs(500, 700), () ->
                     BotInventoryManager.startTradeTransfer(category, entry, entry.bot));
             return;
@@ -1533,7 +1519,9 @@ public class BotChatManager {
         scheduleTransferCommandEvaluation(entry, transferCommand, category);
     }
 
-    private static void scheduleTransferCommandEvaluation(BotEntry entry, TransferCommand transferCommand, String category) {
+    private static void scheduleTransferCommandEvaluation(BotEntry entry,
+                                                          AgentChatTransferFlow.TransferCommand transferCommand,
+                                                          String category) {
         Character bot = entry.bot;
         if (bot == null) {
             return;
@@ -1553,22 +1541,22 @@ public class BotChatManager {
     }
 
     private static TransferCommandResult evaluateTransferCommand(BotEntry entry,
-                                                                 TransferCommand transferCommand,
+                                                                 AgentChatTransferFlow.TransferCommand transferCommand,
                                                                  String category,
                                                                  Character bot) {
-        long hasItemsStartedAt = transferCommand.mode == TransferMode.TRADE
+        long hasItemsStartedAt = transferCommand.mode() == AgentChatTransferFlow.TransferMode.TRADE
                 && BotInventoryManager.profileTradeCategory(category)
                 ? System.nanoTime() : 0L;
         boolean hasItems = BotInventoryManager.hasTransferableItems(category, entry, bot);
         BotInventoryManager.logSlowTradeCommand(category, "hasTransferableItems", entry, bot, hasItemsStartedAt);
-        int count = hasItems && transferCommand.mode == TransferMode.CHOICE
+        int count = hasItems && transferCommand.mode() == AgentChatTransferFlow.TransferMode.CHOICE
                 ? BotInventoryManager.countTransferableItems(category, entry, bot)
                 : 0;
         return new TransferCommandResult(hasItems, count);
     }
 
     private static void applyTransferCommandResult(BotEntry entry,
-                                                   TransferCommand transferCommand,
+                                                   AgentChatTransferFlow.TransferCommand transferCommand,
                                                    String category,
                                                    Character bot,
                                                    int requestId,
@@ -1581,7 +1569,7 @@ public class BotChatManager {
             return;
         }
 
-        switch (transferCommand.mode) {
+        switch (transferCommand.mode()) {
             case TRADE -> BotInventoryManager.startTradeTransfer(category, entry, bot);
             case CHOICE -> {
                 entry.pendingAction = AgentChatPendingAction.ITEM_CHOICE;
@@ -1639,20 +1627,6 @@ public class BotChatManager {
         entry.pendingAction = AgentChatPendingAction.ITEM_CHOICE;
         entry.pendingDropCategory = category;
         BotManager.getInstance().botReply(entry, dropOrTradePrompt(category, result.count()));
-    }
-
-    private static TransferCommand matchTransferCommand(String message) {
-        String tradeCategory = AgentTradeDialogueClassifier.matchTradeCategory(message);
-        if (tradeCategory != null) {
-            return new TransferCommand(TransferMode.TRADE, tradeCategory);
-        }
-
-        String choiceCategory = AgentTradeDialogueClassifier.matchChoiceCategory(message);
-        if (choiceCategory != null) {
-            return new TransferCommand(TransferMode.CHOICE, choiceCategory);
-        }
-
-        return null;
     }
 
     private static String dropOrTradePrompt(String category, int count) {
