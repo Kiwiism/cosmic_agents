@@ -26,6 +26,7 @@ import server.agents.capabilities.dialogue.AgentChatUtilityFlow;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueReportFormatter;
 import server.agents.capabilities.dialogue.AgentChatEquipmentFlow;
+import server.agents.capabilities.dialogue.AgentChatJobAdvancementFlow;
 import server.agents.capabilities.dialogue.AgentChatMovementFlow;
 import server.agents.capabilities.dialogue.AgentChatSessionRequestFlow;
 import server.agents.capabilities.dialogue.AgentChatToggleFlow;
@@ -189,18 +190,11 @@ public class BotChatManager {
             return;
         }
 
-        // Job advancement — check if message contains a valid job selection
-        if (AgentBuildDialogueClassifier.isJobSelectionCandidate(message)) {
-            Job advJob = AgentBuildDialogueClassifier.resolveJobChange(
-                    entry.bot.getJob(), entry.bot.getLevel(), message.toLowerCase());
-            if (advJob != null) {
-                String jobName = AgentDialogueReportFormatter.jobDisplayName(advJob);
-                String reply = AgentDialogueReportFormatter.jobChangeReply(
-                        BotManager.randomReply(AgentDialogueCatalog.jobChangeReplyTemplates()), jobName);
-                BotManager.getInstance().botReply(entry, reply);
-                BotManager.after(BotManager.randMs(900, 1100), () -> BotStarterKitManager.advanceJob(entry, advJob));
-            }
-        }
+        AgentChatJobAdvancementFlow.handle(
+                message,
+                entry.bot.getJob(),
+                entry.bot.getLevel(),
+                jobAdvancementCallbacks(entry));
         LAST_CHAT_HANDLED.set(false);
     }
 
@@ -652,6 +646,16 @@ public class BotChatManager {
             public void potDebug() {
                 BotManager.after(BotManager.randMs(900, 1100), () -> reportPotDebug(entry, entry.bot));
             }
+        };
+    }
+
+    private static AgentChatJobAdvancementFlow.JobAdvancementCallbacks jobAdvancementCallbacks(BotEntry entry) {
+        return advJob -> {
+            String jobName = AgentDialogueReportFormatter.jobDisplayName(advJob);
+            String reply = AgentDialogueReportFormatter.jobChangeReply(
+                    BotManager.randomReply(AgentDialogueCatalog.jobChangeReplyTemplates()), jobName);
+            BotManager.getInstance().botReply(entry, reply);
+            BotManager.after(BotManager.randMs(900, 1100), () -> BotStarterKitManager.advanceJob(entry, advJob));
         };
     }
 
