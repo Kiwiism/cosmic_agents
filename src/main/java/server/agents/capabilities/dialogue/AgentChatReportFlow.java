@@ -5,6 +5,10 @@ public final class AgentChatReportFlow {
     }
 
     public static boolean handle(String message, ReportCallbacks callbacks) {
+        if (AgentChatCommandClassifier.isHelpCommand(message)) {
+            callbacks.help();
+            return true;
+        }
         if (AgentChatCommandClassifier.isRequestUpgradeCommand(message)) {
             callbacks.requestUpgrade();
             return true;
@@ -60,6 +64,8 @@ public final class AgentChatReportFlow {
     }
 
     public interface ReportCallbacks {
+        void help();
+
         void requestUpgrade();
 
         void recommendedGear();

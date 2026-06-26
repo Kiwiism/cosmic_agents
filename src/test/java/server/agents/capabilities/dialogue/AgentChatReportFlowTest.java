@@ -11,11 +11,12 @@ class AgentChatReportFlowTest {
     void shouldStopAfterTerminalInfoCommands() {
         TestCallbacks callbacks = new TestCallbacks();
 
+        assertTrue(AgentChatReportFlow.handle("help", callbacks));
         assertTrue(AgentChatReportFlow.handle("do you need anything", callbacks));
         assertTrue(AgentChatReportFlow.handle("recommended gear", callbacks));
         assertTrue(AgentChatReportFlow.handle("skills", callbacks));
 
-        assertEquals("request;gear;skills;", callbacks.events);
+        assertEquals("help;request;gear;skills;", callbacks.events);
     }
 
     @Test
@@ -51,6 +52,11 @@ class AgentChatReportFlowTest {
 
     private static final class TestCallbacks implements AgentChatReportFlow.ReportCallbacks {
         private String events = "";
+
+        @Override
+        public void help() {
+            events += "help;";
+        }
 
         @Override
         public void requestUpgrade() {

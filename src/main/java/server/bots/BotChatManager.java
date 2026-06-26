@@ -129,10 +129,6 @@ public class BotChatManager {
             return;
         }
 
-        if (AgentChatCommandClassifier.isHelpCommand(message)) {
-            BotManager.after(BotManager.randMs(500, 700), () -> reportHelp(entry));
-            return;
-        }
         if (AgentChatSupplyRequestFlow.handle(message, supplyRequestCallbacks(entry))) {
             return;
         }
@@ -567,6 +563,11 @@ public class BotChatManager {
 
     private static AgentChatReportFlow.ReportCallbacks reportCallbacks(BotEntry entry) {
         return new AgentChatReportFlow.ReportCallbacks() {
+            @Override
+            public void help() {
+                BotManager.after(BotManager.randMs(500, 700), () -> reportHelp(entry));
+            }
+
             @Override
             public void requestUpgrade() {
                 BotManager.after(BotManager.randMs(500, 700), () -> handleRequestUpgradeCommand(entry, entry.bot));
