@@ -153,7 +153,7 @@ public class BotChatManager {
                     entry.pendingAction       = null;
                     entry.pendingDropCategory = null;
                     BotManager.after(BotManager.randMs(400, 600),
-                            () -> BotManager.getInstance().botReply(entry, "ok! keeping them"));
+                            () -> BotManager.getInstance().botReply(entry, AgentDialogueCatalog.keepDropChoiceReply()));
                 }
                 return;
             }
@@ -839,7 +839,7 @@ public class BotChatManager {
 
         Map<Integer, List<LearnedSkill>> skillTrees = collectLearnedSkillTrees(bot);
         if (skillTrees.isEmpty()) {
-            queueBotReply(entry, "no job skills yet " + bot.getRemainingSp() + " SP left");
+            queueBotReply(entry, AgentDialogueCatalog.noJobSkillsWithSpReply(bot.getRemainingSp()));
             return;
         }
 
@@ -858,7 +858,7 @@ public class BotChatManager {
         int beginnerSpLeft = getRemainingBeginnerSp(bot);
 
         if (beginnerSkills.isEmpty()) {
-            queueBotReply(entry, "no learned beginner skills yet " + beginnerSpLeft + " beginner SP left");
+            queueBotReply(entry, AgentDialogueCatalog.noBeginnerSkillsReply(beginnerSpLeft));
             return;
         }
 
@@ -1044,7 +1044,7 @@ public class BotChatManager {
 
         int critPct = (int) Math.round(crit.critChance() * 100);
         if (critPct == 0) {
-            queueBotReply(entry, "i can't crit (my job doesn't have a crit passive)");
+            queueBotReply(entry, AgentDialogueCatalog.noCritPassiveReply());
             return;
         }
 
@@ -1365,7 +1365,7 @@ public class BotChatManager {
         Map<Integer, List<LearnedSkill>> skillTrees = collectLearnedSkillTrees(bot);
         if (skillTrees.isEmpty()) {
             entry.pendingAction = null;
-            queueBotReply(entry, "no job skills yet");
+            queueBotReply(entry, AgentDialogueCatalog.noJobSkillsReply());
             return;
         }
 
@@ -1447,7 +1447,7 @@ public class BotChatManager {
 
     private static void queueSkillTreeReport(BotEntry entry, int treeId, List<LearnedSkill> skills) {
         if (skills == null || skills.isEmpty()) {
-            queueBotReply(entry, "no learned skills in " + skillTreeLabel(treeId));
+            queueBotReply(entry, AgentDialogueCatalog.noLearnedSkillsInReply(skillTreeLabel(treeId)));
             return;
         }
 
@@ -1583,7 +1583,7 @@ public class BotChatManager {
                 && "trash".equals(category)
                 && message != null
                 && AgentTradeDialogueClassifier.isShowJunkCommand(message)) {
-            BotManager.getInstance().botReply(entry, "that sounded weird but ok");
+            BotManager.getInstance().botReply(entry, AgentDialogueCatalog.weirdTransferReply());
         }
         if (transferCommand.mode == TransferMode.TRADE && BotInventoryManager.isMesoCategory(category)) {
             BotManager.after(BotManager.randMs(500, 700), () ->

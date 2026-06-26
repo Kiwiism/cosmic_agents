@@ -29,6 +29,13 @@ class AgentDialogueCatalogTest {
         assertTrue(AgentDialogueCatalog.fameSelfReply().contains("fame myself"));
         assertTrue(AgentDialogueCatalog.fameTooLowLevelReply().contains("too low level"));
         assertTrue(AgentDialogueCatalog.fameFailedReply().contains("fame failed"));
+        assertTrue(AgentDialogueCatalog.keepDropChoiceReply().contains("keeping them"));
+        assertTrue(AgentDialogueCatalog.noJobSkillsReply().contains("no job skills"));
+        assertTrue(AgentDialogueCatalog.noJobSkillsWithSpReply(12).contains("12 SP left"));
+        assertTrue(AgentDialogueCatalog.noBeginnerSkillsReply(3).contains("3 beginner SP left"));
+        assertTrue(AgentDialogueCatalog.noLearnedSkillsInReply("warrior").contains("warrior"));
+        assertTrue(AgentDialogueCatalog.noCritPassiveReply().contains("can't crit"));
+        assertTrue(AgentDialogueCatalog.weirdTransferReply().contains("weird"));
         assertTrue(AgentDialogueCatalog.welcomeBackOfflinePartyTemplates().contains("wb!! we're at %s"));
         assertTrue(AgentDialogueCatalog.relogConfirmPrompts().contains("save and relog? type yes"));
         assertTrue(AgentDialogueCatalog.logoutConfirmedReplies().contains("cya!!"));

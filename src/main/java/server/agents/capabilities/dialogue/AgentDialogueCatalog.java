@@ -46,6 +46,14 @@ public final class AgentDialogueCatalog {
     private static final String FAME_SELF_REPLY = "lol can't fame myself";
     private static final String FAME_TOO_LOW_LEVEL_REPLY = "i'm too low level to fame";
     private static final String FAME_FAILED_REPLY = "fame failed, might be at max already";
+    private static final String KEEP_DROP_CHOICE_REPLY = "ok! keeping them";
+    private static final String NO_JOB_SKILLS_REPLY = "no job skills yet";
+    private static final String NO_JOB_SKILLS_WITH_SP_TEMPLATE = "no job skills yet %d SP left";
+    private static final String NO_BEGINNER_SKILLS_TEMPLATE =
+            "no learned beginner skills yet %d beginner SP left";
+    private static final String NO_LEARNED_SKILLS_IN_TEMPLATE = "no learned skills in %s";
+    private static final String NO_CRIT_PASSIVE_REPLY = "i can't crit (my job doesn't have a crit passive)";
+    private static final String WEIRD_TRANSFER_REPLY = "that sounded weird but ok";
     private static final List<String> OWNER_POT_SHORTAGE_REPLIES = List.of(
             "almost out of %s pots too, i thought u were our shopper?",
             "i checked, nobody has spare %s pots. that's kinda your department lol",
@@ -187,6 +195,34 @@ public final class AgentDialogueCatalog {
 
     public static String fameFailedReply() {
         return FAME_FAILED_REPLY;
+    }
+
+    public static String keepDropChoiceReply() {
+        return KEEP_DROP_CHOICE_REPLY;
+    }
+
+    public static String noJobSkillsReply() {
+        return NO_JOB_SKILLS_REPLY;
+    }
+
+    public static String noJobSkillsWithSpReply(int remainingSp) {
+        return String.format(NO_JOB_SKILLS_WITH_SP_TEMPLATE, remainingSp);
+    }
+
+    public static String noBeginnerSkillsReply(int beginnerSpLeft) {
+        return String.format(NO_BEGINNER_SKILLS_TEMPLATE, beginnerSpLeft);
+    }
+
+    public static String noLearnedSkillsInReply(String skillTreeLabel) {
+        return String.format(NO_LEARNED_SKILLS_IN_TEMPLATE, skillTreeLabel);
+    }
+
+    public static String noCritPassiveReply() {
+        return NO_CRIT_PASSIVE_REPLY;
+    }
+
+    public static String weirdTransferReply() {
+        return WEIRD_TRANSFER_REPLY;
     }
 
     public static List<String> ownerPotShortageReplies() {
