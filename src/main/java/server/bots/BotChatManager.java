@@ -14,6 +14,7 @@ import constants.game.GameConstants;
 import constants.inventory.ItemConstants;
 import server.Trade;
 import server.agents.capabilities.dialogue.AgentBuildDialogueClassifier;
+import server.agents.capabilities.dialogue.AgentChatAwayFlow;
 import server.agents.capabilities.dialogue.AgentChatBuildFlow;
 import server.agents.capabilities.dialogue.AgentChatBuffQueryFlow;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
@@ -742,42 +743,55 @@ public class BotChatManager {
     }
 
     private static void handleOwnerAwayChoice(BotEntry entry, String message) {
-        String choice = AgentChatCommandClassifier.normalizeCommandText(message);
-        boolean townOffered = BotManager.getInstance().shouldOfferTownForAwayCommand(entry);
-        entry.pendingAction = null;
+        AgentChatAwayFlow.handleOwnerAwayChoice(
+                message,
+                BotManager.getInstance().shouldOfferTownForAwayCommand(entry),
+                awayChoiceCallbacks(entry));
+    }
 
-        if (AgentChatCommandClassifier.isAwayLogoutConfirm(choice)) {
-            BotManager.after(BotManager.randMs(700, 900), () -> {
-                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.awayLogoutConfirmReply());
-                logoutOwnerBots(entry);
-            });
-            return;
-        }
-
-        if (AgentChatCommandClassifier.isAwayTownConfirm(choice)) {
-            int ownerId = entry.owner != null ? entry.owner.getId() : 0;
-            if (ownerId != 0) {
-                BotManager.getInstance().issueOwnerAwaySafeModeForOwner(ownerId, townOffered);
+    private static AgentChatAwayFlow.AwayChoiceCallbacks awayChoiceCallbacks(BotEntry entry) {
+        return new AgentChatAwayFlow.AwayChoiceCallbacks() {
+            @Override
+            public void clearPendingAction() {
+                entry.pendingAction = null;
             }
-            BotManager.after(BotManager.randMs(700, 900), () ->
-                    BotManager.getInstance().botReply(entry, townOffered
-                            ? AgentDialogueCatalog.awayTownConfirmReply()
-                            : AgentDialogueCatalog.awayStayConfirmReply()));
-            return;
-        }
 
-        if (AgentChatCommandClassifier.isAwayStayConfirm(choice) && !townOffered) {
-            int ownerId = entry.owner != null ? entry.owner.getId() : 0;
-            if (ownerId != 0) {
-                BotManager.getInstance().issueOwnerAwaySafeModeForOwner(ownerId, false);
+            @Override
+            public void logout() {
+                BotManager.after(BotManager.randMs(700, 900), () -> {
+                    BotManager.getInstance().botReply(entry, AgentDialogueCatalog.awayLogoutConfirmReply());
+                    logoutOwnerBots(entry);
+                });
             }
-            BotManager.after(BotManager.randMs(700, 900), () ->
-                    BotManager.getInstance().botReply(entry, AgentDialogueCatalog.awayStayConfirmReply()));
-            return;
-        }
 
-        BotManager.after(BotManager.randMs(700, 900), () ->
-                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.awayCancelReply()));
+            @Override
+            public void townOrStay(boolean townOffered) {
+                int ownerId = entry.owner != null ? entry.owner.getId() : 0;
+                if (ownerId != 0) {
+                    BotManager.getInstance().issueOwnerAwaySafeModeForOwner(ownerId, townOffered);
+                }
+                BotManager.after(BotManager.randMs(700, 900), () ->
+                        BotManager.getInstance().botReply(entry, townOffered
+                                ? AgentDialogueCatalog.awayTownConfirmReply()
+                                : AgentDialogueCatalog.awayStayConfirmReply()));
+            }
+
+            @Override
+            public void stay() {
+                int ownerId = entry.owner != null ? entry.owner.getId() : 0;
+                if (ownerId != 0) {
+                    BotManager.getInstance().issueOwnerAwaySafeModeForOwner(ownerId, false);
+                }
+                BotManager.after(BotManager.randMs(700, 900), () ->
+                        BotManager.getInstance().botReply(entry, AgentDialogueCatalog.awayStayConfirmReply()));
+            }
+
+            @Override
+            public void cancel() {
+                BotManager.after(BotManager.randMs(700, 900), () ->
+                        BotManager.getInstance().botReply(entry, AgentDialogueCatalog.awayCancelReply()));
+            }
+        };
     }
 
     private static void logoutOwnerBots(BotEntry entry) {
