@@ -46,6 +46,17 @@ public final class AgentChatTransferFlow {
         return TransferResultDecision.promptItemChoice(category, count);
     }
 
+    public static boolean shouldReplyWithWeirdTransfer(TransferCommand command, String message) {
+        return command.mode() == TransferMode.TRADE
+                && AgentTradeDialogueClassifier.isTrashCategory(command.category())
+                && message != null
+                && AgentTradeDialogueClassifier.isShowJunkCommand(message);
+    }
+
+    public static String weirdTransferReply() {
+        return AgentDialogueCatalog.weirdTransferReply();
+    }
+
     public enum TransferMode {
         TRADE,
         CHOICE

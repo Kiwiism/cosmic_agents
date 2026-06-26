@@ -1277,11 +1277,8 @@ public class BotChatManager {
 
     private static void handleTransferCommand(BotEntry entry, AgentChatTransferFlow.TransferCommand transferCommand, String message) {
         String category = transferCommand.category();
-        if (transferCommand.mode() == AgentChatTransferFlow.TransferMode.TRADE
-                && AgentTradeDialogueClassifier.isTrashCategory(category)
-                && message != null
-                && AgentTradeDialogueClassifier.isShowJunkCommand(message)) {
-            BotManager.getInstance().botReply(entry, AgentDialogueCatalog.weirdTransferReply());
+        if (AgentChatTransferFlow.shouldReplyWithWeirdTransfer(transferCommand, message)) {
+            BotManager.getInstance().botReply(entry, AgentChatTransferFlow.weirdTransferReply());
         }
         if (transferCommand.mode() == AgentChatTransferFlow.TransferMode.TRADE && BotInventoryManager.isMesoCategory(category)) {
             BotManager.after(BotManager.randMs(500, 700), () ->

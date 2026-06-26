@@ -53,9 +53,12 @@ class AgentChatTransferFlowTest {
                 new AgentChatTransferFlow.TransferCommand(AgentChatTransferFlow.TransferMode.TRADE, "scrolls"),
                 false,
                 0);
+        var possibleReplies = AgentDialogueCatalog.noItemsReplies().stream()
+                .map(template -> AgentInventoryDialogueReporter.noItemsReply("scrolls", java.util.List.of(template)))
+                .toList();
 
         assertEquals(AgentChatTransferFlow.TransferResultAction.REPLY, decision.action());
-        assertTrue(decision.reply().contains("scrolls"));
+        assertTrue(possibleReplies.contains(decision.reply()));
         assertNull(decision.category());
     }
 
@@ -95,6 +98,27 @@ class AgentChatTransferFlowTest {
         assertTrue(found.reply().contains("2 orange potion"));
         assertEquals(AgentChatTransferFlow.TransferResultAction.REPLY, missing.action());
         assertTrue(missing.reply().contains("orange potion"));
+    }
+
+    @Test
+    void shouldIdentifyWeirdTrashTransferRequests() {
+        AgentChatTransferFlow.TransferCommand command =
+                new AgentChatTransferFlow.TransferCommand(AgentChatTransferFlow.TransferMode.TRADE, "trash");
+
+        assertTrue(AgentChatTransferFlow.shouldReplyWithWeirdTransfer(command, "show junk"));
+        assertEquals(AgentDialogueCatalog.weirdTransferReply(), AgentChatTransferFlow.weirdTransferReply());
+    }
+
+    @Test
+    void shouldNotTreatOtherTransferRequestsAsWeird() {
+        AgentChatTransferFlow.TransferCommand tradeScrolls =
+                new AgentChatTransferFlow.TransferCommand(AgentChatTransferFlow.TransferMode.TRADE, "scrolls");
+        AgentChatTransferFlow.TransferCommand choiceTrash =
+                new AgentChatTransferFlow.TransferCommand(AgentChatTransferFlow.TransferMode.CHOICE, "trash");
+
+        assertFalse(AgentChatTransferFlow.shouldReplyWithWeirdTransfer(tradeScrolls, "show junk"));
+        assertFalse(AgentChatTransferFlow.shouldReplyWithWeirdTransfer(choiceTrash, "show junk"));
+        assertFalse(AgentChatTransferFlow.shouldReplyWithWeirdTransfer(choiceTrash, null));
     }
 
     private static final class TestItemQueryCallbacks implements AgentChatTransferFlow.ItemQueryCallbacks {
