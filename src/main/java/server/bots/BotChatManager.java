@@ -69,9 +69,6 @@ public class BotChatManager {
     private static final List<String> MOVE_HERE_REPLIES = AgentDialogueCatalog.moveHereReplies();
     private static final List<String> STOP_REPLIES = AgentDialogueCatalog.stopReplies();
 
-    private static final List<String> FAME_OK_REPLIES = AgentDialogueCatalog.fameOkReplies();
-    private static final List<String> FAME_COOLDOWN_REPLIES = AgentDialogueCatalog.fameCooldownReplies();
-    private static final List<String> FAME_SAME_PERSON_REPLIES = AgentDialogueCatalog.fameSamePersonReplies();
     private static final List<String> TRADE_INVITE_REPLIES = AgentDialogueCatalog.tradeInviteReplies();
     private static final List<String> GREETING_REPLIES = AgentDialogueCatalog.greetingReplies();
     private static final List<String> WB_REPLIES = AgentDialogueCatalog.welcomeBackReplies();
@@ -1694,18 +1691,18 @@ public class BotChatManager {
         }
         Character.FameStatus status = bot.canGiveFame(target);
         if (status == Character.FameStatus.NOT_TODAY) {
-            BotManager.getInstance().botReply(entry, BotManager.randomReply(FAME_COOLDOWN_REPLIES));
+            BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.fameCooldownReplies()));
             return;
         }
         if (status == Character.FameStatus.NOT_THIS_MONTH) {
             String reply = AgentDialogueReportFormatter.fameSamePersonReply(
-                    BotManager.randomReply(FAME_SAME_PERSON_REPLIES), target.getName());
+                    BotManager.randomReply(AgentDialogueCatalog.fameSamePersonReplies()), target.getName());
             BotManager.getInstance().botReply(entry, reply);
             return;
         }
         if (target.gainFame(1, bot, 1)) {
             bot.hasGivenFame(target);
-            String template = BotManager.randomReply(FAME_OK_REPLIES);
+            String template = BotManager.randomReply(AgentDialogueCatalog.fameOkReplies());
             String reply = AgentDialogueReportFormatter.fameOkReply(template, target.getName());
             BotManager.getInstance().botReply(entry, reply);
         } else {
