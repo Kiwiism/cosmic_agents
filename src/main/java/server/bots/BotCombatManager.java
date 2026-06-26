@@ -2397,8 +2397,7 @@ class BotCombatManager {
         double remainingSeconds = entry.attackCooldownMs / 1000.0;
         String targetName = target != null ? target.getName() : "none";
 
-        return String.format(
-                "debug: route %s, atk speed %d, atk cd %.2fs, remaining %.2fs, tick %dms, ai %dms, target %s",
+        return AgentCombatDialogueReporter.debugStatsReport(
                 route, speed, cooldownSeconds, remainingSeconds,
                 BotMovementManager.cfg.TICK_MS, BotManager.cfg.AI_TICK_MS, targetName);
     }

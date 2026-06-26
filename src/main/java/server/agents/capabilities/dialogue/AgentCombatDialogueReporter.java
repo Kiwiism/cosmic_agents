@@ -71,6 +71,24 @@ public final class AgentCombatDialogueReporter {
                 critMin, critMax);
     }
 
+    public static String debugStatsReport(String route,
+                                          int attackSpeed,
+                                          double attackCooldownSeconds,
+                                          double remainingCooldownSeconds,
+                                          int movementTickMs,
+                                          int aiTickMs,
+                                          String targetName) {
+        return String.format(
+                "debug: route %s, atk speed %d, atk cd %.2fs, remaining %.2fs, tick %dms, ai %dms, target %s",
+                route,
+                attackSpeed,
+                attackCooldownSeconds,
+                remainingCooldownSeconds,
+                movementTickMs,
+                aiTickMs,
+                targetName);
+    }
+
     public static List<String> skillBuffDebugLines(String lastAction,
                                                    long lastActionAgeMs,
                                                    List<ActiveSkillBuffDebugLine> activeBuffs,

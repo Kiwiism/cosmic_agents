@@ -77,6 +77,15 @@ class AgentCombatDialogueReporterTest {
     }
 
     @Test
+    void shouldBuildCombatDebugStatsReportLikeLegacyChat() {
+        String report = AgentCombatDialogueReporter.debugStatsReport(
+                "skill", 4, 1.23d, 0.45d, 80, 250, "Slime");
+
+        assertEquals("debug: route skill, atk speed 4, atk cd 1.23s, remaining 0.45s, tick 80ms, ai 250ms, target Slime",
+                report);
+    }
+
+    @Test
     void shouldBuildSkillBuffDebugLinesLikeLegacyChat() {
         List<String> lines = AgentCombatDialogueReporter.skillBuffDebugLines(
                 "cast Haste",
