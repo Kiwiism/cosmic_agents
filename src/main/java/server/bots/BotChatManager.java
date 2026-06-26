@@ -2,10 +2,9 @@ package server.bots;
 
 import client.Character;
 import client.Job;
-import client.Stat;
 import client.inventory.WeaponType;
-import client.processor.stat.AssignAPProcessor;
 import server.Trade;
+import server.agents.capabilities.dialogue.AgentApBuildDialogueResolver;
 import server.agents.capabilities.dialogue.AgentBuildDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentChatAwayFlow;
 import server.agents.capabilities.dialogue.AgentChatBuildFlow;
@@ -1185,97 +1184,27 @@ public class BotChatManager {
 
     private static void handleApBuildSelection(BotEntry entry, String message) {
         Job job = entry.bot.getJob();
-
-        if (job.isA(Job.WARRIOR) && AgentBuildDialogueClassifier.isPureStrBuildCommand(message)) {
-            int effectiveDex = Math.max(minStatFloor(job, Stat.DEX), entry.bot.getDex());
-            applyApBuildChoice(entry,
-                    new BotBuildManager.ApBuild(BotBuildManager.StatType.STR, BotBuildManager.StatType.DEX, 4),
-                    AgentDialogueReportFormatter.apPureBuildConfirm(
-                            AgentDialogueReportFormatter.WARRIOR_DEXLESS_AP_BUILD, effectiveDex),
-                    AgentDialogueReportFormatter.apPureBuildAlready(
-                            AgentDialogueReportFormatter.WARRIOR_DEXLESS_AP_BUILD));
-            return;
-        }
-        if (job.isA(Job.THIEF) && AgentBuildDialogueClassifier.isDexlessBuildCommand(message)) {
-            int effectiveDex = Math.max(minStatFloor(job, Stat.DEX), entry.bot.getDex());
-            applyApBuildChoice(entry,
-                    new BotBuildManager.ApBuild(BotBuildManager.StatType.LUK, BotBuildManager.StatType.DEX, 4),
-                    AgentDialogueReportFormatter.apPureBuildConfirm(
-                            AgentDialogueReportFormatter.THIEF_DEXLESS_AP_BUILD, effectiveDex),
-                    AgentDialogueReportFormatter.apPureBuildAlready(
-                            AgentDialogueReportFormatter.THIEF_DEXLESS_AP_BUILD));
-            return;
-        }
-        if (job.isA(Job.MAGICIAN) && AgentBuildDialogueClassifier.isLuklessBuildCommand(message)) {
-            int effectiveLuk = Math.max(minStatFloor(job, Stat.LUK), entry.bot.getLuk());
-            applyApBuildChoice(entry,
-                    new BotBuildManager.ApBuild(BotBuildManager.StatType.INT, BotBuildManager.StatType.LUK, 4),
-                    AgentDialogueReportFormatter.apPureBuildConfirm(
-                            AgentDialogueReportFormatter.MAGICIAN_LUKLESS_AP_BUILD, effectiveLuk),
-                    AgentDialogueReportFormatter.apPureBuildAlready(
-                            AgentDialogueReportFormatter.MAGICIAN_LUKLESS_AP_BUILD));
-            return;
-        }
-        if (job.isA(Job.BOWMAN) && AgentBuildDialogueClassifier.isStrlessBuildCommand(message)) {
-            int effectiveStr = Math.max(minStatFloor(job, Stat.STR), entry.bot.getStr());
-            applyApBuildChoice(entry,
-                    new BotBuildManager.ApBuild(BotBuildManager.StatType.DEX, BotBuildManager.StatType.STR, 4),
-                    AgentDialogueReportFormatter.apPureBuildConfirm(
-                            AgentDialogueReportFormatter.BOWMAN_STRLESS_AP_BUILD, effectiveStr),
-                    AgentDialogueReportFormatter.apPureBuildAlready(
-                            AgentDialogueReportFormatter.BOWMAN_STRLESS_AP_BUILD));
-            return;
-        }
-
-        if (job.isA(Job.WARRIOR) || job.isA(Job.THIEF)) {
-            Integer dexTarget = AgentBuildDialogueClassifier.matchFixedDexTarget(message);
-            if (dexTarget != null) {
-                int legalDexTarget = Math.max(minStatFloor(job, Stat.DEX), dexTarget);
-                int effectiveDex = Math.max(legalDexTarget, entry.bot.getDex());
-                BotBuildManager.StatType primary = job.isA(Job.WARRIOR)
-                        ? BotBuildManager.StatType.STR
-                        : BotBuildManager.StatType.LUK;
-                AgentDialogueReportFormatter.AgentApBuildDialogueProfile dialogueProfile = job.isA(Job.WARRIOR)
-                        ? AgentDialogueReportFormatter.WARRIOR_FIXED_DEX_AP_BUILD
-                        : AgentDialogueReportFormatter.THIEF_FIXED_DEX_AP_BUILD;
-                applyApBuildChoice(entry,
-                        new BotBuildManager.ApBuild(primary, BotBuildManager.StatType.DEX, dexTarget),
-                        AgentDialogueReportFormatter.apFixedBuildConfirm(dialogueProfile, effectiveDex),
-                        AgentDialogueReportFormatter.apFixedBuildAlready(dialogueProfile, legalDexTarget));
-                return;
-            }
-        }
-        if (job.isA(Job.MAGICIAN)) {
-            Integer lukTarget = AgentBuildDialogueClassifier.matchFixedLukTarget(message);
-            if (lukTarget != null) {
-                int legalLukTarget = Math.max(minStatFloor(job, Stat.LUK), lukTarget);
-                int effectiveLuk = Math.max(legalLukTarget, entry.bot.getLuk());
-                applyApBuildChoice(entry,
-                        new BotBuildManager.ApBuild(BotBuildManager.StatType.INT, BotBuildManager.StatType.LUK, lukTarget),
-                        AgentDialogueReportFormatter.apFixedBuildConfirm(
-                                AgentDialogueReportFormatter.MAGICIAN_FIXED_LUK_AP_BUILD, effectiveLuk),
-                        AgentDialogueReportFormatter.apFixedBuildAlready(
-                                AgentDialogueReportFormatter.MAGICIAN_FIXED_LUK_AP_BUILD, legalLukTarget));
-                return;
-            }
-        }
-        if (job.isA(Job.BOWMAN)) {
-            Integer strTarget = AgentBuildDialogueClassifier.matchFixedStrTarget(message);
-            if (strTarget != null) {
-                int legalStrTarget = Math.max(minStatFloor(job, Stat.STR), strTarget);
-                int effectiveStr = Math.max(legalStrTarget, entry.bot.getStr());
-                applyApBuildChoice(entry,
-                        new BotBuildManager.ApBuild(BotBuildManager.StatType.DEX, BotBuildManager.StatType.STR, strTarget),
-                        AgentDialogueReportFormatter.apFixedBuildConfirm(
-                                AgentDialogueReportFormatter.BOWMAN_FIXED_STR_AP_BUILD, effectiveStr),
-                        AgentDialogueReportFormatter.apFixedBuildAlready(
-                                AgentDialogueReportFormatter.BOWMAN_FIXED_STR_AP_BUILD, legalStrTarget));
-            }
+        AgentApBuildDialogueResolver.ApBuildChoice choice = AgentApBuildDialogueResolver.resolve(
+                job, entry.bot.getDex(), entry.bot.getLuk(), entry.bot.getStr(), message);
+        if (choice != null) {
+            applyApBuildChoice(entry, toBotApBuild(choice), choice.confirmMessage(), choice.alreadyMessage());
         }
     }
 
-    private static int minStatFloor(Job job, Stat stat) {
-        return AssignAPProcessor.getMinStatFloor(job, stat);
+    private static BotBuildManager.ApBuild toBotApBuild(AgentApBuildDialogueResolver.ApBuildChoice choice) {
+        return new BotBuildManager.ApBuild(
+                toBotStatType(choice.primaryStat()),
+                toBotStatType(choice.secondaryStat()),
+                choice.secondaryTarget());
+    }
+
+    private static BotBuildManager.StatType toBotStatType(AgentApBuildDialogueResolver.StatType statType) {
+        return switch (statType) {
+            case STR -> BotBuildManager.StatType.STR;
+            case DEX -> BotBuildManager.StatType.DEX;
+            case INT -> BotBuildManager.StatType.INT;
+            case LUK -> BotBuildManager.StatType.LUK;
+        };
     }
 
     private static void applyApBuildChoice(BotEntry entry, BotBuildManager.ApBuild build, String confirmMsg, String alreadyMsg) {
