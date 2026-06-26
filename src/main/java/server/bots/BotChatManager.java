@@ -18,6 +18,7 @@ import server.agents.capabilities.dialogue.AgentChatBuffQueryFlow;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.dialogue.AgentChatRespecFlow;
+import server.agents.capabilities.dialogue.AgentChatSocialFlow;
 import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueReportFormatter;
@@ -132,9 +133,7 @@ public class BotChatManager {
         if (AgentChatSupplyRequestFlow.handle(message, supplyRequestCallbacks(entry))) {
             return;
         }
-        String fameTarget = AgentSocialDialogueClassifier.matchFameTarget(message);
-        if (fameTarget != null) {
-            BotManager.after(BotManager.randMs(500, 900), () -> handleFameCommand(entry, fameTarget));
+        if (AgentChatSocialFlow.handle(message, socialCallbacks(entry))) {
             return;
         }
         if (AgentChatToggleFlow.handle(message, toggleCallbacks(entry))) {
@@ -483,6 +482,10 @@ public class BotChatManager {
                 BotManager.after(BotManager.randMs(500, 700), () -> handleNeedAmmoCommand(entry));
             }
         };
+    }
+
+    private static AgentChatSocialFlow.SocialCallbacks socialCallbacks(BotEntry entry) {
+        return targetName -> BotManager.after(BotManager.randMs(500, 900), () -> handleFameCommand(entry, targetName));
     }
 
     private static AgentChatMovementFlow.MovementCallbacks movementCallbacks(BotEntry entry) {
