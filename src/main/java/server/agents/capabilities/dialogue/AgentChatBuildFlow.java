@@ -19,9 +19,27 @@ public final class AgentChatBuildFlow {
         return false;
     }
 
+    public static boolean handleApBuildSelection(String message, boolean awaitingSelection, ApBuildCallbacks callbacks) {
+        if (AgentBuildDialogueClassifier.isApChangeBuildCommand(message)) {
+            callbacks.requestBuildPrompt();
+            return true;
+        }
+        if (awaitingSelection) {
+            callbacks.selectBuild(message);
+            return true;
+        }
+        return false;
+    }
+
     public interface SpVariantCallbacks {
         void oneHanded();
 
         void twoHanded();
+    }
+
+    public interface ApBuildCallbacks {
+        void requestBuildPrompt();
+
+        void selectBuild(String message);
     }
 }

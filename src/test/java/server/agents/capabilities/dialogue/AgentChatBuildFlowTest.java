@@ -35,7 +35,27 @@ class AgentChatBuildFlowTest {
         assertEquals("", callbacks.events);
     }
 
-    private static final class TestCallbacks implements AgentChatBuildFlow.SpVariantCallbacks {
+    @Test
+    void shouldRouteApBuildPromptRequests() {
+        TestCallbacks callbacks = new TestCallbacks();
+
+        assertTrue(AgentChatBuildFlow.handleApBuildSelection("change build", false, callbacks));
+
+        assertEquals("prompt;", callbacks.events);
+    }
+
+    @Test
+    void shouldRouteApBuildSelectionOnlyWhenAwaitingSelection() {
+        TestCallbacks callbacks = new TestCallbacks();
+
+        assertFalse(AgentChatBuildFlow.handleApBuildSelection("dexless", false, callbacks));
+        assertTrue(AgentChatBuildFlow.handleApBuildSelection("dexless", true, callbacks));
+
+        assertEquals("select:dexless;", callbacks.events);
+    }
+
+    private static final class TestCallbacks implements AgentChatBuildFlow.SpVariantCallbacks,
+            AgentChatBuildFlow.ApBuildCallbacks {
         private String events = "";
 
         @Override
@@ -46,6 +66,16 @@ class AgentChatBuildFlowTest {
         @Override
         public void twoHanded() {
             events += "2h;";
+        }
+
+        @Override
+        public void requestBuildPrompt() {
+            events += "prompt;";
+        }
+
+        @Override
+        public void selectBuild(String message) {
+            events += "select:" + message + ";";
         }
     }
 }

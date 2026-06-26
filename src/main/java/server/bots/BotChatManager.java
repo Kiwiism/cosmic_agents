@@ -157,14 +157,7 @@ public class BotChatManager {
 
         // AP build selection — "change build" always triggers a re-prompt;
         // "dexless" / "X dex" only apply when bot is actively waiting for the answer (apPromptSent=true)
-        if (AgentBuildDialogueClassifier.isApChangeBuildCommand(message)) {
-            entry.apBuild      = null;
-            entry.apPromptSent = false;
-            String prompt = BotBuildManager.requestApBuildPrompt(entry, entry.bot);
-            if (prompt != null) BotManager.getInstance().botReply(entry, prompt);
-        } else if (entry.apPromptSent) {
-            handleApBuildSelection(entry, message);
-        }
+        AgentChatBuildFlow.handleApBuildSelection(message, entry.apPromptSent, apBuildCallbacks(entry));
 
         if (AgentChatUtilityFlow.handle(message, utilityCallbacks(entry))) {
             return;
@@ -557,6 +550,25 @@ public class BotChatManager {
                 entry.spVariant = AgentBuildDialogueClassifier.TWO_HANDED_SP_VARIANT;
                 BotManager.getInstance().botReply(entry, AgentDialogueCatalog.twoHandedSpVariantReply());
                 BotBuildManager.autoAssignSp(entry, entry.bot);
+            }
+        };
+    }
+
+    private static AgentChatBuildFlow.ApBuildCallbacks apBuildCallbacks(BotEntry entry) {
+        return new AgentChatBuildFlow.ApBuildCallbacks() {
+            @Override
+            public void requestBuildPrompt() {
+                entry.apBuild = null;
+                entry.apPromptSent = false;
+                String prompt = BotBuildManager.requestApBuildPrompt(entry, entry.bot);
+                if (prompt != null) {
+                    BotManager.getInstance().botReply(entry, prompt);
+                }
+            }
+
+            @Override
+            public void selectBuild(String message) {
+                handleApBuildSelection(entry, message);
             }
         };
     }
