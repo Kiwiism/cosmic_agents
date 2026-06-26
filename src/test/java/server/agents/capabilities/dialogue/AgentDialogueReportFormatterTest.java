@@ -1,6 +1,9 @@
 package server.agents.capabilities.dialogue;
 
+import client.Job;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -102,5 +105,29 @@ class AgentDialogueReportFormatterTest {
                 AgentDialogueReportFormatter.fameSamePersonReply("already famed %s this month", "Alice"));
         assertEquals("famed Alice", AgentDialogueReportFormatter.fameOkReply("famed %s", "Alice"));
         assertEquals("done", AgentDialogueReportFormatter.fameOkReply("done", "Alice"));
+    }
+
+    @Test
+    void shouldFormatJobDisplayNamesExactlyLikeLegacyChat() {
+        assertEquals("mage", AgentDialogueReportFormatter.jobDisplayName(Job.MAGICIAN));
+        assertEquals("f/p wizard", AgentDialogueReportFormatter.jobDisplayName(Job.FP_WIZARD));
+        assertEquals("dark knight", AgentDialogueReportFormatter.jobDisplayName(Job.DARKKNIGHT));
+        assertEquals("night lord", AgentDialogueReportFormatter.jobDisplayName(Job.NIGHTLORD));
+        assertEquals("dawn warrior", AgentDialogueReportFormatter.jobDisplayName(Job.DAWNWARRIOR2));
+        assertEquals("aran", AgentDialogueReportFormatter.jobDisplayName(Job.ARAN4));
+        assertEquals("corsair", AgentDialogueReportFormatter.jobDisplayName(Job.CORSAIR));
+    }
+
+    @Test
+    void shouldFormatSkillTreeLabelsAndChoicePromptExactlyLikeLegacyChat() {
+        assertEquals("warrior (100)", AgentDialogueReportFormatter.skillTreeLabel(100));
+        assertEquals("f/p wizard (210)", AgentDialogueReportFormatter.skillTreeLabel(210));
+        assertEquals("dawn warrior 2nd job (1110)", AgentDialogueReportFormatter.skillTreeLabel(1110));
+        assertEquals("aran 4th job (2112)", AgentDialogueReportFormatter.skillTreeLabel(2112));
+        assertEquals("evan 10th job (2218)", AgentDialogueReportFormatter.skillTreeLabel(2218));
+        assertEquals("tree 999999", AgentDialogueReportFormatter.skillTreeLabel(999999));
+        assertEquals(
+                "which skill tree? warrior (100), fighter (110), crusader (111)",
+                AgentDialogueReportFormatter.skillTreeChoicePrompt(List.of(100, 110, 111)));
     }
 }

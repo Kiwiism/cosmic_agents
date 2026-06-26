@@ -543,7 +543,7 @@ public class BotChatManager {
             Job advJob = AgentBuildDialogueClassifier.resolveJobChange(
                     entry.bot.getJob(), entry.bot.getLevel(), message.toLowerCase());
             if (advJob != null) {
-                String jobName = jobDisplayName(advJob);
+                String jobName = AgentDialogueReportFormatter.jobDisplayName(advJob);
                 String reply = AgentDialogueReportFormatter.jobChangeReply(
                         BotManager.randomReply(AgentDialogueCatalog.jobChangeReplyTemplates()), jobName);
                 BotManager.getInstance().botReply(entry, reply);
@@ -764,7 +764,7 @@ public class BotChatManager {
 
     private static void reportStats(BotEntry entry, Character bot) {
         queueBotReply(entry, AgentDialogueReportFormatter.stats(
-                bot.getLevel(), jobDisplayName(bot.getJob()),
+                bot.getLevel(), AgentDialogueReportFormatter.jobDisplayName(bot.getJob()),
                 bot.getStr(), bot.getDex(), bot.getInt(), bot.getLuk(),
                 bot.getHp(), bot.getCurrentMaxHp(),
                 bot.getMp(), bot.getCurrentMaxMp()));
@@ -855,7 +855,7 @@ public class BotChatManager {
         }
 
         entry.pendingAction = SKILL_TREE_CHOICE_ACTION;
-        queueBotReply(entry, skillTreeChoicePrompt(skillTrees));
+        queueBotReply(entry, AgentDialogueReportFormatter.skillTreeChoicePrompt(skillTrees.keySet()));
     }
 
     private static void reportBeginnerSkills(BotEntry entry, Character bot) {
@@ -1334,7 +1334,7 @@ public class BotChatManager {
 
         Integer treeId = resolveSkillTreeChoice(message, skillTrees);
         if (treeId == null) {
-            queueBotReply(entry, skillTreeChoicePrompt(skillTrees));
+            queueBotReply(entry, AgentDialogueReportFormatter.skillTreeChoicePrompt(skillTrees.keySet()));
             return;
         }
 
@@ -1403,11 +1403,11 @@ public class BotChatManager {
 
     private static void queueSkillTreeReport(BotEntry entry, int treeId, List<LearnedSkill> skills) {
         if (skills == null || skills.isEmpty()) {
-            queueBotReply(entry, AgentDialogueCatalog.noLearnedSkillsInReply(skillTreeLabel(treeId)));
+            queueBotReply(entry, AgentDialogueCatalog.noLearnedSkillsInReply(AgentDialogueReportFormatter.skillTreeLabel(treeId)));
             return;
         }
 
-        String label = skillTreeLabel(treeId);
+        String label = AgentDialogueReportFormatter.skillTreeLabel(treeId);
         String prefix = label + ": ";
         String followupPrefix = "more " + label + ": ";
         StringBuilder line = new StringBuilder(prefix);
@@ -1454,7 +1454,7 @@ public class BotChatManager {
     }
 
     private static boolean matchesSkillTreeChoice(String normalizedMessage, int treeId) {
-        String fullLabel = normalizeChoiceText(skillTreeLabel(treeId));
+        String fullLabel = normalizeChoiceText(AgentDialogueReportFormatter.skillTreeLabel(treeId));
         if (!fullLabel.isEmpty() && normalizedMessage.contains(fullLabel)) {
             return true;
         }
@@ -1464,64 +1464,8 @@ public class BotChatManager {
             return false;
         }
 
-        String baseLabel = normalizeChoiceText(jobDisplayName(job));
+        String baseLabel = normalizeChoiceText(AgentDialogueReportFormatter.jobDisplayName(job));
         return !baseLabel.isEmpty() && normalizedMessage.contains(baseLabel);
-    }
-
-    private static String skillTreeChoicePrompt(Map<Integer, List<LearnedSkill>> skillTrees) {
-        List<String> labels = new ArrayList<>();
-        for (int treeId : skillTrees.keySet()) {
-            labels.add(skillTreeLabel(treeId));
-        }
-        return "which skill tree? " + String.join(", ", labels);
-    }
-
-    private static String skillTreeLabel(int treeId) {
-        Job job = Job.getById(treeId);
-        if (job == null) {
-            return "tree " + treeId;
-        }
-
-        return switch (job) {
-            case NOBLESSE -> "noblesse (" + treeId + ")";
-            case DAWNWARRIOR1 -> "dawn warrior 1st job (" + treeId + ")";
-            case DAWNWARRIOR2 -> "dawn warrior 2nd job (" + treeId + ")";
-            case DAWNWARRIOR3 -> "dawn warrior 3rd job (" + treeId + ")";
-            case DAWNWARRIOR4 -> "dawn warrior 4th job (" + treeId + ")";
-            case BLAZEWIZARD1 -> "blaze wizard 1st job (" + treeId + ")";
-            case BLAZEWIZARD2 -> "blaze wizard 2nd job (" + treeId + ")";
-            case BLAZEWIZARD3 -> "blaze wizard 3rd job (" + treeId + ")";
-            case BLAZEWIZARD4 -> "blaze wizard 4th job (" + treeId + ")";
-            case WINDARCHER1 -> "wind archer 1st job (" + treeId + ")";
-            case WINDARCHER2 -> "wind archer 2nd job (" + treeId + ")";
-            case WINDARCHER3 -> "wind archer 3rd job (" + treeId + ")";
-            case WINDARCHER4 -> "wind archer 4th job (" + treeId + ")";
-            case NIGHTWALKER1 -> "night walker 1st job (" + treeId + ")";
-            case NIGHTWALKER2 -> "night walker 2nd job (" + treeId + ")";
-            case NIGHTWALKER3 -> "night walker 3rd job (" + treeId + ")";
-            case NIGHTWALKER4 -> "night walker 4th job (" + treeId + ")";
-            case THUNDERBREAKER1 -> "thunder breaker 1st job (" + treeId + ")";
-            case THUNDERBREAKER2 -> "thunder breaker 2nd job (" + treeId + ")";
-            case THUNDERBREAKER3 -> "thunder breaker 3rd job (" + treeId + ")";
-            case THUNDERBREAKER4 -> "thunder breaker 4th job (" + treeId + ")";
-            case LEGEND -> "legend (" + treeId + ")";
-            case ARAN1 -> "aran 1st job (" + treeId + ")";
-            case ARAN2 -> "aran 2nd job (" + treeId + ")";
-            case ARAN3 -> "aran 3rd job (" + treeId + ")";
-            case ARAN4 -> "aran 4th job (" + treeId + ")";
-            case EVAN -> "evan (" + treeId + ")";
-            case EVAN1 -> "evan 1st job (" + treeId + ")";
-            case EVAN2 -> "evan 2nd job (" + treeId + ")";
-            case EVAN3 -> "evan 3rd job (" + treeId + ")";
-            case EVAN4 -> "evan 4th job (" + treeId + ")";
-            case EVAN5 -> "evan 5th job (" + treeId + ")";
-            case EVAN6 -> "evan 6th job (" + treeId + ")";
-            case EVAN7 -> "evan 7th job (" + treeId + ")";
-            case EVAN8 -> "evan 8th job (" + treeId + ")";
-            case EVAN9 -> "evan 9th job (" + treeId + ")";
-            case EVAN10 -> "evan 10th job (" + treeId + ")";
-            default -> jobDisplayName(job) + " (" + treeId + ")";
-        };
     }
 
     private static String normalizeChoiceText(String text) {
@@ -1690,47 +1634,6 @@ public class BotChatManager {
 
     private static String dropOrTradePrompt(String category, int count) {
         return AgentDialogueReportFormatter.dropOrTradePrompt(category, count, DROP_OR_TRADE_PROMPTS);
-    }
-
-    static String jobDisplayName(Job job) {
-        return switch (job) {
-            case WARRIOR     -> "warrior";      case MAGICIAN    -> "mage";
-            case BOWMAN      -> "bowman";       case THIEF       -> "thief";
-            case PIRATE      -> "pirate";       case FIGHTER     -> "fighter";
-            case PAGE        -> "page";         case SPEARMAN    -> "spearman";
-            case FP_WIZARD   -> "f/p wizard";   case IL_WIZARD   -> "i/l wizard";
-            case CLERIC      -> "cleric";       case HUNTER      -> "hunter";
-            case CROSSBOWMAN -> "crossbowman";  case ASSASSIN    -> "assassin";
-            case BANDIT      -> "bandit";       case BRAWLER     -> "brawler";
-            case GUNSLINGER  -> "gunslinger";   case CRUSADER    -> "crusader";
-            case WHITEKNIGHT -> "white knight"; case DRAGONKNIGHT-> "dragon knight";
-            case FP_MAGE     -> "f/p mage";     case IL_MAGE     -> "i/l mage";
-            case PRIEST      -> "priest";       case RANGER      -> "ranger";
-            case SNIPER      -> "sniper";       case HERMIT      -> "hermit";
-            case CHIEFBANDIT -> "chief bandit"; case MARAUDER    -> "marauder";
-            case OUTLAW      -> "outlaw";       case HERO        -> "hero";
-            case PALADIN     -> "paladin";      case DARKKNIGHT  -> "dark knight";
-            case FP_ARCHMAGE -> "f/p archmage"; case IL_ARCHMAGE -> "i/l archmage";
-            case BISHOP      -> "bishop";       case BOWMASTER   -> "bowmaster";
-            case MARKSMAN    -> "marksman";     case NIGHTLORD   -> "night lord";
-            case SHADOWER    -> "shadower";     case BUCCANEER   -> "buccaneer";
-            case NOBLESSE    -> "noblesse";
-            case DAWNWARRIOR1 -> "dawn warrior";   case DAWNWARRIOR2 -> "dawn warrior";
-            case DAWNWARRIOR3 -> "dawn warrior";   case DAWNWARRIOR4 -> "dawn warrior";
-            case BLAZEWIZARD1 -> "blaze wizard";   case BLAZEWIZARD2 -> "blaze wizard";
-            case BLAZEWIZARD3 -> "blaze wizard";   case BLAZEWIZARD4 -> "blaze wizard";
-            case WINDARCHER1  -> "wind archer";    case WINDARCHER2  -> "wind archer";
-            case WINDARCHER3  -> "wind archer";    case WINDARCHER4  -> "wind archer";
-            case NIGHTWALKER1 -> "night walker";   case NIGHTWALKER2 -> "night walker";
-            case NIGHTWALKER3 -> "night walker";   case NIGHTWALKER4 -> "night walker";
-            case THUNDERBREAKER1 -> "thunder breaker"; case THUNDERBREAKER2 -> "thunder breaker";
-            case THUNDERBREAKER3 -> "thunder breaker"; case THUNDERBREAKER4 -> "thunder breaker";
-            case LEGEND       -> "legend";
-            case ARAN1        -> "aran";         case ARAN2        -> "aran";
-            case ARAN3        -> "aran";         case ARAN4        -> "aran";
-            case CORSAIR     -> "corsair";
-            default -> job.name().toLowerCase();
-        };
     }
 
     private static void handleFameCommand(BotEntry entry, String targetName) {
