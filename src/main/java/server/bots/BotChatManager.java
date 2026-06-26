@@ -1230,8 +1230,7 @@ public class BotChatManager {
         BotPotionManager.OwnerPotShareResult result = BotPotionManager.offerPotShareToOwner(entry, forHp);
         String reply = AgentSupplyRequestOutcomeFlow.potionShareReply(
                 result == BotPotionManager.OwnerPotShareResult.NO_DONOR,
-                forHp,
-                BotManager.randomReply(AgentDialogueCatalog.ownerPotShortageReplies()));
+                forHp);
         if (reply != null) {
             queueBotReply(entry, reply);
         }
@@ -1244,14 +1243,12 @@ public class BotChatManager {
         }
         WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(owner);
         if (weaponType != WeaponType.BOW && weaponType != WeaponType.CROSSBOW) {
-            queueBotReply(entry, AgentSupplyRequestOutcomeFlow.ammoNotNeededReply(
-                    BotManager.randomReply(AgentDialogueCatalog.ammoNotNeededReplies())));
+            queueBotReply(entry, AgentSupplyRequestOutcomeFlow.ammoNotNeededReply());
             return;
         }
         BotAmmoManager.OwnerAmmoShareResult result = BotAmmoManager.offerAmmoShareToOwner(entry, weaponType);
         String reply = AgentSupplyRequestOutcomeFlow.ammoShareReply(
-                result == BotAmmoManager.OwnerAmmoShareResult.NO_DONOR,
-                BotManager.randomReply(AgentDialogueCatalog.ownerAmmoShortageReplies()));
+                result == BotAmmoManager.OwnerAmmoShareResult.NO_DONOR);
         if (reply != null) {
             queueBotReply(entry, reply);
         }
