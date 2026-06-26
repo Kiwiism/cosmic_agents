@@ -32,6 +32,7 @@ import server.agents.capabilities.dialogue.AgentChatJobAdvancementFlow;
 import server.agents.capabilities.dialogue.AgentChatMovementFlow;
 import server.agents.capabilities.dialogue.AgentChatSessionRequestFlow;
 import server.agents.capabilities.dialogue.AgentChatToggleFlow;
+import server.agents.capabilities.dialogue.AgentChatWelcomeBackFlow;
 import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
 import server.agents.capabilities.dialogue.AgentSocialDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
@@ -926,29 +927,55 @@ public class BotChatManager {
 
     /** Detects owner AFK (same position ≥5 min) and says "wb" when they return. */
     static void tickAfkCheck(BotEntry entry, Character owner) {
-        Point pos = owner.getPosition();
-        long now  = System.currentTimeMillis();
+        AgentChatWelcomeBackFlow.tickAfkCheck(
+                afkState(entry),
+                owner.getPosition(),
+                System.currentTimeMillis(),
+                welcomeBackCallbacks(entry));
+    }
 
-        if (entry.ownerAfkPos == null) {
-            entry.ownerAfkPos     = pos;
-            entry.ownerAfkSinceMs = now;
-            return;
-        }
-
-        if (!pos.equals(entry.ownerAfkPos)) {
-            if (entry.ownerWasAfk) {
-                entry.ownerWasAfk = false;
-                final Character bot = entry.bot;
-                BotManager.after(BotManager.randMs(1800, 2200), () -> {
-                    bot.changeFaceExpression(ThreadLocalRandom.current().nextBoolean() ? 2 : 3);
-                    BotManager.getInstance().botReply(entry, BotManager.randomReply(WB_REPLIES));
-                });
+    private static AgentChatWelcomeBackFlow.AfkState afkState(BotEntry entry) {
+        return new AgentChatWelcomeBackFlow.AfkState() {
+            @Override
+            public Point ownerAfkPosition() {
+                return entry.ownerAfkPos;
             }
-            entry.ownerAfkPos     = pos;
-            entry.ownerAfkSinceMs = now;
-        } else if (!entry.ownerWasAfk && (now - entry.ownerAfkSinceMs) >= 5 * 60_000L) {
-            entry.ownerWasAfk = true;
-        }
+
+            @Override
+            public void setOwnerAfkPosition(Point position) {
+                entry.ownerAfkPos = position;
+            }
+
+            @Override
+            public long ownerAfkSinceMs() {
+                return entry.ownerAfkSinceMs;
+            }
+
+            @Override
+            public void setOwnerAfkSinceMs(long sinceMs) {
+                entry.ownerAfkSinceMs = sinceMs;
+            }
+
+            @Override
+            public boolean ownerWasAfk() {
+                return entry.ownerWasAfk;
+            }
+
+            @Override
+            public void setOwnerWasAfk(boolean wasAfk) {
+                entry.ownerWasAfk = wasAfk;
+            }
+        };
+    }
+
+    private static AgentChatWelcomeBackFlow.WelcomeBackCallbacks welcomeBackCallbacks(BotEntry entry) {
+        return () -> {
+            final Character bot = entry.bot;
+            BotManager.after(BotManager.randMs(1800, 2200), () -> {
+                bot.changeFaceExpression(ThreadLocalRandom.current().nextBoolean() ? 2 : 3);
+                BotManager.getInstance().botReply(entry, BotManager.randomReply(WB_REPLIES));
+            });
+        };
     }
 
     private static void reportStats(BotEntry entry, Character bot) {
