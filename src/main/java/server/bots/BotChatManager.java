@@ -31,6 +31,7 @@ import server.agents.capabilities.dialogue.AgentChatToggleFlow;
 import server.agents.capabilities.dialogue.AgentChatWelcomeBackFlow;
 import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
 import server.agents.capabilities.dialogue.AgentSkillDialogueReporter;
+import server.agents.capabilities.dialogue.AgentSkillReportFlow;
 import server.agents.capabilities.dialogue.AgentSocialDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
@@ -1012,40 +1013,17 @@ public class BotChatManager {
     }
 
     private static void reportSkills(BotEntry entry, Character bot) {
-        if (bot.isBeginnerJob()) {
-            reportBeginnerSkills(entry, bot);
-            return;
-        }
-
         Map<Integer, List<AgentDialogueReportFormatter.AgentSkillLine>> skillTrees =
                 AgentSkillDialogueReporter.collectLearnedSkillTrees(bot);
-        if (skillTrees.isEmpty()) {
-            queueBotReply(entry, AgentDialogueCatalog.noJobSkillsWithSpReply(bot.getRemainingSp()));
-            return;
-        }
-
-        if (skillTrees.size() == 1) {
-            Map.Entry<Integer, List<AgentDialogueReportFormatter.AgentSkillLine>> onlyTree =
-                    skillTrees.entrySet().iterator().next();
-            queueSkillTreeReport(entry, onlyTree.getKey(), onlyTree.getValue());
-            return;
-        }
-
-        entry.pendingAction = AgentChatPendingAction.SKILL_TREE_CHOICE;
-        queueBotReply(entry, AgentDialogueReportFormatter.skillTreeChoicePrompt(skillTrees.keySet()));
-    }
-
-    private static void reportBeginnerSkills(BotEntry entry, Character bot) {
         List<AgentDialogueReportFormatter.AgentSkillLine> beginnerSkills =
                 AgentSkillDialogueReporter.collectLearnedBeginnerSkills(bot);
         int beginnerSpLeft = AgentSkillDialogueReporter.remainingBeginnerSp(bot);
-
-        if (beginnerSkills.isEmpty()) {
-            queueBotReply(entry, AgentDialogueCatalog.noBeginnerSkillsReply(beginnerSpLeft));
-            return;
-        }
-
-        queueBotReply(entry, AgentDialogueReportFormatter.beginnerSkillReport(beginnerSkills, beginnerSpLeft));
+        applySkillReportDecision(entry, AgentSkillReportFlow.reportSkills(
+                bot.isBeginnerJob(),
+                bot.getRemainingSp(),
+                beginnerSkills,
+                beginnerSpLeft,
+                skillTrees));
     }
 
     private static void reportInventory(BotEntry entry, Character bot) {
@@ -1287,38 +1265,17 @@ public class BotChatManager {
     private static void handleSkillTreeChoice(BotEntry entry, Character bot, String message) {
         Map<Integer, List<AgentDialogueReportFormatter.AgentSkillLine>> skillTrees =
                 AgentSkillDialogueReporter.collectLearnedSkillTrees(bot);
-        if (skillTrees.isEmpty()) {
-            entry.pendingAction = null;
-            queueBotReply(entry, AgentDialogueCatalog.noJobSkillsReply());
-            return;
-        }
-
-        if (skillTrees.size() == 1) {
-            entry.pendingAction = null;
-            Map.Entry<Integer, List<AgentDialogueReportFormatter.AgentSkillLine>> onlyTree =
-                    skillTrees.entrySet().iterator().next();
-            queueSkillTreeReport(entry, onlyTree.getKey(), onlyTree.getValue());
-            return;
-        }
-
-        Integer treeId = AgentBuildDialogueClassifier.resolveSkillTreeChoice(message, skillTrees.keySet());
-        if (treeId == null) {
-            queueBotReply(entry, AgentDialogueReportFormatter.skillTreeChoicePrompt(skillTrees.keySet()));
-            return;
-        }
-
-        entry.pendingAction = null;
-        queueSkillTreeReport(entry, treeId, skillTrees.get(treeId));
+        applySkillReportDecision(entry, AgentSkillReportFlow.resolveSkillTreeChoice(skillTrees, message));
     }
 
-    private static void queueSkillTreeReport(BotEntry entry, int treeId,
-                                             List<AgentDialogueReportFormatter.AgentSkillLine> skills) {
-        if (skills == null || skills.isEmpty()) {
-            queueBotReply(entry, AgentDialogueCatalog.noLearnedSkillsInReply(AgentDialogueReportFormatter.skillTreeLabel(treeId)));
-            return;
+    private static void applySkillReportDecision(BotEntry entry, AgentSkillReportFlow.SkillReportDecision decision) {
+        if (decision.clearPendingAction()) {
+            entry.pendingAction = null;
         }
-
-        for (String line : AgentDialogueReportFormatter.skillTreeReportLines(treeId, skills)) {
+        if (decision.requestSkillTreeChoice()) {
+            entry.pendingAction = AgentChatPendingAction.SKILL_TREE_CHOICE;
+        }
+        for (String line : decision.replies()) {
             queueBotReply(entry, line);
         }
     }
