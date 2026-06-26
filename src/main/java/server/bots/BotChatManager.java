@@ -2,12 +2,9 @@ package server.bots;
 
 import client.Character;
 import client.Job;
-import client.Skill;
-import client.SkillFactory;
 import client.Stat;
 import client.inventory.WeaponType;
 import client.processor.stat.AssignAPProcessor;
-import constants.game.GameConstants;
 import server.Trade;
 import server.agents.capabilities.dialogue.AgentBuildDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentChatAwayFlow;
@@ -33,6 +30,7 @@ import server.agents.capabilities.dialogue.AgentChatSessionRequestFlow;
 import server.agents.capabilities.dialogue.AgentChatToggleFlow;
 import server.agents.capabilities.dialogue.AgentChatWelcomeBackFlow;
 import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
+import server.agents.capabilities.dialogue.AgentSkillDialogueReporter;
 import server.agents.capabilities.dialogue.AgentSocialDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.commands.AgentQueuedMessage;
@@ -42,11 +40,8 @@ import server.maps.FieldLimit;
 import server.maps.MapleMap;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -62,7 +57,6 @@ public class BotChatManager {
     });
     private static final Map<Integer, AtomicInteger> PENDING_TRANSFER_REQUESTS = new ConcurrentHashMap<>();
 
-    private record LearnedSkill(int id, String name, int level) {}
     private record TransferCommandResult(boolean hasItems, int count) {}
     private record ItemQueryResult(int count) {}
     // %s = current map name (bot is in town since the offline-return warp put it there).
@@ -1049,14 +1043,16 @@ public class BotChatManager {
             return;
         }
 
-        Map<Integer, List<LearnedSkill>> skillTrees = collectLearnedSkillTrees(bot);
+        Map<Integer, List<AgentDialogueReportFormatter.AgentSkillLine>> skillTrees =
+                AgentSkillDialogueReporter.collectLearnedSkillTrees(bot);
         if (skillTrees.isEmpty()) {
             queueBotReply(entry, AgentDialogueCatalog.noJobSkillsWithSpReply(bot.getRemainingSp()));
             return;
         }
 
         if (skillTrees.size() == 1) {
-            Map.Entry<Integer, List<LearnedSkill>> onlyTree = skillTrees.entrySet().iterator().next();
+            Map.Entry<Integer, List<AgentDialogueReportFormatter.AgentSkillLine>> onlyTree =
+                    skillTrees.entrySet().iterator().next();
             queueSkillTreeReport(entry, onlyTree.getKey(), onlyTree.getValue());
             return;
         }
@@ -1066,15 +1062,16 @@ public class BotChatManager {
     }
 
     private static void reportBeginnerSkills(BotEntry entry, Character bot) {
-        List<LearnedSkill> beginnerSkills = collectLearnedBeginnerSkills(bot);
-        int beginnerSpLeft = getRemainingBeginnerSp(bot);
+        List<AgentDialogueReportFormatter.AgentSkillLine> beginnerSkills =
+                AgentSkillDialogueReporter.collectLearnedBeginnerSkills(bot);
+        int beginnerSpLeft = AgentSkillDialogueReporter.remainingBeginnerSp(bot);
 
         if (beginnerSkills.isEmpty()) {
             queueBotReply(entry, AgentDialogueCatalog.noBeginnerSkillsReply(beginnerSpLeft));
             return;
         }
 
-        queueBotReply(entry, AgentDialogueReportFormatter.beginnerSkillReport(toAgentSkillLines(beginnerSkills), beginnerSpLeft));
+        queueBotReply(entry, AgentDialogueReportFormatter.beginnerSkillReport(beginnerSkills, beginnerSpLeft));
     }
 
     private static void reportInventory(BotEntry entry, Character bot) {
@@ -1400,7 +1397,8 @@ public class BotChatManager {
     }
 
     private static void handleSkillTreeChoice(BotEntry entry, Character bot, String message) {
-        Map<Integer, List<LearnedSkill>> skillTrees = collectLearnedSkillTrees(bot);
+        Map<Integer, List<AgentDialogueReportFormatter.AgentSkillLine>> skillTrees =
+                AgentSkillDialogueReporter.collectLearnedSkillTrees(bot);
         if (skillTrees.isEmpty()) {
             entry.pendingAction = null;
             queueBotReply(entry, AgentDialogueCatalog.noJobSkillsReply());
@@ -1409,7 +1407,8 @@ public class BotChatManager {
 
         if (skillTrees.size() == 1) {
             entry.pendingAction = null;
-            Map.Entry<Integer, List<LearnedSkill>> onlyTree = skillTrees.entrySet().iterator().next();
+            Map.Entry<Integer, List<AgentDialogueReportFormatter.AgentSkillLine>> onlyTree =
+                    skillTrees.entrySet().iterator().next();
             queueSkillTreeReport(entry, onlyTree.getKey(), onlyTree.getValue());
             return;
         }
@@ -1424,87 +1423,16 @@ public class BotChatManager {
         queueSkillTreeReport(entry, treeId, skillTrees.get(treeId));
     }
 
-    private static Map<Integer, List<LearnedSkill>> collectLearnedSkillTrees(Character bot) {
-        Map<Integer, List<LearnedSkill>> skillTrees = new TreeMap<>();
-        for (Map.Entry<Skill, Character.SkillEntry> entry : bot.getSkills().entrySet()) {
-            Skill skill = entry.getKey();
-            Character.SkillEntry skillEntry = entry.getValue();
-            if (skill == null || skillEntry == null || skillEntry.skillevel <= 0) {
-                continue;
-            }
-
-            int skillId = skill.getId();
-            if (skill.isBeginnerSkill() || GameConstants.isHiddenSkills(skillId)) {
-                continue;
-            }
-
-            int treeId = skillId / 10000;
-            skillTrees.computeIfAbsent(treeId, ignored -> new ArrayList<>())
-                    .add(new LearnedSkill(skillId, skillName(skillId), skillEntry.skillevel));
-        }
-
-        for (List<LearnedSkill> skills : skillTrees.values()) {
-            skills.sort(Comparator.comparingInt(LearnedSkill::id));
-        }
-        return skillTrees;
-    }
-
-    private static List<LearnedSkill> collectLearnedBeginnerSkills(Character bot) {
-        List<LearnedSkill> beginnerSkills = new ArrayList<>();
-        for (Map.Entry<Skill, Character.SkillEntry> entry : bot.getSkills().entrySet()) {
-            Skill skill = entry.getKey();
-            Character.SkillEntry skillEntry = entry.getValue();
-            if (skill == null || skillEntry == null || skillEntry.skillevel <= 0) {
-                continue;
-            }
-
-            int skillId = skill.getId();
-            if (!skill.isBeginnerSkill() || GameConstants.isHiddenSkills(skillId)) {
-                continue;
-            }
-
-            beginnerSkills.add(new LearnedSkill(skillId, skillName(skillId), skillEntry.skillevel));
-        }
-
-        beginnerSkills.sort(Comparator.comparingInt(LearnedSkill::id));
-        return beginnerSkills;
-    }
-
-    private static int getRemainingBeginnerSp(Character bot) {
-        int usedBeginnerSp = 0;
-        int beginnerSkillBase = bot.getJobType() * 10000000 + 1000;
-        for (int i = 0; i < 3; i++) {
-            Skill skill = SkillFactory.getSkill(beginnerSkillBase + i);
-            if (skill != null) {
-                usedBeginnerSp += bot.getSkillLevel(skill);
-            }
-        }
-
-        return Math.max(0, Math.min(bot.getLevel() - 1, 6) - usedBeginnerSp);
-    }
-
-    private static void queueSkillTreeReport(BotEntry entry, int treeId, List<LearnedSkill> skills) {
+    private static void queueSkillTreeReport(BotEntry entry, int treeId,
+                                             List<AgentDialogueReportFormatter.AgentSkillLine> skills) {
         if (skills == null || skills.isEmpty()) {
             queueBotReply(entry, AgentDialogueCatalog.noLearnedSkillsInReply(AgentDialogueReportFormatter.skillTreeLabel(treeId)));
             return;
         }
 
-        for (String line : AgentDialogueReportFormatter.skillTreeReportLines(treeId, toAgentSkillLines(skills))) {
+        for (String line : AgentDialogueReportFormatter.skillTreeReportLines(treeId, skills)) {
             queueBotReply(entry, line);
         }
-    }
-
-    private static List<AgentDialogueReportFormatter.AgentSkillLine> toAgentSkillLines(List<LearnedSkill> skills) {
-        List<AgentDialogueReportFormatter.AgentSkillLine> lines = new ArrayList<>();
-        for (LearnedSkill skill : skills) {
-            lines.add(new AgentDialogueReportFormatter.AgentSkillLine(skill.id(), skill.name(), skill.level()));
-        }
-        return lines;
-    }
-
-    private static String skillName(int skillId) {
-        String name = SkillFactory.getSkillName(skillId);
-        return name != null && !name.isBlank() ? name : String.valueOf(skillId);
     }
 
     private static void handleTransferCommand(BotEntry entry, AgentChatTransferFlow.TransferCommand transferCommand, String message) {
