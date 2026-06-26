@@ -188,7 +188,11 @@ public final class AgentDialogueReportFormatter {
     }
 
     public static String welcomeBackOfflineReply(String template, String mapName) {
-        return String.format(template, mapName);
+        return String.format(template, fallbackTownName(mapName));
+    }
+
+    public static String fallbackTownName(String mapName) {
+        return mapName == null || mapName.isBlank() ? "town" : mapName;
     }
 
     public static String ownerPotShortageReply(String template, String type) {

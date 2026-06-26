@@ -723,12 +723,9 @@ public class BotChatManager {
         if (bot == null) {
             return;
         }
-        String mapName = bot.getMap() != null ? bot.getMap().getMapName() : null;
-        if (mapName == null || mapName.isBlank()) {
-            mapName = "town";
-        }
         final String text = AgentDialogueReportFormatter.welcomeBackOfflineReply(
-                BotManager.randomReply(WB_OFFLINE_PARTY_TEMPLATES), mapName);
+                BotManager.randomReply(WB_OFFLINE_PARTY_TEMPLATES),
+                bot.getMap() != null ? bot.getMap().getMapName() : null);
         BotManager.after(BotManager.randMs(1500, 2500), () -> {
             bot.changeFaceExpression(ThreadLocalRandom.current().nextBoolean() ? 2 : 3);
             BotManager.getInstance().botSayParty(bot, text);

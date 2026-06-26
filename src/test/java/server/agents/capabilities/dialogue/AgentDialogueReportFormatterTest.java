@@ -103,6 +103,12 @@ class AgentDialogueReportFormatterTest {
         assertEquals("wb! we've been waiting at Henesys since u went offline",
                 AgentDialogueReportFormatter.welcomeBackOfflineReply(
                         "wb! we've been waiting at %s since u went offline", "Henesys"));
+        assertEquals("wb! we've been waiting at town since u went offline",
+                AgentDialogueReportFormatter.welcomeBackOfflineReply(
+                        "wb! we've been waiting at %s since u went offline", null));
+        assertEquals("wb! we've been waiting at town since u went offline",
+                AgentDialogueReportFormatter.welcomeBackOfflineReply(
+                        "wb! we've been waiting at %s since u went offline", " "));
         assertEquals("we're low on hp pots too, boss",
                 AgentDialogueReportFormatter.ownerPotShortageReply("we're low on %s pots too, boss", "hp"));
         assertEquals("hp", AgentDialogueReportFormatter.potionTypeLabel(true));
