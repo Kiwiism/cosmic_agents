@@ -25,6 +25,7 @@ import server.agents.capabilities.dialogue.AgentMovementDialogueReporter;
 import server.agents.capabilities.dialogue.AgentChatEquipmentFlow;
 import server.agents.capabilities.dialogue.AgentChatJobAdvancementFlow;
 import server.agents.capabilities.dialogue.AgentChatMovementFlow;
+import server.agents.capabilities.dialogue.AgentChatOrchestrator;
 import server.agents.capabilities.dialogue.AgentChatSessionRequestFlow;
 import server.agents.capabilities.dialogue.AgentChatToggleFlow;
 import server.agents.capabilities.dialogue.AgentChatWelcomeBackFlow;
@@ -80,74 +81,126 @@ public class BotChatManager {
     }
 
     static void handleChat(BotEntry entry, String message) {
-        LAST_CHAT_HANDLED.set(true);
-        markOwnerActive(entry);
-        if (entry.pendingAction == null
-                && AgentChatSessionRequestFlow.handle(message, sessionRequestCallbacks(entry))) {
-            return;
-        }
-        if (entry.pendingAction != null) {
-            AgentPendingChatActionFlow.handle(
-                    pendingActionState(entry),
-                    message,
-                    pendingActionCallbacks(entry));
-            return;
-        }
+        LAST_CHAT_HANDLED.set(AgentChatOrchestrator.handle(message, chatOrchestratorContext(entry)));
+    }
 
-        if (AgentChatSupplyRequestFlow.handle(message, supplyRequestCallbacks(entry))) {
-            return;
-        }
-        if (AgentChatSocialFlow.handle(message, socialCallbacks(entry))) {
-            return;
-        }
-        if (AgentChatToggleFlow.handle(message, toggleCallbacks(entry))) {
-            return;
-        }
-        if (AgentChatBuffQueryFlow.handle(message, buffQueryCallbacks(entry))) {
-            return;
-        }
-        if (AgentChatRespecFlow.handle(message, respecCallbacks(entry))) {
-            return;
-        }
-        if (AgentChatEquipmentFlow.handle(message, equipmentCallbacks(entry))) {
-            return;
-        }
+    private static AgentChatOrchestrator.Context chatOrchestratorContext(BotEntry entry) {
+        return new AgentChatOrchestrator.Context() {
+            @Override
+            public void markActive() {
+                markOwnerActive(entry);
+            }
 
-        AgentChatMovementFlow.handle(message, movementCallbacks(entry));
+            @Override
+            public boolean hasPendingAction() {
+                return entry.pendingAction != null;
+            }
 
-        AgentChatBuildFlow.handleSpVariantSelection(
-                message,
-                entry.spVariantPromptSent && entry.spVariant == null,
-                spVariantCallbacks(entry));
+            @Override
+            public AgentPendingChatActionFlow.PendingActionState pendingActionState() {
+                return BotChatManager.pendingActionState(entry);
+            }
 
-        // AP build selection — "change build" always triggers a re-prompt;
-        // "dexless" / "X dex" only apply when bot is actively waiting for the answer (apPromptSent=true)
-        AgentChatBuildFlow.handleApBuildSelection(message, entry.apPromptSent, apBuildCallbacks(entry));
+            @Override
+            public AgentPendingChatActionFlow.PendingActionCallbacks pendingActionCallbacks() {
+                return BotChatManager.pendingActionCallbacks(entry);
+            }
 
-        if (AgentChatUtilityFlow.handle(message, utilityCallbacks(entry))) {
-            return;
-        }
+            @Override
+            public AgentChatSessionRequestFlow.SessionRequestCallbacks sessionRequestCallbacks() {
+                return BotChatManager.sessionRequestCallbacks(entry);
+            }
 
-        AgentChatTransferFlow.TransferCommand transferCommand = AgentChatTransferFlow.matchTransferCommand(message);
-        if (transferCommand != null) {
-            handleTransferCommand(entry, transferCommand, message);
-            return;
-        }
+            @Override
+            public AgentChatSupplyRequestFlow.SupplyRequestCallbacks supplyRequestCallbacks() {
+                return BotChatManager.supplyRequestCallbacks(entry);
+            }
 
-        if (AgentChatTransferFlow.handleItemQuery(message, itemQueryCallbacks(entry))) {
-            return;
-        }
+            @Override
+            public AgentChatSocialFlow.SocialCallbacks socialCallbacks() {
+                return BotChatManager.socialCallbacks(entry);
+            }
 
-        if (AgentChatReportFlow.handle(message, reportCallbacks(entry))) {
-            return;
-        }
+            @Override
+            public AgentChatToggleFlow.ToggleCallbacks toggleCallbacks() {
+                return BotChatManager.toggleCallbacks(entry);
+            }
 
-        AgentChatJobAdvancementFlow.handle(
-                message,
-                entry.bot.getJob(),
-                entry.bot.getLevel(),
-                jobAdvancementCallbacks(entry));
-        LAST_CHAT_HANDLED.set(false);
+            @Override
+            public AgentChatBuffQueryFlow.BuffQueryCallbacks buffQueryCallbacks() {
+                return BotChatManager.buffQueryCallbacks(entry);
+            }
+
+            @Override
+            public AgentChatRespecFlow.RespecCallbacks respecCallbacks() {
+                return BotChatManager.respecCallbacks(entry);
+            }
+
+            @Override
+            public AgentChatEquipmentFlow.EquipmentCallbacks equipmentCallbacks() {
+                return BotChatManager.equipmentCallbacks(entry);
+            }
+
+            @Override
+            public AgentChatMovementFlow.MovementCallbacks movementCallbacks() {
+                return BotChatManager.movementCallbacks(entry);
+            }
+
+            @Override
+            public boolean isWaitingForSpVariant() {
+                return entry.spVariantPromptSent && entry.spVariant == null;
+            }
+
+            @Override
+            public AgentChatBuildFlow.SpVariantCallbacks spVariantCallbacks() {
+                return BotChatManager.spVariantCallbacks(entry);
+            }
+
+            @Override
+            public boolean isWaitingForApBuild() {
+                return entry.apPromptSent;
+            }
+
+            @Override
+            public AgentChatBuildFlow.ApBuildCallbacks apBuildCallbacks() {
+                return BotChatManager.apBuildCallbacks(entry);
+            }
+
+            @Override
+            public AgentChatUtilityFlow.UtilityCallbacks utilityCallbacks() {
+                return BotChatManager.utilityCallbacks(entry);
+            }
+
+            @Override
+            public void handleTransferCommand(AgentChatTransferFlow.TransferCommand transferCommand, String message) {
+                BotChatManager.handleTransferCommand(entry, transferCommand, message);
+            }
+
+            @Override
+            public AgentChatTransferFlow.ItemQueryCallbacks itemQueryCallbacks() {
+                return BotChatManager.itemQueryCallbacks(entry);
+            }
+
+            @Override
+            public AgentChatReportFlow.ReportCallbacks reportCallbacks() {
+                return BotChatManager.reportCallbacks(entry);
+            }
+
+            @Override
+            public Job currentJob() {
+                return entry.bot.getJob();
+            }
+
+            @Override
+            public int level() {
+                return entry.bot.getLevel();
+            }
+
+            @Override
+            public AgentChatJobAdvancementFlow.JobAdvancementCallbacks jobAdvancementCallbacks() {
+                return BotChatManager.jobAdvancementCallbacks(entry);
+            }
+        };
     }
 
     private static AgentPendingChatActionFlow.PendingActionState pendingActionState(BotEntry entry) {
