@@ -22,6 +22,7 @@ import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueReportFormatter;
 import server.agents.capabilities.dialogue.AgentChatEquipmentFlow;
+import server.agents.capabilities.dialogue.AgentChatMovementFlow;
 import server.agents.capabilities.dialogue.AgentChatSessionRequestFlow;
 import server.agents.capabilities.dialogue.AgentChatToggleFlow;
 import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
@@ -149,72 +150,7 @@ public class BotChatManager {
             return;
         }
 
-        if (AgentChatCommandClassifier.isFarmHereCommand(message)) {
-            Point dest = entry.owner != null ? new Point(entry.owner.getPosition()) : null;
-            if (dest != null) {
-                BotManager.after(BotManager.randMs(1000, 1500), () -> {
-                    prepareActiveModeEntry(entry);
-                    BotManager.getInstance().issueFarmHere(entry, dest);
-                    BotManager.getInstance().botReply(entry, BotManager.randomReply(MOVE_HERE_REPLIES));
-                });
-            }
-        } else if (AgentChatCommandClassifier.isPatrolCommand(message)) {
-            Point ownerPos = entry.owner != null ? new Point(entry.owner.getPosition()) : null;
-            if (ownerPos != null) {
-                BotManager.after(BotManager.randMs(1000, 1500), () -> {
-                    prepareActiveModeEntry(entry);
-                    BotManager.getInstance().issuePatrol(entry, ownerPos);
-                    BotManager.getInstance().botReply(entry, BotManager.randomReply(MOVE_HERE_REPLIES));
-                });
-            }
-        } else if (AgentChatCommandClassifier.isMoveHereCommand(message)) {
-            Point dest = entry.owner != null ? new Point(entry.owner.getPosition()) : null;
-            if (dest != null) {
-                BotManager.after(BotManager.randMs(1000, 1500), () -> {
-                    BotManager.getInstance().issueMoveTo(entry, dest, true);
-                    BotManager.getInstance().botReply(entry, BotManager.randomReply(MOVE_HERE_REPLIES));
-                });
-            }
-        } else if (AgentChatCommandClassifier.isFollowCommand(message)) {
-            BotManager.after(BotManager.randMs(1500, 2000), () -> {
-                BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
-                entry.nextGearSuggestionAt = 0;
-                maybeSuggestGearToSiblings(entry, entry.bot);
-                BotManager.getInstance().botReply(entry, BotManager.randomReply(FOLLOW_REPLIES));
-                BotPotionManager.checkPotShareOnModeStart(entry, entry.bot);
-                BotManager.after(BotManager.randMs(250, 750), () -> BotManager.getInstance().issueFollowOwner(entry));
-            });
-        } else if (AgentChatCommandClassifier.isGrindCommand(message)) {
-            BotManager.after(BotManager.randMs(1500, 2000), () -> {
-                prepareActiveModeEntry(entry);
-                BotManager.getInstance().botReply(entry, BotPotionManager.grindStartMessage(entry.bot));
-                BotManager.after(BotManager.randMs(250, 750), () -> {
-                    BotManager.getInstance().issueGrind(entry);
-                    checkBotStatus(entry, entry.bot);
-                });
-            });
-        } else if (AgentChatCommandClassifier.isStopCommand(message)) {
-            BotManager.after(BotManager.randMs(900, 1100), () -> {
-                BotManager.getInstance().issueStop(entry);
-                BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
-                entry.nextGearSuggestionAt = 0;
-                maybeSuggestGearToSiblings(entry, entry.bot);
-                BotManager.after(BotManager.randMs(1400, 1600), () ->
-                        BotManager.getInstance().botReply(entry, BotManager.randomReply(STOP_REPLIES)));
-            });
-        } else if (AgentChatCommandClassifier.isFidgetCommand(message)) {
-            BotManager.after(BotManager.randMs(250, 500), () -> {
-                entry.bot.changeFaceExpression(randomFidgetExpression());
-                BotFidgetManager.maybeStartSocialFidget(entry);
-            });
-        } else if (AgentSocialDialogueClassifier.isGreeting(message)) {
-            BotManager.after(BotManager.randMs(900, 1100), () -> {
-                entry.bot.changeFaceExpression(Emote.HAPPY.getValue());
-                BotFidgetManager.maybeStartGreetingFidget(entry, ThreadLocalRandom.current().nextInt(100));
-                queueBotReply(entry, BotManager.randomReply(GREETING_REPLIES));
-                checkBotStatus(entry, entry.bot);
-            });
-        }
+        AgentChatMovementFlow.handle(message, movementCallbacks(entry));
 
         // SP build variant selection — only matched when waiting for an answer (Hero 1h vs 2h)
         if (entry.spVariantPromptSent && entry.spVariant == null) {
@@ -545,6 +481,105 @@ public class BotChatManager {
             @Override
             public void requestAmmo() {
                 BotManager.after(BotManager.randMs(500, 700), () -> handleNeedAmmoCommand(entry));
+            }
+        };
+    }
+
+    private static AgentChatMovementFlow.MovementCallbacks movementCallbacks(BotEntry entry) {
+        return new AgentChatMovementFlow.MovementCallbacks() {
+            @Override
+            public boolean farmHere() {
+                Point dest = entry.owner != null ? new Point(entry.owner.getPosition()) : null;
+                if (dest == null) {
+                    return false;
+                }
+                BotManager.after(BotManager.randMs(1000, 1500), () -> {
+                    prepareActiveModeEntry(entry);
+                    BotManager.getInstance().issueFarmHere(entry, dest);
+                    BotManager.getInstance().botReply(entry, BotManager.randomReply(MOVE_HERE_REPLIES));
+                });
+                return true;
+            }
+
+            @Override
+            public boolean patrol() {
+                Point ownerPos = entry.owner != null ? new Point(entry.owner.getPosition()) : null;
+                if (ownerPos == null) {
+                    return false;
+                }
+                BotManager.after(BotManager.randMs(1000, 1500), () -> {
+                    prepareActiveModeEntry(entry);
+                    BotManager.getInstance().issuePatrol(entry, ownerPos);
+                    BotManager.getInstance().botReply(entry, BotManager.randomReply(MOVE_HERE_REPLIES));
+                });
+                return true;
+            }
+
+            @Override
+            public boolean moveHere() {
+                Point dest = entry.owner != null ? new Point(entry.owner.getPosition()) : null;
+                if (dest == null) {
+                    return false;
+                }
+                BotManager.after(BotManager.randMs(1000, 1500), () -> {
+                    BotManager.getInstance().issueMoveTo(entry, dest, true);
+                    BotManager.getInstance().botReply(entry, BotManager.randomReply(MOVE_HERE_REPLIES));
+                });
+                return true;
+            }
+
+            @Override
+            public void follow() {
+                BotManager.after(BotManager.randMs(1500, 2000), () -> {
+                    BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
+                    entry.nextGearSuggestionAt = 0;
+                    maybeSuggestGearToSiblings(entry, entry.bot);
+                    BotManager.getInstance().botReply(entry, BotManager.randomReply(FOLLOW_REPLIES));
+                    BotPotionManager.checkPotShareOnModeStart(entry, entry.bot);
+                    BotManager.after(BotManager.randMs(250, 750), () -> BotManager.getInstance().issueFollowOwner(entry));
+                });
+            }
+
+            @Override
+            public void grind() {
+                BotManager.after(BotManager.randMs(1500, 2000), () -> {
+                    prepareActiveModeEntry(entry);
+                    BotManager.getInstance().botReply(entry, BotPotionManager.grindStartMessage(entry.bot));
+                    BotManager.after(BotManager.randMs(250, 750), () -> {
+                        BotManager.getInstance().issueGrind(entry);
+                        checkBotStatus(entry, entry.bot);
+                    });
+                });
+            }
+
+            @Override
+            public void stop() {
+                BotManager.after(BotManager.randMs(900, 1100), () -> {
+                    BotManager.getInstance().issueStop(entry);
+                    BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
+                    entry.nextGearSuggestionAt = 0;
+                    maybeSuggestGearToSiblings(entry, entry.bot);
+                    BotManager.after(BotManager.randMs(1400, 1600), () ->
+                            BotManager.getInstance().botReply(entry, BotManager.randomReply(STOP_REPLIES)));
+                });
+            }
+
+            @Override
+            public void fidget() {
+                BotManager.after(BotManager.randMs(250, 500), () -> {
+                    entry.bot.changeFaceExpression(randomFidgetExpression());
+                    BotFidgetManager.maybeStartSocialFidget(entry);
+                });
+            }
+
+            @Override
+            public void greeting() {
+                BotManager.after(BotManager.randMs(900, 1100), () -> {
+                    entry.bot.changeFaceExpression(Emote.HAPPY.getValue());
+                    BotFidgetManager.maybeStartGreetingFidget(entry, ThreadLocalRandom.current().nextInt(100));
+                    queueBotReply(entry, BotManager.randomReply(GREETING_REPLIES));
+                    checkBotStatus(entry, entry.bot);
+                });
             }
         };
     }
