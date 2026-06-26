@@ -498,14 +498,14 @@ public class BotChatManager {
             @Override
             public void oneHanded() {
                 entry.spVariant = AgentBuildDialogueClassifier.ONE_HANDED_SP_VARIANT;
-                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.oneHandedSpVariantReply());
+                BotManager.getInstance().botReply(entry, AgentChatBuildFlow.oneHandedSpVariantReply());
                 BotBuildManager.autoAssignSp(entry, entry.bot);
             }
 
             @Override
             public void twoHanded() {
                 entry.spVariant = AgentBuildDialogueClassifier.TWO_HANDED_SP_VARIANT;
-                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.twoHandedSpVariantReply());
+                BotManager.getInstance().botReply(entry, AgentChatBuildFlow.twoHandedSpVariantReply());
                 BotBuildManager.autoAssignSp(entry, entry.bot);
             }
         };

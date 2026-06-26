@@ -31,6 +31,14 @@ public final class AgentChatBuildFlow {
         return false;
     }
 
+    public static String oneHandedSpVariantReply() {
+        return AgentDialogueCatalog.oneHandedSpVariantReply();
+    }
+
+    public static String twoHandedSpVariantReply() {
+        return AgentDialogueCatalog.twoHandedSpVariantReply();
+    }
+
     public interface SpVariantCallbacks {
         void oneHanded();
 

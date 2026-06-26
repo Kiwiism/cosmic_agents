@@ -54,6 +54,12 @@ class AgentChatBuildFlowTest {
         assertEquals("select:dexless;", callbacks.events);
     }
 
+    @Test
+    void shouldExposeSpVariantReplies() {
+        assertEquals(AgentDialogueCatalog.oneHandedSpVariantReply(), AgentChatBuildFlow.oneHandedSpVariantReply());
+        assertEquals(AgentDialogueCatalog.twoHandedSpVariantReply(), AgentChatBuildFlow.twoHandedSpVariantReply());
+    }
+
     private static final class TestCallbacks implements AgentChatBuildFlow.SpVariantCallbacks,
             AgentChatBuildFlow.ApBuildCallbacks {
         private String events = "";
