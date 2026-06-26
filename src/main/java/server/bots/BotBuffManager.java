@@ -9,6 +9,7 @@ import client.inventory.Item;
 import net.server.PlayerBuffValueHolder;
 import net.server.channel.handlers.UseItemHandler;
 import server.ItemInformationProvider;
+import server.agents.capabilities.dialogue.AgentBuffDialogueReporter;
 import server.StatEffect;
 import server.combat.CombatFormulaProvider;
 import server.life.Monster;
@@ -89,22 +90,23 @@ final class BotBuffManager {
         List<ActiveBuff> active = collectActiveItemBuffs(bot);
         List<SelectedBuff> available = buildSelection(bot, cheapMode);
 
-        return "buff pots " + (enabled ? "on" : "off")
-                + " (" + (cheapMode ? "cheap" : "max") + ")"
-                + ": active " + summarizeActive(active, 2, bot)
-                + "; bag " + summarizeAvailable(available, 2, bot);
+        return AgentBuffDialogueReporter.chatSummary(
+                enabled,
+                cheapMode,
+                summarizeActive(active, 2, bot),
+                summarizeAvailable(available, 2, bot));
     }
 
     public static List<String> getDebugLines(BotEntry entry, Character bot) {
-        List<String> lines = new ArrayList<>(2);
-        lines.add(formatDebugState(entry) + "; active: " + summarizeActive(collectActiveItemBuffs(bot), 5, bot));
-        lines.add("bag: " + summarizeAvailable(buildSelection(bot, entry.buffCheapMode), 5, bot));
-        return lines;
+        return AgentBuffDialogueReporter.debugLines(
+                entry.buffConsumablesEnabled,
+                entry.buffCheapMode,
+                summarizeActive(collectActiveItemBuffs(bot), 5, bot),
+                summarizeAvailable(buildSelection(bot, entry.buffCheapMode), 5, bot));
     }
 
     static String formatDebugState(BotEntry entry) {
-        return "buff " + (entry.buffConsumablesEnabled ? "on" : "off")
-                + "(" + (entry.buffCheapMode ? "cheap" : "best") + ")";
+        return AgentBuffDialogueReporter.debugState(entry.buffConsumablesEnabled, entry.buffCheapMode);
     }
 
     private static List<SelectedBuff> buildSelection(Character bot, boolean cheapMode) {
