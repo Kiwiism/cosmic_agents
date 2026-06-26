@@ -167,6 +167,28 @@ public final class AgentDialogueReportFormatter {
         return String.format(template, type);
     }
 
+    public static String apPureBuildConfirm(String buildName, String secondaryStat, int effectiveSecondaryTarget,
+                                            String primaryStat) {
+        return buildName + " it is! keeping " + secondaryStat + " at " + effectiveSecondaryTarget
+                + ", rest into " + primaryStat;
+    }
+
+    public static String apPureBuildAlready(String buildName) {
+        return "already doing " + buildName + "!";
+    }
+
+    public static String apFixedBuildConfirm(String secondaryStat, int effectiveSecondaryTarget, String primaryStat) {
+        return "ok! keeping " + secondaryStat + " at " + effectiveSecondaryTarget + ", rest into " + primaryStat;
+    }
+
+    public static String apFixedBuildAlready(int legalSecondaryTarget, String secondaryStat) {
+        return "already doing " + legalSecondaryTarget + " " + secondaryStat + " build!";
+    }
+
+    public static String statTypeName(String statTypeName) {
+        return statTypeName.toLowerCase(Locale.ROOT);
+    }
+
     public static String fameSamePersonReply(String template, String targetName) {
         return String.format(template, targetName);
     }

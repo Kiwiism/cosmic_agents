@@ -108,6 +108,19 @@ class AgentDialogueReportFormatterTest {
     }
 
     @Test
+    void shouldFormatApBuildRepliesExactlyLikeLegacyChat() {
+        assertEquals(
+                "dexless it is! keeping dex at 25, rest into luk",
+                AgentDialogueReportFormatter.apPureBuildConfirm("dexless", "dex", 25, "luk"));
+        assertEquals("already doing dexless!", AgentDialogueReportFormatter.apPureBuildAlready("dexless"));
+        assertEquals(
+                "ok! keeping dex at 40, rest into str",
+                AgentDialogueReportFormatter.apFixedBuildConfirm("dex", 40, "str"));
+        assertEquals("already doing 40 dex build!", AgentDialogueReportFormatter.apFixedBuildAlready(40, "dex"));
+        assertEquals("luk", AgentDialogueReportFormatter.statTypeName("LUK"));
+    }
+
+    @Test
     void shouldFormatJobDisplayNamesExactlyLikeLegacyChat() {
         assertEquals("mage", AgentDialogueReportFormatter.jobDisplayName(Job.MAGICIAN));
         assertEquals("f/p wizard", AgentDialogueReportFormatter.jobDisplayName(Job.FP_WIZARD));

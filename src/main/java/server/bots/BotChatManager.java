@@ -31,7 +31,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
@@ -1067,32 +1066,32 @@ public class BotChatManager {
             int effectiveDex = Math.max(minStatFloor(job, Stat.DEX), entry.bot.getDex());
             applyApBuildChoice(entry,
                     new BotBuildManager.ApBuild(BotBuildManager.StatType.STR, BotBuildManager.StatType.DEX, 4),
-                    "dexless it is! keeping dex at " + effectiveDex + ", rest into str",
-                    "already doing dexless!");
+                    AgentDialogueReportFormatter.apPureBuildConfirm("dexless", "dex", effectiveDex, "str"),
+                    AgentDialogueReportFormatter.apPureBuildAlready("dexless"));
             return;
         }
         if (job.isA(Job.THIEF) && AgentBuildDialogueClassifier.isDexlessBuildCommand(message)) {
             int effectiveDex = Math.max(minStatFloor(job, Stat.DEX), entry.bot.getDex());
             applyApBuildChoice(entry,
                     new BotBuildManager.ApBuild(BotBuildManager.StatType.LUK, BotBuildManager.StatType.DEX, 4),
-                    "dexless it is! keeping dex at " + effectiveDex + ", rest into luk",
-                    "already doing dexless!");
+                    AgentDialogueReportFormatter.apPureBuildConfirm("dexless", "dex", effectiveDex, "luk"),
+                    AgentDialogueReportFormatter.apPureBuildAlready("dexless"));
             return;
         }
         if (job.isA(Job.MAGICIAN) && AgentBuildDialogueClassifier.isLuklessBuildCommand(message)) {
             int effectiveLuk = Math.max(minStatFloor(job, Stat.LUK), entry.bot.getLuk());
             applyApBuildChoice(entry,
                     new BotBuildManager.ApBuild(BotBuildManager.StatType.INT, BotBuildManager.StatType.LUK, 4),
-                    "lukless it is! keeping luk at " + effectiveLuk + ", rest into int",
-                    "already doing lukless!");
+                    AgentDialogueReportFormatter.apPureBuildConfirm("lukless", "luk", effectiveLuk, "int"),
+                    AgentDialogueReportFormatter.apPureBuildAlready("lukless"));
             return;
         }
         if (job.isA(Job.BOWMAN) && AgentBuildDialogueClassifier.isStrlessBuildCommand(message)) {
             int effectiveStr = Math.max(minStatFloor(job, Stat.STR), entry.bot.getStr());
             applyApBuildChoice(entry,
                     new BotBuildManager.ApBuild(BotBuildManager.StatType.DEX, BotBuildManager.StatType.STR, 4),
-                    "strless it is! keeping str at " + effectiveStr + ", rest into dex",
-                    "already doing strless!");
+                    AgentDialogueReportFormatter.apPureBuildConfirm("strless", "str", effectiveStr, "dex"),
+                    AgentDialogueReportFormatter.apPureBuildAlready("strless"));
             return;
         }
 
@@ -1106,8 +1105,9 @@ public class BotChatManager {
                         : BotBuildManager.StatType.LUK;
                 applyApBuildChoice(entry,
                         new BotBuildManager.ApBuild(primary, BotBuildManager.StatType.DEX, dexTarget),
-                        "ok! keeping dex at " + effectiveDex + ", rest into " + primary.name().toLowerCase(Locale.ROOT),
-                        "already doing " + legalDexTarget + " dex build!");
+                        AgentDialogueReportFormatter.apFixedBuildConfirm(
+                                "dex", effectiveDex, AgentDialogueReportFormatter.statTypeName(primary.name())),
+                        AgentDialogueReportFormatter.apFixedBuildAlready(legalDexTarget, "dex"));
                 return;
             }
         }
@@ -1118,8 +1118,8 @@ public class BotChatManager {
                 int effectiveLuk = Math.max(legalLukTarget, entry.bot.getLuk());
                 applyApBuildChoice(entry,
                         new BotBuildManager.ApBuild(BotBuildManager.StatType.INT, BotBuildManager.StatType.LUK, lukTarget),
-                        "ok! keeping luk at " + effectiveLuk + ", rest into int",
-                        "already doing " + legalLukTarget + " luk build!");
+                        AgentDialogueReportFormatter.apFixedBuildConfirm("luk", effectiveLuk, "int"),
+                        AgentDialogueReportFormatter.apFixedBuildAlready(legalLukTarget, "luk"));
                 return;
             }
         }
@@ -1130,8 +1130,8 @@ public class BotChatManager {
                 int effectiveStr = Math.max(legalStrTarget, entry.bot.getStr());
                 applyApBuildChoice(entry,
                         new BotBuildManager.ApBuild(BotBuildManager.StatType.DEX, BotBuildManager.StatType.STR, strTarget),
-                        "ok! keeping str at " + effectiveStr + ", rest into dex",
-                        "already doing " + legalStrTarget + " str build!");
+                        AgentDialogueReportFormatter.apFixedBuildConfirm("str", effectiveStr, "dex"),
+                        AgentDialogueReportFormatter.apFixedBuildAlready(legalStrTarget, "str"));
             }
         }
     }
