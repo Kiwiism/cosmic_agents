@@ -261,14 +261,6 @@ public class BotChatManager {
             "\\b(\\d+)\\s*str\\b", Pattern.CASE_INSENSITIVE);
     private static final List<String> TRADE_INVITE_REPLIES = AgentDialogueCatalog.tradeInviteReplies();
 
-    // Drop-choice responses (matched only when pendingAction = "item_choice")
-    private static final Pattern DROP_CHOICE_DROP_PATTERN = Pattern.compile(
-            "^(?:drop|drop it|drop them|drop to ground|floor|ground)$",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern DROP_CHOICE_TRADE_PATTERN = Pattern.compile(
-            "^(?:trade|trade me|send|give|transfer|give me)$",
-            Pattern.CASE_INSENSITIVE);
-
     // Shared verb prefix for all drop/give/trade category commands
 
     // Drop category commands
@@ -476,12 +468,12 @@ public class BotChatManager {
             if ("item_choice".equals(entry.pendingAction)) {
                 String category = entry.pendingDropCategory;
                 String choice = normalizeCommandText(message);
-                if (DROP_CHOICE_TRADE_PATTERN.matcher(choice).matches()) {
+                if (AgentTradeDialogueClassifier.isDropChoiceTradeCommand(choice)) {
                     entry.pendingAction       = null;
                     entry.pendingDropCategory = null;
                     BotManager.after(BotManager.randMs(400, 600),
                             () -> BotInventoryManager.executeChoice(category, true, entry, entry.bot));
-                } else if (DROP_CHOICE_DROP_PATTERN.matcher(choice).matches()) {
+                } else if (AgentTradeDialogueClassifier.isDropChoiceDropCommand(choice)) {
                     entry.pendingAction       = null;
                     entry.pendingDropCategory = null;
                     BotManager.after(BotManager.randMs(400, 600),

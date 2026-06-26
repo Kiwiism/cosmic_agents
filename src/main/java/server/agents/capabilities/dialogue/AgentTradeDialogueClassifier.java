@@ -136,6 +136,12 @@ public final class AgentTradeDialogueClassifier {
             "^\\s*(?:(?:do\\s+(?:you|u)\\s+have)|(?:(?:any(?:body|one)?|someone|somebody|you|u)\\s+(?:got|have|has))|got|have)\\s+"
             + "(?:any\\s+|some\\s+)?(?:(?:your|ur)\\s+)?([\\w][\\w '\\-]{1,39})[?!.,]*\\s*$",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern DROP_CHOICE_DROP_PATTERN = Pattern.compile(
+            "^(?:drop|drop it|drop them|drop to ground|floor|ground)$",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern DROP_CHOICE_TRADE_PATTERN = Pattern.compile(
+            "^(?:trade|trade me|send|give|transfer|give me)$",
+            Pattern.CASE_INSENSITIVE);
 
     private AgentTradeDialogueClassifier() {
     }
@@ -203,6 +209,14 @@ public final class AgentTradeDialogueClassifier {
 
     public static boolean isShowJunkCommand(String message) {
         return message != null && SHOW_JUNK_COMMAND_PATTERN.matcher(message).matches();
+    }
+
+    public static boolean isDropChoiceDropCommand(String message) {
+        return DROP_CHOICE_DROP_PATTERN.matcher(message).matches();
+    }
+
+    public static boolean isDropChoiceTradeCommand(String message) {
+        return DROP_CHOICE_TRADE_PATTERN.matcher(message).matches();
     }
 
     private static String matchTradeMesoCategory(String message) {

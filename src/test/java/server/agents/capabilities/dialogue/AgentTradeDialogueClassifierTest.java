@@ -3,7 +3,9 @@ package server.agents.capabilities.dialogue;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentTradeDialogueClassifierTest {
     @Test
@@ -42,5 +44,18 @@ class AgentTradeDialogueClassifierTest {
         assertEquals("warrior potion", AgentTradeDialogueClassifier.matchItemQuery("anybody got warrior potions?"));
         assertNull(AgentTradeDialogueClassifier.matchItemQuery("got trash?"));
         assertNull(AgentTradeDialogueClassifier.matchItemQuery("got pot?"));
+    }
+
+    @Test
+    void shouldClassifyPendingDropChoices() {
+        assertTrue(AgentTradeDialogueClassifier.isDropChoiceTradeCommand("trade"));
+        assertTrue(AgentTradeDialogueClassifier.isDropChoiceTradeCommand("trade me"));
+        assertTrue(AgentTradeDialogueClassifier.isDropChoiceTradeCommand("give me"));
+        assertFalse(AgentTradeDialogueClassifier.isDropChoiceTradeCommand("trade chaos scroll"));
+
+        assertTrue(AgentTradeDialogueClassifier.isDropChoiceDropCommand("drop"));
+        assertTrue(AgentTradeDialogueClassifier.isDropChoiceDropCommand("drop them"));
+        assertTrue(AgentTradeDialogueClassifier.isDropChoiceDropCommand("ground"));
+        assertFalse(AgentTradeDialogueClassifier.isDropChoiceDropCommand("drop chaos scroll"));
     }
 }
