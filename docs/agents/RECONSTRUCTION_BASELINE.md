@@ -38,6 +38,7 @@ Reconstruction progress:
 - Meso/movement-stat queries, respec commands, proactive-offer toggles, support/heal/buff toggles, logout/relog/away session requests, and upgrade-request classification also live in `AgentChatCommandClassifier`.
 - Item query string normalization now lives in `server.agents.capabilities.dialogue.AgentItemQueryNormalizer`.
 - Trade/drop/item query classification now lives in `server.agents.capabilities.dialogue.AgentTradeDialogueClassifier`.
+- Bare trade-invite, sell-trash, and Maker utility command classification now lives in `server.agents.capabilities.dialogue.AgentUtilityDialogueClassifier`.
 - Help, report, buff-list, and debug query classification now lives in `server.agents.capabilities.dialogue.AgentChatCommandClassifier`.
 - `server.bots.BotChatManager` still owns chat parsing and most direct response strings while it is split incrementally.
 - Bot runtime behavior still lives under `server.bots` and has not been functionally changed.

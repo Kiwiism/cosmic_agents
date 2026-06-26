@@ -16,6 +16,7 @@ import server.Trade;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
+import server.agents.capabilities.dialogue.AgentUtilityDialogueClassifier;
 import server.agents.commands.AgentQueuedMessage;
 import server.agents.commands.AgentReplyQueue;
 import server.combat.CombatFormulaProvider;
@@ -283,10 +284,6 @@ public class BotChatManager {
             "\\b(\\d+)\\s*luk\\b", Pattern.CASE_INSENSITIVE);
     private static final Pattern AP_FIXED_STR_PATTERN = Pattern.compile(
             "\\b(\\d+)\\s*str\\b", Pattern.CASE_INSENSITIVE);
-    // Bare trade invite — whole-message match so "trade me" isn't swallowed by TRADE_ITEM_COMMAND_PATTERN
-    private static final Pattern TRADE_INVITE_PATTERN = Pattern.compile(
-            "^\\s*trade(\\s+(me|pls|please))?\\s*[?!.,]*\\s*$",
-            Pattern.CASE_INSENSITIVE);
     private static final List<String> TRADE_INVITE_REPLIES = AgentDialogueCatalog.tradeInviteReplies();
 
     // Drop-choice responses (matched only when pendingAction = "item_choice")
@@ -329,15 +326,6 @@ public class BotChatManager {
             Pattern.CASE_INSENSITIVE);
     private static final Pattern TRADE_POTS_COMMAND_PATTERN = Pattern.compile(
             "\\b" + TRADE_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + POTION_WORDS + "\\b",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern SELL_TRASH_COMMAND_PATTERN = Pattern.compile(
-            "^\\s*(?:sell|vendor)\\s+(?:(?:my|ur|your)\\s+)?(?:trash|junk)\\s*[?!.,]*\\s*$",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern MAKE_CRYSTALS_COMMAND_PATTERN = Pattern.compile(
-            "^\\s*(?:make|craft|create)\\s+(?:some\\s+)?(?:mob|mon|monster|monsters|mobs)\\s+crystals?\\s*[?!.,]*\\s*$",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern DISASSEMBLE_TRASH_COMMAND_PATTERN = Pattern.compile(
-            "^\\s*(?:disassemble|dismantle|scrap|break\\s*down)\\s+(?:(?:my|ur|your)\\s+)?(?:trash|junk)(?:\\s+(?:equips?|gear))?\\s*[?!.,]*\\s*$",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern TRADE_USE_COMMAND_PATTERN = Pattern.compile(
             "\\b" + TRADE_CMD_VERB + "\\s+" + TRANSFER_RECIPIENT + TRANSFER_OWNER + USE_WORDS + "\\b",
@@ -827,7 +815,7 @@ public class BotChatManager {
             handleApBuildSelection(entry, message);
         }
 
-        if (TRADE_INVITE_PATTERN.matcher(message).find()) {
+        if (AgentUtilityDialogueClassifier.isTradeInviteCommand(message)) {
             Character bot = entry.bot;
             Character owner = entry.owner;
             if (owner != null && bot.getTrade() == null && owner.getTrade() == null
@@ -843,19 +831,19 @@ public class BotChatManager {
             return;
         }
 
-        if (SELL_TRASH_COMMAND_PATTERN.matcher(message).matches()) {
+        if (AgentUtilityDialogueClassifier.isSellTrashCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () ->
                     BotShopManager.requestSellTrashVisit(entry, entry.bot));
             return;
         }
 
-        if (MAKE_CRYSTALS_COMMAND_PATTERN.matcher(message).matches()) {
+        if (AgentUtilityDialogueClassifier.isMakeCrystalsCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () ->
                     BotMakerManager.handleMakeCrystals(entry));
             return;
         }
 
-        if (DISASSEMBLE_TRASH_COMMAND_PATTERN.matcher(message).matches()) {
+        if (AgentUtilityDialogueClassifier.isDisassembleTrashCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () ->
                     BotMakerManager.handleDisassembleTrash(entry));
             return;
