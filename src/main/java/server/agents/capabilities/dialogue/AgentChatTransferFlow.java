@@ -18,11 +18,24 @@ public final class AgentChatTransferFlow {
         return null;
     }
 
+    public static boolean handleItemQuery(String message, ItemQueryCallbacks callbacks) {
+        String queriedItem = AgentTradeDialogueClassifier.matchItemQuery(message);
+        if (queriedItem == null) {
+            return false;
+        }
+        callbacks.queryItem(queriedItem);
+        return true;
+    }
+
     public enum TransferMode {
         TRADE,
         CHOICE
     }
 
     public record TransferCommand(TransferMode mode, String category) {
+    }
+
+    public interface ItemQueryCallbacks {
+        void queryItem(String itemName);
     }
 }

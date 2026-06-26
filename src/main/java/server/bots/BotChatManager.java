@@ -155,9 +155,7 @@ public class BotChatManager {
             return;
         }
 
-        String queriedItem = AgentTradeDialogueClassifier.matchItemQuery(message);
-        if (queriedItem != null) {
-            handleItemQuery(entry, queriedItem);
+        if (AgentChatTransferFlow.handleItemQuery(message, itemQueryCallbacks(entry))) {
             return;
         }
 
@@ -656,6 +654,10 @@ public class BotChatManager {
             BotManager.getInstance().botReply(entry, reply);
             BotManager.after(BotManager.randMs(900, 1100), () -> BotStarterKitManager.advanceJob(entry, advJob));
         };
+    }
+
+    private static AgentChatTransferFlow.ItemQueryCallbacks itemQueryCallbacks(BotEntry entry) {
+        return itemName -> handleItemQuery(entry, itemName);
     }
 
     private static AgentPendingChatActionFlow.PendingActionCallbacks pendingActionCallbacks(BotEntry entry) {
