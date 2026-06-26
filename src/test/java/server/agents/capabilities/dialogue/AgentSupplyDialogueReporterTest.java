@@ -20,6 +20,17 @@ class AgentSupplyDialogueReporterTest {
     }
 
     @Test
+    void shouldFormatGrindStartPotionWarningsLikeLegacyChat() {
+        assertEquals("ok", AgentSupplyDialogueReporter.grindStartMessage("ok", 100, 100, 100));
+        assertEquals("ok, but only 3 HP pots left",
+                AgentSupplyDialogueReporter.grindStartMessage("ok", 3, 100, 100));
+        assertEquals("ok, but only 4 MP pots left",
+                AgentSupplyDialogueReporter.grindStartMessage("ok", 100, 4, 100));
+        assertEquals("ok, but only 3 HP pots and only 4 MP pots left",
+                AgentSupplyDialogueReporter.grindStartMessage("ok", 3, 4, 100));
+    }
+
+    @Test
     void shouldFormatAutopotDebugReportLikeLegacyChat() {
         assertEquals(
                 "pots: 12 hp / 8 mp | hp slot: Red Potion (FLAT_SINGLE/50) | mp slot: Blue Potion (RATE_SINGLE/30%)",

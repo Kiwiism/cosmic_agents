@@ -11,6 +11,7 @@ class AgentDialogueCatalogTest {
         assertTrue(AgentDialogueCatalog.followReplies().contains("w8 up"));
         assertTrue(AgentDialogueCatalog.moveHereReplies().contains("k, coming"));
         assertTrue(AgentDialogueCatalog.stopReplies().contains("stopping"));
+        assertTrue(AgentDialogueCatalog.grindReplies().contains("farming time"));
         assertTrue(AgentDialogueCatalog.greetingReplies().contains("hi"));
         assertTrue(AgentDialogueCatalog.welcomeBackReplies().contains("wb"));
         assertTrue(AgentDialogueCatalog.tradeInviteReplies().contains("coming to trade"));

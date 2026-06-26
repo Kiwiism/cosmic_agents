@@ -12,6 +12,7 @@ import constants.skills.Magician;
 import constants.skills.Warrior;
 import constants.skills.WhiteKnight;
 import server.ItemInformationProvider;
+import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
 import server.StatEffect;
 
@@ -21,12 +22,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 final class BotPotionManager {
-    private static final List<String> GRIND_REPLIES = List.of(
-            "ok", "on it", "lets get it", "farming time", "got it",
-            "sure", "ok boss", "time to grind",
-            "lets farm", "hunting time", "aye, killing stuff",
-            "lezgo", "gonna get some kills", "on it boss",
-            "time to work", "lets do this");
     private static final List<String> POT_REQUEST_HP_MSGS = List.of(
             "anyone have HP pots? running low",
             "low on HP pots, does anyone have some?",
@@ -257,24 +252,11 @@ final class BotPotionManager {
 
     static String grindStartMessage(Character bot) {
         int[] pots = countPotions(bot);
-        int hp = pots[0];
-        int mp = pots[1];
-        String base = BotManager.randomReply(GRIND_REPLIES);
-        if (hp >= BotManager.cfg.POT_LOW_WARN && mp >= BotManager.cfg.POT_LOW_WARN) {
-            return base;
-        }
-
-        StringBuilder message = new StringBuilder(base).append(", but");
-        if (hp < BotManager.cfg.POT_LOW_WARN) {
-            message.append(" only ").append(hp).append(" HP pots");
-        }
-        if (hp < BotManager.cfg.POT_LOW_WARN && mp < BotManager.cfg.POT_LOW_WARN) {
-            message.append(" and");
-        }
-        if (mp < BotManager.cfg.POT_LOW_WARN) {
-            message.append(" only ").append(mp).append(" MP pots");
-        }
-        return message.append(" left").toString();
+        return AgentSupplyDialogueReporter.grindStartMessage(
+                BotManager.randomReply(AgentDialogueCatalog.grindReplies()),
+                pots[0],
+                pots[1],
+                BotManager.cfg.POT_LOW_WARN);
     }
 
     static void tickPotionCheck(BotEntry entry, Character bot) {

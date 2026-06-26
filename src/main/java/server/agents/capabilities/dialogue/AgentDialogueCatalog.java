@@ -16,6 +16,12 @@ public final class AgentDialogueCatalog {
             "ok ill wait here", "ill be here", "np", "standing by",
             "understood", "ok boss", "staying put", "chilling here",
             "resting", "aye aye", "on it", "noted");
+    private static final List<String> GRIND_REPLIES = List.of(
+            "ok", "on it", "lets get it", "farming time", "got it",
+            "sure", "ok boss", "time to grind",
+            "lets farm", "hunting time", "aye, killing stuff",
+            "lezgo", "gonna get some kills", "on it boss",
+            "time to work", "lets do this");
     private static final List<String> AMMO_NOT_NEEDED_REPLIES = List.of(
             "i don't use shareable arrow ammo rn",
             "i don't need arrows or bolts rn",
@@ -181,6 +187,10 @@ public final class AgentDialogueCatalog {
 
     public static List<String> stopReplies() {
         return STOP_REPLIES;
+    }
+
+    public static List<String> grindReplies() {
+        return GRIND_REPLIES;
     }
 
     public static List<String> ammoNotNeededReplies() {

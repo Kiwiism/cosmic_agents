@@ -14,6 +14,24 @@ public final class AgentSupplyDialogueReporter {
         return AgentDialogueReportFormatter.potionReport(hpPotions, mpPotions);
     }
 
+    public static String grindStartMessage(String baseReply, int hpPotions, int mpPotions, int lowPotionWarning) {
+        if (hpPotions >= lowPotionWarning && mpPotions >= lowPotionWarning) {
+            return baseReply;
+        }
+
+        StringBuilder message = new StringBuilder(baseReply).append(", but");
+        if (hpPotions < lowPotionWarning) {
+            message.append(" only ").append(hpPotions).append(" HP pots");
+        }
+        if (hpPotions < lowPotionWarning && mpPotions < lowPotionWarning) {
+            message.append(" and");
+        }
+        if (mpPotions < lowPotionWarning) {
+            message.append(" only ").append(mpPotions).append(" MP pots");
+        }
+        return message.append(" left").toString();
+    }
+
     public static String autopotDebugReport(int hpPotions, int mpPotions, String hpSlot, String mpSlot) {
         return "pots: " + hpPotions + " hp / " + mpPotions + " mp"
                 + " | hp slot: " + hpSlot
