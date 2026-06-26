@@ -18,6 +18,7 @@ import server.agents.capabilities.dialogue.AgentChatBuffQueryFlow;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.dialogue.AgentChatRespecFlow;
+import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueReportFormatter;
 import server.agents.capabilities.dialogue.AgentChatEquipmentFlow;
@@ -127,20 +128,7 @@ public class BotChatManager {
             BotManager.after(BotManager.randMs(500, 700), () -> reportHelp(entry));
             return;
         }
-        if (AgentChatCommandClassifier.isNeedHpPotCommand(message)) {
-            BotManager.after(BotManager.randMs(500, 700), () -> handleNeedPotionCommand(entry, true));
-            return;
-        }
-        if (AgentChatCommandClassifier.isNeedMpPotCommand(message)) {
-            BotManager.after(BotManager.randMs(500, 700), () -> handleNeedPotionCommand(entry, false));
-            return;
-        }
-        if (AgentChatCommandClassifier.isNeedPotCommand(message)) {
-            BotManager.after(BotManager.randMs(500, 700), () -> handleNeedAnyPotionCommand(entry));
-            return;
-        }
-        if (AgentChatCommandClassifier.isNeedAmmoCommand(message)) {
-            BotManager.after(BotManager.randMs(500, 700), () -> handleNeedAmmoCommand(entry));
+        if (AgentChatSupplyRequestFlow.handle(message, supplyRequestCallbacks(entry))) {
             return;
         }
         String fameTarget = AgentSocialDialogueClassifier.matchFameTarget(message);
@@ -538,6 +526,25 @@ public class BotChatManager {
                     BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem, true);
                     BotManager.getInstance().botReply(entry, AgentDialogueCatalog.gearOptimizedReply());
                 });
+            }
+        };
+    }
+
+    private static AgentChatSupplyRequestFlow.SupplyRequestCallbacks supplyRequestCallbacks(BotEntry entry) {
+        return new AgentChatSupplyRequestFlow.SupplyRequestCallbacks() {
+            @Override
+            public void requestPotion(boolean hpPotion) {
+                BotManager.after(BotManager.randMs(500, 700), () -> handleNeedPotionCommand(entry, hpPotion));
+            }
+
+            @Override
+            public void requestAnyPotion() {
+                BotManager.after(BotManager.randMs(500, 700), () -> handleNeedAnyPotionCommand(entry));
+            }
+
+            @Override
+            public void requestAmmo() {
+                BotManager.after(BotManager.randMs(500, 700), () -> handleNeedAmmoCommand(entry));
             }
         };
     }
