@@ -1,0 +1,37 @@
+# Agent Reconstruction Baseline
+
+Branch: `reconstruction/source-master-agent-base`
+
+Source baseline:
+
+- Remote: `source`
+- Repository: `nutnnut/Cosmic`
+- Ref: `source/master`
+- Commit: `5f0447172e501d85bc406be2599f0a010a82a2d2`
+
+Comparison baseline:
+
+- Remote: `cosmic`
+- Repository: `P0nk/Cosmic`
+- Ref: `cosmic/master`
+- Commit: `fec53bc7714dc0f1ae3f50b2986cdf2727e0912a`
+
+Current bot inventory:
+
+- Production bot files: 63 under `src/main/java/server/bots`.
+- Bot tests and harnesses: 30 under `src/test/java/server/bots`.
+- Bot client/command integration files exist outside `server.bots`.
+- `src/main/java/server/agents` is a new neutral reconstruction target created on this branch.
+
+Important baseline note:
+
+`source/master` already includes NuTNNuT's merge commit `8987c5762 Merge branch 'experimental'`. For this reconstruction, that merged master is treated as the behavior baseline to preserve. Features can be removed later only after they are reconstructed into explicit Agent modules and their impact is understood.
+
+Scope for this branch:
+
+- Reconstruct bot behavior into a clean Agent architecture.
+- Keep behavior exact during reconstruction.
+- Do not pull in unrelated Cosmic gameplay or tooling changes as design goals.
+- Do not remove bot features yet unless a later explicit cleanup phase chooses to.
+- Do not let old bot ownership, manager, or task concepts define the final architecture.
+
