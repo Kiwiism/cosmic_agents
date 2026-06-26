@@ -867,17 +867,7 @@ public class BotChatManager {
             return;
         }
 
-        StringBuilder line = new StringBuilder("beginner: ");
-        for (int i = 0; i < beginnerSkills.size(); i++) {
-            if (i > 0) {
-                line.append(", ");
-            }
-
-            LearnedSkill skill = beginnerSkills.get(i);
-            line.append(skill.name()).append(" lv").append(skill.level());
-        }
-        line.append(" | ").append(beginnerSpLeft).append(" beginner SP left");
-        queueBotReply(entry, line.toString());
+        queueBotReply(entry, AgentDialogueReportFormatter.beginnerSkillReport(toAgentSkillLines(beginnerSkills), beginnerSpLeft));
     }
 
     private static void reportInventory(BotEntry entry, Character bot) {
@@ -1407,33 +1397,17 @@ public class BotChatManager {
             return;
         }
 
-        String label = AgentDialogueReportFormatter.skillTreeLabel(treeId);
-        String prefix = label + ": ";
-        String followupPrefix = "more " + label + ": ";
-        StringBuilder line = new StringBuilder(prefix);
-        int countOnLine = 0;
+        for (String line : AgentDialogueReportFormatter.skillTreeReportLines(treeId, toAgentSkillLines(skills))) {
+            queueBotReply(entry, line);
+        }
+    }
 
+    private static List<AgentDialogueReportFormatter.AgentSkillLine> toAgentSkillLines(List<LearnedSkill> skills) {
+        List<AgentDialogueReportFormatter.AgentSkillLine> lines = new ArrayList<>();
         for (LearnedSkill skill : skills) {
-            String piece = skill.name() + " lv" + skill.level();
-            boolean needsSeparator = countOnLine > 0;
-            int extraChars = piece.length() + (needsSeparator ? 2 : 0);
-            if ((line.length() + extraChars > 100 || countOnLine >= 3) && countOnLine > 0) {
-                queueBotReply(entry, line.toString());
-                line = new StringBuilder(followupPrefix);
-                countOnLine = 0;
-                needsSeparator = false;
-            }
-
-            if (needsSeparator) {
-                line.append(", ");
-            }
-            line.append(piece);
-            countOnLine++;
+            lines.add(new AgentDialogueReportFormatter.AgentSkillLine(skill.id(), skill.name(), skill.level()));
         }
-
-        if (countOnLine > 0) {
-            queueBotReply(entry, line.toString());
-        }
+        return lines;
     }
 
     private static String skillName(int skillId) {

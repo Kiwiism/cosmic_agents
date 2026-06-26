@@ -12,6 +12,9 @@ public final class AgentDialogueReportFormatter {
     private AgentDialogueReportFormatter() {
     }
 
+    public record AgentSkillLine(int id, String name, int level) {
+    }
+
     public static String stats(int level, String jobName, int str, int dex, int intStat, int luk,
                                int hp, int maxHp, int mp, int maxMp) {
         return String.format("lv%d %s | str %d dex %d int %d luk %d | hp %d/%d mp %d/%d",
@@ -178,6 +181,52 @@ public final class AgentDialogueReportFormatter {
             labels.add(skillTreeLabel(treeId));
         }
         return "which skill tree? " + String.join(", ", labels);
+    }
+
+    public static String beginnerSkillReport(List<AgentSkillLine> skills, int beginnerSpLeft) {
+        StringBuilder line = new StringBuilder("beginner: ");
+        for (int i = 0; i < skills.size(); i++) {
+            if (i > 0) {
+                line.append(", ");
+            }
+
+            AgentSkillLine skill = skills.get(i);
+            line.append(skill.name()).append(" lv").append(skill.level());
+        }
+        line.append(" | ").append(beginnerSpLeft).append(" beginner SP left");
+        return line.toString();
+    }
+
+    public static List<String> skillTreeReportLines(int treeId, List<AgentSkillLine> skills) {
+        List<String> lines = new ArrayList<>();
+        String label = skillTreeLabel(treeId);
+        String prefix = label + ": ";
+        String followupPrefix = "more " + label + ": ";
+        StringBuilder line = new StringBuilder(prefix);
+        int countOnLine = 0;
+
+        for (AgentSkillLine skill : skills) {
+            String piece = skill.name() + " lv" + skill.level();
+            boolean needsSeparator = countOnLine > 0;
+            int extraChars = piece.length() + (needsSeparator ? 2 : 0);
+            if ((line.length() + extraChars > 100 || countOnLine >= 3) && countOnLine > 0) {
+                lines.add(line.toString());
+                line = new StringBuilder(followupPrefix);
+                countOnLine = 0;
+                needsSeparator = false;
+            }
+
+            if (needsSeparator) {
+                line.append(", ");
+            }
+            line.append(piece);
+            countOnLine++;
+        }
+
+        if (countOnLine > 0) {
+            lines.add(line.toString());
+        }
+        return lines;
     }
 
     public static String jobDisplayName(Job job) {

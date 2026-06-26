@@ -130,4 +130,24 @@ class AgentDialogueReportFormatterTest {
                 "which skill tree? warrior (100), fighter (110), crusader (111)",
                 AgentDialogueReportFormatter.skillTreeChoicePrompt(List.of(100, 110, 111)));
     }
+
+    @Test
+    void shouldFormatSkillReportsExactlyLikeLegacyChat() {
+        List<AgentDialogueReportFormatter.AgentSkillLine> beginnerSkills = List.of(
+                new AgentDialogueReportFormatter.AgentSkillLine(1000, "Three Snails", 1),
+                new AgentDialogueReportFormatter.AgentSkillLine(1001, "Recovery", 2));
+        assertEquals(
+                "beginner: Three Snails lv1, Recovery lv2 | 3 beginner SP left",
+                AgentDialogueReportFormatter.beginnerSkillReport(beginnerSkills, 3));
+
+        List<AgentDialogueReportFormatter.AgentSkillLine> fighterSkills = List.of(
+                new AgentDialogueReportFormatter.AgentSkillLine(1100000, "Improving Max HP Increase", 10),
+                new AgentDialogueReportFormatter.AgentSkillLine(1100001, "Sword Mastery", 20),
+                new AgentDialogueReportFormatter.AgentSkillLine(1101004, "Power Guard", 20),
+                new AgentDialogueReportFormatter.AgentSkillLine(1101005, "Rage", 20));
+        assertEquals(List.of(
+                        "fighter (110): Improving Max HP Increase lv10, Sword Mastery lv20, Power Guard lv20",
+                        "more fighter (110): Rage lv20"),
+                AgentDialogueReportFormatter.skillTreeReportLines(110, fighterSkills));
+    }
 }
