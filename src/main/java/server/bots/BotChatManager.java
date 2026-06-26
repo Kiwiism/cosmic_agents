@@ -16,6 +16,7 @@ import server.Trade;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentEquipmentDialogueClassifier;
+import server.agents.capabilities.dialogue.AgentSocialDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentUtilityDialogueClassifier;
 import server.agents.commands.AgentQueuedMessage;
@@ -106,17 +107,6 @@ public class BotChatManager {
             "pirate|brawler|gunslinger|gun|marauder|outlaw|bucc|buccaneer|corsair|" +
             "white knight|wk|dragon knight)\\b", Pattern.CASE_INSENSITIVE);
 
-
-    // Whole-message match (with optional trailing punctuation/whitespace) so
-    // longer chat like "hi how are you today" falls through to the LLM instead
-    // of being short-circuited by a canned greeting.
-    private static final Pattern GREETING_PATTERN = Pattern.compile(
-            "^\\s*(hi+|hey+|hello+|sup|yo+|howdy|hiya|heya|hai|ello|"
-            + "whats?\\s*up|waz+up|wassup|hows?\\s+it\\s+going|"
-            + "(good\\s+)?(morning|evening|afternoon)|"
-            + "how\\s+(are|r)\\s+(you|u|ya)(\\s+doing)?|"
-            + "what.?s\\s+(good|up|new|poppin.?))\\s*[?!.,]*\\s*$",
-            Pattern.CASE_INSENSITIVE);
     private static final Pattern FIDGET_PATTERN = Pattern.compile(
             "^\\s*fidget\\s*[?!.,]*\\s*$",
             Pattern.CASE_INSENSITIVE);
@@ -183,9 +173,6 @@ public class BotChatManager {
             Pattern.CASE_INSENSITIVE);
     private static final List<String> AMMO_NOT_NEEDED_REPLIES = AgentDialogueCatalog.ammoNotNeededReplies();
 
-    private static final Pattern FAME_PATTERN = Pattern.compile(
-            "^\\s*fame\\s+(me|\\S+?)\\s*[?!.,]*\\s*$",
-            Pattern.CASE_INSENSITIVE);
     private static final List<String> FAME_OK_REPLIES = AgentDialogueCatalog.fameOkReplies();
     private static final List<String> FAME_COOLDOWN_REPLIES = AgentDialogueCatalog.fameCooldownReplies();
     private static final List<String> FAME_SAME_PERSON_REPLIES = AgentDialogueCatalog.fameSamePersonReplies();
@@ -570,9 +557,8 @@ public class BotChatManager {
             BotManager.after(BotManager.randMs(500, 700), () -> handleNeedAmmoCommand(entry));
             return;
         }
-        Matcher fameMatcher = FAME_PATTERN.matcher(message);
-        if (fameMatcher.matches()) {
-            String fameTarget = fameMatcher.group(1);
+        String fameTarget = AgentSocialDialogueClassifier.matchFameTarget(message);
+        if (fameTarget != null) {
             BotManager.after(BotManager.randMs(500, 900), () -> handleFameCommand(entry, fameTarget));
             return;
         }
@@ -769,7 +755,7 @@ public class BotChatManager {
                 entry.bot.changeFaceExpression(randomFidgetExpression());
                 BotFidgetManager.maybeStartSocialFidget(entry);
             });
-        } else if (GREETING_PATTERN.matcher(message).matches()) {
+        } else if (AgentSocialDialogueClassifier.isGreeting(message)) {
             BotManager.after(BotManager.randMs(900, 1100), () -> {
                 entry.bot.changeFaceExpression(Emote.HAPPY.getValue());
                 BotFidgetManager.maybeStartGreetingFidget(entry, ThreadLocalRandom.current().nextInt(100));
