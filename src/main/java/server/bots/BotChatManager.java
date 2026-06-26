@@ -16,6 +16,7 @@ import server.Trade;
 import server.agents.capabilities.dialogue.AgentBuildDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
+import server.agents.capabilities.dialogue.AgentDialogueReportFormatter;
 import server.agents.capabilities.dialogue.AgentEquipmentDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentSocialDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
@@ -758,7 +759,7 @@ public class BotChatManager {
     }
 
     private static void reportStats(BotEntry entry, Character bot) {
-        queueBotReply(entry, String.format("lv%d %s | str %d dex %d int %d luk %d | hp %d/%d mp %d/%d",
+        queueBotReply(entry, AgentDialogueReportFormatter.stats(
                 bot.getLevel(), jobDisplayName(bot.getJob()),
                 bot.getStr(), bot.getDex(), bot.getInt(), bot.getLuk(),
                 bot.getHp(), bot.getCurrentMaxHp(),
@@ -806,7 +807,7 @@ public class BotChatManager {
             accuracyLabel = "acc";
         }
 
-        String report = String.format("my dmg is %d-%d, %s %d, %s %d",
+        String report = AgentDialogueReportFormatter.range(
                 minDmg, maxDmg, attackLabel, attackStat, accuracyLabel, accuracy);
         if (hitProfile == null) {
             return report;
@@ -816,7 +817,7 @@ public class BotChatManager {
                 ? formulas.calculateMagicMobHitChance(accuracy, bot.getLevel(), hitProfile.mobLevel(), hitProfile.mobAvoid())
                 : formulas.calculatePhysicalMobHitChance(accuracy, bot.getLevel(), hitProfile.mobLevel(), hitProfile.mobAvoid());
         int hitPercent = (int) Math.round(hitChance * 100.0d);
-        return String.format("%s | hit %d%% vs hardest mob (avd %d)", report, hitPercent, hitProfile.mobAvoid());
+        return AgentDialogueReportFormatter.rangeWithHit(report, hitPercent, hitProfile.mobAvoid());
     }
 
     private static void reportMovementStats(BotEntry entry, Character bot) {
@@ -826,7 +827,7 @@ public class BotChatManager {
     }
 
     private static void reportBuild(BotEntry entry, Character bot) {
-        queueBotReply(entry, String.format("build: str %d / dex %d / int %d / luk %d, %d ap left",
+        queueBotReply(entry, AgentDialogueReportFormatter.build(
                 bot.getStr(), bot.getDex(), bot.getInt(), bot.getLuk(),
                 bot.getRemainingAp()));
     }
@@ -1050,8 +1051,7 @@ public class BotChatManager {
 
         int critMin = (int) Math.min(99999, Math.floor(dmg.minDamage() * crit.critMultiplier()));
         int critMax = (int) Math.min(99999, Math.floor(dmg.maxDamage() * crit.critMultiplier()));
-        queueBotReply(entry, String.format(
-                "crit: %d%% chance, %.2fx multiplier | base %d-%d | crit %d-%d",
+        queueBotReply(entry, AgentDialogueReportFormatter.crit(
                 critPct, crit.critMultiplier(),
                 dmg.minDamage(), dmg.maxDamage(),
                 critMin, critMax));
