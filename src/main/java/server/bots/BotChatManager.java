@@ -5,12 +5,9 @@ import client.Job;
 import client.Skill;
 import client.SkillFactory;
 import client.Stat;
-import client.inventory.InventoryType;
-import client.inventory.Item;
 import client.inventory.WeaponType;
 import client.processor.stat.AssignAPProcessor;
 import constants.game.GameConstants;
-import constants.inventory.ItemConstants;
 import server.Trade;
 import server.agents.capabilities.dialogue.AgentBuildDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentChatAwayFlow;
@@ -26,6 +23,7 @@ import server.agents.capabilities.dialogue.AgentChatUtilityFlow;
 import server.agents.capabilities.dialogue.AgentChatTransferFlow;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueReportFormatter;
+import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
 import server.agents.capabilities.dialogue.AgentChatEquipmentFlow;
 import server.agents.capabilities.dialogue.AgentChatJobAdvancementFlow;
 import server.agents.capabilities.dialogue.AgentChatMovementFlow;
@@ -1100,12 +1098,7 @@ public class BotChatManager {
     }
 
     private static void reportScrolls(BotEntry entry, Character bot) {
-        int count = 0;
-        for (Item item : bot.getInventory(InventoryType.USE).list()) {
-            int id = item.getItemId();
-            if (ItemConstants.isEquipScroll(id)) count += item.getQuantity();
-        }
-        queueBotReply(entry, AgentDialogueReportFormatter.scrollCount(count));
+        queueBotReply(entry, AgentInventoryDialogueReporter.scrollReport(bot));
     }
 
     private static void reportPotions(BotEntry entry, Character bot) {
