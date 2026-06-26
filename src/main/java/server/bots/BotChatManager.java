@@ -21,6 +21,7 @@ import server.agents.capabilities.dialogue.AgentChatSocialFlow;
 import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
 import server.agents.capabilities.dialogue.AgentChatUtilityFlow;
 import server.agents.capabilities.dialogue.AgentChatTransferFlow;
+import server.agents.capabilities.dialogue.AgentCharacterDialogueReporter;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueReportFormatter;
 import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
@@ -978,11 +979,7 @@ public class BotChatManager {
     }
 
     private static void reportStats(BotEntry entry, Character bot) {
-        queueBotReply(entry, AgentDialogueReportFormatter.stats(
-                bot.getLevel(), AgentDialogueReportFormatter.jobDisplayName(bot.getJob()),
-                bot.getStr(), bot.getDex(), bot.getInt(), bot.getLuk(),
-                bot.getHp(), bot.getCurrentMaxHp(),
-                bot.getMp(), bot.getCurrentMaxMp()));
+        queueBotReply(entry, AgentCharacterDialogueReporter.statsReport(bot));
     }
 
     private static void reportRange(BotEntry entry, Character bot) {
@@ -1042,9 +1039,7 @@ public class BotChatManager {
     }
 
     private static void reportBuild(BotEntry entry, Character bot) {
-        queueBotReply(entry, AgentDialogueReportFormatter.build(
-                bot.getStr(), bot.getDex(), bot.getInt(), bot.getLuk(),
-                bot.getRemainingAp()));
+        queueBotReply(entry, AgentCharacterDialogueReporter.buildReport(bot));
     }
 
     private static void reportSkills(BotEntry entry, Character bot) {
