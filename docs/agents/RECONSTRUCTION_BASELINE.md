@@ -42,7 +42,7 @@ Reconstruction progress:
 - Bare trade-invite, sell-trash, and Maker utility command classification now lives in `server.agents.capabilities.dialogue.AgentUtilityDialogueClassifier`.
 - Equipment and auto-equip chat classification now lives in `server.agents.capabilities.dialogue.AgentEquipmentDialogueClassifier`.
 - Greeting and fame-target chat classification now lives in `server.agents.capabilities.dialogue.AgentSocialDialogueClassifier`.
-- Job/build/AP/SP choice classification and job advancement resolution now lives in `server.agents.capabilities.dialogue.AgentBuildDialogueClassifier`.
+- Job/build/AP/SP choice classification, skill-tree choice resolution, and job advancement resolution now lives in `server.agents.capabilities.dialogue.AgentBuildDialogueClassifier`.
 - Help, report, buff-list, and debug query classification now lives in `server.agents.capabilities.dialogue.AgentChatCommandClassifier`.
 - Stats/range/build/crit/EXP/supply/meso/movement, drop-or-trade prompt, selected catalog-template text, job display, and skill-tree prompt formatting now lives in `server.agents.capabilities.dialogue.AgentDialogueReportFormatter`.
 - `server.bots.BotChatManager` still owns chat parsing and most direct response strings while it is split incrementally.

@@ -3,6 +3,7 @@ package server.agents.capabilities.dialogue;
 import client.Job;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -148,8 +149,44 @@ public final class AgentBuildDialogueClassifier {
         return ids;
     }
 
+    public static Integer resolveSkillTreeChoice(String message, Collection<Integer> skillTreeIds) {
+        for (int treeId : skillTreeChoiceIds(message)) {
+            if (skillTreeIds.contains(treeId)) {
+                return treeId;
+            }
+        }
+
+        String normalizedMessage = normalizeChoiceText(message);
+        List<Integer> matches = new ArrayList<>();
+        for (int treeId : skillTreeIds) {
+            if (matchesSkillTreeChoice(normalizedMessage, treeId)) {
+                matches.add(treeId);
+            }
+        }
+        return matches.size() == 1 ? matches.get(0) : null;
+    }
+
     private static Integer matchInt(Pattern pattern, String message) {
         Matcher matcher = pattern.matcher(message);
         return matcher.find() ? Integer.parseInt(matcher.group(1)) : null;
+    }
+
+    private static boolean matchesSkillTreeChoice(String normalizedMessage, int treeId) {
+        String fullLabel = normalizeChoiceText(AgentDialogueReportFormatter.skillTreeLabel(treeId));
+        if (!fullLabel.isEmpty() && normalizedMessage.contains(fullLabel)) {
+            return true;
+        }
+
+        Job job = Job.getById(treeId);
+        if (job == null) {
+            return false;
+        }
+
+        String baseLabel = normalizeChoiceText(AgentDialogueReportFormatter.jobDisplayName(job));
+        return !baseLabel.isEmpty() && normalizedMessage.contains(baseLabel);
+    }
+
+    private static String normalizeChoiceText(String text) {
+        return text.toLowerCase().replaceAll("[^a-z0-9]+", " ").trim().replaceAll("\\s+", " ");
     }
 }

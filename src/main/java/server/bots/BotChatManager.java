@@ -1332,7 +1332,7 @@ public class BotChatManager {
             return;
         }
 
-        Integer treeId = resolveSkillTreeChoice(message, skillTrees);
+        Integer treeId = AgentBuildDialogueClassifier.resolveSkillTreeChoice(message, skillTrees.keySet());
         if (treeId == null) {
             queueBotReply(entry, AgentDialogueReportFormatter.skillTreeChoicePrompt(skillTrees.keySet()));
             return;
@@ -1434,42 +1434,6 @@ public class BotChatManager {
         if (countOnLine > 0) {
             queueBotReply(entry, line.toString());
         }
-    }
-
-    private static Integer resolveSkillTreeChoice(String message, Map<Integer, List<LearnedSkill>> skillTrees) {
-        for (int treeId : AgentBuildDialogueClassifier.skillTreeChoiceIds(message)) {
-            if (skillTrees.containsKey(treeId)) {
-                return treeId;
-            }
-        }
-
-        String normalizedMessage = normalizeChoiceText(message);
-        List<Integer> matches = new ArrayList<>();
-        for (int treeId : skillTrees.keySet()) {
-            if (matchesSkillTreeChoice(normalizedMessage, treeId)) {
-                matches.add(treeId);
-            }
-        }
-        return matches.size() == 1 ? matches.get(0) : null;
-    }
-
-    private static boolean matchesSkillTreeChoice(String normalizedMessage, int treeId) {
-        String fullLabel = normalizeChoiceText(AgentDialogueReportFormatter.skillTreeLabel(treeId));
-        if (!fullLabel.isEmpty() && normalizedMessage.contains(fullLabel)) {
-            return true;
-        }
-
-        Job job = Job.getById(treeId);
-        if (job == null) {
-            return false;
-        }
-
-        String baseLabel = normalizeChoiceText(AgentDialogueReportFormatter.jobDisplayName(job));
-        return !baseLabel.isEmpty() && normalizedMessage.contains(baseLabel);
-    }
-
-    private static String normalizeChoiceText(String text) {
-        return text.toLowerCase().replaceAll("[^a-z0-9]+", " ").trim().replaceAll("\\s+", " ");
     }
 
     private static String skillName(int skillId) {

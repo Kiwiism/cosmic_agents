@@ -125,4 +125,15 @@ class AgentBuildDialogueClassifierTest {
         assertEquals(List.of(110, 112, 2110), AgentBuildDialogueClassifier.skillTreeChoiceIds("pick 110 then 112 or 2110"));
         assertEquals(List.of(), AgentBuildDialogueClassifier.skillTreeChoiceIds("pick warrior"));
     }
+
+    @Test
+    void shouldResolveSkillTreeChoiceFromIdsAndLabels() {
+        List<Integer> skillTrees = List.of(110, 111, 112);
+
+        assertEquals(111, AgentBuildDialogueClassifier.resolveSkillTreeChoice("show me 111", skillTrees));
+        assertEquals(110, AgentBuildDialogueClassifier.resolveSkillTreeChoice("fighter tree", skillTrees));
+        assertEquals(111, AgentBuildDialogueClassifier.resolveSkillTreeChoice("crusader (111)", skillTrees));
+        assertNull(AgentBuildDialogueClassifier.resolveSkillTreeChoice("pirate", skillTrees));
+        assertNull(AgentBuildDialogueClassifier.resolveSkillTreeChoice("tree", skillTrees));
+    }
 }
