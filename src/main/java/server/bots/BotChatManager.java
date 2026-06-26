@@ -15,6 +15,7 @@ import constants.inventory.ItemConstants;
 import server.Trade;
 import server.agents.capabilities.dialogue.AgentBuildDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
+import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueReportFormatter;
 import server.agents.capabilities.dialogue.AgentEquipmentDialogueClassifier;
@@ -41,7 +42,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class BotChatManager {
-    private static final String SKILL_TREE_CHOICE_ACTION = "skill_tree_choice";
     private static final ExecutorService TRADE_COMMAND_EXECUTOR = Executors.newFixedThreadPool(2, r -> {
         Thread thread = new Thread(r, "bot-trade-command");
         thread.setDaemon(true);
@@ -109,7 +109,7 @@ public class BotChatManager {
         // Logout / relog — two-step confirmation
         if (entry.pendingAction == null && AgentChatCommandClassifier.isRelogRequest(message)) {
             BotManager.after(BotManager.randMs(900, 1100), () -> {
-                entry.pendingAction = "relog";
+                entry.pendingAction = AgentChatPendingAction.RELOG;
                 BotManager.getInstance().issueStop(entry);
                 BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.relogConfirmPrompts()));
             });
@@ -117,7 +117,7 @@ public class BotChatManager {
         }
         if (entry.pendingAction == null && AgentChatCommandClassifier.isLogoutRequest(message)) {
             BotManager.after(BotManager.randMs(900, 1100), () -> {
-                entry.pendingAction = "logout";
+                entry.pendingAction = AgentChatPendingAction.LOGOUT;
                 BotManager.getInstance().issueStop(entry);
                 BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.logoutConfirmPrompts()));
             });
@@ -131,12 +131,12 @@ public class BotChatManager {
             return;
         }
         if (entry.pendingAction != null) {
-            if ("owner_away".equals(entry.pendingAction)) {
+            if (AgentChatPendingAction.isOwnerAway(entry.pendingAction)) {
                 handleOwnerAwayChoice(entry, message);
                 return;
             }
             // Item-choice: three-way "drop / trade / cancel" — handled independently of yes/no
-            if ("item_choice".equals(entry.pendingAction)) {
+            if (AgentChatPendingAction.isItemChoice(entry.pendingAction)) {
                 String category = entry.pendingDropCategory;
                 String choice = AgentChatCommandClassifier.normalizeCommandText(message);
                 if (AgentTradeDialogueClassifier.isDropChoiceTradeCommand(choice)) {
@@ -158,14 +158,14 @@ public class BotChatManager {
                 }
                 return;
             }
-            if (SKILL_TREE_CHOICE_ACTION.equals(entry.pendingAction)) {
+            if (AgentChatPendingAction.isSkillTreeChoice(entry.pendingAction)) {
                 handleSkillTreeChoice(entry, entry.bot, message);
                 return;
             }
             if (AgentChatCommandClassifier.isLogoutConfirm(message)) {
                 String action = entry.pendingAction;
                 entry.pendingAction = null;
-                if ("relog".equals(action)) {
+                if (AgentChatPendingAction.isRelog(action)) {
                     BotManager.after(BotManager.randMs(900, 1100), () -> {
                         Character o = entry.owner;
                         if (o == null) return; // owner logged out before relog fired
@@ -554,7 +554,7 @@ public class BotChatManager {
     }
 
     private static void promptOwnerAway(BotEntry entry) {
-        entry.pendingAction = "owner_away";
+        entry.pendingAction = AgentChatPendingAction.OWNER_AWAY;
         BotManager.getInstance().issueStop(entry);
         if (BotManager.getInstance().shouldOfferTownForAwayCommand(entry)) {
             BotManager.getInstance().botReply(entry, AgentDialogueCatalog.awayTownOrLogoutPrompt());
@@ -850,7 +850,7 @@ public class BotChatManager {
             return;
         }
 
-        entry.pendingAction = SKILL_TREE_CHOICE_ACTION;
+        entry.pendingAction = AgentChatPendingAction.SKILL_TREE_CHOICE;
         queueBotReply(entry, AgentDialogueReportFormatter.skillTreeChoicePrompt(skillTrees.keySet()));
     }
 
@@ -1397,7 +1397,7 @@ public class BotChatManager {
         switch (transferCommand.mode) {
             case TRADE -> BotInventoryManager.startTradeTransfer(category, entry, bot);
             case CHOICE -> {
-                entry.pendingAction = "item_choice";
+                entry.pendingAction = AgentChatPendingAction.ITEM_CHOICE;
                 entry.pendingDropCategory = category;
                 BotManager.getInstance().botReply(entry, dropOrTradePrompt(category, result.count()));
             }
@@ -1449,7 +1449,7 @@ public class BotChatManager {
             return;
         }
 
-        entry.pendingAction = "item_choice";
+        entry.pendingAction = AgentChatPendingAction.ITEM_CHOICE;
         entry.pendingDropCategory = category;
         BotManager.getInstance().botReply(entry, dropOrTradePrompt(category, result.count()));
     }
