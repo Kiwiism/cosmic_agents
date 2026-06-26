@@ -104,4 +104,25 @@ class AgentChatCommandClassifierTest {
         assertTrue(AgentChatCommandClassifier.isApRespecCommand("rebuild ap"));
         assertFalse(AgentChatCommandClassifier.isApRespecCommand("respec"));
     }
+
+    @Test
+    void shouldMatchReportAndDebugQueries() {
+        assertTrue(AgentChatCommandClassifier.isHelpCommand("help"));
+        assertTrue(AgentChatCommandClassifier.isRecommendedGearQuery("any upgrades?"));
+        assertTrue(AgentChatCommandClassifier.isSkillsQuery("skills?"));
+        assertTrue(AgentChatCommandClassifier.isStatsQuery("your stats"));
+        assertTrue(AgentChatCommandClassifier.isRangeQuery("what's your range"));
+        assertTrue(AgentChatCommandClassifier.isBuildQuery("what's your build"));
+        assertTrue(AgentChatCommandClassifier.isInventoryQuery("show your inventory"));
+        assertTrue(AgentChatCommandClassifier.isExpQuery("exp?"));
+        assertTrue(AgentChatCommandClassifier.isInventorySlotsQuery("slots left"));
+        assertTrue(AgentChatCommandClassifier.isScrollsQuery("any scrolls"));
+        assertTrue(AgentChatCommandClassifier.isPotionsQuery("pots left"));
+        assertTrue(AgentChatCommandClassifier.isDebugStatsQuery("debug stats"));
+        assertTrue(AgentChatCommandClassifier.isCritDebugQuery("crit stats?"));
+        assertTrue(AgentChatCommandClassifier.isPotDebugQuery("potion debug"));
+        assertTrue(AgentChatCommandClassifier.isBuffListQuery("buff list"));
+        assertTrue(AgentChatCommandClassifier.isBuffDebugQuery("active buffs"));
+        assertTrue(AgentChatCommandClassifier.isSkillBuffDebugQuery("skill buffs debug"));
+    }
 }

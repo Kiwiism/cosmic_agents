@@ -653,7 +653,7 @@ public class BotChatManager {
             return;
         }
 
-        if (matchesWholeCommand(HELP_PATTERN, message)) {
+        if (AgentChatCommandClassifier.isHelpCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> reportHelp(entry));
             return;
         }
@@ -754,18 +754,18 @@ public class BotChatManager {
             });
             return;
         }
-        if (matchesWholeCommand(BUFF_LIST_PATTERN, message)) {
+        if (AgentChatCommandClassifier.isBuffListQuery(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 String summary = BotBuffManager.getChatSummary(entry.buffConsumablesEnabled, entry.buffCheapMode, entry.bot);
                 BotManager.getInstance().botReply(entry, summary);
             });
             return;
         }
-        if (matchesWholeCommand(BUFF_DEBUG_PATTERN, message)) {
+        if (AgentChatCommandClassifier.isBuffDebugQuery(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> reportBuffDebug(entry, entry.bot));
             return;
         }
-        if (matchesWholeCommand(SKILL_BUFF_DEBUG_PATTERN, message)) {
+        if (AgentChatCommandClassifier.isSkillBuffDebugQuery(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> reportSkillBuffDebug(entry, entry.bot));
             return;
         }
@@ -957,39 +957,39 @@ public class BotChatManager {
             BotManager.after(BotManager.randMs(500, 700), () -> handleRequestUpgradeCommand(entry, entry.bot));
             return;
         }
-        if (matchesWholeCommand(RECOMMENDED_GEAR_PATTERN, message)) {
+        if (AgentChatCommandClassifier.isRecommendedGearQuery(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> reportRecommendedGear(entry, entry.bot));
             return;
         }
-        if (matchesWholeCommand(SKILLS_PATTERN, message)) {
+        if (AgentChatCommandClassifier.isSkillsQuery(message)) {
             BotManager.after(BotManager.randMs(900, 1100), () -> reportSkills(entry, entry.bot));
             return;
         }
-        if (matchesWholeCommand(STATS_PATTERN, message))
+        if (AgentChatCommandClassifier.isStatsQuery(message))
             BotManager.after(BotManager.randMs(900, 1100), () -> reportStats(entry, entry.bot));
         if (isMovementStatsQuery(message))
             BotManager.after(BotManager.randMs(900, 1100), () -> reportMovementStats(entry, entry.bot));
-        if (matchesWholeCommand(RANGE_PATTERN, message))
+        if (AgentChatCommandClassifier.isRangeQuery(message))
             BotManager.after(BotManager.randMs(900, 1100), () -> reportRange(entry, entry.bot));
-        if (matchesWholeCommand(BUILD_PATTERN, message))
+        if (AgentChatCommandClassifier.isBuildQuery(message))
             BotManager.after(BotManager.randMs(900, 1100), () -> reportBuild(entry, entry.bot));
-        if (matchesWholeCommand(INVENTORY_PATTERN, message))
+        if (AgentChatCommandClassifier.isInventoryQuery(message))
             BotManager.after(BotManager.randMs(900, 1100), () -> reportInventory(entry, entry.bot));
         if (isMesoQuery(message))
             BotManager.after(BotManager.randMs(900, 1100), () -> reportMesos(entry, entry.bot));
-        if (matchesWholeCommand(EXP_PATTERN, message))
+        if (AgentChatCommandClassifier.isExpQuery(message))
             BotManager.after(BotManager.randMs(900, 1100), () -> reportExp(entry, entry.bot));
-        if (matchesWholeCommand(INV_SLOTS_PATTERN, message))
+        if (AgentChatCommandClassifier.isInventorySlotsQuery(message))
             BotManager.after(BotManager.randMs(900, 1100), () -> reportInventorySlots(entry, entry.bot));
-        if (matchesWholeCommand(SCROLLS_PATTERN, message))
+        if (AgentChatCommandClassifier.isScrollsQuery(message))
             BotManager.after(BotManager.randMs(900, 1100), () -> reportScrolls(entry, entry.bot));
-        if (matchesWholeCommand(POTIONS_PATTERN, message))
+        if (AgentChatCommandClassifier.isPotionsQuery(message))
             BotManager.after(BotManager.randMs(900, 1100), () -> reportPotions(entry, entry.bot));
-        if (matchesWholeCommand(DEBUG_STATS_PATTERN, message))
+        if (AgentChatCommandClassifier.isDebugStatsQuery(message))
             BotManager.after(BotManager.randMs(900, 1100), () -> reportDebugStats(entry, entry.bot));
-        if (matchesWholeCommand(CRIT_DEBUG_PATTERN, message))
+        if (AgentChatCommandClassifier.isCritDebugQuery(message))
             BotManager.after(BotManager.randMs(900, 1100), () -> reportCritDebug(entry, entry.bot));
-        if (matchesWholeCommand(POT_DEBUG_PATTERN, message))
+        if (AgentChatCommandClassifier.isPotDebugQuery(message))
             BotManager.after(BotManager.randMs(900, 1100), () -> reportPotDebug(entry, entry.bot));
 
         // Job advancement — check if message contains a valid job selection
