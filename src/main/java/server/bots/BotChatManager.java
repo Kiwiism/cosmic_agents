@@ -17,6 +17,7 @@ import server.agents.capabilities.dialogue.AgentBuildDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentChatBuffQueryFlow;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentChatPendingAction;
+import server.agents.capabilities.dialogue.AgentChatRespecFlow;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueReportFormatter;
 import server.agents.capabilities.dialogue.AgentEquipmentDialogueClassifier;
@@ -153,14 +154,7 @@ public class BotChatManager {
         if (AgentChatBuffQueryFlow.handle(message, buffQueryCallbacks(entry))) {
             return;
         }
-        if (AgentChatCommandClassifier.isApRespecCommand(message)) {
-            BotManager.after(BotManager.randMs(500, 700), () ->
-                    BotManager.getInstance().botReply(entry, BotBuildManager.respecAp(entry, entry.bot)));
-            return;
-        }
-        if (AgentChatCommandClassifier.isRespecCommand(message)) {
-            BotManager.after(BotManager.randMs(500, 700), () ->
-                    BotManager.getInstance().botReply(entry, BotBuildManager.respecSp(entry, entry.bot)));
+        if (AgentChatRespecFlow.handle(message, respecCallbacks(entry))) {
             return;
         }
         String slotName = AgentEquipmentDialogueClassifier.matchUnequipSlotName(message);
@@ -518,6 +512,22 @@ public class BotChatManager {
             @Override
             public void reportSkillBuffDebug() {
                 BotManager.after(BotManager.randMs(500, 700), () -> BotChatManager.reportSkillBuffDebug(entry, entry.bot));
+            }
+        };
+    }
+
+    private static AgentChatRespecFlow.RespecCallbacks respecCallbacks(BotEntry entry) {
+        return new AgentChatRespecFlow.RespecCallbacks() {
+            @Override
+            public void respecAp() {
+                BotManager.after(BotManager.randMs(500, 700), () ->
+                        BotManager.getInstance().botReply(entry, BotBuildManager.respecAp(entry, entry.bot)));
+            }
+
+            @Override
+            public void respecSp() {
+                BotManager.after(BotManager.randMs(500, 700), () ->
+                        BotManager.getInstance().botReply(entry, BotBuildManager.respecSp(entry, entry.bot)));
             }
         };
     }
