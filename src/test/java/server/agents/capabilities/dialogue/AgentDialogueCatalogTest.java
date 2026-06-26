@@ -26,6 +26,9 @@ class AgentDialogueCatalogTest {
         assertTrue(AgentDialogueCatalog.ownerPotShortageReplies().contains("we're low on %s pots too, boss"));
         assertTrue(AgentDialogueCatalog.fameOkReplies().contains("famed %s"));
         assertTrue(AgentDialogueCatalog.welcomeBackOfflinePartyTemplates().contains("wb!! we're at %s"));
+        assertTrue(AgentDialogueCatalog.relogConfirmPrompts().contains("save and relog? type yes"));
+        assertTrue(AgentDialogueCatalog.logoutConfirmedReplies().contains("cya!!"));
+        assertTrue(AgentDialogueCatalog.jobChangeReplyTemplates().contains("ok %s it is!"));
     }
 
     @SuppressWarnings("unchecked")

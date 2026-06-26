@@ -89,6 +89,24 @@ public final class AgentDialogueCatalog {
             "got %s on me",
             "im at %s rn",
             "sitting on %s");
+    private static final List<String> RELOG_CONFIRM_PROMPTS = List.of(
+            "relog? say yes to confirm",
+            "save and relog? type yes",
+            "relogging? say yes to go ahead");
+    private static final List<String> LOGOUT_CONFIRM_PROMPTS = List.of(
+            "log off? you sure? say yes to confirm",
+            "save and log off? say yes if you're sure",
+            "logging off? type yes to confirm");
+    private static final List<String> RELOG_CONFIRMED_REPLIES = List.of(
+            "brb!", "relogging~", "one sec, relogging");
+    private static final List<String> LOGOUT_CONFIRMED_REPLIES = List.of(
+            "ok! saving and logging off~", "cya!!", "ok bye!!");
+    private static final List<String> JOB_CHANGE_REPLY_TEMPLATES = List.of(
+            "ok, ill change to %s!",
+            "alright becoming a %s then",
+            "ok %s it is!",
+            "sure, going %s",
+            "ok changing to %s...");
 
     private AgentDialogueCatalog() {
     }
@@ -147,5 +165,25 @@ public final class AgentDialogueCatalog {
 
     public static List<String> mesoReplies() {
         return MESO_REPLIES;
+    }
+
+    public static List<String> relogConfirmPrompts() {
+        return RELOG_CONFIRM_PROMPTS;
+    }
+
+    public static List<String> logoutConfirmPrompts() {
+        return LOGOUT_CONFIRM_PROMPTS;
+    }
+
+    public static List<String> relogConfirmedReplies() {
+        return RELOG_CONFIRMED_REPLIES;
+    }
+
+    public static List<String> logoutConfirmedReplies() {
+        return LOGOUT_CONFIRMED_REPLIES;
+    }
+
+    public static List<String> jobChangeReplyTemplates() {
+        return JOB_CHANGE_REPLY_TEMPLATES;
     }
 }

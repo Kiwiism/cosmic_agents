@@ -562,11 +562,7 @@ public class BotChatManager {
             BotManager.after(BotManager.randMs(900, 1100), () -> {
                 entry.pendingAction = "relog";
                 BotManager.getInstance().issueStop(entry);
-                List<String> prompts = List.of(
-                        "relog? say yes to confirm",
-                        "save and relog? type yes",
-                        "relogging? say yes to go ahead");
-                BotManager.getInstance().botReply(entry, BotManager.randomReply(prompts));
+                BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.relogConfirmPrompts()));
             });
             return;
         }
@@ -574,11 +570,7 @@ public class BotChatManager {
             BotManager.after(BotManager.randMs(900, 1100), () -> {
                 entry.pendingAction = "logout";
                 BotManager.getInstance().issueStop(entry);
-                List<String> prompts = List.of(
-                        "log off? you sure? say yes to confirm",
-                        "save and log off? say yes if you're sure",
-                        "logging off? type yes to confirm");
-                BotManager.getInstance().botReply(entry, BotManager.randomReply(prompts));
+                BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.logoutConfirmPrompts()));
             });
             return;
         }
@@ -628,7 +620,7 @@ public class BotChatManager {
                     BotManager.after(BotManager.randMs(900, 1100), () -> {
                         Character o = entry.owner;
                         if (o == null) return; // owner logged out before relog fired
-                        BotManager.getInstance().botReply(entry, BotManager.randomReply(List.of("brb!", "relogging~", "one sec, relogging")));
+                        BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.relogConfirmedReplies()));
                         int charId      = entry.bot.getId();
                         int ownerCharId = o.getId();
                         int world       = entry.bot.getClient().getWorld();
@@ -642,7 +634,7 @@ public class BotChatManager {
                     });
                 } else {
                     BotManager.after(BotManager.randMs(900, 1100), () -> {
-                        BotManager.getInstance().botReply(entry, BotManager.randomReply(List.of("ok! saving and logging off~", "cya!!", "ok bye!!")));
+                        BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.logoutConfirmedReplies()));
                         BotManager.after(BotManager.randMs(1800, 2200), () -> {
                             entry.bot.saveCharToDB(true);
                             entry.bot.getClient().disconnect(false, false);
@@ -1003,13 +995,8 @@ public class BotChatManager {
             Job advJob = resolveJobChange(entry.bot, message.toLowerCase());
             if (advJob != null) {
                 String jobName = jobDisplayName(advJob);
-                List<String> replies = List.of(
-                        "ok, ill change to " + jobName + "!",
-                        "alright becoming a " + jobName + " then",
-                        "ok " + jobName + " it is!",
-                        "sure, going " + jobName,
-                        "ok changing to " + jobName + "...");
-                BotManager.getInstance().botReply(entry, BotManager.randomReply(replies));
+                String reply = String.format(BotManager.randomReply(AgentDialogueCatalog.jobChangeReplyTemplates()), jobName);
+                BotManager.getInstance().botReply(entry, reply);
                 BotManager.after(BotManager.randMs(900, 1100), () -> BotStarterKitManager.advanceJob(entry, advJob));
             }
         }
