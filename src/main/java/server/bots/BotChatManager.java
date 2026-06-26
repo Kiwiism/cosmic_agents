@@ -1343,20 +1343,8 @@ public class BotChatManager {
         if (!isLatestTransferRequest(bot, requestId)) {
             return;
         }
-        if (!result.hasItems()) {
-            BotManager.getInstance().botReply(entry, AgentInventoryDialogueReporter.noItemsReply(category));
-            return;
-        }
-
-        switch (transferCommand.mode()) {
-            case TRADE -> BotInventoryManager.startTradeTransfer(category, entry, bot);
-            case CHOICE -> {
-                entry.pendingAction = AgentChatPendingAction.ITEM_CHOICE;
-                entry.pendingDropCategory = category;
-                BotManager.getInstance().botReply(entry, AgentDialogueReportFormatter.dropOrTradePrompt(
-                        category, result.count(), AgentDialogueCatalog.dropOrTradePrompts()));
-            }
-        }
+        applyTransferResultDecision(entry, bot, category, AgentChatTransferFlow.transferResult(
+                transferCommand, result.hasItems(), result.count()));
     }
 
     private static int nextTransferRequestId(Character bot) {
@@ -1399,15 +1387,22 @@ public class BotChatManager {
         if (!isLatestTransferRequest(bot, requestId)) {
             return;
         }
-        if (result.count() <= 0) {
-            BotManager.getInstance().botReply(entry, AgentInventoryDialogueReporter.noItemsReply(category));
-            return;
-        }
+        applyTransferResultDecision(entry, bot, category, AgentChatTransferFlow.itemQueryResult(category, result.count()));
+    }
 
-        entry.pendingAction = AgentChatPendingAction.ITEM_CHOICE;
-        entry.pendingDropCategory = category;
-        BotManager.getInstance().botReply(entry, AgentDialogueReportFormatter.dropOrTradePrompt(
-                category, result.count(), AgentDialogueCatalog.dropOrTradePrompts()));
+    private static void applyTransferResultDecision(BotEntry entry,
+                                                    Character bot,
+                                                    String category,
+                                                    AgentChatTransferFlow.TransferResultDecision decision) {
+        switch (decision.action()) {
+            case REPLY -> BotManager.getInstance().botReply(entry, decision.reply());
+            case START_TRADE -> BotInventoryManager.startTradeTransfer(category, entry, bot);
+            case PROMPT_ITEM_CHOICE -> {
+                entry.pendingAction = AgentChatPendingAction.ITEM_CHOICE;
+                entry.pendingDropCategory = decision.category();
+                BotManager.getInstance().botReply(entry, decision.reply());
+            }
+        }
     }
 
     private static void handleFameCommand(BotEntry entry, String targetName) {

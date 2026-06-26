@@ -27,12 +27,55 @@ public final class AgentChatTransferFlow {
         return true;
     }
 
+    public static TransferResultDecision transferResult(TransferCommand command, boolean hasItems, int count) {
+        if (!hasItems) {
+            return TransferResultDecision.reply(AgentInventoryDialogueReporter.noItemsReply(command.category()));
+        }
+
+        return switch (command.mode()) {
+            case TRADE -> TransferResultDecision.startTrade();
+            case CHOICE -> TransferResultDecision.promptItemChoice(command.category(), count);
+        };
+    }
+
+    public static TransferResultDecision itemQueryResult(String category, int count) {
+        if (count <= 0) {
+            return TransferResultDecision.reply(AgentInventoryDialogueReporter.noItemsReply(category));
+        }
+
+        return TransferResultDecision.promptItemChoice(category, count);
+    }
+
     public enum TransferMode {
         TRADE,
         CHOICE
     }
 
+    public enum TransferResultAction {
+        REPLY,
+        START_TRADE,
+        PROMPT_ITEM_CHOICE
+    }
+
     public record TransferCommand(TransferMode mode, String category) {
+    }
+
+    public record TransferResultDecision(TransferResultAction action, String reply, String category) {
+        private static TransferResultDecision reply(String reply) {
+            return new TransferResultDecision(TransferResultAction.REPLY, reply, null);
+        }
+
+        private static TransferResultDecision startTrade() {
+            return new TransferResultDecision(TransferResultAction.START_TRADE, null, null);
+        }
+
+        private static TransferResultDecision promptItemChoice(String category, int count) {
+            return new TransferResultDecision(
+                    TransferResultAction.PROMPT_ITEM_CHOICE,
+                    AgentDialogueReportFormatter.dropOrTradePrompt(
+                            category, count, AgentDialogueCatalog.dropOrTradePrompts()),
+                    category);
+        }
     }
 
     public interface ItemQueryCallbacks {

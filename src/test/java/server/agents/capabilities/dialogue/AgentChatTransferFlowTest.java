@@ -47,6 +47,56 @@ class AgentChatTransferFlowTest {
         assertNull(callbacks.itemName);
     }
 
+    @Test
+    void shouldReplyWhenTransferCommandHasNoItems() {
+        AgentChatTransferFlow.TransferResultDecision decision = AgentChatTransferFlow.transferResult(
+                new AgentChatTransferFlow.TransferCommand(AgentChatTransferFlow.TransferMode.TRADE, "scrolls"),
+                false,
+                0);
+
+        assertEquals(AgentChatTransferFlow.TransferResultAction.REPLY, decision.action());
+        assertTrue(decision.reply().contains("scrolls"));
+        assertNull(decision.category());
+    }
+
+    @Test
+    void shouldStartTradeWhenTradeCommandHasItems() {
+        AgentChatTransferFlow.TransferResultDecision decision = AgentChatTransferFlow.transferResult(
+                new AgentChatTransferFlow.TransferCommand(AgentChatTransferFlow.TransferMode.TRADE, "scrolls"),
+                true,
+                0);
+
+        assertEquals(AgentChatTransferFlow.TransferResultAction.START_TRADE, decision.action());
+        assertNull(decision.reply());
+        assertNull(decision.category());
+    }
+
+    @Test
+    void shouldPromptChoiceWhenChoiceCommandHasItems() {
+        AgentChatTransferFlow.TransferResultDecision decision = AgentChatTransferFlow.transferResult(
+                new AgentChatTransferFlow.TransferCommand(AgentChatTransferFlow.TransferMode.CHOICE, "scrolls"),
+                true,
+                3);
+
+        assertEquals(AgentChatTransferFlow.TransferResultAction.PROMPT_ITEM_CHOICE, decision.action());
+        assertEquals("scrolls", decision.category());
+        assertTrue(decision.reply().contains("3 scrolls"));
+    }
+
+    @Test
+    void shouldMapItemQueryResultsToChoicePromptOrNoItemsReply() {
+        AgentChatTransferFlow.TransferResultDecision found =
+                AgentChatTransferFlow.itemQueryResult("name:orange potion", 2);
+        AgentChatTransferFlow.TransferResultDecision missing =
+                AgentChatTransferFlow.itemQueryResult("name:orange potion", 0);
+
+        assertEquals(AgentChatTransferFlow.TransferResultAction.PROMPT_ITEM_CHOICE, found.action());
+        assertEquals("name:orange potion", found.category());
+        assertTrue(found.reply().contains("2 orange potion"));
+        assertEquals(AgentChatTransferFlow.TransferResultAction.REPLY, missing.action());
+        assertTrue(missing.reply().contains("orange potion"));
+    }
+
     private static final class TestItemQueryCallbacks implements AgentChatTransferFlow.ItemQueryCallbacks {
         private String itemName;
 
