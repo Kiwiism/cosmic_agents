@@ -8,7 +8,7 @@ Status values:
 - `DELETE_AFTER_MIGRATION`: remove once behavior/callers are migrated.
 - `LEGACY_PROFILE`: preserve as legacy behavior profile until deliberately replaced.
 
-No production behavior is moved in this foundation step. This map is the initial inventory.
+This map tracks reconstruction from the source/master bot baseline into neutral Agent modules.
 
 | Current file | Target Agent destination | Status |
 | --- | --- | --- |
@@ -26,10 +26,10 @@ No production behavior is moved in this foundation step. This map is the initial
 | `src/main/java/server/bots/BotAttackExecutionProvider.java` | `server.agents.capabilities.combat.AgentAttackExecutionProvider` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/BotBuffManager.java` | `server.agents.capabilities.combat.AgentBuffService` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/BotBuildManager.java` | `server.agents.capabilities.build` and `server.agents.profiles.SkillBuildProfile` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
-| `src/main/java/server/bots/BotChatManager.java` | `server.agents.capabilities.dialogue`, `server.agents.commands`, `server.agents.events` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
+| `src/main/java/server/bots/BotChatManager.java` | `server.agents.capabilities.dialogue.AgentDialogueCatalog`, `server.agents.commands.AgentReplyQueue`, `server.agents.events` | `SPLIT_TO_MULTIPLE_AGENT_MODULES`; named random reply pools and reply queue are Agent-owned |
 | `src/main/java/server/bots/BotCombatManager.java` | `server.agents.capabilities.combat` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
 | `src/main/java/server/bots/BotCommandParser.java` | `server.agents.commands.AgentCommandParser` | `COMPATIBILITY_ALIAS_TEMPORARY` |
-| `src/main/java/server/bots/BotEntry.java` | `server.agents.runtime.AgentSession` and capability state objects | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
+| `src/main/java/server/bots/BotEntry.java` | `server.agents.runtime.AgentSession` and capability state objects | `SPLIT_TO_MULTIPLE_AGENT_MODULES`; message queue now uses Agent-owned queued message type |
 | `src/main/java/server/bots/BotEquipManager.java` | `server.agents.capabilities.equipment` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
 | `src/main/java/server/bots/BotFallbackMovementManager.java` | `server.agents.capabilities.movement.AgentFallbackMovementService` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/BotFidgetManager.java` | `server.agents.capabilities.social` and `server.agents.capabilities.movement` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |

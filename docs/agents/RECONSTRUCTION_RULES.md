@@ -19,11 +19,12 @@ Initial reconstruction order:
 
 1. Runtime shell and registry.
 2. Command parser/router boundaries. Initial parser and GM command bridge completed; old bot runtime remains underneath.
-3. Movement and navigation.
-4. Combat.
-5. Loot and supplies.
-6. Inventory, equipment, trade, shop, and build.
-7. Quest, NPC, and PQ.
-8. Dialogue, social, and LLM.
-9. SPI/Cosmic gateway attachment.
-10. Delete old bot-shaped runtime once all callers use Agent modules.
+3. Chat/reply/dialogue boundaries. Reply queue primitive has moved to Agent commands; named random dialogue pools have moved to Agent dialogue catalog; chat parsing and many direct response strings remain in bot compatibility code.
+4. Movement and navigation.
+5. Combat.
+6. Loot and supplies.
+7. Inventory, equipment, trade, shop, and build.
+8. Quest, NPC, and PQ.
+9. Dialogue, social, and LLM.
+10. SPI/Cosmic gateway attachment.
+11. Delete old bot-shaped runtime once all callers use Agent modules.

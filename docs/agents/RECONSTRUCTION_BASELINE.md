@@ -29,6 +29,10 @@ Reconstruction progress:
 - Command parser behavior now lives in `server.agents.commands.AgentCommandParser`.
 - `server.bots.BotCommandParser` remains as a temporary compatibility adapter.
 - GM bot command entry classes still keep their visible command names, but their bodies now route through `server.agents.commands` bridge/executor classes.
+- Reply queue behavior now lives in `server.agents.commands.AgentReplyQueue`.
+- `server.bots.BotChatManager` still exposes the legacy queue methods and adapts bot runtime state into the Agent queue.
+- Named random dialogue pools now live in `server.agents.capabilities.dialogue.AgentDialogueCatalog`.
+- `server.bots.BotChatManager` still owns chat parsing and most direct response strings while it is split incrementally.
 - Bot runtime behavior still lives under `server.bots` and has not been functionally changed.
 
 Important baseline note:

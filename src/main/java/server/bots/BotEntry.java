@@ -7,6 +7,7 @@ import server.life.Monster;
 import server.maps.Foothold;
 import server.maps.MapItem;
 import server.maps.Rope;
+import server.agents.commands.AgentQueuedMessage;
 
 import java.awt.*;
 import java.util.ArrayDeque;
@@ -238,7 +239,7 @@ public class BotEntry {
     Map<Item, Short> pendingTradeRestoreSlots = new IdentityHashMap<>();
 
     // Message queue
-    final ArrayDeque<BotChatManager.QueuedMessage> msgQueue = new ArrayDeque<>();
+    final ArrayDeque<AgentQueuedMessage> msgQueue = new ArrayDeque<>();
     boolean msgSending = false;
 
     // Generic scripted task queue. Per-map scripts enqueue small primitives

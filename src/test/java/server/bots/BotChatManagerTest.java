@@ -5,6 +5,7 @@ import client.Job;
 import client.inventory.Inventory;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
+import server.agents.commands.AgentQueuedMessage;
 import server.maps.FieldLimit;
 import server.maps.MapleMap;
 
@@ -390,12 +391,12 @@ class BotChatManagerTest {
         BotChatManager.queueBotReply(entry, "owner reply");
         BotChatManager.queueBotSay(entry, "party chatter");
 
-        BotChatManager.QueuedMessage first = entry.msgQueue.poll();
-        BotChatManager.QueuedMessage second = entry.msgQueue.poll();
-        assertEquals("owner reply", first.text);
-        assertTrue(first.ownerDirected);
-        assertEquals("party chatter", second.text);
-        assertFalse(second.ownerDirected);
+        AgentQueuedMessage first = entry.msgQueue.poll();
+        AgentQueuedMessage second = entry.msgQueue.poll();
+        assertEquals("owner reply", first.text());
+        assertTrue(first.ownerDirected());
+        assertEquals("party chatter", second.text());
+        assertFalse(second.ownerDirected());
     }
 
     @Test
@@ -408,8 +409,8 @@ class BotChatManagerTest {
         reportHelp.invoke(null, entry);
 
         assertEquals(5, entry.msgQueue.size());
-        for (BotChatManager.QueuedMessage message : entry.msgQueue) {
-            assertTrue(message.ownerDirected);
+        for (AgentQueuedMessage message : entry.msgQueue) {
+            assertTrue(message.ownerDirected());
         }
     }
 

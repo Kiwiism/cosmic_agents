@@ -13,6 +13,9 @@ import constants.game.ExpTable;
 import constants.game.GameConstants;
 import constants.inventory.ItemConstants;
 import server.Trade;
+import server.agents.capabilities.dialogue.AgentDialogueCatalog;
+import server.agents.commands.AgentQueuedMessage;
+import server.agents.commands.AgentReplyQueue;
 import server.combat.CombatFormulaProvider;
 import server.maps.FieldLimit;
 import server.maps.MapleMap;
@@ -45,16 +48,6 @@ public class BotChatManager {
     private record LearnedSkill(int id, String name, int level) {}
     private record TransferCommandResult(boolean hasItems, int count) {}
     private record ItemQueryResult(int count) {}
-    static final class QueuedMessage {
-        final String text;
-        final boolean ownerDirected;
-
-        QueuedMessage(String text, boolean ownerDirected) {
-            this.text = text;
-            this.ownerDirected = ownerDirected;
-        }
-    }
-
     // --- helper prefix used in several info patterns ---
     // optional preamble: "what's/tell me/check … your/ur" or nothing at all
     // \\b at end ensures word boundary when no prefix is present
@@ -88,19 +81,9 @@ public class BotChatManager {
             + "chill(\\s+here)?|idle|park(\\s+here)?)\\b",
             Pattern.CASE_INSENSITIVE);
 
-    private static final List<String> FOLLOW_REPLIES = List.of(
-            "ok", "k", "sure", "omw", "got it", "coming",
-            "roger", "yep", "alright", "aye", "lets go!", "as you wish", "ok boss",
-            "on my way", "right behind you", "np", "kk omw", "w8 up",
-            "gotchu", "moving now", "aye aye");
-    private static final List<String> MOVE_HERE_REPLIES = List.of(
-            "k, coming", "omw", "ok heading over", "on my way", "k",
-            "got it, moving there", "coming, then staying put", "k moving there", "sure omw");
-    private static final List<String> STOP_REPLIES = List.of(
-            "ok", "k", "sure", "alright", "got it", "stopping",
-            "ok ill wait here", "ill be here", "np", "standing by",
-            "understood", "ok boss", "staying put", "chilling here",
-            "resting", "aye aye", "on it", "noted");
+    private static final List<String> FOLLOW_REPLIES = AgentDialogueCatalog.followReplies();
+    private static final List<String> MOVE_HERE_REPLIES = AgentDialogueCatalog.moveHereReplies();
+    private static final List<String> STOP_REPLIES = AgentDialogueCatalog.stopReplies();
 
     private static final Pattern GRIND_PATTERN = Pattern.compile(
             "\\b(go\\s+|start\\s+|begin\\s+|let.?s\\s+)?(farm(ing)?|grind(ing)?|hunt(ing)?|train(ing)?)\\b"
@@ -210,58 +193,16 @@ public class BotChatManager {
             "\\b(?:need|nned|low\\s+on|out\\s+of|running\\s+low\\s+on)\\s+(?:some\\s+)?(?:ammo|arrows?|bolts?)\\b"
             + "|\\b(?:any(?:body|one)?|someone|somebody|u|you)\\s+(?:got|have|has)\\s+(?:any\\s+|some\\s+)?(?:ammo|arrows?|bolts?)\\b",
             Pattern.CASE_INSENSITIVE);
-    private static final List<String> AMMO_NOT_NEEDED_REPLIES = List.of(
-            "i don't use shareable arrow ammo rn",
-            "i don't need arrows or bolts rn",
-            "ammo sharing is only for arrows and bolts",
-            "not using bow ammo rn");
+    private static final List<String> AMMO_NOT_NEEDED_REPLIES = AgentDialogueCatalog.ammoNotNeededReplies();
 
     private static final Pattern FAME_PATTERN = Pattern.compile(
             "^\\s*fame\\s+(me|\\S+?)\\s*[?!.,]*\\s*$",
             Pattern.CASE_INSENSITIVE);
-    private static final List<String> FAME_OK_REPLIES = List.of(
-            "k", "kk", "kkk", "ok", "sure", "done",
-            "famed %s", "my turn tomorrow?", "that would be 1m pls",
-            "trade me 500k first", "S> fame 1m", "famed!", "got u",
-            "ok famed", "yw", "done, fame me back?",
-            "np", "ok but u owe me", "famed %s, now we're even",
-            "ok done, 1m in the mail pls", "fame4fame?",
-            "consider this a gift", "ok fine, famed",
-            "you're welcome, now buy me dinner", "done. u got a good one");
-    private static final List<String> FAME_COOLDOWN_REPLIES = List.of(
-            "already famed someone today, try tmrw",
-            "can only fame once a day, already used it",
-            "famed earlier today, comeback tomorrow",
-            "daily limit hit, tomorrow ok?",
-            "i'm tapped out on fame for today");
-    private static final List<String> FAME_SAME_PERSON_REPLIES = List.of(
-            "already famed %s this month",
-            "famed %s too recently, next month",
-            "can't fame %s again yet, monthly limit",
-            "monthly limit for %s, try again next month",
-            "famed %s already this month, gotta wait");
-    private static final List<String> OWNER_POT_SHORTAGE_REPLIES = List.of(
-            "almost out of %s pots too, i thought u were our shopper?",
-            "i checked, nobody has spare %s pots. that's kinda your department lol",
-            "we're low on %s pots too, boss",
-            "no spare %s pots in the squad rn",
-            "everyone's light on %s pots, might need a shop run",
-            "i'd help, but we're all thin on %s pots",
-            "no one has enough %s pots to share rn",
-            "we're not holding extra %s pots, thought you packed supplies",
-            "can't find spare %s pots. maybe time to restock?",
-            "almost dry on %s pots too, don't look at me");
-    private static final List<String> OWNER_AMMO_SHORTAGE_REPLIES = List.of(
-            "almost out of ammo too, i thought u were our shopper?",
-            "i checked, nobody has spare ammo. that's kinda your department lol",
-            "we're low on ammo too, boss",
-            "no spare ammo in the squad rn",
-            "everyone's light on ammo, might need a shop run",
-            "i'd help, but we're all thin on ammo",
-            "no one has enough ammo to share rn",
-            "we're not holding extra ammo, thought you packed supplies",
-            "can't find spare ammo. maybe time to restock?",
-            "almost dry on ammo too, don't look at me");
+    private static final List<String> FAME_OK_REPLIES = AgentDialogueCatalog.fameOkReplies();
+    private static final List<String> FAME_COOLDOWN_REPLIES = AgentDialogueCatalog.fameCooldownReplies();
+    private static final List<String> FAME_SAME_PERSON_REPLIES = AgentDialogueCatalog.fameSamePersonReplies();
+    private static final List<String> OWNER_POT_SHORTAGE_REPLIES = AgentDialogueCatalog.ownerPotShortageReplies();
+    private static final List<String> OWNER_AMMO_SHORTAGE_REPLIES = AgentDialogueCatalog.ownerAmmoShortageReplies();
     private static final Pattern SUPPORT_ON_PATTERN = Pattern.compile(
             "\\b(support\\s+(me|us|party)|support\\s+on|auto\\s+support|skill\\s+buffs?\\s+on)\\b",
             Pattern.CASE_INSENSITIVE);
@@ -390,8 +331,7 @@ public class BotChatManager {
     private static final Pattern TRADE_INVITE_PATTERN = Pattern.compile(
             "^\\s*trade(\\s+(me|pls|please))?\\s*[?!.,]*\\s*$",
             Pattern.CASE_INSENSITIVE);
-    private static final List<String> TRADE_INVITE_REPLIES = List.of(
-            "ok", "sure", "k", "one sec", "coming to trade", "np", "k opening trade");
+    private static final List<String> TRADE_INVITE_REPLIES = AgentDialogueCatalog.tradeInviteReplies();
 
     // Drop-choice responses (matched only when pendingAction = "item_choice")
     private static final Pattern DROP_CHOICE_DROP_PATTERN = Pattern.compile(
@@ -576,31 +516,12 @@ public class BotChatManager {
             "\\b(no|nope|nah|nvm|never\\s*mind|dont|don't|not\\s+now|skip)\\b",
             Pattern.CASE_INSENSITIVE);
 
-    private static final List<String> GREETING_REPLIES = List.of(
-            "hey", "hi", "sup", "yo", "heya", "hii", "hey!!", "hi!!", "hai", "haii",
-            "heyo", "ello", "o/", "hai", "eyy", "henlo", "o hey", "yo dude", "hey there", "hi there", "hi guys", "what's up", "howdy", "how's it going");
-    private static final List<String> WB_REPLIES = List.of(
-            "wb", "wb!", "welcome back", "oh ur back", "hey ur back", "welcome back!!",
-            "wb~", "there you are", "oh hey", "finally lol", "took ya a bit", "wb lol", "where were you lol", "ready to roll?", "lets continue!",
-            "hey you're back", "oh wb!", "been waiting for you", "waiting on you", "ready to go?", "ready?", "back already?", "back?", "u back?");
+    private static final List<String> GREETING_REPLIES = AgentDialogueCatalog.greetingReplies();
+    private static final List<String> WB_REPLIES = AgentDialogueCatalog.welcomeBackReplies();
     // %s = current map name (bot is in town since the offline-return warp put it there).
     // Sent via party chat so the owner sees it across maps when they reconnect.
-    private static final List<String> WB_OFFLINE_PARTY_TEMPLATES = List.of(
-            "wb! we've been waiting at %s since u went offline",
-            "yoo wb, chillin at %s for a while now",
-            "back online? we parked at %s",
-            "wb, took a break in %s when u dropped",
-            "hey wb! waiting in %s",
-            "wb!! we're at %s",
-            "yo wb, headed to %s when u afk'd",
-            "oh wb, been camping at %s",
-            "wb~ we're in %s, come grab us",
-            "hey ur back!! we're at %s");
-    private static final List<String> MESO_REPLIES = List.of(
-            "I have %s",
-            "got %s on me",
-            "im at %s rn",
-            "sitting on %s");
+    private static final List<String> WB_OFFLINE_PARTY_TEMPLATES = AgentDialogueCatalog.welcomeBackOfflinePartyTemplates();
+    private static final List<String> MESO_REPLIES = AgentDialogueCatalog.mesoReplies();
 
     private enum TransferMode {
         TRADE,
@@ -1182,32 +1103,48 @@ public class BotChatManager {
     }
 
     private static long queueMessageWithEstimatedDelay(BotEntry entry, String message, boolean ownerDirected) {
-        long estimatedDelayMs;
-        synchronized (entry.msgQueue) {
-            estimatedDelayMs = entry.msgSending
-                    ? (long) (entry.msgQueue.size() + 1) * 5_200L
-                    : 0L;
-            entry.msgQueue.add(new QueuedMessage(message, ownerDirected));
-            if (!entry.msgSending) {
-                entry.msgSending = true;
-                drainMsgQueue(entry);
-            }
-        }
-        return estimatedDelayMs;
+        return AgentReplyQueue.queueMessageWithEstimatedDelay(
+                replyQueueState(entry),
+                message,
+                ownerDirected,
+                replyQueueDispatcher(entry));
     }
 
-    private static void drainMsgQueue(BotEntry entry) {
-        QueuedMessage msg;
-        synchronized (entry.msgQueue) {
-            msg = entry.msgQueue.poll();
-            if (msg == null) { entry.msgSending = false; return; }
-        }
-        if (msg.ownerDirected) {
-            BotManager.getInstance().botReply(entry, msg.text);
-        } else {
-            BotManager.getInstance().botSay(entry, msg.text);
-        }
-        BotManager.after(BotManager.randMs(4900, 5100), () -> drainMsgQueue(entry));
+    private static AgentReplyQueue.State replyQueueState(BotEntry entry) {
+        return new AgentReplyQueue.State() {
+            @Override
+            public java.util.Deque<AgentQueuedMessage> queue() {
+                return entry.msgQueue;
+            }
+
+            @Override
+            public boolean isSending() {
+                return entry.msgSending;
+            }
+
+            @Override
+            public void setSending(boolean sending) {
+                entry.msgSending = sending;
+            }
+        };
+    }
+
+    private static AgentReplyQueue.Dispatcher replyQueueDispatcher(BotEntry entry) {
+        return new AgentReplyQueue.Dispatcher() {
+            @Override
+            public void dispatch(AgentQueuedMessage message) {
+                if (message.ownerDirected()) {
+                    BotManager.getInstance().botReply(entry, message.text());
+                } else {
+                    BotManager.getInstance().botSay(entry, message.text());
+                }
+            }
+
+            @Override
+            public void scheduleNext(Runnable task, int delayMs) {
+                BotManager.after(delayMs, task);
+            }
+        };
     }
 
     // Status check — called on spawn, grind start, greeting, and level-up
