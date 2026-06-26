@@ -1048,7 +1048,7 @@ public class BotChatManager {
     }
 
     private static void reportInventory(BotEntry entry, Character bot) {
-        queueBotReply(entry, BotInventoryManager.inventorySummary(bot));
+        queueBotReply(entry, AgentInventoryDialogueReporter.inventorySummary(bot));
     }
 
     private static void reportMesos(BotEntry entry, Character bot) {

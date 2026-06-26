@@ -4,7 +4,10 @@ import client.Character;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
+import config.YamlConfig;
 import constants.inventory.ItemConstants;
+import server.ItemInformationProvider;
+import server.StatEffect;
 
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -43,6 +46,96 @@ public final class AgentInventoryDialogueReporter {
             sb.append(type.name().toLowerCase()).append(": ").append(used).append('/').append(total);
         }
         return sb.toString();
+    }
+
+    public static String inventorySummary(Character agent) {
+        StringBuilder sb = new StringBuilder();
+        for (InventoryType type : List.of(
+                InventoryType.EQUIP, InventoryType.USE, InventoryType.ETC, InventoryType.SETUP)) {
+            Inventory inv = agent.getInventory(type);
+            int used = inv.getSlotLimit() - inv.getNumFreeSlot();
+            int total = inv.getSlotLimit();
+            if (!sb.isEmpty()) {
+                sb.append(" | ");
+            }
+            sb.append(type.name().toLowerCase()).append(' ').append(used).append('/').append(total);
+            if (type == InventoryType.USE) {
+                appendUseInventorySummary(sb, inv);
+            }
+        }
+        return sb.toString();
+    }
+
+    private static void appendUseInventorySummary(StringBuilder sb, Inventory inventory) {
+        int scrolls = 0;
+        int pots = 0;
+        int buffs = 0;
+        for (Item item : inventory.list()) {
+            if (!isSafeToMention(item)) {
+                continue;
+            }
+            int id = item.getItemId();
+            if (ItemConstants.isEquipScroll(id)) {
+                scrolls += item.getQuantity();
+            } else if (isRecoveryPotion(id)) {
+                pots += item.getQuantity();
+            } else if (isBuffConsumable(id)) {
+                buffs += item.getQuantity();
+            }
+        }
+        if (scrolls <= 0 && pots <= 0 && buffs <= 0) {
+            return;
+        }
+
+        sb.append(" (");
+        boolean any = false;
+        if (scrolls > 0) {
+            sb.append(scrolls).append(scrolls != 1 ? " scrolls" : " scroll");
+            any = true;
+        }
+        if (pots > 0) {
+            if (any) {
+                sb.append(", ");
+            }
+            sb.append(pots).append(pots != 1 ? " pots" : " pot");
+            any = true;
+        }
+        if (buffs > 0) {
+            if (any) {
+                sb.append(", ");
+            }
+            sb.append(buffs).append(buffs != 1 ? " buffs" : " buff");
+        }
+        sb.append(')');
+    }
+
+    private static boolean isRecoveryPotion(int itemId) {
+        StatEffect effect = itemEffect(itemId);
+        if (effect == null) {
+            return false;
+        }
+        boolean heals = effect.getHp() > 0 || effect.getMp() > 0 || effect.getHpRate() > 0 || effect.getMpRate() > 0;
+        return heals && effect.getStatups().isEmpty();
+    }
+
+    private static boolean isBuffConsumable(int itemId) {
+        StatEffect effect = itemEffect(itemId);
+        return effect != null && !effect.getStatups().isEmpty();
+    }
+
+    private static StatEffect itemEffect(int itemId) {
+        try {
+            return ItemInformationProvider.getInstance().getItemEffect(itemId);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static boolean isSafeToMention(Item item) {
+        if (item.isUntradeable() && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) {
+            return false;
+        }
+        return !ItemInformationProvider.getInstance().isQuestItem(item.getItemId());
     }
 
     public static String noItemsReply(String category) {

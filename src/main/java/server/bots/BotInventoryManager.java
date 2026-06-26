@@ -1302,34 +1302,7 @@ class BotInventoryManager {
 
     /** Full bag summary: "equip 10/24 | use 8/24 (3 scrolls, 5 pots, 2 buffs) | etc 3/24" */
     static String inventorySummary(Character bot) {
-        StringBuilder sb = new StringBuilder();
-        for (InventoryType type : List.of(
-                InventoryType.EQUIP, InventoryType.USE, InventoryType.ETC, InventoryType.SETUP)) {
-            Inventory inv = bot.getInventory(type);
-            int used  = inv.getSlotLimit() - inv.getNumFreeSlot();
-            int total = inv.getSlotLimit();
-            if (!sb.isEmpty()) sb.append(" | ");
-            sb.append(type.name().toLowerCase()).append(' ').append(used).append('/').append(total);
-            if (type == InventoryType.USE) {
-                int scrolls = 0, pots = 0, buffs = 0;
-                for (Item item : inv.list()) {
-                    if (!isSafeToDrop(item)) continue;
-                    int id = item.getItemId();
-                    if (ItemConstants.isEquipScroll(id)) scrolls += item.getQuantity();
-                    else if (isRecoveryPotion(id))       pots    += item.getQuantity();
-                    else if (isBuffConsumable(id))        buffs   += item.getQuantity();
-                }
-                if (scrolls > 0 || pots > 0 || buffs > 0) {
-                    sb.append(" (");
-                    boolean any = false;
-                    if (scrolls > 0) { sb.append(scrolls).append(scrolls != 1 ? " scrolls" : " scroll"); any = true; }
-                    if (pots > 0)    { if (any) sb.append(", "); sb.append(pots).append(pots != 1 ? " pots" : " pot"); any = true; }
-                    if (buffs > 0)   { if (any) sb.append(", "); sb.append(buffs).append(buffs != 1 ? " buffs" : " buff"); }
-                    sb.append(')');
-                }
-            }
-        }
-        return sb.toString();
+        return AgentInventoryDialogueReporter.inventorySummary(bot);
     }
 
     // ─── Internals ────────────────────────────────────────────────────────────
