@@ -1543,15 +1543,15 @@ public class BotChatManager {
     }
 
     static boolean isFarmHereCommand(String message) {
-        return matchesWholeCommand(FARM_HERE_PATTERN, message);
+        return AgentChatCommandClassifier.isFarmHereCommand(message);
     }
 
     static boolean isPatrolCommand(String message) {
-        return matchesWholeCommand(PATROL_PATTERN, message);
+        return AgentChatCommandClassifier.isPatrolCommand(message);
     }
 
     static boolean isMoveHereCommand(String message) {
-        return matchesWholeCommand(MOVE_HERE_PATTERN, message);
+        return AgentChatCommandClassifier.isMoveHereCommand(message);
     }
 
     static boolean isProactiveOffersOnCommand(String message) {
@@ -1563,15 +1563,15 @@ public class BotChatManager {
     }
 
     static boolean isFollowCommand(String message) {
-        return matchesWholeCommand(FOLLOW_PATTERN, message);
+        return AgentChatCommandClassifier.isFollowCommand(message);
     }
 
     static boolean isGrindCommand(String message) {
-        return matchesWholeCommand(GRIND_PATTERN, message);
+        return AgentChatCommandClassifier.isGrindCommand(message);
     }
 
     static boolean isStopCommand(String message) {
-        return matchesWholeCommand(STOP_PATTERN, message);
+        return AgentChatCommandClassifier.isStopCommand(message);
     }
 
     private static void handleApBuildSelection(BotEntry entry, String message) {
@@ -1750,7 +1750,7 @@ public class BotChatManager {
     }
 
     static boolean isFidgetCommand(String message) {
-        return message != null && FIDGET_PATTERN.matcher(message).find();
+        return AgentChatCommandClassifier.isFidgetCommand(message);
     }
 
     static int randomFidgetExpression() {
