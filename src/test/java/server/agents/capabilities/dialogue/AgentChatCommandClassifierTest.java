@@ -125,4 +125,25 @@ class AgentChatCommandClassifierTest {
         assertTrue(AgentChatCommandClassifier.isBuffDebugQuery("active buffs"));
         assertTrue(AgentChatCommandClassifier.isSkillBuffDebugQuery("skill buffs debug"));
     }
+
+    @Test
+    void shouldClassifySupportHealAndBuffToggles() {
+        assertTrue(AgentChatCommandClassifier.isSupportOnCommand("support party"));
+        assertTrue(AgentChatCommandClassifier.isSupportOnCommand("skill buffs on"));
+        assertTrue(AgentChatCommandClassifier.isSupportOffCommand("stop buffing"));
+        assertTrue(AgentChatCommandClassifier.isSupportOffCommand("no skill buffs"));
+
+        assertTrue(AgentChatCommandClassifier.isHealsOnCommand("auto heals"));
+        assertTrue(AgentChatCommandClassifier.isHealsOnCommand("heal us"));
+        assertTrue(AgentChatCommandClassifier.isHealsOffCommand("stop healing"));
+        assertTrue(AgentChatCommandClassifier.isHealsOffCommand("no heals"));
+
+        assertTrue(AgentChatCommandClassifier.isBuffConsumablesOnCommand("buff pots on"));
+        assertTrue(AgentChatCommandClassifier.isBuffConsumablesOnCommand("auto buff pot"));
+        assertTrue(AgentChatCommandClassifier.isBuffConsumablesOffCommand("buff pots off"));
+        assertTrue(AgentChatCommandClassifier.isBuffConsumablesOffCommand("no buff pots"));
+        assertTrue(AgentChatCommandClassifier.isBuffConsumablesCheapCommand("buff cheap"));
+        assertTrue(AgentChatCommandClassifier.isBuffConsumablesMaxCommand("buff pots max"));
+        assertTrue(AgentChatCommandClassifier.isBuffConsumablesMaxCommand("buff good"));
+    }
 }

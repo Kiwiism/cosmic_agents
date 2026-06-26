@@ -156,6 +156,30 @@ public final class AgentChatCommandClassifier {
     private static final Pattern SKILL_BUFF_DEBUG_PATTERN = Pattern.compile(
             "\\bskill\\s+buffs?\\s*(?:debug|\\?)?\\b|\\bdebug\\s+skill\\s+buffs?\\b",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern SUPPORT_ON_PATTERN = Pattern.compile(
+            "\\b(support\\s+(me|us|party)|support\\s+on|auto\\s+support|skill\\s+buffs?\\s+on)\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern SUPPORT_OFF_PATTERN = Pattern.compile(
+            "\\b(support\\s+off|stop\\s+support(ing)?|no\\s+support|skill\\s+buffs?\\s+off|no\\s+skill\\s+buffs?|stop\\s+(skill\\s+)?buffing)\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern HEALS_ON_PATTERN = Pattern.compile(
+            "\\b(heals?\\s+(me|us|party)|heals?\\s+on|auto\\s+heals?)\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern HEALS_OFF_PATTERN = Pattern.compile(
+            "\\b(heals?\\s+off|stop\\s+heal(ing)?|no\\s+heals?)\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern BUFF_ON_PATTERN = Pattern.compile(
+            "\\bbuff\\s+(pots?\\s+)?on\\b|\\bauto\\s+buff\\s+pots?\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern BUFF_OFF_PATTERN = Pattern.compile(
+            "\\bbuff\\s+(pots?\\s+)?off\\b|\\bno\\s+buff\\s+pots?\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern BUFF_CHEAP_PATTERN = Pattern.compile(
+            "\\bbuff\\s+(pots?\\s+)?cheap\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern BUFF_MAX_PATTERN = Pattern.compile(
+            "\\bbuff\\s+(pots?\\s+)?(max|best|good)\\b",
+            Pattern.CASE_INSENSITIVE);
     private static final Pattern NEED_HP_POT_PATTERN = Pattern.compile(
             "\\b(?:need|nned|low\\s+on|out\\s+of|running\\s+low\\s+on)\\s+(?:some\\s+)?(?:hp|health)\\s+(?:pots?|potions?|supplies)\\b"
             + "|\\b(?:any(?:body|one)?|someone|somebody|u|you)\\s+(?:got|have|has)\\s+(?:any\\s+|some\\s+)?(?:hp|health)\\s+(?:pots?|potions?)\\b",
@@ -296,6 +320,38 @@ public final class AgentChatCommandClassifier {
 
     public static boolean isSkillBuffDebugQuery(String message) {
         return matchesWholeCommand(SKILL_BUFF_DEBUG_PATTERN, message);
+    }
+
+    public static boolean isSupportOnCommand(String message) {
+        return SUPPORT_ON_PATTERN.matcher(message).find();
+    }
+
+    public static boolean isSupportOffCommand(String message) {
+        return SUPPORT_OFF_PATTERN.matcher(message).find();
+    }
+
+    public static boolean isHealsOnCommand(String message) {
+        return HEALS_ON_PATTERN.matcher(message).find();
+    }
+
+    public static boolean isHealsOffCommand(String message) {
+        return HEALS_OFF_PATTERN.matcher(message).find();
+    }
+
+    public static boolean isBuffConsumablesOnCommand(String message) {
+        return BUFF_ON_PATTERN.matcher(message).find();
+    }
+
+    public static boolean isBuffConsumablesOffCommand(String message) {
+        return BUFF_OFF_PATTERN.matcher(message).find();
+    }
+
+    public static boolean isBuffConsumablesCheapCommand(String message) {
+        return BUFF_CHEAP_PATTERN.matcher(message).find();
+    }
+
+    public static boolean isBuffConsumablesMaxCommand(String message) {
+        return BUFF_MAX_PATTERN.matcher(message).find();
     }
 
     public static boolean isProactiveOffersOnCommand(String message) {

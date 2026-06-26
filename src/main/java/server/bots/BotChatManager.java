@@ -189,30 +189,6 @@ public class BotChatManager {
     private static final List<String> FAME_SAME_PERSON_REPLIES = AgentDialogueCatalog.fameSamePersonReplies();
     private static final List<String> OWNER_POT_SHORTAGE_REPLIES = AgentDialogueCatalog.ownerPotShortageReplies();
     private static final List<String> OWNER_AMMO_SHORTAGE_REPLIES = AgentDialogueCatalog.ownerAmmoShortageReplies();
-    private static final Pattern SUPPORT_ON_PATTERN = Pattern.compile(
-            "\\b(support\\s+(me|us|party)|support\\s+on|auto\\s+support|skill\\s+buffs?\\s+on)\\b",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern SUPPORT_OFF_PATTERN = Pattern.compile(
-            "\\b(support\\s+off|stop\\s+support(ing)?|no\\s+support|skill\\s+buffs?\\s+off|no\\s+skill\\s+buffs?|stop\\s+(skill\\s+)?buffing)\\b",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern HEALS_ON_PATTERN = Pattern.compile(
-            "\\b(heals?\\s+(me|us|party)|heals?\\s+on|auto\\s+heals?)\\b",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern HEALS_OFF_PATTERN = Pattern.compile(
-            "\\b(heals?\\s+off|stop\\s+heal(ing)?|no\\s+heals?)\\b",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern BUFF_ON_PATTERN = Pattern.compile(
-            "\\bbuff\\s+(pots?\\s+)?on\\b|\\bauto\\s+buff\\s+pots?\\b",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern BUFF_OFF_PATTERN = Pattern.compile(
-            "\\bbuff\\s+(pots?\\s+)?off\\b|\\bno\\s+buff\\s+pots?\\b",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern BUFF_CHEAP_PATTERN = Pattern.compile(
-            "\\bbuff\\s+(pots?\\s+)?cheap\\b",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern BUFF_MAX_PATTERN = Pattern.compile(
-            "\\bbuff\\s+(pots?\\s+)?(max|best|good)\\b",
-            Pattern.CASE_INSENSITIVE);
     private static final Pattern PROACTIVE_OFFERS_ON_PATTERN = Pattern.compile(
             "\\b(?:(?:proactive|future)\\s+(?:offers?|upgrades?)\\s+on|offers?\\s+(?:proactive|future)\\s+on)\\b",
             Pattern.CASE_INSENSITIVE);
@@ -663,35 +639,35 @@ public class BotChatManager {
             BotManager.after(BotManager.randMs(500, 900), () -> handleFameCommand(entry, fameTarget));
             return;
         }
-        if (SUPPORT_OFF_PATTERN.matcher(message).find()) {
+        if (AgentChatCommandClassifier.isSupportOffCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.skillBuffsEnabled = false;
                 BotManager.getInstance().botReply(entry, "ok, skill buffs off");
             });
             return;
         }
-        if (SUPPORT_ON_PATTERN.matcher(message).find()) {
+        if (AgentChatCommandClassifier.isSupportOnCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.skillBuffsEnabled = true;
                 BotManager.getInstance().botReply(entry, "ok, skill buffs on");
             });
             return;
         }
-        if (HEALS_OFF_PATTERN.matcher(message).find()) {
+        if (AgentChatCommandClassifier.isHealsOffCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.supportHealsEnabled = false;
                 BotManager.getInstance().botReply(entry, "ok, no heals");
             });
             return;
         }
-        if (HEALS_ON_PATTERN.matcher(message).find()) {
+        if (AgentChatCommandClassifier.isHealsOnCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.supportHealsEnabled = true;
                 BotManager.getInstance().botReply(entry, "ok, ill heal when needed");
             });
             return;
         }
-        if (BUFF_OFF_PATTERN.matcher(message).find()) {
+        if (AgentChatCommandClassifier.isBuffConsumablesOffCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.buffConsumablesEnabled = false;
                 entry.lastBuffScanMs = 0;
@@ -699,7 +675,7 @@ public class BotChatManager {
             });
             return;
         }
-        if (BUFF_ON_PATTERN.matcher(message).find()) {
+        if (AgentChatCommandClassifier.isBuffConsumablesOnCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.buffConsumablesEnabled = true;
                 entry.lastBuffScanMs = 0;
@@ -708,7 +684,7 @@ public class BotChatManager {
             });
             return;
         }
-        if (BUFF_CHEAP_PATTERN.matcher(message).find()) {
+        if (AgentChatCommandClassifier.isBuffConsumablesCheapCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.buffCheapMode = true;
                 entry.lastBuffScanMs = 0;
@@ -716,7 +692,7 @@ public class BotChatManager {
             });
             return;
         }
-        if (BUFF_MAX_PATTERN.matcher(message).find()) {
+        if (AgentChatCommandClassifier.isBuffConsumablesMaxCommand(message)) {
             BotManager.after(BotManager.randMs(500, 700), () -> {
                 entry.buffCheapMode = false;
                 entry.lastBuffScanMs = 0;
