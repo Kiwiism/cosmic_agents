@@ -18,12 +18,12 @@ class AgentDialogueCatalogTest {
         assertSame(AgentDialogueCatalog.stopReplies(), botChatPool("STOP_REPLIES"));
         assertSame(AgentDialogueCatalog.greetingReplies(), botChatPool("GREETING_REPLIES"));
         assertSame(AgentDialogueCatalog.welcomeBackReplies(), botChatPool("WB_REPLIES"));
-        assertSame(AgentDialogueCatalog.mesoReplies(), botChatPool("MESO_REPLIES"));
     }
 
     @Test
     void catalogPreservesExpectedLegacyLines() {
         assertTrue(AgentDialogueCatalog.followReplies().contains("w8 up"));
+        assertTrue(AgentDialogueCatalog.mesoReplies().contains("I have %s"));
         assertTrue(AgentDialogueCatalog.dropOrTradePrompts().contains("got %s, want me to trade or drop?"));
         assertTrue(AgentDialogueCatalog.ownerPotShortageReplies().contains("we're low on %s pots too, boss"));
         assertTrue(AgentDialogueCatalog.fameOkReplies().contains("famed %s"));

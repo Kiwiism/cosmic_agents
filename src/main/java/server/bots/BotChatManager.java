@@ -82,8 +82,6 @@ public class BotChatManager {
     // %s = current map name (bot is in town since the offline-return warp put it there).
     // Sent via party chat so the owner sees it across maps when they reconnect.
     private static final List<String> WB_OFFLINE_PARTY_TEMPLATES = AgentDialogueCatalog.welcomeBackOfflinePartyTemplates();
-    private static final List<String> DROP_OR_TRADE_PROMPTS = AgentDialogueCatalog.dropOrTradePrompts();
-
     private static void markOwnerActive(BotEntry entry) {
         Character owner = entry.owner;
         entry.ownerWasAfk = false;
@@ -1619,7 +1617,8 @@ public class BotChatManager {
             case CHOICE -> {
                 entry.pendingAction = AgentChatPendingAction.ITEM_CHOICE;
                 entry.pendingDropCategory = category;
-                BotManager.getInstance().botReply(entry, dropOrTradePrompt(category, result.count()));
+                BotManager.getInstance().botReply(entry, AgentDialogueReportFormatter.dropOrTradePrompt(
+                        category, result.count(), AgentDialogueCatalog.dropOrTradePrompts()));
             }
         }
     }
@@ -1671,11 +1670,8 @@ public class BotChatManager {
 
         entry.pendingAction = AgentChatPendingAction.ITEM_CHOICE;
         entry.pendingDropCategory = category;
-        BotManager.getInstance().botReply(entry, dropOrTradePrompt(category, result.count()));
-    }
-
-    private static String dropOrTradePrompt(String category, int count) {
-        return AgentDialogueReportFormatter.dropOrTradePrompt(category, count, DROP_OR_TRADE_PROMPTS);
+        BotManager.getInstance().botReply(entry, AgentDialogueReportFormatter.dropOrTradePrompt(
+                category, result.count(), AgentDialogueCatalog.dropOrTradePrompts()));
     }
 
     private static void handleFameCommand(BotEntry entry, String targetName) {
