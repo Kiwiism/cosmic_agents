@@ -105,6 +105,8 @@ class AgentDialogueReportFormatterTest {
                         "wb! we've been waiting at %s since u went offline", "Henesys"));
         assertEquals("we're low on hp pots too, boss",
                 AgentDialogueReportFormatter.ownerPotShortageReply("we're low on %s pots too, boss", "hp"));
+        assertEquals("hp", AgentDialogueReportFormatter.potionTypeLabel(true));
+        assertEquals("mp", AgentDialogueReportFormatter.potionTypeLabel(false));
         assertEquals("already famed Alice this month",
                 AgentDialogueReportFormatter.fameSamePersonReply("already famed %s this month", "Alice"));
         assertEquals("famed Alice", AgentDialogueReportFormatter.fameOkReply("famed %s", "Alice"));

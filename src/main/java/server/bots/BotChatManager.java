@@ -1199,9 +1199,9 @@ public class BotChatManager {
     private static void handleNeedPotionCommand(BotEntry entry, boolean forHp) {
         BotPotionManager.OwnerPotShareResult result = BotPotionManager.offerPotShareToOwner(entry, forHp);
         if (result == BotPotionManager.OwnerPotShareResult.NO_DONOR) {
-            String type = forHp ? "hp" : "mp";
             queueBotReply(entry, AgentDialogueReportFormatter.ownerPotShortageReply(
-                    BotManager.randomReply(OWNER_POT_SHORTAGE_REPLIES), type));
+                    BotManager.randomReply(OWNER_POT_SHORTAGE_REPLIES),
+                    AgentDialogueReportFormatter.potionTypeLabel(forHp)));
         }
     }
 

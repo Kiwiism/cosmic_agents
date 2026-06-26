@@ -195,6 +195,10 @@ public final class AgentDialogueReportFormatter {
         return String.format(template, type);
     }
 
+    public static String potionTypeLabel(boolean hpPotion) {
+        return hpPotion ? "hp" : "mp";
+    }
+
     public static String apPureBuildConfirm(String buildName, String secondaryStat, int effectiveSecondaryTarget,
                                             String primaryStat) {
         return buildName + " it is! keeping " + secondaryStat + " at " + effectiveSecondaryTarget
