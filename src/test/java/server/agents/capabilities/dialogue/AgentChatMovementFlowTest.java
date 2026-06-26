@@ -43,6 +43,14 @@ class AgentChatMovementFlowTest {
         assertEquals("", callbacks.events);
     }
 
+    @Test
+    void shouldSelectRepliesFromMovementDialoguePools() {
+        assertTrue(AgentDialogueCatalog.moveHereReplies().contains(AgentChatMovementFlow.moveHereReply()));
+        assertTrue(AgentDialogueCatalog.followReplies().contains(AgentChatMovementFlow.followReply()));
+        assertTrue(AgentDialogueCatalog.stopReplies().contains(AgentChatMovementFlow.stopReply()));
+        assertTrue(AgentDialogueCatalog.greetingReplies().contains(AgentChatMovementFlow.greetingReply()));
+    }
+
     private static final class TestCallbacks implements AgentChatMovementFlow.MovementCallbacks {
         private final boolean acceptPositionCommand;
         private String events = "";

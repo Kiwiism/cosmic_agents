@@ -1,5 +1,8 @@
 package server.agents.capabilities.dialogue;
 
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+
 public final class AgentChatMovementFlow {
     private AgentChatMovementFlow() {
     }
@@ -35,6 +38,26 @@ public final class AgentChatMovementFlow {
             return true;
         }
         return false;
+    }
+
+    public static String moveHereReply() {
+        return randomReply(AgentDialogueCatalog.moveHereReplies());
+    }
+
+    public static String followReply() {
+        return randomReply(AgentDialogueCatalog.followReplies());
+    }
+
+    public static String stopReply() {
+        return randomReply(AgentDialogueCatalog.stopReplies());
+    }
+
+    public static String greetingReply() {
+        return randomReply(AgentDialogueCatalog.greetingReplies());
+    }
+
+    private static String randomReply(List<String> replies) {
+        return replies.get(ThreadLocalRandom.current().nextInt(replies.size()));
     }
 
     public interface MovementCallbacks {
