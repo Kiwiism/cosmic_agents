@@ -1397,7 +1397,7 @@ public class BotChatManager {
     }
 
     static boolean isMesoQuery(String message) {
-        return matchesWholeCommand(MESOS_PATTERN, message);
+        return AgentChatCommandClassifier.isMesoQuery(message);
     }
 
     static String buildMesoReport(int mesos) {
@@ -1407,7 +1407,7 @@ public class BotChatManager {
     }
 
     static boolean isMovementStatsQuery(String message) {
-        return matchesWholeCommand(MOVEMENT_STATS_PATTERN, message);
+        return AgentChatCommandClassifier.isMovementStatsQuery(message);
     }
 
     static List<String> buildMovementStatsReport(Character bot) {
@@ -1535,11 +1535,11 @@ public class BotChatManager {
     }
 
     static boolean isRespecCommand(String message) {
-        return RESPEC_PATTERN.matcher(message).find();
+        return AgentChatCommandClassifier.isRespecCommand(message);
     }
 
     static boolean isApRespecCommand(String message) {
-        return AP_RESPEC_PATTERN.matcher(message).find();
+        return AgentChatCommandClassifier.isApRespecCommand(message);
     }
 
     static boolean isFarmHereCommand(String message) {
@@ -1555,11 +1555,11 @@ public class BotChatManager {
     }
 
     static boolean isProactiveOffersOnCommand(String message) {
-        return PROACTIVE_OFFERS_ON_PATTERN.matcher(message).find();
+        return AgentChatCommandClassifier.isProactiveOffersOnCommand(message);
     }
 
     static boolean isProactiveOffersOffCommand(String message) {
-        return PROACTIVE_OFFERS_OFF_PATTERN.matcher(message).find();
+        return AgentChatCommandClassifier.isProactiveOffersOffCommand(message);
     }
 
     static boolean isFollowCommand(String message) {
@@ -1775,7 +1775,7 @@ public class BotChatManager {
     }
 
     static boolean isRequestUpgradeCommand(String message) {
-        return matchesWholeCommand(REQUEST_UPGRADE_PATTERN, message);
+        return AgentChatCommandClassifier.isRequestUpgradeCommand(message);
     }
 
     /**

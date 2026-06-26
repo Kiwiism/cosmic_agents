@@ -66,4 +66,42 @@ class AgentChatCommandClassifierTest {
         assertTrue(AgentChatCommandClassifier.isGroupSupplyRequest("anybody got arrows"));
         assertFalse(AgentChatCommandClassifier.isGroupSupplyRequest("trade mesos"));
     }
+
+    @Test
+    void shouldMatchMesoAndMovementQueries() {
+        assertTrue(AgentChatCommandClassifier.isMesoQuery("meso?"));
+        assertTrue(AgentChatCommandClassifier.isMesoQuery("mesos?"));
+        assertTrue(AgentChatCommandClassifier.isMesoQuery("cash?"));
+        assertTrue(AgentChatCommandClassifier.isMesoQuery("how much cash do you have"));
+        assertTrue(AgentChatCommandClassifier.isMesoQuery("your mesos"));
+        assertFalse(AgentChatCommandClassifier.isMesoQuery("trade mesos"));
+
+        assertTrue(AgentChatCommandClassifier.isMovementStatsQuery("speed?"));
+        assertTrue(AgentChatCommandClassifier.isMovementStatsQuery("jump?"));
+        assertTrue(AgentChatCommandClassifier.isMovementStatsQuery("movement stats"));
+        assertTrue(AgentChatCommandClassifier.isMovementStatsQuery("how fast are you"));
+        assertFalse(AgentChatCommandClassifier.isMovementStatsQuery("trade mesos"));
+    }
+
+    @Test
+    void shouldMatchProfileAndOfferToggles() {
+        assertTrue(AgentChatCommandClassifier.isProactiveOffersOnCommand("proactive offers on"));
+        assertTrue(AgentChatCommandClassifier.isProactiveOffersOnCommand("future upgrades on"));
+        assertTrue(AgentChatCommandClassifier.isProactiveOffersOffCommand("proactive offers off"));
+        assertTrue(AgentChatCommandClassifier.isProactiveOffersOffCommand("offers future off"));
+        assertFalse(AgentChatCommandClassifier.isProactiveOffersOnCommand("trade recommended gear"));
+
+        assertTrue(AgentChatCommandClassifier.isRequestUpgradeCommand("do you need any gear from me?"));
+        assertTrue(AgentChatCommandClassifier.isRequestUpgradeCommand("need gear from me"));
+        assertTrue(AgentChatCommandClassifier.isRequestUpgradeCommand("do you need equipment"));
+        assertFalse(AgentChatCommandClassifier.isRequestUpgradeCommand("trade recommended gear"));
+
+        assertTrue(AgentChatCommandClassifier.isRespecCommand("respec"));
+        assertTrue(AgentChatCommandClassifier.isRespecCommand("reset skills"));
+        assertTrue(AgentChatCommandClassifier.isRespecCommand("rebuild sp"));
+        assertTrue(AgentChatCommandClassifier.isApRespecCommand("respec ap"));
+        assertTrue(AgentChatCommandClassifier.isApRespecCommand("reset ap"));
+        assertTrue(AgentChatCommandClassifier.isApRespecCommand("rebuild ap"));
+        assertFalse(AgentChatCommandClassifier.isApRespecCommand("respec"));
+    }
 }
