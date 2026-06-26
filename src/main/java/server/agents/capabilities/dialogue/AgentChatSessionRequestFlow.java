@@ -1,5 +1,8 @@
 package server.agents.capabilities.dialogue;
 
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+
 public final class AgentChatSessionRequestFlow {
     private AgentChatSessionRequestFlow() {
     }
@@ -21,6 +24,26 @@ public final class AgentChatSessionRequestFlow {
         }
 
         return false;
+    }
+
+    public static String relogConfirmPrompt() {
+        return randomReply(AgentDialogueCatalog.relogConfirmPrompts());
+    }
+
+    public static String logoutConfirmPrompt() {
+        return randomReply(AgentDialogueCatalog.logoutConfirmPrompts());
+    }
+
+    public static String relogConfirmedReply() {
+        return randomReply(AgentDialogueCatalog.relogConfirmedReplies());
+    }
+
+    public static String logoutConfirmedReply() {
+        return randomReply(AgentDialogueCatalog.logoutConfirmedReplies());
+    }
+
+    private static String randomReply(List<String> replies) {
+        return replies.get(ThreadLocalRandom.current().nextInt(replies.size()));
     }
 
     public interface SessionRequestCallbacks {

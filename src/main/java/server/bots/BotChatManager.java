@@ -183,7 +183,7 @@ public class BotChatManager {
                 BotManager.after(BotManager.randMs(900, 1100), () -> {
                     entry.pendingAction = AgentChatPendingAction.RELOG;
                     BotManager.getInstance().issueStop(entry);
-                    BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.relogConfirmPrompts()));
+                    BotManager.getInstance().botReply(entry, AgentChatSessionRequestFlow.relogConfirmPrompt());
                 });
             }
 
@@ -192,7 +192,7 @@ public class BotChatManager {
                 BotManager.after(BotManager.randMs(900, 1100), () -> {
                     entry.pendingAction = AgentChatPendingAction.LOGOUT;
                     BotManager.getInstance().issueStop(entry);
-                    BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.logoutConfirmPrompts()));
+                    BotManager.getInstance().botReply(entry, AgentChatSessionRequestFlow.logoutConfirmPrompt());
                 });
             }
 
@@ -688,7 +688,7 @@ public class BotChatManager {
         BotManager.after(BotManager.randMs(900, 1100), () -> {
             Character o = entry.owner;
             if (o == null) return; // owner logged out before relog fired
-            BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.relogConfirmedReplies()));
+            BotManager.getInstance().botReply(entry, AgentChatSessionRequestFlow.relogConfirmedReply());
             int charId      = entry.bot.getId();
             int ownerCharId = o.getId();
             int world       = entry.bot.getClient().getWorld();
@@ -704,7 +704,7 @@ public class BotChatManager {
 
     private static void scheduleLogoutConfirm(BotEntry entry) {
         BotManager.after(BotManager.randMs(900, 1100), () -> {
-            BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.logoutConfirmedReplies()));
+            BotManager.getInstance().botReply(entry, AgentChatSessionRequestFlow.logoutConfirmedReply());
             BotManager.after(BotManager.randMs(1800, 2200), () -> {
                 entry.bot.saveCharToDB(true);
                 entry.bot.getClient().disconnect(false, false);

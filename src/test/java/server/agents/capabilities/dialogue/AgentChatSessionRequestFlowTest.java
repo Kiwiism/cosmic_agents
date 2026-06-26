@@ -43,6 +43,14 @@ class AgentChatSessionRequestFlowTest {
         assertEquals("", callbacks.events);
     }
 
+    @Test
+    void shouldSelectRepliesFromSessionDialoguePools() {
+        assertTrue(AgentDialogueCatalog.relogConfirmPrompts().contains(AgentChatSessionRequestFlow.relogConfirmPrompt()));
+        assertTrue(AgentDialogueCatalog.logoutConfirmPrompts().contains(AgentChatSessionRequestFlow.logoutConfirmPrompt()));
+        assertTrue(AgentDialogueCatalog.relogConfirmedReplies().contains(AgentChatSessionRequestFlow.relogConfirmedReply()));
+        assertTrue(AgentDialogueCatalog.logoutConfirmedReplies().contains(AgentChatSessionRequestFlow.logoutConfirmedReply()));
+    }
+
     private static final class TestCallbacks implements AgentChatSessionRequestFlow.SessionRequestCallbacks {
         private String events = "";
 
