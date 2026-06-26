@@ -14,6 +14,7 @@ import constants.game.GameConstants;
 import constants.inventory.ItemConstants;
 import server.Trade;
 import server.agents.capabilities.dialogue.AgentBuildDialogueClassifier;
+import server.agents.capabilities.dialogue.AgentChatBuildFlow;
 import server.agents.capabilities.dialogue.AgentChatBuffQueryFlow;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentChatPendingAction;
@@ -151,18 +152,10 @@ public class BotChatManager {
 
         AgentChatMovementFlow.handle(message, movementCallbacks(entry));
 
-        // SP build variant selection — only matched when waiting for an answer (Hero 1h vs 2h)
-        if (entry.spVariantPromptSent && entry.spVariant == null) {
-            if (AgentBuildDialogueClassifier.isOneHandedSpVariant(message)) {
-                entry.spVariant = AgentBuildDialogueClassifier.ONE_HANDED_SP_VARIANT;
-                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.oneHandedSpVariantReply());
-                BotBuildManager.autoAssignSp(entry, entry.bot);
-            } else if (AgentBuildDialogueClassifier.isTwoHandedSpVariant(message)) {
-                entry.spVariant = AgentBuildDialogueClassifier.TWO_HANDED_SP_VARIANT;
-                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.twoHandedSpVariantReply());
-                BotBuildManager.autoAssignSp(entry, entry.bot);
-            }
-        }
+        AgentChatBuildFlow.handleSpVariantSelection(
+                message,
+                entry.spVariantPromptSent && entry.spVariant == null,
+                spVariantCallbacks(entry));
 
         // AP build selection — "change build" always triggers a re-prompt;
         // "dexless" / "X dex" only apply when bot is actively waiting for the answer (apPromptSent=true)
@@ -591,6 +584,24 @@ public class BotChatManager {
             public void disassembleTrash() {
                 BotManager.after(BotManager.randMs(500, 700), () ->
                         BotMakerManager.handleDisassembleTrash(entry));
+            }
+        };
+    }
+
+    private static AgentChatBuildFlow.SpVariantCallbacks spVariantCallbacks(BotEntry entry) {
+        return new AgentChatBuildFlow.SpVariantCallbacks() {
+            @Override
+            public void oneHanded() {
+                entry.spVariant = AgentBuildDialogueClassifier.ONE_HANDED_SP_VARIANT;
+                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.oneHandedSpVariantReply());
+                BotBuildManager.autoAssignSp(entry, entry.bot);
+            }
+
+            @Override
+            public void twoHanded() {
+                entry.spVariant = AgentBuildDialogueClassifier.TWO_HANDED_SP_VARIANT;
+                BotManager.getInstance().botReply(entry, AgentDialogueCatalog.twoHandedSpVariantReply());
+                BotBuildManager.autoAssignSp(entry, entry.bot);
             }
         };
     }
