@@ -65,16 +65,8 @@ public class BotChatManager {
     private record LearnedSkill(int id, String name, int level) {}
     private record TransferCommandResult(boolean hasItems, int count) {}
     private record ItemQueryResult(int count) {}
-    private static final List<String> FOLLOW_REPLIES = AgentDialogueCatalog.followReplies();
-    private static final List<String> MOVE_HERE_REPLIES = AgentDialogueCatalog.moveHereReplies();
-    private static final List<String> STOP_REPLIES = AgentDialogueCatalog.stopReplies();
-
-    private static final List<String> TRADE_INVITE_REPLIES = AgentDialogueCatalog.tradeInviteReplies();
-    private static final List<String> GREETING_REPLIES = AgentDialogueCatalog.greetingReplies();
-    private static final List<String> WB_REPLIES = AgentDialogueCatalog.welcomeBackReplies();
     // %s = current map name (bot is in town since the offline-return warp put it there).
     // Sent via party chat so the owner sees it across maps when they reconnect.
-    private static final List<String> WB_OFFLINE_PARTY_TEMPLATES = AgentDialogueCatalog.welcomeBackOfflinePartyTemplates();
     private static void markOwnerActive(BotEntry entry) {
         Character owner = entry.owner;
         entry.ownerWasAfk = false;
@@ -385,7 +377,7 @@ public class BotChatManager {
                 BotManager.after(BotManager.randMs(1000, 1500), () -> {
                     prepareActiveModeEntry(entry);
                     BotManager.getInstance().issueFarmHere(entry, dest);
-                    BotManager.getInstance().botReply(entry, BotManager.randomReply(MOVE_HERE_REPLIES));
+                    BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.moveHereReplies()));
                 });
                 return true;
             }
@@ -399,7 +391,7 @@ public class BotChatManager {
                 BotManager.after(BotManager.randMs(1000, 1500), () -> {
                     prepareActiveModeEntry(entry);
                     BotManager.getInstance().issuePatrol(entry, ownerPos);
-                    BotManager.getInstance().botReply(entry, BotManager.randomReply(MOVE_HERE_REPLIES));
+                    BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.moveHereReplies()));
                 });
                 return true;
             }
@@ -412,7 +404,7 @@ public class BotChatManager {
                 }
                 BotManager.after(BotManager.randMs(1000, 1500), () -> {
                     BotManager.getInstance().issueMoveTo(entry, dest, true);
-                    BotManager.getInstance().botReply(entry, BotManager.randomReply(MOVE_HERE_REPLIES));
+                    BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.moveHereReplies()));
                 });
                 return true;
             }
@@ -423,7 +415,7 @@ public class BotChatManager {
                     BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
                     entry.nextGearSuggestionAt = 0;
                     maybeSuggestGearToSiblings(entry, entry.bot);
-                    BotManager.getInstance().botReply(entry, BotManager.randomReply(FOLLOW_REPLIES));
+                    BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.followReplies()));
                     BotPotionManager.checkPotShareOnModeStart(entry, entry.bot);
                     BotManager.after(BotManager.randMs(250, 750), () -> BotManager.getInstance().issueFollowOwner(entry));
                 });
@@ -449,7 +441,7 @@ public class BotChatManager {
                     entry.nextGearSuggestionAt = 0;
                     maybeSuggestGearToSiblings(entry, entry.bot);
                     BotManager.after(BotManager.randMs(1400, 1600), () ->
-                            BotManager.getInstance().botReply(entry, BotManager.randomReply(STOP_REPLIES)));
+                            BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.stopReplies())));
                 });
             }
 
@@ -466,7 +458,7 @@ public class BotChatManager {
                 BotManager.after(BotManager.randMs(900, 1100), () -> {
                     entry.bot.changeFaceExpression(Emote.HAPPY.getValue());
                     BotFidgetManager.maybeStartGreetingFidget(entry, ThreadLocalRandom.current().nextInt(100));
-                    queueBotReply(entry, BotManager.randomReply(GREETING_REPLIES));
+                    queueBotReply(entry, BotManager.randomReply(AgentDialogueCatalog.greetingReplies()));
                     checkBotStatus(entry, entry.bot);
                 });
             }
@@ -482,7 +474,7 @@ public class BotChatManager {
                 if (owner != null && bot.getTrade() == null && owner.getTrade() == null
                         && entry.pendingTradeCategory == null) {
                     BotManager.after(BotManager.randMs(600, 1000), () -> {
-                        BotManager.getInstance().botReply(entry, BotManager.randomReply(TRADE_INVITE_REPLIES));
+                        BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.tradeInviteReplies()));
                         BotManager.after(BotManager.randMs(800, 1200), () -> {
                             Trade.startTrade(bot);
                             Trade.inviteTrade(bot, owner);
@@ -926,7 +918,7 @@ public class BotChatManager {
             return;
         }
         final String text = AgentDialogueReportFormatter.welcomeBackOfflineReply(
-                BotManager.randomReply(WB_OFFLINE_PARTY_TEMPLATES),
+                BotManager.randomReply(AgentDialogueCatalog.welcomeBackOfflinePartyTemplates()),
                 bot.getMap() != null ? bot.getMap().getMapName() : null);
         BotManager.after(BotManager.randMs(1500, 2500), () -> {
             bot.changeFaceExpression(ThreadLocalRandom.current().nextBoolean() ? 2 : 3);
@@ -982,7 +974,7 @@ public class BotChatManager {
             final Character bot = entry.bot;
             BotManager.after(BotManager.randMs(1800, 2200), () -> {
                 bot.changeFaceExpression(ThreadLocalRandom.current().nextBoolean() ? 2 : 3);
-                BotManager.getInstance().botReply(entry, BotManager.randomReply(WB_REPLIES));
+                BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.welcomeBackReplies()));
             });
         };
     }
