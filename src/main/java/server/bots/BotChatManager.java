@@ -21,6 +21,7 @@ import server.agents.capabilities.dialogue.AgentCharacterDialogueReporter;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueReportFormatter;
+import server.agents.capabilities.dialogue.AgentFameDialogueFlow;
 import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
 import server.agents.capabilities.dialogue.AgentMovementDialogueReporter;
 import server.agents.capabilities.dialogue.AgentChatEquipmentFlow;
@@ -1419,36 +1420,62 @@ public class BotChatManager {
                     .filter(c -> c.getName().equalsIgnoreCase(targetName))
                     .findFirst().orElse(null);
         }
-        if (target == null) {
-            BotManager.getInstance().botReply(entry, AgentDialogueCatalog.fameTargetNotFoundReply(targetName));
-            return;
-        }
-        if (target.getId() == bot.getId()) {
-            BotManager.getInstance().botReply(entry, AgentDialogueCatalog.fameSelfReply());
-            return;
-        }
-        if (bot.getLevel() < 15) {
-            BotManager.getInstance().botReply(entry, AgentDialogueCatalog.fameTooLowLevelReply());
-            return;
-        }
-        Character.FameStatus status = bot.canGiveFame(target);
-        if (status == Character.FameStatus.NOT_TODAY) {
-            BotManager.getInstance().botReply(entry, BotManager.randomReply(AgentDialogueCatalog.fameCooldownReplies()));
-            return;
-        }
-        if (status == Character.FameStatus.NOT_THIS_MONTH) {
-            String reply = AgentDialogueReportFormatter.fameSamePersonReply(
-                    BotManager.randomReply(AgentDialogueCatalog.fameSamePersonReplies()), target.getName());
-            BotManager.getInstance().botReply(entry, reply);
-            return;
-        }
-        if (target.gainFame(1, bot, 1)) {
-            bot.hasGivenFame(target);
-            String template = BotManager.randomReply(AgentDialogueCatalog.fameOkReplies());
-            String reply = AgentDialogueReportFormatter.fameOkReply(template, target.getName());
-            BotManager.getInstance().botReply(entry, reply);
-        } else {
-            BotManager.getInstance().botReply(entry, AgentDialogueCatalog.fameFailedReply());
-        }
+        Character fameTarget = target;
+        AgentFameDialogueFlow.handle(targetName, new AgentFameDialogueFlow.FameCallbacks() {
+            @Override
+            public boolean targetExists() {
+                return fameTarget != null;
+            }
+
+            @Override
+            public boolean targetIsSelf() {
+                return fameTarget != null && fameTarget.getId() == bot.getId();
+            }
+
+            @Override
+            public int agentLevel() {
+                return bot.getLevel();
+            }
+
+            @Override
+            public Character.FameStatus fameStatus() {
+                return bot.canGiveFame(fameTarget);
+            }
+
+            @Override
+            public boolean gainFame() {
+                return fameTarget.gainFame(1, bot, 1);
+            }
+
+            @Override
+            public void markFameGiven() {
+                bot.hasGivenFame(fameTarget);
+            }
+
+            @Override
+            public String targetDisplayName() {
+                return fameTarget.getName();
+            }
+
+            @Override
+            public String randomOkReply() {
+                return BotManager.randomReply(AgentDialogueCatalog.fameOkReplies());
+            }
+
+            @Override
+            public String randomFameCooldownReply() {
+                return BotManager.randomReply(AgentDialogueCatalog.fameCooldownReplies());
+            }
+
+            @Override
+            public String randomSamePersonReply() {
+                return BotManager.randomReply(AgentDialogueCatalog.fameSamePersonReplies());
+            }
+
+            @Override
+            public void reply(String message) {
+                BotManager.getInstance().botReply(entry, message);
+            }
+        });
     }
 }
