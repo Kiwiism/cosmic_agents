@@ -1103,7 +1103,7 @@ public class BotChatManager {
     }
 
     private static void reportHelp(BotEntry entry) {
-        for (String line : AgentDialogueCatalog.helpLines()) {
+        for (String line : AgentChatReportFlow.helpLines()) {
             queueBotReply(entry, line);
         }
     }

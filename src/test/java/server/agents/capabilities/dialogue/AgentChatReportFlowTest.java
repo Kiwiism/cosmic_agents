@@ -50,6 +50,11 @@ class AgentChatReportFlowTest {
         assertEquals("", callbacks.events);
     }
 
+    @Test
+    void shouldExposeLegacyHelpLines() {
+        assertEquals(AgentDialogueCatalog.helpLines(), AgentChatReportFlow.helpLines());
+    }
+
     private static final class TestCallbacks implements AgentChatReportFlow.ReportCallbacks {
         private String events = "";
 

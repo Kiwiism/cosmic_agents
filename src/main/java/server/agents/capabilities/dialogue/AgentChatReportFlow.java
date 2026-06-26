@@ -1,5 +1,7 @@
 package server.agents.capabilities.dialogue;
 
+import java.util.List;
+
 public final class AgentChatReportFlow {
     private AgentChatReportFlow() {
     }
@@ -61,6 +63,10 @@ public final class AgentChatReportFlow {
             callbacks.potDebug();
         }
         return false;
+    }
+
+    public static List<String> helpLines() {
+        return AgentDialogueCatalog.helpLines();
     }
 
     public interface ReportCallbacks {
