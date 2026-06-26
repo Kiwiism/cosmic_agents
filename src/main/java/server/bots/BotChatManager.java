@@ -83,7 +83,6 @@ public class BotChatManager {
     // %s = current map name (bot is in town since the offline-return warp put it there).
     // Sent via party chat so the owner sees it across maps when they reconnect.
     private static final List<String> WB_OFFLINE_PARTY_TEMPLATES = AgentDialogueCatalog.welcomeBackOfflinePartyTemplates();
-    private static final List<String> MESO_REPLIES = AgentDialogueCatalog.mesoReplies();
     private static final List<String> DROP_OR_TRADE_PROMPTS = AgentDialogueCatalog.dropOrTradePrompts();
 
     private static void markOwnerActive(BotEntry entry) {
@@ -1115,7 +1114,7 @@ public class BotChatManager {
     }
 
     static String buildExpReport(int currentExp, int level) {
-        return AgentDialogueReportFormatter.expPercent(currentExp, ExpTable.getExpNeededForLevel(level));
+        return AgentDialogueReportFormatter.expReport(currentExp, level);
     }
 
     private static void reportInventorySlots(BotEntry entry, Character bot) {
@@ -1141,11 +1140,11 @@ public class BotChatManager {
     }
 
     static String buildPotionReport(int hp, int mp) {
-        return AgentDialogueReportFormatter.potionCount(hp, mp);
+        return AgentDialogueReportFormatter.potionReport(hp, mp);
     }
 
     static String buildMesoReport(int mesos) {
-        return AgentDialogueReportFormatter.mesoReport(mesos, MESO_REPLIES);
+        return AgentDialogueReportFormatter.mesoReport(mesos);
     }
 
     static List<String> buildMovementStatsReport(Character bot) {

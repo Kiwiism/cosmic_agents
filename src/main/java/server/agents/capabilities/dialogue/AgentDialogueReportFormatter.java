@@ -1,6 +1,7 @@
 package server.agents.capabilities.dialogue;
 
 import client.Job;
+import constants.game.ExpTable;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -82,6 +83,10 @@ public final class AgentDialogueReportFormatter {
         return formatted + "%";
     }
 
+    public static String expReport(int currentExp, int level) {
+        return expPercent(currentExp, ExpTable.getExpNeededForLevel(level));
+    }
+
     public static String scrollCount(int count) {
         return count > 0
                 ? "I have " + count + " scroll" + (count != 1 ? "s" : "") + " on me"
@@ -101,6 +106,10 @@ public final class AgentDialogueReportFormatter {
 
         return "I have " + hp + " hp pot" + (hp != 1 ? "s" : "")
                 + " and " + mp + " mp pot" + (mp != 1 ? "s" : "");
+    }
+
+    public static String potionReport(int hp, int mp) {
+        return potionCount(hp, mp);
     }
 
     public static String compactMesos(int mesos) {
@@ -134,6 +143,10 @@ public final class AgentDialogueReportFormatter {
         String amount = compactMesos(mesos);
         String pattern = templates.get(ThreadLocalRandom.current().nextInt(templates.size()));
         return String.format(pattern, amount);
+    }
+
+    public static String mesoReport(int mesos) {
+        return mesoReport(mesos, AgentDialogueCatalog.mesoReplies());
     }
 
     public static String movementStatLine(int totalSpeedStat, int totalJumpStat) {

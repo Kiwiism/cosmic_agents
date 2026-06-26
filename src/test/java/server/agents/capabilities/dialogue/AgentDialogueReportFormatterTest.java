@@ -42,6 +42,9 @@ class AgentDialogueReportFormatterTest {
     @Test
     void shouldFormatInventorySupplyAndExpReportsExactlyLikeLegacyChat() {
         assertEquals("12.5%", AgentDialogueReportFormatter.expPercent(125, 1000));
+        assertEquals(
+                AgentDialogueReportFormatter.expPercent(125, constants.game.ExpTable.getExpNeededForLevel(5)),
+                AgentDialogueReportFormatter.expReport(125, 5));
         assertEquals("0%", AgentDialogueReportFormatter.expPercent(125, 0));
 
         assertEquals("no scrolls on me", AgentDialogueReportFormatter.scrollCount(0));
@@ -52,6 +55,7 @@ class AgentDialogueReportFormatterTest {
         assertEquals("I have 1 hp pot, no mp pots", AgentDialogueReportFormatter.potionCount(1, 0));
         assertEquals("no hp pots, 2 mp pots", AgentDialogueReportFormatter.potionCount(0, 2));
         assertEquals("I have 3 hp pots and 4 mp pots", AgentDialogueReportFormatter.potionCount(3, 4));
+        assertEquals("I have 3 hp pots and 4 mp pots", AgentDialogueReportFormatter.potionReport(3, 4));
     }
 
     @Test
@@ -62,6 +66,8 @@ class AgentDialogueReportFormatterTest {
         assertEquals("2.1m", AgentDialogueReportFormatter.compactMesos(2_100_000));
 
         assertEquals("I have 6k", AgentDialogueReportFormatter.mesoReport(6_000, java.util.List.of("I have %s")));
+        assertEquals("6k", AgentDialogueReportFormatter.compactMesos(6_000));
+        assertEquals(true, AgentDialogueReportFormatter.mesoReport(6_000).contains("6k"));
     }
 
     @Test
