@@ -26,6 +26,8 @@ class AgentDialogueCatalogTest {
         assertTrue(AgentDialogueCatalog.mesoReplies().contains("I have %s"));
         assertTrue(AgentDialogueCatalog.dropOrTradePrompts().contains("got %s, want me to trade or drop?"));
         assertTrue(AgentDialogueCatalog.ownerPotShortageReplies().contains("we're low on %s pots too, boss"));
+        assertTrue(AgentDialogueCatalog.ammoNotNeededReplies().contains("i don't need arrows or bolts rn"));
+        assertTrue(AgentDialogueCatalog.ownerAmmoShortageReplies().contains("we're low on ammo too, boss"));
         assertTrue(AgentDialogueCatalog.fameOkReplies().contains("famed %s"));
         assertTrue(AgentDialogueCatalog.fameTargetNotFoundReply("Alice").contains("Alice on the map"));
         assertTrue(AgentDialogueCatalog.fameSelfReply().contains("fame myself"));

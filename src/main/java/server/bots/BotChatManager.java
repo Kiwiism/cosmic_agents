@@ -69,13 +69,9 @@ public class BotChatManager {
     private static final List<String> MOVE_HERE_REPLIES = AgentDialogueCatalog.moveHereReplies();
     private static final List<String> STOP_REPLIES = AgentDialogueCatalog.stopReplies();
 
-    private static final List<String> AMMO_NOT_NEEDED_REPLIES = AgentDialogueCatalog.ammoNotNeededReplies();
-
     private static final List<String> FAME_OK_REPLIES = AgentDialogueCatalog.fameOkReplies();
     private static final List<String> FAME_COOLDOWN_REPLIES = AgentDialogueCatalog.fameCooldownReplies();
     private static final List<String> FAME_SAME_PERSON_REPLIES = AgentDialogueCatalog.fameSamePersonReplies();
-    private static final List<String> OWNER_POT_SHORTAGE_REPLIES = AgentDialogueCatalog.ownerPotShortageReplies();
-    private static final List<String> OWNER_AMMO_SHORTAGE_REPLIES = AgentDialogueCatalog.ownerAmmoShortageReplies();
     private static final List<String> TRADE_INVITE_REPLIES = AgentDialogueCatalog.tradeInviteReplies();
     private static final List<String> GREETING_REPLIES = AgentDialogueCatalog.greetingReplies();
     private static final List<String> WB_REPLIES = AgentDialogueCatalog.welcomeBackReplies();
@@ -1416,7 +1412,7 @@ public class BotChatManager {
         BotPotionManager.OwnerPotShareResult result = BotPotionManager.offerPotShareToOwner(entry, forHp);
         if (result == BotPotionManager.OwnerPotShareResult.NO_DONOR) {
             queueBotReply(entry, AgentDialogueReportFormatter.ownerPotShortageReply(
-                    BotManager.randomReply(OWNER_POT_SHORTAGE_REPLIES),
+                    BotManager.randomReply(AgentDialogueCatalog.ownerPotShortageReplies()),
                     AgentDialogueReportFormatter.potionTypeLabel(forHp)));
         }
     }
@@ -1428,12 +1424,12 @@ public class BotChatManager {
         }
         WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(owner);
         if (weaponType != WeaponType.BOW && weaponType != WeaponType.CROSSBOW) {
-            queueBotReply(entry, BotManager.randomReply(AMMO_NOT_NEEDED_REPLIES));
+            queueBotReply(entry, BotManager.randomReply(AgentDialogueCatalog.ammoNotNeededReplies()));
             return;
         }
         BotAmmoManager.OwnerAmmoShareResult result = BotAmmoManager.offerAmmoShareToOwner(entry, weaponType);
         if (result == BotAmmoManager.OwnerAmmoShareResult.NO_DONOR) {
-            queueBotReply(entry, BotManager.randomReply(OWNER_AMMO_SHORTAGE_REPLIES));
+            queueBotReply(entry, BotManager.randomReply(AgentDialogueCatalog.ownerAmmoShortageReplies()));
         }
     }
 
