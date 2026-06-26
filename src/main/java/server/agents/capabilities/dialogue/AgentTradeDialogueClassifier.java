@@ -5,6 +5,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class AgentTradeDialogueClassifier {
+    private static final String NAMED_ITEM_CATEGORY_PREFIX = "name:";
+    private static final String TRASH_CATEGORY = "trash";
     private static final String SCROLL_WORDS = "scrolls?";
     private static final String POTION_WORDS = "(?:pots?|potions?|hp\\s+pots?|mp\\s+pots?|supplies)";
     private static final String BUFF_WORDS = "(?:buff\\s+pots?|buff\\s+potions?|buffs?\\s+items?)";
@@ -162,8 +164,8 @@ public final class AgentTradeDialogueClassifier {
     public static String matchTradeCategory(String message) {
         String mesoCategory = matchTradeMesoCategory(message);
         if (mesoCategory != null) return mesoCategory;
-        if (message != null && SHOW_JUNK_COMMAND_PATTERN.matcher(message).matches()) return "trash";
-        if ("trash".equals(matchItemQueryCategory(message))) return "trash";
+        if (message != null && SHOW_JUNK_COMMAND_PATTERN.matcher(message).matches()) return TRASH_CATEGORY;
+        if (isTrashCategory(matchItemQueryCategory(message))) return TRASH_CATEGORY;
 
         if (TRADE_RECOMMENDED_COMMAND_PATTERN.matcher(message).find()) return "recommended";
         if (TRADE_SCROLLS_COMMAND_PATTERN.matcher(message).find()) return "scrolls";
@@ -176,13 +178,13 @@ public final class AgentTradeDialogueClassifier {
         }
         if (TRADE_USE_COMMAND_PATTERN.matcher(message).find()) return "use";
         if (TRADE_EQUIPS_COMMAND_PATTERN.matcher(message).find()) return "equips";
-        if (TRADE_TRASH_COMMAND_PATTERN.matcher(message).find()) return "trash";
+        if (TRADE_TRASH_COMMAND_PATTERN.matcher(message).find()) return TRASH_CATEGORY;
         if (TRADE_ETC_COMMAND_PATTERN.matcher(message).find()) return "etc";
         Matcher viewSlotMatcher = TRADE_VIEW_SLOT_COMMAND_PATTERN.matcher(message);
-        if (viewSlotMatcher.find()) return "name:" + AgentItemQueryNormalizer.normalize(viewSlotMatcher.group(1));
+        if (viewSlotMatcher.find()) return namedItemCategory(AgentItemQueryNormalizer.normalize(viewSlotMatcher.group(1)));
 
         Matcher matcher = TRADE_ITEM_COMMAND_PATTERN.matcher(message);
-        return matcher.find() ? "name:" + AgentItemQueryNormalizer.normalize(matcher.group(1)) : null;
+        return matcher.find() ? namedItemCategory(AgentItemQueryNormalizer.normalize(matcher.group(1))) : null;
     }
 
     public static String matchChoiceCategory(String message) {
@@ -191,10 +193,10 @@ public final class AgentTradeDialogueClassifier {
         if (DROP_BUFF_COMMAND_PATTERN.matcher(message).find()) return "buff";
         if (DROP_USE_COMMAND_PATTERN.matcher(message).find()) return "use";
         if (DROP_EQUIPS_COMMAND_PATTERN.matcher(message).find()) return "equips";
-        if (DROP_TRASH_COMMAND_PATTERN.matcher(message).find()) return "trash";
+        if (DROP_TRASH_COMMAND_PATTERN.matcher(message).find()) return TRASH_CATEGORY;
         if (DROP_ETC_COMMAND_PATTERN.matcher(message).find()) return "etc";
         Matcher dropMatcher = DROP_ITEM_COMMAND_PATTERN.matcher(message);
-        if (dropMatcher.find()) return "name:" + AgentItemQueryNormalizer.normalize(dropMatcher.group(1));
+        if (dropMatcher.find()) return namedItemCategory(AgentItemQueryNormalizer.normalize(dropMatcher.group(1)));
 
         if (ASK_SCROLLS_COMMAND_PATTERN.matcher(message).find()) return "scrolls";
         if (ASK_POTS_COMMAND_PATTERN.matcher(message).find()) return "pots";
@@ -204,7 +206,15 @@ public final class AgentTradeDialogueClassifier {
         if (ASK_ETC_COMMAND_PATTERN.matcher(message).find()) return "etc";
 
         Matcher matcher = ASK_ITEM_COMMAND_PATTERN.matcher(message);
-        return matcher.find() ? "name:" + AgentItemQueryNormalizer.normalize(matcher.group(1)) : null;
+        return matcher.find() ? namedItemCategory(AgentItemQueryNormalizer.normalize(matcher.group(1))) : null;
+    }
+
+    public static String namedItemCategory(String itemName) {
+        return NAMED_ITEM_CATEGORY_PREFIX + itemName;
+    }
+
+    public static boolean isTrashCategory(String category) {
+        return TRASH_CATEGORY.equals(category);
     }
 
     public static boolean isShowJunkCommand(String message) {
@@ -309,6 +319,6 @@ public final class AgentTradeDialogueClassifier {
         String itemName = matchNormalizedItemQuery(message);
         if (itemName == null) return null;
         String generic = itemName.toLowerCase(Locale.ROOT);
-        return Pattern.matches(TRASH_WORDS, generic) ? "trash" : null;
+        return Pattern.matches(TRASH_WORDS, generic) ? TRASH_CATEGORY : null;
     }
 }

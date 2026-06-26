@@ -1332,7 +1332,7 @@ public class BotChatManager {
     private static void handleTransferCommand(BotEntry entry, TransferCommand transferCommand, String message) {
         String category = transferCommand.category;
         if (transferCommand.mode == TransferMode.TRADE
-                && "trash".equals(category)
+                && AgentTradeDialogueClassifier.isTrashCategory(category)
                 && message != null
                 && AgentTradeDialogueClassifier.isShowJunkCommand(message)) {
             BotManager.getInstance().botReply(entry, AgentDialogueCatalog.weirdTransferReply());
@@ -1416,7 +1416,7 @@ public class BotChatManager {
     }
 
     private static void handleItemQuery(BotEntry entry, String itemName) {
-        String category = "name:" + itemName;
+        String category = AgentTradeDialogueClassifier.namedItemCategory(itemName);
         Character bot = entry.bot;
         if (bot == null) {
             return;

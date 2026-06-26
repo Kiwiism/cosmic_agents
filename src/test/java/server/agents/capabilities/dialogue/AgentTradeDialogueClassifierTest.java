@@ -37,6 +37,13 @@ class AgentTradeDialogueClassifierTest {
     }
 
     @Test
+    void shouldExposeTradeCategoryHelpers() {
+        assertEquals("name:chaos scroll", AgentTradeDialogueClassifier.namedItemCategory("chaos scroll"));
+        assertTrue(AgentTradeDialogueClassifier.isTrashCategory("trash"));
+        assertFalse(AgentTradeDialogueClassifier.isTrashCategory("junk"));
+    }
+
+    @Test
     void shouldParseChoiceAndItemQueries() {
         assertEquals("name:flaming feather", AgentTradeDialogueClassifier.matchChoiceCategory("give me flaming feather"));
         assertEquals("name:flaming feather", AgentTradeDialogueClassifier.matchChoiceCategory("give flaming feather"));
