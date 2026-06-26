@@ -20,6 +20,7 @@ import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.dialogue.AgentChatRespecFlow;
 import server.agents.capabilities.dialogue.AgentChatSocialFlow;
 import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
+import server.agents.capabilities.dialogue.AgentChatUtilityFlow;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueReportFormatter;
 import server.agents.capabilities.dialogue.AgentChatEquipmentFlow;
@@ -29,7 +30,6 @@ import server.agents.capabilities.dialogue.AgentChatToggleFlow;
 import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
 import server.agents.capabilities.dialogue.AgentSocialDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
-import server.agents.capabilities.dialogue.AgentUtilityDialogueClassifier;
 import server.agents.commands.AgentQueuedMessage;
 import server.agents.commands.AgentReplyQueue;
 import server.combat.CombatFormulaProvider;
@@ -175,37 +175,7 @@ public class BotChatManager {
             handleApBuildSelection(entry, message);
         }
 
-        if (AgentUtilityDialogueClassifier.isTradeInviteCommand(message)) {
-            Character bot = entry.bot;
-            Character owner = entry.owner;
-            if (owner != null && bot.getTrade() == null && owner.getTrade() == null
-                    && entry.pendingTradeCategory == null) {
-                BotManager.after(BotManager.randMs(600, 1000), () -> {
-                    BotManager.getInstance().botReply(entry, BotManager.randomReply(TRADE_INVITE_REPLIES));
-                    BotManager.after(BotManager.randMs(800, 1200), () -> {
-                        Trade.startTrade(bot);
-                        Trade.inviteTrade(bot, owner);
-                    });
-                });
-            }
-            return;
-        }
-
-        if (AgentUtilityDialogueClassifier.isSellTrashCommand(message)) {
-            BotManager.after(BotManager.randMs(500, 700), () ->
-                    BotShopManager.requestSellTrashVisit(entry, entry.bot));
-            return;
-        }
-
-        if (AgentUtilityDialogueClassifier.isMakeCrystalsCommand(message)) {
-            BotManager.after(BotManager.randMs(500, 700), () ->
-                    BotMakerManager.handleMakeCrystals(entry));
-            return;
-        }
-
-        if (AgentUtilityDialogueClassifier.isDisassembleTrashCommand(message)) {
-            BotManager.after(BotManager.randMs(500, 700), () ->
-                    BotMakerManager.handleDisassembleTrash(entry));
+        if (AgentChatUtilityFlow.handle(message, utilityCallbacks(entry))) {
             return;
         }
 
@@ -583,6 +553,44 @@ public class BotChatManager {
                     queueBotReply(entry, BotManager.randomReply(GREETING_REPLIES));
                     checkBotStatus(entry, entry.bot);
                 });
+            }
+        };
+    }
+
+    private static AgentChatUtilityFlow.UtilityCallbacks utilityCallbacks(BotEntry entry) {
+        return new AgentChatUtilityFlow.UtilityCallbacks() {
+            @Override
+            public void tradeInvite() {
+                Character bot = entry.bot;
+                Character owner = entry.owner;
+                if (owner != null && bot.getTrade() == null && owner.getTrade() == null
+                        && entry.pendingTradeCategory == null) {
+                    BotManager.after(BotManager.randMs(600, 1000), () -> {
+                        BotManager.getInstance().botReply(entry, BotManager.randomReply(TRADE_INVITE_REPLIES));
+                        BotManager.after(BotManager.randMs(800, 1200), () -> {
+                            Trade.startTrade(bot);
+                            Trade.inviteTrade(bot, owner);
+                        });
+                    });
+                }
+            }
+
+            @Override
+            public void sellTrash() {
+                BotManager.after(BotManager.randMs(500, 700), () ->
+                        BotShopManager.requestSellTrashVisit(entry, entry.bot));
+            }
+
+            @Override
+            public void makeCrystals() {
+                BotManager.after(BotManager.randMs(500, 700), () ->
+                        BotMakerManager.handleMakeCrystals(entry));
+            }
+
+            @Override
+            public void disassembleTrash() {
+                BotManager.after(BotManager.randMs(500, 700), () ->
+                        BotMakerManager.handleDisassembleTrash(entry));
             }
         };
     }
