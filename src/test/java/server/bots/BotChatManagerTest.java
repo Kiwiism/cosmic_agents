@@ -7,6 +7,7 @@ import client.Job;
 import client.inventory.Inventory;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
+import server.agents.integration.AgentBotChatReportRuntime;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.commands.AgentQueuedMessage;
@@ -264,7 +265,7 @@ class BotChatManagerTest {
         when(bot.getTotalJumpStat()).thenReturn(110);
         BotMovementProfile profile = BotMovementProfile.fromCharacter(bot);
 
-        List<String> report = BotChatReportRuntime.buildMovementStatsReport(bot);
+        List<String> report = AgentBotChatReportRuntime.buildMovementStatsReport(bot);
 
         assertEquals(List.of(
                 "speed 120% jump 110%",
@@ -291,7 +292,7 @@ class BotChatManagerTest {
         when(bot.getTotalMoveSpeedStat()).thenReturn(140);
         when(bot.getTotalJumpStat()).thenReturn(125);
 
-        List<String> report = BotChatReportRuntime.buildMovementStatsReport(bot);
+        List<String> report = AgentBotChatReportRuntime.buildMovementStatsReport(bot);
 
         assertEquals("speed 100% jump 100% (map forced; raw 140%/125%)", report.getFirst());
     }
@@ -311,7 +312,7 @@ class BotChatManagerTest {
         when(bot.calculateMinBaseDamage(20, 0.1d)).thenReturn(50);
         when(bot.calculateMaxBaseDamage(20)).thenReturn(99);
 
-        String report = BotChatReportRuntime.buildRangeReport(bot,
+        String report = AgentBotChatReportRuntime.buildRangeReport(bot,
                 new BotEquipManager.MapDamageProfile(100, 40, 48));
 
         assertEquals("my dmg is 50-99, watk 20, acc 100 | hit 47% vs hardest mob (avd 40)", report);
@@ -326,7 +327,7 @@ class BotChatManagerTest {
         when(bot.getTotalInt()).thenReturn(100);
         when(bot.getTotalLuk()).thenReturn(50);
 
-        String report = BotChatReportRuntime.buildRangeReport(bot,
+        String report = AgentBotChatReportRuntime.buildRangeReport(bot,
                 new BotEquipManager.MapDamageProfile(100, 30, 50));
 
         assertEquals("my dmg is 3-9, matk 200, magic acc 75 | hit 26% vs hardest mob (avd 30)", report);
@@ -392,7 +393,7 @@ class BotChatManagerTest {
         BotEntry entry = new BotEntry(null, null, null);
         entry.msgSending = true;
 
-        BotChatReportRuntime.reportHelp(entry);
+        AgentBotChatReportRuntime.reportHelp(entry);
 
         assertEquals(5, entry.msgQueue.size());
         for (AgentQueuedMessage message : entry.msgQueue) {

@@ -78,6 +78,8 @@ Recent reconstruction notes:
   movement, pending-action, social, transfer, and utility callbacks have been
   removed after the Agent orchestrator context switched directly to Agent
   integration facades.
+- The bot-side chat report compatibility shim has been removed; remaining report
+  tests and production callers use `AgentBotChatReportRuntime` directly.
 
 Initial reconstruction order:
 
