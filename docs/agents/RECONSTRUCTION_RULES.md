@@ -144,6 +144,8 @@ Recent reconstruction notes:
 - BotManager's remaining internal owner-directed reply sites now call
   `AgentBotReplyRuntime.replyNow` directly; `BotManager.botReply` remains only a
   compatibility wrapper for callers that have not been migrated yet.
+- `AgentBotSchedulerRuntime` now schedules directly through `TimerManager`; the
+  legacy `BotManager.scheduleBotReplyAction`/`after` bridge has been removed.
 
 Initial reconstruction order:
 

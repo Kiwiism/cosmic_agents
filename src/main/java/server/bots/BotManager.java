@@ -272,15 +272,6 @@ public class BotManager {
         return list.get(ThreadLocalRandom.current().nextInt(list.size()));
     }
 
-    /** Schedule {@code r} to run after {@code ms} milliseconds. */
-    static ScheduledFuture<?> after(long ms, Runnable r) {
-        return TimerManager.getInstance().schedule(r, ms);
-    }
-
-    public static ScheduledFuture<?> scheduleBotReplyAction(long ms, Runnable r) {
-        return after(ms, r);
-    }
-
     /** Uniform random delay in [lo, hi) ms — use wherever a fixed delay would feel robotic. */
     static long randMs(int lo, int hi) {
         return lo + ThreadLocalRandom.current().nextInt(hi - lo);
