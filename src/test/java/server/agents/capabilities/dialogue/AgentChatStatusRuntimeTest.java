@@ -206,6 +206,27 @@ class AgentChatStatusRuntimeTest {
         assertTrue(actions.events.get(2).contains("Henesys"));
     }
 
+    @Test
+    void announceAfkReturnSkipsWhenAgentMissing() {
+        TestAfkReturnActions actions = new TestAfkReturnActions();
+
+        AgentChatStatusRuntime.announceAfkReturn(actions);
+
+        assertEquals(List.of(), actions.events);
+    }
+
+    @Test
+    void announceAfkReturnSchedulesLegacyOwnerReply() {
+        TestAfkReturnActions actions = new TestAfkReturnActions();
+        actions.hasAgent = true;
+
+        AgentChatStatusRuntime.announceAfkReturn(actions);
+
+        assertEquals("1800-2200", actions.events.get(0));
+        assertTrue(Set.of("face:2", "face:3").contains(actions.events.get(1)));
+        assertTrue(actions.events.get(2).startsWith("reply:"));
+    }
+
     private static final class TestState implements AgentChatStatusRuntime.StatusState {
         private Point position;
         private long sinceMs;
@@ -397,6 +418,32 @@ class AgentChatStatusRuntimeTest {
         @Override
         public void sayParty(String text) {
             events.add("say:" + text);
+        }
+    }
+
+    private static final class TestAfkReturnActions implements AgentChatStatusRuntime.AfkReturnActions {
+        private final List<String> events = new ArrayList<>();
+        private boolean hasAgent;
+
+        @Override
+        public boolean hasAgent() {
+            return hasAgent;
+        }
+
+        @Override
+        public void afterRandomDelay(int minMs, int maxMs, Runnable action) {
+            events.add(minMs + "-" + maxMs);
+            action.run();
+        }
+
+        @Override
+        public void changeFaceExpression(int expression) {
+            events.add("face:" + expression);
+        }
+
+        @Override
+        public void reply(String text) {
+            events.add("reply:" + text);
         }
     }
 }

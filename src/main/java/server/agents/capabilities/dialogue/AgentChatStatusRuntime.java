@@ -84,6 +84,18 @@ public final class AgentChatStatusRuntime {
         });
     }
 
+    public static void announceAfkReturn(AfkReturnActions actions) {
+        if (!actions.hasAgent()) {
+            return;
+        }
+
+        String text = AgentChatWelcomeBackFlow.welcomeBackReply();
+        actions.afterRandomDelay(1800, 2200, () -> {
+            actions.changeFaceExpression(randomWelcomeExpression());
+            actions.reply(text);
+        });
+    }
+
     private static int randomWelcomeExpression() {
         return ThreadLocalRandom.current().nextBoolean() ? 2 : 3;
     }
@@ -160,5 +172,15 @@ public final class AgentChatStatusRuntime {
         void changeFaceExpression(int expression);
 
         void sayParty(String text);
+    }
+
+    public interface AfkReturnActions {
+        boolean hasAgent();
+
+        void afterRandomDelay(int minMs, int maxMs, Runnable action);
+
+        void changeFaceExpression(int expression);
+
+        void reply(String text);
     }
 }

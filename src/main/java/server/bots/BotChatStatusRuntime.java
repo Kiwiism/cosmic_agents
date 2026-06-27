@@ -8,7 +8,6 @@ import server.agents.capabilities.dialogue.AgentChatWelcomeBackFlow;
 
 import java.awt.Point;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 
 final class BotChatStatusRuntime {
     private BotChatStatusRuntime() {
@@ -215,13 +214,7 @@ final class BotChatStatusRuntime {
     }
 
     private static AgentChatWelcomeBackFlow.WelcomeBackCallbacks welcomeBackCallbacks(BotEntry entry) {
-        return () -> {
-            final Character bot = entry.bot;
-            BotManager.after(BotManager.randMs(1800, 2200), () -> {
-                bot.changeFaceExpression(ThreadLocalRandom.current().nextBoolean() ? 2 : 3);
-                BotManager.getInstance().botReply(entry, AgentChatWelcomeBackFlow.welcomeBackReply());
-            });
-        };
+        return () -> AgentChatStatusRuntime.announceAfkReturn(afkReturnActions(entry));
     }
 
     private static void maybeSuggestRecommendedGear(BotEntry entry, Character bot) {
@@ -295,6 +288,30 @@ final class BotChatStatusRuntime {
             @Override
             public void sayParty(String text) {
                 BotManager.getInstance().botSayParty(bot, text);
+            }
+        };
+    }
+
+    private static AgentChatStatusRuntime.AfkReturnActions afkReturnActions(BotEntry entry) {
+        return new AgentChatStatusRuntime.AfkReturnActions() {
+            @Override
+            public boolean hasAgent() {
+                return entry.bot != null;
+            }
+
+            @Override
+            public void afterRandomDelay(int minMs, int maxMs, Runnable action) {
+                BotManager.after(BotManager.randMs(minMs, maxMs), action);
+            }
+
+            @Override
+            public void changeFaceExpression(int expression) {
+                entry.bot.changeFaceExpression(expression);
+            }
+
+            @Override
+            public void reply(String text) {
+                BotManager.getInstance().botReply(entry, text);
             }
         };
     }
