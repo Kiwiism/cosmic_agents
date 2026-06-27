@@ -55,6 +55,20 @@ class AgentChatReportRuntimeTest {
     }
 
     @Test
+    void reportCallbacksCanUseOperationsDirectly() {
+        TestScheduler scheduler = new TestScheduler();
+        TestOperations operations = new TestOperations();
+        AgentChatReportFlow.ReportCallbacks callbacks =
+                AgentChatReportRuntime.reportCallbacks(scheduler, operations);
+
+        callbacks.help();
+        callbacks.stats();
+
+        assertEquals(List.of("500-700", "900-1100"), scheduler.delays);
+        assertEquals(List.of("help", "stats"), operations.events);
+    }
+
+    @Test
     void standardReportsUseLegacyStandardDelayWindow() {
         TestScheduler scheduler = new TestScheduler();
         TestActions actions = new TestActions();

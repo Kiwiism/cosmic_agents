@@ -98,6 +98,12 @@ public final class AgentChatReportRuntime {
         };
     }
 
+    public static AgentChatReportFlow.ReportCallbacks reportCallbacks(
+            ReportScheduler scheduler,
+            ReportOperations operations) {
+        return reportCallbacks(scheduler, reportActions(operations));
+    }
+
     public static ReportActions reportActions(ReportOperations operations) {
         return new ReportActions() {
             @Override

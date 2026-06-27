@@ -29,15 +29,15 @@ final class BotChatReportRuntime {
     }
 
     static AgentChatReportFlow.ReportCallbacks reportCallbacks(BotEntry entry) {
-        return AgentChatReportRuntime.reportCallbacks(reportScheduler(), reportActions(entry));
+        return AgentChatReportRuntime.reportCallbacks(reportScheduler(), reportOperations(entry));
     }
 
     private static AgentChatReportRuntime.ReportScheduler reportScheduler() {
         return (minMs, maxMs, action) -> BotManager.after(BotManager.randMs(minMs, maxMs), action);
     }
 
-    private static AgentChatReportRuntime.ReportActions reportActions(BotEntry entry) {
-        return AgentChatReportRuntime.reportActions(new AgentChatReportRuntime.ReportOperations() {
+    private static AgentChatReportRuntime.ReportOperations reportOperations(BotEntry entry) {
+        return new AgentChatReportRuntime.ReportOperations() {
             @Override
             public void help() {
                 reportHelp(entry);
@@ -122,7 +122,7 @@ final class BotChatReportRuntime {
             public void potDebug() {
                 reportPotDebug(entry, entry.bot);
             }
-        });
+        };
     }
 
     static void reportStats(BotEntry entry, Character bot) {
