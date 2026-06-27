@@ -129,6 +129,59 @@ class AgentChatStatusRuntimeTest {
                 "checkPotShareOnModeStart"), actions.events);
     }
 
+    @Test
+    void maybeSuggestGearSkipsWhenRecipientMissing() {
+        TestGearSuggestionState state = new TestGearSuggestionState();
+        TestGearSuggestionActions actions = new TestGearSuggestionActions();
+        actions.hasRecipient = false;
+        actions.offerResult = true;
+
+        AgentChatStatusRuntime.maybeSuggestGear(state, actions, 1000L);
+
+        assertFalse(actions.offerCalled);
+        assertEquals(0L, state.nextAt);
+    }
+
+    @Test
+    void maybeSuggestGearSkipsDuringCooldown() {
+        TestGearSuggestionState state = new TestGearSuggestionState();
+        state.nextAt = 2000L;
+        TestGearSuggestionActions actions = new TestGearSuggestionActions();
+        actions.hasRecipient = true;
+        actions.offerResult = true;
+
+        AgentChatStatusRuntime.maybeSuggestGear(state, actions, 1000L);
+
+        assertFalse(actions.offerCalled);
+        assertEquals(2000L, state.nextAt);
+    }
+
+    @Test
+    void maybeSuggestGearSetsLegacyCooldownWhenOfferSucceeds() {
+        TestGearSuggestionState state = new TestGearSuggestionState();
+        TestGearSuggestionActions actions = new TestGearSuggestionActions();
+        actions.hasRecipient = true;
+        actions.offerResult = true;
+
+        AgentChatStatusRuntime.maybeSuggestGear(state, actions, 1000L);
+
+        assertTrue(actions.offerCalled);
+        assertEquals(61_000L, state.nextAt);
+    }
+
+    @Test
+    void maybeSuggestGearKeepsCooldownWhenOfferFails() {
+        TestGearSuggestionState state = new TestGearSuggestionState();
+        TestGearSuggestionActions actions = new TestGearSuggestionActions();
+        actions.hasRecipient = true;
+        actions.offerResult = false;
+
+        AgentChatStatusRuntime.maybeSuggestGear(state, actions, 1000L);
+
+        assertTrue(actions.offerCalled);
+        assertEquals(0L, state.nextAt);
+    }
+
     private static final class TestState implements AgentChatStatusRuntime.StatusState {
         private Point position;
         private long sinceMs;
@@ -257,6 +310,37 @@ class AgentChatStatusRuntimeTest {
         @Override
         public void checkPotShareOnModeStart() {
             events.add("checkPotShareOnModeStart");
+        }
+    }
+
+    private static final class TestGearSuggestionState implements AgentChatStatusRuntime.GearSuggestionState {
+        private long nextAt;
+
+        @Override
+        public long nextGearSuggestionAt() {
+            return nextAt;
+        }
+
+        @Override
+        public void setNextGearSuggestionAt(long nextGearSuggestionAt) {
+            nextAt = nextGearSuggestionAt;
+        }
+    }
+
+    private static final class TestGearSuggestionActions implements AgentChatStatusRuntime.GearSuggestionActions {
+        private boolean hasRecipient;
+        private boolean offerResult;
+        private boolean offerCalled;
+
+        @Override
+        public boolean hasRecipient() {
+            return hasRecipient;
+        }
+
+        @Override
+        public boolean offerGear() {
+            offerCalled = true;
+            return offerResult;
         }
     }
 }

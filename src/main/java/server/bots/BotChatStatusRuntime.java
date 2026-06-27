@@ -234,25 +234,47 @@ final class BotChatStatusRuntime {
 
     private static void maybeSuggestRecommendedGear(BotEntry entry, Character bot) {
         Character owner = entry.owner;
-        long now = System.currentTimeMillis();
-        if (owner == null || now < entry.nextGearSuggestionAt) {
-            return;
-        }
-
-        if (BotOfferManager.offerBestRecommendedGear(entry, bot, owner)) {
-            entry.nextGearSuggestionAt = now + 60_000L;
-        }
+        AgentChatStatusRuntime.maybeSuggestGear(
+                gearSuggestionState(entry),
+                gearSuggestionActions(owner != null, () -> BotOfferManager.offerBestRecommendedGear(entry, bot, owner)),
+                System.currentTimeMillis());
     }
 
     static void maybeSuggestGearToSiblings(BotEntry entry, Character bot) {
         Character owner = entry.owner;
-        long now = System.currentTimeMillis();
-        if (owner == null || now < entry.nextGearSuggestionAt) {
-            return;
-        }
+        AgentChatStatusRuntime.maybeSuggestGear(
+                gearSuggestionState(entry),
+                gearSuggestionActions(owner != null, () -> BotOfferManager.offerBestGearToSibling(entry, bot)),
+                System.currentTimeMillis());
+    }
 
-        if (BotOfferManager.offerBestGearToSibling(entry, bot)) {
-            entry.nextGearSuggestionAt = now + 60_000L;
-        }
+    private static AgentChatStatusRuntime.GearSuggestionState gearSuggestionState(BotEntry entry) {
+        return new AgentChatStatusRuntime.GearSuggestionState() {
+            @Override
+            public long nextGearSuggestionAt() {
+                return entry.nextGearSuggestionAt;
+            }
+
+            @Override
+            public void setNextGearSuggestionAt(long nextGearSuggestionAt) {
+                entry.nextGearSuggestionAt = nextGearSuggestionAt;
+            }
+        };
+    }
+
+    private static AgentChatStatusRuntime.GearSuggestionActions gearSuggestionActions(
+            boolean hasRecipient,
+            java.util.function.BooleanSupplier offerGear) {
+        return new AgentChatStatusRuntime.GearSuggestionActions() {
+            @Override
+            public boolean hasRecipient() {
+                return hasRecipient;
+            }
+
+            @Override
+            public boolean offerGear() {
+                return offerGear.getAsBoolean();
+            }
+        };
     }
 }

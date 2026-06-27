@@ -62,6 +62,16 @@ public final class AgentChatStatusRuntime {
         actions.checkPotShareOnModeStart();
     }
 
+    public static void maybeSuggestGear(GearSuggestionState state, GearSuggestionActions actions, long nowMs) {
+        if (!actions.hasRecipient() || nowMs < state.nextGearSuggestionAt()) {
+            return;
+        }
+
+        if (actions.offerGear()) {
+            state.setNextGearSuggestionAt(nowMs + 60_000L);
+        }
+    }
+
     public interface StatusState {
         void setOwnerAfkPosition(Point position);
 
@@ -110,5 +120,17 @@ public final class AgentChatStatusRuntime {
         void setupAutopot();
 
         void checkPotShareOnModeStart();
+    }
+
+    public interface GearSuggestionState {
+        long nextGearSuggestionAt();
+
+        void setNextGearSuggestionAt(long nextGearSuggestionAt);
+    }
+
+    public interface GearSuggestionActions {
+        boolean hasRecipient();
+
+        boolean offerGear();
     }
 }
