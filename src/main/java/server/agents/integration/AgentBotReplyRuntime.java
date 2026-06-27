@@ -1,5 +1,6 @@
 package server.agents.integration;
 
+import client.Character;
 import server.agents.capabilities.dialogue.AgentChatReplyRuntime;
 import server.agents.commands.AgentQueuedMessage;
 import server.agents.commands.AgentReplyQueue;
@@ -30,6 +31,18 @@ public final class AgentBotReplyRuntime {
         return AgentChatReplyRuntime.queueReplyWithEstimatedDelay(state(entry), message, dispatcher(entry));
     }
 
+    public static void replyNow(BotEntry entry, String message) {
+        BotManager.getInstance().botReply(entry, message);
+    }
+
+    public static void visibleSayNow(BotEntry entry, String message) {
+        BotManager.getInstance().botVisibleSay(entry, message);
+    }
+
+    public static void sayPartyNow(Character bot, String message) {
+        BotManager.getInstance().botSayParty(bot, message);
+    }
+
     private static AgentReplyQueue.State state(BotEntry entry) {
         return new AgentReplyQueue.State() {
             @Override
@@ -54,15 +67,15 @@ public final class AgentBotReplyRuntime {
             @Override
             public void dispatch(AgentQueuedMessage message) {
                 if (message.ownerDirected()) {
-                    BotManager.getInstance().botReply(entry, message.text());
+                    replyNow(entry, message.text());
                 } else {
-                    BotManager.getInstance().botVisibleSay(entry, message.text());
+                    visibleSayNow(entry, message.text());
                 }
             }
 
             @Override
             public void scheduleNext(Runnable task, int delayMs) {
-                BotManager.scheduleBotReplyAction(delayMs, task);
+                AgentBotSchedulerRuntime.afterDelay(delayMs, task);
             }
         };
     }

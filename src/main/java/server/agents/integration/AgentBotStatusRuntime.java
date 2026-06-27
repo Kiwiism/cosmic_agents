@@ -4,7 +4,6 @@ import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.capabilities.dialogue.AgentChatWelcomeBackFlow;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 import client.Character;
 
 import java.awt.Point;
@@ -131,7 +130,7 @@ public final class AgentBotStatusRuntime {
 
             @Override
             public void sayParty(String text) {
-                BotManager.getInstance().botSayParty(bot, text);
+                AgentBotReplyRuntime.sayPartyNow(bot, text);
             }
         };
     }
@@ -155,7 +154,7 @@ public final class AgentBotStatusRuntime {
 
             @Override
             public void reply(String text) {
-                BotManager.getInstance().botReply(entry, text);
+                AgentBotReplyRuntime.replyNow(entry, text);
             }
         };
     }

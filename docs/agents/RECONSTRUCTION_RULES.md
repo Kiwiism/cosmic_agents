@@ -89,6 +89,11 @@ Recent reconstruction notes:
 - `BotChatRuntime` has been removed; `BotChatManager` is now the only bot-side
   chat compatibility facade and delegates directly to `AgentChatRuntime` with
   `AgentBotChatOrchestratorContext`.
+- Immediate Agent integration reply delivery now routes through
+  `AgentBotReplyRuntime.replyNow`, `visibleSayNow`, and `sayPartyNow`; scattered
+  Agent integration facades no longer call `BotManager.botReply`/visible
+  delivery directly. `AgentBotReplyRuntime` remains the temporary adapter to the
+  legacy BotManager packet-delivery methods.
 
 Initial reconstruction order:
 

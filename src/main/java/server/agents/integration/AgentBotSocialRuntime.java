@@ -5,7 +5,6 @@ import server.agents.capabilities.dialogue.AgentChatSocialFlow;
 import server.agents.capabilities.dialogue.AgentFameDialogueFlow;
 import server.agents.capabilities.dialogue.AgentSocialDialogueClassifier;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 
 /**
  * Agent-owned social chat callback facade over temporary bot-side fame side
@@ -69,7 +68,7 @@ public final class AgentBotSocialRuntime {
 
             @Override
             public void reply(String message) {
-                BotManager.getInstance().botReply(entry, message);
+                AgentBotReplyRuntime.replyNow(entry, message);
             }
         });
     }

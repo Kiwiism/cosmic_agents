@@ -6,7 +6,6 @@ import server.agents.capabilities.dialogue.AgentChatTransferFlow;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.bots.BotEntry;
 import server.bots.BotInventoryManager;
-import server.bots.BotManager;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -42,7 +41,7 @@ public final class AgentBotTransferRuntime {
                                              String message) {
         String category = transferCommand.category();
         if (AgentChatTransferFlow.shouldReplyWithWeirdTransfer(transferCommand, message)) {
-            BotManager.getInstance().botReply(entry, AgentChatTransferFlow.weirdTransferReply());
+            AgentBotReplyRuntime.replyNow(entry, AgentChatTransferFlow.weirdTransferReply());
         }
         if (transferCommand.mode() == AgentChatTransferFlow.TransferMode.TRADE
                 && BotInventoryManager.isMesoCategory(category)) {
@@ -151,12 +150,12 @@ public final class AgentBotTransferRuntime {
                                                     String category,
                                                     AgentChatTransferFlow.TransferResultDecision decision) {
         switch (decision.action()) {
-            case REPLY -> BotManager.getInstance().botReply(entry, decision.reply());
+            case REPLY -> AgentBotReplyRuntime.replyNow(entry, decision.reply());
             case START_TRADE -> BotInventoryManager.startTradeTransfer(category, entry, bot);
             case PROMPT_ITEM_CHOICE -> {
                 entry.setPendingAction(AgentChatPendingAction.ITEM_CHOICE);
                 entry.setPendingDropCategory(decision.category());
-                BotManager.getInstance().botReply(entry, decision.reply());
+                AgentBotReplyRuntime.replyNow(entry, decision.reply());
             }
         }
     }

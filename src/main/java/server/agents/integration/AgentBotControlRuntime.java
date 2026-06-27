@@ -6,7 +6,6 @@ import server.agents.capabilities.dialogue.AgentChatToggleFlow;
 import server.bots.BotBuffManager;
 import server.bots.BotBuildManager;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 
 /**
  * Temporary Agent-owned bridge for control callbacks while toggle/respec side
@@ -22,7 +21,7 @@ public final class AgentBotControlRuntime {
             public void setSupport(boolean enabled) {
                 AgentBotSchedulerRuntime.afterRandomDelay(500, 700, () -> {
                     entry.setSkillBuffsEnabled(enabled);
-                    BotManager.getInstance().botReply(entry, AgentChatToggleFlow.supportReply(enabled));
+                    AgentBotReplyRuntime.replyNow(entry, AgentChatToggleFlow.supportReply(enabled));
                 });
             }
 
@@ -30,7 +29,7 @@ public final class AgentBotControlRuntime {
             public void setHeals(boolean enabled) {
                 AgentBotSchedulerRuntime.afterRandomDelay(500, 700, () -> {
                     entry.setSupportHealsEnabled(enabled);
-                    BotManager.getInstance().botReply(entry, AgentChatToggleFlow.healsReply(enabled));
+                    AgentBotReplyRuntime.replyNow(entry, AgentChatToggleFlow.healsReply(enabled));
                 });
             }
 
@@ -39,7 +38,7 @@ public final class AgentBotControlRuntime {
                 AgentBotSchedulerRuntime.afterRandomDelay(500, 700, () -> {
                     entry.setBuffConsumablesEnabled(enabled);
                     entry.resetLastBuffScan();
-                    BotManager.getInstance().botReply(entry, AgentChatToggleFlow.buffConsumablesReply(
+                    AgentBotReplyRuntime.replyNow(entry, AgentChatToggleFlow.buffConsumablesReply(
                             enabled, entry.buffCheapMode()));
                 });
             }
@@ -49,7 +48,7 @@ public final class AgentBotControlRuntime {
                 AgentBotSchedulerRuntime.afterRandomDelay(500, 700, () -> {
                     entry.setBuffCheapMode(cheapMode);
                     entry.resetLastBuffScan();
-                    BotManager.getInstance().botReply(entry, AgentChatToggleFlow.buffConsumablesModeReply(cheapMode));
+                    AgentBotReplyRuntime.replyNow(entry, AgentChatToggleFlow.buffConsumablesModeReply(cheapMode));
                 });
             }
 
@@ -57,7 +56,7 @@ public final class AgentBotControlRuntime {
             public void setProactiveOffers(boolean enabled) {
                 AgentBotSchedulerRuntime.afterRandomDelay(500, 700, () -> {
                     entry.setProactiveUpgradeOffers(enabled);
-                    BotManager.getInstance().botReply(entry, AgentChatToggleFlow.proactiveOffersReply(enabled));
+                    AgentBotReplyRuntime.replyNow(entry, AgentChatToggleFlow.proactiveOffersReply(enabled));
                 });
             }
         };
@@ -70,7 +69,7 @@ public final class AgentBotControlRuntime {
                 AgentBotSchedulerRuntime.afterRandomDelay(500, 700, () -> {
                     String summary = BotBuffManager.getChatSummary(
                             entry.buffConsumablesEnabled(), entry.buffCheapMode(), entry.bot());
-                    BotManager.getInstance().botReply(entry, summary);
+                    AgentBotReplyRuntime.replyNow(entry, summary);
                 });
             }
 
@@ -93,13 +92,13 @@ public final class AgentBotControlRuntime {
             @Override
             public void respecAp() {
                 AgentBotSchedulerRuntime.afterRandomDelay(500, 700, () ->
-                        BotManager.getInstance().botReply(entry, BotBuildManager.respecAp(entry, entry.bot())));
+                        AgentBotReplyRuntime.replyNow(entry, BotBuildManager.respecAp(entry, entry.bot())));
             }
 
             @Override
             public void respecSp() {
                 AgentBotSchedulerRuntime.afterRandomDelay(500, 700, () ->
-                        BotManager.getInstance().botReply(entry, BotBuildManager.respecSp(entry, entry.bot())));
+                        AgentBotReplyRuntime.replyNow(entry, BotBuildManager.respecSp(entry, entry.bot())));
             }
         };
     }

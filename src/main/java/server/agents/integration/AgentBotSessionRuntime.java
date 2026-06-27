@@ -22,7 +22,7 @@ public final class AgentBotSessionRuntime {
                 AgentBotSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
                     entry.setPendingAction(AgentChatPendingAction.RELOG);
                     BotManager.getInstance().issueStop(entry);
-                    BotManager.getInstance().botReply(entry, AgentChatSessionRequestFlow.relogConfirmPrompt());
+                    AgentBotReplyRuntime.replyNow(entry, AgentChatSessionRequestFlow.relogConfirmPrompt());
                 });
             }
 
@@ -31,7 +31,7 @@ public final class AgentBotSessionRuntime {
                 AgentBotSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
                     entry.setPendingAction(AgentChatPendingAction.LOGOUT);
                     BotManager.getInstance().issueStop(entry);
-                    BotManager.getInstance().botReply(entry, AgentChatSessionRequestFlow.logoutConfirmPrompt());
+                    AgentBotReplyRuntime.replyNow(entry, AgentChatSessionRequestFlow.logoutConfirmPrompt());
                 });
             }
 
@@ -51,7 +51,7 @@ public final class AgentBotSessionRuntime {
             if (owner == null) {
                 return;
             }
-            BotManager.getInstance().botReply(entry, AgentChatSessionRequestFlow.relogConfirmedReply());
+            AgentBotReplyRuntime.replyNow(entry, AgentChatSessionRequestFlow.relogConfirmedReply());
             int charId = entry.bot().getId();
             int ownerCharId = owner.getId();
             int world = entry.bot().getClient().getWorld();
@@ -67,7 +67,7 @@ public final class AgentBotSessionRuntime {
 
     public static void scheduleLogoutConfirm(BotEntry entry) {
         AgentBotSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
-            BotManager.getInstance().botReply(entry, AgentChatSessionRequestFlow.logoutConfirmedReply());
+            AgentBotReplyRuntime.replyNow(entry, AgentChatSessionRequestFlow.logoutConfirmedReply());
             AgentBotSchedulerRuntime.afterRandomDelay(1800, 2200, () -> {
                 entry.bot().saveCharToDB(true);
                 entry.bot().getClient().disconnect(false, false);
@@ -102,12 +102,12 @@ public final class AgentBotSessionRuntime {
 
             @Override
             public void replyTownOrLogout() {
-                BotManager.getInstance().botReply(entry, AgentChatAwayFlow.townOrLogoutPrompt());
+                AgentBotReplyRuntime.replyNow(entry, AgentChatAwayFlow.townOrLogoutPrompt());
             }
 
             @Override
             public void replyStayOrLogout() {
-                BotManager.getInstance().botReply(entry, AgentChatAwayFlow.stayOrLogoutPrompt());
+                AgentBotReplyRuntime.replyNow(entry, AgentChatAwayFlow.stayOrLogoutPrompt());
             }
         };
     }
@@ -122,7 +122,7 @@ public final class AgentBotSessionRuntime {
             @Override
             public void logout() {
                 AgentBotSchedulerRuntime.afterRandomDelay(700, 900, () -> {
-                    BotManager.getInstance().botReply(entry, AgentChatAwayFlow.logoutConfirmReply());
+                    AgentBotReplyRuntime.replyNow(entry, AgentChatAwayFlow.logoutConfirmReply());
                     logoutOwnerBots(entry);
                 });
             }
@@ -134,7 +134,7 @@ public final class AgentBotSessionRuntime {
                     BotManager.getInstance().issueOwnerAwaySafeModeForOwner(ownerId, townOffered);
                 }
                 AgentBotSchedulerRuntime.afterRandomDelay(700, 900, () ->
-                        BotManager.getInstance().botReply(entry, AgentChatAwayFlow.townOrStayConfirmReply(townOffered)));
+                        AgentBotReplyRuntime.replyNow(entry, AgentChatAwayFlow.townOrStayConfirmReply(townOffered)));
             }
 
             @Override
@@ -144,13 +144,13 @@ public final class AgentBotSessionRuntime {
                     BotManager.getInstance().issueOwnerAwaySafeModeForOwner(ownerId, false);
                 }
                 AgentBotSchedulerRuntime.afterRandomDelay(700, 900, () ->
-                        BotManager.getInstance().botReply(entry, AgentChatAwayFlow.stayConfirmReply()));
+                        AgentBotReplyRuntime.replyNow(entry, AgentChatAwayFlow.stayConfirmReply()));
             }
 
             @Override
             public void cancel() {
                 AgentBotSchedulerRuntime.afterRandomDelay(700, 900, () ->
-                        BotManager.getInstance().botReply(entry, AgentChatAwayFlow.cancelReply()));
+                        AgentBotReplyRuntime.replyNow(entry, AgentChatAwayFlow.cancelReply()));
             }
         };
     }

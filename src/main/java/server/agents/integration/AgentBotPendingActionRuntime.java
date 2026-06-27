@@ -7,7 +7,6 @@ import server.agents.capabilities.dialogue.AgentSkillDialogueReporter;
 import server.agents.capabilities.dialogue.AgentSkillReportFlow;
 import server.bots.BotEntry;
 import server.bots.BotInventoryManager;
-import server.bots.BotManager;
 
 import java.util.List;
 import java.util.Map;
@@ -60,7 +59,7 @@ public final class AgentBotPendingActionRuntime {
             @Override
             public void cancelItemChoice() {
                 AgentBotSchedulerRuntime.afterRandomDelay(400, 600,
-                        () -> BotManager.getInstance().botReply(entry, AgentPendingChatActionFlow.keepDropChoiceReply()));
+                        () -> AgentBotReplyRuntime.replyNow(entry, AgentPendingChatActionFlow.keepDropChoiceReply()));
             }
 
             @Override
@@ -82,7 +81,7 @@ public final class AgentBotPendingActionRuntime {
             public void cancelPendingAction(boolean dropAction) {
                 String cancelMsg = AgentPendingChatActionFlow.pendingActionCancelReply(dropAction);
                 AgentBotSchedulerRuntime.afterRandomDelay(700, 900,
-                        () -> BotManager.getInstance().botReply(entry, cancelMsg));
+                        () -> AgentBotReplyRuntime.replyNow(entry, cancelMsg));
             }
         };
     }

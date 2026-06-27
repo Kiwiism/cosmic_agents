@@ -24,7 +24,7 @@ public final class AgentBotEquipmentRuntime {
                     return false;
                 }
                 AgentBotSchedulerRuntime.afterRandomDelay(500, 700, () ->
-                        BotManager.getInstance().botReply(entry, BotEquipManager.unequipSlot(entry.bot(), slots)));
+                        AgentBotReplyRuntime.replyNow(entry, BotEquipManager.unequipSlot(entry.bot(), slots)));
                 return true;
             }
 
@@ -32,7 +32,7 @@ public final class AgentBotEquipmentRuntime {
             public void unequipAll() {
                 AgentBotSchedulerRuntime.afterRandomDelay(500, 700, () -> {
                     BotManager.getInstance().issueStop(entry);
-                    BotManager.getInstance().botReply(entry, BotEquipManager.unequipAll(entry.bot()));
+                    AgentBotReplyRuntime.replyNow(entry, BotEquipManager.unequipAll(entry.bot()));
                 });
             }
 
@@ -41,7 +41,7 @@ public final class AgentBotEquipmentRuntime {
                 AgentBotSchedulerRuntime.afterRandomDelay(400, 600, () -> {
                     List<String> lines = BotEquipManager.autoEquipDebug(entry.bot());
                     for (String line : lines) {
-                        BotManager.getInstance().botReply(entry, line);
+                        AgentBotReplyRuntime.replyNow(entry, line);
                     }
                 });
             }
@@ -50,7 +50,7 @@ public final class AgentBotEquipmentRuntime {
             public void autoEquip() {
                 AgentBotSchedulerRuntime.afterRandomDelay(400, 600, () -> {
                     BotEquipManager.autoEquip(entry.bot(), entry.owner(), entry.pendingLootOfferItem(), true);
-                    BotManager.getInstance().botReply(entry, AgentChatEquipmentFlow.gearOptimizedReply());
+                    AgentBotReplyRuntime.replyNow(entry, AgentChatEquipmentFlow.gearOptimizedReply());
                 });
             }
         };

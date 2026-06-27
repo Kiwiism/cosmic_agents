@@ -7,7 +7,6 @@ import server.agents.capabilities.dialogue.AgentChatBuildFlow;
 import server.agents.capabilities.dialogue.AgentChatJobAdvancementFlow;
 import server.bots.BotBuildManager;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 import server.bots.BotStarterKitManager;
 
 /**
@@ -23,14 +22,14 @@ public final class AgentBotBuildRuntime {
             @Override
             public void oneHanded() {
                 entry.setSpVariant(AgentBuildDialogueClassifier.ONE_HANDED_SP_VARIANT);
-                BotManager.getInstance().botReply(entry, AgentChatBuildFlow.oneHandedSpVariantReply());
+                AgentBotReplyRuntime.replyNow(entry, AgentChatBuildFlow.oneHandedSpVariantReply());
                 BotBuildManager.autoAssignSp(entry, entry.bot());
             }
 
             @Override
             public void twoHanded() {
                 entry.setSpVariant(AgentBuildDialogueClassifier.TWO_HANDED_SP_VARIANT);
-                BotManager.getInstance().botReply(entry, AgentChatBuildFlow.twoHandedSpVariantReply());
+                AgentBotReplyRuntime.replyNow(entry, AgentChatBuildFlow.twoHandedSpVariantReply());
                 BotBuildManager.autoAssignSp(entry, entry.bot());
             }
         };
@@ -43,7 +42,7 @@ public final class AgentBotBuildRuntime {
                 entry.clearApBuildPromptState();
                 String prompt = BotBuildManager.requestApBuildPrompt(entry, entry.bot());
                 if (prompt != null) {
-                    BotManager.getInstance().botReply(entry, prompt);
+                    AgentBotReplyRuntime.replyNow(entry, prompt);
                 }
             }
 
@@ -57,7 +56,7 @@ public final class AgentBotBuildRuntime {
     public static AgentChatJobAdvancementFlow.JobAdvancementCallbacks jobAdvancementCallbacks(BotEntry entry) {
         return advJob -> {
             String reply = AgentChatJobAdvancementFlow.jobChangeReply(advJob);
-            BotManager.getInstance().botReply(entry, reply);
+            AgentBotReplyRuntime.replyNow(entry, reply);
             AgentBotSchedulerRuntime.afterRandomDelay(900, 1100, () -> BotStarterKitManager.advanceJob(entry, advJob));
         };
     }
@@ -93,7 +92,7 @@ public final class AgentBotBuildRuntime {
             String confirmMsg,
             String alreadyMsg) {
         if (sameApBuild(entry.apBuild(), build)) {
-            BotManager.getInstance().botReply(entry, alreadyMsg);
+            AgentBotReplyRuntime.replyNow(entry, alreadyMsg);
             return;
         }
         BotBuildManager.setApBuild(entry, build, confirmMsg);

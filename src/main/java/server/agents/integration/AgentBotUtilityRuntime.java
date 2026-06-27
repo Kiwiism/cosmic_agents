@@ -5,7 +5,6 @@ import server.Trade;
 import server.agents.capabilities.dialogue.AgentChatUtilityFlow;
 import server.bots.BotEntry;
 import server.bots.BotMakerManager;
-import server.bots.BotManager;
 import server.bots.BotShopManager;
 
 /**
@@ -25,7 +24,7 @@ public final class AgentBotUtilityRuntime {
                 if (owner != null && bot.getTrade() == null && owner.getTrade() == null
                         && entry.pendingTradeCategory() == null) {
                     AgentBotSchedulerRuntime.afterRandomDelay(600, 1000, () -> {
-                        BotManager.getInstance().botReply(entry, AgentChatUtilityFlow.tradeInviteReply());
+                        AgentBotReplyRuntime.replyNow(entry, AgentChatUtilityFlow.tradeInviteReply());
                         AgentBotSchedulerRuntime.afterRandomDelay(800, 1200, () -> {
                             Trade.startTrade(bot);
                             Trade.inviteTrade(bot, owner);
