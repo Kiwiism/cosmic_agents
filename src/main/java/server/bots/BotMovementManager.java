@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
-class BotMovementManager {
+public class BotMovementManager {
     enum ActionType {
         IDLE,
         WALK,
@@ -116,7 +116,7 @@ class BotMovementManager {
         return BotPhysicsEngine.walkStep(map);
     }
 
-    static int walkStep(MapleMap map, BotMovementProfile profile) {
+    public static int walkStep(MapleMap map, BotMovementProfile profile) {
         return BotPhysicsEngine.walkStep(map, profile);
     }
 

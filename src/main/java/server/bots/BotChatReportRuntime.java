@@ -4,6 +4,7 @@ package server.bots;
 import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotCharacterReportRuntime;
 import server.agents.integration.AgentBotInventoryReportRuntime;
+import server.agents.integration.AgentBotMovementReportRuntime;
 import server.agents.integration.AgentBotOfferRuntime;
 import server.agents.integration.AgentBotRangeReportRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
@@ -14,10 +15,7 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentChatReportFlow;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
-import server.agents.capabilities.dialogue.AgentMovementDialogueReporter;
 import server.combat.CombatFormulaProvider;
-import server.maps.FieldLimit;
-import server.maps.MapleMap;
 
 import java.util.List;
 
@@ -143,38 +141,7 @@ final class BotChatReportRuntime {
     }
 
     static List<String> buildMovementStatsReport(Character bot) {
-        if (bot == null) {
-            return AgentMovementDialogueReporter.movementStatsReport(null, 0, 0, false, 0, null);
-        }
-
-        BotMovementProfile profile = BotMovementProfile.fromCharacter(bot);
-        MapleMap map = bot.getMap();
-        int rawSpeedStat = bot.getTotalMoveSpeedStat();
-        int rawJumpStat = bot.getTotalJumpStat();
-        boolean movementSkillsForced = map != null && FieldLimit.MOVEMENTSKILLS.check(map.getFieldLimit());
-        AgentMovementDialogueReporter.MovementProfile agentProfile =
-                new AgentMovementDialogueReporter.MovementProfile(
-                        profile.totalSpeedStat(),
-                        profile.totalJumpStat(),
-                        profile.walkVelocityPxs(),
-                        profile.hForcePxs(),
-                        BotPhysicsEngine.jumpForcePerTick(profile),
-                        BotPhysicsEngine.ropeJumpForcePerTick(profile),
-                        BotPhysicsEngine.calculateMaxJumpHeight(profile));
-        AgentMovementDialogueReporter.MapMovementProfile mapProfile = map == null
-                ? null
-                : new AgentMovementDialogueReporter.MapMovementProfile(
-                        BotMovementManager.walkStep(map, profile),
-                        BotPhysicsEngine.climbStepPerTick(),
-                        BotPhysicsEngine.maxJumpHorizontalTravel(map, profile),
-                        BotPhysicsEngine.maxRopeJumpHorizontalTravel(map, profile));
-        return AgentMovementDialogueReporter.movementStatsReport(
-                agentProfile,
-                rawSpeedStat,
-                rawJumpStat,
-                movementSkillsForced,
-                BotPhysicsEngine.climbStepPerTick(),
-                mapProfile);
+        return AgentBotMovementReportRuntime.movementStatsReport(bot);
     }
 
     static void reportBuild(BotEntry entry, Character bot) {

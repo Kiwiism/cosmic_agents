@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-final class BotPhysicsEngine {
+public final class BotPhysicsEngine {
     private static final double CLIENT_GROUND_STEP_MS = 8.0;
     private static final double CLIENT_GROUND_STEP_S = CLIENT_GROUND_STEP_MS / 1000.0;
     private static final int REGION_STITCH_GAP_PX = 2;
@@ -216,7 +216,7 @@ final class BotPhysicsEngine {
         return cfg.JUMP_SPEED_PXS * tickS();
     }
 
-    static float jumpForcePerTick(BotMovementProfile profile) {
+    public static float jumpForcePerTick(BotMovementProfile profile) {
         return profileOrBase(profile).jumpSpeedPxs() * tickS();
     }
 
@@ -228,11 +228,11 @@ final class BotPhysicsEngine {
         return cfg.JUMP_ROPE_PXS * tickS();
     }
 
-    static float ropeJumpForcePerTick(BotMovementProfile profile) {
+    public static float ropeJumpForcePerTick(BotMovementProfile profile) {
         return profileOrBase(profile).ropeJumpSpeedPxs() * tickS();
     }
 
-    static int climbStepPerTick() {
+    public static int climbStepPerTick() {
         return Math.max(1, Math.round(cfg.CLIMB_SPEED_PXS * tickS()));
     }
 
@@ -1384,7 +1384,7 @@ final class BotPhysicsEngine {
         return calculateMaxJumpHeight(BotMovementProfile.base());
     }
 
-    static float calculateMaxJumpHeight(BotMovementProfile profile) {
+    public static float calculateMaxJumpHeight(BotMovementProfile profile) {
         float jumpForce = jumpForcePerTick(profile);
         return jumpForce * jumpForce / (2 * gravityPerTick());
     }
@@ -1393,7 +1393,7 @@ final class BotPhysicsEngine {
         return maxJumpHorizontalTravel(map, BotMovementProfile.base());
     }
 
-    static int maxJumpHorizontalTravel(MapleMap map, BotMovementProfile profile) {
+    public static int maxJumpHorizontalTravel(MapleMap map, BotMovementProfile profile) {
         return maxHorizontalTravel(map, profile, jumpForcePerTick(profile));
     }
 
@@ -1401,7 +1401,7 @@ final class BotPhysicsEngine {
         return maxRopeJumpHorizontalTravel(map, BotMovementProfile.base());
     }
 
-    static int maxRopeJumpHorizontalTravel(MapleMap map, BotMovementProfile profile) {
+    public static int maxRopeJumpHorizontalTravel(MapleMap map, BotMovementProfile profile) {
         return maxHorizontalTravel(map, profile, ropeJumpForcePerTick(profile));
     }
 

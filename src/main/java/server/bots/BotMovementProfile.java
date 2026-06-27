@@ -7,7 +7,7 @@ import server.maps.MapleMap;
 import java.io.Serial;
 import java.io.Serializable;
 
-record BotMovementProfile(int totalSpeedStat, int totalJumpStat) implements Serializable {
+public record BotMovementProfile(int totalSpeedStat, int totalJumpStat) implements Serializable {
     // Serialized inside cached BotNavigationGraph instances; keep explicit so
     // cache compatibility is controlled by GRAPH_VERSION instead of compiler-generated UIDs.
     @Serial
@@ -19,7 +19,7 @@ record BotMovementProfile(int totalSpeedStat, int totalJumpStat) implements Seri
     static final int MAX_EFFECTIVE_JUMP_STAT = 123;
     static final BotMovementProfile BASE = new BotMovementProfile(BASE_TOTAL_STAT, BASE_TOTAL_STAT);
 
-    BotMovementProfile {
+    public BotMovementProfile {
         totalSpeedStat = bucketStat(totalSpeedStat);
         totalJumpStat = bucketStat(totalJumpStat);
         totalSpeedStat = Math.min(totalSpeedStat, MAX_EFFECTIVE_SPEED_STAT);
@@ -30,7 +30,7 @@ record BotMovementProfile(int totalSpeedStat, int totalJumpStat) implements Seri
         return BASE;
     }
 
-    static BotMovementProfile fromCharacter(Character character) {
+    public static BotMovementProfile fromCharacter(Character character) {
         if (character == null) {
             return BASE;
         }
@@ -61,11 +61,11 @@ record BotMovementProfile(int totalSpeedStat, int totalJumpStat) implements Seri
         return totalJumpStat / (double) BASE_TOTAL_STAT;
     }
 
-    double walkVelocityPxs() {
+    public double walkVelocityPxs() {
         return BotMovementManager.cfg.WALK_VEL * speedMultiplier();
     }
 
-    double hForcePxs() {
+    public double hForcePxs() {
         return BotPhysicsEngine.cfg.HFORCE_PXS * speedMultiplier();
     }
 
