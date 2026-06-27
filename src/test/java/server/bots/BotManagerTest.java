@@ -14,6 +14,7 @@ import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.integration.AgentBotManagerReplyRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
+import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.StatEffect;
 import server.TimerManager;
 import server.life.Monster;
@@ -1301,12 +1302,12 @@ class BotManagerTest {
     @Test
     void shouldSplitSingleAmmoStackByShareBudget() {
         BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
-        entry.pendingPotShareBudget = 2250;
+        AgentBotPendingTradeStateRuntime.setShareBudget(entry, 2250);
 
         short tradeQty = BotInventoryManager.capTradeQuantityByShareBudget(entry, (short) 5000);
 
         assertEquals(2250, tradeQty);
-        assertEquals(0, entry.pendingPotShareBudget);
+        assertEquals(0, AgentBotPendingTradeStateRuntime.shareBudget(entry));
     }
 
     @Test

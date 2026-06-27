@@ -392,6 +392,10 @@ Recent reconstruction notes:
   `AgentBotPendingTradeStateRuntime`; loot-offer, potion-share, and ammo-share
   retry scheduling keep BotEntry as the temporary backing store but no longer
   read, write, or clear retry fields directly.
+- Potion/ammo share trade quantity budget state now enters through
+  `AgentBotPendingTradeStateRuntime`; trade item quantity capping and trade
+  reset keep BotEntry as the temporary backing store but no longer read,
+  decrement, or clear the budget field directly.
 
 Initial reconstruction order:
 

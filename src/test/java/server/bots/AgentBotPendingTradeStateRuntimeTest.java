@@ -47,4 +47,22 @@ class AgentBotPendingTradeStateRuntimeTest {
         assertTrue(firstRan.get());
         assertFalse(secondRan.get());
     }
+
+    @Test
+    void adaptsShareBudgetCapState() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        assertEquals((short) 5000, AgentBotPendingTradeStateRuntime.capShareQuantity(entry, (short) 5000));
+
+        AgentBotPendingTradeStateRuntime.setShareBudget(entry, 2250);
+
+        assertEquals(2250, AgentBotPendingTradeStateRuntime.shareBudget(entry));
+        assertEquals((short) 2250, AgentBotPendingTradeStateRuntime.capShareQuantity(entry, (short) 5000));
+        assertEquals(0, AgentBotPendingTradeStateRuntime.shareBudget(entry));
+
+        AgentBotPendingTradeStateRuntime.setShareBudget(entry, 1000);
+        AgentBotPendingTradeStateRuntime.clearShareBudget(entry);
+
+        assertEquals(0, AgentBotPendingTradeStateRuntime.shareBudget(entry));
+    }
 }

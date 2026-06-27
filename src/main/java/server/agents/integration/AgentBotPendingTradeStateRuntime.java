@@ -42,4 +42,26 @@ public final class AgentBotPendingTradeStateRuntime {
         entry.setPendingBotTradeRetry(null);
         return retry;
     }
+
+    public static int shareBudget(BotEntry entry) {
+        return entry.pendingPotShareBudget();
+    }
+
+    public static void setShareBudget(BotEntry entry, int maxQuantity) {
+        entry.setPendingPotShareBudget(maxQuantity);
+    }
+
+    public static void clearShareBudget(BotEntry entry) {
+        entry.setPendingPotShareBudget(0);
+    }
+
+    public static short capShareQuantity(BotEntry entry, short availableQuantity) {
+        int budget = shareBudget(entry);
+        if (budget <= 0) {
+            return availableQuantity;
+        }
+        short tradeQuantity = (short) Math.min(availableQuantity, budget);
+        entry.setPendingPotShareBudget(budget - tradeQuantity);
+        return tradeQuantity;
+    }
 }

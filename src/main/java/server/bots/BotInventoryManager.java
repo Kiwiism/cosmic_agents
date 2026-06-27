@@ -815,7 +815,7 @@ public class BotInventoryManager {
         entry.pendingTradeBotDone  = false;
         entry.pendingTradeSingleBatch = false;
         entry.pendingTradeInviteAnnounced = false;
-        entry.pendingPotShareBudget = 0;
+        AgentBotPendingTradeStateRuntime.clearShareBudget(entry);
         entry.ownerGivenItems.clear();
         // Safety net: if any items were temporarily unequipped for a trade that ended without
         // completing (declined invite / cancel / timeout), the per-slot restore above may fail
@@ -835,12 +835,7 @@ public class BotInventoryManager {
     }
 
     static short capTradeQuantityByShareBudget(BotEntry entry, short availableQty) {
-        if (entry.pendingPotShareBudget <= 0) {
-            return availableQty;
-        }
-        short tradeQty = (short) Math.min(availableQty, entry.pendingPotShareBudget);
-        entry.pendingPotShareBudget -= tradeQty;
-        return tradeQty;
+        return AgentBotPendingTradeStateRuntime.capShareQuantity(entry, availableQty);
     }
 
     private static void completeTradeAndThank(BotEntry entry, Character bot, Trade trade) {
@@ -1819,7 +1814,7 @@ public class BotInventoryManager {
                     BotMovementManager.delayAfterCurrentTick(10_000));
             return;
         }
-        entry.pendingPotShareBudget = maxQty;
+        AgentBotPendingTradeStateRuntime.setShareBudget(entry, maxQty);
         startTradeSequence("pot_share", recipient, items, 0, true, entry, bot);
     }
 
@@ -1859,7 +1854,7 @@ public class BotInventoryManager {
                     BotMovementManager.delayAfterCurrentTick(10_000));
             return;
         }
-        entry.pendingPotShareBudget = maxQty;
+        AgentBotPendingTradeStateRuntime.setShareBudget(entry, maxQty);
         startTradeSequence("ammo_share", recipient, items, 0, true, entry, bot);
     }
 

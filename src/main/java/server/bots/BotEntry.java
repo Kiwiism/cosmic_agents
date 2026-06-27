@@ -341,6 +341,14 @@ public class BotEntry {
         return pendingTradeCategory;
     }
 
+    public int pendingPotShareBudget() {
+        return pendingPotShareBudget;
+    }
+
+    public void setPendingPotShareBudget(int pendingPotShareBudget) {
+        this.pendingPotShareBudget = pendingPotShareBudget;
+    }
+
     // Message queue
     final ArrayDeque<AgentQueuedMessage> msgQueue = new ArrayDeque<>();
     boolean msgSending = false;
