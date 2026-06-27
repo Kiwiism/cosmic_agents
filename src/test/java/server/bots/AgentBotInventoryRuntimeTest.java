@@ -18,9 +18,11 @@ class AgentBotInventoryRuntimeTest {
         try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class);
              MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class)) {
             AgentBotInventoryRuntime.replyNow(entry, "hello");
+            AgentBotInventoryRuntime.visibleSayNow(entry, "visible");
             AgentBotInventoryRuntime.afterDelay(123L, action);
 
             replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, "hello"));
+            replies.verify(() -> AgentBotReplyRuntime.visibleSayNow(entry, "visible"));
             scheduler.verify(() -> AgentBotSchedulerRuntime.afterDelay(123L, action));
         }
     }

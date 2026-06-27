@@ -224,6 +224,10 @@ Recent reconstruction notes:
   `AgentBotEquipmentRuntime`; `BotEquipManager` no longer calls
   `BotManager.botSay` directly for equipment-owned reply delivery, and the
   legacy try/catch still prevents chat failures from blocking equip passes.
+- Inventory trade-thanks and freebie quip callbacks now enter through
+  `AgentBotInventoryRuntime`; `BotInventoryManager` no longer calls
+  `BotManager.botSay` directly for inventory-owned delayed trade reply
+  delivery, while the same reply channel and random reply pools remain intact.
 
 Initial reconstruction order:
 

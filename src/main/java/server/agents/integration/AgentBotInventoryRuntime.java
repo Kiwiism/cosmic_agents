@@ -15,6 +15,10 @@ public final class AgentBotInventoryRuntime {
         AgentBotReplyRuntime.replyNow(entry, message);
     }
 
+    public static void visibleSayNow(BotEntry entry, String message) {
+        AgentBotReplyRuntime.visibleSayNow(entry, message);
+    }
+
     public static void afterDelay(long delayMs, Runnable action) {
         AgentBotSchedulerRuntime.afterDelay(delayMs, action);
     }
