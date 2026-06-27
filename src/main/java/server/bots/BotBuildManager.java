@@ -17,6 +17,7 @@ import server.bots.build.ThiefBuilds;
 import server.bots.build.WarriorBuilds;
 import server.agents.capabilities.dialogue.AgentBuildPromptReporter;
 import server.agents.integration.AgentBotChatStatusRuntime;
+import server.agents.integration.AgentBotReplyRuntime;
 
 public final class BotBuildManager {
     public enum StatType {
@@ -57,7 +58,7 @@ public final class BotBuildManager {
     public static void setApBuild(BotEntry entry, ApBuild build, String confirmMsg) {
         entry.apBuild = build;
         entry.apPromptSent = false;
-        BotManager.getInstance().botReply(entry, confirmMsg);
+        AgentBotReplyRuntime.replyNow(entry, confirmMsg);
         autoAssignAp(entry, entry.bot);
     }
 

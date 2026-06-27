@@ -17,6 +17,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.integration.AgentBotReplyRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -34,6 +35,24 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class BotBuildManagerTest {
+    @Test
+    void setApBuildConfirmsThroughAgentReplyAdapter() {
+        Character bot = mock(Character.class);
+        when(bot.getRemainingAp()).thenReturn(0);
+        BotEntry entry = new BotEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
+        BotBuildManager.ApBuild build = new BotBuildManager.ApBuild(
+                BotBuildManager.StatType.LUK,
+                BotBuildManager.StatType.DEX,
+                25);
+
+        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
+            BotBuildManager.setApBuild(entry, build, "confirm");
+
+            replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, "confirm"));
+        }
+
+        assertEquals(build, entry.apBuild);
+    }
 
     @Test
     void initialSyncWarriorSpendsPendingSpWithoutPrompt() {

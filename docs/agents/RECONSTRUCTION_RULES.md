@@ -98,6 +98,9 @@ Recent reconstruction notes:
   through `AgentBotReplyRuntime` and `AgentBotSchedulerRuntime`. The remaining
   bot-side map-only `botSay(Character, ...)` branch is intentionally unchanged
   until map-only visible delivery has an exact Agent adapter.
+- AP build confirmation replies now route through `AgentBotReplyRuntime`; the
+  build manager still owns the legacy AP assignment behavior for this
+  reconstruction stage.
 
 Initial reconstruction order:
 
