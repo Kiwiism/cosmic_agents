@@ -74,6 +74,10 @@ Recent reconstruction notes:
   `AgentBotChatOrchestratorContext`; the old bot-side context class has been
   removed, and `BotChatRuntime` only creates the temporary Agent integration
   adapter.
+- Unused bot-side chat compatibility shims for build, control, equipment,
+  movement, pending-action, social, transfer, and utility callbacks have been
+  removed after the Agent orchestrator context switched directly to Agent
+  integration facades.
 
 Initial reconstruction order:
 
