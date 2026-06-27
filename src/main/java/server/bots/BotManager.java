@@ -2,8 +2,8 @@ package server.bots;
 
 
 import server.agents.integration.AgentBotManagerReplyRuntime;
+import server.agents.integration.AgentBotManagerSchedulerRuntime;
 import server.agents.integration.AgentBotManagerStatusRuntime;
-import server.agents.integration.AgentBotSchedulerRuntime;
 import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
 import client.BotClient;
 import config.YamlConfig;
@@ -259,7 +259,7 @@ public class BotManager {
                     "following " + target.getName(),
                     "ok, following " + target.getName()
             )));
-            AgentBotSchedulerRuntime.afterDelay(randMs(250, 750), () -> {
+            AgentBotManagerSchedulerRuntime.afterDelay(randMs(250, 750), () -> {
                 BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
                 BotPotionManager.checkPotShareOnModeStart(entry, entry.bot);
                 issueFollow(entry, target);
@@ -579,7 +579,7 @@ public class BotManager {
         entries.remove(entry);
         entry.task.cancel(false);
         issueStop(entry);
-        AgentBotSchedulerRuntime.afterDelay(randMs(400, 600), () ->
+        AgentBotManagerSchedulerRuntime.afterDelay(randMs(400, 600), () ->
                 AgentBotManagerReplyRuntime.replyNow(entry, randomReply(List.of(
                         "ok", "sure", "alright", "gotcha",
                         "later!", "see ya", "take care", "cya", "peace out"))));
@@ -639,7 +639,7 @@ public class BotManager {
 
         // Register under new owner
         registerBot(target.getId(), target, bot);
-        AgentBotSchedulerRuntime.afterDelay(randMs(700, 900), () ->
+        AgentBotManagerSchedulerRuntime.afterDelay(randMs(700, 900), () ->
                 botSay(bot, randomReply(List.of("ok!", "sure!", "hey " + target.getName() + "!", "hi " + target.getName() + "!"))));
         return null;
     }
@@ -710,7 +710,7 @@ public class BotManager {
         // Run the per-bot upgrade-recommendation scan off the player's pickup thread. The
         // scan is fire-and-forget (its only effect is a possible chat-prompt) so deferring
         // by one timer tick keeps rapid pickups from stalling the player behind K×N DPs.
-        AgentBotSchedulerRuntime.afterDelay(0L, () -> {
+        AgentBotManagerSchedulerRuntime.afterDelay(0L, () -> {
             for (BotEntry entry : entries) {
                 BotOfferManager.notifyOwnerGainedEquip(entry, entry.bot, item);
             }
@@ -737,7 +737,7 @@ public class BotManager {
                                          client.inventory.Equip.ScrollResult result,
                                          int scrollItemId,
                                          long delayMs) {
-        AgentBotSchedulerRuntime.afterDelay(Math.max(0L, delayMs), () ->
+        AgentBotManagerSchedulerRuntime.afterDelay(Math.max(0L, delayMs), () ->
                 BotScrollReactionManager.handleScrollEvent(source, result, scrollItemId, bots.values()));
     }
 
@@ -3860,7 +3860,7 @@ public class BotManager {
             Character botChar = loadOfflineBot(charId, world, channel, map, pos);
 
             registerSpawnedBot(ownerCharId, owner, botChar);
-            AgentBotSchedulerRuntime.afterDelay(randMs(900, 1100), () -> {
+            AgentBotManagerSchedulerRuntime.afterDelay(randMs(900, 1100), () -> {
                 botSay(botChar, "back!!");
                 botChar.changeFaceExpression(Emote.HAPPY.getValue());
             });

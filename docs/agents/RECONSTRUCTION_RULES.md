@@ -172,6 +172,10 @@ Recent reconstruction notes:
   `AgentBotManagerReplyRuntime`; `BotManager` no longer reaches directly into
   the lower-level `AgentBotReplyRuntime` for internal command/error/formation
   replies or compatibility delivery wrappers.
+- BotManager-triggered delayed callbacks now enter through
+  `AgentBotManagerSchedulerRuntime`; `BotManager` no longer reaches directly
+  into the lower-level `AgentBotSchedulerRuntime` for follow-target, dismiss,
+  ownership-transfer, pickup-scan, scroll-reaction, or relog-greeting delays.
 
 Initial reconstruction order:
 
