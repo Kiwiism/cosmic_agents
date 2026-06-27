@@ -2,11 +2,7 @@ package server.agents.integration;
 
 import client.Character;
 import server.agents.capabilities.dialogue.AgentMovementDialogueReporter;
-import server.bots.BotMovementManager;
-import server.bots.BotMovementProfile;
-import server.bots.BotPhysicsEngine;
-import server.maps.FieldLimit;
-import server.maps.MapleMap;
+import server.agents.capabilities.movement.AgentMovementKinematicsSnapshot;
 
 import java.util.List;
 
@@ -19,37 +15,35 @@ public final class AgentBotMovementReportRuntime {
     }
 
     public static List<String> movementStatsReport(Character bot) {
-        if (bot == null) {
+        AgentMovementKinematicsSnapshot snapshot = AgentBotMovementKinematicsRuntime.snapshot(bot);
+        if (snapshot == null) {
             return AgentMovementDialogueReporter.movementStatsReport(null, 0, 0, false, 0, null);
         }
 
-        BotMovementProfile profile = BotMovementProfile.fromCharacter(bot);
-        MapleMap map = bot.getMap();
-        int rawSpeedStat = bot.getTotalMoveSpeedStat();
-        int rawJumpStat = bot.getTotalJumpStat();
-        boolean movementSkillsForced = map != null && FieldLimit.MOVEMENTSKILLS.check(map.getFieldLimit());
+        AgentMovementKinematicsSnapshot.MovementProfile profile = snapshot.movementProfile();
         AgentMovementDialogueReporter.MovementProfile agentProfile =
                 new AgentMovementDialogueReporter.MovementProfile(
                         profile.totalSpeedStat(),
                         profile.totalJumpStat(),
                         profile.walkVelocityPxs(),
                         profile.hForcePxs(),
-                        BotPhysicsEngine.jumpForcePerTick(profile),
-                        BotPhysicsEngine.ropeJumpForcePerTick(profile),
-                        BotPhysicsEngine.calculateMaxJumpHeight(profile));
-        AgentMovementDialogueReporter.MapMovementProfile mapProfile = map == null
+                        profile.jumpForcePerTick(),
+                        profile.ropeJumpForcePerTick(),
+                        profile.maxJumpHeight());
+        AgentMovementKinematicsSnapshot.MapMovementProfile mapProfile = snapshot.mapMovementProfile();
+        AgentMovementDialogueReporter.MapMovementProfile agentMapProfile = mapProfile == null
                 ? null
                 : new AgentMovementDialogueReporter.MapMovementProfile(
-                        BotMovementManager.walkStep(map, profile),
-                        BotPhysicsEngine.climbStepPerTick(),
-                        BotPhysicsEngine.maxJumpHorizontalTravel(map, profile),
-                        BotPhysicsEngine.maxRopeJumpHorizontalTravel(map, profile));
+                        mapProfile.walkStep(),
+                        mapProfile.climbStepPerTick(),
+                        mapProfile.maxJumpHorizontalTravel(),
+                        mapProfile.maxRopeJumpHorizontalTravel());
         return AgentMovementDialogueReporter.movementStatsReport(
                 agentProfile,
-                rawSpeedStat,
-                rawJumpStat,
-                movementSkillsForced,
-                BotPhysicsEngine.climbStepPerTick(),
-                mapProfile);
+                snapshot.rawSpeedStat(),
+                snapshot.rawJumpStat(),
+                snapshot.movementSkillsForced(),
+                snapshot.climbStepPerTick(),
+                agentMapProfile);
     }
 }

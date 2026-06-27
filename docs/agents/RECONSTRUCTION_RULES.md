@@ -64,6 +64,9 @@ Recent reconstruction notes:
 - Movement simulation and perf harnesses now use `AgentMovementTargetSnapshot`
   for read-only owner/goal/steering reads, keeping tests aligned with the Agent
   snapshot boundary while preserving legacy movement execution.
+- Movement stats reporting now consumes `AgentMovementKinematicsSnapshot`; the
+  temporary integration adapter still reads legacy bot physics values, but
+  Agent dialogue/report code no longer assembles those bot metrics inline.
 
 Initial reconstruction order:
 
