@@ -6,6 +6,7 @@ import server.agents.integration.AgentBotCharacterReportRuntime;
 import server.agents.integration.AgentBotInventoryReportRuntime;
 import server.agents.integration.AgentBotOfferRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentBotSkillReportRuntime;
 import server.agents.integration.AgentBotStatusRuntime;
 import server.agents.integration.AgentBotSupplyReportRuntime;
 import client.Character;
@@ -13,14 +14,11 @@ import server.agents.capabilities.dialogue.AgentChatReportFlow;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.capabilities.dialogue.AgentMovementDialogueReporter;
-import server.agents.capabilities.dialogue.AgentSkillDialogueReporter;
-import server.agents.capabilities.dialogue.AgentSkillReportFlow;
 import server.combat.CombatFormulaProvider;
 import server.maps.FieldLimit;
 import server.maps.MapleMap;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Temporary bot-side report adapter while report data sources still live in bot
@@ -194,18 +192,7 @@ final class BotChatReportRuntime {
     }
 
     static void reportSkills(BotEntry entry, Character bot) {
-        Map<Integer, List<AgentSkillReportFlow.SkillLine>> skillTrees =
-                AgentSkillDialogueReporter.collectLearnedSkillTrees(bot);
-        List<AgentSkillReportFlow.SkillLine> beginnerSkills =
-                AgentSkillDialogueReporter.collectLearnedBeginnerSkills(bot);
-        int beginnerSpLeft = AgentSkillDialogueReporter.remainingBeginnerSp(bot);
-        AgentChatReportRuntime.reportSkills(
-                bot.isBeginnerJob(),
-                bot.getRemainingSp(),
-                beginnerSkills,
-                beginnerSpLeft,
-                skillTrees,
-                decision -> BotChatPendingActionRuntime.applySkillReportDecision(entry, decision));
+        AgentBotSkillReportRuntime.reportSkills(entry, bot);
     }
 
     static void reportInventory(BotEntry entry, Character bot) {

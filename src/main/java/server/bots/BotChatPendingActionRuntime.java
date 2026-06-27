@@ -15,7 +15,7 @@ import java.util.Map;
  * Temporary bot-side pending-action adapter while pending action side effects
  * still mutate bot runtime state directly.
  */
-final class BotChatPendingActionRuntime {
+public final class BotChatPendingActionRuntime {
     private BotChatPendingActionRuntime() {
     }
 
@@ -92,7 +92,7 @@ final class BotChatPendingActionRuntime {
         applySkillReportDecision(entry, AgentSkillReportFlow.resolveSkillTreeChoice(skillTrees, message));
     }
 
-    static void applySkillReportDecision(BotEntry entry, AgentSkillReportFlow.SkillReportDecision decision) {
+    public static void applySkillReportDecision(BotEntry entry, AgentSkillReportFlow.SkillReportDecision decision) {
         if (decision.clearPendingAction()) {
             entry.pendingAction = null;
         }
