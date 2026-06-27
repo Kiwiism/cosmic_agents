@@ -27,6 +27,7 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.ArgumentCaptor;
 import server.StatEffect;
+import server.agents.integration.AgentBotSchedulerRuntime;
 import server.bots.combat.BotAttackDataProvider;
 import server.life.Monster;
 import server.life.MonsterStats;
@@ -40,7 +41,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Collections;
 import java.util.Set;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -1653,9 +1653,10 @@ class BotCombatManagerTest {
     }
 
     private static void runWithStubbedBotAfter(Runnable action) {
-        try (MockedStatic<BotManager> botManager = Mockito.mockStatic(BotManager.class, Mockito.CALLS_REAL_METHODS)) {
-            botManager.when(() -> BotManager.after(anyLong(), any(Runnable.class)))
-                    .thenReturn(mock(ScheduledFuture.class));
+        try (MockedStatic<AgentBotSchedulerRuntime> scheduler =
+                     Mockito.mockStatic(AgentBotSchedulerRuntime.class, Mockito.CALLS_REAL_METHODS)) {
+            scheduler.when(() -> AgentBotSchedulerRuntime.afterDelay(anyLong(), any(Runnable.class)))
+                    .thenAnswer(invocation -> null);
             action.run();
         }
     }

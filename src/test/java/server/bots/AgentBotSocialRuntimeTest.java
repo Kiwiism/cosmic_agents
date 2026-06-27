@@ -3,6 +3,7 @@ package server.bots;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 import server.agents.integration.AgentBotSocialRuntime;
 import server.maps.MapleMap;
@@ -14,7 +15,6 @@ import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AgentBotSocialRuntimeTest {
@@ -34,16 +34,14 @@ class AgentBotSocialRuntimeTest {
         Character bot = mock(Character.class);
         MapleMap map = mock(MapleMap.class);
         BotEntry entry = new BotEntry(bot, null, null);
-        BotManager manager = mock(BotManager.class);
 
-        try (MockedStatic<BotManager> botManager = mockStatic(BotManager.class)) {
-            botManager.when(BotManager::getInstance).thenReturn(manager);
+        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
             when(bot.getMap()).thenReturn(map);
             when(map.getCharacters()).thenReturn(List.of());
 
             AgentBotSocialRuntime.handleFameCommand(entry, "Alice");
 
-            verify(manager).botReply(eq(entry), contains("Alice"));
+            replies.verify(() -> AgentBotReplyRuntime.replyNow(eq(entry), contains("Alice")));
         }
     }
 }

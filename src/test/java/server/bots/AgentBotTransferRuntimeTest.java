@@ -4,6 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatTransferFlow;
+import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 import server.agents.integration.AgentBotTransferRuntime;
 
@@ -11,22 +12,18 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.verify;
 
 class AgentBotTransferRuntimeTest {
     @Test
     void weirdTransferRequestRepliesImmediately() {
         BotEntry entry = new BotEntry(null, null, null);
-        BotManager manager = mock(BotManager.class);
         AgentChatTransferFlow.TransferCommand command =
                 new AgentChatTransferFlow.TransferCommand(AgentChatTransferFlow.TransferMode.TRADE, "trash");
 
-        try (MockedStatic<BotManager> botManager = mockStatic(BotManager.class)) {
-            botManager.when(BotManager::getInstance).thenReturn(manager);
-
+        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
             AgentBotTransferRuntime.handleTransferCommand(entry, command, "show junk");
 
-            verify(manager).botReply(entry, AgentChatTransferFlow.weirdTransferReply());
+            replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, AgentChatTransferFlow.weirdTransferReply()));
         }
     }
 

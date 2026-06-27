@@ -134,9 +134,6 @@ Recent reconstruction notes:
 - Remaining BotManager fire-and-forget callback scheduling for follow-target
   activation, spawn status checks, recruit greetings, owner pickup scans, scroll
   reactions, and relog greetings now routes through `AgentBotSchedulerRuntime`.
-  The legacy `BotManager.after` helper remains only behind
-  `scheduleBotReplyAction`, which is the temporary scheduling hook consumed by
-  the Agent scheduler adapter.
 - Immediate Agent reply delivery now lives in `AgentBotReplyRuntime` instead of
   bridging back through `BotManager.botReply`, `botVisibleSay`, or
   `botSayParty`. `BotManager` keeps those methods as compatibility wrappers,
@@ -146,6 +143,9 @@ Recent reconstruction notes:
   compatibility wrapper for callers that have not been migrated yet.
 - `AgentBotSchedulerRuntime` now schedules directly through `TimerManager`; the
   legacy `BotManager.scheduleBotReplyAction`/`after` bridge has been removed.
+- Agent integration tests for build, session, pending-action, transfer, social,
+  and combat delayed callbacks now assert the Agent reply/scheduler runtime
+  boundary instead of the removed BotManager delivery/scheduler bridge.
 
 Initial reconstruction order:
 

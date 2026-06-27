@@ -6,6 +6,7 @@ import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
 import server.agents.capabilities.dialogue.AgentSkillReportFlow;
 import server.agents.integration.AgentBotPendingActionRuntime;
+import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 
 import java.util.List;
@@ -14,9 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.verify;
 
 class AgentBotPendingActionRuntimeTest {
     @Test
@@ -61,11 +60,9 @@ class AgentBotPendingActionRuntimeTest {
     @Test
     void cancelItemChoiceSchedulesLegacyReply() {
         BotEntry entry = new BotEntry(null, null, null);
-        BotManager manager = mock(BotManager.class);
 
         try (MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class);
-             MockedStatic<BotManager> botManager = mockStatic(BotManager.class)) {
-            botManager.when(BotManager::getInstance).thenReturn(manager);
+             MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
             scheduler.when(() -> AgentBotSchedulerRuntime.afterRandomDelay(eq(400), eq(600), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
@@ -74,7 +71,7 @@ class AgentBotPendingActionRuntimeTest {
 
             AgentBotPendingActionRuntime.pendingActionCallbacks(entry).cancelItemChoice();
 
-            verify(manager).botReply(entry, AgentPendingChatActionFlow.keepDropChoiceReply());
+            replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, AgentPendingChatActionFlow.keepDropChoiceReply()));
         }
     }
 
