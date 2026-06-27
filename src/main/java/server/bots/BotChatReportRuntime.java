@@ -193,7 +193,7 @@ final class BotChatReportRuntime {
         List<AgentSkillReportFlow.SkillLine> beginnerSkills =
                 AgentSkillDialogueReporter.collectLearnedBeginnerSkills(bot);
         int beginnerSpLeft = AgentSkillDialogueReporter.remainingBeginnerSp(bot);
-        BotChatManager.applySkillReportDecision(entry, AgentSkillReportFlow.reportSkills(
+        BotChatPendingActionRuntime.applySkillReportDecision(entry, AgentSkillReportFlow.reportSkills(
                 bot.isBeginnerJob(),
                 bot.getRemainingSp(),
                 beginnerSkills,
