@@ -286,6 +286,10 @@ Recent reconstruction notes:
   now enter through narrow `AgentBotPotionReplyRuntime` and
   `AgentBotPotionSchedulerRuntime` adapters; potion orchestration no longer
   reaches directly into the broad reply or scheduler runtimes.
+- Maker automation reply, delay, and random-delay bridge methods now enter
+  through narrow `AgentBotMakerReplyRuntime` and
+  `AgentBotMakerSchedulerRuntime` adapters; Maker orchestration no longer
+  reaches directly into the broad reply or scheduler runtimes.
 
 Initial reconstruction order:
 
