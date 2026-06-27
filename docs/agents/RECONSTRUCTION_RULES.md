@@ -141,6 +141,9 @@ Recent reconstruction notes:
   bridging back through `BotManager.botReply`, `botVisibleSay`, or
   `botSayParty`. `BotManager` keeps those methods as compatibility wrappers,
   and chat text sanitization now lives in `AgentChatTextSanitizer`.
+- BotManager's remaining internal owner-directed reply sites now call
+  `AgentBotReplyRuntime.replyNow` directly; `BotManager.botReply` remains only a
+  compatibility wrapper for callers that have not been migrated yet.
 
 Initial reconstruction order:
 

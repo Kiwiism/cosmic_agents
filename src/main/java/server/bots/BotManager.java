@@ -589,7 +589,7 @@ public class BotManager {
         entry.task.cancel(false);
         issueStop(entry);
         AgentBotSchedulerRuntime.afterDelay(randMs(400, 600), () ->
-                botReply(entry, randomReply(List.of(
+                AgentBotReplyRuntime.replyNow(entry, randomReply(List.of(
                         "ok", "sure", "alright", "gotcha",
                         "later!", "see ya", "take care", "cya", "peace out"))));
         return true;
@@ -2489,7 +2489,7 @@ public class BotManager {
     private void forceBotIdleAfterTickFailure(BotEntry entry) {
         issueStop(entry);
         try {
-            botReply(entry, "unrecoverable error caught, idling");
+            AgentBotReplyRuntime.replyNow(entry, "unrecoverable error caught, idling");
         } catch (Throwable chatError) {
             Character bot = entry.bot;
             log.warn("Failed to send bot failure idle message for '{}'",
@@ -2967,7 +2967,7 @@ public class BotManager {
         BotNavigationGraph graph = BotNavigationGraphProvider.peekBestGraph(map, entry.movementProfile);
         int regionId = graph != null ? graph.findRegionId(map, ownerPos) : -1;
         if (regionId < 0) {
-            botReply(entry, "can't find a patrol region here");
+            AgentBotReplyRuntime.replyNow(entry, "can't find a patrol region here");
             return;
         }
         clearScriptTasks(entry);
