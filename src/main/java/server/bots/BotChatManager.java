@@ -3,8 +3,6 @@ package server.bots;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatOrchestrator;
 
-import java.util.List;
-
 public class BotChatManager {
     // Set true on entry; cleared to false only if we fall off the natural end of handleChat
     // (no command pattern matched). Every match path returns early, leaving this true. Caller
@@ -20,7 +18,7 @@ public class BotChatManager {
     }
 
     // -------------------------------------------------------------------------
-    // Message queue — 5-second spacing between consecutive bot messages
+    // Message queue - 5-second spacing between consecutive bot messages
     // -------------------------------------------------------------------------
 
     public static void queueBotSay(BotEntry entry, String message) {
@@ -39,7 +37,7 @@ public class BotChatManager {
         return BotChatReplyRuntime.queueReplyWithEstimatedDelay(entry, message);
     }
 
-    // Status check — called on spawn, grind start, greeting, and level-up
+    // Status check - called on spawn, grind start, greeting, and level-up
     static void checkBotStatus(BotEntry entry, Character bot) {
         BotChatStatusRuntime.checkBotStatus(entry, bot);
     }
@@ -54,34 +52,13 @@ public class BotChatManager {
         BotChatStatusRuntime.announceOwnerReturnedFromOffline(entry);
     }
 
-    /** Detects owner AFK (same position ≥5 min) and says "wb" when they return. */
+    /** Detects owner AFK (same position >=5 min) and says "wb" when they return. */
     static void tickAfkCheck(BotEntry entry, Character owner) {
         BotChatStatusRuntime.tickAfkCheck(entry, owner);
     }
 
-    static String buildRangeReport(Character bot) {
-        return BotChatReportRuntime.buildRangeReport(bot);
-    }
-
-    static String buildRangeReport(Character bot, BotEquipManager.MapDamageProfile mobProfile) {
-        return BotChatReportRuntime.buildRangeReport(bot, mobProfile);
-    }
-
-    static List<String> buildMovementStatsReport(Character bot) {
-        return BotChatReportRuntime.buildMovementStatsReport(bot);
-    }
-
-    private static void reportHelp(BotEntry entry) {
-        BotChatReportRuntime.reportHelp(entry);
-    }
-
-    /** Returns true when the owner hasn't moved in ≥5 min (AFK). Skip chat interactions. */
+    /** Returns true when the owner hasn't moved in >=5 min (AFK). Skip chat interactions. */
     static boolean isOwnerIdle(BotEntry entry) {
         return BotChatStatusRuntime.isOwnerIdle(entry);
     }
-
-    static int randomFidgetExpression() {
-        return BotChatStatusRuntime.randomFidgetExpression();
-    }
-
 }

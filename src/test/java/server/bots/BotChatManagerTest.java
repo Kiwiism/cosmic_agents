@@ -13,7 +13,6 @@ import server.maps.MapleMap;
 
 import java.util.List;
 import java.util.Locale;
-import java.lang.reflect.Method;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -188,7 +187,7 @@ class BotChatManagerTest {
         assertTrue(AgentChatCommandClassifier.isFidgetCommand("fidget!"));
         assertFalse(AgentChatCommandClassifier.isFidgetCommand("please fidget"));
         for (int i = 0; i < 100; i++) {
-            assertTrue(Set.of(2, 3, 5, 6, 7).contains(BotChatManager.randomFidgetExpression()));
+            assertTrue(Set.of(2, 3, 5, 6, 7).contains(BotChatStatusRuntime.randomFidgetExpression()));
         }
 
         assertTrue(BotFidgetManager.maybeStartSocialFidget(entry));
@@ -263,7 +262,7 @@ class BotChatManagerTest {
         when(bot.getTotalJumpStat()).thenReturn(110);
         BotMovementProfile profile = BotMovementProfile.fromCharacter(bot);
 
-        List<String> report = BotChatManager.buildMovementStatsReport(bot);
+        List<String> report = BotChatReportRuntime.buildMovementStatsReport(bot);
 
         assertEquals(List.of(
                 "speed 120% jump 110%",
@@ -290,7 +289,7 @@ class BotChatManagerTest {
         when(bot.getTotalMoveSpeedStat()).thenReturn(140);
         when(bot.getTotalJumpStat()).thenReturn(125);
 
-        List<String> report = BotChatManager.buildMovementStatsReport(bot);
+        List<String> report = BotChatReportRuntime.buildMovementStatsReport(bot);
 
         assertEquals("speed 100% jump 100% (map forced; raw 140%/125%)", report.getFirst());
     }
@@ -310,7 +309,7 @@ class BotChatManagerTest {
         when(bot.calculateMinBaseDamage(20, 0.1d)).thenReturn(50);
         when(bot.calculateMaxBaseDamage(20)).thenReturn(99);
 
-        String report = BotChatManager.buildRangeReport(bot,
+        String report = BotChatReportRuntime.buildRangeReport(bot,
                 new BotEquipManager.MapDamageProfile(100, 40, 48));
 
         assertEquals("my dmg is 50-99, watk 20, acc 100 | hit 47% vs hardest mob (avd 40)", report);
@@ -325,7 +324,7 @@ class BotChatManagerTest {
         when(bot.getTotalInt()).thenReturn(100);
         when(bot.getTotalLuk()).thenReturn(50);
 
-        String report = BotChatManager.buildRangeReport(bot,
+        String report = BotChatReportRuntime.buildRangeReport(bot,
                 new BotEquipManager.MapDamageProfile(100, 30, 50));
 
         assertEquals("my dmg is 3-9, matk 200, magic acc 75 | hit 26% vs hardest mob (avd 30)", report);
@@ -391,9 +390,7 @@ class BotChatManagerTest {
         BotEntry entry = new BotEntry(null, null, null);
         entry.msgSending = true;
 
-        Method reportHelp = BotChatManager.class.getDeclaredMethod("reportHelp", BotEntry.class);
-        reportHelp.setAccessible(true);
-        reportHelp.invoke(null, entry);
+        BotChatReportRuntime.reportHelp(entry);
 
         assertEquals(5, entry.msgQueue.size());
         for (AgentQueuedMessage message : entry.msgQueue) {
