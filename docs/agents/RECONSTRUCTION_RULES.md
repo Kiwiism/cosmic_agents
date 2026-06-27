@@ -207,6 +207,10 @@ Recent reconstruction notes:
   through `AgentBotControlReportRuntime`; `AgentBotControlRuntime` still owns
   the same 500-700 ms command delay, but no longer reaches directly into the
   broad chat-report facade for those control-owned report callbacks.
+- Offer-manager map-visible rejection replies and bot-to-bot loot-offer accept
+  replies now enter through `AgentBotOfferRuntime`; `BotOfferManager` no longer
+  calls `BotManager.botSay` directly for offer-owned reply delivery, while the
+  same reply channel, random reply pool, and delay behavior remain intact.
 
 Initial reconstruction order:
 

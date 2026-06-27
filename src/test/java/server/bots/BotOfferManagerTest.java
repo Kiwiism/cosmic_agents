@@ -105,4 +105,26 @@ class BotOfferManagerTest {
             offers.verify(() -> AgentBotOfferRuntime.replyNow(entry, "ok, keeping it for now"));
         }
     }
+
+    @Test
+    void negativePeerUpgradeResponseSchedulesAgentMapSayAdapter() {
+        Character bot = mock(Character.class);
+        Character owner = mock(Character.class);
+        Character speaker = mock(Character.class);
+        when(owner.getId()).thenReturn(100);
+        when(speaker.getId()).thenReturn(200);
+        BotEntry entry = new BotEntry(bot, owner, null);
+        entry.pendingLootOfferItem = new Item(1002000, (short) 1, (short) 1);
+        entry.pendingLootOfferRecipientId = 200;
+        entry.pendingLootOfferExpiresAt = Long.MAX_VALUE;
+
+        ArgumentCaptor<Runnable> action = ArgumentCaptor.forClass(Runnable.class);
+        try (MockedStatic<AgentBotOfferRuntime> offers = mockStatic(AgentBotOfferRuntime.class)) {
+            assertTrue(BotOfferManager.handlePendingOfferResponse(entry, speaker, "no"));
+
+            offers.verify(() -> AgentBotOfferRuntime.afterRandomDelay(eq(400), eq(600), action.capture()));
+            action.getValue().run();
+            offers.verify(() -> AgentBotOfferRuntime.sayMapNow(bot, "ok, keeping it for now"));
+        }
+    }
 }

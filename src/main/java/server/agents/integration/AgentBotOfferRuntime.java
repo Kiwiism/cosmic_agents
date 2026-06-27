@@ -4,6 +4,7 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.bots.BotEntry;
 import server.bots.BotOfferManager;
+import server.bots.ReplyChannel;
 
 /**
  * Temporary Agent-owned bridge to legacy bot offer side effects.
@@ -22,6 +23,14 @@ public final class AgentBotOfferRuntime {
 
     public static void queueSay(BotEntry entry, String message) {
         AgentBotReplyRuntime.queueSay(entry, message);
+    }
+
+    public static void sayMapNow(Character bot, String message) {
+        AgentBotReplyRuntime.sayMapNow(bot, message);
+    }
+
+    public static void sayNow(Character bot, ReplyChannel channel, String message) {
+        AgentBotReplyRuntime.sayNow(bot, channel, message);
     }
 
     public static long queueSayWithEstimatedDelay(BotEntry entry, String message) {

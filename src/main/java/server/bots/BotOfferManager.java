@@ -197,7 +197,7 @@ public final class BotOfferManager {
                 if (entry.owner != null && speaker.getId() == entry.owner.getId()) {
                     AgentBotOfferRuntime.replyNow(entry, "ok, keeping it for now");
                 } else {
-                    BotManager.getInstance().botSay(entry.bot, "ok, keeping it for now");
+                    AgentBotOfferRuntime.sayMapNow(entry.bot, "ok, keeping it for now");
                 }
             });
             return true;
@@ -307,7 +307,7 @@ public final class BotOfferManager {
         if (!hasPendingOffer(entry) || entry.pendingLootOfferRecipientId != recipientBot.getId()) {
             return;
         }
-        BotManager.getInstance().botSay(recipientBot, entry.replyChannel, BotManager.randomReply(BOT_ACCEPT_MSGS));
+        AgentBotOfferRuntime.sayNow(recipientBot, entry.replyChannel, BotManager.randomReply(BOT_ACCEPT_MSGS));
         handlePendingOfferResponse(entry, recipientBot, "yes");
     }
 

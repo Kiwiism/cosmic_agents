@@ -49,6 +49,8 @@ class AgentBotOfferRuntimeTest {
 
             AgentBotOfferRuntime.replyNow(entry, "reply");
             AgentBotOfferRuntime.queueSay(entry, "say");
+            AgentBotOfferRuntime.sayMapNow(null, "map");
+            AgentBotOfferRuntime.sayNow(null, ReplyChannel.PARTY, "party");
             long queueDelay = AgentBotOfferRuntime.queueSayWithEstimatedDelay(entry, "queued");
             AgentBotOfferRuntime.afterDelay(500L, action);
             AgentBotOfferRuntime.afterRandomDelay(400, 600, action);
@@ -56,6 +58,8 @@ class AgentBotOfferRuntimeTest {
 
             replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, "reply"));
             replies.verify(() -> AgentBotReplyRuntime.queueSay(entry, "say"));
+            replies.verify(() -> AgentBotReplyRuntime.sayMapNow(null, "map"));
+            replies.verify(() -> AgentBotReplyRuntime.sayNow(null, ReplyChannel.PARTY, "party"));
             replies.verify(() -> AgentBotReplyRuntime.queueSayWithEstimatedDelay(entry, "queued"));
             scheduler.verify(() -> AgentBotSchedulerRuntime.afterDelay(500L, action));
             scheduler.verify(() -> AgentBotSchedulerRuntime.afterRandomDelay(400, 600, action));
