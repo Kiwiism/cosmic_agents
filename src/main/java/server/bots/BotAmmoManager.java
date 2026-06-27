@@ -4,6 +4,7 @@ import client.Character;
 import client.inventory.Item;
 import client.inventory.WeaponType;
 import server.agents.integration.AgentBotAmmoRuntime;
+import server.agents.integration.AgentBotAmmoStateRuntime;
 
 import java.util.List;
 import java.util.Map;
@@ -35,26 +36,26 @@ public final class BotAmmoManager {
     static boolean requestLowAmmoShare(BotEntry entry, Character bot, boolean bypassShareLimits) {
         WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(bot);
         if (!canRequestShare(weaponType)) {
-            entry.ammoShareRequested = false;
+            AgentBotAmmoStateRuntime.clearAmmoShareRequested(entry);
             return false;
         }
 
         int ammo = BotCombatManager.countAmmo(bot, weaponType);
         if (ammo >= BotCombatManager.cfg.AMMO_LOW_WARN) {
-            entry.ammoShareRequested = false;
+            AgentBotAmmoStateRuntime.clearAmmoShareRequested(entry);
             return false;
         }
 
-        if ((!entry.ammoShareRequested || bypassShareLimits)
+        if ((!AgentBotAmmoStateRuntime.ammoShareRequested(entry) || bypassShareLimits)
                 && requestAmmoShare(entry, bot, weaponType, ammo, bypassShareLimits)) {
-            entry.ammoShareRequested = true;
+            AgentBotAmmoStateRuntime.setAmmoShareRequested(entry, true);
             return true;
         }
         return false;
     }
 
     static void checkAmmoShareOnModeStart(BotEntry entry, Character bot) {
-        entry.ammoShareRequested = false;
+        AgentBotAmmoStateRuntime.clearAmmoShareRequested(entry);
         requestLowAmmoShare(entry, bot, false);
     }
 

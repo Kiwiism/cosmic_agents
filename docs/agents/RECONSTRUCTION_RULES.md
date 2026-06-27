@@ -365,6 +365,10 @@ Recent reconstruction notes:
   `AgentBotActivityStateRuntime` adapter; status and welcome-back orchestration
   keep BotEntry as the temporary backing store but no longer read or mutate AFK
   fields directly.
+- Ammo share request episode state now enters through the narrow
+  `AgentBotAmmoStateRuntime` adapter; ammo sharing keeps BotEntry as the
+  temporary backing store but no longer reads or mutates the request flag
+  directly.
 
 Initial reconstruction order:
 
