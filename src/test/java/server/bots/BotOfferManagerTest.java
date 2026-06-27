@@ -8,8 +8,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotOfferRuntime;
-import server.agents.integration.AgentBotReplyRuntime;
-import server.agents.integration.AgentBotSchedulerRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -43,10 +41,10 @@ class BotOfferManagerTest {
         BotEntry entry = new BotEntry(bot, owner, null);
         entry.setPendingAction("trade");
 
-        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
+        try (MockedStatic<AgentBotOfferRuntime> offers = mockStatic(AgentBotOfferRuntime.class)) {
             BotOfferManager.requestBestUpgradeFromOwner(entry, bot);
 
-            replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, "busy rn, ask me again in a bit"));
+            offers.verify(() -> AgentBotOfferRuntime.replyNow(entry, "busy rn, ask me again in a bit"));
         }
     }
 
@@ -79,13 +77,12 @@ class BotOfferManagerTest {
         entry.pendingLootOfferBotRequesting = true;
 
         ArgumentCaptor<Runnable> action = ArgumentCaptor.forClass(Runnable.class);
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class);
-             MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
+        try (MockedStatic<AgentBotOfferRuntime> offers = mockStatic(AgentBotOfferRuntime.class)) {
             assertTrue(BotOfferManager.handlePendingOfferResponse(entry, owner, "yes"));
 
-            scheduler.verify(() -> AgentBotSchedulerRuntime.afterRandomDelay(eq(400), eq(600), action.capture()));
+            offers.verify(() -> AgentBotOfferRuntime.afterRandomDelay(eq(400), eq(600), action.capture()));
             action.getValue().run();
-            replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, "ty! inv me?"));
+            offers.verify(() -> AgentBotOfferRuntime.replyNow(entry, "ty! inv me?"));
         }
     }
 
@@ -100,13 +97,12 @@ class BotOfferManagerTest {
         entry.pendingLootOfferExpiresAt = Long.MAX_VALUE;
 
         ArgumentCaptor<Runnable> action = ArgumentCaptor.forClass(Runnable.class);
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class);
-             MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
+        try (MockedStatic<AgentBotOfferRuntime> offers = mockStatic(AgentBotOfferRuntime.class)) {
             assertTrue(BotOfferManager.handlePendingOfferResponse(entry, owner, "no"));
 
-            scheduler.verify(() -> AgentBotSchedulerRuntime.afterRandomDelay(eq(400), eq(600), action.capture()));
+            offers.verify(() -> AgentBotOfferRuntime.afterRandomDelay(eq(400), eq(600), action.capture()));
             action.getValue().run();
-            replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, "ok, keeping it for now"));
+            offers.verify(() -> AgentBotOfferRuntime.replyNow(entry, "ok, keeping it for now"));
         }
     }
 }

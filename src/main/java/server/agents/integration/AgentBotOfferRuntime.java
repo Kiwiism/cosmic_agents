@@ -16,6 +16,30 @@ public final class AgentBotOfferRuntime {
         return AgentBotChatStatusRuntime.isOwnerIdle(entry);
     }
 
+    public static void replyNow(BotEntry entry, String message) {
+        AgentBotReplyRuntime.replyNow(entry, message);
+    }
+
+    public static void queueSay(BotEntry entry, String message) {
+        AgentBotReplyRuntime.queueSay(entry, message);
+    }
+
+    public static long queueSayWithEstimatedDelay(BotEntry entry, String message) {
+        return AgentBotReplyRuntime.queueSayWithEstimatedDelay(entry, message);
+    }
+
+    public static void afterDelay(long delayMs, Runnable action) {
+        AgentBotSchedulerRuntime.afterDelay(delayMs, action);
+    }
+
+    public static void afterRandomDelay(int minMs, int maxMs, Runnable action) {
+        AgentBotSchedulerRuntime.afterRandomDelay(minMs, maxMs, action);
+    }
+
+    public static long randomDelayMs(int minMs, int maxMs) {
+        return AgentBotSchedulerRuntime.randomDelayMs(minMs, maxMs);
+    }
+
     public static AgentChatReportRuntime.RecommendedGearActions recommendedGearActions(
             BotEntry entry,
             Character bot,
