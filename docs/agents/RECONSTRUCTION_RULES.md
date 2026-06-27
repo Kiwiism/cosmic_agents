@@ -70,6 +70,10 @@ Recent reconstruction notes:
 - Top-level chat handled-state ownership now lives in `AgentChatRuntime`;
   `BotChatRuntime` remains only as a temporary adapter from `BotEntry` to the
   Agent chat orchestrator context.
+- Top-level chat orchestrator context ownership now lives in
+  `AgentBotChatOrchestratorContext`; the old bot-side context class has been
+  removed, and `BotChatRuntime` only creates the temporary Agent integration
+  adapter.
 
 Initial reconstruction order:
 

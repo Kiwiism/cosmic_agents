@@ -199,6 +199,9 @@ public class BotEntry {
         apPromptSent = false;
     }
     public void setSpVariant(String spVariant) { this.spVariant = spVariant; }
+    public boolean apPromptSent() { return apPromptSent; }
+    public String spVariant() { return spVariant; }
+    public boolean spVariantPromptSent() { return spVariantPromptSent; }
     public java.awt.Point getFarmAnchor() { return farmAnchor; }
     public int getFarmAnchorMapId() { return farmAnchorMapId; }
     public java.awt.Point moveTarget() { return moveTarget == null ? null : new java.awt.Point(moveTarget); }

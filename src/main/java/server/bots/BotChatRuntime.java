@@ -1,5 +1,6 @@
 package server.bots;
 
+import server.agents.integration.AgentBotChatOrchestratorContext;
 import server.agents.capabilities.dialogue.AgentChatRuntime;
 
 /**
@@ -15,6 +16,6 @@ final class BotChatRuntime {
     }
 
     static void handleChat(BotEntry entry, String message) {
-        AgentChatRuntime.handleChat(message, new BotChatOrchestratorContext(entry));
+        AgentChatRuntime.handleChat(message, new AgentBotChatOrchestratorContext(entry));
     }
 }
