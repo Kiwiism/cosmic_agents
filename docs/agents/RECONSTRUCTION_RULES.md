@@ -120,6 +120,10 @@ Recent reconstruction notes:
   chat remains unchanged on the legacy map-visible say path.
 - Combat alert reset callbacks now route through `AgentBotSchedulerRuntime`;
   alert timing and stance reset behavior are unchanged.
+- Inventory, trade, meso-transfer, and drop owner-directed replies now route
+  through `AgentBotReplyRuntime`; delayed trade thanks/freebie callbacks now use
+  `AgentBotSchedulerRuntime` while preserving the legacy visible `botSay`
+  delivery and random reply pools.
 
 Initial reconstruction order:
 

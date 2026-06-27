@@ -7,6 +7,7 @@ import client.inventory.Inventory;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.integration.AgentBotReplyRuntime;
 import server.Trade;
 import server.maps.Foothold;
 import server.maps.MapItem;
@@ -26,7 +27,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -41,7 +41,6 @@ class BotInventoryManagerTest {
         BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
         Character bot = entry.bot;
         Character owner = entry.owner;
-        BotManager manager = spy(BotManager.getInstance());
         Method startTradeSequence = method(BotInventoryManager.class,
                 "startTradeSequence",
                 String.class, Character.class, List.class, int.class, boolean.class, BotEntry.class, Character.class);
@@ -52,16 +51,13 @@ class BotInventoryManagerTest {
         when(owner.getId()).thenReturn(42);
         when(owner.getTrade()).thenReturn(null);
         when(bot.getTrade()).thenReturn(null);
-        doAnswer(invocation -> null).when(manager).botReply(eq(entry), anyString());
 
-        try (MockedStatic<BotManager> botManagers = mockStatic(BotManager.class, org.mockito.Mockito.CALLS_REAL_METHODS);
+        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class);
              MockedStatic<Trade> trades = mockStatic(Trade.class)) {
-            botManagers.when(BotManager::getInstance).thenReturn(manager);
-
             startTradeSequence.invoke(null, "trash", owner, List.of(mock(Item.class)), 0, false, entry, bot);
             openTradeBatch.invoke(null, entry, bot, List.of(mock(Item.class)), 0);
 
-            verify(manager, times(1)).botReply(eq(entry), anyString());
+            replies.verify(() -> AgentBotReplyRuntime.replyNow(eq(entry), anyString()), times(1));
         }
     }
 
