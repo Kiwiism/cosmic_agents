@@ -15,6 +15,7 @@ import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
 import server.agents.integration.AgentBotPotionRuntime;
+import server.agents.integration.AgentBotPotionStateRuntime;
 import server.StatEffect;
 
 import java.util.List;
@@ -307,8 +308,7 @@ public final class BotPotionManager {
     }
 
     public static void checkPotShareOnModeStart(BotEntry entry, Character bot) {
-        entry.potShareRequestedHp = false;
-        entry.potShareRequestedMp = false;
+        AgentBotPotionStateRuntime.clearAllPotShareRequests(entry);
         BotAmmoManager.checkAmmoShareOnModeStart(entry, bot);
         requestLowPotShares(entry, bot, false);
     }
@@ -335,24 +335,16 @@ public final class BotPotionManager {
                                               boolean forHp,
                                               boolean bypassShareLimits) {
         if (count >= BotManager.cfg.POT_LOW_WARN) {
-            if (forHp) {
-                entry.potShareRequestedHp = false;
-            } else {
-                entry.potShareRequestedMp = false;
-            }
+            AgentBotPotionStateRuntime.clearPotShareRequested(entry, forHp);
             return false;
         }
 
-        boolean alreadyRequested = forHp ? entry.potShareRequestedHp : entry.potShareRequestedMp;
+        boolean alreadyRequested = AgentBotPotionStateRuntime.potShareRequested(entry, forHp);
         if ((alreadyRequested && !bypassShareLimits)
                 || !requestPotShare(entry, bot, forHp, bypassShareLimits)) {
             return false;
         }
-        if (forHp) {
-            entry.potShareRequestedHp = true;
-        } else {
-            entry.potShareRequestedMp = true;
-        }
+        AgentBotPotionStateRuntime.setPotShareRequested(entry, forHp, true);
         return true;
     }
 

@@ -369,6 +369,10 @@ Recent reconstruction notes:
   `AgentBotAmmoStateRuntime` adapter; ammo sharing keeps BotEntry as the
   temporary backing store but no longer reads or mutates the request flag
   directly.
+- HP/MP potion share request episode state now enters through the narrow
+  `AgentBotPotionStateRuntime` adapter; potion sharing keeps BotEntry as the
+  temporary backing store but no longer reads or mutates the request flags
+  directly.
 
 Initial reconstruction order:
 

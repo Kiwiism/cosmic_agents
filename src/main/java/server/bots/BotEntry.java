@@ -230,6 +230,22 @@ public class BotEntry {
     boolean potShareRequestedMp = false; // reset when pot count recovers above POT_LOW_WARN
     boolean ammoShareRequested = false; // reset when arrow/bolt count recovers above AMMO_LOW_WARN
 
+    public boolean potShareRequestedHp() {
+        return potShareRequestedHp;
+    }
+
+    public void setPotShareRequestedHp(boolean potShareRequestedHp) {
+        this.potShareRequestedHp = potShareRequestedHp;
+    }
+
+    public boolean potShareRequestedMp() {
+        return potShareRequestedMp;
+    }
+
+    public void setPotShareRequestedMp(boolean potShareRequestedMp) {
+        this.potShareRequestedMp = potShareRequestedMp;
+    }
+
     public boolean ammoShareRequested() {
         return ammoShareRequested;
     }
