@@ -45,6 +45,9 @@ Recent reconstruction notes:
 - Session/relog/logout/away callback orchestration now has an Agent-owned
   facade in `AgentBotSessionRuntime`; `BotChatSessionRuntime` remains only as a
   temporary compatibility shim for legacy bot package callers.
+- Movement/follow/grind/stop/fidget/greeting callback orchestration now has an
+  Agent-owned facade in `AgentBotMovementRuntime`; `BotChatMovementRuntime`
+  remains only as a temporary compatibility shim for legacy bot package callers.
 
 Initial reconstruction order:
 

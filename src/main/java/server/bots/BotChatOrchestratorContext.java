@@ -16,6 +16,7 @@ import server.agents.capabilities.dialogue.AgentChatToggleFlow;
 import server.agents.capabilities.dialogue.AgentChatTransferFlow;
 import server.agents.capabilities.dialogue.AgentChatUtilityFlow;
 import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
+import server.agents.integration.AgentBotMovementRuntime;
 import server.agents.integration.AgentBotSessionRuntime;
 
 /**
@@ -86,7 +87,7 @@ final class BotChatOrchestratorContext implements AgentChatOrchestrator.Context 
 
     @Override
     public AgentChatMovementFlow.MovementCallbacks movementCallbacks() {
-        return BotChatMovementRuntime.movementCallbacks(entry);
+        return AgentBotMovementRuntime.movementCallbacks(entry);
     }
 
     @Override
