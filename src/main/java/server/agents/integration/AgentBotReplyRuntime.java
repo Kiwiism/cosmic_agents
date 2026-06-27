@@ -87,17 +87,17 @@ public final class AgentBotReplyRuntime {
         return new AgentReplyQueue.State() {
             @Override
             public java.util.Deque<AgentQueuedMessage> queue() {
-                return entry.messageQueue();
+                return AgentBotMessageQueueStateRuntime.queue(entry);
             }
 
             @Override
             public boolean isSending() {
-                return entry.isMessageSending();
+                return AgentBotMessageQueueStateRuntime.isSending(entry);
             }
 
             @Override
             public void setSending(boolean sending) {
-                entry.setMessageSending(sending);
+                AgentBotMessageQueueStateRuntime.setSending(entry, sending);
             }
         };
     }

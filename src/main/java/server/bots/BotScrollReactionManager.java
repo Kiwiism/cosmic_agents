@@ -1,6 +1,7 @@
 package server.bots;
 
 
+import server.agents.integration.AgentBotMessageQueueStateRuntime;
 import server.agents.integration.AgentBotScrollReactionRuntime;
 import client.Character;
 import client.inventory.Equip;
@@ -272,9 +273,7 @@ final class BotScrollReactionManager {
     }
 
     private static boolean shouldQueueChat(BotEntry entry) {
-        synchronized (entry.msgQueue) {
-            return !entry.msgSending && entry.msgQueue.isEmpty();
-        }
+        return AgentBotMessageQueueStateRuntime.isIdle(entry);
     }
 
     private static int successExpression() {

@@ -9,6 +9,7 @@ import server.agents.integration.AgentBotPendingActionRuntime;
 import server.agents.integration.AgentBotPendingActionReplyRuntime;
 import server.agents.integration.AgentBotPendingActionSchedulerRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
+import server.agents.integration.AgentBotMessageQueueStateRuntime;
 import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 
@@ -86,14 +87,14 @@ class AgentBotPendingActionRuntimeTest {
     @Test
     void skillReportDecisionMutatesPendingActionAndQueuesReplies() {
         BotEntry entry = new BotEntry(null, null, null);
-        entry.setMessageSending(true);
+        AgentBotMessageQueueStateRuntime.setSending(entry, true);
         AgentSkillReportFlow.SkillReportDecision decision =
                 new AgentSkillReportFlow.SkillReportDecision(List.of("pick tree"), true, true);
 
         AgentBotPendingActionRuntime.applySkillReportDecision(entry, decision);
 
         assertEquals(AgentChatPendingAction.SKILL_TREE_CHOICE, AgentBotPendingActionStateRuntime.pendingAction(entry));
-        assertEquals("pick tree", entry.messageQueue().peek().text());
+        assertEquals("pick tree", AgentBotMessageQueueStateRuntime.queue(entry).peek().text());
     }
 
     @Test

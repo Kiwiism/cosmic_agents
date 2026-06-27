@@ -8,6 +8,7 @@ import client.inventory.Inventory;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotChatReportRuntime;
+import server.agents.integration.AgentBotMessageQueueStateRuntime;
 import server.agents.integration.AgentBotChatStatusRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
@@ -378,13 +379,13 @@ class BotChatManagerTest {
     @Test
     void shouldMarkQueuedRepliesAsOwnerDirected() {
         BotEntry entry = new BotEntry(null, null, null);
-        entry.msgSending = true;
+        AgentBotMessageQueueStateRuntime.setSending(entry, true);
 
         AgentBotReplyRuntime.queueReply(entry, "owner reply");
         AgentBotReplyRuntime.queueSay(entry, "party chatter");
 
-        AgentQueuedMessage first = entry.msgQueue.poll();
-        AgentQueuedMessage second = entry.msgQueue.poll();
+        AgentQueuedMessage first = AgentBotMessageQueueStateRuntime.queue(entry).poll();
+        AgentQueuedMessage second = AgentBotMessageQueueStateRuntime.queue(entry).poll();
         assertEquals("owner reply", first.text());
         assertTrue(first.ownerDirected());
         assertEquals("party chatter", second.text());
@@ -394,12 +395,12 @@ class BotChatManagerTest {
     @Test
     void shouldQueueHelpAsOwnerDirectedReply() throws Exception {
         BotEntry entry = new BotEntry(null, null, null);
-        entry.msgSending = true;
+        AgentBotMessageQueueStateRuntime.setSending(entry, true);
 
         AgentBotChatReportRuntime.reportHelp(entry);
 
-        assertEquals(5, entry.msgQueue.size());
-        for (AgentQueuedMessage message : entry.msgQueue) {
+        assertEquals(5, AgentBotMessageQueueStateRuntime.queue(entry).size());
+        for (AgentQueuedMessage message : AgentBotMessageQueueStateRuntime.queue(entry)) {
             assertTrue(message.ownerDirected());
         }
     }

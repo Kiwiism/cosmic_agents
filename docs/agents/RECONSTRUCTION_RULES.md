@@ -353,6 +353,10 @@ Recent reconstruction notes:
   narrow `AgentBotBuildStateRuntime` adapter; build orchestration keeps BotEntry
   as the temporary backing store but no longer reads or mutates AP/SP prompt
   fields directly.
+- Chat message queue and message-sending state now enter through the narrow
+  `AgentBotMessageQueueStateRuntime` adapter; reply queue orchestration and
+  scroll-reaction readiness checks keep BotEntry as the temporary backing store
+  but no longer read queue fields directly.
 
 Initial reconstruction order:
 

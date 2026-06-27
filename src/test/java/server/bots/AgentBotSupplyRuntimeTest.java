@@ -5,6 +5,7 @@ import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
+import server.agents.integration.AgentBotMessageQueueStateRuntime;
 import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 import server.agents.integration.AgentBotSupplyReplyRuntime;
@@ -38,7 +39,7 @@ class AgentBotSupplyRuntimeTest {
     @Test
     void potionRequestQueuesNoDonorReply() {
         BotEntry entry = new BotEntry(null, null, null);
-        entry.setMessageSending(true);
+        AgentBotMessageQueueStateRuntime.setSending(entry, true);
 
         try (MockedStatic<BotPotionManager> potions = mockStatic(BotPotionManager.class)) {
             potions.when(() -> BotPotionManager.offerPotShareToOwner(entry, true))
@@ -46,7 +47,7 @@ class AgentBotSupplyRuntimeTest {
 
             AgentBotSupplyRuntime.handleNeedPotionCommand(entry, true);
 
-            assertTrue(entry.messageQueue().peek().text().contains("hp"));
+            assertTrue(AgentBotMessageQueueStateRuntime.queue(entry).peek().text().contains("hp"));
         }
     }
 
@@ -69,7 +70,7 @@ class AgentBotSupplyRuntimeTest {
     void ammoRequestQueuesNotNeededReplyForNonBowOwner() {
         Character owner = mock(Character.class);
         BotEntry entry = new BotEntry(null, owner, null);
-        entry.setMessageSending(true);
+        AgentBotMessageQueueStateRuntime.setSending(entry, true);
 
         try (MockedStatic<BotAttackExecutionProvider> attacks = mockStatic(BotAttackExecutionProvider.class)) {
             attacks.when(() -> BotAttackExecutionProvider.getEquippedWeaponType(owner))
@@ -77,7 +78,7 @@ class AgentBotSupplyRuntimeTest {
 
             AgentBotSupplyRuntime.handleNeedAmmoCommand(entry);
 
-            String reply = entry.messageQueue().peek().text();
+            String reply = AgentBotMessageQueueStateRuntime.queue(entry).peek().text();
             assertTrue(reply.contains("ammo") || reply.contains("arrows") || reply.contains("bolts"));
         }
     }
