@@ -15,6 +15,12 @@ Rules:
 9. Profiles and policies should make old behavior replaceable without changing runtime infrastructure.
 10. Removal decisions happen only after the behavior is isolated and documented.
 
+Recent reconstruction notes:
+
+- Report helper orchestration now has an Agent-owned facade in
+  `AgentBotChatReportRuntime`; `BotChatReportRuntime` remains only as a
+  temporary compatibility shim for legacy bot package callers.
+
 Initial reconstruction order:
 
 1. Runtime shell and registry.

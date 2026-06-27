@@ -5,7 +5,6 @@ import server.agents.capabilities.dialogue.AgentChatRespecFlow;
 import server.agents.capabilities.dialogue.AgentChatToggleFlow;
 import server.bots.BotBuffManager;
 import server.bots.BotBuildManager;
-import server.bots.BotChatReportRuntime;
 import server.bots.BotEntry;
 import server.bots.BotManager;
 
@@ -78,13 +77,13 @@ public final class AgentBotControlRuntime {
             @Override
             public void reportBuffDebug() {
                 AgentBotSchedulerRuntime.afterRandomDelay(500, 700, () ->
-                        BotChatReportRuntime.reportBuffDebug(entry, entry.bot()));
+                        AgentBotChatReportRuntime.reportBuffDebug(entry, entry.bot()));
             }
 
             @Override
             public void reportSkillBuffDebug() {
                 AgentBotSchedulerRuntime.afterRandomDelay(500, 700, () ->
-                        BotChatReportRuntime.reportSkillBuffDebug(entry, entry.bot()));
+                        AgentBotChatReportRuntime.reportSkillBuffDebug(entry, entry.bot()));
             }
         };
     }

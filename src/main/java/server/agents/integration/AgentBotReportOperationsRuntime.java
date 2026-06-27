@@ -1,7 +1,6 @@
 package server.agents.integration;
 
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
-import server.bots.BotChatReportRuntime;
 import server.bots.BotChatSupplyRuntime;
 import server.bots.BotEntry;
 
@@ -17,7 +16,7 @@ public final class AgentBotReportOperationsRuntime {
         return new AgentChatReportRuntime.ReportOperations() {
             @Override
             public void help() {
-                BotChatReportRuntime.reportHelp(entry);
+                AgentBotChatReportRuntime.reportHelp(entry);
             }
 
             @Override
@@ -27,77 +26,77 @@ public final class AgentBotReportOperationsRuntime {
 
             @Override
             public void recommendedGear() {
-                BotChatReportRuntime.reportRecommendedGear(entry, entry.bot());
+                AgentBotChatReportRuntime.reportRecommendedGear(entry, entry.bot());
             }
 
             @Override
             public void skills() {
-                BotChatReportRuntime.reportSkills(entry, entry.bot());
+                AgentBotChatReportRuntime.reportSkills(entry, entry.bot());
             }
 
             @Override
             public void stats() {
-                BotChatReportRuntime.reportStats(entry, entry.bot());
+                AgentBotChatReportRuntime.reportStats(entry, entry.bot());
             }
 
             @Override
             public void movementStats() {
-                BotChatReportRuntime.reportMovementStats(entry, entry.bot());
+                AgentBotChatReportRuntime.reportMovementStats(entry, entry.bot());
             }
 
             @Override
             public void range() {
-                BotChatReportRuntime.reportRange(entry, entry.bot());
+                AgentBotChatReportRuntime.reportRange(entry, entry.bot());
             }
 
             @Override
             public void build() {
-                BotChatReportRuntime.reportBuild(entry, entry.bot());
+                AgentBotChatReportRuntime.reportBuild(entry, entry.bot());
             }
 
             @Override
             public void inventory() {
-                BotChatReportRuntime.reportInventory(entry, entry.bot());
+                AgentBotChatReportRuntime.reportInventory(entry, entry.bot());
             }
 
             @Override
             public void mesos() {
-                BotChatReportRuntime.reportMesos(entry, entry.bot());
+                AgentBotChatReportRuntime.reportMesos(entry, entry.bot());
             }
 
             @Override
             public void exp() {
-                BotChatReportRuntime.reportExp(entry, entry.bot());
+                AgentBotChatReportRuntime.reportExp(entry, entry.bot());
             }
 
             @Override
             public void inventorySlots() {
-                BotChatReportRuntime.reportInventorySlots(entry, entry.bot());
+                AgentBotChatReportRuntime.reportInventorySlots(entry, entry.bot());
             }
 
             @Override
             public void scrolls() {
-                BotChatReportRuntime.reportScrolls(entry, entry.bot());
+                AgentBotChatReportRuntime.reportScrolls(entry, entry.bot());
             }
 
             @Override
             public void potions() {
-                BotChatReportRuntime.reportPotions(entry, entry.bot());
+                AgentBotChatReportRuntime.reportPotions(entry, entry.bot());
             }
 
             @Override
             public void debugStats() {
-                BotChatReportRuntime.reportDebugStats(entry, entry.bot());
+                AgentBotChatReportRuntime.reportDebugStats(entry, entry.bot());
             }
 
             @Override
             public void critDebug() {
-                BotChatReportRuntime.reportCritDebug(entry, entry.bot());
+                AgentBotChatReportRuntime.reportCritDebug(entry, entry.bot());
             }
 
             @Override
             public void potDebug() {
-                BotChatReportRuntime.reportPotDebug(entry, entry.bot());
+                AgentBotChatReportRuntime.reportPotDebug(entry, entry.bot());
             }
         };
     }

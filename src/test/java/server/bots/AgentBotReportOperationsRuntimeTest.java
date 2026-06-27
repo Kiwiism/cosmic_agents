@@ -4,6 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
+import server.agents.integration.AgentBotChatReportRuntime;
 import server.agents.integration.AgentBotReportOperationsRuntime;
 
 import static org.mockito.Mockito.mock;
@@ -17,7 +18,7 @@ class AgentBotReportOperationsRuntimeTest {
         AgentChatReportRuntime.ReportOperations operations =
                 AgentBotReportOperationsRuntime.reportOperations(entry);
 
-        try (MockedStatic<BotChatReportRuntime> reports = mockStatic(BotChatReportRuntime.class);
+        try (MockedStatic<AgentBotChatReportRuntime> reports = mockStatic(AgentBotChatReportRuntime.class);
              MockedStatic<BotChatSupplyRuntime> supplies = mockStatic(BotChatSupplyRuntime.class)) {
             operations.help();
             operations.requestUpgrade();
@@ -37,23 +38,23 @@ class AgentBotReportOperationsRuntimeTest {
             operations.critDebug();
             operations.potDebug();
 
-            reports.verify(() -> BotChatReportRuntime.reportHelp(entry));
+            reports.verify(() -> AgentBotChatReportRuntime.reportHelp(entry));
             supplies.verify(() -> BotChatSupplyRuntime.handleRequestUpgradeCommand(entry, bot));
-            reports.verify(() -> BotChatReportRuntime.reportRecommendedGear(entry, bot));
-            reports.verify(() -> BotChatReportRuntime.reportSkills(entry, bot));
-            reports.verify(() -> BotChatReportRuntime.reportStats(entry, bot));
-            reports.verify(() -> BotChatReportRuntime.reportMovementStats(entry, bot));
-            reports.verify(() -> BotChatReportRuntime.reportRange(entry, bot));
-            reports.verify(() -> BotChatReportRuntime.reportBuild(entry, bot));
-            reports.verify(() -> BotChatReportRuntime.reportInventory(entry, bot));
-            reports.verify(() -> BotChatReportRuntime.reportMesos(entry, bot));
-            reports.verify(() -> BotChatReportRuntime.reportExp(entry, bot));
-            reports.verify(() -> BotChatReportRuntime.reportInventorySlots(entry, bot));
-            reports.verify(() -> BotChatReportRuntime.reportScrolls(entry, bot));
-            reports.verify(() -> BotChatReportRuntime.reportPotions(entry, bot));
-            reports.verify(() -> BotChatReportRuntime.reportDebugStats(entry, bot));
-            reports.verify(() -> BotChatReportRuntime.reportCritDebug(entry, bot));
-            reports.verify(() -> BotChatReportRuntime.reportPotDebug(entry, bot));
+            reports.verify(() -> AgentBotChatReportRuntime.reportRecommendedGear(entry, bot));
+            reports.verify(() -> AgentBotChatReportRuntime.reportSkills(entry, bot));
+            reports.verify(() -> AgentBotChatReportRuntime.reportStats(entry, bot));
+            reports.verify(() -> AgentBotChatReportRuntime.reportMovementStats(entry, bot));
+            reports.verify(() -> AgentBotChatReportRuntime.reportRange(entry, bot));
+            reports.verify(() -> AgentBotChatReportRuntime.reportBuild(entry, bot));
+            reports.verify(() -> AgentBotChatReportRuntime.reportInventory(entry, bot));
+            reports.verify(() -> AgentBotChatReportRuntime.reportMesos(entry, bot));
+            reports.verify(() -> AgentBotChatReportRuntime.reportExp(entry, bot));
+            reports.verify(() -> AgentBotChatReportRuntime.reportInventorySlots(entry, bot));
+            reports.verify(() -> AgentBotChatReportRuntime.reportScrolls(entry, bot));
+            reports.verify(() -> AgentBotChatReportRuntime.reportPotions(entry, bot));
+            reports.verify(() -> AgentBotChatReportRuntime.reportDebugStats(entry, bot));
+            reports.verify(() -> AgentBotChatReportRuntime.reportCritDebug(entry, bot));
+            reports.verify(() -> AgentBotChatReportRuntime.reportPotDebug(entry, bot));
         }
     }
 }
