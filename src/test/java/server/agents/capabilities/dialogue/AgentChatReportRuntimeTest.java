@@ -92,6 +92,15 @@ class AgentChatReportRuntimeTest {
         assertEquals(61_000L, state.nextGearSuggestionAt);
     }
 
+    @Test
+    void helpReportQueuesEveryHelpLineInOrder() {
+        List<String> replies = new ArrayList<>();
+
+        AgentChatReportRuntime.reportHelp(replies::add);
+
+        assertEquals(AgentChatReportFlow.helpLines(), replies);
+    }
+
     private static final class TestScheduler implements AgentChatReportRuntime.ReportScheduler {
         private final List<String> delays = new ArrayList<>();
 

@@ -118,6 +118,12 @@ public final class AgentChatReportRuntime {
         state.setNextGearSuggestionAt(nowMs + 60_000L);
     }
 
+    public static void reportHelp(HelpActions actions) {
+        for (String line : AgentChatReportFlow.helpLines()) {
+            actions.queueReply(line);
+        }
+    }
+
     public interface ReportScheduler {
         void afterRandomDelay(int minMs, int maxMs, Runnable action);
     }
@@ -170,5 +176,9 @@ public final class AgentChatReportRuntime {
         void queueGearCheckUnavailable();
 
         void queueNoBetterGear();
+    }
+
+    public interface HelpActions {
+        void queueReply(String line);
     }
 }

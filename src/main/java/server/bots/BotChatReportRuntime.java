@@ -264,9 +264,7 @@ final class BotChatReportRuntime {
     }
 
     static void reportHelp(BotEntry entry) {
-        for (String line : AgentChatReportFlow.helpLines()) {
-            AgentBotReplyRuntime.queueReply(entry, line);
-        }
+        AgentChatReportRuntime.reportHelp(line -> AgentBotReplyRuntime.queueReply(entry, line));
     }
 
     static void reportRecommendedGear(BotEntry entry, Character bot) {
