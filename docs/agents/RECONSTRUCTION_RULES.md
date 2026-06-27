@@ -211,6 +211,10 @@ Recent reconstruction notes:
   replies now enter through `AgentBotOfferRuntime`; `BotOfferManager` no longer
   calls `BotManager.botSay` directly for offer-owned reply delivery, while the
   same reply channel, random reply pool, and delay behavior remain intact.
+- Ammo low-supply request and ammo-donor offer visible replies now enter
+  through `AgentBotAmmoRuntime`; `BotAmmoManager` no longer calls
+  `BotManager.botSay` directly for ammo-owned reply delivery, while the same
+  random reply pools and transfer timing remain intact.
 
 Initial reconstruction order:
 

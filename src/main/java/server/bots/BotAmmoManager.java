@@ -83,7 +83,7 @@ public final class BotAmmoManager {
             ammoShareCooldownUntil.put(owner.getId(), now + 30_000L);
         }
 
-        BotManager.getInstance().botSay(bot, BotManager.randomReply(
+        AgentBotAmmoRuntime.sayMapNow(bot, BotManager.randomReply(
                 weaponType == WeaponType.BOW ? ARROW_REQUEST_MSGS : BOLT_REQUEST_MSGS));
 
         AmmoDonorPlan plan = selectAmmoDonor(entry, bot, weaponType);
@@ -171,7 +171,7 @@ public final class BotAmmoManager {
             if (items.isEmpty()) {
                 return;
             }
-            BotManager.getInstance().botSay(donorBot, BotManager.randomReply(AMMO_OFFER_MSGS));
+            AgentBotAmmoRuntime.sayMapNow(donorBot, BotManager.randomReply(AMMO_OFFER_MSGS));
             AgentBotAmmoRuntime.afterRandomDelay(900, 1100, () ->
                     BotInventoryManager.startAmmoShareTransfer(items, recipient, donorEntry, donorBot, maxQty));
         });
