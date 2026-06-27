@@ -124,6 +124,10 @@ public final class AgentChatReportRuntime {
         }
     }
 
+    public static void reportLine(String line, LineActions actions) {
+        actions.queueReply(line);
+    }
+
     public interface ReportScheduler {
         void afterRandomDelay(int minMs, int maxMs, Runnable action);
     }
@@ -179,6 +183,10 @@ public final class AgentChatReportRuntime {
     }
 
     public interface HelpActions {
+        void queueReply(String line);
+    }
+
+    public interface LineActions {
         void queueReply(String line);
     }
 }

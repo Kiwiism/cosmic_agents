@@ -126,11 +126,11 @@ final class BotChatReportRuntime {
     }
 
     static void reportStats(BotEntry entry, Character bot) {
-        AgentBotReplyRuntime.queueReply(entry, AgentCharacterDialogueReporter.statsReport(bot));
+        reportLine(entry, AgentCharacterDialogueReporter.statsReport(bot));
     }
 
     static void reportRange(BotEntry entry, Character bot) {
-        AgentBotReplyRuntime.queueReply(entry, buildRangeReport(bot));
+        reportLine(entry, buildRangeReport(bot));
     }
 
     static String buildRangeReport(Character bot) {
@@ -194,7 +194,7 @@ final class BotChatReportRuntime {
     }
 
     static void reportBuild(BotEntry entry, Character bot) {
-        AgentBotReplyRuntime.queueReply(entry, AgentCharacterDialogueReporter.buildReport(bot));
+        reportLine(entry, AgentCharacterDialogueReporter.buildReport(bot));
     }
 
     static void reportSkills(BotEntry entry, Character bot) {
@@ -212,43 +212,43 @@ final class BotChatReportRuntime {
     }
 
     static void reportInventory(BotEntry entry, Character bot) {
-        AgentBotReplyRuntime.queueReply(entry, AgentInventoryDialogueReporter.inventorySummary(bot));
+        reportLine(entry, AgentInventoryDialogueReporter.inventorySummary(bot));
     }
 
     static void reportMesos(BotEntry entry, Character bot) {
-        AgentBotReplyRuntime.queueReply(entry, AgentCharacterDialogueReporter.mesoReport(bot));
+        reportLine(entry, AgentCharacterDialogueReporter.mesoReport(bot));
     }
 
     static void reportExp(BotEntry entry, Character bot) {
-        AgentBotReplyRuntime.queueReply(entry, AgentCharacterDialogueReporter.expReport(bot));
+        reportLine(entry, AgentCharacterDialogueReporter.expReport(bot));
     }
 
     static void reportInventorySlots(BotEntry entry, Character bot) {
-        AgentBotReplyRuntime.queueReply(entry, AgentInventoryDialogueReporter.slotsReport(bot));
+        reportLine(entry, AgentInventoryDialogueReporter.slotsReport(bot));
     }
 
     static void reportScrolls(BotEntry entry, Character bot) {
-        AgentBotReplyRuntime.queueReply(entry, AgentInventoryDialogueReporter.scrollReport(bot));
+        reportLine(entry, AgentInventoryDialogueReporter.scrollReport(bot));
     }
 
     static void reportPotions(BotEntry entry, Character bot) {
         int[] counts = BotPotionManager.countPotions(bot);
-        AgentBotReplyRuntime.queueReply(entry, AgentSupplyDialogueReporter.potionReport(counts));
+        reportLine(entry, AgentSupplyDialogueReporter.potionReport(counts));
     }
 
     static void reportPotDebug(BotEntry entry, Character bot) {
-        AgentBotReplyRuntime.queueReply(entry, BotPotionManager.autopotDebugReport(bot));
+        reportLine(entry, BotPotionManager.autopotDebugReport(bot));
     }
 
     static void reportDebugStats(BotEntry entry, Character bot) {
-        AgentBotReplyRuntime.queueReply(entry, BotCombatManager.describeDebugStats(entry, bot));
+        reportLine(entry, BotCombatManager.describeDebugStats(entry, bot));
     }
 
     static void reportCritDebug(BotEntry entry, Character bot) {
         CombatFormulaProvider formula = CombatFormulaProvider.getInstance();
         CombatFormulaProvider.CritProfile crit = formula.resolveCritProfile(bot);
         CombatFormulaProvider.DamageProfile dmg = formula.resolveDamageProfile(bot, 0, 0, false);
-        AgentBotReplyRuntime.queueReply(entry, AgentCombatDialogueReporter.critReport(crit, dmg));
+        reportLine(entry, AgentCombatDialogueReporter.critReport(crit, dmg));
     }
 
     static void reportBuffDebug(BotEntry entry, Character bot) {
@@ -273,6 +273,10 @@ final class BotChatReportRuntime {
                 recommendedGearState(entry),
                 recommendedGearActions(entry, bot, owner),
                 System.currentTimeMillis());
+    }
+
+    private static void reportLine(BotEntry entry, String line) {
+        AgentChatReportRuntime.reportLine(line, replyLine -> AgentBotReplyRuntime.queueReply(entry, replyLine));
     }
 
     private static AgentChatReportRuntime.RecommendedGearState recommendedGearState(BotEntry entry) {
