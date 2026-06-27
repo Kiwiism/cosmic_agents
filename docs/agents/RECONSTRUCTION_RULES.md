@@ -270,6 +270,10 @@ Recent reconstruction notes:
   auto-equip callbacks now enter through narrow `AgentBotEquipmentReplyRuntime`
   and `AgentBotEquipmentSchedulerRuntime` adapters; equipment orchestration no
   longer reaches directly into the broad reply or scheduler runtimes.
+- Inventory, trade, drop, and meso reply/timing bridge methods now enter
+  through narrow `AgentBotInventoryReplyRuntime` and
+  `AgentBotInventorySchedulerRuntime` adapters; inventory orchestration no
+  longer reaches directly into the broad reply or scheduler runtimes.
 
 Initial reconstruction order:
 
