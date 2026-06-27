@@ -27,6 +27,7 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.ArgumentCaptor;
 import server.StatEffect;
+import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 import server.bots.combat.BotAttackDataProvider;
 import server.life.Monster;
@@ -1026,7 +1027,7 @@ class BotCombatManagerTest {
 
         assertEquals("no skill buff checks yet", entry.lastSkillBuffActionSummary);
         assertFalse(entry.nextSupportBuffAt.containsKey(Cleric.BLESS) && entry.nextSupportBuffAt.get(Cleric.BLESS) > 0L);
-        assertEquals(0, entry.attackCooldownMs);
+        assertEquals(0, AgentBotCombatCooldownStateRuntime.attackCooldownMs(entry));
     }
 
     @Test

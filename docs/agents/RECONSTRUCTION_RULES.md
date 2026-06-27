@@ -461,6 +461,11 @@ Recent reconstruction notes:
   `AgentBotPendingActionStateRuntime`, keeping relog/away prompt state checks on
   the Agent-owned pending-action boundary instead of the temporary BotEntry
   backing field.
+- Combat attack-lock, post-attack movement-window, and mob-hit invulnerability
+  cooldown state now enter through `AgentBotCombatCooldownStateRuntime`; combat,
+  movement, and local attack orchestration keep BotEntry as the temporary backing
+  store but no longer read, extend, tick down, clear, or set those cooldown fields
+  directly.
 
 Initial reconstruction order:
 

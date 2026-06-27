@@ -50,6 +50,7 @@ import server.bots.combat.BotAttackDataProvider;
 import server.bots.combat.BotDefenseDataProvider;
 import server.bots.combat.BotMobHitboxProvider;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
+import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatRuntime;
 import server.combat.CombatFormulaProvider;
 import server.life.Monster;
@@ -361,8 +362,8 @@ public class BotCombatManager {
     static void tickMobDamage(BotEntry entry, Character bot) {
         Point botPos = bot.getPosition();
         try {
-            if (entry.mobHitCooldownMs > 0) {
-                entry.mobHitCooldownMs = BotMovementManager.tickDown(entry.mobHitCooldownMs);
+            if (AgentBotCombatCooldownStateRuntime.hasMobHitCooldown(entry)) {
+                AgentBotCombatCooldownStateRuntime.tickMobHitCooldown(entry, BotMovementManager::tickDown);
                 return;
             }
             if (bot.getHp() <= 0) return;
@@ -405,7 +406,7 @@ public class BotCombatManager {
      */
     static void applyFallDamage(BotEntry entry, Character bot, float fallDistancePx) {
         if (bot.getHp() <= 0) return;
-        if (entry.mobHitCooldownMs > 0) return; // damage invincibility window
+        if (AgentBotCombatCooldownStateRuntime.hasMobHitCooldown(entry)) return; // damage invincibility window
         int dmg = fallDamageFromDistance(fallDistancePx);
         if (dmg <= 0) return;
         int dirSign = entry.facingDir >= 0 ? 1 : -1;
@@ -457,7 +458,9 @@ public class BotCombatManager {
             bot.getMap().broadcastMessage(bot,
                     PacketCreator.damagePlayer(damageFrom, monsterId, bot.getId(), 0, 0,
                             broadcastDirection, false, 0, false, 0, 0, 0), false);
-            entry.mobHitCooldownMs = BotMovementManager.delayAfterCurrentTick(cc.MOB_HIT_COOLDOWN_MS);
+            AgentBotCombatCooldownStateRuntime.setMobHitCooldownMs(
+                    entry,
+                    BotMovementManager.delayAfterCurrentTick(cc.MOB_HIT_COOLDOWN_MS));
             markAlerted(entry);
             return;
         }
@@ -468,7 +471,9 @@ public class BotCombatManager {
                 PacketCreator.damagePlayer(damageFrom, monsterId, bot.getId(), dmg, 0,
                         broadcastDirection, false, 0, false, 0, 0, 0), false);
 
-        entry.mobHitCooldownMs = BotMovementManager.delayAfterCurrentTick(cc.MOB_HIT_COOLDOWN_MS);
+        AgentBotCombatCooldownStateRuntime.setMobHitCooldownMs(
+                entry,
+                BotMovementManager.delayAfterCurrentTick(cc.MOB_HIT_COOLDOWN_MS));
         markAlerted(entry);
 
         if (bot.getHp() <= 0) {
@@ -530,8 +535,8 @@ public class BotCombatManager {
 
     private static void clearActionState(BotEntry entry) {
         entry.grindTarget = null;
-        entry.attackCooldownMs = 0;
-        entry.moveWindowMs = 0;
+        AgentBotCombatCooldownStateRuntime.clearAttackCooldown(entry);
+        AgentBotCombatCooldownStateRuntime.clearMoveWindow(entry);
         BotMovementManager.clearNavigationState(entry);
         entry.movementBroadcastValid = false;
     }
@@ -624,7 +629,7 @@ public class BotCombatManager {
     }
 
     static void tickBuffs(BotEntry entry, Character bot) {
-        if (entry.attackCooldownMs > 0) return;
+        if (AgentBotCombatCooldownStateRuntime.hasAttackCooldown(entry)) return;
         if (!entry.skillBuffsEnabled) {
             noteSkillBuffDecision(entry, "skill buffs disabled");
             return;
@@ -704,7 +709,7 @@ public class BotCombatManager {
      * the heal animation play (matches real player behaviour when Heal is pressed with no mob in range).
      */
     static boolean tickSupportHealing(BotEntry entry, Character bot) {
-        if (entry.attackCooldownMs > 0 || (entry.moveWindowMs > 0 && !entry.inAir)) return false;
+        if (AgentBotCombatCooldownStateRuntime.blocksGroundedAttack(entry, entry.inAir)) return false;
         if (!entry.supportHealsEnabled) return false;
         if (!entry.following && !entry.grinding) return false;
         if (entry.healSkillId == 0 || bot.skillIsCooling(entry.healSkillId)) return false;
@@ -750,7 +755,7 @@ public class BotCombatManager {
                 BotAttackExecutionProvider.getEquippedWeaponType(bot));
         BotAttackExecutionProvider.SkillAttackTiming skillTiming =
                 BotAttackExecutionProvider.resolveSkillAttackTiming(skill, action, bot, fallbackAttackData);
-        entry.attackCooldownMs = Math.max(entry.attackCooldownMs, skillTiming.cooldownMs());
+        AgentBotCombatCooldownStateRuntime.maxAttackCooldown(entry, skillTiming.cooldownMs());
         if (partyNeedsHeal && fx.getCooldown() > 0) {
             bot.addCooldown(entry.healSkillId, now, fx.getCooldown() * 1000L);
         }
@@ -760,7 +765,7 @@ public class BotCombatManager {
         // does when a player presses Heal with no mob in range.
         sendHealAttack(entry.healSkillId, lvl, bot, undeadTargets, fallbackAttackData, skillTiming);
         markAlerted(entry);
-        entry.moveWindowMs = Math.max(entry.moveWindowMs, cfg.HEAL_MOVE_WINDOW_MS);
+        AgentBotCombatCooldownStateRuntime.maxMoveWindow(entry, cfg.HEAL_MOVE_WINDOW_MS);
         if (!jumpHealing) {
             // Stop walk-in-place: broadcast STAND→ALERT immediately on the heal tick.
             // Skipped on jump-heal — initiateJump already broadcast the airborne stance and
@@ -1191,7 +1196,7 @@ public class BotCombatManager {
     }
 
     static void attackMonster(BotEntry entry, Character bot, AttackPlan attackPlan) {
-        if (entry.attackCooldownMs > 0) {
+        if (AgentBotCombatCooldownStateRuntime.hasAttackCooldown(entry)) {
             return;
         }
         if (entry.noAmmo) {
@@ -1230,7 +1235,7 @@ public class BotCombatManager {
         }
 
         BotAttackExecutionProvider.applyAttackRoute(attackPlan.route, attack, bot);
-        entry.attackCooldownMs = Math.max(entry.attackCooldownMs, attackPlan.cooldownMs);
+        AgentBotCombatCooldownStateRuntime.maxAttackCooldown(entry, attackPlan.cooldownMs);
         rememberAttackFacing(entry, attackPlan.stance);
         markAlerted(entry);
     }
@@ -1241,11 +1246,11 @@ public class BotCombatManager {
     }
 
     static void tickActionLock(BotEntry entry) {
-        if (entry.attackCooldownMs > 0) {
-            entry.attackCooldownMs = BotMovementManager.tickDown(entry.attackCooldownMs);
-        } else if (entry.moveWindowMs > 0) {
+        if (AgentBotCombatCooldownStateRuntime.hasAttackCooldown(entry)) {
+            AgentBotCombatCooldownStateRuntime.tickAttackCooldown(entry, BotMovementManager::tickDown);
+        } else if (AgentBotCombatCooldownStateRuntime.hasMoveWindow(entry)) {
             // Movement window: animation done, bot may walk but not attack yet.
-            entry.moveWindowMs = BotMovementManager.tickDown(entry.moveWindowMs);
+            AgentBotCombatCooldownStateRuntime.tickMoveWindow(entry, BotMovementManager::tickDown);
         }
     }
 
@@ -2395,7 +2400,7 @@ public class BotCombatManager {
         String route = plan != null ? plan.route.name().toLowerCase() : BotAttackExecutionProvider.determineBasicAttackRoute(bot).name().toLowerCase();
         int speed = plan != null ? plan.speed : BotAttackExecutionProvider.buildBasicAttackData(bot, bot.getPosition()).speed();
         double cooldownSeconds = (plan != null ? plan.cooldownMs : 0) / 1000.0;
-        double remainingSeconds = entry.attackCooldownMs / 1000.0;
+        double remainingSeconds = AgentBotCombatCooldownStateRuntime.attackCooldownMs(entry) / 1000.0;
         String targetName = target != null ? target.getName() : "none";
 
         return AgentCombatDialogueReporter.debugStatsReport(
@@ -2465,7 +2470,7 @@ public class BotCombatManager {
         BotAttackExecutionProvider.SkillAttackTiming skillTiming =
                 BotAttackExecutionProvider.resolveSkillAttackTiming(skill, action, bot, fallbackAttackData);
         int animMs = skill.getAnimationTime() > 0 ? skill.getAnimationTime() : 1000;
-        entry.attackCooldownMs = Math.max(entry.attackCooldownMs, Math.max(skillTiming.cooldownMs(), animMs));
+        AgentBotCombatCooldownStateRuntime.maxAttackCooldown(entry, Math.max(skillTiming.cooldownMs(), animMs));
         markAlerted(entry);
         noteSkillBuffDecision(entry, "cast " + skillLabel(skill.getId()));
         return true;

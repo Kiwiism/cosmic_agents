@@ -109,6 +109,22 @@ public class BotEntry {
     int attackCooldownMs = 0;
     int moveWindowMs = 0;    // movement-only gap after attack animation; attacks blocked, walking allowed
 
+    public int attackCooldownMs() {
+        return attackCooldownMs;
+    }
+
+    public void setAttackCooldownMs(int attackCooldownMs) {
+        this.attackCooldownMs = attackCooldownMs;
+    }
+
+    public int moveWindowMs() {
+        return moveWindowMs;
+    }
+
+    public void setMoveWindowMs(int moveWindowMs) {
+        this.moveWindowMs = moveWindowMs;
+    }
+
     // Skill cache
     int cachedSkillJob = -1;
     int cachedSkillLevel = -1;
@@ -168,6 +184,15 @@ public class BotEntry {
     // Damage taken
     long deadUntil = 0;
     int mobHitCooldownMs = 0;
+
+    public int mobHitCooldownMs() {
+        return mobHitCooldownMs;
+    }
+
+    public void setMobHitCooldownMs(int mobHitCooldownMs) {
+        this.mobHitCooldownMs = mobHitCooldownMs;
+    }
+
     // Absolute time until which this bot may not take another portal (set on portal use).
     // Portal-only gate: does not block movement, attacks, or any other action.
     long portalUseCooldownUntilMs = 0L;

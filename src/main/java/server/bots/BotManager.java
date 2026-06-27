@@ -5,6 +5,7 @@ import server.agents.integration.AgentBotManagerReplyRuntime;
 import server.agents.integration.AgentBotManagerSchedulerRuntime;
 import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotActivityStateRuntime;
+import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotPotionStateRuntime;
 import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
@@ -2363,9 +2364,9 @@ public class BotManager {
                     && BotCombatManager.canUseAttackPlanNow(entry, grindWeaponType, attackPlan)) {
                 attackAttemptedInRange = true;
                 // In range — attack if grounded, or during ascent of a jump
-                int prevCooldown = entry.attackCooldownMs;
+                int prevCooldown = AgentBotCombatCooldownStateRuntime.attackCooldownMs(entry);
                 BotCombatManager.attackMonster(entry, bot, attackPlan);
-                boolean attacked = entry.attackCooldownMs != prevCooldown;
+                boolean attacked = AgentBotCombatCooldownStateRuntime.attackCooldownMs(entry) != prevCooldown;
                 // If a ranged bot just did a degenerate close-range hit, force retreat next tick
                 if (attacked && attackPlan.isCloseRangeRoute()
                         && BotCombatManager.isRangedAmmoWeapon(grindWeaponType)) {
@@ -2638,7 +2639,8 @@ public class BotManager {
             return new LocalOpportunityAttackResult(true, targetPos);
         }
 
-        if (entry.moveWindowMs <= 0 && BotCombatManager.isTargetInAttackRange(attackPlan, bot, localTarget)) {
+        if (!AgentBotCombatCooldownStateRuntime.hasMoveWindow(entry)
+                && BotCombatManager.isTargetInAttackRange(attackPlan, bot, localTarget)) {
             BotCombatManager.attackMonster(entry, bot, attackPlan);
             setLocalAttackMoveWindow(entry, botPos, moveWindowReferencePos);
             if (allowCombatMovement && attackPlan.isCloseRangeRoute()
@@ -2653,13 +2655,14 @@ public class BotManager {
 
     private static void setLocalAttackMoveWindow(BotEntry entry, Point botPos, Point referencePos) {
         if (botPos == null || referencePos == null) {
-            entry.moveWindowMs = 0;
+            AgentBotCombatCooldownStateRuntime.clearMoveWindow(entry);
             return;
         }
         int dx = Math.abs(botPos.x - referencePos.x);
-        entry.moveWindowMs = dx > BotMovementManager.cfg.FOLLOW_DIST * 3 ? 1000
-                           : dx > BotMovementManager.cfg.FOLLOW_DIST     ? 200
-                           : 0;
+        AgentBotCombatCooldownStateRuntime.setMoveWindowMs(entry,
+                dx > BotMovementManager.cfg.FOLLOW_DIST * 3 ? 1000
+                        : dx > BotMovementManager.cfg.FOLLOW_DIST ? 200
+                        : 0);
         clearActionMoveWindowIfSettled(entry, botPos, referencePos);
     }
 
@@ -2675,14 +2678,15 @@ public class BotManager {
     private static void clearActionMoveWindowIfSettled(BotEntry entry,
                                                        Point botPos,
                                                        Point targetPos) {
-        if (entry == null || entry.moveWindowMs <= 0 || botPos == null || targetPos == null) {
+        if (entry == null || !AgentBotCombatCooldownStateRuntime.hasMoveWindow(entry)
+                || botPos == null || targetPos == null) {
             return;
         }
 
         int followStopBand = Math.max(BotMovementManager.cfg.STOP_DIST, BotMovementManager.cfg.FOLLOW_DIST);
         if (Math.abs(botPos.x - targetPos.x) <= followStopBand
                 && Math.abs(botPos.y - targetPos.y) <= BotMovementManager.cfg.FOLLOW_Y_CAP) {
-            entry.moveWindowMs = 0;
+            AgentBotCombatCooldownStateRuntime.clearMoveWindow(entry);
         }
     }
 
@@ -3053,7 +3057,7 @@ public class BotManager {
         entry.grindTarget = null;
         entry.grindLootTarget = null;
         entry.nextGrindTargetSearchAtMs = 0L;
-        entry.moveWindowMs = 0;
+        AgentBotCombatCooldownStateRuntime.clearMoveWindow(entry);
         entry.degenAttackDone = false;
         entry.retreatHoldUntilMs = 0L;
         entry.retreatHoldPos = null;
@@ -3830,7 +3834,7 @@ public class BotManager {
     }
 
     private boolean tickActionLocked(BotEntry entry) {
-        if (entry.attackCooldownMs <= 0) {
+        if (!AgentBotCombatCooldownStateRuntime.hasAttackCooldown(entry)) {
             return false;
         }
         if (isSwimMap(entry) && entry.inAir && !entry.climbing) {

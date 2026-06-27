@@ -5,6 +5,7 @@ import io.netty.buffer.Unpooled;
 import net.packet.ByteBufInPacket;
 import net.packet.InPacket;
 import net.packet.Packet;
+import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.bots.combat.BotMobHitboxProvider;
 import server.life.Monster;
 import server.maps.Foothold;
@@ -182,7 +183,7 @@ public class BotMovementManager {
     private static void clearTransientState(BotEntry entry) {
         entry.grindTarget = null;
         entry.nextGrindTargetSearchAtMs = 0L;
-        entry.attackCooldownMs = 0;
+        AgentBotCombatCooldownStateRuntime.clearAttackCooldown(entry);
         entry.graphWarmupFallback = false;
         entry.observedOwnerStepX = 0;
         entry.observedOwnerStepY = 0;
@@ -445,7 +446,7 @@ public class BotMovementManager {
         // CUserLocal::IsAttacking is true. Mirror that here: during animation
         // lock the integrator still ticks (drag + gravity, collision) but no
         // intent is set, so the bot just floats in place.
-        if (entry.attackCooldownMs > 0) {
+        if (AgentBotCombatCooldownStateRuntime.hasAttackCooldown(entry)) {
             return;
         }
 
