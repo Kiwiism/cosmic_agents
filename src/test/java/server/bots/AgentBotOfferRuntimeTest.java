@@ -5,6 +5,7 @@ import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotOfferReplyRuntime;
 import server.agents.integration.AgentBotOfferRuntime;
 import server.agents.integration.AgentBotOfferSchedulerRuntime;
+import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 
@@ -26,17 +27,37 @@ class AgentBotOfferRuntimeTest {
     void gearPromptStateRoutesThroughLegacyEntryState() {
         BotEntry entry = new BotEntry(null, null, null);
 
-        AgentBotOfferRuntime.reserveGearPrompt(entry, 2_000L);
+        AgentBotOfferStateRuntime.reserveGearPrompt(entry, 2_000L);
 
-        assertEquals(2_000L, entry.pendingGearPromptAt);
-        assertTrue(AgentBotOfferRuntime.hasPendingGearPromptAfter(entry, 1_999L));
-        assertFalse(AgentBotOfferRuntime.hasPendingGearPromptAfter(entry, 2_000L));
-        assertTrue(AgentBotOfferRuntime.isReservedGearPrompt(entry, 2_000L));
-        assertFalse(AgentBotOfferRuntime.isReservedGearPrompt(entry, 2_001L));
+        assertEquals(2_000L, entry.pendingGearPromptAt());
+        assertTrue(AgentBotOfferStateRuntime.hasPendingGearPromptAfter(entry, 1_999L));
+        assertFalse(AgentBotOfferStateRuntime.hasPendingGearPromptAfter(entry, 2_000L));
+        assertTrue(AgentBotOfferStateRuntime.isReservedGearPrompt(entry, 2_000L));
+        assertFalse(AgentBotOfferStateRuntime.isReservedGearPrompt(entry, 2_001L));
 
-        AgentBotOfferRuntime.clearGearPrompt(entry);
+        AgentBotOfferStateRuntime.clearGearPrompt(entry);
 
-        assertEquals(0L, entry.pendingGearPromptAt);
+        assertEquals(0L, entry.pendingGearPromptAt());
+    }
+
+    @Test
+    void offerRuntimeGearPromptMethodsDelegateToStateRuntime() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        try (MockedStatic<AgentBotOfferStateRuntime> state = mockStatic(AgentBotOfferStateRuntime.class)) {
+            state.when(() -> AgentBotOfferStateRuntime.hasPendingGearPromptAfter(entry, 1_999L)).thenReturn(true);
+            state.when(() -> AgentBotOfferStateRuntime.isReservedGearPrompt(entry, 2_000L)).thenReturn(true);
+
+            assertTrue(AgentBotOfferRuntime.hasPendingGearPromptAfter(entry, 1_999L));
+            AgentBotOfferRuntime.reserveGearPrompt(entry, 2_000L);
+            assertTrue(AgentBotOfferRuntime.isReservedGearPrompt(entry, 2_000L));
+            AgentBotOfferRuntime.clearGearPrompt(entry);
+
+            state.verify(() -> AgentBotOfferStateRuntime.hasPendingGearPromptAfter(entry, 1_999L));
+            state.verify(() -> AgentBotOfferStateRuntime.reserveGearPrompt(entry, 2_000L));
+            state.verify(() -> AgentBotOfferStateRuntime.isReservedGearPrompt(entry, 2_000L));
+            state.verify(() -> AgentBotOfferStateRuntime.clearGearPrompt(entry));
+        }
     }
 
     @Test

@@ -9,6 +9,7 @@ import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotChatReportRuntime;
 import server.agents.integration.AgentBotChatStatusRuntime;
+import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.commands.AgentQueuedMessage;
@@ -410,7 +411,7 @@ class BotChatManagerTest {
         entry.pendingLootOfferRecipientId = 123;
         entry.pendingLootOfferExpiresAt = Long.MAX_VALUE;
         entry.pendingLootOfferBotRequesting = true;
-        entry.pendingGearPromptAt = Long.MAX_VALUE;
+        AgentBotOfferStateRuntime.reserveGearPrompt(entry, Long.MAX_VALUE);
 
         BotOfferManager.clearPendingOfferForOwnerAsk(entry);
 
@@ -419,6 +420,6 @@ class BotChatManagerTest {
         assertEquals(0, entry.pendingLootOfferRecipientId);
         assertEquals(0L, entry.pendingLootOfferExpiresAt);
         assertFalse(entry.pendingLootOfferBotRequesting);
-        assertEquals(0L, entry.pendingGearPromptAt);
+        assertEquals(0L, entry.pendingGearPromptAt());
     }
 }

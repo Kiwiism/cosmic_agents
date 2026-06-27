@@ -12,6 +12,7 @@ import config.YamlConfig;
 import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
 import server.agents.integration.AgentBotOfferRuntime;
+import server.agents.integration.AgentBotOfferStateRuntime;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -140,7 +141,7 @@ public final class BotOfferManager {
         long now = System.currentTimeMillis();
         if (owner == null
                 || item == null
-                || AgentBotOfferRuntime.hasPendingGearPromptAfter(entry, now)
+                || AgentBotOfferStateRuntime.hasPendingGearPromptAfter(entry, now)
                 || AgentBotOfferRuntime.isOwnerIdleForOffer(entry)
                 || entry.pendingAction != null
                 || entry.pendingTradeCategory != null
@@ -161,7 +162,7 @@ public final class BotOfferManager {
         entry.pendingLootOfferBotRequesting = false;
 
         long scheduledAt = now + Math.max(0L, delayMs);
-        AgentBotOfferRuntime.reserveGearPrompt(entry, scheduledAt);
+        AgentBotOfferStateRuntime.reserveGearPrompt(entry, scheduledAt);
         AgentBotOfferRuntime.afterDelay(delayMs, () -> promptLootOfferAfterLoot(entry, bot, item, recipient.getId(), scheduledAt));
     }
 
@@ -254,10 +255,10 @@ public final class BotOfferManager {
     }
 
     private static void promptLootOfferAfterLoot(BotEntry entry, Character bot, Item item, int recipientId, long scheduledAt) {
-        if (!AgentBotOfferRuntime.isReservedGearPrompt(entry, scheduledAt)) {
+        if (!AgentBotOfferStateRuntime.isReservedGearPrompt(entry, scheduledAt)) {
             return;
         }
-        AgentBotOfferRuntime.clearGearPrompt(entry);
+        AgentBotOfferStateRuntime.clearGearPrompt(entry);
 
         if (entry.pendingLootOfferItem != item || entry.pendingLootOfferRecipientId != recipientId) {
             clearPendingOffer(entry);
@@ -696,6 +697,6 @@ public final class BotOfferManager {
         entry.pendingLootOfferRecipientId = 0;
         entry.pendingLootOfferExpiresAt = 0L;
         entry.pendingLootOfferBotRequesting = false;
-        AgentBotOfferRuntime.clearGearPrompt(entry);
+        AgentBotOfferStateRuntime.clearGearPrompt(entry);
     }
 }

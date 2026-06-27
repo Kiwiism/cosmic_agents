@@ -50,19 +50,19 @@ public final class AgentBotOfferRuntime {
     }
 
     public static boolean hasPendingGearPromptAfter(BotEntry entry, long nowMs) {
-        return entry.pendingGearPromptAt() > nowMs;
+        return AgentBotOfferStateRuntime.hasPendingGearPromptAfter(entry, nowMs);
     }
 
     public static void reserveGearPrompt(BotEntry entry, long scheduledAt) {
-        entry.setPendingGearPromptAt(scheduledAt);
+        AgentBotOfferStateRuntime.reserveGearPrompt(entry, scheduledAt);
     }
 
     public static boolean isReservedGearPrompt(BotEntry entry, long scheduledAt) {
-        return entry.pendingGearPromptAt() == scheduledAt;
+        return AgentBotOfferStateRuntime.isReservedGearPrompt(entry, scheduledAt);
     }
 
     public static void clearGearPrompt(BotEntry entry) {
-        entry.setPendingGearPromptAt(0L);
+        AgentBotOfferStateRuntime.clearGearPrompt(entry);
     }
 
     public static AgentChatReportRuntime.RecommendedGearActions recommendedGearActions(

@@ -341,6 +341,10 @@ Recent reconstruction notes:
   `AgentBotMovementReplyRuntime` and `AgentBotMovementSchedulerRuntime`
   adapters; movement chat orchestration no longer reaches directly into the
   broad reply or scheduler runtimes.
+- Gear-prompt reservation state now enters through the narrow
+  `AgentBotOfferStateRuntime` adapter; offer scheduling keeps BotEntry as the
+  temporary backing store but no longer owns the pending gear prompt field
+  directly in offer orchestration.
 
 Initial reconstruction order:
 
