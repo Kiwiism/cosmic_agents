@@ -245,6 +245,10 @@ Recent reconstruction notes:
   `AgentBotReportReplyRuntime`; `AgentBotReportDeliveryRuntime` no longer
   reaches directly into the broad `AgentBotReplyRuntime` for report line
   delivery, while the same queued owner-directed reply behavior remains intact.
+- Report callback scheduling now enters through the narrow
+  `AgentBotReportSchedulerRuntime`; `AgentBotChatReportRuntime` no longer
+  reaches directly into the broad `AgentBotSchedulerRuntime` when constructing
+  report callbacks, while the same random delay scheduler remains underneath.
 
 Initial reconstruction order:
 

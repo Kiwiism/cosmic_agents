@@ -19,7 +19,7 @@ public final class AgentBotChatReportRuntime {
 
     public static AgentChatReportFlow.ReportCallbacks reportCallbacks(BotEntry entry) {
         return AgentChatReportRuntime.reportCallbacks(
-                AgentBotSchedulerRuntime.reportScheduler(),
+                AgentBotReportSchedulerRuntime.reportScheduler(),
                 AgentBotReportOperationsRuntime.reportOperations(entry));
     }
 

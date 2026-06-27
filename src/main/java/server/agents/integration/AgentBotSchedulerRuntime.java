@@ -1,6 +1,5 @@
 package server.agents.integration;
 
-import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.TimerManager;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -10,10 +9,6 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public final class AgentBotSchedulerRuntime {
     private AgentBotSchedulerRuntime() {
-    }
-
-    public static AgentChatReportRuntime.ReportScheduler reportScheduler() {
-        return AgentBotSchedulerRuntime::afterRandomDelay;
     }
 
     public static void afterRandomDelay(int minMs, int maxMs, Runnable action) {
