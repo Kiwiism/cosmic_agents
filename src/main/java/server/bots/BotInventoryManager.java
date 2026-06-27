@@ -478,10 +478,10 @@ public class BotInventoryManager {
             return;
         }
         if (bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry) || recipient.getTrade() != null) {
-            if (entry.pendingBotTradeRetry == null) {
-                entry.pendingBotTradeRetry = () -> startTradeTransfer(item, recipient, entry, bot);
-                entry.pendingBotTradeRetryMs = BotMovementManager.delayAfterCurrentTick(10_000);
-            }
+            AgentBotPendingTradeStateRuntime.queueRetry(
+                    entry,
+                    () -> startTradeTransfer(item, recipient, entry, bot),
+                    BotMovementManager.delayAfterCurrentTick(10_000));
             return;
         }
         startTradeSequence("loot_offer", recipient, List.of(item), 0, true, entry, bot);
@@ -617,13 +617,14 @@ public class BotInventoryManager {
     /** Called every bot simulation tick while a trade sequence is in progress. */
     static void tickTrade(BotEntry entry, Character bot) {
         // Fire a queued bot-initiated retry once this bot is free and the delay expires.
-        if (AgentBotPendingTradeStateRuntime.isIdle(entry) && entry.pendingBotTradeRetry != null) {
-            if (entry.pendingBotTradeRetryMs > 0) {
-                entry.pendingBotTradeRetryMs = BotMovementManager.tickDown(entry.pendingBotTradeRetryMs);
+        if (AgentBotPendingTradeStateRuntime.isIdle(entry) && AgentBotPendingTradeStateRuntime.hasQueuedRetry(entry)) {
+            if (AgentBotPendingTradeStateRuntime.retryDelayMs(entry) > 0) {
+                AgentBotPendingTradeStateRuntime.setRetryDelayMs(
+                        entry,
+                        BotMovementManager.tickDown(AgentBotPendingTradeStateRuntime.retryDelayMs(entry)));
                 return;
             }
-            Runnable retry = entry.pendingBotTradeRetry;
-            entry.pendingBotTradeRetry = null;
+            Runnable retry = AgentBotPendingTradeStateRuntime.takeRetry(entry);
             retry.run();
             return;
         }
@@ -1812,10 +1813,10 @@ public class BotInventoryManager {
     static void startPotShareTransfer(List<Item> items, Character recipient, BotEntry entry, Character bot, int maxQty) {
         if (items.isEmpty()) return;
         if (bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry) || recipient.getTrade() != null) {
-            if (entry.pendingBotTradeRetry == null) {
-                entry.pendingBotTradeRetry = () -> startPotShareTransfer(items, recipient, entry, bot, maxQty);
-                entry.pendingBotTradeRetryMs = BotMovementManager.delayAfterCurrentTick(10_000);
-            }
+            AgentBotPendingTradeStateRuntime.queueRetry(
+                    entry,
+                    () -> startPotShareTransfer(items, recipient, entry, bot, maxQty),
+                    BotMovementManager.delayAfterCurrentTick(10_000));
             return;
         }
         entry.pendingPotShareBudget = maxQty;
@@ -1852,10 +1853,10 @@ public class BotInventoryManager {
     static void startAmmoShareTransfer(List<Item> items, Character recipient, BotEntry entry, Character bot, int maxQty) {
         if (items.isEmpty()) return;
         if (bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry) || recipient.getTrade() != null) {
-            if (entry.pendingBotTradeRetry == null) {
-                entry.pendingBotTradeRetry = () -> startAmmoShareTransfer(items, recipient, entry, bot, maxQty);
-                entry.pendingBotTradeRetryMs = BotMovementManager.delayAfterCurrentTick(10_000);
-            }
+            AgentBotPendingTradeStateRuntime.queueRetry(
+                    entry,
+                    () -> startAmmoShareTransfer(items, recipient, entry, bot, maxQty),
+                    BotMovementManager.delayAfterCurrentTick(10_000));
             return;
         }
         entry.pendingPotShareBudget = maxQty;

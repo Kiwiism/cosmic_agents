@@ -388,6 +388,10 @@ Recent reconstruction notes:
   `AgentBotPendingTradeStateRuntime`; ammo, potion, offer, utility, and
   inventory orchestration keep BotEntry as the temporary backing store but no
   longer scatter direct `pendingTradeCategory` null checks.
+- Bot-initiated trade retry callback and delay state now enter through
+  `AgentBotPendingTradeStateRuntime`; loot-offer, potion-share, and ammo-share
+  retry scheduling keep BotEntry as the temporary backing store but no longer
+  read, write, or clear retry fields directly.
 
 Initial reconstruction order:
 

@@ -305,6 +305,22 @@ public class BotEntry {
     Runnable pendingBotTradeRetry = null;
     int pendingBotTradeRetryMs = 0;
 
+    public Runnable pendingBotTradeRetry() {
+        return pendingBotTradeRetry;
+    }
+
+    public void setPendingBotTradeRetry(Runnable pendingBotTradeRetry) {
+        this.pendingBotTradeRetry = pendingBotTradeRetry;
+    }
+
+    public int pendingBotTradeRetryMs() {
+        return pendingBotTradeRetryMs;
+    }
+
+    public void setPendingBotTradeRetryMs(int pendingBotTradeRetryMs) {
+        this.pendingBotTradeRetryMs = pendingBotTradeRetryMs;
+    }
+
     // Trade queue
     String pendingTradeCategory = null;
     List<Item> pendingTradeItems = null;
