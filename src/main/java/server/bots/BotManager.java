@@ -975,8 +975,8 @@ public class BotManager {
                     return;
                 }
             }
-            BotChatManager.handleChat(targetedBot.entry(), cmd);
-            boolean matched = BotChatManager.wasLastChatHandled();
+            BotChatRuntime.handleChat(targetedBot.entry(), cmd);
+            boolean matched = BotChatRuntime.wasLastChatHandled();
             if (matched && targetedBot.entry().getOwner() != null
                     && owner.getId() == targetedBot.entry().getOwner().getId()) {
                 targetedBot.entry().lastOwnerCommand = cmd;
@@ -1008,7 +1008,7 @@ public class BotManager {
             BotEntry responder = pickGroupSupplyResponder(owner, entries);
             if (responder != null) {
                 responder.replyChannel = channel;
-                BotChatManager.handleChat(responder, message);
+                BotChatRuntime.handleChat(responder, message);
             }
             return;
         }
@@ -1025,7 +1025,7 @@ public class BotManager {
         }
         for (BotEntry entry : entries) {
             entry.replyChannel = channel;
-            BotChatManager.handleChat(entry, message);
+            BotChatRuntime.handleChat(entry, message);
         }
     }
 
@@ -4011,7 +4011,7 @@ public class BotManager {
             return;
         }
         entry.replyChannel = ReplyChannel.WHISPER;
-        BotChatManager.handleChat(entry, message);
+        BotChatRuntime.handleChat(entry, message);
     }
 
     private boolean consumeAiTick(BotEntry entry) {
