@@ -165,6 +165,9 @@ Recent reconstruction notes:
   now enter through `AgentBotManagerStatusRuntime`; `BotManager` no longer
   reaches directly into the broad chat-status facade for those lifecycle/tick
   callbacks.
+- Bot performance-monitor diagnostics now label the common AFK check as
+  `AgentBotManagerStatusRuntime.tickAfkCheck`, matching the Agent-owned
+  BotManager status boundary used by the tick shell.
 
 Initial reconstruction order:
 
