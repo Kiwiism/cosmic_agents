@@ -232,6 +232,11 @@ Recent reconstruction notes:
   now enter through `AgentBotCombatRuntime`; `BotCombatManager` no longer calls
   `BotManager.botSay` directly for combat-owned reply delivery, while the same
   random reply pools, follow-owner fallback, and warning flags remain intact.
+- Shop resupply, approach-timeout, shopping, purchase summary, shortfall,
+  sell-trash, and abort visible replies now enter through `AgentBotShopRuntime`;
+  `BotShopManager` no longer calls `BotManager.botSay` directly for shop-owned
+  reply delivery, while the same text, random reply pools, and delayed shop
+  sequencing remain intact.
 
 Initial reconstruction order:
 

@@ -1,5 +1,6 @@
 package server.agents.integration;
 
+import client.Character;
 import server.bots.BotEntry;
 
 /**
@@ -12,6 +13,10 @@ public final class AgentBotShopRuntime {
 
     public static void replyNow(BotEntry entry, String message) {
         AgentBotReplyRuntime.replyNow(entry, message);
+    }
+
+    public static void sayMapNow(Character bot, String message) {
+        AgentBotReplyRuntime.sayMapNow(bot, message);
     }
 
     public static void afterDelay(long delayMs, Runnable action) {

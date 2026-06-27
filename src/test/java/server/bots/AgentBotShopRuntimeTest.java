@@ -21,10 +21,12 @@ class AgentBotShopRuntimeTest {
             scheduler.when(() -> AgentBotSchedulerRuntime.randomDelayMs(2000, 4001)).thenReturn(2500L);
 
             AgentBotShopRuntime.replyNow(entry, "reply");
+            AgentBotShopRuntime.sayMapNow(null, "shop");
             AgentBotShopRuntime.afterDelay(500L, action);
             long delay = AgentBotShopRuntime.randomDelayMs(2000, 4001);
 
             replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, "reply"));
+            replies.verify(() -> AgentBotReplyRuntime.sayMapNow(null, "shop"));
             scheduler.verify(() -> AgentBotSchedulerRuntime.afterDelay(500L, action));
             scheduler.verify(() -> AgentBotSchedulerRuntime.randomDelayMs(2000, 4001));
             assertEquals(2500L, delay);

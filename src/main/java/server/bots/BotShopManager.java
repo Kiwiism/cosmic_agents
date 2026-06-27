@@ -121,7 +121,7 @@ public final class BotShopManager {
 
         long distSq = (long) bot.getPosition().distanceSq(match.npcPos);
         if (distSq > 1000L * 1000L) {
-            BotManager.getInstance().botSay(bot, BotManager.randomReply(RESUPPLY_MSGS));
+            AgentBotShopRuntime.sayMapNow(bot, BotManager.randomReply(RESUPPLY_MSGS));
         }
 
         startShopVisit(entry, bot, match);
@@ -173,7 +173,7 @@ public final class BotShopManager {
         if (entry.shopVisitStartedAtMs > 0
                 && !entry.shopSequenceActive
                 && now - entry.shopVisitStartedAtMs > SHOP_VISIT_TIMEOUT_MS) {
-            BotManager.getInstance().botSay(bot, "couldn't reach shop in time");
+            AgentBotShopRuntime.sayMapNow(bot, "couldn't reach shop in time");
             clearShopState(entry);
             return false;
         }
@@ -198,7 +198,7 @@ public final class BotShopManager {
             if (!entry.shopSequenceActive) {
                 entry.shopSequenceActive = true;
                 entry.shopSequenceStartedAtMs = System.currentTimeMillis();
-                BotManager.getInstance().botSay(bot, BotManager.randomReply(SHOPPING_MSGS));
+                AgentBotShopRuntime.sayMapNow(bot, BotManager.randomReply(SHOPPING_MSGS));
                 Point npcPos = entry.shopNpcPos;
                 scheduleShopStep(entry, () -> executePurchases(entry, bot, npcPos));
             }
@@ -355,16 +355,16 @@ public final class BotShopManager {
                 return;
             }
             if (sequence.firstShortfall() != null) {
-                BotManager.getInstance().botSay(sequence.bot(), buildShortfallMessage(sequence.firstShortfall()));
+                AgentBotShopRuntime.sayMapNow(sequence.bot(), buildShortfallMessage(sequence.firstShortfall()));
             } else if (announceIfEmpty && sequence.bought().isEmpty()) {
                 // Never end a resupply visit silently: nothing was bought and nothing fell short.
-                BotManager.getInstance().botSay(sequence.bot(), "turned out I didn't need anything here");
+                AgentBotShopRuntime.sayMapNow(sequence.bot(), "turned out I didn't need anything here");
             }
             clearShopState(sequence.entry());
         };
 
         if (!sequence.bought().isEmpty()) {
-            BotManager.getInstance().botSay(sequence.bot(), "bought " + String.join(", ", sequence.bought()));
+            AgentBotShopRuntime.sayMapNow(sequence.bot(), "bought " + String.join(", ", sequence.bought()));
             BotPotionManager.setupAutopotForBot(sequence.bot());
             BotCombatManager.tickAmmoCheck(sequence.entry(), sequence.bot());
             scheduleShopStep(sequence.entry(), finish);
@@ -378,7 +378,7 @@ public final class BotShopManager {
         List<Item> items = BotInventoryManager.collectSellTrashEquips(sequence.entry(), sequence.bot());
         if (items.isEmpty()) {
             sequence.entry().shopSellTrashPending = false;
-            BotManager.getInstance().botSay(sequence.bot(), "no trash equips worth selling");
+            AgentBotShopRuntime.sayMapNow(sequence.bot(), "no trash equips worth selling");
             finishPurchaseSequence(sequence, false);
             return;
         }
@@ -410,12 +410,12 @@ public final class BotShopManager {
         if (items.isEmpty()) {
             entry.shopSellTrashPending = false;
             if (soldCount > 0) {
-                BotManager.getInstance().botSay(bot, "sold " + soldCount + " trash equip" + (soldCount != 1 ? "s" : ""));
+                AgentBotShopRuntime.sayMapNow(bot, "sold " + soldCount + " trash equip" + (soldCount != 1 ? "s" : ""));
             }
             if (!failedItems.isEmpty()) {
-                BotManager.getInstance().botSay(bot, buildSellTrashFailureMessage(failedItems.size()));
+                AgentBotShopRuntime.sayMapNow(bot, buildSellTrashFailureMessage(failedItems.size()));
             } else if (soldCount == 0) {
-                BotManager.getInstance().botSay(bot, "no trash equips worth selling");
+                AgentBotShopRuntime.sayMapNow(bot, "no trash equips worth selling");
             }
             finishPurchaseSequence(new PurchaseSequence(entry, bot, npcPos, List.of(), bought, firstShortfall), false);
             return;
@@ -778,7 +778,7 @@ public final class BotShopManager {
     // that flag, so a cleared flag here means a concurrent player cancel — stay silent.
     private static void abortShop(BotEntry entry, Character bot, String reason) {
         if (entry.shopVisitPending) {
-            BotManager.getInstance().botSay(bot, reason);
+            AgentBotShopRuntime.sayMapNow(bot, reason);
         }
         clearShopState(entry);
     }
