@@ -100,7 +100,7 @@ public class BotEquipManager {
      * ring stat contribution rarely unlocks armor). Cash and {@code pendingOffer} excluded.
      * Called on mode change (follow / stop / grind).
      */
-    static void autoEquip(Character bot, Character owner, Item pendingOffer) {
+    public static void autoEquip(Character bot, Character owner, Item pendingOffer) {
         autoEquip(bot, owner, pendingOffer, false);
     }
 

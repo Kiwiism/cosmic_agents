@@ -2,6 +2,7 @@ package server.bots;
 
 
 import server.agents.integration.AgentBotReplyRuntime;
+import server.agents.integration.AgentBotActiveModeRuntime;
 import server.agents.capabilities.dialogue.AgentChatMovementFlow;
 
 import java.awt.Point;
@@ -57,9 +58,7 @@ final class BotChatMovementRuntime {
             @Override
             public void follow() {
                 BotManager.after(BotManager.randMs(1500, 2000), () -> {
-                    BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
-                    entry.nextGearSuggestionAt = 0;
-                    BotChatStatusRuntime.maybeSuggestGearToSiblings(entry, entry.bot);
+                    AgentBotActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry);
                     BotManager.getInstance().botReply(entry, AgentChatMovementFlow.followReply());
                     BotPotionManager.checkPotShareOnModeStart(entry, entry.bot);
                     BotManager.after(BotManager.randMs(250, 750), () -> BotManager.getInstance().issueFollowOwner(entry));
@@ -82,9 +81,7 @@ final class BotChatMovementRuntime {
             public void stop() {
                 BotManager.after(BotManager.randMs(900, 1100), () -> {
                     BotManager.getInstance().issueStop(entry);
-                    BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
-                    entry.nextGearSuggestionAt = 0;
-                    BotChatStatusRuntime.maybeSuggestGearToSiblings(entry, entry.bot);
+                    AgentBotActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry);
                     BotManager.after(BotManager.randMs(1400, 1600), () ->
                             BotManager.getInstance().botReply(entry, AgentChatMovementFlow.stopReply()));
                 });

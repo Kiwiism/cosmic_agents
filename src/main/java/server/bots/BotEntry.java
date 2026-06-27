@@ -216,6 +216,7 @@ public class BotEntry {
     public String pendingAction() { return pendingAction; }
     String pendingDropCategory = null;
     Item pendingLootOfferItem = null;
+    public Item pendingLootOfferItem() { return pendingLootOfferItem; }
     int pendingLootOfferRecipientId = 0;
     long pendingLootOfferExpiresAt = 0L;
     int lootInhibitMs = 0;

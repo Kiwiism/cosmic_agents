@@ -209,7 +209,7 @@ public final class BotPotionManager {
         return new AutopotChoice(hpItemId, bestHp, mpItemId, bestMp);
     }
 
-    static void setupAutopotForBot(Character bot) {
+    public static void setupAutopotForBot(Character bot) {
         AutopotChoice choice = computeAutopotChoice(bot);
 
         if (choice.hpItemId() > 0) {
@@ -305,7 +305,7 @@ public final class BotPotionManager {
         BotPerformanceMonitor.recordSince("potion-grind-stop", startedAt);
     }
 
-    static void checkPotShareOnModeStart(BotEntry entry, Character bot) {
+    public static void checkPotShareOnModeStart(BotEntry entry, Character bot) {
         entry.potShareRequestedHp = false;
         entry.potShareRequestedMp = false;
         BotAmmoManager.checkAmmoShareOnModeStart(entry, bot);
