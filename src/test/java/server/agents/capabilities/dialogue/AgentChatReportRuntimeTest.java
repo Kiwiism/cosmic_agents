@@ -25,6 +25,36 @@ class AgentChatReportRuntimeTest {
     }
 
     @Test
+    void reportActionsDelegateToOperationsByName() {
+        TestOperations operations = new TestOperations();
+        AgentChatReportRuntime.ReportActions actions = AgentChatReportRuntime.reportActions(operations);
+
+        actions.help();
+        actions.requestUpgrade();
+        actions.recommendedGear();
+        actions.skills();
+        actions.stats();
+        actions.movementStats();
+        actions.range();
+        actions.build();
+        actions.inventory();
+        actions.mesos();
+        actions.exp();
+        actions.inventorySlots();
+        actions.scrolls();
+        actions.potions();
+        actions.debugStats();
+        actions.critDebug();
+        actions.potDebug();
+
+        assertEquals(List.of(
+                "help", "requestUpgrade", "recommendedGear", "skills", "stats",
+                "movementStats", "range", "build", "inventory", "mesos", "exp",
+                "inventorySlots", "scrolls", "potions", "debugStats", "critDebug",
+                "potDebug"), operations.events);
+    }
+
+    @Test
     void standardReportsUseLegacyStandardDelayWindow() {
         TestScheduler scheduler = new TestScheduler();
         TestActions actions = new TestActions();
@@ -181,6 +211,95 @@ class AgentChatReportRuntimeTest {
     }
 
     private static final class TestActions implements AgentChatReportRuntime.ReportActions {
+        private final List<String> events = new ArrayList<>();
+
+        @Override
+        public void help() {
+            events.add("help");
+        }
+
+        @Override
+        public void requestUpgrade() {
+            events.add("requestUpgrade");
+        }
+
+        @Override
+        public void recommendedGear() {
+            events.add("recommendedGear");
+        }
+
+        @Override
+        public void skills() {
+            events.add("skills");
+        }
+
+        @Override
+        public void stats() {
+            events.add("stats");
+        }
+
+        @Override
+        public void movementStats() {
+            events.add("movementStats");
+        }
+
+        @Override
+        public void range() {
+            events.add("range");
+        }
+
+        @Override
+        public void build() {
+            events.add("build");
+        }
+
+        @Override
+        public void inventory() {
+            events.add("inventory");
+        }
+
+        @Override
+        public void mesos() {
+            events.add("mesos");
+        }
+
+        @Override
+        public void exp() {
+            events.add("exp");
+        }
+
+        @Override
+        public void inventorySlots() {
+            events.add("inventorySlots");
+        }
+
+        @Override
+        public void scrolls() {
+            events.add("scrolls");
+        }
+
+        @Override
+        public void potions() {
+            events.add("potions");
+        }
+
+        @Override
+        public void debugStats() {
+            events.add("debugStats");
+        }
+
+        @Override
+        public void critDebug() {
+            events.add("critDebug");
+        }
+
+        @Override
+        public void potDebug() {
+            events.add("potDebug");
+        }
+    }
+
+    private static final class TestOperations implements AgentChatReportRuntime.ReportOperations {
         private final List<String> events = new ArrayList<>();
 
         @Override

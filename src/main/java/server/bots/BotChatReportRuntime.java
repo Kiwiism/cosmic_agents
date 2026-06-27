@@ -37,7 +37,7 @@ final class BotChatReportRuntime {
     }
 
     private static AgentChatReportRuntime.ReportActions reportActions(BotEntry entry) {
-        return new AgentChatReportRuntime.ReportActions() {
+        return AgentChatReportRuntime.reportActions(new AgentChatReportRuntime.ReportOperations() {
             @Override
             public void help() {
                 reportHelp(entry);
@@ -122,7 +122,7 @@ final class BotChatReportRuntime {
             public void potDebug() {
                 reportPotDebug(entry, entry.bot);
             }
-        };
+        });
     }
 
     static void reportStats(BotEntry entry, Character bot) {

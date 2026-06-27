@@ -98,6 +98,95 @@ public final class AgentChatReportRuntime {
         };
     }
 
+    public static ReportActions reportActions(ReportOperations operations) {
+        return new ReportActions() {
+            @Override
+            public void help() {
+                operations.help();
+            }
+
+            @Override
+            public void requestUpgrade() {
+                operations.requestUpgrade();
+            }
+
+            @Override
+            public void recommendedGear() {
+                operations.recommendedGear();
+            }
+
+            @Override
+            public void skills() {
+                operations.skills();
+            }
+
+            @Override
+            public void stats() {
+                operations.stats();
+            }
+
+            @Override
+            public void movementStats() {
+                operations.movementStats();
+            }
+
+            @Override
+            public void range() {
+                operations.range();
+            }
+
+            @Override
+            public void build() {
+                operations.build();
+            }
+
+            @Override
+            public void inventory() {
+                operations.inventory();
+            }
+
+            @Override
+            public void mesos() {
+                operations.mesos();
+            }
+
+            @Override
+            public void exp() {
+                operations.exp();
+            }
+
+            @Override
+            public void inventorySlots() {
+                operations.inventorySlots();
+            }
+
+            @Override
+            public void scrolls() {
+                operations.scrolls();
+            }
+
+            @Override
+            public void potions() {
+                operations.potions();
+            }
+
+            @Override
+            public void debugStats() {
+                operations.debugStats();
+            }
+
+            @Override
+            public void critDebug() {
+                operations.critDebug();
+            }
+
+            @Override
+            public void potDebug() {
+                operations.potDebug();
+            }
+        };
+    }
+
     private static void scheduleFast(ReportScheduler scheduler, Runnable action) {
         scheduler.afterRandomDelay(500, 700, action);
     }
@@ -157,6 +246,42 @@ public final class AgentChatReportRuntime {
     }
 
     public interface ReportActions {
+        void help();
+
+        void requestUpgrade();
+
+        void recommendedGear();
+
+        void skills();
+
+        void stats();
+
+        void movementStats();
+
+        void range();
+
+        void build();
+
+        void inventory();
+
+        void mesos();
+
+        void exp();
+
+        void inventorySlots();
+
+        void scrolls();
+
+        void potions();
+
+        void debugStats();
+
+        void critDebug();
+
+        void potDebug();
+    }
+
+    public interface ReportOperations {
         void help();
 
         void requestUpgrade();
