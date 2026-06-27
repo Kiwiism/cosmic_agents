@@ -2,6 +2,7 @@ package server.bots;
 
 
 import server.agents.integration.AgentBotReplyRuntime;
+import server.agents.integration.AgentBotSchedulerRuntime;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentCharacterDialogueReporter;
 import server.agents.capabilities.dialogue.AgentChatReportFlow;
@@ -28,11 +29,7 @@ final class BotChatReportRuntime {
     }
 
     static AgentChatReportFlow.ReportCallbacks reportCallbacks(BotEntry entry) {
-        return AgentChatReportRuntime.reportCallbacks(reportScheduler(), reportOperations(entry));
-    }
-
-    private static AgentChatReportRuntime.ReportScheduler reportScheduler() {
-        return (minMs, maxMs, action) -> BotManager.after(BotManager.randMs(minMs, maxMs), action);
+        return AgentChatReportRuntime.reportCallbacks(AgentBotSchedulerRuntime.reportScheduler(), reportOperations(entry));
     }
 
     private static AgentChatReportRuntime.ReportOperations reportOperations(BotEntry entry) {
