@@ -446,6 +446,10 @@ Recent reconstruction notes:
   enter through `AgentBotInventoryStateRuntime`; passive loot and drop-choice
   handling keep BotEntry as the temporary backing store but no longer read,
   tick down, or set those cooldown fields directly.
+- Potion check and passive MP/HP recovery timer state now enter through
+  `AgentBotPotionStateRuntime`; potion check retry, autopot cadence, and
+  passive recovery keep BotEntry as the temporary backing store but no longer
+  read, shorten, tick down, clear, or set those timer fields directly.
 
 Initial reconstruction order:
 

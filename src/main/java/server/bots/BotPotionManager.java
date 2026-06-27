@@ -263,11 +263,13 @@ public final class BotPotionManager {
     }
 
     static void tickPotionCheck(BotEntry entry, Character bot) {
-        if (entry.potCheckTimerMs > 0) {
-            entry.potCheckTimerMs = BotMovementManager.tickDown(entry.potCheckTimerMs);
+        if (AgentBotPotionStateRuntime.hasPotCheckDelay(entry)) {
+            AgentBotPotionStateRuntime.tickPotCheckDelay(entry, BotMovementManager::tickDown);
             return;
         }
-        entry.potCheckTimerMs = BotMovementManager.delayAfterCurrentTick(BotManager.cfg.POT_CHECK_INTERVAL_MS);
+        AgentBotPotionStateRuntime.setPotCheckTimerMs(
+                entry,
+                BotMovementManager.delayAfterCurrentTick(BotManager.cfg.POT_CHECK_INTERVAL_MS));
 
         long startedAt = BotPerformanceMonitor.start();
         setupAutopotForBot(bot);
@@ -353,15 +355,17 @@ public final class BotPotionManager {
         boolean hpFull = bot.getHp() >= bot.getCurrentMaxHp();
         boolean mpFull = bot.getMp() >= bot.getCurrentMaxMp();
         if (hpFull && mpFull) {
-            entry.mpRecoveryTimerMs = 0;
+            AgentBotPotionStateRuntime.clearMpRecoveryTimer(entry);
             return;
         }
-        if (entry.mpRecoveryTimerMs > 0) {
-            entry.mpRecoveryTimerMs = BotMovementManager.tickDown(entry.mpRecoveryTimerMs);
+        if (AgentBotPotionStateRuntime.hasMpRecoveryDelay(entry)) {
+            AgentBotPotionStateRuntime.tickMpRecoveryDelay(entry, BotMovementManager::tickDown);
             return;
         }
 
-        entry.mpRecoveryTimerMs = BotMovementManager.delayAfterCurrentTick(BotManager.cfg.MP_RECOVERY_INTERVAL_MS);
+        AgentBotPotionStateRuntime.setMpRecoveryTimerMs(
+                entry,
+                BotMovementManager.delayAfterCurrentTick(BotManager.cfg.MP_RECOVERY_INTERVAL_MS));
 
         int hpRecovery = hpFull ? 0 : calculatePassiveHpRecovery(entry, bot);
         int mpRecovery = mpFull ? 0 : calculatePassiveMpRecovery(entry, bot);

@@ -5,6 +5,7 @@ import server.agents.integration.AgentBotManagerReplyRuntime;
 import server.agents.integration.AgentBotManagerSchedulerRuntime;
 import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
+import server.agents.integration.AgentBotPotionStateRuntime;
 import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
 import client.BotClient;
 import config.YamlConfig;
@@ -669,9 +670,7 @@ public class BotManager {
             return;
         }
         int soonDelayMs = Math.max(0, cfg.POT_CHECK_RETRY_SOON_MS);
-        if (entry.potCheckTimerMs <= 0 || entry.potCheckTimerMs > soonDelayMs) {
-            entry.potCheckTimerMs = soonDelayMs;
-        }
+        AgentBotPotionStateRuntime.requestPotionCheckSoon(entry, soonDelayMs);
     }
 
     /** Finds a bot-client character with the given name that is not currently owned by anyone. */
