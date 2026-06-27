@@ -13,15 +13,15 @@ public final class AgentBotReportDeliveryRuntime {
     }
 
     public static void reportHelp(BotEntry entry) {
-        AgentChatReportRuntime.reportHelp(line -> AgentBotReplyRuntime.queueReply(entry, line));
+        AgentChatReportRuntime.reportHelp(line -> AgentBotReportReplyRuntime.queueReply(entry, line));
     }
 
     public static void reportLine(BotEntry entry, String line) {
-        AgentChatReportRuntime.reportLine(line, replyLine -> AgentBotReplyRuntime.queueReply(entry, replyLine));
+        AgentChatReportRuntime.reportLine(line, replyLine -> AgentBotReportReplyRuntime.queueReply(entry, replyLine));
     }
 
     public static void reportLines(BotEntry entry, Iterable<String> lines) {
-        AgentChatReportRuntime.reportLines(lines, line -> AgentBotReplyRuntime.queueReply(entry, line));
+        AgentChatReportRuntime.reportLines(lines, line -> AgentBotReportReplyRuntime.queueReply(entry, line));
     }
 
     public static void reportRecommendedGear(BotEntry entry, Character bot) {
