@@ -5,7 +5,7 @@ import server.agents.capabilities.dialogue.AgentChatAwayFlow;
 import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.dialogue.AgentChatSessionRequestFlow;
 
-final class BotChatSessionRuntime {
+public final class BotChatSessionRuntime {
     private BotChatSessionRuntime() {
     }
 
@@ -39,7 +39,7 @@ final class BotChatSessionRuntime {
         };
     }
 
-    static void scheduleRelogConfirm(BotEntry entry) {
+    public static void scheduleRelogConfirm(BotEntry entry) {
         BotManager.after(BotManager.randMs(900, 1100), () -> {
             Character owner = entry.owner;
             if (owner == null) {
@@ -59,7 +59,7 @@ final class BotChatSessionRuntime {
         });
     }
 
-    static void scheduleLogoutConfirm(BotEntry entry) {
+    public static void scheduleLogoutConfirm(BotEntry entry) {
         BotManager.after(BotManager.randMs(900, 1100), () -> {
             BotManager.getInstance().botReply(entry, AgentChatSessionRequestFlow.logoutConfirmedReply());
             BotManager.after(BotManager.randMs(1800, 2200), () -> {
@@ -69,7 +69,7 @@ final class BotChatSessionRuntime {
         });
     }
 
-    static void handleOwnerAwayChoice(BotEntry entry, String message) {
+    public static void handleOwnerAwayChoice(BotEntry entry, String message) {
         AgentChatAwayFlow.handleOwnerAwayChoice(
                 message,
                 BotManager.getInstance().shouldOfferTownForAwayCommand(entry),

@@ -37,7 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
 
-class BotInventoryManager {
+public class BotInventoryManager {
     private static final Logger log = LoggerFactory.getLogger(BotInventoryManager.class);
     private static final long TRADE_COMMAND_PROFILE_WARN_NS = 50_000_000L;
     private static final int MANUAL_TRADE_TIMEOUT_MS = 60_000;
@@ -371,7 +371,7 @@ class BotInventoryManager {
      * Called after the owner chooses "drop" or "trade" in the item-choice prompt.
      * category: "scrolls", "pots", "equips", "etc", or "name:<fragment>"
      */
-    static void executeChoice(String category, boolean tradeToOwner, BotEntry entry, Character bot) {
+    public static void executeChoice(String category, boolean tradeToOwner, BotEntry entry, Character bot) {
         if (tradeToOwner) {
             startTradeTransfer(category, entry, bot);
         } else {

@@ -26,6 +26,10 @@ Recent reconstruction notes:
 - Build/AP/SP/job callback orchestration now has an Agent-owned facade in
   `AgentBotBuildRuntime`; `BotChatBuildRuntime` remains only as a temporary
   compatibility shim for legacy bot package callers.
+- Pending chat-action state, callbacks, and skill-report decision application
+  now have an Agent-owned facade in `AgentBotPendingActionRuntime`;
+  `BotChatPendingActionRuntime` remains only as a temporary compatibility shim
+  for legacy bot package callers.
 
 Initial reconstruction order:
 

@@ -228,7 +228,11 @@ public class BotEntry {
     // Pending two-step action
     String pendingAction = null;
     public String pendingAction() { return pendingAction; }
+    public void setPendingAction(String pendingAction) { this.pendingAction = pendingAction; }
+    public void clearPendingAction() { this.pendingAction = null; }
     String pendingDropCategory = null;
+    public String pendingDropCategory() { return pendingDropCategory; }
+    public void clearPendingDropCategory() { this.pendingDropCategory = null; }
     Item pendingLootOfferItem = null;
     public Item pendingLootOfferItem() { return pendingLootOfferItem; }
     int pendingLootOfferRecipientId = 0;

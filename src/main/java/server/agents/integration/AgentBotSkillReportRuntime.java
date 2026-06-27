@@ -4,7 +4,6 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.capabilities.dialogue.AgentSkillDialogueReporter;
 import server.agents.capabilities.dialogue.AgentSkillReportFlow;
-import server.bots.BotChatPendingActionRuntime;
 import server.bots.BotEntry;
 
 import java.util.List;
@@ -25,7 +24,7 @@ public final class AgentBotSkillReportRuntime {
                 collectLearnedBeginnerSkills(bot),
                 AgentSkillDialogueReporter.remainingBeginnerSp(bot),
                 collectLearnedSkillTrees(bot),
-                decision -> BotChatPendingActionRuntime.applySkillReportDecision(entry, decision));
+                decision -> AgentBotPendingActionRuntime.applySkillReportDecision(entry, decision));
     }
 
     static AgentSkillReportFlow.SkillReportDecision skillReportDecision(Character bot) {
