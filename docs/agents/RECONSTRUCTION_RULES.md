@@ -111,9 +111,10 @@ Recent reconstruction notes:
   `AgentBotSchedulerRuntime`; scroll reaction chat was already delivered through
   `AgentBotReplyRuntime`.
 - Sell-trash shop owner-directed replies and delayed shop step callbacks now
-  route through `AgentBotReplyRuntime` and `AgentBotSchedulerRuntime`. Map-only
-  resupply/shop chatter remains on the legacy visible-say path until exact
-  map-visible delivery has an Agent adapter.
+  enter through `AgentBotShopRuntime`; `BotShopManager` no longer reaches
+  directly into the lower-level reply or scheduler runtime for shop-owned
+  flows. Map-only resupply/shop chatter remains on the legacy visible-say path
+  until exact map-visible delivery has an Agent adapter.
 - Ammo-share delayed donor offer and transfer callbacks now route through
   `AgentBotSchedulerRuntime`; visible ammo request/offer chat remains unchanged
   on the legacy map-visible say path.
