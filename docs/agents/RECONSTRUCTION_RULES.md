@@ -131,6 +131,12 @@ Recent reconstruction notes:
   `AgentBotSchedulerRuntime`; delivery intentionally remains on the local
   `BotManager.botReply` method because `AgentBotReplyRuntime` currently bridges
   back to that delivery method.
+- Remaining BotManager fire-and-forget callback scheduling for follow-target
+  activation, spawn status checks, recruit greetings, owner pickup scans, scroll
+  reactions, and relog greetings now routes through `AgentBotSchedulerRuntime`.
+  The legacy `BotManager.after` helper remains only behind
+  `scheduleBotReplyAction`, which is the temporary scheduling hook consumed by
+  the Agent scheduler adapter.
 
 Initial reconstruction order:
 

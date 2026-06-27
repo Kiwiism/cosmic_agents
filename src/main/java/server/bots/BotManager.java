@@ -259,7 +259,7 @@ public class BotManager {
                     "following " + target.getName(),
                     "ok, following " + target.getName()
             )));
-            after(randMs(250, 750), () -> {
+            AgentBotSchedulerRuntime.afterDelay(randMs(250, 750), () -> {
                 BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
                 BotPotionManager.checkPotShareOnModeStart(entry, entry.bot);
                 issueFollow(entry, target);
@@ -490,7 +490,7 @@ public class BotManager {
         if (normalizeSpawnState) {
             normalizeSpawnedBot(entry);
         }
-        after(randMs(30_000, 31_000), () -> AgentBotChatStatusRuntime.checkBotStatus(entry, bot));
+        AgentBotSchedulerRuntime.afterDelay(randMs(30_000, 31_000), () -> AgentBotChatStatusRuntime.checkBotStatus(entry, bot));
         return entry;
     }
 
@@ -648,7 +648,7 @@ public class BotManager {
 
         // Register under new owner
         registerBot(target.getId(), target, bot);
-        after(randMs(700, 900), () ->
+        AgentBotSchedulerRuntime.afterDelay(randMs(700, 900), () ->
                 botSay(bot, randomReply(List.of("ok!", "sure!", "hey " + target.getName() + "!", "hi " + target.getName() + "!"))));
         return null;
     }
@@ -719,7 +719,7 @@ public class BotManager {
         // Run the per-bot upgrade-recommendation scan off the player's pickup thread. The
         // scan is fire-and-forget (its only effect is a possible chat-prompt) so deferring
         // by one timer tick keeps rapid pickups from stalling the player behind K×N DPs.
-        after(0L, () -> {
+        AgentBotSchedulerRuntime.afterDelay(0L, () -> {
             for (BotEntry entry : entries) {
                 BotOfferManager.notifyOwnerGainedEquip(entry, entry.bot, item);
             }
@@ -746,7 +746,7 @@ public class BotManager {
                                          client.inventory.Equip.ScrollResult result,
                                          int scrollItemId,
                                          long delayMs) {
-        after(Math.max(0L, delayMs), () ->
+        AgentBotSchedulerRuntime.afterDelay(Math.max(0L, delayMs), () ->
                 BotScrollReactionManager.handleScrollEvent(source, result, scrollItemId, bots.values()));
     }
 
@@ -3869,7 +3869,7 @@ public class BotManager {
             Character botChar = loadOfflineBot(charId, world, channel, map, pos);
 
             registerSpawnedBot(ownerCharId, owner, botChar);
-            after(randMs(900, 1100), () -> {
+            AgentBotSchedulerRuntime.afterDelay(randMs(900, 1100), () -> {
                 botSay(botChar, "back!!");
                 botChar.changeFaceExpression(Emote.HAPPY.getValue());
             });
