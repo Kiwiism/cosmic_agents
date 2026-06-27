@@ -3,6 +3,7 @@ package server.bots;
 
 import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotChatStatusRuntime;
+import server.agents.integration.AgentBotSchedulerRuntime;
 import client.BotClient;
 import config.YamlConfig;
 import client.Character;
@@ -587,7 +588,7 @@ public class BotManager {
         entries.remove(entry);
         entry.task.cancel(false);
         issueStop(entry);
-        after(randMs(400, 600), () ->
+        AgentBotSchedulerRuntime.afterDelay(randMs(400, 600), () ->
                 botReply(entry, randomReply(List.of(
                         "ok", "sure", "alright", "gotcha",
                         "later!", "see ya", "take care", "cya", "peace out"))));

@@ -127,6 +127,10 @@ Recent reconstruction notes:
 - LLM split-message owner-directed replies now route through
   `AgentBotReplyRuntime`; the existing LLM executor, multi-message delay, and
   sanitization/splitting behavior are unchanged.
+- Bot dismissal acknowledgement scheduling now routes through
+  `AgentBotSchedulerRuntime`; delivery intentionally remains on the local
+  `BotManager.botReply` method because `AgentBotReplyRuntime` currently bridges
+  back to that delivery method.
 
 Initial reconstruction order:
 
