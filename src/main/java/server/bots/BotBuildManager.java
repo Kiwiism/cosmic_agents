@@ -16,7 +16,7 @@ import server.bots.build.MageBuilds;
 import server.bots.build.ThiefBuilds;
 import server.bots.build.WarriorBuilds;
 import server.agents.capabilities.dialogue.AgentBuildPromptReporter;
-import server.agents.integration.AgentBotChatStatusRuntime;
+import server.agents.integration.AgentBotBuildStatusRuntime;
 import server.agents.integration.AgentBotReplyRuntime;
 
 public final class BotBuildManager {
@@ -321,7 +321,7 @@ public final class BotBuildManager {
 
         if (lvl == 8 || lvl == 10 || lvl == 30 || lvl == 70 || lvl == 120) {
             BotManager.getInstance().issueFollowOwner(entry);
-            AgentBotChatStatusRuntime.checkBotStatus(entry, bot);
+            AgentBotBuildStatusRuntime.checkBuildStatus(entry, bot);
         }
 
         autoAssignSp(entry, bot);

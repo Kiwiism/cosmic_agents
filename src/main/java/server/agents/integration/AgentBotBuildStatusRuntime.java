@@ -17,6 +17,12 @@ public final class AgentBotBuildStatusRuntime {
     private AgentBotBuildStatusRuntime() {
     }
 
+    public static void checkBuildStatus(BotEntry entry, Character bot) {
+        AgentChatStatusRuntime.checkStatus(
+                AgentBotStatusRuntime.statusCheckState(entry),
+                statusCheckActions(entry, bot));
+    }
+
     public static AgentChatStatusRuntime.StatusCheckActions statusCheckActions(BotEntry entry, Character bot) {
         return new AgentChatStatusRuntime.StatusCheckActions() {
             @Override

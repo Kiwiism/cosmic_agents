@@ -22,9 +22,7 @@ public final class AgentBotChatStatusRuntime {
     }
 
     public static void checkBotStatus(BotEntry entry, Character bot) {
-        AgentChatStatusRuntime.checkStatus(
-                AgentBotStatusRuntime.statusCheckState(entry),
-                AgentBotBuildStatusRuntime.statusCheckActions(entry, bot));
+        AgentBotBuildStatusRuntime.checkBuildStatus(entry, bot);
     }
 
     public static void announceOwnerReturnedFromOffline(BotEntry entry) {

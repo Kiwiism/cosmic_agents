@@ -146,6 +146,10 @@ Recent reconstruction notes:
 - Agent integration tests for build, session, pending-action, transfer, social,
   and combat delayed callbacks now assert the Agent reply/scheduler runtime
   boundary instead of the removed BotManager delivery/scheduler bridge.
+- Build-triggered status checks now enter through
+  `AgentBotBuildStatusRuntime.checkBuildStatus`; `BotBuildManager` and
+  `BotStarterKitManager` no longer call the broad chat-status facade directly
+  for job/level build status prompts.
 
 Initial reconstruction order:
 

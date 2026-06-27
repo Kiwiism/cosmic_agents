@@ -14,6 +14,20 @@ import static org.mockito.Mockito.mockStatic;
 
 class AgentBotBuildStatusRuntimeTest {
     @Test
+    void checkBuildStatusRunsStatusRuntimeWithBuildActions() {
+        BotEntry entry = new BotEntry(null, null, null);
+        Character bot = mock(Character.class);
+
+        try (MockedStatic<AgentChatStatusRuntime> statusRuntime = mockStatic(AgentChatStatusRuntime.class)) {
+            AgentBotBuildStatusRuntime.checkBuildStatus(entry, bot);
+
+            statusRuntime.verify(() -> AgentChatStatusRuntime.checkStatus(
+                    org.mockito.ArgumentMatchers.any(),
+                    org.mockito.ArgumentMatchers.any()));
+        }
+    }
+
+    @Test
     void statusCheckActionsDelegateBuildPromptsAndAssignments() {
         BotEntry entry = new BotEntry(null, null, null);
         Character bot = mock(Character.class);
