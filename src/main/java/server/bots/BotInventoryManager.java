@@ -583,7 +583,7 @@ public class BotInventoryManager {
         }
         entry.pendingTradeCategory = category;
         AgentBotPendingTradeStateRuntime.setRecipientId(entry, recipient.getId());
-        entry.pendingTradeSingleBatch = singleBatch;
+        AgentBotPendingTradeStateRuntime.setSingleBatch(entry, singleBatch);
         AgentBotPendingTradeStateRuntime.clearInviteAnnounced(entry);
         openTradeBatch(entry, bot, items, mesos);
     }
@@ -634,7 +634,7 @@ public class BotInventoryManager {
 
         // ── PAUSE between batches (items == null) ──────────────────────────
         if (entry.pendingTradeItems == null) {
-            if (entry.pendingTradeSingleBatch) {
+            if (AgentBotPendingTradeStateRuntime.singleBatch(entry)) {
                 resetTradeState(entry, bot);
                 return;
             }
@@ -665,7 +665,7 @@ public class BotInventoryManager {
         if (trade == null) {
             if (entry.pendingTradeBotDone) {
                 // Both sides confirmed — sequence complete or cancelled after bot OK
-                if (entry.pendingTradeSingleBatch) {
+                if (AgentBotPendingTradeStateRuntime.singleBatch(entry)) {
                     resetTradeState(entry, bot);
                     BotEquipManager.autoEquip(bot, entry.owner, null);
                     return;
@@ -812,7 +812,7 @@ public class BotInventoryManager {
         entry.pendingTradeMesoAdded = false;
         entry.pendingTradeAllAdded = false;
         entry.pendingTradeBotDone  = false;
-        entry.pendingTradeSingleBatch = false;
+        AgentBotPendingTradeStateRuntime.clearSingleBatch(entry);
         AgentBotPendingTradeStateRuntime.clearInviteAnnounced(entry);
         AgentBotPendingTradeStateRuntime.clearShareBudget(entry);
         entry.ownerGivenItems.clear();

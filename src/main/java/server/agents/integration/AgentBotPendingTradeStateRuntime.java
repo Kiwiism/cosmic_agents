@@ -126,4 +126,16 @@ public final class AgentBotPendingTradeStateRuntime {
     public static void clearTimer(BotEntry entry) {
         entry.setPendingTradeTimerMs(0);
     }
+
+    public static boolean singleBatch(BotEntry entry) {
+        return entry.pendingTradeSingleBatch();
+    }
+
+    public static void setSingleBatch(BotEntry entry, boolean singleBatch) {
+        entry.setPendingTradeSingleBatch(singleBatch);
+    }
+
+    public static void clearSingleBatch(BotEntry entry) {
+        entry.setPendingTradeSingleBatch(false);
+    }
 }

@@ -413,6 +413,10 @@ Recent reconstruction notes:
   confirmation timeout handling keep BotEntry as the temporary backing store
   but no longer read, increment, tick down, set, or clear the timer field
   directly.
+- Pending trade single-batch state now enters through
+  `AgentBotPendingTradeStateRuntime`; trade setup, batch-completion decisions,
+  and reset keep BotEntry as the temporary backing store but no longer read,
+  set, or clear the single-batch field directly.
 
 Initial reconstruction order:
 

@@ -381,6 +381,14 @@ public class BotEntry {
         this.pendingTradeTimerMs = pendingTradeTimerMs;
     }
 
+    public boolean pendingTradeSingleBatch() {
+        return pendingTradeSingleBatch;
+    }
+
+    public void setPendingTradeSingleBatch(boolean pendingTradeSingleBatch) {
+        this.pendingTradeSingleBatch = pendingTradeSingleBatch;
+    }
+
     // Message queue
     final ArrayDeque<AgentQueuedMessage> msgQueue = new ArrayDeque<>();
     boolean msgSending = false;

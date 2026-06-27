@@ -134,4 +134,19 @@ class AgentBotPendingTradeStateRuntimeTest {
 
         assertEquals(0, AgentBotPendingTradeStateRuntime.timerMs(entry));
     }
+
+    @Test
+    void adaptsSingleBatchState() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        assertFalse(AgentBotPendingTradeStateRuntime.singleBatch(entry));
+
+        AgentBotPendingTradeStateRuntime.setSingleBatch(entry, true);
+
+        assertTrue(AgentBotPendingTradeStateRuntime.singleBatch(entry));
+
+        AgentBotPendingTradeStateRuntime.clearSingleBatch(entry);
+
+        assertFalse(AgentBotPendingTradeStateRuntime.singleBatch(entry));
+    }
 }
