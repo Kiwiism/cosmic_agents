@@ -274,6 +274,10 @@ Recent reconstruction notes:
   through narrow `AgentBotInventoryReplyRuntime` and
   `AgentBotInventorySchedulerRuntime` adapters; inventory orchestration no
   longer reaches directly into the broad reply or scheduler runtimes.
+- Combat warning/status reply and delay bridge methods now enter through
+  narrow `AgentBotCombatReplyRuntime` and `AgentBotCombatSchedulerRuntime`
+  adapters; combat orchestration no longer reaches directly into the broad
+  reply or scheduler runtimes.
 
 Initial reconstruction order:
 
