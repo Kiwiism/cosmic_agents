@@ -20,6 +20,9 @@ Recent reconstruction notes:
 - Report helper orchestration now has an Agent-owned facade in
   `AgentBotChatReportRuntime`; `BotChatReportRuntime` remains only as a
   temporary compatibility shim for legacy bot package callers.
+- Status helper orchestration now has an Agent-owned facade in
+  `AgentBotChatStatusRuntime`; `BotChatStatusRuntime` remains only as a
+  temporary compatibility shim for legacy bot package callers.
 
 Initial reconstruction order:
 
