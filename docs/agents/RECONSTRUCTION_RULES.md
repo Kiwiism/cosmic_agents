@@ -290,6 +290,11 @@ Recent reconstruction notes:
   through narrow `AgentBotMakerReplyRuntime` and
   `AgentBotMakerSchedulerRuntime` adapters; Maker orchestration no longer
   reaches directly into the broad reply or scheduler runtimes.
+- Shop automation owner replies, map-visible replies, fixed-delay callbacks,
+  and delay-sampling bridge methods now enter through narrow
+  `AgentBotShopReplyRuntime` and `AgentBotShopSchedulerRuntime` adapters; shop
+  orchestration no longer reaches directly into the broad reply or scheduler
+  runtimes.
 
 Initial reconstruction order:
 

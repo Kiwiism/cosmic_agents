@@ -12,18 +12,18 @@ public final class AgentBotShopRuntime {
     }
 
     public static void replyNow(BotEntry entry, String message) {
-        AgentBotReplyRuntime.replyNow(entry, message);
+        AgentBotShopReplyRuntime.replyNow(entry, message);
     }
 
     public static void sayMapNow(Character bot, String message) {
-        AgentBotReplyRuntime.sayMapNow(bot, message);
+        AgentBotShopReplyRuntime.sayMapNow(bot, message);
     }
 
     public static void afterDelay(long delayMs, Runnable action) {
-        AgentBotSchedulerRuntime.afterDelay(delayMs, action);
+        AgentBotShopSchedulerRuntime.afterDelay(delayMs, action);
     }
 
     public static long randomDelayMs(int minMs, int maxMs) {
-        return AgentBotSchedulerRuntime.randomDelayMs(minMs, maxMs);
+        return AgentBotShopSchedulerRuntime.randomDelayMs(minMs, maxMs);
     }
 }
