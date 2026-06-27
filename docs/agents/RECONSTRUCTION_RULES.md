@@ -118,6 +118,8 @@ Recent reconstruction notes:
 - Potion-share delayed donor offer, low-supply fallback, and transfer callbacks
   now route through `AgentBotSchedulerRuntime`; visible potion request/offer
   chat remains unchanged on the legacy map-visible say path.
+- Combat alert reset callbacks now route through `AgentBotSchedulerRuntime`;
+  alert timing and stance reset behavior are unchanged.
 
 Initial reconstruction order:
 
