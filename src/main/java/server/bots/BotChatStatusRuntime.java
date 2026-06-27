@@ -3,11 +3,10 @@ package server.bots;
 
 import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentBotStatusRuntime;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
-import server.agents.capabilities.dialogue.AgentChatWelcomeBackFlow;
 
-import java.awt.Point;
 import java.util.List;
 
 final class BotChatStatusRuntime {
@@ -17,13 +16,13 @@ final class BotChatStatusRuntime {
     static void markOwnerActive(BotEntry entry) {
         Character owner = entry.owner;
         AgentChatStatusRuntime.markActive(
-                statusState(entry),
+                AgentBotStatusRuntime.statusState(entry),
                 owner != null ? owner.getPosition() : null,
                 System.currentTimeMillis());
     }
 
     static void checkBotStatus(BotEntry entry, Character bot) {
-        AgentChatStatusRuntime.checkStatus(statusCheckState(entry), statusCheckActions(entry, bot));
+        AgentChatStatusRuntime.checkStatus(AgentBotStatusRuntime.statusCheckState(entry), statusCheckActions(entry, bot));
     }
 
     static void announceOwnerReturnedFromOffline(BotEntry entry) {
@@ -33,7 +32,7 @@ final class BotChatStatusRuntime {
 
     static void tickAfkCheck(BotEntry entry, Character owner) {
         AgentChatStatusRuntime.tickAfkCheck(
-                afkState(entry),
+                AgentBotStatusRuntime.afkState(entry),
                 owner.getPosition(),
                 System.currentTimeMillis(),
                 afkReturnActions(entry));
@@ -44,49 +43,11 @@ final class BotChatStatusRuntime {
     }
 
     static boolean isOwnerIdle(BotEntry entry) {
-        return AgentChatStatusRuntime.isOwnerIdle(statusState(entry));
+        return AgentChatStatusRuntime.isOwnerIdle(AgentBotStatusRuntime.statusState(entry));
     }
 
     static int randomFidgetExpression() {
         return AgentChatStatusRuntime.randomFidgetExpression();
-    }
-
-    private static AgentChatStatusRuntime.StatusState statusState(BotEntry entry) {
-        return new AgentChatStatusRuntime.StatusState() {
-            @Override
-            public void setOwnerAfkPosition(Point position) {
-                entry.ownerAfkPos = position;
-            }
-
-            @Override
-            public void setOwnerAfkSinceMs(long sinceMs) {
-                entry.ownerAfkSinceMs = sinceMs;
-            }
-
-            @Override
-            public boolean ownerWasAfk() {
-                return entry.ownerWasAfk;
-            }
-
-            @Override
-            public void setOwnerWasAfk(boolean wasAfk) {
-                entry.ownerWasAfk = wasAfk;
-            }
-        };
-    }
-
-    private static AgentChatStatusRuntime.StatusCheckState statusCheckState(BotEntry entry) {
-        return new AgentChatStatusRuntime.StatusCheckState() {
-            @Override
-            public boolean spawnUpgradeCheckDone() {
-                return entry.spawnUpgradeCheckDone;
-            }
-
-            @Override
-            public void setSpawnUpgradeCheckDone(boolean done) {
-                entry.spawnUpgradeCheckDone = done;
-            }
-        };
     }
 
     private static AgentChatStatusRuntime.StatusCheckActions statusCheckActions(BotEntry entry, Character bot) {
@@ -180,44 +141,10 @@ final class BotChatStatusRuntime {
         };
     }
 
-    private static AgentChatWelcomeBackFlow.AfkState afkState(BotEntry entry) {
-        return new AgentChatWelcomeBackFlow.AfkState() {
-            @Override
-            public Point ownerAfkPosition() {
-                return entry.ownerAfkPos;
-            }
-
-            @Override
-            public void setOwnerAfkPosition(Point position) {
-                entry.ownerAfkPos = position;
-            }
-
-            @Override
-            public long ownerAfkSinceMs() {
-                return entry.ownerAfkSinceMs;
-            }
-
-            @Override
-            public void setOwnerAfkSinceMs(long sinceMs) {
-                entry.ownerAfkSinceMs = sinceMs;
-            }
-
-            @Override
-            public boolean ownerWasAfk() {
-                return entry.ownerWasAfk;
-            }
-
-            @Override
-            public void setOwnerWasAfk(boolean wasAfk) {
-                entry.ownerWasAfk = wasAfk;
-            }
-        };
-    }
-
     private static void maybeSuggestRecommendedGear(BotEntry entry, Character bot) {
         Character owner = entry.owner;
         AgentChatStatusRuntime.maybeSuggestGear(
-                gearSuggestionState(entry),
+                AgentBotStatusRuntime.gearSuggestionState(entry),
                 gearSuggestionActions(owner != null, () -> BotOfferManager.offerBestRecommendedGear(entry, bot, owner)),
                 System.currentTimeMillis());
     }
@@ -225,23 +152,9 @@ final class BotChatStatusRuntime {
     static void maybeSuggestGearToSiblings(BotEntry entry, Character bot) {
         Character owner = entry.owner;
         AgentChatStatusRuntime.maybeSuggestGear(
-                gearSuggestionState(entry),
+                AgentBotStatusRuntime.gearSuggestionState(entry),
                 gearSuggestionActions(owner != null, () -> BotOfferManager.offerBestGearToSibling(entry, bot)),
                 System.currentTimeMillis());
-    }
-
-    private static AgentChatStatusRuntime.GearSuggestionState gearSuggestionState(BotEntry entry) {
-        return new AgentChatStatusRuntime.GearSuggestionState() {
-            @Override
-            public long nextGearSuggestionAt() {
-                return entry.nextGearSuggestionAt;
-            }
-
-            @Override
-            public void setNextGearSuggestionAt(long nextGearSuggestionAt) {
-                entry.nextGearSuggestionAt = nextGearSuggestionAt;
-            }
-        };
     }
 
     private static AgentChatStatusRuntime.GearSuggestionActions gearSuggestionActions(

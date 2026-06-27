@@ -265,6 +265,30 @@ public class BotEntry {
     long ownerAfkSinceMs = 0;
     boolean ownerWasAfk = false;
 
+    public Point ownerAfkPosition() {
+        return ownerAfkPos;
+    }
+
+    public void setOwnerAfkPosition(Point ownerAfkPos) {
+        this.ownerAfkPos = ownerAfkPos;
+    }
+
+    public long ownerAfkSinceMs() {
+        return ownerAfkSinceMs;
+    }
+
+    public void setOwnerAfkSinceMs(long ownerAfkSinceMs) {
+        this.ownerAfkSinceMs = ownerAfkSinceMs;
+    }
+
+    public boolean ownerWasAfk() {
+        return ownerWasAfk;
+    }
+
+    public void setOwnerWasAfk(boolean ownerWasAfk) {
+        this.ownerWasAfk = ownerWasAfk;
+    }
+
     // Owner-offline-or-dead detection: after a sustained period (5 min) the bot
     // scrolls/warps to the nearest town and idles, instead of grinding pots dry
     // or death-looping with no anchor.
@@ -345,6 +369,22 @@ public class BotEntry {
     long nextFidgetVisualAtMs = 0L;
     long nextGearSuggestionAt = 0L;
     boolean spawnUpgradeCheckDone = false;
+
+    public long nextGearSuggestionAt() {
+        return nextGearSuggestionAt;
+    }
+
+    public void setNextGearSuggestionAt(long nextGearSuggestionAt) {
+        this.nextGearSuggestionAt = nextGearSuggestionAt;
+    }
+
+    public boolean spawnUpgradeCheckDone() {
+        return spawnUpgradeCheckDone;
+    }
+
+    public void setSpawnUpgradeCheckDone(boolean spawnUpgradeCheckDone) {
+        this.spawnUpgradeCheckDone = spawnUpgradeCheckDone;
+    }
     final Set<Integer> requestedUpgradeItemIds = ConcurrentHashMap.newKeySet();
     boolean pendingLootOfferBotRequesting = false; // true = bot asked for owner's item
     double recentScrollReactionLoad = 0.0;
