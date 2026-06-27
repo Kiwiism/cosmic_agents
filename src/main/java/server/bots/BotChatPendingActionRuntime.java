@@ -1,5 +1,7 @@
 package server.bots;
 
+
+import server.agents.integration.AgentBotReplyRuntime;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
@@ -98,7 +100,7 @@ final class BotChatPendingActionRuntime {
             entry.pendingAction = AgentChatPendingAction.SKILL_TREE_CHOICE;
         }
         for (String line : decision.replies()) {
-            BotChatReplyRuntime.queueReply(entry, line);
+            AgentBotReplyRuntime.queueReply(entry, line);
         }
     }
 }

@@ -1,5 +1,7 @@
 package server.bots;
 
+
+import server.agents.integration.AgentBotReplyRuntime;
 import client.BotClient;
 import client.Character;
 import client.inventory.Equip;
@@ -231,7 +233,7 @@ final class BotOfferManager {
                 "Your " + itemDesc + " would be better on me! trade it over?",
                 "I could use that " + itemDesc + " of yours ;)",
                 "that " + itemDesc + " is an upgrade for me, want to trade?");
-        BotChatReplyRuntime.queueSay(entry, BotManager.randomReply(prompts));
+        AgentBotReplyRuntime.queueSay(entry, BotManager.randomReply(prompts));
     }
 
     private static boolean offerGearItem(BotEntry entry, Character bot, Character recipient, Item item,
@@ -245,7 +247,7 @@ final class BotOfferManager {
         entry.pendingLootOfferRecipientId = recipient.getId();
         entry.pendingLootOfferExpiresAt = System.currentTimeMillis() + 30_000L;
         entry.pendingLootOfferBotRequesting = false;
-        long promptDelayMs = BotChatReplyRuntime.queueSayWithEstimatedDelay(entry,
+        long promptDelayMs = AgentBotReplyRuntime.queueSayWithEstimatedDelay(entry,
                 buildLootOfferPrompt(recipient, entry.owner, item, need == GearOfferNeed.FUTURE));
         scheduleBotLootOfferAutoAccept(entry, recipient, promptDelayMs);
         return true;
@@ -288,7 +290,7 @@ final class BotOfferManager {
         entry.pendingLootOfferRecipientId = recipient.getId();
         entry.pendingLootOfferExpiresAt = System.currentTimeMillis() + 30_000L;
         entry.pendingLootOfferBotRequesting = false;
-        long promptDelayMs = BotChatReplyRuntime.queueSayWithEstimatedDelay(entry,
+        long promptDelayMs = AgentBotReplyRuntime.queueSayWithEstimatedDelay(entry,
                 buildLootOfferPrompt(recipient, owner, item, need == GearOfferNeed.FUTURE));
         scheduleBotLootOfferAutoAccept(entry, recipient, promptDelayMs);
     }

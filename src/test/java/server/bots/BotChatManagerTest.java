@@ -1,5 +1,7 @@
 package server.bots;
 
+
+import server.agents.integration.AgentBotReplyRuntime;
 import client.Character;
 import client.Job;
 import client.inventory.Inventory;
@@ -374,8 +376,8 @@ class BotChatManagerTest {
         BotEntry entry = new BotEntry(null, null, null);
         entry.msgSending = true;
 
-        BotChatReplyRuntime.queueReply(entry, "owner reply");
-        BotChatReplyRuntime.queueSay(entry, "party chatter");
+        AgentBotReplyRuntime.queueReply(entry, "owner reply");
+        AgentBotReplyRuntime.queueSay(entry, "party chatter");
 
         AgentQueuedMessage first = entry.msgQueue.poll();
         AgentQueuedMessage second = entry.msgQueue.poll();

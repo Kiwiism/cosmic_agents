@@ -1,30 +1,32 @@
-package server.bots;
+package server.agents.integration;
 
 import server.agents.capabilities.dialogue.AgentChatReplyRuntime;
 import server.agents.commands.AgentQueuedMessage;
 import server.agents.commands.AgentReplyQueue;
+import server.bots.BotEntry;
+import server.bots.BotManager;
 
 /**
- * Temporary bot-side adapter from legacy BotEntry message fields to the
- * Agent-owned reply runtime.
+ * Temporary Agent-owned adapter from legacy BotEntry message fields to the
+ * Agent reply queue runtime.
  */
-public final class BotChatReplyRuntime {
-    private BotChatReplyRuntime() {
+public final class AgentBotReplyRuntime {
+    private AgentBotReplyRuntime() {
     }
 
     public static void queueSay(BotEntry entry, String message) {
         AgentChatReplyRuntime.queueSay(state(entry), message, dispatcher(entry));
     }
 
-    static void queueReply(BotEntry entry, String message) {
+    public static void queueReply(BotEntry entry, String message) {
         AgentChatReplyRuntime.queueReply(state(entry), message, dispatcher(entry));
     }
 
-    static long queueSayWithEstimatedDelay(BotEntry entry, String message) {
+    public static long queueSayWithEstimatedDelay(BotEntry entry, String message) {
         return AgentChatReplyRuntime.queueSayWithEstimatedDelay(state(entry), message, dispatcher(entry));
     }
 
-    static long queueReplyWithEstimatedDelay(BotEntry entry, String message) {
+    public static long queueReplyWithEstimatedDelay(BotEntry entry, String message) {
         return AgentChatReplyRuntime.queueReplyWithEstimatedDelay(state(entry), message, dispatcher(entry));
     }
 
@@ -32,17 +34,17 @@ public final class BotChatReplyRuntime {
         return new AgentReplyQueue.State() {
             @Override
             public java.util.Deque<AgentQueuedMessage> queue() {
-                return entry.msgQueue;
+                return entry.messageQueue();
             }
 
             @Override
             public boolean isSending() {
-                return entry.msgSending;
+                return entry.isMessageSending();
             }
 
             @Override
             public void setSending(boolean sending) {
-                entry.msgSending = sending;
+                entry.setMessageSending(sending);
             }
         };
     }
@@ -54,13 +56,13 @@ public final class BotChatReplyRuntime {
                 if (message.ownerDirected()) {
                     BotManager.getInstance().botReply(entry, message.text());
                 } else {
-                    BotManager.getInstance().botSay(entry, message.text());
+                    BotManager.getInstance().botVisibleSay(entry, message.text());
                 }
             }
 
             @Override
             public void scheduleNext(Runnable task, int delayMs) {
-                BotManager.after(delayMs, task);
+                BotManager.scheduleBotReplyAction(delayMs, task);
             }
         };
     }

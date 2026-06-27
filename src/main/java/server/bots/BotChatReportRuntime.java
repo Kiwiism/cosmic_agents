@@ -1,5 +1,7 @@
 package server.bots;
 
+
+import server.agents.integration.AgentBotReplyRuntime;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentCharacterDialogueReporter;
 import server.agents.capabilities.dialogue.AgentChatEquipmentFlow;
@@ -116,11 +118,11 @@ final class BotChatReportRuntime {
     }
 
     static void reportStats(BotEntry entry, Character bot) {
-        BotChatReplyRuntime.queueReply(entry, AgentCharacterDialogueReporter.statsReport(bot));
+        AgentBotReplyRuntime.queueReply(entry, AgentCharacterDialogueReporter.statsReport(bot));
     }
 
     static void reportRange(BotEntry entry, Character bot) {
-        BotChatReplyRuntime.queueReply(entry, buildRangeReport(bot));
+        AgentBotReplyRuntime.queueReply(entry, buildRangeReport(bot));
     }
 
     static String buildRangeReport(Character bot) {
@@ -144,7 +146,7 @@ final class BotChatReportRuntime {
 
     static void reportMovementStats(BotEntry entry, Character bot) {
         for (String line : buildMovementStatsReport(bot)) {
-            BotChatReplyRuntime.queueReply(entry, line);
+            AgentBotReplyRuntime.queueReply(entry, line);
         }
     }
 
@@ -184,7 +186,7 @@ final class BotChatReportRuntime {
     }
 
     static void reportBuild(BotEntry entry, Character bot) {
-        BotChatReplyRuntime.queueReply(entry, AgentCharacterDialogueReporter.buildReport(bot));
+        AgentBotReplyRuntime.queueReply(entry, AgentCharacterDialogueReporter.buildReport(bot));
     }
 
     static void reportSkills(BotEntry entry, Character bot) {
@@ -202,71 +204,71 @@ final class BotChatReportRuntime {
     }
 
     static void reportInventory(BotEntry entry, Character bot) {
-        BotChatReplyRuntime.queueReply(entry, AgentInventoryDialogueReporter.inventorySummary(bot));
+        AgentBotReplyRuntime.queueReply(entry, AgentInventoryDialogueReporter.inventorySummary(bot));
     }
 
     static void reportMesos(BotEntry entry, Character bot) {
-        BotChatReplyRuntime.queueReply(entry, AgentCharacterDialogueReporter.mesoReport(bot));
+        AgentBotReplyRuntime.queueReply(entry, AgentCharacterDialogueReporter.mesoReport(bot));
     }
 
     static void reportExp(BotEntry entry, Character bot) {
-        BotChatReplyRuntime.queueReply(entry, AgentCharacterDialogueReporter.expReport(bot));
+        AgentBotReplyRuntime.queueReply(entry, AgentCharacterDialogueReporter.expReport(bot));
     }
 
     static void reportInventorySlots(BotEntry entry, Character bot) {
-        BotChatReplyRuntime.queueReply(entry, AgentInventoryDialogueReporter.slotsReport(bot));
+        AgentBotReplyRuntime.queueReply(entry, AgentInventoryDialogueReporter.slotsReport(bot));
     }
 
     static void reportScrolls(BotEntry entry, Character bot) {
-        BotChatReplyRuntime.queueReply(entry, AgentInventoryDialogueReporter.scrollReport(bot));
+        AgentBotReplyRuntime.queueReply(entry, AgentInventoryDialogueReporter.scrollReport(bot));
     }
 
     static void reportPotions(BotEntry entry, Character bot) {
         int[] counts = BotPotionManager.countPotions(bot);
-        BotChatReplyRuntime.queueReply(entry, AgentSupplyDialogueReporter.potionReport(counts));
+        AgentBotReplyRuntime.queueReply(entry, AgentSupplyDialogueReporter.potionReport(counts));
     }
 
     static void reportPotDebug(BotEntry entry, Character bot) {
-        BotChatReplyRuntime.queueReply(entry, BotPotionManager.autopotDebugReport(bot));
+        AgentBotReplyRuntime.queueReply(entry, BotPotionManager.autopotDebugReport(bot));
     }
 
     static void reportDebugStats(BotEntry entry, Character bot) {
-        BotChatReplyRuntime.queueReply(entry, BotCombatManager.describeDebugStats(entry, bot));
+        AgentBotReplyRuntime.queueReply(entry, BotCombatManager.describeDebugStats(entry, bot));
     }
 
     static void reportCritDebug(BotEntry entry, Character bot) {
         CombatFormulaProvider formula = CombatFormulaProvider.getInstance();
         CombatFormulaProvider.CritProfile crit = formula.resolveCritProfile(bot);
         CombatFormulaProvider.DamageProfile dmg = formula.resolveDamageProfile(bot, 0, 0, false);
-        BotChatReplyRuntime.queueReply(entry, AgentCombatDialogueReporter.critReport(crit, dmg));
+        AgentBotReplyRuntime.queueReply(entry, AgentCombatDialogueReporter.critReport(crit, dmg));
     }
 
     static void reportBuffDebug(BotEntry entry, Character bot) {
         for (String line : BotBuffManager.getDebugLines(entry, bot)) {
-            BotChatReplyRuntime.queueReply(entry, line);
+            AgentBotReplyRuntime.queueReply(entry, line);
         }
     }
 
     static void reportSkillBuffDebug(BotEntry entry, Character bot) {
         for (String line : BotCombatManager.getSkillBuffDebugLines(entry, bot)) {
-            BotChatReplyRuntime.queueReply(entry, line);
+            AgentBotReplyRuntime.queueReply(entry, line);
         }
     }
 
     static void reportHelp(BotEntry entry) {
         for (String line : AgentChatReportFlow.helpLines()) {
-            BotChatReplyRuntime.queueReply(entry, line);
+            AgentBotReplyRuntime.queueReply(entry, line);
         }
     }
 
     static void reportRecommendedGear(BotEntry entry, Character bot) {
         Character owner = entry.owner;
         if (owner == null) {
-            BotChatReplyRuntime.queueReply(entry, AgentChatEquipmentFlow.gearCheckUnavailableReply());
+            AgentBotReplyRuntime.queueReply(entry, AgentChatEquipmentFlow.gearCheckUnavailableReply());
             return;
         }
         if (!BotOfferManager.offerBestRecommendedGear(entry, bot, owner)) {
-            BotChatReplyRuntime.queueReply(entry, AgentChatEquipmentFlow.noBetterGearReply());
+            AgentBotReplyRuntime.queueReply(entry, AgentChatEquipmentFlow.noBetterGearReply());
         }
         entry.nextGearSuggestionAt = System.currentTimeMillis() + 60_000L;
     }

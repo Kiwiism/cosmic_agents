@@ -1,5 +1,7 @@
 package server.bots;
 
+
+import server.agents.integration.AgentBotReplyRuntime;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatWelcomeBackFlow;
 
@@ -21,17 +23,17 @@ final class BotChatStatusRuntime {
     static void checkBotStatus(BotEntry entry, Character bot) {
         String jobPrompt = BotBuildManager.buildJobPrompt(entry, bot);
         if (jobPrompt != null) {
-            BotChatReplyRuntime.queueReply(entry, jobPrompt);
+            AgentBotReplyRuntime.queueReply(entry, jobPrompt);
         }
         String spPrompt = BotBuildManager.buildSpVariantPrompt(entry, bot);
         if (spPrompt != null) {
-            BotChatReplyRuntime.queueReply(entry, spPrompt);
+            AgentBotReplyRuntime.queueReply(entry, spPrompt);
         } else {
             BotBuildManager.autoAssignSp(entry, bot);
         }
         String apPrompt = BotBuildManager.buildApPrompt(entry, bot);
         if (apPrompt != null) {
-            BotChatReplyRuntime.queueReply(entry, apPrompt);
+            AgentBotReplyRuntime.queueReply(entry, apPrompt);
         } else {
             BotBuildManager.autoAssignAp(entry, bot);
         }

@@ -13,6 +13,7 @@ import java.awt.*;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -241,6 +242,18 @@ public class BotEntry {
     // Message queue
     final ArrayDeque<AgentQueuedMessage> msgQueue = new ArrayDeque<>();
     boolean msgSending = false;
+
+    public Deque<AgentQueuedMessage> messageQueue() {
+        return msgQueue;
+    }
+
+    public boolean isMessageSending() {
+        return msgSending;
+    }
+
+    public void setMessageSending(boolean msgSending) {
+        this.msgSending = msgSending;
+    }
 
     // Generic scripted task queue. Per-map scripts enqueue small primitives
     // (move, follow, grind, drop) and the shared manager executes them.

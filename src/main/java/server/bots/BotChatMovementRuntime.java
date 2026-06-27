@@ -1,5 +1,7 @@
 package server.bots;
 
+
+import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.capabilities.dialogue.AgentChatMovementFlow;
 
 import java.awt.Point;
@@ -101,7 +103,7 @@ final class BotChatMovementRuntime {
                 BotManager.after(BotManager.randMs(900, 1100), () -> {
                     entry.bot.changeFaceExpression(Emote.HAPPY.getValue());
                     BotFidgetManager.maybeStartGreetingFidget(entry, ThreadLocalRandom.current().nextInt(100));
-                    BotChatReplyRuntime.queueReply(entry, AgentChatMovementFlow.greetingReply());
+                    AgentBotReplyRuntime.queueReply(entry, AgentChatMovementFlow.greetingReply());
                     BotChatStatusRuntime.checkBotStatus(entry, entry.bot);
                 });
             }

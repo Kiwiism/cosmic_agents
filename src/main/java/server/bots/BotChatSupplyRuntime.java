@@ -1,5 +1,7 @@
 package server.bots;
 
+
+import server.agents.integration.AgentBotReplyRuntime;
 import client.Character;
 import client.inventory.WeaponType;
 import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
@@ -50,7 +52,7 @@ final class BotChatSupplyRuntime {
                 result == BotPotionManager.OwnerPotShareResult.NO_DONOR,
                 forHp);
         if (reply != null) {
-            BotChatReplyRuntime.queueReply(entry, reply);
+            AgentBotReplyRuntime.queueReply(entry, reply);
         }
     }
 
@@ -61,14 +63,14 @@ final class BotChatSupplyRuntime {
         }
         WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(owner);
         if (weaponType != WeaponType.BOW && weaponType != WeaponType.CROSSBOW) {
-            BotChatReplyRuntime.queueReply(entry, AgentSupplyRequestOutcomeFlow.ammoNotNeededReply());
+            AgentBotReplyRuntime.queueReply(entry, AgentSupplyRequestOutcomeFlow.ammoNotNeededReply());
             return;
         }
         BotAmmoManager.OwnerAmmoShareResult result = BotAmmoManager.offerAmmoShareToOwner(entry, weaponType);
         String reply = AgentSupplyRequestOutcomeFlow.ammoShareReply(
                 result == BotAmmoManager.OwnerAmmoShareResult.NO_DONOR);
         if (reply != null) {
-            BotChatReplyRuntime.queueReply(entry, reply);
+            AgentBotReplyRuntime.queueReply(entry, reply);
         }
     }
 }

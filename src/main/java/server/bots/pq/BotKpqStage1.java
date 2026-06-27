@@ -4,7 +4,7 @@ import client.Character;
 import client.inventory.InventoryType;
 import client.inventory.manipulator.InventoryManipulator;
 import scripting.event.EventInstanceManager;
-import server.bots.BotChatReplyRuntime;
+import server.agents.integration.AgentBotReplyRuntime;
 import server.bots.BotEntry;
 import server.bots.BotScript;
 import server.bots.BotScriptContext;
@@ -64,7 +64,7 @@ final class BotKpqStage1 {
                 BotScriptStep.action(BotKpqStage1::exchangeCoupons),
                 BotScriptStep.of(BotKpqStage1::queuePassDelivery, null, BotScriptContext::tasksDone),
                 BotScriptStep.action(ctx -> {
-                    BotChatReplyRuntime.queueSay(ctx.entry, "Here's your pass!");
+                    AgentBotReplyRuntime.queueSay(ctx.entry, "Here's your pass!");
                     ctx.entry.kpq.state = DONE;
                 })
         );
@@ -136,9 +136,9 @@ final class BotKpqStage1 {
         int target = (question < ANSWERS.length) ? ANSWERS[question] : ANSWERS[1];
         ctx.entry.kpq.couponTarget = target;
         if (target >= 25) {
-            BotChatReplyRuntime.queueSay(ctx.entry, "I need " + target + ", smh");
+            AgentBotReplyRuntime.queueSay(ctx.entry, "I need " + target + ", smh");
         } else {
-            BotChatReplyRuntime.queueSay(ctx.entry, "I need " + target + ", Let's go!");
+            AgentBotReplyRuntime.queueSay(ctx.entry, "I need " + target + ", Let's go!");
         }
     }
 
@@ -154,7 +154,7 @@ final class BotKpqStage1 {
         int milestone = (have / 5) * 5;
         if (milestone > ctx.entry.kpq.lastReportedCoupons) {
             ctx.entry.kpq.lastReportedCoupons = milestone;
-            BotChatReplyRuntime.queueSay(ctx.entry, have + " / " + need);
+            AgentBotReplyRuntime.queueSay(ctx.entry, have + " / " + need);
         }
     }
 
@@ -163,7 +163,7 @@ final class BotKpqStage1 {
         if (need <= 0 || ctx.bot.getItemQuantity(ITEM_COUPON, false) < need) {
             return false;
         }
-        BotChatReplyRuntime.queueSay(ctx.entry, "Got " + need + "!");
+        AgentBotReplyRuntime.queueSay(ctx.entry, "Got " + need + "!");
         return true;
     }
 
@@ -175,7 +175,7 @@ final class BotKpqStage1 {
             EventInstanceManager eim = ctx.bot.getEventInstance();
             if (eim != null) eim.gridInsert(ctx.bot, 0);
         }
-        BotChatReplyRuntime.queueSay(ctx.entry, "Got my pass! Bringing it to you.");
+        AgentBotReplyRuntime.queueSay(ctx.entry, "Got my pass! Bringing it to you.");
     }
 
     private static void queuePassDelivery(BotScriptContext ctx) {

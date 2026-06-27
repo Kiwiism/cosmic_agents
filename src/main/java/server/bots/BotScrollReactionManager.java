@@ -1,5 +1,7 @@
 package server.bots;
 
+
+import server.agents.integration.AgentBotReplyRuntime;
 import client.Character;
 import client.inventory.Equip;
 import server.ItemInformationProvider;
@@ -134,7 +136,7 @@ final class BotScrollReactionManager {
         }
 
         if (rollPercent(CHAT_CHANCE_PCT, chanceScale) && shouldQueueChat(entry)) {
-            BotChatReplyRuntime.queueSay(entry, selectChatLine(success, streak, scrollSuccessRate));
+            AgentBotReplyRuntime.queueSay(entry, selectChatLine(success, streak, scrollSuccessRate));
             reacted = true;
         }
 
