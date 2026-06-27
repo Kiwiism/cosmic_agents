@@ -323,6 +323,11 @@ Recent reconstruction notes:
   `AgentBotBuildReplyRuntime` and `AgentBotBuildSchedulerRuntime` adapters;
   build orchestration no longer reaches directly into the broad reply or
   scheduler runtimes.
+- Gear/loot offer immediate replies, queued replies, map/channel dialogue,
+  queued-say delay estimation, fixed-delay callbacks, random-delay callbacks,
+  and delay sampling now enter through narrow `AgentBotOfferReplyRuntime` and
+  `AgentBotOfferSchedulerRuntime` adapters; offer orchestration no longer
+  reaches directly into the broad reply or scheduler runtimes.
 
 Initial reconstruction order:
 
