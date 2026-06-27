@@ -32,7 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * Default: off. Configured via chat ("buff on/off", "buff cheap/max").
  */
-final class BotBuffManager {
+public final class BotBuffManager {
 
     private static final long TICK_MS = 3_000;
     private static final double ACC_HIT_THRESHOLD = 0.90;

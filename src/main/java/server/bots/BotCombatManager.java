@@ -71,7 +71,7 @@ import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.ThreadLocalRandom;
 
-class BotCombatManager {
+public class BotCombatManager {
     private static final Logger log = LoggerFactory.getLogger(BotCombatManager.class);
     private static final long UNREACHABLE_GRAPH_COST = Long.MAX_VALUE / 4;
 
@@ -2338,7 +2338,7 @@ class BotCombatManager {
         entry.lastSkillBuffActionSummary = summary;
     }
 
-    static List<String> getSkillBuffDebugLines(BotEntry entry, Character bot) {
+    public static List<String> getSkillBuffDebugLines(BotEntry entry, Character bot) {
         long now = System.currentTimeMillis();
 
         long lastActionAgeMs = entry.lastSkillBuffActionAtMs > 0
@@ -2384,7 +2384,7 @@ class BotCombatManager {
         return (name != null && !name.isBlank()) ? name : "skill#" + skillId;
     }
 
-    static String describeDebugStats(BotEntry entry, Character bot) {
+    public static String describeDebugStats(BotEntry entry, Character bot) {
         Monster target = entry.grindTarget;
         if (target == null || !target.isAlive()) {
             target = findGrindTarget(bot);

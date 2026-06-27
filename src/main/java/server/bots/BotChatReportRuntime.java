@@ -3,6 +3,7 @@ package server.bots;
 
 import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotCharacterReportRuntime;
+import server.agents.integration.AgentBotCombatReportRuntime;
 import server.agents.integration.AgentBotInventoryReportRuntime;
 import server.agents.integration.AgentBotMovementReportRuntime;
 import server.agents.integration.AgentBotOfferRuntime;
@@ -15,8 +16,6 @@ import server.agents.integration.AgentBotSupplyReportRuntime;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatReportFlow;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
-import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
-import server.combat.CombatFormulaProvider;
 
 import java.util.List;
 
@@ -95,22 +94,19 @@ public final class BotChatReportRuntime {
     }
 
     public static void reportDebugStats(BotEntry entry, Character bot) {
-        reportLine(entry, BotCombatManager.describeDebugStats(entry, bot));
+        reportLine(entry, AgentBotCombatReportRuntime.debugStatsReport(entry, bot));
     }
 
     public static void reportCritDebug(BotEntry entry, Character bot) {
-        CombatFormulaProvider formula = CombatFormulaProvider.getInstance();
-        CombatFormulaProvider.CritProfile crit = formula.resolveCritProfile(bot);
-        CombatFormulaProvider.DamageProfile dmg = formula.resolveDamageProfile(bot, 0, 0, false);
-        reportLine(entry, AgentCombatDialogueReporter.critReport(crit, dmg));
+        reportLine(entry, AgentBotCombatReportRuntime.critDebugReport(bot));
     }
 
     public static void reportBuffDebug(BotEntry entry, Character bot) {
-        reportLines(entry, BotBuffManager.getDebugLines(entry, bot));
+        reportLines(entry, AgentBotCombatReportRuntime.buffDebugLines(entry, bot));
     }
 
     public static void reportSkillBuffDebug(BotEntry entry, Character bot) {
-        reportLines(entry, BotCombatManager.getSkillBuffDebugLines(entry, bot));
+        reportLines(entry, AgentBotCombatReportRuntime.skillBuffDebugLines(entry, bot));
     }
 
     public static void reportHelp(BotEntry entry) {
