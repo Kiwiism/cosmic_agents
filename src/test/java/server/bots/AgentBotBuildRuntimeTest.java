@@ -76,4 +76,15 @@ class AgentBotBuildRuntimeTest {
                     org.mockito.ArgumentMatchers.any(Runnable.class)));
         }
     }
+
+    @Test
+    void confirmApBuildUsesAgentReplyRuntime() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
+            AgentBotBuildRuntime.confirmApBuild(entry, "confirm");
+
+            replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, "confirm"));
+        }
+    }
 }

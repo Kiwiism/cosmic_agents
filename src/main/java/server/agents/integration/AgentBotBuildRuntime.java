@@ -61,6 +61,10 @@ public final class AgentBotBuildRuntime {
         };
     }
 
+    public static void confirmApBuild(BotEntry entry, String confirmMsg) {
+        AgentBotReplyRuntime.replyNow(entry, confirmMsg);
+    }
+
     private static void handleApBuildSelection(BotEntry entry, String message) {
         Job job = entry.bot().getJob();
         AgentApBuildDialogueResolver.ApBuildChoice choice = AgentApBuildDialogueResolver.resolve(

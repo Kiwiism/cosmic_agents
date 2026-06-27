@@ -98,9 +98,10 @@ Recent reconstruction notes:
   through `AgentBotReplyRuntime` and `AgentBotSchedulerRuntime`. The remaining
   bot-side map-only `botSay(Character, ...)` branch is intentionally unchanged
   until map-only visible delivery has an exact Agent adapter.
-- AP build confirmation replies now route through `AgentBotReplyRuntime`; the
-  build manager still owns the legacy AP assignment behavior for this
-  reconstruction stage.
+- AP build confirmation replies now enter through `AgentBotBuildRuntime`; the
+  build manager no longer reaches directly into the lower-level reply runtime
+  for AP-build selection confirmation, but it still owns the legacy AP
+  assignment behavior for this reconstruction stage.
 - Maker batch command replies and delayed batch steps now enter through
   `AgentBotMakerRuntime`; `BotMakerManager` no longer reaches directly into the
   lower-level reply or scheduler runtime for Maker-owned flows. It still lazily
