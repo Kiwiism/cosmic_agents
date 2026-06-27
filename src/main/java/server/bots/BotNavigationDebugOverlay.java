@@ -6,6 +6,7 @@ import constants.skills.Evan;
 import constants.skills.FPMage;
 import constants.skills.Shadower;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
+import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotMovementTargetRuntime;
 import server.StatEffect;
 import server.TimerManager;
@@ -136,15 +137,13 @@ public final class BotNavigationDebugOverlay {
         }
         BotEntry entry = selection.entry;
 
-        if (entry.pathLogger == null) {
-            entry.pathLogger = new BotPathLogger(entry.bot.getName(), entry.bot.getMapId());
+        if (!AgentBotNavigationDebugStateRuntime.isPathLogging(entry)) {
+            AgentBotNavigationDebugStateRuntime.startPathLogging(entry);
             return "Path logging started for '" + entry.bot.getName() + "'. Run !botnav pathlog again to dump.";
         }
 
-        BotPathLogger logger = entry.pathLogger;
-        entry.pathLogger = null;
         AgentMovementTargetSnapshot targetSnapshot = AgentBotMovementTargetRuntime.snapshot(entry);
-        String filePath = logger.dumpToFile(entry, targetSnapshot, note);
+        String filePath = AgentBotNavigationDebugStateRuntime.dumpPathLog(entry, targetSnapshot, note);
         return "Path log for '" + entry.bot.getName() + "' dumped: " + filePath;
     }
 

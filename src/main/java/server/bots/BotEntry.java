@@ -730,6 +730,18 @@ public class BotEntry {
     String lastNavDecision = "-";
     long pendingGearPromptAt = 0L;
 
+    public BotPathLogger pathLogger() {
+        return pathLogger;
+    }
+
+    public void setPathLogger(BotPathLogger pathLogger) {
+        this.pathLogger = pathLogger;
+    }
+
+    public void clearPathLogger() {
+        this.pathLogger = null;
+    }
+
     public long pendingGearPromptAt() {
         return pendingGearPromptAt;
     }

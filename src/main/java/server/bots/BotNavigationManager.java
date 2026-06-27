@@ -5,6 +5,7 @@ import constants.game.CharacterStance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
+import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.maps.MapleMap;
 import server.maps.Foothold;
 import server.maps.Portal;
@@ -103,9 +104,7 @@ final class BotNavigationManager {
                 entry.lastNavDecision = "graph-warmup";
                 clearNavigation(entry);
                 Point fallbackTarget = rawTargetPos != null ? new Point(rawTargetPos) : bot.getPosition();
-                if (entry.pathLogger != null) {
-                    entry.pathLogger.record(entry, captureTargetSnapshot(entry, rawTargetPos), -1, false, runAiTick);
-                }
+                AgentBotNavigationDebugStateRuntime.recordPathLog(entry, captureTargetSnapshot(entry, rawTargetPos), -1, false, runAiTick);
                 return new NavigationDirective(fallbackTarget, false);
             }
             if (BotNavigationGraphProvider.peekGraph(bot.getMap(), entry.movementProfile) == null) {
@@ -153,27 +152,21 @@ final class BotNavigationManager {
                         : startRegionId < 0 || targetRegionId < 0 ? "no-region"
                         : startRegionId == targetRegionId ? "same-region" : "no-path";
                 clearNavigation(entry);
-                if (entry.pathLogger != null) {
-                    entry.pathLogger.record(entry, captureTargetSnapshot(entry, rawTargetPos), startRegionId, false, runAiTick);
-                }
+                AgentBotNavigationDebugStateRuntime.recordPathLog(entry, captureTargetSnapshot(entry, rawTargetPos), startRegionId, false, runAiTick);
                 return new NavigationDirective(rawTargetPos, false);
             }
 
             NavigationDirective executionDirective = tryExecuteEdge(graph, entry, bot, botPos, rawTargetPos, edge, runAiTick);
             if (executionDirective != null) {
                 entry.lastNavDecision = "exec";
-                if (entry.pathLogger != null) {
-                    entry.pathLogger.record(entry, captureTargetSnapshot(entry, rawTargetPos), startRegionId, true, runAiTick);
-                }
+                AgentBotNavigationDebugStateRuntime.recordPathLog(entry, captureTargetSnapshot(entry, rawTargetPos), startRegionId, true, runAiTick);
                 return executionDirective;
             }
 
             entry.lastNavDecision = edgeReused ? "reuse" : "new";
             entry.navPreciseTarget = shouldUsePreciseTarget(graph, entry, botPos, edge);
             entry.navTargetPos = selectWaypoint(entry, graph, botPos, edge);
-            if (entry.pathLogger != null) {
-                entry.pathLogger.record(entry, captureTargetSnapshot(entry, rawTargetPos), startRegionId, false, runAiTick);
-            }
+            AgentBotNavigationDebugStateRuntime.recordPathLog(entry, captureTargetSnapshot(entry, rawTargetPos), startRegionId, false, runAiTick);
             return new NavigationDirective(new Point(entry.navTargetPos), false);
         } finally {
             BotPerformanceMonitor.record("nav-resolve", System.nanoTime() - startedAt);

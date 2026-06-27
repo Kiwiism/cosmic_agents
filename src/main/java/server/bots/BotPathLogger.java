@@ -16,7 +16,7 @@ import server.maps.MapleMap;
  * Records per-tick navigation snapshots for a single bot and dumps them to a human-readable file.
  * Attach to BotEntry.pathLogger to start recording; call dumpToFile() to write the report.
  */
-final class BotPathLogger {
+public final class BotPathLogger {
     private static final int MAX_TICKS = 120; // 6s at 50ms tick
     private static final Path LOG_DIR = Path.of("logs", "bot-nav");
     private static final DateTimeFormatter FILE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HHmmss");
@@ -52,12 +52,12 @@ final class BotPathLogger {
     private final long startMs = System.currentTimeMillis();
     private final Deque<TickRecord> history = new ArrayDeque<>(MAX_TICKS + 1);
 
-    BotPathLogger(String botName, int mapId) {
+    public BotPathLogger(String botName, int mapId) {
         this.botName = botName;
         this.mapId = mapId;
     }
 
-    void record(BotEntry entry,
+    public void record(BotEntry entry,
                 AgentMovementTargetSnapshot targetSnapshot,
                 int botRegionId,
                 boolean consumedTick,
@@ -101,7 +101,7 @@ final class BotPathLogger {
      * @param note optional free-text comment included in the report header (may be null)
      * @return absolute file path, or an error string if the write failed
      */
-    String dumpToFile(BotEntry entry, AgentMovementTargetSnapshot targetSnapshot, String note) {
+    public String dumpToFile(BotEntry entry, AgentMovementTargetSnapshot targetSnapshot, String note) {
         LocalDateTime now = LocalDateTime.now();
         String filename = "pathlog-" + botName + "-" + now.format(FILE_FMT) + ".txt";
 

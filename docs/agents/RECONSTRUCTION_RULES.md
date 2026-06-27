@@ -470,6 +470,10 @@ Recent reconstruction notes:
   `AgentBotMovementBroadcastStateRuntime`; movement, combat, airshow, and mode
   reset paths keep BotEntry as the temporary backing store but no longer invalidate,
   compare, or record the last broadcast snapshot fields directly.
+- Navigation debug path logger lifecycle and per-tick recording now enter
+  through `AgentBotNavigationDebugStateRuntime`; navigation debug overlay and
+  navigation resolution keep BotEntry as the temporary backing store but no
+  longer create, clear, or record the path logger field directly.
 
 Initial reconstruction order:
 
