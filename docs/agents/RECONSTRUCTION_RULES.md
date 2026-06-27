@@ -48,6 +48,9 @@ Recent reconstruction notes:
 - Movement/follow/grind/stop/fidget/greeting callback orchestration now has an
   Agent-owned facade in `AgentBotMovementRuntime`; `BotChatMovementRuntime`
   remains only as a temporary compatibility shim for legacy bot package callers.
+- Follow/stop/move/farm/patrol/grind command dispatch now has an Agent-owned
+  facade in `AgentBotMovementCommandRuntime`; `BotManager` remains the temporary
+  side-effect implementation for the actual movement state mutations.
 
 Initial reconstruction order:
 

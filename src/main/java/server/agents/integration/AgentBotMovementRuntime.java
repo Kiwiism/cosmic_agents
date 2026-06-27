@@ -28,7 +28,7 @@ public final class AgentBotMovementRuntime {
                 }
                 AgentBotSchedulerRuntime.afterRandomDelay(1000, 1500, () -> {
                     AgentBotChatStatusRuntime.prepareActiveModeEntry(entry);
-                    BotManager.getInstance().issueFarmHere(entry, dest);
+                    AgentBotMovementCommandRuntime.farmHere(entry, dest);
                     BotManager.getInstance().botReply(entry, AgentChatMovementFlow.moveHereReply());
                 });
                 return true;
@@ -42,7 +42,7 @@ public final class AgentBotMovementRuntime {
                 }
                 AgentBotSchedulerRuntime.afterRandomDelay(1000, 1500, () -> {
                     AgentBotChatStatusRuntime.prepareActiveModeEntry(entry);
-                    BotManager.getInstance().issuePatrol(entry, ownerPos);
+                    AgentBotMovementCommandRuntime.patrol(entry, ownerPos);
                     BotManager.getInstance().botReply(entry, AgentChatMovementFlow.moveHereReply());
                 });
                 return true;
@@ -55,7 +55,7 @@ public final class AgentBotMovementRuntime {
                     return false;
                 }
                 AgentBotSchedulerRuntime.afterRandomDelay(1000, 1500, () -> {
-                    BotManager.getInstance().issueMoveTo(entry, dest, true);
+                    AgentBotMovementCommandRuntime.moveTo(entry, dest, true);
                     BotManager.getInstance().botReply(entry, AgentChatMovementFlow.moveHereReply());
                 });
                 return true;
@@ -68,7 +68,7 @@ public final class AgentBotMovementRuntime {
                     BotManager.getInstance().botReply(entry, AgentChatMovementFlow.followReply());
                     BotPotionManager.checkPotShareOnModeStart(entry, entry.bot());
                     AgentBotSchedulerRuntime.afterRandomDelay(250, 750,
-                            () -> BotManager.getInstance().issueFollowOwner(entry));
+                            () -> AgentBotMovementCommandRuntime.followOwner(entry));
                 });
             }
 
@@ -78,7 +78,7 @@ public final class AgentBotMovementRuntime {
                     AgentBotChatStatusRuntime.prepareActiveModeEntry(entry);
                     BotManager.getInstance().botReply(entry, BotPotionManager.grindStartMessage(entry.bot()));
                     AgentBotSchedulerRuntime.afterRandomDelay(250, 750, () -> {
-                        BotManager.getInstance().issueGrind(entry);
+                        AgentBotMovementCommandRuntime.grind(entry);
                         AgentBotChatStatusRuntime.checkBotStatus(entry, entry.bot());
                     });
                 });
@@ -87,7 +87,7 @@ public final class AgentBotMovementRuntime {
             @Override
             public void stop() {
                 AgentBotSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
-                    BotManager.getInstance().issueStop(entry);
+                    AgentBotMovementCommandRuntime.stop(entry);
                     AgentBotActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry);
                     AgentBotSchedulerRuntime.afterRandomDelay(1400, 1600, () ->
                             BotManager.getInstance().botReply(entry, AgentChatMovementFlow.stopReply()));
