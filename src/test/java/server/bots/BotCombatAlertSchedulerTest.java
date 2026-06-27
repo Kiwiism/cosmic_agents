@@ -3,7 +3,7 @@ package server.bots;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentBotCombatRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -13,14 +13,14 @@ import static org.mockito.Mockito.mockStatic;
 
 class BotCombatAlertSchedulerTest {
     @Test
-    void markAlertedSchedulesResetThroughAgentSchedulerAdapter() {
+    void markAlertedSchedulesResetThroughAgentCombatRuntime() {
         BotEntry entry = new BotEntry(mock(Character.class), null, null);
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class)) {
+        try (MockedStatic<AgentBotCombatRuntime> scheduler = mockStatic(AgentBotCombatRuntime.class)) {
             BotCombatManager.markAlerted(entry);
 
             assertTrue(entry.alertResetScheduled);
-            scheduler.verify(() -> AgentBotSchedulerRuntime.afterDelay(
+            scheduler.verify(() -> AgentBotCombatRuntime.afterDelay(
                     longThat(delay -> delay >= 50L && delay <= 5200L),
                     any(Runnable.class)));
         }

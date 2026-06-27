@@ -50,7 +50,7 @@ import server.bots.combat.BotAttackDataProvider;
 import server.bots.combat.BotDefenseDataProvider;
 import server.bots.combat.BotMobHitboxProvider;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
-import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentBotCombatRuntime;
 import server.combat.CombatFormulaProvider;
 import server.life.Monster;
 import server.maps.Foothold;
@@ -1265,7 +1265,7 @@ public class BotCombatManager {
         if (entry.alertResetScheduled) return;
         entry.alertResetScheduled = true;
         long delay = Math.max(50L, entry.alertedUntilMs - System.currentTimeMillis() + 100L);
-        AgentBotSchedulerRuntime.afterDelay(delay, () -> {
+        AgentBotCombatRuntime.afterDelay(delay, () -> {
             long now = System.currentTimeMillis();
             if (now < entry.alertedUntilMs) {
                 entry.alertResetScheduled = false;

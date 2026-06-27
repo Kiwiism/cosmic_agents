@@ -130,8 +130,10 @@ Recent reconstruction notes:
   `BotPotionManager` no longer reaches directly into the lower-level scheduler
   runtime for potion-owned timing. Visible potion request/offer chat remains
   unchanged on the legacy map-visible say path.
-- Combat alert reset callbacks now route through `AgentBotSchedulerRuntime`;
-  alert timing and stance reset behavior are unchanged.
+- Combat alert reset callbacks now enter through `AgentBotCombatRuntime`;
+  `BotCombatManager` no longer reaches directly into the lower-level scheduler
+  runtime for combat-owned alert timing, and alert timing and stance reset
+  behavior are unchanged.
 - Inventory, trade, meso-transfer, and drop owner-directed replies now route
   through `AgentBotReplyRuntime`; delayed trade thanks/freebie callbacks now use
   `AgentBotSchedulerRuntime` while preserving the legacy visible `botSay`
