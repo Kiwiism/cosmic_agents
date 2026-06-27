@@ -389,6 +389,22 @@ public class BotEntry {
         this.pendingTradeSingleBatch = pendingTradeSingleBatch;
     }
 
+    public int pendingTradeMeso() {
+        return pendingTradeMeso;
+    }
+
+    public void setPendingTradeMeso(int pendingTradeMeso) {
+        this.pendingTradeMeso = pendingTradeMeso;
+    }
+
+    public boolean pendingTradeMesoAdded() {
+        return pendingTradeMesoAdded;
+    }
+
+    public void setPendingTradeMesoAdded(boolean pendingTradeMesoAdded) {
+        this.pendingTradeMesoAdded = pendingTradeMesoAdded;
+    }
+
     // Message queue
     final ArrayDeque<AgentQueuedMessage> msgQueue = new ArrayDeque<>();
     boolean msgSending = false;

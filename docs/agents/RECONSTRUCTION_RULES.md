@@ -417,6 +417,10 @@ Recent reconstruction notes:
   `AgentBotPendingTradeStateRuntime`; trade setup, batch-completion decisions,
   and reset keep BotEntry as the temporary backing store but no longer read,
   set, or clear the single-batch field directly.
+- Pending trade meso amount and meso-added state now enter through
+  `AgentBotPendingTradeStateRuntime`; trade setup, meso-add, insufficient-meso
+  checks, and reset keep BotEntry as the temporary backing store but no longer
+  read, set, mark, or clear meso trade fields directly.
 
 Initial reconstruction order:
 

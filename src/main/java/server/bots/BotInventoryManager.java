@@ -597,10 +597,10 @@ public class BotInventoryManager {
         entry.pendingTradeItems = items.size() > TRADE_WINDOW_ITEM_LIMIT
                 ? new ArrayList<>(items.subList(0, TRADE_WINDOW_ITEM_LIMIT))
                 : new ArrayList<>(items);
-        entry.pendingTradeMeso     = mesos;
+        AgentBotPendingTradeStateRuntime.setMeso(entry, mesos);
         entry.pendingTradeIdx      = 0;
         AgentBotPendingTradeStateRuntime.clearTimer(entry);
-        entry.pendingTradeMesoAdded = false;
+        AgentBotPendingTradeStateRuntime.clearMesoAdded(entry);
         entry.pendingTradeAllAdded = false;
         entry.pendingTradeBotDone  = false;
         Trade.startTrade(bot);
@@ -705,14 +705,14 @@ public class BotInventoryManager {
                 return;
             }
 
-            if (!entry.pendingTradeMesoAdded && entry.pendingTradeMeso > 0) {
-                if (bot.getMeso() < entry.pendingTradeMeso) {
+            if (AgentBotPendingTradeStateRuntime.hasMesoToAdd(entry)) {
+                if (bot.getMeso() < AgentBotPendingTradeStateRuntime.meso(entry)) {
                     cancelTradeSequence(entry, bot, "don't have that many mesos anymore");
                     return;
                 }
 
-                trade.setMeso(entry.pendingTradeMeso);
-                entry.pendingTradeMesoAdded = true;
+                trade.setMeso(AgentBotPendingTradeStateRuntime.meso(entry));
+                AgentBotPendingTradeStateRuntime.markMesoAdded(entry);
                 AgentBotPendingTradeStateRuntime.setTimerMs(entry, BotMovementManager.delayAfterCurrentTick(500));
                 return;
             }
@@ -806,10 +806,10 @@ public class BotInventoryManager {
         AgentBotPendingTradeStateRuntime.clearCategoryMessage(entry);
         entry.pendingTradeItems    = null;
         AgentBotPendingTradeStateRuntime.clearRecipientId(entry);
-        entry.pendingTradeMeso     = 0;
+        AgentBotPendingTradeStateRuntime.clearMeso(entry);
         entry.pendingTradeIdx      = 0;
         AgentBotPendingTradeStateRuntime.clearTimer(entry);
-        entry.pendingTradeMesoAdded = false;
+        AgentBotPendingTradeStateRuntime.clearMesoAdded(entry);
         entry.pendingTradeAllAdded = false;
         entry.pendingTradeBotDone  = false;
         AgentBotPendingTradeStateRuntime.clearSingleBatch(entry);

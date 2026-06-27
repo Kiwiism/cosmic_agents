@@ -138,4 +138,32 @@ public final class AgentBotPendingTradeStateRuntime {
     public static void clearSingleBatch(BotEntry entry) {
         entry.setPendingTradeSingleBatch(false);
     }
+
+    public static int meso(BotEntry entry) {
+        return entry.pendingTradeMeso();
+    }
+
+    public static void setMeso(BotEntry entry, int meso) {
+        entry.setPendingTradeMeso(meso);
+    }
+
+    public static void clearMeso(BotEntry entry) {
+        entry.setPendingTradeMeso(0);
+    }
+
+    public static boolean mesoAdded(BotEntry entry) {
+        return entry.pendingTradeMesoAdded();
+    }
+
+    public static boolean hasMesoToAdd(BotEntry entry) {
+        return !mesoAdded(entry) && meso(entry) > 0;
+    }
+
+    public static void markMesoAdded(BotEntry entry) {
+        entry.setPendingTradeMesoAdded(true);
+    }
+
+    public static void clearMesoAdded(BotEntry entry) {
+        entry.setPendingTradeMesoAdded(false);
+    }
 }
