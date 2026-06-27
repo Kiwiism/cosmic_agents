@@ -582,7 +582,7 @@ public class BotInventoryManager {
             return;
         }
         entry.pendingTradeCategory = category;
-        entry.pendingTradeRecipientId = recipient.getId();
+        AgentBotPendingTradeStateRuntime.setRecipientId(entry, recipient.getId());
         entry.pendingTradeSingleBatch = singleBatch;
         entry.pendingTradeInviteAnnounced = false;
         openTradeBatch(entry, bot, items, mesos);
@@ -805,7 +805,7 @@ public class BotInventoryManager {
         entry.pendingTradeCategory = null;
         AgentBotPendingTradeStateRuntime.clearCategoryMessage(entry);
         entry.pendingTradeItems    = null;
-        entry.pendingTradeRecipientId = 0;
+        AgentBotPendingTradeStateRuntime.clearRecipientId(entry);
         entry.pendingTradeMeso     = 0;
         entry.pendingTradeIdx      = 0;
         entry.pendingTradeTimerMs  = 0;
@@ -1206,7 +1206,7 @@ public class BotInventoryManager {
     }
 
     private static Character resolveTradeRecipient(BotEntry entry, Character bot) {
-        int recipientId = entry.pendingTradeRecipientId;
+        int recipientId = AgentBotPendingTradeStateRuntime.recipientId(entry);
         if (recipientId <= 0) {
             return entry.owner;
         }

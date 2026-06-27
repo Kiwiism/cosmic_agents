@@ -84,4 +84,19 @@ class AgentBotPendingTradeStateRuntimeTest {
 
         assertNull(AgentBotPendingTradeStateRuntime.categoryMessage(entry));
     }
+
+    @Test
+    void adaptsRecipientIdState() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        assertEquals(0, AgentBotPendingTradeStateRuntime.recipientId(entry));
+
+        AgentBotPendingTradeStateRuntime.setRecipientId(entry, 1234);
+
+        assertEquals(1234, AgentBotPendingTradeStateRuntime.recipientId(entry));
+
+        AgentBotPendingTradeStateRuntime.clearRecipientId(entry);
+
+        assertEquals(0, AgentBotPendingTradeStateRuntime.recipientId(entry));
+    }
 }

@@ -400,6 +400,10 @@ Recent reconstruction notes:
   `AgentBotPendingTradeStateRuntime`; reserved/equip group trade announcements
   keep BotEntry as the temporary backing store but no longer set, read, or clear
   the message field directly.
+- Pending trade recipient id state now enters through
+  `AgentBotPendingTradeStateRuntime`; trade setup, reset, and recipient
+  resolution keep BotEntry as the temporary backing store but no longer set,
+  read, or clear the recipient id field directly.
 
 Initial reconstruction order:
 

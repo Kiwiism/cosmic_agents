@@ -82,4 +82,16 @@ public final class AgentBotPendingTradeStateRuntime {
         clearCategoryMessage(entry);
         return message;
     }
+
+    public static int recipientId(BotEntry entry) {
+        return entry.pendingTradeRecipientId();
+    }
+
+    public static void setRecipientId(BotEntry entry, int recipientId) {
+        entry.setPendingTradeRecipientId(recipientId);
+    }
+
+    public static void clearRecipientId(BotEntry entry) {
+        entry.setPendingTradeRecipientId(0);
+    }
 }
