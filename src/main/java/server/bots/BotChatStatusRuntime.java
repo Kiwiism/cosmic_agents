@@ -2,6 +2,7 @@ package server.bots;
 
 
 import server.agents.integration.AgentBotReplyRuntime;
+import server.agents.integration.AgentBotSchedulerRuntime;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.capabilities.dialogue.AgentChatWelcomeBackFlow;
@@ -273,7 +274,7 @@ final class BotChatStatusRuntime {
 
             @Override
             public void afterRandomDelay(int minMs, int maxMs, Runnable action) {
-                BotManager.after(BotManager.randMs(minMs, maxMs), action);
+                AgentBotSchedulerRuntime.afterRandomDelay(minMs, maxMs, action);
             }
 
             @Override
@@ -297,7 +298,7 @@ final class BotChatStatusRuntime {
 
             @Override
             public void afterRandomDelay(int minMs, int maxMs, Runnable action) {
-                BotManager.after(BotManager.randMs(minMs, maxMs), action);
+                AgentBotSchedulerRuntime.afterRandomDelay(minMs, maxMs, action);
             }
 
             @Override
