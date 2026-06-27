@@ -17,7 +17,6 @@ import server.agents.capabilities.dialogue.AgentChatMovementFlow;
 import server.agents.capabilities.dialogue.AgentChatOrchestrator;
 import server.agents.capabilities.dialogue.AgentChatSessionRequestFlow;
 import server.agents.capabilities.dialogue.AgentChatToggleFlow;
-import server.agents.capabilities.dialogue.AgentChatWelcomeBackFlow;
 import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
 import server.agents.capabilities.dialogue.AgentSkillDialogueReporter;
 import server.agents.capabilities.dialogue.AgentSkillReportFlow;
@@ -111,7 +110,7 @@ public class BotChatManager {
                     return false;
                 }
                 BotManager.after(BotManager.randMs(1000, 1500), () -> {
-                    prepareActiveModeEntry(entry);
+                    BotChatStatusRuntime.prepareActiveModeEntry(entry);
                     BotManager.getInstance().issueFarmHere(entry, dest);
                     BotManager.getInstance().botReply(entry, AgentChatMovementFlow.moveHereReply());
                 });
@@ -125,7 +124,7 @@ public class BotChatManager {
                     return false;
                 }
                 BotManager.after(BotManager.randMs(1000, 1500), () -> {
-                    prepareActiveModeEntry(entry);
+                    BotChatStatusRuntime.prepareActiveModeEntry(entry);
                     BotManager.getInstance().issuePatrol(entry, ownerPos);
                     BotManager.getInstance().botReply(entry, AgentChatMovementFlow.moveHereReply());
                 });
@@ -150,7 +149,7 @@ public class BotChatManager {
                 BotManager.after(BotManager.randMs(1500, 2000), () -> {
                     BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
                     entry.nextGearSuggestionAt = 0;
-                    maybeSuggestGearToSiblings(entry, entry.bot);
+                    BotChatStatusRuntime.maybeSuggestGearToSiblings(entry, entry.bot);
                     BotManager.getInstance().botReply(entry, AgentChatMovementFlow.followReply());
                     BotPotionManager.checkPotShareOnModeStart(entry, entry.bot);
                     BotManager.after(BotManager.randMs(250, 750), () -> BotManager.getInstance().issueFollowOwner(entry));
@@ -160,11 +159,11 @@ public class BotChatManager {
             @Override
             public void grind() {
                 BotManager.after(BotManager.randMs(1500, 2000), () -> {
-                    prepareActiveModeEntry(entry);
+                    BotChatStatusRuntime.prepareActiveModeEntry(entry);
                     BotManager.getInstance().botReply(entry, BotPotionManager.grindStartMessage(entry.bot));
                     BotManager.after(BotManager.randMs(250, 750), () -> {
                         BotManager.getInstance().issueGrind(entry);
-                        checkBotStatus(entry, entry.bot);
+                        BotChatStatusRuntime.checkBotStatus(entry, entry.bot);
                     });
                 });
             }
@@ -175,7 +174,7 @@ public class BotChatManager {
                     BotManager.getInstance().issueStop(entry);
                     BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
                     entry.nextGearSuggestionAt = 0;
-                    maybeSuggestGearToSiblings(entry, entry.bot);
+                    BotChatStatusRuntime.maybeSuggestGearToSiblings(entry, entry.bot);
                     BotManager.after(BotManager.randMs(1400, 1600), () ->
                             BotManager.getInstance().botReply(entry, AgentChatMovementFlow.stopReply()));
                 });
@@ -184,7 +183,7 @@ public class BotChatManager {
             @Override
             public void fidget() {
                 BotManager.after(BotManager.randMs(250, 500), () -> {
-                    entry.bot.changeFaceExpression(randomFidgetExpression());
+                    entry.bot.changeFaceExpression(BotChatStatusRuntime.randomFidgetExpression());
                     BotFidgetManager.maybeStartSocialFidget(entry);
                 });
             }
@@ -195,7 +194,7 @@ public class BotChatManager {
                     entry.bot.changeFaceExpression(Emote.HAPPY.getValue());
                     BotFidgetManager.maybeStartGreetingFidget(entry, ThreadLocalRandom.current().nextInt(100));
                     queueBotReply(entry, AgentChatMovementFlow.greetingReply());
-                    checkBotStatus(entry, entry.bot);
+                    BotChatStatusRuntime.checkBotStatus(entry, entry.bot);
                 });
             }
         };
@@ -376,32 +375,7 @@ public class BotChatManager {
 
     // Status check — called on spawn, grind start, greeting, and level-up
     static void checkBotStatus(BotEntry entry, Character bot) {
-        String jobPrompt = BotBuildManager.buildJobPrompt(entry, bot);
-        if (jobPrompt != null) queueBotReply(entry, jobPrompt);
-        String spPrompt = BotBuildManager.buildSpVariantPrompt(entry, bot);
-        if (spPrompt != null) {
-            queueBotReply(entry, spPrompt);
-        } else {
-            BotBuildManager.autoAssignSp(entry, bot);
-        }
-        String apPrompt = BotBuildManager.buildApPrompt(entry, bot);
-        if (apPrompt != null) {
-            queueBotReply(entry, apPrompt);
-        } else {
-            BotBuildManager.autoAssignAp(entry, bot);
-        }
-        maybeSuggestRecommendedGear(entry, bot);
-        maybeSuggestGearToSiblings(entry, bot);
-        if (!entry.spawnUpgradeCheckDone) {
-            entry.spawnUpgradeCheckDone = true;
-            Character owner = entry.owner;
-            if (owner != null && !isOwnerIdle(entry) && entry.pendingAction == null && !BotOfferManager.hasPendingOffer(entry)) {
-                List<BotEquipManager.EquipRecommendation> recs = BotEquipManager.findRecommendedEquips(bot, owner);
-                if (!recs.isEmpty()) {
-                    BotOfferManager.notifyOwnerGainedEquip(entry, bot, recs.get(0).candidate());
-                }
-            }
-        }
+        BotChatStatusRuntime.checkBotStatus(entry, bot);
     }
 
     /**
@@ -411,69 +385,12 @@ public class BotChatManager {
      * a different map.
      */
     static void announceOwnerReturnedFromOffline(BotEntry entry) {
-        final Character bot = entry.bot;
-        if (bot == null) {
-            return;
-        }
-        final String text = AgentChatWelcomeBackFlow.welcomeBackOfflinePartyReply(
-                bot.getMap() != null ? bot.getMap().getMapName() : null);
-        BotManager.after(BotManager.randMs(1500, 2500), () -> {
-            bot.changeFaceExpression(ThreadLocalRandom.current().nextBoolean() ? 2 : 3);
-            BotManager.getInstance().botSayParty(bot, text);
-        });
+        BotChatStatusRuntime.announceOwnerReturnedFromOffline(entry);
     }
 
     /** Detects owner AFK (same position ≥5 min) and says "wb" when they return. */
     static void tickAfkCheck(BotEntry entry, Character owner) {
-        AgentChatWelcomeBackFlow.tickAfkCheck(
-                afkState(entry),
-                owner.getPosition(),
-                System.currentTimeMillis(),
-                welcomeBackCallbacks(entry));
-    }
-
-    private static AgentChatWelcomeBackFlow.AfkState afkState(BotEntry entry) {
-        return new AgentChatWelcomeBackFlow.AfkState() {
-            @Override
-            public Point ownerAfkPosition() {
-                return entry.ownerAfkPos;
-            }
-
-            @Override
-            public void setOwnerAfkPosition(Point position) {
-                entry.ownerAfkPos = position;
-            }
-
-            @Override
-            public long ownerAfkSinceMs() {
-                return entry.ownerAfkSinceMs;
-            }
-
-            @Override
-            public void setOwnerAfkSinceMs(long sinceMs) {
-                entry.ownerAfkSinceMs = sinceMs;
-            }
-
-            @Override
-            public boolean ownerWasAfk() {
-                return entry.ownerWasAfk;
-            }
-
-            @Override
-            public void setOwnerWasAfk(boolean wasAfk) {
-                entry.ownerWasAfk = wasAfk;
-            }
-        };
-    }
-
-    private static AgentChatWelcomeBackFlow.WelcomeBackCallbacks welcomeBackCallbacks(BotEntry entry) {
-        return () -> {
-            final Character bot = entry.bot;
-            BotManager.after(BotManager.randMs(1800, 2200), () -> {
-                bot.changeFaceExpression(ThreadLocalRandom.current().nextBoolean() ? 2 : 3);
-                BotManager.getInstance().botReply(entry, AgentChatWelcomeBackFlow.welcomeBackReply());
-            });
-        };
+        BotChatStatusRuntime.tickAfkCheck(entry, owner);
     }
 
     static String buildRangeReport(Character bot) {
@@ -492,53 +409,13 @@ public class BotChatManager {
         BotChatReportRuntime.reportHelp(entry);
     }
 
-    private static void maybeSuggestRecommendedGear(BotEntry entry, Character bot) {
-        Character owner = entry.owner;
-        long now = System.currentTimeMillis();
-        if (owner == null || now < entry.nextGearSuggestionAt) {
-            return;
-        }
-
-        if (BotOfferManager.offerBestRecommendedGear(entry, bot, owner)) {
-            entry.nextGearSuggestionAt = now + 60_000L;
-        }
-    }
-
-    /** Check if this bot has gear that would be an upgrade for a sibling bot. */
-    private static void maybeSuggestGearToSiblings(BotEntry entry, Character bot) {
-        Character owner = entry.owner;
-        long now = System.currentTimeMillis();
-        if (owner == null || now < entry.nextGearSuggestionAt) {
-            return;
-        }
-
-        if (BotOfferManager.offerBestGearToSibling(entry, bot)) {
-            entry.nextGearSuggestionAt = now + 60_000L;
-        }
-    }
-
-    /**
-     * Shared prelude for owner-issued active-combat-mode commands (grind / sentry
-     * / patrol). Keeps the modes in lock-step on autoEquip, gear suggestion,
-     * autopot keybind setup, and the initial pot-share request — otherwise new
-     * modes silently miss one of these (the original sentry-mode bug).
-     */
-    private static void prepareActiveModeEntry(BotEntry entry) {
-        BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
-        entry.nextGearSuggestionAt = 0;
-        maybeSuggestGearToSiblings(entry, entry.bot);
-        BotPotionManager.setupAutopotForBot(entry.bot);
-        BotPotionManager.checkPotShareOnModeStart(entry, entry.bot);
-    }
-
     /** Returns true when the owner hasn't moved in ≥5 min (AFK). Skip chat interactions. */
     static boolean isOwnerIdle(BotEntry entry) {
-        return entry.ownerWasAfk;
+        return BotChatStatusRuntime.isOwnerIdle(entry);
     }
 
     static int randomFidgetExpression() {
-        int[] expressions = {2, 3, 5, 6, 7};
-        return expressions[ThreadLocalRandom.current().nextInt(expressions.length)];
+        return BotChatStatusRuntime.randomFidgetExpression();
     }
 
     private static void handleSkillTreeChoice(BotEntry entry, Character bot, String message) {
