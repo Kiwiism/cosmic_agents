@@ -333,6 +333,9 @@ Recent reconstruction notes:
   `AgentBotTransferReplyRuntime` and `AgentBotTransferSchedulerRuntime`
   adapters; transfer orchestration no longer reaches directly into the broad
   reply or scheduler runtimes.
+- Manager spawn-status delayed callbacks now enter through the narrow
+  `AgentBotManagerSchedulerRuntime` adapter; manager status orchestration no
+  longer reaches directly into the broad scheduler runtime.
 
 Initial reconstruction order:
 
