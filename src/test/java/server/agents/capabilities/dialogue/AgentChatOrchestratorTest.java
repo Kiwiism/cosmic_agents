@@ -85,6 +85,29 @@ class AgentChatOrchestratorTest {
         assertEquals(List.of("active", "job:FIGHTER"), context.events);
     }
 
+    @Test
+    void chatRuntimeOwnsHandledStateForTerminalCommands() {
+        TestContext context = new TestContext();
+
+        AgentChatRuntime.handleChat("help", context);
+
+        assertTrue(AgentChatRuntime.wasLastChatHandled());
+        assertEquals(List.of("active", "help"), context.events);
+    }
+
+    @Test
+    void chatRuntimeClearsHandledStateForFallThroughCommands() {
+        TestContext terminalContext = new TestContext();
+        AgentChatRuntime.handleChat("help", terminalContext);
+        assertTrue(AgentChatRuntime.wasLastChatHandled());
+
+        TestContext fallThroughContext = new TestContext();
+        AgentChatRuntime.handleChat("follow me", fallThroughContext);
+
+        assertFalse(AgentChatRuntime.wasLastChatHandled());
+        assertEquals(List.of("active", "follow"), fallThroughContext.events);
+    }
+
     private static final class TestContext implements AgentChatOrchestrator.Context {
         private final List<String> events = new ArrayList<>();
         private String pendingAction;

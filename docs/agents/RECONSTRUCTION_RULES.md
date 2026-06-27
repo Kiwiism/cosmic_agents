@@ -67,6 +67,9 @@ Recent reconstruction notes:
 - Movement stats reporting now consumes `AgentMovementKinematicsSnapshot`; the
   temporary integration adapter still reads legacy bot physics values, but
   Agent dialogue/report code no longer assembles those bot metrics inline.
+- Top-level chat handled-state ownership now lives in `AgentChatRuntime`;
+  `BotChatRuntime` remains only as a temporary adapter from `BotEntry` to the
+  Agent chat orchestrator context.
 
 Initial reconstruction order:
 
