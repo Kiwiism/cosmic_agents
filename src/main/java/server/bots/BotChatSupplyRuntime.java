@@ -7,7 +7,7 @@ import client.inventory.WeaponType;
 import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
 import server.agents.capabilities.dialogue.AgentSupplyRequestOutcomeFlow;
 
-final class BotChatSupplyRuntime {
+public final class BotChatSupplyRuntime {
     private BotChatSupplyRuntime() {
     }
 
@@ -30,7 +30,7 @@ final class BotChatSupplyRuntime {
         };
     }
 
-    static void handleRequestUpgradeCommand(BotEntry entry, Character bot) {
+    public static void handleRequestUpgradeCommand(BotEntry entry, Character bot) {
         BotOfferManager.clearPendingOfferForOwnerAsk(entry);
         if (BotPotionManager.requestLowSuppliesFromOwnerAsk(entry, bot)) {
             return;
