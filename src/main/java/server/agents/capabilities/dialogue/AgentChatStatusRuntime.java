@@ -23,6 +23,37 @@ public final class AgentChatStatusRuntime {
         return FIDGET_EXPRESSIONS[ThreadLocalRandom.current().nextInt(FIDGET_EXPRESSIONS.length)];
     }
 
+    public static void checkStatus(StatusCheckState state, StatusCheckActions actions) {
+        String jobPrompt = actions.buildJobPrompt();
+        if (jobPrompt != null) {
+            actions.queueReply(jobPrompt);
+        }
+
+        String spPrompt = actions.buildSpVariantPrompt();
+        if (spPrompt != null) {
+            actions.queueReply(spPrompt);
+        } else {
+            actions.autoAssignSp();
+        }
+
+        String apPrompt = actions.buildApPrompt();
+        if (apPrompt != null) {
+            actions.queueReply(apPrompt);
+        } else {
+            actions.autoAssignAp();
+        }
+
+        actions.maybeSuggestRecommendedGear();
+        actions.maybeSuggestGearToSiblings();
+
+        if (!state.spawnUpgradeCheckDone()) {
+            state.setSpawnUpgradeCheckDone(true);
+            if (actions.canOfferSpawnUpgrade()) {
+                actions.offerSpawnUpgradeIfAvailable();
+            }
+        }
+    }
+
     public interface StatusState {
         void setOwnerAfkPosition(Point position);
 
@@ -31,5 +62,33 @@ public final class AgentChatStatusRuntime {
         boolean ownerWasAfk();
 
         void setOwnerWasAfk(boolean wasAfk);
+    }
+
+    public interface StatusCheckState {
+        boolean spawnUpgradeCheckDone();
+
+        void setSpawnUpgradeCheckDone(boolean done);
+    }
+
+    public interface StatusCheckActions {
+        String buildJobPrompt();
+
+        String buildSpVariantPrompt();
+
+        String buildApPrompt();
+
+        void queueReply(String message);
+
+        void autoAssignSp();
+
+        void autoAssignAp();
+
+        void maybeSuggestRecommendedGear();
+
+        void maybeSuggestGearToSiblings();
+
+        boolean canOfferSpawnUpgrade();
+
+        void offerSpawnUpgradeIfAvailable();
     }
 }

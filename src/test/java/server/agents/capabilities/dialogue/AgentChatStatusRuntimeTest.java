@@ -3,6 +3,8 @@ package server.agents.capabilities.dialogue;
 import org.junit.jupiter.api.Test;
 
 import java.awt.Point;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -52,6 +54,67 @@ class AgentChatStatusRuntimeTest {
         }
     }
 
+    @Test
+    void checkStatusQueuesPromptsAndKeepsLegacyHookOrder() {
+        TestStatusCheckState state = new TestStatusCheckState();
+        TestStatusCheckActions actions = new TestStatusCheckActions();
+        actions.jobPrompt = "job?";
+        actions.spPrompt = "sp?";
+        actions.apPrompt = "ap?";
+        actions.canOfferSpawnUpgrade = true;
+
+        AgentChatStatusRuntime.checkStatus(state, actions);
+
+        assertTrue(state.spawnDone);
+        assertEquals(List.of(
+                "buildJobPrompt",
+                "queue:job?",
+                "buildSpVariantPrompt",
+                "queue:sp?",
+                "buildApPrompt",
+                "queue:ap?",
+                "maybeSuggestRecommendedGear",
+                "maybeSuggestGearToSiblings",
+                "canOfferSpawnUpgrade",
+                "offerSpawnUpgradeIfAvailable"), actions.events);
+    }
+
+    @Test
+    void checkStatusAutoAssignsWhenPromptsAreMissing() {
+        TestStatusCheckState state = new TestStatusCheckState();
+        TestStatusCheckActions actions = new TestStatusCheckActions();
+
+        AgentChatStatusRuntime.checkStatus(state, actions);
+
+        assertEquals(List.of(
+                "buildJobPrompt",
+                "buildSpVariantPrompt",
+                "autoAssignSp",
+                "buildApPrompt",
+                "autoAssignAp",
+                "maybeSuggestRecommendedGear",
+                "maybeSuggestGearToSiblings",
+                "canOfferSpawnUpgrade"), actions.events);
+    }
+
+    @Test
+    void checkStatusSkipsOneTimeSpawnUpgradeWhenAlreadyDone() {
+        TestStatusCheckState state = new TestStatusCheckState();
+        state.spawnDone = true;
+        TestStatusCheckActions actions = new TestStatusCheckActions();
+
+        AgentChatStatusRuntime.checkStatus(state, actions);
+
+        assertEquals(List.of(
+                "buildJobPrompt",
+                "buildSpVariantPrompt",
+                "autoAssignSp",
+                "buildApPrompt",
+                "autoAssignAp",
+                "maybeSuggestRecommendedGear",
+                "maybeSuggestGearToSiblings"), actions.events);
+    }
+
     private static final class TestState implements AgentChatStatusRuntime.StatusState {
         private Point position;
         private long sinceMs;
@@ -75,6 +138,82 @@ class AgentChatStatusRuntimeTest {
         @Override
         public void setOwnerWasAfk(boolean wasAfk) {
             this.wasAfk = wasAfk;
+        }
+    }
+
+    private static final class TestStatusCheckState implements AgentChatStatusRuntime.StatusCheckState {
+        private boolean spawnDone;
+
+        @Override
+        public boolean spawnUpgradeCheckDone() {
+            return spawnDone;
+        }
+
+        @Override
+        public void setSpawnUpgradeCheckDone(boolean done) {
+            spawnDone = done;
+        }
+    }
+
+    private static final class TestStatusCheckActions implements AgentChatStatusRuntime.StatusCheckActions {
+        private final List<String> events = new ArrayList<>();
+        private String jobPrompt;
+        private String spPrompt;
+        private String apPrompt;
+        private boolean canOfferSpawnUpgrade;
+
+        @Override
+        public String buildJobPrompt() {
+            events.add("buildJobPrompt");
+            return jobPrompt;
+        }
+
+        @Override
+        public String buildSpVariantPrompt() {
+            events.add("buildSpVariantPrompt");
+            return spPrompt;
+        }
+
+        @Override
+        public String buildApPrompt() {
+            events.add("buildApPrompt");
+            return apPrompt;
+        }
+
+        @Override
+        public void queueReply(String message) {
+            events.add("queue:" + message);
+        }
+
+        @Override
+        public void autoAssignSp() {
+            events.add("autoAssignSp");
+        }
+
+        @Override
+        public void autoAssignAp() {
+            events.add("autoAssignAp");
+        }
+
+        @Override
+        public void maybeSuggestRecommendedGear() {
+            events.add("maybeSuggestRecommendedGear");
+        }
+
+        @Override
+        public void maybeSuggestGearToSiblings() {
+            events.add("maybeSuggestGearToSiblings");
+        }
+
+        @Override
+        public boolean canOfferSpawnUpgrade() {
+            events.add("canOfferSpawnUpgrade");
+            return canOfferSpawnUpgrade;
+        }
+
+        @Override
+        public void offerSpawnUpgradeIfAvailable() {
+            events.add("offerSpawnUpgradeIfAvailable");
         }
     }
 }

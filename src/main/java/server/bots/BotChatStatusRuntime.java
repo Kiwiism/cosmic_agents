@@ -23,34 +23,7 @@ final class BotChatStatusRuntime {
     }
 
     static void checkBotStatus(BotEntry entry, Character bot) {
-        String jobPrompt = BotBuildManager.buildJobPrompt(entry, bot);
-        if (jobPrompt != null) {
-            AgentBotReplyRuntime.queueReply(entry, jobPrompt);
-        }
-        String spPrompt = BotBuildManager.buildSpVariantPrompt(entry, bot);
-        if (spPrompt != null) {
-            AgentBotReplyRuntime.queueReply(entry, spPrompt);
-        } else {
-            BotBuildManager.autoAssignSp(entry, bot);
-        }
-        String apPrompt = BotBuildManager.buildApPrompt(entry, bot);
-        if (apPrompt != null) {
-            AgentBotReplyRuntime.queueReply(entry, apPrompt);
-        } else {
-            BotBuildManager.autoAssignAp(entry, bot);
-        }
-        maybeSuggestRecommendedGear(entry, bot);
-        maybeSuggestGearToSiblings(entry, bot);
-        if (!entry.spawnUpgradeCheckDone) {
-            entry.spawnUpgradeCheckDone = true;
-            Character owner = entry.owner;
-            if (owner != null && !isOwnerIdle(entry) && entry.pendingAction == null && !BotOfferManager.hasPendingOffer(entry)) {
-                List<BotEquipManager.EquipRecommendation> recs = BotEquipManager.findRecommendedEquips(bot, owner);
-                if (!recs.isEmpty()) {
-                    BotOfferManager.notifyOwnerGainedEquip(entry, bot, recs.get(0).candidate());
-                }
-            }
-        }
+        AgentChatStatusRuntime.checkStatus(statusCheckState(entry), statusCheckActions(entry, bot));
     }
 
     static void announceOwnerReturnedFromOffline(BotEntry entry) {
@@ -110,6 +83,82 @@ final class BotChatStatusRuntime {
             @Override
             public void setOwnerWasAfk(boolean wasAfk) {
                 entry.ownerWasAfk = wasAfk;
+            }
+        };
+    }
+
+    private static AgentChatStatusRuntime.StatusCheckState statusCheckState(BotEntry entry) {
+        return new AgentChatStatusRuntime.StatusCheckState() {
+            @Override
+            public boolean spawnUpgradeCheckDone() {
+                return entry.spawnUpgradeCheckDone;
+            }
+
+            @Override
+            public void setSpawnUpgradeCheckDone(boolean done) {
+                entry.spawnUpgradeCheckDone = done;
+            }
+        };
+    }
+
+    private static AgentChatStatusRuntime.StatusCheckActions statusCheckActions(BotEntry entry, Character bot) {
+        return new AgentChatStatusRuntime.StatusCheckActions() {
+            @Override
+            public String buildJobPrompt() {
+                return BotBuildManager.buildJobPrompt(entry, bot);
+            }
+
+            @Override
+            public String buildSpVariantPrompt() {
+                return BotBuildManager.buildSpVariantPrompt(entry, bot);
+            }
+
+            @Override
+            public String buildApPrompt() {
+                return BotBuildManager.buildApPrompt(entry, bot);
+            }
+
+            @Override
+            public void queueReply(String message) {
+                AgentBotReplyRuntime.queueReply(entry, message);
+            }
+
+            @Override
+            public void autoAssignSp() {
+                BotBuildManager.autoAssignSp(entry, bot);
+            }
+
+            @Override
+            public void autoAssignAp() {
+                BotBuildManager.autoAssignAp(entry, bot);
+            }
+
+            @Override
+            public void maybeSuggestRecommendedGear() {
+                BotChatStatusRuntime.maybeSuggestRecommendedGear(entry, bot);
+            }
+
+            @Override
+            public void maybeSuggestGearToSiblings() {
+                BotChatStatusRuntime.maybeSuggestGearToSiblings(entry, bot);
+            }
+
+            @Override
+            public boolean canOfferSpawnUpgrade() {
+                Character owner = entry.owner;
+                return owner != null
+                        && !isOwnerIdle(entry)
+                        && entry.pendingAction == null
+                        && !BotOfferManager.hasPendingOffer(entry);
+            }
+
+            @Override
+            public void offerSpawnUpgradeIfAvailable() {
+                Character owner = entry.owner;
+                List<BotEquipManager.EquipRecommendation> recs = BotEquipManager.findRecommendedEquips(bot, owner);
+                if (!recs.isEmpty()) {
+                    BotOfferManager.notifyOwnerGainedEquip(entry, bot, recs.get(0).candidate());
+                }
             }
         };
     }
