@@ -129,9 +129,10 @@ Recent reconstruction notes:
   through `AgentBotReplyRuntime`; delayed trade thanks/freebie callbacks now use
   `AgentBotSchedulerRuntime` while preserving the legacy visible `botSay`
   delivery and random reply pools.
-- LLM split-message owner-directed replies now route through
-  `AgentBotReplyRuntime`; the existing LLM executor, multi-message delay, and
-  sanitization/splitting behavior are unchanged.
+- LLM split-message owner-directed replies now enter through
+  `AgentBotLlmRuntime`; `BotLlmReplyManager` no longer reaches directly into
+  the lower-level reply runtime, and the existing LLM executor,
+  multi-message delay, and sanitization/splitting behavior are unchanged.
 - Bot dismissal acknowledgement scheduling now routes through
   `AgentBotSchedulerRuntime`; delivery intentionally remains on the local
   `BotManager.botReply` method because `AgentBotReplyRuntime` currently bridges

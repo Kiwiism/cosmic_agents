@@ -3,7 +3,7 @@ package server.bots.llm;
 import client.Character;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import server.agents.integration.AgentBotReplyRuntime;
+import server.agents.integration.AgentBotLlmRuntime;
 import server.bots.BotEntry;
 
 import java.util.List;
@@ -200,12 +200,12 @@ public final class BotLlmReplyManager {
 
     static void deliverReplyParts(BotEntry entry, List<String> parts, FollowUpScheduler scheduler) {
         if (parts.isEmpty()) return;
-        AgentBotReplyRuntime.replyNow(entry, parts.get(0));
+        AgentBotLlmRuntime.replyNow(entry, parts.get(0));
         for (int i = 1; i < parts.size(); i++) {
             final String part = parts.get(i);
             scheduler.schedule(() -> {
                 try {
-                    AgentBotReplyRuntime.replyNow(entry, part);
+                    AgentBotLlmRuntime.replyNow(entry, part);
                 } catch (Throwable t) {
                     log.warn("llm follow-up reply failed: {}", t.toString());
                 }
