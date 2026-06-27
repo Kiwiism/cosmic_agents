@@ -199,6 +199,10 @@ Recent reconstruction notes:
   `AgentBotOfferRuntime`; `BotOfferManager` no longer reads or clears the
   `pendingGearPromptAt` entry field directly, while the same legacy field and
   timing semantics remain intact behind the Agent-owned offer boundary.
+- Equipment optimizer debug/dump range report formatting now enters through
+  `AgentBotRangeReportRuntime`; `BotEquipManager` no longer imports the broad
+  chat-report facade just to render range text, and the underlying range
+  formatter remains unchanged.
 
 Initial reconstruction order:
 

@@ -22,7 +22,7 @@ import constants.skills.WhiteKnight;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.ItemInformationProvider;
-import server.agents.integration.AgentBotChatReportRuntime;
+import server.agents.integration.AgentBotRangeReportRuntime;
 import server.bots.combat.BotAttackDataProvider;
 import server.combat.CombatFormulaProvider;
 import server.life.LifeFactory;
@@ -323,7 +323,7 @@ public class BotEquipManager {
             if (anyCap) out.add("WARN: pareto cap hit, result is best-effort");
         }
 
-        out.add("range: " + AgentBotChatReportRuntime.buildRangeReport(bot));
+        out.add("range: " + AgentBotRangeReportRuntime.rangeReport(bot));
 
         // Full dump to disk — chat is too narrow for inventory + per-branch breakdown.
         String filePath = writeAutoEquipDumpFile(bot, ii, eqpInv, eqdInv, mob, naked,
@@ -371,7 +371,7 @@ public class BotEquipManager {
           .append(" watk=").append(naked.watk())
           .append(" mag=").append(naked.magic())
           .append(" acc=").append(naked.totalAcc()).append('\n');
-        sb.append("range:   ").append(AgentBotChatReportRuntime.buildRangeReport(bot, mob)).append('\n');
+        sb.append("range:   ").append(AgentBotRangeReportRuntime.rangeReport(bot, mob)).append('\n');
 
         sb.append("\n--- equipped ---\n");
         sb.append(itemHeader(false));
