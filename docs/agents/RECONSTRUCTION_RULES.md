@@ -442,6 +442,10 @@ Recent reconstruction notes:
   `AgentBotPendingTradeStateRuntime`; trade preparation, trade-window item
   remapping, restore checks, restore snapshots, and cleanup keep BotEntry as the
   temporary backing store but no longer operate on the restore map directly.
+- Inventory full-warning cooldown and post-drop loot-inhibit cooldown state now
+  enter through `AgentBotInventoryStateRuntime`; passive loot and drop-choice
+  handling keep BotEntry as the temporary backing store but no longer read,
+  tick down, or set those cooldown fields directly.
 
 Initial reconstruction order:
 

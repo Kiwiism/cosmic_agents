@@ -230,6 +230,14 @@ public class BotEntry {
     boolean potShareRequestedMp = false; // reset when pot count recovers above POT_LOW_WARN
     boolean ammoShareRequested = false; // reset when arrow/bolt count recovers above AMMO_LOW_WARN
 
+    public int invFullWarnCooldownMs() {
+        return invFullWarnCooldownMs;
+    }
+
+    public void setInvFullWarnCooldownMs(int invFullWarnCooldownMs) {
+        this.invFullWarnCooldownMs = invFullWarnCooldownMs;
+    }
+
     public boolean potShareRequestedHp() {
         return potShareRequestedHp;
     }
@@ -298,6 +306,14 @@ public class BotEntry {
     int pendingLootOfferRecipientId = 0;
     long pendingLootOfferExpiresAt = 0L;
     int lootInhibitMs = 0;
+
+    public int lootInhibitMs() {
+        return lootInhibitMs;
+    }
+
+    public void setLootInhibitMs(int lootInhibitMs) {
+        this.lootInhibitMs = lootInhibitMs;
+    }
 
     // Bot-initiated trade retry: when a pot-share / ammo-share / loot-offer is blocked
     // because the sender or recipient is already in a trade, the attempt is stored here

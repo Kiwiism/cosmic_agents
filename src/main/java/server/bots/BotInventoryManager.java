@@ -20,6 +20,7 @@ import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
 import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
 import server.agents.integration.AgentBotInventoryRuntime;
+import server.agents.integration.AgentBotInventoryStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.ItemInformationProvider;
 import server.StatEffect;
@@ -111,15 +112,15 @@ public class BotInventoryManager {
     );
 
     static void tickPassiveLoot(BotEntry entry, Character bot) {
-        if (entry.lootInhibitMs > 0) {
-            entry.lootInhibitMs = BotMovementManager.tickDown(entry.lootInhibitMs);
+        if (AgentBotInventoryStateRuntime.hasLootInhibit(entry)) {
+            AgentBotInventoryStateRuntime.tickLootInhibit(entry, BotMovementManager::tickDown);
             return;
         }
         if (AgentBotPendingTradeStateRuntime.hasActiveSequence(entry)) {
             return;
         }
 
-        entry.invFullWarnCooldownMs = BotMovementManager.tickDown(entry.invFullWarnCooldownMs);
+        AgentBotInventoryStateRuntime.tickInventoryFullWarnCooldown(entry, BotMovementManager::tickDown);
         Point botPos = bot.getPosition();
         long now = System.currentTimeMillis();
         for (MapItem drop : bot.getMap().getDroppedItems()) {
@@ -141,9 +142,11 @@ public class BotInventoryManager {
                 if (drop.getMeso() <= 0 && drop.getItemId() > 0) {
                     InventoryType type = ItemConstants.getInventoryType(drop.getItemId());
                     Inventory inventory = bot.getInventory(type);
-                    if (inventory != null && inventory.isFull() && entry.invFullWarnCooldownMs <= 0) {
+                    if (inventory != null && inventory.isFull() && AgentBotInventoryStateRuntime.canWarnInventoryFull(entry)) {
                         AgentBotInventoryRuntime.replyNow(entry, type.name().toLowerCase() + " inventory is full!");
-                        entry.invFullWarnCooldownMs = BotMovementManager.delayAfterCurrentTick(BotManager.cfg.INV_FULL_WARN_CD_MS);
+                        AgentBotInventoryStateRuntime.setInventoryFullWarnCooldownMs(
+                                entry,
+                                BotMovementManager.delayAfterCurrentTick(BotManager.cfg.INV_FULL_WARN_CD_MS));
                     }
                 }
                 continue;
@@ -153,9 +156,11 @@ public class BotInventoryManager {
                 InventoryType type = ItemConstants.getInventoryType(drop.getItemId());
                 Inventory inventory = bot.getInventory(type);
                 if (inventory != null && inventory.isFull()) {
-                    if (entry.invFullWarnCooldownMs <= 0) {
+                    if (AgentBotInventoryStateRuntime.canWarnInventoryFull(entry)) {
                         AgentBotInventoryRuntime.replyNow(entry, type.name().toLowerCase() + " inventory is full!");
-                        entry.invFullWarnCooldownMs = BotMovementManager.delayAfterCurrentTick(BotManager.cfg.INV_FULL_WARN_CD_MS);
+                        AgentBotInventoryStateRuntime.setInventoryFullWarnCooldownMs(
+                                entry,
+                                BotMovementManager.delayAfterCurrentTick(BotManager.cfg.INV_FULL_WARN_CD_MS));
                     }
                     continue;
                 }
@@ -381,7 +386,9 @@ public class BotInventoryManager {
             startTradeTransfer(category, entry, bot);
         } else {
             dropCategory(category, entry, bot);
-            entry.lootInhibitMs = BotMovementManager.delayAfterCurrentTick(20_000); // ~20s: prevents bot re-looting its own floor drops
+            AgentBotInventoryStateRuntime.setLootInhibitMs(
+                    entry,
+                    BotMovementManager.delayAfterCurrentTick(20_000)); // ~20s: prevents bot re-looting its own floor drops
         }
     }
 
