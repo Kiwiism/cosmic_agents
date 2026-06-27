@@ -1,0 +1,21 @@
+package server.agents.integration;
+
+import server.bots.BotEntry;
+
+/**
+ * Temporary Agent-owned bridge for inventory, trade, drop, and meso reply
+ * delivery while the inventory automation logic still lives in the legacy bot
+ * runtime.
+ */
+public final class AgentBotInventoryRuntime {
+    private AgentBotInventoryRuntime() {
+    }
+
+    public static void replyNow(BotEntry entry, String message) {
+        AgentBotReplyRuntime.replyNow(entry, message);
+    }
+
+    public static void afterDelay(long delayMs, Runnable action) {
+        AgentBotSchedulerRuntime.afterDelay(delayMs, action);
+    }
+}

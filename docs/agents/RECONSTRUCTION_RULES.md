@@ -176,6 +176,10 @@ Recent reconstruction notes:
   `AgentBotManagerSchedulerRuntime`; `BotManager` no longer reaches directly
   into the lower-level `AgentBotSchedulerRuntime` for follow-target, dismiss,
   ownership-transfer, pickup-scan, scroll-reaction, or relog-greeting delays.
+- Inventory/trade/drop/meso reply delivery and trade-thanks delayed callbacks
+  now enter through `AgentBotInventoryRuntime`; `BotInventoryManager` no longer
+  reaches directly into the lower-level reply or scheduler runtime for those
+  inventory-owned flows.
 
 Initial reconstruction order:
 

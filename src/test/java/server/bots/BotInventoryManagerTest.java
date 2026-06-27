@@ -7,7 +7,7 @@ import client.inventory.Inventory;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentBotReplyRuntime;
+import server.agents.integration.AgentBotInventoryRuntime;
 import server.Trade;
 import server.maps.Foothold;
 import server.maps.MapItem;
@@ -52,12 +52,12 @@ class BotInventoryManagerTest {
         when(owner.getTrade()).thenReturn(null);
         when(bot.getTrade()).thenReturn(null);
 
-        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class);
+        try (MockedStatic<AgentBotInventoryRuntime> replies = mockStatic(AgentBotInventoryRuntime.class);
              MockedStatic<Trade> trades = mockStatic(Trade.class)) {
             startTradeSequence.invoke(null, "trash", owner, List.of(mock(Item.class)), 0, false, entry, bot);
             openTradeBatch.invoke(null, entry, bot, List.of(mock(Item.class)), 0);
 
-            replies.verify(() -> AgentBotReplyRuntime.replyNow(eq(entry), anyString()), times(1));
+            replies.verify(() -> AgentBotInventoryRuntime.replyNow(eq(entry), anyString()), times(1));
         }
     }
 
