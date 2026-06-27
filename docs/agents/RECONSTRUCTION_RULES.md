@@ -101,10 +101,11 @@ Recent reconstruction notes:
 - AP build confirmation replies now route through `AgentBotReplyRuntime`; the
   build manager still owns the legacy AP assignment behavior for this
   reconstruction stage.
-- Maker batch command replies and delayed batch steps now route through
-  `AgentBotReplyRuntime` and `AgentBotSchedulerRuntime`. `BotMakerManager`
-  lazily resolves `ItemInformationProvider` so guard paths and Agent adapter
-  tests do not initialize database-backed item data before it is needed.
+- Maker batch command replies and delayed batch steps now enter through
+  `AgentBotMakerRuntime`; `BotMakerManager` no longer reaches directly into the
+  lower-level reply or scheduler runtime for Maker-owned flows. It still lazily
+  resolves `ItemInformationProvider` so guard paths and Agent adapter tests do
+  not initialize database-backed item data before it is needed.
 - Scroll-reaction delayed callbacks now route through
   `AgentBotSchedulerRuntime`; scroll reaction chat was already delivered through
   `AgentBotReplyRuntime`.
