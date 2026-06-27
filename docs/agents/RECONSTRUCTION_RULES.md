@@ -94,6 +94,10 @@ Recent reconstruction notes:
   Agent integration facades no longer call `BotManager.botReply`/visible
   delivery directly. `AgentBotReplyRuntime` remains the temporary adapter to the
   legacy BotManager packet-delivery methods.
+- Loot/gear offer owner-directed replies and delayed offer actions now route
+  through `AgentBotReplyRuntime` and `AgentBotSchedulerRuntime`. The remaining
+  bot-side map-only `botSay(Character, ...)` branch is intentionally unchanged
+  until map-only visible delivery has an exact Agent adapter.
 
 Initial reconstruction order:
 

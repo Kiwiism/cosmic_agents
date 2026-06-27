@@ -13,6 +13,7 @@ import config.YamlConfig;
 import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
 import server.agents.integration.AgentBotChatStatusRuntime;
+import server.agents.integration.AgentBotSchedulerRuntime;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,12 +76,12 @@ public final class BotOfferManager {
             return;
         }
         if (entry.pendingAction != null || entry.pendingTradeCategory != null || hasOfferReservation(entry)) {
-            BotManager.getInstance().botReply(entry, "busy rn, ask me again in a bit");
+            AgentBotReplyRuntime.replyNow(entry, "busy rn, ask me again in a bit");
             return;
         }
         List<BotEquipManager.EquipRecommendation> recs = BotEquipManager.findRecommendedEquips(bot, owner);
         if (recs.isEmpty()) {
-            BotManager.getInstance().botReply(entry, "nothing i need from you rn, im good!");
+            AgentBotReplyRuntime.replyNow(entry, "nothing i need from you rn, im good!");
             return;
         }
         Item candidate = recs.get(0).candidate();
@@ -163,7 +164,7 @@ public final class BotOfferManager {
 
         long scheduledAt = now + Math.max(0L, delayMs);
         entry.pendingGearPromptAt = scheduledAt;
-        BotManager.after(delayMs, () -> promptLootOfferAfterLoot(entry, bot, item, recipient.getId(), scheduledAt));
+        AgentBotSchedulerRuntime.afterDelay(delayMs, () -> promptLootOfferAfterLoot(entry, bot, item, recipient.getId(), scheduledAt));
     }
 
     static boolean handlePendingOfferResponse(BotEntry entry, Character speaker, String message) {
@@ -177,15 +178,15 @@ public final class BotOfferManager {
         if (POSITIVE_CONFIRM_PATTERN.matcher(message).find()) {
             if (entry.pendingLootOfferBotRequesting) {
                 clearPendingOffer(entry);
-                BotManager.after(BotManager.randMs(400, 600), () ->
-                        BotManager.getInstance().botReply(entry, "ty! inv me?"));
+                AgentBotSchedulerRuntime.afterRandomDelay(400, 600, () ->
+                        AgentBotReplyRuntime.replyNow(entry, "ty! inv me?"));
             } else {
                 Item item = entry.pendingLootOfferItem;
                 entry.pendingDropCategory = null;
                 entry.pendingLootOfferExpiresAt = 0L;
                 entry.pendingLootOfferBotRequesting = false;
                 entry.pendingLootOfferRecipientId = 0;
-                BotManager.after(BotManager.randMs(900, 1100), () -> {
+                AgentBotSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
                     entry.pendingLootOfferItem = null;
                     BotInventoryManager.startTradeTransfer(item, speaker, entry, entry.bot);
                 });
@@ -194,9 +195,9 @@ public final class BotOfferManager {
         }
         if (NEGATIVE_CONFIRM_PATTERN.matcher(message).find()) {
             clearPendingOffer(entry);
-            BotManager.after(BotManager.randMs(400, 600), () -> {
+            AgentBotSchedulerRuntime.afterRandomDelay(400, 600, () -> {
                 if (entry.owner != null && speaker.getId() == entry.owner.getId()) {
-                    BotManager.getInstance().botReply(entry, "ok, keeping it for now");
+                    AgentBotReplyRuntime.replyNow(entry, "ok, keeping it for now");
                 } else {
                     BotManager.getInstance().botSay(entry.bot, "ok, keeping it for now");
                 }
@@ -300,8 +301,8 @@ public final class BotOfferManager {
         if (!(recipient.getClient() instanceof BotClient)) {
             return;
         }
-        long replyDelayMs = promptDelayMs + BotManager.randMs(1800, 2200);
-        BotManager.after(replyDelayMs, () -> autoAcceptLootOffer(entry, recipient));
+        long replyDelayMs = promptDelayMs + AgentBotSchedulerRuntime.randomDelayMs(1800, 2200);
+        AgentBotSchedulerRuntime.afterDelay(replyDelayMs, () -> autoAcceptLootOffer(entry, recipient));
     }
 
     private static void autoAcceptLootOffer(BotEntry entry, Character recipientBot) {

@@ -24,7 +24,7 @@ public final class AgentBotSchedulerRuntime {
         BotManager.scheduleBotReplyAction(delayMs, action);
     }
 
-    static long randomDelayMs(int minMs, int maxMs) {
+    public static long randomDelayMs(int minMs, int maxMs) {
         return minMs + ThreadLocalRandom.current().nextInt(maxMs - minMs);
     }
 }
