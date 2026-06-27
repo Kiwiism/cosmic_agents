@@ -3,7 +3,9 @@ package server.agents.integration;
 import client.inventory.Item;
 import server.bots.BotEntry;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Agent-owned adapter for temporary BotEntry-backed pending trade sequence state.
@@ -240,5 +242,28 @@ public final class AgentBotPendingTradeStateRuntime {
 
     public static void clearItems(BotEntry entry) {
         entry.setPendingTradeItems(null);
+    }
+
+    public static boolean hasRestoreSlots(BotEntry entry) {
+        return !entry.pendingTradeRestoreSlots().isEmpty();
+    }
+
+    public static void rememberRestoreSlot(BotEntry entry, Item item, short slot) {
+        entry.pendingTradeRestoreSlots().put(item, slot);
+    }
+
+    public static void transferRestoreSlot(BotEntry entry, Item fromItem, Item toItem) {
+        Short restoreSlot = entry.pendingTradeRestoreSlots().remove(fromItem);
+        if (restoreSlot != null) {
+            entry.pendingTradeRestoreSlots().put(toItem, restoreSlot);
+        }
+    }
+
+    public static List<Map.Entry<Item, Short>> restoreSlotEntries(BotEntry entry) {
+        return new ArrayList<>(entry.pendingTradeRestoreSlots().entrySet());
+    }
+
+    public static void clearRestoreSlots(BotEntry entry) {
+        entry.pendingTradeRestoreSlots().clear();
     }
 }

@@ -438,6 +438,10 @@ Recent reconstruction notes:
   share invitation suppression, and reset keep BotEntry as the temporary
   backing store but no longer set, read, compare, or clear the category field
   directly.
+- Pending trade temporary equipment restore-slot state now enters through
+  `AgentBotPendingTradeStateRuntime`; trade preparation, trade-window item
+  remapping, restore checks, restore snapshots, and cleanup keep BotEntry as the
+  temporary backing store but no longer operate on the restore map directly.
 
 Initial reconstruction order:
 

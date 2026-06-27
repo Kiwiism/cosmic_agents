@@ -240,4 +240,27 @@ class AgentBotPendingTradeStateRuntimeTest {
 
         assertTrue(AgentBotPendingTradeStateRuntime.isBetweenBatches(entry));
     }
+
+    @Test
+    void adaptsRestoreSlotState() {
+        BotEntry entry = new BotEntry(null, null, null);
+        Item original = new Item(1040000, (short) 1, (short) 1);
+        Item tradeCopy = original.copy();
+
+        assertFalse(AgentBotPendingTradeStateRuntime.hasRestoreSlots(entry));
+
+        AgentBotPendingTradeStateRuntime.rememberRestoreSlot(entry, original, (short) -5);
+
+        assertTrue(AgentBotPendingTradeStateRuntime.hasRestoreSlots(entry));
+
+        AgentBotPendingTradeStateRuntime.transferRestoreSlot(entry, original, tradeCopy);
+
+        assertEquals(1, AgentBotPendingTradeStateRuntime.restoreSlotEntries(entry).size());
+        assertSame(tradeCopy, AgentBotPendingTradeStateRuntime.restoreSlotEntries(entry).get(0).getKey());
+        assertEquals((short) -5, AgentBotPendingTradeStateRuntime.restoreSlotEntries(entry).get(0).getValue());
+
+        AgentBotPendingTradeStateRuntime.clearRestoreSlots(entry);
+
+        assertFalse(AgentBotPendingTradeStateRuntime.hasRestoreSlots(entry));
+    }
 }

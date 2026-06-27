@@ -1316,12 +1316,17 @@ class BotManagerTest {
         Item equippedItem = new Item(1040000, (short) 1, (short) 1);
         Item tradeWindowCopy = equippedItem.copy();
 
-        entry.pendingTradeRestoreSlots.put(equippedItem, (short) -5);
+        AgentBotPendingTradeStateRuntime.rememberRestoreSlot(entry, equippedItem, (short) -5);
 
         BotInventoryManager.rememberTradeWindowItemForRestore(entry, equippedItem, tradeWindowCopy);
 
-        assertFalse(entry.pendingTradeRestoreSlots.containsKey(equippedItem));
-        assertEquals((short) -5, entry.pendingTradeRestoreSlots.get(tradeWindowCopy));
+        assertFalse(AgentBotPendingTradeStateRuntime.restoreSlotEntries(entry).stream()
+                .anyMatch(restore -> restore.getKey() == equippedItem));
+        assertEquals((short) -5, AgentBotPendingTradeStateRuntime.restoreSlotEntries(entry).stream()
+                .filter(restore -> restore.getKey() == tradeWindowCopy)
+                .findFirst()
+                .orElseThrow()
+                .getValue());
     }
 
     @Test

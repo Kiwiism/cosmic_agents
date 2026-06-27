@@ -441,6 +441,10 @@ public class BotEntry {
         this.pendingTradeIdx = pendingTradeIdx;
     }
 
+    public Map<Item, Short> pendingTradeRestoreSlots() {
+        return pendingTradeRestoreSlots;
+    }
+
     // Message queue
     final ArrayDeque<AgentQueuedMessage> msgQueue = new ArrayDeque<>();
     boolean msgSending = false;
