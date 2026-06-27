@@ -8,6 +8,7 @@ import client.inventory.Inventory;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotChatReportRuntime;
+import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotMessageQueueStateRuntime;
 import server.agents.integration.AgentBotChatStatusRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
@@ -224,7 +225,7 @@ class BotChatManagerTest {
     void shouldNotTriggerGreetingFidgetWhileOwnerIsAfk() {
         BotEntry entry = new BotEntry(null, null, null);
         entry.following = true;
-        entry.ownerWasAfk = true;
+        AgentBotActivityStateRuntime.setOwnerWasAfk(entry, true);
 
         assertFalse(BotFidgetManager.maybeStartGreetingFidget(entry, 0));
         assertEquals(BotFidgetMode.NONE, entry.fidgetMode);

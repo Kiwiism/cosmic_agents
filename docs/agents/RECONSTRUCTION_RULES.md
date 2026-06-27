@@ -361,6 +361,10 @@ Recent reconstruction notes:
   through the narrow `AgentBotScrollReactionStateRuntime` adapter; scroll
   reaction orchestration keeps BotEntry as the temporary backing store but no
   longer reads or mutates those fields directly.
+- Owner activity and AFK/welcome-back state now enter through the narrow
+  `AgentBotActivityStateRuntime` adapter; status and welcome-back orchestration
+  keep BotEntry as the temporary backing store but no longer read or mutate AFK
+  fields directly.
 
 Initial reconstruction order:
 

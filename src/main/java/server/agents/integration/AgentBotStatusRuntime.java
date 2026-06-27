@@ -20,22 +20,22 @@ public final class AgentBotStatusRuntime {
         return new AgentChatStatusRuntime.StatusState() {
             @Override
             public void setOwnerAfkPosition(Point position) {
-                entry.setOwnerAfkPosition(position);
+                AgentBotActivityStateRuntime.setOwnerAfkPosition(entry, position);
             }
 
             @Override
             public void setOwnerAfkSinceMs(long sinceMs) {
-                entry.setOwnerAfkSinceMs(sinceMs);
+                AgentBotActivityStateRuntime.setOwnerAfkSinceMs(entry, sinceMs);
             }
 
             @Override
             public boolean ownerWasAfk() {
-                return entry.ownerWasAfk();
+                return AgentBotActivityStateRuntime.ownerWasAfk(entry);
             }
 
             @Override
             public void setOwnerWasAfk(boolean wasAfk) {
-                entry.setOwnerWasAfk(wasAfk);
+                AgentBotActivityStateRuntime.setOwnerWasAfk(entry, wasAfk);
             }
         };
     }
@@ -44,32 +44,32 @@ public final class AgentBotStatusRuntime {
         return new AgentChatWelcomeBackFlow.AfkState() {
             @Override
             public Point ownerAfkPosition() {
-                return entry.ownerAfkPosition();
+                return AgentBotActivityStateRuntime.ownerAfkPosition(entry);
             }
 
             @Override
             public void setOwnerAfkPosition(Point position) {
-                entry.setOwnerAfkPosition(position);
+                AgentBotActivityStateRuntime.setOwnerAfkPosition(entry, position);
             }
 
             @Override
             public long ownerAfkSinceMs() {
-                return entry.ownerAfkSinceMs();
+                return AgentBotActivityStateRuntime.ownerAfkSinceMs(entry);
             }
 
             @Override
             public void setOwnerAfkSinceMs(long sinceMs) {
-                entry.setOwnerAfkSinceMs(sinceMs);
+                AgentBotActivityStateRuntime.setOwnerAfkSinceMs(entry, sinceMs);
             }
 
             @Override
             public boolean ownerWasAfk() {
-                return entry.ownerWasAfk();
+                return AgentBotActivityStateRuntime.ownerWasAfk(entry);
             }
 
             @Override
             public void setOwnerWasAfk(boolean wasAfk) {
-                entry.setOwnerWasAfk(wasAfk);
+                AgentBotActivityStateRuntime.setOwnerWasAfk(entry, wasAfk);
             }
         };
     }

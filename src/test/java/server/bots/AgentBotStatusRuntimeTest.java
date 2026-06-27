@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.capabilities.dialogue.AgentChatWelcomeBackFlow;
+import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 import server.agents.integration.AgentBotStatusReplyRuntime;
@@ -30,10 +31,10 @@ class AgentBotStatusRuntimeTest {
         state.setOwnerAfkSinceMs(1234L);
         state.setOwnerWasAfk(true);
 
-        assertEquals(position, entry.ownerAfkPosition());
-        assertEquals(1234L, entry.ownerAfkSinceMs());
+        assertEquals(position, AgentBotActivityStateRuntime.ownerAfkPosition(entry));
+        assertEquals(1234L, AgentBotActivityStateRuntime.ownerAfkSinceMs(entry));
         assertTrue(state.ownerWasAfk());
-        assertTrue(entry.ownerWasAfk());
+        assertTrue(AgentBotActivityStateRuntime.ownerWasAfk(entry));
     }
 
     @Test
@@ -49,6 +50,20 @@ class AgentBotStatusRuntimeTest {
         assertEquals(position, state.ownerAfkPosition());
         assertEquals(5678L, state.ownerAfkSinceMs());
         assertTrue(state.ownerWasAfk());
+    }
+
+    @Test
+    void activityStateAdapterBacksAfkFields() {
+        BotEntry entry = new BotEntry(null, null, null);
+        Point position = new Point(50, 60);
+
+        AgentBotActivityStateRuntime.setOwnerAfkPosition(entry, position);
+        AgentBotActivityStateRuntime.setOwnerAfkSinceMs(entry, 4321L);
+        AgentBotActivityStateRuntime.setOwnerWasAfk(entry, true);
+
+        assertEquals(position, AgentBotActivityStateRuntime.ownerAfkPosition(entry));
+        assertEquals(4321L, AgentBotActivityStateRuntime.ownerAfkSinceMs(entry));
+        assertTrue(AgentBotActivityStateRuntime.ownerWasAfk(entry));
     }
 
     @Test
