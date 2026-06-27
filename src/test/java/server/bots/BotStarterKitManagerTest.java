@@ -4,6 +4,7 @@ import client.Character;
 import client.Job;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.integration.AgentBotChatStatusRuntime;
 
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
@@ -56,14 +57,14 @@ class BotStarterKitManagerTest {
         when(bot.getJob()).thenReturn(Job.BOWMAN);
 
         try (MockedStatic<BotBuildManager> buildManager = mockStatic(BotBuildManager.class);
-             MockedStatic<BotChatStatusRuntime> statusRuntime = mockStatic(BotChatStatusRuntime.class);
+             MockedStatic<AgentBotChatStatusRuntime> statusRuntime = mockStatic(AgentBotChatStatusRuntime.class);
              MockedStatic<BotEquipManager> equipManager = mockStatic(BotEquipManager.class)) {
             BotStarterKitManager.advanceJob(entry, Job.HUNTER);
 
             verify(bot).changeJob(Job.HUNTER);
             buildManager.verify(() -> BotBuildManager.handleJobAdvance(entry, bot, Job.BOWMAN, Job.HUNTER));
             equipManager.verify(() -> BotEquipManager.autoEquip(bot, owner, null));
-            statusRuntime.verify(() -> BotChatStatusRuntime.checkBotStatus(entry, bot));
+            statusRuntime.verify(() -> AgentBotChatStatusRuntime.checkBotStatus(entry, bot));
         }
     }
 }

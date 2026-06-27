@@ -2,6 +2,7 @@ package server.bots;
 
 import client.Character;
 import net.packet.Packet;
+import server.agents.integration.AgentBotChatStatusRuntime;
 import server.maps.Foothold;
 import tools.PacketCreator;
 
@@ -150,7 +151,7 @@ final class BotFidgetManager {
         if (entry == null
                 || entry.fidgetMode != BotFidgetMode.NONE
                 || !entry.following
-                || BotChatStatusRuntime.isOwnerIdle(entry)
+                || AgentBotChatStatusRuntime.isOwnerIdle(entry)
                 || entry.grinding
                 || entry.moveTarget != null
                 || entry.navEdge != null
@@ -175,7 +176,7 @@ final class BotFidgetManager {
                                       boolean allowAirborneJumpFidget) {
         boolean airborneJumpFidget = entry.inAir && allowAirborneJumpFidget && isJumpFidget(entry.fidgetMode);
         return entry.following
-                && !BotChatStatusRuntime.isOwnerIdle(entry)
+                && !AgentBotChatStatusRuntime.isOwnerIdle(entry)
                 && !entry.grinding
                 && entry.moveTarget == null
                 && entry.navEdge == null

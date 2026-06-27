@@ -8,6 +8,7 @@ import client.inventory.Inventory;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotChatReportRuntime;
+import server.agents.integration.AgentBotChatStatusRuntime;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.commands.AgentQueuedMessage;
@@ -190,7 +191,7 @@ class BotChatManagerTest {
         assertTrue(AgentChatCommandClassifier.isFidgetCommand("fidget!"));
         assertFalse(AgentChatCommandClassifier.isFidgetCommand("please fidget"));
         for (int i = 0; i < 100; i++) {
-            assertTrue(Set.of(2, 3, 5, 6, 7).contains(BotChatStatusRuntime.randomFidgetExpression()));
+            assertTrue(Set.of(2, 3, 5, 6, 7).contains(AgentBotChatStatusRuntime.randomFidgetExpression()));
         }
 
         assertTrue(BotFidgetManager.maybeStartSocialFidget(entry));

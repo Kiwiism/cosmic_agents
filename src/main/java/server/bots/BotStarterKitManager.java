@@ -7,6 +7,7 @@ import client.inventory.manipulator.InventoryManipulator;
 import constants.inventory.ItemConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.agents.integration.AgentBotChatStatusRuntime;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -52,7 +53,7 @@ public final class BotStarterKitManager {
         BotBuildManager.handleJobAdvance(entry, bot, oldJob, newJob);
         grantStarterKitIfEligible(bot, oldJob, newJob);
         BotEquipManager.autoEquip(bot, owner, null);
-        BotChatStatusRuntime.checkBotStatus(entry, bot);
+        AgentBotChatStatusRuntime.checkBotStatus(entry, bot);
     }
 
     static List<ItemGrant> starterKitFor(Job job) {

@@ -16,6 +16,7 @@ import server.bots.build.MageBuilds;
 import server.bots.build.ThiefBuilds;
 import server.bots.build.WarriorBuilds;
 import server.agents.capabilities.dialogue.AgentBuildPromptReporter;
+import server.agents.integration.AgentBotChatStatusRuntime;
 
 public final class BotBuildManager {
     public enum StatType {
@@ -319,7 +320,7 @@ public final class BotBuildManager {
 
         if (lvl == 8 || lvl == 10 || lvl == 30 || lvl == 70 || lvl == 120) {
             BotManager.getInstance().issueFollowOwner(entry);
-            BotChatStatusRuntime.checkBotStatus(entry, bot);
+            AgentBotChatStatusRuntime.checkBotStatus(entry, bot);
         }
 
         autoAssignSp(entry, bot);

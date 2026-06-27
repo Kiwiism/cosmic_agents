@@ -80,6 +80,9 @@ Recent reconstruction notes:
   integration facades.
 - The bot-side chat report compatibility shim has been removed; remaining report
   tests and production callers use `AgentBotChatReportRuntime` directly.
+- The bot-side chat status compatibility shim has been removed; production
+  lifecycle, fidget, offer, build, starter-kit, and tests now call
+  `AgentBotChatStatusRuntime` directly.
 
 Initial reconstruction order:
 
