@@ -8,6 +8,7 @@ import client.inventory.Item;
 import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.integration.AgentBotReplyRuntime;
 import server.Shop;
 import server.ShopFactory;
 import server.life.NPC;
@@ -28,6 +29,24 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 class BotShopManagerTest {
+    @Test
+    void sellTrashNoItemsReplyUsesAgentReplyAdapter() {
+        Character bot = mock(Character.class);
+        MapleMap map = mock(MapleMap.class);
+        when(bot.getMap()).thenReturn(map);
+        BotEntry entry = new BotEntry(bot, null, null);
+
+        try (MockedStatic<BotInventoryManager> inventories = mockStatic(BotInventoryManager.class);
+             MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
+            inventories.when(() -> BotInventoryManager.collectSellTrashEquips(entry, bot))
+                    .thenReturn(List.of());
+
+            BotShopManager.requestSellTrashVisit(entry, bot);
+
+            replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, "no trash equips worth selling"));
+        }
+    }
+
     @Test
     void shouldNotTriggerClawShopVisitWhenBestStarIsAboveThreshold() {
         Character bot = clawBotWithStars(800, 1000, 1000, 1000, 1000, 1000); // 5800 of the best star

@@ -108,6 +108,10 @@ Recent reconstruction notes:
 - Scroll-reaction delayed callbacks now route through
   `AgentBotSchedulerRuntime`; scroll reaction chat was already delivered through
   `AgentBotReplyRuntime`.
+- Sell-trash shop owner-directed replies and delayed shop step callbacks now
+  route through `AgentBotReplyRuntime` and `AgentBotSchedulerRuntime`. Map-only
+  resupply/shop chatter remains on the legacy visible-say path until exact
+  map-visible delivery has an Agent adapter.
 
 Initial reconstruction order:
 

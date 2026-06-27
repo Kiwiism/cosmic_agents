@@ -7,6 +7,8 @@ import client.inventory.WeaponType;
 import constants.game.GameConstants;
 import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
+import server.agents.integration.AgentBotReplyRuntime;
+import server.agents.integration.AgentBotSchedulerRuntime;
 import server.Shop;
 import server.ShopFactory;
 import server.ShopItem;
@@ -131,7 +133,7 @@ public final class BotShopManager {
             return;
         }
         if (BotInventoryManager.collectSellTrashEquips(entry, bot).isEmpty()) {
-            BotManager.getInstance().botReply(entry, "no trash equips worth selling");
+            AgentBotReplyRuntime.replyNow(entry, "no trash equips worth selling");
             return;
         }
 
@@ -143,11 +145,11 @@ public final class BotShopManager {
         NpcShopMatch match = findBestShop(bot, true);
         if (match == null) {
             entry.shopSellTrashPending = false;
-            BotManager.getInstance().botReply(entry, "can't find a shop here");
+            AgentBotReplyRuntime.replyNow(entry, "can't find a shop here");
             return;
         }
 
-        BotManager.getInstance().botReply(entry, "ok gonna sell the junk");
+        AgentBotReplyRuntime.replyNow(entry, "ok gonna sell the junk");
         startShopVisit(entry, bot, match);
     }
 
@@ -796,7 +798,7 @@ public final class BotShopManager {
     }
 
     private static long stepDelayMs() {
-        return BotManager.randMs(SHOP_STEP_DELAY_MIN_MS, SHOP_STEP_DELAY_MAX_MS);
+        return AgentBotSchedulerRuntime.randomDelayMs(SHOP_STEP_DELAY_MIN_MS, SHOP_STEP_DELAY_MAX_MS);
     }
 
     private static void scheduleShopStep(BotEntry entry, Runnable step) {
@@ -804,7 +806,7 @@ public final class BotShopManager {
     }
 
     private static void scheduleShopStep(BotEntry entry, long delayMs, Runnable step) {
-        BotManager.after(delayMs, () -> {
+        AgentBotSchedulerRuntime.afterDelay(delayMs, () -> {
             if (!entry.shopVisitPending) {
                 return;
             }
