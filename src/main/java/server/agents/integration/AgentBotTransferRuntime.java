@@ -41,11 +41,11 @@ public final class AgentBotTransferRuntime {
                                              String message) {
         String category = transferCommand.category();
         if (AgentChatTransferFlow.shouldReplyWithWeirdTransfer(transferCommand, message)) {
-            AgentBotReplyRuntime.replyNow(entry, AgentChatTransferFlow.weirdTransferReply());
+            AgentBotTransferReplyRuntime.replyNow(entry, AgentChatTransferFlow.weirdTransferReply());
         }
         if (transferCommand.mode() == AgentChatTransferFlow.TransferMode.TRADE
                 && BotInventoryManager.isMesoCategory(category)) {
-            AgentBotSchedulerRuntime.afterRandomDelay(500, 700,
+            AgentBotTransferSchedulerRuntime.afterRandomDelay(500, 700,
                     () -> BotInventoryManager.startTradeTransfer(category, entry, entry.bot()));
             return;
         }
@@ -62,14 +62,14 @@ public final class AgentBotTransferRuntime {
         }
 
         int requestId = nextTransferRequestId(bot);
-        long replyDelay = AgentBotSchedulerRuntime.randomDelayMs(500, 700);
+        long replyDelay = AgentBotTransferSchedulerRuntime.randomDelayMs(500, 700);
         long requestedAt = System.nanoTime();
         CompletableFuture
                 .supplyAsync(() -> evaluateTransferCommand(entry, transferCommand, category, bot), TRADE_COMMAND_EXECUTOR)
                 .thenAccept(result -> {
                     long elapsedMs = (System.nanoTime() - requestedAt) / 1_000_000L;
                     long remainingDelay = Math.max(0L, replyDelay - elapsedMs);
-                    AgentBotSchedulerRuntime.afterDelay(remainingDelay, () ->
+                    AgentBotTransferSchedulerRuntime.afterDelay(remainingDelay, () ->
                             applyTransferCommandResult(entry, transferCommand, category, bot, requestId, result));
                 });
     }
@@ -121,7 +121,7 @@ public final class AgentBotTransferRuntime {
         }
 
         int requestId = nextTransferRequestId(bot);
-        long replyDelay = AgentBotSchedulerRuntime.randomDelayMs(500, 700);
+        long replyDelay = AgentBotTransferSchedulerRuntime.randomDelayMs(500, 700);
         long requestedAt = System.nanoTime();
         CompletableFuture
                 .supplyAsync(() -> new ItemQueryResult(
@@ -129,7 +129,7 @@ public final class AgentBotTransferRuntime {
                 .thenAccept(result -> {
                     long elapsedMs = (System.nanoTime() - requestedAt) / 1_000_000L;
                     long remainingDelay = Math.max(0L, replyDelay - elapsedMs);
-                    AgentBotSchedulerRuntime.afterDelay(remainingDelay, () ->
+                    AgentBotTransferSchedulerRuntime.afterDelay(remainingDelay, () ->
                             applyItemQueryResult(entry, category, bot, requestId, result));
                 });
     }
@@ -150,12 +150,12 @@ public final class AgentBotTransferRuntime {
                                                     String category,
                                                     AgentChatTransferFlow.TransferResultDecision decision) {
         switch (decision.action()) {
-            case REPLY -> AgentBotReplyRuntime.replyNow(entry, decision.reply());
+            case REPLY -> AgentBotTransferReplyRuntime.replyNow(entry, decision.reply());
             case START_TRADE -> BotInventoryManager.startTradeTransfer(category, entry, bot);
             case PROMPT_ITEM_CHOICE -> {
                 entry.setPendingAction(AgentChatPendingAction.ITEM_CHOICE);
                 entry.setPendingDropCategory(decision.category());
-                AgentBotReplyRuntime.replyNow(entry, decision.reply());
+                AgentBotTransferReplyRuntime.replyNow(entry, decision.reply());
             }
         }
     }

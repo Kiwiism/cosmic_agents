@@ -328,6 +328,11 @@ Recent reconstruction notes:
   and delay sampling now enter through narrow `AgentBotOfferReplyRuntime` and
   `AgentBotOfferSchedulerRuntime` adapters; offer orchestration no longer
   reaches directly into the broad reply or scheduler runtimes.
+- Transfer/item-query immediate replies, fixed-delay callbacks, random-delay
+  callbacks, and delay sampling now enter through narrow
+  `AgentBotTransferReplyRuntime` and `AgentBotTransferSchedulerRuntime`
+  adapters; transfer orchestration no longer reaches directly into the broad
+  reply or scheduler runtimes.
 
 Initial reconstruction order:
 
