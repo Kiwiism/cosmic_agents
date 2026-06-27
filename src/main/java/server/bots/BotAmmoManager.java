@@ -5,6 +5,7 @@ import client.inventory.Item;
 import client.inventory.WeaponType;
 import server.agents.integration.AgentBotAmmoRuntime;
 import server.agents.integration.AgentBotAmmoStateRuntime;
+import server.agents.integration.AgentBotPendingTradeStateRuntime;
 
 import java.util.List;
 import java.util.Map;
@@ -65,7 +66,7 @@ public final class BotAmmoManager {
 
     static boolean requestAmmoShare(BotEntry entry, Character bot, WeaponType weaponType, int currentAmmo, boolean bypassShareLimits) {
         Character owner = entry.owner;
-        if (owner == null || bot.getTrade() != null || entry.pendingTradeCategory != null) {
+        if (owner == null || bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry)) {
             return false;
         }
         if (!canRequestShare(weaponType) || currentAmmo >= BotCombatManager.cfg.AMMO_LOW_WARN) {
@@ -165,7 +166,7 @@ public final class BotAmmoManager {
         Character donorBot = donorEntry.bot;
         int maxQty = plan.donationQty();
         AgentBotAmmoRuntime.afterDelay(initialDelayMs, () -> {
-            if (donorBot.getTrade() != null || donorEntry.pendingTradeCategory != null || recipient.getTrade() != null) {
+            if (donorBot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(donorEntry) || recipient.getTrade() != null) {
                 return;
             }
             List<Item> items = BotInventoryManager.collectAmmoShareItems(donorBot, weaponType, maxQty);

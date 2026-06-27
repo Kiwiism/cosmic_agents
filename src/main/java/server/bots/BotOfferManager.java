@@ -14,6 +14,7 @@ import server.ItemInformationProvider;
 import server.agents.integration.AgentBotOfferRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
+import server.agents.integration.AgentBotPendingTradeStateRuntime;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,7 +55,7 @@ public final class BotOfferManager {
         if (entry.requestedUpgradeItemIds.contains(item.getItemId())) {
             return;
         }
-        if (AgentBotPendingActionStateRuntime.hasPendingAction(entry) || entry.pendingTradeCategory != null || hasOfferReservation(entry)) {
+        if (AgentBotPendingActionStateRuntime.hasPendingAction(entry) || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry) || hasOfferReservation(entry)) {
             return;
         }
         Character owner = entry.owner;
@@ -75,7 +76,7 @@ public final class BotOfferManager {
         if (owner == null) {
             return;
         }
-        if (AgentBotPendingActionStateRuntime.hasPendingAction(entry) || entry.pendingTradeCategory != null || hasOfferReservation(entry)) {
+        if (AgentBotPendingActionStateRuntime.hasPendingAction(entry) || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry) || hasOfferReservation(entry)) {
             AgentBotOfferRuntime.replyNow(entry, "busy rn, ask me again in a bit");
             return;
         }
@@ -145,7 +146,7 @@ public final class BotOfferManager {
                 || AgentBotOfferStateRuntime.hasPendingGearPromptAfter(entry, now)
                 || AgentBotOfferRuntime.isOwnerIdleForOffer(entry)
                 || AgentBotPendingActionStateRuntime.hasPendingAction(entry)
-                || entry.pendingTradeCategory != null
+                || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry)
                 || hasOfferReservation(entry)
                 || !BotInventoryManager.hasItem(bot, item)) {
             return;
@@ -240,7 +241,7 @@ public final class BotOfferManager {
 
     private static boolean offerGearItem(BotEntry entry, Character bot, Character recipient, Item item,
                                          GearOfferNeed need) {
-        if (AgentBotPendingActionStateRuntime.hasPendingAction(entry) || entry.pendingTradeCategory != null || hasOfferReservation(entry)
+        if (AgentBotPendingActionStateRuntime.hasPendingAction(entry) || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry) || hasOfferReservation(entry)
                 || !BotInventoryManager.hasItem(bot, item)) {
             return false;
         }
@@ -270,7 +271,7 @@ public final class BotOfferManager {
         Character recipient = resolveReservedOfferRecipient(entry, bot, recipientId);
         if (owner == null
                 || AgentBotPendingActionStateRuntime.hasPendingAction(entry)
-                || entry.pendingTradeCategory != null
+                || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry)
                 || recipient == null
                 || !BotInventoryManager.hasItem(bot, item)) {
             clearPendingOffer(entry);

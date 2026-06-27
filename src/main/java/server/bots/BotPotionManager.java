@@ -14,6 +14,7 @@ import constants.skills.WhiteKnight;
 import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
+import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.agents.integration.AgentBotPotionRuntime;
 import server.agents.integration.AgentBotPotionStateRuntime;
 import server.StatEffect;
@@ -378,7 +379,7 @@ public final class BotPotionManager {
     static boolean requestPotShare(BotEntry entry, Character bot, boolean forHp, boolean bypassShareLimits) {
         long startedAt = BotPerformanceMonitor.start();
         Character owner = entry.owner;
-        if (owner == null || bot.getTrade() != null || entry.pendingTradeCategory != null) {
+        if (owner == null || bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry)) {
             BotPerformanceMonitor.recordSince("potion-request", startedAt);
             return false;
         }
@@ -472,7 +473,7 @@ public final class BotPotionManager {
         Character donorBot = donorEntry.bot;
         int maxQty = plan.donationQty();
         AgentBotPotionRuntime.afterDelay(initialDelayMs, () -> {
-            if (donorBot.getTrade() != null || donorEntry.pendingTradeCategory != null || recipient.getTrade() != null) {
+            if (donorBot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(donorEntry) || recipient.getTrade() != null) {
                 return;
             }
             List<Item> items = BotInventoryManager.collectPotShareItems(donorBot, forHp, maxQty);

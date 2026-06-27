@@ -384,6 +384,10 @@ Recent reconstruction notes:
   through `AgentBotManualTradeStateRuntime`; manual trade handling keeps
   BotEntry as the temporary backing store but no longer reads or mutates those
   fields directly.
+- Pending trade active/idle guard checks now enter through
+  `AgentBotPendingTradeStateRuntime`; ammo, potion, offer, utility, and
+  inventory orchestration keep BotEntry as the temporary backing store but no
+  longer scatter direct `pendingTradeCategory` null checks.
 
 Initial reconstruction order:
 
