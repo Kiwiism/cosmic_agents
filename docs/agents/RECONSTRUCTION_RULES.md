@@ -314,6 +314,10 @@ Recent reconstruction notes:
   `AgentBotSocialReplyRuntime` and `AgentBotSocialSchedulerRuntime` adapters;
   social orchestration no longer reaches directly into the broad reply or
   scheduler runtimes.
+- Utility chat trade-invite replies and trade/shop/Maker random-delay callbacks
+  now enter through narrow `AgentBotUtilityReplyRuntime` and
+  `AgentBotUtilitySchedulerRuntime` adapters; utility orchestration no longer
+  reaches directly into the broad reply or scheduler runtimes.
 
 Initial reconstruction order:
 

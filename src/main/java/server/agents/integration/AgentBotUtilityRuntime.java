@@ -23,9 +23,9 @@ public final class AgentBotUtilityRuntime {
                 Character owner = entry.owner();
                 if (owner != null && bot.getTrade() == null && owner.getTrade() == null
                         && entry.pendingTradeCategory() == null) {
-                    AgentBotSchedulerRuntime.afterRandomDelay(600, 1000, () -> {
-                        AgentBotReplyRuntime.replyNow(entry, AgentChatUtilityFlow.tradeInviteReply());
-                        AgentBotSchedulerRuntime.afterRandomDelay(800, 1200, () -> {
+                    AgentBotUtilitySchedulerRuntime.afterRandomDelay(600, 1000, () -> {
+                        AgentBotUtilityReplyRuntime.replyNow(entry, AgentChatUtilityFlow.tradeInviteReply());
+                        AgentBotUtilitySchedulerRuntime.afterRandomDelay(800, 1200, () -> {
                             Trade.startTrade(bot);
                             Trade.inviteTrade(bot, owner);
                         });
@@ -35,19 +35,19 @@ public final class AgentBotUtilityRuntime {
 
             @Override
             public void sellTrash() {
-                AgentBotSchedulerRuntime.afterRandomDelay(500, 700,
+                AgentBotUtilitySchedulerRuntime.afterRandomDelay(500, 700,
                         () -> BotShopManager.requestSellTrashVisit(entry, entry.bot()));
             }
 
             @Override
             public void makeCrystals() {
-                AgentBotSchedulerRuntime.afterRandomDelay(500, 700,
+                AgentBotUtilitySchedulerRuntime.afterRandomDelay(500, 700,
                         () -> BotMakerManager.handleMakeCrystals(entry));
             }
 
             @Override
             public void disassembleTrash() {
-                AgentBotSchedulerRuntime.afterRandomDelay(500, 700,
+                AgentBotUtilitySchedulerRuntime.afterRandomDelay(500, 700,
                         () -> BotMakerManager.handleDisassembleTrash(entry));
             }
         };
