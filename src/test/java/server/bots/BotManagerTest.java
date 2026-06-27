@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.integration.AgentBotManagerReplyRuntime;
+import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.StatEffect;
@@ -644,7 +645,7 @@ class BotManagerTest {
         entry.following = true;
 
         assertTrue(BotManager.tryFollowIdleMovementFastPath(entry, bot, new Point(100, 100), 1_000L));
-        assertEquals("idle-fast", entry.lastNavDecision);
+        assertEquals("idle-fast", AgentBotNavigationDebugStateRuntime.lastDecision(entry));
         assertTrue(BotManager.tryFollowIdleMovementFastPath(entry, bot, new Point(100, 100), 1_500L),
                 "idle follow bots should skip per-tick nav/ground movement between periodic checks");
         assertFalse(BotManager.tryFollowIdleMovementFastPath(entry, bot, new Point(100, 100), 2_000L),

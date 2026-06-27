@@ -2,6 +2,7 @@ package server.bots;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
+import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 
@@ -36,10 +37,11 @@ class BotNavigationGraphFallbackTest {
                 BotNavigationManager.resolveTarget(entry, new Point(180, 160), true);
 
         assertFalse(entry.graphWarmupFallback, "closest cached graph should be used before heuristics");
-        assertFalse(directive.consumedTick && entry.navEdge == null && "graph-warmup".equals(entry.lastNavDecision),
+        assertFalse(directive.consumedTick && entry.navEdge == null
+                        && "graph-warmup".equals(AgentBotNavigationDebugStateRuntime.lastDecision(entry)),
                 "cached fallback graph should route with a graph edge, not heuristic warmup");
         assertNotNull(entry.navEdge, "cached fallback graph should provide a real nav edge");
-        assertFalse("graph-warmup".equals(entry.lastNavDecision),
+        assertFalse("graph-warmup".equals(AgentBotNavigationDebugStateRuntime.lastDecision(entry)),
                 "nav should stay on graph-based routing instead of dropping straight into heuristics");
     }
 

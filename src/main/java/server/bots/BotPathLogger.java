@@ -10,6 +10,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
+import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.maps.MapleMap;
 
 /**
@@ -77,9 +78,7 @@ public final class BotPathLogger {
                 botRegionId,
                 physState(entry),
                 navEdgeSummary(entry),
-                entry.lastEdgeBlockReason != null
-                        ? entry.lastNavDecision + "[" + entry.lastEdgeBlockReason + "]"
-                        : entry.lastNavDecision,
+                AgentBotNavigationDebugStateRuntime.decisionWithBlockReason(entry),
                 targetSnapshot.primaryTargetSource(),
                 targetSnapshot.steeringTargetSource(),
                 navTargetSummary(entry),
@@ -238,9 +237,9 @@ public final class BotPathLogger {
         sb.append("Nav edge:   ").append(navEdgeSummary(entry)).append("\n");
         sb.append("Nav target: ").append(navTargetSummary(entry))
                 .append("  targetRegion=").append(entry.navTargetRegionId).append("\n");
-        sb.append("Last nav decision: ").append(entry.lastNavDecision);
-        if (entry.lastEdgeBlockReason != null) {
-            sb.append("  [blocked: ").append(entry.lastEdgeBlockReason).append("]");
+        sb.append("Last nav decision: ").append(AgentBotNavigationDebugStateRuntime.lastDecision(entry));
+        if (AgentBotNavigationDebugStateRuntime.lastEdgeBlockReason(entry) != null) {
+            sb.append("  [blocked: ").append(AgentBotNavigationDebugStateRuntime.lastEdgeBlockReason(entry)).append("]");
         }
         sb.append("\n");
         sb.append("AI cadence:  every ").append(BotManager.cfg.AI_TICK_MS).append("ms")

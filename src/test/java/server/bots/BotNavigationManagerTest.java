@@ -3,6 +3,7 @@ package server.bots;
 import client.Character;
 import constants.game.CharacterStance;
 import org.junit.jupiter.api.BeforeAll;
+import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.maps.MapleMap;
 import server.maps.Foothold;
 import server.maps.Rope;
@@ -451,7 +452,7 @@ class BotNavigationManagerTest {
 
         assertFalse(directive.consumedTick);
         assertEquals(new Point(180, 100), directive.targetPos);
-        assertEquals("graph-warmup", entry.lastNavDecision);
+        assertEquals("graph-warmup", AgentBotNavigationDebugStateRuntime.lastDecision(entry));
         assertTrue(entry.graphWarmupFallback);
         assertNull(entry.navEdge);
 
@@ -589,7 +590,7 @@ class BotNavigationManagerTest {
 
         assertFalse(directive.consumedTick);
         assertFalse(entry.inAir);
-        assertEquals("climb-pos", entry.lastEdgeBlockReason);
+        assertEquals("climb-pos", AgentBotNavigationDebugStateRuntime.lastEdgeBlockReason(entry));
     }
 
     @Test

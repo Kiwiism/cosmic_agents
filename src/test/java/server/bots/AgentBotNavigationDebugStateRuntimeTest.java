@@ -44,6 +44,22 @@ class AgentBotNavigationDebugStateRuntimeTest {
         assertFalse(AgentBotNavigationDebugStateRuntime.isPathLogging(entry));
     }
 
+    @Test
+    void adaptsLastDecisionAndBlockReasonState() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        AgentBotNavigationDebugStateRuntime.setLastDecision(entry, "graph-warmup");
+        assertTrue("graph-warmup".equals(AgentBotNavigationDebugStateRuntime.lastDecision(entry)));
+
+        AgentBotNavigationDebugStateRuntime.setLastEdgeBlockReason(entry, "climb-pos");
+        assertTrue("climb-pos".equals(AgentBotNavigationDebugStateRuntime.lastEdgeBlockReason(entry)));
+        assertTrue("graph-warmup[climb-pos]".equals(
+                AgentBotNavigationDebugStateRuntime.decisionWithBlockReason(entry)));
+
+        AgentBotNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
+        assertTrue("graph-warmup".equals(AgentBotNavigationDebugStateRuntime.decisionWithBlockReason(entry)));
+    }
+
     private static AgentMovementTargetSnapshot snapshot() {
         return new AgentMovementTargetSnapshot(
                 "line",

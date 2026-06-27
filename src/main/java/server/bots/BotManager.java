@@ -7,6 +7,7 @@ import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
+import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotPotionStateRuntime;
 import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
@@ -3664,7 +3665,7 @@ public class BotManager {
             return false;
         }
 
-        entry.lastNavDecision = "idle-fast";
+        AgentBotNavigationDebugStateRuntime.setLastDecision(entry, "idle-fast");
         entry.stuckMs = 0;
         entry.stuckCheckX = Integer.MIN_VALUE;
         return true;

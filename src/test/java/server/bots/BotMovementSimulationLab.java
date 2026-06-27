@@ -6,6 +6,7 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import org.mockito.stubbing.Answer;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
+import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.maps.MapleMap;
 import server.maps.Rope;
 
@@ -344,7 +345,7 @@ final class BotMovementSimulationLab {
                     new Point(ownerPos),
                     new Point(goalPos),
                     new Point(steeringPos),
-                    entry.lastNavDecision,
+                    AgentBotNavigationDebugStateRuntime.lastDecision(entry),
                     describePhysics(entry),
                     describeEdge(entry.navEdge));
         }

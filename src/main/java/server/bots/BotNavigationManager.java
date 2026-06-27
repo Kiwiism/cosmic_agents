@@ -101,7 +101,7 @@ final class BotNavigationManager {
                 BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), entry.movementProfile);
                 entry.graphWarmupFallback = true;
                 notifyWarmup(entry, bot);
-                entry.lastNavDecision = "graph-warmup";
+                AgentBotNavigationDebugStateRuntime.setLastDecision(entry, "graph-warmup");
                 clearNavigation(entry);
                 Point fallbackTarget = rawTargetPos != null ? new Point(rawTargetPos) : bot.getPosition();
                 AgentBotNavigationDebugStateRuntime.recordPathLog(entry, captureTargetSnapshot(entry, rawTargetPos), -1, false, runAiTick);
@@ -109,7 +109,7 @@ final class BotNavigationManager {
             }
             if (BotNavigationGraphProvider.peekGraph(bot.getMap(), entry.movementProfile) == null) {
                 BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), entry.movementProfile);
-                entry.lastNavDecision = "graph-fallback-profile";
+                AgentBotNavigationDebugStateRuntime.setLastDecision(entry, "graph-fallback-profile");
             }
             entry.graphWarmupFallback = false;
             Point botPos = bot.getPosition();
@@ -148,9 +148,9 @@ final class BotNavigationManager {
             }
 
             if (edge == null) {
-                entry.lastNavDecision = !runAiTick ? "no-ai"
+                AgentBotNavigationDebugStateRuntime.setLastDecision(entry, !runAiTick ? "no-ai"
                         : startRegionId < 0 || targetRegionId < 0 ? "no-region"
-                        : startRegionId == targetRegionId ? "same-region" : "no-path";
+                        : startRegionId == targetRegionId ? "same-region" : "no-path");
                 clearNavigation(entry);
                 AgentBotNavigationDebugStateRuntime.recordPathLog(entry, captureTargetSnapshot(entry, rawTargetPos), startRegionId, false, runAiTick);
                 return new NavigationDirective(rawTargetPos, false);
@@ -158,12 +158,12 @@ final class BotNavigationManager {
 
             NavigationDirective executionDirective = tryExecuteEdge(graph, entry, bot, botPos, rawTargetPos, edge, runAiTick);
             if (executionDirective != null) {
-                entry.lastNavDecision = "exec";
+                AgentBotNavigationDebugStateRuntime.setLastDecision(entry, "exec");
                 AgentBotNavigationDebugStateRuntime.recordPathLog(entry, captureTargetSnapshot(entry, rawTargetPos), startRegionId, true, runAiTick);
                 return executionDirective;
             }
 
-            entry.lastNavDecision = edgeReused ? "reuse" : "new";
+            AgentBotNavigationDebugStateRuntime.setLastDecision(entry, edgeReused ? "reuse" : "new");
             entry.navPreciseTarget = shouldUsePreciseTarget(graph, entry, botPos, edge);
             entry.navTargetPos = selectWaypoint(entry, graph, botPos, edge);
             AgentBotNavigationDebugStateRuntime.recordPathLog(entry, captureTargetSnapshot(entry, rawTargetPos), startRegionId, false, runAiTick);
@@ -202,7 +202,7 @@ final class BotNavigationManager {
             return false;
         }
 
-        entry.lastNavDecision = "exec";
+        AgentBotNavigationDebugStateRuntime.setLastDecision(entry, "exec");
         return true;
     }
 
@@ -417,11 +417,11 @@ final class BotNavigationManager {
                     }
                 }
             }
-            entry.lastEdgeBlockReason = "jump-pos";
+            AgentBotNavigationDebugStateRuntime.setLastEdgeBlockReason(entry, "jump-pos");
             return null;
         }
 
-        entry.lastEdgeBlockReason = null;
+        AgentBotNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
         setEdgeExecutionTarget(entry, edge);
         BotMovementManager.initiateJump(entry, bot, edge.launchStepX);
         return new NavigationDirective(rawTargetPos, true);
@@ -482,7 +482,7 @@ final class BotNavigationManager {
             return null;
         }
         if (!canExecuteClimbEntryFromCurrentPosition(bot.getMap(), botPos, edge, rope)) {
-            entry.lastEdgeBlockReason = "climb-pos";
+            AgentBotNavigationDebugStateRuntime.setLastEdgeBlockReason(entry, "climb-pos");
             return null;
         }
 
@@ -490,31 +490,31 @@ final class BotNavigationManager {
             // Bot is already within the rope's Y range — attach at its current Y, not the edge
             // endPoint. Using endPoint.y (rope top) would teleport a bot at the bottom of the
             // rope all the way to the top instantly.
-            entry.lastEdgeBlockReason = null;
+            AgentBotNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
             startClimbing(entry, bot, rope, botPos.y);
             return new NavigationDirective(rawTargetPos, true);
         }
         if (canAttachToRopeFromTopPlatform(edge, botPos, rope)) {
-            entry.lastEdgeBlockReason = null;
+            AgentBotNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
             startClimbing(entry, bot, rope, edge.endPoint.y);
             return new NavigationDirective(rawTargetPos, true);
         }
         if (canGrabRopeFromTopPlatform(edge, botPos, rope)) {
             // Top-of-rope entry is a separate intent from down-jump. Queue it and let grounded
             // physics consume the request on the next tick, just like other input-driven actions.
-            entry.lastEdgeBlockReason = null;
+            AgentBotNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
             BotPhysicsEngine.queueTopRopeEntry(entry, bot, rope, edge.endPoint.y);
             BotMovementManager.broadcastMovement(entry);
             return new NavigationDirective(rawTargetPos, true);
         }
 
         if (canExecuteGroundRopeJumpEntryFromCurrentPosition(botPos, edge)) {
-            entry.lastEdgeBlockReason = null;
+            AgentBotNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
             BotMovementManager.initiateRopeJump(entry, bot, edge.launchStepX);
             return new NavigationDirective(rawTargetPos, true);
         }
 
-        entry.lastEdgeBlockReason = "climb-reach";
+        AgentBotNavigationDebugStateRuntime.setLastEdgeBlockReason(entry, "climb-reach");
         return null;
     }
 

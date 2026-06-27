@@ -474,6 +474,10 @@ Recent reconstruction notes:
   through `AgentBotNavigationDebugStateRuntime`; navigation debug overlay and
   navigation resolution keep BotEntry as the temporary backing store but no
   longer create, clear, or record the path logger field directly.
+- Navigation debug decision and edge-block reason state now enter through
+  `AgentBotNavigationDebugStateRuntime`; navigation resolution, idle fast-path
+  status, path logging, and focused tests keep BotEntry as the temporary backing
+  store but no longer read or write those debug fields directly.
 
 Initial reconstruction order:
 

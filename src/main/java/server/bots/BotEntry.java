@@ -742,6 +742,22 @@ public class BotEntry {
         this.pathLogger = null;
     }
 
+    public String lastNavDecision() {
+        return lastNavDecision;
+    }
+
+    public void setLastNavDecision(String lastNavDecision) {
+        this.lastNavDecision = lastNavDecision;
+    }
+
+    public String lastEdgeBlockReason() {
+        return lastEdgeBlockReason;
+    }
+
+    public void setLastEdgeBlockReason(String lastEdgeBlockReason) {
+        this.lastEdgeBlockReason = lastEdgeBlockReason;
+    }
+
     public long pendingGearPromptAt() {
         return pendingGearPromptAt;
     }

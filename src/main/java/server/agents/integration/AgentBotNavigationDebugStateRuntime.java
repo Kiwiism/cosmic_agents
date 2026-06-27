@@ -34,6 +34,31 @@ public final class AgentBotNavigationDebugStateRuntime {
         }
     }
 
+    public static String lastDecision(BotEntry entry) {
+        return entry.lastNavDecision();
+    }
+
+    public static void setLastDecision(BotEntry entry, String decision) {
+        entry.setLastNavDecision(decision);
+    }
+
+    public static String lastEdgeBlockReason(BotEntry entry) {
+        return entry.lastEdgeBlockReason();
+    }
+
+    public static void setLastEdgeBlockReason(BotEntry entry, String reason) {
+        entry.setLastEdgeBlockReason(reason);
+    }
+
+    public static void clearLastEdgeBlockReason(BotEntry entry) {
+        entry.setLastEdgeBlockReason(null);
+    }
+
+    public static String decisionWithBlockReason(BotEntry entry) {
+        String reason = lastEdgeBlockReason(entry);
+        return reason == null ? lastDecision(entry) : lastDecision(entry) + "[" + reason + "]";
+    }
+
     public static void recordPathLog(BotEntry entry,
                                      AgentMovementTargetSnapshot targetSnapshot,
                                      int botRegionId,
