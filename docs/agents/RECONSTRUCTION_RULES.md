@@ -262,6 +262,10 @@ Recent reconstruction notes:
   queueing now enter through narrow `AgentBotPendingActionReplyRuntime` and
   `AgentBotPendingActionSchedulerRuntime` adapters; pending-action orchestration
   no longer reaches directly into the broad reply or scheduler runtimes.
+- Toggle, buff-query, and respec control callbacks now enter through narrow
+  `AgentBotControlReplyRuntime` and `AgentBotControlSchedulerRuntime` adapters;
+  control orchestration no longer reaches directly into the broad reply or
+  scheduler runtimes for control-owned chat timing.
 
 Initial reconstruction order:
 
