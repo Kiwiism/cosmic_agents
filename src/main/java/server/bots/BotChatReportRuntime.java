@@ -4,7 +4,6 @@ package server.bots;
 import server.agents.integration.AgentBotReplyRuntime;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentCharacterDialogueReporter;
-import server.agents.capabilities.dialogue.AgentChatEquipmentFlow;
 import server.agents.capabilities.dialogue.AgentChatReportFlow;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
@@ -298,13 +297,8 @@ final class BotChatReportRuntime {
             }
 
             @Override
-            public void queueGearCheckUnavailable() {
-                AgentBotReplyRuntime.queueReply(entry, AgentChatEquipmentFlow.gearCheckUnavailableReply());
-            }
-
-            @Override
-            public void queueNoBetterGear() {
-                AgentBotReplyRuntime.queueReply(entry, AgentChatEquipmentFlow.noBetterGearReply());
+            public void queueReply(String line) {
+                AgentBotReplyRuntime.queueReply(entry, line);
             }
         };
     }

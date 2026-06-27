@@ -206,12 +206,12 @@ public final class AgentChatReportRuntime {
             RecommendedGearActions actions,
             long nowMs) {
         if (!actions.hasOwner()) {
-            actions.queueGearCheckUnavailable();
+            actions.queueReply(AgentChatEquipmentFlow.gearCheckUnavailableReply());
             return;
         }
 
         if (!actions.offerBestRecommendedGear()) {
-            actions.queueNoBetterGear();
+            actions.queueReply(AgentChatEquipmentFlow.noBetterGearReply());
         }
         state.setNextGearSuggestionAt(nowMs + 60_000L);
     }
@@ -332,9 +332,7 @@ public final class AgentChatReportRuntime {
 
         boolean offerBestRecommendedGear();
 
-        void queueGearCheckUnavailable();
-
-        void queueNoBetterGear();
+        void queueReply(String line);
     }
 
     public interface HelpActions {

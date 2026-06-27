@@ -107,7 +107,8 @@ class AgentChatReportRuntimeTest {
 
         AgentChatReportRuntime.reportRecommendedGear(state, actions, 1000L);
 
-        assertEquals(List.of("queueGearCheckUnavailable"), actions.events);
+        assertEquals(List.of(AgentChatEquipmentFlow.gearCheckUnavailableReply()), actions.replies);
+        assertEquals(List.of(), actions.events);
         assertEquals(0L, state.nextGearSuggestionAt);
     }
 
@@ -121,6 +122,7 @@ class AgentChatReportRuntimeTest {
         AgentChatReportRuntime.reportRecommendedGear(state, actions, 1000L);
 
         assertEquals(List.of("offerBestRecommendedGear"), actions.events);
+        assertEquals(List.of(), actions.replies);
         assertEquals(61_000L, state.nextGearSuggestionAt);
     }
 
@@ -133,7 +135,8 @@ class AgentChatReportRuntimeTest {
 
         AgentChatReportRuntime.reportRecommendedGear(state, actions, 1000L);
 
-        assertEquals(List.of("offerBestRecommendedGear", "queueNoBetterGear"), actions.events);
+        assertEquals(List.of("offerBestRecommendedGear"), actions.events);
+        assertEquals(List.of(AgentChatEquipmentFlow.noBetterGearReply()), actions.replies);
         assertEquals(61_000L, state.nextGearSuggestionAt);
     }
 
@@ -413,6 +416,7 @@ class AgentChatReportRuntimeTest {
 
     private static final class TestRecommendedGearActions implements AgentChatReportRuntime.RecommendedGearActions {
         private final List<String> events = new ArrayList<>();
+        private final List<String> replies = new ArrayList<>();
         private boolean hasOwner;
         private boolean offerResult;
 
@@ -428,13 +432,8 @@ class AgentChatReportRuntimeTest {
         }
 
         @Override
-        public void queueGearCheckUnavailable() {
-            events.add("queueGearCheckUnavailable");
-        }
-
-        @Override
-        public void queueNoBetterGear() {
-            events.add("queueNoBetterGear");
+        public void queueReply(String line) {
+            replies.add(line);
         }
     }
 
