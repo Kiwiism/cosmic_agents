@@ -253,6 +253,11 @@ Recent reconstruction notes:
   `AgentBotStatusReplyRuntime` and `AgentBotStatusSchedulerRuntime` adapters;
   `AgentBotStatusRuntime` no longer reaches directly into the broad reply or
   scheduler runtimes for those status-owned side effects.
+- Relog/logout/away session prompts, confirmations, and delayed lifecycle
+  callbacks now enter through narrow `AgentBotSessionReplyRuntime` and
+  `AgentBotSessionSchedulerRuntime` adapters; `AgentBotSessionRuntime` no
+  longer reaches directly into the broad reply or scheduler runtimes for
+  session-owned chat timing.
 
 Initial reconstruction order:
 
