@@ -278,6 +278,10 @@ Recent reconstruction notes:
   narrow `AgentBotCombatReplyRuntime` and `AgentBotCombatSchedulerRuntime`
   adapters; combat orchestration no longer reaches directly into the broad
   reply or scheduler runtimes.
+- Ammo-sharing reply, delay, random-delay, and delay-sampling bridge methods
+  now enter through narrow `AgentBotAmmoReplyRuntime` and
+  `AgentBotAmmoSchedulerRuntime` adapters; ammo orchestration no longer reaches
+  directly into the broad reply or scheduler runtimes.
 
 Initial reconstruction order:
 
