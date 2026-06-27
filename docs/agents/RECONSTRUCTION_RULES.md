@@ -295,6 +295,9 @@ Recent reconstruction notes:
   `AgentBotShopReplyRuntime` and `AgentBotShopSchedulerRuntime` adapters; shop
   orchestration no longer reaches directly into the broad reply or scheduler
   runtimes.
+- LLM dialogue replies now enter through the narrow `AgentBotLlmReplyRuntime`
+  adapter; LLM orchestration no longer reaches directly into the broad reply
+  runtime.
 
 Initial reconstruction order:
 
