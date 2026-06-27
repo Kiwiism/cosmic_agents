@@ -250,7 +250,7 @@ public final class BotPotionManager {
         return AgentSupplyDialogueReporter.autopotChoice(name, itemId, rank.tier().name(), rank.value());
     }
 
-    static String grindStartMessage(Character bot) {
+    public static String grindStartMessage(Character bot) {
         int[] pots = countPotions(bot);
         return AgentSupplyDialogueReporter.grindStartMessage(
                 BotManager.randomReply(AgentDialogueCatalog.grindReplies()),
@@ -312,7 +312,7 @@ public final class BotPotionManager {
         requestLowPotShares(entry, bot, false);
     }
 
-    static boolean requestLowSuppliesFromOwnerAsk(BotEntry entry, Character bot) {
+    public static boolean requestLowSuppliesFromOwnerAsk(BotEntry entry, Character bot) {
         boolean requestedPots = requestLowPotShares(entry, bot, true);
         boolean requestedAmmo = BotAmmoManager.requestLowAmmoShare(entry, bot, true);
         return requestedPots || requestedAmmo;
@@ -434,13 +434,13 @@ public final class BotPotionManager {
         return true;
     }
 
-    enum OwnerPotShareResult {
+    public enum OwnerPotShareResult {
         OFFERED,
         NO_DONOR,
         BLOCKED
     }
 
-    static OwnerPotShareResult offerPotShareToOwner(BotEntry entry, boolean forHp) {
+    public static OwnerPotShareResult offerPotShareToOwner(BotEntry entry, boolean forHp) {
         Character owner = entry.owner;
         if (owner == null || owner.getTrade() != null) {
             return OwnerPotShareResult.BLOCKED;

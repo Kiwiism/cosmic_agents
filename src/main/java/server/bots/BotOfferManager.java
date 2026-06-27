@@ -68,7 +68,7 @@ public final class BotOfferManager {
         createOwnerUpgradeRequest(entry, bot, owner, item);
     }
 
-    static void requestBestUpgradeFromOwner(BotEntry entry, Character bot) {
+    public static void requestBestUpgradeFromOwner(BotEntry entry, Character bot) {
         Character owner = entry.owner;
         if (owner == null) {
             return;
@@ -212,7 +212,7 @@ public final class BotOfferManager {
         }
     }
 
-    static void clearPendingOfferForOwnerAsk(BotEntry entry) {
+    public static void clearPendingOfferForOwnerAsk(BotEntry entry) {
         clearPendingOffer(entry);
     }
 

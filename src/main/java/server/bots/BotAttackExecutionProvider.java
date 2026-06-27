@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
-final class BotAttackExecutionProvider {
+public final class BotAttackExecutionProvider {
     // This server's close-range packet path uses:
     // byte 2 = body action id from Character/00002000.img
     // byte 3 = facing mask (0 / 0x80)
@@ -302,7 +302,7 @@ final class BotAttackExecutionProvider {
         };
     }
 
-    static WeaponType getEquippedWeaponType(Character bot) {
+    public static WeaponType getEquippedWeaponType(Character bot) {
         Item weapon = bot.getInventory(InventoryType.EQUIPPED).getItem((short) -11);
         if (weapon == null) {
             return null;

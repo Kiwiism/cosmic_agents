@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-final class BotAmmoManager {
+public final class BotAmmoManager {
     private static final Map<String, Long> ammoShareBackoffUntil = new ConcurrentHashMap<>();
     private static final Map<Integer, Long> ammoShareCooldownUntil = new ConcurrentHashMap<>();
 
@@ -97,13 +97,13 @@ final class BotAmmoManager {
         return true;
     }
 
-    enum OwnerAmmoShareResult {
+    public enum OwnerAmmoShareResult {
         OFFERED,
         NO_DONOR,
         BLOCKED
     }
 
-    static OwnerAmmoShareResult offerAmmoShareToOwner(BotEntry entry, WeaponType weaponType) {
+    public static OwnerAmmoShareResult offerAmmoShareToOwner(BotEntry entry, WeaponType weaponType) {
         Character owner = entry.owner;
         if (owner == null || owner.getTrade() != null || !canRequestShare(weaponType)) {
             return OwnerAmmoShareResult.BLOCKED;

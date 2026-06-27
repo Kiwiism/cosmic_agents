@@ -39,6 +39,9 @@ Recent reconstruction notes:
 - Transfer/item-query chat callbacks and async transfer result routing now have
   an Agent-owned facade in `AgentBotTransferRuntime`; `BotChatTransferRuntime`
   remains only as a temporary compatibility shim for legacy bot package callers.
+- Supply request callbacks and request-upgrade supply routing now have an
+  Agent-owned facade in `AgentBotSupplyRuntime`; `BotChatSupplyRuntime` remains
+  only as a temporary compatibility shim for legacy bot package callers.
 
 Initial reconstruction order:
 
