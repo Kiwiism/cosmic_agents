@@ -4,6 +4,7 @@ package server.bots;
 import server.agents.integration.AgentBotManagerReplyRuntime;
 import server.agents.integration.AgentBotManagerSchedulerRuntime;
 import server.agents.integration.AgentBotManagerStatusRuntime;
+import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotPotionStateRuntime;
 import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
@@ -2709,14 +2710,14 @@ public class BotManager {
         boolean inactive = (owner == null) || (owner.getHp() <= 0);
 
         if (!inactive) {
-            if (entry.ownerAwaySafeMode && entry.ownerOfflineOrDeadSinceMs == 0) {
+            if (AgentBotActivityStateRuntime.ownerAwaySafeMode(entry)
+                    && !AgentBotActivityStateRuntime.ownerInactiveTimerStarted(entry)) {
                 return false;
             }
-            if (entry.ownerOfflineOrDeadSinceMs != 0 || entry.ownerReturnedToTown) {
-                boolean justReturnedFromTown = entry.ownerReturnedToTown;
-                entry.ownerOfflineOrDeadSinceMs = 0;
-                entry.ownerReturnedToTown = false;
-                entry.ownerAwaySafeMode = false;
+            if (AgentBotActivityStateRuntime.ownerInactiveTimerStarted(entry)
+                    || AgentBotActivityStateRuntime.ownerReturnedToTown(entry)) {
+                boolean justReturnedFromTown = AgentBotActivityStateRuntime.ownerReturnedToTown(entry);
+                AgentBotActivityStateRuntime.clearOwnerInactiveState(entry);
                 // Cancel any in-flight cluster walk: while owner was offline the
                 // only setter of moveTarget was the offline-town path, so clearing
                 // here is safe and avoids stale state when owner reconnects.
@@ -2734,19 +2735,21 @@ public class BotManager {
             return false;
         }
 
-        if (entry.ownerReturnedToTown) {
-            if (entry.ownerAwaySafeMode && entry.ownerOfflineOrDeadSinceMs == 0) {
-                entry.ownerOfflineOrDeadSinceMs = nowMs;
+        if (AgentBotActivityStateRuntime.ownerReturnedToTown(entry)) {
+            if (AgentBotActivityStateRuntime.ownerAwaySafeMode(entry)
+                    && !AgentBotActivityStateRuntime.ownerInactiveTimerStarted(entry)) {
+                AgentBotActivityStateRuntime.startOwnerInactiveTimer(entry, nowMs);
             }
             return false;
         }
 
-        if (entry.ownerOfflineOrDeadSinceMs == 0) {
-            entry.ownerOfflineOrDeadSinceMs = nowMs;
+        if (!AgentBotActivityStateRuntime.ownerInactiveTimerStarted(entry)) {
+            AgentBotActivityStateRuntime.startOwnerInactiveTimer(entry, nowMs);
             return false;
         }
 
-        if (nowMs - entry.ownerOfflineOrDeadSinceMs < cfg.OWNER_INACTIVE_TOWN_RETURN_MS) {
+        if (nowMs - AgentBotActivityStateRuntime.ownerOfflineOrDeadSinceMs(entry)
+                < cfg.OWNER_INACTIVE_TOWN_RETURN_MS) {
             return false;
         }
 
@@ -2796,7 +2799,7 @@ public class BotManager {
 
         BotPhysicsEngine.idleOnGround(entry, bot);
         BotMovementManager.broadcastMovement(entry);
-        entry.ownerReturnedToTown = true;
+        AgentBotActivityStateRuntime.setOwnerReturnedToTown(entry, true);
         return false;
     }
 
@@ -2809,7 +2812,7 @@ public class BotManager {
         entry.grindTarget = null;
         entry.degenAttackDone = false;
         entry.buffConsumablesEnabled = false;
-        entry.ownerAwaySafeMode = true;
+        AgentBotActivityStateRuntime.setOwnerAwaySafeMode(entry, true);
     }
 
     private boolean scrollBotToTown(BotEntry entry, Character bot, int ownerCharId) {
@@ -2820,7 +2823,7 @@ public class BotManager {
         MapleMap returnMap = currentMap.getReturnMap();
         if (returnMap == null || returnMap.getId() == currentMap.getId()) {
             // No return map (e.g. some PQ/town maps): mark handled to avoid re-evaluating every tick.
-            entry.ownerReturnedToTown = true;
+            AgentBotActivityStateRuntime.setOwnerReturnedToTown(entry, true);
             return false;
         }
 
@@ -2846,7 +2849,7 @@ public class BotManager {
 
         BotMovementManager.resetEntryState(entry);
         startMoveTo(entry, target, true);
-        entry.ownerReturnedToTown = true;
+        AgentBotActivityStateRuntime.setOwnerReturnedToTown(entry, true);
         return true;
     }
 

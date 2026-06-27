@@ -450,6 +450,10 @@ Recent reconstruction notes:
   `AgentBotPotionStateRuntime`; potion check retry, autopot cadence, and
   passive recovery keep BotEntry as the temporary backing store but no longer
   read, shorten, tick down, clear, or set those timer fields directly.
+- Owner-inactive safe-mode state now enters through
+  `AgentBotActivityStateRuntime`; offline/dead owner recovery keeps BotEntry as
+  the temporary backing store but no longer reads, starts, clears, or sets the
+  inactive timer, town-return flag, or away-safe-mode flag directly.
 
 Initial reconstruction order:
 

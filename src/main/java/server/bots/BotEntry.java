@@ -534,6 +534,30 @@ public class BotEntry {
     boolean ownerReturnedToTown = false;
     boolean ownerAwaySafeMode = false;
 
+    public long ownerOfflineOrDeadSinceMs() {
+        return ownerOfflineOrDeadSinceMs;
+    }
+
+    public void setOwnerOfflineOrDeadSinceMs(long ownerOfflineOrDeadSinceMs) {
+        this.ownerOfflineOrDeadSinceMs = ownerOfflineOrDeadSinceMs;
+    }
+
+    public boolean ownerReturnedToTown() {
+        return ownerReturnedToTown;
+    }
+
+    public void setOwnerReturnedToTown(boolean ownerReturnedToTown) {
+        this.ownerReturnedToTown = ownerReturnedToTown;
+    }
+
+    public boolean ownerAwaySafeMode() {
+        return ownerAwaySafeMode;
+    }
+
+    public void setOwnerAwaySafeMode(boolean ownerAwaySafeMode) {
+        this.ownerAwaySafeMode = ownerAwaySafeMode;
+    }
+
     // Foothold index, rebuilt on map change
     int lastMapId = -1;
     Map<Integer, Foothold> fhIndex = new HashMap<>();
