@@ -110,6 +110,15 @@ class AgentChatReportRuntimeTest {
         assertEquals(List.of("range: 1~2"), replies);
     }
 
+    @Test
+    void linesReportQueuesProvidedLinesInOrder() {
+        List<String> replies = new ArrayList<>();
+
+        AgentChatReportRuntime.reportLines(List.of("one", "two", "three"), replies::add);
+
+        assertEquals(List.of("one", "two", "three"), replies);
+    }
+
     private static final class TestScheduler implements AgentChatReportRuntime.ReportScheduler {
         private final List<String> delays = new ArrayList<>();
 

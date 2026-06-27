@@ -153,9 +153,7 @@ final class BotChatReportRuntime {
     }
 
     static void reportMovementStats(BotEntry entry, Character bot) {
-        for (String line : buildMovementStatsReport(bot)) {
-            AgentBotReplyRuntime.queueReply(entry, line);
-        }
+        reportLines(entry, buildMovementStatsReport(bot));
     }
 
     static List<String> buildMovementStatsReport(Character bot) {
@@ -252,15 +250,11 @@ final class BotChatReportRuntime {
     }
 
     static void reportBuffDebug(BotEntry entry, Character bot) {
-        for (String line : BotBuffManager.getDebugLines(entry, bot)) {
-            AgentBotReplyRuntime.queueReply(entry, line);
-        }
+        reportLines(entry, BotBuffManager.getDebugLines(entry, bot));
     }
 
     static void reportSkillBuffDebug(BotEntry entry, Character bot) {
-        for (String line : BotCombatManager.getSkillBuffDebugLines(entry, bot)) {
-            AgentBotReplyRuntime.queueReply(entry, line);
-        }
+        reportLines(entry, BotCombatManager.getSkillBuffDebugLines(entry, bot));
     }
 
     static void reportHelp(BotEntry entry) {
@@ -277,6 +271,10 @@ final class BotChatReportRuntime {
 
     private static void reportLine(BotEntry entry, String line) {
         AgentChatReportRuntime.reportLine(line, replyLine -> AgentBotReplyRuntime.queueReply(entry, replyLine));
+    }
+
+    private static void reportLines(BotEntry entry, Iterable<String> lines) {
+        AgentChatReportRuntime.reportLines(lines, line -> AgentBotReplyRuntime.queueReply(entry, line));
     }
 
     private static AgentChatReportRuntime.RecommendedGearState recommendedGearState(BotEntry entry) {

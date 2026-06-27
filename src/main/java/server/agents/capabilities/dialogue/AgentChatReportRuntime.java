@@ -128,6 +128,12 @@ public final class AgentChatReportRuntime {
         actions.queueReply(line);
     }
 
+    public static void reportLines(Iterable<String> lines, LineActions actions) {
+        for (String line : lines) {
+            actions.queueReply(line);
+        }
+    }
+
     public interface ReportScheduler {
         void afterRandomDelay(int minMs, int maxMs, Runnable action);
     }
