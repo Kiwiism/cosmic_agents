@@ -96,6 +96,18 @@ public final class AgentChatStatusRuntime {
         });
     }
 
+    public static void tickAfkCheck(
+            AgentChatWelcomeBackFlow.AfkState state,
+            Point ownerPosition,
+            long nowMs,
+            AfkReturnActions actions) {
+        AgentChatWelcomeBackFlow.tickAfkCheck(
+                state,
+                ownerPosition,
+                nowMs,
+                () -> announceAfkReturn(actions));
+    }
+
     private static int randomWelcomeExpression() {
         return ThreadLocalRandom.current().nextBoolean() ? 2 : 3;
     }

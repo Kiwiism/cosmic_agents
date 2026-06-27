@@ -31,11 +31,11 @@ final class BotChatStatusRuntime {
     }
 
     static void tickAfkCheck(BotEntry entry, Character owner) {
-        AgentChatWelcomeBackFlow.tickAfkCheck(
+        AgentChatStatusRuntime.tickAfkCheck(
                 afkState(entry),
                 owner.getPosition(),
                 System.currentTimeMillis(),
-                welcomeBackCallbacks(entry));
+                afkReturnActions(entry));
     }
 
     static void prepareActiveModeEntry(BotEntry entry) {
@@ -211,10 +211,6 @@ final class BotChatStatusRuntime {
                 entry.ownerWasAfk = wasAfk;
             }
         };
-    }
-
-    private static AgentChatWelcomeBackFlow.WelcomeBackCallbacks welcomeBackCallbacks(BotEntry entry) {
-        return () -> AgentChatStatusRuntime.announceAfkReturn(afkReturnActions(entry));
     }
 
     private static void maybeSuggestRecommendedGear(BotEntry entry, Character bot) {

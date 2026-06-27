@@ -227,6 +227,25 @@ class AgentChatStatusRuntimeTest {
         assertTrue(actions.events.get(2).startsWith("reply:"));
     }
 
+    @Test
+    void tickAfkCheckSchedulesWelcomeBackWhenAfkOwnerMoves() {
+        TestAfkState state = new TestAfkState();
+        state.position = new Point(1, 1);
+        state.sinceMs = 1000L;
+        state.wasAfk = true;
+        TestAfkReturnActions actions = new TestAfkReturnActions();
+        actions.hasAgent = true;
+
+        AgentChatStatusRuntime.tickAfkCheck(state, new Point(2, 2), 2000L, actions);
+
+        assertFalse(state.wasAfk);
+        assertEquals(new Point(2, 2), state.position);
+        assertEquals(2000L, state.sinceMs);
+        assertEquals("1800-2200", actions.events.get(0));
+        assertTrue(Set.of("face:2", "face:3").contains(actions.events.get(1)));
+        assertTrue(actions.events.get(2).startsWith("reply:"));
+    }
+
     private static final class TestState implements AgentChatStatusRuntime.StatusState {
         private Point position;
         private long sinceMs;
@@ -444,6 +463,42 @@ class AgentChatStatusRuntimeTest {
         @Override
         public void reply(String text) {
             events.add("reply:" + text);
+        }
+    }
+
+    private static final class TestAfkState implements AgentChatWelcomeBackFlow.AfkState {
+        private Point position;
+        private long sinceMs;
+        private boolean wasAfk;
+
+        @Override
+        public Point ownerAfkPosition() {
+            return position;
+        }
+
+        @Override
+        public void setOwnerAfkPosition(Point position) {
+            this.position = position;
+        }
+
+        @Override
+        public long ownerAfkSinceMs() {
+            return sinceMs;
+        }
+
+        @Override
+        public void setOwnerAfkSinceMs(long sinceMs) {
+            this.sinceMs = sinceMs;
+        }
+
+        @Override
+        public boolean ownerWasAfk() {
+            return wasAfk;
+        }
+
+        @Override
+        public void setOwnerWasAfk(boolean wasAfk) {
+            this.wasAfk = wasAfk;
         }
     }
 }
