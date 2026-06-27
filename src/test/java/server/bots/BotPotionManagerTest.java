@@ -3,7 +3,7 @@ package server.bots;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentBotPotionRuntime;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 class BotPotionManagerTest {
     @Test
     @SuppressWarnings("unchecked")
-    void ownerPotionShareSchedulesThroughAgentSchedulerAdapter() throws Exception {
+    void ownerPotionShareSchedulesThroughAgentPotionRuntime() throws Exception {
         BotManager manager = BotManager.getInstance();
         Character owner = mock(Character.class);
         Character requestingBot = mock(Character.class);
@@ -37,15 +37,15 @@ class BotPotionManagerTest {
         bots.put(owner.getId(), List.of(entry, donorEntry));
 
         try (MockedStatic<BotPotionManager> potions = mockStatic(BotPotionManager.class, CALLS_REAL_METHODS);
-             MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class)) {
+             MockedStatic<AgentBotPotionRuntime> scheduler = mockStatic(AgentBotPotionRuntime.class)) {
             potions.when(() -> BotPotionManager.countPotions(donorBot)).thenReturn(new int[]{400, 0});
-            scheduler.when(() -> AgentBotSchedulerRuntime.randomDelayMs(900, 1400)).thenReturn(77L);
+            scheduler.when(() -> AgentBotPotionRuntime.randomDelayMs(900, 1400)).thenReturn(77L);
 
             assertEquals(BotPotionManager.OwnerPotShareResult.OFFERED,
                     BotPotionManager.offerPotShareToOwner(entry, true));
 
-            scheduler.verify(() -> AgentBotSchedulerRuntime.randomDelayMs(900, 1400));
-            scheduler.verify(() -> AgentBotSchedulerRuntime.afterDelay(eq(77L), any(Runnable.class)));
+            scheduler.verify(() -> AgentBotPotionRuntime.randomDelayMs(900, 1400));
+            scheduler.verify(() -> AgentBotPotionRuntime.afterDelay(eq(77L), any(Runnable.class)));
         } finally {
             bots.remove(owner.getId());
         }

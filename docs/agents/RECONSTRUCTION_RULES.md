@@ -121,9 +121,11 @@ Recent reconstruction notes:
   through `AgentBotAmmoRuntime`; `BotAmmoManager` no longer reaches directly
   into the lower-level scheduler runtime for ammo-owned timing. Visible ammo
   request/offer chat remains unchanged on the legacy map-visible say path.
-- Potion-share delayed donor offer, low-supply fallback, and transfer callbacks
-  now route through `AgentBotSchedulerRuntime`; visible potion request/offer
-  chat remains unchanged on the legacy map-visible say path.
+- Potion-share donor selection delays, low-supply fallback delay, and delayed
+  transfer callbacks now enter through `AgentBotPotionRuntime`;
+  `BotPotionManager` no longer reaches directly into the lower-level scheduler
+  runtime for potion-owned timing. Visible potion request/offer chat remains
+  unchanged on the legacy map-visible say path.
 - Combat alert reset callbacks now route through `AgentBotSchedulerRuntime`;
   alert timing and stance reset behavior are unchanged.
 - Inventory, trade, meso-transfer, and drop owner-directed replies now route
