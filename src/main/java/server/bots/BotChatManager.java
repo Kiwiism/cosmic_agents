@@ -1,37 +1,11 @@
 package server.bots;
 
 import client.Character;
-import server.agents.capabilities.dialogue.AgentChatBuildFlow;
-import server.agents.capabilities.dialogue.AgentChatBuffQueryFlow;
-import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
-import server.agents.capabilities.dialogue.AgentChatRespecFlow;
-import server.agents.capabilities.dialogue.AgentChatReportFlow;
-import server.agents.capabilities.dialogue.AgentChatSocialFlow;
-import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
-import server.agents.capabilities.dialogue.AgentChatUtilityFlow;
-import server.agents.capabilities.dialogue.AgentChatTransferFlow;
-import server.agents.capabilities.dialogue.AgentChatEquipmentFlow;
-import server.agents.capabilities.dialogue.AgentChatJobAdvancementFlow;
-import server.agents.capabilities.dialogue.AgentChatMovementFlow;
 import server.agents.capabilities.dialogue.AgentChatOrchestrator;
-import server.agents.capabilities.dialogue.AgentChatSessionRequestFlow;
-import server.agents.capabilities.dialogue.AgentChatToggleFlow;
-import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
-import server.agents.capabilities.dialogue.AgentSkillReportFlow;
 
-import java.awt.*;
 import java.util.List;
 
 public class BotChatManager {
-    // %s = current map name (bot is in town since the offline-return warp put it there).
-    // Sent via party chat so the owner sees it across maps when they reconnect.
-    static void markOwnerActive(BotEntry entry) {
-        Character owner = entry.owner;
-        entry.ownerWasAfk = false;
-        entry.ownerAfkSinceMs = System.currentTimeMillis();
-        entry.ownerAfkPos = owner != null ? new Point(owner.getPosition()) : null;
-    }
-
     // Set true on entry; cleared to false only if we fall off the natural end of handleChat
     // (no command pattern matched). Every match path returns early, leaving this true. Caller
     // (BotManager) reads via wasLastChatHandled() to gate the LLM fallback.
@@ -43,70 +17,6 @@ public class BotChatManager {
 
     static void handleChat(BotEntry entry, String message) {
         LAST_CHAT_HANDLED.set(AgentChatOrchestrator.handle(message, new BotChatOrchestratorContext(entry)));
-    }
-
-    static AgentPendingChatActionFlow.PendingActionState pendingActionState(BotEntry entry) {
-        return BotChatPendingActionRuntime.pendingActionState(entry);
-    }
-
-    static AgentChatSessionRequestFlow.SessionRequestCallbacks sessionRequestCallbacks(BotEntry entry) {
-        return BotChatSessionRuntime.sessionRequestCallbacks(entry);
-    }
-
-    static AgentChatToggleFlow.ToggleCallbacks toggleCallbacks(BotEntry entry) {
-        return BotChatControlRuntime.toggleCallbacks(entry);
-    }
-
-    static AgentChatBuffQueryFlow.BuffQueryCallbacks buffQueryCallbacks(BotEntry entry) {
-        return BotChatControlRuntime.buffQueryCallbacks(entry);
-    }
-
-    static AgentChatRespecFlow.RespecCallbacks respecCallbacks(BotEntry entry) {
-        return BotChatControlRuntime.respecCallbacks(entry);
-    }
-
-    static AgentChatEquipmentFlow.EquipmentCallbacks equipmentCallbacks(BotEntry entry) {
-        return BotChatEquipmentRuntime.equipmentCallbacks(entry);
-    }
-
-    static AgentChatSupplyRequestFlow.SupplyRequestCallbacks supplyRequestCallbacks(BotEntry entry) {
-        return BotChatSupplyRuntime.supplyRequestCallbacks(entry);
-    }
-
-    static AgentChatSocialFlow.SocialCallbacks socialCallbacks(BotEntry entry) {
-        return BotChatSocialRuntime.socialCallbacks(entry);
-    }
-
-    static AgentChatMovementFlow.MovementCallbacks movementCallbacks(BotEntry entry) {
-        return BotChatMovementRuntime.movementCallbacks(entry);
-    }
-
-    static AgentChatUtilityFlow.UtilityCallbacks utilityCallbacks(BotEntry entry) {
-        return BotChatUtilityRuntime.utilityCallbacks(entry);
-    }
-
-    static AgentChatBuildFlow.SpVariantCallbacks spVariantCallbacks(BotEntry entry) {
-        return BotChatBuildRuntime.spVariantCallbacks(entry);
-    }
-
-    static AgentChatBuildFlow.ApBuildCallbacks apBuildCallbacks(BotEntry entry) {
-        return BotChatBuildRuntime.apBuildCallbacks(entry);
-    }
-
-    static AgentChatReportFlow.ReportCallbacks reportCallbacks(BotEntry entry) {
-        return BotChatReportRuntime.reportCallbacks(entry);
-    }
-
-    static AgentChatJobAdvancementFlow.JobAdvancementCallbacks jobAdvancementCallbacks(BotEntry entry) {
-        return BotChatBuildRuntime.jobAdvancementCallbacks(entry);
-    }
-
-    static AgentChatTransferFlow.ItemQueryCallbacks itemQueryCallbacks(BotEntry entry) {
-        return BotChatTransferRuntime.itemQueryCallbacks(entry);
-    }
-
-    static AgentPendingChatActionFlow.PendingActionCallbacks pendingActionCallbacks(BotEntry entry) {
-        return BotChatPendingActionRuntime.pendingActionCallbacks(entry);
     }
 
     // -------------------------------------------------------------------------
@@ -172,18 +82,6 @@ public class BotChatManager {
 
     static int randomFidgetExpression() {
         return BotChatStatusRuntime.randomFidgetExpression();
-    }
-
-    private static void handleSkillTreeChoice(BotEntry entry, Character bot, String message) {
-        BotChatPendingActionRuntime.handleSkillTreeChoice(entry, bot, message);
-    }
-
-    static void applySkillReportDecision(BotEntry entry, AgentSkillReportFlow.SkillReportDecision decision) {
-        BotChatPendingActionRuntime.applySkillReportDecision(entry, decision);
-    }
-
-    static void handleTransferCommand(BotEntry entry, AgentChatTransferFlow.TransferCommand transferCommand, String message) {
-        BotChatTransferRuntime.handleTransferCommand(entry, transferCommand, message);
     }
 
 }

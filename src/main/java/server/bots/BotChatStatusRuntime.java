@@ -11,6 +11,13 @@ final class BotChatStatusRuntime {
     private BotChatStatusRuntime() {
     }
 
+    static void markOwnerActive(BotEntry entry) {
+        Character owner = entry.owner;
+        entry.ownerWasAfk = false;
+        entry.ownerAfkSinceMs = System.currentTimeMillis();
+        entry.ownerAfkPos = owner != null ? new Point(owner.getPosition()) : null;
+    }
+
     static void checkBotStatus(BotEntry entry, Character bot) {
         String jobPrompt = BotBuildManager.buildJobPrompt(entry, bot);
         if (jobPrompt != null) {

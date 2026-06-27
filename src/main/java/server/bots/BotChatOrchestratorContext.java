@@ -30,7 +30,7 @@ final class BotChatOrchestratorContext implements AgentChatOrchestrator.Context 
 
     @Override
     public void markActive() {
-        BotChatManager.markOwnerActive(entry);
+        BotChatStatusRuntime.markOwnerActive(entry);
     }
 
     @Override
@@ -40,52 +40,52 @@ final class BotChatOrchestratorContext implements AgentChatOrchestrator.Context 
 
     @Override
     public AgentPendingChatActionFlow.PendingActionState pendingActionState() {
-        return BotChatManager.pendingActionState(entry);
+        return BotChatPendingActionRuntime.pendingActionState(entry);
     }
 
     @Override
     public AgentPendingChatActionFlow.PendingActionCallbacks pendingActionCallbacks() {
-        return BotChatManager.pendingActionCallbacks(entry);
+        return BotChatPendingActionRuntime.pendingActionCallbacks(entry);
     }
 
     @Override
     public AgentChatSessionRequestFlow.SessionRequestCallbacks sessionRequestCallbacks() {
-        return BotChatManager.sessionRequestCallbacks(entry);
+        return BotChatSessionRuntime.sessionRequestCallbacks(entry);
     }
 
     @Override
     public AgentChatSupplyRequestFlow.SupplyRequestCallbacks supplyRequestCallbacks() {
-        return BotChatManager.supplyRequestCallbacks(entry);
+        return BotChatSupplyRuntime.supplyRequestCallbacks(entry);
     }
 
     @Override
     public AgentChatSocialFlow.SocialCallbacks socialCallbacks() {
-        return BotChatManager.socialCallbacks(entry);
+        return BotChatSocialRuntime.socialCallbacks(entry);
     }
 
     @Override
     public AgentChatToggleFlow.ToggleCallbacks toggleCallbacks() {
-        return BotChatManager.toggleCallbacks(entry);
+        return BotChatControlRuntime.toggleCallbacks(entry);
     }
 
     @Override
     public AgentChatBuffQueryFlow.BuffQueryCallbacks buffQueryCallbacks() {
-        return BotChatManager.buffQueryCallbacks(entry);
+        return BotChatControlRuntime.buffQueryCallbacks(entry);
     }
 
     @Override
     public AgentChatRespecFlow.RespecCallbacks respecCallbacks() {
-        return BotChatManager.respecCallbacks(entry);
+        return BotChatControlRuntime.respecCallbacks(entry);
     }
 
     @Override
     public AgentChatEquipmentFlow.EquipmentCallbacks equipmentCallbacks() {
-        return BotChatManager.equipmentCallbacks(entry);
+        return BotChatEquipmentRuntime.equipmentCallbacks(entry);
     }
 
     @Override
     public AgentChatMovementFlow.MovementCallbacks movementCallbacks() {
-        return BotChatManager.movementCallbacks(entry);
+        return BotChatMovementRuntime.movementCallbacks(entry);
     }
 
     @Override
@@ -95,7 +95,7 @@ final class BotChatOrchestratorContext implements AgentChatOrchestrator.Context 
 
     @Override
     public AgentChatBuildFlow.SpVariantCallbacks spVariantCallbacks() {
-        return BotChatManager.spVariantCallbacks(entry);
+        return BotChatBuildRuntime.spVariantCallbacks(entry);
     }
 
     @Override
@@ -105,27 +105,27 @@ final class BotChatOrchestratorContext implements AgentChatOrchestrator.Context 
 
     @Override
     public AgentChatBuildFlow.ApBuildCallbacks apBuildCallbacks() {
-        return BotChatManager.apBuildCallbacks(entry);
+        return BotChatBuildRuntime.apBuildCallbacks(entry);
     }
 
     @Override
     public AgentChatUtilityFlow.UtilityCallbacks utilityCallbacks() {
-        return BotChatManager.utilityCallbacks(entry);
+        return BotChatUtilityRuntime.utilityCallbacks(entry);
     }
 
     @Override
     public void handleTransferCommand(AgentChatTransferFlow.TransferCommand transferCommand, String message) {
-        BotChatManager.handleTransferCommand(entry, transferCommand, message);
+        BotChatTransferRuntime.handleTransferCommand(entry, transferCommand, message);
     }
 
     @Override
     public AgentChatTransferFlow.ItemQueryCallbacks itemQueryCallbacks() {
-        return BotChatManager.itemQueryCallbacks(entry);
+        return BotChatTransferRuntime.itemQueryCallbacks(entry);
     }
 
     @Override
     public AgentChatReportFlow.ReportCallbacks reportCallbacks() {
-        return BotChatManager.reportCallbacks(entry);
+        return BotChatReportRuntime.reportCallbacks(entry);
     }
 
     @Override
@@ -140,6 +140,6 @@ final class BotChatOrchestratorContext implements AgentChatOrchestrator.Context 
 
     @Override
     public AgentChatJobAdvancementFlow.JobAdvancementCallbacks jobAdvancementCallbacks() {
-        return BotChatManager.jobAdvancementCallbacks(entry);
+        return BotChatBuildRuntime.jobAdvancementCallbacks(entry);
     }
 }
