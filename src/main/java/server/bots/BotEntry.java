@@ -373,6 +373,14 @@ public class BotEntry {
         this.pendingTradeInviteAnnounced = pendingTradeInviteAnnounced;
     }
 
+    public int pendingTradeTimerMs() {
+        return pendingTradeTimerMs;
+    }
+
+    public void setPendingTradeTimerMs(int pendingTradeTimerMs) {
+        this.pendingTradeTimerMs = pendingTradeTimerMs;
+    }
+
     // Message queue
     final ArrayDeque<AgentQueuedMessage> msgQueue = new ArrayDeque<>();
     boolean msgSending = false;

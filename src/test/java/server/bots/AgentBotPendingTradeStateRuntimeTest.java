@@ -114,4 +114,24 @@ class AgentBotPendingTradeStateRuntimeTest {
 
         assertFalse(AgentBotPendingTradeStateRuntime.inviteAnnounced(entry));
     }
+
+    @Test
+    void adaptsTimerState() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        assertEquals(0, AgentBotPendingTradeStateRuntime.timerMs(entry));
+
+        AgentBotPendingTradeStateRuntime.setTimerMs(entry, 1_000);
+        AgentBotPendingTradeStateRuntime.addTimerMs(entry, 250);
+
+        assertEquals(1_250, AgentBotPendingTradeStateRuntime.timerMs(entry));
+
+        AgentBotPendingTradeStateRuntime.tickTimerDown(entry, value -> value - 100);
+
+        assertEquals(1_150, AgentBotPendingTradeStateRuntime.timerMs(entry));
+
+        AgentBotPendingTradeStateRuntime.clearTimer(entry);
+
+        assertEquals(0, AgentBotPendingTradeStateRuntime.timerMs(entry));
+    }
 }

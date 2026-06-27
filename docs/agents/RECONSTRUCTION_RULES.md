@@ -408,6 +408,11 @@ Recent reconstruction notes:
   `AgentBotPendingTradeStateRuntime`; trade batch opening and reset keep
   BotEntry as the temporary backing store but no longer read, mark, or clear
   the invitation announcement flag directly.
+- Pending trade timer state now enters through
+  `AgentBotPendingTradeStateRuntime`; trade accept, batch pause, item-add, and
+  confirmation timeout handling keep BotEntry as the temporary backing store
+  but no longer read, increment, tick down, set, or clear the timer field
+  directly.
 
 Initial reconstruction order:
 

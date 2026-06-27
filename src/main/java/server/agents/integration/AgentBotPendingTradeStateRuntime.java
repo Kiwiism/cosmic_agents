@@ -106,4 +106,24 @@ public final class AgentBotPendingTradeStateRuntime {
     public static void clearInviteAnnounced(BotEntry entry) {
         entry.setPendingTradeInviteAnnounced(false);
     }
+
+    public static int timerMs(BotEntry entry) {
+        return entry.pendingTradeTimerMs();
+    }
+
+    public static void setTimerMs(BotEntry entry, int timerMs) {
+        entry.setPendingTradeTimerMs(timerMs);
+    }
+
+    public static void addTimerMs(BotEntry entry, int deltaMs) {
+        entry.setPendingTradeTimerMs(entry.pendingTradeTimerMs() + deltaMs);
+    }
+
+    public static void tickTimerDown(BotEntry entry, java.util.function.IntUnaryOperator tickDown) {
+        entry.setPendingTradeTimerMs(tickDown.applyAsInt(entry.pendingTradeTimerMs()));
+    }
+
+    public static void clearTimer(BotEntry entry) {
+        entry.setPendingTradeTimerMs(0);
+    }
 }
