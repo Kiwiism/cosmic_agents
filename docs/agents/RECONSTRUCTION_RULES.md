@@ -454,6 +454,9 @@ Recent reconstruction notes:
   `AgentBotActivityStateRuntime`; offline/dead owner recovery keeps BotEntry as
   the temporary backing store but no longer reads, starts, clears, or sets the
   inactive timer, town-return flag, or away-safe-mode flag directly.
+- Gear-prompt test assertions now read the reserved prompt timestamp through
+  `AgentBotOfferStateRuntime`, keeping tests on the Agent-owned offer state
+  boundary instead of the temporary BotEntry backing field.
 
 Initial reconstruction order:
 

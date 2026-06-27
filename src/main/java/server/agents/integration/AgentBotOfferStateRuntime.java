@@ -15,6 +15,10 @@ public final class AgentBotOfferStateRuntime {
         return entry.pendingGearPromptAt() > nowMs;
     }
 
+    public static long pendingGearPromptAt(BotEntry entry) {
+        return entry.pendingGearPromptAt();
+    }
+
     public static void reserveGearPrompt(BotEntry entry, long scheduledAt) {
         entry.setPendingGearPromptAt(scheduledAt);
     }

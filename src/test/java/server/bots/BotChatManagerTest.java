@@ -423,6 +423,6 @@ class BotChatManagerTest {
         assertEquals(0, entry.pendingLootOfferRecipientId);
         assertEquals(0L, entry.pendingLootOfferExpiresAt);
         assertFalse(entry.pendingLootOfferBotRequesting);
-        assertEquals(0L, entry.pendingGearPromptAt());
+        assertEquals(0L, AgentBotOfferStateRuntime.pendingGearPromptAt(entry));
     }
 }

@@ -29,7 +29,7 @@ class AgentBotOfferRuntimeTest {
 
         AgentBotOfferStateRuntime.reserveGearPrompt(entry, 2_000L);
 
-        assertEquals(2_000L, entry.pendingGearPromptAt());
+        assertEquals(2_000L, AgentBotOfferStateRuntime.pendingGearPromptAt(entry));
         assertTrue(AgentBotOfferStateRuntime.hasPendingGearPromptAfter(entry, 1_999L));
         assertFalse(AgentBotOfferStateRuntime.hasPendingGearPromptAfter(entry, 2_000L));
         assertTrue(AgentBotOfferStateRuntime.isReservedGearPrompt(entry, 2_000L));
@@ -37,7 +37,7 @@ class AgentBotOfferRuntimeTest {
 
         AgentBotOfferStateRuntime.clearGearPrompt(entry);
 
-        assertEquals(0L, entry.pendingGearPromptAt());
+        assertEquals(0L, AgentBotOfferStateRuntime.pendingGearPromptAt(entry));
     }
 
     @Test
