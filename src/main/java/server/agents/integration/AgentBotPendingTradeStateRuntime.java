@@ -94,4 +94,16 @@ public final class AgentBotPendingTradeStateRuntime {
     public static void clearRecipientId(BotEntry entry) {
         entry.setPendingTradeRecipientId(0);
     }
+
+    public static boolean inviteAnnounced(BotEntry entry) {
+        return entry.pendingTradeInviteAnnounced();
+    }
+
+    public static void markInviteAnnounced(BotEntry entry) {
+        entry.setPendingTradeInviteAnnounced(true);
+    }
+
+    public static void clearInviteAnnounced(BotEntry entry) {
+        entry.setPendingTradeInviteAnnounced(false);
+    }
 }

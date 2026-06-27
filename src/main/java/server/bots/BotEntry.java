@@ -365,6 +365,14 @@ public class BotEntry {
         this.pendingTradeRecipientId = pendingTradeRecipientId;
     }
 
+    public boolean pendingTradeInviteAnnounced() {
+        return pendingTradeInviteAnnounced;
+    }
+
+    public void setPendingTradeInviteAnnounced(boolean pendingTradeInviteAnnounced) {
+        this.pendingTradeInviteAnnounced = pendingTradeInviteAnnounced;
+    }
+
     // Message queue
     final ArrayDeque<AgentQueuedMessage> msgQueue = new ArrayDeque<>();
     boolean msgSending = false;

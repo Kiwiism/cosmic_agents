@@ -584,7 +584,7 @@ public class BotInventoryManager {
         entry.pendingTradeCategory = category;
         AgentBotPendingTradeStateRuntime.setRecipientId(entry, recipient.getId());
         entry.pendingTradeSingleBatch = singleBatch;
-        entry.pendingTradeInviteAnnounced = false;
+        AgentBotPendingTradeStateRuntime.clearInviteAnnounced(entry);
         openTradeBatch(entry, bot, items, mesos);
     }
 
@@ -606,10 +606,10 @@ public class BotInventoryManager {
         Trade.startTrade(bot);
         Trade.inviteTrade(bot, recipient);
         // pot_share already announced itself ("got some HP pots, inv u") — skip the redundant "k i inv"
-        if (!entry.pendingTradeInviteAnnounced
+        if (!AgentBotPendingTradeStateRuntime.inviteAnnounced(entry)
                 && !"pot_share".equals(entry.pendingTradeCategory)
                 && !"ammo_share".equals(entry.pendingTradeCategory)) {
-            entry.pendingTradeInviteAnnounced = true;
+            AgentBotPendingTradeStateRuntime.markInviteAnnounced(entry);
             AgentBotInventoryRuntime.replyNow(entry, BotManager.randomReply(TRADE_INVITATION_MSGS));
         }
     }
@@ -813,7 +813,7 @@ public class BotInventoryManager {
         entry.pendingTradeAllAdded = false;
         entry.pendingTradeBotDone  = false;
         entry.pendingTradeSingleBatch = false;
-        entry.pendingTradeInviteAnnounced = false;
+        AgentBotPendingTradeStateRuntime.clearInviteAnnounced(entry);
         AgentBotPendingTradeStateRuntime.clearShareBudget(entry);
         entry.ownerGivenItems.clear();
         // Safety net: if any items were temporarily unequipped for a trade that ended without

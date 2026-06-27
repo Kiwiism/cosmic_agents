@@ -99,4 +99,19 @@ class AgentBotPendingTradeStateRuntimeTest {
 
         assertEquals(0, AgentBotPendingTradeStateRuntime.recipientId(entry));
     }
+
+    @Test
+    void adaptsInviteAnnouncedState() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        assertFalse(AgentBotPendingTradeStateRuntime.inviteAnnounced(entry));
+
+        AgentBotPendingTradeStateRuntime.markInviteAnnounced(entry);
+
+        assertTrue(AgentBotPendingTradeStateRuntime.inviteAnnounced(entry));
+
+        AgentBotPendingTradeStateRuntime.clearInviteAnnounced(entry);
+
+        assertFalse(AgentBotPendingTradeStateRuntime.inviteAnnounced(entry));
+    }
 }

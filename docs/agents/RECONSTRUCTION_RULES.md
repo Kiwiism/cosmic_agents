@@ -404,6 +404,10 @@ Recent reconstruction notes:
   `AgentBotPendingTradeStateRuntime`; trade setup, reset, and recipient
   resolution keep BotEntry as the temporary backing store but no longer set,
   read, or clear the recipient id field directly.
+- Pending trade invite-announced state now enters through
+  `AgentBotPendingTradeStateRuntime`; trade batch opening and reset keep
+  BotEntry as the temporary backing store but no longer read, mark, or clear
+  the invitation announcement flag directly.
 
 Initial reconstruction order:
 
