@@ -153,6 +153,9 @@ Recent reconstruction notes:
 - Gear-offer idle gating now enters through
   `AgentBotOfferRuntime.isOwnerIdleForOffer`; `BotOfferManager` no longer
   reaches directly into the broad chat-status facade for offer prompt checks.
+- Fidget idle gating now enters through
+  `AgentBotFidgetRuntime.isLeaderIdleForFidget`; `BotFidgetManager` no longer
+  reaches directly into the broad chat-status facade for fidget eligibility.
 
 Initial reconstruction order:
 
