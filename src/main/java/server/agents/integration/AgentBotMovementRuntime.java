@@ -25,10 +25,10 @@ public final class AgentBotMovementRuntime {
                 if (dest == null) {
                     return false;
                 }
-                AgentBotSchedulerRuntime.afterRandomDelay(1000, 1500, () -> {
+                AgentBotMovementSchedulerRuntime.afterRandomDelay(1000, 1500, () -> {
                     AgentBotMovementStatusRuntime.prepareMovementActiveMode(entry);
                     AgentBotMovementCommandRuntime.farmHere(entry, dest);
-                    AgentBotReplyRuntime.replyNow(entry, AgentChatMovementFlow.moveHereReply());
+                    AgentBotMovementReplyRuntime.replyNow(entry, AgentChatMovementFlow.moveHereReply());
                 });
                 return true;
             }
@@ -39,10 +39,10 @@ public final class AgentBotMovementRuntime {
                 if (ownerPos == null) {
                     return false;
                 }
-                AgentBotSchedulerRuntime.afterRandomDelay(1000, 1500, () -> {
+                AgentBotMovementSchedulerRuntime.afterRandomDelay(1000, 1500, () -> {
                     AgentBotMovementStatusRuntime.prepareMovementActiveMode(entry);
                     AgentBotMovementCommandRuntime.patrol(entry, ownerPos);
-                    AgentBotReplyRuntime.replyNow(entry, AgentChatMovementFlow.moveHereReply());
+                    AgentBotMovementReplyRuntime.replyNow(entry, AgentChatMovementFlow.moveHereReply());
                 });
                 return true;
             }
@@ -53,30 +53,30 @@ public final class AgentBotMovementRuntime {
                 if (dest == null) {
                     return false;
                 }
-                AgentBotSchedulerRuntime.afterRandomDelay(1000, 1500, () -> {
+                AgentBotMovementSchedulerRuntime.afterRandomDelay(1000, 1500, () -> {
                     AgentBotMovementCommandRuntime.moveTo(entry, dest, true);
-                    AgentBotReplyRuntime.replyNow(entry, AgentChatMovementFlow.moveHereReply());
+                    AgentBotMovementReplyRuntime.replyNow(entry, AgentChatMovementFlow.moveHereReply());
                 });
                 return true;
             }
 
             @Override
             public void follow() {
-                AgentBotSchedulerRuntime.afterRandomDelay(1500, 2000, () -> {
+                AgentBotMovementSchedulerRuntime.afterRandomDelay(1500, 2000, () -> {
                     AgentBotActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry);
-                    AgentBotReplyRuntime.replyNow(entry, AgentChatMovementFlow.followReply());
+                    AgentBotMovementReplyRuntime.replyNow(entry, AgentChatMovementFlow.followReply());
                     BotPotionManager.checkPotShareOnModeStart(entry, entry.bot());
-                    AgentBotSchedulerRuntime.afterRandomDelay(250, 750,
+                    AgentBotMovementSchedulerRuntime.afterRandomDelay(250, 750,
                             () -> AgentBotMovementCommandRuntime.followOwner(entry));
                 });
             }
 
             @Override
             public void grind() {
-                AgentBotSchedulerRuntime.afterRandomDelay(1500, 2000, () -> {
+                AgentBotMovementSchedulerRuntime.afterRandomDelay(1500, 2000, () -> {
                     AgentBotMovementStatusRuntime.prepareMovementActiveMode(entry);
-                    AgentBotReplyRuntime.replyNow(entry, BotPotionManager.grindStartMessage(entry.bot()));
-                    AgentBotSchedulerRuntime.afterRandomDelay(250, 750, () -> {
+                    AgentBotMovementReplyRuntime.replyNow(entry, BotPotionManager.grindStartMessage(entry.bot()));
+                    AgentBotMovementSchedulerRuntime.afterRandomDelay(250, 750, () -> {
                         AgentBotMovementCommandRuntime.grind(entry);
                         AgentBotMovementStatusRuntime.checkMovementStatus(entry, entry.bot());
                     });
@@ -85,17 +85,17 @@ public final class AgentBotMovementRuntime {
 
             @Override
             public void stop() {
-                AgentBotSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
+                AgentBotMovementSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
                     AgentBotMovementCommandRuntime.stop(entry);
                     AgentBotActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry);
-                    AgentBotSchedulerRuntime.afterRandomDelay(1400, 1600, () ->
-                            AgentBotReplyRuntime.replyNow(entry, AgentChatMovementFlow.stopReply()));
+                    AgentBotMovementSchedulerRuntime.afterRandomDelay(1400, 1600, () ->
+                            AgentBotMovementReplyRuntime.replyNow(entry, AgentChatMovementFlow.stopReply()));
                 });
             }
 
             @Override
             public void fidget() {
-                AgentBotSchedulerRuntime.afterRandomDelay(250, 500, () -> {
+                AgentBotMovementSchedulerRuntime.afterRandomDelay(250, 500, () -> {
                     entry.bot().changeFaceExpression(AgentBotMovementStatusRuntime.randomFidgetExpression());
                     BotFidgetSideEffects.maybeStartSocialFidget(entry);
                 });
@@ -103,10 +103,10 @@ public final class AgentBotMovementRuntime {
 
             @Override
             public void greeting() {
-                AgentBotSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
+                AgentBotMovementSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
                     entry.bot().changeFaceExpression(Emote.HAPPY.getValue());
                     BotFidgetSideEffects.maybeStartGreetingFidget(entry, ThreadLocalRandom.current().nextInt(100));
-                    AgentBotReplyRuntime.queueReply(entry, AgentChatMovementFlow.greetingReply());
+                    AgentBotMovementReplyRuntime.queueReply(entry, AgentChatMovementFlow.greetingReply());
                     AgentBotMovementStatusRuntime.checkMovementStatus(entry, entry.bot());
                 });
             }

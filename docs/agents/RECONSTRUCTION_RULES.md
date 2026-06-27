@@ -336,6 +336,11 @@ Recent reconstruction notes:
 - Manager spawn-status delayed callbacks now enter through the narrow
   `AgentBotManagerSchedulerRuntime` adapter; manager status orchestration no
   longer reaches directly into the broad scheduler runtime.
+- Movement/follow/grind/stop/fidget/greeting immediate replies, queued replies,
+  and random-delay callbacks now enter through narrow
+  `AgentBotMovementReplyRuntime` and `AgentBotMovementSchedulerRuntime`
+  adapters; movement chat orchestration no longer reaches directly into the
+  broad reply or scheduler runtimes.
 
 Initial reconstruction order:
 

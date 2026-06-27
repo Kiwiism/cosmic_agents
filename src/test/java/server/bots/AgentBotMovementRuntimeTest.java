@@ -6,7 +6,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatMovementFlow;
 import server.agents.integration.AgentBotActiveModeRuntime;
+import server.agents.integration.AgentBotMovementReplyRuntime;
 import server.agents.integration.AgentBotMovementRuntime;
+import server.agents.integration.AgentBotMovementSchedulerRuntime;
 import server.agents.integration.AgentBotMovementStatusRuntime;
 import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
@@ -34,12 +36,13 @@ class AgentBotMovementRuntimeTest {
         BotManager manager = mock(BotManager.class);
         ArgumentCaptor<Point> pointCaptor = ArgumentCaptor.forClass(Point.class);
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class);
+        try (MockedStatic<AgentBotMovementSchedulerRuntime> scheduler =
+                     mockStatic(AgentBotMovementSchedulerRuntime.class);
              MockedStatic<AgentBotMovementStatusRuntime> status = mockStatic(AgentBotMovementStatusRuntime.class);
-             MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class);
+             MockedStatic<AgentBotMovementReplyRuntime> replies = mockStatic(AgentBotMovementReplyRuntime.class);
              MockedStatic<BotManager> botManager = mockStatic(BotManager.class)) {
             botManager.when(BotManager::getInstance).thenReturn(manager);
-            scheduler.when(() -> AgentBotSchedulerRuntime.afterRandomDelay(eq(1000), eq(1500), any(Runnable.class)))
+            scheduler.when(() -> AgentBotMovementSchedulerRuntime.afterRandomDelay(eq(1000), eq(1500), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
                         return null;
@@ -50,7 +53,7 @@ class AgentBotMovementRuntimeTest {
             status.verify(() -> AgentBotMovementStatusRuntime.prepareMovementActiveMode(entry));
             verify(manager).issueFarmHere(eq(entry), pointCaptor.capture());
             assertEquals(new Point(10, 20), pointCaptor.getValue());
-            replies.verify(() -> AgentBotReplyRuntime.replyNow(eq(entry), anyString()));
+            replies.verify(() -> AgentBotMovementReplyRuntime.replyNow(eq(entry), anyString()));
         }
     }
 
@@ -58,7 +61,8 @@ class AgentBotMovementRuntimeTest {
     void moveHereReturnsFalseWithoutOwnerPosition() {
         BotEntry entry = new BotEntry(null, null, null);
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class)) {
+        try (MockedStatic<AgentBotMovementSchedulerRuntime> scheduler =
+                     mockStatic(AgentBotMovementSchedulerRuntime.class)) {
             assertFalse(AgentBotMovementRuntime.movementCallbacks(entry).moveHere());
 
             scheduler.verifyNoInteractions();
@@ -71,18 +75,19 @@ class AgentBotMovementRuntimeTest {
         BotEntry entry = new BotEntry(bot, null, null);
         BotManager manager = mock(BotManager.class);
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class);
+        try (MockedStatic<AgentBotMovementSchedulerRuntime> scheduler =
+                     mockStatic(AgentBotMovementSchedulerRuntime.class);
              MockedStatic<AgentBotActiveModeRuntime> activeMode = mockStatic(AgentBotActiveModeRuntime.class);
-             MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class);
+             MockedStatic<AgentBotMovementReplyRuntime> replies = mockStatic(AgentBotMovementReplyRuntime.class);
              MockedStatic<BotPotionManager> potions = mockStatic(BotPotionManager.class);
              MockedStatic<BotManager> botManager = mockStatic(BotManager.class)) {
             botManager.when(BotManager::getInstance).thenReturn(manager);
-            scheduler.when(() -> AgentBotSchedulerRuntime.afterRandomDelay(eq(1500), eq(2000), any(Runnable.class)))
+            scheduler.when(() -> AgentBotMovementSchedulerRuntime.afterRandomDelay(eq(1500), eq(2000), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
                         return null;
                     });
-            scheduler.when(() -> AgentBotSchedulerRuntime.afterRandomDelay(eq(250), eq(750), any(Runnable.class)))
+            scheduler.when(() -> AgentBotMovementSchedulerRuntime.afterRandomDelay(eq(250), eq(750), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
                         return null;
@@ -91,7 +96,7 @@ class AgentBotMovementRuntimeTest {
             AgentBotMovementRuntime.movementCallbacks(entry).follow();
 
             activeMode.verify(() -> AgentBotActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry));
-            replies.verify(() -> AgentBotReplyRuntime.replyNow(eq(entry), anyString()));
+            replies.verify(() -> AgentBotMovementReplyRuntime.replyNow(eq(entry), anyString()));
             potions.verify(() -> BotPotionManager.checkPotShareOnModeStart(entry, bot));
             verify(manager).issueFollowOwner(entry);
         }
@@ -102,11 +107,12 @@ class AgentBotMovementRuntimeTest {
         Character bot = mock(Character.class);
         BotEntry entry = new BotEntry(bot, null, null);
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class);
+        try (MockedStatic<AgentBotMovementSchedulerRuntime> scheduler =
+                     mockStatic(AgentBotMovementSchedulerRuntime.class);
              MockedStatic<BotFidgetSideEffects> fidgets = mockStatic(BotFidgetSideEffects.class);
-             MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class);
+             MockedStatic<AgentBotMovementReplyRuntime> replies = mockStatic(AgentBotMovementReplyRuntime.class);
              MockedStatic<AgentBotMovementStatusRuntime> status = mockStatic(AgentBotMovementStatusRuntime.class)) {
-            scheduler.when(() -> AgentBotSchedulerRuntime.afterRandomDelay(eq(900), eq(1100), any(Runnable.class)))
+            scheduler.when(() -> AgentBotMovementSchedulerRuntime.afterRandomDelay(eq(900), eq(1100), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
                         return null;
@@ -116,8 +122,32 @@ class AgentBotMovementRuntimeTest {
 
             verify(bot).changeFaceExpression(Emote.HAPPY.getValue());
             fidgets.verify(() -> BotFidgetSideEffects.maybeStartGreetingFidget(eq(entry), anyInt()));
-            replies.verify(() -> AgentBotReplyRuntime.queueReply(eq(entry), anyString()));
+            replies.verify(() -> AgentBotMovementReplyRuntime.queueReply(eq(entry), anyString()));
             status.verify(() -> AgentBotMovementStatusRuntime.checkMovementStatus(entry, bot));
+        }
+    }
+
+    @Test
+    void movementReplyAdapterDelegatesToAgentReplyRuntime() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
+            AgentBotMovementReplyRuntime.replyNow(entry, "reply");
+            AgentBotMovementReplyRuntime.queueReply(entry, "queued");
+
+            replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, "reply"));
+            replies.verify(() -> AgentBotReplyRuntime.queueReply(entry, "queued"));
+        }
+    }
+
+    @Test
+    void movementSchedulerAdapterDelegatesToAgentSchedulerRuntime() {
+        Runnable action = mock(Runnable.class);
+
+        try (MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class)) {
+            AgentBotMovementSchedulerRuntime.afterRandomDelay(900, 1100, action);
+
+            scheduler.verify(() -> AgentBotSchedulerRuntime.afterRandomDelay(900, 1100, action));
         }
     }
 }
