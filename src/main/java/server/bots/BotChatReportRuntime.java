@@ -25,6 +25,96 @@ final class BotChatReportRuntime {
     private BotChatReportRuntime() {
     }
 
+    static AgentChatReportFlow.ReportCallbacks reportCallbacks(BotEntry entry) {
+        return new AgentChatReportFlow.ReportCallbacks() {
+            @Override
+            public void help() {
+                BotManager.after(BotManager.randMs(500, 700), () -> reportHelp(entry));
+            }
+
+            @Override
+            public void requestUpgrade() {
+                BotManager.after(BotManager.randMs(500, 700), () ->
+                        BotChatSupplyRuntime.handleRequestUpgradeCommand(entry, entry.bot));
+            }
+
+            @Override
+            public void recommendedGear() {
+                BotManager.after(BotManager.randMs(500, 700), () -> reportRecommendedGear(entry, entry.bot));
+            }
+
+            @Override
+            public void skills() {
+                BotManager.after(BotManager.randMs(900, 1100), () -> reportSkills(entry, entry.bot));
+            }
+
+            @Override
+            public void stats() {
+                BotManager.after(BotManager.randMs(900, 1100), () -> reportStats(entry, entry.bot));
+            }
+
+            @Override
+            public void movementStats() {
+                BotManager.after(BotManager.randMs(900, 1100), () -> reportMovementStats(entry, entry.bot));
+            }
+
+            @Override
+            public void range() {
+                BotManager.after(BotManager.randMs(900, 1100), () -> reportRange(entry, entry.bot));
+            }
+
+            @Override
+            public void build() {
+                BotManager.after(BotManager.randMs(900, 1100), () -> reportBuild(entry, entry.bot));
+            }
+
+            @Override
+            public void inventory() {
+                BotManager.after(BotManager.randMs(900, 1100), () -> reportInventory(entry, entry.bot));
+            }
+
+            @Override
+            public void mesos() {
+                BotManager.after(BotManager.randMs(900, 1100), () -> reportMesos(entry, entry.bot));
+            }
+
+            @Override
+            public void exp() {
+                BotManager.after(BotManager.randMs(900, 1100), () -> reportExp(entry, entry.bot));
+            }
+
+            @Override
+            public void inventorySlots() {
+                BotManager.after(BotManager.randMs(900, 1100), () -> reportInventorySlots(entry, entry.bot));
+            }
+
+            @Override
+            public void scrolls() {
+                BotManager.after(BotManager.randMs(900, 1100), () -> reportScrolls(entry, entry.bot));
+            }
+
+            @Override
+            public void potions() {
+                BotManager.after(BotManager.randMs(900, 1100), () -> reportPotions(entry, entry.bot));
+            }
+
+            @Override
+            public void debugStats() {
+                BotManager.after(BotManager.randMs(900, 1100), () -> reportDebugStats(entry, entry.bot));
+            }
+
+            @Override
+            public void critDebug() {
+                BotManager.after(BotManager.randMs(900, 1100), () -> reportCritDebug(entry, entry.bot));
+            }
+
+            @Override
+            public void potDebug() {
+                BotManager.after(BotManager.randMs(900, 1100), () -> reportPotDebug(entry, entry.bot));
+            }
+        };
+    }
+
     static void reportStats(BotEntry entry, Character bot) {
         BotChatManager.queueBotReply(entry, AgentCharacterDialogueReporter.statsReport(bot));
     }
