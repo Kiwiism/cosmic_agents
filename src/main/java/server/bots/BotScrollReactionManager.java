@@ -2,6 +2,7 @@ package server.bots;
 
 
 import server.agents.integration.AgentBotReplyRuntime;
+import server.agents.integration.AgentBotSchedulerRuntime;
 import client.Character;
 import client.inventory.Equip;
 import server.ItemInformationProvider;
@@ -104,9 +105,10 @@ final class BotScrollReactionManager {
                 if (dx * dx + dy * dy > maxDistSq) {
                     continue;
                 }
-                long botDelayMs = BotManager.randMs(0, PER_BOT_REACTION_JITTER_MAX_MS + 1);
+                long botDelayMs = AgentBotSchedulerRuntime.randomDelayMs(0, PER_BOT_REACTION_JITTER_MAX_MS + 1);
                 long reactionAtMs = now + botDelayMs;
-                BotManager.after(botDelayMs, () -> maybeReact(entry, source.getId(), success, scrollSuccessRate, reactionAtMs));
+                AgentBotSchedulerRuntime.afterDelay(botDelayMs,
+                        () -> maybeReact(entry, source.getId(), success, scrollSuccessRate, reactionAtMs));
             }
         }
     }

@@ -105,6 +105,9 @@ Recent reconstruction notes:
   `AgentBotReplyRuntime` and `AgentBotSchedulerRuntime`. `BotMakerManager`
   lazily resolves `ItemInformationProvider` so guard paths and Agent adapter
   tests do not initialize database-backed item data before it is needed.
+- Scroll-reaction delayed callbacks now route through
+  `AgentBotSchedulerRuntime`; scroll reaction chat was already delivered through
+  `AgentBotReplyRuntime`.
 
 Initial reconstruction order:
 
