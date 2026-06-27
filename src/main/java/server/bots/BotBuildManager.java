@@ -17,6 +17,7 @@ import server.bots.build.ThiefBuilds;
 import server.bots.build.WarriorBuilds;
 import server.agents.capabilities.dialogue.AgentBuildPromptReporter;
 import server.agents.integration.AgentBotBuildRuntime;
+import server.agents.integration.AgentBotBuildStateRuntime;
 import server.agents.integration.AgentBotBuildStatusRuntime;
 
 public final class BotBuildManager {
@@ -56,8 +57,7 @@ public final class BotBuildManager {
 
     /** Stores the AP build, confirms it to the owner, and immediately spends any pending AP. */
     public static void setApBuild(BotEntry entry, ApBuild build, String confirmMsg) {
-        entry.apBuild = build;
-        entry.apPromptSent = false;
+        AgentBotBuildStateRuntime.setApBuild(entry, build);
         AgentBotBuildRuntime.confirmApBuild(entry, confirmMsg);
         autoAssignAp(entry, entry.bot);
     }
@@ -70,28 +70,29 @@ public final class BotBuildManager {
     public static String buildApPrompt(BotEntry entry, Character bot) {
         String prompt = apPromptForJob(bot.getJob());
         if (prompt == null) return null;
-        if (entry.apBuild != null || entry.apPromptSent || bot.getRemainingAp() < 1) return null;
+        if (AgentBotBuildStateRuntime.hasApBuild(entry) || AgentBotBuildStateRuntime.apPromptSent(entry) || bot.getRemainingAp() < 1) return null;
         return requestApBuildPrompt(entry, bot);
     }
 
     public static String requestApBuildPrompt(BotEntry entry, Character bot) {
         String prompt = apPromptForJob(bot.getJob());
         if (prompt == null) return null;
-        entry.apPromptSent = true;
+        AgentBotBuildStateRuntime.markApPromptSent(entry);
         return prompt;
     }
 
     /** Spends all remaining AP according to the stored build. */
     public static void autoAssignAp(BotEntry entry, Character bot) {
-        if (entry.apBuild == null || bot.getRemainingAp() < 1) return;
+        ApBuild build = AgentBotBuildStateRuntime.apBuild(entry);
+        if (build == null || bot.getRemainingAp() < 1) return;
 
         int ap = bot.getRemainingAp();
         int[] gains = new int[StatType.values().length];
-        int secondaryNeeded = Math.max(0, entry.apBuild.secondaryTarget - currentStat(bot, entry.apBuild.secondaryStat));
+        int secondaryNeeded = Math.max(0, build.secondaryTarget - currentStat(bot, build.secondaryStat));
         int secondaryGain = Math.min(secondaryNeeded, ap);
-        gains[entry.apBuild.secondaryStat.ordinal()] = secondaryGain;
+        gains[build.secondaryStat.ordinal()] = secondaryGain;
         ap -= secondaryGain;
-        gains[entry.apBuild.primaryStat.ordinal()] += ap;
+        gains[build.primaryStat.ordinal()] += ap;
 
         if (gains[StatType.STR.ordinal()] > 0
                 || gains[StatType.DEX.ordinal()] > 0
@@ -110,8 +111,8 @@ public final class BotBuildManager {
         if (apPromptForJob(bot.getJob()) == null) {
             return "dont have an ap build for my job yet";
         }
-        if (entry.apBuild == null) {
-            entry.apPromptSent = false;
+        if (!AgentBotBuildStateRuntime.hasApBuild(entry)) {
+            AgentBotBuildStateRuntime.clearApBuildPromptState(entry);
             String prompt = requestApBuildPrompt(entry, bot);
             return prompt != null ? prompt : "need your ap build first";
         }
@@ -124,7 +125,7 @@ public final class BotBuildManager {
     }
 
     static void handleJobAdvance(BotEntry entry, Character bot, Job oldJob, Job newJob) {
-        if (oldJob == Job.BEGINNER && oldJob != newJob && entry.apBuild != null) {
+        if (oldJob == Job.BEGINNER && oldJob != newJob && AgentBotBuildStateRuntime.hasApBuild(entry)) {
             reallocateAp(entry, bot);
         }
 
@@ -152,8 +153,8 @@ public final class BotBuildManager {
      */
     public static String buildSpVariantPrompt(BotEntry entry, Character bot) {
         if (bot.getJob() != Job.HERO) return null;
-        if (entry.spVariant != null || entry.spVariantPromptSent || bot.getRemainingSps()[3] < 1) return null;
-        entry.spVariantPromptSent = true;
+        if (AgentBotBuildStateRuntime.hasSpVariant(entry) || AgentBotBuildStateRuntime.spVariantPromptSent(entry) || bot.getRemainingSps()[3] < 1) return null;
+        AgentBotBuildStateRuntime.markSpVariantPromptSent(entry);
         return AgentBuildPromptReporter.heroSpVariantPrompt();
     }
 
@@ -162,16 +163,18 @@ public final class BotBuildManager {
      * Hero SP is held until the owner chooses a variant.
      */
     public static void autoAssignSp(BotEntry entry, Character bot) {
-        if (bot.getJob() == Job.HERO && entry.spVariant == null) return;
+        String spVariant = AgentBotBuildStateRuntime.spVariant(entry);
+        if (bot.getJob() == Job.HERO && spVariant == null) return;
 
-        List<BuildStep> steps = getBuildOrder(bot.getJob(), entry.spVariant);
+        List<BuildStep> steps = getBuildOrder(bot.getJob(), spVariant);
         if (steps == null) return;
 
         autoAssignSp(bot, steps);
     }
 
     public static String respecSp(BotEntry entry, Character bot) {
-        if (bot.getJob() == Job.HERO && entry.spVariant == null) {
+        String spVariant = AgentBotBuildStateRuntime.spVariant(entry);
+        if (bot.getJob() == Job.HERO && spVariant == null) {
             return "need your hero build first. say '1h' or '2h'";
         }
 
@@ -211,7 +214,7 @@ public final class BotBuildManager {
         }
 
         for (Job job : buildPath) {
-            List<BuildStep> steps = getBuildOrder(job, entry.spVariant);
+            List<BuildStep> steps = getBuildOrder(job, spVariant);
             if (steps != null) {
                 autoAssignSp(bot, steps);
             }

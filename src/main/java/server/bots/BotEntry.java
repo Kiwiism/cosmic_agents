@@ -194,14 +194,20 @@ public class BotEntry {
     public Character bot() { return bot; }
     public Character owner() { return owner; }
     public BotBuildManager.ApBuild apBuild() { return apBuild; }
+    public void setApBuild(BotBuildManager.ApBuild apBuild) {
+        this.apBuild = apBuild;
+        this.apPromptSent = false;
+    }
     public void clearApBuildPromptState() {
         apBuild = null;
         apPromptSent = false;
     }
+    public void markApPromptSent() { this.apPromptSent = true; }
     public void setSpVariant(String spVariant) { this.spVariant = spVariant; }
     public boolean apPromptSent() { return apPromptSent; }
     public String spVariant() { return spVariant; }
     public boolean spVariantPromptSent() { return spVariantPromptSent; }
+    public void markSpVariantPromptSent() { this.spVariantPromptSent = true; }
     public java.awt.Point getFarmAnchor() { return farmAnchor; }
     public int getFarmAnchorMapId() { return farmAnchorMapId; }
     public java.awt.Point moveTarget() { return moveTarget == null ? null : new java.awt.Point(moveTarget); }

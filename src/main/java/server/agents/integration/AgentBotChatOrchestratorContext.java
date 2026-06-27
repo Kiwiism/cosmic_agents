@@ -91,7 +91,8 @@ public final class AgentBotChatOrchestratorContext implements AgentChatOrchestra
 
     @Override
     public boolean isWaitingForSpVariant() {
-        return entry.spVariantPromptSent() && entry.spVariant() == null;
+        return AgentBotBuildStateRuntime.spVariantPromptSent(entry)
+                && !AgentBotBuildStateRuntime.hasSpVariant(entry);
     }
 
     @Override
@@ -101,7 +102,7 @@ public final class AgentBotChatOrchestratorContext implements AgentChatOrchestra
 
     @Override
     public boolean isWaitingForApBuild() {
-        return entry.apPromptSent();
+        return AgentBotBuildStateRuntime.apPromptSent(entry);
     }
 
     @Override

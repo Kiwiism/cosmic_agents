@@ -21,14 +21,14 @@ public final class AgentBotBuildRuntime {
         return new AgentChatBuildFlow.SpVariantCallbacks() {
             @Override
             public void oneHanded() {
-                entry.setSpVariant(AgentBuildDialogueClassifier.ONE_HANDED_SP_VARIANT);
+                AgentBotBuildStateRuntime.setSpVariant(entry, AgentBuildDialogueClassifier.ONE_HANDED_SP_VARIANT);
                 AgentBotBuildReplyRuntime.replyNow(entry, AgentChatBuildFlow.oneHandedSpVariantReply());
                 BotBuildManager.autoAssignSp(entry, entry.bot());
             }
 
             @Override
             public void twoHanded() {
-                entry.setSpVariant(AgentBuildDialogueClassifier.TWO_HANDED_SP_VARIANT);
+                AgentBotBuildStateRuntime.setSpVariant(entry, AgentBuildDialogueClassifier.TWO_HANDED_SP_VARIANT);
                 AgentBotBuildReplyRuntime.replyNow(entry, AgentChatBuildFlow.twoHandedSpVariantReply());
                 BotBuildManager.autoAssignSp(entry, entry.bot());
             }
@@ -39,7 +39,7 @@ public final class AgentBotBuildRuntime {
         return new AgentChatBuildFlow.ApBuildCallbacks() {
             @Override
             public void requestBuildPrompt() {
-                entry.clearApBuildPromptState();
+                AgentBotBuildStateRuntime.clearApBuildPromptState(entry);
                 String prompt = BotBuildManager.requestApBuildPrompt(entry, entry.bot());
                 if (prompt != null) {
                     AgentBotBuildReplyRuntime.replyNow(entry, prompt);
@@ -95,7 +95,7 @@ public final class AgentBotBuildRuntime {
             BotBuildManager.ApBuild build,
             String confirmMsg,
             String alreadyMsg) {
-        if (sameApBuild(entry.apBuild(), build)) {
+        if (sameApBuild(AgentBotBuildStateRuntime.apBuild(entry), build)) {
             AgentBotBuildReplyRuntime.replyNow(entry, alreadyMsg);
             return;
         }

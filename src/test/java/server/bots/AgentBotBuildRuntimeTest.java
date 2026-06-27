@@ -11,6 +11,7 @@ import server.agents.capabilities.dialogue.AgentChatJobAdvancementFlow;
 import server.agents.integration.AgentBotBuildReplyRuntime;
 import server.agents.integration.AgentBotBuildRuntime;
 import server.agents.integration.AgentBotBuildSchedulerRuntime;
+import server.agents.integration.AgentBotBuildStateRuntime;
 import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 
@@ -32,7 +33,7 @@ class AgentBotBuildRuntimeTest {
              MockedStatic<BotBuildManager> buildManager = mockStatic(BotBuildManager.class)) {
             AgentBotBuildRuntime.spVariantCallbacks(entry).oneHanded();
 
-            assertEquals(AgentBuildDialogueClassifier.ONE_HANDED_SP_VARIANT, entry.spVariant);
+            assertEquals(AgentBuildDialogueClassifier.ONE_HANDED_SP_VARIANT, AgentBotBuildStateRuntime.spVariant(entry));
             replies.verify(() -> AgentBotBuildReplyRuntime.replyNow(entry, AgentChatBuildFlow.oneHandedSpVariantReply()));
             buildManager.verify(() -> BotBuildManager.autoAssignSp(entry, bot));
         }

@@ -349,6 +349,10 @@ Recent reconstruction notes:
   `AgentBotPendingActionStateRuntime` adapter; chat, transfer, manager cleanup,
   and offer orchestration keep BotEntry as the temporary backing store but no
   longer read or clear those fields directly.
+- AP-build prompt state and SP-variant prompt state now enter through the
+  narrow `AgentBotBuildStateRuntime` adapter; build orchestration keeps BotEntry
+  as the temporary backing store but no longer reads or mutates AP/SP prompt
+  fields directly.
 
 Initial reconstruction order:
 

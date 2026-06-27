@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotBuildRuntime;
+import server.agents.integration.AgentBotBuildStateRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -51,7 +52,7 @@ class BotBuildManagerTest {
             buildRuntime.verify(() -> AgentBotBuildRuntime.confirmApBuild(entry, "confirm"));
         }
 
-        assertEquals(build, entry.apBuild);
+        assertEquals(build, AgentBotBuildStateRuntime.apBuild(entry));
     }
 
     @Test
@@ -324,7 +325,7 @@ class BotBuildManagerTest {
     void mageLuklessBuildDumpsRemainingApIntoInt() {
         Character bot = mock(Character.class);
         BotEntry entry = new BotEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
-        entry.apBuild = new BotBuildManager.ApBuild(BotBuildManager.StatType.INT, BotBuildManager.StatType.LUK, 4);
+        AgentBotBuildStateRuntime.setApBuild(entry, new BotBuildManager.ApBuild(BotBuildManager.StatType.INT, BotBuildManager.StatType.LUK, 4));
 
         when(bot.getRemainingAp()).thenReturn(5);
         when(bot.getLuk()).thenReturn(4);
@@ -338,7 +339,7 @@ class BotBuildManagerTest {
     void thiefFixedDexBuildFillsDexBeforeLuk() {
         Character bot = mock(Character.class);
         BotEntry entry = new BotEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
-        entry.apBuild = new BotBuildManager.ApBuild(BotBuildManager.StatType.LUK, BotBuildManager.StatType.DEX, 25);
+        AgentBotBuildStateRuntime.setApBuild(entry, new BotBuildManager.ApBuild(BotBuildManager.StatType.LUK, BotBuildManager.StatType.DEX, 25));
 
         when(bot.getRemainingAp()).thenReturn(5);
         when(bot.getDex()).thenReturn(22);
@@ -352,7 +353,7 @@ class BotBuildManagerTest {
     void bowmanStrlessBuildDumpsRemainingApIntoDex() {
         Character bot = mock(Character.class);
         BotEntry entry = new BotEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
-        entry.apBuild = new BotBuildManager.ApBuild(BotBuildManager.StatType.DEX, BotBuildManager.StatType.STR, 4);
+        AgentBotBuildStateRuntime.setApBuild(entry, new BotBuildManager.ApBuild(BotBuildManager.StatType.DEX, BotBuildManager.StatType.STR, 4));
 
         when(bot.getRemainingAp()).thenReturn(5);
         when(bot.getStr()).thenReturn(4);
@@ -366,7 +367,7 @@ class BotBuildManagerTest {
     void apRespecResetsToBaseStatsThenRebuildsUsingSavedPlan() {
         Character bot = mock(Character.class);
         BotEntry entry = new BotEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
-        entry.apBuild = new BotBuildManager.ApBuild(BotBuildManager.StatType.INT, BotBuildManager.StatType.LUK, 4);
+        AgentBotBuildStateRuntime.setApBuild(entry, new BotBuildManager.ApBuild(BotBuildManager.StatType.INT, BotBuildManager.StatType.LUK, 4));
 
         AtomicInteger str = new AtomicInteger(35);
         AtomicInteger dex = new AtomicInteger(24);
@@ -407,7 +408,7 @@ class BotBuildManagerTest {
     void apRespecKeepsFirstJobRequiredDexForThiefBuilds() {
         Character bot = mock(Character.class);
         BotEntry entry = new BotEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
-        entry.apBuild = new BotBuildManager.ApBuild(BotBuildManager.StatType.LUK, BotBuildManager.StatType.DEX, 4);
+        AgentBotBuildStateRuntime.setApBuild(entry, new BotBuildManager.ApBuild(BotBuildManager.StatType.LUK, BotBuildManager.StatType.DEX, 4));
 
         AtomicInteger str = new AtomicInteger(20);
         AtomicInteger dex = new AtomicInteger(60);
