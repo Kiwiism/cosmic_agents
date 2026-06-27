@@ -113,6 +113,9 @@ Recent reconstruction notes:
   `AgentBotScrollReactionRuntime`; `BotScrollReactionManager` no longer reaches
   directly into the lower-level reply or scheduler runtime for scroll-reaction
   owned flows.
+- KPQ Stage 1 progress/pass dialogue and Stage 5 reward dialogue now enter
+  through `AgentBotPqRuntime`; the KPQ script classes no longer reach directly
+  into the lower-level reply runtime for party-quest-owned dialogue.
 - Sell-trash shop owner-directed replies and delayed shop step callbacks now
   enter through `AgentBotShopRuntime`; `BotShopManager` no longer reaches
   directly into the lower-level reply or scheduler runtime for shop-owned
