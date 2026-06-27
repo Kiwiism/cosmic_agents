@@ -373,6 +373,10 @@ Recent reconstruction notes:
   `AgentBotPotionStateRuntime` adapter; potion sharing keeps BotEntry as the
   temporary backing store but no longer reads or mutates the request flags
   directly.
+- Build level-sync and job-prompt milestone state now enter through
+  `AgentBotBuildStateRuntime`; build progression keeps BotEntry as the
+  temporary backing store but no longer reads or mutates `lastKnownLevel` or
+  `jobPromptSent` directly.
 
 Initial reconstruction order:
 

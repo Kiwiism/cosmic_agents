@@ -53,4 +53,20 @@ public final class AgentBotBuildStateRuntime {
     public static void markSpVariantPromptSent(BotEntry entry) {
         entry.markSpVariantPromptSent();
     }
+
+    public static int lastKnownLevel(BotEntry entry) {
+        return entry.lastKnownLevel();
+    }
+
+    public static void setLastKnownLevel(BotEntry entry, int level) {
+        entry.setLastKnownLevel(level);
+    }
+
+    public static int jobPromptSent(BotEntry entry) {
+        return entry.jobPromptSent();
+    }
+
+    public static void setJobPromptSent(BotEntry entry, int level) {
+        entry.setJobPromptSent(level);
+    }
 }

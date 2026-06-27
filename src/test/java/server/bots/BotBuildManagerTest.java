@@ -77,7 +77,7 @@ class BotBuildManagerTest {
             BotBuildManager.checkLevelUp(entry, bot);
         }
 
-        assertEquals(10, entry.lastKnownLevel);
+        assertEquals(10, AgentBotBuildStateRuntime.lastKnownLevel(entry));
         assertEquals(0, remainingSps[warriorBook]);
         assertEquals(1, skillLevels.getOrDefault(Warrior.IMPROVED_HPREC, 0));
     }
@@ -96,7 +96,7 @@ class BotBuildManagerTest {
 
         BotBuildManager.checkLevelUp(entry, bot);
 
-        assertEquals(120, entry.lastKnownLevel);
+        assertEquals(120, AgentBotBuildStateRuntime.lastKnownLevel(entry));
         assertEquals(1, remainingSps[3]);
         verify(bot, never()).gainSp(anyInt(), anyInt(), anyBoolean());
         verify(bot, never()).changeSkillLevel(any(Skill.class), anyByte(), anyInt(), anyLong());

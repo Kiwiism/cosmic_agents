@@ -312,10 +312,10 @@ public final class BotBuildManager {
      */
     static void checkLevelUp(BotEntry entry, Character bot) {
         int lvl = bot.getLevel();
-        if (entry.lastKnownLevel == lvl) return;
+        if (AgentBotBuildStateRuntime.lastKnownLevel(entry) == lvl) return;
 
-        int prev = entry.lastKnownLevel;
-        entry.lastKnownLevel = lvl;
+        int prev = AgentBotBuildStateRuntime.lastKnownLevel(entry);
+        AgentBotBuildStateRuntime.setLastKnownLevel(entry, lvl);
         if (prev == -1) {
             autoAssignSp(entry, bot);
             autoAssignAp(entry, bot);
@@ -335,14 +335,14 @@ public final class BotBuildManager {
     public static String buildJobPrompt(BotEntry entry, Character bot) {
         int lvl = bot.getLevel();
         Job job = bot.getJob();
-        int prompted = entry.jobPromptSent;
+        int prompted = AgentBotBuildStateRuntime.jobPromptSent(entry);
 
         if (job == Job.BEGINNER) {
             if (lvl >= 10 && prompted < 10) {
-                entry.jobPromptSent = 10;
+                AgentBotBuildStateRuntime.setJobPromptSent(entry, 10);
                 return AgentBuildPromptReporter.beginnerJobPrompt(lvl);
             } else if (lvl >= 8 && prompted < 8) {
-                entry.jobPromptSent = 8;
+                AgentBotBuildStateRuntime.setJobPromptSent(entry, 8);
                 return AgentBuildPromptReporter.beginnerJobPrompt(lvl);
             }
             return null;
@@ -351,7 +351,7 @@ public final class BotBuildManager {
         if (lvl >= 30 && prompted < 30) {
             String msg = AgentBuildPromptReporter.secondJobPrompt(job);
             if (msg != null) {
-                entry.jobPromptSent = 30;
+                AgentBotBuildStateRuntime.setJobPromptSent(entry, 30);
                 return msg;
             }
         }
@@ -359,7 +359,7 @@ public final class BotBuildManager {
         if (lvl >= 70 && prompted < 70) {
             String msg = AgentBuildPromptReporter.thirdJobPrompt(job);
             if (msg != null) {
-                entry.jobPromptSent = 70;
+                AgentBotBuildStateRuntime.setJobPromptSent(entry, 70);
                 return msg;
             }
         }
@@ -367,7 +367,7 @@ public final class BotBuildManager {
         if (lvl >= 120 && prompted < 120) {
             String msg = AgentBuildPromptReporter.fourthJobPrompt(job);
             if (msg != null) {
-                entry.jobPromptSent = 120;
+                AgentBotBuildStateRuntime.setJobPromptSent(entry, 120);
                 return msg;
             }
         }

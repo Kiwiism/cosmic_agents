@@ -258,6 +258,22 @@ public class BotEntry {
     int jobPromptSent = 0;
     int lastKnownLevel = -1;
 
+    public int jobPromptSent() {
+        return jobPromptSent;
+    }
+
+    public void setJobPromptSent(int jobPromptSent) {
+        this.jobPromptSent = jobPromptSent;
+    }
+
+    public int lastKnownLevel() {
+        return lastKnownLevel;
+    }
+
+    public void setLastKnownLevel(int lastKnownLevel) {
+        this.lastKnownLevel = lastKnownLevel;
+    }
+
     // AP/SP builds
     BotBuildManager.ApBuild apBuild = null;
     boolean apPromptSent = false;
