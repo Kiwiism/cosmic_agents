@@ -183,6 +183,7 @@ public class BotEntry {
     public boolean isGrinding() { return grinding; }
     public boolean isFollowing() { return following; }
     public Character bot() { return bot; }
+    public Character owner() { return owner; }
     public java.awt.Point getFarmAnchor() { return farmAnchor; }
     public int getFarmAnchorMapId() { return farmAnchorMapId; }
     Point lastMobTouchCheckPos = null;
@@ -212,6 +213,7 @@ public class BotEntry {
 
     // Pending two-step action
     String pendingAction = null;
+    public String pendingAction() { return pendingAction; }
     String pendingDropCategory = null;
     Item pendingLootOfferItem = null;
     int pendingLootOfferRecipientId = 0;

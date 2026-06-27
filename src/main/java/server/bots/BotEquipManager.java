@@ -44,7 +44,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.ToIntFunction;
 
-class BotEquipManager {
+public class BotEquipManager {
 
     private static final Logger log = LoggerFactory.getLogger(BotEquipManager.class);
     private static final java.nio.file.Path EQUIP_LOG_DIR = java.nio.file.Path.of("logs", "bot-equip");
@@ -58,7 +58,7 @@ class BotEquipManager {
     private static final long AUTOEQUIP_THROTTLE_MS = 30_000L;
     private static final Map<Integer, Long> LAST_AUTOEQUIP_MS = new java.util.concurrent.ConcurrentHashMap<>();
 
-    static final class EquipRecommendation {
+    public static final class EquipRecommendation {
         private final short targetSlot;
         private final Equip current;
         private final Equip candidate;
@@ -77,7 +77,7 @@ class BotEquipManager {
             return current;
         }
 
-        Equip candidate() {
+        public Equip candidate() {
             return candidate;
         }
     }
@@ -1231,7 +1231,7 @@ class BotEquipManager {
         return bySlot;
     }
 
-    static List<EquipRecommendation> findRecommendedEquips(Character receiver, Character holder) {
+    public static List<EquipRecommendation> findRecommendedEquips(Character receiver, Character holder) {
         return findRecommendedEquips(receiver, holder, RecommendationScope.IMMEDIATE);
     }
 

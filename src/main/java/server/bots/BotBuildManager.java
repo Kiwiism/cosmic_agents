@@ -17,7 +17,7 @@ import server.bots.build.ThiefBuilds;
 import server.bots.build.WarriorBuilds;
 import server.agents.capabilities.dialogue.AgentBuildPromptReporter;
 
-class BotBuildManager {
+public final class BotBuildManager {
     enum StatType {
         STR,
         DEX,
@@ -53,7 +53,7 @@ class BotBuildManager {
      * no AP is pending, a build is already chosen, a prompt was already sent,
      * or the bot is not on a supported branch.
      */
-    static String buildApPrompt(BotEntry entry, Character bot) {
+    public static String buildApPrompt(BotEntry entry, Character bot) {
         String prompt = apPromptForJob(bot.getJob());
         if (prompt == null) return null;
         if (entry.apBuild != null || entry.apPromptSent || bot.getRemainingAp() < 1) return null;
@@ -68,7 +68,7 @@ class BotBuildManager {
     }
 
     /** Spends all remaining AP according to the stored build. */
-    static void autoAssignAp(BotEntry entry, Character bot) {
+    public static void autoAssignAp(BotEntry entry, Character bot) {
         if (entry.apBuild == null || bot.getRemainingAp() < 1) return;
 
         int ap = bot.getRemainingAp();
@@ -136,7 +136,7 @@ class BotBuildManager {
      * Returns a prompt asking for the SP build variant, or null if not needed.
      * Currently only Hero has two documented builds.
      */
-    static String buildSpVariantPrompt(BotEntry entry, Character bot) {
+    public static String buildSpVariantPrompt(BotEntry entry, Character bot) {
         if (bot.getJob() != Job.HERO) return null;
         if (entry.spVariant != null || entry.spVariantPromptSent || bot.getRemainingSps()[3] < 1) return null;
         entry.spVariantPromptSent = true;
@@ -147,7 +147,7 @@ class BotBuildManager {
      * Spends all available SP following the configured build order.
      * Hero SP is held until the owner chooses a variant.
      */
-    static void autoAssignSp(BotEntry entry, Character bot) {
+    public static void autoAssignSp(BotEntry entry, Character bot) {
         if (bot.getJob() == Job.HERO && entry.spVariant == null) return;
 
         List<BuildStep> steps = getBuildOrder(bot.getJob(), entry.spVariant);
@@ -315,7 +315,7 @@ class BotBuildManager {
     }
 
     /** Returns the next job-advancement prompt, or null if none is pending. */
-    static String buildJobPrompt(BotEntry entry, Character bot) {
+    public static String buildJobPrompt(BotEntry entry, Character bot) {
         int lvl = bot.getLevel();
         Job job = bot.getJob();
         int prompted = entry.jobPromptSent;

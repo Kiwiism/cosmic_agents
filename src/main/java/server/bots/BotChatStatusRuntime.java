@@ -1,12 +1,9 @@
 package server.bots;
 
-
-import server.agents.integration.AgentBotReplyRuntime;
-import server.agents.integration.AgentBotStatusRuntime;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
-
-import java.util.List;
+import server.agents.integration.AgentBotBuildStatusRuntime;
+import server.agents.integration.AgentBotStatusRuntime;
 
 final class BotChatStatusRuntime {
     private BotChatStatusRuntime() {
@@ -21,7 +18,9 @@ final class BotChatStatusRuntime {
     }
 
     static void checkBotStatus(BotEntry entry, Character bot) {
-        AgentChatStatusRuntime.checkStatus(AgentBotStatusRuntime.statusCheckState(entry), statusCheckActions(entry, bot));
+        AgentChatStatusRuntime.checkStatus(
+                AgentBotStatusRuntime.statusCheckState(entry),
+                AgentBotBuildStatusRuntime.statusCheckActions(entry, bot));
     }
 
     static void announceOwnerReturnedFromOffline(BotEntry entry) {
@@ -47,68 +46,6 @@ final class BotChatStatusRuntime {
 
     static int randomFidgetExpression() {
         return AgentChatStatusRuntime.randomFidgetExpression();
-    }
-
-    private static AgentChatStatusRuntime.StatusCheckActions statusCheckActions(BotEntry entry, Character bot) {
-        return new AgentChatStatusRuntime.StatusCheckActions() {
-            @Override
-            public String buildJobPrompt() {
-                return BotBuildManager.buildJobPrompt(entry, bot);
-            }
-
-            @Override
-            public String buildSpVariantPrompt() {
-                return BotBuildManager.buildSpVariantPrompt(entry, bot);
-            }
-
-            @Override
-            public String buildApPrompt() {
-                return BotBuildManager.buildApPrompt(entry, bot);
-            }
-
-            @Override
-            public void queueReply(String message) {
-                AgentBotReplyRuntime.queueReply(entry, message);
-            }
-
-            @Override
-            public void autoAssignSp() {
-                BotBuildManager.autoAssignSp(entry, bot);
-            }
-
-            @Override
-            public void autoAssignAp() {
-                BotBuildManager.autoAssignAp(entry, bot);
-            }
-
-            @Override
-            public void maybeSuggestRecommendedGear() {
-                BotChatStatusRuntime.maybeSuggestRecommendedGear(entry, bot);
-            }
-
-            @Override
-            public void maybeSuggestGearToSiblings() {
-                BotChatStatusRuntime.maybeSuggestGearToSiblings(entry, bot);
-            }
-
-            @Override
-            public boolean canOfferSpawnUpgrade() {
-                Character owner = entry.owner;
-                return owner != null
-                        && !isOwnerIdle(entry)
-                        && entry.pendingAction == null
-                        && !BotOfferManager.hasPendingOffer(entry);
-            }
-
-            @Override
-            public void offerSpawnUpgradeIfAvailable() {
-                Character owner = entry.owner;
-                List<BotEquipManager.EquipRecommendation> recs = BotEquipManager.findRecommendedEquips(bot, owner);
-                if (!recs.isEmpty()) {
-                    BotOfferManager.notifyOwnerGainedEquip(entry, bot, recs.get(0).candidate());
-                }
-            }
-        };
     }
 
     private static AgentChatStatusRuntime.ActiveModeActions activeModeActions(BotEntry entry) {

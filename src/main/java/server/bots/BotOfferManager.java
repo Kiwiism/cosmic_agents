@@ -41,11 +41,11 @@ public final class BotOfferManager {
                 && entry.pendingLootOfferRecipientId > 0;
     }
 
-    static boolean hasPendingOffer(BotEntry entry) {
+    public static boolean hasPendingOffer(BotEntry entry) {
         return hasOfferReservation(entry) && entry.pendingLootOfferExpiresAt > 0L;
     }
 
-    static void notifyOwnerGainedEquip(BotEntry entry, Character bot, Item item) {
+    public static void notifyOwnerGainedEquip(BotEntry entry, Character bot, Item item) {
         if (BotChatStatusRuntime.isOwnerIdle(entry)) {
             return;
         }
@@ -105,7 +105,7 @@ public final class BotOfferManager {
         return throwingStar != null && offerGearItem(entry, bot, owner, throwingStar, GearOfferNeed.CURRENT);
     }
 
-    static boolean offerBestGearToSibling(BotEntry entry, Character bot) {
+    public static boolean offerBestGearToSibling(BotEntry entry, Character bot) {
         Character owner = entry.owner;
         if (owner == null) {
             return false;
