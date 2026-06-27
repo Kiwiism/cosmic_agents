@@ -232,6 +232,7 @@ public class BotEntry {
     public void clearPendingAction() { this.pendingAction = null; }
     String pendingDropCategory = null;
     public String pendingDropCategory() { return pendingDropCategory; }
+    public void setPendingDropCategory(String pendingDropCategory) { this.pendingDropCategory = pendingDropCategory; }
     public void clearPendingDropCategory() { this.pendingDropCategory = null; }
     Item pendingLootOfferItem = null;
     public Item pendingLootOfferItem() { return pendingLootOfferItem; }

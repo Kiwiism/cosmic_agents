@@ -36,6 +36,9 @@ Recent reconstruction notes:
 - Social/fame chat callbacks now have an Agent-owned facade in
   `AgentBotSocialRuntime`; `BotChatSocialRuntime` remains only as a temporary
   compatibility shim for legacy bot package callers.
+- Transfer/item-query chat callbacks and async transfer result routing now have
+  an Agent-owned facade in `AgentBotTransferRuntime`; `BotChatTransferRuntime`
+  remains only as a temporary compatibility shim for legacy bot package callers.
 
 Initial reconstruction order:
 

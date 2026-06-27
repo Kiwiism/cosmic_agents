@@ -405,7 +405,7 @@ public class BotInventoryManager {
      * Kicks off a trade sequence for the given category.
      * Items are batched ≤9 per trade window; subsequent batches open new trades automatically.
      */
-    static void startTradeTransfer(String category, BotEntry entry, Character bot) {
+    public static void startTradeTransfer(String category, BotEntry entry, Character bot) {
         long startedAt = profileTradeCategory(category) ? System.nanoTime() : 0L;
         if (isMesoCategory(category)) {
             startTradeMesoTransfer(category, entry, bot);
@@ -482,7 +482,7 @@ public class BotInventoryManager {
         startTradeSequence("loot_offer", recipient, List.of(item), 0, true, entry, bot);
     }
 
-    static boolean hasTransferableItems(String category, BotEntry entry, Character bot) {
+    public static boolean hasTransferableItems(String category, BotEntry entry, Character bot) {
         if (isMesoCategory(category)) {
             int currentMesos = bot.getMeso();
             if (currentMesos <= 0) {
@@ -503,11 +503,11 @@ public class BotInventoryManager {
         return !collectItems(category, entry, bot).isEmpty();
     }
 
-    static boolean profileTradeCategory(String category) {
+    public static boolean profileTradeCategory(String category) {
         return "trash".equals(category) || "equips".equals(category) || isReservedEquipsCategory(category);
     }
 
-    static void logSlowTradeCommand(String category, String phase, BotEntry entry, Character bot, long startedAt) {
+    public static void logSlowTradeCommand(String category, String phase, BotEntry entry, Character bot, long startedAt) {
         if (startedAt == 0L || !profileTradeCategory(category)) {
             return;
         }
@@ -525,7 +525,7 @@ public class BotInventoryManager {
                 ownerName);
     }
 
-    static int countTransferableItems(String category, BotEntry entry, Character bot) {
+    public static int countTransferableItems(String category, BotEntry entry, Character bot) {
         if (isMesoCategory(category)) {
             return bot.getMeso();
         }
@@ -1731,7 +1731,7 @@ public class BotInventoryManager {
                           : "no " + noun + "s to drop");
     }
 
-    static boolean isMesoCategory(String category) {
+    public static boolean isMesoCategory(String category) {
         return category != null && (category.equals("mesos") || category.startsWith("mesos:"));
     }
 
