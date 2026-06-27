@@ -6,7 +6,7 @@ import client.inventory.InventoryType;
 import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentBotAmmoRuntime;
 import testutil.Items;
 
 import java.lang.reflect.Field;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 class BotAmmoManagerTest {
     @Test
     @SuppressWarnings("unchecked")
-    void ownerAmmoShareSchedulesThroughAgentSchedulerAdapter() throws Exception {
+    void ownerAmmoShareSchedulesThroughAgentAmmoRuntime() throws Exception {
         BotManager manager = BotManager.getInstance();
         Character owner = mock(Character.class);
         Character requestingBot = mock(Character.class);
@@ -39,15 +39,15 @@ class BotAmmoManagerTest {
         bots.put(owner.getId(), List.of(entry, donorEntry));
 
         try (MockedStatic<BotAttackExecutionProvider> attacks = mockStatic(BotAttackExecutionProvider.class);
-             MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class)) {
+             MockedStatic<AgentBotAmmoRuntime> scheduler = mockStatic(AgentBotAmmoRuntime.class)) {
             attacks.when(() -> BotAttackExecutionProvider.getEquippedWeaponType(donorBot)).thenReturn(null);
-            scheduler.when(() -> AgentBotSchedulerRuntime.randomDelayMs(900, 1400)).thenReturn(99L);
+            scheduler.when(() -> AgentBotAmmoRuntime.randomDelayMs(900, 1400)).thenReturn(99L);
 
             assertEquals(BotAmmoManager.OwnerAmmoShareResult.OFFERED,
                     BotAmmoManager.offerAmmoShareToOwner(entry, WeaponType.BOW));
 
-            scheduler.verify(() -> AgentBotSchedulerRuntime.randomDelayMs(900, 1400));
-            scheduler.verify(() -> AgentBotSchedulerRuntime.afterDelay(eq(99L), any(Runnable.class)));
+            scheduler.verify(() -> AgentBotAmmoRuntime.randomDelayMs(900, 1400));
+            scheduler.verify(() -> AgentBotAmmoRuntime.afterDelay(eq(99L), any(Runnable.class)));
         } finally {
             bots.remove(owner.getId());
         }

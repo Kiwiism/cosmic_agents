@@ -117,9 +117,10 @@ Recent reconstruction notes:
   directly into the lower-level reply or scheduler runtime for shop-owned
   flows. Map-only resupply/shop chatter remains on the legacy visible-say path
   until exact map-visible delivery has an Agent adapter.
-- Ammo-share delayed donor offer and transfer callbacks now route through
-  `AgentBotSchedulerRuntime`; visible ammo request/offer chat remains unchanged
-  on the legacy map-visible say path.
+- Ammo-share donor selection delays and delayed transfer callbacks now enter
+  through `AgentBotAmmoRuntime`; `BotAmmoManager` no longer reaches directly
+  into the lower-level scheduler runtime for ammo-owned timing. Visible ammo
+  request/offer chat remains unchanged on the legacy map-visible say path.
 - Potion-share delayed donor offer, low-supply fallback, and transfer callbacks
   now route through `AgentBotSchedulerRuntime`; visible potion request/offer
   chat remains unchanged on the legacy map-visible say path.
