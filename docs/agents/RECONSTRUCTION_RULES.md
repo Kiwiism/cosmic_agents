@@ -310,6 +310,10 @@ Recent reconstruction notes:
   narrow `AgentBotSupplyReplyRuntime` and `AgentBotSupplySchedulerRuntime`
   adapters; supply orchestration no longer reaches directly into the broad
   reply or scheduler runtimes.
+- Social/fame replies and random-delay callbacks now enter through narrow
+  `AgentBotSocialReplyRuntime` and `AgentBotSocialSchedulerRuntime` adapters;
+  social orchestration no longer reaches directly into the broad reply or
+  scheduler runtimes.
 
 Initial reconstruction order:
 
