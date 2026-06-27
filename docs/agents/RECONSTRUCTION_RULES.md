@@ -228,6 +228,10 @@ Recent reconstruction notes:
   `AgentBotInventoryRuntime`; `BotInventoryManager` no longer calls
   `BotManager.botSay` directly for inventory-owned delayed trade reply
   delivery, while the same reply channel and random reply pools remain intact.
+- Combat death, missing-MP-potion, low-ammo, and out-of-ammo visible replies
+  now enter through `AgentBotCombatRuntime`; `BotCombatManager` no longer calls
+  `BotManager.botSay` directly for combat-owned reply delivery, while the same
+  random reply pools, follow-owner fallback, and warning flags remain intact.
 
 Initial reconstruction order:
 

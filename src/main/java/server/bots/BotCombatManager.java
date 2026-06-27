@@ -524,7 +524,7 @@ public class BotCombatManager {
         BotMovementManager.broadcastMovement(entry);
         entry.deadUntil = System.currentTimeMillis() + cfg.BOT_DEAD_MS;
         if (announceDeath) {
-            BotManager.getInstance().botSay(bot, BotManager.randomReply(DEATH_REPLIES));
+            AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(DEATH_REPLIES));
         }
     }
 
@@ -2574,7 +2574,7 @@ public class BotCombatManager {
                 entry.noAmmo = true;
                 if (entry.grinding) {
                     BotManager.getInstance().issueFollowOwner(entry);
-                    BotManager.getInstance().botSay(bot, BotManager.randomReply(MP_POTS_OUT_MSGS));
+                    AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(MP_POTS_OUT_MSGS));
                 }
             }
             return;
@@ -2589,7 +2589,7 @@ public class BotCombatManager {
 
         if (ammo > 0 && !entry.ammoWarnSent) {
             entry.ammoWarnSent = true;
-            BotManager.getInstance().botSay(bot, BotManager.randomReply(AMMO_LOW_MSGS));
+            AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(AMMO_LOW_MSGS));
             return;
         }
 
@@ -2597,7 +2597,7 @@ public class BotCombatManager {
             entry.noAmmo = true;
             if (entry.grinding) {
                 BotManager.getInstance().issueFollowOwner(entry);
-                BotManager.getInstance().botSay(bot, BotManager.randomReply(AMMO_OUT_MSGS));
+                AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(AMMO_OUT_MSGS));
             }
         }
     }
