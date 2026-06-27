@@ -14,6 +14,7 @@ import constants.skills.WhiteKnight;
 import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
+import server.agents.integration.AgentBotSchedulerRuntime;
 import server.StatEffect;
 
 import java.util.List;
@@ -425,10 +426,10 @@ public final class BotPotionManager {
                     "wish i could help, try " + ownerName + "?",
                     "i'm low too :/ check with " + ownerName,
                     "barely have any myself, ask " + ownerName);
-            BotManager.after(BotManager.randMs(4000, 6000), () ->
+            AgentBotSchedulerRuntime.afterRandomDelay(4000, 6000, () ->
                     BotManager.getInstance().botSay(plan.entry().bot, BotManager.randomReply(noQualMessages)));
         } else {
-            schedulePotShare(plan, bot, forHp, BotManager.randMs(2000, 3000));
+            schedulePotShare(plan, bot, forHp, AgentBotSchedulerRuntime.randomDelayMs(2000, 3000));
         }
         BotPerformanceMonitor.recordSince("potion-request", startedAt);
         return true;
@@ -451,7 +452,7 @@ public final class BotPotionManager {
             return OwnerPotShareResult.NO_DONOR;
         }
 
-        schedulePotShare(plan, owner, forHp, BotManager.randMs(900, 1400));
+        schedulePotShare(plan, owner, forHp, AgentBotSchedulerRuntime.randomDelayMs(900, 1400));
         return OwnerPotShareResult.OFFERED;
     }
 
@@ -478,7 +479,7 @@ public final class BotPotionManager {
         BotEntry donorEntry = plan.entry();
         Character donorBot = donorEntry.bot;
         int maxQty = plan.donationQty();
-        BotManager.after(initialDelayMs, () -> {
+        AgentBotSchedulerRuntime.afterDelay(initialDelayMs, () -> {
             if (donorBot.getTrade() != null || donorEntry.pendingTradeCategory != null || recipient.getTrade() != null) {
                 return;
             }
@@ -487,7 +488,7 @@ public final class BotPotionManager {
                 return;
             }
             BotManager.getInstance().botSay(donorBot, BotManager.randomReply(forHp ? POT_OFFER_HP_MSGS : POT_OFFER_MP_MSGS));
-            BotManager.after(BotManager.randMs(900, 1100), () ->
+            AgentBotSchedulerRuntime.afterRandomDelay(900, 1100, () ->
                     BotInventoryManager.startPotShareTransfer(items, recipient, donorEntry, donorBot, maxQty));
         });
     }

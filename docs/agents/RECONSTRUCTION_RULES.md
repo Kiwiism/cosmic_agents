@@ -115,6 +115,9 @@ Recent reconstruction notes:
 - Ammo-share delayed donor offer and transfer callbacks now route through
   `AgentBotSchedulerRuntime`; visible ammo request/offer chat remains unchanged
   on the legacy map-visible say path.
+- Potion-share delayed donor offer, low-supply fallback, and transfer callbacks
+  now route through `AgentBotSchedulerRuntime`; visible potion request/offer
+  chat remains unchanged on the legacy map-visible say path.
 
 Initial reconstruction order:
 
