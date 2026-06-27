@@ -298,6 +298,9 @@ Recent reconstruction notes:
 - LLM dialogue replies now enter through the narrow `AgentBotLlmReplyRuntime`
   adapter; LLM orchestration no longer reaches directly into the broad reply
   runtime.
+- PQ queued dialogue now enters through the narrow `AgentBotPqReplyRuntime`
+  adapter; PQ orchestration no longer reaches directly into the broad reply
+  runtime.
 
 Initial reconstruction order:
 

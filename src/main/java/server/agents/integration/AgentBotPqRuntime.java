@@ -11,6 +11,6 @@ public final class AgentBotPqRuntime {
     }
 
     public static void queueSay(BotEntry entry, String message) {
-        AgentBotReplyRuntime.queueSay(entry, message);
+        AgentBotPqReplyRuntime.queueSay(entry, message);
     }
 }
