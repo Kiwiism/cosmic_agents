@@ -10,6 +10,7 @@ import net.server.PlayerBuffValueHolder;
 import net.server.channel.handlers.UseItemHandler;
 import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentBuffDialogueReporter;
+import server.agents.integration.AgentBotBuffStateRuntime;
 import server.StatEffect;
 import server.combat.CombatFormulaProvider;
 import server.life.Monster;
@@ -53,8 +54,8 @@ public final class BotBuffManager {
         if (!entry.buffConsumablesEnabled) return;
 
         long now = System.currentTimeMillis();
-        if (now - entry.lastBuffScanMs < TICK_MS) return;
-        entry.lastBuffScanMs = now;
+        if (!AgentBotBuffStateRuntime.scanDue(entry, now, TICK_MS)) return;
+        AgentBotBuffStateRuntime.markScanned(entry, now);
 
         if (bot.getMap().getAllMonsters().stream().noneMatch(Monster::isAlive)) return;
 
@@ -331,8 +332,7 @@ public final class BotBuffManager {
     }
 
     private static void noteDecision(BotEntry entry, String summary) {
-        entry.lastBuffActionAtMs = System.currentTimeMillis();
-        entry.lastBuffActionSummary = summary;
+        AgentBotBuffStateRuntime.noteDecision(entry, System.currentTimeMillis(), summary);
     }
 
     private static String itemName(int itemId) {

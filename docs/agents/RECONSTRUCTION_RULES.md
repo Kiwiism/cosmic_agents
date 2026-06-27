@@ -377,6 +377,9 @@ Recent reconstruction notes:
   `AgentBotBuildStateRuntime`; build progression keeps BotEntry as the
   temporary backing store but no longer reads or mutates `lastKnownLevel` or
   `jobPromptSent` directly.
+- Consumable buff scan and last-action summary state now enter through
+  `AgentBotBuffStateRuntime`; buff consumable automation keeps BotEntry as the
+  temporary backing store but no longer reads or mutates those fields directly.
 
 Initial reconstruction order:
 

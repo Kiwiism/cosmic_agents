@@ -414,6 +414,27 @@ public class BotEntry {
     long    lastBuffActionAtMs     = 0L;
     String  lastBuffActionSummary  = "no buff scans yet";
 
+    public long lastBuffScanMs() {
+        return lastBuffScanMs;
+    }
+
+    public void setLastBuffScanMs(long lastBuffScanMs) {
+        this.lastBuffScanMs = lastBuffScanMs;
+    }
+
+    public long lastBuffActionAtMs() {
+        return lastBuffActionAtMs;
+    }
+
+    public String lastBuffActionSummary() {
+        return lastBuffActionSummary;
+    }
+
+    public void setLastBuffAction(long atMs, String summary) {
+        this.lastBuffActionAtMs = atMs;
+        this.lastBuffActionSummary = summary;
+    }
+
     public boolean buffConsumablesEnabled() {
         return buffConsumablesEnabled;
     }
