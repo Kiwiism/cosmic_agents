@@ -190,4 +190,16 @@ public final class AgentBotPendingTradeStateRuntime {
     public static void clearBotDone(BotEntry entry) {
         entry.setPendingTradeBotDone(false);
     }
+
+    public static int itemIndex(BotEntry entry) {
+        return entry.pendingTradeIdx();
+    }
+
+    public static void incrementItemIndex(BotEntry entry) {
+        entry.setPendingTradeIdx(entry.pendingTradeIdx() + 1);
+    }
+
+    public static void clearItemIndex(BotEntry entry) {
+        entry.setPendingTradeIdx(0);
+    }
 }

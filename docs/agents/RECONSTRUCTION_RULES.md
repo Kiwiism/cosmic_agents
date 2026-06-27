@@ -425,6 +425,10 @@ Recent reconstruction notes:
   `AgentBotPendingTradeStateRuntime`; trade completion, cancel, timeout, and
   reset handling keep BotEntry as the temporary backing store but no longer
   read, mark, or clear completion fields directly.
+- Pending trade item index state now enters through
+  `AgentBotPendingTradeStateRuntime`; trade batch setup, item-add progression,
+  and reset keep BotEntry as the temporary backing store but no longer read,
+  increment, or clear the item index field directly.
 
 Initial reconstruction order:
 

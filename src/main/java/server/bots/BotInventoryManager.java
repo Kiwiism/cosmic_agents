@@ -598,7 +598,7 @@ public class BotInventoryManager {
                 ? new ArrayList<>(items.subList(0, TRADE_WINDOW_ITEM_LIMIT))
                 : new ArrayList<>(items);
         AgentBotPendingTradeStateRuntime.setMeso(entry, mesos);
-        entry.pendingTradeIdx      = 0;
+        AgentBotPendingTradeStateRuntime.clearItemIndex(entry);
         AgentBotPendingTradeStateRuntime.clearTimer(entry);
         AgentBotPendingTradeStateRuntime.clearMesoAdded(entry);
         AgentBotPendingTradeStateRuntime.clearAllItemsAdded(entry);
@@ -718,7 +718,7 @@ public class BotInventoryManager {
             }
 
             List<Item> items = entry.pendingTradeItems;
-            int idx = entry.pendingTradeIdx;
+            int idx = AgentBotPendingTradeStateRuntime.itemIndex(entry);
 
             if (idx >= items.size()) {
                 // All items added — say so in trade chat and wait for owner OK
@@ -738,7 +738,7 @@ public class BotInventoryManager {
 
             // Add next item
             Item item = items.get(idx);
-            entry.pendingTradeIdx++;
+            AgentBotPendingTradeStateRuntime.incrementItemIndex(entry);
             AgentBotPendingTradeStateRuntime.setTimerMs(entry, BotMovementManager.delayAfterCurrentTick(500)); // 500 ms before next
 
             short tradeQty = capTradeQuantityByShareBudget(entry, item.getQuantity());
@@ -807,7 +807,7 @@ public class BotInventoryManager {
         entry.pendingTradeItems    = null;
         AgentBotPendingTradeStateRuntime.clearRecipientId(entry);
         AgentBotPendingTradeStateRuntime.clearMeso(entry);
-        entry.pendingTradeIdx      = 0;
+        AgentBotPendingTradeStateRuntime.clearItemIndex(entry);
         AgentBotPendingTradeStateRuntime.clearTimer(entry);
         AgentBotPendingTradeStateRuntime.clearMesoAdded(entry);
         AgentBotPendingTradeStateRuntime.clearAllItemsAdded(entry);

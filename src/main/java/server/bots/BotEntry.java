@@ -421,6 +421,14 @@ public class BotEntry {
         this.pendingTradeBotDone = pendingTradeBotDone;
     }
 
+    public int pendingTradeIdx() {
+        return pendingTradeIdx;
+    }
+
+    public void setPendingTradeIdx(int pendingTradeIdx) {
+        this.pendingTradeIdx = pendingTradeIdx;
+    }
+
     // Message queue
     final ArrayDeque<AgentQueuedMessage> msgQueue = new ArrayDeque<>();
     boolean msgSending = false;

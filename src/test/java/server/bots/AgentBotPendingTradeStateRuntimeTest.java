@@ -194,4 +194,20 @@ class AgentBotPendingTradeStateRuntimeTest {
         assertFalse(AgentBotPendingTradeStateRuntime.allItemsAdded(entry));
         assertFalse(AgentBotPendingTradeStateRuntime.botDone(entry));
     }
+
+    @Test
+    void adaptsItemIndexState() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        assertEquals(0, AgentBotPendingTradeStateRuntime.itemIndex(entry));
+
+        AgentBotPendingTradeStateRuntime.incrementItemIndex(entry);
+        AgentBotPendingTradeStateRuntime.incrementItemIndex(entry);
+
+        assertEquals(2, AgentBotPendingTradeStateRuntime.itemIndex(entry));
+
+        AgentBotPendingTradeStateRuntime.clearItemIndex(entry);
+
+        assertEquals(0, AgentBotPendingTradeStateRuntime.itemIndex(entry));
+    }
 }
