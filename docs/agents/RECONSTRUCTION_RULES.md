@@ -301,6 +301,11 @@ Recent reconstruction notes:
 - PQ queued dialogue now enters through the narrow `AgentBotPqReplyRuntime`
   adapter; PQ orchestration no longer reaches directly into the broad reply
   runtime.
+- Scroll-reaction queued dialogue, fixed-delay callbacks, and delay-sampling
+  bridge methods now enter through narrow `AgentBotScrollReactionReplyRuntime`
+  and `AgentBotScrollReactionSchedulerRuntime` adapters; scroll-reaction
+  orchestration no longer reaches directly into the broad reply or scheduler
+  runtimes.
 
 Initial reconstruction order:
 
