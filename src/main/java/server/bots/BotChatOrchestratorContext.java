@@ -16,6 +16,7 @@ import server.agents.capabilities.dialogue.AgentChatToggleFlow;
 import server.agents.capabilities.dialogue.AgentChatTransferFlow;
 import server.agents.capabilities.dialogue.AgentChatUtilityFlow;
 import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
+import server.agents.integration.AgentBotSessionRuntime;
 
 /**
  * Temporary compatibility adapter while BotChatManager side effects are migrated
@@ -50,7 +51,7 @@ final class BotChatOrchestratorContext implements AgentChatOrchestrator.Context 
 
     @Override
     public AgentChatSessionRequestFlow.SessionRequestCallbacks sessionRequestCallbacks() {
-        return BotChatSessionRuntime.sessionRequestCallbacks(entry);
+        return AgentBotSessionRuntime.sessionRequestCallbacks(entry);
     }
 
     @Override

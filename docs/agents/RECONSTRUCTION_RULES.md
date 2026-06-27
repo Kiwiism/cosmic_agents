@@ -42,6 +42,9 @@ Recent reconstruction notes:
 - Supply request callbacks and request-upgrade supply routing now have an
   Agent-owned facade in `AgentBotSupplyRuntime`; `BotChatSupplyRuntime` remains
   only as a temporary compatibility shim for legacy bot package callers.
+- Session/relog/logout/away callback orchestration now has an Agent-owned
+  facade in `AgentBotSessionRuntime`; `BotChatSessionRuntime` remains only as a
+  temporary compatibility shim for legacy bot package callers.
 
 Initial reconstruction order:
 

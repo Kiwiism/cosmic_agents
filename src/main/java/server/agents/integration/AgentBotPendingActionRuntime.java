@@ -5,7 +5,6 @@ import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
 import server.agents.capabilities.dialogue.AgentSkillDialogueReporter;
 import server.agents.capabilities.dialogue.AgentSkillReportFlow;
-import server.bots.BotChatSessionRuntime;
 import server.bots.BotEntry;
 import server.bots.BotInventoryManager;
 import server.bots.BotManager;
@@ -49,7 +48,7 @@ public final class AgentBotPendingActionRuntime {
         return new AgentPendingChatActionFlow.PendingActionCallbacks() {
             @Override
             public void handleOwnerAwayChoice(String message) {
-                BotChatSessionRuntime.handleOwnerAwayChoice(entry, message);
+                AgentBotSessionRuntime.handleOwnerAwayChoice(entry, message);
             }
 
             @Override
@@ -71,12 +70,12 @@ public final class AgentBotPendingActionRuntime {
 
             @Override
             public void confirmRelog() {
-                BotChatSessionRuntime.scheduleRelogConfirm(entry);
+                AgentBotSessionRuntime.scheduleRelogConfirm(entry);
             }
 
             @Override
             public void confirmLogout() {
-                BotChatSessionRuntime.scheduleLogoutConfirm(entry);
+                AgentBotSessionRuntime.scheduleLogoutConfirm(entry);
             }
 
             @Override
