@@ -8,6 +8,7 @@ import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotInventoryRuntime;
+import server.agents.integration.AgentBotManualTradeStateRuntime;
 import server.Trade;
 import server.maps.Foothold;
 import server.maps.MapItem;
@@ -86,14 +87,14 @@ class BotInventoryManagerTest {
         when(bot.getTrade()).thenReturn(trade);
 
         BotInventoryManager.tickManualTrade(entry, bot);
-        entry.manualTradeTimeoutMs = BotMovementManager.cfg.TICK_MS;
+        AgentBotManualTradeStateRuntime.setTimeoutMs(entry, BotMovementManager.cfg.TICK_MS);
 
         try (MockedStatic<Trade> trades = mockStatic(Trade.class)) {
             BotInventoryManager.tickManualTrade(entry, bot);
 
             trades.verify(() -> Trade.cancelTrade(bot, Trade.TradeResult.NO_RESPONSE));
-            assertNull(entry.manualTradeRef);
-            assertTrue(entry.manualTradeTimeoutMs == 0);
+            assertNull(AgentBotManualTradeStateRuntime.tradeRef(entry));
+            assertEquals(0, AgentBotManualTradeStateRuntime.timeoutMs(entry));
         }
     }
 

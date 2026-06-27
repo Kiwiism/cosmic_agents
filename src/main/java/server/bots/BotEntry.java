@@ -593,6 +593,30 @@ public class BotEntry {
     Trade manualTradeRef = null;
     int manualTradeTimeoutMs = 0;
 
+    public int manualTradeAcceptDelayMs() {
+        return manualTradeAcceptDelayMs;
+    }
+
+    public void setManualTradeAcceptDelayMs(int manualTradeAcceptDelayMs) {
+        this.manualTradeAcceptDelayMs = manualTradeAcceptDelayMs;
+    }
+
+    public Trade manualTradeRef() {
+        return manualTradeRef;
+    }
+
+    public void setManualTradeRef(Trade manualTradeRef) {
+        this.manualTradeRef = manualTradeRef;
+    }
+
+    public int manualTradeTimeoutMs() {
+        return manualTradeTimeoutMs;
+    }
+
+    public void setManualTradeTimeoutMs(int manualTradeTimeoutMs) {
+        this.manualTradeTimeoutMs = manualTradeTimeoutMs;
+    }
+
     // Movement packet cache so repeated no-op packets are suppressed
     boolean movementBroadcastValid = false;
     int lastBroadcastX = 0;

@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
 import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
+import server.agents.integration.AgentBotManualTradeStateRuntime;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.ItemInformationProvider;
 import server.StatEffect;
@@ -269,14 +270,14 @@ public class BotInventoryManager {
             return;
         }
 
-        if (trade != entry.manualTradeRef) {
+        if (trade != AgentBotManualTradeStateRuntime.tradeRef(entry)) {
             manualTradeGreetingSent.remove(bot.getId());
-            entry.manualTradeAcceptDelayMs = 0;
-            entry.manualTradeRef = trade;
-            entry.manualTradeTimeoutMs = MANUAL_TRADE_TIMEOUT_MS;
-        } else if (entry.manualTradeTimeoutMs > 0) {
-            entry.manualTradeTimeoutMs = BotMovementManager.tickDown(entry.manualTradeTimeoutMs);
-            if (entry.manualTradeTimeoutMs == 0) {
+            AgentBotManualTradeStateRuntime.beginTrade(entry, trade, MANUAL_TRADE_TIMEOUT_MS);
+        } else if (AgentBotManualTradeStateRuntime.timeoutMs(entry) > 0) {
+            AgentBotManualTradeStateRuntime.setTimeoutMs(
+                    entry,
+                    BotMovementManager.tickDown(AgentBotManualTradeStateRuntime.timeoutMs(entry)));
+            if (AgentBotManualTradeStateRuntime.timeoutMs(entry) == 0) {
                 Trade.cancelTrade(bot, Trade.TradeResult.NO_RESPONSE);
                 clearManualTradeState(entry, bot);
                 return;
@@ -306,10 +307,11 @@ public class BotInventoryManager {
             // Accept invite if not yet joined — small delay so it feels human
             if (!trade.isFullTrade()) {
                 if (trade.getNumber() != 1) return;
-                if (entry.manualTradeAcceptDelayMs == 0)
-                    entry.manualTradeAcceptDelayMs = 500 + BotMovementManager.cfg.TICK_MS;
-                entry.manualTradeAcceptDelayMs = BotMovementManager.tickDown(entry.manualTradeAcceptDelayMs);
-                if (entry.manualTradeAcceptDelayMs > 0) return;
+                AgentBotManualTradeStateRuntime.ensureAcceptDelay(entry, 500 + BotMovementManager.cfg.TICK_MS);
+                AgentBotManualTradeStateRuntime.setAcceptDelayMs(
+                        entry,
+                        BotMovementManager.tickDown(AgentBotManualTradeStateRuntime.acceptDelayMs(entry)));
+                if (AgentBotManualTradeStateRuntime.acceptDelayMs(entry) > 0) return;
                 Trade.visitTrade(bot, partner.getChr());
                 trade = bot.getTrade();
                 if (trade == null || !trade.isFullTrade()) return;
@@ -326,10 +328,11 @@ public class BotInventoryManager {
             // Only accept on bot's behalf when the owner was the initiator (bot is slot 1).
             // When bot is slot 0 (bot initiated via "trade me"), wait for owner to accept.
             if (trade.getNumber() != 1) return;
-            if (entry.manualTradeAcceptDelayMs == 0)
-                entry.manualTradeAcceptDelayMs = 500 + BotMovementManager.cfg.TICK_MS;
-            entry.manualTradeAcceptDelayMs = BotMovementManager.tickDown(entry.manualTradeAcceptDelayMs);
-            if (entry.manualTradeAcceptDelayMs > 0) return;
+            AgentBotManualTradeStateRuntime.ensureAcceptDelay(entry, 500 + BotMovementManager.cfg.TICK_MS);
+            AgentBotManualTradeStateRuntime.setAcceptDelayMs(
+                    entry,
+                    BotMovementManager.tickDown(AgentBotManualTradeStateRuntime.acceptDelayMs(entry)));
+            if (AgentBotManualTradeStateRuntime.acceptDelayMs(entry) > 0) return;
             Trade.visitTrade(bot, owner);
             trade = bot.getTrade();
             if (trade == null || !trade.isFullTrade()) return;
@@ -791,9 +794,7 @@ public class BotInventoryManager {
 
     private static void clearManualTradeState(BotEntry entry, Character bot) {
         manualTradeGreetingSent.remove(bot.getId());
-        entry.manualTradeAcceptDelayMs = 0;
-        entry.manualTradeRef = null;
-        entry.manualTradeTimeoutMs = 0;
+        AgentBotManualTradeStateRuntime.clear(entry);
     }
 
     private static void resetTradeState(BotEntry entry, Character bot) {

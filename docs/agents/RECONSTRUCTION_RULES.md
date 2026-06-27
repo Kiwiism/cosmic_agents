@@ -380,6 +380,10 @@ Recent reconstruction notes:
 - Consumable buff scan and last-action summary state now enter through
   `AgentBotBuffStateRuntime`; buff consumable automation keeps BotEntry as the
   temporary backing store but no longer reads or mutates those fields directly.
+- Manual trade invite accept-delay, trade reference, and timeout state now enter
+  through `AgentBotManualTradeStateRuntime`; manual trade handling keeps
+  BotEntry as the temporary backing store but no longer reads or mutates those
+  fields directly.
 
 Initial reconstruction order:
 
