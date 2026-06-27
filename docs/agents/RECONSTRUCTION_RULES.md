@@ -237,6 +237,10 @@ Recent reconstruction notes:
   `BotShopManager` no longer calls `BotManager.botSay` directly for shop-owned
   reply delivery, while the same text, random reply pools, and delayed shop
   sequencing remain intact.
+- The unused `BotManager.botVisibleSay` and `BotManager.botReply`
+  compatibility shims were removed after all production and test callers moved
+  to Agent reply runtimes; `botSay(...)` and `botSayParty(...)` remain for
+  legacy channel delivery compatibility.
 
 Initial reconstruction order:
 

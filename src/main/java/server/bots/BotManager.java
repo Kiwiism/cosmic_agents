@@ -3926,15 +3926,6 @@ public class BotManager {
         botSay(entry.bot, entry.replyChannel, text);
     }
 
-    public void botVisibleSay(BotEntry entry, String text) {
-        AgentBotManagerReplyRuntime.visibleSayNow(entry, text);
-    }
-
-    /** Owner-directed reply — routes MAP→map broadcast, PARTY→party, WHISPER→whisper to owner. */
-    public void botReply(BotEntry entry, String text) {
-        AgentBotManagerReplyRuntime.replyNow(entry, text);
-    }
-
     /**
      * Broadcasts via party chat so the owner sees the message even when they're
      * on a different map. Falls back to map chat if the bot has no party.
