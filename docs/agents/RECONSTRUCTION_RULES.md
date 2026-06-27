@@ -54,6 +54,10 @@ Recent reconstruction notes:
 - Read-only movement state snapshots now have Agent-owned types in
   `AgentMovementSnapshot`/`AgentMovementMode` and an integration facade in
   `AgentBotMovementStateRuntime`; `BotEntry` remains the temporary state source.
+- Read-only target/formation snapshots now have an Agent-owned type in
+  `AgentMovementTargetSnapshot` and an integration facade in
+  `AgentBotMovementTargetRuntime`; `BotManager.TargetSnapshot` remains the
+  temporary target-resolution source.
 
 Initial reconstruction order:
 
