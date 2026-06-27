@@ -48,11 +48,7 @@ final class BotChatStatusRuntime {
     }
 
     static void prepareActiveModeEntry(BotEntry entry) {
-        BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
-        entry.nextGearSuggestionAt = 0;
-        maybeSuggestGearToSiblings(entry, entry.bot);
-        BotPotionManager.setupAutopotForBot(entry.bot);
-        BotPotionManager.checkPotShareOnModeStart(entry, entry.bot);
+        AgentChatStatusRuntime.prepareActiveMode(activeModeActions(entry));
     }
 
     static boolean isOwnerIdle(BotEntry entry) {
@@ -159,6 +155,35 @@ final class BotChatStatusRuntime {
                 if (!recs.isEmpty()) {
                     BotOfferManager.notifyOwnerGainedEquip(entry, bot, recs.get(0).candidate());
                 }
+            }
+        };
+    }
+
+    private static AgentChatStatusRuntime.ActiveModeActions activeModeActions(BotEntry entry) {
+        return new AgentChatStatusRuntime.ActiveModeActions() {
+            @Override
+            public void autoEquip() {
+                BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
+            }
+
+            @Override
+            public void resetGearSuggestionCooldown() {
+                entry.nextGearSuggestionAt = 0;
+            }
+
+            @Override
+            public void maybeSuggestGearToSiblings() {
+                BotChatStatusRuntime.maybeSuggestGearToSiblings(entry, entry.bot);
+            }
+
+            @Override
+            public void setupAutopot() {
+                BotPotionManager.setupAutopotForBot(entry.bot);
+            }
+
+            @Override
+            public void checkPotShareOnModeStart() {
+                BotPotionManager.checkPotShareOnModeStart(entry, entry.bot);
             }
         };
     }

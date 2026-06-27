@@ -115,6 +115,20 @@ class AgentChatStatusRuntimeTest {
                 "maybeSuggestGearToSiblings"), actions.events);
     }
 
+    @Test
+    void prepareActiveModeUsesLegacyPreparationOrder() {
+        TestActiveModeActions actions = new TestActiveModeActions();
+
+        AgentChatStatusRuntime.prepareActiveMode(actions);
+
+        assertEquals(List.of(
+                "autoEquip",
+                "resetGearSuggestionCooldown",
+                "maybeSuggestGearToSiblings",
+                "setupAutopot",
+                "checkPotShareOnModeStart"), actions.events);
+    }
+
     private static final class TestState implements AgentChatStatusRuntime.StatusState {
         private Point position;
         private long sinceMs;
@@ -214,6 +228,35 @@ class AgentChatStatusRuntimeTest {
         @Override
         public void offerSpawnUpgradeIfAvailable() {
             events.add("offerSpawnUpgradeIfAvailable");
+        }
+    }
+
+    private static final class TestActiveModeActions implements AgentChatStatusRuntime.ActiveModeActions {
+        private final List<String> events = new ArrayList<>();
+
+        @Override
+        public void autoEquip() {
+            events.add("autoEquip");
+        }
+
+        @Override
+        public void resetGearSuggestionCooldown() {
+            events.add("resetGearSuggestionCooldown");
+        }
+
+        @Override
+        public void maybeSuggestGearToSiblings() {
+            events.add("maybeSuggestGearToSiblings");
+        }
+
+        @Override
+        public void setupAutopot() {
+            events.add("setupAutopot");
+        }
+
+        @Override
+        public void checkPotShareOnModeStart() {
+            events.add("checkPotShareOnModeStart");
         }
     }
 }

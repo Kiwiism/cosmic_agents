@@ -54,6 +54,14 @@ public final class AgentChatStatusRuntime {
         }
     }
 
+    public static void prepareActiveMode(ActiveModeActions actions) {
+        actions.autoEquip();
+        actions.resetGearSuggestionCooldown();
+        actions.maybeSuggestGearToSiblings();
+        actions.setupAutopot();
+        actions.checkPotShareOnModeStart();
+    }
+
     public interface StatusState {
         void setOwnerAfkPosition(Point position);
 
@@ -90,5 +98,17 @@ public final class AgentChatStatusRuntime {
         boolean canOfferSpawnUpgrade();
 
         void offerSpawnUpgradeIfAvailable();
+    }
+
+    public interface ActiveModeActions {
+        void autoEquip();
+
+        void resetGearSuggestionCooldown();
+
+        void maybeSuggestGearToSiblings();
+
+        void setupAutopot();
+
+        void checkPotShareOnModeStart();
     }
 }
