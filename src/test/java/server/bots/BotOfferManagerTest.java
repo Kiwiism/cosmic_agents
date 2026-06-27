@@ -7,6 +7,7 @@ import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
+import server.agents.integration.AgentBotOfferRuntime;
 import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 
@@ -15,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -45,6 +47,23 @@ class BotOfferManagerTest {
             BotOfferManager.requestBestUpgradeFromOwner(entry, bot);
 
             replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, "busy rn, ask me again in a bit"));
+        }
+    }
+
+    @Test
+    void notifyOwnerGainedEquipSkipsWhenOfferOwnerIsIdle() {
+        Character bot = mock(Character.class);
+        Character owner = mock(Character.class);
+        BotEntry entry = new BotEntry(bot, owner, null);
+        Item item = new Item(1002000, (short) 1, (short) 1);
+
+        try (MockedStatic<AgentBotOfferRuntime> offers = mockStatic(AgentBotOfferRuntime.class);
+             MockedStatic<BotEquipManager> equipment = mockStatic(BotEquipManager.class)) {
+            offers.when(() -> AgentBotOfferRuntime.isOwnerIdleForOffer(entry)).thenReturn(true);
+
+            BotOfferManager.notifyOwnerGainedEquip(entry, bot, item);
+
+            equipment.verify(() -> BotEquipManager.findRecommendationForItem(bot, owner, item), never());
         }
     }
 

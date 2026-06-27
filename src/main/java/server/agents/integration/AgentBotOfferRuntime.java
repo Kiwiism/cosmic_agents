@@ -12,6 +12,10 @@ public final class AgentBotOfferRuntime {
     private AgentBotOfferRuntime() {
     }
 
+    public static boolean isOwnerIdleForOffer(BotEntry entry) {
+        return AgentBotChatStatusRuntime.isOwnerIdle(entry);
+    }
+
     public static AgentChatReportRuntime.RecommendedGearActions recommendedGearActions(
             BotEntry entry,
             Character bot,

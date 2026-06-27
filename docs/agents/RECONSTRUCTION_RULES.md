@@ -150,6 +150,9 @@ Recent reconstruction notes:
   `AgentBotBuildStatusRuntime.checkBuildStatus`; `BotBuildManager` and
   `BotStarterKitManager` no longer call the broad chat-status facade directly
   for job/level build status prompts.
+- Gear-offer idle gating now enters through
+  `AgentBotOfferRuntime.isOwnerIdleForOffer`; `BotOfferManager` no longer
+  reaches directly into the broad chat-status facade for offer prompt checks.
 
 Initial reconstruction order:
 

@@ -12,7 +12,7 @@ import client.inventory.WeaponType;
 import config.YamlConfig;
 import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
-import server.agents.integration.AgentBotChatStatusRuntime;
+import server.agents.integration.AgentBotOfferRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 
 import java.util.ArrayList;
@@ -48,7 +48,7 @@ public final class BotOfferManager {
     }
 
     public static void notifyOwnerGainedEquip(BotEntry entry, Character bot, Item item) {
-        if (AgentBotChatStatusRuntime.isOwnerIdle(entry)) {
+        if (AgentBotOfferRuntime.isOwnerIdleForOffer(entry)) {
             return;
         }
         if (entry.requestedUpgradeItemIds.contains(item.getItemId())) {
@@ -143,7 +143,7 @@ public final class BotOfferManager {
         if (owner == null
                 || item == null
                 || entry.pendingGearPromptAt > now
-                || AgentBotChatStatusRuntime.isOwnerIdle(entry)
+                || AgentBotOfferRuntime.isOwnerIdleForOffer(entry)
                 || entry.pendingAction != null
                 || entry.pendingTradeCategory != null
                 || hasOfferReservation(entry)
