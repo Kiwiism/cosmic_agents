@@ -4,6 +4,7 @@ package server.bots;
 import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotChatStatusRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
 import client.BotClient;
 import config.YamlConfig;
 import client.Character;
@@ -16,7 +17,6 @@ import client.inventory.manipulator.InventoryManipulator;
 import client.keybind.KeyBinding;
 import constants.game.CharacterStance;
 import constants.inventory.ItemConstants;
-import constants.string.CharsetConstants;
 import net.server.Server;
 import net.server.world.Party;
 import net.server.world.PartyCharacter;
@@ -3919,52 +3919,15 @@ public class BotManager {
     // -------------------------------------------------------------------------
 
     void botSay(Character bot, String text) {
-        bot.getMap().broadcastMessage(PacketCreator.getChatText(bot.getId(), sanitizeChat(text), false, 0));
+        AgentBotReplyRuntime.sayMapNow(bot, text);
     }
 
-    // Common typographic chars an LLM/source string may slip in; the v83 client chat
-    // charset (usually US-ASCII) can't encode them, so they render as '?'. Map to ASCII.
-    private static final Map<java.lang.Character, String> CHAT_CHAR_FALLBACKS = Map.ofEntries(
-            Map.entry('—', "-"),    // em dash
-            Map.entry('–', "-"),    // en dash
-            Map.entry('‘', "'"),    // left single quote
-            Map.entry('’', "'"),    // right single quote / apostrophe
-            Map.entry('“', "\""),   // left double quote
-            Map.entry('”', "\""),   // right double quote
-            Map.entry('…', "..."),  // ellipsis
-            Map.entry(' ', " "));   // non-breaking space
-
-    private static final java.nio.charset.CharsetEncoder CHAT_ENCODER =
-            CharsetConstants.CHARSET.newEncoder();
-
-    /**
-     * Replaces characters the chat charset ({@link CharsetConstants#CHARSET}) can't encode —
-     * which the client renders as '?' — with ASCII equivalents, logging a warning so the
-     * offending source string can be located and fixed. Fast no-op for already-clean text.
-     */
     static synchronized String sanitizeChat(String text) {
-        if (text == null || CHAT_ENCODER.canEncode(text)) {
-            return text;
-        }
-        StringBuilder sb = new StringBuilder(text.length());
-        for (int i = 0; i < text.length(); i++) {
-            char c = text.charAt(i);
-            if (CHAT_ENCODER.canEncode(c)) {
-                sb.append(c);
-            } else {
-                sb.append(CHAT_CHAR_FALLBACKS.getOrDefault(c, "?"));
-            }
-        }
-        String cleaned = sb.toString();
-        log.warn("Bot chat had non-encodable char(s) (would show as '?'): \"{}\" -> \"{}\"", text, cleaned);
-        return cleaned;
+        return AgentChatTextSanitizer.sanitize(text);
     }
 
     void botSay(Character bot, ReplyChannel channel, String text) {
-        switch (channel) {
-            case PARTY, WHISPER -> botSayParty(bot, text);
-            default -> botSay(bot, text);
-        }
+        AgentBotReplyRuntime.sayNow(bot, channel, text);
     }
 
     /** Bot-to-bot visible say — routes MAP→map broadcast, PARTY→party, WHISPER→party fallback. */
@@ -3973,24 +3936,12 @@ public class BotManager {
     }
 
     public void botVisibleSay(BotEntry entry, String text) {
-        botSay(entry, text);
+        AgentBotReplyRuntime.visibleSayNow(entry, text);
     }
 
     /** Owner-directed reply — routes MAP→map broadcast, PARTY→party, WHISPER→whisper to owner. */
     public void botReply(BotEntry entry, String text) {
-        switch (entry.replyChannel) {
-            case PARTY -> botSayParty(entry.bot, text);
-            case WHISPER -> {
-                Character owner = entry.owner;
-                if (owner != null && owner.getClient() != null) {
-                    owner.sendPacket(PacketCreator.getWhisperReceive(
-                            entry.bot.getName(),
-                            entry.bot.getClient().getChannel() - 1,
-                            false, sanitizeChat(text)));
-                }
-            }
-            default -> botSay(entry.bot, text);
-        }
+        AgentBotReplyRuntime.replyNow(entry, text);
     }
 
     /**
@@ -3998,12 +3949,7 @@ public class BotManager {
      * on a different map. Falls back to map chat if the bot has no party.
      */
     public void botSayParty(Character bot, String text) {
-        Party party = bot.getParty();
-        if (party != null && bot.getClient() != null && bot.getClient().getWorldServer() != null) {
-            bot.getClient().getWorldServer().partyChat(party, sanitizeChat(text), bot.getName());
-        } else {
-            botSay(bot, text);
-        }
+        AgentBotReplyRuntime.sayPartyNow(bot, text);
     }
 
     /**

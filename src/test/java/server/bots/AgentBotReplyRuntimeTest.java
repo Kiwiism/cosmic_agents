@@ -1,42 +1,63 @@
 package server.bots;
 
 import client.Character;
+import client.Client;
+import net.packet.Packet;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotReplyRuntime;
+import server.maps.MapleMap;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class AgentBotReplyRuntimeTest {
     @Test
-    void immediateReplyDeliveryDelegatesToLegacyBotManager() {
-        BotEntry entry = new BotEntry(null, null, null);
-        BotManager manager = mock(BotManager.class);
+    void visibleSayBroadcastsToMap() {
+        Character bot = mock(Character.class);
+        Character owner = mock(Character.class);
+        MapleMap map = mock(MapleMap.class);
+        BotEntry entry = new BotEntry(bot, owner, null);
 
-        try (MockedStatic<BotManager> botManager = mockStatic(BotManager.class)) {
-            botManager.when(BotManager::getInstance).thenReturn(manager);
+        when(bot.getMap()).thenReturn(map);
+        when(bot.getId()).thenReturn(7);
 
-            AgentBotReplyRuntime.replyNow(entry, "ok");
-            AgentBotReplyRuntime.visibleSayNow(entry, "hello");
+        AgentBotReplyRuntime.visibleSayNow(entry, "hello");
 
-            verify(manager).botReply(entry, "ok");
-            verify(manager).botVisibleSay(entry, "hello");
-        }
+        verify(map).broadcastMessage(any(Packet.class));
     }
 
     @Test
-    void immediatePartyDeliveryDelegatesToLegacyBotManager() {
+    void whisperReplySendsPacketToOwner() {
         Character bot = mock(Character.class);
-        BotManager manager = mock(BotManager.class);
+        Character owner = mock(Character.class);
+        Client botClient = mock(Client.class);
+        Client ownerClient = mock(Client.class);
+        BotEntry entry = new BotEntry(bot, owner, null);
+        entry.replyChannel = ReplyChannel.WHISPER;
 
-        try (MockedStatic<BotManager> botManager = mockStatic(BotManager.class)) {
-            botManager.when(BotManager::getInstance).thenReturn(manager);
+        when(bot.getName()).thenReturn("agent");
+        when(bot.getClient()).thenReturn(botClient);
+        when(botClient.getChannel()).thenReturn(1);
+        when(owner.getClient()).thenReturn(ownerClient);
 
-            AgentBotReplyRuntime.sayPartyNow(bot, "party");
+        AgentBotReplyRuntime.replyNow(entry, "ok");
 
-            verify(manager).botSayParty(bot, "party");
-        }
+        verify(owner).sendPacket(any(Packet.class));
+    }
+
+    @Test
+    void partyDeliveryFallsBackToMapWhenBotHasNoParty() {
+        Character bot = mock(Character.class);
+        MapleMap map = mock(MapleMap.class);
+
+        when(bot.getParty()).thenReturn(null);
+        when(bot.getMap()).thenReturn(map);
+        when(bot.getId()).thenReturn(7);
+
+        AgentBotReplyRuntime.sayPartyNow(bot, "party");
+
+        verify(map).broadcastMessage(any(Packet.class));
     }
 }

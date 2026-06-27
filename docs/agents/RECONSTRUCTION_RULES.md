@@ -137,6 +137,10 @@ Recent reconstruction notes:
   The legacy `BotManager.after` helper remains only behind
   `scheduleBotReplyAction`, which is the temporary scheduling hook consumed by
   the Agent scheduler adapter.
+- Immediate Agent reply delivery now lives in `AgentBotReplyRuntime` instead of
+  bridging back through `BotManager.botReply`, `botVisibleSay`, or
+  `botSayParty`. `BotManager` keeps those methods as compatibility wrappers,
+  and chat text sanitization now lives in `AgentChatTextSanitizer`.
 
 Initial reconstruction order:
 

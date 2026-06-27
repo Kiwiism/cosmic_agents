@@ -36,6 +36,7 @@ class AgentBotMovementRuntimeTest {
 
         try (MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class);
              MockedStatic<AgentBotChatStatusRuntime> status = mockStatic(AgentBotChatStatusRuntime.class);
+             MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class);
              MockedStatic<BotManager> botManager = mockStatic(BotManager.class)) {
             botManager.when(BotManager::getInstance).thenReturn(manager);
             scheduler.when(() -> AgentBotSchedulerRuntime.afterRandomDelay(eq(1000), eq(1500), any(Runnable.class)))
@@ -49,7 +50,7 @@ class AgentBotMovementRuntimeTest {
             status.verify(() -> AgentBotChatStatusRuntime.prepareActiveModeEntry(entry));
             verify(manager).issueFarmHere(eq(entry), pointCaptor.capture());
             assertEquals(new Point(10, 20), pointCaptor.getValue());
-            verify(manager).botReply(eq(entry), anyString());
+            replies.verify(() -> AgentBotReplyRuntime.replyNow(eq(entry), anyString()));
         }
     }
 
@@ -72,6 +73,7 @@ class AgentBotMovementRuntimeTest {
 
         try (MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class);
              MockedStatic<AgentBotActiveModeRuntime> activeMode = mockStatic(AgentBotActiveModeRuntime.class);
+             MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class);
              MockedStatic<BotPotionManager> potions = mockStatic(BotPotionManager.class);
              MockedStatic<BotManager> botManager = mockStatic(BotManager.class)) {
             botManager.when(BotManager::getInstance).thenReturn(manager);
@@ -89,7 +91,7 @@ class AgentBotMovementRuntimeTest {
             AgentBotMovementRuntime.movementCallbacks(entry).follow();
 
             activeMode.verify(() -> AgentBotActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry));
-            verify(manager).botReply(eq(entry), anyString());
+            replies.verify(() -> AgentBotReplyRuntime.replyNow(eq(entry), anyString()));
             potions.verify(() -> BotPotionManager.checkPotShareOnModeStart(entry, bot));
             verify(manager).issueFollowOwner(entry);
         }
