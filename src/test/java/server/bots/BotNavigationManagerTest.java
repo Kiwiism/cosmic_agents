@@ -453,7 +453,7 @@ class BotNavigationManagerTest {
         assertFalse(directive.consumedTick);
         assertEquals(new Point(180, 100), directive.targetPos);
         assertEquals("graph-warmup", AgentBotNavigationDebugStateRuntime.lastDecision(entry));
-        assertTrue(entry.graphWarmupFallback);
+        assertTrue(AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry));
         assertNull(entry.navEdge);
 
         BotNavigationGraphProvider.getGraph(map, entry.movementProfile);
@@ -740,7 +740,7 @@ class BotNavigationManagerTest {
         Character bot = mockBot(new Point(120, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.movementProfile = BotMovementProfile.base();
-        entry.graphWarmupFallback = true;
+        AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         Point target = new Point(130, 220);
         boolean immediateAction = BotFallbackMovementManager.tryImmediateAction(entry, bot.getPosition(), target);
@@ -760,7 +760,7 @@ class BotNavigationManagerTest {
         Character bot = mockBot(new Point(120, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.movementProfile = BotMovementProfile.base();
-        entry.graphWarmupFallback = true;
+        AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         Point target = new Point(130, 220);
         boolean immediateAction = BotFallbackMovementManager.tryImmediateAction(entry, bot.getPosition(), target);
@@ -780,7 +780,7 @@ class BotNavigationManagerTest {
         Character bot = mockBot(new Point(120, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.movementProfile = BotMovementProfile.base();
-        entry.graphWarmupFallback = true;
+        AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         Point target = new Point(260, 220);
         Point steeringTarget = BotFallbackMovementManager.resolveSteeringTarget(entry, bot.getPosition(), target);
@@ -804,7 +804,7 @@ class BotNavigationManagerTest {
         Character bot = mockBot(new Point(40, 114), map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.movementProfile = BotMovementProfile.base();
-        entry.graphWarmupFallback = true;
+        AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         Point target = new Point(320, 212);
         Point steeringTarget = BotFallbackMovementManager.resolveSteeringTarget(entry, bot.getPosition(), target);

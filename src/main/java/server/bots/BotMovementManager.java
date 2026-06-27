@@ -7,6 +7,7 @@ import net.packet.InPacket;
 import net.packet.Packet;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
+import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.bots.combat.BotMobHitboxProvider;
 import server.life.Monster;
 import server.maps.Foothold;
@@ -185,7 +186,7 @@ public class BotMovementManager {
         entry.grindTarget = null;
         entry.nextGrindTargetSearchAtMs = 0L;
         AgentBotCombatCooldownStateRuntime.clearAttackCooldown(entry);
-        entry.graphWarmupFallback = false;
+        AgentBotNavigationDebugStateRuntime.clearGraphWarmupFallback(entry);
         entry.observedOwnerStepX = 0;
         entry.observedOwnerStepY = 0;
         BotFidgetManager.clear(entry);
@@ -528,7 +529,7 @@ public class BotMovementManager {
             }
 
             targetPos = adjustGrindingTargetPosition(entry, currentFh, targetPos);
-            if (entry.graphWarmupFallback && targetPos != null) {
+            if (AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry) && targetPos != null) {
                 if (BotFallbackMovementManager.tryImmediateAction(entry, botPos, targetPos)) {
                     return;
                 }
@@ -733,7 +734,7 @@ public class BotMovementManager {
         if (entry == null || entry.bot == null || botPos == null || targetPos == null) {
             return 0;
         }
-        if (entry.graphWarmupFallback) {
+        if (AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)) {
             int localStopDist = Math.min(stopDist, 12);
             return updateStepX(entry, entry.bot.getMap(), botPos.x, targetPos.x, localStopDist, localStopDist);
         }

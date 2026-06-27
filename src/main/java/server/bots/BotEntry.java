@@ -758,6 +758,14 @@ public class BotEntry {
         this.lastEdgeBlockReason = lastEdgeBlockReason;
     }
 
+    public boolean graphWarmupFallback() {
+        return graphWarmupFallback;
+    }
+
+    public void setGraphWarmupFallback(boolean graphWarmupFallback) {
+        this.graphWarmupFallback = graphWarmupFallback;
+    }
+
     public long pendingGearPromptAt() {
         return pendingGearPromptAt;
     }

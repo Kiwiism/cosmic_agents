@@ -1,6 +1,7 @@
 package server.bots;
 
 import client.Character;
+import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Rope;
@@ -93,7 +94,7 @@ final class BotFallbackMovementManager {
     }
 
     static boolean shouldWalkOffLedge(BotEntry entry, Point botPos, Point targetPos, int stepX) {
-        if (entry == null || !entry.graphWarmupFallback || botPos == null || targetPos == null || stepX == 0) {
+        if (entry == null || !AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry) || botPos == null || targetPos == null || stepX == 0) {
             return false;
         }
         if (targetPos.y <= botPos.y + BotPhysicsEngine.cfg.MAX_SNAP_DROP) {

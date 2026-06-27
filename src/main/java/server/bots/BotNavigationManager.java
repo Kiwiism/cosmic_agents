@@ -80,7 +80,7 @@ final class BotNavigationManager {
         try {
             Character bot = entry.bot;
             if (bot.getMap().getFootholds() == null) {
-                entry.graphWarmupFallback = false;
+                AgentBotNavigationDebugStateRuntime.clearGraphWarmupFallback(entry);
                 clearNavigation(entry);
                 return new NavigationDirective(rawTargetPos, false);
             }
@@ -91,7 +91,7 @@ final class BotNavigationManager {
                 // it walks off ledges into water, picks up nearby ropes, and jumps onto
                 // higher platforms when useful. tickSwimming consults targetPos directly,
                 // so the same rawTargetPos works for both grounded and airborne paths.
-                entry.graphWarmupFallback = true;
+                AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
                 clearNavigation(entry);
                 return new NavigationDirective(rawTargetPos, false);
             }
@@ -99,7 +99,7 @@ final class BotNavigationManager {
             BotNavigationGraph graph = resolveActiveGraph(bot.getMap(), entry.movementProfile);
             if (graph == null) {
                 BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), entry.movementProfile);
-                entry.graphWarmupFallback = true;
+                AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
                 notifyWarmup(entry, bot);
                 AgentBotNavigationDebugStateRuntime.setLastDecision(entry, "graph-warmup");
                 clearNavigation(entry);
@@ -111,7 +111,7 @@ final class BotNavigationManager {
                 BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), entry.movementProfile);
                 AgentBotNavigationDebugStateRuntime.setLastDecision(entry, "graph-fallback-profile");
             }
-            entry.graphWarmupFallback = false;
+            AgentBotNavigationDebugStateRuntime.clearGraphWarmupFallback(entry);
             Point botPos = bot.getPosition();
             int startRegionId = resolveCurrentRegionId(graph, entry, bot.getMap(), botPos);
             int targetRegionId = resolveTargetRegionId(graph, entry, bot.getMap(), rawTargetPos);

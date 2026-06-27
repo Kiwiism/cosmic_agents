@@ -59,6 +59,18 @@ public final class AgentBotNavigationDebugStateRuntime {
         return reason == null ? lastDecision(entry) : lastDecision(entry) + "[" + reason + "]";
     }
 
+    public static boolean graphWarmupFallback(BotEntry entry) {
+        return entry.graphWarmupFallback();
+    }
+
+    public static void setGraphWarmupFallback(BotEntry entry, boolean fallback) {
+        entry.setGraphWarmupFallback(fallback);
+    }
+
+    public static void clearGraphWarmupFallback(BotEntry entry) {
+        entry.setGraphWarmupFallback(false);
+    }
+
     public static void recordPathLog(BotEntry entry,
                                      AgentMovementTargetSnapshot targetSnapshot,
                                      int botRegionId,

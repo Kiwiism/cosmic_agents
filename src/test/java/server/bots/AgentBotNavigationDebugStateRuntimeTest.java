@@ -60,6 +60,21 @@ class AgentBotNavigationDebugStateRuntimeTest {
         assertTrue("graph-warmup".equals(AgentBotNavigationDebugStateRuntime.decisionWithBlockReason(entry)));
     }
 
+    @Test
+    void adaptsGraphWarmupFallbackState() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        assertFalse(AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry));
+
+        AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
+
+        assertTrue(AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry));
+
+        AgentBotNavigationDebugStateRuntime.clearGraphWarmupFallback(entry);
+
+        assertFalse(AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry));
+    }
+
     private static AgentMovementTargetSnapshot snapshot() {
         return new AgentMovementTargetSnapshot(
                 "line",

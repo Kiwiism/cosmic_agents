@@ -3678,7 +3678,7 @@ public class BotManager {
         if (!entry.following || entry.grinding || entry.moveTarget != null) {
             return false;
         }
-        if (entry.inAir || entry.climbing || entry.downJumpPending || entry.graphWarmupFallback) {
+        if (entry.inAir || entry.climbing || entry.downJumpPending || AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)) {
             return false;
         }
         if (entry.navEdge != null || entry.navPreciseTarget || entry.fidgetMode != BotFidgetMode.NONE) {
@@ -3804,7 +3804,7 @@ public class BotManager {
 
         // Only detect/act while actively navigating — idling near owner is not stuck.
         if (entry.inAir || entry.climbing
-                || entry.graphWarmupFallback
+                || AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)
                 || (entry.navEdge == null && entry.moveTarget == null)) {
             entry.stuckMs = 0;
             entry.stuckCheckX = Integer.MIN_VALUE;

@@ -3,6 +3,7 @@ package server.bots;
 import client.Character;
 import constants.game.CharacterStance;
 import org.junit.jupiter.api.Test;
+import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.life.Monster;
 import server.maps.Foothold;
 import server.maps.MapleMap;
@@ -511,7 +512,7 @@ class BotMovementManagerTest {
 
         Character bot = mockBot(new Point(36, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.graphWarmupFallback = true;
+        AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         BotMovementManager.tickGrounded(entry, new Point(110, 100));
 
@@ -535,7 +536,7 @@ class BotMovementManagerTest {
 
         Character bot = mockBot(new Point(44, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.graphWarmupFallback = true;
+        AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         BotMovementManager.tickGrounded(entry, new Point(90, 60));
 
@@ -553,7 +554,7 @@ class BotMovementManagerTest {
 
         Character bot = mockBot(new Point(100, 120), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.graphWarmupFallback = true;
+        AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         BotMovementManager.tickGrounded(entry, new Point(100, 40));
 

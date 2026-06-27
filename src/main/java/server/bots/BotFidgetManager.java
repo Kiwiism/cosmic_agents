@@ -3,6 +3,7 @@ package server.bots;
 import client.Character;
 import net.packet.Packet;
 import server.agents.integration.AgentBotFidgetRuntime;
+import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.maps.Foothold;
 import tools.PacketCreator;
 
@@ -19,14 +20,12 @@ enum BotFidgetMode {
     SPAM_PRONE,
     SPAM_SIDEWAYS
 }
-
 enum BotFidgetTrigger {
     NONE,
     AUTO_FOLLOW,
     IDLE,
     SOCIAL
 }
-
 final class BotFidgetManager {
     private static final int SPAM_BASE_DELAY_MIN_MS = 100;
     private static final int SPAM_BASE_DELAY_MAX_MS = 250;
@@ -156,7 +155,7 @@ final class BotFidgetManager {
                 || entry.moveTarget != null
                 || entry.navEdge != null
                 || entry.navPreciseTarget
-                || entry.graphWarmupFallback
+                || AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)
                 || entry.inAir
                 || entry.climbing) {
             return false;
@@ -181,7 +180,7 @@ final class BotFidgetManager {
                 && entry.moveTarget == null
                 && entry.navEdge == null
                 && !entry.navPreciseTarget
-                && !entry.graphWarmupFallback
+                && !AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)
                 && !entry.climbing
                 && (!entry.inAir || airborneJumpFidget)
                 && !entry.downJumpPending

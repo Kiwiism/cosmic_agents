@@ -478,6 +478,11 @@ Recent reconstruction notes:
   `AgentBotNavigationDebugStateRuntime`; navigation resolution, idle fast-path
   status, path logging, and focused tests keep BotEntry as the temporary backing
   store but no longer read or write those debug fields directly.
+- Navigation graph warmup fallback state now enters through
+  `AgentBotNavigationDebugStateRuntime`; navigation, movement, fallback steering,
+  fidget gating, stuck checks, path logging, and focused tests keep BotEntry as
+  the temporary backing store but no longer read or write the fallback flag
+  directly.
 
 Initial reconstruction order:
 

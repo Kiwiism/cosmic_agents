@@ -36,7 +36,7 @@ class BotNavigationGraphFallbackTest {
         BotNavigationManager.NavigationDirective directive =
                 BotNavigationManager.resolveTarget(entry, new Point(180, 160), true);
 
-        assertFalse(entry.graphWarmupFallback, "closest cached graph should be used before heuristics");
+        assertFalse(AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry), "closest cached graph should be used before heuristics");
         assertFalse(directive.consumedTick && entry.navEdge == null
                         && "graph-warmup".equals(AgentBotNavigationDebugStateRuntime.lastDecision(entry)),
                 "cached fallback graph should route with a graph edge, not heuristic warmup");

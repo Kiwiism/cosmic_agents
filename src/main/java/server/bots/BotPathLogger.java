@@ -281,7 +281,7 @@ public final class BotPathLogger {
             }
             sb.append("\n");
         }
-        sb.append("Fallback:   heuristic=").append(entry.graphWarmupFallback ? "yes" : "no")
+        sb.append("Fallback:   heuristic=").append(AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry) ? "yes" : "no")
                 .append(" closestGraph=").append("closest".equals(graphSnapshot.source()) ? "yes" : "no")
                 .append("\n");
     }
