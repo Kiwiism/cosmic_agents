@@ -51,6 +51,9 @@ Recent reconstruction notes:
 - Follow/stop/move/farm/patrol/grind command dispatch now has an Agent-owned
   facade in `AgentBotMovementCommandRuntime`; `BotManager` remains the temporary
   side-effect implementation for the actual movement state mutations.
+- Read-only movement state snapshots now have Agent-owned types in
+  `AgentMovementSnapshot`/`AgentMovementMode` and an integration facade in
+  `AgentBotMovementStateRuntime`; `BotEntry` remains the temporary state source.
 
 Initial reconstruction order:
 

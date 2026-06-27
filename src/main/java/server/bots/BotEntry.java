@@ -190,6 +190,7 @@ public class BotEntry {
 
     public boolean isGrinding() { return grinding; }
     public boolean isFollowing() { return following; }
+    public int followTargetId() { return followTargetId; }
     public Character bot() { return bot; }
     public Character owner() { return owner; }
     public BotBuildManager.ApBuild apBuild() { return apBuild; }
@@ -200,6 +201,15 @@ public class BotEntry {
     public void setSpVariant(String spVariant) { this.spVariant = spVariant; }
     public java.awt.Point getFarmAnchor() { return farmAnchor; }
     public int getFarmAnchorMapId() { return farmAnchorMapId; }
+    public java.awt.Point moveTarget() { return moveTarget == null ? null : new java.awt.Point(moveTarget); }
+    public boolean isMoveTargetPrecise() { return moveTargetPrecise; }
+    public java.awt.Point farmAnchor() { return farmAnchor == null ? null : new java.awt.Point(farmAnchor); }
+    public int farmAnchorMapId() { return farmAnchorMapId; }
+    public int patrolRegionId() { return patrolRegionId; }
+    public int patrolMapId() { return patrolMapId; }
+    public java.awt.Point patrolWanderTarget() {
+        return patrolWanderTarget == null ? null : new java.awt.Point(patrolWanderTarget);
+    }
     Point lastMobTouchCheckPos = null;
     int lastMobTouchMapId = -1;
 
