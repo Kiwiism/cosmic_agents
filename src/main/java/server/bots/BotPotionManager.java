@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-final class BotPotionManager {
+public final class BotPotionManager {
     private static final List<String> POT_REQUEST_HP_MSGS = List.of(
             "anyone have HP pots? running low",
             "low on HP pots, does anyone have some?",
@@ -72,7 +72,7 @@ final class BotPotionManager {
         return result;
     }
 
-    static int[] countPotions(Character bot) {
+    public static int[] countPotions(Character bot) {
         long startedAt = BotPerformanceMonitor.start();
         int hp = 0;
         int mp = 0;
@@ -230,7 +230,7 @@ final class BotPotionManager {
     }
 
     /** Owner-facing diagnostic: counts vs. selected items for each slot. */
-    static String autopotDebugReport(Character bot) {
+    public static String autopotDebugReport(Character bot) {
         int[] cnt = countPotions(bot);
         AutopotChoice choice = computeAutopotChoice(bot);
         ItemInformationProvider iip = ItemInformationProvider.getInstance();

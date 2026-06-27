@@ -5,6 +5,7 @@ import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotOfferRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 import server.agents.integration.AgentBotStatusRuntime;
+import server.agents.integration.AgentBotSupplyReportRuntime;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentCharacterDialogueReporter;
 import server.agents.capabilities.dialogue.AgentChatReportFlow;
@@ -14,7 +15,6 @@ import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
 import server.agents.capabilities.dialogue.AgentMovementDialogueReporter;
 import server.agents.capabilities.dialogue.AgentSkillDialogueReporter;
 import server.agents.capabilities.dialogue.AgentSkillReportFlow;
-import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
 import server.combat.CombatFormulaProvider;
 import server.maps.FieldLimit;
 import server.maps.MapleMap;
@@ -229,12 +229,11 @@ final class BotChatReportRuntime {
     }
 
     static void reportPotions(BotEntry entry, Character bot) {
-        int[] counts = BotPotionManager.countPotions(bot);
-        reportLine(entry, AgentSupplyDialogueReporter.potionReport(counts));
+        reportLine(entry, AgentBotSupplyReportRuntime.potionReport(bot));
     }
 
     static void reportPotDebug(BotEntry entry, Character bot) {
-        reportLine(entry, BotPotionManager.autopotDebugReport(bot));
+        reportLine(entry, AgentBotSupplyReportRuntime.autopotDebugReport(bot));
     }
 
     static void reportDebugStats(BotEntry entry, Character bot) {
