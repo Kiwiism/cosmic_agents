@@ -183,6 +183,15 @@ class AgentChatStatusRuntimeTest {
     }
 
     @Test
+    void gearSuggestionActionsWrapRecipientAndOfferSupplier() {
+        AgentChatStatusRuntime.GearSuggestionActions actions =
+                AgentChatStatusRuntime.gearSuggestionActions(true, () -> true);
+
+        assertTrue(actions.hasRecipient());
+        assertTrue(actions.offerGear());
+    }
+
+    @Test
     void announceOfflineReturnSkipsWhenAgentMissing() {
         TestOfflineReturnActions actions = new TestOfflineReturnActions();
 

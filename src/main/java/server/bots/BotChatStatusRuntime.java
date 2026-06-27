@@ -144,7 +144,9 @@ final class BotChatStatusRuntime {
         Character owner = entry.owner;
         AgentChatStatusRuntime.maybeSuggestGear(
                 AgentBotStatusRuntime.gearSuggestionState(entry),
-                gearSuggestionActions(owner != null, () -> BotOfferManager.offerBestRecommendedGear(entry, bot, owner)),
+                AgentChatStatusRuntime.gearSuggestionActions(
+                        owner != null,
+                        () -> BotOfferManager.offerBestRecommendedGear(entry, bot, owner)),
                 System.currentTimeMillis());
     }
 
@@ -152,24 +154,10 @@ final class BotChatStatusRuntime {
         Character owner = entry.owner;
         AgentChatStatusRuntime.maybeSuggestGear(
                 AgentBotStatusRuntime.gearSuggestionState(entry),
-                gearSuggestionActions(owner != null, () -> BotOfferManager.offerBestGearToSibling(entry, bot)),
+                AgentChatStatusRuntime.gearSuggestionActions(
+                        owner != null,
+                        () -> BotOfferManager.offerBestGearToSibling(entry, bot)),
                 System.currentTimeMillis());
-    }
-
-    private static AgentChatStatusRuntime.GearSuggestionActions gearSuggestionActions(
-            boolean hasRecipient,
-            java.util.function.BooleanSupplier offerGear) {
-        return new AgentChatStatusRuntime.GearSuggestionActions() {
-            @Override
-            public boolean hasRecipient() {
-                return hasRecipient;
-            }
-
-            @Override
-            public boolean offerGear() {
-                return offerGear.getAsBoolean();
-            }
-        };
     }
 
 }

@@ -1,6 +1,7 @@
 package server.agents.capabilities.dialogue;
 
 import java.awt.Point;
+import java.util.function.BooleanSupplier;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class AgentChatStatusRuntime {
@@ -70,6 +71,20 @@ public final class AgentChatStatusRuntime {
         if (actions.offerGear()) {
             state.setNextGearSuggestionAt(nowMs + 60_000L);
         }
+    }
+
+    public static GearSuggestionActions gearSuggestionActions(boolean hasRecipient, BooleanSupplier offerGear) {
+        return new GearSuggestionActions() {
+            @Override
+            public boolean hasRecipient() {
+                return hasRecipient;
+            }
+
+            @Override
+            public boolean offerGear() {
+                return offerGear.getAsBoolean();
+            }
+        };
     }
 
     public static void announceOfflineReturn(OfflineReturnActions actions) {
