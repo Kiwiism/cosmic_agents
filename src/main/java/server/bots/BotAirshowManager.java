@@ -10,6 +10,7 @@ import net.packet.Packet;
 import server.life.LifeFactory;
 import server.life.Monster;
 import server.TimerManager;
+import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.maps.MapleMap;
 import tools.PacketCreator;
 
@@ -59,7 +60,7 @@ public final class BotAirshowManager {
         int previousStance = bot.getStance();
         entry.airshowActive = true;
         entry.airshowLastTrailAtMs = 0L;
-        entry.movementBroadcastValid = false;
+        AgentBotMovementBroadcastStateRuntime.invalidate(entry);
 
         int left = bounds.x;
         int right = bounds.x + bounds.width;
@@ -166,7 +167,7 @@ public final class BotAirshowManager {
         entry.airshowLastTrailAtMs = 0L;
         BotPhysicsEngine.teleportTo(entry, bot, previousPosition);
         bot.setStance(previousStance);
-        entry.movementBroadcastValid = false;
+        AgentBotMovementBroadcastStateRuntime.invalidate(entry);
         sendMovementPacket(bot, previousPosition, 0, 0, previousStance);
         BotMovementManager.resetEntryStateAfterTeleport(entry);
     }

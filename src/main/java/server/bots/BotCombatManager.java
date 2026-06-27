@@ -52,6 +52,7 @@ import server.bots.combat.BotMobHitboxProvider;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatRuntime;
+import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.combat.CombatFormulaProvider;
 import server.life.Monster;
 import server.maps.Foothold;
@@ -538,7 +539,7 @@ public class BotCombatManager {
         AgentBotCombatCooldownStateRuntime.clearAttackCooldown(entry);
         AgentBotCombatCooldownStateRuntime.clearMoveWindow(entry);
         BotMovementManager.clearNavigationState(entry);
-        entry.movementBroadcastValid = false;
+        AgentBotMovementBroadcastStateRuntime.invalidate(entry);
     }
 
     private record MobHitKnockback(int direction, int airVelX) {

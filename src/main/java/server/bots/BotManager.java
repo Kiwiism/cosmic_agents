@@ -6,6 +6,7 @@ import server.agents.integration.AgentBotManagerSchedulerRuntime;
 import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotPotionStateRuntime;
 import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
@@ -442,7 +443,7 @@ public class BotManager {
         entry.skipDelayMs = 0;
         entry.aiTickAccumulatorMs = 0;
         entry.moveDir = 0;
-        entry.movementBroadcastValid = false;
+        AgentBotMovementBroadcastStateRuntime.invalidate(entry);
         BotMovementManager.broadcastMovement(entry);
         botChar.updatePartyMemberHP();
     }
@@ -504,7 +505,7 @@ public class BotManager {
         entry.skipDelayMs = 0;
         entry.aiTickAccumulatorMs = 0;
         entry.moveDir = 0;
-        entry.movementBroadcastValid = false;
+        AgentBotMovementBroadcastStateRuntime.invalidate(entry);
         BotMovementManager.broadcastMovement(entry);
         if (entry.owner != null) {
             joinBotToOwnerParty(entry.owner, bot);

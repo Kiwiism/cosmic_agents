@@ -6,6 +6,7 @@ import net.packet.ByteBufInPacket;
 import net.packet.InPacket;
 import net.packet.Packet;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.bots.combat.BotMobHitboxProvider;
 import server.life.Monster;
 import server.maps.Foothold;
@@ -189,7 +190,7 @@ public class BotMovementManager {
         entry.observedOwnerStepY = 0;
         BotFidgetManager.clear(entry);
         clearNavigationState(entry);
-        entry.movementBroadcastValid = false;
+        AgentBotMovementBroadcastStateRuntime.invalidate(entry);
     }
 
     static void clearNavigationState(BotEntry entry) {
@@ -885,23 +886,13 @@ public class BotMovementManager {
         BotPhysicsEngine.MovementSnapshot snapshot = BotPhysicsEngine.movementSnapshot(entry);
         int fhId = resolveBroadcastFhId(entry, bot);
 
-        if (entry.movementBroadcastValid
-                && entry.lastBroadcastX == x
-                && entry.lastBroadcastY == y
-                && entry.lastBroadcastVelX == snapshot.velX()
-                && entry.lastBroadcastVelY == snapshot.velY()
-                && entry.lastBroadcastStance == snapshot.stance()
-                && entry.lastBroadcastFh == fhId) {
+        if (AgentBotMovementBroadcastStateRuntime.matches(
+                entry, x, y, snapshot.velX(), snapshot.velY(), snapshot.stance(), fhId)) {
             return;
         }
 
-        entry.movementBroadcastValid = true;
-        entry.lastBroadcastX = x;
-        entry.lastBroadcastY = y;
-        entry.lastBroadcastVelX = snapshot.velX();
-        entry.lastBroadcastVelY = snapshot.velY();
-        entry.lastBroadcastStance = snapshot.stance();
-        entry.lastBroadcastFh = fhId;
+        AgentBotMovementBroadcastStateRuntime.record(
+                entry, x, y, snapshot.velX(), snapshot.velY(), snapshot.stance(), fhId);
         sendMovementPacket(bot, snapshot, fhId);
     }
 

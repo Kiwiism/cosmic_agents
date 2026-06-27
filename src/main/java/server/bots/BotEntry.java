@@ -828,6 +828,62 @@ public class BotEntry {
     int lastBroadcastFh = 0;
     int lastGroundFhId = 0;
 
+    public boolean movementBroadcastValid() {
+        return movementBroadcastValid;
+    }
+
+    public void setMovementBroadcastValid(boolean movementBroadcastValid) {
+        this.movementBroadcastValid = movementBroadcastValid;
+    }
+
+    public int lastBroadcastX() {
+        return lastBroadcastX;
+    }
+
+    public void setLastBroadcastX(int lastBroadcastX) {
+        this.lastBroadcastX = lastBroadcastX;
+    }
+
+    public int lastBroadcastY() {
+        return lastBroadcastY;
+    }
+
+    public void setLastBroadcastY(int lastBroadcastY) {
+        this.lastBroadcastY = lastBroadcastY;
+    }
+
+    public int lastBroadcastVelX() {
+        return lastBroadcastVelX;
+    }
+
+    public void setLastBroadcastVelX(int lastBroadcastVelX) {
+        this.lastBroadcastVelX = lastBroadcastVelX;
+    }
+
+    public int lastBroadcastVelY() {
+        return lastBroadcastVelY;
+    }
+
+    public void setLastBroadcastVelY(int lastBroadcastVelY) {
+        this.lastBroadcastVelY = lastBroadcastVelY;
+    }
+
+    public int lastBroadcastStance() {
+        return lastBroadcastStance;
+    }
+
+    public void setLastBroadcastStance(int lastBroadcastStance) {
+        this.lastBroadcastStance = lastBroadcastStance;
+    }
+
+    public int lastBroadcastFh() {
+        return lastBroadcastFh;
+    }
+
+    public void setLastBroadcastFh(int lastBroadcastFh) {
+        this.lastBroadcastFh = lastBroadcastFh;
+    }
+
     BotEntry(Character bot, Character owner, ScheduledFuture<?> task) {
         this.bot = bot;
         this.owner = owner;

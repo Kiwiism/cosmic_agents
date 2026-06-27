@@ -466,6 +466,10 @@ Recent reconstruction notes:
   movement, and local attack orchestration keep BotEntry as the temporary backing
   store but no longer read, extend, tick down, clear, or set those cooldown fields
   directly.
+- Movement broadcast duplicate-suppression cache state now enters through
+  `AgentBotMovementBroadcastStateRuntime`; movement, combat, airshow, and mode
+  reset paths keep BotEntry as the temporary backing store but no longer invalidate,
+  compare, or record the last broadcast snapshot fields directly.
 
 Initial reconstruction order:
 
