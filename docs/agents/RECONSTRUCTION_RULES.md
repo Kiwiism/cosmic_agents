@@ -61,6 +61,9 @@ Recent reconstruction notes:
 - Navigation debug overlay and path logging now consume
   `AgentMovementTargetSnapshot` for read-only target/formation data; pathfinding
   and target resolution still remain in the legacy bot runtime.
+- Movement simulation and perf harnesses now use `AgentMovementTargetSnapshot`
+  for read-only owner/goal/steering reads, keeping tests aligned with the Agent
+  snapshot boundary while preserving legacy movement execution.
 
 Initial reconstruction order:
 

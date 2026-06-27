@@ -9,6 +9,7 @@ import client.keybind.KeyBinding;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.mockito.stubbing.Answer;
+import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.life.Monster;
 import server.maps.MapleMap;
 
@@ -176,10 +177,10 @@ public class BotFollowTickPerfHarness {
                     // We still get useful timing for sections that DID execute.
                 }
                 try {
-                    BotManager.TargetSnapshot snap = manager.captureTargetSnapshot(entry);
-                    Point ownerPos = snap.rawOwnerPos();
+                    AgentMovementTargetSnapshot snap = BotMovementTargetSideEffects.captureTargetSnapshot(entry);
+                    Point ownerPos = snap.rawOwnerPosition();
                     entry.lastOwnerPos = new Point(ownerPos);
-                    manager.stepMovementOnly(entry, snap.primaryTargetPos(), ownerPos, runAiTick);
+                    manager.stepMovementOnly(entry, snap.primaryTargetPosition(), ownerPos, runAiTick);
                 } catch (Throwable t) {
                     // ignore
                 }

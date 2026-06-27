@@ -5,6 +5,7 @@ import client.Job;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import org.mockito.stubbing.Answer;
+import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.maps.MapleMap;
 import server.maps.Rope;
 
@@ -142,8 +143,8 @@ final class BotMovementSimulationLab {
             for (Map.Entry<String, BotEntry> botEntry : bots.entrySet()) {
                 BotEntry entry = botEntry.getValue();
                 boolean runAiTick = consumeAiTick(entry);
-                BotManager.TargetSnapshot targetSnapshot = manager.captureTargetSnapshot(entry);
-                Point ownerPos = targetSnapshot.rawOwnerPos();
+                AgentMovementTargetSnapshot targetSnapshot = BotMovementTargetSideEffects.captureTargetSnapshot(entry);
+                Point ownerPos = targetSnapshot.rawOwnerPosition();
                 entry.lastTickWasAi = runAiTick;
                 entry.lastTickAtMs = elapsedMs;
                 entry.lastOwnerPos = new Point(ownerPos);
@@ -153,8 +154,8 @@ final class BotMovementSimulationLab {
             for (PendingStep pendingStep : pending) {
                 manager.stepMovementOnly(
                         pendingStep.entry(),
-                        pendingStep.targetSnapshot().primaryTargetPos(),
-                        pendingStep.targetSnapshot().rawOwnerPos(),
+                        pendingStep.targetSnapshot().primaryTargetPosition(),
+                        pendingStep.targetSnapshot().rawOwnerPosition(),
                         pendingStep.runAiTick());
                 trace.add(TraceFrame.capture(
                         trace.size(),
@@ -172,11 +173,12 @@ final class BotMovementSimulationLab {
         entry.lastTickWasAi = runAiTick;
         entry.lastTickAtMs = elapsedMs;
 
-        BotManager.TargetSnapshot targetSnapshot = manager.captureTargetSnapshot(entry);
-        Point ownerPos = targetSnapshot.rawOwnerPos();
+        AgentMovementTargetSnapshot targetSnapshot = BotMovementTargetSideEffects.captureTargetSnapshot(entry);
+        Point ownerPos = targetSnapshot.rawOwnerPosition();
         entry.lastOwnerPos = new Point(ownerPos);
         manager.stepMovementOnly(entry, new Point(targetPos), ownerPos, runAiTick);
-        trace.add(TraceFrame.capture(trace.size(), elapsedMs, botName, entry, manager.captureTargetSnapshot(entry)));
+        trace.add(TraceFrame.capture(trace.size(), elapsedMs, botName, entry,
+                BotMovementTargetSideEffects.captureTargetSnapshot(entry)));
     }
 
     Character actor(String name) {
@@ -207,7 +209,7 @@ final class BotMovementSimulationLab {
 
     String describeCurrentState(String botName) {
         BotEntry entry = requireBot(botName);
-        BotManager.TargetSnapshot snapshot = manager.captureTargetSnapshot(entry);
+        AgentMovementTargetSnapshot snapshot = BotMovementTargetSideEffects.captureTargetSnapshot(entry);
         return TraceFrame.capture(trace.size(), elapsedMs, botName, entry, snapshot).format();
     }
 
@@ -310,7 +312,7 @@ final class BotMovementSimulationLab {
     private record PendingStep(String name,
                                BotEntry entry,
                                boolean runAiTick,
-                               BotManager.TargetSnapshot targetSnapshot) {
+                               AgentMovementTargetSnapshot targetSnapshot) {
     }
 
     private record TraceFrame(long index,
@@ -328,11 +330,11 @@ final class BotMovementSimulationLab {
                                   long elapsedMs,
                                   String botName,
                                   BotEntry entry,
-                                  BotManager.TargetSnapshot targetSnapshot) {
+                                  AgentMovementTargetSnapshot targetSnapshot) {
             Point botPos = entry.bot.getPosition();
-            Point ownerPos = targetSnapshot.rawOwnerPos();
-            Point goalPos = targetSnapshot.primaryTargetPos();
-            Point steeringPos = targetSnapshot.steeringTargetPos(entry);
+            Point ownerPos = targetSnapshot.rawOwnerPosition();
+            Point goalPos = targetSnapshot.primaryTargetPosition();
+            Point steeringPos = targetSnapshot.steeringTargetPosition();
             return new TraceFrame(
                     index,
                     elapsedMs,
