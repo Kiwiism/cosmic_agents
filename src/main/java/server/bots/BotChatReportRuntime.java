@@ -3,6 +3,7 @@ package server.bots;
 
 import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotCharacterReportRuntime;
+import server.agents.integration.AgentBotInventoryReportRuntime;
 import server.agents.integration.AgentBotOfferRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 import server.agents.integration.AgentBotStatusRuntime;
@@ -11,7 +12,6 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentChatReportFlow;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
-import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
 import server.agents.capabilities.dialogue.AgentMovementDialogueReporter;
 import server.agents.capabilities.dialogue.AgentSkillDialogueReporter;
 import server.agents.capabilities.dialogue.AgentSkillReportFlow;
@@ -209,7 +209,7 @@ final class BotChatReportRuntime {
     }
 
     static void reportInventory(BotEntry entry, Character bot) {
-        reportLine(entry, AgentInventoryDialogueReporter.inventorySummary(bot));
+        reportLine(entry, AgentBotInventoryReportRuntime.inventorySummary(bot));
     }
 
     static void reportMesos(BotEntry entry, Character bot) {
@@ -221,11 +221,11 @@ final class BotChatReportRuntime {
     }
 
     static void reportInventorySlots(BotEntry entry, Character bot) {
-        reportLine(entry, AgentInventoryDialogueReporter.slotsReport(bot));
+        reportLine(entry, AgentBotInventoryReportRuntime.slotsReport(bot));
     }
 
     static void reportScrolls(BotEntry entry, Character bot) {
-        reportLine(entry, AgentInventoryDialogueReporter.scrollReport(bot));
+        reportLine(entry, AgentBotInventoryReportRuntime.scrollReport(bot));
     }
 
     static void reportPotions(BotEntry entry, Character bot) {
