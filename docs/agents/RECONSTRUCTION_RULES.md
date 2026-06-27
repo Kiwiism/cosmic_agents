@@ -318,6 +318,11 @@ Recent reconstruction notes:
   now enter through narrow `AgentBotUtilityReplyRuntime` and
   `AgentBotUtilitySchedulerRuntime` adapters; utility orchestration no longer
   reaches directly into the broad reply or scheduler runtimes.
+- Build/AP/SP/job-advance immediate replies, queued build-status replies, and
+  job-advance random-delay callbacks now enter through narrow
+  `AgentBotBuildReplyRuntime` and `AgentBotBuildSchedulerRuntime` adapters;
+  build orchestration no longer reaches directly into the broad reply or
+  scheduler runtimes.
 
 Initial reconstruction order:
 

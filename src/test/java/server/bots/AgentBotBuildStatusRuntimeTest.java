@@ -4,6 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
+import server.agents.integration.AgentBotBuildReplyRuntime;
 import server.agents.integration.AgentBotBuildStatusRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -67,6 +68,20 @@ class AgentBotBuildStatusRuntimeTest {
             entry.setOwnerWasAfk(true);
 
             assertFalse(actions.canOfferSpawnUpgrade());
+        }
+    }
+
+    @Test
+    void statusCheckQueueReplyUsesBuildReplyAdapter() {
+        BotEntry entry = new BotEntry(null, null, null);
+        Character bot = mock(Character.class);
+        AgentChatStatusRuntime.StatusCheckActions actions =
+                AgentBotBuildStatusRuntime.statusCheckActions(entry, bot);
+
+        try (MockedStatic<AgentBotBuildReplyRuntime> replies = mockStatic(AgentBotBuildReplyRuntime.class)) {
+            actions.queueReply("build?");
+
+            replies.verify(() -> AgentBotBuildReplyRuntime.queueReply(entry, "build?"));
         }
     }
 }

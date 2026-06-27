@@ -22,14 +22,14 @@ public final class AgentBotBuildRuntime {
             @Override
             public void oneHanded() {
                 entry.setSpVariant(AgentBuildDialogueClassifier.ONE_HANDED_SP_VARIANT);
-                AgentBotReplyRuntime.replyNow(entry, AgentChatBuildFlow.oneHandedSpVariantReply());
+                AgentBotBuildReplyRuntime.replyNow(entry, AgentChatBuildFlow.oneHandedSpVariantReply());
                 BotBuildManager.autoAssignSp(entry, entry.bot());
             }
 
             @Override
             public void twoHanded() {
                 entry.setSpVariant(AgentBuildDialogueClassifier.TWO_HANDED_SP_VARIANT);
-                AgentBotReplyRuntime.replyNow(entry, AgentChatBuildFlow.twoHandedSpVariantReply());
+                AgentBotBuildReplyRuntime.replyNow(entry, AgentChatBuildFlow.twoHandedSpVariantReply());
                 BotBuildManager.autoAssignSp(entry, entry.bot());
             }
         };
@@ -42,7 +42,7 @@ public final class AgentBotBuildRuntime {
                 entry.clearApBuildPromptState();
                 String prompt = BotBuildManager.requestApBuildPrompt(entry, entry.bot());
                 if (prompt != null) {
-                    AgentBotReplyRuntime.replyNow(entry, prompt);
+                    AgentBotBuildReplyRuntime.replyNow(entry, prompt);
                 }
             }
 
@@ -56,13 +56,13 @@ public final class AgentBotBuildRuntime {
     public static AgentChatJobAdvancementFlow.JobAdvancementCallbacks jobAdvancementCallbacks(BotEntry entry) {
         return advJob -> {
             String reply = AgentChatJobAdvancementFlow.jobChangeReply(advJob);
-            AgentBotReplyRuntime.replyNow(entry, reply);
-            AgentBotSchedulerRuntime.afterRandomDelay(900, 1100, () -> BotStarterKitManager.advanceJob(entry, advJob));
+            AgentBotBuildReplyRuntime.replyNow(entry, reply);
+            AgentBotBuildSchedulerRuntime.afterRandomDelay(900, 1100, () -> BotStarterKitManager.advanceJob(entry, advJob));
         };
     }
 
     public static void confirmApBuild(BotEntry entry, String confirmMsg) {
-        AgentBotReplyRuntime.replyNow(entry, confirmMsg);
+        AgentBotBuildReplyRuntime.replyNow(entry, confirmMsg);
     }
 
     private static void handleApBuildSelection(BotEntry entry, String message) {
@@ -96,7 +96,7 @@ public final class AgentBotBuildRuntime {
             String confirmMsg,
             String alreadyMsg) {
         if (sameApBuild(entry.apBuild(), build)) {
-            AgentBotReplyRuntime.replyNow(entry, alreadyMsg);
+            AgentBotBuildReplyRuntime.replyNow(entry, alreadyMsg);
             return;
         }
         BotBuildManager.setApBuild(entry, build, confirmMsg);

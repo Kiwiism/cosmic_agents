@@ -8,7 +8,9 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentBuildDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentChatBuildFlow;
 import server.agents.capabilities.dialogue.AgentChatJobAdvancementFlow;
+import server.agents.integration.AgentBotBuildReplyRuntime;
 import server.agents.integration.AgentBotBuildRuntime;
+import server.agents.integration.AgentBotBuildSchedulerRuntime;
 import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 
@@ -26,12 +28,12 @@ class AgentBotBuildRuntimeTest {
         Character bot = mock(Character.class);
         BotEntry entry = new BotEntry(bot, null, null);
 
-        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class);
+        try (MockedStatic<AgentBotBuildReplyRuntime> replies = mockStatic(AgentBotBuildReplyRuntime.class);
              MockedStatic<BotBuildManager> buildManager = mockStatic(BotBuildManager.class)) {
             AgentBotBuildRuntime.spVariantCallbacks(entry).oneHanded();
 
             assertEquals(AgentBuildDialogueClassifier.ONE_HANDED_SP_VARIANT, entry.spVariant);
-            replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, AgentChatBuildFlow.oneHandedSpVariantReply()));
+            replies.verify(() -> AgentBotBuildReplyRuntime.replyNow(entry, AgentChatBuildFlow.oneHandedSpVariantReply()));
             buildManager.verify(() -> BotBuildManager.autoAssignSp(entry, bot));
         }
     }
@@ -64,13 +66,13 @@ class AgentBotBuildRuntimeTest {
     void jobAdvancementCallbackRepliesThenSchedulesAdvance() {
         BotEntry entry = new BotEntry(null, null, null);
 
-        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class);
-             MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class)) {
+        try (MockedStatic<AgentBotBuildReplyRuntime> replies = mockStatic(AgentBotBuildReplyRuntime.class);
+             MockedStatic<AgentBotBuildSchedulerRuntime> scheduler = mockStatic(AgentBotBuildSchedulerRuntime.class)) {
             AgentBotBuildRuntime.jobAdvancementCallbacks(entry).advanceTo(Job.HUNTER);
 
-            replies.verify(() -> AgentBotReplyRuntime.replyNow(eq(entry), argThat(message ->
+            replies.verify(() -> AgentBotBuildReplyRuntime.replyNow(eq(entry), argThat(message ->
                     message != null && message.contains("hunter"))));
-            scheduler.verify(() -> AgentBotSchedulerRuntime.afterRandomDelay(
+            scheduler.verify(() -> AgentBotBuildSchedulerRuntime.afterRandomDelay(
                     org.mockito.ArgumentMatchers.eq(900),
                     org.mockito.ArgumentMatchers.eq(1100),
                     org.mockito.ArgumentMatchers.any(Runnable.class)));
@@ -81,10 +83,34 @@ class AgentBotBuildRuntimeTest {
     void confirmApBuildUsesAgentReplyRuntime() {
         BotEntry entry = new BotEntry(null, null, null);
 
-        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
+        try (MockedStatic<AgentBotBuildReplyRuntime> replies = mockStatic(AgentBotBuildReplyRuntime.class)) {
             AgentBotBuildRuntime.confirmApBuild(entry, "confirm");
 
-            replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, "confirm"));
+            replies.verify(() -> AgentBotBuildReplyRuntime.replyNow(entry, "confirm"));
+        }
+    }
+
+    @Test
+    void buildReplyAdapterDelegatesToAgentReplyRuntime() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
+            AgentBotBuildReplyRuntime.replyNow(entry, "reply");
+            AgentBotBuildReplyRuntime.queueReply(entry, "queued");
+
+            replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, "reply"));
+            replies.verify(() -> AgentBotReplyRuntime.queueReply(entry, "queued"));
+        }
+    }
+
+    @Test
+    void buildSchedulerAdapterDelegatesToAgentSchedulerRuntime() {
+        Runnable action = mock(Runnable.class);
+
+        try (MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class)) {
+            AgentBotBuildSchedulerRuntime.afterRandomDelay(900, 1100, action);
+
+            scheduler.verify(() -> AgentBotSchedulerRuntime.afterRandomDelay(900, 1100, action));
         }
     }
 }
