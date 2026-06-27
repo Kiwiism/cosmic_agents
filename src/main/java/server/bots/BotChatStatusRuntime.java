@@ -28,15 +28,7 @@ final class BotChatStatusRuntime {
 
     static void announceOwnerReturnedFromOffline(BotEntry entry) {
         final Character bot = entry.bot;
-        if (bot == null) {
-            return;
-        }
-        final String text = AgentChatWelcomeBackFlow.welcomeBackOfflinePartyReply(
-                bot.getMap() != null ? bot.getMap().getMapName() : null);
-        BotManager.after(BotManager.randMs(1500, 2500), () -> {
-            bot.changeFaceExpression(ThreadLocalRandom.current().nextBoolean() ? 2 : 3);
-            BotManager.getInstance().botSayParty(bot, text);
-        });
+        AgentChatStatusRuntime.announceOfflineReturn(offlineReturnActions(bot));
     }
 
     static void tickAfkCheck(BotEntry entry, Character owner) {
@@ -274,6 +266,35 @@ final class BotChatStatusRuntime {
             @Override
             public boolean offerGear() {
                 return offerGear.getAsBoolean();
+            }
+        };
+    }
+
+    private static AgentChatStatusRuntime.OfflineReturnActions offlineReturnActions(Character bot) {
+        return new AgentChatStatusRuntime.OfflineReturnActions() {
+            @Override
+            public boolean hasAgent() {
+                return bot != null;
+            }
+
+            @Override
+            public String mapName() {
+                return bot != null && bot.getMap() != null ? bot.getMap().getMapName() : null;
+            }
+
+            @Override
+            public void afterRandomDelay(int minMs, int maxMs, Runnable action) {
+                BotManager.after(BotManager.randMs(minMs, maxMs), action);
+            }
+
+            @Override
+            public void changeFaceExpression(int expression) {
+                bot.changeFaceExpression(expression);
+            }
+
+            @Override
+            public void sayParty(String text) {
+                BotManager.getInstance().botSayParty(bot, text);
             }
         };
     }

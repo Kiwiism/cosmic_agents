@@ -182,6 +182,30 @@ class AgentChatStatusRuntimeTest {
         assertEquals(0L, state.nextAt);
     }
 
+    @Test
+    void announceOfflineReturnSkipsWhenAgentMissing() {
+        TestOfflineReturnActions actions = new TestOfflineReturnActions();
+
+        AgentChatStatusRuntime.announceOfflineReturn(actions);
+
+        assertEquals(List.of(), actions.events);
+    }
+
+    @Test
+    void announceOfflineReturnSchedulesLegacyPartyReply() {
+        TestOfflineReturnActions actions = new TestOfflineReturnActions();
+        actions.hasAgent = true;
+        actions.mapName = "Henesys";
+
+        AgentChatStatusRuntime.announceOfflineReturn(actions);
+
+        assertEquals("1500-2500", actions.events.get(0));
+        assertTrue(actions.events.get(1).startsWith("face:"));
+        assertTrue(Set.of("face:2", "face:3").contains(actions.events.get(1)));
+        assertTrue(actions.events.get(2).startsWith("say:"));
+        assertTrue(actions.events.get(2).contains("Henesys"));
+    }
+
     private static final class TestState implements AgentChatStatusRuntime.StatusState {
         private Point position;
         private long sinceMs;
@@ -341,6 +365,38 @@ class AgentChatStatusRuntimeTest {
         public boolean offerGear() {
             offerCalled = true;
             return offerResult;
+        }
+    }
+
+    private static final class TestOfflineReturnActions implements AgentChatStatusRuntime.OfflineReturnActions {
+        private final List<String> events = new ArrayList<>();
+        private boolean hasAgent;
+        private String mapName;
+
+        @Override
+        public boolean hasAgent() {
+            return hasAgent;
+        }
+
+        @Override
+        public String mapName() {
+            return mapName;
+        }
+
+        @Override
+        public void afterRandomDelay(int minMs, int maxMs, Runnable action) {
+            events.add(minMs + "-" + maxMs);
+            action.run();
+        }
+
+        @Override
+        public void changeFaceExpression(int expression) {
+            events.add("face:" + expression);
+        }
+
+        @Override
+        public void sayParty(String text) {
+            events.add("say:" + text);
         }
     }
 }

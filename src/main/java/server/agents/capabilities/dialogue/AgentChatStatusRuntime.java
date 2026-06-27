@@ -72,6 +72,22 @@ public final class AgentChatStatusRuntime {
         }
     }
 
+    public static void announceOfflineReturn(OfflineReturnActions actions) {
+        if (!actions.hasAgent()) {
+            return;
+        }
+
+        String text = AgentChatWelcomeBackFlow.welcomeBackOfflinePartyReply(actions.mapName());
+        actions.afterRandomDelay(1500, 2500, () -> {
+            actions.changeFaceExpression(randomWelcomeExpression());
+            actions.sayParty(text);
+        });
+    }
+
+    private static int randomWelcomeExpression() {
+        return ThreadLocalRandom.current().nextBoolean() ? 2 : 3;
+    }
+
     public interface StatusState {
         void setOwnerAfkPosition(Point position);
 
@@ -132,5 +148,17 @@ public final class AgentChatStatusRuntime {
         boolean hasRecipient();
 
         boolean offerGear();
+    }
+
+    public interface OfflineReturnActions {
+        boolean hasAgent();
+
+        String mapName();
+
+        void afterRandomDelay(int minMs, int maxMs, Runnable action);
+
+        void changeFaceExpression(int expression);
+
+        void sayParty(String text);
     }
 }
