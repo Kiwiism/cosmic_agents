@@ -124,6 +124,9 @@ Recent reconstruction notes:
   through `AgentBotReplyRuntime`; delayed trade thanks/freebie callbacks now use
   `AgentBotSchedulerRuntime` while preserving the legacy visible `botSay`
   delivery and random reply pools.
+- LLM split-message owner-directed replies now route through
+  `AgentBotReplyRuntime`; the existing LLM executor, multi-message delay, and
+  sanitization/splitting behavior are unchanged.
 
 Initial reconstruction order:
 

@@ -3,8 +3,8 @@ package server.bots.llm;
 import client.Character;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.agents.integration.AgentBotReplyRuntime;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 
 import java.util.List;
 import java.util.Locale;
@@ -144,15 +144,8 @@ public final class BotLlmReplyManager {
             log.info("llm[{}] split into {} messages", botName, parts.size());
         }
 
-        BotManager bm = BotManager.getInstance();
-        bm.botReply(entry, parts.get(0));
-        for (int i = 1; i < parts.size(); i++) {
-            final String part = parts.get(i);
-            EXEC.schedule(() -> {
-                try { bm.botReply(entry, part); }
-                catch (Throwable t) { log.warn("llm follow-up reply failed: {}", t.toString()); }
-            }, (long) BotLlmConfig.multiMessageDelayMs * i, TimeUnit.MILLISECONDS);
-        }
+        deliverReplyParts(entry, parts,
+                (action, delayMs) -> EXEC.schedule(action, delayMs, TimeUnit.MILLISECONDS));
 
         if (!looksLowQuality(message, reply)) {
             BotMemoryStore.Turn turn = new BotMemoryStore.Turn(System.currentTimeMillis(),
@@ -197,6 +190,26 @@ public final class BotLlmReplyManager {
         while (!turns.isEmpty() && (maxTurns == 0 || turns.size() > maxTurns
                 || now - turns.peekFirst().ts() > maxAge)) {
             turns.removeFirst();
+        }
+    }
+
+    @FunctionalInterface
+    interface FollowUpScheduler {
+        void schedule(Runnable action, long delayMs);
+    }
+
+    static void deliverReplyParts(BotEntry entry, List<String> parts, FollowUpScheduler scheduler) {
+        if (parts.isEmpty()) return;
+        AgentBotReplyRuntime.replyNow(entry, parts.get(0));
+        for (int i = 1; i < parts.size(); i++) {
+            final String part = parts.get(i);
+            scheduler.schedule(() -> {
+                try {
+                    AgentBotReplyRuntime.replyNow(entry, part);
+                } catch (Throwable t) {
+                    log.warn("llm follow-up reply failed: {}", t.toString());
+                }
+            }, (long) BotLlmConfig.multiMessageDelayMs * i);
         }
     }
 
