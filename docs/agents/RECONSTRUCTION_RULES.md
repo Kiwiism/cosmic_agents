@@ -160,6 +160,11 @@ Recent reconstruction notes:
   random fidget expressions now enter through `AgentBotMovementStatusRuntime`;
   `AgentBotMovementRuntime` no longer reaches directly into the broad
   chat-status facade for those movement callbacks.
+- BotManager-triggered spawn status checks, map-change status checks,
+  shop-transition status checks, offline-return announcements, and AFK ticks
+  now enter through `AgentBotManagerStatusRuntime`; `BotManager` no longer
+  reaches directly into the broad chat-status facade for those lifecycle/tick
+  callbacks.
 
 Initial reconstruction order:
 

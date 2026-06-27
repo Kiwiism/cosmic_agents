@@ -2,7 +2,7 @@ package server.bots;
 
 
 import server.agents.integration.AgentBotReplyRuntime;
-import server.agents.integration.AgentBotChatStatusRuntime;
+import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
 import client.BotClient;
@@ -481,7 +481,7 @@ public class BotManager {
         if (normalizeSpawnState) {
             normalizeSpawnedBot(entry);
         }
-        AgentBotSchedulerRuntime.afterDelay(randMs(30_000, 31_000), () -> AgentBotChatStatusRuntime.checkBotStatus(entry, bot));
+        AgentBotManagerStatusRuntime.scheduleSpawnStatusCheck(entry, bot, randMs(30_000, 31_000));
         return entry;
     }
 
@@ -2102,7 +2102,7 @@ public class BotManager {
                 else if (BotPqHooks.requiresFollow(entry, bot)) { issueFollowOwner(entry); }
                 else { entry.kpq.stage5Claimed = false; } // left KPQ — reset for next run
                 BotShopManager.onMapChange(entry, bot);
-                AgentBotChatStatusRuntime.checkBotStatus(entry, bot);
+                AgentBotManagerStatusRuntime.checkManagerStatus(entry, bot);
             } else {
                 long tMapChange = System.nanoTime();
                 try {
@@ -2118,7 +2118,7 @@ public class BotManager {
                     else if (BotPqHooks.requiresFollow(entry, bot)) { issueFollowOwner(entry); }
                     else { entry.kpq.stage5Claimed = false; } // left KPQ — reset for next run
                     BotShopManager.onMapChange(entry, bot);
-                    AgentBotChatStatusRuntime.checkBotStatus(entry, bot);
+                    AgentBotManagerStatusRuntime.checkManagerStatus(entry, bot);
                 } finally {
                     BotPerformanceMonitor.record("tick-map-change", System.nanoTime() - tMapChange);
                 }
@@ -2728,7 +2728,7 @@ public class BotManager {
                 // skip the announcement, so the party sees one wb line, not N.
                 Point removedAnchor = townClusterAnchors.remove(ownerCharId);
                 if (justReturnedFromTown && removedAnchor != null) {
-                    AgentBotChatStatusRuntime.announceOwnerReturnedFromOffline(entry);
+                    AgentBotManagerStatusRuntime.announceOwnerReturnedFromOffline(entry);
                 }
             }
             return false;
@@ -3394,7 +3394,7 @@ public class BotManager {
         BotBuildManager.checkLevelUp(entry, bot);
         if (perf) BotPerformanceMonitor.record("common-build-levelup", System.nanoTime() - t);
         if (perf) t = System.nanoTime();
-        AgentBotChatStatusRuntime.tickAfkCheck(entry, owner);
+        AgentBotManagerStatusRuntime.tickAfkCheck(entry, owner);
         if (perf) BotPerformanceMonitor.record("common-afk-check", System.nanoTime() - t);
         if (perf) t = System.nanoTime();
         BotInventoryManager.tickTrade(entry, bot);
@@ -3620,7 +3620,7 @@ public class BotManager {
             BotMovementManager.resetEntryStateAfterTeleport(entry);
             BotMovementManager.broadcastMovement(entry);
             BotShopManager.onMapChange(entry, bot);
-            AgentBotChatStatusRuntime.checkBotStatus(entry, bot);
+            AgentBotManagerStatusRuntime.checkManagerStatus(entry, bot);
             return;
         }
 
