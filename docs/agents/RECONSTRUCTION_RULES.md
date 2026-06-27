@@ -258,6 +258,10 @@ Recent reconstruction notes:
   `AgentBotSessionSchedulerRuntime` adapters; `AgentBotSessionRuntime` no
   longer reaches directly into the broad reply or scheduler runtimes for
   session-owned chat timing.
+- Pending chat-action item choices, cancel replies, and skill-tree reply
+  queueing now enter through narrow `AgentBotPendingActionReplyRuntime` and
+  `AgentBotPendingActionSchedulerRuntime` adapters; pending-action orchestration
+  no longer reaches directly into the broad reply or scheduler runtimes.
 
 Initial reconstruction order:
 
