@@ -203,6 +203,10 @@ Recent reconstruction notes:
   `AgentBotRangeReportRuntime`; `BotEquipManager` no longer imports the broad
   chat-report facade just to render range text, and the underlying range
   formatter remains unchanged.
+- Control-triggered buff-debug and skill-buff-debug report delivery now enters
+  through `AgentBotControlReportRuntime`; `AgentBotControlRuntime` still owns
+  the same 500-700 ms command delay, but no longer reaches directly into the
+  broad chat-report facade for those control-owned report callbacks.
 
 Initial reconstruction order:
 
