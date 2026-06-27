@@ -282,6 +282,10 @@ Recent reconstruction notes:
   now enter through narrow `AgentBotAmmoReplyRuntime` and
   `AgentBotAmmoSchedulerRuntime` adapters; ammo orchestration no longer reaches
   directly into the broad reply or scheduler runtimes.
+- Potion-sharing reply, delay, random-delay, and delay-sampling bridge methods
+  now enter through narrow `AgentBotPotionReplyRuntime` and
+  `AgentBotPotionSchedulerRuntime` adapters; potion orchestration no longer
+  reaches directly into the broad reply or scheduler runtimes.
 
 Initial reconstruction order:
 
