@@ -306,6 +306,10 @@ Recent reconstruction notes:
   and `AgentBotScrollReactionSchedulerRuntime` adapters; scroll-reaction
   orchestration no longer reaches directly into the broad reply or scheduler
   runtimes.
+- Supply request queued replies and random-delay callbacks now enter through
+  narrow `AgentBotSupplyReplyRuntime` and `AgentBotSupplySchedulerRuntime`
+  adapters; supply orchestration no longer reaches directly into the broad
+  reply or scheduler runtimes.
 
 Initial reconstruction order:
 

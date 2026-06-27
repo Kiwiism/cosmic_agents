@@ -22,17 +22,17 @@ public final class AgentBotSupplyRuntime {
         return new AgentChatSupplyRequestFlow.SupplyRequestCallbacks() {
             @Override
             public void requestPotion(boolean hpPotion) {
-                AgentBotSchedulerRuntime.afterRandomDelay(500, 700, () -> handleNeedPotionCommand(entry, hpPotion));
+                AgentBotSupplySchedulerRuntime.afterRandomDelay(500, 700, () -> handleNeedPotionCommand(entry, hpPotion));
             }
 
             @Override
             public void requestAnyPotion() {
-                AgentBotSchedulerRuntime.afterRandomDelay(500, 700, () -> handleNeedAnyPotionCommand(entry));
+                AgentBotSupplySchedulerRuntime.afterRandomDelay(500, 700, () -> handleNeedAnyPotionCommand(entry));
             }
 
             @Override
             public void requestAmmo() {
-                AgentBotSchedulerRuntime.afterRandomDelay(500, 700, () -> handleNeedAmmoCommand(entry));
+                AgentBotSupplySchedulerRuntime.afterRandomDelay(500, 700, () -> handleNeedAmmoCommand(entry));
             }
         };
     }
@@ -59,7 +59,7 @@ public final class AgentBotSupplyRuntime {
                 result == BotPotionManager.OwnerPotShareResult.NO_DONOR,
                 forHp);
         if (reply != null) {
-            AgentBotReplyRuntime.queueReply(entry, reply);
+            AgentBotSupplyReplyRuntime.queueReply(entry, reply);
         }
     }
 
@@ -70,14 +70,14 @@ public final class AgentBotSupplyRuntime {
         }
         WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(owner);
         if (weaponType != WeaponType.BOW && weaponType != WeaponType.CROSSBOW) {
-            AgentBotReplyRuntime.queueReply(entry, AgentSupplyRequestOutcomeFlow.ammoNotNeededReply());
+            AgentBotSupplyReplyRuntime.queueReply(entry, AgentSupplyRequestOutcomeFlow.ammoNotNeededReply());
             return;
         }
         BotAmmoManager.OwnerAmmoShareResult result = BotAmmoManager.offerAmmoShareToOwner(entry, weaponType);
         String reply = AgentSupplyRequestOutcomeFlow.ammoShareReply(
                 result == BotAmmoManager.OwnerAmmoShareResult.NO_DONOR);
         if (reply != null) {
-            AgentBotReplyRuntime.queueReply(entry, reply);
+            AgentBotSupplyReplyRuntime.queueReply(entry, reply);
         }
     }
 }
