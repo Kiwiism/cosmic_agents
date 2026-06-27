@@ -92,7 +92,7 @@ public final class BotBuildManager {
         }
     }
 
-    static String respecAp(BotEntry entry, Character bot) {
+    public static String respecAp(BotEntry entry, Character bot) {
         if (apPromptForJob(bot.getJob()) == null) {
             return "dont have an ap build for my job yet";
         }
@@ -156,7 +156,7 @@ public final class BotBuildManager {
         autoAssignSp(bot, steps);
     }
 
-    static String respecSp(BotEntry entry, Character bot) {
+    public static String respecSp(BotEntry entry, Character bot) {
         if (bot.getJob() == Job.HERO && entry.spVariant == null) {
             return "need your hero build first. say '1h' or '2h'";
         }

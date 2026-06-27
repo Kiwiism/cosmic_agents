@@ -130,6 +130,14 @@ public class BotEntry {
     boolean supportHealsEnabled = true;
     boolean skillBuffsEnabled = true;
 
+    public void setSupportHealsEnabled(boolean supportHealsEnabled) {
+        this.supportHealsEnabled = supportHealsEnabled;
+    }
+
+    public void setSkillBuffsEnabled(boolean skillBuffsEnabled) {
+        this.skillBuffsEnabled = skillBuffsEnabled;
+    }
+
     // Ammo
     boolean noAmmo = false;
     boolean ammoWarnSent = false;
@@ -331,6 +339,30 @@ public class BotEntry {
     long    lastBuffScanMs         = 0;
     long    lastBuffActionAtMs     = 0L;
     String  lastBuffActionSummary  = "no buff scans yet";
+
+    public boolean buffConsumablesEnabled() {
+        return buffConsumablesEnabled;
+    }
+
+    public void setBuffConsumablesEnabled(boolean buffConsumablesEnabled) {
+        this.buffConsumablesEnabled = buffConsumablesEnabled;
+    }
+
+    public boolean buffCheapMode() {
+        return buffCheapMode;
+    }
+
+    public void setBuffCheapMode(boolean buffCheapMode) {
+        this.buffCheapMode = buffCheapMode;
+    }
+
+    public void resetLastBuffScan() {
+        lastBuffScanMs = 0;
+    }
+
+    public void setProactiveUpgradeOffers(boolean proactiveUpgradeOffers) {
+        this.proactiveUpgradeOffers = proactiveUpgradeOffers;
+    }
 
     // Skill buff tracking (always enabled; tracks last decision for debug)
     long   lastSkillBuffActionAtMs    = 0L;
