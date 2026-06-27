@@ -266,6 +266,10 @@ Recent reconstruction notes:
   `AgentBotControlReplyRuntime` and `AgentBotControlSchedulerRuntime` adapters;
   control orchestration no longer reaches directly into the broad reply or
   scheduler runtimes for control-owned chat timing.
+- Equipment visible replies, unequip, unequip-all, auto-equip-debug, and
+  auto-equip callbacks now enter through narrow `AgentBotEquipmentReplyRuntime`
+  and `AgentBotEquipmentSchedulerRuntime` adapters; equipment orchestration no
+  longer reaches directly into the broad reply or scheduler runtimes.
 
 Initial reconstruction order:
 
