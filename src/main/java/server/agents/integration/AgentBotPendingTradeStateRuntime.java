@@ -20,6 +20,26 @@ public final class AgentBotPendingTradeStateRuntime {
         return !hasActiveSequence(entry);
     }
 
+    public static String category(BotEntry entry) {
+        return entry.pendingTradeCategory();
+    }
+
+    public static void setCategory(BotEntry entry, String category) {
+        entry.setPendingTradeCategory(category);
+    }
+
+    public static void clearCategory(BotEntry entry) {
+        entry.setPendingTradeCategory(null);
+    }
+
+    public static boolean isCategory(BotEntry entry, String category) {
+        return category.equals(entry.pendingTradeCategory());
+    }
+
+    public static boolean isSupplyShareCategory(BotEntry entry) {
+        return isCategory(entry, "pot_share") || isCategory(entry, "ammo_share");
+    }
+
     public static boolean hasQueuedRetry(BotEntry entry) {
         return entry.pendingBotTradeRetry() != null;
     }

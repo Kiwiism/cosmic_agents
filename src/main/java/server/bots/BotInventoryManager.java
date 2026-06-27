@@ -581,7 +581,7 @@ public class BotInventoryManager {
             AgentBotInventoryRuntime.replyNow(entry, "can't find who to trade!");
             return;
         }
-        entry.pendingTradeCategory = category;
+        AgentBotPendingTradeStateRuntime.setCategory(entry, category);
         AgentBotPendingTradeStateRuntime.setRecipientId(entry, recipient.getId());
         AgentBotPendingTradeStateRuntime.setSingleBatch(entry, singleBatch);
         AgentBotPendingTradeStateRuntime.clearInviteAnnounced(entry);
@@ -607,8 +607,7 @@ public class BotInventoryManager {
         Trade.inviteTrade(bot, recipient);
         // pot_share already announced itself ("got some HP pots, inv u") — skip the redundant "k i inv"
         if (!AgentBotPendingTradeStateRuntime.inviteAnnounced(entry)
-                && !"pot_share".equals(entry.pendingTradeCategory)
-                && !"ammo_share".equals(entry.pendingTradeCategory)) {
+                && !AgentBotPendingTradeStateRuntime.isSupplyShareCategory(entry)) {
             AgentBotPendingTradeStateRuntime.markInviteAnnounced(entry);
             AgentBotInventoryRuntime.replyNow(entry, BotManager.randomReply(TRADE_INVITATION_MSGS));
         }
@@ -642,14 +641,14 @@ public class BotInventoryManager {
                 AgentBotPendingTradeStateRuntime.tickTimerDown(entry, BotMovementManager::tickDown);
                 return;
             }
-            List<Item> next = collectItems(entry.pendingTradeCategory, entry, bot);
+            List<Item> next = collectItems(AgentBotPendingTradeStateRuntime.category(entry), entry, bot);
             if (next.isEmpty()) {
-                String advanced = nextEquipsGroup(entry.pendingTradeCategory, entry, bot);
+                String advanced = nextEquipsGroup(AgentBotPendingTradeStateRuntime.category(entry), entry, bot);
                 if (advanced == null) {
-                    advanced = nextAmmoGroup(entry.pendingTradeCategory, bot);
+                    advanced = nextAmmoGroup(AgentBotPendingTradeStateRuntime.category(entry), bot);
                 }
                 if (advanced != null) {
-                    entry.pendingTradeCategory = advanced;
+                    AgentBotPendingTradeStateRuntime.setCategory(entry, advanced);
                     AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, equipsGroupMsg(advanced));
                     openTradeBatch(entry, bot, collectItems(advanced, entry, bot), 0);
                 } else {
@@ -802,7 +801,7 @@ public class BotInventoryManager {
         boolean hadRestores = !entry.pendingTradeRestoreSlots.isEmpty();
         restoreTemporarilyUnequippedItems(entry, bot);
         clearManualTradeState(entry, bot);
-        entry.pendingTradeCategory = null;
+        AgentBotPendingTradeStateRuntime.clearCategory(entry);
         AgentBotPendingTradeStateRuntime.clearCategoryMessage(entry);
         AgentBotPendingTradeStateRuntime.clearItems(entry);
         AgentBotPendingTradeStateRuntime.clearRecipientId(entry);

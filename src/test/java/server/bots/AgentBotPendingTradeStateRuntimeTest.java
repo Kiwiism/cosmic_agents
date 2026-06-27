@@ -21,10 +21,21 @@ class AgentBotPendingTradeStateRuntimeTest {
         assertFalse(AgentBotPendingTradeStateRuntime.hasActiveSequence(entry));
         assertTrue(AgentBotPendingTradeStateRuntime.isIdle(entry));
 
-        entry.pendingTradeCategory = "trash";
+        AgentBotPendingTradeStateRuntime.setCategory(entry, "trash");
 
         assertTrue(AgentBotPendingTradeStateRuntime.hasActiveSequence(entry));
         assertFalse(AgentBotPendingTradeStateRuntime.isIdle(entry));
+        assertEquals("trash", AgentBotPendingTradeStateRuntime.category(entry));
+        assertTrue(AgentBotPendingTradeStateRuntime.isCategory(entry, "trash"));
+        assertFalse(AgentBotPendingTradeStateRuntime.isSupplyShareCategory(entry));
+
+        AgentBotPendingTradeStateRuntime.setCategory(entry, "pot_share");
+
+        assertTrue(AgentBotPendingTradeStateRuntime.isSupplyShareCategory(entry));
+
+        AgentBotPendingTradeStateRuntime.clearCategory(entry);
+
+        assertFalse(AgentBotPendingTradeStateRuntime.hasActiveSequence(entry));
     }
 
     @Test

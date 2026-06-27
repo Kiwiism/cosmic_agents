@@ -433,6 +433,11 @@ Recent reconstruction notes:
   `AgentBotPendingTradeStateRuntime`; trade batch setup, between-batch pause,
   item-add progression, and reset keep BotEntry as the temporary backing store
   but no longer set, read, null-check, or clear the batch item list directly.
+- Pending trade category state now enters through
+  `AgentBotPendingTradeStateRuntime`; trade setup, group advancement, supply
+  share invitation suppression, and reset keep BotEntry as the temporary
+  backing store but no longer set, read, compare, or clear the category field
+  directly.
 
 Initial reconstruction order:
 
