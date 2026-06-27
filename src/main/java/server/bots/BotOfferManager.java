@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-final class BotOfferManager {
+public final class BotOfferManager {
     private static final Pattern POSITIVE_CONFIRM_PATTERN = Pattern.compile(
             "\\b(yes|yep|yeah|yea|y|ok|sure|confirm|do\\s+it|go\\s+(ahead|for\\s+it))\\b",
             Pattern.CASE_INSENSITIVE);
@@ -87,7 +87,7 @@ final class BotOfferManager {
         createOwnerUpgradeRequest(entry, bot, owner, candidate);
     }
 
-    static boolean offerBestRecommendedGear(BotEntry entry, Character bot, Character owner) {
+    public static boolean offerBestRecommendedGear(BotEntry entry, Character bot, Character owner) {
         if (owner == null) {
             return false;
         }

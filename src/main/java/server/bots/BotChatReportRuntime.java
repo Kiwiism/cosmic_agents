@@ -2,6 +2,7 @@ package server.bots;
 
 
 import server.agents.integration.AgentBotReplyRuntime;
+import server.agents.integration.AgentBotOfferRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 import server.agents.integration.AgentBotStatusRuntime;
 import client.Character;
@@ -263,7 +264,7 @@ final class BotChatReportRuntime {
         Character owner = entry.owner;
         AgentChatReportRuntime.reportRecommendedGear(
                 AgentBotStatusRuntime.recommendedGearReportState(entry),
-                recommendedGearActions(entry, bot, owner),
+                AgentBotOfferRuntime.recommendedGearActions(entry, bot, owner),
                 System.currentTimeMillis());
     }
 
@@ -275,25 +276,4 @@ final class BotChatReportRuntime {
         AgentChatReportRuntime.reportLines(lines, line -> AgentBotReplyRuntime.queueReply(entry, line));
     }
 
-    private static AgentChatReportRuntime.RecommendedGearActions recommendedGearActions(
-            BotEntry entry,
-            Character bot,
-            Character owner) {
-        return new AgentChatReportRuntime.RecommendedGearActions() {
-            @Override
-            public boolean hasOwner() {
-                return owner != null;
-            }
-
-            @Override
-            public boolean offerBestRecommendedGear() {
-                return BotOfferManager.offerBestRecommendedGear(entry, bot, owner);
-            }
-
-            @Override
-            public void queueReply(String line) {
-                AgentBotReplyRuntime.queueReply(entry, line);
-            }
-        };
-    }
 }
