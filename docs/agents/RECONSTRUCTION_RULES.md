@@ -112,6 +112,9 @@ Recent reconstruction notes:
   route through `AgentBotReplyRuntime` and `AgentBotSchedulerRuntime`. Map-only
   resupply/shop chatter remains on the legacy visible-say path until exact
   map-visible delivery has an Agent adapter.
+- Ammo-share delayed donor offer and transfer callbacks now route through
+  `AgentBotSchedulerRuntime`; visible ammo request/offer chat remains unchanged
+  on the legacy map-visible say path.
 
 Initial reconstruction order:
 

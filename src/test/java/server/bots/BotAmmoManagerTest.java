@@ -1,0 +1,71 @@
+package server.bots;
+
+import client.Character;
+import client.inventory.Inventory;
+import client.inventory.InventoryType;
+import client.inventory.WeaponType;
+import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import server.agents.integration.AgentBotSchedulerRuntime;
+import testutil.Items;
+
+import java.lang.reflect.Field;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
+
+class BotAmmoManagerTest {
+    @Test
+    @SuppressWarnings("unchecked")
+    void ownerAmmoShareSchedulesThroughAgentSchedulerAdapter() throws Exception {
+        BotManager manager = BotManager.getInstance();
+        Character owner = mock(Character.class);
+        Character requestingBot = mock(Character.class);
+        Character donorBot = ammoBot(22, 100000000, 1000);
+        BotEntry entry = new BotEntry(requestingBot, owner, null);
+        BotEntry donorEntry = new BotEntry(donorBot, owner, null);
+
+        when(owner.getId()).thenReturn(77);
+        when(owner.getMapId()).thenReturn(100000000);
+        when(owner.getTrade()).thenReturn(null);
+
+        Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
+        bots.put(owner.getId(), List.of(entry, donorEntry));
+
+        try (MockedStatic<BotAttackExecutionProvider> attacks = mockStatic(BotAttackExecutionProvider.class);
+             MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class)) {
+            attacks.when(() -> BotAttackExecutionProvider.getEquippedWeaponType(donorBot)).thenReturn(null);
+            scheduler.when(() -> AgentBotSchedulerRuntime.randomDelayMs(900, 1400)).thenReturn(99L);
+
+            assertEquals(BotAmmoManager.OwnerAmmoShareResult.OFFERED,
+                    BotAmmoManager.offerAmmoShareToOwner(entry, WeaponType.BOW));
+
+            scheduler.verify(() -> AgentBotSchedulerRuntime.randomDelayMs(900, 1400));
+            scheduler.verify(() -> AgentBotSchedulerRuntime.afterDelay(eq(99L), any(Runnable.class)));
+        } finally {
+            bots.remove(owner.getId());
+        }
+    }
+
+    private static Character ammoBot(int id, int mapId, int arrows) {
+        Character bot = mock(Character.class);
+        Inventory use = new Inventory(bot, InventoryType.USE, (byte) 24);
+        use.addItem(Items.itemWithQuantity(2060000, arrows));
+        when(bot.getId()).thenReturn(id);
+        when(bot.getMapId()).thenReturn(mapId);
+        when(bot.getInventory(InventoryType.USE)).thenReturn(use);
+        return bot;
+    }
+
+    private static Field field(Class<?> owner, String name) throws ReflectiveOperationException {
+        Field field = owner.getDeclaredField(name);
+        field.setAccessible(true);
+        return field;
+    }
+}

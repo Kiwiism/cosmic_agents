@@ -3,6 +3,7 @@ package server.bots;
 import client.Character;
 import client.inventory.Item;
 import client.inventory.WeaponType;
+import server.agents.integration.AgentBotSchedulerRuntime;
 
 import java.util.List;
 import java.util.Map;
@@ -93,7 +94,7 @@ public final class BotAmmoManager {
             return true;
         }
 
-        scheduleAmmoShare(plan, bot, weaponType, BotManager.randMs(2000, 3000));
+        scheduleAmmoShare(plan, bot, weaponType, AgentBotSchedulerRuntime.randomDelayMs(2000, 3000));
         return true;
     }
 
@@ -114,7 +115,7 @@ public final class BotAmmoManager {
             return OwnerAmmoShareResult.NO_DONOR;
         }
 
-        scheduleAmmoShare(plan, owner, weaponType, BotManager.randMs(900, 1400));
+        scheduleAmmoShare(plan, owner, weaponType, AgentBotSchedulerRuntime.randomDelayMs(900, 1400));
         return OwnerAmmoShareResult.OFFERED;
     }
 
@@ -162,7 +163,7 @@ public final class BotAmmoManager {
         BotEntry donorEntry = plan.entry();
         Character donorBot = donorEntry.bot;
         int maxQty = plan.donationQty();
-        BotManager.after(initialDelayMs, () -> {
+        AgentBotSchedulerRuntime.afterDelay(initialDelayMs, () -> {
             if (donorBot.getTrade() != null || donorEntry.pendingTradeCategory != null || recipient.getTrade() != null) {
                 return;
             }
@@ -171,7 +172,7 @@ public final class BotAmmoManager {
                 return;
             }
             BotManager.getInstance().botSay(donorBot, BotManager.randomReply(AMMO_OFFER_MSGS));
-            BotManager.after(BotManager.randMs(900, 1100), () ->
+            AgentBotSchedulerRuntime.afterRandomDelay(900, 1100, () ->
                     BotInventoryManager.startAmmoShareTransfer(items, recipient, donorEntry, donorBot, maxQty));
         });
     }
