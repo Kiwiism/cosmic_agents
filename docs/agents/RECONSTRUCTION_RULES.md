@@ -86,6 +86,9 @@ Recent reconstruction notes:
 - Unused bot-side chat session and supply compatibility shims have been
   removed; session and supply chat orchestration is reached through Agent
   integration facades.
+- `BotChatRuntime` has been removed; `BotChatManager` is now the only bot-side
+  chat compatibility facade and delegates directly to `AgentChatRuntime` with
+  `AgentBotChatOrchestratorContext`.
 
 Initial reconstruction order:
 

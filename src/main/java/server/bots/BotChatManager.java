@@ -1,12 +1,15 @@
 package server.bots;
 
+import server.agents.capabilities.dialogue.AgentChatRuntime;
+import server.agents.integration.AgentBotChatOrchestratorContext;
+
 public class BotChatManager {
     public static boolean wasLastChatHandled() {
-        return BotChatRuntime.wasLastChatHandled();
+        return AgentChatRuntime.wasLastChatHandled();
     }
 
     static void handleChat(BotEntry entry, String message) {
-        BotChatRuntime.handleChat(entry, message);
+        AgentChatRuntime.handleChat(message, new AgentBotChatOrchestratorContext(entry));
     }
 
 }
