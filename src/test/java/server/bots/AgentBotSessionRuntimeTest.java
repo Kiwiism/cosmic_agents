@@ -6,6 +6,7 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatAwayFlow;
 import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.integration.AgentBotReplyRuntime;
+import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 import server.agents.integration.AgentBotSessionReplyRuntime;
 import server.agents.integration.AgentBotSessionRuntime;
@@ -39,7 +40,7 @@ class AgentBotSessionRuntimeTest {
 
             AgentBotSessionRuntime.sessionRequestCallbacks(entry).requestRelog();
 
-            assertEquals(AgentChatPendingAction.RELOG, entry.pendingAction());
+            assertEquals(AgentChatPendingAction.RELOG, AgentBotPendingActionStateRuntime.pendingAction(entry));
             verify(manager).issueStop(entry);
             replies.verify(() -> AgentBotSessionReplyRuntime.replyNow(eq(entry), anyString()));
         }
@@ -64,7 +65,7 @@ class AgentBotSessionRuntimeTest {
 
             AgentBotSessionRuntime.sessionRequestCallbacks(entry).requestAway();
 
-            assertEquals(AgentChatPendingAction.OWNER_AWAY, entry.pendingAction());
+            assertEquals(AgentChatPendingAction.OWNER_AWAY, AgentBotPendingActionStateRuntime.pendingAction(entry));
             verify(manager).issueStop(entry);
             replies.verify(() -> AgentBotSessionReplyRuntime.replyNow(entry, AgentChatAwayFlow.townOrLogoutPrompt()));
         }
@@ -91,7 +92,7 @@ class AgentBotSessionRuntimeTest {
 
             AgentBotSessionRuntime.handleOwnerAwayChoice(entry, "stay");
 
-            assertNull(entry.pendingAction());
+            assertNull(AgentBotPendingActionStateRuntime.pendingAction(entry));
             verify(manager).issueOwnerAwaySafeModeForOwner(123, false);
             replies.verify(() -> AgentBotSessionReplyRuntime.replyNow(entry, AgentChatAwayFlow.stayConfirmReply()));
         }

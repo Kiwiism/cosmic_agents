@@ -457,6 +457,10 @@ Recent reconstruction notes:
 - Gear-prompt test assertions now read the reserved prompt timestamp through
   `AgentBotOfferStateRuntime`, keeping tests on the Agent-owned offer state
   boundary instead of the temporary BotEntry backing field.
+- Session-request tests now assert pending chat action through
+  `AgentBotPendingActionStateRuntime`, keeping relog/away prompt state checks on
+  the Agent-owned pending-action boundary instead of the temporary BotEntry
+  backing field.
 
 Initial reconstruction order:
 
