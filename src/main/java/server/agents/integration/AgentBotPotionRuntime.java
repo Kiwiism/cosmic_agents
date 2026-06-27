@@ -1,11 +1,17 @@
 package server.agents.integration;
 
+import client.Character;
+
 /**
- * Temporary Agent-owned bridge for potion-sharing timing while potion transfer
- * execution still lives in the legacy bot runtime.
+ * Temporary Agent-owned bridge for potion-sharing timing/replies while potion
+ * transfer execution still lives in the legacy bot runtime.
  */
 public final class AgentBotPotionRuntime {
     private AgentBotPotionRuntime() {
+    }
+
+    public static void sayMapNow(Character bot, String message) {
+        AgentBotReplyRuntime.sayMapNow(bot, message);
     }
 
     public static void afterDelay(long delayMs, Runnable action) {

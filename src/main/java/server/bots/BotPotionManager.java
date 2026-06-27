@@ -300,7 +300,7 @@ public final class BotPotionManager {
         startedAt = BotPerformanceMonitor.start();
         if (pots[0] < BotManager.cfg.POT_STOP && bot.getHp() < bot.getMaxHp() * 0.4f) {
             BotManager.getInstance().issueFollowOwner(entry);
-            BotManager.getInstance().botSay(bot, "low on pots!! walking to you");
+            AgentBotPotionRuntime.sayMapNow(bot, "low on pots!! walking to you");
             bot.changeFaceExpression(Emote.GLARE.getValue());
         }
         BotPerformanceMonitor.recordSince("potion-grind-stop", startedAt);
@@ -405,7 +405,7 @@ public final class BotPotionManager {
             potShareCooldownUntil.put(owner.getId(), now + 30_000L);
         }
 
-        BotManager.getInstance().botSay(bot, BotManager.randomReply(forHp ? POT_REQUEST_HP_MSGS : POT_REQUEST_MP_MSGS));
+        AgentBotPotionRuntime.sayMapNow(bot, BotManager.randomReply(forHp ? POT_REQUEST_HP_MSGS : POT_REQUEST_MP_MSGS));
 
         PotDonorPlan plan = selectPotDonor(owner, bot, entry, forHp);
         if (plan == null) {
@@ -427,7 +427,7 @@ public final class BotPotionManager {
                     "i'm low too :/ check with " + ownerName,
                     "barely have any myself, ask " + ownerName);
             AgentBotPotionRuntime.afterRandomDelay(4000, 6000, () ->
-                    BotManager.getInstance().botSay(plan.entry().bot, BotManager.randomReply(noQualMessages)));
+                    AgentBotPotionRuntime.sayMapNow(plan.entry().bot, BotManager.randomReply(noQualMessages)));
         } else {
             schedulePotShare(plan, bot, forHp, AgentBotPotionRuntime.randomDelayMs(2000, 3000));
         }
@@ -487,7 +487,7 @@ public final class BotPotionManager {
             if (items.isEmpty()) {
                 return;
             }
-            BotManager.getInstance().botSay(donorBot, BotManager.randomReply(forHp ? POT_OFFER_HP_MSGS : POT_OFFER_MP_MSGS));
+            AgentBotPotionRuntime.sayMapNow(donorBot, BotManager.randomReply(forHp ? POT_OFFER_HP_MSGS : POT_OFFER_MP_MSGS));
             AgentBotPotionRuntime.afterRandomDelay(900, 1100, () ->
                     BotInventoryManager.startPotShareTransfer(items, recipient, donorEntry, donorBot, maxQty));
         });

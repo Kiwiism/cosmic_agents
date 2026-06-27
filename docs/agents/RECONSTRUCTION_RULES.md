@@ -215,6 +215,11 @@ Recent reconstruction notes:
   through `AgentBotAmmoRuntime`; `BotAmmoManager` no longer calls
   `BotManager.botSay` directly for ammo-owned reply delivery, while the same
   random reply pools and transfer timing remain intact.
+- Potion grind-stop warnings, low-supply requests, no-qualified-donor
+  deflections, and donor offer visible replies now enter through
+  `AgentBotPotionRuntime`; `BotPotionManager` no longer calls
+  `BotManager.botSay` directly for potion-owned reply delivery, while the same
+  text, random reply pools, and transfer timing remain intact.
 
 Initial reconstruction order:
 
