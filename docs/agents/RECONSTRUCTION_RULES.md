@@ -109,9 +109,10 @@ Recent reconstruction notes:
   lower-level reply or scheduler runtime for Maker-owned flows. It still lazily
   resolves `ItemInformationProvider` so guard paths and Agent adapter tests do
   not initialize database-backed item data before it is needed.
-- Scroll-reaction delayed callbacks now route through
-  `AgentBotSchedulerRuntime`; scroll reaction chat was already delivered through
-  `AgentBotReplyRuntime`.
+- Scroll-reaction jitter delays and queued reaction chat now enter through
+  `AgentBotScrollReactionRuntime`; `BotScrollReactionManager` no longer reaches
+  directly into the lower-level reply or scheduler runtime for scroll-reaction
+  owned flows.
 - Sell-trash shop owner-directed replies and delayed shop step callbacks now
   enter through `AgentBotShopRuntime`; `BotShopManager` no longer reaches
   directly into the lower-level reply or scheduler runtime for shop-owned

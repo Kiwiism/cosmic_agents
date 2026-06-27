@@ -1,8 +1,7 @@
 package server.bots;
 
 
-import server.agents.integration.AgentBotReplyRuntime;
-import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentBotScrollReactionRuntime;
 import client.Character;
 import client.inventory.Equip;
 import server.ItemInformationProvider;
@@ -105,9 +104,9 @@ final class BotScrollReactionManager {
                 if (dx * dx + dy * dy > maxDistSq) {
                     continue;
                 }
-                long botDelayMs = AgentBotSchedulerRuntime.randomDelayMs(0, PER_BOT_REACTION_JITTER_MAX_MS + 1);
+                long botDelayMs = AgentBotScrollReactionRuntime.randomDelayMs(0, PER_BOT_REACTION_JITTER_MAX_MS + 1);
                 long reactionAtMs = now + botDelayMs;
-                AgentBotSchedulerRuntime.afterDelay(botDelayMs,
+                AgentBotScrollReactionRuntime.afterDelay(botDelayMs,
                         () -> maybeReact(entry, source.getId(), success, scrollSuccessRate, reactionAtMs));
             }
         }
@@ -138,7 +137,7 @@ final class BotScrollReactionManager {
         }
 
         if (rollPercent(CHAT_CHANCE_PCT, chanceScale) && shouldQueueChat(entry)) {
-            AgentBotReplyRuntime.queueSay(entry, selectChatLine(success, streak, scrollSuccessRate));
+            AgentBotScrollReactionRuntime.queueSay(entry, selectChatLine(success, streak, scrollSuccessRate));
             reacted = true;
         }
 

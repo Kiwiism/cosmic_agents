@@ -4,7 +4,7 @@ import client.Character;
 import client.inventory.Equip;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentBotScrollReactionRuntime;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -18,7 +18,7 @@ import static org.mockito.Mockito.when;
 
 class BotScrollReactionManagerTest {
     @Test
-    void scrollReactionSchedulingUsesAgentSchedulerAdapter() {
+    void scrollReactionSchedulingUsesAgentScrollReactionRuntime() {
         MapleMap map = mock(MapleMap.class);
         Character source = mock(Character.class);
         when(source.getMap()).thenReturn(map);
@@ -32,8 +32,8 @@ class BotScrollReactionManagerTest {
         when(bot.getPosition()).thenReturn(new Point(60, 60));
         BotEntry entry = new BotEntry(bot, null, null);
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class)) {
-            scheduler.when(() -> AgentBotSchedulerRuntime.randomDelayMs(0, 2001)).thenReturn(123L);
+        try (MockedStatic<AgentBotScrollReactionRuntime> scheduler = mockStatic(AgentBotScrollReactionRuntime.class)) {
+            scheduler.when(() -> AgentBotScrollReactionRuntime.randomDelayMs(0, 2001)).thenReturn(123L);
 
             BotScrollReactionManager.handleScrollEvent(
                     source,
@@ -41,8 +41,8 @@ class BotScrollReactionManagerTest {
                     0,
                     List.of(List.of(entry)));
 
-            scheduler.verify(() -> AgentBotSchedulerRuntime.randomDelayMs(0, 2001));
-            scheduler.verify(() -> AgentBotSchedulerRuntime.afterDelay(eq(123L), any(Runnable.class)));
+            scheduler.verify(() -> AgentBotScrollReactionRuntime.randomDelayMs(0, 2001));
+            scheduler.verify(() -> AgentBotScrollReactionRuntime.afterDelay(eq(123L), any(Runnable.class)));
         }
     }
 }
