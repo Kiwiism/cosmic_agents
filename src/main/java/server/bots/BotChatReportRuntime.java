@@ -5,6 +5,7 @@ import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotCharacterReportRuntime;
 import server.agents.integration.AgentBotInventoryReportRuntime;
 import server.agents.integration.AgentBotOfferRuntime;
+import server.agents.integration.AgentBotRangeReportRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 import server.agents.integration.AgentBotSkillReportRuntime;
 import server.agents.integration.AgentBotStatusRuntime;
@@ -130,22 +131,11 @@ final class BotChatReportRuntime {
     }
 
     static String buildRangeReport(Character bot) {
-        BotEquipManager.MapDamageProfile dmgProfile = BotEquipManager.MapDamageProfile.snapshot(bot);
-        BotEquipManager.MapDamageProfile hitProfile = BotEquipManager.MapDamageProfile.snapshotByAvoid(bot);
-        return buildRangeReport(bot, dmgProfile, hitProfile);
+        return AgentBotRangeReportRuntime.rangeReport(bot);
     }
 
     static String buildRangeReport(Character bot, BotEquipManager.MapDamageProfile mobProfile) {
-        return buildRangeReport(bot, mobProfile, mobProfile);
-    }
-
-    private static String buildRangeReport(Character bot, BotEquipManager.MapDamageProfile mobProfile,
-                                           BotEquipManager.MapDamageProfile hitProfile) {
-        AgentCombatDialogueReporter.MobHitProfile agentHitProfile = hitProfile == null
-                ? null
-                : new AgentCombatDialogueReporter.MobHitProfile(hitProfile.mobLevel(), hitProfile.mobAvoid());
-        return AgentCombatDialogueReporter.rangeReport(
-                bot, BotEquipManager.isMageJob(bot.getJob()), agentHitProfile);
+        return AgentBotRangeReportRuntime.rangeReport(bot, mobProfile);
     }
 
     static void reportMovementStats(BotEntry entry, Character bot) {

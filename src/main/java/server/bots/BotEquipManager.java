@@ -1935,7 +1935,7 @@ public class BotEquipManager {
         return (int) Math.round(sim.int_() * 1.1d) + sim.magic();
     }
 
-    static boolean isMageJob(Job job) {
+    public static boolean isMageJob(Job job) {
         return job == Job.MAGICIAN
                 || job == Job.FP_WIZARD || job == Job.FP_MAGE || job == Job.FP_ARCHMAGE
                 || job == Job.IL_WIZARD || job == Job.IL_MAGE || job == Job.IL_ARCHMAGE
@@ -2148,12 +2148,12 @@ public class BotEquipManager {
      * briefly clear still benchmarks against the map's mobs instead of raw damage.
      * Returns null when no map context is available or no map mobs are present.
      */
-    record MapDamageProfile(int mobWdef, int mobAvoid, int mobLevel) {
-        static MapDamageProfile snapshot(Character bot) {
+    public record MapDamageProfile(int mobWdef, int mobAvoid, int mobLevel) {
+        public static MapDamageProfile snapshot(Character bot) {
             return fromStats(collectCandidates(bot));
         }
 
-        static MapDamageProfile snapshotByAvoid(Character bot) {
+        public static MapDamageProfile snapshotByAvoid(Character bot) {
             return fromStatsByAvoid(collectCandidates(bot));
         }
 
