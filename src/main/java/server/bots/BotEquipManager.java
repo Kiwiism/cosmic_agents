@@ -104,7 +104,7 @@ public class BotEquipManager {
         autoEquip(bot, owner, pendingOffer, false);
     }
 
-    static void autoEquip(Character bot, Character owner, Item pendingOffer, boolean force) {
+    public static void autoEquip(Character bot, Character owner, Item pendingOffer, boolean force) {
         if (!shouldRunAutoEquip(bot, System.currentTimeMillis(), force)) {
             return;
         }
@@ -224,7 +224,7 @@ public class BotEquipManager {
      * Returns multiple short lines suitable for sequential bot chat. Includes mob benchmark,
      * naked stats, per-weapon score (top 3), changed slots vs current, and pareto-cap status.
      */
-    static List<String> autoEquipDebug(Character bot) {
+    public static List<String> autoEquipDebug(Character bot) {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         Inventory eqpInv = bot.getInventory(InventoryType.EQUIP);
         Inventory eqdInv = bot.getInventory(InventoryType.EQUIPPED);
@@ -1701,7 +1701,7 @@ public class BotEquipManager {
         return summary.toString();
     }
 
-    static String unequipAll(Character bot) {
+    public static String unequipAll(Character bot) {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         Inventory eqpInv = bot.getInventory(InventoryType.EQUIP);
         Inventory eqdInv = bot.getInventory(InventoryType.EQUIPPED);
@@ -1748,7 +1748,7 @@ public class BotEquipManager {
         unequipSlot(bot, arr);
     }
 
-    static String unequipSlot(Character bot, short[] slots) {
+    public static String unequipSlot(Character bot, short[] slots) {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         Inventory eqpInv = bot.getInventory(InventoryType.EQUIP);
         Inventory eqdInv = bot.getInventory(InventoryType.EQUIPPED);
@@ -1779,7 +1779,7 @@ public class BotEquipManager {
     }
 
     /** Returns the equipped slot(s) that match the given slot name from chat. Empty array = unknown. */
-    static short[] slotsFromName(String name) {
+    public static short[] slotsFromName(String name) {
         return switch (name.trim().toLowerCase().replaceAll("\\s+", "")) {
             case "hat", "helm", "helmet" -> new short[]{-1};
             case "face", "faceacc", "faceaccessory" -> new short[]{-2};
