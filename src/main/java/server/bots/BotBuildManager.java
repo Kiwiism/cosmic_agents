@@ -18,7 +18,7 @@ import server.bots.build.WarriorBuilds;
 import server.agents.capabilities.dialogue.AgentBuildPromptReporter;
 
 public final class BotBuildManager {
-    enum StatType {
+    public enum StatType {
         STR,
         DEX,
         INT,
@@ -38,10 +38,22 @@ public final class BotBuildManager {
             this.secondaryStat = secondaryStat;
             this.secondaryTarget = Math.max(4, secondaryTarget);
         }
+
+        public StatType primaryStat() {
+            return primaryStat;
+        }
+
+        public StatType secondaryStat() {
+            return secondaryStat;
+        }
+
+        public int secondaryTarget() {
+            return secondaryTarget;
+        }
     }
 
     /** Stores the AP build, confirms it to the owner, and immediately spends any pending AP. */
-    static void setApBuild(BotEntry entry, ApBuild build, String confirmMsg) {
+    public static void setApBuild(BotEntry entry, ApBuild build, String confirmMsg) {
         entry.apBuild = build;
         entry.apPromptSent = false;
         BotManager.getInstance().botReply(entry, confirmMsg);
@@ -60,7 +72,7 @@ public final class BotBuildManager {
         return requestApBuildPrompt(entry, bot);
     }
 
-    static String requestApBuildPrompt(BotEntry entry, Character bot) {
+    public static String requestApBuildPrompt(BotEntry entry, Character bot) {
         String prompt = apPromptForJob(bot.getJob());
         if (prompt == null) return null;
         entry.apPromptSent = true;

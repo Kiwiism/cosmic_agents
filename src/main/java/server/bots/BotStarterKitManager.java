@@ -12,7 +12,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
-final class BotStarterKitManager {
+public final class BotStarterKitManager {
     private static final Logger log = LoggerFactory.getLogger(BotStarterKitManager.class);
 
     record ItemGrant(int itemId, short quantity) {}
@@ -44,7 +44,7 @@ final class BotStarterKitManager {
             )
     );
 
-    static void advanceJob(BotEntry entry, Job newJob) {
+    public static void advanceJob(BotEntry entry, Job newJob) {
         Character bot = entry.bot;
         Character owner = entry.owner;
         Job oldJob = bot.getJob();

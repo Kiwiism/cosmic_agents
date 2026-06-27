@@ -192,6 +192,12 @@ public class BotEntry {
     public boolean isFollowing() { return following; }
     public Character bot() { return bot; }
     public Character owner() { return owner; }
+    public BotBuildManager.ApBuild apBuild() { return apBuild; }
+    public void clearApBuildPromptState() {
+        apBuild = null;
+        apPromptSent = false;
+    }
+    public void setSpVariant(String spVariant) { this.spVariant = spVariant; }
     public java.awt.Point getFarmAnchor() { return farmAnchor; }
     public int getFarmAnchorMapId() { return farmAnchorMapId; }
     Point lastMobTouchCheckPos = null;

@@ -23,6 +23,9 @@ Recent reconstruction notes:
 - Status helper orchestration now has an Agent-owned facade in
   `AgentBotChatStatusRuntime`; `BotChatStatusRuntime` remains only as a
   temporary compatibility shim for legacy bot package callers.
+- Build/AP/SP/job callback orchestration now has an Agent-owned facade in
+  `AgentBotBuildRuntime`; `BotChatBuildRuntime` remains only as a temporary
+  compatibility shim for legacy bot package callers.
 
 Initial reconstruction order:
 
