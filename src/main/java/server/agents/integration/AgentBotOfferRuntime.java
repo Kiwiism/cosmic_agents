@@ -40,6 +40,22 @@ public final class AgentBotOfferRuntime {
         return AgentBotSchedulerRuntime.randomDelayMs(minMs, maxMs);
     }
 
+    public static boolean hasPendingGearPromptAfter(BotEntry entry, long nowMs) {
+        return entry.pendingGearPromptAt() > nowMs;
+    }
+
+    public static void reserveGearPrompt(BotEntry entry, long scheduledAt) {
+        entry.setPendingGearPromptAt(scheduledAt);
+    }
+
+    public static boolean isReservedGearPrompt(BotEntry entry, long scheduledAt) {
+        return entry.pendingGearPromptAt() == scheduledAt;
+    }
+
+    public static void clearGearPrompt(BotEntry entry) {
+        entry.setPendingGearPromptAt(0L);
+    }
+
     public static AgentChatReportRuntime.RecommendedGearActions recommendedGearActions(
             BotEntry entry,
             Character bot,

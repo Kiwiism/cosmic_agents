@@ -140,7 +140,7 @@ public final class BotOfferManager {
         long now = System.currentTimeMillis();
         if (owner == null
                 || item == null
-                || entry.pendingGearPromptAt > now
+                || AgentBotOfferRuntime.hasPendingGearPromptAfter(entry, now)
                 || AgentBotOfferRuntime.isOwnerIdleForOffer(entry)
                 || entry.pendingAction != null
                 || entry.pendingTradeCategory != null
@@ -161,7 +161,7 @@ public final class BotOfferManager {
         entry.pendingLootOfferBotRequesting = false;
 
         long scheduledAt = now + Math.max(0L, delayMs);
-        entry.pendingGearPromptAt = scheduledAt;
+        AgentBotOfferRuntime.reserveGearPrompt(entry, scheduledAt);
         AgentBotOfferRuntime.afterDelay(delayMs, () -> promptLootOfferAfterLoot(entry, bot, item, recipient.getId(), scheduledAt));
     }
 
@@ -254,10 +254,10 @@ public final class BotOfferManager {
     }
 
     private static void promptLootOfferAfterLoot(BotEntry entry, Character bot, Item item, int recipientId, long scheduledAt) {
-        if (entry.pendingGearPromptAt != scheduledAt) {
+        if (!AgentBotOfferRuntime.isReservedGearPrompt(entry, scheduledAt)) {
             return;
         }
-        entry.pendingGearPromptAt = 0L;
+        AgentBotOfferRuntime.clearGearPrompt(entry);
 
         if (entry.pendingLootOfferItem != item || entry.pendingLootOfferRecipientId != recipientId) {
             clearPendingOffer(entry);
@@ -696,6 +696,6 @@ public final class BotOfferManager {
         entry.pendingLootOfferRecipientId = 0;
         entry.pendingLootOfferExpiresAt = 0L;
         entry.pendingLootOfferBotRequesting = false;
-        entry.pendingGearPromptAt = 0L;
+        AgentBotOfferRuntime.clearGearPrompt(entry);
     }
 }

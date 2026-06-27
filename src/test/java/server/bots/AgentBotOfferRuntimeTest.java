@@ -8,6 +8,7 @@ import server.agents.integration.AgentBotSchedulerRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
@@ -17,6 +18,23 @@ class AgentBotOfferRuntimeTest {
         BotEntry entry = new BotEntry(null, null, null);
 
         assertFalse(AgentBotOfferRuntime.recommendedGearActions(entry, null, null).hasOwner());
+    }
+
+    @Test
+    void gearPromptStateRoutesThroughLegacyEntryState() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        AgentBotOfferRuntime.reserveGearPrompt(entry, 2_000L);
+
+        assertEquals(2_000L, entry.pendingGearPromptAt);
+        assertTrue(AgentBotOfferRuntime.hasPendingGearPromptAfter(entry, 1_999L));
+        assertFalse(AgentBotOfferRuntime.hasPendingGearPromptAfter(entry, 2_000L));
+        assertTrue(AgentBotOfferRuntime.isReservedGearPrompt(entry, 2_000L));
+        assertFalse(AgentBotOfferRuntime.isReservedGearPrompt(entry, 2_001L));
+
+        AgentBotOfferRuntime.clearGearPrompt(entry);
+
+        assertEquals(0L, entry.pendingGearPromptAt);
     }
 
     @Test

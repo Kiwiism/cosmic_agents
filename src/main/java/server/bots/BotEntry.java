@@ -461,6 +461,15 @@ public class BotEntry {
     BotPathLogger pathLogger = null;
     String lastNavDecision = "-";
     long pendingGearPromptAt = 0L;
+
+    public long pendingGearPromptAt() {
+        return pendingGearPromptAt;
+    }
+
+    public void setPendingGearPromptAt(long pendingGearPromptAt) {
+        this.pendingGearPromptAt = pendingGearPromptAt;
+    }
+
     // Last known owner position (set each tick in BotManager, read by pathLogger)
     Point lastOwnerPos = null;
     boolean lastTickWasAi = false;

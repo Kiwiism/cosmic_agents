@@ -195,6 +195,10 @@ Recent reconstruction notes:
   now enter through `AgentBotInventoryRuntime`; `BotInventoryManager` no longer
   reaches directly into the lower-level reply or scheduler runtime for those
   inventory-owned flows.
+- Recommended-gear prompt reservation state now enters through
+  `AgentBotOfferRuntime`; `BotOfferManager` no longer reads or clears the
+  `pendingGearPromptAt` entry field directly, while the same legacy field and
+  timing semantics remain intact behind the Agent-owned offer boundary.
 
 Initial reconstruction order:
 
