@@ -1,7 +1,6 @@
 package server.agents.integration;
 
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
-import server.bots.BotChatSupplyRuntime;
 import server.bots.BotEntry;
 
 /**
@@ -21,7 +20,7 @@ public final class AgentBotReportOperationsRuntime {
 
             @Override
             public void requestUpgrade() {
-                BotChatSupplyRuntime.handleRequestUpgradeCommand(entry, entry.bot());
+                AgentBotSupplyRuntime.handleRequestUpgradeCommand(entry, entry.bot());
             }
 
             @Override

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.integration.AgentBotChatReportRuntime;
+import server.agents.integration.AgentBotSupplyRuntime;
 import server.agents.integration.AgentBotReportOperationsRuntime;
 
 import static org.mockito.Mockito.mock;
@@ -19,7 +20,7 @@ class AgentBotReportOperationsRuntimeTest {
                 AgentBotReportOperationsRuntime.reportOperations(entry);
 
         try (MockedStatic<AgentBotChatReportRuntime> reports = mockStatic(AgentBotChatReportRuntime.class);
-             MockedStatic<BotChatSupplyRuntime> supplies = mockStatic(BotChatSupplyRuntime.class)) {
+             MockedStatic<AgentBotSupplyRuntime> supplies = mockStatic(AgentBotSupplyRuntime.class)) {
             operations.help();
             operations.requestUpgrade();
             operations.recommendedGear();
@@ -39,7 +40,7 @@ class AgentBotReportOperationsRuntimeTest {
             operations.potDebug();
 
             reports.verify(() -> AgentBotChatReportRuntime.reportHelp(entry));
-            supplies.verify(() -> BotChatSupplyRuntime.handleRequestUpgradeCommand(entry, bot));
+            supplies.verify(() -> AgentBotSupplyRuntime.handleRequestUpgradeCommand(entry, bot));
             reports.verify(() -> AgentBotChatReportRuntime.reportRecommendedGear(entry, bot));
             reports.verify(() -> AgentBotChatReportRuntime.reportSkills(entry, bot));
             reports.verify(() -> AgentBotChatReportRuntime.reportStats(entry, bot));
