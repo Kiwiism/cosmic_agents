@@ -357,6 +357,10 @@ Recent reconstruction notes:
   `AgentBotMessageQueueStateRuntime` adapter; reply queue orchestration and
   scroll-reaction readiness checks keep BotEntry as the temporary backing store
   but no longer read queue fields directly.
+- Scroll reaction cooldown, load, and per-scroller streak state now enter
+  through the narrow `AgentBotScrollReactionStateRuntime` adapter; scroll
+  reaction orchestration keeps BotEntry as the temporary backing store but no
+  longer reads or mutates those fields directly.
 
 Initial reconstruction order:
 

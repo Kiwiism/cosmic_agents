@@ -24,10 +24,10 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class BotEntry {
-    static final class ScrollReactionStreakState {
-        int streak = 0;
-        boolean lastWasSuccess = false;
-        long lastOutcomeAtMs = 0L;
+    public static final class ScrollReactionStreakState {
+        public int streak = 0;
+        public boolean lastWasSuccess = false;
+        public long lastOutcomeAtMs = 0L;
     }
 
     final Character bot;
@@ -470,6 +470,42 @@ public class BotEntry {
 
     public long pendingGearPromptAt() {
         return pendingGearPromptAt;
+    }
+
+    public double recentScrollReactionLoad() {
+        return recentScrollReactionLoad;
+    }
+
+    public void setRecentScrollReactionLoad(double recentScrollReactionLoad) {
+        this.recentScrollReactionLoad = recentScrollReactionLoad;
+    }
+
+    public long lastScrollReactionObservedAtMs() {
+        return lastScrollReactionObservedAtMs;
+    }
+
+    public void setLastScrollReactionObservedAtMs(long lastScrollReactionObservedAtMs) {
+        this.lastScrollReactionObservedAtMs = lastScrollReactionObservedAtMs;
+    }
+
+    public long nextScrollReactionAtMs() {
+        return nextScrollReactionAtMs;
+    }
+
+    public void setNextScrollReactionAtMs(long nextScrollReactionAtMs) {
+        this.nextScrollReactionAtMs = nextScrollReactionAtMs;
+    }
+
+    public Map<Integer, ScrollReactionStreakState> scrollReactionStreaksByScroller() {
+        return scrollReactionStreaksByScroller;
+    }
+
+    public long nextScrollReactionStreakPruneAtMs() {
+        return nextScrollReactionStreakPruneAtMs;
+    }
+
+    public void setNextScrollReactionStreakPruneAtMs(long nextScrollReactionStreakPruneAtMs) {
+        this.nextScrollReactionStreakPruneAtMs = nextScrollReactionStreakPruneAtMs;
     }
 
     public void setPendingGearPromptAt(long pendingGearPromptAt) {

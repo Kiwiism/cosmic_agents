@@ -3,6 +3,7 @@ package server.bots;
 
 import server.agents.integration.AgentBotMessageQueueStateRuntime;
 import server.agents.integration.AgentBotScrollReactionRuntime;
+import server.agents.integration.AgentBotScrollReactionStateRuntime;
 import client.Character;
 import client.inventory.Equip;
 import server.ItemInformationProvider;
@@ -120,7 +121,7 @@ final class BotScrollReactionManager {
 
         int streak = updateReactionStreak(entry, scrollerId, success, now);
         double load = recordReactionLoad(entry, now);
-        if (now < entry.nextScrollReactionAtMs) {
+        if (AgentBotScrollReactionStateRuntime.isOnCooldown(entry, now)) {
             return;
         }
 
@@ -148,24 +149,12 @@ final class BotScrollReactionManager {
         }
 
         if (reacted) {
-            entry.nextScrollReactionAtMs = now + Math.max(0, REACTION_COOLDOWN_MS);
+            AgentBotScrollReactionStateRuntime.startCooldown(entry, now, REACTION_COOLDOWN_MS);
         }
     }
 
     static double recordReactionLoad(BotEntry entry, long now) {
-        if (entry == null) {
-            return 0.0;
-        }
-
-        long decayMs = Math.max(1, LOAD_DECAY_MS);
-        double load = entry.recentScrollReactionLoad;
-        if (entry.lastScrollReactionObservedAtMs > 0L && now > entry.lastScrollReactionObservedAtMs) {
-            load *= Math.exp(-(double) (now - entry.lastScrollReactionObservedAtMs) / decayMs);
-        }
-        load += 1.0;
-        entry.recentScrollReactionLoad = load;
-        entry.lastScrollReactionObservedAtMs = now;
-        return load;
+        return AgentBotScrollReactionStateRuntime.recordReactionLoad(entry, now, LOAD_DECAY_MS);
     }
 
     static double reactionChanceScale(double load) {
@@ -202,20 +191,8 @@ final class BotScrollReactionManager {
             return 0;
         }
 
-        pruneStreaks(entry, now);
-        long windowMs = Math.max(1, STREAK_WINDOW_MS);
-        BotEntry.ScrollReactionStreakState state = entry.scrollReactionStreaksByScroller
-                .computeIfAbsent(scrollerId, ignored -> new BotEntry.ScrollReactionStreakState());
-        if (state.lastOutcomeAtMs == 0L
-                || now - state.lastOutcomeAtMs > windowMs
-                || state.lastWasSuccess != success) {
-            state.streak = 1;
-        } else {
-            state.streak++;
-        }
-        state.lastWasSuccess = success;
-        state.lastOutcomeAtMs = now;
-        return state.streak;
+        return AgentBotScrollReactionStateRuntime.updateReactionStreak(
+                entry, scrollerId, success, now, STREAK_WINDOW_MS, STREAK_PRUNE_INTERVAL_MS);
     }
 
     static double streakChanceScale(int streak, boolean success, int scrollSuccessRate) {
@@ -255,16 +232,6 @@ final class BotScrollReactionManager {
         }
         Integer success = stats.get("success");
         return success == null ? 0 : success;
-    }
-
-    private static void pruneStreaks(BotEntry entry, long now) {
-        if (now < entry.nextScrollReactionStreakPruneAtMs) {
-            return;
-        }
-        long cutoff = now - STREAK_WINDOW_MS;
-        entry.scrollReactionStreaksByScroller.entrySet()
-                .removeIf(it -> it.getValue() == null || it.getValue().lastOutcomeAtMs < cutoff);
-        entry.nextScrollReactionStreakPruneAtMs = now + STREAK_PRUNE_INTERVAL_MS;
     }
 
     private static boolean rollPercent(int baseChancePct, double chanceScale) {
