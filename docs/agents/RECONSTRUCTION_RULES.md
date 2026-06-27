@@ -83,6 +83,9 @@ Recent reconstruction notes:
 - The bot-side chat status compatibility shim has been removed; production
   lifecycle, fidget, offer, build, starter-kit, and tests now call
   `AgentBotChatStatusRuntime` directly.
+- Unused bot-side chat session and supply compatibility shims have been
+  removed; session and supply chat orchestration is reached through Agent
+  integration facades.
 
 Initial reconstruction order:
 
