@@ -156,6 +156,10 @@ Recent reconstruction notes:
 - Fidget idle gating now enters through
   `AgentBotFidgetRuntime.isLeaderIdleForFidget`; `BotFidgetManager` no longer
   reaches directly into the broad chat-status facade for fidget eligibility.
+- Movement-triggered active-mode preparation, post-movement status checks, and
+  random fidget expressions now enter through `AgentBotMovementStatusRuntime`;
+  `AgentBotMovementRuntime` no longer reaches directly into the broad
+  chat-status facade for those movement callbacks.
 
 Initial reconstruction order:
 
