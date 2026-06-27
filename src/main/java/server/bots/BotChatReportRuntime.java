@@ -201,12 +201,13 @@ final class BotChatReportRuntime {
         List<AgentSkillReportFlow.SkillLine> beginnerSkills =
                 AgentSkillDialogueReporter.collectLearnedBeginnerSkills(bot);
         int beginnerSpLeft = AgentSkillDialogueReporter.remainingBeginnerSp(bot);
-        BotChatPendingActionRuntime.applySkillReportDecision(entry, AgentSkillReportFlow.reportSkills(
+        AgentChatReportRuntime.reportSkills(
                 bot.isBeginnerJob(),
                 bot.getRemainingSp(),
                 beginnerSkills,
                 beginnerSpLeft,
-                skillTrees));
+                skillTrees,
+                decision -> BotChatPendingActionRuntime.applySkillReportDecision(entry, decision));
     }
 
     static void reportInventory(BotEntry entry, Character bot) {

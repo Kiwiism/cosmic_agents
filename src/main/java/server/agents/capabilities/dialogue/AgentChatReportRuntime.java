@@ -1,5 +1,8 @@
 package server.agents.capabilities.dialogue;
 
+import java.util.List;
+import java.util.Map;
+
 public final class AgentChatReportRuntime {
     private AgentChatReportRuntime() {
     }
@@ -134,6 +137,21 @@ public final class AgentChatReportRuntime {
         }
     }
 
+    public static void reportSkills(
+            boolean beginnerJob,
+            int remainingSp,
+            List<AgentSkillReportFlow.SkillLine> beginnerSkills,
+            int beginnerSpLeft,
+            Map<Integer, List<AgentSkillReportFlow.SkillLine>> skillTrees,
+            SkillReportActions actions) {
+        actions.applySkillReportDecision(AgentSkillReportFlow.reportSkills(
+                beginnerJob,
+                remainingSp,
+                beginnerSkills,
+                beginnerSpLeft,
+                skillTrees));
+    }
+
     public interface ReportScheduler {
         void afterRandomDelay(int minMs, int maxMs, Runnable action);
     }
@@ -194,5 +212,9 @@ public final class AgentChatReportRuntime {
 
     public interface LineActions {
         void queueReply(String line);
+    }
+
+    public interface SkillReportActions {
+        void applySkillReportDecision(AgentSkillReportFlow.SkillReportDecision decision);
     }
 }

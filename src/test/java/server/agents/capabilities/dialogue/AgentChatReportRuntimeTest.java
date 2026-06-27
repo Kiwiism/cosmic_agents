@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -117,6 +118,56 @@ class AgentChatReportRuntimeTest {
         AgentChatReportRuntime.reportLines(List.of("one", "two", "three"), replies::add);
 
         assertEquals(List.of("one", "two", "three"), replies);
+    }
+
+    @Test
+    void skillReportAppliesBeginnerDecision() {
+        TestSkillReportActions actions = new TestSkillReportActions();
+
+        AgentChatReportRuntime.reportSkills(
+                true,
+                0,
+                List.of(new AgentSkillReportFlow.SkillLine(1000, "Three Snails", 1)),
+                2,
+                Map.of(),
+                actions);
+
+        assertEquals(1, actions.decisions.size());
+        assertEquals(false, actions.decisions.get(0).requestSkillTreeChoice());
+        assertEquals(false, actions.decisions.get(0).clearPendingAction());
+        assertEquals(1, actions.decisions.get(0).replies().size());
+    }
+
+    @Test
+    void skillReportAppliesNoJobSkillDecision() {
+        TestSkillReportActions actions = new TestSkillReportActions();
+
+        AgentChatReportRuntime.reportSkills(false, 3, List.of(), 0, Map.of(), actions);
+
+        assertEquals(1, actions.decisions.size());
+        assertEquals(false, actions.decisions.get(0).requestSkillTreeChoice());
+        assertEquals(false, actions.decisions.get(0).clearPendingAction());
+        assertEquals(1, actions.decisions.get(0).replies().size());
+    }
+
+    @Test
+    void skillReportAppliesPendingChoiceDecisionForMultipleSkillTrees() {
+        TestSkillReportActions actions = new TestSkillReportActions();
+
+        AgentChatReportRuntime.reportSkills(
+                false,
+                0,
+                List.of(),
+                0,
+                Map.of(
+                        100, List.of(new AgentSkillReportFlow.SkillLine(1001004, "Power Strike", 1)),
+                        110, List.of(new AgentSkillReportFlow.SkillLine(1101006, "Sword Booster", 1))),
+                actions);
+
+        assertEquals(1, actions.decisions.size());
+        assertEquals(true, actions.decisions.get(0).requestSkillTreeChoice());
+        assertEquals(false, actions.decisions.get(0).clearPendingAction());
+        assertEquals(1, actions.decisions.get(0).replies().size());
     }
 
     private static final class TestScheduler implements AgentChatReportRuntime.ReportScheduler {
@@ -251,6 +302,15 @@ class AgentChatReportRuntimeTest {
         @Override
         public void queueNoBetterGear() {
             events.add("queueNoBetterGear");
+        }
+    }
+
+    private static final class TestSkillReportActions implements AgentChatReportRuntime.SkillReportActions {
+        private final List<AgentSkillReportFlow.SkillReportDecision> decisions = new ArrayList<>();
+
+        @Override
+        public void applySkillReportDecision(AgentSkillReportFlow.SkillReportDecision decision) {
+            decisions.add(decision);
         }
     }
 }
