@@ -120,7 +120,7 @@ public final class AgentBotStatusRuntime {
 
             @Override
             public void afterRandomDelay(int minMs, int maxMs, Runnable action) {
-                AgentBotSchedulerRuntime.afterRandomDelay(minMs, maxMs, action);
+                AgentBotStatusSchedulerRuntime.afterRandomDelay(minMs, maxMs, action);
             }
 
             @Override
@@ -130,7 +130,7 @@ public final class AgentBotStatusRuntime {
 
             @Override
             public void sayParty(String text) {
-                AgentBotReplyRuntime.sayPartyNow(bot, text);
+                AgentBotStatusReplyRuntime.sayPartyNow(bot, text);
             }
         };
     }
@@ -144,7 +144,7 @@ public final class AgentBotStatusRuntime {
 
             @Override
             public void afterRandomDelay(int minMs, int maxMs, Runnable action) {
-                AgentBotSchedulerRuntime.afterRandomDelay(minMs, maxMs, action);
+                AgentBotStatusSchedulerRuntime.afterRandomDelay(minMs, maxMs, action);
             }
 
             @Override
@@ -154,7 +154,7 @@ public final class AgentBotStatusRuntime {
 
             @Override
             public void reply(String text) {
-                AgentBotReplyRuntime.replyNow(entry, text);
+                AgentBotStatusReplyRuntime.replyNow(entry, text);
             }
         };
     }

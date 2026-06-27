@@ -249,6 +249,10 @@ Recent reconstruction notes:
   `AgentBotReportSchedulerRuntime`; `AgentBotChatReportRuntime` no longer
   reaches directly into the broad `AgentBotSchedulerRuntime` when constructing
   report callbacks, while the same random delay scheduler remains underneath.
+- AFK-return and offline-return status actions now enter through narrow
+  `AgentBotStatusReplyRuntime` and `AgentBotStatusSchedulerRuntime` adapters;
+  `AgentBotStatusRuntime` no longer reaches directly into the broad reply or
+  scheduler runtimes for those status-owned side effects.
 
 Initial reconstruction order:
 
