@@ -168,6 +168,10 @@ Recent reconstruction notes:
 - Bot performance-monitor diagnostics now label the common AFK check as
   `AgentBotManagerStatusRuntime.tickAfkCheck`, matching the Agent-owned
   BotManager status boundary used by the tick shell.
+- BotManager-triggered queue/reply/map/party delivery now enters through
+  `AgentBotManagerReplyRuntime`; `BotManager` no longer reaches directly into
+  the lower-level `AgentBotReplyRuntime` for internal command/error/formation
+  replies or compatibility delivery wrappers.
 
 Initial reconstruction order:
 

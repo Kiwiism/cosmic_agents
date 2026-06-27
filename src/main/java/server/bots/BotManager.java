@@ -1,7 +1,7 @@
 package server.bots;
 
 
-import server.agents.integration.AgentBotReplyRuntime;
+import server.agents.integration.AgentBotManagerReplyRuntime;
 import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
@@ -250,7 +250,7 @@ public class BotManager {
             if (entry == null || entry.bot == null || entry.bot.getId() == target.getId()) {
                 continue;
             }
-            AgentBotReplyRuntime.queueReply(entry, randomReply(List.of(
+            AgentBotManagerReplyRuntime.queueReply(entry, randomReply(List.of(
                     "ok",
                     "k",
                     "sure",
@@ -580,7 +580,7 @@ public class BotManager {
         entry.task.cancel(false);
         issueStop(entry);
         AgentBotSchedulerRuntime.afterDelay(randMs(400, 600), () ->
-                AgentBotReplyRuntime.replyNow(entry, randomReply(List.of(
+                AgentBotManagerReplyRuntime.replyNow(entry, randomReply(List.of(
                         "ok", "sure", "alright", "gotcha",
                         "later!", "see ya", "take care", "cya", "peace out"))));
         return true;
@@ -882,7 +882,7 @@ public class BotManager {
             List<BotEntry> fEntries = bots.get(owner.getId());
             if (typeStr == null) {
                 String help = "formations: stagger/split/random/spread/left/right <px>, stack, tight, loose | snap <px/on/off>";
-                if (fEntries != null && !fEntries.isEmpty()) AgentBotReplyRuntime.queueReply(fEntries.get(0), help);
+                if (fEntries != null && !fEntries.isEmpty()) AgentBotManagerReplyRuntime.queueReply(fEntries.get(0), help);
                 else owner.yellowMessage(help);
                 return;
             }
@@ -893,7 +893,7 @@ public class BotManager {
                 int newSnapRange;
                 if (qualifier == null) {
                     String status = current.snapRange() > 0 ? "on (" + current.snapRange() + "px)" : "off";
-                    if (fEntries != null && !fEntries.isEmpty()) AgentBotReplyRuntime.queueReply(fEntries.get(0), "snap: " + status);
+                    if (fEntries != null && !fEntries.isEmpty()) AgentBotManagerReplyRuntime.queueReply(fEntries.get(0), "snap: " + status);
                     else owner.yellowMessage("snap: " + status);
                     return;
                 } else if (qualifier.equalsIgnoreCase("off")) {
@@ -907,7 +907,7 @@ public class BotManager {
                 ownerFormations.put(owner.getId(), fs);
                 String status = newSnapRange > 0 ? "on (" + newSnapRange + "px)" : "off";
                 if (fEntries != null && !fEntries.isEmpty())
-                    AgentBotReplyRuntime.queueReply(fEntries.get(0), "snap: " + status);
+                    AgentBotManagerReplyRuntime.queueReply(fEntries.get(0), "snap: " + status);
                 return;
             }
             String pxToken = fm.group(2);
@@ -936,7 +936,7 @@ public class BotManager {
                 for (int i = 0; i < fEntries.size(); i++) fEntries.get(i).followOffsetX = fs.offsetFor(i, fEntries.size());
                 if (!fEntries.isEmpty()) {
                     String label = typeStr.toLowerCase() + (px > 0 ? " " + px + "px" : "");
-                    AgentBotReplyRuntime.queueReply(fEntries.get(0), "formation: " + label);
+                    AgentBotManagerReplyRuntime.queueReply(fEntries.get(0), "formation: " + label);
                 }
             }
             return;
@@ -970,7 +970,7 @@ public class BotManager {
             if (server.bots.llm.BotLlmConfig.typoSuggesterEnabled) {
                 String typo = server.bots.llm.CommandTypoSuggester.suggest(cmd);
                 if (typo != null) {
-                    AgentBotReplyRuntime.queueReply(targetedBot.entry(), "did you mean '" + typo + "'?");
+                    AgentBotManagerReplyRuntime.queueReply(targetedBot.entry(), "did you mean '" + typo + "'?");
                     return;
                 }
             }
@@ -1018,7 +1018,7 @@ public class BotManager {
             if (typo != null) {
                 BotEntry first = entries.get(0);
                 first.replyChannel = channel;
-                AgentBotReplyRuntime.queueReply(first, "did you mean '" + typo + "'?");
+                AgentBotManagerReplyRuntime.queueReply(first, "did you mean '" + typo + "'?");
                 return;
             }
         }
@@ -2480,7 +2480,7 @@ public class BotManager {
     private void forceBotIdleAfterTickFailure(BotEntry entry) {
         issueStop(entry);
         try {
-            AgentBotReplyRuntime.replyNow(entry, "unrecoverable error caught, idling");
+            AgentBotManagerReplyRuntime.replyNow(entry, "unrecoverable error caught, idling");
         } catch (Throwable chatError) {
             Character bot = entry.bot;
             log.warn("Failed to send bot failure idle message for '{}'",
@@ -2958,7 +2958,7 @@ public class BotManager {
         BotNavigationGraph graph = BotNavigationGraphProvider.peekBestGraph(map, entry.movementProfile);
         int regionId = graph != null ? graph.findRegionId(map, ownerPos) : -1;
         if (regionId < 0) {
-            AgentBotReplyRuntime.replyNow(entry, "can't find a patrol region here");
+            AgentBotManagerReplyRuntime.replyNow(entry, "can't find a patrol region here");
             return;
         }
         clearScriptTasks(entry);
@@ -3910,7 +3910,7 @@ public class BotManager {
     // -------------------------------------------------------------------------
 
     void botSay(Character bot, String text) {
-        AgentBotReplyRuntime.sayMapNow(bot, text);
+        AgentBotManagerReplyRuntime.sayMapNow(bot, text);
     }
 
     static synchronized String sanitizeChat(String text) {
@@ -3918,7 +3918,7 @@ public class BotManager {
     }
 
     void botSay(Character bot, ReplyChannel channel, String text) {
-        AgentBotReplyRuntime.sayNow(bot, channel, text);
+        AgentBotManagerReplyRuntime.sayNow(bot, channel, text);
     }
 
     /** Bot-to-bot visible say — routes MAP→map broadcast, PARTY→party, WHISPER→party fallback. */
@@ -3927,12 +3927,12 @@ public class BotManager {
     }
 
     public void botVisibleSay(BotEntry entry, String text) {
-        AgentBotReplyRuntime.visibleSayNow(entry, text);
+        AgentBotManagerReplyRuntime.visibleSayNow(entry, text);
     }
 
     /** Owner-directed reply — routes MAP→map broadcast, PARTY→party, WHISPER→whisper to owner. */
     public void botReply(BotEntry entry, String text) {
-        AgentBotReplyRuntime.replyNow(entry, text);
+        AgentBotManagerReplyRuntime.replyNow(entry, text);
     }
 
     /**
@@ -3940,7 +3940,7 @@ public class BotManager {
      * on a different map. Falls back to map chat if the bot has no party.
      */
     public void botSayParty(Character bot, String text) {
-        AgentBotReplyRuntime.sayPartyNow(bot, text);
+        AgentBotManagerReplyRuntime.sayPartyNow(bot, text);
     }
 
     /**
