@@ -3,6 +3,7 @@ package server.bots;
 
 import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentBotStatusRuntime;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentCharacterDialogueReporter;
 import server.agents.capabilities.dialogue.AgentChatReportFlow;
@@ -261,7 +262,7 @@ final class BotChatReportRuntime {
     static void reportRecommendedGear(BotEntry entry, Character bot) {
         Character owner = entry.owner;
         AgentChatReportRuntime.reportRecommendedGear(
-                recommendedGearState(entry),
+                AgentBotStatusRuntime.recommendedGearReportState(entry),
                 recommendedGearActions(entry, bot, owner),
                 System.currentTimeMillis());
     }
@@ -272,10 +273,6 @@ final class BotChatReportRuntime {
 
     private static void reportLines(BotEntry entry, Iterable<String> lines) {
         AgentChatReportRuntime.reportLines(lines, line -> AgentBotReplyRuntime.queueReply(entry, line));
-    }
-
-    private static AgentChatReportRuntime.RecommendedGearState recommendedGearState(BotEntry entry) {
-        return nextGearSuggestionAt -> entry.nextGearSuggestionAt = nextGearSuggestionAt;
     }
 
     private static AgentChatReportRuntime.RecommendedGearActions recommendedGearActions(

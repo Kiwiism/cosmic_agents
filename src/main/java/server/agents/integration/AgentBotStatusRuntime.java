@@ -1,6 +1,7 @@
 package server.agents.integration;
 
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
+import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.capabilities.dialogue.AgentChatWelcomeBackFlow;
 import server.bots.BotEntry;
 
@@ -98,5 +99,9 @@ public final class AgentBotStatusRuntime {
                 entry.setNextGearSuggestionAt(nextGearSuggestionAt);
             }
         };
+    }
+
+    public static AgentChatReportRuntime.RecommendedGearState recommendedGearReportState(BotEntry entry) {
+        return nextGearSuggestionAt -> entry.setNextGearSuggestionAt(nextGearSuggestionAt);
     }
 }

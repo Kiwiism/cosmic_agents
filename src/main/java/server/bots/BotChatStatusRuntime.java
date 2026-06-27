@@ -121,7 +121,7 @@ final class BotChatStatusRuntime {
 
             @Override
             public void resetGearSuggestionCooldown() {
-                entry.nextGearSuggestionAt = 0;
+                entry.setNextGearSuggestionAt(0);
             }
 
             @Override

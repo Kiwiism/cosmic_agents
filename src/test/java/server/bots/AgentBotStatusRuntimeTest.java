@@ -66,4 +66,13 @@ class AgentBotStatusRuntimeTest {
         assertEquals(9000L, entry.nextGearSuggestionAt());
         assertEquals(9000L, state.nextGearSuggestionAt());
     }
+
+    @Test
+    void recommendedGearReportStateAdaptsCooldown() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        AgentBotStatusRuntime.recommendedGearReportState(entry).setNextGearSuggestionAt(12_000L);
+
+        assertEquals(12_000L, entry.nextGearSuggestionAt());
+    }
 }
