@@ -4,6 +4,7 @@ import client.Character;
 import constants.game.CharacterStance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.maps.MapleMap;
 import server.maps.Foothold;
 import server.maps.Portal;
@@ -216,23 +217,8 @@ final class BotNavigationManager {
         BotMovementManager.clearNavigationState(entry);
     }
 
-    private static BotManager.TargetSnapshot captureTargetSnapshot(BotEntry entry, Point rawTargetPos) {
-        BotManager.TargetSnapshot snapshot = BotManager.getInstance().captureTargetSnapshot(entry);
-        if (rawTargetPos == null || rawTargetPos.equals(snapshot.primaryTargetPos())) {
-            return snapshot;
-        }
-        return new BotManager.TargetSnapshot(
-                snapshot.formation(),
-                snapshot.rawOwnerPos(),
-                snapshot.followAnchorPos(),
-                snapshot.followAnchorName(),
-                snapshot.followBasePos(),
-                snapshot.followTargetPos(),
-                snapshot.moveTargetPos(),
-                snapshot.farmAnchorPos(),
-                snapshot.grindTargetPos(),
-                new Point(rawTargetPos),
-                "nav-input");
+    private static AgentMovementTargetSnapshot captureTargetSnapshot(BotEntry entry, Point rawTargetPos) {
+        return BotMovementTargetSideEffects.captureTargetSnapshot(entry, rawTargetPos);
     }
 
     private static void notifyWarmup(BotEntry entry, Character bot) {

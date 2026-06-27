@@ -9,6 +9,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
+import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.maps.MapleMap;
 
 /**
@@ -57,14 +58,14 @@ final class BotPathLogger {
     }
 
     void record(BotEntry entry,
-                BotManager.TargetSnapshot targetSnapshot,
+                AgentMovementTargetSnapshot targetSnapshot,
                 int botRegionId,
                 boolean consumedTick,
                 boolean aiTick) {
         Point botPos = entry.bot.getPosition();
-        Point ownerPos = targetSnapshot.rawOwnerPos();
-        Point goalPos = targetSnapshot.primaryTargetPos();
-        Point steerPos = targetSnapshot.steeringTargetPos(entry);
+        Point ownerPos = targetSnapshot.rawOwnerPosition();
+        Point goalPos = targetSnapshot.primaryTargetPosition();
+        Point steerPos = targetSnapshot.steeringTargetPosition();
         long elapsed = System.currentTimeMillis() - startMs;
 
         TickRecord rec = new TickRecord(
@@ -80,7 +81,7 @@ final class BotPathLogger {
                         ? entry.lastNavDecision + "[" + entry.lastEdgeBlockReason + "]"
                         : entry.lastNavDecision,
                 targetSnapshot.primaryTargetSource(),
-                targetSnapshot.steeringTargetSource(entry),
+                targetSnapshot.steeringTargetSource(),
                 navTargetSummary(entry),
                 aiTick,
                 consumedTick,
@@ -100,28 +101,28 @@ final class BotPathLogger {
      * @param note optional free-text comment included in the report header (may be null)
      * @return absolute file path, or an error string if the write failed
      */
-    String dumpToFile(BotEntry entry, BotManager.TargetSnapshot targetSnapshot, String note) {
+    String dumpToFile(BotEntry entry, AgentMovementTargetSnapshot targetSnapshot, String note) {
         LocalDateTime now = LocalDateTime.now();
         String filename = "pathlog-" + botName + "-" + now.format(FILE_FMT) + ".txt";
 
         GraphSnapshot graphSnapshot = resolveGraphSnapshot(entry);
         BotNavigationGraph graph = graphSnapshot.graph();
         Point botPos = entry.bot.getPosition();
-        Point goalTargetPos = targetSnapshot.primaryTargetPos();
-        Point steeringTargetPos = targetSnapshot.steeringTargetPos(entry);
+        Point goalTargetPos = targetSnapshot.primaryTargetPosition();
+        Point steeringTargetPos = targetSnapshot.steeringTargetPosition();
         int botRegionId = resolveCurrentRegionId(graph, entry, botPos);
-        int rawOwnerRegionId = resolveTargetRegionId(graph, entry, targetSnapshot.rawOwnerPos());
-        int followAnchorRegionId = resolveTargetRegionId(graph, entry, targetSnapshot.followAnchorPos());
-        int followBaseRegionId = resolveTargetRegionId(graph, entry, targetSnapshot.followBasePos());
-        int followTargetRegionId = resolveTargetRegionId(graph, entry, targetSnapshot.followTargetPos());
+        int rawOwnerRegionId = resolveTargetRegionId(graph, entry, targetSnapshot.rawOwnerPosition());
+        int followAnchorRegionId = resolveTargetRegionId(graph, entry, targetSnapshot.followAnchorPosition());
+        int followBaseRegionId = resolveTargetRegionId(graph, entry, targetSnapshot.followBasePosition());
+        int followTargetRegionId = resolveTargetRegionId(graph, entry, targetSnapshot.followTargetPosition());
         int goalRegionId = resolveTargetRegionId(graph, entry, goalTargetPos);
         int steeringTargetRegionId = resolveTargetRegionId(graph, entry, steeringTargetPos);
-        int moveTargetRegionId = targetSnapshot.moveTargetPos() == null
+        int moveTargetRegionId = targetSnapshot.moveTargetPosition() == null
                 ? -1
-                : resolveTargetRegionId(graph, entry, targetSnapshot.moveTargetPos());
-        int grindTargetRegionId = targetSnapshot.grindTargetPos() == null
+                : resolveTargetRegionId(graph, entry, targetSnapshot.moveTargetPosition());
+        int grindTargetRegionId = targetSnapshot.grindTargetPosition() == null
                 ? -1
-                : resolveTargetRegionId(graph, entry, targetSnapshot.grindTargetPos());
+                : resolveTargetRegionId(graph, entry, targetSnapshot.grindTargetPosition());
 
         StringBuilder sb = new StringBuilder(4096);
         appendHeader(sb, now, note);
@@ -187,7 +188,7 @@ final class BotPathLogger {
 
     private void appendCurrentState(StringBuilder sb,
                                     BotEntry entry,
-                                    BotManager.TargetSnapshot targetSnapshot,
+                                    AgentMovementTargetSnapshot targetSnapshot,
                                     Point botPos,
                                     int botRegionId,
                                     int rawOwnerRegionId,
@@ -202,37 +203,37 @@ final class BotPathLogger {
                                     GraphSnapshot graphSnapshot) {
         sb.append("--- CURRENT STATE ---\n");
         sb.append("Bot:        ").append(pointRegionStr(botPos, botRegionId)).append("\n");
-        sb.append("Owner raw:  ").append(pointRegionStr(targetSnapshot.rawOwnerPos(), rawOwnerRegionId)).append("\n");
+        sb.append("Owner raw:  ").append(pointRegionStr(targetSnapshot.rawOwnerPosition(), rawOwnerRegionId)).append("\n");
         if (entry.following) {
             sb.append("Follow anchor:")
                     .append(" ").append(targetSnapshot.followAnchorName())
-                    .append(" ").append(pointRegionStr(targetSnapshot.followAnchorPos(), followAnchorRegionId))
+                    .append(" ").append(pointRegionStr(targetSnapshot.followAnchorPosition(), followAnchorRegionId))
                     .append("\n");
         }
         appendMovementGraphState(sb, entry, graphSnapshot);
-        sb.append("Formation:  ").append(targetSnapshot.formation().type().name().toLowerCase())
-                .append(" px=").append(targetSnapshot.formation().px())
-                .append(" snap=").append(targetSnapshot.formation().snapRange())
+        sb.append("Formation:  ").append(targetSnapshot.formationType().toLowerCase())
+                .append(" px=").append(targetSnapshot.formationPx())
+                .append(" snap=").append(targetSnapshot.formationSnapRange())
                 .append(" offsetX=").append(entry.followOffsetX).append("\n");
-        if (entry.following || !targetSnapshot.followBasePos().equals(targetSnapshot.rawOwnerPos())) {
+        if (entry.following || !targetSnapshot.followBasePosition().equals(targetSnapshot.rawOwnerPosition())) {
             sb.append("Follow base:")
-                    .append(" ").append(pointRegionStr(targetSnapshot.followBasePos(), followBaseRegionId))
+                    .append(" ").append(pointRegionStr(targetSnapshot.followBasePosition(), followBaseRegionId))
                     .append("  [anchor + formation offset]\n");
         }
         if (entry.following) {
-            sb.append("Follow tgt: ").append(pointRegionStr(targetSnapshot.followTargetPos(), followTargetRegionId))
+            sb.append("Follow tgt: ").append(pointRegionStr(targetSnapshot.followTargetPosition(), followTargetRegionId))
                     .append("  [after snap/clamp]\n");
         }
-        if (targetSnapshot.moveTargetPos() != null) {
-            sb.append("Move target:").append(" ").append(pointRegionStr(targetSnapshot.moveTargetPos(), moveTargetRegionId)).append("\n");
+        if (targetSnapshot.moveTargetPosition() != null) {
+            sb.append("Move target:").append(" ").append(pointRegionStr(targetSnapshot.moveTargetPosition(), moveTargetRegionId)).append("\n");
         }
-        if (targetSnapshot.grindTargetPos() != null) {
-            sb.append("Grind tgt:  ").append(pointRegionStr(targetSnapshot.grindTargetPos(), grindTargetRegionId)).append("\n");
+        if (targetSnapshot.grindTargetPosition() != null) {
+            sb.append("Grind tgt:  ").append(pointRegionStr(targetSnapshot.grindTargetPosition(), grindTargetRegionId)).append("\n");
         }
-        sb.append("Goal:       ").append(pointRegionStr(targetSnapshot.primaryTargetPos(), goalRegionId))
+        sb.append("Goal:       ").append(pointRegionStr(targetSnapshot.primaryTargetPosition(), goalRegionId))
                 .append("  [").append(targetSnapshot.primaryTargetSource()).append("]\n");
         sb.append("Steering:   ").append(pointRegionStr(steeringTargetPos, steeringTargetRegionId))
-                .append("  [").append(targetSnapshot.steeringTargetSource(entry)).append("]\n");
+                .append("  [").append(targetSnapshot.steeringTargetSource()).append("]\n");
         sb.append("Physics:    ").append(physState(entry)).append("\n");
         sb.append("Nav edge:   ").append(navEdgeSummary(entry)).append("\n");
         sb.append("Nav target: ").append(navTargetSummary(entry))
@@ -288,18 +289,18 @@ final class BotPathLogger {
 
     private void appendCurrentPath(StringBuilder sb,
                                    BotEntry entry,
-                                   BotManager.TargetSnapshot targetSnapshot,
+                                   AgentMovementTargetSnapshot targetSnapshot,
                                    int goalRegionId,
                                    int rawOwnerRegionId,
                                    int botRegionId,
                                    BotNavigationGraph graph) {
         sb.append("--- CURRENT A* PATH ---\n");
         sb.append("Goal basis:  ").append(targetSnapshot.primaryTargetSource())
-                .append(" ").append(pointRegionStr(targetSnapshot.primaryTargetPos(), goalRegionId)).append("\n");
-        appendPath(sb, entry, targetSnapshot.primaryTargetPos(), goalRegionId, botRegionId, graph);
-        if (!targetSnapshot.rawOwnerPos().equals(targetSnapshot.primaryTargetPos())) {
-            sb.append("Raw owner:   ").append(pointRegionStr(targetSnapshot.rawOwnerPos(), rawOwnerRegionId)).append("\n");
-            appendPath(sb, entry, targetSnapshot.rawOwnerPos(), rawOwnerRegionId, botRegionId, graph);
+                .append(" ").append(pointRegionStr(targetSnapshot.primaryTargetPosition(), goalRegionId)).append("\n");
+        appendPath(sb, entry, targetSnapshot.primaryTargetPosition(), goalRegionId, botRegionId, graph);
+        if (!targetSnapshot.rawOwnerPosition().equals(targetSnapshot.primaryTargetPosition())) {
+            sb.append("Raw owner:   ").append(pointRegionStr(targetSnapshot.rawOwnerPosition(), rawOwnerRegionId)).append("\n");
+            appendPath(sb, entry, targetSnapshot.rawOwnerPosition(), rawOwnerRegionId, botRegionId, graph);
         }
         sb.append("\n");
     }

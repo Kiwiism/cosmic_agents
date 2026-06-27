@@ -58,6 +58,9 @@ Recent reconstruction notes:
   `AgentMovementTargetSnapshot` and an integration facade in
   `AgentBotMovementTargetRuntime`; `BotManager.TargetSnapshot` remains the
   temporary target-resolution source.
+- Navigation debug overlay and path logging now consume
+  `AgentMovementTargetSnapshot` for read-only target/formation data; pathfinding
+  and target resolution still remain in the legacy bot runtime.
 
 Initial reconstruction order:
 

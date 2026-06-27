@@ -122,4 +122,39 @@ class AgentBotMovementTargetRuntimeTest {
         entry.navTargetPos.x = 123;
         assertEquals(new Point(90, 91), snapshot.steeringTargetPosition());
     }
+
+    @Test
+    void conversionCanOverridePrimaryTargetForNavigationInput() {
+        BotEntry entry = new BotEntry(null, null, null);
+        BotManager.TargetSnapshot targetSnapshot = new BotManager.TargetSnapshot(
+                new BotManager.FormationState(BotManager.FormationType.STACK, 0, 120),
+                new Point(1, 1),
+                new Point(2, 2),
+                "owner",
+                new Point(3, 3),
+                new Point(4, 4),
+                null,
+                null,
+                null,
+                new Point(5, 5),
+                "follow-target");
+        Point rawTarget = new Point(60, 61);
+
+        AgentMovementTargetSnapshot snapshot = BotMovementTargetSideEffects.from(entry, new BotManager.TargetSnapshot(
+                targetSnapshot.formation(),
+                targetSnapshot.rawOwnerPos(),
+                targetSnapshot.followAnchorPos(),
+                targetSnapshot.followAnchorName(),
+                targetSnapshot.followBasePos(),
+                targetSnapshot.followTargetPos(),
+                targetSnapshot.moveTargetPos(),
+                targetSnapshot.farmAnchorPos(),
+                targetSnapshot.grindTargetPos(),
+                rawTarget,
+                "nav-input"));
+
+        rawTarget.x = 999;
+        assertEquals(new Point(60, 61), snapshot.primaryTargetPosition());
+        assertEquals("nav-input", snapshot.primaryTargetSource());
+    }
 }

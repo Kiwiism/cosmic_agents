@@ -5,6 +5,8 @@ import client.SkillFactory;
 import constants.skills.Evan;
 import constants.skills.FPMage;
 import constants.skills.Shadower;
+import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
+import server.agents.integration.AgentBotMovementTargetRuntime;
 import server.StatEffect;
 import server.TimerManager;
 import server.maps.MapleMap;
@@ -86,8 +88,8 @@ public final class BotNavigationDebugOverlay {
             return "Bot '" + bot.getName() + "' is on map " + bot.getMapId() + ", not your current map.";
         }
 
-        BotManager.TargetSnapshot targetSnapshot = BotManager.getInstance().captureTargetSnapshot(entry);
-        Point targetPos = targetSnapshot.primaryTargetPos();
+        AgentMovementTargetSnapshot targetSnapshot = AgentBotMovementTargetRuntime.snapshot(entry);
+        Point targetPos = targetSnapshot.primaryTargetPosition();
         BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(bot.getMap(), BotMovementProfile.fromCharacter(bot));
         int startRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, bot.getMap(), bot.getPosition());
         int targetRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, bot.getMap(), targetPos);
@@ -141,7 +143,7 @@ public final class BotNavigationDebugOverlay {
 
         BotPathLogger logger = entry.pathLogger;
         entry.pathLogger = null;
-        BotManager.TargetSnapshot targetSnapshot = BotManager.getInstance().captureTargetSnapshot(entry);
+        AgentMovementTargetSnapshot targetSnapshot = AgentBotMovementTargetRuntime.snapshot(entry);
         String filePath = logger.dumpToFile(entry, targetSnapshot, note);
         return "Path log for '" + entry.bot.getName() + "' dumped: " + filePath;
     }
