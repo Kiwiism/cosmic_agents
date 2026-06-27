@@ -22,6 +22,7 @@ import constants.skills.WhiteKnight;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.ItemInformationProvider;
+import server.agents.integration.AgentBotEquipmentRuntime;
 import server.agents.integration.AgentBotRangeReportRuntime;
 import server.bots.combat.BotAttackDataProvider;
 import server.combat.CombatFormulaProvider;
@@ -172,7 +173,7 @@ public class BotEquipManager {
             // the optimizer to exhaustively enumerate. The chosen set is best-effort under an
             // admissible-bound truncation; the owner should clean up redundant gear.
             try {
-                BotManager.getInstance().botSay(bot,
+                AgentBotEquipmentRuntime.sayMapNow(bot,
                         "inventory's too cluttered, cant fully optimize gear - try selling/dropping spares");
             } catch (Throwable ignored) {
                 // Don't let a chat error block the equip pass.

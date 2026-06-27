@@ -1,5 +1,6 @@
 package server.agents.integration;
 
+import client.Character;
 import server.agents.capabilities.dialogue.AgentChatEquipmentFlow;
 import server.bots.BotEntry;
 import server.bots.BotEquipManager;
@@ -13,6 +14,10 @@ import java.util.List;
  */
 public final class AgentBotEquipmentRuntime {
     private AgentBotEquipmentRuntime() {
+    }
+
+    public static void sayMapNow(Character bot, String message) {
+        AgentBotReplyRuntime.sayMapNow(bot, message);
     }
 
     public static AgentChatEquipmentFlow.EquipmentCallbacks equipmentCallbacks(BotEntry entry) {

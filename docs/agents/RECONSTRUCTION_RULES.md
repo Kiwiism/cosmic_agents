@@ -220,6 +220,10 @@ Recent reconstruction notes:
   `AgentBotPotionRuntime`; `BotPotionManager` no longer calls
   `BotManager.botSay` directly for potion-owned reply delivery, while the same
   text, random reply pools, and transfer timing remain intact.
+- Equipment auto-equip clutter warnings now enter through
+  `AgentBotEquipmentRuntime`; `BotEquipManager` no longer calls
+  `BotManager.botSay` directly for equipment-owned reply delivery, and the
+  legacy try/catch still prevents chat failures from blocking equip passes.
 
 Initial reconstruction order:
 

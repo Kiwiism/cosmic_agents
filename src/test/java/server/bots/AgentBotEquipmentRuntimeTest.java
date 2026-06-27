@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatEquipmentFlow;
 import server.agents.integration.AgentBotEquipmentRuntime;
+import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -14,6 +15,15 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 
 class AgentBotEquipmentRuntimeTest {
+    @Test
+    void equipmentVisibleReplyDelegatesToAgentReplyRuntime() {
+        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
+            AgentBotEquipmentRuntime.sayMapNow(null, "gear");
+
+            replies.verify(() -> AgentBotReplyRuntime.sayMapNow(null, "gear"));
+        }
+    }
+
     @Test
     void equipmentCallbacksScheduleLegacyEquipmentSideEffects() {
         BotEntry entry = new BotEntry(null, null, null);
