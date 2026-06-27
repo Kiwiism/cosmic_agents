@@ -443,7 +443,7 @@ public class BotInventoryManager {
                 return;
             }
             startTradeSequence(category, owner, items, 0, true, entry, bot);
-            entry.pendingTradeCategoryMsg = reservedEquipsPageMessage(category, entry, bot);
+            AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, reservedEquipsPageMessage(category, entry, bot));
             logSlowTradeCommand(category, "startTradeTransfer", entry, bot, startedAt);
             return;
         }
@@ -650,7 +650,7 @@ public class BotInventoryManager {
                 }
                 if (advanced != null) {
                     entry.pendingTradeCategory = advanced;
-                    entry.pendingTradeCategoryMsg = equipsGroupMsg(advanced);
+                    AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, equipsGroupMsg(advanced));
                     openTradeBatch(entry, bot, collectItems(advanced, entry, bot), 0);
                 } else {
                     resetTradeState(entry, bot);
@@ -730,9 +730,8 @@ public class BotInventoryManager {
             }
 
             // Send group announcement before the first item
-            if (idx == 0 && entry.pendingTradeCategoryMsg != null) {
-                trade.chat(entry.pendingTradeCategoryMsg);
-                entry.pendingTradeCategoryMsg = null;
+            if (idx == 0 && AgentBotPendingTradeStateRuntime.categoryMessage(entry) != null) {
+                trade.chat(AgentBotPendingTradeStateRuntime.takeCategoryMessage(entry));
                 entry.pendingTradeTimerMs = BotMovementManager.delayAfterCurrentTick(600);
                 return;
             }
@@ -804,7 +803,7 @@ public class BotInventoryManager {
         restoreTemporarilyUnequippedItems(entry, bot);
         clearManualTradeState(entry, bot);
         entry.pendingTradeCategory = null;
-        entry.pendingTradeCategoryMsg = null;
+        AgentBotPendingTradeStateRuntime.clearCategoryMessage(entry);
         entry.pendingTradeItems    = null;
         entry.pendingTradeRecipientId = 0;
         entry.pendingTradeMeso     = 0;
@@ -1455,7 +1454,7 @@ public class BotInventoryManager {
                 String category = group.categoryString();
                 startTradeSequence(category, owner, items, 0, false, entry, bot);
                 String msg = equipsGroupMsg(category);
-                if (msg != null) entry.pendingTradeCategoryMsg = msg;
+                if (msg != null) AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, msg);
                 return;
             }
         }

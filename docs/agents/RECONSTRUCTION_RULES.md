@@ -396,6 +396,10 @@ Recent reconstruction notes:
   `AgentBotPendingTradeStateRuntime`; trade item quantity capping and trade
   reset keep BotEntry as the temporary backing store but no longer read,
   decrement, or clear the budget field directly.
+- Pending trade category message state now enters through
+  `AgentBotPendingTradeStateRuntime`; reserved/equip group trade announcements
+  keep BotEntry as the temporary backing store but no longer set, read, or clear
+  the message field directly.
 
 Initial reconstruction order:
 

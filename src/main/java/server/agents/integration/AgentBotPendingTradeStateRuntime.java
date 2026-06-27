@@ -64,4 +64,22 @@ public final class AgentBotPendingTradeStateRuntime {
         entry.setPendingPotShareBudget(budget - tradeQuantity);
         return tradeQuantity;
     }
+
+    public static String categoryMessage(BotEntry entry) {
+        return entry.pendingTradeCategoryMsg();
+    }
+
+    public static void setCategoryMessage(BotEntry entry, String message) {
+        entry.setPendingTradeCategoryMsg(message);
+    }
+
+    public static void clearCategoryMessage(BotEntry entry) {
+        entry.setPendingTradeCategoryMsg(null);
+    }
+
+    public static String takeCategoryMessage(BotEntry entry) {
+        String message = categoryMessage(entry);
+        clearCategoryMessage(entry);
+        return message;
+    }
 }

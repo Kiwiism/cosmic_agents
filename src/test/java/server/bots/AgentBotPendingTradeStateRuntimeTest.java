@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -64,5 +65,23 @@ class AgentBotPendingTradeStateRuntimeTest {
         AgentBotPendingTradeStateRuntime.clearShareBudget(entry);
 
         assertEquals(0, AgentBotPendingTradeStateRuntime.shareBudget(entry));
+    }
+
+    @Test
+    void adaptsCategoryMessageState() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        assertNull(AgentBotPendingTradeStateRuntime.categoryMessage(entry));
+
+        AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, "trading equips");
+
+        assertEquals("trading equips", AgentBotPendingTradeStateRuntime.categoryMessage(entry));
+        assertEquals("trading equips", AgentBotPendingTradeStateRuntime.takeCategoryMessage(entry));
+        assertNull(AgentBotPendingTradeStateRuntime.categoryMessage(entry));
+
+        AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, "trading ammo");
+        AgentBotPendingTradeStateRuntime.clearCategoryMessage(entry);
+
+        assertNull(AgentBotPendingTradeStateRuntime.categoryMessage(entry));
     }
 }
