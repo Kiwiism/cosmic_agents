@@ -2,12 +2,12 @@ package server.bots;
 
 
 import server.agents.integration.AgentBotReplyRuntime;
+import server.agents.integration.AgentBotCharacterReportRuntime;
 import server.agents.integration.AgentBotOfferRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 import server.agents.integration.AgentBotStatusRuntime;
 import server.agents.integration.AgentBotSupplyReportRuntime;
 import client.Character;
-import server.agents.capabilities.dialogue.AgentCharacterDialogueReporter;
 import server.agents.capabilities.dialogue.AgentChatReportFlow;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
@@ -124,7 +124,7 @@ final class BotChatReportRuntime {
     }
 
     static void reportStats(BotEntry entry, Character bot) {
-        reportLine(entry, AgentCharacterDialogueReporter.statsReport(bot));
+        reportLine(entry, AgentBotCharacterReportRuntime.statsReport(bot));
     }
 
     static void reportRange(BotEntry entry, Character bot) {
@@ -190,7 +190,7 @@ final class BotChatReportRuntime {
     }
 
     static void reportBuild(BotEntry entry, Character bot) {
-        reportLine(entry, AgentCharacterDialogueReporter.buildReport(bot));
+        reportLine(entry, AgentBotCharacterReportRuntime.buildReport(bot));
     }
 
     static void reportSkills(BotEntry entry, Character bot) {
@@ -213,11 +213,11 @@ final class BotChatReportRuntime {
     }
 
     static void reportMesos(BotEntry entry, Character bot) {
-        reportLine(entry, AgentCharacterDialogueReporter.mesoReport(bot));
+        reportLine(entry, AgentBotCharacterReportRuntime.mesoReport(bot));
     }
 
     static void reportExp(BotEntry entry, Character bot) {
-        reportLine(entry, AgentCharacterDialogueReporter.expReport(bot));
+        reportLine(entry, AgentBotCharacterReportRuntime.expReport(bot));
     }
 
     static void reportInventorySlots(BotEntry entry, Character bot) {
