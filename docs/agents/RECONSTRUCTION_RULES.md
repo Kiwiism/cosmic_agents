@@ -429,6 +429,10 @@ Recent reconstruction notes:
   `AgentBotPendingTradeStateRuntime`; trade batch setup, item-add progression,
   and reset keep BotEntry as the temporary backing store but no longer read,
   increment, or clear the item index field directly.
+- Pending trade item-list state now enters through
+  `AgentBotPendingTradeStateRuntime`; trade batch setup, between-batch pause,
+  item-add progression, and reset keep BotEntry as the temporary backing store
+  but no longer set, read, null-check, or clear the batch item list directly.
 
 Initial reconstruction order:
 

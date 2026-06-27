@@ -1,6 +1,9 @@
 package server.agents.integration;
 
+import client.inventory.Item;
 import server.bots.BotEntry;
+
+import java.util.List;
 
 /**
  * Agent-owned adapter for temporary BotEntry-backed pending trade sequence state.
@@ -201,5 +204,21 @@ public final class AgentBotPendingTradeStateRuntime {
 
     public static void clearItemIndex(BotEntry entry) {
         entry.setPendingTradeIdx(0);
+    }
+
+    public static List<Item> items(BotEntry entry) {
+        return entry.pendingTradeItems();
+    }
+
+    public static void setItems(BotEntry entry, List<Item> items) {
+        entry.setPendingTradeItems(items);
+    }
+
+    public static boolean isBetweenBatches(BotEntry entry) {
+        return entry.pendingTradeItems() == null;
+    }
+
+    public static void clearItems(BotEntry entry) {
+        entry.setPendingTradeItems(null);
     }
 }

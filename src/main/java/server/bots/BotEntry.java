@@ -341,6 +341,14 @@ public class BotEntry {
         return pendingTradeCategory;
     }
 
+    public List<Item> pendingTradeItems() {
+        return pendingTradeItems;
+    }
+
+    public void setPendingTradeItems(List<Item> pendingTradeItems) {
+        this.pendingTradeItems = pendingTradeItems;
+    }
+
     public int pendingPotShareBudget() {
         return pendingPotShareBudget;
     }

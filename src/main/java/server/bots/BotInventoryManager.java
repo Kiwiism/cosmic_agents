@@ -594,9 +594,9 @@ public class BotInventoryManager {
             cancelTradeSequence(entry, bot, "can't trade right now, stopping");
             return;
         }
-        entry.pendingTradeItems = items.size() > TRADE_WINDOW_ITEM_LIMIT
+        AgentBotPendingTradeStateRuntime.setItems(entry, items.size() > TRADE_WINDOW_ITEM_LIMIT
                 ? new ArrayList<>(items.subList(0, TRADE_WINDOW_ITEM_LIMIT))
-                : new ArrayList<>(items);
+                : new ArrayList<>(items));
         AgentBotPendingTradeStateRuntime.setMeso(entry, mesos);
         AgentBotPendingTradeStateRuntime.clearItemIndex(entry);
         AgentBotPendingTradeStateRuntime.clearTimer(entry);
@@ -633,7 +633,7 @@ public class BotInventoryManager {
         Trade trade = bot.getTrade();
 
         // ── PAUSE between batches (items == null) ──────────────────────────
-        if (entry.pendingTradeItems == null) {
+        if (AgentBotPendingTradeStateRuntime.isBetweenBatches(entry)) {
             if (AgentBotPendingTradeStateRuntime.singleBatch(entry)) {
                 resetTradeState(entry, bot);
                 return;
@@ -670,7 +670,7 @@ public class BotInventoryManager {
                     BotEquipManager.autoEquip(bot, entry.owner, null);
                     return;
                 }
-                entry.pendingTradeItems    = null;
+                AgentBotPendingTradeStateRuntime.clearItems(entry);
                 AgentBotPendingTradeStateRuntime.clearAllItemsAdded(entry);
                 AgentBotPendingTradeStateRuntime.clearBotDone(entry);
                 AgentBotPendingTradeStateRuntime.setTimerMs(entry, BotMovementManager.delayAfterCurrentTick(1_000));
@@ -717,7 +717,7 @@ public class BotInventoryManager {
                 return;
             }
 
-            List<Item> items = entry.pendingTradeItems;
+            List<Item> items = AgentBotPendingTradeStateRuntime.items(entry);
             int idx = AgentBotPendingTradeStateRuntime.itemIndex(entry);
 
             if (idx >= items.size()) {
@@ -804,7 +804,7 @@ public class BotInventoryManager {
         clearManualTradeState(entry, bot);
         entry.pendingTradeCategory = null;
         AgentBotPendingTradeStateRuntime.clearCategoryMessage(entry);
-        entry.pendingTradeItems    = null;
+        AgentBotPendingTradeStateRuntime.clearItems(entry);
         AgentBotPendingTradeStateRuntime.clearRecipientId(entry);
         AgentBotPendingTradeStateRuntime.clearMeso(entry);
         AgentBotPendingTradeStateRuntime.clearItemIndex(entry);

@@ -1,8 +1,10 @@
 package server.bots;
 
+import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -209,5 +211,22 @@ class AgentBotPendingTradeStateRuntimeTest {
         AgentBotPendingTradeStateRuntime.clearItemIndex(entry);
 
         assertEquals(0, AgentBotPendingTradeStateRuntime.itemIndex(entry));
+    }
+
+    @Test
+    void adaptsItemListState() {
+        BotEntry entry = new BotEntry(null, null, null);
+        List<Item> items = List.of(new Item(2000000, (short) 1, (short) 2));
+
+        assertTrue(AgentBotPendingTradeStateRuntime.isBetweenBatches(entry));
+
+        AgentBotPendingTradeStateRuntime.setItems(entry, items);
+
+        assertSame(items, AgentBotPendingTradeStateRuntime.items(entry));
+        assertFalse(AgentBotPendingTradeStateRuntime.isBetweenBatches(entry));
+
+        AgentBotPendingTradeStateRuntime.clearItems(entry);
+
+        assertTrue(AgentBotPendingTradeStateRuntime.isBetweenBatches(entry));
     }
 }
