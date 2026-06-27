@@ -2,7 +2,6 @@ package server.bots;
 
 
 import server.agents.integration.AgentBotReplyRuntime;
-import server.agents.integration.AgentBotSchedulerRuntime;
 import server.agents.integration.AgentBotStatusRuntime;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
@@ -27,7 +26,7 @@ final class BotChatStatusRuntime {
 
     static void announceOwnerReturnedFromOffline(BotEntry entry) {
         final Character bot = entry.bot;
-        AgentChatStatusRuntime.announceOfflineReturn(offlineReturnActions(bot));
+        AgentChatStatusRuntime.announceOfflineReturn(AgentBotStatusRuntime.offlineReturnActions(bot));
     }
 
     static void tickAfkCheck(BotEntry entry, Character owner) {
@@ -35,7 +34,7 @@ final class BotChatStatusRuntime {
                 AgentBotStatusRuntime.afkState(entry),
                 owner.getPosition(),
                 System.currentTimeMillis(),
-                afkReturnActions(entry));
+                AgentBotStatusRuntime.afkReturnActions(entry));
     }
 
     static void prepareActiveModeEntry(BotEntry entry) {
@@ -173,56 +172,4 @@ final class BotChatStatusRuntime {
         };
     }
 
-    private static AgentChatStatusRuntime.OfflineReturnActions offlineReturnActions(Character bot) {
-        return new AgentChatStatusRuntime.OfflineReturnActions() {
-            @Override
-            public boolean hasAgent() {
-                return bot != null;
-            }
-
-            @Override
-            public String mapName() {
-                return bot != null && bot.getMap() != null ? bot.getMap().getMapName() : null;
-            }
-
-            @Override
-            public void afterRandomDelay(int minMs, int maxMs, Runnable action) {
-                AgentBotSchedulerRuntime.afterRandomDelay(minMs, maxMs, action);
-            }
-
-            @Override
-            public void changeFaceExpression(int expression) {
-                bot.changeFaceExpression(expression);
-            }
-
-            @Override
-            public void sayParty(String text) {
-                BotManager.getInstance().botSayParty(bot, text);
-            }
-        };
-    }
-
-    private static AgentChatStatusRuntime.AfkReturnActions afkReturnActions(BotEntry entry) {
-        return new AgentChatStatusRuntime.AfkReturnActions() {
-            @Override
-            public boolean hasAgent() {
-                return entry.bot != null;
-            }
-
-            @Override
-            public void afterRandomDelay(int minMs, int maxMs, Runnable action) {
-                AgentBotSchedulerRuntime.afterRandomDelay(minMs, maxMs, action);
-            }
-
-            @Override
-            public void changeFaceExpression(int expression) {
-                entry.bot.changeFaceExpression(expression);
-            }
-
-            @Override
-            public void reply(String text) {
-                BotManager.getInstance().botReply(entry, text);
-            }
-        };
-    }
 }

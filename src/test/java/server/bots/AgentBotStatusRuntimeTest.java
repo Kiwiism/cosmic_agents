@@ -75,4 +75,16 @@ class AgentBotStatusRuntimeTest {
 
         assertEquals(12_000L, entry.nextGearSuggestionAt());
     }
+
+    @Test
+    void offlineReturnActionsTreatNullAgentAsUnavailable() {
+        assertFalse(AgentBotStatusRuntime.offlineReturnActions(null).hasAgent());
+    }
+
+    @Test
+    void afkReturnActionsTreatNullAgentAsUnavailable() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        assertFalse(AgentBotStatusRuntime.afkReturnActions(entry).hasAgent());
+    }
 }

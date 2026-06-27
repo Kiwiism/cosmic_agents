@@ -4,6 +4,8 @@ import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.capabilities.dialogue.AgentChatWelcomeBackFlow;
 import server.bots.BotEntry;
+import server.bots.BotManager;
+import client.Character;
 
 import java.awt.Point;
 
@@ -103,5 +105,58 @@ public final class AgentBotStatusRuntime {
 
     public static AgentChatReportRuntime.RecommendedGearState recommendedGearReportState(BotEntry entry) {
         return nextGearSuggestionAt -> entry.setNextGearSuggestionAt(nextGearSuggestionAt);
+    }
+
+    public static AgentChatStatusRuntime.OfflineReturnActions offlineReturnActions(Character bot) {
+        return new AgentChatStatusRuntime.OfflineReturnActions() {
+            @Override
+            public boolean hasAgent() {
+                return bot != null;
+            }
+
+            @Override
+            public String mapName() {
+                return bot != null && bot.getMap() != null ? bot.getMap().getMapName() : null;
+            }
+
+            @Override
+            public void afterRandomDelay(int minMs, int maxMs, Runnable action) {
+                AgentBotSchedulerRuntime.afterRandomDelay(minMs, maxMs, action);
+            }
+
+            @Override
+            public void changeFaceExpression(int expression) {
+                bot.changeFaceExpression(expression);
+            }
+
+            @Override
+            public void sayParty(String text) {
+                BotManager.getInstance().botSayParty(bot, text);
+            }
+        };
+    }
+
+    public static AgentChatStatusRuntime.AfkReturnActions afkReturnActions(BotEntry entry) {
+        return new AgentChatStatusRuntime.AfkReturnActions() {
+            @Override
+            public boolean hasAgent() {
+                return entry.bot() != null;
+            }
+
+            @Override
+            public void afterRandomDelay(int minMs, int maxMs, Runnable action) {
+                AgentBotSchedulerRuntime.afterRandomDelay(minMs, maxMs, action);
+            }
+
+            @Override
+            public void changeFaceExpression(int expression) {
+                entry.bot().changeFaceExpression(expression);
+            }
+
+            @Override
+            public void reply(String text) {
+                BotManager.getInstance().botReply(entry, text);
+            }
+        };
     }
 }

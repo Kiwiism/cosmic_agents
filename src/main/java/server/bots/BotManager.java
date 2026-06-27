@@ -3995,7 +3995,7 @@ public class BotManager {
      * Broadcasts via party chat so the owner sees the message even when they're
      * on a different map. Falls back to map chat if the bot has no party.
      */
-    void botSayParty(Character bot, String text) {
+    public void botSayParty(Character bot, String text) {
         Party party = bot.getParty();
         if (party != null && bot.getClient() != null && bot.getClient().getWorldServer() != null) {
             bot.getClient().getWorldServer().partyChat(party, sanitizeChat(text), bot.getName());

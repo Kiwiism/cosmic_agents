@@ -182,6 +182,7 @@ public class BotEntry {
 
     public boolean isGrinding() { return grinding; }
     public boolean isFollowing() { return following; }
+    public Character bot() { return bot; }
     public java.awt.Point getFarmAnchor() { return farmAnchor; }
     public int getFarmAnchorMapId() { return farmAnchorMapId; }
     Point lastMobTouchCheckPos = null;
