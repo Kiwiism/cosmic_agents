@@ -8,6 +8,8 @@ import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.processor.action.MakerProcessor;
 import server.ItemInformationProvider;
+import server.agents.integration.AgentBotReplyRuntime;
+import server.agents.integration.AgentBotSchedulerRuntime;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -26,7 +28,6 @@ import java.util.concurrent.ThreadLocalRandom;
  * {@link BotEntry#activityEpoch}.
  */
 public final class BotMakerManager {
-    private static final ItemInformationProvider ii = ItemInformationProvider.getInstance();
     private static final int LEFTOVERS_PER_CRYSTAL = 100;   // Maker type-3 recipe req count
     private static final long STEP_INTERVAL_MS = 5000L;     // 5 seconds per operation
     private static final int LONG_BATCH_THRESHOLD = 10;     // "will take a while" past this many ops
@@ -54,7 +55,7 @@ public final class BotMakerManager {
 
         Queue<Integer> leftovers = collectLeftoverQueue(bot);   // one entry per craft, holding the leftover itemid
         if (leftovers.isEmpty()) {
-            BotManager.getInstance().botReply(entry,
+            AgentBotReplyRuntime.replyNow(entry,
                     "I don't have any leftovers I can turn into monster crystals (need 100+ of a drop)");
             return;
         }
@@ -74,7 +75,7 @@ public final class BotMakerManager {
 
         int total = collectDisassemblableTrash(entry, bot).size();
         if (total == 0) {
-            BotManager.getInstance().botReply(entry, "no trash equips I can disassemble");
+            AgentBotReplyRuntime.replyNow(entry, "no trash equips I can disassemble");
             return;
         }
 
@@ -101,11 +102,11 @@ public final class BotMakerManager {
 
     private static boolean guardStart(BotEntry entry, Character bot) {
         if (ACTIVE.contains(bot.getId())) {
-            BotManager.getInstance().botReply(entry, "still working on the last batch, hang on");
+            AgentBotReplyRuntime.replyNow(entry, "still working on the last batch, hang on");
             return false;
         }
         if (MakerProcessor.getMakerSkillLevel(bot) < 1) {
-            BotManager.getInstance().botReply(entry, "I can't - I don't have the Maker skill");
+            AgentBotReplyRuntime.replyNow(entry, "I can't - I don't have the Maker skill");
             return false;
         }
         return true;
@@ -123,7 +124,7 @@ public final class BotMakerManager {
                     continue;   // count each distinct leftover once; countById sums all stacks
                 }
                 int crafts = etc.countById(itemId) / LEFTOVERS_PER_CRYSTAL;
-                if (crafts <= 0 || ii.getMakerCrystalFromLeftover(itemId) == -1) {
+                if (crafts <= 0 || itemInformation().getMakerCrystalFromLeftover(itemId) == -1) {
                     continue;
                 }
                 for (int i = 0; i < crafts; i++) {
@@ -143,11 +144,11 @@ public final class BotMakerManager {
         if (total > LONG_BATCH_THRESHOLD) {
             msg += ", will take a while";
         }
-        BotManager.getInstance().botReply(entry, msg);
+        AgentBotReplyRuntime.replyNow(entry, msg);
 
         ACTIVE.add(bot.getId());
         int epoch = entry.activityEpoch;
-        BotManager.after(BotManager.randMs(900, 1100), () -> runStep(entry, step, noun, epoch, 0));
+        AgentBotSchedulerRuntime.afterRandomDelay(900, 1100, () -> runStep(entry, step, noun, epoch, 0));
     }
 
     private static void runStep(BotEntry entry, BatchStep step, String noun, int epoch, int done) {
@@ -161,7 +162,7 @@ public final class BotMakerManager {
 
         if (entry.activityEpoch != epoch) {   // player issued a new command — disrupt
             ACTIVE.remove(bot.getId());
-            BotManager.getInstance().botReply(entry, "ok, stopping - " + done + " " + plural(noun, done) + " done");
+            AgentBotReplyRuntime.replyNow(entry, "ok, stopping - " + done + " " + plural(noun, done) + " done");
             return;
         }
 
@@ -173,7 +174,7 @@ public final class BotMakerManager {
         if (!c.tryacquireClient()) {
             // transient contention (a trade/packet in flight) — retry without consuming the step.
             // The bot keeps doing whatever it's doing; crafting just slots into the next free moment.
-            BotManager.after(BotManager.randMs(600, 900), () -> runStep(entry, step, noun, epoch, done));
+            AgentBotSchedulerRuntime.afterRandomDelay(600, 900, () -> runStep(entry, step, noun, epoch, done));
             return;
         }
         int status;
@@ -185,16 +186,16 @@ public final class BotMakerManager {
 
         if (status == NO_MORE) {
             ACTIVE.remove(bot.getId());
-            BotManager.getInstance().botReply(entry, "done - " + done + " " + plural(noun, done));
+            AgentBotReplyRuntime.replyNow(entry, "done - " + done + " " + plural(noun, done));
             return;
         }
         if (status != 0) {
             ACTIVE.remove(bot.getId());
-            BotManager.getInstance().botReply(entry, abortReason((short) status, noun, done));
+            AgentBotReplyRuntime.replyNow(entry, abortReason((short) status, noun, done));
             return;
         }
 
-        BotManager.after(STEP_INTERVAL_MS, () -> runStep(entry, step, noun, epoch, done + 1));
+        AgentBotSchedulerRuntime.afterDelay(STEP_INTERVAL_MS, () -> runStep(entry, step, noun, epoch, done + 1));
     }
 
     private static String abortReason(short status, String noun, int done) {
@@ -209,5 +210,9 @@ public final class BotMakerManager {
 
     private static String plural(String noun, int count) {
         return count == 1 ? noun : noun + "s";
+    }
+
+    private static ItemInformationProvider itemInformation() {
+        return ItemInformationProvider.getInstance();
     }
 }
