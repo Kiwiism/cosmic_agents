@@ -6,7 +6,7 @@ import client.inventory.InventoryType;
 import client.inventory.Item;
 import scripting.event.EventInstanceManager;
 import server.ItemInformationProvider;
-import server.bots.BotChatManager;
+import server.bots.BotChatReplyRuntime;
 import server.bots.BotEntry;
 
 import java.util.HashMap;
@@ -32,7 +32,7 @@ final class BotKpqStage5 {
         if (success) {
             entry.kpq.stage5Claimed = true;
             String reward = findNewItem(before, snapshotInventory(bot));
-            BotChatManager.queueBotSay(entry, reward != null ? "r, I got " + reward : "r");
+            BotChatReplyRuntime.queueSay(entry, reward != null ? "r, I got " + reward : "r");
         }
     }
 

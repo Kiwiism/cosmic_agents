@@ -8,11 +8,11 @@ import server.agents.commands.AgentReplyQueue;
  * Temporary bot-side adapter from legacy BotEntry message fields to the
  * Agent-owned reply runtime.
  */
-final class BotChatReplyRuntime {
+public final class BotChatReplyRuntime {
     private BotChatReplyRuntime() {
     }
 
-    static void queueSay(BotEntry entry, String message) {
+    public static void queueSay(BotEntry entry, String message) {
         AgentChatReplyRuntime.queueSay(state(entry), message, dispatcher(entry));
     }
 
