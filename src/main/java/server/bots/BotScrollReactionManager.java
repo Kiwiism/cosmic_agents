@@ -134,7 +134,7 @@ final class BotScrollReactionManager {
         }
 
         if (rollPercent(CHAT_CHANCE_PCT, chanceScale) && shouldQueueChat(entry)) {
-            BotChatManager.queueBotSay(entry, selectChatLine(success, streak, scrollSuccessRate));
+            BotChatReplyRuntime.queueSay(entry, selectChatLine(success, streak, scrollSuccessRate));
             reacted = true;
         }
 

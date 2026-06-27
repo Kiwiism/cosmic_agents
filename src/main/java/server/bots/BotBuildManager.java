@@ -307,7 +307,7 @@ class BotBuildManager {
 
         if (lvl == 8 || lvl == 10 || lvl == 30 || lvl == 70 || lvl == 120) {
             BotManager.getInstance().issueFollowOwner(entry);
-            BotChatManager.checkBotStatus(entry, bot);
+            BotChatStatusRuntime.checkBotStatus(entry, bot);
         }
 
         autoAssignSp(entry, bot);

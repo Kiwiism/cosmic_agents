@@ -21,17 +21,17 @@ final class BotChatStatusRuntime {
     static void checkBotStatus(BotEntry entry, Character bot) {
         String jobPrompt = BotBuildManager.buildJobPrompt(entry, bot);
         if (jobPrompt != null) {
-            BotChatManager.queueBotReply(entry, jobPrompt);
+            BotChatReplyRuntime.queueReply(entry, jobPrompt);
         }
         String spPrompt = BotBuildManager.buildSpVariantPrompt(entry, bot);
         if (spPrompt != null) {
-            BotChatManager.queueBotReply(entry, spPrompt);
+            BotChatReplyRuntime.queueReply(entry, spPrompt);
         } else {
             BotBuildManager.autoAssignSp(entry, bot);
         }
         String apPrompt = BotBuildManager.buildApPrompt(entry, bot);
         if (apPrompt != null) {
-            BotChatManager.queueBotReply(entry, apPrompt);
+            BotChatReplyRuntime.queueReply(entry, apPrompt);
         } else {
             BotBuildManager.autoAssignAp(entry, bot);
         }

@@ -374,8 +374,8 @@ class BotChatManagerTest {
         BotEntry entry = new BotEntry(null, null, null);
         entry.msgSending = true;
 
-        BotChatManager.queueBotReply(entry, "owner reply");
-        BotChatManager.queueBotSay(entry, "party chatter");
+        BotChatReplyRuntime.queueReply(entry, "owner reply");
+        BotChatReplyRuntime.queueSay(entry, "party chatter");
 
         AgentQueuedMessage first = entry.msgQueue.poll();
         AgentQueuedMessage second = entry.msgQueue.poll();

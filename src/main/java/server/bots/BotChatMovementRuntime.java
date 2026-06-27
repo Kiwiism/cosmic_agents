@@ -101,7 +101,7 @@ final class BotChatMovementRuntime {
                 BotManager.after(BotManager.randMs(900, 1100), () -> {
                     entry.bot.changeFaceExpression(Emote.HAPPY.getValue());
                     BotFidgetManager.maybeStartGreetingFidget(entry, ThreadLocalRandom.current().nextInt(100));
-                    BotChatManager.queueBotReply(entry, AgentChatMovementFlow.greetingReply());
+                    BotChatReplyRuntime.queueReply(entry, AgentChatMovementFlow.greetingReply());
                     BotChatStatusRuntime.checkBotStatus(entry, entry.bot);
                 });
             }

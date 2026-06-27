@@ -50,7 +50,7 @@ final class BotChatSupplyRuntime {
                 result == BotPotionManager.OwnerPotShareResult.NO_DONOR,
                 forHp);
         if (reply != null) {
-            BotChatManager.queueBotReply(entry, reply);
+            BotChatReplyRuntime.queueReply(entry, reply);
         }
     }
 
@@ -61,14 +61,14 @@ final class BotChatSupplyRuntime {
         }
         WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(owner);
         if (weaponType != WeaponType.BOW && weaponType != WeaponType.CROSSBOW) {
-            BotChatManager.queueBotReply(entry, AgentSupplyRequestOutcomeFlow.ammoNotNeededReply());
+            BotChatReplyRuntime.queueReply(entry, AgentSupplyRequestOutcomeFlow.ammoNotNeededReply());
             return;
         }
         BotAmmoManager.OwnerAmmoShareResult result = BotAmmoManager.offerAmmoShareToOwner(entry, weaponType);
         String reply = AgentSupplyRequestOutcomeFlow.ammoShareReply(
                 result == BotAmmoManager.OwnerAmmoShareResult.NO_DONOR);
         if (reply != null) {
-            BotChatManager.queueBotReply(entry, reply);
+            BotChatReplyRuntime.queueReply(entry, reply);
         }
     }
 }

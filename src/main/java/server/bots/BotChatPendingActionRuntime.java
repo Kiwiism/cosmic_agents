@@ -98,7 +98,7 @@ final class BotChatPendingActionRuntime {
             entry.pendingAction = AgentChatPendingAction.SKILL_TREE_CHOICE;
         }
         for (String line : decision.replies()) {
-            BotChatManager.queueBotReply(entry, line);
+            BotChatReplyRuntime.queueReply(entry, line);
         }
     }
 }

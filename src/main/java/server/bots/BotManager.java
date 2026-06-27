@@ -246,7 +246,7 @@ public class BotManager {
             if (entry == null || entry.bot == null || entry.bot.getId() == target.getId()) {
                 continue;
             }
-            BotChatManager.queueBotReply(entry, randomReply(List.of(
+            BotChatReplyRuntime.queueReply(entry, randomReply(List.of(
                     "ok",
                     "k",
                     "sure",
@@ -482,7 +482,7 @@ public class BotManager {
         if (normalizeSpawnState) {
             normalizeSpawnedBot(entry);
         }
-        after(randMs(30_000, 31_000), () -> BotChatManager.checkBotStatus(entry, bot));
+        after(randMs(30_000, 31_000), () -> BotChatStatusRuntime.checkBotStatus(entry, bot));
         return entry;
     }
 
@@ -883,7 +883,7 @@ public class BotManager {
             List<BotEntry> fEntries = bots.get(owner.getId());
             if (typeStr == null) {
                 String help = "formations: stagger/split/random/spread/left/right <px>, stack, tight, loose | snap <px/on/off>";
-                if (fEntries != null && !fEntries.isEmpty()) BotChatManager.queueBotReply(fEntries.get(0), help);
+                if (fEntries != null && !fEntries.isEmpty()) BotChatReplyRuntime.queueReply(fEntries.get(0), help);
                 else owner.yellowMessage(help);
                 return;
             }
@@ -894,7 +894,7 @@ public class BotManager {
                 int newSnapRange;
                 if (qualifier == null) {
                     String status = current.snapRange() > 0 ? "on (" + current.snapRange() + "px)" : "off";
-                    if (fEntries != null && !fEntries.isEmpty()) BotChatManager.queueBotReply(fEntries.get(0), "snap: " + status);
+                    if (fEntries != null && !fEntries.isEmpty()) BotChatReplyRuntime.queueReply(fEntries.get(0), "snap: " + status);
                     else owner.yellowMessage("snap: " + status);
                     return;
                 } else if (qualifier.equalsIgnoreCase("off")) {
@@ -908,7 +908,7 @@ public class BotManager {
                 ownerFormations.put(owner.getId(), fs);
                 String status = newSnapRange > 0 ? "on (" + newSnapRange + "px)" : "off";
                 if (fEntries != null && !fEntries.isEmpty())
-                    BotChatManager.queueBotReply(fEntries.get(0), "snap: " + status);
+                    BotChatReplyRuntime.queueReply(fEntries.get(0), "snap: " + status);
                 return;
             }
             String pxToken = fm.group(2);
@@ -937,7 +937,7 @@ public class BotManager {
                 for (int i = 0; i < fEntries.size(); i++) fEntries.get(i).followOffsetX = fs.offsetFor(i, fEntries.size());
                 if (!fEntries.isEmpty()) {
                     String label = typeStr.toLowerCase() + (px > 0 ? " " + px + "px" : "");
-                    BotChatManager.queueBotReply(fEntries.get(0), "formation: " + label);
+                    BotChatReplyRuntime.queueReply(fEntries.get(0), "formation: " + label);
                 }
             }
             return;
@@ -971,7 +971,7 @@ public class BotManager {
             if (server.bots.llm.BotLlmConfig.typoSuggesterEnabled) {
                 String typo = server.bots.llm.CommandTypoSuggester.suggest(cmd);
                 if (typo != null) {
-                    BotChatManager.queueBotReply(targetedBot.entry(), "did you mean '" + typo + "'?");
+                    BotChatReplyRuntime.queueReply(targetedBot.entry(), "did you mean '" + typo + "'?");
                     return;
                 }
             }
@@ -1019,7 +1019,7 @@ public class BotManager {
             if (typo != null) {
                 BotEntry first = entries.get(0);
                 first.replyChannel = channel;
-                BotChatManager.queueBotReply(first, "did you mean '" + typo + "'?");
+                BotChatReplyRuntime.queueReply(first, "did you mean '" + typo + "'?");
                 return;
             }
         }
@@ -2103,7 +2103,7 @@ public class BotManager {
                 else if (BotPqHooks.requiresFollow(entry, bot)) { issueFollowOwner(entry); }
                 else { entry.kpq.stage5Claimed = false; } // left KPQ — reset for next run
                 BotShopManager.onMapChange(entry, bot);
-                BotChatManager.checkBotStatus(entry, bot);
+                BotChatStatusRuntime.checkBotStatus(entry, bot);
             } else {
                 long tMapChange = System.nanoTime();
                 try {
@@ -2119,7 +2119,7 @@ public class BotManager {
                     else if (BotPqHooks.requiresFollow(entry, bot)) { issueFollowOwner(entry); }
                     else { entry.kpq.stage5Claimed = false; } // left KPQ — reset for next run
                     BotShopManager.onMapChange(entry, bot);
-                    BotChatManager.checkBotStatus(entry, bot);
+                    BotChatStatusRuntime.checkBotStatus(entry, bot);
                 } finally {
                     BotPerformanceMonitor.record("tick-map-change", System.nanoTime() - tMapChange);
                 }
@@ -2729,7 +2729,7 @@ public class BotManager {
                 // skip the announcement, so the party sees one wb line, not N.
                 Point removedAnchor = townClusterAnchors.remove(ownerCharId);
                 if (justReturnedFromTown && removedAnchor != null) {
-                    BotChatManager.announceOwnerReturnedFromOffline(entry);
+                    BotChatStatusRuntime.announceOwnerReturnedFromOffline(entry);
                 }
             }
             return false;
@@ -3395,7 +3395,7 @@ public class BotManager {
         BotBuildManager.checkLevelUp(entry, bot);
         if (perf) BotPerformanceMonitor.record("common-build-levelup", System.nanoTime() - t);
         if (perf) t = System.nanoTime();
-        BotChatManager.tickAfkCheck(entry, owner);
+        BotChatStatusRuntime.tickAfkCheck(entry, owner);
         if (perf) BotPerformanceMonitor.record("common-afk-check", System.nanoTime() - t);
         if (perf) t = System.nanoTime();
         BotInventoryManager.tickTrade(entry, bot);
@@ -3621,7 +3621,7 @@ public class BotManager {
             BotMovementManager.resetEntryStateAfterTeleport(entry);
             BotMovementManager.broadcastMovement(entry);
             BotShopManager.onMapChange(entry, bot);
-            BotChatManager.checkBotStatus(entry, bot);
+            BotChatStatusRuntime.checkBotStatus(entry, bot);
             return;
         }
 

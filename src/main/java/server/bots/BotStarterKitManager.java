@@ -52,7 +52,7 @@ final class BotStarterKitManager {
         BotBuildManager.handleJobAdvance(entry, bot, oldJob, newJob);
         grantStarterKitIfEligible(bot, oldJob, newJob);
         BotEquipManager.autoEquip(bot, owner, null);
-        BotChatManager.checkBotStatus(entry, bot);
+        BotChatStatusRuntime.checkBotStatus(entry, bot);
     }
 
     static List<ItemGrant> starterKitFor(Job job) {

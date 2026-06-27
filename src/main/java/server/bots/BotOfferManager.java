@@ -44,7 +44,7 @@ final class BotOfferManager {
     }
 
     static void notifyOwnerGainedEquip(BotEntry entry, Character bot, Item item) {
-        if (BotChatManager.isOwnerIdle(entry)) {
+        if (BotChatStatusRuntime.isOwnerIdle(entry)) {
             return;
         }
         if (entry.requestedUpgradeItemIds.contains(item.getItemId())) {
@@ -139,7 +139,7 @@ final class BotOfferManager {
         if (owner == null
                 || item == null
                 || entry.pendingGearPromptAt > now
-                || BotChatManager.isOwnerIdle(entry)
+                || BotChatStatusRuntime.isOwnerIdle(entry)
                 || entry.pendingAction != null
                 || entry.pendingTradeCategory != null
                 || hasOfferReservation(entry)
@@ -231,7 +231,7 @@ final class BotOfferManager {
                 "Your " + itemDesc + " would be better on me! trade it over?",
                 "I could use that " + itemDesc + " of yours ;)",
                 "that " + itemDesc + " is an upgrade for me, want to trade?");
-        BotChatManager.queueBotSay(entry, BotManager.randomReply(prompts));
+        BotChatReplyRuntime.queueSay(entry, BotManager.randomReply(prompts));
     }
 
     private static boolean offerGearItem(BotEntry entry, Character bot, Character recipient, Item item,
@@ -245,7 +245,7 @@ final class BotOfferManager {
         entry.pendingLootOfferRecipientId = recipient.getId();
         entry.pendingLootOfferExpiresAt = System.currentTimeMillis() + 30_000L;
         entry.pendingLootOfferBotRequesting = false;
-        long promptDelayMs = BotChatManager.queueBotSayWithEstimatedDelay(entry,
+        long promptDelayMs = BotChatReplyRuntime.queueSayWithEstimatedDelay(entry,
                 buildLootOfferPrompt(recipient, entry.owner, item, need == GearOfferNeed.FUTURE));
         scheduleBotLootOfferAutoAccept(entry, recipient, promptDelayMs);
         return true;
@@ -288,7 +288,7 @@ final class BotOfferManager {
         entry.pendingLootOfferRecipientId = recipient.getId();
         entry.pendingLootOfferExpiresAt = System.currentTimeMillis() + 30_000L;
         entry.pendingLootOfferBotRequesting = false;
-        long promptDelayMs = BotChatManager.queueBotSayWithEstimatedDelay(entry,
+        long promptDelayMs = BotChatReplyRuntime.queueSayWithEstimatedDelay(entry,
                 buildLootOfferPrompt(recipient, owner, item, need == GearOfferNeed.FUTURE));
         scheduleBotLootOfferAutoAccept(entry, recipient, promptDelayMs);
     }

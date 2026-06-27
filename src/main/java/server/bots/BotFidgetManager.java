@@ -150,7 +150,7 @@ final class BotFidgetManager {
         if (entry == null
                 || entry.fidgetMode != BotFidgetMode.NONE
                 || !entry.following
-                || BotChatManager.isOwnerIdle(entry)
+                || BotChatStatusRuntime.isOwnerIdle(entry)
                 || entry.grinding
                 || entry.moveTarget != null
                 || entry.navEdge != null
@@ -175,7 +175,7 @@ final class BotFidgetManager {
                                       boolean allowAirborneJumpFidget) {
         boolean airborneJumpFidget = entry.inAir && allowAirborneJumpFidget && isJumpFidget(entry.fidgetMode);
         return entry.following
-                && !BotChatManager.isOwnerIdle(entry)
+                && !BotChatStatusRuntime.isOwnerIdle(entry)
                 && !entry.grinding
                 && entry.moveTarget == null
                 && entry.navEdge == null

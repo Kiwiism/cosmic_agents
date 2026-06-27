@@ -56,14 +56,14 @@ class BotStarterKitManagerTest {
         when(bot.getJob()).thenReturn(Job.BOWMAN);
 
         try (MockedStatic<BotBuildManager> buildManager = mockStatic(BotBuildManager.class);
-             MockedStatic<BotChatManager> chatManager = mockStatic(BotChatManager.class);
+             MockedStatic<BotChatStatusRuntime> statusRuntime = mockStatic(BotChatStatusRuntime.class);
              MockedStatic<BotEquipManager> equipManager = mockStatic(BotEquipManager.class)) {
             BotStarterKitManager.advanceJob(entry, Job.HUNTER);
 
             verify(bot).changeJob(Job.HUNTER);
             buildManager.verify(() -> BotBuildManager.handleJobAdvance(entry, bot, Job.BOWMAN, Job.HUNTER));
             equipManager.verify(() -> BotEquipManager.autoEquip(bot, owner, null));
-            chatManager.verify(() -> BotChatManager.checkBotStatus(entry, bot));
+            statusRuntime.verify(() -> BotChatStatusRuntime.checkBotStatus(entry, bot));
         }
     }
 }
