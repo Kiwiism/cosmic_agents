@@ -601,8 +601,8 @@ public class BotInventoryManager {
         entry.pendingTradeIdx      = 0;
         AgentBotPendingTradeStateRuntime.clearTimer(entry);
         AgentBotPendingTradeStateRuntime.clearMesoAdded(entry);
-        entry.pendingTradeAllAdded = false;
-        entry.pendingTradeBotDone  = false;
+        AgentBotPendingTradeStateRuntime.clearAllItemsAdded(entry);
+        AgentBotPendingTradeStateRuntime.clearBotDone(entry);
         Trade.startTrade(bot);
         Trade.inviteTrade(bot, recipient);
         // pot_share already announced itself ("got some HP pots, inv u") — skip the redundant "k i inv"
@@ -663,7 +663,7 @@ public class BotInventoryManager {
 
         // ── Trade was closed externally ────────────────────────────────────
         if (trade == null) {
-            if (entry.pendingTradeBotDone) {
+            if (AgentBotPendingTradeStateRuntime.botDone(entry)) {
                 // Both sides confirmed — sequence complete or cancelled after bot OK
                 if (AgentBotPendingTradeStateRuntime.singleBatch(entry)) {
                     resetTradeState(entry, bot);
@@ -671,10 +671,10 @@ public class BotInventoryManager {
                     return;
                 }
                 entry.pendingTradeItems    = null;
-                entry.pendingTradeAllAdded = false;
-                entry.pendingTradeBotDone  = false;
+                AgentBotPendingTradeStateRuntime.clearAllItemsAdded(entry);
+                AgentBotPendingTradeStateRuntime.clearBotDone(entry);
                 AgentBotPendingTradeStateRuntime.setTimerMs(entry, BotMovementManager.delayAfterCurrentTick(1_000));
-            } else if (entry.pendingTradeAllAdded) {
+            } else if (AgentBotPendingTradeStateRuntime.allItemsAdded(entry)) {
                 // Owner cancelled after items were added (items returned to bot)
                 AgentBotInventoryRuntime.replyNow(entry, "trade cancelled");
                 resetTradeState(entry, bot);
@@ -699,7 +699,7 @@ public class BotInventoryManager {
         }
 
         // ── ADDING ITEMS ──────────────────────────────────────────────────
-        if (!entry.pendingTradeAllAdded) {
+        if (!AgentBotPendingTradeStateRuntime.allItemsAdded(entry)) {
             if (AgentBotPendingTradeStateRuntime.timerMs(entry) > 0) {
                 AgentBotPendingTradeStateRuntime.tickTimerDown(entry, BotMovementManager::tickDown);
                 return;
@@ -722,7 +722,7 @@ public class BotInventoryManager {
 
             if (idx >= items.size()) {
                 // All items added — say so in trade chat and wait for owner OK
-                entry.pendingTradeAllAdded = true;
+                AgentBotPendingTradeStateRuntime.markAllItemsAdded(entry);
                 AgentBotPendingTradeStateRuntime.clearTimer(entry);
                 String msg = BotManager.randomReply(ALL_DONE_MSGS);
                 trade.chat(msg);
@@ -770,13 +770,13 @@ public class BotInventoryManager {
         }
 
         // ── WAITING FOR OWNER TO CLICK OK ─────────────────────────────────
-        if (!entry.pendingTradeBotDone) {
+        if (!AgentBotPendingTradeStateRuntime.botDone(entry)) {
             AgentBotPendingTradeStateRuntime.addTimerMs(entry, BotMovementManager.cfg.TICK_MS);
             Character recipient = resolveTradeRecipient(entry, bot);
             boolean recipientIsBot = recipient != null && recipient.getClient() instanceof client.BotClient;
             if (recipientIsBot || trade.isPartnerConfirmed()) {
                 completeTradeAndThank(entry, bot, trade);
-                entry.pendingTradeBotDone = true;
+                AgentBotPendingTradeStateRuntime.markBotDone(entry);
                 AgentBotPendingTradeStateRuntime.clearTimer(entry);
             } else if (AgentBotPendingTradeStateRuntime.timerMs(entry) > 60_000) { // 60 s timeout
                 AgentBotInventoryRuntime.replyNow(entry, "trade timed out, cancelling");
@@ -810,8 +810,8 @@ public class BotInventoryManager {
         entry.pendingTradeIdx      = 0;
         AgentBotPendingTradeStateRuntime.clearTimer(entry);
         AgentBotPendingTradeStateRuntime.clearMesoAdded(entry);
-        entry.pendingTradeAllAdded = false;
-        entry.pendingTradeBotDone  = false;
+        AgentBotPendingTradeStateRuntime.clearAllItemsAdded(entry);
+        AgentBotPendingTradeStateRuntime.clearBotDone(entry);
         AgentBotPendingTradeStateRuntime.clearSingleBatch(entry);
         AgentBotPendingTradeStateRuntime.clearInviteAnnounced(entry);
         AgentBotPendingTradeStateRuntime.clearShareBudget(entry);

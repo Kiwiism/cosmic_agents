@@ -166,4 +166,28 @@ public final class AgentBotPendingTradeStateRuntime {
     public static void clearMesoAdded(BotEntry entry) {
         entry.setPendingTradeMesoAdded(false);
     }
+
+    public static boolean allItemsAdded(BotEntry entry) {
+        return entry.pendingTradeAllAdded();
+    }
+
+    public static void markAllItemsAdded(BotEntry entry) {
+        entry.setPendingTradeAllAdded(true);
+    }
+
+    public static void clearAllItemsAdded(BotEntry entry) {
+        entry.setPendingTradeAllAdded(false);
+    }
+
+    public static boolean botDone(BotEntry entry) {
+        return entry.pendingTradeBotDone();
+    }
+
+    public static void markBotDone(BotEntry entry) {
+        entry.setPendingTradeBotDone(true);
+    }
+
+    public static void clearBotDone(BotEntry entry) {
+        entry.setPendingTradeBotDone(false);
+    }
 }

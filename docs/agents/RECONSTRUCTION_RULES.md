@@ -421,6 +421,10 @@ Recent reconstruction notes:
   `AgentBotPendingTradeStateRuntime`; trade setup, meso-add, insufficient-meso
   checks, and reset keep BotEntry as the temporary backing store but no longer
   read, set, mark, or clear meso trade fields directly.
+- Pending trade all-items-added and bot-done completion flags now enter through
+  `AgentBotPendingTradeStateRuntime`; trade completion, cancel, timeout, and
+  reset handling keep BotEntry as the temporary backing store but no longer
+  read, mark, or clear completion fields directly.
 
 Initial reconstruction order:
 

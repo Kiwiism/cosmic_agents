@@ -174,4 +174,24 @@ class AgentBotPendingTradeStateRuntimeTest {
         assertEquals(0, AgentBotPendingTradeStateRuntime.meso(entry));
         assertFalse(AgentBotPendingTradeStateRuntime.mesoAdded(entry));
     }
+
+    @Test
+    void adaptsCompletionFlags() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        assertFalse(AgentBotPendingTradeStateRuntime.allItemsAdded(entry));
+        assertFalse(AgentBotPendingTradeStateRuntime.botDone(entry));
+
+        AgentBotPendingTradeStateRuntime.markAllItemsAdded(entry);
+        AgentBotPendingTradeStateRuntime.markBotDone(entry);
+
+        assertTrue(AgentBotPendingTradeStateRuntime.allItemsAdded(entry));
+        assertTrue(AgentBotPendingTradeStateRuntime.botDone(entry));
+
+        AgentBotPendingTradeStateRuntime.clearAllItemsAdded(entry);
+        AgentBotPendingTradeStateRuntime.clearBotDone(entry);
+
+        assertFalse(AgentBotPendingTradeStateRuntime.allItemsAdded(entry));
+        assertFalse(AgentBotPendingTradeStateRuntime.botDone(entry));
+    }
 }
