@@ -261,6 +261,10 @@ public class BotEntry {
     int     pendingPotShareBudget = 0; // max total qty to donate; 0 = no cap (normal trades)
     Map<Item, Short> pendingTradeRestoreSlots = new IdentityHashMap<>();
 
+    public String pendingTradeCategory() {
+        return pendingTradeCategory;
+    }
+
     // Message queue
     final ArrayDeque<AgentQueuedMessage> msgQueue = new ArrayDeque<>();
     boolean msgSending = false;

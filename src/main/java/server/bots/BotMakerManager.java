@@ -25,7 +25,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * self-interrupt when the player issues a new directive (follow/stop/move/...): see
  * {@link BotEntry#activityEpoch}.
  */
-final class BotMakerManager {
+public final class BotMakerManager {
     private static final ItemInformationProvider ii = ItemInformationProvider.getInstance();
     private static final int LEFTOVERS_PER_CRYSTAL = 100;   // Maker type-3 recipe req count
     private static final long STEP_INTERVAL_MS = 5000L;     // 5 seconds per operation
@@ -46,7 +46,7 @@ final class BotMakerManager {
     private BotMakerManager() {
     }
 
-    static void handleMakeCrystals(BotEntry entry) {
+    public static void handleMakeCrystals(BotEntry entry) {
         Character bot = entry.bot;
         if (bot == null || !guardStart(entry, bot)) {
             return;
@@ -66,7 +66,7 @@ final class BotMakerManager {
                 });
     }
 
-    static void handleDisassembleTrash(BotEntry entry) {
+    public static void handleDisassembleTrash(BotEntry entry) {
         Character bot = entry.bot;
         if (bot == null || !guardStart(entry, bot)) {
             return;

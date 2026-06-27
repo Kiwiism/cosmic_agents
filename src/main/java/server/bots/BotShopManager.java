@@ -26,7 +26,7 @@ import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.IntUnaryOperator;
 
-final class BotShopManager {
+public final class BotShopManager {
 
     // Test seam: ItemInformationProvider's WZ/DB static initializer can't run in unit tests,
     // so projectile attack / slot-max lookups go through overridable hooks (see BotShopManagerTest).
@@ -126,7 +126,7 @@ final class BotShopManager {
         startShopVisit(entry, bot, match);
     }
 
-    static void requestSellTrashVisit(BotEntry entry, Character bot) {
+    public static void requestSellTrashVisit(BotEntry entry, Character bot) {
         if (entry == null || bot == null || bot.getMap() == null) {
             return;
         }

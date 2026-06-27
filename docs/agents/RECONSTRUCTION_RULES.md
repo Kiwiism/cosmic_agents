@@ -30,6 +30,9 @@ Recent reconstruction notes:
   now have an Agent-owned facade in `AgentBotPendingActionRuntime`;
   `BotChatPendingActionRuntime` remains only as a temporary compatibility shim
   for legacy bot package callers.
+- Utility chat callbacks now have an Agent-owned facade in
+  `AgentBotUtilityRuntime`; `BotChatUtilityRuntime` remains only as a
+  temporary compatibility shim for legacy bot package callers.
 
 Initial reconstruction order:
 
