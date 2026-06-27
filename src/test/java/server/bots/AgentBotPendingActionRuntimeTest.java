@@ -8,6 +8,7 @@ import server.agents.capabilities.dialogue.AgentSkillReportFlow;
 import server.agents.integration.AgentBotPendingActionRuntime;
 import server.agents.integration.AgentBotPendingActionReplyRuntime;
 import server.agents.integration.AgentBotPendingActionSchedulerRuntime;
+import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 
@@ -23,8 +24,8 @@ class AgentBotPendingActionRuntimeTest {
     @Test
     void pendingActionStateAdaptsBotEntryFields() {
         BotEntry entry = new BotEntry(null, null, null);
-        entry.setPendingAction("drop_scrolls");
-        entry.pendingDropCategory = "scrolls";
+        AgentBotPendingActionStateRuntime.setPendingAction(entry, "drop_scrolls");
+        AgentBotPendingActionStateRuntime.setPendingDropCategory(entry, "scrolls");
 
         AgentPendingChatActionFlow.PendingActionState state =
                 AgentBotPendingActionRuntime.pendingActionState(entry);
@@ -35,8 +36,8 @@ class AgentBotPendingActionRuntimeTest {
         state.clearPendingAction();
         state.clearPendingDropCategory();
 
-        assertNull(entry.pendingAction());
-        assertNull(entry.pendingDropCategory());
+        assertNull(AgentBotPendingActionStateRuntime.pendingAction(entry));
+        assertNull(AgentBotPendingActionStateRuntime.pendingDropCategory(entry));
     }
 
     @Test
@@ -91,7 +92,7 @@ class AgentBotPendingActionRuntimeTest {
 
         AgentBotPendingActionRuntime.applySkillReportDecision(entry, decision);
 
-        assertEquals(AgentChatPendingAction.SKILL_TREE_CHOICE, entry.pendingAction());
+        assertEquals(AgentChatPendingAction.SKILL_TREE_CHOICE, AgentBotPendingActionStateRuntime.pendingAction(entry));
         assertEquals("pick tree", entry.messageQueue().peek().text());
     }
 

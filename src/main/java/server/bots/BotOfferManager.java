@@ -13,6 +13,7 @@ import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
 import server.agents.integration.AgentBotOfferRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
+import server.agents.integration.AgentBotPendingActionStateRuntime;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +54,7 @@ public final class BotOfferManager {
         if (entry.requestedUpgradeItemIds.contains(item.getItemId())) {
             return;
         }
-        if (entry.pendingAction != null || entry.pendingTradeCategory != null || hasOfferReservation(entry)) {
+        if (AgentBotPendingActionStateRuntime.hasPendingAction(entry) || entry.pendingTradeCategory != null || hasOfferReservation(entry)) {
             return;
         }
         Character owner = entry.owner;
@@ -74,7 +75,7 @@ public final class BotOfferManager {
         if (owner == null) {
             return;
         }
-        if (entry.pendingAction != null || entry.pendingTradeCategory != null || hasOfferReservation(entry)) {
+        if (AgentBotPendingActionStateRuntime.hasPendingAction(entry) || entry.pendingTradeCategory != null || hasOfferReservation(entry)) {
             AgentBotOfferRuntime.replyNow(entry, "busy rn, ask me again in a bit");
             return;
         }
@@ -143,7 +144,7 @@ public final class BotOfferManager {
                 || item == null
                 || AgentBotOfferStateRuntime.hasPendingGearPromptAfter(entry, now)
                 || AgentBotOfferRuntime.isOwnerIdleForOffer(entry)
-                || entry.pendingAction != null
+                || AgentBotPendingActionStateRuntime.hasPendingAction(entry)
                 || entry.pendingTradeCategory != null
                 || hasOfferReservation(entry)
                 || !BotInventoryManager.hasItem(bot, item)) {
@@ -155,7 +156,7 @@ public final class BotOfferManager {
             return;
         }
 
-        entry.pendingDropCategory = null;
+        AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
         entry.pendingLootOfferItem = item;
         entry.pendingLootOfferRecipientId = recipient.getId();
         entry.pendingLootOfferExpiresAt = 0L;
@@ -181,7 +182,7 @@ public final class BotOfferManager {
                         AgentBotOfferRuntime.replyNow(entry, "ty! inv me?"));
             } else {
                 Item item = entry.pendingLootOfferItem;
-                entry.pendingDropCategory = null;
+                AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
                 entry.pendingLootOfferExpiresAt = 0L;
                 entry.pendingLootOfferBotRequesting = false;
                 entry.pendingLootOfferRecipientId = 0;
@@ -222,7 +223,7 @@ public final class BotOfferManager {
         // is good for it, so format stats relative to the bot's job.
         String itemDesc = formatItemSpecifier(ownerItem, bot);
 
-        entry.pendingDropCategory = null;
+        AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
         entry.pendingLootOfferItem = ownerItem;
         entry.pendingLootOfferRecipientId = owner.getId();
         entry.pendingLootOfferExpiresAt = System.currentTimeMillis() + 45_000L;
@@ -239,11 +240,11 @@ public final class BotOfferManager {
 
     private static boolean offerGearItem(BotEntry entry, Character bot, Character recipient, Item item,
                                          GearOfferNeed need) {
-        if (entry.pendingAction != null || entry.pendingTradeCategory != null || hasOfferReservation(entry)
+        if (AgentBotPendingActionStateRuntime.hasPendingAction(entry) || entry.pendingTradeCategory != null || hasOfferReservation(entry)
                 || !BotInventoryManager.hasItem(bot, item)) {
             return false;
         }
-        entry.pendingDropCategory = null;
+        AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
         entry.pendingLootOfferItem = item;
         entry.pendingLootOfferRecipientId = recipient.getId();
         entry.pendingLootOfferExpiresAt = System.currentTimeMillis() + 30_000L;
@@ -268,7 +269,7 @@ public final class BotOfferManager {
         Character owner = entry.owner;
         Character recipient = resolveReservedOfferRecipient(entry, bot, recipientId);
         if (owner == null
-                || entry.pendingAction != null
+                || AgentBotPendingActionStateRuntime.hasPendingAction(entry)
                 || entry.pendingTradeCategory != null
                 || recipient == null
                 || !BotInventoryManager.hasItem(bot, item)) {
@@ -286,7 +287,7 @@ public final class BotOfferManager {
             clearPendingOffer(entry);
             return;
         }
-        entry.pendingDropCategory = null;
+        AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
         entry.pendingLootOfferItem = item;
         entry.pendingLootOfferRecipientId = recipient.getId();
         entry.pendingLootOfferExpiresAt = System.currentTimeMillis() + 30_000L;
@@ -692,7 +693,7 @@ public final class BotOfferManager {
     }
 
     private static void clearPendingOffer(BotEntry entry) {
-        entry.pendingDropCategory = null;
+        AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
         entry.pendingLootOfferItem = null;
         entry.pendingLootOfferRecipientId = 0;
         entry.pendingLootOfferExpiresAt = 0L;

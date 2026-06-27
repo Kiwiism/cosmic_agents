@@ -4,6 +4,7 @@ package server.bots;
 import server.agents.integration.AgentBotManagerReplyRuntime;
 import server.agents.integration.AgentBotManagerSchedulerRuntime;
 import server.agents.integration.AgentBotManagerStatusRuntime;
+import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
 import client.BotClient;
 import config.YamlConfig;
@@ -2469,8 +2470,8 @@ public class BotManager {
     }
 
     private static void clearBotVolatileActions(BotEntry entry) {
-        entry.pendingAction = null;
-        entry.pendingDropCategory = null;
+        AgentBotPendingActionStateRuntime.clearPendingAction(entry);
+        AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
         entry.grindTarget = null;
         entry.grindLootTarget = null;
         entry.patrolWanderTarget = null;

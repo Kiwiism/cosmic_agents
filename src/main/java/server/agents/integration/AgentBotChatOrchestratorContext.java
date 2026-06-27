@@ -36,7 +36,7 @@ public final class AgentBotChatOrchestratorContext implements AgentChatOrchestra
 
     @Override
     public boolean hasPendingAction() {
-        return entry.pendingAction() != null;
+        return AgentBotPendingActionStateRuntime.hasPendingAction(entry);
     }
 
     @Override

@@ -345,6 +345,10 @@ Recent reconstruction notes:
   `AgentBotOfferStateRuntime` adapter; offer scheduling keeps BotEntry as the
   temporary backing store but no longer owns the pending gear prompt field
   directly in offer orchestration.
+- Pending action and pending drop-choice state now enter through the narrow
+  `AgentBotPendingActionStateRuntime` adapter; chat, transfer, manager cleanup,
+  and offer orchestration keep BotEntry as the temporary backing store but no
+  longer read or clear those fields directly.
 
 Initial reconstruction order:
 

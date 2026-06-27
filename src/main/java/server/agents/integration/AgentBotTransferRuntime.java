@@ -153,8 +153,8 @@ public final class AgentBotTransferRuntime {
             case REPLY -> AgentBotTransferReplyRuntime.replyNow(entry, decision.reply());
             case START_TRADE -> BotInventoryManager.startTradeTransfer(category, entry, bot);
             case PROMPT_ITEM_CHOICE -> {
-                entry.setPendingAction(AgentChatPendingAction.ITEM_CHOICE);
-                entry.setPendingDropCategory(decision.category());
+                AgentBotPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.ITEM_CHOICE);
+                AgentBotPendingActionStateRuntime.setPendingDropCategory(entry, decision.category());
                 AgentBotTransferReplyRuntime.replyNow(entry, decision.reply());
             }
         }

@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.integration.AgentBotManagerReplyRuntime;
+import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.StatEffect;
 import server.TimerManager;
 import server.life.Monster;
@@ -598,8 +599,8 @@ class BotManagerTest {
         when(bot.getMapId()).thenReturn(100000000);
 
         BotEntry entry = new BotEntry(bot, owner, task);
-        entry.pendingAction = "drop";
-        entry.pendingDropCategory = "equips";
+        AgentBotPendingActionStateRuntime.setPendingAction(entry, "drop");
+        AgentBotPendingActionStateRuntime.setPendingDropCategory(entry, "equips");
         entry.grindLootTarget = mock(MapItem.class);
         entry.following = true;
         entry.grinding = true;
@@ -613,8 +614,8 @@ class BotManagerTest {
         try {
             failureHandler.invoke(manager, entry, owner.getId(), bot.getId(), new NullPointerException("bad drop"));
             assertTrue(bots.containsKey(owner.getId()));
-            assertNull(entry.pendingAction);
-            assertNull(entry.pendingDropCategory);
+            assertNull(AgentBotPendingActionStateRuntime.pendingAction(entry));
+            assertNull(AgentBotPendingActionStateRuntime.pendingDropCategory(entry));
             assertNull(entry.grindLootTarget);
             assertTrue(entry.following);
             assertTrue(entry.grinding);

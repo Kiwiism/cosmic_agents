@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotChatReportRuntime;
 import server.agents.integration.AgentBotChatStatusRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
+import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.commands.AgentQueuedMessage;
@@ -406,7 +407,7 @@ class BotChatManagerTest {
     @Test
     void shouldClearPendingOfferStateForOwnerAsk() {
         BotEntry entry = new BotEntry(null, null, null);
-        entry.pendingDropCategory = "equips";
+        AgentBotPendingActionStateRuntime.setPendingDropCategory(entry, "equips");
         entry.pendingLootOfferItem = new Item(1002000, (short) 1, (short) 1);
         entry.pendingLootOfferRecipientId = 123;
         entry.pendingLootOfferExpiresAt = Long.MAX_VALUE;
@@ -415,7 +416,7 @@ class BotChatManagerTest {
 
         BotOfferManager.clearPendingOfferForOwnerAsk(entry);
 
-        assertNull(entry.pendingDropCategory);
+        assertNull(AgentBotPendingActionStateRuntime.pendingDropCategory(entry));
         assertNull(entry.pendingLootOfferItem);
         assertEquals(0, entry.pendingLootOfferRecipientId);
         assertEquals(0L, entry.pendingLootOfferExpiresAt);

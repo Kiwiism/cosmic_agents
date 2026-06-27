@@ -23,22 +23,22 @@ public final class AgentBotPendingActionRuntime {
         return new AgentPendingChatActionFlow.PendingActionState() {
             @Override
             public String pendingAction() {
-                return entry.pendingAction();
+                return AgentBotPendingActionStateRuntime.pendingAction(entry);
             }
 
             @Override
             public String pendingDropCategory() {
-                return entry.pendingDropCategory();
+                return AgentBotPendingActionStateRuntime.pendingDropCategory(entry);
             }
 
             @Override
             public void clearPendingAction() {
-                entry.clearPendingAction();
+                AgentBotPendingActionStateRuntime.clearPendingAction(entry);
             }
 
             @Override
             public void clearPendingDropCategory() {
-                entry.clearPendingDropCategory();
+                AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
             }
         };
     }
@@ -96,10 +96,10 @@ public final class AgentBotPendingActionRuntime {
 
     public static void applySkillReportDecision(BotEntry entry, AgentSkillReportFlow.SkillReportDecision decision) {
         if (decision.clearPendingAction()) {
-            entry.clearPendingAction();
+            AgentBotPendingActionStateRuntime.clearPendingAction(entry);
         }
         if (decision.requestSkillTreeChoice()) {
-            entry.setPendingAction(AgentChatPendingAction.SKILL_TREE_CHOICE);
+            AgentBotPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.SKILL_TREE_CHOICE);
         }
         for (String line : decision.replies()) {
             AgentBotPendingActionReplyRuntime.queueReply(entry, line);
