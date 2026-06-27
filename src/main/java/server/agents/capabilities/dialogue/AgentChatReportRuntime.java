@@ -103,6 +103,21 @@ public final class AgentChatReportRuntime {
         scheduler.afterRandomDelay(900, 1100, action);
     }
 
+    public static void reportRecommendedGear(
+            RecommendedGearState state,
+            RecommendedGearActions actions,
+            long nowMs) {
+        if (!actions.hasOwner()) {
+            actions.queueGearCheckUnavailable();
+            return;
+        }
+
+        if (!actions.offerBestRecommendedGear()) {
+            actions.queueNoBetterGear();
+        }
+        state.setNextGearSuggestionAt(nowMs + 60_000L);
+    }
+
     public interface ReportScheduler {
         void afterRandomDelay(int minMs, int maxMs, Runnable action);
     }
@@ -141,5 +156,19 @@ public final class AgentChatReportRuntime {
         void critDebug();
 
         void potDebug();
+    }
+
+    public interface RecommendedGearState {
+        void setNextGearSuggestionAt(long nextGearSuggestionAt);
+    }
+
+    public interface RecommendedGearActions {
+        boolean hasOwner();
+
+        boolean offerBestRecommendedGear();
+
+        void queueGearCheckUnavailable();
+
+        void queueNoBetterGear();
     }
 }

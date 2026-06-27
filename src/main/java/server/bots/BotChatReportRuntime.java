@@ -271,13 +271,40 @@ final class BotChatReportRuntime {
 
     static void reportRecommendedGear(BotEntry entry, Character bot) {
         Character owner = entry.owner;
-        if (owner == null) {
-            AgentBotReplyRuntime.queueReply(entry, AgentChatEquipmentFlow.gearCheckUnavailableReply());
-            return;
-        }
-        if (!BotOfferManager.offerBestRecommendedGear(entry, bot, owner)) {
-            AgentBotReplyRuntime.queueReply(entry, AgentChatEquipmentFlow.noBetterGearReply());
-        }
-        entry.nextGearSuggestionAt = System.currentTimeMillis() + 60_000L;
+        AgentChatReportRuntime.reportRecommendedGear(
+                recommendedGearState(entry),
+                recommendedGearActions(entry, bot, owner),
+                System.currentTimeMillis());
+    }
+
+    private static AgentChatReportRuntime.RecommendedGearState recommendedGearState(BotEntry entry) {
+        return nextGearSuggestionAt -> entry.nextGearSuggestionAt = nextGearSuggestionAt;
+    }
+
+    private static AgentChatReportRuntime.RecommendedGearActions recommendedGearActions(
+            BotEntry entry,
+            Character bot,
+            Character owner) {
+        return new AgentChatReportRuntime.RecommendedGearActions() {
+            @Override
+            public boolean hasOwner() {
+                return owner != null;
+            }
+
+            @Override
+            public boolean offerBestRecommendedGear() {
+                return BotOfferManager.offerBestRecommendedGear(entry, bot, owner);
+            }
+
+            @Override
+            public void queueGearCheckUnavailable() {
+                AgentBotReplyRuntime.queueReply(entry, AgentChatEquipmentFlow.gearCheckUnavailableReply());
+            }
+
+            @Override
+            public void queueNoBetterGear() {
+                AgentBotReplyRuntime.queueReply(entry, AgentChatEquipmentFlow.noBetterGearReply());
+            }
+        };
     }
 }

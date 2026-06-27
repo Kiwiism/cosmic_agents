@@ -55,6 +55,43 @@ class AgentChatReportRuntimeTest {
                 "potions", "debugStats", "critDebug", "potDebug"), actions.events);
     }
 
+    @Test
+    void recommendedGearReportQueuesUnavailableWhenOwnerMissing() {
+        TestRecommendedGearState state = new TestRecommendedGearState();
+        TestRecommendedGearActions actions = new TestRecommendedGearActions();
+
+        AgentChatReportRuntime.reportRecommendedGear(state, actions, 1000L);
+
+        assertEquals(List.of("queueGearCheckUnavailable"), actions.events);
+        assertEquals(0L, state.nextGearSuggestionAt);
+    }
+
+    @Test
+    void recommendedGearReportSetsCooldownWhenOfferSucceeds() {
+        TestRecommendedGearState state = new TestRecommendedGearState();
+        TestRecommendedGearActions actions = new TestRecommendedGearActions();
+        actions.hasOwner = true;
+        actions.offerResult = true;
+
+        AgentChatReportRuntime.reportRecommendedGear(state, actions, 1000L);
+
+        assertEquals(List.of("offerBestRecommendedGear"), actions.events);
+        assertEquals(61_000L, state.nextGearSuggestionAt);
+    }
+
+    @Test
+    void recommendedGearReportQueuesNoBetterGearAndSetsCooldownWhenOfferFails() {
+        TestRecommendedGearState state = new TestRecommendedGearState();
+        TestRecommendedGearActions actions = new TestRecommendedGearActions();
+        actions.hasOwner = true;
+        actions.offerResult = false;
+
+        AgentChatReportRuntime.reportRecommendedGear(state, actions, 1000L);
+
+        assertEquals(List.of("offerBestRecommendedGear", "queueNoBetterGear"), actions.events);
+        assertEquals(61_000L, state.nextGearSuggestionAt);
+    }
+
     private static final class TestScheduler implements AgentChatReportRuntime.ReportScheduler {
         private final List<String> delays = new ArrayList<>();
 
@@ -151,6 +188,42 @@ class AgentChatReportRuntimeTest {
         @Override
         public void potDebug() {
             events.add("potDebug");
+        }
+    }
+
+    private static final class TestRecommendedGearState implements AgentChatReportRuntime.RecommendedGearState {
+        private long nextGearSuggestionAt;
+
+        @Override
+        public void setNextGearSuggestionAt(long nextGearSuggestionAt) {
+            this.nextGearSuggestionAt = nextGearSuggestionAt;
+        }
+    }
+
+    private static final class TestRecommendedGearActions implements AgentChatReportRuntime.RecommendedGearActions {
+        private final List<String> events = new ArrayList<>();
+        private boolean hasOwner;
+        private boolean offerResult;
+
+        @Override
+        public boolean hasOwner() {
+            return hasOwner;
+        }
+
+        @Override
+        public boolean offerBestRecommendedGear() {
+            events.add("offerBestRecommendedGear");
+            return offerResult;
+        }
+
+        @Override
+        public void queueGearCheckUnavailable() {
+            events.add("queueGearCheckUnavailable");
+        }
+
+        @Override
+        public void queueNoBetterGear() {
+            events.add("queueNoBetterGear");
         }
     }
 }
