@@ -3,6 +3,7 @@ package server.bots;
 
 import server.agents.integration.AgentBotReplyRuntime;
 import client.Character;
+import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.capabilities.dialogue.AgentChatWelcomeBackFlow;
 
 import java.awt.Point;
@@ -15,9 +16,10 @@ final class BotChatStatusRuntime {
 
     static void markOwnerActive(BotEntry entry) {
         Character owner = entry.owner;
-        entry.ownerWasAfk = false;
-        entry.ownerAfkSinceMs = System.currentTimeMillis();
-        entry.ownerAfkPos = owner != null ? new Point(owner.getPosition()) : null;
+        AgentChatStatusRuntime.markActive(
+                statusState(entry),
+                owner != null ? owner.getPosition() : null,
+                System.currentTimeMillis());
     }
 
     static void checkBotStatus(BotEntry entry, Character bot) {
@@ -81,12 +83,35 @@ final class BotChatStatusRuntime {
     }
 
     static boolean isOwnerIdle(BotEntry entry) {
-        return entry.ownerWasAfk;
+        return AgentChatStatusRuntime.isOwnerIdle(statusState(entry));
     }
 
     static int randomFidgetExpression() {
-        int[] expressions = {2, 3, 5, 6, 7};
-        return expressions[ThreadLocalRandom.current().nextInt(expressions.length)];
+        return AgentChatStatusRuntime.randomFidgetExpression();
+    }
+
+    private static AgentChatStatusRuntime.StatusState statusState(BotEntry entry) {
+        return new AgentChatStatusRuntime.StatusState() {
+            @Override
+            public void setOwnerAfkPosition(Point position) {
+                entry.ownerAfkPos = position;
+            }
+
+            @Override
+            public void setOwnerAfkSinceMs(long sinceMs) {
+                entry.ownerAfkSinceMs = sinceMs;
+            }
+
+            @Override
+            public boolean ownerWasAfk() {
+                return entry.ownerWasAfk;
+            }
+
+            @Override
+            public void setOwnerWasAfk(boolean wasAfk) {
+                entry.ownerWasAfk = wasAfk;
+            }
+        };
     }
 
     private static AgentChatWelcomeBackFlow.AfkState afkState(BotEntry entry) {
