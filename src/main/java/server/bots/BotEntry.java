@@ -709,6 +709,39 @@ public class BotEntry {
     final ArrayDeque<BotTask> scriptTasks = new ArrayDeque<>();
     BotTask activeScriptTask = null;
 
+    public int activityEpoch() {
+        return activityEpoch;
+    }
+
+    public int bumpActivityEpoch() {
+        return ++activityEpoch;
+    }
+
+    public void addScriptTask(BotTask task) {
+        scriptTasks.add(task);
+    }
+
+    public BotTask activeScriptTask() {
+        return activeScriptTask;
+    }
+
+    public void setActiveScriptTask(BotTask activeScriptTask) {
+        this.activeScriptTask = activeScriptTask;
+    }
+
+    public BotTask pollScriptTask() {
+        return scriptTasks.poll();
+    }
+
+    public boolean hasScriptTasks() {
+        return activeScriptTask != null || !scriptTasks.isEmpty();
+    }
+
+    public void clearScriptTasks() {
+        scriptTasks.clear();
+        activeScriptTask = null;
+    }
+
     // AFK detection
     Point ownerAfkPos = null;
     long ownerAfkSinceMs = 0;

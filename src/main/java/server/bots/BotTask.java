@@ -16,7 +16,7 @@ public final class BotTask {
         LOCAL_OPPORTUNITY
     }
 
-    enum Type {
+    public enum Type {
         MOVE_TO,
         FOLLOW_OWNER,
         FOLLOW_TARGET,
@@ -54,6 +54,18 @@ public final class BotTask {
         this.itemId = itemId;
         this.quantity = quantity;
         this.moveCombatMode = moveCombatMode == null ? MoveCombatMode.NONE : moveCombatMode;
+    }
+
+    public Type type() {
+        return type;
+    }
+
+    public Point point() {
+        return point == null ? null : new Point(point);
+    }
+
+    public MoveCombatMode moveCombatMode() {
+        return moveCombatMode;
     }
 
     public static BotTask moveTo(Point point, boolean precise) {

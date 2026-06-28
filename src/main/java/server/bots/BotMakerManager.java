@@ -9,6 +9,7 @@ import client.inventory.Item;
 import client.processor.action.MakerProcessor;
 import server.ItemInformationProvider;
 import server.agents.integration.AgentBotMakerRuntime;
+import server.agents.integration.AgentBotScriptTaskStateRuntime;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -24,7 +25,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * etc stacks) and "disassemble trash" (break down trash equips). Both run through the shared
  * {@link MakerProcessor} player path, one operation per {@link #STEP_INTERVAL_MS} ms, and
  * self-interrupt when the player issues a new directive (follow/stop/move/...): see
- * {@link BotEntry#activityEpoch}.
+ * {@link AgentBotScriptTaskStateRuntime#activityEpoch(BotEntry)}.
  */
 public final class BotMakerManager {
     private static final int LEFTOVERS_PER_CRYSTAL = 100;   // Maker type-3 recipe req count
@@ -146,7 +147,7 @@ public final class BotMakerManager {
         AgentBotMakerRuntime.replyNow(entry, msg);
 
         ACTIVE.add(bot.getId());
-        int epoch = entry.activityEpoch;
+        int epoch = AgentBotScriptTaskStateRuntime.activityEpoch(entry);
         AgentBotMakerRuntime.afterRandomDelay(900, 1100, () -> runStep(entry, step, noun, epoch, 0));
     }
 
@@ -159,7 +160,7 @@ public final class BotMakerManager {
             return;
         }
 
-        if (entry.activityEpoch != epoch) {   // player issued a new command — disrupt
+        if (!AgentBotScriptTaskStateRuntime.isCurrentActivityEpoch(entry, epoch)) {   // player issued a new command — disrupt
             ACTIVE.remove(bot.getId());
             AgentBotMakerRuntime.replyNow(entry, "ok, stopping - " + done + " " + plural(noun, done) + " done");
             return;

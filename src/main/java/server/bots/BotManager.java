@@ -27,6 +27,7 @@ import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotPotionStateRuntime;
 import server.agents.integration.AgentBotReplyChannelStateRuntime;
 import server.agents.integration.AgentBotRetreatHoldStateRuntime;
+import server.agents.integration.AgentBotScriptTaskStateRuntime;
 import server.agents.integration.AgentBotTickCadenceStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
 import server.agents.integration.AgentBotTickFailureStateRuntime;
@@ -2558,17 +2559,7 @@ public class BotManager {
     }
 
     private static boolean shouldUseScriptedMoveLocalCombat(BotEntry entry, Point targetPos) {
-        if (entry == null || targetPos == null || entry.activeScriptTask == null) {
-            return false;
-        }
-        if (entry.activeScriptTask.type != BotTask.Type.MOVE_TO
-                || entry.activeScriptTask.moveCombatMode != BotTask.MoveCombatMode.LOCAL_OPPORTUNITY) {
-            return false;
-        }
-        if (!AgentBotMoveTargetStateRuntime.moveTargetEquals(entry, entry.activeScriptTask.point)) {
-            return false;
-        }
-        return !AgentBotModeStateRuntime.following(entry);
+        return AgentBotScriptTaskStateRuntime.isActiveLocalOpportunityMoveTo(entry, targetPos);
     }
 
     private LocalOpportunityAttackResult tryLocalOpportunityAttack(BotEntry entry,
@@ -3076,16 +3067,14 @@ public class BotManager {
         if (entry == null) {
             return;
         }
-        entry.activityEpoch++;   // signal background batches (Maker craft/disassembly) to self-interrupt
-        entry.scriptTasks.clear();
-        entry.activeScriptTask = null;
+        AgentBotScriptTaskStateRuntime.clearTasksAndBumpEpoch(entry);   // signal background batches (Maker craft/disassembly) to self-interrupt
     }
 
     public void queueTask(BotEntry entry, BotTask task) {
         if (entry == null || task == null) {
             return;
         }
-        entry.scriptTasks.add(task);
+        AgentBotScriptTaskStateRuntime.queueTask(entry, task);
     }
 
     public void queueMoveTo(BotEntry entry, Point point, boolean precise) {
@@ -3107,7 +3096,7 @@ public class BotManager {
     }
 
     public boolean hasQueuedTasks(BotEntry entry) {
-        return entry != null && (entry.activeScriptTask != null || !entry.scriptTasks.isEmpty());
+        return AgentBotScriptTaskStateRuntime.hasQueuedTasks(entry);
     }
 
     public boolean isCheapScriptMoveTarget(BotEntry entry,
@@ -3183,18 +3172,19 @@ public class BotManager {
         }
 
         while (true) {
-            if (entry.activeScriptTask == null) {
-                entry.activeScriptTask = entry.scriptTasks.poll();
-                if (entry.activeScriptTask == null) {
+            BotTask activeScriptTask = AgentBotScriptTaskStateRuntime.activeTask(entry);
+            if (activeScriptTask == null) {
+                activeScriptTask = AgentBotScriptTaskStateRuntime.activateNextTask(entry);
+                if (activeScriptTask == null) {
                     return;
                 }
-                startScriptTask(entry, entry.activeScriptTask);
+                startScriptTask(entry, activeScriptTask);
             }
 
-            if (!isScriptTaskComplete(entry, entry.activeScriptTask)) {
+            if (!isScriptTaskComplete(entry, activeScriptTask)) {
                 return;
             }
-            entry.activeScriptTask = null;
+            AgentBotScriptTaskStateRuntime.clearActiveTask(entry);
         }
     }
 

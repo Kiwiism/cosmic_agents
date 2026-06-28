@@ -609,6 +609,12 @@ Recent reconstruction notes:
   standalone move-target map-change grounding, shop-mode map-change grounding,
   and focused tests keep BotEntry as the temporary backing store but no longer
   read or write `lastMapId` or `fhIndex` directly in production.
+- Script task queue and activity-epoch state now enter through
+  `AgentBotScriptTaskStateRuntime`; BotManager task clearing, queueing,
+  active-task activation/completion, scripted local-combat checks, BotMakerManager
+  batch-interruption checks, and focused tests keep BotEntry as the temporary
+  backing store but no longer read or write `activityEpoch`, `scriptTasks`, or
+  `activeScriptTask` directly in production.
 
 Initial reconstruction order:
 
