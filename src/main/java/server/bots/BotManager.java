@@ -22,6 +22,7 @@ import server.agents.integration.AgentBotMapStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
+import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
@@ -465,7 +466,7 @@ public class BotManager {
         int spawnMapId = spawnMap != null ? spawnMap.getId() : botChar.getMapId();
         if (spawnMap != null && spawnMap.getFootholds() != null) {
             AgentBotMapStateRuntime.setMapTracking(entry, spawnMapId, BotMovementManager.buildFhIndex(spawnMap));
-            BotNavigationGraphProvider.warmGraphAsync(spawnMap, entry.movementProfile);
+            BotNavigationGraphProvider.warmGraphAsync(spawnMap, AgentBotMovementStateRuntime.movementProfile(entry));
         } else {
             AgentBotMapStateRuntime.setMapTracking(entry, spawnMapId, null);
         }
@@ -504,8 +505,8 @@ public class BotManager {
                 () -> tick(ref[0], ownerCharId, botCharId), BotMovementManager.cfg.TICK_MS);
         BotEntry entry = new BotEntry(bot, owner, task);
         ref[0] = entry;
-        entry.movementProfile = BotMovementProfile.fromCharacter(bot);
-        BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), entry.movementProfile);
+        AgentBotMovementStateRuntime.refreshMovementProfile(entry, bot);
+        BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         entries.add(entry);
         FormationState fs = ownerFormations.getOrDefault(ownerCharId, FormationState.defaultStagger());
         for (int i = 0; i < entries.size(); i++) {
@@ -1477,7 +1478,7 @@ public class BotManager {
         if (map == null || map.getFootholds() == null) {
             return base;
         }
-        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map, entry.movementProfile);
+        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
         if (graph == null) {
             return base;
         }
@@ -1532,9 +1533,9 @@ public class BotManager {
         if (map == null || map.getFootholds() == null) {
             return null;
         }
-        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map, entry.movementProfile);
+        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
         if (graph == null) {
-            BotNavigationGraphProvider.warmGraphAsync(map, entry.movementProfile);
+            BotNavigationGraphProvider.warmGraphAsync(map, AgentBotMovementStateRuntime.movementProfile(entry));
             return null;
         }
 
@@ -1757,9 +1758,9 @@ public class BotManager {
             return false;
         }
 
-        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map, entry.movementProfile);
+        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
         if (graph == null) {
-            BotNavigationGraphProvider.warmGraphAsync(map, entry.movementProfile);
+            BotNavigationGraphProvider.warmGraphAsync(map, AgentBotMovementStateRuntime.movementProfile(entry));
             return false;
         }
         int botRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, map, botPos);
@@ -1827,7 +1828,9 @@ public class BotManager {
             }
         }
 
-        BotNavigationGraph graph = map != null ? BotNavigationGraphProvider.peekBestGraph(map, entry.movementProfile) : null;
+        BotNavigationGraph graph = map != null
+                ? BotNavigationGraphProvider.peekBestGraph(map, AgentBotMovementStateRuntime.movementProfile(entry))
+                : null;
         int regionId = graph != null ? BotNavigationManager.resolveCurrentRegionId(graph, entry, map, botPos) : -1;
         BotNavigationGraph.Region region = graph != null ? graph.getRegion(regionId) : null;
         if (region != null && !region.isRopeRegion && region.width() > 0) {
@@ -1910,7 +1913,7 @@ public class BotManager {
     }
 
     private static Point resolvePatrolWanderTarget(BotEntry entry, Point botPos, MapleMap map) {
-        BotNavigationGraph graph = BotNavigationGraphProvider.peekBestGraph(map, entry.movementProfile);
+        BotNavigationGraph graph = BotNavigationGraphProvider.peekBestGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
         int patrolRegionId = AgentBotPatrolStateRuntime.patrolRegionId(entry);
         BotNavigationGraph.Region region = graph != null ? graph.getRegion(patrolRegionId) : null;
         if (region == null || region.isRopeRegion || region.width() == 0) {
@@ -2104,7 +2107,7 @@ public class BotManager {
                 Point ground = BotPhysicsEngine.findGroundPoint(bot.getMap(), new Point(cur.x, cur.y - 1));
                 BotPhysicsEngine.teleportTo(entry, bot, ground != null ? ground : cur);
                 BotMovementManager.resetEntryStateAfterTeleport(entry);
-                BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), entry.movementProfile);
+                BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
                 BotMovementManager.broadcastMovement(entry);
                 if (BotPqHooks.requiresGrind(entry, bot)) { issueGrind(entry); }
                 else if (BotPqHooks.requiresFollow(entry, bot)) { issueFollowOwner(entry); }
@@ -2119,7 +2122,7 @@ public class BotManager {
                     Point ground = BotPhysicsEngine.findGroundPoint(bot.getMap(), new Point(cur.x, cur.y - 1));
                     BotPhysicsEngine.teleportTo(entry, bot, ground != null ? ground : cur);
                     BotMovementManager.resetEntryStateAfterTeleport(entry);
-                    BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), entry.movementProfile);
+                    BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
                     BotMovementManager.broadcastMovement(entry);
                     if (BotPqHooks.requiresGrind(entry, bot)) { issueGrind(entry); }
                     else if (BotPqHooks.requiresFollow(entry, bot)) { issueFollowOwner(entry); }
@@ -2378,7 +2381,11 @@ public class BotManager {
                 }
             } else if (!entry.inAir
                     && attackPlan != null
-                    && BotCombatManager.isTargetJumpable(entry.movementProfile, attackPlan.isCloseRangeRoute(), botPos, tp)
+                    && BotCombatManager.isTargetJumpable(
+                            AgentBotMovementStateRuntime.movementProfile(entry),
+                            attackPlan.isCloseRangeRoute(),
+                            botPos,
+                            tp)
                     && grindWeaponType != WeaponType.BOW && grindWeaponType != WeaponType.CROSSBOW
                     && grindWeaponType != WeaponType.WAND && grindWeaponType != WeaponType.STAFF) {
                 // Target is above but within jump height — jump toward it
@@ -2616,7 +2623,11 @@ public class BotManager {
         if (allowJumpTowardTarget
                 && weaponType != WeaponType.BOW && weaponType != WeaponType.CROSSBOW
                 && weaponType != WeaponType.WAND && weaponType != WeaponType.STAFF
-                && BotCombatManager.isTargetJumpable(entry.movementProfile, true, botPos, localTargetPos)) {
+                && BotCombatManager.isTargetJumpable(
+                        AgentBotMovementStateRuntime.movementProfile(entry),
+                        true,
+                        botPos,
+                        localTargetPos)) {
             BotMovementManager.initiateJump(entry, bot, localTargetPos.x - botPos.x);
             return new LocalOpportunityAttackResult(true, targetPos);
         }
@@ -2856,7 +2867,7 @@ public class BotManager {
         int offsetX = formation.offsetFor(idx, Math.max(1, entries.size()));
         int targetX = base.x + offsetX;
 
-        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map, entry.movementProfile);
+        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
         if (graph != null) {
             int anchorRegionId = graph.findRegionId(map, base);
             BotNavigationGraph.Region anchorRegion = graph.getRegion(anchorRegionId);
@@ -2939,7 +2950,7 @@ public class BotManager {
             return;
         }
         MapleMap map = entry.bot.getMap();
-        BotNavigationGraph graph = BotNavigationGraphProvider.peekBestGraph(map, entry.movementProfile);
+        BotNavigationGraph graph = BotNavigationGraphProvider.peekBestGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
         int regionId = graph != null ? graph.findRegionId(map, ownerPos) : -1;
         if (regionId < 0) {
             AgentBotManagerReplyRuntime.replyNow(entry, "can't find a patrol region here");
@@ -3129,7 +3140,7 @@ public class BotManager {
             return false;
         }
 
-        BotNavigationGraph graph = BotNavigationGraphProvider.peekBestGraph(map, entry.movementProfile);
+        BotNavigationGraph graph = BotNavigationGraphProvider.peekBestGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
         if (graph == null) {
             return Math.abs(targetPos.x - botPos.x) <= fallbackRangeX
                     && Math.abs(targetPos.y - botPos.y) <= fallbackRangeY;
@@ -3305,7 +3316,7 @@ public class BotManager {
         Point ground = BotPhysicsEngine.findGroundPoint(bot.getMap(), new Point(cur.x, cur.y - 1));
         BotPhysicsEngine.teleportTo(entry, bot, ground != null ? ground : cur);
         BotMovementManager.resetEntryStateAfterTeleport(entry);
-        BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), entry.movementProfile);
+        BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         BotMovementManager.broadcastMovement(entry);
         return true;
     }

@@ -101,4 +101,30 @@ class AgentBotMovementStateRuntimeTest {
         assertNull(snapshot.botPosition());
         assertNull(snapshot.ownerPosition());
     }
+
+    @Test
+    void movementProfileDefaultsAndStoresThroughAgentBoundary() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        assertEquals(BotMovementProfile.fromCharacter(null), AgentBotMovementStateRuntime.movementProfile(entry));
+
+        BotMovementProfile profile = new BotMovementProfile(147, 119);
+        AgentBotMovementStateRuntime.setMovementProfile(entry, profile);
+        assertEquals(new BotMovementProfile(145, 115), AgentBotMovementStateRuntime.movementProfile(entry));
+
+        AgentBotMovementStateRuntime.setMovementProfile(entry, null);
+        assertEquals(BotMovementProfile.fromCharacter(null), AgentBotMovementStateRuntime.movementProfile(entry));
+    }
+
+    @Test
+    void refreshMovementProfileUsesCharacterStats() {
+        Character bot = mock(Character.class);
+        when(bot.getTotalMoveSpeedStat()).thenReturn(163);
+        when(bot.getTotalJumpStat()).thenReturn(127);
+        BotEntry entry = new BotEntry(bot, null, null);
+
+        AgentBotMovementStateRuntime.refreshMovementProfile(entry, bot);
+
+        assertEquals(new BotMovementProfile(160, 127), AgentBotMovementStateRuntime.movementProfile(entry));
+    }
 }

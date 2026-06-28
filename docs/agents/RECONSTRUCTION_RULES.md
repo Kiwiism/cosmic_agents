@@ -637,6 +637,11 @@ Recent reconstruction notes:
   `AgentBotLeaderStateRuntime`; BotManager tick-owner refresh and focused tests
   keep BotEntry as the temporary backing store but no longer assign `owner`
   directly in production.
+- Movement profile state now enters through `AgentBotMovementStateRuntime`;
+  BotManager registration, spawn/map-change graph warmup, graph lookup, patrol
+  region selection, retreat planning, and jumpability checks keep BotEntry as
+  the temporary backing store but no longer read or write `movementProfile`
+  directly in production.
 
 Initial reconstruction order:
 

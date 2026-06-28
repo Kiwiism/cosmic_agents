@@ -39,6 +39,14 @@ public class BotEntry {
     final ScheduledFuture<?> task;
     BotMovementProfile movementProfile = BotMovementProfile.base();
 
+    public BotMovementProfile movementProfile() {
+        return movementProfile != null ? movementProfile : BotMovementProfile.base();
+    }
+
+    public void setMovementProfile(BotMovementProfile movementProfile) {
+        this.movementProfile = movementProfile != null ? movementProfile : BotMovementProfile.base();
+    }
+
     // Physics
     float velY = 0f;
     double hspeed = 0.0;

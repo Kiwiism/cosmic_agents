@@ -4,6 +4,7 @@ import client.Character;
 import server.agents.capabilities.movement.AgentMovementMode;
 import server.agents.capabilities.movement.AgentMovementSnapshot;
 import server.bots.BotEntry;
+import server.bots.BotMovementProfile;
 
 import java.awt.Point;
 
@@ -48,6 +49,18 @@ public final class AgentBotMovementStateRuntime {
             return AgentMovementMode.FOLLOWING;
         }
         return AgentMovementMode.STOPPED;
+    }
+
+    public static BotMovementProfile movementProfile(BotEntry entry) {
+        return entry.movementProfile();
+    }
+
+    public static void setMovementProfile(BotEntry entry, BotMovementProfile movementProfile) {
+        entry.setMovementProfile(movementProfile);
+    }
+
+    public static void refreshMovementProfile(BotEntry entry, Character bot) {
+        entry.setMovementProfile(BotMovementProfile.fromCharacter(bot));
     }
 
     private static Point position(Character character) {
