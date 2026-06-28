@@ -11,6 +11,7 @@ import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
+import server.agents.integration.AgentBotFormationStateRuntime;
 import server.agents.integration.AgentBotGrindLootStateRuntime;
 import server.agents.integration.AgentBotGrindSearchStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
@@ -505,7 +506,7 @@ public class BotManager {
         entries.add(entry);
         FormationState fs = ownerFormations.getOrDefault(ownerCharId, FormationState.defaultStagger());
         for (int i = 0; i < entries.size(); i++) {
-            entries.get(i).followOffsetX = fs.offsetFor(i, entries.size());
+            AgentBotFormationStateRuntime.setFollowOffsetX(entries.get(i), fs.offsetFor(i, entries.size()));
         }
         if (normalizeSpawnState) {
             normalizeSpawnedBot(entry);
@@ -958,7 +959,9 @@ public class BotManager {
             FormationState fs = new FormationState(type, px, current.snapRange());
             ownerFormations.put(owner.getId(), fs);
             if (fEntries != null) {
-                for (int i = 0; i < fEntries.size(); i++) fEntries.get(i).followOffsetX = fs.offsetFor(i, fEntries.size());
+                for (int i = 0; i < fEntries.size(); i++) {
+                    AgentBotFormationStateRuntime.setFollowOffsetX(fEntries.get(i), fs.offsetFor(i, fEntries.size()));
+                }
                 if (!fEntries.isEmpty()) {
                     String label = typeStr.toLowerCase() + (px > 0 ? " " + px + "px" : "");
                     AgentBotManagerReplyRuntime.queueReply(fEntries.get(0), "formation: " + label);
@@ -1281,7 +1284,7 @@ public class BotManager {
         }
 
         for (int i = 0; i < entries.size(); i++) {
-            entries.get(i).followOffsetX = formation.offsetFor(i, entries.size());
+            AgentBotFormationStateRuntime.setFollowOffsetX(entries.get(i), formation.offsetFor(i, entries.size()));
         }
     }
 
@@ -1294,7 +1297,7 @@ public class BotManager {
         Point rawFollowAnchorPos = followAnchor != null ? followAnchor.getPosition() : rawOwnerPos;
         String followAnchorName = followAnchor != null ? followAnchor.getName() : "owner";
         FormationState formation = formationStateFor(entry);
-        Point followBasePos = new Point(rawFollowAnchorPos.x + entry.followOffsetX, rawFollowAnchorPos.y);
+        Point followBasePos = new Point(rawFollowAnchorPos.x + AgentBotFormationStateRuntime.followOffsetX(entry), rawFollowAnchorPos.y);
         Point followTargetPos = resolveFollowTargetPos(followBasePos, followAnchor, rawFollowAnchorPos, formation.snapRange(), bot.getMap());
         Point rawShopTargetPos = entry.shopVisitPending
                 ? (entry.shopTargetPos != null ? entry.shopTargetPos : entry.shopNpcPos)

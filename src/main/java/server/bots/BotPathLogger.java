@@ -11,6 +11,7 @@ import java.util.Deque;
 import java.util.List;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.integration.AgentBotModeStateRuntime;
+import server.agents.integration.AgentBotFormationStateRuntime;
 import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotTickCadenceStateRuntime;
@@ -217,7 +218,7 @@ public final class BotPathLogger {
         sb.append("Formation:  ").append(targetSnapshot.formationType().toLowerCase())
                 .append(" px=").append(targetSnapshot.formationPx())
                 .append(" snap=").append(targetSnapshot.formationSnapRange())
-                .append(" offsetX=").append(entry.followOffsetX).append("\n");
+                .append(" offsetX=").append(AgentBotFormationStateRuntime.followOffsetX(entry)).append("\n");
         if (AgentBotModeStateRuntime.following(entry) || !targetSnapshot.followBasePosition().equals(targetSnapshot.rawOwnerPosition())) {
             sb.append("Follow base:")
                     .append(" ").append(pointRegionStr(targetSnapshot.followBasePosition(), followBaseRegionId))

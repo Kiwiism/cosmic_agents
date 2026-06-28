@@ -821,6 +821,15 @@ public class BotEntry {
 
     // Human-like spacing and stagger — assigned at registration based on bot index
     int followOffsetX = 0;
+
+    public int followOffsetX() {
+        return followOffsetX;
+    }
+
+    public void setFollowOffsetX(int followOffsetX) {
+        this.followOffsetX = followOffsetX;
+    }
+
     int skipDelayMs = ThreadLocalRandom.current().nextInt(0, 501);
     int aiTickAccumulatorMs = 0;
 

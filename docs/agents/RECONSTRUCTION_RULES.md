@@ -615,6 +615,11 @@ Recent reconstruction notes:
   batch-interruption checks, and focused tests keep BotEntry as the temporary
   backing store but no longer read or write `activityEpoch`, `scriptTasks`, or
   `activeScriptTask` directly in production.
+- Formation spacing state now enters through `AgentBotFormationStateRuntime`;
+  BotManager registration/reconfiguration offset assignment, follow-target
+  snapshot construction, BotPathLogger reporting, and focused tests keep
+  BotEntry as the temporary backing store but no longer read or write
+  `followOffsetX` directly in production.
 
 Initial reconstruction order:
 
