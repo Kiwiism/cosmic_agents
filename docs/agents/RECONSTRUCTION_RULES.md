@@ -604,6 +604,11 @@ Recent reconstruction notes:
   handling, respawn cleanup, BotCombatManager fatal-hit handling, and focused
   tests keep BotEntry as the temporary backing store but no longer read or write
   `deadUntil` directly outside the adapter.
+- Map/foothold tracking state now enters through `AgentBotMapStateRuntime`;
+  BotManager spawn/normalize map tracking, follow/grind map-change detection,
+  standalone move-target map-change grounding, shop-mode map-change grounding,
+  and focused tests keep BotEntry as the temporary backing store but no longer
+  read or write `lastMapId` or `fhIndex` directly in production.
 
 Initial reconstruction order:
 

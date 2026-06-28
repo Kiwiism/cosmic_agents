@@ -15,6 +15,7 @@ import server.agents.integration.AgentBotGrindLootStateRuntime;
 import server.agents.integration.AgentBotGrindSearchStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotGrindWanderStateRuntime;
+import server.agents.integration.AgentBotMapStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
@@ -456,10 +457,12 @@ public class BotManager {
         BotPhysicsEngine.teleportTo(entry, botChar, spawnPos);
         BotMovementManager.resetEntryStateAfterTeleport(entry);
         AgentBotDeathStateRuntime.clear(entry);
-        entry.lastMapId = spawnMap != null ? spawnMap.getId() : botChar.getMapId();
+        int spawnMapId = spawnMap != null ? spawnMap.getId() : botChar.getMapId();
         if (spawnMap != null && spawnMap.getFootholds() != null) {
-            entry.fhIndex = BotMovementManager.buildFhIndex(spawnMap);
+            AgentBotMapStateRuntime.setMapTracking(entry, spawnMapId, BotMovementManager.buildFhIndex(spawnMap));
             BotNavigationGraphProvider.warmGraphAsync(spawnMap, entry.movementProfile);
+        } else {
+            AgentBotMapStateRuntime.setMapTracking(entry, spawnMapId, null);
         }
         AgentBotTickCadenceStateRuntime.reset(entry);
         entry.moveDir = 0;
@@ -520,8 +523,7 @@ public class BotManager {
         BotPhysicsEngine.teleportTo(entry, bot, spawnPos != null ? spawnPos : bot.getPosition());
         BotMovementManager.resetEntryStateAfterTeleport(entry);
         AgentBotDeathStateRuntime.clear(entry);
-        entry.lastMapId = bot.getMapId();
-        entry.fhIndex = BotMovementManager.buildFhIndex(bot.getMap());
+        AgentBotMapStateRuntime.setMapTracking(entry, bot.getMapId(), BotMovementManager.buildFhIndex(bot.getMap()));
         AgentBotTickCadenceStateRuntime.reset(entry);
         entry.moveDir = 0;
         AgentBotMovementBroadcastStateRuntime.invalidate(entry);
@@ -2088,10 +2090,9 @@ public class BotManager {
 
         // On any map change (e.g. NPC-triggered portal): rebuild footholds, reset physics,
         // and snap to ground so the bot doesn't carry over airborne state from the previous map.
-        if (entry.lastMapId != bot.getMapId()) {
+        if (!AgentBotMapStateRuntime.isTrackingMap(entry, bot.getMapId())) {
             if (!perf) {
-                entry.fhIndex  = BotMovementManager.buildFhIndex(bot.getMap());
-                entry.lastMapId = bot.getMapId();
+                AgentBotMapStateRuntime.setMapTracking(entry, bot.getMapId(), BotMovementManager.buildFhIndex(bot.getMap()));
                 Point cur = bot.getPosition();
                 Point ground = BotPhysicsEngine.findGroundPoint(bot.getMap(), new Point(cur.x, cur.y - 1));
                 BotPhysicsEngine.teleportTo(entry, bot, ground != null ? ground : cur);
@@ -2106,8 +2107,7 @@ public class BotManager {
             } else {
                 long tMapChange = System.nanoTime();
                 try {
-                    entry.fhIndex  = BotMovementManager.buildFhIndex(bot.getMap());
-                    entry.lastMapId = bot.getMapId();
+                    AgentBotMapStateRuntime.setMapTracking(entry, bot.getMapId(), BotMovementManager.buildFhIndex(bot.getMap()));
                     Point cur = bot.getPosition();
                     Point ground = BotPhysicsEngine.findGroundPoint(bot.getMap(), new Point(cur.x, cur.y - 1));
                     BotPhysicsEngine.teleportTo(entry, bot, ground != null ? ground : cur);
@@ -3300,12 +3300,11 @@ public class BotManager {
     }
 
     private boolean groundAfterMapChange(BotEntry entry, Character bot) {
-        if (entry.lastMapId == bot.getMapId()) {
+        if (AgentBotMapStateRuntime.isTrackingMap(entry, bot.getMapId())) {
             return false;
         }
 
-        entry.fhIndex = BotMovementManager.buildFhIndex(bot.getMap());
-        entry.lastMapId = bot.getMapId();
+        AgentBotMapStateRuntime.setMapTracking(entry, bot.getMapId(), BotMovementManager.buildFhIndex(bot.getMap()));
         Point cur = bot.getPosition();
         Point ground = BotPhysicsEngine.findGroundPoint(bot.getMap(), new Point(cur.x, cur.y - 1));
         BotPhysicsEngine.teleportTo(entry, bot, ground != null ? ground : cur);
@@ -3581,9 +3580,8 @@ public class BotManager {
             return;
         }
 
-        if (entry.lastMapId != bot.getMapId()) {
-            entry.fhIndex  = BotMovementManager.buildFhIndex(bot.getMap());
-            entry.lastMapId = bot.getMapId();
+        if (!AgentBotMapStateRuntime.isTrackingMap(entry, bot.getMapId())) {
+            AgentBotMapStateRuntime.setMapTracking(entry, bot.getMapId(), BotMovementManager.buildFhIndex(bot.getMap()));
             Point cur = bot.getPosition();
             Point ground = BotPhysicsEngine.findGroundPoint(bot.getMap(), new Point(cur.x, cur.y - 1));
             BotPhysicsEngine.teleportTo(entry, bot, ground != null ? ground : cur);

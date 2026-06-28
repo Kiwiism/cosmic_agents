@@ -773,6 +773,19 @@ public class BotEntry {
     int lastMapId = -1;
     Map<Integer, Foothold> fhIndex = new HashMap<>();
 
+    public int lastMapId() {
+        return lastMapId;
+    }
+
+    public Map<Integer, Foothold> footholdIndex() {
+        return Collections.unmodifiableMap(fhIndex);
+    }
+
+    public void setMapTracking(int mapId, Map<Integer, Foothold> footholdIndex) {
+        lastMapId = mapId;
+        fhIndex = footholdIndex == null ? new HashMap<>() : new HashMap<>(footholdIndex);
+    }
+
     // Human-like spacing and stagger — assigned at registration based on bot index
     int followOffsetX = 0;
     int skipDelayMs = ThreadLocalRandom.current().nextInt(0, 501);

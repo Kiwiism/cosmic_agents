@@ -19,6 +19,7 @@ import server.agents.integration.AgentBotGrindLootStateRuntime;
 import server.agents.integration.AgentBotGrindSearchStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotGrindWanderStateRuntime;
+import server.agents.integration.AgentBotMapStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
@@ -419,7 +420,7 @@ class BotManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         AgentBotModeStateRuntime.setGrinding(entry, true);
         AgentBotGrindTargetStateRuntime.setTarget(entry, target);
-        entry.lastMapId = map.getId();
+        AgentBotMapStateRuntime.setMapTracking(entry, map.getId(), BotMovementManager.buildFhIndex(map));
         BotCombatManager.AttackPlan rangedPlan = new BotCombatManager.AttackPlan(
                 0, 0, 1, new Rectangle(-200, 50, 300, 100),
                 List.of(target), BotCombatManager.AttackRoute.RANGED,
@@ -546,7 +547,7 @@ class BotManagerTest {
         assertEquals(100.0, entry.physY);
         assertEquals(0, entry.airVelX);
         assertNull(AgentBotNavigationDebugStateRuntime.navTargetPosition(entry));
-        assertEquals(map.getId(), entry.lastMapId);
+        assertEquals(map.getId(), AgentBotMapStateRuntime.lastMapId(entry));
     }
 
     @Test
