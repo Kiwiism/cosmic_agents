@@ -25,6 +25,7 @@ import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotPotionStateRuntime;
 import server.agents.integration.AgentBotReplyChannelStateRuntime;
 import server.agents.integration.AgentBotRetreatHoldStateRuntime;
+import server.agents.integration.AgentBotTickCadenceStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
 import server.agents.integration.AgentBotTickFailureStateRuntime;
 import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
@@ -459,8 +460,7 @@ public class BotManager {
             entry.fhIndex = BotMovementManager.buildFhIndex(spawnMap);
             BotNavigationGraphProvider.warmGraphAsync(spawnMap, entry.movementProfile);
         }
-        entry.skipDelayMs = 0;
-        entry.aiTickAccumulatorMs = 0;
+        AgentBotTickCadenceStateRuntime.reset(entry);
         entry.moveDir = 0;
         AgentBotMovementBroadcastStateRuntime.invalidate(entry);
         BotMovementManager.broadcastMovement(entry);
@@ -521,8 +521,7 @@ public class BotManager {
         entry.deadUntil = 0;
         entry.lastMapId = bot.getMapId();
         entry.fhIndex = BotMovementManager.buildFhIndex(bot.getMap());
-        entry.skipDelayMs = 0;
-        entry.aiTickAccumulatorMs = 0;
+        AgentBotTickCadenceStateRuntime.reset(entry);
         entry.moveDir = 0;
         AgentBotMovementBroadcastStateRuntime.invalidate(entry);
         BotMovementManager.broadcastMovement(entry);
@@ -1972,8 +1971,7 @@ public class BotManager {
     private void tickCore(BotEntry entry, int ownerCharId, int botCharId) {
         if (entry == null) return;
         if (entry.airshowActive) return;
-        if (entry.skipDelayMs > 0) {
-            entry.skipDelayMs = BotMovementManager.tickDown(entry.skipDelayMs);
+        if (AgentBotTickCadenceStateRuntime.consumeSkipDelay(entry, BotMovementManager.cfg.TICK_MS)) {
             return;
         }
         Character bot = entry.bot;
@@ -3913,13 +3911,8 @@ public class BotManager {
     }
 
     private boolean consumeAiTick(BotEntry entry) {
-        entry.aiTickAccumulatorMs += BotMovementManager.cfg.TICK_MS;
-        if (entry.aiTickAccumulatorMs < cfg.AI_TICK_MS) {
-            return false;
-        }
-
-        entry.aiTickAccumulatorMs -= cfg.AI_TICK_MS;
-        return true;
+        return AgentBotTickCadenceStateRuntime.consumeAiTick(
+                entry, BotMovementManager.cfg.TICK_MS, cfg.AI_TICK_MS);
     }
 
     // ===== Owned-bot accessors used by the androidequip.cpp BotEquipHandler =====

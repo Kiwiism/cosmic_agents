@@ -594,6 +594,11 @@ Recent reconstruction notes:
   BotManager command routing/reply delivery, Agent reply runtime delivery, and
   BotOfferManager auto-accept replies keep BotEntry as the temporary backing
   store but no longer read or write `replyChannel` directly outside the adapter.
+- Tick cadence state now enters through `AgentBotTickCadenceStateRuntime`;
+  BotManager spawn/normalize reset, tick skip-delay handling, AI tick cadence
+  consumption, BotPathLogger cadence reporting, and focused tests keep BotEntry
+  as the temporary backing store but no longer read or write `skipDelayMs` or
+  `aiTickAccumulatorMs` directly outside the adapter.
 
 Initial reconstruction order:
 

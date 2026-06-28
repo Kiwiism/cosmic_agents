@@ -766,6 +766,22 @@ public class BotEntry {
     int skipDelayMs = ThreadLocalRandom.current().nextInt(0, 501);
     int aiTickAccumulatorMs = 0;
 
+    public int skipDelayMs() {
+        return skipDelayMs;
+    }
+
+    public void setSkipDelayMs(int skipDelayMs) {
+        this.skipDelayMs = skipDelayMs;
+    }
+
+    public int aiTickAccumulatorMs() {
+        return aiTickAccumulatorMs;
+    }
+
+    public void setAiTickAccumulatorMs(int aiTickAccumulatorMs) {
+        this.aiTickAccumulatorMs = aiTickAccumulatorMs;
+    }
+
     // "Move here" target — bot navigates to this fixed point, then idles until cleared
     Point moveTarget = null;
     boolean moveTargetPrecise = false; // true when triggered by "move here" — uses tight stop dist

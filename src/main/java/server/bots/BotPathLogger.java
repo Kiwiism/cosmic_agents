@@ -13,6 +13,7 @@ import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentBotTickCadenceStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
 import server.maps.MapleMap;
 
@@ -246,7 +247,7 @@ public final class BotPathLogger {
         }
         sb.append("\n");
         sb.append("AI cadence:  every ").append(BotManager.cfg.AI_TICK_MS).append("ms")
-                .append("  accum=").append(entry.aiTickAccumulatorMs).append("ms")
+                .append("  accum=").append(AgentBotTickCadenceStateRuntime.aiTickAccumulatorMs(entry)).append("ms")
                 .append("  lastTick=").append(AgentBotTickStateRuntime.lastTickWasAi(entry) ? "AI" : "non-AI");
         long lastTickAtMs = AgentBotTickStateRuntime.lastTickAtMs(entry);
         if (lastTickAtMs > 0) {
