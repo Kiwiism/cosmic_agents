@@ -1,5 +1,6 @@
 package server.bots;
 
+import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import client.Character;
 import client.BuffStat;
 import client.inventory.Inventory;
@@ -696,8 +697,8 @@ class BotManagerTest {
         Character bot = mockMovingBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
         AgentBotGrindSearchStateRuntime.scheduleNextSearch(entry, 1_000L);
-        entry.aoeSkillId = constants.skills.Warrior.SLASH_BLAST;
-        entry.aoeSkillMobs = 6;
+        AgentBotCombatSkillCacheStateRuntime.setAoeSkill(entry, constants.skills.Warrior.SLASH_BLAST, AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
+        AgentBotCombatSkillCacheStateRuntime.setAoeSkill(entry, AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry), 6);
         Monster target = mock(Monster.class);
         when(target.getPosition()).thenReturn(new Point(140, 100));
         BotCombatManager.AttackPlan singleTargetPlan = basicClosePlan(target);
@@ -725,8 +726,8 @@ class BotManagerTest {
         MapleMap map = createEmptyTestMap(910000130);
         Character bot = mockMovingBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
-        entry.aoeSkillId = constants.skills.Warrior.SLASH_BLAST;
-        entry.aoeSkillMobs = 6;
+        AgentBotCombatSkillCacheStateRuntime.setAoeSkill(entry, constants.skills.Warrior.SLASH_BLAST, AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
+        AgentBotCombatSkillCacheStateRuntime.setAoeSkill(entry, AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry), 6);
         Monster current = mock(Monster.class);
         when(current.getPosition()).thenReturn(new Point(140, 100)); // in basic range
         Monster searched = mock(Monster.class);

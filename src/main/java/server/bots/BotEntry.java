@@ -212,20 +212,20 @@ public class BotEntry {
     }
 
     // Skill cache
-    int cachedSkillJob = -1;
-    int cachedSkillLevel = -1;
-    int cachedSkillSignature = 0;
-    final List<Integer> attackSkillIds = new ArrayList<>();
-    int attackSkillId = 0;
-    int aoeSkillId = 0;
-    int aoeSkillMobs = 1;
-    int healSkillId = 0;
-    List<Integer> buffSkillIds = new ArrayList<>();
+    private int cachedSkillJob = -1;
+    private int cachedSkillLevel = -1;
+    private int cachedSkillSignature = 0;
+    private final List<Integer> attackSkillIds = new ArrayList<>();
+    private int attackSkillId = 0;
+    private int aoeSkillId = 0;
+    private int aoeSkillMobs = 1;
+    private int healSkillId = 0;
+    private final List<Integer> buffSkillIds = new ArrayList<>();
     // Summon skills (Phoenix, Puppet, Beholder, ...) classified into their own bucket: they are
     // NOT rebuffable (the bot has no summon-cast path that sends a spawn position, so casting them
     // via the buff loop only burns MP without spawning the creature). Held here for a future
     // place/condition-gated summon caster; the generic rebuff loop ignores this list.
-    final List<Integer> summonSkillIds = new ArrayList<>();
+    private final List<Integer> summonSkillIds = new ArrayList<>();
     final Map<Integer, Long> nextBuffAt = new HashMap<>();
     final Map<Integer, Long> nextSupportBuffAt = new HashMap<>();
     long nextSupportHealAt = 0L;
@@ -238,6 +238,78 @@ public class BotEntry {
 
     public void setSkillBuffsEnabled(boolean skillBuffsEnabled) {
         this.skillBuffsEnabled = skillBuffsEnabled;
+    }
+
+    public boolean skillCacheMatches(int jobId, int level, int signature) {
+        return cachedSkillJob == jobId
+                && cachedSkillLevel == level
+                && cachedSkillSignature == signature;
+    }
+
+    public void resetSkillCache(int jobId, int level, int signature) {
+        cachedSkillJob = jobId;
+        cachedSkillLevel = level;
+        cachedSkillSignature = signature;
+        attackSkillId = 0;
+        aoeSkillId = 0;
+        aoeSkillMobs = 1;
+        attackSkillIds.clear();
+        healSkillId = 0;
+        buffSkillIds.clear();
+        summonSkillIds.clear();
+    }
+
+    public List<Integer> attackSkillIds() {
+        return attackSkillIds;
+    }
+
+    public void addAttackSkillId(int skillId) {
+        attackSkillIds.add(skillId);
+    }
+
+    public int attackSkillId() {
+        return attackSkillId;
+    }
+
+    public void setAttackSkillId(int attackSkillId) {
+        this.attackSkillId = attackSkillId;
+    }
+
+    public int aoeSkillId() {
+        return aoeSkillId;
+    }
+
+    public int aoeSkillMobs() {
+        return aoeSkillMobs;
+    }
+
+    public void setAoeSkill(int skillId, int mobCount) {
+        aoeSkillId = skillId;
+        aoeSkillMobs = mobCount;
+    }
+
+    public int healSkillId() {
+        return healSkillId;
+    }
+
+    public void setHealSkillId(int healSkillId) {
+        this.healSkillId = healSkillId;
+    }
+
+    public List<Integer> buffSkillIds() {
+        return buffSkillIds;
+    }
+
+    public void addBuffSkillId(int skillId) {
+        buffSkillIds.add(skillId);
+    }
+
+    public List<Integer> summonSkillIds() {
+        return summonSkillIds;
+    }
+
+    public void addSummonSkillId(int skillId) {
+        summonSkillIds.add(skillId);
     }
 
     // Ammo

@@ -51,6 +51,7 @@ import server.bots.combat.BotDefenseDataProvider;
 import server.bots.combat.BotMobHitboxProvider;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import server.agents.integration.AgentBotCombatRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
@@ -551,22 +552,12 @@ public class BotCombatManager {
 
     static void rebuildSkillCacheIfNeeded(BotEntry entry, Character bot) {
         int skillSignature = skillCacheSignature(bot);
-        if (entry.cachedSkillJob == bot.getJob().getId()
-                && entry.cachedSkillLevel == bot.getLevel()
-                && entry.cachedSkillSignature == skillSignature) {
+        if (AgentBotCombatSkillCacheStateRuntime.matches(
+                entry, bot.getJob().getId(), bot.getLevel(), skillSignature)) {
             return;
         }
 
-        entry.cachedSkillJob = bot.getJob().getId();
-        entry.cachedSkillLevel = bot.getLevel();
-        entry.cachedSkillSignature = skillSignature;
-        entry.attackSkillId = 0;
-        entry.aoeSkillId = 0;
-        entry.aoeSkillMobs = 1;
-        entry.attackSkillIds.clear();
-        entry.healSkillId = 0;
-        entry.buffSkillIds.clear();
-        entry.summonSkillIds.clear();
+        AgentBotCombatSkillCacheStateRuntime.reset(entry, bot.getJob().getId(), bot.getLevel(), skillSignature);
 
         int bestAtkHits = 0;
         int bestAtkPriority = Integer.MIN_VALUE;
@@ -583,39 +574,39 @@ public class BotCombatManager {
 
             if (isHealSkill(skill.getId())) {
                 if (isActiveHealSkill(skill, fx)) {
-                    entry.healSkillId = skill.getId();
+                    AgentBotCombatSkillCacheStateRuntime.setHealSkillId(entry, skill.getId());
                 }
                 continue;  // not an attack skill; offensive use against undead handled in tickSupportHealing
             }
 
             if (isActiveAttackSkill(skill, fx)) {
-                entry.attackSkillIds.add(skill.getId());
+                AgentBotCombatSkillCacheStateRuntime.addAttackSkillId(entry, skill.getId());
                 if (mobs >= 2) {
                     long score = (long) Math.max(0, fx.getDamagePercent()) * Math.max(1, atk) * Math.max(1, mobs);
                     if (score > bestAoeScore) {
                         bestAoeScore = score;
-                        entry.aoeSkillId = skill.getId();
-                        entry.aoeSkillMobs = mobs;
+                        AgentBotCombatSkillCacheStateRuntime.setAoeSkill(entry, skill.getId(), mobs);
                     }
                 } else if (shouldUseAsBestSingleTargetSkill(bot, skill, fx, atk,
-                        bestAtkHits, bestAtkPriority, bestAtkDamage, entry.attackSkillId)) {
+                        bestAtkHits, bestAtkPriority, bestAtkDamage,
+                        AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry))) {
                     bestAtkHits = atk;
                     bestAtkPriority = singleTargetSkillPriority(bot, skill);
                     bestAtkDamage = fx.getDamage();
-                    entry.attackSkillId = skill.getId();
+                    AgentBotCombatSkillCacheStateRuntime.setAttackSkillId(entry, skill.getId());
                 }
                 continue;
             }
 
             if (isSummonSkill(fx)) {
                 // Own bucket, not rebuffable — see BotEntry.summonSkillIds.
-                entry.summonSkillIds.add(skill.getId());
+                AgentBotCombatSkillCacheStateRuntime.addSummonSkillId(entry, skill.getId());
                 continue;
             }
 
             if (!isActiveSupportSkill(skill, fx)) continue;
             if (BUFF_BLACKLIST.contains(skill.getId())) continue;
-            entry.buffSkillIds.add(skill.getId());
+            AgentBotCombatSkillCacheStateRuntime.addBuffSkillId(entry, skill.getId());
             entry.nextBuffAt.putIfAbsent(skill.getId(), 0L);
         }
     }
@@ -643,7 +634,7 @@ public class BotCombatManager {
             noteSkillBuffDecision(entry, "idle (not following or grinding)");
             return;
         }
-        if (entry.buffSkillIds.isEmpty()) {
+        if (!AgentBotCombatSkillCacheStateRuntime.hasBuffSkillIds(entry)) {
             noteSkillBuffDecision(entry, "no buff skills in cache");
             return;
         }
@@ -654,7 +645,7 @@ public class BotCombatManager {
             return;
         }
 
-        for (int skillId : entry.buffSkillIds) {
+        for (int skillId : AgentBotCombatSkillCacheStateRuntime.buffSkillIds(entry)) {
             if (now < entry.nextBuffAt.getOrDefault(skillId, 0L)) continue;
             if (bot.skillIsCooling(skillId)) continue;
 
@@ -717,9 +708,10 @@ public class BotCombatManager {
         if (AgentBotCombatCooldownStateRuntime.blocksGroundedAttack(entry, entry.inAir)) return false;
         if (!entry.supportHealsEnabled) return false;
         if (!AgentBotModeStateRuntime.following(entry) && !AgentBotModeStateRuntime.grinding(entry)) return false;
-        if (entry.healSkillId == 0 || bot.skillIsCooling(entry.healSkillId)) return false;
+        int healSkillId = AgentBotCombatSkillCacheStateRuntime.healSkillId(entry);
+        if (healSkillId == 0 || bot.skillIsCooling(healSkillId)) return false;
 
-        Skill skill = SkillFactory.getSkill(entry.healSkillId);
+        Skill skill = SkillFactory.getSkill(healSkillId);
         int lvl = bot.getSkillLevel(skill);
         if (lvl <= 0) return false;
         StatEffect fx = skill.getEffect(lvl);
@@ -762,13 +754,13 @@ public class BotCombatManager {
                 BotAttackExecutionProvider.resolveSkillAttackTiming(skill, action, bot, fallbackAttackData);
         AgentBotCombatCooldownStateRuntime.maxAttackCooldown(entry, skillTiming.cooldownMs());
         if (partyNeedsHeal && fx.getCooldown() > 0) {
-            bot.addCooldown(entry.healSkillId, now, fx.getCooldown() * 1000L);
+            bot.addCooldown(healSkillId, now, fx.getCooldown() * 1000L);
         }
 
         // Always send the attack/cast packet so the animation plays even when there are no undead
         // to hit — the packet carries an empty targets map in that case, which is what a real client
         // does when a player presses Heal with no mob in range.
-        sendHealAttack(entry.healSkillId, lvl, bot, undeadTargets, fallbackAttackData, skillTiming);
+        sendHealAttack(healSkillId, lvl, bot, undeadTargets, fallbackAttackData, skillTiming);
         markAlerted(entry);
         AgentBotCombatCooldownStateRuntime.maxMoveWindow(entry, cfg.HEAL_MOVE_WINDOW_MS);
         if (!jumpHealing) {
@@ -1030,16 +1022,18 @@ public class BotCombatManager {
     }
 
     private static List<Integer> cachedAttackSkillIds(BotEntry entry) {
-        if (!entry.attackSkillIds.isEmpty()) {
-            return entry.attackSkillIds;
+        if (AgentBotCombatSkillCacheStateRuntime.hasAttackSkillIds(entry)) {
+            return AgentBotCombatSkillCacheStateRuntime.attackSkillIds(entry);
         }
 
         List<Integer> skillIds = new ArrayList<>(2);
-        if (entry.attackSkillId != 0) {
-            skillIds.add(entry.attackSkillId);
+        int attackSkillId = AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry);
+        int aoeSkillId = AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry);
+        if (attackSkillId != 0) {
+            skillIds.add(attackSkillId);
         }
-        if (entry.aoeSkillId != 0 && entry.aoeSkillId != entry.attackSkillId) {
-            skillIds.add(entry.aoeSkillId);
+        if (aoeSkillId != 0 && aoeSkillId != attackSkillId) {
+            skillIds.add(aoeSkillId);
         }
         return skillIds;
     }
@@ -1639,8 +1633,9 @@ public class BotCombatManager {
         int aoeDamage = Math.max(0, aoeEffect.getDamage());
         long aoeScore = (long) aoeDamage * Math.max(1, aoeAttackCount) * Math.max(1, targetCount);
         long singleScore = 100L; // basic attack: 100% damage × 1 line
-        if (entry.attackSkillId != 0) {
-            Skill skill = SkillFactory.getSkill(entry.attackSkillId);
+        int attackSkillId = AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry);
+        if (attackSkillId != 0) {
+            Skill skill = SkillFactory.getSkill(attackSkillId);
             int level = skill == null ? 0 : bot.getSkillLevel(skill);
             if (level > 0) {
                 StatEffect fx = skill.getEffect(level);
@@ -1715,11 +1710,12 @@ public class BotCombatManager {
     }
 
     private static boolean isImmediateProjectileSkillTarget(BotEntry entry, Character bot, Monster target) {
-        if (entry.attackSkillId == 0 || bot.skillIsCooling(entry.attackSkillId)) {
+        int attackSkillId = AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry);
+        if (attackSkillId == 0 || bot.skillIsCooling(attackSkillId)) {
             return false;
         }
 
-        Skill skill = SkillFactory.getSkill(entry.attackSkillId);
+        Skill skill = SkillFactory.getSkill(attackSkillId);
         int skillLevel = skill == null ? 0 : bot.getSkillLevel(skill);
         if (skillLevel <= 0) {
             return false;
@@ -1730,14 +1726,14 @@ public class BotCombatManager {
             return false;
         }
 
-        AttackRoute route = BotAttackExecutionProvider.determineSkillRoute(bot, entry.attackSkillId);
+        AttackRoute route = BotAttackExecutionProvider.determineSkillRoute(bot, attackSkillId);
         if (route != AttackRoute.RANGED && route != AttackRoute.MAGIC) {
             return false;
         }
 
         // Route is gated to RANGED/MAGIC above, so the close-range (action-gated) path is never
         // taken here — action is irrelevant for the projectile box.
-        Rectangle hitBox = calculateSkillHitBox(effect, bot, target, route, entry.attackSkillId, null);
+        Rectangle hitBox = calculateSkillHitBox(effect, bot, target, route, attackSkillId, null);
         if (hitBox == null || !doesHitBoxIntersectMonster(hitBox, target)) {
             return false;
         }
@@ -1887,7 +1883,7 @@ public class BotCombatManager {
     static final long AOE_CLUSTER_BONUS_PER_MOB = 200L;
 
     private static long aoeClusterBonus(BotEntry entry, Monster target, List<Monster> candidates) {
-        if (entry == null || entry.aoeSkillId == 0 || entry.aoeSkillMobs <= 1
+        if (entry == null || !AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry)
                 || target == null || candidates == null || candidates.isEmpty()) {
             return 0L;
         }
@@ -1896,7 +1892,7 @@ public class BotCombatManager {
             return 0L;
         }
         long radiusSq = (long) AOE_CLUSTER_RADIUS_PX * AOE_CLUSTER_RADIUS_PX;
-        int cap = entry.aoeSkillMobs - 1;
+        int cap = AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry) - 1;
         int neighbors = 0;
         for (Monster other : candidates) {
             if (other == target || other == null || !other.isAlive()) {
@@ -1921,9 +1917,9 @@ public class BotCombatManager {
     /** True iff the bot has a multi-mob AoE skill but its chosen plan is single-target with room to hit more. */
     static boolean isAoeBotSingleTargeting(BotEntry entry, AttackPlan plan) {
         return entry != null && plan != null
-                && entry.aoeSkillId != 0 && entry.aoeSkillMobs > 1
-                && plan.skillId != entry.aoeSkillId
-                && plan.targets.size() < entry.aoeSkillMobs;
+                && AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry)
+                && plan.skillId != AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry)
+                && plan.targets.size() < AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry);
     }
 
     /** Live mobs within AoE cluster radius of the anchor (including itself), capped at the skill's mobCount. */
@@ -1932,7 +1928,8 @@ public class BotCombatManager {
                 || bot.getMap() == null || anchor.getPosition() == null) {
             return 0;
         }
-        return Math.min(clusterMonsters(bot, anchor).size(), Math.max(1, entry.aoeSkillMobs));
+        return Math.min(clusterMonsters(bot, anchor).size(),
+                Math.max(1, AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry)));
     }
 
     // AoE positioning: target selection (aoeClusterBonus) steers the bot toward a cluster, but the
@@ -1943,14 +1940,14 @@ public class BotCombatManager {
     // (fire now). Bounded by AOE_REPOSITION_MAX_DISTANCE_X so it never chases scattering mobs.
     static Point aoeRepositionTarget(BotEntry entry, Character bot, Monster primaryTarget, AttackPlan fireNowBest) {
         if (!cfg.AOE_REPOSITION_ENABLED || entry == null || bot == null || primaryTarget == null
-                || entry.aoeSkillId == 0 || entry.aoeSkillMobs <= 1) {
+                || !AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry)) {
             return null;
         }
         // Only when the chosen plan is single-target with room to hit more — skip when the AoE is
         // already the pick or the in-range cluster already maxes the skill's mobCount.
         if (fireNowBest == null
-                || fireNowBest.skillId == entry.aoeSkillId
-                || fireNowBest.targets.size() >= entry.aoeSkillMobs) {
+                || fireNowBest.skillId == AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry)
+                || fireNowBest.targets.size() >= AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry)) {
             return null;
         }
         Point botPos = bot.getPosition();
@@ -1974,7 +1971,9 @@ public class BotCombatManager {
         // anchor), so to cover the cluster we shift the box CENTER onto the centroid — not the bot
         // onto the centroid, which would push a forward box past the mobs and catch none. The bot
         // moves by the same shift, bounded by the chase distance.
-        AttackPlan aoeNow = planSkillAttack(entry, bot, primaryTarget, entry.aoeSkillId);
+        int aoeSkillId = AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry);
+        int aoeSkillMobs = AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry);
+        AttackPlan aoeNow = planSkillAttack(entry, bot, primaryTarget, aoeSkillId);
         if (aoeNow == null || aoeNow.hitBox == null) {
             return null;
         }
@@ -1991,7 +1990,7 @@ public class BotCombatManager {
         if (sweetPrimary == null) {
             return null;
         }
-        List<Monster> sweetTargets = collectTargetsInHitBox(bot, sweetPrimary, shifted, entry.aoeSkillMobs);
+        List<Monster> sweetTargets = collectTargetsInHitBox(bot, sweetPrimary, shifted, aoeSkillMobs);
         if (sweetTargets.size() <= fireNowBest.targets.size()) {
             return null; // repositioning wouldn't actually catch more mobs
         }
@@ -2011,7 +2010,7 @@ public class BotCombatManager {
                 double pct = fireNowScore.rawDps > 0 ? sweetScore.rawDps / fireNowScore.rawDps * 100.0d : 0.0d;
                 log.info("AoE reposition[{}]: stepping {}px {} to hit {} mobs (vs {}) with {} for {}% DPS ({} vs {} dps)",
                         bot.getName(), Math.abs(shift), shift < 0 ? "left" : "right",
-                        sweetTargets.size(), fireNowBest.targets.size(), skillLabel(entry.aoeSkillId),
+                        sweetTargets.size(), fireNowBest.targets.size(), skillLabel(aoeSkillId),
                         Math.round(pct), Math.round(sweetScore.rawDps), Math.round(fireNowScore.rawDps));
             }
             return new Point(botPos.x + shift, botPos.y);
@@ -2368,7 +2367,7 @@ public class BotCombatManager {
         }
 
         List<AgentCombatDialogueReporter.CachedSkillBuffDebugLine> cachedBuffs = new ArrayList<>();
-        for (int skillId : entry.buffSkillIds) {
+        for (int skillId : AgentBotCombatSkillCacheStateRuntime.buffSkillIds(entry)) {
             boolean cooling = bot.skillIsCooling(skillId);
             long nextAt = entry.nextBuffAt.getOrDefault(skillId, 0L);
             String status;
@@ -2414,7 +2413,7 @@ public class BotCombatManager {
     }
 
     private static boolean trySupportBuff(BotEntry entry, Character bot, long now) {
-        for (int skillId : entry.buffSkillIds) {
+        for (int skillId : AgentBotCombatSkillCacheStateRuntime.buffSkillIds(entry)) {
             if (!isPartySupportSkill(skillId)) {
                 continue;
             }
