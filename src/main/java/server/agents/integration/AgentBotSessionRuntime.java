@@ -20,7 +20,7 @@ public final class AgentBotSessionRuntime {
             @Override
             public void requestRelog() {
                 AgentBotSessionSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
-                    entry.setPendingAction(AgentChatPendingAction.RELOG);
+                    AgentBotPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.RELOG);
                     BotManager.getInstance().issueStop(entry);
                     AgentBotSessionReplyRuntime.replyNow(entry, AgentChatSessionRequestFlow.relogConfirmPrompt());
                 });
@@ -29,7 +29,7 @@ public final class AgentBotSessionRuntime {
             @Override
             public void requestLogout() {
                 AgentBotSessionSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
-                    entry.setPendingAction(AgentChatPendingAction.LOGOUT);
+                    AgentBotPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.LOGOUT);
                     BotManager.getInstance().issueStop(entry);
                     AgentBotSessionReplyRuntime.replyNow(entry, AgentChatSessionRequestFlow.logoutConfirmPrompt());
                 });
@@ -92,7 +92,7 @@ public final class AgentBotSessionRuntime {
         return new AgentChatAwayFlow.AwayPromptCallbacks() {
             @Override
             public void setPendingOwnerAway() {
-                entry.setPendingAction(AgentChatPendingAction.OWNER_AWAY);
+                AgentBotPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.OWNER_AWAY);
             }
 
             @Override
@@ -116,7 +116,7 @@ public final class AgentBotSessionRuntime {
         return new AgentChatAwayFlow.AwayChoiceCallbacks() {
             @Override
             public void clearPendingAction() {
-                entry.clearPendingAction();
+                AgentBotPendingActionStateRuntime.clearPendingAction(entry);
             }
 
             @Override

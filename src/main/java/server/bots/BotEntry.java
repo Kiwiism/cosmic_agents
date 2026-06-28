@@ -618,11 +618,11 @@ public class BotEntry {
     volatile ReplyChannel replyChannel = ReplyChannel.MAP;
 
     // Pending two-step action
-    String pendingAction = null;
+    private String pendingAction = null;
     public String pendingAction() { return pendingAction; }
     public void setPendingAction(String pendingAction) { this.pendingAction = pendingAction; }
     public void clearPendingAction() { this.pendingAction = null; }
-    String pendingDropCategory = null;
+    private String pendingDropCategory = null;
     public String pendingDropCategory() { return pendingDropCategory; }
     public void setPendingDropCategory(String pendingDropCategory) { this.pendingDropCategory = pendingDropCategory; }
     public void clearPendingDropCategory() { this.pendingDropCategory = null; }
