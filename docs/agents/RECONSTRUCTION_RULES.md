@@ -685,6 +685,13 @@ Recent reconstruction notes:
   ownership transfer, active-owner lookup, and name lookup keep BotEntry as the
   temporary backing store but no longer read the corresponding `bot`/`owner`
   identity fields directly in those paths.
+- Runtime identity local extraction now enters through
+  `AgentBotRuntimeIdentityRuntime`; BotManager normalization, formation,
+  target snapshots, retreat selection, grind loot, tick shell, tick-failure
+  handling, follow setup, local movement checks, and movement-only stepping keep
+  BotEntry as the temporary backing store but no longer initialize local
+  `Character bot`/`Character owner` variables directly from `entry.bot` or
+  `entry.owner`.
 
 Initial reconstruction order:
 

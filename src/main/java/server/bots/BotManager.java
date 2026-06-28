@@ -526,7 +526,7 @@ public class BotManager {
     }
 
     private void normalizeSpawnedBot(BotEntry entry) {
-        Character bot = entry.bot;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         Point spawnPos = resolveSpawnPosition(bot.getMap(), bot.getPosition());
         if (bot.getHp() <= 0) {
             bot.updateHp(Math.max(1, bot.getCurrentMaxHp()));
@@ -1248,7 +1248,7 @@ public class BotManager {
     }
 
     FormationState formationStateFor(BotEntry entry) {
-        Character owner = entry.owner;
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner == null) {
             return FormationState.defaultStagger();
         }
@@ -1261,7 +1261,7 @@ public class BotManager {
         }
 
         int targetId = AgentBotModeStateRuntime.followTargetId(entry);
-        if (targetId <= 0 || targetId == owner.getId() || targetId == entry.bot.getId()) {
+        if (targetId <= 0 || targetId == owner.getId() || targetId == AgentBotRuntimeIdentityRuntime.botId(entry)) {
             return owner;
         }
 
@@ -1274,8 +1274,9 @@ public class BotManager {
         }
 
         for (BotEntry sibling : getBotEntries(owner.getId())) {
-            if (sibling.bot != null && sibling.bot.getId() == targetId && sibling.bot.isLoggedinWorld()) {
-                return sibling.bot;
+            Character siblingBot = AgentBotRuntimeIdentityRuntime.bot(sibling);
+            if (siblingBot != null && siblingBot.getId() == targetId && siblingBot.isLoggedinWorld()) {
+                return siblingBot;
             }
         }
 
@@ -1299,8 +1300,8 @@ public class BotManager {
     }
 
     TargetSnapshot captureTargetSnapshot(BotEntry entry) {
-        Character bot = entry.bot;
-        Character owner = entry.owner;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         Character followAnchor = resolveFollowAnchor(entry, owner);
         Point fallbackPos = bot.getPosition();
         Point rawOwnerPos = owner != null ? owner.getPosition() : fallbackPos;
@@ -1395,7 +1396,7 @@ public class BotManager {
             return combatTargetPos;
         }
 
-        Character bot = entry.bot;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (bot == null) {
             return combatTargetPos;
         }
@@ -1478,7 +1479,7 @@ public class BotManager {
      * an exit instead of into a dead-end wall. Ties fall back to the open-side preference.
      */
     private static int pickBreakoutDirection(BotEntry entry, Point botPos, Point combatTargetPos) {
-        Character bot = entry.bot;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         int base = BotAttackExecutionProvider.pickRetreatDirection(bot, botPos, combatTargetPos);
         MapleMap map = bot != null ? bot.getMap() : null;
         if (map == null || map.getFootholds() == null) {
@@ -1534,7 +1535,7 @@ public class BotManager {
         if (AgentBotMovementStateRuntime.climbing(entry) || AgentBotMovementStateRuntime.inAir(entry) || AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
             return null;
         }
-        Character bot = entry.bot;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         MapleMap map = bot != null ? bot.getMap() : null;
         if (map == null || map.getFootholds() == null) {
             return null;
@@ -1758,7 +1759,7 @@ public class BotManager {
             return false;
         }
 
-        Character bot = entry.bot;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         MapleMap map = bot != null ? bot.getMap() : null;
         if (map == null || map.getFootholds() == null) {
             return false;
@@ -1854,7 +1855,7 @@ public class BotManager {
     }
 
     static Point resolveNoGrindTargetPosition(BotEntry entry, Point botPos) {
-        Character bot = entry != null ? entry.bot : null;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         MapleMap map = bot != null ? bot.getMap() : null;
         return resolveNoGrindTargetPosition(entry, botPos, map);
     }
@@ -1865,7 +1866,7 @@ public class BotManager {
             AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
             return null;
         }
-        Character bot = entry.bot;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (loot.isPickedUp() || bot == null || bot.getMap() == null
                 || bot.getMap().getMapObject(loot.getObjectId()) != loot) {
             AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
@@ -1993,7 +1994,7 @@ public class BotManager {
         if (AgentBotTickCadenceStateRuntime.consumeSkipDelay(entry, BotMovementManager.cfg.TICK_MS)) {
             return;
         }
-        Character bot = entry.bot;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
 
         // Guard: bot was removed from its map externally (e.g. a prior disconnect race).
         // Stop ticking and clean up rather than NPE-spamming TimerManager workers.
@@ -2446,8 +2447,8 @@ public class BotManager {
         long now = System.currentTimeMillis();
         int failureCount = AgentBotTickFailureStateRuntime.recordFailure(entry, now, BOT_TICK_FAILURE_WINDOW_MS);
 
-        Character bot = entry.bot;
-        Character owner = entry.owner;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         String botName = bot != null ? bot.getName() : "?";
         String ownerName = owner != null ? owner.getName() : "?";
         int mapId = bot != null ? bot.getMapId() : -1;
@@ -2491,7 +2492,7 @@ public class BotManager {
         try {
             AgentBotManagerReplyRuntime.replyNow(entry, "unrecoverable error caught, idling");
         } catch (Throwable chatError) {
-            Character bot = entry.bot;
+            Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
             log.warn("Failed to send bot failure idle message for '{}'",
                     bot != null ? bot.getName() : "?", chatError);
         }
@@ -2995,7 +2996,7 @@ public class BotManager {
     }
 
     private void startFollow(BotEntry entry, Character target) {
-        Character owner = entry.owner;
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         AgentBotModeStateRuntime.setFollowTargetId(entry, owner != null && target != null && owner.getId() != target.getId()
                 ? target.getId()
                 : 0);
@@ -3131,7 +3132,7 @@ public class BotManager {
             return false;
         }
 
-        Character bot = entry.bot;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         Point botPos = bot.getPosition();
         if (botPos == null) {
             return false;
@@ -3576,8 +3577,8 @@ public class BotManager {
             return;
         }
 
-        Character bot = entry.bot;
-        Character owner = entry.owner;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
 
         if (tickIdleEntry(entry, bot)) {
             return;
