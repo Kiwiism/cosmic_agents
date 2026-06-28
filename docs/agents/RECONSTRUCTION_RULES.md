@@ -770,6 +770,13 @@ Recent reconstruction notes:
   `AgentBotMovementStateRuntime`; BotMovementManager idle-on-ground checks and
   follow-step hysteresis keep BotEntry as the temporary backing store but no
   longer read or write `movementVelX` or `wasMovingX` directly in production.
+- Climb and rope movement state now enters through
+  `AgentBotClimbStateRuntime`; BotMovementManager climb target steering,
+  climb direction intent, rope transfer, rope snap, rope-grab filtering, and
+  rope-entry dispatch keep BotEntry as the temporary backing store but no
+  longer read or write `climbRope`, `climbVerticalDir`, `climbing`,
+  `climbUpIntent`, `blockedRopeGrab`, or `ropeEntryPending` directly in
+  production.
 
 Initial reconstruction order:
 

@@ -6,6 +6,7 @@ import net.packet.ByteBufInPacket;
 import net.packet.InPacket;
 import net.packet.Packet;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotGrindSearchStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
@@ -213,12 +214,13 @@ public class BotMovementManager {
             BotPhysicsEngine.tickMotionTimers(entry);
             Point botPos = bot.getPosition();
             int dy = targetPos.y - botPos.y;
-            int dxOwner = targetPos.x - entry.climbRope.x();
+            Rope climbRope = AgentBotClimbStateRuntime.climbRope(entry);
+            int dxOwner = targetPos.x - climbRope.x();
 
             // If not navigating, allow jumping off when target is far away horizontally
             if (runAiTick && entry.navEdge == null
                     && Math.abs(dxOwner) > cfg.FOLLOW_DIST
-                    && entry.climbRope.bottomY() < targetPos.y) {
+                    && climbRope.bottomY() < targetPos.y) {
                 jumpOffRope(entry, bot, dxOwner);
                 return;
             }
@@ -231,7 +233,7 @@ public class BotMovementManager {
             }
 
             if (shouldSnapToClimbTarget(entry, targetPos, dy)) {
-                BotPhysicsEngine.attachToRope(entry, bot, entry.climbRope, targetPos.y);
+                BotPhysicsEngine.attachToRope(entry, bot, climbRope, targetPos.y);
                 broadcastMovement(entry);
                 return;
             }
@@ -242,7 +244,7 @@ public class BotMovementManager {
                 // findNextEdge here), and using its dy to choose a direction can dismount the bot
                 // off the rope-top onto the foothold above — pathlog-Preston-2026-05-07 oscillation.
                 // Integrate the cached intent instead; the next AI tick will refresh direction.
-                if (entry.climbVerticalDir == 0) {
+                if (!AgentBotClimbStateRuntime.hasClimbVerticalDirection(entry)) {
                     BotPhysicsEngine.holdClimb(entry, bot);
                 } else {
                     BotPhysicsEngine.advanceClimb(entry, bot);
@@ -268,20 +270,20 @@ public class BotMovementManager {
     }
 
     static void jumpToRope(BotEntry entry, Character bot, int dx) {
-        Rope sourceRope = entry.climbRope;
+        Rope sourceRope = AgentBotClimbStateRuntime.climbRope(entry);
         int airVelX = resolveAirVelocityX(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry), dx);
         BotPhysicsEngine.beginRopeTransferJump(entry, bot, sourceRope, airVelX);
         broadcastMovement(entry);
     }
 
     private static void applyClimbAction(BotEntry entry, Character bot, MoveAction action) {
-        entry.climbVerticalDir = switch (action.type()) {
+        AgentBotClimbStateRuntime.setClimbVerticalDirection(entry, switch (action.type()) {
             case CLIMB_UP -> -1;
             case CLIMB_DOWN -> 1;
             default -> 0;
-        };
+        });
 
-        if (entry.climbVerticalDir == 0) {
+        if (!AgentBotClimbStateRuntime.hasClimbVerticalDirection(entry)) {
             BotPhysicsEngine.holdClimb(entry, bot);
         } else {
             BotPhysicsEngine.advanceClimb(entry, bot);
@@ -299,13 +301,18 @@ public class BotMovementManager {
     }
 
     static boolean shouldSnapToClimbTarget(BotEntry entry, Point targetPos, int dy) {
-        if (entry == null || !entry.climbing || entry.climbRope == null || targetPos == null || dy == 0) {
+        if (entry == null
+                || !AgentBotClimbStateRuntime.climbing(entry)
+                || !AgentBotClimbStateRuntime.hasClimbRope(entry)
+                || targetPos == null
+                || dy == 0) {
             return false;
         }
         if (!AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry)) {
             return false;
         }
-        if (targetPos.x != entry.climbRope.x()) {
+        Rope climbRope = AgentBotClimbStateRuntime.climbRope(entry);
+        if (targetPos.x != climbRope.x()) {
             return false;
         }
         // Allow target == bottomY: rope-exit launch anchors can be authored at the rope bottom
@@ -313,7 +320,7 @@ public class BotMovementManager {
         // grinding the climb integrator against a fixed-step overshoot — every step landed
         // past bottomY, beginFall(0,0) detached, repeat. Top step-off keeps its strict guard
         // because dismount there is driven by physics top-boundary detach, not snap.
-        if (targetPos.y <= entry.climbRope.topY() || targetPos.y > entry.climbRope.bottomY()) {
+        if (targetPos.y <= climbRope.topY() || targetPos.y > climbRope.bottomY()) {
             return false;
         }
         return Math.abs(dy) < BotPhysicsEngine.climbStepPerTick();
@@ -371,12 +378,12 @@ public class BotMovementManager {
     }
 
     private static boolean successfullyGrabbedRope(BotEntry entry, Character bot, Point botPos) {
-        if (!entry.climbUpIntent) {
+        if (!AgentBotClimbStateRuntime.climbUpIntent(entry)) {
             return false;
         }
 
         for (Rope rope : bot.getMap().getRopes()) {
-            if (sameRope(entry.blockedRopeGrab, rope)) {
+            if (sameRope(AgentBotClimbStateRuntime.blockedRopeGrab(entry), rope)) {
                 continue;
             }
             if (Math.abs(rope.x() - botPos.x) > BotPhysicsEngine.cfg.ROPE_GRAB_X) {
@@ -522,7 +529,7 @@ public class BotMovementManager {
             }
 
             Point botPos = bot.getPosition();
-            if (entry.ropeEntryPending) {
+            if (AgentBotClimbStateRuntime.ropeEntryPending(entry)) {
                 performTopRopeEntry(entry);
                 return;
             }

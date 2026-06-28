@@ -142,7 +142,24 @@ public class BotEntry {
     }
 
     // Climb intent — set by movement layer, consumed by physics engine.
+    public Rope climbRope() {
+        return climbRope;
+    }
+
+    public void setClimbingOnRope(Rope rope) {
+        climbing = rope != null;
+        climbRope = rope;
+    }
+
     int climbVerticalDir = 0;            // -1 up, 0 idle, +1 down
+
+    public int climbVerticalDirection() {
+        return climbVerticalDir;
+    }
+
+    public void setClimbVerticalDirection(int direction) {
+        climbVerticalDir = Integer.compare(direction, 0);
+    }
 
     // Horizontal movement hysteresis
     boolean wasMovingX = false;
@@ -163,6 +180,14 @@ public class BotEntry {
 
     // Movement intent
     boolean climbUpIntent = false;
+
+    public boolean climbUpIntent() {
+        return climbUpIntent;
+    }
+
+    public Rope blockedRopeGrab() {
+        return blockedRopeGrab;
+    }
     int ropeGrabCooldownMs = 0;
 
     // Down-jump: true when crouch was shown last tick, jump fires this tick
@@ -177,6 +202,10 @@ public class BotEntry {
         return downJumpGracePeriodMS;
     }
     boolean ropeEntryPending = false;
+
+    public boolean ropeEntryPending() {
+        return ropeEntryPending;
+    }
     Rope ropeEntryRope = null;
     int ropeEntryY = 0;
 
