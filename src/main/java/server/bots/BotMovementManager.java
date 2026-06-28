@@ -15,6 +15,7 @@ import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
+import server.agents.integration.AgentBotSwimStateRuntime;
 import server.bots.combat.BotMobHitboxProvider;
 import server.life.Monster;
 import server.maps.Foothold;
@@ -329,7 +330,7 @@ public class BotMovementManager {
     static void tickAirborne(BotEntry entry, Point targetPos) {
         long startedAt = System.nanoTime();
         try {
-            entry.swimming = false;
+            AgentBotSwimStateRuntime.setSwimming(entry, false);
             BotPhysicsEngine.tickMotionTimers(entry);
 
             Character bot = entry.bot;
@@ -447,12 +448,10 @@ public class BotMovementManager {
         // a target sinking faster than the bot's UP-terminal sink rate causes
         // dy to oscillate across the LEVEL_BAND boundary every tick — bot
         // alternates UP-hold (slow sink) and free-sink, visibly stuttering.
-        int prevVerticalHold = entry.swimVerticalHold;
+        int prevVerticalHold = AgentBotSwimStateRuntime.swimVerticalHold(entry);
 
         // Default to "no input": bot drifts under swim gravity.
-        entry.swimMoveDir = 0;
-        entry.swimVerticalHold = 0;
-        entry.swimJumpRequested = false;
+        AgentBotSwimStateRuntime.clearSwimInput(entry);
 
         // Player can't dispatch movement input (strafe/jump/up/down) while
         // CUserLocal::IsAttacking is true. Mirror that here: during animation
@@ -464,7 +463,7 @@ public class BotMovementManager {
 
         if (targetPos == null) {
             // Idle in water — hold UP so the bot doesn't sink endlessly.
-            entry.swimVerticalHold = -1;
+            AgentBotSwimStateRuntime.setSwimVerticalHold(entry, -1);
             return;
         }
 
@@ -474,8 +473,8 @@ public class BotMovementManager {
 
         // Horizontal steer.
         int hRadius = BotPhysicsEngine.cfg.SWIM_ARRIVAL_RADIUS_PX;
-        if (dx >  hRadius) entry.swimMoveDir =  1;
-        else if (dx < -hRadius) entry.swimMoveDir = -1;
+        if (dx >  hRadius) AgentBotSwimStateRuntime.setSwimMoveDirection(entry, 1);
+        else if (dx < -hRadius) AgentBotSwimStateRuntime.setSwimMoveDirection(entry, -1);
 
         // Arrival band: bot is essentially on top of the target both axes.
         // Hold UP just to maintain altitude, no burst, no horizontal push —
@@ -484,8 +483,8 @@ public class BotMovementManager {
         // through level, repeat).
         int levelBand = BotPhysicsEngine.cfg.SWIM_LEVEL_BAND_PX;
         if (Math.abs(dx) <= hRadius && Math.abs(dy) <= levelBand) {
-            entry.swimMoveDir = 0;
-            entry.swimVerticalHold = -1;
+            AgentBotSwimStateRuntime.setSwimMoveDirection(entry, 0);
+            AgentBotSwimStateRuntime.setSwimVerticalHold(entry, -1);
             return;
         }
 
@@ -497,27 +496,27 @@ public class BotMovementManager {
         long now = System.currentTimeMillis();
         int jumpTrigger = BotPhysicsEngine.cfg.SWIM_JUMP_TRIGGER_DY_PX;
         int downBand = BotPhysicsEngine.cfg.SWIM_DOWN_BAND_PX;
-        if (dy <= -jumpTrigger && now >= entry.swimNextJumpAtMs) {
-            entry.swimJumpRequested = true;
-            entry.swimNextJumpAtMs = now + BotPhysicsEngine.cfg.SWIM_JUMP_COOLDOWN_MS;
-            entry.swimVerticalHold = -1;
+        if (dy <= -jumpTrigger && now >= AgentBotSwimStateRuntime.swimNextJumpAtMs(entry)) {
+            AgentBotSwimStateRuntime.setSwimJumpRequested(entry, true);
+            AgentBotSwimStateRuntime.setSwimNextJumpAtMs(entry, now + BotPhysicsEngine.cfg.SWIM_JUMP_COOLDOWN_MS);
+            AgentBotSwimStateRuntime.setSwimVerticalHold(entry, -1);
         } else if (dy <= levelBand) {
-            entry.swimVerticalHold = -1;        // clearly above target → UP
+            AgentBotSwimStateRuntime.setSwimVerticalHold(entry, -1);        // clearly above target → UP
         } else if (dy > downBand) {
-            entry.swimVerticalHold = 1;         // clearly far below → DOWN
+            AgentBotSwimStateRuntime.setSwimVerticalHold(entry, 1);         // clearly far below → DOWN
         } else {
             // Middle band: persist last hold to avoid stutter. If we were
             // sinking (free or DOWN), keep that — UP would just slow our
             // descent and let target pull further away. If we were UP-holding
             // and now drifted past LEVEL, switch to free sink so we catch up.
-            entry.swimVerticalHold = prevVerticalHold > 0 ? 1 : 0;
+            AgentBotSwimStateRuntime.setSwimVerticalHold(entry, prevVerticalHold > 0 ? 1 : 0);
         }
     }
 
     static void tickGrounded(BotEntry entry, Point targetPos) {
         long startedAt = System.nanoTime();
         try {
-            entry.swimming = false;
+            AgentBotSwimStateRuntime.setSwimming(entry, false);
             Character bot = entry.bot;
 
             BotPhysicsEngine.tickMotionTimers(entry);

@@ -112,6 +112,46 @@ public class BotEntry {
     boolean swimJumpRequested = false;   // one-shot upward burst
     long swimNextJumpAtMs = 0L;          // cooldown gate
 
+    public boolean swimming() {
+        return swimming;
+    }
+
+    public void setSwimming(boolean swimming) {
+        this.swimming = swimming;
+    }
+
+    public int swimMoveDirection() {
+        return swimMoveDir;
+    }
+
+    public void setSwimMoveDirection(int direction) {
+        swimMoveDir = Integer.compare(direction, 0);
+    }
+
+    public int swimVerticalHold() {
+        return swimVerticalHold;
+    }
+
+    public void setSwimVerticalHold(int verticalHold) {
+        swimVerticalHold = Integer.compare(verticalHold, 0);
+    }
+
+    public boolean swimJumpRequested() {
+        return swimJumpRequested;
+    }
+
+    public void setSwimJumpRequested(boolean swimJumpRequested) {
+        this.swimJumpRequested = swimJumpRequested;
+    }
+
+    public long swimNextJumpAtMs() {
+        return swimNextJumpAtMs;
+    }
+
+    public void setSwimNextJumpAtMs(long swimNextJumpAtMs) {
+        this.swimNextJumpAtMs = swimNextJumpAtMs;
+    }
+
     // Movement intent — set by movement/fidget layer, consumed by physics engine.
     // Maps to the same left/right key hold used by the real client for both
     // ground walking and air steering. Physics reads this in the active mode:

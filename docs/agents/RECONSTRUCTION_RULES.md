@@ -777,6 +777,11 @@ Recent reconstruction notes:
   longer read or write `climbRope`, `climbVerticalDir`, `climbing`,
   `climbUpIntent`, `blockedRopeGrab`, or `ropeEntryPending` directly in
   production.
+- Swim movement intent state now enters through `AgentBotSwimStateRuntime`;
+  BotMovementManager airborne/grounded swim-mode clearing and swim input
+  calculation keep BotEntry as the temporary backing store but no longer read
+  or write `swimming`, `swimMoveDir`, `swimVerticalHold`,
+  `swimJumpRequested`, or `swimNextJumpAtMs` directly in production.
 
 Initial reconstruction order:
 
