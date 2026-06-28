@@ -708,6 +708,12 @@ Recent reconstruction notes:
   completion, swim-map detection, and movement cleanup/stuck detection keep
   BotEntry as the temporary backing store but no longer read `entry.bot`
   map/position fields directly in those paths.
+- Remaining BotManager runtime identity reads now enter through
+  `AgentBotRuntimeIdentityRuntime`; test tick execution, leader refresh,
+  farm/patrol guards, owner-follow reset, script item drop, follow-target
+  resolution, queued script ticking, cheap script movement checks, and
+  movement-only stepping keep BotEntry as the temporary backing store but no
+  longer read `entry.bot` or `entry.owner` directly in production code.
 
 Initial reconstruction order:
 

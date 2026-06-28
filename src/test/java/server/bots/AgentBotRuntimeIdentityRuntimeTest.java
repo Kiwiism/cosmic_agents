@@ -32,6 +32,7 @@ class AgentBotRuntimeIdentityRuntimeTest {
         assertSame(owner, AgentBotRuntimeIdentityRuntime.owner(entry));
         assertEquals(101, AgentBotRuntimeIdentityRuntime.botId(entry));
         assertEquals(202, AgentBotRuntimeIdentityRuntime.ownerId(entry));
+        assertEquals("AgentOne", AgentBotRuntimeIdentityRuntime.botName(entry));
         assertTrue(AgentBotRuntimeIdentityRuntime.hasBot(entry));
         assertTrue(AgentBotRuntimeIdentityRuntime.botIs(entry, 101));
         assertTrue(AgentBotRuntimeIdentityRuntime.botNameEquals(entry, "agentone"));
@@ -52,6 +53,7 @@ class AgentBotRuntimeIdentityRuntimeTest {
         assertEquals(-1, AgentBotRuntimeIdentityRuntime.ownerId(null));
         assertEquals(-1, AgentBotRuntimeIdentityRuntime.botId(entry));
         assertEquals(-1, AgentBotRuntimeIdentityRuntime.ownerId(entry));
+        assertEquals(null, AgentBotRuntimeIdentityRuntime.botName(entry));
         assertFalse(AgentBotRuntimeIdentityRuntime.hasBot(entry));
         assertFalse(AgentBotRuntimeIdentityRuntime.botIs(entry, 101));
         assertFalse(AgentBotRuntimeIdentityRuntime.botNameEquals(entry, "agentone"));

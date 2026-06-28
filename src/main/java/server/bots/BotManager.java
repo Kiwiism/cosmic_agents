@@ -1975,16 +1975,16 @@ public class BotManager {
      * without going through {@code registerBotInternal}.
      */
     void runTickForTest(BotEntry entry) {
-        if (entry == null || entry.bot == null) {
+        if (!AgentBotRuntimeIdentityRuntime.hasBot(entry)) {
             return;
         }
-        int botCharId = entry.bot.getId();
-        int ownerCharId = entry.owner != null ? entry.owner.getId() : -1;
+        int botCharId = AgentBotRuntimeIdentityRuntime.botId(entry);
+        int ownerCharId = AgentBotRuntimeIdentityRuntime.ownerId(entry);
         long startedAt = BotPerformanceMonitor.enabled() ? System.nanoTime() : 0L;
         try {
             tickCore(entry, ownerCharId, botCharId);
         } catch (Throwable t) {
-            log.warn("runTickForTest: tickCore threw for bot {}", entry.bot.getName(), t);
+            log.warn("runTickForTest: tickCore threw for bot {}", AgentBotRuntimeIdentityRuntime.botName(entry), t);
         } finally {
             if (startedAt != 0L) {
                 BotPerformanceMonitor.record("tick-total", System.nanoTime() - startedAt);
@@ -2698,7 +2698,7 @@ public class BotManager {
         Character owner = AgentBotLeaderStateRuntime.leader(entry);
         if (owner == null || !AgentBotLeaderStateRuntime.matchesLeaderId(entry, ownerCharId) || !owner.isLoggedinWorld()) {
             owner = Server.getInstance()
-                    .getWorld(entry.bot.getWorld())
+                    .getWorld(AgentBotRuntimeIdentityRuntime.bot(entry).getWorld())
                     .getPlayerStorage()
                     .getCharacterById(ownerCharId);
             AgentBotLeaderStateRuntime.setLeader(entry, owner);
@@ -2938,7 +2938,7 @@ public class BotManager {
     }
 
     public void issueFarmHere(BotEntry entry, Point dest) {
-        if (entry == null || dest == null || entry.bot == null) {
+        if (entry == null || dest == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry)) {
             return;
         }
         clearScriptTasks(entry);
@@ -2957,7 +2957,7 @@ public class BotManager {
     }
 
     public void issuePatrol(BotEntry entry, Point ownerPos) {
-        if (entry == null || ownerPos == null || entry.bot == null) {
+        if (entry == null || ownerPos == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry)) {
             return;
         }
         MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
@@ -2983,7 +2983,7 @@ public class BotManager {
      * fields directly.
      */
     public void issueFollowOwner(BotEntry entry) {
-        issueFollow(entry, entry != null ? entry.owner : null);
+        issueFollow(entry, AgentBotRuntimeIdentityRuntime.owner(entry));
     }
 
     /**
@@ -3075,10 +3075,11 @@ public class BotManager {
      * stack of {@code itemId}. Use {@code quantity <= 0} to drop the whole stack.
      */
     public boolean issueDropItem(BotEntry entry, InventoryType type, int itemId, short quantity) {
-        if (entry == null || entry.bot == null || type == null) {
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        if (bot == null || type == null) {
             return false;
         }
-        var inventory = entry.bot.getInventory(type);
+        var inventory = bot.getInventory(type);
         if (inventory == null) {
             return false;
         }
@@ -3087,7 +3088,7 @@ public class BotManager {
             return false;
         }
         short dropQuantity = quantity <= 0 ? item.getQuantity() : (short) Math.min(quantity, item.getQuantity());
-        InventoryManipulator.drop(entry.bot.getClient(), type, item.getPosition(), dropQuantity);
+        InventoryManipulator.drop(bot.getClient(), type, item.getPosition(), dropQuantity);
         return true;
     }
 
@@ -3132,7 +3133,7 @@ public class BotManager {
                                            int maxPathCost,
                                            int fallbackRangeX,
                                            int fallbackRangeY) {
-        if (entry == null || entry.bot == null || targetPos == null) {
+        if (!AgentBotRuntimeIdentityRuntime.hasBot(entry) || targetPos == null) {
             return false;
         }
 
@@ -3195,7 +3196,7 @@ public class BotManager {
     }
 
     private void tickScriptTasks(BotEntry entry) {
-        if (entry == null || entry.bot == null) {
+        if (!AgentBotRuntimeIdentityRuntime.hasBot(entry)) {
             return;
         }
 
@@ -3243,27 +3244,29 @@ public class BotManager {
     }
 
     private Character resolveFollowCharacterById(BotEntry entry, int targetCharacterId) {
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (entry == null || targetCharacterId <= 0) {
-            return entry != null ? entry.owner : null;
+            return owner;
         }
-        if (entry.owner != null && entry.owner.getId() == targetCharacterId) {
-            return entry.owner;
+        if (owner != null && owner.getId() == targetCharacterId) {
+            return owner;
         }
-        if (entry.owner != null && entry.owner.getParty() != null) {
-            for (Character member : entry.owner.getPartyMembersOnline()) {
+        if (owner != null && owner.getParty() != null) {
+            for (Character member : owner.getPartyMembersOnline()) {
                 if (member != null && member.getId() == targetCharacterId && member.isLoggedinWorld()) {
                     return member;
                 }
             }
         }
-        if (entry.owner != null) {
-            for (BotEntry sibling : getBotEntries(entry.owner.getId())) {
-                if (sibling.bot != null && sibling.bot.getId() == targetCharacterId && sibling.bot.isLoggedinWorld()) {
-                    return sibling.bot;
+        if (owner != null) {
+            for (BotEntry sibling : getBotEntries(owner.getId())) {
+                Character siblingBot = AgentBotRuntimeIdentityRuntime.bot(sibling);
+                if (siblingBot != null && siblingBot.getId() == targetCharacterId && siblingBot.isLoggedinWorld()) {
+                    return siblingBot;
                 }
             }
         }
-        return entry.owner;
+        return owner;
     }
 
     /**
@@ -3558,7 +3561,7 @@ public class BotManager {
     }
 
     boolean stepMovementOnly(BotEntry entry, long tickAtMs) {
-        if (entry == null || entry.bot == null) {
+        if (!AgentBotRuntimeIdentityRuntime.hasBot(entry)) {
             return false;
         }
 
@@ -3577,7 +3580,7 @@ public class BotManager {
                           Point targetPos,
                           Point ownerPos,
                           boolean runAiTick) {
-        if (entry == null || entry.bot == null || targetPos == null) {
+        if (!AgentBotRuntimeIdentityRuntime.hasBot(entry) || targetPos == null) {
             return;
         }
 
