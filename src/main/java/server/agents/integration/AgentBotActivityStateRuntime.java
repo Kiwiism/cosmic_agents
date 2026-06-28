@@ -35,6 +35,18 @@ public final class AgentBotActivityStateRuntime {
         entry.setOwnerWasAfk(wasAfk);
     }
 
+    public static String lastOwnerCommand(BotEntry entry) {
+        return entry.lastOwnerCommand();
+    }
+
+    public static long lastOwnerCommandAtMs(BotEntry entry) {
+        return entry.lastOwnerCommandAtMs();
+    }
+
+    public static void recordLastOwnerCommand(BotEntry entry, String command, long commandAtMs) {
+        entry.recordLastOwnerCommand(command, commandAtMs);
+    }
+
     public static long ownerOfflineOrDeadSinceMs(BotEntry entry) {
         return entry.ownerOfflineOrDeadSinceMs();
     }

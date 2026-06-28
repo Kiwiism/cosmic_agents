@@ -1020,8 +1020,8 @@ public class BotManager {
             boolean matched = BotChatManager.wasLastChatHandled();
             if (matched && targetedBot.entry().getOwner() != null
                     && owner.getId() == targetedBot.entry().getOwner().getId()) {
-                targetedBot.entry().lastOwnerCommand = cmd;
-                targetedBot.entry().lastOwnerCommandAtMs = System.currentTimeMillis();
+                AgentBotActivityStateRuntime.recordLastOwnerCommand(
+                        targetedBot.entry(), cmd, System.currentTimeMillis());
             }
             // Fall through to LLM only if no command pattern matched.
             if (server.bots.llm.BotLlmConfig.enabled && !matched) {

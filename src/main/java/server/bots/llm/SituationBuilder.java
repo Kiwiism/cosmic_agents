@@ -4,6 +4,7 @@ import client.Character;
 import constants.game.ExpTable;
 import net.server.world.Party;
 import net.server.world.PartyCharacter;
+import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.bots.BotEntry;
@@ -55,9 +56,11 @@ public final class SituationBuilder {
         String party = describeParty(bot);
         if (!party.isEmpty()) sb.append("Party: ").append(party).append('\n');
 
-        if (entry.lastOwnerCommand != null && !entry.lastOwnerCommand.isBlank()) {
-            sb.append("Last command from owner: \"").append(entry.lastOwnerCommand).append('"')
-                    .append(" (").append(ago(System.currentTimeMillis() - entry.lastOwnerCommandAtMs))
+        String lastOwnerCommand = AgentBotActivityStateRuntime.lastOwnerCommand(entry);
+        if (lastOwnerCommand != null && !lastOwnerCommand.isBlank()) {
+            sb.append("Last command from owner: \"").append(lastOwnerCommand).append('"')
+                    .append(" (").append(ago(System.currentTimeMillis()
+                            - AgentBotActivityStateRuntime.lastOwnerCommandAtMs(entry)))
                     .append(" ago)\n");
         }
         return sb.toString();

@@ -48,4 +48,14 @@ class AgentBotActivityStateRuntimeTest {
         assertFalse(AgentBotActivityStateRuntime.ownerReturnedToTown(entry));
         assertFalse(AgentBotActivityStateRuntime.ownerAwaySafeMode(entry));
     }
+
+    @Test
+    void adaptsLastOwnerCommandState() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        AgentBotActivityStateRuntime.recordLastOwnerCommand(entry, "follow me", 9_000L);
+
+        assertEquals("follow me", AgentBotActivityStateRuntime.lastOwnerCommand(entry));
+        assertEquals(9_000L, AgentBotActivityStateRuntime.lastOwnerCommandAtMs(entry));
+    }
 }

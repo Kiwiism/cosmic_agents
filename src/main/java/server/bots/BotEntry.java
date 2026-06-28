@@ -423,8 +423,8 @@ public class BotEntry {
     // Most recent command the owner issued that handleChat actually matched.
     // Used by SituationBuilder to give the LLM context like "owner told you to
     // farm here 3 min ago" so 'what are you doing' answers stay coherent.
-    public volatile String lastOwnerCommand = null;
-    public volatile long lastOwnerCommandAtMs = 0L;
+    private volatile String lastOwnerCommand = null;
+    private volatile long lastOwnerCommandAtMs = 0L;
 
     public boolean isGrinding() { return grinding; }
     public boolean isFollowing() { return following; }
@@ -435,6 +435,12 @@ public class BotEntry {
     public Character bot() { return bot; }
     public Character owner() { return owner; }
     public void setOwner(Character owner) { this.owner = owner; }
+    public String lastOwnerCommand() { return lastOwnerCommand; }
+    public long lastOwnerCommandAtMs() { return lastOwnerCommandAtMs; }
+    public void recordLastOwnerCommand(String command, long commandAtMs) {
+        this.lastOwnerCommand = command;
+        this.lastOwnerCommandAtMs = commandAtMs;
+    }
     public BotBuildManager.ApBuild apBuild() { return apBuild; }
     public void setApBuild(BotBuildManager.ApBuild apBuild) {
         this.apBuild = apBuild;
@@ -869,9 +875,9 @@ public class BotEntry {
     }
 
     // AFK detection
-    Point ownerAfkPos = null;
-    long ownerAfkSinceMs = 0;
-    boolean ownerWasAfk = false;
+    private Point ownerAfkPos = null;
+    private long ownerAfkSinceMs = 0;
+    private boolean ownerWasAfk = false;
 
     public Point ownerAfkPosition() {
         return ownerAfkPos;
@@ -900,9 +906,9 @@ public class BotEntry {
     // Owner-offline-or-dead detection: after a sustained period (5 min) the bot
     // scrolls/warps to the nearest town and idles, instead of grinding pots dry
     // or death-looping with no anchor.
-    long ownerOfflineOrDeadSinceMs = 0;
-    boolean ownerReturnedToTown = false;
-    boolean ownerAwaySafeMode = false;
+    private long ownerOfflineOrDeadSinceMs = 0;
+    private boolean ownerReturnedToTown = false;
+    private boolean ownerAwaySafeMode = false;
 
     public long ownerOfflineOrDeadSinceMs() {
         return ownerOfflineOrDeadSinceMs;
