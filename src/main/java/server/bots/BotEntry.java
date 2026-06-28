@@ -1098,6 +1098,29 @@ public class BotEntry {
     int tickFailureCount = 0;
     long tickFailureWindowStartedAtMs = 0L;
 
+    public int tickFailureCount() {
+        return tickFailureCount;
+    }
+
+    public long tickFailureWindowStartedAtMs() {
+        return tickFailureWindowStartedAtMs;
+    }
+
+    public void resetTickFailureWindow(long startedAtMs) {
+        tickFailureWindowStartedAtMs = startedAtMs;
+        tickFailureCount = 0;
+    }
+
+    public int incrementTickFailureCount() {
+        tickFailureCount++;
+        return tickFailureCount;
+    }
+
+    public void clearTickFailures() {
+        tickFailureCount = 0;
+        tickFailureWindowStartedAtMs = 0L;
+    }
+
     // Stuck detection & unstuck
     int stuckMs = 0;
     int unstuckCooldownMs = 0;

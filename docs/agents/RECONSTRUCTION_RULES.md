@@ -585,6 +585,11 @@ Recent reconstruction notes:
   movement snapshots, and focused tests keep BotEntry as the temporary backing
   store but no longer read or write `following`, `grinding`, or
   `followTargetId` directly outside the adapter.
+- Tick-failure window state now enters through
+  `AgentBotTickFailureStateRuntime`; BotManager tick exception handling and
+  recovery reset keep BotEntry as the temporary backing store but no longer read
+  or write `tickFailureCount` or `tickFailureWindowStartedAtMs` directly outside
+  the adapter.
 
 Initial reconstruction order:
 
