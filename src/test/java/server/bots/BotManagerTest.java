@@ -14,6 +14,7 @@ import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.integration.AgentBotManagerReplyRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
+import server.agents.integration.AgentBotGrindWanderStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
@@ -737,7 +738,7 @@ class BotManagerTest {
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
 
         Point first = BotManager.resolveNoGrindTargetPosition(entry, bot.getPosition());
-        int direction = entry.wanderDirection;
+        int direction = AgentBotGrindWanderStateRuntime.wanderDirection(entry);
         Point second = BotManager.resolveNoGrindTargetPosition(entry, bot.getPosition());
 
         assertTrue(direction == -1 || direction == 1);
@@ -749,7 +750,7 @@ class BotManagerTest {
     void shouldIgnoreCachedGrindLootInsidePassiveLootRadiusWhenNoMobTarget() {
         Character bot = mockMovingBot(new Point(100, 100), createEmptyTestMap(910000034));
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
-        entry.wanderDirection = 1;
+        AgentBotGrindWanderStateRuntime.setWanderDirection(entry, 1);
         MapItem nearbyLoot = mockLoot(1, new Point(100 + BotManager.cfg.LOOT_RADIUS, 100));
         entry.grindLootTarget = nearbyLoot;
 
@@ -831,7 +832,7 @@ class BotManagerTest {
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
         MapItem loot = mockLoot(1, new Point(100 + BotManager.cfg.LOOT_RADIUS, 100));
         int lootObjectId = loot.getObjectId();
-        entry.wanderDirection = 1;
+        AgentBotGrindWanderStateRuntime.setWanderDirection(entry, 1);
         entry.grindLootTarget = loot;
         doReturn(List.of(loot)).when(map).getDroppedItems();
         doReturn(loot).when(map).getMapObject(lootObjectId);

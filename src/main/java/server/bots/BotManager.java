@@ -7,6 +7,7 @@ import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
+import server.agents.integration.AgentBotGrindWanderStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementStuckStateRuntime;
@@ -1831,10 +1832,7 @@ public class BotManager {
         }
 
         AgentBotPatrolStateRuntime.clearPatrolWanderTarget(entry);
-        if (entry.wanderDirection == 0) {
-            entry.wanderDirection = ThreadLocalRandom.current().nextBoolean() ? 1 : -1;
-        }
-        return new Point(botPos.x + entry.wanderDirection * 200, botPos.y);
+        return new Point(botPos.x + AgentBotGrindWanderStateRuntime.ensureWanderDirection(entry) * 200, botPos.y);
     }
 
     static Point resolveNoGrindTargetPosition(BotEntry entry, Point botPos) {
@@ -2298,10 +2296,7 @@ public class BotManager {
             } else {
                 // No mob in seek range — pick a wander direction once and walk that way until
                 // a mob enters range. Beats standing still and lets the bot self-relocate.
-                if (entry.wanderDirection == 0) {
-                    entry.wanderDirection = java.util.concurrent.ThreadLocalRandom.current().nextBoolean() ? 1 : -1;
-                }
-                targetPos = new Point(botPos.x + entry.wanderDirection * 200, botPos.y);
+                targetPos = new Point(botPos.x + AgentBotGrindWanderStateRuntime.ensureWanderDirection(entry) * 200, botPos.y);
                 // falls through to stepMovementCore below
             }
         }
@@ -2313,7 +2308,7 @@ public class BotManager {
             return new LocalOpportunityAttackResult(true, targetPos);
         }
         entry.grindTarget = target;
-        entry.wanderDirection = 0;
+        AgentBotGrindWanderStateRuntime.clearWanderDirection(entry);
         AgentBotPatrolStateRuntime.clearPatrolWanderTarget(entry);
         Point tp = target.getPosition();
         Monster rangedPriorityTarget = selectPriorityRangedAttackTarget(entry, bot, botPos, target);
@@ -3053,7 +3048,7 @@ public class BotManager {
         entry.degenAttackDone = false;
         entry.retreatHoldUntilMs = 0L;
         entry.retreatHoldPos = null;
-        entry.wanderDirection = 0;
+        AgentBotGrindWanderStateRuntime.clearWanderDirection(entry);
         BotMovementManager.clearNavigationState(entry);
         entry.grinding = true;
     }

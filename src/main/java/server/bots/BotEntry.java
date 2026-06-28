@@ -288,6 +288,13 @@ public class BotEntry {
     public void clearPatrolWanderTarget() {
         this.patrolWanderTarget = null;
     }
+    public int wanderDirection() { return wanderDirection; }
+    public void setWanderDirection(int wanderDirection) {
+        this.wanderDirection = Integer.compare(wanderDirection, 0);
+    }
+    public void clearWanderDirection() {
+        this.wanderDirection = 0;
+    }
     Point lastMobTouchCheckPos = null;
     int lastMobTouchMapId = -1;
 

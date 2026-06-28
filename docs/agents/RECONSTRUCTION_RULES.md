@@ -538,6 +538,10 @@ Recent reconstruction notes:
   cleanup, and focused tests keep BotEntry as the temporary backing store but no
   longer read or write `patrolRegionId`, `patrolMapId`, or
   `patrolWanderTarget` directly outside the adapter.
+- No-target grind wander direction now enters through
+  `AgentBotGrindWanderStateRuntime`; BotManager no-target grind movement and
+  focused tests keep BotEntry as the temporary backing store but no longer read,
+  choose, or clear `wanderDirection` directly outside the adapter.
 
 Initial reconstruction order:
 
