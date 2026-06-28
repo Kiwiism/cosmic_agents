@@ -2,6 +2,9 @@ package server.agents.integration;
 
 import client.Character;
 import server.bots.BotEntry;
+import server.maps.MapleMap;
+
+import java.awt.Point;
 
 /**
  * Agent-owned adapter for temporary BotEntry-backed live runtime identity.
@@ -39,5 +42,25 @@ public final class AgentBotRuntimeIdentityRuntime {
     public static boolean botNameEquals(BotEntry entry, String name) {
         Character bot = bot(entry);
         return bot != null && name != null && bot.getName().equalsIgnoreCase(name);
+    }
+
+    public static int botMapId(BotEntry entry) {
+        Character bot = bot(entry);
+        return bot == null ? -1 : bot.getMapId();
+    }
+
+    public static MapleMap botMap(BotEntry entry) {
+        Character bot = bot(entry);
+        return bot == null ? null : bot.getMap();
+    }
+
+    public static boolean botHasMap(BotEntry entry) {
+        return botMap(entry) != null;
+    }
+
+    public static Point botPosition(BotEntry entry) {
+        Character bot = bot(entry);
+        Point position = bot == null ? null : bot.getPosition();
+        return position == null ? null : new Point(position);
     }
 }

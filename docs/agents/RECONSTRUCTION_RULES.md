@@ -697,6 +697,13 @@ Recent reconstruction notes:
   mode checks, spawn party join, owner-gained-equip notifications, and
   compatibility reply delivery keep BotEntry as the temporary backing store but
   no longer pass `entry.bot` or `entry.owner` directly in those calls.
+- Runtime identity map/position reads now enter through
+  `AgentBotRuntimeIdentityRuntime`; BotManager group supply responder
+  selection, pending-offer map checks, owner-inactive town checks, away
+  safe-mode map checks, town cluster targeting, farm/patrol setup, script task
+  completion, swim-map detection, and movement cleanup/stuck detection keep
+  BotEntry as the temporary backing store but no longer read `entry.bot`
+  map/position fields directly in those paths.
 
 Initial reconstruction order:
 

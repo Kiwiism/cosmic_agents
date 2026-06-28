@@ -1077,7 +1077,7 @@ public class BotManager {
         }
         int ownerMapId = owner != null ? owner.getMapId() : -1;
         for (BotEntry entry : entries) {
-            if (entry.bot != null && entry.bot.getMapId() == ownerMapId) {
+            if (AgentBotRuntimeIdentityRuntime.botMapId(entry) == ownerMapId) {
                 return entry;
             }
         }
@@ -1121,7 +1121,7 @@ public class BotManager {
         return entry != null
                 && BotOfferManager.hasPendingOffer(entry)
                 && AgentBotOfferStateRuntime.pendingOfferRecipientIs(entry, speaker)
-                && entry.bot.getMapId() == speaker.getMapId();
+                && AgentBotRuntimeIdentityRuntime.botMapId(entry) == speaker.getMapId();
     }
 
     private boolean looksLikeConfirmation(String message) {
@@ -2764,7 +2764,7 @@ public class BotManager {
     }
 
     private boolean shouldTownWarpForOwnerInactive(BotEntry entry) {
-        MapleMap currentMap = entry != null && entry.bot != null ? entry.bot.getMap() : null;
+        MapleMap currentMap = AgentBotRuntimeIdentityRuntime.botMap(entry);
         return currentMap != null
                 && currentMap.getAllMonsters().stream().anyMatch(Monster::isAlive)
                 && canReturnToDifferentMap(currentMap);
@@ -2784,16 +2784,16 @@ public class BotManager {
 
     public boolean isFirstBotEntry(BotEntry entry) {
         return entry != null
-                && entry.owner != null
-                && getFirstBotEntry(entry.owner.getId()) == entry;
+                && AgentBotRuntimeIdentityRuntime.owner(entry) != null
+                && getFirstBotEntry(AgentBotRuntimeIdentityRuntime.ownerId(entry)) == entry;
     }
 
     public void issueOwnerAwaySafeModeForOwner(int ownerCharId, boolean town) {
         for (BotEntry entry : getBotEntries(ownerCharId)) {
-            if (entry.bot == null || entry.bot.getMap() == null) {
+            if (!AgentBotRuntimeIdentityRuntime.botHasMap(entry)) {
                 continue;
             }
-            enterOwnerInactiveSafeMode(entry, entry.bot, ownerCharId,
+            enterOwnerInactiveSafeMode(entry, AgentBotRuntimeIdentityRuntime.bot(entry), ownerCharId,
                     town && shouldTownWarpForOwnerInactive(entry));
         }
     }
@@ -2860,8 +2860,8 @@ public class BotManager {
     }
 
     private Point resolveTownClusterTarget(BotEntry entry, int ownerCharId, MapleMap map, Point anchor) {
-        Point base = anchor != null ? new Point(anchor) : new Point(entry.bot.getPosition());
-        if (entry == null || entry.bot == null || map == null) {
+        Point base = anchor != null ? new Point(anchor) : new Point(AgentBotRuntimeIdentityRuntime.botPosition(entry));
+        if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry) || map == null) {
             return base;
         }
 
@@ -2952,7 +2952,7 @@ public class BotManager {
         // grind/patrol (self-buff, pot-share, ammo-low, "low on pots" fallback all
         // gate on entry.grinding — see kb feedback_bot_coding_guidelines).
         enterActiveMode(entry);
-        AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, dest, entry.bot.getMapId());
+        AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, dest, AgentBotRuntimeIdentityRuntime.botMapId(entry));
         AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, dest);
     }
 
@@ -2960,7 +2960,7 @@ public class BotManager {
         if (entry == null || ownerPos == null || entry.bot == null) {
             return;
         }
-        MapleMap map = entry.bot.getMap();
+        MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
         BotNavigationGraph graph = BotNavigationGraphProvider.peekBestGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
         int regionId = graph != null ? graph.findRegionId(map, ownerPos) : -1;
         if (regionId < 0) {
@@ -2974,7 +2974,7 @@ public class BotManager {
 
     private void startPatrol(BotEntry entry, int regionId) {
         enterActiveMode(entry);
-        AgentBotPatrolStateRuntime.startPatrol(entry, regionId, entry.bot.getMapId());
+        AgentBotPatrolStateRuntime.startPatrol(entry, regionId, AgentBotRuntimeIdentityRuntime.botMapId(entry));
     }
 
     /**
@@ -3219,7 +3219,7 @@ public class BotManager {
     private void startScriptTask(BotEntry entry, BotTask task) {
         switch (task.type) {
             case MOVE_TO -> startMoveTo(entry, task.point, task.precise);
-            case FOLLOW_OWNER -> startFollow(entry, entry.owner);
+            case FOLLOW_OWNER -> startFollow(entry, AgentBotRuntimeIdentityRuntime.owner(entry));
             case FOLLOW_TARGET -> startFollow(entry, resolveFollowCharacterById(entry, task.targetCharacterId));
             case FOLLOW_UNTIL_NEAR -> startFollow(entry, resolveFollowCharacterById(entry, task.targetCharacterId));
             case GRIND -> startGrind(entry);
@@ -3230,13 +3230,13 @@ public class BotManager {
 
     private boolean isScriptTaskComplete(BotEntry entry, BotTask task) {
         return switch (task.type) {
-            case MOVE_TO -> !AgentBotMoveTargetStateRuntime.hasMoveTarget(entry) || isNear(entry.bot.getPosition(), task.point,
+            case MOVE_TO -> !AgentBotMoveTargetStateRuntime.hasMoveTarget(entry) || isNear(AgentBotRuntimeIdentityRuntime.botPosition(entry), task.point,
                     task.precise ? 8 : BotMovementManager.cfg.STOP_DIST);
             case FOLLOW_UNTIL_NEAR -> {
                 Character target = resolveFollowCharacterById(entry, task.targetCharacterId);
                 yield target != null
-                        && entry.bot.getMapId() == target.getMapId()
-                        && isNear(entry.bot.getPosition(), target.getPosition(), task.nearPx);
+                        && AgentBotRuntimeIdentityRuntime.botMapId(entry) == target.getMapId()
+                        && isNear(AgentBotRuntimeIdentityRuntime.botPosition(entry), target.getPosition(), task.nearPx);
             }
             case FOLLOW_OWNER, FOLLOW_TARGET, GRIND, STOP, DROP_ITEM -> true;
         };
@@ -3717,14 +3717,15 @@ public class BotManager {
     }
 
     private static boolean isSwimMap(BotEntry entry) {
-        return entry.bot != null && entry.bot.getMap() != null && entry.bot.getMap().isSwim();
+        MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
+        return map != null && map.isSwim();
     }
 
     private void clearReachedMoveTarget(BotEntry entry) {
         if (!AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)) {
             return;
         }
-        Point botPos = entry.bot.getPosition();
+        Point botPos = AgentBotRuntimeIdentityRuntime.botPosition(entry);
         if (AgentBotMoveTargetStateRuntime.hasReachedMoveTarget(entry, botPos, BotMovementManager.cfg.STOP_DIST)) {
             AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
         }
@@ -3783,7 +3784,7 @@ public class BotManager {
             return;
         }
 
-        Point botPos = entry.bot.getPosition();
+        Point botPos = AgentBotRuntimeIdentityRuntime.botPosition(entry);
         if (!AgentBotMovementStuckStateRuntime.hasStuckCheckPosition(entry)) {
             AgentBotMovementStuckStateRuntime.rememberStuckCheckPosition(entry, botPos);
             return;
