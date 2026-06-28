@@ -16,6 +16,7 @@ import server.agents.integration.AgentBotBreakoutStateRuntime;
 import server.agents.integration.AgentBotManagerReplyRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotGrindLootStateRuntime;
+import server.agents.integration.AgentBotGrindSearchStateRuntime;
 import server.agents.integration.AgentBotGrindWanderStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
@@ -665,7 +666,7 @@ class BotManagerTest {
         MapleMap map = createEmptyTestMap(910000028);
         Character bot = mockMovingBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
-        entry.nextGrindTargetSearchAtMs = 1_000L;
+        AgentBotGrindSearchStateRuntime.scheduleNextSearch(entry, 1_000L);
         Monster target = mock(Monster.class);
         when(target.getPosition()).thenReturn(new Point(140, 100));
         BotCombatManager.AttackPlan plan = basicClosePlan(target);
@@ -678,7 +679,7 @@ class BotManagerTest {
         MapleMap map = createEmptyTestMap(910000029);
         Character bot = mockMovingBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
-        entry.nextGrindTargetSearchAtMs = 1_000L;
+        AgentBotGrindSearchStateRuntime.scheduleNextSearch(entry, 1_000L);
         Monster target = mock(Monster.class);
         when(target.getPosition()).thenReturn(new Point(300, 100));
         BotCombatManager.AttackPlan plan = basicClosePlan(target);
@@ -691,7 +692,7 @@ class BotManagerTest {
         MapleMap map = createEmptyTestMap(910000128);
         Character bot = mockMovingBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
-        entry.nextGrindTargetSearchAtMs = 1_000L;
+        AgentBotGrindSearchStateRuntime.scheduleNextSearch(entry, 1_000L);
         entry.aoeSkillId = constants.skills.Warrior.SLASH_BLAST;
         entry.aoeSkillMobs = 6;
         Monster target = mock(Monster.class);

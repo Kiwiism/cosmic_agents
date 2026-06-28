@@ -11,6 +11,7 @@ import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotGrindLootStateRuntime;
+import server.agents.integration.AgentBotGrindSearchStateRuntime;
 import server.agents.integration.AgentBotGrindWanderStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
@@ -1773,7 +1774,7 @@ public class BotManager {
         if (currentTarget == null) {
             return true;
         }
-        if (now < entry.nextGrindTargetSearchAtMs) {
+        if (AgentBotGrindSearchStateRuntime.searchBlocked(entry, now)) {
             return false;
         }
         if (bot == null
@@ -2272,7 +2273,8 @@ public class BotManager {
                 target = searchedTarget;
                 attackPlan = null;
             }
-            entry.nextGrindTargetSearchAtMs = now + BotCombatManager.cfg.GRIND_RETARGET_INTERVAL_MS;
+            AgentBotGrindSearchStateRuntime.scheduleNextSearch(
+                    entry, now + BotCombatManager.cfg.GRIND_RETARGET_INTERVAL_MS);
         }
         // Search for a convenient loot drop every AI tick (grind mode only)
         if (runAiTick && !AgentBotPatrolStateRuntime.hasPatrolRegion(entry)) {
@@ -3037,7 +3039,7 @@ public class BotManager {
         AgentBotPatrolStateRuntime.clearPatrol(entry);
         entry.grindTarget = null;
         AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
-        entry.nextGrindTargetSearchAtMs = 0L;
+        AgentBotGrindSearchStateRuntime.clear(entry);
         AgentBotCombatCooldownStateRuntime.clearMoveWindow(entry);
         AgentBotDegenerateAttackStateRuntime.clear(entry);
         AgentBotRetreatHoldStateRuntime.clear(entry);

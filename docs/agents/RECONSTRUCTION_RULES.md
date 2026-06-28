@@ -566,6 +566,11 @@ Recent reconstruction notes:
   `AgentBotDegenerateAttackStateRuntime`; BotManager grind combat and local
   opportunity combat keep BotEntry as the temporary backing store but no longer
   read or write `degenAttackDone` directly outside the adapter.
+- Grind retarget-search cooldown state now enters through
+  `AgentBotGrindSearchStateRuntime`; BotManager target-search cadence,
+  BotMovementManager teleport/reset cleanup, and focused tests keep BotEntry as
+  the temporary backing store but no longer read or write
+  `nextGrindTargetSearchAtMs` directly outside the adapter.
 
 Initial reconstruction order:
 

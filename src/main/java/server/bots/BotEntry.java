@@ -109,6 +109,18 @@ public class BotEntry {
     int attackCooldownMs = 0;
     int moveWindowMs = 0;    // movement-only gap after attack animation; attacks blocked, walking allowed
 
+    public long nextGrindTargetSearchAtMs() {
+        return nextGrindTargetSearchAtMs;
+    }
+
+    public void setNextGrindTargetSearchAtMs(long nextGrindTargetSearchAtMs) {
+        this.nextGrindTargetSearchAtMs = nextGrindTargetSearchAtMs;
+    }
+
+    public void clearNextGrindTargetSearchAtMs() {
+        nextGrindTargetSearchAtMs = 0L;
+    }
+
     public int attackCooldownMs() {
         return attackCooldownMs;
     }

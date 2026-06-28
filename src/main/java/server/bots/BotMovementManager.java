@@ -6,6 +6,7 @@ import net.packet.ByteBufInPacket;
 import net.packet.InPacket;
 import net.packet.Packet;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentBotGrindSearchStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
@@ -186,7 +187,7 @@ public class BotMovementManager {
 
     private static void clearTransientState(BotEntry entry) {
         entry.grindTarget = null;
-        entry.nextGrindTargetSearchAtMs = 0L;
+        AgentBotGrindSearchStateRuntime.clear(entry);
         AgentBotCombatCooldownStateRuntime.clearAttackCooldown(entry);
         AgentBotNavigationDebugStateRuntime.clearGraphWarmupFallback(entry);
         AgentBotOwnerMotionStateRuntime.clearObservedOwnerStep(entry);
