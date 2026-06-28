@@ -4,6 +4,7 @@ import client.Character;
 import net.packet.Packet;
 import server.agents.integration.AgentBotFidgetRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentBotTickStateRuntime;
 import server.maps.Foothold;
 import tools.PacketCreator;
 
@@ -201,7 +202,7 @@ final class BotFidgetManager {
     }
 
     private static void maybeRollIdleFidget(BotEntry entry, Point botPos, Point targetPos, long now) {
-        if (!entry.lastTickWasAi || !isOwnerMostlyIdle(entry)) {
+        if (!AgentBotTickStateRuntime.lastTickWasAi(entry) || !isOwnerMostlyIdle(entry)) {
             return;
         }
         if (Math.abs(targetPos.x - botPos.x) > BotMovementManager.cfg.FOLLOW_DIST) {

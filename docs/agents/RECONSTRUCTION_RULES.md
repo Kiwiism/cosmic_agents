@@ -507,6 +507,11 @@ Recent reconstruction notes:
   recovery cooldown setup keep BotEntry as the temporary backing store but no
   longer read or write `stuckMs`, `stuckCheckX`, `stuckCheckY`, or
   `unstuckCooldownMs` directly.
+- Tick heartbeat, last-tick metadata, and follow-idle check timing now enter
+  through `AgentBotTickStateRuntime`; BotManager, fidget eligibility, and path
+  logging keep BotEntry as the temporary backing store but no longer read or
+  write `lastTickWasAi`, `lastTickAtMs`, `lastHeartbeatAtMs`, or
+  `nextFollowIdleMovementCheckAtMs` directly in production.
 
 Initial reconstruction order:
 

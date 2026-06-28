@@ -878,6 +878,36 @@ public class BotEntry {
     long lastTickAtMs = 0L;
     long lastHeartbeatAtMs = 0L;
     long nextFollowIdleMovementCheckAtMs = 0L;
+
+    public boolean lastTickWasAi() {
+        return lastTickWasAi;
+    }
+
+    public long lastTickAtMs() {
+        return lastTickAtMs;
+    }
+
+    public void recordTick(boolean aiTick, long tickAtMs) {
+        this.lastTickWasAi = aiTick;
+        this.lastTickAtMs = tickAtMs;
+    }
+
+    public long lastHeartbeatAtMs() {
+        return lastHeartbeatAtMs;
+    }
+
+    public void setLastHeartbeatAtMs(long lastHeartbeatAtMs) {
+        this.lastHeartbeatAtMs = lastHeartbeatAtMs;
+    }
+
+    public long nextFollowIdleMovementCheckAtMs() {
+        return nextFollowIdleMovementCheckAtMs;
+    }
+
+    public void setNextFollowIdleMovementCheckAtMs(long nextFollowIdleMovementCheckAtMs) {
+        this.nextFollowIdleMovementCheckAtMs = nextFollowIdleMovementCheckAtMs;
+    }
+
     int tickFailureCount = 0;
     long tickFailureWindowStartedAtMs = 0L;
 

@@ -11,6 +11,7 @@ import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotPotionStateRuntime;
+import server.agents.integration.AgentBotTickStateRuntime;
 import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
 import client.BotClient;
 import config.YamlConfig;
@@ -1993,16 +1994,15 @@ public class BotManager {
         // movement packet every 10 minutes so the server never considers the bot idle.
         // Covers all modes: idle, follow, and grind.
         long nowMs = System.currentTimeMillis();
-        if (nowMs - entry.lastHeartbeatAtMs >= 600_000L) {
-            entry.lastHeartbeatAtMs = nowMs;
+        if (AgentBotTickStateRuntime.heartbeatDue(entry, nowMs, 600_000L)) {
+            AgentBotTickStateRuntime.markHeartbeat(entry, nowMs);
             bot.getClient().updateLastPacket();
             BotMovementManager.broadcastMovement(entry);
         }
 
         BotOfferManager.expirePendingOffer(entry);
         boolean runAiTick = consumeAiTick(entry);
-        entry.lastTickWasAi = runAiTick;
-        entry.lastTickAtMs = System.currentTimeMillis();
+        AgentBotTickStateRuntime.recordTick(entry, runAiTick, System.currentTimeMillis());
 
         Character owner = resolveTickOwner(entry, ownerCharId);
         if (handleOwnerOfflineOrDead(entry, bot, owner, nowMs, ownerCharId)) {
@@ -3585,8 +3585,7 @@ public class BotManager {
         }
 
         boolean runAiTick = consumeAiTick(entry);
-        entry.lastTickWasAi = runAiTick;
-        entry.lastTickAtMs = tickAtMs;
+        AgentBotTickStateRuntime.recordTick(entry, runAiTick, tickAtMs);
 
         TargetSnapshot targetSnapshot = captureTargetSnapshot(entry);
         Point ownerPos = targetSnapshot.rawOwnerPos();
@@ -3648,7 +3647,7 @@ public class BotManager {
             return;
         }
 
-        if (tryFollowIdleMovementFastPath(entry, bot, targetPos, entry.lastTickAtMs)) {
+        if (tryFollowIdleMovementFastPath(entry, bot, targetPos, AgentBotTickStateRuntime.lastTickAtMs(entry))) {
             return;
         }
 
@@ -3660,10 +3659,10 @@ public class BotManager {
             return false;
         }
 
-        if (entry.nextFollowIdleMovementCheckAtMs == 0L) {
-            entry.nextFollowIdleMovementCheckAtMs = nowMs + 1000L;
-        } else if (nowMs >= entry.nextFollowIdleMovementCheckAtMs) {
-            entry.nextFollowIdleMovementCheckAtMs = nowMs + 1000L;
+        if (AgentBotTickStateRuntime.nextFollowIdleMovementCheckAtMs(entry) == 0L) {
+            AgentBotTickStateRuntime.setNextFollowIdleMovementCheckAtMs(entry, nowMs + 1000L);
+        } else if (nowMs >= AgentBotTickStateRuntime.nextFollowIdleMovementCheckAtMs(entry)) {
+            AgentBotTickStateRuntime.setNextFollowIdleMovementCheckAtMs(entry, nowMs + 1000L);
             return false;
         }
 
