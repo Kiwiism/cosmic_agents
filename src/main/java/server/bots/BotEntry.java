@@ -252,8 +252,8 @@ public class BotEntry {
     Point retreatHoldPos = null;  // the locked retreat target — reused while hold is active
     int breakoutDirection = 0;    // -1/+1 committed escape side while surrounded, 0 = not breaking out
     long breakoutUntilMs = 0L;    // hard safety timeout for the surround-breakout commitment
-    Point aoeRepositionAnchor = null; // committed AoE sweet-spot to walk to before firing, null = not repositioning
-    long aoeRepositionDeadlineMs = 0L; // bounded-chase timeout for the AoE reposition commitment
+    private Point aoeRepositionAnchor = null; // committed AoE sweet-spot to walk to before firing, null = not repositioning
+    private long aoeRepositionDeadlineMs = 0L; // bounded-chase timeout for the AoE reposition commitment
     int wanderDirection = 0;      // -1 left, +1 right, 0 = unset (picked when grind has no target)
 
     public boolean degenAttackDone() {
