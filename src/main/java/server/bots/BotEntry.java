@@ -297,6 +297,31 @@ public class BotEntry {
     long shopVisitStartedAtMs = 0L;
     long shopSequenceStartedAtMs = 0L;
     boolean shopSellTrashPending = false;
+
+    public boolean shopVisitPending() {
+        return shopVisitPending;
+    }
+
+    public boolean shopSequenceActive() {
+        return shopSequenceActive;
+    }
+
+    public Point shopNpcPos() {
+        return shopNpcPos == null ? null : new Point(shopNpcPos);
+    }
+
+    public Point shopTargetPos() {
+        return shopTargetPos == null ? null : new Point(shopTargetPos);
+    }
+
+    public Point activeShopTargetPos() {
+        Point target = shopTargetPos != null ? shopTargetPos : shopNpcPos;
+        return target == null ? null : new Point(target);
+    }
+
+    public int shopApproachDelayMs() {
+        return shopApproachDelayMs;
+    }
     // bumped whenever a new player directive resets scripted state (follow/stop/move/farm/patrol/grind);
     // background batches (Maker crafting / disassembly) capture it and self-interrupt when it changes
     volatile int activityEpoch = 0;

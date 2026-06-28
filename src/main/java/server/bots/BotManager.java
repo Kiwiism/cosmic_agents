@@ -33,6 +33,7 @@ import server.agents.integration.AgentBotPotionStateRuntime;
 import server.agents.integration.AgentBotReplyChannelStateRuntime;
 import server.agents.integration.AgentBotRetreatHoldStateRuntime;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
+import server.agents.integration.AgentBotShopStateRuntime;
 import server.agents.integration.AgentBotTickCadenceStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
 import server.agents.integration.AgentBotTickFailureStateRuntime;
@@ -1303,8 +1304,8 @@ public class BotManager {
         FormationState formation = formationStateFor(entry);
         Point followBasePos = new Point(rawFollowAnchorPos.x + AgentBotFormationStateRuntime.followOffsetX(entry), rawFollowAnchorPos.y);
         Point followTargetPos = resolveFollowTargetPos(followBasePos, followAnchor, rawFollowAnchorPos, formation.snapRange(), bot.getMap());
-        Point rawShopTargetPos = entry.shopVisitPending
-                ? (entry.shopTargetPos != null ? entry.shopTargetPos : entry.shopNpcPos)
+        Point rawShopTargetPos = AgentBotShopStateRuntime.shopVisitPending(entry)
+                ? AgentBotShopStateRuntime.activeShopTargetPosition(entry)
                 : null;
         Point shopTargetPos = rawShopTargetPos == null ? null : new Point(rawShopTargetPos);
         Point moveTargetPos = AgentBotMoveTargetStateRuntime.moveTarget(entry);
@@ -2087,7 +2088,7 @@ public class BotManager {
         // Map change and teleport checks only apply when following a live anchor.
         // Shop visits are intentional same-map detours and must not be pulled back
         // to the owner while walking to the NPC.
-        if (!entry.shopVisitPending && syncFollowMap(entry, bot, followAnchor)) {
+        if (!AgentBotShopStateRuntime.shopVisitPending(entry) && syncFollowMap(entry, bot, followAnchor)) {
             return;
         }
         if (recoverGrindPartyTeleportDistance(entry, bot, followAnchor)) {
@@ -2139,7 +2140,7 @@ public class BotManager {
         // Shop visit: navigate to approach point before resuming normal flow.
         // Keep this ahead of follow/combat/grind logic so resupply movement is not
         // coupled to owner proximity.
-        if (entry.shopVisitPending) {
+        if (AgentBotShopStateRuntime.shopVisitPending(entry)) {
             boolean consumed;
             if (!perf) {
                 consumed = BotShopManager.tickShopVisit(entry, bot);
@@ -2148,8 +2149,8 @@ public class BotManager {
                 consumed = BotShopManager.tickShopVisit(entry, bot);
                 BotPerformanceMonitor.record("tick-shop-visit", System.nanoTime() - tShop);
             }
-            targetPos = entry.shopTargetPos != null ? entry.shopTargetPos : entry.shopNpcPos;
-            if (!consumed && entry.shopApproachDelayMs > 0) {
+            targetPos = AgentBotShopStateRuntime.activeShopTargetPosition(entry);
+            if (!consumed && AgentBotShopStateRuntime.shopApproachDelayMs(entry) > 0) {
                 return;
             }
             if (targetPos != null) {
@@ -3435,7 +3436,7 @@ public class BotManager {
 
     private boolean tickIdleEntry(BotEntry entry, Character bot) {
         if (AgentBotModeStateRuntime.following(entry) || AgentBotModeStateRuntime.grinding(entry) || AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)
-                || AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry) || entry.shopVisitPending) {
+                || AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry) || AgentBotShopStateRuntime.shopVisitPending(entry)) {
             return false;
         }
         if (isSwimMap(entry) && entry.inAir && !entry.climbing) {
@@ -3494,7 +3495,8 @@ public class BotManager {
     }
 
     private boolean recoverGrindPartyTeleportDistance(BotEntry entry, Character bot, Character partyAnchor) {
-        if (entry == null || bot == null || partyAnchor == null || !AgentBotModeStateRuntime.grinding(entry) || entry.shopVisitPending) {
+        if (entry == null || bot == null || partyAnchor == null || !AgentBotModeStateRuntime.grinding(entry)
+                || AgentBotShopStateRuntime.shopVisitPending(entry)) {
             return false;
         }
         if (AgentBotMoveTargetStateRuntime.hasMoveTarget(entry) || AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry)) {
@@ -3576,7 +3578,7 @@ public class BotManager {
             return;
         }
 
-        if (owner != null && !entry.shopVisitPending && syncFollowMap(entry, bot, owner)) {
+        if (owner != null && !AgentBotShopStateRuntime.shopVisitPending(entry) && syncFollowMap(entry, bot, owner)) {
             return;
         }
         Character followAnchor = resolveFollowAnchor(entry, owner);
@@ -3600,10 +3602,10 @@ public class BotManager {
         }
 
         // Shop visit: navigate to approach point before resuming normal flow.
-        if (entry.shopVisitPending) {
+        if (AgentBotShopStateRuntime.shopVisitPending(entry)) {
             boolean consumed = BotShopManager.tickShopVisit(entry, bot);
-            targetPos = entry.shopTargetPos != null ? entry.shopTargetPos : entry.shopNpcPos;
-            if (!consumed && entry.shopApproachDelayMs > 0) {
+            targetPos = AgentBotShopStateRuntime.activeShopTargetPosition(entry);
+            if (!consumed && AgentBotShopStateRuntime.shopApproachDelayMs(entry) > 0) {
                 return;
             }
             if (targetPos != null) {
@@ -3651,7 +3653,7 @@ public class BotManager {
                 || entry.fidgetMode != BotFidgetMode.NONE) {
             return false;
         }
-        if (entry.shopVisitPending || entry.shopSequenceActive) {
+        if (AgentBotShopStateRuntime.hasActiveShopTransition(entry)) {
             return false;
         }
         if (entry.wasMovingX || AgentBotMovementStateRuntime.hasMoveDirection(entry)

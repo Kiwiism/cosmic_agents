@@ -651,6 +651,12 @@ Recent reconstruction notes:
   follow-idle fast-path gating, precise-target setup, and stuck detection keep
   BotEntry as the temporary backing store but no longer check `navEdge`
   directly in production.
+- Shop transition read state now enters through `AgentBotShopStateRuntime`;
+  BotManager target snapshots, shop detour ticks, idle gating, map-sync gating,
+  party-teleport recovery, and follow-idle fast-path gating keep BotEntry as the
+  temporary backing store but no longer read `shopVisitPending`,
+  `shopTargetPos`, `shopNpcPos`, `shopApproachDelayMs`, or
+  `shopSequenceActive` directly in production.
 
 Initial reconstruction order:
 
