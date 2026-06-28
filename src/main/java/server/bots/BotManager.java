@@ -299,8 +299,11 @@ public class BotManager {
                     "ok, following " + target.getName()
             )));
             AgentBotManagerSchedulerRuntime.afterDelay(randMs(250, 750), () -> {
-                BotEquipManager.autoEquip(entry.bot, entry.owner, AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
-                BotPotionManager.checkPotShareOnModeStart(entry, entry.bot);
+                BotEquipManager.autoEquip(
+                        AgentBotRuntimeIdentityRuntime.bot(entry),
+                        AgentBotRuntimeIdentityRuntime.owner(entry),
+                        AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
+                BotPotionManager.checkPotShareOnModeStart(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
                 issueFollow(entry, target);
             });
         }
@@ -540,8 +543,9 @@ public class BotManager {
         AgentBotMovementStateRuntime.clearMoveDirection(entry);
         AgentBotMovementBroadcastStateRuntime.invalidate(entry);
         BotMovementManager.broadcastMovement(entry);
-        if (entry.owner != null) {
-            joinBotToOwnerParty(entry.owner, bot);
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+        if (owner != null) {
+            joinBotToOwnerParty(owner, bot);
         }
     }
 
@@ -748,7 +752,7 @@ public class BotManager {
         // by one timer tick keeps rapid pickups from stalling the player behind K×N DPs.
         AgentBotManagerSchedulerRuntime.afterDelay(0L, () -> {
             for (BotEntry entry : entries) {
-                BotOfferManager.notifyOwnerGainedEquip(entry, entry.bot, item);
+                BotOfferManager.notifyOwnerGainedEquip(entry, AgentBotRuntimeIdentityRuntime.bot(entry), item);
             }
         });
     }
@@ -3898,7 +3902,7 @@ public class BotManager {
 
     /** Bot-to-bot visible say — routes MAP→map broadcast, PARTY→party, WHISPER→party fallback. */
     void botSay(BotEntry entry, String text) {
-        botSay(entry.bot, AgentBotReplyChannelStateRuntime.replyChannel(entry), text);
+        botSay(AgentBotRuntimeIdentityRuntime.bot(entry), AgentBotReplyChannelStateRuntime.replyChannel(entry), text);
     }
 
     /**

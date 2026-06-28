@@ -692,6 +692,11 @@ Recent reconstruction notes:
   BotEntry as the temporary backing store but no longer initialize local
   `Character bot`/`Character owner` variables directly from `entry.bot` or
   `entry.owner`.
+- Runtime identity side-effect arguments now enter through
+  `AgentBotRuntimeIdentityRuntime`; BotManager pickup auto-equip, potion-share
+  mode checks, spawn party join, owner-gained-equip notifications, and
+  compatibility reply delivery keep BotEntry as the temporary backing store but
+  no longer pass `entry.bot` or `entry.owner` directly in those calls.
 
 Initial reconstruction order:
 
