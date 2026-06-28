@@ -587,8 +587,8 @@ public class BotManager {
     }
 
     private void cancelBotTask(BotEntry entry) {
-        if (entry != null && entry.task != null) {
-            entry.task.cancel(false);
+        if (AgentBotManagerSchedulerRuntime.hasScheduledTask(entry)) {
+            AgentBotManagerSchedulerRuntime.cancelScheduledTask(entry);
         }
     }
 
@@ -613,7 +613,7 @@ public class BotManager {
         BotEntry entry = getBotEntry(ownerCharId, botName);
         if (entry == null) return false;
         entries.remove(entry);
-        entry.task.cancel(false);
+        AgentBotManagerSchedulerRuntime.cancelScheduledTask(entry);
         issueStop(entry);
         AgentBotManagerSchedulerRuntime.afterDelay(randMs(400, 600), () ->
                 AgentBotManagerReplyRuntime.replyNow(entry, randomReply(List.of(

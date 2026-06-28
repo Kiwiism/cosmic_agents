@@ -676,6 +676,10 @@ Recent reconstruction notes:
   `AgentBotManagerStatusRuntime`; BotManager tick orchestration keeps BotEntry
   as the temporary backing store but no longer reads `airshowActive` directly in
   production.
+- Scheduled tick task cancellation now enters through
+  `AgentBotManagerSchedulerRuntime`; BotManager lifecycle removal keeps BotEntry
+  as the temporary backing store but no longer reads or cancels `task` directly
+  in production.
 
 Initial reconstruction order:
 
