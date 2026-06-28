@@ -17,6 +17,7 @@ import server.agents.integration.AgentBotManagerReplyRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotGrindLootStateRuntime;
 import server.agents.integration.AgentBotGrindSearchStateRuntime;
+import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotGrindWanderStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
@@ -416,7 +417,7 @@ class BotManagerTest {
 
         BotEntry entry = new BotEntry(bot, null, null);
         entry.grinding = true;
-        entry.grindTarget = target;
+        AgentBotGrindTargetStateRuntime.setTarget(entry, target);
         entry.lastMapId = map.getId();
         BotCombatManager.AttackPlan rangedPlan = new BotCombatManager.AttackPlan(
                 0, 0, 1, new Rectangle(-200, 50, 300, 100),

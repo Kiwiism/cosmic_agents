@@ -52,6 +52,7 @@ import server.bots.combat.BotMobHitboxProvider;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatRuntime;
+import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.combat.CombatFormulaProvider;
@@ -536,7 +537,7 @@ public class BotCombatManager {
     }
 
     private static void clearActionState(BotEntry entry) {
-        entry.grindTarget = null;
+        AgentBotGrindTargetStateRuntime.clear(entry);
         AgentBotCombatCooldownStateRuntime.clearAttackCooldown(entry);
         AgentBotCombatCooldownStateRuntime.clearMoveWindow(entry);
         BotMovementManager.clearNavigationState(entry);
@@ -2393,7 +2394,7 @@ public class BotCombatManager {
     }
 
     public static String describeDebugStats(BotEntry entry, Character bot) {
-        Monster target = entry.grindTarget;
+        Monster target = AgentBotGrindTargetStateRuntime.target(entry);
         if (target == null || !target.isAlive()) {
             target = findGrindTarget(bot);
         }

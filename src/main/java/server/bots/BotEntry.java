@@ -109,6 +109,18 @@ public class BotEntry {
     int attackCooldownMs = 0;
     int moveWindowMs = 0;    // movement-only gap after attack animation; attacks blocked, walking allowed
 
+    public Monster grindTarget() {
+        return grindTarget;
+    }
+
+    public void setGrindTarget(Monster grindTarget) {
+        this.grindTarget = grindTarget;
+    }
+
+    public void clearGrindTarget() {
+        grindTarget = null;
+    }
+
     public long nextGrindTargetSearchAtMs() {
         return nextGrindTargetSearchAtMs;
     }

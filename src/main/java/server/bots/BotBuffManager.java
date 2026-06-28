@@ -11,6 +11,7 @@ import net.server.channel.handlers.UseItemHandler;
 import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentBuffDialogueReporter;
 import server.agents.integration.AgentBotBuffStateRuntime;
+import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.StatEffect;
 import server.combat.CombatFormulaProvider;
 import server.life.Monster;
@@ -167,7 +168,7 @@ public final class BotBuffManager {
     }
 
     private static boolean needsAccBuff(BotEntry entry, Character bot) {
-        Monster ref = entry.grindTarget;
+        Monster ref = AgentBotGrindTargetStateRuntime.target(entry);
         if (ref == null) {
             for (Monster monster : bot.getMap().getAllMonsters()) {
                 if (monster.isAlive()) {

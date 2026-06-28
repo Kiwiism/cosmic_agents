@@ -571,6 +571,12 @@ Recent reconstruction notes:
   BotMovementManager teleport/reset cleanup, and focused tests keep BotEntry as
   the temporary backing store but no longer read or write
   `nextGrindTargetSearchAtMs` directly outside the adapter.
+- Active grind target state now enters through
+  `AgentBotGrindTargetStateRuntime`; BotManager target snapshots, grind combat
+  selection, failure/owner-idle cleanup, BotMovementManager reset cleanup,
+  BotCombatManager death/debug handling, and BotBuffManager ACC reference
+  selection keep BotEntry as the temporary backing store but no longer read or
+  write `grindTarget` directly outside the adapter.
 
 Initial reconstruction order:
 

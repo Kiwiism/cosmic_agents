@@ -12,6 +12,7 @@ import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotGrindLootStateRuntime;
 import server.agents.integration.AgentBotGrindSearchStateRuntime;
+import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotGrindWanderStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
@@ -1295,11 +1296,7 @@ public class BotManager {
         Point shopTargetPos = rawShopTargetPos == null ? null : new Point(rawShopTargetPos);
         Point moveTargetPos = AgentBotMoveTargetStateRuntime.moveTarget(entry);
         Point farmAnchorPos = AgentBotFarmAnchorStateRuntime.farmAnchorInMap(entry, bot.getMapId());
-        Monster activeGrindTarget = entry.grindTarget != null
-                && entry.grindTarget.isAlive()
-                && entry.grindTarget.getMap() == bot.getMap()
-                ? entry.grindTarget
-                : null;
+        Monster activeGrindTarget = AgentBotGrindTargetStateRuntime.activeTargetInMap(entry, bot.getMap());
         Point grindTargetPos = activeGrindTarget == null ? null : new Point(activeGrindTarget.getPosition());
         Point primaryTargetPos;
         String primaryTargetSource;
@@ -2248,12 +2245,7 @@ public class BotManager {
     private LocalOpportunityAttackResult tickGrindMode(BotEntry entry, Character bot, Point botPos,
             Point targetPos, boolean runAiTick) {
         double seekRangeSq = (double) BotCombatManager.cfg.GRIND_SEEK_RANGE * BotCombatManager.cfg.GRIND_SEEK_RANGE;
-        Monster target = entry.grindTarget;
-        if (target == null || !target.isAlive()
-                || target.getMap() != bot.getMap()
-                || target.getPosition().distanceSq(botPos) > seekRangeSq) {
-            target = null;
-        }
+        Monster target = AgentBotGrindTargetStateRuntime.targetInSeekRange(entry, bot, botPos, seekRangeSq);
         long now = System.currentTimeMillis();
         BotCombatManager.AttackPlan attackPlan = target == null
                 ? null
@@ -2281,7 +2273,7 @@ public class BotManager {
             AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, BotInventoryManager.findNearestGrindLootTarget(entry, bot));
         }
         if (target == null) {
-            entry.grindTarget = null;
+            AgentBotGrindTargetStateRuntime.clear(entry);
             if (isSwimMap(entry) && entry.inAir) {
                 BotMovementManager.tickSwimming(entry, targetPos);
                 return new LocalOpportunityAttackResult(true, targetPos);
@@ -2302,14 +2294,14 @@ public class BotManager {
             stepMovementCore(entry, targetPos, runAiTick);
             return new LocalOpportunityAttackResult(true, targetPos);
         }
-        entry.grindTarget = target;
+        AgentBotGrindTargetStateRuntime.setTarget(entry, target);
         AgentBotGrindWanderStateRuntime.clearWanderDirection(entry);
         AgentBotPatrolStateRuntime.clearPatrolWanderTarget(entry);
         Point tp = target.getPosition();
         Monster rangedPriorityTarget = selectPriorityRangedAttackTarget(entry, bot, botPos, target);
         if (rangedPriorityTarget != null && rangedPriorityTarget != target) {
             target = rangedPriorityTarget;
-            entry.grindTarget = rangedPriorityTarget;
+            AgentBotGrindTargetStateRuntime.setTarget(entry, rangedPriorityTarget);
             tp = target.getPosition();
             attackPlan = null;
         }
@@ -2322,7 +2314,7 @@ public class BotManager {
                 : null;
         if (closerThreat != null && closerThreat != target) {
             target = closerThreat;
-            entry.grindTarget = closerThreat;
+            AgentBotGrindTargetStateRuntime.setTarget(entry, closerThreat);
             tp = target.getPosition();
             attackPlan = null;
         }
@@ -2471,7 +2463,7 @@ public class BotManager {
     private static void clearBotVolatileActions(BotEntry entry) {
         AgentBotPendingActionStateRuntime.clearPendingAction(entry);
         AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
-        entry.grindTarget = null;
+        AgentBotGrindTargetStateRuntime.clear(entry);
         AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
         AgentBotPatrolStateRuntime.clearPatrolWanderTarget(entry);
         BotMovementManager.resetEntryStateAfterTeleport(entry);
@@ -2807,7 +2799,7 @@ public class BotManager {
         BotShopManager.cancelShopVisit(entry);
         clearMode(entry);
         AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
-        entry.grindTarget = null;
+        AgentBotGrindTargetStateRuntime.clear(entry);
         AgentBotDegenerateAttackStateRuntime.clear(entry);
         entry.buffConsumablesEnabled = false;
         AgentBotActivityStateRuntime.setOwnerAwaySafeMode(entry, true);
@@ -3037,7 +3029,7 @@ public class BotManager {
         AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
         AgentBotFarmAnchorStateRuntime.clearFarmAnchor(entry);
         AgentBotPatrolStateRuntime.clearPatrol(entry);
-        entry.grindTarget = null;
+        AgentBotGrindTargetStateRuntime.clear(entry);
         AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
         AgentBotGrindSearchStateRuntime.clear(entry);
         AgentBotCombatCooldownStateRuntime.clearMoveWindow(entry);
