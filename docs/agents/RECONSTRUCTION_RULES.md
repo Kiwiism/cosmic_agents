@@ -523,6 +523,10 @@ Recent reconstruction notes:
   cleanup, fidget gating, and navigation keep BotEntry as the temporary backing
   store but no longer read or write `moveTarget` or `moveTargetPrecise` directly
   in production.
+- Agent reply queue state no longer exposes the temporary BotEntry-backed
+  `Deque` through the integration adapter; callers use narrow queue operations
+  or a read-only snapshot while `BotEntry.messageQueue()` remains only the
+  temporary backing accessor.
 
 Initial reconstruction order:
 

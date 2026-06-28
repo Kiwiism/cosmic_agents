@@ -3,17 +3,14 @@ package server.agents.integration;
 import server.agents.commands.AgentQueuedMessage;
 import server.bots.BotEntry;
 
-import java.util.Deque;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Agent-owned adapter for temporary BotEntry-backed chat queue state.
  */
 public final class AgentBotMessageQueueStateRuntime {
     private AgentBotMessageQueueStateRuntime() {
-    }
-
-    public static Deque<AgentQueuedMessage> queue(BotEntry entry) {
-        return entry.messageQueue();
     }
 
     public static Object lock(BotEntry entry) {
@@ -34,6 +31,12 @@ public final class AgentBotMessageQueueStateRuntime {
 
     public static AgentQueuedMessage peek(BotEntry entry) {
         return entry.messageQueue().peek();
+    }
+
+    public static List<AgentQueuedMessage> snapshot(BotEntry entry) {
+        synchronized (lock(entry)) {
+            return List.copyOf(new ArrayList<>(entry.messageQueue()));
+        }
     }
 
     public static boolean isSending(BotEntry entry) {

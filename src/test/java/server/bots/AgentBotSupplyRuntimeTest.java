@@ -47,7 +47,7 @@ class AgentBotSupplyRuntimeTest {
 
             AgentBotSupplyRuntime.handleNeedPotionCommand(entry, true);
 
-            assertTrue(AgentBotMessageQueueStateRuntime.queue(entry).peek().text().contains("hp"));
+            assertTrue(AgentBotMessageQueueStateRuntime.peek(entry).text().contains("hp"));
         }
     }
 
@@ -78,7 +78,7 @@ class AgentBotSupplyRuntimeTest {
 
             AgentBotSupplyRuntime.handleNeedAmmoCommand(entry);
 
-            String reply = AgentBotMessageQueueStateRuntime.queue(entry).peek().text();
+            String reply = AgentBotMessageQueueStateRuntime.peek(entry).text();
             assertTrue(reply.contains("ammo") || reply.contains("arrows") || reply.contains("bolts"));
         }
     }

@@ -94,7 +94,7 @@ class AgentBotPendingActionRuntimeTest {
         AgentBotPendingActionRuntime.applySkillReportDecision(entry, decision);
 
         assertEquals(AgentChatPendingAction.SKILL_TREE_CHOICE, AgentBotPendingActionStateRuntime.pendingAction(entry));
-        assertEquals("pick tree", AgentBotMessageQueueStateRuntime.queue(entry).peek().text());
+        assertEquals("pick tree", AgentBotMessageQueueStateRuntime.peek(entry).text());
     }
 
     @Test

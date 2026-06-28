@@ -385,8 +385,8 @@ class BotChatManagerTest {
         AgentBotReplyRuntime.queueReply(entry, "owner reply");
         AgentBotReplyRuntime.queueSay(entry, "party chatter");
 
-        AgentQueuedMessage first = AgentBotMessageQueueStateRuntime.queue(entry).poll();
-        AgentQueuedMessage second = AgentBotMessageQueueStateRuntime.queue(entry).poll();
+        AgentQueuedMessage first = AgentBotMessageQueueStateRuntime.poll(entry);
+        AgentQueuedMessage second = AgentBotMessageQueueStateRuntime.poll(entry);
         assertEquals("owner reply", first.text());
         assertTrue(first.ownerDirected());
         assertEquals("party chatter", second.text());
@@ -400,8 +400,8 @@ class BotChatManagerTest {
 
         AgentBotChatReportRuntime.reportHelp(entry);
 
-        assertEquals(5, AgentBotMessageQueueStateRuntime.queue(entry).size());
-        for (AgentQueuedMessage message : AgentBotMessageQueueStateRuntime.queue(entry)) {
+        assertEquals(5, AgentBotMessageQueueStateRuntime.size(entry));
+        for (AgentQueuedMessage message : AgentBotMessageQueueStateRuntime.snapshot(entry)) {
             assertTrue(message.ownerDirected());
         }
     }
