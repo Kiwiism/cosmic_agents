@@ -53,6 +53,7 @@ import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
+import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.combat.CombatFormulaProvider;
@@ -637,7 +638,7 @@ public class BotCombatManager {
             noteSkillBuffDecision(entry, "skill buffs disabled");
             return;
         }
-        if (!entry.following && !entry.grinding) {
+        if (!AgentBotModeStateRuntime.following(entry) && !AgentBotModeStateRuntime.grinding(entry)) {
             noteSkillBuffDecision(entry, "idle (not following or grinding)");
             return;
         }
@@ -714,7 +715,7 @@ public class BotCombatManager {
     static boolean tickSupportHealing(BotEntry entry, Character bot) {
         if (AgentBotCombatCooldownStateRuntime.blocksGroundedAttack(entry, entry.inAir)) return false;
         if (!entry.supportHealsEnabled) return false;
-        if (!entry.following && !entry.grinding) return false;
+        if (!AgentBotModeStateRuntime.following(entry) && !AgentBotModeStateRuntime.grinding(entry)) return false;
         if (entry.healSkillId == 0 || bot.skillIsCooling(entry.healSkillId)) return false;
 
         Skill skill = SkillFactory.getSkill(entry.healSkillId);
@@ -738,7 +739,7 @@ public class BotCombatManager {
         // them right before the cast. The top guard already permits casts while inAir, so the
         // heal animation plays mid-flight instead of forcing a planted stand-and-cast.
         boolean jumpHealing = false;
-        if (entry.following && !entry.inAir && !entry.climbing && cfg.JUMP_HEAL_LEADER_AHEAD_PX > 0) {
+        if (AgentBotModeStateRuntime.following(entry) && !entry.inAir && !entry.climbing && cfg.JUMP_HEAL_LEADER_AHEAD_PX > 0) {
             Character anchor = BotManager.getInstance().resolveFollowAnchor(entry, entry.owner);
             if (anchor != null && anchor != bot && anchor.getMap() == bot.getMap()) {
                 int dx = anchor.getPosition().x - bot.getPosition().x;
@@ -2580,7 +2581,7 @@ public class BotCombatManager {
             }
             if (!entry.noAmmo) {
                 entry.noAmmo = true;
-                if (entry.grinding) {
+                if (AgentBotModeStateRuntime.grinding(entry)) {
                     BotManager.getInstance().issueFollowOwner(entry);
                     AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(MP_POTS_OUT_MSGS));
                 }
@@ -2603,7 +2604,7 @@ public class BotCombatManager {
 
         if (ammo <= 0 && !entry.noAmmo) {
             entry.noAmmo = true;
-            if (entry.grinding) {
+            if (AgentBotModeStateRuntime.grinding(entry)) {
                 BotManager.getInstance().issueFollowOwner(entry);
                 AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(AMMO_OUT_MSGS));
             }

@@ -10,6 +10,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
+import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
@@ -205,7 +206,7 @@ public final class BotPathLogger {
         sb.append("--- CURRENT STATE ---\n");
         sb.append("Bot:        ").append(pointRegionStr(botPos, botRegionId)).append("\n");
         sb.append("Owner raw:  ").append(pointRegionStr(targetSnapshot.rawOwnerPosition(), rawOwnerRegionId)).append("\n");
-        if (entry.following) {
+        if (AgentBotModeStateRuntime.following(entry)) {
             sb.append("Follow anchor:")
                     .append(" ").append(targetSnapshot.followAnchorName())
                     .append(" ").append(pointRegionStr(targetSnapshot.followAnchorPosition(), followAnchorRegionId))
@@ -216,12 +217,12 @@ public final class BotPathLogger {
                 .append(" px=").append(targetSnapshot.formationPx())
                 .append(" snap=").append(targetSnapshot.formationSnapRange())
                 .append(" offsetX=").append(entry.followOffsetX).append("\n");
-        if (entry.following || !targetSnapshot.followBasePosition().equals(targetSnapshot.rawOwnerPosition())) {
+        if (AgentBotModeStateRuntime.following(entry) || !targetSnapshot.followBasePosition().equals(targetSnapshot.rawOwnerPosition())) {
             sb.append("Follow base:")
                     .append(" ").append(pointRegionStr(targetSnapshot.followBasePosition(), followBaseRegionId))
                     .append("  [anchor + formation offset]\n");
         }
-        if (entry.following) {
+        if (AgentBotModeStateRuntime.following(entry)) {
             sb.append("Follow tgt: ").append(pointRegionStr(targetSnapshot.followTargetPosition(), followTargetRegionId))
                     .append("  [after snap/clamp]\n");
         }
@@ -252,7 +253,9 @@ public final class BotPathLogger {
             sb.append("  at=").append(lastTickAtMs);
         }
         sb.append("\n");
-        sb.append("Mode:       ").append(entry.following ? "follow" : entry.grinding ? "grind" : "idle").append("\n");
+        sb.append("Mode:       ").append(AgentBotModeStateRuntime.following(entry)
+                ? "follow"
+                : AgentBotModeStateRuntime.grinding(entry) ? "grind" : "idle").append("\n");
         int stuckMs = AgentBotMovementStuckStateRuntime.stuckMs(entry);
         boolean isStuck = stuckMs >= 500 || computeStuck(botPos.x, botPos.y);
         sb.append("Stuck:      ").append(isStuck ? "YES (" + stuckMs + "ms) ***" : "no").append("\n");

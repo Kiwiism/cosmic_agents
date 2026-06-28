@@ -14,6 +14,7 @@ import constants.skills.WhiteKnight;
 import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
+import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.agents.integration.AgentBotPotionRuntime;
 import server.agents.integration.AgentBotPotionStateRuntime;
@@ -279,7 +280,7 @@ public final class BotPotionManager {
         BotCombatManager.tickAmmoCheck(entry, bot);
         BotPerformanceMonitor.recordSince("potion-ammo-check", startedAt);
 
-        if (!entry.grinding && !entry.following) {
+        if (!AgentBotModeStateRuntime.grinding(entry) && !AgentBotModeStateRuntime.following(entry)) {
             return;
         }
         startedAt = BotPerformanceMonitor.start();
@@ -298,7 +299,7 @@ public final class BotPotionManager {
         requestLowPotShare(entry, bot, pots[1], false, false);
         BotPerformanceMonitor.recordSince("potion-share-mp", startedAt);
 
-        if (!entry.grinding) {
+        if (!AgentBotModeStateRuntime.grinding(entry)) {
             return;
         }
         startedAt = BotPerformanceMonitor.start();

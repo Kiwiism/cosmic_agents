@@ -14,6 +14,7 @@ import server.agents.integration.AgentBotGrindLootStateRuntime;
 import server.agents.integration.AgentBotGrindSearchStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotGrindWanderStateRuntime;
+import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementStuckStateRuntime;
@@ -1241,7 +1242,7 @@ public class BotManager {
             return null;
         }
 
-        int targetId = entry.followTargetId;
+        int targetId = AgentBotModeStateRuntime.followTargetId(entry);
         if (targetId <= 0 || targetId == owner.getId() || targetId == entry.bot.getId()) {
             return owner;
         }
@@ -1312,10 +1313,10 @@ public class BotManager {
         } else if (grindTargetPos != null) {
             primaryTargetPos = grindTargetPos;
             primaryTargetSource = "grind-target";
-        } else if (entry.grinding) {
+        } else if (AgentBotModeStateRuntime.grinding(entry)) {
             primaryTargetPos = fallbackPos;
             primaryTargetSource = "grind-idle";
-        } else if (entry.following) {
+        } else if (AgentBotModeStateRuntime.following(entry)) {
             primaryTargetPos = followTargetPos;
             primaryTargetSource = "follow-target";
         } else {
@@ -2001,7 +2002,7 @@ public class BotManager {
             return;
         }
         if (owner == null) {
-            entry.following = false;
+            AgentBotModeStateRuntime.setFollowing(entry, false);
             if (groundAfterMapChange(entry, bot)) {
                 return;
             }
@@ -2147,7 +2148,7 @@ public class BotManager {
         }
 
         // Follow mode: attack monsters already in attack range without chasing
-        if (entry.following && runAiTick && !entry.climbing
+        if (AgentBotModeStateRuntime.following(entry) && runAiTick && !entry.climbing
                 && followAnchor != null
                 && bot.getMapId() == followAnchor.getMapId()
                 && Math.abs(botPos.x - followAnchor.getPosition().x) <= BotMovementManager.cfg.FOLLOW_DIST * 5) {
@@ -2209,7 +2210,7 @@ public class BotManager {
         }
 
         // Grind mode: navigate toward nearest monster, attack when in range
-        if (entry.grinding) {
+        if (AgentBotModeStateRuntime.grinding(entry)) {
             LocalOpportunityAttackResult grindResult;
             if (!perf) {
                 grindResult = tickGrindMode(entry, bot, botPos, targetPos, runAiTick);
@@ -2438,7 +2439,7 @@ public class BotManager {
         if (entry.tickFailureCount >= BOT_TICK_FAILURE_LIMIT) {
             log.error("Disabling bot '{}' after {} tick failures within {} ms (owner={}, map={}, grinding={}, following={})",
                     botName, entry.tickFailureCount, BOT_TICK_FAILURE_WINDOW_MS, ownerName, mapId,
-                    entry.grinding, entry.following, t);
+                    AgentBotModeStateRuntime.grinding(entry), AgentBotModeStateRuntime.following(entry), t);
             removeBotByCharId(botCharId);
             return;
         }
@@ -2449,7 +2450,7 @@ public class BotManager {
 
         log.warn("Bot '{}' tick failed {}/{} (owner={}, map={}, grinding={}, following={})",
                 botName, entry.tickFailureCount, BOT_TICK_FAILURE_LIMIT, ownerName, mapId,
-                entry.grinding, entry.following, t);
+                AgentBotModeStateRuntime.grinding(entry), AgentBotModeStateRuntime.following(entry), t);
     }
 
     private static void resetBotTickFailures(BotEntry entry) {
@@ -2571,7 +2572,7 @@ public class BotManager {
         if (!AgentBotMoveTargetStateRuntime.moveTargetEquals(entry, entry.activeScriptTask.point)) {
             return false;
         }
-        return !entry.following;
+        return !AgentBotModeStateRuntime.following(entry);
     }
 
     private LocalOpportunityAttackResult tryLocalOpportunityAttack(BotEntry entry,
@@ -2657,7 +2658,7 @@ public class BotManager {
     private static void clearFollowActionMoveWindowIfSettled(BotEntry entry,
                                                              Point botPos,
                                                              TargetSnapshot targetSnapshot) {
-        if (entry == null || !entry.following || targetSnapshot == null) {
+        if (entry == null || !AgentBotModeStateRuntime.following(entry) || targetSnapshot == null) {
             return;
         }
         clearActionMoveWindowIfSettled(entry, botPos, targetSnapshot.followTargetPos());
@@ -2985,13 +2986,13 @@ public class BotManager {
 
     private void startFollow(BotEntry entry, Character target) {
         Character owner = entry.owner;
-        entry.followTargetId = owner != null && target != null && owner.getId() != target.getId()
+        AgentBotModeStateRuntime.setFollowTargetId(entry, owner != null && target != null && owner.getId() != target.getId()
                 ? target.getId()
-                : 0;
-        entry.grinding = false;
+                : 0);
+        AgentBotModeStateRuntime.setGrinding(entry, false);
         AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
         AgentBotFarmAnchorStateRuntime.clearFarmAnchor(entry);
-        entry.following = true;
+        AgentBotModeStateRuntime.setFollowing(entry, true);
     }
 
     /**
@@ -3024,8 +3025,7 @@ public class BotManager {
      * pot-share, self-buff, and ammo-low fallback paths.
      */
     private void enterActiveMode(BotEntry entry) {
-        entry.followTargetId = 0;
-        entry.following = false;
+        AgentBotModeStateRuntime.stopFollowing(entry);
         AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
         AgentBotFarmAnchorStateRuntime.clearFarmAnchor(entry);
         AgentBotPatrolStateRuntime.clearPatrol(entry);
@@ -3037,7 +3037,7 @@ public class BotManager {
         AgentBotRetreatHoldStateRuntime.clear(entry);
         AgentBotGrindWanderStateRuntime.clearWanderDirection(entry);
         BotMovementManager.clearNavigationState(entry);
-        entry.grinding = true;
+        AgentBotModeStateRuntime.startGrinding(entry);
     }
 
     /** Public hook: stop all scripted movement/combat mode and idle in place. */
@@ -3169,9 +3169,7 @@ public class BotManager {
     }
 
     private static void clearMode(BotEntry entry) {
-        entry.followTargetId = 0;
-        entry.following = false;
-        entry.grinding = false;
+        AgentBotModeStateRuntime.stopMovementModes(entry);
         AgentBotFarmAnchorStateRuntime.clearFarmAnchor(entry);
         AgentBotPatrolStateRuntime.clearPatrol(entry);
         AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
@@ -3434,7 +3432,7 @@ public class BotManager {
     }
 
     private boolean tickIdleEntry(BotEntry entry, Character bot) {
-        if (entry.following || entry.grinding || AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)
+        if (AgentBotModeStateRuntime.following(entry) || AgentBotModeStateRuntime.grinding(entry) || AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)
                 || AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry) || entry.shopVisitPending) {
             return false;
         }
@@ -3454,7 +3452,7 @@ public class BotManager {
     }
 
     private boolean syncFollowMap(BotEntry entry, Character bot, Character followAnchor) {
-        if (!entry.following || followAnchor == null || bot.getMapId() == followAnchor.getMapId()) {
+        if (!AgentBotModeStateRuntime.following(entry) || followAnchor == null || bot.getMapId() == followAnchor.getMapId()) {
             return false;
         }
         // Ground against the anchor's actual position in their NEW map. The previously-passed
@@ -3494,7 +3492,7 @@ public class BotManager {
     }
 
     private boolean recoverGrindPartyTeleportDistance(BotEntry entry, Character bot, Character partyAnchor) {
-        if (entry == null || bot == null || partyAnchor == null || !entry.grinding || entry.shopVisitPending) {
+        if (entry == null || bot == null || partyAnchor == null || !AgentBotModeStateRuntime.grinding(entry) || entry.shopVisitPending) {
             return false;
         }
         if (AgentBotMoveTargetStateRuntime.hasMoveTarget(entry) || AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry)) {
@@ -3641,7 +3639,7 @@ public class BotManager {
         if (entry == null || bot == null || targetPos == null) {
             return false;
         }
-        if (!entry.following || entry.grinding || AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)) {
+        if (!AgentBotModeStateRuntime.following(entry) || AgentBotModeStateRuntime.grinding(entry) || AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)) {
             return false;
         }
         if (entry.inAir || entry.climbing || entry.downJumpPending || AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)) {

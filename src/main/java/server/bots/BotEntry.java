@@ -326,6 +326,9 @@ public class BotEntry {
     public boolean isGrinding() { return grinding; }
     public boolean isFollowing() { return following; }
     public int followTargetId() { return followTargetId; }
+    public void setGrinding(boolean grinding) { this.grinding = grinding; }
+    public void setFollowing(boolean following) { this.following = following; }
+    public void setFollowTargetId(int followTargetId) { this.followTargetId = followTargetId; }
     public Character bot() { return bot; }
     public Character owner() { return owner; }
     public BotBuildManager.ApBuild apBuild() { return apBuild; }

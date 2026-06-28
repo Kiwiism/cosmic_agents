@@ -5,6 +5,7 @@ import constants.game.ExpTable;
 import net.server.world.Party;
 import net.server.world.PartyCharacter;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
+import server.agents.integration.AgentBotModeStateRuntime;
 import server.bots.BotEntry;
 import server.life.Monster;
 import server.maps.MapleMap;
@@ -63,14 +64,14 @@ public final class SituationBuilder {
     }
 
     private static String describeActivity(BotEntry entry) {
-        if (entry.isGrinding()) {
+        if (AgentBotModeStateRuntime.grinding(entry)) {
             MapleMap m = entry.getBot().getMap();
             if (m != null && AgentBotFarmAnchorStateRuntime.isFarmAnchorInMap(entry, m.getId())) {
                 return "grinding (camping this spot)";
             }
             return "grinding";
         }
-        if (entry.isFollowing()) return "following owner";
+        if (AgentBotModeStateRuntime.following(entry)) return "following owner";
         return "standing around, no orders";
     }
 

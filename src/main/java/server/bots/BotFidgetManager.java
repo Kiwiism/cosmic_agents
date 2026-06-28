@@ -3,6 +3,7 @@ package server.bots;
 import client.Character;
 import net.packet.Packet;
 import server.agents.integration.AgentBotFidgetRuntime;
+import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
@@ -151,9 +152,9 @@ final class BotFidgetManager {
     static boolean maybeStartSocialFidget(BotEntry entry) {
         if (entry == null
                 || entry.fidgetMode != BotFidgetMode.NONE
-                || !entry.following
+                || !AgentBotModeStateRuntime.following(entry)
                 || AgentBotFidgetRuntime.isLeaderIdleForFidget(entry)
-                || entry.grinding
+                || AgentBotModeStateRuntime.grinding(entry)
                 || AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)
                 || entry.navEdge != null
                 || AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry)
@@ -176,9 +177,9 @@ final class BotFidgetManager {
                                       Point targetPos,
                                       boolean allowAirborneJumpFidget) {
         boolean airborneJumpFidget = entry.inAir && allowAirborneJumpFidget && isJumpFidget(entry.fidgetMode);
-        return entry.following
+        return AgentBotModeStateRuntime.following(entry)
                 && !AgentBotFidgetRuntime.isLeaderIdleForFidget(entry)
-                && !entry.grinding
+                && !AgentBotModeStateRuntime.grinding(entry)
                 && !AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)
                 && entry.navEdge == null
                 && !AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry)

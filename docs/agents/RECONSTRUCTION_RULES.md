@@ -577,6 +577,14 @@ Recent reconstruction notes:
   BotCombatManager death/debug handling, and BotBuffManager ACC reference
   selection keep BotEntry as the temporary backing store but no longer read or
   write `grindTarget` directly outside the adapter.
+- High-level mode state now enters through `AgentBotModeStateRuntime`;
+  BotManager follow/grind/stop transitions, BotMovementManager movement gates,
+  BotFidgetManager social fidget gates, BotCombatManager buff/heal/ammo gates,
+  BotPotionManager share/low-pot gates, BotNavigationManager follow/grind
+  target adjustment, BotPathLogger mode reporting, LLM situation reporting,
+  movement snapshots, and focused tests keep BotEntry as the temporary backing
+  store but no longer read or write `following`, `grinding`, or
+  `followTargetId` directly outside the adapter.
 
 Initial reconstruction order:
 

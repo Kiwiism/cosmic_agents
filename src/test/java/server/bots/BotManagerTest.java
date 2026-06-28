@@ -19,6 +19,7 @@ import server.agents.integration.AgentBotGrindLootStateRuntime;
 import server.agents.integration.AgentBotGrindSearchStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotGrindWanderStateRuntime;
+import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
@@ -320,7 +321,7 @@ class BotManagerTest {
         Character owner = mockMovingBot(new Point(100, 100), map);
         Character bot = mockMovingBot(new Point(100, 1700), map);
         BotEntry entry = new BotEntry(bot, owner, null);
-        entry.grinding = true;
+        AgentBotModeStateRuntime.setGrinding(entry, true);
 
         BotManager.getInstance().stepMovementOnly(entry, bot.getPosition(), owner.getPosition(), true);
 
@@ -416,7 +417,7 @@ class BotManagerTest {
         when(target.getMap()).thenReturn(map);
 
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.grinding = true;
+        AgentBotModeStateRuntime.setGrinding(entry, true);
         AgentBotGrindTargetStateRuntime.setTarget(entry, target);
         entry.lastMapId = map.getId();
         BotCombatManager.AttackPlan rangedPlan = new BotCombatManager.AttackPlan(
@@ -610,8 +611,8 @@ class BotManagerTest {
         AgentBotPendingActionStateRuntime.setPendingAction(entry, "drop");
         AgentBotPendingActionStateRuntime.setPendingDropCategory(entry, "equips");
         AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, mock(MapItem.class));
-        entry.following = true;
-        entry.grinding = true;
+        AgentBotModeStateRuntime.setFollowing(entry, true);
+        AgentBotModeStateRuntime.setGrinding(entry, true);
         entry.moveTarget = new Point(100, 100);
 
         Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
@@ -625,13 +626,13 @@ class BotManagerTest {
             assertNull(AgentBotPendingActionStateRuntime.pendingAction(entry));
             assertNull(AgentBotPendingActionStateRuntime.pendingDropCategory(entry));
             assertNull(AgentBotGrindLootStateRuntime.grindLootTarget(entry));
-            assertTrue(entry.following);
-            assertTrue(entry.grinding);
+            assertTrue(AgentBotModeStateRuntime.following(entry));
+            assertTrue(AgentBotModeStateRuntime.grinding(entry));
 
             failureHandler.invoke(manager, entry, owner.getId(), bot.getId(), new NullPointerException("bad drop"));
             assertTrue(bots.containsKey(owner.getId()));
-            assertFalse(entry.following);
-            assertFalse(entry.grinding);
+            assertFalse(AgentBotModeStateRuntime.following(entry));
+            assertFalse(AgentBotModeStateRuntime.grinding(entry));
             assertNull(entry.moveTarget);
 
             failureHandler.invoke(manager, entry, owner.getId(), bot.getId(), new NullPointerException("bad drop"));
@@ -648,7 +649,7 @@ class BotManagerTest {
         map.getFootholds().insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
         Character bot = mockMovingBot(new Point(80, 100), map);
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
-        entry.following = true;
+        AgentBotModeStateRuntime.setFollowing(entry, true);
 
         assertTrue(BotManager.tryFollowIdleMovementFastPath(entry, bot, new Point(100, 100), 1_000L));
         assertEquals("idle-fast", AgentBotNavigationDebugStateRuntime.lastDecision(entry));
@@ -967,7 +968,7 @@ class BotManagerTest {
         Character owner = mockMovingBot(new Point(50, 100), map);
         Character bot = mockMovingBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, owner, null);
-        entry.following = true;
+        AgentBotModeStateRuntime.setFollowing(entry, true);
         entry.shopVisitPending = true;
         entry.shopNpcPos = new Point(900, 100);
         entry.shopTargetPos = new Point(850, 100);
@@ -991,8 +992,8 @@ class BotManagerTest {
         assertEquals(map.getId(), AgentBotFarmAnchorStateRuntime.farmAnchorMapId(entry));
         assertEquals(new Point(300, 100), AgentBotMoveTargetStateRuntime.moveTarget(entry));
         assertTrue(AgentBotMoveTargetStateRuntime.isPrecise(entry));
-        assertFalse(entry.following);
-        assertTrue(entry.grinding);
+        assertFalse(AgentBotModeStateRuntime.following(entry));
+        assertTrue(AgentBotModeStateRuntime.grinding(entry));
 
         BotManager.TargetSnapshot snapshot = BotManager.getInstance().captureTargetSnapshot(entry);
         assertEquals(new Point(300, 100), snapshot.primaryTargetPos());
@@ -1030,7 +1031,7 @@ class BotManagerTest {
         assertFalse(entry.shopSequenceActive);
         assertNull(entry.shopNpcPos);
         assertNull(entry.shopTargetPos);
-        assertTrue(entry.following);
+        assertTrue(AgentBotModeStateRuntime.following(entry));
     }
 
     @Test
@@ -1048,7 +1049,7 @@ class BotManagerTest {
         assertEquals(-1, AgentBotFarmAnchorStateRuntime.farmAnchorMapId(entry));
         assertNull(AgentBotMoveTargetStateRuntime.moveTarget(entry));
         assertFalse(AgentBotMoveTargetStateRuntime.isPrecise(entry));
-        assertTrue(entry.following);
+        assertTrue(AgentBotModeStateRuntime.following(entry));
     }
 
     @Test

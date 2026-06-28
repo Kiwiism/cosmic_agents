@@ -16,9 +16,9 @@ public final class AgentBotMovementStateRuntime {
 
     public static AgentMovementSnapshot snapshot(BotEntry entry) {
         return new AgentMovementSnapshot(
-                entry.isFollowing(),
-                entry.isGrinding(),
-                entry.followTargetId(),
+                AgentBotModeStateRuntime.following(entry),
+                AgentBotModeStateRuntime.grinding(entry),
+                AgentBotModeStateRuntime.followTargetId(entry),
                 AgentBotMoveTargetStateRuntime.moveTarget(entry),
                 AgentBotMoveTargetStateRuntime.isPrecise(entry),
                 AgentBotFarmAnchorStateRuntime.farmAnchor(entry),
@@ -32,7 +32,7 @@ public final class AgentBotMovementStateRuntime {
     }
 
     public static AgentMovementMode mode(BotEntry entry) {
-        if (entry.isGrinding()) {
+        if (AgentBotModeStateRuntime.grinding(entry)) {
             return AgentMovementMode.GRINDING;
         }
         if (AgentBotPatrolStateRuntime.hasPatrolRegion(entry)) {
@@ -44,7 +44,7 @@ public final class AgentBotMovementStateRuntime {
         if (AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)) {
             return AgentMovementMode.MOVING;
         }
-        if (entry.isFollowing()) {
+        if (AgentBotModeStateRuntime.following(entry)) {
             return AgentMovementMode.FOLLOWING;
         }
         return AgentMovementMode.STOPPED;

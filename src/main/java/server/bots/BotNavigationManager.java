@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
+import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.maps.MapleMap;
@@ -1420,7 +1421,7 @@ final class BotNavigationManager {
                                           BotNavigationGraph graph,
                                           int targetRegionId,
                                           Point rawTargetPos) {
-        if (rawTargetPos == null || !entry.grinding || targetRegionId < 0) {
+        if (rawTargetPos == null || !AgentBotModeStateRuntime.grinding(entry) || targetRegionId < 0) {
             return rawTargetPos;
         }
 
@@ -1480,11 +1481,11 @@ final class BotNavigationManager {
 
         Character owner = entry.owner;
         Character followAnchor = BotManager.getInstance().resolveFollowAnchor(entry, owner);
-        if (entry.following
+        if (AgentBotModeStateRuntime.following(entry)
                 && !AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)
                 && !AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry)
                 && !entry.shopVisitPending
-                && !entry.grinding
+                && !AgentBotModeStateRuntime.grinding(entry)
                 && followAnchor != null
                 && followAnchor.getMap() == map) {
             // Follow mode + owner climbing: prioritise a rope target. The follow

@@ -8,6 +8,7 @@ import net.packet.Packet;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotGrindSearchStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
+import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
@@ -291,7 +292,7 @@ public class BotMovementManager {
         if (entry.navEdge != null) {
             return false;
         }
-        return !entry.grinding
+        return !AgentBotModeStateRuntime.grinding(entry)
                 && Math.abs(dy) < cfg.STOP_DIST
                 && Math.abs(dxOwner) < cfg.FOLLOW_DIST * 2;
     }
@@ -564,7 +565,7 @@ public class BotMovementManager {
     }
 
     static Point adjustGrindingTargetPosition(BotEntry entry, Foothold currentFh, Point targetPos) {
-        if (!entry.grinding || entry.navEdge != null || currentFh == null || targetPos == null) {
+        if (!AgentBotModeStateRuntime.grinding(entry) || entry.navEdge != null || currentFh == null || targetPos == null) {
             return targetPos;
         }
 
@@ -635,7 +636,8 @@ public class BotMovementManager {
         if (entry == null || entry.bot == null || currentFh == null || botPos == null || stepX == 0) {
             return false;
         }
-        if ((!entry.following && !entry.grinding) || entry.navEdge != null || AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry)) {
+        if ((!AgentBotModeStateRuntime.following(entry) && !AgentBotModeStateRuntime.grinding(entry))
+                || entry.navEdge != null || AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry)) {
             return false;
         }
 
