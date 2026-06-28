@@ -411,19 +411,17 @@ class BotChatManagerTest {
     void shouldClearPendingOfferStateForOwnerAsk() {
         BotEntry entry = new BotEntry(null, null, null);
         AgentBotPendingActionStateRuntime.setPendingDropCategory(entry, "equips");
-        entry.pendingLootOfferItem = new Item(1002000, (short) 1, (short) 1);
-        entry.pendingLootOfferRecipientId = 123;
-        entry.pendingLootOfferExpiresAt = Long.MAX_VALUE;
-        entry.pendingLootOfferBotRequesting = true;
+        AgentBotOfferStateRuntime.setPendingLootOffer(
+                entry, new Item(1002000, (short) 1, (short) 1), 123, Long.MAX_VALUE, true);
         AgentBotOfferStateRuntime.reserveGearPrompt(entry, Long.MAX_VALUE);
 
         BotOfferManager.clearPendingOfferForOwnerAsk(entry);
 
         assertNull(AgentBotPendingActionStateRuntime.pendingDropCategory(entry));
-        assertNull(entry.pendingLootOfferItem);
-        assertEquals(0, entry.pendingLootOfferRecipientId);
-        assertEquals(0L, entry.pendingLootOfferExpiresAt);
-        assertFalse(entry.pendingLootOfferBotRequesting);
+        assertNull(AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
+        assertEquals(0, AgentBotOfferStateRuntime.pendingLootOfferRecipientId(entry));
+        assertEquals(0L, AgentBotOfferStateRuntime.pendingLootOfferExpiresAt(entry));
+        assertFalse(AgentBotOfferStateRuntime.pendingLootOfferBotRequesting(entry));
         assertEquals(0L, AgentBotOfferStateRuntime.pendingGearPromptAt(entry));
     }
 }

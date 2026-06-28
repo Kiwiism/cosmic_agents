@@ -625,6 +625,14 @@ Recent reconstruction notes:
   BotBuffManager tick/debug/report paths, Agent control callbacks, and focused
   tests keep BotEntry as the temporary backing store but no longer read or write
   `buffConsumablesEnabled` or `buffCheapMode` directly outside the adapter.
+- Pending loot-offer tuple state now enters through
+  `AgentBotOfferStateRuntime`; BotManager offer-recipient checks, BotOfferManager
+  reservation/prompt/expiry/accepted-transfer cleanup, BotInventoryManager
+  pickup auto-equip, Agent active/equipment bridges, and focused tests keep
+  BotEntry as the temporary backing store but no longer read or write
+  `pendingLootOfferItem`, `pendingLootOfferRecipientId`,
+  `pendingLootOfferExpiresAt`, or `pendingLootOfferBotRequesting` directly
+  outside the adapter.
 
 Initial reconstruction order:
 

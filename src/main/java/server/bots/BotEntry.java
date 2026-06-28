@@ -532,6 +532,40 @@ public class BotEntry {
     public Item pendingLootOfferItem() { return pendingLootOfferItem; }
     int pendingLootOfferRecipientId = 0;
     long pendingLootOfferExpiresAt = 0L;
+
+    public int pendingLootOfferRecipientId() {
+        return pendingLootOfferRecipientId;
+    }
+
+    public long pendingLootOfferExpiresAt() {
+        return pendingLootOfferExpiresAt;
+    }
+
+    public boolean pendingLootOfferBotRequesting() {
+        return pendingLootOfferBotRequesting;
+    }
+
+    public void setPendingLootOffer(Item item, int recipientId, long expiresAt, boolean botRequesting) {
+        pendingLootOfferItem = item;
+        pendingLootOfferRecipientId = recipientId;
+        pendingLootOfferExpiresAt = expiresAt;
+        pendingLootOfferBotRequesting = botRequesting;
+    }
+
+    public void clearPendingLootOffer() {
+        setPendingLootOffer(null, 0, 0L, false);
+    }
+
+    public void clearPendingLootOfferForAcceptedTransfer() {
+        pendingLootOfferRecipientId = 0;
+        pendingLootOfferExpiresAt = 0L;
+        pendingLootOfferBotRequesting = false;
+    }
+
+    public void clearPendingLootOfferItem() {
+        pendingLootOfferItem = null;
+    }
+
     int lootInhibitMs = 0;
 
     public int lootInhibitMs() {

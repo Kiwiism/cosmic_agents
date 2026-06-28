@@ -54,7 +54,7 @@ public final class AgentBotEquipmentRuntime {
             @Override
             public void autoEquip() {
                 AgentBotEquipmentSchedulerRuntime.afterRandomDelay(400, 600, () -> {
-                    BotEquipManager.autoEquip(entry.bot(), entry.owner(), entry.pendingLootOfferItem(), true);
+                    BotEquipManager.autoEquip(entry.bot(), entry.owner(), AgentBotOfferStateRuntime.pendingLootOfferItem(entry), true);
                     AgentBotEquipmentReplyRuntime.replyNow(entry, AgentChatEquipmentFlow.gearOptimizedReply());
                 });
             }

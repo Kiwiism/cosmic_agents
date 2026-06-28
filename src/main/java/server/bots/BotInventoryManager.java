@@ -21,6 +21,7 @@ import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotInventoryStateRuntime;
+import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.ItemInformationProvider;
 import server.StatEffect;
@@ -177,7 +178,7 @@ public class BotInventoryManager {
             if (pickedItem != null && pickedItemId > 0 && hasItem(bot, pickedItem)) {
                 InventoryType pickedType = ItemConstants.getInventoryType(pickedItemId);
                 if (pickedType == InventoryType.EQUIP) {
-                    BotEquipManager.autoEquip(bot, entry.owner, entry.pendingLootOfferItem);
+                    BotEquipManager.autoEquip(bot, entry.owner, AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
                     if (hasItem(bot, pickedItem)) {
                         BotOfferManager.scheduleLootOfferPrompt(entry, bot, pickedItem, 5_000L);
                     }

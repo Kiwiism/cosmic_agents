@@ -41,12 +41,11 @@ public final class BotOfferManager {
     private BotOfferManager() {}
 
     static boolean hasOfferReservation(BotEntry entry) {
-        return entry.pendingLootOfferItem != null
-                && entry.pendingLootOfferRecipientId > 0;
+        return AgentBotOfferStateRuntime.hasOfferReservation(entry);
     }
 
     public static boolean hasPendingOffer(BotEntry entry) {
-        return hasOfferReservation(entry) && entry.pendingLootOfferExpiresAt > 0L;
+        return AgentBotOfferStateRuntime.hasPendingOffer(entry);
     }
 
     public static void notifyOwnerGainedEquip(BotEntry entry, Character bot, Item item) {
@@ -98,7 +97,7 @@ public final class BotOfferManager {
 
         // Self-equip first so any item that would upgrade the bot stays on the bot
         // rather than being offered to the owner.
-        BotEquipManager.autoEquip(bot, owner, entry.pendingLootOfferItem);
+        BotEquipManager.autoEquip(bot, owner, AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
 
         GearOfferChoice choice = findBestGearOffer(entry, owner, bot);
         if (choice != null) {
@@ -117,7 +116,7 @@ public final class BotOfferManager {
 
         // Self-equip first: priority is self → owner → sibling, so don't hand gear
         // to a sibling if this bot could actually wear it.
-        BotEquipManager.autoEquip(bot, owner, entry.pendingLootOfferItem);
+        BotEquipManager.autoEquip(bot, owner, AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
 
         List<BotEntry> siblings = BotManager.getInstance().getBotEntries(owner.getId());
         for (BotEntry sibling : siblings) {
@@ -159,10 +158,7 @@ public final class BotOfferManager {
         }
 
         AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
-        entry.pendingLootOfferItem = item;
-        entry.pendingLootOfferRecipientId = recipient.getId();
-        entry.pendingLootOfferExpiresAt = 0L;
-        entry.pendingLootOfferBotRequesting = false;
+        AgentBotOfferStateRuntime.setPendingLootOffer(entry, item, recipient.getId(), 0L, false);
 
         long scheduledAt = now + Math.max(0L, delayMs);
         AgentBotOfferStateRuntime.reserveGearPrompt(entry, scheduledAt);
@@ -173,23 +169,21 @@ public final class BotOfferManager {
         expirePendingOffer(entry);
         if (!hasPendingOffer(entry)
                 || speaker == null
-                || speaker.getId() != entry.pendingLootOfferRecipientId) {
+                || !AgentBotOfferStateRuntime.pendingOfferRecipientIs(entry, speaker)) {
             return false;
         }
 
         if (POSITIVE_CONFIRM_PATTERN.matcher(message).find()) {
-            if (entry.pendingLootOfferBotRequesting) {
+            if (AgentBotOfferStateRuntime.pendingLootOfferBotRequesting(entry)) {
                 clearPendingOffer(entry);
                 AgentBotOfferRuntime.afterRandomDelay(400, 600, () ->
                         AgentBotOfferRuntime.replyNow(entry, "ty! inv me?"));
             } else {
-                Item item = entry.pendingLootOfferItem;
+                Item item = AgentBotOfferStateRuntime.pendingLootOfferItem(entry);
                 AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
-                entry.pendingLootOfferExpiresAt = 0L;
-                entry.pendingLootOfferBotRequesting = false;
-                entry.pendingLootOfferRecipientId = 0;
+                AgentBotOfferStateRuntime.clearPendingOfferForAcceptedTransfer(entry);
                 AgentBotOfferRuntime.afterRandomDelay(900, 1100, () -> {
-                    entry.pendingLootOfferItem = null;
+                    AgentBotOfferStateRuntime.clearPendingOfferItem(entry);
                     BotInventoryManager.startTradeTransfer(item, speaker, entry, entry.bot);
                 });
             }
@@ -211,7 +205,7 @@ public final class BotOfferManager {
     }
 
     static void expirePendingOffer(BotEntry entry) {
-        if (hasPendingOffer(entry) && System.currentTimeMillis() >= entry.pendingLootOfferExpiresAt) {
+        if (AgentBotOfferStateRuntime.pendingOfferExpired(entry, System.currentTimeMillis())) {
             clearPendingOffer(entry);
         }
     }
@@ -226,10 +220,7 @@ public final class BotOfferManager {
         String itemDesc = formatItemSpecifier(ownerItem, bot);
 
         AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
-        entry.pendingLootOfferItem = ownerItem;
-        entry.pendingLootOfferRecipientId = owner.getId();
-        entry.pendingLootOfferExpiresAt = System.currentTimeMillis() + 45_000L;
-        entry.pendingLootOfferBotRequesting = true;
+        AgentBotOfferStateRuntime.setPendingLootOffer(entry, ownerItem, owner.getId(), System.currentTimeMillis() + 45_000L, true);
 
         List<String> prompts = List.of(
                 "hey, that " + itemDesc + " would be an upgrade for me, can i have it pls?",
@@ -247,10 +238,7 @@ public final class BotOfferManager {
             return false;
         }
         AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
-        entry.pendingLootOfferItem = item;
-        entry.pendingLootOfferRecipientId = recipient.getId();
-        entry.pendingLootOfferExpiresAt = System.currentTimeMillis() + 30_000L;
-        entry.pendingLootOfferBotRequesting = false;
+        AgentBotOfferStateRuntime.setPendingLootOffer(entry, item, recipient.getId(), System.currentTimeMillis() + 30_000L, false);
         long promptDelayMs = AgentBotOfferRuntime.queueSayWithEstimatedDelay(entry,
                 buildLootOfferPrompt(recipient, entry.owner, item, need == GearOfferNeed.FUTURE));
         scheduleBotLootOfferAutoAccept(entry, recipient, promptDelayMs);
@@ -263,7 +251,7 @@ public final class BotOfferManager {
         }
         AgentBotOfferStateRuntime.clearGearPrompt(entry);
 
-        if (entry.pendingLootOfferItem != item || entry.pendingLootOfferRecipientId != recipientId) {
+        if (!AgentBotOfferStateRuntime.pendingOfferMatches(entry, item, recipientId)) {
             clearPendingOffer(entry);
             return;
         }
@@ -290,10 +278,7 @@ public final class BotOfferManager {
             return;
         }
         AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
-        entry.pendingLootOfferItem = item;
-        entry.pendingLootOfferRecipientId = recipient.getId();
-        entry.pendingLootOfferExpiresAt = System.currentTimeMillis() + 30_000L;
-        entry.pendingLootOfferBotRequesting = false;
+        AgentBotOfferStateRuntime.setPendingLootOffer(entry, item, recipient.getId(), System.currentTimeMillis() + 30_000L, false);
         long promptDelayMs = AgentBotOfferRuntime.queueSayWithEstimatedDelay(entry,
                 buildLootOfferPrompt(recipient, owner, item, need == GearOfferNeed.FUTURE));
         scheduleBotLootOfferAutoAccept(entry, recipient, promptDelayMs);
@@ -308,7 +293,7 @@ public final class BotOfferManager {
     }
 
     private static void autoAcceptLootOffer(BotEntry entry, Character recipientBot) {
-        if (!hasPendingOffer(entry) || entry.pendingLootOfferRecipientId != recipientBot.getId()) {
+        if (!hasPendingOffer(entry) || !AgentBotOfferStateRuntime.pendingOfferRecipientIs(entry, recipientBot)) {
             return;
         }
         AgentBotOfferRuntime.sayNow(recipientBot,
@@ -698,10 +683,7 @@ public final class BotOfferManager {
 
     private static void clearPendingOffer(BotEntry entry) {
         AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
-        entry.pendingLootOfferItem = null;
-        entry.pendingLootOfferRecipientId = 0;
-        entry.pendingLootOfferExpiresAt = 0L;
-        entry.pendingLootOfferBotRequesting = false;
+        AgentBotOfferStateRuntime.clearPendingOffer(entry);
         AgentBotOfferStateRuntime.clearGearPrompt(entry);
     }
 }

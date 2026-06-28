@@ -60,7 +60,7 @@ public final class AgentBotActiveModeRuntime {
     }
 
     private static void autoEquip(BotEntry entry) {
-        BotEquipManager.autoEquip(entry.bot(), entry.owner(), entry.pendingLootOfferItem());
+        BotEquipManager.autoEquip(entry.bot(), entry.owner(), AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
     }
 
     private static void resetGearSuggestionCooldown(BotEntry entry) {

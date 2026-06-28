@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotOfferRuntime;
+import server.agents.integration.AgentBotOfferStateRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -71,10 +72,8 @@ class BotOfferManagerTest {
         Character owner = mock(Character.class);
         when(owner.getId()).thenReturn(100);
         BotEntry entry = new BotEntry(bot, owner, null);
-        entry.pendingLootOfferItem = new Item(1002000, (short) 1, (short) 1);
-        entry.pendingLootOfferRecipientId = 100;
-        entry.pendingLootOfferExpiresAt = Long.MAX_VALUE;
-        entry.pendingLootOfferBotRequesting = true;
+        AgentBotOfferStateRuntime.setPendingLootOffer(
+                entry, new Item(1002000, (short) 1, (short) 1), 100, Long.MAX_VALUE, true);
 
         ArgumentCaptor<Runnable> action = ArgumentCaptor.forClass(Runnable.class);
         try (MockedStatic<AgentBotOfferRuntime> offers = mockStatic(AgentBotOfferRuntime.class)) {
@@ -92,9 +91,8 @@ class BotOfferManagerTest {
         Character owner = mock(Character.class);
         when(owner.getId()).thenReturn(100);
         BotEntry entry = new BotEntry(bot, owner, null);
-        entry.pendingLootOfferItem = new Item(1002000, (short) 1, (short) 1);
-        entry.pendingLootOfferRecipientId = 100;
-        entry.pendingLootOfferExpiresAt = Long.MAX_VALUE;
+        AgentBotOfferStateRuntime.setPendingLootOffer(
+                entry, new Item(1002000, (short) 1, (short) 1), 100, Long.MAX_VALUE, false);
 
         ArgumentCaptor<Runnable> action = ArgumentCaptor.forClass(Runnable.class);
         try (MockedStatic<AgentBotOfferRuntime> offers = mockStatic(AgentBotOfferRuntime.class)) {
@@ -114,9 +112,8 @@ class BotOfferManagerTest {
         when(owner.getId()).thenReturn(100);
         when(speaker.getId()).thenReturn(200);
         BotEntry entry = new BotEntry(bot, owner, null);
-        entry.pendingLootOfferItem = new Item(1002000, (short) 1, (short) 1);
-        entry.pendingLootOfferRecipientId = 200;
-        entry.pendingLootOfferExpiresAt = Long.MAX_VALUE;
+        AgentBotOfferStateRuntime.setPendingLootOffer(
+                entry, new Item(1002000, (short) 1, (short) 1), 200, Long.MAX_VALUE, false);
 
         ArgumentCaptor<Runnable> action = ArgumentCaptor.forClass(Runnable.class);
         try (MockedStatic<AgentBotOfferRuntime> offers = mockStatic(AgentBotOfferRuntime.class)) {

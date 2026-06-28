@@ -23,6 +23,7 @@ import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
@@ -290,7 +291,7 @@ public class BotManager {
                     "ok, following " + target.getName()
             )));
             AgentBotManagerSchedulerRuntime.afterDelay(randMs(250, 750), () -> {
-                BotEquipManager.autoEquip(entry.bot, entry.owner, entry.pendingLootOfferItem);
+                BotEquipManager.autoEquip(entry.bot, entry.owner, AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
                 BotPotionManager.checkPotShareOnModeStart(entry, entry.bot);
                 issueFollow(entry, target);
             });
@@ -1107,7 +1108,7 @@ public class BotManager {
     private boolean isPendingLootOfferTarget(BotEntry entry, Character speaker) {
         return entry != null
                 && BotOfferManager.hasPendingOffer(entry)
-                && entry.pendingLootOfferRecipientId == speaker.getId()
+                && AgentBotOfferStateRuntime.pendingOfferRecipientIs(entry, speaker)
                 && entry.bot.getMapId() == speaker.getMapId();
     }
 
