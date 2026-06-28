@@ -131,6 +131,10 @@ public final class AgentBotMovementStateRuntime {
         return entry.wasMovingX();
     }
 
+    public static void setWasMovingX(BotEntry entry, boolean wasMovingX) {
+        entry.setWasMovingX(wasMovingX);
+    }
+
     public static int movementVelocityX(BotEntry entry) {
         return entry.movementVelX();
     }

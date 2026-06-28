@@ -151,6 +151,10 @@ public class BotEntry {
         return wasMovingX;
     }
 
+    public void setWasMovingX(boolean wasMovingX) {
+        this.wasMovingX = wasMovingX;
+    }
+
     // Committed horizontal step while airborne (set at launch, never changed mid-air)
     int airVelX = 0;
     // Accumulated air-steering correction (gradually adjusted toward target each tick)

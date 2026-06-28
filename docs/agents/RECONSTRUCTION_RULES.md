@@ -766,6 +766,10 @@ Recent reconstruction notes:
   walk-step, mob-avoidance, and unstuck calculations keep BotEntry as the
   temporary backing store but no longer read or write `movementProfile` directly
   in production.
+- Horizontal movement hysteresis state now enters through
+  `AgentBotMovementStateRuntime`; BotMovementManager idle-on-ground checks and
+  follow-step hysteresis keep BotEntry as the temporary backing store but no
+  longer read or write `movementVelX` or `wasMovingX` directly in production.
 
 Initial reconstruction order:
 

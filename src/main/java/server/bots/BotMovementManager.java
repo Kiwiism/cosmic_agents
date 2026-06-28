@@ -785,7 +785,7 @@ public class BotMovementManager {
         // Preserve ground momentum while still trying to walk/jump toward a nav target.
         // Otherwise subpixel uphill/transition movement gets zeroed every tick and the bot
         // can stall forever short of a valid launch window.
-        if (entry.movementVelX == 0 && action.type() == ActionType.IDLE) {
+        if (AgentBotMovementStateRuntime.movementVelocityX(entry) == 0 && action.type() == ActionType.IDLE) {
             BotPhysicsEngine.idleOnGround(entry, entry.bot);
         }
         broadcastMovement(entry);
@@ -826,12 +826,13 @@ public class BotMovementManager {
     }
 
     static int updateStepX(BotEntry entry, MapleMap map, int botX, int targetX, int stopDist, int followDist) {
-        int stepX = calcStepX(map, AgentBotMovementStateRuntime.movementProfile(entry), botX, targetX, entry.wasMovingX, stopDist, followDist);
+        int stepX = calcStepX(map, AgentBotMovementStateRuntime.movementProfile(entry), botX, targetX,
+                AgentBotMovementStateRuntime.wasMovingX(entry), stopDist, followDist);
         if (stepX == 0) {
-            entry.wasMovingX = false;
+            AgentBotMovementStateRuntime.setWasMovingX(entry, false);
             return 0;
         }
-        entry.wasMovingX = true;
+        AgentBotMovementStateRuntime.setWasMovingX(entry, true);
         return stepX;
     }
 
