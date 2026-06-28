@@ -8,6 +8,7 @@ import server.agents.integration.AgentBotAoeRepositionStateRuntime;
 import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotBreakoutStateRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotGrindLootStateRuntime;
@@ -454,7 +455,7 @@ public class BotManager {
 
         BotPhysicsEngine.teleportTo(entry, botChar, spawnPos);
         BotMovementManager.resetEntryStateAfterTeleport(entry);
-        entry.deadUntil = 0;
+        AgentBotDeathStateRuntime.clear(entry);
         entry.lastMapId = spawnMap != null ? spawnMap.getId() : botChar.getMapId();
         if (spawnMap != null && spawnMap.getFootholds() != null) {
             entry.fhIndex = BotMovementManager.buildFhIndex(spawnMap);
@@ -518,7 +519,7 @@ public class BotManager {
 
         BotPhysicsEngine.teleportTo(entry, bot, spawnPos != null ? spawnPos : bot.getPosition());
         BotMovementManager.resetEntryStateAfterTeleport(entry);
-        entry.deadUntil = 0;
+        AgentBotDeathStateRuntime.clear(entry);
         entry.lastMapId = bot.getMapId();
         entry.fhIndex = BotMovementManager.buildFhIndex(bot.getMap());
         AgentBotTickCadenceStateRuntime.reset(entry);
@@ -3315,13 +3316,13 @@ public class BotManager {
     }
 
     private boolean handleDeadTick(BotEntry entry, Character bot, Character owner) {
-        if (entry.deadUntil == 0 && bot.getHp() <= 0) {
+        if (AgentBotDeathStateRuntime.shouldEnterDeadState(entry, bot.getHp())) {
             BotCombatManager.enterDeadState(entry, bot, false);
         }
-        if (entry.deadUntil == 0) {
+        if (!AgentBotDeathStateRuntime.isDead(entry)) {
             return false;
         }
-        if (System.currentTimeMillis() >= entry.deadUntil) {
+        if (AgentBotDeathStateRuntime.isRespawnDue(entry, System.currentTimeMillis())) {
             respawnBot(entry, bot, owner);
         }
         return true;
@@ -3336,7 +3337,7 @@ public class BotManager {
         BotCombatManager.tickMobDamage(entry, bot);
         if (perf) BotPerformanceMonitor.record("common-mob-damage", System.nanoTime() - t);
         if (bot.getHp() <= 0) {
-            if (entry.deadUntil == 0) {
+            if (!AgentBotDeathStateRuntime.isDead(entry)) {
                 BotCombatManager.enterDeadState(entry, bot, false);
             }
             return true;
@@ -3826,7 +3827,7 @@ public class BotManager {
     }
 
     private void respawnBot(BotEntry entry, Character bot, Character owner) {
-        entry.deadUntil = 0;
+        AgentBotDeathStateRuntime.clear(entry);
         bot.updateHp(bot.getMaxHp());
 
         if (bot.getMapId() != owner.getMapId()) {

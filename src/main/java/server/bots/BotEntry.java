@@ -287,6 +287,18 @@ public class BotEntry {
     long deadUntil = 0;
     int mobHitCooldownMs = 0;
 
+    public long deadUntilMs() {
+        return deadUntil;
+    }
+
+    public void setDeadUntilMs(long deadUntilMs) {
+        deadUntil = deadUntilMs;
+    }
+
+    public void clearDeadUntilMs() {
+        deadUntil = 0L;
+    }
+
     public int mobHitCooldownMs() {
         return mobHitCooldownMs;
     }

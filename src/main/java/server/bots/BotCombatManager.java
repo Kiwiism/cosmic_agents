@@ -52,6 +52,7 @@ import server.bots.combat.BotMobHitboxProvider;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatRuntime;
+import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
@@ -531,7 +532,7 @@ public class BotCombatManager {
         clearActionState(entry);
         BotPhysicsEngine.markDead(entry, bot);
         BotMovementManager.broadcastMovement(entry);
-        entry.deadUntil = System.currentTimeMillis() + cfg.BOT_DEAD_MS;
+        AgentBotDeathStateRuntime.enterDeadState(entry, System.currentTimeMillis(), cfg.BOT_DEAD_MS);
         if (announceDeath) {
             AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(DEATH_REPLIES));
         }

@@ -28,6 +28,7 @@ import org.mockito.Mockito;
 import org.mockito.ArgumentCaptor;
 import server.StatEffect;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 import server.bots.combat.BotAttackDataProvider;
@@ -1105,7 +1106,7 @@ class BotCombatManagerTest {
         runWithStubbedBotAfter(() -> BotCombatManager.applyMobHit(entry, bot, mob));
 
         assertEquals(CharacterStance.DEAD_LEFT_STANCE, bot.getStance());
-        assertTrue(entry.deadUntil > 0);
+        assertTrue(AgentBotDeathStateRuntime.deadUntilMs(entry) > 0);
         assertFalse(entry.inAir);
         assertFalse(entry.climbing);
     }
