@@ -4,7 +4,9 @@ import org.junit.jupiter.api.Test;
 import server.agents.commands.AgentQueuedMessage;
 import server.agents.integration.AgentBotMessageQueueStateRuntime;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -21,7 +23,15 @@ class AgentBotMessageQueueStateRuntimeTest {
         assertFalse(AgentBotMessageQueueStateRuntime.isIdle(entry));
 
         AgentBotMessageQueueStateRuntime.setSending(entry, false);
-        AgentBotMessageQueueStateRuntime.queue(entry).add(new AgentQueuedMessage("queued", true));
+        AgentQueuedMessage message = new AgentQueuedMessage("queued", true);
+        assertSame(entry.messageQueue(), AgentBotMessageQueueStateRuntime.lock(entry));
+        AgentBotMessageQueueStateRuntime.enqueue(entry, message);
+        assertEquals(1, AgentBotMessageQueueStateRuntime.size(entry));
+        assertSame(message, AgentBotMessageQueueStateRuntime.peek(entry));
         assertFalse(AgentBotMessageQueueStateRuntime.isIdle(entry));
+
+        assertSame(message, AgentBotMessageQueueStateRuntime.poll(entry));
+        assertEquals(0, AgentBotMessageQueueStateRuntime.size(entry));
+        assertNull(AgentBotMessageQueueStateRuntime.poll(entry));
     }
 }

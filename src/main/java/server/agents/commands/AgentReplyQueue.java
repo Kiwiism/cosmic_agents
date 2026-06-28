@@ -1,6 +1,5 @@
 package server.agents.commands;
 
-import java.util.Deque;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -14,7 +13,13 @@ public final class AgentReplyQueue {
     }
 
     public interface State {
-        Deque<AgentQueuedMessage> queue();
+        Object lock();
+
+        int size();
+
+        void enqueue(AgentQueuedMessage message);
+
+        AgentQueuedMessage poll();
 
         boolean isSending();
 
@@ -41,11 +46,11 @@ public final class AgentReplyQueue {
             boolean ownerDirected,
             Dispatcher dispatcher) {
         long estimatedDelayMs;
-        synchronized (state.queue()) {
+        synchronized (state.lock()) {
             estimatedDelayMs = state.isSending()
-                    ? (long) (state.queue().size() + 1) * QUEUED_MESSAGE_SPACING_ESTIMATE_MS
+                    ? (long) (state.size() + 1) * QUEUED_MESSAGE_SPACING_ESTIMATE_MS
                     : 0L;
-            state.queue().add(new AgentQueuedMessage(message, ownerDirected));
+            state.enqueue(new AgentQueuedMessage(message, ownerDirected));
             if (!state.isSending()) {
                 state.setSending(true);
                 drain(state, dispatcher);
@@ -56,8 +61,8 @@ public final class AgentReplyQueue {
 
     private static void drain(State state, Dispatcher dispatcher) {
         AgentQueuedMessage message;
-        synchronized (state.queue()) {
-            message = state.queue().poll();
+        synchronized (state.lock()) {
+            message = state.poll();
             if (message == null) {
                 state.setSending(false);
                 return;

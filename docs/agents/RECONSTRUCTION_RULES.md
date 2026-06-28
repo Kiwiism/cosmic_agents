@@ -199,6 +199,11 @@ Recent reconstruction notes:
   `AgentBotOfferRuntime`; `BotOfferManager` no longer reads or clears the
   `pendingGearPromptAt` entry field directly, while the same legacy field and
   timing semantics remain intact behind the Agent-owned offer boundary.
+- Agent reply queue ownership now uses narrow queue operations on
+  `AgentReplyQueue.State` and `AgentBotMessageQueueStateRuntime`; production
+  reply draining no longer depends on direct `Deque` access while the same
+  BotEntry-backed queue, synchronization lock, spacing estimate, and dispatch
+  behavior remain in place.
 - Equipment optimizer debug/dump range report formatting now enters through
   `AgentBotRangeReportRuntime`; `BotEquipManager` no longer imports the broad
   chat-report facade just to render range text, and the underlying range

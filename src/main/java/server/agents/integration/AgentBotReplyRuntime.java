@@ -86,8 +86,23 @@ public final class AgentBotReplyRuntime {
     private static AgentReplyQueue.State state(BotEntry entry) {
         return new AgentReplyQueue.State() {
             @Override
-            public java.util.Deque<AgentQueuedMessage> queue() {
-                return AgentBotMessageQueueStateRuntime.queue(entry);
+            public Object lock() {
+                return AgentBotMessageQueueStateRuntime.lock(entry);
+            }
+
+            @Override
+            public int size() {
+                return AgentBotMessageQueueStateRuntime.size(entry);
+            }
+
+            @Override
+            public void enqueue(AgentQueuedMessage message) {
+                AgentBotMessageQueueStateRuntime.enqueue(entry, message);
+            }
+
+            @Override
+            public AgentQueuedMessage poll() {
+                return AgentBotMessageQueueStateRuntime.poll(entry);
             }
 
             @Override

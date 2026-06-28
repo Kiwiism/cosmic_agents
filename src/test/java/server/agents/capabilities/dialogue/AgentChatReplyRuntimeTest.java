@@ -23,8 +23,8 @@ class AgentChatReplyRuntimeTest {
 
         assertEquals(5_200L, replyDelay);
         assertEquals(10_400L, sayDelay);
-        AgentQueuedMessage reply = state.queue().poll();
-        AgentQueuedMessage say = state.queue().poll();
+        AgentQueuedMessage reply = state.poll();
+        AgentQueuedMessage say = state.poll();
         assertEquals("owner reply", reply.text());
         assertTrue(reply.ownerDirected());
         assertEquals("party chatter", say.text());
@@ -49,8 +49,23 @@ class AgentChatReplyRuntimeTest {
         private boolean sending;
 
         @Override
-        public Deque<AgentQueuedMessage> queue() {
+        public Object lock() {
             return queue;
+        }
+
+        @Override
+        public int size() {
+            return queue.size();
+        }
+
+        @Override
+        public void enqueue(AgentQueuedMessage message) {
+            queue.add(message);
+        }
+
+        @Override
+        public AgentQueuedMessage poll() {
+            return queue.poll();
         }
 
         @Override

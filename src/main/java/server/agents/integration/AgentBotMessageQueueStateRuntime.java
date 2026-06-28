@@ -16,6 +16,26 @@ public final class AgentBotMessageQueueStateRuntime {
         return entry.messageQueue();
     }
 
+    public static Object lock(BotEntry entry) {
+        return entry.messageQueue();
+    }
+
+    public static int size(BotEntry entry) {
+        return entry.messageQueue().size();
+    }
+
+    public static void enqueue(BotEntry entry, AgentQueuedMessage message) {
+        entry.messageQueue().add(message);
+    }
+
+    public static AgentQueuedMessage poll(BotEntry entry) {
+        return entry.messageQueue().poll();
+    }
+
+    public static AgentQueuedMessage peek(BotEntry entry) {
+        return entry.messageQueue().peek();
+    }
+
     public static boolean isSending(BotEntry entry) {
         return entry.isMessageSending();
     }
@@ -25,9 +45,8 @@ public final class AgentBotMessageQueueStateRuntime {
     }
 
     public static boolean isIdle(BotEntry entry) {
-        Deque<AgentQueuedMessage> queue = queue(entry);
-        synchronized (queue) {
-            return !isSending(entry) && queue.isEmpty();
+        synchronized (lock(entry)) {
+            return !isSending(entry) && size(entry) == 0;
         }
     }
 }
