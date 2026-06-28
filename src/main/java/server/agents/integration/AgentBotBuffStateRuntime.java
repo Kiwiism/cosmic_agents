@@ -9,6 +9,30 @@ public final class AgentBotBuffStateRuntime {
     private AgentBotBuffStateRuntime() {
     }
 
+    public static boolean enabled(BotEntry entry) {
+        return entry.buffConsumablesEnabled();
+    }
+
+    public static void setEnabled(BotEntry entry, boolean enabled) {
+        entry.setBuffConsumablesEnabled(enabled);
+    }
+
+    public static void disable(BotEntry entry) {
+        setEnabled(entry, false);
+    }
+
+    public static boolean cheapMode(BotEntry entry) {
+        return entry.buffCheapMode();
+    }
+
+    public static void setCheapMode(BotEntry entry, boolean cheapMode) {
+        entry.setBuffCheapMode(cheapMode);
+    }
+
+    public static void resetScan(BotEntry entry) {
+        entry.resetLastBuffScan();
+    }
+
     public static boolean scanDue(BotEntry entry, long nowMs, long intervalMs) {
         return nowMs - entry.lastBuffScanMs() >= intervalMs;
     }

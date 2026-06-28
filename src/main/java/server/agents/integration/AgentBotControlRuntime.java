@@ -36,18 +36,18 @@ public final class AgentBotControlRuntime {
             @Override
             public void setBuffConsumables(boolean enabled) {
                 AgentBotControlSchedulerRuntime.afterRandomDelay(500, 700, () -> {
-                    entry.setBuffConsumablesEnabled(enabled);
-                    entry.resetLastBuffScan();
+                    AgentBotBuffStateRuntime.setEnabled(entry, enabled);
+                    AgentBotBuffStateRuntime.resetScan(entry);
                     AgentBotControlReplyRuntime.replyNow(entry, AgentChatToggleFlow.buffConsumablesReply(
-                            enabled, entry.buffCheapMode()));
+                            enabled, AgentBotBuffStateRuntime.cheapMode(entry)));
                 });
             }
 
             @Override
             public void setBuffConsumablesCheapMode(boolean cheapMode) {
                 AgentBotControlSchedulerRuntime.afterRandomDelay(500, 700, () -> {
-                    entry.setBuffCheapMode(cheapMode);
-                    entry.resetLastBuffScan();
+                    AgentBotBuffStateRuntime.setCheapMode(entry, cheapMode);
+                    AgentBotBuffStateRuntime.resetScan(entry);
                     AgentBotControlReplyRuntime.replyNow(entry, AgentChatToggleFlow.buffConsumablesModeReply(cheapMode));
                 });
             }
@@ -68,7 +68,7 @@ public final class AgentBotControlRuntime {
             public void reportBuffList() {
                 AgentBotControlSchedulerRuntime.afterRandomDelay(500, 700, () -> {
                     String summary = BotBuffManager.getChatSummary(
-                            entry.buffConsumablesEnabled(), entry.buffCheapMode(), entry.bot());
+                            AgentBotBuffStateRuntime.enabled(entry), AgentBotBuffStateRuntime.cheapMode(entry), entry.bot());
                     AgentBotControlReplyRuntime.replyNow(entry, summary);
                 });
             }

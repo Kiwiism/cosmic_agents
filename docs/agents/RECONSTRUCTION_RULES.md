@@ -620,6 +620,11 @@ Recent reconstruction notes:
   snapshot construction, BotPathLogger reporting, and focused tests keep
   BotEntry as the temporary backing store but no longer read or write
   `followOffsetX` directly in production.
+- Consumable buff toggle/mode state now enters through
+  `AgentBotBuffStateRuntime`; BotManager owner-away safe-mode cleanup,
+  BotBuffManager tick/debug/report paths, Agent control callbacks, and focused
+  tests keep BotEntry as the temporary backing store but no longer read or write
+  `buffConsumablesEnabled` or `buffCheapMode` directly outside the adapter.
 
 Initial reconstruction order:
 

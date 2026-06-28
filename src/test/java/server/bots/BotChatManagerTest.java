@@ -9,6 +9,7 @@ import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotChatReportRuntime;
 import server.agents.integration.AgentBotActivityStateRuntime;
+import server.agents.integration.AgentBotBuffStateRuntime;
 import server.agents.integration.AgentBotMessageQueueStateRuntime;
 import server.agents.integration.AgentBotChatStatusRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
@@ -235,12 +236,12 @@ class BotChatManagerTest {
     void shouldShowBuffDebugStateWithEnabledAndMode() {
         BotEntry entry = new BotEntry(null, null, null);
 
-        entry.buffConsumablesEnabled = true;
-        entry.buffCheapMode = true;
+        AgentBotBuffStateRuntime.setEnabled(entry, true);
+        AgentBotBuffStateRuntime.setCheapMode(entry, true);
         assertEquals("buff on(cheap)", BotBuffManager.formatDebugState(entry));
 
-        entry.buffConsumablesEnabled = false;
-        entry.buffCheapMode = false;
+        AgentBotBuffStateRuntime.setEnabled(entry, false);
+        AgentBotBuffStateRuntime.setCheapMode(entry, false);
         assertEquals("buff off(best)", BotBuffManager.formatDebugState(entry));
     }
 

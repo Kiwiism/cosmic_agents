@@ -7,6 +7,7 @@ import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotAoeRepositionStateRuntime;
 import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotBreakoutStateRuntime;
+import server.agents.integration.AgentBotBuffStateRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
@@ -2792,7 +2793,7 @@ public class BotManager {
         AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
         AgentBotGrindTargetStateRuntime.clear(entry);
         AgentBotDegenerateAttackStateRuntime.clear(entry);
-        entry.buffConsumablesEnabled = false;
+        AgentBotBuffStateRuntime.disable(entry);
         AgentBotActivityStateRuntime.setOwnerAwaySafeMode(entry, true);
     }
 

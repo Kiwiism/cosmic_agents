@@ -9,6 +9,33 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentBotBuffStateRuntimeTest {
     @Test
+    void storesBuffConsumableToggleAndMode() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        AgentBotBuffStateRuntime.setEnabled(entry, true);
+        AgentBotBuffStateRuntime.setCheapMode(entry, false);
+
+        assertTrue(AgentBotBuffStateRuntime.enabled(entry));
+        assertFalse(AgentBotBuffStateRuntime.cheapMode(entry));
+
+        AgentBotBuffStateRuntime.disable(entry);
+
+        assertFalse(AgentBotBuffStateRuntime.enabled(entry));
+    }
+
+    @Test
+    void resetScanMakesScanDueImmediately() {
+        BotEntry entry = new BotEntry(null, null, null);
+        AgentBotBuffStateRuntime.markScanned(entry, 10_000L);
+
+        assertFalse(AgentBotBuffStateRuntime.scanDue(entry, 10_500L, 3_000L));
+
+        AgentBotBuffStateRuntime.resetScan(entry);
+
+        assertTrue(AgentBotBuffStateRuntime.scanDue(entry, 10_500L, 3_000L));
+    }
+
+    @Test
     void adaptsConsumableBuffScanAndDecisionState() {
         BotEntry entry = new BotEntry(null, null, null);
 
