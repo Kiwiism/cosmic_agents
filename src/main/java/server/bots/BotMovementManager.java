@@ -196,8 +196,7 @@ public class BotMovementManager {
 
     static void clearNavigationState(BotEntry entry) {
         entry.navEdge = null;
-        entry.navJumpLaunchEdge = null;
-        entry.navJumpLaunchX = Integer.MIN_VALUE;
+        AgentBotNavigationDebugStateRuntime.clearNavJumpLaunch(entry);
         AgentBotNavigationDebugStateRuntime.clearNavTarget(entry);
     }
 

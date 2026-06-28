@@ -128,6 +128,26 @@ public final class AgentBotNavigationDebugStateRuntime {
         entry.setPortalUseCooldownUntilMs(cooldownUntilMs);
     }
 
+    public static boolean hasNavJumpLaunchEdge(BotEntry entry) {
+        return entry.hasNavJumpLaunchEdge();
+    }
+
+    public static int navJumpLaunchX(BotEntry entry) {
+        return entry.navJumpLaunchX();
+    }
+
+    public static boolean matchesNavJumpLaunchEdge(BotEntry entry, Object edge) {
+        return entry.matchesNavJumpLaunchEdge(edge);
+    }
+
+    public static void rememberNavJumpLaunch(BotEntry entry, Object edge, int launchX) {
+        entry.setNavJumpLaunch(edge, launchX);
+    }
+
+    public static void clearNavJumpLaunch(BotEntry entry) {
+        rememberNavJumpLaunch(entry, null, Integer.MIN_VALUE);
+    }
+
     public static void recordPathLog(BotEntry entry,
                                      AgentMovementTargetSnapshot targetSnapshot,
                                      int botRegionId,

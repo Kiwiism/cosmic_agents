@@ -1258,10 +1258,11 @@ final class BotNavigationManager {
         if (fromRegion == null || fromRegion.isRopeRegion) {
             return edge.startPoint.x;
         }
-        if (sameEdge(entry.navJumpLaunchEdge, edge)
-                && entry.navJumpLaunchX >= edge.launchMinX
-                && entry.navJumpLaunchX <= edge.launchMaxX) {
-            return entry.navJumpLaunchX;
+        int cachedLaunchX = AgentBotNavigationDebugStateRuntime.navJumpLaunchX(entry);
+        if (AgentBotNavigationDebugStateRuntime.matchesNavJumpLaunchEdge(entry, edge)
+                && cachedLaunchX >= edge.launchMinX
+                && cachedLaunchX <= edge.launchMaxX) {
+            return cachedLaunchX;
         }
 
         int minX = Math.max(edge.launchMinX, fromRegion.minX);
@@ -1283,8 +1284,7 @@ final class BotNavigationManager {
         int selectedX = randomMinX >= randomMaxX
                 ? randomMinX
                 : ThreadLocalRandom.current().nextInt(randomMinX, randomMaxX + 1);
-        entry.navJumpLaunchEdge = edge;
-        entry.navJumpLaunchX = selectedX;
+        AgentBotNavigationDebugStateRuntime.rememberNavJumpLaunch(entry, edge, selectedX);
         return selectedX;
     }
 

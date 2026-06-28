@@ -493,6 +493,10 @@ Recent reconstruction notes:
   `AgentBotNavigationDebugStateRuntime`; portal execution keeps BotEntry as the
   temporary backing store but no longer reads or writes `portalUseCooldownUntilMs`
   directly.
+- Navigation jump-launch cache state now enters through
+  `AgentBotNavigationDebugStateRuntime`; movement reset and jump waypoint
+  selection keep BotEntry as the temporary backing store but no longer read or
+  write `navJumpLaunchEdge` or `navJumpLaunchX` directly.
 
 Initial reconstruction order:
 

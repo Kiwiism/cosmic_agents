@@ -798,6 +798,36 @@ public class BotEntry {
         this.navPreciseTarget = navPreciseTarget;
     }
 
+    public boolean matchesNavJumpLaunchEdge(Object edge) {
+        return edge instanceof BotNavigationGraph.Edge navEdge && sameNavEdge(navJumpLaunchEdge, navEdge);
+    }
+
+    public boolean hasNavJumpLaunchEdge() {
+        return navJumpLaunchEdge != null;
+    }
+
+    public int navJumpLaunchX() {
+        return navJumpLaunchX;
+    }
+
+    public void setNavJumpLaunch(Object navJumpLaunchEdge, int navJumpLaunchX) {
+        this.navJumpLaunchEdge = navJumpLaunchEdge instanceof BotNavigationGraph.Edge navEdge ? navEdge : null;
+        this.navJumpLaunchX = navJumpLaunchX;
+    }
+
+    private static boolean sameNavEdge(BotNavigationGraph.Edge a, BotNavigationGraph.Edge b) {
+        if (a == b) return true;
+        if (a == null || b == null) return false;
+        return a.type == b.type
+                && a.fromRegionId == b.fromRegionId
+                && a.toRegionId == b.toRegionId
+                && a.startPoint.equals(b.startPoint)
+                && a.endPoint.equals(b.endPoint)
+                && a.portalId == b.portalId
+                && a.launchMinX == b.launchMinX
+                && a.launchMaxX == b.launchMaxX;
+    }
+
     public long pendingGearPromptAt() {
         return pendingGearPromptAt;
     }

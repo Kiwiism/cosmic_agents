@@ -115,6 +115,35 @@ class AgentBotNavigationDebugStateRuntimeTest {
         assertFalse(AgentBotNavigationDebugStateRuntime.portalUseOnCooldown(entry, 1_500L));
     }
 
+    @Test
+    void adaptsNavJumpLaunchCacheState() {
+        BotEntry entry = new BotEntry(null, null, null);
+        BotNavigationGraph.Edge edge = new BotNavigationGraph.Edge(
+                1,
+                2,
+                BotNavigationGraph.EdgeType.JUMP,
+                new Point(10, 20),
+                new Point(30, 40),
+                0,
+                0,
+                5,
+                15,
+                0,
+                100);
+
+        AgentBotNavigationDebugStateRuntime.rememberNavJumpLaunch(entry, edge, 12);
+
+        assertTrue(AgentBotNavigationDebugStateRuntime.hasNavJumpLaunchEdge(entry));
+        assertTrue(AgentBotNavigationDebugStateRuntime.matchesNavJumpLaunchEdge(entry, edge));
+        assertEquals(12, AgentBotNavigationDebugStateRuntime.navJumpLaunchX(entry));
+
+        AgentBotNavigationDebugStateRuntime.clearNavJumpLaunch(entry);
+
+        assertFalse(AgentBotNavigationDebugStateRuntime.hasNavJumpLaunchEdge(entry));
+        assertFalse(AgentBotNavigationDebugStateRuntime.matchesNavJumpLaunchEdge(entry, edge));
+        assertEquals(Integer.MIN_VALUE, AgentBotNavigationDebugStateRuntime.navJumpLaunchX(entry));
+    }
+
     private static AgentMovementTargetSnapshot snapshot() {
         return new AgentMovementTargetSnapshot(
                 "line",
