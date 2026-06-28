@@ -147,4 +147,36 @@ class AgentBotMovementStateRuntimeTest {
         assertEquals(0, AgentBotMovementStateRuntime.moveDirection(entry));
         assertFalse(AgentBotMovementStateRuntime.hasMoveDirection(entry));
     }
+
+    @Test
+    void physicalMovementStatusReadsThroughAgentBoundary() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        assertFalse(AgentBotMovementStateRuntime.inAir(entry));
+        assertTrue(AgentBotMovementStateRuntime.grounded(entry));
+        assertFalse(AgentBotMovementStateRuntime.climbing(entry));
+        assertTrue(AgentBotMovementStateRuntime.notClimbing(entry));
+        assertFalse(AgentBotMovementStateRuntime.downJumpPending(entry));
+        assertFalse(AgentBotMovementStateRuntime.wasMovingX(entry));
+        assertEquals(0, AgentBotMovementStateRuntime.movementVelocityX(entry));
+        assertEquals(0, AgentBotMovementStateRuntime.movementVelocityY(entry));
+        assertFalse(AgentBotMovementStateRuntime.hasMovementVelocity(entry));
+
+        entry.inAir = true;
+        entry.climbing = true;
+        entry.downJumpPending = true;
+        entry.wasMovingX = true;
+        entry.movementVelX = 12;
+        entry.movementVelY = -3;
+
+        assertTrue(AgentBotMovementStateRuntime.inAir(entry));
+        assertFalse(AgentBotMovementStateRuntime.grounded(entry));
+        assertTrue(AgentBotMovementStateRuntime.climbing(entry));
+        assertFalse(AgentBotMovementStateRuntime.notClimbing(entry));
+        assertTrue(AgentBotMovementStateRuntime.downJumpPending(entry));
+        assertTrue(AgentBotMovementStateRuntime.wasMovingX(entry));
+        assertEquals(12, AgentBotMovementStateRuntime.movementVelocityX(entry));
+        assertEquals(-3, AgentBotMovementStateRuntime.movementVelocityY(entry));
+        assertTrue(AgentBotMovementStateRuntime.hasMovementVelocity(entry));
+    }
 }

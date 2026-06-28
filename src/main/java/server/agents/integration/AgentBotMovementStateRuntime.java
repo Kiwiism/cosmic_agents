@@ -79,6 +79,42 @@ public final class AgentBotMovementStateRuntime {
         entry.clearMoveDirection();
     }
 
+    public static boolean inAir(BotEntry entry) {
+        return entry.inAir();
+    }
+
+    public static boolean grounded(BotEntry entry) {
+        return !entry.inAir();
+    }
+
+    public static boolean climbing(BotEntry entry) {
+        return entry.climbing();
+    }
+
+    public static boolean notClimbing(BotEntry entry) {
+        return !entry.climbing();
+    }
+
+    public static boolean downJumpPending(BotEntry entry) {
+        return entry.downJumpPending();
+    }
+
+    public static boolean wasMovingX(BotEntry entry) {
+        return entry.wasMovingX();
+    }
+
+    public static int movementVelocityX(BotEntry entry) {
+        return entry.movementVelX();
+    }
+
+    public static int movementVelocityY(BotEntry entry) {
+        return entry.movementVelY();
+    }
+
+    public static boolean hasMovementVelocity(BotEntry entry) {
+        return entry.hasMovementVelocity();
+    }
+
     private static Point position(Character character) {
         return character == null || character.getPosition() == null ? null : new Point(character.getPosition());
     }

@@ -657,6 +657,12 @@ Recent reconstruction notes:
   temporary backing store but no longer read `shopVisitPending`,
   `shopTargetPos`, `shopNpcPos`, `shopApproachDelayMs`, or
   `shopSequenceActive` directly in production.
+- Physical movement status now enters through `AgentBotMovementStateRuntime`;
+  BotManager retreat eligibility, local combat, trade/idle physics, follow idle
+  gating, movement-phase dispatch, stuck detection, and action-lock physics
+  keep BotEntry as the temporary backing store but no longer read `inAir`,
+  `climbing`, `downJumpPending`, `wasMovingX`, `movementVelX`, or
+  `movementVelY` directly in production.
 
 Initial reconstruction order:
 

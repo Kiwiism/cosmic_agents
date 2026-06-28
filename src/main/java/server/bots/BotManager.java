@@ -1526,7 +1526,7 @@ public class BotManager {
         if (entry == null || botPos == null || combatTargetPos == null) {
             return null;
         }
-        if (entry.climbing || entry.inAir || AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
+        if (AgentBotMovementStateRuntime.climbing(entry) || AgentBotMovementStateRuntime.inAir(entry) || AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
             return null;
         }
         Character bot = entry.bot;
@@ -1749,7 +1749,7 @@ public class BotManager {
         if (entry == null || botPos == null || combatTargetPos == null || retreatPos == null) {
             return false;
         }
-        if (entry.climbing || entry.inAir || AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
+        if (AgentBotMovementStateRuntime.climbing(entry) || AgentBotMovementStateRuntime.inAir(entry) || AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
             return false;
         }
 
@@ -2160,7 +2160,7 @@ public class BotManager {
         }
 
         // Follow mode: attack monsters already in attack range without chasing
-        if (AgentBotModeStateRuntime.following(entry) && runAiTick && !entry.climbing
+        if (AgentBotModeStateRuntime.following(entry) && runAiTick && !AgentBotMovementStateRuntime.climbing(entry)
                 && followAnchor != null
                 && bot.getMapId() == followAnchor.getMapId()
                 && Math.abs(botPos.x - followAnchor.getPosition().x) <= BotMovementManager.cfg.FOLLOW_DIST * 5) {
@@ -2287,10 +2287,10 @@ public class BotManager {
         }
         if (target == null) {
             AgentBotGrindTargetStateRuntime.clear(entry);
-            if (isSwimMap(entry) && entry.inAir) {
+            if (isSwimMap(entry) && AgentBotMovementStateRuntime.inAir(entry)) {
                 BotMovementManager.tickSwimming(entry, targetPos);
                 return new LocalOpportunityAttackResult(true, targetPos);
-            } else if (entry.inAir) {
+            } else if (AgentBotMovementStateRuntime.inAir(entry)) {
                 BotMovementManager.tickAirborne(entry, targetPos);
                 return new LocalOpportunityAttackResult(true, targetPos);
             } else {
@@ -2361,7 +2361,7 @@ public class BotManager {
                 : null;
 
         boolean attackAttemptedInRange = false;
-        if (!entry.climbing) {
+        if (!AgentBotMovementStateRuntime.climbing(entry)) {
             if (aoeRepositionPos == null
                     && attackGateOpen && BotCombatManager.isTargetInAttackRange(attackPlan, bot, target)
                     && BotCombatManager.canUseAttackPlanNow(entry, grindWeaponType, attackPlan)) {
@@ -2377,10 +2377,10 @@ public class BotManager {
                 }
                 // Don't short-circuit when a cross-region retreat is in progress — the
                 // bot must still walk to the edge launch this tick.
-                if (attacked && !entry.inAir && crossRegionRetreatPos == null) {
+                if (attacked && !AgentBotMovementStateRuntime.inAir(entry) && crossRegionRetreatPos == null) {
                     return new LocalOpportunityAttackResult(true, targetPos);
                 }
-            } else if (!entry.inAir
+            } else if (!AgentBotMovementStateRuntime.inAir(entry)
                     && attackPlan != null
                     && BotCombatManager.isTargetJumpable(
                             AgentBotMovementStateRuntime.movementProfile(entry),
@@ -2398,7 +2398,7 @@ public class BotManager {
         // mob during cooldown drops dx into the retreat band, triggering a walk-away the
         // next tick — produces a tight (~100 ms) left-right oscillation when the bot is
         // already in firing position.
-        if (target != null && !entry.inAir && !entry.climbing
+        if (target != null && !AgentBotMovementStateRuntime.inAir(entry) && !AgentBotMovementStateRuntime.climbing(entry)
                 && !shouldRetreatForRangedSpacing && crossRegionRetreatPos == null
                 && aoeRepositionPos == null
                 && !attackAttemptedInRange
@@ -2561,7 +2561,7 @@ public class BotManager {
             }
         }
 
-        if (isNear(botPos, anchor, 8) && !entry.inAir && !entry.climbing) {
+        if (isNear(botPos, anchor, 8) && !AgentBotMovementStateRuntime.inAir(entry) && !AgentBotMovementStateRuntime.climbing(entry)) {
             AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
             BotPhysicsEngine.idleOnGround(entry, bot);
             BotMovementManager.broadcastMovement(entry);
@@ -2609,7 +2609,7 @@ public class BotManager {
         if (attackPlan == null) {
             return new LocalOpportunityAttackResult(false, targetPos);
         }
-        if (entry.inAir) {
+        if (AgentBotMovementStateRuntime.inAir(entry)) {
             if (BotCombatManager.canUseAttackPlanNow(entry, weaponType, attackPlan)
                     && BotCombatManager.isTargetInAttackRange(attackPlan, bot, localTarget)) {
                 BotCombatManager.attackMonster(entry, bot, attackPlan);
@@ -2641,7 +2641,7 @@ public class BotManager {
                     && BotCombatManager.isRangedAmmoWeapon(weaponType)) {
                 AgentBotDegenerateAttackStateRuntime.markDegenAttackDone(entry);
             }
-            return new LocalOpportunityAttackResult(!entry.inAir, targetPos);
+            return new LocalOpportunityAttackResult(!AgentBotMovementStateRuntime.inAir(entry), targetPos);
         }
 
         return new LocalOpportunityAttackResult(false, targetPos);
@@ -3420,11 +3420,11 @@ public class BotManager {
      * no movement input (no follow, grind, teleport, shop visit, or attack).
      */
     private void tickTradePhysicsOnly(BotEntry entry, Character bot) {
-        if (isSwimMap(entry) && entry.inAir && !entry.climbing) {
+        if (isSwimMap(entry) && AgentBotMovementStateRuntime.inAir(entry) && !AgentBotMovementStateRuntime.climbing(entry)) {
             BotMovementManager.tickSwimming(entry, null);
-        } else if (entry.inAir) {
+        } else if (AgentBotMovementStateRuntime.inAir(entry)) {
             BotMovementManager.tickAirborne(entry, null);
-        } else if (!entry.climbing) {
+        } else if (!AgentBotMovementStateRuntime.climbing(entry)) {
             int expectedIdleStance = BotPhysicsEngine.resolveIdleGroundStance(entry);
             if (BotPhysicsEngine.resolveStance(entry) != expectedIdleStance
                     || bot.getStance() != expectedIdleStance) {
@@ -3439,11 +3439,11 @@ public class BotManager {
                 || AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry) || AgentBotShopStateRuntime.shopVisitPending(entry)) {
             return false;
         }
-        if (isSwimMap(entry) && entry.inAir && !entry.climbing) {
+        if (isSwimMap(entry) && AgentBotMovementStateRuntime.inAir(entry) && !AgentBotMovementStateRuntime.climbing(entry)) {
             BotMovementManager.tickSwimming(entry, null);
-        } else if (entry.inAir) {
+        } else if (AgentBotMovementStateRuntime.inAir(entry)) {
             BotMovementManager.tickAirborne(entry, null);
-        } else if (!entry.climbing) {
+        } else if (!AgentBotMovementStateRuntime.climbing(entry)) {
             int expectedIdleStance = BotPhysicsEngine.resolveIdleGroundStance(entry);
             if (BotPhysicsEngine.resolveStance(entry) != expectedIdleStance
                     || bot.getStance() != expectedIdleStance) {
@@ -3645,7 +3645,7 @@ public class BotManager {
         if (!AgentBotModeStateRuntime.following(entry) || AgentBotModeStateRuntime.grinding(entry) || AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)) {
             return false;
         }
-        if (entry.inAir || entry.climbing || entry.downJumpPending || AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)) {
+        if (AgentBotMovementStateRuntime.inAir(entry) || AgentBotMovementStateRuntime.climbing(entry) || AgentBotMovementStateRuntime.downJumpPending(entry) || AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)) {
             return false;
         }
         if (AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
@@ -3656,8 +3656,8 @@ public class BotManager {
         if (AgentBotShopStateRuntime.hasActiveShopTransition(entry)) {
             return false;
         }
-        if (entry.wasMovingX || AgentBotMovementStateRuntime.hasMoveDirection(entry)
-                || entry.movementVelX != 0 || entry.movementVelY != 0) {
+        if (AgentBotMovementStateRuntime.wasMovingX(entry) || AgentBotMovementStateRuntime.hasMoveDirection(entry)
+                || AgentBotMovementStateRuntime.hasMovementVelocity(entry)) {
             return false;
         }
         if (AgentBotOwnerMotionStateRuntime.observedOwnerMoved(entry)) {
@@ -3687,7 +3687,7 @@ public class BotManager {
         }
 
         tickMovementPhase(entry, steeringTarget, runAiTick);
-        if (runAiTick && !entry.inAir && !entry.climbing) {
+        if (runAiTick && !AgentBotMovementStateRuntime.inAir(entry) && !AgentBotMovementStateRuntime.climbing(entry)) {
             BotNavigationManager.tryExecuteCommittedEdgeAfterGroundMovement(entry, targetPos);
         }
         tickStuckDetection(entry);
@@ -3695,11 +3695,11 @@ public class BotManager {
     }
 
     private void tickMovementPhase(BotEntry entry, Point targetPos, boolean runAiTick) {
-        if (entry.climbing) {
+        if (AgentBotMovementStateRuntime.climbing(entry)) {
             BotMovementManager.tickClimbing(entry, targetPos, runAiTick);
-        } else if (isSwimMap(entry) && entry.inAir) {
+        } else if (isSwimMap(entry) && AgentBotMovementStateRuntime.inAir(entry)) {
             BotMovementManager.tickSwimming(entry, targetPos);
-        } else if (entry.inAir) {
+        } else if (AgentBotMovementStateRuntime.inAir(entry)) {
             BotMovementManager.tickAirborne(entry, targetPos);
         } else {
             BotMovementManager.tickGrounded(entry, targetPos);
@@ -3765,7 +3765,7 @@ public class BotManager {
                 BotMovementManager.tickDown(AgentBotMovementStuckStateRuntime.unstuckCooldownMs(entry)));
 
         // Only detect/act while actively navigating — idling near owner is not stuck.
-        if (entry.inAir || entry.climbing
+        if (AgentBotMovementStateRuntime.inAir(entry) || AgentBotMovementStateRuntime.climbing(entry)
                 || AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)
                 || (!AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
                         && !AgentBotMoveTargetStateRuntime.hasMoveTarget(entry))) {
@@ -3799,11 +3799,11 @@ public class BotManager {
         if (!AgentBotCombatCooldownStateRuntime.hasAttackCooldown(entry)) {
             return false;
         }
-        if (isSwimMap(entry) && entry.inAir && !entry.climbing) {
+        if (isSwimMap(entry) && AgentBotMovementStateRuntime.inAir(entry) && !AgentBotMovementStateRuntime.climbing(entry)) {
             BotMovementManager.tickSwimming(entry, null);
-        } else if (entry.inAir) {
+        } else if (AgentBotMovementStateRuntime.inAir(entry)) {
             BotMovementManager.tickAirborne(entry, null);
-        } else if (!entry.climbing) {
+        } else if (!AgentBotMovementStateRuntime.climbing(entry)) {
             // Ground physics must keep ticking during attack lock so prior walk momentum decays
             // via friction, walk-offs trigger falls, and broadcastMovement updates stance from
             // WALK→STAND. Without this the client extrapolates the last walk packet for the

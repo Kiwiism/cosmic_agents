@@ -65,6 +65,22 @@ public class BotEntry {
     boolean crouching = false;
     boolean swimming = false;
 
+    public boolean inAir() {
+        return inAir;
+    }
+
+    public int movementVelX() {
+        return movementVelX;
+    }
+
+    public int movementVelY() {
+        return movementVelY;
+    }
+
+    public boolean hasMovementVelocity() {
+        return movementVelX != 0 || movementVelY != 0;
+    }
+
     // Swim intent — set by movement layer, consumed by physics engine. Movement
     // expresses "what the bot is trying to do"; physics integrates accordingly.
     // Mirrors how the real client only exposes discrete inputs (steer L/R,
@@ -99,11 +115,19 @@ public class BotEntry {
     Rope climbRope = null;
     Rope blockedRopeGrab = null;
 
+    public boolean climbing() {
+        return climbing;
+    }
+
     // Climb intent — set by movement layer, consumed by physics engine.
     int climbVerticalDir = 0;            // -1 up, 0 idle, +1 down
 
     // Horizontal movement hysteresis
     boolean wasMovingX = false;
+
+    public boolean wasMovingX() {
+        return wasMovingX;
+    }
 
     // Committed horizontal step while airborne (set at launch, never changed mid-air)
     int airVelX = 0;
@@ -118,6 +142,10 @@ public class BotEntry {
     // Down-jump: true when crouch was shown last tick, jump fires this tick
     boolean downJumpPending = false;
     long downJumpGracePeriodMS = 0;
+
+    public boolean downJumpPending() {
+        return downJumpPending;
+    }
     boolean ropeEntryPending = false;
     Rope ropeEntryRope = null;
     int ropeEntryY = 0;
