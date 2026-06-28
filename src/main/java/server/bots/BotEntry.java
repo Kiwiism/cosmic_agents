@@ -657,8 +657,21 @@ public class BotEntry {
         this.ignoredGrindLootObjectId = 0;
         this.ignoredGrindLootUntilMs = 0L;
     }
-    Point lastMobTouchCheckPos = null;
-    int lastMobTouchMapId = -1;
+    private Point lastMobTouchCheckPos = null;
+    private int lastMobTouchMapId = -1;
+
+    public Point lastMobTouchCheckPos() {
+        return lastMobTouchCheckPos == null ? null : new Point(lastMobTouchCheckPos);
+    }
+
+    public int lastMobTouchMapId() {
+        return lastMobTouchMapId;
+    }
+
+    public void rememberMobTouchCheck(Point position, int mapId) {
+        lastMobTouchCheckPos = position == null ? null : new Point(position);
+        lastMobTouchMapId = position == null ? -1 : mapId;
+    }
 
     // Loot and potions
     int potCheckTimerMs = 0;

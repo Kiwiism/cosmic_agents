@@ -735,6 +735,10 @@ Recent reconstruction notes:
   `AgentBotAmmoStateRuntime`; BotCombatManager attack gating and ammo/potion
   warning checks keep BotEntry as the temporary backing store but no longer read
   or write `noAmmo` or `ammoWarnSent` directly in production.
+- Mob-touch sweep checkpoint state now enters through
+  `AgentBotMobTouchStateRuntime`; BotCombatManager touch-damage sweep checks
+  keep BotEntry as the temporary backing store but no longer read or write
+  `lastMobTouchCheckPos` or `lastMobTouchMapId` directly in production.
 
 Initial reconstruction order:
 

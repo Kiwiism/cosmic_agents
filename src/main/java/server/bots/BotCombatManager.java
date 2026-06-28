@@ -58,6 +58,7 @@ import server.agents.integration.AgentBotCombatRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
+import server.agents.integration.AgentBotMobTouchStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.combat.CombatFormulaProvider;
@@ -2194,10 +2195,9 @@ public class BotCombatManager {
     static Rectangle getBotTouchBounds(BotEntry entry, Character bot) {
         Point currentPos = bot.getPosition();
         Point previousPos = currentPos;
-        if (entry != null
-                && entry.lastMobTouchCheckPos != null
-                && entry.lastMobTouchMapId == bot.getMapId()) {
-            previousPos = entry.lastMobTouchCheckPos;
+        Point rememberedPos = AgentBotMobTouchStateRuntime.previousCheckPositionOnMap(entry, bot.getMapId());
+        if (rememberedPos != null) {
+            previousPos = rememberedPos;
         }
 
         // Mirror the client touch check: sweep the player's foot position between ticks
@@ -2218,8 +2218,7 @@ public class BotCombatManager {
             return;
         }
 
-        entry.lastMobTouchCheckPos = new Point(position);
-        entry.lastMobTouchMapId = bot.getMapId();
+        AgentBotMobTouchStateRuntime.rememberCheck(entry, position, bot.getMapId());
     }
 
     private static boolean doesHitBoxIntersectMonster(Rectangle hitBox, Monster monster) {

@@ -31,6 +31,7 @@ import server.agents.integration.AgentBotCombatBuffStateRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
+import server.agents.integration.AgentBotMobTouchStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 import server.bots.combat.BotAttackDataProvider;
@@ -1450,8 +1451,7 @@ class BotCombatManagerTest {
     void shouldDetectMobTouchAcrossBotMovementSweep() {
         Character bot = mockBot(new Point(120, 200), mock(MapleMap.class), 20_000, null);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.lastMobTouchCheckPos = new Point(80, 200);
-        entry.lastMobTouchMapId = 0;
+        AgentBotMobTouchStateRuntime.rememberCheck(entry, new Point(80, 200), 0);
         when(bot.getMapId()).thenReturn(0);
         Monster mob = mockMob(new Point(96, 200), 100100);
         when(mob.isFacingLeft()).thenReturn(false);
