@@ -582,8 +582,8 @@ public class BotEntry {
     }
 
     // Job advancement prompts
-    int jobPromptSent = 0;
-    int lastKnownLevel = -1;
+    private int jobPromptSent = 0;
+    private int lastKnownLevel = -1;
 
     public int jobPromptSent() {
         return jobPromptSent;
@@ -602,10 +602,10 @@ public class BotEntry {
     }
 
     // AP/SP builds
-    BotBuildManager.ApBuild apBuild = null;
-    boolean apPromptSent = false;
-    String spVariant = null;
-    boolean spVariantPromptSent = false;
+    private BotBuildManager.ApBuild apBuild = null;
+    private boolean apPromptSent = false;
+    private String spVariant = null;
+    private boolean spVariantPromptSent = false;
 
     // Reply channel — tracks the chat channel the last owner command arrived on.
     // Bot replies are routed to this channel until the next command changes it.
@@ -1104,8 +1104,8 @@ public class BotEntry {
     long nextFidgetJumpAtMs = 0L;
     Point fidgetOriginPos = null;
     long nextFidgetVisualAtMs = 0L;
-    long nextGearSuggestionAt = 0L;
-    boolean spawnUpgradeCheckDone = false;
+    private long nextGearSuggestionAt = 0L;
+    private boolean spawnUpgradeCheckDone = false;
 
     public BotFidgetMode fidgetMode() {
         return fidgetMode;
@@ -1141,7 +1141,7 @@ public class BotEntry {
     // Path logging (debug)
     BotPathLogger pathLogger = null;
     String lastNavDecision = "-";
-    long pendingGearPromptAt = 0L;
+    private long pendingGearPromptAt = 0L;
 
     public BotPathLogger pathLogger() {
         return pathLogger;
