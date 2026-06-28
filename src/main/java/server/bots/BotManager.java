@@ -19,6 +19,7 @@ import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotPotionStateRuntime;
+import server.agents.integration.AgentBotRetreatHoldStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
 import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
 import client.BotClient;
@@ -1401,20 +1402,17 @@ public class BotManager {
         // Hysteresis: a previously committed retreat keeps its goal until either the
         // hold expires, the bot has effectively arrived, or the bot wandered too far
         // from the hold pos for it to still be the right answer.
-        if (entry.retreatHoldPos != null && now < entry.retreatHoldUntilMs) {
-            int dxHold = Math.abs(entry.retreatHoldPos.x - botPos.x);
+        if (AgentBotRetreatHoldStateRuntime.hasActiveHold(entry, now)) {
+            int dxHold = AgentBotRetreatHoldStateRuntime.distanceFromHoldX(entry, botPos);
             if (dxHold <= RETREAT_ARRIVAL_TOLERANCE_X) {
-                entry.retreatHoldUntilMs = 0L;
-                entry.retreatHoldPos = null;
+                AgentBotRetreatHoldStateRuntime.clear(entry);
             } else if (dxHold > BotCombatManager.cfg.RANGED_RETREAT_DISTANCE_X * 2) {
-                entry.retreatHoldUntilMs = 0L;
-                entry.retreatHoldPos = null;
+                AgentBotRetreatHoldStateRuntime.clear(entry);
             } else {
-                return new Point(entry.retreatHoldPos);
+                return AgentBotRetreatHoldStateRuntime.holdPosition(entry);
             }
-        } else if (entry.retreatHoldPos != null) {
-            entry.retreatHoldUntilMs = 0L;
-            entry.retreatHoldPos = null;
+        } else if (AgentBotRetreatHoldStateRuntime.hasHold(entry)) {
+            AgentBotRetreatHoldStateRuntime.clear(entry);
         }
 
         if (!retreatNeeded) {
@@ -1439,15 +1437,13 @@ public class BotManager {
             AgentBotBreakoutStateRuntime.setBreakoutCommitment(
                     entry, dir, now + BotCombatManager.cfg.BREAKOUT_MAX_MS);
             // Drop any stale one-step hysteresis so it can't fight the committed breakout.
-            entry.retreatHoldPos = null;
-            entry.retreatHoldUntilMs = 0L;
+            AgentBotRetreatHoldStateRuntime.clear(entry);
             return breakoutStep(botPos, dir);
         }
 
         Point retreatPos = BotAttackExecutionProvider.retreatTargetPosition(bot, botPos, combatTargetPos);
         if (shouldUseLocalCombatRetreatTarget(entry, botPos, combatTargetPos, retreatPos)) {
-            entry.retreatHoldUntilMs = now + RETREAT_HOLD_MS;
-            entry.retreatHoldPos = new Point(retreatPos);
+            AgentBotRetreatHoldStateRuntime.setHold(entry, retreatPos, now + RETREAT_HOLD_MS);
             return retreatPos;
         }
         return combatTargetPos;
@@ -3042,8 +3038,7 @@ public class BotManager {
         entry.nextGrindTargetSearchAtMs = 0L;
         AgentBotCombatCooldownStateRuntime.clearMoveWindow(entry);
         entry.degenAttackDone = false;
-        entry.retreatHoldUntilMs = 0L;
-        entry.retreatHoldPos = null;
+        AgentBotRetreatHoldStateRuntime.clear(entry);
         AgentBotGrindWanderStateRuntime.clearWanderDirection(entry);
         BotMovementManager.clearNavigationState(entry);
         entry.grinding = true;

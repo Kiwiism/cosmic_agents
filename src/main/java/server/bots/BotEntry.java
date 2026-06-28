@@ -166,6 +166,28 @@ public class BotEntry {
     long aoeRepositionDeadlineMs = 0L; // bounded-chase timeout for the AoE reposition commitment
     int wanderDirection = 0;      // -1 left, +1 right, 0 = unset (picked when grind has no target)
 
+    public Point retreatHoldPos() {
+        return retreatHoldPos == null ? null : new Point(retreatHoldPos);
+    }
+
+    public long retreatHoldUntilMs() {
+        return retreatHoldUntilMs;
+    }
+
+    public boolean hasRetreatHold() {
+        return retreatHoldPos != null;
+    }
+
+    public void setRetreatHold(Point position, long untilMs) {
+        retreatHoldPos = position == null ? null : new Point(position);
+        retreatHoldUntilMs = position == null ? 0L : untilMs;
+    }
+
+    public void clearRetreatHold() {
+        retreatHoldUntilMs = 0L;
+        retreatHoldPos = null;
+    }
+
     public int breakoutDirection() {
         return breakoutDirection;
     }

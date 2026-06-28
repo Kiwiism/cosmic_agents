@@ -557,6 +557,11 @@ Recent reconstruction notes:
   `AgentBotBreakoutStateRuntime`; BotManager ranged retreat breakout movement
   keeps BotEntry as the temporary backing store but no longer reads or writes
   `breakoutDirection` or `breakoutUntilMs` directly outside the adapter.
+- Ranged retreat-hold commitment state now enters through
+  `AgentBotRetreatHoldStateRuntime`; BotManager ranged retreat hysteresis,
+  breakout cleanup, and grind-start cleanup keep BotEntry as the temporary
+  backing store but no longer read or write `retreatHoldPos` or
+  `retreatHoldUntilMs` directly outside the adapter.
 
 Initial reconstruction order:
 
