@@ -34,6 +34,7 @@ import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotMobTouchStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentBotSkillBuffDebugStateRuntime;
 import server.bots.combat.BotAttackDataProvider;
 import server.life.Monster;
 import server.life.MonsterStats;
@@ -1030,7 +1031,7 @@ class BotCombatManagerTest {
             BotCombatManager.tickBuffs(entry, bot);
         }
 
-        assertEquals("no skill buff checks yet", entry.lastSkillBuffActionSummary);
+        assertEquals("no skill buff checks yet", AgentBotSkillBuffDebugStateRuntime.lastActionSummary(entry));
         assertEquals(0L, AgentBotCombatBuffStateRuntime.nextSupportBuffAt(entry, Cleric.BLESS));
         assertEquals(0, AgentBotCombatCooldownStateRuntime.attackCooldownMs(entry));
     }

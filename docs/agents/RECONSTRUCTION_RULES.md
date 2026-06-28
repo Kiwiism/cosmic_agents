@@ -739,6 +739,11 @@ Recent reconstruction notes:
   `AgentBotMobTouchStateRuntime`; BotCombatManager touch-damage sweep checks
   keep BotEntry as the temporary backing store but no longer read or write
   `lastMobTouchCheckPos` or `lastMobTouchMapId` directly in production.
+- Skill-buff debug decision state now enters through
+  `AgentBotSkillBuffDebugStateRuntime`; BotCombatManager buff decision logging
+  and debug-line generation keep BotEntry as the temporary backing store but no
+  longer read or write `lastSkillBuffActionAtMs` or
+  `lastSkillBuffActionSummary` directly in production.
 
 Initial reconstruction order:
 

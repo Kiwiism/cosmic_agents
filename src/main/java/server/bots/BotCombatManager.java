@@ -61,6 +61,7 @@ import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMobTouchStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
+import server.agents.integration.AgentBotSkillBuffDebugStateRuntime;
 import server.combat.CombatFormulaProvider;
 import server.life.Monster;
 import server.maps.Foothold;
@@ -2345,16 +2346,13 @@ public class BotCombatManager {
     }
 
     private static void noteSkillBuffDecision(BotEntry entry, String summary) {
-        entry.lastSkillBuffActionAtMs = System.currentTimeMillis();
-        entry.lastSkillBuffActionSummary = summary;
+        AgentBotSkillBuffDebugStateRuntime.rememberAction(entry, System.currentTimeMillis(), summary);
     }
 
     public static List<String> getSkillBuffDebugLines(BotEntry entry, Character bot) {
         long now = System.currentTimeMillis();
 
-        long lastActionAgeMs = entry.lastSkillBuffActionAtMs > 0
-                ? Math.max(0L, now - entry.lastSkillBuffActionAtMs)
-                : -1L;
+        long lastActionAgeMs = AgentBotSkillBuffDebugStateRuntime.lastActionAgeMs(entry, now);
         List<AgentCombatDialogueReporter.ActiveSkillBuffDebugLine> activeBuffs = new ArrayList<>();
         for (PlayerBuffValueHolder holder : bot.getAllBuffs()) {
             StatEffect effect = holder.effect;
@@ -2383,7 +2381,7 @@ public class BotCombatManager {
         }
 
         return AgentCombatDialogueReporter.skillBuffDebugLines(
-                entry.lastSkillBuffActionSummary, lastActionAgeMs, activeBuffs, cachedBuffs);
+                AgentBotSkillBuffDebugStateRuntime.lastActionSummary(entry), lastActionAgeMs, activeBuffs, cachedBuffs);
     }
 
     private static String formatBuffAge(long ms) {

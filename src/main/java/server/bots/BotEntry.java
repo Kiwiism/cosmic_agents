@@ -1192,8 +1192,21 @@ public class BotEntry {
     }
 
     // Skill buff tracking (always enabled; tracks last decision for debug)
-    long   lastSkillBuffActionAtMs    = 0L;
-    String lastSkillBuffActionSummary = "no skill buff checks yet";
+    private long lastSkillBuffActionAtMs = 0L;
+    private String lastSkillBuffActionSummary = "no skill buff checks yet";
+
+    public long lastSkillBuffActionAtMs() {
+        return lastSkillBuffActionAtMs;
+    }
+
+    public String lastSkillBuffActionSummary() {
+        return lastSkillBuffActionSummary;
+    }
+
+    public void rememberSkillBuffAction(long atMs, String summary) {
+        lastSkillBuffActionAtMs = atMs;
+        lastSkillBuffActionSummary = summary;
+    }
 
     // Party-quest state (one slot per PQ type; null = not in that PQ)
     public server.bots.pq.BotKpqState kpq = new server.bots.pq.BotKpqState();
