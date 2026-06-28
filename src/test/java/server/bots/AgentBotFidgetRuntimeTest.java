@@ -5,6 +5,7 @@ import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotChatStatusRuntime;
 import server.agents.integration.AgentBotFidgetRuntime;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mockStatic;
 
@@ -19,5 +20,16 @@ class AgentBotFidgetRuntimeTest {
             assertTrue(AgentBotFidgetRuntime.isLeaderIdleForFidget(entry));
             status.verify(() -> AgentBotChatStatusRuntime.isOwnerIdle(entry));
         }
+    }
+
+    @Test
+    void adaptsActiveFidgetModeState() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        assertFalse(AgentBotFidgetRuntime.hasActiveFidgetMode(entry));
+
+        entry.fidgetMode = BotFidgetMode.PRONE;
+
+        assertTrue(AgentBotFidgetRuntime.hasActiveFidgetMode(entry));
     }
 }

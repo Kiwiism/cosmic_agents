@@ -663,6 +663,9 @@ Recent reconstruction notes:
   keep BotEntry as the temporary backing store but no longer read `inAir`,
   `climbing`, `downJumpPending`, `wasMovingX`, `movementVelX`, or
   `movementVelY` directly in production.
+- Fidget mode presence now enters through `AgentBotFidgetRuntime`; BotManager
+  follow-idle fast-path gating keeps BotEntry as the temporary backing store but
+  no longer reads `fidgetMode` directly in production.
 
 Initial reconstruction order:
 

@@ -12,6 +12,7 @@ import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
+import server.agents.integration.AgentBotFidgetRuntime;
 import server.agents.integration.AgentBotFormationStateRuntime;
 import server.agents.integration.AgentBotGrindLootStateRuntime;
 import server.agents.integration.AgentBotGrindSearchStateRuntime;
@@ -3650,7 +3651,7 @@ public class BotManager {
         }
         if (AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
                 || AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry)
-                || entry.fidgetMode != BotFidgetMode.NONE) {
+                || AgentBotFidgetRuntime.hasActiveFidgetMode(entry)) {
             return false;
         }
         if (AgentBotShopStateRuntime.hasActiveShopTransition(entry)) {

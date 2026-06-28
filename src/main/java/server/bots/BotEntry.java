@@ -1084,6 +1084,14 @@ public class BotEntry {
     long nextGearSuggestionAt = 0L;
     boolean spawnUpgradeCheckDone = false;
 
+    public BotFidgetMode fidgetMode() {
+        return fidgetMode;
+    }
+
+    public boolean hasActiveFidgetMode() {
+        return fidgetMode != BotFidgetMode.NONE;
+    }
+
     public long nextGearSuggestionAt() {
         return nextGearSuggestionAt;
     }
