@@ -163,7 +163,7 @@ public class BotMovementManager {
 
     static boolean refreshMovementProfile(BotEntry entry) {
         BotMovementProfile updated = BotMovementProfile.fromCharacter(entry.bot);
-        if (updated.equals(entry.movementProfile)) {
+        if (updated.equals(AgentBotMovementStateRuntime.movementProfile(entry))) {
             return false;
         }
 
@@ -174,7 +174,7 @@ public class BotMovementManager {
             BotNavigationGraphProvider.warmGraphAsync(map, updated);
         }
 
-        entry.movementProfile = updated;
+        AgentBotMovementStateRuntime.setMovementProfile(entry, updated);
         clearNavigationState(entry);
         return true;
     }
@@ -262,14 +262,14 @@ public class BotMovementManager {
     }
 
     static void jumpOffRope(BotEntry entry, Character bot, int dx) {
-        int airVelX = resolveAirVelocityX(bot.getMap(), entry.movementProfile, dx);
+        int airVelX = resolveAirVelocityX(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry), dx);
         BotPhysicsEngine.beginJumpOffRope(entry, bot, airVelX);
         broadcastMovement(entry);
     }
 
     static void jumpToRope(BotEntry entry, Character bot, int dx) {
         Rope sourceRope = entry.climbRope;
-        int airVelX = resolveAirVelocityX(bot.getMap(), entry.movementProfile, dx);
+        int airVelX = resolveAirVelocityX(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry), dx);
         BotPhysicsEngine.beginRopeTransferJump(entry, bot, sourceRope, airVelX);
         broadcastMovement(entry);
     }
@@ -572,9 +572,10 @@ public class BotMovementManager {
         }
 
         MapleMap map = entry.bot.getMap();
-        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map, entry.movementProfile);
+        BotMovementProfile profile = AgentBotMovementStateRuntime.movementProfile(entry);
+        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map, profile);
         if (graph == null) {
-            BotNavigationGraphProvider.warmGraphAsync(map, entry.movementProfile);
+            BotNavigationGraphProvider.warmGraphAsync(map, profile);
             return targetPos;
         }
         Point botPos = entry.bot.getPosition();
@@ -655,7 +656,8 @@ public class BotMovementManager {
         MapleMap map = entry.bot.getMap();
         int direction = Integer.signum(stepX);
         int lookahead = Math.max(Math.abs(stepX),
-                BotPhysicsEngine.walkStep(map, entry.movementProfile) * Math.max(1, cfg.MOB_AVOID_LOOKAHEAD_STEPS));
+                BotPhysicsEngine.walkStep(map, AgentBotMovementStateRuntime.movementProfile(entry))
+                        * Math.max(1, cfg.MOB_AVOID_LOOKAHEAD_STEPS));
         int laneEndX = botPos.x + direction * lookahead;
         Rectangle lane = inclusiveRectangle(
                 Math.min(botPos.x, laneEndX),
@@ -694,7 +696,8 @@ public class BotMovementManager {
             return true;
         }
 
-        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(entry.bot.getMap(), entry.movementProfile);
+        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(
+                entry.bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         if (graph == null) {
             return false;
         }
@@ -708,13 +711,14 @@ public class BotMovementManager {
 
     private static boolean simulatedJumpLandsInCurrentRegion(BotEntry entry, Foothold currentFh, Point botPos, int stepX) {
         MapleMap map = entry.bot.getMap();
-        int airVelX = resolveAirVelocityX(map, entry.movementProfile, stepX);
-        JumpLanding landing = simulateJumpLanding(map, botPos, airVelX, entry.movementProfile);
+        BotMovementProfile profile = AgentBotMovementStateRuntime.movementProfile(entry);
+        int airVelX = resolveAirVelocityX(map, profile, stepX);
+        JumpLanding landing = simulateJumpLanding(map, botPos, airVelX, profile);
         if (landing == null || landing.point() == null || landing.foothold() == null) {
             return false;
         }
 
-        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map, entry.movementProfile);
+        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
         if (graph == null) {
             return landing.foothold().getId() == currentFh.getId();
         }
@@ -822,7 +826,7 @@ public class BotMovementManager {
     }
 
     static int updateStepX(BotEntry entry, MapleMap map, int botX, int targetX, int stopDist, int followDist) {
-        int stepX = calcStepX(map, entry.movementProfile, botX, targetX, entry.wasMovingX, stopDist, followDist);
+        int stepX = calcStepX(map, AgentBotMovementStateRuntime.movementProfile(entry), botX, targetX, entry.wasMovingX, stopDist, followDist);
         if (stepX == 0) {
             entry.wasMovingX = false;
             return 0;
@@ -832,7 +836,7 @@ public class BotMovementManager {
     }
 
     static void initiateJump(BotEntry entry, Character bot, int dx) {
-        BotPhysicsEngine.beginGroundJump(entry, bot, resolveAirVelocityX(bot.getMap(), entry.movementProfile, dx));
+        BotPhysicsEngine.beginGroundJump(entry, bot, resolveAirVelocityX(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry), dx));
         broadcastMovement(entry);
     }
 
@@ -847,7 +851,7 @@ public class BotMovementManager {
      */
     static void tickUnstuck(BotEntry entry) {
         Character bot = entry.bot;
-        int walkStep = BotPhysicsEngine.walkStep(bot.getMap(), entry.movementProfile);
+        int walkStep = BotPhysicsEngine.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         switch (ThreadLocalRandom.current().nextInt(2)) {
             case 0 -> BotPhysicsEngine.beginGroundJump(entry, bot, -walkStep); // jump left
             default -> BotPhysicsEngine.beginGroundJump(entry, bot, walkStep); // jump right
@@ -858,7 +862,7 @@ public class BotMovementManager {
     }
 
     static void initiateRopeJump(BotEntry entry, Character bot, int dx) {
-        BotPhysicsEngine.beginClimbUpJump(entry, bot, resolveAirVelocityX(bot.getMap(), entry.movementProfile, dx));
+        BotPhysicsEngine.beginClimbUpJump(entry, bot, resolveAirVelocityX(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry), dx));
         broadcastMovement(entry);
     }
 

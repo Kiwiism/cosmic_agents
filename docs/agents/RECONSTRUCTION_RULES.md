@@ -761,6 +761,11 @@ Recent reconstruction notes:
   BotEntry as the temporary backing store but no longer read or write
   `moveDir`, `downJumpPending`, or `downJumpGracePeriodMS` directly in
   production.
+- Movement profile state now enters through `AgentBotMovementStateRuntime`;
+  BotMovementManager profile refresh, graph lookup/warmup, jump velocity,
+  walk-step, mob-avoidance, and unstuck calculations keep BotEntry as the
+  temporary backing store but no longer read or write `movementProfile` directly
+  in production.
 
 Initial reconstruction order:
 
