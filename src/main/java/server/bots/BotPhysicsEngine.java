@@ -2,6 +2,7 @@ package server.bots;
 
 import client.Character;
 import constants.game.CharacterStance;
+import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Rope;
@@ -1320,7 +1321,7 @@ public final class BotPhysicsEngine {
     }
 
     private static int broadcastStance(BotEntry entry, int baseStance) {
-        if (System.currentTimeMillis() >= entry.alertedUntilMs) {
+        if (System.currentTimeMillis() >= AgentBotCombatCooldownStateRuntime.alertedUntilMs(entry)) {
             return baseStance;
         }
         if (baseStance == CharacterStance.STAND_RIGHT_STANCE) {

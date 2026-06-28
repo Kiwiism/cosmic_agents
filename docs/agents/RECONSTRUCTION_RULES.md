@@ -725,6 +725,12 @@ Recent reconstruction notes:
   resolution, queued script ticking, cheap script movement checks, and
   movement-only stepping keep BotEntry as the temporary backing store but no
   longer read `entry.bot` or `entry.owner` directly in production code.
+- Combat animation/cooldown and alert-reset state now enters through
+  `AgentBotCombatCooldownStateRuntime`; BotCombatManager attack cooldown,
+  movement-window, alerted-stance timeout, and alert-reset scheduling keep
+  BotEntry as the temporary backing store but no longer read or write
+  `attackCooldownMs`, `moveWindowMs`, `alertedUntilMs`, or
+  `alertResetScheduled` directly in production.
 
 Initial reconstruction order:
 

@@ -63,4 +63,22 @@ class AgentBotCombatCooldownStateRuntimeTest {
 
         assertEquals(750, AgentBotCombatCooldownStateRuntime.mobHitCooldownMs(entry));
     }
+
+    @Test
+    void adaptsAlertResetState() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        assertFalse(AgentBotCombatCooldownStateRuntime.alertResetScheduled(entry));
+        assertEquals(0L, AgentBotCombatCooldownStateRuntime.alertedUntilMs(entry));
+
+        AgentBotCombatCooldownStateRuntime.setAlertedUntilMs(entry, 12_345L);
+        AgentBotCombatCooldownStateRuntime.setAlertResetScheduled(entry, true);
+
+        assertEquals(12_345L, AgentBotCombatCooldownStateRuntime.alertedUntilMs(entry));
+        assertTrue(AgentBotCombatCooldownStateRuntime.alertResetScheduled(entry));
+
+        AgentBotCombatCooldownStateRuntime.setAlertResetScheduled(entry, false);
+
+        assertFalse(AgentBotCombatCooldownStateRuntime.alertResetScheduled(entry));
+    }
 }

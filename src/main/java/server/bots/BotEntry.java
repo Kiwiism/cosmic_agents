@@ -168,8 +168,8 @@ public class BotEntry {
     volatile boolean grinding = false;
     Monster grindTarget = null;
     long nextGrindTargetSearchAtMs = 0L;
-    int attackCooldownMs = 0;
-    int moveWindowMs = 0;    // movement-only gap after attack animation; attacks blocked, walking allowed
+    private int attackCooldownMs = 0;
+    private int moveWindowMs = 0;    // movement-only gap after attack animation; attacks blocked, walking allowed
 
     public Monster grindTarget() {
         return grindTarget;
@@ -513,12 +513,28 @@ public class BotEntry {
     // broadcast stance gets STAND→ALERT substituted so observers see the alert pose.
     // Mirrors CharLook::alerted (TimedBool, 5000ms) in maplestory-wasm. Absolute reset on each
     // trigger (attack/hit/heal/buff), never additive.
-    long alertedUntilMs = 0L;
+    private long alertedUntilMs = 0L;
     // Debounce flag for the scheduled stance-reset callback in BotCombatManager.markAlerted.
     // Without this, when the bot stops moving while alerted (e.g. "stay" command), no new
     // movement snapshot ever fires — so the wire stance stays ALERT forever. The callback
     // pushes a fresh STAND broadcast once the timer expires.
-    boolean alertResetScheduled = false;
+    private boolean alertResetScheduled = false;
+
+    public long alertedUntilMs() {
+        return alertedUntilMs;
+    }
+
+    public void setAlertedUntilMs(long alertedUntilMs) {
+        this.alertedUntilMs = alertedUntilMs;
+    }
+
+    public boolean alertResetScheduled() {
+        return alertResetScheduled;
+    }
+
+    public void setAlertResetScheduled(boolean alertResetScheduled) {
+        this.alertResetScheduled = alertResetScheduled;
+    }
 
     // Most recent command the owner issued that handleChat actually matched.
     // Used by SituationBuilder to give the LLM context like "owner told you to

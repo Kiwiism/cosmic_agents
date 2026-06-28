@@ -59,6 +59,22 @@ public final class AgentBotCombatCooldownStateRuntime {
         return hasAttackCooldown(entry) || (hasMoveWindow(entry) && !inAir);
     }
 
+    public static long alertedUntilMs(BotEntry entry) {
+        return entry.alertedUntilMs();
+    }
+
+    public static void setAlertedUntilMs(BotEntry entry, long untilMs) {
+        entry.setAlertedUntilMs(untilMs);
+    }
+
+    public static boolean alertResetScheduled(BotEntry entry) {
+        return entry.alertResetScheduled();
+    }
+
+    public static void setAlertResetScheduled(BotEntry entry, boolean scheduled) {
+        entry.setAlertResetScheduled(scheduled);
+    }
+
     public static int mobHitCooldownMs(BotEntry entry) {
         return entry.mobHitCooldownMs();
     }

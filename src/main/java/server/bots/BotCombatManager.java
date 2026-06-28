@@ -698,7 +698,7 @@ public class BotCombatManager {
      * Healing is the cleric bot's top priority: runs before any attack decision (see BotManager tick)
      * and casts whenever the bot itself OR any nearby party member is below
      * {@link Config#SUPPORT_HEAL_TARGET_RATIO}. There is no decision-side cooldown — the only
-     * throttle is {@code entry.attackCooldownMs}, which we set from the skill's animation timing so
+     * throttle is the Agent combat cooldown state, which we set from the skill's animation timing so
      * consecutive casts match what a legit client would send (~600ms between Heal packets per the
      * captured monitored-packets-cleric-heal-only.log reference).
      *
@@ -1259,7 +1259,7 @@ public class BotCombatManager {
     private static final long ALERT_DURATION_MS = 5000L;
 
     static void markAlerted(BotEntry entry) {
-        entry.alertedUntilMs = System.currentTimeMillis() + ALERT_DURATION_MS;
+        AgentBotCombatCooldownStateRuntime.setAlertedUntilMs(entry, System.currentTimeMillis() + ALERT_DURATION_MS);
         scheduleAlertReset(entry);
     }
 
@@ -1267,17 +1267,17 @@ public class BotCombatManager {
     // it has stopped moving in the meantime (otherwise the last-sent ALERT wire stance sticks).
     // Self-reschedules if markAlerted extended the deadline while we were waiting.
     private static void scheduleAlertReset(BotEntry entry) {
-        if (entry.alertResetScheduled) return;
-        entry.alertResetScheduled = true;
-        long delay = Math.max(50L, entry.alertedUntilMs - System.currentTimeMillis() + 100L);
+        if (AgentBotCombatCooldownStateRuntime.alertResetScheduled(entry)) return;
+        AgentBotCombatCooldownStateRuntime.setAlertResetScheduled(entry, true);
+        long delay = Math.max(50L, AgentBotCombatCooldownStateRuntime.alertedUntilMs(entry) - System.currentTimeMillis() + 100L);
         AgentBotCombatRuntime.afterDelay(delay, () -> {
             long now = System.currentTimeMillis();
-            if (now < entry.alertedUntilMs) {
-                entry.alertResetScheduled = false;
+            if (now < AgentBotCombatCooldownStateRuntime.alertedUntilMs(entry)) {
+                AgentBotCombatCooldownStateRuntime.setAlertResetScheduled(entry, false);
                 scheduleAlertReset(entry);
                 return;
             }
-            entry.alertResetScheduled = false;
+            AgentBotCombatCooldownStateRuntime.setAlertResetScheduled(entry, false);
             try {
                 if (entry.bot != null) entry.bot.broadcastStance();
             } catch (Throwable ignored) {}
