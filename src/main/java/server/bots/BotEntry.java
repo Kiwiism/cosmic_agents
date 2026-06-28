@@ -226,18 +226,46 @@ public class BotEntry {
     // via the buff loop only burns MP without spawning the creature). Held here for a future
     // place/condition-gated summon caster; the generic rebuff loop ignores this list.
     private final List<Integer> summonSkillIds = new ArrayList<>();
-    final Map<Integer, Long> nextBuffAt = new HashMap<>();
-    final Map<Integer, Long> nextSupportBuffAt = new HashMap<>();
+    private final Map<Integer, Long> nextBuffAt = new HashMap<>();
+    private final Map<Integer, Long> nextSupportBuffAt = new HashMap<>();
     long nextSupportHealAt = 0L;
-    boolean supportHealsEnabled = true;
-    boolean skillBuffsEnabled = true;
+    private boolean supportHealsEnabled = true;
+    private boolean skillBuffsEnabled = true;
+
+    public boolean supportHealsEnabled() {
+        return supportHealsEnabled;
+    }
 
     public void setSupportHealsEnabled(boolean supportHealsEnabled) {
         this.supportHealsEnabled = supportHealsEnabled;
     }
 
+    public boolean skillBuffsEnabled() {
+        return skillBuffsEnabled;
+    }
+
     public void setSkillBuffsEnabled(boolean skillBuffsEnabled) {
         this.skillBuffsEnabled = skillBuffsEnabled;
+    }
+
+    public long nextBuffAt(int skillId) {
+        return nextBuffAt.getOrDefault(skillId, 0L);
+    }
+
+    public void ensureNextBuffAt(int skillId, long nextAt) {
+        nextBuffAt.putIfAbsent(skillId, nextAt);
+    }
+
+    public void setNextBuffAt(int skillId, long nextAt) {
+        nextBuffAt.put(skillId, nextAt);
+    }
+
+    public long nextSupportBuffAt(int skillId) {
+        return nextSupportBuffAt.getOrDefault(skillId, 0L);
+    }
+
+    public void setNextSupportBuffAt(int skillId, long nextAt) {
+        nextSupportBuffAt.put(skillId, nextAt);
     }
 
     public boolean skillCacheMatches(int jobId, int level, int signature) {

@@ -571,6 +571,12 @@ Recent reconstruction notes:
   buff/heal selection, attack planning, projectile checks, AoE scoring, and
   focused tests keep BotEntry as the temporary backing store but no longer read
   or write cached attack, AoE, heal, buff, or summon skill fields directly.
+- Combat buff/support toggle and cooldown state now enters through
+  `AgentBotCombatBuffStateRuntime`; BotCombatManager skill-buff gating,
+  per-skill rebuff cadence, support-heal gating, support-buff cadence, and
+  focused tests keep BotEntry as the temporary backing store but no longer read
+  or write `skillBuffsEnabled`, `supportHealsEnabled`, `nextBuffAt`, or
+  `nextSupportBuffAt` directly.
 - Ranged degenerate-hit retreat latch state now enters through
   `AgentBotDegenerateAttackStateRuntime`; BotManager grind combat and local
   opportunity combat keep BotEntry as the temporary backing store but no longer

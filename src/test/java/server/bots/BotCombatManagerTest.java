@@ -27,6 +27,7 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.ArgumentCaptor;
 import server.StatEffect;
+import server.agents.integration.AgentBotCombatBuffStateRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
@@ -1013,7 +1014,7 @@ class BotCombatManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
         AgentBotCombatSkillCacheStateRuntime.addBuffSkillId(entry, Cleric.BLESS);
-        entry.nextSupportBuffAt.put(Cleric.BLESS, 0L);
+        AgentBotCombatBuffStateRuntime.setNextSupportBuffAt(entry, Cleric.BLESS, 0L);
 
         Skill bless = new Skill(Cleric.BLESS);
         StatEffect effect = mock(StatEffect.class);
@@ -1029,7 +1030,7 @@ class BotCombatManagerTest {
         }
 
         assertEquals("no skill buff checks yet", entry.lastSkillBuffActionSummary);
-        assertFalse(entry.nextSupportBuffAt.containsKey(Cleric.BLESS) && entry.nextSupportBuffAt.get(Cleric.BLESS) > 0L);
+        assertEquals(0L, AgentBotCombatBuffStateRuntime.nextSupportBuffAt(entry, Cleric.BLESS));
         assertEquals(0, AgentBotCombatCooldownStateRuntime.attackCooldownMs(entry));
     }
 

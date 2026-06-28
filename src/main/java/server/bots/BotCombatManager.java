@@ -51,6 +51,7 @@ import server.bots.combat.BotDefenseDataProvider;
 import server.bots.combat.BotMobHitboxProvider;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentBotCombatBuffStateRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import server.agents.integration.AgentBotCombatRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
@@ -607,7 +608,7 @@ public class BotCombatManager {
             if (!isActiveSupportSkill(skill, fx)) continue;
             if (BUFF_BLACKLIST.contains(skill.getId())) continue;
             AgentBotCombatSkillCacheStateRuntime.addBuffSkillId(entry, skill.getId());
-            entry.nextBuffAt.putIfAbsent(skill.getId(), 0L);
+            AgentBotCombatBuffStateRuntime.ensureNextBuffAt(entry, skill.getId(), 0L);
         }
     }
 
@@ -626,7 +627,7 @@ public class BotCombatManager {
 
     static void tickBuffs(BotEntry entry, Character bot) {
         if (AgentBotCombatCooldownStateRuntime.hasAttackCooldown(entry)) return;
-        if (!entry.skillBuffsEnabled) {
+        if (!AgentBotCombatBuffStateRuntime.skillBuffsEnabled(entry)) {
             noteSkillBuffDecision(entry, "skill buffs disabled");
             return;
         }
@@ -646,7 +647,7 @@ public class BotCombatManager {
         }
 
         for (int skillId : AgentBotCombatSkillCacheStateRuntime.buffSkillIds(entry)) {
-            if (now < entry.nextBuffAt.getOrDefault(skillId, 0L)) continue;
+            if (now < AgentBotCombatBuffStateRuntime.nextBuffAt(entry, skillId)) continue;
             if (bot.skillIsCooling(skillId)) continue;
 
             Skill skill = SkillFactory.getSkill(skillId);
@@ -706,7 +707,7 @@ public class BotCombatManager {
      */
     static boolean tickSupportHealing(BotEntry entry, Character bot) {
         if (AgentBotCombatCooldownStateRuntime.blocksGroundedAttack(entry, entry.inAir)) return false;
-        if (!entry.supportHealsEnabled) return false;
+        if (!AgentBotCombatBuffStateRuntime.supportHealsEnabled(entry)) return false;
         if (!AgentBotModeStateRuntime.following(entry) && !AgentBotModeStateRuntime.grinding(entry)) return false;
         int healSkillId = AgentBotCombatSkillCacheStateRuntime.healSkillId(entry);
         if (healSkillId == 0 || bot.skillIsCooling(healSkillId)) return false;
@@ -2369,7 +2370,7 @@ public class BotCombatManager {
         List<AgentCombatDialogueReporter.CachedSkillBuffDebugLine> cachedBuffs = new ArrayList<>();
         for (int skillId : AgentBotCombatSkillCacheStateRuntime.buffSkillIds(entry)) {
             boolean cooling = bot.skillIsCooling(skillId);
-            long nextAt = entry.nextBuffAt.getOrDefault(skillId, 0L);
+            long nextAt = AgentBotCombatBuffStateRuntime.nextBuffAt(entry, skillId);
             String status;
             if (cooling) {
                 status = "cd";
@@ -2420,7 +2421,7 @@ public class BotCombatManager {
             if (bot.skillIsCooling(skillId)) {
                 continue;
             }
-            if (now < entry.nextSupportBuffAt.getOrDefault(skillId, 0L)) {
+            if (AgentBotCombatBuffStateRuntime.supportBuffOnCooldown(entry, skillId, now)) {
                 continue;
             }
 
@@ -2436,7 +2437,8 @@ public class BotCombatManager {
             }
 
             if (castSupportSkill(entry, bot, skill, fx, now)) {
-                entry.nextSupportBuffAt.put(skillId, now + cfg.SUPPORT_REBUFF_CD_MS);
+                AgentBotCombatBuffStateRuntime.setNextSupportBuffAt(
+                        entry, skillId, now + cfg.SUPPORT_REBUFF_CD_MS);
                 return true;
             }
         }
@@ -2465,7 +2467,7 @@ public class BotCombatManager {
 
         long dur = fx.getDuration();
         if (dur > 0) {
-            entry.nextBuffAt.put(skill.getId(), now + (long) (dur * 0.9));
+            AgentBotCombatBuffStateRuntime.setNextBuffAt(entry, skill.getId(), now + (long) (dur * 0.9));
         }
         BotAttackExecutionProvider.BasicAttackData fallbackAttackData =
                 BotAttackExecutionProvider.buildBasicAttackData(bot, bot.getPosition());
