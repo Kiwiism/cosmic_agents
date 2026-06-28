@@ -196,6 +196,14 @@ public class BotEntry {
     // Absolute time until which this bot may not take another portal (set on portal use).
     // Portal-only gate: does not block movement, attacks, or any other action.
     long portalUseCooldownUntilMs = 0L;
+
+    public long portalUseCooldownUntilMs() {
+        return portalUseCooldownUntilMs;
+    }
+
+    public void setPortalUseCooldownUntilMs(long portalUseCooldownUntilMs) {
+        this.portalUseCooldownUntilMs = portalUseCooldownUntilMs;
+    }
     // Client-side alert-stance emulation: when currentTimeMillis < alertedUntilMs the bot's
     // broadcast stance gets STAND→ALERT substituted so observers see the alert pose.
     // Mirrors CharLook::alerted (TimedBool, 5000ms) in maplestory-wasm. Absolute reset on each

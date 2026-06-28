@@ -102,6 +102,19 @@ class AgentBotNavigationDebugStateRuntimeTest {
         assertFalse(AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry));
     }
 
+    @Test
+    void adaptsPortalUseCooldownState() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        assertFalse(AgentBotNavigationDebugStateRuntime.portalUseOnCooldown(entry, 1_000L));
+
+        AgentBotNavigationDebugStateRuntime.setPortalUseCooldownUntilMs(entry, 1_500L);
+
+        assertEquals(1_500L, AgentBotNavigationDebugStateRuntime.portalUseCooldownUntilMs(entry));
+        assertTrue(AgentBotNavigationDebugStateRuntime.portalUseOnCooldown(entry, 1_000L));
+        assertFalse(AgentBotNavigationDebugStateRuntime.portalUseOnCooldown(entry, 1_500L));
+    }
+
     private static AgentMovementTargetSnapshot snapshot() {
         return new AgentMovementTargetSnapshot(
                 "line",

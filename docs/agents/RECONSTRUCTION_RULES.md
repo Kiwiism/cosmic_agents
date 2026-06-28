@@ -489,6 +489,10 @@ Recent reconstruction notes:
   path logging, simulation helpers, and focused tests keep BotEntry as the
   temporary backing store but no longer read or write `navTargetPos`,
   `navTargetRegionId`, or `navPreciseTarget` directly.
+- Portal-use cooldown state now enters through
+  `AgentBotNavigationDebugStateRuntime`; portal execution keeps BotEntry as the
+  temporary backing store but no longer reads or writes `portalUseCooldownUntilMs`
+  directly.
 
 Initial reconstruction order:
 

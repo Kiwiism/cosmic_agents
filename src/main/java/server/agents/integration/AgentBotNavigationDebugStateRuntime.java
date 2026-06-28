@@ -116,6 +116,18 @@ public final class AgentBotNavigationDebugStateRuntime {
         setNavPreciseTarget(entry, precise);
     }
 
+    public static boolean portalUseOnCooldown(BotEntry entry, long nowMs) {
+        return nowMs < entry.portalUseCooldownUntilMs();
+    }
+
+    public static long portalUseCooldownUntilMs(BotEntry entry) {
+        return entry.portalUseCooldownUntilMs();
+    }
+
+    public static void setPortalUseCooldownUntilMs(BotEntry entry, long cooldownUntilMs) {
+        entry.setPortalUseCooldownUntilMs(cooldownUntilMs);
+    }
+
     public static void recordPathLog(BotEntry entry,
                                      AgentMovementTargetSnapshot targetSnapshot,
                                      int botRegionId,

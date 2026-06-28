@@ -579,14 +579,15 @@ final class BotNavigationManager {
                                                         Character bot,
                                                         Point rawTargetPos,
                                                         BotNavigationGraph.Edge edge) {
-        if (System.currentTimeMillis() < entry.portalUseCooldownUntilMs) {
+        if (AgentBotNavigationDebugStateRuntime.portalUseOnCooldown(entry, System.currentTimeMillis())) {
             return null;
         }
         if (!usePortal(bot, edge.portalId)) {
             return null;
         }
 
-        entry.portalUseCooldownUntilMs = System.currentTimeMillis() + PORTAL_USE_COOLDOWN_MS;
+        AgentBotNavigationDebugStateRuntime.setPortalUseCooldownUntilMs(
+                entry, System.currentTimeMillis() + PORTAL_USE_COOLDOWN_MS);
         clearNavigation(entry);
         BotMovementManager.resetEntryState(entry);
         return new NavigationDirective(rawTargetPos, true);
