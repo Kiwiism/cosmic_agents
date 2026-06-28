@@ -10,6 +10,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
+import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.maps.MapleMap;
 
@@ -85,7 +86,7 @@ public final class BotPathLogger {
                 aiTick,
                 consumedTick,
                 computeStuck(botPos.x, botPos.y),
-                entry.unstuckCooldownMs > 0 && consumedTick
+                AgentBotMovementStuckStateRuntime.hasUnstuckCooldown(entry) && consumedTick
         );
 
         if (history.size() >= MAX_TICKS) {
@@ -250,8 +251,9 @@ public final class BotPathLogger {
         }
         sb.append("\n");
         sb.append("Mode:       ").append(entry.following ? "follow" : entry.grinding ? "grind" : "idle").append("\n");
-        boolean isStuck = entry.stuckMs >= 500 || computeStuck(botPos.x, botPos.y);
-        sb.append("Stuck:      ").append(isStuck ? "YES (" + entry.stuckMs + "ms) ***" : "no").append("\n");
+        int stuckMs = AgentBotMovementStuckStateRuntime.stuckMs(entry);
+        boolean isStuck = stuckMs >= 500 || computeStuck(botPos.x, botPos.y);
+        sb.append("Stuck:      ").append(isStuck ? "YES (" + stuckMs + "ms) ***" : "no").append("\n");
         sb.append("\n");
     }
 

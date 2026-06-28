@@ -7,6 +7,7 @@ import net.packet.InPacket;
 import net.packet.Packet;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
+import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.bots.combat.BotMobHitboxProvider;
 import server.life.Monster;
@@ -846,7 +847,7 @@ public class BotMovementManager {
             default -> BotPhysicsEngine.beginGroundJump(entry, bot, walkStep); // jump right
         }
         clearNavigationState(entry);
-        entry.unstuckCooldownMs = delayAfterCurrentTick(5000);
+        AgentBotMovementStuckStateRuntime.setUnstuckCooldownMs(entry, delayAfterCurrentTick(5000));
         broadcastMovement(entry);
     }
 

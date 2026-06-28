@@ -502,6 +502,11 @@ Recent reconstruction notes:
   `AgentBotNavigationDebugStateRuntime`; movement reset and jump waypoint
   selection keep BotEntry as the temporary backing store but no longer read or
   write `navJumpLaunchEdge` or `navJumpLaunchX` directly.
+- Movement stuck/unstuck tracking now enters through
+  `AgentBotMovementStuckStateRuntime`; stuck detection, path logging, and
+  recovery cooldown setup keep BotEntry as the temporary backing store but no
+  longer read or write `stuckMs`, `stuckCheckX`, `stuckCheckY`, or
+  `unstuckCooldownMs` directly.
 
 Initial reconstruction order:
 

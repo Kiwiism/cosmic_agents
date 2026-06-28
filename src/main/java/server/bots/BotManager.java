@@ -7,6 +7,7 @@ import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
+import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotPotionStateRuntime;
@@ -3667,8 +3668,7 @@ public class BotManager {
         }
 
         AgentBotNavigationDebugStateRuntime.setLastDecision(entry, "idle-fast");
-        entry.stuckMs = 0;
-        entry.stuckCheckX = Integer.MIN_VALUE;
+        AgentBotMovementStuckStateRuntime.resetStuckProgress(entry);
         return true;
     }
 
@@ -3801,37 +3801,36 @@ public class BotManager {
     }
 
     private static void doStuckDetection(BotEntry entry) {
-        entry.unstuckCooldownMs = BotMovementManager.tickDown(entry.unstuckCooldownMs);
+        AgentBotMovementStuckStateRuntime.setUnstuckCooldownMs(
+                entry,
+                BotMovementManager.tickDown(AgentBotMovementStuckStateRuntime.unstuckCooldownMs(entry)));
 
         // Only detect/act while actively navigating — idling near owner is not stuck.
         if (entry.inAir || entry.climbing
                 || AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)
                 || (entry.navEdge == null && entry.moveTarget == null)) {
-            entry.stuckMs = 0;
-            entry.stuckCheckX = Integer.MIN_VALUE;
+            AgentBotMovementStuckStateRuntime.resetStuckProgress(entry);
             return;
         }
 
         Point botPos = entry.bot.getPosition();
-        if (entry.stuckCheckX == Integer.MIN_VALUE) {
-            entry.stuckCheckX = botPos.x;
-            entry.stuckCheckY = botPos.y;
+        if (!AgentBotMovementStuckStateRuntime.hasStuckCheckPosition(entry)) {
+            AgentBotMovementStuckStateRuntime.rememberStuckCheckPosition(entry, botPos);
             return;
         }
 
-        boolean moved = Math.abs(botPos.x - entry.stuckCheckX) > 8
-                || Math.abs(botPos.y - entry.stuckCheckY) > 8;
+        boolean moved = AgentBotMovementStuckStateRuntime.movedSinceStuckCheck(entry, botPos, 8);
         if (moved) {
-            entry.stuckMs = 0;
-            entry.stuckCheckX = botPos.x;
-            entry.stuckCheckY = botPos.y;
+            AgentBotMovementStuckStateRuntime.resetStuckMs(entry);
+            AgentBotMovementStuckStateRuntime.rememberStuckCheckPosition(entry, botPos);
         } else {
-            entry.stuckMs += BotPhysicsEngine.cfg.TICK_MS;
+            AgentBotMovementStuckStateRuntime.addStuckMs(entry, BotPhysicsEngine.cfg.TICK_MS);
         }
 
-        if (cfg.ENABLE_UNSTUCK && entry.stuckMs >= 500 && entry.unstuckCooldownMs == 0) {
-            entry.stuckMs = 0;
-            entry.stuckCheckX = Integer.MIN_VALUE;
+        if (cfg.ENABLE_UNSTUCK
+                && AgentBotMovementStuckStateRuntime.stuckForAtLeast(entry, 500)
+                && !AgentBotMovementStuckStateRuntime.hasUnstuckCooldown(entry)) {
+            AgentBotMovementStuckStateRuntime.resetStuckProgress(entry);
             BotMovementManager.tickUnstuck(entry);
         }
     }

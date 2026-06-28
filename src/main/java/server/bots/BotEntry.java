@@ -887,6 +887,47 @@ public class BotEntry {
     int stuckCheckX = Integer.MIN_VALUE;
     int stuckCheckY = Integer.MIN_VALUE;
 
+    public int stuckMs() {
+        return stuckMs;
+    }
+
+    public void setStuckMs(int stuckMs) {
+        this.stuckMs = stuckMs;
+    }
+
+    public void addStuckMs(int deltaMs) {
+        this.stuckMs += deltaMs;
+    }
+
+    public int unstuckCooldownMs() {
+        return unstuckCooldownMs;
+    }
+
+    public void setUnstuckCooldownMs(int unstuckCooldownMs) {
+        this.unstuckCooldownMs = unstuckCooldownMs;
+    }
+
+    public int stuckCheckX() {
+        return stuckCheckX;
+    }
+
+    public int stuckCheckY() {
+        return stuckCheckY;
+    }
+
+    public boolean hasStuckCheckPosition() {
+        return stuckCheckX != Integer.MIN_VALUE;
+    }
+
+    public void setStuckCheckPosition(Point position) {
+        this.stuckCheckX = position.x;
+        this.stuckCheckY = position.y;
+    }
+
+    public void clearStuckCheckPosition() {
+        this.stuckCheckX = Integer.MIN_VALUE;
+    }
+
     // Manual trade: countdown before bot accepts an incoming trade invite (both owner and peer-bot)
     int manualTradeAcceptDelayMs = 0;
     Trade manualTradeRef = null;
