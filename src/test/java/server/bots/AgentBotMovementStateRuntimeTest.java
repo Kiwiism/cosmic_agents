@@ -130,6 +130,11 @@ class AgentBotMovementStateRuntimeTest {
     }
 
     @Test
+    void movementProfileFallbackHandlesMissingEntryForCombatCallers() {
+        assertEquals(BotMovementProfile.fromCharacter(null), AgentBotMovementStateRuntime.movementProfileOrCharacter(null, null));
+    }
+
+    @Test
     void moveDirectionClampsAndClearsThroughAgentBoundary() {
         BotEntry entry = new BotEntry(null, null, null);
 
@@ -146,6 +151,22 @@ class AgentBotMovementStateRuntimeTest {
         AgentBotMovementStateRuntime.clearMoveDirection(entry);
         assertEquals(0, AgentBotMovementStateRuntime.moveDirection(entry));
         assertFalse(AgentBotMovementStateRuntime.hasMoveDirection(entry));
+    }
+
+    @Test
+    void facingDirectionClampsThroughAgentBoundary() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        assertEquals(1, AgentBotMovementStateRuntime.facingDirection(entry));
+        assertEquals(1, AgentBotMovementStateRuntime.facingDirectionSign(entry));
+
+        AgentBotMovementStateRuntime.setFacingDirection(entry, -3);
+        assertEquals(-1, AgentBotMovementStateRuntime.facingDirection(entry));
+        assertEquals(-1, AgentBotMovementStateRuntime.facingDirectionSign(entry));
+
+        AgentBotMovementStateRuntime.setFacingDirection(entry, 0);
+        assertEquals(1, AgentBotMovementStateRuntime.facingDirection(entry));
+        assertEquals(1, AgentBotMovementStateRuntime.facingDirectionSign(entry));
     }
 
     @Test

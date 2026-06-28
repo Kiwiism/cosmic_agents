@@ -83,6 +83,14 @@ public class BotEntry {
         return inAir;
     }
 
+    public int facingDirection() {
+        return facingDir;
+    }
+
+    public void setFacingDirection(int facingDirection) {
+        facingDir = facingDirection >= 0 ? 1 : -1;
+    }
+
     public int movementVelX() {
         return movementVelX;
     }

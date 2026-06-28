@@ -744,6 +744,12 @@ Recent reconstruction notes:
   and debug-line generation keep BotEntry as the temporary backing store but no
   longer read or write `lastSkillBuffActionAtMs` or
   `lastSkillBuffActionSummary` directly in production.
+- Combat movement-facing state reads now enter through
+  `AgentBotMovementStateRuntime`; BotCombatManager fall knockback, mob
+  knockback, support-heal movement gating, attack-plan gating, attack-facing,
+  action-lock movement, and grind graph profile selection keep BotEntry as the
+  temporary backing store but no longer read or write `facingDir`, `inAir`,
+  `climbing`, `moveDir`, or `movementProfile` directly in production.
 
 Initial reconstruction order:
 

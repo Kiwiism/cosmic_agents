@@ -60,6 +60,7 @@ import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMobTouchStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
+import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotSkillBuffDebugStateRuntime;
 import server.combat.CombatFormulaProvider;
@@ -419,7 +420,7 @@ public class BotCombatManager {
         if (AgentBotCombatCooldownStateRuntime.hasMobHitCooldown(entry)) return; // damage invincibility window
         int dmg = fallDamageFromDistance(fallDistancePx);
         if (dmg <= 0) return;
-        int dirSign = entry.facingDir >= 0 ? 1 : -1;
+        int dirSign = AgentBotMovementStateRuntime.facingDirectionSign(entry);
         int airVelX = Math.round(-dirSign * scaledOpenStoryStep(cfg.KNOCKBACK_HSPEED));
         applyDamage(entry, bot, dmg, -3, 0, 0, airVelX);
     }
@@ -496,7 +497,7 @@ public class BotCombatManager {
         }
 
         clearActionState(entry);
-        if (entry.inAir) {
+        if (AgentBotMovementStateRuntime.inAir(entry)) {
             BotPhysicsEngine.applyAirKnockback(entry, bot, knockbackAirVelX);
         } else {
             BotPhysicsEngine.beginKnockback(entry, bot, botPos, -scaledOpenStoryStep(cfg.KNOCKBACK_VFORCE), knockbackAirVelX);
@@ -509,7 +510,7 @@ public class BotCombatManager {
     }
 
     private static boolean shouldApplyMobKnockback(BotEntry entry, Character bot) {
-        if (entry.climbing || bot.getHp() <= 0) {
+        if (AgentBotMovementStateRuntime.climbing(entry) || bot.getHp() <= 0) {
             return false;
         }
 
@@ -709,7 +710,7 @@ public class BotCombatManager {
      * the heal animation play (matches real player behaviour when Heal is pressed with no mob in range).
      */
     static boolean tickSupportHealing(BotEntry entry, Character bot) {
-        if (AgentBotCombatCooldownStateRuntime.blocksGroundedAttack(entry, entry.inAir)) return false;
+        if (AgentBotCombatCooldownStateRuntime.blocksGroundedAttack(entry, AgentBotMovementStateRuntime.inAir(entry))) return false;
         if (!AgentBotCombatBuffStateRuntime.supportHealsEnabled(entry)) return false;
         if (!AgentBotModeStateRuntime.following(entry) && !AgentBotModeStateRuntime.grinding(entry)) return false;
         int healSkillId = AgentBotCombatSkillCacheStateRuntime.healSkillId(entry);
@@ -736,7 +737,10 @@ public class BotCombatManager {
         // them right before the cast. The top guard already permits casts while inAir, so the
         // heal animation plays mid-flight instead of forcing a planted stand-and-cast.
         boolean jumpHealing = false;
-        if (AgentBotModeStateRuntime.following(entry) && !entry.inAir && !entry.climbing && cfg.JUMP_HEAL_LEADER_AHEAD_PX > 0) {
+        if (AgentBotModeStateRuntime.following(entry)
+                && AgentBotMovementStateRuntime.grounded(entry)
+                && AgentBotMovementStateRuntime.notClimbing(entry)
+                && cfg.JUMP_HEAL_LEADER_AHEAD_PX > 0) {
             Character anchor = BotManager.getInstance().resolveFollowAnchor(entry, entry.owner);
             if (anchor != null && anchor != bot && anchor.getMap() == bot.getMap()) {
                 int dx = anchor.getPosition().x - bot.getPosition().x;
@@ -771,7 +775,7 @@ public class BotCombatManager {
             // Stop walk-in-place: broadcast STAND→ALERT immediately on the heal tick.
             // Skipped on jump-heal — initiateJump already broadcast the airborne stance and
             // zeroing moveDir here would cancel the diagonal air-steering toward the leader.
-            entry.moveDir = 0;
+            AgentBotMovementStateRuntime.clearMoveDirection(entry);
             BotMovementManager.broadcastMovement(entry);
         }
         return true;
@@ -1172,7 +1176,7 @@ public class BotCombatManager {
         if (entry == null || attackPlan == null) {
             return false;
         }
-        if (!entry.inAir) {
+        if (AgentBotMovementStateRuntime.grounded(entry)) {
             return true;
         }
         return !isAirborneRangedAttackBlockedWeapon(weaponType) || attackPlan.route != AttackRoute.RANGED;
@@ -1244,7 +1248,8 @@ public class BotCombatManager {
     }
 
     static void rememberAttackFacing(BotEntry entry, int attackPacketStance) {
-        entry.facingDir = BotAttackExecutionProvider.facingDirFromAttackPacketStance(attackPacketStance);
+        AgentBotMovementStateRuntime.setFacingDirection(entry,
+                BotAttackExecutionProvider.facingDirFromAttackPacketStance(attackPacketStance));
         BotPhysicsEngine.syncCharacterState(entry);
     }
 
@@ -2149,7 +2154,7 @@ public class BotCombatManager {
                 return unavailable(entry, bot, botPos);
             }
 
-            BotMovementProfile profile = entry.movementProfile == null ? BotMovementProfile.fromCharacter(bot) : entry.movementProfile;
+            BotMovementProfile profile = AgentBotMovementStateRuntime.movementProfileOrCharacter(entry, bot);
             BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(bot.getMap(), profile);
             if (graph == null) {
                 BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), profile);
@@ -2168,7 +2173,7 @@ public class BotCombatManager {
 
         private static GrindGraphContext unavailable(BotEntry entry, Character bot, Point botPos) {
             MapleMap map = bot == null ? null : bot.getMap();
-            BotMovementProfile profile = entry == null ? BotMovementProfile.base() : entry.movementProfile;
+            BotMovementProfile profile = AgentBotMovementStateRuntime.movementProfileOrCharacter(entry, bot);
             Point startPos = botPos == null ? null : new Point(botPos);
             return new GrindGraphContext(entry, map, null, profile, startPos, -1);
         }

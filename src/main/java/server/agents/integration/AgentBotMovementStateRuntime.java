@@ -55,6 +55,14 @@ public final class AgentBotMovementStateRuntime {
         return entry.movementProfile();
     }
 
+    public static BotMovementProfile movementProfileOrCharacter(BotEntry entry, Character bot) {
+        if (entry == null) {
+            return BotMovementProfile.fromCharacter(null);
+        }
+        BotMovementProfile profile = entry.movementProfile();
+        return profile == null ? BotMovementProfile.fromCharacter(bot) : profile;
+    }
+
     public static void setMovementProfile(BotEntry entry, BotMovementProfile movementProfile) {
         entry.setMovementProfile(movementProfile);
     }
@@ -77,6 +85,18 @@ public final class AgentBotMovementStateRuntime {
 
     public static void clearMoveDirection(BotEntry entry) {
         entry.clearMoveDirection();
+    }
+
+    public static int facingDirection(BotEntry entry) {
+        return entry.facingDirection();
+    }
+
+    public static int facingDirectionSign(BotEntry entry) {
+        return entry.facingDirection() >= 0 ? 1 : -1;
+    }
+
+    public static void setFacingDirection(BotEntry entry, int facingDirection) {
+        entry.setFacingDirection(facingDirection);
     }
 
     public static boolean inAir(BotEntry entry) {
