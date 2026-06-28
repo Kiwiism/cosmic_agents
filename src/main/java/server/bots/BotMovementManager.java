@@ -11,6 +11,7 @@ import server.agents.integration.AgentBotGrindSearchStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
+import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
@@ -363,7 +364,7 @@ public class BotMovementManager {
                 return;
             }
             if (result == BotPhysicsEngine.AirborneStepResult.LANDED) {
-                entry.jumpCooldownMs = 0;
+                AgentBotMovementPhysicsStateRuntime.clearJumpCooldown(entry);
                 broadcastMovement(entry);
                 return;
             }
@@ -411,7 +412,7 @@ public class BotMovementManager {
     }
 
     private static boolean shouldApplyAirSteering(BotEntry entry) {
-        if (entry.fixedAirArc) {
+        if (AgentBotMovementPhysicsStateRuntime.fixedAirArc(entry)) {
             return false;
         }
         if (AgentBotMovementStateRuntime.hasDownJumpGracePeriod(entry)) {
@@ -855,7 +856,7 @@ public class BotMovementManager {
 
     private static void initiateFixedArcJump(BotEntry entry, Character bot, int dx) {
         initiateJump(entry, bot, dx);
-        entry.fixedAirArc = true;
+        AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, true);
     }
 
     /**
@@ -925,9 +926,9 @@ public class BotMovementManager {
     private static int resolveBroadcastFhId(BotEntry entry, Character bot) {
         Foothold fh = BotPhysicsEngine.findGroundFoothold(bot.getMap(), bot.getPosition());
         if (fh != null) {
-            entry.lastGroundFhId = fh.getId();
+            AgentBotMovementPhysicsStateRuntime.setLastGroundFhId(entry, fh.getId());
         }
-        return entry.lastGroundFhId;
+        return AgentBotMovementPhysicsStateRuntime.lastGroundFhId(entry);
     }
 
     private static void sendMovementPacket(Character bot, BotPhysicsEngine.MovementSnapshot snapshot, int fhId) {

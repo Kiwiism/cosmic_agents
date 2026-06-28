@@ -83,6 +83,14 @@ public class BotEntry {
         return inAir;
     }
 
+    public int jumpCooldownMs() {
+        return jumpCooldownMs;
+    }
+
+    public void setJumpCooldownMs(int jumpCooldownMs) {
+        this.jumpCooldownMs = jumpCooldownMs;
+    }
+
     public int facingDirection() {
         return facingDir;
     }
@@ -217,6 +225,14 @@ public class BotEntry {
     // Accumulated air-steering correction (gradually adjusted toward target each tick)
     double airSteerVelX = 0.0;
     boolean fixedAirArc = false;
+
+    public boolean fixedAirArc() {
+        return fixedAirArc;
+    }
+
+    public void setFixedAirArc(boolean fixedAirArc) {
+        this.fixedAirArc = fixedAirArc;
+    }
 
     // Movement intent
     boolean climbUpIntent = false;
@@ -1690,6 +1706,14 @@ public class BotEntry {
     int lastBroadcastStance = 0;
     int lastBroadcastFh = 0;
     int lastGroundFhId = 0;
+
+    public int lastGroundFhId() {
+        return lastGroundFhId;
+    }
+
+    public void setLastGroundFhId(int lastGroundFhId) {
+        this.lastGroundFhId = lastGroundFhId;
+    }
 
     public boolean movementBroadcastValid() {
         return movementBroadcastValid;

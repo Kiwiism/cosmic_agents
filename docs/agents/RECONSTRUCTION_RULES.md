@@ -678,6 +678,11 @@ Recent reconstruction notes:
   keep BotEntry as the temporary backing store but no longer read `inAir`,
   `climbing`, `downJumpPending`, `wasMovingX`, `movementVelX`, or
   `movementVelY` directly in production.
+- Movement physics flag state now enters through
+  `AgentBotMovementPhysicsStateRuntime`; BotMovementManager landing cooldown
+  reset, fixed-air-arc gating/setup, and broadcast foothold caching keep
+  BotEntry as the temporary backing store but no longer read or write
+  `jumpCooldownMs`, `fixedAirArc`, or `lastGroundFhId` directly in production.
 - Fidget mode presence now enters through `AgentBotFidgetRuntime`; BotManager
   follow-idle fast-path gating keeps BotEntry as the temporary backing store but
   no longer reads `fidgetMode` directly in production.
