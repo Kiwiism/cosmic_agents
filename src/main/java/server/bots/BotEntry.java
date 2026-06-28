@@ -295,6 +295,24 @@ public class BotEntry {
     public void clearWanderDirection() {
         this.wanderDirection = 0;
     }
+    public MapItem grindLootTarget() { return grindLootTarget; }
+    public boolean hasGrindLootTarget() { return grindLootTarget != null; }
+    public void setGrindLootTarget(MapItem grindLootTarget) {
+        this.grindLootTarget = grindLootTarget;
+    }
+    public void clearGrindLootTarget() {
+        this.grindLootTarget = null;
+    }
+    public int ignoredGrindLootObjectId() { return ignoredGrindLootObjectId; }
+    public long ignoredGrindLootUntilMs() { return ignoredGrindLootUntilMs; }
+    public void suppressGrindLootRetry(int objectId, long untilMs) {
+        this.ignoredGrindLootObjectId = objectId;
+        this.ignoredGrindLootUntilMs = untilMs;
+    }
+    public void clearGrindLootRetrySuppression() {
+        this.ignoredGrindLootObjectId = 0;
+        this.ignoredGrindLootUntilMs = 0L;
+    }
     Point lastMobTouchCheckPos = null;
     int lastMobTouchMapId = -1;
 

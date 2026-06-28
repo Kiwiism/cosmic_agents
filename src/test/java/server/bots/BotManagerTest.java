@@ -14,6 +14,7 @@ import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.integration.AgentBotManagerReplyRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
+import server.agents.integration.AgentBotGrindLootStateRuntime;
 import server.agents.integration.AgentBotGrindWanderStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
@@ -606,7 +607,7 @@ class BotManagerTest {
         BotEntry entry = new BotEntry(bot, owner, task);
         AgentBotPendingActionStateRuntime.setPendingAction(entry, "drop");
         AgentBotPendingActionStateRuntime.setPendingDropCategory(entry, "equips");
-        entry.grindLootTarget = mock(MapItem.class);
+        AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, mock(MapItem.class));
         entry.following = true;
         entry.grinding = true;
         entry.moveTarget = new Point(100, 100);
@@ -621,7 +622,7 @@ class BotManagerTest {
             assertTrue(bots.containsKey(owner.getId()));
             assertNull(AgentBotPendingActionStateRuntime.pendingAction(entry));
             assertNull(AgentBotPendingActionStateRuntime.pendingDropCategory(entry));
-            assertNull(entry.grindLootTarget);
+            assertNull(AgentBotGrindLootStateRuntime.grindLootTarget(entry));
             assertTrue(entry.following);
             assertTrue(entry.grinding);
 
@@ -752,12 +753,12 @@ class BotManagerTest {
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
         AgentBotGrindWanderStateRuntime.setWanderDirection(entry, 1);
         MapItem nearbyLoot = mockLoot(1, new Point(100 + BotManager.cfg.LOOT_RADIUS, 100));
-        entry.grindLootTarget = nearbyLoot;
+        AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, nearbyLoot);
 
         Point target = BotManager.resolveNoGrindTargetPosition(entry, bot.getPosition());
 
         assertEquals(new Point(300, 100), target);
-        assertNull(entry.grindLootTarget);
+        assertNull(AgentBotGrindLootStateRuntime.grindLootTarget(entry));
     }
 
     @Test
@@ -810,7 +811,7 @@ class BotManagerTest {
         BotManager manager = mock(BotManager.class);
         Character dropBotOwner = mock(Character.class);
 
-        entry.grindLootTarget = loot;
+        AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, loot);
         when(loot.getOwnerId()).thenReturn(99);
         when(loot.isPlayerDrop()).thenReturn(true);
         when(loot.getDropTime()).thenReturn(System.currentTimeMillis() - 14_000L);
@@ -821,7 +822,7 @@ class BotManagerTest {
             botManagers.when(BotManager::getInstance).thenReturn(manager);
 
             assertNull(BotManager.convenientLootTarget(entry, bot.getPosition(), new Point(500, 100)));
-            assertNull(entry.grindLootTarget);
+            assertNull(AgentBotGrindLootStateRuntime.grindLootTarget(entry));
         }
     }
 
@@ -833,7 +834,7 @@ class BotManagerTest {
         MapItem loot = mockLoot(1, new Point(100 + BotManager.cfg.LOOT_RADIUS, 100));
         int lootObjectId = loot.getObjectId();
         AgentBotGrindWanderStateRuntime.setWanderDirection(entry, 1);
-        entry.grindLootTarget = loot;
+        AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, loot);
         doReturn(List.of(loot)).when(map).getDroppedItems();
         doReturn(loot).when(map).getMapObject(lootObjectId);
 
@@ -908,7 +909,7 @@ class BotManagerTest {
         Point lootPos = new Point(100 + BotManager.cfg.LOOT_RADIUS + 21, 100);
         MapItem loot = mockLoot(1, lootPos);
         int lootObjectId = loot.getObjectId();
-        entry.grindLootTarget = loot;
+        AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, loot);
         doReturn(loot).when(map).getMapObject(lootObjectId);
 
         assertEquals(lootPos, BotManager.convenientLootTarget(entry, botPos, mobPos));

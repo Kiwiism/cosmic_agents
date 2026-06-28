@@ -7,6 +7,7 @@ import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
+import server.agents.integration.AgentBotGrindLootStateRuntime;
 import server.agents.integration.AgentBotGrindWanderStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
@@ -1811,7 +1812,7 @@ public class BotManager {
         if (entry == null || botPos == null) {
             return botPos;
         }
-        if (entry.grindLootTarget != null) {
+        if (AgentBotGrindLootStateRuntime.hasGrindLootTarget(entry)) {
             Point lootPos = activeGrindLootPosition(entry, botPos);
             if (lootPos != null) {
                 return lootPos;
@@ -1842,26 +1843,26 @@ public class BotManager {
     }
 
     private static Point activeGrindLootPosition(BotEntry entry, Point botPos) {
-        MapItem loot = entry.grindLootTarget;
+        MapItem loot = AgentBotGrindLootStateRuntime.grindLootTarget(entry);
         if (loot == null || botPos == null) {
-            entry.grindLootTarget = null;
+            AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
             return null;
         }
         Character bot = entry.bot;
         if (loot.isPickedUp() || bot == null || bot.getMap() == null
                 || bot.getMap().getMapObject(loot.getObjectId()) != loot) {
-            entry.grindLootTarget = null;
+            AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
             return null;
         }
         if (!BotLootEligibility.canBotTargetLoot(entry, bot, bot.getMap(), loot, System.currentTimeMillis())) {
-            entry.grindLootTarget = null;
+            AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
             return null;
         }
         Point lootPos = loot.getPosition();
         if (Math.abs(lootPos.x - botPos.x) <= cfg.LOOT_RADIUS
                 && Math.abs(lootPos.y - botPos.y) <= cfg.LOOT_RADIUS) {
             suppressGrindLootRetry(entry, loot);
-            entry.grindLootTarget = null;
+            AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
             return null;
         }
         return lootPos;
@@ -1871,20 +1872,14 @@ public class BotManager {
         if (entry == null || loot == null) {
             return;
         }
-        entry.ignoredGrindLootObjectId = loot.getObjectId();
-        entry.ignoredGrindLootUntilMs = System.currentTimeMillis() + cfg.GRIND_LOOT_RETRY_SUPPRESS_MS;
+        AgentBotGrindLootStateRuntime.suppressRetry(
+                entry,
+                loot,
+                System.currentTimeMillis() + cfg.GRIND_LOOT_RETRY_SUPPRESS_MS);
     }
 
     static boolean isGrindLootRetrySuppressed(BotEntry entry, MapItem loot, long now) {
-        if (entry == null || loot == null || entry.ignoredGrindLootObjectId <= 0) {
-            return false;
-        }
-        if (now >= entry.ignoredGrindLootUntilMs) {
-            entry.ignoredGrindLootObjectId = 0;
-            entry.ignoredGrindLootUntilMs = 0L;
-            return false;
-        }
-        return entry.ignoredGrindLootObjectId == loot.getObjectId();
+        return AgentBotGrindLootStateRuntime.isRetrySuppressed(entry, loot, now);
     }
 
     static double activeLootTravelDistSq(Point botPos, Point lootPos) {
@@ -2265,10 +2260,10 @@ public class BotManager {
                 ? null
                 : BotCombatManager.planAttack(entry, bot, target);
         // Validate cached loot target
-        if (entry.grindLootTarget != null) {
-            MapItem loot = entry.grindLootTarget;
+        if (AgentBotGrindLootStateRuntime.hasGrindLootTarget(entry)) {
+            MapItem loot = AgentBotGrindLootStateRuntime.grindLootTarget(entry);
             if (loot.isPickedUp() || bot.getMap().getMapObject(loot.getObjectId()) != loot) {
-                entry.grindLootTarget = null;
+                AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
             }
         }
         if (runAiTick && shouldSearchForGrindTarget(entry, bot, target, attackPlan, now)) {
@@ -2283,7 +2278,7 @@ public class BotManager {
         }
         // Search for a convenient loot drop every AI tick (grind mode only)
         if (runAiTick && !AgentBotPatrolStateRuntime.hasPatrolRegion(entry)) {
-            entry.grindLootTarget = BotInventoryManager.findNearestGrindLootTarget(entry, bot);
+            AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, BotInventoryManager.findNearestGrindLootTarget(entry, bot));
         }
         if (target == null) {
             entry.grindTarget = null;
@@ -2476,7 +2471,7 @@ public class BotManager {
         AgentBotPendingActionStateRuntime.clearPendingAction(entry);
         AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
         entry.grindTarget = null;
-        entry.grindLootTarget = null;
+        AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
         AgentBotPatrolStateRuntime.clearPatrolWanderTarget(entry);
         BotMovementManager.resetEntryStateAfterTeleport(entry);
     }
@@ -3042,7 +3037,7 @@ public class BotManager {
         AgentBotFarmAnchorStateRuntime.clearFarmAnchor(entry);
         AgentBotPatrolStateRuntime.clearPatrol(entry);
         entry.grindTarget = null;
-        entry.grindLootTarget = null;
+        AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
         entry.nextGrindTargetSearchAtMs = 0L;
         AgentBotCombatCooldownStateRuntime.clearMoveWindow(entry);
         entry.degenAttackDone = false;
@@ -3187,7 +3182,7 @@ public class BotManager {
         entry.grinding = false;
         AgentBotFarmAnchorStateRuntime.clearFarmAnchor(entry);
         AgentBotPatrolStateRuntime.clearPatrol(entry);
-        entry.grindLootTarget = null;
+        AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
     }
 
     private static boolean isNear(Point source, Point target, int dist) {
