@@ -62,6 +62,7 @@ import server.agents.integration.AgentBotMobTouchStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSkillBuffDebugStateRuntime;
 import server.combat.CombatFormulaProvider;
 import server.life.Monster;
@@ -741,7 +742,7 @@ public class BotCombatManager {
                 && AgentBotMovementStateRuntime.grounded(entry)
                 && AgentBotMovementStateRuntime.notClimbing(entry)
                 && cfg.JUMP_HEAL_LEADER_AHEAD_PX > 0) {
-            Character anchor = BotManager.getInstance().resolveFollowAnchor(entry, entry.owner);
+            Character anchor = BotManager.getInstance().resolveFollowAnchor(entry, AgentBotRuntimeIdentityRuntime.owner(entry));
             if (anchor != null && anchor != bot && anchor.getMap() == bot.getMap()) {
                 int dx = anchor.getPosition().x - bot.getPosition().x;
                 if (Math.abs(dx) >= cfg.JUMP_HEAL_LEADER_AHEAD_PX) {
@@ -1287,7 +1288,8 @@ public class BotCombatManager {
             }
             AgentBotCombatCooldownStateRuntime.setAlertResetScheduled(entry, false);
             try {
-                if (entry.bot != null) entry.bot.broadcastStance();
+                Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+                if (bot != null) bot.broadcastStance();
             } catch (Throwable ignored) {}
         });
     }

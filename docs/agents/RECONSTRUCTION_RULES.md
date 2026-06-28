@@ -750,6 +750,11 @@ Recent reconstruction notes:
   action-lock movement, and grind graph profile selection keep BotEntry as the
   temporary backing store but no longer read or write `facingDir`, `inAir`,
   `climbing`, `moveDir`, or `movementProfile` directly in production.
+- Combat runtime identity reads now enter through
+  `AgentBotRuntimeIdentityRuntime`; BotCombatManager jump-heal leader
+  resolution and delayed alert-stance broadcasts keep BotEntry as the temporary
+  backing store but no longer read `entry.owner` or `entry.bot` directly in
+  production.
 
 Initial reconstruction order:
 
