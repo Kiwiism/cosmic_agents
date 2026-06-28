@@ -4,6 +4,7 @@ import client.Character;
 import client.Client;
 import net.packet.Packet;
 import org.junit.jupiter.api.Test;
+import server.agents.integration.AgentBotReplyChannelStateRuntime;
 import server.agents.integration.AgentBotReplyRuntime;
 import server.maps.MapleMap;
 
@@ -35,7 +36,7 @@ class AgentBotReplyRuntimeTest {
         Client botClient = mock(Client.class);
         Client ownerClient = mock(Client.class);
         BotEntry entry = new BotEntry(bot, owner, null);
-        entry.replyChannel = ReplyChannel.WHISPER;
+        AgentBotReplyChannelStateRuntime.setWhisper(entry);
 
         when(bot.getName()).thenReturn("agent");
         when(bot.getClient()).thenReturn(botClient);

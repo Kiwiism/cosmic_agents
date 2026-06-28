@@ -590,6 +590,10 @@ Recent reconstruction notes:
   recovery reset keep BotEntry as the temporary backing store but no longer read
   or write `tickFailureCount` or `tickFailureWindowStartedAtMs` directly outside
   the adapter.
+- Reply-channel state now enters through `AgentBotReplyChannelStateRuntime`;
+  BotManager command routing/reply delivery, Agent reply runtime delivery, and
+  BotOfferManager auto-accept replies keep BotEntry as the temporary backing
+  store but no longer read or write `replyChannel` directly outside the adapter.
 
 Initial reconstruction order:
 

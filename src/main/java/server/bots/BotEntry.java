@@ -1274,4 +1274,5 @@ public class BotEntry {
     public Character getBot() { return bot; }
     public Character getOwner() { return owner; }
     public ReplyChannel getReplyChannel() { return replyChannel; }
+    public void setReplyChannel(ReplyChannel replyChannel) { this.replyChannel = replyChannel; }
 }

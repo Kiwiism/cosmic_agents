@@ -15,6 +15,7 @@ import server.agents.integration.AgentBotOfferRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentBotReplyChannelStateRuntime;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -310,7 +311,9 @@ public final class BotOfferManager {
         if (!hasPendingOffer(entry) || entry.pendingLootOfferRecipientId != recipientBot.getId()) {
             return;
         }
-        AgentBotOfferRuntime.sayNow(recipientBot, entry.replyChannel, BotManager.randomReply(BOT_ACCEPT_MSGS));
+        AgentBotOfferRuntime.sayNow(recipientBot,
+                AgentBotReplyChannelStateRuntime.replyChannel(entry),
+                BotManager.randomReply(BOT_ACCEPT_MSGS));
         handlePendingOfferResponse(entry, recipientBot, "yes");
     }
 

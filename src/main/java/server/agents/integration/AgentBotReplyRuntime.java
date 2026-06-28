@@ -35,7 +35,7 @@ public final class AgentBotReplyRuntime {
     }
 
     public static void replyNow(BotEntry entry, String message) {
-        switch (entry.getReplyChannel()) {
+        switch (AgentBotReplyChannelStateRuntime.replyChannel(entry)) {
             case PARTY -> sayPartyNow(entry.getBot(), message);
             case WHISPER -> {
                 Character owner = entry.getOwner();
@@ -53,7 +53,7 @@ public final class AgentBotReplyRuntime {
     }
 
     public static void visibleSayNow(BotEntry entry, String message) {
-        sayNow(entry.getBot(), entry.getReplyChannel(), message);
+        sayNow(entry.getBot(), AgentBotReplyChannelStateRuntime.replyChannel(entry), message);
     }
 
     public static void sayNow(Character bot, ReplyChannel channel, String message) {

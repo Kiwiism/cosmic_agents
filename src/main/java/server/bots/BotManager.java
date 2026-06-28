@@ -23,6 +23,7 @@ import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotPotionStateRuntime;
+import server.agents.integration.AgentBotReplyChannelStateRuntime;
 import server.agents.integration.AgentBotRetreatHoldStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
 import server.agents.integration.AgentBotTickFailureStateRuntime;
@@ -986,7 +987,7 @@ public class BotManager {
                 applyFollowTargetCommand(owner, List.of(targetedBot.entry()), followTargetToken);
                 return;
             }
-            targetedBot.entry().replyChannel = channel;
+            AgentBotReplyChannelStateRuntime.setReplyChannel(targetedBot.entry(), channel);
             String cmd = targetedBot.commandText();
             if (server.bots.llm.BotLlmConfig.typoSuggesterEnabled) {
                 String typo = server.bots.llm.CommandTypoSuggester.suggest(cmd);
@@ -1027,7 +1028,7 @@ public class BotManager {
         if (AgentChatCommandClassifier.isGroupSupplyRequest(message)) {
             BotEntry responder = pickGroupSupplyResponder(owner, entries);
             if (responder != null) {
-                responder.replyChannel = channel;
+                AgentBotReplyChannelStateRuntime.setReplyChannel(responder, channel);
                 BotChatManager.handleChat(responder, message);
             }
             return;
@@ -1038,13 +1039,13 @@ public class BotManager {
             String typo = server.bots.llm.CommandTypoSuggester.suggest(message);
             if (typo != null) {
                 BotEntry first = entries.get(0);
-                first.replyChannel = channel;
+                AgentBotReplyChannelStateRuntime.setReplyChannel(first, channel);
                 AgentBotManagerReplyRuntime.queueReply(first, "did you mean '" + typo + "'?");
                 return;
             }
         }
         for (BotEntry entry : entries) {
-            entry.replyChannel = channel;
+            AgentBotReplyChannelStateRuntime.setReplyChannel(entry, channel);
             BotChatManager.handleChat(entry, message);
         }
     }
@@ -3880,7 +3881,7 @@ public class BotManager {
 
     /** Bot-to-bot visible say — routes MAP→map broadcast, PARTY→party, WHISPER→party fallback. */
     void botSay(BotEntry entry, String text) {
-        botSay(entry.bot, entry.replyChannel, text);
+        botSay(entry.bot, AgentBotReplyChannelStateRuntime.replyChannel(entry), text);
     }
 
     /**
@@ -3907,7 +3908,7 @@ public class BotManager {
         if (entry == null) {
             return;
         }
-        entry.replyChannel = ReplyChannel.WHISPER;
+        AgentBotReplyChannelStateRuntime.setWhisper(entry);
         BotChatManager.handleChat(entry, message);
     }
 
