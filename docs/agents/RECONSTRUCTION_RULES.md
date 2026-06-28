@@ -782,6 +782,12 @@ Recent reconstruction notes:
   calculation keep BotEntry as the temporary backing store but no longer read
   or write `swimming`, `swimMoveDir`, `swimVerticalHold`,
   `swimJumpRequested`, or `swimNextJumpAtMs` directly in production.
+- Active navigation edge state now enters through
+  `AgentBotNavigationDebugStateRuntime`; BotMovementManager navigation-state
+  clearing, climb steering, air-steering gating, grind target adjustment,
+  ground action planning, wall-block recovery, directional drop execution, and
+  mob-avoidance checks keep BotEntry as the temporary backing store but no
+  longer read or write `navEdge` directly in production.
 
 Initial reconstruction order:
 

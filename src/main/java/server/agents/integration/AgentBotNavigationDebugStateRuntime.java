@@ -136,6 +136,18 @@ public final class AgentBotNavigationDebugStateRuntime {
         return entry.hasActiveNavigationEdge();
     }
 
+    public static Object activeNavigationEdge(BotEntry entry) {
+        return entry.activeNavigationEdge();
+    }
+
+    public static void setActiveNavigationEdge(BotEntry entry, Object edge) {
+        entry.setActiveNavigationEdge(edge);
+    }
+
+    public static void clearActiveNavigationEdge(BotEntry entry) {
+        entry.clearActiveNavigationEdge();
+    }
+
     public static int navJumpLaunchX(BotEntry entry) {
         return entry.navJumpLaunchX();
     }

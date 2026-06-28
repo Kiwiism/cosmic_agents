@@ -1324,6 +1324,18 @@ public class BotEntry {
         return navEdge != null;
     }
 
+    public Object activeNavigationEdge() {
+        return navEdge;
+    }
+
+    public void setActiveNavigationEdge(Object edge) {
+        navEdge = edge instanceof BotNavigationGraph.Edge navEdge ? navEdge : null;
+    }
+
+    public void clearActiveNavigationEdge() {
+        navEdge = null;
+    }
+
     public int observedOwnerStepX() {
         return observedOwnerStepX;
     }

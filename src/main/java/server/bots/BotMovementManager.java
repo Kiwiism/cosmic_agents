@@ -202,7 +202,7 @@ public class BotMovementManager {
     }
 
     static void clearNavigationState(BotEntry entry) {
-        entry.navEdge = null;
+        AgentBotNavigationDebugStateRuntime.clearActiveNavigationEdge(entry);
         AgentBotNavigationDebugStateRuntime.clearNavJumpLaunch(entry);
         AgentBotNavigationDebugStateRuntime.clearNavTarget(entry);
     }
@@ -219,7 +219,7 @@ public class BotMovementManager {
             int dxOwner = targetPos.x - climbRope.x();
 
             // If not navigating, allow jumping off when target is far away horizontally
-            if (runAiTick && entry.navEdge == null
+            if (runAiTick && !AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
                     && Math.abs(dxOwner) > cfg.FOLLOW_DIST
                     && climbRope.bottomY() < targetPos.y) {
                 jumpOffRope(entry, bot, dxOwner);
@@ -239,7 +239,7 @@ public class BotMovementManager {
                 return;
             }
 
-            if (!runAiTick && entry.navEdge == null) {
+            if (!runAiTick && !AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
                 // No committed nav edge → no AI-decided climb intent. On non-AI ticks the
                 // navDirective falls through to the raw follow target (resolveTarget can't run
                 // findNextEdge here), and using its dy to choose a direction can dismount the bot
@@ -293,7 +293,7 @@ public class BotMovementManager {
     }
 
     static boolean shouldHoldClimbIdle(BotEntry entry, int dy, int dxOwner) {
-        if (entry.navEdge != null) {
+        if (AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
             return false;
         }
         return !AgentBotModeStateRuntime.grinding(entry)
@@ -417,13 +417,14 @@ public class BotMovementManager {
         if (AgentBotMovementStateRuntime.hasDownJumpGracePeriod(entry)) {
             return false;
         }
-        if (entry.navEdge == null) {
+        BotNavigationGraph.Edge navEdge = (BotNavigationGraph.Edge) AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry);
+        if (navEdge == null) {
             return true;
         }
-        return entry.navEdge.type != BotNavigationGraph.EdgeType.JUMP
-                && entry.navEdge.type != BotNavigationGraph.EdgeType.DROP
-                && !(entry.navEdge.type == BotNavigationGraph.EdgeType.CLIMB
-                && entry.navEdge.launchStepX != 0);
+        return navEdge.type != BotNavigationGraph.EdgeType.JUMP
+                && navEdge.type != BotNavigationGraph.EdgeType.DROP
+                && !(navEdge.type == BotNavigationGraph.EdgeType.CLIMB
+                && navEdge.launchStepX != 0);
     }
 
     static void tickSwimming(BotEntry entry, Point targetPos) {
@@ -573,7 +574,10 @@ public class BotMovementManager {
     }
 
     static Point adjustGrindingTargetPosition(BotEntry entry, Foothold currentFh, Point targetPos) {
-        if (!AgentBotModeStateRuntime.grinding(entry) || entry.navEdge != null || currentFh == null || targetPos == null) {
+        if (!AgentBotModeStateRuntime.grinding(entry)
+                || AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
+                || currentFh == null
+                || targetPos == null) {
             return targetPos;
         }
 
@@ -607,11 +611,12 @@ public class BotMovementManager {
     }
 
     private static MoveAction planGroundAction(BotEntry entry, Foothold currentFh, Point botPos, Point targetPos) {
-        boolean directionalDrop = isDirectionalDropEdge(entry.navEdge);
-        int stopDist = directionalDrop ? 0 : AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry) ? preciseNavStopDist(entry.navEdge) : cfg.STOP_DIST;
+        BotNavigationGraph.Edge navEdge = (BotNavigationGraph.Edge) AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry);
+        boolean directionalDrop = isDirectionalDropEdge(navEdge);
+        int stopDist = directionalDrop ? 0 : AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry) ? preciseNavStopDist(navEdge) : cfg.STOP_DIST;
         // No hysteresis when navigating to an edge — always move toward the waypoint
         int followDist = directionalDrop ? 0
-                : (entry.navEdge != null || AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry)) ? stopDist : cfg.FOLLOW_DIST;
+                : (navEdge != null || AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry)) ? stopDist : cfg.FOLLOW_DIST;
         int stepX = resolveGroundStepX(entry, botPos, targetPos, stopDist, followDist);
         if (stepX == 0) {
             return MoveAction.idle();
@@ -620,7 +625,7 @@ public class BotMovementManager {
         if (!canWalkStep) {
             boolean blockedByWall = BotPhysicsEngine.isGroundStepBlockedByWall(entry.bot.getMap(), botPos, stepX);
             if (!blockedByWall
-                    && ((directionalDrop && Integer.signum(stepX) == Integer.signum(entry.navEdge.launchStepX))
+                    && ((directionalDrop && Integer.signum(stepX) == Integer.signum(navEdge.launchStepX))
                     || BotFallbackMovementManager.shouldWalkOffLedge(entry, botPos, targetPos, stepX))) {
                 // Walk-off drops should keep walking in the authored direction until physics
                 // detects lost ground and transitions into a fall with preserved momentum.
@@ -628,9 +633,9 @@ public class BotMovementManager {
             }
             // Wall-blocked nav edges are stale or invalid. Clear them so the next AI tick can
             // replan instead of holding a walk stance into the wall.
-            if (blockedByWall && entry.navEdge != null) {
+            if (blockedByWall && navEdge != null) {
                 clearNavigationState(entry);
-            } else if (entry.navEdge != null && entry.navEdge.type == BotNavigationGraph.EdgeType.WALK) {
+            } else if (navEdge != null && navEdge.type == BotNavigationGraph.EdgeType.WALK) {
                 clearNavigationState(entry);
             }
             return MoveAction.idle();
@@ -646,7 +651,8 @@ public class BotMovementManager {
             return false;
         }
         if ((!AgentBotModeStateRuntime.following(entry) && !AgentBotModeStateRuntime.grinding(entry))
-                || entry.navEdge != null || AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry)) {
+                || AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
+                || AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry)) {
             return false;
         }
 

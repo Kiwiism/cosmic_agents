@@ -161,14 +161,17 @@ class AgentBotNavigationDebugStateRuntimeTest {
                 20);
 
         assertFalse(AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry));
+        assertNull(AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry));
 
-        entry.navEdge = edge;
+        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, edge);
 
         assertTrue(AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry));
+        assertEquals(edge, AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry));
 
-        entry.navEdge = null;
+        AgentBotNavigationDebugStateRuntime.clearActiveNavigationEdge(entry);
 
         assertFalse(AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry));
+        assertNull(AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry));
     }
 
     private static AgentMovementTargetSnapshot snapshot() {
