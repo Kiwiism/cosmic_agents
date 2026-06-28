@@ -6,6 +6,7 @@ import server.agents.integration.AgentBotManagerSchedulerRuntime;
 import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
@@ -1283,7 +1284,7 @@ public class BotManager {
                 ? (entry.shopTargetPos != null ? entry.shopTargetPos : entry.shopNpcPos)
                 : null;
         Point shopTargetPos = rawShopTargetPos == null ? null : new Point(rawShopTargetPos);
-        Point moveTargetPos = entry.moveTarget == null ? null : new Point(entry.moveTarget);
+        Point moveTargetPos = AgentBotMoveTargetStateRuntime.moveTarget(entry);
         Point farmAnchorPos = entry.farmAnchor == null || entry.farmAnchorMapId != bot.getMapId()
                 ? null
                 : new Point(entry.farmAnchor);
@@ -2014,13 +2015,13 @@ public class BotManager {
             if (groundAfterMapChange(entry, bot)) {
                 return;
             }
-            // Owner-offline pass-through: when entry.moveTarget is set (currently by
+            // Owner-offline pass-through: when explicit move target is set (currently by
             // the offline-town cluster, but any caller of issueMoveTo) the bot still
             // walks toward it. Same field and movement core as the player "here"
             // command — only the tick gate differs because the regular pipeline is
             // tightly coupled to `owner` for combat/follow/heal logic that's all
             // skipped here.
-            if (entry.moveTarget != null) {
+            if (AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)) {
                 tickStandaloneMoveTarget(entry, bot, runAiTick);
             } else {
                 tickIdleEntry(entry, bot);
@@ -2565,15 +2566,13 @@ public class BotManager {
         }
 
         if (isNear(botPos, anchor, 8) && !entry.inAir && !entry.climbing) {
-            entry.moveTarget = null;
-            entry.moveTargetPrecise = false;
+            AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
             BotPhysicsEngine.idleOnGround(entry, bot);
             BotMovementManager.broadcastMovement(entry);
             return;
         }
 
-        entry.moveTarget = anchor;
-        entry.moveTargetPrecise = true;
+        AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, anchor);
         stepMovementCore(entry, anchor, runAiTick);
     }
 
@@ -2585,7 +2584,7 @@ public class BotManager {
                 || entry.activeScriptTask.moveCombatMode != BotTask.MoveCombatMode.LOCAL_OPPORTUNITY) {
             return false;
         }
-        if (entry.moveTarget == null || !entry.moveTarget.equals(entry.activeScriptTask.point)) {
+        if (!AgentBotMoveTargetStateRuntime.moveTargetEquals(entry, entry.activeScriptTask.point)) {
             return false;
         }
         return !entry.following;
@@ -2730,8 +2729,7 @@ public class BotManager {
                 // Cancel any in-flight cluster walk: while owner was offline the
                 // only setter of moveTarget was the offline-town path, so clearing
                 // here is safe and avoids stale state when owner reconnects.
-                entry.moveTarget = null;
-                entry.moveTargetPrecise = false;
+                AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
                 // Race-safe single-representative wb: each bot tries to remove the
                 // group's anchor entry; only the winner (first to observe owner
                 // active) speaks. Other bots find the anchor already cleared and
@@ -2816,8 +2814,7 @@ public class BotManager {
         clearScriptTasks(entry);
         BotShopManager.cancelShopVisit(entry);
         clearMode(entry);
-        entry.moveTarget = null;
-        entry.moveTargetPrecise = false;
+        AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
         entry.grindTarget = null;
         entry.degenAttackDone = false;
         entry.buffConsumablesEnabled = false;
@@ -2937,8 +2934,7 @@ public class BotManager {
 
     private void startMoveTo(BotEntry entry, Point dest, boolean precise) {
         clearMode(entry);
-        entry.moveTarget = new Point(dest);
-        entry.moveTargetPrecise = precise;
+        AgentBotMoveTargetStateRuntime.setMoveTarget(entry, dest, precise);
     }
 
     public void issueFarmHere(BotEntry entry, Point dest) {
@@ -2958,8 +2954,7 @@ public class BotManager {
         enterActiveMode(entry);
         entry.farmAnchor = new Point(dest);
         entry.farmAnchorMapId = entry.bot.getMapId();
-        entry.moveTarget = new Point(dest);
-        entry.moveTargetPrecise = true;
+        AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, dest);
     }
 
     public void issuePatrol(BotEntry entry, Point ownerPos) {
@@ -3013,8 +3008,7 @@ public class BotManager {
                 ? target.getId()
                 : 0;
         entry.grinding = false;
-        entry.moveTarget = null;
-        entry.moveTargetPrecise = false;
+        AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
         entry.farmAnchor = null;
         entry.farmAnchorMapId = -1;
         entry.following = true;
@@ -3052,8 +3046,7 @@ public class BotManager {
     private void enterActiveMode(BotEntry entry) {
         entry.followTargetId = 0;
         entry.following = false;
-        entry.moveTarget = null;
-        entry.moveTargetPrecise = false;
+        AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
         entry.farmAnchor = null;
         entry.farmAnchorMapId = -1;
         entry.patrolRegionId = -1;
@@ -3083,8 +3076,7 @@ public class BotManager {
 
     private void startStop(BotEntry entry) {
         clearMode(entry);
-        entry.moveTarget = null;
-        entry.moveTargetPrecise = false;
+        AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
     }
 
     /**
@@ -3253,7 +3245,7 @@ public class BotManager {
 
     private boolean isScriptTaskComplete(BotEntry entry, BotTask task) {
         return switch (task.type) {
-            case MOVE_TO -> entry.moveTarget == null || isNear(entry.bot.getPosition(), task.point,
+            case MOVE_TO -> !AgentBotMoveTargetStateRuntime.hasMoveTarget(entry) || isNear(entry.bot.getPosition(), task.point,
                     task.precise ? 8 : BotMovementManager.cfg.STOP_DIST);
             case FOLLOW_UNTIL_NEAR -> {
                 Character target = resolveFollowCharacterById(entry, task.targetCharacterId);
@@ -3337,7 +3329,7 @@ public class BotManager {
         }
 
         BotMovementManager.refreshMovementProfile(entry);
-        stepMovementCore(entry, entry.moveTarget, runAiTick);
+        stepMovementCore(entry, AgentBotMoveTargetStateRuntime.moveTarget(entry), runAiTick);
     }
 
     private boolean groundAfterMapChange(BotEntry entry, Character bot) {
@@ -3469,7 +3461,7 @@ public class BotManager {
     }
 
     private boolean tickIdleEntry(BotEntry entry, Character bot) {
-        if (entry.following || entry.grinding || entry.moveTarget != null
+        if (entry.following || entry.grinding || AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)
                 || entry.farmAnchor != null || entry.shopVisitPending) {
             return false;
         }
@@ -3532,7 +3524,7 @@ public class BotManager {
         if (entry == null || bot == null || partyAnchor == null || !entry.grinding || entry.shopVisitPending) {
             return false;
         }
-        if (entry.moveTarget != null || entry.farmAnchor != null) {
+        if (AgentBotMoveTargetStateRuntime.hasMoveTarget(entry) || entry.farmAnchor != null) {
             return false;
         }
         if (bot.getMap() == null || partyAnchor.getMap() != bot.getMap()) {
@@ -3676,7 +3668,7 @@ public class BotManager {
         if (entry == null || bot == null || targetPos == null) {
             return false;
         }
-        if (!entry.following || entry.grinding || entry.moveTarget != null) {
+        if (!entry.following || entry.grinding || AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)) {
             return false;
         }
         if (entry.inAir || entry.climbing || entry.downJumpPending || AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)) {
@@ -3709,7 +3701,7 @@ public class BotManager {
         }
 
         Point steeringTarget = navDirective.targetPos;
-        if (entry.moveTargetPrecise && entry.navEdge == null) {
+        if (AgentBotMoveTargetStateRuntime.isPrecise(entry) && entry.navEdge == null) {
             AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
         }
         if (BotFidgetManager.tryHandleTick(entry, steeringTarget, runAiTick)) {
@@ -3741,15 +3733,12 @@ public class BotManager {
     }
 
     private void clearReachedMoveTarget(BotEntry entry) {
-        if (entry.moveTarget == null) {
+        if (!AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)) {
             return;
         }
         Point botPos = entry.bot.getPosition();
-        int arrivalDist = entry.moveTargetPrecise ? 8 : BotMovementManager.cfg.STOP_DIST;
-        if (Math.abs(botPos.x - entry.moveTarget.x) <= arrivalDist
-                && Math.abs(botPos.y - entry.moveTarget.y) <= arrivalDist) {
-            entry.moveTarget = null;
-            entry.moveTargetPrecise = false;
+        if (AgentBotMoveTargetStateRuntime.hasReachedMoveTarget(entry, botPos, BotMovementManager.cfg.STOP_DIST)) {
+            AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
         }
     }
 
@@ -3767,9 +3756,8 @@ public class BotManager {
         if (entry.farmAnchorMapId != bot.getMapId()) {
             entry.farmAnchor = null;
             entry.farmAnchorMapId = -1;
-            if (entry.moveTargetPrecise) {
-                entry.moveTarget = null;
-                entry.moveTargetPrecise = false;
+            if (AgentBotMoveTargetStateRuntime.isPrecise(entry)) {
+                AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
             }
         }
     }
@@ -3807,7 +3795,7 @@ public class BotManager {
         // Only detect/act while actively navigating — idling near owner is not stuck.
         if (entry.inAir || entry.climbing
                 || AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)
-                || (entry.navEdge == null && entry.moveTarget == null)) {
+                || (entry.navEdge == null && !AgentBotMoveTargetStateRuntime.hasMoveTarget(entry))) {
             AgentBotMovementStuckStateRuntime.resetStuckProgress(entry);
             return;
         }

@@ -517,6 +517,12 @@ Recent reconstruction notes:
   and fidget decisions keep BotEntry as the temporary backing store but no
   longer read or write `lastOwnerPos`, `observedOwnerStepX`, or
   `observedOwnerStepY` directly in production.
+- Explicit movement target state now enters through
+  `AgentBotMoveTargetStateRuntime`; BotManager scripted movement, standalone
+  move-target ticks, idle/follow gating, precise arrival checks, farm-anchor map
+  cleanup, fidget gating, and navigation keep BotEntry as the temporary backing
+  store but no longer read or write `moveTarget` or `moveTargetPrecise` directly
+  in production.
 
 Initial reconstruction order:
 

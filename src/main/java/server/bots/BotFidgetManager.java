@@ -3,6 +3,7 @@ package server.bots;
 import client.Character;
 import net.packet.Packet;
 import server.agents.integration.AgentBotFidgetRuntime;
+import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
@@ -97,8 +98,7 @@ final class BotFidgetManager {
         Point origin = entry.fidgetOriginPos == null ? null : new Point(entry.fidgetOriginPos);
         clear(entry);
         if (shouldReturnToOrigin(trigger, origin, botPos)) {
-            entry.moveTarget = origin;
-            entry.moveTargetPrecise = true;
+            AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, origin);
             BotMovementManager.clearNavigationState(entry);
         }
     }
@@ -154,7 +154,7 @@ final class BotFidgetManager {
                 || !entry.following
                 || AgentBotFidgetRuntime.isLeaderIdleForFidget(entry)
                 || entry.grinding
-                || entry.moveTarget != null
+                || AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)
                 || entry.navEdge != null
                 || AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry)
                 || AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)
@@ -179,7 +179,7 @@ final class BotFidgetManager {
         return entry.following
                 && !AgentBotFidgetRuntime.isLeaderIdleForFidget(entry)
                 && !entry.grinding
-                && entry.moveTarget == null
+                && !AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)
                 && entry.navEdge == null
                 && !AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry)
                 && !AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)

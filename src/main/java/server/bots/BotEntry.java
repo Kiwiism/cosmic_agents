@@ -245,6 +245,18 @@ public class BotEntry {
     public int getFarmAnchorMapId() { return farmAnchorMapId; }
     public java.awt.Point moveTarget() { return moveTarget == null ? null : new java.awt.Point(moveTarget); }
     public boolean isMoveTargetPrecise() { return moveTargetPrecise; }
+    public boolean hasMoveTarget() { return moveTarget != null; }
+    public void setMoveTarget(java.awt.Point moveTarget, boolean precise) {
+        this.moveTarget = moveTarget == null ? null : new java.awt.Point(moveTarget);
+        this.moveTargetPrecise = moveTarget != null && precise;
+    }
+    public void clearMoveTarget() {
+        this.moveTarget = null;
+        this.moveTargetPrecise = false;
+    }
+    public boolean moveTargetEquals(java.awt.Point point) {
+        return moveTarget != null && moveTarget.equals(point);
+    }
     public java.awt.Point farmAnchor() { return farmAnchor == null ? null : new java.awt.Point(farmAnchor); }
     public int farmAnchorMapId() { return farmAnchorMapId; }
     public int patrolRegionId() { return patrolRegionId; }
