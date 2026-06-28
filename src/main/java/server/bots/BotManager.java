@@ -1987,7 +1987,7 @@ public class BotManager {
 
     private void tickCore(BotEntry entry, int ownerCharId, int botCharId) {
         if (entry == null) return;
-        if (entry.airshowActive) return;
+        if (AgentBotManagerStatusRuntime.airshowActive(entry)) return;
         if (AgentBotTickCadenceStateRuntime.consumeSkipDelay(entry, BotMovementManager.cfg.TICK_MS)) {
             return;
         }

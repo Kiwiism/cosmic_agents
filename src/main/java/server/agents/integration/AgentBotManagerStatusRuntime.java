@@ -26,4 +26,8 @@ public final class AgentBotManagerStatusRuntime {
     public static void tickAfkCheck(BotEntry entry, Character owner) {
         AgentBotChatStatusRuntime.tickAfkCheck(entry, owner);
     }
+
+    public static boolean airshowActive(BotEntry entry) {
+        return entry.airshowActive();
+    }
 }

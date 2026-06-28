@@ -39,6 +39,10 @@ public class BotEntry {
     final ScheduledFuture<?> task;
     BotMovementProfile movementProfile = BotMovementProfile.base();
 
+    public boolean airshowActive() {
+        return airshowActive;
+    }
+
     public BotMovementProfile movementProfile() {
         return movementProfile != null ? movementProfile : BotMovementProfile.base();
     }

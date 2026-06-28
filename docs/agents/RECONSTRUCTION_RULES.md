@@ -672,6 +672,10 @@ Recent reconstruction notes:
 - KPQ Stage 5 claim reset state now enters through `AgentBotPqRuntime`;
   BotManager map-change handling keeps BotEntry as the temporary backing store
   but no longer writes `kpq.stage5Claimed` directly in production.
+- Airshow-active tick gate state now enters through
+  `AgentBotManagerStatusRuntime`; BotManager tick orchestration keeps BotEntry
+  as the temporary backing store but no longer reads `airshowActive` directly in
+  production.
 
 Initial reconstruction order:
 

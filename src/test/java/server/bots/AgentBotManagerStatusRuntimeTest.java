@@ -8,6 +8,8 @@ import server.agents.integration.AgentBotChatStatusRuntime;
 import server.agents.integration.AgentBotManagerSchedulerRuntime;
 import server.agents.integration.AgentBotManagerStatusRuntime;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
@@ -45,5 +47,16 @@ class AgentBotManagerStatusRuntimeTest {
             status.verify(() -> AgentBotChatStatusRuntime.announceOwnerReturnedFromOffline(entry));
             status.verify(() -> AgentBotChatStatusRuntime.tickAfkCheck(entry, owner));
         }
+    }
+
+    @Test
+    void adaptsAirshowActiveState() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        assertFalse(AgentBotManagerStatusRuntime.airshowActive(entry));
+
+        entry.airshowActive = true;
+
+        assertTrue(AgentBotManagerStatusRuntime.airshowActive(entry));
     }
 }
