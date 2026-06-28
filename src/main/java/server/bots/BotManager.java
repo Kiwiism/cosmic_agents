@@ -1525,7 +1525,7 @@ public class BotManager {
         if (entry == null || botPos == null || combatTargetPos == null) {
             return null;
         }
-        if (entry.climbing || entry.inAir || entry.navEdge != null) {
+        if (entry.climbing || entry.inAir || AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
             return null;
         }
         Character bot = entry.bot;
@@ -1748,7 +1748,7 @@ public class BotManager {
         if (entry == null || botPos == null || combatTargetPos == null || retreatPos == null) {
             return false;
         }
-        if (entry.climbing || entry.inAir || entry.navEdge != null) {
+        if (entry.climbing || entry.inAir || AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
             return false;
         }
 
@@ -3646,7 +3646,9 @@ public class BotManager {
         if (entry.inAir || entry.climbing || entry.downJumpPending || AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)) {
             return false;
         }
-        if (entry.navEdge != null || AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry) || entry.fidgetMode != BotFidgetMode.NONE) {
+        if (AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
+                || AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry)
+                || entry.fidgetMode != BotFidgetMode.NONE) {
             return false;
         }
         if (entry.shopVisitPending || entry.shopSequenceActive) {
@@ -3674,7 +3676,8 @@ public class BotManager {
         }
 
         Point steeringTarget = navDirective.targetPos;
-        if (AgentBotMoveTargetStateRuntime.isPrecise(entry) && entry.navEdge == null) {
+        if (AgentBotMoveTargetStateRuntime.isPrecise(entry)
+                && !AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
             AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
         }
         if (BotFidgetManager.tryHandleTick(entry, steeringTarget, runAiTick)) {
@@ -3762,7 +3765,8 @@ public class BotManager {
         // Only detect/act while actively navigating — idling near owner is not stuck.
         if (entry.inAir || entry.climbing
                 || AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)
-                || (entry.navEdge == null && !AgentBotMoveTargetStateRuntime.hasMoveTarget(entry))) {
+                || (!AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
+                        && !AgentBotMoveTargetStateRuntime.hasMoveTarget(entry))) {
             AgentBotMovementStuckStateRuntime.resetStuckProgress(entry);
             return;
         }

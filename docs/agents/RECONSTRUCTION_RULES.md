@@ -646,6 +646,11 @@ Recent reconstruction notes:
   `AgentBotMovementStateRuntime`; BotManager spawn normalization and follow-idle
   fast-path gating keep BotEntry as the temporary backing store but no longer
   read or write `moveDir` directly in production.
+- Active navigation-edge presence now enters through
+  `AgentBotNavigationDebugStateRuntime`; BotManager retreat eligibility,
+  follow-idle fast-path gating, precise-target setup, and stuck detection keep
+  BotEntry as the temporary backing store but no longer check `navEdge`
+  directly in production.
 
 Initial reconstruction order:
 

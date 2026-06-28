@@ -998,6 +998,10 @@ public class BotEntry {
     int observedOwnerStepX = 0;
     int observedOwnerStepY = 0;
 
+    public boolean hasActiveNavigationEdge() {
+        return navEdge != null;
+    }
+
     public int observedOwnerStepX() {
         return observedOwnerStepX;
     }

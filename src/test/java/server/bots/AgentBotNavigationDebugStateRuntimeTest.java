@@ -144,6 +144,33 @@ class AgentBotNavigationDebugStateRuntimeTest {
         assertEquals(Integer.MIN_VALUE, AgentBotNavigationDebugStateRuntime.navJumpLaunchX(entry));
     }
 
+    @Test
+    void adaptsActiveNavigationEdgePresence() {
+        BotEntry entry = new BotEntry(null, null, null);
+        BotNavigationGraph.Edge edge = new BotNavigationGraph.Edge(
+                1,
+                2,
+                BotNavigationGraph.EdgeType.WALK,
+                new Point(10, 20),
+                new Point(30, 20),
+                0,
+                0,
+                0,
+                0,
+                0,
+                20);
+
+        assertFalse(AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry));
+
+        entry.navEdge = edge;
+
+        assertTrue(AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry));
+
+        entry.navEdge = null;
+
+        assertFalse(AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry));
+    }
+
     private static AgentMovementTargetSnapshot snapshot() {
         return new AgentMovementTargetSnapshot(
                 "line",
