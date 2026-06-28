@@ -343,6 +343,7 @@ public class BotEntry {
     public void setFollowTargetId(int followTargetId) { this.followTargetId = followTargetId; }
     public Character bot() { return bot; }
     public Character owner() { return owner; }
+    public void setOwner(Character owner) { this.owner = owner; }
     public BotBuildManager.ApBuild apBuild() { return apBuild; }
     public void setApBuild(BotBuildManager.ApBuild apBuild) {
         this.apBuild = apBuild;

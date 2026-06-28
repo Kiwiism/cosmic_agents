@@ -633,6 +633,10 @@ Recent reconstruction notes:
   `pendingLootOfferItem`, `pendingLootOfferRecipientId`,
   `pendingLootOfferExpiresAt`, or `pendingLootOfferBotRequesting` directly
   outside the adapter.
+- Live leader/anchor reference refresh now enters through
+  `AgentBotLeaderStateRuntime`; BotManager tick-owner refresh and focused tests
+  keep BotEntry as the temporary backing store but no longer assign `owner`
+  directly in production.
 
 Initial reconstruction order:
 

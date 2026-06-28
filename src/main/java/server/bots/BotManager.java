@@ -17,6 +17,7 @@ import server.agents.integration.AgentBotGrindLootStateRuntime;
 import server.agents.integration.AgentBotGrindSearchStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotGrindWanderStateRuntime;
+import server.agents.integration.AgentBotLeaderStateRuntime;
 import server.agents.integration.AgentBotMapStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
@@ -2672,13 +2673,13 @@ public class BotManager {
     }
 
     private Character resolveTickOwner(BotEntry entry, int ownerCharId) {
-        Character owner = entry.owner;
-        if (owner == null || owner.getId() != ownerCharId || !owner.isLoggedinWorld()) {
+        Character owner = AgentBotLeaderStateRuntime.leader(entry);
+        if (owner == null || !AgentBotLeaderStateRuntime.matchesLeaderId(entry, ownerCharId) || !owner.isLoggedinWorld()) {
             owner = Server.getInstance()
                     .getWorld(entry.bot.getWorld())
                     .getPlayerStorage()
                     .getCharacterById(ownerCharId);
-            entry.owner = owner;
+            AgentBotLeaderStateRuntime.setLeader(entry, owner);
         }
         return owner;
     }
