@@ -483,6 +483,12 @@ Recent reconstruction notes:
   fidget gating, stuck checks, path logging, and focused tests keep BotEntry as
   the temporary backing store but no longer read or write the fallback flag
   directly.
+- Navigation waypoint target state now enters through
+  `AgentBotNavigationDebugStateRuntime`; navigation planning, committed-edge
+  reuse, movement precision gates, fidget gates, target snapshots, debug overlay,
+  path logging, simulation helpers, and focused tests keep BotEntry as the
+  temporary backing store but no longer read or write `navTargetPos`,
+  `navTargetRegionId`, or `navPreciseTarget` directly.
 
 Initial reconstruction order:
 

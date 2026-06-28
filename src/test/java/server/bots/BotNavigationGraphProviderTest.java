@@ -4,6 +4,7 @@ import client.Character;
 import constants.game.CharacterStance;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Rope;
@@ -422,7 +423,7 @@ class BotNavigationGraphProviderTest {
         entry.climbing = true;
         entry.climbRope = reuseCase.rope();
         entry.navEdge = reuseCase.edge();
-        entry.navTargetRegionId = graph.findRegionId(map, reuseCase.rawTarget());
+        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, graph.findRegionId(map, reuseCase.rawTarget()));
 
         BotNavigationManager.NavigationDirective directive =
                 BotNavigationManager.resolveTarget(entry, reuseCase.rawTarget(), false);

@@ -185,7 +185,7 @@ class BotNavigationManagerTest {
         when(bot.getMap()).thenReturn(mock(MapleMap.class));
         BotEntry entry = new BotEntry(bot, null, null);
         entry.navEdge = collapsedWalk;
-        entry.navTargetRegionId = 355;
+        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, 355);
         BotNavigationGraph graph = mock(BotNavigationGraph.class);
 
         // Bot is in intermediate region 359 — neither source (358) nor destination (355)
@@ -205,7 +205,7 @@ class BotNavigationManagerTest {
         when(bot.getMap()).thenReturn(mock(MapleMap.class));
         BotEntry entry = new BotEntry(bot, null, null);
         entry.navEdge = collapsedWalk;
-        entry.navTargetRegionId = 355;
+        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, 355);
         BotNavigationGraph graph = mock(BotNavigationGraph.class);
 
         BotNavigationGraph.Edge result = BotNavigationManager.reuseCommittedEdge(graph, entry, 355, 355);
@@ -345,7 +345,7 @@ class BotNavigationManagerTest {
         entry.movementProfile = BotMovementProfile.base();
         entry.following = true;
         entry.navEdge = staleEdge;
-        entry.navTargetRegionId = leftTargetRegionId;
+        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, leftTargetRegionId);
 
         BotNavigationManager.NavigationDirective directive =
                 BotNavigationManager.resolveTarget(entry, rightTarget, true);
@@ -396,7 +396,7 @@ class BotNavigationManagerTest {
         Character bot = mockBot(botPos, map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.navEdge = staleDrop;
-        entry.navTargetRegionId = staleDrop.toRegionId;
+        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, staleDrop.toRegionId);
 
         assertNull(BotNavigationManager.reuseCommittedEdge(graph, entry, 1, 3),
                 "non-AI reuse must drop stale grounded edges whose destination no longer matches the live target");
@@ -526,7 +526,7 @@ class BotNavigationManagerTest {
                 new Point(-437, -181), new Point(-473, -211),
                 -8, 0, -437, -1471, 84, 250
         );
-        entry.navTargetRegionId = 14;
+        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, 14);
         BotNavigationGraph graph = mock(BotNavigationGraph.class);
 
         BotNavigationGraph.Edge reused = BotNavigationManager.reuseCommittedEdge(graph, entry, 20, 14);
@@ -583,7 +583,7 @@ class BotNavigationManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.movementProfile = BotMovementProfile.base();
         entry.navEdge = ropeEntry;
-        entry.navTargetRegionId = targetRegionId;
+        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
 
         BotNavigationManager.NavigationDirective directive =
                 BotNavigationManager.resolveTarget(entry, target, true);

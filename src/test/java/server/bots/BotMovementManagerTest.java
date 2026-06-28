@@ -216,7 +216,7 @@ class BotMovementManagerTest {
                 new Point(-437, -1141), new Point(-477, -1166),
                 -8, 0, -437, -1471, 84, 250
         );
-        entry.navPreciseTarget = true;
+        AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
 
         BotMovementManager.tickClimbing(entry, new Point(-437, -1141), true);
 
@@ -229,7 +229,7 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(null, null, null);
         entry.climbing = true;
         entry.climbRope = new Rope(3398, 126, 332, false);
-        entry.navPreciseTarget = true;
+        AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
 
         // Above the rope (y <= topY) and strictly below it (y > bottomY) must reject snap.
         // Snap AT bottomY is allowed for rope-exit launch anchors authored at the rope bottom
@@ -249,7 +249,7 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(null, null, null);
         entry.climbing = true;
         entry.climbRope = rope;
-        entry.navPreciseTarget = true;
+        AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
 
         // Bot within one climbStep of the anchor — natural step would overshoot bottomY.
         int dyWithin = BotPhysicsEngine.climbStepPerTick() - 2;
@@ -288,7 +288,7 @@ class BotMovementManagerTest {
                 new Point(3398, 156), new Point(3443, 124),
                 0, 0, 3398, 126, 332, 400
         );
-        entry.navPreciseTarget = true;
+        AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
 
         BotMovementManager.tickClimbing(entry, new Point(3398, 124), true);
 
@@ -360,7 +360,7 @@ class BotMovementManagerTest {
                 new Point(8, 100), new Point(60, 100),
                 0, 0, 0, 0, 0, 100
         );
-        entry.navPreciseTarget = true;
+        AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
 
         BotMovementManager.tickGrounded(entry, new Point(60, 100));
 
@@ -999,17 +999,17 @@ class BotMovementManagerTest {
                 new Point(20, 100), new Point(80, 40),
                 8, 0, 0, 0, 0, 300
         );
-        entry.navTargetPos = new Point(20, 100);
-        entry.navTargetRegionId = 2;
-        entry.navPreciseTarget = true;
+        AgentBotNavigationDebugStateRuntime.setNavTargetPosition(entry, new Point(20, 100));
+        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, 2);
+        AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
 
         assertTrue(BotMovementManager.refreshMovementProfile(entry),
                 "profile swap should commit immediately and let nav use closest graph while the exact graph warms");
         assertEquals(targetProfile, entry.movementProfile);
         assertNull(entry.navEdge);
-        assertNull(entry.navTargetPos);
-        assertEquals(-1, entry.navTargetRegionId);
-        assertFalse(entry.navPreciseTarget);
+        assertNull(AgentBotNavigationDebugStateRuntime.navTargetPosition(entry));
+        assertEquals(-1, AgentBotNavigationDebugStateRuntime.navTargetRegionId(entry));
+        assertFalse(AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry));
     }
 
     private static Character mockBot(Point startPosition, MapleMap map) {

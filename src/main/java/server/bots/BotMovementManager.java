@@ -195,12 +195,10 @@ public class BotMovementManager {
     }
 
     static void clearNavigationState(BotEntry entry) {
-        entry.navTargetPos = null;
         entry.navEdge = null;
         entry.navJumpLaunchEdge = null;
         entry.navJumpLaunchX = Integer.MIN_VALUE;
-        entry.navTargetRegionId = -1;
-        entry.navPreciseTarget = false;
+        AgentBotNavigationDebugStateRuntime.clearNavTarget(entry);
     }
 
     static void tickClimbing(BotEntry entry, Point targetPos, boolean runAiTick) {
@@ -300,7 +298,7 @@ public class BotMovementManager {
         if (entry == null || !entry.climbing || entry.climbRope == null || targetPos == null || dy == 0) {
             return false;
         }
-        if (!entry.navPreciseTarget) {
+        if (!AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry)) {
             return false;
         }
         if (targetPos.x != entry.climbRope.x()) {
@@ -598,10 +596,10 @@ public class BotMovementManager {
 
     private static MoveAction planGroundAction(BotEntry entry, Foothold currentFh, Point botPos, Point targetPos) {
         boolean directionalDrop = isDirectionalDropEdge(entry.navEdge);
-        int stopDist = directionalDrop ? 0 : entry.navPreciseTarget ? preciseNavStopDist(entry.navEdge) : cfg.STOP_DIST;
+        int stopDist = directionalDrop ? 0 : AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry) ? preciseNavStopDist(entry.navEdge) : cfg.STOP_DIST;
         // No hysteresis when navigating to an edge — always move toward the waypoint
         int followDist = directionalDrop ? 0
-                : (entry.navEdge != null || entry.navPreciseTarget) ? stopDist : cfg.FOLLOW_DIST;
+                : (entry.navEdge != null || AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry)) ? stopDist : cfg.FOLLOW_DIST;
         int stepX = resolveGroundStepX(entry, botPos, targetPos, stopDist, followDist);
         if (stepX == 0) {
             return MoveAction.idle();
@@ -635,7 +633,7 @@ public class BotMovementManager {
         if (entry == null || entry.bot == null || currentFh == null || botPos == null || stepX == 0) {
             return false;
         }
-        if ((!entry.following && !entry.grinding) || entry.navEdge != null || entry.navPreciseTarget) {
+        if ((!entry.following && !entry.grinding) || entry.navEdge != null || AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry)) {
             return false;
         }
 

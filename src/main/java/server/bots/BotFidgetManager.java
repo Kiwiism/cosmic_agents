@@ -154,7 +154,7 @@ final class BotFidgetManager {
                 || entry.grinding
                 || entry.moveTarget != null
                 || entry.navEdge != null
-                || entry.navPreciseTarget
+                || AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry)
                 || AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)
                 || entry.inAir
                 || entry.climbing) {
@@ -179,7 +179,7 @@ final class BotFidgetManager {
                 && !entry.grinding
                 && entry.moveTarget == null
                 && entry.navEdge == null
-                && !entry.navPreciseTarget
+                && !AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry)
                 && !AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)
                 && !entry.climbing
                 && (!entry.inAir || airborneJumpFidget)

@@ -236,7 +236,7 @@ public final class BotPathLogger {
         sb.append("Physics:    ").append(physState(entry)).append("\n");
         sb.append("Nav edge:   ").append(navEdgeSummary(entry)).append("\n");
         sb.append("Nav target: ").append(navTargetSummary(entry))
-                .append("  targetRegion=").append(entry.navTargetRegionId).append("\n");
+                .append("  targetRegion=").append(AgentBotNavigationDebugStateRuntime.navTargetRegionId(entry)).append("\n");
         sb.append("Last nav decision: ").append(AgentBotNavigationDebugStateRuntime.lastDecision(entry));
         if (AgentBotNavigationDebugStateRuntime.lastEdgeBlockReason(entry) != null) {
             sb.append("  [blocked: ").append(AgentBotNavigationDebugStateRuntime.lastEdgeBlockReason(entry)).append("]");
@@ -400,11 +400,12 @@ public final class BotPathLogger {
     }
 
     private static String navTargetSummary(BotEntry entry) {
-        if (entry.navTargetPos == null) {
+        Point navTargetPos = AgentBotNavigationDebugStateRuntime.navTargetPosition(entry);
+        if (navTargetPos == null) {
             return "none";
         }
-        return "(" + entry.navTargetPos.x + "," + entry.navTargetPos.y + ")"
-                + (entry.navPreciseTarget ? "[precise]" : "");
+        return "(" + navTargetPos.x + "," + navTargetPos.y + ")"
+                + (AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry) ? "[precise]" : "");
     }
 
     private static String edgeStr(BotNavigationGraph.Edge e) {

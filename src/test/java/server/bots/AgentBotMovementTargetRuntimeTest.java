@@ -2,6 +2,7 @@ package server.bots;
 
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
+import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 
 import java.awt.Point;
 
@@ -101,7 +102,8 @@ class AgentBotMovementTargetRuntimeTest {
     @Test
     void conversionUsesNavigationWaypointAsSteeringTargetWhenPresent() {
         BotEntry entry = new BotEntry(null, null, null);
-        entry.navTargetPos = new Point(90, 91);
+        Point navTargetPos = new Point(90, 91);
+        AgentBotNavigationDebugStateRuntime.setNavTargetPosition(entry, navTargetPos);
         BotManager.TargetSnapshot targetSnapshot = new BotManager.TargetSnapshot(
                 new BotManager.FormationState(BotManager.FormationType.STACK, 0, 120),
                 new Point(1, 1),
@@ -119,7 +121,7 @@ class AgentBotMovementTargetRuntimeTest {
 
         assertEquals(new Point(90, 91), snapshot.steeringTargetPosition());
         assertEquals("nav-waypoint", snapshot.steeringTargetSource());
-        entry.navTargetPos.x = 123;
+        navTargetPos.x = 123;
         assertEquals(new Point(90, 91), snapshot.steeringTargetPosition());
     }
 

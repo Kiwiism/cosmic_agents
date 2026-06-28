@@ -7,8 +7,10 @@ import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 
 import java.awt.Point;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -73,6 +75,31 @@ class AgentBotNavigationDebugStateRuntimeTest {
         AgentBotNavigationDebugStateRuntime.clearGraphWarmupFallback(entry);
 
         assertFalse(AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry));
+    }
+
+    @Test
+    void adaptsNavTargetStateWithPointCopies() {
+        BotEntry entry = new BotEntry(null, null, null);
+        Point waypoint = new Point(20, 30);
+
+        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, 7);
+        AgentBotNavigationDebugStateRuntime.setNavWaypoint(entry, waypoint, true);
+
+        waypoint.x = 99;
+        Point exposed = AgentBotNavigationDebugStateRuntime.navTargetPosition(entry);
+        exposed.y = 88;
+
+        assertTrue(AgentBotNavigationDebugStateRuntime.hasNavTargetPosition(entry));
+        assertEquals(new Point(20, 30), AgentBotNavigationDebugStateRuntime.navTargetPosition(entry));
+        assertEquals(7, AgentBotNavigationDebugStateRuntime.navTargetRegionId(entry));
+        assertTrue(AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry));
+
+        AgentBotNavigationDebugStateRuntime.clearNavTarget(entry);
+
+        assertFalse(AgentBotNavigationDebugStateRuntime.hasNavTargetPosition(entry));
+        assertNull(AgentBotNavigationDebugStateRuntime.navTargetPosition(entry));
+        assertEquals(-1, AgentBotNavigationDebugStateRuntime.navTargetRegionId(entry));
+        assertFalse(AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry));
     }
 
     private static AgentMovementTargetSnapshot snapshot() {

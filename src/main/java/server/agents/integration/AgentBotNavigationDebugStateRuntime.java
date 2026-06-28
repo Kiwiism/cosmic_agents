@@ -5,6 +5,8 @@ import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.bots.BotEntry;
 import server.bots.BotPathLogger;
 
+import java.awt.Point;
+
 /**
  * Temporary Agent-owned boundary for navigation debug/path-log state still
  * backed by BotEntry during reconstruction.
@@ -69,6 +71,49 @@ public final class AgentBotNavigationDebugStateRuntime {
 
     public static void clearGraphWarmupFallback(BotEntry entry) {
         entry.setGraphWarmupFallback(false);
+    }
+
+    public static Point navTargetPosition(BotEntry entry) {
+        return entry.navTargetPos();
+    }
+
+    public static boolean hasNavTargetPosition(BotEntry entry) {
+        return entry.navTargetPos() != null;
+    }
+
+    public static void setNavTargetPosition(BotEntry entry, Point position) {
+        entry.setNavTargetPos(position);
+    }
+
+    public static void clearNavTargetPosition(BotEntry entry) {
+        entry.setNavTargetPos(null);
+    }
+
+    public static int navTargetRegionId(BotEntry entry) {
+        return entry.navTargetRegionId();
+    }
+
+    public static void setNavTargetRegionId(BotEntry entry, int regionId) {
+        entry.setNavTargetRegionId(regionId);
+    }
+
+    public static boolean navPreciseTarget(BotEntry entry) {
+        return entry.navPreciseTarget();
+    }
+
+    public static void setNavPreciseTarget(BotEntry entry, boolean precise) {
+        entry.setNavPreciseTarget(precise);
+    }
+
+    public static void clearNavTarget(BotEntry entry) {
+        clearNavTargetPosition(entry);
+        setNavTargetRegionId(entry, -1);
+        setNavPreciseTarget(entry, false);
+    }
+
+    public static void setNavWaypoint(BotEntry entry, Point position, boolean precise) {
+        setNavTargetPosition(entry, position);
+        setNavPreciseTarget(entry, precise);
     }
 
     public static void recordPathLog(BotEntry entry,

@@ -766,6 +766,30 @@ public class BotEntry {
         this.graphWarmupFallback = graphWarmupFallback;
     }
 
+    public Point navTargetPos() {
+        return navTargetPos == null ? null : new Point(navTargetPos);
+    }
+
+    public void setNavTargetPos(Point navTargetPos) {
+        this.navTargetPos = navTargetPos == null ? null : new Point(navTargetPos);
+    }
+
+    public int navTargetRegionId() {
+        return navTargetRegionId;
+    }
+
+    public void setNavTargetRegionId(int navTargetRegionId) {
+        this.navTargetRegionId = navTargetRegionId;
+    }
+
+    public boolean navPreciseTarget() {
+        return navPreciseTarget;
+    }
+
+    public void setNavPreciseTarget(boolean navPreciseTarget) {
+        this.navPreciseTarget = navPreciseTarget;
+    }
+
     public long pendingGearPromptAt() {
         return pendingGearPromptAt;
     }

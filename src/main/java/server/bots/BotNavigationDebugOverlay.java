@@ -116,8 +116,9 @@ public final class BotNavigationDebugOverlay {
 
         overlay.drawNode(bot.getPosition(), OverlayType.CURRENT_EDGE, NODE_SIZE + 4);
         overlay.drawNode(targetPos, OverlayType.TRANSITION, NODE_SIZE + 4);
-        if (entry.navTargetPos != null) {
-            overlay.drawNode(entry.navTargetPos, OverlayType.PATH, NODE_SIZE + 2);
+        Point navTargetPos = AgentBotNavigationDebugStateRuntime.navTargetPosition(entry);
+        if (navTargetPos != null) {
+            overlay.drawNode(navTargetPos, OverlayType.PATH, NODE_SIZE + 2);
         }
 
         replaceOverlay(viewer, overlay.objectIds());

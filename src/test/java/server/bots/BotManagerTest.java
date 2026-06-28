@@ -529,7 +529,7 @@ class BotManagerTest {
         entry.physY = -999;
         entry.velY = 20f;
         entry.airVelX = 6;
-        entry.navTargetPos = new Point(120, 100);
+        AgentBotNavigationDebugStateRuntime.setNavTargetPosition(entry, new Point(120, 100));
 
         BotManager.placeSpawnedOnlineBot(entry, bot, map, new Point(80, 100));
 
@@ -538,7 +538,7 @@ class BotManagerTest {
         assertEquals(80.0, entry.physX);
         assertEquals(100.0, entry.physY);
         assertEquals(0, entry.airVelX);
-        assertNull(entry.navTargetPos);
+        assertNull(AgentBotNavigationDebugStateRuntime.navTargetPosition(entry));
         assertEquals(map.getId(), entry.lastMapId);
     }
 

@@ -143,7 +143,7 @@ final class BotNavigationManager {
                 edge = findNextEdge(graph, bot, startRegionId, targetRegionId, pathTargetPos);
                 if (edge != null) {
                     entry.navEdge = edge;
-                    entry.navTargetRegionId = targetRegionId;
+                    AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
                 }
             }
 
@@ -164,10 +164,12 @@ final class BotNavigationManager {
             }
 
             AgentBotNavigationDebugStateRuntime.setLastDecision(entry, edgeReused ? "reuse" : "new");
-            entry.navPreciseTarget = shouldUsePreciseTarget(graph, entry, botPos, edge);
-            entry.navTargetPos = selectWaypoint(entry, graph, botPos, edge);
+            AgentBotNavigationDebugStateRuntime.setNavWaypoint(
+                    entry,
+                    selectWaypoint(entry, graph, botPos, edge),
+                    shouldUsePreciseTarget(graph, entry, botPos, edge));
             AgentBotNavigationDebugStateRuntime.recordPathLog(entry, captureTargetSnapshot(entry, rawTargetPos), startRegionId, false, runAiTick);
-            return new NavigationDirective(new Point(entry.navTargetPos), false);
+            return new NavigationDirective(AgentBotNavigationDebugStateRuntime.navTargetPosition(entry), false);
         } finally {
             BotPerformanceMonitor.record("nav-resolve", System.nanoTime() - startedAt);
         }
@@ -191,7 +193,8 @@ final class BotNavigationManager {
         }
         Point botPos = entry.bot.getPosition();
         int startRegionId = resolveCurrentRegionId(graph, entry, entry.bot.getMap(), botPos);
-        BotNavigationGraph.Edge edge = reuseCommittedEdge(graph, entry, startRegionId, entry.navTargetRegionId);
+        BotNavigationGraph.Edge edge = reuseCommittedEdge(graph, entry, startRegionId,
+                AgentBotNavigationDebugStateRuntime.navTargetRegionId(entry));
         if (edge == null) {
             BotMovementManager.clearNavigationState(entry);
             return false;
@@ -263,9 +266,9 @@ final class BotNavigationManager {
         }
 
         entry.navEdge = bestEdge;
-        entry.navTargetRegionId = targetRegionId;
-        entry.navTargetPos = null;
-        entry.navPreciseTarget = false;
+        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
+        AgentBotNavigationDebugStateRuntime.clearNavTargetPosition(entry);
+        AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, false);
         return bestEdge;
     }
 
@@ -296,9 +299,9 @@ final class BotNavigationManager {
         }
 
         entry.navEdge = bestEdge;
-        entry.navTargetRegionId = targetRegionId;
-        entry.navTargetPos = null;
-        entry.navPreciseTarget = false;
+        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
+        AgentBotNavigationDebugStateRuntime.clearNavTargetPosition(entry);
+        AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, false);
         return bestEdge;
     }
 
@@ -313,12 +316,12 @@ final class BotNavigationManager {
         if (targetRegionId < 0) {
             return null;
         }
-        int previousTargetRegionId = entry.navTargetRegionId;
+        int previousTargetRegionId = AgentBotNavigationDebugStateRuntime.navTargetRegionId(entry);
         // Update stored target in-place rather than discarding. The Y-snap offset causes
         // followBase.x to differ between AI and non-AI ticks, making targetRegionId fluctuate
         // even when the owner hasn't meaningfully moved. Relying on structural checks below
         // (start-region match, usability, arrival) is sufficient to detect actual invalidity.
-        entry.navTargetRegionId = targetRegionId;
+        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
         if (!isEdgeUsable(graph, entry.bot, edge)) {
             return null;
         }
@@ -1407,8 +1410,7 @@ final class BotNavigationManager {
     }
 
     private static void setEdgeExecutionTarget(BotEntry entry, BotNavigationGraph.Edge edge) {
-        entry.navPreciseTarget = false;
-        entry.navTargetPos = new Point(edge.endPoint);
+        AgentBotNavigationDebugStateRuntime.setNavWaypoint(entry, edge.endPoint, false);
     }
 
     private static Point adjustPathTarget(BotEntry entry,

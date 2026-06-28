@@ -150,11 +150,12 @@ public class BotManager {
                           Point primaryTargetPos,
                           String primaryTargetSource) {
         Point steeringTargetPos(BotEntry entry) {
-            return entry.navTargetPos != null ? new Point(entry.navTargetPos) : new Point(primaryTargetPos);
+            Point navTargetPos = AgentBotNavigationDebugStateRuntime.navTargetPosition(entry);
+            return navTargetPos != null ? navTargetPos : new Point(primaryTargetPos);
         }
 
         String steeringTargetSource(BotEntry entry) {
-            return entry.navTargetPos != null ? "nav-waypoint" : primaryTargetSource;
+            return AgentBotNavigationDebugStateRuntime.hasNavTargetPosition(entry) ? "nav-waypoint" : primaryTargetSource;
         }
     }
 
@@ -3681,7 +3682,7 @@ public class BotManager {
         if (entry.inAir || entry.climbing || entry.downJumpPending || AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)) {
             return false;
         }
-        if (entry.navEdge != null || entry.navPreciseTarget || entry.fidgetMode != BotFidgetMode.NONE) {
+        if (entry.navEdge != null || AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry) || entry.fidgetMode != BotFidgetMode.NONE) {
             return false;
         }
         if (entry.shopVisitPending || entry.shopSequenceActive) {
@@ -3709,7 +3710,7 @@ public class BotManager {
 
         Point steeringTarget = navDirective.targetPos;
         if (entry.moveTargetPrecise && entry.navEdge == null) {
-            entry.navPreciseTarget = true;
+            AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
         }
         if (BotFidgetManager.tryHandleTick(entry, steeringTarget, runAiTick)) {
             return;
