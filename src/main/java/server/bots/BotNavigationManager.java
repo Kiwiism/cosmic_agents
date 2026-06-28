@@ -5,6 +5,7 @@ import constants.game.CharacterStance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
+import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.maps.MapleMap;
@@ -1481,7 +1482,7 @@ final class BotNavigationManager {
         Character followAnchor = BotManager.getInstance().resolveFollowAnchor(entry, owner);
         if (entry.following
                 && !AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)
-                && entry.farmAnchor == null
+                && !AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry)
                 && !entry.shopVisitPending
                 && !entry.grinding
                 && followAnchor != null

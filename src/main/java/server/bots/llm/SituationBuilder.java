@@ -4,6 +4,7 @@ import client.Character;
 import constants.game.ExpTable;
 import net.server.world.Party;
 import net.server.world.PartyCharacter;
+import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.bots.BotEntry;
 import server.life.Monster;
 import server.maps.MapleMap;
@@ -64,7 +65,7 @@ public final class SituationBuilder {
     private static String describeActivity(BotEntry entry) {
         if (entry.isGrinding()) {
             MapleMap m = entry.getBot().getMap();
-            if (entry.getFarmAnchor() != null && m != null && entry.getFarmAnchorMapId() == m.getId()) {
+            if (m != null && AgentBotFarmAnchorStateRuntime.isFarmAnchorInMap(entry, m.getId())) {
                 return "grinding (camping this spot)";
             }
             return "grinding";

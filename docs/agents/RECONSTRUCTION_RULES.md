@@ -527,6 +527,11 @@ Recent reconstruction notes:
   `Deque` through the integration adapter; callers use narrow queue operations
   or a read-only snapshot while `BotEntry.messageQueue()` remains only the
   temporary backing accessor.
+- Farm/sentry anchor state now enters through `AgentBotFarmAnchorStateRuntime`;
+  BotManager target snapshots, anchored-farm ticks, follow/active-mode cleanup,
+  navigation gating, and LLM situation reporting keep BotEntry as the temporary
+  backing store but no longer read or write `farmAnchor` or `farmAnchorMapId`
+  directly in production.
 
 Initial reconstruction order:
 

@@ -6,6 +6,7 @@ import server.agents.integration.AgentBotManagerSchedulerRuntime;
 import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementStuckStateRuntime;
@@ -1285,9 +1286,7 @@ public class BotManager {
                 : null;
         Point shopTargetPos = rawShopTargetPos == null ? null : new Point(rawShopTargetPos);
         Point moveTargetPos = AgentBotMoveTargetStateRuntime.moveTarget(entry);
-        Point farmAnchorPos = entry.farmAnchor == null || entry.farmAnchorMapId != bot.getMapId()
-                ? null
-                : new Point(entry.farmAnchor);
+        Point farmAnchorPos = AgentBotFarmAnchorStateRuntime.farmAnchorInMap(entry, bot.getMapId());
         Monster activeGrindTarget = entry.grindTarget != null
                 && entry.grindTarget.isAlive()
                 && entry.grindTarget.getMap() == bot.getMap()
@@ -2207,7 +2206,7 @@ public class BotManager {
             return;
         }
 
-        if (entry.farmAnchor != null) {
+        if (AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry)) {
             if (!perf) {
                 tickAnchoredFarm(entry, bot, botPos, runAiTick);
             } else {
@@ -2550,13 +2549,13 @@ public class BotManager {
     }
 
     private void tickAnchoredFarm(BotEntry entry, Character bot, Point botPos, boolean runAiTick) {
-        if (entry.farmAnchor == null || entry.farmAnchorMapId != bot.getMapId()) {
+        if (!AgentBotFarmAnchorStateRuntime.isFarmAnchorInMap(entry, bot.getMapId())) {
             clearFarmAnchorOnMapChange(entry, bot);
             tickIdleEntry(entry, bot);
             return;
         }
 
-        Point anchor = new Point(entry.farmAnchor);
+        Point anchor = AgentBotFarmAnchorStateRuntime.farmAnchor(entry);
         if (runAiTick) {
             LocalOpportunityAttackResult attackResult = tryLocalOpportunityAttack(
                     entry, bot, botPos, anchor, anchor, false, false);
@@ -2952,8 +2951,7 @@ public class BotManager {
         // grind/patrol (self-buff, pot-share, ammo-low, "low on pots" fallback all
         // gate on entry.grinding — see kb feedback_bot_coding_guidelines).
         enterActiveMode(entry);
-        entry.farmAnchor = new Point(dest);
-        entry.farmAnchorMapId = entry.bot.getMapId();
+        AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, dest, entry.bot.getMapId());
         AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, dest);
     }
 
@@ -3009,8 +3007,7 @@ public class BotManager {
                 : 0;
         entry.grinding = false;
         AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
-        entry.farmAnchor = null;
-        entry.farmAnchorMapId = -1;
+        AgentBotFarmAnchorStateRuntime.clearFarmAnchor(entry);
         entry.following = true;
     }
 
@@ -3047,8 +3044,7 @@ public class BotManager {
         entry.followTargetId = 0;
         entry.following = false;
         AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
-        entry.farmAnchor = null;
-        entry.farmAnchorMapId = -1;
+        AgentBotFarmAnchorStateRuntime.clearFarmAnchor(entry);
         entry.patrolRegionId = -1;
         entry.patrolMapId = -1;
         entry.patrolWanderTarget = null;
@@ -3196,8 +3192,7 @@ public class BotManager {
         entry.followTargetId = 0;
         entry.following = false;
         entry.grinding = false;
-        entry.farmAnchor = null;
-        entry.farmAnchorMapId = -1;
+        AgentBotFarmAnchorStateRuntime.clearFarmAnchor(entry);
         entry.patrolRegionId = -1;
         entry.patrolMapId = -1;
         entry.patrolWanderTarget = null;
@@ -3462,7 +3457,7 @@ public class BotManager {
 
     private boolean tickIdleEntry(BotEntry entry, Character bot) {
         if (entry.following || entry.grinding || AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)
-                || entry.farmAnchor != null || entry.shopVisitPending) {
+                || AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry) || entry.shopVisitPending) {
             return false;
         }
         if (isSwimMap(entry) && entry.inAir && !entry.climbing) {
@@ -3524,7 +3519,7 @@ public class BotManager {
         if (entry == null || bot == null || partyAnchor == null || !entry.grinding || entry.shopVisitPending) {
             return false;
         }
-        if (AgentBotMoveTargetStateRuntime.hasMoveTarget(entry) || entry.farmAnchor != null) {
+        if (AgentBotMoveTargetStateRuntime.hasMoveTarget(entry) || AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry)) {
             return false;
         }
         if (bot.getMap() == null || partyAnchor.getMap() != bot.getMap()) {
@@ -3750,12 +3745,10 @@ public class BotManager {
     }
 
     private static void clearFarmAnchorOnMapChange(BotEntry entry, Character bot) {
-        if (entry == null || bot == null || entry.farmAnchor == null) {
+        if (entry == null || bot == null || !AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry)) {
             return;
         }
-        if (entry.farmAnchorMapId != bot.getMapId()) {
-            entry.farmAnchor = null;
-            entry.farmAnchorMapId = -1;
+        if (AgentBotFarmAnchorStateRuntime.clearFarmAnchorIfMapChanged(entry, bot.getMapId())) {
             if (AgentBotMoveTargetStateRuntime.isPrecise(entry)) {
                 AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
             }

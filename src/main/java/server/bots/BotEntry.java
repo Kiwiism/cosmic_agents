@@ -241,8 +241,6 @@ public class BotEntry {
     public String spVariant() { return spVariant; }
     public boolean spVariantPromptSent() { return spVariantPromptSent; }
     public void markSpVariantPromptSent() { this.spVariantPromptSent = true; }
-    public java.awt.Point getFarmAnchor() { return farmAnchor; }
-    public int getFarmAnchorMapId() { return farmAnchorMapId; }
     public java.awt.Point moveTarget() { return moveTarget == null ? null : new java.awt.Point(moveTarget); }
     public boolean isMoveTargetPrecise() { return moveTargetPrecise; }
     public boolean hasMoveTarget() { return moveTarget != null; }
@@ -259,6 +257,15 @@ public class BotEntry {
     }
     public java.awt.Point farmAnchor() { return farmAnchor == null ? null : new java.awt.Point(farmAnchor); }
     public int farmAnchorMapId() { return farmAnchorMapId; }
+    public boolean hasFarmAnchor() { return farmAnchor != null; }
+    public void setFarmAnchor(java.awt.Point farmAnchor, int mapId) {
+        this.farmAnchor = farmAnchor == null ? null : new java.awt.Point(farmAnchor);
+        this.farmAnchorMapId = farmAnchor == null ? -1 : mapId;
+    }
+    public void clearFarmAnchor() {
+        this.farmAnchor = null;
+        this.farmAnchorMapId = -1;
+    }
     public int patrolRegionId() { return patrolRegionId; }
     public int patrolMapId() { return patrolMapId; }
     public java.awt.Point patrolWanderTarget() {

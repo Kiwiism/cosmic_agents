@@ -13,6 +13,8 @@ import org.junit.jupiter.api.Test;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.integration.AgentBotManagerReplyRuntime;
+import server.agents.integration.AgentBotFarmAnchorStateRuntime;
+import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
@@ -981,10 +983,10 @@ class BotManagerTest {
 
         BotManager.getInstance().issueFarmHere(entry, new Point(300, 100));
 
-        assertEquals(new Point(300, 100), entry.farmAnchor);
-        assertEquals(map.getId(), entry.farmAnchorMapId);
-        assertEquals(new Point(300, 100), entry.moveTarget);
-        assertTrue(entry.moveTargetPrecise);
+        assertEquals(new Point(300, 100), AgentBotFarmAnchorStateRuntime.farmAnchor(entry));
+        assertEquals(map.getId(), AgentBotFarmAnchorStateRuntime.farmAnchorMapId(entry));
+        assertEquals(new Point(300, 100), AgentBotMoveTargetStateRuntime.moveTarget(entry));
+        assertTrue(AgentBotMoveTargetStateRuntime.isPrecise(entry));
         assertFalse(entry.following);
         assertTrue(entry.grinding);
 
@@ -999,8 +1001,7 @@ class BotManagerTest {
         Character owner = mockMovingBot(new Point(50, 100), map);
         Character bot = mockMovingBot(new Point(300, 100), map);
         BotEntry entry = new BotEntry(bot, owner, null);
-        entry.farmAnchor = new Point(300, 100);
-        entry.farmAnchorMapId = map.getId();
+        AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(300, 100), map.getId());
 
         BotManager.TargetSnapshot snapshot = BotManager.getInstance().captureTargetSnapshot(entry);
 
@@ -1034,17 +1035,15 @@ class BotManagerTest {
         Character owner = mockMovingBot(new Point(50, 100), map);
         Character bot = mockMovingBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, owner, null);
-        entry.farmAnchor = new Point(300, 100);
-        entry.farmAnchorMapId = map.getId();
-        entry.moveTarget = new Point(300, 100);
-        entry.moveTargetPrecise = true;
+        AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(300, 100), map.getId());
+        AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, new Point(300, 100));
 
         BotManager.getInstance().issueFollowOwner(entry);
 
-        assertNull(entry.farmAnchor);
-        assertEquals(-1, entry.farmAnchorMapId);
-        assertNull(entry.moveTarget);
-        assertFalse(entry.moveTargetPrecise);
+        assertNull(AgentBotFarmAnchorStateRuntime.farmAnchor(entry));
+        assertEquals(-1, AgentBotFarmAnchorStateRuntime.farmAnchorMapId(entry));
+        assertNull(AgentBotMoveTargetStateRuntime.moveTarget(entry));
+        assertFalse(AgentBotMoveTargetStateRuntime.isPrecise(entry));
         assertTrue(entry.following);
     }
 
