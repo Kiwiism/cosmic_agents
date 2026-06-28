@@ -166,6 +166,18 @@ public class BotEntry {
     long aoeRepositionDeadlineMs = 0L; // bounded-chase timeout for the AoE reposition commitment
     int wanderDirection = 0;      // -1 left, +1 right, 0 = unset (picked when grind has no target)
 
+    public boolean degenAttackDone() {
+        return degenAttackDone;
+    }
+
+    public void markDegenAttackDone() {
+        degenAttackDone = true;
+    }
+
+    public void clearDegenAttackDone() {
+        degenAttackDone = false;
+    }
+
     public Point retreatHoldPos() {
         return retreatHoldPos == null ? null : new Point(retreatHoldPos);
     }

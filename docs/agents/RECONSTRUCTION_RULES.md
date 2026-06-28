@@ -562,6 +562,10 @@ Recent reconstruction notes:
   breakout cleanup, and grind-start cleanup keep BotEntry as the temporary
   backing store but no longer read or write `retreatHoldPos` or
   `retreatHoldUntilMs` directly outside the adapter.
+- Ranged degenerate-hit retreat latch state now enters through
+  `AgentBotDegenerateAttackStateRuntime`; BotManager grind combat and local
+  opportunity combat keep BotEntry as the temporary backing store but no longer
+  read or write `degenAttackDone` directly outside the adapter.
 
 Initial reconstruction order:
 

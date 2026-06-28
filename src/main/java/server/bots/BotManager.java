@@ -8,6 +8,7 @@ import server.agents.integration.AgentBotAoeRepositionStateRuntime;
 import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotBreakoutStateRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotGrindLootStateRuntime;
 import server.agents.integration.AgentBotGrindWanderStateRuntime;
@@ -2328,8 +2329,9 @@ public class BotManager {
         }
         WeaponType grindWeaponType = BotAttackExecutionProvider.getEquippedWeaponType(bot);
         boolean targetInDegenerateBand = BotAttackExecutionProvider.shouldDegenerateRangedAttack(grindWeaponType, botPos, tp);
-        boolean allowOneDegenerateAttack = targetInDegenerateBand && !entry.degenAttackDone && rangedPriorityTarget == null;
-        boolean shouldRetreatForRangedSpacing = entry.degenAttackDone
+        boolean degenAttackDone = AgentBotDegenerateAttackStateRuntime.degenAttackDone(entry);
+        boolean allowOneDegenerateAttack = targetInDegenerateBand && !degenAttackDone && rangedPriorityTarget == null;
+        boolean shouldRetreatForRangedSpacing = degenAttackDone
                 || (BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(grindWeaponType, botPos, tp)
                 && !allowOneDegenerateAttack);
         // Opportunity attack: keep firing during retreat as long as the shot would land
@@ -2364,7 +2366,7 @@ public class BotManager {
                 // If a ranged bot just did a degenerate close-range hit, force retreat next tick
                 if (attacked && attackPlan.isCloseRangeRoute()
                         && BotCombatManager.isRangedAmmoWeapon(grindWeaponType)) {
-                    entry.degenAttackDone = true;
+                    AgentBotDegenerateAttackStateRuntime.markDegenAttackDone(entry);
                 }
                 // Don't short-circuit when a cross-region retreat is in progress — the
                 // bot must still walk to the edge launch this tick.
@@ -2406,9 +2408,9 @@ public class BotManager {
         // Clear only once the bot has physically left the retreat zone, not after the
         // first retreat tick — otherwise the flag resets while the bot is still overlapping
         // and allowOneDegenerateAttack re-opens the attack gate next tick.
-        if (entry.degenAttackDone
+        if (AgentBotDegenerateAttackStateRuntime.degenAttackDone(entry)
                 && !BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(grindWeaponType, botPos, tp)) {
-            entry.degenAttackDone = false;
+            AgentBotDegenerateAttackStateRuntime.clear(entry);
         }
         // Small detour: take a very close loot drop on the way when not retreating.
         if (crossRegionRetreatPos == null && !shouldRetreatForRangedSpacing
@@ -2598,11 +2600,11 @@ public class BotManager {
         Point localTargetPos = localTarget.getPosition();
         WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(bot);
         boolean shouldRetreat = allowCombatMovement
-                && (entry.degenAttackDone
+                && (AgentBotDegenerateAttackStateRuntime.degenAttackDone(entry)
                 || BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(weaponType, botPos, localTargetPos)
                 || BotAttackExecutionProvider.isAnyMobNearerThanTarget(bot, botPos, localTargetPos));
         if (shouldRetreat) {
-            entry.degenAttackDone = false;
+            AgentBotDegenerateAttackStateRuntime.clear(entry);
             return new LocalOpportunityAttackResult(
                     false, selectGrindNavigationTarget(entry, botPos, localTargetPos));
         }
@@ -2617,7 +2619,7 @@ public class BotManager {
                 BotCombatManager.attackMonster(entry, bot, attackPlan);
                 if (allowCombatMovement && attackPlan.isCloseRangeRoute()
                         && BotCombatManager.isRangedAmmoWeapon(weaponType)) {
-                    entry.degenAttackDone = true;
+                    AgentBotDegenerateAttackStateRuntime.markDegenAttackDone(entry);
                 }
             }
             return new LocalOpportunityAttackResult(false, targetPos);
@@ -2637,7 +2639,7 @@ public class BotManager {
             setLocalAttackMoveWindow(entry, botPos, moveWindowReferencePos);
             if (allowCombatMovement && attackPlan.isCloseRangeRoute()
                     && BotCombatManager.isRangedAmmoWeapon(weaponType)) {
-                entry.degenAttackDone = true;
+                AgentBotDegenerateAttackStateRuntime.markDegenAttackDone(entry);
             }
             return new LocalOpportunityAttackResult(!entry.inAir, targetPos);
         }
@@ -2804,7 +2806,7 @@ public class BotManager {
         clearMode(entry);
         AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
         entry.grindTarget = null;
-        entry.degenAttackDone = false;
+        AgentBotDegenerateAttackStateRuntime.clear(entry);
         entry.buffConsumablesEnabled = false;
         AgentBotActivityStateRuntime.setOwnerAwaySafeMode(entry, true);
     }
@@ -3037,7 +3039,7 @@ public class BotManager {
         AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
         entry.nextGrindTargetSearchAtMs = 0L;
         AgentBotCombatCooldownStateRuntime.clearMoveWindow(entry);
-        entry.degenAttackDone = false;
+        AgentBotDegenerateAttackStateRuntime.clear(entry);
         AgentBotRetreatHoldStateRuntime.clear(entry);
         AgentBotGrindWanderStateRuntime.clearWanderDirection(entry);
         BotMovementManager.clearNavigationState(entry);
