@@ -12,6 +12,7 @@ import org.mockito.MockedStatic;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
+import server.agents.integration.AgentBotBreakoutStateRuntime;
 import server.agents.integration.AgentBotManagerReplyRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotGrindLootStateRuntime;
@@ -460,7 +461,7 @@ class BotManagerTest {
             Point first = BotManager.selectGrindNavigationTarget(entry, botPos, rightMob.getPosition());
             int dir1 = Integer.signum(first.x - botPos.x);
             assertTrue(dir1 != 0);
-            assertTrue(entry.breakoutDirection != 0);
+            assertTrue(AgentBotBreakoutStateRuntime.hasBreakoutCommitment(entry));
 
             // Crowding-swap points the active target at the OTHER flank on later ticks; the
             // committed breakout must not reverse (that flip is the oscillation we are fixing).
@@ -481,8 +482,7 @@ class BotManagerTest {
         when(bot.getMap()).thenReturn(map);
         when(bot.getPosition()).thenReturn(new Point(botPos));
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.breakoutDirection = -1;
-        entry.breakoutUntilMs = System.currentTimeMillis() + 5_000L;
+        AgentBotBreakoutStateRuntime.setBreakoutCommitment(entry, -1, System.currentTimeMillis() + 5_000L);
 
         // Only one flank occupied -> not surrounded -> the breakout latch must release.
         Monster rightMob = mockMob(new Point(160, 100), 9300602);
@@ -493,7 +493,7 @@ class BotManagerTest {
             attacks.when(() -> BotAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.BOW);
 
             BotManager.selectGrindNavigationTarget(entry, botPos, rightMob.getPosition());
-            assertEquals(0, entry.breakoutDirection);
+            assertFalse(AgentBotBreakoutStateRuntime.hasBreakoutCommitment(entry));
         }
     }
 
@@ -517,7 +517,7 @@ class BotManagerTest {
 
             Point nav = BotManager.selectGrindNavigationTarget(entry, botPos, rightMob.getPosition());
             // Single mob -> ordinary local kiting (retreat away from the mob), no breakout latch.
-            assertEquals(0, entry.breakoutDirection);
+            assertFalse(AgentBotBreakoutStateRuntime.hasBreakoutCommitment(entry));
             assertEquals(BotAttackExecutionProvider.retreatTargetPosition(bot, botPos, rightMob.getPosition()), nav);
         }
     }

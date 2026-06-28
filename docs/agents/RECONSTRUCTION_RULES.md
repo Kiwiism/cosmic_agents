@@ -553,6 +553,10 @@ Recent reconstruction notes:
   BotEntry as the temporary backing store but no longer reads or writes
   `aoeRepositionAnchor` or `aoeRepositionDeadlineMs` directly outside the
   adapter.
+- Surround-breakout commitment state now enters through
+  `AgentBotBreakoutStateRuntime`; BotManager ranged retreat breakout movement
+  keeps BotEntry as the temporary backing store but no longer reads or writes
+  `breakoutDirection` or `breakoutUntilMs` directly outside the adapter.
 
 Initial reconstruction order:
 

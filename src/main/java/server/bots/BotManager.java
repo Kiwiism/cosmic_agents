@@ -6,6 +6,7 @@ import server.agents.integration.AgentBotManagerSchedulerRuntime;
 import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotAoeRepositionStateRuntime;
 import server.agents.integration.AgentBotActivityStateRuntime;
+import server.agents.integration.AgentBotBreakoutStateRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotGrindLootStateRuntime;
@@ -1388,12 +1389,12 @@ public class BotManager {
         // bot is no longer flanked on both sides (or a safety timeout), re-issuing a forward
         // step each tick. A per-step local retreat here would walk into the opposite mob and
         // flip direction every time it arrives — the swarm oscillation we are fixing.
-        if (entry.breakoutDirection != 0) {
-            if (now >= entry.breakoutUntilMs || !BotAttackExecutionProvider.isSurrounded(bot, botPos)) {
-                entry.breakoutDirection = 0;
-                entry.breakoutUntilMs = 0L;
+        if (AgentBotBreakoutStateRuntime.hasBreakoutCommitment(entry)) {
+            if (AgentBotBreakoutStateRuntime.isExpired(entry, now)
+                    || !BotAttackExecutionProvider.isSurrounded(bot, botPos)) {
+                AgentBotBreakoutStateRuntime.clear(entry);
             } else {
-                return breakoutStep(botPos, entry.breakoutDirection);
+                return breakoutStep(botPos, AgentBotBreakoutStateRuntime.direction(entry));
             }
         }
 
@@ -1435,8 +1436,8 @@ public class BotManager {
         // commit to bursting out one side instead of micro-retreating into the other wall.
         if (BotAttackExecutionProvider.isSurrounded(bot, botPos)) {
             int dir = pickBreakoutDirection(entry, botPos, combatTargetPos);
-            entry.breakoutDirection = dir;
-            entry.breakoutUntilMs = now + BotCombatManager.cfg.BREAKOUT_MAX_MS;
+            AgentBotBreakoutStateRuntime.setBreakoutCommitment(
+                    entry, dir, now + BotCombatManager.cfg.BREAKOUT_MAX_MS);
             // Drop any stale one-step hysteresis so it can't fight the committed breakout.
             entry.retreatHoldPos = null;
             entry.retreatHoldUntilMs = 0L;
