@@ -9,6 +9,7 @@ import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.bots.combat.BotMobHitboxProvider;
 import server.life.Monster;
 import server.maps.Foothold;
@@ -188,8 +189,7 @@ public class BotMovementManager {
         entry.nextGrindTargetSearchAtMs = 0L;
         AgentBotCombatCooldownStateRuntime.clearAttackCooldown(entry);
         AgentBotNavigationDebugStateRuntime.clearGraphWarmupFallback(entry);
-        entry.observedOwnerStepX = 0;
-        entry.observedOwnerStepY = 0;
+        AgentBotOwnerMotionStateRuntime.clearObservedOwnerStep(entry);
         BotFidgetManager.clear(entry);
         clearNavigationState(entry);
         AgentBotMovementBroadcastStateRuntime.invalidate(entry);

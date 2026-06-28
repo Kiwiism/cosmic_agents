@@ -9,6 +9,7 @@ import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotPotionStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
@@ -2040,7 +2041,7 @@ public class BotManager {
         TargetSnapshot targetSnapshot = captureTargetSnapshot(entry);
         Point ownerPos = targetSnapshot.rawOwnerPos();
         updateObservedOwnerMotion(entry, ownerPos);
-        entry.lastOwnerPos = new Point(ownerPos); // raw owner pos before formation offset/snap — used by path logger
+        AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, ownerPos); // raw owner pos before formation offset/snap
         clearFarmAnchorOnMapChange(entry, bot);
         clearPatrolOnMapChange(entry, bot);
         Point targetPos = targetSnapshot.primaryTargetPos();
@@ -3590,7 +3591,7 @@ public class BotManager {
         TargetSnapshot targetSnapshot = captureTargetSnapshot(entry);
         Point ownerPos = targetSnapshot.rawOwnerPos();
         updateObservedOwnerMotion(entry, ownerPos);
-        entry.lastOwnerPos = new Point(ownerPos);
+        AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, ownerPos);
         stepMovementOnly(entry, targetSnapshot.primaryTargetPos(), ownerPos, runAiTick);
         return runAiTick;
     }
@@ -3690,7 +3691,7 @@ public class BotManager {
         if (entry.wasMovingX || entry.moveDir != 0 || entry.movementVelX != 0 || entry.movementVelY != 0) {
             return false;
         }
-        if (entry.observedOwnerStepX != 0 || entry.observedOwnerStepY != 0) {
+        if (AgentBotOwnerMotionStateRuntime.observedOwnerMoved(entry)) {
             return false;
         }
 
@@ -3756,8 +3757,7 @@ public class BotManager {
         if (entry == null || ownerPos == null) {
             return;
         }
-        entry.observedOwnerStepX = entry.lastOwnerPos == null ? 0 : ownerPos.x - entry.lastOwnerPos.x;
-        entry.observedOwnerStepY = entry.lastOwnerPos == null ? 0 : ownerPos.y - entry.lastOwnerPos.y;
+        AgentBotOwnerMotionStateRuntime.updateObservedOwnerStep(entry, ownerPos);
     }
 
     private static void clearFarmAnchorOnMapChange(BotEntry entry, Character bot) {

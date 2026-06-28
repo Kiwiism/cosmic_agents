@@ -512,6 +512,11 @@ Recent reconstruction notes:
   logging keep BotEntry as the temporary backing store but no longer read or
   write `lastTickWasAi`, `lastTickAtMs`, `lastHeartbeatAtMs`, or
   `nextFollowIdleMovementCheckAtMs` directly in production.
+- Owner/leader motion observation now enters through
+  `AgentBotOwnerMotionStateRuntime`; BotManager follow tracking, movement reset,
+  and fidget decisions keep BotEntry as the temporary backing store but no
+  longer read or write `lastOwnerPos`, `observedOwnerStepX`, or
+  `observedOwnerStepY` directly in production.
 
 Initial reconstruction order:
 

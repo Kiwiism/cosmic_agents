@@ -4,6 +4,7 @@ import client.Character;
 import net.packet.Packet;
 import server.agents.integration.AgentBotFidgetRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
 import server.maps.Foothold;
 import tools.PacketCreator;
@@ -250,13 +251,13 @@ final class BotFidgetManager {
 
         int walkStep = BotPhysicsEngine.walkStep(entry.bot.getMap(), entry.movementProfile);
         int absDx = Math.abs(targetPos.x - botPos.x);
-        int ownerStep = Math.max(Math.abs(entry.observedOwnerStepX), Math.abs(entry.observedOwnerStepY));
+        int ownerStep = AgentBotOwnerMotionStateRuntime.maxObservedOwnerStep(entry);
         return absDx <= BotMovementManager.cfg.FOLLOW_DIST + walkStep
                 && ownerStep < walkStep;
     }
 
     private static boolean isOwnerMostlyIdle(BotEntry entry) {
-        return Math.abs(entry.observedOwnerStepX) <= 1 && Math.abs(entry.observedOwnerStepY) <= 1;
+        return AgentBotOwnerMotionStateRuntime.ownerMostlyIdle(entry);
     }
 
     static void startRandomFidget(BotEntry entry, long now, int durationMs) {

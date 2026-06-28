@@ -693,6 +693,19 @@ public class BotEntry {
     boolean graphWarmupFallback = false;
     int observedOwnerStepX = 0;
     int observedOwnerStepY = 0;
+
+    public int observedOwnerStepX() {
+        return observedOwnerStepX;
+    }
+
+    public int observedOwnerStepY() {
+        return observedOwnerStepY;
+    }
+
+    public void setObservedOwnerStep(int stepX, int stepY) {
+        this.observedOwnerStepX = stepX;
+        this.observedOwnerStepY = stepY;
+    }
     BotFidgetMode fidgetMode = BotFidgetMode.NONE;
     BotFidgetTrigger fidgetTrigger = BotFidgetTrigger.NONE;
     long fidgetUntilMs = 0L;
@@ -878,6 +891,14 @@ public class BotEntry {
     long lastTickAtMs = 0L;
     long lastHeartbeatAtMs = 0L;
     long nextFollowIdleMovementCheckAtMs = 0L;
+
+    public Point lastOwnerPosition() {
+        return lastOwnerPos == null ? null : new Point(lastOwnerPos);
+    }
+
+    public void setLastOwnerPosition(Point lastOwnerPos) {
+        this.lastOwnerPos = lastOwnerPos == null ? null : new Point(lastOwnerPos);
+    }
 
     public boolean lastTickWasAi() {
         return lastTickWasAi;
