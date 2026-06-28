@@ -1035,6 +1035,11 @@ public class BotEntry {
 
     // Party-quest state (one slot per PQ type; null = not in that PQ)
     public server.bots.pq.BotKpqState kpq = new server.bots.pq.BotKpqState();
+
+    public void resetKpqStage5Claimed() {
+        kpq.stage5Claimed = false;
+    }
+
     public BotScriptRuntime script = new BotScriptRuntime();
 
     // Equips received from the owner during the current trade session.

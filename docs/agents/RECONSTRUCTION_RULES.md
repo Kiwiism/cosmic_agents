@@ -669,6 +669,9 @@ Recent reconstruction notes:
 - No-ammo combat gate state now enters through `AgentBotAmmoStateRuntime`;
   BotManager local combat opportunity checks keep BotEntry as the temporary
   backing store but no longer read `noAmmo` directly in production.
+- KPQ Stage 5 claim reset state now enters through `AgentBotPqRuntime`;
+  BotManager map-change handling keeps BotEntry as the temporary backing store
+  but no longer writes `kpq.stage5Claimed` directly in production.
 
 Initial reconstruction order:
 

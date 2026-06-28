@@ -32,6 +32,7 @@ import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotPotionStateRuntime;
+import server.agents.integration.AgentBotPqRuntime;
 import server.agents.integration.AgentBotReplyChannelStateRuntime;
 import server.agents.integration.AgentBotRetreatHoldStateRuntime;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
@@ -2114,7 +2115,7 @@ public class BotManager {
                 BotMovementManager.broadcastMovement(entry);
                 if (BotPqHooks.requiresGrind(entry, bot)) { issueGrind(entry); }
                 else if (BotPqHooks.requiresFollow(entry, bot)) { issueFollowOwner(entry); }
-                else { entry.kpq.stage5Claimed = false; } // left KPQ — reset for next run
+                else { AgentBotPqRuntime.resetKpqStage5Claimed(entry); } // left KPQ — reset for next run
                 BotShopManager.onMapChange(entry, bot);
                 AgentBotManagerStatusRuntime.checkManagerStatus(entry, bot);
             } else {
@@ -2129,7 +2130,7 @@ public class BotManager {
                     BotMovementManager.broadcastMovement(entry);
                     if (BotPqHooks.requiresGrind(entry, bot)) { issueGrind(entry); }
                     else if (BotPqHooks.requiresFollow(entry, bot)) { issueFollowOwner(entry); }
-                    else { entry.kpq.stage5Claimed = false; } // left KPQ — reset for next run
+                    else { AgentBotPqRuntime.resetKpqStage5Claimed(entry); } // left KPQ — reset for next run
                     BotShopManager.onMapChange(entry, bot);
                     AgentBotManagerStatusRuntime.checkManagerStatus(entry, bot);
                 } finally {

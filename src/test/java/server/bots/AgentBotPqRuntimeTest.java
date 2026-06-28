@@ -6,6 +6,7 @@ import server.agents.integration.AgentBotPqReplyRuntime;
 import server.agents.integration.AgentBotPqRuntime;
 import server.agents.integration.AgentBotReplyRuntime;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.mockStatic;
 
 class AgentBotPqRuntimeTest {
@@ -29,5 +30,15 @@ class AgentBotPqRuntimeTest {
 
             replies.verify(() -> AgentBotReplyRuntime.queueSay(entry, "Here's your pass!"));
         }
+    }
+
+    @Test
+    void resetsKpqStage5ClaimedState() {
+        BotEntry entry = new BotEntry(null, null, null);
+        entry.kpq.stage5Claimed = true;
+
+        AgentBotPqRuntime.resetKpqStage5Claimed(entry);
+
+        assertFalse(entry.kpq.stage5Claimed);
     }
 }
