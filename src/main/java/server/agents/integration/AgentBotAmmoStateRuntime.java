@@ -20,4 +20,8 @@ public final class AgentBotAmmoStateRuntime {
     public static void clearAmmoShareRequested(BotEntry entry) {
         entry.setAmmoShareRequested(false);
     }
+
+    public static boolean noAmmo(BotEntry entry) {
+        return entry.noAmmo();
+    }
 }

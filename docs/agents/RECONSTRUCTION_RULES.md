@@ -666,6 +666,9 @@ Recent reconstruction notes:
 - Fidget mode presence now enters through `AgentBotFidgetRuntime`; BotManager
   follow-idle fast-path gating keeps BotEntry as the temporary backing store but
   no longer reads `fidgetMode` directly in production.
+- No-ammo combat gate state now enters through `AgentBotAmmoStateRuntime`;
+  BotManager local combat opportunity checks keep BotEntry as the temporary
+  backing store but no longer read `noAmmo` directly in production.
 
 Initial reconstruction order:
 

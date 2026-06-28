@@ -6,6 +6,7 @@ import server.agents.integration.AgentBotManagerSchedulerRuntime;
 import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotAoeRepositionStateRuntime;
 import server.agents.integration.AgentBotActivityStateRuntime;
+import server.agents.integration.AgentBotAmmoStateRuntime;
 import server.agents.integration.AgentBotBreakoutStateRuntime;
 import server.agents.integration.AgentBotBuffStateRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
@@ -2497,7 +2498,7 @@ public class BotManager {
                                                    Character bot,
                                                    Point botPos,
                                                    Monster preferredTarget) {
-        if (entry == null || entry.noAmmo || bot == null || botPos == null) {
+        if (entry == null || AgentBotAmmoStateRuntime.noAmmo(entry) || bot == null || botPos == null) {
             return null;
         }
 
@@ -2585,7 +2586,7 @@ public class BotManager {
                                                                   boolean allowCombatMovement,
                                                                   boolean allowJumpTowardTarget) {
         Point targetPos = movementTargetPos;
-        if (entry.noAmmo || bot == null || botPos == null) {
+        if (AgentBotAmmoStateRuntime.noAmmo(entry) || bot == null || botPos == null) {
             return new LocalOpportunityAttackResult(false, targetPos);
         }
 

@@ -228,6 +228,10 @@ public class BotEntry {
 
     // Ammo
     boolean noAmmo = false;
+
+    public boolean noAmmo() {
+        return noAmmo;
+    }
     boolean ammoWarnSent = false;
     boolean degenAttackDone = false; // force retreat after an accidental close-range hit
     long retreatHoldUntilMs = 0L; // hysteresis: lock the local retreat goal for a short window

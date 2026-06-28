@@ -19,4 +19,15 @@ class AgentBotAmmoStateRuntimeTest {
         AgentBotAmmoStateRuntime.clearAmmoShareRequested(entry);
         assertFalse(AgentBotAmmoStateRuntime.ammoShareRequested(entry));
     }
+
+    @Test
+    void adaptsNoAmmoState() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        assertFalse(AgentBotAmmoStateRuntime.noAmmo(entry));
+
+        entry.noAmmo = true;
+
+        assertTrue(AgentBotAmmoStateRuntime.noAmmo(entry));
+    }
 }
