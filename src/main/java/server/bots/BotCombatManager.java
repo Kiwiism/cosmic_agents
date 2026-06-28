@@ -53,6 +53,7 @@ import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
+import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.combat.CombatFormulaProvider;
 import server.life.Monster;
 import server.maps.Foothold;
@@ -892,7 +893,7 @@ public class BotCombatManager {
     static Monster findPatrolTarget(BotEntry entry, Character bot) {
         long startedAt = System.nanoTime();
         try {
-            if (entry == null || bot == null || entry.patrolRegionId < 0) {
+            if (entry == null || bot == null || !AgentBotPatrolStateRuntime.hasPatrolRegion(entry)) {
                 return null;
             }
             Point botPos = bot.getPosition();
@@ -908,7 +909,7 @@ public class BotCombatManager {
             }
             BotNavigationGraph graph = graphContext.graph();
             MapleMap map = graphContext.map();
-            int patrolId = entry.patrolRegionId;
+            int patrolId = AgentBotPatrolStateRuntime.patrolRegionId(entry);
 
             // 1-hop expansion: only inter-region edges count as a hop. Self-loop edges
             // (intra-region portals where fromRegionId == toRegionId) are free traversals

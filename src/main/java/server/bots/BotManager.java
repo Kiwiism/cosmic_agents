@@ -12,6 +12,7 @@ import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
+import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotPotionStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
@@ -1820,16 +1821,16 @@ public class BotManager {
         int regionId = graph != null ? BotNavigationManager.resolveCurrentRegionId(graph, entry, map, botPos) : -1;
         BotNavigationGraph.Region region = graph != null ? graph.getRegion(regionId) : null;
         if (region != null && !region.isRopeRegion && region.width() > 0) {
-            Point wander = entry.patrolWanderTarget;
+            Point wander = AgentBotPatrolStateRuntime.patrolWanderTarget(entry);
             if (wander == null || isNear(botPos, wander, BotMovementManager.cfg.STOP_DIST)) {
                 int x = ThreadLocalRandom.current().nextInt(region.minX, region.maxX + 1);
                 wander = region.pointAt(x);
-                entry.patrolWanderTarget = wander;
+                AgentBotPatrolStateRuntime.setPatrolWanderTarget(entry, wander);
             }
             return wander;
         }
 
-        entry.patrolWanderTarget = null;
+        AgentBotPatrolStateRuntime.clearPatrolWanderTarget(entry);
         if (entry.wanderDirection == 0) {
             entry.wanderDirection = ThreadLocalRandom.current().nextBoolean() ? 1 : -1;
         }
@@ -1909,22 +1910,23 @@ public class BotManager {
 
     private static Point resolvePatrolWanderTarget(BotEntry entry, Point botPos, MapleMap map) {
         BotNavigationGraph graph = BotNavigationGraphProvider.peekBestGraph(map, entry.movementProfile);
-        BotNavigationGraph.Region region = graph != null ? graph.getRegion(entry.patrolRegionId) : null;
+        int patrolRegionId = AgentBotPatrolStateRuntime.patrolRegionId(entry);
+        BotNavigationGraph.Region region = graph != null ? graph.getRegion(patrolRegionId) : null;
         if (region == null || region.isRopeRegion || region.width() == 0) {
             return resolveNoGrindTargetPosition(entry, botPos, map);
         }
         // Seek loot before roaming
-        Point lootTarget = BotInventoryManager.findNearestPatrolLootTarget(entry, entry.patrolRegionId);
+        Point lootTarget = BotInventoryManager.findNearestPatrolLootTarget(entry, patrolRegionId);
         if (lootTarget != null) {
-            entry.patrolWanderTarget = lootTarget;
+            AgentBotPatrolStateRuntime.setPatrolWanderTarget(entry, lootTarget);
             return lootTarget;
         }
         // Roam within region
-        Point wander = entry.patrolWanderTarget;
+        Point wander = AgentBotPatrolStateRuntime.patrolWanderTarget(entry);
         if (wander == null || isNear(botPos, wander, BotMovementManager.cfg.STOP_DIST)) {
             int x = ThreadLocalRandom.current().nextInt(region.minX, region.maxX + 1);
             wander = region.pointAt(x);
-            entry.patrolWanderTarget = wander;
+            AgentBotPatrolStateRuntime.setPatrolWanderTarget(entry, wander);
         }
         return wander;
     }
@@ -2272,7 +2274,7 @@ public class BotManager {
             }
         }
         if (runAiTick && shouldSearchForGrindTarget(entry, bot, target, attackPlan, now)) {
-            Monster searchedTarget = entry.patrolRegionId >= 0
+            Monster searchedTarget = AgentBotPatrolStateRuntime.hasPatrolRegion(entry)
                     ? BotCombatManager.findPatrolTarget(entry, bot)
                     : BotCombatManager.findGrindTarget(entry, bot);
             if (shouldSwitchToSearchedTarget(entry, bot, target, searchedTarget, attackPlan)) {
@@ -2282,7 +2284,7 @@ public class BotManager {
             entry.nextGrindTargetSearchAtMs = now + BotCombatManager.cfg.GRIND_RETARGET_INTERVAL_MS;
         }
         // Search for a convenient loot drop every AI tick (grind mode only)
-        if (runAiTick && entry.patrolRegionId < 0) {
+        if (runAiTick && !AgentBotPatrolStateRuntime.hasPatrolRegion(entry)) {
             entry.grindLootTarget = BotInventoryManager.findNearestGrindLootTarget(entry, bot);
         }
         if (target == null) {
@@ -2304,7 +2306,7 @@ public class BotManager {
             }
         }
         if (target == null) {
-            targetPos = entry.patrolRegionId >= 0
+            targetPos = AgentBotPatrolStateRuntime.hasPatrolRegion(entry)
                     ? resolvePatrolWanderTarget(entry, botPos, bot.getMap())
                     : resolveNoGrindTargetPosition(entry, botPos, bot.getMap());
             stepMovementCore(entry, targetPos, runAiTick);
@@ -2312,7 +2314,7 @@ public class BotManager {
         }
         entry.grindTarget = target;
         entry.wanderDirection = 0;
-        entry.patrolWanderTarget = null;
+        AgentBotPatrolStateRuntime.clearPatrolWanderTarget(entry);
         Point tp = target.getPosition();
         Monster rangedPriorityTarget = selectPriorityRangedAttackTarget(entry, bot, botPos, target);
         if (rangedPriorityTarget != null && rangedPriorityTarget != target) {
@@ -2423,7 +2425,7 @@ public class BotManager {
         }
         // Small detour: take a very close loot drop on the way when not retreating.
         if (crossRegionRetreatPos == null && !shouldRetreatForRangedSpacing
-                && aoeRepositionPos == null && entry.patrolRegionId < 0) {
+                && aoeRepositionPos == null && !AgentBotPatrolStateRuntime.hasPatrolRegion(entry)) {
             Point lootPos = convenientLootTarget(entry, botPos, tp);
             if (lootPos != null) targetPos = lootPos;
         }
@@ -2480,7 +2482,7 @@ public class BotManager {
         AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
         entry.grindTarget = null;
         entry.grindLootTarget = null;
-        entry.patrolWanderTarget = null;
+        AgentBotPatrolStateRuntime.clearPatrolWanderTarget(entry);
         BotMovementManager.resetEntryStateAfterTeleport(entry);
     }
 
@@ -2973,9 +2975,7 @@ public class BotManager {
 
     private void startPatrol(BotEntry entry, int regionId) {
         enterActiveMode(entry);
-        entry.patrolRegionId = regionId;
-        entry.patrolMapId = entry.bot.getMapId();
-        entry.patrolWanderTarget = null;
+        AgentBotPatrolStateRuntime.startPatrol(entry, regionId, entry.bot.getMapId());
     }
 
     /**
@@ -3045,9 +3045,7 @@ public class BotManager {
         entry.following = false;
         AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
         AgentBotFarmAnchorStateRuntime.clearFarmAnchor(entry);
-        entry.patrolRegionId = -1;
-        entry.patrolMapId = -1;
-        entry.patrolWanderTarget = null;
+        AgentBotPatrolStateRuntime.clearPatrol(entry);
         entry.grindTarget = null;
         entry.grindLootTarget = null;
         entry.nextGrindTargetSearchAtMs = 0L;
@@ -3193,9 +3191,7 @@ public class BotManager {
         entry.following = false;
         entry.grinding = false;
         AgentBotFarmAnchorStateRuntime.clearFarmAnchor(entry);
-        entry.patrolRegionId = -1;
-        entry.patrolMapId = -1;
-        entry.patrolWanderTarget = null;
+        AgentBotPatrolStateRuntime.clearPatrol(entry);
         entry.grindLootTarget = null;
     }
 
@@ -3756,14 +3752,10 @@ public class BotManager {
     }
 
     private static void clearPatrolOnMapChange(BotEntry entry, Character bot) {
-        if (entry == null || bot == null || entry.patrolRegionId < 0) {
+        if (entry == null || bot == null || !AgentBotPatrolStateRuntime.hasPatrolRegion(entry)) {
             return;
         }
-        if (entry.patrolMapId != bot.getMapId()) {
-            entry.patrolRegionId = -1;
-            entry.patrolMapId = -1;
-            entry.patrolWanderTarget = null;
-        }
+        AgentBotPatrolStateRuntime.clearPatrolIfMapChanged(entry, bot.getMapId());
     }
 
     private static void tickStuckDetection(BotEntry entry) {

@@ -4,7 +4,10 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.AgentMovementMode;
 import server.agents.capabilities.movement.AgentMovementSnapshot;
+import server.agents.integration.AgentBotFarmAnchorStateRuntime;
+import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentBotPatrolStateRuntime;
 
 import java.awt.Point;
 
@@ -39,15 +42,14 @@ class AgentBotMovementStateRuntimeTest {
     @Test
     void snapshotDefensivelyCopiesMoveTarget() {
         BotEntry entry = new BotEntry(null, null, null);
-        entry.moveTarget = new Point(100, 200);
-        entry.moveTargetPrecise = true;
+        AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, new Point(100, 200));
 
         AgentMovementSnapshot snapshot = AgentBotMovementStateRuntime.snapshot(entry);
         Point exposed = snapshot.moveTarget();
         exposed.x = 999;
 
         assertEquals(new Point(100, 200), snapshot.moveTarget());
-        assertEquals(new Point(100, 200), entry.moveTarget);
+        assertEquals(new Point(100, 200), AgentBotMoveTargetStateRuntime.moveTarget(entry));
         assertTrue(snapshot.moveTargetPrecise());
         assertEquals(AgentMovementMode.MOVING, snapshot.mode());
     }
@@ -55,11 +57,9 @@ class AgentBotMovementStateRuntimeTest {
     @Test
     void snapshotReportsFarmAndPatrolState() {
         BotEntry entry = new BotEntry(null, null, null);
-        entry.farmAnchor = new Point(50, 60);
-        entry.farmAnchorMapId = 100000000;
-        entry.patrolRegionId = 7;
-        entry.patrolMapId = 100000001;
-        entry.patrolWanderTarget = new Point(70, 80);
+        AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(50, 60), 100000000);
+        AgentBotPatrolStateRuntime.startPatrol(entry, 7, 100000001);
+        AgentBotPatrolStateRuntime.setPatrolWanderTarget(entry, new Point(70, 80));
 
         AgentMovementSnapshot snapshot = AgentBotMovementStateRuntime.snapshot(entry);
 
@@ -79,13 +79,13 @@ class AgentBotMovementStateRuntimeTest {
         entry.following = true;
         assertEquals(AgentMovementMode.FOLLOWING, AgentBotMovementStateRuntime.mode(entry));
 
-        entry.moveTarget = new Point(1, 1);
+        AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(1, 1), false);
         assertEquals(AgentMovementMode.MOVING, AgentBotMovementStateRuntime.mode(entry));
 
-        entry.farmAnchor = new Point(2, 2);
+        AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(2, 2), 100000000);
         assertEquals(AgentMovementMode.FARMING, AgentBotMovementStateRuntime.mode(entry));
 
-        entry.patrolRegionId = 9;
+        AgentBotPatrolStateRuntime.startPatrol(entry, 9, 100000000);
         assertEquals(AgentMovementMode.PATROLLING, AgentBotMovementStateRuntime.mode(entry));
 
         entry.grinding = true;

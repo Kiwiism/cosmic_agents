@@ -271,6 +271,23 @@ public class BotEntry {
     public java.awt.Point patrolWanderTarget() {
         return patrolWanderTarget == null ? null : new java.awt.Point(patrolWanderTarget);
     }
+    public boolean hasPatrolRegion() { return patrolRegionId >= 0; }
+    public void setPatrolRegion(int regionId, int mapId) {
+        this.patrolRegionId = regionId;
+        this.patrolMapId = regionId < 0 ? -1 : mapId;
+        this.patrolWanderTarget = null;
+    }
+    public void clearPatrol() {
+        this.patrolRegionId = -1;
+        this.patrolMapId = -1;
+        this.patrolWanderTarget = null;
+    }
+    public void setPatrolWanderTarget(java.awt.Point patrolWanderTarget) {
+        this.patrolWanderTarget = patrolWanderTarget == null ? null : new java.awt.Point(patrolWanderTarget);
+    }
+    public void clearPatrolWanderTarget() {
+        this.patrolWanderTarget = null;
+    }
     Point lastMobTouchCheckPos = null;
     int lastMobTouchMapId = -1;
 

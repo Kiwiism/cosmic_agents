@@ -532,6 +532,12 @@ Recent reconstruction notes:
   navigation gating, and LLM situation reporting keep BotEntry as the temporary
   backing store but no longer read or write `farmAnchor` or `farmAnchorMapId`
   directly in production.
+- Patrol region and wander-target state now enters through
+  `AgentBotPatrolStateRuntime`; BotManager patrol wandering, patrol loot
+  steering, grind/combat patrol targeting, movement snapshots, map-change
+  cleanup, and focused tests keep BotEntry as the temporary backing store but no
+  longer read or write `patrolRegionId`, `patrolMapId`, or
+  `patrolWanderTarget` directly outside the adapter.
 
 Initial reconstruction order:
 

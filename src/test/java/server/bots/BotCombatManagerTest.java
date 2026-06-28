@@ -28,6 +28,7 @@ import org.mockito.Mockito;
 import org.mockito.ArgumentCaptor;
 import server.StatEffect;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 import server.bots.combat.BotAttackDataProvider;
 import server.life.Monster;
@@ -1633,7 +1634,7 @@ class BotCombatManagerTest {
         doReturn(List.of(oneWayTarget, returnableTarget)).when(map).getAllMonsters();
 
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.patrolRegionId = 1;
+        AgentBotPatrolStateRuntime.startPatrol(entry, 1, map.getId());
 
         try (MockedStatic<BotNavigationGraphProvider> graphProvider =
                      Mockito.mockStatic(BotNavigationGraphProvider.class, Mockito.CALLS_REAL_METHODS)) {

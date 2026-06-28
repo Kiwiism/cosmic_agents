@@ -19,13 +19,13 @@ public final class AgentBotMovementStateRuntime {
                 entry.isFollowing(),
                 entry.isGrinding(),
                 entry.followTargetId(),
-                entry.moveTarget(),
-                entry.isMoveTargetPrecise(),
-                entry.farmAnchor(),
-                entry.farmAnchorMapId(),
-                entry.patrolRegionId(),
-                entry.patrolMapId(),
-                entry.patrolWanderTarget(),
+                AgentBotMoveTargetStateRuntime.moveTarget(entry),
+                AgentBotMoveTargetStateRuntime.isPrecise(entry),
+                AgentBotFarmAnchorStateRuntime.farmAnchor(entry),
+                AgentBotFarmAnchorStateRuntime.farmAnchorMapId(entry),
+                AgentBotPatrolStateRuntime.patrolRegionId(entry),
+                AgentBotPatrolStateRuntime.patrolMapId(entry),
+                AgentBotPatrolStateRuntime.patrolWanderTarget(entry),
                 position(entry.bot()),
                 position(entry.owner()),
                 mode(entry));
@@ -35,13 +35,13 @@ public final class AgentBotMovementStateRuntime {
         if (entry.isGrinding()) {
             return AgentMovementMode.GRINDING;
         }
-        if (entry.patrolRegionId() >= 0) {
+        if (AgentBotPatrolStateRuntime.hasPatrolRegion(entry)) {
             return AgentMovementMode.PATROLLING;
         }
-        if (entry.farmAnchor() != null) {
+        if (AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry)) {
             return AgentMovementMode.FARMING;
         }
-        if (entry.moveTarget() != null) {
+        if (AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)) {
             return AgentMovementMode.MOVING;
         }
         if (entry.isFollowing()) {
