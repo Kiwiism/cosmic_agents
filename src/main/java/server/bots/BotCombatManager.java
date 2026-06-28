@@ -50,6 +50,7 @@ import server.bots.combat.BotAttackDataProvider;
 import server.bots.combat.BotDefenseDataProvider;
 import server.bots.combat.BotMobHitboxProvider;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
+import server.agents.integration.AgentBotAmmoStateRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatBuffStateRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
@@ -1199,7 +1200,7 @@ public class BotCombatManager {
         if (AgentBotCombatCooldownStateRuntime.hasAttackCooldown(entry)) {
             return;
         }
-        if (entry.noAmmo) {
+        if (AgentBotAmmoStateRuntime.noAmmo(entry)) {
             return;
         }
         if (attackPlan.skillId != 0 && !canUseSkill(bot, attackPlan.skillId, attackPlan.skillLevel)) {
@@ -1692,7 +1693,7 @@ public class BotCombatManager {
     }
 
     private static boolean isImmediateProjectileTarget(BotEntry entry, Character bot, Monster target) {
-        if (entry == null || entry.noAmmo || bot == null || target == null || !target.isAlive()) {
+        if (entry == null || AgentBotAmmoStateRuntime.noAmmo(entry) || bot == null || target == null || !target.isAlive()) {
             return false;
         }
 
@@ -2554,8 +2555,7 @@ public class BotCombatManager {
         WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(bot);
         boolean mage = weaponType == WeaponType.WAND || weaponType == WeaponType.STAFF;
         if (!mage && !isRangedAmmoWeapon(weaponType)) {
-            entry.noAmmo = false;
-            entry.ammoWarnSent = false;
+            AgentBotAmmoStateRuntime.clearAmmoWarningState(entry);
             return;
         }
 
@@ -2577,12 +2577,11 @@ public class BotCombatManager {
                 }
             }
             if (mpPotionCount > 0) {
-                entry.noAmmo = false;
-                entry.ammoWarnSent = false;
+                AgentBotAmmoStateRuntime.clearAmmoWarningState(entry);
                 return;
             }
-            if (!entry.noAmmo) {
-                entry.noAmmo = true;
+            if (!AgentBotAmmoStateRuntime.noAmmo(entry)) {
+                AgentBotAmmoStateRuntime.setNoAmmo(entry, true);
                 if (AgentBotModeStateRuntime.grinding(entry)) {
                     BotManager.getInstance().issueFollowOwner(entry);
                     AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(MP_POTS_OUT_MSGS));
@@ -2593,19 +2592,18 @@ public class BotCombatManager {
 
         int ammo = countAmmo(bot, weaponType);
         if (ammo >= cfg.AMMO_LOW_WARN) {
-            entry.noAmmo = false;
-            entry.ammoWarnSent = false;
+            AgentBotAmmoStateRuntime.clearAmmoWarningState(entry);
             return;
         }
 
-        if (ammo > 0 && !entry.ammoWarnSent) {
-            entry.ammoWarnSent = true;
+        if (ammo > 0 && !AgentBotAmmoStateRuntime.ammoWarnSent(entry)) {
+            AgentBotAmmoStateRuntime.setAmmoWarnSent(entry, true);
             AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(AMMO_LOW_MSGS));
             return;
         }
 
-        if (ammo <= 0 && !entry.noAmmo) {
-            entry.noAmmo = true;
+        if (ammo <= 0 && !AgentBotAmmoStateRuntime.noAmmo(entry)) {
+            AgentBotAmmoStateRuntime.setNoAmmo(entry, true);
             if (AgentBotModeStateRuntime.grinding(entry)) {
                 BotManager.getInstance().issueFollowOwner(entry);
                 AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(AMMO_OUT_MSGS));

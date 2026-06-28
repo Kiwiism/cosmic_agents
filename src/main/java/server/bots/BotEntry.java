@@ -341,12 +341,25 @@ public class BotEntry {
     }
 
     // Ammo
-    boolean noAmmo = false;
+    private boolean noAmmo = false;
 
     public boolean noAmmo() {
         return noAmmo;
     }
-    boolean ammoWarnSent = false;
+
+    public void setNoAmmo(boolean noAmmo) {
+        this.noAmmo = noAmmo;
+    }
+
+    private boolean ammoWarnSent = false;
+
+    public boolean ammoWarnSent() {
+        return ammoWarnSent;
+    }
+
+    public void setAmmoWarnSent(boolean ammoWarnSent) {
+        this.ammoWarnSent = ammoWarnSent;
+    }
     boolean degenAttackDone = false; // force retreat after an accidental close-range hit
     private long retreatHoldUntilMs = 0L; // hysteresis: lock the local retreat goal for a short window
     private Point retreatHoldPos = null;  // the locked retreat target — reused while hold is active

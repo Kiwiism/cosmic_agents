@@ -731,6 +731,10 @@ Recent reconstruction notes:
   BotEntry as the temporary backing store but no longer read or write
   `attackCooldownMs`, `moveWindowMs`, `alertedUntilMs`, or
   `alertResetScheduled` directly in production.
+- Ammo/no-ammo combat gate state now enters through
+  `AgentBotAmmoStateRuntime`; BotCombatManager attack gating and ammo/potion
+  warning checks keep BotEntry as the temporary backing store but no longer read
+  or write `noAmmo` or `ammoWarnSent` directly in production.
 
 Initial reconstruction order:
 

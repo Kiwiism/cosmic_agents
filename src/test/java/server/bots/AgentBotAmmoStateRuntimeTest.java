@@ -25,9 +25,17 @@ class AgentBotAmmoStateRuntimeTest {
         BotEntry entry = new BotEntry(null, null, null);
 
         assertFalse(AgentBotAmmoStateRuntime.noAmmo(entry));
+        assertFalse(AgentBotAmmoStateRuntime.ammoWarnSent(entry));
 
-        entry.noAmmo = true;
+        AgentBotAmmoStateRuntime.setNoAmmo(entry, true);
+        AgentBotAmmoStateRuntime.setAmmoWarnSent(entry, true);
 
         assertTrue(AgentBotAmmoStateRuntime.noAmmo(entry));
+        assertTrue(AgentBotAmmoStateRuntime.ammoWarnSent(entry));
+
+        AgentBotAmmoStateRuntime.clearAmmoWarningState(entry);
+
+        assertFalse(AgentBotAmmoStateRuntime.noAmmo(entry));
+        assertFalse(AgentBotAmmoStateRuntime.ammoWarnSent(entry));
     }
 }

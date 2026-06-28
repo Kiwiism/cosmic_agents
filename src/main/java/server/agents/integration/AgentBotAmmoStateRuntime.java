@@ -24,4 +24,21 @@ public final class AgentBotAmmoStateRuntime {
     public static boolean noAmmo(BotEntry entry) {
         return entry.noAmmo();
     }
+
+    public static void setNoAmmo(BotEntry entry, boolean noAmmo) {
+        entry.setNoAmmo(noAmmo);
+    }
+
+    public static boolean ammoWarnSent(BotEntry entry) {
+        return entry.ammoWarnSent();
+    }
+
+    public static void setAmmoWarnSent(BotEntry entry, boolean ammoWarnSent) {
+        entry.setAmmoWarnSent(ammoWarnSent);
+    }
+
+    public static void clearAmmoWarningState(BotEntry entry) {
+        entry.setNoAmmo(false);
+        entry.setAmmoWarnSent(false);
+    }
 }
