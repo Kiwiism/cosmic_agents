@@ -4,6 +4,7 @@ package server.bots;
 import server.agents.integration.AgentBotManagerReplyRuntime;
 import server.agents.integration.AgentBotManagerSchedulerRuntime;
 import server.agents.integration.AgentBotManagerStatusRuntime;
+import server.agents.integration.AgentBotAoeRepositionStateRuntime;
 import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
@@ -1344,21 +1345,20 @@ public class BotManager {
     private static Point resolveAoeReposition(BotEntry entry, Character bot, Monster target,
                                               BotCombatManager.AttackPlan attackPlan, Point botPos) {
         long now = System.currentTimeMillis();
-        if (entry.aoeRepositionAnchor != null) {
-            boolean done = now > entry.aoeRepositionDeadlineMs
-                    || target == null || !target.isAlive()
-                    || Math.abs(entry.aoeRepositionAnchor.x - botPos.x) <= BotCombatManager.cfg.AOE_REPOSITION_ARRIVAL_X;
+        if (AgentBotAoeRepositionStateRuntime.hasAnchor(entry)) {
+            boolean done = AgentBotAoeRepositionStateRuntime.isExpiredOrArrived(
+                    entry, botPos, now, BotCombatManager.cfg.AOE_REPOSITION_ARRIVAL_X)
+                    || target == null || !target.isAlive();
             if (done) {
-                entry.aoeRepositionAnchor = null;
-                entry.aoeRepositionDeadlineMs = 0L;
+                AgentBotAoeRepositionStateRuntime.clear(entry);
                 return null;
             }
-            return entry.aoeRepositionAnchor;
+            return AgentBotAoeRepositionStateRuntime.anchor(entry);
         }
         Point anchor = BotCombatManager.aoeRepositionTarget(entry, bot, target, attackPlan);
         if (anchor != null) {
-            entry.aoeRepositionAnchor = anchor;
-            entry.aoeRepositionDeadlineMs = now + BotCombatManager.cfg.AOE_REPOSITION_MAX_MS;
+            AgentBotAoeRepositionStateRuntime.setAnchor(
+                    entry, anchor, now + BotCombatManager.cfg.AOE_REPOSITION_MAX_MS);
         }
         return anchor;
     }

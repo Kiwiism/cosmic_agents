@@ -166,6 +166,28 @@ public class BotEntry {
     long aoeRepositionDeadlineMs = 0L; // bounded-chase timeout for the AoE reposition commitment
     int wanderDirection = 0;      // -1 left, +1 right, 0 = unset (picked when grind has no target)
 
+    public Point aoeRepositionAnchor() {
+        return aoeRepositionAnchor == null ? null : new Point(aoeRepositionAnchor);
+    }
+
+    public boolean hasAoeRepositionAnchor() {
+        return aoeRepositionAnchor != null;
+    }
+
+    public long aoeRepositionDeadlineMs() {
+        return aoeRepositionDeadlineMs;
+    }
+
+    public void setAoeRepositionAnchor(Point anchor, long deadlineMs) {
+        aoeRepositionAnchor = anchor == null ? null : new Point(anchor);
+        aoeRepositionDeadlineMs = anchor == null ? 0L : deadlineMs;
+    }
+
+    public void clearAoeRepositionAnchor() {
+        aoeRepositionAnchor = null;
+        aoeRepositionDeadlineMs = 0L;
+    }
+
     // Shop auto-buy (triggered once per map change)
     volatile boolean shopVisitPending = false;
     volatile Point shopNpcPos = null;

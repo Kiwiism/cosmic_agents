@@ -548,6 +548,11 @@ Recent reconstruction notes:
   focused tests keep BotEntry as the temporary backing store but no longer read
   or write `grindLootTarget`, `ignoredGrindLootObjectId`, or
   `ignoredGrindLootUntilMs` directly outside the adapter.
+- AoE reposition commitment state now enters through
+  `AgentBotAoeRepositionStateRuntime`; BotManager AoE pre-attack movement keeps
+  BotEntry as the temporary backing store but no longer reads or writes
+  `aoeRepositionAnchor` or `aoeRepositionDeadlineMs` directly outside the
+  adapter.
 
 Initial reconstruction order:
 
