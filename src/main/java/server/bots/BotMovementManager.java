@@ -10,6 +10,7 @@ import server.agents.integration.AgentBotGrindSearchStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
+import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
@@ -334,10 +335,11 @@ public class BotMovementManager {
             // Set air steering intent. Gated by shouldApplyAirSteering to preserve
             // fixed ballistic path for committed nav jumps/drops.
             // If fidget manager already set moveDir (non-zero), preserve it.
-            if (entry.moveDir == 0 && targetPos != null && shouldApplyAirSteering(entry)) {
+            if (!AgentBotMovementStateRuntime.hasMoveDirection(entry) && targetPos != null && shouldApplyAirSteering(entry)) {
                 int dx = targetPos.x - botPos.x;
-                entry.moveDir = Math.abs(dx) > BotPhysicsEngine.cfg.SWIM_ARRIVAL_RADIUS_PX
-                        ? Integer.signum(dx) : 0;
+                AgentBotMovementStateRuntime.setMoveDirection(entry,
+                        Math.abs(dx) > BotPhysicsEngine.cfg.SWIM_ARRIVAL_RADIUS_PX
+                                ? Integer.signum(dx) : 0);
             }
 
             BotPhysicsEngine.AirborneStepResult result = BotPhysicsEngine.stepAirborne(entry, bot);
@@ -404,7 +406,7 @@ public class BotMovementManager {
         if (entry.fixedAirArc) {
             return false;
         }
-        if (entry.downJumpGracePeriodMS != 0L) {
+        if (AgentBotMovementStateRuntime.hasDownJumpGracePeriod(entry)) {
             return false;
         }
         if (entry.navEdge == null) {
@@ -524,7 +526,7 @@ public class BotMovementManager {
                 performTopRopeEntry(entry);
                 return;
             }
-            if (entry.downJumpPending) {
+            if (AgentBotMovementStateRuntime.hasDownJumpPending(entry)) {
                 performDownJump(entry);
                 return;
             }
@@ -745,10 +747,10 @@ public class BotMovementManager {
 
     private static void applyGroundAction(BotEntry entry, Foothold currentFh, MoveAction action) {
         Character bot = entry.bot;
-        entry.moveDir = switch (action.type()) {
+        AgentBotMovementStateRuntime.setMoveDirection(entry, switch (action.type()) {
             case WALK, JUMP -> Integer.compare(action.stepX(), 0);
             default -> 0;
-        };
+        });
 
         if (action.type() == ActionType.CROUCH) {
             BotPhysicsEngine.queueDownJump(entry, bot);

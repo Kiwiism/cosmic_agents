@@ -168,6 +168,10 @@ public class BotEntry {
     public boolean downJumpPending() {
         return downJumpPending;
     }
+
+    public long downJumpGracePeriodMs() {
+        return downJumpGracePeriodMS;
+    }
     boolean ropeEntryPending = false;
     Rope ropeEntryRope = null;
     int ropeEntryY = 0;

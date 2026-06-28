@@ -755,6 +755,12 @@ Recent reconstruction notes:
   resolution and delayed alert-stance broadcasts keep BotEntry as the temporary
   backing store but no longer read `entry.owner` or `entry.bot` directly in
   production.
+- Movement intent and down-jump gate reads now enter through
+  `AgentBotMovementStateRuntime`; BotMovementManager air steering, ground-action
+  movement intent, down-jump grace gating, and pending down-jump dispatch keep
+  BotEntry as the temporary backing store but no longer read or write
+  `moveDir`, `downJumpPending`, or `downJumpGracePeriodMS` directly in
+  production.
 
 Initial reconstruction order:
 

@@ -119,6 +119,14 @@ public final class AgentBotMovementStateRuntime {
         return entry.downJumpPending();
     }
 
+    public static boolean hasDownJumpPending(BotEntry entry) {
+        return entry.downJumpPending();
+    }
+
+    public static boolean hasDownJumpGracePeriod(BotEntry entry) {
+        return entry.downJumpGracePeriodMs() != 0L;
+    }
+
     public static boolean wasMovingX(BotEntry entry) {
         return entry.wasMovingX();
     }
