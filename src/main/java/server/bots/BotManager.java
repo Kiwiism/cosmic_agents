@@ -35,6 +35,7 @@ import server.agents.integration.AgentBotPotionStateRuntime;
 import server.agents.integration.AgentBotPqRuntime;
 import server.agents.integration.AgentBotReplyChannelStateRuntime;
 import server.agents.integration.AgentBotRetreatHoldStateRuntime;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
 import server.agents.integration.AgentBotShopStateRuntime;
 import server.agents.integration.AgentBotTickCadenceStateRuntime;
@@ -284,7 +285,8 @@ public class BotManager {
             return true;
         }
         for (BotEntry entry : entries) {
-            if (entry == null || entry.bot == null || entry.bot.getId() == target.getId()) {
+            if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry)
+                    || AgentBotRuntimeIdentityRuntime.botIs(entry, target.getId())) {
                 continue;
             }
             AgentBotManagerReplyRuntime.queueReply(entry, randomReply(List.of(
@@ -668,9 +670,9 @@ public class BotManager {
         }
 
         // Disown from current owner
-        Character bot = found.bot;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(found);
         entries.remove(found);
-        found.task.cancel(false);
+        AgentBotManagerSchedulerRuntime.cancelScheduledTask(found);
         issueStop(found);
 
         // Register under new owner
@@ -683,8 +685,8 @@ public class BotManager {
     public Character getActiveOwnerByBotCharId(int botCharId) {
         for (List<BotEntry> entries : bots.values()) {
             for (BotEntry entry : entries) {
-                if (entry.bot.getId() == botCharId) {
-                    return entry.owner;
+                if (AgentBotRuntimeIdentityRuntime.botIs(entry, botCharId)) {
+                    return AgentBotRuntimeIdentityRuntime.owner(entry);
                 }
             }
         }
@@ -782,7 +784,7 @@ public class BotManager {
         }
 
         for (BotEntry entry : entries) {
-            if (entry.bot.getName().equalsIgnoreCase(botName)) {
+            if (AgentBotRuntimeIdentityRuntime.botNameEquals(entry, botName)) {
                 return entry;
             }
         }

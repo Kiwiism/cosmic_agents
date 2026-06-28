@@ -680,6 +680,11 @@ Recent reconstruction notes:
   `AgentBotManagerSchedulerRuntime`; BotManager lifecycle removal keeps BotEntry
   as the temporary backing store but no longer reads or cancels `task` directly
   in production.
+- Runtime identity lookup state now enters through
+  `AgentBotRuntimeIdentityRuntime`; BotManager follow-target filtering,
+  ownership transfer, active-owner lookup, and name lookup keep BotEntry as the
+  temporary backing store but no longer read the corresponding `bot`/`owner`
+  identity fields directly in those paths.
 
 Initial reconstruction order:
 
