@@ -471,7 +471,7 @@ public class BotManager {
             AgentBotMapStateRuntime.setMapTracking(entry, spawnMapId, null);
         }
         AgentBotTickCadenceStateRuntime.reset(entry);
-        entry.moveDir = 0;
+        AgentBotMovementStateRuntime.clearMoveDirection(entry);
         AgentBotMovementBroadcastStateRuntime.invalidate(entry);
         BotMovementManager.broadcastMovement(entry);
         botChar.updatePartyMemberHP();
@@ -531,7 +531,7 @@ public class BotManager {
         AgentBotDeathStateRuntime.clear(entry);
         AgentBotMapStateRuntime.setMapTracking(entry, bot.getMapId(), BotMovementManager.buildFhIndex(bot.getMap()));
         AgentBotTickCadenceStateRuntime.reset(entry);
-        entry.moveDir = 0;
+        AgentBotMovementStateRuntime.clearMoveDirection(entry);
         AgentBotMovementBroadcastStateRuntime.invalidate(entry);
         BotMovementManager.broadcastMovement(entry);
         if (entry.owner != null) {
@@ -3652,7 +3652,8 @@ public class BotManager {
         if (entry.shopVisitPending || entry.shopSequenceActive) {
             return false;
         }
-        if (entry.wasMovingX || entry.moveDir != 0 || entry.movementVelX != 0 || entry.movementVelY != 0) {
+        if (entry.wasMovingX || AgentBotMovementStateRuntime.hasMoveDirection(entry)
+                || entry.movementVelX != 0 || entry.movementVelY != 0) {
             return false;
         }
         if (AgentBotOwnerMotionStateRuntime.observedOwnerMoved(entry)) {

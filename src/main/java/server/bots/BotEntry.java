@@ -82,6 +82,18 @@ public class BotEntry {
     // Mutually exclusive by state (inAir vs grounded), so one field suffices.
     int moveDir = 0;                     // -1 left, 0 none, +1 right
 
+    public int moveDirection() {
+        return moveDir;
+    }
+
+    public void setMoveDirection(int moveDirection) {
+        moveDir = Integer.compare(moveDirection, 0);
+    }
+
+    public void clearMoveDirection() {
+        moveDir = 0;
+    }
+
     // Rope climbing
     boolean climbing = false;
     Rope climbRope = null;

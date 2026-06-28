@@ -642,6 +642,10 @@ Recent reconstruction notes:
   region selection, retreat planning, and jumpability checks keep BotEntry as
   the temporary backing store but no longer read or write `movementProfile`
   directly in production.
+- Horizontal movement intent state now enters through
+  `AgentBotMovementStateRuntime`; BotManager spawn normalization and follow-idle
+  fast-path gating keep BotEntry as the temporary backing store but no longer
+  read or write `moveDir` directly in production.
 
 Initial reconstruction order:
 

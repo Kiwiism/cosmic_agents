@@ -12,6 +12,7 @@ import server.agents.integration.AgentBotPatrolStateRuntime;
 import java.awt.Point;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -126,5 +127,24 @@ class AgentBotMovementStateRuntimeTest {
         AgentBotMovementStateRuntime.refreshMovementProfile(entry, bot);
 
         assertEquals(new BotMovementProfile(160, 127), AgentBotMovementStateRuntime.movementProfile(entry));
+    }
+
+    @Test
+    void moveDirectionClampsAndClearsThroughAgentBoundary() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        assertEquals(0, AgentBotMovementStateRuntime.moveDirection(entry));
+        assertFalse(AgentBotMovementStateRuntime.hasMoveDirection(entry));
+
+        AgentBotMovementStateRuntime.setMoveDirection(entry, 25);
+        assertEquals(1, AgentBotMovementStateRuntime.moveDirection(entry));
+        assertTrue(AgentBotMovementStateRuntime.hasMoveDirection(entry));
+
+        AgentBotMovementStateRuntime.setMoveDirection(entry, -10);
+        assertEquals(-1, AgentBotMovementStateRuntime.moveDirection(entry));
+
+        AgentBotMovementStateRuntime.clearMoveDirection(entry);
+        assertEquals(0, AgentBotMovementStateRuntime.moveDirection(entry));
+        assertFalse(AgentBotMovementStateRuntime.hasMoveDirection(entry));
     }
 }

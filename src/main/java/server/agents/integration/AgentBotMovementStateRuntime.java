@@ -63,6 +63,22 @@ public final class AgentBotMovementStateRuntime {
         entry.setMovementProfile(BotMovementProfile.fromCharacter(bot));
     }
 
+    public static int moveDirection(BotEntry entry) {
+        return entry.moveDirection();
+    }
+
+    public static boolean hasMoveDirection(BotEntry entry) {
+        return entry.moveDirection() != 0;
+    }
+
+    public static void setMoveDirection(BotEntry entry, int moveDirection) {
+        entry.setMoveDirection(moveDirection);
+    }
+
+    public static void clearMoveDirection(BotEntry entry) {
+        entry.clearMoveDirection();
+    }
+
     private static Point position(Character character) {
         return character == null || character.getPosition() == null ? null : new Point(character.getPosition());
     }
