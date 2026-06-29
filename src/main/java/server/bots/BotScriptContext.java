@@ -7,16 +7,32 @@ import server.agents.integration.AgentBotScriptTaskStateRuntime;
 import java.awt.*;
 
 public final class BotScriptContext {
-    public final BotEntry entry;
-    public final Character bot;
-    public final Character owner;
-    public final BotManager manager;
+    private final BotEntry entry;
+    private final Character bot;
+    private final Character owner;
+    private final BotManager manager;
 
     BotScriptContext(BotEntry entry, Character bot, Character owner, BotManager manager) {
         this.entry = entry;
         this.bot = bot;
         this.owner = owner;
         this.manager = manager;
+    }
+
+    public BotEntry entry() {
+        return entry;
+    }
+
+    public Character bot() {
+        return bot;
+    }
+
+    public Character owner() {
+        return owner;
+    }
+
+    public BotManager manager() {
+        return manager;
     }
 
     public int getInt(String key) {

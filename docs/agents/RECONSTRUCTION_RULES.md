@@ -1048,6 +1048,10 @@ Recent reconstruction notes:
   `AgentBotRuntimeIdentityRuntime`; public owner-to-bot lookup preserves the
   same first-entry behavior while no longer reading the BotEntry bot field
   directly.
+- KPQ stage-1 script context access now enters through `BotScriptContext`
+  accessors; the stage script preserves Cloto movement, coupon assignment,
+  progress reporting, exchange, and pass delivery behavior while no longer
+  reading script context runtime fields directly.
 
 Initial reconstruction order:
 
