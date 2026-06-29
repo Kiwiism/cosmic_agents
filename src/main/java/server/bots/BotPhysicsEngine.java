@@ -882,10 +882,11 @@ public final class BotPhysicsEngine {
         return AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry) == 0L;
     }
 
-  /**
-     * Intent-driven ground integrator. Reads {@link BotEntry#moveDir} for horizontal
-     * steer direction (-1/0/+1). Physics owns velocity integration via force/friction model.
-     * Movement layer sets intent before calling; physics never returns velocity to movement.
+    /**
+     * Intent-driven ground integrator. Reads horizontal steer direction
+     * (-1/0/+1) through Agent movement state. Physics owns velocity integration
+     * via force/friction model. Movement layer sets intent before calling;
+     * physics never returns velocity to movement.
      */
     static GroundMotion applyGroundMotion(BotEntry entry, Character bot, Foothold foothold) {
         MapleMap map = bot.getMap();
@@ -1252,10 +1253,10 @@ public final class BotPhysicsEngine {
         syncCharacterState(entry);
     }
 
-  /**
-     * Intent-driven airborne integrator. Reads {@link BotEntry#moveDir} for horizontal
-     * air steering (-1/0/+1). Movement layer gates steering for committed nav trajectories
-     * (fixedAirArc, JUMP/DROP edges) by setting moveDir=0.
+    /**
+     * Intent-driven airborne integrator. Reads horizontal air steering (-1/0/+1)
+     * through Agent movement state. Movement layer gates steering for committed
+     * nav trajectories (fixedAirArc, JUMP/DROP edges) by clearing movement intent.
      *
      * One physics step: apply air steering from intent, advance position, resolve collision, apply result.
      * All collision outcome methods are private — movement must not call them directly.
