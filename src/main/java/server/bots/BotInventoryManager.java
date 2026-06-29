@@ -23,6 +23,7 @@ import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotInventoryStateRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.ItemInformationProvider;
 import server.StatEffect;
 import server.Trade;
@@ -169,8 +170,9 @@ public class BotInventoryManager {
 
             Item pickedItem = drop.getItem();
             int pickedItemId = drop.getItemId();
-            if (ItemId.isNxCard(pickedItemId) && entry.owner != null && entry.owner.getMap() == bot.getMap()) {
-                entry.owner.pickupItem(drop);
+            Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+            if (ItemId.isNxCard(pickedItemId) && owner != null && owner.getMap() == bot.getMap()) {
+                owner.pickupItem(drop);
             } else {
                 bot.pickupItem(drop);
             }
@@ -178,7 +180,7 @@ public class BotInventoryManager {
             if (pickedItem != null && pickedItemId > 0 && hasItem(bot, pickedItem)) {
                 InventoryType pickedType = ItemConstants.getInventoryType(pickedItemId);
                 if (pickedType == InventoryType.EQUIP) {
-                    BotEquipManager.autoEquip(bot, entry.owner, AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
+                    BotEquipManager.autoEquip(bot, owner, AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
                     if (hasItem(bot, pickedItem)) {
                         BotOfferManager.scheduleLootOfferPrompt(entry, bot, pickedItem, 5_000L);
                     }
@@ -236,7 +238,7 @@ public class BotInventoryManager {
      * drop exists, the graph is unavailable, or any inventory is full.
      */
     static Point findNearestPatrolLootTarget(BotEntry entry, int patrolRegionId) {
-        Character bot = entry.bot;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (bot == null) return null;
         if (hasAnyInventoryFull(bot)) return null;
         MapleMap map = bot.getMap();
@@ -271,7 +273,7 @@ public class BotInventoryManager {
         if (AgentBotPendingTradeStateRuntime.hasActiveSequence(entry)) return;
 
         Trade trade = bot.getTrade();
-        Character owner = entry.owner;
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (trade == null) {
             clearManualTradeState(entry, bot);
             return;
@@ -424,7 +426,7 @@ public class BotInventoryManager {
             startTradeMesoTransfer(category, entry, bot);
             return;
         }
-        Character owner = entry.owner;
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner == null) {
             AgentBotInventoryRuntime.replyNow(entry, "can't find you to trade!");
             return;
@@ -529,7 +531,8 @@ public class BotInventoryManager {
             return;
         }
         String botName = bot != null ? bot.getName() : "?";
-        String ownerName = entry != null && entry.owner != null ? entry.owner.getName() : "?";
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+        String ownerName = owner != null ? owner.getName() : "?";
         log.warn("Slow bot trade command phase: category={} phase={} took {} ms bot={} owner={}",
                 category,
                 phase,
@@ -674,7 +677,7 @@ public class BotInventoryManager {
                 // Both sides confirmed — sequence complete or cancelled after bot OK
                 if (AgentBotPendingTradeStateRuntime.singleBatch(entry)) {
                     resetTradeState(entry, bot);
-                    BotEquipManager.autoEquip(bot, entry.owner, null);
+                    BotEquipManager.autoEquip(bot, AgentBotRuntimeIdentityRuntime.owner(entry), null);
                     return;
                 }
                 AgentBotPendingTradeStateRuntime.clearItems(entry);
@@ -685,7 +688,7 @@ public class BotInventoryManager {
                 // Owner cancelled after items were added (items returned to bot)
                 AgentBotInventoryRuntime.replyNow(entry, "trade cancelled");
                 resetTradeState(entry, bot);
-                BotEquipManager.autoEquip(bot, entry.owner, null);
+                BotEquipManager.autoEquip(bot, AgentBotRuntimeIdentityRuntime.owner(entry), null);
             } else {
                 // Owner declined invite
                 AgentBotInventoryRuntime.replyNow(entry, "trade declined");
@@ -829,7 +832,7 @@ public class BotInventoryManager {
         // slots get refilled from the bot's bag — prevents leaving the bot wearing e.g. pants
         // without a top after a declined trade.
         if (hadRestores && bot != null) {
-            BotEquipManager.autoEquip(bot, entry.owner, null);
+            BotEquipManager.autoEquip(bot, AgentBotRuntimeIdentityRuntime.owner(entry), null);
         }
     }
 
@@ -866,7 +869,7 @@ public class BotInventoryManager {
     }
 
     private static void startTradeMesoTransfer(String category, BotEntry entry, Character bot) {
-        Character owner = entry.owner;
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner == null) {
             AgentBotInventoryRuntime.replyNow(entry, "can't find you to trade!");
             return;
@@ -1115,7 +1118,7 @@ public class BotInventoryManager {
         List<Item> result = new ArrayList<>();
         switch (category) {
             case "recommended" -> {
-                Character owner = entry.owner;
+                Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
                 if (owner != null) {
                     result.addAll(BotEquipManager.collectRecommendedItems(owner, bot));
                 }
@@ -1123,14 +1126,14 @@ public class BotInventoryManager {
             case "scrolls" -> {
                 collectFromBag(bot, result, InventoryType.USE,
                         item -> ItemConstants.isEquipScroll(item.getItemId()));
-                result = prioritizeScrollTradeItems(result, entry.owner);
+                result = prioritizeScrollTradeItems(result, AgentBotRuntimeIdentityRuntime.owner(entry));
             }
             case "pots"    -> collectFromBag(bot, result, InventoryType.USE,
                     item -> isRecoveryPotion(item.getItemId()));
             case "buff"    -> collectFromBag(bot, result, InventoryType.USE,
                     item -> isBuffConsumable(item.getItemId()));
             case "use"     -> {
-                UseTradeGroups groups = classifyUseTradeGroups(bot, entry.owner);
+                UseTradeGroups groups = classifyUseTradeGroups(bot, AgentBotRuntimeIdentityRuntime.owner(entry));
                 result.addAll(groups.uncategorized());
                 result.addAll(groups.categorized());
             }
@@ -1146,7 +1149,7 @@ public class BotInventoryManager {
             case "trash" -> result.addAll(collectTrashEquips(entry, bot));
             case "etc" -> {
                 collectFromBag(bot, result, InventoryType.ETC, item -> true);
-                result = prioritizeEtcTradeItems(result, entry.owner);
+                result = prioritizeEtcTradeItems(result, AgentBotRuntimeIdentityRuntime.owner(entry));
             }
             default -> {
                 if (isReservedEquipsCategory(category)) {
@@ -1212,10 +1215,10 @@ public class BotInventoryManager {
     private static Character resolveTradeRecipient(BotEntry entry, Character bot) {
         int recipientId = AgentBotPendingTradeStateRuntime.recipientId(entry);
         if (recipientId <= 0) {
-            return entry.owner;
+            return AgentBotRuntimeIdentityRuntime.owner(entry);
         }
 
-        Character owner = entry.owner;
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner != null && owner.getId() == recipientId) {
             return owner;
         }
@@ -1588,7 +1591,8 @@ public class BotInventoryManager {
             long elapsedNs = System.nanoTime() - startedAt;
             if (elapsedNs >= TRADE_COMMAND_PROFILE_WARN_NS) {
                 String botName = bot != null ? bot.getName() : "?";
-                String ownerName = entry != null && entry.owner != null ? entry.owner.getName() : "?";
+                Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+                String ownerName = owner != null ? owner.getName() : "?";
                 log.warn(
                         "Slow equip trade classification: took {} ms bot={} owner={} bagItems={} selfKeep={} normalItems={} reservedOtherItems={} reservedSelfItems={} bagScanMs={} selfKeepMs={} reservedOtherMs={} reservedOtherChecks={} reservedOtherHits={} sortMs={}",
                         String.format("%.1f", elapsedNs / 1_000_000.0),

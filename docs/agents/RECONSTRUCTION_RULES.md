@@ -762,6 +762,12 @@ Recent reconstruction notes:
   directional-drop live landing simulation and follow-rope region targeting keep
   BotEntry as the temporary backing store but no longer read `physX`, `hspeed`,
   `groundPhysicsCarryMs`, or `shopVisitPending` directly in production.
+- BotInventoryManager runtime identity reads now enter through
+  `AgentBotRuntimeIdentityRuntime`; passive pickup ownership, patrol-loot
+  lookup, manual trade handling, transfer setup, auto-equip handoff,
+  transferable item selection, recipient resolution, and slow-path logging keep
+  BotEntry as the temporary backing store but no longer read `entry.bot` or
+  `entry.owner` directly in production.
 - Combat animation/cooldown and alert-reset state now enters through
   `AgentBotCombatCooldownStateRuntime`; BotCombatManager attack cooldown,
   movement-window, alerted-stance timeout, and alert-reset scheduling keep
