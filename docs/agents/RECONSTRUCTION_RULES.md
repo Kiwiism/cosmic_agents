@@ -120,6 +120,13 @@ Recent reconstruction notes:
   `AgentCombatGrindTargetPolicy`. Graph-cost, local-score, and distance
   tie-break ordering are unchanged; `BotCombatManager` still builds the scored
   target list until the remaining graph scoring slice is extracted.
+- Combat grind-region grouping and graph-score conversion moved to
+  `server.agents.capabilities.combat.AgentGrindTargetGroup` and
+  `AgentCombatGrindTargetPolicy`. Best-local-score target selection,
+  distance tie-break within a region, crowd bonus cap/per-mob formula,
+  unreachable graph-cost preservation, and occupancy-penalty application are
+  unchanged; `BotCombatManager` still supplies legacy path cost, occupancy
+  penalty, and navigation-region resolution.
 - Combat attack-plan tie-break ordering moved to
   `server.agents.capabilities.combat.AgentAttackPlanTieBreakPolicy`. Cooldown
   priority and lower-skill-id fallback ordering are unchanged; larger

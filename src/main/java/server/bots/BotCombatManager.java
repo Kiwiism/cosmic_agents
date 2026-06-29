@@ -24,6 +24,7 @@ import server.agents.capabilities.combat.AgentMobTouchPolicy;
 import server.agents.capabilities.combat.AgentMobKnockbackPolicy;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
 import server.agents.capabilities.combat.AgentScoredGrindTarget;
+import server.agents.capabilities.combat.AgentGrindTargetGroup;
 
 import server.agents.runtime.AgentPerformanceMonitor;
 
@@ -1303,7 +1304,7 @@ public class BotCombatManager {
                                                               Point botPos,
                                                               Foothold botFoothold,
                                                               List<Monster> candidates) {
-        Map<Integer, GrindTargetGroup> groupsByRegionId = new HashMap<>();
+        Map<Integer, AgentGrindTargetGroup> groupsByRegionId = new HashMap<>();
         for (Monster candidate : candidates) {
             Point targetPos = candidate.getPosition();
             int targetRegionId = BotNavigationManager.resolveTargetRegionId(
@@ -1314,22 +1315,17 @@ public class BotCombatManager {
 
             long localScore = grindTargetScore(bot, botPos, botFoothold, candidate)
                     - aoeClusterBonus(entry, candidate, candidates);
-            GrindTargetGroup group = groupsByRegionId.computeIfAbsent(targetRegionId, GrindTargetGroup::new);
+            AgentGrindTargetGroup group = groupsByRegionId.computeIfAbsent(targetRegionId, AgentGrindTargetGroup::new);
             group.add(candidate, localScore, targetPos.distanceSq(botPos));
         }
 
         List<AgentScoredGrindTarget> scoredTargets = new ArrayList<>(groupsByRegionId.size());
-        for (GrindTargetGroup group : groupsByRegionId.values()) {
+        for (AgentGrindTargetGroup group : groupsByRegionId.values()) {
             long pathCost = graphPathCost(context.graph(), context.map(), context.startPos(), context.startRegionId(),
                     group.bestMonster().getPosition(), group.regionId(), context.profile());
-            long crowdBonus = Math.min(3_000L, (long) Math.max(0, group.mobCount() - 1) * 400L);
             long occupancyPenalty = grindRegionOccupancyPenalty(context, bot, group.regionId());
-            long graphScore = pathCost >= UNREACHABLE_GRAPH_COST
-                    ? UNREACHABLE_GRAPH_COST
-                    : Math.max(0L, pathCost - crowdBonus) + occupancyPenalty;
-            long localScore = group.bestLocalScore() + occupancyPenalty;
-            scoredTargets.add(new AgentScoredGrindTarget(group.bestMonster(), graphScore, localScore,
-                    group.bestDistanceSq()));
+            scoredTargets.add(AgentCombatGrindTargetPolicy.toScoredTarget(
+                    group, pathCost, occupancyPenalty, UNREACHABLE_GRAPH_COST));
         }
         return scoredTargets;
     }
@@ -1558,49 +1554,6 @@ public class BotCombatManager {
         }
 
         return BotPhysicsEngine.findGroundFoothold(bot.getMap(), position);
-    }
-
-    private static final class GrindTargetGroup {
-        private final int regionId;
-        private int mobCount;
-        private Monster bestMonster;
-        private long bestLocalScore = Long.MAX_VALUE;
-        private double bestDistanceSq = Double.MAX_VALUE;
-
-        private GrindTargetGroup(int regionId) {
-            this.regionId = regionId;
-        }
-
-        private void add(Monster monster, long localScore, double distanceSq) {
-            mobCount++;
-            if (bestMonster == null
-                    || localScore < bestLocalScore
-                    || (localScore == bestLocalScore && distanceSq < bestDistanceSq)) {
-                bestMonster = monster;
-                bestLocalScore = localScore;
-                bestDistanceSq = distanceSq;
-            }
-        }
-
-        private int regionId() {
-            return regionId;
-        }
-
-        private int mobCount() {
-            return mobCount;
-        }
-
-        private Monster bestMonster() {
-            return bestMonster;
-        }
-
-        private long bestLocalScore() {
-            return bestLocalScore;
-        }
-
-        private double bestDistanceSq() {
-            return bestDistanceSq;
-        }
     }
 
     private record GrindGraphContext(BotEntry entry,

@@ -76,6 +76,55 @@ class AgentCombatGrindTargetPolicyTest {
         assertNull(AgentCombatGrindTargetPolicy.pickFromBestTargets(new ArrayList<>()));
     }
 
+    @Test
+    void shouldGroupTargetsByBestLocalScoreThenDistance() {
+        Monster farTie = mock(Monster.class);
+        Monster localWinner = mock(Monster.class);
+        Monster distanceWinner = mock(Monster.class);
+        AgentGrindTargetGroup group = new AgentGrindTargetGroup(9);
+
+        group.add(farTie, 100, 500.0);
+        group.add(localWinner, 90, 999.0);
+        group.add(distanceWinner, 90, 50.0);
+
+        assertEquals(9, group.regionId());
+        assertEquals(3, group.mobCount());
+        assertEquals(distanceWinner, group.bestMonster());
+        assertEquals(90, group.bestLocalScore());
+        assertEquals(50.0, group.bestDistanceSq());
+    }
+
+    @Test
+    void shouldConvertRegionGroupToLegacyScoredTarget() {
+        Monster best = mock(Monster.class);
+        AgentGrindTargetGroup group = new AgentGrindTargetGroup(4);
+        group.add(best, 120, 25.0);
+        group.add(mock(Monster.class), 130, 9.0);
+
+        AgentScoredGrindTarget scored = AgentCombatGrindTargetPolicy.toScoredTarget(
+                group, 1_000, 50, 9_999);
+
+        assertEquals(best, scored.monster());
+        assertEquals(650, scored.graphCost());
+        assertEquals(170, scored.localScore());
+        assertEquals(25.0, scored.distanceSq());
+    }
+
+    @Test
+    void shouldCapCrowdBonusAndPreserveUnreachableGraphCost() {
+        Monster best = mock(Monster.class);
+        AgentGrindTargetGroup group = new AgentGrindTargetGroup(4);
+        for (int i = 0; i < 20; i++) {
+            group.add(i == 0 ? best : mock(Monster.class), 100 + i, i);
+        }
+
+        assertEquals(3_000, AgentCombatGrindTargetPolicy.regionCrowdBonus(group.mobCount()));
+        AgentScoredGrindTarget scored = AgentCombatGrindTargetPolicy.toScoredTarget(
+                group, 9_999, 50, 9_999);
+        assertEquals(9_999, scored.graphCost());
+        assertEquals(150, scored.localScore());
+    }
+
     private static Foothold foothold(int id) {
         return new Foothold(new Point(0, 0), new Point(100, 0), id);
     }

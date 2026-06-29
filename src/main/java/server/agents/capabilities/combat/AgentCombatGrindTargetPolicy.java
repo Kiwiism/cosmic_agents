@@ -7,6 +7,9 @@ import server.life.Monster;
 import server.maps.Foothold;
 
 public final class AgentCombatGrindTargetPolicy {
+    private static final long REGION_CROWD_BONUS_CAP = 3_000L;
+    private static final long REGION_CROWD_BONUS_PER_EXTRA_MOB = 400L;
+
     private static final Comparator<AgentScoredGrindTarget> LEGACY_TARGET_ORDER = Comparator
             .comparingLong(AgentScoredGrindTarget::graphCost)
             .thenComparingLong(AgentScoredGrindTarget::localScore)
@@ -42,5 +45,28 @@ public final class AgentCombatGrindTargetPolicy {
         }
         sortByLegacyTargetOrder(scoredTargets);
         return scoredTargets.get(0).monster();
+    }
+
+    public static long regionCrowdBonus(int mobCount) {
+        return Math.min(REGION_CROWD_BONUS_CAP,
+                (long) Math.max(0, mobCount - 1) * REGION_CROWD_BONUS_PER_EXTRA_MOB);
+    }
+
+    public static long graphScore(long pathCost, long crowdBonus, long occupancyPenalty, long unreachableGraphCost) {
+        if (pathCost >= unreachableGraphCost) {
+            return unreachableGraphCost;
+        }
+        return Math.max(0L, pathCost - crowdBonus) + occupancyPenalty;
+    }
+
+    public static AgentScoredGrindTarget toScoredTarget(AgentGrindTargetGroup group,
+                                                        long pathCost,
+                                                        long occupancyPenalty,
+                                                        long unreachableGraphCost) {
+        long graphScore = graphScore(pathCost, regionCrowdBonus(group.mobCount()),
+                occupancyPenalty, unreachableGraphCost);
+        long localScore = group.bestLocalScore() + occupancyPenalty;
+        return new AgentScoredGrindTarget(group.bestMonster(), graphScore, localScore,
+                group.bestDistanceSq());
     }
 }
