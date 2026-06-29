@@ -881,6 +881,13 @@ Recent reconstruction notes:
   calculations, grounded execution, diagonal/sideways direction selection, and
   prone visual broadcast keep BotEntry as the temporary backing store but no
   longer read `bot` or `movementProfile` directly in production.
+- Fidget movement/nav gate state now enters through
+  `AgentBotMovementStateRuntime` and `AgentBotNavigationDebugStateRuntime`;
+  BotFidgetManager social fidget eligibility, active fidget eligibility,
+  airborne/climb dispatch, air-steer movement intent, grounded sideways
+  movement intent, and prone visual facing keep BotEntry as the temporary
+  backing store but no longer read or write `inAir`, `climbing`, `navEdge`,
+  `downJumpPending`, `moveDir`, or `facingDir` directly in production.
 
 Initial reconstruction order:
 

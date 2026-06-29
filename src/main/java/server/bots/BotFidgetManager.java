@@ -160,11 +160,11 @@ final class BotFidgetManager {
                 || AgentBotFidgetRuntime.isLeaderIdleForFidget(entry)
                 || AgentBotModeStateRuntime.grinding(entry)
                 || AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)
-                || entry.navEdge != null
+                || AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
                 || AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry)
                 || AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)
-                || entry.inAir
-                || entry.climbing) {
+                || AgentBotMovementStateRuntime.inAir(entry)
+                || AgentBotMovementStateRuntime.climbing(entry)) {
             return false;
         }
 
@@ -180,17 +180,18 @@ final class BotFidgetManager {
                                       Point botPos,
                                       Point targetPos,
                                       boolean allowAirborneJumpFidget) {
-        boolean airborneJumpFidget = entry.inAir && allowAirborneJumpFidget && isJumpFidget(entry.fidgetMode);
+        boolean inAir = AgentBotMovementStateRuntime.inAir(entry);
+        boolean airborneJumpFidget = inAir && allowAirborneJumpFidget && isJumpFidget(entry.fidgetMode);
         return AgentBotModeStateRuntime.following(entry)
                 && !AgentBotFidgetRuntime.isLeaderIdleForFidget(entry)
                 && !AgentBotModeStateRuntime.grinding(entry)
                 && !AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)
-                && entry.navEdge == null
+                && !AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
                 && !AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry)
                 && !AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)
-                && !entry.climbing
-                && (!entry.inAir || airborneJumpFidget)
-                && !entry.downJumpPending
+                && !AgentBotMovementStateRuntime.climbing(entry)
+                && (!inAir || airborneJumpFidget)
+                && !AgentBotMovementStateRuntime.downJumpPending(entry)
                 && (airborneJumpFidget || Math.abs(targetPos.y - botPos.y) <= BotMovementManager.cfg.JUMP_Y_THRESH * 2);
     }
 
@@ -287,11 +288,11 @@ final class BotFidgetManager {
     }
 
     private static boolean handleActiveTick(BotEntry entry, Point botPos, Point targetPos, long now) {
-        if (entry.climbing) {
+        if (AgentBotMovementStateRuntime.climbing(entry)) {
             finishFidget(entry, botPos);
             return false;
         }
-        if (entry.inAir) {
+        if (AgentBotMovementStateRuntime.inAir(entry)) {
             tickActiveAirborne(entry, now);
             BotMovementManager.tickAirborne(entry, null);
             return true;
@@ -311,7 +312,7 @@ final class BotFidgetManager {
 
         int steerDir = ThreadLocalRandom.current().nextBoolean() ? 1 : -1;
         entry.fidgetAirSteerDir = steerDir;
-        entry.moveDir = steerDir;
+        AgentBotMovementStateRuntime.setMoveDirection(entry, steerDir);
         entry.nextFidgetActionAtMs = now + jitteredDelayMs(entry.fidgetActionBaseDelayMs);
     }
 
@@ -439,7 +440,7 @@ final class BotFidgetManager {
             return;
         }
 
-        entry.moveDir = dir;
+        AgentBotMovementStateRuntime.setMoveDirection(entry, dir);
         BotPhysicsEngine.applyGroundMotion(entry, bot, currentFh);
         BotMovementManager.broadcastMovement(entry);
     }
@@ -500,7 +501,7 @@ final class BotFidgetManager {
                 bot,
                 0,
                 0,
-                entry.facingDir < 0 ? 0x80 : 0x00,
+                AgentBotMovementStateRuntime.facingDirection(entry) < 0 ? 0x80 : 0x00,
                 0,
                 Map.of(),
                 4,
