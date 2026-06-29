@@ -33,6 +33,8 @@ class AgentDialogueCatalogTest {
         assertTrue(AgentDialogueCatalog.arrowRequestReplies().contains("need arrows soon, anyone got extras?"));
         assertTrue(AgentDialogueCatalog.boltRequestReplies().contains("need crossbow bolts soon, anyone got extras?"));
         assertTrue(AgentDialogueCatalog.ammoOfferReplies().contains("got some ammo for you, trading"));
+        assertTrue(AgentDialogueCatalog.shopResupplyReplies().contains("one sec, going to restock"));
+        assertTrue(AgentDialogueCatalog.shoppingReplies().contains("restocking now"));
         assertTrue(AgentDialogueCatalog.fameOkReplies().contains("famed %s"));
         assertTrue(AgentDialogueCatalog.fameTargetNotFoundReply("Alice").contains("Alice on the map"));
         assertTrue(AgentDialogueCatalog.fameSelfReply().contains("fame myself"));

@@ -57,7 +57,7 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 | `src/main/java/server/bots/BotScriptRuntime.java` | `server.agents.runtime` and `plans` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
 | `src/main/java/server/bots/BotScriptStep.java` | `server.agents.plans.AgentPlanStep` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/BotScrollReactionManager.java` | `server.agents.capabilities.social` and `dialogue` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
-| `src/main/java/server/bots/BotShopManager.java` | `server.agents.capabilities.shop` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
+| `src/main/java/server/bots/BotShopManager.java` | `server.agents.capabilities.shop`, `server.agents.capabilities.dialogue.AgentDialogueCatalog` | `SPLIT_TO_MULTIPLE_AGENT_MODULES`; shop resupply/shopping dialogue pools are Agent-owned |
 | `src/main/java/server/bots/BotStarterKitManager.java` | `server.agents.capabilities.inventory.AgentStarterKitService` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/BotTask.java` | `server.agents.plans.AgentPlanStep` or legacy plan adapter | `LEGACY_PROFILE` |
 | `src/main/java/server/bots/Emote.java` | `server.agents.capabilities.dialogue.AgentEmote` | `MIGRATED_TO_AGENT` |

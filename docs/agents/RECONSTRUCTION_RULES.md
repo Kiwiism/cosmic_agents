@@ -1368,6 +1368,9 @@ Recent reconstruction notes:
   warning reply pools now live in `AgentDialogueCatalog`; BotInventoryManager
   preserves the same random reply selection, trade chat, and visible map-chat
   delivery through compatibility delegates.
+- Shop resupply and shopping dialogue pools now live in
+  `AgentDialogueCatalog`; BotShopManager preserves the same random reply
+  selection and visible map-chat delivery through compatibility delegates.
 
 Initial reconstruction order:
 

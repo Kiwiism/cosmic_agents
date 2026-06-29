@@ -121,6 +121,11 @@ public final class AgentDialogueCatalog {
             "i have spare ammo, inv u",
             "got some ammo for you, trading",
             "i can spare ammo, one sec");
+    private static final List<String> SHOP_RESUPPLY_REPLIES = List.of(
+            "brb gotta resupply", "one sec, going to restock", "be right back, need supplies",
+            "brb, refilling", "be right back~");
+    private static final List<String> SHOPPING_REPLIES = List.of(
+            "shopping...", "restocking now", "buying stuff", "ok let me buy", "getting supplies");
     private static final List<String> COMBAT_DEATH_REPLIES = List.of(
             "oops im dead", "gg", "rip me", "oww", "i died lol",
             "welp", "ouchh", "nooo", "ok i died", "i'll be right back");
@@ -385,6 +390,14 @@ public final class AgentDialogueCatalog {
 
     public static List<String> ammoOfferReplies() {
         return AMMO_OFFER_REPLIES;
+    }
+
+    public static List<String> shopResupplyReplies() {
+        return SHOP_RESUPPLY_REPLIES;
+    }
+
+    public static List<String> shoppingReplies() {
+        return SHOPPING_REPLIES;
     }
 
     public static List<String> combatDeathReplies() {

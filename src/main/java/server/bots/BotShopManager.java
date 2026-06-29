@@ -11,6 +11,7 @@ import client.inventory.WeaponType;
 import constants.game.GameConstants;
 import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
+import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotShopBuyReport;
 import server.agents.integration.AgentBotShopPurchaseAction;
@@ -75,15 +76,6 @@ public final class BotShopManager {
 
     private record ShopSlotItem(short slot, ShopItem shopItem) {}
 
-    private static final List<String> RESUPPLY_MSGS = List.of(
-            "brb gotta resupply", "one sec, going to restock", "be right back, need supplies",
-            "brb, refilling", "be right back~"
-    );
-
-    private static final List<String> SHOPPING_MSGS = List.of(
-            "shopping...", "restocking now", "buying stuff", "ok let me buy", "getting supplies"
-    );
-
     static void onMapChange(BotEntry entry, Character bot) {
         clearShopState(entry);
 
@@ -105,7 +97,7 @@ public final class BotShopManager {
 
         long distSq = (long) bot.getPosition().distanceSq(match.npcPos);
         if (distSq > 1000L * 1000L) {
-            AgentBotShopRuntime.sayMapNow(bot, BotManager.randomReply(RESUPPLY_MSGS));
+            AgentBotShopRuntime.sayMapNow(bot, BotManager.randomReply(AgentDialogueCatalog.shopResupplyReplies()));
         }
 
         startShopVisit(entry, bot, match);
@@ -179,7 +171,7 @@ public final class BotShopManager {
         if (reachedApproach || stuckAtNpc) {
             if (!AgentBotShopStateRuntime.shopSequenceActive(entry)) {
                 AgentBotShopStateRuntime.markShopSequenceActive(entry, System.currentTimeMillis());
-                AgentBotShopRuntime.sayMapNow(bot, BotManager.randomReply(SHOPPING_MSGS));
+                AgentBotShopRuntime.sayMapNow(bot, BotManager.randomReply(AgentDialogueCatalog.shoppingReplies()));
                 Point npcPos = AgentBotShopStateRuntime.shopNpcPosition(entry);
                 scheduleShopStep(entry, () -> executePurchases(entry, bot, npcPos));
             }
