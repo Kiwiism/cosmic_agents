@@ -17,6 +17,7 @@ import server.agents.capabilities.combat.AgentCombatScoringPolicy;
 import server.agents.capabilities.combat.AgentCombatSkillUsePolicy;
 import server.agents.capabilities.combat.AgentCombatSupportPolicy;
 import server.agents.capabilities.combat.AgentCombatTargetEligibilityPolicy;
+import server.agents.capabilities.combat.AgentCombatTargetSelector;
 import server.agents.capabilities.combat.AgentMobTouchPolicy;
 import server.agents.capabilities.combat.AgentMobKnockbackPolicy;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
@@ -1207,35 +1208,8 @@ public class BotCombatManager {
     }
 
     private static List<Monster> collectTargetsInHitBox(Character bot, Monster primaryTarget, Rectangle hitBox, int maxTargets) {
-        if (!doesHitBoxIntersectMonster(hitBox, primaryTarget)) {
-            return List.of();
-        }
-
-        List<Monster> targets = new ArrayList<>();
-        targets.add(primaryTarget);
-        if (maxTargets <= 1) {
-            return targets;
-        }
-
-        List<Monster> secondaryTargets = new ArrayList<>();
-        for (Monster monster : bot.getMap().getAllMonsters()) {
-            if (!isHostileLivingMonster(monster) || monster.getObjectId() == primaryTarget.getObjectId()) {
-                continue;
-            }
-            if (!doesHitBoxIntersectMonster(hitBox, monster)) {
-                continue;
-            }
-            secondaryTargets.add(monster);
-        }
-
-        secondaryTargets.sort(Comparator.comparingDouble(monster -> monster.getPosition().distanceSq(primaryTarget.getPosition())));
-        for (Monster monster : secondaryTargets) {
-            targets.add(monster);
-            if (targets.size() >= maxTargets) {
-                break;
-            }
-        }
-        return targets;
+        return AgentCombatTargetSelector.collectTargetsInHitBox(primaryTarget, hitBox, maxTargets,
+                bot.getMap().getAllMonsters());
     }
 
     private static boolean isBasicAttackInRange(Point botPos, Point targetPos) {
