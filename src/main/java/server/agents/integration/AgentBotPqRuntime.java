@@ -21,4 +21,8 @@ public final class AgentBotPqRuntime {
     public static int kpqCouponTarget(BotEntry entry) {
         return entry.kpq.couponTarget;
     }
+
+    public static int kpqStageState(BotEntry entry) {
+        return entry.kpq.state;
+    }
 }

@@ -930,6 +930,9 @@ Recent reconstruction notes:
   BotLootEligibility preserves coupon/pass/rice-cake and quest-item filtering
   behavior while no longer reading KPQ coupon target state directly from
   BotEntry in production.
+- KPQ grind-requirement stage reads now enter through `AgentBotPqRuntime`;
+  BotPqHooks preserves stage-1 grind gating while no longer reading KPQ state
+  directly from BotEntry in production.
 
 Initial reconstruction order:
 

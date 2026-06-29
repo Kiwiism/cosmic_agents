@@ -50,4 +50,12 @@ class AgentBotPqRuntimeTest {
 
         assertEquals(25, AgentBotPqRuntime.kpqCouponTarget(entry));
     }
+
+    @Test
+    void readsKpqStageStateThroughAgentBoundary() {
+        BotEntry entry = new BotEntry(null, null, null);
+        entry.kpq.state = 2;
+
+        assertEquals(2, AgentBotPqRuntime.kpqStageState(entry));
+    }
 }

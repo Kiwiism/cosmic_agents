@@ -1,6 +1,7 @@
 package server.bots.pq;
 
 import client.Character;
+import server.agents.integration.AgentBotPqRuntime;
 import server.bots.BotScript;
 import server.bots.BotScriptRunner;
 import server.bots.BotEntry;
@@ -31,7 +32,7 @@ public final class BotPqHooks {
     /** Returns true if the bot is in a PQ map that requires grind mode (KPQ stage 1). */
     public static boolean requiresGrind(BotEntry entry, Character bot) {
         return bot.getMapId() == BotKpqStage1.KPQ_STAGE1_MAP
-                && entry.kpq.state == BotKpqStage1.GRINDING;
+                && AgentBotPqRuntime.kpqStageState(entry) == BotKpqStage1.GRINDING;
     }
 
     /** True once the bot no longer needs coupons — suppress coupon loot. */
