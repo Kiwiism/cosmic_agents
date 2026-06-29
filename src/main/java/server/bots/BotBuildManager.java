@@ -19,6 +19,7 @@ import server.agents.capabilities.dialogue.AgentBuildPromptReporter;
 import server.agents.integration.AgentBotBuildRuntime;
 import server.agents.integration.AgentBotBuildStateRuntime;
 import server.agents.integration.AgentBotBuildStatusRuntime;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 
 public final class BotBuildManager {
     public enum StatType {
@@ -59,7 +60,7 @@ public final class BotBuildManager {
     public static void setApBuild(BotEntry entry, ApBuild build, String confirmMsg) {
         AgentBotBuildStateRuntime.setApBuild(entry, build);
         AgentBotBuildRuntime.confirmApBuild(entry, confirmMsg);
-        autoAssignAp(entry, entry.bot);
+        autoAssignAp(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
     }
 
     /**

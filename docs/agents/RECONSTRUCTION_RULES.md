@@ -863,6 +863,10 @@ Recent reconstruction notes:
   donor scans, and delayed transfer donor identity keep BotEntry as the
   temporary backing store but no longer read `owner` or `bot` directly in
   production.
+- AP build assignment identity now enters through
+  `AgentBotRuntimeIdentityRuntime`; BotBuildManager set-build confirmation and
+  immediate AP assignment keep BotEntry as the temporary backing store but no
+  longer read `bot` directly in production.
 
 Initial reconstruction order:
 
