@@ -4,6 +4,7 @@ import client.Character;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import constants.inventory.ItemConstants;
+import server.agents.integration.AgentBotPqRuntime;
 import server.bots.pq.BotPqHooks;
 import server.maps.MapItem;
 import server.maps.MapleMap;
@@ -37,8 +38,9 @@ public final class BotLootEligibility {
         if (itemId == HPQ_RICE_CAKE) {
             return false;
         }
+        int kpqCouponTarget = AgentBotPqRuntime.kpqCouponTarget(entry);
         if (itemId == KPQ_COUPON && (BotPqHooks.shouldSkipCouponLoot(entry)
-                || (entry.kpq.couponTarget > 0 && bot.getItemQuantity(KPQ_COUPON, false) >= entry.kpq.couponTarget))) {
+                || (kpqCouponTarget > 0 && bot.getItemQuantity(KPQ_COUPON, false) >= kpqCouponTarget))) {
             return false;
         }
         if (itemId > 0 && !bot.needQuestItem(drop.getQuest(), itemId)) {

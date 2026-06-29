@@ -6,6 +6,7 @@ import server.agents.integration.AgentBotPqReplyRuntime;
 import server.agents.integration.AgentBotPqRuntime;
 import server.agents.integration.AgentBotReplyRuntime;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.mockStatic;
 
@@ -40,5 +41,13 @@ class AgentBotPqRuntimeTest {
         AgentBotPqRuntime.resetKpqStage5Claimed(entry);
 
         assertFalse(entry.kpq.stage5Claimed);
+    }
+
+    @Test
+    void readsKpqCouponTargetThroughAgentBoundary() {
+        BotEntry entry = new BotEntry(null, null, null);
+        entry.kpq.couponTarget = 25;
+
+        assertEquals(25, AgentBotPqRuntime.kpqCouponTarget(entry));
     }
 }
