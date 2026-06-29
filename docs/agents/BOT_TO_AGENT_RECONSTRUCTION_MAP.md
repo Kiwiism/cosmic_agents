@@ -50,7 +50,7 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 | `src/main/java/server/bots/BotPathLogger.java` | `server.agents.runtime.AgentPathLogger` or monitoring package later | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/BotPerformanceMonitor.java` | `server.agents.runtime.AgentPerformanceMonitor` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotPhysicsEngine.java` | `server.agents.capabilities.movement.AgentPhysicsEngine` | `MIGRATE_TO_AGENT` |
-| `src/main/java/server/bots/BotPotionManager.java` | `server.agents.capabilities.supplies.AgentPotionService`, `server.agents.capabilities.supplies.AgentAutopotPolicy`, `server.agents.capabilities.supplies.AgentPotionInventoryPolicy` | `MIGRATE_TO_AGENT`; autopot potion tier ranking, HP/MP slot choice policy, and pure recovery potion stack counting are Agent-owned |
+| `src/main/java/server/bots/BotPotionManager.java` | `server.agents.capabilities.supplies.AgentPotionService`, `server.agents.capabilities.supplies.AgentAutopotPolicy`, `server.agents.capabilities.supplies.AgentPotionInventoryPolicy`, `server.agents.capabilities.supplies.AgentPassiveRecoveryPolicy` | `MIGRATE_TO_AGENT`; autopot potion tier ranking, HP/MP slot choice policy, pure recovery potion stack counting, and passive HP/MP recovery formula/skill-bonus lookup are Agent-owned |
 | `src/main/java/server/bots/BotScript.java` | `server.agents.plans.legacy.LegacyBotScript` or later deletion | `LEGACY_PROFILE` |
 | `src/main/java/server/bots/BotScriptContext.java` | `server.agents.plans.legacy.LegacyBotScriptContext` | `LEGACY_PROFILE` |
 | `src/main/java/server/bots/BotScriptRunner.java` | `server.agents.plans.legacy.LegacyBotScriptRunner` | `LEGACY_PROFILE` |

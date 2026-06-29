@@ -1356,6 +1356,10 @@ Recent reconstruction notes:
   `AgentPotionInventoryPolicy`; BotPotionManager preserves the same USE
   inventory scan, item-effect lookup, timing metric, and public count API
   through a compatibility delegate.
+- Passive HP/MP recovery formula and legacy recovery skill-bonus lookup now
+  live in `AgentPassiveRecoveryPolicy`; BotPotionManager preserves the same
+  movement/air/climb/stance standing-still gate and MP recovery tick timing
+  through compatibility delegates.
 
 Initial reconstruction order:
 

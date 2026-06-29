@@ -5,22 +5,16 @@ import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.runtime.AgentPerformanceMonitor;
 
 import client.Character;
-import client.Skill;
-import client.SkillFactory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.keybind.KeyBinding;
-import constants.skills.Crusader;
-import constants.skills.DawnWarrior;
-import constants.skills.Magician;
-import constants.skills.Warrior;
-import constants.skills.WhiteKnight;
 import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
 import server.agents.capabilities.supplies.AgentAutopotPolicy;
 import server.agents.capabilities.supplies.AgentAutopotPolicy.AutopotChoice;
 import server.agents.capabilities.supplies.AgentAutopotPolicy.PotionRanking;
+import server.agents.capabilities.supplies.AgentPassiveRecoveryPolicy;
 import server.agents.capabilities.supplies.AgentPotionInventoryPolicy;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
@@ -422,26 +416,17 @@ public final class BotPotionManager {
     }
 
     private static int calculatePassiveHpRecovery(BotEntry entry, Character bot) {
-        int recovery = BotManager.cfg.BASE_HP_RECOVERY;
-        if (!isStandingStillForRecovery(entry)) {
-            return recovery;
-        }
-
-        recovery += getFlatHpRecoveryBonus(bot, Warrior.IMPROVED_HPREC);
-        return recovery;
+        return AgentPassiveRecoveryPolicy.hpRecovery(
+                bot,
+                BotManager.cfg.BASE_HP_RECOVERY,
+                isStandingStillForRecovery(entry));
     }
 
     private static int calculatePassiveMpRecovery(BotEntry entry, Character bot) {
-        int recovery = BotManager.cfg.BASE_MP_RECOVERY;
-        if (!isStandingStillForRecovery(entry)) {
-            return recovery;
-        }
-
-        recovery += getFlatMpRecoveryBonus(bot, Crusader.IMPROVING_MPREC);
-        recovery += getFlatMpRecoveryBonus(bot, WhiteKnight.IMPROVING_MP_RECOVERY);
-        recovery += getFlatMpRecoveryBonus(bot, DawnWarrior.INCREASED_MP_RECOVERY);
-        recovery += getMagicianMpRecoveryBonus(bot);
-        return recovery;
+        return AgentPassiveRecoveryPolicy.mpRecovery(
+                bot,
+                BotManager.cfg.BASE_MP_RECOVERY,
+                isStandingStillForRecovery(entry));
     }
 
     private static boolean isStandingStillForRecovery(BotEntry entry) {
@@ -450,42 +435,6 @@ public final class BotPotionManager {
         }
         return !AgentBotMovementStateRuntime.hasMoveDirection(entry)
                 && BotPhysicsEngine.isStandingStance(BotPhysicsEngine.resolveStance(entry));
-    }
-
-    private static int getFlatHpRecoveryBonus(Character bot, int skillId) {
-        Skill skill = SkillFactory.getSkill(skillId);
-        if (skill == null) {
-            return 0;
-        }
-        int level = bot.getSkillLevel(skill);
-        if (level <= 0) {
-            return 0;
-        }
-        return skill.getEffect(level).getHp();
-    }
-
-    private static int getFlatMpRecoveryBonus(Character bot, int skillId) {
-        Skill skill = SkillFactory.getSkill(skillId);
-        if (skill == null) {
-            return 0;
-        }
-        int level = bot.getSkillLevel(skill);
-        if (level <= 0) {
-            return 0;
-        }
-        return skill.getEffect(level).getMp();
-    }
-
-    private static int getMagicianMpRecoveryBonus(Character bot) {
-        Skill skill = SkillFactory.getSkill(Magician.IMPROVED_MP_RECOVERY);
-        if (skill == null) {
-            return 0;
-        }
-        int level = bot.getSkillLevel(skill);
-        if (level <= 0) {
-            return 0;
-        }
-        return Math.max(0, (bot.getInt() / 10) * level);
     }
 
 }
