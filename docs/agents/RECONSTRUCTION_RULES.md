@@ -1332,6 +1332,10 @@ Recent reconstruction notes:
   `AgentInventorySellTrashPolicy`; BotInventoryManager preserves scrolled-equip,
   non-weapon WATK, class-stat, base-stat, pure-stat, and weapon attack/magic
   attack protection behavior through compatibility delegates.
+- Ammo item-to-weapon classification now lives in `AgentInventoryAmmoPolicy`;
+  BotInventoryManager preserves bow-arrow, crossbow-arrow, throwing-star, and
+  bullet matching plus trade-ammo item detection through compatibility
+  delegates.
 
 Initial reconstruction order:
 

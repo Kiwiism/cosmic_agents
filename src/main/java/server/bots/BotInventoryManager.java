@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
 import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
+import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy;
 import server.agents.capabilities.inventory.AgentInventorySellTrashPolicy;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
@@ -1812,33 +1813,15 @@ public class BotInventoryManager {
     }
 
     private static boolean isAmmoForWeapon(int itemId, WeaponType weaponType) {
-        return switch (weaponType) {
-            case BOW -> ItemConstants.isArrowForBow(itemId);
-            case CROSSBOW -> ItemConstants.isArrowForCrossBow(itemId);
-            case CLAW -> ItemConstants.isThrowingStar(itemId);
-            case GUN -> ItemConstants.isBullet(itemId);
-            default -> false;
-        };
+        return AgentInventoryAmmoPolicy.isAmmoForWeapon(itemId, weaponType);
     }
 
     private static boolean isTradeAmmoItem(int itemId) {
-        return ammoWeaponType(itemId) != null;
+        return AgentInventoryAmmoPolicy.isTradeAmmoItem(itemId);
     }
 
     private static WeaponType ammoWeaponType(int itemId) {
-        if (ItemConstants.isArrowForBow(itemId)) {
-            return WeaponType.BOW;
-        }
-        if (ItemConstants.isArrowForCrossBow(itemId)) {
-            return WeaponType.CROSSBOW;
-        }
-        if (ItemConstants.isThrowingStar(itemId)) {
-            return WeaponType.CLAW;
-        }
-        if (ItemConstants.isBullet(itemId)) {
-            return WeaponType.GUN;
-        }
-        return null;
+        return AgentInventoryAmmoPolicy.ammoWeaponType(itemId);
     }
 
     private static WeaponType tradeAmmoWeaponType(Character bot) {
