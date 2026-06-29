@@ -16,7 +16,6 @@ import client.inventory.Item;
 import client.inventory.WeaponType;
 import client.inventory.manipulator.InventoryManipulator;
 import config.YamlConfig;
-import constants.game.GameConstants;
 import constants.id.ItemId;
 import constants.inventory.ItemConstants;
 import net.packet.Packet;
@@ -24,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
 import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
+import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotInventoryStateRuntime;
@@ -1380,12 +1380,11 @@ public class BotInventoryManager {
     }
 
     static String reservedEquipsCategory(int requestedPage) {
-        return RESERVED_EQUIPS_CATEGORY_PREFIX + requestedPage;
+        return AgentInventoryTradePolicy.reservedEquipsCategory(requestedPage);
     }
 
     static int clampTradePage(int requestedPage, int totalItems) {
-        int maxPage = Math.max(1, (totalItems + TRADE_WINDOW_ITEM_LIMIT - 1) / TRADE_WINDOW_ITEM_LIMIT);
-        return Math.max(1, Math.min(requestedPage, maxPage));
+        return AgentInventoryTradePolicy.clampTradePage(requestedPage, totalItems);
     }
 
     private static boolean isReservedEquipsCategory(String category) {
@@ -1745,27 +1744,15 @@ public class BotInventoryManager {
     }
 
     public static boolean isMesoCategory(String category) {
-        return category != null && (category.equals("mesos") || category.startsWith("mesos:"));
+        return AgentInventoryTradePolicy.isMesoCategory(category);
     }
 
     private static int requestedTradeMesos(String category) {
-        if (!isMesoCategory(category)) {
-            return 0;
-        }
-        if ("mesos".equals(category)) {
-            return -1;
-        }
-
-        try {
-            return Integer.parseInt(category.substring("mesos:".length()));
-        } catch (NumberFormatException ignored) {
-            return 0;
-        }
+        return AgentInventoryTradePolicy.requestedTradeMesos(category);
     }
 
     private static String notEnoughMesosReply(int requestedMesos, int currentMesos) {
-        return "i only have " + GameConstants.numberWithCommas(currentMesos)
-                + " mesos rn, not " + GameConstants.numberWithCommas(requestedMesos);
+        return AgentInventoryTradePolicy.notEnoughMesosReply(requestedMesos, currentMesos);
     }
 
     // ─── Pot-share helpers ────────────────────────────────────────────────────

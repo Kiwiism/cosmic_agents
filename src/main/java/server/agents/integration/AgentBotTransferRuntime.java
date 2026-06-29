@@ -4,6 +4,7 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.dialogue.AgentChatTransferFlow;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
+import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.bots.BotEntry;
 import server.bots.BotInventoryManager;
 
@@ -44,7 +45,7 @@ public final class AgentBotTransferRuntime {
             AgentBotTransferReplyRuntime.replyNow(entry, AgentChatTransferFlow.weirdTransferReply());
         }
         if (transferCommand.mode() == AgentChatTransferFlow.TransferMode.TRADE
-                && BotInventoryManager.isMesoCategory(category)) {
+                && AgentInventoryTradePolicy.isMesoCategory(category)) {
             AgentBotTransferSchedulerRuntime.afterRandomDelay(500, 700,
                     () -> BotInventoryManager.startTradeTransfer(category, entry, entry.bot()));
             return;

@@ -1323,6 +1323,11 @@ Recent reconstruction notes:
   BotCombatManager keeps a temporary compatibility delegate while active-buff,
   cached-buff, cooldown, and last-action report lines are assembled through the
   Agent integration/reporting path.
+- Inventory trade page/meso policy now lives in `AgentInventoryTradePolicy`;
+  BotInventoryManager preserves the same reserved-equips category, trade-page
+  clamp, meso category parsing, requested-meso parsing, and insufficient-meso
+  reply behavior through compatibility delegates, while Agent transfer routing
+  uses the Agent policy directly.
 
 Initial reconstruction order:
 

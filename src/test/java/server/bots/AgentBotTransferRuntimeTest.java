@@ -39,7 +39,6 @@ class AgentBotTransferRuntimeTest {
         try (MockedStatic<AgentBotTransferSchedulerRuntime> scheduler =
                      mockStatic(AgentBotTransferSchedulerRuntime.class);
              MockedStatic<BotInventoryManager> inventory = mockStatic(BotInventoryManager.class)) {
-            inventory.when(() -> BotInventoryManager.isMesoCategory("mesos")).thenReturn(true);
             scheduler.when(() -> AgentBotTransferSchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
