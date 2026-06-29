@@ -41,6 +41,8 @@ import server.agents.integration.AgentBotShopStateRuntime;
 import server.agents.integration.AgentBotTickCadenceStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
 import server.agents.integration.AgentBotTickFailureStateRuntime;
+import server.agents.integration.AgentBotTargetedCommandMatch;
+import server.agents.integration.AgentBotTransferCommand;
 import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
 import client.BotClient;
 import config.YamlConfig;
@@ -910,7 +912,7 @@ public class BotManager {
             return;
         }
 
-        BotCommandParser.BotTransferCommand transferCommand = BotCommandParser.matchBotTransferCommand(message);
+        AgentBotTransferCommand transferCommand = BotCommandParser.matchBotTransferCommand(message);
         if (transferCommand != null) {
             String err = giveBot(owner.getId(), owner, transferCommand.botName(), transferCommand.targetName());
             if (err != null) owner.yellowMessage(err);
@@ -1003,7 +1005,7 @@ public class BotManager {
         }
 
         // Name-prefix routing: "Jason pots?" → only Jason responds
-        BotCommandParser.TargetedBotMatch targetedBot = BotCommandParser.resolveTargetedBot(entries, message);
+        AgentBotTargetedCommandMatch targetedBot = BotCommandParser.resolveTargetedBot(entries, message);
         if (targetedBot.entry() != null) {
             String followTargetToken = AgentChatCommandClassifier.matchFollowTarget(targetedBot.commandText());
             if (followTargetToken != null) {
@@ -1100,7 +1102,7 @@ public class BotManager {
             }
         }
 
-        BotCommandParser.TargetedBotMatch targetedBot = BotCommandParser.resolveTargetedBot(matches, message);
+        AgentBotTargetedCommandMatch targetedBot = BotCommandParser.resolveTargetedBot(matches, message);
         if (targetedBot.entry() != null) {
             return BotOfferManager.handlePendingOfferResponse(targetedBot.entry(), speaker, targetedBot.commandText());
         }

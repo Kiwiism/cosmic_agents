@@ -1069,6 +1069,11 @@ Recent reconstruction notes:
   preserves the same donor selection ordering, same-ammo preference, donation
   quantity, delay, and transfer behavior while the donor plan context is owned
   by the Agent integration layer instead of a bot package record.
+- Bot command transfer and targeted-command match records now use
+  `AgentBotTransferCommand` and `AgentBotTargetedCommandMatch`;
+  BotCommandParser remains the temporary bot-package shim over
+  `AgentCommandParser`, while parsed command boundary data is owned by the
+  Agent integration layer.
 
 Initial reconstruction order:
 

@@ -14,6 +14,8 @@ import org.junit.jupiter.api.Test;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.integration.AgentBotAmmoDonorPlan;
+import server.agents.integration.AgentBotTargetedCommandMatch;
+import server.agents.integration.AgentBotTransferCommand;
 import server.agents.integration.AgentBotBreakoutStateRuntime;
 import server.agents.integration.AgentBotManagerReplyRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
@@ -67,7 +69,7 @@ import static org.mockito.Mockito.when;
 class BotManagerTest {
     @Test
     void shouldParseTransferBotCommands() {
-        BotCommandParser.BotTransferCommand command = BotCommandParser.matchBotTransferCommand("transfer Jason to Bob");
+        AgentBotTransferCommand command = BotCommandParser.matchBotTransferCommand("transfer Jason to Bob");
 
         assertNotNull(command);
         assertEquals("Jason", command.botName());
@@ -76,7 +78,7 @@ class BotManagerTest {
 
     @Test
     void shouldStillAllowTransferWithoutTo() {
-        BotCommandParser.BotTransferCommand command = BotCommandParser.matchBotTransferCommand("transfer Jason Bob");
+        AgentBotTransferCommand command = BotCommandParser.matchBotTransferCommand("transfer Jason Bob");
 
         assertNotNull(command);
         assertEquals("Jason", command.botName());
@@ -155,7 +157,7 @@ class BotManagerTest {
         BotEntry jason = botEntryNamed("Jason");
         BotEntry bob = botEntryNamed("Bob");
 
-        BotCommandParser.TargetedBotMatch match = BotCommandParser.resolveTargetedBot(
+        AgentBotTargetedCommandMatch match = BotCommandParser.resolveTargetedBot(
                 List.of(jason, bob), "Ja pots?");
 
         assertEquals(jason, match.entry());
@@ -168,7 +170,7 @@ class BotManagerTest {
         BotEntry jason = botEntryNamed("Jason");
         BotEntry bob = botEntryNamed("Bob");
 
-        BotCommandParser.TargetedBotMatch match = BotCommandParser.resolveTargetedBot(
+        AgentBotTargetedCommandMatch match = BotCommandParser.resolveTargetedBot(
                 List.of(jason, bob), "2 follow Alice");
 
         assertEquals(bob, match.entry());
@@ -193,7 +195,7 @@ class BotManagerTest {
         BotEntry jane = botEntryNamed("Jane");
         BotEntry jason = botEntryNamed("Jason");
 
-        BotCommandParser.TargetedBotMatch match = BotCommandParser.resolveTargetedBot(
+        AgentBotTargetedCommandMatch match = BotCommandParser.resolveTargetedBot(
                 List.of(jane, jason), "Ja yes");
 
         assertNull(match.entry());
