@@ -20,6 +20,24 @@ public final class AgentCombatSupportPolicy {
         CANNOT_PAY_COST
     }
 
+    public enum SkillBuffTickDecision {
+        READY(null),
+        ATTACK_COOLDOWN(null),
+        DISABLED("skill buffs disabled"),
+        IDLE("idle (not following or grinding)"),
+        NO_BUFF_SKILLS("no buff skills in cache");
+
+        private final String legacyDebugSummary;
+
+        SkillBuffTickDecision(String legacyDebugSummary) {
+            this.legacyDebugSummary = legacyDebugSummary;
+        }
+
+        public String legacyDebugSummary() {
+            return legacyDebugSummary;
+        }
+    }
+
     private AgentCombatSupportPolicy() {
     }
 
@@ -66,6 +84,26 @@ public final class AgentCombatSupportPolicy {
         return partySupportSkill
                 && !skillCooling
                 && !supportBuffCooldownActive;
+    }
+
+    public static SkillBuffTickDecision skillBuffTickDecision(boolean attackCooldownActive,
+                                                             boolean skillBuffsEnabled,
+                                                             boolean following,
+                                                             boolean grinding,
+                                                             boolean hasBuffSkillIds) {
+        if (attackCooldownActive) {
+            return SkillBuffTickDecision.ATTACK_COOLDOWN;
+        }
+        if (!skillBuffsEnabled) {
+            return SkillBuffTickDecision.DISABLED;
+        }
+        if (!following && !grinding) {
+            return SkillBuffTickDecision.IDLE;
+        }
+        if (!hasBuffSkillIds) {
+            return SkillBuffTickDecision.NO_BUFF_SKILLS;
+        }
+        return SkillBuffTickDecision.READY;
     }
 
     public static SupportCastReadiness supportCastReadiness(int skillLevel,

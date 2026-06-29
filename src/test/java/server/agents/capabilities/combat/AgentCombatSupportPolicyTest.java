@@ -2,6 +2,7 @@ package server.agents.capabilities.combat;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -73,6 +74,32 @@ class AgentCombatSupportPolicyTest {
         assertFalse(AgentCombatSupportPolicy.shouldConsiderSupportBuff(false, false, false));
         assertFalse(AgentCombatSupportPolicy.shouldConsiderSupportBuff(true, true, false));
         assertFalse(AgentCombatSupportPolicy.shouldConsiderSupportBuff(true, false, true));
+    }
+
+    @Test
+    void shouldPreserveSkillBuffTickPreflightPriorityAndMessages() {
+        assertEquals(AgentCombatSupportPolicy.SkillBuffTickDecision.ATTACK_COOLDOWN,
+                AgentCombatSupportPolicy.skillBuffTickDecision(true, false, false, false, false));
+        assertNull(AgentCombatSupportPolicy.SkillBuffTickDecision.ATTACK_COOLDOWN.legacyDebugSummary());
+
+        assertEquals(AgentCombatSupportPolicy.SkillBuffTickDecision.DISABLED,
+                AgentCombatSupportPolicy.skillBuffTickDecision(false, false, false, false, false));
+        assertEquals("skill buffs disabled",
+                AgentCombatSupportPolicy.SkillBuffTickDecision.DISABLED.legacyDebugSummary());
+
+        assertEquals(AgentCombatSupportPolicy.SkillBuffTickDecision.IDLE,
+                AgentCombatSupportPolicy.skillBuffTickDecision(false, true, false, false, false));
+        assertEquals("idle (not following or grinding)",
+                AgentCombatSupportPolicy.SkillBuffTickDecision.IDLE.legacyDebugSummary());
+
+        assertEquals(AgentCombatSupportPolicy.SkillBuffTickDecision.NO_BUFF_SKILLS,
+                AgentCombatSupportPolicy.skillBuffTickDecision(false, true, true, false, false));
+        assertEquals("no buff skills in cache",
+                AgentCombatSupportPolicy.SkillBuffTickDecision.NO_BUFF_SKILLS.legacyDebugSummary());
+
+        assertEquals(AgentCombatSupportPolicy.SkillBuffTickDecision.READY,
+                AgentCombatSupportPolicy.skillBuffTickDecision(false, true, false, true, true));
+        assertNull(AgentCombatSupportPolicy.SkillBuffTickDecision.READY.legacyDebugSummary());
     }
 
     @Test

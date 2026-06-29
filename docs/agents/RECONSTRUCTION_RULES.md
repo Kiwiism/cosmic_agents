@@ -1396,6 +1396,9 @@ Recent reconstruction notes:
   plans use monster-hitbox intersection and plans without hitboxes fall back to
   the legacy basic attack range check. BotCombatManager only adapts AttackPlan
   fields to the Agent-owned policy.
+- Skill-buff tick preflight decisions now live in `AgentCombatSupportPolicy`,
+  including the legacy debug summaries for disabled, idle, and empty-cache
+  states. BotCombatManager still performs live monster checks and cast dispatch.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

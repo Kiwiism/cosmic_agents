@@ -372,17 +372,17 @@ public class BotCombatManager {
     }
 
     static void tickBuffs(BotEntry entry, Character bot) {
-        if (AgentBotCombatCooldownStateRuntime.hasAttackCooldown(entry)) return;
-        if (!AgentBotCombatBuffStateRuntime.skillBuffsEnabled(entry)) {
-            noteSkillBuffDecision(entry, "skill buffs disabled");
-            return;
-        }
-        if (!AgentBotModeStateRuntime.following(entry) && !AgentBotModeStateRuntime.grinding(entry)) {
-            noteSkillBuffDecision(entry, "idle (not following or grinding)");
-            return;
-        }
-        if (!AgentBotCombatSkillCacheStateRuntime.hasBuffSkillIds(entry)) {
-            noteSkillBuffDecision(entry, "no buff skills in cache");
+        AgentCombatSupportPolicy.SkillBuffTickDecision tickDecision =
+                AgentCombatSupportPolicy.skillBuffTickDecision(
+                        AgentBotCombatCooldownStateRuntime.hasAttackCooldown(entry),
+                        AgentBotCombatBuffStateRuntime.skillBuffsEnabled(entry),
+                        AgentBotModeStateRuntime.following(entry),
+                        AgentBotModeStateRuntime.grinding(entry),
+                        AgentBotCombatSkillCacheStateRuntime.hasBuffSkillIds(entry));
+        if (tickDecision != AgentCombatSupportPolicy.SkillBuffTickDecision.READY) {
+            if (tickDecision.legacyDebugSummary() != null) {
+                noteSkillBuffDecision(entry, tickDecision.legacyDebugSummary());
+            }
             return;
         }
         if (bot.getMap().getAllMonsters().stream().noneMatch(Monster::isAlive)) return;
