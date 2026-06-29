@@ -1313,6 +1313,9 @@ Recent reconstruction notes:
 - Buff blacklist classification now lives in `AgentCombatSkillClassifier`;
   BotCombatManager preserves the same Dark Sight exclusion behavior while the
   never-cast skill list is owned by Agent combat classification.
+- The legacy Dragon Roar minimum-target threshold now lives in
+  `AgentCombatSupportPolicy`; BotCombatManager still supplies the nearby-healer
+  state but no longer owns the hardcoded support-combat threshold.
 
 Initial reconstruction order:
 

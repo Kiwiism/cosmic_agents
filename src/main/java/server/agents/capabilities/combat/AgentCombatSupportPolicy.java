@@ -10,7 +10,16 @@ import java.util.List;
 import server.StatEffect;
 
 public final class AgentCombatSupportPolicy {
+    public static final int LEGACY_DRAGON_ROAR_MIN_TARGETS_WITHOUT_HEALER = 10;
+
     private AgentCombatSupportPolicy() {
+    }
+
+    public static boolean canUseDragonRoarPlan(Character bot,
+                                               int targetCount,
+                                               boolean hasNearbyHealSkillAlly) {
+        return canUseDragonRoarPlan(bot, targetCount,
+                LEGACY_DRAGON_ROAR_MIN_TARGETS_WITHOUT_HEALER, hasNearbyHealSkillAlly);
     }
 
     public static boolean canUseDragonRoarPlan(Character bot,

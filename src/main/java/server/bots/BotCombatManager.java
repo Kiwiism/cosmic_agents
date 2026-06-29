@@ -108,7 +108,6 @@ import java.util.concurrent.ThreadLocalRandom;
 public class BotCombatManager {
     private static final Logger log = LoggerFactory.getLogger(BotCombatManager.class);
     private static final long UNREACHABLE_GRAPH_COST = Long.MAX_VALUE / 4;
-    private static final int DRAGON_ROAR_MIN_TARGETS_WITHOUT_HEALER = 10;
 
     static final class AttackPlan extends AgentAttackPlan {
         AttackPlan(int skillId, int skillLevel, int numDamage, Rectangle hitBox, List<Monster> targets,
@@ -1002,8 +1001,7 @@ public class BotCombatManager {
     }
 
     private static boolean canUseDragonRoarPlan(Character bot, int targetCount) {
-        return AgentCombatSupportPolicy.canUseDragonRoarPlan(bot, targetCount,
-                DRAGON_ROAR_MIN_TARGETS_WITHOUT_HEALER, hasNearbyHealSkillAlly(bot));
+        return AgentCombatSupportPolicy.canUseDragonRoarPlan(bot, targetCount, hasNearbyHealSkillAlly(bot));
     }
 
     private static boolean hasNearbyHealSkillAlly(Character bot) {

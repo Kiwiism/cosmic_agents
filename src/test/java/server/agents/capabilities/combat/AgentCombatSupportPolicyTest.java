@@ -36,6 +36,14 @@ class AgentCombatSupportPolicyTest {
     }
 
     @Test
+    void shouldUseLegacyDragonRoarTargetThresholdWithoutNearbyHealer() {
+        Character bot = characterWithHp(101, 200);
+
+        assertFalse(AgentCombatSupportPolicy.canUseDragonRoarPlan(bot, 9, false));
+        assertTrue(AgentCombatSupportPolicy.canUseDragonRoarPlan(bot, 10, false));
+    }
+
+    @Test
     void shouldApplyLegacyHealThreshold() {
         Character healthy = characterWithHp(101, 200);
         Character hurt = characterWithHp(99, 200);
