@@ -690,17 +690,13 @@ public class BotCombatManager {
 
             Foothold botFoothold = findGroundFoothold(botPos, bot);
             GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, botPos);
-            List<AgentScoredGrindTarget> localTargets = new ArrayList<>();
-            for (Monster candidate : candidates) {
-                if (!isLocalCombatTarget(graphContext, bot, botFoothold, candidate)
-                        && !isImmediateProjectileTarget(entry, bot, candidate)) {
-                    continue;
-                }
-                long localScore = grindTargetScore(bot, botPos, botFoothold, candidate)
-                        - aoeClusterBonus(entry, candidate, candidates);
-                localTargets.add(new AgentScoredGrindTarget(candidate, localScore, localScore,
-                        candidate.getPosition().distanceSq(botPos)));
-            }
+            List<AgentScoredGrindTarget> localTargets = AgentCombatGrindTargetPolicy.scoreFollowLocalTargets(
+                    candidates,
+                    botPos,
+                    candidate -> isLocalCombatTarget(graphContext, bot, botFoothold, candidate)
+                            || isImmediateProjectileTarget(entry, bot, candidate),
+                    candidate -> grindTargetScore(bot, botPos, botFoothold, candidate),
+                    candidate -> aoeClusterBonus(entry, candidate, candidates));
             return pickFromBestTargets(localTargets);
         } finally {
             AgentPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);

@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.IntSupplier;
+import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 import java.util.function.ToLongFunction;
 import server.life.Monster;
@@ -89,6 +90,23 @@ public final class AgentCombatGrindTargetPolicy {
         for (AgentGrindTargetGroup group : groupsByRegionId.values()) {
             scoredTargets.add(toScoredTarget(group, pathCost.applyAsLong(group),
                     occupancyPenalty.applyAsLong(group), unreachableGraphCost));
+        }
+        return scoredTargets;
+    }
+
+    public static List<AgentScoredGrindTarget> scoreFollowLocalTargets(List<Monster> candidates,
+                                                                       Point agentPosition,
+                                                                       Predicate<Monster> canSelect,
+                                                                       ToLongFunction<Monster> localScore,
+                                                                       ToLongFunction<Monster> clusterBonus) {
+        List<AgentScoredGrindTarget> scoredTargets = new ArrayList<>();
+        for (Monster candidate : candidates) {
+            if (!canSelect.test(candidate)) {
+                continue;
+            }
+            long adjustedLocalScore = localScore.applyAsLong(candidate) - clusterBonus.applyAsLong(candidate);
+            scoredTargets.add(new AgentScoredGrindTarget(candidate, adjustedLocalScore, adjustedLocalScore,
+                    candidate.getPosition().distanceSq(agentPosition)));
         }
         return scoredTargets;
     }

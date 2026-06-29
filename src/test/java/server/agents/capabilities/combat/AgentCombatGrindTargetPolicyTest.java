@@ -176,6 +176,31 @@ class AgentCombatGrindTargetPolicyTest {
     }
 
     @Test
+    void shouldScoreOnlySelectableFollowLocalTargets() {
+        Monster skipped = monsterAt(90, 100);
+        Monster near = monsterAt(130, 100);
+        Monster far = monsterAt(200, 100);
+        Point agentPosition = new Point(100, 100);
+
+        List<AgentScoredGrindTarget> scoredTargets = AgentCombatGrindTargetPolicy.scoreFollowLocalTargets(
+                List.of(skipped, near, far),
+                agentPosition,
+                monster -> monster != skipped,
+                monster -> monster == near ? 150L : 300L,
+                monster -> monster == near ? 50L : 0L);
+
+        assertEquals(2, scoredTargets.size());
+        assertEquals(near, scoredTargets.get(0).monster());
+        assertEquals(100L, scoredTargets.get(0).graphCost());
+        assertEquals(100L, scoredTargets.get(0).localScore());
+        assertEquals(900.0d, scoredTargets.get(0).distanceSq());
+        assertEquals(far, scoredTargets.get(1).monster());
+        assertEquals(300L, scoredTargets.get(1).graphCost());
+        assertEquals(300L, scoredTargets.get(1).localScore());
+        assertEquals(10_000.0d, scoredTargets.get(1).distanceSq());
+    }
+
+    @Test
     void shouldGroupTargetsByBestLocalScoreThenDistance() {
         Monster farTie = mock(Monster.class);
         Monster localWinner = mock(Monster.class);

@@ -1319,6 +1319,10 @@ Recent reconstruction notes:
   navigation region ids, path costs, occupancy, and local-score callbacks while
   Agent combat owns invalid-region skipping, region grouping, best-target
   selection per region, and scored-target conversion.
+- Follow-mode local combat target scored-list construction now lives in
+  `AgentCombatGrindTargetPolicy`; BotCombatManager still supplies live
+  local/immediate-projectile eligibility and scoring callbacks while Agent
+  combat owns selectable filtering and adjusted scored-target record creation.
 - Buff blacklist classification now lives in `AgentCombatSkillClassifier`;
   BotCombatManager preserves the same Dark Sight exclusion behavior while the
   never-cast skill list is owned by Agent combat classification.
