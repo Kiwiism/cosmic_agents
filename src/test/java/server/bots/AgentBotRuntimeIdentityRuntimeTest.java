@@ -22,6 +22,7 @@ class AgentBotRuntimeIdentityRuntimeTest {
         MapleMap map = mock(MapleMap.class);
         when(bot.getId()).thenReturn(101);
         when(bot.getName()).thenReturn("AgentOne");
+        when(bot.getAccountID()).thenReturn(303);
         when(bot.getMapId()).thenReturn(100000000);
         when(bot.getMap()).thenReturn(map);
         when(bot.getPosition()).thenReturn(new Point(10, 20));
@@ -31,6 +32,7 @@ class AgentBotRuntimeIdentityRuntimeTest {
         assertSame(bot, AgentBotRuntimeIdentityRuntime.bot(entry));
         assertSame(owner, AgentBotRuntimeIdentityRuntime.owner(entry));
         assertEquals(101, AgentBotRuntimeIdentityRuntime.botId(entry));
+        assertEquals(303, AgentBotRuntimeIdentityRuntime.botAccountId(entry));
         assertEquals(202, AgentBotRuntimeIdentityRuntime.ownerId(entry));
         assertEquals("AgentOne", AgentBotRuntimeIdentityRuntime.botName(entry));
         assertTrue(AgentBotRuntimeIdentityRuntime.hasBot(entry));
@@ -50,8 +52,10 @@ class AgentBotRuntimeIdentityRuntimeTest {
         BotEntry entry = new BotEntry(null, null, null);
 
         assertEquals(-1, AgentBotRuntimeIdentityRuntime.botId(null));
+        assertEquals(-1, AgentBotRuntimeIdentityRuntime.botAccountId(null));
         assertEquals(-1, AgentBotRuntimeIdentityRuntime.ownerId(null));
         assertEquals(-1, AgentBotRuntimeIdentityRuntime.botId(entry));
+        assertEquals(-1, AgentBotRuntimeIdentityRuntime.botAccountId(entry));
         assertEquals(-1, AgentBotRuntimeIdentityRuntime.ownerId(entry));
         assertEquals(null, AgentBotRuntimeIdentityRuntime.botName(entry));
         assertFalse(AgentBotRuntimeIdentityRuntime.hasBot(entry));

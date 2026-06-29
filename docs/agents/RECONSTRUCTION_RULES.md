@@ -1038,6 +1038,12 @@ Recent reconstruction notes:
   BotCombatManager and BotOfferManager preserve sibling filtering, map matching,
   and recipient selection while no longer reading sibling bot/owner/grinding
   fields directly in those paths.
+- BotManager sibling target discovery, bot-id lookup, replacement cancellation,
+  removal matching, and transfer authorization identity now enter through
+  `AgentBotRuntimeIdentityRuntime` and `AgentBotManagerSchedulerRuntime`; the
+  registry behavior, task cancellation timing, and authorization inputs remain
+  unchanged while those paths stop reading BotEntry identity/task fields
+  directly.
 
 Initial reconstruction order:
 

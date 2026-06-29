@@ -225,7 +225,7 @@ public class BotManager {
             }
         }
         for (BotEntry sibling : getBotEntries(owner.getId())) {
-            Character siblingBot = sibling.bot;
+            Character siblingBot = AgentBotRuntimeIdentityRuntime.bot(sibling);
             if (siblingBot == null || !siblingBot.isLoggedinWorld()) {
                 continue;
             }
@@ -417,7 +417,7 @@ public class BotManager {
         List<BotEntry> entries = bots.get(ownerCharId);
         if (entries == null) return null;
         for (BotEntry e : entries) {
-            if (e.bot.getId() == botCharId) return e;
+            if (AgentBotRuntimeIdentityRuntime.botIs(e, botCharId)) return e;
         }
         return null;
     }
@@ -499,7 +499,10 @@ public class BotManager {
         List<BotEntry> entries = bots.computeIfAbsent(ownerCharId, k -> new CopyOnWriteArrayList<>());
         // Replace if same bot character is already registered (e.g. relog)
         entries.removeIf(e -> {
-            if (e.bot.getId() == bot.getId()) { e.task.cancel(false); return true; }
+            if (AgentBotRuntimeIdentityRuntime.botIs(e, bot.getId())) {
+                AgentBotManagerSchedulerRuntime.cancelScheduledTask(e);
+                return true;
+            }
             return false;
         });
         int botCharId = bot.getId();
@@ -564,7 +567,7 @@ public class BotManager {
         for (Map.Entry<Integer, List<BotEntry>> ownerEntry : bots.entrySet()) {
             List<BotEntry> entries = ownerEntry.getValue();
             boolean removedFromOwner = entries.removeIf(e -> {
-                if (e.bot.getId() == botCharId) {
+                if (AgentBotRuntimeIdentityRuntime.botIs(e, botCharId)) {
                     cancelBotTask(e);
                     return true;
                 }
@@ -665,10 +668,10 @@ public class BotManager {
                 BotOwnershipService.getInstance().ensureCanControl(
                         target,
                         new BotOwnershipService.ResolvedCharacter(
-                                found.bot.getId(),
-                                found.bot.getName(),
-                                found.bot.getAccountID(),
-                                found.bot));
+                                AgentBotRuntimeIdentityRuntime.botId(found),
+                                AgentBotRuntimeIdentityRuntime.botName(found),
+                                AgentBotRuntimeIdentityRuntime.botAccountId(found),
+                                AgentBotRuntimeIdentityRuntime.bot(found)));
         if (!auth.allowed()) {
             return auth.failureMessage();
         }

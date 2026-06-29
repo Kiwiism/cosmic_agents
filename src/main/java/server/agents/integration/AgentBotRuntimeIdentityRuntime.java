@@ -26,6 +26,11 @@ public final class AgentBotRuntimeIdentityRuntime {
         return bot == null ? -1 : bot.getId();
     }
 
+    public static int botAccountId(BotEntry entry) {
+        Character bot = bot(entry);
+        return bot == null ? -1 : bot.getAccountID();
+    }
+
     public static String botName(BotEntry entry) {
         Character bot = bot(entry);
         return bot == null ? null : bot.getName();
