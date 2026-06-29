@@ -2,6 +2,7 @@ package server.bots;
 
 import server.agents.runtime.AgentPerformanceMonitor;
 
+import server.agents.capabilities.movement.AgentClimbMovementPolicy;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementTimingPolicy;
 
@@ -299,38 +300,31 @@ public class BotMovementManager {
     }
 
     static boolean shouldHoldClimbIdle(BotEntry entry, int dy, int dxOwner) {
-        if (AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
-            return false;
-        }
-        return !AgentBotModeStateRuntime.grinding(entry)
-                && Math.abs(dy) < cfg.STOP_DIST
-                && Math.abs(dxOwner) < cfg.FOLLOW_DIST * 2;
+        return AgentClimbMovementPolicy.shouldHoldClimbIdle(
+                AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry),
+                AgentBotModeStateRuntime.grinding(entry),
+                dy,
+                dxOwner,
+                cfg.STOP_DIST,
+                cfg.FOLLOW_DIST);
     }
 
     static boolean shouldSnapToClimbTarget(BotEntry entry, Point targetPos, int dy) {
-        if (entry == null
-                || !AgentBotClimbStateRuntime.climbing(entry)
-                || !AgentBotClimbStateRuntime.hasClimbRope(entry)
-                || targetPos == null
-                || dy == 0) {
-            return false;
-        }
-        if (!AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry)) {
-            return false;
-        }
-        Rope climbRope = AgentBotClimbStateRuntime.climbRope(entry);
-        if (targetPos.x != climbRope.x()) {
+        if (entry == null) {
             return false;
         }
         // Allow target == bottomY: rope-exit launch anchors can be authored at the rope bottom
         // (pathlog-Leroy/John). The exclusive guard rejected those anchors, leaving the bot
-        // grinding the climb integrator against a fixed-step overshoot — every step landed
+        // grinding the climb integrator against a fixed-step overshoot - every step landed
         // past bottomY, beginFall(0,0) detached, repeat. Top step-off keeps its strict guard
         // because dismount there is driven by physics top-boundary detach, not snap.
-        if (targetPos.y <= climbRope.topY() || targetPos.y > climbRope.bottomY()) {
-            return false;
-        }
-        return Math.abs(dy) < BotPhysicsEngine.climbStepPerTick();
+        return AgentClimbMovementPolicy.shouldSnapToClimbTarget(
+                AgentBotClimbStateRuntime.climbing(entry),
+                AgentBotClimbStateRuntime.climbRope(entry),
+                targetPos,
+                dy,
+                AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry),
+                BotPhysicsEngine.climbStepPerTick());
     }
 
     static void tickAirborne(BotEntry entry, Point targetPos) {

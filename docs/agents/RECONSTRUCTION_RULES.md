@@ -1384,6 +1384,10 @@ Recent reconstruction notes:
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
   combat, inventory, potion, shop, and trade timers.
+- Climb idle-hold and precise climb-target snap decisions now live in
+  `AgentClimbMovementPolicy`; BotMovementManager preserves the same
+  navigation-edge, grind-mode, rope-bound, precise-target, and climb-step
+  inputs through compatibility delegates.
 - Potion-share low-donor deflection templates now live in
   `AgentDialogueCatalog`; BotPotionManager preserves the same delayed map-chat
   callback and random selection timing while delegating the wording and owner
