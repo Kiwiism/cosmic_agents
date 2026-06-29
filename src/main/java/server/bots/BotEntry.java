@@ -144,15 +144,32 @@ public class BotEntry {
         physX = physicsX;
     }
 
+    public void setPhysicsY(double physicsY) {
+        physY = physicsY;
+    }
+
     public void setPhysicsPosition(double physicsX, double physicsY) {
         physX = physicsX;
         physY = physicsY;
+    }
+
+    public void addPhysicsPosition(double deltaX, double deltaY) {
+        physX += deltaX;
+        physY += deltaY;
     }
 
     public void setPhysicsPosition(Point position) {
         if (position != null) {
             setPhysicsPosition(position.x, position.y);
         }
+    }
+
+    public double groundPhysicsCarryMs() {
+        return groundPhysicsCarryMs;
+    }
+
+    public void setGroundPhysicsCarryMs(double groundPhysicsCarryMs) {
+        this.groundPhysicsCarryMs = groundPhysicsCarryMs;
     }
 
     public int jumpCooldownMs() {

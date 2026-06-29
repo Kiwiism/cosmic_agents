@@ -109,8 +109,28 @@ public final class AgentBotMovementPhysicsStateRuntime {
         entry.setPhysicsX(physicsX);
     }
 
+    public static void setPhysicsY(BotEntry entry, double physicsY) {
+        entry.setPhysicsY(physicsY);
+    }
+
+    public static void setPhysicsPosition(BotEntry entry, double physicsX, double physicsY) {
+        entry.setPhysicsPosition(physicsX, physicsY);
+    }
+
     public static void setPhysicsPosition(BotEntry entry, Point position) {
         entry.setPhysicsPosition(position);
+    }
+
+    public static void addPhysicsPosition(BotEntry entry, double deltaX, double deltaY) {
+        entry.addPhysicsPosition(deltaX, deltaY);
+    }
+
+    public static double groundPhysicsCarryMs(BotEntry entry) {
+        return entry.groundPhysicsCarryMs();
+    }
+
+    public static void setGroundPhysicsCarryMs(BotEntry entry, double groundPhysicsCarryMs) {
+        entry.setGroundPhysicsCarryMs(groundPhysicsCarryMs);
     }
 
     public static int lastGroundFhId(BotEntry entry) {

@@ -628,8 +628,7 @@ public final class BotPhysicsEngine {
         AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
         AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
         AgentBotMovementStateRuntime.clearMoveDirection(entry);
-        entry.physX = position.x;
-        entry.physY = position.y;
+        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, position);
         stopGroundMotion(entry);
         setMovementVelocity(entry, 0, 0);
         syncCharacterState(entry);
@@ -672,8 +671,7 @@ public final class BotPhysicsEngine {
             AgentBotMovementStateRuntime.setInAir(entry, true);
             AgentBotSwimStateRuntime.setSwimming(entry, true);
             AgentBotMovementStateRuntime.setCrouching(entry, false);
-            entry.physX = position.x;
-            entry.physY = position.y;
+            AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, position);
             AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry,
                     -profileOrBase(AgentBotMovementStateRuntime.movementProfile(entry)).jumpSpeedPxs());
             stopGroundMotion(entry);
@@ -769,8 +767,7 @@ public final class BotPhysicsEngine {
         AgentBotMovementStateRuntime.setInAir(entry, true);
         AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
         AgentBotMovementStateRuntime.setCrouching(entry, false);
-        entry.physX = position.x;
-        entry.physY = position.y;
+        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, position);
         stopGroundMotion(entry);
         AgentBotClimbStateRuntime.setClimbUpIntent(entry, true);
         AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, airVelX);
@@ -808,16 +805,16 @@ public final class BotPhysicsEngine {
         AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
         AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
         AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
-        entry.physX = position.x;
-        entry.physY = position.y;
+        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, position);
         clearRopeEntryIntent(entry);
         AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
         AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, 0L);
-        entry.groundPhysicsCarryMs = 0.0;
+        AgentBotMovementPhysicsStateRuntime.setGroundPhysicsCarryMs(entry, 0.0);
         AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
-        entry.hspeed = landingGroundHSpeed(bot.getMap(), foothold, incomingDeltaX, incomingDeltaY,
-                AgentBotMovementStateRuntime.movementProfile(entry));
-        setMovementVelocity(entry, velocityFromDeltaX(tickDeltaFromGroundHSpeed(bot.getMap(), entry.hspeed,
+        AgentBotMovementPhysicsStateRuntime.setHorizontalSpeed(entry, landingGroundHSpeed(bot.getMap(), foothold,
+                incomingDeltaX, incomingDeltaY, AgentBotMovementStateRuntime.movementProfile(entry)));
+        setMovementVelocity(entry, velocityFromDeltaX(tickDeltaFromGroundHSpeed(bot.getMap(),
+                AgentBotMovementPhysicsStateRuntime.horizontalSpeed(entry),
                 AgentBotMovementStateRuntime.movementProfile(entry))), 0);
         syncCharacterState(entry);
 
@@ -894,7 +891,9 @@ public final class BotPhysicsEngine {
         Point currentPos = bot.getPosition();
         int desiredDir = AgentBotMovementStateRuntime.moveDirection(entry);
         GroundStepResult step = simulateGroundMotion(map, currentPos, foothold, desiredDir,
-                new GroundTravelState(entry.physX, entry.hspeed, entry.groundPhysicsCarryMs),
+                new GroundTravelState(AgentBotMovementPhysicsStateRuntime.physicsX(entry),
+                        AgentBotMovementPhysicsStateRuntime.horizontalSpeed(entry),
+                        AgentBotMovementPhysicsStateRuntime.groundPhysicsCarryMs(entry)),
                 AgentBotMovementStateRuntime.movementProfile(entry));
 
         // Snap-up to a *different* foothold means the bot walked off the edge and a separate
@@ -915,10 +914,9 @@ public final class BotPhysicsEngine {
         AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
         AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
         AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
-        entry.physX = position.x;
-        entry.physY = position.y;
-        entry.hspeed = step.state().hspeed();
-        entry.groundPhysicsCarryMs = step.state().carryMs();
+        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, position);
+        AgentBotMovementPhysicsStateRuntime.setHorizontalSpeed(entry, step.state().hspeed());
+        AgentBotMovementPhysicsStateRuntime.setGroundPhysicsCarryMs(entry, step.state().carryMs());
         AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
         setMovementVelocity(entry, step.velocityX(), 0);
         syncCharacterState(entry);
@@ -1065,8 +1063,7 @@ public final class BotPhysicsEngine {
         // authoritative position and discard any committed-airborne state from
         // the launch (airVelX, fixedAirArc) — swim physics owns motion now.
         if (!AgentBotSwimStateRuntime.swimming(entry)) {
-            entry.physX = pos.x;
-            entry.physY = pos.y;
+            AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, pos);
             AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
             AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
             AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
@@ -1075,17 +1072,17 @@ public final class BotPhysicsEngine {
             // Preserve velY/hspeed from launch — a jump-off-platform should
             // still arc upward under swim physics (matches wasm: NORMAL kick
             // immediately followed by SWIMMING integration).
-        } else if (Math.abs(entry.physX - pos.x) > 2 || Math.abs(entry.physY - pos.y) > 2) {
+        } else if (Math.abs(AgentBotMovementPhysicsStateRuntime.physicsX(entry) - pos.x) > 2
+                || Math.abs(AgentBotMovementPhysicsStateRuntime.physicsY(entry) - pos.y) > 2) {
             // External teleport (mob-touch knockback, !warp, position correction)
             // moved the authoritative position out from under the integrator.
             // Without rebase, the next sweep starts from a stale physX/physY and
             // can advance through a foothold without registering the floor —
             // bot tunnels straight through the platform. Resync to the truth.
-            entry.physX = pos.x;
-            entry.physY = pos.y;
+            AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, pos);
         }
 
-        double vx = entry.hspeed;
+        double vx = AgentBotMovementPhysicsStateRuntime.horizontalSpeed(entry);
         double vy = AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry);
 
         // --- Vertical control ---
@@ -1143,8 +1140,8 @@ public final class BotPhysicsEngine {
         };
         vy = Math.max(-cfg.SWIM_MAX_SPEED_PXS, Math.min(sinkCap, vy));
 
-        double nextX = entry.physX + vx * t;
-        double nextY = entry.physY + vy * t;
+        double nextX = AgentBotMovementPhysicsStateRuntime.physicsX(entry) + vx * t;
+        double nextY = AgentBotMovementPhysicsStateRuntime.physicsY(entry) + vy * t;
 
         // Use the same sweep-based collision resolution as airborne physics:
         // resolveAirCollision handles wall segments and scans every pixel along
@@ -1154,7 +1151,7 @@ public final class BotPhysicsEngine {
         Foothold landingFoothold = null;
         double landingDeltaX = 0.0;
         double landingDeltaY = 0.0;
-        Point prevPt = new Point((int) Math.round(entry.physX), (int) Math.round(entry.physY));
+        Point prevPt = AgentBotMovementPhysicsStateRuntime.roundedPhysicsPosition(entry);
         {
             Point nextPt = new Point((int) Math.round(nextX), (int) Math.round(nextY));
             AirCollision collision = resolveAirCollision(map, prevPt, nextPt);
@@ -1193,10 +1190,9 @@ public final class BotPhysicsEngine {
             return;
         }
 
-        entry.hspeed = vx;
+        AgentBotMovementPhysicsStateRuntime.setHorizontalSpeed(entry, vx);
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, (float) vy);
-        entry.physX = nextX;
-        entry.physY = nextY;
+        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, nextX, nextY);
         AgentBotMovementStateRuntime.setCrouching(entry, false);
         setMovementVelocity(entry, (int) Math.round(vx), (int) Math.round(vy));
         AgentBotSwimStateRuntime.setSwimming(entry, true);
@@ -1227,13 +1223,15 @@ public final class BotPhysicsEngine {
     }
 
     private static Point advanceAirbornePosition(BotEntry entry, Character bot) {
-        entry.physX += AgentBotMovementPhysicsStateRuntime.airVelocityX(entry)
+        double deltaX = AgentBotMovementPhysicsStateRuntime.airVelocityX(entry)
                 + AgentBotMovementPhysicsStateRuntime.airSteerVelocityX(entry);
         float gravity = gravityPerTick();
-        entry.physY += AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry) + 0.5f * gravity;
+        double deltaY = AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry) + 0.5f * gravity;
+        AgentBotMovementPhysicsStateRuntime.addPhysicsPosition(entry, deltaX, deltaY);
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry,
                 Math.min(AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry) + gravity, maxFallPerTick()));
-        AgentBotMovementPhysicsStateRuntime.recordFallPeakPhysicsY(entry, entry.physY);
+        AgentBotMovementPhysicsStateRuntime.recordFallPeakPhysicsY(entry,
+                AgentBotMovementPhysicsStateRuntime.physicsY(entry));
 
         return roundedAirPosition(entry);
     }
@@ -1290,8 +1288,7 @@ public final class BotPhysicsEngine {
         AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
         AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
         AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
-        entry.physX = collisionPoint.x;
-        entry.physY = collisionPoint.y;
+        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, collisionPoint);
         bot.setPosition(collisionPoint);
         AgentBotMovementStateRuntime.setInAir(entry, true);
         AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
@@ -1304,8 +1301,7 @@ public final class BotPhysicsEngine {
     private static void collideWithAirCeiling(BotEntry entry, Character bot, Point collisionPoint) {
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
         AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
-        entry.physX = collisionPoint.x;
-        entry.physY = collisionPoint.y;
+        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, collisionPoint);
         bot.setPosition(collisionPoint);
         AgentBotMovementStateRuntime.setInAir(entry, true);
         AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
@@ -1587,8 +1583,7 @@ public final class BotPhysicsEngine {
         AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
         AgentBotMovementStateRuntime.setInAir(entry, true);
         AgentBotMovementStateRuntime.setCrouching(entry, false);
-        entry.physX = position.x;
-        entry.physY = position.y;
+        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, position);
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, initialVelY);
         stopGroundMotion(entry);
         AgentBotClimbStateRuntime.setClimbUpIntent(entry, climbUpIntent);
@@ -1656,8 +1651,7 @@ public final class BotPhysicsEngine {
         AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
         AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
         AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
-        entry.physX = position.x;
-        entry.physY = position.y;
+        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, position);
         clearRopeEntryIntent(entry);
         AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
         stopGroundMotion(entry);
@@ -1674,10 +1668,9 @@ public final class BotPhysicsEngine {
         AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
         AgentBotMovementStateRuntime.setCrouching(entry, false);
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
-        entry.hspeed = 0.0;
-        entry.physX = position.x;
-        entry.physY = position.y;
-        entry.groundPhysicsCarryMs = 0.0;
+        AgentBotMovementPhysicsStateRuntime.setHorizontalSpeed(entry, 0.0);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, position);
+        AgentBotMovementPhysicsStateRuntime.setGroundPhysicsCarryMs(entry, 0.0);
         AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
         AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
         AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);

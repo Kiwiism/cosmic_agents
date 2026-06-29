@@ -1028,6 +1028,11 @@ Recent reconstruction notes:
   BotFallbackMovementManager preserves rope attach/jump, swim jump-up,
   down-jump, ledge walk-off, and fallback jump behavior while no longer reading
   BotEntry runtime fields directly in production.
+- Physics position, horizontal-speed, and ground-travel carry state now enter
+  through `AgentBotMovementPhysicsStateRuntime`; BotPhysicsEngine preserves
+  landing, grounded travel, swim, airborne collision, climb-position, and reset
+  behavior while no longer reading or writing `physX`, `physY`, `hspeed`, or
+  `groundPhysicsCarryMs` directly in production.
 
 Initial reconstruction order:
 

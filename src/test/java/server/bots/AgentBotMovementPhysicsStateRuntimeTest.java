@@ -97,6 +97,20 @@ class AgentBotMovementPhysicsStateRuntimeTest {
         AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 12.6);
         assertEquals(12.6, AgentBotMovementPhysicsStateRuntime.physicsX(entry));
         assertEquals(13, AgentBotMovementPhysicsStateRuntime.roundedPhysicsX(entry));
+
+        AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 22.4);
+        assertEquals(22.4, AgentBotMovementPhysicsStateRuntime.physicsY(entry));
+
+        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, 15.5, 25.5);
+        assertEquals(15.5, AgentBotMovementPhysicsStateRuntime.physicsX(entry));
+        assertEquals(25.5, AgentBotMovementPhysicsStateRuntime.physicsY(entry));
+
+        AgentBotMovementPhysicsStateRuntime.addPhysicsPosition(entry, 2.0, -3.0);
+        assertEquals(17.5, AgentBotMovementPhysicsStateRuntime.physicsX(entry));
+        assertEquals(22.5, AgentBotMovementPhysicsStateRuntime.physicsY(entry));
+
+        AgentBotMovementPhysicsStateRuntime.setGroundPhysicsCarryMs(entry, 6.75);
+        assertEquals(6.75, AgentBotMovementPhysicsStateRuntime.groundPhysicsCarryMs(entry));
     }
 
     @Test
