@@ -621,7 +621,7 @@ public final class BotPhysicsEngine {
         entry.inAir = false;
         entry.climbing = false;
         entry.climbRope = null;
-        entry.crouching = false;
+        AgentBotMovementStateRuntime.setCrouching(entry, false);
         entry.climbUpIntent = false;
         clearRopeEntryIntent(entry);
         entry.velY = 0f;
@@ -638,15 +638,15 @@ public final class BotPhysicsEngine {
 
     static void proneOnGround(BotEntry entry, Character bot) {
         idleOnGround(entry, bot);
-        entry.crouching = true;
-        entry.downJumpPending = false;
+        AgentBotMovementStateRuntime.setCrouching(entry, true);
+        AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
         syncCharacterState(entry);
     }
 
     static void queueDownJump(BotEntry entry, Character bot) {
         idleOnGround(entry, bot);
-        entry.downJumpPending = true;
-        entry.crouching = true;
+        AgentBotMovementStateRuntime.setDownJumpPending(entry, true);
+        AgentBotMovementStateRuntime.setCrouching(entry, true);
         syncCharacterState(entry);
     }
 
@@ -673,7 +673,7 @@ public final class BotPhysicsEngine {
             entry.climbRope = null;
             entry.inAir = true;
             entry.swimming = true;
-            entry.crouching = false;
+            AgentBotMovementStateRuntime.setCrouching(entry, false);
             entry.physX = position.x;
             entry.physY = position.y;
             entry.velY = -profileOrBase(AgentBotMovementStateRuntime.movementProfile(entry)).jumpSpeedPxs();
@@ -682,7 +682,7 @@ public final class BotPhysicsEngine {
             entry.airVelX = 0;
             entry.airSteerVelX = 0.0;
             entry.fixedAirArc = false;
-            entry.downJumpPending = false;
+            AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
             entry.swimJumpRequested = false;
             // The first impulse off a foothold is the small ground jump. A
             // mid-water swim burst may follow later, but not on the next swim
@@ -712,15 +712,15 @@ public final class BotPhysicsEngine {
 
     static void beginDownJump(BotEntry entry, Character bot) {
         if (!canStartDownJump(bot.getMap(), bot.getPosition())) {
-            entry.downJumpPending = false;
-            entry.downJumpGracePeriodMS = 0L;
-            entry.crouching = false;
+            AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
+            AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, 0L);
+            AgentBotMovementStateRuntime.setCrouching(entry, false);
             syncCharacterState(entry);
             return;
         }
         entry.blockedRopeGrab = null;
         launchAirborne(entry, bot, bot.getPosition(), -downJumpForcePerTick(), 0, false);
-        entry.downJumpGracePeriodMS = cfg.DOWN_JUMP_GRACE_MS;
+        AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, cfg.DOWN_JUMP_GRACE_MS);
     }
 
     static void beginTopRopeEntry(BotEntry entry, Character bot) {
@@ -769,7 +769,7 @@ public final class BotPhysicsEngine {
         entry.inAir = true;
         entry.climbing = false;
         entry.climbRope = null;
-        entry.crouching = false;
+        AgentBotMovementStateRuntime.setCrouching(entry, false);
         entry.physX = position.x;
         entry.physY = position.y;
         stopGroundMotion(entry);
@@ -777,7 +777,7 @@ public final class BotPhysicsEngine {
         entry.airVelX = airVelX;
         entry.airSteerVelX = 0.0;
         entry.fixedAirArc = false;
-        entry.downJumpPending = false;
+        AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
         entry.blockedRopeGrab = null;
         setMovementVelocity(entry, velocityFromDeltaX(airVelX), velocityFromAirStep(entry.velY));
         entry.facingDir = preservedFacingDir;
@@ -803,7 +803,7 @@ public final class BotPhysicsEngine {
         entry.inAir = false;
         entry.climbing = false;
         entry.climbRope = null;
-        entry.crouching = false;
+        AgentBotMovementStateRuntime.setCrouching(entry, false);
         entry.climbUpIntent = false;
         entry.velY = 0f;
         entry.airVelX = 0;
@@ -812,8 +812,8 @@ public final class BotPhysicsEngine {
         entry.physX = position.x;
         entry.physY = position.y;
         clearRopeEntryIntent(entry);
-        entry.downJumpPending = false;
-        entry.downJumpGracePeriodMS = 0L;
+        AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
+        AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, 0L);
         entry.groundPhysicsCarryMs = 0.0;
         entry.blockedRopeGrab = null;
         entry.hspeed = landingGroundHSpeed(bot.getMap(), foothold, incomingDeltaX, incomingDeltaY,
@@ -875,13 +875,14 @@ public final class BotPhysicsEngine {
     }
 
     static void tickMotionTimers(BotEntry entry) {
-        if (entry.downJumpGracePeriodMS > 0L) {
-            entry.downJumpGracePeriodMS = Math.max(0L, entry.downJumpGracePeriodMS - cfg.TICK_MS);
+        if (AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry) > 0L) {
+            AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry,
+                    Math.max(0L, AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry) - cfg.TICK_MS));
         }
     }
 
     static boolean canLand(BotEntry entry) {
-        return entry.downJumpGracePeriodMS == 0L;
+        return AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry) == 0L;
     }
 
   /**
@@ -910,7 +911,7 @@ public final class BotPhysicsEngine {
         entry.inAir = false;
         entry.climbing = false;
         entry.climbRope = null;
-        entry.crouching = false;
+        AgentBotMovementStateRuntime.setCrouching(entry, false);
         entry.climbUpIntent = false;
         entry.velY = 0f;
         entry.airVelX = 0;
@@ -920,7 +921,7 @@ public final class BotPhysicsEngine {
         entry.physY = position.y;
         entry.hspeed = step.state().hspeed();
         entry.groundPhysicsCarryMs = step.state().carryMs();
-        entry.downJumpPending = false;
+        AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
         setMovementVelocity(entry, step.velocityX(), 0);
         syncCharacterState(entry);
         return new GroundMotion(step.stepX(), false);
@@ -1071,8 +1072,8 @@ public final class BotPhysicsEngine {
             entry.airVelX = 0;
             entry.airSteerVelX = 0.0;
             entry.fixedAirArc = false;
-            entry.downJumpPending = false;
-            entry.downJumpGracePeriodMS = 0L;
+            AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
+            AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, 0L);
             // Preserve velY/hspeed from launch — a jump-off-platform should
             // still arc upward under swim physics (matches wasm: NORMAL kick
             // immediately followed by SWIMMING integration).
@@ -1194,7 +1195,7 @@ public final class BotPhysicsEngine {
         entry.velY = (float) vy;
         entry.physX = nextX;
         entry.physY = nextY;
-        entry.crouching = false;
+        AgentBotMovementStateRuntime.setCrouching(entry, false);
         setMovementVelocity(entry, (int) Math.round(vx), (int) Math.round(vy));
         entry.swimming = true;
         entry.inAir = true;
@@ -1240,7 +1241,7 @@ public final class BotPhysicsEngine {
         entry.inAir = true;
         entry.climbing = false;
         entry.climbRope = null;
-        entry.crouching = false;
+        AgentBotMovementStateRuntime.setCrouching(entry, false);
         // Preserve facing set by air steering (moveDir intent) - setMovementVelocity would
         // overwrite it based on momentum velocity, which is wrong for airborne steering.
         int facingDir = entry.facingDir;
@@ -1293,7 +1294,7 @@ public final class BotPhysicsEngine {
         entry.inAir = true;
         entry.climbing = false;
         entry.climbRope = null;
-        entry.crouching = false;
+        AgentBotMovementStateRuntime.setCrouching(entry, false);
         setMovementVelocity(entry, 0, velocityFromAirStep(entry.velY));
         syncCharacterState(entry);
     }
@@ -1307,7 +1308,7 @@ public final class BotPhysicsEngine {
         entry.inAir = true;
         entry.climbing = false;
         entry.climbRope = null;
-        entry.crouching = false;
+        AgentBotMovementStateRuntime.setCrouching(entry, false);
         setMovementVelocity(entry, velocityFromDeltaX(entry.airVelX), 0);
         syncCharacterState(entry);
     }
@@ -1585,7 +1586,7 @@ public final class BotPhysicsEngine {
         entry.climbing = false;
         entry.climbRope = null;
         entry.inAir = true;
-        entry.crouching = false;
+        AgentBotMovementStateRuntime.setCrouching(entry, false);
         entry.physX = position.x;
         entry.physY = position.y;
         entry.velY = initialVelY;
@@ -1595,7 +1596,7 @@ public final class BotPhysicsEngine {
         entry.airVelX = airVelX;
         entry.airSteerVelX = 0.0;
         entry.fixedAirArc = false;
-        entry.downJumpPending = false;
+        AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
         // Clear ground movement intent when going airborne - unified moveDir serves both
         // ground and air, so ground walk direction must not bleed into air steering.
         // Movement manager will set moveDir for air steering if shouldApplyAirSteering allows.
@@ -1650,7 +1651,7 @@ public final class BotPhysicsEngine {
         entry.climbing = true;
         entry.climbRope = rope;
         entry.inAir = false;
-        entry.crouching = false;
+        AgentBotMovementStateRuntime.setCrouching(entry, false);
         entry.climbUpIntent = false;
         entry.velY = 0f;
         entry.airVelX = 0;
@@ -1659,7 +1660,7 @@ public final class BotPhysicsEngine {
         entry.physX = position.x;
         entry.physY = position.y;
         clearRopeEntryIntent(entry);
-        entry.downJumpPending = false;
+        AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
         stopGroundMotion(entry);
         setMovementVelocity(entry, 0, 0);
         syncCharacterState(entry);
@@ -1673,7 +1674,7 @@ public final class BotPhysicsEngine {
         entry.inAir = false;
         entry.climbing = false;
         entry.climbRope = null;
-        entry.crouching = false;
+        AgentBotMovementStateRuntime.setCrouching(entry, false);
         entry.velY = 0f;
         entry.hspeed = 0.0;
         entry.physX = position.x;
@@ -1687,8 +1688,8 @@ public final class BotPhysicsEngine {
         entry.climbUpIntent = false;
         entry.blockedRopeGrab = null;
         entry.ropeGrabCooldownMs = 0;
-        entry.downJumpPending = false;
-        entry.downJumpGracePeriodMS = 0L;
+        AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
+        AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, 0L);
         clearRopeEntryIntent(entry);
         setMovementVelocity(entry, 0, 0);
     }
@@ -2257,3 +2258,4 @@ public final class BotPhysicsEngine {
         return landing != null ? landing.timeMs() : Integer.MAX_VALUE;
     }
 }
+

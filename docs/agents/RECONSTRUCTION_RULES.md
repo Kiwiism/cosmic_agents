@@ -155,6 +155,10 @@ Recent reconstruction notes:
 - Bot physics top-rope entry intent now enters through
   `AgentBotClimbStateRuntime`; queue, consume, and clear operations no longer
   access `ropeEntryPending`, `ropeEntryRope`, or `ropeEntryY` directly.
+- Bot physics down-jump and crouch state now enters through
+  `AgentBotMovementStateRuntime`; prone, queued down-jump, down-jump failure,
+  grace-period timer, landing, swim, airborne, climb, and reset paths no longer
+  write `downJumpPending`, `downJumpGracePeriodMS`, or `crouching` directly.
 - Combat alert reset callbacks now enter through `AgentBotCombatRuntime`;
   `BotCombatManager` no longer reaches directly into the lower-level scheduler
   runtime for combat-owned alert timing, and alert timing and stance reset

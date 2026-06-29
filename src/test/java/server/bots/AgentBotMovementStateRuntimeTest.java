@@ -203,6 +203,7 @@ class AgentBotMovementStateRuntimeTest {
         assertTrue(AgentBotMovementStateRuntime.crouching(entry));
         assertTrue(AgentBotMovementStateRuntime.hasDownJumpPending(entry));
         assertTrue(AgentBotMovementStateRuntime.hasDownJumpGracePeriod(entry));
+        assertEquals(100L, AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry));
         assertTrue(AgentBotMovementStateRuntime.wasMovingX(entry));
         AgentBotMovementStateRuntime.setWasMovingX(entry, false);
         assertFalse(AgentBotMovementStateRuntime.wasMovingX(entry));
@@ -219,5 +220,14 @@ class AgentBotMovementStateRuntimeTest {
         assertEquals(0, AgentBotMovementStateRuntime.movementVelocityX(entry));
         assertEquals(0, AgentBotMovementStateRuntime.movementVelocityY(entry));
         assertEquals(-1, AgentBotMovementStateRuntime.facingDirection(entry));
+
+        AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
+        AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, 0L);
+        AgentBotMovementStateRuntime.setCrouching(entry, false);
+        assertFalse(AgentBotMovementStateRuntime.downJumpPending(entry));
+        assertFalse(AgentBotMovementStateRuntime.hasDownJumpPending(entry));
+        assertEquals(0L, AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry));
+        assertFalse(AgentBotMovementStateRuntime.hasDownJumpGracePeriod(entry));
+        assertFalse(AgentBotMovementStateRuntime.crouching(entry));
     }
 }

@@ -119,8 +119,16 @@ public final class AgentBotMovementStateRuntime {
         return entry.downJumpPending();
     }
 
+    public static void setDownJumpPending(BotEntry entry, boolean downJumpPending) {
+        entry.setDownJumpPending(downJumpPending);
+    }
+
     public static boolean crouching(BotEntry entry) {
         return entry.crouching();
+    }
+
+    public static void setCrouching(BotEntry entry, boolean crouching) {
+        entry.setCrouching(crouching);
     }
 
     public static boolean hasDownJumpPending(BotEntry entry) {
@@ -129,6 +137,14 @@ public final class AgentBotMovementStateRuntime {
 
     public static boolean hasDownJumpGracePeriod(BotEntry entry) {
         return entry.downJumpGracePeriodMs() != 0L;
+    }
+
+    public static long downJumpGracePeriodMs(BotEntry entry) {
+        return entry.downJumpGracePeriodMs();
+    }
+
+    public static void setDownJumpGracePeriodMs(BotEntry entry, long downJumpGracePeriodMs) {
+        entry.setDownJumpGracePeriodMs(downJumpGracePeriodMs);
     }
 
     public static boolean wasMovingX(BotEntry entry) {

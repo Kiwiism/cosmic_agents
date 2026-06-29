@@ -337,6 +337,15 @@ public class BotEntry {
     public long downJumpGracePeriodMs() {
         return downJumpGracePeriodMS;
     }
+
+    public void setDownJumpPending(boolean downJumpPending) {
+        this.downJumpPending = downJumpPending;
+    }
+
+    public void setDownJumpGracePeriodMs(long downJumpGracePeriodMs) {
+        this.downJumpGracePeriodMS = downJumpGracePeriodMs;
+    }
+
     boolean ropeEntryPending = false;
 
     public boolean ropeEntryPending() {
@@ -1620,6 +1629,10 @@ public class BotEntry {
 
     public boolean crouching() {
         return crouching;
+    }
+
+    public void setCrouching(boolean crouching) {
+        this.crouching = crouching;
     }
 
     public void clearFidgetState() {
