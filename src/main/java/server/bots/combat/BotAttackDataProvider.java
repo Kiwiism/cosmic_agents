@@ -23,9 +23,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static server.bots.combat.BotWzXml.findNamedChild;
-import static server.bots.combat.BotWzXml.getIntAttribute;
-import static server.bots.combat.BotWzXml.getIntValue;
+import static server.agents.capabilities.combat.data.AgentWzXml.findNamedChild;
+import static server.agents.capabilities.combat.data.AgentWzXml.getIntAttribute;
+import static server.agents.capabilities.combat.data.AgentWzXml.getIntValue;
 
 public final class BotAttackDataProvider {
     private static final Logger log = LoggerFactory.getLogger(BotAttackDataProvider.class);

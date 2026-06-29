@@ -18,9 +18,9 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static server.bots.combat.BotWzXml.findNamedChild;
-import static server.bots.combat.BotWzXml.getIntAttribute;
-import static server.bots.combat.BotWzXml.getIntValue;
+import static server.agents.capabilities.combat.data.AgentWzXml.findNamedChild;
+import static server.agents.capabilities.combat.data.AgentWzXml.getIntAttribute;
+import static server.agents.capabilities.combat.data.AgentWzXml.getIntValue;
 
 public final class BotMobHitboxProvider {
     private static final Logger log = LoggerFactory.getLogger(BotMobHitboxProvider.class);

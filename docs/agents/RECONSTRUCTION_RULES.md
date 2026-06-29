@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Combat WZ DOM helper ownership moved to
+  `server.agents.capabilities.combat.data.AgentWzXml`. Named-child lookup,
+  integer attribute parsing, and integer value parsing are unchanged; legacy
+  attack-data and mob-hitbox providers now import the Agent-owned helper.
 - Combat attack timing formula ownership moved to
   `server.agents.capabilities.combat.data.AgentAttackTiming`. Attack-speed
   normalization, attack-speed factor calculation, and delay adjustment preserve
