@@ -1033,6 +1033,11 @@ Recent reconstruction notes:
   landing, grounded travel, swim, airborne collision, climb-position, and reset
   behavior while no longer reading or writing `physX`, `physY`, `hspeed`, or
   `groundPhysicsCarryMs` directly in production.
+- Combat grind-region sibling occupancy and sibling gear-offer targeting now
+  enter through `AgentBotRuntimeIdentityRuntime` and `AgentBotModeStateRuntime`;
+  BotCombatManager and BotOfferManager preserve sibling filtering, map matching,
+  and recipient selection while no longer reading sibling bot/owner/grinding
+  fields directly in those paths.
 
 Initial reconstruction order:
 

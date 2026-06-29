@@ -121,12 +121,16 @@ public final class BotOfferManager {
 
         List<BotEntry> siblings = BotManager.getInstance().getBotEntries(owner.getId());
         for (BotEntry sibling : siblings) {
-            if (sibling == entry || sibling.bot == null || sibling.bot.getMapId() != bot.getMapId()) {
+            if (sibling == entry) {
                 continue;
             }
-            GearOfferChoice choice = findBestGearOffer(entry, sibling.bot, bot);
+            Character siblingBot = AgentBotRuntimeIdentityRuntime.bot(sibling);
+            if (siblingBot == null || siblingBot.getMapId() != bot.getMapId()) {
+                continue;
+            }
+            GearOfferChoice choice = findBestGearOffer(entry, siblingBot, bot);
             if (choice != null) {
-                return offerGearItem(entry, bot, sibling.bot, choice.item(), choice.need());
+                return offerGearItem(entry, bot, siblingBot, choice.item(), choice.need());
             }
         }
 

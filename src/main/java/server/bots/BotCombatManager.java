@@ -2067,21 +2067,26 @@ public class BotCombatManager {
     }
 
     private static long grindRegionOccupancyPenalty(GrindGraphContext context, Character bot, int targetRegionId) {
-        if (!context.available() || context.entry().owner == null || bot == null || targetRegionId < 0) {
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(context.entry());
+        if (!context.available() || owner == null || bot == null || targetRegionId < 0) {
             return 0L;
         }
 
         int occupiedCount = 0;
-        for (BotEntry sibling : BotManager.getInstance().getBotEntries(context.entry().owner.getId())) {
-            if (sibling == context.entry() || sibling == null || !sibling.grinding || sibling.bot == null) {
+        for (BotEntry sibling : BotManager.getInstance().getBotEntries(owner.getId())) {
+            if (sibling == context.entry() || sibling == null || !AgentBotModeStateRuntime.grinding(sibling)) {
                 continue;
             }
-            if (sibling.bot.getMap() != context.map() || sibling.bot.getHp() <= 0 || sibling.bot.getPosition() == null) {
+            Character siblingBot = AgentBotRuntimeIdentityRuntime.bot(sibling);
+            if (siblingBot == null) {
+                continue;
+            }
+            if (siblingBot.getMap() != context.map() || siblingBot.getHp() <= 0 || siblingBot.getPosition() == null) {
                 continue;
             }
 
             int occupiedRegionId = BotNavigationManager.resolveCurrentRegionId(
-                    context.graph(), sibling, context.map(), sibling.bot.getPosition());
+                    context.graph(), sibling, context.map(), siblingBot.getPosition());
             if (occupiedRegionId == targetRegionId) {
                 occupiedCount++;
             }
