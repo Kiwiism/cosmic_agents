@@ -61,7 +61,6 @@ import net.PacketHandler;
 import net.PacketProcessor;
 import net.packet.ByteBufInPacket;
 import net.packet.InPacket;
-import net.server.PlayerBuffValueHolder;
 import net.server.channel.handlers.AbstractDealDamageHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,6 +73,7 @@ import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotAmmoStateRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatBuffStateRuntime;
+import server.agents.integration.AgentBotCombatReportRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import server.agents.integration.AgentBotCombatRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
@@ -1574,38 +1574,7 @@ public class BotCombatManager {
     }
 
     public static List<String> getSkillBuffDebugLines(BotEntry entry, Character bot) {
-        long now = System.currentTimeMillis();
-
-        long lastActionAgeMs = AgentBotSkillBuffDebugStateRuntime.lastActionAgeMs(entry, now);
-        List<AgentCombatDialogueReporter.ActiveSkillBuffDebugLine> activeBuffs = new ArrayList<>();
-        for (PlayerBuffValueHolder holder : bot.getAllBuffs()) {
-            StatEffect effect = holder.effect;
-            if (effect == null || !effect.isSkill()) continue;
-            int skillId = effect.getSourceId();
-            long remainingMs = effect.getDuration() > 0
-                    ? Math.max(0, effect.getDuration() - holder.usedTime)
-                    : 0L;
-            activeBuffs.add(new AgentCombatDialogueReporter.ActiveSkillBuffDebugLine(
-                    skillLabel(skillId), remainingMs));
-        }
-
-        List<AgentCombatDialogueReporter.CachedSkillBuffDebugLine> cachedBuffs = new ArrayList<>();
-        for (int skillId : AgentBotCombatSkillCacheStateRuntime.buffSkillIds(entry)) {
-            boolean cooling = bot.skillIsCooling(skillId);
-            long nextAt = AgentBotCombatBuffStateRuntime.nextBuffAt(entry, skillId);
-            String status;
-            if (cooling) {
-                status = "cd";
-            } else if (now < nextAt) {
-                status = AgentCombatDialogueReporter.skillBuffRebuffStatus(nextAt - now);
-            } else {
-                status = "ready";
-            }
-            cachedBuffs.add(new AgentCombatDialogueReporter.CachedSkillBuffDebugLine(skillLabel(skillId), status));
-        }
-
-        return AgentCombatDialogueReporter.skillBuffDebugLines(
-                AgentBotSkillBuffDebugStateRuntime.lastActionSummary(entry), lastActionAgeMs, activeBuffs, cachedBuffs);
+        return AgentBotCombatReportRuntime.skillBuffDebugLines(entry, bot);
     }
 
     private static String skillLabel(int skillId) {

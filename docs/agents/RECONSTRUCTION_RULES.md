@@ -1319,6 +1319,10 @@ Recent reconstruction notes:
 - Combat skill-label formatting now lives in `AgentCombatDialogueReporter`;
   BotCombatManager preserves the same SkillFactory lookup and `skill#<id>`
   fallback for AoE reposition logs and skill-buff debug/failure summaries.
+- Skill-buff debug report assembly now lives in `AgentBotCombatReportRuntime`;
+  BotCombatManager keeps a temporary compatibility delegate while active-buff,
+  cached-buff, cooldown, and last-action report lines are assembled through the
+  Agent integration/reporting path.
 
 Initial reconstruction order:
 
