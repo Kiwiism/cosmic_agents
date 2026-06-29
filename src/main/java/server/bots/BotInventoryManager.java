@@ -21,6 +21,7 @@ import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotInventoryStateRuntime;
+import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
@@ -244,7 +245,7 @@ public class BotInventoryManager {
         MapleMap map = bot.getMap();
         if (map == null) return null;
 
-        BotNavigationGraph graph = BotNavigationGraphProvider.peekBestGraph(map, entry.movementProfile);
+        BotNavigationGraph graph = BotNavigationGraphProvider.peekBestGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
         if (graph == null) return null;
 
         Set<Integer> allowed = new HashSet<>();

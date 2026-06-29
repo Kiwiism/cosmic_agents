@@ -768,6 +768,10 @@ Recent reconstruction notes:
   transferable item selection, recipient resolution, and slow-path logging keep
   BotEntry as the temporary backing store but no longer read `entry.bot` or
   `entry.owner` directly in production.
+- BotInventoryManager patrol-loot graph lookup now reads movement profile
+  through `AgentBotMovementStateRuntime`; BotEntry remains the temporary backing
+  store but inventory patrol-loot selection no longer reads `movementProfile`
+  directly in production.
 - Combat animation/cooldown and alert-reset state now enters through
   `AgentBotCombatCooldownStateRuntime`; BotCombatManager attack cooldown,
   movement-window, alerted-stance timeout, and alert-reset scheduling keep
