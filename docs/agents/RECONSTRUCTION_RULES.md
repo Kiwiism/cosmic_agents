@@ -69,6 +69,11 @@ Recent reconstruction notes:
   reach, diagonal jump-attack eligibility, and airborne ranged-route blocking
   for bow/crossbow/gun are unchanged; `BotCombatManager` keeps compatibility
   wrappers for current attack-plan gating and tests.
+- Combat support safety policy ownership moved to
+  `server.agents.capabilities.combat.AgentCombatSupportPolicy`. Dragon Roar
+  HP/target/healer gating, heal-threshold checks, and healer-skill detection
+  are unchanged; `BotCombatManager` still supplies party/member context and
+  executes the existing support side effects.
 - Combat attack data provider ownership moved to
   `server.agents.capabilities.combat.data.AgentAttackDataProvider`. Weapon
   normal-attack profile loading, action-spec selection, body action id

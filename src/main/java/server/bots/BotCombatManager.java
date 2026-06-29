@@ -11,6 +11,7 @@ import server.agents.capabilities.combat.AgentCombatWeaponPolicy;
 import server.agents.capabilities.combat.AgentCombatSkillHitboxPolicy;
 import server.agents.capabilities.combat.AgentCombatHitCounter;
 import server.agents.capabilities.combat.AgentCombatRangePolicy;
+import server.agents.capabilities.combat.AgentCombatSupportPolicy;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
 
 import server.agents.runtime.AgentPerformanceMonitor;
@@ -30,7 +31,6 @@ import constants.skills.Assassin;
 import constants.skills.Bandit;
 import constants.skills.Bowmaster;
 import constants.skills.Buccaneer;
-import constants.skills.Cleric;
 import constants.skills.Corsair;
 import constants.skills.Crusader;
 import constants.skills.DawnWarrior;
@@ -42,7 +42,6 @@ import constants.skills.NightWalker;
 import constants.skills.Priest;
 import constants.skills.Rogue;
 import constants.skills.Spearman;
-import constants.skills.SuperGM;
 import constants.skills.ThunderBreaker;
 import constants.skills.WhiteKnight;
 import io.netty.buffer.Unpooled;
@@ -601,10 +600,7 @@ public class BotCombatManager {
     }
 
     private static boolean needsHeal(Character chr) {
-        if (chr == null || !chr.isAlive()) return false;
-        int maxHp = chr.getCurrentMaxHp();
-        if (maxHp <= 0) return false;
-        return chr.getHp() < Math.round(maxHp * cfg.SUPPORT_HEAL_TARGET_RATIO);
+        return AgentCombatSupportPolicy.needsHeal(chr, cfg.SUPPORT_HEAL_TARGET_RATIO);
     }
 
     /**
@@ -1189,16 +1185,13 @@ public class BotCombatManager {
     }
 
     private static boolean canUseDragonRoarPlan(Character bot, int targetCount) {
-        int maxHp = bot.getCurrentMaxHp();
-        if (maxHp <= 0 || bot.getHp() * 2 <= maxHp) {
-            return false;
-        }
-        return targetCount >= DRAGON_ROAR_MIN_TARGETS_WITHOUT_HEALER || hasNearbyHealSkillAlly(bot);
+        return AgentCombatSupportPolicy.canUseDragonRoarPlan(bot, targetCount,
+                DRAGON_ROAR_MIN_TARGETS_WITHOUT_HEALER, hasNearbyHealSkillAlly(bot));
     }
 
     private static boolean hasNearbyHealSkillAlly(Character bot) {
         for (Character member : getNearbyPartyMembers(bot)) {
-            if (member.getSkillLevel(Cleric.HEAL) > 0 || member.getSkillLevel(SuperGM.HEAL_PLUS_DISPEL) > 0) {
+            if (AgentCombatSupportPolicy.hasHealSkill(member)) {
                 return true;
             }
         }
