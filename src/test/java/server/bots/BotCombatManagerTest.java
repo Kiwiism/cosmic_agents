@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.combat.AgentAttackRoute;
+
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
@@ -874,7 +876,7 @@ class BotCombatManagerTest {
         // Fire-now plan is the AoE itself — nothing to upgrade by repositioning.
         BotCombatManager.AttackPlan aoePlan = new BotCombatManager.AttackPlan(
                 Warrior.SLASH_BLAST, 1, 1, new Rectangle(20, 170, 160, 60), List.of(primary),
-                BotCombatManager.AttackRoute.CLOSE, 0, 0, 0, 0, 0, 0, 100, null);
+                AgentAttackRoute.CLOSE, 0, 0, 0, 0, 0, 0, 100, null);
         assertNull(BotCombatManager.aoeRepositionTarget(entry, bot, primary, aoePlan));
     }
 
@@ -915,12 +917,12 @@ class BotCombatManagerTest {
 
         BotCombatManager.AttackPlan singleTarget = new BotCombatManager.AttackPlan(
                 Warrior.POWER_STRIKE, 1, 1, new Rectangle(0, 0, 1, 1), List.of(mob),
-                BotCombatManager.AttackRoute.CLOSE, 0, 0, 0, 0, 0, 0, 100, null);
+                AgentAttackRoute.CLOSE, 0, 0, 0, 0, 0, 0, 100, null);
         assertTrue(BotCombatManager.isAoeBotSingleTargeting(entry, singleTarget));
 
         BotCombatManager.AttackPlan aoePlan = new BotCombatManager.AttackPlan(
                 Warrior.SLASH_BLAST, 1, 1, new Rectangle(0, 0, 1, 1), List.of(mob),
-                BotCombatManager.AttackRoute.CLOSE, 0, 0, 0, 0, 0, 0, 100, null);
+                AgentAttackRoute.CLOSE, 0, 0, 0, 0, 0, 0, 100, null);
         assertFalse(BotCombatManager.isAoeBotSingleTargeting(entry, aoePlan));
 
         AgentBotCombatSkillCacheStateRuntime.setAoeSkill(entry, 0, AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
@@ -948,7 +950,7 @@ class BotCombatManagerTest {
 
     @Test
     void shouldTreatBasicStaffAttacksAsCloseRange() {
-        assertEquals(BotCombatManager.AttackRoute.CLOSE, AgentAttackExecutionProvider.determineBasicWeaponRoute(WeaponType.STAFF));
+        assertEquals(AgentAttackRoute.CLOSE, AgentAttackExecutionProvider.determineBasicWeaponRoute(WeaponType.STAFF));
     }
 
     @Test
@@ -959,9 +961,9 @@ class BotCombatManagerTest {
                      Mockito.mockStatic(AgentAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS)) {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.STAFF);
 
-            assertEquals(BotCombatManager.AttackRoute.CLOSE,
+            assertEquals(AgentAttackRoute.CLOSE,
                     AgentAttackExecutionProvider.determineSkillRoute(bot, Warrior.POWER_STRIKE));
-            assertEquals(BotCombatManager.AttackRoute.MAGIC,
+            assertEquals(AgentAttackRoute.MAGIC,
                     AgentAttackExecutionProvider.determineSkillRoute(bot, Magician.MAGIC_CLAW));
         }
     }
@@ -1203,7 +1205,7 @@ class BotCombatManagerTest {
         StatEffect effect = mock(StatEffect.class);
         when(effect.getRange()).thenReturn(0);
 
-        Rectangle hitBox = BotCombatManager.fallbackSkillHitBox(effect, bot, false, BotCombatManager.AttackRoute.RANGED, 0, null);
+        Rectangle hitBox = BotCombatManager.fallbackSkillHitBox(effect, bot, false, AgentAttackRoute.RANGED, 0, null);
 
         assertEquals(new Rectangle(105, 150, 395, 100), hitBox);
     }
@@ -1215,7 +1217,7 @@ class BotCombatManagerTest {
         StatEffect effect = mock(StatEffect.class);
         when(effect.getRange()).thenReturn(0);
 
-        Rectangle hitBox = BotCombatManager.fallbackSkillHitBox(effect, bot, true, BotCombatManager.AttackRoute.MAGIC, 0, null);
+        Rectangle hitBox = BotCombatManager.fallbackSkillHitBox(effect, bot, true, AgentAttackRoute.MAGIC, 0, null);
 
         assertEquals(new Rectangle(-300, 150, 395, 100), hitBox);
     }
@@ -1227,7 +1229,7 @@ class BotCombatManagerTest {
         StatEffect effect = mock(StatEffect.class);
         when(effect.getRange()).thenReturn(150);
 
-        Rectangle hitBox = BotCombatManager.fallbackSkillHitBox(effect, bot, false, BotCombatManager.AttackRoute.MAGIC, 0, null);
+        Rectangle hitBox = BotCombatManager.fallbackSkillHitBox(effect, bot, false, AgentAttackRoute.MAGIC, 0, null);
 
         assertEquals(new Rectangle(105, 150, 595, 100), hitBox);
     }
@@ -1241,7 +1243,7 @@ class BotCombatManagerTest {
 
         // Iron Arrow: yAbove=32, yBelow=-28 → rect from y=168 to y=172 (height 4)
         Rectangle hitBox = BotCombatManager.fallbackSkillHitBox(effect, bot, false,
-                BotCombatManager.AttackRoute.RANGED, constants.skills.Crossbowman.IRON_ARROW, null);
+                AgentAttackRoute.RANGED, constants.skills.Crossbowman.IRON_ARROW, null);
 
         assertEquals(168, hitBox.y);
         assertEquals(4, hitBox.height);
@@ -1256,7 +1258,7 @@ class BotCombatManagerTest {
 
         // Avenger: yAbove=60, yBelow=0 → rect from y=140 to y=200 (height 60)
         Rectangle hitBox = BotCombatManager.fallbackSkillHitBox(effect, bot, false,
-                BotCombatManager.AttackRoute.RANGED, constants.skills.Hermit.AVENGER, null);
+                AgentAttackRoute.RANGED, constants.skills.Hermit.AVENGER, null);
 
         assertEquals(140, hitBox.y);
         assertEquals(60, hitBox.height);
@@ -1359,11 +1361,11 @@ class BotCombatManagerTest {
         entry.inAir = true;
         BotCombatManager.AttackPlan rangedBowPlan = new BotCombatManager.AttackPlan(
                 Hunter.ARROW_BOMB, 1, 1, new Rectangle(100, 150, 300, 100),
-                List.of(mockMob(new Point(180, 200), 9300200)), BotCombatManager.AttackRoute.RANGED,
+                List.of(mockMob(new Point(180, 200), 9300200)), AgentAttackRoute.RANGED,
                 0, 11, 11, 11, 4, 300, 600, null);
         BotCombatManager.AttackPlan closePlan = new BotCombatManager.AttackPlan(
                 0, 0, 1, new Rectangle(100, 150, 80, 70),
-                List.of(mockMob(new Point(120, 200), 9300201)), BotCombatManager.AttackRoute.CLOSE,
+                List.of(mockMob(new Point(120, 200), 9300201)), AgentAttackRoute.CLOSE,
                 4, 1, 1, 0, 4, 300, 600, null);
 
         assertFalse(BotCombatManager.canUseAttackPlanNow(entry, WeaponType.BOW, rangedBowPlan));

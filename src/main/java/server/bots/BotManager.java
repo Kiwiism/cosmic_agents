@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.combat.AgentAttackRoute;
+
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 
 import server.agents.capabilities.dialogue.AgentEmote;
@@ -2566,7 +2568,7 @@ public class BotManager {
         }
         BotCombatManager.AttackPlan plan = BotCombatManager.planAttack(entry, bot, target);
         return plan != null
-                && plan.route == BotCombatManager.AttackRoute.RANGED
+                && plan.route == AgentAttackRoute.RANGED
                 && BotCombatManager.isTargetInAttackRange(plan, bot, target)
                 && BotCombatManager.canUseAttackPlanNow(entry, weaponType, plan);
     }

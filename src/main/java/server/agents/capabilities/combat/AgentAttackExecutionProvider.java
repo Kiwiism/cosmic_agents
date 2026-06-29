@@ -34,7 +34,7 @@ public final class AgentAttackExecutionProvider {
     }
 
     public record BasicAttackData(Rectangle hitBox, int display, int direction, int rangedDirection, String action,
-                           int stance, int speed, int hitDelayMs, int cooldownMs, BotCombatManager.AttackRoute route) {
+                           int stance, int speed, int hitDelayMs, int cooldownMs, AgentAttackRoute route) {
     }
 
     private AgentAttackExecutionProvider() {
@@ -74,10 +74,10 @@ public final class AgentAttackExecutionProvider {
         String fallbackAction = attackSpec.primaryAction();
         List<String> candidateActions = resolveAttackActions(attackSpec, profile.getSourceActions());
         String action = sampleAttackAction(candidateActions, fallbackAction);
-        BotCombatManager.AttackRoute route = useDegenerateCloseRange
-                ? BotCombatManager.AttackRoute.CLOSE
+        AgentAttackRoute route = useDegenerateCloseRange
+                ? AgentAttackRoute.CLOSE
                 : determineBasicWeaponRoute(weaponType);
-        boolean closeRangeRoute = route == BotCombatManager.AttackRoute.CLOSE;
+        boolean closeRangeRoute = route == AgentAttackRoute.CLOSE;
         CloseRangePacketFields closeRangePacketFields = mimicCloseRangePacketFields(action, fallbackAction, facingLeft);
         int display = closeRangeRoute ? closeRangePacketFields.display() : 0;
         int direction = closeRangeRoute
@@ -120,10 +120,10 @@ public final class AgentAttackExecutionProvider {
                 || shouldDegenerateForNoAmmo(weaponType, bot);
         AgentAttackDataProvider.AttackAnimationSpec attackSpec = provider.getBasicAttackSpec(weaponType, useDegenerateCloseRange);
         String action = sampleAttackAction(attackSpec.actions(), attackSpec.primaryAction());
-        BotCombatManager.AttackRoute route = useDegenerateCloseRange
-                ? BotCombatManager.AttackRoute.CLOSE
+        AgentAttackRoute route = useDegenerateCloseRange
+                ? AgentAttackRoute.CLOSE
                 : determineBasicWeaponRoute(weaponType);
-        boolean closeRangeRoute = route == BotCombatManager.AttackRoute.CLOSE;
+        boolean closeRangeRoute = route == AgentAttackRoute.CLOSE;
         CloseRangePacketFields closeRangePacketFields =
                 mimicCloseRangePacketFields(action, attackSpec.primaryAction(), facingLeft);
         int display = closeRangeRoute ? closeRangePacketFields.display() : 0;
@@ -242,7 +242,7 @@ public final class AgentAttackExecutionProvider {
         return sampleAttackAction(attackSpec.actions(), attackSpec.primaryAction());
     }
 
-    public static void applyAttackRoute(BotCombatManager.AttackRoute route, AbstractDealDamageHandler.AttackInfo attack, Character bot) {
+    public static void applyAttackRoute(AgentAttackRoute route, AbstractDealDamageHandler.AttackInfo attack, Character bot) {
         switch (route) {
             case RANGED -> RangedAttackHandler.applyRangedAttackEffects(attack, bot, bot.getClient());
             case MAGIC -> MagicDamageHandler.applyMagicAttackEffects(attack, bot, bot.getClient());
@@ -250,12 +250,12 @@ public final class AgentAttackExecutionProvider {
         }
     }
 
-    public static BotCombatManager.AttackRoute determineBasicAttackRoute(Character bot) {
+    public static AgentAttackRoute determineBasicAttackRoute(Character bot) {
         return determineBasicWeaponRoute(getEquippedWeaponType(bot));
     }
 
-    public static boolean canUseRangedAttackRoute(BotCombatManager.AttackRoute route, WeaponType weaponType, Point botPos, Point targetPos) {
-        return route != BotCombatManager.AttackRoute.RANGED || !shouldDegenerateRangedAttack(weaponType, botPos, targetPos);
+    public static boolean canUseRangedAttackRoute(AgentAttackRoute route, WeaponType weaponType, Point botPos, Point targetPos) {
+        return route != AgentAttackRoute.RANGED || !shouldDegenerateRangedAttack(weaponType, botPos, targetPos);
     }
 
     // Skills the bow/crossbow classes cast as a melee swing on the client (opcode 0x2C,
@@ -268,19 +268,19 @@ public final class AgentAttackExecutionProvider {
             Crossbowman.POWER_KNOCKBACK
     );
 
-    public static BotCombatManager.AttackRoute determineSkillRoute(Character bot, int skillId) {
+    public static AgentAttackRoute determineSkillRoute(Character bot, int skillId) {
         if (FORCED_CLOSE_RANGE_SKILL_IDS.contains(skillId)) {
-            return BotCombatManager.AttackRoute.CLOSE;
+            return AgentAttackRoute.CLOSE;
         }
         if (isRangedSkill(skillId)) {
-            return BotCombatManager.AttackRoute.RANGED;
+            return AgentAttackRoute.RANGED;
         }
 
         WeaponType weaponType = getEquippedWeaponType(bot);
         if (weaponType == WeaponType.WAND || weaponType == WeaponType.STAFF) {
             return isMagicAttackSkill(skillId)
-                    ? BotCombatManager.AttackRoute.MAGIC
-                    : BotCombatManager.AttackRoute.CLOSE;
+                    ? AgentAttackRoute.MAGIC
+                    : AgentAttackRoute.CLOSE;
         }
 
         return determineWeaponRoute(weaponType);
@@ -292,14 +292,14 @@ public final class AgentAttackExecutionProvider {
         return family == 2 || family == 12 || family == 22;
     }
 
-    public static BotCombatManager.AttackRoute determineBasicWeaponRoute(WeaponType weaponType) {
+    public static AgentAttackRoute determineBasicWeaponRoute(WeaponType weaponType) {
         if (weaponType == null) {
-            return BotCombatManager.AttackRoute.CLOSE;
+            return AgentAttackRoute.CLOSE;
         }
 
         return switch (weaponType) {
-            case BOW, CROSSBOW, CLAW, GUN -> BotCombatManager.AttackRoute.RANGED;
-            default -> BotCombatManager.AttackRoute.CLOSE;
+            case BOW, CROSSBOW, CLAW, GUN -> AgentAttackRoute.RANGED;
+            default -> AgentAttackRoute.CLOSE;
         };
     }
 
@@ -575,15 +575,15 @@ public final class AgentAttackExecutionProvider {
         return sampleAttackAction(attackSpec.actions(), attackSpec.primaryAction());
     }
 
-    private static BotCombatManager.AttackRoute determineWeaponRoute(WeaponType weaponType) {
+    private static AgentAttackRoute determineWeaponRoute(WeaponType weaponType) {
         if (weaponType == null) {
-            return BotCombatManager.AttackRoute.CLOSE;
+            return AgentAttackRoute.CLOSE;
         }
 
         return switch (weaponType) {
-            case BOW, CROSSBOW, CLAW, GUN -> BotCombatManager.AttackRoute.RANGED;
-            case WAND, STAFF -> BotCombatManager.AttackRoute.MAGIC;
-            default -> BotCombatManager.AttackRoute.CLOSE;
+            case BOW, CROSSBOW, CLAW, GUN -> AgentAttackRoute.RANGED;
+            case WAND, STAFF -> AgentAttackRoute.MAGIC;
+            default -> AgentAttackRoute.CLOSE;
         };
     }
 
@@ -656,7 +656,7 @@ public final class AgentAttackExecutionProvider {
         return AgentAttackDataProvider.getInstance().getNormalAttackProfile(weapon.getItemId());
     }
 
-    private static Rectangle rangedBasicHitBox(BotCombatManager.AttackRoute route, Character bot, boolean facingLeft) {
+    private static Rectangle rangedBasicHitBox(AgentAttackRoute route, Character bot, boolean facingLeft) {
         if (bot == null || bot.getPosition() == null) {
             return null;
         }

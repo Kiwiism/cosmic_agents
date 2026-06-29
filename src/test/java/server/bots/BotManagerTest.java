@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.combat.AgentAttackRoute;
+
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
@@ -398,7 +400,7 @@ class BotManagerTest {
         Monster rangedMob = mockMob(new Point(260, 100), 9300401);
         BotCombatManager.AttackPlan rangedPlan = new BotCombatManager.AttackPlan(
                 0, 0, 1, new Rectangle(105, 50, 395, 100),
-                List.of(rangedMob), BotCombatManager.AttackRoute.RANGED,
+                List.of(rangedMob), AgentAttackRoute.RANGED,
                 0, 11, 11, 11, 4, 300, 600, null);
 
         when(bot.getMap()).thenReturn(map);
@@ -430,7 +432,7 @@ class BotManagerTest {
         AgentBotMapStateRuntime.setMapTracking(entry, map.getId(), BotMovementManager.buildFhIndex(map));
         BotCombatManager.AttackPlan rangedPlan = new BotCombatManager.AttackPlan(
                 0, 0, 1, new Rectangle(-200, 50, 300, 100),
-                List.of(target), BotCombatManager.AttackRoute.RANGED,
+                List.of(target), AgentAttackRoute.RANGED,
                 0, 11, 11, 11, 4, 300, 600, null);
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks =
@@ -1444,7 +1446,7 @@ class BotManagerTest {
 
     private static BotCombatManager.AttackPlan basicClosePlan(Monster target) {
         return new BotCombatManager.AttackPlan(
-                0, 0, 1, null, List.of(target), BotCombatManager.AttackRoute.CLOSE,
+                0, 0, 1, null, List.of(target), AgentAttackRoute.CLOSE,
                 0, 0, 0, 0, 0, 0, 0, null);
     }
 

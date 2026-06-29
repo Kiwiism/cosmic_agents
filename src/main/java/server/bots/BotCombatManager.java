@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.combat.AgentAttackRoute;
+
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 
 import server.agents.runtime.AgentPerformanceMonitor;
@@ -108,19 +110,13 @@ public class BotCombatManager {
     );
     private static final int DRAGON_ROAR_MIN_TARGETS_WITHOUT_HEALER = 10;
 
-    public enum AttackRoute {
-        CLOSE,
-        RANGED,
-        MAGIC
-    }
-
     static final class AttackPlan {
         final int skillId;
         final int skillLevel;
         final int numDamage;
         final Rectangle hitBox;
         final List<Monster> targets;
-        final AttackRoute route;
+        final AgentAttackRoute route;
         final int display;
         final int direction;
         final int rangedDirection;
@@ -131,7 +127,7 @@ public class BotCombatManager {
         final WeaponType damageWeaponType;
 
         AttackPlan(int skillId, int skillLevel, int numDamage, Rectangle hitBox, List<Monster> targets,
-                   AttackRoute route, int display, int direction, int rangedDirection, int stance, int speed,
+                   AgentAttackRoute route, int display, int direction, int rangedDirection, int stance, int speed,
                    int hitDelayMs, int cooldownMs, WeaponType damageWeaponType) {
             this.skillId = skillId;
             this.skillLevel = skillLevel;
@@ -158,7 +154,7 @@ public class BotCombatManager {
         }
 
         boolean isCloseRangeRoute() {
-            return route == AttackRoute.CLOSE;
+            return route == AgentAttackRoute.CLOSE;
         }
     }
 
@@ -806,7 +802,7 @@ public class BotCombatManager {
             List<Monster> undeadTargets,
             AgentAttackExecutionProvider.BasicAttackData fallbackAttackData,
             AgentAttackExecutionProvider.SkillAttackTiming skillTiming) {
-        AttackRoute route = AgentAttackExecutionProvider.determineSkillRoute(bot, healSkillId);
+        AgentAttackRoute route = AgentAttackExecutionProvider.determineSkillRoute(bot, healSkillId);
         // N in Russt's target multiplier is caster + damaged targets. When no undead are in range
         // the damage profile is unused (numAttacked=0) but we still pass 1 to avoid a divide-by-zero
         // surprise if the profile gets reused elsewhere.
@@ -1127,7 +1123,7 @@ public class BotCombatManager {
     private static PlanScore scoreAttackPlan(Character bot, AttackPlan attackPlan) {
         CombatFormulaProvider.DamageProfile damageProfile = CombatFormulaProvider.getInstance().resolveDamageProfile(
                 bot, attackPlan.skillId, attackPlan.skillLevel,
-                attackPlan.route == AttackRoute.MAGIC, attackPlan.damageWeaponType);
+                attackPlan.route == AgentAttackRoute.MAGIC, attackPlan.damageWeaponType);
         double usefulDamage = 0.0d;
         double rawDamage = 0.0d;
         boolean minimumKillsFullHpTargets = !attackPlan.targets.isEmpty();
@@ -1187,7 +1183,7 @@ public class BotCombatManager {
         if (AgentBotMovementStateRuntime.grounded(entry)) {
             return true;
         }
-        return !isAirborneRangedAttackBlockedWeapon(weaponType) || attackPlan.route != AttackRoute.RANGED;
+        return !isAirborneRangedAttackBlockedWeapon(weaponType) || attackPlan.route != AgentAttackRoute.RANGED;
     }
 
     static boolean isTargetJumpable(AgentMovementProfile movementProfile, boolean closeRangeRoute, Point botPos, Point targetPos) {
@@ -1236,10 +1232,10 @@ public class BotCombatManager {
         attack.display = attackPlan.display;
         attack.direction = attackPlan.direction; // Historical server name: packet byte 2.
         attack.rangedirection = attackPlan.rangedDirection; // Extra ranged byte after speed.
-        attack.ranged = attackPlan.route == AttackRoute.RANGED;
+        attack.ranged = attackPlan.route == AgentAttackRoute.RANGED;
         CombatFormulaProvider.DamageProfile damageProfile = CombatFormulaProvider.getInstance().resolveDamageProfile(
                 bot, attackPlan.skillId, attackPlan.skillLevel,
-                attackPlan.route == AttackRoute.MAGIC, attackPlan.damageWeaponType);
+                attackPlan.route == AgentAttackRoute.MAGIC, attackPlan.damageWeaponType);
         attack.magic = damageProfile.magicAttack();
         attack.targets = new HashMap<>();
 
@@ -1323,7 +1319,7 @@ public class BotCombatManager {
         if (!canUseAttackSkillWithWeapon(skillId, weaponType)) {
             return null;
         }
-        AttackRoute route = AgentAttackExecutionProvider.determineSkillRoute(bot, skillId);
+        AgentAttackRoute route = AgentAttackExecutionProvider.determineSkillRoute(bot, skillId);
         // Ammo gate: ranged skills with bulletCount need that many arrows/stars/bullets in
         // the bot's USE inventory. canPaySkillCost only covers MP/HP. countAmmo returns
         // MAX_VALUE for non-ammo weapons and while Soul Arrow / Shadow Claw are active.
@@ -1332,7 +1328,7 @@ public class BotCombatManager {
         // Partner doubles the actual consume (see RangedAttackHandler.bulletConsume *= 2).
         int ammoCost = Math.max(effect.getBulletCount(), effect.getBulletConsume())
                 * shadowPartnerHitMultiplier(bot, route);
-        if (ammoCost > 0 && route == AttackRoute.RANGED
+        if (ammoCost > 0 && route == AgentAttackRoute.RANGED
                 && countAmmo(bot, weaponType) < ammoCost) {
             return null;
         }
@@ -1368,10 +1364,10 @@ public class BotCombatManager {
         AgentAttackExecutionProvider.BasicAttackData fallbackAttackData = buildBasicAttackData(bot, primaryTarget);
         AgentAttackDataProvider.AttackAnimationSpec attackSpec = AgentAttackDataProvider.getInstance().getBasicAttackSpec(weaponType);
         String fallbackAction = attackSpec.primaryAction();
-        AgentAttackExecutionProvider.CloseRangePacketFields closeRangePacketFields = route == AttackRoute.CLOSE
+        AgentAttackExecutionProvider.CloseRangePacketFields closeRangePacketFields = route == AgentAttackRoute.CLOSE
                 ? AgentAttackExecutionProvider.mimicCloseRangePacketFields(action, fallbackAction, facingLeft)
                 : null;
-        int direction = route == AttackRoute.CLOSE
+        int direction = route == AgentAttackRoute.CLOSE
                 ? closeRangePacketFields.bodyActionId()
                 : AgentAttackExecutionProvider.bodyActionId(action, fallbackAction, weaponType);
         AgentAttackExecutionProvider.SkillAttackTiming skillTiming =
@@ -1381,7 +1377,7 @@ public class BotCombatManager {
             return null;
         }
         return new AttackPlan(skillId, skillLevel, attackCount, hitBox, targets,
-                route, route == AttackRoute.CLOSE ? closeRangePacketFields.display() : 0,
+                route, route == AgentAttackRoute.CLOSE ? closeRangePacketFields.display() : 0,
                 direction, direction,
                 AgentAttackExecutionProvider.attackPacketStance(facingLeft),
                 fallbackAttackData.speed(), skillTiming.hitDelayMs(), skillTiming.cooldownMs(),
@@ -1448,7 +1444,7 @@ public class BotCombatManager {
         return weaponType == WeaponType.POLE_ARM_SWING || weaponType == WeaponType.POLE_ARM_STAB;
     }
 
-    private static Rectangle calculateSkillHitBox(StatEffect effect, Character bot, Monster primaryTarget, AttackRoute route, int skillId, String action) {
+    private static Rectangle calculateSkillHitBox(StatEffect effect, Character bot, Monster primaryTarget, AgentAttackRoute route, int skillId, String action) {
         boolean facingLeft = primaryTarget.getPosition().x < bot.getPosition().x;
         if (effect.hasBoundingBox()) {
             Point anchor = isStrikePointAnchoredAoeSkill(skillId)
@@ -1491,8 +1487,8 @@ public class BotCombatManager {
         return new Rectangle(left, top, horizontalRange, height);
     }
 
-    static Rectangle fallbackSkillHitBox(StatEffect effect, Character bot, boolean facingLeft, AttackRoute route, int skillId, String action) {
-        if (route == AttackRoute.CLOSE) {
+    static Rectangle fallbackSkillHitBox(StatEffect effect, Character bot, boolean facingLeft, AgentAttackRoute route, int skillId, String action) {
+        if (route == AgentAttackRoute.CLOSE) {
             return fallbackCloseRangeSkillHitBox(effect, bot, action, facingLeft);
         }
         if (effect == null || bot == null) {
@@ -1634,8 +1630,8 @@ public class BotCombatManager {
     // Melee and magic routes are left untouched here — Shadow Partner's melee/magic
     // doubling for thief skills (e.g. Triple Throw is ranged-claw, so it covers itself)
     // can be enabled per-skill later if needed.
-    private static int shadowPartnerHitMultiplier(Character bot, AttackRoute route) {
-        if (route != AttackRoute.RANGED || bot == null) {
+    private static int shadowPartnerHitMultiplier(Character bot, AgentAttackRoute route) {
+        if (route != AgentAttackRoute.RANGED || bot == null) {
             return 1;
         }
         return bot.getBuffEffect(BuffStat.SHADOWPARTNER) != null ? 2 : 1;
@@ -1716,7 +1712,7 @@ public class BotCombatManager {
         Point botPos = bot.getPosition();
         Point targetPos = target.getPosition();
         WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
-        if (AgentAttackExecutionProvider.determineBasicWeaponRoute(weaponType) == AttackRoute.RANGED
+        if (AgentAttackExecutionProvider.determineBasicWeaponRoute(weaponType) == AgentAttackRoute.RANGED
                 && !AgentAttackExecutionProvider.shouldDegenerateRangedAttack(weaponType, botPos, targetPos)) {
             Rectangle hitBox = clientProjectileHitBox(bot, targetPos.x < botPos.x, 1.0f);
             if (doesHitBoxIntersectMonster(hitBox, target)) {
@@ -1744,8 +1740,8 @@ public class BotCombatManager {
             return false;
         }
 
-        AttackRoute route = AgentAttackExecutionProvider.determineSkillRoute(bot, attackSkillId);
-        if (route != AttackRoute.RANGED && route != AttackRoute.MAGIC) {
+        AgentAttackRoute route = AgentAttackExecutionProvider.determineSkillRoute(bot, attackSkillId);
+        if (route != AgentAttackRoute.RANGED && route != AgentAttackRoute.MAGIC) {
             return false;
         }
 
@@ -2258,11 +2254,11 @@ public class BotCombatManager {
     // doesHitBoxIntersectMonster(hitBox, target) is trivially true and does not gate reach.
     // Use the bot's basic weapon rectangle as a separate reach check. MAGIC route is left
     // ungated for now — untested.
-    private static boolean isPrimaryReachableByBasicWeapon(Character bot, Monster target, AttackRoute route) {
+    private static boolean isPrimaryReachableByBasicWeapon(Character bot, Monster target, AgentAttackRoute route) {
         if (bot == null || target == null || bot.getPosition() == null || target.getPosition() == null) {
             return false;
         }
-        if (route != AttackRoute.RANGED && route != AttackRoute.CLOSE) {
+        if (route != AgentAttackRoute.RANGED && route != AgentAttackRoute.CLOSE) {
             return true;
         }
         boolean facingLeft = target.getPosition().x < bot.getPosition().x;
@@ -2270,11 +2266,11 @@ public class BotCombatManager {
         return basicReach != null && doesHitBoxIntersectMonster(basicReach, target);
     }
 
-    private static Monster resolveStrikePointPrimaryByBasicWeapon(Character bot, Monster fallback, AttackRoute route) {
+    private static Monster resolveStrikePointPrimaryByBasicWeapon(Character bot, Monster fallback, AgentAttackRoute route) {
         if (bot == null || fallback == null || bot.getPosition() == null || fallback.getPosition() == null) {
             return fallback;
         }
-        if (route != AttackRoute.RANGED && route != AttackRoute.CLOSE) {
+        if (route != AgentAttackRoute.RANGED && route != AgentAttackRoute.CLOSE) {
             return fallback;
         }
         boolean facingLeft = fallback.getPosition().x < bot.getPosition().x;
@@ -2290,14 +2286,14 @@ public class BotCombatManager {
      * RANGED -> projectile reach (400 px + passive bonuses); CLOSE -> ATTACK_RANGE_X/Y/DOWN_MAX
      * around bot origin. Returns null for routes with no rect-based reach (e.g. MAGIC).
      */
-    private static Rectangle basicWeaponReachRect(Character bot, boolean facingLeft, AttackRoute route) {
+    private static Rectangle basicWeaponReachRect(Character bot, boolean facingLeft, AgentAttackRoute route) {
         if (bot == null || bot.getPosition() == null) {
             return null;
         }
-        if (route == AttackRoute.RANGED) {
+        if (route == AgentAttackRoute.RANGED) {
             return clientProjectileHitBox(bot, facingLeft, 1.0f);
         }
-        if (route == AttackRoute.CLOSE) {
+        if (route == AgentAttackRoute.CLOSE) {
             Point origin = bot.getPosition();
             int left = facingLeft ? origin.x - cfg.ATTACK_RANGE_X : origin.x;
             int top = origin.y - cfg.ATTACK_RANGE_Y;
