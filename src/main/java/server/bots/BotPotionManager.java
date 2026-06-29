@@ -15,9 +15,11 @@ import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
 import server.agents.integration.AgentBotModeStateRuntime;
+import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.agents.integration.AgentBotPotionRuntime;
 import server.agents.integration.AgentBotPotionStateRuntime;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.StatEffect;
 
 import java.util.List;
@@ -383,7 +385,7 @@ public final class BotPotionManager {
 
     static boolean requestPotShare(BotEntry entry, Character bot, boolean forHp, boolean bypassShareLimits) {
         long startedAt = BotPerformanceMonitor.start();
-        Character owner = entry.owner;
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner == null || bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry)) {
             BotPerformanceMonitor.recordSince("potion-request", startedAt);
             return false;
@@ -425,7 +427,9 @@ public final class BotPotionManager {
                     "i'm low too :/ check with " + ownerName,
                     "barely have any myself, ask " + ownerName);
             AgentBotPotionRuntime.afterRandomDelay(4000, 6000, () ->
-                    AgentBotPotionRuntime.sayMapNow(plan.entry().bot, BotManager.randomReply(noQualMessages)));
+                    AgentBotPotionRuntime.sayMapNow(
+                            AgentBotRuntimeIdentityRuntime.bot(plan.entry()),
+                            BotManager.randomReply(noQualMessages)));
         } else {
             schedulePotShare(plan, bot, forHp, AgentBotPotionRuntime.randomDelayMs(2000, 3000));
         }
@@ -440,7 +444,7 @@ public final class BotPotionManager {
     }
 
     public static OwnerPotShareResult offerPotShareToOwner(BotEntry entry, boolean forHp) {
-        Character owner = entry.owner;
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner == null || owner.getTrade() != null) {
             return OwnerPotShareResult.BLOCKED;
         }
@@ -459,10 +463,11 @@ public final class BotPotionManager {
         BotEntry bestEntry = null;
         int bestCount = 0;
         for (BotEntry sibling : BotManager.getInstance().getBotEntries(owner.getId())) {
-            if (sibling == excludedEntry || sibling.bot == null || sibling.bot.getMapId() != recipient.getMapId()) {
+            Character siblingBot = AgentBotRuntimeIdentityRuntime.bot(sibling);
+            if (sibling == excludedEntry || siblingBot == null || siblingBot.getMapId() != recipient.getMapId()) {
                 continue;
             }
-            int[] pots = countPotions(sibling.bot);
+            int[] pots = countPotions(siblingBot);
             int count = forHp ? pots[0] : pots[1];
             if (count > bestCount) {
                 bestCount = count;
@@ -475,7 +480,7 @@ public final class BotPotionManager {
 
     private static void schedulePotShare(PotDonorPlan plan, Character recipient, boolean forHp, long initialDelayMs) {
         BotEntry donorEntry = plan.entry();
-        Character donorBot = donorEntry.bot;
+        Character donorBot = AgentBotRuntimeIdentityRuntime.bot(donorEntry);
         int maxQty = plan.donationQty();
         AgentBotPotionRuntime.afterDelay(initialDelayMs, () -> {
             if (donorBot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(donorEntry) || recipient.getTrade() != null) {
@@ -525,10 +530,10 @@ public final class BotPotionManager {
     }
 
     private static boolean isStandingStillForRecovery(BotEntry entry) {
-        if (entry.inAir || entry.climbing) {
+        if (AgentBotMovementStateRuntime.inAir(entry) || AgentBotMovementStateRuntime.climbing(entry)) {
             return false;
         }
-        return entry.moveDir == 0
+        return !AgentBotMovementStateRuntime.hasMoveDirection(entry)
                 && BotPhysicsEngine.isStandingStance(BotPhysicsEngine.resolveStance(entry));
     }
 

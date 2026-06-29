@@ -852,6 +852,12 @@ Recent reconstruction notes:
   recipient scans, and reserved-offer recipient resolution keep BotEntry as the
   temporary backing store but no longer read `requestedUpgradeItemIds`,
   `proactiveUpgradeOffers`, `owner`, or `bot` directly in production.
+- Potion sharing and passive recovery gates now enter through
+  `AgentBotRuntimeIdentityRuntime` and `AgentBotMovementStateRuntime`;
+  BotPotionManager owner lookup, donor bot selection, delayed low-supply
+  replies, transfer donor identity, and standing-still recovery checks keep
+  BotEntry as the temporary backing store but no longer read `owner`, `bot`,
+  `inAir`, `climbing`, or `moveDir` directly in production.
 
 Initial reconstruction order:
 
