@@ -1405,6 +1405,9 @@ Recent reconstruction notes:
 - The best single-target score floor used for AoE-vs-single-target comparison
   now lives in `AgentCombatScoringPolicy`; BotCombatManager still resolves the
   cached skill/effect before passing damage and hit-count inputs.
+- Basic attack target selection and opposite-facing pivot orchestration now live
+  in `AgentBasicAttackPlanner`; BotCombatManager still builds concrete attack
+  data, applies Shadow Partner hit counts, and constructs the legacy AttackPlan.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

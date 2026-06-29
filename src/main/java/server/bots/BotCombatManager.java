@@ -6,6 +6,7 @@ import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentAttackPlanScoringPolicy;
 import server.agents.capabilities.combat.AgentAttackPlanTieBreakPolicy;
+import server.agents.capabilities.combat.AgentBasicAttackPlanner;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 import server.agents.capabilities.combat.AgentFallDamageCalculator;
@@ -749,22 +750,17 @@ public class BotCombatManager {
     }
 
     private static AttackPlan planBasicAttack(Character bot, Monster target) {
-        AgentAttackExecutionProvider.BasicAttackData basicAttackData = buildBasicAttackData(bot, target);
-        Monster effective = resolveEffectivePrimary(bot, target, basicAttackData.hitBox());
-        if (effective != target) {
-            basicAttackData = buildBasicAttackData(bot, effective);
+        AgentBasicAttackPlanner.BasicAttackSelection selection = AgentBasicAttackPlanner.selectBasicAttack(
+                target,
+                candidate -> buildBasicAttackData(bot, candidate),
+                (candidate, hitBox) -> resolveEffectivePrimary(bot, candidate, hitBox),
+                BotCombatManager::doesHitBoxIntersectMonster,
+                candidate -> findReachableOnOppositeFacing(bot, candidate));
+        if (selection == null) {
+            return null;
         }
-        if (!doesHitBoxIntersectMonster(basicAttackData.hitBox(), effective)) {
-            // Original facing is dry. Try the opposite facing: resolveEffectivePrimary only
-            // scans the forward hemisphere, so a closer mob on the other side would have
-            // been ignored. If one exists, pivot to it.
-            Monster pivoted = findReachableOnOppositeFacing(bot, target);
-            if (pivoted == null) {
-                return null;
-            }
-            basicAttackData = buildBasicAttackData(bot, pivoted);
-            effective = pivoted;
-        }
+        AgentAttackExecutionProvider.BasicAttackData basicAttackData = selection.attackData();
+        Monster effective = selection.target();
         int numDamage = shadowPartnerHitMultiplier(bot, basicAttackData.route());
         return new AttackPlan(0, 0, numDamage, basicAttackData.hitBox(), List.of(effective), basicAttackData.route(),
                 basicAttackData.display(), basicAttackData.direction(), basicAttackData.rangedDirection(), basicAttackData.stance(),
