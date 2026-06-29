@@ -52,6 +52,17 @@ class AgentCombatScoringPolicyTest {
     }
 
     @Test
+    void shouldUseLegacyAoeClusterDefaults() {
+        Monster target = mobAt(100, 100, true);
+        Monster nearOne = mobAt(120, 100, true);
+        Monster nearTwo = mobAt(130, 100, true);
+        Monster far = mobAt(260, 100, true);
+
+        assertEquals(400L, AgentCombatScoringPolicy.legacyAoeClusterBonus(
+                target, List.of(target, nearOne, nearTwo, far), true, 3));
+    }
+
+    @Test
     void shouldCompareAoeScoreAgainstBestSingleTargetScore() {
         assertTrue(AgentCombatScoringPolicy.aoeBeatsSingleTargetScore(120, 2, 2, 200L));
         assertFalse(AgentCombatScoringPolicy.aoeBeatsSingleTargetScore(100, 1, 2, 200L));
@@ -96,6 +107,20 @@ class AgentCombatScoringPolicyTest {
                 target, List.of(target, nearOne, nearTwo, far), true, 2, 150));
         assertEquals(0, AgentCombatScoringPolicy.cappedAoeClusterSize(
                 target, List.of(target, nearOne), false, 6, 150));
+    }
+
+    @Test
+    void shouldUseLegacyAoeClusterSizeDefaults() {
+        Monster target = mobAt(100, 100, true);
+        Monster nearOne = mobAt(120, 100, true);
+        Monster nearTwo = mobAt(130, 100, true);
+        Monster far = mobAt(260, 100, true);
+
+        assertEquals(3, AgentCombatScoringPolicy.legacyCappedAoeClusterSize(
+                target, List.of(target, nearOne, nearTwo, far), true, 6));
+        assertEquals(List.of(target, nearOne, nearTwo),
+                AgentCombatScoringPolicy.legacyClusterMonsters(
+                        target, List.of(target, nearOne, nearTwo, far)));
     }
 
     @Test

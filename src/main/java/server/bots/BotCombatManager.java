@@ -1279,14 +1279,10 @@ public class BotCombatManager {
     // Returns a non-negative bonus that is subtracted from the candidate's localScore
     // (lower score wins). Capped by the AoE skill's mobCount-1 so a 6-mob skill on a
     // pile of 10 mobs doesn't crater scores past the natural distance/foothold penalties.
-    static final int AOE_CLUSTER_RADIUS_PX = 150;
-    static final long AOE_CLUSTER_BONUS_PER_MOB = 200L;
-
     private static long aoeClusterBonus(BotEntry entry, Monster target, List<Monster> candidates) {
-        return AgentCombatScoringPolicy.aoeClusterBonus(target, candidates,
+        return AgentCombatScoringPolicy.legacyAoeClusterBonus(target, candidates,
                 entry != null && AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
-                entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry),
-                AOE_CLUSTER_RADIUS_PX, AOE_CLUSTER_BONUS_PER_MOB);
+                entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
     }
 
     /** True iff the bot has a multi-mob AoE skill but its chosen plan is single-target with room to hit more. */
@@ -1305,10 +1301,9 @@ public class BotCombatManager {
                 || bot.getMap() == null || anchor.getPosition() == null) {
             return 0;
         }
-        return AgentCombatScoringPolicy.cappedAoeClusterSize(anchor, bot.getMap().getAllMonsters(),
+        return AgentCombatScoringPolicy.legacyCappedAoeClusterSize(anchor, bot.getMap().getAllMonsters(),
                 AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
-                AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry),
-                AOE_CLUSTER_RADIUS_PX);
+                AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
     }
 
     // AoE positioning: target selection (aoeClusterBonus) steers the bot toward a cluster, but the
@@ -1398,7 +1393,7 @@ public class BotCombatManager {
     }
 
     private static List<Monster> clusterMonsters(Character bot, Monster primaryTarget) {
-        return AgentCombatScoringPolicy.clusterMonsters(primaryTarget, bot.getMap().getAllMonsters(), AOE_CLUSTER_RADIUS_PX);
+        return AgentCombatScoringPolicy.legacyClusterMonsters(primaryTarget, bot.getMap().getAllMonsters());
     }
 
     private static Monster nearestMonster(List<Monster> monsters, int x, int y) {

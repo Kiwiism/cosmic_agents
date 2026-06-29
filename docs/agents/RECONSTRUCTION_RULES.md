@@ -1376,6 +1376,10 @@ Recent reconstruction notes:
   now live in `AgentDialogueCatalog`; BotOfferManager preserves the same random
   reply selection, prompt formatting, delayed delivery, and trade-transfer
   behavior through compatibility delegates.
+- Legacy AoE cluster target-selection radius/bonus defaults and default cluster
+  helper wrappers now live in `AgentCombatScoringPolicy`; BotCombatManager still
+  supplies live skill-cache and map monster state while delegating the pure
+  cluster scoring policy to Agent combat.
 
 Initial reconstruction order:
 

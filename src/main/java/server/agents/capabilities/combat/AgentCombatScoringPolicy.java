@@ -7,6 +7,9 @@ import server.agents.capabilities.movement.AgentMovementProfile;
 import server.life.Monster;
 
 public final class AgentCombatScoringPolicy {
+    public static final int LEGACY_AOE_CLUSTER_RADIUS_PX = 150;
+    public static final long LEGACY_AOE_CLUSTER_BONUS_PER_MOB = 200L;
+
     private AgentCombatScoringPolicy() {
     }
 
@@ -79,6 +82,14 @@ public final class AgentCombatScoringPolicy {
         return neighbors * bonusPerMob;
     }
 
+    public static long legacyAoeClusterBonus(Monster target,
+                                             List<Monster> candidates,
+                                             boolean hasMultiMobAoeSkill,
+                                             int aoeMobCount) {
+        return aoeClusterBonus(target, candidates, hasMultiMobAoeSkill, aoeMobCount,
+                LEGACY_AOE_CLUSTER_RADIUS_PX, LEGACY_AOE_CLUSTER_BONUS_PER_MOB);
+    }
+
     public static boolean isAoeSingleTargeting(int planSkillId,
                                                int planTargetCount,
                                                boolean hasMultiMobAoeSkill,
@@ -99,6 +110,14 @@ public final class AgentCombatScoringPolicy {
         }
         return Math.min(clusterMonsters(anchor, candidates, clusterRadiusPx).size(),
                 Math.max(1, aoeMobCount));
+    }
+
+    public static int legacyCappedAoeClusterSize(Monster anchor,
+                                                 Iterable<Monster> candidates,
+                                                 boolean hasMultiMobAoeSkill,
+                                                 int aoeMobCount) {
+        return cappedAoeClusterSize(anchor, candidates, hasMultiMobAoeSkill, aoeMobCount,
+                LEGACY_AOE_CLUSTER_RADIUS_PX);
     }
 
     public static boolean aoeBeatsSingleTargetScore(int aoeDamage,
@@ -145,6 +164,11 @@ public final class AgentCombatScoringPolicy {
             }
         }
         return cluster;
+    }
+
+    public static List<Monster> legacyClusterMonsters(Monster primaryTarget,
+                                                      Iterable<Monster> candidates) {
+        return clusterMonsters(primaryTarget, candidates, LEGACY_AOE_CLUSTER_RADIUS_PX);
     }
 
     public static Monster nearestMonster(List<Monster> monsters, int x, int y) {
