@@ -22,6 +22,11 @@ Recent reconstruction notes:
   remains as a compatibility alias to the same live config object, so existing
   bot config commands and tests keep the same behavior while Agent combat code
   no longer reads config through `BotCombatManager`.
+- Combat ammo counting ownership moved to
+  `server.agents.capabilities.combat.AgentCombatAmmoCounter`. Ranged-ammo weapon
+  classification, Soul Arrow/Shadow Claw unlimited-ammo behavior, and USE
+  inventory arrow/star/bullet counting are unchanged; `BotCombatManager`
+  retains compatibility wrappers for legacy bot-package callers.
 - Combat attack data provider ownership moved to
   `server.agents.capabilities.combat.data.AgentAttackDataProvider`. Weapon
   normal-attack profile loading, action-spec selection, body action id
@@ -49,9 +54,8 @@ Recent reconstruction notes:
   basic/skill attack data records, packet stance/action helpers, attack-route
   application bridge, weapon route resolution, degenerate ranged retreat
   helpers, projectile hitbox helpers, and skill timing resolution are unchanged.
-  `BotCombatManager` still owns ammo counting and client projectile hitbox
-  implementation as temporary public seams until combat planning moves into
-  Agent combat modules.
+  `BotCombatManager` still owns client projectile hitbox implementation as a
+  temporary public seam until combat planning moves into Agent combat modules.
 - Combat attack-route ownership moved to
   `server.agents.capabilities.combat.AgentAttackRoute`. The CLOSE/RANGED/MAGIC
   route values are unchanged; `BotCombatManager`, `BotManager`, and attack

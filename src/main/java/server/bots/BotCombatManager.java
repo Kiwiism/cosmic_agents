@@ -4,6 +4,7 @@ import server.agents.capabilities.combat.AgentAttackRoute;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentCombatConfig;
+import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 
 import server.agents.runtime.AgentPerformanceMonitor;
 
@@ -18,7 +19,6 @@ import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.WeaponType;
 import constants.game.GameConstants;
-import constants.inventory.ItemConstants;
 import constants.skills.Archer;
 import constants.skills.Assassin;
 import constants.skills.Bandit;
@@ -2493,8 +2493,7 @@ public class BotCombatManager {
 
     /** Returns true if the bot's weapon type requires projectile ammo. */
     static boolean isRangedAmmoWeapon(WeaponType weaponType) {
-        return weaponType == WeaponType.BOW || weaponType == WeaponType.CROSSBOW
-                || weaponType == WeaponType.CLAW || weaponType == WeaponType.GUN;
+        return AgentCombatAmmoCounter.isRangedAmmoWeapon(weaponType);
     }
 
     static boolean isAirborneRangedAttackBlockedWeapon(WeaponType weaponType) {
@@ -2569,29 +2568,7 @@ public class BotCombatManager {
 
     /** Counts total ammo in USE inventory matching the bot's equipped weapon type. */
     public static int countAmmo(Character bot, WeaponType weaponType) {
-        if (weaponType == null || !isRangedAmmoWeapon(weaponType)) {
-            return Integer.MAX_VALUE;
-        }
-        boolean soulArrow = bot.getBuffedValue(BuffStat.SOULARROW) != null;
-        boolean shadowClaw = bot.getBuffedValue(BuffStat.SHADOW_CLAW) != null;
-        if (soulArrow || shadowClaw) {
-            return Integer.MAX_VALUE;
-        }
-        int total = 0;
-        for (Item item : bot.getInventory(InventoryType.USE).list()) {
-            int id = item.getItemId();
-            boolean match = switch (weaponType) {
-                case BOW -> ItemConstants.isArrowForBow(id);
-                case CROSSBOW -> ItemConstants.isArrowForCrossBow(id);
-                case CLAW -> ItemConstants.isThrowingStar(id);
-                case GUN -> ItemConstants.isBullet(id);
-                default -> false;
-            };
-            if (match) {
-                total += item.getQuantity();
-            }
-        }
-        return total;
+        return AgentCombatAmmoCounter.countAmmo(bot, weaponType);
     }
 
     private static boolean hasNearbyPartyMemberMissingBuff(Character bot, StatEffect fx) {

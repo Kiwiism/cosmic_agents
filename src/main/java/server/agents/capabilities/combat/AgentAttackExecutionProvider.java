@@ -621,7 +621,7 @@ public final class AgentAttackExecutionProvider {
         if (bot == null || !isDegenerateCapableRangedWeapon(weaponType)) {
             return false;
         }
-        return BotCombatManager.countAmmo(bot, weaponType) <= 0;
+        return AgentCombatAmmoCounter.countAmmo(bot, weaponType) <= 0;
     }
 
     private static Rectangle closeRangeBasicHitBox(Point origin, boolean facingLeft) {
