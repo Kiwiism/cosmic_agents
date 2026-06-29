@@ -5,8 +5,8 @@ import server.agents.capabilities.dialogue.AgentChatReplyRuntime;
 import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
 import server.agents.commands.AgentQueuedMessage;
 import server.agents.commands.AgentReplyQueue;
+import server.agents.commands.AgentReplyChannel;
 import server.bots.BotEntry;
-import server.bots.ReplyChannel;
 import net.server.world.Party;
 import tools.PacketCreator;
 
@@ -56,7 +56,7 @@ public final class AgentBotReplyRuntime {
         sayNow(entry.getBot(), AgentBotReplyChannelStateRuntime.replyChannel(entry), message);
     }
 
-    public static void sayNow(Character bot, ReplyChannel channel, String message) {
+    public static void sayNow(Character bot, AgentReplyChannel channel, String message) {
         switch (channel) {
             case PARTY, WHISPER -> sayPartyNow(bot, message);
             default -> sayMapNow(bot, message);

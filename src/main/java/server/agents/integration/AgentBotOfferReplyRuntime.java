@@ -1,8 +1,8 @@
 package server.agents.integration;
 
 import client.Character;
+import server.agents.commands.AgentReplyChannel;
 import server.bots.BotEntry;
-import server.bots.ReplyChannel;
 
 /**
  * Agent-owned offer reply adapter. Gear/loot offer flows should depend on this
@@ -28,7 +28,7 @@ public final class AgentBotOfferReplyRuntime {
         AgentBotReplyRuntime.sayMapNow(bot, message);
     }
 
-    public static void sayNow(Character bot, ReplyChannel channel, String message) {
+    public static void sayNow(Character bot, AgentReplyChannel channel, String message) {
         AgentBotReplyRuntime.sayNow(bot, channel, message);
     }
 

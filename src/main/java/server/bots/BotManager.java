@@ -44,6 +44,7 @@ import server.agents.integration.AgentBotTickFailureStateRuntime;
 import server.agents.integration.AgentBotTargetedCommandMatch;
 import server.agents.integration.AgentBotTransferCommand;
 import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
+import server.agents.commands.AgentReplyChannel;
 import client.BotClient;
 import config.YamlConfig;
 import client.Character;
@@ -894,7 +895,7 @@ public class BotManager {
         return constants.id.NpcId.MAPLE_ADMINISTRATOR;
     }
 
-    public void handleChat(Character owner, String message, ReplyChannel channel) {
+    public void handleChat(Character owner, String message, AgentReplyChannel channel) {
         if (handlePendingLootOfferResponse(owner, message)) {
             return;
         }
@@ -3905,7 +3906,7 @@ public class BotManager {
         return AgentChatTextSanitizer.sanitize(text);
     }
 
-    void botSay(Character bot, ReplyChannel channel, String text) {
+    void botSay(Character bot, AgentReplyChannel channel, String text) {
         AgentBotManagerReplyRuntime.sayNow(bot, channel, text);
     }
 

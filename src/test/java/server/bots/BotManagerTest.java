@@ -13,6 +13,7 @@ import org.mockito.MockedStatic;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
+import server.agents.commands.AgentReplyChannel;
 import server.agents.integration.AgentBotAmmoDonorPlan;
 import server.agents.integration.AgentBotTargetedCommandMatch;
 import server.agents.integration.AgentBotTransferCommand;
@@ -184,9 +185,9 @@ class BotManagerTest {
         Character bot = mock(Character.class);
 
         try (MockedStatic<AgentBotManagerReplyRuntime> replies = mockStatic(AgentBotManagerReplyRuntime.class)) {
-            manager.botSay(bot, ReplyChannel.PARTY, "sure!");
+            manager.botSay(bot, AgentReplyChannel.PARTY, "sure!");
 
-            replies.verify(() -> AgentBotManagerReplyRuntime.sayNow(bot, ReplyChannel.PARTY, "sure!"));
+            replies.verify(() -> AgentBotManagerReplyRuntime.sayNow(bot, AgentReplyChannel.PARTY, "sure!"));
         }
     }
 

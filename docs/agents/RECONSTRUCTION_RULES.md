@@ -1078,6 +1078,10 @@ Recent reconstruction notes:
   `AgentStarterItemGrant`; BotStarterKitManager preserves the same job-change,
   grant, auto-equip, and build-status behavior while the static kit table and
   grant value object are owned by the Agent build capability.
+- Reply-channel state now uses the Agent-owned `AgentReplyChannel` enum across
+  BotEntry, chat handlers, reply runtimes, offer replies, LLM gating, and tests;
+  the legacy `server.bots.ReplyChannel` enum has been removed without changing
+  MAP/PARTY/WHISPER routing behavior.
 
 Initial reconstruction order:
 

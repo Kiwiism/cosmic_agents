@@ -1,8 +1,8 @@
 package server.agents.integration;
 
 import client.Character;
+import server.agents.commands.AgentReplyChannel;
 import server.bots.BotEntry;
-import server.bots.ReplyChannel;
 
 /**
  * Temporary Agent-owned bridge for reply delivery still triggered by the
@@ -28,7 +28,7 @@ public final class AgentBotManagerReplyRuntime {
         AgentBotReplyRuntime.sayMapNow(bot, message);
     }
 
-    public static void sayNow(Character bot, ReplyChannel channel, String message) {
+    public static void sayNow(Character bot, AgentReplyChannel channel, String message) {
         AgentBotReplyRuntime.sayNow(bot, channel, message);
     }
 

@@ -7,7 +7,7 @@ import server.agents.integration.AgentBotLlmRuntime;
 import server.agents.integration.AgentBotReplyChannelStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
-import server.bots.ReplyChannel;
+import server.agents.commands.AgentReplyChannel;
 
 import java.util.List;
 import java.util.Locale;
@@ -67,7 +67,7 @@ public final class BotLlmReplyManager {
         // Strangers' whispers are dropped pre-LLM (whisper hook isn't wired in
         // Phase 1 anyway, but defend in depth).
         if (relation == SenderRelation.STRANGER
-                && AgentBotReplyChannelStateRuntime.replyChannel(entry) == ReplyChannel.WHISPER) {
+                && AgentBotReplyChannelStateRuntime.replyChannel(entry) == AgentReplyChannel.WHISPER) {
             return;
         }
 

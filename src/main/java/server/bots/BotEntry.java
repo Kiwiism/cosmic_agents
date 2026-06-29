@@ -8,6 +8,7 @@ import server.maps.Foothold;
 import server.maps.MapItem;
 import server.maps.Rope;
 import server.agents.commands.AgentQueuedMessage;
+import server.agents.commands.AgentReplyChannel;
 
 import java.awt.*;
 import java.util.ArrayDeque;
@@ -1106,7 +1107,7 @@ public class BotEntry {
 
     // Reply channel — tracks the chat channel the last owner command arrived on.
     // Bot replies are routed to this channel until the next command changes it.
-    volatile ReplyChannel replyChannel = ReplyChannel.MAP;
+    volatile AgentReplyChannel replyChannel = AgentReplyChannel.MAP;
 
     // Pending two-step action
     private String pendingAction = null;
@@ -2178,6 +2179,6 @@ public class BotEntry {
     // Mutations stay package-private to preserve existing invariants.
     public Character getBot() { return bot; }
     public Character getOwner() { return owner; }
-    public ReplyChannel getReplyChannel() { return replyChannel; }
-    public void setReplyChannel(ReplyChannel replyChannel) { this.replyChannel = replyChannel; }
+    public AgentReplyChannel getReplyChannel() { return replyChannel; }
+    public void setReplyChannel(AgentReplyChannel replyChannel) { this.replyChannel = replyChannel; }
 }

@@ -2,9 +2,9 @@ package server.agents.integration;
 
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
+import server.agents.commands.AgentReplyChannel;
 import server.bots.BotEntry;
 import server.bots.BotOfferManager;
-import server.bots.ReplyChannel;
 
 /**
  * Temporary Agent-owned bridge to legacy bot offer side effects.
@@ -29,7 +29,7 @@ public final class AgentBotOfferRuntime {
         AgentBotOfferReplyRuntime.sayMapNow(bot, message);
     }
 
-    public static void sayNow(Character bot, ReplyChannel channel, String message) {
+    public static void sayNow(Character bot, AgentReplyChannel channel, String message) {
         AgentBotOfferReplyRuntime.sayNow(bot, channel, message);
     }
 
