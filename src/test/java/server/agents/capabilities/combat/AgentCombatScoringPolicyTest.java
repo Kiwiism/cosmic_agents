@@ -142,6 +142,31 @@ class AgentCombatScoringPolicyTest {
         assertEquals(near, AgentCombatScoringPolicy.nearestMonster(List.of(far, near), 125, 100));
     }
 
+    @Test
+    void shouldCalculateClusterCentroidXLikeLegacyAoeReposition() {
+        assertEquals(200, AgentCombatScoringPolicy.clusterCentroidX(List.of(
+                mobAt(140, 200, true),
+                mobAt(200, 200, true),
+                mobAt(260, 200, true))));
+        assertEquals(101, AgentCombatScoringPolicy.clusterCentroidX(List.of(
+                mobAt(100, 200, true),
+                mobAt(103, 200, true))));
+    }
+
+    @Test
+    void shouldBoundAoeRepositionShiftByConfiguredDistance() {
+        assertEquals(80, AgentCombatScoringPolicy.boundedRepositionShift(300, 100.2d, 80));
+        assertEquals(-80, AgentCombatScoringPolicy.boundedRepositionShift(0, 100.8d, 80));
+        assertEquals(20, AgentCombatScoringPolicy.boundedRepositionShift(120, 100.2d, 80));
+    }
+
+    @Test
+    void shouldDetectAoeRepositionArrivalWindow() {
+        assertTrue(AgentCombatScoringPolicy.isWithinRepositionArrival(10, 10));
+        assertTrue(AgentCombatScoringPolicy.isWithinRepositionArrival(-10, 10));
+        assertFalse(AgentCombatScoringPolicy.isWithinRepositionArrival(11, 10));
+    }
+
     private static Monster mobAt(int x, int y, boolean alive) {
         Monster mob = mock(Monster.class);
         when(mob.getPosition()).thenReturn(new Point(x, y));

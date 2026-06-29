@@ -1380,6 +1380,9 @@ Recent reconstruction notes:
   helper wrappers now live in `AgentCombatScoringPolicy`; BotCombatManager still
   supplies live skill-cache and map monster state while delegating the pure
   cluster scoring policy to Agent combat.
+- AoE reposition centroid, bounded-shift, and arrival-window math now live in
+  `AgentCombatScoringPolicy`; BotCombatManager still owns plan construction,
+  translated-hitbox target collection, DPS comparison, and debug logging.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

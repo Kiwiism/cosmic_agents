@@ -189,4 +189,24 @@ public final class AgentCombatScoringPolicy {
         }
         return best;
     }
+
+    public static int clusterCentroidX(List<Monster> cluster) {
+        long sumX = 0L;
+        for (Monster monster : cluster) {
+            sumX += monster.getPosition().x;
+        }
+        return (int) (sumX / cluster.size());
+    }
+
+    public static int boundedRepositionShift(int centroidX, double hitBoxCenterX, int maxDistanceX) {
+        int shift = centroidX - (int) Math.round(hitBoxCenterX);
+        if (Math.abs(shift) > maxDistanceX) {
+            return Integer.signum(shift) * maxDistanceX;
+        }
+        return shift;
+    }
+
+    public static boolean isWithinRepositionArrival(int shift, int arrivalX) {
+        return Math.abs(shift) <= arrivalX;
+    }
 }

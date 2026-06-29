@@ -1335,11 +1335,7 @@ public class BotCombatManager {
         if (cluster.size() <= fireNowBest.targets.size()) {
             return null;
         }
-        long sumX = 0L;
-        for (Monster m : cluster) {
-            sumX += m.getPosition().x;
-        }
-        int centroidX = (int) (sumX / cluster.size());
+        int centroidX = AgentCombatScoringPolicy.clusterCentroidX(cluster);
         // Rebuild the AoE candidate at the current position (the plan planAttack discards) so we know
         // the actual hitbox shape. The box extends *forward* from the bot (it does not straddle the
         // anchor), so to cover the cluster we shift the box CENTER onto the centroid — not the bot
@@ -1351,11 +1347,9 @@ public class BotCombatManager {
         if (aoeNow == null || aoeNow.hitBox == null) {
             return null;
         }
-        int shift = centroidX - (int) Math.round(aoeNow.hitBox.getCenterX());
-        if (Math.abs(shift) > cfg.AOE_REPOSITION_MAX_DISTANCE_X) {
-            shift = Integer.signum(shift) * cfg.AOE_REPOSITION_MAX_DISTANCE_X;
-        }
-        if (Math.abs(shift) <= cfg.AOE_REPOSITION_ARRIVAL_X) {
+        int shift = AgentCombatScoringPolicy.boundedRepositionShift(
+                centroidX, aoeNow.hitBox.getCenterX(), cfg.AOE_REPOSITION_MAX_DISTANCE_X);
+        if (AgentCombatScoringPolicy.isWithinRepositionArrival(shift, cfg.AOE_REPOSITION_ARRIVAL_X)) {
             return null; // box already covers the cluster — let the normal flow pick the AoE
         }
         Rectangle shifted = new Rectangle(aoeNow.hitBox);
