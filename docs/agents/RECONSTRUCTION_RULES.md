@@ -147,10 +147,12 @@ Recent reconstruction notes:
   target inclusion, hostile/living secondary filtering, hitbox intersection,
   nearest-to-primary sorting, max-target capping, and hostile/living in-range
   candidate filtering, forward-projectile effective-primary selection, and
-  closest-alive target selection are unchanged. Heal-range undead target
-  filtering and cap handling are also Agent-owned; `BotCombatManager` still
-  supplies the map monster iterable, map-object query results, and caller
-  range values.
+  closest-alive target selection are unchanged. Opposite-facing mirrored
+  basic-attack target pivoting is also Agent-owned; `BotCombatManager` still
+  supplies the legacy hitbox builder and effective-primary resolver callbacks.
+  Heal-range undead target filtering and cap handling are also Agent-owned;
+  `BotCombatManager` still supplies the map monster iterable, map-object query
+  results, and caller range values.
 - Combat immediate projectile target policy moved to
   `server.agents.capabilities.combat.AgentCombatImmediateTargetPolicy`. Basic
   ranged projectile hitbox gating, degenerate-ranged fallback rejection, cached

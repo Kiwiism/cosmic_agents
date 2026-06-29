@@ -5,6 +5,7 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Function;
 import server.life.Monster;
 import server.maps.MapObject;
 
@@ -101,6 +102,25 @@ public final class AgentCombatTargetSelector {
             }
         }
         return closest;
+    }
+
+    public static Monster findReachableOnOppositeFacing(Point agentPosition,
+                                                        Monster originalTarget,
+                                                        Function<Point, Rectangle> oppositeHitBox,
+                                                        Function<Rectangle, Monster> effectivePrimary) {
+        if (agentPosition == null || originalTarget == null || originalTarget.getPosition() == null) {
+            return null;
+        }
+
+        Point mirroredPosition = new Point(2 * agentPosition.x - originalTarget.getPosition().x,
+                originalTarget.getPosition().y);
+        Rectangle hitBox = oppositeHitBox.apply(mirroredPosition);
+        if (hitBox == null) {
+            return null;
+        }
+
+        Monster mirrored = effectivePrimary.apply(hitBox);
+        return mirrored != originalTarget ? mirrored : null;
     }
 
     public static List<Monster> collectUndeadMobsInHealRange(Rectangle bounds,

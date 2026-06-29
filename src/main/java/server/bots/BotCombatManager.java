@@ -815,21 +815,14 @@ public class BotCombatManager {
     }
 
     private static Monster findReachableOnOppositeFacing(Character bot, Monster originalTarget) {
-        if (bot == null || originalTarget == null
-                || bot.getPosition() == null || originalTarget.getPosition() == null) {
+        if (bot == null) {
             return null;
         }
-        Point botPos = bot.getPosition();
-        Point mirroredPos = new Point(2 * botPos.x - originalTarget.getPosition().x,
-                originalTarget.getPosition().y);
-        AgentAttackExecutionProvider.BasicAttackData oppositeData =
-                AgentAttackExecutionProvider.buildBasicAttackData(bot, mirroredPos);
-        Rectangle oppositeHitBox = oppositeData.hitBox();
-        if (oppositeHitBox == null) {
-            return null;
-        }
-        Monster mirrored = resolveEffectivePrimary(bot, originalTarget, oppositeHitBox);
-        return mirrored != originalTarget ? mirrored : null;
+        return AgentCombatTargetSelector.findReachableOnOppositeFacing(
+                bot.getPosition(),
+                originalTarget,
+                mirroredPos -> AgentAttackExecutionProvider.buildBasicAttackData(bot, mirroredPos).hitBox(),
+                hitBox -> resolveEffectivePrimary(bot, originalTarget, hitBox));
     }
 
     private static AttackPlan selectBestAttackPlan(Character bot, List<AttackPlan> candidates) {

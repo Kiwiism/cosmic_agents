@@ -7,6 +7,7 @@ import server.life.MonsterStats;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -93,6 +94,40 @@ class AgentCombatTargetSelectorTest {
                 List.of(farther, boundary, dead, near), new Point(100, 100), 50 * 50));
         assertNull(AgentCombatTargetSelector.findClosestAliveMonster(
                 List.of(boundary), new Point(100, 100), 50 * 50));
+    }
+
+    @Test
+    void shouldResolveReachableTargetOnOppositeFacingUsingMirroredPosition() {
+        Monster original = monster(1, new Point(250, 100), true, false);
+        Monster mirrored = monster(2, new Point(60, 100), true, false);
+        AtomicReference<Point> requestedHitBoxPosition = new AtomicReference<>();
+        Rectangle hitBox = new Rectangle(40, 50, 100, 100);
+
+        Monster result = AgentCombatTargetSelector.findReachableOnOppositeFacing(
+                new Point(100, 100),
+                original,
+                mirroredPosition -> {
+                    requestedHitBoxPosition.set(mirroredPosition);
+                    return hitBox;
+                },
+                rectangle -> rectangle == hitBox ? mirrored : original);
+
+        assertEquals(new Point(-50, 100), requestedHitBoxPosition.get());
+        assertEquals(mirrored, result);
+    }
+
+    @Test
+    void shouldRejectOppositeFacingTargetWhenInputsMissingHitboxMissingOrTargetUnchanged() {
+        Monster original = monster(1, new Point(250, 100), true, false);
+
+        assertNull(AgentCombatTargetSelector.findReachableOnOppositeFacing(
+                null, original, ignored -> new Rectangle(), ignored -> original));
+        assertNull(AgentCombatTargetSelector.findReachableOnOppositeFacing(
+                new Point(100, 100), null, ignored -> new Rectangle(), ignored -> original));
+        assertNull(AgentCombatTargetSelector.findReachableOnOppositeFacing(
+                new Point(100, 100), original, ignored -> null, ignored -> original));
+        assertNull(AgentCombatTargetSelector.findReachableOnOppositeFacing(
+                new Point(100, 100), original, ignored -> new Rectangle(), ignored -> original));
     }
 
     @Test
