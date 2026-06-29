@@ -1905,7 +1905,7 @@ public class BotEquipManager {
             if (rawAnimationDelayMs <= 0) {
                 return 0;
             }
-            return server.bots.combat.BotAttackTiming.adjustDelayMillis(rawAnimationDelayMs, profile.getAttackSpeed());
+            return server.agents.capabilities.combat.data.AgentAttackTiming.adjustDelayMillis(rawAnimationDelayMs, profile.getAttackSpeed());
         } catch (Throwable t) {
             // WZ data may not be initialized in unit-test contexts; fall back to no DPS scaling.
             return 0;

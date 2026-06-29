@@ -4,7 +4,7 @@ import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 
 import org.junit.jupiter.api.Test;
 import server.bots.combat.BotAttackDataProvider;
-import server.bots.combat.BotAttackTiming;
+import server.agents.capabilities.combat.data.AgentAttackTiming;
 
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -100,7 +100,7 @@ class BotAttackDataProviderTest {
     }
 
     private static int adjustedDelay(int rawDelayMs) {
-        return BotAttackTiming.adjustDelayMillis(rawDelayMs, 4);
+        return AgentAttackTiming.adjustDelayMillis(rawDelayMs, 4);
     }
 
     @Test

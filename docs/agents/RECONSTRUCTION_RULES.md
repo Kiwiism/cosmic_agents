@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Combat attack timing formula ownership moved to
+  `server.agents.capabilities.combat.data.AgentAttackTiming`. Attack-speed
+  normalization, attack-speed factor calculation, and delay adjustment preserve
+  the same constants and rounding behavior.
 - Combat attack execution ownership moved to
   `server.agents.capabilities.combat.AgentAttackExecutionProvider`. The
   basic/skill attack data records, packet stance/action helpers, attack-route

@@ -15,7 +15,7 @@ import net.server.channel.handlers.MagicDamageHandler;
 import net.server.channel.handlers.RangedAttackHandler;
 import server.bots.BotCombatManager;
 import server.bots.combat.BotAttackDataProvider;
-import server.bots.combat.BotAttackTiming;
+import server.agents.capabilities.combat.data.AgentAttackTiming;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -713,7 +713,7 @@ public final class AgentAttackExecutionProvider {
     }
 
     private static int normalizeAttackSpeed(int attackSpeed) {
-        return BotAttackTiming.normalizeAttackSpeed(attackSpeed);
+        return AgentAttackTiming.normalizeAttackSpeed(attackSpeed);
     }
 
     private static int resolveEffectiveAttackSpeed(int baseAttackSpeed, Character bot) {
@@ -736,7 +736,7 @@ public final class AgentAttackExecutionProvider {
     }
 
     private static int adjustAttackDelayMillis(int baseDelayMillis, int effectiveAttackSpeed) {
-        return BotAttackTiming.adjustDelayMillis(baseDelayMillis, effectiveAttackSpeed);
+        return AgentAttackTiming.adjustDelayMillis(baseDelayMillis, effectiveAttackSpeed);
     }
 
 }

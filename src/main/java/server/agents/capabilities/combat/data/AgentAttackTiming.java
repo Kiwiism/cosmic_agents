@@ -1,10 +1,10 @@
-package server.bots.combat;
+package server.agents.capabilities.combat.data;
 
-public final class BotAttackTiming {
+public final class AgentAttackTiming {
     private static final float ATTACK_SPEED_BASE_FACTOR = 1.42f;
     private static final float ATTACK_SPEED_TIER_FACTOR = 0.07f;
 
-    private BotAttackTiming() {
+    private AgentAttackTiming() {
     }
 
     public static int normalizeAttackSpeed(int attackSpeed) {
