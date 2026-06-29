@@ -148,8 +148,9 @@ Recent reconstruction notes:
   nearest-to-primary sorting, max-target capping, and hostile/living in-range
   candidate filtering, forward-projectile effective-primary selection, and
   closest-alive target selection are unchanged. Opposite-facing mirrored
-  basic-attack target pivoting is also Agent-owned; `BotCombatManager` still
-  supplies the legacy hitbox builder and effective-primary resolver callbacks.
+  basic-attack target pivoting and strike-point primary resolution through
+  basic-weapon reach are also Agent-owned; `BotCombatManager` still supplies
+  the legacy hitbox builder and effective-primary resolver callbacks.
   Heal-range undead target filtering and cap handling are also Agent-owned;
   `BotCombatManager` still supplies the map monster iterable, map-object query
   results, and caller range values.

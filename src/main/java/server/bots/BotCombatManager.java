@@ -1628,18 +1628,15 @@ public class BotCombatManager {
     }
 
     private static Monster resolveStrikePointPrimaryByBasicWeapon(Character bot, Monster fallback, AgentAttackRoute route) {
-        if (bot == null || fallback == null || bot.getPosition() == null || fallback.getPosition() == null) {
+        if (bot == null) {
             return fallback;
         }
-        if (route != AgentAttackRoute.RANGED && route != AgentAttackRoute.CLOSE) {
-            return fallback;
-        }
-        boolean facingLeft = fallback.getPosition().x < bot.getPosition().x;
-        Rectangle basicReach = basicWeaponReachRect(bot, facingLeft, route);
-        if (basicReach == null) {
-            return fallback;
-        }
-        return resolveEffectivePrimary(bot, fallback, basicReach);
+        return AgentCombatTargetSelector.resolveStrikePointPrimaryByBasicWeapon(
+                bot.getPosition(),
+                fallback,
+                route,
+                facingLeft -> basicWeaponReachRect(bot, facingLeft, route),
+                hitBox -> resolveEffectivePrimary(bot, fallback, hitBox));
     }
 
     /**

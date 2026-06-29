@@ -131,6 +131,41 @@ class AgentCombatTargetSelectorTest {
     }
 
     @Test
+    void shouldResolveStrikePointPrimaryUsingBasicWeaponFacingAndReach() {
+        Monster fallback = monster(1, new Point(50, 100), true, false);
+        Monster replacement = monster(2, new Point(60, 100), true, false);
+        AtomicReference<Boolean> facingLeft = new AtomicReference<>();
+        Rectangle reach = new Rectangle(0, 0, 100, 100);
+
+        Monster result = AgentCombatTargetSelector.resolveStrikePointPrimaryByBasicWeapon(
+                new Point(100, 100),
+                fallback,
+                AgentAttackRoute.RANGED,
+                left -> {
+                    facingLeft.set(left);
+                    return reach;
+                },
+                rectangle -> rectangle == reach ? replacement : fallback);
+
+        assertTrue(facingLeft.get());
+        assertEquals(replacement, result);
+    }
+
+    @Test
+    void shouldKeepStrikePointFallbackForInvalidRouteInputsOrMissingReach() {
+        Monster fallback = monster(1, new Point(50, 100), true, false);
+
+        assertEquals(fallback, AgentCombatTargetSelector.resolveStrikePointPrimaryByBasicWeapon(
+                null, fallback, AgentAttackRoute.RANGED, ignored -> new Rectangle(), ignored -> null));
+        assertNull(AgentCombatTargetSelector.resolveStrikePointPrimaryByBasicWeapon(
+                new Point(100, 100), null, AgentAttackRoute.RANGED, ignored -> new Rectangle(), ignored -> null));
+        assertEquals(fallback, AgentCombatTargetSelector.resolveStrikePointPrimaryByBasicWeapon(
+                new Point(100, 100), fallback, AgentAttackRoute.MAGIC, ignored -> new Rectangle(), ignored -> null));
+        assertEquals(fallback, AgentCombatTargetSelector.resolveStrikePointPrimaryByBasicWeapon(
+                new Point(100, 100), fallback, AgentAttackRoute.CLOSE, ignored -> null, ignored -> null));
+    }
+
+    @Test
     void shouldCollectAliveUndeadMobsForHealRangeUpToCap() {
         Monster firstUndead = monster(1, new Point(100, 100), true, false, true);
         Monster livingNonUndead = monster(2, new Point(110, 100), true, false, false);

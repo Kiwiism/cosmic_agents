@@ -123,6 +123,26 @@ public final class AgentCombatTargetSelector {
         return mirrored != originalTarget ? mirrored : null;
     }
 
+    public static Monster resolveStrikePointPrimaryByBasicWeapon(Point agentPosition,
+                                                                 Monster fallback,
+                                                                 AgentAttackRoute route,
+                                                                 Function<Boolean, Rectangle> basicReach,
+                                                                 Function<Rectangle, Monster> effectivePrimary) {
+        if (agentPosition == null || fallback == null || fallback.getPosition() == null) {
+            return fallback;
+        }
+        if (route != AgentAttackRoute.RANGED && route != AgentAttackRoute.CLOSE) {
+            return fallback;
+        }
+
+        boolean facingLeft = fallback.getPosition().x < agentPosition.x;
+        Rectangle hitBox = basicReach.apply(facingLeft);
+        if (hitBox == null) {
+            return fallback;
+        }
+        return effectivePrimary.apply(hitBox);
+    }
+
     public static List<Monster> collectUndeadMobsInHealRange(Rectangle bounds,
                                                              Iterable<MapObject> objects,
                                                              int cap) {
