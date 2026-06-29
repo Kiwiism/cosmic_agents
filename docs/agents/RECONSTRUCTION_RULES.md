@@ -44,6 +44,11 @@ Recent reconstruction notes:
   rebuffable support filtering, summon statup detection, and heal-skill checks
   are unchanged; `BotCombatManager` keeps package-private compatibility
   wrappers for the current skill-cache and export-test paths.
+- Combat weapon policy ownership moved to
+  `server.agents.capabilities.combat.AgentCombatWeaponPolicy`. Dragon Knight
+  spear/polearm skill gating, forced Crusher/Fury damage weapon types, and
+  stab/swing action-to-weapon normalization are unchanged; `BotCombatManager`
+  keeps compatibility wrappers for current attack-plan construction.
 - Combat attack data provider ownership moved to
   `server.agents.capabilities.combat.data.AgentAttackDataProvider`. Weapon
   normal-attack profile loading, action-spec selection, body action id
