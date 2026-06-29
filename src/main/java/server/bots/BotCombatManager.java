@@ -1787,45 +1787,14 @@ public class BotCombatManager {
         return AgentCombatRangePolicy.basicWeaponReachRect(bot, facingLeft, route);
     }
 
-    private static boolean isForwardProjectileHitBox(Rectangle hitBox, Point botPos) {
-        return AgentCombatHitboxIntersection.isForwardProjectileHitBox(hitBox, botPos);
-    }
-
     static Monster resolveEffectivePrimary(Character bot, Monster fallback, Rectangle hitBox) {
         Point botPos = bot.getPosition();
-        if (!isForwardProjectileHitBox(hitBox, botPos)) {
-            return fallback;
-        }
-        Monster closest = null;
-        double closestDistSq = Double.MAX_VALUE;
-        for (Monster m : bot.getMap().getAllMonsters()) {
-            if (!isHostileLivingMonster(m) || !doesHitBoxIntersectMonster(hitBox, m)) {
-                continue;
-            }
-            double distSq = m.getPosition().distanceSq(botPos);
-            if (distSq < closestDistSq) {
-                closestDistSq = distSq;
-                closest = m;
-            }
-        }
-        return closest != null ? closest : fallback;
+        return AgentCombatTargetSelector.resolveEffectivePrimary(botPos, fallback, hitBox, bot.getMap().getAllMonsters());
     }
 
     static Monster findClosestAliveMonster(Character bot, double maxRangeSq) {
         Point botPos = bot.getPosition();
-        Monster closest = null;
-        double closestDistSq = maxRangeSq;
-        for (Monster m : bot.getMap().getAllMonsters()) {
-            if (!isHostileLivingMonster(m)) {
-                continue;
-            }
-            double distSq = m.getPosition().distanceSq(botPos);
-            if (distSq < closestDistSq) {
-                closestDistSq = distSq;
-                closest = m;
-            }
-        }
-        return closest;
+        return AgentCombatTargetSelector.findClosestAliveMonster(bot.getMap().getAllMonsters(), botPos, maxRangeSq);
     }
 
     /** A living monster the bot may attack and be hit by — alive and not a friendly (escort/PQ) mob. */

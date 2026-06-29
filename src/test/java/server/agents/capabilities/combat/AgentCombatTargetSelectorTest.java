@@ -9,6 +9,7 @@ import java.awt.Rectangle;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -56,6 +57,42 @@ class AgentCombatTargetSelectorTest {
 
         assertEquals(List.of(near), AgentCombatTargetSelector.aliveMonstersInRange(
                 List.of(far, deadNear, near, friendlyNear), new Point(100, 100), 50 * 50));
+    }
+
+    @Test
+    void shouldResolveForwardProjectilePrimaryToClosestIntersectingTarget() {
+        Monster fallback = monster(1, new Point(500, 100), true, false);
+        Monster far = monster(2, new Point(220, 100), true, false);
+        Monster near = monster(3, new Point(170, 100), true, false);
+        Monster friendly = monster(4, new Point(160, 100), true, true);
+
+        assertEquals(near, AgentCombatTargetSelector.resolveEffectivePrimary(
+                new Point(100, 100), fallback, new Rectangle(150, 50, 120, 100),
+                List.of(far, friendly, near)));
+    }
+
+    @Test
+    void shouldKeepFallbackWhenHitboxIsNotForwardOrNoCandidateMatches() {
+        Monster fallback = monster(1, new Point(120, 100), true, false);
+        Monster far = monster(2, new Point(500, 100), true, false);
+
+        assertEquals(fallback, AgentCombatTargetSelector.resolveEffectivePrimary(
+                new Point(100, 100), fallback, new Rectangle(80, 50, 120, 100), List.of(far)));
+        assertEquals(fallback, AgentCombatTargetSelector.resolveEffectivePrimary(
+                new Point(100, 100), fallback, new Rectangle(150, 50, 120, 100), List.of(far)));
+    }
+
+    @Test
+    void shouldFindClosestAliveMonsterInsideExclusiveRange() {
+        Monster near = monster(1, new Point(110, 100), true, false);
+        Monster farther = monster(2, new Point(140, 100), true, false);
+        Monster boundary = monster(3, new Point(150, 100), true, false);
+        Monster dead = monster(4, new Point(105, 100), false, false);
+
+        assertEquals(near, AgentCombatTargetSelector.findClosestAliveMonster(
+                List.of(farther, boundary, dead, near), new Point(100, 100), 50 * 50));
+        assertNull(AgentCombatTargetSelector.findClosestAliveMonster(
+                List.of(boundary), new Point(100, 100), 50 * 50));
     }
 
     private static Monster monster(int objectId, Point position, boolean alive, boolean friendly) {

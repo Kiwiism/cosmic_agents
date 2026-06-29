@@ -60,4 +60,45 @@ public final class AgentCombatTargetSelector {
         }
         return targets;
     }
+
+    public static Monster resolveEffectivePrimary(Point origin,
+                                                  Monster fallback,
+                                                  Rectangle hitBox,
+                                                  Iterable<Monster> candidates) {
+        if (!AgentCombatHitboxIntersection.isForwardProjectileHitBox(hitBox, origin)) {
+            return fallback;
+        }
+        Monster closest = null;
+        double closestDistSq = Double.MAX_VALUE;
+        for (Monster monster : candidates) {
+            if (!AgentCombatTargetEligibilityPolicy.isHostileLivingMonster(monster)
+                    || !AgentCombatHitboxIntersection.intersectsMonster(hitBox, monster)) {
+                continue;
+            }
+            double distSq = monster.getPosition().distanceSq(origin);
+            if (distSq < closestDistSq) {
+                closestDistSq = distSq;
+                closest = monster;
+            }
+        }
+        return closest != null ? closest : fallback;
+    }
+
+    public static Monster findClosestAliveMonster(Iterable<Monster> candidates,
+                                                  Point origin,
+                                                  double maxRangeSq) {
+        Monster closest = null;
+        double closestDistSq = maxRangeSq;
+        for (Monster monster : candidates) {
+            if (!AgentCombatTargetEligibilityPolicy.isHostileLivingMonster(monster)) {
+                continue;
+            }
+            double distSq = monster.getPosition().distanceSq(origin);
+            if (distSq < closestDistSq) {
+                closestDistSq = distSq;
+                closest = monster;
+            }
+        }
+        return closest;
+    }
 }
