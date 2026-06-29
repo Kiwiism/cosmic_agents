@@ -3,6 +3,7 @@ package server.bots;
 import server.agents.runtime.AgentPerformanceMonitor;
 
 import server.agents.capabilities.movement.AgentClimbMovementPolicy;
+import server.agents.capabilities.movement.AgentGroundMovementPolicy;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementTimingPolicy;
 
@@ -822,15 +823,13 @@ public class BotMovementManager {
     }
 
     static int calcStepX(MapleMap map, AgentMovementProfile profile, int botX, int targetX, boolean wasMovingX, int stopDist, int followDist) {
-        int dx = targetX - botX;
-        int absDx = Math.abs(dx);
-        if (absDx <= stopDist) {
-            return 0;
-        }
-        if (!wasMovingX && absDx <= followDist) {
-            return 0;
-        }
-        return Math.min(absDx, BotPhysicsEngine.walkStep(map, profile)) * (dx >= 0 ? 1 : -1);
+        return AgentGroundMovementPolicy.calcStepX(
+                botX,
+                targetX,
+                wasMovingX,
+                stopDist,
+                followDist,
+                BotPhysicsEngine.walkStep(map, profile));
     }
 
     static int updateStepX(BotEntry entry, MapleMap map, int botX, int targetX) {

@@ -1388,6 +1388,10 @@ Recent reconstruction notes:
   `AgentClimbMovementPolicy`; BotMovementManager preserves the same
   navigation-edge, grind-mode, rope-bound, precise-target, and climb-step
   inputs through compatibility delegates.
+- Ground horizontal step hysteresis now lives in `AgentGroundMovementPolicy`;
+  BotMovementManager preserves the same stop-distance, follow-distance,
+  was-moving, direction, and walk-step inputs while keeping runtime movement
+  state updates in the legacy compatibility layer.
 - Potion-share low-donor deflection templates now live in
   `AgentDialogueCatalog`; BotPotionManager preserves the same delayed map-chat
   callback and random selection timing while delegating the wording and owner
