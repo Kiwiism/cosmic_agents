@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -74,6 +75,28 @@ class AgentCombatGrindTargetPolicyTest {
                 new AgentScoredGrindTarget(distanceWinner, 10, 5, 2.0)));
         assertEquals(distanceWinner, AgentCombatGrindTargetPolicy.pickFromBestTargets(targets));
         assertNull(AgentCombatGrindTargetPolicy.pickFromBestTargets(new ArrayList<>()));
+    }
+
+    @Test
+    void shouldScoreLocalTargetsWithAdjustedLocalScoreAndDistance() {
+        Monster near = monsterAt(130, 100);
+        Monster far = monsterAt(200, 100);
+        Point agentPosition = new Point(100, 100);
+
+        List<AgentScoredGrindTarget> scoredTargets = AgentCombatGrindTargetPolicy.scoreLocalTargets(
+                List.of(near, far),
+                agentPosition,
+                monster -> monster == near ? 150L : 300L,
+                monster -> monster == near ? 50L : 0L);
+
+        assertEquals(near, scoredTargets.get(0).monster());
+        assertEquals(100L, scoredTargets.get(0).graphCost());
+        assertEquals(100L, scoredTargets.get(0).localScore());
+        assertEquals(900.0d, scoredTargets.get(0).distanceSq());
+        assertEquals(far, scoredTargets.get(1).monster());
+        assertEquals(300L, scoredTargets.get(1).graphCost());
+        assertEquals(300L, scoredTargets.get(1).localScore());
+        assertEquals(10_000.0d, scoredTargets.get(1).distanceSq());
     }
 
     @Test
@@ -171,5 +194,11 @@ class AgentCombatGrindTargetPolicyTest {
 
     private static Foothold foothold(int id) {
         return new Foothold(new Point(0, 0), new Point(100, 0), id);
+    }
+
+    private static Monster monsterAt(int x, int y) {
+        Monster monster = mock(Monster.class);
+        when(monster.getPosition()).thenReturn(new Point(x, y));
+        return monster;
     }
 }

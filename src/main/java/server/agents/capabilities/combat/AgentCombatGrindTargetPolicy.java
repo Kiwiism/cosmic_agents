@@ -1,8 +1,11 @@
 package server.agents.capabilities.combat;
 
+import java.awt.Point;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.IntSupplier;
+import java.util.function.ToLongFunction;
 import server.life.Monster;
 import server.maps.Foothold;
 
@@ -45,6 +48,19 @@ public final class AgentCombatGrindTargetPolicy {
         }
         sortByLegacyTargetOrder(scoredTargets);
         return scoredTargets.get(0).monster();
+    }
+
+    public static List<AgentScoredGrindTarget> scoreLocalTargets(List<Monster> candidates,
+                                                                 Point agentPosition,
+                                                                 ToLongFunction<Monster> localScore,
+                                                                 ToLongFunction<Monster> clusterBonus) {
+        List<AgentScoredGrindTarget> scoredTargets = new ArrayList<>(candidates.size());
+        for (Monster candidate : candidates) {
+            long adjustedLocalScore = localScore.applyAsLong(candidate) - clusterBonus.applyAsLong(candidate);
+            scoredTargets.add(new AgentScoredGrindTarget(candidate, adjustedLocalScore, adjustedLocalScore,
+                    candidate.getPosition().distanceSq(agentPosition)));
+        }
+        return scoredTargets;
     }
 
     public static long regionCrowdBonus(int mobCount) {

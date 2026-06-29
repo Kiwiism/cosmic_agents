@@ -1174,14 +1174,11 @@ public class BotCombatManager {
                                                              Point botPos,
                                                              Foothold botFoothold,
                                                              List<Monster> candidates) {
-        List<AgentScoredGrindTarget> scoredTargets = new ArrayList<>(candidates.size());
-        for (Monster candidate : candidates) {
-            long localScore = grindTargetScore(bot, botPos, botFoothold, candidate)
-                    - aoeClusterBonus(entry, candidate, candidates);
-            scoredTargets.add(new AgentScoredGrindTarget(candidate, localScore, localScore,
-                    candidate.getPosition().distanceSq(botPos)));
-        }
-        return scoredTargets;
+        return AgentCombatGrindTargetPolicy.scoreLocalTargets(
+                candidates,
+                botPos,
+                candidate -> grindTargetScore(bot, botPos, botFoothold, candidate),
+                candidate -> aoeClusterBonus(entry, candidate, candidates));
     }
 
     private static List<AgentScoredGrindTarget> scoreTargetRegions(BotEntry entry,

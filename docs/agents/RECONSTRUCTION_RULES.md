@@ -1310,6 +1310,10 @@ Recent reconstruction notes:
   BotCombatManager still resolves regions and navigation paths, then delegates
   invalid-region, same-region local cost, no-path, and edge-cost summing
   semantics to Agent combat policy.
+- Local grind-target scored-list construction now lives in
+  `AgentCombatGrindTargetPolicy`; BotCombatManager still supplies live
+  foothold, local-score, and AoE-cluster callbacks while Agent combat owns the
+  adjusted local-score, graph-score mirror, and distance-square record shape.
 - Buff blacklist classification now lives in `AgentCombatSkillClassifier`;
   BotCombatManager preserves the same Dark Sight exclusion behavior while the
   never-cast skill list is owned by Agent combat classification.
