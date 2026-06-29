@@ -115,6 +115,11 @@ Recent reconstruction notes:
   foothold early acceptance, graph-unavailable rejection, and same-region
   acceptance are unchanged; `BotCombatManager` still supplies foothold lookup
   and the legacy navigation-region resolver lazily to preserve call ordering.
+- Combat scored grind-target value and ordering ownership moved to
+  `server.agents.capabilities.combat.AgentScoredGrindTarget` and
+  `AgentCombatGrindTargetPolicy`. Graph-cost, local-score, and distance
+  tie-break ordering are unchanged; `BotCombatManager` still builds the scored
+  target list until the remaining graph scoring slice is extracted.
 - Combat attack-plan tie-break ordering moved to
   `server.agents.capabilities.combat.AgentAttackPlanTieBreakPolicy`. Cooldown
   priority and lower-skill-id fallback ordering are unchanged; larger

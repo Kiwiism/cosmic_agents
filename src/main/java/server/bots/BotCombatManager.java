@@ -23,6 +23,7 @@ import server.agents.capabilities.combat.AgentCombatTargetSelector;
 import server.agents.capabilities.combat.AgentMobTouchPolicy;
 import server.agents.capabilities.combat.AgentMobKnockbackPolicy;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
+import server.agents.capabilities.combat.AgentScoredGrindTarget;
 
 import server.agents.runtime.AgentPerformanceMonitor;
 
@@ -96,7 +97,6 @@ import tools.Pair;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -630,19 +630,16 @@ public class BotCombatManager {
             List<Monster> candidates = aliveMonstersInRange(bot, botPos, rangeSq);
             if (candidates.isEmpty()) return null;
 
-            List<ScoredGrindTarget> scoredTargets = scoreGrindTargets(entry, bot, botPos, botFoothold, candidates);
+            List<AgentScoredGrindTarget> scoredTargets = scoreGrindTargets(entry, bot, botPos, botFoothold, candidates);
             if (scoredTargets.isEmpty()) {
                 return null;
             }
 
-            scoredTargets.sort(Comparator
-                    .comparingLong(ScoredGrindTarget::graphCost)
-                    .thenComparingLong(ScoredGrindTarget::localScore)
-                    .thenComparingDouble(ScoredGrindTarget::distanceSq));
-            List<ScoredGrindTarget> reachableTargets = scoredTargets.stream()
+            AgentCombatGrindTargetPolicy.sortByLegacyTargetOrder(scoredTargets);
+            List<AgentScoredGrindTarget> reachableTargets = scoredTargets.stream()
                     .filter(target -> target.graphCost() < UNREACHABLE_GRAPH_COST)
                     .toList();
-            List<ScoredGrindTarget> selectable = reachableTargets.isEmpty() ? scoredTargets : reachableTargets;
+            List<AgentScoredGrindTarget> selectable = reachableTargets.isEmpty() ? scoredTargets : reachableTargets;
             if (selectable.getFirst().graphCost() >= UNREACHABLE_GRAPH_COST) {
                 return null;
             }
@@ -705,18 +702,15 @@ public class BotCombatManager {
                 return null;
             }
 
-            List<ScoredGrindTarget> scored = scoreGrindTargets(entry, bot, botPos, botFoothold, filtered);
+            List<AgentScoredGrindTarget> scored = scoreGrindTargets(entry, bot, botPos, botFoothold, filtered);
             if (scored.isEmpty()) {
                 return null;
             }
-            scored.sort(Comparator
-                    .comparingLong(ScoredGrindTarget::graphCost)
-                    .thenComparingLong(ScoredGrindTarget::localScore)
-                    .thenComparingDouble(ScoredGrindTarget::distanceSq));
-            List<ScoredGrindTarget> reachable = scored.stream()
+            AgentCombatGrindTargetPolicy.sortByLegacyTargetOrder(scored);
+            List<AgentScoredGrindTarget> reachable = scored.stream()
                     .filter(t -> t.graphCost() < UNREACHABLE_GRAPH_COST)
                     .toList();
-            List<ScoredGrindTarget> selectable = reachable.isEmpty() ? scored : reachable;
+            List<AgentScoredGrindTarget> selectable = reachable.isEmpty() ? scored : reachable;
             if (selectable.getFirst().graphCost() >= UNREACHABLE_GRAPH_COST) {
                 return null;
             }
@@ -740,7 +734,7 @@ public class BotCombatManager {
 
             Foothold botFoothold = findGroundFoothold(botPos, bot);
             GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, botPos);
-            List<ScoredGrindTarget> localTargets = new ArrayList<>();
+            List<AgentScoredGrindTarget> localTargets = new ArrayList<>();
             for (Monster candidate : candidates) {
                 if (!isLocalCombatTarget(graphContext, bot, botFoothold, candidate)
                         && !isImmediateProjectileTarget(entry, bot, candidate)) {
@@ -748,7 +742,7 @@ public class BotCombatManager {
                 }
                 long localScore = grindTargetScore(bot, botPos, botFoothold, candidate)
                         - aoeClusterBonus(entry, candidate, candidates);
-                localTargets.add(new ScoredGrindTarget(candidate, localScore, localScore,
+                localTargets.add(new AgentScoredGrindTarget(candidate, localScore, localScore,
                         candidate.getPosition().distanceSq(botPos)));
             }
             return pickFromBestTargets(localTargets);
@@ -1241,7 +1235,7 @@ public class BotCombatManager {
                 singleScore);
     }
 
-    private static List<ScoredGrindTarget> scoreGrindTargets(BotEntry entry,
+    private static List<AgentScoredGrindTarget> scoreGrindTargets(BotEntry entry,
                                                              Character bot,
                                                              Point botPos,
                                                              Foothold botFoothold,
@@ -1288,22 +1282,22 @@ public class BotCombatManager {
         return AgentCombatImmediateTargetPolicy.isImmediateProjectileSkillTarget(bot, target, attackSkillId);
     }
 
-    private static List<ScoredGrindTarget> scoreLocalTargets(BotEntry entry,
+    private static List<AgentScoredGrindTarget> scoreLocalTargets(BotEntry entry,
                                                              Character bot,
                                                              Point botPos,
                                                              Foothold botFoothold,
                                                              List<Monster> candidates) {
-        List<ScoredGrindTarget> scoredTargets = new ArrayList<>(candidates.size());
+        List<AgentScoredGrindTarget> scoredTargets = new ArrayList<>(candidates.size());
         for (Monster candidate : candidates) {
             long localScore = grindTargetScore(bot, botPos, botFoothold, candidate)
                     - aoeClusterBonus(entry, candidate, candidates);
-            scoredTargets.add(new ScoredGrindTarget(candidate, localScore, localScore,
+            scoredTargets.add(new AgentScoredGrindTarget(candidate, localScore, localScore,
                     candidate.getPosition().distanceSq(botPos)));
         }
         return scoredTargets;
     }
 
-    private static List<ScoredGrindTarget> scoreTargetRegions(BotEntry entry,
+    private static List<AgentScoredGrindTarget> scoreTargetRegions(BotEntry entry,
                                                               GrindGraphContext context,
                                                               Character bot,
                                                               Point botPos,
@@ -1324,7 +1318,7 @@ public class BotCombatManager {
             group.add(candidate, localScore, targetPos.distanceSq(botPos));
         }
 
-        List<ScoredGrindTarget> scoredTargets = new ArrayList<>(groupsByRegionId.size());
+        List<AgentScoredGrindTarget> scoredTargets = new ArrayList<>(groupsByRegionId.size());
         for (GrindTargetGroup group : groupsByRegionId.values()) {
             long pathCost = graphPathCost(context.graph(), context.map(), context.startPos(), context.startRegionId(),
                     group.bestMonster().getPosition(), group.regionId(), context.profile());
@@ -1334,21 +1328,17 @@ public class BotCombatManager {
                     ? UNREACHABLE_GRAPH_COST
                     : Math.max(0L, pathCost - crowdBonus) + occupancyPenalty;
             long localScore = group.bestLocalScore() + occupancyPenalty;
-            scoredTargets.add(new ScoredGrindTarget(group.bestMonster(), graphScore, localScore,
+            scoredTargets.add(new AgentScoredGrindTarget(group.bestMonster(), graphScore, localScore,
                     group.bestDistanceSq()));
         }
         return scoredTargets;
     }
 
-    private static Monster pickFromBestTargets(List<ScoredGrindTarget> scoredTargets) {
+    private static Monster pickFromBestTargets(List<AgentScoredGrindTarget> scoredTargets) {
         if (scoredTargets.isEmpty()) {
             return null;
         }
-        scoredTargets.sort(Comparator
-                .comparingLong(ScoredGrindTarget::graphCost)
-                .thenComparingLong(ScoredGrindTarget::localScore)
-                .thenComparingDouble(ScoredGrindTarget::distanceSq));
-        return scoredTargets.get(0).monster();
+        return AgentCombatGrindTargetPolicy.pickFromBestTargets(scoredTargets);
     }
 
     private static long graphTargetCost(GrindGraphContext context, Monster target) {
@@ -1568,9 +1558,6 @@ public class BotCombatManager {
         }
 
         return BotPhysicsEngine.findGroundFoothold(bot.getMap(), position);
-    }
-
-    private record ScoredGrindTarget(Monster monster, long graphCost, long localScore, double distanceSq) {
     }
 
     private static final class GrindTargetGroup {
@@ -2065,3 +2052,4 @@ public class BotCombatManager {
         return AgentCombatSkillClassifier.isHealSkill(skillId);
     }
 }
+
