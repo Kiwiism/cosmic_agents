@@ -740,6 +740,11 @@ Recent reconstruction notes:
   climb-exit refresh, ground-edge refresh, and post-ground edge execution keep
   BotEntry as the temporary backing store but no longer read or write
   `navEdge` directly in production.
+- Navigation movement-profile reads now enter through
+  `AgentBotMovementStateRuntime`; BotNavigationManager graph resolution,
+  warmup, jump/drop planning, tolerance checks, and platform-margin calculation
+  keep BotEntry as the temporary backing store but no longer read
+  `movementProfile` directly in production.
 - Combat animation/cooldown and alert-reset state now enters through
   `AgentBotCombatCooldownStateRuntime`; BotCombatManager attack cooldown,
   movement-window, alerted-stance timeout, and alert-reset scheduling keep

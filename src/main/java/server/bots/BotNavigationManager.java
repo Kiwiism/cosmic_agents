@@ -8,6 +8,7 @@ import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
+import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.maps.MapleMap;
 import server.maps.Foothold;
@@ -99,9 +100,9 @@ final class BotNavigationManager {
                 return new NavigationDirective(rawTargetPos, false);
             }
 
-            BotNavigationGraph graph = resolveActiveGraph(bot.getMap(), entry.movementProfile);
+            BotNavigationGraph graph = resolveActiveGraph(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
             if (graph == null) {
-                BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), entry.movementProfile);
+                BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
                 AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
                 notifyWarmup(entry, bot);
                 AgentBotNavigationDebugStateRuntime.setLastDecision(entry, "graph-warmup");
@@ -110,8 +111,8 @@ final class BotNavigationManager {
                 AgentBotNavigationDebugStateRuntime.recordPathLog(entry, captureTargetSnapshot(entry, rawTargetPos), -1, false, runAiTick);
                 return new NavigationDirective(fallbackTarget, false);
             }
-            if (BotNavigationGraphProvider.peekGraph(bot.getMap(), entry.movementProfile) == null) {
-                BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), entry.movementProfile);
+            if (BotNavigationGraphProvider.peekGraph(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry)) == null) {
+                BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
                 AgentBotNavigationDebugStateRuntime.setLastDecision(entry, "graph-fallback-profile");
             }
             AgentBotNavigationDebugStateRuntime.clearGraphWarmupFallback(entry);
@@ -193,9 +194,9 @@ final class BotNavigationManager {
         // discard a DROP/JUMP edge whose toRegionId matches the bot's current region. Without this
         // check, tryExecuteDrop re-fires from the landing platform where there's no lower foothold,
         // sending the bot out of the map.
-        BotNavigationGraph graph = resolveActiveGraph(entry.bot.getMap(), entry.movementProfile);
+        BotNavigationGraph graph = resolveActiveGraph(entry.bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         if (graph == null) {
-            BotNavigationGraphProvider.warmGraphAsync(entry.bot.getMap(), entry.movementProfile);
+            BotNavigationGraphProvider.warmGraphAsync(entry.bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
             return false;
         }
         Point botPos = entry.bot.getPosition();
@@ -632,7 +633,7 @@ final class BotNavigationManager {
     }
 
     static Point selectJumpWaypoint(BotEntry entry, Point botPos, BotNavigationGraph.Edge edge) {
-        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(entry.bot.getMap(), entry.movementProfile);
+        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(entry.bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         return selectJumpWaypoint(graph, entry, botPos, edge);
     }
 
@@ -655,7 +656,7 @@ final class BotNavigationManager {
     }
 
     static Point selectClimbWaypoint(BotEntry entry, Point botPos, BotNavigationGraph.Edge edge) {
-        BotNavigationGraph graph = resolveActiveGraph(entry.bot.getMap(), entry.movementProfile);
+        BotNavigationGraph graph = resolveActiveGraph(entry.bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         return selectClimbWaypoint(graph, entry, botPos, edge);
     }
 
@@ -719,7 +720,7 @@ final class BotNavigationManager {
         BotPhysicsEngine.WalkOffLanding liveOutcome = BotPhysicsEngine.simulateWalkOffLanding(
                 entry.bot.getMap(), botPos, Integer.signum(edge.launchStepX),
                 new BotPhysicsEngine.GroundTravelState(entry.physX, entry.hspeed, entry.groundPhysicsCarryMs),
-                entry.movementProfile);
+                AgentBotMovementStateRuntime.movementProfile(entry));
         if (matchesDirectionalDrop(edge, graph, liveOutcome)) {
             // Like rope top step-offs, once the continuous-control exit is naturally executable
             // we stop targeting an intermediate anchor and just keep feeding the authored
@@ -1177,7 +1178,8 @@ final class BotNavigationManager {
             return false;
         }
         int launchX = selectedJumpLaunchX(entry, graph, edge);
-        int tolerance = Math.max(1, BotPhysicsEngine.walkStep(map, entry != null ? entry.movementProfile : null));
+        int tolerance = Math.max(1, BotPhysicsEngine.walkStep(map,
+                entry != null ? AgentBotMovementStateRuntime.movementProfile(entry) : null));
         return Math.abs(botPos.x - launchX) <= tolerance;
     }
 
@@ -1280,7 +1282,8 @@ final class BotNavigationManager {
         }
 
         int width = Math.max(0, maxX - minX);
-        int margin = Math.min(width / 2, Math.max(1, BotPhysicsEngine.walkStep(entry.bot.getMap(), entry.movementProfile) * 2));
+        int margin = Math.min(width / 2, Math.max(1,
+                BotPhysicsEngine.walkStep(entry.bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry)) * 2));
         int randomMinX = minX + margin;
         int randomMaxX = maxX - margin;
         if (randomMinX > randomMaxX) {
