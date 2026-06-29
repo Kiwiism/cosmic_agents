@@ -6,6 +6,7 @@ import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 import server.agents.capabilities.combat.AgentFallDamageCalculator;
+import server.agents.capabilities.combat.AgentCombatSkillClassifier;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
 
 import server.agents.runtime.AgentPerformanceMonitor;
@@ -103,11 +104,6 @@ public class BotCombatManager {
     static final Set<Integer> BUFF_BLACKLIST = Set.of(
             Rogue.DARK_SIGHT,
             NightWalker.DARK_SIGHT
-    );
-    static final Set<Integer> NON_DAMAGE_ACTIVE_SKILL_IDS = Set.of(
-            Crusader.ARMOR_CRASH,
-            WhiteKnight.MAGIC_CRASH,
-            DragonKnight.POWER_CRASH
     );
     private static final int DRAGON_ROAR_MIN_TARGETS_WITHOUT_HEALER = 10;
 
@@ -262,29 +258,6 @@ public class BotCombatManager {
     private static final Set<Integer> STRIKE_POINT_ANCHORED_AOE_SKILL_IDS = Set.of(
             Hunter.ARROW_BOMB
     );
-    private static final Set<Integer> PARTY_SUPPORT_SKILL_IDS = Set.of(
-            Assassin.HASTE,
-            Bandit.HASTE,
-            NightWalker.HASTE,
-            Fighter.RAGE,
-            DawnWarrior.RAGE,
-            Cleric.BLESS,
-            Priest.HOLY_SYMBOL,
-            Spearman.HYPER_BODY,
-            Buccaneer.PIRATES_RAGE,
-            Buccaneer.SPEED_INFUSION,
-            Corsair.SPEED_INFUSION,
-            ThunderBreaker.SPEED_INFUSION,
-            Bowmaster.SHARP_EYES,
-            Marksman.SHARP_EYES,
-            GM.HASTE,
-            GM.BLESS,
-            GM.HYPER_BODY,
-            SuperGM.HASTE,
-            SuperGM.HOLY_SYMBOL,
-            SuperGM.HYPER_BODY
-    );
-
     private static final List<String> DEATH_REPLIES = List.of(
             "oops im dead", "gg", "rip me", "oww", "i died lol",
             "welp", "ouchh", "nooo", "ok i died", "i'll be right back");
@@ -2583,25 +2556,11 @@ public class BotCombatManager {
     }
 
     static boolean isPartySupportSkill(int skillId) {
-        return PARTY_SUPPORT_SKILL_IDS.contains(skillId);
+        return AgentCombatSkillClassifier.isPartySupportSkill(skillId);
     }
 
     static boolean isActiveAttackSkill(Skill skill, StatEffect effect) {
-        if (skill == null || effect == null) {
-            return false;
-        }
-        if (NON_DAMAGE_ACTIVE_SKILL_IDS.contains(skill.getId())) {
-            return false;
-        }
-        if (effect.isOverTime() || !declaresOffense(effect)) {
-            return false;
-        }
-        if (skill.getSkillType() == 1 || skill.getSkillType() == 3) {
-            return false;
-        }
-        // v83 attack skills often omit a top-level action node; passive damage carriers do not
-        // carry a client-paid cost. Use WZ skillType for explicit passives and cost as the fallback.
-        return effect.getMpCon() > 0 || effect.getHpCon() > 0 || skill.isBeginnerSkill();
+        return AgentCombatSkillClassifier.isActiveAttackSkill(skill, effect);
     }
 
     // Identifies skills the WZ source declares as offensive. Three WZ shapes cover every
@@ -2613,39 +2572,11 @@ public class BotCombatManager {
     //   3. mobCount > 1 + bbox   → bomb/explosion skill that derives damage from "x" instead
     //                              of "damage" (Hunter.ARROW_BOMB and similar).
     private static boolean declaresOffense(StatEffect effect) {
-        return effect.hasDamage()
-                || effect.hasMatk()
-                || (effect.getMobCount() > 1 && effect.hasBoundingBox());
+        return AgentCombatSkillClassifier.declaresOffense(effect);
     }
 
     static boolean isActiveSupportSkill(Skill skill, StatEffect effect) {
-        if (skill == null || effect == null || !effect.isOverTime()) {
-            return false;
-        }
-        // Data-driven gate for "rebuffable self/party buff" — two WZ facts replace what used to
-        // need per-skill exclusion lists:
-        //   1. getDuration() > 0. The rebuff loop is timer-based: castSupportSkill sets
-        //      nextBuffAt = now + duration*0.9 and only recasts once that elapses. Skills with no
-        //      WZ "time" key load as duration -1000 (Dispel, Resurrection, Big Bang, MP Recovery,
-        //      Time Leap, Energy Drain), so they would never advance the timer and recast every
-        //      tick. These are one-shot / instant / charged effects, not rebuffable buffs.
-        //   2. getStatups() non-empty. A genuine buff declares at least one stat it grants the
-        //      caster/party (pad/pdd/mad/acc/eva/speed/jump/SUMMON/MORPH/...). Mob-targeting
-        //      debuffs (Threaten, Slow, Seal, Doom, Ninja Ambush) instead carry mobCount + a
-        //      bounding box and grant the caster no statup; the bot only has a self/party
-        //      SPECIAL_MOVE cast path, so firing them on a rebuff timer is wasted MP. This also
-        //      subsumes the old NON_DAMAGE_ACTIVE_SKILL_IDS exclusion here (the *Crash skills
-        //      carry no statup), so no skill-id list is needed on the support path.
-        if (effect.getDuration() <= 0 || effect.getStatups().isEmpty()) {
-            return false;
-        }
-        // Summons are classified separately in Agent combat skill-cache state: their
-        // only statup is SUMMON/PUPPET, and they cannot be cast through the rebuff
-        // loop (no spawn position).
-        if (isSummonSkill(effect)) {
-            return false;
-        }
-        return skill.getAction() || skill.getSkillType() == 2;
+        return AgentCombatSkillClassifier.isActiveSupportSkill(skill, effect);
     }
 
     /**
@@ -2655,23 +2586,14 @@ public class BotCombatManager {
      * server's spawn path (StatEffect.applyTo spawns the creature only when given a position).
      */
     static boolean isSummonSkill(StatEffect effect) {
-        if (effect == null) {
-            return false;
-        }
-        for (Pair<BuffStat, Integer> statup : effect.getStatups()) {
-            BuffStat stat = statup.getLeft();
-            if (stat == BuffStat.SUMMON || stat == BuffStat.PUPPET) {
-                return true;
-            }
-        }
-        return false;
+        return AgentCombatSkillClassifier.isSummonSkill(effect);
     }
 
     static boolean isActiveHealSkill(Skill skill, StatEffect effect) {
-        return skill != null && effect != null && skill.getAction();
+        return AgentCombatSkillClassifier.isActiveHealSkill(skill, effect);
     }
 
     static boolean isHealSkill(int skillId) {
-        return skillId == Cleric.HEAL || skillId == SuperGM.HEAL_PLUS_DISPEL;
+        return AgentCombatSkillClassifier.isHealSkill(skillId);
     }
 }

@@ -38,6 +38,12 @@ Recent reconstruction notes:
   saturating-knee formula, linear tail, rounding behavior, and captured
   real-client sample outputs are unchanged; `BotCombatManager` keeps only a
   compatibility wrapper used by the current fall-damage side-effect path.
+- Combat skill classification ownership moved to
+  `server.agents.capabilities.combat.AgentCombatSkillClassifier`. Party-support
+  skill ids, non-damage active-skill exclusions, offensive WZ-shape detection,
+  rebuffable support filtering, summon statup detection, and heal-skill checks
+  are unchanged; `BotCombatManager` keeps package-private compatibility
+  wrappers for the current skill-cache and export-test paths.
 - Combat attack data provider ownership moved to
   `server.agents.capabilities.combat.data.AgentAttackDataProvider`. Weapon
   normal-attack profile loading, action-spec selection, body action id

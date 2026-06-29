@@ -1,0 +1,124 @@
+package server.agents.capabilities.combat;
+
+import client.BuffStat;
+import client.Skill;
+import constants.skills.Assassin;
+import constants.skills.Bandit;
+import constants.skills.Bowmaster;
+import constants.skills.Buccaneer;
+import constants.skills.Cleric;
+import constants.skills.Corsair;
+import constants.skills.Crusader;
+import constants.skills.DawnWarrior;
+import constants.skills.DragonKnight;
+import constants.skills.Fighter;
+import constants.skills.GM;
+import constants.skills.Marksman;
+import constants.skills.NightWalker;
+import constants.skills.Priest;
+import constants.skills.Spearman;
+import constants.skills.SuperGM;
+import constants.skills.ThunderBreaker;
+import constants.skills.WhiteKnight;
+import server.StatEffect;
+import tools.Pair;
+
+import java.util.Set;
+
+public final class AgentCombatSkillClassifier {
+    private static final Set<Integer> NON_DAMAGE_ACTIVE_SKILL_IDS = Set.of(
+            Crusader.ARMOR_CRASH,
+            WhiteKnight.MAGIC_CRASH,
+            DragonKnight.POWER_CRASH
+    );
+
+    private static final Set<Integer> PARTY_SUPPORT_SKILL_IDS = Set.of(
+            Assassin.HASTE,
+            Bandit.HASTE,
+            NightWalker.HASTE,
+            Fighter.RAGE,
+            DawnWarrior.RAGE,
+            Cleric.BLESS,
+            Priest.HOLY_SYMBOL,
+            Spearman.HYPER_BODY,
+            Buccaneer.PIRATES_RAGE,
+            Buccaneer.SPEED_INFUSION,
+            Corsair.SPEED_INFUSION,
+            ThunderBreaker.SPEED_INFUSION,
+            Bowmaster.SHARP_EYES,
+            Marksman.SHARP_EYES,
+            GM.HASTE,
+            GM.BLESS,
+            GM.HYPER_BODY,
+            SuperGM.HASTE,
+            SuperGM.HOLY_SYMBOL,
+            SuperGM.HYPER_BODY
+    );
+
+    private AgentCombatSkillClassifier() {
+    }
+
+    public static boolean isPartySupportSkill(int skillId) {
+        return PARTY_SUPPORT_SKILL_IDS.contains(skillId);
+    }
+
+    public static boolean isActiveAttackSkill(Skill skill, StatEffect effect) {
+        if (skill == null || effect == null) {
+            return false;
+        }
+        if (NON_DAMAGE_ACTIVE_SKILL_IDS.contains(skill.getId())) {
+            return false;
+        }
+        if (effect.isOverTime() || !declaresOffense(effect)) {
+            return false;
+        }
+        if (skill.getSkillType() == 1 || skill.getSkillType() == 3) {
+            return false;
+        }
+        // v83 attack skills often omit a top-level action node; passive damage carriers do not
+        // carry a client-paid cost. Use WZ skillType for explicit passives and cost as the fallback.
+        return effect.getMpCon() > 0 || effect.getHpCon() > 0 || skill.isBeginnerSkill();
+    }
+
+    // Identifies skills the WZ source declares as offensive. Three WZ shapes cover every
+    // attack skill we know of in v83; combined with isOverTime() this rejects utility skills.
+    public static boolean declaresOffense(StatEffect effect) {
+        return effect.hasDamage()
+                || effect.hasMatk()
+                || (effect.getMobCount() > 1 && effect.hasBoundingBox());
+    }
+
+    public static boolean isActiveSupportSkill(Skill skill, StatEffect effect) {
+        if (skill == null || effect == null || !effect.isOverTime()) {
+            return false;
+        }
+        if (effect.getDuration() <= 0 || effect.getStatups().isEmpty()) {
+            return false;
+        }
+        if (isSummonSkill(effect)) {
+            return false;
+        }
+        return skill.getAction() || skill.getSkillType() == 2;
+    }
+
+    public static boolean isSummonSkill(StatEffect effect) {
+        if (effect == null) {
+            return false;
+        }
+        for (Pair<BuffStat, Integer> statup : effect.getStatups()) {
+            BuffStat stat = statup.getLeft();
+            if (stat == BuffStat.SUMMON || stat == BuffStat.PUPPET) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean isActiveHealSkill(Skill skill, StatEffect effect) {
+        return skill != null && effect != null && skill.getAction();
+    }
+
+    public static boolean isHealSkill(int skillId) {
+        return skillId == Cleric.HEAL || skillId == SuperGM.HEAL_PLUS_DISPEL;
+    }
+}
