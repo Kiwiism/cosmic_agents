@@ -735,6 +735,11 @@ Recent reconstruction notes:
   climb/air/swim/ground movement, mob-avoidance region checks, ground step
   resolution, unstuck jumps, and movement broadcast keep BotEntry as the
   temporary backing store but no longer read `entry.bot` directly in production.
+- Active navigation-edge state in BotNavigationManager now enters through
+  `AgentBotNavigationDebugStateRuntime`; path planning, committed-edge reuse,
+  climb-exit refresh, ground-edge refresh, and post-ground edge execution keep
+  BotEntry as the temporary backing store but no longer read or write
+  `navEdge` directly in production.
 - Combat animation/cooldown and alert-reset state now enters through
   `AgentBotCombatCooldownStateRuntime`; BotCombatManager attack cooldown,
   movement-window, alerted-stance timeout, and alert-reset scheduling keep

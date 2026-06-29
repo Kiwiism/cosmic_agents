@@ -145,7 +145,7 @@ final class BotNavigationManager {
                 // an empty path when direct walk wins, falling through to direct steering.
                 edge = findNextEdge(graph, bot, startRegionId, targetRegionId, pathTargetPos);
                 if (edge != null) {
-                    entry.navEdge = edge;
+                    AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, edge);
                     AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
                 }
             }
@@ -179,7 +179,11 @@ final class BotNavigationManager {
     }
 
     static boolean tryExecuteCommittedEdgeAfterGroundMovement(BotEntry entry, Point rawTargetPos) {
-        if (entry == null || entry.bot == null || entry.navEdge == null || entry.inAir || entry.climbing) {
+        if (entry == null
+                || entry.bot == null
+                || !AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
+                || entry.inAir
+                || entry.climbing) {
             return false;
         }
 
@@ -268,7 +272,7 @@ final class BotNavigationManager {
             return edge;
         }
 
-        entry.navEdge = bestEdge;
+        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, bestEdge);
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
         AgentBotNavigationDebugStateRuntime.clearNavTargetPosition(entry);
         AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, false);
@@ -301,7 +305,7 @@ final class BotNavigationManager {
             return edge;
         }
 
-        entry.navEdge = bestEdge;
+        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, bestEdge);
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
         AgentBotNavigationDebugStateRuntime.clearNavTargetPosition(entry);
         AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, false);
@@ -312,7 +316,7 @@ final class BotNavigationManager {
                                                       BotEntry entry,
                                                       int startRegionId,
                                                       int targetRegionId) {
-        BotNavigationGraph.Edge edge = entry.navEdge;
+        BotNavigationGraph.Edge edge = (BotNavigationGraph.Edge) AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry);
         if (edge == null) {
             return null;
         }
