@@ -53,6 +53,18 @@ public class BotEntry {
         return airshowActive;
     }
 
+    public void setAirshowActive(boolean airshowActive) {
+        this.airshowActive = airshowActive;
+    }
+
+    public long airshowLastTrailAtMs() {
+        return airshowLastTrailAtMs;
+    }
+
+    public void setAirshowLastTrailAtMs(long airshowLastTrailAtMs) {
+        this.airshowLastTrailAtMs = airshowLastTrailAtMs;
+    }
+
     public BotMovementProfile movementProfile() {
         return movementProfile != null ? movementProfile : BotMovementProfile.base();
     }
@@ -101,6 +113,21 @@ public class BotEntry {
 
     public void setFacingDirection(int facingDirection) {
         facingDir = facingDirection >= 0 ? 1 : -1;
+    }
+
+    public void setScriptedMovementFrame(Point position,
+                                         int velocityX,
+                                         int velocityY,
+                                         int facingDirection,
+                                         boolean inAir,
+                                         boolean climbing) {
+        physX = position.x;
+        physY = position.y;
+        movementVelX = velocityX;
+        movementVelY = velocityY;
+        setFacingDirection(facingDirection);
+        this.inAir = inAir;
+        this.climbing = climbing;
     }
 
     public int movementVelX() {

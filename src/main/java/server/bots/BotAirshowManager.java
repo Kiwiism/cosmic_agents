@@ -10,7 +10,10 @@ import net.packet.Packet;
 import server.life.LifeFactory;
 import server.life.Monster;
 import server.TimerManager;
+import server.agents.integration.AgentBotAirshowStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
+import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.maps.MapleMap;
 import tools.PacketCreator;
 
@@ -42,12 +45,12 @@ public final class BotAirshowManager {
             return "No active owned bot named '" + botName + "'.";
         }
 
-        Character bot = entry.bot;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         MapleMap map = owner.getMap();
         if (bot == null || bot.getMap() == null || map == null || bot.getMap() != map) {
-            return "Bot '" + entry.bot.getName() + "' must be in your map.";
+            return "Bot '" + botName + "' must be in your map.";
         }
-        if (entry.airshowActive) {
+        if (AgentBotAirshowStateRuntime.active(entry)) {
             return "Bot '" + bot.getName() + "' is already doing an airshow.";
         }
 
@@ -58,8 +61,7 @@ public final class BotAirshowManager {
 
         Point previousPosition = new Point(bot.getPosition());
         int previousStance = bot.getStance();
-        entry.airshowActive = true;
-        entry.airshowLastTrailAtMs = 0L;
+        AgentBotAirshowStateRuntime.start(entry);
         AgentBotMovementBroadcastStateRuntime.invalidate(entry);
 
         int left = bounds.x;
@@ -102,12 +104,15 @@ public final class BotAirshowManager {
                                                 int stance,
                                                 Runnable done) {
         TimerManager.getInstance().schedule(() -> {
-            if (!entry.airshowActive || entry.bot.getMap() != map) {
-                restore(entry, entry.bot.getPosition(), entry.bot.getStance());
+            Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+            if (!AgentBotAirshowStateRuntime.active(entry) || bot == null || bot.getMap() != map) {
+                if (bot != null) {
+                    restore(entry, bot.getPosition(), bot.getStance());
+                }
                 return;
             }
 
-            Point current = entry.bot.getPosition();
+            Point current = bot.getPosition();
             int step = velocityX * FRAME_MS / 1000;
             int nextX = current.x + step;
             boolean finished = velocityX >= 0 ? nextX >= targetX : nextX <= targetX;
@@ -139,12 +144,15 @@ public final class BotAirshowManager {
                                               int stance,
                                               Runnable done) {
         TimerManager.getInstance().schedule(() -> {
-            if (!entry.airshowActive || entry.bot.getMap() != map) {
-                restore(entry, entry.bot.getPosition(), entry.bot.getStance());
+            Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+            if (!AgentBotAirshowStateRuntime.active(entry) || bot == null || bot.getMap() != map) {
+                if (bot != null) {
+                    restore(entry, bot.getPosition(), bot.getStance());
+                }
                 return;
             }
 
-            Point current = entry.bot.getPosition();
+            Point current = bot.getPosition();
             int step = velocityY * FRAME_MS / 1000;
             int nextY = current.y + step;
             boolean finished = velocityY >= 0 ? nextY >= targetY : nextY <= targetY;
@@ -159,12 +167,15 @@ public final class BotAirshowManager {
     }
 
     private static void restore(BotEntry entry, Point previousPosition, int previousStance) {
-        if (!entry.airshowActive) {
+        if (!AgentBotAirshowStateRuntime.active(entry)) {
             return;
         }
-        Character bot = entry.bot;
-        entry.airshowActive = false;
-        entry.airshowLastTrailAtMs = 0L;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        if (bot == null) {
+            AgentBotAirshowStateRuntime.stop(entry);
+            return;
+        }
+        AgentBotAirshowStateRuntime.stop(entry);
         BotPhysicsEngine.teleportTo(entry, bot, previousPosition);
         bot.setStance(previousStance);
         AgentBotMovementBroadcastStateRuntime.invalidate(entry);
@@ -173,16 +184,20 @@ public final class BotAirshowManager {
     }
 
     private static void moveFrame(BotEntry entry, MapleMap map, Point position, int velocityX, int velocityY, int stance) {
-        Character bot = entry.bot;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        if (bot == null) {
+            return;
+        }
         bot.setPosition(position);
         bot.setStance(stance);
-        entry.physX = position.x;
-        entry.physY = position.y;
-        entry.movementVelX = velocityX;
-        entry.movementVelY = velocityY;
-        entry.facingDir = CharacterStance.isFacingLeft(stance) ? -1 : 1;
-        entry.inAir = true;
-        entry.climbing = CharacterStance.isClimbing(stance);
+        AgentBotAirshowStateRuntime.applyFrame(
+                entry,
+                position,
+                velocityX,
+                velocityY,
+                CharacterStance.isFacingLeft(stance) ? -1 : 1,
+                true,
+                CharacterStance.isClimbing(stance));
         sendMovementPacket(bot, position, velocityX, velocityY, stance);
         maybeChemTrail(entry, map, position);
         bot.updatePartyMemberHP();
@@ -190,10 +205,10 @@ public final class BotAirshowManager {
 
     private static void maybeChemTrail(BotEntry entry, MapleMap map, Point position) {
         long now = System.currentTimeMillis();
-        if (now - entry.airshowLastTrailAtMs < TRAIL_INTERVAL_MS) {
+        if (!AgentBotAirshowStateRuntime.trailDue(entry, now, TRAIL_INTERVAL_MS)) {
             return;
         }
-        entry.airshowLastTrailAtMs = now;
+        AgentBotAirshowStateRuntime.markTrail(entry, now);
 
         Monster trail = LifeFactory.getMonster(MobId.ORANGE_MUSHROOM);
         if (trail == null) {
@@ -201,7 +216,7 @@ public final class BotAirshowManager {
         }
         trail.setObjectId(TRAIL_OBJECT_IDS.getAndIncrement());
         trail.setPosition(position);
-        trail.setFh(entry.lastGroundFhId);
+        trail.setFh(AgentBotMovementPhysicsStateRuntime.lastGroundFhId(entry));
         trail.setStance(CharacterStance.STAND_RIGHT_STANCE);
         map.broadcastMessage(PacketCreator.spawnMonster(trail, true));
         TimerManager.getInstance().schedule(

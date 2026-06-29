@@ -895,6 +895,11 @@ Recent reconstruction notes:
   write fidget fields directly in production. `BotFidgetMode` and
   `BotFidgetTrigger` were moved to public enum files with the same values so
   the Agent adapter can keep a typed boundary without changing behavior.
+- Airshow state now enters through `AgentBotAirshowStateRuntime`;
+  BotAirshowManager active/trail timing, scripted frame physics fields, bot
+  identity lookup, restore checks, and trail foothold reads keep BotEntry as the
+  temporary backing store but no longer read or write BotEntry fields directly
+  in production.
 
 Initial reconstruction order:
 
