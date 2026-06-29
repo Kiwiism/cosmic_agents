@@ -1360,6 +1360,10 @@ Recent reconstruction notes:
   live in `AgentPassiveRecoveryPolicy`; BotPotionManager preserves the same
   movement/air/climb/stance standing-still gate and MP recovery tick timing
   through compatibility delegates.
+- Potion and ammo sharing request/offer dialogue pools now live in
+  `AgentDialogueCatalog`; BotPotionManager and BotAmmoManager preserve the same
+  random reply selection and visible map-chat delivery through compatibility
+  delegates.
 
 Initial reconstruction order:
 

@@ -31,31 +31,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 public final class BotPotionManager {
-    private static final List<String> POT_REQUEST_HP_MSGS = List.of(
-            "anyone have HP pots? running low",
-            "low on HP pots, does anyone have some?",
-            "need HP pots!! anyone?",
-            "HP pots? who has some",
-            "anyone got HP pots to spare?");
-    private static final List<String> POT_REQUEST_MP_MSGS = List.of(
-            "anyone have MP pots? running low",
-            "low on MP pots, does anyone have some?",
-            "need MP pots!! anyone?",
-            "MP pots? who has some",
-            "anyone got MP pots to spare?");
-    private static final List<String> POT_OFFER_HP_MSGS = List.of(
-            "got some HP pots, inv u",
-            "yep i have HP pots, inv u",
-            "sure, got spare HP pots",
-            "coming, inv",
-            "got you");
-    private static final List<String> POT_OFFER_MP_MSGS = List.of(
-            "got some MP pots, inv u",
-            "yep i have MP pots, inv u",
-            "sure, got spare MP pots",
-            "coming, inv",
-            "got you");
-
     // ownerCharId -> shared HP/MP 30 s request cooldown
     private static final Map<Integer, Long> potShareCooldownUntil = new ConcurrentHashMap<>();
     // ownerCharId -> category-specific 10 min failed-request backoff
@@ -324,7 +299,8 @@ public final class BotPotionManager {
             potShareCooldownUntil.put(owner.getId(), now + 30_000L);
         }
 
-        AgentBotPotionRuntime.sayMapNow(bot, BotManager.randomReply(forHp ? POT_REQUEST_HP_MSGS : POT_REQUEST_MP_MSGS));
+        AgentBotPotionRuntime.sayMapNow(bot, BotManager.randomReply(
+                forHp ? AgentDialogueCatalog.potRequestHpReplies() : AgentDialogueCatalog.potRequestMpReplies()));
 
         AgentBotPotionDonorPlan plan = selectPotDonor(owner, bot, entry, forHp);
         if (plan == null) {
@@ -409,7 +385,8 @@ public final class BotPotionManager {
             if (items.isEmpty()) {
                 return;
             }
-            AgentBotPotionRuntime.sayMapNow(donorBot, BotManager.randomReply(forHp ? POT_OFFER_HP_MSGS : POT_OFFER_MP_MSGS));
+            AgentBotPotionRuntime.sayMapNow(donorBot, BotManager.randomReply(
+                    forHp ? AgentDialogueCatalog.potOfferHpReplies() : AgentDialogueCatalog.potOfferMpReplies()));
             AgentBotPotionRuntime.afterRandomDelay(900, 1100, () ->
                     BotInventoryManager.startPotShareTransfer(items, recipient, donorEntry, donorBot, maxQty));
         });

@@ -85,6 +85,42 @@ public final class AgentDialogueCatalog {
             "we're not holding extra ammo, thought you packed supplies",
             "can't find spare ammo. maybe time to restock?",
             "almost dry on ammo too, don't look at me");
+    private static final List<String> POT_REQUEST_HP_REPLIES = List.of(
+            "anyone have HP pots? running low",
+            "low on HP pots, does anyone have some?",
+            "need HP pots!! anyone?",
+            "HP pots? who has some",
+            "anyone got HP pots to spare?");
+    private static final List<String> POT_REQUEST_MP_REPLIES = List.of(
+            "anyone have MP pots? running low",
+            "low on MP pots, does anyone have some?",
+            "need MP pots!! anyone?",
+            "MP pots? who has some",
+            "anyone got MP pots to spare?");
+    private static final List<String> POT_OFFER_HP_REPLIES = List.of(
+            "got some HP pots, inv u",
+            "yep i have HP pots, inv u",
+            "sure, got spare HP pots",
+            "coming, inv",
+            "got you");
+    private static final List<String> POT_OFFER_MP_REPLIES = List.of(
+            "got some MP pots, inv u",
+            "yep i have MP pots, inv u",
+            "sure, got spare MP pots",
+            "coming, inv",
+            "got you");
+    private static final List<String> ARROW_REQUEST_REPLIES = List.of(
+            "low on arrows, anyone have spare?",
+            "need arrows soon, anyone got extras?",
+            "running low on arrows, can someone share?");
+    private static final List<String> BOLT_REQUEST_REPLIES = List.of(
+            "low on bolts, anyone have spare?",
+            "need crossbow bolts soon, anyone got extras?",
+            "running low on bolts, can someone share?");
+    private static final List<String> AMMO_OFFER_REPLIES = List.of(
+            "i have spare ammo, inv u",
+            "got some ammo for you, trading",
+            "i can spare ammo, one sec");
     private static final List<String> COMBAT_DEATH_REPLIES = List.of(
             "oops im dead", "gg", "rip me", "oww", "i died lol",
             "welp", "ouchh", "nooo", "ok i died", "i'll be right back");
@@ -285,6 +321,34 @@ public final class AgentDialogueCatalog {
 
     public static List<String> ownerAmmoShortageReplies() {
         return OWNER_AMMO_SHORTAGE_REPLIES;
+    }
+
+    public static List<String> potRequestHpReplies() {
+        return POT_REQUEST_HP_REPLIES;
+    }
+
+    public static List<String> potRequestMpReplies() {
+        return POT_REQUEST_MP_REPLIES;
+    }
+
+    public static List<String> potOfferHpReplies() {
+        return POT_OFFER_HP_REPLIES;
+    }
+
+    public static List<String> potOfferMpReplies() {
+        return POT_OFFER_MP_REPLIES;
+    }
+
+    public static List<String> arrowRequestReplies() {
+        return ARROW_REQUEST_REPLIES;
+    }
+
+    public static List<String> boltRequestReplies() {
+        return BOLT_REQUEST_REPLIES;
+    }
+
+    public static List<String> ammoOfferReplies() {
+        return AMMO_OFFER_REPLIES;
     }
 
     public static List<String> combatDeathReplies() {

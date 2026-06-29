@@ -5,6 +5,7 @@ import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import client.Character;
 import client.inventory.Item;
 import client.inventory.WeaponType;
+import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.supplies.AgentAmmoSharePolicy;
 import server.agents.capabilities.supplies.AgentAmmoSharePolicy.DonorScore;
 import server.agents.integration.AgentBotAmmoDonorPlan;
@@ -20,19 +21,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class BotAmmoManager {
     private static final Map<String, Long> ammoShareBackoffUntil = new ConcurrentHashMap<>();
     private static final Map<Integer, Long> ammoShareCooldownUntil = new ConcurrentHashMap<>();
-
-    private static final List<String> ARROW_REQUEST_MSGS = List.of(
-            "low on arrows, anyone have spare?",
-            "need arrows soon, anyone got extras?",
-            "running low on arrows, can someone share?");
-    private static final List<String> BOLT_REQUEST_MSGS = List.of(
-            "low on bolts, anyone have spare?",
-            "need crossbow bolts soon, anyone got extras?",
-            "running low on bolts, can someone share?");
-    private static final List<String> AMMO_OFFER_MSGS = List.of(
-            "i have spare ammo, inv u",
-            "got some ammo for you, trading",
-            "i can spare ammo, one sec");
 
     private BotAmmoManager() {}
 
@@ -92,7 +80,9 @@ public final class BotAmmoManager {
         }
 
         AgentBotAmmoRuntime.sayMapNow(bot, BotManager.randomReply(
-                weaponType == WeaponType.BOW ? ARROW_REQUEST_MSGS : BOLT_REQUEST_MSGS));
+                weaponType == WeaponType.BOW
+                        ? AgentDialogueCatalog.arrowRequestReplies()
+                        : AgentDialogueCatalog.boltRequestReplies()));
 
         AgentBotAmmoDonorPlan plan = selectAmmoDonor(entry, bot, weaponType);
         if (plan == null) {
@@ -182,7 +172,7 @@ public final class BotAmmoManager {
             if (items.isEmpty()) {
                 return;
             }
-            AgentBotAmmoRuntime.sayMapNow(donorBot, BotManager.randomReply(AMMO_OFFER_MSGS));
+            AgentBotAmmoRuntime.sayMapNow(donorBot, BotManager.randomReply(AgentDialogueCatalog.ammoOfferReplies()));
             AgentBotAmmoRuntime.afterRandomDelay(900, 1100, () ->
                     BotInventoryManager.startAmmoShareTransfer(items, recipient, donorEntry, donorBot, maxQty));
         });

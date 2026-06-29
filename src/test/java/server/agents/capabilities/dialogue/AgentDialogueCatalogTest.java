@@ -20,6 +20,13 @@ class AgentDialogueCatalogTest {
         assertTrue(AgentDialogueCatalog.ownerPotShortageReplies().contains("we're low on %s pots too, boss"));
         assertTrue(AgentDialogueCatalog.ammoNotNeededReplies().contains("i don't need arrows or bolts rn"));
         assertTrue(AgentDialogueCatalog.ownerAmmoShortageReplies().contains("we're low on ammo too, boss"));
+        assertTrue(AgentDialogueCatalog.potRequestHpReplies().contains("need HP pots!! anyone?"));
+        assertTrue(AgentDialogueCatalog.potRequestMpReplies().contains("need MP pots!! anyone?"));
+        assertTrue(AgentDialogueCatalog.potOfferHpReplies().contains("got some HP pots, inv u"));
+        assertTrue(AgentDialogueCatalog.potOfferMpReplies().contains("got some MP pots, inv u"));
+        assertTrue(AgentDialogueCatalog.arrowRequestReplies().contains("need arrows soon, anyone got extras?"));
+        assertTrue(AgentDialogueCatalog.boltRequestReplies().contains("need crossbow bolts soon, anyone got extras?"));
+        assertTrue(AgentDialogueCatalog.ammoOfferReplies().contains("got some ammo for you, trading"));
         assertTrue(AgentDialogueCatalog.fameOkReplies().contains("famed %s"));
         assertTrue(AgentDialogueCatalog.fameTargetNotFoundReply("Alice").contains("Alice on the map"));
         assertTrue(AgentDialogueCatalog.fameSelfReply().contains("fame myself"));
