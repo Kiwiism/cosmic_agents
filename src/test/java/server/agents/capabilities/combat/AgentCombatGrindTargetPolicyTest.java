@@ -134,6 +134,18 @@ class AgentCombatGrindTargetPolicyTest {
         assertEquals(0L, AgentCombatGrindTargetPolicy.occupancyPenalty(9, 100, -1));
     }
 
+    @Test
+    void shouldCalculateGraphPathCostFromLegacyPathInputs() {
+        assertEquals(9_999L, AgentCombatGrindTargetPolicy.graphPathCost(
+                false, false, 123L, List.of(100L), 9_999L));
+        assertEquals(123L, AgentCombatGrindTargetPolicy.graphPathCost(
+                true, true, 123L, List.of(), 9_999L));
+        assertEquals(9_999L, AgentCombatGrindTargetPolicy.graphPathCost(
+                true, false, 123L, List.of(), 9_999L));
+        assertEquals(300L, AgentCombatGrindTargetPolicy.graphPathCost(
+                true, false, 0L, List.of(100L, 200L), 9_999L));
+    }
+
     private static Foothold foothold(int id) {
         return new Foothold(new Point(0, 0), new Point(100, 0), id);
     }

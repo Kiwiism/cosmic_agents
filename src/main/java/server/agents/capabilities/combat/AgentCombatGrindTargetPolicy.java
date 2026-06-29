@@ -59,6 +59,28 @@ public final class AgentCombatGrindTargetPolicy {
         return Math.max(0L, pathCost - crowdBonus) + occupancyPenalty;
     }
 
+    public static long graphPathCost(boolean hasValidRegions,
+                                     boolean sameRegion,
+                                     long sameRegionLocalCost,
+                                     List<Long> edgeCosts,
+                                     long unreachableGraphCost) {
+        if (!hasValidRegions) {
+            return unreachableGraphCost;
+        }
+        if (sameRegion) {
+            return sameRegionLocalCost;
+        }
+        if (edgeCosts == null || edgeCosts.isEmpty()) {
+            return unreachableGraphCost;
+        }
+
+        long cost = 0L;
+        for (Long edgeCost : edgeCosts) {
+            cost += edgeCost == null ? 0L : edgeCost;
+        }
+        return cost;
+    }
+
     public static long occupancyPenalty(int occupiedCount, int penaltyPerOccupiedRegion, int penaltyCap) {
         long penalty = (long) Math.max(0, occupiedCount) * Math.max(0, penaltyPerOccupiedRegion);
         return Math.min(Math.max(0, penaltyCap), penalty);

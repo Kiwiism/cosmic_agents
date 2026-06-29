@@ -1254,23 +1254,20 @@ public class BotCombatManager {
                                       int targetRegionId,
                                       AgentMovementProfile profile) {
         if (startPos == null || targetPos == null || startRegionId < 0 || targetRegionId < 0) {
-            return UNREACHABLE_GRAPH_COST;
+            return AgentCombatGrindTargetPolicy.graphPathCost(false, false, 0L, List.of(), UNREACHABLE_GRAPH_COST);
         }
         if (startRegionId == targetRegionId) {
-            return estimateLocalTravelCostMs(startPos, targetPos, profile);
+            return AgentCombatGrindTargetPolicy.graphPathCost(true, true,
+                    estimateLocalTravelCostMs(startPos, targetPos, profile), List.of(), UNREACHABLE_GRAPH_COST);
         }
 
         List<BotNavigationGraph.Edge> path = BotNavigationManager.findPathForTargetScore(
                 graph, map, startPos, startRegionId, targetRegionId, targetPos);
-        if (path.isEmpty()) {
-            return UNREACHABLE_GRAPH_COST;
-        }
-
-        long cost = 0;
+        List<Long> edgeCosts = new ArrayList<>(path.size());
         for (BotNavigationGraph.Edge edge : path) {
-            cost += edge.cost;
+            edgeCosts.add((long) edge.cost);
         }
-        return cost;
+        return AgentCombatGrindTargetPolicy.graphPathCost(true, false, 0L, edgeCosts, UNREACHABLE_GRAPH_COST);
     }
 
     private static long estimateLocalTravelCostMs(Point from, Point to, AgentMovementProfile profile) {

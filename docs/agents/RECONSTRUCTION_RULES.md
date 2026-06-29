@@ -1306,6 +1306,10 @@ Recent reconstruction notes:
   `AgentCombatGrindTargetPolicy`; BotCombatManager still performs the legacy
   sibling-region scan but delegates the exact occupied-count, per-region
   penalty, and cap calculation to Agent combat policy.
+- Grind graph path-cost branching now lives in `AgentCombatGrindTargetPolicy`;
+  BotCombatManager still resolves regions and navigation paths, then delegates
+  invalid-region, same-region local cost, no-path, and edge-cost summing
+  semantics to Agent combat policy.
 
 Initial reconstruction order:
 
