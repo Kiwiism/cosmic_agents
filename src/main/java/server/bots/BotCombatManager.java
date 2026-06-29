@@ -28,6 +28,7 @@ import server.agents.capabilities.combat.AgentMobTouchPolicy;
 import server.agents.capabilities.combat.AgentMobKnockbackPolicy;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
 import server.agents.capabilities.combat.AgentScoredGrindTarget;
+import server.agents.capabilities.combat.AgentSkillAttackPlanner;
 import server.agents.capabilities.combat.AgentGrindTargetGroup;
 import server.agents.capabilities.combat.AgentSupportSpecialMovePacketBuilder;
 
@@ -915,27 +916,20 @@ public class BotCombatManager {
     }
 
     private static AttackPlan planSkillAttack(BotEntry entry, Character bot, Monster primaryTarget, int skillId) {
-        if (skillId == 0 || bot.skillIsCooling(skillId)) {
-            return null;
-        }
-
         Skill skill = SkillFactory.getSkill(skillId);
-        if (skill == null) {
-            return null;
-        }
-        int skillLevel = bot.getSkillLevel(skill);
-        if (skillLevel <= 0) {
-            return null;
-        }
-
-        StatEffect effect = skill.getEffect(skillLevel);
-        if (!effect.canPaySkillCost(bot)) {
+        int skillLevel = skill == null ? 0 : bot.getSkillLevel(skill);
+        StatEffect effect = skill == null || skillLevel <= 0 ? null : skill.getEffect(skillLevel);
+        AgentSkillAttackPlanner.SkillAttackReadiness readiness = AgentSkillAttackPlanner.skillAttackReadiness(
+                skillId,
+                skillId != 0 && bot.skillIsCooling(skillId),
+                skill != null,
+                skillLevel,
+                () -> effect.canPaySkillCost(bot),
+                () -> canUseAttackSkillWithWeapon(skillId, AgentAttackExecutionProvider.getEquippedWeaponType(bot)));
+        if (readiness != AgentSkillAttackPlanner.SkillAttackReadiness.READY) {
             return null;
         }
         WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
-        if (!canUseAttackSkillWithWeapon(skillId, weaponType)) {
-            return null;
-        }
         AgentAttackRoute route = AgentAttackExecutionProvider.determineSkillRoute(bot, skillId);
         // Ammo gate: ranged skills with bulletCount need that many arrows/stars/bullets in
         // the bot's USE inventory. canPaySkillCost only covers MP/HP. countAmmo returns

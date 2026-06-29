@@ -1412,6 +1412,10 @@ Recent reconstruction notes:
   `AgentCombatAttackExecutionPolicy`; BotCombatManager still builds AttackInfo,
   resolves damage profiles, applies attack routes, and mutates cooldown/facing
   runtime state.
+- Skill attack preflight ordering now lives in `AgentSkillAttackPlanner`,
+  preserving the legacy short-circuit order for missing id, cooldown, missing
+  skill, missing level, skill cost, and weapon compatibility. BotCombatManager
+  still resolves effects/actions/hitboxes and constructs the legacy AttackPlan.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
