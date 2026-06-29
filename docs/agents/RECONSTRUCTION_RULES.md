@@ -952,6 +952,12 @@ Recent reconstruction notes:
   reporting, pass exchange, pass delivery, and reset behavior while no longer
   reading or writing KPQ or script runtime fields directly on BotEntry in
   production.
+- Fallback movement identity, map, movement-profile, and movement-gate reads
+  now enter through `AgentBotRuntimeIdentityRuntime`,
+  `AgentBotMovementStateRuntime`, and `AgentBotMovementPhysicsStateRuntime`;
+  BotFallbackMovementManager preserves rope attach/jump, swim jump-up,
+  down-jump, ledge walk-off, and fallback jump behavior while no longer reading
+  BotEntry runtime fields directly in production.
 
 Initial reconstruction order:
 

@@ -1,7 +1,10 @@
 package server.bots;
 
 import client.Character;
+import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
+import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Rope;
@@ -25,8 +28,8 @@ final class BotFallbackMovementManager {
     }
 
     static boolean tryImmediateAction(BotEntry entry, Point botPos, Point targetPos) {
-        Character bot = entry.bot;
-        MapleMap map = bot.getMap();
+        Character bot = bot(entry);
+        MapleMap map = map(entry);
         Rope rope = selectNearbyRope(entry, botPos, targetPos);
         if (rope != null) {
             if (canDirectlyAttachToRope(botPos, rope)) {
@@ -38,9 +41,9 @@ final class BotFallbackMovementManager {
 
             int ropeDx = rope.x() - botPos.x;
             int ropeJumpRange = Math.max(BotPhysicsEngine.cfg.ROPE_GRAB_X * 2,
-                    BotPhysicsEngine.walkStep(map, entry.movementProfile) * 2);
+                    BotPhysicsEngine.walkStep(map, movementProfile(entry)) * 2);
             if (Math.abs(ropeDx) <= ropeJumpRange
-                    && BotPhysicsEngine.canReachRopeFromGround(map, botPos, rope, entry.movementProfile)) {
+                    && BotPhysicsEngine.canReachRopeFromGround(map, botPos, rope, movementProfile(entry))) {
                 BotMovementManager.initiateRopeJump(entry, bot, ropeDx);
                 return true;
             }
@@ -78,13 +81,16 @@ final class BotFallbackMovementManager {
     }
 
     private static boolean shouldJumpUpIntoSwim(BotEntry entry, Point botPos, Point targetPos) {
-        if (entry == null || entry.bot == null || botPos == null || targetPos == null) {
+        if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry) || botPos == null || targetPos == null) {
             return false;
         }
-        if (entry.inAir || entry.climbing || entry.jumpCooldownMs > 0 || entry.downJumpPending) {
+        if (AgentBotMovementStateRuntime.inAir(entry)
+                || AgentBotMovementStateRuntime.climbing(entry)
+                || AgentBotMovementPhysicsStateRuntime.jumpCooldownMs(entry) > 0
+                || AgentBotMovementStateRuntime.downJumpPending(entry)) {
             return false;
         }
-        MapleMap map = entry.bot.getMap();
+        MapleMap map = map(entry);
         if (map == null || !map.isSwim()) {
             return false;
         }
@@ -101,11 +107,11 @@ final class BotFallbackMovementManager {
             return false;
         }
         Point ahead = new Point(botPos.x + stepX, botPos.y);
-        return BotPhysicsEngine.isGroundFarBelow(entry.bot.getMap(), ahead);
+        return BotPhysicsEngine.isGroundFarBelow(map(entry), ahead);
     }
 
     private static Rope selectNearbyRope(BotEntry entry, Point botPos, Point targetPos) {
-        if (entry == null || entry.bot == null || botPos == null || targetPos == null) {
+        if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry) || botPos == null || targetPos == null) {
             return null;
         }
 
@@ -114,8 +120,8 @@ final class BotFallbackMovementManager {
             return null;
         }
 
-        MapleMap map = entry.bot.getMap();
-        int walkStep = BotPhysicsEngine.walkStep(map, entry.movementProfile);
+        MapleMap map = map(entry);
+        int walkStep = BotPhysicsEngine.walkStep(map, movementProfile(entry));
         int searchX = Math.max(walkStep * 4, 90);
         Rope best = null;
         int bestScore = Integer.MAX_VALUE;
@@ -173,10 +179,10 @@ final class BotFallbackMovementManager {
     }
 
     private static Point resolveFallbackLedgeTarget(BotEntry entry, Point botPos, Point targetPos, Rope rope) {
-        if (entry == null || entry.bot == null || botPos == null || targetPos == null || rope != null) {
+        if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry) || botPos == null || targetPos == null || rope != null) {
             return null;
         }
-        MapleMap map = entry.bot.getMap();
+        MapleMap map = map(entry);
         if (!shouldConsiderFallbackDrop(entry, map, botPos, targetPos)) {
             return null;
         }
@@ -186,8 +192,8 @@ final class BotFallbackMovementManager {
             return null;
         }
 
-        Point left = walkOffTarget(map, foothold, entry.movementProfile, -1);
-        Point right = walkOffTarget(map, foothold, entry.movementProfile, 1);
+        Point left = walkOffTarget(map, foothold, movementProfile(entry), -1);
+        Point right = walkOffTarget(map, foothold, movementProfile(entry), 1);
         Point best = chooseBetterLedgeTarget(botPos, targetPos, left, right);
         if (best == null) {
             return null;
@@ -199,13 +205,13 @@ final class BotFallbackMovementManager {
         if (entry == null || botPos == null || targetPos == null || rope != null) {
             return false;
         }
-        MapleMap map = entry.bot.getMap();
+        MapleMap map = map(entry);
         if (!shouldConsiderFallbackDrop(entry, map, botPos, targetPos)
                 || !BotPhysicsEngine.canStartDownJump(map, botPos)) {
             return false;
         }
         return Math.abs(targetPos.x - botPos.x) <= Math.max(BotMovementManager.cfg.FOLLOW_DIST,
-                BotPhysicsEngine.walkStep(map, entry.movementProfile) * 4);
+                BotPhysicsEngine.walkStep(map, movementProfile(entry)) * 4);
     }
 
     private static boolean shouldConsiderFallbackDrop(BotEntry entry, MapleMap map, Point botPos, Point targetPos) {
@@ -265,12 +271,24 @@ final class BotFallbackMovementManager {
             return false;
         }
 
-        MapleMap map = entry.bot.getMap();
+        MapleMap map = map(entry);
         int direction = Integer.signum(stepX);
-        int jumpStep = direction * BotPhysicsEngine.walkStep(map, entry.movementProfile);
+        int jumpStep = direction * BotPhysicsEngine.walkStep(map, movementProfile(entry));
         BotPhysicsEngine.JumpLanding landing =
-                BotPhysicsEngine.simulateJumpLanding(map, botPos, jumpStep, entry.movementProfile);
+                BotPhysicsEngine.simulateJumpLanding(map, botPos, jumpStep, movementProfile(entry));
         return isUsefulJumpProbeLanding(botPos, steeringTarget, direction, landing);
+    }
+
+    private static Character bot(BotEntry entry) {
+        return AgentBotRuntimeIdentityRuntime.bot(entry);
+    }
+
+    private static MapleMap map(BotEntry entry) {
+        return AgentBotRuntimeIdentityRuntime.botMap(entry);
+    }
+
+    private static BotMovementProfile movementProfile(BotEntry entry) {
+        return AgentBotMovementStateRuntime.movementProfile(entry);
     }
 
     private static boolean isUsefulJumpProbeLanding(Point botPos,
