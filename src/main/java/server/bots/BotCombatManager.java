@@ -1187,30 +1187,17 @@ public class BotCombatManager {
                                                               Point botPos,
                                                               Foothold botFoothold,
                                                               List<Monster> candidates) {
-        Map<Integer, AgentGrindTargetGroup> groupsByRegionId = new HashMap<>();
-        for (Monster candidate : candidates) {
-            Point targetPos = candidate.getPosition();
-            int targetRegionId = BotNavigationManager.resolveTargetRegionId(
-                    context.graph(), context.entry(), context.map(), targetPos);
-            if (targetRegionId < 0) {
-                continue;
-            }
-
-            long localScore = grindTargetScore(bot, botPos, botFoothold, candidate)
-                    - aoeClusterBonus(entry, candidate, candidates);
-            AgentGrindTargetGroup group = groupsByRegionId.computeIfAbsent(targetRegionId, AgentGrindTargetGroup::new);
-            group.add(candidate, localScore, targetPos.distanceSq(botPos));
-        }
-
-        List<AgentScoredGrindTarget> scoredTargets = new ArrayList<>(groupsByRegionId.size());
-        for (AgentGrindTargetGroup group : groupsByRegionId.values()) {
-            long pathCost = graphPathCost(context.graph(), context.map(), context.startPos(), context.startRegionId(),
-                    group.bestMonster().getPosition(), group.regionId(), context.profile());
-            long occupancyPenalty = grindRegionOccupancyPenalty(context, bot, group.regionId());
-            scoredTargets.add(AgentCombatGrindTargetPolicy.toScoredTarget(
-                    group, pathCost, occupancyPenalty, UNREACHABLE_GRAPH_COST));
-        }
-        return scoredTargets;
+        return AgentCombatGrindTargetPolicy.scoreTargetRegions(
+                candidates,
+                botPos,
+                candidate -> BotNavigationManager.resolveTargetRegionId(
+                        context.graph(), context.entry(), context.map(), candidate.getPosition()),
+                candidate -> grindTargetScore(bot, botPos, botFoothold, candidate)
+                        - aoeClusterBonus(entry, candidate, candidates),
+                group -> graphPathCost(context.graph(), context.map(), context.startPos(), context.startRegionId(),
+                        group.bestMonster().getPosition(), group.regionId(), context.profile()),
+                group -> grindRegionOccupancyPenalty(context, bot, group.regionId()),
+                UNREACHABLE_GRAPH_COST);
     }
 
     private static Monster pickFromBestTargets(List<AgentScoredGrindTarget> scoredTargets) {

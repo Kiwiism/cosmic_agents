@@ -100,6 +100,82 @@ class AgentCombatGrindTargetPolicyTest {
     }
 
     @Test
+    void shouldScoreTargetRegionsByGroupingValidRegions() {
+        Monster skipped = monsterAt(50, 100);
+        Monster regionOneFar = monsterAt(200, 100);
+        Monster regionOneBest = monsterAt(120, 100);
+        Monster regionTwo = monsterAt(300, 100);
+        Point agentPosition = new Point(100, 100);
+
+        List<AgentScoredGrindTarget> scoredTargets = AgentCombatGrindTargetPolicy.scoreTargetRegions(
+                List.of(skipped, regionOneFar, regionOneBest, regionTwo),
+                agentPosition,
+                monster -> {
+                    if (monster == skipped) {
+                        return -1;
+                    }
+                    return monster == regionTwo ? 2 : 1;
+                },
+                monster -> {
+                    if (monster == regionOneBest || monster == regionTwo) {
+                        return 100L;
+                    }
+                    return 120L;
+                },
+                group -> group.regionId() == 1 ? 1_000L : 500L,
+                group -> group.regionId() == 1 ? 25L : 0L,
+                9_999L);
+
+        assertEquals(2, scoredTargets.size());
+        AgentScoredGrindTarget regionOne = scoredTargets.stream()
+                .filter(target -> target.monster() == regionOneBest)
+                .findFirst()
+                .orElseThrow();
+        assertEquals(625L, regionOne.graphCost());
+        assertEquals(125L, regionOne.localScore());
+        assertEquals(400.0d, regionOne.distanceSq());
+
+        AgentScoredGrindTarget regionTwoScore = scoredTargets.stream()
+                .filter(target -> target.monster() == regionTwo)
+                .findFirst()
+                .orElseThrow();
+        assertEquals(500L, regionTwoScore.graphCost());
+        assertEquals(100L, regionTwoScore.localScore());
+        assertEquals(40_000.0d, regionTwoScore.distanceSq());
+    }
+
+    @Test
+    void shouldPreserveUnreachableCostWhenScoringTargetRegions() {
+        Monster target = monsterAt(120, 100);
+
+        AgentScoredGrindTarget scored = AgentCombatGrindTargetPolicy.scoreTargetRegions(
+                List.of(target),
+                new Point(100, 100),
+                monster -> 1,
+                monster -> 100L,
+                group -> 9_999L,
+                group -> 25L,
+                9_999L).get(0);
+
+        assertEquals(9_999L, scored.graphCost());
+        assertEquals(125L, scored.localScore());
+    }
+
+    @Test
+    void shouldReturnEmptyRegionScoresWhenAllTargetsHaveInvalidRegions() {
+        Monster target = monsterAt(120, 100);
+
+        assertTrue(AgentCombatGrindTargetPolicy.scoreTargetRegions(
+                List.of(target),
+                new Point(100, 100),
+                monster -> -1,
+                monster -> 100L,
+                group -> 1L,
+                group -> 1L,
+                9_999L).isEmpty());
+    }
+
+    @Test
     void shouldGroupTargetsByBestLocalScoreThenDistance() {
         Monster farTie = mock(Monster.class);
         Monster localWinner = mock(Monster.class);

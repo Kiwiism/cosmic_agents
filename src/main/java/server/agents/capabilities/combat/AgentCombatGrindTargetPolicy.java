@@ -3,8 +3,11 @@ package server.agents.capabilities.combat;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.IntSupplier;
+import java.util.function.ToIntFunction;
 import java.util.function.ToLongFunction;
 import server.life.Monster;
 import server.maps.Foothold;
@@ -59,6 +62,33 @@ public final class AgentCombatGrindTargetPolicy {
             long adjustedLocalScore = localScore.applyAsLong(candidate) - clusterBonus.applyAsLong(candidate);
             scoredTargets.add(new AgentScoredGrindTarget(candidate, adjustedLocalScore, adjustedLocalScore,
                     candidate.getPosition().distanceSq(agentPosition)));
+        }
+        return scoredTargets;
+    }
+
+    public static List<AgentScoredGrindTarget> scoreTargetRegions(List<Monster> candidates,
+                                                                  Point agentPosition,
+                                                                  ToIntFunction<Monster> targetRegionId,
+                                                                  ToLongFunction<Monster> localScore,
+                                                                  ToLongFunction<AgentGrindTargetGroup> pathCost,
+                                                                  ToLongFunction<AgentGrindTargetGroup> occupancyPenalty,
+                                                                  long unreachableGraphCost) {
+        Map<Integer, AgentGrindTargetGroup> groupsByRegionId = new HashMap<>();
+        for (Monster candidate : candidates) {
+            int regionId = targetRegionId.applyAsInt(candidate);
+            if (regionId < 0) {
+                continue;
+            }
+
+            AgentGrindTargetGroup group = groupsByRegionId.computeIfAbsent(regionId, AgentGrindTargetGroup::new);
+            group.add(candidate, localScore.applyAsLong(candidate),
+                    candidate.getPosition().distanceSq(agentPosition));
+        }
+
+        List<AgentScoredGrindTarget> scoredTargets = new ArrayList<>(groupsByRegionId.size());
+        for (AgentGrindTargetGroup group : groupsByRegionId.values()) {
+            scoredTargets.add(toScoredTarget(group, pathCost.applyAsLong(group),
+                    occupancyPenalty.applyAsLong(group), unreachableGraphCost));
         }
         return scoredTargets;
     }
