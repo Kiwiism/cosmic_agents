@@ -8,6 +8,7 @@ import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 import server.agents.capabilities.combat.AgentFallDamageCalculator;
 import server.agents.capabilities.combat.AgentCombatSkillClassifier;
 import server.agents.capabilities.combat.AgentCombatWeaponPolicy;
+import server.agents.capabilities.combat.AgentCombatSkillHitboxPolicy;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
 
 import server.agents.runtime.AgentPerformanceMonitor;
@@ -29,14 +30,11 @@ import constants.skills.Bowmaster;
 import constants.skills.Buccaneer;
 import constants.skills.Cleric;
 import constants.skills.Corsair;
-import constants.skills.Crossbowman;
 import constants.skills.Crusader;
 import constants.skills.DawnWarrior;
 import constants.skills.DragonKnight;
 import constants.skills.Fighter;
 import constants.skills.GM;
-import constants.skills.Hermit;
-import constants.skills.Hunter;
 import constants.skills.Marksman;
 import constants.skills.NightWalker;
 import constants.skills.Priest;
@@ -235,30 +233,6 @@ public class BotCombatManager {
         throw new NumberFormatException(v);
     }
 
-    // Pierce-line projectiles do NOT use the generic ±50 px vertical band: the actual
-    // client projectile sprite is much thinner (Iron Arrow) or much taller (Avenger)
-    // and the launch height sits at ~30 px above the character's feet.
-    //   yAbove = how far the projectile box extends above the bot's feet.
-    //   yBelow = how far it extends below (can be negative when the entire box is above
-    //            the feet, e.g. a thin Iron Arrow line at player.Y - 30).
-    // Values measured 2026-05-18 from monitored-packets-{ironarrow,avenger}-*.log
-    // (Bowgurl / admin) by binary-searching the mob-Y vs. player-feet-Y delta at which
-    // the client stopped including a mob in the per-attack mob list:
-    //   Iron Arrow: hit @ Δy=17, miss @ Δy=41  → reach ≈ 30 (~thin horizontal line)
-    //   Avenger:    hit @ Δy=56, miss @ Δy=65  → reach ≈ 60 (~±30 around launch line)
-    private record ProjectileVerticalReach(int yAbove, int yBelow) { }
-
-    private static final Map<Integer, ProjectileVerticalReach> PIERCE_LINE_PROJECTILE_REACH = Map.of(
-            Crossbowman.IRON_ARROW, new ProjectileVerticalReach(32, -28),
-            Hermit.AVENGER, new ProjectileVerticalReach(60, 0),
-            NightWalker.AVENGER, new ProjectileVerticalReach(60, 0)
-    );
-    // Skills whose WZ bbox describes an explosion around the strike point (primary target),
-    // not a sweep around the caster. Anchor the planner's hitBox at the target for these,
-    // matching how StatEffect handles NightWalker.POISON_BOMB (see StatEffect line 1089).
-    private static final Set<Integer> STRIKE_POINT_ANCHORED_AOE_SKILL_IDS = Set.of(
-            Hunter.ARROW_BOMB
-    );
     private static final List<String> DEATH_REPLIES = List.of(
             "oops im dead", "gg", "rip me", "oww", "i died lol",
             "welp", "ouchh", "nooo", "ok i died", "i'll be right back");
@@ -1316,62 +1290,19 @@ public class BotCombatManager {
     }
 
     private static Rectangle calculateSkillHitBox(StatEffect effect, Character bot, Monster primaryTarget, AgentAttackRoute route, int skillId, String action) {
-        boolean facingLeft = primaryTarget.getPosition().x < bot.getPosition().x;
-        if (effect.hasBoundingBox()) {
-            Point anchor = isStrikePointAnchoredAoeSkill(skillId)
-                    ? primaryTarget.getPosition()
-                    : bot.getPosition();
-            return effect.calculateBoundingBox(anchor, facingLeft);
-        }
-
-        return fallbackSkillHitBox(effect, bot, facingLeft, route, skillId, action);
+        return AgentCombatSkillHitboxPolicy.calculateSkillHitBox(effect, bot, primaryTarget, route, skillId, action);
     }
 
     static boolean isStrikePointAnchoredAoeSkill(int skillId) {
-        return STRIKE_POINT_ANCHORED_AOE_SKILL_IDS.contains(skillId);
+        return AgentCombatSkillHitboxPolicy.isStrikePointAnchoredAoeSkill(skillId);
     }
 
-    // Caller (fallbackSkillHitBox) already gates on route == CLOSE; we no longer require
-    // the bot's basic route to be CLOSE so bow/crossbow Power Knockback (a melee swing on
-    // the client) gets the proper rectangular reach instead of falling through to the
-    // 400 px ranged projectile box.
     static Rectangle fallbackCloseRangeSkillHitBox(StatEffect effect, Character bot, String action, boolean facingLeft) {
-        if (effect == null || bot == null) {
-            return null;
-        }
-
-        // A true melee weapon carries an afterimage swing box (per-weapon, per-action). Use it and
-        // ignore the skill's WZ `range`, which the v83 client does not apply to these melee swings
-        // (e.g. Slash Blast reaches the same as the weapon's basic swing, not its 150 px `range`).
-        // Weapons with no swing box — bows/crossbows casting Power Knockback as a melee hit — fall
-        // through and keep `range` (e.g. 130 px) as their close reach.
-        Rectangle weaponBox = AgentAttackExecutionProvider.closeRangeWeaponActionHitBox(bot, action, facingLeft);
-        if (weaponBox != null) {
-            return weaponBox;
-        }
-
-        Point origin = bot.getPosition();
-        int horizontalRange = Math.max(cfg.ATTACK_RANGE_X, effect.getRange());
-        int top = origin.y - cfg.ATTACK_RANGE_Y;
-        int height = cfg.ATTACK_RANGE_Y + cfg.ATTACK_DOWN_MAX;
-        int left = facingLeft ? origin.x - horizontalRange : origin.x;
-        return new Rectangle(left, top, horizontalRange, height);
+        return AgentCombatSkillHitboxPolicy.fallbackCloseRangeSkillHitBox(effect, bot, action, facingLeft);
     }
 
     static Rectangle fallbackSkillHitBox(StatEffect effect, Character bot, boolean facingLeft, AgentAttackRoute route, int skillId, String action) {
-        if (route == AgentAttackRoute.CLOSE) {
-            return fallbackCloseRangeSkillHitBox(effect, bot, action, facingLeft);
-        }
-        if (effect == null || bot == null) {
-            return null;
-        }
-
-        ProjectileVerticalReach reach = PIERCE_LINE_PROJECTILE_REACH.get(skillId);
-        if (reach != null) {
-            return clientProjectileHitBox(bot, facingLeft, projectileRangeScale(effect),
-                    reach.yAbove(), reach.yBelow());
-        }
-        return clientProjectileHitBox(bot, facingLeft, projectileRangeScale(effect));
+        return AgentCombatSkillHitboxPolicy.fallbackSkillHitBox(effect, bot, facingLeft, route, skillId, action);
     }
 
     public static Rectangle clientProjectileHitBox(Character bot, boolean facingLeft, float horizontalScale) {
@@ -2544,7 +2475,6 @@ public class BotCombatManager {
     //   1. "damage" key present  → physical attack skill (Power Strike, Strafe, Iron Arrow).
     //   2. "mad" key present     → magic attack skill (Magic Claw, Cold Beam, Thunder Bolt).
     //   3. mobCount > 1 + bbox   → bomb/explosion skill that derives damage from "x" instead
-    //                              of "damage" (Hunter.ARROW_BOMB and similar).
     private static boolean declaresOffense(StatEffect effect) {
         return AgentCombatSkillClassifier.declaresOffense(effect);
     }

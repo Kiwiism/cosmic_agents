@@ -49,6 +49,12 @@ Recent reconstruction notes:
   spear/polearm skill gating, forced Crusher/Fury damage weapon types, and
   stab/swing action-to-weapon normalization are unchanged; `BotCombatManager`
   keeps compatibility wrappers for current attack-plan construction.
+- Combat skill hitbox policy ownership moved to
+  `server.agents.capabilities.combat.AgentCombatSkillHitboxPolicy`. Strike-point
+  anchored AOE detection, measured Iron Arrow/Avenger pierce-line vertical
+  reach, close-range fallback reach, weapon afterimage fallback, and projectile
+  skill fallback geometry are unchanged; `BotCombatManager` keeps compatibility
+  wrappers for current attack-plan construction and tests.
 - Combat attack data provider ownership moved to
   `server.agents.capabilities.combat.data.AgentAttackDataProvider`. Weapon
   normal-attack profile loading, action-spec selection, body action id
