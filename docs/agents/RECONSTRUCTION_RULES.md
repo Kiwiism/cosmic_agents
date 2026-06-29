@@ -888,6 +888,13 @@ Recent reconstruction notes:
   movement intent, and prone visual facing keep BotEntry as the temporary
   backing store but no longer read or write `inAir`, `climbing`, `navEdge`,
   `downJumpPending`, `moveDir`, or `facingDir` directly in production.
+- Fidget state-machine fields now enter through `AgentBotFidgetStateRuntime`;
+  BotFidgetManager fidget mode/trigger, timers, origin position, spam-air-steer,
+  jump/sideways direction, crouch checks, visual cooldown, and idle/speed-roll
+  scheduling keep BotEntry as the temporary backing store but no longer read or
+  write fidget fields directly in production. `BotFidgetMode` and
+  `BotFidgetTrigger` were moved to public enum files with the same values so
+  the Agent adapter can keep a typed boundary without changing behavior.
 
 Initial reconstruction order:
 
