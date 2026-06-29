@@ -1305,10 +1305,12 @@ public class BotCombatManager {
 
     /** True iff the bot has a multi-mob AoE skill but its chosen plan is single-target with room to hit more. */
     static boolean isAoeBotSingleTargeting(BotEntry entry, AttackPlan plan) {
-        return entry != null && plan != null
-                && AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry)
-                && plan.skillId != AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry)
-                && plan.targets.size() < AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry);
+        return entry != null && plan != null && AgentCombatScoringPolicy.isAoeSingleTargeting(
+                plan.skillId,
+                plan.targets.size(),
+                AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
+                AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry),
+                AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
     }
 
     /** Live mobs within AoE cluster radius of the anchor (including itself), capped at the skill's mobCount. */
@@ -1317,8 +1319,10 @@ public class BotCombatManager {
                 || bot.getMap() == null || anchor.getPosition() == null) {
             return 0;
         }
-        return Math.min(clusterMonsters(bot, anchor).size(),
-                Math.max(1, AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry)));
+        return AgentCombatScoringPolicy.cappedAoeClusterSize(anchor, bot.getMap().getAllMonsters(),
+                AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
+                AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry),
+                AOE_CLUSTER_RADIUS_PX);
     }
 
     // AoE positioning: target selection (aoeClusterBonus) steers the bot toward a cluster, but the

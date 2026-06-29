@@ -79,6 +79,28 @@ public final class AgentCombatScoringPolicy {
         return neighbors * bonusPerMob;
     }
 
+    public static boolean isAoeSingleTargeting(int planSkillId,
+                                               int planTargetCount,
+                                               boolean hasMultiMobAoeSkill,
+                                               int aoeSkillId,
+                                               int aoeMobCount) {
+        return hasMultiMobAoeSkill
+                && planSkillId != aoeSkillId
+                && planTargetCount < aoeMobCount;
+    }
+
+    public static int cappedAoeClusterSize(Monster anchor,
+                                           Iterable<Monster> candidates,
+                                           boolean hasMultiMobAoeSkill,
+                                           int aoeMobCount,
+                                           int clusterRadiusPx) {
+        if (!hasMultiMobAoeSkill || anchor == null || anchor.getPosition() == null) {
+            return 0;
+        }
+        return Math.min(clusterMonsters(anchor, candidates, clusterRadiusPx).size(),
+                Math.max(1, aoeMobCount));
+    }
+
     public static boolean aoeBeatsSingleTargetScore(int aoeDamage,
                                                     int aoeAttackCount,
                                                     int targetCount,

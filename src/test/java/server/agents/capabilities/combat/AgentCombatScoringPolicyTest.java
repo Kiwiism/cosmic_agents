@@ -76,6 +76,29 @@ class AgentCombatScoringPolicyTest {
     }
 
     @Test
+    void shouldDetectAoeSingleTargetingWhenPlanHasRoomForMoreTargets() {
+        assertTrue(AgentCombatScoringPolicy.isAoeSingleTargeting(1001004, 1, true, 1001005, 6));
+        assertFalse(AgentCombatScoringPolicy.isAoeSingleTargeting(1001005, 1, true, 1001005, 6));
+        assertFalse(AgentCombatScoringPolicy.isAoeSingleTargeting(1001004, 6, true, 1001005, 6));
+        assertFalse(AgentCombatScoringPolicy.isAoeSingleTargeting(1001004, 1, false, 1001005, 6));
+    }
+
+    @Test
+    void shouldCountAoeClusterSizeCappedAtSkillMobCount() {
+        Monster target = mobAt(100, 100, true);
+        Monster nearOne = mobAt(120, 100, true);
+        Monster nearTwo = mobAt(130, 100, true);
+        Monster far = mobAt(500, 100, true);
+
+        assertEquals(3, AgentCombatScoringPolicy.cappedAoeClusterSize(
+                target, List.of(target, nearOne, nearTwo, far), true, 6, 150));
+        assertEquals(2, AgentCombatScoringPolicy.cappedAoeClusterSize(
+                target, List.of(target, nearOne, nearTwo, far), true, 2, 150));
+        assertEquals(0, AgentCombatScoringPolicy.cappedAoeClusterSize(
+                target, List.of(target, nearOne), false, 6, 150));
+    }
+
+    @Test
     void shouldBuildAoeClusterAroundPrimaryTarget() {
         Monster target = mobAt(100, 100, true);
         Monster near = mobAt(130, 100, true);

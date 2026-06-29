@@ -1298,6 +1298,10 @@ Recent reconstruction notes:
   BotFidgetManager preserve the same NONE/WAIT/JUMP/DIAGONAL_JUMP/PRONE/
   SPAM_PRONE/SPAM_SIDEWAYS and NONE/AUTO_FOLLOW/IDLE/SOCIAL behavior while the
   enum ownership moves out of `server.bots`.
+- AoE single-target detection and capped cluster-size policy now live in
+  `AgentCombatScoringPolicy`; BotCombatManager preserves the same AoE skill-id,
+  target-count, live-map cluster, and mob-count cap behavior through a thin
+  compatibility delegate.
 
 Initial reconstruction order:
 
