@@ -11,6 +11,7 @@ import server.agents.capabilities.combat.AgentCombatWeaponPolicy;
 import server.agents.capabilities.combat.AgentCombatSkillHitboxPolicy;
 import server.agents.capabilities.combat.AgentCombatHitCounter;
 import server.agents.capabilities.combat.AgentCombatRangePolicy;
+import server.agents.capabilities.combat.AgentCombatSkillUsePolicy;
 import server.agents.capabilities.combat.AgentCombatSupportPolicy;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
 
@@ -2216,12 +2217,7 @@ public class BotCombatManager {
     }
 
     private static boolean canUseSkill(Character bot, int skillId, int skillLevel) {
-        Skill skill = SkillFactory.getSkill(skillId);
-        if (skill == null || skillLevel <= 0) {
-            return false;
-        }
-
-        return skill.getEffect(skillLevel).canPaySkillCost(bot);
+        return AgentCombatSkillUsePolicy.canPaySkillCost(bot, skillId, skillLevel);
     }
 
     /** Returns true if the bot's weapon type requires projectile ammo. */

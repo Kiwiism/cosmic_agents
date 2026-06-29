@@ -74,6 +74,11 @@ Recent reconstruction notes:
   HP/target/healer gating, heal-threshold checks, and healer-skill detection
   are unchanged; `BotCombatManager` still supplies party/member context and
   executes the existing support side effects.
+- Combat skill-use affordability policy moved to
+  `server.agents.capabilities.combat.AgentCombatSkillUsePolicy`. Skill lookup,
+  non-positive-level rejection, and `StatEffect.canPaySkillCost` delegation are
+  unchanged; `BotCombatManager` keeps a compatibility wrapper for current
+  attack execution.
 - Combat attack data provider ownership moved to
   `server.agents.capabilities.combat.data.AgentAttackDataProvider`. Weapon
   normal-attack profile loading, action-spec selection, body action id
