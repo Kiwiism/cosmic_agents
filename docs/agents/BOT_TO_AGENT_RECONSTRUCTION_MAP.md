@@ -34,7 +34,7 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 | `src/main/java/server/bots/BotFallbackMovementManager.java` | `server.agents.capabilities.movement.AgentFallbackMovementService` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/BotFidgetManager.java` | `server.agents.capabilities.social` and `server.agents.capabilities.movement` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
 | `src/main/java/server/bots/BotInventoryManager.java` | `server.agents.capabilities.inventory`, `looting`, `trade`, `server.agents.capabilities.dialogue.AgentItemQueryNormalizer` | `SPLIT_TO_MULTIPLE_AGENT_MODULES`; item query normalization is Agent-owned |
-| `src/main/java/server/bots/BotLootEligibility.java` | `server.agents.capabilities.looting.AgentLootEligibility` | `MIGRATE_TO_AGENT` |
+| `src/main/java/server/bots/BotLootEligibility.java` | `server.agents.capabilities.looting.AgentLootEligibility` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotMakerManager.java` | `server.agents.capabilities.build` or later deletion | `LEGACY_PROFILE` |
 | `src/main/java/server/bots/BotManager.java` | `server.agents.runtime`, `commands`, `events`, capability orchestrators | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
 | `src/main/java/server/bots/BotMovementManager.java` | `server.agents.capabilities.movement` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |

@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.looting.AgentLootEligibility;
+
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -16,7 +18,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-class BotLootEligibilityTest {
+class AgentLootEligibilityTest {
     @Test
     void shouldDelayTargetingBotInventoryDropsForFifteenSeconds() {
         MapleMap map = mock(MapleMap.class);
@@ -33,7 +35,7 @@ class BotLootEligibilityTest {
         try (MockedStatic<BotManager> botManagers = mockStatic(BotManager.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
             botManagers.when(BotManager::getInstance).thenReturn(manager);
 
-            assertFalse(BotLootEligibility.canBotTargetLoot(entry, bot, map, drop, System.currentTimeMillis()));
+            assertFalse(AgentLootEligibility.canBotTargetLoot(entry, bot, map, drop, System.currentTimeMillis()));
         }
     }
 
@@ -53,7 +55,7 @@ class BotLootEligibilityTest {
         try (MockedStatic<BotManager> botManagers = mockStatic(BotManager.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
             botManagers.when(BotManager::getInstance).thenReturn(manager);
 
-            assertTrue(BotLootEligibility.canBotTargetLoot(entry, bot, map, drop, System.currentTimeMillis()));
+            assertTrue(AgentLootEligibility.canBotTargetLoot(entry, bot, map, drop, System.currentTimeMillis()));
         }
     }
 
@@ -73,7 +75,7 @@ class BotLootEligibilityTest {
         try (MockedStatic<BotManager> botManagers = mockStatic(BotManager.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
             botManagers.when(BotManager::getInstance).thenReturn(manager);
 
-            assertFalse(BotLootEligibility.canBotTargetLoot(entry, bot, map, drop, System.currentTimeMillis()));
+            assertFalse(AgentLootEligibility.canBotTargetLoot(entry, bot, map, drop, System.currentTimeMillis()));
         }
     }
 
@@ -91,7 +93,7 @@ class BotLootEligibilityTest {
         try (MockedStatic<BotManager> botManagers = mockStatic(BotManager.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
             botManagers.when(BotManager::getInstance).thenReturn(manager);
 
-            assertTrue(BotLootEligibility.canBotTargetLoot(entry, bot, map, drop, System.currentTimeMillis()));
+            assertTrue(AgentLootEligibility.canBotTargetLoot(entry, bot, map, drop, System.currentTimeMillis()));
         }
     }
 
@@ -107,7 +109,7 @@ class BotLootEligibilityTest {
         when(owner.getId()).thenReturn(10);
         doReturn(drop).when(map).getMapObject(1);
 
-        assertTrue(BotLootEligibility.canBotTargetLoot(entry, bot, map, drop, System.currentTimeMillis()));
+        assertTrue(AgentLootEligibility.canBotTargetLoot(entry, bot, map, drop, System.currentTimeMillis()));
     }
 
     @Test
@@ -123,7 +125,7 @@ class BotLootEligibilityTest {
         when(drop.canBePickedBy(bot)).thenReturn(false);
         doReturn(drop).when(map).getMapObject(1);
 
-        assertFalse(BotLootEligibility.canBotTargetLoot(entry, bot, map, drop, System.currentTimeMillis()));
+        assertFalse(AgentLootEligibility.canBotTargetLoot(entry, bot, map, drop, System.currentTimeMillis()));
     }
 
     private static MapItem mockLoot(int objectId, int ownerId, boolean playerDrop, long dropTime) {

@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.looting.AgentLootEligibility;
+
 
 import server.agents.integration.AgentBotManagerReplyRuntime;
 import server.agents.integration.AgentBotManagerSchedulerRuntime;
@@ -1884,7 +1886,7 @@ public class BotManager {
             AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
             return null;
         }
-        if (!BotLootEligibility.canBotTargetLoot(entry, bot, bot.getMap(), loot, System.currentTimeMillis())) {
+        if (!AgentLootEligibility.canBotTargetLoot(entry, bot, bot.getMap(), loot, System.currentTimeMillis())) {
             AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
             return null;
         }

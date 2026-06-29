@@ -1,22 +1,24 @@
-package server.bots;
+package server.agents.capabilities.looting;
 
 import client.Character;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import constants.inventory.ItemConstants;
 import server.agents.integration.AgentBotPqRuntime;
+import server.bots.BotEntry;
+import server.bots.BotManager;
 import server.bots.pq.BotPqHooks;
 import server.maps.MapItem;
 import server.maps.MapleMap;
 
-public final class BotLootEligibility {
+public final class AgentLootEligibility {
     public static final int KPQ_COUPON = 4001007;
     public static final int KPQ_PASS = 4001008;
     public static final int HPQ_RICE_CAKE = 4001101;
     public static final long MIN_TARGET_LOOT_AGE_MS = 3_000L;
     public static final long BOT_INVENTORY_DROP_TARGET_LOOT_AGE_MS = 15_000L;
 
-    private BotLootEligibility() {
+    private AgentLootEligibility() {
     }
 
     public static boolean isPresent(MapleMap map, MapItem drop) {

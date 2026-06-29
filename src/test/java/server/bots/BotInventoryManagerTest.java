@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.looting.AgentLootEligibility;
+
 import server.agents.capabilities.movement.AgentMovementProfile;
 
 import client.Character;
@@ -285,12 +287,12 @@ class BotInventoryManagerTest {
 
         try (MockedStatic<BotNavigationGraphProvider> graphProvider =
                      mockStatic(BotNavigationGraphProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS);
-             MockedStatic<BotLootEligibility> lootEligibility =
-                     mockStatic(BotLootEligibility.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
+             MockedStatic<AgentLootEligibility> lootEligibility =
+                     mockStatic(AgentLootEligibility.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
             graphProvider.when(() -> BotNavigationGraphProvider.peekBestGraph(eq(map), any())).thenReturn(graph);
-            lootEligibility.when(() -> BotLootEligibility.canBotTargetLoot(
+            lootEligibility.when(() -> AgentLootEligibility.canBotTargetLoot(
                     eq(entry), eq(bot), eq(map), eq(oneWayLoot), anyLong())).thenReturn(true);
-            lootEligibility.when(() -> BotLootEligibility.canBotTargetLoot(
+            lootEligibility.when(() -> AgentLootEligibility.canBotTargetLoot(
                     eq(entry), eq(bot), eq(map), eq(returnableLoot), anyLong())).thenReturn(true);
 
             Point target = BotInventoryManager.findNearestPatrolLootTarget(entry, 1);

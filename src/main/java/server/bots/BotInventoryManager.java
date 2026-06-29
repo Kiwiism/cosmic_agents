@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.looting.AgentLootEligibility;
+
 import client.BotClient;
 import client.Character;
 import client.Job;
@@ -127,7 +129,7 @@ public class BotInventoryManager {
         Point botPos = bot.getPosition();
         long now = System.currentTimeMillis();
         for (MapItem drop : bot.getMap().getDroppedItems()) {
-            if (!BotLootEligibility.isPresent(bot.getMap(), drop)) {
+            if (!AgentLootEligibility.isPresent(bot.getMap(), drop)) {
                 cleanupBotLootGhostDrop(bot, drop);
                 continue;
             }
@@ -138,8 +140,8 @@ public class BotInventoryManager {
                 continue;
             }
 
-            if (!BotLootEligibility.canBotTargetLoot(entry, bot, bot.getMap(), drop, now)) {
-                if (BotLootEligibility.canBotLoot(entry, bot, drop)) {
+            if (!AgentLootEligibility.canBotTargetLoot(entry, bot, bot.getMap(), drop, now)) {
+                if (AgentLootEligibility.canBotLoot(entry, bot, drop)) {
                     continue;
                 }
                 if (drop.getMeso() <= 0 && drop.getItemId() > 0) {
@@ -208,7 +210,7 @@ public class BotInventoryManager {
         double nearestDistSq = Double.MAX_VALUE;
 
         for (MapItem drop : map.getDroppedItems()) {
-            if (!BotLootEligibility.canBotTargetLoot(entry, bot, map, drop, now)) continue;
+            if (!AgentLootEligibility.canBotTargetLoot(entry, bot, map, drop, now)) continue;
             if (BotManager.isGrindLootRetrySuppressed(entry, drop, now)) continue;
             Point dropPos = drop.getPosition();
             if (Math.abs(dropPos.x - botPos.x) <= BotManager.cfg.LOOT_RADIUS
@@ -258,7 +260,7 @@ public class BotInventoryManager {
         double nearestDistSq = Double.MAX_VALUE;
 
         for (MapItem drop : map.getDroppedItems()) {
-            if (!BotLootEligibility.canBotTargetLoot(entry, bot, map, drop, now)) continue;
+            if (!AgentLootEligibility.canBotTargetLoot(entry, bot, map, drop, now)) continue;
             Point dropPos = drop.getPosition();
             if (!allowed.contains(graph.findRegionId(map, dropPos))) continue;
             double distSq = dropPos.distanceSq(botPos);

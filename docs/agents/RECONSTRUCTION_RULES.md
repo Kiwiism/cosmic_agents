@@ -973,6 +973,9 @@ Recent reconstruction notes:
   movement capability. The stat bucketing, base profile, forced-base field-limit
   handling, and physics multipliers are unchanged; legacy bot movement,
   navigation, combat, and shop code now consume the Agent-owned profile type.
+- Loot eligibility ownership moved to `AgentLootEligibility` under the Agent
+  looting capability. Coupon/pass/rice-cake filtering, quest-item checks,
+  inventory-full checks, and bot-inventory-drop target delays are unchanged.
 - Airshow state now enters through `AgentBotAirshowStateRuntime`;
   BotAirshowManager active/trail timing, scripted frame physics fields, bot
   identity lookup, restore checks, and trail foothold reads keep BotEntry as the
@@ -1005,7 +1008,7 @@ Recent reconstruction notes:
   starter-kit grant, auto-equip, and build-status ordering while no longer
   reading bot or leader characters directly from BotEntry in production.
 - KPQ coupon-target loot eligibility now enters through `AgentBotPqRuntime`;
-  BotLootEligibility preserves coupon/pass/rice-cake and quest-item filtering
+  AgentLootEligibility preserves coupon/pass/rice-cake and quest-item filtering
   behavior while no longer reading KPQ coupon target state directly from
   BotEntry in production.
 - KPQ grind-requirement stage reads now enter through `AgentBotPqRuntime`;
