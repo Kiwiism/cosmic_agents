@@ -1,7 +1,9 @@
 package server.bots;
 
 import org.junit.jupiter.api.Test;
+import server.agents.integration.AgentBotShopBuyReport;
 import server.agents.integration.AgentBotShopPurchaseSequence;
+import server.agents.integration.AgentBotShopShortfallReason;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -19,21 +21,21 @@ class AgentBotShopPurchaseSequenceTest {
         AgentBotShopPurchaseSequence sequence =
                 new AgentBotShopPurchaseSequence(entry, null, new Point(10, 20), List.of(), bought, null);
 
-        BotShopManager.BuyReport fullPurchase =
-                new BotShopManager.BuyReport(2000000, 10, 10, BotShopManager.ShortfallReason.NONE);
+        AgentBotShopBuyReport fullPurchase =
+                new AgentBotShopBuyReport(2000000, 10, 10, AgentBotShopShortfallReason.NONE);
         assertSame(sequence, sequence.withFirstShortfall(fullPurchase));
         assertNull(sequence.firstShortfall());
 
-        BotShopManager.BuyReport firstShortfall =
-                new BotShopManager.BuyReport(2000001, 2, 5, BotShopManager.ShortfallReason.NO_MESO);
+        AgentBotShopBuyReport firstShortfall =
+                new AgentBotShopBuyReport(2000001, 2, 5, AgentBotShopShortfallReason.NO_MESO);
         AgentBotShopPurchaseSequence withShortfall = sequence.withFirstShortfall(firstShortfall);
 
         assertEquals(firstShortfall, withShortfall.firstShortfall());
         assertSame(entry, withShortfall.entry());
         assertSame(bought, withShortfall.bought());
 
-        BotShopManager.BuyReport laterShortfall =
-                new BotShopManager.BuyReport(2000002, 1, 3, BotShopManager.ShortfallReason.NO_SPACE);
+        AgentBotShopBuyReport laterShortfall =
+                new AgentBotShopBuyReport(2000002, 1, 3, AgentBotShopShortfallReason.NO_SPACE);
         assertEquals(firstShortfall, withShortfall.withFirstShortfall(laterShortfall).firstShortfall());
     }
 }

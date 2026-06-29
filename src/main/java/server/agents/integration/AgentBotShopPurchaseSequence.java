@@ -2,7 +2,6 @@ package server.agents.integration;
 
 import client.Character;
 import server.bots.BotEntry;
-import server.bots.BotShopManager;
 
 import java.awt.Point;
 import java.util.List;
@@ -15,8 +14,8 @@ public record AgentBotShopPurchaseSequence(BotEntry entry,
                                            Point npcPos,
                                            List<AgentBotShopPurchaseAction> actions,
                                            List<String> bought,
-                                           BotShopManager.BuyReport firstShortfall) {
-    public AgentBotShopPurchaseSequence withFirstShortfall(BotShopManager.BuyReport report) {
+                                           AgentBotShopBuyReport firstShortfall) {
+    public AgentBotShopPurchaseSequence withFirstShortfall(AgentBotShopBuyReport report) {
         if (firstShortfall == null && report != null && report.hasShortfall()) {
             return new AgentBotShopPurchaseSequence(entry, bot, npcPos, actions, bought, report);
         }

@@ -1057,6 +1057,10 @@ Recent reconstruction notes:
   potion purchase, trash-sale, shortfall, announcement, and finish behavior
   while the active purchase context is owned by the Agent integration layer
   instead of a private bot runtime record.
+- Shop purchase shortfall reporting now uses `AgentBotShopBuyReport` and
+  `AgentBotShopShortfallReason`; BotShopManager preserves the same quantity,
+  meso, space, and generic-failure reporting while the purchase report value
+  object is owned by the Agent integration layer.
 
 Initial reconstruction order:
 
