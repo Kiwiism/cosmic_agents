@@ -148,6 +148,10 @@ Recent reconstruction notes:
   `AgentBotMovementPhysicsStateRuntime`; ground-position sync, stop-ground
   motion, and rounded airborne position reads no longer touch `physX`,
   `physY`, or `hspeed` directly.
+- Bot physics movement-packet velocity writes now enter through
+  `AgentBotMovementStateRuntime.setMovementVelocity`; the legacy behavior that
+  non-zero horizontal velocity also updates facing direction is preserved behind
+  the Agent movement-state boundary.
 - Combat alert reset callbacks now enter through `AgentBotCombatRuntime`;
   `BotCombatManager` no longer reaches directly into the lower-level scheduler
   runtime for combat-owned alert timing, and alert timing and stance reset

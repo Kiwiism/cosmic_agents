@@ -178,6 +178,14 @@ public class BotEntry {
         return movementVelX != 0 || movementVelY != 0;
     }
 
+    public void setMovementVelocity(int velocityX, int velocityY) {
+        movementVelX = velocityX;
+        movementVelY = velocityY;
+        if (velocityX != 0) {
+            setFacingDirection(velocityX);
+        }
+    }
+
     // Swim intent — set by movement layer, consumed by physics engine. Movement
     // expresses "what the bot is trying to do"; physics integrates accordingly.
     // Mirrors how the real client only exposes discrete inputs (steer L/R,

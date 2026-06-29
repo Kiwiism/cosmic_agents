@@ -209,5 +209,15 @@ class AgentBotMovementStateRuntimeTest {
         assertEquals(12, AgentBotMovementStateRuntime.movementVelocityX(entry));
         assertEquals(-3, AgentBotMovementStateRuntime.movementVelocityY(entry));
         assertTrue(AgentBotMovementStateRuntime.hasMovementVelocity(entry));
+
+        AgentBotMovementStateRuntime.setMovementVelocity(entry, -20, 4);
+        assertEquals(-20, AgentBotMovementStateRuntime.movementVelocityX(entry));
+        assertEquals(4, AgentBotMovementStateRuntime.movementVelocityY(entry));
+        assertEquals(-1, AgentBotMovementStateRuntime.facingDirection(entry));
+
+        AgentBotMovementStateRuntime.setMovementVelocity(entry, 0, 0);
+        assertEquals(0, AgentBotMovementStateRuntime.movementVelocityX(entry));
+        assertEquals(0, AgentBotMovementStateRuntime.movementVelocityY(entry));
+        assertEquals(-1, AgentBotMovementStateRuntime.facingDirection(entry));
     }
 }

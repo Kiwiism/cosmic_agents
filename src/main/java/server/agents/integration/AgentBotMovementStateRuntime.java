@@ -151,6 +151,10 @@ public final class AgentBotMovementStateRuntime {
         return entry.hasMovementVelocity();
     }
 
+    public static void setMovementVelocity(BotEntry entry, int velocityX, int velocityY) {
+        entry.setMovementVelocity(velocityX, velocityY);
+    }
+
     private static Point position(Character character) {
         return character == null || character.getPosition() == null ? null : new Point(character.getPosition());
     }

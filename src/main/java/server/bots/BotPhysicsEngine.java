@@ -1197,8 +1197,7 @@ public final class BotPhysicsEngine {
         entry.physX = nextX;
         entry.physY = nextY;
         entry.crouching = false;
-        entry.movementVelX = (int) Math.round(vx);
-        entry.movementVelY = (int) Math.round(vy);
+        setMovementVelocity(entry, (int) Math.round(vx), (int) Math.round(vy));
         entry.swimming = true;
         entry.inAir = true;
 
@@ -1699,11 +1698,7 @@ public final class BotPhysicsEngine {
     }
 
     private static void setMovementVelocity(BotEntry entry, int velX, int velY) {
-        entry.movementVelX = velX;
-        entry.movementVelY = velY;
-        if (velX != 0) {
-            entry.facingDir = velX > 0 ? 1 : -1;
-        }
+        AgentBotMovementStateRuntime.setMovementVelocity(entry, velX, velY);
     }
 
     private static int velocityFromAirStep(float airVelPerTick) {
