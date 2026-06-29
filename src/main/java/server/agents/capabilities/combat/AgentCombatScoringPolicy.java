@@ -1,6 +1,7 @@
 package server.agents.capabilities.combat;
 
 import java.awt.Point;
+import java.util.ArrayList;
 import java.util.List;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.life.Monster;
@@ -76,5 +77,47 @@ public final class AgentCombatScoringPolicy {
             }
         }
         return neighbors * bonusPerMob;
+    }
+
+    public static List<Monster> clusterMonsters(Monster primaryTarget,
+                                                Iterable<Monster> candidates,
+                                                int clusterRadiusPx) {
+        List<Monster> cluster = new ArrayList<>();
+        if (primaryTarget == null || candidates == null || primaryTarget.getPosition() == null) {
+            return cluster;
+        }
+        cluster.add(primaryTarget);
+        Point targetPosition = primaryTarget.getPosition();
+        long radiusSq = (long) clusterRadiusPx * clusterRadiusPx;
+        for (Monster other : candidates) {
+            if (other == primaryTarget || other == null || !other.isAlive() || other.getPosition() == null) {
+                continue;
+            }
+            long dx = (long) other.getPosition().x - targetPosition.x;
+            long dy = (long) other.getPosition().y - targetPosition.y;
+            if (dx * dx + dy * dy <= radiusSq) {
+                cluster.add(other);
+            }
+        }
+        return cluster;
+    }
+
+    public static Monster nearestMonster(List<Monster> monsters, int x, int y) {
+        Monster best = null;
+        long bestDistSq = Long.MAX_VALUE;
+        for (Monster monster : monsters) {
+            Point position = monster.getPosition();
+            if (position == null) {
+                continue;
+            }
+            long dx = (long) position.x - x;
+            long dy = (long) position.y - y;
+            long distSq = dx * dx + dy * dy;
+            if (distSq < bestDistSq) {
+                bestDistSq = distSq;
+                best = monster;
+            }
+        }
+        return best;
     }
 }

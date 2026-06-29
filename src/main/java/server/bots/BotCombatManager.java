@@ -1652,40 +1652,11 @@ public class BotCombatManager {
     }
 
     private static List<Monster> clusterMonsters(Character bot, Monster primaryTarget) {
-        List<Monster> cluster = new ArrayList<>();
-        cluster.add(primaryTarget);
-        Point tp = primaryTarget.getPosition();
-        long radiusSq = (long) AOE_CLUSTER_RADIUS_PX * AOE_CLUSTER_RADIUS_PX;
-        for (Monster other : bot.getMap().getAllMonsters()) {
-            if (other == primaryTarget || !other.isAlive() || other.getPosition() == null) {
-                continue;
-            }
-            long dx = (long) other.getPosition().x - tp.x;
-            long dy = (long) other.getPosition().y - tp.y;
-            if (dx * dx + dy * dy <= radiusSq) {
-                cluster.add(other);
-            }
-        }
-        return cluster;
+        return AgentCombatScoringPolicy.clusterMonsters(primaryTarget, bot.getMap().getAllMonsters(), AOE_CLUSTER_RADIUS_PX);
     }
 
     private static Monster nearestMonster(List<Monster> monsters, int x, int y) {
-        Monster best = null;
-        long bestDistSq = Long.MAX_VALUE;
-        for (Monster m : monsters) {
-            Point p = m.getPosition();
-            if (p == null) {
-                continue;
-            }
-            long dx = (long) p.x - x;
-            long dy = (long) p.y - y;
-            long distSq = dx * dx + dy * dy;
-            if (distSq < bestDistSq) {
-                bestDistSq = distSq;
-                best = m;
-            }
-        }
-        return best;
+        return AgentCombatScoringPolicy.nearestMonster(monsters, x, y);
     }
 
     private static long grindRegionOccupancyPenalty(GrindGraphContext context, Character bot, int targetRegionId) {

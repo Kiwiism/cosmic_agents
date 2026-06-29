@@ -60,6 +60,25 @@ class AgentCombatScoringPolicyTest {
                 null, List.of(target, near), true, 3, 150, 200L));
     }
 
+    @Test
+    void shouldBuildAoeClusterAroundPrimaryTarget() {
+        Monster target = mobAt(100, 100, true);
+        Monster near = mobAt(130, 100, true);
+        Monster deadNear = mobAt(140, 100, false);
+        Monster far = mobAt(400, 100, true);
+
+        assertEquals(List.of(target, near),
+                AgentCombatScoringPolicy.clusterMonsters(target, List.of(target, near, deadNear, far), 150));
+    }
+
+    @Test
+    void shouldSelectNearestMonsterToPoint() {
+        Monster far = mobAt(100, 100, true);
+        Monster near = mobAt(130, 100, true);
+
+        assertEquals(near, AgentCombatScoringPolicy.nearestMonster(List.of(far, near), 125, 100));
+    }
+
     private static Monster mobAt(int x, int y, boolean alive) {
         Monster mob = mock(Monster.class);
         when(mob.getPosition()).thenReturn(new Point(x, y));

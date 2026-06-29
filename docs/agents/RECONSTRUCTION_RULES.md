@@ -98,9 +98,9 @@ Recent reconstruction notes:
 - Combat scoring math moved to
   `server.agents.capabilities.combat.AgentCombatScoringPolicy`. Expected damage
   capping by current HP, local travel-cost estimation, local grind-target
-  score penalties, and AOE cluster bonus calculation keep the same formulas;
-  larger attack-plan orchestration and grind-target selection still remain in
-  `BotCombatManager`.
+  score penalties, AOE cluster bonus calculation, cluster membership, and
+  nearest-cluster-target selection keep the same formulas; larger attack-plan
+  orchestration and grind-target selection still remain in `BotCombatManager`.
 - Combat attack data provider ownership moved to
   `server.agents.capabilities.combat.data.AgentAttackDataProvider`. Weapon
   normal-attack profile loading, action-spec selection, body action id
