@@ -1061,6 +1061,10 @@ Recent reconstruction notes:
   `AgentBotShopShortfallReason`; BotShopManager preserves the same quantity,
   meso, space, and generic-failure reporting while the purchase report value
   object is owned by the Agent integration layer.
+- Potion donor planning now uses `AgentBotPotionDonorPlan`; BotPotionManager
+  preserves the same donor selection, qualification threshold, donation
+  quantity, delay, and transfer behavior while the donor plan context is owned
+  by the Agent integration layer instead of a private bot runtime record.
 
 Initial reconstruction order:
 

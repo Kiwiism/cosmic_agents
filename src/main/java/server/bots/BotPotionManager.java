@@ -17,6 +17,7 @@ import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentBotPotionDonorPlan;
 import server.agents.integration.AgentBotPotionRuntime;
 import server.agents.integration.AgentBotPotionStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
@@ -407,7 +408,7 @@ public final class BotPotionManager {
 
         AgentBotPotionRuntime.sayMapNow(bot, BotManager.randomReply(forHp ? POT_REQUEST_HP_MSGS : POT_REQUEST_MP_MSGS));
 
-        PotDonorPlan plan = selectPotDonor(owner, bot, entry, forHp);
+        AgentBotPotionDonorPlan plan = selectPotDonor(owner, bot, entry, forHp);
         if (plan == null) {
             if (!bypassShareLimits) {
                 categoryBackoff.put(owner.getId(), now + 10 * 60_000L);
@@ -449,7 +450,7 @@ public final class BotPotionManager {
             return OwnerPotShareResult.BLOCKED;
         }
 
-        PotDonorPlan plan = selectPotDonor(owner, owner, null, forHp);
+        AgentBotPotionDonorPlan plan = selectPotDonor(owner, owner, null, forHp);
         if (plan == null || !plan.qualifies()) {
             return OwnerPotShareResult.NO_DONOR;
         }
@@ -458,7 +459,7 @@ public final class BotPotionManager {
         return OwnerPotShareResult.OFFERED;
     }
 
-    private static PotDonorPlan selectPotDonor(Character owner, Character recipient, BotEntry excludedEntry, boolean forHp) {
+    private static AgentBotPotionDonorPlan selectPotDonor(Character owner, Character recipient, BotEntry excludedEntry, boolean forHp) {
         long startedAt = BotPerformanceMonitor.start();
         BotEntry bestEntry = null;
         int bestCount = 0;
@@ -475,10 +476,10 @@ public final class BotPotionManager {
             }
         }
         BotPerformanceMonitor.recordSince("potion-donor-select", startedAt);
-        return bestEntry != null ? new PotDonorPlan(bestEntry, bestCount) : null;
+        return bestEntry != null ? new AgentBotPotionDonorPlan(bestEntry, bestCount) : null;
     }
 
-    private static void schedulePotShare(PotDonorPlan plan, Character recipient, boolean forHp, long initialDelayMs) {
+    private static void schedulePotShare(AgentBotPotionDonorPlan plan, Character recipient, boolean forHp, long initialDelayMs) {
         BotEntry donorEntry = plan.entry();
         Character donorBot = AgentBotRuntimeIdentityRuntime.bot(donorEntry);
         int maxQty = plan.donationQty();
@@ -494,16 +495,6 @@ public final class BotPotionManager {
             AgentBotPotionRuntime.afterRandomDelay(900, 1100, () ->
                     BotInventoryManager.startPotShareTransfer(items, recipient, donorEntry, donorBot, maxQty));
         });
-    }
-
-    private record PotDonorPlan(BotEntry entry, int count) {
-        boolean qualifies() {
-            return count > BotManager.cfg.POT_LOW_WARN * 3;
-        }
-
-        int donationQty() {
-            return count / 3;
-        }
     }
 
     private static int calculatePassiveHpRecovery(BotEntry entry, Character bot) {
