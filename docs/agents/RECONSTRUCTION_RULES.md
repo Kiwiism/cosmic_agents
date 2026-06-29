@@ -1408,6 +1408,10 @@ Recent reconstruction notes:
 - Basic attack target selection and opposite-facing pivot orchestration now live
   in `AgentBasicAttackPlanner`; BotCombatManager still builds concrete attack
   data, applies Shadow Partner hit counts, and constructs the legacy AttackPlan.
+- Attack execution preflight ordering now lives in
+  `AgentCombatAttackExecutionPolicy`; BotCombatManager still builds AttackInfo,
+  resolves damage profiles, applies attack routes, and mutates cooldown/facing
+  runtime state.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

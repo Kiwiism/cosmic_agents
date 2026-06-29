@@ -7,6 +7,7 @@ import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentAttackPlanScoringPolicy;
 import server.agents.capabilities.combat.AgentAttackPlanTieBreakPolicy;
 import server.agents.capabilities.combat.AgentBasicAttackPlanner;
+import server.agents.capabilities.combat.AgentCombatAttackExecutionPolicy;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 import server.agents.capabilities.combat.AgentFallDamageCalculator;
@@ -825,16 +826,14 @@ public class BotCombatManager {
     }
 
     static void attackMonster(BotEntry entry, Character bot, AttackPlan attackPlan) {
-        if (AgentBotCombatCooldownStateRuntime.hasAttackCooldown(entry)) {
-            return;
-        }
-        if (AgentBotAmmoStateRuntime.noAmmo(entry)) {
-            return;
-        }
-        if (attackPlan.skillId != 0 && !canUseSkill(bot, attackPlan.skillId, attackPlan.skillLevel)) {
-            return;
-        }
-        if (!canUseAttackPlanNow(entry, AgentAttackExecutionProvider.getEquippedWeaponType(bot), attackPlan)) {
+        AgentCombatAttackExecutionPolicy.AttackExecutionReadiness readiness =
+                AgentCombatAttackExecutionPolicy.attackExecutionReadiness(
+                        AgentBotCombatCooldownStateRuntime.hasAttackCooldown(entry),
+                        AgentBotAmmoStateRuntime.noAmmo(entry),
+                        attackPlan.skillId,
+                        () -> canUseSkill(bot, attackPlan.skillId, attackPlan.skillLevel),
+                        () -> canUseAttackPlanNow(entry, AgentAttackExecutionProvider.getEquippedWeaponType(bot), attackPlan));
+        if (readiness != AgentCombatAttackExecutionPolicy.AttackExecutionReadiness.READY) {
             return;
         }
 
