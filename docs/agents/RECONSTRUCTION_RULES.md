@@ -1302,6 +1302,10 @@ Recent reconstruction notes:
   `AgentCombatScoringPolicy`; BotCombatManager preserves the same AoE skill-id,
   target-count, live-map cluster, and mob-count cap behavior through a thin
   compatibility delegate.
+- Grind-region occupancy penalty math now lives in
+  `AgentCombatGrindTargetPolicy`; BotCombatManager still performs the legacy
+  sibling-region scan but delegates the exact occupied-count, per-region
+  penalty, and cap calculation to Agent combat policy.
 
 Initial reconstruction order:
 

@@ -1445,8 +1445,8 @@ public class BotCombatManager {
             }
         }
 
-        long penalty = (long) Math.max(0, occupiedCount) * Math.max(0, cfg.GRIND_REGION_OCCUPANCY_PENALTY);
-        return Math.min(Math.max(0, cfg.GRIND_REGION_OCCUPANCY_PENALTY_CAP), penalty);
+        return AgentCombatGrindTargetPolicy.occupancyPenalty(occupiedCount,
+                cfg.GRIND_REGION_OCCUPANCY_PENALTY, cfg.GRIND_REGION_OCCUPANCY_PENALTY_CAP);
     }
 
     private static Foothold findGroundFoothold(Point position, Character bot) {

@@ -125,6 +125,15 @@ class AgentCombatGrindTargetPolicyTest {
         assertEquals(150, scored.localScore());
     }
 
+    @Test
+    void shouldCalculateCappedOccupancyPenalty() {
+        assertEquals(0L, AgentCombatGrindTargetPolicy.occupancyPenalty(-1, 100, 500));
+        assertEquals(0L, AgentCombatGrindTargetPolicy.occupancyPenalty(3, -100, 500));
+        assertEquals(300L, AgentCombatGrindTargetPolicy.occupancyPenalty(3, 100, 500));
+        assertEquals(500L, AgentCombatGrindTargetPolicy.occupancyPenalty(9, 100, 500));
+        assertEquals(0L, AgentCombatGrindTargetPolicy.occupancyPenalty(9, 100, -1));
+    }
+
     private static Foothold foothold(int id) {
         return new Foothold(new Point(0, 0), new Point(100, 0), id);
     }

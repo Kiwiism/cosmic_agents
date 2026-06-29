@@ -59,6 +59,11 @@ public final class AgentCombatGrindTargetPolicy {
         return Math.max(0L, pathCost - crowdBonus) + occupancyPenalty;
     }
 
+    public static long occupancyPenalty(int occupiedCount, int penaltyPerOccupiedRegion, int penaltyCap) {
+        long penalty = (long) Math.max(0, occupiedCount) * Math.max(0, penaltyPerOccupiedRegion);
+        return Math.min(Math.max(0, penaltyCap), penalty);
+    }
+
     public static AgentScoredGrindTarget toScoredTarget(AgentGrindTargetGroup group,
                                                         long pathCost,
                                                         long occupancyPenalty,
