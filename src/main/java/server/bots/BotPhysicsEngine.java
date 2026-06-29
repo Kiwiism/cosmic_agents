@@ -624,8 +624,8 @@ public final class BotPhysicsEngine {
         entry.climbUpIntent = false;
         clearRopeEntryIntent(entry);
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
-        entry.airVelX = 0;
-        entry.airSteerVelX = 0.0;
+        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
+        AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
         AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
         AgentBotMovementStateRuntime.clearMoveDirection(entry);
         entry.physX = position.x;
@@ -678,8 +678,8 @@ public final class BotPhysicsEngine {
                     -profileOrBase(AgentBotMovementStateRuntime.movementProfile(entry)).jumpSpeedPxs());
             stopGroundMotion(entry);
             entry.climbUpIntent = false;
-            entry.airVelX = 0;
-            entry.airSteerVelX = 0.0;
+            AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
+            AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
             AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
             AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
             AgentBotSwimStateRuntime.setSwimJumpRequested(entry, false);
@@ -773,8 +773,8 @@ public final class BotPhysicsEngine {
         entry.physY = position.y;
         stopGroundMotion(entry);
         entry.climbUpIntent = true;
-        entry.airVelX = airVelX;
-        entry.airSteerVelX = 0.0;
+        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, airVelX);
+        AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
         AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
         AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
         AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
@@ -805,8 +805,8 @@ public final class BotPhysicsEngine {
         AgentBotMovementStateRuntime.setCrouching(entry, false);
         entry.climbUpIntent = false;
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
-        entry.airVelX = 0;
-        entry.airSteerVelX = 0.0;
+        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
+        AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
         AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
         entry.physX = position.x;
         entry.physY = position.y;
@@ -912,8 +912,8 @@ public final class BotPhysicsEngine {
         AgentBotMovementStateRuntime.setCrouching(entry, false);
         entry.climbUpIntent = false;
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
-        entry.airVelX = 0;
-        entry.airSteerVelX = 0.0;
+        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
+        AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
         AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
         entry.physX = position.x;
         entry.physY = position.y;
@@ -1067,8 +1067,8 @@ public final class BotPhysicsEngine {
         if (!AgentBotSwimStateRuntime.swimming(entry)) {
             entry.physX = pos.x;
             entry.physY = pos.y;
-            entry.airVelX = 0;
-            entry.airSteerVelX = 0.0;
+            AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
+            AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
             AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
             AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
             AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, 0L);
@@ -1219,7 +1219,7 @@ public final class BotPhysicsEngine {
     private static void applyAirSteering(BotEntry entry, int steerDir) {
         if (steerDir == 0) return;
         double accel = steerDir > 0 ? cfg.AIR_STEER_ACCEL : -cfg.AIR_STEER_ACCEL;
-        entry.airSteerVelX = Math.clamp(entry.airSteerVelX + accel, -cfg.AIR_STEER_MAX, cfg.AIR_STEER_MAX);
+        AgentBotMovementPhysicsStateRuntime.addClampedAirSteerVelocityX(entry, accel, cfg.AIR_STEER_MAX);
         // Client jump stance follows the held steering direction, not the preserved horizontal
         // launch momentum. Updating facing here makes airborne debug output line up with what the
         // client is visually trying to do, even before the net X velocity changes sign.
@@ -1227,7 +1227,8 @@ public final class BotPhysicsEngine {
     }
 
     private static Point advanceAirbornePosition(BotEntry entry, Character bot) {
-        entry.physX += entry.airVelX + entry.airSteerVelX;
+        entry.physX += AgentBotMovementPhysicsStateRuntime.airVelocityX(entry)
+                + AgentBotMovementPhysicsStateRuntime.airSteerVelocityX(entry);
         float gravity = gravityPerTick();
         entry.physY += AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry) + 0.5f * gravity;
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry,
@@ -1247,7 +1248,7 @@ public final class BotPhysicsEngine {
         // Preserve facing set by air steering (moveDir intent) - setMovementVelocity would
         // overwrite it based on momentum velocity, which is wrong for airborne steering.
         int facingDir = AgentBotMovementStateRuntime.facingDirection(entry);
-        setMovementVelocity(entry, velocityFromDeltaX(entry.airVelX),
+        setMovementVelocity(entry, velocityFromDeltaX(AgentBotMovementPhysicsStateRuntime.airVelocityX(entry)),
                 velocityFromAirStep(AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry)));
         AgentBotMovementStateRuntime.setFacingDirection(entry, facingDir);
         syncCharacterState(entry);
@@ -1288,8 +1289,8 @@ public final class BotPhysicsEngine {
     }
 
     private static void collideWithAirWall(BotEntry entry, Character bot, Point collisionPoint) {
-        entry.airVelX = 0;
-        entry.airSteerVelX = 0.0;
+        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
+        AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
         AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
         entry.physX = collisionPoint.x;
         entry.physY = collisionPoint.y;
@@ -1311,7 +1312,7 @@ public final class BotPhysicsEngine {
         AgentBotMovementStateRuntime.setInAir(entry, true);
         AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
         AgentBotMovementStateRuntime.setCrouching(entry, false);
-        setMovementVelocity(entry, velocityFromDeltaX(entry.airVelX), 0);
+        setMovementVelocity(entry, velocityFromDeltaX(AgentBotMovementPhysicsStateRuntime.airVelocityX(entry)), 0);
         syncCharacterState(entry);
     }
 
@@ -1594,8 +1595,8 @@ public final class BotPhysicsEngine {
         stopGroundMotion(entry);
         entry.climbUpIntent = climbUpIntent;
         clearRopeEntryIntent(entry);
-        entry.airVelX = airVelX;
-        entry.airSteerVelX = 0.0;
+        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, airVelX);
+        AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
         AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
         AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
         // Clear ground movement intent when going airborne - unified moveDir serves both
@@ -1654,8 +1655,8 @@ public final class BotPhysicsEngine {
         AgentBotMovementStateRuntime.setCrouching(entry, false);
         entry.climbUpIntent = false;
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
-        entry.airVelX = 0;
-        entry.airSteerVelX = 0.0;
+        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
+        AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
         AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
         entry.physX = position.x;
         entry.physY = position.y;
@@ -1679,8 +1680,8 @@ public final class BotPhysicsEngine {
         entry.physX = position.x;
         entry.physY = position.y;
         entry.groundPhysicsCarryMs = 0.0;
-        entry.airVelX = 0;
-        entry.airSteerVelX = 0.0;
+        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
+        AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
         AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
         entry.wasMovingX = false;
         AgentBotMovementStateRuntime.clearMoveDirection(entry);

@@ -187,6 +187,10 @@ Recent reconstruction notes:
   `AgentBotMovementPhysicsStateRuntime`; jump launch, swim integration,
   airborne integration, collision, climb, landing, and reset paths no longer
   access `velY` directly.
+- Bot physics committed air velocity and air-steering velocity now enter
+  through `AgentBotMovementPhysicsStateRuntime`; swim entry, knockback,
+  airborne launch, air steering, collision, climb, and reset paths no longer
+  access `airVelX` or `airSteerVelX` directly.
 - Combat alert reset callbacks now enter through `AgentBotCombatRuntime`;
   `BotCombatManager` no longer reaches directly into the lower-level scheduler
   runtime for combat-owned alert timing, and alert timing and stance reset

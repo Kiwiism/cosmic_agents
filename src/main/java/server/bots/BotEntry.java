@@ -310,9 +310,21 @@ public class BotEntry {
         return airVelX;
     }
 
+    public void setAirVelocityX(int airVelocityX) {
+        airVelX = airVelocityX;
+    }
+
     // Accumulated air-steering correction (gradually adjusted toward target each tick)
     double airSteerVelX = 0.0;
     boolean fixedAirArc = false;
+
+    public double airSteerVelocityX() {
+        return airSteerVelX;
+    }
+
+    public void setAirSteerVelocityX(double airSteerVelocityX) {
+        airSteerVelX = airSteerVelocityX;
+    }
 
     public boolean fixedAirArc() {
         return fixedAirArc;

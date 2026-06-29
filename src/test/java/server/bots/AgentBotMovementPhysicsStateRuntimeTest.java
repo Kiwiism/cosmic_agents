@@ -45,6 +45,16 @@ class AgentBotMovementPhysicsStateRuntimeTest {
 
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 3.5f);
         assertEquals(3.5f, AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry));
+
+        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, -9);
+        assertEquals(-9, AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
+
+        AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 1.0);
+        assertEquals(1.0, AgentBotMovementPhysicsStateRuntime.airSteerVelocityX(entry));
+        AgentBotMovementPhysicsStateRuntime.addClampedAirSteerVelocityX(entry, 2.0, 1.5);
+        assertEquals(1.5, AgentBotMovementPhysicsStateRuntime.airSteerVelocityX(entry));
+        AgentBotMovementPhysicsStateRuntime.addClampedAirSteerVelocityX(entry, -5.0, 1.5);
+        assertEquals(-1.5, AgentBotMovementPhysicsStateRuntime.airSteerVelocityX(entry));
     }
 
     @Test

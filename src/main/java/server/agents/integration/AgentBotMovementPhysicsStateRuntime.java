@@ -39,6 +39,22 @@ public final class AgentBotMovementPhysicsStateRuntime {
         return entry.airVelocityX();
     }
 
+    public static void setAirVelocityX(BotEntry entry, int airVelocityX) {
+        entry.setAirVelocityX(airVelocityX);
+    }
+
+    public static double airSteerVelocityX(BotEntry entry) {
+        return entry.airSteerVelocityX();
+    }
+
+    public static void setAirSteerVelocityX(BotEntry entry, double airSteerVelocityX) {
+        entry.setAirSteerVelocityX(airSteerVelocityX);
+    }
+
+    public static void addClampedAirSteerVelocityX(BotEntry entry, double delta, double maxAbs) {
+        entry.setAirSteerVelocityX(Math.clamp(entry.airSteerVelocityX() + delta, -maxAbs, maxAbs));
+    }
+
     public static void setFixedAirArc(BotEntry entry, boolean fixed) {
         entry.setFixedAirArc(fixed);
     }
