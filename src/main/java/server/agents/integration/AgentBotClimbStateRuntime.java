@@ -58,6 +58,14 @@ public final class AgentBotClimbStateRuntime {
         entry.clearBlockedRopeGrab();
     }
 
+    public static int ropeGrabCooldownMs(BotEntry entry) {
+        return entry.ropeGrabCooldownMs();
+    }
+
+    public static void setRopeGrabCooldownMs(BotEntry entry, int cooldownMs) {
+        entry.setRopeGrabCooldownMs(cooldownMs);
+    }
+
     public static boolean ropeEntryPending(BotEntry entry) {
         return entry.ropeEntryPending();
     }

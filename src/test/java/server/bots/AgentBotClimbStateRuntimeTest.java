@@ -39,6 +39,10 @@ class AgentBotClimbStateRuntimeTest {
         assertTrue(AgentBotClimbStateRuntime.climbUpIntent(entry));
         AgentBotClimbStateRuntime.setClimbUpIntent(entry, false);
         assertFalse(AgentBotClimbStateRuntime.climbUpIntent(entry));
+
+        assertEquals(0, AgentBotClimbStateRuntime.ropeGrabCooldownMs(entry));
+        AgentBotClimbStateRuntime.setRopeGrabCooldownMs(entry, 250);
+        assertEquals(250, AgentBotClimbStateRuntime.ropeGrabCooldownMs(entry));
     }
 
     @Test

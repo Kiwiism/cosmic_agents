@@ -197,6 +197,9 @@ Recent reconstruction notes:
 - Bot physics fall-peak tracking now enters through
   `AgentBotMovementPhysicsStateRuntime`; fall-distance calculation, airborne
   peak recording, and landing reset no longer access `fallPeakPhysY` directly.
+- Bot physics reset-only movement and rope cooldown flags now enter through
+  `AgentBotMovementStateRuntime` and `AgentBotClimbStateRuntime`; full motion
+  reset no longer writes `wasMovingX` or `ropeGrabCooldownMs` directly.
 - Combat alert reset callbacks now enter through `AgentBotCombatRuntime`;
   `BotCombatManager` no longer reaches directly into the lower-level scheduler
   runtime for combat-owned alert timing, and alert timing and stance reset

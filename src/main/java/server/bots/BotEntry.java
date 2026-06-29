@@ -371,6 +371,14 @@ public class BotEntry {
 
     int ropeGrabCooldownMs = 0;
 
+    public int ropeGrabCooldownMs() {
+        return ropeGrabCooldownMs;
+    }
+
+    public void setRopeGrabCooldownMs(int ropeGrabCooldownMs) {
+        this.ropeGrabCooldownMs = ropeGrabCooldownMs;
+    }
+
     // Down-jump: true when crouch was shown last tick, jump fires this tick
     boolean downJumpPending = false;
     long downJumpGracePeriodMS = 0;

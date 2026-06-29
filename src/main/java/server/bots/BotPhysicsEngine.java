@@ -1681,11 +1681,11 @@ public final class BotPhysicsEngine {
         AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
         AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
         AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
-        entry.wasMovingX = false;
+        AgentBotMovementStateRuntime.setWasMovingX(entry, false);
         AgentBotMovementStateRuntime.clearMoveDirection(entry);
         AgentBotClimbStateRuntime.setClimbUpIntent(entry, false);
         AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
-        entry.ropeGrabCooldownMs = 0;
+        AgentBotClimbStateRuntime.setRopeGrabCooldownMs(entry, 0);
         AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
         AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, 0L);
         clearRopeEntryIntent(entry);
