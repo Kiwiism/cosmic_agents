@@ -619,8 +619,7 @@ public final class BotPhysicsEngine {
     static void idleOnGround(BotEntry entry, Character bot) {
         Point position = bot.getPosition();
         entry.inAir = false;
-        entry.climbing = false;
-        entry.climbRope = null;
+        AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
         AgentBotMovementStateRuntime.setCrouching(entry, false);
         entry.climbUpIntent = false;
         clearRopeEntryIntent(entry);
@@ -669,8 +668,7 @@ public final class BotPhysicsEngine {
             // conversion: that path expects px/tick and emits a huge one-tick
             // velocity when given swim px/s.
             Point position = bot.getPosition();
-            entry.climbing = false;
-            entry.climbRope = null;
+            AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
             entry.inAir = true;
             entry.swimming = true;
             AgentBotMovementStateRuntime.setCrouching(entry, false);
@@ -767,8 +765,7 @@ public final class BotPhysicsEngine {
         int preservedFacingDir = entry.facingDir;
         Point position = bot.getPosition();
         entry.inAir = true;
-        entry.climbing = false;
-        entry.climbRope = null;
+        AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
         AgentBotMovementStateRuntime.setCrouching(entry, false);
         entry.physX = position.x;
         entry.physY = position.y;
@@ -801,8 +798,7 @@ public final class BotPhysicsEngine {
                 : 0.0;
         bot.setPosition(position);
         entry.inAir = false;
-        entry.climbing = false;
-        entry.climbRope = null;
+        AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
         AgentBotMovementStateRuntime.setCrouching(entry, false);
         entry.climbUpIntent = false;
         entry.velY = 0f;
@@ -831,7 +827,7 @@ public final class BotPhysicsEngine {
 
     static void attachToRope(BotEntry entry, Character bot, Rope rope, int y) {
         int ropeY = Math.clamp(y, firstClimbableY(rope), rope.bottomY());
-        entry.climbVerticalDir = 0;
+        AgentBotClimbStateRuntime.setClimbVerticalDirection(entry, 0);
         setClimbPosition(entry, bot, rope, ropeY);
     }
 
@@ -840,13 +836,13 @@ public final class BotPhysicsEngine {
      * direction (-1=up, 0=idle, +1=down). Movement layer sets intent before calling.
      */
     static void advanceClimb(BotEntry entry, Character bot) {
-        Rope rope = entry.climbRope;
+        Rope rope = AgentBotClimbStateRuntime.climbRope(entry);
         if (rope == null) {
             beginFall(entry, bot, 0);
             return;
         }
 
-        int climbDir = Integer.compare(entry.climbVerticalDir, 0);
+        int climbDir = Integer.compare(AgentBotClimbStateRuntime.climbVerticalDirection(entry), 0);
         if (climbDir == 0) {
             holdClimb(entry, bot);
             return;
@@ -861,7 +857,7 @@ public final class BotPhysicsEngine {
     }
 
     static void holdClimb(BotEntry entry, Character bot) {
-        Rope rope = entry.climbRope;
+        Rope rope = AgentBotClimbStateRuntime.climbRope(entry);
         if (rope == null) {
             beginFall(entry, bot, 0);
             return;
@@ -909,8 +905,7 @@ public final class BotPhysicsEngine {
         Point position = step.point();
         bot.setPosition(position);
         entry.inAir = false;
-        entry.climbing = false;
-        entry.climbRope = null;
+        AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
         AgentBotMovementStateRuntime.setCrouching(entry, false);
         entry.climbUpIntent = false;
         entry.velY = 0f;
@@ -1239,8 +1234,7 @@ public final class BotPhysicsEngine {
     private static void applyAirbornePosition(BotEntry entry, Character bot, Point position) {
         bot.setPosition(position);
         entry.inAir = true;
-        entry.climbing = false;
-        entry.climbRope = null;
+        AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
         AgentBotMovementStateRuntime.setCrouching(entry, false);
         // Preserve facing set by air steering (moveDir intent) - setMovementVelocity would
         // overwrite it based on momentum velocity, which is wrong for airborne steering.
@@ -1292,8 +1286,7 @@ public final class BotPhysicsEngine {
         entry.physY = collisionPoint.y;
         bot.setPosition(collisionPoint);
         entry.inAir = true;
-        entry.climbing = false;
-        entry.climbRope = null;
+        AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
         AgentBotMovementStateRuntime.setCrouching(entry, false);
         setMovementVelocity(entry, 0, velocityFromAirStep(entry.velY));
         syncCharacterState(entry);
@@ -1306,8 +1299,7 @@ public final class BotPhysicsEngine {
         entry.physY = collisionPoint.y;
         bot.setPosition(collisionPoint);
         entry.inAir = true;
-        entry.climbing = false;
-        entry.climbRope = null;
+        AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
         AgentBotMovementStateRuntime.setCrouching(entry, false);
         setMovementVelocity(entry, velocityFromDeltaX(entry.airVelX), 0);
         syncCharacterState(entry);
@@ -1583,8 +1575,7 @@ public final class BotPhysicsEngine {
                                        float initialVelY,
                                        int airVelX,
                                        boolean climbUpIntent) {
-        entry.climbing = false;
-        entry.climbRope = null;
+        AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
         entry.inAir = true;
         AgentBotMovementStateRuntime.setCrouching(entry, false);
         entry.physX = position.x;
@@ -1648,8 +1639,7 @@ public final class BotPhysicsEngine {
     private static void setClimbPosition(BotEntry entry, Character bot, Rope rope, int y) {
         Point position = new Point(rope.x(), y);
         bot.setPosition(position);
-        entry.climbing = true;
-        entry.climbRope = rope;
+        AgentBotClimbStateRuntime.setClimbingOnRope(entry, rope);
         entry.inAir = false;
         AgentBotMovementStateRuntime.setCrouching(entry, false);
         entry.climbUpIntent = false;
@@ -1672,8 +1662,7 @@ public final class BotPhysicsEngine {
 
     private static void clearMovementState(BotEntry entry, Point position) {
         entry.inAir = false;
-        entry.climbing = false;
-        entry.climbRope = null;
+        AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
         AgentBotMovementStateRuntime.setCrouching(entry, false);
         entry.velY = 0f;
         entry.hspeed = 0.0;
@@ -2258,5 +2247,6 @@ public final class BotPhysicsEngine {
         return landing != null ? landing.timeMs() : Integer.MAX_VALUE;
     }
 }
+
 
 

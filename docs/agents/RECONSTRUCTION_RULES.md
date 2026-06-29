@@ -162,6 +162,10 @@ Recent reconstruction notes:
 - Bot physics blocked-rope-grab state now enters through
   `AgentBotClimbStateRuntime`; jump, fall, knockback, landing, and reset paths
   no longer write `blockedRopeGrab` directly.
+- Bot physics climb attachment and climb-direction state now enters through
+  `AgentBotClimbStateRuntime`; idle, airborne, landing, climb, collision, and
+  reset paths no longer directly read or write `climbing`, `climbRope`, or
+  `climbVerticalDir`.
 - Combat alert reset callbacks now enter through `AgentBotCombatRuntime`;
   `BotCombatManager` no longer reaches directly into the lower-level scheduler
   runtime for combat-owned alert timing, and alert timing and stance reset
