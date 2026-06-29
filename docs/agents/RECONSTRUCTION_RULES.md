@@ -144,6 +144,10 @@ Recent reconstruction notes:
   `AgentBotMovementStateRuntime.movementProfile`; jump, rope-jump, swim-burst,
   landing-speed, and ground-motion calculations still use the same non-null
   BotEntry-backed profile semantics.
+- Bot physics coordinate and horizontal-speed helper access now enters through
+  `AgentBotMovementPhysicsStateRuntime`; ground-position sync, stop-ground
+  motion, and rounded airborne position reads no longer touch `physX`,
+  `physY`, or `hspeed` directly.
 - Combat alert reset callbacks now enter through `AgentBotCombatRuntime`;
   `BotCombatManager` no longer reaches directly into the lower-level scheduler
   runtime for combat-owned alert timing, and alert timing and stance reset

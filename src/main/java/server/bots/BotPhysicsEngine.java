@@ -4,6 +4,7 @@ import client.Character;
 import constants.game.CharacterStance;
 import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSwimStateRuntime;
@@ -274,8 +275,9 @@ public final class BotPhysicsEngine {
     }
 
     static void syncGroundPosition(BotEntry entry, int x) {
-        if (entry.hspeed == 0.0 && (int) Math.round(entry.physX) != x) {
-            entry.physX = x;
+        if (AgentBotMovementPhysicsStateRuntime.horizontalSpeed(entry) == 0.0
+                && AgentBotMovementPhysicsStateRuntime.roundedPhysicsX(entry) != x) {
+            AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, x);
         }
     }
 
@@ -595,7 +597,7 @@ public final class BotPhysicsEngine {
     }
 
     static void stopGroundMotion(BotEntry entry) {
-        entry.hspeed = 0.0;
+        AgentBotMovementPhysicsStateRuntime.setHorizontalSpeed(entry, 0.0);
     }
 
     static void resetMotion(BotEntry entry, Point position) {
@@ -1040,7 +1042,7 @@ public final class BotPhysicsEngine {
     }
 
     private static Point roundedAirPosition(BotEntry entry) {
-        return new Point((int) Math.round(entry.physX), (int) Math.round(entry.physY));
+        return AgentBotMovementPhysicsStateRuntime.roundedPhysicsPosition(entry);
     }
 
     /**

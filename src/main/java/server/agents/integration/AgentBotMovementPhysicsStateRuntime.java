@@ -2,6 +2,8 @@ package server.agents.integration;
 
 import server.bots.BotEntry;
 
+import java.awt.Point;
+
 /**
  * Agent-owned adapter for temporary BotEntry-backed movement physics flags.
  */
@@ -35,6 +37,38 @@ public final class AgentBotMovementPhysicsStateRuntime {
 
     public static void setFixedAirArc(BotEntry entry, boolean fixed) {
         entry.setFixedAirArc(fixed);
+    }
+
+    public static double horizontalSpeed(BotEntry entry) {
+        return entry.horizontalSpeed();
+    }
+
+    public static void setHorizontalSpeed(BotEntry entry, double horizontalSpeed) {
+        entry.setHorizontalSpeed(horizontalSpeed);
+    }
+
+    public static double physicsX(BotEntry entry) {
+        return entry.physicsX();
+    }
+
+    public static double physicsY(BotEntry entry) {
+        return entry.physicsY();
+    }
+
+    public static int roundedPhysicsX(BotEntry entry) {
+        return (int) Math.round(entry.physicsX());
+    }
+
+    public static Point roundedPhysicsPosition(BotEntry entry) {
+        return new Point((int) Math.round(entry.physicsX()), (int) Math.round(entry.physicsY()));
+    }
+
+    public static void setPhysicsX(BotEntry entry, double physicsX) {
+        entry.setPhysicsX(physicsX);
+    }
+
+    public static void setPhysicsPosition(BotEntry entry, Point position) {
+        entry.setPhysicsPosition(position);
     }
 
     public static int lastGroundFhId(BotEntry entry) {

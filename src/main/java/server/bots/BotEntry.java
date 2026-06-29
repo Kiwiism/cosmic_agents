@@ -104,6 +104,37 @@ public class BotEntry {
         return new BotPhysicsEngine.GroundTravelState(physX, hspeed, groundPhysicsCarryMs);
     }
 
+    public double horizontalSpeed() {
+        return hspeed;
+    }
+
+    public void setHorizontalSpeed(double horizontalSpeed) {
+        hspeed = horizontalSpeed;
+    }
+
+    public double physicsX() {
+        return physX;
+    }
+
+    public double physicsY() {
+        return physY;
+    }
+
+    public void setPhysicsX(double physicsX) {
+        physX = physicsX;
+    }
+
+    public void setPhysicsPosition(double physicsX, double physicsY) {
+        physX = physicsX;
+        physY = physicsY;
+    }
+
+    public void setPhysicsPosition(Point position) {
+        if (position != null) {
+            setPhysicsPosition(position.x, position.y);
+        }
+    }
+
     public int jumpCooldownMs() {
         return jumpCooldownMs;
     }

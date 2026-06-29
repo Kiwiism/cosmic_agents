@@ -3,6 +3,8 @@ package server.bots;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 
+import java.awt.Point;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -65,5 +67,22 @@ class AgentBotMovementPhysicsStateRuntimeTest {
         assertEquals(12.5, state.physX());
         assertEquals(3.25, state.hspeed());
         assertEquals(8.0, state.carryMs());
+    }
+
+    @Test
+    void physicsPositionAndSpeedAreStoredThroughAgentBoundary() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        AgentBotMovementPhysicsStateRuntime.setHorizontalSpeed(entry, 4.5);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, new Point(10, 20));
+
+        assertEquals(4.5, AgentBotMovementPhysicsStateRuntime.horizontalSpeed(entry));
+        assertEquals(10.0, AgentBotMovementPhysicsStateRuntime.physicsX(entry));
+        assertEquals(20.0, AgentBotMovementPhysicsStateRuntime.physicsY(entry));
+        assertEquals(new Point(10, 20), AgentBotMovementPhysicsStateRuntime.roundedPhysicsPosition(entry));
+
+        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 12.6);
+        assertEquals(12.6, AgentBotMovementPhysicsStateRuntime.physicsX(entry));
+        assertEquals(13, AgentBotMovementPhysicsStateRuntime.roundedPhysicsX(entry));
     }
 }
