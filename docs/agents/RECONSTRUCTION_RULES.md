@@ -72,8 +72,10 @@ Recent reconstruction notes:
 - Combat support safety policy ownership moved to
   `server.agents.capabilities.combat.AgentCombatSupportPolicy`. Dragon Roar
   HP/target/healer gating, heal-threshold checks, and healer-skill detection
-  are unchanged; `BotCombatManager` still supplies party/member context and
-  executes the existing support side effects.
+  are unchanged. Nearby-party filtering, missing-party-buff detection, and
+  heal-in-bounds checks now live in the same Agent policy; `BotCombatManager`
+  still supplies legacy config values and executes the existing support side
+  effects.
 - Combat skill-use affordability policy moved to
   `server.agents.capabilities.combat.AgentCombatSkillUsePolicy`. Skill lookup,
   non-positive-level rejection, and `StatEffect.canPaySkillCost` delegation are

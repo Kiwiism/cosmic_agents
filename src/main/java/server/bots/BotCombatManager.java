@@ -2299,19 +2299,8 @@ public class BotCombatManager {
     }
 
     private static boolean hasNearbyPartyMemberMissingBuff(Character bot, StatEffect fx) {
-        if (fx.getStatups().isEmpty()) {
-            return false;
-        }
-
-        for (Character target : getNearbyPartyMembers(bot)) {
-            for (var statup : fx.getStatups()) {
-                if (target.getBuffedValue(statup.getLeft()) == null) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        return AgentCombatSupportPolicy.hasNearbyPartyMemberMissingBuff(bot, fx,
+                cfg.SUPPORT_RANGE, cfg.SUPPORT_VERTICAL_RANGE);
     }
 
     /**
@@ -2324,52 +2313,12 @@ public class BotCombatManager {
      * defensive — Cleric.HEAL always has lt/rb, but other heal-like skills added later might not.
      */
     private static boolean hasPartyMemberInBoundsNeedingHeal(Character bot, Rectangle healBounds) {
-        Point botPos = bot.getPosition();
-        for (Character target : bot.getPartyMembersOnSameMap()) {
-            if (target == null || target.getId() == bot.getId() || !target.isAlive()) {
-                continue;
-            }
-            Point memberPos = target.getPosition();
-            if (healBounds != null) {
-                if (!healBounds.contains(memberPos)) {
-                    continue;
-                }
-            } else {
-                if (Math.abs(memberPos.y - botPos.y) > cfg.SUPPORT_VERTICAL_RANGE) {
-                    continue;
-                }
-                double rangeSq = (double) cfg.SUPPORT_RANGE * cfg.SUPPORT_RANGE;
-                if (memberPos.distanceSq(botPos) > rangeSq) {
-                    continue;
-                }
-            }
-            if (needsHeal(target)) {
-                return true;
-            }
-        }
-        return false;
+        return AgentCombatSupportPolicy.hasPartyMemberInBoundsNeedingHeal(bot, healBounds,
+                cfg.SUPPORT_RANGE, cfg.SUPPORT_VERTICAL_RANGE, cfg.SUPPORT_HEAL_TARGET_RATIO);
     }
 
     private static List<Character> getNearbyPartyMembers(Character bot) {
-        List<Character> nearby = new ArrayList<>();
-        Point botPos = bot.getPosition();
-        double rangeSq = (double) cfg.SUPPORT_RANGE * cfg.SUPPORT_RANGE;
-        for (Character member : bot.getPartyMembersOnSameMap()) {
-            if (member == null || member.getId() == bot.getId() || !member.isAlive()) {
-                continue;
-            }
-
-            Point memberPos = member.getPosition();
-            if (Math.abs(memberPos.y - botPos.y) > cfg.SUPPORT_VERTICAL_RANGE) {
-                continue;
-            }
-            if (memberPos.distanceSq(botPos) > rangeSq) {
-                continue;
-            }
-
-            nearby.add(member);
-        }
-        return nearby;
+        return AgentCombatSupportPolicy.nearbyPartyMembers(bot, cfg.SUPPORT_RANGE, cfg.SUPPORT_VERTICAL_RANGE);
     }
 
     static boolean isPartySupportSkill(int skillId) {
