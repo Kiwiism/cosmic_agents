@@ -1,6 +1,6 @@
-package server.bots;
+package server.agents.capabilities.dialogue;
 
-public enum Emote {
+public enum AgentEmote {
     ANNOYED(1),
     HAPPY(2),
     GLARE(3),
@@ -11,7 +11,7 @@ public enum Emote {
 
     private final int value;
 
-    Emote(int value) {
+    AgentEmote(int value) {
         this.value = value;
     }
 

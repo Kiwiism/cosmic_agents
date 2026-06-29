@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.dialogue.AgentEmote;
+
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -120,7 +122,7 @@ class AgentBotMovementRuntimeTest {
 
             AgentBotMovementRuntime.movementCallbacks(entry).greeting();
 
-            verify(bot).changeFaceExpression(Emote.HAPPY.getValue());
+            verify(bot).changeFaceExpression(AgentEmote.HAPPY.getValue());
             fidgets.verify(() -> BotFidgetSideEffects.maybeStartGreetingFidget(eq(entry), anyInt()));
             replies.verify(() -> AgentBotMovementReplyRuntime.queueReply(eq(entry), anyString()));
             status.verify(() -> AgentBotMovementStatusRuntime.checkMovementStatus(entry, bot));

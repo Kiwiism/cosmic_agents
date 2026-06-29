@@ -1,10 +1,12 @@
 package server.agents.integration;
 
+import server.agents.capabilities.dialogue.AgentEmote;
+
 import server.agents.capabilities.dialogue.AgentChatMovementFlow;
 import server.bots.BotEntry;
 import server.bots.BotFidgetSideEffects;
 import server.bots.BotPotionManager;
-import server.bots.Emote;
+import server.agents.capabilities.dialogue.AgentEmote;
 
 import java.awt.Point;
 import java.util.concurrent.ThreadLocalRandom;
@@ -104,7 +106,7 @@ public final class AgentBotMovementRuntime {
             @Override
             public void greeting() {
                 AgentBotMovementSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
-                    entry.bot().changeFaceExpression(Emote.HAPPY.getValue());
+                    entry.bot().changeFaceExpression(AgentEmote.HAPPY.getValue());
                     BotFidgetSideEffects.maybeStartGreetingFidget(entry, ThreadLocalRandom.current().nextInt(100));
                     AgentBotMovementReplyRuntime.queueReply(entry, AgentChatMovementFlow.greetingReply());
                     AgentBotMovementStatusRuntime.checkMovementStatus(entry, entry.bot());

@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.dialogue.AgentEmote;
+
 import server.agents.capabilities.looting.AgentLootEligibility;
 
 import client.BotClient;
@@ -861,11 +863,11 @@ public class BotInventoryManager {
         Trade.completeTrade(bot);
         long replyDelay = BotManager.randMs(800, 1300);
         if (receivedSomething) {
-            bot.changeFaceExpression(Emote.HAPPY.getValue());
+            bot.changeFaceExpression(AgentEmote.HAPPY.getValue());
             AgentBotInventoryRuntime.afterDelay(replyDelay, () ->
                     AgentBotInventoryRuntime.visibleSayNow(entry, BotManager.randomReply(TRADE_THANKS_MSGS)));
         } else if (ThreadLocalRandom.current().nextInt(100) < 20) {
-            bot.changeFaceExpression(ThreadLocalRandom.current().nextBoolean() ? Emote.GLARE.getValue() : Emote.ANNOYED.getValue());
+            bot.changeFaceExpression(ThreadLocalRandom.current().nextBoolean() ? AgentEmote.GLARE.getValue() : AgentEmote.ANNOYED.getValue());
             AgentBotInventoryRuntime.afterDelay(replyDelay, () ->
                     AgentBotInventoryRuntime.visibleSayNow(entry, BotManager.randomReply(TRADE_FREEBIE_QUIPS)));
         }

@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.dialogue.AgentEmote;
+
 
 import server.agents.integration.AgentBotMessageQueueStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
@@ -247,17 +249,17 @@ final class BotScrollReactionManager {
 
     private static int successExpression() {
         return ThreadLocalRandom.current().nextInt(100) < 12
-                ? Emote.DISTURBED.getValue()
-                : Emote.HAPPY.getValue();
+                ? AgentEmote.DISTURBED.getValue()
+                : AgentEmote.HAPPY.getValue();
     }
 
     private static int failedExpression() {
-        Emote[] options = {
-                Emote.GLARE,
-                Emote.SAD,
-                Emote.ANGRY,
-                Emote.DISTURBED,
-                Emote.EMBARRASSED
+        AgentEmote[] options = {
+                AgentEmote.GLARE,
+                AgentEmote.SAD,
+                AgentEmote.ANGRY,
+                AgentEmote.DISTURBED,
+                AgentEmote.EMBARRASSED
         };
         return options[ThreadLocalRandom.current().nextInt(options.length)].getValue();
     }

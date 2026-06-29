@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.dialogue.AgentEmote;
+
 import server.agents.runtime.AgentPerformanceMonitor;
 
 import client.Character;
@@ -311,7 +313,7 @@ public final class BotPotionManager {
         if (pots[0] < BotManager.cfg.POT_STOP && bot.getHp() < bot.getMaxHp() * 0.4f) {
             BotManager.getInstance().issueFollowOwner(entry);
             AgentBotPotionRuntime.sayMapNow(bot, "low on pots!! walking to you");
-            bot.changeFaceExpression(Emote.GLARE.getValue());
+            bot.changeFaceExpression(AgentEmote.GLARE.getValue());
         }
         AgentPerformanceMonitor.recordSince("potion-grind-stop", startedAt);
     }

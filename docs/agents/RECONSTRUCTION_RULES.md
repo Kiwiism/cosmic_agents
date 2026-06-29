@@ -982,6 +982,8 @@ Recent reconstruction notes:
 - Runtime performance monitoring moved to `AgentPerformanceMonitor` under the
   Agent runtime package. Section timing, pathfind timing, slow-sample/report
   thresholds, snapshots, and legacy perf command toggles are unchanged.
+- Chat/social face-expression enum ownership moved to `AgentEmote` under the
+  Agent dialogue capability. Numeric expression ids are unchanged.
 - Airshow state now enters through `AgentBotAirshowStateRuntime`;
   BotAirshowManager active/trail timing, scripted frame physics fields, bot
   identity lookup, restore checks, and trail foothold reads keep BotEntry as the

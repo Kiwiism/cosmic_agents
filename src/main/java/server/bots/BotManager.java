@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.dialogue.AgentEmote;
+
 import server.agents.runtime.AgentPerformanceMonitor;
 
 import server.agents.capabilities.looting.AgentLootEligibility;
@@ -3857,7 +3859,7 @@ public class BotManager {
             registerSpawnedBot(ownerCharId, owner, botChar);
             AgentBotManagerSchedulerRuntime.afterDelay(randMs(900, 1100), () -> {
                 botSay(botChar, "back!!");
-                botChar.changeFaceExpression(Emote.HAPPY.getValue());
+                botChar.changeFaceExpression(AgentEmote.HAPPY.getValue());
             });
         } catch (SQLException e) {
             log.warn("reloginBot: failed to reload charId={}", charId, e);
@@ -3877,7 +3879,7 @@ public class BotManager {
         BotMovementManager.resetEntryStateAfterTeleport(entry);
         BotMovementManager.broadcastMovement(entry);
         botSay(bot, "back!");
-        bot.changeFaceExpression(Emote.GLARE.getValue());
+        bot.changeFaceExpression(AgentEmote.GLARE.getValue());
     }
 
     // -------------------------------------------------------------------------
