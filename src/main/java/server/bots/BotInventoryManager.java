@@ -372,7 +372,7 @@ public class BotInventoryManager {
         // silently vanish. Refuse and tell the owner why instead of destroying the items.
         if (!YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE
                 && FieldLimit.DROP_LIMIT.check(bot.getMap().getFieldLimit())) {
-            AgentBotInventoryRuntime.replyNow(entry, "can't drop here - try another map or trade");
+            AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.dropLimitedMapReply());
             return;
         }
         switch (category) {

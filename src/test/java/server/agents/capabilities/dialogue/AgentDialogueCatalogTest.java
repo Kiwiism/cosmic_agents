@@ -47,6 +47,7 @@ class AgentDialogueCatalogTest {
         assertTrue(AgentDialogueCatalog.potDonorLowTemplates().contains("wish i could help, try %s?"));
         assertEquals("wish i could help, try Admin?",
                 AgentDialogueCatalog.formatPotDonorLowReply("wish i could help, try %s?", "Admin"));
+        assertEquals("low on pots!! walking to you", AgentDialogueCatalog.potLowReturnReply());
         assertTrue(AgentDialogueCatalog.arrowRequestReplies().contains("need arrows soon, anyone got extras?"));
         assertTrue(AgentDialogueCatalog.boltRequestReplies().contains("need crossbow bolts soon, anyone got extras?"));
         assertTrue(AgentDialogueCatalog.ammoOfferReplies().contains("got some ammo for you, trading"));
@@ -98,6 +99,7 @@ class AgentDialogueCatalogTest {
         assertTrue(AgentDialogueCatalog.keepDropChoiceReply().contains("keeping them"));
         assertEquals("ok! keeping them", AgentDialogueCatalog.pendingActionCancelReply(true));
         assertEquals("ok nvm, staying!", AgentDialogueCatalog.pendingActionCancelReply(false));
+        assertEquals("can't drop here - try another map or trade", AgentDialogueCatalog.dropLimitedMapReply());
         assertTrue(AgentDialogueCatalog.noJobSkillsReply().contains("no job skills"));
         assertTrue(AgentDialogueCatalog.noJobSkillsWithSpReply(12).contains("12 SP left"));
         assertTrue(AgentDialogueCatalog.noBeginnerSkillsReply(3).contains("3 beginner SP left"));

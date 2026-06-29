@@ -55,6 +55,7 @@ public final class AgentDialogueCatalog {
     private static final String KEEP_DROP_CHOICE_REPLY = "ok! keeping them";
     private static final String PENDING_DROP_CANCEL_REPLY = "ok! keeping them";
     private static final String PENDING_ACTION_CANCEL_REPLY = "ok nvm, staying!";
+    private static final String DROP_LIMITED_MAP_REPLY = "can't drop here - try another map or trade";
     private static final String NO_JOB_SKILLS_REPLY = "no job skills yet";
     private static final String NO_JOB_SKILLS_WITH_SP_TEMPLATE = "no job skills yet %d SP left";
     private static final String NO_BEGINNER_SKILLS_TEMPLATE =
@@ -114,6 +115,7 @@ public final class AgentDialogueCatalog {
             "wish i could help, try %s?",
             "i'm low too :/ check with %s",
             "barely have any myself, ask %s");
+    private static final String POT_LOW_RETURN_REPLY = "low on pots!! walking to you";
     private static final List<String> ARROW_REQUEST_REPLIES = List.of(
             "low on arrows, anyone have spare?",
             "need arrows soon, anyone got extras?",
@@ -388,6 +390,10 @@ public final class AgentDialogueCatalog {
         return dropAction ? PENDING_DROP_CANCEL_REPLY : PENDING_ACTION_CANCEL_REPLY;
     }
 
+    public static String dropLimitedMapReply() {
+        return DROP_LIMITED_MAP_REPLY;
+    }
+
     public static String noJobSkillsReply() {
         return NO_JOB_SKILLS_REPLY;
     }
@@ -446,6 +452,10 @@ public final class AgentDialogueCatalog {
 
     public static String formatPotDonorLowReply(String template, String ownerName) {
         return String.format(template, ownerName);
+    }
+
+    public static String potLowReturnReply() {
+        return POT_LOW_RETURN_REPLY;
     }
 
     public static List<String> arrowRequestReplies() {

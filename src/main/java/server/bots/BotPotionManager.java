@@ -201,7 +201,7 @@ public final class BotPotionManager {
         startedAt = AgentPerformanceMonitor.start();
         if (pots[0] < BotManager.cfg.POT_STOP && bot.getHp() < bot.getMaxHp() * 0.4f) {
             BotManager.getInstance().issueFollowOwner(entry);
-            AgentBotPotionRuntime.sayMapNow(bot, "low on pots!! walking to you");
+            AgentBotPotionRuntime.sayMapNow(bot, AgentDialogueCatalog.potLowReturnReply());
             bot.changeFaceExpression(AgentEmote.GLARE.getValue());
         }
         AgentPerformanceMonitor.recordSince("potion-grind-stop", startedAt);
