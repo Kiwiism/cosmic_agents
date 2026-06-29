@@ -3,6 +3,7 @@ package server.bots;
 import server.agents.capabilities.combat.AgentAttackRoute;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+import server.agents.capabilities.combat.AgentAttackPlanTieBreakPolicy;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 import server.agents.capabilities.combat.AgentFallDamageCalculator;
@@ -946,10 +947,8 @@ public class BotCombatManager {
     }
 
     private static boolean isBetterTieBreak(AttackPlan candidate, AttackPlan currentBest) {
-        if (candidate.cooldownMs != currentBest.cooldownMs) {
-            return candidate.cooldownMs < currentBest.cooldownMs;
-        }
-        return candidate.skillId < currentBest.skillId;
+        return AgentAttackPlanTieBreakPolicy.isBetter(candidate.cooldownMs, candidate.skillId,
+                currentBest.cooldownMs, currentBest.skillId);
     }
 
     private static double capDamageByCurrentHp(double expectedDamage, Monster target) {

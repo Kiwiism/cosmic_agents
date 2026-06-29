@@ -101,6 +101,10 @@ Recent reconstruction notes:
   score penalties, AOE cluster bonus calculation, cluster membership, and
   nearest-cluster-target selection keep the same formulas; larger attack-plan
   orchestration and grind-target selection still remain in `BotCombatManager`.
+- Combat attack-plan tie-break ordering moved to
+  `server.agents.capabilities.combat.AgentAttackPlanTieBreakPolicy`. Cooldown
+  priority and lower-skill-id fallback ordering are unchanged; larger
+  attack-plan construction and scoring still remain in `BotCombatManager`.
 - Combat attack data provider ownership moved to
   `server.agents.capabilities.combat.data.AgentAttackDataProvider`. Weapon
   normal-attack profile loading, action-spec selection, body action id
