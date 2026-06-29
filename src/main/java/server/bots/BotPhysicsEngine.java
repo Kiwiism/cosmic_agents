@@ -676,7 +676,7 @@ public final class BotPhysicsEngine {
             entry.crouching = false;
             entry.physX = position.x;
             entry.physY = position.y;
-            entry.velY = -profileOrBase(entry.movementProfile).jumpSpeedPxs();
+            entry.velY = -profileOrBase(AgentBotMovementStateRuntime.movementProfile(entry)).jumpSpeedPxs();
             stopGroundMotion(entry);
             entry.climbUpIntent = false;
             entry.airVelX = 0;
@@ -692,22 +692,22 @@ public final class BotPhysicsEngine {
             syncCharacterState(entry);
             return;
         }
-        launchAirborne(entry, bot, bot.getPosition(), -jumpForcePerTick(entry.movementProfile), airVelX, false);
+        launchAirborne(entry, bot, bot.getPosition(), -jumpForcePerTick(AgentBotMovementStateRuntime.movementProfile(entry)), airVelX, false);
     }
 
     static void beginClimbUpJump(BotEntry entry, Character bot, int airVelX) {
         entry.blockedRopeGrab = null;
-        launchAirborne(entry, bot, bot.getPosition(), -jumpForcePerTick(entry.movementProfile), airVelX, true);
+        launchAirborne(entry, bot, bot.getPosition(), -jumpForcePerTick(AgentBotMovementStateRuntime.movementProfile(entry)), airVelX, true);
     }
 
     static void beginJumpOffRope(BotEntry entry, Character bot, int airVelX) {
         entry.blockedRopeGrab = null;
-        launchAirborne(entry, bot, bot.getPosition(), -ropeJumpForcePerTick(entry.movementProfile), airVelX, false);
+        launchAirborne(entry, bot, bot.getPosition(), -ropeJumpForcePerTick(AgentBotMovementStateRuntime.movementProfile(entry)), airVelX, false);
     }
 
     static void beginRopeTransferJump(BotEntry entry, Character bot, Rope sourceRope, int airVelX) {
         entry.blockedRopeGrab = sourceRope;
-        launchAirborne(entry, bot, bot.getPosition(), -ropeJumpForcePerTick(entry.movementProfile), airVelX, true);
+        launchAirborne(entry, bot, bot.getPosition(), -ropeJumpForcePerTick(AgentBotMovementStateRuntime.movementProfile(entry)), airVelX, true);
     }
 
     static void beginDownJump(BotEntry entry, Character bot) {
@@ -816,8 +816,10 @@ public final class BotPhysicsEngine {
         entry.downJumpGracePeriodMS = 0L;
         entry.groundPhysicsCarryMs = 0.0;
         entry.blockedRopeGrab = null;
-        entry.hspeed = landingGroundHSpeed(bot.getMap(), foothold, incomingDeltaX, incomingDeltaY, entry.movementProfile);
-        setMovementVelocity(entry, velocityFromDeltaX(tickDeltaFromGroundHSpeed(bot.getMap(), entry.hspeed, entry.movementProfile)), 0);
+        entry.hspeed = landingGroundHSpeed(bot.getMap(), foothold, incomingDeltaX, incomingDeltaY,
+                AgentBotMovementStateRuntime.movementProfile(entry));
+        setMovementVelocity(entry, velocityFromDeltaX(tickDeltaFromGroundHSpeed(bot.getMap(), entry.hspeed,
+                AgentBotMovementStateRuntime.movementProfile(entry))), 0);
         syncCharacterState(entry);
 
         // Fall-damage check triggers exactly once, at the landing transition, using the
@@ -892,7 +894,8 @@ public final class BotPhysicsEngine {
         Point currentPos = bot.getPosition();
         int desiredDir = entry.moveDir;
         GroundStepResult step = simulateGroundMotion(map, currentPos, foothold, desiredDir,
-                new GroundTravelState(entry.physX, entry.hspeed, entry.groundPhysicsCarryMs), entry.movementProfile);
+                new GroundTravelState(entry.physX, entry.hspeed, entry.groundPhysicsCarryMs),
+                AgentBotMovementStateRuntime.movementProfile(entry));
 
         // Snap-up to a *different* foothold means the bot walked off the edge and a separate
         // platform happens to be within MAX_SLOPE_UP above. That is not an uphill slope of the
@@ -1095,9 +1098,7 @@ public final class BotPhysicsEngine {
             // for jump). At base 100 stat both are 1.0; jumpMultiplier would be
             // wrong here for any speed-buffed/jump-buffed character.
             float burst = cfg.SWIM_JUMP_BURST_PXS;
-            if (entry.movementProfile != null) {
-                burst *= (float) entry.movementProfile.speedMultiplier();
-            }
+            burst *= (float) AgentBotMovementStateRuntime.movementProfile(entry).speedMultiplier();
             vy = -burst;
             entry.swimJumpRequested = false;
         }

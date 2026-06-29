@@ -140,6 +140,10 @@ Recent reconstruction notes:
   `AgentBotSwimStateRuntime`; `BotPhysicsEngine` still owns the legacy physics
   calculations, but stance selection no longer directly reads BotEntry movement,
   climb, or swim fields.
+- Bot physics movement-profile reads now enter through
+  `AgentBotMovementStateRuntime.movementProfile`; jump, rope-jump, swim-burst,
+  landing-speed, and ground-motion calculations still use the same non-null
+  BotEntry-backed profile semantics.
 - Combat alert reset callbacks now enter through `AgentBotCombatRuntime`;
   `BotCombatManager` no longer reaches directly into the lower-level scheduler
   runtime for combat-owned alert timing, and alert timing and stance reset
