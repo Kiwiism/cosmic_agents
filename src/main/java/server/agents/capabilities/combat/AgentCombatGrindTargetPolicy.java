@@ -54,6 +54,22 @@ public final class AgentCombatGrindTargetPolicy {
         return scoredTargets.get(0).monster();
     }
 
+    public static Monster pickReachableOrBestTarget(List<AgentScoredGrindTarget> scoredTargets,
+                                                    long unreachableGraphCost) {
+        if (scoredTargets.isEmpty()) {
+            return null;
+        }
+        sortByLegacyTargetOrder(scoredTargets);
+        List<AgentScoredGrindTarget> reachableTargets = scoredTargets.stream()
+                .filter(target -> target.graphCost() < unreachableGraphCost)
+                .toList();
+        List<AgentScoredGrindTarget> selectable = reachableTargets.isEmpty() ? scoredTargets : reachableTargets;
+        if (selectable.getFirst().graphCost() >= unreachableGraphCost) {
+            return null;
+        }
+        return selectable.get(0).monster();
+    }
+
     public static List<AgentScoredGrindTarget> scoreLocalTargets(List<Monster> candidates,
                                                                  Point agentPosition,
                                                                  ToLongFunction<Monster> localScore,

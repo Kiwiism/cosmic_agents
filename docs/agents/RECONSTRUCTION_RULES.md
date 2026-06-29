@@ -1323,6 +1323,10 @@ Recent reconstruction notes:
   `AgentCombatGrindTargetPolicy`; BotCombatManager still supplies live
   local/immediate-projectile eligibility and scoring callbacks while Agent
   combat owns selectable filtering and adjusted scored-target record creation.
+- Grind and patrol reachable-target selection now lives in
+  `AgentCombatGrindTargetPolicy`; BotCombatManager still supplies the scored
+  candidates while Agent combat owns legacy ordering, reachable-target
+  preference, and all-unreachable rejection.
 - Buff blacklist classification now lives in `AgentCombatSkillClassifier`;
   BotCombatManager preserves the same Dark Sight exclusion behavior while the
   never-cast skill list is owned by Agent combat classification.

@@ -591,16 +591,7 @@ public class BotCombatManager {
                 return null;
             }
 
-            AgentCombatGrindTargetPolicy.sortByLegacyTargetOrder(scoredTargets);
-            List<AgentScoredGrindTarget> reachableTargets = scoredTargets.stream()
-                    .filter(target -> target.graphCost() < UNREACHABLE_GRAPH_COST)
-                    .toList();
-            List<AgentScoredGrindTarget> selectable = reachableTargets.isEmpty() ? scoredTargets : reachableTargets;
-            if (selectable.getFirst().graphCost() >= UNREACHABLE_GRAPH_COST) {
-                return null;
-            }
-
-            return selectable.get(0).monster();
+            return AgentCombatGrindTargetPolicy.pickReachableOrBestTarget(scoredTargets, UNREACHABLE_GRAPH_COST);
         } finally {
             AgentPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
         }
@@ -662,15 +653,7 @@ public class BotCombatManager {
             if (scored.isEmpty()) {
                 return null;
             }
-            AgentCombatGrindTargetPolicy.sortByLegacyTargetOrder(scored);
-            List<AgentScoredGrindTarget> reachable = scored.stream()
-                    .filter(t -> t.graphCost() < UNREACHABLE_GRAPH_COST)
-                    .toList();
-            List<AgentScoredGrindTarget> selectable = reachable.isEmpty() ? scored : reachable;
-            if (selectable.getFirst().graphCost() >= UNREACHABLE_GRAPH_COST) {
-                return null;
-            }
-            return selectable.get(0).monster();
+            return AgentCombatGrindTargetPolicy.pickReachableOrBestTarget(scored, UNREACHABLE_GRAPH_COST);
         } finally {
             AgentPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
         }

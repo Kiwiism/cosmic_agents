@@ -78,6 +78,33 @@ class AgentCombatGrindTargetPolicyTest {
     }
 
     @Test
+    void shouldPickReachableTargetAfterLegacyOrdering() {
+        Monster unreachableBest = mock(Monster.class);
+        Monster reachable = mock(Monster.class);
+        Monster worseReachable = mock(Monster.class);
+        List<AgentScoredGrindTarget> targets = new ArrayList<>(List.of(
+                new AgentScoredGrindTarget(worseReachable, 500, 1, 1.0),
+                new AgentScoredGrindTarget(reachable, 100, 1, 1.0),
+                new AgentScoredGrindTarget(unreachableBest, 999, 0, 0.0)));
+
+        assertEquals(reachable, AgentCombatGrindTargetPolicy.pickReachableOrBestTarget(targets, 999));
+        assertEquals(reachable, targets.get(0).monster());
+    }
+
+    @Test
+    void shouldRejectWhenEveryScoredTargetIsUnreachable() {
+        Monster first = mock(Monster.class);
+        Monster second = mock(Monster.class);
+        List<AgentScoredGrindTarget> targets = new ArrayList<>(List.of(
+                new AgentScoredGrindTarget(second, 1_000, 1, 1.0),
+                new AgentScoredGrindTarget(first, 999, 0, 0.0)));
+
+        assertNull(AgentCombatGrindTargetPolicy.pickReachableOrBestTarget(targets, 999));
+        assertEquals(first, targets.get(0).monster());
+        assertNull(AgentCombatGrindTargetPolicy.pickReachableOrBestTarget(new ArrayList<>(), 999));
+    }
+
+    @Test
     void shouldScoreLocalTargetsWithAdjustedLocalScoreAndDistance() {
         Monster near = monsterAt(130, 100);
         Monster far = monsterAt(200, 100);
