@@ -918,6 +918,10 @@ Recent reconstruction notes:
   nav-edge summaries keep BotEntry as the temporary backing store but no longer
   read climb, airborne, crouch, down-jump, velocity, or active-edge fields
   directly in production.
+- Bot command target-name resolution now enters through
+  `AgentBotRuntimeIdentityRuntime`; BotCommandParser keeps the same targeted
+  command matching behavior but no longer reads the bot character directly from
+  BotEntry in production.
 
 Initial reconstruction order:
 

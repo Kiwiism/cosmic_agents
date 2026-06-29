@@ -3,6 +3,7 @@ package server.bots;
 import java.util.List;
 import server.agents.commands.AgentCommandParser;
 import server.agents.commands.AgentCommandTarget;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 
 final class BotCommandParser {
     private BotCommandParser() {
@@ -36,7 +37,7 @@ final class BotCommandParser {
     private record BotCommandTarget(BotEntry entry) implements AgentCommandTarget {
         @Override
         public String name() {
-            return entry.bot.getName();
+            return AgentBotRuntimeIdentityRuntime.botName(entry);
         }
     }
 }
