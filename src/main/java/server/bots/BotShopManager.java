@@ -8,6 +8,8 @@ import constants.game.GameConstants;
 import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
 import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentBotShopPurchaseAction;
+import server.agents.integration.AgentBotShopPurchaseSequence;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotShopRuntime;
 import server.agents.integration.AgentBotShopStateRuntime;
@@ -65,34 +67,15 @@ public final class BotShopManager {
 
     private record NpcShopMatch(NPC npc, Shop shop, Point npcPos) {}
 
-    private enum ShortfallReason { NONE, NO_MESO, NO_SPACE, OTHER }
+    public enum ShortfallReason { NONE, NO_MESO, NO_SPACE, OTHER }
 
-    private record BuyReport(int itemId, int quantity, int requestedQuantity, ShortfallReason reason) {
-        boolean hasShortfall() {
+    public record BuyReport(int itemId, int quantity, int requestedQuantity, ShortfallReason reason) {
+        public boolean hasShortfall() {
             return reason != ShortfallReason.NONE && quantity < requestedQuantity;
         }
     }
 
     private record ShopSlotItem(short slot, ShopItem shopItem) {}
-
-    private record PurchaseSequence(BotEntry entry,
-                                    Character bot,
-                                    Point npcPos,
-                                    List<PurchaseAction> actions,
-                                    List<String> bought,
-                                    BuyReport firstShortfall) {
-        PurchaseSequence withFirstShortfall(BuyReport report) {
-            if (firstShortfall == null && report != null && report.hasShortfall()) {
-                return new PurchaseSequence(entry, bot, npcPos, actions, bought, report);
-            }
-            return this;
-        }
-    }
-
-    @FunctionalInterface
-    private interface PurchaseAction {
-        PurchaseSequence run(PurchaseSequence sequence, Shop shop);
-    }
 
     private static final List<String> RESUPPLY_MSGS = List.of(
             "brb gotta resupply", "one sec, going to restock", "be right back, need supplies",
@@ -263,7 +246,7 @@ public final class BotShopManager {
         }
 
         WeaponType wt = BotAttackExecutionProvider.getEquippedWeaponType(bot);
-        List<PurchaseAction> actions = new ArrayList<>();
+        List<AgentBotShopPurchaseAction> actions = new ArrayList<>();
 
         if (shouldRechargeWhileShopping(bot, wt)) {
             actions.add((sequence, shop) -> {
@@ -295,10 +278,10 @@ public final class BotShopManager {
             return sequence;
         });
 
-        runPurchaseStep(new PurchaseSequence(entry, bot, npcPos, actions, new ArrayList<>(), null), 0);
+        runPurchaseStep(new AgentBotShopPurchaseSequence(entry, bot, npcPos, actions, new ArrayList<>(), null), 0);
     }
 
-    private static void runPurchaseStep(PurchaseSequence sequence, int index) {
+    private static void runPurchaseStep(AgentBotShopPurchaseSequence sequence, int index) {
         if (!isShopSequenceValid(sequence.entry(), sequence.bot(), sequence.npcPos())) {
             abortShop(sequence.entry(), sequence.bot(), "couldn't stay at the shop to buy, never mind");
             return;
@@ -323,11 +306,11 @@ public final class BotShopManager {
             return;
         }
 
-        PurchaseSequence next = sequence.actions().get(index).run(sequence, shop);
+        AgentBotShopPurchaseSequence next = sequence.actions().get(index).run(sequence, shop);
         scheduleShopStep(sequence.entry(), () -> runPurchaseStep(next, index + 1));
     }
 
-    private static void finishPurchaseSequence(PurchaseSequence sequence, boolean announceIfEmpty) {
+    private static void finishPurchaseSequence(AgentBotShopPurchaseSequence sequence, boolean announceIfEmpty) {
         if (!isShopSequenceValid(sequence.entry(), sequence.bot(), sequence.npcPos())) {
             abortShop(sequence.entry(), sequence.bot(), "couldn't finish up at the shop");
             return;
@@ -358,7 +341,7 @@ public final class BotShopManager {
         finish.run();
     }
 
-    private static void startSellTrashSequence(PurchaseSequence sequence) {
+    private static void startSellTrashSequence(AgentBotShopPurchaseSequence sequence) {
         List<Item> items = BotInventoryManager.collectSellTrashEquips(sequence.entry(), sequence.bot());
         if (items.isEmpty()) {
             AgentBotShopStateRuntime.setShopSellTrashPending(sequence.entry(), false);
@@ -401,7 +384,7 @@ public final class BotShopManager {
             } else if (soldCount == 0) {
                 AgentBotShopRuntime.sayMapNow(bot, "no trash equips worth selling");
             }
-            finishPurchaseSequence(new PurchaseSequence(entry, bot, npcPos, List.of(), bought, firstShortfall), false);
+            finishPurchaseSequence(new AgentBotShopPurchaseSequence(entry, bot, npcPos, List.of(), bought, firstShortfall), false);
             return;
         }
 
@@ -441,7 +424,7 @@ public final class BotShopManager {
         return "unable to sell " + items + ", tell me to drop them if you want them gone";
     }
 
-    private static PurchaseSequence appendBuyReport(PurchaseSequence sequence, BuyReport report, String fallbackName) {
+    private static AgentBotShopPurchaseSequence appendBuyReport(AgentBotShopPurchaseSequence sequence, BuyReport report, String fallbackName) {
         if (report.quantity() > 0) {
             sequence.bought().add(report.quantity() + " " + resolveItemName(report.itemId(), fallbackName));
         }

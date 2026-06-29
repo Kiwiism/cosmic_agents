@@ -1052,6 +1052,11 @@ Recent reconstruction notes:
   accessors; the stage script preserves Cloto movement, coupon assignment,
   progress reporting, exchange, and pass delivery behavior while no longer
   reading script context runtime fields directly.
+- Shop purchase sequencing now uses `AgentBotShopPurchaseSequence` and
+  `AgentBotShopPurchaseAction`; BotShopManager preserves resupply, recharge,
+  potion purchase, trash-sale, shortfall, announcement, and finish behavior
+  while the active purchase context is owned by the Agent integration layer
+  instead of a private bot runtime record.
 
 Initial reconstruction order:
 
