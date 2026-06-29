@@ -1,6 +1,7 @@
 package server.agents.capabilities.combat;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -11,6 +12,7 @@ import constants.skills.SuperGM;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 
 class AgentCombatSupportPolicyTest {
@@ -71,6 +73,35 @@ class AgentCombatSupportPolicyTest {
         assertFalse(AgentCombatSupportPolicy.shouldConsiderSupportBuff(false, false, false));
         assertFalse(AgentCombatSupportPolicy.shouldConsiderSupportBuff(true, true, false));
         assertFalse(AgentCombatSupportPolicy.shouldConsiderSupportBuff(true, false, true));
+    }
+
+    @Test
+    void shouldPreserveSupportCastReadinessOrder() {
+        AtomicBoolean costChecked = new AtomicBoolean(false);
+
+        assertEquals(AgentCombatSupportPolicy.SupportCastReadiness.MISSING_SKILL_LEVEL,
+                AgentCombatSupportPolicy.supportCastReadiness(0, true, () -> {
+                    costChecked.set(true);
+                    return true;
+                }));
+        assertFalse(costChecked.get());
+
+        assertEquals(AgentCombatSupportPolicy.SupportCastReadiness.DEAD,
+                AgentCombatSupportPolicy.supportCastReadiness(1, false, () -> {
+                    costChecked.set(true);
+                    return true;
+                }));
+        assertFalse(costChecked.get());
+
+        assertEquals(AgentCombatSupportPolicy.SupportCastReadiness.CANNOT_PAY_COST,
+                AgentCombatSupportPolicy.supportCastReadiness(1, true, () -> {
+                    costChecked.set(true);
+                    return false;
+                }));
+        assertTrue(costChecked.get());
+
+        assertEquals(AgentCombatSupportPolicy.SupportCastReadiness.READY,
+                AgentCombatSupportPolicy.supportCastReadiness(1, true, () -> true));
     }
 
     @Test

@@ -1628,17 +1628,23 @@ public class BotCombatManager {
 
     private static boolean castSupportSkill(BotEntry entry, Character bot, Skill skill, StatEffect fx, long now) {
         int skillLevel = bot.getSkillLevel(skill);
-        if (skillLevel <= 0) {
-            noteSkillBuffDecision(entry, "missing skill level for " + skillLabel(skill.getId()));
-            return false;
-        }
-        if (!bot.isAlive()) {
-            noteSkillBuffDecision(entry, "can't cast while dead: " + skillLabel(skill.getId()));
-            return false;
-        }
-        if (!fx.canPaySkillCost(bot)) {
-            noteSkillBuffDecision(entry, "can't pay cost for " + skillLabel(skill.getId()));
-            return false;
+        AgentCombatSupportPolicy.SupportCastReadiness readiness =
+                AgentCombatSupportPolicy.supportCastReadiness(skillLevel, bot.isAlive(), () -> fx.canPaySkillCost(bot));
+        switch (readiness) {
+            case MISSING_SKILL_LEVEL -> {
+                noteSkillBuffDecision(entry, "missing skill level for " + skillLabel(skill.getId()));
+                return false;
+            }
+            case DEAD -> {
+                noteSkillBuffDecision(entry, "can't cast while dead: " + skillLabel(skill.getId()));
+                return false;
+            }
+            case CANNOT_PAY_COST -> {
+                noteSkillBuffDecision(entry, "can't pay cost for " + skillLabel(skill.getId()));
+                return false;
+            }
+            case READY -> {
+            }
         }
         if (!dispatchSupportSpecialMove(bot, skill, skillLevel)) {
             noteSkillBuffDecision(entry, "special move failed for " + skillLabel(skill.getId()));

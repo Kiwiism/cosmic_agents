@@ -1389,6 +1389,9 @@ Recent reconstruction notes:
 - Support-buff candidate gating now lives in `AgentCombatSupportPolicy`;
   BotCombatManager still resolves live skills/effects and dispatches the
   SPECIAL_MOVE packet through the legacy bot runtime.
+- Support-cast readiness ordering now lives in `AgentCombatSupportPolicy` with
+  lazy cost evaluation so the missing-skill and dead cases preserve the legacy
+  short-circuit behavior; BotCombatManager still emits the existing debug text.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

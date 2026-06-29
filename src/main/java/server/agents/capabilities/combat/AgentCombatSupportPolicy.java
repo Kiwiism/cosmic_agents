@@ -7,10 +7,18 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 import server.StatEffect;
 
 public final class AgentCombatSupportPolicy {
     public static final int LEGACY_DRAGON_ROAR_MIN_TARGETS_WITHOUT_HEALER = 10;
+
+    public enum SupportCastReadiness {
+        READY,
+        MISSING_SKILL_LEVEL,
+        DEAD,
+        CANNOT_PAY_COST
+    }
 
     private AgentCombatSupportPolicy() {
     }
@@ -58,6 +66,21 @@ public final class AgentCombatSupportPolicy {
         return partySupportSkill
                 && !skillCooling
                 && !supportBuffCooldownActive;
+    }
+
+    public static SupportCastReadiness supportCastReadiness(int skillLevel,
+                                                            boolean alive,
+                                                            BooleanSupplier canPaySkillCost) {
+        if (skillLevel <= 0) {
+            return SupportCastReadiness.MISSING_SKILL_LEVEL;
+        }
+        if (!alive) {
+            return SupportCastReadiness.DEAD;
+        }
+        if (!canPaySkillCost.getAsBoolean()) {
+            return SupportCastReadiness.CANNOT_PAY_COST;
+        }
+        return SupportCastReadiness.READY;
     }
 
     public static boolean hasNearbyHealSkillAlly(Character bot, int supportRange, int supportVerticalRange) {
