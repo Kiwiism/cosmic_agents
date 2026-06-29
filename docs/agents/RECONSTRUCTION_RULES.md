@@ -123,8 +123,10 @@ Recent reconstruction notes:
   target inclusion, hostile/living secondary filtering, hitbox intersection,
   nearest-to-primary sorting, max-target capping, and hostile/living in-range
   candidate filtering, forward-projectile effective-primary selection, and
-  closest-alive target selection are unchanged; `BotCombatManager` still
-  supplies the map monster iterable and caller range values.
+  closest-alive target selection are unchanged. Heal-range undead target
+  filtering and cap handling are also Agent-owned; `BotCombatManager` still
+  supplies the map monster iterable, map-object query results, and caller
+  range values.
 - Combat attack data provider ownership moved to
   `server.agents.capabilities.combat.data.AgentAttackDataProvider`. Weapon
   normal-attack profile loading, action-spec selection, body action id

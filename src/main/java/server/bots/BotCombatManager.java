@@ -608,19 +608,10 @@ public class BotCombatManager {
 
     private static List<Monster> getUndeadMobsInHealRange(Character bot, StatEffect fx, Rectangle bounds) {
         if (bounds == null) {
-            return new ArrayList<>();
+            return AgentCombatTargetSelector.collectUndeadMobsInHealRange(null, List.of(), fx.getMobCount());
         }
         List<MapObject> objects = bot.getMap().getMapObjectsInRect(bounds, Arrays.asList(MapObjectType.MONSTER));
-        List<Monster> undead = new ArrayList<>();
-        int cap = fx.getMobCount();
-        for (MapObject mo : objects) {
-            Monster m = (Monster) mo;
-            if (m.isAlive() && m.getStats().isUndead()) {
-                undead.add(m);
-                if (undead.size() >= cap) break;
-            }
-        }
-        return undead;
+        return AgentCombatTargetSelector.collectUndeadMobsInHealRange(bounds, objects, fx.getMobCount());
     }
 
     static Monster findGrindTarget(Character bot) {

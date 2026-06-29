@@ -95,10 +95,37 @@ class AgentCombatTargetSelectorTest {
                 List.of(boundary), new Point(100, 100), 50 * 50));
     }
 
+    @Test
+    void shouldCollectAliveUndeadMobsForHealRangeUpToCap() {
+        Monster firstUndead = monster(1, new Point(100, 100), true, false, true);
+        Monster livingNonUndead = monster(2, new Point(110, 100), true, false, false);
+        Monster deadUndead = monster(3, new Point(120, 100), false, false, true);
+        Monster secondUndead = monster(4, new Point(130, 100), true, false, true);
+
+        assertEquals(List.of(firstUndead), AgentCombatTargetSelector.collectUndeadMobsInHealRange(
+                new Rectangle(0, 0, 250, 250),
+                List.of(firstUndead, livingNonUndead, deadUndead, secondUndead), 1));
+        assertEquals(List.of(firstUndead, secondUndead), AgentCombatTargetSelector.collectUndeadMobsInHealRange(
+                new Rectangle(0, 0, 250, 250),
+                List.of(firstUndead, livingNonUndead, deadUndead, secondUndead), 5));
+    }
+
+    @Test
+    void shouldReturnEmptyUndeadHealTargetsWhenBoundsMissing() {
+        Monster undead = monster(1, new Point(100, 100), true, false, true);
+
+        assertEquals(List.of(), AgentCombatTargetSelector.collectUndeadMobsInHealRange(null, List.of(undead), 5));
+    }
+
     private static Monster monster(int objectId, Point position, boolean alive, boolean friendly) {
+        return monster(objectId, position, alive, friendly, false);
+    }
+
+    private static Monster monster(int objectId, Point position, boolean alive, boolean friendly, boolean undead) {
         Monster monster = mock(Monster.class);
         MonsterStats stats = mock(MonsterStats.class);
         when(stats.isFriendly()).thenReturn(friendly);
+        when(stats.isUndead()).thenReturn(undead);
         when(monster.getId()).thenReturn(90_000_000 + objectId);
         when(monster.getObjectId()).thenReturn(objectId);
         when(monster.getPosition()).thenReturn(position);

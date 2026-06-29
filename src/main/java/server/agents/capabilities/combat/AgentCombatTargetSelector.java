@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import server.life.Monster;
+import server.maps.MapObject;
 
 public final class AgentCombatTargetSelector {
     private AgentCombatTargetSelector() {
@@ -100,5 +101,25 @@ public final class AgentCombatTargetSelector {
             }
         }
         return closest;
+    }
+
+    public static List<Monster> collectUndeadMobsInHealRange(Rectangle bounds,
+                                                             Iterable<MapObject> objects,
+                                                             int cap) {
+        if (bounds == null) {
+            return new ArrayList<>();
+        }
+
+        List<Monster> undead = new ArrayList<>();
+        for (MapObject object : objects) {
+            Monster monster = (Monster) object;
+            if (monster.isAlive() && monster.getStats().isUndead()) {
+                undead.add(monster);
+                if (undead.size() >= cap) {
+                    break;
+                }
+            }
+        }
+        return undead;
     }
 }
