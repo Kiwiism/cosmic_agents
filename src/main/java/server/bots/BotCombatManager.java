@@ -12,6 +12,7 @@ import server.agents.capabilities.combat.AgentCombatSkillHitboxPolicy;
 import server.agents.capabilities.combat.AgentCombatHitCounter;
 import server.agents.capabilities.combat.AgentCombatHitboxIntersection;
 import server.agents.capabilities.combat.AgentCombatRangePolicy;
+import server.agents.capabilities.combat.AgentCombatScoringPolicy;
 import server.agents.capabilities.combat.AgentCombatSkillUsePolicy;
 import server.agents.capabilities.combat.AgentCombatSupportPolicy;
 import server.agents.capabilities.combat.AgentMobTouchPolicy;
@@ -955,11 +956,7 @@ public class BotCombatManager {
         if (target == null) {
             return expectedDamage;
         }
-        int currentHp = target.getHp();
-        if (currentHp <= 0) {
-            return 0.0d;
-        }
-        return Math.min(expectedDamage, currentHp);
+        return AgentCombatScoringPolicy.capDamageByCurrentHp(expectedDamage, target.getHp());
     }
 
     static boolean isTargetInAttackRange(AttackPlan attackPlan, Character bot, Monster target) {
@@ -1521,10 +1518,7 @@ public class BotCombatManager {
     }
 
     private static long estimateLocalTravelCostMs(Point from, Point to, AgentMovementProfile profile) {
-        int dx = Math.abs(to.x - from.x);
-        int dy = Math.abs(to.y - from.y);
-        double walkVelocity = Math.max(1.0, profile.walkVelocityPxs());
-        return Math.round(dx * 1000.0 / walkVelocity) + dy * 4L;
+        return AgentCombatScoringPolicy.estimateLocalTravelCostMs(from, to, profile);
     }
 
     private static long grindTargetScore(Character bot, Point botPos, Foothold botFoothold, Monster target) {
@@ -1945,10 +1939,7 @@ public class BotCombatManager {
     }
 
     private static boolean isForwardProjectileHitBox(Rectangle hitBox, Point botPos) {
-        if (hitBox == null || botPos == null) {
-            return false;
-        }
-        return botPos.x < hitBox.getMinX() || botPos.x > hitBox.getMaxX();
+        return AgentCombatHitboxIntersection.isForwardProjectileHitBox(hitBox, botPos);
     }
 
     static Monster resolveEffectivePrimary(Character bot, Monster fallback, Rectangle hitBox) {

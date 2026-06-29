@@ -33,4 +33,13 @@ class AgentCombatHitboxIntersectionTest {
         assertTrue(AgentCombatHitboxIntersection.intersectsMonsterBounds(hitBox, null, new Point(120, 120)));
         assertFalse(AgentCombatHitboxIntersection.intersectsMonsterBounds(hitBox, null, new Point(200, 200)));
     }
+
+    @Test
+    void shouldDetectForwardProjectileHitboxOnlyWhenBotIsOutsideHorizontalRange() {
+        Rectangle hitBox = new Rectangle(100, 100, 40, 40);
+
+        assertTrue(AgentCombatHitboxIntersection.isForwardProjectileHitBox(hitBox, new Point(80, 120)));
+        assertTrue(AgentCombatHitboxIntersection.isForwardProjectileHitBox(hitBox, new Point(150, 120)));
+        assertFalse(AgentCombatHitboxIntersection.isForwardProjectileHitBox(hitBox, new Point(120, 120)));
+    }
 }

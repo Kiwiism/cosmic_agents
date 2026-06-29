@@ -92,9 +92,14 @@ Recent reconstruction notes:
   bounds for the current side-effect path.
 - Combat hitbox/monster intersection ownership moved to
   `server.agents.capabilities.combat.AgentCombatHitboxIntersection`. Mob WZ
-  bounds intersection, monster-position fallback, and null handling are
-  unchanged; `BotCombatManager` keeps only a compatibility wrapper for current
-  target planning.
+  bounds intersection, monster-position fallback, forward-projectile hitbox
+  detection, and null handling are unchanged; `BotCombatManager` keeps only a
+  compatibility wrapper for current target planning.
+- Combat scoring math moved to
+  `server.agents.capabilities.combat.AgentCombatScoringPolicy`. Expected damage
+  capping by current HP and local travel-cost estimation keep the same formulas;
+  larger attack-plan and grind-target selection still remain in
+  `BotCombatManager`.
 - Combat attack data provider ownership moved to
   `server.agents.capabilities.combat.data.AgentAttackDataProvider`. Weapon
   normal-attack profile loading, action-spec selection, body action id
