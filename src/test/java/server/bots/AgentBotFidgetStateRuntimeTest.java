@@ -1,6 +1,8 @@
 package server.bots;
 
 import org.junit.jupiter.api.Test;
+import server.agents.capabilities.movement.fidget.AgentFidgetMode;
+import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 import server.agents.integration.AgentBotFidgetStateRuntime;
 
 import java.awt.Point;
@@ -18,8 +20,8 @@ class AgentBotFidgetStateRuntimeTest {
 
         AgentBotFidgetStateRuntime.start(
                 entry,
-                BotFidgetMode.DIAGONAL_JUMP,
-                BotFidgetTrigger.SOCIAL,
+                AgentFidgetMode.DIAGONAL_JUMP,
+                AgentFidgetTrigger.SOCIAL,
                 5_000L,
                 1_000L,
                 -1,
@@ -32,10 +34,10 @@ class AgentBotFidgetStateRuntimeTest {
 
         assertTrue(AgentBotFidgetStateRuntime.active(entry));
         assertFalse(AgentBotFidgetStateRuntime.inactive(entry));
-        assertEquals(BotFidgetMode.DIAGONAL_JUMP, AgentBotFidgetStateRuntime.mode(entry));
-        assertTrue(AgentBotFidgetStateRuntime.modeIs(entry, BotFidgetMode.DIAGONAL_JUMP));
-        assertTrue(AgentBotFidgetStateRuntime.modeIsAny(entry, BotFidgetMode.JUMP, BotFidgetMode.DIAGONAL_JUMP));
-        assertEquals(BotFidgetTrigger.SOCIAL, AgentBotFidgetStateRuntime.trigger(entry));
+        assertEquals(AgentFidgetMode.DIAGONAL_JUMP, AgentBotFidgetStateRuntime.mode(entry));
+        assertTrue(AgentBotFidgetStateRuntime.modeIs(entry, AgentFidgetMode.DIAGONAL_JUMP));
+        assertTrue(AgentBotFidgetStateRuntime.modeIsAny(entry, AgentFidgetMode.JUMP, AgentFidgetMode.DIAGONAL_JUMP));
+        assertEquals(AgentFidgetTrigger.SOCIAL, AgentBotFidgetStateRuntime.trigger(entry));
         assertEquals(5_000L, AgentBotFidgetStateRuntime.untilMs(entry));
         assertEquals(1_000L, AgentBotFidgetStateRuntime.nextActionAtMs(entry));
         assertEquals(-1, AgentBotFidgetStateRuntime.airSteerDir(entry));
@@ -56,8 +58,8 @@ class AgentBotFidgetStateRuntimeTest {
 
         assertFalse(AgentBotFidgetStateRuntime.active(entry));
         assertTrue(AgentBotFidgetStateRuntime.inactive(entry));
-        assertEquals(BotFidgetMode.NONE, AgentBotFidgetStateRuntime.mode(entry));
-        assertEquals(BotFidgetTrigger.NONE, AgentBotFidgetStateRuntime.trigger(entry));
+        assertEquals(AgentFidgetMode.NONE, AgentBotFidgetStateRuntime.mode(entry));
+        assertEquals(AgentFidgetTrigger.NONE, AgentBotFidgetStateRuntime.trigger(entry));
         assertEquals(0L, AgentBotFidgetStateRuntime.untilMs(entry));
         assertEquals(0L, AgentBotFidgetStateRuntime.nextActionAtMs(entry));
         assertEquals(0, AgentBotFidgetStateRuntime.airSteerDir(entry));
@@ -75,8 +77,8 @@ class AgentBotFidgetStateRuntimeTest {
         BotEntry entry = new BotEntry(null, null, null);
         AgentBotFidgetStateRuntime.start(
                 entry,
-                BotFidgetMode.SPAM_SIDEWAYS,
-                BotFidgetTrigger.IDLE,
+                AgentFidgetMode.SPAM_SIDEWAYS,
+                AgentFidgetTrigger.IDLE,
                 5_000L,
                 1_000L,
                 1,

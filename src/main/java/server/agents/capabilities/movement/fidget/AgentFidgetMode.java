@@ -1,6 +1,6 @@
-package server.bots;
+package server.agents.capabilities.movement.fidget;
 
-public enum BotFidgetMode {
+public enum AgentFidgetMode {
     NONE,
     WAIT,
     JUMP,

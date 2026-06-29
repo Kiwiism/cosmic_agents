@@ -962,8 +962,8 @@ Recent reconstruction notes:
   BotFidgetManager fidget mode/trigger, timers, origin position, spam-air-steer,
   jump/sideways direction, crouch checks, visual cooldown, and idle/speed-roll
   scheduling keep BotEntry as the temporary backing store but no longer read or
-  write fidget fields directly in production. `BotFidgetMode` and
-  `BotFidgetTrigger` were moved to public enum files with the same values so
+  write fidget fields directly in production. `AgentFidgetMode` and
+  `AgentFidgetTrigger` were moved to public enum files with the same values so
   the Agent adapter can keep a typed boundary without changing behavior.
 - Airshow state now enters through `AgentBotAirshowStateRuntime`;
   BotAirshowManager active/trail timing, scripted frame physics fields, bot
@@ -1086,6 +1086,11 @@ Recent reconstruction notes:
   `AgentResolvedCharacter` and `AgentAuthorizationResult`; BotOwnershipService
   remains the temporary DB-backed compatibility service, while callers no
   longer depend on bot-package nested ownership result records.
+- Fidget mode and trigger state now use `AgentFidgetMode` and
+  `AgentFidgetTrigger` under the Agent movement fidget capability; BotEntry and
+  BotFidgetManager preserve the same NONE/WAIT/JUMP/DIAGONAL_JUMP/PRONE/
+  SPAM_PRONE/SPAM_SIDEWAYS and NONE/AUTO_FOLLOW/IDLE/SOCIAL behavior while the
+  enum ownership moves out of `server.bots`.
 
 Initial reconstruction order:
 

@@ -3,6 +3,8 @@ package server.bots;
 import client.Character;
 import constants.game.CharacterStance;
 import org.junit.jupiter.api.Test;
+import server.agents.capabilities.movement.fidget.AgentFidgetMode;
+import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.life.Monster;
 import server.maps.Foothold;
@@ -653,7 +655,7 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
         entry.movementProfile = new BotMovementProfile(140, 100);
-        BotFidgetManager.startFidget(entry, BotFidgetMode.PRONE, System.currentTimeMillis(), 3000);
+        BotFidgetManager.startFidget(entry, AgentFidgetMode.PRONE, System.currentTimeMillis(), 3000);
 
         assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         assertTrue(entry.crouching);
@@ -670,7 +672,7 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
         entry.facingDir = -1;
-        BotFidgetManager.startFidget(entry, BotFidgetMode.PRONE, System.currentTimeMillis(), 3000);
+        BotFidgetManager.startFidget(entry, AgentFidgetMode.PRONE, System.currentTimeMillis(), 3000);
 
         assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         assertEquals(-1, entry.facingDir, "prone fidget should keep the current facing direction");
@@ -680,7 +682,7 @@ class BotMovementManagerTest {
         BotFidgetManager.clear(entry);
         entry.facingDir = -1;
         entry.crouching = false;
-        BotFidgetManager.startFidget(entry, BotFidgetMode.SPAM_PRONE, System.currentTimeMillis(), 3000);
+        BotFidgetManager.startFidget(entry, AgentFidgetMode.SPAM_PRONE, System.currentTimeMillis(), 3000);
 
         assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         assertEquals(-1, entry.facingDir, "spam-prone fidget should not synthesize a turn input");
@@ -699,7 +701,7 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
         entry.movementProfile = new BotMovementProfile(100, 100);
-        BotFidgetManager.startFidget(entry, BotFidgetMode.PRONE, System.currentTimeMillis(), 3000, BotFidgetTrigger.SOCIAL);
+        BotFidgetManager.startFidget(entry, AgentFidgetMode.PRONE, System.currentTimeMillis(), 3000, AgentFidgetTrigger.SOCIAL);
 
         assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         assertTrue(entry.crouching);
@@ -716,7 +718,7 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
         entry.movementProfile = new BotMovementProfile(100, 100);
-        BotFidgetManager.startFidget(entry, BotFidgetMode.PRONE, System.currentTimeMillis(), 3000, BotFidgetTrigger.AUTO_FOLLOW);
+        BotFidgetManager.startFidget(entry, AgentFidgetMode.PRONE, System.currentTimeMillis(), 3000, AgentFidgetTrigger.AUTO_FOLLOW);
 
         assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         assertTrue(entry.crouching, "base-speed follow fidgets should not be blocked by a speed-stat guard");
@@ -733,7 +735,7 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
         entry.movementProfile = new BotMovementProfile(140, 100);
-        BotFidgetManager.startFidget(entry, BotFidgetMode.DIAGONAL_JUMP, System.currentTimeMillis(), 3000);
+        BotFidgetManager.startFidget(entry, AgentFidgetMode.DIAGONAL_JUMP, System.currentTimeMillis(), 3000);
 
         assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         int firstJumpVelX = entry.airVelX;
@@ -758,14 +760,14 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
         entry.movementProfile = new BotMovementProfile(140, 100);
-        BotFidgetManager.startFidget(entry, BotFidgetMode.JUMP, System.currentTimeMillis(), 3000);
+        BotFidgetManager.startFidget(entry, AgentFidgetMode.JUMP, System.currentTimeMillis(), 3000);
 
         assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         assertTrue(entry.inAir);
 
         bot.setPosition(new Point(100, 0));
         assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(BotFidgetMode.JUMP, entry.fidgetMode,
+        assertEquals(AgentFidgetMode.JUMP, entry.fidgetMode,
                 "jump fidgets should not clear themselves while airborne above the ground target");
     }
 
@@ -780,7 +782,7 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
         entry.movementProfile = new BotMovementProfile(140, 100);
-        BotFidgetManager.startFidget(entry, BotFidgetMode.JUMP, System.currentTimeMillis(), 3000);
+        BotFidgetManager.startFidget(entry, AgentFidgetMode.JUMP, System.currentTimeMillis(), 3000);
 
         assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
         assertTrue(entry.inAir);
@@ -804,7 +806,7 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
         entry.movementProfile = new BotMovementProfile(140, 100);
-        BotFidgetManager.startFidget(entry, BotFidgetMode.JUMP, System.currentTimeMillis(), 3000);
+        BotFidgetManager.startFidget(entry, AgentFidgetMode.JUMP, System.currentTimeMillis(), 3000);
         BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true);
 
         entry.fidgetSpamAirSteer = false;
@@ -841,13 +843,13 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
         entry.movementProfile = new BotMovementProfile(140, 100);
-        BotFidgetManager.startFidget(entry, BotFidgetMode.SPAM_SIDEWAYS, System.currentTimeMillis(), 3000);
+        BotFidgetManager.startFidget(entry, AgentFidgetMode.SPAM_SIDEWAYS, System.currentTimeMillis(), 3000);
         assertTrue(entry.fidgetActionBaseDelayMs >= 100 && entry.fidgetActionBaseDelayMs <= 250);
         assertEquals(0, entry.fidgetActionBaseDelayMs % BotPhysicsEngine.cfg.TICK_MS);
 
         long before = System.currentTimeMillis();
         assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(BotFidgetMode.SPAM_SIDEWAYS, entry.fidgetMode);
+        assertEquals(AgentFidgetMode.SPAM_SIDEWAYS, entry.fidgetMode);
         assertTrue(entry.fidgetMoveDir != 0, "sideway spam should keep an active sideways fidget direction");
         assertTrue(bot.getPosition().x != 100, "sideway spam should cause sideways motion during the tick");
         long after = System.currentTimeMillis();
@@ -865,12 +867,12 @@ class BotMovementManagerTest {
         entry.following = true;
         entry.movementProfile = new BotMovementProfile(140, 100);
         long now = System.currentTimeMillis();
-        BotFidgetManager.startFidget(entry, BotFidgetMode.SPAM_SIDEWAYS, now, 2000);
+        BotFidgetManager.startFidget(entry, AgentFidgetMode.SPAM_SIDEWAYS, now, 2000);
         bot.setPosition(new Point(130, 100));
         entry.fidgetUntilMs = now - 1;
 
         assertFalse(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(BotFidgetMode.NONE, entry.fidgetMode);
+        assertEquals(AgentFidgetMode.NONE, entry.fidgetMode);
         assertNull(entry.moveTarget, "speed-mismatch follow fidgets should resume following immediately");
         assertFalse(entry.moveTargetPrecise);
     }
@@ -883,7 +885,7 @@ class BotMovementManagerTest {
         entry.following = true;
         entry.movementProfile = new BotMovementProfile(140, 100);
         long now = System.currentTimeMillis();
-        BotFidgetManager.startFidget(entry, BotFidgetMode.SPAM_SIDEWAYS, now, 2000, BotFidgetTrigger.SOCIAL);
+        BotFidgetManager.startFidget(entry, AgentFidgetMode.SPAM_SIDEWAYS, now, 2000, AgentFidgetTrigger.SOCIAL);
         bot.setPosition(new Point(130, 100));
         entry.fidgetUntilMs = now - 1;
 
@@ -895,7 +897,7 @@ class BotMovementManagerTest {
         entry.moveTarget = null;
         entry.moveTargetPrecise = false;
         bot.setPosition(new Point(130, 100));
-        BotFidgetManager.startFidget(entry, BotFidgetMode.SPAM_SIDEWAYS, now, 2000, BotFidgetTrigger.IDLE);
+        BotFidgetManager.startFidget(entry, AgentFidgetMode.SPAM_SIDEWAYS, now, 2000, AgentFidgetTrigger.IDLE);
         bot.setPosition(new Point(160, 100));
         entry.fidgetUntilMs = now - 1;
 

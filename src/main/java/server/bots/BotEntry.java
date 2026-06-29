@@ -9,6 +9,8 @@ import server.maps.MapItem;
 import server.maps.Rope;
 import server.agents.commands.AgentQueuedMessage;
 import server.agents.commands.AgentReplyChannel;
+import server.agents.capabilities.movement.fidget.AgentFidgetMode;
+import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 
 import java.awt.*;
 import java.util.ArrayDeque;
@@ -1621,8 +1623,8 @@ public class BotEntry {
         this.observedOwnerStepX = stepX;
         this.observedOwnerStepY = stepY;
     }
-    BotFidgetMode fidgetMode = BotFidgetMode.NONE;
-    BotFidgetTrigger fidgetTrigger = BotFidgetTrigger.NONE;
+    AgentFidgetMode fidgetMode = AgentFidgetMode.NONE;
+    AgentFidgetTrigger fidgetTrigger = AgentFidgetTrigger.NONE;
     long fidgetUntilMs = 0L;
     long nextFidgetActionAtMs = 0L;
     long nextFidgetAtMs = 0L;
@@ -1638,15 +1640,15 @@ public class BotEntry {
     private long nextGearSuggestionAt = 0L;
     private boolean spawnUpgradeCheckDone = false;
 
-    public BotFidgetMode fidgetMode() {
+    public AgentFidgetMode fidgetMode() {
         return fidgetMode;
     }
 
     public boolean hasActiveFidgetMode() {
-        return fidgetMode != BotFidgetMode.NONE;
+        return fidgetMode != AgentFidgetMode.NONE;
     }
 
-    public BotFidgetTrigger fidgetTrigger() {
+    public AgentFidgetTrigger fidgetTrigger() {
         return fidgetTrigger;
     }
 
@@ -1707,8 +1709,8 @@ public class BotEntry {
     }
 
     public void clearFidgetState() {
-        fidgetMode = BotFidgetMode.NONE;
-        fidgetTrigger = BotFidgetTrigger.NONE;
+        fidgetMode = AgentFidgetMode.NONE;
+        fidgetTrigger = AgentFidgetTrigger.NONE;
         fidgetUntilMs = 0L;
         nextFidgetActionAtMs = 0L;
         fidgetAirSteerDir = 0;
@@ -1721,8 +1723,8 @@ public class BotEntry {
         nextFidgetVisualAtMs = 0L;
     }
 
-    public void startFidgetState(BotFidgetMode mode,
-                                 BotFidgetTrigger trigger,
+    public void startFidgetState(AgentFidgetMode mode,
+                                 AgentFidgetTrigger trigger,
                                  long untilMs,
                                  long nowMs,
                                  int airSteerDir,

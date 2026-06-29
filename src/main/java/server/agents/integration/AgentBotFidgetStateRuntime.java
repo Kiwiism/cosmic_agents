@@ -1,8 +1,8 @@
 package server.agents.integration;
 
+import server.agents.capabilities.movement.fidget.AgentFidgetMode;
+import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 import server.bots.BotEntry;
-import server.bots.BotFidgetMode;
-import server.bots.BotFidgetTrigger;
 
 import java.awt.Point;
 
@@ -13,16 +13,16 @@ public final class AgentBotFidgetStateRuntime {
     private AgentBotFidgetStateRuntime() {
     }
 
-    public static BotFidgetMode mode(BotEntry entry) {
+    public static AgentFidgetMode mode(BotEntry entry) {
         return entry.fidgetMode();
     }
 
-    public static boolean modeIs(BotEntry entry, BotFidgetMode mode) {
+    public static boolean modeIs(BotEntry entry, AgentFidgetMode mode) {
         return entry.fidgetMode() == mode;
     }
 
-    public static boolean modeIsAny(BotEntry entry, BotFidgetMode first, BotFidgetMode second) {
-        BotFidgetMode mode = entry.fidgetMode();
+    public static boolean modeIsAny(BotEntry entry, AgentFidgetMode first, AgentFidgetMode second) {
+        AgentFidgetMode mode = entry.fidgetMode();
         return mode == first || mode == second;
     }
 
@@ -34,7 +34,7 @@ public final class AgentBotFidgetStateRuntime {
         return !active(entry);
     }
 
-    public static BotFidgetTrigger trigger(BotEntry entry) {
+    public static AgentFidgetTrigger trigger(BotEntry entry) {
         return entry.fidgetTrigger();
     }
 
@@ -135,8 +135,8 @@ public final class AgentBotFidgetStateRuntime {
     }
 
     public static void start(BotEntry entry,
-                             BotFidgetMode mode,
-                             BotFidgetTrigger trigger,
+                             AgentFidgetMode mode,
+                             AgentFidgetTrigger trigger,
                              long untilMs,
                              long nowMs,
                              int airSteerDir,

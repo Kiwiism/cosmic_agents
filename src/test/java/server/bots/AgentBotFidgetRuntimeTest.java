@@ -2,6 +2,7 @@ package server.bots;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.capabilities.movement.fidget.AgentFidgetMode;
 import server.agents.integration.AgentBotChatStatusRuntime;
 import server.agents.integration.AgentBotFidgetRuntime;
 
@@ -28,7 +29,7 @@ class AgentBotFidgetRuntimeTest {
 
         assertFalse(AgentBotFidgetRuntime.hasActiveFidgetMode(entry));
 
-        entry.fidgetMode = BotFidgetMode.PRONE;
+        entry.fidgetMode = AgentFidgetMode.PRONE;
 
         assertTrue(AgentBotFidgetRuntime.hasActiveFidgetMode(entry));
     }

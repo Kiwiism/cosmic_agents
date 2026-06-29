@@ -7,6 +7,8 @@ import client.Job;
 import client.inventory.Inventory;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
+import server.agents.capabilities.movement.fidget.AgentFidgetMode;
+import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 import server.agents.integration.AgentBotChatReportRuntime;
 import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotBuffStateRuntime;
@@ -178,13 +180,13 @@ class BotChatManagerTest {
         entry.following = true;
 
         assertTrue(BotFidgetManager.maybeStartGreetingFidget(entry, 0));
-        assertFalse(entry.fidgetMode == BotFidgetMode.NONE);
-        assertEquals(BotFidgetTrigger.SOCIAL, entry.fidgetTrigger);
+        assertFalse(entry.fidgetMode == AgentFidgetMode.NONE);
+        assertEquals(AgentFidgetTrigger.SOCIAL, entry.fidgetTrigger);
 
         BotFidgetManager.clear(entry);
 
         assertFalse(BotFidgetManager.maybeStartGreetingFidget(entry, 99));
-        assertEquals(BotFidgetMode.NONE, entry.fidgetMode);
+        assertEquals(AgentFidgetMode.NONE, entry.fidgetMode);
     }
 
     @Test
@@ -200,8 +202,8 @@ class BotChatManagerTest {
         }
 
         assertTrue(BotFidgetManager.maybeStartSocialFidget(entry));
-        assertFalse(entry.fidgetMode == BotFidgetMode.NONE);
-        assertEquals(BotFidgetTrigger.SOCIAL, entry.fidgetTrigger);
+        assertFalse(entry.fidgetMode == AgentFidgetMode.NONE);
+        assertEquals(AgentFidgetTrigger.SOCIAL, entry.fidgetTrigger);
     }
 
     @Test
@@ -229,7 +231,7 @@ class BotChatManagerTest {
         AgentBotActivityStateRuntime.setOwnerWasAfk(entry, true);
 
         assertFalse(BotFidgetManager.maybeStartGreetingFidget(entry, 0));
-        assertEquals(BotFidgetMode.NONE, entry.fidgetMode);
+        assertEquals(AgentFidgetMode.NONE, entry.fidgetMode);
     }
 
     @Test
