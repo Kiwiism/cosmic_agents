@@ -9,9 +9,11 @@ import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
+import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentBotShopStateRuntime;
 import server.maps.MapleMap;
 import server.maps.Foothold;
 import server.maps.Portal;
@@ -722,7 +724,7 @@ final class BotNavigationManager {
 
         BotPhysicsEngine.WalkOffLanding liveOutcome = BotPhysicsEngine.simulateWalkOffLanding(
                 AgentBotRuntimeIdentityRuntime.botMap(entry), botPos, Integer.signum(edge.launchStepX),
-                new BotPhysicsEngine.GroundTravelState(entry.physX, entry.hspeed, entry.groundPhysicsCarryMs),
+                (BotPhysicsEngine.GroundTravelState) AgentBotMovementPhysicsStateRuntime.groundTravelState(entry),
                 AgentBotMovementStateRuntime.movementProfile(entry));
         if (matchesDirectionalDrop(edge, graph, liveOutcome)) {
             // Like rope top step-offs, once the continuous-control exit is naturally executable
@@ -1495,7 +1497,7 @@ final class BotNavigationManager {
         if (AgentBotModeStateRuntime.following(entry)
                 && !AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)
                 && !AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry)
-                && !entry.shopVisitPending
+                && !AgentBotShopStateRuntime.shopVisitPending(entry)
                 && !AgentBotModeStateRuntime.grinding(entry)
                 && followAnchor != null
                 && followAnchor.getMap() == map) {

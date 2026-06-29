@@ -757,6 +757,11 @@ Recent reconstruction notes:
   current-region resolution, and follow-anchor handling keep BotEntry as the
   temporary backing store but no longer read `entry.bot` or `entry.owner`
   directly in production.
+- Remaining BotNavigationManager state reads now enter through
+  `AgentBotMovementPhysicsStateRuntime` and `AgentBotShopStateRuntime`;
+  directional-drop live landing simulation and follow-rope region targeting keep
+  BotEntry as the temporary backing store but no longer read `physX`, `hspeed`,
+  `groundPhysicsCarryMs`, or `shopVisitPending` directly in production.
 - Combat animation/cooldown and alert-reset state now enters through
   `AgentBotCombatCooldownStateRuntime`; BotCombatManager attack cooldown,
   movement-window, alerted-stance timeout, and alert-reset scheduling keep

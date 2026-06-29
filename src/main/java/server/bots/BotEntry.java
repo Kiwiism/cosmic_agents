@@ -83,6 +83,10 @@ public class BotEntry {
         return inAir;
     }
 
+    public Object groundTravelState() {
+        return new BotPhysicsEngine.GroundTravelState(physX, hspeed, groundPhysicsCarryMs);
+    }
+
     public int jumpCooldownMs() {
         return jumpCooldownMs;
     }

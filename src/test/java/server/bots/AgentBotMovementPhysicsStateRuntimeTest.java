@@ -41,4 +41,19 @@ class AgentBotMovementPhysicsStateRuntimeTest {
         AgentBotMovementPhysicsStateRuntime.setLastGroundFhId(entry, 12345);
         assertEquals(12345, AgentBotMovementPhysicsStateRuntime.lastGroundFhId(entry));
     }
+
+    @Test
+    void groundTravelStateCopiesCurrentPhysicsValuesThroughAgentBoundary() {
+        BotEntry entry = new BotEntry(null, null, null);
+        entry.physX = 12.5;
+        entry.hspeed = 3.25;
+        entry.groundPhysicsCarryMs = 8.0;
+
+        BotPhysicsEngine.GroundTravelState state =
+                (BotPhysicsEngine.GroundTravelState) AgentBotMovementPhysicsStateRuntime.groundTravelState(entry);
+
+        assertEquals(12.5, state.physX());
+        assertEquals(3.25, state.hspeed());
+        assertEquals(8.0, state.carryMs());
+    }
 }

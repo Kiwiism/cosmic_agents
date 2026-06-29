@@ -36,4 +36,8 @@ public final class AgentBotMovementPhysicsStateRuntime {
     public static void setLastGroundFhId(BotEntry entry, int footholdId) {
         entry.setLastGroundFhId(footholdId);
     }
+
+    public static Object groundTravelState(BotEntry entry) {
+        return entry.groundTravelState();
+    }
 }
