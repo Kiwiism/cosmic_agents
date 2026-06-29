@@ -18,6 +18,7 @@ import server.agents.capabilities.combat.AgentCombatSkillUsePolicy;
 import server.agents.capabilities.combat.AgentCombatSupportPolicy;
 import server.agents.capabilities.combat.AgentCombatTargetEligibilityPolicy;
 import server.agents.capabilities.combat.AgentMobTouchPolicy;
+import server.agents.capabilities.combat.AgentMobKnockbackPolicy;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
 
 import server.agents.runtime.AgentPerformanceMonitor;
@@ -315,17 +316,11 @@ public class BotCombatManager {
     }
 
     private static boolean shouldApplyMobKnockback(BotEntry entry, Character bot) {
-        if (AgentBotMovementStateRuntime.climbing(entry) || bot.getHp() <= 0) {
-            return false;
-        }
-
-        Integer stancePercent = bot.getBuffedValue(BuffStat.STANCE);
-        if (stancePercent == null || stancePercent <= 0) {
-            return true;
-        }
-
-        float stanceChance = Math.max(0f, Math.min(1f, stancePercent / 100f));
-        return ThreadLocalRandom.current().nextFloat() > stanceChance;
+        return AgentMobKnockbackPolicy.shouldApplyMobKnockback(
+                AgentBotMovementStateRuntime.climbing(entry),
+                bot.getHp(),
+                bot.getBuffedValue(BuffStat.STANCE),
+                ThreadLocalRandom.current().nextFloat());
     }
 
     private static MobHitKnockback resolveMobHitKnockback(Point botPos, Point attackOrigin) {
