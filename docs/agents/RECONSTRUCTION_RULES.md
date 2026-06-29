@@ -1400,6 +1400,10 @@ Recent reconstruction notes:
   now live in `AgentDialogueCatalog`; BotShopManager preserves the same shop
   state, item-name resolution, comma-count formatting, delayed step handling,
   and map/reply delivery behavior through compatibility delegates.
+- Shop approach Manhattan distance and foothold candidate generation now live in
+  `AgentShopApproachPolicy`; BotShopManager preserves the same NPC approach
+  radius, graph reachability filtering, random candidate choice, and shop
+  sequence timing through compatibility delegates.
 - Fixed inventory trade preflight, recipient-missing, item-missing, cancel,
   decline, timeout, meso-validation, equipped-item preparation, and named-item
   missing replies now live in `AgentDialogueCatalog`; BotInventoryManager

@@ -3,6 +3,7 @@ package server.bots;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
+import server.agents.capabilities.shop.AgentShopApproachPolicy;
 
 import client.Character;
 import client.inventory.InventoryType;
@@ -25,7 +26,6 @@ import server.ShopFactory;
 import server.ShopItem;
 import server.StatEffect;
 import server.life.NPC;
-import server.maps.Foothold;
 import server.maps.MapObject;
 import server.maps.MapObjectType;
 
@@ -187,7 +187,7 @@ public final class BotShopManager {
     }
 
     private static int manhattan(Point a, Point b) {
-        return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+        return AgentShopApproachPolicy.manhattan(a, b);
     }
 
     private static NpcShopMatch findBestShop(Character bot, boolean allowAnyShop) {
@@ -759,24 +759,8 @@ public final class BotShopManager {
         if (footholds == null) {
             return npcPos;
         }
-        List<Point> candidates = new ArrayList<>();
-        for (Foothold fh : footholds.getAllFootholds()) {
-            int fx1 = fh.getX1(), fy1 = fh.getY1();
-            int fx2 = fh.getX2(), fy2 = fh.getY2();
-            if (fx1 == fx2) {
-                continue; // wall foothold
-            }
-            int xMin = Math.min(fx1, fx2);
-            int xMax = Math.max(fx1, fx2);
-            int step = Math.max(1, (xMax - xMin) / 20);
-            for (int x = xMin; x <= xMax; x += step) {
-                double t = (double) (x - fx1) / (fx2 - fx1);
-                int y = (int) (fy1 + t * (fy2 - fy1));
-                if (Math.abs(x - npcPos.x) + Math.abs(y - npcPos.y) <= SHOP_MANHATTAN_RADIUS) {
-                    candidates.add(new Point(x, y));
-                }
-            }
-        }
+        List<Point> candidates = AgentShopApproachPolicy.footholdCandidatesNear(
+                npcPos, footholds.getAllFootholds(), SHOP_MANHATTAN_RADIUS);
         if (candidates.isEmpty()) {
             return npcPos;
         }
