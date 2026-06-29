@@ -3,6 +3,7 @@ package server.bots;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
+import server.agents.capabilities.shop.AgentShopAmmoPolicy;
 import server.agents.capabilities.shop.AgentShopApproachPolicy;
 
 import client.Character;
@@ -417,18 +418,15 @@ public final class BotShopManager {
     }
 
     private static boolean needsAmmo(Character bot, WeaponType wt) {
-        if (wt == null) {
-            return false;
-        }
-        return wt == WeaponType.BOW || wt == WeaponType.CROSSBOW;
+        return AgentShopAmmoPolicy.needsFixedAmmoWeapon(wt);
     }
 
     private static int ammoTriggerThreshold() {
-        return BotCombatManager.cfg.AMMO_LOW_WARN * AMMO_TRIGGER_THRESHOLD;
+        return AgentShopAmmoPolicy.triggerThreshold(BotCombatManager.cfg.AMMO_LOW_WARN, AMMO_TRIGGER_THRESHOLD);
     }
 
     private static int ammoTargetThreshold() {
-        return BotCombatManager.cfg.AMMO_LOW_WARN * AMMO_TARGET_THRESHOLD;
+        return AgentShopAmmoPolicy.targetThreshold(BotCombatManager.cfg.AMMO_LOW_WARN, AMMO_TARGET_THRESHOLD);
     }
 
     private static boolean needsFixedAmmoForShop(Character bot, Shop shop, WeaponType wt, int threshold) {
@@ -443,26 +441,12 @@ public final class BotShopManager {
     // Keying on the best item means a pile of weaker stars can't mask a depleted good stack,
     // and the partial-stack check stops pointless trips/silent no-ops when nothing is refillable.
     private static boolean needsRechargeForShop(Character bot, WeaponType wt, int threshold) {
-        if (!isRechargeWeaponType(wt)) {
-            return false;
-        }
-        int bestId = bestRechargeAmmoId(bot, wt);
-        if (bestId < 0) {
-            return false;
-        }
-        short slotMax = ammoSlotMax.slotMax(bot, bestId);
-        int count = 0;
-        boolean refillable = false;
-        for (Item item : bot.getInventory(InventoryType.USE).list()) {
-            if (item.getItemId() != bestId) {
-                continue;
-            }
-            count += item.getQuantity();
-            if (item.getQuantity() < slotMax) {
-                refillable = true;
-            }
-        }
-        return refillable && count < threshold;
+        return AgentShopAmmoPolicy.needsRecharge(
+                bot.getInventory(InventoryType.USE).list(),
+                wt,
+                threshold,
+                projectileWatk,
+                itemId -> ammoSlotMax.slotMax(bot, itemId));
     }
 
     static boolean shouldRechargeWhileShopping(Character bot, WeaponType wt) {
@@ -470,11 +454,11 @@ public final class BotShopManager {
     }
 
     static boolean shouldBuyFixedAmmoWhileShopping(Character bot, WeaponType wt) {
-        return needsAmmo(bot, wt) && BotCombatManager.countAmmo(bot, wt) < ammoTargetThreshold();
+        return AgentShopAmmoPolicy.shouldBuyFixedAmmo(wt, BotCombatManager.countAmmo(bot, wt), ammoTargetThreshold());
     }
 
     private static boolean isRechargeWeaponType(WeaponType wt) {
-        return wt == WeaponType.CLAW || wt == WeaponType.GUN;
+        return AgentShopAmmoPolicy.isRechargeWeaponType(wt);
     }
 
     private static ShopSlotItem findAmmoItem(Shop shop, WeaponType wt) {
@@ -510,28 +494,11 @@ public final class BotShopManager {
     }
 
     private static int bestRechargeAmmoId(Character bot, WeaponType wt) {
-        int bestId = -1;
-        int bestAtk = -1;
-        for (Item item : bot.getInventory(InventoryType.USE).list()) {
-            int id = item.getItemId();
-            if (!ItemConstants.isRechargeable(id) || !matchesRechargeWeapon(id, wt)) {
-                continue;
-            }
-            int atk = projectileWatk.applyAsInt(id);
-            if (atk > bestAtk) {
-                bestAtk = atk;
-                bestId = id;
-            }
-        }
-        return bestId;
+        return AgentShopAmmoPolicy.bestRechargeAmmoId(bot.getInventory(InventoryType.USE).list(), wt, projectileWatk);
     }
 
     private static boolean matchesRechargeWeapon(int itemId, WeaponType wt) {
-        return switch (wt) {
-            case CLAW -> ItemConstants.isThrowingStar(itemId);
-            case GUN -> ItemConstants.isBullet(itemId);
-            default -> false;
-        };
+        return AgentShopAmmoPolicy.matchesRechargeWeapon(itemId, wt);
     }
 
     private static AgentBotShopBuyReport doRecharge(Character bot, Shop shop, WeaponType wt) {

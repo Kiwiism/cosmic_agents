@@ -1404,6 +1404,10 @@ Recent reconstruction notes:
   `AgentShopApproachPolicy`; BotShopManager preserves the same NPC approach
   radius, graph reachability filtering, random candidate choice, and shop
   sequence timing through compatibility delegates.
+- Shop fixed-ammo and rechargeable-ammo resupply policy now lives in
+  `AgentShopAmmoPolicy`; BotShopManager preserves the same low-ammo
+  thresholds, projectile attack ranking, slot-max lookup, shop item selection,
+  and purchase/recharge side effects through compatibility delegates.
 - Fixed inventory trade preflight, recipient-missing, item-missing, cancel,
   decline, timeout, meso-validation, equipped-item preparation, and named-item
   missing replies now live in `AgentDialogueCatalog`; BotInventoryManager
