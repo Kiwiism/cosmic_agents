@@ -2,8 +2,11 @@ package server.bots;
 
 import client.Character;
 import constants.game.CharacterStance;
+import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentBotSwimStateRuntime;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Rope;
@@ -1319,7 +1322,10 @@ public final class BotPhysicsEngine {
         // logical stance (STAND/WALK/etc.); only the wire byte gets ALERT when the alert timer
         // is active. Mirrors maplestory-wasm CharLook.cpp substituting Stance::ALERT for STAND1/2
         // while TimedBool alerted is set_for(5000).
-        return new MovementSnapshot(entry.movementVelX, entry.movementVelY, broadcastStance(entry, stance));
+        return new MovementSnapshot(
+                AgentBotMovementStateRuntime.movementVelocityX(entry),
+                AgentBotMovementStateRuntime.movementVelocityY(entry),
+                broadcastStance(entry, stance));
     }
 
     private static int broadcastStance(BotEntry entry, int baseStance) {
@@ -1340,35 +1346,46 @@ public final class BotPhysicsEngine {
         if (bot != null && bot.getHp() <= 0) {
             return resolveDeadStance(entry);
         }
-        if (entry.climbing) {
-            return entry.climbRope != null && entry.climbRope.isLadder()
+        if (AgentBotClimbStateRuntime.climbing(entry)) {
+            Rope rope = AgentBotClimbStateRuntime.climbRope(entry);
+            return rope != null && rope.isLadder()
                     ? CharacterStance.LADDER_STANCE
                     : CharacterStance.ROPE_STANCE;
         }
-        if (entry.swimming) {
-            return entry.facingDir >= 0 ? CharacterStance.SWIM_RIGHT_STANCE : CharacterStance.SWIM_LEFT_STANCE;
+        if (AgentBotSwimStateRuntime.swimming(entry)) {
+            return AgentBotMovementStateRuntime.facingDirectionSign(entry) >= 0
+                    ? CharacterStance.SWIM_RIGHT_STANCE
+                    : CharacterStance.SWIM_LEFT_STANCE;
         }
-        if (entry.crouching) {
-            return entry.facingDir >= 0 ? CharacterStance.PRONE_RIGHT_STANCE : CharacterStance.PRONE_LEFT_STANCE;
+        if (AgentBotMovementStateRuntime.crouching(entry)) {
+            return AgentBotMovementStateRuntime.facingDirectionSign(entry) >= 0
+                    ? CharacterStance.PRONE_RIGHT_STANCE
+                    : CharacterStance.PRONE_LEFT_STANCE;
         }
-        if (entry.inAir) {
-            return entry.facingDir >= 0 ? CharacterStance.JUMP_RIGHT_STANCE : CharacterStance.JUMP_LEFT_STANCE;
+        if (AgentBotMovementStateRuntime.inAir(entry)) {
+            return AgentBotMovementStateRuntime.facingDirectionSign(entry) >= 0
+                    ? CharacterStance.JUMP_RIGHT_STANCE
+                    : CharacterStance.JUMP_LEFT_STANCE;
         }
-        if (entry.moveDir > 0) {
+        if (AgentBotMovementStateRuntime.moveDirection(entry) > 0) {
             return CharacterStance.WALK_RIGHT_STANCE;
         }
-        if (entry.moveDir < 0) {
+        if (AgentBotMovementStateRuntime.moveDirection(entry) < 0) {
             return CharacterStance.WALK_LEFT_STANCE;
         }
         return resolveIdleGroundStance(entry);
     }
 
     static int resolveIdleGroundStance(BotEntry entry) {
-        return entry.facingDir >= 0 ? CharacterStance.STAND_RIGHT_STANCE : CharacterStance.STAND_LEFT_STANCE;
+        return AgentBotMovementStateRuntime.facingDirectionSign(entry) >= 0
+                ? CharacterStance.STAND_RIGHT_STANCE
+                : CharacterStance.STAND_LEFT_STANCE;
     }
 
     static int resolveDeadStance(BotEntry entry) {
-        return entry.facingDir >= 0 ? CharacterStance.DEAD_RIGHT_STANCE : CharacterStance.DEAD_LEFT_STANCE;
+        return AgentBotMovementStateRuntime.facingDirectionSign(entry) >= 0
+                ? CharacterStance.DEAD_RIGHT_STANCE
+                : CharacterStance.DEAD_LEFT_STANCE;
     }
 
     static boolean isStandingStance(int stance) {

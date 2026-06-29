@@ -135,6 +135,11 @@ Recent reconstruction notes:
   stance resolution, movement snapshots, or character-state synchronization,
   while the same BotEntry-backed character reference and movement behavior are
   preserved.
+- Bot physics stance and movement-snapshot reads now enter through
+  `AgentBotMovementStateRuntime`, `AgentBotClimbStateRuntime`, and
+  `AgentBotSwimStateRuntime`; `BotPhysicsEngine` still owns the legacy physics
+  calculations, but stance selection no longer directly reads BotEntry movement,
+  climb, or swim fields.
 - Combat alert reset callbacks now enter through `AgentBotCombatRuntime`;
   `BotCombatManager` no longer reaches directly into the lower-level scheduler
   runtime for combat-owned alert timing, and alert timing and stance reset
