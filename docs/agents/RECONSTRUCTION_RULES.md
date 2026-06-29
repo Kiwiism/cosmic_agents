@@ -730,6 +730,11 @@ Recent reconstruction notes:
   resolution, queued script ticking, cheap script movement checks, and
   movement-only stepping keep BotEntry as the temporary backing store but no
   longer read `entry.bot` or `entry.owner` directly in production code.
+- BotMovementManager runtime identity reads now enter through
+  `AgentBotRuntimeIdentityRuntime`; movement profile refresh, state reset,
+  climb/air/swim/ground movement, mob-avoidance region checks, ground step
+  resolution, unstuck jumps, and movement broadcast keep BotEntry as the
+  temporary backing store but no longer read `entry.bot` directly in production.
 - Combat animation/cooldown and alert-reset state now enters through
   `AgentBotCombatCooldownStateRuntime`; BotCombatManager attack cooldown,
   movement-window, alerted-stance timeout, and alert-reset scheduling keep

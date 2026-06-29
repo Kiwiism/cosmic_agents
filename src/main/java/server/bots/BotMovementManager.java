@@ -16,6 +16,7 @@ import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSwimStateRuntime;
 import server.bots.combat.BotMobHitboxProvider;
 import server.life.Monster;
@@ -165,12 +166,13 @@ public class BotMovementManager {
     }
 
     static boolean refreshMovementProfile(BotEntry entry) {
-        BotMovementProfile updated = BotMovementProfile.fromCharacter(entry.bot);
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        BotMovementProfile updated = BotMovementProfile.fromCharacter(bot);
         if (updated.equals(AgentBotMovementStateRuntime.movementProfile(entry))) {
             return false;
         }
 
-        MapleMap map = entry.bot != null ? entry.bot.getMap() : null;
+        MapleMap map = bot != null ? bot.getMap() : null;
         if (map != null
                 && map.getFootholds() != null
                 && BotNavigationGraphProvider.peekGraph(map, updated) == null) {
@@ -183,7 +185,7 @@ public class BotMovementManager {
     }
 
     static void resetEntryState(BotEntry entry) {
-        BotPhysicsEngine.resetMotion(entry, entry.bot.getPosition());
+        BotPhysicsEngine.resetMotion(entry, AgentBotRuntimeIdentityRuntime.bot(entry).getPosition());
         clearTransientState(entry);
     }
 
@@ -211,7 +213,7 @@ public class BotMovementManager {
     static void tickClimbing(BotEntry entry, Point targetPos, boolean runAiTick) {
         long startedAt = System.nanoTime();
         try {
-            Character bot = entry.bot;
+            Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
             // Null rope is handled inside advanceClimb/holdClimb — they call beginFall internally.
             BotPhysicsEngine.tickMotionTimers(entry);
             Point botPos = bot.getPosition();
@@ -334,7 +336,7 @@ public class BotMovementManager {
             AgentBotSwimStateRuntime.setSwimming(entry, false);
             BotPhysicsEngine.tickMotionTimers(entry);
 
-            Character bot = entry.bot;
+            Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
             Point botPos = bot.getPosition();
 
             if (successfullyGrabbedRope(entry, bot, botPos)) {
@@ -469,7 +471,7 @@ public class BotMovementManager {
             return;
         }
 
-        Point pos = entry.bot.getPosition();
+        Point pos = AgentBotRuntimeIdentityRuntime.bot(entry).getPosition();
         int dx = targetPos.x - pos.x;
         int dy = targetPos.y - pos.y;
 
@@ -519,7 +521,7 @@ public class BotMovementManager {
         long startedAt = System.nanoTime();
         try {
             AgentBotSwimStateRuntime.setSwimming(entry, false);
-            Character bot = entry.bot;
+            Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
 
             BotPhysicsEngine.tickMotionTimers(entry);
 
@@ -582,14 +584,14 @@ public class BotMovementManager {
             return targetPos;
         }
 
-        MapleMap map = entry.bot.getMap();
+        MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
         BotMovementProfile profile = AgentBotMovementStateRuntime.movementProfile(entry);
         BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map, profile);
         if (graph == null) {
             BotNavigationGraphProvider.warmGraphAsync(map, profile);
             return targetPos;
         }
-        Point botPos = entry.bot.getPosition();
+        Point botPos = AgentBotRuntimeIdentityRuntime.bot(entry).getPosition();
         int currentRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, map, botPos);
         int targetRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, map, targetPos);
         if (currentRegionId < 0 || currentRegionId != targetRegionId) {
@@ -622,9 +624,9 @@ public class BotMovementManager {
         if (stepX == 0) {
             return MoveAction.idle();
         }
-        boolean canWalkStep = BotPhysicsEngine.canWalkGroundStep(entry.bot.getMap(), botPos, stepX);
+        boolean canWalkStep = BotPhysicsEngine.canWalkGroundStep(AgentBotRuntimeIdentityRuntime.botMap(entry), botPos, stepX);
         if (!canWalkStep) {
-            boolean blockedByWall = BotPhysicsEngine.isGroundStepBlockedByWall(entry.bot.getMap(), botPos, stepX);
+            boolean blockedByWall = BotPhysicsEngine.isGroundStepBlockedByWall(AgentBotRuntimeIdentityRuntime.botMap(entry), botPos, stepX);
             if (!blockedByWall
                     && ((directionalDrop && Integer.signum(stepX) == Integer.signum(navEdge.launchStepX))
                     || BotFallbackMovementManager.shouldWalkOffLedge(entry, botPos, targetPos, stepX))) {
@@ -648,7 +650,7 @@ public class BotMovementManager {
     }
 
     private static boolean shouldJumpToAvoidMob(BotEntry entry, Foothold currentFh, Point botPos, int stepX) {
-        if (entry == null || entry.bot == null || currentFh == null || botPos == null || stepX == 0) {
+        if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry) || currentFh == null || botPos == null || stepX == 0) {
             return false;
         }
         if ((!AgentBotModeStateRuntime.following(entry) && !AgentBotModeStateRuntime.grinding(entry))
@@ -666,7 +668,7 @@ public class BotMovementManager {
     }
 
     private static Monster firstBlockingMobInWalkLane(BotEntry entry, Foothold currentFh, Point botPos, int stepX) {
-        MapleMap map = entry.bot.getMap();
+        MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
         int direction = Integer.signum(stepX);
         int lookahead = Math.max(Math.abs(stepX),
                 BotPhysicsEngine.walkStep(map, AgentBotMovementStateRuntime.movementProfile(entry))
@@ -704,26 +706,26 @@ public class BotMovementManager {
     }
 
     private static boolean isMobInCurrentGroundRegion(BotEntry entry, Foothold currentFh, Monster mob) {
-        Foothold mobFoothold = BotPhysicsEngine.findGroundFoothold(entry.bot.getMap(), mob.getPosition());
+        Foothold mobFoothold = BotPhysicsEngine.findGroundFoothold(AgentBotRuntimeIdentityRuntime.botMap(entry), mob.getPosition());
         if (mobFoothold != null && mobFoothold.getId() == currentFh.getId()) {
             return true;
         }
 
         BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(
-                entry.bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
+                AgentBotRuntimeIdentityRuntime.botMap(entry), AgentBotMovementStateRuntime.movementProfile(entry));
         if (graph == null) {
             return false;
         }
 
         int currentRegionId = BotNavigationManager.resolveCurrentRegionId(
-                graph, entry, entry.bot.getMap(), entry.bot.getPosition());
+                graph, entry, AgentBotRuntimeIdentityRuntime.botMap(entry), AgentBotRuntimeIdentityRuntime.bot(entry).getPosition());
         int mobRegionId = BotNavigationManager.resolveTargetRegionId(
-                graph, entry, entry.bot.getMap(), mob.getPosition());
+                graph, entry, AgentBotRuntimeIdentityRuntime.botMap(entry), mob.getPosition());
         return currentRegionId >= 0 && currentRegionId == mobRegionId;
     }
 
     private static boolean simulatedJumpLandsInCurrentRegion(BotEntry entry, Foothold currentFh, Point botPos, int stepX) {
-        MapleMap map = entry.bot.getMap();
+        MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
         BotMovementProfile profile = AgentBotMovementStateRuntime.movementProfile(entry);
         int airVelX = resolveAirVelocityX(map, profile, stepX);
         JumpLanding landing = simulateJumpLanding(map, botPos, airVelX, profile);
@@ -752,18 +754,18 @@ public class BotMovementManager {
     }
 
     static int resolveGroundStepX(BotEntry entry, Point botPos, Point targetPos, int stopDist, int followDist) {
-        if (entry == null || entry.bot == null || botPos == null || targetPos == null) {
+        if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry) || botPos == null || targetPos == null) {
             return 0;
         }
         if (AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)) {
             int localStopDist = Math.min(stopDist, 12);
-            return updateStepX(entry, entry.bot.getMap(), botPos.x, targetPos.x, localStopDist, localStopDist);
+            return updateStepX(entry, AgentBotRuntimeIdentityRuntime.botMap(entry), botPos.x, targetPos.x, localStopDist, localStopDist);
         }
-        return updateStepX(entry, entry.bot.getMap(), botPos.x, targetPos.x, stopDist, followDist);
+        return updateStepX(entry, AgentBotRuntimeIdentityRuntime.botMap(entry), botPos.x, targetPos.x, stopDist, followDist);
     }
 
     private static void applyGroundAction(BotEntry entry, Foothold currentFh, MoveAction action) {
-        Character bot = entry.bot;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         AgentBotMovementStateRuntime.setMoveDirection(entry, switch (action.type()) {
             case WALK, JUMP -> Integer.compare(action.stepX(), 0);
             default -> 0;
@@ -799,18 +801,18 @@ public class BotMovementManager {
         // Otherwise subpixel uphill/transition movement gets zeroed every tick and the bot
         // can stall forever short of a valid launch window.
         if (AgentBotMovementStateRuntime.movementVelocityX(entry) == 0 && action.type() == ActionType.IDLE) {
-            BotPhysicsEngine.idleOnGround(entry, entry.bot);
+            BotPhysicsEngine.idleOnGround(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
         }
         broadcastMovement(entry);
     }
 
     private static void performDownJump(BotEntry entry) {
-        BotPhysicsEngine.beginDownJump(entry, entry.bot);
+        BotPhysicsEngine.beginDownJump(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
         broadcastMovement(entry);
     }
 
     private static void performTopRopeEntry(BotEntry entry) {
-        BotPhysicsEngine.beginTopRopeEntry(entry, entry.bot);
+        BotPhysicsEngine.beginTopRopeEntry(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
         broadcastMovement(entry);
     }
 
@@ -864,7 +866,7 @@ public class BotMovementManager {
      * Clears the nav edge so A* replans on the next AI tick.
      */
     static void tickUnstuck(BotEntry entry) {
-        Character bot = entry.bot;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         int walkStep = BotPhysicsEngine.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         switch (ThreadLocalRandom.current().nextInt(2)) {
             case 0 -> BotPhysicsEngine.beginGroundJump(entry, bot, -walkStep); // jump left
@@ -903,7 +905,7 @@ public class BotMovementManager {
     }
 
     private static void doBroadcastMovement(BotEntry entry) {
-        Character bot = entry.bot;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         int x = bot.getPosition().x;
         int y = bot.getPosition().y;
         BotPhysicsEngine.MovementSnapshot snapshot = BotPhysicsEngine.movementSnapshot(entry);
