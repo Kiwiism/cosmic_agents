@@ -33,4 +33,36 @@ public final class AgentBotPqRuntime {
     public static int kpqStageState(BotEntry entry) {
         return entry.kpq.state;
     }
+
+    public static void setKpqStageState(BotEntry entry, int state) {
+        entry.kpq.state = state;
+    }
+
+    public static boolean kpqStageStateIs(BotEntry entry, int state) {
+        return entry.kpq.state == state;
+    }
+
+    public static boolean kpqStageStateAtLeast(BotEntry entry, int state) {
+        return entry.kpq.state >= state;
+    }
+
+    public static void setKpqCouponTarget(BotEntry entry, int target) {
+        entry.kpq.couponTarget = target;
+    }
+
+    public static int kpqLastReportedCoupons(BotEntry entry) {
+        return entry.kpq.lastReportedCoupons;
+    }
+
+    public static void setKpqLastReportedCoupons(BotEntry entry, int coupons) {
+        entry.kpq.lastReportedCoupons = coupons;
+    }
+
+    public static void resetKpqStage1(BotEntry entry, int idleState) {
+        entry.kpq.state = idleState;
+        entry.kpq.couponTarget = -1;
+        entry.kpq.waitUntilMs = 0;
+        entry.kpq.lastReportedCoupons = 0;
+        AgentBotScriptTaskStateRuntime.resetScript(entry, null);
+    }
 }

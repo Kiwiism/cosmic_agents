@@ -947,6 +947,11 @@ Recent reconstruction notes:
   BotScriptContext and BotScriptRunner preserve script id reset, step entry,
   step advancement, script-local ints, wait timers, and queued-task behavior
   while no longer reading or writing `entry.script` directly in production.
+- KPQ stage-1 state-machine fields now enter through `AgentBotPqRuntime`;
+  BotKpqStage1 preserves stage transitions, coupon target assignment, progress
+  reporting, pass exchange, pass delivery, and reset behavior while no longer
+  reading or writing KPQ or script runtime fields directly on BotEntry in
+  production.
 
 Initial reconstruction order:
 

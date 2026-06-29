@@ -46,18 +46,18 @@ final class BotKpqStage1 {
         private final List<BotScriptStep> steps = List.of(
                 moveToCloto(FIRST_WALK),
                 BotScriptStep.of(ctx -> {
-                    ctx.entry.kpq.state = FIRST_WAIT;
+                    AgentBotPqRuntime.setKpqStageState(ctx.entry, FIRST_WAIT);
                     ctx.queueStop();
                     ctx.waitMs(WAIT_MS);
                 }, null, BotScriptContext::waitDone),
                 BotScriptStep.action(BotKpqStage1::assignCouponTarget),
                 BotScriptStep.of(ctx -> {
-                    ctx.entry.kpq.state = GRINDING;
+                    AgentBotPqRuntime.setKpqStageState(ctx.entry, GRINDING);
                     ctx.queueGrind();
                 }, BotKpqStage1::tickCouponGrinding, BotKpqStage1::hasRequiredCoupons),
                 moveToCloto(SECOND_WALK),
                 BotScriptStep.of(ctx -> {
-                    ctx.entry.kpq.state = SECOND_WAIT;
+                    AgentBotPqRuntime.setKpqStageState(ctx.entry, SECOND_WAIT);
                     ctx.queueStop();
                     ctx.waitMs(WAIT_MS);
                 }, null, BotScriptContext::waitDone),
@@ -65,7 +65,7 @@ final class BotKpqStage1 {
                 BotScriptStep.of(BotKpqStage1::queuePassDelivery, null, BotScriptContext::tasksDone),
                 BotScriptStep.action(ctx -> {
                     AgentBotPqRuntime.queueSay(ctx.entry, "Here's your pass!");
-                    ctx.entry.kpq.state = DONE;
+                    AgentBotPqRuntime.setKpqStageState(ctx.entry, DONE);
                 })
         );
 
@@ -77,12 +77,12 @@ final class BotKpqStage1 {
         @Override
         public boolean applies(BotEntry entry, Character bot, Character owner) {
             if (bot.getMapId() != KPQ_STAGE1_MAP) {
-                if (entry.kpq.state != IDLE) {
+                if (!AgentBotPqRuntime.kpqStageStateIs(entry, IDLE)) {
                     reset(entry);
                 }
                 return false;
             }
-            return entry.kpq.state != DONE;
+            return !AgentBotPqRuntime.kpqStageStateIs(entry, DONE);
         }
 
         @Override
@@ -96,16 +96,17 @@ final class BotKpqStage1 {
     }
 
     static boolean shouldSkipCouponLoot(BotEntry entry) {
-        return entry.kpq.state >= SECOND_WALK;
+        return AgentBotPqRuntime.kpqStageStateAtLeast(entry, SECOND_WALK);
     }
 
     static boolean isNpcLocked(BotEntry entry) {
-        return entry.kpq.state == FIRST_WAIT || entry.kpq.state == SECOND_WAIT;
+        return AgentBotPqRuntime.kpqStageStateIs(entry, FIRST_WAIT)
+                || AgentBotPqRuntime.kpqStageStateIs(entry, SECOND_WAIT);
     }
 
     private static BotScriptStep moveToCloto(int state) {
         return BotScriptStep.of(ctx -> {
-            ctx.entry.kpq.state = state;
+            AgentBotPqRuntime.setKpqStageState(ctx.entry, state);
             queueMoveToCloto(ctx);
         }, BotKpqStage1::tickMoveToCloto, ctx -> {
             Point npcPos = getNpcPos(ctx.bot);
@@ -134,7 +135,7 @@ final class BotKpqStage1 {
             if (eim != null) eim.gridInsert(ctx.bot, question);
         }
         int target = (question < ANSWERS.length) ? ANSWERS[question] : ANSWERS[1];
-        ctx.entry.kpq.couponTarget = target;
+        AgentBotPqRuntime.setKpqCouponTarget(ctx.entry, target);
         if (target >= 25) {
             AgentBotPqRuntime.queueSay(ctx.entry, "I need " + target + ", smh");
         } else {
@@ -144,7 +145,7 @@ final class BotKpqStage1 {
 
     private static void tickCouponGrinding(BotScriptContext ctx) {
         int have = ctx.bot.getItemQuantity(ITEM_COUPON, false);
-        int need = ctx.entry.kpq.couponTarget;
+        int need = AgentBotPqRuntime.kpqCouponTarget(ctx.entry);
 
         if (have > need) {
             ctx.manager.issueDropItem(ctx.entry, InventoryType.ETC, ITEM_COUPON, (short) (have - need));
@@ -152,14 +153,14 @@ final class BotKpqStage1 {
         }
 
         int milestone = (have / 5) * 5;
-        if (milestone > ctx.entry.kpq.lastReportedCoupons) {
-            ctx.entry.kpq.lastReportedCoupons = milestone;
+        if (milestone > AgentBotPqRuntime.kpqLastReportedCoupons(ctx.entry)) {
+            AgentBotPqRuntime.setKpqLastReportedCoupons(ctx.entry, milestone);
             AgentBotPqRuntime.queueSay(ctx.entry, have + " / " + need);
         }
     }
 
     private static boolean hasRequiredCoupons(BotScriptContext ctx) {
-        int need = ctx.entry.kpq.couponTarget;
+        int need = AgentBotPqRuntime.kpqCouponTarget(ctx.entry);
         if (need <= 0 || ctx.bot.getItemQuantity(ITEM_COUPON, false) < need) {
             return false;
         }
@@ -168,7 +169,7 @@ final class BotKpqStage1 {
     }
 
     private static void exchangeCoupons(BotScriptContext ctx) {
-        int target = ctx.entry.kpq.couponTarget;
+        int target = AgentBotPqRuntime.kpqCouponTarget(ctx.entry);
         if (ctx.bot.getItemQuantity(ITEM_COUPON, false) >= target) {
             InventoryManipulator.removeById(ctx.bot.getClient(), InventoryType.ETC, ITEM_COUPON, target, false, false);
             InventoryManipulator.addById(ctx.bot.getClient(), ITEM_PASS, (short) 1);
@@ -179,18 +180,14 @@ final class BotKpqStage1 {
     }
 
     private static void queuePassDelivery(BotScriptContext ctx) {
-        ctx.entry.kpq.state = DELIVERING;
+        AgentBotPqRuntime.setKpqStageState(ctx.entry, DELIVERING);
         ctx.queueFollowUntilNearOwner(NEAR_OWNER_PX);
         ctx.queueDrop(InventoryType.ETC, ITEM_COUPON, (short) 0);
         ctx.queueDrop(InventoryType.ETC, ITEM_PASS, (short) 1);
     }
 
     private static void reset(BotEntry entry) {
-        entry.kpq.state = IDLE;
-        entry.kpq.couponTarget = -1;
-        entry.kpq.waitUntilMs = 0;
-        entry.kpq.lastReportedCoupons = 0;
-        entry.script.reset(null);
+        AgentBotPqRuntime.resetKpqStage1(entry, IDLE);
     }
 
     private static Point getNpcPos(Character bot) {

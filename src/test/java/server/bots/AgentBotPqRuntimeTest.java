@@ -65,4 +65,24 @@ class AgentBotPqRuntimeTest {
 
         assertEquals(2, AgentBotPqRuntime.kpqStageState(entry));
     }
+
+    @Test
+    void adaptsKpqStageOneStateThroughAgentBoundary() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        AgentBotPqRuntime.setKpqStageState(entry, 4);
+        assertEquals(4, AgentBotPqRuntime.kpqStageState(entry));
+        assertTrue(AgentBotPqRuntime.kpqStageStateIs(entry, 4));
+        assertTrue(AgentBotPqRuntime.kpqStageStateAtLeast(entry, 3));
+
+        AgentBotPqRuntime.setKpqCouponTarget(entry, 25);
+        AgentBotPqRuntime.setKpqLastReportedCoupons(entry, 15);
+        assertEquals(25, AgentBotPqRuntime.kpqCouponTarget(entry));
+        assertEquals(15, AgentBotPqRuntime.kpqLastReportedCoupons(entry));
+
+        AgentBotPqRuntime.resetKpqStage1(entry, 0);
+        assertEquals(0, AgentBotPqRuntime.kpqStageState(entry));
+        assertEquals(-1, AgentBotPqRuntime.kpqCouponTarget(entry));
+        assertEquals(0, AgentBotPqRuntime.kpqLastReportedCoupons(entry));
+    }
 }
