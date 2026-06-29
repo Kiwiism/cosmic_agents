@@ -1120,7 +1120,7 @@ public class BotCombatManager {
                 StatEffect fx = skill.getEffect(level);
                 if (fx != null) {
                     singleScore = Math.max(singleScore,
-                            (long) Math.max(0, fx.getDamage()) * effectiveHitCount(fx));
+                            AgentCombatScoringPolicy.bestSingleTargetScore(fx.getDamage(), effectiveHitCount(fx)));
                 }
             }
         }

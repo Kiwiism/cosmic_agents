@@ -1402,6 +1402,9 @@ Recent reconstruction notes:
 - Support-heal tick preflight now lives in `AgentCombatSupportPolicy`; the
   legacy bot runtime still resolves the heal skill/effect, applies HP recovery,
   optionally jump-heals, and emits the captured Heal attack packet shape.
+- The best single-target score floor used for AoE-vs-single-target comparison
+  now lives in `AgentCombatScoringPolicy`; BotCombatManager still resolves the
+  cached skill/effect before passing damage and hit-count inputs.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

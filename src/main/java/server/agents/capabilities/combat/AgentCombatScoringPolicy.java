@@ -125,12 +125,13 @@ public final class AgentCombatScoringPolicy {
                                                     int targetCount,
                                                     int bestSingleTargetDamage,
                                                     int bestSingleTargetHitCount) {
-        long aoeScore = (long) Math.max(0, aoeDamage)
-                * Math.max(1, aoeAttackCount)
-                * Math.max(1, targetCount);
-        long singleScore = Math.max(100L, (long) Math.max(0, bestSingleTargetDamage)
+        return aoeBeatsSingleTargetScore(aoeDamage, aoeAttackCount, targetCount,
+                bestSingleTargetScore(bestSingleTargetDamage, bestSingleTargetHitCount));
+    }
+
+    public static long bestSingleTargetScore(int bestSingleTargetDamage, int bestSingleTargetHitCount) {
+        return Math.max(100L, (long) Math.max(0, bestSingleTargetDamage)
                 * Math.max(1, bestSingleTargetHitCount));
-        return aoeScore > singleScore;
     }
 
     public static boolean aoeBeatsSingleTargetScore(int aoeDamage,

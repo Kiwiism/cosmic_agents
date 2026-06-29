@@ -71,6 +71,9 @@ class AgentCombatScoringPolicyTest {
 
     @Test
     void shouldBuildSingleTargetScoreFromDamageAndHitCountWithBasicAttackFloor() {
+        assertEquals(300L, AgentCombatScoringPolicy.bestSingleTargetScore(150, 2));
+        assertEquals(100L, AgentCombatScoringPolicy.bestSingleTargetScore(0, 9));
+        assertEquals(100L, AgentCombatScoringPolicy.bestSingleTargetScore(-20, 9));
         assertTrue(AgentCombatScoringPolicy.aoeBeatsSingleTargetScore(120, 2, 2, 150, 2));
         assertFalse(AgentCombatScoringPolicy.aoeBeatsSingleTargetScore(80, 1, 1, 0, 1));
     }
