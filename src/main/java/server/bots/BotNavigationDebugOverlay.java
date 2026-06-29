@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.movement.AgentMovementProfile;
+
 import client.Character;
 import client.SkillFactory;
 import constants.skills.Evan;
@@ -47,7 +49,7 @@ public final class BotNavigationDebugOverlay {
         }
 
         OverlayBuilder overlay = new OverlayBuilder(viewer);
-        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(viewer.getMap(), BotMovementProfile.fromCharacter(viewer));
+        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(viewer.getMap(), AgentMovementProfile.fromCharacter(viewer));
         Set<String> drawnEdges = new HashSet<>();
 
         for (BotNavigationGraph.Region region : graph.regions) {
@@ -92,7 +94,7 @@ public final class BotNavigationDebugOverlay {
 
         AgentMovementTargetSnapshot targetSnapshot = AgentBotMovementTargetRuntime.snapshot(entry);
         Point targetPos = targetSnapshot.primaryTargetPosition();
-        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(bot.getMap(), BotMovementProfile.fromCharacter(bot));
+        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(bot.getMap(), AgentMovementProfile.fromCharacter(bot));
         int startRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, bot.getMap(), bot.getPosition());
         int targetRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, bot.getMap(), targetPos);
         List<BotNavigationGraph.Edge> path = startRegionId >= 0 && targetRegionId >= 0 && startRegionId != targetRegionId

@@ -969,6 +969,10 @@ Recent reconstruction notes:
   Agent runtime adapters; BotPhysicsEngine keeps BotEntry as the temporary
   backing store but no longer owns direct runtime field access for these state
   groups.
+- Movement profile ownership moved to `AgentMovementProfile` under the Agent
+  movement capability. The stat bucketing, base profile, forced-base field-limit
+  handling, and physics multipliers are unchanged; legacy bot movement,
+  navigation, combat, and shop code now consume the Agent-owned profile type.
 - Airshow state now enters through `AgentBotAirshowStateRuntime`;
   BotAirshowManager active/trail timing, scripted frame physics fields, bot
   identity lookup, restore checks, and trail foothold reads keep BotEntry as the

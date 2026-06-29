@@ -4,7 +4,7 @@ import client.Character;
 import server.agents.capabilities.movement.AgentMovementMode;
 import server.agents.capabilities.movement.AgentMovementSnapshot;
 import server.bots.BotEntry;
-import server.bots.BotMovementProfile;
+import server.agents.capabilities.movement.AgentMovementProfile;
 
 import java.awt.Point;
 
@@ -51,24 +51,24 @@ public final class AgentBotMovementStateRuntime {
         return AgentMovementMode.STOPPED;
     }
 
-    public static BotMovementProfile movementProfile(BotEntry entry) {
+    public static AgentMovementProfile movementProfile(BotEntry entry) {
         return entry.movementProfile();
     }
 
-    public static BotMovementProfile movementProfileOrCharacter(BotEntry entry, Character bot) {
+    public static AgentMovementProfile movementProfileOrCharacter(BotEntry entry, Character bot) {
         if (entry == null) {
-            return BotMovementProfile.fromCharacter(null);
+            return AgentMovementProfile.fromCharacter(null);
         }
-        BotMovementProfile profile = entry.movementProfile();
-        return profile == null ? BotMovementProfile.fromCharacter(bot) : profile;
+        AgentMovementProfile profile = entry.movementProfile();
+        return profile == null ? AgentMovementProfile.fromCharacter(bot) : profile;
     }
 
-    public static void setMovementProfile(BotEntry entry, BotMovementProfile movementProfile) {
+    public static void setMovementProfile(BotEntry entry, AgentMovementProfile movementProfile) {
         entry.setMovementProfile(movementProfile);
     }
 
     public static void refreshMovementProfile(BotEntry entry, Character bot) {
-        entry.setMovementProfile(BotMovementProfile.fromCharacter(bot));
+        entry.setMovementProfile(AgentMovementProfile.fromCharacter(bot));
     }
 
     public static int moveDirection(BotEntry entry) {

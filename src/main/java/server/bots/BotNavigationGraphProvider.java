@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.movement.AgentMovementProfile;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.maps.Foothold;
@@ -55,8 +57,8 @@ final class BotNavigationGraphProvider {
     });
 
     private record GraphCacheKey(int mapId, int totalSpeedStat, int totalJumpStat) {
-        static GraphCacheKey from(int mapId, BotMovementProfile profile) {
-            BotMovementProfile effective = profile == null ? BotMovementProfile.base() : profile;
+        static GraphCacheKey from(int mapId, AgentMovementProfile profile) {
+            AgentMovementProfile effective = profile == null ? AgentMovementProfile.base() : profile;
             return new GraphCacheKey(mapId, effective.totalSpeedStat(), effective.totalJumpStat());
         }
     }
@@ -197,7 +199,7 @@ final class BotNavigationGraphProvider {
         private long jumpBoundaryRefineProbeCount;
         private final List<JumpRegionProfile> slowestJumpRegions = new ArrayList<>();
 
-        private BuildProfileBuilder(int mapId, BotMovementProfile movementProfile) {
+        private BuildProfileBuilder(int mapId, AgentMovementProfile movementProfile) {
             this.mapId = mapId;
             this.totalSpeedStat = movementProfile.totalSpeedStat();
             this.totalJumpStat = movementProfile.totalJumpStat();
@@ -297,10 +299,10 @@ final class BotNavigationGraphProvider {
     }
 
     static BotNavigationGraph getGraph(MapleMap map) {
-        return getGraph(map, BotMovementProfile.base());
+        return getGraph(map, AgentMovementProfile.base());
     }
 
-    static BotNavigationGraph getGraph(MapleMap map, BotMovementProfile movementProfile) {
+    static BotNavigationGraph getGraph(MapleMap map, AgentMovementProfile movementProfile) {
         if (map == null) {
             return null;
         }
@@ -326,7 +328,7 @@ final class BotNavigationGraphProvider {
     }
 
     /** Returns the cached graph for the requested profile without triggering a build. */
-    static BotNavigationGraph peekGraph(MapleMap map, BotMovementProfile movementProfile) {
+    static BotNavigationGraph peekGraph(MapleMap map, AgentMovementProfile movementProfile) {
         if (map == null) {
             return null;
         }
@@ -334,7 +336,7 @@ final class BotNavigationGraphProvider {
     }
 
     /** Returns the closest cached graph for this map when the exact profile graph is unavailable. */
-    static BotNavigationGraph peekClosestGraph(MapleMap map, BotMovementProfile movementProfile) {
+    static BotNavigationGraph peekClosestGraph(MapleMap map, AgentMovementProfile movementProfile) {
         if (map == null) {
             return null;
         }
@@ -365,12 +367,12 @@ final class BotNavigationGraphProvider {
      * replacing the bare {@link #peekGraph(MapleMap)} arbitrary-first-entry pick at profile-aware
      * call sites and the open-coded exact-then-closest fallback duplicated across callers.
      */
-    static BotNavigationGraph peekBestGraph(MapleMap map, BotMovementProfile movementProfile) {
+    static BotNavigationGraph peekBestGraph(MapleMap map, AgentMovementProfile movementProfile) {
         BotNavigationGraph exact = peekGraph(map, movementProfile);
         return exact != null ? exact : peekClosestGraph(map, movementProfile);
     }
 
-    static void warmGraphAsync(MapleMap map, BotMovementProfile movementProfile) {
+    static void warmGraphAsync(MapleMap map, AgentMovementProfile movementProfile) {
         if (map == null) {
             return;
         }
@@ -382,10 +384,10 @@ final class BotNavigationGraphProvider {
     }
 
     static BotNavigationGraph rebuildGraph(MapleMap map) {
-        return rebuildGraph(map, BotMovementProfile.base());
+        return rebuildGraph(map, AgentMovementProfile.base());
     }
 
-    static BotNavigationGraph rebuildGraph(MapleMap map, BotMovementProfile movementProfile) {
+    static BotNavigationGraph rebuildGraph(MapleMap map, AgentMovementProfile movementProfile) {
         GraphCacheKey key = GraphCacheKey.from(map.getId(), movementProfile);
         BotNavigationGraph rebuilt = buildGraph(map, movementProfile);
         GRAPHS.put(key, rebuilt);
@@ -398,7 +400,7 @@ final class BotNavigationGraphProvider {
     }
 
     private static CompletableFuture<BotNavigationGraph> getOrStartGraphLoad(MapleMap map,
-                                                                             BotMovementProfile movementProfile,
+                                                                             AgentMovementProfile movementProfile,
                                                                              GraphCacheKey key,
                                                                              boolean async) {
         BotNavigationGraph cached = GRAPHS.get(key);
@@ -451,7 +453,7 @@ final class BotNavigationGraphProvider {
     }
 
     private static BotNavigationGraph loadOrBuildGraph(MapleMap map,
-                                                       BotMovementProfile movementProfile,
+                                                       AgentMovementProfile movementProfile,
                                                        GraphCacheKey key) {
         BotNavigationGraph cached = loadGraph(key);
         if (cached != null) {
@@ -504,8 +506,8 @@ final class BotNavigationGraphProvider {
         return CACHE_DIR.resolve(key.mapId() + "-s" + key.totalSpeedStat() + "-j" + key.totalJumpStat() + ".bin");
     }
 
-    private static BotNavigationGraph buildGraph(MapleMap map, BotMovementProfile movementProfile) {
-        movementProfile = movementProfile == null ? BotMovementProfile.base() : movementProfile;
+    private static BotNavigationGraph buildGraph(MapleMap map, AgentMovementProfile movementProfile) {
+        movementProfile = movementProfile == null ? AgentMovementProfile.base() : movementProfile;
         BuildProfileBuilder buildProfile = new BuildProfileBuilder(map.getId(), movementProfile);
         ACTIVE_BUILD_PROFILE.set(buildProfile);
         try {
@@ -638,10 +640,10 @@ final class BotNavigationGraphProvider {
     }
 
     static GraphBuildReport getLastBuildReport(int mapId) {
-        return getLastBuildReport(mapId, BotMovementProfile.base());
+        return getLastBuildReport(mapId, AgentMovementProfile.base());
     }
 
-    static GraphBuildReport getLastBuildReport(int mapId, BotMovementProfile movementProfile) {
+    static GraphBuildReport getLastBuildReport(int mapId, AgentMovementProfile movementProfile) {
         return LAST_BUILD_REPORTS.get(GraphCacheKey.from(mapId, movementProfile));
     }
 
@@ -899,7 +901,7 @@ final class BotNavigationGraphProvider {
                                      Map<Integer, Integer> regionIdByFootholdId,
                                      Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
                                      Set<String> edgeKeys,
-                                     BotMovementProfile movementProfile) {
+                                     AgentMovementProfile movementProfile) {
         addWalkEdge(foothold, footholdsById.get(foothold.getPrev()), regionsById, regionIdByFootholdId, outgoing, edgeKeys, movementProfile);
         addWalkEdge(foothold, footholdsById.get(foothold.getNext()), regionsById, regionIdByFootholdId, outgoing, edgeKeys, movementProfile);
     }
@@ -910,7 +912,7 @@ final class BotNavigationGraphProvider {
                                     Map<Integer, Integer> regionIdByFootholdId,
                                     Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
                                     Set<String> edgeKeys,
-                                    BotMovementProfile movementProfile) {
+                                    AgentMovementProfile movementProfile) {
         if (fromFoothold == null || targetFoothold == null || targetFoothold.isWall()) {
             return;
         }
@@ -946,7 +948,7 @@ final class BotNavigationGraphProvider {
                                      List<Point> anchors,
                                      Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
                                      Set<String> edgeKeys,
-                                     BotMovementProfile movementProfile) {
+                                     AgentMovementProfile movementProfile) {
         addDirectionalDropEdge(from, map, regionsById, regionIdByFootholdId, -1, outgoing, edgeKeys, movementProfile);
         addDirectionalDropEdge(from, map, regionsById, regionIdByFootholdId, 1, outgoing, edgeKeys, movementProfile);
 
@@ -981,7 +983,7 @@ final class BotNavigationGraphProvider {
                                                int direction,
                                                Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
                                                Set<String> edgeKeys,
-                                               BotMovementProfile movementProfile) {
+                                               AgentMovementProfile movementProfile) {
         if (direction == 0) {
             return;
         }
@@ -1047,7 +1049,7 @@ final class BotNavigationGraphProvider {
                                      Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
                                      Set<String> edgeKeys,
                                      JumpLandingCache jumpLandingCache,
-                                     BotMovementProfile movementProfile) {
+                                     AgentMovementProfile movementProfile) {
         long startedAt = System.nanoTime();
         int jumpStep = BotPhysicsEngine.walkStep(map, movementProfile);
         JumpBuildStats stats = new JumpBuildStats();
@@ -1102,7 +1104,7 @@ final class BotNavigationGraphProvider {
                                                                               int launchStepX,
                                                                               JumpLandingCache jumpLandingCache,
                                                                               JumpBuildStats stats,
-                                                                              BotMovementProfile movementProfile) {
+                                                                              AgentMovementProfile movementProfile) {
         JumpLandingKey key = new JumpLandingKey(start.x, start.y, launchStepX);
         BotPhysicsEngine.PostLandingJump cachedLanding = jumpLandingCache.hits.get(key);
         if (cachedLanding != null) {
@@ -1131,7 +1133,7 @@ final class BotNavigationGraphProvider {
                                                           Rope rope,
                                                           RopeGrabCache ropeGrabCache,
                                                           JumpBuildStats stats,
-                                                          BotMovementProfile movementProfile) {
+                                                          AgentMovementProfile movementProfile) {
         RopeGrabKey key = new RopeGrabKey(start.x, start.y, launchStepX,
                 rope.x(), rope.topY(), rope.bottomY());
         Point cachedGrab = ropeGrabCache.hits.get(key);
@@ -1170,7 +1172,7 @@ final class BotNavigationGraphProvider {
     private static Map<Integer, List<Point>> buildAnchorsByRegionId(MapleMap map,
                                                                     List<BotNavigationGraph.Region> regions,
                                                                     Map<Integer, List<Integer>> featureXsByRegionId,
-                                                                    BotMovementProfile movementProfile) {
+                                                                    AgentMovementProfile movementProfile) {
         Map<Integer, List<Point>> anchorsByRegionId = new HashMap<>();
         for (BotNavigationGraph.Region region : regions) {
             if (region.isRopeRegion) {
@@ -1189,7 +1191,7 @@ final class BotNavigationGraphProvider {
                                                            int targetRegionId,
                                                            JumpBuildStats stats,
                                                            JumpLandingCache jumpLandingCache,
-                                                           BotMovementProfile movementProfile) {
+                                                           AgentMovementProfile movementProfile) {
         if (!isValidJumpLaunchX(from, map, regionIdByFootholdId, anchorX, launchStepX, targetRegionId,
                 stats, jumpLandingCache, movementProfile)) {
             return null;
@@ -1221,7 +1223,7 @@ final class BotNavigationGraphProvider {
                                                                MapleMap map,
                                                                Map<Integer, Integer> regionIdByFootholdId,
                                                                int anchorX,
-                                                               BotMovementProfile movementProfile) {
+                                                               AgentMovementProfile movementProfile) {
         BotPhysicsEngine.JumpLanding anchorLanding = validateDownJumpLaunchX(
                 from, map, regionIdByFootholdId, anchorX, movementProfile);
         if (anchorLanding == null) {
@@ -1257,7 +1259,7 @@ final class BotNavigationGraphProvider {
                                         boolean searchLeft,
                                         JumpBuildStats stats,
                                         JumpLandingCache jumpLandingCache,
-                                        BotMovementProfile movementProfile) {
+                                        AgentMovementProfile movementProfile) {
         int limitX = searchLeft ? from.minX : from.maxX;
         int validX = startX;
         int invalidX = startX;
@@ -1302,7 +1304,7 @@ final class BotNavigationGraphProvider {
                                             int startX,
                                             int targetRegionId,
                                             boolean searchLeft,
-                                            BotMovementProfile movementProfile) {
+                                            AgentMovementProfile movementProfile) {
         int limitX = searchLeft
                 ? Math.max(from.minX, startX - DOWN_JUMP_PRELAUNCH_WINDOW_PX)
                 : Math.min(from.maxX, startX + DOWN_JUMP_PRELAUNCH_WINDOW_PX);
@@ -1349,7 +1351,7 @@ final class BotNavigationGraphProvider {
                                               int targetRegionId,
                                               JumpBuildStats stats,
                                               JumpLandingCache jumpLandingCache,
-                                              BotMovementProfile movementProfile) {
+                                              AgentMovementProfile movementProfile) {
         if (!isApproachableJumpLaunchX(from, map, launchX)) {
             return false;
         }
@@ -1364,7 +1366,7 @@ final class BotNavigationGraphProvider {
                                                                          MapleMap map,
                                                                          Map<Integer, Integer> regionIdByFootholdId,
                                                                          int launchX,
-                                                                         BotMovementProfile movementProfile) {
+                                                                         AgentMovementProfile movementProfile) {
         return validateDownJumpLaunchX(from, map, regionIdByFootholdId, launchX, movementProfile, Integer.MIN_VALUE);
     }
 
@@ -1372,7 +1374,7 @@ final class BotNavigationGraphProvider {
                                                   MapleMap map,
                                                   Map<Integer, Integer> regionIdByFootholdId,
                                                   int launchX,
-                                                  BotMovementProfile movementProfile,
+                                                  AgentMovementProfile movementProfile,
                                                   int targetRegionId) {
         return validateDownJumpLaunchX(from, map, regionIdByFootholdId, launchX, movementProfile, targetRegionId) != null;
     }
@@ -1381,7 +1383,7 @@ final class BotNavigationGraphProvider {
                                                                          MapleMap map,
                                                                          Map<Integer, Integer> regionIdByFootholdId,
                                                                          int launchX,
-                                                                         BotMovementProfile movementProfile,
+                                                                         AgentMovementProfile movementProfile,
                                                                          int requiredTargetRegionId) {
         if (from == null || from.isRopeRegion || map == null) {
             return null;
@@ -1432,7 +1434,7 @@ final class BotNavigationGraphProvider {
                                                                Rope rope,
                                                                JumpBuildStats stats,
                                                                RopeGrabCache ropeGrabCache,
-                                                               BotMovementProfile movementProfile) {
+                                                               AgentMovementProfile movementProfile) {
         if (!isValidRopeGrabLaunchX(from, map, anchorX, launchStepX, rope, stats, ropeGrabCache, movementProfile)) {
             return null;
         }
@@ -1463,7 +1465,7 @@ final class BotNavigationGraphProvider {
                                             boolean searchLeft,
                                             JumpBuildStats stats,
                                             RopeGrabCache ropeGrabCache,
-                                            BotMovementProfile movementProfile) {
+                                            AgentMovementProfile movementProfile) {
         int limitX = searchLeft ? from.minX : from.maxX;
         int validX = startX;
         int invalidX = startX;
@@ -1507,7 +1509,7 @@ final class BotNavigationGraphProvider {
                                                   Rope rope,
                                                   JumpBuildStats stats,
                                                   RopeGrabCache ropeGrabCache,
-                                                  BotMovementProfile movementProfile) {
+                                                  AgentMovementProfile movementProfile) {
         if (!isApproachableJumpLaunchX(from, map, launchX)) {
             return false;
         }
@@ -1561,7 +1563,7 @@ final class BotNavigationGraphProvider {
                                           Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
                                           Set<String> edgeKeys,
                                           RopeGrabCache ropeGrabCache,
-                                          BotMovementProfile movementProfile) {
+                                          AgentMovementProfile movementProfile) {
         Rope rope = ropeByRegionId.get(ropeRegion.id);
         if (rope == null) {
             return;
@@ -1631,7 +1633,7 @@ final class BotNavigationGraphProvider {
                                          Map<Integer, Integer> regionIdByFootholdId,
                                          Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
                                          Set<String> edgeKeys,
-                                         BotMovementProfile movementProfile) {
+                                         AgentMovementProfile movementProfile) {
         Rope rope = ropeByRegionId.get(ropeRegion.id);
         if (rope == null) {
             return;
@@ -1907,7 +1909,7 @@ final class BotNavigationGraphProvider {
     private static List<Point> anchorPoints(MapleMap map,
                                             BotNavigationGraph.Region region,
                                             List<Integer> featureXs,
-                                            BotMovementProfile movementProfile) {
+                                            AgentMovementProfile movementProfile) {
         List<Point> points = new ArrayList<>();
         addAnchor(points, region.leftPoint());
         // Near-edge anchors for better jump/drop accuracy at platform boundaries
@@ -2109,18 +2111,18 @@ final class BotNavigationGraphProvider {
     }
 
     private static int estimateWalkCost(Point start, Point end) {
-        return estimateWalkCost(start, end, BotMovementProfile.base());
+        return estimateWalkCost(start, end, AgentMovementProfile.base());
     }
 
-    private static int estimateWalkCost(Point start, Point end, BotMovementProfile movementProfile) {
+    private static int estimateWalkCost(Point start, Point end, AgentMovementProfile movementProfile) {
         return estimateHorizontalTravelTimeMs(Math.abs(end.x - start.x), movementProfile);
     }
 
-    private static int estimateHorizontalTravelTimeMs(int dx, BotMovementProfile movementProfile) {
+    private static int estimateHorizontalTravelTimeMs(int dx, AgentMovementProfile movementProfile) {
         return Math.max(0, (int) Math.round((dx * 1000.0) / Math.max(1.0, movementProfile.walkVelocityPxs())));
     }
 
-    private static int dropLaunchStep(BotNavigationGraph.Region region, MapleMap map, Point anchor, BotMovementProfile movementProfile) {
+    private static int dropLaunchStep(BotNavigationGraph.Region region, MapleMap map, Point anchor, AgentMovementProfile movementProfile) {
         Point left = region.leftPoint();
         if (Math.abs(anchor.x - left.x) <= ENDPOINT_ANCHOR_SPACING_PX && Math.abs(anchor.y - left.y) <= 12) {
             return -BotMovementManager.walkStep(map, movementProfile);

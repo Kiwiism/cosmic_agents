@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.movement.AgentMovementProfile;
+
 import client.Character;
 import client.inventory.InventoryType;
 import client.inventory.Item;
@@ -793,7 +795,7 @@ public final class BotShopManager {
         if (candidates.isEmpty()) {
             return npcPos;
         }
-        BotMovementProfile profile = AgentBotMovementStateRuntime.movementProfileOrCharacter(entry, bot);
+        AgentMovementProfile profile = AgentBotMovementStateRuntime.movementProfileOrCharacter(entry, bot);
         BotNavigationGraph graph = BotNavigationGraphProvider.peekBestGraph(bot.getMap(), profile);
         if (graph != null) {
             Point botPos = bot.getPosition();

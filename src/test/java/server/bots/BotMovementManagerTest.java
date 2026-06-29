@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.movement.AgentMovementProfile;
+
 import client.Character;
 import constants.game.CharacterStance;
 import org.junit.jupiter.api.Test;
@@ -600,7 +602,7 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
         entry.wasMovingX = true;
-        entry.movementProfile = new BotMovementProfile(140, 100);
+        entry.movementProfile = new AgentMovementProfile(140, 100);
         entry.observedOwnerStepX = 4;
 
         int walkStep = BotPhysicsEngine.walkStep(map, entry.movementProfile);
@@ -631,7 +633,7 @@ class BotMovementManagerTest {
         Character bot = mockBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
-        entry.movementProfile = new BotMovementProfile(140, 100);
+        entry.movementProfile = new AgentMovementProfile(140, 100);
         entry.observedOwnerStepX = 0;
         entry.observedOwnerStepY = 0;
 
@@ -654,7 +656,7 @@ class BotMovementManagerTest {
         Character bot = mockBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
-        entry.movementProfile = new BotMovementProfile(140, 100);
+        entry.movementProfile = new AgentMovementProfile(140, 100);
         BotFidgetManager.startFidget(entry, AgentFidgetMode.PRONE, System.currentTimeMillis(), 3000);
 
         assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
@@ -700,7 +702,7 @@ class BotMovementManagerTest {
         Character bot = mockBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
-        entry.movementProfile = new BotMovementProfile(100, 100);
+        entry.movementProfile = new AgentMovementProfile(100, 100);
         BotFidgetManager.startFidget(entry, AgentFidgetMode.PRONE, System.currentTimeMillis(), 3000, AgentFidgetTrigger.SOCIAL);
 
         assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
@@ -717,7 +719,7 @@ class BotMovementManagerTest {
         Character bot = mockBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
-        entry.movementProfile = new BotMovementProfile(100, 100);
+        entry.movementProfile = new AgentMovementProfile(100, 100);
         BotFidgetManager.startFidget(entry, AgentFidgetMode.PRONE, System.currentTimeMillis(), 3000, AgentFidgetTrigger.AUTO_FOLLOW);
 
         assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
@@ -734,7 +736,7 @@ class BotMovementManagerTest {
         Character bot = mockBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
-        entry.movementProfile = new BotMovementProfile(140, 100);
+        entry.movementProfile = new AgentMovementProfile(140, 100);
         BotFidgetManager.startFidget(entry, AgentFidgetMode.DIAGONAL_JUMP, System.currentTimeMillis(), 3000);
 
         assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
@@ -759,7 +761,7 @@ class BotMovementManagerTest {
         Character bot = mockBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
-        entry.movementProfile = new BotMovementProfile(140, 100);
+        entry.movementProfile = new AgentMovementProfile(140, 100);
         BotFidgetManager.startFidget(entry, AgentFidgetMode.JUMP, System.currentTimeMillis(), 3000);
 
         assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
@@ -781,7 +783,7 @@ class BotMovementManagerTest {
         Character bot = mockBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
-        entry.movementProfile = new BotMovementProfile(140, 100);
+        entry.movementProfile = new AgentMovementProfile(140, 100);
         BotFidgetManager.startFidget(entry, AgentFidgetMode.JUMP, System.currentTimeMillis(), 3000);
 
         assertTrue(BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true));
@@ -805,7 +807,7 @@ class BotMovementManagerTest {
         Character bot = mockBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
-        entry.movementProfile = new BotMovementProfile(140, 100);
+        entry.movementProfile = new AgentMovementProfile(140, 100);
         BotFidgetManager.startFidget(entry, AgentFidgetMode.JUMP, System.currentTimeMillis(), 3000);
         BotFidgetManager.tryHandleTick(entry, new Point(110, 100), true);
 
@@ -842,7 +844,7 @@ class BotMovementManagerTest {
         Character bot = mockBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
-        entry.movementProfile = new BotMovementProfile(140, 100);
+        entry.movementProfile = new AgentMovementProfile(140, 100);
         BotFidgetManager.startFidget(entry, AgentFidgetMode.SPAM_SIDEWAYS, System.currentTimeMillis(), 3000);
         assertTrue(entry.fidgetActionBaseDelayMs >= 100 && entry.fidgetActionBaseDelayMs <= 250);
         assertEquals(0, entry.fidgetActionBaseDelayMs % BotPhysicsEngine.cfg.TICK_MS);
@@ -865,7 +867,7 @@ class BotMovementManagerTest {
         Character bot = mockBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
-        entry.movementProfile = new BotMovementProfile(140, 100);
+        entry.movementProfile = new AgentMovementProfile(140, 100);
         long now = System.currentTimeMillis();
         BotFidgetManager.startFidget(entry, AgentFidgetMode.SPAM_SIDEWAYS, now, 2000);
         bot.setPosition(new Point(130, 100));
@@ -883,7 +885,7 @@ class BotMovementManagerTest {
         Character bot = mockBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
-        entry.movementProfile = new BotMovementProfile(140, 100);
+        entry.movementProfile = new AgentMovementProfile(140, 100);
         long now = System.currentTimeMillis();
         BotFidgetManager.startFidget(entry, AgentFidgetMode.SPAM_SIDEWAYS, now, 2000, AgentFidgetTrigger.SOCIAL);
         bot.setPosition(new Point(130, 100));
@@ -985,17 +987,17 @@ class BotMovementManagerTest {
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
         footholds.insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
         map.setFootholds(footholds);
-        BotNavigationGraphProvider.rebuildGraph(map, BotMovementProfile.base());
+        BotNavigationGraphProvider.rebuildGraph(map, AgentMovementProfile.base());
 
         Character bot = mockBot(new Point(20, 100), map);
         when(bot.getTotalMoveSpeedStat()).thenReturn(109);
         when(bot.getTotalJumpStat()).thenReturn(107);
 
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.movementProfile = BotMovementProfile.base();
+        entry.movementProfile = AgentMovementProfile.base();
 
-        BotMovementProfile targetProfile = BotMovementProfile.fromCharacter(bot);
-        assertEquals(new BotMovementProfile(105, 105), targetProfile);
+        AgentMovementProfile targetProfile = AgentMovementProfile.fromCharacter(bot);
+        assertEquals(new AgentMovementProfile(105, 105), targetProfile);
         entry.navEdge = new BotNavigationGraph.Edge(
                 1, 2, BotNavigationGraph.EdgeType.JUMP,
                 new Point(20, 100), new Point(80, 40),

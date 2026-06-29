@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.movement.AgentMovementProfile;
+
 import client.Character;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
@@ -230,7 +232,7 @@ final class BotFallbackMovementManager {
                 || currentFoothold.getId() != targetFoothold.getId();
     }
 
-    private static Point walkOffTarget(MapleMap map, Foothold foothold, BotMovementProfile profile, int direction) {
+    private static Point walkOffTarget(MapleMap map, Foothold foothold, AgentMovementProfile profile, int direction) {
         if (map == null || foothold == null || direction == 0) {
             return null;
         }
@@ -287,7 +289,7 @@ final class BotFallbackMovementManager {
         return AgentBotRuntimeIdentityRuntime.botMap(entry);
     }
 
-    private static BotMovementProfile movementProfile(BotEntry entry) {
+    private static AgentMovementProfile movementProfile(BotEntry entry) {
         return AgentBotMovementStateRuntime.movementProfile(entry);
     }
 

@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.movement.AgentMovementProfile;
+
 import client.BuffStat;
 import client.Character;
 import client.Job;
@@ -1531,7 +1533,7 @@ class BotCombatManagerTest {
         BotNavigationGraph graph = new BotNavigationGraph(
                 map.getId(),
                 1,
-                BotMovementProfile.base(),
+                AgentMovementProfile.base(),
                 List.of(startRegion, occupiedRegion, openRegion),
                 Map.of(1, startRegion, 2, occupiedRegion, 3, openRegion),
                 Map.of(1, 1, 2, 2, 3, 3),
@@ -1560,7 +1562,7 @@ class BotCombatManagerTest {
         bots.put(owner.getId(), new CopyOnWriteArrayList<>(List.of(entry, siblingEntry)));
         try (MockedStatic<BotNavigationGraphProvider> graphProvider =
                      Mockito.mockStatic(BotNavigationGraphProvider.class, Mockito.CALLS_REAL_METHODS)) {
-            graphProvider.when(() -> BotNavigationGraphProvider.peekGraph(map, BotMovementProfile.base()))
+            graphProvider.when(() -> BotNavigationGraphProvider.peekGraph(map, AgentMovementProfile.base()))
                     .thenReturn(graph);
 
             Monster target = BotCombatManager.findGrindTarget(entry, bot);
@@ -1617,7 +1619,7 @@ class BotCombatManagerTest {
         BotNavigationGraph graph = new BotNavigationGraph(
                 map.getId(),
                 1,
-                BotMovementProfile.base(),
+                AgentMovementProfile.base(),
                 List.of(homeRegion, oneWayRegion, returnableRegion),
                 Map.of(1, homeRegion, 2, oneWayRegion, 3, returnableRegion),
                 Map.of(1, 1, 2, 2, 3, 3),
@@ -1641,7 +1643,7 @@ class BotCombatManagerTest {
 
         try (MockedStatic<BotNavigationGraphProvider> graphProvider =
                      Mockito.mockStatic(BotNavigationGraphProvider.class, Mockito.CALLS_REAL_METHODS)) {
-            graphProvider.when(() -> BotNavigationGraphProvider.peekGraph(map, BotMovementProfile.base()))
+            graphProvider.when(() -> BotNavigationGraphProvider.peekGraph(map, AgentMovementProfile.base()))
                     .thenReturn(graph);
 
             Monster target = BotCombatManager.findPatrolTarget(entry, bot);

@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.movement.AgentMovementProfile;
+
 import client.Character;
 import client.Job;
 import client.inventory.Equip;
@@ -255,7 +257,7 @@ class BotInventoryManagerTest {
         BotNavigationGraph graph = new BotNavigationGraph(
                 map.getId(),
                 1,
-                BotMovementProfile.base(),
+                AgentMovementProfile.base(),
                 List.of(homeRegion, oneWayRegion, returnableRegion),
                 Map.of(1, homeRegion, 2, oneWayRegion, 3, returnableRegion),
                 Map.of(1, 1, 2, 2, 3, 3),
@@ -310,7 +312,7 @@ class BotInventoryManagerTest {
         BotNavigationGraph graph = new BotNavigationGraph(
                 map.getId(),
                 1,
-                BotMovementProfile.base(),
+                AgentMovementProfile.base(),
                 List.of(region),
                 Map.of(1, region),
                 Map.of(1, 1),

@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.movement.AgentMovementProfile;
+
 import client.BuffStat;
 import client.Character;
 import client.Client;
@@ -1184,7 +1186,7 @@ public class BotCombatManager {
         return !isAirborneRangedAttackBlockedWeapon(weaponType) || attackPlan.route != AttackRoute.RANGED;
     }
 
-    static boolean isTargetJumpable(BotMovementProfile movementProfile, boolean closeRangeRoute, Point botPos, Point targetPos) {
+    static boolean isTargetJumpable(AgentMovementProfile movementProfile, boolean closeRangeRoute, Point botPos, Point targetPos) {
         if (!closeRangeRoute || botPos == null || targetPos == null) {
             return false;
         }
@@ -1201,7 +1203,7 @@ public class BotCombatManager {
     }
 
     static boolean isTargetJumpable(boolean closeRangeRoute, Point botPos, Point targetPos) {
-        return isTargetJumpable(BotMovementProfile.base(), closeRangeRoute, botPos, targetPos);
+        return isTargetJumpable(AgentMovementProfile.base(), closeRangeRoute, botPos, targetPos);
     }
 
     static void attackMonster(BotEntry entry, Character bot, AttackPlan attackPlan) {
@@ -1835,7 +1837,7 @@ public class BotCombatManager {
                                       int startRegionId,
                                       Point targetPos,
                                       int targetRegionId,
-                                      BotMovementProfile profile) {
+                                      AgentMovementProfile profile) {
         if (startPos == null || targetPos == null || startRegionId < 0 || targetRegionId < 0) {
             return UNREACHABLE_GRAPH_COST;
         }
@@ -1856,7 +1858,7 @@ public class BotCombatManager {
         return cost;
     }
 
-    private static long estimateLocalTravelCostMs(Point from, Point to, BotMovementProfile profile) {
+    private static long estimateLocalTravelCostMs(Point from, Point to, AgentMovementProfile profile) {
         int dx = Math.abs(to.x - from.x);
         int dy = Math.abs(to.y - from.y);
         double walkVelocity = Math.max(1.0, profile.walkVelocityPxs());
@@ -2154,7 +2156,7 @@ public class BotCombatManager {
     private record GrindGraphContext(BotEntry entry,
                                      MapleMap map,
                                      BotNavigationGraph graph,
-                                     BotMovementProfile profile,
+                                     AgentMovementProfile profile,
                                      Point startPos,
                                      int startRegionId) {
         static GrindGraphContext resolve(BotEntry entry, Character bot, Point botPos) {
@@ -2162,7 +2164,7 @@ public class BotCombatManager {
                 return unavailable(entry, bot, botPos);
             }
 
-            BotMovementProfile profile = AgentBotMovementStateRuntime.movementProfileOrCharacter(entry, bot);
+            AgentMovementProfile profile = AgentBotMovementStateRuntime.movementProfileOrCharacter(entry, bot);
             BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(bot.getMap(), profile);
             if (graph == null) {
                 BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), profile);
@@ -2181,7 +2183,7 @@ public class BotCombatManager {
 
         private static GrindGraphContext unavailable(BotEntry entry, Character bot, Point botPos) {
             MapleMap map = bot == null ? null : bot.getMap();
-            BotMovementProfile profile = AgentBotMovementStateRuntime.movementProfileOrCharacter(entry, bot);
+            AgentMovementProfile profile = AgentBotMovementStateRuntime.movementProfileOrCharacter(entry, bot);
             Point startPos = botPos == null ? null : new Point(botPos);
             return new GrindGraphContext(entry, map, null, profile, startPos, -1);
         }

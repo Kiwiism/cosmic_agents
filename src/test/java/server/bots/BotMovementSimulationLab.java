@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.movement.AgentMovementProfile;
+
 import client.Character;
 import client.Job;
 import client.inventory.Inventory;
@@ -60,7 +62,7 @@ final class BotMovementSimulationLab {
         entry.skipDelayMs = 0;
         entry.lastMapId = map.getId();
         entry.fhIndex = BotMovementManager.buildFhIndex(map);
-        entry.movementProfile = BotMovementProfile.fromCharacter(bot);
+        entry.movementProfile = AgentMovementProfile.fromCharacter(bot);
         bots.put(name, entry);
         return entry;
     }

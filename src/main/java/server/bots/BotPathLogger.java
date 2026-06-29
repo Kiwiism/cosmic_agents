@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.movement.AgentMovementProfile;
+
 import client.Character;
 import java.awt.*;
 import java.io.IOException;
@@ -54,7 +56,7 @@ public final class BotPathLogger {
     ) {}
 
     private record GraphSnapshot(
-            BotMovementProfile requestedProfile,
+            AgentMovementProfile requestedProfile,
             BotNavigationGraph graph,
             String source
     ) {}
@@ -155,7 +157,7 @@ public final class BotPathLogger {
     private static GraphSnapshot resolveGraphSnapshot(BotEntry entry) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
-        BotMovementProfile requestedProfile = AgentBotMovementStateRuntime.movementProfileOrCharacter(entry, bot);
+        AgentMovementProfile requestedProfile = AgentBotMovementStateRuntime.movementProfileOrCharacter(entry, bot);
         BotNavigationGraph exact = BotNavigationGraphProvider.peekGraph(map, requestedProfile);
         if (exact != null) {
             return new GraphSnapshot(requestedProfile, exact, "exact");
@@ -270,7 +272,7 @@ public final class BotPathLogger {
     }
 
     private void appendMovementGraphState(StringBuilder sb, BotEntry entry, GraphSnapshot graphSnapshot) {
-        BotMovementProfile requested = graphSnapshot.requestedProfile();
+        AgentMovementProfile requested = graphSnapshot.requestedProfile();
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
         sb.append("Movement:   speed=").append(requested.totalSpeedStat()).append("%")
@@ -286,7 +288,7 @@ public final class BotPathLogger {
             sb.append("Graph:      none/warming requestedSpeed=").append(requested.totalSpeedStat()).append("%")
                     .append(" requestedJump=").append(requested.totalJumpStat()).append("%\n");
         } else {
-            BotMovementProfile graphProfile = graph.movementProfile;
+            AgentMovementProfile graphProfile = graph.movementProfile;
             sb.append("Graph:      ").append(graphSnapshot.source())
                     .append(" version=").append(graph.version)
                     .append(" speed=").append(graphProfile.totalSpeedStat()).append("%")

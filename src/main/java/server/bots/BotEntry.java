@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.movement.AgentMovementProfile;
+
 import client.Character;
 import client.inventory.Item;
 import server.Trade;
@@ -40,7 +42,7 @@ public class BotEntry {
     volatile boolean airshowActive = false;
     volatile long airshowLastTrailAtMs = 0L;
     final ScheduledFuture<?> task;
-    BotMovementProfile movementProfile = BotMovementProfile.base();
+    AgentMovementProfile movementProfile = AgentMovementProfile.base();
 
     public boolean hasScheduledTask() {
         return task != null;
@@ -68,12 +70,12 @@ public class BotEntry {
         this.airshowLastTrailAtMs = airshowLastTrailAtMs;
     }
 
-    public BotMovementProfile movementProfile() {
-        return movementProfile != null ? movementProfile : BotMovementProfile.base();
+    public AgentMovementProfile movementProfile() {
+        return movementProfile != null ? movementProfile : AgentMovementProfile.base();
     }
 
-    public void setMovementProfile(BotMovementProfile movementProfile) {
-        this.movementProfile = movementProfile != null ? movementProfile : BotMovementProfile.base();
+    public void setMovementProfile(AgentMovementProfile movementProfile) {
+        this.movementProfile = movementProfile != null ? movementProfile : AgentMovementProfile.base();
     }
 
     // Physics

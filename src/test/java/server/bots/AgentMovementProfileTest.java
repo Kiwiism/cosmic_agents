@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.movement.AgentMovementProfile;
+
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.maps.FieldLimit;
@@ -10,10 +12,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class BotMovementProfileTest {
+class AgentMovementProfileTest {
     @Test
     void shouldBucketStatsDownToNearestFivePointStep() {
-        BotMovementProfile profile = new BotMovementProfile(109, 117);
+        AgentMovementProfile profile = new AgentMovementProfile(109, 117);
 
         assertEquals(105, profile.totalSpeedStat());
         assertEquals(115, profile.totalJumpStat());
@@ -21,7 +23,7 @@ class BotMovementProfileTest {
 
     @Test
     void shouldLeaveExactFivePointBucketsUnchanged() {
-        BotMovementProfile profile = new BotMovementProfile(105, 120);
+        AgentMovementProfile profile = new AgentMovementProfile(105, 120);
 
         assertEquals(105, profile.totalSpeedStat());
         assertEquals(120, profile.totalJumpStat());
@@ -29,7 +31,7 @@ class BotMovementProfileTest {
 
     @Test
     void shouldCapEffectivePhysicsStats() {
-        BotMovementProfile profile = new BotMovementProfile(240, 130);
+        AgentMovementProfile profile = new AgentMovementProfile(240, 130);
 
         assertEquals(200, profile.totalSpeedStat());
         assertEquals(123, profile.totalJumpStat());
@@ -44,9 +46,9 @@ class BotMovementProfileTest {
         when(character.getTotalMoveSpeedStat()).thenReturn(140);
         when(character.getTotalJumpStat()).thenReturn(123);
 
-        BotMovementProfile profile = BotMovementProfile.fromCharacter(character);
+        AgentMovementProfile profile = AgentMovementProfile.fromCharacter(character);
 
-        assertEquals(BotMovementProfile.base(), profile);
+        assertEquals(AgentMovementProfile.base(), profile);
     }
 
     @Test

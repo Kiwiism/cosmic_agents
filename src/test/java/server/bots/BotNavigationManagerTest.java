@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.movement.AgentMovementProfile;
+
 import client.Character;
 import constants.game.CharacterStance;
 import org.junit.jupiter.api.BeforeAll;
@@ -342,7 +344,7 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(botPos, map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.movementProfile = BotMovementProfile.base();
+        entry.movementProfile = AgentMovementProfile.base();
         entry.following = true;
         entry.navEdge = staleEdge;
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, leftTargetRegionId);
@@ -379,7 +381,7 @@ class BotNavigationManagerTest {
                 new Point(100, 100), new Point(140, 40),
                 90, 110, 6, 0, 0, 0, 0, 250);
         BotNavigationGraph graph = new BotNavigationGraph(
-                910000213, 1, BotMovementProfile.base(),
+                910000213, 1, AgentMovementProfile.base(),
                 List.of(source, staleLower, ownerUpper),
                 regionsById,
                 Map.of(1, 1, 2, 2, 3, 3),
@@ -445,7 +447,7 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(new Point(20, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.movementProfile = new BotMovementProfile(105, 105);
+        entry.movementProfile = new AgentMovementProfile(105, 105);
 
         BotNavigationManager.NavigationDirective directive =
                 BotNavigationManager.resolveTarget(entry, new Point(180, 100), true);
@@ -581,7 +583,7 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(fromRegion.pointAt(outsideLaunchX), lithHarbor);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.movementProfile = BotMovementProfile.base();
+        entry.movementProfile = AgentMovementProfile.base();
         entry.navEdge = ropeEntry;
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
 
@@ -611,7 +613,7 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(botPos, lithHarbor);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.movementProfile = BotMovementProfile.base();
+        entry.movementProfile = AgentMovementProfile.base();
         entry.climbing = true;
         entry.climbRope = new Rope(1265, 289, 597, false);
 
@@ -627,14 +629,14 @@ class BotNavigationManagerTest {
     @Test
     void shouldPreferCurrentRopeRegionAtRopeTopWhenBotStanceIsClimbing() {
         MapleMap map = topRopeSyntheticMap(910000101);
-        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map, new BotMovementProfile(105, 100));
+        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map, new AgentMovementProfile(105, 100));
         Point ropeTop = new Point(100, 100);
         assertNotEquals(graph.findRopeRegionId(ropeTop), graph.findRegionId(map, ropeTop));
 
         Character bot = mockBot(ropeTop, map);
         bot.setStance(CharacterStance.ROPE_RIGHT_STANCE);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.movementProfile = new BotMovementProfile(105, 100);
+        entry.movementProfile = new AgentMovementProfile(105, 100);
 
         assertEquals(graph.findRopeRegionId(ropeTop),
                 BotNavigationManager.resolveCurrentRegionId(graph, entry, map, ropeTop));
@@ -643,7 +645,7 @@ class BotNavigationManagerTest {
     @Test
     void shouldModelTopStepOffAtPhysicsLandingX() {
         MapleMap map = topRopeSyntheticMap(910000102);
-        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map, new BotMovementProfile(105, 100));
+        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map, new AgentMovementProfile(105, 100));
         Point ropeTop = new Point(100, 100);
         int startRegionId = graph.findRopeRegionId(ropeTop);
         BotNavigationGraph.Edge topExit = graph.getOutgoing(startRegionId).stream()
@@ -677,7 +679,7 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(new Point(100, 0), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.movementProfile = BotMovementProfile.base();
+        entry.movementProfile = AgentMovementProfile.base();
 
         // Simulate the state right after AI tick attached the bot to the rope at firstClimbableY.
         entry.climbVerticalDir = -1;
@@ -711,7 +713,7 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.movementProfile = BotMovementProfile.base();
+        entry.movementProfile = AgentMovementProfile.base();
 
         BotNavigationManager.NavigationDirective directive =
                 BotNavigationManager.resolveTarget(entry, new Point(100, 150), true);
@@ -739,7 +741,7 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(new Point(120, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.movementProfile = BotMovementProfile.base();
+        entry.movementProfile = AgentMovementProfile.base();
         AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         Point target = new Point(130, 220);
@@ -759,7 +761,7 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(new Point(120, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.movementProfile = BotMovementProfile.base();
+        entry.movementProfile = AgentMovementProfile.base();
         AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         Point target = new Point(130, 220);
@@ -779,7 +781,7 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(new Point(120, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.movementProfile = BotMovementProfile.base();
+        entry.movementProfile = AgentMovementProfile.base();
         AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         Point target = new Point(260, 220);
@@ -803,7 +805,7 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(new Point(40, 114), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.movementProfile = BotMovementProfile.base();
+        entry.movementProfile = AgentMovementProfile.base();
         AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         Point target = new Point(320, 212);

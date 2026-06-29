@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.movement.AgentMovementProfile;
+
 import client.Character;
 import io.netty.buffer.Unpooled;
 import net.packet.ByteBufInPacket;
@@ -106,6 +108,10 @@ public class BotMovementManager {
 
     static Config cfg = bindConfig(new Config());
 
+    public static int configuredWalkVelocityPxs() {
+        return cfg.WALK_VEL;
+    }
+
     private static Config bindConfig(Config config) {
         BotPhysicsEngine.cfg = config;
         return config;
@@ -129,7 +135,7 @@ public class BotMovementManager {
         return BotPhysicsEngine.walkStep(map);
     }
 
-    public static int walkStep(MapleMap map, BotMovementProfile profile) {
+    public static int walkStep(MapleMap map, AgentMovementProfile profile) {
         return BotPhysicsEngine.walkStep(map, profile);
     }
 
@@ -145,7 +151,7 @@ public class BotMovementManager {
         return wrapLanding(BotPhysicsEngine.simulateJumpLanding(map, from, stepX));
     }
 
-    static JumpLanding simulateJumpLanding(MapleMap map, Point from, int stepX, BotMovementProfile profile) {
+    static JumpLanding simulateJumpLanding(MapleMap map, Point from, int stepX, AgentMovementProfile profile) {
         return wrapLanding(BotPhysicsEngine.simulateJumpLanding(map, from, stepX, profile));
     }
 
@@ -153,7 +159,7 @@ public class BotMovementManager {
         return wrapLanding(BotPhysicsEngine.simulateRopeJumpLanding(map, from, stepX));
     }
 
-    static JumpLanding simulateRopeJumpLanding(MapleMap map, Point from, int stepX, BotMovementProfile profile) {
+    static JumpLanding simulateRopeJumpLanding(MapleMap map, Point from, int stepX, AgentMovementProfile profile) {
         return wrapLanding(BotPhysicsEngine.simulateRopeJumpLanding(map, from, stepX, profile));
     }
 
@@ -161,13 +167,13 @@ public class BotMovementManager {
         return BotPhysicsEngine.canReachRopeFromGround(map, from, rope);
     }
 
-    static boolean canReachRopeFromGround(MapleMap map, Point from, Rope rope, BotMovementProfile profile) {
+    static boolean canReachRopeFromGround(MapleMap map, Point from, Rope rope, AgentMovementProfile profile) {
         return BotPhysicsEngine.canReachRopeFromGround(map, from, rope, profile);
     }
 
     static boolean refreshMovementProfile(BotEntry entry) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        BotMovementProfile updated = BotMovementProfile.fromCharacter(bot);
+        AgentMovementProfile updated = AgentMovementProfile.fromCharacter(bot);
         if (updated.equals(AgentBotMovementStateRuntime.movementProfile(entry))) {
             return false;
         }
@@ -585,7 +591,7 @@ public class BotMovementManager {
         }
 
         MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
-        BotMovementProfile profile = AgentBotMovementStateRuntime.movementProfile(entry);
+        AgentMovementProfile profile = AgentBotMovementStateRuntime.movementProfile(entry);
         BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map, profile);
         if (graph == null) {
             BotNavigationGraphProvider.warmGraphAsync(map, profile);
@@ -726,7 +732,7 @@ public class BotMovementManager {
 
     private static boolean simulatedJumpLandsInCurrentRegion(BotEntry entry, Foothold currentFh, Point botPos, int stepX) {
         MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
-        BotMovementProfile profile = AgentBotMovementStateRuntime.movementProfile(entry);
+        AgentMovementProfile profile = AgentBotMovementStateRuntime.movementProfile(entry);
         int airVelX = resolveAirVelocityX(map, profile, stepX);
         JumpLanding landing = simulateJumpLanding(map, botPos, airVelX, profile);
         if (landing == null || landing.point() == null || landing.foothold() == null) {
@@ -817,14 +823,14 @@ public class BotMovementManager {
     }
 
     static int calcStepX(MapleMap map, int botX, int targetX, boolean wasMovingX) {
-        return calcStepX(map, BotMovementProfile.base(), botX, targetX, wasMovingX, cfg.STOP_DIST, cfg.FOLLOW_DIST);
+        return calcStepX(map, AgentMovementProfile.base(), botX, targetX, wasMovingX, cfg.STOP_DIST, cfg.FOLLOW_DIST);
     }
 
     static int calcStepX(MapleMap map, int botX, int targetX, boolean wasMovingX, int stopDist, int followDist) {
-        return calcStepX(map, BotMovementProfile.base(), botX, targetX, wasMovingX, stopDist, followDist);
+        return calcStepX(map, AgentMovementProfile.base(), botX, targetX, wasMovingX, stopDist, followDist);
     }
 
-    static int calcStepX(MapleMap map, BotMovementProfile profile, int botX, int targetX, boolean wasMovingX, int stopDist, int followDist) {
+    static int calcStepX(MapleMap map, AgentMovementProfile profile, int botX, int targetX, boolean wasMovingX, int stopDist, int followDist) {
         int dx = targetX - botX;
         int absDx = Math.abs(dx);
         if (absDx <= stopDist) {
@@ -882,7 +888,7 @@ public class BotMovementManager {
         broadcastMovement(entry);
     }
 
-    private static int resolveAirVelocityX(MapleMap map, BotMovementProfile profile, int dx) {
+    private static int resolveAirVelocityX(MapleMap map, AgentMovementProfile profile, int dx) {
         if (dx == 0) {
             return 0;
         }

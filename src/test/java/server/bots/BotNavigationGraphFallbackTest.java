@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.movement.AgentMovementProfile;
+
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
@@ -26,12 +28,12 @@ class BotNavigationGraphFallbackTest {
         footholds.insert(new Foothold(new Point(106, 160), new Point(280, 160), 2));
         map.setFootholds(footholds);
 
-        BotNavigationGraph cachedGraph = BotNavigationGraphProvider.rebuildGraph(map, BotMovementProfile.base());
+        BotNavigationGraph cachedGraph = BotNavigationGraphProvider.rebuildGraph(map, AgentMovementProfile.base());
         assertNotNull(cachedGraph);
 
         Character bot = mockBot(new Point(60, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.movementProfile = new BotMovementProfile(125, 110);
+        entry.movementProfile = new AgentMovementProfile(125, 110);
 
         BotNavigationManager.NavigationDirective directive =
                 BotNavigationManager.resolveTarget(entry, new Point(180, 160), true);
@@ -59,7 +61,7 @@ class BotNavigationGraphFallbackTest {
         footholds.insert(upper);
         map.setFootholds(footholds);
 
-        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map, BotMovementProfile.base());
+        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map, AgentMovementProfile.base());
         int upperRegionId = graph.findRegionId(map, new Point(100, 80));
 
         assertTrue(graph.getOutgoing(upperRegionId).stream()
@@ -81,7 +83,7 @@ class BotNavigationGraphFallbackTest {
         footholds.insert(lower);
         map.setFootholds(footholds);
 
-        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map, BotMovementProfile.base());
+        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map, AgentMovementProfile.base());
         int lowerRegionId = graph.findRegionId(map, new Point(51, 100));
         int upperRegionId = graph.findRegionId(map, new Point(49, 60));
 

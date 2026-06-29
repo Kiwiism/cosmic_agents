@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.movement.AgentMovementProfile;
+
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.AgentMovementMode;
@@ -107,14 +109,14 @@ class AgentBotMovementStateRuntimeTest {
     void movementProfileDefaultsAndStoresThroughAgentBoundary() {
         BotEntry entry = new BotEntry(null, null, null);
 
-        assertEquals(BotMovementProfile.fromCharacter(null), AgentBotMovementStateRuntime.movementProfile(entry));
+        assertEquals(AgentMovementProfile.fromCharacter(null), AgentBotMovementStateRuntime.movementProfile(entry));
 
-        BotMovementProfile profile = new BotMovementProfile(147, 119);
+        AgentMovementProfile profile = new AgentMovementProfile(147, 119);
         AgentBotMovementStateRuntime.setMovementProfile(entry, profile);
-        assertEquals(new BotMovementProfile(145, 115), AgentBotMovementStateRuntime.movementProfile(entry));
+        assertEquals(new AgentMovementProfile(145, 115), AgentBotMovementStateRuntime.movementProfile(entry));
 
         AgentBotMovementStateRuntime.setMovementProfile(entry, null);
-        assertEquals(BotMovementProfile.fromCharacter(null), AgentBotMovementStateRuntime.movementProfile(entry));
+        assertEquals(AgentMovementProfile.fromCharacter(null), AgentBotMovementStateRuntime.movementProfile(entry));
     }
 
     @Test
@@ -126,12 +128,12 @@ class AgentBotMovementStateRuntimeTest {
 
         AgentBotMovementStateRuntime.refreshMovementProfile(entry, bot);
 
-        assertEquals(new BotMovementProfile(160, 127), AgentBotMovementStateRuntime.movementProfile(entry));
+        assertEquals(new AgentMovementProfile(160, 127), AgentBotMovementStateRuntime.movementProfile(entry));
     }
 
     @Test
     void movementProfileFallbackHandlesMissingEntryForCombatCallers() {
-        assertEquals(BotMovementProfile.fromCharacter(null), AgentBotMovementStateRuntime.movementProfileOrCharacter(null, null));
+        assertEquals(AgentMovementProfile.fromCharacter(null), AgentBotMovementStateRuntime.movementProfileOrCharacter(null, null));
     }
 
     @Test

@@ -1,13 +1,15 @@
-package server.bots;
+package server.agents.capabilities.movement;
 
 import client.Character;
+import server.bots.BotMovementManager;
+import server.bots.BotPhysicsEngine;
 import server.maps.FieldLimit;
 import server.maps.MapleMap;
 
 import java.io.Serial;
 import java.io.Serializable;
 
-public record BotMovementProfile(int totalSpeedStat, int totalJumpStat) implements Serializable {
+public record AgentMovementProfile(int totalSpeedStat, int totalJumpStat) implements Serializable {
     // Serialized inside cached BotNavigationGraph instances; keep explicit so
     // cache compatibility is controlled by GRAPH_VERSION instead of compiler-generated UIDs.
     @Serial
@@ -17,27 +19,27 @@ public record BotMovementProfile(int totalSpeedStat, int totalJumpStat) implemen
     static final int STAT_BUCKET_SIZE = 5;
     static final int MAX_EFFECTIVE_SPEED_STAT = 200;
     static final int MAX_EFFECTIVE_JUMP_STAT = 123;
-    static final BotMovementProfile BASE = new BotMovementProfile(BASE_TOTAL_STAT, BASE_TOTAL_STAT);
+    static final AgentMovementProfile BASE = new AgentMovementProfile(BASE_TOTAL_STAT, BASE_TOTAL_STAT);
 
-    public BotMovementProfile {
+    public AgentMovementProfile {
         totalSpeedStat = bucketStat(totalSpeedStat);
         totalJumpStat = bucketStat(totalJumpStat);
         totalSpeedStat = Math.min(totalSpeedStat, MAX_EFFECTIVE_SPEED_STAT);
         totalJumpStat = Math.min(totalJumpStat, MAX_EFFECTIVE_JUMP_STAT);
     }
 
-    static BotMovementProfile base() {
+    public static AgentMovementProfile base() {
         return BASE;
     }
 
-    public static BotMovementProfile fromCharacter(Character character) {
+    public static AgentMovementProfile fromCharacter(Character character) {
         if (character == null) {
             return BASE;
         }
         if (hasForcedBaseMovementStats(character)) {
             return BASE;
         }
-        return new BotMovementProfile(character.getTotalMoveSpeedStat(), character.getTotalJumpStat());
+        return new AgentMovementProfile(character.getTotalMoveSpeedStat(), character.getTotalJumpStat());
     }
 
     private static boolean hasForcedBaseMovementStats(Character character) {
@@ -53,27 +55,27 @@ public record BotMovementProfile(int totalSpeedStat, int totalJumpStat) implemen
         return clamped - Math.floorMod(clamped, STAT_BUCKET_SIZE);
     }
 
-    double speedMultiplier() {
+    public double speedMultiplier() {
         return totalSpeedStat / (double) BASE_TOTAL_STAT;
     }
 
-    double jumpMultiplier() {
+    public double jumpMultiplier() {
         return totalJumpStat / (double) BASE_TOTAL_STAT;
     }
 
     public double walkVelocityPxs() {
-        return BotMovementManager.cfg.WALK_VEL * speedMultiplier();
+        return BotMovementManager.configuredWalkVelocityPxs() * speedMultiplier();
     }
 
     public double hForcePxs() {
-        return BotPhysicsEngine.cfg.HFORCE_PXS * speedMultiplier();
+        return BotPhysicsEngine.configuredHorizontalForcePxs() * speedMultiplier();
     }
 
-    float jumpSpeedPxs() {
-        return (float) (BotPhysicsEngine.cfg.JUMP_SPEED_PXS * jumpMultiplier());
+    public float jumpSpeedPxs() {
+        return (float) (BotPhysicsEngine.configuredJumpSpeedPxs() * jumpMultiplier());
     }
 
-    float ropeJumpSpeedPxs() {
-        return (float) (BotPhysicsEngine.cfg.JUMP_ROPE_PXS * jumpMultiplier());
+    public float ropeJumpSpeedPxs() {
+        return (float) (BotPhysicsEngine.configuredRopeJumpSpeedPxs() * jumpMultiplier());
     }
 }

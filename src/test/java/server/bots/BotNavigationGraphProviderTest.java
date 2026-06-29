@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.movement.AgentMovementProfile;
+
 import client.Character;
 import constants.game.CharacterStance;
 import org.junit.jupiter.api.BeforeAll;
@@ -569,7 +571,7 @@ class BotNavigationGraphProviderTest {
 
     @Test
     void shouldNotGenerateKerningPharmacyJumpIntoBlockedUnderside() {
-        BotMovementProfile profile = new BotMovementProfile(105, 100);
+        AgentMovementProfile profile = new AgentMovementProfile(105, 100);
         BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(kerningPharmacy(), profile);
         int fromRegionId = graph.regionIdByFootholdId.getOrDefault(17, -1);
         int targetRegionId = graph.regionIdByFootholdId.getOrDefault(1, -1);
@@ -593,7 +595,7 @@ class BotNavigationGraphProviderTest {
 
     @Test
     void shouldNotGenerateMushroomShrineJumpIntoDoughnutUnderside() {
-        BotMovementProfile profile = new BotMovementProfile(110, 100);
+        AgentMovementProfile profile = new AgentMovementProfile(110, 100);
         BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(mushroomShrine(), profile);
         int fromRegionId = graph.findRegionId(mushroomShrine(), new Point(3146, 95));
         int targetRegionId = graph.regionIdByFootholdId.getOrDefault(264, -1);

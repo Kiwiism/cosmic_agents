@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.movement.AgentMovementProfile;
+
 import server.maps.Foothold;
 import server.maps.MapleMap;
 
@@ -270,7 +272,7 @@ final class BotNavigationGraph implements Serializable {
 
     final int mapId;
     final int version;
-    final BotMovementProfile movementProfile;
+    final AgentMovementProfile movementProfile;
     final List<Region> regions;
     final Map<Integer, Region> regionsById;
     final Map<Integer, Integer> regionIdByFootholdId;
@@ -280,7 +282,7 @@ final class BotNavigationGraph implements Serializable {
 
     BotNavigationGraph(int mapId,
                        int version,
-                       BotMovementProfile movementProfile,
+                       AgentMovementProfile movementProfile,
                        List<Region> regions,
                        Map<Integer, Region> regionsById,
                        Map<Integer, Integer> regionIdByFootholdId,
@@ -291,7 +293,7 @@ final class BotNavigationGraph implements Serializable {
 
     BotNavigationGraph(int mapId,
                        int version,
-                       BotMovementProfile movementProfile,
+                       AgentMovementProfile movementProfile,
                        List<Region> regions,
                        Map<Integer, Region> regionsById,
                        Map<Integer, Integer> regionIdByFootholdId,
@@ -319,7 +321,7 @@ final class BotNavigationGraph implements Serializable {
                        Map<Integer, Integer> regionIdByFootholdId,
                        Map<Integer, List<Edge>> outgoingByRegionId,
                        java.util.Set<Integer> collidableWallIds) {
-        this(mapId, version, BotMovementProfile.base(), regions, regionsById, regionIdByFootholdId, outgoingByRegionId, collidableWallIds, java.util.Set.of());
+        this(mapId, version, AgentMovementProfile.base(), regions, regionsById, regionIdByFootholdId, outgoingByRegionId, collidableWallIds, java.util.Set.of());
     }
 
     BotNavigationGraph(int mapId,
@@ -330,7 +332,7 @@ final class BotNavigationGraph implements Serializable {
                        Map<Integer, List<Edge>> outgoingByRegionId,
                        java.util.Set<Integer> collidableWallIds,
                        java.util.Set<Integer> collidableFromBelowIds) {
-        this(mapId, version, BotMovementProfile.base(), regions, regionsById, regionIdByFootholdId, outgoingByRegionId, collidableWallIds, collidableFromBelowIds);
+        this(mapId, version, AgentMovementProfile.base(), regions, regionsById, regionIdByFootholdId, outgoingByRegionId, collidableWallIds, collidableFromBelowIds);
     }
 
     Region getRegion(int regionId) {

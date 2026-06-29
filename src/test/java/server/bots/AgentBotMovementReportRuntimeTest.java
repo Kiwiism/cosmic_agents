@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.movement.AgentMovementProfile;
+
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotMovementReportRuntime;
@@ -20,7 +22,7 @@ class AgentBotMovementReportRuntimeTest {
         when(bot.getMap()).thenReturn(map);
         when(bot.getTotalMoveSpeedStat()).thenReturn(120);
         when(bot.getTotalJumpStat()).thenReturn(110);
-        BotMovementProfile profile = BotMovementProfile.fromCharacter(bot);
+        AgentMovementProfile profile = AgentMovementProfile.fromCharacter(bot);
 
         List<String> report = AgentBotMovementReportRuntime.movementStatsReport(bot);
 

@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.movement.AgentMovementProfile;
+
 import client.Character;
 import constants.game.CharacterStance;
 import org.slf4j.Logger;
@@ -691,7 +693,7 @@ final class BotNavigationManager {
         return new Point(edge.startPoint);
     }
 
-    private static BotNavigationGraph resolveActiveGraph(MapleMap map, BotMovementProfile movementProfile) {
+    private static BotNavigationGraph resolveActiveGraph(MapleMap map, AgentMovementProfile movementProfile) {
         return BotNavigationGraphProvider.peekBestGraph(map, movementProfile);
     }
 

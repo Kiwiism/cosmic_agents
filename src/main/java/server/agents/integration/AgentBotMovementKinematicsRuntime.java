@@ -3,7 +3,7 @@ package server.agents.integration;
 import client.Character;
 import server.agents.capabilities.movement.AgentMovementKinematicsSnapshot;
 import server.bots.BotMovementManager;
-import server.bots.BotMovementProfile;
+import server.agents.capabilities.movement.AgentMovementProfile;
 import server.bots.BotPhysicsEngine;
 import server.maps.FieldLimit;
 import server.maps.MapleMap;
@@ -21,7 +21,7 @@ public final class AgentBotMovementKinematicsRuntime {
             return null;
         }
 
-        BotMovementProfile profile = BotMovementProfile.fromCharacter(bot);
+        AgentMovementProfile profile = AgentMovementProfile.fromCharacter(bot);
         MapleMap map = bot.getMap();
         AgentMovementKinematicsSnapshot.MovementProfile movementProfile =
                 new AgentMovementKinematicsSnapshot.MovementProfile(

@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.movement.AgentMovementProfile;
+
 
 import server.agents.integration.AgentBotReplyRuntime;
 import client.Character;
@@ -271,7 +273,7 @@ class BotChatManagerTest {
         when(bot.getMap()).thenReturn(map);
         when(bot.getTotalMoveSpeedStat()).thenReturn(120);
         when(bot.getTotalJumpStat()).thenReturn(110);
-        BotMovementProfile profile = BotMovementProfile.fromCharacter(bot);
+        AgentMovementProfile profile = AgentMovementProfile.fromCharacter(bot);
 
         List<String> report = AgentBotChatReportRuntime.buildMovementStatsReport(bot);
 
