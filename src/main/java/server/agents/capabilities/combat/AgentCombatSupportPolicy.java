@@ -52,6 +52,14 @@ public final class AgentCombatSupportPolicy {
                 && (chr.getSkillLevel(Cleric.HEAL) > 0 || chr.getSkillLevel(SuperGM.HEAL_PLUS_DISPEL) > 0);
     }
 
+    public static boolean shouldConsiderSupportBuff(boolean partySupportSkill,
+                                                    boolean skillCooling,
+                                                    boolean supportBuffCooldownActive) {
+        return partySupportSkill
+                && !skillCooling
+                && !supportBuffCooldownActive;
+    }
+
     public static boolean hasNearbyHealSkillAlly(Character bot, int supportRange, int supportVerticalRange) {
         for (Character member : nearbyPartyMembers(bot, supportRange, supportVerticalRange)) {
             if (hasHealSkill(member)) {

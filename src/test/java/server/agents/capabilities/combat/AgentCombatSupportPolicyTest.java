@@ -66,6 +66,14 @@ class AgentCombatSupportPolicyTest {
     }
 
     @Test
+    void shouldConsiderOnlyReadyPartySupportBuffs() {
+        assertTrue(AgentCombatSupportPolicy.shouldConsiderSupportBuff(true, false, false));
+        assertFalse(AgentCombatSupportPolicy.shouldConsiderSupportBuff(false, false, false));
+        assertFalse(AgentCombatSupportPolicy.shouldConsiderSupportBuff(true, true, false));
+        assertFalse(AgentCombatSupportPolicy.shouldConsiderSupportBuff(true, false, true));
+    }
+
+    @Test
     void shouldDetectNearbyHealSkillAlly() {
         Character bot = characterAt(1, new Point(100, 100), true);
         Character healer = characterAt(2, new Point(130, 110), true);

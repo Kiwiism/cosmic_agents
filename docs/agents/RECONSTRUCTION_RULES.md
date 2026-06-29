@@ -1386,6 +1386,9 @@ Recent reconstruction notes:
 - Grind-region sibling occupant eligibility/counting rules now live in
   `AgentCombatGrindTargetPolicy`; BotCombatManager still gathers live sibling
   agents and resolves their navigation regions through the legacy bot runtime.
+- Support-buff candidate gating now lives in `AgentCombatSupportPolicy`;
+  BotCombatManager still resolves live skills/effects and dispatches the
+  SPECIAL_MOVE packet through the legacy bot runtime.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

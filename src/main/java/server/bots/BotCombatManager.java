@@ -1598,13 +1598,10 @@ public class BotCombatManager {
 
     private static boolean trySupportBuff(BotEntry entry, Character bot, long now) {
         for (int skillId : AgentBotCombatSkillCacheStateRuntime.buffSkillIds(entry)) {
-            if (!isPartySupportSkill(skillId)) {
-                continue;
-            }
-            if (bot.skillIsCooling(skillId)) {
-                continue;
-            }
-            if (AgentBotCombatBuffStateRuntime.supportBuffOnCooldown(entry, skillId, now)) {
+            if (!AgentCombatSupportPolicy.shouldConsiderSupportBuff(
+                    isPartySupportSkill(skillId),
+                    bot.skillIsCooling(skillId),
+                    AgentBotCombatBuffStateRuntime.supportBuffOnCooldown(entry, skillId, now))) {
                 continue;
             }
 
