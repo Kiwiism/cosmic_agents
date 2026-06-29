@@ -178,6 +178,7 @@ class AgentBotMovementStateRuntimeTest {
         assertFalse(AgentBotMovementStateRuntime.climbing(entry));
         assertTrue(AgentBotMovementStateRuntime.notClimbing(entry));
         assertFalse(AgentBotMovementStateRuntime.downJumpPending(entry));
+        assertFalse(AgentBotMovementStateRuntime.crouching(entry));
         assertFalse(AgentBotMovementStateRuntime.hasDownJumpPending(entry));
         assertFalse(AgentBotMovementStateRuntime.hasDownJumpGracePeriod(entry));
         assertFalse(AgentBotMovementStateRuntime.wasMovingX(entry));
@@ -188,6 +189,7 @@ class AgentBotMovementStateRuntimeTest {
         entry.inAir = true;
         entry.climbing = true;
         entry.downJumpPending = true;
+        entry.crouching = true;
         entry.downJumpGracePeriodMS = 100L;
         AgentBotMovementStateRuntime.setWasMovingX(entry, true);
         entry.movementVelX = 12;
@@ -198,6 +200,7 @@ class AgentBotMovementStateRuntimeTest {
         assertTrue(AgentBotMovementStateRuntime.climbing(entry));
         assertFalse(AgentBotMovementStateRuntime.notClimbing(entry));
         assertTrue(AgentBotMovementStateRuntime.downJumpPending(entry));
+        assertTrue(AgentBotMovementStateRuntime.crouching(entry));
         assertTrue(AgentBotMovementStateRuntime.hasDownJumpPending(entry));
         assertTrue(AgentBotMovementStateRuntime.hasDownJumpGracePeriod(entry));
         assertTrue(AgentBotMovementStateRuntime.wasMovingX(entry));

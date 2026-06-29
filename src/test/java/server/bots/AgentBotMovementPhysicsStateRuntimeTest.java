@@ -33,6 +33,16 @@ class AgentBotMovementPhysicsStateRuntimeTest {
     }
 
     @Test
+    void airborneVelocityReadsThroughAgentBoundary() {
+        BotEntry entry = new BotEntry(null, null, null);
+        entry.velY = -12.5f;
+        entry.airVelX = 7;
+
+        assertEquals(-12.5f, AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry));
+        assertEquals(7, AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
+    }
+
+    @Test
     void lastGroundFootholdIsStoredThroughAgentBoundary() {
         BotEntry entry = new BotEntry(null, null, null);
 

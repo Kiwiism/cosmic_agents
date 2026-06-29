@@ -25,6 +25,14 @@ public final class AgentBotMovementPhysicsStateRuntime {
         return entry.fixedAirArc();
     }
 
+    public static float verticalVelocity(BotEntry entry) {
+        return entry.verticalVelocity();
+    }
+
+    public static int airVelocityX(BotEntry entry) {
+        return entry.airVelocityX();
+    }
+
     public static void setFixedAirArc(BotEntry entry, boolean fixed) {
         entry.setFixedAirArc(fixed);
     }

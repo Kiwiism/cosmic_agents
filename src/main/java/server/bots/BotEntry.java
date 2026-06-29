@@ -75,6 +75,11 @@ public class BotEntry {
 
     // Physics
     float velY = 0f;
+
+    public float verticalVelocity() {
+        return velY;
+    }
+
     double hspeed = 0.0;
     double physX = 0.0;
     double physY = 0.0;
@@ -253,6 +258,11 @@ public class BotEntry {
 
     // Committed horizontal step while airborne (set at launch, never changed mid-air)
     int airVelX = 0;
+
+    public int airVelocityX() {
+        return airVelX;
+    }
+
     // Accumulated air-steering correction (gradually adjusted toward target each tick)
     double airSteerVelX = 0.0;
     boolean fixedAirArc = false;

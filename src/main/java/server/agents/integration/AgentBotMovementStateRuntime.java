@@ -119,6 +119,10 @@ public final class AgentBotMovementStateRuntime {
         return entry.downJumpPending();
     }
 
+    public static boolean crouching(BotEntry entry) {
+        return entry.crouching();
+    }
+
     public static boolean hasDownJumpPending(BotEntry entry) {
         return entry.downJumpPending();
     }

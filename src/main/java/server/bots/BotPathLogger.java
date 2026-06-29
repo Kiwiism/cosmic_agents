@@ -11,15 +11,18 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
+import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotFormationStateRuntime;
 import server.agents.integration.AgentBotMovementStuckStateRuntime;
+import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotTickCadenceStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
 import server.maps.MapleMap;
+import server.maps.Rope;
 
 /**
  * Records per-tick navigation snapshots for a single bot and dumps them to a human-readable file.
@@ -383,26 +386,27 @@ public final class BotPathLogger {
     }
 
     static String physState(BotEntry entry) {
-        if (entry.climbing) {
-            if (entry.climbRope != null) {
-                return "ROPE(x=" + entry.climbRope.x()
-                        + " top=" + entry.climbRope.topY()
-                        + " bot=" + entry.climbRope.bottomY() + ")";
+        if (AgentBotClimbStateRuntime.climbing(entry)) {
+            Rope climbRope = AgentBotClimbStateRuntime.climbRope(entry);
+            if (climbRope != null) {
+                return "ROPE(x=" + climbRope.x()
+                        + " top=" + climbRope.topY()
+                        + " bot=" + climbRope.bottomY() + ")";
             }
             return "ROPE(? climbRope=null)";
         }
-        if (entry.inAir) {
-            return "AIR(velY=" + String.format("%.1f", entry.velY)
-                    + " airVelX=" + entry.airVelX
-                    + (entry.climbUpIntent ? " climbIntent" : "") + ")";
+        if (AgentBotMovementStateRuntime.inAir(entry)) {
+            return "AIR(velY=" + String.format("%.1f", AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry))
+                    + " airVelX=" + AgentBotMovementPhysicsStateRuntime.airVelocityX(entry)
+                    + (AgentBotClimbStateRuntime.climbUpIntent(entry) ? " climbIntent" : "") + ")";
         }
         return "GND"
-                + (entry.downJumpPending ? "(downJump)" : "")
-                + (entry.crouching ? "(crouch)" : "");
+                + (AgentBotMovementStateRuntime.downJumpPending(entry) ? "(downJump)" : "")
+                + (AgentBotMovementStateRuntime.crouching(entry) ? "(crouch)" : "");
     }
 
     static String navEdgeSummary(BotEntry entry) {
-        BotNavigationGraph.Edge e = entry.navEdge;
+        BotNavigationGraph.Edge e = (BotNavigationGraph.Edge) AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry);
         if (e == null) {
             return "none";
         }

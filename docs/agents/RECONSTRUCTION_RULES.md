@@ -911,6 +911,13 @@ Recent reconstruction notes:
   movement graph summaries, walk-step calculation, and path query calls keep
   BotEntry as the temporary backing store but no longer read `bot` or
   `movementProfile` directly in production.
+- Path logger movement-formatting state now enters through
+  `AgentBotClimbStateRuntime`, `AgentBotMovementStateRuntime`,
+  `AgentBotMovementPhysicsStateRuntime`, and
+  `AgentBotNavigationDebugStateRuntime`; BotPathLogger physics-state and
+  nav-edge summaries keep BotEntry as the temporary backing store but no longer
+  read climb, airborne, crouch, down-jump, velocity, or active-edge fields
+  directly in production.
 
 Initial reconstruction order:
 
