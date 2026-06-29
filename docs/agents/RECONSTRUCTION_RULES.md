@@ -1328,6 +1328,10 @@ Recent reconstruction notes:
   clamp, meso category parsing, requested-meso parsing, and insufficient-meso
   reply behavior through compatibility delegates, while Agent transfer routing
   uses the Agent policy directly.
+- Sell-trash equipment protection policy now lives in
+  `AgentInventorySellTrashPolicy`; BotInventoryManager preserves scrolled-equip,
+  non-weapon WATK, class-stat, base-stat, pure-stat, and weapon attack/magic
+  attack protection behavior through compatibility delegates.
 
 Initial reconstruction order:
 

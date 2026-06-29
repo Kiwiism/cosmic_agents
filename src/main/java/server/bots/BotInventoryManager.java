@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
 import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
+import server.agents.capabilities.inventory.AgentInventorySellTrashPolicy;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
 import server.agents.integration.AgentBotInventoryRuntime;
@@ -1625,19 +1626,7 @@ public class BotInventoryManager {
     }
 
     static boolean shouldKeepForSellTrash(ItemInformationProvider ii, Equip equip) {
-        if (equip.getLevel() > 0) {
-            return true;
-        }
-        Map<String, Integer> stats = ii != null ? ii.getEquipStats(equip.getItemId()) : null;
-        if (ItemConstants.isWeapon(equip.getItemId())) {
-            Equip baseEquip = ii != null ? (Equip) ii.getEquipById(equip.getItemId()) : null;
-            if (hasProtectedSellTrashWeaponStat(stats, equip, baseEquip)) {
-                return true;
-            }
-        } else if (equip.getWatk() > 0) {
-            return true;
-        }
-        return hasProtectedSellTrashStat(stats, equip, 6, 10);
+        return AgentInventorySellTrashPolicy.shouldKeepForSellTrash(ii, equip);
     }
 
     // A stat protects an equip from being trashed only if it has been improved above the item's
@@ -1645,48 +1634,11 @@ public class BotInventoryManager {
     // (>= pureThreshold) regardless of base. Base stat values come straight from the WZ stats map
     // (the "inc"-stripped STR/DEX/INT/LUK keys).
     static boolean hasProtectedSellTrashStat(Map<String, Integer> stats, Equip equip, int aboveBaseThreshold, int pureThreshold) {
-        if (stats == null || equip == null) {
-            return false;
-        }
-
-        boolean str = statProtected(equip.getStr(), stats.getOrDefault("STR", 0), aboveBaseThreshold, pureThreshold);
-        boolean dex = statProtected(equip.getDex(), stats.getOrDefault("DEX", 0), aboveBaseThreshold, pureThreshold);
-        boolean intt = statProtected(equip.getInt(), stats.getOrDefault("INT", 0), aboveBaseThreshold, pureThreshold);
-        boolean luk = statProtected(equip.getLuk(), stats.getOrDefault("LUK", 0), aboveBaseThreshold, pureThreshold);
-
-        int reqJob = stats.getOrDefault("reqJob", 0);
-        if (reqJob == 0) {
-            return str || dex || intt || luk;
-        }
-
-        return ((reqJob & 0x1) != 0 && (str || dex))
-                || ((reqJob & 0x2) != 0 && (intt || luk))
-                || ((reqJob & 0x4) != 0 && (dex || str))
-                || ((reqJob & 0x8) != 0 && (luk || dex))
-                || ((reqJob & 0x10) != 0 && (str || dex));
-    }
-
-    private static boolean statProtected(int value, int base, int aboveBaseThreshold, int pureThreshold) {
-        return value >= pureThreshold || (value >= aboveBaseThreshold && value > base);
+        return AgentInventorySellTrashPolicy.hasProtectedSellTrashStat(stats, equip, aboveBaseThreshold, pureThreshold);
     }
 
     static boolean hasProtectedSellTrashWeaponStat(Map<String, Integer> stats, Equip equip, Equip baseEquip) {
-        if (equip == null || baseEquip == null) {
-            return false;
-        }
-        boolean mageWeapon = isMageWeapon(stats);
-        if (mageWeapon) {
-            return equip.getMatk() - baseEquip.getMatk() >= 4;
-        }
-        return equip.getWatk() - baseEquip.getWatk() >= 4;
-    }
-
-    private static boolean isMageWeapon(Map<String, Integer> stats) {
-        if (stats == null) {
-            return false;
-        }
-        int reqJob = stats.getOrDefault("reqJob", 0);
-        return reqJob == 0 ? false : (reqJob & 0x2) != 0 && (reqJob & ~0x2) == 0;
+        return AgentInventorySellTrashPolicy.hasProtectedSellTrashWeaponStat(stats, equip, baseEquip);
     }
 
     /** Score used to order own-class equips worst-to-best: 4*watk + matk + main + sec. */
