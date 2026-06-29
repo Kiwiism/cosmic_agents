@@ -1,6 +1,10 @@
 package server.agents.integration;
 
 import org.junit.jupiter.api.Test;
+import server.bots.BotEntry;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -21,5 +25,16 @@ class AgentBotCommandBoundaryTest {
         assertNull(match.entry());
         assertEquals("follow me", match.commandText());
         assertEquals("not found", match.feedbackMessage());
+    }
+
+    @Test
+    void commandTargetResolvesNameThroughRuntimeIdentity() {
+        BotEntry entry = mock(BotEntry.class);
+
+        try (var identity = mockStatic(AgentBotRuntimeIdentityRuntime.class)) {
+            identity.when(() -> AgentBotRuntimeIdentityRuntime.botName(entry)).thenReturn("agent123");
+
+            assertEquals("agent123", new AgentBotCommandTarget(entry).name());
+        }
     }
 }
