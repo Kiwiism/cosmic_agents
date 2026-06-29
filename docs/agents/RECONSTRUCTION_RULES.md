@@ -85,6 +85,11 @@ Recent reconstruction notes:
   `server.agents.capabilities.dialogue.AgentDialogueCatalog`. The exact strings,
   legacy random selection through `BotManager.randomReply`, and map-visible
   delivery path are unchanged.
+- Combat mob-touch geometry moved to
+  `server.agents.capabilities.combat.AgentMobTouchPolicy`. Client-style
+  inclusive foot-sweep bounds and lower-half mob contact checks are unchanged;
+  `BotCombatManager` still supplies remembered touch checkpoints and mob WZ
+  bounds for the current side-effect path.
 - Combat attack data provider ownership moved to
   `server.agents.capabilities.combat.data.AgentAttackDataProvider`. Weapon
   normal-attack profile loading, action-spec selection, body action id

@@ -13,6 +13,7 @@ import server.agents.capabilities.combat.AgentCombatHitCounter;
 import server.agents.capabilities.combat.AgentCombatRangePolicy;
 import server.agents.capabilities.combat.AgentCombatSkillUsePolicy;
 import server.agents.capabilities.combat.AgentCombatSupportPolicy;
+import server.agents.capabilities.combat.AgentMobTouchPolicy;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
 
 import server.agents.runtime.AgentPerformanceMonitor;
@@ -1859,13 +1860,7 @@ public class BotCombatManager {
         if (mobBounds == null) {
             return false;
         }
-        // Only the lower half of the mob deals touch damage: keep the bottom half of the sprite
-        // bounds (v83 y grows downward, so the bottom is the max-y side). Lets the bot's
-        // feet/legs slip under a tall mob's upper body without taking contact damage.
-        int lowerHeight = Math.max(1, mobBounds.height / 2);
-        Rectangle mobLowerHalf = new Rectangle(mobBounds.x, mobBounds.y + mobBounds.height - lowerHeight,
-                mobBounds.width, lowerHeight);
-        return mobLowerHalf.intersects(botBounds);
+        return AgentMobTouchPolicy.lowerHalfIntersects(mobBounds, botBounds);
     }
 
     static Rectangle getBotTouchBounds(BotEntry entry, Character bot) {
@@ -1876,17 +1871,11 @@ public class BotCombatManager {
             previousPos = rememberedPos;
         }
 
-        // Mirror the client touch check: sweep the player's foot position between ticks
-        // and use a fixed height above the feet instead of the full character sprite.
-        int left = Math.min(previousPos.x, currentPos.x);
-        int right = Math.max(previousPos.x, currentPos.x);
-        int top = Math.min(previousPos.y, currentPos.y) - BotCombatManager.cfg.MOB_TOUCH_SWEEP_HEIGHT;
-        int bottom = Math.max(previousPos.y, currentPos.y);
-        return inclusiveRectangle(left, top, right, bottom);
+        return AgentMobTouchPolicy.botTouchSweepBounds(previousPos, currentPos, cfg.MOB_TOUCH_SWEEP_HEIGHT);
     }
 
     private static Rectangle inclusiveRectangle(int left, int top, int right, int bottom) {
-        return new Rectangle(left, top, Math.max(1, right - left + 1), Math.max(1, bottom - top + 1));
+        return AgentMobTouchPolicy.inclusiveRectangle(left, top, right, bottom);
     }
 
     private static void rememberMobTouchCheck(BotEntry entry, Character bot, Point position) {
