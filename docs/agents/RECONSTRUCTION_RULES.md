@@ -1044,6 +1044,10 @@ Recent reconstruction notes:
   registry behavior, task cancellation timing, and authorization inputs remain
   unchanged while those paths stop reading BotEntry identity/task fields
   directly.
+- BotManager first-bot lookup now enters through
+  `AgentBotRuntimeIdentityRuntime`; public owner-to-bot lookup preserves the
+  same first-entry behavior while no longer reading the BotEntry bot field
+  directly.
 
 Initial reconstruction order:
 

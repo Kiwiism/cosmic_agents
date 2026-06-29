@@ -728,7 +728,7 @@ public class BotManager {
 
     public Character getBot(int ownerCharId) {
         List<BotEntry> entries = bots.get(ownerCharId);
-        return (entries != null && !entries.isEmpty()) ? entries.get(0).bot : null;
+        return (entries != null && !entries.isEmpty()) ? AgentBotRuntimeIdentityRuntime.bot(entries.get(0)) : null;
     }
 
     BotEntry getFirstBotEntry(int ownerCharId) {
