@@ -1,6 +1,10 @@
 package server.agents.capabilities.inventory;
 
+import client.inventory.InventoryType;
+import client.inventory.Item;
 import constants.game.GameConstants;
+
+import java.util.List;
 
 public final class AgentInventoryTradePolicy {
     public static final int TRADE_WINDOW_ITEM_LIMIT = 9;
@@ -40,5 +44,13 @@ public final class AgentInventoryTradePolicy {
     public static String notEnoughMesosReply(int requestedMesos, int currentMesos) {
         return "i only have " + GameConstants.numberWithCommas(currentMesos)
                 + " mesos rn, not " + GameConstants.numberWithCommas(requestedMesos);
+    }
+
+    public static int itemQuantitySum(List<Item> items) {
+        int total = 0;
+        for (Item item : items) {
+            total += item.getInventoryType() == InventoryType.EQUIP ? 1 : Math.max(0, item.getQuantity());
+        }
+        return total;
     }
 }

@@ -541,11 +541,7 @@ public class BotInventoryManager {
     }
 
     private static int itemQuantitySum(List<Item> items) {
-        int total = 0;
-        for (Item item : items) {
-            total += item.getInventoryType() == InventoryType.EQUIP ? 1 : Math.max(0, item.getQuantity());
-        }
-        return total;
+        return AgentInventoryTradePolicy.itemQuantitySum(items);
     }
 
     static String noItemsReply(String category) {

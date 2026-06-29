@@ -1417,6 +1417,9 @@ Recent reconstruction notes:
   missing replies now live in `AgentDialogueCatalog`; BotInventoryManager
   preserves the same trade sequencing, retry timing, item preparation, and
   reply delivery behavior through compatibility delegates.
+- Inventory trade item-quantity summing now lives in `AgentInventoryTradePolicy`;
+  BotInventoryManager preserves the same equip-as-one behavior, stack quantity
+  summing, and negative quantity clamp through a compatibility delegate.
 - The remaining fixed drop-limited-map and low-potion return notices now live in
   `AgentDialogueCatalog`; BotInventoryManager and BotPotionManager preserve the
   same drop gating, grind-stop/follow-owner behavior, emote change, and map/reply
