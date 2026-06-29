@@ -1344,6 +1344,10 @@ Recent reconstruction notes:
   `AgentPotionSharePolicy`; BotInventoryManager preserves the same item-effect
   lookup, candidate sorting, max-stack, and trade-transfer behavior through
   compatibility delegates.
+- Ammo-share request eligibility, donor quantity math, and donor tie-break
+  policy now live in `AgentAmmoSharePolicy`; BotAmmoManager preserves the same
+  cooldown/backoff, donor scan, visible request/offer dialogue, delayed trade,
+  and inventory transfer behavior through compatibility delegates.
 
 Initial reconstruction order:
 

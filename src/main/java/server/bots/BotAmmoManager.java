@@ -5,6 +5,8 @@ import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import client.Character;
 import client.inventory.Item;
 import client.inventory.WeaponType;
+import server.agents.capabilities.supplies.AgentAmmoSharePolicy;
+import server.agents.capabilities.supplies.AgentAmmoSharePolicy.DonorScore;
 import server.agents.integration.AgentBotAmmoDonorPlan;
 import server.agents.integration.AgentBotAmmoRuntime;
 import server.agents.integration.AgentBotAmmoStateRuntime;
@@ -153,7 +155,10 @@ public final class BotAmmoManager {
             }
             WeaponType donorWeaponType = AgentAttackExecutionProvider.getEquippedWeaponType(donorBot);
             boolean donorNeedsSameAmmo = donorWeaponType == needyWeaponType;
-            int donationQty = donorNeedsSameAmmo ? (count - BotCombatManager.cfg.AMMO_LOW_WARN) / 2 : count;
+            int donationQty = AgentAmmoSharePolicy.donationQuantity(
+                    count,
+                    BotCombatManager.cfg.AMMO_LOW_WARN,
+                    donorNeedsSameAmmo);
             if (donationQty <= 0) {
                 continue;
             }
@@ -184,16 +189,12 @@ public final class BotAmmoManager {
     }
 
     private static boolean isBetterDonor(AgentBotAmmoDonorPlan candidate, AgentBotAmmoDonorPlan best) {
-        if (best == null) {
-            return true;
-        }
-        if (candidate.donorNeedsSameAmmo() != best.donorNeedsSameAmmo()) {
-            return !candidate.donorNeedsSameAmmo();
-        }
-        return candidate.matchingAmmoCount() > best.matchingAmmoCount();
+        return AgentAmmoSharePolicy.isBetterDonor(
+                new DonorScore(candidate.donorNeedsSameAmmo(), candidate.matchingAmmoCount()),
+                best == null ? null : new DonorScore(best.donorNeedsSameAmmo(), best.matchingAmmoCount()));
     }
 
     private static boolean canRequestShare(WeaponType weaponType) {
-        return weaponType == WeaponType.BOW || weaponType == WeaponType.CROSSBOW;
+        return AgentAmmoSharePolicy.canRequestShare(weaponType);
     }
 }

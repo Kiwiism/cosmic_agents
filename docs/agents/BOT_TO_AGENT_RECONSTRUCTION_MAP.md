@@ -22,7 +22,7 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 | `src/main/java/client/command/commands/gm3/BotNavCommand.java` | `server.agents.commands.AgentLegacyCommandBridge` | `COMPATIBILITY_ALIAS_TEMPORARY` |
 | `src/main/java/client/command/commands/gm3/BotPerfDebugCommand.java` | `server.agents.commands.AgentLegacyCommandBridge` | `COMPATIBILITY_ALIAS_TEMPORARY` |
 | `src/main/java/server/bots/BotAirshowManager.java` | `server.agents.capabilities.social.airshow` | `MIGRATE_TO_AGENT` |
-| `src/main/java/server/bots/BotAmmoManager.java` | `server.agents.capabilities.supplies.AgentAmmoService` | `MIGRATE_TO_AGENT` |
+| `src/main/java/server/bots/BotAmmoManager.java` | `server.agents.capabilities.supplies.AgentAmmoService`, `server.agents.capabilities.supplies.AgentAmmoSharePolicy` | `MIGRATE_TO_AGENT`; ammo-share request eligibility, donor quantity math, and donor tie-break policy are Agent-owned |
 | `src/main/java/server/bots/BotAttackExecutionProvider.java` | `server.agents.capabilities.combat.AgentAttackExecutionProvider` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotBuffManager.java` | `server.agents.capabilities.combat.AgentBuffService` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/BotBuildManager.java` | `server.agents.capabilities.build` and `server.agents.profiles.SkillBuildProfile` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
