@@ -177,6 +177,9 @@ Recent reconstruction notes:
   `AgentBotMovementPhysicsStateRuntime.setFixedAirArc`; grounded, swim,
   landing, collision, airborne launch, climb, and reset paths no longer clear
   `fixedAirArc` directly.
+- Bot physics movement-direction intent now enters through
+  `AgentBotMovementStateRuntime`; ground motion, air steering, airborne launch,
+  idle, and reset paths no longer read or clear `moveDir` directly.
 - Combat alert reset callbacks now enter through `AgentBotCombatRuntime`;
   `BotCombatManager` no longer reaches directly into the lower-level scheduler
   runtime for combat-owned alert timing, and alert timing and stance reset

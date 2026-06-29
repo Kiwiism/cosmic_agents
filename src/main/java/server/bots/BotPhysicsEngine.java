@@ -627,7 +627,7 @@ public final class BotPhysicsEngine {
         entry.airVelX = 0;
         entry.airSteerVelX = 0.0;
         AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
-        entry.moveDir = 0;
+        AgentBotMovementStateRuntime.clearMoveDirection(entry);
         entry.physX = position.x;
         entry.physY = position.y;
         stopGroundMotion(entry);
@@ -890,7 +890,7 @@ public final class BotPhysicsEngine {
     static GroundMotion applyGroundMotion(BotEntry entry, Character bot, Foothold foothold) {
         MapleMap map = bot.getMap();
         Point currentPos = bot.getPosition();
-        int desiredDir = entry.moveDir;
+        int desiredDir = AgentBotMovementStateRuntime.moveDirection(entry);
         GroundStepResult step = simulateGroundMotion(map, currentPos, foothold, desiredDir,
                 new GroundTravelState(entry.physX, entry.hspeed, entry.groundPhysicsCarryMs),
                 AgentBotMovementStateRuntime.movementProfile(entry));
@@ -1259,8 +1259,8 @@ public final class BotPhysicsEngine {
      */
     static AirborneStepResult stepAirborne(BotEntry entry, Character bot) {
         // Apply air steering from intent. Movement sets moveDir=0 for committed trajectories.
-        if (entry.moveDir != 0) {
-            applyAirSteering(entry, entry.moveDir);
+        if (AgentBotMovementStateRuntime.hasMoveDirection(entry)) {
+            applyAirSteering(entry, AgentBotMovementStateRuntime.moveDirection(entry));
         }
 
         Point previousPos = roundedAirPosition(entry);
@@ -1596,7 +1596,7 @@ public final class BotPhysicsEngine {
         // Clear ground movement intent when going airborne - unified moveDir serves both
         // ground and air, so ground walk direction must not bleed into air steering.
         // Movement manager will set moveDir for air steering if shouldApplyAirSteering allows.
-        entry.moveDir = 0;
+        AgentBotMovementStateRuntime.clearMoveDirection(entry);
         setMovementVelocity(entry, velocityFromDeltaX(airVelX), velocityFromAirStep(initialVelY));
         syncCharacterState(entry);
     }
@@ -1678,7 +1678,7 @@ public final class BotPhysicsEngine {
         entry.airSteerVelX = 0.0;
         AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
         entry.wasMovingX = false;
-        entry.moveDir = 0;
+        AgentBotMovementStateRuntime.clearMoveDirection(entry);
         entry.climbUpIntent = false;
         AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
         entry.ropeGrabCooldownMs = 0;
