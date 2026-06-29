@@ -626,7 +626,7 @@ public final class BotPhysicsEngine {
         entry.velY = 0f;
         entry.airVelX = 0;
         entry.airSteerVelX = 0.0;
-        entry.fixedAirArc = false;
+        AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
         entry.moveDir = 0;
         entry.physX = position.x;
         entry.physY = position.y;
@@ -679,7 +679,7 @@ public final class BotPhysicsEngine {
             entry.climbUpIntent = false;
             entry.airVelX = 0;
             entry.airSteerVelX = 0.0;
-            entry.fixedAirArc = false;
+            AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
             AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
             AgentBotSwimStateRuntime.setSwimJumpRequested(entry, false);
             // The first impulse off a foothold is the small ground jump. A
@@ -774,7 +774,7 @@ public final class BotPhysicsEngine {
         entry.climbUpIntent = true;
         entry.airVelX = airVelX;
         entry.airSteerVelX = 0.0;
-        entry.fixedAirArc = false;
+        AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
         AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
         AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
         setMovementVelocity(entry, velocityFromDeltaX(airVelX), velocityFromAirStep(entry.velY));
@@ -805,7 +805,7 @@ public final class BotPhysicsEngine {
         entry.velY = 0f;
         entry.airVelX = 0;
         entry.airSteerVelX = 0.0;
-        entry.fixedAirArc = false;
+        AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
         entry.physX = position.x;
         entry.physY = position.y;
         clearRopeEntryIntent(entry);
@@ -912,7 +912,7 @@ public final class BotPhysicsEngine {
         entry.velY = 0f;
         entry.airVelX = 0;
         entry.airSteerVelX = 0.0;
-        entry.fixedAirArc = false;
+        AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
         entry.physX = position.x;
         entry.physY = position.y;
         entry.hspeed = step.state().hspeed();
@@ -1067,7 +1067,7 @@ public final class BotPhysicsEngine {
             entry.physY = pos.y;
             entry.airVelX = 0;
             entry.airSteerVelX = 0.0;
-            entry.fixedAirArc = false;
+            AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
             AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
             AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, 0L);
             // Preserve velY/hspeed from launch — a jump-off-platform should
@@ -1286,7 +1286,7 @@ public final class BotPhysicsEngine {
     private static void collideWithAirWall(BotEntry entry, Character bot, Point collisionPoint) {
         entry.airVelX = 0;
         entry.airSteerVelX = 0.0;
-        entry.fixedAirArc = false;
+        AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
         entry.physX = collisionPoint.x;
         entry.physY = collisionPoint.y;
         bot.setPosition(collisionPoint);
@@ -1299,7 +1299,7 @@ public final class BotPhysicsEngine {
 
     private static void collideWithAirCeiling(BotEntry entry, Character bot, Point collisionPoint) {
         entry.velY = 0f;
-        entry.fixedAirArc = false;
+        AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
         entry.physX = collisionPoint.x;
         entry.physY = collisionPoint.y;
         bot.setPosition(collisionPoint);
@@ -1591,7 +1591,7 @@ public final class BotPhysicsEngine {
         clearRopeEntryIntent(entry);
         entry.airVelX = airVelX;
         entry.airSteerVelX = 0.0;
-        entry.fixedAirArc = false;
+        AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
         AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
         // Clear ground movement intent when going airborne - unified moveDir serves both
         // ground and air, so ground walk direction must not bleed into air steering.
@@ -1651,7 +1651,7 @@ public final class BotPhysicsEngine {
         entry.velY = 0f;
         entry.airVelX = 0;
         entry.airSteerVelX = 0.0;
-        entry.fixedAirArc = false;
+        AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
         entry.physX = position.x;
         entry.physY = position.y;
         clearRopeEntryIntent(entry);
@@ -1676,7 +1676,7 @@ public final class BotPhysicsEngine {
         entry.groundPhysicsCarryMs = 0.0;
         entry.airVelX = 0;
         entry.airSteerVelX = 0.0;
-        entry.fixedAirArc = false;
+        AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
         entry.wasMovingX = false;
         entry.moveDir = 0;
         entry.climbUpIntent = false;

@@ -173,6 +173,10 @@ Recent reconstruction notes:
   `AgentBotSwimStateRuntime`; water jump launch, swim integration, landing
   handoff, swim input reads, swim-jump consumption, swim cooldown, and swim
   facing updates no longer access swim fields directly in `BotPhysicsEngine`.
+- Bot physics fixed-air-arc state now enters through
+  `AgentBotMovementPhysicsStateRuntime.setFixedAirArc`; grounded, swim,
+  landing, collision, airborne launch, climb, and reset paths no longer clear
+  `fixedAirArc` directly.
 - Combat alert reset callbacks now enter through `AgentBotCombatRuntime`;
   `BotCombatManager` no longer reaches directly into the lower-level scheduler
   runtime for combat-owned alert timing, and alert timing and stance reset
