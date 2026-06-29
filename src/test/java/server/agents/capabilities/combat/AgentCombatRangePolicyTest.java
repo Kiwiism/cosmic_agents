@@ -29,6 +29,26 @@ class AgentCombatRangePolicyTest {
     }
 
     @Test
+    void shouldUseHitboxIntersectionWhenAttackPlanHasHitbox() {
+        Monster target = monsterAt(120, 200);
+
+        assertTrue(AgentCombatRangePolicy.isTargetInAttackRange(
+                new Rectangle(100, 150, 80, 80), target, new Point(0, 0), new Point(999, 999)));
+        assertFalse(AgentCombatRangePolicy.isTargetInAttackRange(
+                new Rectangle(300, 150, 80, 80), target, new Point(100, 200), new Point(120, 200)));
+    }
+
+    @Test
+    void shouldFallBackToBasicRangeWhenAttackPlanHasNoHitbox() {
+        Monster target = monsterAt(120, 200);
+
+        assertTrue(AgentCombatRangePolicy.isTargetInAttackRange(
+                null, target, new Point(100, 200), new Point(120, 200)));
+        assertFalse(AgentCombatRangePolicy.isTargetInAttackRange(
+                null, target, new Point(100, 200), new Point(250, 200)));
+    }
+
+    @Test
     void shouldAllowDiagonalJumpAttackForCloseRangeTargetsSlightlyAbove() {
         assertTrue(AgentCombatRangePolicy.isTargetJumpable(
                 AgentMovementProfile.base(), true, new Point(100, 200), new Point(230, 135), 80.0));

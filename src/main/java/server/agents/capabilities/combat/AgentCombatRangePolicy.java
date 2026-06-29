@@ -23,6 +23,16 @@ public final class AgentCombatRangePolicy {
         return inHorizontalRange && inVerticalRange;
     }
 
+    public static boolean isTargetInAttackRange(Rectangle attackHitBox,
+                                                Monster target,
+                                                Point agentPosition,
+                                                Point targetPosition) {
+        if (attackHitBox != null) {
+            return AgentCombatHitboxIntersection.intersectsMonster(attackHitBox, target);
+        }
+        return isBasicAttackInRange(agentPosition, targetPosition);
+    }
+
     public static Rectangle basicWeaponReachRect(Character bot, boolean facingLeft, AgentAttackRoute route) {
         if (bot == null || bot.getPosition() == null) {
             return null;

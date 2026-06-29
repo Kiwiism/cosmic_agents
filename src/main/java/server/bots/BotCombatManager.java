@@ -797,10 +797,11 @@ public class BotCombatManager {
         if (attackPlan == null) {
             return false;
         }
-        if (attackPlan.hasHitBox()) {
-            return doesHitBoxIntersectMonster(attackPlan.hitBox, target);
-        }
-        return AgentCombatRangePolicy.isBasicAttackInRange(bot.getPosition(), target.getPosition());
+        return AgentCombatRangePolicy.isTargetInAttackRange(
+                attackPlan.hasHitBox() ? attackPlan.hitBox : null,
+                target,
+                bot.getPosition(),
+                target.getPosition());
     }
 
     static boolean canUseAttackPlanNow(BotEntry entry, WeaponType weaponType, AttackPlan attackPlan) {

@@ -1392,6 +1392,10 @@ Recent reconstruction notes:
 - Support-cast readiness ordering now lives in `AgentCombatSupportPolicy` with
   lazy cost evaluation so the missing-skill and dead cases preserve the legacy
   short-circuit behavior; BotCombatManager still emits the existing debug text.
+- Attack-plan range selection now lives in `AgentCombatRangePolicy`: hitbox
+  plans use monster-hitbox intersection and plans without hitboxes fall back to
+  the legacy basic attack range check. BotCombatManager only adapts AttackPlan
+  fields to the Agent-owned policy.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
