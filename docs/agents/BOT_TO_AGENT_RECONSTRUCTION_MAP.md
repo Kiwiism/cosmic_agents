@@ -37,7 +37,7 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 | `src/main/java/server/bots/BotLootEligibility.java` | `server.agents.capabilities.looting.AgentLootEligibility` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotMakerManager.java` | `server.agents.capabilities.build` or later deletion | `LEGACY_PROFILE` |
 | `src/main/java/server/bots/BotManager.java` | `server.agents.runtime`, `commands`, `events`, capability orchestrators | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
-| `src/main/java/server/bots/BotMovementManager.java` | `server.agents.capabilities.movement` | `SPLIT_TO_MULTIPLE_AGENT_MODULES`; cooldown/delay countdown math, climb idle/snap decision policy, and ground horizontal step policy are Agent-owned |
+| `src/main/java/server/bots/BotMovementManager.java` | `server.agents.capabilities.movement` | `SPLIT_TO_MULTIPLE_AGENT_MODULES`; cooldown/delay countdown math, climb idle/snap/rope identity decision policy, and ground horizontal step policy are Agent-owned |
 | `src/main/java/server/bots/BotMovementProfile.java` | `server.agents.capabilities.movement.AgentMovementProfile` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotNavigationDebugOverlay.java` | `server.agents.capabilities.navigation.AgentNavigationDebugOverlay` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/BotNavigationGraph.java` | `server.agents.capabilities.navigation.AgentNavigationGraph` | `MIGRATE_TO_AGENT` |

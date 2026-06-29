@@ -404,11 +404,7 @@ public class BotMovementManager {
     }
 
     static boolean sameRope(Rope left, Rope right) {
-        return left != null && right != null
-                && left.x() == right.x()
-                && left.topY() == right.topY()
-                && left.bottomY() == right.bottomY()
-                && left.isLadder() == right.isLadder();
+        return AgentClimbMovementPolicy.sameRope(left, right);
     }
 
     private static boolean shouldApplyAirSteering(BotEntry entry) {

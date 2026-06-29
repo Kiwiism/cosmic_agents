@@ -41,4 +41,12 @@ public final class AgentClimbMovementPolicy {
         }
         return Math.abs(dy) < climbStepPerTick;
     }
+
+    public static boolean sameRope(Rope left, Rope right) {
+        return left != null && right != null
+                && left.x() == right.x()
+                && left.topY() == right.topY()
+                && left.bottomY() == right.bottomY()
+                && left.isLadder() == right.isLadder();
+    }
 }

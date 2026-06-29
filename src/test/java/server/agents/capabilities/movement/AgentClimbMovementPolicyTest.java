@@ -65,4 +65,23 @@ class AgentClimbMovementPolicyTest {
 
         assertFalse(AgentClimbMovementPolicy.shouldSnapToClimbTarget(true, rope, new Point(10, 300), 8, true, 8));
     }
+
+    @Test
+    void shouldMatchEquivalentRopes() {
+        assertTrue(AgentClimbMovementPolicy.sameRope(
+                new Rope(10, 100, 300, false),
+                new Rope(10, 100, 300, false)));
+    }
+
+    @Test
+    void shouldRejectDifferentOrMissingRopes() {
+        Rope rope = new Rope(10, 100, 300, false);
+
+        assertFalse(AgentClimbMovementPolicy.sameRope(null, rope));
+        assertFalse(AgentClimbMovementPolicy.sameRope(rope, null));
+        assertFalse(AgentClimbMovementPolicy.sameRope(rope, new Rope(11, 100, 300, false)));
+        assertFalse(AgentClimbMovementPolicy.sameRope(rope, new Rope(10, 99, 300, false)));
+        assertFalse(AgentClimbMovementPolicy.sameRope(rope, new Rope(10, 100, 301, false)));
+        assertFalse(AgentClimbMovementPolicy.sameRope(rope, new Rope(10, 100, 300, true)));
+    }
 }
