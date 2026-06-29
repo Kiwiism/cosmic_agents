@@ -61,6 +61,7 @@ import server.agents.capabilities.combat.data.AgentAttackDataProvider;
 import server.agents.capabilities.combat.data.AgentDefenseDataProvider;
 import server.agents.capabilities.combat.data.AgentMobHitboxProvider;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
+import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotAmmoStateRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatBuffStateRuntime;
@@ -175,25 +176,6 @@ public class BotCombatManager {
     public static String setConfigField(String name, String rawValue) {
         return AgentCombatConfig.setConfigField(name, rawValue);
     }
-
-    private static final List<String> DEATH_REPLIES = List.of(
-            "oops im dead", "gg", "rip me", "oww", "i died lol",
-            "welp", "ouchh", "nooo", "ok i died", "i'll be right back");
-    private static final List<String> AMMO_LOW_MSGS = List.of(
-            "running low on ammo",
-            "ammo getting low",
-            "not much ammo left",
-            "gonna need more ammo soon");
-    private static final List<String> AMMO_OUT_MSGS = List.of(
-            "out of ammo! heading back",
-            "no ammo left, coming to you",
-            "need ammo!! walking back",
-            "im out of ammo, heading to you");
-    private static final List<String> MP_POTS_OUT_MSGS = List.of(
-            "out of MP pots! heading back",
-            "no MP pots left, coming to you",
-            "need MP pots!! walking back",
-            "im out of MP pots, heading to you");
 
     /** Check every alive monster on the map; if bot is inside its bounding box, apply a hit. */
     static void tickMobDamage(BotEntry entry, Character bot) {
@@ -359,7 +341,7 @@ public class BotCombatManager {
         BotMovementManager.broadcastMovement(entry);
         AgentBotDeathStateRuntime.enterDeadState(entry, System.currentTimeMillis(), cfg.BOT_DEAD_MS);
         if (announceDeath) {
-            AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(DEATH_REPLIES));
+            AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(AgentDialogueCatalog.combatDeathReplies()));
         }
     }
 
@@ -2266,7 +2248,7 @@ public class BotCombatManager {
                 AgentBotAmmoStateRuntime.setNoAmmo(entry, true);
                 if (AgentBotModeStateRuntime.grinding(entry)) {
                     BotManager.getInstance().issueFollowOwner(entry);
-                    AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(MP_POTS_OUT_MSGS));
+                    AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(AgentDialogueCatalog.combatMpPotsOutReplies()));
                 }
             }
             return;
@@ -2280,7 +2262,7 @@ public class BotCombatManager {
 
         if (ammo > 0 && !AgentBotAmmoStateRuntime.ammoWarnSent(entry)) {
             AgentBotAmmoStateRuntime.setAmmoWarnSent(entry, true);
-            AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(AMMO_LOW_MSGS));
+            AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(AgentDialogueCatalog.combatAmmoLowReplies()));
             return;
         }
 
@@ -2288,7 +2270,7 @@ public class BotCombatManager {
             AgentBotAmmoStateRuntime.setNoAmmo(entry, true);
             if (AgentBotModeStateRuntime.grinding(entry)) {
                 BotManager.getInstance().issueFollowOwner(entry);
-                AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(AMMO_OUT_MSGS));
+                AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(AgentDialogueCatalog.combatAmmoOutReplies()));
             }
         }
     }

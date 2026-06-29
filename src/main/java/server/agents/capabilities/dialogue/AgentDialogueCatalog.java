@@ -85,6 +85,24 @@ public final class AgentDialogueCatalog {
             "we're not holding extra ammo, thought you packed supplies",
             "can't find spare ammo. maybe time to restock?",
             "almost dry on ammo too, don't look at me");
+    private static final List<String> COMBAT_DEATH_REPLIES = List.of(
+            "oops im dead", "gg", "rip me", "oww", "i died lol",
+            "welp", "ouchh", "nooo", "ok i died", "i'll be right back");
+    private static final List<String> COMBAT_AMMO_LOW_REPLIES = List.of(
+            "running low on ammo",
+            "ammo getting low",
+            "not much ammo left",
+            "gonna need more ammo soon");
+    private static final List<String> COMBAT_AMMO_OUT_REPLIES = List.of(
+            "out of ammo! heading back",
+            "no ammo left, coming to you",
+            "need ammo!! walking back",
+            "im out of ammo, heading to you");
+    private static final List<String> COMBAT_MP_POTS_OUT_REPLIES = List.of(
+            "out of MP pots! heading back",
+            "no MP pots left, coming to you",
+            "need MP pots!! walking back",
+            "im out of MP pots, heading to you");
     private static final List<String> TRADE_INVITE_REPLIES = List.of(
             "ok", "sure", "k", "one sec", "coming to trade", "np", "k opening trade");
     private static final List<String> GREETING_REPLIES = List.of(
@@ -267,6 +285,22 @@ public final class AgentDialogueCatalog {
 
     public static List<String> ownerAmmoShortageReplies() {
         return OWNER_AMMO_SHORTAGE_REPLIES;
+    }
+
+    public static List<String> combatDeathReplies() {
+        return COMBAT_DEATH_REPLIES;
+    }
+
+    public static List<String> combatAmmoLowReplies() {
+        return COMBAT_AMMO_LOW_REPLIES;
+    }
+
+    public static List<String> combatAmmoOutReplies() {
+        return COMBAT_AMMO_OUT_REPLIES;
+    }
+
+    public static List<String> combatMpPotsOutReplies() {
+        return COMBAT_MP_POTS_OUT_REPLIES;
     }
 
     public static List<String> tradeInviteReplies() {

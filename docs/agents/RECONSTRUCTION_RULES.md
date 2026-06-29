@@ -81,6 +81,10 @@ Recent reconstruction notes:
   non-positive-level rejection, and `StatEffect.canPaySkillCost` delegation are
   unchanged; `BotCombatManager` keeps a compatibility wrapper for current
   attack execution.
+- Combat death/ammo/MP shortage reply pools moved to
+  `server.agents.capabilities.dialogue.AgentDialogueCatalog`. The exact strings,
+  legacy random selection through `BotManager.randomReply`, and map-visible
+  delivery path are unchanged.
 - Combat attack data provider ownership moved to
   `server.agents.capabilities.combat.data.AgentAttackDataProvider`. Weapon
   normal-attack profile loading, action-spec selection, body action id
