@@ -12,6 +12,7 @@ import server.agents.capabilities.combat.AgentCombatWeaponPolicy;
 import server.agents.capabilities.combat.AgentCombatSkillHitboxPolicy;
 import server.agents.capabilities.combat.AgentCombatHitCounter;
 import server.agents.capabilities.combat.AgentCombatHitboxIntersection;
+import server.agents.capabilities.combat.AgentCombatImmediateTargetPolicy;
 import server.agents.capabilities.combat.AgentCombatRangePolicy;
 import server.agents.capabilities.combat.AgentCombatScoringPolicy;
 import server.agents.capabilities.combat.AgentCombatSkillUsePolicy;
@@ -1281,55 +1282,19 @@ public class BotCombatManager {
     }
 
     private static boolean isImmediateProjectileTarget(BotEntry entry, Character bot, Monster target) {
-        if (entry == null || AgentBotAmmoStateRuntime.noAmmo(entry) || bot == null || target == null || !target.isAlive()) {
-            return false;
-        }
-
-        Point botPos = bot.getPosition();
-        Point targetPos = target.getPosition();
-        WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
-        if (AgentAttackExecutionProvider.determineBasicWeaponRoute(weaponType) == AgentAttackRoute.RANGED
-                && !AgentAttackExecutionProvider.shouldDegenerateRangedAttack(weaponType, botPos, targetPos)) {
-            Rectangle hitBox = clientProjectileHitBox(bot, targetPos.x < botPos.x, 1.0f);
-            if (doesHitBoxIntersectMonster(hitBox, target)) {
-                return true;
-            }
-        }
-
-        return isImmediateProjectileSkillTarget(entry, bot, target);
+        return AgentCombatImmediateTargetPolicy.isImmediateProjectileTarget(
+                bot,
+                target,
+                entry == null || AgentBotAmmoStateRuntime.noAmmo(entry),
+                entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry));
     }
 
     private static boolean isImmediateProjectileSkillTarget(BotEntry entry, Character bot, Monster target) {
+        if (entry == null) {
+            return AgentCombatImmediateTargetPolicy.isImmediateProjectileSkillTarget(bot, target, 0);
+        }
         int attackSkillId = AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry);
-        if (attackSkillId == 0 || bot.skillIsCooling(attackSkillId)) {
-            return false;
-        }
-
-        Skill skill = SkillFactory.getSkill(attackSkillId);
-        int skillLevel = skill == null ? 0 : bot.getSkillLevel(skill);
-        if (skillLevel <= 0) {
-            return false;
-        }
-
-        StatEffect effect = skill.getEffect(skillLevel);
-        if (effect == null || !effect.canPaySkillCost(bot)) {
-            return false;
-        }
-
-        AgentAttackRoute route = AgentAttackExecutionProvider.determineSkillRoute(bot, attackSkillId);
-        if (route != AgentAttackRoute.RANGED && route != AgentAttackRoute.MAGIC) {
-            return false;
-        }
-
-        // Route is gated to RANGED/MAGIC above, so the close-range (action-gated) path is never
-        // taken here — action is irrelevant for the projectile box.
-        Rectangle hitBox = calculateSkillHitBox(effect, bot, target, route, attackSkillId, null);
-        if (hitBox == null || !doesHitBoxIntersectMonster(hitBox, target)) {
-            return false;
-        }
-
-        WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
-        return AgentAttackExecutionProvider.canUseRangedAttackRoute(route, weaponType, bot.getPosition(), target.getPosition());
+        return AgentCombatImmediateTargetPolicy.isImmediateProjectileSkillTarget(bot, target, attackSkillId);
     }
 
     private static List<ScoredGrindTarget> scoreLocalTargets(BotEntry entry,

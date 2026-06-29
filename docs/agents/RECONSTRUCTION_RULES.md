@@ -127,6 +127,12 @@ Recent reconstruction notes:
   filtering and cap handling are also Agent-owned; `BotCombatManager` still
   supplies the map monster iterable, map-object query results, and caller
   range values.
+- Combat immediate projectile target policy moved to
+  `server.agents.capabilities.combat.AgentCombatImmediateTargetPolicy`. Basic
+  ranged projectile hitbox gating, degenerate-ranged fallback rejection, cached
+  ranged/magic attack-skill cooldown, affordability, route, skill-hitbox, and
+  ranged-route checks are unchanged; `BotCombatManager` now only supplies
+  legacy ammo and cached attack-skill state before delegating.
 - Combat attack data provider ownership moved to
   `server.agents.capabilities.combat.data.AgentAttackDataProvider`. Weapon
   normal-attack profile loading, action-spec selection, body action id
