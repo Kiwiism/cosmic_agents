@@ -1760,15 +1760,7 @@ public class BotCombatManager {
     // Use the bot's basic weapon rectangle as a separate reach check. MAGIC route is left
     // ungated for now — untested.
     private static boolean isPrimaryReachableByBasicWeapon(Character bot, Monster target, AgentAttackRoute route) {
-        if (bot == null || target == null || bot.getPosition() == null || target.getPosition() == null) {
-            return false;
-        }
-        if (route != AgentAttackRoute.RANGED && route != AgentAttackRoute.CLOSE) {
-            return true;
-        }
-        boolean facingLeft = target.getPosition().x < bot.getPosition().x;
-        Rectangle basicReach = basicWeaponReachRect(bot, facingLeft, route);
-        return basicReach != null && doesHitBoxIntersectMonster(basicReach, target);
+        return AgentCombatRangePolicy.isPrimaryReachableByBasicWeapon(bot, target, route);
     }
 
     private static Monster resolveStrikePointPrimaryByBasicWeapon(Character bot, Monster fallback, AgentAttackRoute route) {
@@ -1792,20 +1784,7 @@ public class BotCombatManager {
      * around bot origin. Returns null for routes with no rect-based reach (e.g. MAGIC).
      */
     private static Rectangle basicWeaponReachRect(Character bot, boolean facingLeft, AgentAttackRoute route) {
-        if (bot == null || bot.getPosition() == null) {
-            return null;
-        }
-        if (route == AgentAttackRoute.RANGED) {
-            return clientProjectileHitBox(bot, facingLeft, 1.0f);
-        }
-        if (route == AgentAttackRoute.CLOSE) {
-            Point origin = bot.getPosition();
-            int left = facingLeft ? origin.x - cfg.ATTACK_RANGE_X : origin.x;
-            int top = origin.y - cfg.ATTACK_RANGE_Y;
-            int height = cfg.ATTACK_RANGE_Y + cfg.ATTACK_DOWN_MAX;
-            return new Rectangle(left, top, cfg.ATTACK_RANGE_X, height);
-        }
-        return null;
+        return AgentCombatRangePolicy.basicWeaponReachRect(bot, facingLeft, route);
     }
 
     private static boolean isForwardProjectileHitBox(Rectangle hitBox, Point botPos) {

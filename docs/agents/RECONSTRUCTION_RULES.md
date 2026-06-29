@@ -67,8 +67,9 @@ Recent reconstruction notes:
   plan construction.
 - Combat range and airborne-use policy ownership moved to
   `server.agents.capabilities.combat.AgentCombatRangePolicy`. Basic attack
-  reach, diagonal jump-attack eligibility, and airborne ranged-route blocking
-  for bow/crossbow/gun are unchanged; `BotCombatManager` keeps compatibility
+  reach, basic weapon reach rectangles, strike-point primary reach gating,
+  diagonal jump-attack eligibility, and airborne ranged-route blocking for
+  bow/crossbow/gun are unchanged; `BotCombatManager` keeps compatibility
   wrappers for current attack-plan gating and tests.
 - Combat support safety policy ownership moved to
   `server.agents.capabilities.combat.AgentCombatSupportPolicy`. Dragon Roar
