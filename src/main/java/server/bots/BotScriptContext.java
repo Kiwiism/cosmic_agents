@@ -2,6 +2,7 @@ package server.bots;
 
 import client.Character;
 import client.inventory.InventoryType;
+import server.agents.integration.AgentBotScriptTaskStateRuntime;
 
 import java.awt.*;
 
@@ -19,19 +20,19 @@ public final class BotScriptContext {
     }
 
     public int getInt(String key) {
-        return entry.script.ints.getOrDefault(key, 0);
+        return AgentBotScriptTaskStateRuntime.scriptInt(entry, key);
     }
 
     public void setInt(String key, int value) {
-        entry.script.ints.put(key, value);
+        AgentBotScriptTaskStateRuntime.setScriptInt(entry, key, value);
     }
 
     public void waitMs(long ms) {
-        entry.script.waitUntilMs = System.currentTimeMillis() + ms;
+        AgentBotScriptTaskStateRuntime.waitScriptUntil(entry, System.currentTimeMillis() + ms);
     }
 
     public boolean waitDone() {
-        return System.currentTimeMillis() >= entry.script.waitUntilMs;
+        return AgentBotScriptTaskStateRuntime.scriptWaitDone(entry, System.currentTimeMillis());
     }
 
     public void queueMoveTo(Point point, boolean precise) {

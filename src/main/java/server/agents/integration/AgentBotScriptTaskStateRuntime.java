@@ -72,4 +72,49 @@ public final class AgentBotScriptTaskStateRuntime {
         }
         return !AgentBotModeStateRuntime.following(entry);
     }
+
+    public static String scriptId(BotEntry entry) {
+        return entry.script.scriptId;
+    }
+
+    public static boolean hasScriptId(BotEntry entry) {
+        return scriptId(entry) != null;
+    }
+
+    public static void resetScript(BotEntry entry, String scriptId) {
+        entry.script.reset(scriptId);
+    }
+
+    public static int scriptStepIndex(BotEntry entry) {
+        return entry.script.stepIndex;
+    }
+
+    public static boolean scriptStepEntered(BotEntry entry) {
+        return entry.script.stepEntered;
+    }
+
+    public static void markScriptStepEntered(BotEntry entry) {
+        entry.script.stepEntered = true;
+    }
+
+    public static void advanceScriptStep(BotEntry entry) {
+        entry.script.stepIndex++;
+        entry.script.stepEntered = false;
+    }
+
+    public static int scriptInt(BotEntry entry, String key) {
+        return entry.script.ints.getOrDefault(key, 0);
+    }
+
+    public static void setScriptInt(BotEntry entry, String key, int value) {
+        entry.script.ints.put(key, value);
+    }
+
+    public static void waitScriptUntil(BotEntry entry, long untilMs) {
+        entry.script.waitUntilMs = untilMs;
+    }
+
+    public static boolean scriptWaitDone(BotEntry entry, long nowMs) {
+        return nowMs >= entry.script.waitUntilMs;
+    }
 }

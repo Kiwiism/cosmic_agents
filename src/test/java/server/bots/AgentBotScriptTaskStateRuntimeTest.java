@@ -58,4 +58,36 @@ class AgentBotScriptTaskStateRuntimeTest {
         AgentBotModeStateRuntime.setFollowing(entry, true);
         assertFalse(AgentBotScriptTaskStateRuntime.isActiveLocalOpportunityMoveTo(entry, point));
     }
+
+    @Test
+    void scriptRuntimeStateMovesThroughAgentBoundary() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        assertFalse(AgentBotScriptTaskStateRuntime.hasScriptId(entry));
+        AgentBotScriptTaskStateRuntime.resetScript(entry, "kpq-stage-1");
+
+        assertTrue(AgentBotScriptTaskStateRuntime.hasScriptId(entry));
+        assertEquals("kpq-stage-1", AgentBotScriptTaskStateRuntime.scriptId(entry));
+        assertEquals(0, AgentBotScriptTaskStateRuntime.scriptStepIndex(entry));
+        assertFalse(AgentBotScriptTaskStateRuntime.scriptStepEntered(entry));
+
+        AgentBotScriptTaskStateRuntime.markScriptStepEntered(entry);
+        assertTrue(AgentBotScriptTaskStateRuntime.scriptStepEntered(entry));
+
+        AgentBotScriptTaskStateRuntime.advanceScriptStep(entry);
+        assertEquals(1, AgentBotScriptTaskStateRuntime.scriptStepIndex(entry));
+        assertFalse(AgentBotScriptTaskStateRuntime.scriptStepEntered(entry));
+
+        AgentBotScriptTaskStateRuntime.setScriptInt(entry, "coupons", 7);
+        assertEquals(7, AgentBotScriptTaskStateRuntime.scriptInt(entry, "coupons"));
+        assertEquals(0, AgentBotScriptTaskStateRuntime.scriptInt(entry, "missing"));
+
+        AgentBotScriptTaskStateRuntime.waitScriptUntil(entry, 500L);
+        assertFalse(AgentBotScriptTaskStateRuntime.scriptWaitDone(entry, 499L));
+        assertTrue(AgentBotScriptTaskStateRuntime.scriptWaitDone(entry, 500L));
+
+        AgentBotScriptTaskStateRuntime.resetScript(entry, null);
+        assertFalse(AgentBotScriptTaskStateRuntime.hasScriptId(entry));
+        assertEquals(0, AgentBotScriptTaskStateRuntime.scriptInt(entry, "coupons"));
+    }
 }

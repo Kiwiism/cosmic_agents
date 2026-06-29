@@ -1,6 +1,7 @@
 package server.bots;
 
 import client.Character;
+import server.agents.integration.AgentBotScriptTaskStateRuntime;
 
 import java.util.List;
 
@@ -10,33 +11,32 @@ public final class BotScriptRunner {
     public static void tick(BotEntry entry, Character bot, Character owner, List<BotScript> scripts) {
         BotScript script = findScript(entry, bot, owner, scripts);
         if (script == null) {
-            if (entry.script.scriptId != null) {
+            if (AgentBotScriptTaskStateRuntime.hasScriptId(entry)) {
                 BotManager.getInstance().clearScriptTasks(entry);
-                entry.script.reset(null);
+                AgentBotScriptTaskStateRuntime.resetScript(entry, null);
             }
             return;
         }
 
-        if (!script.id().equals(entry.script.scriptId)) {
+        if (!script.id().equals(AgentBotScriptTaskStateRuntime.scriptId(entry))) {
             BotManager.getInstance().clearScriptTasks(entry);
-            entry.script.reset(script.id());
+            AgentBotScriptTaskStateRuntime.resetScript(entry, script.id());
         }
 
         List<BotScriptStep> steps = script.steps();
-        if (entry.script.stepIndex >= steps.size()) {
+        if (AgentBotScriptTaskStateRuntime.scriptStepIndex(entry) >= steps.size()) {
             return;
         }
 
         BotScriptContext ctx = new BotScriptContext(entry, bot, owner, BotManager.getInstance());
-        BotScriptStep step = steps.get(entry.script.stepIndex);
-        if (!entry.script.stepEntered) {
+        BotScriptStep step = steps.get(AgentBotScriptTaskStateRuntime.scriptStepIndex(entry));
+        if (!AgentBotScriptTaskStateRuntime.scriptStepEntered(entry)) {
             step.enter(ctx);
-            entry.script.stepEntered = true;
+            AgentBotScriptTaskStateRuntime.markScriptStepEntered(entry);
         }
         step.tick(ctx);
         if (step.complete(ctx)) {
-            entry.script.stepIndex++;
-            entry.script.stepEntered = false;
+            AgentBotScriptTaskStateRuntime.advanceScriptStep(entry);
         }
     }
 

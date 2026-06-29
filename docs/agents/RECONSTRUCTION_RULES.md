@@ -943,6 +943,10 @@ Recent reconstruction notes:
   preserve reply gating, prompt wording, memory keys, and relation resolution
   while no longer reading bot, owner, map, or reply-channel state directly from
   BotEntry in production.
+- Script runtime state now enters through `AgentBotScriptTaskStateRuntime`;
+  BotScriptContext and BotScriptRunner preserve script id reset, step entry,
+  step advancement, script-local ints, wait timers, and queued-task behavior
+  while no longer reading or writing `entry.script` directly in production.
 
 Initial reconstruction order:
 
