@@ -905,6 +905,12 @@ Recent reconstruction notes:
   BotNavigationDebugOverlay path rendering, path-log messages, multi-bot
   selection names, and committed-edge status keep BotEntry as the temporary
   backing store but no longer read `bot` or `navEdge` directly in production.
+- Path logger identity, map, and movement-profile reads now enter through
+  `AgentBotRuntimeIdentityRuntime` and `AgentBotMovementStateRuntime`;
+  BotPathLogger tick capture, graph snapshot resolution, region resolution,
+  movement graph summaries, walk-step calculation, and path query calls keep
+  BotEntry as the temporary backing store but no longer read `bot` or
+  `movementProfile` directly in production.
 
 Initial reconstruction order:
 
