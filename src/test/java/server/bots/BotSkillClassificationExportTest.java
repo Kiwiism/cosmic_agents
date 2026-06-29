@@ -3,6 +3,7 @@ package server.bots;
 import client.Skill;
 import client.SkillFactory;
 import org.junit.jupiter.api.Test;
+import server.agents.capabilities.combat.AgentCombatSkillClassifier;
 import server.StatEffect;
 import tools.Pair;
 import client.BuffStat;
@@ -117,7 +118,7 @@ public class BotSkillClassificationExportTest {
             return "SUMMON";
         }
         if (BotCombatManager.isActiveSupportSkill(skill, fx)) {
-            return BotCombatManager.BUFF_BLACKLIST.contains(id) ? "BLACKLISTED" : "SUPPORT_BUFF";
+            return AgentCombatSkillClassifier.isBuffBlacklisted(id) ? "BLACKLISTED" : "SUPPORT_BUFF";
         }
         boolean rawBuff = fx.isOverTime() && (skill.getAction() || skill.getSkillType() == 2);
         if (rawBuff) {
@@ -126,7 +127,7 @@ public class BotSkillClassificationExportTest {
             }
             return "MOB_DEBUFF"; // duration but no caster statup (isActiveSupportSkill rejected it)
         }
-        if (BotCombatManager.BUFF_BLACKLIST.contains(id)) {
+        if (AgentCombatSkillClassifier.isBuffBlacklisted(id)) {
             return "BLACKLISTED";
         }
         return "PASSIVE";

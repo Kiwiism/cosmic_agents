@@ -7,6 +7,7 @@ import client.Skill;
 import constants.skills.Assassin;
 import constants.skills.Cleric;
 import constants.skills.Crusader;
+import constants.skills.NightWalker;
 import constants.skills.Rogue;
 import constants.skills.SuperGM;
 import constants.skills.Warrior;
@@ -29,6 +30,13 @@ class AgentCombatSkillClassifierTest {
     void identifiesLegacyPartySupportSkills() {
         assertTrue(AgentCombatSkillClassifier.isPartySupportSkill(Assassin.HASTE));
         assertFalse(AgentCombatSkillClassifier.isPartySupportSkill(Crusader.ARMOR_CRASH));
+    }
+
+    @Test
+    void identifiesBuffBlacklistedSkills() {
+        assertTrue(AgentCombatSkillClassifier.isBuffBlacklisted(Rogue.DARK_SIGHT));
+        assertTrue(AgentCombatSkillClassifier.isBuffBlacklisted(NightWalker.DARK_SIGHT));
+        assertFalse(AgentCombatSkillClassifier.isBuffBlacklisted(Assassin.HASTE));
     }
 
     @Test

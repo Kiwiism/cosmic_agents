@@ -1310,6 +1310,9 @@ Recent reconstruction notes:
   BotCombatManager still resolves regions and navigation paths, then delegates
   invalid-region, same-region local cost, no-path, and edge-cost summing
   semantics to Agent combat policy.
+- Buff blacklist classification now lives in `AgentCombatSkillClassifier`;
+  BotCombatManager preserves the same Dark Sight exclusion behavior while the
+  never-cast skill list is owned by Agent combat classification.
 
 Initial reconstruction order:
 

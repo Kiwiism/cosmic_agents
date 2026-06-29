@@ -52,9 +52,7 @@ import constants.skills.DragonKnight;
 import constants.skills.Fighter;
 import constants.skills.GM;
 import constants.skills.Marksman;
-import constants.skills.NightWalker;
 import constants.skills.Priest;
-import constants.skills.Rogue;
 import constants.skills.Spearman;
 import constants.skills.ThunderBreaker;
 import constants.skills.WhiteKnight;
@@ -110,13 +108,6 @@ import java.util.concurrent.ThreadLocalRandom;
 public class BotCombatManager {
     private static final Logger log = LoggerFactory.getLogger(BotCombatManager.class);
     private static final long UNREACHABLE_GRAPH_COST = Long.MAX_VALUE / 4;
-
-    // Skills that bots must never cast — stealth makes them untargetable by monsters,
-    // breaking combat entirely.
-    static final Set<Integer> BUFF_BLACKLIST = Set.of(
-            Rogue.DARK_SIGHT,
-            NightWalker.DARK_SIGHT
-    );
     private static final int DRAGON_ROAR_MIN_TARGETS_WITHOUT_HEALER = 10;
 
     static final class AttackPlan extends AgentAttackPlan {
@@ -371,7 +362,7 @@ public class BotCombatManager {
             }
 
             if (!isActiveSupportSkill(skill, fx)) continue;
-            if (BUFF_BLACKLIST.contains(skill.getId())) continue;
+            if (AgentCombatSkillClassifier.isBuffBlacklisted(skill.getId())) continue;
             AgentBotCombatSkillCacheStateRuntime.addBuffSkillId(entry, skill.getId());
             AgentBotCombatBuffStateRuntime.ensureNextBuffAt(entry, skill.getId(), 0L);
         }
@@ -411,7 +402,7 @@ public class BotCombatManager {
             if (lvl <= 0) continue;
 
             StatEffect fx = skill.getEffect(lvl);
-            if (!isActiveSupportSkill(skill, fx) || BUFF_BLACKLIST.contains(skill.getId())) {
+            if (!isActiveSupportSkill(skill, fx) || AgentCombatSkillClassifier.isBuffBlacklisted(skill.getId())) {
                 continue;
             }
             if (castSupportSkill(entry, bot, skill, fx, now)) {

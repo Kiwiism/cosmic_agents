@@ -18,6 +18,7 @@ import constants.skills.GM;
 import constants.skills.Marksman;
 import constants.skills.NightWalker;
 import constants.skills.Priest;
+import constants.skills.Rogue;
 import constants.skills.Spearman;
 import constants.skills.SuperGM;
 import constants.skills.ThunderBreaker;
@@ -35,6 +36,11 @@ public final class AgentCombatSkillClassifier {
             Crusader.ARMOR_CRASH,
             WhiteKnight.MAGIC_CRASH,
             DragonKnight.POWER_CRASH
+    );
+
+    private static final Set<Integer> BUFF_BLACKLIST_SKILL_IDS = Set.of(
+            Rogue.DARK_SIGHT,
+            NightWalker.DARK_SIGHT
     );
 
     private static final Set<Integer> PARTY_SUPPORT_SKILL_IDS = Set.of(
@@ -65,6 +71,10 @@ public final class AgentCombatSkillClassifier {
 
     public static boolean isPartySupportSkill(int skillId) {
         return PARTY_SUPPORT_SKILL_IDS.contains(skillId);
+    }
+
+    public static boolean isBuffBlacklisted(int skillId) {
+        return BUFF_BLACKLIST_SKILL_IDS.contains(skillId);
     }
 
     public static boolean isActiveAttackSkill(Skill skill, StatEffect effect) {
