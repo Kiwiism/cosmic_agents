@@ -751,6 +751,12 @@ Recent reconstruction notes:
   execution, waypoint selection, and current-region resolution keep BotEntry as
   the temporary backing store but no longer read `inAir`, `climbing`,
   `downJumpPending`, or `climbRope` directly in production.
+- BotNavigationManager runtime identity reads now enter through
+  `AgentBotRuntimeIdentityRuntime`; graph lookup/warmup, committed-edge
+  execution, warmup notification, edge usability checks, waypoint selection,
+  current-region resolution, and follow-anchor handling keep BotEntry as the
+  temporary backing store but no longer read `entry.bot` or `entry.owner`
+  directly in production.
 - Combat animation/cooldown and alert-reset state now enters through
   `AgentBotCombatCooldownStateRuntime`; BotCombatManager attack cooldown,
   movement-window, alerted-stance timeout, and alert-reset scheduling keep
