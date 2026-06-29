@@ -100,4 +100,31 @@ class AgentSkillAttackPlannerTest {
                 AgentSkillAttackPlanner.skillAttackReadiness(
                         1001004, false, true, 1, () -> true, () -> true));
     }
+
+    @Test
+    void shouldRequireMaxBulletCostTimesHitMultiplierForRangedSkills() {
+        assertEquals(AgentSkillAttackPlanner.SkillAmmoReadiness.INSUFFICIENT_AMMO,
+                AgentSkillAttackPlanner.skillAmmoReadiness(1, 3, 2, AgentAttackRoute.RANGED, () -> 5));
+        assertEquals(AgentSkillAttackPlanner.SkillAmmoReadiness.READY,
+                AgentSkillAttackPlanner.skillAmmoReadiness(1, 3, 2, AgentAttackRoute.RANGED, () -> 6));
+    }
+
+    @Test
+    void shouldSkipAmmoCountForNoCostOrNonRangedSkills() {
+        AtomicBoolean ammoCounted = new AtomicBoolean(false);
+
+        assertEquals(AgentSkillAttackPlanner.SkillAmmoReadiness.READY,
+                AgentSkillAttackPlanner.skillAmmoReadiness(0, 0, 2, AgentAttackRoute.RANGED, () -> {
+                    ammoCounted.set(true);
+                    return 0;
+                }));
+        assertFalse(ammoCounted.get());
+
+        assertEquals(AgentSkillAttackPlanner.SkillAmmoReadiness.READY,
+                AgentSkillAttackPlanner.skillAmmoReadiness(1, 3, 2, AgentAttackRoute.CLOSE, () -> {
+                    ammoCounted.set(true);
+                    return 0;
+                }));
+        assertFalse(ammoCounted.get());
+    }
 }

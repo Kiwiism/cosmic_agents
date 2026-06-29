@@ -937,10 +937,12 @@ public class BotCombatManager {
         // Avenger / Iron Arrow set bulletConsume (e.g. 3 for Avenger) for ammo cost without
         // changing the visible projectile count, so use the larger of the two. Shadow
         // Partner doubles the actual consume (see RangedAttackHandler.bulletConsume *= 2).
-        int ammoCost = Math.max(effect.getBulletCount(), effect.getBulletConsume())
-                * shadowPartnerHitMultiplier(bot, route);
-        if (ammoCost > 0 && route == AgentAttackRoute.RANGED
-                && countAmmo(bot, weaponType) < ammoCost) {
+        if (AgentSkillAttackPlanner.skillAmmoReadiness(
+                effect.getBulletCount(),
+                effect.getBulletConsume(),
+                shadowPartnerHitMultiplier(bot, route),
+                route,
+                () -> countAmmo(bot, weaponType)) != AgentSkillAttackPlanner.SkillAmmoReadiness.READY) {
             return null;
         }
         // Resolve the animated action once up front: weapon-action sampling is random, so the

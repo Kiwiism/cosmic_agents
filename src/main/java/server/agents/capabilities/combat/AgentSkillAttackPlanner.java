@@ -1,6 +1,7 @@
 package server.agents.capabilities.combat;
 
 import java.util.function.BooleanSupplier;
+import java.util.function.IntSupplier;
 
 public final class AgentSkillAttackPlanner {
     public enum SkillAttackReadiness {
@@ -11,6 +12,11 @@ public final class AgentSkillAttackPlanner {
         SKILL_LEVEL_MISSING,
         CANNOT_PAY_COST,
         WEAPON_INCOMPATIBLE
+    }
+
+    public enum SkillAmmoReadiness {
+        READY,
+        INSUFFICIENT_AMMO
     }
 
     private AgentSkillAttackPlanner() {
@@ -41,5 +47,17 @@ public final class AgentSkillAttackPlanner {
             return SkillAttackReadiness.WEAPON_INCOMPATIBLE;
         }
         return SkillAttackReadiness.READY;
+    }
+
+    public static SkillAmmoReadiness skillAmmoReadiness(int bulletCount,
+                                                        int bulletConsume,
+                                                        int hitMultiplier,
+                                                        AgentAttackRoute route,
+                                                        IntSupplier ammoCount) {
+        int ammoCost = Math.max(bulletCount, bulletConsume) * Math.max(1, hitMultiplier);
+        if (ammoCost > 0 && route == AgentAttackRoute.RANGED && ammoCount.getAsInt() < ammoCost) {
+            return SkillAmmoReadiness.INSUFFICIENT_AMMO;
+        }
+        return SkillAmmoReadiness.READY;
     }
 }
