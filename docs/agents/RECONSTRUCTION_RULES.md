@@ -119,8 +119,9 @@ Recent reconstruction notes:
 - Combat hitbox target selection moved to
   `server.agents.capabilities.combat.AgentCombatTargetSelector`. Primary-first
   target inclusion, hostile/living secondary filtering, hitbox intersection,
-  nearest-to-primary sorting, and max-target capping are unchanged;
-  `BotCombatManager` still supplies the map monster iterable.
+  nearest-to-primary sorting, max-target capping, and hostile/living in-range
+  candidate filtering are unchanged; `BotCombatManager` still supplies the map
+  monster iterable and caller range values.
 - Combat attack data provider ownership moved to
   `server.agents.capabilities.combat.data.AgentAttackDataProvider`. Weapon
   normal-attack profile loading, action-spec selection, body action id

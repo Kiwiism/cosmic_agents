@@ -47,6 +47,17 @@ class AgentCombatTargetSelectorTest {
                 primary, new Rectangle(0, 0, 250, 250), 1, List.of(near)));
     }
 
+    @Test
+    void shouldCollectOnlyHostileLivingMonstersInsideRange() {
+        Monster near = monster(1, new Point(110, 100), true, false);
+        Monster far = monster(2, new Point(300, 100), true, false);
+        Monster deadNear = monster(3, new Point(105, 100), false, false);
+        Monster friendlyNear = monster(4, new Point(106, 100), true, true);
+
+        assertEquals(List.of(near), AgentCombatTargetSelector.aliveMonstersInRange(
+                List.of(far, deadNear, near, friendlyNear), new Point(100, 100), 50 * 50));
+    }
+
     private static Monster monster(int objectId, Point position, boolean alive, boolean friendly) {
         Monster monster = mock(Monster.class);
         MonsterStats stats = mock(MonsterStats.class);

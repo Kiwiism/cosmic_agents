@@ -1,5 +1,6 @@
 package server.agents.capabilities.combat;
 
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -42,6 +43,19 @@ public final class AgentCombatTargetSelector {
             targets.add(monster);
             if (targets.size() >= maxTargets) {
                 break;
+            }
+        }
+        return targets;
+    }
+
+    public static List<Monster> aliveMonstersInRange(Iterable<Monster> candidates,
+                                                     Point origin,
+                                                     double rangeSq) {
+        List<Monster> targets = new ArrayList<>();
+        for (Monster monster : candidates) {
+            if (AgentCombatTargetEligibilityPolicy.isHostileLivingMonster(monster)
+                    && monster.getPosition().distanceSq(origin) <= rangeSq) {
+                targets.add(monster);
             }
         }
         return targets;

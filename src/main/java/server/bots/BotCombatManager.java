@@ -1277,13 +1277,7 @@ public class BotCombatManager {
     }
 
     private static List<Monster> aliveMonstersInRange(Character bot, Point botPos, double rangeSq) {
-        List<Monster> candidates = new ArrayList<>();
-        for (Monster m : bot.getMap().getAllMonsters()) {
-            if (isHostileLivingMonster(m) && m.getPosition().distanceSq(botPos) <= rangeSq) {
-                candidates.add(m);
-            }
-        }
-        return candidates;
+        return AgentCombatTargetSelector.aliveMonstersInRange(bot.getMap().getAllMonsters(), botPos, rangeSq);
     }
 
     private static boolean isLocalCombatTarget(GrindGraphContext context,
