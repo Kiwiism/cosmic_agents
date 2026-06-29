@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+
 import server.agents.runtime.AgentPerformanceMonitor;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
@@ -106,7 +108,7 @@ public class BotCombatManager {
     );
     private static final int DRAGON_ROAR_MIN_TARGETS_WITHOUT_HEALER = 10;
 
-    enum AttackRoute {
+    public enum AttackRoute {
         CLOSE,
         RANGED,
         MAGIC
@@ -160,7 +162,7 @@ public class BotCombatManager {
         }
     }
 
-    static class Config {
+    public static class Config {
         // Physics (combat use only)
         // OpenStory Player::damage sets hspeed = +/-1.5 and vforce -= 3.5 on mob knockback.
         public float KNOCKBACK_HSPEED = 1.5f;
@@ -217,7 +219,7 @@ public class BotCombatManager {
         public int   JUMP_HEAL_LEADER_AHEAD_PX = 80;
     }
 
-    static Config cfg = new Config();
+    public static Config cfg = new Config();
 
     /** Admin/debug (!botcfg): "FIELD = value" for every public combat config field, sorted. */
     public static List<String> configFieldLines() {
@@ -760,12 +762,12 @@ public class BotCombatManager {
         if (!fx.canPaySkillCost(bot) || !fx.applyTo(bot)) return false;
 
         long now = System.currentTimeMillis();
-        BotAttackExecutionProvider.BasicAttackData fallbackAttackData =
-                BotAttackExecutionProvider.buildBasicAttackData(bot, bot.getPosition());
-        String action = BotAttackExecutionProvider.resolveSkillAttackAction(bot, skill, lvl,
-                BotAttackExecutionProvider.getEquippedWeaponType(bot));
-        BotAttackExecutionProvider.SkillAttackTiming skillTiming =
-                BotAttackExecutionProvider.resolveSkillAttackTiming(skill, action, bot, fallbackAttackData);
+        AgentAttackExecutionProvider.BasicAttackData fallbackAttackData =
+                AgentAttackExecutionProvider.buildBasicAttackData(bot, bot.getPosition());
+        String action = AgentAttackExecutionProvider.resolveSkillAttackAction(bot, skill, lvl,
+                AgentAttackExecutionProvider.getEquippedWeaponType(bot));
+        AgentAttackExecutionProvider.SkillAttackTiming skillTiming =
+                AgentAttackExecutionProvider.resolveSkillAttackTiming(skill, action, bot, fallbackAttackData);
         AgentBotCombatCooldownStateRuntime.maxAttackCooldown(entry, skillTiming.cooldownMs());
         if (partyNeedsHeal && fx.getCooldown() > 0) {
             bot.addCooldown(healSkillId, now, fx.getCooldown() * 1000L);
@@ -802,9 +804,9 @@ public class BotCombatManager {
      */
     private static void sendHealAttack(int healSkillId, int lvl, Character bot,
             List<Monster> undeadTargets,
-            BotAttackExecutionProvider.BasicAttackData fallbackAttackData,
-            BotAttackExecutionProvider.SkillAttackTiming skillTiming) {
-        AttackRoute route = BotAttackExecutionProvider.determineSkillRoute(bot, healSkillId);
+            AgentAttackExecutionProvider.BasicAttackData fallbackAttackData,
+            AgentAttackExecutionProvider.SkillAttackTiming skillTiming) {
+        AttackRoute route = AgentAttackExecutionProvider.determineSkillRoute(bot, healSkillId);
         // N in Russt's target multiplier is caster + damaged targets. When no undead are in range
         // the damage profile is unused (numAttacked=0) but we still pass 1 to avoid a divide-by-zero
         // surprise if the profile gets reused elsewhere.
@@ -823,12 +825,12 @@ public class BotCombatManager {
         // caster in the magic-casting "alert2" pose rather than the idle-frame default. The
         // stance byte is the shared facing mask used by every attack-plan builder.
         boolean facingLeft = bot.isFacingLeft();
-        BotAttackExecutionProvider.CloseRangePacketFields castFields =
-                BotAttackExecutionProvider.mimicCloseRangePacketFields("alert2", "alert2", facingLeft);
+        AgentAttackExecutionProvider.CloseRangePacketFields castFields =
+                AgentAttackExecutionProvider.mimicCloseRangePacketFields("alert2", "alert2", facingLeft);
         attack.display = castFields.display();
         attack.direction = castFields.bodyActionId();
-        attack.stance = BotAttackExecutionProvider.attackPacketStance(facingLeft);
-        attack.rangedirection = BotAttackExecutionProvider.attackPacketStance(facingLeft);
+        attack.stance = AgentAttackExecutionProvider.attackPacketStance(facingLeft);
+        attack.rangedirection = AgentAttackExecutionProvider.attackPacketStance(facingLeft);
         attack.ranged = false;
         attack.magic = damageProfile.magicAttack();
         attack.targets = new HashMap<>();
@@ -837,7 +839,7 @@ public class BotCombatManager {
                     CombatFormulaProvider.getInstance().makeTarget(
                             bot, target, 1, healSkillId, damageProfile, skillTiming.hitDelayMs()));
         }
-        BotAttackExecutionProvider.applyAttackRoute(route, attack, bot);
+        AgentAttackExecutionProvider.applyAttackRoute(route, attack, bot);
     }
 
     private static List<Monster> getUndeadMobsInHealRange(Character bot, StatEffect fx, Rectangle bounds) {
@@ -1053,7 +1055,7 @@ public class BotCombatManager {
     }
 
     private static AttackPlan planBasicAttack(Character bot, Monster target) {
-        BotAttackExecutionProvider.BasicAttackData basicAttackData = buildBasicAttackData(bot, target);
+        AgentAttackExecutionProvider.BasicAttackData basicAttackData = buildBasicAttackData(bot, target);
         Monster effective = resolveEffectivePrimary(bot, target, basicAttackData.hitBox());
         if (effective != target) {
             basicAttackData = buildBasicAttackData(bot, effective);
@@ -1073,7 +1075,7 @@ public class BotCombatManager {
         return new AttackPlan(0, 0, numDamage, basicAttackData.hitBox(), List.of(effective), basicAttackData.route(),
                 basicAttackData.display(), basicAttackData.direction(), basicAttackData.rangedDirection(), basicAttackData.stance(),
                 basicAttackData.speed(), basicAttackData.hitDelayMs(), basicAttackData.cooldownMs(),
-                damageWeaponTypeForAction(0, BotAttackExecutionProvider.getEquippedWeaponType(bot), basicAttackData.action()));
+                damageWeaponTypeForAction(0, AgentAttackExecutionProvider.getEquippedWeaponType(bot), basicAttackData.action()));
     }
 
     private static Monster findReachableOnOppositeFacing(Character bot, Monster originalTarget) {
@@ -1084,8 +1086,8 @@ public class BotCombatManager {
         Point botPos = bot.getPosition();
         Point mirroredPos = new Point(2 * botPos.x - originalTarget.getPosition().x,
                 originalTarget.getPosition().y);
-        BotAttackExecutionProvider.BasicAttackData oppositeData =
-                BotAttackExecutionProvider.buildBasicAttackData(bot, mirroredPos);
+        AgentAttackExecutionProvider.BasicAttackData oppositeData =
+                AgentAttackExecutionProvider.buildBasicAttackData(bot, mirroredPos);
         Rectangle oppositeHitBox = oppositeData.hitBox();
         if (oppositeHitBox == null) {
             return null;
@@ -1218,7 +1220,7 @@ public class BotCombatManager {
         if (attackPlan.skillId != 0 && !canUseSkill(bot, attackPlan.skillId, attackPlan.skillLevel)) {
             return;
         }
-        if (!canUseAttackPlanNow(entry, BotAttackExecutionProvider.getEquippedWeaponType(bot), attackPlan)) {
+        if (!canUseAttackPlanNow(entry, AgentAttackExecutionProvider.getEquippedWeaponType(bot), attackPlan)) {
             return;
         }
 
@@ -1247,7 +1249,7 @@ public class BotCombatManager {
                             attackPlan.skillId, damageProfile, attackPlan.hitDelayMs));
         }
 
-        BotAttackExecutionProvider.applyAttackRoute(attackPlan.route, attack, bot);
+        AgentAttackExecutionProvider.applyAttackRoute(attackPlan.route, attack, bot);
         AgentBotCombatCooldownStateRuntime.maxAttackCooldown(entry, attackPlan.cooldownMs);
         rememberAttackFacing(entry, attackPlan.stance);
         markAlerted(entry);
@@ -1255,7 +1257,7 @@ public class BotCombatManager {
 
     static void rememberAttackFacing(BotEntry entry, int attackPacketStance) {
         AgentBotMovementStateRuntime.setFacingDirection(entry,
-                BotAttackExecutionProvider.facingDirFromAttackPacketStance(attackPacketStance));
+                AgentAttackExecutionProvider.facingDirFromAttackPacketStance(attackPacketStance));
         BotPhysicsEngine.syncCharacterState(entry);
     }
 
@@ -1317,11 +1319,11 @@ public class BotCombatManager {
         if (!effect.canPaySkillCost(bot)) {
             return null;
         }
-        WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(bot);
+        WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
         if (!canUseAttackSkillWithWeapon(skillId, weaponType)) {
             return null;
         }
-        AttackRoute route = BotAttackExecutionProvider.determineSkillRoute(bot, skillId);
+        AttackRoute route = AgentAttackExecutionProvider.determineSkillRoute(bot, skillId);
         // Ammo gate: ranged skills with bulletCount need that many arrows/stars/bullets in
         // the bot's USE inventory. canPaySkillCost only covers MP/HP. countAmmo returns
         // MAX_VALUE for non-ammo weapons and while Soul Arrow / Shadow Claw are active.
@@ -1337,7 +1339,7 @@ public class BotCombatManager {
         // Resolve the animated action once up front: weapon-action sampling is random, so the
         // reach hitbox and the broadcast packet must share the same swing (a close skill without
         // its own lt/rb gates the hit on this action's afterimage box).
-        String action = BotAttackExecutionProvider.resolveSkillAttackAction(bot, skill, skillLevel, weaponType);
+        String action = AgentAttackExecutionProvider.resolveSkillAttackAction(bot, skill, skillLevel, weaponType);
         if (isStrikePointAnchoredAoeSkill(skillId)) {
             primaryTarget = resolveStrikePointPrimaryByBasicWeapon(bot, primaryTarget, route);
         }
@@ -1359,21 +1361,21 @@ public class BotCombatManager {
         }
 
         int attackCount = effectiveHitCount(effect) * shadowPartnerHitMultiplier(bot, route);
-        if (!BotAttackExecutionProvider.canUseRangedAttackRoute(route, weaponType, bot.getPosition(), primaryTarget.getPosition())) {
+        if (!AgentAttackExecutionProvider.canUseRangedAttackRoute(route, weaponType, bot.getPosition(), primaryTarget.getPosition())) {
             return null;
         }
         boolean facingLeft = primaryTarget.getPosition().x < bot.getPosition().x;
-        BotAttackExecutionProvider.BasicAttackData fallbackAttackData = buildBasicAttackData(bot, primaryTarget);
+        AgentAttackExecutionProvider.BasicAttackData fallbackAttackData = buildBasicAttackData(bot, primaryTarget);
         BotAttackDataProvider.AttackAnimationSpec attackSpec = BotAttackDataProvider.getInstance().getBasicAttackSpec(weaponType);
         String fallbackAction = attackSpec.primaryAction();
-        BotAttackExecutionProvider.CloseRangePacketFields closeRangePacketFields = route == AttackRoute.CLOSE
-                ? BotAttackExecutionProvider.mimicCloseRangePacketFields(action, fallbackAction, facingLeft)
+        AgentAttackExecutionProvider.CloseRangePacketFields closeRangePacketFields = route == AttackRoute.CLOSE
+                ? AgentAttackExecutionProvider.mimicCloseRangePacketFields(action, fallbackAction, facingLeft)
                 : null;
         int direction = route == AttackRoute.CLOSE
                 ? closeRangePacketFields.bodyActionId()
-                : BotAttackExecutionProvider.bodyActionId(action, fallbackAction, weaponType);
-        BotAttackExecutionProvider.SkillAttackTiming skillTiming =
-                BotAttackExecutionProvider.resolveSkillAttackTiming(skill, action, bot, fallbackAttackData);
+                : AgentAttackExecutionProvider.bodyActionId(action, fallbackAction, weaponType);
+        AgentAttackExecutionProvider.SkillAttackTiming skillTiming =
+                AgentAttackExecutionProvider.resolveSkillAttackTiming(skill, action, bot, fallbackAttackData);
         List<Monster> targets = collectTargetsInHitBox(bot, primaryTarget, hitBox, Math.max(1, effect.getMobCount()));
         if (skillId == DragonKnight.DRAGON_ROAR && !canUseDragonRoarPlan(bot, targets.size())) {
             return null;
@@ -1381,7 +1383,7 @@ public class BotCombatManager {
         return new AttackPlan(skillId, skillLevel, attackCount, hitBox, targets,
                 route, route == AttackRoute.CLOSE ? closeRangePacketFields.display() : 0,
                 direction, direction,
-                BotAttackExecutionProvider.attackPacketStance(facingLeft),
+                AgentAttackExecutionProvider.attackPacketStance(facingLeft),
                 fallbackAttackData.speed(), skillTiming.hitDelayMs(), skillTiming.cooldownMs(),
                 damageWeaponTypeForAction(skillId, weaponType, action));
     }
@@ -1476,7 +1478,7 @@ public class BotCombatManager {
         // (e.g. Slash Blast reaches the same as the weapon's basic swing, not its 150 px `range`).
         // Weapons with no swing box — bows/crossbows casting Power Knockback as a melee hit — fall
         // through and keep `range` (e.g. 130 px) as their close reach.
-        Rectangle weaponBox = BotAttackExecutionProvider.closeRangeWeaponActionHitBox(bot, action, facingLeft);
+        Rectangle weaponBox = AgentAttackExecutionProvider.closeRangeWeaponActionHitBox(bot, action, facingLeft);
         if (weaponBox != null) {
             return weaponBox;
         }
@@ -1505,7 +1507,7 @@ public class BotCombatManager {
         return clientProjectileHitBox(bot, facingLeft, projectileRangeScale(effect));
     }
 
-    static Rectangle clientProjectileHitBox(Character bot, boolean facingLeft, float horizontalScale) {
+    public static Rectangle clientProjectileHitBox(Character bot, boolean facingLeft, float horizontalScale) {
         return clientProjectileHitBox(bot, facingLeft, horizontalScale,
                 CLIENT_PROJECTILE_TOP, CLIENT_PROJECTILE_BOTTOM);
     }
@@ -1519,7 +1521,7 @@ public class BotCombatManager {
     // approximately player.Y - 30 (mid-body) and its vertical reach is the projectile
     // sprite half-height. The bot derives this from per-skill measurements rather than
     // the client's WZ projectile asset because we do not yet parse those.
-    static Rectangle clientProjectileHitBox(Character bot, boolean facingLeft, float horizontalScale,
+    public static Rectangle clientProjectileHitBox(Character bot, boolean facingLeft, float horizontalScale,
                                             int yAboveOrigin, int yBelowOrigin) {
         if (bot == null || bot.getPosition() == null) {
             return null;
@@ -1713,9 +1715,9 @@ public class BotCombatManager {
 
         Point botPos = bot.getPosition();
         Point targetPos = target.getPosition();
-        WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(bot);
-        if (BotAttackExecutionProvider.determineBasicWeaponRoute(weaponType) == AttackRoute.RANGED
-                && !BotAttackExecutionProvider.shouldDegenerateRangedAttack(weaponType, botPos, targetPos)) {
+        WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
+        if (AgentAttackExecutionProvider.determineBasicWeaponRoute(weaponType) == AttackRoute.RANGED
+                && !AgentAttackExecutionProvider.shouldDegenerateRangedAttack(weaponType, botPos, targetPos)) {
             Rectangle hitBox = clientProjectileHitBox(bot, targetPos.x < botPos.x, 1.0f);
             if (doesHitBoxIntersectMonster(hitBox, target)) {
                 return true;
@@ -1742,7 +1744,7 @@ public class BotCombatManager {
             return false;
         }
 
-        AttackRoute route = BotAttackExecutionProvider.determineSkillRoute(bot, attackSkillId);
+        AttackRoute route = AgentAttackExecutionProvider.determineSkillRoute(bot, attackSkillId);
         if (route != AttackRoute.RANGED && route != AttackRoute.MAGIC) {
             return false;
         }
@@ -1754,8 +1756,8 @@ public class BotCombatManager {
             return false;
         }
 
-        WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(bot);
-        return BotAttackExecutionProvider.canUseRangedAttackRoute(route, weaponType, bot.getPosition(), target.getPosition());
+        WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
+        return AgentAttackExecutionProvider.canUseRangedAttackRoute(route, weaponType, bot.getPosition(), target.getPosition());
     }
 
     private static List<ScoredGrindTarget> scoreLocalTargets(BotEntry entry,
@@ -2358,8 +2360,8 @@ public class BotCombatManager {
                 && (monster.getStats() == null || !monster.getStats().isFriendly());
     }
 
-    private static BotAttackExecutionProvider.BasicAttackData buildBasicAttackData(Character bot, Monster primaryTarget) {
-        return BotAttackExecutionProvider.buildBasicAttackData(bot, primaryTarget.getPosition());
+    private static AgentAttackExecutionProvider.BasicAttackData buildBasicAttackData(Character bot, Monster primaryTarget) {
+        return AgentAttackExecutionProvider.buildBasicAttackData(bot, primaryTarget.getPosition());
     }
 
     private static void noteSkillBuffDecision(BotEntry entry, String summary) {
@@ -2417,8 +2419,8 @@ public class BotCombatManager {
         }
 
         AttackPlan plan = target != null ? planAttack(entry, bot, target) : null;
-        String route = plan != null ? plan.route.name().toLowerCase() : BotAttackExecutionProvider.determineBasicAttackRoute(bot).name().toLowerCase();
-        int speed = plan != null ? plan.speed : BotAttackExecutionProvider.buildBasicAttackData(bot, bot.getPosition()).speed();
+        String route = plan != null ? plan.route.name().toLowerCase() : AgentAttackExecutionProvider.determineBasicAttackRoute(bot).name().toLowerCase();
+        int speed = plan != null ? plan.speed : AgentAttackExecutionProvider.buildBasicAttackData(bot, bot.getPosition()).speed();
         double cooldownSeconds = (plan != null ? plan.cooldownMs : 0) / 1000.0;
         double remainingSeconds = AgentBotCombatCooldownStateRuntime.attackCooldownMs(entry) / 1000.0;
         String targetName = target != null ? target.getName() : "none";
@@ -2484,12 +2486,12 @@ public class BotCombatManager {
         if (dur > 0) {
             AgentBotCombatBuffStateRuntime.setNextBuffAt(entry, skill.getId(), now + (long) (dur * 0.9));
         }
-        BotAttackExecutionProvider.BasicAttackData fallbackAttackData =
-                BotAttackExecutionProvider.buildBasicAttackData(bot, bot.getPosition());
-        String action = BotAttackExecutionProvider.resolveSkillAttackAction(bot, skill, skillLevel,
-                BotAttackExecutionProvider.getEquippedWeaponType(bot));
-        BotAttackExecutionProvider.SkillAttackTiming skillTiming =
-                BotAttackExecutionProvider.resolveSkillAttackTiming(skill, action, bot, fallbackAttackData);
+        AgentAttackExecutionProvider.BasicAttackData fallbackAttackData =
+                AgentAttackExecutionProvider.buildBasicAttackData(bot, bot.getPosition());
+        String action = AgentAttackExecutionProvider.resolveSkillAttackAction(bot, skill, skillLevel,
+                AgentAttackExecutionProvider.getEquippedWeaponType(bot));
+        AgentAttackExecutionProvider.SkillAttackTiming skillTiming =
+                AgentAttackExecutionProvider.resolveSkillAttackTiming(skill, action, bot, fallbackAttackData);
         int animMs = skill.getAnimationTime() > 0 ? skill.getAnimationTime() : 1000;
         AgentBotCombatCooldownStateRuntime.maxAttackCooldown(entry, Math.max(skillTiming.cooldownMs(), animMs));
         markAlerted(entry);
@@ -2566,7 +2568,7 @@ public class BotCombatManager {
      * Warns at AMMO_LOW_WARN, stops grinding and follows owner at 0.
      */
     static void tickAmmoCheck(BotEntry entry, Character bot) {
-        WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(bot);
+        WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
         boolean mage = weaponType == WeaponType.WAND || weaponType == WeaponType.STAFF;
         if (!mage && !isRangedAmmoWeapon(weaponType)) {
             AgentBotAmmoStateRuntime.clearAmmoWarningState(entry);
@@ -2626,7 +2628,7 @@ public class BotCombatManager {
     }
 
     /** Counts total ammo in USE inventory matching the bot's equipped weapon type. */
-    static int countAmmo(Character bot, WeaponType weaponType) {
+    public static int countAmmo(Character bot, WeaponType weaponType) {
         if (weaponType == null || !isRangedAmmoWeapon(weaponType)) {
             return Integer.MAX_VALUE;
         }

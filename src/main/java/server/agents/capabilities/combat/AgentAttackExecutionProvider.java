@@ -1,4 +1,4 @@
-package server.bots;
+package server.agents.capabilities.combat;
 
 import client.BuffStat;
 import client.Character;
@@ -13,6 +13,7 @@ import net.server.channel.handlers.AbstractDealDamageHandler;
 import net.server.channel.handlers.CloseRangeDamageHandler;
 import net.server.channel.handlers.MagicDamageHandler;
 import net.server.channel.handlers.RangedAttackHandler;
+import server.bots.BotCombatManager;
 import server.bots.combat.BotAttackDataProvider;
 import server.bots.combat.BotAttackTiming;
 
@@ -22,24 +23,24 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
-public final class BotAttackExecutionProvider {
+public final class AgentAttackExecutionProvider {
     // This server's close-range packet path uses:
     // byte 2 = body action id from Character/00002000.img
     // byte 3 = facing mask (0 / 0x80)
-    record CloseRangePacketFields(int display, int bodyActionId, int facingMask) {
+    public record CloseRangePacketFields(int display, int bodyActionId, int facingMask) {
     }
 
-    record SkillAttackTiming(int hitDelayMs, int cooldownMs) {
+    public record SkillAttackTiming(int hitDelayMs, int cooldownMs) {
     }
 
-    record BasicAttackData(Rectangle hitBox, int display, int direction, int rangedDirection, String action,
+    public record BasicAttackData(Rectangle hitBox, int display, int direction, int rangedDirection, String action,
                            int stance, int speed, int hitDelayMs, int cooldownMs, BotCombatManager.AttackRoute route) {
     }
 
-    private BotAttackExecutionProvider() {
+    private AgentAttackExecutionProvider() {
     }
 
-    static BasicAttackData buildBasicAttackData(Character bot, Point targetPosition) {
+    public static BasicAttackData buildBasicAttackData(Character bot, Point targetPosition) {
         Item weapon = bot.getInventory(InventoryType.EQUIPPED).getItem((short) -11);
         if (weapon == null) {
             return fallbackBasicAttackData(targetPosition.x < bot.getPosition().x, 4, null, bot, targetPosition);
@@ -147,11 +148,11 @@ public final class BotAttackExecutionProvider {
 
     // This is not the same table as the client stance enum. It is the body action ordering
     // from Character/00002000.img and matches the server's packet byte 2 semantics.
-    static int bodyActionId(String actionName, String fallbackAction) {
+    public static int bodyActionId(String actionName, String fallbackAction) {
         return bodyActionId(actionName, fallbackAction, null);
     }
 
-    static int bodyActionId(String actionName, String fallbackAction, WeaponType weaponType) {
+    public static int bodyActionId(String actionName, String fallbackAction, WeaponType weaponType) {
         BotAttackDataProvider provider = BotAttackDataProvider.getInstance();
         int actionId = provider.getBodyActionId(actionName, weaponType);
         if (actionId >= 0) {
@@ -168,7 +169,7 @@ public final class BotAttackExecutionProvider {
         return 0;
     }
 
-    static CloseRangePacketFields mimicCloseRangePacketFields(String actionName, String fallbackAction, boolean facingLeft) {
+    public static CloseRangePacketFields mimicCloseRangePacketFields(String actionName, String fallbackAction, boolean facingLeft) {
         return new CloseRangePacketFields(0,
                 bodyActionId(actionName, fallbackAction),
                 facingLeft ? 0x80 : 0x00);
@@ -179,15 +180,15 @@ public final class BotAttackExecutionProvider {
     // nothing when this byte carries a non-zero action id on a ranged star throw, even
     // though the server still applies damage. Single source of truth for all attack-plan
     // builders so basic and skill packets stay in lockstep.
-    static int attackPacketStance(boolean facingLeft) {
+    public static int attackPacketStance(boolean facingLeft) {
         return facingLeft ? 0x80 : 0x00;
     }
 
-    static int facingDirFromAttackPacketStance(int attackPacketStance) {
+    public static int facingDirFromAttackPacketStance(int attackPacketStance) {
         return (attackPacketStance & 0x80) != 0 ? -1 : 1;
     }
 
-    static List<String> resolveAttackActions(BotAttackDataProvider.AttackAnimationSpec attackSpec, List<String> sourceActions) {
+    public static List<String> resolveAttackActions(BotAttackDataProvider.AttackAnimationSpec attackSpec, List<String> sourceActions) {
         if (attackSpec == null || attackSpec.actions().isEmpty()) {
             return List.of("swingO1");
         }
@@ -206,7 +207,7 @@ public final class BotAttackExecutionProvider {
         return resolvedActions.isEmpty() ? attackSpec.actions() : List.copyOf(resolvedActions);
     }
 
-    static String resolveSkillAttackAction(Character bot, Skill skill, int skillLevel, WeaponType weaponType) {
+    public static String resolveSkillAttackAction(Character bot, Skill skill, int skillLevel, WeaponType weaponType) {
         if (skill != null) {
             boolean twoHanded = isTwoHandedWeapon(bot);
             String skillAction = skill.resolveAnimationAction(skillLevel, twoHanded);
@@ -241,7 +242,7 @@ public final class BotAttackExecutionProvider {
         return sampleAttackAction(attackSpec.actions(), attackSpec.primaryAction());
     }
 
-    static void applyAttackRoute(BotCombatManager.AttackRoute route, AbstractDealDamageHandler.AttackInfo attack, Character bot) {
+    public static void applyAttackRoute(BotCombatManager.AttackRoute route, AbstractDealDamageHandler.AttackInfo attack, Character bot) {
         switch (route) {
             case RANGED -> RangedAttackHandler.applyRangedAttackEffects(attack, bot, bot.getClient());
             case MAGIC -> MagicDamageHandler.applyMagicAttackEffects(attack, bot, bot.getClient());
@@ -249,11 +250,11 @@ public final class BotAttackExecutionProvider {
         }
     }
 
-    static BotCombatManager.AttackRoute determineBasicAttackRoute(Character bot) {
+    public static BotCombatManager.AttackRoute determineBasicAttackRoute(Character bot) {
         return determineBasicWeaponRoute(getEquippedWeaponType(bot));
     }
 
-    static boolean canUseRangedAttackRoute(BotCombatManager.AttackRoute route, WeaponType weaponType, Point botPos, Point targetPos) {
+    public static boolean canUseRangedAttackRoute(BotCombatManager.AttackRoute route, WeaponType weaponType, Point botPos, Point targetPos) {
         return route != BotCombatManager.AttackRoute.RANGED || !shouldDegenerateRangedAttack(weaponType, botPos, targetPos);
     }
 
@@ -267,7 +268,7 @@ public final class BotAttackExecutionProvider {
             Crossbowman.POWER_KNOCKBACK
     );
 
-    static BotCombatManager.AttackRoute determineSkillRoute(Character bot, int skillId) {
+    public static BotCombatManager.AttackRoute determineSkillRoute(Character bot, int skillId) {
         if (FORCED_CLOSE_RANGE_SKILL_IDS.contains(skillId)) {
             return BotCombatManager.AttackRoute.CLOSE;
         }
@@ -291,7 +292,7 @@ public final class BotAttackExecutionProvider {
         return family == 2 || family == 12 || family == 22;
     }
 
-    static BotCombatManager.AttackRoute determineBasicWeaponRoute(WeaponType weaponType) {
+    public static BotCombatManager.AttackRoute determineBasicWeaponRoute(WeaponType weaponType) {
         if (weaponType == null) {
             return BotCombatManager.AttackRoute.CLOSE;
         }
@@ -311,7 +312,7 @@ public final class BotAttackExecutionProvider {
         return server.ItemInformationProvider.getInstance().getWeaponType(weapon.getItemId());
     }
 
-    static boolean shouldDegenerateRangedAttack(WeaponType weaponType, Point botPos, Point targetPos) {
+    public static boolean shouldDegenerateRangedAttack(WeaponType weaponType, Point botPos, Point targetPos) {
         if (!isDegenerateCapableRangedWeapon(weaponType) || botPos == null || targetPos == null) {
             return false;
         }
@@ -322,7 +323,7 @@ public final class BotAttackExecutionProvider {
                 && dy <= BotCombatManager.cfg.RANGED_DEGENERATE_RANGE_Y;
     }
 
-    static boolean shouldRetreatFromNearbyTarget(WeaponType weaponType, Point botPos, Point targetPos) {
+    public static boolean shouldRetreatFromNearbyTarget(WeaponType weaponType, Point botPos, Point targetPos) {
         if (!isDegenerateCapableRangedWeapon(weaponType) || botPos == null || targetPos == null) {
             return false;
         }
@@ -333,7 +334,7 @@ public final class BotAttackExecutionProvider {
                 && dy <= BotCombatManager.cfg.RANGED_DEGENERATE_RANGE_Y;
     }
 
-    static boolean isAnyMobNearerThanTarget(Character bot, Point botPos, Point targetPos) {
+    public static boolean isAnyMobNearerThanTarget(Character bot, Point botPos, Point targetPos) {
         return findCloserThreatMob(bot, botPos, targetPos) != null;
     }
 
@@ -343,7 +344,7 @@ public final class BotAttackExecutionProvider {
      * (bow/crossbow/claw/gun only). Used by grind mode to swap onto a crowding threat
      * instead of fleeing the original target while shooting in the wrong direction.
      */
-    static server.life.Monster findCloserThreatMob(Character bot, Point botPos, Point targetPos) {
+    public static server.life.Monster findCloserThreatMob(Character bot, Point botPos, Point targetPos) {
         if (bot == null || botPos == null || targetPos == null) {
             return null;
         }
@@ -371,7 +372,7 @@ public final class BotAttackExecutionProvider {
         return closest;
     }
 
-    static Point retreatTargetPosition(Point botPos, Point targetPos) {
+    public static Point retreatTargetPosition(Point botPos, Point targetPos) {
         return retreatTargetPosition(null, botPos, targetPos);
     }
 
@@ -381,7 +382,7 @@ public final class BotAttackExecutionProvider {
      * any nearby mob. Falls back to the fixed-distance step when {@code bot} is null
      * or no candidate sweep is possible.
      */
-    static Point retreatTargetPosition(Character bot, Point botPos, Point targetPos) {
+    public static Point retreatTargetPosition(Character bot, Point botPos, Point targetPos) {
         int direction = pickRetreatDirection(bot, botPos, targetPos);
         int defaultStep = BotCombatManager.cfg.RANGED_RETREAT_DISTANCE_X;
         if (bot == null || bot.getMap() == null) {
@@ -416,7 +417,7 @@ public final class BotAttackExecutionProvider {
         return new Point(bestX, botPos.y);
     }
 
-    static int pickRetreatDirection(Character bot, Point botPos, Point targetPos) {
+    public static int pickRetreatDirection(Character bot, Point botPos, Point targetPos) {
         int defaultDir = targetPos.x >= botPos.x ? -1 : 1;
         if (bot == null || bot.getMap() == null) {
             return defaultDir;
@@ -433,7 +434,7 @@ public final class BotAttackExecutionProvider {
      * {@code dy <= DEGENERATE_RANGE_Y}) on BOTH horizontal sides — the bot is pincered and
      * a one-step local retreat just walks it into the other wall. Bow/crossbow/claw/gun only.
      */
-    static boolean isSurrounded(Character bot, Point botPos) {
+    public static boolean isSurrounded(Character bot, Point botPos) {
         if (!isDegenerateCapableRangedWeapon(getEquippedWeaponType(bot)) || botPos == null) {
             return false;
         }
@@ -481,7 +482,7 @@ public final class BotAttackExecutionProvider {
         boolean rightInBand = false;
     }
 
-    static SkillAttackTiming resolveSkillAttackTiming(Skill skill, String action, Character bot,
+    public static SkillAttackTiming resolveSkillAttackTiming(Skill skill, String action, Character bot,
                                                       BasicAttackData fallbackAttackData) {
         int fallbackHitDelayMs = fallbackAttackData != null ? fallbackAttackData.hitDelayMs() : defaultHitDelayMs(600);
         int fallbackCooldownMs = fallbackAttackData != null ? fallbackAttackData.cooldownMs() : toCooldownMs(600);
@@ -490,7 +491,7 @@ public final class BotAttackExecutionProvider {
                 fallbackHitDelayMs, fallbackCooldownMs);
     }
 
-    static SkillAttackTiming resolveSkillAttackTiming(String action,
+    public static SkillAttackTiming resolveSkillAttackTiming(String action,
                                                       BotAttackDataProvider.NormalAttackProfile weaponAttackProfile,
                                                       int rawSkillDelayMs,
                                                       int effectiveWeaponAttackSpeed,
@@ -523,7 +524,7 @@ public final class BotAttackExecutionProvider {
                 fallbackHitDelayMs, fallbackCooldownMs);
     }
 
-    static SkillAttackTiming resolveSkillAttackTiming(int rawSkillDelayMs,
+    public static SkillAttackTiming resolveSkillAttackTiming(int rawSkillDelayMs,
                                                       int effectiveWeaponAttackSpeed,
                                                       int fallbackHitDelayMs, int fallbackCooldownMs) {
         if (rawSkillDelayMs <= 0) {
@@ -635,7 +636,7 @@ public final class BotAttackExecutionProvider {
     // which is per-weapon (spear/polearm ~150 px, sword ~120, dagger/knuckle ~64) and per-action
     // (stab vs overhead swing differ). Returns null when the weapon has no melee afterimage bounds
     // (ranged weapons), so callers can keep their flat-rect / skill-range fallback.
-    static Rectangle closeRangeWeaponActionHitBox(Character bot, String action, boolean facingLeft) {
+    public static Rectangle closeRangeWeaponActionHitBox(Character bot, String action, boolean facingLeft) {
         if (bot == null || bot.getPosition() == null) {
             return null;
         }

@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+
 import server.agents.capabilities.movement.AgentMovementProfile;
 
 import client.Character;
@@ -90,7 +92,7 @@ public final class BotShopManager {
             return;
         }
 
-        WeaponType wt = BotAttackExecutionProvider.getEquippedWeaponType(bot);
+        WeaponType wt = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
         boolean needsRecharge = needsRechargeForShop(bot, wt, ammoTriggerThreshold());
         boolean needsAmmoForShop = needsFixedAmmoForShop(bot, match.shop, wt, ammoTriggerThreshold());
         int[] pots = BotPotionManager.countPotions(bot);
@@ -218,7 +220,7 @@ public final class BotShopManager {
     }
 
     private static boolean shopHasAnythingNeeded(Character bot, Shop shop) {
-        WeaponType wt = BotAttackExecutionProvider.getEquippedWeaponType(bot);
+        WeaponType wt = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
         if (needsFixedAmmoForShop(bot, shop, wt, ammoTriggerThreshold())) {
             return true;
         }
@@ -241,7 +243,7 @@ public final class BotShopManager {
             return;
         }
 
-        WeaponType wt = BotAttackExecutionProvider.getEquippedWeaponType(bot);
+        WeaponType wt = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
         List<AgentBotShopPurchaseAction> actions = new ArrayList<>();
 
         if (shouldRechargeWhileShopping(bot, wt)) {

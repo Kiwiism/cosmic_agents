@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+
 import client.Character;
 import client.inventory.Item;
 import client.inventory.WeaponType;
@@ -37,7 +39,7 @@ public final class BotAmmoManager {
     }
 
     static boolean requestLowAmmoShare(BotEntry entry, Character bot, boolean bypassShareLimits) {
-        WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(bot);
+        WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
         if (!canRequestShare(weaponType)) {
             AgentBotAmmoStateRuntime.clearAmmoShareRequested(entry);
             return false;
@@ -149,7 +151,7 @@ public final class BotAmmoManager {
             if (count < BotCombatManager.cfg.AMMO_LOW_WARN) {
                 continue;
             }
-            WeaponType donorWeaponType = BotAttackExecutionProvider.getEquippedWeaponType(donorBot);
+            WeaponType donorWeaponType = AgentAttackExecutionProvider.getEquippedWeaponType(donorBot);
             boolean donorNeedsSameAmmo = donorWeaponType == needyWeaponType;
             int donationQty = donorNeedsSameAmmo ? (count - BotCombatManager.cfg.AMMO_LOW_WARN) / 2 : count;
             if (donationQty <= 0) {

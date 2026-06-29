@@ -17,6 +17,14 @@ Rules:
 
 Recent reconstruction notes:
 
+- Combat attack execution ownership moved to
+  `server.agents.capabilities.combat.AgentAttackExecutionProvider`. The
+  basic/skill attack data records, packet stance/action helpers, attack-route
+  application bridge, weapon route resolution, degenerate ranged retreat
+  helpers, projectile hitbox helpers, and skill timing resolution are unchanged.
+  `BotCombatManager` still owns the legacy `AttackRoute`, combat config, ammo
+  counting, and client projectile hitbox implementation as temporary public
+  seams until combat planning and config move into Agent combat modules.
 - Report helper orchestration now has an Agent-owned facade in
   `AgentBotChatReportRuntime`; `BotChatReportRuntime` remains only as a
   temporary compatibility shim for legacy bot package callers.

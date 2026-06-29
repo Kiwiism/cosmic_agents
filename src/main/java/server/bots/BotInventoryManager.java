@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+
 import server.agents.capabilities.dialogue.AgentEmote;
 
 import server.agents.capabilities.looting.AgentLootEligibility;
@@ -1901,7 +1903,7 @@ public class BotInventoryManager {
     }
 
     private static WeaponType tradeAmmoWeaponType(Character bot) {
-        WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(bot);
+        WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
         return switch (weaponType) {
             case BOW, CROSSBOW, CLAW, GUN -> weaponType;
             default -> null;

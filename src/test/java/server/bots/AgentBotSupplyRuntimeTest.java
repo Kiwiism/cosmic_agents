@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+
 import client.Character;
 import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
@@ -72,8 +74,8 @@ class AgentBotSupplyRuntimeTest {
         BotEntry entry = new BotEntry(null, owner, null);
         AgentBotMessageQueueStateRuntime.setSending(entry, true);
 
-        try (MockedStatic<BotAttackExecutionProvider> attacks = mockStatic(BotAttackExecutionProvider.class)) {
-            attacks.when(() -> BotAttackExecutionProvider.getEquippedWeaponType(owner))
+        try (MockedStatic<AgentAttackExecutionProvider> attacks = mockStatic(AgentAttackExecutionProvider.class)) {
+            attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(owner))
                     .thenReturn(WeaponType.SWORD1H);
 
             AgentBotSupplyRuntime.handleNeedAmmoCommand(entry);
@@ -88,9 +90,9 @@ class AgentBotSupplyRuntimeTest {
         Character owner = mock(Character.class);
         BotEntry entry = new BotEntry(null, owner, null);
 
-        try (MockedStatic<BotAttackExecutionProvider> attacks = mockStatic(BotAttackExecutionProvider.class);
+        try (MockedStatic<AgentAttackExecutionProvider> attacks = mockStatic(AgentAttackExecutionProvider.class);
              MockedStatic<AgentBotSupplyReplyRuntime> replies = mockStatic(AgentBotSupplyReplyRuntime.class)) {
-            attacks.when(() -> BotAttackExecutionProvider.getEquippedWeaponType(owner))
+            attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(owner))
                     .thenReturn(WeaponType.SWORD1H);
 
             AgentBotSupplyRuntime.handleNeedAmmoCommand(entry);

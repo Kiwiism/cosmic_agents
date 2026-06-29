@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+
 import server.agents.capabilities.dialogue.AgentEmote;
 
 import server.agents.runtime.AgentPerformanceMonitor;
@@ -1420,8 +1422,8 @@ public class BotManager {
         }
 
         long now = System.currentTimeMillis();
-        boolean retreatNeeded = BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(
-                BotAttackExecutionProvider.getEquippedWeaponType(bot), botPos, combatTargetPos);
+        boolean retreatNeeded = AgentAttackExecutionProvider.shouldRetreatFromNearbyTarget(
+                AgentAttackExecutionProvider.getEquippedWeaponType(bot), botPos, combatTargetPos);
 
         // Surround-breakout commitment: once pincered, keep bursting the SAME way until the
         // bot is no longer flanked on both sides (or a safety timeout), re-issuing a forward
@@ -1429,7 +1431,7 @@ public class BotManager {
         // flip direction every time it arrives — the swarm oscillation we are fixing.
         if (AgentBotBreakoutStateRuntime.hasBreakoutCommitment(entry)) {
             if (AgentBotBreakoutStateRuntime.isExpired(entry, now)
-                    || !BotAttackExecutionProvider.isSurrounded(bot, botPos)) {
+                    || !AgentAttackExecutionProvider.isSurrounded(bot, botPos)) {
                 AgentBotBreakoutStateRuntime.clear(entry);
             } else {
                 return breakoutStep(botPos, AgentBotBreakoutStateRuntime.direction(entry));
@@ -1469,7 +1471,7 @@ public class BotManager {
 
         // No separated region to flee to (e.g. one open platform). If the bot is pincered,
         // commit to bursting out one side instead of micro-retreating into the other wall.
-        if (BotAttackExecutionProvider.isSurrounded(bot, botPos)) {
+        if (AgentAttackExecutionProvider.isSurrounded(bot, botPos)) {
             int dir = pickBreakoutDirection(entry, botPos, combatTargetPos);
             AgentBotBreakoutStateRuntime.setBreakoutCommitment(
                     entry, dir, now + BotCombatManager.cfg.BREAKOUT_MAX_MS);
@@ -1478,7 +1480,7 @@ public class BotManager {
             return breakoutStep(botPos, dir);
         }
 
-        Point retreatPos = BotAttackExecutionProvider.retreatTargetPosition(bot, botPos, combatTargetPos);
+        Point retreatPos = AgentAttackExecutionProvider.retreatTargetPosition(bot, botPos, combatTargetPos);
         if (shouldUseLocalCombatRetreatTarget(entry, botPos, combatTargetPos, retreatPos)) {
             AgentBotRetreatHoldStateRuntime.setHold(entry, retreatPos, now + RETREAT_HOLD_MS);
             return retreatPos;
@@ -1498,7 +1500,7 @@ public class BotManager {
      */
     private static int pickBreakoutDirection(BotEntry entry, Point botPos, Point combatTargetPos) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        int base = BotAttackExecutionProvider.pickRetreatDirection(bot, botPos, combatTargetPos);
+        int base = AgentAttackExecutionProvider.pickRetreatDirection(bot, botPos, combatTargetPos);
         MapleMap map = bot != null ? bot.getMap() : null;
         if (map == null || map.getFootholds() == null) {
             return base;
@@ -2347,7 +2349,7 @@ public class BotManager {
         // way (the close mob also triggers retreat), but with the right target our shots
         // land on the actual threat instead of pointing at the far one.
         server.life.Monster closerThreat = rangedPriorityTarget == null
-                ? BotAttackExecutionProvider.findCloserThreatMob(bot, botPos, tp)
+                ? AgentAttackExecutionProvider.findCloserThreatMob(bot, botPos, tp)
                 : null;
         if (closerThreat != null && closerThreat != target) {
             target = closerThreat;
@@ -2358,18 +2360,18 @@ public class BotManager {
         if (attackPlan == null) {
             attackPlan = BotCombatManager.planAttack(entry, bot, target);
         }
-        WeaponType grindWeaponType = BotAttackExecutionProvider.getEquippedWeaponType(bot);
-        boolean targetInDegenerateBand = BotAttackExecutionProvider.shouldDegenerateRangedAttack(grindWeaponType, botPos, tp);
+        WeaponType grindWeaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
+        boolean targetInDegenerateBand = AgentAttackExecutionProvider.shouldDegenerateRangedAttack(grindWeaponType, botPos, tp);
         boolean degenAttackDone = AgentBotDegenerateAttackStateRuntime.degenAttackDone(entry);
         boolean allowOneDegenerateAttack = targetInDegenerateBand && !degenAttackDone && rangedPriorityTarget == null;
         boolean shouldRetreatForRangedSpacing = degenAttackDone
-                || (BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(grindWeaponType, botPos, tp)
+                || (AgentAttackExecutionProvider.shouldRetreatFromNearbyTarget(grindWeaponType, botPos, tp)
                 && !allowOneDegenerateAttack);
         // Opportunity attack: keep firing during retreat as long as the shot would land
         // as a true ranged hit. Suppress only inside the degenerate band, since firing
         // there would re-trigger degenAttackDone and extend the retreat indefinitely.
         boolean canFireWithoutDegen = grindWeaponType == null
-                || !BotAttackExecutionProvider.shouldDegenerateRangedAttack(grindWeaponType, botPos, tp);
+                || !AgentAttackExecutionProvider.shouldDegenerateRangedAttack(grindWeaponType, botPos, tp);
         boolean attackGateOpen = !shouldRetreatForRangedSpacing || canFireWithoutDegen || allowOneDegenerateAttack;
         // Sticky cross-region retreat: pre-compute so an opportunity attack doesn't stall
         // the traversal — bot fires AND keeps walking toward the safe vantage in the same tick.
@@ -2444,7 +2446,7 @@ public class BotManager {
         // first retreat tick — otherwise the flag resets while the bot is still overlapping
         // and allowOneDegenerateAttack re-opens the attack gate next tick.
         if (AgentBotDegenerateAttackStateRuntime.degenAttackDone(entry)
-                && !BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(grindWeaponType, botPos, tp)) {
+                && !AgentAttackExecutionProvider.shouldRetreatFromNearbyTarget(grindWeaponType, botPos, tp)) {
             AgentBotDegenerateAttackStateRuntime.clear(entry);
         }
         // Small detour: take a very close loot drop on the way when not retreating.
@@ -2524,7 +2526,7 @@ public class BotManager {
             return null;
         }
 
-        WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(bot);
+        WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
         if (!BotCombatManager.isRangedAmmoWeapon(weaponType)) {
             return null;
         }
@@ -2559,7 +2561,7 @@ public class BotManager {
             return false;
         }
         Point targetPos = target.getPosition();
-        if (BotAttackExecutionProvider.shouldDegenerateRangedAttack(weaponType, botPos, targetPos)) {
+        if (AgentAttackExecutionProvider.shouldDegenerateRangedAttack(weaponType, botPos, targetPos)) {
             return false;
         }
         BotCombatManager.AttackPlan plan = BotCombatManager.planAttack(entry, bot, target);
@@ -2618,11 +2620,11 @@ public class BotManager {
         }
 
         Point localTargetPos = localTarget.getPosition();
-        WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(bot);
+        WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
         boolean shouldRetreat = allowCombatMovement
                 && (AgentBotDegenerateAttackStateRuntime.degenAttackDone(entry)
-                || BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(weaponType, botPos, localTargetPos)
-                || BotAttackExecutionProvider.isAnyMobNearerThanTarget(bot, botPos, localTargetPos));
+                || AgentAttackExecutionProvider.shouldRetreatFromNearbyTarget(weaponType, botPos, localTargetPos)
+                || AgentAttackExecutionProvider.isAnyMobNearerThanTarget(bot, botPos, localTargetPos));
         if (shouldRetreat) {
             AgentBotDegenerateAttackStateRuntime.clear(entry);
             return new LocalOpportunityAttackResult(

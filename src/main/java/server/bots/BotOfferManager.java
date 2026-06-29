@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+
 
 import client.BotClient;
 import client.Character;
@@ -641,14 +643,14 @@ public final class BotOfferManager {
         if (candidate == null || !ItemConstants.isThrowingStar(candidate.getItemId())) {
             return false;
         }
-        if (BotAttackExecutionProvider.getEquippedWeaponType(recipient) != WeaponType.CLAW) {
+        if (AgentAttackExecutionProvider.getEquippedWeaponType(recipient) != WeaponType.CLAW) {
             return false;
         }
         int candidateWatk = throwingStarAttack(candidate);
         if (candidateWatk < bestThrowingStarAttack(recipient)) {
             return false;
         }
-        return BotAttackExecutionProvider.getEquippedWeaponType(donor) != WeaponType.CLAW
+        return AgentAttackExecutionProvider.getEquippedWeaponType(donor) != WeaponType.CLAW
                 || candidateWatk < bestThrowingStarAttack(donor);
     }
 

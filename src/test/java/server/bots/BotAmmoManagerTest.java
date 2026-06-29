@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+
 import client.Character;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
@@ -38,9 +40,9 @@ class BotAmmoManagerTest {
         Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
         bots.put(owner.getId(), List.of(entry, donorEntry));
 
-        try (MockedStatic<BotAttackExecutionProvider> attacks = mockStatic(BotAttackExecutionProvider.class);
+        try (MockedStatic<AgentAttackExecutionProvider> attacks = mockStatic(AgentAttackExecutionProvider.class);
              MockedStatic<AgentBotAmmoRuntime> scheduler = mockStatic(AgentBotAmmoRuntime.class)) {
-            attacks.when(() -> BotAttackExecutionProvider.getEquippedWeaponType(donorBot)).thenReturn(null);
+            attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(donorBot)).thenReturn(null);
             scheduler.when(() -> AgentBotAmmoRuntime.randomDelayMs(900, 1400)).thenReturn(99L);
 
             assertEquals(BotAmmoManager.OwnerAmmoShareResult.OFFERED,

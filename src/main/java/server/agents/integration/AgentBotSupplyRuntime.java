@@ -1,11 +1,12 @@
 package server.agents.integration;
 
+import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+
 import client.Character;
 import client.inventory.WeaponType;
 import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
 import server.agents.capabilities.dialogue.AgentSupplyRequestOutcomeFlow;
 import server.bots.BotAmmoManager;
-import server.bots.BotAttackExecutionProvider;
 import server.bots.BotEntry;
 import server.bots.BotOfferManager;
 import server.bots.BotPotionManager;
@@ -68,7 +69,7 @@ public final class AgentBotSupplyRuntime {
         if (owner == null) {
             return;
         }
-        WeaponType weaponType = BotAttackExecutionProvider.getEquippedWeaponType(owner);
+        WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(owner);
         if (weaponType != WeaponType.BOW && weaponType != WeaponType.CROSSBOW) {
             AgentBotSupplyReplyRuntime.queueReply(entry, AgentSupplyRequestOutcomeFlow.ammoNotNeededReply());
             return;

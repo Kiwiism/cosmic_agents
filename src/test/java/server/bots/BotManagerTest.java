@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import client.Character;
 import client.BuffStat;
@@ -402,11 +404,11 @@ class BotManagerTest {
         when(bot.getMap()).thenReturn(map);
         when(map.getAllMonsters()).thenReturn(List.of(closeMob, rangedMob));
 
-        try (MockedStatic<BotAttackExecutionProvider> attacks =
-                     mockStatic(BotAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS);
+        try (MockedStatic<AgentAttackExecutionProvider> attacks =
+                     mockStatic(AgentAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS);
              MockedStatic<BotCombatManager> combat =
                      mockStatic(BotCombatManager.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
-            attacks.when(() -> BotAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.BOW);
+            attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.BOW);
             combat.when(() -> BotCombatManager.planAttack(entry, bot, rangedMob)).thenReturn(rangedPlan);
             combat.when(() -> BotCombatManager.isTargetInAttackRange(rangedPlan, bot, rangedMob)).thenReturn(true);
 
@@ -431,11 +433,11 @@ class BotManagerTest {
                 List.of(target), BotCombatManager.AttackRoute.RANGED,
                 0, 11, 11, 11, 4, 300, 600, null);
 
-        try (MockedStatic<BotAttackExecutionProvider> attacks =
-                     mockStatic(BotAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS);
+        try (MockedStatic<AgentAttackExecutionProvider> attacks =
+                     mockStatic(AgentAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS);
              MockedStatic<BotCombatManager> combat =
                      mockStatic(BotCombatManager.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
-            attacks.when(() -> BotAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.CLAW);
+            attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.CLAW);
             combat.when(() -> BotCombatManager.planAttack(entry, bot, target)).thenReturn(rangedPlan);
             combat.when(() -> BotCombatManager.isTargetInAttackRange(rangedPlan, bot, target)).thenReturn(true);
             combat.when(() -> BotCombatManager.canUseAttackPlanNow(entry, WeaponType.CLAW, rangedPlan)).thenReturn(true);
@@ -463,9 +465,9 @@ class BotManagerTest {
         Monster rightMob = mockMob(new Point(160, 100), 9300601);
         doReturn(List.of(leftMob, rightMob)).when(map).getAllMonsters();
 
-        try (MockedStatic<BotAttackExecutionProvider> attacks =
-                     mockStatic(BotAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
-            attacks.when(() -> BotAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.BOW);
+        try (MockedStatic<AgentAttackExecutionProvider> attacks =
+                     mockStatic(AgentAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
+            attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.BOW);
 
             Point first = BotManager.selectGrindNavigationTarget(entry, botPos, rightMob.getPosition());
             int dir1 = Integer.signum(first.x - botPos.x);
@@ -497,9 +499,9 @@ class BotManagerTest {
         Monster rightMob = mockMob(new Point(160, 100), 9300602);
         doReturn(List.of(rightMob)).when(map).getAllMonsters();
 
-        try (MockedStatic<BotAttackExecutionProvider> attacks =
-                     mockStatic(BotAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
-            attacks.when(() -> BotAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.BOW);
+        try (MockedStatic<AgentAttackExecutionProvider> attacks =
+                     mockStatic(AgentAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
+            attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.BOW);
 
             BotManager.selectGrindNavigationTarget(entry, botPos, rightMob.getPosition());
             assertFalse(AgentBotBreakoutStateRuntime.hasBreakoutCommitment(entry));
@@ -520,14 +522,14 @@ class BotManagerTest {
         Monster rightMob = mockMob(new Point(160, 100), 9300603);
         doReturn(List.of(rightMob)).when(map).getAllMonsters();
 
-        try (MockedStatic<BotAttackExecutionProvider> attacks =
-                     mockStatic(BotAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
-            attacks.when(() -> BotAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.BOW);
+        try (MockedStatic<AgentAttackExecutionProvider> attacks =
+                     mockStatic(AgentAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
+            attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.BOW);
 
             Point nav = BotManager.selectGrindNavigationTarget(entry, botPos, rightMob.getPosition());
             // Single mob -> ordinary local kiting (retreat away from the mob), no breakout latch.
             assertFalse(AgentBotBreakoutStateRuntime.hasBreakoutCommitment(entry));
-            assertEquals(BotAttackExecutionProvider.retreatTargetPosition(bot, botPos, rightMob.getPosition()), nav);
+            assertEquals(AgentAttackExecutionProvider.retreatTargetPosition(bot, botPos, rightMob.getPosition()), nav);
         }
     }
 
@@ -1262,7 +1264,7 @@ class BotManagerTest {
         Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
         bots.put(owner.getId(), List.of(needyEntry, nonBow600Entry, bow3000Entry, ignored499Entry, nonBow800Entry));
 
-        try (MockedStatic<BotAttackExecutionProvider> attacks = mockStatic(BotAttackExecutionProvider.class, invocation -> {
+        try (MockedStatic<AgentAttackExecutionProvider> attacks = mockStatic(AgentAttackExecutionProvider.class, invocation -> {
             Character character = invocation.getArgument(0);
             if (character == needy || character == bow3000) {
                 return WeaponType.BOW;
@@ -1297,7 +1299,7 @@ class BotManagerTest {
         Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
         bots.put(owner.getId(), List.of(needyEntry, bow3000Entry));
 
-        try (MockedStatic<BotAttackExecutionProvider> attacks = mockStatic(BotAttackExecutionProvider.class,
+        try (MockedStatic<AgentAttackExecutionProvider> attacks = mockStatic(AgentAttackExecutionProvider.class,
                 invocation -> WeaponType.BOW)) {
             AgentBotAmmoDonorPlan plan = BotAmmoManager.selectAmmoDonor(needyEntry, needy, WeaponType.BOW);
 

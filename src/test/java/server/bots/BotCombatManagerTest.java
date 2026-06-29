@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+
 import server.agents.capabilities.movement.AgentMovementProfile;
 
 import client.BuffStat;
@@ -112,7 +114,7 @@ class BotCombatManagerTest {
         Skill skill = new Skill(3121004);
         skill.setAction0("doublefire");
 
-        String action = BotAttackExecutionProvider.resolveSkillAttackAction(null, skill, 1, WeaponType.BOW);
+        String action = AgentAttackExecutionProvider.resolveSkillAttackAction(null, skill, 1, WeaponType.BOW);
 
         assertEquals("doublefire", action);
     }
@@ -946,21 +948,21 @@ class BotCombatManagerTest {
 
     @Test
     void shouldTreatBasicStaffAttacksAsCloseRange() {
-        assertEquals(BotCombatManager.AttackRoute.CLOSE, BotAttackExecutionProvider.determineBasicWeaponRoute(WeaponType.STAFF));
+        assertEquals(BotCombatManager.AttackRoute.CLOSE, AgentAttackExecutionProvider.determineBasicWeaponRoute(WeaponType.STAFF));
     }
 
     @Test
     void shouldTreatNonMageSkillsWithStaffAsCloseRange() {
         Character bot = mockBot(new Point(100, 200), mock(MapleMap.class), 20_000, null);
 
-        try (MockedStatic<BotAttackExecutionProvider> attacks =
-                     Mockito.mockStatic(BotAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS)) {
-            attacks.when(() -> BotAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.STAFF);
+        try (MockedStatic<AgentAttackExecutionProvider> attacks =
+                     Mockito.mockStatic(AgentAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS)) {
+            attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.STAFF);
 
             assertEquals(BotCombatManager.AttackRoute.CLOSE,
-                    BotAttackExecutionProvider.determineSkillRoute(bot, Warrior.POWER_STRIKE));
+                    AgentAttackExecutionProvider.determineSkillRoute(bot, Warrior.POWER_STRIKE));
             assertEquals(BotCombatManager.AttackRoute.MAGIC,
-                    BotAttackExecutionProvider.determineSkillRoute(bot, Magician.MAGIC_CLAW));
+                    AgentAttackExecutionProvider.determineSkillRoute(bot, Magician.MAGIC_CLAW));
         }
     }
 
@@ -1281,8 +1283,8 @@ class BotCombatManagerTest {
 
     @Test
     void shouldFallbackToBasicAttackTimingWhenSkillAnimationDelayMissing() {
-        BotAttackExecutionProvider.SkillAttackTiming timing =
-                BotAttackExecutionProvider.resolveSkillAttackTiming(0, 4, 300, 590);
+        AgentAttackExecutionProvider.SkillAttackTiming timing =
+                AgentAttackExecutionProvider.resolveSkillAttackTiming(0, 4, 300, 590);
 
         assertEquals(300, timing.hitDelayMs());
         assertEquals(590, timing.cooldownMs());
@@ -1290,8 +1292,8 @@ class BotCombatManagerTest {
 
     @Test
     void shouldNotUnlockSkillFasterThanBasicAttackCooldown() {
-        BotAttackExecutionProvider.SkillAttackTiming timing =
-                BotAttackExecutionProvider.resolveSkillAttackTiming(450, 4, 300, 590);
+        AgentAttackExecutionProvider.SkillAttackTiming timing =
+                AgentAttackExecutionProvider.resolveSkillAttackTiming(450, 4, 300, 590);
 
         assertEquals(197, timing.hitDelayMs());
         assertEquals(590, timing.cooldownMs());
@@ -1299,8 +1301,8 @@ class BotCombatManagerTest {
 
     @Test
     void shouldApplyAttackSpeedScalingToSkillAnimationTiming() {
-        BotAttackExecutionProvider.SkillAttackTiming timing =
-                BotAttackExecutionProvider.resolveSkillAttackTiming(520, 2, 120, 0);
+        AgentAttackExecutionProvider.SkillAttackTiming timing =
+                AgentAttackExecutionProvider.resolveSkillAttackTiming(520, 2, 120, 0);
 
         assertEquals(203, timing.hitDelayMs());
         assertEquals(406, timing.cooldownMs());
@@ -1308,7 +1310,7 @@ class BotCombatManagerTest {
 
     @Test
     void shouldUseDegenerateCloseAttackPoolForBowAtPointBlankRange() {
-        assertTrue(BotAttackExecutionProvider.shouldDegenerateRangedAttack(WeaponType.BOW, new Point(100, 200), new Point(145, 200)));
+        assertTrue(AgentAttackExecutionProvider.shouldDegenerateRangedAttack(WeaponType.BOW, new Point(100, 200), new Point(145, 200)));
         BotAttackDataProvider.AttackAnimationSpec bowSpec = BotAttackDataProvider.getInstance().getBasicAttackSpec(WeaponType.BOW, true);
 
         assertEquals(3, bowSpec.display());
@@ -1318,7 +1320,7 @@ class BotCombatManagerTest {
 
     @Test
     void shouldKeepBowOutOfDegenerateModeWhenTargetIsNotCrowding() {
-        assertFalse(BotAttackExecutionProvider.shouldDegenerateRangedAttack(WeaponType.BOW, new Point(100, 200), new Point(300, 200)));
+        assertFalse(AgentAttackExecutionProvider.shouldDegenerateRangedAttack(WeaponType.BOW, new Point(100, 200), new Point(300, 200)));
         BotAttackDataProvider.AttackAnimationSpec bowSpec = BotAttackDataProvider.getInstance().getBasicAttackSpec(WeaponType.BOW, false);
 
         assertEquals("shoot1", bowSpec.primaryAction());
@@ -1332,12 +1334,12 @@ class BotCombatManagerTest {
         Point justOutsideRetreatTarget = new Point(botPos.x + BotCombatManager.cfg.RANGED_RETREAT_THRESHOLD_X + 1, 200);
         Point farTarget = new Point(botPos.x + BotCombatManager.cfg.RANGED_DEGENERATE_RANGE_X + 100, 200);
 
-        assertTrue(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, botPos, retreatBandTarget));
+        assertTrue(AgentAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, botPos, retreatBandTarget));
         assertEquals(new Point(botPos.x - BotCombatManager.cfg.RANGED_RETREAT_DISTANCE_X, 200),
-                BotAttackExecutionProvider.retreatTargetPosition(botPos, retreatBandTarget));
-        assertTrue(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, botPos, pointBlankTarget));
-        assertFalse(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, botPos, justOutsideRetreatTarget));
-        assertFalse(BotAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, botPos, farTarget));
+                AgentAttackExecutionProvider.retreatTargetPosition(botPos, retreatBandTarget));
+        assertTrue(AgentAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, botPos, pointBlankTarget));
+        assertFalse(AgentAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, botPos, justOutsideRetreatTarget));
+        assertFalse(AgentAttackExecutionProvider.shouldRetreatFromNearbyTarget(WeaponType.BOW, botPos, farTarget));
     }
 
     @Test
@@ -1377,7 +1379,7 @@ class BotCombatManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.facingDir = 1;
 
-        BotCombatManager.rememberAttackFacing(entry, BotAttackExecutionProvider.attackPacketStance(true));
+        BotCombatManager.rememberAttackFacing(entry, AgentAttackExecutionProvider.attackPacketStance(true));
 
         assertEquals(-1, entry.facingDir);
         assertEquals(CharacterStance.STAND_LEFT_STANCE, bot.getStance());
@@ -1389,7 +1391,7 @@ class BotCombatManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.facingDir = -1;
 
-        BotCombatManager.rememberAttackFacing(entry, BotAttackExecutionProvider.attackPacketStance(false));
+        BotCombatManager.rememberAttackFacing(entry, AgentAttackExecutionProvider.attackPacketStance(false));
 
         assertEquals(1, entry.facingDir);
         assertEquals(CharacterStance.STAND_RIGHT_STANCE, bot.getStance());
@@ -1410,10 +1412,10 @@ class BotCombatManagerTest {
         AgentBotCombatSkillCacheStateRuntime.setAoeSkill(entry, Hunter.ARROW_BOMB, AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
 
         try (MockedStatic<SkillFactory> skillFactory = Mockito.mockStatic(SkillFactory.class);
-             MockedStatic<BotAttackExecutionProvider> attackExecution =
-                     Mockito.mockStatic(BotAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS)) {
+             MockedStatic<AgentAttackExecutionProvider> attackExecution =
+                     Mockito.mockStatic(AgentAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS)) {
             skillFactory.when(() -> SkillFactory.getSkill(Hunter.ARROW_BOMB)).thenReturn(arrowBomb);
-            attackExecution.when(() -> BotAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.BOW);
+            attackExecution.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.BOW);
 
             BotCombatManager.AttackPlan plan = BotCombatManager.planAttack(entry, bot, farSelected);
 
@@ -1588,9 +1590,9 @@ class BotCombatManagerTest {
 
         BotEntry entry = new BotEntry(bot, null, null);
 
-        try (MockedStatic<BotAttackExecutionProvider> attackExecution =
-                     Mockito.mockStatic(BotAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS)) {
-            attackExecution.when(() -> BotAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.BOW);
+        try (MockedStatic<AgentAttackExecutionProvider> attackExecution =
+                     Mockito.mockStatic(AgentAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS)) {
+            attackExecution.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.BOW);
 
             assertEquals(otherRegionMob, BotCombatManager.findFollowAttackTarget(entry, bot));
             assertEquals(otherRegionMob, BotCombatManager.findGrindTarget(entry, bot));

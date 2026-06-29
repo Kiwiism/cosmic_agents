@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+
 import client.Character;
 import net.packet.Packet;
 import server.agents.capabilities.movement.fidget.AgentFidgetMode;
@@ -479,7 +481,7 @@ final class BotFidgetManager {
             return;
         }
 
-        int direction = BotAttackExecutionProvider.bodyActionId("proneStab", "stabO1", null);
+        int direction = AgentAttackExecutionProvider.bodyActionId("proneStab", "stabO1", null);
         Packet attackPacket = PacketCreator.closeRangeAttack(
                 bot,
                 0,

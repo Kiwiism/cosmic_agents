@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+
 import org.junit.jupiter.api.Test;
 import server.bots.combat.BotAttackDataProvider;
 import server.bots.combat.BotAttackTiming;
@@ -32,14 +34,14 @@ class BotAttackDataProviderTest {
         assertEquals(69, provider.getBodyActionId("genesis"));
         assertEquals(77, provider.getBodyActionId("handgun"));
         assertEquals(86, provider.getBodyActionId("doublefire"));
-        BotAttackExecutionProvider.CloseRangePacketFields closeRangeFields =
-                BotAttackExecutionProvider.mimicCloseRangePacketFields("stabO1", "swingO1", false);
+        AgentAttackExecutionProvider.CloseRangePacketFields closeRangeFields =
+                AgentAttackExecutionProvider.mimicCloseRangePacketFields("stabO1", "swingO1", false);
         assertEquals(0, closeRangeFields.display());
         assertEquals(16, closeRangeFields.bodyActionId());
         assertEquals(0, closeRangeFields.facingMask());
-        assertEquals(0x80, BotAttackExecutionProvider.mimicCloseRangePacketFields("stabO1", "swingO1", true).facingMask());
-        assertEquals(0x00, BotAttackExecutionProvider.attackPacketStance(false));
-        assertEquals(0x80, BotAttackExecutionProvider.attackPacketStance(true));
+        assertEquals(0x80, AgentAttackExecutionProvider.mimicCloseRangePacketFields("stabO1", "swingO1", true).facingMask());
+        assertEquals(0x00, AgentAttackExecutionProvider.attackPacketStance(false));
+        assertEquals(0x80, AgentAttackExecutionProvider.attackPacketStance(true));
 
         BotAttackDataProvider.NormalAttackProfile profile = provider.getNormalAttackProfile(1302077);
         assertNotNull(profile);
@@ -52,8 +54,8 @@ class BotAttackDataProviderTest {
         BotAttackDataProvider provider = BotAttackDataProvider.getInstance();
         int rawActionHitDelayMs = provider.getBodyActionAttackDelayMs("doublefire", 0);
         int rawActionDurationMs = provider.getBodyActionDurationMs("doublefire");
-        BotAttackExecutionProvider.SkillAttackTiming timing =
-                BotAttackExecutionProvider.resolveSkillAttackTiming("doublefire", null, 999, 4, 300, 590);
+        AgentAttackExecutionProvider.SkillAttackTiming timing =
+                AgentAttackExecutionProvider.resolveSkillAttackTiming("doublefire", null, 999, 4, 300, 590);
 
         assertTrue(rawActionDurationMs > 0);
         assertTrue(rawActionHitDelayMs >= 0);
@@ -71,8 +73,8 @@ class BotAttackDataProviderTest {
                 profile.getAfterimageFirstFrame("swingO1"));
         int rawStanceDurationMs = provider.getBodyStanceDurationMs("swingO1");
 
-        BotAttackExecutionProvider.SkillAttackTiming timing =
-                BotAttackExecutionProvider.resolveSkillAttackTiming("swingO1", profile, 999, 4, 0, 0);
+        AgentAttackExecutionProvider.SkillAttackTiming timing =
+                AgentAttackExecutionProvider.resolveSkillAttackTiming("swingO1", profile, 999, 4, 0, 0);
 
         assertTrue(rawStanceDurationMs > 0);
         assertTrue(rawStanceHitDelayMs > 0);
@@ -86,10 +88,10 @@ class BotAttackDataProviderTest {
         int rawShootDurationMs = provider.getBodyStanceDurationMs("shoot1");
         int rawClawDurationMs = provider.getBodyStanceDurationMs("swingO1");
 
-        BotAttackExecutionProvider.SkillAttackTiming doubleShotTiming =
-                BotAttackExecutionProvider.resolveSkillAttackTiming("shoot1", null, 0, 4, 0, 0);
-        BotAttackExecutionProvider.SkillAttackTiming luckySevenTiming =
-                BotAttackExecutionProvider.resolveSkillAttackTiming("swingO1", null, 0, 4, 0, 0);
+        AgentAttackExecutionProvider.SkillAttackTiming doubleShotTiming =
+                AgentAttackExecutionProvider.resolveSkillAttackTiming("shoot1", null, 0, 4, 0, 0);
+        AgentAttackExecutionProvider.SkillAttackTiming luckySevenTiming =
+                AgentAttackExecutionProvider.resolveSkillAttackTiming("swingO1", null, 0, 4, 0, 0);
 
         assertTrue(rawShootDurationMs > 0);
         assertTrue(rawClawDurationMs > 0);
@@ -127,7 +129,7 @@ class BotAttackDataProviderTest {
         BotAttackDataProvider.AttackAnimationSpec attackSpec =
                 BotAttackDataProvider.getInstance().getBasicAttackSpec(1, client.inventory.WeaponType.GENERAL1H_SWING);
 
-        List<String> actions = BotAttackExecutionProvider.resolveAttackActions(attackSpec,
+        List<String> actions = AgentAttackExecutionProvider.resolveAttackActions(attackSpec,
                 List.of("swingOF", "stabO1", "proneStab", "swingO3", "stabOF"));
 
         assertEquals(List.of("stabO1", "swingO3"), actions);
