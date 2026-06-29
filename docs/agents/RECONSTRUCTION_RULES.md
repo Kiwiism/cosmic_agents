@@ -101,9 +101,10 @@ Recent reconstruction notes:
   bounds for the current side-effect path.
 - Combat mob-knockback decision policy moved to
   `server.agents.capabilities.combat.AgentMobKnockbackPolicy`. Climb/death
-  blocking, stance-percent clamping, and random-roll comparison are unchanged;
-  `BotCombatManager` still supplies the live movement state, HP, buff, and
-  random roll before executing existing knockback side effects.
+  blocking, stance-percent clamping, random-roll comparison, OpenStory-step
+  tick scaling, and mob-hit direction/air-velocity resolution are unchanged;
+  `BotCombatManager` still supplies the live movement state, HP, buff, random
+  roll, config values, and executes existing knockback side effects.
 - Combat hitbox/monster intersection ownership moved to
   `server.agents.capabilities.combat.AgentCombatHitboxIntersection`. Mob WZ
   bounds intersection, monster-position fallback, forward-projectile hitbox

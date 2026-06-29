@@ -213,7 +213,7 @@ public class BotCombatManager {
      */
     static void applyMobHit(BotEntry entry, Character bot, Monster mob) {
         int dmg = rollPhysicalMobDamage(bot, mob);
-        MobHitKnockback kb = resolveMobHitKnockback(bot.getPosition(), mob.getPosition());
+        AgentMobKnockbackPolicy.MobHitKnockback kb = resolveMobHitKnockback(bot.getPosition(), mob.getPosition());
         applyDamage(entry, bot, dmg, -1, mob.getId(), kb.direction(), kb.airVelX());
     }
 
@@ -326,15 +326,13 @@ public class BotCombatManager {
                 ThreadLocalRandom.current().nextFloat());
     }
 
-    private static MobHitKnockback resolveMobHitKnockback(Point botPos, Point attackOrigin) {
-        boolean attackFromRight = attackOrigin.x > botPos.x;
-        int direction = attackFromRight ? 0 : 1;
-        int airVelX = Math.round((attackFromRight ? -1f : 1f) * scaledOpenStoryStep(cfg.KNOCKBACK_HSPEED));
-        return new MobHitKnockback(direction, airVelX);
+    private static AgentMobKnockbackPolicy.MobHitKnockback resolveMobHitKnockback(Point botPos, Point attackOrigin) {
+        return AgentMobKnockbackPolicy.resolveMobHitKnockback(
+                botPos, attackOrigin, cfg.KNOCKBACK_HSPEED, BotMovementManager.cfg.TICK_MS);
     }
 
     private static float scaledOpenStoryStep(float openStoryStepValue) {
-        return openStoryStepValue * (BotMovementManager.cfg.TICK_MS / 8.0f);
+        return AgentMobKnockbackPolicy.scaledOpenStoryStep(openStoryStepValue, BotMovementManager.cfg.TICK_MS);
     }
 
     static void enterDeadState(BotEntry entry, Character bot, boolean announceDeath) {
@@ -353,9 +351,6 @@ public class BotCombatManager {
         AgentBotCombatCooldownStateRuntime.clearMoveWindow(entry);
         BotMovementManager.clearNavigationState(entry);
         AgentBotMovementBroadcastStateRuntime.invalidate(entry);
-    }
-
-    private record MobHitKnockback(int direction, int airVelX) {
     }
 
     static void rebuildSkillCacheIfNeeded(BotEntry entry, Character bot) {
