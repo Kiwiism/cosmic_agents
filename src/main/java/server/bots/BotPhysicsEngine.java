@@ -831,9 +831,10 @@ public final class BotPhysicsEngine {
         setClimbPosition(entry, bot, rope, ropeY);
     }
 
-   /**
-     * Intent-driven climb integrator. Reads {@link BotEntry#climbVerticalDir} for vertical
-     * direction (-1=up, 0=idle, +1=down). Movement layer sets intent before calling.
+    /**
+     * Intent-driven climb integrator. Reads vertical direction through
+     * AgentBotClimbStateRuntime (-1=up, 0=idle, +1=down). Movement layer sets
+     * intent before calling.
      */
     static void advanceClimb(BotEntry entry, Character bot) {
         Rope rope = AgentBotClimbStateRuntime.climbRope(entry);
@@ -1042,15 +1043,16 @@ public final class BotPhysicsEngine {
 
     /**
      * Intent-driven swim integrator. Mirrors wasm Physics::move_swimming, but
-     * the only inputs are discrete intents on {@link BotEntry}:
-     *   swimMoveDir       — -1/0/+1 horizontal steer
+     * the only inputs are discrete intents read through AgentBotSwimStateRuntime:
+     *   swimMoveDirection — -1/0/+1 horizontal steer
      *   swimVerticalHold  — -1 (UP slow sink) / 0 (free sink) / +1 (DOWN fast sink)
      *   swimJumpRequested — one-shot upward burst (consumed here)
      *
      * Movement layer never writes velY/hspeed directly — the engine owns physics.
-     * On contact with a foothold floor the bot transitions out of swim mode
-     * (entry.inAir = false) so the next tick routes through tickGrounded and the
-     * bot walks normally on the platform. This matches the real client behavior
+     * On contact with a foothold floor the bot transitions out of swim mode and
+     * clears airborne state through Agent movement adapters so the next tick
+     * routes through tickGrounded and the bot walks normally on the platform.
+     * This matches the real client behavior
      * where SWIMMING physics applies only while airborne underwater.
      */
     static void applySwimMotion(BotEntry entry) {

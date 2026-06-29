@@ -965,6 +965,10 @@ Recent reconstruction notes:
   write fidget fields directly in production. `AgentFidgetMode` and
   `AgentFidgetTrigger` were moved to public enum files with the same values so
   the Agent adapter can keep a typed boundary without changing behavior.
+- Physics engine movement, climb, swim, and airborne state now route through
+  Agent runtime adapters; BotPhysicsEngine keeps BotEntry as the temporary
+  backing store but no longer owns direct runtime field access for these state
+  groups.
 - Airshow state now enters through `AgentBotAirshowStateRuntime`;
   BotAirshowManager active/trail timing, scripted frame physics fields, bot
   identity lookup, restore checks, and trail foothold reads keep BotEntry as the
