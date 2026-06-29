@@ -957,17 +957,20 @@ public class BotCombatManager {
             return null;
         }
 
-        if (isStrikePointAnchoredAoeSkill(skillId)
-                && !isPrimaryReachableByBasicWeapon(bot, primaryTarget, route)) {
+        boolean strikePointAnchored = isStrikePointAnchoredAoeSkill(skillId);
+        Monster preSelectionPrimaryTarget = primaryTarget;
+        AgentSkillAttackPlanner.SkillPrimaryTargetSelection targetSelection =
+                AgentSkillAttackPlanner.resolvePrimaryTargetAfterHitbox(
+                        strikePointAnchored,
+                        preSelectionPrimaryTarget,
+                        hitBox,
+                        () -> isPrimaryReachableByBasicWeapon(bot, preSelectionPrimaryTarget, route),
+                        (candidate, candidateHitBox) -> resolveEffectivePrimary(bot, candidate, candidateHitBox),
+                        BotCombatManager::doesHitBoxIntersectMonster);
+        if (targetSelection == null) {
             return null;
         }
-
-        if (!isStrikePointAnchoredAoeSkill(skillId)) {
-            primaryTarget = resolveEffectivePrimary(bot, primaryTarget, hitBox);
-        }
-        if (!doesHitBoxIntersectMonster(hitBox, primaryTarget)) {
-            return null;
-        }
+        primaryTarget = targetSelection.target();
 
         int attackCount = effectiveHitCount(effect) * shadowPartnerHitMultiplier(bot, route);
         if (!AgentAttackExecutionProvider.canUseRangedAttackRoute(route, weaponType, bot.getPosition(), primaryTarget.getPosition())) {

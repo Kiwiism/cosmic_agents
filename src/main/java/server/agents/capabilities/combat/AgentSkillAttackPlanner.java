@@ -1,7 +1,11 @@
 package server.agents.capabilities.combat;
 
+import java.awt.Rectangle;
+import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 import java.util.function.BooleanSupplier;
 import java.util.function.IntSupplier;
+import server.life.Monster;
 
 public final class AgentSkillAttackPlanner {
     public enum SkillAttackReadiness {
@@ -17,6 +21,9 @@ public final class AgentSkillAttackPlanner {
     public enum SkillAmmoReadiness {
         READY,
         INSUFFICIENT_AMMO
+    }
+
+    public record SkillPrimaryTargetSelection(Monster target) {
     }
 
     private AgentSkillAttackPlanner() {
@@ -59,5 +66,26 @@ public final class AgentSkillAttackPlanner {
             return SkillAmmoReadiness.INSUFFICIENT_AMMO;
         }
         return SkillAmmoReadiness.READY;
+    }
+
+    public static SkillPrimaryTargetSelection resolvePrimaryTargetAfterHitbox(
+            boolean strikePointAnchored,
+            Monster primaryTarget,
+            Rectangle hitBox,
+            BooleanSupplier primaryReachableByBasicWeapon,
+            BiFunction<Monster, Rectangle, Monster> resolveEffectivePrimary,
+            BiPredicate<Rectangle, Monster> intersectsMonster) {
+        if (strikePointAnchored && !primaryReachableByBasicWeapon.getAsBoolean()) {
+            return null;
+        }
+
+        Monster resolvedTarget = primaryTarget;
+        if (!strikePointAnchored) {
+            resolvedTarget = resolveEffectivePrimary.apply(primaryTarget, hitBox);
+        }
+        if (!intersectsMonster.test(hitBox, resolvedTarget)) {
+            return null;
+        }
+        return new SkillPrimaryTargetSelection(resolvedTarget);
     }
 }

@@ -2,10 +2,14 @@ package server.agents.capabilities.combat;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 
+import java.awt.Rectangle;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
+import server.life.Monster;
 
 class AgentSkillAttackPlannerTest {
     @Test
@@ -126,5 +130,90 @@ class AgentSkillAttackPlannerTest {
                     return 0;
                 }));
         assertFalse(ammoCounted.get());
+    }
+
+    @Test
+    void shouldRejectUnreachableStrikePointTargetBeforeResolvingEffectivePrimary() {
+        Monster primary = mock(Monster.class);
+        Rectangle hitBox = new Rectangle(0, 0, 10, 10);
+        AtomicBoolean resolvedEffectivePrimary = new AtomicBoolean(false);
+        AtomicBoolean checkedIntersection = new AtomicBoolean(false);
+
+        assertNull(AgentSkillAttackPlanner.resolvePrimaryTargetAfterHitbox(
+                true,
+                primary,
+                hitBox,
+                () -> false,
+                (candidate, candidateHitBox) -> {
+                    resolvedEffectivePrimary.set(true);
+                    return candidate;
+                },
+                (candidateHitBox, candidate) -> {
+                    checkedIntersection.set(true);
+                    return true;
+                }));
+        assertFalse(resolvedEffectivePrimary.get());
+        assertFalse(checkedIntersection.get());
+    }
+
+    @Test
+    void shouldKeepStrikePointPrimaryAndCheckIntersectionWhenReachable() {
+        Monster primary = mock(Monster.class);
+        Monster effective = mock(Monster.class);
+        Rectangle hitBox = new Rectangle(0, 0, 10, 10);
+        AtomicBoolean resolvedEffectivePrimary = new AtomicBoolean(false);
+
+        AgentSkillAttackPlanner.SkillPrimaryTargetSelection selection =
+                AgentSkillAttackPlanner.resolvePrimaryTargetAfterHitbox(
+                        true,
+                        primary,
+                        hitBox,
+                        () -> true,
+                        (candidate, candidateHitBox) -> {
+                            resolvedEffectivePrimary.set(true);
+                            return effective;
+                        },
+                        (candidateHitBox, candidate) -> candidate == primary);
+
+        assertEquals(primary, selection.target());
+        assertFalse(resolvedEffectivePrimary.get());
+    }
+
+    @Test
+    void shouldResolveEffectivePrimaryForNonStrikePointTargetWithoutReachGate() {
+        Monster primary = mock(Monster.class);
+        Monster effective = mock(Monster.class);
+        Rectangle hitBox = new Rectangle(0, 0, 10, 10);
+        AtomicBoolean checkedReach = new AtomicBoolean(false);
+
+        AgentSkillAttackPlanner.SkillPrimaryTargetSelection selection =
+                AgentSkillAttackPlanner.resolvePrimaryTargetAfterHitbox(
+                        false,
+                        primary,
+                        hitBox,
+                        () -> {
+                            checkedReach.set(true);
+                            return false;
+                        },
+                        (candidate, candidateHitBox) -> effective,
+                        (candidateHitBox, candidate) -> candidate == effective);
+
+        assertEquals(effective, selection.target());
+        assertFalse(checkedReach.get());
+    }
+
+    @Test
+    void shouldRejectResolvedPrimaryWhenHitboxDoesNotIntersect() {
+        Monster primary = mock(Monster.class);
+        Monster effective = mock(Monster.class);
+        Rectangle hitBox = new Rectangle(0, 0, 10, 10);
+
+        assertNull(AgentSkillAttackPlanner.resolvePrimaryTargetAfterHitbox(
+                false,
+                primary,
+                hitBox,
+                () -> true,
+                (candidate, candidateHitBox) -> effective,
+                (candidateHitBox, candidate) -> false));
     }
 }

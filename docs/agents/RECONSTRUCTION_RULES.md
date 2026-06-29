@@ -1419,6 +1419,11 @@ Recent reconstruction notes:
 - Skill ammo readiness now lives in `AgentSkillAttackPlanner`, preserving the
   legacy `max(bulletCount, bulletConsume) * hitMultiplier` ranged-only gate with
   lazy inventory counting. BotCombatManager still owns inventory access.
+- Skill post-hitbox primary-target resolution now lives in
+  `AgentSkillAttackPlanner`, preserving the strike-point basic-weapon reach
+  gate, non-strike effective-primary replacement, and final monster hitbox
+  intersection check. BotCombatManager still resolves concrete hitboxes and
+  packet fields.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
