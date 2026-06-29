@@ -858,6 +858,11 @@ Recent reconstruction notes:
   replies, transfer donor identity, and standing-still recovery checks keep
   BotEntry as the temporary backing store but no longer read `owner`, `bot`,
   `inAir`, `climbing`, or `moveDir` directly in production.
+- Ammo sharing identity now enters through `AgentBotRuntimeIdentityRuntime`;
+  BotAmmoManager low-ammo request owner lookup, owner-request sharing, sibling
+  donor scans, and delayed transfer donor identity keep BotEntry as the
+  temporary backing store but no longer read `owner` or `bot` directly in
+  production.
 
 Initial reconstruction order:
 
