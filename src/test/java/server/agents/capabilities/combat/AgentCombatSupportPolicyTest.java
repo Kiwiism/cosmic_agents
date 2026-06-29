@@ -103,6 +103,24 @@ class AgentCombatSupportPolicyTest {
     }
 
     @Test
+    void shouldTickSupportHealingOnlyWhenLegacyPreflightAllowsIt() {
+        assertTrue(AgentCombatSupportPolicy.shouldTickSupportHealing(
+                false, true, true, false, 2001002, false));
+        assertTrue(AgentCombatSupportPolicy.shouldTickSupportHealing(
+                false, true, false, true, 2001002, false));
+        assertFalse(AgentCombatSupportPolicy.shouldTickSupportHealing(
+                true, true, true, false, 2001002, false));
+        assertFalse(AgentCombatSupportPolicy.shouldTickSupportHealing(
+                false, false, true, false, 2001002, false));
+        assertFalse(AgentCombatSupportPolicy.shouldTickSupportHealing(
+                false, true, false, false, 2001002, false));
+        assertFalse(AgentCombatSupportPolicy.shouldTickSupportHealing(
+                false, true, true, false, 0, false));
+        assertFalse(AgentCombatSupportPolicy.shouldTickSupportHealing(
+                false, true, true, false, 2001002, true));
+    }
+
+    @Test
     void shouldPreserveSupportCastReadinessOrder() {
         AtomicBoolean costChecked = new AtomicBoolean(false);
 

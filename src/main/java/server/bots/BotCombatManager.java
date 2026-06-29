@@ -435,11 +435,16 @@ public class BotCombatManager {
      * the heal animation play (matches real player behaviour when Heal is pressed with no mob in range).
      */
     static boolean tickSupportHealing(BotEntry entry, Character bot) {
-        if (AgentBotCombatCooldownStateRuntime.blocksGroundedAttack(entry, AgentBotMovementStateRuntime.inAir(entry))) return false;
-        if (!AgentBotCombatBuffStateRuntime.supportHealsEnabled(entry)) return false;
-        if (!AgentBotModeStateRuntime.following(entry) && !AgentBotModeStateRuntime.grinding(entry)) return false;
         int healSkillId = AgentBotCombatSkillCacheStateRuntime.healSkillId(entry);
-        if (healSkillId == 0 || bot.skillIsCooling(healSkillId)) return false;
+        if (!AgentCombatSupportPolicy.shouldTickSupportHealing(
+                AgentBotCombatCooldownStateRuntime.blocksGroundedAttack(entry, AgentBotMovementStateRuntime.inAir(entry)),
+                AgentBotCombatBuffStateRuntime.supportHealsEnabled(entry),
+                AgentBotModeStateRuntime.following(entry),
+                AgentBotModeStateRuntime.grinding(entry),
+                healSkillId,
+                bot.skillIsCooling(healSkillId))) {
+            return false;
+        }
 
         Skill skill = SkillFactory.getSkill(healSkillId);
         int lvl = bot.getSkillLevel(skill);

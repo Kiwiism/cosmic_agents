@@ -1399,6 +1399,9 @@ Recent reconstruction notes:
 - Skill-buff tick preflight decisions now live in `AgentCombatSupportPolicy`,
   including the legacy debug summaries for disabled, idle, and empty-cache
   states. BotCombatManager still performs live monster checks and cast dispatch.
+- Support-heal tick preflight now lives in `AgentCombatSupportPolicy`; the
+  legacy bot runtime still resolves the heal skill/effect, applies HP recovery,
+  optionally jump-heals, and emits the captured Heal attack packet shape.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

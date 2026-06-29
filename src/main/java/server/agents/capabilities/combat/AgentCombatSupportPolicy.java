@@ -106,6 +106,19 @@ public final class AgentCombatSupportPolicy {
         return SkillBuffTickDecision.READY;
     }
 
+    public static boolean shouldTickSupportHealing(boolean groundedAttackBlocked,
+                                                   boolean supportHealsEnabled,
+                                                   boolean following,
+                                                   boolean grinding,
+                                                   int healSkillId,
+                                                   boolean healSkillCooling) {
+        return !groundedAttackBlocked
+                && supportHealsEnabled
+                && (following || grinding)
+                && healSkillId != 0
+                && !healSkillCooling;
+    }
+
     public static SupportCastReadiness supportCastReadiness(int skillLevel,
                                                             boolean alive,
                                                             BooleanSupplier canPaySkillCost) {
