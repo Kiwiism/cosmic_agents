@@ -110,6 +110,11 @@ Recent reconstruction notes:
   nearest-cluster-target selection, plus the AOE-vs-single-target score gate,
   keep the same formulas; larger attack-plan orchestration, cached skill
   resolution, and grind-target selection still remain in `BotCombatManager`.
+- Combat grind-target locality classification moved to
+  `server.agents.capabilities.combat.AgentCombatGrindTargetPolicy`. Same-
+  foothold early acceptance, graph-unavailable rejection, and same-region
+  acceptance are unchanged; `BotCombatManager` still supplies foothold lookup
+  and the legacy navigation-region resolver lazily to preserve call ordering.
 - Combat attack-plan tie-break ordering moved to
   `server.agents.capabilities.combat.AgentAttackPlanTieBreakPolicy`. Cooldown
   priority and lower-skill-id fallback ordering are unchanged; larger

@@ -13,6 +13,7 @@ import server.agents.capabilities.combat.AgentCombatSkillHitboxPolicy;
 import server.agents.capabilities.combat.AgentCombatHitCounter;
 import server.agents.capabilities.combat.AgentCombatHitboxIntersection;
 import server.agents.capabilities.combat.AgentCombatImmediateTargetPolicy;
+import server.agents.capabilities.combat.AgentCombatGrindTargetPolicy;
 import server.agents.capabilities.combat.AgentCombatRangePolicy;
 import server.agents.capabilities.combat.AgentCombatScoringPolicy;
 import server.agents.capabilities.combat.AgentCombatSkillUsePolicy;
@@ -1261,19 +1262,14 @@ public class BotCombatManager {
                                                Character bot,
                                                Foothold botFoothold,
                                                Monster target) {
-        if (botFoothold != null) {
-            Foothold targetFoothold = findGroundFoothold(target.getPosition(), bot);
-            if (targetFoothold != null && targetFoothold.getId() == botFoothold.getId()) {
-                return true;
-            }
-        }
-        if (!context.available()) {
-            return false;
-        }
-
-        int targetRegionId = BotNavigationManager.resolveTargetRegionId(
-                context.graph(), context.entry(), context.map(), target.getPosition());
-        return targetRegionId >= 0 && targetRegionId == context.startRegionId();
+        Foothold targetFoothold = botFoothold == null ? null : findGroundFoothold(target.getPosition(), bot);
+        return AgentCombatGrindTargetPolicy.isLocalCombatTarget(
+                botFoothold,
+                targetFoothold,
+                context.available(),
+                () -> BotNavigationManager.resolveTargetRegionId(
+                        context.graph(), context.entry(), context.map(), target.getPosition()),
+                context.startRegionId());
     }
 
     private static boolean isImmediateProjectileTarget(BotEntry entry, Character bot, Monster target) {
