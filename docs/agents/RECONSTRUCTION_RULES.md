@@ -745,6 +745,12 @@ Recent reconstruction notes:
   warmup, jump/drop planning, tolerance checks, and platform-margin calculation
   keep BotEntry as the temporary backing store but no longer read
   `movementProfile` directly in production.
+- Navigation movement-phase reads now enter through
+  `AgentBotMovementStateRuntime` and `AgentBotClimbStateRuntime`;
+  BotNavigationManager committed-edge guards, edge reuse, portal/jump/drop/climb
+  execution, waypoint selection, and current-region resolution keep BotEntry as
+  the temporary backing store but no longer read `inAir`, `climbing`,
+  `downJumpPending`, or `climbRope` directly in production.
 - Combat animation/cooldown and alert-reset state now enters through
   `AgentBotCombatCooldownStateRuntime`; BotCombatManager attack cooldown,
   movement-window, alerted-stance timeout, and alert-reset scheduling keep
