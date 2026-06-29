@@ -10,6 +10,7 @@ import server.agents.capabilities.combat.AgentCombatSkillClassifier;
 import server.agents.capabilities.combat.AgentCombatWeaponPolicy;
 import server.agents.capabilities.combat.AgentCombatSkillHitboxPolicy;
 import server.agents.capabilities.combat.AgentCombatHitCounter;
+import server.agents.capabilities.combat.AgentCombatHitboxIntersection;
 import server.agents.capabilities.combat.AgentCombatRangePolicy;
 import server.agents.capabilities.combat.AgentCombatSkillUsePolicy;
 import server.agents.capabilities.combat.AgentCombatSupportPolicy;
@@ -1887,16 +1888,7 @@ public class BotCombatManager {
     }
 
     private static boolean doesHitBoxIntersectMonster(Rectangle hitBox, Monster monster) {
-        if (hitBox == null || monster == null) {
-            return false;
-        }
-
-        Rectangle mobBounds = AgentMobHitboxProvider.getInstance().getMobBounds(monster);
-        if (mobBounds != null) {
-            return hitBox.intersects(mobBounds) || hitBox.contains(monster.getPosition());
-        }
-
-        return hitBox.contains(monster.getPosition());
+        return AgentCombatHitboxIntersection.intersectsMonster(hitBox, monster);
     }
 
     // Strike-point-anchored skills (e.g. Arrow Bomb) center their bbox on the target, so

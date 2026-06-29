@@ -90,6 +90,11 @@ Recent reconstruction notes:
   inclusive foot-sweep bounds and lower-half mob contact checks are unchanged;
   `BotCombatManager` still supplies remembered touch checkpoints and mob WZ
   bounds for the current side-effect path.
+- Combat hitbox/monster intersection ownership moved to
+  `server.agents.capabilities.combat.AgentCombatHitboxIntersection`. Mob WZ
+  bounds intersection, monster-position fallback, and null handling are
+  unchanged; `BotCombatManager` keeps only a compatibility wrapper for current
+  target planning.
 - Combat attack data provider ownership moved to
   `server.agents.capabilities.combat.data.AgentAttackDataProvider`. Weapon
   normal-attack profile loading, action-spec selection, body action id
