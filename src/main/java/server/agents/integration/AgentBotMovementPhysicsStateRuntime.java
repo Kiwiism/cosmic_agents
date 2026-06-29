@@ -31,6 +31,10 @@ public final class AgentBotMovementPhysicsStateRuntime {
         return entry.verticalVelocity();
     }
 
+    public static void setVerticalVelocity(BotEntry entry, float verticalVelocity) {
+        entry.setVerticalVelocity(verticalVelocity);
+    }
+
     public static int airVelocityX(BotEntry entry) {
         return entry.airVelocityX();
     }

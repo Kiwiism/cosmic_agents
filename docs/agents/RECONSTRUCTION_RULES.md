@@ -183,6 +183,10 @@ Recent reconstruction notes:
 - Bot physics facing-direction preservation and air-steering facing updates now
   enter through `AgentBotMovementStateRuntime`; knockback and airborne steering
   paths no longer access `facingDir` directly.
+- Bot physics vertical velocity now enters through
+  `AgentBotMovementPhysicsStateRuntime`; jump launch, swim integration,
+  airborne integration, collision, climb, landing, and reset paths no longer
+  access `velY` directly.
 - Combat alert reset callbacks now enter through `AgentBotCombatRuntime`;
   `BotCombatManager` no longer reaches directly into the lower-level scheduler
   runtime for combat-owned alert timing, and alert timing and stance reset

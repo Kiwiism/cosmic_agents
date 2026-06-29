@@ -42,6 +42,9 @@ class AgentBotMovementPhysicsStateRuntimeTest {
 
         assertEquals(-12.5f, AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry));
         assertEquals(7, AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
+
+        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 3.5f);
+        assertEquals(3.5f, AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry));
     }
 
     @Test

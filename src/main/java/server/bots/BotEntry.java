@@ -80,6 +80,10 @@ public class BotEntry {
         return velY;
     }
 
+    public void setVerticalVelocity(float verticalVelocity) {
+        velY = verticalVelocity;
+    }
+
     double hspeed = 0.0;
     double physX = 0.0;
     double physY = 0.0;
