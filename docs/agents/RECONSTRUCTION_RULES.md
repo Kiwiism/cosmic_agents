@@ -144,6 +144,12 @@ Recent reconstruction notes:
   `hasHitBox`, `primaryTarget`, and close-route helpers are unchanged;
   `BotCombatManager.AttackPlan` remains only as a temporary compatibility
   subclass for existing bot-package tests and callers.
+- Combat attack-plan scoring and selection moved to
+  `server.agents.capabilities.combat.AgentAttackPlanScoringPolicy`. Damage
+  profile resolution, expected/useful/raw damage aggregation, full-HP minimum
+  kill gating, animation-duration DPS normalization, guaranteed-kill
+  selection preference, and tie-break ordering are unchanged; `BotCombatManager`
+  keeps only a temporary score wrapper for current AOE reposition code.
 - Combat target eligibility moved to
   `server.agents.capabilities.combat.AgentCombatTargetEligibilityPolicy`. The
   null/dead/friendly escort/PQ monster exclusion rule is unchanged;
