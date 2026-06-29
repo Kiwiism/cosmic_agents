@@ -13,6 +13,7 @@ import org.mockito.MockedStatic;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
+import server.agents.integration.AgentBotAmmoDonorPlan;
 import server.agents.integration.AgentBotBreakoutStateRuntime;
 import server.agents.integration.AgentBotManagerReplyRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
@@ -1266,7 +1267,7 @@ class BotManagerTest {
             return WeaponType.SWORD1H;
         })) {
 
-            BotAmmoManager.AmmoDonorPlan plan = BotAmmoManager.selectAmmoDonor(needyEntry, needy, WeaponType.BOW);
+            AgentBotAmmoDonorPlan plan = BotAmmoManager.selectAmmoDonor(needyEntry, needy, WeaponType.BOW);
 
             assertNotNull(plan);
             assertEquals(nonBow800Entry, plan.entry());
@@ -1295,7 +1296,7 @@ class BotManagerTest {
 
         try (MockedStatic<BotAttackExecutionProvider> attacks = mockStatic(BotAttackExecutionProvider.class,
                 invocation -> WeaponType.BOW)) {
-            BotAmmoManager.AmmoDonorPlan plan = BotAmmoManager.selectAmmoDonor(needyEntry, needy, WeaponType.BOW);
+            AgentBotAmmoDonorPlan plan = BotAmmoManager.selectAmmoDonor(needyEntry, needy, WeaponType.BOW);
 
             assertNotNull(plan);
             assertEquals(bow3000Entry, plan.entry());

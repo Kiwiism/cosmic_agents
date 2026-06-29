@@ -3,6 +3,7 @@ package server.bots;
 import client.Character;
 import client.inventory.Item;
 import client.inventory.WeaponType;
+import server.agents.integration.AgentBotAmmoDonorPlan;
 import server.agents.integration.AgentBotAmmoRuntime;
 import server.agents.integration.AgentBotAmmoStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
@@ -89,7 +90,7 @@ public final class BotAmmoManager {
         AgentBotAmmoRuntime.sayMapNow(bot, BotManager.randomReply(
                 weaponType == WeaponType.BOW ? ARROW_REQUEST_MSGS : BOLT_REQUEST_MSGS));
 
-        AmmoDonorPlan plan = selectAmmoDonor(entry, bot, weaponType);
+        AgentBotAmmoDonorPlan plan = selectAmmoDonor(entry, bot, weaponType);
         if (plan == null) {
             if (!bypassShareLimits) {
                 ammoShareBackoffUntil.put(backoffKey, now + 10 * 60_000L);
@@ -113,7 +114,7 @@ public final class BotAmmoManager {
             return OwnerAmmoShareResult.BLOCKED;
         }
 
-        AmmoDonorPlan plan = selectAmmoDonorForRecipient(owner, weaponType);
+        AgentBotAmmoDonorPlan plan = selectAmmoDonorForRecipient(owner, weaponType);
         if (plan == null) {
             return OwnerAmmoShareResult.NO_DONOR;
         }
@@ -122,7 +123,7 @@ public final class BotAmmoManager {
         return OwnerAmmoShareResult.OFFERED;
     }
 
-    static AmmoDonorPlan selectAmmoDonor(BotEntry needyEntry, Character needyBot, WeaponType needyWeaponType) {
+    static AgentBotAmmoDonorPlan selectAmmoDonor(BotEntry needyEntry, Character needyBot, WeaponType needyWeaponType) {
         Character owner = AgentBotRuntimeIdentityRuntime.owner(needyEntry);
         if (owner == null || !canRequestShare(needyWeaponType)) {
             return null;
@@ -130,15 +131,15 @@ public final class BotAmmoManager {
         return selectAmmoDonor(owner.getId(), needyBot.getMapId(), needyEntry, needyWeaponType);
     }
 
-    static AmmoDonorPlan selectAmmoDonorForRecipient(Character recipient, WeaponType needyWeaponType) {
+    static AgentBotAmmoDonorPlan selectAmmoDonorForRecipient(Character recipient, WeaponType needyWeaponType) {
         if (recipient == null || !canRequestShare(needyWeaponType)) {
             return null;
         }
         return selectAmmoDonor(recipient.getId(), recipient.getMapId(), null, needyWeaponType);
     }
 
-    private static AmmoDonorPlan selectAmmoDonor(int ownerId, int mapId, BotEntry excludedEntry, WeaponType needyWeaponType) {
-        AmmoDonorPlan best = null;
+    private static AgentBotAmmoDonorPlan selectAmmoDonor(int ownerId, int mapId, BotEntry excludedEntry, WeaponType needyWeaponType) {
+        AgentBotAmmoDonorPlan best = null;
         for (BotEntry sibling : BotManager.getInstance().getBotEntries(ownerId)) {
             Character donorBot = AgentBotRuntimeIdentityRuntime.bot(sibling);
             if (sibling == excludedEntry || donorBot == null || donorBot.getMapId() != mapId) {
@@ -154,7 +155,7 @@ public final class BotAmmoManager {
             if (donationQty <= 0) {
                 continue;
             }
-            AmmoDonorPlan candidate = new AmmoDonorPlan(sibling, count, donorNeedsSameAmmo, donationQty);
+            AgentBotAmmoDonorPlan candidate = new AgentBotAmmoDonorPlan(sibling, count, donorNeedsSameAmmo, donationQty);
             if (isBetterDonor(candidate, best)) {
                 best = candidate;
             }
@@ -162,7 +163,7 @@ public final class BotAmmoManager {
         return best;
     }
 
-    private static void scheduleAmmoShare(AmmoDonorPlan plan, Character recipient, WeaponType weaponType, long initialDelayMs) {
+    private static void scheduleAmmoShare(AgentBotAmmoDonorPlan plan, Character recipient, WeaponType weaponType, long initialDelayMs) {
         BotEntry donorEntry = plan.entry();
         Character donorBot = AgentBotRuntimeIdentityRuntime.bot(donorEntry);
         int maxQty = plan.donationQty();
@@ -180,7 +181,7 @@ public final class BotAmmoManager {
         });
     }
 
-    private static boolean isBetterDonor(AmmoDonorPlan candidate, AmmoDonorPlan best) {
+    private static boolean isBetterDonor(AgentBotAmmoDonorPlan candidate, AgentBotAmmoDonorPlan best) {
         if (best == null) {
             return true;
         }
@@ -193,6 +194,4 @@ public final class BotAmmoManager {
     private static boolean canRequestShare(WeaponType weaponType) {
         return weaponType == WeaponType.BOW || weaponType == WeaponType.CROSSBOW;
     }
-
-    record AmmoDonorPlan(BotEntry entry, int matchingAmmoCount, boolean donorNeedsSameAmmo, int donationQty) {}
 }

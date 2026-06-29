@@ -1065,6 +1065,10 @@ Recent reconstruction notes:
   preserves the same donor selection, qualification threshold, donation
   quantity, delay, and transfer behavior while the donor plan context is owned
   by the Agent integration layer instead of a private bot runtime record.
+- Ammo donor planning now uses `AgentBotAmmoDonorPlan`; BotAmmoManager
+  preserves the same donor selection ordering, same-ammo preference, donation
+  quantity, delay, and transfer behavior while the donor plan context is owned
+  by the Agent integration layer instead of a bot package record.
 
 Initial reconstruction order:
 
