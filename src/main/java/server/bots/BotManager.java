@@ -45,6 +45,8 @@ import server.agents.integration.AgentBotTargetedCommandMatch;
 import server.agents.integration.AgentBotTransferCommand;
 import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
 import server.agents.commands.AgentReplyChannel;
+import server.agents.auth.AgentAuthorizationResult;
+import server.agents.registry.AgentResolvedCharacter;
 import client.BotClient;
 import config.YamlConfig;
 import client.Character;
@@ -346,14 +348,14 @@ public class BotManager {
     /** Spawn a registered bot for the given owner, placing it at the owner's current position in follow mode. */
     public SpawnResult spawnBotForOwner(Character owner, String botName) {
         BotOwnershipService ownershipService = BotOwnershipService.getInstance();
-        BotOwnershipService.ResolvedCharacter resolved = ownershipService.resolveCharacterByName(botName);
+        AgentResolvedCharacter resolved = ownershipService.resolveCharacterByName(botName);
         if (resolved == null) {
             return SpawnResult.fail("No character named '" + botName + "' exists.");
         }
         if (resolved.isOnline() && !resolved.isOnlineAsBot()) {
             return SpawnResult.fail("'" + botName + "' is currently being played by a real player.");
         }
-        BotOwnershipService.AuthorizationResult auth = ownershipService.ensureCanControl(owner, resolved);
+        AgentAuthorizationResult auth = ownershipService.ensureCanControl(owner, resolved);
         if (!auth.allowed()) {
             return SpawnResult.fail(auth.failureMessage());
         }
@@ -639,10 +641,10 @@ public class BotManager {
         Character bot = findOwnerlessBot(botName, owner.getWorld());
         if (bot == null) return "No ownerless bot named '" + botName + "' found.";
 
-        BotOwnershipService.AuthorizationResult auth =
+        AgentAuthorizationResult auth =
                 BotOwnershipService.getInstance().ensureCanControl(
                         owner,
-                        new BotOwnershipService.ResolvedCharacter(
+                        new AgentResolvedCharacter(
                                 bot.getId(),
                                 bot.getName(),
                                 bot.getAccountID(),
@@ -667,10 +669,10 @@ public class BotManager {
         if (target == null) return "Player '" + targetName + "' not found in this map.";
         if (target.getId() == ownerCharId) return "That's you.";
 
-        BotOwnershipService.AuthorizationResult auth =
+        AgentAuthorizationResult auth =
                 BotOwnershipService.getInstance().ensureCanControl(
                         target,
-                        new BotOwnershipService.ResolvedCharacter(
+                        new AgentResolvedCharacter(
                                 AgentBotRuntimeIdentityRuntime.botId(found),
                                 AgentBotRuntimeIdentityRuntime.botName(found),
                                 AgentBotRuntimeIdentityRuntime.botAccountId(found),

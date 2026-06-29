@@ -1,8 +1,9 @@
 package server.bots;
 
-import client.BotClient;
 import client.Character;
 import net.server.Server;
+import server.agents.auth.AgentAuthorizationResult;
+import server.agents.registry.AgentResolvedCharacter;
 import tools.DatabaseConnection;
 
 import java.sql.Connection;
@@ -20,14 +21,14 @@ public final class BotOwnershipService {
     private BotOwnershipService() {
     }
 
-    public ResolvedCharacter resolveCharacterByName(String name) {
+    public AgentResolvedCharacter resolveCharacterByName(String name) {
         if (name == null || name.isBlank()) {
             return null;
         }
 
         Character online = findOnlineCharacter(name);
         if (online != null) {
-            return new ResolvedCharacter(
+            return new AgentResolvedCharacter(
                     online.getId(),
                     online.getName(),
                     online.getAccountID(),
@@ -43,7 +44,7 @@ public final class BotOwnershipService {
                     return null;
                 }
 
-                return new ResolvedCharacter(
+                return new AgentResolvedCharacter(
                         rs.getInt("id"),
                         rs.getString("name"),
                         rs.getInt("accountid"),
@@ -54,37 +55,37 @@ public final class BotOwnershipService {
         }
     }
 
-    public AuthorizationResult ensureCanControl(Character owner, ResolvedCharacter bot) {
+    public AgentAuthorizationResult ensureCanControl(Character owner, AgentResolvedCharacter bot) {
         if (owner == null || bot == null) {
-            return AuthorizationResult.denied("Bot could not be resolved.");
+            return AgentAuthorizationResult.denied("Bot could not be resolved.");
         }
         if (bot.id() == owner.getId()) {
-            return AuthorizationResult.denied("You cannot spawn your current character as a bot.");
+            return AgentAuthorizationResult.denied("You cannot spawn your current character as a bot.");
         }
 
         Integer registeredOwnerId = getRegisteredOwnerId(bot.id());
         if (registeredOwnerId != null) {
             if (registeredOwnerId == owner.getId()) {
-                return AuthorizationResult.allowed(false);
+                return AgentAuthorizationResult.allowed(false);
             }
             if (bot.accountId() == owner.getAccountID()) {
                 registerOwner(bot.id(), owner.getId());
-                return AuthorizationResult.allowed(true);
+                return AgentAuthorizationResult.allowed(true);
             }
 
             String registeredOwnerName = Character.getNameById(registeredOwnerId);
             String ownerName = registeredOwnerName != null ? registeredOwnerName : "another character";
-            return AuthorizationResult.denied(
+            return AgentAuthorizationResult.denied(
                     "Bot '" + bot.name() + "' is registered to '" + ownerName + "'. Log in on "
                             + bot.name() + " and use @registerbot " + owner.getName() + " to change owner.");
         }
 
         if (bot.accountId() == owner.getAccountID()) {
             registerOwner(bot.id(), owner.getId());
-            return AuthorizationResult.allowed(true);
+            return AgentAuthorizationResult.allowed(true);
         }
 
-        return AuthorizationResult.denied(
+        return AgentAuthorizationResult.denied(
                 "Bot '" + bot.name() + "' is not registered to you. Log in on "
                         + bot.name() + " and use @registerbot " + owner.getName() + ".");
     }
@@ -123,11 +124,11 @@ public final class BotOwnershipService {
         }
     }
 
-    public ResolvedCharacter resolveCharacterById(int charId) {
+    public AgentResolvedCharacter resolveCharacterById(int charId) {
         for (var world : Server.getInstance().getWorlds()) {
             Character online = world.getPlayerStorage().getCharacterById(charId);
             if (online != null) {
-                return new ResolvedCharacter(charId, online.getName(), online.getAccountID(), online);
+                return new AgentResolvedCharacter(charId, online.getName(), online.getAccountID(), online);
             }
         }
         try (Connection con = DatabaseConnection.getConnection();
@@ -136,7 +137,7 @@ public final class BotOwnershipService {
             ps.setInt(1, charId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return new ResolvedCharacter(charId, rs.getString("name"), rs.getInt("accountid"), null);
+                    return new AgentResolvedCharacter(charId, rs.getString("name"), rs.getInt("accountid"), null);
                 }
             }
         } catch (SQLException e) {
@@ -155,23 +156,4 @@ public final class BotOwnershipService {
         return null;
     }
 
-    public record ResolvedCharacter(int id, String name, int accountId, Character onlineCharacter) {
-        public boolean isOnline() {
-            return onlineCharacter != null;
-        }
-
-        public boolean isOnlineAsBot() {
-            return onlineCharacter != null && onlineCharacter.getClient() instanceof BotClient;
-        }
-    }
-
-    public record AuthorizationResult(boolean allowed, boolean autoRegistered, String failureMessage) {
-        static AuthorizationResult allowed(boolean autoRegistered) {
-            return new AuthorizationResult(true, autoRegistered, null);
-        }
-
-        static AuthorizationResult denied(String failureMessage) {
-            return new AuthorizationResult(false, false, failureMessage);
-        }
-    }
 }

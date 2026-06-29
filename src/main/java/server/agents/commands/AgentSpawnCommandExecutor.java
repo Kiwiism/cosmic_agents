@@ -7,6 +7,7 @@ import client.DefaultDates;
 import client.creator.BotCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.agents.registry.AgentResolvedCharacter;
 import server.bots.BotManager;
 import server.bots.BotOwnershipService;
 import tools.BCrypt;
@@ -40,7 +41,7 @@ public final class AgentSpawnCommandExecutor {
         String botName = rawArgs[0];
         boolean createRequested = params.length >= 2 && params[1].equals("confirm");
 
-        BotOwnershipService.ResolvedCharacter bot = ownershipService.resolveCharacterByName(botName);
+        AgentResolvedCharacter bot = ownershipService.resolveCharacterByName(botName);
         if (bot == null) {
             if (!createRequested) {
                 player.yellowMessage("Bot '" + botName + "' does not exist. Run: @spawnbot " + botName + " confirm  to create it.");

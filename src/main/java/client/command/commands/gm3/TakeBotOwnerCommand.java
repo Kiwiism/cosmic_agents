@@ -3,6 +3,7 @@ package client.command.commands.gm3;
 import client.Character;
 import client.Client;
 import client.command.Command;
+import server.agents.registry.AgentResolvedCharacter;
 import server.bots.BotOwnershipService;
 
 public class TakeBotOwnerCommand extends Command {
@@ -22,13 +23,13 @@ public class TakeBotOwnerCommand extends Command {
         String[] rawArgs = player.getLastCommandMessage().trim().split("[ ]", 2);
         String botName = rawArgs[0];
 
-        BotOwnershipService.ResolvedCharacter bot = ownershipService.resolveCharacterByName(botName);
+        AgentResolvedCharacter bot = ownershipService.resolveCharacterByName(botName);
         if (bot == null) {
             player.yellowMessage("Bot '" + botName + "' could not be found.");
             return;
         }
 
-        BotOwnershipService.ResolvedCharacter newOwner;
+        AgentResolvedCharacter newOwner;
         if (rawArgs.length >= 2 && !rawArgs[1].isBlank()) {
             newOwner = ownershipService.resolveCharacterByName(rawArgs[1].trim());
             if (newOwner == null) {

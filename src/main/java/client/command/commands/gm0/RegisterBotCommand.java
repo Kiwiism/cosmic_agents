@@ -3,6 +3,7 @@ package client.command.commands.gm0;
 import client.Character;
 import client.Client;
 import client.command.Command;
+import server.agents.registry.AgentResolvedCharacter;
 import server.bots.BotOwnershipService;
 
 public class RegisterBotCommand extends Command {
@@ -25,7 +26,7 @@ public class RegisterBotCommand extends Command {
         }
 
         BotOwnershipService ownershipService = BotOwnershipService.getInstance();
-        BotOwnershipService.ResolvedCharacter owner = ownershipService.resolveCharacterByName(ownerName);
+        AgentResolvedCharacter owner = ownershipService.resolveCharacterByName(ownerName);
         if (owner == null) {
             player.yellowMessage("Character '" + ownerName + "' could not be found.");
             return;

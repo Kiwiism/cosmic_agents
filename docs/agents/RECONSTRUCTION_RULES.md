@@ -1082,6 +1082,10 @@ Recent reconstruction notes:
   BotEntry, chat handlers, reply runtimes, offer replies, LLM gating, and tests;
   the legacy `server.bots.ReplyChannel` enum has been removed without changing
   MAP/PARTY/WHISPER routing behavior.
+- Bot ownership lookup and authorization result contracts now use
+  `AgentResolvedCharacter` and `AgentAuthorizationResult`; BotOwnershipService
+  remains the temporary DB-backed compatibility service, while callers no
+  longer depend on bot-package nested ownership result records.
 
 Initial reconstruction order:
 
