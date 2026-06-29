@@ -8,6 +8,7 @@ import constants.inventory.ItemConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.integration.AgentBotBuildStatusRuntime;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -46,8 +47,8 @@ public final class BotStarterKitManager {
     );
 
     public static void advanceJob(BotEntry entry, Job newJob) {
-        Character bot = entry.bot;
-        Character owner = entry.owner;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         Job oldJob = bot.getJob();
         bot.changeJob(newJob);
         BotBuildManager.handleJobAdvance(entry, bot, oldJob, newJob);

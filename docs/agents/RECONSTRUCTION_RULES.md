@@ -922,6 +922,10 @@ Recent reconstruction notes:
   `AgentBotRuntimeIdentityRuntime`; BotCommandParser keeps the same targeted
   command matching behavior but no longer reads the bot character directly from
   BotEntry in production.
+- Starter-kit job advancement identity now enters through
+  `AgentBotRuntimeIdentityRuntime`; BotStarterKitManager preserves job-change,
+  starter-kit grant, auto-equip, and build-status ordering while no longer
+  reading bot or leader characters directly from BotEntry in production.
 
 Initial reconstruction order:
 
