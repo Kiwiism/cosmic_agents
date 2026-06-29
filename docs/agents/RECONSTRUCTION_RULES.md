@@ -138,6 +138,12 @@ Recent reconstruction notes:
   `server.agents.capabilities.combat.AgentAttackPlanTieBreakPolicy`. Cooldown
   priority and lower-skill-id fallback ordering are unchanged; larger
   attack-plan construction and scoring still remain in `BotCombatManager`.
+- Combat attack-plan value model moved to
+  `server.agents.capabilities.combat.AgentAttackPlan`. Skill, route, hitbox,
+  target, packet-display, stance, timing, and damage-weapon fields plus
+  `hasHitBox`, `primaryTarget`, and close-route helpers are unchanged;
+  `BotCombatManager.AttackPlan` remains only as a temporary compatibility
+  subclass for existing bot-package tests and callers.
 - Combat target eligibility moved to
   `server.agents.capabilities.combat.AgentCombatTargetEligibilityPolicy`. The
   null/dead/friendly escort/PQ monster exclusion rule is unchanged;

@@ -3,6 +3,7 @@ package server.bots;
 import server.agents.capabilities.combat.AgentAttackRoute;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentAttackPlanTieBreakPolicy;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
@@ -117,51 +118,12 @@ public class BotCombatManager {
     );
     private static final int DRAGON_ROAR_MIN_TARGETS_WITHOUT_HEALER = 10;
 
-    static final class AttackPlan {
-        final int skillId;
-        final int skillLevel;
-        final int numDamage;
-        final Rectangle hitBox;
-        final List<Monster> targets;
-        final AgentAttackRoute route;
-        final int display;
-        final int direction;
-        final int rangedDirection;
-        final int stance;
-        final int speed;
-        final int hitDelayMs;
-        final int cooldownMs;
-        final WeaponType damageWeaponType;
-
+    static final class AttackPlan extends AgentAttackPlan {
         AttackPlan(int skillId, int skillLevel, int numDamage, Rectangle hitBox, List<Monster> targets,
                    AgentAttackRoute route, int display, int direction, int rangedDirection, int stance, int speed,
                    int hitDelayMs, int cooldownMs, WeaponType damageWeaponType) {
-            this.skillId = skillId;
-            this.skillLevel = skillLevel;
-            this.numDamage = numDamage;
-            this.hitBox = hitBox;
-            this.targets = targets;
-            this.route = route;
-            this.display = display;
-            this.direction = direction;
-            this.rangedDirection = rangedDirection;
-            this.stance = stance;
-            this.speed = speed;
-            this.hitDelayMs = hitDelayMs;
-            this.cooldownMs = cooldownMs;
-            this.damageWeaponType = damageWeaponType;
-        }
-
-        boolean hasHitBox() {
-            return hitBox != null;
-        }
-
-        Monster primaryTarget() {
-            return targets.get(0);
-        }
-
-        boolean isCloseRangeRoute() {
-            return route == AgentAttackRoute.CLOSE;
+            super(skillId, skillLevel, numDamage, hitBox, targets, route, display, direction, rangedDirection,
+                    stance, speed, hitDelayMs, cooldownMs, damageWeaponType);
         }
     }
 
