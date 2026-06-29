@@ -867,6 +867,10 @@ Recent reconstruction notes:
   `AgentBotRuntimeIdentityRuntime`; BotBuildManager set-build confirmation and
   immediate AP assignment keep BotEntry as the temporary backing store but no
   longer read `bot` directly in production.
+- Maker automation bot identity now enters through
+  `AgentBotRuntimeIdentityRuntime`; BotMakerManager crystal creation,
+  disassembly, batch start, and delayed batch step checks keep BotEntry as the
+  temporary backing store but no longer read `bot` directly in production.
 
 Initial reconstruction order:
 

@@ -9,6 +9,7 @@ import client.inventory.Item;
 import client.processor.action.MakerProcessor;
 import server.ItemInformationProvider;
 import server.agents.integration.AgentBotMakerRuntime;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
 
 import java.util.ArrayList;
@@ -48,7 +49,7 @@ public final class BotMakerManager {
     }
 
     public static void handleMakeCrystals(BotEntry entry) {
-        Character bot = entry.bot;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (bot == null || !guardStart(entry, bot)) {
             return;
         }
@@ -68,7 +69,7 @@ public final class BotMakerManager {
     }
 
     public static void handleDisassembleTrash(BotEntry entry) {
-        Character bot = entry.bot;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (bot == null || !guardStart(entry, bot)) {
             return;
         }
@@ -138,7 +139,7 @@ public final class BotMakerManager {
     }
 
     private static void startBatch(BotEntry entry, int total, String[] verbs, String noun, BatchStep step) {
-        Character bot = entry.bot;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         String verb = verbs[ThreadLocalRandom.current().nextInt(verbs.length)];
         String msg = "ok " + verb + " " + total + " " + plural(noun, total);
         if (total > LONG_BATCH_THRESHOLD) {
@@ -152,7 +153,7 @@ public final class BotMakerManager {
     }
 
     private static void runStep(BotEntry entry, BatchStep step, String noun, int epoch, int done) {
-        Character bot = entry.bot;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (bot == null || !bot.isLoggedin()) {
             if (bot != null) {
                 ACTIVE.remove(bot.getId());
