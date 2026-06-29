@@ -166,6 +166,9 @@ Recent reconstruction notes:
   `AgentBotClimbStateRuntime`; idle, airborne, landing, climb, collision, and
   reset paths no longer directly read or write `climbing`, `climbRope`, or
   `climbVerticalDir`.
+- Bot physics airborne/grounded state now enters through
+  `AgentBotMovementStateRuntime.setInAir`; movement transitions no longer write
+  the `inAir` field directly.
 - Combat alert reset callbacks now enter through `AgentBotCombatRuntime`;
   `BotCombatManager` no longer reaches directly into the lower-level scheduler
   runtime for combat-owned alert timing, and alert timing and stance reset

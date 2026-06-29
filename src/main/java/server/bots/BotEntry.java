@@ -100,6 +100,10 @@ public class BotEntry {
         return inAir;
     }
 
+    public void setInAir(boolean inAir) {
+        this.inAir = inAir;
+    }
+
     public Object groundTravelState() {
         return new BotPhysicsEngine.GroundTravelState(physX, hspeed, groundPhysicsCarryMs);
     }

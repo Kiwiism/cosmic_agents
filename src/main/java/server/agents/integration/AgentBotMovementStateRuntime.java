@@ -103,6 +103,10 @@ public final class AgentBotMovementStateRuntime {
         return entry.inAir();
     }
 
+    public static void setInAir(BotEntry entry, boolean inAir) {
+        entry.setInAir(inAir);
+    }
+
     public static boolean grounded(BotEntry entry) {
         return !entry.inAir();
     }

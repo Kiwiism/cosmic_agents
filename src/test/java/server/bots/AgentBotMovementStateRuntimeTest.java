@@ -229,5 +229,12 @@ class AgentBotMovementStateRuntimeTest {
         assertEquals(0L, AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry));
         assertFalse(AgentBotMovementStateRuntime.hasDownJumpGracePeriod(entry));
         assertFalse(AgentBotMovementStateRuntime.crouching(entry));
+
+        AgentBotMovementStateRuntime.setInAir(entry, false);
+        assertFalse(AgentBotMovementStateRuntime.inAir(entry));
+        assertTrue(AgentBotMovementStateRuntime.grounded(entry));
+        AgentBotMovementStateRuntime.setInAir(entry, true);
+        assertTrue(AgentBotMovementStateRuntime.inAir(entry));
+        assertFalse(AgentBotMovementStateRuntime.grounded(entry));
     }
 }
