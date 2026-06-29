@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationMapLoader;
+
 import org.junit.jupiter.api.Test;
 import server.maps.Foothold;
 import server.maps.MapleMap;
@@ -94,7 +96,7 @@ class BotMovementSimulationLabTest {
 
     @Test
     void shouldResolveSlashRopeOscillationDumpByRefreshingPendingExitEdge() {
-        MapleMap map = BotNavigationMapLoader.loadMapGeometry(103000000);
+        MapleMap map = AgentNavigationMapLoader.loadMapGeometry(103000000);
         BotNavigationGraphProvider.rebuildGraph(map);
         BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);
         lab.spawnActor("OWNER", 20, map, new Point(-69, 156));
@@ -131,7 +133,7 @@ class BotMovementSimulationLabTest {
 
     @Test
     void shouldResolveBashRopeOscillationDumpByExecutingImmediatelyFromRopeAnchorWindow() {
-        MapleMap map = BotNavigationMapLoader.loadMapGeometry(103000800);
+        MapleMap map = AgentNavigationMapLoader.loadMapGeometry(103000800);
         BotNavigationGraphProvider.rebuildGraph(map);
         BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);
         lab.spawnActor("OWNER", 30, map, new Point(-437, -859));
@@ -161,7 +163,7 @@ class BotMovementSimulationLabTest {
 
     @Test
     void shouldCommitJohnSecondJumpOnTheNextAiTickAfterLanding() {
-        MapleMap map = BotNavigationMapLoader.loadMapGeometry(101020001);
+        MapleMap map = AgentNavigationMapLoader.loadMapGeometry(101020001);
         BotNavigationGraphProvider.rebuildGraph(map);
         BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);
         lab.spawnActor("OWNER", 50, map, new Point(115, -1521));
@@ -193,7 +195,7 @@ class BotMovementSimulationLabTest {
 
     @Test
     void shouldUsePetWalkingRoadLocalWalkOffDrop() {
-        MapleMap map = BotNavigationMapLoader.loadMapGeometry(100000202);
+        MapleMap map = AgentNavigationMapLoader.loadMapGeometry(100000202);
         BotNavigationGraphProvider.rebuildGraph(map);
         BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);
         lab.spawnActor("OWNER", 40, map, new Point(-1799, -926));

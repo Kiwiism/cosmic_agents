@@ -976,6 +976,9 @@ Recent reconstruction notes:
 - Loot eligibility ownership moved to `AgentLootEligibility` under the Agent
   looting capability. Coupon/pass/rice-cake filtering, quest-item checks,
   inventory-full checks, and bot-inventory-drop target delays are unchanged.
+- Navigation map geometry loading moved to `AgentNavigationMapLoader` under the
+  Agent navigation capability. WZ-backed map bounds, portals, footholds, ropes,
+  swim flags, field limits, return map, and foothold speed loading are unchanged.
 - Airshow state now enters through `AgentBotAirshowStateRuntime`;
   BotAirshowManager active/trail timing, scripted frame physics fields, bot
   identity lookup, restore checks, and trail foothold reads keep BotEntry as the

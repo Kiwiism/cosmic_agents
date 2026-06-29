@@ -1,4 +1,4 @@
-package server.bots;
+package server.agents.capabilities.navigation;
 
 import provider.Data;
 import provider.DataProvider;
@@ -16,11 +16,11 @@ import java.awt.*;
 import java.util.LinkedList;
 import java.util.List;
 
-final class BotNavigationMapLoader {
-    private BotNavigationMapLoader() {
+public final class AgentNavigationMapLoader {
+    private AgentNavigationMapLoader() {
     }
 
-    static MapleMap loadMapGeometry(int mapId) {
+    public static MapleMap loadMapGeometry(int mapId) {
         DataProvider mapSource = DataProviderFactory.getDataProvider(WZFiles.MAP);
         Data mapData = mapSource.getData(getMapName(mapId));
         if (mapData == null) {

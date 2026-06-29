@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationMapLoader;
+
 import server.agents.capabilities.movement.AgentMovementProfile;
 
 import client.Character;
@@ -41,7 +43,7 @@ class BotNavigationManagerTest {
         if (v != null) return v;
         synchronized (BotNavigationManagerTest.class) {
             if (kerningCached == null) {
-                kerningCached = BotNavigationMapLoader.loadMapGeometry(103000000);
+                kerningCached = AgentNavigationMapLoader.loadMapGeometry(103000000);
             }
             return kerningCached;
         }
@@ -538,7 +540,7 @@ class BotNavigationManagerTest {
 
     @Test
     void shouldUseTopRopeEntryInsteadOfDroppingToBottomInLithHarbor() {
-        MapleMap lithHarbor = BotNavigationMapLoader.loadMapGeometry(104000000);
+        MapleMap lithHarbor = AgentNavigationMapLoader.loadMapGeometry(104000000);
         BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(lithHarbor);
         Point start = new Point(1189, 287);
         Point target = new Point(1265, 331);
@@ -556,7 +558,7 @@ class BotNavigationManagerTest {
 
     @Test
     void shouldNotLaunchVerticalRopeEntryFromOutsideRopeGrabWindow() {
-        MapleMap lithHarbor = BotNavigationMapLoader.loadMapGeometry(104000000);
+        MapleMap lithHarbor = AgentNavigationMapLoader.loadMapGeometry(104000000);
         BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(lithHarbor);
         Point start = new Point(1245, 647);
         Point target = new Point(1265, 331);
@@ -597,7 +599,7 @@ class BotNavigationManagerTest {
 
     @Test
     void shouldJumpOffTopRopeBeforePhysicsAutoDismountsToUpperPlatform() {
-        MapleMap lithHarbor = BotNavigationMapLoader.loadMapGeometry(104000000);
+        MapleMap lithHarbor = AgentNavigationMapLoader.loadMapGeometry(104000000);
         BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(lithHarbor);
         Point botPos = new Point(1265, 294);
         Point target = new Point(1802, 647);

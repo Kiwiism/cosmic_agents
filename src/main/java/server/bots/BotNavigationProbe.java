@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationMapLoader;
+
 import server.maps.Foothold;
 import server.maps.MapleMap;
 
@@ -66,7 +68,7 @@ public final class BotNavigationProbe {
             }
         }
 
-        MapleMap map = BotNavigationMapLoader.loadMapGeometry(mapId);
+        MapleMap map = AgentNavigationMapLoader.loadMapGeometry(mapId);
         BotNavigationGraph graph = rebuild
                 ? BotNavigationGraphProvider.rebuildGraph(map)
                 : BotNavigationGraphProvider.getGraph(map);
@@ -506,7 +508,7 @@ public final class BotNavigationProbe {
         Point startPoint = startRegion == null ? null : startRegion.centerPoint();
         List<BotNavigationGraph.Edge> path = targetPoint == null
                 ? List.of()
-                : BotNavigationManager.findPath(graph, BotNavigationMapLoader.loadMapGeometry(graph.mapId),
+                : BotNavigationManager.findPath(graph, AgentNavigationMapLoader.loadMapGeometry(graph.mapId),
                 startPoint, regionPath.startRegionId, regionPath.targetRegionId, targetPoint);
 
         System.out.printf("%nRegion path %d -> %d%n", regionPath.startRegionId, regionPath.targetRegionId);

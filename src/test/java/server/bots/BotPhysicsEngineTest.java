@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationMapLoader;
+
 import client.Character;
 import constants.game.CharacterStance;
 import org.junit.jupiter.api.BeforeAll;
@@ -46,7 +48,7 @@ class BotPhysicsEngineTest {
     private static MapleMap sleepyForest() { return sleepyForestS.get(); }
 
     private static Supplier<MapleMap> lazyMap(int mapId) {
-        Supplier<MapleMap> delegate = () -> BotNavigationMapLoader.loadMapGeometry(mapId);
+        Supplier<MapleMap> delegate = () -> AgentNavigationMapLoader.loadMapGeometry(mapId);
         return new Supplier<>() {
             private volatile MapleMap value;
             @Override public MapleMap get() {
@@ -697,7 +699,7 @@ class BotPhysicsEngineTest {
 
     @Test
     void shouldTreatMap193000000BottomAnchoredWallsAsCollidable() {
-        MapleMap map = BotNavigationMapLoader.loadMapGeometry(193000000);
+        MapleMap map = AgentNavigationMapLoader.loadMapGeometry(193000000);
         BotNavigationGraphProvider.rebuildGraph(map);
 
         java.util.Set<Integer> collidableWallIds = BotNavigationGraphProvider.getCachedCollidableWallIds(map.getId());

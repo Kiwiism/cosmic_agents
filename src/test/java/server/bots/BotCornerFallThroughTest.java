@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationMapLoader;
+
 import client.Character;
 import constants.game.CharacterStance;
 import org.junit.jupiter.api.BeforeAll;
@@ -51,7 +53,7 @@ class BotCornerFallThroughTest {
      */
     @Test
     void shouldNotFallThroughCornerUnderAnyKnockback() {
-        MapleMap map = BotNavigationMapLoader.loadMapGeometry(MAP_ID);
+        MapleMap map = AgentNavigationMapLoader.loadMapGeometry(MAP_ID);
         BotNavigationGraphProvider.rebuildGraph(map);
 
         List<String> failures = new ArrayList<>();

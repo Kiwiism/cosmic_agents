@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationMapLoader;
+
 import server.maps.MapleMap;
 import server.maps.Rope;
 
@@ -23,7 +25,7 @@ public final class BotMovementSimulationCli {
         }
 
         int mapId = Integer.parseInt(args[0]);
-        MapleMap map = BotNavigationMapLoader.loadMapGeometry(mapId);
+        MapleMap map = AgentNavigationMapLoader.loadMapGeometry(mapId);
         BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);
         int nextId = 1;
         int ticks = 100;

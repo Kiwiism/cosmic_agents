@@ -43,7 +43,7 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 | `src/main/java/server/bots/BotNavigationGraph.java` | `server.agents.capabilities.navigation.AgentNavigationGraph` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/BotNavigationGraphProvider.java` | `server.agents.capabilities.navigation.AgentNavigationGraphService` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
 | `src/main/java/server/bots/BotNavigationManager.java` | `server.agents.capabilities.navigation` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
-| `src/main/java/server/bots/BotNavigationMapLoader.java` | `server.agents.capabilities.navigation.AgentNavigationMapLoader` | `MIGRATE_TO_AGENT` |
+| `src/main/java/server/bots/BotNavigationMapLoader.java` | `server.agents.capabilities.navigation.AgentNavigationMapLoader` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotNavigationProbe.java` | `server.agents.capabilities.navigation.AgentNavigationProbe` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/BotOfferManager.java` | `server.agents.capabilities.trade.AgentOfferService` and `equipment` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
 | `src/main/java/server/bots/BotOwnershipService.java` | `server.agents.legacy.LegacyBotOwnershipAdapter` initially; later replace/remove | `LEGACY_PROFILE` |

@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationMapLoader;
+
 import server.agents.capabilities.movement.AgentMovementProfile;
 
 import client.Character;
@@ -53,7 +55,7 @@ class AgentMovementProfileTest {
 
     @Test
     void shouldLoadPetWalkingRoadMovementSkillLimit() {
-        MapleMap map = BotNavigationMapLoader.loadMapGeometry(100000202);
+        MapleMap map = AgentNavigationMapLoader.loadMapGeometry(100000202);
 
         assertTrue(FieldLimit.MOVEMENTSKILLS.check(map.getFieldLimit()));
     }

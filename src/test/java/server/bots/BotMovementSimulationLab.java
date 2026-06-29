@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationMapLoader;
+
 import server.agents.capabilities.movement.AgentMovementProfile;
 
 import client.Character;
@@ -41,7 +43,7 @@ final class BotMovementSimulationLab {
 
     static BotMovementSimulationLab loadMap(int mapId) {
         ensureWzPath();
-        MapleMap map = BotNavigationMapLoader.loadMapGeometry(mapId);
+        MapleMap map = AgentNavigationMapLoader.loadMapGeometry(mapId);
         return fromMap(map);
     }
 

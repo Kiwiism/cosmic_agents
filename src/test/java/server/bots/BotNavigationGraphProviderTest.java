@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationMapLoader;
+
 import server.agents.capabilities.movement.AgentMovementProfile;
 
 import client.Character;
@@ -59,7 +61,7 @@ class BotNavigationGraphProviderTest {
     private static BotNavigationGraph swamp1Graph() { return swamp1GraphS.get(); }
 
     private static Supplier<MapleMap> lazyMap(int mapId) {
-        return memoize(() -> BotNavigationMapLoader.loadMapGeometry(mapId));
+        return memoize(() -> AgentNavigationMapLoader.loadMapGeometry(mapId));
     }
 
     private static Supplier<BotNavigationGraph> lazyGraph(Supplier<MapleMap> map) {
@@ -505,7 +507,7 @@ class BotNavigationGraphProviderTest {
 
     @Test
     void shouldTrimJumpWindowAtInvalidInteriorWallBoundary() {
-        MapleMap map = BotNavigationMapLoader.loadMapGeometry(100000202);
+        MapleMap map = AgentNavigationMapLoader.loadMapGeometry(100000202);
         BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
         Point badLaunch = new Point(-1422, -642);
         int fromRegionId = graph.findRegionId(map, badLaunch);
@@ -534,7 +536,7 @@ class BotNavigationGraphProviderTest {
 
     @Test
     void shouldTrimJumpWindowThatFallsOffLandingPlatformWithMomentum() {
-        MapleMap map = BotNavigationMapLoader.loadMapGeometry(100000202);
+        MapleMap map = AgentNavigationMapLoader.loadMapGeometry(100000202);
         BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
         int stepX = BotPhysicsEngine.walkStep(map, graph.movementProfile);
         Point badLaunch = new Point(-1881, -1341);
