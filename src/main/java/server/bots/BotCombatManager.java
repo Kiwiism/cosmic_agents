@@ -16,6 +16,7 @@ import server.agents.capabilities.combat.AgentCombatRangePolicy;
 import server.agents.capabilities.combat.AgentCombatScoringPolicy;
 import server.agents.capabilities.combat.AgentCombatSkillUsePolicy;
 import server.agents.capabilities.combat.AgentCombatSupportPolicy;
+import server.agents.capabilities.combat.AgentCombatTargetEligibilityPolicy;
 import server.agents.capabilities.combat.AgentMobTouchPolicy;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
 
@@ -1889,9 +1890,7 @@ public class BotCombatManager {
     // Thanks to ReinderKas for finding and implementing the friendly-mob
     // interaction (escort/PQ mobs should not be attacked or deal contact damage).
     private static boolean isHostileLivingMonster(Monster monster) {
-        return monster != null
-                && monster.isAlive()
-                && (monster.getStats() == null || !monster.getStats().isFriendly());
+        return AgentCombatTargetEligibilityPolicy.isHostileLivingMonster(monster);
     }
 
     private static AgentAttackExecutionProvider.BasicAttackData buildBasicAttackData(Character bot, Monster primaryTarget) {

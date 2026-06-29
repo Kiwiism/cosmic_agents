@@ -107,6 +107,10 @@ Recent reconstruction notes:
   `server.agents.capabilities.combat.AgentAttackPlanTieBreakPolicy`. Cooldown
   priority and lower-skill-id fallback ordering are unchanged; larger
   attack-plan construction and scoring still remain in `BotCombatManager`.
+- Combat target eligibility moved to
+  `server.agents.capabilities.combat.AgentCombatTargetEligibilityPolicy`. The
+  null/dead/friendly escort/PQ monster exclusion rule is unchanged;
+  `BotCombatManager` keeps a compatibility wrapper for current target scans.
 - Combat attack data provider ownership moved to
   `server.agents.capabilities.combat.data.AgentAttackDataProvider`. Weapon
   normal-attack profile loading, action-spec selection, body action id
