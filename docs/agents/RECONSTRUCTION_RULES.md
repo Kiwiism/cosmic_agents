@@ -180,6 +180,9 @@ Recent reconstruction notes:
 - Bot physics movement-direction intent now enters through
   `AgentBotMovementStateRuntime`; ground motion, air steering, airborne launch,
   idle, and reset paths no longer read or clear `moveDir` directly.
+- Bot physics facing-direction preservation and air-steering facing updates now
+  enter through `AgentBotMovementStateRuntime`; knockback and airborne steering
+  paths no longer access `facingDir` directly.
 - Combat alert reset callbacks now enter through `AgentBotCombatRuntime`;
   `BotCombatManager` no longer reaches directly into the lower-level scheduler
   runtime for combat-owned alert timing, and alert timing and stance reset

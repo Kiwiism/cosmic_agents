@@ -754,16 +754,16 @@ public final class BotPhysicsEngine {
     }
 
     static void beginKnockback(BotEntry entry, Character bot, Point position, float initialVelY, int airVelX) {
-        int preservedFacingDir = entry.facingDir;
+        int preservedFacingDir = AgentBotMovementStateRuntime.facingDirection(entry);
         bot.setPosition(position);
         AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
         launchAirborne(entry, bot, position, initialVelY, airVelX, true);
-        entry.facingDir = preservedFacingDir;
+        AgentBotMovementStateRuntime.setFacingDirection(entry, preservedFacingDir);
         syncCharacterState(entry);
     }
 
     static void applyAirKnockback(BotEntry entry, Character bot, int airVelX) {
-        int preservedFacingDir = entry.facingDir;
+        int preservedFacingDir = AgentBotMovementStateRuntime.facingDirection(entry);
         Point position = bot.getPosition();
         AgentBotMovementStateRuntime.setInAir(entry, true);
         AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
@@ -778,7 +778,7 @@ public final class BotPhysicsEngine {
         AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
         AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
         setMovementVelocity(entry, velocityFromDeltaX(airVelX), velocityFromAirStep(entry.velY));
-        entry.facingDir = preservedFacingDir;
+        AgentBotMovementStateRuntime.setFacingDirection(entry, preservedFacingDir);
         syncCharacterState(entry);
     }
 
@@ -1221,7 +1221,7 @@ public final class BotPhysicsEngine {
         // Client jump stance follows the held steering direction, not the preserved horizontal
         // launch momentum. Updating facing here makes airborne debug output line up with what the
         // client is visually trying to do, even before the net X velocity changes sign.
-        entry.facingDir = steerDir > 0 ? 1 : -1;
+        AgentBotMovementStateRuntime.setFacingDirection(entry, steerDir > 0 ? 1 : -1);
     }
 
     private static Point advanceAirbornePosition(BotEntry entry, Character bot) {
@@ -1243,9 +1243,9 @@ public final class BotPhysicsEngine {
         AgentBotMovementStateRuntime.setCrouching(entry, false);
         // Preserve facing set by air steering (moveDir intent) - setMovementVelocity would
         // overwrite it based on momentum velocity, which is wrong for airborne steering.
-        int facingDir = entry.facingDir;
+        int facingDir = AgentBotMovementStateRuntime.facingDirection(entry);
         setMovementVelocity(entry, velocityFromDeltaX(entry.airVelX), velocityFromAirStep(entry.velY));
-        entry.facingDir = facingDir;
+        AgentBotMovementStateRuntime.setFacingDirection(entry, facingDir);
         syncCharacterState(entry);
     }
 
