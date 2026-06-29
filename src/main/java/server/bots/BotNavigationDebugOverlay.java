@@ -8,6 +8,7 @@ import constants.skills.Shadower;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotMovementTargetRuntime;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.StatEffect;
 import server.TimerManager;
 import server.maps.MapleMap;
@@ -84,7 +85,7 @@ public final class BotNavigationDebugOverlay {
         }
         BotEntry entry = selection.entry;
 
-        Character bot = entry.bot;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (bot.getMapId() != viewer.getMapId()) {
             return "Bot '" + bot.getName() + "' is on map " + bot.getMapId() + ", not your current map.";
         }
@@ -108,10 +109,11 @@ public final class BotNavigationDebugOverlay {
             overlay.drawSparseLine(edge.startPoint, edge.endPoint, OverlayType.PATH, PATH_THICKNESS, PATH_EDGE_SPACING);
         }
 
-        if (entry.navEdge != null) {
-            overlay.drawSparseLine(entry.navEdge.startPoint, entry.navEdge.endPoint, OverlayType.CURRENT_EDGE, PATH_THICKNESS + 2, PATH_EDGE_SPACING);
-            overlay.drawNode(entry.navEdge.startPoint, OverlayType.CURRENT_EDGE, NODE_SIZE + 2);
-            overlay.drawNode(entry.navEdge.endPoint, OverlayType.CURRENT_EDGE, NODE_SIZE + 2);
+        BotNavigationGraph.Edge activeEdge = activeNavigationEdge(entry);
+        if (activeEdge != null) {
+            overlay.drawSparseLine(activeEdge.startPoint, activeEdge.endPoint, OverlayType.CURRENT_EDGE, PATH_THICKNESS + 2, PATH_EDGE_SPACING);
+            overlay.drawNode(activeEdge.startPoint, OverlayType.CURRENT_EDGE, NODE_SIZE + 2);
+            overlay.drawNode(activeEdge.endPoint, OverlayType.CURRENT_EDGE, NODE_SIZE + 2);
         }
 
         overlay.drawNode(bot.getPosition(), OverlayType.CURRENT_EDGE, NODE_SIZE + 4);
@@ -140,12 +142,12 @@ public final class BotNavigationDebugOverlay {
 
         if (!AgentBotNavigationDebugStateRuntime.isPathLogging(entry)) {
             AgentBotNavigationDebugStateRuntime.startPathLogging(entry);
-            return "Path logging started for '" + entry.bot.getName() + "'. Run !botnav pathlog again to dump.";
+            return "Path logging started for '" + AgentBotRuntimeIdentityRuntime.botName(entry) + "'. Run !botnav pathlog again to dump.";
         }
 
         AgentMovementTargetSnapshot targetSnapshot = AgentBotMovementTargetRuntime.snapshot(entry);
         String filePath = AgentBotNavigationDebugStateRuntime.dumpPathLog(entry, targetSnapshot, note);
-        return "Path log for '" + entry.bot.getName() + "' dumped: " + filePath;
+        return "Path log for '" + AgentBotRuntimeIdentityRuntime.botName(entry) + "' dumped: " + filePath;
     }
 
     private static void drawRegion(OverlayBuilder overlay, BotNavigationGraph.Region region, OverlayType type) {
@@ -164,7 +166,7 @@ public final class BotNavigationDebugOverlay {
             }
             if (entries.size() > 1) {
                 String names = entries.stream()
-                        .map(botEntry -> botEntry.bot.getName())
+                        .map(AgentBotRuntimeIdentityRuntime::botName)
                         .sorted(String::compareToIgnoreCase)
                         .reduce((left, right) -> left + ", " + right)
                         .orElse("");
@@ -192,11 +194,12 @@ public final class BotNavigationDebugOverlay {
                                            List<BotNavigationGraph.Edge> path,
                                            BotEntry entry,
                                            OverlayBuilder overlay) {
-        String currentEdge = entry.navEdge == null ? "none" : entry.navEdge.type.name();
+        BotNavigationGraph.Edge activeEdge = activeNavigationEdge(entry);
+        String currentEdge = activeEdge == null ? "none" : activeEdge.type.name();
         String status;
-        if (startRegionId == targetRegionId && entry.navEdge == null) {
+        if (startRegionId == targetRegionId && activeEdge == null) {
             status = "same-region/local";
-        } else if (entry.navEdge != null) {
+        } else if (activeEdge != null) {
             status = "committed";
         } else if (path.isEmpty()) {
             status = "no-path";
@@ -210,6 +213,11 @@ public final class BotNavigationDebugOverlay {
                 + ", mists=" + overlay.objectIds().size()
                 + (overlay.truncated() ? " (truncated)" : "")
                 + ", auto-clear " + (AUTO_CLEAR_MS / 1000) + "s.";
+    }
+
+    private static BotNavigationGraph.Edge activeNavigationEdge(BotEntry entry) {
+        Object edge = AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry);
+        return edge instanceof BotNavigationGraph.Edge navEdge ? navEdge : null;
     }
 
     private static void replaceOverlay(Character viewer, List<Integer> objectIds) {

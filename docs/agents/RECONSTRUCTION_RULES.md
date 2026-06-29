@@ -900,6 +900,11 @@ Recent reconstruction notes:
   identity lookup, restore checks, and trail foothold reads keep BotEntry as the
   temporary backing store but no longer read or write BotEntry fields directly
   in production.
+- Navigation debug overlay identity and active-edge reads now enter through
+  `AgentBotRuntimeIdentityRuntime` and `AgentBotNavigationDebugStateRuntime`;
+  BotNavigationDebugOverlay path rendering, path-log messages, multi-bot
+  selection names, and committed-edge status keep BotEntry as the temporary
+  backing store but no longer read `bot` or `navEdge` directly in production.
 
 Initial reconstruction order:
 
