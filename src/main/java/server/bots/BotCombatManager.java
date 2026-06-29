@@ -5,6 +5,7 @@ import server.agents.capabilities.combat.AgentAttackRoute;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
+import server.agents.capabilities.combat.AgentProjectileHitbox;
 
 import server.agents.runtime.AgentPerformanceMonitor;
 
@@ -19,7 +20,6 @@ import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.WeaponType;
 import constants.game.GameConstants;
-import constants.skills.Archer;
 import constants.skills.Assassin;
 import constants.skills.Bandit;
 import constants.skills.Bowmaster;
@@ -42,7 +42,6 @@ import constants.skills.Spearman;
 import constants.skills.SuperGM;
 import constants.skills.ThunderBreaker;
 import constants.skills.WhiteKnight;
-import constants.skills.WindArcher;
 import io.netty.buffer.Unpooled;
 import net.PacketHandler;
 import net.PacketProcessor;
@@ -238,12 +237,6 @@ public class BotCombatManager {
         throw new NumberFormatException(v);
     }
 
-    // Journey client CharStats::get_range() returns Rectangle(-projectilerange, -5, -50, 50).
-    static final int CLIENT_PROJECTILE_BASE_RANGE = 400;
-    private static final int CLIENT_PROJECTILE_NEAR_INSET = 5;
-    private static final int CLIENT_PROJECTILE_TOP = 50;
-    private static final int CLIENT_PROJECTILE_BOTTOM = 50;
-
     // Pierce-line projectiles do NOT use the generic ±50 px vertical band: the actual
     // client projectile sprite is much thinner (Iron Arrow) or much taller (Avenger)
     // and the launch height sits at ~30 px above the character's feet.
@@ -261,12 +254,6 @@ public class BotCombatManager {
             Crossbowman.IRON_ARROW, new ProjectileVerticalReach(32, -28),
             Hermit.AVENGER, new ProjectileVerticalReach(60, 0),
             NightWalker.AVENGER, new ProjectileVerticalReach(60, 0)
-    );
-    private static final List<Integer> PASSIVE_PROJECTILE_RANGE_SKILL_IDS = List.of(
-            Archer.EYE_OF_AMAZON,
-            Rogue.KEEN_EYES,
-            WindArcher.EYE_OF_AMAZON,
-            NightWalker.KEEN_EYES
     );
     // Skills whose WZ bbox describes an explosion around the strike point (primary target),
     // not a sweep around the caster. Anchor the planner's hitBox at the target for these,
@@ -914,7 +901,7 @@ public class BotCombatManager {
         long startedAt = System.nanoTime();
         try {
             Point botPos = bot.getPosition();
-            double range = Math.max(CLIENT_PROJECTILE_BASE_RANGE + passiveProjectileRangeBonus(bot),
+            double range = Math.max(AgentProjectileHitbox.CLIENT_PROJECTILE_BASE_RANGE + passiveProjectileRangeBonus(bot),
                     BotCombatManager.cfg.ATTACK_RANGE_X + BotCombatManager.cfg.ATTACK_JUMP_X_EXTRA);
             List<Monster> candidates = aliveMonstersInRange(bot, botPos, range * range);
             if (candidates.isEmpty()) {
@@ -1448,8 +1435,7 @@ public class BotCombatManager {
     }
 
     public static Rectangle clientProjectileHitBox(Character bot, boolean facingLeft, float horizontalScale) {
-        return clientProjectileHitBox(bot, facingLeft, horizontalScale,
-                CLIENT_PROJECTILE_TOP, CLIENT_PROJECTILE_BOTTOM);
+        return AgentProjectileHitbox.clientProjectileHitBox(bot, facingLeft, horizontalScale);
     }
 
     // Vertical extents are signed offsets from the character feet (origin.y):
@@ -1463,57 +1449,15 @@ public class BotCombatManager {
     // the client's WZ projectile asset because we do not yet parse those.
     public static Rectangle clientProjectileHitBox(Character bot, boolean facingLeft, float horizontalScale,
                                             int yAboveOrigin, int yBelowOrigin) {
-        if (bot == null || bot.getPosition() == null) {
-            return null;
-        }
-
-        Point origin = bot.getPosition();
-        int projectileRange = CLIENT_PROJECTILE_BASE_RANGE + passiveProjectileRangeBonus(bot);
-        int farEdge = Math.max(CLIENT_PROJECTILE_NEAR_INSET, Math.round(projectileRange * Math.max(0f, horizontalScale)));
-        int left = facingLeft ? origin.x - farEdge : origin.x + CLIENT_PROJECTILE_NEAR_INSET;
-        int right = facingLeft ? origin.x - CLIENT_PROJECTILE_NEAR_INSET : origin.x + farEdge;
-        int top = origin.y - yAboveOrigin;
-        int height = Math.max(1, yAboveOrigin + yBelowOrigin);
-        return new Rectangle(left, top, right - left, height);
+        return AgentProjectileHitbox.clientProjectileHitBox(bot, facingLeft, horizontalScale, yAboveOrigin, yBelowOrigin);
     }
 
     static float projectileRangeScale(StatEffect effect) {
-        return effect != null && effect.getRange() > 0 ? effect.getRange() / 100.0f : 1.0f;
+        return AgentProjectileHitbox.projectileRangeScale(effect);
     }
 
     static int passiveProjectileRangeBonus(Character bot) {
-        if (bot == null) {
-            return 0;
-        }
-
-        int bonus = 0;
-        for (int skillId : PASSIVE_PROJECTILE_RANGE_SKILL_IDS) {
-            Skill skill = resolveLearnedSkill(bot, skillId);
-            if (skill == null) {
-                continue;
-            }
-
-            int level = bot.getSkillLevel(skill);
-            if (level <= 0) {
-                continue;
-            }
-
-            bonus += Math.max(0, skill.getEffect(level).getRange());
-        }
-        return bonus;
-    }
-
-    private static Skill resolveLearnedSkill(Character bot, int skillId) {
-        Map<Skill, Character.SkillEntry> skills = bot.getSkills();
-        if (skills != null) {
-            for (Skill learned : skills.keySet()) {
-                if (learned != null && learned.getId() == skillId) {
-                    return learned;
-                }
-            }
-        }
-
-        return SkillFactory.getSkill(skillId);
+        return AgentProjectileHitbox.passiveProjectileRangeBonus(bot);
     }
 
     private static List<Monster> collectTargetsInHitBox(Character bot, Monster primaryTarget, Rectangle hitBox, int maxTargets) {

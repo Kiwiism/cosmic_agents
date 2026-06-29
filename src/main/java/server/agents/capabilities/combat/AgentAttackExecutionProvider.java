@@ -13,7 +13,6 @@ import net.server.channel.handlers.AbstractDealDamageHandler;
 import net.server.channel.handlers.CloseRangeDamageHandler;
 import net.server.channel.handlers.MagicDamageHandler;
 import net.server.channel.handlers.RangedAttackHandler;
-import server.bots.BotCombatManager;
 import server.agents.capabilities.combat.data.AgentAttackDataProvider;
 import server.agents.capabilities.combat.data.AgentAttackTiming;
 
@@ -661,7 +660,7 @@ public final class AgentAttackExecutionProvider {
             return null;
         }
 
-        return BotCombatManager.clientProjectileHitBox(bot, facingLeft, 1.0f);
+        return AgentProjectileHitbox.clientProjectileHitBox(bot, facingLeft, 1.0f);
     }
 
     private static int resolveSkillAttackDelayMillis(Skill skill) {

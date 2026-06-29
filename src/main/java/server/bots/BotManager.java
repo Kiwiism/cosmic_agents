@@ -3,6 +3,7 @@ package server.bots;
 import server.agents.capabilities.combat.AgentAttackRoute;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+import server.agents.capabilities.combat.AgentProjectileHitbox;
 
 import server.agents.capabilities.dialogue.AgentEmote;
 
@@ -1574,8 +1575,8 @@ public class BotManager {
         }
         int targetRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, map, combatTargetPos);
 
-        int projectileRange = BotCombatManager.CLIENT_PROJECTILE_BASE_RANGE
-                + BotCombatManager.passiveProjectileRangeBonus(bot);
+        int projectileRange = AgentProjectileHitbox.CLIENT_PROJECTILE_BASE_RANGE
+                + AgentProjectileHitbox.passiveProjectileRangeBonus(bot);
         int yReachable = BotCombatManager.cfg.RANGED_DEGENERATE_RANGE_Y * 2;
 
         Point reachableRetreat = selectReachableProjectileRetreatTarget(

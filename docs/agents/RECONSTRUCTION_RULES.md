@@ -27,6 +27,12 @@ Recent reconstruction notes:
   classification, Soul Arrow/Shadow Claw unlimited-ammo behavior, and USE
   inventory arrow/star/bullet counting are unchanged; `BotCombatManager`
   retains compatibility wrappers for legacy bot-package callers.
+- Client projectile hitbox ownership moved to
+  `server.agents.capabilities.combat.AgentProjectileHitbox`. The Journey client
+  base range, near inset, default vertical band, passive Eye of Amazon/Keen
+  Eyes range bonus lookup, and horizontal scaling behavior are unchanged;
+  `BotCombatManager` keeps compatibility wrappers for legacy skill-planning
+  callers until that planner is extracted.
 - Combat attack data provider ownership moved to
   `server.agents.capabilities.combat.data.AgentAttackDataProvider`. Weapon
   normal-attack profile loading, action-spec selection, body action id
@@ -54,8 +60,8 @@ Recent reconstruction notes:
   basic/skill attack data records, packet stance/action helpers, attack-route
   application bridge, weapon route resolution, degenerate ranged retreat
   helpers, projectile hitbox helpers, and skill timing resolution are unchanged.
-  `BotCombatManager` still owns client projectile hitbox implementation as a
-  temporary public seam until combat planning moves into Agent combat modules.
+  Agent attack execution no longer depends on `BotCombatManager`; legacy combat
+  planning still owns larger attack-plan construction until later slices.
 - Combat attack-route ownership moved to
   `server.agents.capabilities.combat.AgentAttackRoute`. The CLOSE/RANGED/MAGIC
   route values are unchanged; `BotCombatManager`, `BotManager`, and attack
