@@ -4,7 +4,10 @@ import client.Character;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.integration.AgentBotLlmRuntime;
+import server.agents.integration.AgentBotReplyChannelStateRuntime;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
+import server.bots.ReplyChannel;
 
 import java.util.List;
 import java.util.Locale;
@@ -57,17 +60,18 @@ public final class BotLlmReplyManager {
 
     public static void maybeRespond(BotEntry entry, Character sender, String message) {
         if (!BotLlmConfig.enabled) return;
-        if (entry == null || entry.getBot() == null || sender == null) return;
+        if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry) || sender == null) return;
         if (message == null || message.isBlank()) return;
 
         SenderRelation relation = SenderRelation.resolve(entry, sender);
         // Strangers' whispers are dropped pre-LLM (whisper hook isn't wired in
         // Phase 1 anyway, but defend in depth).
-        if (relation == SenderRelation.STRANGER && entry.getReplyChannel() == server.bots.ReplyChannel.WHISPER) {
+        if (relation == SenderRelation.STRANGER
+                && AgentBotReplyChannelStateRuntime.replyChannel(entry) == ReplyChannel.WHISPER) {
             return;
         }
 
-        int botId = entry.getBot().getId();
+        int botId = AgentBotRuntimeIdentityRuntime.botId(entry);
         AtomicInteger inflight = inflightByBotId.computeIfAbsent(botId, k -> new AtomicInteger(0));
         if (!compareAndIncrement(inflight, 0, 1)) {
             // already 1 in-flight for this bot; drop this one
@@ -94,8 +98,8 @@ public final class BotLlmReplyManager {
     }
 
     private static void runReply(BotEntry entry, String senderName, SenderRelation relation, String message) {
-        String botName = entry.getBot().getName();
-        int botId = entry.getBot().getId();
+        String botName = AgentBotRuntimeIdentityRuntime.botName(entry);
+        int botId = AgentBotRuntimeIdentityRuntime.botId(entry);
         // Use disk-backed memory only when enabled; otherwise keep a tiny recent in-memory window.
         String summary = BotLlmConfig.memoryEnabled ? BotMemoryStore.loadSummary(botName) : "";
         // Prompt shows ALL uncompacted turns (cursor..end). The summary covers everything before

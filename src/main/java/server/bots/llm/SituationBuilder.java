@@ -7,6 +7,7 @@ import net.server.world.PartyCharacter;
 import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
 import server.life.Monster;
 import server.maps.MapleMap;
@@ -24,9 +25,9 @@ public final class SituationBuilder {
     private SituationBuilder() {}
 
     public static String build(BotEntry entry) {
-        if (entry == null || entry.getBot() == null) return "";
-        Character bot = entry.getBot();
-        MapleMap map = bot.getMap();
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        if (entry == null || bot == null) return "";
+        MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
         StringBuilder sb = new StringBuilder(256);
         sb.append("[Where you are now]\n");
 
@@ -68,7 +69,7 @@ public final class SituationBuilder {
 
     private static String describeActivity(BotEntry entry) {
         if (AgentBotModeStateRuntime.grinding(entry)) {
-            MapleMap m = entry.getBot().getMap();
+            MapleMap m = AgentBotRuntimeIdentityRuntime.botMap(entry);
             if (m != null && AgentBotFarmAnchorStateRuntime.isFarmAnchorInMap(entry, m.getId())) {
                 return "grinding (camping this spot)";
             }

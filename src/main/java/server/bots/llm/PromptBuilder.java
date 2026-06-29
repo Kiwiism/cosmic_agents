@@ -1,6 +1,7 @@
 package server.bots.llm;
 
 import client.Character;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
 
 import java.util.List;
@@ -9,7 +10,7 @@ public final class PromptBuilder {
     private PromptBuilder() {}
 
     public static String buildSystem(BotEntry entry, SenderRelation relation, String senderName) {
-        Character bot = entry.getBot();
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         String botName = bot != null ? bot.getName() : "bot";
         String job = bot != null ? bot.getJob().toString().toLowerCase().replace('_', ' ') : "adventurer";
         int lvl = bot != null ? bot.getLevel() : 1;
@@ -41,7 +42,9 @@ public final class PromptBuilder {
         }
         if (recent != null && !recent.isEmpty()) {
             sb.append("Recent chat (older lines matter less):\n");
-            String botName = entry.getBot() != null ? entry.getBot().getName() : "bot";
+            String botName = AgentBotRuntimeIdentityRuntime.hasBot(entry)
+                    ? AgentBotRuntimeIdentityRuntime.botName(entry)
+                    : "bot";
             long now = System.currentTimeMillis();
             for (BotMemoryStore.Turn t : recent) {
                 String age = SituationBuilder.ago(now - t.ts());
@@ -53,7 +56,9 @@ public final class PromptBuilder {
         }
         sb.append("Reply to the newest message only. Treat older chat as background, not the topic.\n");
         sb.append(senderName).append(": ").append(newMessage).append('\n');
-        sb.append(entry.getBot() != null ? entry.getBot().getName() : "bot").append(':');
+        sb.append(AgentBotRuntimeIdentityRuntime.hasBot(entry)
+                ? AgentBotRuntimeIdentityRuntime.botName(entry)
+                : "bot").append(':');
         return sb.toString();
     }
 }

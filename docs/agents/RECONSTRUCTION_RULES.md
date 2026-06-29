@@ -937,6 +937,12 @@ Recent reconstruction notes:
   BotKpqStage5 preserves reward-claim and announcement behavior while no
   longer reading or writing stage-5 claimed state directly on BotEntry in
   production.
+- LLM identity and reply-channel reads now enter through
+  `AgentBotRuntimeIdentityRuntime` and `AgentBotReplyChannelStateRuntime`;
+  BotLlmReplyManager, PromptBuilder, SituationBuilder, and SenderRelation
+  preserve reply gating, prompt wording, memory keys, and relation resolution
+  while no longer reading bot, owner, map, or reply-channel state directly from
+  BotEntry in production.
 
 Initial reconstruction order:
 
