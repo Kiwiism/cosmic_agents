@@ -13,6 +13,7 @@ import client.inventory.WeaponType;
 import config.YamlConfig;
 import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
+import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotOfferRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
@@ -31,8 +32,6 @@ public final class BotOfferManager {
     private static final Pattern NEGATIVE_CONFIRM_PATTERN = Pattern.compile(
             "\\b(no|nope|nah|nvm|never\\s*mind|dont|don't|not\\s+now|skip)\\b",
             Pattern.CASE_INSENSITIVE);
-    private static final List<String> BOT_ACCEPT_MSGS = List.of(
-            "sure!", "ok!", "yes", "y!", "y", "yes!", "yes pls", "yes please!", "yes please", "ooh nice, ty", "that would be great!", "that would be awesome!", "of course!");
 
     private enum GearOfferNeed {
         CURRENT,
@@ -80,12 +79,12 @@ public final class BotOfferManager {
             return;
         }
         if (AgentBotPendingActionStateRuntime.hasPendingAction(entry) || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry) || hasOfferReservation(entry)) {
-            AgentBotOfferRuntime.replyNow(entry, "busy rn, ask me again in a bit");
+            AgentBotOfferRuntime.replyNow(entry, AgentDialogueCatalog.offerBusyReply());
             return;
         }
         List<BotEquipManager.EquipRecommendation> recs = BotEquipManager.findRecommendedEquips(bot, owner);
         if (recs.isEmpty()) {
-            AgentBotOfferRuntime.replyNow(entry, "nothing i need from you rn, im good!");
+            AgentBotOfferRuntime.replyNow(entry, AgentDialogueCatalog.offerNoUpgradeNeededReply());
             return;
         }
         Item candidate = recs.get(0).candidate();
@@ -184,7 +183,7 @@ public final class BotOfferManager {
             if (AgentBotOfferStateRuntime.pendingLootOfferBotRequesting(entry)) {
                 clearPendingOffer(entry);
                 AgentBotOfferRuntime.afterRandomDelay(400, 600, () ->
-                        AgentBotOfferRuntime.replyNow(entry, "ty! inv me?"));
+                        AgentBotOfferRuntime.replyNow(entry, AgentDialogueCatalog.offerOwnerRequestingTradeReply()));
             } else {
                 Item item = AgentBotOfferStateRuntime.pendingLootOfferItem(entry);
                 AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
@@ -202,9 +201,9 @@ public final class BotOfferManager {
             AgentBotOfferRuntime.afterRandomDelay(400, 600, () -> {
                 Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
                 if (owner != null && speaker.getId() == owner.getId()) {
-                    AgentBotOfferRuntime.replyNow(entry, "ok, keeping it for now");
+                    AgentBotOfferRuntime.replyNow(entry, AgentDialogueCatalog.offerKeepItemReply());
                 } else {
-                    AgentBotOfferRuntime.sayMapNow(AgentBotRuntimeIdentityRuntime.bot(entry), "ok, keeping it for now");
+                    AgentBotOfferRuntime.sayMapNow(AgentBotRuntimeIdentityRuntime.bot(entry), AgentDialogueCatalog.offerKeepItemReply());
                 }
             });
             return true;
@@ -231,13 +230,8 @@ public final class BotOfferManager {
         AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
         AgentBotOfferStateRuntime.setPendingLootOffer(entry, ownerItem, owner.getId(), System.currentTimeMillis() + 45_000L, true);
 
-        List<String> prompts = List.of(
-                "hey, that " + itemDesc + " would be an upgrade for me, can i have it pls?",
-                "Can I have your " + itemDesc + "?",
-                "Your " + itemDesc + " would be better on me! trade it over?",
-                "I could use that " + itemDesc + " of yours ;)",
-                "that " + itemDesc + " is an upgrade for me, want to trade?");
-        AgentBotOfferRuntime.queueSay(entry, BotManager.randomReply(prompts));
+        String promptTemplate = BotManager.randomReply(AgentDialogueCatalog.ownerUpgradeRequestPromptTemplates());
+        AgentBotOfferRuntime.queueSay(entry, AgentDialogueCatalog.formatOwnerUpgradeRequestPrompt(promptTemplate, itemDesc));
     }
 
     private static boolean offerGearItem(BotEntry entry, Character bot, Character recipient, Item item,
@@ -307,7 +301,7 @@ public final class BotOfferManager {
         }
         AgentBotOfferRuntime.sayNow(recipientBot,
                 AgentBotReplyChannelStateRuntime.replyChannel(entry),
-                BotManager.randomReply(BOT_ACCEPT_MSGS));
+                BotManager.randomReply(AgentDialogueCatalog.offerAcceptReplies()));
         handlePendingOfferResponse(entry, recipientBot, "yes");
     }
 
@@ -320,23 +314,8 @@ public final class BotOfferManager {
     }
 
     private static String buildSharedLootOfferPrompt(String recipientName, String itemName, boolean forLater) {
-        List<String> prompts = forLater
-                ? List.of(
-                        "%s, you might need %s later, want it?",
-                        "%s, picked up %s, could help later if you want it",
-                        "%s, I got %s for later if you want it",
-                        "%s, %s looks useful for later, want me to trade it over?",
-                        "%s, holding %s in case you want it later",
-                        "%s, saved %s for later if you want it")
-                : List.of(
-                        "%s, I have %s, you want?",
-                        "%s, picked up %s, want it?",
-                        "%s, I got %s if you want it",
-                        "%s, want %s?",
-                        "%s, I can trade you %s",
-                        "%s, grabbed %s for you if you want it");
-        String format = BotManager.randomReply(prompts);
-        return String.format(format, recipientName, itemName);
+        String format = BotManager.randomReply(AgentDialogueCatalog.lootOfferPromptTemplates(forLater));
+        return AgentDialogueCatalog.formatLootOfferPrompt(format, recipientName, itemName);
     }
 
     private static String buildLootOfferPrompt(Character recipient, Character owner, Item item, boolean forLater) {

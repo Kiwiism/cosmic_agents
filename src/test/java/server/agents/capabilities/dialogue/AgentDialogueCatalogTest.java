@@ -35,6 +35,18 @@ class AgentDialogueCatalogTest {
         assertTrue(AgentDialogueCatalog.ammoOfferReplies().contains("got some ammo for you, trading"));
         assertTrue(AgentDialogueCatalog.shopResupplyReplies().contains("one sec, going to restock"));
         assertTrue(AgentDialogueCatalog.shoppingReplies().contains("restocking now"));
+        assertTrue(AgentDialogueCatalog.offerAcceptReplies().contains("yes please!"));
+        assertEquals("busy rn, ask me again in a bit", AgentDialogueCatalog.offerBusyReply());
+        assertEquals("nothing i need from you rn, im good!", AgentDialogueCatalog.offerNoUpgradeNeededReply());
+        assertEquals("ty! inv me?", AgentDialogueCatalog.offerOwnerRequestingTradeReply());
+        assertEquals("ok, keeping it for now", AgentDialogueCatalog.offerKeepItemReply());
+        assertTrue(AgentDialogueCatalog.ownerUpgradeRequestPromptTemplates().contains("Can I have your %s?"));
+        assertTrue(AgentDialogueCatalog.lootOfferPromptTemplates(false).contains("%s, I have %s, you want?"));
+        assertTrue(AgentDialogueCatalog.lootOfferPromptTemplates(true).contains("%s, holding %s in case you want it later"));
+        assertEquals("Can I have your Blue Moon?",
+                AgentDialogueCatalog.formatOwnerUpgradeRequestPrompt("Can I have your %s?", "Blue Moon"));
+        assertEquals("Alice, I have Blue Moon, you want?",
+                AgentDialogueCatalog.formatLootOfferPrompt("%s, I have %s, you want?", "Alice", "Blue Moon"));
         assertTrue(AgentDialogueCatalog.fameOkReplies().contains("famed %s"));
         assertTrue(AgentDialogueCatalog.fameTargetNotFoundReply("Alice").contains("Alice on the map"));
         assertTrue(AgentDialogueCatalog.fameSelfReply().contains("fame myself"));

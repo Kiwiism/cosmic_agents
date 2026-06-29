@@ -1371,6 +1371,11 @@ Recent reconstruction notes:
 - Shop resupply and shopping dialogue pools now live in
   `AgentDialogueCatalog`; BotShopManager preserves the same random reply
   selection and visible map-chat delivery through compatibility delegates.
+- Gear/loot offer accept/decline replies, busy/no-upgrade fixed replies,
+  owner-upgrade request prompts, and current/future loot-offer prompt templates
+  now live in `AgentDialogueCatalog`; BotOfferManager preserves the same random
+  reply selection, prompt formatting, delayed delivery, and trade-transfer
+  behavior through compatibility delegates.
 
 Initial reconstruction order:
 

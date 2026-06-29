@@ -126,6 +126,32 @@ public final class AgentDialogueCatalog {
             "brb, refilling", "be right back~");
     private static final List<String> SHOPPING_REPLIES = List.of(
             "shopping...", "restocking now", "buying stuff", "ok let me buy", "getting supplies");
+    private static final List<String> OFFER_ACCEPT_REPLIES = List.of(
+            "sure!", "ok!", "yes", "y!", "y", "yes!", "yes pls", "yes please!", "yes please", "ooh nice, ty", "that would be great!", "that would be awesome!", "of course!");
+    private static final String OFFER_BUSY_REPLY = "busy rn, ask me again in a bit";
+    private static final String OFFER_NO_UPGRADE_NEEDED_REPLY = "nothing i need from you rn, im good!";
+    private static final String OFFER_OWNER_REQUESTING_TRADE_REPLY = "ty! inv me?";
+    private static final String OFFER_KEEP_ITEM_REPLY = "ok, keeping it for now";
+    private static final List<String> OWNER_UPGRADE_REQUEST_PROMPT_TEMPLATES = List.of(
+            "hey, that %s would be an upgrade for me, can i have it pls?",
+            "Can I have your %s?",
+            "Your %s would be better on me! trade it over?",
+            "I could use that %s of yours ;)",
+            "that %s is an upgrade for me, want to trade?");
+    private static final List<String> LOOT_OFFER_PROMPT_TEMPLATES = List.of(
+            "%s, I have %s, you want?",
+            "%s, picked up %s, want it?",
+            "%s, I got %s if you want it",
+            "%s, want %s?",
+            "%s, I can trade you %s",
+            "%s, grabbed %s for you if you want it");
+    private static final List<String> FUTURE_LOOT_OFFER_PROMPT_TEMPLATES = List.of(
+            "%s, you might need %s later, want it?",
+            "%s, picked up %s, could help later if you want it",
+            "%s, I got %s for later if you want it",
+            "%s, %s looks useful for later, want me to trade it over?",
+            "%s, holding %s in case you want it later",
+            "%s, saved %s for later if you want it");
     private static final List<String> COMBAT_DEATH_REPLIES = List.of(
             "oops im dead", "gg", "rip me", "oww", "i died lol",
             "welp", "ouchh", "nooo", "ok i died", "i'll be right back");
@@ -398,6 +424,42 @@ public final class AgentDialogueCatalog {
 
     public static List<String> shoppingReplies() {
         return SHOPPING_REPLIES;
+    }
+
+    public static List<String> offerAcceptReplies() {
+        return OFFER_ACCEPT_REPLIES;
+    }
+
+    public static String offerBusyReply() {
+        return OFFER_BUSY_REPLY;
+    }
+
+    public static String offerNoUpgradeNeededReply() {
+        return OFFER_NO_UPGRADE_NEEDED_REPLY;
+    }
+
+    public static String offerOwnerRequestingTradeReply() {
+        return OFFER_OWNER_REQUESTING_TRADE_REPLY;
+    }
+
+    public static String offerKeepItemReply() {
+        return OFFER_KEEP_ITEM_REPLY;
+    }
+
+    public static List<String> ownerUpgradeRequestPromptTemplates() {
+        return OWNER_UPGRADE_REQUEST_PROMPT_TEMPLATES;
+    }
+
+    public static List<String> lootOfferPromptTemplates(boolean forLater) {
+        return forLater ? FUTURE_LOOT_OFFER_PROMPT_TEMPLATES : LOOT_OFFER_PROMPT_TEMPLATES;
+    }
+
+    public static String formatOwnerUpgradeRequestPrompt(String template, String itemDescription) {
+        return String.format(template, itemDescription);
+    }
+
+    public static String formatLootOfferPrompt(String template, String recipientName, String itemDescription) {
+        return String.format(template, recipientName, itemDescription);
     }
 
     public static List<String> combatDeathReplies() {
