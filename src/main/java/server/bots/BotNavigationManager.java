@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.runtime.AgentPerformanceMonitor;
+
 import server.agents.capabilities.movement.AgentMovementProfile;
 
 import client.Character;
@@ -181,7 +183,7 @@ final class BotNavigationManager {
             AgentBotNavigationDebugStateRuntime.recordPathLog(entry, captureTargetSnapshot(entry, rawTargetPos), startRegionId, false, runAiTick);
             return new NavigationDirective(AgentBotNavigationDebugStateRuntime.navTargetPosition(entry), false);
         } finally {
-            BotPerformanceMonitor.record("nav-resolve", System.nanoTime() - startedAt);
+            AgentPerformanceMonitor.record("nav-resolve", System.nanoTime() - startedAt);
         }
     }
 
@@ -949,7 +951,7 @@ final class BotNavigationManager {
                             0);
                 }
                 logSlowPathfind(graph, map, startPos, startRegionId, targetRegionId, targetPos, pathfindCaller, profile);
-                BotPerformanceMonitor.recordPathfind(pathfindCaller, System.nanoTime() - startedAt);
+                AgentPerformanceMonitor.recordPathfind(pathfindCaller, System.nanoTime() - startedAt);
             }
         }
     }

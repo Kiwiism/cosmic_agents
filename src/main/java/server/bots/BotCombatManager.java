@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.runtime.AgentPerformanceMonitor;
+
 import server.agents.capabilities.movement.AgentMovementProfile;
 
 import client.BuffStat;
@@ -888,7 +890,7 @@ public class BotCombatManager {
 
             return selectable.get(0).monster();
         } finally {
-            BotPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
+            AgentPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
         }
     }
 
@@ -961,7 +963,7 @@ public class BotCombatManager {
             }
             return selectable.get(0).monster();
         } finally {
-            BotPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
+            AgentPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
         }
     }
 
@@ -992,7 +994,7 @@ public class BotCombatManager {
             }
             return pickFromBestTargets(localTargets);
         } finally {
-            BotPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
+            AgentPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
         }
     }
 
@@ -1029,7 +1031,7 @@ public class BotCombatManager {
             }
             return selectBestAttackPlan(bot, candidates);
         } finally {
-            BotPerformanceMonitor.record("combat-plan", System.nanoTime() - startedAt);
+            AgentPerformanceMonitor.record("combat-plan", System.nanoTime() - startedAt);
         }
     }
 

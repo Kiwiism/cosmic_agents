@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.runtime.AgentPerformanceMonitor;
+
 import server.agents.capabilities.navigation.AgentNavigationMapLoader;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
@@ -43,7 +45,7 @@ import static org.mockito.Mockito.when;
  * mocking approach so it runs without a live server. Drives N follow-mode bots through
  * {@link BotManager#runCommonTickSystemsForTest} + {@link BotManager#stepMovementOnly}
  * for many ticks and prints a per-section timing report drawn from
- * {@link BotPerformanceMonitor#snapshot()}.
+ * {@link AgentPerformanceMonitor#snapshot()}.
  *
  * <p>Two run modes:
  * <ul>
@@ -82,12 +84,12 @@ public class BotFollowTickPerfHarness {
     }
 
     private static void runScenario(Scenario scenario, int warmupTicks, int measureTicks, int workers) {
-        boolean previousPerfState = BotPerformanceMonitor.enabled();
-        BotPerformanceMonitor.setEnabled(true);
+        boolean previousPerfState = AgentPerformanceMonitor.enabled();
+        AgentPerformanceMonitor.setEnabled(true);
         try {
             // Warmup
             scenario.runTicks(warmupTicks, workers);
-            BotPerformanceMonitor.reset();
+            AgentPerformanceMonitor.reset();
 
             long wallStartNs = System.nanoTime();
             scenario.runTicks(measureTicks, workers);
@@ -95,7 +97,7 @@ public class BotFollowTickPerfHarness {
 
             printReport(scenario, measureTicks, workers, wallElapsedNs);
         } finally {
-            BotPerformanceMonitor.setEnabled(previousPerfState);
+            AgentPerformanceMonitor.setEnabled(previousPerfState);
         }
     }
 
@@ -169,7 +171,7 @@ public class BotFollowTickPerfHarness {
         private void runOneTick(BotEntry entry) {
             Character bot = entry.bot;
             // Mirror BotManager.tick() timing wrap so "tick-total" is captured.
-            long startedAt = BotPerformanceMonitor.start();
+            long startedAt = AgentPerformanceMonitor.start();
             try {
                 boolean runAiTick = consumeAiTick(entry);
                 entry.lastTickWasAi = runAiTick;
@@ -189,7 +191,7 @@ public class BotFollowTickPerfHarness {
                     // ignore
                 }
             } finally {
-                BotPerformanceMonitor.recordSince("tick-total", startedAt);
+                AgentPerformanceMonitor.recordSince("tick-total", startedAt);
             }
         }
 
@@ -208,11 +210,11 @@ public class BotFollowTickPerfHarness {
     // -----------------------------------------------------------------------
 
     private static void printReport(Scenario scenario, int ticks, int workers, long wallNs) {
-        List<BotPerformanceMonitor.SectionSnapshot> snaps =
-                new ArrayList<>(BotPerformanceMonitor.snapshot());
-        snaps.sort(Comparator.comparingDouble(BotPerformanceMonitor.SectionSnapshot::maxMs).reversed());
+        List<AgentPerformanceMonitor.SectionSnapshot> snaps =
+                new ArrayList<>(AgentPerformanceMonitor.snapshot());
+        snaps.sort(Comparator.comparingDouble(AgentPerformanceMonitor.SectionSnapshot::maxMs).reversed());
 
-        long totalCalls = snaps.stream().mapToLong(BotPerformanceMonitor.SectionSnapshot::count).sum();
+        long totalCalls = snaps.stream().mapToLong(AgentPerformanceMonitor.SectionSnapshot::count).sum();
         double wallMs = wallNs / 1_000_000.0;
         int botCount = scenario.entries.size();
 
@@ -225,7 +227,7 @@ public class BotFollowTickPerfHarness {
         System.out.printf("%-28s %10s %12s %12s %12s %10s %12s%n",
                 "section", "n", "avgMs", "maxMs", "totalMs", "slow%", "slowAvgMs");
         System.out.println("---------------------------------------------------------------------------------");
-        for (BotPerformanceMonitor.SectionSnapshot s : snaps) {
+        for (AgentPerformanceMonitor.SectionSnapshot s : snaps) {
             double totalMs = s.totalNs() / 1_000_000.0;
             double slowPct = s.slowCount() * 100.0 / Math.max(1, s.count());
             System.out.printf("%-28s %10d %12.4f %12.4f %12.2f %9.2f%% %12.4f%n",

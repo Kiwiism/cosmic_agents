@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.runtime.AgentPerformanceMonitor;
+
 import server.agents.capabilities.movement.AgentMovementProfile;
 
 import client.Character;
@@ -269,7 +271,7 @@ public class BotMovementManager {
                     : dy > 0 ? MoveAction.climbDown() : MoveAction.idle();
             applyClimbAction(entry, bot, action);
         } finally {
-            BotPerformanceMonitor.record("move-climb", System.nanoTime() - startedAt);
+            AgentPerformanceMonitor.record("move-climb", System.nanoTime() - startedAt);
         }
     }
 
@@ -383,7 +385,7 @@ public class BotMovementManager {
             }
             broadcastMovement(entry);
         } finally {
-            BotPerformanceMonitor.record("move-air", System.nanoTime() - startedAt);
+            AgentPerformanceMonitor.record("move-air", System.nanoTime() - startedAt);
         }
     }
 
@@ -444,7 +446,7 @@ public class BotMovementManager {
             BotPhysicsEngine.applySwimMotion(entry);
             broadcastMovement(entry);
         } finally {
-            BotPerformanceMonitor.record("move-swim", System.nanoTime() - startedAt);
+            AgentPerformanceMonitor.record("move-swim", System.nanoTime() - startedAt);
         }
     }
 
@@ -557,7 +559,7 @@ public class BotMovementManager {
             MoveAction action = planGroundAction(entry, currentFh, botPos, targetPos);
             applyGroundAction(entry, currentFh, action);
         } finally {
-            BotPerformanceMonitor.record("move-ground", System.nanoTime() - startedAt);
+            AgentPerformanceMonitor.record("move-ground", System.nanoTime() - startedAt);
         }
     }
 
@@ -897,7 +899,7 @@ public class BotMovementManager {
     }
 
     static void broadcastMovement(BotEntry entry) {
-        if (!BotPerformanceMonitor.enabled()) {
+        if (!AgentPerformanceMonitor.enabled()) {
             doBroadcastMovement(entry);
             return;
         }
@@ -906,7 +908,7 @@ public class BotMovementManager {
         try {
             doBroadcastMovement(entry);
         } finally {
-            BotPerformanceMonitor.record("broadcast-move", System.nanoTime() - startedAt);
+            AgentPerformanceMonitor.record("broadcast-move", System.nanoTime() - startedAt);
         }
     }
 

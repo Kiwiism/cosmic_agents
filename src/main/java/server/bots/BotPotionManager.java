@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.runtime.AgentPerformanceMonitor;
+
 import client.Character;
 import client.Skill;
 import client.SkillFactory;
@@ -65,7 +67,7 @@ public final class BotPotionManager {
 
     /** Single source of truth: items the bot has that count as recovery pots. */
     static List<Item> recoveryPotions(Character bot) {
-        long startedAt = BotPerformanceMonitor.start();
+        long startedAt = AgentPerformanceMonitor.start();
         List<Item> result = new java.util.ArrayList<>();
         for (Item item : bot.getInventory(InventoryType.USE).list()) {
             if (item.getQuantity() <= 0) {
@@ -75,12 +77,12 @@ public final class BotPotionManager {
                 result.add(item);
             }
         }
-        BotPerformanceMonitor.recordSince("potion-recovery-scan", startedAt);
+        AgentPerformanceMonitor.recordSince("potion-recovery-scan", startedAt);
         return result;
     }
 
     public static int[] countPotions(Character bot) {
-        long startedAt = BotPerformanceMonitor.start();
+        long startedAt = AgentPerformanceMonitor.start();
         int hp = 0;
         int mp = 0;
         for (Item item : bot.getInventory(InventoryType.USE).list()) {
@@ -104,12 +106,12 @@ public final class BotPotionManager {
                 mp += quantity;
             }
         }
-        BotPerformanceMonitor.recordSince("potion-recovery-scan", startedAt);
+        AgentPerformanceMonitor.recordSince("potion-recovery-scan", startedAt);
         return new int[]{hp, mp};
     }
 
     static int[] countPotions(List<Item> items, Function<Integer, StatEffect> effectLookup) {
-        long startedAt = BotPerformanceMonitor.start();
+        long startedAt = AgentPerformanceMonitor.start();
         int hp = 0;
         int mp = 0;
         for (Item item : items) {
@@ -125,7 +127,7 @@ public final class BotPotionManager {
                 mp += quantity;
             }
         }
-        BotPerformanceMonitor.recordSince("potion-recovery-count", startedAt);
+        AgentPerformanceMonitor.recordSince("potion-recovery-count", startedAt);
         return new int[]{hp, mp};
     }
 
@@ -188,7 +190,7 @@ public final class BotPotionManager {
 
     /** Shared selection used by both keybind setup and the debug report. */
     static AutopotChoice computeAutopotChoice(Character bot) {
-        long startedAt = BotPerformanceMonitor.start();
+        long startedAt = AgentPerformanceMonitor.start();
         int hpItemId = -1;
         int mpItemId = -1;
         PotionRanking bestHp = null;
@@ -212,7 +214,7 @@ public final class BotPotionManager {
                 mpItemId = item.getItemId();
             }
         }
-        BotPerformanceMonitor.recordSince("potion-recovery-scan", startedAt);
+        AgentPerformanceMonitor.recordSince("potion-recovery-scan", startedAt);
         return new AutopotChoice(hpItemId, bestHp, mpItemId, bestMp);
     }
 
@@ -275,43 +277,43 @@ public final class BotPotionManager {
                 entry,
                 BotMovementManager.delayAfterCurrentTick(BotManager.cfg.POT_CHECK_INTERVAL_MS));
 
-        long startedAt = BotPerformanceMonitor.start();
+        long startedAt = AgentPerformanceMonitor.start();
         setupAutopotForBot(bot);
-        BotPerformanceMonitor.recordSince("potion-autopot", startedAt);
+        AgentPerformanceMonitor.recordSince("potion-autopot", startedAt);
 
-        startedAt = BotPerformanceMonitor.start();
+        startedAt = AgentPerformanceMonitor.start();
         BotCombatManager.tickAmmoCheck(entry, bot);
-        BotPerformanceMonitor.recordSince("potion-ammo-check", startedAt);
+        AgentPerformanceMonitor.recordSince("potion-ammo-check", startedAt);
 
         if (!AgentBotModeStateRuntime.grinding(entry) && !AgentBotModeStateRuntime.following(entry)) {
             return;
         }
-        startedAt = BotPerformanceMonitor.start();
+        startedAt = AgentPerformanceMonitor.start();
         BotAmmoManager.tickAmmoShareCheck(entry, bot);
-        BotPerformanceMonitor.recordSince("potion-ammo-share", startedAt);
+        AgentPerformanceMonitor.recordSince("potion-ammo-share", startedAt);
 
-        startedAt = BotPerformanceMonitor.start();
+        startedAt = AgentPerformanceMonitor.start();
         int[] pots = countPotions(bot);
-        BotPerformanceMonitor.recordSince("potion-count", startedAt);
+        AgentPerformanceMonitor.recordSince("potion-count", startedAt);
 
-        startedAt = BotPerformanceMonitor.start();
+        startedAt = AgentPerformanceMonitor.start();
         requestLowPotShare(entry, bot, pots[0], true, false);
-        BotPerformanceMonitor.recordSince("potion-share-hp", startedAt);
+        AgentPerformanceMonitor.recordSince("potion-share-hp", startedAt);
 
-        startedAt = BotPerformanceMonitor.start();
+        startedAt = AgentPerformanceMonitor.start();
         requestLowPotShare(entry, bot, pots[1], false, false);
-        BotPerformanceMonitor.recordSince("potion-share-mp", startedAt);
+        AgentPerformanceMonitor.recordSince("potion-share-mp", startedAt);
 
         if (!AgentBotModeStateRuntime.grinding(entry)) {
             return;
         }
-        startedAt = BotPerformanceMonitor.start();
+        startedAt = AgentPerformanceMonitor.start();
         if (pots[0] < BotManager.cfg.POT_STOP && bot.getHp() < bot.getMaxHp() * 0.4f) {
             BotManager.getInstance().issueFollowOwner(entry);
             AgentBotPotionRuntime.sayMapNow(bot, "low on pots!! walking to you");
             bot.changeFaceExpression(Emote.GLARE.getValue());
         }
-        BotPerformanceMonitor.recordSince("potion-grind-stop", startedAt);
+        AgentPerformanceMonitor.recordSince("potion-grind-stop", startedAt);
     }
 
     public static void checkPotShareOnModeStart(BotEntry entry, Character bot) {
@@ -385,10 +387,10 @@ public final class BotPotionManager {
     }
 
     static boolean requestPotShare(BotEntry entry, Character bot, boolean forHp, boolean bypassShareLimits) {
-        long startedAt = BotPerformanceMonitor.start();
+        long startedAt = AgentPerformanceMonitor.start();
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner == null || bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry)) {
-            BotPerformanceMonitor.recordSince("potion-request", startedAt);
+            AgentPerformanceMonitor.recordSince("potion-request", startedAt);
             return false;
         }
 
@@ -396,11 +398,11 @@ public final class BotPotionManager {
         Map<Integer, Long> categoryBackoff = forHp ? potShareHpBackoffUntil : potShareMpBackoffUntil;
         if (!bypassShareLimits) {
             if (now < categoryBackoff.getOrDefault(owner.getId(), 0L)) {
-                BotPerformanceMonitor.recordSince("potion-request", startedAt);
+                AgentPerformanceMonitor.recordSince("potion-request", startedAt);
                 return false;
             }
             if (now < potShareCooldownUntil.getOrDefault(owner.getId(), 0L)) {
-                BotPerformanceMonitor.recordSince("potion-request", startedAt);
+                AgentPerformanceMonitor.recordSince("potion-request", startedAt);
                 return false;
             }
             potShareCooldownUntil.put(owner.getId(), now + 30_000L);
@@ -413,7 +415,7 @@ public final class BotPotionManager {
             if (!bypassShareLimits) {
                 categoryBackoff.put(owner.getId(), now + 10 * 60_000L);
             }
-            BotPerformanceMonitor.recordSince("potion-request", startedAt);
+            AgentPerformanceMonitor.recordSince("potion-request", startedAt);
             return true;
         }
 
@@ -434,7 +436,7 @@ public final class BotPotionManager {
         } else {
             schedulePotShare(plan, bot, forHp, AgentBotPotionRuntime.randomDelayMs(2000, 3000));
         }
-        BotPerformanceMonitor.recordSince("potion-request", startedAt);
+        AgentPerformanceMonitor.recordSince("potion-request", startedAt);
         return true;
     }
 
@@ -460,7 +462,7 @@ public final class BotPotionManager {
     }
 
     private static AgentBotPotionDonorPlan selectPotDonor(Character owner, Character recipient, BotEntry excludedEntry, boolean forHp) {
-        long startedAt = BotPerformanceMonitor.start();
+        long startedAt = AgentPerformanceMonitor.start();
         BotEntry bestEntry = null;
         int bestCount = 0;
         for (BotEntry sibling : BotManager.getInstance().getBotEntries(owner.getId())) {
@@ -475,7 +477,7 @@ public final class BotPotionManager {
                 bestEntry = sibling;
             }
         }
-        BotPerformanceMonitor.recordSince("potion-donor-select", startedAt);
+        AgentPerformanceMonitor.recordSince("potion-donor-select", startedAt);
         return bestEntry != null ? new AgentBotPotionDonorPlan(bestEntry, bestCount) : null;
     }
 

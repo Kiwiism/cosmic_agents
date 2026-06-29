@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.runtime.AgentPerformanceMonitor;
+
 import server.agents.capabilities.looting.AgentLootEligibility;
 
 
@@ -1960,7 +1962,7 @@ public class BotManager {
     // -------------------------------------------------------------------------
 
     private void tick(BotEntry entry, int ownerCharId, int botCharId) {
-        long startedAt = BotPerformanceMonitor.enabled() ? System.nanoTime() : 0L;
+        long startedAt = AgentPerformanceMonitor.enabled() ? System.nanoTime() : 0L;
         try {
             tickCore(entry, ownerCharId, botCharId);
             resetBotTickFailures(entry);
@@ -1968,7 +1970,7 @@ public class BotManager {
             handleBotTickFailure(entry, ownerCharId, botCharId, t);
         } finally {
             if (startedAt != 0L) {
-                BotPerformanceMonitor.record("tick-total", System.nanoTime() - startedAt);
+                AgentPerformanceMonitor.record("tick-total", System.nanoTime() - startedAt);
             }
         }
     }
@@ -1990,14 +1992,14 @@ public class BotManager {
         }
         int botCharId = AgentBotRuntimeIdentityRuntime.botId(entry);
         int ownerCharId = AgentBotRuntimeIdentityRuntime.ownerId(entry);
-        long startedAt = BotPerformanceMonitor.enabled() ? System.nanoTime() : 0L;
+        long startedAt = AgentPerformanceMonitor.enabled() ? System.nanoTime() : 0L;
         try {
             tickCore(entry, ownerCharId, botCharId);
         } catch (Throwable t) {
             log.warn("runTickForTest: tickCore threw for bot {}", AgentBotRuntimeIdentityRuntime.botName(entry), t);
         } finally {
             if (startedAt != 0L) {
-                BotPerformanceMonitor.record("tick-total", System.nanoTime() - startedAt);
+                AgentPerformanceMonitor.record("tick-total", System.nanoTime() - startedAt);
             }
         }
     }
@@ -2071,7 +2073,7 @@ public class BotManager {
         clearFarmAnchorOnMapChange(entry, bot);
         clearPatrolOnMapChange(entry, bot);
         Point targetPos = targetSnapshot.primaryTargetPos();
-        boolean perf = BotPerformanceMonitor.enabled();
+        boolean perf = AgentPerformanceMonitor.enabled();
         clearFollowActionMoveWindowIfSettled(entry, botPos, targetSnapshot);
 
         // These run in all modes (idle, follow, grind)
@@ -2088,7 +2090,7 @@ public class BotManager {
             } else {
                 long tTrade = System.nanoTime();
                 try { tickTradePhysicsOnly(entry, bot); }
-                finally { BotPerformanceMonitor.record("tick-trade-physics", System.nanoTime() - tTrade); }
+                finally { AgentPerformanceMonitor.record("tick-trade-physics", System.nanoTime() - tTrade); }
             }
             return;
         }
@@ -2099,7 +2101,7 @@ public class BotManager {
         } else {
             long tIdle = System.nanoTime();
             idleConsumed = tickIdleEntry(entry, bot);
-            BotPerformanceMonitor.record("tick-idle", System.nanoTime() - tIdle);
+            AgentPerformanceMonitor.record("tick-idle", System.nanoTime() - tIdle);
         }
         if (idleConsumed) {
             return;
@@ -2151,7 +2153,7 @@ public class BotManager {
                     BotShopManager.onMapChange(entry, bot);
                     AgentBotManagerStatusRuntime.checkManagerStatus(entry, bot);
                 } finally {
-                    BotPerformanceMonitor.record("tick-map-change", System.nanoTime() - tMapChange);
+                    AgentPerformanceMonitor.record("tick-map-change", System.nanoTime() - tMapChange);
                 }
             }
             return;
@@ -2167,7 +2169,7 @@ public class BotManager {
             } else {
                 long tShop = System.nanoTime();
                 consumed = BotShopManager.tickShopVisit(entry, bot);
-                BotPerformanceMonitor.record("tick-shop-visit", System.nanoTime() - tShop);
+                AgentPerformanceMonitor.record("tick-shop-visit", System.nanoTime() - tShop);
             }
             targetPos = AgentBotShopStateRuntime.activeShopTargetPosition(entry);
             if (!consumed && AgentBotShopStateRuntime.shopApproachDelayMs(entry) > 0) {
@@ -2192,7 +2194,7 @@ public class BotManager {
                 long tOpp = System.nanoTime();
                 result = tryLocalOpportunityAttack(
                         entry, bot, botPos, targetPos, targetSnapshot.followTargetPos(), true, true);
-                BotPerformanceMonitor.record("opportunity-attack", System.nanoTime() - tOpp);
+                AgentPerformanceMonitor.record("opportunity-attack", System.nanoTime() - tOpp);
             }
             targetPos = result.targetPos();
             if (result.consumedTick()) {
@@ -2214,7 +2216,7 @@ public class BotManager {
                 long tOppS = System.nanoTime();
                 result = tryLocalOpportunityAttack(
                         entry, bot, botPos, targetPos, targetPos, true, true);
-                BotPerformanceMonitor.record("opportunity-attack", System.nanoTime() - tOppS);
+                AgentPerformanceMonitor.record("opportunity-attack", System.nanoTime() - tOppS);
             }
             if (result.consumedTick()) {
                 return;
@@ -2225,7 +2227,7 @@ public class BotManager {
             } else {
                 long tStep = System.nanoTime();
                 try { stepMovementCore(entry, targetPos, runAiTick); }
-                finally { BotPerformanceMonitor.record("step-movement-core", System.nanoTime() - tStep); }
+                finally { AgentPerformanceMonitor.record("step-movement-core", System.nanoTime() - tStep); }
             }
             return;
         }
@@ -2236,7 +2238,7 @@ public class BotManager {
             } else {
                 long tFarm = System.nanoTime();
                 try { tickAnchoredFarm(entry, bot, botPos, runAiTick); }
-                finally { BotPerformanceMonitor.record("tick-anchored-farm", System.nanoTime() - tFarm); }
+                finally { AgentPerformanceMonitor.record("tick-anchored-farm", System.nanoTime() - tFarm); }
             }
             return;
         }
@@ -2251,7 +2253,7 @@ public class BotManager {
                 try {
                     grindResult = tickGrindMode(entry, bot, botPos, targetPos, runAiTick);
                 } finally {
-                    BotPerformanceMonitor.record("tick-grind-dispatch", System.nanoTime() - tGrindDispatch);
+                    AgentPerformanceMonitor.record("tick-grind-dispatch", System.nanoTime() - tGrindDispatch);
                 }
             }
             if (grindResult.consumedTick()) {
@@ -2265,7 +2267,7 @@ public class BotManager {
         } else {
             long tStepTail = System.nanoTime();
             try { stepMovementCore(entry, targetPos, runAiTick); }
-            finally { BotPerformanceMonitor.record("step-movement-core", System.nanoTime() - tStepTail); }
+            finally { AgentPerformanceMonitor.record("step-movement-core", System.nanoTime() - tStepTail); }
         }
     }
 
@@ -3362,10 +3364,10 @@ public class BotManager {
         // Single source of truth for the subsystem sequence. Perf instrumentation is gated by
         // `perf` so the hot (monitor-disabled) path pays only cheap branch checks and never
         // allocates timing state, while the enabled path keeps every per-subsystem label.
-        boolean perf = BotPerformanceMonitor.enabled();
+        boolean perf = AgentPerformanceMonitor.enabled();
         long t = perf ? System.nanoTime() : 0L;
         BotCombatManager.tickMobDamage(entry, bot);
-        if (perf) BotPerformanceMonitor.record("common-mob-damage", System.nanoTime() - t);
+        if (perf) AgentPerformanceMonitor.record("common-mob-damage", System.nanoTime() - t);
         if (bot.getHp() <= 0) {
             if (!AgentBotDeathStateRuntime.isDead(entry)) {
                 BotCombatManager.enterDeadState(entry, bot, false);
@@ -3374,7 +3376,7 @@ public class BotManager {
         }
         if (perf) t = System.nanoTime();
         tickReleaseMonsterControl(bot);
-        if (perf) BotPerformanceMonitor.record("common-release-mob", System.nanoTime() - t);
+        if (perf) AgentPerformanceMonitor.record("common-release-mob", System.nanoTime() - t);
         // While a trade window is open, suppress passive loot pickup. pickupItem() runs on
         // this scheduler thread and races Trade.completeTrade()'s addFromDrop on the packet
         // thread: fitsInInventory() can pass, then this fills the last slot before addFromDrop
@@ -3383,55 +3385,55 @@ public class BotManager {
         if (bot.getTrade() == null) {
             if (perf) t = System.nanoTime();
             BotInventoryManager.tickPassiveLoot(entry, bot);
-            if (perf) BotPerformanceMonitor.record("common-passive-loot", System.nanoTime() - t);
+            if (perf) AgentPerformanceMonitor.record("common-passive-loot", System.nanoTime() - t);
         }
         if (perf) t = System.nanoTime();
         BotPotionManager.tickPotionCheck(entry, bot);
-        if (perf) BotPerformanceMonitor.record("common-potion-check", System.nanoTime() - t);
+        if (perf) AgentPerformanceMonitor.record("common-potion-check", System.nanoTime() - t);
         if (perf) t = System.nanoTime();
         BotPotionManager.tickPassiveRecovery(entry, bot);
-        if (perf) BotPerformanceMonitor.record("common-passive-recovery", System.nanoTime() - t);
+        if (perf) AgentPerformanceMonitor.record("common-passive-recovery", System.nanoTime() - t);
         if (perf) t = System.nanoTime();
         BotBuildManager.checkLevelUp(entry, bot);
-        if (perf) BotPerformanceMonitor.record("common-build-levelup", System.nanoTime() - t);
+        if (perf) AgentPerformanceMonitor.record("common-build-levelup", System.nanoTime() - t);
         if (perf) t = System.nanoTime();
         AgentBotManagerStatusRuntime.tickAfkCheck(entry, owner);
-        if (perf) BotPerformanceMonitor.record("common-afk-check", System.nanoTime() - t);
+        if (perf) AgentPerformanceMonitor.record("common-afk-check", System.nanoTime() - t);
         if (perf) t = System.nanoTime();
         BotInventoryManager.tickTrade(entry, bot);
-        if (perf) BotPerformanceMonitor.record("common-trade", System.nanoTime() - t);
+        if (perf) AgentPerformanceMonitor.record("common-trade", System.nanoTime() - t);
         if (perf) t = System.nanoTime();
         BotInventoryManager.tickManualTrade(entry, bot);
-        if (perf) BotPerformanceMonitor.record("common-manual-trade", System.nanoTime() - t);
+        if (perf) AgentPerformanceMonitor.record("common-manual-trade", System.nanoTime() - t);
         if (perf) t = System.nanoTime();
         BotPqHooks.tick(entry, bot, owner);
-        if (perf) BotPerformanceMonitor.record("common-pq-hooks", System.nanoTime() - t);
+        if (perf) AgentPerformanceMonitor.record("common-pq-hooks", System.nanoTime() - t);
         if (perf) t = System.nanoTime();
         tickScriptTasks(entry);
-        if (perf) BotPerformanceMonitor.record("common-script-tasks", System.nanoTime() - t);
+        if (perf) AgentPerformanceMonitor.record("common-script-tasks", System.nanoTime() - t);
         if (BotPqHooks.isNpcLocked(entry)) {
             return true;
         }
         if (perf) t = System.nanoTime();
         BotCombatManager.tickActionLock(entry);
-        if (perf) BotPerformanceMonitor.record("common-action-lock", System.nanoTime() - t);
+        if (perf) AgentPerformanceMonitor.record("common-action-lock", System.nanoTime() - t);
         if (runAiTick) {
             if (perf) t = System.nanoTime();
             BotCombatManager.rebuildSkillCacheIfNeeded(entry, bot);
-            if (perf) BotPerformanceMonitor.record("common-skill-cache", System.nanoTime() - t);
+            if (perf) AgentPerformanceMonitor.record("common-skill-cache", System.nanoTime() - t);
             // Support healing is top priority — runs before buffs so that a bot below the heal
             // threshold casts Heal before a rebuff uses up this tick's action window. If it fires,
             // Agent combat cooldown state is set to the heal animation lock and tickActionLocked()
             // will return true, causing the caller to skip attack logic this tick.
             if (perf) t = System.nanoTime();
             BotCombatManager.tickSupportHealing(entry, bot);
-            if (perf) BotPerformanceMonitor.record("common-support-heal", System.nanoTime() - t);
+            if (perf) AgentPerformanceMonitor.record("common-support-heal", System.nanoTime() - t);
             if (perf) t = System.nanoTime();
             BotCombatManager.tickBuffs(entry, bot);
-            if (perf) BotPerformanceMonitor.record("common-combat-buffs", System.nanoTime() - t);
+            if (perf) AgentPerformanceMonitor.record("common-combat-buffs", System.nanoTime() - t);
             if (perf) t = System.nanoTime();
             BotBuffManager.tick(entry, bot);
-            if (perf) BotPerformanceMonitor.record("common-buff-pots", System.nanoTime() - t);
+            if (perf) AgentPerformanceMonitor.record("common-buff-pots", System.nanoTime() - t);
         }
         return tickActionLocked(entry);
     }
@@ -3770,7 +3772,7 @@ public class BotManager {
     }
 
     private static void tickStuckDetection(BotEntry entry) {
-        if (!BotPerformanceMonitor.enabled()) {
+        if (!AgentPerformanceMonitor.enabled()) {
             doStuckDetection(entry);
             return;
         }
@@ -3779,7 +3781,7 @@ public class BotManager {
         try {
             doStuckDetection(entry);
         } finally {
-            BotPerformanceMonitor.record("stuck-detect", System.nanoTime() - startedAt);
+            AgentPerformanceMonitor.record("stuck-detect", System.nanoTime() - startedAt);
         }
     }
 

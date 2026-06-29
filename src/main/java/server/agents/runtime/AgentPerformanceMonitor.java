@@ -1,4 +1,4 @@
-package server.bots;
+package server.agents.runtime;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public final class BotPerformanceMonitor {
+public final class AgentPerformanceMonitor {
     static final class Config {
         public boolean ENABLED = false;
         public int LOG_INTERVAL_MS = 15000;
@@ -44,7 +44,7 @@ public final class BotPerformanceMonitor {
         }
     }
 
-    private static final Logger log = LoggerFactory.getLogger(BotPerformanceMonitor.class);
+    private static final Logger log = LoggerFactory.getLogger(AgentPerformanceMonitor.class);
     private static final Object LOCK = new Object();
     private static final int MAX_LOGGED_SECTIONS = 12;
     static Config cfg = new Config();
@@ -111,7 +111,7 @@ public final class BotPerformanceMonitor {
         SECTION_NOTES = notes;
     }
 
-    private BotPerformanceMonitor() {
+    private AgentPerformanceMonitor() {
     }
 
     public static boolean enabled() {
@@ -131,18 +131,18 @@ public final class BotPerformanceMonitor {
     }
 
     /** Returns a start timestamp suitable for {@link #recordSince}, or 0 if monitoring is disabled. */
-    static long start() {
+    public static long start() {
         return enabled ? System.nanoTime() : 0L;
     }
 
     /** Records elapsed time since the matching {@link #start} call. No-op when start returned 0. */
-    static void recordSince(String section, long startedAtNs) {
+    public static void recordSince(String section, long startedAtNs) {
         if (startedAtNs != 0L) {
             record(section, System.nanoTime() - startedAtNs);
         }
     }
 
-    static void record(String section, long elapsedNs) {
+    public static void record(String section, long elapsedNs) {
         if (!enabled || elapsedNs < 0) {
             return;
         }
@@ -181,11 +181,11 @@ public final class BotPerformanceMonitor {
         }
     }
 
-    static void recordPathfind(long elapsedNs) {
+    public static void recordPathfind(long elapsedNs) {
         record("pathfind", elapsedNs);
     }
 
-    static void recordPathfind(String caller, long elapsedNs) {
+    public static void recordPathfind(String caller, long elapsedNs) {
         if (caller == null || caller.isBlank()) {
             recordPathfind(elapsedNs);
             return;

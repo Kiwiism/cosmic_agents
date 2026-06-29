@@ -1,9 +1,10 @@
 package server.agents.commands;
 
+import server.agents.runtime.AgentPerformanceMonitor;
+
 import client.Character;
 import server.bots.BotManager;
 import server.bots.BotNavigationDebugOverlay;
-import server.bots.BotPerformanceMonitor;
 import server.bots.llm.BotLlmConfig;
 
 import java.util.List;
@@ -58,10 +59,10 @@ public final class AgentLegacyCommandBridge {
     }
 
     public static boolean togglePerformanceMonitor() {
-        return BotPerformanceMonitor.toggleEnabled();
+        return AgentPerformanceMonitor.toggleEnabled();
     }
 
     public static void setPerformanceMonitorEnabled(boolean enabled) {
-        BotPerformanceMonitor.setEnabled(enabled);
+        AgentPerformanceMonitor.setEnabled(enabled);
     }
 }
