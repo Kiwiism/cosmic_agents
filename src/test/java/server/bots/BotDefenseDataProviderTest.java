@@ -2,12 +2,12 @@ package server.bots;
 
 import client.Job;
 import org.junit.jupiter.api.Test;
-import server.bots.combat.BotDefenseDataProvider;
+import server.agents.capabilities.combat.data.AgentDefenseDataProvider;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class BotDefenseDataProviderTest {
-    private final BotDefenseDataProvider provider = BotDefenseDataProvider.getInstance();
+class AgentDefenseDataProviderTest {
+    private final AgentDefenseDataProvider provider = AgentDefenseDataProvider.getInstance();
 
     @Test
     void shouldFloorWarriorLevelLookupToLowerBucket() {

@@ -53,7 +53,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.StatEffect;
 import server.bots.combat.BotAttackDataProvider;
-import server.bots.combat.BotDefenseDataProvider;
+import server.agents.capabilities.combat.data.AgentDefenseDataProvider;
 import server.agents.capabilities.combat.data.AgentMobHitboxProvider;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.integration.AgentBotAmmoStateRuntime;
@@ -514,7 +514,7 @@ public class BotCombatManager {
     }
 
     private static int rollPhysicalMobDamage(Character bot, Monster mob) {
-        return BotDefenseDataProvider.getInstance().rollPhysicalTouchDamage(bot, mob);
+        return AgentDefenseDataProvider.getInstance().rollPhysicalTouchDamage(bot, mob);
     }
 
     private static boolean shouldApplyMobKnockback(BotEntry entry, Character bot) {

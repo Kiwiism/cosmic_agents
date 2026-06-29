@@ -1,4 +1,4 @@
-package server.bots.combat;
+package server.agents.capabilities.combat.data;
 
 import client.Character;
 import client.Job;
@@ -10,10 +10,10 @@ import java.util.NavigableMap;
 import java.util.TreeMap;
 import java.util.concurrent.ThreadLocalRandom;
 
-public final class BotDefenseDataProvider {
+public final class AgentDefenseDataProvider {
     private static final double MIN_DAMAGE_FACTOR = 0.008d;
     private static final double MAX_DAMAGE_FACTOR = 0.0085d;
-    private static final BotDefenseDataProvider instance = new BotDefenseDataProvider();
+    private static final AgentDefenseDataProvider instance = new AgentDefenseDataProvider();
 
     private enum JobFamily {
         BEGINNER,
@@ -26,11 +26,11 @@ public final class BotDefenseDataProvider {
 
     private final Map<JobFamily, NavigableMap<Integer, Integer>> standardPddTables = new EnumMap<>(JobFamily.class);
 
-    public static BotDefenseDataProvider getInstance() {
+    public static AgentDefenseDataProvider getInstance() {
         return instance;
     }
 
-    private BotDefenseDataProvider() {
+    private AgentDefenseDataProvider() {
         standardPddTables.put(JobFamily.BEGINNER, createTable(
                 entry(1, 7),
                 entry(5, 17),

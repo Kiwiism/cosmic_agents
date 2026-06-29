@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Combat defense data ownership moved to
+  `server.agents.capabilities.combat.data.AgentDefenseDataProvider`. Standard
+  PDD tables, job-family resolution, hit/miss delegation, and physical touch
+  damage formula constants are unchanged.
 - Combat mob hitbox provider ownership moved to
   `server.agents.capabilities.combat.data.AgentMobHitboxProvider`. Mob WZ
   cache invalidation, linked-mob fallback, stand/move/fly frame fallback, and
