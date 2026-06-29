@@ -33,6 +33,11 @@ Recent reconstruction notes:
   Eyes range bonus lookup, and horizontal scaling behavior are unchanged;
   `BotCombatManager` keeps compatibility wrappers for legacy skill-planning
   callers until that planner is extracted.
+- Fall-damage curve ownership moved to
+  `server.agents.capabilities.combat.AgentFallDamageCalculator`. The threshold,
+  saturating-knee formula, linear tail, rounding behavior, and captured
+  real-client sample outputs are unchanged; `BotCombatManager` keeps only a
+  compatibility wrapper used by the current fall-damage side-effect path.
 - Combat attack data provider ownership moved to
   `server.agents.capabilities.combat.data.AgentAttackDataProvider`. Weapon
   normal-attack profile loading, action-spec selection, body action id

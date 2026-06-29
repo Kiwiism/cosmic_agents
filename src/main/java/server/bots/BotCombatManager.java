@@ -5,6 +5,7 @@ import server.agents.capabilities.combat.AgentAttackRoute;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
+import server.agents.capabilities.combat.AgentFallDamageCalculator;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
 
 import server.agents.runtime.AgentPerformanceMonitor;
@@ -371,17 +372,9 @@ public class BotCombatManager {
      *
      * O(1): one exp, two multiplies, one add, one round.
      */
-    static final float FALL_DIST_THRESHOLD_PX = 890.0f;   // below: 0 dmg, no packet
-    static final float FALL_DMG_SAT           = 28.0f;    // asymptote of the knee component
-    static final float FALL_KNEE_SHARPNESS    = 0.013f;   // 1/px — larger = sharper knee
-    static final float FALL_DMG_PER_PX_TAIL   = 0.0024f;  // linear tail slope (dmg/px)
 
     static int fallDamageFromDistance(float distancePx) {
-        if (distancePx <= FALL_DIST_THRESHOLD_PX) return 0;
-        double u = distancePx - FALL_DIST_THRESHOLD_PX;
-        double dmg = FALL_DMG_SAT * (1.0 - Math.exp(-FALL_KNEE_SHARPNESS * u))
-                + FALL_DMG_PER_PX_TAIL * u;
-        return (int) Math.max(1, Math.round(dmg));
+        return AgentFallDamageCalculator.fallDamageFromDistance(distancePx);
     }
 
     /**
