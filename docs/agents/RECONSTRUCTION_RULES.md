@@ -1408,6 +1408,10 @@ Recent reconstruction notes:
   `AgentShopAmmoPolicy`; BotShopManager preserves the same low-ammo
   thresholds, projectile attack ranking, slot-max lookup, shop item selection,
   and purchase/recharge side effects through compatibility delegates.
+- Shop potion selection policy now lives in `AgentShopPotionPolicy`;
+  BotShopManager preserves the same HP/MP recovery band, percent-potion skip,
+  cheapest in-band preference, too-low/too-high fallback ordering, and purchase
+  side effects through compatibility delegates.
 - Fixed inventory trade preflight, recipient-missing, item-missing, cancel,
   decline, timeout, meso-validation, equipped-item preparation, and named-item
   missing replies now live in `AgentDialogueCatalog`; BotInventoryManager

@@ -5,6 +5,7 @@ import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.shop.AgentShopAmmoPolicy;
 import server.agents.capabilities.shop.AgentShopApproachPolicy;
+import server.agents.capabilities.shop.AgentShopPotionPolicy;
 
 import client.Character;
 import client.inventory.InventoryType;
@@ -25,7 +26,6 @@ import server.agents.integration.AgentBotShopStateRuntime;
 import server.Shop;
 import server.ShopFactory;
 import server.ShopItem;
-import server.StatEffect;
 import server.life.NPC;
 import server.maps.MapObject;
 import server.maps.MapObjectType;
@@ -546,62 +546,14 @@ public final class BotShopManager {
     }
 
     private static ShopSlotItem findPotionItem(Shop shop, Character bot, boolean forHp) {
-        List<ShopItem> items = shop.getItems();
         int maxStat = forHp ? bot.getCurrentMaxHp() : bot.getCurrentMaxMp();
-        int minRecover = (int) (maxStat * 0.10);
-        int maxRecover = (int) (maxStat * 0.50);
-
-        ShopSlotItem inBand = null;     // cheapest potion within [minRecover, maxRecover]
-        ShopSlotItem bestTooLow = null; // highest-recover potion below minRecover
-        int bestTooLowRecover = -1;
-        ShopSlotItem bestTooHigh = null; // lowest-recover potion above maxRecover
-        int bestTooHighRecover = Integer.MAX_VALUE;
-        for (int i = 0; i < items.size(); i++) {
-            ShopItem si = items.get(i);
-            if (si.getPrice() <= 0) {
-                continue;
-            }
-            int id = si.getItemId();
-            if (!BotInventoryManager.isRecoveryPotion(id)) {
-                continue;
-            }
-
-            StatEffect fx = BotInventoryManager.itemEffect(id);
-            if (fx == null) {
-                continue;
-            }
-            if (forHp && fx.getHpRate() > 0) {
-                continue;
-            }
-            if (!forHp && fx.getMpRate() > 0) {
-                continue;
-            }
-
-            int recover = forHp ? fx.getHp() : fx.getMp();
-            if (recover <= 0) {
-                continue;
-            }
-
-            if (recover < minRecover) {
-                if (recover > bestTooLowRecover) {
-                    bestTooLowRecover = recover;
-                    bestTooLow = new ShopSlotItem((short) i, si);
-                }
-            } else if (recover > maxRecover) {
-                if (recover < bestTooHighRecover) {
-                    bestTooHighRecover = recover;
-                    bestTooHigh = new ShopSlotItem((short) i, si);
-                }
-            } else if (inBand == null || si.getPrice() < inBand.shopItem.getPrice()) {
-                inBand = new ShopSlotItem((short) i, si);
-            }
-        }
-        // Prefer a potion sized for this bot; otherwise fall back to the closest available:
-        // the strongest that's still too weak, or failing that the weakest that's too strong.
-        if (inBand != null) {
-            return inBand;
-        }
-        return bestTooLow != null ? bestTooLow : bestTooHigh;
+        AgentShopPotionPolicy.PotionShopSlot selected = AgentShopPotionPolicy.selectPotionItem(
+                shop.getItems(),
+                maxStat,
+                forHp,
+                BotInventoryManager::isRecoveryPotion,
+                BotInventoryManager::itemEffect);
+        return selected == null ? null : new ShopSlotItem(selected.slot(), selected.shopItem());
     }
 
     private static AgentBotShopBuyReport buyPotions(Character bot, Shop shop, boolean forHp) {
