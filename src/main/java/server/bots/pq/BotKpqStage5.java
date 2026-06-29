@@ -22,7 +22,7 @@ final class BotKpqStage5 {
 
     static void tick(BotEntry entry, Character bot) {
         if (bot.getMapId() != KPQ_STAGE5_MAP) return;
-        if (entry.kpq.stage5Claimed) return;
+        if (AgentBotPqRuntime.kpqStage5Claimed(entry)) return;
 
         EventInstanceManager eim = bot.getEventInstance();
         if (eim == null || eim.getProperty("5stageclear") == null) return;
@@ -30,7 +30,7 @@ final class BotKpqStage5 {
         Map<Integer, Integer> before = snapshotInventory(bot);
         boolean success = eim.giveEventReward(bot);
         if (success) {
-            entry.kpq.stage5Claimed = true;
+            AgentBotPqRuntime.markKpqStage5Claimed(entry);
             String reward = findNewItem(before, snapshotInventory(bot));
             AgentBotPqRuntime.queueSay(entry, reward != null ? "r, I got " + reward : "r");
         }

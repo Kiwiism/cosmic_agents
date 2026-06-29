@@ -933,6 +933,10 @@ Recent reconstruction notes:
 - KPQ grind-requirement stage reads now enter through `AgentBotPqRuntime`;
   BotPqHooks preserves stage-1 grind gating while no longer reading KPQ state
   directly from BotEntry in production.
+- KPQ stage-5 reward-claim state now enters through `AgentBotPqRuntime`;
+  BotKpqStage5 preserves reward-claim and announcement behavior while no
+  longer reading or writing stage-5 claimed state directly on BotEntry in
+  production.
 
 Initial reconstruction order:
 

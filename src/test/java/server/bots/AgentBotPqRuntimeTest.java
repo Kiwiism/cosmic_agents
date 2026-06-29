@@ -8,6 +8,7 @@ import server.agents.integration.AgentBotReplyRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mockStatic;
 
 class AgentBotPqRuntimeTest {
@@ -38,9 +39,15 @@ class AgentBotPqRuntimeTest {
         BotEntry entry = new BotEntry(null, null, null);
         entry.kpq.stage5Claimed = true;
 
+        assertTrue(AgentBotPqRuntime.kpqStage5Claimed(entry));
+
         AgentBotPqRuntime.resetKpqStage5Claimed(entry);
 
-        assertFalse(entry.kpq.stage5Claimed);
+        assertFalse(AgentBotPqRuntime.kpqStage5Claimed(entry));
+
+        AgentBotPqRuntime.markKpqStage5Claimed(entry);
+
+        assertTrue(AgentBotPqRuntime.kpqStage5Claimed(entry));
     }
 
     @Test

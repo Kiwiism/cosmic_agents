@@ -18,6 +18,14 @@ public final class AgentBotPqRuntime {
         entry.resetKpqStage5Claimed();
     }
 
+    public static boolean kpqStage5Claimed(BotEntry entry) {
+        return entry.kpq.stage5Claimed;
+    }
+
+    public static void markKpqStage5Claimed(BotEntry entry) {
+        entry.kpq.stage5Claimed = true;
+    }
+
     public static int kpqCouponTarget(BotEntry entry) {
         return entry.kpq.couponTarget;
     }
