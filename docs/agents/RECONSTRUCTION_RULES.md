@@ -1380,6 +1380,10 @@ Recent reconstruction notes:
   helper wrappers now live in `AgentCombatScoringPolicy`; BotCombatManager still
   supplies live skill-cache and map monster state while delegating the pure
   cluster scoring policy to Agent combat.
+- Movement cooldown/delay countdown math now lives in
+  `AgentMovementTimingPolicy`; BotMovementManager preserves the same
+  physics-tick input and remains the temporary compatibility delegate for
+  combat, inventory, potion, shop, and trade timers.
 
 Initial reconstruction order:
 

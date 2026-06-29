@@ -3,6 +3,7 @@ package server.bots;
 import server.agents.runtime.AgentPerformanceMonitor;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
+import server.agents.capabilities.movement.AgentMovementTimingPolicy;
 
 import client.Character;
 import io.netty.buffer.Unpooled;
@@ -120,17 +121,11 @@ public class BotMovementManager {
     }
 
     static int tickDown(int remainingMs) {
-        if (remainingMs <= 0) {
-            return 0;
-        }
-        return Math.max(0, remainingMs - BotPhysicsEngine.cfg.TICK_MS);
+        return AgentMovementTimingPolicy.tickDown(remainingMs, BotPhysicsEngine.cfg.TICK_MS);
     }
 
     static int delayAfterCurrentTick(int durationMs) {
-        if (durationMs <= 0) {
-            return 0;
-        }
-        return Math.max(0, durationMs - BotPhysicsEngine.cfg.TICK_MS);
+        return AgentMovementTimingPolicy.delayAfterCurrentTick(durationMs, BotPhysicsEngine.cfg.TICK_MS);
     }
 
     static int walkStep(MapleMap map) {
