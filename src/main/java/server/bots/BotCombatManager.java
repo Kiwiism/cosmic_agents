@@ -1276,7 +1276,6 @@ public class BotCombatManager {
     private static boolean beatsSingleTargetScore(Character bot, BotEntry entry, StatEffect aoeEffect,
                                                   int aoeAttackCount, int targetCount) {
         int aoeDamage = Math.max(0, aoeEffect.getDamage());
-        long aoeScore = (long) aoeDamage * Math.max(1, aoeAttackCount) * Math.max(1, targetCount);
         long singleScore = 100L; // basic attack: 100% damage × 1 line
         int attackSkillId = AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry);
         if (attackSkillId != 0) {
@@ -1290,7 +1289,8 @@ public class BotCombatManager {
                 }
             }
         }
-        return aoeScore > singleScore;
+        return AgentCombatScoringPolicy.aoeBeatsSingleTargetScore(aoeDamage, aoeAttackCount, targetCount,
+                singleScore);
     }
 
     private static List<ScoredGrindTarget> scoreGrindTargets(BotEntry entry,

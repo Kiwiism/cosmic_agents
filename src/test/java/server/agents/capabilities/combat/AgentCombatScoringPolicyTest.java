@@ -1,6 +1,8 @@
 package server.agents.capabilities.combat;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -47,6 +49,19 @@ class AgentCombatScoringPolicyTest {
         assertEquals(400L, AgentCombatScoringPolicy.aoeClusterBonus(
                 target, List.of(target, nearOne, nearTwo, nearThree, far),
                 true, 3, 150, 200L));
+    }
+
+    @Test
+    void shouldCompareAoeScoreAgainstBestSingleTargetScore() {
+        assertTrue(AgentCombatScoringPolicy.aoeBeatsSingleTargetScore(120, 2, 2, 200L));
+        assertFalse(AgentCombatScoringPolicy.aoeBeatsSingleTargetScore(100, 1, 2, 200L));
+        assertFalse(AgentCombatScoringPolicy.aoeBeatsSingleTargetScore(-20, 5, 5, 100L));
+    }
+
+    @Test
+    void shouldBuildSingleTargetScoreFromDamageAndHitCountWithBasicAttackFloor() {
+        assertTrue(AgentCombatScoringPolicy.aoeBeatsSingleTargetScore(120, 2, 2, 150, 2));
+        assertFalse(AgentCombatScoringPolicy.aoeBeatsSingleTargetScore(80, 1, 1, 0, 1));
     }
 
     @Test

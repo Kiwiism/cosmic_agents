@@ -100,8 +100,9 @@ Recent reconstruction notes:
   `server.agents.capabilities.combat.AgentCombatScoringPolicy`. Expected damage
   capping by current HP, local travel-cost estimation, local grind-target
   score penalties, AOE cluster bonus calculation, cluster membership, and
-  nearest-cluster-target selection keep the same formulas; larger attack-plan
-  orchestration and grind-target selection still remain in `BotCombatManager`.
+  nearest-cluster-target selection, plus the AOE-vs-single-target score gate,
+  keep the same formulas; larger attack-plan orchestration, cached skill
+  resolution, and grind-target selection still remain in `BotCombatManager`.
 - Combat attack-plan tie-break ordering moved to
   `server.agents.capabilities.combat.AgentAttackPlanTieBreakPolicy`. Cooldown
   priority and lower-skill-id fallback ordering are unchanged; larger

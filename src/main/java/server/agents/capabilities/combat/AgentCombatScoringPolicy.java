@@ -79,6 +79,29 @@ public final class AgentCombatScoringPolicy {
         return neighbors * bonusPerMob;
     }
 
+    public static boolean aoeBeatsSingleTargetScore(int aoeDamage,
+                                                    int aoeAttackCount,
+                                                    int targetCount,
+                                                    int bestSingleTargetDamage,
+                                                    int bestSingleTargetHitCount) {
+        long aoeScore = (long) Math.max(0, aoeDamage)
+                * Math.max(1, aoeAttackCount)
+                * Math.max(1, targetCount);
+        long singleScore = Math.max(100L, (long) Math.max(0, bestSingleTargetDamage)
+                * Math.max(1, bestSingleTargetHitCount));
+        return aoeScore > singleScore;
+    }
+
+    public static boolean aoeBeatsSingleTargetScore(int aoeDamage,
+                                                    int aoeAttackCount,
+                                                    int targetCount,
+                                                    long singleScore) {
+        long aoeScore = (long) Math.max(0, aoeDamage)
+                * Math.max(1, aoeAttackCount)
+                * Math.max(1, targetCount);
+        return aoeScore > singleScore;
+    }
+
     public static List<Monster> clusterMonsters(Monster primaryTarget,
                                                 Iterable<Monster> candidates,
                                                 int clusterRadiusPx) {
