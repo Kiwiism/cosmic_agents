@@ -1282,15 +1282,20 @@ public class BotCombatManager {
     // from there would beat the fire-now plan's DPS by cfg.AOE_REPOSITION_DPS_FACTOR, else null
     // (fire now). Bounded by AOE_REPOSITION_MAX_DISTANCE_X so it never chases scattering mobs.
     static Point aoeRepositionTarget(BotEntry entry, Character bot, Monster primaryTarget, AttackPlan fireNowBest) {
-        if (!cfg.AOE_REPOSITION_ENABLED || entry == null || bot == null || primaryTarget == null
-                || !AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry)) {
-            return null;
-        }
+        boolean hasMultiMobAoeSkill = entry != null && AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry);
+        int aoeSkillId = entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry);
+        int aoeSkillMobs = entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry);
         // Only when the chosen plan is single-target with room to hit more — skip when the AoE is
         // already the pick or the in-range cluster already maxes the skill's mobCount.
-        if (fireNowBest == null
-                || fireNowBest.skillId == AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry)
-                || fireNowBest.targets.size() >= AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry)) {
+        if (!AgentCombatScoringPolicy.shouldConsiderAoeReposition(
+                cfg.AOE_REPOSITION_ENABLED,
+                entry != null && bot != null,
+                primaryTarget != null,
+                hasMultiMobAoeSkill,
+                fireNowBest != null,
+                fireNowBest != null && fireNowBest.skillId == aoeSkillId,
+                fireNowBest == null ? 0 : fireNowBest.targets.size(),
+                aoeSkillMobs)) {
             return null;
         }
         Point botPos = bot.getPosition();
@@ -1310,8 +1315,6 @@ public class BotCombatManager {
         // anchor), so to cover the cluster we shift the box CENTER onto the centroid — not the bot
         // onto the centroid, which would push a forward box past the mobs and catch none. The bot
         // moves by the same shift, bounded by the chase distance.
-        int aoeSkillId = AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry);
-        int aoeSkillMobs = AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry);
         AttackPlan aoeNow = planSkillAttack(entry, bot, primaryTarget, aoeSkillId);
         if (aoeNow == null || aoeNow.hitBox == null) {
             return null;

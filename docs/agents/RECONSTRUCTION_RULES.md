@@ -1404,6 +1404,10 @@ Recent reconstruction notes:
 - AoE reposition centroid, bounded-shift, and arrival-window math now live in
   `AgentCombatScoringPolicy`; BotCombatManager still owns plan construction,
   translated-hitbox target collection, DPS comparison, and debug logging.
+- AoE reposition preflight gating now lives in `AgentCombatScoringPolicy`;
+  BotCombatManager still supplies live config, runtime, selected-plan, and
+  cached AoE-skill inputs while Agent combat owns the early decision to skip
+  reposition work.
 - Grind-region sibling occupant eligibility/counting rules now live in
   `AgentCombatGrindTargetPolicy`; BotCombatManager still gathers live sibling
   agents and resolves their navigation regions through the legacy bot runtime.

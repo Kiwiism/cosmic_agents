@@ -170,6 +170,26 @@ class AgentCombatScoringPolicyTest {
         assertFalse(AgentCombatScoringPolicy.isWithinRepositionArrival(11, 10));
     }
 
+    @Test
+    void shouldGateAoeRepositionPreflight() {
+        assertTrue(AgentCombatScoringPolicy.shouldConsiderAoeReposition(
+                true, true, true, true, true, false, 1, 6));
+        assertFalse(AgentCombatScoringPolicy.shouldConsiderAoeReposition(
+                false, true, true, true, true, false, 1, 6));
+        assertFalse(AgentCombatScoringPolicy.shouldConsiderAoeReposition(
+                true, false, true, true, true, false, 1, 6));
+        assertFalse(AgentCombatScoringPolicy.shouldConsiderAoeReposition(
+                true, true, false, true, true, false, 1, 6));
+        assertFalse(AgentCombatScoringPolicy.shouldConsiderAoeReposition(
+                true, true, true, false, true, false, 1, 6));
+        assertFalse(AgentCombatScoringPolicy.shouldConsiderAoeReposition(
+                true, true, true, true, false, false, 1, 6));
+        assertFalse(AgentCombatScoringPolicy.shouldConsiderAoeReposition(
+                true, true, true, true, true, true, 1, 6));
+        assertFalse(AgentCombatScoringPolicy.shouldConsiderAoeReposition(
+                true, true, true, true, true, false, 6, 6));
+    }
+
     private static Monster mobAt(int x, int y, boolean alive) {
         Monster mob = mock(Monster.class);
         when(mob.getPosition()).thenReturn(new Point(x, y));

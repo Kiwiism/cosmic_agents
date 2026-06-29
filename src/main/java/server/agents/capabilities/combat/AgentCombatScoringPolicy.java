@@ -210,4 +210,20 @@ public final class AgentCombatScoringPolicy {
     public static boolean isWithinRepositionArrival(int shift, int arrivalX) {
         return Math.abs(shift) <= arrivalX;
     }
+
+    public static boolean shouldConsiderAoeReposition(boolean repositionEnabled,
+                                                      boolean hasRuntimeContext,
+                                                      boolean hasPrimaryTarget,
+                                                      boolean hasMultiMobAoeSkill,
+                                                      boolean hasFireNowPlan,
+                                                      boolean fireNowIsAoeSkill,
+                                                      int fireNowTargetCount,
+                                                      int aoeMobCount) {
+        if (!repositionEnabled || !hasRuntimeContext || !hasPrimaryTarget || !hasMultiMobAoeSkill) {
+            return false;
+        }
+        return hasFireNowPlan
+                && !fireNowIsAoeSkill
+                && fireNowTargetCount < aoeMobCount;
+    }
 }
