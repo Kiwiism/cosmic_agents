@@ -1,7 +1,9 @@
 package server.agents.capabilities.combat;
 
+import client.Character;
 import client.BuffStat;
 import client.Skill;
+import constants.game.GameConstants;
 import constants.skills.Assassin;
 import constants.skills.Bandit;
 import constants.skills.Bowmaster;
@@ -23,6 +25,7 @@ import constants.skills.WhiteKnight;
 import server.StatEffect;
 import tools.Pair;
 
+import java.util.Map;
 import java.util.Set;
 
 public final class AgentCombatSkillClassifier {
@@ -120,5 +123,47 @@ public final class AgentCombatSkillClassifier {
 
     public static boolean isHealSkill(int skillId) {
         return skillId == Cleric.HEAL || skillId == SuperGM.HEAL_PLUS_DISPEL;
+    }
+
+    public static int skillCacheSignature(Character bot) {
+        int result = 1;
+        for (Map.Entry<Skill, Character.SkillEntry> learned : bot.getSkills().entrySet()) {
+            Skill skill = learned.getKey();
+            if (skill == null) {
+                continue;
+            }
+            result = 31 * result + skill.getId();
+            result = 31 * result + bot.getSkillLevel(skill);
+        }
+        return result;
+    }
+
+    public static boolean shouldUseAsBestSingleTargetSkill(Character bot, Skill skill, StatEffect effect,
+                                                           int attackCount, int bestAttackCount,
+                                                           int bestPriority, int bestDamage,
+                                                           int currentBestSkillId) {
+        int priority = singleTargetSkillPriority(bot, skill);
+        if (priority != bestPriority) {
+            return priority > bestPriority;
+        }
+
+        int damage = effect != null ? effect.getDamagePercent() : 0;
+        int score = damage * attackCount;
+        int bestScore = bestDamage * bestAttackCount;
+        if (score != bestScore) {
+            return score > bestScore;
+        }
+
+        return currentBestSkillId == 0 || skill.getId() < currentBestSkillId;
+    }
+
+    public static int singleTargetSkillPriority(Character bot, Skill skill) {
+        if (skill == null) {
+            return Integer.MIN_VALUE;
+        }
+        if (skill.isBeginnerSkill()) {
+            return 0;
+        }
+        return GameConstants.isInJobTree(skill.getId(), bot.getJob().getId()) ? 2 : 1;
     }
 }

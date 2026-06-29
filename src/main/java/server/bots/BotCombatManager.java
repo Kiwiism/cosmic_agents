@@ -31,7 +31,6 @@ import client.SkillFactory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.WeaponType;
-import constants.game.GameConstants;
 import constants.skills.Assassin;
 import constants.skills.Bandit;
 import constants.skills.Bowmaster;
@@ -422,16 +421,7 @@ public class BotCombatManager {
     }
 
     private static int skillCacheSignature(Character bot) {
-        int result = 1;
-        for (Map.Entry<Skill, Character.SkillEntry> learned : bot.getSkills().entrySet()) {
-            Skill skill = learned.getKey();
-            if (skill == null) {
-                continue;
-            }
-            result = 31 * result + skill.getId();
-            result = 31 * result + bot.getSkillLevel(skill);
-        }
-        return result;
+        return AgentCombatSkillClassifier.skillCacheSignature(bot);
     }
 
     static void tickBuffs(BotEntry entry, Character bot) {
@@ -478,29 +468,12 @@ public class BotCombatManager {
                                                             int attackCount, int bestAttackCount,
                                                             int bestPriority, int bestDamage,
                                                             int currentBestSkillId) {
-        int priority = singleTargetSkillPriority(bot, skill);
-        if (priority != bestPriority) {
-            return priority > bestPriority;
-        }
-
-        int damage = effect != null ? effect.getDamagePercent() : 0;
-        int score = damage * attackCount;
-        int bestScore = bestDamage * bestAttackCount;
-        if (score != bestScore) {
-            return score > bestScore;
-        }
-
-        return currentBestSkillId == 0 || skill.getId() < currentBestSkillId;
+        return AgentCombatSkillClassifier.shouldUseAsBestSingleTargetSkill(bot, skill, effect, attackCount,
+                bestAttackCount, bestPriority, bestDamage, currentBestSkillId);
     }
 
     private static int singleTargetSkillPriority(Character bot, Skill skill) {
-        if (skill == null) {
-            return Integer.MIN_VALUE;
-        }
-        if (skill.isBeginnerSkill()) {
-            return 0;
-        }
-        return GameConstants.isInJobTree(skill.getId(), bot.getJob().getId()) ? 2 : 1;
+        return AgentCombatSkillClassifier.singleTargetSkillPriority(bot, skill);
     }
 
     /**
