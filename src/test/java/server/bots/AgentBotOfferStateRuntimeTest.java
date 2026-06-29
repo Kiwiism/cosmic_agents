@@ -73,4 +73,19 @@ class AgentBotOfferStateRuntimeTest {
         assertEquals(0L, AgentBotOfferStateRuntime.pendingLootOfferExpiresAt(entry));
         assertFalse(AgentBotOfferStateRuntime.pendingLootOfferBotRequesting(entry));
     }
+
+    @Test
+    void adaptsRequestedUpgradeItemsAndProactiveOfferToggle() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        assertFalse(AgentBotOfferStateRuntime.hasRequestedUpgradeItem(entry, 1002000));
+        assertTrue(AgentBotOfferStateRuntime.proactiveUpgradeOffers(entry));
+
+        AgentBotOfferStateRuntime.rememberRequestedUpgradeItem(entry, 1002000);
+        entry.setProactiveUpgradeOffers(false);
+
+        assertTrue(AgentBotOfferStateRuntime.hasRequestedUpgradeItem(entry, 1002000));
+        assertFalse(AgentBotOfferStateRuntime.proactiveUpgradeOffers(entry));
+        assertFalse(AgentBotOfferStateRuntime.proactiveUpgradeOffers(null));
+    }
 }

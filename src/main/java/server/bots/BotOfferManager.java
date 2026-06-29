@@ -16,6 +16,7 @@ import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.agents.integration.AgentBotReplyChannelStateRuntime;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,13 +53,13 @@ public final class BotOfferManager {
         if (AgentBotOfferRuntime.isOwnerIdleForOffer(entry)) {
             return;
         }
-        if (entry.requestedUpgradeItemIds.contains(item.getItemId())) {
+        if (AgentBotOfferStateRuntime.hasRequestedUpgradeItem(entry, item.getItemId())) {
             return;
         }
         if (AgentBotPendingActionStateRuntime.hasPendingAction(entry) || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry) || hasOfferReservation(entry)) {
             return;
         }
-        Character owner = entry.owner;
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner == null) {
             return;
         }
@@ -67,12 +68,12 @@ public final class BotOfferManager {
             return;
         }
 
-        entry.requestedUpgradeItemIds.add(item.getItemId());
+        AgentBotOfferStateRuntime.rememberRequestedUpgradeItem(entry, item.getItemId());
         createOwnerUpgradeRequest(entry, bot, owner, item);
     }
 
     public static void requestBestUpgradeFromOwner(BotEntry entry, Character bot) {
-        Character owner = entry.owner;
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner == null) {
             return;
         }
@@ -86,7 +87,7 @@ public final class BotOfferManager {
             return;
         }
         Item candidate = recs.get(0).candidate();
-        entry.requestedUpgradeItemIds.add(candidate.getItemId());
+        AgentBotOfferStateRuntime.rememberRequestedUpgradeItem(entry, candidate.getItemId());
         createOwnerUpgradeRequest(entry, bot, owner, candidate);
     }
 
@@ -109,7 +110,7 @@ public final class BotOfferManager {
     }
 
     public static boolean offerBestGearToSibling(BotEntry entry, Character bot) {
-        Character owner = entry.owner;
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner == null) {
             return false;
         }
@@ -139,7 +140,7 @@ public final class BotOfferManager {
     }
 
     static void scheduleLootOfferPrompt(BotEntry entry, Character bot, Item item, long delayMs) {
-        Character owner = entry.owner;
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         long now = System.currentTimeMillis();
         if (owner == null
                 || item == null
@@ -184,7 +185,8 @@ public final class BotOfferManager {
                 AgentBotOfferStateRuntime.clearPendingOfferForAcceptedTransfer(entry);
                 AgentBotOfferRuntime.afterRandomDelay(900, 1100, () -> {
                     AgentBotOfferStateRuntime.clearPendingOfferItem(entry);
-                    BotInventoryManager.startTradeTransfer(item, speaker, entry, entry.bot);
+                    BotInventoryManager.startTradeTransfer(
+                            item, speaker, entry, AgentBotRuntimeIdentityRuntime.bot(entry));
                 });
             }
             return true;
@@ -192,10 +194,11 @@ public final class BotOfferManager {
         if (NEGATIVE_CONFIRM_PATTERN.matcher(message).find()) {
             clearPendingOffer(entry);
             AgentBotOfferRuntime.afterRandomDelay(400, 600, () -> {
-                if (entry.owner != null && speaker.getId() == entry.owner.getId()) {
+                Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+                if (owner != null && speaker.getId() == owner.getId()) {
                     AgentBotOfferRuntime.replyNow(entry, "ok, keeping it for now");
                 } else {
-                    AgentBotOfferRuntime.sayMapNow(entry.bot, "ok, keeping it for now");
+                    AgentBotOfferRuntime.sayMapNow(AgentBotRuntimeIdentityRuntime.bot(entry), "ok, keeping it for now");
                 }
             });
             return true;
@@ -240,7 +243,7 @@ public final class BotOfferManager {
         AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
         AgentBotOfferStateRuntime.setPendingLootOffer(entry, item, recipient.getId(), System.currentTimeMillis() + 30_000L, false);
         long promptDelayMs = AgentBotOfferRuntime.queueSayWithEstimatedDelay(entry,
-                buildLootOfferPrompt(recipient, entry.owner, item, need == GearOfferNeed.FUTURE));
+                buildLootOfferPrompt(recipient, AgentBotRuntimeIdentityRuntime.owner(entry), item, need == GearOfferNeed.FUTURE));
         scheduleBotLootOfferAutoAccept(entry, recipient, promptDelayMs);
         return true;
     }
@@ -256,7 +259,7 @@ public final class BotOfferManager {
             return;
         }
 
-        Character owner = entry.owner;
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         Character recipient = resolveReservedOfferRecipient(entry, bot, recipientId);
         if (owner == null
                 || AgentBotPendingActionStateRuntime.hasPendingAction(entry)
@@ -424,7 +427,7 @@ public final class BotOfferManager {
     }
 
     private static Character findLootOfferRecipient(BotEntry entry, Character bot, Item item) {
-        Character owner = entry.owner;
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner == null) {
             return null;
         }
@@ -458,7 +461,7 @@ public final class BotOfferManager {
         if (!current.isEmpty()) {
             return new GearOfferChoice(current.get(0).candidate(), GearOfferNeed.CURRENT);
         }
-        if (entry != null && entry.proactiveUpgradeOffers) {
+        if (AgentBotOfferStateRuntime.proactiveUpgradeOffers(entry)) {
             ItemInformationProvider ii = ItemInformationProvider.getInstance();
             for (Equip equip : offerable) {
                 if (BotEquipManager.wouldReserveIncomingItem(recipient, ii, equip)) {
@@ -494,7 +497,7 @@ public final class BotOfferManager {
         if (BotEquipManager.findRecommendationForItem(recipient, donor, item) != null) {
             return GearOfferNeed.CURRENT;
         }
-        if (entry != null && entry.proactiveUpgradeOffers && item instanceof Equip equip) {
+        if (AgentBotOfferStateRuntime.proactiveUpgradeOffers(entry) && item instanceof Equip equip) {
             if (BotEquipManager.wouldReserveIncomingItem(recipient, ItemInformationProvider.getInstance(), equip)) {
                 return GearOfferNeed.FUTURE;
             }
@@ -522,7 +525,7 @@ public final class BotOfferManager {
             return false;
         }
 
-        Character owner = entry.owner;
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner == null) {
             return false;
         }
@@ -661,7 +664,7 @@ public final class BotOfferManager {
     }
 
     private static Character resolveReservedOfferRecipient(BotEntry entry, Character bot, int recipientId) {
-        Character owner = entry.owner;
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner != null && owner.getId() == recipientId) {
             return owner;
         }

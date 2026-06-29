@@ -846,6 +846,12 @@ Recent reconstruction notes:
   write shop visit fields directly in production. Shop approach graph profile
   lookup now reads through `AgentBotMovementStateRuntime`, and delayed abort
   identity reads through `AgentBotRuntimeIdentityRuntime`.
+- Offer request/proactive-offer state now enters through
+  `AgentBotOfferStateRuntime`; BotOfferManager owner upgrade request memory,
+  proactive shared-loot offer checks, accepted/declined offer callbacks, sibling
+  recipient scans, and reserved-offer recipient resolution keep BotEntry as the
+  temporary backing store but no longer read `requestedUpgradeItemIds`,
+  `proactiveUpgradeOffers`, `owner`, or `bot` directly in production.
 
 Initial reconstruction order:
 

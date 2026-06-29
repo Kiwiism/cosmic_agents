@@ -89,4 +89,16 @@ public final class AgentBotOfferStateRuntime {
     public static void clearPendingOffer(BotEntry entry) {
         entry.clearPendingLootOffer();
     }
+
+    public static boolean hasRequestedUpgradeItem(BotEntry entry, int itemId) {
+        return entry.hasRequestedUpgradeItem(itemId);
+    }
+
+    public static void rememberRequestedUpgradeItem(BotEntry entry, int itemId) {
+        entry.rememberRequestedUpgradeItem(itemId);
+    }
+
+    public static boolean proactiveUpgradeOffers(BotEntry entry) {
+        return entry != null && entry.proactiveUpgradeOffers();
+    }
 }

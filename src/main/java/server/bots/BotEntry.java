@@ -1364,6 +1364,10 @@ public class BotEntry {
         this.proactiveUpgradeOffers = proactiveUpgradeOffers;
     }
 
+    public boolean proactiveUpgradeOffers() {
+        return proactiveUpgradeOffers;
+    }
+
     // Skill buff tracking (always enabled; tracks last decision for debug)
     private long lastSkillBuffActionAtMs = 0L;
     private String lastSkillBuffActionSummary = "no skill buff checks yet";
@@ -1481,6 +1485,15 @@ public class BotEntry {
         this.spawnUpgradeCheckDone = spawnUpgradeCheckDone;
     }
     final Set<Integer> requestedUpgradeItemIds = ConcurrentHashMap.newKeySet();
+
+    public boolean hasRequestedUpgradeItem(int itemId) {
+        return requestedUpgradeItemIds.contains(itemId);
+    }
+
+    public void rememberRequestedUpgradeItem(int itemId) {
+        requestedUpgradeItemIds.add(itemId);
+    }
+
     boolean pendingLootOfferBotRequesting = false; // true = bot asked for owner's item
     double recentScrollReactionLoad = 0.0;
     long lastScrollReactionObservedAtMs = 0L;
