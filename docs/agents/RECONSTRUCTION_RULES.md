@@ -21,7 +21,10 @@ Recent reconstruction notes:
   `server.agents.capabilities.combat.AgentCombatConfig`. `BotCombatManager.cfg`
   remains as a compatibility alias to the same live config object, so existing
   bot config commands and tests keep the same behavior while Agent combat code
-  no longer reads config through `BotCombatManager`.
+  no longer reads config through `BotCombatManager`. Combat config field
+  listing, case-insensitive lookup, live mutation, and legacy value parsing now
+  also live on `AgentCombatConfig`; `BotCombatManager` keeps compatibility
+  wrappers for existing command paths.
 - Combat ammo counting ownership moved to
   `server.agents.capabilities.combat.AgentCombatAmmoCounter`. Ranged-ammo weapon
   classification, Soul Arrow/Shadow Claw unlimited-ammo behavior, and USE

@@ -159,32 +159,12 @@ public class BotCombatManager {
 
     /** Admin/debug (!botcfg): "FIELD = value" for every public combat config field, sorted. */
     public static List<String> configFieldLines() {
-        List<String> out = new ArrayList<>();
-        for (java.lang.reflect.Field f : AgentCombatConfig.Config.class.getDeclaredFields()) {
-            if (!java.lang.reflect.Modifier.isPublic(f.getModifiers())) {
-                continue;
-            }
-            try {
-                out.add(f.getName() + " = " + f.get(cfg));
-            } catch (IllegalAccessException ignored) {
-            }
-        }
-        out.sort(String::compareTo);
-        return out;
+        return AgentCombatConfig.configFieldLines();
     }
 
     /** Admin/debug (!botcfg): "FIELD = value" for one field (case-insensitive), or null if unknown. */
     public static String configFieldLine(String name) {
-        for (java.lang.reflect.Field f : AgentCombatConfig.Config.class.getDeclaredFields()) {
-            if (java.lang.reflect.Modifier.isPublic(f.getModifiers()) && f.getName().equalsIgnoreCase(name)) {
-                try {
-                    return f.getName() + " = " + f.get(cfg);
-                } catch (IllegalAccessException e) {
-                    return null;
-                }
-            }
-        }
-        return null;
+        return AgentCombatConfig.configFieldLine(name);
     }
 
     /**
@@ -192,46 +172,7 @@ public class BotCombatManager {
      * Returns a human-readable result; success messages start with "OK".
      */
     public static String setConfigField(String name, String rawValue) {
-        for (java.lang.reflect.Field f : AgentCombatConfig.Config.class.getDeclaredFields()) {
-            if (!java.lang.reflect.Modifier.isPublic(f.getModifiers()) || !f.getName().equalsIgnoreCase(name)) {
-                continue;
-            }
-            try {
-                Object parsed = parseConfigValue(f.getType(), rawValue.trim());
-                f.set(cfg, parsed);
-                return "OK: " + f.getName() + " = " + parsed;
-            } catch (NumberFormatException e) {
-                return "bad value '" + rawValue + "' for " + f.getName() + " (" + f.getType().getSimpleName() + ")";
-            } catch (IllegalAccessException e) {
-                return "cannot set " + f.getName();
-            }
-        }
-        return "unknown field: " + name;
-    }
-
-    private static Object parseConfigValue(Class<?> type, String v) {
-        if (type == boolean.class || type == Boolean.class) {
-            if (v.equalsIgnoreCase("true") || v.equals("1") || v.equalsIgnoreCase("on")) {
-                return Boolean.TRUE;
-            }
-            if (v.equalsIgnoreCase("false") || v.equals("0") || v.equalsIgnoreCase("off")) {
-                return Boolean.FALSE;
-            }
-            throw new NumberFormatException(v);
-        }
-        if (type == int.class || type == Integer.class) {
-            return Integer.parseInt(v);
-        }
-        if (type == long.class || type == Long.class) {
-            return Long.parseLong(v);
-        }
-        if (type == double.class || type == Double.class) {
-            return Double.parseDouble(v);
-        }
-        if (type == float.class || type == Float.class) {
-            return Float.parseFloat(v);
-        }
-        throw new NumberFormatException(v);
+        return AgentCombatConfig.setConfigField(name, rawValue);
     }
 
     private static final List<String> DEATH_REPLIES = List.of(
