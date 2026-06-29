@@ -1348,6 +1348,10 @@ Recent reconstruction notes:
   policy now live in `AgentAmmoSharePolicy`; BotAmmoManager preserves the same
   cooldown/backoff, donor scan, visible request/offer dialogue, delayed trade,
   and inventory transfer behavior through compatibility delegates.
+- USE-item recovery-potion and buff-consumable classification now lives in
+  `AgentUseItemClassificationPolicy`; BotInventoryManager and Agent inventory
+  dialogue reporting preserve their existing item-effect lookup and category
+  behavior through compatibility delegates.
 
 Initial reconstruction order:
 

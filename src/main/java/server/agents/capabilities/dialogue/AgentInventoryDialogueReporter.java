@@ -8,6 +8,7 @@ import config.YamlConfig;
 import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
 import server.StatEffect;
+import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -110,17 +111,11 @@ public final class AgentInventoryDialogueReporter {
     }
 
     private static boolean isRecoveryPotion(int itemId) {
-        StatEffect effect = itemEffect(itemId);
-        if (effect == null) {
-            return false;
-        }
-        boolean heals = effect.getHp() > 0 || effect.getMp() > 0 || effect.getHpRate() > 0 || effect.getMpRate() > 0;
-        return heals && effect.getStatups().isEmpty();
+        return AgentUseItemClassificationPolicy.isRecoveryPotion(itemEffect(itemId));
     }
 
     private static boolean isBuffConsumable(int itemId) {
-        StatEffect effect = itemEffect(itemId);
-        return effect != null && !effect.getStatups().isEmpty();
+        return AgentUseItemClassificationPolicy.isBuffConsumable(itemEffect(itemId));
     }
 
     private static StatEffect itemEffect(int itemId) {

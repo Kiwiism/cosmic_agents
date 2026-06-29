@@ -26,6 +26,7 @@ import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy;
 import server.agents.capabilities.inventory.AgentInventorySellTrashPolicy;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
+import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.supplies.AgentPotionSharePolicy;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
 import server.agents.integration.AgentBotInventoryRuntime;
@@ -1188,15 +1189,11 @@ public class BotInventoryManager {
     }
 
     static boolean isRecoveryPotion(int itemId) {
-        StatEffect fx = itemEffect(itemId);
-        if (fx == null) return false;
-        boolean heals = fx.getHp() > 0 || fx.getMp() > 0 || fx.getHpRate() > 0 || fx.getMpRate() > 0;
-        return heals && fx.getStatups().isEmpty();
+        return AgentUseItemClassificationPolicy.isRecoveryPotion(itemEffect(itemId));
     }
 
     static boolean isBuffConsumable(int itemId) {
-        StatEffect fx = itemEffect(itemId);
-        return fx != null && !fx.getStatups().isEmpty();
+        return AgentUseItemClassificationPolicy.isBuffConsumable(itemEffect(itemId));
     }
 
     private static void collectFromBag(Character bot, List<Item> result,
