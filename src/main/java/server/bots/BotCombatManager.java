@@ -687,18 +687,24 @@ public class BotCombatManager {
     }
 
     static boolean isReachableGrindTarget(BotEntry entry, Character bot, Monster target) {
-        if (target == null || !target.isAlive()) {
-            return false;
-        }
-        if (entry == null || bot == null) {
-            return true;
-        }
-
-        GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, bot.getPosition());
-        if (isImmediateProjectileTarget(entry, bot, target)) {
-            return true;
-        }
-        return !graphContext.available() || graphTargetCost(graphContext, target) < UNREACHABLE_GRAPH_COST;
+        boolean targetPresentAndAlive = target != null && target.isAlive();
+        boolean hasRuntimeContext = entry != null && bot != null;
+        GrindGraphContext graphContext = targetPresentAndAlive && hasRuntimeContext
+                ? GrindGraphContext.resolve(entry, bot, bot.getPosition())
+                : null;
+        boolean immediateProjectileTarget = targetPresentAndAlive && hasRuntimeContext
+                && isImmediateProjectileTarget(entry, bot, target);
+        boolean graphAvailable = graphContext != null && graphContext.available();
+        long targetCost = targetPresentAndAlive && hasRuntimeContext && !immediateProjectileTarget && graphAvailable
+                ? graphTargetCost(graphContext, target)
+                : UNREACHABLE_GRAPH_COST;
+        return AgentCombatGrindTargetPolicy.isReachableGrindTarget(
+                targetPresentAndAlive,
+                hasRuntimeContext,
+                immediateProjectileTarget,
+                graphAvailable,
+                targetCost,
+                UNREACHABLE_GRAPH_COST);
     }
 
     static AttackPlan planAttack(BotEntry entry, Character bot, Monster target) {

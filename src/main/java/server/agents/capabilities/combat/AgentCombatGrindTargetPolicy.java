@@ -183,6 +183,24 @@ public final class AgentCombatGrindTargetPolicy {
                 && occupiedRegionId == targetRegionId;
     }
 
+    public static boolean isReachableGrindTarget(boolean targetPresentAndAlive,
+                                                 boolean hasRuntimeContext,
+                                                 boolean immediateProjectileTarget,
+                                                 boolean graphAvailable,
+                                                 long graphTargetCost,
+                                                 long unreachableGraphCost) {
+        if (!targetPresentAndAlive) {
+            return false;
+        }
+        if (!hasRuntimeContext) {
+            return true;
+        }
+        if (immediateProjectileTarget) {
+            return true;
+        }
+        return !graphAvailable || graphTargetCost < unreachableGraphCost;
+    }
+
     public static AgentScoredGrindTarget toScoredTarget(AgentGrindTargetGroup group,
                                                         long pathCost,
                                                         long occupancyPenalty,

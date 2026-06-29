@@ -1327,6 +1327,10 @@ Recent reconstruction notes:
   `AgentCombatGrindTargetPolicy`; BotCombatManager still supplies the scored
   candidates while Agent combat owns legacy ordering, reachable-target
   preference, and all-unreachable rejection.
+- Reachable grind-target decision logic now lives in
+  `AgentCombatGrindTargetPolicy`; BotCombatManager still resolves immediate
+  projectile eligibility and graph target cost lazily while Agent combat owns
+  the dead-target, missing-runtime, no-graph, and unreachable-cost decisions.
 - Buff blacklist classification now lives in `AgentCombatSkillClassifier`;
   BotCombatManager preserves the same Dark Sight exclusion behavior while the
   never-cast skill list is owned by Agent combat classification.

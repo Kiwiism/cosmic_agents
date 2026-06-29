@@ -309,6 +309,22 @@ class AgentCombatGrindTargetPolicyTest {
     }
 
     @Test
+    void shouldResolveReachableGrindTargetWithLegacyFallbacks() {
+        assertFalse(AgentCombatGrindTargetPolicy.isReachableGrindTarget(
+                false, false, false, false, 0L, 999L));
+        assertTrue(AgentCombatGrindTargetPolicy.isReachableGrindTarget(
+                true, false, false, false, 999L, 999L));
+        assertTrue(AgentCombatGrindTargetPolicy.isReachableGrindTarget(
+                true, true, true, true, 999L, 999L));
+        assertTrue(AgentCombatGrindTargetPolicy.isReachableGrindTarget(
+                true, true, false, false, 999L, 999L));
+        assertTrue(AgentCombatGrindTargetPolicy.isReachableGrindTarget(
+                true, true, false, true, 998L, 999L));
+        assertFalse(AgentCombatGrindTargetPolicy.isReachableGrindTarget(
+                true, true, false, true, 999L, 999L));
+    }
+
+    @Test
     void shouldCalculateGraphPathCostFromLegacyPathInputs() {
         assertEquals(9_999L, AgentCombatGrindTargetPolicy.graphPathCost(
                 false, false, 123L, List.of(100L), 9_999L));
