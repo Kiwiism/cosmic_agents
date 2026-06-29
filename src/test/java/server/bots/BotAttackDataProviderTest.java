@@ -3,7 +3,7 @@ package server.bots;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 
 import org.junit.jupiter.api.Test;
-import server.bots.combat.BotAttackDataProvider;
+import server.agents.capabilities.combat.data.AgentAttackDataProvider;
 import server.agents.capabilities.combat.data.AgentAttackTiming;
 
 import java.awt.Point;
@@ -15,10 +15,10 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class BotAttackDataProviderTest {
+class AgentAttackDataProviderTest {
     @Test
     void shouldMatchOpenStoryBodyAndAfterimageAttackTimingInputs() {
-        BotAttackDataProvider provider = BotAttackDataProvider.getInstance();
+        AgentAttackDataProvider provider = AgentAttackDataProvider.getInstance();
 
         assertTrue(provider.getBodyStanceDurationMs("swingO1") > 0);
         assertTrue(provider.getBodyStanceDelayBeforeFrameMs("swingO1", 2) > 0);
@@ -43,7 +43,7 @@ class BotAttackDataProviderTest {
         assertEquals(0x00, AgentAttackExecutionProvider.attackPacketStance(false));
         assertEquals(0x80, AgentAttackExecutionProvider.attackPacketStance(true));
 
-        BotAttackDataProvider.NormalAttackProfile profile = provider.getNormalAttackProfile(1302077);
+        AgentAttackDataProvider.NormalAttackProfile profile = provider.getNormalAttackProfile(1302077);
         assertNotNull(profile);
         assertTrue(profile.getSourceActions().contains("swingO1"));
         assertTrue(profile.getAfterimageFirstFrame("swingO1") > 0);
@@ -51,7 +51,7 @@ class BotAttackDataProviderTest {
 
     @Test
     void shouldPreferExplicitBodyActionTimingOverSkillAnimationDelay() {
-        BotAttackDataProvider provider = BotAttackDataProvider.getInstance();
+        AgentAttackDataProvider provider = AgentAttackDataProvider.getInstance();
         int rawActionHitDelayMs = provider.getBodyActionAttackDelayMs("doublefire", 0);
         int rawActionDurationMs = provider.getBodyActionDurationMs("doublefire");
         AgentAttackExecutionProvider.SkillAttackTiming timing =
@@ -65,8 +65,8 @@ class BotAttackDataProviderTest {
 
     @Test
     void shouldUseBodyStanceTimingForExplicitStanceStyleSkillActions() {
-        BotAttackDataProvider provider = BotAttackDataProvider.getInstance();
-        BotAttackDataProvider.NormalAttackProfile profile = provider.getNormalAttackProfile(1302077);
+        AgentAttackDataProvider provider = AgentAttackDataProvider.getInstance();
+        AgentAttackDataProvider.NormalAttackProfile profile = provider.getNormalAttackProfile(1302077);
         assertNotNull(profile);
 
         int rawStanceHitDelayMs = provider.getBodyStanceDelayBeforeFrameMs("swingO1",
@@ -84,7 +84,7 @@ class BotAttackDataProviderTest {
 
     @Test
     void shouldUseFullRegularAttackCooldownForSkillsSharingBasicAttackAnimation() {
-        BotAttackDataProvider provider = BotAttackDataProvider.getInstance();
+        AgentAttackDataProvider provider = AgentAttackDataProvider.getInstance();
         int rawShootDurationMs = provider.getBodyStanceDurationMs("shoot1");
         int rawClawDurationMs = provider.getBodyStanceDurationMs("swingO1");
 
@@ -105,8 +105,8 @@ class BotAttackDataProviderTest {
 
     @Test
     void shouldExposePerActionAttackBoundsThatDifferBetweenStabAndSwing() {
-        BotAttackDataProvider provider = BotAttackDataProvider.getInstance();
-        BotAttackDataProvider.NormalAttackProfile profile = provider.getNormalAttackProfile(1302077);
+        AgentAttackDataProvider provider = AgentAttackDataProvider.getInstance();
+        AgentAttackDataProvider.NormalAttackProfile profile = provider.getNormalAttackProfile(1302077);
         assertNotNull(profile);
         assertTrue(profile.hasBoundingBox());
 
@@ -126,8 +126,8 @@ class BotAttackDataProviderTest {
 
     @Test
     void shouldFilterWeaponActionsToLegalAttackGroupAnimations() {
-        BotAttackDataProvider.AttackAnimationSpec attackSpec =
-                BotAttackDataProvider.getInstance().getBasicAttackSpec(1, client.inventory.WeaponType.GENERAL1H_SWING);
+        AgentAttackDataProvider.AttackAnimationSpec attackSpec =
+                AgentAttackDataProvider.getInstance().getBasicAttackSpec(1, client.inventory.WeaponType.GENERAL1H_SWING);
 
         List<String> actions = AgentAttackExecutionProvider.resolveAttackActions(attackSpec,
                 List.of("swingOF", "stabO1", "proneStab", "swingO3", "stabOF"));

@@ -14,7 +14,7 @@ import net.server.channel.handlers.CloseRangeDamageHandler;
 import net.server.channel.handlers.MagicDamageHandler;
 import net.server.channel.handlers.RangedAttackHandler;
 import server.bots.BotCombatManager;
-import server.bots.combat.BotAttackDataProvider;
+import server.agents.capabilities.combat.data.AgentAttackDataProvider;
 import server.agents.capabilities.combat.data.AgentAttackTiming;
 
 import java.awt.*;
@@ -46,8 +46,8 @@ public final class AgentAttackExecutionProvider {
             return fallbackBasicAttackData(targetPosition.x < bot.getPosition().x, 4, null, bot, targetPosition);
         }
 
-        BotAttackDataProvider.NormalAttackProfile attackProfile =
-                BotAttackDataProvider.getInstance().getNormalAttackProfile(weapon.getItemId());
+        AgentAttackDataProvider.NormalAttackProfile attackProfile =
+                AgentAttackDataProvider.getInstance().getNormalAttackProfile(weapon.getItemId());
         if (attackProfile == null) {
             return fallbackBasicAttackData(targetPosition.x < bot.getPosition().x, 4, null, bot, targetPosition);
         }
@@ -57,15 +57,15 @@ public final class AgentAttackExecutionProvider {
         return buildBasicAttackDataFromProfile(attackProfile, weaponType, facingLeft, bot, targetPosition);
     }
 
-    private static BasicAttackData buildBasicAttackDataFromProfile(BotAttackDataProvider.NormalAttackProfile profile,
+    private static BasicAttackData buildBasicAttackDataFromProfile(AgentAttackDataProvider.NormalAttackProfile profile,
                                                                    WeaponType weaponType, boolean facingLeft,
                                                                    Character bot, Point targetPosition) {
         int baseDisplay = profile.getAttack();
-        BotAttackDataProvider provider = BotAttackDataProvider.getInstance();
+        AgentAttackDataProvider provider = AgentAttackDataProvider.getInstance();
         boolean useDegenerateCloseRange = shouldDegenerateRangedAttack(weaponType,
                 bot != null ? bot.getPosition() : null, targetPosition)
                 || shouldDegenerateForNoAmmo(weaponType, bot);
-        BotAttackDataProvider.AttackAnimationSpec attackSpec =
+        AgentAttackDataProvider.AttackAnimationSpec attackSpec =
                 provider.getBasicAttackSpec(baseDisplay, weaponType, useDegenerateCloseRange);
         if (baseDisplay <= 0) {
             return fallbackBasicAttackData(facingLeft, profile.getAttackSpeed(), weaponType, bot, targetPosition);
@@ -114,11 +114,11 @@ public final class AgentAttackExecutionProvider {
 
     private static BasicAttackData fallbackBasicAttackData(boolean facingLeft, int baseAttackSpeed,
                                                            WeaponType weaponType, Character bot, Point targetPosition) {
-        BotAttackDataProvider provider = BotAttackDataProvider.getInstance();
+        AgentAttackDataProvider provider = AgentAttackDataProvider.getInstance();
         boolean useDegenerateCloseRange = shouldDegenerateRangedAttack(weaponType,
                 bot != null ? bot.getPosition() : null, targetPosition)
                 || shouldDegenerateForNoAmmo(weaponType, bot);
-        BotAttackDataProvider.AttackAnimationSpec attackSpec = provider.getBasicAttackSpec(weaponType, useDegenerateCloseRange);
+        AgentAttackDataProvider.AttackAnimationSpec attackSpec = provider.getBasicAttackSpec(weaponType, useDegenerateCloseRange);
         String action = sampleAttackAction(attackSpec.actions(), attackSpec.primaryAction());
         BotCombatManager.AttackRoute route = useDegenerateCloseRange
                 ? BotCombatManager.AttackRoute.CLOSE
@@ -153,7 +153,7 @@ public final class AgentAttackExecutionProvider {
     }
 
     public static int bodyActionId(String actionName, String fallbackAction, WeaponType weaponType) {
-        BotAttackDataProvider provider = BotAttackDataProvider.getInstance();
+        AgentAttackDataProvider provider = AgentAttackDataProvider.getInstance();
         int actionId = provider.getBodyActionId(actionName, weaponType);
         if (actionId >= 0) {
             return actionId;
@@ -188,7 +188,7 @@ public final class AgentAttackExecutionProvider {
         return (attackPacketStance & 0x80) != 0 ? -1 : 1;
     }
 
-    public static List<String> resolveAttackActions(BotAttackDataProvider.AttackAnimationSpec attackSpec, List<String> sourceActions) {
+    public static List<String> resolveAttackActions(AgentAttackDataProvider.AttackAnimationSpec attackSpec, List<String> sourceActions) {
         if (attackSpec == null || attackSpec.actions().isEmpty()) {
             return List.of("swingO1");
         }
@@ -226,19 +226,19 @@ public final class AgentAttackExecutionProvider {
     }
 
     private static String sampleDegenerateCloseRangeAction(Character bot, WeaponType weaponType) {
-        BotAttackDataProvider provider = BotAttackDataProvider.getInstance();
+        AgentAttackDataProvider provider = AgentAttackDataProvider.getInstance();
         Item weapon = bot != null ? bot.getInventory(InventoryType.EQUIPPED).getItem((short) -11) : null;
         if (weapon != null) {
-            BotAttackDataProvider.NormalAttackProfile attackProfile =
+            AgentAttackDataProvider.NormalAttackProfile attackProfile =
                     provider.getNormalAttackProfile(weapon.getItemId());
             if (attackProfile != null) {
-                BotAttackDataProvider.AttackAnimationSpec attackSpec =
+                AgentAttackDataProvider.AttackAnimationSpec attackSpec =
                         provider.getBasicAttackSpec(attackProfile.getAttack(), weaponType, true);
                 return sampleAttackAction(resolveAttackActions(attackSpec, attackProfile.getSourceActions()),
                         attackSpec.primaryAction());
             }
         }
-        BotAttackDataProvider.AttackAnimationSpec attackSpec = provider.getBasicAttackSpec(weaponType, true);
+        AgentAttackDataProvider.AttackAnimationSpec attackSpec = provider.getBasicAttackSpec(weaponType, true);
         return sampleAttackAction(attackSpec.actions(), attackSpec.primaryAction());
     }
 
@@ -492,11 +492,11 @@ public final class AgentAttackExecutionProvider {
     }
 
     public static SkillAttackTiming resolveSkillAttackTiming(String action,
-                                                      BotAttackDataProvider.NormalAttackProfile weaponAttackProfile,
+                                                      AgentAttackDataProvider.NormalAttackProfile weaponAttackProfile,
                                                       int rawSkillDelayMs,
                                                       int effectiveWeaponAttackSpeed,
                                                       int fallbackHitDelayMs, int fallbackCooldownMs) {
-        BotAttackDataProvider provider = BotAttackDataProvider.getInstance();
+        AgentAttackDataProvider provider = AgentAttackDataProvider.getInstance();
         int rawActionCooldownMs = provider.getBodyActionDurationMs(action);
         if (rawActionCooldownMs > 0) {
             int rawActionHitDelayMs = provider.getBodyActionAttackDelayMs(action, 0);
@@ -545,11 +545,11 @@ public final class AgentAttackExecutionProvider {
         return candidateActions.get(variantOffset);
     }
 
-    private static BotAttackDataProvider.AttackAnimationSpec resolveWeaponAttackSpec(Character bot, WeaponType weaponType) {
-        BotAttackDataProvider provider = BotAttackDataProvider.getInstance();
+    private static AgentAttackDataProvider.AttackAnimationSpec resolveWeaponAttackSpec(Character bot, WeaponType weaponType) {
+        AgentAttackDataProvider provider = AgentAttackDataProvider.getInstance();
         Item weapon = bot != null ? bot.getInventory(InventoryType.EQUIPPED).getItem((short) -11) : null;
         if (weapon != null) {
-            BotAttackDataProvider.NormalAttackProfile attackProfile =
+            AgentAttackDataProvider.NormalAttackProfile attackProfile =
                     provider.getNormalAttackProfile(weapon.getItemId());
             if (attackProfile != null && attackProfile.getAttack() > 0) {
                 return provider.getBasicAttackSpec(attackProfile.getAttack(), weaponType);
@@ -559,19 +559,19 @@ public final class AgentAttackExecutionProvider {
     }
 
     private static String sampleWeaponAttackAction(Character bot, WeaponType weaponType) {
-        BotAttackDataProvider provider = BotAttackDataProvider.getInstance();
+        AgentAttackDataProvider provider = AgentAttackDataProvider.getInstance();
         Item weapon = bot != null ? bot.getInventory(InventoryType.EQUIPPED).getItem((short) -11) : null;
         if (weapon != null) {
-            BotAttackDataProvider.NormalAttackProfile attackProfile =
+            AgentAttackDataProvider.NormalAttackProfile attackProfile =
                     provider.getNormalAttackProfile(weapon.getItemId());
             if (attackProfile != null) {
-                BotAttackDataProvider.AttackAnimationSpec attackSpec = provider.getBasicAttackSpec(attackProfile.getAttack(), weaponType);
+                AgentAttackDataProvider.AttackAnimationSpec attackSpec = provider.getBasicAttackSpec(attackProfile.getAttack(), weaponType);
                 return sampleAttackAction(resolveAttackActions(attackSpec, attackProfile.getSourceActions()),
                         attackSpec.primaryAction());
             }
         }
 
-        BotAttackDataProvider.AttackAnimationSpec attackSpec = provider.getBasicAttackSpec(weaponType);
+        AgentAttackDataProvider.AttackAnimationSpec attackSpec = provider.getBasicAttackSpec(weaponType);
         return sampleAttackAction(attackSpec.actions(), attackSpec.primaryAction());
     }
 
@@ -640,20 +640,20 @@ public final class AgentAttackExecutionProvider {
         if (bot == null || bot.getPosition() == null) {
             return null;
         }
-        BotAttackDataProvider.NormalAttackProfile profile = equippedNormalAttackProfile(bot);
+        AgentAttackDataProvider.NormalAttackProfile profile = equippedNormalAttackProfile(bot);
         if (profile == null) {
             return null;
         }
         return profile.calculateActionBoundingBox(action, bot.getPosition(), facingLeft);
     }
 
-    private static BotAttackDataProvider.NormalAttackProfile equippedNormalAttackProfile(Character bot) {
+    private static AgentAttackDataProvider.NormalAttackProfile equippedNormalAttackProfile(Character bot) {
         Inventory equipped = bot.getInventory(InventoryType.EQUIPPED);
         Item weapon = equipped != null ? equipped.getItem((short) -11) : null;
         if (weapon == null) {
             return null;
         }
-        return BotAttackDataProvider.getInstance().getNormalAttackProfile(weapon.getItemId());
+        return AgentAttackDataProvider.getInstance().getNormalAttackProfile(weapon.getItemId());
     }
 
     private static Rectangle rangedBasicHitBox(BotCombatManager.AttackRoute route, Character bot, boolean facingLeft) {
@@ -691,7 +691,7 @@ public final class AgentAttackExecutionProvider {
     }
 
     private static int resolveBaseWeaponAttackSpeed(Character bot) {
-        BotAttackDataProvider.NormalAttackProfile attackProfile = resolveWeaponAttackProfile(bot);
+        AgentAttackDataProvider.NormalAttackProfile attackProfile = resolveWeaponAttackProfile(bot);
         if (attackProfile == null) {
             return 4;
         }
@@ -699,7 +699,7 @@ public final class AgentAttackExecutionProvider {
         return attackProfile.getAttackSpeed();
     }
 
-    private static BotAttackDataProvider.NormalAttackProfile resolveWeaponAttackProfile(Character bot) {
+    private static AgentAttackDataProvider.NormalAttackProfile resolveWeaponAttackProfile(Character bot) {
         if (bot == null) {
             return null;
         }
@@ -709,7 +709,7 @@ public final class AgentAttackExecutionProvider {
             return null;
         }
 
-        return BotAttackDataProvider.getInstance().getNormalAttackProfile(weapon.getItemId());
+        return AgentAttackDataProvider.getInstance().getNormalAttackProfile(weapon.getItemId());
     }
 
     private static int normalizeAttackSpeed(int attackSpeed) {

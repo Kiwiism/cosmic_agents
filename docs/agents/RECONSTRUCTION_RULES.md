@@ -17,6 +17,12 @@ Rules:
 
 Recent reconstruction notes:
 
+- Combat attack data provider ownership moved to
+  `server.agents.capabilities.combat.data.AgentAttackDataProvider`. Weapon
+  normal-attack profile loading, action-spec selection, body action id
+  overrides, stance/action timing caches, afterimage bounds, and WZ root cache
+  invalidation are unchanged; legacy combat/equipment code now imports the
+  Agent-owned data provider.
 - Combat defense data ownership moved to
   `server.agents.capabilities.combat.data.AgentDefenseDataProvider`. Standard
   PDD tables, job-family resolution, hit/miss delegation, and physical touch

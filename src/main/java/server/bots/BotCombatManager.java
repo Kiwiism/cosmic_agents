@@ -52,7 +52,7 @@ import net.server.channel.handlers.AbstractDealDamageHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.StatEffect;
-import server.bots.combat.BotAttackDataProvider;
+import server.agents.capabilities.combat.data.AgentAttackDataProvider;
 import server.agents.capabilities.combat.data.AgentDefenseDataProvider;
 import server.agents.capabilities.combat.data.AgentMobHitboxProvider;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
@@ -1366,7 +1366,7 @@ public class BotCombatManager {
         }
         boolean facingLeft = primaryTarget.getPosition().x < bot.getPosition().x;
         AgentAttackExecutionProvider.BasicAttackData fallbackAttackData = buildBasicAttackData(bot, primaryTarget);
-        BotAttackDataProvider.AttackAnimationSpec attackSpec = BotAttackDataProvider.getInstance().getBasicAttackSpec(weaponType);
+        AgentAttackDataProvider.AttackAnimationSpec attackSpec = AgentAttackDataProvider.getInstance().getBasicAttackSpec(weaponType);
         String fallbackAction = attackSpec.primaryAction();
         AgentAttackExecutionProvider.CloseRangePacketFields closeRangePacketFields = route == AttackRoute.CLOSE
                 ? AgentAttackExecutionProvider.mimicCloseRangePacketFields(action, fallbackAction, facingLeft)

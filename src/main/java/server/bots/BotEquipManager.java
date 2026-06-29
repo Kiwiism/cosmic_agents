@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 import server.ItemInformationProvider;
 import server.agents.integration.AgentBotEquipmentRuntime;
 import server.agents.integration.AgentBotRangeReportRuntime;
-import server.bots.combat.BotAttackDataProvider;
+import server.agents.capabilities.combat.data.AgentAttackDataProvider;
 import server.combat.CombatFormulaProvider;
 import server.life.LifeFactory;
 import server.life.Monster;
@@ -1894,13 +1894,13 @@ public class BotEquipManager {
      */
     private static int weaponCycleMs(int itemId) {
         try {
-            BotAttackDataProvider provider = BotAttackDataProvider.getInstance();
-            BotAttackDataProvider.NormalAttackProfile profile = provider.getNormalAttackProfile(itemId);
+            AgentAttackDataProvider provider = AgentAttackDataProvider.getInstance();
+            AgentAttackDataProvider.NormalAttackProfile profile = provider.getNormalAttackProfile(itemId);
             if (profile == null) {
                 return 0;
             }
             WeaponType weaponType = ItemInformationProvider.getInstance().getWeaponType(itemId);
-            BotAttackDataProvider.AttackAnimationSpec attackSpec = provider.getBasicAttackSpec(profile.getAttack(), weaponType);
+            AgentAttackDataProvider.AttackAnimationSpec attackSpec = provider.getBasicAttackSpec(profile.getAttack(), weaponType);
             int rawAnimationDelayMs = provider.getBodyStanceDurationMs(attackSpec.primaryAction());
             if (rawAnimationDelayMs <= 0) {
                 return 0;

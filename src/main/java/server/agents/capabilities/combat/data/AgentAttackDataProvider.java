@@ -1,4 +1,4 @@
-package server.bots.combat;
+package server.agents.capabilities.combat.data;
 
 import client.inventory.WeaponType;
 import org.slf4j.Logger;
@@ -27,15 +27,15 @@ import static server.agents.capabilities.combat.data.AgentWzXml.findNamedChild;
 import static server.agents.capabilities.combat.data.AgentWzXml.getIntAttribute;
 import static server.agents.capabilities.combat.data.AgentWzXml.getIntValue;
 
-public final class BotAttackDataProvider {
-    private static final Logger log = LoggerFactory.getLogger(BotAttackDataProvider.class);
-    private static final BotAttackDataProvider instance = new BotAttackDataProvider();
+public final class AgentAttackDataProvider {
+    private static final Logger log = LoggerFactory.getLogger(AgentAttackDataProvider.class);
+    private static final AgentAttackDataProvider instance = new AgentAttackDataProvider();
     private static final Map<String, Integer> BODY_ACTION_ID_OVERRIDES = createBodyActionIdOverrides();
     private static final Map<String, Integer> CLAW_BODY_ACTION_ID_OVERRIDES = createClawBodyActionIdOverrides();
     private static final Map<String, Integer> WAND_BODY_ACTION_ID_OVERRIDES = createWandBodyActionIdOverrides();
     private static final Map<String, Integer> ATTACK_STANCE_IDS = createAttackStanceIds();
 
-    public static BotAttackDataProvider getInstance() {
+    public static AgentAttackDataProvider getInstance() {
         return instance;
     }
 
@@ -168,7 +168,7 @@ public final class BotAttackDataProvider {
     private volatile Map<String, Integer> bodyActionIds = null;
     private volatile Path cachedCharacterRoot = null;
 
-    private BotAttackDataProvider() {
+    private AgentAttackDataProvider() {
     }
 
     private static Map<String, Integer> createBodyActionIdOverrides() {
