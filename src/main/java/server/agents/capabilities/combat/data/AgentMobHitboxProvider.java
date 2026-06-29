@@ -1,4 +1,4 @@
-package server.bots.combat;
+package server.agents.capabilities.combat.data;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,9 +22,9 @@ import static server.agents.capabilities.combat.data.AgentWzXml.findNamedChild;
 import static server.agents.capabilities.combat.data.AgentWzXml.getIntAttribute;
 import static server.agents.capabilities.combat.data.AgentWzXml.getIntValue;
 
-public final class BotMobHitboxProvider {
-    private static final Logger log = LoggerFactory.getLogger(BotMobHitboxProvider.class);
-    private static final BotMobHitboxProvider instance = new BotMobHitboxProvider();
+public final class AgentMobHitboxProvider {
+    private static final Logger log = LoggerFactory.getLogger(AgentMobHitboxProvider.class);
+    private static final AgentMobHitboxProvider instance = new AgentMobHitboxProvider();
 
     // Sentinel stored in the cache when a mob has no usable hitbox frame. Using a sentinel rather
     // than leaving the key unmapped prevents repeated XML re-parsing and re-logging on every tick
@@ -39,7 +39,7 @@ public final class BotMobHitboxProvider {
     private final Map<Integer, Rectangle> boundsByMobId = new ConcurrentHashMap<>();
     private volatile Path cachedMobRoot = null;
 
-    public static BotMobHitboxProvider getInstance() {
+    public static AgentMobHitboxProvider getInstance() {
         return instance;
     }
 

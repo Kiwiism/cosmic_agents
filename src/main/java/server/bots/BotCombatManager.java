@@ -54,7 +54,7 @@ import org.slf4j.LoggerFactory;
 import server.StatEffect;
 import server.bots.combat.BotAttackDataProvider;
 import server.bots.combat.BotDefenseDataProvider;
-import server.bots.combat.BotMobHitboxProvider;
+import server.agents.capabilities.combat.data.AgentMobHitboxProvider;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.integration.AgentBotAmmoStateRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
@@ -2199,7 +2199,7 @@ public class BotCombatManager {
 
     static boolean isMobTouchingBot(BotEntry entry, Character bot, Monster mob) {
         Rectangle botBounds = getBotTouchBounds(entry, bot);
-        Rectangle mobBounds = BotMobHitboxProvider.getInstance().getMobBounds(mob);
+        Rectangle mobBounds = AgentMobHitboxProvider.getInstance().getMobBounds(mob);
         if (mobBounds == null) {
             return false;
         }
@@ -2246,7 +2246,7 @@ public class BotCombatManager {
             return false;
         }
 
-        Rectangle mobBounds = BotMobHitboxProvider.getInstance().getMobBounds(monster);
+        Rectangle mobBounds = AgentMobHitboxProvider.getInstance().getMobBounds(monster);
         if (mobBounds != null) {
             return hitBox.intersects(mobBounds) || hitBox.contains(monster.getPosition());
         }

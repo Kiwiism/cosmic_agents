@@ -22,7 +22,7 @@ import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSwimStateRuntime;
-import server.bots.combat.BotMobHitboxProvider;
+import server.agents.capabilities.combat.data.AgentMobHitboxProvider;
 import server.life.Monster;
 import server.maps.Foothold;
 import server.maps.MapleMap;
@@ -695,7 +695,7 @@ public class BotMovementManager {
                 continue;
             }
 
-            Rectangle bounds = BotMobHitboxProvider.getInstance().getMobBounds(mob);
+            Rectangle bounds = AgentMobHitboxProvider.getInstance().getMobBounds(mob);
             if (bounds == null) {
                 bounds = inclusiveRectangle(mob.getPosition().x, mob.getPosition().y, mob.getPosition().x, mob.getPosition().y);
             }

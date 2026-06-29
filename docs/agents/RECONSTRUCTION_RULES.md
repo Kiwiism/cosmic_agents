@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Combat mob hitbox provider ownership moved to
+  `server.agents.capabilities.combat.data.AgentMobHitboxProvider`. Mob WZ
+  cache invalidation, linked-mob fallback, stand/move/fly frame fallback, and
+  facing-aware world-bounds calculation are unchanged.
 - Combat WZ DOM helper ownership moved to
   `server.agents.capabilities.combat.data.AgentWzXml`. Named-child lookup,
   integer attribute parsing, and integer value parsing are unchanged; legacy
