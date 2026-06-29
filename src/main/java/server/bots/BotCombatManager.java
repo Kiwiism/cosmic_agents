@@ -9,6 +9,7 @@ import server.agents.capabilities.combat.AgentFallDamageCalculator;
 import server.agents.capabilities.combat.AgentCombatSkillClassifier;
 import server.agents.capabilities.combat.AgentCombatWeaponPolicy;
 import server.agents.capabilities.combat.AgentCombatSkillHitboxPolicy;
+import server.agents.capabilities.combat.AgentCombatHitCounter;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
 
 import server.agents.runtime.AgentPerformanceMonitor;
@@ -1377,7 +1378,7 @@ public class BotCombatManager {
      * claw skills like Lucky Seven store their projectile count in bulletCount.
      */
     static int effectiveHitCount(StatEffect effect) {
-        return Math.max(1, Math.max(effect.getAttackCount(), effect.getBulletCount()));
+        return AgentCombatHitCounter.effectiveHitCount(effect);
     }
 
     // Shadow Partner (Hermit / NightWalker / DualBlade book) doubles the per-mob damage
@@ -1390,10 +1391,7 @@ public class BotCombatManager {
     // doubling for thief skills (e.g. Triple Throw is ranged-claw, so it covers itself)
     // can be enabled per-skill later if needed.
     private static int shadowPartnerHitMultiplier(Character bot, AgentAttackRoute route) {
-        if (route != AgentAttackRoute.RANGED || bot == null) {
-            return 1;
-        }
-        return bot.getBuffEffect(BuffStat.SHADOWPARTNER) != null ? 2 : 1;
+        return AgentCombatHitCounter.shadowPartnerHitMultiplier(bot, route);
     }
 
     /**

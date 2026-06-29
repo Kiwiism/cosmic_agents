@@ -55,6 +55,12 @@ Recent reconstruction notes:
   reach, close-range fallback reach, weapon afterimage fallback, and projectile
   skill fallback geometry are unchanged; `BotCombatManager` keeps compatibility
   wrappers for current attack-plan construction and tests.
+- Combat hit-count policy ownership moved to
+  `server.agents.capabilities.combat.AgentCombatHitCounter`. Effective
+  attack-line resolution still uses the larger of attackCount and bulletCount,
+  minimum one line, and Shadow Partner still doubles only ranged-route damage
+  lines; `BotCombatManager` keeps compatibility wrappers for current attack
+  plan construction.
 - Combat attack data provider ownership moved to
   `server.agents.capabilities.combat.data.AgentAttackDataProvider`. Weapon
   normal-attack profile loading, action-spec selection, body action id
