@@ -97,8 +97,9 @@ Recent reconstruction notes:
   compatibility wrapper for current target planning.
 - Combat scoring math moved to
   `server.agents.capabilities.combat.AgentCombatScoringPolicy`. Expected damage
-  capping by current HP and local travel-cost estimation keep the same formulas;
-  larger attack-plan and grind-target selection still remain in
+  capping by current HP, local travel-cost estimation, local grind-target
+  score penalties, and AOE cluster bonus calculation keep the same formulas;
+  larger attack-plan orchestration and grind-target selection still remain in
   `BotCombatManager`.
 - Combat attack data provider ownership moved to
   `server.agents.capabilities.combat.data.AgentAttackDataProvider`. Weapon

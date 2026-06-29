@@ -1525,20 +1525,8 @@ public class BotCombatManager {
         Point targetPos = target.getPosition();
         Foothold targetFoothold = findGroundFoothold(targetPos, bot);
 
-        int dx = Math.abs(targetPos.x - botPos.x);
-        int dy = Math.abs(targetPos.y - botPos.y);
         boolean sameFoothold = botFoothold != null && targetFoothold != null && botFoothold.getId() == targetFoothold.getId();
-        boolean nearSameLevel = dy <= BotCombatManager.cfg.ATTACK_RANGE_Y;
-
-        long score = dx;
-        score += (long) dy * 8L;
-        if (!nearSameLevel) {
-            score += 600L;
-        }
-        if (!sameFoothold) {
-            score += 1200L;
-        }
-        return score;
+        return AgentCombatScoringPolicy.localTargetScore(botPos, targetPos, sameFoothold, cfg.ATTACK_RANGE_Y);
     }
 
     // Cluster-density bonus: when the bot has an AoE skill, bias target selection toward
@@ -1553,35 +1541,10 @@ public class BotCombatManager {
     static final long AOE_CLUSTER_BONUS_PER_MOB = 200L;
 
     private static long aoeClusterBonus(BotEntry entry, Monster target, List<Monster> candidates) {
-        if (entry == null || !AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry)
-                || target == null || candidates == null || candidates.isEmpty()) {
-            return 0L;
-        }
-        Point tp = target.getPosition();
-        if (tp == null) {
-            return 0L;
-        }
-        long radiusSq = (long) AOE_CLUSTER_RADIUS_PX * AOE_CLUSTER_RADIUS_PX;
-        int cap = AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry) - 1;
-        int neighbors = 0;
-        for (Monster other : candidates) {
-            if (other == target || other == null || !other.isAlive()) {
-                continue;
-            }
-            Point op = other.getPosition();
-            if (op == null) {
-                continue;
-            }
-            long dx = (long) op.x - tp.x;
-            long dy = (long) op.y - tp.y;
-            if (dx * dx + dy * dy <= radiusSq) {
-                neighbors++;
-                if (neighbors >= cap) {
-                    break;
-                }
-            }
-        }
-        return neighbors * AOE_CLUSTER_BONUS_PER_MOB;
+        return AgentCombatScoringPolicy.aoeClusterBonus(target, candidates,
+                entry != null && AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
+                entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry),
+                AOE_CLUSTER_RADIUS_PX, AOE_CLUSTER_BONUS_PER_MOB);
     }
 
     /** True iff the bot has a multi-mob AoE skill but its chosen plan is single-target with room to hit more. */
