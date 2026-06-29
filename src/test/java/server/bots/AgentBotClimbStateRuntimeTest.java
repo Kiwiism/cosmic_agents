@@ -34,4 +34,26 @@ class AgentBotClimbStateRuntimeTest {
 
         assertFalse(AgentBotClimbStateRuntime.hasClimbVerticalDirection(entry));
     }
+
+    @Test
+    void adaptsRopeEntryIntentState() {
+        BotEntry entry = new BotEntry(null, null, null);
+        Rope rope = new Rope(100, 20, 200, false);
+
+        assertFalse(AgentBotClimbStateRuntime.ropeEntryPending(entry));
+        assertNull(AgentBotClimbStateRuntime.ropeEntryRope(entry));
+        assertEquals(0, AgentBotClimbStateRuntime.ropeEntryY(entry));
+
+        AgentBotClimbStateRuntime.queueRopeEntry(entry, rope, 90);
+
+        assertTrue(AgentBotClimbStateRuntime.ropeEntryPending(entry));
+        assertSame(rope, AgentBotClimbStateRuntime.ropeEntryRope(entry));
+        assertEquals(90, AgentBotClimbStateRuntime.ropeEntryY(entry));
+
+        AgentBotClimbStateRuntime.clearRopeEntry(entry);
+
+        assertFalse(AgentBotClimbStateRuntime.ropeEntryPending(entry));
+        assertNull(AgentBotClimbStateRuntime.ropeEntryRope(entry));
+        assertEquals(0, AgentBotClimbStateRuntime.ropeEntryY(entry));
+    }
 }

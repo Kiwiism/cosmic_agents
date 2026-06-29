@@ -342,8 +342,29 @@ public class BotEntry {
     public boolean ropeEntryPending() {
         return ropeEntryPending;
     }
+
     Rope ropeEntryRope = null;
     int ropeEntryY = 0;
+
+    public Rope ropeEntryRope() {
+        return ropeEntryRope;
+    }
+
+    public int ropeEntryY() {
+        return ropeEntryY;
+    }
+
+    public void queueRopeEntry(Rope rope, int y) {
+        ropeEntryPending = true;
+        ropeEntryRope = rope;
+        ropeEntryY = y;
+    }
+
+    public void clearRopeEntry() {
+        ropeEntryPending = false;
+        ropeEntryRope = null;
+        ropeEntryY = 0;
+    }
 
     // Grind mode
     volatile boolean grinding = false;

@@ -49,4 +49,20 @@ public final class AgentBotClimbStateRuntime {
     public static boolean ropeEntryPending(BotEntry entry) {
         return entry.ropeEntryPending();
     }
+
+    public static Rope ropeEntryRope(BotEntry entry) {
+        return entry.ropeEntryRope();
+    }
+
+    public static int ropeEntryY(BotEntry entry) {
+        return entry.ropeEntryY();
+    }
+
+    public static void queueRopeEntry(BotEntry entry, Rope rope, int y) {
+        entry.queueRopeEntry(rope, y);
+    }
+
+    public static void clearRopeEntry(BotEntry entry) {
+        entry.clearRopeEntry();
+    }
 }

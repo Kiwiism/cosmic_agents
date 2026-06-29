@@ -652,9 +652,7 @@ public final class BotPhysicsEngine {
 
     static void queueTopRopeEntry(BotEntry entry, Character bot, Rope rope, int y) {
         idleOnGround(entry, bot);
-        entry.ropeEntryPending = true;
-        entry.ropeEntryRope = rope;
-        entry.ropeEntryY = y;
+        AgentBotClimbStateRuntime.queueRopeEntry(entry, rope, y);
         syncCharacterState(entry);
     }
 
@@ -726,8 +724,8 @@ public final class BotPhysicsEngine {
     }
 
     static void beginTopRopeEntry(BotEntry entry, Character bot) {
-        Rope rope = entry.ropeEntryRope;
-        int ropeY = entry.ropeEntryY;
+        Rope rope = AgentBotClimbStateRuntime.ropeEntryRope(entry);
+        int ropeY = AgentBotClimbStateRuntime.ropeEntryY(entry);
         clearRopeEntryIntent(entry);
         if (rope == null || bot == null) {
             syncCharacterState(entry);
@@ -1668,9 +1666,7 @@ public final class BotPhysicsEngine {
     }
 
     private static void clearRopeEntryIntent(BotEntry entry) {
-        entry.ropeEntryPending = false;
-        entry.ropeEntryRope = null;
-        entry.ropeEntryY = 0;
+        AgentBotClimbStateRuntime.clearRopeEntry(entry);
     }
 
     private static void clearMovementState(BotEntry entry, Point position) {

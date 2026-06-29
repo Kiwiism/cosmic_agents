@@ -152,6 +152,9 @@ Recent reconstruction notes:
   `AgentBotMovementStateRuntime.setMovementVelocity`; the legacy behavior that
   non-zero horizontal velocity also updates facing direction is preserved behind
   the Agent movement-state boundary.
+- Bot physics top-rope entry intent now enters through
+  `AgentBotClimbStateRuntime`; queue, consume, and clear operations no longer
+  access `ropeEntryPending`, `ropeEntryRope`, or `ropeEntryY` directly.
 - Combat alert reset callbacks now enter through `AgentBotCombatRuntime`;
   `BotCombatManager` no longer reaches directly into the lower-level scheduler
   runtime for combat-owned alert timing, and alert timing and stance reset
