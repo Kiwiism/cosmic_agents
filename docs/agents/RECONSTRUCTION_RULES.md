@@ -79,6 +79,12 @@ Recent reconstruction notes:
   missing-party-buff detection, and heal-in-bounds checks now live in the same
   Agent policy; `BotCombatManager` still supplies legacy config values and
   executes the existing support side effects.
+- Combat support special-move packet layout ownership moved to
+  `server.agents.capabilities.combat.AgentSupportSpecialMovePacketBuilder`.
+  Self-only and party-support SPECIAL_MOVE packet shapes, timestamp, skill id,
+  skill level, position fallback, facing mask, and trailing terminator bytes
+  are unchanged; `BotCombatManager` still dispatches the packet through the
+  legacy packet handler path.
 - Combat skill-use affordability policy moved to
   `server.agents.capabilities.combat.AgentCombatSkillUsePolicy`. Skill lookup,
   non-positive-level rejection, and `StatEffect.canPaySkillCost` delegation are

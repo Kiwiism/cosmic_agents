@@ -25,6 +25,7 @@ import server.agents.capabilities.combat.AgentMobKnockbackPolicy;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
 import server.agents.capabilities.combat.AgentScoredGrindTarget;
 import server.agents.capabilities.combat.AgentGrindTargetGroup;
+import server.agents.capabilities.combat.AgentSupportSpecialMovePacketBuilder;
 
 import server.agents.runtime.AgentPerformanceMonitor;
 
@@ -58,9 +59,7 @@ import constants.skills.WhiteKnight;
 import io.netty.buffer.Unpooled;
 import net.PacketHandler;
 import net.PacketProcessor;
-import net.opcodes.RecvOpcode;
 import net.packet.ByteBufInPacket;
-import net.packet.ByteBufOutPacket;
 import net.packet.InPacket;
 import net.server.PlayerBuffValueHolder;
 import net.server.channel.handlers.AbstractDealDamageHandler;
@@ -1825,20 +1824,7 @@ public class BotCombatManager {
     // - party support buffs like Bless: timestamp, skillId, skillLevel, pos(x,y), facingMask, 00 00
     // Bot buffs must mimic those client parameters and then run through the normal SpecialMoveHandler.
     static byte[] buildSupportSpecialMovePacket(Character bot, int skillId, int skillLevel, int packetTimestamp) {
-        ByteBufOutPacket packet = new ByteBufOutPacket();
-        packet.writeShort(RecvOpcode.SPECIAL_MOVE.getValue());
-        packet.writeInt(packetTimestamp);
-        packet.writeInt(skillId);
-        packet.writeByte(skillLevel);
-        if (isPartySupportSkill(skillId)) {
-            Point position = bot.getPosition();
-            packet.writePos(position != null ? position : new Point(0, 0));
-            packet.writeByte(bot.isFacingLeft() ? 0x80 : 0x00);
-            packet.writeShort(0);
-        } else {
-            packet.writeShort(0);
-        }
-        return packet.getBytes();
+        return AgentSupportSpecialMovePacketBuilder.build(bot, skillId, skillLevel, packetTimestamp);
     }
 
     private static boolean dispatchSupportSpecialMove(Character bot, Skill skill, int skillLevel) {
