@@ -1392,6 +1392,11 @@ Recent reconstruction notes:
   now live in `AgentDialogueCatalog`; BotShopManager preserves the same shop
   state, item-name resolution, comma-count formatting, delayed step handling,
   and map/reply delivery behavior through compatibility delegates.
+- Fixed inventory trade preflight, recipient-missing, item-missing, cancel,
+  decline, timeout, meso-validation, equipped-item preparation, and named-item
+  missing replies now live in `AgentDialogueCatalog`; BotInventoryManager
+  preserves the same trade sequencing, retry timing, item preparation, and
+  reply delivery behavior through compatibility delegates.
 
 Initial reconstruction order:
 

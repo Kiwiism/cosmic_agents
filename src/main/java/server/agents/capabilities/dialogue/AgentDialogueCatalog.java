@@ -229,6 +229,19 @@ public final class AgentDialogueCatalog {
             "heads up, I kinda wanted those for myself",
             "those might fit me later, maybe hold onto them",
             "just so you know, I had my eye on those");
+    private static final String TRADE_OWNER_NOT_FOUND_REPLY = "can't find you to trade!";
+    private static final String TRADE_BOT_BUSY_REPLY = "already in a trade!";
+    private static final String TRADE_OWNER_BUSY_REPLY = "you're already in a trade!";
+    private static final String TRADE_RECIPIENT_NOT_FOUND_REPLY = "can't find who to trade!";
+    private static final String TRADE_ITEM_MISSING_REPLY = "don't have it anymore";
+    private static final String TRADE_CANCELLED_REPLY = "trade cancelled";
+    private static final String TRADE_DECLINED_REPLY = "trade declined";
+    private static final String TRADE_REQUEST_TIMEOUT_REPLY = "trade request timed out";
+    private static final String TRADE_CONFIRM_TIMEOUT_REPLY = "trade timed out, cancelling";
+    private static final String TRADE_MESO_INVALID_REPLY = "ask for more than 0 mesos, or just say 'trade mesos'";
+    private static final String TRADE_EQUIP_BAG_FULL_REPLY = "equip bag full";
+    private static final String TRADE_EQUIP_SLOTS_FULL_REPLY = "ran out of equip slots";
+    private static final String TRADE_EQUIPPED_ITEM_PREP_FAILED_REPLY = "couldn't prepare equipped item for trade";
     private static final List<String> GREETING_REPLIES = List.of(
             "hey", "hi", "sup", "yo", "heya", "hii", "hey!!", "hi!!", "hai", "haii",
             "heyo", "ello", "o/", "hai", "eyy", "henlo", "o hey", "yo dude", "hey there", "hi there", "hi guys", "what's up", "howdy", "how's it going");
@@ -626,6 +639,62 @@ public final class AgentDialogueCatalog {
 
     public static List<String> tradeReservedForSelfReplies() {
         return TRADE_RESERVED_FOR_SELF_REPLIES;
+    }
+
+    public static String tradeOwnerNotFoundReply() {
+        return TRADE_OWNER_NOT_FOUND_REPLY;
+    }
+
+    public static String tradeBotBusyReply() {
+        return TRADE_BOT_BUSY_REPLY;
+    }
+
+    public static String tradeOwnerBusyReply() {
+        return TRADE_OWNER_BUSY_REPLY;
+    }
+
+    public static String tradeRecipientNotFoundReply() {
+        return TRADE_RECIPIENT_NOT_FOUND_REPLY;
+    }
+
+    public static String tradeItemMissingReply() {
+        return TRADE_ITEM_MISSING_REPLY;
+    }
+
+    public static String tradeCancelledReply() {
+        return TRADE_CANCELLED_REPLY;
+    }
+
+    public static String tradeDeclinedReply() {
+        return TRADE_DECLINED_REPLY;
+    }
+
+    public static String tradeRequestTimeoutReply() {
+        return TRADE_REQUEST_TIMEOUT_REPLY;
+    }
+
+    public static String tradeConfirmTimeoutReply() {
+        return TRADE_CONFIRM_TIMEOUT_REPLY;
+    }
+
+    public static String tradeMesoInvalidReply() {
+        return TRADE_MESO_INVALID_REPLY;
+    }
+
+    public static String tradeEquipBagFullReply() {
+        return TRADE_EQUIP_BAG_FULL_REPLY;
+    }
+
+    public static String tradeEquipSlotsFullReply() {
+        return TRADE_EQUIP_SLOTS_FULL_REPLY;
+    }
+
+    public static String tradeEquippedItemPrepareFailedReply() {
+        return TRADE_EQUIPPED_ITEM_PREP_FAILED_REPLY;
+    }
+
+    public static String tradeNamedItemNotFoundReply(String nameFragment) {
+        return "couldn't find '" + nameFragment + "' in my bags";
     }
 
     public static List<String> greetingReplies() {
