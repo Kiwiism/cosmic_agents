@@ -64,6 +64,11 @@ Recent reconstruction notes:
   minimum one line, and Shadow Partner still doubles only ranged-route damage
   lines; `BotCombatManager` keeps compatibility wrappers for current attack
   plan construction.
+- Combat range and airborne-use policy ownership moved to
+  `server.agents.capabilities.combat.AgentCombatRangePolicy`. Basic attack
+  reach, diagonal jump-attack eligibility, and airborne ranged-route blocking
+  for bow/crossbow/gun are unchanged; `BotCombatManager` keeps compatibility
+  wrappers for current attack-plan gating and tests.
 - Combat attack data provider ownership moved to
   `server.agents.capabilities.combat.data.AgentAttackDataProvider`. Weapon
   normal-attack profile loading, action-spec selection, body action id

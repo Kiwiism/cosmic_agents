@@ -10,6 +10,7 @@ import server.agents.capabilities.combat.AgentCombatSkillClassifier;
 import server.agents.capabilities.combat.AgentCombatWeaponPolicy;
 import server.agents.capabilities.combat.AgentCombatSkillHitboxPolicy;
 import server.agents.capabilities.combat.AgentCombatHitCounter;
+import server.agents.capabilities.combat.AgentCombatRangePolicy;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
 
 import server.agents.runtime.AgentPerformanceMonitor;
@@ -987,7 +988,7 @@ public class BotCombatManager {
         if (attackPlan.hasHitBox()) {
             return doesHitBoxIntersectMonster(attackPlan.hitBox, target);
         }
-        return isBasicAttackInRange(bot.getPosition(), target.getPosition());
+        return AgentCombatRangePolicy.isBasicAttackInRange(bot.getPosition(), target.getPosition());
     }
 
     static boolean canUseAttackPlanNow(BotEntry entry, WeaponType weaponType, AttackPlan attackPlan) {
@@ -997,23 +998,12 @@ public class BotCombatManager {
         if (AgentBotMovementStateRuntime.grounded(entry)) {
             return true;
         }
-        return !isAirborneRangedAttackBlockedWeapon(weaponType) || attackPlan.route != AgentAttackRoute.RANGED;
+        return AgentCombatRangePolicy.canUseAttackPlanNow(false, weaponType, attackPlan.route);
     }
 
     static boolean isTargetJumpable(AgentMovementProfile movementProfile, boolean closeRangeRoute, Point botPos, Point targetPos) {
-        if (!closeRangeRoute || botPos == null || targetPos == null) {
-            return false;
-        }
-
-        int dx = Math.abs(targetPos.x - botPos.x);
-        if (dx > BotCombatManager.cfg.ATTACK_RANGE_X + BotCombatManager.cfg.ATTACK_JUMP_X_EXTRA) {
-            return false;
-        }
-
-        int dy = botPos.y - targetPos.y;
-        int maxJumpHeight = Math.max(BotCombatManager.cfg.ATTACK_JUMP_Y,
-                (int) Math.ceil(BotPhysicsEngine.calculateMaxJumpHeight(movementProfile)));
-        return dy > BotCombatManager.cfg.ATTACK_RANGE_Y && dy <= maxJumpHeight;
+        return AgentCombatRangePolicy.isTargetJumpable(movementProfile, closeRangeRoute, botPos, targetPos,
+                BotPhysicsEngine.calculateMaxJumpHeight(movementProfile));
     }
 
     static boolean isTargetJumpable(boolean closeRangeRoute, Point botPos, Point targetPos) {
@@ -1306,11 +1296,7 @@ public class BotCombatManager {
     }
 
     private static boolean isBasicAttackInRange(Point botPos, Point targetPos) {
-        int dx = Math.abs(targetPos.x - botPos.x);
-        int dy = botPos.y - targetPos.y;
-        boolean inHRange = dx <= BotCombatManager.cfg.ATTACK_RANGE_X;
-        boolean inVRange = dy >= -BotCombatManager.cfg.ATTACK_DOWN_MAX && dy <= BotCombatManager.cfg.ATTACK_RANGE_Y;
-        return inHRange && inVRange;
+        return AgentCombatRangePolicy.isBasicAttackInRange(botPos, targetPos);
     }
 
     /**
@@ -2251,9 +2237,7 @@ public class BotCombatManager {
     }
 
     static boolean isAirborneRangedAttackBlockedWeapon(WeaponType weaponType) {
-        return weaponType == WeaponType.BOW
-                || weaponType == WeaponType.CROSSBOW
-                || weaponType == WeaponType.GUN;
+        return AgentCombatRangePolicy.isAirborneRangedAttackBlockedWeapon(weaponType);
     }
 
     /**
