@@ -130,6 +130,11 @@ Recent reconstruction notes:
   `BotPotionManager` no longer reaches directly into the lower-level scheduler
   runtime for potion-owned timing. Visible potion request/offer chat remains
   unchanged on the legacy map-visible say path.
+- Bot physics identity reads now enter through `AgentBotRuntimeIdentityRuntime`;
+  `BotPhysicsEngine` no longer reads `entry.bot` directly for swim motion,
+  stance resolution, movement snapshots, or character-state synchronization,
+  while the same BotEntry-backed character reference and movement behavior are
+  preserved.
 - Combat alert reset callbacks now enter through `AgentBotCombatRuntime`;
   `BotCombatManager` no longer reaches directly into the lower-level scheduler
   runtime for combat-owned alert timing, and alert timing and stance reset

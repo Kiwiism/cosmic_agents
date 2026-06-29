@@ -3,6 +3,7 @@ package server.bots;
 import client.Character;
 import constants.game.CharacterStance;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Rope;
@@ -1050,7 +1051,7 @@ public final class BotPhysicsEngine {
      * where SWIMMING physics applies only while airborne underwater.
      */
     static void applySwimMotion(BotEntry entry) {
-        Character bot = entry.bot;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         MapleMap map = bot.getMap();
         Point pos = bot.getPosition();
         double t = tickS();
@@ -1310,8 +1311,9 @@ public final class BotPhysicsEngine {
 
     static MovementSnapshot movementSnapshot(BotEntry entry) {
         int stance = resolveStance(entry);
-        if (entry.bot != null && entry.bot.getStance() != stance) {
-            entry.bot.setStance(stance);
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        if (bot != null && bot.getStance() != stance) {
+            bot.setStance(stance);
         }
         // Broadcast-only alert substitution. The server-side Character.stance above keeps the
         // logical stance (STAND/WALK/etc.); only the wire byte gets ALERT when the alert timer
@@ -1334,7 +1336,7 @@ public final class BotPhysicsEngine {
     }
 
     static int resolveStance(BotEntry entry) {
-        Character bot = entry.bot;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (bot != null && bot.getHp() <= 0) {
             return resolveDeadStance(entry);
         }
@@ -1374,7 +1376,7 @@ public final class BotPhysicsEngine {
     }
 
     static void syncCharacterState(BotEntry entry) {
-        Character bot = entry.bot;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (bot == null) {
             return;
         }
