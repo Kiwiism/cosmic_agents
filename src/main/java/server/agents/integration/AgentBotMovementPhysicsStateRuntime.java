@@ -59,6 +59,28 @@ public final class AgentBotMovementPhysicsStateRuntime {
         entry.setFixedAirArc(fixed);
     }
 
+    public static double fallPeakPhysicsY(BotEntry entry) {
+        return entry.fallPeakPhysicsY();
+    }
+
+    public static boolean hasFallPeakPhysicsY(BotEntry entry) {
+        return Double.isFinite(entry.fallPeakPhysicsY());
+    }
+
+    public static void setFallPeakPhysicsY(BotEntry entry, double fallPeakPhysicsY) {
+        entry.setFallPeakPhysicsY(fallPeakPhysicsY);
+    }
+
+    public static void resetFallPeakPhysicsY(BotEntry entry) {
+        entry.resetFallPeakPhysicsY();
+    }
+
+    public static void recordFallPeakPhysicsY(BotEntry entry, double physicsY) {
+        if (physicsY < entry.fallPeakPhysicsY()) {
+            entry.setFallPeakPhysicsY(physicsY);
+        }
+    }
+
     public static double horizontalSpeed(BotEntry entry) {
         return entry.horizontalSpeed();
     }

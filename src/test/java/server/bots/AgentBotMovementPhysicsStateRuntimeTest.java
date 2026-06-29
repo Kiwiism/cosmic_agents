@@ -98,4 +98,24 @@ class AgentBotMovementPhysicsStateRuntimeTest {
         assertEquals(12.6, AgentBotMovementPhysicsStateRuntime.physicsX(entry));
         assertEquals(13, AgentBotMovementPhysicsStateRuntime.roundedPhysicsX(entry));
     }
+
+    @Test
+    void fallPeakPhysicsYIsStoredAndResetThroughAgentBoundary() {
+        BotEntry entry = new BotEntry(null, null, null);
+
+        assertFalse(AgentBotMovementPhysicsStateRuntime.hasFallPeakPhysicsY(entry));
+
+        AgentBotMovementPhysicsStateRuntime.setFallPeakPhysicsY(entry, 50.0);
+        assertTrue(AgentBotMovementPhysicsStateRuntime.hasFallPeakPhysicsY(entry));
+        assertEquals(50.0, AgentBotMovementPhysicsStateRuntime.fallPeakPhysicsY(entry));
+
+        AgentBotMovementPhysicsStateRuntime.recordFallPeakPhysicsY(entry, 60.0);
+        assertEquals(50.0, AgentBotMovementPhysicsStateRuntime.fallPeakPhysicsY(entry));
+
+        AgentBotMovementPhysicsStateRuntime.recordFallPeakPhysicsY(entry, 40.0);
+        assertEquals(40.0, AgentBotMovementPhysicsStateRuntime.fallPeakPhysicsY(entry));
+
+        AgentBotMovementPhysicsStateRuntime.resetFallPeakPhysicsY(entry);
+        assertFalse(AgentBotMovementPhysicsStateRuntime.hasFallPeakPhysicsY(entry));
+    }
 }

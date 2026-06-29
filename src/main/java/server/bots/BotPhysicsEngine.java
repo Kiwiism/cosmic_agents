@@ -796,8 +796,8 @@ public final class BotPhysicsEngine {
                              double incomingDeltaY) {
         // Fall distance = descent from peak-air-point down to landing point.
         // `fallPeakPhysY` was maintained in advanceAirbornePosition for this airborne period.
-        double fallDistance = Double.isFinite(entry.fallPeakPhysY)
-                ? Math.max(0.0, position.y - entry.fallPeakPhysY)
+        double fallDistance = AgentBotMovementPhysicsStateRuntime.hasFallPeakPhysicsY(entry)
+                ? Math.max(0.0, position.y - AgentBotMovementPhysicsStateRuntime.fallPeakPhysicsY(entry))
                 : 0.0;
         bot.setPosition(position);
         AgentBotMovementStateRuntime.setInAir(entry, false);
@@ -825,7 +825,7 @@ public final class BotPhysicsEngine {
         // peak-to-landing descent distance. Below-threshold landings are no-ops (no packet).
         // Reset peak AFTER the check so the next airborne period starts fresh.
         BotCombatManager.applyFallDamage(entry, bot, (float) fallDistance);
-        entry.fallPeakPhysY = Double.POSITIVE_INFINITY;
+        AgentBotMovementPhysicsStateRuntime.resetFallPeakPhysicsY(entry);
     }
 
     static void attachToRope(BotEntry entry, Character bot, Rope rope, int y) {
@@ -1233,9 +1233,7 @@ public final class BotPhysicsEngine {
         entry.physY += AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry) + 0.5f * gravity;
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry,
                 Math.min(AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry) + gravity, maxFallPerTick()));
-        if (entry.physY < entry.fallPeakPhysY) {
-            entry.fallPeakPhysY = entry.physY;
-        }
+        AgentBotMovementPhysicsStateRuntime.recordFallPeakPhysicsY(entry, entry.physY);
 
         return roundedAirPosition(entry);
     }

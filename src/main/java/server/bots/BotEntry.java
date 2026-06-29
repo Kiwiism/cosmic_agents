@@ -108,6 +108,18 @@ public class BotEntry {
         this.inAir = inAir;
     }
 
+    public double fallPeakPhysicsY() {
+        return fallPeakPhysY;
+    }
+
+    public void setFallPeakPhysicsY(double fallPeakPhysicsY) {
+        fallPeakPhysY = fallPeakPhysicsY;
+    }
+
+    public void resetFallPeakPhysicsY() {
+        fallPeakPhysY = Double.POSITIVE_INFINITY;
+    }
+
     public Object groundTravelState() {
         return new BotPhysicsEngine.GroundTravelState(physX, hspeed, groundPhysicsCarryMs);
     }
