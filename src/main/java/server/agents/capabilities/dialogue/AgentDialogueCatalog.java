@@ -131,6 +131,22 @@ public final class AgentDialogueCatalog {
             "brb, refilling", "be right back~");
     private static final List<String> SHOPPING_REPLIES = List.of(
             "shopping...", "restocking now", "buying stuff", "ok let me buy", "getting supplies");
+    private static final String SHOP_NO_TRASH_EQUIPS_REPLY = "no trash equips worth selling";
+    private static final String SHOP_NOT_FOUND_REPLY = "can't find a shop here";
+    private static final String SHOP_SELL_TRASH_START_REPLY = "ok gonna sell the junk";
+    private static final String SHOP_LOST_REPLY = "lost track of the shop, never mind";
+    private static final String SHOP_REACH_TIMEOUT_REPLY = "couldn't reach shop in time";
+    private static final String SHOP_SEQUENCE_TIMEOUT_REPLY = "took too long at the shop, giving up";
+    private static final String SHOP_KEEPER_UNREACHABLE_REPLY = "couldn't get to the shopkeeper, never mind";
+    private static final String SHOP_BUY_INTERRUPTED_REPLY = "couldn't stay at the shop to buy, never mind";
+    private static final String SHOP_KEEPER_GONE_BUY_REPLY = "the shopkeeper's gone, can't buy";
+    private static final String SHOP_CLOSED_BUY_REPLY = "this shop's closed, can't buy";
+    private static final String SHOP_FINISH_FAILED_REPLY = "couldn't finish up at the shop";
+    private static final String SHOP_EMPTY_RESUPPLY_REPLY = "turned out I didn't need anything here";
+    private static final String SHOP_SELL_INTERRUPTED_REPLY = "couldn't stay at the shop to sell, never mind";
+    private static final String SHOP_KEEPER_GONE_SELL_REPLY = "the shopkeeper's gone, can't sell";
+    private static final String SHOP_CLOSED_SELL_REPLY = "this shop's closed, can't sell";
+    private static final String SHOP_SCHEDULE_ERROR_REPLY = "ran into a problem at the shop";
     private static final List<String> OFFER_ACCEPT_REPLIES = List.of(
             "sure!", "ok!", "yes", "y!", "y", "yes!", "yes pls", "yes please!", "yes please", "ooh nice, ty", "that would be great!", "that would be awesome!", "of course!");
     private static final String OFFER_BUSY_REPLY = "busy rn, ask me again in a bit";
@@ -437,6 +453,99 @@ public final class AgentDialogueCatalog {
 
     public static List<String> shoppingReplies() {
         return SHOPPING_REPLIES;
+    }
+
+    public static String shopNoTrashEquipsReply() {
+        return SHOP_NO_TRASH_EQUIPS_REPLY;
+    }
+
+    public static String shopNotFoundReply() {
+        return SHOP_NOT_FOUND_REPLY;
+    }
+
+    public static String shopSellTrashStartReply() {
+        return SHOP_SELL_TRASH_START_REPLY;
+    }
+
+    public static String shopLostReply() {
+        return SHOP_LOST_REPLY;
+    }
+
+    public static String shopReachTimeoutReply() {
+        return SHOP_REACH_TIMEOUT_REPLY;
+    }
+
+    public static String shopSequenceTimeoutReply() {
+        return SHOP_SEQUENCE_TIMEOUT_REPLY;
+    }
+
+    public static String shopKeeperUnreachableReply() {
+        return SHOP_KEEPER_UNREACHABLE_REPLY;
+    }
+
+    public static String shopBuyInterruptedReply() {
+        return SHOP_BUY_INTERRUPTED_REPLY;
+    }
+
+    public static String shopKeeperGoneBuyReply() {
+        return SHOP_KEEPER_GONE_BUY_REPLY;
+    }
+
+    public static String shopClosedBuyReply() {
+        return SHOP_CLOSED_BUY_REPLY;
+    }
+
+    public static String shopFinishFailedReply() {
+        return SHOP_FINISH_FAILED_REPLY;
+    }
+
+    public static String shopEmptyResupplyReply() {
+        return SHOP_EMPTY_RESUPPLY_REPLY;
+    }
+
+    public static String shopBoughtReply(List<String> boughtItems) {
+        return "bought " + String.join(", ", boughtItems);
+    }
+
+    public static String shopSellInterruptedReply() {
+        return SHOP_SELL_INTERRUPTED_REPLY;
+    }
+
+    public static String shopSoldTrashReply(int soldCount) {
+        return "sold " + soldCount + " trash equip" + (soldCount != 1 ? "s" : "");
+    }
+
+    public static String shopSellTrashFailureReply(int failedCount) {
+        String items = failedCount + " item" + (failedCount != 1 ? "s" : "");
+        return "unable to sell " + items + ", tell me to drop them if you want them gone";
+    }
+
+    public static String shopKeeperGoneSellReply() {
+        return SHOP_KEEPER_GONE_SELL_REPLY;
+    }
+
+    public static String shopClosedSellReply() {
+        return SHOP_CLOSED_SELL_REPLY;
+    }
+
+    public static String shopNoSpaceReply(String itemName, String got, String want, int quantity) {
+        return quantity <= 0
+                ? "no room in my bag for " + itemName
+                : "only fit " + got + " " + itemName + " out of " + want + " - bag's full";
+    }
+
+    public static String shopRefusedReply(String itemName) {
+        return "shop wouldn't sell me " + itemName;
+    }
+
+    public static String shopNoMesoReply(String itemName, String got, String want, int quantity) {
+        return quantity <= 0
+                ? "couldn't afford any " + itemName + " this trip"
+                : "could only afford " + got + " " + itemName + " out of " + want;
+    }
+
+    public static String shopScheduleErrorReply() {
+        return SHOP_SCHEDULE_ERROR_REPLY;
     }
 
     public static List<String> offerAcceptReplies() {

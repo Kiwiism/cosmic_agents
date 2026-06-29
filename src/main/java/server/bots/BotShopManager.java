@@ -108,7 +108,7 @@ public final class BotShopManager {
             return;
         }
         if (BotInventoryManager.collectSellTrashEquips(entry, bot).isEmpty()) {
-            AgentBotShopRuntime.replyNow(entry, "no trash equips worth selling");
+            AgentBotShopRuntime.replyNow(entry, AgentDialogueCatalog.shopNoTrashEquipsReply());
             return;
         }
 
@@ -120,11 +120,11 @@ public final class BotShopManager {
         NpcShopMatch match = findBestShop(bot, true);
         if (match == null) {
             AgentBotShopStateRuntime.setShopSellTrashPending(entry, false);
-            AgentBotShopRuntime.replyNow(entry, "can't find a shop here");
+            AgentBotShopRuntime.replyNow(entry, AgentDialogueCatalog.shopNotFoundReply());
             return;
         }
 
-        AgentBotShopRuntime.replyNow(entry, "ok gonna sell the junk");
+        AgentBotShopRuntime.replyNow(entry, AgentDialogueCatalog.shopSellTrashStartReply());
         startShopVisit(entry, bot, match);
     }
 
@@ -142,17 +142,17 @@ public final class BotShopManager {
             return false;
         }
         if (!AgentBotShopStateRuntime.hasShopNpcPosition(entry)) {
-            abortShop(entry, bot, "lost track of the shop, never mind");
+            abortShop(entry, bot, AgentDialogueCatalog.shopLostReply());
             return false;
         }
         long now = System.currentTimeMillis();
         if (AgentBotShopStateRuntime.visitTimedOut(entry, now, SHOP_VISIT_TIMEOUT_MS)) {
-            AgentBotShopRuntime.sayMapNow(bot, "couldn't reach shop in time");
+            AgentBotShopRuntime.sayMapNow(bot, AgentDialogueCatalog.shopReachTimeoutReply());
             clearShopState(entry);
             return false;
         }
         if (AgentBotShopStateRuntime.sequenceTimedOut(entry, now, SHOP_SEQUENCE_TIMEOUT_MS)) {
-            abortShop(entry, bot, "took too long at the shop, giving up");
+            abortShop(entry, bot, AgentDialogueCatalog.shopSequenceTimeoutReply());
             return false;
         }
         if (AgentBotShopStateRuntime.shopApproachDelayMs(entry) > 0) {
@@ -231,7 +231,7 @@ public final class BotShopManager {
 
     private static void executePurchases(BotEntry entry, Character bot, Point npcPos) {
         if (!isShopSequenceValid(entry, bot, npcPos)) {
-            abortShop(entry, bot, "couldn't get to the shopkeeper, never mind");
+            abortShop(entry, bot, AgentDialogueCatalog.shopKeeperUnreachableReply());
             return;
         }
 
@@ -273,7 +273,7 @@ public final class BotShopManager {
 
     private static void runPurchaseStep(AgentBotShopPurchaseSequence sequence, int index) {
         if (!isShopSequenceValid(sequence.entry(), sequence.bot(), sequence.npcPos())) {
-            abortShop(sequence.entry(), sequence.bot(), "couldn't stay at the shop to buy, never mind");
+            abortShop(sequence.entry(), sequence.bot(), AgentDialogueCatalog.shopBuyInterruptedReply());
             return;
         }
         if (index >= sequence.actions().size()) {
@@ -287,12 +287,12 @@ public final class BotShopManager {
 
         NPC npc = findNpcNear(sequence.bot(), sequence.npcPos());
         if (npc == null) {
-            abortShop(sequence.entry(), sequence.bot(), "the shopkeeper's gone, can't buy");
+            abortShop(sequence.entry(), sequence.bot(), AgentDialogueCatalog.shopKeeperGoneBuyReply());
             return;
         }
         Shop shop = ShopFactory.getInstance().getShopForNPC(npc.getId());
         if (shop == null) {
-            abortShop(sequence.entry(), sequence.bot(), "this shop's closed, can't buy");
+            abortShop(sequence.entry(), sequence.bot(), AgentDialogueCatalog.shopClosedBuyReply());
             return;
         }
 
@@ -302,26 +302,26 @@ public final class BotShopManager {
 
     private static void finishPurchaseSequence(AgentBotShopPurchaseSequence sequence, boolean announceIfEmpty) {
         if (!isShopSequenceValid(sequence.entry(), sequence.bot(), sequence.npcPos())) {
-            abortShop(sequence.entry(), sequence.bot(), "couldn't finish up at the shop");
+            abortShop(sequence.entry(), sequence.bot(), AgentDialogueCatalog.shopFinishFailedReply());
             return;
         }
 
         Runnable finish = () -> {
             if (!isShopSequenceValid(sequence.entry(), sequence.bot(), sequence.npcPos())) {
-                abortShop(sequence.entry(), sequence.bot(), "couldn't finish up at the shop");
+                abortShop(sequence.entry(), sequence.bot(), AgentDialogueCatalog.shopFinishFailedReply());
                 return;
             }
             if (sequence.firstShortfall() != null) {
                 AgentBotShopRuntime.sayMapNow(sequence.bot(), buildShortfallMessage(sequence.firstShortfall()));
             } else if (announceIfEmpty && sequence.bought().isEmpty()) {
                 // Never end a resupply visit silently: nothing was bought and nothing fell short.
-                AgentBotShopRuntime.sayMapNow(sequence.bot(), "turned out I didn't need anything here");
+                AgentBotShopRuntime.sayMapNow(sequence.bot(), AgentDialogueCatalog.shopEmptyResupplyReply());
             }
             clearShopState(sequence.entry());
         };
 
         if (!sequence.bought().isEmpty()) {
-            AgentBotShopRuntime.sayMapNow(sequence.bot(), "bought " + String.join(", ", sequence.bought()));
+            AgentBotShopRuntime.sayMapNow(sequence.bot(), AgentDialogueCatalog.shopBoughtReply(sequence.bought()));
             BotPotionManager.setupAutopotForBot(sequence.bot());
             BotCombatManager.tickAmmoCheck(sequence.entry(), sequence.bot());
             scheduleShopStep(sequence.entry(), finish);
@@ -335,7 +335,7 @@ public final class BotShopManager {
         List<Item> items = BotInventoryManager.collectSellTrashEquips(sequence.entry(), sequence.bot());
         if (items.isEmpty()) {
             AgentBotShopStateRuntime.setShopSellTrashPending(sequence.entry(), false);
-            AgentBotShopRuntime.sayMapNow(sequence.bot(), "no trash equips worth selling");
+            AgentBotShopRuntime.sayMapNow(sequence.bot(), AgentDialogueCatalog.shopNoTrashEquipsReply());
             finishPurchaseSequence(sequence, false);
             return;
         }
@@ -356,7 +356,7 @@ public final class BotShopManager {
     private static void runSellTrashStep(BotEntry entry, Character bot, Point npcPos, int soldCount, Set<Item> failedItems, List<Item> plan,
                                          List<String> bought, AgentBotShopBuyReport firstShortfall) {
         if (!isShopSequenceValid(entry, bot, npcPos)) {
-            abortShop(entry, bot, "couldn't stay at the shop to sell, never mind");
+            abortShop(entry, bot, AgentDialogueCatalog.shopSellInterruptedReply());
             return;
         }
 
@@ -367,12 +367,12 @@ public final class BotShopManager {
         if (items.isEmpty()) {
             AgentBotShopStateRuntime.setShopSellTrashPending(entry, false);
             if (soldCount > 0) {
-                AgentBotShopRuntime.sayMapNow(bot, "sold " + soldCount + " trash equip" + (soldCount != 1 ? "s" : ""));
+                AgentBotShopRuntime.sayMapNow(bot, AgentDialogueCatalog.shopSoldTrashReply(soldCount));
             }
             if (!failedItems.isEmpty()) {
-                AgentBotShopRuntime.sayMapNow(bot, buildSellTrashFailureMessage(failedItems.size()));
+                AgentBotShopRuntime.sayMapNow(bot, AgentDialogueCatalog.shopSellTrashFailureReply(failedItems.size()));
             } else if (soldCount == 0) {
-                AgentBotShopRuntime.sayMapNow(bot, "no trash equips worth selling");
+                AgentBotShopRuntime.sayMapNow(bot, AgentDialogueCatalog.shopNoTrashEquipsReply());
             }
             finishPurchaseSequence(new AgentBotShopPurchaseSequence(entry, bot, npcPos, List.of(), bought, firstShortfall), false);
             return;
@@ -387,12 +387,12 @@ public final class BotShopManager {
 
         NPC npc = findNpcNear(bot, npcPos);
         if (npc == null) {
-            abortShop(entry, bot, "the shopkeeper's gone, can't sell");
+            abortShop(entry, bot, AgentDialogueCatalog.shopKeeperGoneSellReply());
             return;
         }
         Shop shop = ShopFactory.getInstance().getShopForNPC(npc.getId());
         if (shop == null) {
-            abortShop(entry, bot, "this shop's closed, can't sell");
+            abortShop(entry, bot, AgentDialogueCatalog.shopClosedSellReply());
             return;
         }
 
@@ -407,11 +407,6 @@ public final class BotShopManager {
         int nextSoldCount = soldCount + 1;
         scheduleShopStep(entry, SELL_TRASH_STEP_DELAY_MS,
                 () -> runSellTrashStep(entry, bot, npcPos, nextSoldCount, failedItems, plan, bought, firstShortfall));
-    }
-
-    private static String buildSellTrashFailureMessage(int failedCount) {
-        String items = failedCount + " item" + (failedCount != 1 ? "s" : "");
-        return "unable to sell " + items + ", tell me to drop them if you want them gone";
     }
 
     private static AgentBotShopPurchaseSequence appendBuyReport(AgentBotShopPurchaseSequence sequence, AgentBotShopBuyReport report, String fallbackName) {
@@ -698,13 +693,9 @@ public final class BotShopManager {
         String got = GameConstants.numberWithCommas(report.quantity());
         String want = GameConstants.numberWithCommas(report.requestedQuantity());
         return switch (report.reason()) {
-            case NO_SPACE -> report.quantity() <= 0
-                    ? "no room in my bag for " + itemName
-                    : "only fit " + got + " " + itemName + " out of " + want + " - bag's full";
-            case OTHER -> "shop wouldn't sell me " + itemName;
-            case NO_MESO, NONE -> report.quantity() <= 0
-                    ? "couldn't afford any " + itemName + " this trip"
-                    : "could only afford " + got + " " + itemName + " out of " + want;
+            case NO_SPACE -> AgentDialogueCatalog.shopNoSpaceReply(itemName, got, want, report.quantity());
+            case OTHER -> AgentDialogueCatalog.shopRefusedReply(itemName);
+            case NO_MESO, NONE -> AgentDialogueCatalog.shopNoMesoReply(itemName, got, want, report.quantity());
         };
     }
 
@@ -757,7 +748,7 @@ public final class BotShopManager {
             try {
                 step.run();
             } catch (RuntimeException exception) {
-                abortShop(entry, AgentBotRuntimeIdentityRuntime.bot(entry), "ran into a problem at the shop");
+                abortShop(entry, AgentBotRuntimeIdentityRuntime.bot(entry), AgentDialogueCatalog.shopScheduleErrorReply());
                 throw exception;
             }
         });

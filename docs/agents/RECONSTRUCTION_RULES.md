@@ -1388,6 +1388,10 @@ Recent reconstruction notes:
   `AgentDialogueCatalog`; BotPotionManager preserves the same delayed map-chat
   callback and random selection timing while delegating the wording and owner
   name formatting to Agent dialogue.
+- Fixed shop visit, sell-trash, purchase-summary, and shortfall result messages
+  now live in `AgentDialogueCatalog`; BotShopManager preserves the same shop
+  state, item-name resolution, comma-count formatting, delayed step handling,
+  and map/reply delivery behavior through compatibility delegates.
 
 Initial reconstruction order:
 
