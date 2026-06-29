@@ -404,8 +404,9 @@ public class BotCombatManager {
 
     /**
      * Apply fall damage on landing. Distance is peak-to-landing descent in pixels
-     * (BotPhysicsEngine tracks {@code entry.fallPeakPhysY} each airborne tick and
-     * passes the delta here). Distance-based rather than velocity-based because
+     * (BotPhysicsEngine tracks fall peak physics state through Agent movement
+     * adapters each airborne tick and passes the delta here). Distance-based
+     * rather than velocity-based because
      * terminal velocity is reached after only ~112px of fall, so velocity saturates
      * immediately while real-client damage keeps scaling with drop height.
      *
@@ -2778,8 +2779,9 @@ public class BotCombatManager {
         if (effect.getDuration() <= 0 || effect.getStatups().isEmpty()) {
             return false;
         }
-        // Summons are classified separately (entry.summonSkillIds): their only statup is
-        // SUMMON/PUPPET, and they cannot be cast through the rebuff loop (no spawn position).
+        // Summons are classified separately in Agent combat skill-cache state: their
+        // only statup is SUMMON/PUPPET, and they cannot be cast through the rebuff
+        // loop (no spawn position).
         if (isSummonSkill(effect)) {
             return false;
         }

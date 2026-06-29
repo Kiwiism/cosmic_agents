@@ -2958,7 +2958,7 @@ public class BotManager {
         // Sentry/farm-here is an active combat mode that just anchors to a fixed spot.
         // Route through the shared active-mode reset so it stays in lock-step with
         // grind/patrol (self-buff, pot-share, ammo-low, "low on pots" fallback all
-        // gate on entry.grinding — see kb feedback_bot_coding_guidelines).
+        // gate on Agent mode state — see kb feedback_bot_coding_guidelines).
         enterActiveMode(entry);
         AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, dest, AgentBotRuntimeIdentityRuntime.botMapId(entry));
         AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, dest);
@@ -3311,7 +3311,7 @@ public class BotManager {
     }
 
     /**
-     * Owner-offline tick path for entry.moveTarget — drives the bot to its
+     * Owner-offline tick path for Agent move-target state — drives the bot to its
      * point using the same stepMovementCore as the regular pipeline. The
      * regular tick handles moveTarget when owner is online; this is the
      * minimal version for owner-null sessions (currently the offline-town
@@ -3419,8 +3419,8 @@ public class BotManager {
             if (perf) BotPerformanceMonitor.record("common-skill-cache", System.nanoTime() - t);
             // Support healing is top priority — runs before buffs so that a bot below the heal
             // threshold casts Heal before a rebuff uses up this tick's action window. If it fires,
-            // entry.attackCooldownMs is set to the heal animation lock and tickActionLocked() will
-            // return true, causing the caller to skip attack logic this tick.
+            // Agent combat cooldown state is set to the heal animation lock and tickActionLocked()
+            // will return true, causing the caller to skip attack logic this tick.
             if (perf) t = System.nanoTime();
             BotCombatManager.tickSupportHealing(entry, bot);
             if (perf) BotPerformanceMonitor.record("common-support-heal", System.nanoTime() - t);
