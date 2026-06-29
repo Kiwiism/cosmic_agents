@@ -1340,6 +1340,10 @@ Recent reconstruction notes:
   `AgentAutopotPolicy`; BotPotionManager preserves the same USE-inventory scan,
   keybinding assignment, alert thresholds, and debug-report wiring through
   compatibility delegates.
+- Potion-share recovery scoring and HP/MP share-slot eligibility now live in
+  `AgentPotionSharePolicy`; BotInventoryManager preserves the same item-effect
+  lookup, candidate sorting, max-stack, and trade-transfer behavior through
+  compatibility delegates.
 
 Initial reconstruction order:
 

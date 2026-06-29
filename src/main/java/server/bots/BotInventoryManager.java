@@ -26,6 +26,7 @@ import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy;
 import server.agents.capabilities.inventory.AgentInventorySellTrashPolicy;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
+import server.agents.capabilities.supplies.AgentPotionSharePolicy;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotInventoryStateRuntime;
@@ -1716,15 +1717,7 @@ public class BotInventoryManager {
      * always considered better than any flat-value pot. Within each tier lower = worse.
      */
     private static int potRecoveryScore(int itemId, boolean forHp) {
-        StatEffect eff = itemEffect(itemId);
-        if (eff == null) return Integer.MAX_VALUE;
-        if (forHp) {
-            if (eff.getHpRate() > 0) return 1_000_000 + (int) (eff.getHpRate() * 1000);
-            return eff.getHp();
-        } else {
-            if (eff.getMpRate() > 0) return 1_000_000 + (int) (eff.getMpRate() * 1000);
-            return eff.getMp();
-        }
+        return AgentPotionSharePolicy.recoveryScore(itemEffect(itemId), forHp);
     }
 
     /**
@@ -1741,8 +1734,7 @@ public class BotInventoryManager {
             if (item == null || !isRecoveryPotion(item.getItemId())) continue;
             StatEffect eff = itemEffect(item.getItemId());
             if (eff == null) continue;
-            if (forHp  && eff.getHp() == 0 && eff.getHpRate() == 0) continue;
-            if (!forHp && eff.getMp() == 0 && eff.getMpRate() == 0) continue;
+            if (!AgentPotionSharePolicy.canShareForSlot(eff, forHp)) continue;
             candidates.add(item);
         }
         candidates.sort((a, b) -> Integer.compare(
