@@ -191,6 +191,9 @@ Recent reconstruction notes:
   through `AgentBotMovementPhysicsStateRuntime`; swim entry, knockback,
   airborne launch, air steering, collision, climb, and reset paths no longer
   access `airVelX` or `airSteerVelX` directly.
+- Bot physics climb-up intent now enters through `AgentBotClimbStateRuntime`;
+  idle, swim launch, knockback, landing, ground motion, airborne launch, climb,
+  and reset paths no longer access `climbUpIntent` directly.
 - Combat alert reset callbacks now enter through `AgentBotCombatRuntime`;
   `BotCombatManager` no longer reaches directly into the lower-level scheduler
   runtime for combat-owned alert timing, and alert timing and stance reset

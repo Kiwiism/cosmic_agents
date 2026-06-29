@@ -33,6 +33,12 @@ class AgentBotClimbStateRuntimeTest {
         AgentBotClimbStateRuntime.setClimbVerticalDirection(entry, 0);
 
         assertFalse(AgentBotClimbStateRuntime.hasClimbVerticalDirection(entry));
+
+        assertFalse(AgentBotClimbStateRuntime.climbUpIntent(entry));
+        AgentBotClimbStateRuntime.setClimbUpIntent(entry, true);
+        assertTrue(AgentBotClimbStateRuntime.climbUpIntent(entry));
+        AgentBotClimbStateRuntime.setClimbUpIntent(entry, false);
+        assertFalse(AgentBotClimbStateRuntime.climbUpIntent(entry));
     }
 
     @Test

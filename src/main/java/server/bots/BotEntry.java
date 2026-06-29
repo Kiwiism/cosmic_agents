@@ -341,6 +341,10 @@ public class BotEntry {
         return climbUpIntent;
     }
 
+    public void setClimbUpIntent(boolean climbUpIntent) {
+        this.climbUpIntent = climbUpIntent;
+    }
+
     public Rope blockedRopeGrab() {
         return blockedRopeGrab;
     }

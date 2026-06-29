@@ -621,7 +621,7 @@ public final class BotPhysicsEngine {
         AgentBotMovementStateRuntime.setInAir(entry, false);
         AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
         AgentBotMovementStateRuntime.setCrouching(entry, false);
-        entry.climbUpIntent = false;
+        AgentBotClimbStateRuntime.setClimbUpIntent(entry, false);
         clearRopeEntryIntent(entry);
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
         AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
@@ -677,7 +677,7 @@ public final class BotPhysicsEngine {
             AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry,
                     -profileOrBase(AgentBotMovementStateRuntime.movementProfile(entry)).jumpSpeedPxs());
             stopGroundMotion(entry);
-            entry.climbUpIntent = false;
+            AgentBotClimbStateRuntime.setClimbUpIntent(entry, false);
             AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
             AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
             AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
@@ -772,7 +772,7 @@ public final class BotPhysicsEngine {
         entry.physX = position.x;
         entry.physY = position.y;
         stopGroundMotion(entry);
-        entry.climbUpIntent = true;
+        AgentBotClimbStateRuntime.setClimbUpIntent(entry, true);
         AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, airVelX);
         AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
         AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
@@ -803,7 +803,7 @@ public final class BotPhysicsEngine {
         AgentBotMovementStateRuntime.setInAir(entry, false);
         AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
         AgentBotMovementStateRuntime.setCrouching(entry, false);
-        entry.climbUpIntent = false;
+        AgentBotClimbStateRuntime.setClimbUpIntent(entry, false);
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
         AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
         AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
@@ -910,7 +910,7 @@ public final class BotPhysicsEngine {
         AgentBotMovementStateRuntime.setInAir(entry, false);
         AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
         AgentBotMovementStateRuntime.setCrouching(entry, false);
-        entry.climbUpIntent = false;
+        AgentBotClimbStateRuntime.setClimbUpIntent(entry, false);
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
         AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
         AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
@@ -1593,7 +1593,7 @@ public final class BotPhysicsEngine {
         entry.physY = position.y;
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, initialVelY);
         stopGroundMotion(entry);
-        entry.climbUpIntent = climbUpIntent;
+        AgentBotClimbStateRuntime.setClimbUpIntent(entry, climbUpIntent);
         clearRopeEntryIntent(entry);
         AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, airVelX);
         AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
@@ -1653,7 +1653,7 @@ public final class BotPhysicsEngine {
         AgentBotClimbStateRuntime.setClimbingOnRope(entry, rope);
         AgentBotMovementStateRuntime.setInAir(entry, false);
         AgentBotMovementStateRuntime.setCrouching(entry, false);
-        entry.climbUpIntent = false;
+        AgentBotClimbStateRuntime.setClimbUpIntent(entry, false);
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
         AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
         AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
@@ -1685,7 +1685,7 @@ public final class BotPhysicsEngine {
         AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
         entry.wasMovingX = false;
         AgentBotMovementStateRuntime.clearMoveDirection(entry);
-        entry.climbUpIntent = false;
+        AgentBotClimbStateRuntime.setClimbUpIntent(entry, false);
         AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
         entry.ropeGrabCooldownMs = 0;
         AgentBotMovementStateRuntime.setDownJumpPending(entry, false);

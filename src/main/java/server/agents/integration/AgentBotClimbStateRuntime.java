@@ -42,6 +42,10 @@ public final class AgentBotClimbStateRuntime {
         return entry.climbUpIntent();
     }
 
+    public static void setClimbUpIntent(BotEntry entry, boolean climbUpIntent) {
+        entry.setClimbUpIntent(climbUpIntent);
+    }
+
     public static Rope blockedRopeGrab(BotEntry entry) {
         return entry.blockedRopeGrab();
     }
