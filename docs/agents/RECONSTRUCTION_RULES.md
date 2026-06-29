@@ -1074,6 +1074,10 @@ Recent reconstruction notes:
   `AgentBotTargetedCommandMatch`; BotCommandParser remains the temporary
   bot-package shim over `AgentCommandParser`, while parsed command boundary
   data is owned by the Agent integration layer.
+- First-job starter-kit data now lives in `AgentStarterKitCatalog` with
+  `AgentStarterItemGrant`; BotStarterKitManager preserves the same job-change,
+  grant, auto-equip, and build-status behavior while the static kit table and
+  grant value object are owned by the Agent build capability.
 
 Initial reconstruction order:
 

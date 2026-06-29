@@ -4,6 +4,7 @@ import client.Character;
 import client.Job;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.capabilities.build.AgentStarterItemGrant;
 import server.agents.integration.AgentBotBuildStatusRuntime;
 
 import java.util.List;
@@ -20,23 +21,23 @@ import static org.mockito.Mockito.when;
 class BotStarterKitManagerTest {
     @Test
     void shouldExposeExplorerFirstJobStarterKits() {
-        assertEquals(List.of(new BotStarterKitManager.ItemGrant(1302077, (short) 1)),
+        assertEquals(List.of(new AgentStarterItemGrant(1302077, (short) 1)),
                 BotStarterKitManager.starterKitFor(Job.WARRIOR));
-        assertEquals(List.of(new BotStarterKitManager.ItemGrant(1372043, (short) 1)),
+        assertEquals(List.of(new AgentStarterItemGrant(1372043, (short) 1)),
                 BotStarterKitManager.starterKitFor(Job.MAGICIAN));
         assertEquals(List.of(
-                        new BotStarterKitManager.ItemGrant(1452051, (short) 1),
-                        new BotStarterKitManager.ItemGrant(2060000, (short) 1000)),
+                        new AgentStarterItemGrant(1452051, (short) 1),
+                        new AgentStarterItemGrant(2060000, (short) 1000)),
                 BotStarterKitManager.starterKitFor(Job.BOWMAN));
         assertEquals(List.of(
-                        new BotStarterKitManager.ItemGrant(1472061, (short) 1),
-                        new BotStarterKitManager.ItemGrant(1332063, (short) 1),
-                        new BotStarterKitManager.ItemGrant(2070015, (short) 500)),
+                        new AgentStarterItemGrant(1472061, (short) 1),
+                        new AgentStarterItemGrant(1332063, (short) 1),
+                        new AgentStarterItemGrant(2070015, (short) 500)),
                 BotStarterKitManager.starterKitFor(Job.THIEF));
         assertEquals(List.of(
-                        new BotStarterKitManager.ItemGrant(1492000, (short) 1),
-                        new BotStarterKitManager.ItemGrant(1482000, (short) 1),
-                        new BotStarterKitManager.ItemGrant(2330000, (short) 1000)),
+                        new AgentStarterItemGrant(1492000, (short) 1),
+                        new AgentStarterItemGrant(1482000, (short) 1),
+                        new AgentStarterItemGrant(2330000, (short) 1000)),
                 BotStarterKitManager.starterKitFor(Job.PIRATE));
     }
 
