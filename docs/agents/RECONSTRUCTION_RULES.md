@@ -1336,6 +1336,10 @@ Recent reconstruction notes:
   BotInventoryManager preserves bow-arrow, crossbow-arrow, throwing-star, and
   bullet matching plus trade-ammo item detection through compatibility
   delegates.
+- Autopot potion tier ranking and HP/MP slot choice policy now live in
+  `AgentAutopotPolicy`; BotPotionManager preserves the same USE-inventory scan,
+  keybinding assignment, alert thresholds, and debug-report wiring through
+  compatibility delegates.
 
 Initial reconstruction order:
 

@@ -18,6 +18,9 @@ import constants.skills.WhiteKnight;
 import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
+import server.agents.capabilities.supplies.AgentAutopotPolicy;
+import server.agents.capabilities.supplies.AgentAutopotPolicy.AutopotChoice;
+import server.agents.capabilities.supplies.AgentAutopotPolicy.PotionRanking;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
@@ -142,82 +145,18 @@ public final class BotPotionManager {
      * Within the same tier, the smaller recovery value wins (burn cheap pots first;
      * preserve big pots for emergencies). Buff potions (statups present) are excluded.
      */
-    enum PotionTier {
-        FLAT_SINGLE,
-        FLAT_MIXED,
-        RATE_SINGLE,
-        RATE_MIXED
-    }
-
-    /** Result of classifying an item for a slot: tier + the slot-stat magnitude used for tie-breaking. */
-    record PotionRanking(PotionTier tier, double value) {
-        boolean betterThan(PotionRanking other) {
-            if (other == null) return true;
-            int t = Integer.compare(this.tier.ordinal(), other.tier.ordinal());
-            if (t != 0) return t < 0;
-            return this.value < other.value; // smaller value preferred within tier
-        }
-    }
-
     static PotionRanking classifyForSlot(StatEffect fx, boolean hpSlot) {
-        if (fx == null) {
-            return null;
-        }
-        int flatPrim    = Math.max(0, hpSlot ? fx.getHp()     : fx.getMp());
-        int flatOther   = Math.max(0, hpSlot ? fx.getMp()     : fx.getHp());
-        double ratePrim  = Math.max(0.0, hpSlot ? fx.getHpRate() : fx.getMpRate());
-        double rateOther = Math.max(0.0, hpSlot ? fx.getMpRate() : fx.getHpRate());
-
-        if (flatPrim == 0 && ratePrim == 0.0) {
-            return null; // does not restore the slot's stat
-        }
-
-        boolean hasFlat = flatPrim > 0 || flatOther > 0;
-        boolean hasRate = ratePrim > 0 || rateOther > 0;
-
-        if (hasFlat && !hasRate) {
-            boolean mixed = flatPrim > 0 && flatOther > 0;
-            return new PotionRanking(mixed ? PotionTier.FLAT_MIXED : PotionTier.FLAT_SINGLE, flatPrim);
-        }
-        if (hasRate && !hasFlat) {
-            boolean mixed = ratePrim > 0 && rateOther > 0;
-            return new PotionRanking(mixed ? PotionTier.RATE_MIXED : PotionTier.RATE_SINGLE, ratePrim);
-        }
-        // Hybrid flat+rate: rank as worst tier (mixed rate) so flat-only pots always win.
-        return new PotionRanking(PotionTier.RATE_MIXED, ratePrim > 0 ? ratePrim : flatPrim);
+        return AgentAutopotPolicy.classifyForSlot(fx, hpSlot);
     }
-
-    /** Pair of best autopot picks for the HP and MP slots over the bot's recovery pots. */
-    record AutopotChoice(int hpItemId, PotionRanking hpRank, int mpItemId, PotionRanking mpRank) {}
 
     /** Shared selection used by both keybind setup and the debug report. */
     static AutopotChoice computeAutopotChoice(Character bot) {
         long startedAt = AgentPerformanceMonitor.start();
-        int hpItemId = -1;
-        int mpItemId = -1;
-        PotionRanking bestHp = null;
-        PotionRanking bestMp = null;
-        for (Item item : bot.getInventory(InventoryType.USE).list()) {
-            if (item.getQuantity() <= 0) {
-                continue;
-            }
-            StatEffect effect = BotInventoryManager.itemEffect(item.getItemId());
-            if (effect == null || effect.getStatups().isEmpty() == false) {
-                continue;
-            }
-            PotionRanking hpRank = classifyForSlot(effect, true);
-            if (hpRank != null && hpRank.betterThan(bestHp)) {
-                bestHp = hpRank;
-                hpItemId = item.getItemId();
-            }
-            PotionRanking mpRank = classifyForSlot(effect, false);
-            if (mpRank != null && mpRank.betterThan(bestMp)) {
-                bestMp = mpRank;
-                mpItemId = item.getItemId();
-            }
-        }
+        AutopotChoice choice = AgentAutopotPolicy.computeChoice(
+                bot.getInventory(InventoryType.USE).list(),
+                BotInventoryManager::itemEffect);
         AgentPerformanceMonitor.recordSince("potion-recovery-scan", startedAt);
-        return new AutopotChoice(hpItemId, bestHp, mpItemId, bestMp);
+        return choice;
     }
 
     public static void setupAutopotForBot(Character bot) {
