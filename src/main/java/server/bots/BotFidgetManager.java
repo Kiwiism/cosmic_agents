@@ -4,9 +4,11 @@ import client.Character;
 import net.packet.Packet;
 import server.agents.integration.AgentBotFidgetRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
+import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
 import server.maps.Foothold;
 import tools.PacketCreator;
@@ -39,12 +41,13 @@ final class BotFidgetManager {
     }
 
     static boolean tryHandleTick(BotEntry entry, Point targetPos, boolean runAiTick) {
-        if (entry == null || entry.bot == null || targetPos == null) {
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        if (entry == null || bot == null || targetPos == null) {
             clear(entry);
             return false;
         }
 
-        Point botPos = entry.bot.getPosition();
+        Point botPos = bot.getPosition();
         long now = System.currentTimeMillis();
         if (entry.fidgetMode != BotFidgetMode.NONE) {
             if (!shouldKeepRunning(entry, botPos, targetPos, now)) {
@@ -137,7 +140,8 @@ final class BotFidgetManager {
         entry.fidgetSpamAirSteer = isJumpFidget(mode) && ThreadLocalRandom.current().nextInt(100) < 35;
         entry.fidgetActionBaseDelayMs = randomActionBaseDelayMs(mode, entry.fidgetSpamAirSteer);
         entry.nextFidgetJumpAtMs = now;
-        entry.fidgetOriginPos = entry.bot == null ? null : new Point(entry.bot.getPosition());
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        entry.fidgetOriginPos = bot == null ? null : new Point(bot.getPosition());
         entry.nextFidgetVisualAtMs = now + BotManager.randMs(500, 1200);
         entry.nextFidgetAtMs = now + BotManager.randMs(4000, 8000);
     }
@@ -194,7 +198,11 @@ final class BotFidgetManager {
         if (!isEligible(entry, botPos, targetPos, true) || now >= entry.fidgetUntilMs) {
             return false;
         }
-        int walkStep = BotPhysicsEngine.walkStep(entry.bot.getMap(), entry.movementProfile);
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        if (bot == null) {
+            return false;
+        }
+        int walkStep = BotPhysicsEngine.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         int absDx = Math.abs(targetPos.x - botPos.x);
         return absDx <= BotMovementManager.cfg.FOLLOW_DIST + walkStep * 3;
     }
@@ -243,14 +251,15 @@ final class BotFidgetManager {
     }
 
     static boolean shouldStartSpeedMismatchFidget(BotEntry entry, Point botPos, Point targetPos) {
-        if (entry == null || entry.bot == null || botPos == null || targetPos == null) {
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        if (entry == null || bot == null || botPos == null || targetPos == null) {
             return false;
         }
         if (isOwnerMostlyIdle(entry)) {
             return false;
         }
 
-        int walkStep = BotPhysicsEngine.walkStep(entry.bot.getMap(), entry.movementProfile);
+        int walkStep = BotPhysicsEngine.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         int absDx = Math.abs(targetPos.x - botPos.x);
         int ownerStep = AgentBotOwnerMotionStateRuntime.maxObservedOwnerStep(entry);
         return absDx <= BotMovementManager.cfg.FOLLOW_DIST + walkStep
@@ -307,7 +316,10 @@ final class BotFidgetManager {
     }
 
     private static boolean executeGrounded(BotEntry entry, Point botPos, Point targetPos, long now) {
-        Character bot = entry.bot;
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        if (bot == null) {
+            return false;
+        }
         return switch (entry.fidgetMode) {
             case WAIT -> {
                 BotPhysicsEngine.idleOnGround(entry, bot);
@@ -365,10 +377,10 @@ final class BotFidgetManager {
                                           Point targetPos,
                                           long now,
                                           boolean diagonal) {
-        int walkStep = BotPhysicsEngine.walkStep(bot.getMap(), entry.movementProfile);
+        int walkStep = BotPhysicsEngine.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         int jumpDx;
         if (diagonal) {
-            int jumpDir = nextDiagonalJumpDir(entry, botPos);
+            int jumpDir = nextDiagonalJumpDir(entry, bot, botPos);
             jumpDx = jumpDir * walkStep;
             entry.fidgetJumpDir = -jumpDir;
             entry.fidgetAirSteerDir = jumpDir;
@@ -386,11 +398,11 @@ final class BotFidgetManager {
         entry.nextFidgetJumpAtMs = now + BotManager.randMs(200, 400);
     }
 
-    private static int nextDiagonalJumpDir(BotEntry entry, Point botPos) {
+    private static int nextDiagonalJumpDir(BotEntry entry, Character bot, Point botPos) {
         Point origin = entry.fidgetOriginPos;
         if (origin != null && botPos != null) {
             int dxFromOrigin = botPos.x - origin.x;
-            int bias = Math.max(8, BotPhysicsEngine.walkStep(entry.bot.getMap(), entry.movementProfile));
+            int bias = Math.max(8, BotPhysicsEngine.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry)));
             if (dxFromOrigin >= bias) {
                 return -1;
             }
@@ -405,12 +417,12 @@ final class BotFidgetManager {
 
     private static void tickSidewaysMovement(BotEntry entry, Character bot, Point botPos, long now) {
         if (now >= entry.nextFidgetActionAtMs || entry.fidgetMoveDir == 0) {
-            entry.fidgetMoveDir = nextSidewaysDir(entry, botPos);
+            entry.fidgetMoveDir = nextSidewaysDir(entry, bot, botPos);
             entry.nextFidgetActionAtMs = now + jitteredDelayMs(entry.fidgetActionBaseDelayMs);
         }
 
         int dir = entry.fidgetMoveDir == 0 ? 1 : entry.fidgetMoveDir;
-        int walkStep = BotPhysicsEngine.walkStep(bot.getMap(), entry.movementProfile);
+        int walkStep = BotPhysicsEngine.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         if (!BotPhysicsEngine.canWalkGroundStep(bot.getMap(), botPos, dir * walkStep)) {
             dir = -dir;
             entry.fidgetMoveDir = dir;
@@ -432,9 +444,9 @@ final class BotFidgetManager {
         BotMovementManager.broadcastMovement(entry);
     }
 
-    private static int nextSidewaysDir(BotEntry entry, Point botPos) {
+    private static int nextSidewaysDir(BotEntry entry, Character bot, Point botPos) {
         Point origin = entry.fidgetOriginPos;
-        int walkStep = BotPhysicsEngine.walkStep(entry.bot.getMap(), entry.movementProfile);
+        int walkStep = BotPhysicsEngine.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         if (origin != null && botPos != null) {
             int dxFromOrigin = botPos.x - origin.x;
             int bound = Math.max(12, walkStep * 2);
@@ -472,7 +484,8 @@ final class BotFidgetManager {
     }
 
     private static void maybeBroadcastProneAttackVisual(BotEntry entry, long now) {
-        if (entry == null || entry.bot == null || entry.bot.getMap() == null
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        if (entry == null || bot == null || bot.getMap() == null
                 || !entry.crouching || now < entry.nextFidgetVisualAtMs) {
             return;
         }
@@ -482,7 +495,6 @@ final class BotFidgetManager {
             return;
         }
 
-        Character bot = entry.bot;
         int direction = BotAttackExecutionProvider.bodyActionId("proneStab", "stabO1", null);
         Packet attackPacket = PacketCreator.closeRangeAttack(
                 bot,

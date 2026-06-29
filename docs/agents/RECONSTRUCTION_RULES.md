@@ -875,6 +875,12 @@ Recent reconstruction notes:
   `AgentBotRuntimeIdentityRuntime`; BotScrollReactionManager range filtering,
   delayed reaction eligibility, and emote side effects keep BotEntry as the
   temporary backing store but no longer read `bot` directly in production.
+- Fidget bot identity and movement profile reads now enter through
+  `AgentBotRuntimeIdentityRuntime` and `AgentBotMovementStateRuntime`;
+  BotFidgetManager tick eligibility, fidget origin capture, walk-step
+  calculations, grounded execution, diagonal/sideways direction selection, and
+  prone visual broadcast keep BotEntry as the temporary backing store but no
+  longer read `bot` or `movementProfile` directly in production.
 
 Initial reconstruction order:
 
