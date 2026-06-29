@@ -670,7 +670,7 @@ public final class BotPhysicsEngine {
             Point position = bot.getPosition();
             AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
             AgentBotMovementStateRuntime.setInAir(entry, true);
-            entry.swimming = true;
+            AgentBotSwimStateRuntime.setSwimming(entry, true);
             AgentBotMovementStateRuntime.setCrouching(entry, false);
             entry.physX = position.x;
             entry.physY = position.y;
@@ -681,11 +681,12 @@ public final class BotPhysicsEngine {
             entry.airSteerVelX = 0.0;
             entry.fixedAirArc = false;
             AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
-            entry.swimJumpRequested = false;
+            AgentBotSwimStateRuntime.setSwimJumpRequested(entry, false);
             // The first impulse off a foothold is the small ground jump. A
             // mid-water swim burst may follow later, but not on the next swim
             // tick just because the steering target is still above the bot.
-            entry.swimNextJumpAtMs = System.currentTimeMillis() + cfg.SWIM_JUMP_COOLDOWN_MS;
+            AgentBotSwimStateRuntime.setSwimNextJumpAtMs(entry,
+                    System.currentTimeMillis() + cfg.SWIM_JUMP_COOLDOWN_MS);
             setMovementVelocity(entry, 0, Math.round(entry.velY));
             syncCharacterState(entry);
             return;
@@ -1061,7 +1062,7 @@ public final class BotPhysicsEngine {
         // First tick after entering swim mode: rebase the integrator on the bot's
         // authoritative position and discard any committed-airborne state from
         // the launch (airVelX, fixedAirArc) — swim physics owns motion now.
-        if (!entry.swimming) {
+        if (!AgentBotSwimStateRuntime.swimming(entry)) {
             entry.physX = pos.x;
             entry.physY = pos.y;
             entry.airVelX = 0;
@@ -1086,7 +1087,7 @@ public final class BotPhysicsEngine {
         double vy = entry.velY;
 
         // --- Vertical control ---
-        if (entry.swimJumpRequested) {
+        if (AgentBotSwimStateRuntime.swimJumpRequested(entry)) {
             // Swim-jump impulse scales with character SPEED stat, not jump stat.
             // Per JustJump@CVecCtrl @ 0x9b1d3d swim branch:
             //   swim_jump = stat[+0x6c] × physcfg[+0x48] × speedScale × 5.0
@@ -1096,12 +1097,13 @@ public final class BotPhysicsEngine {
             float burst = cfg.SWIM_JUMP_BURST_PXS;
             burst *= (float) AgentBotMovementStateRuntime.movementProfile(entry).speedMultiplier();
             vy = -burst;
-            entry.swimJumpRequested = false;
+            AgentBotSwimStateRuntime.setSwimJumpRequested(entry, false);
         }
 
         // --- Horizontal control ---
-        if (entry.swimMoveDir != 0) {
-            double accelStep = cfg.SWIM_ACCEL_PXS2 * t * Integer.signum(entry.swimMoveDir);
+        if (AgentBotSwimStateRuntime.swimMoveDirection(entry) != 0) {
+            double accelStep = cfg.SWIM_ACCEL_PXS2 * t
+                    * Integer.signum(AgentBotSwimStateRuntime.swimMoveDirection(entry));
             vx += accelStep;
         }
 
@@ -1117,22 +1119,22 @@ public final class BotPhysicsEngine {
         // doesn't just lower the sink cap, it continuously accelerates the
         // character upward. Without this the bot's burst trajectory falls
         // far short of a real player's "burst + hold UP" reach.
-        if (entry.swimVerticalHold < 0) {
+        if (AgentBotSwimStateRuntime.swimVerticalHold(entry) < 0) {
             vy -= cfg.SWIM_UP_THRUST_PXS2 * t;
-        } else if (entry.swimVerticalHold > 0) {
+        } else if (AgentBotSwimStateRuntime.swimVerticalHold(entry) > 0) {
             vy += cfg.SWIM_DOWN_THRUST_PXS2 * t;
         }
 
         // Horizontal cap.
         vx = Math.max(-cfg.SWIM_MAX_SPEED_PXS, Math.min(cfg.SWIM_MAX_SPEED_PXS, vx));
-        if (entry.swimMoveDir != 0) {
+        if (AgentBotSwimStateRuntime.swimMoveDirection(entry) != 0) {
             double cap = cfg.SWIM_VEL_PXS;
-            if (vx >  cap && entry.swimMoveDir > 0) vx =  cap;
-            if (vx < -cap && entry.swimMoveDir < 0) vx = -cap;
+            if (vx >  cap && AgentBotSwimStateRuntime.swimMoveDirection(entry) > 0) vx =  cap;
+            if (vx < -cap && AgentBotSwimStateRuntime.swimMoveDirection(entry) < 0) vx = -cap;
         }
         // Vertical sink cap — discrete intent picks the terminal velocity.
         // Upward velocity (vy < 0) is unaffected so jump bursts still arc up.
-        double sinkCap = switch (Integer.signum(entry.swimVerticalHold)) {
+        double sinkCap = switch (Integer.signum(AgentBotSwimStateRuntime.swimVerticalHold(entry))) {
             case -1 -> cfg.SWIM_UP_MAX_SINK_PXS;
             case  1 -> cfg.SWIM_DOWN_MAX_SPEED_PXS;
             default -> cfg.SWIM_FREE_MAX_SINK_PXS;
@@ -1169,8 +1171,11 @@ public final class BotPhysicsEngine {
         }
 
         // Facing follows horizontal intent (or current vx if coasting).
-        if (entry.swimMoveDir > 0) entry.facingDir = 1;
-        else if (entry.swimMoveDir < 0) entry.facingDir = -1;
+        if (AgentBotSwimStateRuntime.swimMoveDirection(entry) > 0) {
+            AgentBotMovementStateRuntime.setFacingDirection(entry, 1);
+        } else if (AgentBotSwimStateRuntime.swimMoveDirection(entry) < 0) {
+            AgentBotMovementStateRuntime.setFacingDirection(entry, -1);
+        }
 
         if (landed) {
             // Hand off to grounded physics. Must go through landOnGround so
@@ -1179,7 +1184,7 @@ public final class BotPhysicsEngine {
             // conversion caused a 500+ px jerk forward on the first grounded
             // tick because raw vx was treated as ground hspeed and then
             // multiplied by stepsPerTick (50/8 = 6.25).
-            entry.swimming = false;
+            AgentBotSwimStateRuntime.setSwimming(entry, false);
             landOnGround(entry, bot,
                     new Point((int) Math.round(nextX), (int) Math.round(nextY)),
                     landingFoothold, landingDeltaX, landingDeltaY);
@@ -1192,7 +1197,7 @@ public final class BotPhysicsEngine {
         entry.physY = nextY;
         AgentBotMovementStateRuntime.setCrouching(entry, false);
         setMovementVelocity(entry, (int) Math.round(vx), (int) Math.round(vy));
-        entry.swimming = true;
+        AgentBotSwimStateRuntime.setSwimming(entry, true);
         AgentBotMovementStateRuntime.setInAir(entry, true);
 
         bot.setPosition(new Point((int) Math.round(nextX), (int) Math.round(nextY)));

@@ -169,6 +169,10 @@ Recent reconstruction notes:
 - Bot physics airborne/grounded state now enters through
   `AgentBotMovementStateRuntime.setInAir`; movement transitions no longer write
   the `inAir` field directly.
+- Bot physics swim mode and swim intent state now enters through
+  `AgentBotSwimStateRuntime`; water jump launch, swim integration, landing
+  handoff, swim input reads, swim-jump consumption, swim cooldown, and swim
+  facing updates no longer access swim fields directly in `BotPhysicsEngine`.
 - Combat alert reset callbacks now enter through `AgentBotCombatRuntime`;
   `BotCombatManager` no longer reaches directly into the lower-level scheduler
   runtime for combat-owned alert timing, and alert timing and stance reset
