@@ -1364,6 +1364,10 @@ Recent reconstruction notes:
   `AgentDialogueCatalog`; BotPotionManager and BotAmmoManager preserve the same
   random reply selection and visible map-chat delivery through compatibility
   delegates.
+- Inventory trade invitation, thanks, freebie, all-done, and reserved-equip
+  warning reply pools now live in `AgentDialogueCatalog`; BotInventoryManager
+  preserves the same random reply selection, trade chat, and visible map-chat
+  delivery through compatibility delegates.
 
 Initial reconstruction order:
 

@@ -141,6 +141,42 @@ public final class AgentDialogueCatalog {
             "im out of MP pots, heading to you");
     private static final List<String> TRADE_INVITE_REPLIES = List.of(
             "ok", "sure", "k", "one sec", "coming to trade", "np", "k opening trade");
+    private static final List<String> TRADE_INVITATION_REPLIES = List.of(
+            "k", "ok", "kk", "sure", "k, I inv", "k i inv",
+            "omw", "inv u", "one sec", "coming", "1sec", "1 sec",
+            "kkk", "aight", "aight inv", "alright", "alright inv",
+            "pull up", "slide trade", "ill trade u", "opening trade",
+            "trade time", "sending trade", "im here", "ready when u are");
+    private static final List<String> TRADE_THANKS_REPLIES = List.of(
+            "ty!", "thanks!", "thank you!", "tyty", "appreciate it!", "tysm!",
+            "nice ty", "ooh ty!", "thx!!", "much appreciated", "thx", "wow thx", "I owe you one",
+            "sweet ty", "ay ty", "perfect ty", "huge ty", "sick ty", "legend");
+    private static final List<String> TRADE_FREEBIE_REPLIES = List.of(
+            "i better get paid for that eventually lol", "you really should be paying me for that :P",
+            "free delivery, where's my tip", "don't say i never gave you anything",
+            "i'm basically your personal shopper at this point", "doing this for free smh",
+            "enjoy", "hope u like it", "enjoy the loot",
+            ":)", ":D", "np", "npnp", "npnpnp", "np man enjoy",
+            "there u go", "have fun", "that should help",
+            "use it well", "all yours", "take good care of it",
+            "delivered", "hope that helps", "treat it nicely", "tell me if you find anything for me too");
+    private static final List<String> TRADE_ALL_DONE_REPLIES = List.of(
+            "that's all!", "done adding stuff!", "all set!", "everything's in!",
+            "that's everything!", "done!", "added it all", "check it out");
+    private static final List<String> TRADE_RESERVED_FOR_OTHER_REPLIES = List.of(
+            "these might be needed by others, maybe don't sell them",
+            "careful with these, they could be for someone else",
+            "heads up, I was saving those for someone - don't lose them",
+            "these might go to someone else, hold onto them for now",
+            "those are kinda spoken for, keep them safe ok?",
+            "just so you know, I had plans for those");
+    private static final List<String> TRADE_RESERVED_FOR_SELF_REPLIES = List.of(
+            "I might need those later, don't lose them ok?",
+            "those could be an upgrade for me eventually, don't toss them",
+            "I was thinking I'd use those someday, keep them somewhere",
+            "heads up, I kinda wanted those for myself",
+            "those might fit me later, maybe hold onto them",
+            "just so you know, I had my eye on those");
     private static final List<String> GREETING_REPLIES = List.of(
             "hey", "hi", "sup", "yo", "heya", "hii", "hey!!", "hi!!", "hai", "haii",
             "heyo", "ello", "o/", "hai", "eyy", "henlo", "o hey", "yo dude", "hey there", "hi there", "hi guys", "what's up", "howdy", "how's it going");
@@ -369,6 +405,30 @@ public final class AgentDialogueCatalog {
 
     public static List<String> tradeInviteReplies() {
         return TRADE_INVITE_REPLIES;
+    }
+
+    public static List<String> tradeInvitationReplies() {
+        return TRADE_INVITATION_REPLIES;
+    }
+
+    public static List<String> tradeThanksReplies() {
+        return TRADE_THANKS_REPLIES;
+    }
+
+    public static List<String> tradeFreebieReplies() {
+        return TRADE_FREEBIE_REPLIES;
+    }
+
+    public static List<String> tradeAllDoneReplies() {
+        return TRADE_ALL_DONE_REPLIES;
+    }
+
+    public static List<String> tradeReservedForOtherReplies() {
+        return TRADE_RESERVED_FOR_OTHER_REPLIES;
+    }
+
+    public static List<String> tradeReservedForSelfReplies() {
+        return TRADE_RESERVED_FOR_SELF_REPLIES;
     }
 
     public static List<String> greetingReplies() {

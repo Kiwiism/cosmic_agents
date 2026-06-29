@@ -21,6 +21,7 @@ import constants.inventory.ItemConstants;
 import net.packet.Packet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
 import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy;
@@ -84,46 +85,6 @@ public class BotInventoryManager {
 
     private static final Set<Integer> manualTradeGreetingSent = ConcurrentHashMap.newKeySet();
     private static final Map<Integer, String> normalizedItemNameCache = new ConcurrentHashMap<>();
-    private static final List<String> TRADE_INVITATION_MSGS = List.of(
-            "k", "ok", "kk", "sure", "k, I inv", "k i inv",
-            "omw", "inv u", "one sec", "coming", "1sec", "1 sec",
-            "kkk", "aight", "aight inv", "alright", "alright inv",
-            "pull up", "slide trade", "ill trade u", "opening trade",
-            "trade time", "sending trade", "im here", "ready when u are");
-    private static final List<String> TRADE_THANKS_MSGS = List.of(
-            "ty!", "thanks!", "thank you!", "tyty", "appreciate it!", "tysm!",
-            "nice ty", "ooh ty!", "thx!!", "much appreciated", "thx", "wow thx", "I owe you one",
-            "sweet ty", "ay ty", "perfect ty", "huge ty", "sick ty", "legend");
-    private static final List<String> TRADE_FREEBIE_QUIPS = List.of(
-            "i better get paid for that eventually lol", "you really should be paying me for that :P",
-            "free delivery, where's my tip", "don't say i never gave you anything",
-            "i'm basically your personal shopper at this point", "doing this for free smh",
-            "enjoy", "hope u like it", "enjoy the loot",
-            ":)", ":D", "np", "npnp", "npnpnp", "np man enjoy",
-            "there u go", "have fun", "that should help",
-            "use it well", "all yours", "take good care of it",
-            "delivered", "hope that helps", "treat it nicely", "tell me if you find anything for me too");
-    private static final List<String> ALL_DONE_MSGS = List.of(
-            "that's all!", "done adding stuff!", "all set!", "everything's in!",
-            "that's everything!", "done!", "added it all", "check it out"
-    );
-    private static final List<String> TRADE_RESERVED_FOR_OTHER_MSGS = List.of(
-            "these might be needed by others, maybe don't sell them",
-            "careful with these, they could be for someone else",
-            "heads up, I was saving those for someone - don't lose them",
-            "these might go to someone else, hold onto them for now",
-            "those are kinda spoken for, keep them safe ok?",
-            "just so you know, I had plans for those"
-    );
-    private static final List<String> TRADE_RESERVED_FOR_SELF_MSGS = List.of(
-            "I might need those later, don't lose them ok?",
-            "those could be an upgrade for me eventually, don't toss them",
-            "I was thinking I'd use those someday, keep them somewhere",
-            "heads up, I kinda wanted those for myself",
-            "those might fit me later, maybe hold onto them",
-            "just so you know, I had my eye on those"
-    );
-
     static void tickPassiveLoot(BotEntry entry, Character bot) {
         if (AgentBotInventoryStateRuntime.hasLootInhibit(entry)) {
             AgentBotInventoryStateRuntime.tickLootInhibit(entry, BotMovementManager::tickDown);
@@ -631,7 +592,7 @@ public class BotInventoryManager {
         if (!AgentBotPendingTradeStateRuntime.inviteAnnounced(entry)
                 && !AgentBotPendingTradeStateRuntime.isSupplyShareCategory(entry)) {
             AgentBotPendingTradeStateRuntime.markInviteAnnounced(entry);
-            AgentBotInventoryRuntime.replyNow(entry, BotManager.randomReply(TRADE_INVITATION_MSGS));
+            AgentBotInventoryRuntime.replyNow(entry, BotManager.randomReply(AgentDialogueCatalog.tradeInvitationReplies()));
         }
     }
 
@@ -745,7 +706,7 @@ public class BotInventoryManager {
                 // All items added — say so in trade chat and wait for owner OK
                 AgentBotPendingTradeStateRuntime.markAllItemsAdded(entry);
                 AgentBotPendingTradeStateRuntime.clearTimer(entry);
-                String msg = BotManager.randomReply(ALL_DONE_MSGS);
+                String msg = BotManager.randomReply(AgentDialogueCatalog.tradeAllDoneReplies());
                 trade.chat(msg);
                 return;
             }
@@ -871,11 +832,11 @@ public class BotInventoryManager {
         if (receivedSomething) {
             bot.changeFaceExpression(AgentEmote.HAPPY.getValue());
             AgentBotInventoryRuntime.afterDelay(replyDelay, () ->
-                    AgentBotInventoryRuntime.visibleSayNow(entry, BotManager.randomReply(TRADE_THANKS_MSGS)));
+                    AgentBotInventoryRuntime.visibleSayNow(entry, BotManager.randomReply(AgentDialogueCatalog.tradeThanksReplies())));
         } else if (ThreadLocalRandom.current().nextInt(100) < 20) {
             bot.changeFaceExpression(ThreadLocalRandom.current().nextBoolean() ? AgentEmote.GLARE.getValue() : AgentEmote.ANNOYED.getValue());
             AgentBotInventoryRuntime.afterDelay(replyDelay, () ->
-                    AgentBotInventoryRuntime.visibleSayNow(entry, BotManager.randomReply(TRADE_FREEBIE_QUIPS)));
+                    AgentBotInventoryRuntime.visibleSayNow(entry, BotManager.randomReply(AgentDialogueCatalog.tradeFreebieReplies())));
         }
     }
 
@@ -1433,8 +1394,8 @@ public class BotInventoryManager {
         EquipsGroup group = EquipsGroup.fromCategory(category);
         if (group == null) return null;
         return switch (group) {
-            case RESERVED_FOR_OTHER -> BotManager.randomReply(TRADE_RESERVED_FOR_OTHER_MSGS);
-            case RESERVED_FOR_SELF  -> BotManager.randomReply(TRADE_RESERVED_FOR_SELF_MSGS);
+            case RESERVED_FOR_OTHER -> BotManager.randomReply(AgentDialogueCatalog.tradeReservedForOtherReplies());
+            case RESERVED_FOR_SELF  -> BotManager.randomReply(AgentDialogueCatalog.tradeReservedForSelfReplies());
             default -> null;
         };
     }

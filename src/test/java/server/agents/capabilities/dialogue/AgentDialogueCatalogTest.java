@@ -15,6 +15,12 @@ class AgentDialogueCatalogTest {
         assertTrue(AgentDialogueCatalog.greetingReplies().contains("hi"));
         assertTrue(AgentDialogueCatalog.welcomeBackReplies().contains("wb"));
         assertTrue(AgentDialogueCatalog.tradeInviteReplies().contains("coming to trade"));
+        assertTrue(AgentDialogueCatalog.tradeInvitationReplies().contains("opening trade"));
+        assertTrue(AgentDialogueCatalog.tradeThanksReplies().contains("legend"));
+        assertTrue(AgentDialogueCatalog.tradeFreebieReplies().contains("free delivery, where's my tip"));
+        assertTrue(AgentDialogueCatalog.tradeAllDoneReplies().contains("everything's in!"));
+        assertTrue(AgentDialogueCatalog.tradeReservedForOtherReplies().contains("those are kinda spoken for, keep them safe ok?"));
+        assertTrue(AgentDialogueCatalog.tradeReservedForSelfReplies().contains("heads up, I kinda wanted those for myself"));
         assertTrue(AgentDialogueCatalog.mesoReplies().contains("I have %s"));
         assertTrue(AgentDialogueCatalog.dropOrTradePrompts().contains("got %s, want me to trade or drop?"));
         assertTrue(AgentDialogueCatalog.ownerPotShortageReplies().contains("we're low on %s pots too, boss"));

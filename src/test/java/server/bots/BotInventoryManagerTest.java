@@ -11,6 +11,7 @@ import client.inventory.Inventory;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
 import server.Trade;
@@ -19,7 +20,6 @@ import server.maps.MapItem;
 import server.maps.MapleMap;
 
 import java.awt.*;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
@@ -67,9 +67,9 @@ class BotInventoryManagerTest {
     }
 
     @Test
-    void shouldExposeExpandedTradeMessagePools() throws Exception {
-        List<String> invitationMsgs = listField("TRADE_INVITATION_MSGS");
-        List<String> freebieMsgs = listField("TRADE_FREEBIE_QUIPS");
+    void shouldExposeExpandedTradeMessagePools() {
+        List<String> invitationMsgs = AgentDialogueCatalog.tradeInvitationReplies();
+        List<String> freebieMsgs = AgentDialogueCatalog.tradeFreebieReplies();
 
         assertTrue(invitationMsgs.size() >= 20);
         assertTrue(invitationMsgs.contains("ready when u are"));
@@ -352,17 +352,6 @@ class BotInventoryManagerTest {
 
             assertEquals(new Point(240, 100), BotInventoryManager.findNearestPatrolLootTarget(entry, 1));
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private static List<String> listField(String name) throws Exception {
-        return (List<String>) field(BotInventoryManager.class, name).get(null);
-    }
-
-    private static Field field(Class<?> type, String name) throws Exception {
-        Field field = type.getDeclaredField(name);
-        field.setAccessible(true);
-        return field;
     }
 
     private static Method method(Class<?> type, String name, Class<?>... parameterTypes) throws Exception {
