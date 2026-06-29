@@ -109,6 +109,11 @@ public final class AgentDialogueCatalog {
             "sure, got spare MP pots",
             "coming, inv",
             "got you");
+    private static final List<String> POT_DONOR_LOW_TEMPLATES = List.of(
+            "low too, maybe %s has some?",
+            "wish i could help, try %s?",
+            "i'm low too :/ check with %s",
+            "barely have any myself, ask %s");
     private static final List<String> ARROW_REQUEST_REPLIES = List.of(
             "low on arrows, anyone have spare?",
             "need arrows soon, anyone got extras?",
@@ -404,6 +409,14 @@ public final class AgentDialogueCatalog {
 
     public static List<String> potOfferMpReplies() {
         return POT_OFFER_MP_REPLIES;
+    }
+
+    public static List<String> potDonorLowTemplates() {
+        return POT_DONOR_LOW_TEMPLATES;
+    }
+
+    public static String formatPotDonorLowReply(String template, String ownerName) {
+        return String.format(template, ownerName);
     }
 
     public static List<String> arrowRequestReplies() {

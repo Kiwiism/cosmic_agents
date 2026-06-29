@@ -30,6 +30,9 @@ class AgentDialogueCatalogTest {
         assertTrue(AgentDialogueCatalog.potRequestMpReplies().contains("need MP pots!! anyone?"));
         assertTrue(AgentDialogueCatalog.potOfferHpReplies().contains("got some HP pots, inv u"));
         assertTrue(AgentDialogueCatalog.potOfferMpReplies().contains("got some MP pots, inv u"));
+        assertTrue(AgentDialogueCatalog.potDonorLowTemplates().contains("wish i could help, try %s?"));
+        assertEquals("wish i could help, try Admin?",
+                AgentDialogueCatalog.formatPotDonorLowReply("wish i could help, try %s?", "Admin"));
         assertTrue(AgentDialogueCatalog.arrowRequestReplies().contains("need arrows soon, anyone got extras?"));
         assertTrue(AgentDialogueCatalog.boltRequestReplies().contains("need crossbow bolts soon, anyone got extras?"));
         assertTrue(AgentDialogueCatalog.ammoOfferReplies().contains("got some ammo for you, trading"));

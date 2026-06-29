@@ -316,15 +316,12 @@ public final class BotPotionManager {
                 categoryBackoff.put(owner.getId(), now + 10 * 60_000L);
             }
             String ownerName = owner.getName();
-            List<String> noQualMessages = List.of(
-                    "low too, maybe " + ownerName + " has some?",
-                    "wish i could help, try " + ownerName + "?",
-                    "i'm low too :/ check with " + ownerName,
-                    "barely have any myself, ask " + ownerName);
             AgentBotPotionRuntime.afterRandomDelay(4000, 6000, () ->
                     AgentBotPotionRuntime.sayMapNow(
                             AgentBotRuntimeIdentityRuntime.bot(plan.entry()),
-                            BotManager.randomReply(noQualMessages)));
+                            AgentDialogueCatalog.formatPotDonorLowReply(
+                                    BotManager.randomReply(AgentDialogueCatalog.potDonorLowTemplates()),
+                                    ownerName)));
         } else {
             schedulePotShare(plan, bot, forHp, AgentBotPotionRuntime.randomDelayMs(2000, 3000));
         }
