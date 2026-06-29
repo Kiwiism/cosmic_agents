@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Combat config ownership moved to
+  `server.agents.capabilities.combat.AgentCombatConfig`. `BotCombatManager.cfg`
+  remains as a compatibility alias to the same live config object, so existing
+  bot config commands and tests keep the same behavior while Agent combat code
+  no longer reads config through `BotCombatManager`.
 - Combat attack data provider ownership moved to
   `server.agents.capabilities.combat.data.AgentAttackDataProvider`. Weapon
   normal-attack profile loading, action-spec selection, body action id
@@ -44,9 +49,9 @@ Recent reconstruction notes:
   basic/skill attack data records, packet stance/action helpers, attack-route
   application bridge, weapon route resolution, degenerate ranged retreat
   helpers, projectile hitbox helpers, and skill timing resolution are unchanged.
-  `BotCombatManager` still owns combat config, ammo counting, and client
-  projectile hitbox implementation as temporary public seams until combat
-  planning and config move into Agent combat modules.
+  `BotCombatManager` still owns ammo counting and client projectile hitbox
+  implementation as temporary public seams until combat planning moves into
+  Agent combat modules.
 - Combat attack-route ownership moved to
   `server.agents.capabilities.combat.AgentAttackRoute`. The CLOSE/RANGED/MAGIC
   route values are unchanged; `BotCombatManager`, `BotManager`, and attack

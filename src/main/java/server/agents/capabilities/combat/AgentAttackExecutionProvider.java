@@ -319,8 +319,8 @@ public final class AgentAttackExecutionProvider {
 
         int dx = Math.abs(targetPos.x - botPos.x);
         int dy = Math.abs(targetPos.y - botPos.y);
-        return dx <= BotCombatManager.cfg.RANGED_DEGENERATE_RANGE_X
-                && dy <= BotCombatManager.cfg.RANGED_DEGENERATE_RANGE_Y;
+        return dx <= AgentCombatConfig.cfg.RANGED_DEGENERATE_RANGE_X
+                && dy <= AgentCombatConfig.cfg.RANGED_DEGENERATE_RANGE_Y;
     }
 
     public static boolean shouldRetreatFromNearbyTarget(WeaponType weaponType, Point botPos, Point targetPos) {
@@ -330,8 +330,8 @@ public final class AgentAttackExecutionProvider {
 
         int dx = Math.abs(targetPos.x - botPos.x);
         int dy = Math.abs(targetPos.y - botPos.y);
-        return dx <= BotCombatManager.cfg.RANGED_RETREAT_THRESHOLD_X
-                && dy <= BotCombatManager.cfg.RANGED_DEGENERATE_RANGE_Y;
+        return dx <= AgentCombatConfig.cfg.RANGED_RETREAT_THRESHOLD_X
+                && dy <= AgentCombatConfig.cfg.RANGED_DEGENERATE_RANGE_Y;
     }
 
     public static boolean isAnyMobNearerThanTarget(Character bot, Point botPos, Point targetPos) {
@@ -352,8 +352,8 @@ public final class AgentAttackExecutionProvider {
         if (!isDegenerateCapableRangedWeapon(wt)) {
             return null;
         }
-        int threshX = BotCombatManager.cfg.RANGED_RETREAT_THRESHOLD_X;
-        int threshY = BotCombatManager.cfg.RANGED_DEGENERATE_RANGE_Y;
+        int threshX = AgentCombatConfig.cfg.RANGED_RETREAT_THRESHOLD_X;
+        int threshY = AgentCombatConfig.cfg.RANGED_DEGENERATE_RANGE_Y;
         double targetDistSq = targetPos.distanceSq(botPos);
         server.life.Monster closest = null;
         double closestDistSq = targetDistSq;
@@ -384,14 +384,14 @@ public final class AgentAttackExecutionProvider {
      */
     public static Point retreatTargetPosition(Character bot, Point botPos, Point targetPos) {
         int direction = pickRetreatDirection(bot, botPos, targetPos);
-        int defaultStep = BotCombatManager.cfg.RANGED_RETREAT_DISTANCE_X;
+        int defaultStep = AgentCombatConfig.cfg.RANGED_RETREAT_DISTANCE_X;
         if (bot == null || bot.getMap() == null) {
             return new Point(botPos.x + direction * defaultStep, botPos.y);
         }
 
-        int minStep = BotCombatManager.cfg.RANGED_DEGENERATE_RANGE_X + 20;
+        int minStep = AgentCombatConfig.cfg.RANGED_DEGENERATE_RANGE_X + 20;
         int maxStep = defaultStep * 2;
-        int yBand = BotCombatManager.cfg.RANGED_DEGENERATE_RANGE_Y * 2;
+        int yBand = AgentCombatConfig.cfg.RANGED_DEGENERATE_RANGE_Y * 2;
         int bestX = botPos.x + direction * defaultStep;
         long bestScore = Long.MIN_VALUE;
         for (int step = minStep; step <= maxStep; step += 30) {
@@ -450,10 +450,10 @@ public final class AgentAttackExecutionProvider {
         if (bot == null || bot.getMap() == null || botPos == null) {
             return scan;
         }
-        int scanWidth = BotCombatManager.cfg.ATTACK_RANGE_X * 4;
-        int scanHeight = BotCombatManager.cfg.RANGED_DEGENERATE_RANGE_Y * 2;
-        int bandX = BotCombatManager.cfg.RANGED_RETREAT_THRESHOLD_X;
-        int bandY = BotCombatManager.cfg.RANGED_DEGENERATE_RANGE_Y;
+        int scanWidth = AgentCombatConfig.cfg.ATTACK_RANGE_X * 4;
+        int scanHeight = AgentCombatConfig.cfg.RANGED_DEGENERATE_RANGE_Y * 2;
+        int bandX = AgentCombatConfig.cfg.RANGED_RETREAT_THRESHOLD_X;
+        int bandY = AgentCombatConfig.cfg.RANGED_DEGENERATE_RANGE_Y;
         for (server.life.Monster m : bot.getMap().getAllMonsters()) {
             if (!m.isAlive()) continue;
             Point mp = m.getPosition();
@@ -625,9 +625,9 @@ public final class AgentAttackExecutionProvider {
     }
 
     private static Rectangle closeRangeBasicHitBox(Point origin, boolean facingLeft) {
-        int horizontalRange = BotCombatManager.cfg.ATTACK_RANGE_X;
-        int top = origin.y - BotCombatManager.cfg.ATTACK_RANGE_Y;
-        int height = BotCombatManager.cfg.ATTACK_RANGE_Y + BotCombatManager.cfg.ATTACK_DOWN_MAX;
+        int horizontalRange = AgentCombatConfig.cfg.ATTACK_RANGE_X;
+        int top = origin.y - AgentCombatConfig.cfg.ATTACK_RANGE_Y;
+        int height = AgentCombatConfig.cfg.ATTACK_RANGE_Y + AgentCombatConfig.cfg.ATTACK_DOWN_MAX;
         int left = facingLeft ? origin.x - horizontalRange : origin.x;
         return new Rectangle(left, top, horizontalRange, height);
     }
