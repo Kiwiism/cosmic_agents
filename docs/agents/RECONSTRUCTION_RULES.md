@@ -159,6 +159,9 @@ Recent reconstruction notes:
   `AgentBotMovementStateRuntime`; prone, queued down-jump, down-jump failure,
   grace-period timer, landing, swim, airborne, climb, and reset paths no longer
   write `downJumpPending`, `downJumpGracePeriodMS`, or `crouching` directly.
+- Bot physics blocked-rope-grab state now enters through
+  `AgentBotClimbStateRuntime`; jump, fall, knockback, landing, and reset paths
+  no longer write `blockedRopeGrab` directly.
 - Combat alert reset callbacks now enter through `AgentBotCombatRuntime`;
   `BotCombatManager` no longer reaches directly into the lower-level scheduler
   runtime for combat-owned alert timing, and alert timing and stance reset

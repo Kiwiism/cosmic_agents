@@ -324,6 +324,15 @@ public class BotEntry {
     public Rope blockedRopeGrab() {
         return blockedRopeGrab;
     }
+
+    public void setBlockedRopeGrab(Rope rope) {
+        blockedRopeGrab = rope;
+    }
+
+    public void clearBlockedRopeGrab() {
+        blockedRopeGrab = null;
+    }
+
     int ropeGrabCooldownMs = 0;
 
     // Down-jump: true when crouch was shown last tick, jump fires this tick

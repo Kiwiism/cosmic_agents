@@ -657,7 +657,7 @@ public final class BotPhysicsEngine {
     }
 
     static void beginGroundJump(BotEntry entry, Character bot, int airVelX) {
-        entry.blockedRopeGrab = null;
+        AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
         // In swim maps, physics owns horizontal motion — drop any committed
         // airVelX/fixedAirArc the caller passed so swim integrator can steer.
         // Movement layer expresses *intent only* in water.
@@ -696,17 +696,17 @@ public final class BotPhysicsEngine {
     }
 
     static void beginClimbUpJump(BotEntry entry, Character bot, int airVelX) {
-        entry.blockedRopeGrab = null;
+        AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
         launchAirborne(entry, bot, bot.getPosition(), -jumpForcePerTick(AgentBotMovementStateRuntime.movementProfile(entry)), airVelX, true);
     }
 
     static void beginJumpOffRope(BotEntry entry, Character bot, int airVelX) {
-        entry.blockedRopeGrab = null;
+        AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
         launchAirborne(entry, bot, bot.getPosition(), -ropeJumpForcePerTick(AgentBotMovementStateRuntime.movementProfile(entry)), airVelX, false);
     }
 
     static void beginRopeTransferJump(BotEntry entry, Character bot, Rope sourceRope, int airVelX) {
-        entry.blockedRopeGrab = sourceRope;
+        AgentBotClimbStateRuntime.setBlockedRopeGrab(entry, sourceRope);
         launchAirborne(entry, bot, bot.getPosition(), -ropeJumpForcePerTick(AgentBotMovementStateRuntime.movementProfile(entry)), airVelX, true);
     }
 
@@ -718,7 +718,7 @@ public final class BotPhysicsEngine {
             syncCharacterState(entry);
             return;
         }
-        entry.blockedRopeGrab = null;
+        AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
         launchAirborne(entry, bot, bot.getPosition(), -downJumpForcePerTick(), 0, false);
         AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, cfg.DOWN_JUMP_GRACE_MS);
     }
@@ -749,7 +749,7 @@ public final class BotPhysicsEngine {
     }
 
     private static void beginFall(BotEntry entry, Character bot, Point position, int airVelX) {
-        entry.blockedRopeGrab = null;
+        AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
         bot.setPosition(new Point(position));
         launchAirborne(entry, bot, position, 0f, airVelX, false);
     }
@@ -757,7 +757,7 @@ public final class BotPhysicsEngine {
     static void beginKnockback(BotEntry entry, Character bot, Point position, float initialVelY, int airVelX) {
         int preservedFacingDir = entry.facingDir;
         bot.setPosition(position);
-        entry.blockedRopeGrab = null;
+        AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
         launchAirborne(entry, bot, position, initialVelY, airVelX, true);
         entry.facingDir = preservedFacingDir;
         syncCharacterState(entry);
@@ -778,7 +778,7 @@ public final class BotPhysicsEngine {
         entry.airSteerVelX = 0.0;
         entry.fixedAirArc = false;
         AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
-        entry.blockedRopeGrab = null;
+        AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
         setMovementVelocity(entry, velocityFromDeltaX(airVelX), velocityFromAirStep(entry.velY));
         entry.facingDir = preservedFacingDir;
         syncCharacterState(entry);
@@ -815,7 +815,7 @@ public final class BotPhysicsEngine {
         AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
         AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, 0L);
         entry.groundPhysicsCarryMs = 0.0;
-        entry.blockedRopeGrab = null;
+        AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
         entry.hspeed = landingGroundHSpeed(bot.getMap(), foothold, incomingDeltaX, incomingDeltaY,
                 AgentBotMovementStateRuntime.movementProfile(entry));
         setMovementVelocity(entry, velocityFromDeltaX(tickDeltaFromGroundHSpeed(bot.getMap(), entry.hspeed,
@@ -1686,7 +1686,7 @@ public final class BotPhysicsEngine {
         entry.wasMovingX = false;
         entry.moveDir = 0;
         entry.climbUpIntent = false;
-        entry.blockedRopeGrab = null;
+        AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
         entry.ropeGrabCooldownMs = 0;
         AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
         AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, 0L);
@@ -2258,4 +2258,5 @@ public final class BotPhysicsEngine {
         return landing != null ? landing.timeMs() : Integer.MAX_VALUE;
     }
 }
+
 

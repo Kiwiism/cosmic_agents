@@ -56,4 +56,20 @@ class AgentBotClimbStateRuntimeTest {
         assertNull(AgentBotClimbStateRuntime.ropeEntryRope(entry));
         assertEquals(0, AgentBotClimbStateRuntime.ropeEntryY(entry));
     }
+
+    @Test
+    void adaptsBlockedRopeGrabState() {
+        BotEntry entry = new BotEntry(null, null, null);
+        Rope rope = new Rope(100, 20, 200, false);
+
+        assertNull(AgentBotClimbStateRuntime.blockedRopeGrab(entry));
+
+        AgentBotClimbStateRuntime.setBlockedRopeGrab(entry, rope);
+
+        assertSame(rope, AgentBotClimbStateRuntime.blockedRopeGrab(entry));
+
+        AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
+
+        assertNull(AgentBotClimbStateRuntime.blockedRopeGrab(entry));
+    }
 }
