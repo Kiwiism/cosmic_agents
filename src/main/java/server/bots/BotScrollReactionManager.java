@@ -2,6 +2,7 @@ package server.bots;
 
 
 import server.agents.integration.AgentBotMessageQueueStateRuntime;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotScrollReactionRuntime;
 import server.agents.integration.AgentBotScrollReactionStateRuntime;
 import client.Character;
@@ -93,7 +94,7 @@ final class BotScrollReactionManager {
 
         for (List<BotEntry> entries : allEntries) {
             for (BotEntry entry : entries) {
-                Character bot = entry.bot;
+                Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
                 if (bot == null || bot.getId() == source.getId() || bot.getMapId() != mapId) {
                     continue;
                 }
@@ -115,7 +116,8 @@ final class BotScrollReactionManager {
     }
 
     static void maybeReact(BotEntry entry, int scrollerId, boolean success, int scrollSuccessRate, long now) {
-        if (entry == null || entry.bot == null) {
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        if (entry == null || bot == null) {
             return;
         }
 
@@ -134,7 +136,7 @@ final class BotScrollReactionManager {
 
         boolean reacted = false;
         if (rollPercent(EMOTE_CHANCE_PCT, chanceScale)) {
-            entry.bot.changeFaceExpression(success ? successExpression() : failedExpression());
+            bot.changeFaceExpression(success ? successExpression() : failedExpression());
             reacted = true;
         }
 

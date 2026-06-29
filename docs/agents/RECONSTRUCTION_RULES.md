@@ -871,6 +871,10 @@ Recent reconstruction notes:
   `AgentBotRuntimeIdentityRuntime`; BotMakerManager crystal creation,
   disassembly, batch start, and delayed batch step checks keep BotEntry as the
   temporary backing store but no longer read `bot` directly in production.
+- Scroll reaction bot identity now enters through
+  `AgentBotRuntimeIdentityRuntime`; BotScrollReactionManager range filtering,
+  delayed reaction eligibility, and emote side effects keep BotEntry as the
+  temporary backing store but no longer read `bot` directly in production.
 
 Initial reconstruction order:
 
