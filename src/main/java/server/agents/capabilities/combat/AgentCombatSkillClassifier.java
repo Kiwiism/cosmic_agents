@@ -25,6 +25,8 @@ import constants.skills.WhiteKnight;
 import server.StatEffect;
 import tools.Pair;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -165,5 +167,22 @@ public final class AgentCombatSkillClassifier {
             return 0;
         }
         return GameConstants.isInJobTree(skill.getId(), bot.getJob().getId()) ? 2 : 1;
+    }
+
+    public static List<Integer> cachedAttackSkillIds(List<Integer> attackSkillIds,
+                                                     int attackSkillId,
+                                                     int aoeSkillId) {
+        if (attackSkillIds != null && !attackSkillIds.isEmpty()) {
+            return attackSkillIds;
+        }
+
+        List<Integer> skillIds = new ArrayList<>(2);
+        if (attackSkillId != 0) {
+            skillIds.add(attackSkillId);
+        }
+        if (aoeSkillId != 0 && aoeSkillId != attackSkillId) {
+            skillIds.add(aoeSkillId);
+        }
+        return skillIds;
     }
 }

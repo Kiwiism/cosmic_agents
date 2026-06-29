@@ -802,20 +802,10 @@ public class BotCombatManager {
     }
 
     private static List<Integer> cachedAttackSkillIds(BotEntry entry) {
-        if (AgentBotCombatSkillCacheStateRuntime.hasAttackSkillIds(entry)) {
-            return AgentBotCombatSkillCacheStateRuntime.attackSkillIds(entry);
-        }
-
-        List<Integer> skillIds = new ArrayList<>(2);
-        int attackSkillId = AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry);
-        int aoeSkillId = AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry);
-        if (attackSkillId != 0) {
-            skillIds.add(attackSkillId);
-        }
-        if (aoeSkillId != 0 && aoeSkillId != attackSkillId) {
-            skillIds.add(aoeSkillId);
-        }
-        return skillIds;
+        return AgentCombatSkillClassifier.cachedAttackSkillIds(
+                AgentBotCombatSkillCacheStateRuntime.attackSkillIds(entry),
+                AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry),
+                AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry));
     }
 
     private static AttackPlan planBasicAttack(Character bot, Monster target) {

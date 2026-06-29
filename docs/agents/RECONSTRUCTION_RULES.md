@@ -46,8 +46,9 @@ Recent reconstruction notes:
   skill ids, non-damage active-skill exclusions, offensive WZ-shape detection,
   rebuffable support filtering, summon statup detection, heal-skill checks,
   learned-skill cache signatures, and best single-target attack-skill
-  comparison are unchanged; `BotCombatManager` keeps package-private
-  compatibility wrappers for the current skill-cache and export-test paths.
+  comparison, plus cached attack/AOE skill id fallback ordering, are unchanged;
+  `BotCombatManager` keeps package-private compatibility wrappers for the
+  current skill-cache and export-test paths.
 - Combat weapon policy ownership moved to
   `server.agents.capabilities.combat.AgentCombatWeaponPolicy`. Dragon Knight
   spear/polearm skill gating, forced Crusher/Fury damage weapon types, and

@@ -112,6 +112,25 @@ class AgentCombatSkillClassifierTest {
                 weakEffect, 1, 1, 1, 100, Warrior.POWER_STRIKE));
     }
 
+    @Test
+    void shouldPreferCachedAttackSkillListWhenPresent() {
+        List<Integer> cached = List.of(1001004, 1001005);
+
+        assertEquals(cached, AgentCombatSkillClassifier.cachedAttackSkillIds(cached, 2001004, 2201005));
+    }
+
+    @Test
+    void shouldBuildLegacyAttackAndAoeFallbackListWithoutDuplicatesOrZeroes() {
+        assertEquals(List.of(1001004, 2201005),
+                AgentCombatSkillClassifier.cachedAttackSkillIds(List.of(), 1001004, 2201005));
+        assertEquals(List.of(1001004),
+                AgentCombatSkillClassifier.cachedAttackSkillIds(List.of(), 1001004, 1001004));
+        assertEquals(List.of(2201005),
+                AgentCombatSkillClassifier.cachedAttackSkillIds(List.of(), 0, 2201005));
+        assertEquals(List.of(),
+                AgentCombatSkillClassifier.cachedAttackSkillIds(null, 0, 0));
+    }
+
     private static Skill skill(int skillId, boolean beginner) {
         Skill skill = mock(Skill.class);
         when(skill.getId()).thenReturn(skillId);
