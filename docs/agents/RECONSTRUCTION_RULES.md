@@ -839,6 +839,13 @@ Recent reconstruction notes:
   ground action planning, wall-block recovery, directional drop execution, and
   mob-avoidance checks keep BotEntry as the temporary backing store but no
   longer read or write `navEdge` directly in production.
+- Shop visit lifecycle state now enters through `AgentBotShopStateRuntime`;
+  BotShopManager resupply/sell-trash visit setup, approach delay, sequence
+  activation, stuck fallback, sequence validation, scheduled-step guard, abort,
+  and cleanup keep BotEntry as the temporary backing store but no longer read or
+  write shop visit fields directly in production. Shop approach graph profile
+  lookup now reads through `AgentBotMovementStateRuntime`, and delayed abort
+  identity reads through `AgentBotRuntimeIdentityRuntime`.
 
 Initial reconstruction order:
 

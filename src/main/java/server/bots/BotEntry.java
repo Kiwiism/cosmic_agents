@@ -586,6 +586,74 @@ public class BotEntry {
     public int shopApproachDelayMs() {
         return shopApproachDelayMs;
     }
+
+    public void setShopApproachDelayMs(int delayMs) {
+        shopApproachDelayMs = Math.max(0, delayMs);
+    }
+
+    public long shopVisitStartedAtMs() {
+        return shopVisitStartedAtMs;
+    }
+
+    public long shopSequenceStartedAtMs() {
+        return shopSequenceStartedAtMs;
+    }
+
+    public boolean shopSellTrashPending() {
+        return shopSellTrashPending;
+    }
+
+    public void setShopSellTrashPending(boolean pending) {
+        shopSellTrashPending = pending;
+    }
+
+    public void startShopVisit(Point npcPosition, Point targetPosition, int approachDelayMs, long startedAtMs) {
+        shopVisitPending = true;
+        shopNpcPos = npcPosition == null ? null : new Point(npcPosition);
+        shopTargetPos = targetPosition == null ? null : new Point(targetPosition);
+        shopApproachDelayMs = Math.max(0, approachDelayMs);
+        shopVisitStartedAtMs = startedAtMs;
+        shopSequenceStartedAtMs = 0L;
+    }
+
+    public void markShopSequenceActive(long startedAtMs) {
+        shopSequenceActive = true;
+        shopSequenceStartedAtMs = startedAtMs;
+    }
+
+    public boolean stuckNearShopNpc(Point botPosition, long nowMs, long fallbackMs, int moveTolerancePx,
+                                    int arriveDistance) {
+        if (shopNpcPos == null || botPosition == null) {
+            return false;
+        }
+        if (shopStuckCheckPos == null) {
+            shopStuckCheckPos = new Point(botPosition);
+            shopStuckCheckAtMs = nowMs;
+            return false;
+        }
+        if (botPosition.distanceSq(shopStuckCheckPos) > (long) moveTolerancePx * moveTolerancePx) {
+            shopStuckCheckPos.setLocation(botPosition);
+            shopStuckCheckAtMs = nowMs;
+            return false;
+        }
+        if (nowMs - shopStuckCheckAtMs < fallbackMs) {
+            return false;
+        }
+        return Math.abs(botPosition.x - shopNpcPos.x) + Math.abs(botPosition.y - shopNpcPos.y) <= arriveDistance;
+    }
+
+    public void clearShopState() {
+        shopVisitPending = false;
+        shopNpcPos = null;
+        shopTargetPos = null;
+        shopApproachDelayMs = 0;
+        shopSequenceActive = false;
+        shopVisitStartedAtMs = 0L;
+        shopSequenceStartedAtMs = 0L;
+        shopSellTrashPending = false;
+        shopStuckCheckPos = null;
+        shopStuckCheckAtMs = 0L;
+    }
     // bumped whenever a new player directive resets scripted state (follow/stop/move/farm/patrol/grind);
     // background batches (Maker crafting / disassembly) capture it and self-interrupt when it changes
     volatile int activityEpoch = 0;
