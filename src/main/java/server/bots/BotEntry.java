@@ -1326,6 +1326,10 @@ public class BotEntry {
     // Cleared when that trade session finishes or is cancelled.
     Set<Item> ownerGivenItems = Collections.newSetFromMap(new IdentityHashMap<>());
 
+    public Set<Item> ownerGivenItems() {
+        return ownerGivenItems;
+    }
+
     // Last reason an edge execution was blocked (for debug logs)
     String lastEdgeBlockReason = null;
 

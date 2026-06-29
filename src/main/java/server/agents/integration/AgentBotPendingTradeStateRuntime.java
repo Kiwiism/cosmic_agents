@@ -266,4 +266,16 @@ public final class AgentBotPendingTradeStateRuntime {
     public static void clearRestoreSlots(BotEntry entry) {
         entry.pendingTradeRestoreSlots().clear();
     }
+
+    public static boolean hasOwnerGivenItems(BotEntry entry) {
+        return !entry.ownerGivenItems().isEmpty();
+    }
+
+    public static void addOwnerGivenItem(BotEntry entry, Item item) {
+        entry.ownerGivenItems().add(item);
+    }
+
+    public static void clearOwnerGivenItems(BotEntry entry) {
+        entry.ownerGivenItems().clear();
+    }
 }

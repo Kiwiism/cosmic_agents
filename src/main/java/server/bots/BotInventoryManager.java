@@ -826,7 +826,7 @@ public class BotInventoryManager {
         AgentBotPendingTradeStateRuntime.clearSingleBatch(entry);
         AgentBotPendingTradeStateRuntime.clearInviteAnnounced(entry);
         AgentBotPendingTradeStateRuntime.clearShareBudget(entry);
-        entry.ownerGivenItems.clear();
+        AgentBotPendingTradeStateRuntime.clearOwnerGivenItems(entry);
         // Safety net: if any items were temporarily unequipped for a trade that ended without
         // completing (declined invite / cancel / timeout), the per-slot restore above may fail
         // (slot occupied, item lost via window-swap bookkeeping). Re-run autoEquip so empty
@@ -851,7 +851,7 @@ public class BotInventoryManager {
         if (trade.getPartner() != null) {
             for (Item item : trade.getPartner().getItems()) {
                 if (ItemConstants.getInventoryType(item.getItemId()) == InventoryType.EQUIP) {
-                    entry.ownerGivenItems.add(item);
+                    AgentBotPendingTradeStateRuntime.addOwnerGivenItem(entry, item);
                 }
             }
         }

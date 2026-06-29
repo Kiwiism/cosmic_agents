@@ -263,4 +263,20 @@ class AgentBotPendingTradeStateRuntimeTest {
 
         assertFalse(AgentBotPendingTradeStateRuntime.hasRestoreSlots(entry));
     }
+
+    @Test
+    void adaptsOwnerGivenItemState() {
+        BotEntry entry = new BotEntry(null, null, null);
+        Item item = new Item(1040000, (short) 1, (short) 1);
+
+        assertFalse(AgentBotPendingTradeStateRuntime.hasOwnerGivenItems(entry));
+
+        AgentBotPendingTradeStateRuntime.addOwnerGivenItem(entry, item);
+
+        assertTrue(AgentBotPendingTradeStateRuntime.hasOwnerGivenItems(entry));
+
+        AgentBotPendingTradeStateRuntime.clearOwnerGivenItems(entry);
+
+        assertFalse(AgentBotPendingTradeStateRuntime.hasOwnerGivenItems(entry));
+    }
 }

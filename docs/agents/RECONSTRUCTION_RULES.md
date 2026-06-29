@@ -772,6 +772,10 @@ Recent reconstruction notes:
   through `AgentBotMovementStateRuntime`; BotEntry remains the temporary backing
   store but inventory patrol-loot selection no longer reads `movementProfile`
   directly in production.
+- BotInventoryManager owner-given trade item state now enters through
+  `AgentBotPendingTradeStateRuntime`; trade reset and owner-given equipment
+  capture keep BotEntry as the temporary backing store but no longer mutate
+  `ownerGivenItems` directly in production.
 - Combat animation/cooldown and alert-reset state now enters through
   `AgentBotCombatCooldownStateRuntime`; BotCombatManager attack cooldown,
   movement-window, alerted-stance timeout, and alert-reset scheduling keep
