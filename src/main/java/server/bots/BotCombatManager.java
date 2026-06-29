@@ -1608,13 +1608,8 @@ public class BotCombatManager {
                 AgentBotSkillBuffDebugStateRuntime.lastActionSummary(entry), lastActionAgeMs, activeBuffs, cachedBuffs);
     }
 
-    private static String formatBuffAge(long ms) {
-        return AgentCombatDialogueReporter.formatBuffAge(ms);
-    }
-
     private static String skillLabel(int skillId) {
-        String name = SkillFactory.getSkillName(skillId);
-        return (name != null && !name.isBlank()) ? name : "skill#" + skillId;
+        return AgentCombatDialogueReporter.combatSkillLabel(skillId);
     }
 
     public static String describeDebugStats(BotEntry entry, Character bot) {

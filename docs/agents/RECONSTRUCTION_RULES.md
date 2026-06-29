@@ -1316,6 +1316,9 @@ Recent reconstruction notes:
 - The legacy Dragon Roar minimum-target threshold now lives in
   `AgentCombatSupportPolicy`; BotCombatManager still supplies the nearby-healer
   state but no longer owns the hardcoded support-combat threshold.
+- Combat skill-label formatting now lives in `AgentCombatDialogueReporter`;
+  BotCombatManager preserves the same SkillFactory lookup and `skill#<id>`
+  fallback for AoE reposition logs and skill-buff debug/failure summaries.
 
 Initial reconstruction order:
 

@@ -1,6 +1,7 @@
 package server.agents.capabilities.dialogue;
 
 import client.Character;
+import client.SkillFactory;
 import server.combat.CombatFormulaProvider;
 
 import java.util.List;
@@ -117,6 +118,11 @@ public final class AgentCombatDialogueReporter {
             return seconds + "s";
         }
         return minutes + "m" + seconds + "s";
+    }
+
+    public static String combatSkillLabel(int skillId) {
+        String name = SkillFactory.getSkillName(skillId);
+        return (name != null && !name.isBlank()) ? name : "skill#" + skillId;
     }
 
     private static String activeSkillBuffLine(List<ActiveSkillBuffDebugLine> activeBuffs) {
