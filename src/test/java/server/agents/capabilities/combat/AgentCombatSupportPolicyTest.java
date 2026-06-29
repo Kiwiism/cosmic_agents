@@ -58,6 +58,21 @@ class AgentCombatSupportPolicyTest {
     }
 
     @Test
+    void shouldDetectNearbyHealSkillAlly() {
+        Character bot = characterAt(1, new Point(100, 100), true);
+        Character healer = characterAt(2, new Point(130, 110), true);
+        when(healer.getSkillLevel(Cleric.HEAL)).thenReturn(1);
+        Character farHealer = characterAt(3, new Point(220, 100), true);
+        when(farHealer.getSkillLevel(Cleric.HEAL)).thenReturn(1);
+        Character nonHealer = characterAt(4, new Point(120, 100), true);
+        when(bot.getPartyMembersOnSameMap()).thenReturn(List.of(bot, nonHealer, healer, farHealer));
+
+        assertTrue(AgentCombatSupportPolicy.hasNearbyHealSkillAlly(bot, 60, 30));
+        when(bot.getPartyMembersOnSameMap()).thenReturn(List.of(bot, nonHealer, farHealer));
+        assertFalse(AgentCombatSupportPolicy.hasNearbyHealSkillAlly(bot, 60, 30));
+    }
+
+    @Test
     void shouldFilterNearbyPartyMembersByAliveIdentityVerticalAndDistance() {
         Character bot = characterAt(1, new Point(100, 100), true);
         Character nearby = characterAt(2, new Point(130, 110), true);

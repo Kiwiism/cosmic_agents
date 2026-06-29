@@ -1123,12 +1123,7 @@ public class BotCombatManager {
     }
 
     private static boolean hasNearbyHealSkillAlly(Character bot) {
-        for (Character member : getNearbyPartyMembers(bot)) {
-            if (AgentCombatSupportPolicy.hasHealSkill(member)) {
-                return true;
-            }
-        }
-        return false;
+        return AgentCombatSupportPolicy.hasNearbyHealSkillAlly(bot, cfg.SUPPORT_RANGE, cfg.SUPPORT_VERTICAL_RANGE);
     }
 
     private static WeaponType damageWeaponTypeForAction(int skillId, WeaponType equippedWeaponType, String action) {
@@ -2031,10 +2026,6 @@ public class BotCombatManager {
     private static boolean hasPartyMemberInBoundsNeedingHeal(Character bot, Rectangle healBounds) {
         return AgentCombatSupportPolicy.hasPartyMemberInBoundsNeedingHeal(bot, healBounds,
                 cfg.SUPPORT_RANGE, cfg.SUPPORT_VERTICAL_RANGE, cfg.SUPPORT_HEAL_TARGET_RATIO);
-    }
-
-    private static List<Character> getNearbyPartyMembers(Character bot) {
-        return AgentCombatSupportPolicy.nearbyPartyMembers(bot, cfg.SUPPORT_RANGE, cfg.SUPPORT_VERTICAL_RANGE);
     }
 
     static boolean isPartySupportSkill(int skillId) {

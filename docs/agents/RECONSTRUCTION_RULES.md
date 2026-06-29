@@ -74,11 +74,11 @@ Recent reconstruction notes:
   wrappers for current attack-plan gating and tests.
 - Combat support safety policy ownership moved to
   `server.agents.capabilities.combat.AgentCombatSupportPolicy`. Dragon Roar
-  HP/target/healer gating, heal-threshold checks, and healer-skill detection
-  are unchanged. Nearby-party filtering, missing-party-buff detection, and
-  heal-in-bounds checks now live in the same Agent policy; `BotCombatManager`
-  still supplies legacy config values and executes the existing support side
-  effects.
+  HP/target/healer gating, heal-threshold checks, healer-skill detection, and
+  nearby-heal-ally scanning are unchanged. Nearby-party filtering,
+  missing-party-buff detection, and heal-in-bounds checks now live in the same
+  Agent policy; `BotCombatManager` still supplies legacy config values and
+  executes the existing support side effects.
 - Combat skill-use affordability policy moved to
   `server.agents.capabilities.combat.AgentCombatSkillUsePolicy`. Skill lookup,
   non-positive-level rejection, and `StatEffect.canPaySkillCost` delegation are
