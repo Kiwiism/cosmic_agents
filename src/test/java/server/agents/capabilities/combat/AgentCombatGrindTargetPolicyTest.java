@@ -135,6 +135,29 @@ class AgentCombatGrindTargetPolicyTest {
     }
 
     @Test
+    void shouldInspectOnlyActiveSiblingOccupantsInSameMap() {
+        assertTrue(AgentCombatGrindTargetPolicy.shouldInspectRegionOccupant(
+                false, true, true, true, true));
+        assertFalse(AgentCombatGrindTargetPolicy.shouldInspectRegionOccupant(
+                true, true, true, true, true));
+        assertFalse(AgentCombatGrindTargetPolicy.shouldInspectRegionOccupant(
+                false, false, true, true, true));
+        assertFalse(AgentCombatGrindTargetPolicy.shouldInspectRegionOccupant(
+                false, true, false, true, true));
+        assertFalse(AgentCombatGrindTargetPolicy.shouldInspectRegionOccupant(
+                false, true, true, false, true));
+        assertFalse(AgentCombatGrindTargetPolicy.shouldInspectRegionOccupant(
+                false, true, true, true, false));
+    }
+
+    @Test
+    void shouldCountOnlyMatchingTargetRegionOccupants() {
+        assertTrue(AgentCombatGrindTargetPolicy.shouldCountRegionOccupant(7, 7));
+        assertFalse(AgentCombatGrindTargetPolicy.shouldCountRegionOccupant(7, 8));
+        assertFalse(AgentCombatGrindTargetPolicy.shouldCountRegionOccupant(7, -1));
+    }
+
+    @Test
     void shouldCalculateGraphPathCostFromLegacyPathInputs() {
         assertEquals(9_999L, AgentCombatGrindTargetPolicy.graphPathCost(
                 false, false, 123L, List.of(100L), 9_999L));

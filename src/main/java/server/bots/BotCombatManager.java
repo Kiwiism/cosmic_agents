@@ -1409,13 +1409,21 @@ public class BotCombatManager {
             if (siblingBot == null) {
                 continue;
             }
-            if (siblingBot.getMap() != context.map() || siblingBot.getHp() <= 0 || siblingBot.getPosition() == null) {
+            boolean sameMap = siblingBot.getMap() == context.map();
+            boolean alive = siblingBot.getHp() > 0;
+            boolean hasPosition = siblingBot.getPosition() != null;
+            if (!AgentCombatGrindTargetPolicy.shouldInspectRegionOccupant(
+                    sibling == context.entry(),
+                    AgentBotModeStateRuntime.grinding(sibling),
+                    sameMap,
+                    alive,
+                    hasPosition)) {
                 continue;
             }
 
             int occupiedRegionId = BotNavigationManager.resolveCurrentRegionId(
                     context.graph(), sibling, context.map(), siblingBot.getPosition());
-            if (occupiedRegionId == targetRegionId) {
+            if (AgentCombatGrindTargetPolicy.shouldCountRegionOccupant(occupiedRegionId, targetRegionId)) {
                 occupiedCount++;
             }
         }

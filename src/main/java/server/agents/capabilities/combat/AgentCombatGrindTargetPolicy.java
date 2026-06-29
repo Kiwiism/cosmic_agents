@@ -86,6 +86,23 @@ public final class AgentCombatGrindTargetPolicy {
         return Math.min(Math.max(0, penaltyCap), penalty);
     }
 
+    public static boolean shouldInspectRegionOccupant(boolean sameEntry,
+                                                      boolean grinding,
+                                                      boolean sameMap,
+                                                      boolean alive,
+                                                      boolean hasPosition) {
+        return !sameEntry
+                && grinding
+                && sameMap
+                && alive
+                && hasPosition;
+    }
+
+    public static boolean shouldCountRegionOccupant(int occupiedRegionId, int targetRegionId) {
+        return targetRegionId >= 0
+                && occupiedRegionId == targetRegionId;
+    }
+
     public static AgentScoredGrindTarget toScoredTarget(AgentGrindTargetGroup group,
                                                         long pathCost,
                                                         long occupancyPenalty,
