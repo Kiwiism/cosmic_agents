@@ -21,6 +21,7 @@ import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
 import server.agents.capabilities.supplies.AgentAutopotPolicy;
 import server.agents.capabilities.supplies.AgentAutopotPolicy.AutopotChoice;
 import server.agents.capabilities.supplies.AgentAutopotPolicy.PotionRanking;
+import server.agents.capabilities.supplies.AgentPotionInventoryPolicy;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
@@ -88,31 +89,11 @@ public final class BotPotionManager {
 
     public static int[] countPotions(Character bot) {
         long startedAt = AgentPerformanceMonitor.start();
-        int hp = 0;
-        int mp = 0;
-        for (Item item : bot.getInventory(InventoryType.USE).list()) {
-            if (item.getQuantity() <= 0) {
-                continue;
-            }
-            StatEffect effect = BotInventoryManager.itemEffect(item.getItemId());
-            if (effect == null) {
-                continue;
-            }
-            boolean healsHp = effect.getHp() > 0 || effect.getHpRate() > 0;
-            boolean healsMp = effect.getMp() > 0 || effect.getMpRate() > 0;
-            if ((!healsHp && !healsMp) || !effect.getStatups().isEmpty()) {
-                continue;
-            }
-            int quantity = item.getQuantity();
-            if (healsHp) {
-                hp += quantity;
-            }
-            if (healsMp) {
-                mp += quantity;
-            }
-        }
+        int[] counts = AgentPotionInventoryPolicy.countPureRecoveryPotions(
+                bot.getInventory(InventoryType.USE).list(),
+                BotInventoryManager::itemEffect);
         AgentPerformanceMonitor.recordSince("potion-recovery-scan", startedAt);
-        return new int[]{hp, mp};
+        return counts;
     }
 
     static int[] countPotions(List<Item> items, Function<Integer, StatEffect> effectLookup) {

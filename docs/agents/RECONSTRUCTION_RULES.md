@@ -1352,6 +1352,10 @@ Recent reconstruction notes:
   `AgentUseItemClassificationPolicy`; BotInventoryManager and Agent inventory
   dialogue reporting preserve their existing item-effect lookup and category
   behavior through compatibility delegates.
+- Pure recovery potion HP/MP stack counting now lives in
+  `AgentPotionInventoryPolicy`; BotPotionManager preserves the same USE
+  inventory scan, item-effect lookup, timing metric, and public count API
+  through a compatibility delegate.
 
 Initial reconstruction order:
 
