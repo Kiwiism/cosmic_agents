@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-final class BotNavigationGraphProvider {
+public final class BotNavigationGraphProvider {
     private static final Logger log = LoggerFactory.getLogger(BotNavigationGraphProvider.class);
 
     private static final int GRAPH_VERSION = 46;
@@ -328,7 +328,7 @@ final class BotNavigationGraphProvider {
     }
 
     /** Returns the cached graph for the requested profile without triggering a build. */
-    static BotNavigationGraph peekGraph(MapleMap map, AgentMovementProfile movementProfile) {
+    public static BotNavigationGraph peekGraph(MapleMap map, AgentMovementProfile movementProfile) {
         if (map == null) {
             return null;
         }
@@ -336,7 +336,7 @@ final class BotNavigationGraphProvider {
     }
 
     /** Returns the closest cached graph for this map when the exact profile graph is unavailable. */
-    static BotNavigationGraph peekClosestGraph(MapleMap map, AgentMovementProfile movementProfile) {
+    public static BotNavigationGraph peekClosestGraph(MapleMap map, AgentMovementProfile movementProfile) {
         if (map == null) {
             return null;
         }
@@ -372,7 +372,7 @@ final class BotNavigationGraphProvider {
         return exact != null ? exact : peekClosestGraph(map, movementProfile);
     }
 
-    static void warmGraphAsync(MapleMap map, AgentMovementProfile movementProfile) {
+    public static void warmGraphAsync(MapleMap map, AgentMovementProfile movementProfile) {
         if (map == null) {
             return;
         }

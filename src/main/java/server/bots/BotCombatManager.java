@@ -2,72 +2,27 @@ package server.bots;
 
 import server.agents.capabilities.combat.AgentAttackRoute;
 
-import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentAttackPlan;
-import server.agents.capabilities.combat.AgentAttackPlanTieBreakPolicy;
 import server.agents.capabilities.combat.AgentCombatConfig;
-import server.agents.capabilities.combat.AgentCombatImmediateTargetPolicy;
-import server.agents.capabilities.combat.AgentCombatGrindTargetPolicy;
-import server.agents.capabilities.combat.AgentCombatRangePolicy;
-import server.agents.capabilities.combat.AgentCombatScoringPolicy;
-import server.agents.capabilities.combat.AgentCombatTargetSelector;
-import server.agents.capabilities.combat.AgentProjectileHitbox;
-import server.agents.capabilities.combat.AgentScoredGrindTarget;
-import server.agents.capabilities.combat.AgentGrindTargetGroup;
-
-import server.agents.runtime.AgentPerformanceMonitor;
-
-import server.agents.capabilities.movement.AgentMovementProfile;
 
 import client.Character;
 import client.inventory.WeaponType;
-import constants.skills.Assassin;
-import constants.skills.Bandit;
-import constants.skills.Bowmaster;
-import constants.skills.Buccaneer;
-import constants.skills.Corsair;
-import constants.skills.Crusader;
-import constants.skills.DawnWarrior;
-import constants.skills.Fighter;
-import constants.skills.GM;
-import constants.skills.Marksman;
-import constants.skills.Priest;
-import constants.skills.Spearman;
-import constants.skills.ThunderBreaker;
-import constants.skills.WhiteKnight;
-import server.agents.integration.AgentBotAmmoStateRuntime;
 import server.agents.integration.AgentBotCombatAoeRepositionRuntime;
 import server.agents.integration.AgentBotCombatAttackRuntime;
 import server.agents.integration.AgentBotCombatBuffRuntime;
 import server.agents.integration.AgentBotCombatReportRuntime;
-import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheRuntime;
 import server.agents.integration.AgentBotCombatHealRuntime;
 import server.agents.integration.AgentBotCombatDeathRuntime;
 import server.agents.integration.AgentBotCombatDamageRuntime;
-import server.agents.integration.AgentBotCombatGroundRuntime;
 import server.agents.integration.AgentBotCombatPlanRuntime;
-import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotPatrolStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.agents.integration.AgentBotSkillBuffDebugStateRuntime;
+import server.agents.integration.AgentBotCombatTargetRuntime;
 import server.life.Monster;
-import server.maps.Foothold;
-import server.maps.MapleMap;
-import tools.Pair;
 
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringJoiner;
 
 public class BotCombatManager {
-    private static final long UNREACHABLE_GRAPH_COST = Long.MAX_VALUE / 4;
-
     public static final class AttackPlan extends AgentAttackPlan {
         AttackPlan(int skillId, int skillLevel, int numDamage, Rectangle hitBox, List<Monster> targets,
                    AgentAttackRoute route, int display, int direction, int rangedDirection, int stance, int speed,
@@ -126,164 +81,21 @@ public class BotCombatManager {
         return AgentBotCombatHealRuntime.tickSupportHealing(entry, bot, cfg);
     }
 
-    /** Returns the most convenient reachable target (deterministic — closest/best score wins). */
     public static Monster findGrindTarget(BotEntry entry, Character bot) {
-        long startedAt = System.nanoTime();
-        try {
-            Point botPos = bot.getPosition();
-            double rangeSq = (double) BotCombatManager.cfg.GRIND_SEEK_RANGE * BotCombatManager.cfg.GRIND_SEEK_RANGE;
-            Foothold botFoothold = AgentBotCombatGroundRuntime.findGroundFoothold(botPos, bot);
-            List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(bot, botPos, rangeSq);
-            if (candidates.isEmpty()) return null;
-
-            List<AgentScoredGrindTarget> scoredTargets = scoreGrindTargets(entry, bot, botPos, botFoothold, candidates);
-            if (scoredTargets.isEmpty()) {
-                return null;
-            }
-
-            return AgentCombatGrindTargetPolicy.pickReachableOrBestTarget(scoredTargets, UNREACHABLE_GRAPH_COST);
-        } finally {
-            AgentPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
-        }
+        return AgentBotCombatTargetRuntime.findGrindTarget(entry, bot, cfg);
     }
 
-    /**
-     * Patrol mode: find the best grind target restricted to the patrol region and its
-     * immediate neighbours (1 graph hop). Tries the home region first; expands to
-     * adjacent regions only when the home region has no candidates.
-     */
     static Monster findPatrolTarget(BotEntry entry, Character bot) {
-        long startedAt = System.nanoTime();
-        try {
-            if (entry == null || bot == null || !AgentBotPatrolStateRuntime.hasPatrolRegion(entry)) {
-                return null;
-            }
-            Point botPos = bot.getPosition();
-            double rangeSq = (double) cfg.GRIND_SEEK_RANGE * cfg.GRIND_SEEK_RANGE;
-            Foothold botFoothold = AgentBotCombatGroundRuntime.findGroundFoothold(botPos, bot);
-            List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(bot, botPos, rangeSq);
-            if (candidates.isEmpty()) {
-                return null;
-            }
-            GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, botPos);
-            if (!graphContext.available()) {
-                return null;
-            }
-            BotNavigationGraph graph = graphContext.graph();
-            MapleMap map = graphContext.map();
-            int patrolId = AgentBotPatrolStateRuntime.patrolRegionId(entry);
-
-            // 1-hop expansion: only inter-region edges count as a hop. Self-loop edges
-            // (intra-region portals where fromRegionId == toRegionId) are free traversals
-            // within the patrol region itself — A* uses them to shortcut long walks but
-            // they don't expose new regions, so skip them here to keep intent explicit.
-            Set<Integer> adjacentIds = graph.getMutualAdjacentRegionIds(patrolId);
-
-            // Phase 1: home region only
-            List<Monster> filtered = new ArrayList<>();
-            for (Monster m : candidates) {
-                if (graph.findRegionId(map, m.getPosition()) == patrolId) {
-                    filtered.add(m);
-                }
-            }
-            // Phase 2: expand to adjacent if home region is empty
-            if (filtered.isEmpty()) {
-                for (Monster m : candidates) {
-                    int mId = graph.findRegionId(map, m.getPosition());
-                    if (mId == patrolId || adjacentIds.contains(mId)) {
-                        filtered.add(m);
-                    }
-                }
-            }
-            if (filtered.isEmpty()) {
-                return null;
-            }
-
-            List<AgentScoredGrindTarget> scored = scoreGrindTargets(entry, bot, botPos, botFoothold, filtered);
-            if (scored.isEmpty()) {
-                return null;
-            }
-            return AgentCombatGrindTargetPolicy.pickReachableOrBestTarget(scored, UNREACHABLE_GRAPH_COST);
-        } finally {
-            AgentPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
-        }
+        return AgentBotCombatTargetRuntime.findPatrolTarget(entry, bot, cfg);
     }
 
-    /** Follow mode should only attack local mobs; it should not run pathfinding or chase across the map. */
     static Monster findFollowAttackTarget(BotEntry entry, Character bot) {
-        long startedAt = System.nanoTime();
-        try {
-            Point botPos = bot.getPosition();
-            double range = Math.max(
-                    AgentProjectileHitbox.CLIENT_PROJECTILE_BASE_RANGE
-                            + AgentProjectileHitbox.passiveProjectileRangeBonus(bot),
-                    BotCombatManager.cfg.ATTACK_RANGE_X + BotCombatManager.cfg.ATTACK_JUMP_X_EXTRA);
-            List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(bot, botPos, range * range);
-            if (candidates.isEmpty()) {
-                return null;
-            }
-
-            Foothold botFoothold = AgentBotCombatGroundRuntime.findGroundFoothold(botPos, bot);
-            GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, botPos);
-            List<AgentScoredGrindTarget> localTargets = AgentCombatGrindTargetPolicy.scoreFollowLocalTargets(
-                    candidates,
-                    botPos,
-                    candidate -> isLocalCombatTarget(graphContext, bot, botFoothold, candidate)
-                    || AgentCombatImmediateTargetPolicy.isImmediateProjectileTarget(
-                            bot,
-                            candidate,
-                            entry == null || AgentBotAmmoStateRuntime.noAmmo(entry),
-                            entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry)),
-                    candidate -> grindTargetScore(bot, botPos, botFoothold, candidate),
-                    candidate -> AgentCombatScoringPolicy.legacyAoeClusterBonus(
-                            candidate,
-                            candidates,
-                            entry != null && AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
-                            entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry)));
-            return AgentCombatGrindTargetPolicy.pickFromBestTargets(localTargets);
-        } finally {
-            AgentPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
-        }
+        return AgentBotCombatTargetRuntime.findFollowAttackTarget(entry, bot, cfg);
     }
 
     static boolean isReachableGrindTarget(BotEntry entry, Character bot, Monster target) {
-        boolean targetPresentAndAlive = target != null && target.isAlive();
-        boolean hasRuntimeContext = entry != null && bot != null;
-        GrindGraphContext graphContext = targetPresentAndAlive && hasRuntimeContext
-                ? GrindGraphContext.resolve(entry, bot, bot.getPosition())
-                : null;
-        boolean immediateProjectileTarget = targetPresentAndAlive && hasRuntimeContext
-                && AgentCombatImmediateTargetPolicy.isImmediateProjectileTarget(
-                        bot,
-                        target,
-                        entry == null || AgentBotAmmoStateRuntime.noAmmo(entry),
-                        entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry));
-        boolean graphAvailable = graphContext != null && graphContext.available();
-        long targetCost = UNREACHABLE_GRAPH_COST;
-        if (targetPresentAndAlive && hasRuntimeContext && !immediateProjectileTarget && graphAvailable) {
-            Point targetPos = target.getPosition();
-            int targetRegionId = BotNavigationManager.resolveTargetRegionId(
-                    graphContext.graph(), graphContext.entry(), graphContext.map(), targetPos);
-            if (targetRegionId >= 0) {
-                targetCost = graphPathCost(
-                        graphContext.graph(),
-                        graphContext.map(),
-                        graphContext.startPos(),
-                        graphContext.startRegionId(),
-                        targetPos,
-                        targetRegionId,
-                        graphContext.profile());
-            }
-        }
-        return AgentCombatGrindTargetPolicy.isReachableGrindTarget(
-                targetPresentAndAlive,
-                hasRuntimeContext,
-                immediateProjectileTarget,
-                graphAvailable,
-                targetCost,
-                UNREACHABLE_GRAPH_COST);
+        return AgentBotCombatTargetRuntime.isReachableGrindTarget(entry, bot, target);
     }
-
     public static AttackPlan planAttack(BotEntry entry, Character bot, Monster target) {
         return toBotAttackPlan(AgentBotCombatPlanRuntime.planAttack(entry, bot, target, cfg));
     }
@@ -301,185 +113,9 @@ public class BotCombatManager {
         AgentBotCombatAttackRuntime.attackMonster(entry, bot, attackPlan);
     }
 
-    private static List<AgentScoredGrindTarget> scoreGrindTargets(BotEntry entry,
-                                                             Character bot,
-                                                             Point botPos,
-                                                             Foothold botFoothold,
-                                                             List<Monster> candidates) {
-        GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, botPos);
-        return AgentCombatGrindTargetPolicy.scoreGrindTargets(
-                graphContext.available(),
-                () -> scoreLocalTargets(entry, bot, botPos, botFoothold, candidates),
-                () -> scoreTargetRegions(entry, graphContext, bot, botPos, botFoothold, candidates));
-    }
-
-    private static boolean isLocalCombatTarget(GrindGraphContext context,
-                                               Character bot,
-                                               Foothold botFoothold,
-                                               Monster target) {
-        Foothold targetFoothold = botFoothold == null ? null : AgentBotCombatGroundRuntime.findGroundFoothold(target.getPosition(), bot);
-        return AgentCombatGrindTargetPolicy.isLocalCombatTarget(
-                botFoothold,
-                targetFoothold,
-                context.available(),
-                () -> BotNavigationManager.resolveTargetRegionId(
-                        context.graph(), context.entry(), context.map(), target.getPosition()),
-                context.startRegionId());
-    }
-
-    private static List<AgentScoredGrindTarget> scoreLocalTargets(BotEntry entry,
-                                                             Character bot,
-                                                             Point botPos,
-                                                             Foothold botFoothold,
-                                                             List<Monster> candidates) {
-        return AgentCombatGrindTargetPolicy.scoreLocalTargets(
-                candidates,
-                botPos,
-                candidate -> grindTargetScore(bot, botPos, botFoothold, candidate),
-                candidate -> AgentCombatScoringPolicy.legacyAoeClusterBonus(
-                        candidate,
-                        candidates,
-                        entry != null && AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
-                        entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry)));
-    }
-
-    private static List<AgentScoredGrindTarget> scoreTargetRegions(BotEntry entry,
-                                                              GrindGraphContext context,
-                                                              Character bot,
-                                                              Point botPos,
-                                                              Foothold botFoothold,
-                                                              List<Monster> candidates) {
-        return AgentCombatGrindTargetPolicy.scoreTargetRegions(
-                candidates,
-                botPos,
-                candidate -> BotNavigationManager.resolveTargetRegionId(
-                        context.graph(), context.entry(), context.map(), candidate.getPosition()),
-                candidate -> grindTargetScore(bot, botPos, botFoothold, candidate)
-                        - AgentCombatScoringPolicy.legacyAoeClusterBonus(
-                                candidate,
-                                candidates,
-                                entry != null && AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
-                                entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry)),
-                group -> graphPathCost(context.graph(), context.map(), context.startPos(), context.startRegionId(),
-                        group.bestMonster().getPosition(), group.regionId(), context.profile()),
-                group -> grindRegionOccupancyPenalty(context, bot, group.regionId()),
-                UNREACHABLE_GRAPH_COST);
-    }
-
-    private static long graphPathCost(BotNavigationGraph graph,
-                                      MapleMap map,
-                                      Point startPos,
-                                      int startRegionId,
-                                      Point targetPos,
-                                      int targetRegionId,
-                                      AgentMovementProfile profile) {
-        if (startPos == null || targetPos == null || startRegionId < 0 || targetRegionId < 0) {
-            return AgentCombatGrindTargetPolicy.graphPathCost(false, false, 0L, List.of(), UNREACHABLE_GRAPH_COST);
-        }
-        if (startRegionId == targetRegionId) {
-            return AgentCombatGrindTargetPolicy.graphPathCost(true, true,
-                    AgentCombatScoringPolicy.estimateLocalTravelCostMs(startPos, targetPos, profile),
-                    List.of(), UNREACHABLE_GRAPH_COST);
-        }
-
-        List<BotNavigationGraph.Edge> path = BotNavigationManager.findPathForTargetScore(
-                graph, map, startPos, startRegionId, targetRegionId, targetPos);
-        List<Long> edgeCosts = new ArrayList<>(path.size());
-        for (BotNavigationGraph.Edge edge : path) {
-            edgeCosts.add((long) edge.cost);
-        }
-        return AgentCombatGrindTargetPolicy.graphPathCost(true, false, 0L, edgeCosts, UNREACHABLE_GRAPH_COST);
-    }
-
-    private static long grindTargetScore(Character bot, Point botPos, Foothold botFoothold, Monster target) {
-        Point targetPos = target.getPosition();
-        Foothold targetFoothold = AgentBotCombatGroundRuntime.findGroundFoothold(targetPos, bot);
-
-        boolean sameFoothold = botFoothold != null && targetFoothold != null && botFoothold.getId() == targetFoothold.getId();
-        return AgentCombatScoringPolicy.localTargetScore(botPos, targetPos, sameFoothold, cfg.ATTACK_RANGE_Y);
-    }
-
     static Point aoeRepositionTarget(BotEntry entry, Character bot, Monster primaryTarget, AttackPlan fireNowBest) {
         return AgentBotCombatAoeRepositionRuntime.aoeRepositionTarget(entry, bot, primaryTarget, fireNowBest, cfg);
     }
-    private static long grindRegionOccupancyPenalty(GrindGraphContext context, Character bot, int targetRegionId) {
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(context.entry());
-        if (!context.available() || owner == null || bot == null || targetRegionId < 0) {
-            return 0L;
-        }
-
-        int occupiedCount = 0;
-        for (BotEntry sibling : BotManager.getInstance().getBotEntries(owner.getId())) {
-            if (sibling == context.entry() || sibling == null || !AgentBotModeStateRuntime.grinding(sibling)) {
-                continue;
-            }
-            Character siblingBot = AgentBotRuntimeIdentityRuntime.bot(sibling);
-            if (siblingBot == null) {
-                continue;
-            }
-            boolean sameMap = siblingBot.getMap() == context.map();
-            boolean alive = siblingBot.getHp() > 0;
-            boolean hasPosition = siblingBot.getPosition() != null;
-            if (!AgentCombatGrindTargetPolicy.shouldInspectRegionOccupant(
-                    sibling == context.entry(),
-                    AgentBotModeStateRuntime.grinding(sibling),
-                    sameMap,
-                    alive,
-                    hasPosition)) {
-                continue;
-            }
-
-            int occupiedRegionId = BotNavigationManager.resolveCurrentRegionId(
-                    context.graph(), sibling, context.map(), siblingBot.getPosition());
-            if (AgentCombatGrindTargetPolicy.shouldCountRegionOccupant(occupiedRegionId, targetRegionId)) {
-                occupiedCount++;
-            }
-        }
-
-        return AgentCombatGrindTargetPolicy.occupancyPenalty(occupiedCount,
-                cfg.GRIND_REGION_OCCUPANCY_PENALTY, cfg.GRIND_REGION_OCCUPANCY_PENALTY_CAP);
-    }
-
-    private record GrindGraphContext(BotEntry entry,
-                                     MapleMap map,
-                                     BotNavigationGraph graph,
-                                     AgentMovementProfile profile,
-                                     Point startPos,
-                                     int startRegionId) {
-        static GrindGraphContext resolve(BotEntry entry, Character bot, Point botPos) {
-            if (entry == null || bot == null || bot.getMap() == null || bot.getMap().getFootholds() == null) {
-                return unavailable(entry, bot, botPos);
-            }
-
-            AgentMovementProfile profile = AgentBotMovementStateRuntime.movementProfileOrCharacter(entry, bot);
-            BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(bot.getMap(), profile);
-            if (graph == null) {
-                BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), profile);
-                graph = BotNavigationGraphProvider.peekClosestGraph(bot.getMap(), profile);
-            }
-            if (graph == null) {
-                return unavailable(entry, bot, botPos);
-            }
-
-            int startRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, bot.getMap(), botPos);
-            if (startRegionId < 0) {
-                return unavailable(entry, bot, botPos);
-            }
-            return new GrindGraphContext(entry, bot.getMap(), graph, profile, new Point(botPos), startRegionId);
-        }
-
-        private static GrindGraphContext unavailable(BotEntry entry, Character bot, Point botPos) {
-            MapleMap map = bot == null ? null : bot.getMap();
-            AgentMovementProfile profile = AgentBotMovementStateRuntime.movementProfileOrCharacter(entry, bot);
-            Point startPos = botPos == null ? null : new Point(botPos);
-            return new GrindGraphContext(entry, map, null, profile, startPos, -1);
-        }
-
-        boolean available() {
-            return graph != null && map != null && startPos != null && startRegionId >= 0 && entry != null;
-        }
-    }
-
     public static String describeDebugStats(BotEntry entry, Character bot) {
         return AgentBotCombatReportRuntime.debugStatsReport(entry, bot);
     }

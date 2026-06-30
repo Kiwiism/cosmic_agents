@@ -33,7 +33,7 @@ import java.util.PriorityQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
-final class BotNavigationManager {
+public final class BotNavigationManager {
     private static final Logger log = LoggerFactory.getLogger(BotNavigationManager.class);
     private static final int JUMP_READY_X_TOLERANCE = 10;
     private static final int EDGE_READY_X_TOLERANCE = 14;
@@ -798,7 +798,7 @@ final class BotNavigationManager {
         return findPath(graph, map, startPos, startRegionId, targetRegionId, targetPos, null);
     }
 
-    static List<BotNavigationGraph.Edge> findPathForTargetScore(BotNavigationGraph graph,
+    public static List<BotNavigationGraph.Edge> findPathForTargetScore(BotNavigationGraph graph,
                                                                 MapleMap map,
                                                                 Point startPos,
                                                                 int startRegionId,
@@ -1463,7 +1463,7 @@ final class BotNavigationManager {
         return graph.regionIdByFootholdId.getOrDefault(landing.foothold().getId(), -1);
     }
 
-    static int resolveCurrentRegionId(BotNavigationGraph graph,
+    public static int resolveCurrentRegionId(BotNavigationGraph graph,
                                       BotEntry entry,
                                       MapleMap map,
                                       Point botPos) {
@@ -1488,7 +1488,7 @@ final class BotNavigationManager {
         return graph.findRegionId(map, botPos);
     }
 
-    static int resolveTargetRegionId(BotNavigationGraph graph,
+    public static int resolveTargetRegionId(BotNavigationGraph graph,
                                      BotEntry entry,
                                      MapleMap map,
                                      Point targetPos) {

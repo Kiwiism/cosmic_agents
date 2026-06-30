@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-final class BotNavigationGraph implements Serializable {
+public final class BotNavigationGraph implements Serializable {
     // Cached nav graphs are serialized to disk. Keep explicit serialVersionUIDs so
     // harmless method-only edits do not break cache loading; use GRAPH_VERSION for
     // intentional cache invalidation when the serialized data shape changes.
@@ -199,7 +199,7 @@ final class BotNavigationGraph implements Serializable {
         }
     }
 
-    static final class Edge implements Serializable {
+    public static final class Edge implements Serializable {
         // Part of the on-disk BotNavigationGraph cache schema; do not remove.
         @Serial
         private static final long serialVersionUID = 1L;
@@ -216,7 +216,7 @@ final class BotNavigationGraph implements Serializable {
         final int ropeX;
         final int ropeTopY;
         final int ropeBottomY;
-        final int cost;
+        public final int cost;
 
         Edge(int fromRegionId,
              int toRegionId,
@@ -339,11 +339,11 @@ final class BotNavigationGraph implements Serializable {
         return regionsById.get(regionId);
     }
 
-    List<Edge> getOutgoing(int regionId) {
+    public List<Edge> getOutgoing(int regionId) {
         return outgoingByRegionId.getOrDefault(regionId, List.of());
     }
 
-    boolean hasInterRegionEdge(int fromRegionId, int toRegionId) {
+    public boolean hasInterRegionEdge(int fromRegionId, int toRegionId) {
         for (Edge edge : getOutgoing(fromRegionId)) {
             if (edge.fromRegionId != edge.toRegionId && edge.toRegionId == toRegionId) {
                 return true;
@@ -352,7 +352,7 @@ final class BotNavigationGraph implements Serializable {
         return false;
     }
 
-    Set<Integer> getMutualAdjacentRegionIds(int regionId) {
+    public Set<Integer> getMutualAdjacentRegionIds(int regionId) {
         Set<Integer> adjacent = new HashSet<>();
         for (Edge edge : getOutgoing(regionId)) {
             if (edge.fromRegionId == edge.toRegionId) {
@@ -365,7 +365,7 @@ final class BotNavigationGraph implements Serializable {
         return adjacent;
     }
 
-    int findRegionId(MapleMap map, Point position) {
+    public int findRegionId(MapleMap map, Point position) {
         if (position == null || map.getFootholds() == null) {
             return -1;
         }

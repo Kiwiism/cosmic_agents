@@ -56,6 +56,7 @@ import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheRuntime;
 import server.agents.integration.AgentBotCombatHealRuntime;
 import server.agents.integration.AgentBotCombatPlanRuntime;
+import server.agents.integration.AgentBotCombatTargetRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotMobTouchStateRuntime;
@@ -1246,6 +1247,16 @@ class BotCombatManagerTest {
         } finally {
             BotCombatManager.cfg.AOE_REPOSITION_ENABLED = original;
         }
+    }
+
+    @Test
+    void combatTargetRuntimeReturnsNullWhenNoCandidatesExist() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        when(map.getAllMonsters()).thenReturn(List.of());
+
+        assertNull(AgentBotCombatTargetRuntime.findGrindTarget(
+                new BotEntry(bot, null, null), bot, BotCombatManager.cfg));
     }
 
     @Test

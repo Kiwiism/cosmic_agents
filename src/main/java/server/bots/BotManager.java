@@ -758,7 +758,7 @@ public class BotManager {
         return (entries != null && !entries.isEmpty()) ? entries.get(0) : null;
     }
 
-    List<BotEntry> getBotEntries(int ownerCharId) {
+    public List<BotEntry> getBotEntries(int ownerCharId) {
         List<BotEntry> entries = bots.get(ownerCharId);
         if (entries == null || entries.isEmpty()) {
             return List.of();

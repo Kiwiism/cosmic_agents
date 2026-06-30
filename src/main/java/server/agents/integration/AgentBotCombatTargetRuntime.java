@@ -1,0 +1,362 @@
+package server.agents.integration;
+
+import client.Character;
+import server.agents.capabilities.combat.AgentCombatConfig;
+import server.agents.capabilities.combat.AgentCombatGrindTargetPolicy;
+import server.agents.capabilities.combat.AgentCombatImmediateTargetPolicy;
+import server.agents.capabilities.combat.AgentCombatScoringPolicy;
+import server.agents.capabilities.combat.AgentCombatTargetSelector;
+import server.agents.capabilities.combat.AgentGrindTargetGroup;
+import server.agents.capabilities.combat.AgentProjectileHitbox;
+import server.agents.capabilities.combat.AgentScoredGrindTarget;
+import server.agents.capabilities.movement.AgentMovementProfile;
+import server.agents.runtime.AgentPerformanceMonitor;
+import server.bots.BotEntry;
+import server.bots.BotManager;
+import server.bots.BotNavigationGraph;
+import server.bots.BotNavigationGraphProvider;
+import server.bots.BotNavigationManager;
+import server.life.Monster;
+import server.maps.Foothold;
+import server.maps.MapleMap;
+
+import java.awt.Point;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+public final class AgentBotCombatTargetRuntime {
+    private static final long UNREACHABLE_GRAPH_COST = Long.MAX_VALUE / 4;
+
+    private AgentBotCombatTargetRuntime() {
+    }
+
+    public static Monster findGrindTarget(BotEntry entry, Character bot, AgentCombatConfig.Config config) {
+        long startedAt = System.nanoTime();
+        try {
+            Point botPos = bot.getPosition();
+            double rangeSq = (double) config.GRIND_SEEK_RANGE * config.GRIND_SEEK_RANGE;
+            Foothold botFoothold = AgentBotCombatGroundRuntime.findGroundFoothold(botPos, bot);
+            List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(bot, botPos, rangeSq);
+            if (candidates.isEmpty()) return null;
+
+            List<AgentScoredGrindTarget> scoredTargets = scoreGrindTargets(
+                    entry, bot, botPos, botFoothold, candidates, config);
+            if (scoredTargets.isEmpty()) {
+                return null;
+            }
+
+            return AgentCombatGrindTargetPolicy.pickReachableOrBestTarget(scoredTargets, UNREACHABLE_GRAPH_COST);
+        } finally {
+            AgentPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
+        }
+    }
+
+    public static Monster findPatrolTarget(BotEntry entry, Character bot, AgentCombatConfig.Config config) {
+        long startedAt = System.nanoTime();
+        try {
+            if (entry == null || bot == null || !AgentBotPatrolStateRuntime.hasPatrolRegion(entry)) {
+                return null;
+            }
+            Point botPos = bot.getPosition();
+            double rangeSq = (double) config.GRIND_SEEK_RANGE * config.GRIND_SEEK_RANGE;
+            Foothold botFoothold = AgentBotCombatGroundRuntime.findGroundFoothold(botPos, bot);
+            List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(bot, botPos, rangeSq);
+            if (candidates.isEmpty()) {
+                return null;
+            }
+            GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, botPos);
+            if (!graphContext.available()) {
+                return null;
+            }
+            BotNavigationGraph graph = graphContext.graph();
+            MapleMap map = graphContext.map();
+            int patrolId = AgentBotPatrolStateRuntime.patrolRegionId(entry);
+            Set<Integer> adjacentIds = graph.getMutualAdjacentRegionIds(patrolId);
+
+            List<Monster> filtered = new ArrayList<>();
+            for (Monster m : candidates) {
+                if (graph.findRegionId(map, m.getPosition()) == patrolId) {
+                    filtered.add(m);
+                }
+            }
+            if (filtered.isEmpty()) {
+                for (Monster m : candidates) {
+                    int mId = graph.findRegionId(map, m.getPosition());
+                    if (mId == patrolId || adjacentIds.contains(mId)) {
+                        filtered.add(m);
+                    }
+                }
+            }
+            if (filtered.isEmpty()) {
+                return null;
+            }
+
+            List<AgentScoredGrindTarget> scored = scoreGrindTargets(entry, bot, botPos, botFoothold, filtered, config);
+            if (scored.isEmpty()) {
+                return null;
+            }
+            return AgentCombatGrindTargetPolicy.pickReachableOrBestTarget(scored, UNREACHABLE_GRAPH_COST);
+        } finally {
+            AgentPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
+        }
+    }
+
+    public static Monster findFollowAttackTarget(BotEntry entry, Character bot, AgentCombatConfig.Config config) {
+        long startedAt = System.nanoTime();
+        try {
+            Point botPos = bot.getPosition();
+            double range = Math.max(
+                    AgentProjectileHitbox.CLIENT_PROJECTILE_BASE_RANGE
+                            + AgentProjectileHitbox.passiveProjectileRangeBonus(bot),
+                    config.ATTACK_RANGE_X + config.ATTACK_JUMP_X_EXTRA);
+            List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(bot, botPos, range * range);
+            if (candidates.isEmpty()) {
+                return null;
+            }
+
+            Foothold botFoothold = AgentBotCombatGroundRuntime.findGroundFoothold(botPos, bot);
+            GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, botPos);
+            List<AgentScoredGrindTarget> localTargets = AgentCombatGrindTargetPolicy.scoreFollowLocalTargets(
+                    candidates,
+                    botPos,
+                    candidate -> isLocalCombatTarget(graphContext, bot, botFoothold, candidate)
+                            || AgentCombatImmediateTargetPolicy.isImmediateProjectileTarget(
+                            bot,
+                            candidate,
+                            entry == null || AgentBotAmmoStateRuntime.noAmmo(entry),
+                            entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry)),
+                    candidate -> grindTargetScore(bot, botPos, botFoothold, candidate, config),
+                    candidate -> AgentCombatScoringPolicy.legacyAoeClusterBonus(
+                            candidate,
+                            candidates,
+                            entry != null && AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
+                            entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry)));
+            return AgentCombatGrindTargetPolicy.pickFromBestTargets(localTargets);
+        } finally {
+            AgentPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
+        }
+    }
+
+    public static boolean isReachableGrindTarget(BotEntry entry, Character bot, Monster target) {
+        boolean targetPresentAndAlive = target != null && target.isAlive();
+        boolean hasRuntimeContext = entry != null && bot != null;
+        GrindGraphContext graphContext = targetPresentAndAlive && hasRuntimeContext
+                ? GrindGraphContext.resolve(entry, bot, bot.getPosition())
+                : null;
+        boolean immediateProjectileTarget = targetPresentAndAlive && hasRuntimeContext
+                && AgentCombatImmediateTargetPolicy.isImmediateProjectileTarget(
+                bot,
+                target,
+                entry == null || AgentBotAmmoStateRuntime.noAmmo(entry),
+                entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry));
+        boolean graphAvailable = graphContext != null && graphContext.available();
+        long targetCost = UNREACHABLE_GRAPH_COST;
+        if (targetPresentAndAlive && hasRuntimeContext && !immediateProjectileTarget && graphAvailable) {
+            Point targetPos = target.getPosition();
+            int targetRegionId = BotNavigationManager.resolveTargetRegionId(
+                    graphContext.graph(), graphContext.entry(), graphContext.map(), targetPos);
+            if (targetRegionId >= 0) {
+                targetCost = graphPathCost(
+                        graphContext.graph(),
+                        graphContext.map(),
+                        graphContext.startPos(),
+                        graphContext.startRegionId(),
+                        targetPos,
+                        targetRegionId,
+                        graphContext.profile());
+            }
+        }
+        return AgentCombatGrindTargetPolicy.isReachableGrindTarget(
+                targetPresentAndAlive,
+                hasRuntimeContext,
+                immediateProjectileTarget,
+                graphAvailable,
+                targetCost,
+                UNREACHABLE_GRAPH_COST);
+    }
+
+    private static List<AgentScoredGrindTarget> scoreGrindTargets(BotEntry entry,
+                                                                  Character bot,
+                                                                  Point botPos,
+                                                                  Foothold botFoothold,
+                                                                  List<Monster> candidates,
+                                                                  AgentCombatConfig.Config config) {
+        GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, botPos);
+        return AgentCombatGrindTargetPolicy.scoreGrindTargets(
+                graphContext.available(),
+                () -> scoreLocalTargets(entry, bot, botPos, botFoothold, candidates, config),
+                () -> scoreTargetRegions(entry, graphContext, bot, botPos, botFoothold, candidates, config));
+    }
+
+    private static boolean isLocalCombatTarget(GrindGraphContext context,
+                                               Character bot,
+                                               Foothold botFoothold,
+                                               Monster target) {
+        Foothold targetFoothold = botFoothold == null
+                ? null
+                : AgentBotCombatGroundRuntime.findGroundFoothold(target.getPosition(), bot);
+        return AgentCombatGrindTargetPolicy.isLocalCombatTarget(
+                botFoothold,
+                targetFoothold,
+                context.available(),
+                () -> BotNavigationManager.resolveTargetRegionId(
+                        context.graph(), context.entry(), context.map(), target.getPosition()),
+                context.startRegionId());
+    }
+
+    private static List<AgentScoredGrindTarget> scoreLocalTargets(BotEntry entry,
+                                                                  Character bot,
+                                                                  Point botPos,
+                                                                  Foothold botFoothold,
+                                                                  List<Monster> candidates,
+                                                                  AgentCombatConfig.Config config) {
+        return AgentCombatGrindTargetPolicy.scoreLocalTargets(
+                candidates,
+                botPos,
+                candidate -> grindTargetScore(bot, botPos, botFoothold, candidate, config),
+                candidate -> AgentCombatScoringPolicy.legacyAoeClusterBonus(
+                        candidate,
+                        candidates,
+                        entry != null && AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
+                        entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry)));
+    }
+
+    private static List<AgentScoredGrindTarget> scoreTargetRegions(BotEntry entry,
+                                                                   GrindGraphContext context,
+                                                                   Character bot,
+                                                                   Point botPos,
+                                                                   Foothold botFoothold,
+                                                                   List<Monster> candidates,
+                                                                   AgentCombatConfig.Config config) {
+        return AgentCombatGrindTargetPolicy.scoreTargetRegions(
+                candidates,
+                botPos,
+                candidate -> BotNavigationManager.resolveTargetRegionId(
+                        context.graph(), context.entry(), context.map(), candidate.getPosition()),
+                candidate -> grindTargetScore(bot, botPos, botFoothold, candidate, config)
+                        - AgentCombatScoringPolicy.legacyAoeClusterBonus(
+                        candidate,
+                        candidates,
+                        entry != null && AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
+                        entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry)),
+                group -> graphPathCost(context.graph(), context.map(), context.startPos(), context.startRegionId(),
+                        group.bestMonster().getPosition(), group.regionId(), context.profile()),
+                group -> grindRegionOccupancyPenalty(context, bot, group.regionId(), config),
+                UNREACHABLE_GRAPH_COST);
+    }
+
+    private static long graphPathCost(BotNavigationGraph graph,
+                                      MapleMap map,
+                                      Point startPos,
+                                      int startRegionId,
+                                      Point targetPos,
+                                      int targetRegionId,
+                                      AgentMovementProfile profile) {
+        if (startPos == null || targetPos == null || startRegionId < 0 || targetRegionId < 0) {
+            return AgentCombatGrindTargetPolicy.graphPathCost(false, false, 0L, List.of(), UNREACHABLE_GRAPH_COST);
+        }
+        if (startRegionId == targetRegionId) {
+            return AgentCombatGrindTargetPolicy.graphPathCost(true, true,
+                    AgentCombatScoringPolicy.estimateLocalTravelCostMs(startPos, targetPos, profile),
+                    List.of(), UNREACHABLE_GRAPH_COST);
+        }
+
+        List<BotNavigationGraph.Edge> path = BotNavigationManager.findPathForTargetScore(
+                graph, map, startPos, startRegionId, targetRegionId, targetPos);
+        List<Long> edgeCosts = new ArrayList<>(path.size());
+        for (BotNavigationGraph.Edge edge : path) {
+            edgeCosts.add((long) edge.cost);
+        }
+        return AgentCombatGrindTargetPolicy.graphPathCost(true, false, 0L, edgeCosts, UNREACHABLE_GRAPH_COST);
+    }
+
+    private static long grindTargetScore(Character bot, Point botPos, Foothold botFoothold, Monster target,
+                                         AgentCombatConfig.Config config) {
+        Point targetPos = target.getPosition();
+        Foothold targetFoothold = AgentBotCombatGroundRuntime.findGroundFoothold(targetPos, bot);
+
+        boolean sameFoothold = botFoothold != null && targetFoothold != null
+                && botFoothold.getId() == targetFoothold.getId();
+        return AgentCombatScoringPolicy.localTargetScore(botPos, targetPos, sameFoothold, config.ATTACK_RANGE_Y);
+    }
+
+    private static long grindRegionOccupancyPenalty(GrindGraphContext context, Character bot, int targetRegionId,
+                                                    AgentCombatConfig.Config config) {
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(context.entry());
+        if (!context.available() || owner == null || bot == null || targetRegionId < 0) {
+            return 0L;
+        }
+
+        int occupiedCount = 0;
+        for (BotEntry sibling : BotManager.getInstance().getBotEntries(owner.getId())) {
+            if (sibling == context.entry() || sibling == null || !AgentBotModeStateRuntime.grinding(sibling)) {
+                continue;
+            }
+            Character siblingBot = AgentBotRuntimeIdentityRuntime.bot(sibling);
+            if (siblingBot == null) {
+                continue;
+            }
+            boolean sameMap = siblingBot.getMap() == context.map();
+            boolean alive = siblingBot.getHp() > 0;
+            boolean hasPosition = siblingBot.getPosition() != null;
+            if (!AgentCombatGrindTargetPolicy.shouldInspectRegionOccupant(
+                    sibling == context.entry(),
+                    AgentBotModeStateRuntime.grinding(sibling),
+                    sameMap,
+                    alive,
+                    hasPosition)) {
+                continue;
+            }
+
+            int occupiedRegionId = BotNavigationManager.resolveCurrentRegionId(
+                    context.graph(), sibling, context.map(), siblingBot.getPosition());
+            if (AgentCombatGrindTargetPolicy.shouldCountRegionOccupant(occupiedRegionId, targetRegionId)) {
+                occupiedCount++;
+            }
+        }
+
+        return AgentCombatGrindTargetPolicy.occupancyPenalty(occupiedCount,
+                config.GRIND_REGION_OCCUPANCY_PENALTY, config.GRIND_REGION_OCCUPANCY_PENALTY_CAP);
+    }
+
+    private record GrindGraphContext(BotEntry entry,
+                                     MapleMap map,
+                                     BotNavigationGraph graph,
+                                     AgentMovementProfile profile,
+                                     Point startPos,
+                                     int startRegionId) {
+        static GrindGraphContext resolve(BotEntry entry, Character bot, Point botPos) {
+            if (entry == null || bot == null || bot.getMap() == null || bot.getMap().getFootholds() == null) {
+                return unavailable(entry, bot, botPos);
+            }
+
+            AgentMovementProfile profile = AgentBotMovementStateRuntime.movementProfileOrCharacter(entry, bot);
+            BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(bot.getMap(), profile);
+            if (graph == null) {
+                BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), profile);
+                graph = BotNavigationGraphProvider.peekClosestGraph(bot.getMap(), profile);
+            }
+            if (graph == null) {
+                return unavailable(entry, bot, botPos);
+            }
+
+            int startRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, bot.getMap(), botPos);
+            if (startRegionId < 0) {
+                return unavailable(entry, bot, botPos);
+            }
+            return new GrindGraphContext(entry, bot.getMap(), graph, profile, new Point(botPos), startRegionId);
+        }
+
+        private static GrindGraphContext unavailable(BotEntry entry, Character bot, Point botPos) {
+            MapleMap map = bot == null ? null : bot.getMap();
+            AgentMovementProfile profile = AgentBotMovementStateRuntime.movementProfileOrCharacter(entry, bot);
+            Point startPos = botPos == null ? null : new Point(botPos);
+            return new GrindGraphContext(entry, map, null, profile, startPos, -1);
+        }
+
+        boolean available() {
+            return graph != null && map != null && startPos != null && startRegionId >= 0 && entry != null;
+        }
+    }
+}

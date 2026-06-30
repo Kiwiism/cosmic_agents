@@ -1758,6 +1758,13 @@ Recent reconstruction notes:
   `BotCombatManager.aoeRepositionTarget` is a temporary compatibility delegate
   while Agent-owned logic preserves the enable gate, cluster geometry, shifted
   hitbox scoring, full-HP kill priority, DPS threshold, and debug log payload.
+- Combat target search now lives in `AgentBotCombatTargetRuntime`;
+  `BotCombatManager.findGrindTarget`, `findPatrolTarget`,
+  `findFollowAttackTarget`, and `isReachableGrindTarget` are temporary
+  compatibility delegates while Agent-owned logic preserves candidate ranges,
+  local-vs-graph scoring, patrol-region expansion, follow-mode local targeting,
+  immediate projectile reach, sibling occupancy penalty, graph fallback, and the
+  existing `combat-target-search` performance metric.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
