@@ -781,7 +781,8 @@ public class BotCombatManager {
                         AgentBotCombatCooldownStateRuntime.hasAttackCooldown(entry),
                         AgentBotAmmoStateRuntime.noAmmo(entry),
                         attackPlan.skillId,
-                        () -> canUseSkill(bot, attackPlan.skillId, attackPlan.skillLevel),
+                        () -> AgentCombatSkillUsePolicy.canPaySkillCost(
+                                bot, attackPlan.skillId, attackPlan.skillLevel),
                         () -> canUseAttackPlanNow(entry, AgentAttackExecutionProvider.getEquippedWeaponType(bot), attackPlan));
         if (readiness != AgentCombatAttackExecutionPolicy.AttackExecutionReadiness.READY) {
             return;
@@ -1497,10 +1498,6 @@ public class BotCombatManager {
 
         handler.handlePacket(packet, client);
         return true;
-    }
-
-    private static boolean canUseSkill(Character bot, int skillId, int skillLevel) {
-        return AgentCombatSkillUsePolicy.canPaySkillCost(bot, skillId, skillLevel);
     }
 
     /** Returns true if the bot's weapon type requires projectile ammo. */

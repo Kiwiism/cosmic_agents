@@ -1579,6 +1579,10 @@ Recent reconstruction notes:
   `AgentCombatTargetEligibilityPolicy` and `AgentCombatImmediateTargetPolicy`
   directly; temporary `BotCombatManager` wrappers have been removed while
   preserving ammo-state and cached attack-skill inputs.
+- Skill-cost affordability preflight now calls `AgentCombatSkillUsePolicy`
+  directly from attack execution readiness; the temporary `BotCombatManager`
+  skill-use wrapper has been removed while preserving SkillFactory/effect cost
+  behavior.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
