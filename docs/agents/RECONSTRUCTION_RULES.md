@@ -1600,6 +1600,10 @@ Recent reconstruction notes:
   wrappers for best-target picking, best-plan selection, AoE cluster lookup, and
   basic-attack data construction have been removed while preserving the same
   Agent policy inputs.
+- AoE reposition scoring now uses
+  `AgentAttackPlanScoringPolicy.AgentAttackPlanScore` directly; the temporary
+  `BotCombatManager` `PlanScore` mirror and score wrapper have been removed
+  while preserving the same DPS and guaranteed-kill comparisons.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

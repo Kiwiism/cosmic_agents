@@ -735,17 +735,6 @@ public class BotCombatManager {
                 hitBox -> resolveEffectivePrimary(bot, originalTarget, hitBox));
     }
 
-    private record PlanScore(AttackPlan plan, double usefulDamage, double rawDamage, double usefulDps, double rawDps,
-                             boolean minimumKillsFullHpTargets) {
-    }
-
-    private static PlanScore scoreAttackPlan(Character bot, AttackPlan attackPlan) {
-        AgentAttackPlanScoringPolicy.AgentAttackPlanScore<AttackPlan> score =
-                AgentAttackPlanScoringPolicy.scoreAttackPlan(bot, attackPlan);
-        return new PlanScore(score.plan(), score.usefulDamage(), score.rawDamage(), score.usefulDps(),
-                score.rawDps(), score.minimumKillsFullHpTargets());
-    }
-
     static boolean isTargetInAttackRange(AttackPlan attackPlan, Character bot, Monster target) {
         if (attackPlan == null) {
             return false;
@@ -1202,23 +1191,27 @@ public class BotCombatManager {
         }
         // Geometry is promising — now pay for scoring. scoreAttackPlan is position-independent
         // (target HP + damage profile), so the translated plan scores validly.
-        PlanScore fireNowScore = scoreAttackPlan(bot, fireNowBest);
+        AgentAttackPlanScoringPolicy.AgentAttackPlanScore<AttackPlan> fireNowScore =
+                AgentAttackPlanScoringPolicy.scoreAttackPlan(bot, fireNowBest);
         // Preserve kill priority: if the fire-now plan already one-shots a full-HP target, just fire.
-        if (fireNowScore.minimumKillsFullHpTargets) {
+        if (fireNowScore.minimumKillsFullHpTargets()) {
             return null;
         }
         AttackPlan sweetPlan = new AttackPlan(aoeNow.skillId, aoeNow.skillLevel, aoeNow.numDamage, shifted,
                 sweetTargets, aoeNow.route, aoeNow.display, aoeNow.direction, aoeNow.rangedDirection,
                 aoeNow.stance, aoeNow.speed, aoeNow.hitDelayMs, aoeNow.cooldownMs, aoeNow.damageWeaponType);
-        PlanScore sweetScore = scoreAttackPlan(bot, sweetPlan);
-        if (sweetScore.rawDps >= fireNowScore.rawDps * cfg.AOE_REPOSITION_DPS_FACTOR) {
+        AgentAttackPlanScoringPolicy.AgentAttackPlanScore<AttackPlan> sweetScore =
+                AgentAttackPlanScoringPolicy.scoreAttackPlan(bot, sweetPlan);
+        if (sweetScore.rawDps() >= fireNowScore.rawDps() * cfg.AOE_REPOSITION_DPS_FACTOR) {
             if (cfg.AOE_REPOSITION_DEBUG) {
-                double pct = fireNowScore.rawDps > 0 ? sweetScore.rawDps / fireNowScore.rawDps * 100.0d : 0.0d;
+                double pct = fireNowScore.rawDps() > 0
+                        ? sweetScore.rawDps() / fireNowScore.rawDps() * 100.0d
+                        : 0.0d;
                 log.info("AoE reposition[{}]: stepping {}px {} to hit {} mobs (vs {}) with {} for {}% DPS ({} vs {} dps)",
                         bot.getName(), Math.abs(shift), shift < 0 ? "left" : "right",
                         sweetTargets.size(), fireNowBest.targets.size(),
                         AgentCombatDialogueReporter.combatSkillLabel(aoeSkillId),
-                        Math.round(pct), Math.round(sweetScore.rawDps), Math.round(fireNowScore.rawDps));
+                        Math.round(pct), Math.round(sweetScore.rawDps()), Math.round(fireNowScore.rawDps()));
             }
             return new Point(botPos.x + shift, botPos.y);
         }
