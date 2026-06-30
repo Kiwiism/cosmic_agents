@@ -2050,6 +2050,10 @@ Recent reconstruction notes:
 - Reserved-equipment trade page message formatting now lives in
   `AgentInventoryTradePolicy`; BotInventoryManager preserves the same reserved
   equip count source and category-message delivery path.
+- Equipment trade category selection now lives in `AgentInventoryTradePolicy`;
+  BotInventoryManager preserves the same first non-empty group selection,
+  next-group advancement, category-message selection, and trade-sequence side
+  effects through compatibility delegates.
 - Maker crystal creation and trash-disassembly batch orchestration now live in
   `AgentMakerService`; utility chat callbacks preserve the same guard replies,
   lazy item-data lookup, five-second step cadence, ACTIVE set, and

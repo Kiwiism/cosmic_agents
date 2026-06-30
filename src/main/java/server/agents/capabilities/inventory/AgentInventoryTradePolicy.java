@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.IntPredicate;
+import java.util.function.Predicate;
 
 public final class AgentInventoryTradePolicy {
     public static final int TRADE_WINDOW_ITEM_LIMIT = 9;
@@ -88,6 +89,26 @@ public final class AgentInventoryTradePolicy {
         } catch (IllegalArgumentException ignored) {
             return null;
         }
+    }
+
+    public static EquipsGroup firstAvailableEquipsGroup(Predicate<EquipsGroup> hasItems) {
+        for (EquipsGroup group : EquipsGroup.values()) {
+            if (hasItems.test(group)) {
+                return group;
+            }
+        }
+        return null;
+    }
+
+    public static String nextAvailableEquipsGroupCategory(String category, Predicate<EquipsGroup> hasItems) {
+        EquipsGroup current = equipsGroupFromCategory(category);
+        if (current == null) return null;
+        for (EquipsGroup group = current.next(); group != null; group = group.next()) {
+            if (hasItems.test(group)) {
+                return group.categoryString();
+            }
+        }
+        return null;
     }
 
     public static AmmoGroup ammoGroupFromCategory(String category) {

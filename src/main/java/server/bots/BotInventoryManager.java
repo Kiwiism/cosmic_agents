@@ -1259,13 +1259,9 @@ public class BotInventoryManager {
     }
 
     private static String nextEquipsGroup(String category, BotEntry entry, Character bot) {
-        EquipsGroup current = AgentInventoryTradePolicy.equipsGroupFromCategory(category);
-        if (current == null) return null;
         EquipTradeGroups groups = classifyEquipTradeGroups(entry, bot);
-        for (EquipsGroup g = current.next(); g != null; g = g.next()) {
-            if (!groups.itemsFor(g).isEmpty()) return g.categoryString();
-        }
-        return null;
+        return AgentInventoryTradePolicy.nextAvailableEquipsGroupCategory(category,
+                group -> !groups.itemsFor(group).isEmpty());
     }
 
     private static String nextAmmoGroup(String category, Character bot) {
@@ -1274,15 +1270,14 @@ public class BotInventoryManager {
 
     private static void startEquipsGroupTradeTransfer(Character owner, BotEntry entry, Character bot) {
         EquipTradeGroups groups = classifyEquipTradeGroups(entry, bot);
-        for (EquipsGroup group : EquipsGroup.values()) {
-            List<Item> items = groups.itemsFor(group);
-            if (!items.isEmpty()) {
-                String category = group.categoryString();
-                startTradeSequence(category, owner, items, 0, false, entry, bot);
-                String msg = equipsGroupMsg(category);
-                if (msg != null) AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, msg);
-                return;
-            }
+        EquipsGroup group = AgentInventoryTradePolicy.firstAvailableEquipsGroup(
+                candidate -> !groups.itemsFor(candidate).isEmpty());
+        if (group != null) {
+            String category = group.categoryString();
+            startTradeSequence(category, owner, groups.itemsFor(group), 0, false, entry, bot);
+            String msg = equipsGroupMsg(category);
+            if (msg != null) AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, msg);
+            return;
         }
         AgentBotInventoryRuntime.replyNow(entry, noItemsReply("equips"));
     }

@@ -77,6 +77,23 @@ class AgentInventoryTradePolicyTest {
     }
 
     @Test
+    void shouldSelectEquipTradeGroupsLikeLegacyInventory() {
+        assertEquals(AgentInventoryTradePolicy.EquipsGroup.NORMAL,
+                AgentInventoryTradePolicy.firstAvailableEquipsGroup(group -> true));
+        assertEquals(AgentInventoryTradePolicy.EquipsGroup.RESERVED_FOR_SELF,
+                AgentInventoryTradePolicy.firstAvailableEquipsGroup(
+                        group -> group == AgentInventoryTradePolicy.EquipsGroup.RESERVED_FOR_SELF));
+        assertEquals(null, AgentInventoryTradePolicy.firstAvailableEquipsGroup(group -> false));
+        assertEquals("equips:reserved_for_self",
+                AgentInventoryTradePolicy.nextAvailableEquipsGroupCategory("equips:reserved_for_other",
+                        group -> group == AgentInventoryTradePolicy.EquipsGroup.RESERVED_FOR_SELF));
+        assertEquals(null,
+                AgentInventoryTradePolicy.nextAvailableEquipsGroupCategory("equips:reserved_for_self", group -> true));
+        assertEquals(null,
+                AgentInventoryTradePolicy.nextAvailableEquipsGroupCategory("equips:nope", group -> true));
+    }
+
+    @Test
     void shouldBuildNotEnoughMesosReplyLikeLegacyInventory() {
         assertEquals("i only have 1,000 mesos rn, not 50,000",
                 AgentInventoryTradePolicy.notEnoughMesosReply(50_000, 1_000));
