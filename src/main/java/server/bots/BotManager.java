@@ -3,6 +3,7 @@ package server.bots;
 import server.agents.capabilities.combat.AgentAttackRoute;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatRangePolicy;
@@ -25,8 +26,12 @@ import server.agents.integration.AgentBotAmmoStateRuntime;
 import server.agents.integration.AgentBotBreakoutStateRuntime;
 import server.agents.integration.AgentBotBuffStateRuntime;
 import server.agents.integration.AgentBotCombatActionLockRuntime;
+import server.agents.integration.AgentBotCombatAoeRepositionRuntime;
+import server.agents.integration.AgentBotCombatAttackRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentBotCombatPlanRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
+import server.agents.integration.AgentBotCombatTargetRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
@@ -1389,11 +1394,11 @@ public class BotManager {
     private static final int RETREAT_ARRIVAL_TOLERANCE_X = 25; // 50ms tick can't land on an exact pixel
 
     // AoE reposition commitment: returns the sweet-spot Point to walk to before firing, or null to
-    // fire now. Scores once when a commitment starts (BotCombatManager.aoeRepositionTarget); while
+    // fire now. Scores once when a commitment starts (AgentBotCombatAoeRepositionRuntime); while
     // committed it just returns the stored anchor — no further scoring — until the bot arrives, the
     // bounded-chase deadline expires, or the target dies/clears.
     private static Point resolveAoeReposition(BotEntry entry, Character bot, Monster target,
-                                              BotCombatManager.AttackPlan attackPlan, Point botPos) {
+                                              AgentAttackPlan attackPlan, Point botPos) {
         long now = System.currentTimeMillis();
         if (AgentBotAoeRepositionStateRuntime.hasAnchor(entry)) {
             boolean done = AgentBotAoeRepositionStateRuntime.isExpiredOrArrived(
@@ -1405,7 +1410,8 @@ public class BotManager {
             }
             return AgentBotAoeRepositionStateRuntime.anchor(entry);
         }
-        Point anchor = BotCombatManager.aoeRepositionTarget(entry, bot, target, attackPlan);
+        Point anchor = AgentBotCombatAoeRepositionRuntime.aoeRepositionTarget(
+                entry, bot, target, attackPlan, AgentCombatConfig.cfg);
         if (anchor != null) {
             AgentBotAoeRepositionStateRuntime.setAnchor(
                     entry, anchor, now + BotCombatManager.cfg.AOE_REPOSITION_MAX_MS);
@@ -1812,7 +1818,7 @@ public class BotManager {
     static boolean shouldSearchForGrindTarget(BotEntry entry,
                                               Character bot,
                                               Monster currentTarget,
-                                              BotCombatManager.AttackPlan currentAttackPlan,
+                                              AgentAttackPlan currentAttackPlan,
                                               long now) {
         if (entry == null) {
             return false;
@@ -1846,7 +1852,7 @@ public class BotManager {
      * — hysteresis that prevents flip-flop between near-equal targets.
      */
     static boolean shouldSwitchToSearchedTarget(BotEntry entry, Character bot, Monster current,
-                                                Monster searched, BotCombatManager.AttackPlan currentPlan) {
+                                                Monster searched, AgentAttackPlan currentPlan) {
         if (searched == null || searched == current) {
             return false;
         }
@@ -2313,9 +2319,9 @@ public class BotManager {
         double seekRangeSq = (double) BotCombatManager.cfg.GRIND_SEEK_RANGE * BotCombatManager.cfg.GRIND_SEEK_RANGE;
         Monster target = AgentBotGrindTargetStateRuntime.targetInSeekRange(entry, bot, botPos, seekRangeSq);
         long now = System.currentTimeMillis();
-        BotCombatManager.AttackPlan attackPlan = target == null
+        AgentAttackPlan attackPlan = target == null
                 ? null
-                : BotCombatManager.planAttack(entry, bot, target);
+                : AgentBotCombatPlanRuntime.planAttack(entry, bot, target, AgentCombatConfig.cfg);
         // Validate cached loot target
         if (AgentBotGrindLootStateRuntime.hasGrindLootTarget(entry)) {
             MapItem loot = AgentBotGrindLootStateRuntime.grindLootTarget(entry);
@@ -2325,8 +2331,8 @@ public class BotManager {
         }
         if (runAiTick && shouldSearchForGrindTarget(entry, bot, target, attackPlan, now)) {
             Monster searchedTarget = AgentBotPatrolStateRuntime.hasPatrolRegion(entry)
-                    ? BotCombatManager.findPatrolTarget(entry, bot)
-                    : BotCombatManager.findGrindTarget(entry, bot);
+                    ? AgentBotCombatTargetRuntime.findPatrolTarget(entry, bot, AgentCombatConfig.cfg)
+                    : AgentBotCombatTargetRuntime.findGrindTarget(entry, bot, AgentCombatConfig.cfg);
             if (shouldSwitchToSearchedTarget(entry, bot, target, searchedTarget, attackPlan)) {
                 target = searchedTarget;
                 attackPlan = null;
@@ -2385,7 +2391,7 @@ public class BotManager {
             attackPlan = null;
         }
         if (attackPlan == null) {
-            attackPlan = BotCombatManager.planAttack(entry, bot, target);
+            attackPlan = AgentBotCombatPlanRuntime.planAttack(entry, bot, target, AgentCombatConfig.cfg);
         }
         WeaponType grindWeaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
         boolean targetInDegenerateBand = AgentAttackExecutionProvider.shouldDegenerateRangedAttack(grindWeaponType, botPos, tp);
@@ -2422,7 +2428,7 @@ public class BotManager {
                 attackAttemptedInRange = true;
                 // In range — attack if grounded, or during ascent of a jump
                 int prevCooldown = AgentBotCombatCooldownStateRuntime.attackCooldownMs(entry);
-                BotCombatManager.attackMonster(entry, bot, attackPlan);
+                AgentBotCombatAttackRuntime.attackMonster(entry, bot, attackPlan);
                 boolean attacked = AgentBotCombatCooldownStateRuntime.attackCooldownMs(entry) != prevCooldown;
                 // If a ranged bot just did a degenerate close-range hit, force retreat next tick
                 if (attacked && attackPlan.isCloseRangeRoute()
@@ -2593,7 +2599,7 @@ public class BotManager {
         if (AgentAttackExecutionProvider.shouldDegenerateRangedAttack(weaponType, botPos, targetPos)) {
             return false;
         }
-        BotCombatManager.AttackPlan plan = BotCombatManager.planAttack(entry, bot, target);
+        AgentAttackPlan plan = AgentBotCombatPlanRuntime.planAttack(entry, bot, target, AgentCombatConfig.cfg);
         return plan != null
                 && plan.route == AgentAttackRoute.RANGED
                 && AgentCombatRangePolicy.isTargetInAttackRange(plan, bot, target)
@@ -2644,7 +2650,7 @@ public class BotManager {
             return new LocalOpportunityAttackResult(false, targetPos);
         }
 
-        Monster localTarget = BotCombatManager.findFollowAttackTarget(entry, bot);
+        Monster localTarget = AgentBotCombatTargetRuntime.findFollowAttackTarget(entry, bot, AgentCombatConfig.cfg);
         if (localTarget == null) {
             return new LocalOpportunityAttackResult(false, targetPos);
         }
@@ -2661,7 +2667,7 @@ public class BotManager {
                     false, selectGrindNavigationTarget(entry, botPos, localTargetPos));
         }
 
-        BotCombatManager.AttackPlan attackPlan = BotCombatManager.planAttack(entry, bot, localTarget);
+        AgentAttackPlan attackPlan = AgentBotCombatPlanRuntime.planAttack(entry, bot, localTarget, AgentCombatConfig.cfg);
         if (attackPlan == null) {
             return new LocalOpportunityAttackResult(false, targetPos);
         }
@@ -2669,7 +2675,7 @@ public class BotManager {
             if (AgentCombatRangePolicy.canUseAttackPlanNow(
                     AgentBotMovementStateRuntime.grounded(entry), weaponType, attackPlan.route)
                     && AgentCombatRangePolicy.isTargetInAttackRange(attackPlan, bot, localTarget)) {
-                BotCombatManager.attackMonster(entry, bot, attackPlan);
+                AgentBotCombatAttackRuntime.attackMonster(entry, bot, attackPlan);
                 if (allowCombatMovement && attackPlan.isCloseRangeRoute()
                         && AgentCombatAmmoCounter.isRangedAmmoWeapon(weaponType)) {
                     AgentBotDegenerateAttackStateRuntime.markDegenAttackDone(entry);
@@ -2693,7 +2699,7 @@ public class BotManager {
 
         if (!AgentBotCombatCooldownStateRuntime.hasMoveWindow(entry)
                 && AgentCombatRangePolicy.isTargetInAttackRange(attackPlan, bot, localTarget)) {
-            BotCombatManager.attackMonster(entry, bot, attackPlan);
+            AgentBotCombatAttackRuntime.attackMonster(entry, bot, attackPlan);
             setLocalAttackMoveWindow(entry, botPos, moveWindowReferencePos);
             if (allowCombatMovement && attackPlan.isCloseRangeRoute()
                     && AgentCombatAmmoCounter.isRangedAmmoWeapon(weaponType)) {

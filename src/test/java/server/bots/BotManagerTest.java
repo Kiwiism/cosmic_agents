@@ -3,7 +3,11 @@ package server.bots;
 import server.agents.capabilities.combat.AgentAttackRoute;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+import server.agents.capabilities.combat.AgentAttackPlan;
+import server.agents.capabilities.combat.AgentCombatConfig;
 
+import server.agents.integration.AgentBotCombatAttackRuntime;
+import server.agents.integration.AgentBotCombatPlanRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import client.Character;
 import client.BuffStat;
@@ -398,7 +402,7 @@ class BotManagerTest {
         Point botPos = new Point(100, 100);
         Monster closeMob = mockMob(new Point(150, 100), 9300400);
         Monster rangedMob = mockMob(new Point(260, 100), 9300401);
-        BotCombatManager.AttackPlan rangedPlan = new BotCombatManager.AttackPlan(
+        AgentAttackPlan rangedPlan = new AgentAttackPlan(
                 0, 0, 1, new Rectangle(105, 50, 395, 100),
                 List.of(rangedMob), AgentAttackRoute.RANGED,
                 0, 11, 11, 11, 4, 300, 600, null);
@@ -408,10 +412,11 @@ class BotManagerTest {
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks =
                      mockStatic(AgentAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS);
-             MockedStatic<BotCombatManager> combat =
-                     mockStatic(BotCombatManager.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
+             MockedStatic<AgentBotCombatPlanRuntime> plans =
+                     mockStatic(AgentBotCombatPlanRuntime.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.BOW);
-            combat.when(() -> BotCombatManager.planAttack(entry, bot, rangedMob)).thenReturn(rangedPlan);
+            plans.when(() -> AgentBotCombatPlanRuntime.planAttack(entry, bot, rangedMob, AgentCombatConfig.cfg))
+                    .thenReturn(rangedPlan);
 
             assertEquals(rangedMob, BotManager.selectPriorityRangedAttackTarget(entry, bot, botPos, closeMob));
         }
@@ -429,18 +434,22 @@ class BotManagerTest {
         AgentBotModeStateRuntime.setGrinding(entry, true);
         AgentBotGrindTargetStateRuntime.setTarget(entry, target);
         AgentBotMapStateRuntime.setMapTracking(entry, map.getId(), BotMovementManager.buildFhIndex(map));
-        BotCombatManager.AttackPlan rangedPlan = new BotCombatManager.AttackPlan(
+        AgentAttackPlan rangedPlan = new AgentAttackPlan(
                 0, 0, 1, new Rectangle(-200, 50, 300, 100),
                 List.of(target), AgentAttackRoute.RANGED,
                 0, 11, 11, 11, 4, 300, 600, null);
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks =
                      mockStatic(AgentAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS);
-             MockedStatic<BotCombatManager> combat =
-                     mockStatic(BotCombatManager.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
+             MockedStatic<AgentBotCombatPlanRuntime> plans =
+                     mockStatic(AgentBotCombatPlanRuntime.class, org.mockito.Mockito.CALLS_REAL_METHODS);
+             MockedStatic<AgentBotCombatAttackRuntime> attacksRuntime =
+                     mockStatic(AgentBotCombatAttackRuntime.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.CLAW);
-            combat.when(() -> BotCombatManager.planAttack(entry, bot, target)).thenReturn(rangedPlan);
-            combat.when(() -> BotCombatManager.attackMonster(entry, bot, rangedPlan)).thenAnswer(invocation -> null);
+            plans.when(() -> AgentBotCombatPlanRuntime.planAttack(entry, bot, target, AgentCombatConfig.cfg))
+                    .thenReturn(rangedPlan);
+            attacksRuntime.when(() -> AgentBotCombatAttackRuntime.attackMonster(entry, bot, rangedPlan))
+                    .thenAnswer(invocation -> null);
 
             BotManager.getInstance().stepMovementOnly(entry, target.getPosition(), target.getPosition(), false);
         }
@@ -678,7 +687,7 @@ class BotManagerTest {
         AgentBotGrindSearchStateRuntime.scheduleNextSearch(entry, 1_000L);
         Monster target = mock(Monster.class);
         when(target.getPosition()).thenReturn(new Point(140, 100));
-        BotCombatManager.AttackPlan plan = basicClosePlan(target);
+        AgentAttackPlan plan = basicClosePlan(target);
 
         assertFalse(BotManager.shouldSearchForGrindTarget(entry, bot, target, plan, 1_000L));
     }
@@ -691,7 +700,7 @@ class BotManagerTest {
         AgentBotGrindSearchStateRuntime.scheduleNextSearch(entry, 1_000L);
         Monster target = mock(Monster.class);
         when(target.getPosition()).thenReturn(new Point(300, 100));
-        BotCombatManager.AttackPlan plan = basicClosePlan(target);
+        AgentAttackPlan plan = basicClosePlan(target);
 
         assertTrue(BotManager.shouldSearchForGrindTarget(entry, bot, target, plan, 1_000L));
     }
@@ -706,7 +715,7 @@ class BotManagerTest {
         AgentBotCombatSkillCacheStateRuntime.setAoeSkill(entry, AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry), 6);
         Monster target = mock(Monster.class);
         when(target.getPosition()).thenReturn(new Point(140, 100));
-        BotCombatManager.AttackPlan singleTargetPlan = basicClosePlan(target);
+        AgentAttackPlan singleTargetPlan = basicClosePlan(target);
 
         // In range, but a multi-mob AoE bot stuck single-targeting should keep scanning for a cluster.
         assertTrue(BotManager.shouldSearchForGrindTarget(entry, bot, target, singleTargetPlan, 1_000L));
@@ -721,7 +730,7 @@ class BotManagerTest {
         when(current.getPosition()).thenReturn(new Point(300, 100)); // out of basic range
         Monster searched = mock(Monster.class);
         when(searched.getPosition()).thenReturn(new Point(160, 100));
-        BotCombatManager.AttackPlan plan = basicClosePlan(current);
+        AgentAttackPlan plan = basicClosePlan(current);
 
         assertTrue(BotManager.shouldSwitchToSearchedTarget(entry, bot, current, searched, plan));
     }
@@ -737,7 +746,7 @@ class BotManagerTest {
         when(current.getPosition()).thenReturn(new Point(140, 100)); // in basic range
         Monster searched = mock(Monster.class);
         when(searched.getPosition()).thenReturn(new Point(160, 100));
-        BotCombatManager.AttackPlan plan = basicClosePlan(current);
+        AgentAttackPlan plan = basicClosePlan(current);
 
         // Committed to an in-range target and the searched mob anchors no larger cluster (empty map).
         assertFalse(BotManager.shouldSwitchToSearchedTarget(entry, bot, current, searched, plan));
@@ -1441,8 +1450,8 @@ class BotManagerTest {
                 ordered.stream().map(Item::getItemId).toList());
     }
 
-    private static BotCombatManager.AttackPlan basicClosePlan(Monster target) {
-        return new BotCombatManager.AttackPlan(
+    private static AgentAttackPlan basicClosePlan(Monster target) {
+        return new AgentAttackPlan(
                 0, 0, 1, null, List.of(target), AgentAttackRoute.CLOSE,
                 0, 0, 0, 0, 0, 0, 0, null);
     }

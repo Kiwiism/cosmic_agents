@@ -17,6 +17,11 @@ Recent map updates:
   `AgentBotCombatTargetRuntime` and `AgentBotCombatPlanRuntime` directly, while
   `BotCombatManager.describeDebugStats` remains only a temporary compatibility
   delegate.
+- `BotManager` grind/local-opportunity combat now uses Agent combat plan,
+  target, reposition, and attack runtimes directly. The bot combat facade still
+  exists for older callers, but the main tick path no longer depends on
+  `BotCombatManager.planAttack`, `attackMonster`, `findGrindTarget`,
+  `findPatrolTarget`, `findFollowAttackTarget`, or `aoeRepositionTarget`.
 
 | Current file | Target Agent destination | Status |
 | --- | --- | --- |

@@ -1770,6 +1770,13 @@ Recent reconstruction notes:
   local-vs-graph scoring, patrol-region expansion, follow-mode local targeting,
   immediate projectile reach, sibling occupancy penalty, graph fallback, and the
   existing `combat-target-search` performance metric.
+- BotManager grind, local-opportunity, priority-ranged, and AoE reposition paths
+  now call `AgentBotCombatPlanRuntime`, `AgentBotCombatAttackRuntime`,
+  `AgentBotCombatTargetRuntime`, and `AgentBotCombatAoeRepositionRuntime`
+  directly for plan/target/reposition/attack execution. `BotCombatManager`
+  remains a temporary compatibility facade for older callers and tests, while
+  the main tick path preserves the same config object, target ordering, attack
+  gating, cooldown checks, and packet side effects.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
