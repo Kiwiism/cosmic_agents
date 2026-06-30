@@ -37,6 +37,7 @@ import server.agents.capabilities.inventory.AgentInventoryTradePolicy.UseTradeGr
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
+import server.agents.capabilities.trade.AgentTradeRecipientService;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotInventoryStateRuntime;
@@ -420,7 +421,7 @@ public class BotInventoryManager {
     }
 
     private static void openTradeBatch(BotEntry entry, Character bot, List<Item> items, int mesos) {
-        Character recipient = resolveTradeRecipient(entry, bot);
+        Character recipient = AgentTradeRecipientService.resolveTradeRecipient(entry, bot);
         if (recipient == null || recipient.getTrade() != null) {
             cancelTradeSequence(entry, bot, "can't trade right now, stopping");
             return;
@@ -602,7 +603,7 @@ public class BotInventoryManager {
         // ── WAITING FOR OWNER TO CLICK OK ─────────────────────────────────
         if (!AgentBotPendingTradeStateRuntime.botDone(entry)) {
             AgentBotPendingTradeStateRuntime.addTimerMs(entry, BotMovementManager.cfg.TICK_MS);
-            Character recipient = resolveTradeRecipient(entry, bot);
+            Character recipient = AgentTradeRecipientService.resolveTradeRecipient(entry, bot);
             boolean recipientIsBot = recipient != null && recipient.getClient() instanceof client.BotClient;
             if (recipientIsBot || trade.isPartnerConfirmed()) {
                 completeTradeAndThank(entry, bot, trade);
@@ -818,37 +819,6 @@ public class BotInventoryManager {
         result.addAll(AgentInventoryItemPolicy.collectSafeItems(bot, type, filter,
                 ItemInformationProvider.getInstance()::isQuestItem,
                 YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE));
-    }
-
-    private static Character resolveTradeRecipient(BotEntry entry, Character bot) {
-        int recipientId = AgentBotPendingTradeStateRuntime.recipientId(entry);
-        if (recipientId <= 0) {
-            return AgentBotRuntimeIdentityRuntime.owner(entry);
-        }
-
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
-        if (owner != null && owner.getId() == recipientId) {
-            return owner;
-        }
-
-        if (bot.getMap() != null) {
-            Character mapRecipient = bot.getMap().getCharacterById(recipientId);
-            if (mapRecipient != null) {
-                return mapRecipient;
-            }
-        }
-
-        if (owner == null || owner.getParty() == null) {
-            return null;
-        }
-
-        for (Character member : owner.getPartyMembersOnline()) {
-            if (member != null && member.getId() == recipientId) {
-                return member;
-            }
-        }
-
-        return null;
     }
 
     // ─── Drop actions (floor) ─────────────────────────────────────────────────

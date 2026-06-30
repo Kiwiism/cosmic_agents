@@ -2112,6 +2112,9 @@ Recent reconstruction notes:
   trade sequence but delegates slot counting, temporary unequip preparation,
   restore-slot recording, and legacy failure replies to the Agent inventory
   service.
+- Trade recipient resolution now lives in `AgentTradeRecipientService`;
+  BotInventoryManager still owns trade sequencing but delegates owner/map/party
+  recipient lookup to the Agent trade capability.
 - Ammo trade grouping now lives in `AgentInventoryAmmoPolicy`;
   BotInventoryManager preserves the same safe-item filtering, own-ammo versus
   non-own-ammo split, non-own item-id ordering, and own-ammo projectile attack
