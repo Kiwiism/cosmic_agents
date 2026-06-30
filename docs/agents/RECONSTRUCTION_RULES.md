@@ -1754,6 +1754,10 @@ Recent reconstruction notes:
 - Combat ground foothold lookup now lives in `AgentBotCombatGroundRuntime`;
   BotCombatManager no longer owns the null guards or physics-engine bridge used
   by grind, patrol, follow, and local target scoring.
+- AoE repositioning now lives in `AgentBotCombatAoeRepositionRuntime`;
+  `BotCombatManager.aoeRepositionTarget` is a temporary compatibility delegate
+  while Agent-owned logic preserves the enable gate, cluster geometry, shifted
+  hitbox scoring, full-HP kill priority, DPS threshold, and debug log payload.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

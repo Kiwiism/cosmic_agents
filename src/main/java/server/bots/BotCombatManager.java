@@ -4,7 +4,6 @@ import server.agents.capabilities.combat.AgentAttackRoute;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentAttackPlan;
-import server.agents.capabilities.combat.AgentAttackPlanScoringPolicy;
 import server.agents.capabilities.combat.AgentAttackPlanTieBreakPolicy;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatImmediateTargetPolicy;
@@ -14,7 +13,6 @@ import server.agents.capabilities.combat.AgentCombatScoringPolicy;
 import server.agents.capabilities.combat.AgentCombatTargetSelector;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
 import server.agents.capabilities.combat.AgentScoredGrindTarget;
-import server.agents.capabilities.combat.AgentSkillAttackPlanRuntime;
 import server.agents.capabilities.combat.AgentGrindTargetGroup;
 
 import server.agents.runtime.AgentPerformanceMonitor;
@@ -37,10 +35,8 @@ import constants.skills.Priest;
 import constants.skills.Spearman;
 import constants.skills.ThunderBreaker;
 import constants.skills.WhiteKnight;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.integration.AgentBotAmmoStateRuntime;
+import server.agents.integration.AgentBotCombatAoeRepositionRuntime;
 import server.agents.integration.AgentBotCombatAttackRuntime;
 import server.agents.integration.AgentBotCombatBuffRuntime;
 import server.agents.integration.AgentBotCombatReportRuntime;
@@ -70,7 +66,6 @@ import java.util.Set;
 import java.util.StringJoiner;
 
 public class BotCombatManager {
-    private static final Logger log = LoggerFactory.getLogger(BotCombatManager.class);
     private static final long UNREACHABLE_GRAPH_COST = Long.MAX_VALUE / 4;
 
     public static final class AttackPlan extends AgentAttackPlan {
@@ -306,10 +301,6 @@ public class BotCombatManager {
         AgentBotCombatAttackRuntime.attackMonster(entry, bot, attackPlan);
     }
 
-    private static AttackPlan planSkillAttack(BotEntry entry, Character bot, Monster primaryTarget, int skillId) {
-        return toBotAttackPlan(AgentSkillAttackPlanRuntime.planSkillAttack(bot, primaryTarget, skillId, cfg));
-    }
-
     private static List<AgentScoredGrindTarget> scoreGrindTargets(BotEntry entry,
                                                              Character bot,
                                                              Point botPos,
@@ -408,96 +399,9 @@ public class BotCombatManager {
         return AgentCombatScoringPolicy.localTargetScore(botPos, targetPos, sameFoothold, cfg.ATTACK_RANGE_Y);
     }
 
-    // AoE positioning: target selection (AgentCombatScoringPolicy.legacyAoeClusterBonus) steers the bot toward a cluster, but the
-    // fire site still throws the single-target skill the instant one mob is in range — the AoE box
-    // at the cluster *edge* catches only that mob, so it ties the denominator and loses on per-hit
-    // damage. This returns a sweet-spot Point (the cluster centroid) to walk to when an AoE thrown
-    // from there would beat the fire-now plan's DPS by cfg.AOE_REPOSITION_DPS_FACTOR, else null
-    // (fire now). Bounded by AOE_REPOSITION_MAX_DISTANCE_X so it never chases scattering mobs.
     static Point aoeRepositionTarget(BotEntry entry, Character bot, Monster primaryTarget, AttackPlan fireNowBest) {
-        boolean hasMultiMobAoeSkill = entry != null && AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry);
-        int aoeSkillId = entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry);
-        int aoeSkillMobs = entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry);
-        // Only when the chosen plan is single-target with room to hit more — skip when the AoE is
-        // already the pick or the in-range cluster already maxes the skill's mobCount.
-        if (!AgentCombatScoringPolicy.shouldConsiderAoeReposition(
-                cfg.AOE_REPOSITION_ENABLED,
-                entry != null && bot != null,
-                primaryTarget != null,
-                hasMultiMobAoeSkill,
-                fireNowBest != null,
-                fireNowBest != null && fireNowBest.skillId == aoeSkillId,
-                fireNowBest == null ? 0 : fireNowBest.targets.size(),
-                aoeSkillMobs)) {
-            return null;
-        }
-        Point botPos = bot.getPosition();
-        Point tp = primaryTarget.getPosition();
-        if (botPos == null || tp == null) {
-            return null;
-        }
-        // Cheap geometry gate first (no scoring): the cluster of live mobs within the AoE radius of
-        // the primary. If it holds no more mobs than the fire-now plan already hits, bail.
-        List<Monster> cluster = AgentCombatScoringPolicy.legacyClusterMonsters(
-                primaryTarget, bot.getMap().getAllMonsters());
-        if (cluster.size() <= fireNowBest.targets.size()) {
-            return null;
-        }
-        int centroidX = AgentCombatScoringPolicy.clusterCentroidX(cluster);
-        // Rebuild the AoE candidate at the current position (the plan planAttack discards) so we know
-        // the actual hitbox shape. The box extends *forward* from the bot (it does not straddle the
-        // anchor), so to cover the cluster we shift the box CENTER onto the centroid — not the bot
-        // onto the centroid, which would push a forward box past the mobs and catch none. The bot
-        // moves by the same shift, bounded by the chase distance.
-        AttackPlan aoeNow = planSkillAttack(entry, bot, primaryTarget, aoeSkillId);
-        if (aoeNow == null || aoeNow.hitBox == null) {
-            return null;
-        }
-        int shift = AgentCombatScoringPolicy.boundedRepositionShift(
-                centroidX, aoeNow.hitBox.getCenterX(), cfg.AOE_REPOSITION_MAX_DISTANCE_X);
-        if (AgentCombatScoringPolicy.isWithinRepositionArrival(shift, cfg.AOE_REPOSITION_ARRIVAL_X)) {
-            return null; // box already covers the cluster — let the normal flow pick the AoE
-        }
-        Rectangle shifted = new Rectangle(aoeNow.hitBox);
-        shifted.translate(shift, 0);
-        Monster sweetPrimary = AgentCombatScoringPolicy.nearestMonster(cluster, centroidX, tp.y);
-        if (sweetPrimary == null) {
-            return null;
-        }
-        List<Monster> sweetTargets = AgentCombatTargetSelector.collectTargetsInHitBox(
-                sweetPrimary, shifted, aoeSkillMobs, bot.getMap().getAllMonsters());
-        if (sweetTargets.size() <= fireNowBest.targets.size()) {
-            return null; // repositioning wouldn't actually catch more mobs
-        }
-        // Geometry is promising — now pay for scoring. scoreAttackPlan is position-independent
-        // (target HP + damage profile), so the translated plan scores validly.
-        AgentAttackPlanScoringPolicy.AgentAttackPlanScore<AttackPlan> fireNowScore =
-                AgentAttackPlanScoringPolicy.scoreAttackPlan(bot, fireNowBest);
-        // Preserve kill priority: if the fire-now plan already one-shots a full-HP target, just fire.
-        if (fireNowScore.minimumKillsFullHpTargets()) {
-            return null;
-        }
-        AttackPlan sweetPlan = new AttackPlan(aoeNow.skillId, aoeNow.skillLevel, aoeNow.numDamage, shifted,
-                sweetTargets, aoeNow.route, aoeNow.display, aoeNow.direction, aoeNow.rangedDirection,
-                aoeNow.stance, aoeNow.speed, aoeNow.hitDelayMs, aoeNow.cooldownMs, aoeNow.damageWeaponType);
-        AgentAttackPlanScoringPolicy.AgentAttackPlanScore<AttackPlan> sweetScore =
-                AgentAttackPlanScoringPolicy.scoreAttackPlan(bot, sweetPlan);
-        if (sweetScore.rawDps() >= fireNowScore.rawDps() * cfg.AOE_REPOSITION_DPS_FACTOR) {
-            if (cfg.AOE_REPOSITION_DEBUG) {
-                double pct = fireNowScore.rawDps() > 0
-                        ? sweetScore.rawDps() / fireNowScore.rawDps() * 100.0d
-                        : 0.0d;
-                log.info("AoE reposition[{}]: stepping {}px {} to hit {} mobs (vs {}) with {} for {}% DPS ({} vs {} dps)",
-                        bot.getName(), Math.abs(shift), shift < 0 ? "left" : "right",
-                        sweetTargets.size(), fireNowBest.targets.size(),
-                        AgentCombatDialogueReporter.combatSkillLabel(aoeSkillId),
-                        Math.round(pct), Math.round(sweetScore.rawDps()), Math.round(fireNowScore.rawDps()));
-            }
-            return new Point(botPos.x + shift, botPos.y);
-        }
-        return null;
+        return AgentBotCombatAoeRepositionRuntime.aoeRepositionTarget(entry, bot, primaryTarget, fireNowBest, cfg);
     }
-
     private static long grindRegionOccupancyPenalty(GrindGraphContext context, Character bot, int targetRegionId) {
         Character owner = AgentBotRuntimeIdentityRuntime.owner(context.entry());
         if (!context.available() || owner == null || bot == null || targetRegionId < 0) {

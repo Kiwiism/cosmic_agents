@@ -43,6 +43,7 @@ import org.mockito.Mockito;
 import org.mockito.ArgumentCaptor;
 import server.StatEffect;
 import server.agents.integration.AgentBotCombatActionStateRuntime;
+import server.agents.integration.AgentBotCombatAoeRepositionRuntime;
 import server.agents.integration.AgentBotCombatAttackRuntime;
 import server.agents.integration.AgentBotCombatBuffStateRuntime;
 import server.agents.integration.AgentBotCombatBuffRuntime;
@@ -1225,6 +1226,26 @@ class BotCombatManagerTest {
         assertNull(AgentBotCombatGroundRuntime.findGroundFoothold(new Point(100, 200), bot));
         assertNull(AgentBotCombatGroundRuntime.findGroundFoothold(null, bot));
         assertNull(AgentBotCombatGroundRuntime.findGroundFoothold(new Point(100, 200), null));
+    }
+
+    @Test
+    void aoeRepositionRuntimeReturnsNullWhenDisabled() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        Monster target = mockMob(new Point(140, 200), 9300509);
+        BotEntry entry = new BotEntry(bot, null, null);
+        BotCombatManager.AttackPlan fireNow = new BotCombatManager.AttackPlan(
+                0, 0, 1, new Rectangle(100, 150, 80, 70),
+                List.of(target), AgentAttackRoute.CLOSE,
+                4, 1, 1, 0, 4, 300, 600, null);
+        boolean original = BotCombatManager.cfg.AOE_REPOSITION_ENABLED;
+        BotCombatManager.cfg.AOE_REPOSITION_ENABLED = false;
+        try {
+            assertNull(AgentBotCombatAoeRepositionRuntime.aoeRepositionTarget(
+                    entry, bot, target, fireNow, BotCombatManager.cfg));
+        } finally {
+            BotCombatManager.cfg.AOE_REPOSITION_ENABLED = original;
+        }
     }
 
     @Test
