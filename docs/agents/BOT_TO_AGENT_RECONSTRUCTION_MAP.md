@@ -76,6 +76,9 @@ Recent map updates:
   `server.agents.integration.AgentBotMovementTargetSideEffects`. Snapshot
   conversion and raw navigation-target override behavior are unchanged while
   BotManager remains the temporary target-snapshot source.
+- `server.bots.BotScriptRuntime` has moved to
+  `server.agents.plans.AgentScriptRuntimeState`. `BotEntry` still carries the
+  state during reconstruction, but the script runtime state bag is Agent-owned.
 
 | Current file | Target Agent destination | Status |
 | --- | --- | --- |
@@ -123,7 +126,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotScript.java` | `server.agents.plans.legacy.LegacyBotScript` or later deletion | `LEGACY_PROFILE` |
 | `src/main/java/server/bots/BotScriptContext.java` | `server.agents.plans.legacy.LegacyBotScriptContext` | `LEGACY_PROFILE` |
 | `src/main/java/server/bots/BotScriptRunner.java` | `server.agents.plans.legacy.LegacyBotScriptRunner` | `LEGACY_PROFILE` |
-| `src/main/java/server/bots/BotScriptRuntime.java` | `server.agents.runtime` and `plans` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
+| `src/main/java/server/bots/BotScriptRuntime.java` | `server.agents.plans.AgentScriptRuntimeState` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotScriptStep.java` | `server.agents.plans.AgentPlanStep` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/BotScrollReactionManager.java` | `server.agents.capabilities.social` and `dialogue` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
 | `src/main/java/server/bots/BotSessionLifecycleSideEffects.java` | `server.agents.integration.AgentBotSessionLifecycleSideEffects` | `MIGRATED_TO_AGENT` |

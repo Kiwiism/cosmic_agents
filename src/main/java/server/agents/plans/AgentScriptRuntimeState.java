@@ -1,9 +1,9 @@
-package server.bots;
+package server.agents.plans;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public final class BotScriptRuntime {
+public final class AgentScriptRuntimeState {
     public String scriptId = null;
     public int stepIndex = 0;
     public boolean stepEntered = false;

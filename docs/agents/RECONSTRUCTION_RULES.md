@@ -1842,6 +1842,10 @@ Recent reconstruction notes:
   `AgentBotMovementTargetSideEffects`; the old bot-side movement-target shim has
   been removed while `BotManager` still owns temporary target-snapshot
   construction and steering-source resolution.
+- Script runtime mutable state now lives in
+  `server.agents.plans.AgentScriptRuntimeState`; `BotEntry` remains the
+  temporary container, but the script id, step, wait, and script-local integer
+  state bag is no longer a bot-owned type.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

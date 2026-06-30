@@ -13,6 +13,7 @@ import server.agents.commands.AgentQueuedMessage;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.capabilities.movement.fidget.AgentFidgetMode;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
+import server.agents.plans.AgentScriptRuntimeState;
 
 import java.awt.*;
 import java.util.ArrayDeque;
@@ -1573,7 +1574,7 @@ public class BotEntry {
         kpq.stage5Claimed = false;
     }
 
-    public BotScriptRuntime script = new BotScriptRuntime();
+    public AgentScriptRuntimeState script = new AgentScriptRuntimeState();
 
     // Equips received from the owner during the current trade session.
     // Cleared when that trade session finishes or is cancelled.
