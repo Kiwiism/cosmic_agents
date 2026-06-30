@@ -648,7 +648,7 @@ public class BotCombatManager {
                                     entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry)),
                     candidate -> grindTargetScore(bot, botPos, botFoothold, candidate),
                     candidate -> aoeClusterBonus(entry, candidate, candidates));
-            return pickFromBestTargets(localTargets);
+            return AgentCombatGrindTargetPolicy.pickFromBestTargets(localTargets);
         } finally {
             AgentPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
         }
@@ -698,7 +698,7 @@ public class BotCombatManager {
             if (basicAttack != null) {
                 candidates.add(basicAttack);
             }
-            return selectBestAttackPlan(bot, candidates);
+            return AgentAttackPlanScoringPolicy.selectBestAttackPlan(bot, candidates);
         } finally {
             AgentPerformanceMonitor.record("combat-plan", System.nanoTime() - startedAt);
         }
@@ -707,7 +707,7 @@ public class BotCombatManager {
     private static AttackPlan planBasicAttack(Character bot, Monster target) {
         AgentBasicAttackPlanner.BasicAttackSelection selection = AgentBasicAttackPlanner.selectBasicAttack(
                 target,
-                candidate -> buildBasicAttackData(bot, candidate),
+                candidate -> AgentAttackExecutionProvider.buildBasicAttackData(bot, candidate.getPosition()),
                 (candidate, hitBox) -> resolveEffectivePrimary(bot, candidate, hitBox),
                 AgentCombatHitboxIntersection::intersectsMonster,
                 candidate -> findReachableOnOppositeFacing(bot, candidate));
@@ -733,10 +733,6 @@ public class BotCombatManager {
                 originalTarget,
                 mirroredPos -> AgentAttackExecutionProvider.buildBasicAttackData(bot, mirroredPos).hitBox(),
                 hitBox -> resolveEffectivePrimary(bot, originalTarget, hitBox));
-    }
-
-    private static AttackPlan selectBestAttackPlan(Character bot, List<AttackPlan> candidates) {
-        return AgentAttackPlanScoringPolicy.selectBestAttackPlan(bot, candidates);
     }
 
     private record PlanScore(AttackPlan plan, double usefulDamage, double rawDamage, double usefulDps, double rawDps,
@@ -936,7 +932,8 @@ public class BotCombatManager {
         if (!AgentAttackExecutionProvider.canUseRangedAttackRoute(route, weaponType, bot.getPosition(), primaryTarget.getPosition())) {
             return null;
         }
-        AgentAttackExecutionProvider.BasicAttackData fallbackAttackData = buildBasicAttackData(bot, primaryTarget);
+        AgentAttackExecutionProvider.BasicAttackData fallbackAttackData =
+                AgentAttackExecutionProvider.buildBasicAttackData(bot, primaryTarget.getPosition());
         AgentAttackDataProvider.AttackAnimationSpec attackSpec = AgentAttackDataProvider.getInstance().getBasicAttackSpec(weaponType);
         String fallbackAction = attackSpec.primaryAction();
         AgentSkillAttackPlanner.SkillAttackPacketFields packetFields =
@@ -1062,13 +1059,6 @@ public class BotCombatManager {
                 UNREACHABLE_GRAPH_COST);
     }
 
-    private static Monster pickFromBestTargets(List<AgentScoredGrindTarget> scoredTargets) {
-        if (scoredTargets.isEmpty()) {
-            return null;
-        }
-        return AgentCombatGrindTargetPolicy.pickFromBestTargets(scoredTargets);
-    }
-
     private static long graphTargetCost(GrindGraphContext context, Monster target) {
         Point targetPos = target.getPosition();
         int targetRegionId = BotNavigationManager.resolveTargetRegionId(
@@ -1179,7 +1169,8 @@ public class BotCombatManager {
         }
         // Cheap geometry gate first (no scoring): the cluster of live mobs within the AoE radius of
         // the primary. If it holds no more mobs than the fire-now plan already hits, bail.
-        List<Monster> cluster = clusterMonsters(bot, primaryTarget);
+        List<Monster> cluster = AgentCombatScoringPolicy.legacyClusterMonsters(
+                primaryTarget, bot.getMap().getAllMonsters());
         if (cluster.size() <= fireNowBest.targets.size()) {
             return null;
         }
@@ -1232,10 +1223,6 @@ public class BotCombatManager {
             return new Point(botPos.x + shift, botPos.y);
         }
         return null;
-    }
-
-    private static List<Monster> clusterMonsters(Character bot, Monster primaryTarget) {
-        return AgentCombatScoringPolicy.legacyClusterMonsters(primaryTarget, bot.getMap().getAllMonsters());
     }
 
     private static long grindRegionOccupancyPenalty(GrindGraphContext context, Character bot, int targetRegionId) {
@@ -1378,10 +1365,6 @@ public class BotCombatManager {
     static Monster findClosestAliveMonster(Character bot, double maxRangeSq) {
         Point botPos = bot.getPosition();
         return AgentCombatTargetSelector.findClosestAliveMonster(bot.getMap().getAllMonsters(), botPos, maxRangeSq);
-    }
-
-    private static AgentAttackExecutionProvider.BasicAttackData buildBasicAttackData(Character bot, Monster primaryTarget) {
-        return AgentAttackExecutionProvider.buildBasicAttackData(bot, primaryTarget.getPosition());
     }
 
     private static void noteSkillBuffDecision(BotEntry entry, String summary) {

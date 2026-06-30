@@ -1595,6 +1595,11 @@ Recent reconstruction notes:
   `AgentSupportSpecialMovePacketBuilder` directly; the temporary
   `BotCombatManager` packet-builder wrapper has been removed while preserving
   the captured self-buff and party-buff packet shapes.
+- Local combat selector/planner pass-through helpers now call Agent policies
+  directly from the remaining combat shell; temporary `BotCombatManager`
+  wrappers for best-target picking, best-plan selection, AoE cluster lookup, and
+  basic-attack data construction have been removed while preserving the same
+  Agent policy inputs.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
