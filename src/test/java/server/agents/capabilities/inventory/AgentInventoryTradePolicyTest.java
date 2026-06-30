@@ -36,6 +36,15 @@ class AgentInventoryTradePolicyTest {
     }
 
     @Test
+    void shouldBuildReservedEquipPageMessageLikeLegacyInventory() {
+        assertEquals(null, AgentInventoryTradePolicy.reservedEquipsPageMessage("equips:reserved:1", 0));
+        assertEquals("reserved equips page 1/1",
+                AgentInventoryTradePolicy.reservedEquipsPageMessage("equips:reserved:bad", 4));
+        assertEquals("reserved equips page 2/2",
+                AgentInventoryTradePolicy.reservedEquipsPageMessage("equips:reserved:99", 10));
+    }
+
+    @Test
     void shouldParseMesoTradeCategoriesLikeLegacyInventory() {
         assertTrue(AgentInventoryTradePolicy.isMesoCategory("mesos"));
         assertTrue(AgentInventoryTradePolicy.isMesoCategory("mesos:1500"));

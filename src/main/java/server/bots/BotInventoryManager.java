@@ -1245,12 +1245,7 @@ public class BotInventoryManager {
     private static String reservedEquipsPageMessage(String category, BotEntry entry, Character bot) {
         EquipTradeGroups groups = classifyEquipTradeGroups(entry, bot);
         List<Item> reserved = collectReservedEquips(groups);
-        if (reserved.isEmpty()) {
-            return null;
-        }
-        int page = clampTradePage(requestedReservedEquipsPage(category), reserved.size());
-        int lastPage = clampTradePage(Integer.MAX_VALUE, reserved.size());
-        return "reserved equips page " + page + "/" + lastPage;
+        return AgentInventoryTradePolicy.reservedEquipsPageMessage(category, reserved.size());
     }
 
     private static String equipsGroupMsg(String category) {

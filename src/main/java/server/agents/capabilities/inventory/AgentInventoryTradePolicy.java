@@ -72,6 +72,15 @@ public final class AgentInventoryTradePolicy {
         }
     }
 
+    public static String reservedEquipsPageMessage(String category, int reservedCount) {
+        if (reservedCount <= 0) {
+            return null;
+        }
+        int page = clampTradePage(requestedReservedEquipsPage(category), reservedCount);
+        int lastPage = clampTradePage(Integer.MAX_VALUE, reservedCount);
+        return "reserved equips page " + page + "/" + lastPage;
+    }
+
     public static EquipsGroup equipsGroupFromCategory(String category) {
         if (category == null || !category.startsWith("equips:")) return null;
         try {
