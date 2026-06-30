@@ -625,7 +625,7 @@ public final class BotPhysicsEngine {
         syncCharacterState(entry);
     }
 
-    static void markDead(BotEntry entry, Character bot) {
+    public static void markDead(BotEntry entry, Character bot) {
         clearMovementState(entry, bot.getPosition());
         syncCharacterState(entry);
     }

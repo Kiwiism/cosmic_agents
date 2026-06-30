@@ -42,6 +42,7 @@ import server.agents.integration.AgentBotCombatActionStateRuntime;
 import server.agents.integration.AgentBotCombatBuffStateRuntime;
 import server.agents.integration.AgentBotCombatBuffRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentBotCombatDeathRuntime;
 import server.agents.integration.AgentBotCombatFacingRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheRuntime;
@@ -1106,6 +1107,16 @@ class BotCombatManagerTest {
         assertNull(AgentBotGrindTargetStateRuntime.target(entry));
         assertEquals(0, AgentBotCombatCooldownStateRuntime.attackCooldownMs(entry));
         assertEquals(0, AgentBotCombatCooldownStateRuntime.moveWindowMs(entry));
+    }
+
+    @Test
+    void combatDeathRuntimeEntersDeadWindowWithoutAnnouncement() {
+        Character bot = mockBot(new Point(100, 200), mock(MapleMap.class), 20_000, null);
+        BotEntry entry = new BotEntry(bot, null, null);
+
+        AgentBotCombatDeathRuntime.enterDeadState(entry, bot, false, BotCombatManager.cfg);
+
+        assertTrue(AgentBotDeathStateRuntime.deadUntilMs(entry) > System.currentTimeMillis());
     }
 
     @Test

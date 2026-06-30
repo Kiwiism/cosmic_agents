@@ -61,7 +61,6 @@ import server.StatEffect;
 import server.agents.capabilities.combat.data.AgentAttackDataProvider;
 import server.agents.capabilities.combat.data.AgentDefenseDataProvider;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
-import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotAmmoStateRuntime;
 import server.agents.integration.AgentBotCombatActionStateRuntime;
 import server.agents.integration.AgentBotCombatAlertRuntime;
@@ -71,9 +70,8 @@ import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatReportRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheRuntime;
-import server.agents.integration.AgentBotCombatRuntime;
 import server.agents.integration.AgentBotCombatHealRuntime;
-import server.agents.integration.AgentBotDeathStateRuntime;
+import server.agents.integration.AgentBotCombatDeathRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMobTouchRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
@@ -236,13 +234,7 @@ public class BotCombatManager {
     }
 
     static void enterDeadState(BotEntry entry, Character bot, boolean announceDeath) {
-        AgentBotCombatActionStateRuntime.clearActionState(entry);
-        BotPhysicsEngine.markDead(entry, bot);
-        BotMovementManager.broadcastMovement(entry);
-        AgentBotDeathStateRuntime.enterDeadState(entry, System.currentTimeMillis(), cfg.BOT_DEAD_MS);
-        if (announceDeath) {
-            AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(AgentDialogueCatalog.combatDeathReplies()));
-        }
+        AgentBotCombatDeathRuntime.enterDeadState(entry, bot, announceDeath, cfg);
     }
 
     static void rebuildSkillCacheIfNeeded(BotEntry entry, Character bot) {

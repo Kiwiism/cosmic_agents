@@ -1716,6 +1716,10 @@ Recent reconstruction notes:
   `AgentBotCombatActionStateRuntime`; the damage/death path calls the Agent
   helper while preserving the same grind target, attack cooldown, move window,
   navigation state, and movement broadcast invalidation reset.
+- Combat death-state entry now lives in `AgentBotCombatDeathRuntime`;
+  `BotCombatManager.enterDeadState` is a temporary compatibility delegate while
+  the Agent runtime preserves action-state clearing, physics dead stance sync,
+  movement broadcast, dead-window timing, and optional death dialogue.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
