@@ -915,16 +915,11 @@ public class BotInventoryManager {
     }
 
     private static List<Item> collectNamedItems(String fragment, Character bot) {
-        List<Item> result = new ArrayList<>();
-        String normalizedFragment = normalizeItemQuery(fragment);
-        for (InventoryType t : List.of(
-                InventoryType.EQUIP, InventoryType.USE, InventoryType.ETC, InventoryType.SETUP)) {
-            collectFromBag(bot, result, t, item -> {
-                String name = normalizedItemName(item.getItemId());
-                return name != null && name.contains(normalizedFragment);
-            });
-        }
-        return result;
+        return AgentInventoryItemPolicy.collectNamedItems(bot, fragment,
+                BotInventoryManager::normalizeItemQuery,
+                BotInventoryManager::normalizedItemName,
+                ItemInformationProvider.getInstance()::isQuestItem,
+                YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE);
     }
 
     private static String normalizedItemName(int itemId) {

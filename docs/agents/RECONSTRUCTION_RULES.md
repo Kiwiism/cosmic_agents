@@ -1331,6 +1331,10 @@ Recent reconstruction notes:
 - Inventory drop-slot selection now enters through `AgentInventoryItemPolicy`.
   Drop commands still execute through the bot seam, but the slot list is chosen
   by the same Agent-owned safety and caller predicate rules.
+- Named item collection now enters through `AgentInventoryItemPolicy`. The
+  inventory-type scan, normalized fragment matching, and safe-item filtering are
+  Agent-owned while the temporary bot seam still supplies cached item-name
+  lookup and command-side trade/drop wiring.
 - Physics position, horizontal-speed, and ground-travel carry state now enter
   through `AgentBotMovementPhysicsStateRuntime`; BotPhysicsEngine preserves
   landing, grounded travel, swim, airborne collision, climb-position, and reset

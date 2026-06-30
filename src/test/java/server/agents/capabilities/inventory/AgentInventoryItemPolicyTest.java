@@ -121,4 +121,48 @@ class AgentInventoryItemPolicyTest {
 
         assertEquals(List.of((short) 1), slots);
     }
+
+    @Test
+    void shouldCollectNamedItemsAcrossTradeableBags() {
+        Character agent = mock(Character.class);
+        Inventory equip = mock(Inventory.class);
+        Inventory use = mock(Inventory.class);
+        Inventory etc = mock(Inventory.class);
+        Inventory setup = mock(Inventory.class);
+        Item equipMatch = mock(Item.class);
+        Item useMiss = mock(Item.class);
+        Item etcQuestMatch = mock(Item.class);
+        Item setupMatch = mock(Item.class);
+
+        when(agent.getInventory(InventoryType.EQUIP)).thenReturn(equip);
+        when(agent.getInventory(InventoryType.USE)).thenReturn(use);
+        when(agent.getInventory(InventoryType.ETC)).thenReturn(etc);
+        when(agent.getInventory(InventoryType.SETUP)).thenReturn(setup);
+        when(equip.getSlotLimit()).thenReturn((byte) 1);
+        when(use.getSlotLimit()).thenReturn((byte) 1);
+        when(etc.getSlotLimit()).thenReturn((byte) 1);
+        when(setup.getSlotLimit()).thenReturn((byte) 1);
+        when(equip.getItem((short) 1)).thenReturn(equipMatch);
+        when(use.getItem((short) 1)).thenReturn(useMiss);
+        when(etc.getItem((short) 1)).thenReturn(etcQuestMatch);
+        when(setup.getItem((short) 1)).thenReturn(setupMatch);
+        when(equipMatch.getItemId()).thenReturn(4001);
+        when(useMiss.getItemId()).thenReturn(4002);
+        when(etcQuestMatch.getItemId()).thenReturn(4003);
+        when(setupMatch.getItemId()).thenReturn(4004);
+
+        List<Item> items = AgentInventoryItemPolicy.collectNamedItems(agent, "red",
+                text -> text.toLowerCase(),
+                itemId -> switch (itemId) {
+                    case 4001 -> "red sword";
+                    case 4002 -> "blue potion";
+                    case 4003 -> "red quest item";
+                    case 4004 -> "red chair";
+                    default -> "";
+                },
+                itemId -> itemId == 4003,
+                false);
+
+        assertEquals(List.of(equipMatch, setupMatch), items);
+    }
 }

@@ -7,7 +7,9 @@ import client.inventory.Item;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.IntPredicate;
+import java.util.function.IntFunction;
 import java.util.function.Predicate;
 
 public final class AgentInventoryItemPolicy {
@@ -68,5 +70,23 @@ public final class AgentInventoryItemPolicy {
             }
         }
         return slots;
+    }
+
+    public static List<Item> collectNamedItems(Character agent,
+                                               String fragment,
+                                               Function<String, String> normalizer,
+                                               IntFunction<String> normalizedItemName,
+                                               IntPredicate isQuestItem,
+                                               boolean untradeableItemsTradeable) {
+        List<Item> result = new ArrayList<>();
+        String normalizedFragment = normalizer.apply(fragment);
+        for (InventoryType type : List.of(
+                InventoryType.EQUIP, InventoryType.USE, InventoryType.ETC, InventoryType.SETUP)) {
+            result.addAll(collectSafeItems(agent, type, item -> {
+                String name = normalizedItemName.apply(item.getItemId());
+                return name != null && name.contains(normalizedFragment);
+            }, isQuestItem, untradeableItemsTradeable));
+        }
+        return result;
     }
 }
