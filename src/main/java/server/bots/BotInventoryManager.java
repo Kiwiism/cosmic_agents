@@ -14,7 +14,6 @@ import server.agents.capabilities.looting.AgentLootEligibility;
 
 import client.BotClient;
 import client.Character;
-import client.Job;
 import client.inventory.Equip;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
@@ -1295,13 +1294,7 @@ public class BotInventoryManager {
 
     /** Orders own reserved equips worst-to-best using the existing trade score helper. */
     private static List<Item> sortEquipsByTradeScore(List<Item> items, Character bot) {
-        if (items.size() <= 1) return items;
-        Job job = bot.getJob();
-        items.sort(Comparator
-                .comparingInt((Item item) -> item instanceof Equip equip ? equipTradeScore(equip, job) : Integer.MIN_VALUE)
-                .thenComparingInt(Item::getItemId)
-                .thenComparingInt(Item::getPosition));
-        return items;
+        return AgentInventoryTradePolicy.sortReservedEquipsByTradeScore(items, bot);
     }
 
     private enum EquipsGroup {
@@ -1603,22 +1596,6 @@ public class BotInventoryManager {
 
     static boolean hasProtectedSellTrashWeaponStat(Map<String, Integer> stats, Equip equip, Equip baseEquip) {
         return AgentInventorySellTrashPolicy.hasProtectedSellTrashWeaponStat(stats, equip, baseEquip);
-    }
-
-    /** Score used to order own-class equips worst-to-best: 4*watk + matk + main + sec. */
-    private static int equipTradeScore(Equip e, Job job) {
-        int main, sec;
-        if (BotEquipManager.isMageJob(job)) {
-            main = e.getInt(); sec = e.getLuk();
-        } else if (job != null && (job.isA(Job.BOWMAN)
-                || job == Job.GUNSLINGER || job == Job.OUTLAW || job == Job.CORSAIR)) {
-            main = e.getDex(); sec = e.getStr();
-        } else if (job != null && job.isA(Job.THIEF)) {
-            main = e.getLuk(); sec = e.getDex();
-        } else {
-            main = e.getStr(); sec = e.getDex();
-        }
-        return 4 * e.getWatk() + e.getMatk() + main + sec;
     }
 
     private static List<Item> sortItemsByItemId(List<Item> items) {

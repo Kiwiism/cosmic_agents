@@ -1291,6 +1291,10 @@ Recent reconstruction notes:
   `AgentEquipmentReservePolicy`: level/job/stat/fame ease checks and future
   slot/weapon-track matching preserve the same dominance-pruning behavior while
   `BotEquipManager` remains the temporary optimizer compatibility seam.
+- Reserved-equipment trade ordering now enters through
+  `AgentInventoryTradePolicy`: own-class reserved equip scoring and
+  worst-to-best sort order preserve the same job-sensitive stat weighting while
+  `BotInventoryManager` remains the temporary trade sequencing seam.
 - Physics position, horizontal-speed, and ground-travel carry state now enter
   through `AgentBotMovementPhysicsStateRuntime`; BotPhysicsEngine preserves
   landing, grounded travel, swim, airborne collision, climb-position, and reset

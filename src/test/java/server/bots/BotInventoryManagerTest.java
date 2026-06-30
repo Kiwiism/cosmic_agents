@@ -16,6 +16,7 @@ import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
+import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
 import server.Trade;
@@ -196,10 +197,7 @@ class BotInventoryManagerTest {
         when(midScore.getItemId()).thenReturn(1070000);
         when(midScore.getPosition()).thenReturn((short) 2);
 
-        Method sortEquipsByTradeScore = method(BotInventoryManager.class, "sortEquipsByTradeScore", List.class, Character.class);
-
-        List<Item> sorted = (List<Item>) sortEquipsByTradeScore.invoke(
-                null,
+        List<Item> sorted = AgentInventoryTradePolicy.sortReservedEquipsByTradeScore(
                 new java.util.ArrayList<>(List.of(highScore, lowScore, midScore)),
                 bot);
 
