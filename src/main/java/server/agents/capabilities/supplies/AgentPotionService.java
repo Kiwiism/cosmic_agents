@@ -384,7 +384,7 @@ public final class AgentPotionService {
             if (donorBot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(donorEntry) || recipient.getTrade() != null) {
                 return;
             }
-            List<Item> items = BotInventoryManager.collectPotShareItems(donorBot, forHp, maxQty);
+            List<Item> items = collectPotShareItems(donorBot, forHp, maxQty);
             if (items.isEmpty()) {
                 return;
             }
@@ -393,6 +393,12 @@ public final class AgentPotionService {
             AgentBotPotionRuntime.afterRandomDelay(900, 1100, () ->
                     BotInventoryManager.startPotShareTransfer(items, recipient, donorEntry, donorBot, maxQty));
         });
+    }
+
+    public static List<Item> collectPotShareItems(Character donorBot, boolean forHp, int maxQty) {
+        return AgentPotionSharePolicy.collectShareItems(donorBot, forHp, maxQty,
+                AgentUseItemClassificationPolicy::isRecoveryPotion,
+                AgentUseItemClassificationPolicy::itemEffect);
     }
 
     private static int calculatePassiveHpRecovery(BotEntry entry, Character bot) {

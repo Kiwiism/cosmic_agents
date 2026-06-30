@@ -2062,6 +2062,10 @@ Recent reconstruction notes:
 - USE-trade ammo-item classification now calls `AgentInventoryAmmoPolicy`
   directly from the remaining inventory compatibility path; the old private
   `BotInventoryManager` pass-through has been removed.
+- Potion share item collection now has an Agent-owned entry point on
+  `AgentPotionService`; the remaining `BotInventoryManager.collectPotShareItems`
+  compatibility method delegates to it, while pot-share trade execution remains a
+  later inventory/trade migration slice.
 - Ammo trade grouping now lives in `AgentInventoryAmmoPolicy`;
   BotInventoryManager preserves the same safe-item filtering, own-ammo versus
   non-own-ammo split, non-own item-id ordering, and own-ammo projectile attack

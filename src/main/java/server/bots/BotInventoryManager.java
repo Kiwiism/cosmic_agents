@@ -39,7 +39,7 @@ import server.agents.capabilities.inventory.AgentInventoryTradePolicy.AmmoGroup;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.EquipsGroup;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.UseTradeGroups;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
-import server.agents.capabilities.supplies.AgentPotionSharePolicy;
+import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
 import server.agents.integration.AgentBotInventoryRuntime;
@@ -1337,9 +1337,7 @@ public class BotInventoryManager {
      * Only pure recovery pots are included (buff pots excluded via isRecoveryPotion).
      */
     public static List<Item> collectPotShareItems(Character donorBot, boolean forHp, int maxQty) {
-        return AgentPotionSharePolicy.collectShareItems(donorBot, forHp, maxQty,
-                AgentUseItemClassificationPolicy::isRecoveryPotion,
-                AgentUseItemClassificationPolicy::itemEffect);
+        return AgentPotionService.collectPotShareItems(donorBot, forHp, maxQty);
     }
 
     /** Initiates a bot-to-bot pot-share trade (single batch; donor auto-confirms). */
