@@ -1,11 +1,13 @@
 package server.bots;
 
+import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.movement.AgentMovementProfile;
 
 import client.Character;
 import constants.game.CharacterStance;
 import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentBotCombatDamageRuntime;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
@@ -835,7 +837,7 @@ public final class BotPhysicsEngine {
         // Fall-damage check triggers exactly once, at the landing transition, using the
         // peak-to-landing descent distance. Below-threshold landings are no-ops (no packet).
         // Reset peak AFTER the check so the next airborne period starts fresh.
-        BotCombatManager.applyFallDamage(entry, bot, (float) fallDistance);
+        AgentBotCombatDamageRuntime.applyFallDamage(entry, bot, (float) fallDistance, AgentCombatConfig.cfg);
         AgentBotMovementPhysicsStateRuntime.resetFallPeakPhysicsY(entry);
     }
 

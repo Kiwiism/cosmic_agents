@@ -28,6 +28,9 @@ Recent map updates:
 - BotManager common tick combat lifecycle now calls Agent runtimes directly for
   mob damage, death-state entry, skill-cache rebuild, support healing, and
   combat buff ticks.
+- BotPhysicsEngine fall-damage dispatch now calls
+  `AgentBotCombatDamageRuntime.applyFallDamage` directly instead of the
+  temporary `BotCombatManager` facade.
 
 | Current file | Target Agent destination | Status |
 | --- | --- | --- |

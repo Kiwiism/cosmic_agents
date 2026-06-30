@@ -1787,6 +1787,10 @@ Recent reconstruction notes:
   support-heal, and support-buff orchestration. The subsystem order, performance
   metric labels, cooldown/death gates, movement tick-down callback, and shared
   config object are unchanged.
+- BotPhysicsEngine landing fall-damage dispatch now calls
+  `AgentBotCombatDamageRuntime.applyFallDamage` directly. The same
+  peak-to-landing fall distance, threshold behavior, packet side effects, and
+  shared combat config are preserved.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
