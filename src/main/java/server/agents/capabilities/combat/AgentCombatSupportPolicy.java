@@ -152,6 +152,14 @@ public final class AgentCombatSupportPolicy {
         return SupportCastReadiness.READY;
     }
 
+    public static String supportSpecialMoveFailedSummary(String skillLabel) {
+        return "special move failed for " + skillLabel;
+    }
+
+    public static String supportCastSummary(String skillLabel) {
+        return "cast " + skillLabel;
+    }
+
     public static boolean hasNearbyHealSkillAlly(Character bot, int supportRange, int supportVerticalRange) {
         for (Character member : nearbyPartyMembers(bot, supportRange, supportVerticalRange)) {
             if (hasHealSkill(member)) {

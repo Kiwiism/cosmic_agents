@@ -1482,6 +1482,10 @@ Recent reconstruction notes:
   `AgentCombatSupportPolicy.SupportCastReadiness`, preserving the legacy
   missing-level, dead, and cannot-pay-cost debug wording while BotCombatManager
   still performs the actual support skill cast side effects.
+- Support-buff cast outcome summaries now live in `AgentCombatSupportPolicy`,
+  preserving the legacy special-move-failed and successful-cast debug wording
+  while BotCombatManager still dispatches the SPECIAL_MOVE packet and applies
+  cooldown/facing side effects.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

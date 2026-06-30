@@ -175,6 +175,13 @@ class AgentCombatSupportPolicyTest {
     }
 
     @Test
+    void shouldFormatLegacySupportCastOutcomeSummaries() {
+        assertEquals("special move failed for Bless",
+                AgentCombatSupportPolicy.supportSpecialMoveFailedSummary("Bless"));
+        assertEquals("cast Bless", AgentCombatSupportPolicy.supportCastSummary("Bless"));
+    }
+
+    @Test
     void shouldDetectNearbyHealSkillAlly() {
         Character bot = characterAt(1, new Point(100, 100), true);
         Character healer = characterAt(2, new Point(130, 110), true);

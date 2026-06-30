@@ -1604,7 +1604,7 @@ public class BotCombatManager {
             return false;
         }
         if (!dispatchSupportSpecialMove(bot, skill, skillLevel)) {
-            noteSkillBuffDecision(entry, "special move failed for " + skillLabel(skill.getId()));
+            noteSkillBuffDecision(entry, AgentCombatSupportPolicy.supportSpecialMoveFailedSummary(skillLabel(skill.getId())));
             return false;
         }
 
@@ -1621,7 +1621,7 @@ public class BotCombatManager {
         int animMs = skill.getAnimationTime() > 0 ? skill.getAnimationTime() : 1000;
         AgentBotCombatCooldownStateRuntime.maxAttackCooldown(entry, Math.max(skillTiming.cooldownMs(), animMs));
         markAlerted(entry);
-        noteSkillBuffDecision(entry, "cast " + skillLabel(skill.getId()));
+        noteSkillBuffDecision(entry, AgentCombatSupportPolicy.supportCastSummary(skillLabel(skill.getId())));
         return true;
     }
 
