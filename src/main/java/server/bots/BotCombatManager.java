@@ -927,7 +927,11 @@ public class BotCombatManager {
         AgentAttackExecutionProvider.SkillAttackTiming skillTiming =
                 AgentAttackExecutionProvider.resolveSkillAttackTiming(skill, action, bot, fallbackAttackData);
         List<Monster> targets = collectTargetsInHitBox(bot, primaryTarget, hitBox, Math.max(1, effect.getMobCount()));
-        if (skillId == DragonKnight.DRAGON_ROAR && !canUseDragonRoarPlan(bot, targets.size())) {
+        if (skillId == DragonKnight.DRAGON_ROAR
+                && !AgentCombatSupportPolicy.canUseDragonRoarPlan(
+                bot, targets.size(),
+                AgentCombatSupportPolicy.hasNearbyHealSkillAlly(
+                        bot, cfg.SUPPORT_RANGE, cfg.SUPPORT_VERTICAL_RANGE))) {
             return null;
         }
         return new AttackPlan(skillId, skillLevel, attackCount, hitBox, targets,
@@ -936,14 +940,6 @@ public class BotCombatManager {
                 packetFields.stance(),
                 fallbackAttackData.speed(), skillTiming.hitDelayMs(), skillTiming.cooldownMs(),
                 damageWeaponTypeForAction(skillId, weaponType, action));
-    }
-
-    private static boolean canUseDragonRoarPlan(Character bot, int targetCount) {
-        return AgentCombatSupportPolicy.canUseDragonRoarPlan(bot, targetCount, hasNearbyHealSkillAlly(bot));
-    }
-
-    private static boolean hasNearbyHealSkillAlly(Character bot) {
-        return AgentCombatSupportPolicy.hasNearbyHealSkillAlly(bot, cfg.SUPPORT_RANGE, cfg.SUPPORT_VERTICAL_RANGE);
     }
 
     private static WeaponType damageWeaponTypeForAction(int skillId, WeaponType equippedWeaponType, String action) {

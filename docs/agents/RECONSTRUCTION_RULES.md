@@ -1551,6 +1551,9 @@ Recent reconstruction notes:
   `AgentCombatSkillClassifier` and `AgentCombatSupportPolicy` directly from the
   remaining combat shell; the temporary `BotCombatManager` wrappers have been
   removed while preserving the same cache state and configured heal ratio inputs.
+- Dragon Roar support-safety checks now call `AgentCombatSupportPolicy` directly;
+  the temporary `BotCombatManager` Dragon Roar/healer-ally wrappers have been
+  removed while preserving target-count and nearby-healer inputs.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
