@@ -703,7 +703,7 @@ public class BotCombatManager {
         }
         AgentAttackExecutionProvider.BasicAttackData basicAttackData = selection.attackData();
         Monster effective = selection.target();
-        int numDamage = shadowPartnerHitMultiplier(bot, basicAttackData.route());
+        int numDamage = AgentCombatHitCounter.shadowPartnerHitMultiplier(bot, basicAttackData.route());
         return new AttackPlan(0, 0, numDamage, basicAttackData.hitBox(), List.of(effective), basicAttackData.route(),
                 basicAttackData.display(), basicAttackData.direction(), basicAttackData.rangedDirection(), basicAttackData.stance(),
                 basicAttackData.speed(), basicAttackData.hitDelayMs(), basicAttackData.cooldownMs(),
@@ -882,7 +882,7 @@ public class BotCombatManager {
         if (AgentSkillAttackPlanner.skillAmmoReadiness(
                 effect.getBulletCount(),
                 effect.getBulletConsume(),
-                shadowPartnerHitMultiplier(bot, route),
+                AgentCombatHitCounter.shadowPartnerHitMultiplier(bot, route),
                 route,
                 () -> AgentCombatAmmoCounter.countAmmo(bot, weaponType))
                 != AgentSkillAttackPlanner.SkillAmmoReadiness.READY) {
@@ -915,7 +915,8 @@ public class BotCombatManager {
         }
         primaryTarget = targetSelection.target();
 
-        int attackCount = AgentCombatHitCounter.effectiveHitCount(effect) * shadowPartnerHitMultiplier(bot, route);
+        int attackCount = AgentCombatHitCounter.effectiveHitCount(effect)
+                * AgentCombatHitCounter.shadowPartnerHitMultiplier(bot, route);
         if (!AgentAttackExecutionProvider.canUseRangedAttackRoute(route, weaponType, bot.getPosition(), primaryTarget.getPosition())) {
             return null;
         }
@@ -1000,10 +1001,6 @@ public class BotCombatManager {
     // Melee and magic routes are left untouched here — Shadow Partner's melee/magic
     // doubling for thief skills (e.g. Triple Throw is ranged-claw, so it covers itself)
     // can be enabled per-skill later if needed.
-    private static int shadowPartnerHitMultiplier(Character bot, AgentAttackRoute route) {
-        return AgentCombatHitCounter.shadowPartnerHitMultiplier(bot, route);
-    }
-
     /**
      * True iff the AoE skill's expected total damage (damage% × hits × targets) beats
      * the bot's best single-target option (best of configured attack skill or basic 100%).

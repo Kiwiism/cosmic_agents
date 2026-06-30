@@ -1557,6 +1557,9 @@ Recent reconstruction notes:
 - Damage weapon-type resolution now calls `AgentCombatWeaponPolicy` directly;
   temporary `BotCombatManager` weapon policy wrappers have been removed while
   preserving Dragon Knight spear/polearm and action-name normalization behavior.
+- Shadow Partner hit multiplier checks now call `AgentCombatHitCounter`
+  directly; the temporary `BotCombatManager` multiplier wrapper has been
+  removed while preserving ranged-only Shadow Partner doubling behavior.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
