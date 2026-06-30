@@ -6,6 +6,7 @@ import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatRangePolicy;
+import server.agents.capabilities.combat.AgentCombatScoringPolicy;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
 
 import server.agents.capabilities.dialogue.AgentEmote;
@@ -24,6 +25,7 @@ import server.agents.integration.AgentBotAmmoStateRuntime;
 import server.agents.integration.AgentBotBreakoutStateRuntime;
 import server.agents.integration.AgentBotBuffStateRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
@@ -1828,7 +1830,12 @@ public class BotManager {
         // In range we normally stay committed (avoids flip-flop). Exception: an AoE bot stuck
         // single-targeting keeps scanning for a better cluster — the switch itself is gated by
         // cluster-size hysteresis in shouldSwitchToSearchedTarget.
-        return BotCombatManager.isAoeBotSingleTargeting(entry, currentAttackPlan);
+        return AgentCombatScoringPolicy.isAoeSingleTargeting(
+                currentAttackPlan.skillId,
+                currentAttackPlan.targets.size(),
+                AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
+                AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry),
+                AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
     }
 
     /**
@@ -1846,8 +1853,21 @@ public class BotManager {
                 || !BotCombatManager.isTargetInAttackRange(currentPlan, bot, current)) {
             return true;
         }
-        return BotCombatManager.aoeClusterSize(entry, bot, searched)
-                > BotCombatManager.aoeClusterSize(entry, bot, current);
+        int searchedClusterSize = bot.getMap() == null || searched.getPosition() == null
+                ? 0
+                : AgentCombatScoringPolicy.legacyCappedAoeClusterSize(
+                        searched,
+                        bot.getMap().getAllMonsters(),
+                        AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
+                        AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
+        int currentClusterSize = bot.getMap() == null || current.getPosition() == null
+                ? 0
+                : AgentCombatScoringPolicy.legacyCappedAoeClusterSize(
+                        current,
+                        bot.getMap().getAllMonsters(),
+                        AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
+                        AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
+        return searchedClusterSize > currentClusterSize;
     }
 
     static Point resolveNoGrindTargetPosition(BotEntry entry, Point botPos, MapleMap map) {

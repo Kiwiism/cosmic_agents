@@ -1083,27 +1083,6 @@ public class BotCombatManager {
                 entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
     }
 
-    /** True iff the bot has a multi-mob AoE skill but its chosen plan is single-target with room to hit more. */
-    static boolean isAoeBotSingleTargeting(BotEntry entry, AttackPlan plan) {
-        return entry != null && plan != null && AgentCombatScoringPolicy.isAoeSingleTargeting(
-                plan.skillId,
-                plan.targets.size(),
-                AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
-                AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry),
-                AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
-    }
-
-    /** Live mobs within AoE cluster radius of the anchor (including itself), capped at the skill's mobCount. */
-    static int aoeClusterSize(BotEntry entry, Character bot, Monster anchor) {
-        if (entry == null || bot == null || anchor == null
-                || bot.getMap() == null || anchor.getPosition() == null) {
-            return 0;
-        }
-        return AgentCombatScoringPolicy.legacyCappedAoeClusterSize(anchor, bot.getMap().getAllMonsters(),
-                AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
-                AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
-    }
-
     // AoE positioning: target selection (aoeClusterBonus) steers the bot toward a cluster, but the
     // fire site still throws the single-target skill the instant one mob is in range — the AoE box
     // at the cluster *edge* catches only that mob, so it ties the denominator and loses on per-hit

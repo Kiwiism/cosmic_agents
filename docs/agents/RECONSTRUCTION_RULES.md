@@ -1617,6 +1617,10 @@ Recent reconstruction notes:
   the temporary `BotCombatManager` target-selector pass-through wrappers have
   been removed while preserving the same map monster source and bot-position
   inputs.
+- AoE single-target detection and capped cluster-size comparison now call
+  `AgentCombatScoringPolicy` directly from `BotManager` and focused tests; the
+  temporary `BotCombatManager` AoE scoring wrappers have been removed while
+  preserving the same cached AoE skill id and mob-count inputs.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

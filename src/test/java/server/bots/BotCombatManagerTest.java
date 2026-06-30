@@ -5,6 +5,7 @@ import server.agents.capabilities.combat.AgentAttackRoute;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentCombatWeaponPolicy;
 import server.agents.capabilities.combat.AgentCombatRangePolicy;
+import server.agents.capabilities.combat.AgentCombatScoringPolicy;
 import server.agents.capabilities.combat.AgentCombatTargetSelector;
 import server.agents.capabilities.combat.AgentSupportSpecialMovePacketBuilder;
 
@@ -927,15 +928,30 @@ class BotCombatManagerTest {
         BotCombatManager.AttackPlan singleTarget = new BotCombatManager.AttackPlan(
                 Warrior.POWER_STRIKE, 1, 1, new Rectangle(0, 0, 1, 1), List.of(mob),
                 AgentAttackRoute.CLOSE, 0, 0, 0, 0, 0, 0, 100, null);
-        assertTrue(BotCombatManager.isAoeBotSingleTargeting(entry, singleTarget));
+        assertTrue(AgentCombatScoringPolicy.isAoeSingleTargeting(
+                singleTarget.skillId,
+                singleTarget.targets.size(),
+                AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
+                AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry),
+                AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry)));
 
         BotCombatManager.AttackPlan aoePlan = new BotCombatManager.AttackPlan(
                 Warrior.SLASH_BLAST, 1, 1, new Rectangle(0, 0, 1, 1), List.of(mob),
                 AgentAttackRoute.CLOSE, 0, 0, 0, 0, 0, 0, 100, null);
-        assertFalse(BotCombatManager.isAoeBotSingleTargeting(entry, aoePlan));
+        assertFalse(AgentCombatScoringPolicy.isAoeSingleTargeting(
+                aoePlan.skillId,
+                aoePlan.targets.size(),
+                AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
+                AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry),
+                AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry)));
 
         AgentBotCombatSkillCacheStateRuntime.setAoeSkill(entry, 0, AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
-        assertFalse(BotCombatManager.isAoeBotSingleTargeting(entry, singleTarget));
+        assertFalse(AgentCombatScoringPolicy.isAoeSingleTargeting(
+                singleTarget.skillId,
+                singleTarget.targets.size(),
+                AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
+                AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry),
+                AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry)));
     }
 
     @Test
@@ -951,10 +967,18 @@ class BotCombatManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         AgentBotCombatSkillCacheStateRuntime.setAoeSkill(entry, Warrior.SLASH_BLAST, AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
         AgentBotCombatSkillCacheStateRuntime.setAoeSkill(entry, AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry), 6);
-        assertEquals(3, BotCombatManager.aoeClusterSize(entry, bot, anchor));
+        assertEquals(3, AgentCombatScoringPolicy.legacyCappedAoeClusterSize(
+                anchor,
+                bot.getMap().getAllMonsters(),
+                AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
+                AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry)));
 
         AgentBotCombatSkillCacheStateRuntime.setAoeSkill(entry, AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry), 2); // cap below cluster size
-        assertEquals(2, BotCombatManager.aoeClusterSize(entry, bot, anchor));
+        assertEquals(2, AgentCombatScoringPolicy.legacyCappedAoeClusterSize(
+                anchor,
+                bot.getMap().getAllMonsters(),
+                AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
+                AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry)));
     }
 
     @Test
