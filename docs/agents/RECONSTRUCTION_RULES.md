@@ -2046,6 +2046,10 @@ Recent reconstruction notes:
   formatting, and no-items reply selection now call Agent inventory/dialogue
   policies directly; the matching `BotInventoryManager` compatibility shims have
   been removed without changing trade, restore-slot, or loot-offer behavior.
+- Sell-trash equipment protection checks now call
+  `AgentInventorySellTrashPolicy` directly; the old `BotInventoryManager`
+  protection helper shims have been removed while preserving the same scrolled,
+  high-stat, weapon-attack, and class-gated protection rules.
 - Ammo trade grouping now lives in `AgentInventoryAmmoPolicy`;
   BotInventoryManager preserves the same safe-item filtering, own-ammo versus
   non-own-ammo split, non-own item-id ordering, and own-ammo projectile attack

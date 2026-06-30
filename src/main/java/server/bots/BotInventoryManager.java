@@ -1249,7 +1249,7 @@ public class BotInventoryManager {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         List<Item> result = new ArrayList<>(trash.size());
         for (Item item : trash) {
-            if (item instanceof Equip equip && !shouldKeepForSellTrash(ii, equip)) {
+            if (item instanceof Equip equip && !AgentInventorySellTrashPolicy.shouldKeepForSellTrash(ii, equip)) {
                 result.add(item);
             }
         }
@@ -1327,22 +1327,6 @@ public class BotInventoryManager {
 
     private static boolean isOwnClassEquip(Character bot, ItemInformationProvider ii, Equip equip) {
         return AgentEquipmentReservePolicy.isOwnClassEquip(bot, ii, equip);
-    }
-
-    static boolean shouldKeepForSellTrash(ItemInformationProvider ii, Equip equip) {
-        return AgentInventorySellTrashPolicy.shouldKeepForSellTrash(ii, equip);
-    }
-
-    // A stat protects an equip from being trashed only if it has been improved above the item's
-    // WZ base (>= aboveBaseThreshold AND strictly above base), or it is high enough on its own
-    // (>= pureThreshold) regardless of base. Base stat values come straight from the WZ stats map
-    // (the "inc"-stripped STR/DEX/INT/LUK keys).
-    static boolean hasProtectedSellTrashStat(Map<String, Integer> stats, Equip equip, int aboveBaseThreshold, int pureThreshold) {
-        return AgentInventorySellTrashPolicy.hasProtectedSellTrashStat(stats, equip, aboveBaseThreshold, pureThreshold);
-    }
-
-    static boolean hasProtectedSellTrashWeaponStat(Map<String, Integer> stats, Equip equip, Equip baseEquip) {
-        return AgentInventorySellTrashPolicy.hasProtectedSellTrashWeaponStat(stats, equip, baseEquip);
     }
 
     private static int dropFromBag(Character bot, InventoryType type, Predicate<Item> filter) {
