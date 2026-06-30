@@ -1720,7 +1720,7 @@ public class BotInventoryManager {
         startTradeSequence("pot_share", recipient, items, 0, true, entry, bot);
     }
 
-    static List<Item> collectAmmoShareItems(Character donorBot, WeaponType needyWeaponType, int maxQty) {
+    public static List<Item> collectAmmoShareItems(Character donorBot, WeaponType needyWeaponType, int maxQty) {
         if (maxQty <= 0) return List.of();
         List<Item> candidates = new ArrayList<>();
         Inventory useInv = donorBot.getInventory(InventoryType.USE);
@@ -1747,7 +1747,7 @@ public class BotInventoryManager {
         return result;
     }
 
-    static void startAmmoShareTransfer(List<Item> items, Character recipient, BotEntry entry, Character bot, int maxQty) {
+    public static void startAmmoShareTransfer(List<Item> items, Character recipient, BotEntry entry, Character bot, int maxQty) {
         if (items.isEmpty()) return;
         if (bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry) || recipient.getTrade() != null) {
             AgentBotPendingTradeStateRuntime.queueRetry(

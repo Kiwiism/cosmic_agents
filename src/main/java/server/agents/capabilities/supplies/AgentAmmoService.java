@@ -1,4 +1,4 @@
-package server.bots;
+package server.agents.capabilities.supplies;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
@@ -15,22 +15,26 @@ import server.agents.integration.AgentBotAmmoRuntime;
 import server.agents.integration.AgentBotAmmoStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.bots.BotEntry;
+import server.bots.BotInventoryManager;
+import server.bots.BotManager;
 
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public final class BotAmmoManager {
+public final class AgentAmmoService {
+
     private static final Map<String, Long> ammoShareBackoffUntil = new ConcurrentHashMap<>();
     private static final Map<Integer, Long> ammoShareCooldownUntil = new ConcurrentHashMap<>();
 
-    private BotAmmoManager() {}
+    private AgentAmmoService() {}
 
-    static void tickAmmoShareCheck(BotEntry entry, Character bot) {
+    public static void tickAmmoShareCheck(BotEntry entry, Character bot) {
         requestLowAmmoShare(entry, bot, false);
     }
 
-    static boolean requestLowAmmoShare(BotEntry entry, Character bot, boolean bypassShareLimits) {
+    public static boolean requestLowAmmoShare(BotEntry entry, Character bot, boolean bypassShareLimits) {
         WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
         if (!canRequestShare(weaponType)) {
             AgentBotAmmoStateRuntime.clearAmmoShareRequested(entry);
@@ -51,16 +55,16 @@ public final class BotAmmoManager {
         return false;
     }
 
-    static void checkAmmoShareOnModeStart(BotEntry entry, Character bot) {
+    public static void checkAmmoShareOnModeStart(BotEntry entry, Character bot) {
         AgentBotAmmoStateRuntime.clearAmmoShareRequested(entry);
         requestLowAmmoShare(entry, bot, false);
     }
 
-    static boolean requestAmmoShare(BotEntry entry, Character bot, WeaponType weaponType, int currentAmmo) {
+    public static boolean requestAmmoShare(BotEntry entry, Character bot, WeaponType weaponType, int currentAmmo) {
         return requestAmmoShare(entry, bot, weaponType, currentAmmo, false);
     }
 
-    static boolean requestAmmoShare(BotEntry entry, Character bot, WeaponType weaponType, int currentAmmo, boolean bypassShareLimits) {
+    public static boolean requestAmmoShare(BotEntry entry, Character bot, WeaponType weaponType, int currentAmmo, boolean bypassShareLimits) {
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner == null || bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry)) {
             return false;
@@ -119,7 +123,7 @@ public final class BotAmmoManager {
         return OwnerAmmoShareResult.OFFERED;
     }
 
-    static AgentBotAmmoDonorPlan selectAmmoDonor(BotEntry needyEntry, Character needyBot, WeaponType needyWeaponType) {
+    public static AgentBotAmmoDonorPlan selectAmmoDonor(BotEntry needyEntry, Character needyBot, WeaponType needyWeaponType) {
         Character owner = AgentBotRuntimeIdentityRuntime.owner(needyEntry);
         if (owner == null || !canRequestShare(needyWeaponType)) {
             return null;
@@ -127,7 +131,7 @@ public final class BotAmmoManager {
         return selectAmmoDonor(owner.getId(), needyBot.getMapId(), needyEntry, needyWeaponType);
     }
 
-    static AgentBotAmmoDonorPlan selectAmmoDonorForRecipient(Character recipient, WeaponType needyWeaponType) {
+    public static AgentBotAmmoDonorPlan selectAmmoDonorForRecipient(Character recipient, WeaponType needyWeaponType) {
         if (recipient == null || !canRequestShare(needyWeaponType)) {
             return null;
         }

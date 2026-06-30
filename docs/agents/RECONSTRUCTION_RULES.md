@@ -310,7 +310,7 @@ Recent reconstruction notes:
   flows. Map-only resupply/shop chatter remains on the legacy visible-say path
   until exact map-visible delivery has an Agent adapter.
 - Ammo-share donor selection delays and delayed transfer callbacks now enter
-  through `AgentBotAmmoRuntime`; `BotAmmoManager` no longer reaches directly
+  through `AgentBotAmmoRuntime`; `AgentAmmoService` no longer reaches directly
   into the lower-level scheduler runtime for ammo-owned timing. Visible ammo
   request/offer chat remains unchanged on the legacy map-visible say path.
 - Potion-share donor selection delays, low-supply fallback delay, and delayed
@@ -475,7 +475,7 @@ Recent reconstruction notes:
   calls `BotManager.botSay` directly for offer-owned reply delivery, while the
   same reply channel, random reply pool, and delay behavior remain intact.
 - Ammo low-supply request and ammo-donor offer visible replies now enter
-  through `AgentBotAmmoRuntime`; `BotAmmoManager` no longer calls
+  through `AgentBotAmmoRuntime`; `AgentAmmoService` no longer calls
   `BotManager.botSay` directly for ammo-owned reply delivery, while the same
   random reply pools and transfer timing remain intact.
 - Potion grind-stop warnings, low-supply requests, no-qualified-donor
@@ -1117,7 +1117,7 @@ Recent reconstruction notes:
   BotEntry as the temporary backing store but no longer read `owner`, `bot`,
   `inAir`, `climbing`, or `moveDir` directly in production.
 - Ammo sharing identity now enters through `AgentBotRuntimeIdentityRuntime`;
-  BotAmmoManager low-ammo request owner lookup, owner-request sharing, sibling
+  AgentAmmoService low-ammo request owner lookup, owner-request sharing, sibling
   donor scans, and delayed transfer donor identity keep BotEntry as the
   temporary backing store but no longer read `owner` or `bot` directly in
   production.
@@ -1271,7 +1271,7 @@ Recent reconstruction notes:
   preserves the same donor selection, qualification threshold, donation
   quantity, delay, and transfer behavior while the donor plan context is owned
   by the Agent integration layer instead of a private bot runtime record.
-- Ammo donor planning now uses `AgentBotAmmoDonorPlan`; BotAmmoManager
+- Ammo donor planning now uses `AgentBotAmmoDonorPlan`; AgentAmmoService
   preserves the same donor selection ordering, same-ammo preference, donation
   quantity, delay, and transfer behavior while the donor plan context is owned
   by the Agent integration layer instead of a bot package record.
@@ -1395,7 +1395,7 @@ Recent reconstruction notes:
   lookup, candidate sorting, max-stack, and trade-transfer behavior through
   compatibility delegates.
 - Ammo-share request eligibility, donor quantity math, and donor tie-break
-  policy now live in `AgentAmmoSharePolicy`; BotAmmoManager preserves the same
+  policy now live in `AgentAmmoSharePolicy`; AgentAmmoService preserves the same
   cooldown/backoff, donor scan, visible request/offer dialogue, delayed trade,
   and inventory transfer behavior through compatibility delegates.
 - USE-item recovery-potion and buff-consumable classification now lives in
@@ -1411,7 +1411,7 @@ Recent reconstruction notes:
   movement/air/climb/stance standing-still gate and MP recovery tick timing
   through compatibility delegates.
 - Potion and ammo sharing request/offer dialogue pools now live in
-  `AgentDialogueCatalog`; BotPotionManager and BotAmmoManager preserve the same
+  `AgentDialogueCatalog`; BotPotionManager and AgentAmmoService preserve the same
   random reply selection and visible map-chat delivery through compatibility
   delegates.
 - Inventory trade invitation, thanks, freebie, all-done, and reserved-equip
@@ -1922,6 +1922,11 @@ Recent reconstruction notes:
   `AgentDialogueCatalog`; BotInventoryManager and BotPotionManager preserve the
   same drop gating, grind-stop/follow-owner behavior, emote change, and map/reply
   delivery behavior through compatibility delegates.
+- Low-ammo request, donor selection, ammo-share scheduling, and owner-offer
+  routing now live in `AgentAmmoService`; BotPotionManager and supply request
+  callbacks preserve the same thresholds, cooldown/backoff timing, donor
+  ordering, delayed transfer timing, and map-chat behavior through compatibility
+  delegates.
 
 Initial reconstruction order:
 

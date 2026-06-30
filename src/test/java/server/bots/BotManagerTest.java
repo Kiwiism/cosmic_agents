@@ -21,6 +21,7 @@ import org.mockito.MockedStatic;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
+import server.agents.capabilities.supplies.AgentAmmoService;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.integration.AgentBotAmmoDonorPlan;
 import server.agents.integration.AgentBotCommandParser;
@@ -1164,16 +1165,16 @@ class BotManagerTest {
         when(owner.getTrade()).thenReturn(null);
 
         Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
-        Map<Integer, Long> sharedCooldown = (Map<Integer, Long>) field(BotAmmoManager.class, "ammoShareCooldownUntil").get(null);
-        Map<String, Long> backoff = (Map<String, Long>) field(BotAmmoManager.class, "ammoShareBackoffUntil").get(null);
+        Map<Integer, Long> sharedCooldown = (Map<Integer, Long>) field(AgentAmmoService.class, "ammoShareCooldownUntil").get(null);
+        Map<String, Long> backoff = (Map<String, Long>) field(AgentAmmoService.class, "ammoShareBackoffUntil").get(null);
         String backoffKey = owner.getId() + ":" + WeaponType.BOW.name();
 
         bots.put(owner.getId(), List.of());
         sharedCooldown.put(owner.getId(), Long.MAX_VALUE);
         backoff.put(backoffKey, Long.MAX_VALUE);
         try {
-            assertEquals(BotAmmoManager.OwnerAmmoShareResult.NO_DONOR,
-                    BotAmmoManager.offerAmmoShareToOwner(entry, WeaponType.BOW),
+            assertEquals(AgentAmmoService.OwnerAmmoShareResult.NO_DONOR,
+                    AgentAmmoService.offerAmmoShareToOwner(entry, WeaponType.BOW),
                     "manual owner ammo requests should still attempt donor lookup while automatic share cooldowns are active");
         } finally {
             bots.remove(owner.getId());
@@ -1231,8 +1232,8 @@ class BotManagerTest {
         when(bot.getMap()).thenReturn(map);
 
         Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
-        Map<Integer, Long> sharedCooldown = (Map<Integer, Long>) field(BotAmmoManager.class, "ammoShareCooldownUntil").get(null);
-        Map<String, Long> backoff = (Map<String, Long>) field(BotAmmoManager.class, "ammoShareBackoffUntil").get(null);
+        Map<Integer, Long> sharedCooldown = (Map<Integer, Long>) field(AgentAmmoService.class, "ammoShareCooldownUntil").get(null);
+        Map<String, Long> backoff = (Map<String, Long>) field(AgentAmmoService.class, "ammoShareBackoffUntil").get(null);
         String backoffKey = owner.getId() + ":" + WeaponType.BOW.name();
 
         bots.put(owner.getId(), List.of(entry));
@@ -1240,7 +1241,7 @@ class BotManagerTest {
         backoff.put(backoffKey, Long.MAX_VALUE);
 
         try {
-            assertTrue(BotAmmoManager.requestAmmoShare(entry, bot, WeaponType.BOW, 0, true),
+            assertTrue(AgentAmmoService.requestAmmoShare(entry, bot, WeaponType.BOW, 0, true),
                     "player-asked bot supply checks should bypass automatic cooldown/backoff guards");
             assertEquals(Long.MAX_VALUE, sharedCooldown.get(owner.getId()));
             assertEquals(Long.MAX_VALUE, backoff.get(backoffKey));
@@ -1281,7 +1282,7 @@ class BotManagerTest {
             return WeaponType.SWORD1H;
         })) {
 
-            AgentBotAmmoDonorPlan plan = BotAmmoManager.selectAmmoDonor(needyEntry, needy, WeaponType.BOW);
+            AgentBotAmmoDonorPlan plan = AgentAmmoService.selectAmmoDonor(needyEntry, needy, WeaponType.BOW);
 
             assertNotNull(plan);
             assertEquals(nonBow800Entry, plan.entry());
@@ -1310,7 +1311,7 @@ class BotManagerTest {
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks = mockStatic(AgentAttackExecutionProvider.class,
                 invocation -> WeaponType.BOW)) {
-            AgentBotAmmoDonorPlan plan = BotAmmoManager.selectAmmoDonor(needyEntry, needy, WeaponType.BOW);
+            AgentBotAmmoDonorPlan plan = AgentAmmoService.selectAmmoDonor(needyEntry, needy, WeaponType.BOW);
 
             assertNotNull(plan);
             assertEquals(bow3000Entry, plan.entry());

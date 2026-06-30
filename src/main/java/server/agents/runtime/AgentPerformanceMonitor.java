@@ -73,7 +73,7 @@ public final class AgentPerformanceMonitor {
         notes.put("common-potion-check", "BotPotionManager.tickPotionCheck (HP/MP potion request)");
         notes.put("potion-autopot", "BotPotionManager.setupAutopotForBot (scan USE bag + choose HP/MP autopot bindings)");
         notes.put("potion-ammo-check", "AgentBotCombatAmmoCheckRuntime.tickAmmoCheck invoked from potion check");
-        notes.put("potion-ammo-share", "BotAmmoManager.tickAmmoShareCheck invoked from potion check");
+        notes.put("potion-ammo-share", "AgentAmmoService.tickAmmoShareCheck invoked from potion check");
         notes.put("potion-count", "BotPotionManager.countPotions for the active bot");
         notes.put("potion-recovery-scan", "BotPotionManager.recoveryPotions (USE inventory scan + recovery classification)");
         notes.put("potion-recovery-count", "BotPotionManager.countPotions second pass over recovery items");

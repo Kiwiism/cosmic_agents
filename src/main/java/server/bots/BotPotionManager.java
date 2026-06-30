@@ -15,6 +15,7 @@ import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
 import server.agents.capabilities.supplies.AgentAutopotPolicy;
 import server.agents.capabilities.supplies.AgentAutopotPolicy.AutopotChoice;
 import server.agents.capabilities.supplies.AgentAutopotPolicy.PotionRanking;
+import server.agents.capabilities.supplies.AgentAmmoService;
 import server.agents.capabilities.supplies.AgentPassiveRecoveryPolicy;
 import server.agents.capabilities.supplies.AgentPotionInventoryPolicy;
 import server.agents.integration.AgentBotModeStateRuntime;
@@ -183,7 +184,7 @@ public final class BotPotionManager {
             return;
         }
         startedAt = AgentPerformanceMonitor.start();
-        BotAmmoManager.tickAmmoShareCheck(entry, bot);
+        AgentAmmoService.tickAmmoShareCheck(entry, bot);
         AgentPerformanceMonitor.recordSince("potion-ammo-share", startedAt);
 
         startedAt = AgentPerformanceMonitor.start();
@@ -212,13 +213,13 @@ public final class BotPotionManager {
 
     public static void checkPotShareOnModeStart(BotEntry entry, Character bot) {
         AgentBotPotionStateRuntime.clearAllPotShareRequests(entry);
-        BotAmmoManager.checkAmmoShareOnModeStart(entry, bot);
+        AgentAmmoService.checkAmmoShareOnModeStart(entry, bot);
         requestLowPotShares(entry, bot, false);
     }
 
     public static boolean requestLowSuppliesFromOwnerAsk(BotEntry entry, Character bot) {
         boolean requestedPots = requestLowPotShares(entry, bot, true);
-        boolean requestedAmmo = BotAmmoManager.requestLowAmmoShare(entry, bot, true);
+        boolean requestedAmmo = AgentAmmoService.requestLowAmmoShare(entry, bot, true);
         return requestedPots || requestedAmmo;
     }
 

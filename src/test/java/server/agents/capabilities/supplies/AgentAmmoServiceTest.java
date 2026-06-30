@@ -1,4 +1,4 @@
-package server.bots;
+package server.agents.capabilities.supplies;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 
@@ -9,6 +9,8 @@ import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotAmmoRuntime;
+import server.bots.BotEntry;
+import server.bots.BotManager;
 import testutil.Items;
 
 import java.lang.reflect.Field;
@@ -22,7 +24,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-class BotAmmoManagerTest {
+class AgentAmmoServiceTest {
     @Test
     @SuppressWarnings("unchecked")
     void ownerAmmoShareSchedulesThroughAgentAmmoRuntime() throws Exception {
@@ -45,8 +47,8 @@ class BotAmmoManagerTest {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(donorBot)).thenReturn(null);
             scheduler.when(() -> AgentBotAmmoRuntime.randomDelayMs(900, 1400)).thenReturn(99L);
 
-            assertEquals(BotAmmoManager.OwnerAmmoShareResult.OFFERED,
-                    BotAmmoManager.offerAmmoShareToOwner(entry, WeaponType.BOW));
+            assertEquals(AgentAmmoService.OwnerAmmoShareResult.OFFERED,
+                    AgentAmmoService.offerAmmoShareToOwner(entry, WeaponType.BOW));
 
             scheduler.verify(() -> AgentBotAmmoRuntime.randomDelayMs(900, 1400));
             scheduler.verify(() -> AgentBotAmmoRuntime.afterDelay(eq(99L), any(Runnable.class)));
