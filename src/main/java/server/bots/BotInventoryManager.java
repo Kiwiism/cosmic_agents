@@ -476,7 +476,7 @@ public class BotInventoryManager {
                 return false;
             }
 
-            int requestedMesos = requestedTradeMesos(category);
+            int requestedMesos = AgentInventoryTradePolicy.requestedTradeMesos(category);
             return requestedMesos <= 0 || currentMesos >= requestedMesos;
         }
 
@@ -533,15 +533,11 @@ public class BotInventoryManager {
             }
             return total;
         }
-        return itemQuantitySum(collectItems(category, entry, bot));
+        return AgentInventoryTradePolicy.itemQuantitySum(collectItems(category, entry, bot));
     }
 
     private static int countNamedItems(String fragment, Character bot) {
-        return itemQuantitySum(collectNamedItems(fragment, bot));
-    }
-
-    private static int itemQuantitySum(List<Item> items) {
-        return AgentInventoryTradePolicy.itemQuantitySum(items);
+        return AgentInventoryTradePolicy.itemQuantitySum(collectNamedItems(fragment, bot));
     }
 
     static String noItemsReply(String category) {
@@ -857,13 +853,13 @@ public class BotInventoryManager {
             return;
         }
 
-        int requestedMesos = requestedTradeMesos(category);
+        int requestedMesos = AgentInventoryTradePolicy.requestedTradeMesos(category);
         if (requestedMesos == 0) {
             AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeMesoInvalidReply());
             return;
         }
         if (requestedMesos > 0 && currentMesos < requestedMesos) {
-            AgentBotInventoryRuntime.replyNow(entry, notEnoughMesosReply(requestedMesos, currentMesos));
+            AgentBotInventoryRuntime.replyNow(entry, AgentInventoryTradePolicy.notEnoughMesosReply(requestedMesos, currentMesos));
             return;
         }
 
@@ -1175,11 +1171,6 @@ public class BotInventoryManager {
 
     // ─── Internals ────────────────────────────────────────────────────────────
 
-    /** Orders equips like a plain inventory view: itemId first, then bag position. */
-    private static List<Item> sortEquipsByItemId(List<Item> items) {
-        return AgentInventoryTradePolicy.sortEquipsByItemId(items);
-    }
-
     /** Orders own reserved equips worst-to-best using the existing trade score helper. */
     private static List<Item> sortEquipsByTradeScore(List<Item> items, Character bot) {
         return AgentInventoryTradePolicy.sortReservedEquipsByTradeScore(items, bot);
@@ -1347,8 +1338,8 @@ public class BotInventoryManager {
         }
 
         long sortStartedAt = startedAt != 0L ? System.nanoTime() : 0L;
-        List<Item> normalSorted = sortEquipsByItemId(normal);
-        List<Item> reservedForOtherSorted = sortEquipsByItemId(reservedForOther);
+        List<Item> normalSorted = AgentInventoryTradePolicy.sortEquipsByItemId(normal);
+        List<Item> reservedForOtherSorted = AgentInventoryTradePolicy.sortEquipsByItemId(reservedForOther);
         List<Item> reservedForSelfSorted = sortEquipsByTradeScore(reservedForSelf, bot);
         long sortNs = startedAt != 0L ? System.nanoTime() - sortStartedAt : 0L;
         if (startedAt != 0L) {
@@ -1430,14 +1421,6 @@ public class BotInventoryManager {
 
     public static boolean isMesoCategory(String category) {
         return AgentInventoryTradePolicy.isMesoCategory(category);
-    }
-
-    private static int requestedTradeMesos(String category) {
-        return AgentInventoryTradePolicy.requestedTradeMesos(category);
-    }
-
-    private static String notEnoughMesosReply(int requestedMesos, int currentMesos) {
-        return AgentInventoryTradePolicy.notEnoughMesosReply(requestedMesos, currentMesos);
     }
 
     // ─── Pot-share helpers ────────────────────────────────────────────────────
