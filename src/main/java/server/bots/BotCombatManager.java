@@ -961,16 +961,12 @@ public class BotCombatManager {
         if (!AgentAttackExecutionProvider.canUseRangedAttackRoute(route, weaponType, bot.getPosition(), primaryTarget.getPosition())) {
             return null;
         }
-        boolean facingLeft = primaryTarget.getPosition().x < bot.getPosition().x;
         AgentAttackExecutionProvider.BasicAttackData fallbackAttackData = buildBasicAttackData(bot, primaryTarget);
         AgentAttackDataProvider.AttackAnimationSpec attackSpec = AgentAttackDataProvider.getInstance().getBasicAttackSpec(weaponType);
         String fallbackAction = attackSpec.primaryAction();
-        AgentAttackExecutionProvider.CloseRangePacketFields closeRangePacketFields = route == AgentAttackRoute.CLOSE
-                ? AgentAttackExecutionProvider.mimicCloseRangePacketFields(action, fallbackAction, facingLeft)
-                : null;
-        int direction = route == AgentAttackRoute.CLOSE
-                ? closeRangePacketFields.bodyActionId()
-                : AgentAttackExecutionProvider.bodyActionId(action, fallbackAction, weaponType);
+        AgentSkillAttackPlanner.SkillAttackPacketFields packetFields =
+                AgentSkillAttackPlanner.resolveSkillAttackPacketFields(
+                        route, weaponType, bot.getPosition(), primaryTarget.getPosition(), action, fallbackAction);
         AgentAttackExecutionProvider.SkillAttackTiming skillTiming =
                 AgentAttackExecutionProvider.resolveSkillAttackTiming(skill, action, bot, fallbackAttackData);
         List<Monster> targets = collectTargetsInHitBox(bot, primaryTarget, hitBox, Math.max(1, effect.getMobCount()));
@@ -978,9 +974,9 @@ public class BotCombatManager {
             return null;
         }
         return new AttackPlan(skillId, skillLevel, attackCount, hitBox, targets,
-                route, route == AgentAttackRoute.CLOSE ? closeRangePacketFields.display() : 0,
-                direction, direction,
-                AgentAttackExecutionProvider.attackPacketStance(facingLeft),
+                route, packetFields.display(),
+                packetFields.direction(), packetFields.rangedDirection(),
+                packetFields.stance(),
                 fallbackAttackData.speed(), skillTiming.hitDelayMs(), skillTiming.cooldownMs(),
                 damageWeaponTypeForAction(skillId, weaponType, action));
     }

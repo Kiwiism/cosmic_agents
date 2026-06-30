@@ -1,5 +1,7 @@
 package server.agents.capabilities.combat;
 
+import client.inventory.WeaponType;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
@@ -24,6 +26,9 @@ public final class AgentSkillAttackPlanner {
     }
 
     public record SkillPrimaryTargetSelection(Monster target) {
+    }
+
+    public record SkillAttackPacketFields(int display, int direction, int rangedDirection, int stance) {
     }
 
     private AgentSkillAttackPlanner() {
@@ -87,5 +92,30 @@ public final class AgentSkillAttackPlanner {
             return null;
         }
         return new SkillPrimaryTargetSelection(resolvedTarget);
+    }
+
+    public static SkillAttackPacketFields resolveSkillAttackPacketFields(AgentAttackRoute route,
+                                                                         WeaponType weaponType,
+                                                                         Point agentPosition,
+                                                                         Point targetPosition,
+                                                                         String action,
+                                                                         String fallbackAction) {
+        boolean facingLeft = targetPosition.x < agentPosition.x;
+        if (route == AgentAttackRoute.CLOSE) {
+            AgentAttackExecutionProvider.CloseRangePacketFields closeRangePacketFields =
+                    AgentAttackExecutionProvider.mimicCloseRangePacketFields(action, fallbackAction, facingLeft);
+            return new SkillAttackPacketFields(
+                    closeRangePacketFields.display(),
+                    closeRangePacketFields.bodyActionId(),
+                    closeRangePacketFields.bodyActionId(),
+                    AgentAttackExecutionProvider.attackPacketStance(facingLeft));
+        }
+
+        int direction = AgentAttackExecutionProvider.bodyActionId(action, fallbackAction, weaponType);
+        return new SkillAttackPacketFields(
+                0,
+                direction,
+                direction,
+                AgentAttackExecutionProvider.attackPacketStance(facingLeft));
     }
 }

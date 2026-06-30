@@ -1451,7 +1451,12 @@ Recent reconstruction notes:
   `AgentSkillAttackPlanner`, preserving the strike-point basic-weapon reach
   gate, non-strike effective-primary replacement, and final monster hitbox
   intersection check. BotCombatManager still resolves concrete hitboxes and
-  packet fields.
+  concrete hitboxes.
+- Skill attack packet-field planning now lives in `AgentSkillAttackPlanner`,
+  preserving the legacy close-range display/body-action mimic, ranged
+  zero-display path, shared direction/ranged-direction value, and facing stance
+  calculation. BotCombatManager still resolves concrete skill actions and
+  attack timing.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

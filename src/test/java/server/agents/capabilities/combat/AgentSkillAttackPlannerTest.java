@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
+import client.inventory.WeaponType;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
@@ -215,5 +217,44 @@ class AgentSkillAttackPlannerTest {
                 () -> true,
                 (candidate, candidateHitBox) -> effective,
                 (candidateHitBox, candidate) -> false));
+    }
+
+    @Test
+    void shouldResolveCloseRangeSkillPacketFieldsWithLegacyCloseRangeMimic() {
+        AgentAttackExecutionProvider.CloseRangePacketFields expected =
+                AgentAttackExecutionProvider.mimicCloseRangePacketFields("alert2", "alert2", true);
+
+        AgentSkillAttackPlanner.SkillAttackPacketFields fields =
+                AgentSkillAttackPlanner.resolveSkillAttackPacketFields(
+                        AgentAttackRoute.CLOSE,
+                        WeaponType.BOW,
+                        new Point(100, 100),
+                        new Point(40, 100),
+                        "alert2",
+                        "alert2");
+
+        assertEquals(expected.display(), fields.display());
+        assertEquals(expected.bodyActionId(), fields.direction());
+        assertEquals(expected.bodyActionId(), fields.rangedDirection());
+        assertEquals(AgentAttackExecutionProvider.attackPacketStance(true), fields.stance());
+    }
+
+    @Test
+    void shouldResolveNonCloseSkillPacketFieldsWithZeroDisplayAndSharedDirection() {
+        int expectedDirection = AgentAttackExecutionProvider.bodyActionId("shoot1", "shoot1", WeaponType.BOW);
+
+        AgentSkillAttackPlanner.SkillAttackPacketFields fields =
+                AgentSkillAttackPlanner.resolveSkillAttackPacketFields(
+                        AgentAttackRoute.RANGED,
+                        WeaponType.BOW,
+                        new Point(40, 100),
+                        new Point(100, 100),
+                        "shoot1",
+                        "shoot1");
+
+        assertEquals(0, fields.display());
+        assertEquals(expectedDirection, fields.direction());
+        assertEquals(expectedDirection, fields.rangedDirection());
+        assertEquals(AgentAttackExecutionProvider.attackPacketStance(false), fields.stance());
     }
 }
