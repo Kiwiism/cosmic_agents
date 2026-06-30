@@ -14,10 +14,20 @@ public final class AgentCombatSupportPolicy {
     public static final int LEGACY_DRAGON_ROAR_MIN_TARGETS_WITHOUT_HEALER = 10;
 
     public enum SupportCastReadiness {
-        READY,
-        MISSING_SKILL_LEVEL,
-        DEAD,
-        CANNOT_PAY_COST
+        READY(null),
+        MISSING_SKILL_LEVEL("missing skill level for "),
+        DEAD("can't cast while dead: "),
+        CANNOT_PAY_COST("can't pay cost for ");
+
+        private final String legacyDebugPrefix;
+
+        SupportCastReadiness(String legacyDebugPrefix) {
+            this.legacyDebugPrefix = legacyDebugPrefix;
+        }
+
+        public String legacyDebugSummary(String skillLabel) {
+            return legacyDebugPrefix == null ? null : legacyDebugPrefix + skillLabel;
+        }
     }
 
     public enum SkillBuffTickDecision {

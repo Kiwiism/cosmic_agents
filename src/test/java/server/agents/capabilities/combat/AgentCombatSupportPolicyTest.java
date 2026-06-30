@@ -164,6 +164,17 @@ class AgentCombatSupportPolicyTest {
     }
 
     @Test
+    void shouldFormatLegacySupportCastReadinessSummaries() {
+        assertNull(AgentCombatSupportPolicy.SupportCastReadiness.READY.legacyDebugSummary("Bless"));
+        assertEquals("missing skill level for Bless",
+                AgentCombatSupportPolicy.SupportCastReadiness.MISSING_SKILL_LEVEL.legacyDebugSummary("Bless"));
+        assertEquals("can't cast while dead: Bless",
+                AgentCombatSupportPolicy.SupportCastReadiness.DEAD.legacyDebugSummary("Bless"));
+        assertEquals("can't pay cost for Bless",
+                AgentCombatSupportPolicy.SupportCastReadiness.CANNOT_PAY_COST.legacyDebugSummary("Bless"));
+    }
+
+    @Test
     void shouldDetectNearbyHealSkillAlly() {
         Character bot = characterAt(1, new Point(100, 100), true);
         Character healer = characterAt(2, new Point(130, 110), true);

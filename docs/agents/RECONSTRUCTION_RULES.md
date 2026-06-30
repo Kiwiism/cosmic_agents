@@ -1478,6 +1478,10 @@ Recent reconstruction notes:
   `AgentCombatSupportPolicy`, preserving the legacy skip when a map has no
   alive monsters while BotCombatManager still performs the live map scan and
   support-buff side effects.
+- Support-buff cast readiness failure summaries now live on
+  `AgentCombatSupportPolicy.SupportCastReadiness`, preserving the legacy
+  missing-level, dead, and cannot-pay-cost debug wording while BotCombatManager
+  still performs the actual support skill cast side effects.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
