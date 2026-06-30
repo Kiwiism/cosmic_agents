@@ -1546,6 +1546,11 @@ Recent reconstruction notes:
   temporary `BotCombatManager` wrappers for knockback eligibility, direction,
   and OpenStory-step scaling have been removed while preserving the same stance,
   climbing, HP, direction, and tick-length inputs.
+- Skill-cache signature, best single-target skill comparison, cached attack-skill
+  id ordering, and support-heal self-threshold checks now call
+  `AgentCombatSkillClassifier` and `AgentCombatSupportPolicy` directly from the
+  remaining combat shell; the temporary `BotCombatManager` wrappers have been
+  removed while preserving the same cache state and configured heal ratio inputs.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

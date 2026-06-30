@@ -284,7 +284,7 @@ public class BotCombatManager {
     }
 
     static void rebuildSkillCacheIfNeeded(BotEntry entry, Character bot) {
-        int skillSignature = skillCacheSignature(bot);
+        int skillSignature = AgentCombatSkillClassifier.skillCacheSignature(bot);
         if (AgentBotCombatSkillCacheStateRuntime.matches(
                 entry, bot.getJob().getId(), bot.getLevel(), skillSignature)) {
             return;
@@ -322,11 +322,11 @@ public class BotCombatManager {
                         bestAoeScore = score;
                         AgentBotCombatSkillCacheStateRuntime.setAoeSkill(entry, skill.getId(), mobs);
                     }
-                } else if (shouldUseAsBestSingleTargetSkill(bot, skill, fx, atk,
+                } else if (AgentCombatSkillClassifier.shouldUseAsBestSingleTargetSkill(bot, skill, fx, atk,
                         bestAtkHits, bestAtkPriority, bestAtkDamage,
                         AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry))) {
                     bestAtkHits = atk;
-                    bestAtkPriority = singleTargetSkillPriority(bot, skill);
+                    bestAtkPriority = AgentCombatSkillClassifier.singleTargetSkillPriority(bot, skill);
                     bestAtkDamage = fx.getDamage();
                     AgentBotCombatSkillCacheStateRuntime.setAttackSkillId(entry, skill.getId());
                 }
@@ -343,10 +343,6 @@ public class BotCombatManager {
             AgentBotCombatSkillCacheStateRuntime.addBuffSkillId(entry, skill.getId());
             AgentBotCombatBuffStateRuntime.ensureNextBuffAt(entry, skill.getId(), 0L);
         }
-    }
-
-    private static int skillCacheSignature(Character bot) {
-        return AgentCombatSkillClassifier.skillCacheSignature(bot);
     }
 
     static void tickBuffs(BotEntry entry, Character bot) {
@@ -391,18 +387,6 @@ public class BotCombatManager {
         noteSkillBuffDecision(entry, AgentCombatSupportPolicy.allSkillBuffsActiveOrOnCooldownSummary());
     }
 
-    private static boolean shouldUseAsBestSingleTargetSkill(Character bot, Skill skill, StatEffect effect,
-                                                            int attackCount, int bestAttackCount,
-                                                            int bestPriority, int bestDamage,
-                                                            int currentBestSkillId) {
-        return AgentCombatSkillClassifier.shouldUseAsBestSingleTargetSkill(bot, skill, effect, attackCount,
-                bestAttackCount, bestPriority, bestDamage, currentBestSkillId);
-    }
-
-    private static int singleTargetSkillPriority(Character bot, Skill skill) {
-        return AgentCombatSkillClassifier.singleTargetSkillPriority(bot, skill);
-    }
-
     /**
      * Healing is the cleric bot's top priority: runs before any attack decision (see BotManager tick)
      * and casts whenever the bot itself OR any nearby party member is below
@@ -438,7 +422,7 @@ public class BotCombatManager {
         Rectangle healBounds = fx.hasBoundingBox()
                 ? fx.calculateBoundingBox(bot.getPosition(), bot.isFacingLeft())
                 : null;
-        boolean selfNeedsHeal = needsHeal(bot);
+        boolean selfNeedsHeal = AgentCombatSupportPolicy.needsHeal(bot, cfg.SUPPORT_HEAL_TARGET_RATIO);
         boolean partyNeedsHeal = selfNeedsHeal || hasPartyMemberInBoundsNeedingHeal(bot, healBounds);
         List<Monster> undeadTargets = getUndeadMobsInHealRange(bot, fx, healBounds);
         if (!AgentCombatSupportPolicy.shouldCastSupportHeal(partyNeedsHeal, !undeadTargets.isEmpty())) return false;
@@ -489,10 +473,6 @@ public class BotCombatManager {
             BotMovementManager.broadcastMovement(entry);
         }
         return true;
-    }
-
-    private static boolean needsHeal(Character chr) {
-        return AgentCombatSupportPolicy.needsHeal(chr, cfg.SUPPORT_HEAL_TARGET_RATIO);
     }
 
     /**
@@ -691,7 +671,10 @@ public class BotCombatManager {
         try {
             List<AttackPlan> candidates = new ArrayList<>(3);
 
-            for (int skillId : cachedAttackSkillIds(entry)) {
+            for (int skillId : AgentCombatSkillClassifier.cachedAttackSkillIds(
+                    AgentBotCombatSkillCacheStateRuntime.attackSkillIds(entry),
+                    AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry),
+                    AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry))) {
                 AttackPlan skillAttack = planSkillAttack(entry, bot, target, skillId);
                 if (skillAttack != null) {
                     candidates.add(skillAttack);
@@ -706,13 +689,6 @@ public class BotCombatManager {
         } finally {
             AgentPerformanceMonitor.record("combat-plan", System.nanoTime() - startedAt);
         }
-    }
-
-    private static List<Integer> cachedAttackSkillIds(BotEntry entry) {
-        return AgentCombatSkillClassifier.cachedAttackSkillIds(
-                AgentBotCombatSkillCacheStateRuntime.attackSkillIds(entry),
-                AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry),
-                AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry));
     }
 
     private static AttackPlan planBasicAttack(Character bot, Monster target) {
