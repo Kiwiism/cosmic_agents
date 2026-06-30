@@ -1207,7 +1207,7 @@ public class BotInventoryManager {
     private static UseTradeGroups classifyUseTradeGroups(Character bot, Character recipient) {
         return AgentInventoryTradePolicy.classifyUseTradeGroups(bot, recipient,
                 AgentUseItemClassificationPolicy::isRecoveryPotion,
-                BotInventoryManager::isTradeAmmoItem,
+                AgentInventoryAmmoPolicy::isTradeAmmoItem,
                 ItemConstants::isEquipScroll,
                 AgentUseItemClassificationPolicy::isBuffConsumable,
                 ItemInformationProvider.getInstance()::isQuestItem,
@@ -1386,7 +1386,4 @@ public class BotInventoryManager {
         startTradeSequence("ammo_share", recipient, items, 0, true, entry, bot);
     }
 
-    private static boolean isTradeAmmoItem(int itemId) {
-        return AgentInventoryAmmoPolicy.isTradeAmmoItem(itemId);
-    }
 }

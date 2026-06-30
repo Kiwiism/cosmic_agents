@@ -2055,6 +2055,9 @@ Recent reconstruction notes:
   supplies, ammo-check, and remaining inventory compatibility paths; the old
   `BotInventoryManager` item-effect/classification shims have been removed while
   preserving the same null-on-lookup-failure behavior.
+- USE-trade ammo-item classification now calls `AgentInventoryAmmoPolicy`
+  directly from the remaining inventory compatibility path; the old private
+  `BotInventoryManager` pass-through has been removed.
 - Ammo trade grouping now lives in `AgentInventoryAmmoPolicy`;
   BotInventoryManager preserves the same safe-item filtering, own-ammo versus
   non-own-ammo split, non-own item-id ordering, and own-ammo projectile attack
