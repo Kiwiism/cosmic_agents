@@ -1846,6 +1846,11 @@ Recent reconstruction notes:
   `server.agents.plans.AgentScriptRuntimeState`; `BotEntry` remains the
   temporary container, but the script id, step, wait, and script-local integer
   state bag is no longer a bot-owned type.
+- Generic script primitives now live in `server.agents.plans` as
+  `AgentScript`, `AgentScriptContext`, `AgentScriptStep`, and
+  `AgentScriptRunner`. KPQ still supplies legacy script content from the bot PQ
+  package, and script tasks still queue the same legacy `BotTask` objects until
+  the task primitive is migrated.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

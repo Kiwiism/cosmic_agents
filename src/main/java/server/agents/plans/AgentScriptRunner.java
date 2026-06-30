@@ -1,15 +1,17 @@
-package server.bots;
+package server.agents.plans;
 
 import client.Character;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
+import server.bots.BotEntry;
+import server.bots.BotManager;
 
 import java.util.List;
 
-public final class BotScriptRunner {
-    private BotScriptRunner() {}
+public final class AgentScriptRunner {
+    private AgentScriptRunner() {}
 
-    public static void tick(BotEntry entry, Character bot, Character owner, List<BotScript> scripts) {
-        BotScript script = findScript(entry, bot, owner, scripts);
+    public static void tick(BotEntry entry, Character bot, Character owner, List<AgentScript> scripts) {
+        AgentScript script = findScript(entry, bot, owner, scripts);
         if (script == null) {
             if (AgentBotScriptTaskStateRuntime.hasScriptId(entry)) {
                 BotManager.getInstance().clearScriptTasks(entry);
@@ -23,13 +25,13 @@ public final class BotScriptRunner {
             AgentBotScriptTaskStateRuntime.resetScript(entry, script.id());
         }
 
-        List<BotScriptStep> steps = script.steps();
+        List<AgentScriptStep> steps = script.steps();
         if (AgentBotScriptTaskStateRuntime.scriptStepIndex(entry) >= steps.size()) {
             return;
         }
 
-        BotScriptContext ctx = new BotScriptContext(entry, bot, owner, BotManager.getInstance());
-        BotScriptStep step = steps.get(AgentBotScriptTaskStateRuntime.scriptStepIndex(entry));
+        AgentScriptContext ctx = new AgentScriptContext(entry, bot, owner, BotManager.getInstance());
+        AgentScriptStep step = steps.get(AgentBotScriptTaskStateRuntime.scriptStepIndex(entry));
         if (!AgentBotScriptTaskStateRuntime.scriptStepEntered(entry)) {
             step.enter(ctx);
             AgentBotScriptTaskStateRuntime.markScriptStepEntered(entry);
@@ -40,8 +42,8 @@ public final class BotScriptRunner {
         }
     }
 
-    private static BotScript findScript(BotEntry entry, Character bot, Character owner, List<BotScript> scripts) {
-        for (BotScript script : scripts) {
+    private static AgentScript findScript(BotEntry entry, Character bot, Character owner, List<AgentScript> scripts) {
+        for (AgentScript script : scripts) {
             if (script.applies(entry, bot, owner)) {
                 return script;
             }

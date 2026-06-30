@@ -2,8 +2,8 @@ package server.bots.pq;
 
 import client.Character;
 import server.agents.integration.AgentBotPqRuntime;
-import server.bots.BotScript;
-import server.bots.BotScriptRunner;
+import server.agents.plans.AgentScript;
+import server.agents.plans.AgentScriptRunner;
 import server.bots.BotEntry;
 
 import java.util.List;
@@ -13,12 +13,12 @@ import java.util.List;
  * BotManager calls {@link #tick} once per bot tick; each PQ class handles its own map range.
  */
 public final class BotPqHooks {
-    private static final List<BotScript> SCRIPTS = List.of(BotKpqStage1.script());
+    private static final List<AgentScript> SCRIPTS = List.of(BotKpqStage1.script());
 
     private BotPqHooks() {}
 
     public static void tick(BotEntry entry, Character bot, Character owner) {
-        BotScriptRunner.tick(entry, bot, owner, SCRIPTS);
+        AgentScriptRunner.tick(entry, bot, owner, SCRIPTS);
         BotKpqStage5.tick(entry, bot);
     }
 

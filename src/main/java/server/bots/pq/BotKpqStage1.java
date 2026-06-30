@@ -5,10 +5,10 @@ import client.inventory.InventoryType;
 import client.inventory.manipulator.InventoryManipulator;
 import scripting.event.EventInstanceManager;
 import server.agents.integration.AgentBotPqRuntime;
+import server.agents.plans.AgentScript;
+import server.agents.plans.AgentScriptContext;
+import server.agents.plans.AgentScriptStep;
 import server.bots.BotEntry;
-import server.bots.BotScript;
-import server.bots.BotScriptContext;
-import server.bots.BotScriptStep;
 import server.life.NPC;
 
 import java.awt.*;
@@ -42,28 +42,28 @@ final class BotKpqStage1 {
     private static final int NEAR_OWNER_PX = 80;
     private static final long WAIT_MS = 1800;
 
-    private static final BotScript SCRIPT = new BotScript() {
-        private final List<BotScriptStep> steps = List.of(
+    private static final AgentScript SCRIPT = new AgentScript() {
+        private final List<AgentScriptStep> steps = List.of(
                 moveToCloto(FIRST_WALK),
-                BotScriptStep.of(ctx -> {
+                AgentScriptStep.of(ctx -> {
                     AgentBotPqRuntime.setKpqStageState(ctx.entry(), FIRST_WAIT);
                     ctx.queueStop();
                     ctx.waitMs(WAIT_MS);
-                }, null, BotScriptContext::waitDone),
-                BotScriptStep.action(BotKpqStage1::assignCouponTarget),
-                BotScriptStep.of(ctx -> {
+                }, null, AgentScriptContext::waitDone),
+                AgentScriptStep.action(BotKpqStage1::assignCouponTarget),
+                AgentScriptStep.of(ctx -> {
                     AgentBotPqRuntime.setKpqStageState(ctx.entry(), GRINDING);
                     ctx.queueGrind();
                 }, BotKpqStage1::tickCouponGrinding, BotKpqStage1::hasRequiredCoupons),
                 moveToCloto(SECOND_WALK),
-                BotScriptStep.of(ctx -> {
+                AgentScriptStep.of(ctx -> {
                     AgentBotPqRuntime.setKpqStageState(ctx.entry(), SECOND_WAIT);
                     ctx.queueStop();
                     ctx.waitMs(WAIT_MS);
-                }, null, BotScriptContext::waitDone),
-                BotScriptStep.action(BotKpqStage1::exchangeCoupons),
-                BotScriptStep.of(BotKpqStage1::queuePassDelivery, null, BotScriptContext::tasksDone),
-                BotScriptStep.action(ctx -> {
+                }, null, AgentScriptContext::waitDone),
+                AgentScriptStep.action(BotKpqStage1::exchangeCoupons),
+                AgentScriptStep.of(BotKpqStage1::queuePassDelivery, null, AgentScriptContext::tasksDone),
+                AgentScriptStep.action(ctx -> {
                     AgentBotPqRuntime.queueSay(ctx.entry(), "Here's your pass!");
                     AgentBotPqRuntime.setKpqStageState(ctx.entry(), DONE);
                 })
@@ -86,12 +86,12 @@ final class BotKpqStage1 {
         }
 
         @Override
-        public List<BotScriptStep> steps() {
+        public List<AgentScriptStep> steps() {
             return steps;
         }
     };
 
-    static BotScript script() {
+    static AgentScript script() {
         return SCRIPT;
     }
 
@@ -104,8 +104,8 @@ final class BotKpqStage1 {
                 || AgentBotPqRuntime.kpqStageStateIs(entry, SECOND_WAIT);
     }
 
-    private static BotScriptStep moveToCloto(int state) {
-        return BotScriptStep.of(ctx -> {
+    private static AgentScriptStep moveToCloto(int state) {
+        return AgentScriptStep.of(ctx -> {
             AgentBotPqRuntime.setKpqStageState(ctx.entry(), state);
             queueMoveToCloto(ctx);
         }, BotKpqStage1::tickMoveToCloto, ctx -> {
@@ -114,20 +114,20 @@ final class BotKpqStage1 {
         });
     }
 
-    private static void tickMoveToCloto(BotScriptContext ctx) {
+    private static void tickMoveToCloto(AgentScriptContext ctx) {
         if (ctx.tasksDone()) {
             queueMoveToCloto(ctx);
         }
     }
 
-    private static void queueMoveToCloto(BotScriptContext ctx) {
+    private static void queueMoveToCloto(AgentScriptContext ctx) {
         Point npcPos = getNpcPos(ctx.bot());
         if (npcPos != null && !near(ctx.bot(), npcPos, NEAR_NPC_PX)) {
             ctx.queueMoveTo(npcPos, false);
         }
     }
 
-    private static void assignCouponTarget(BotScriptContext ctx) {
+    private static void assignCouponTarget(AgentScriptContext ctx) {
         EventInstanceManager eim = ctx.bot().getEventInstance();
         int question = (eim != null) ? eim.gridCheck(ctx.bot()) : -1;
         if (question == -1) {
@@ -143,7 +143,7 @@ final class BotKpqStage1 {
         }
     }
 
-    private static void tickCouponGrinding(BotScriptContext ctx) {
+    private static void tickCouponGrinding(AgentScriptContext ctx) {
         int have = ctx.bot().getItemQuantity(ITEM_COUPON, false);
         int need = AgentBotPqRuntime.kpqCouponTarget(ctx.entry());
 
@@ -159,7 +159,7 @@ final class BotKpqStage1 {
         }
     }
 
-    private static boolean hasRequiredCoupons(BotScriptContext ctx) {
+    private static boolean hasRequiredCoupons(AgentScriptContext ctx) {
         int need = AgentBotPqRuntime.kpqCouponTarget(ctx.entry());
         if (need <= 0 || ctx.bot().getItemQuantity(ITEM_COUPON, false) < need) {
             return false;
@@ -168,7 +168,7 @@ final class BotKpqStage1 {
         return true;
     }
 
-    private static void exchangeCoupons(BotScriptContext ctx) {
+    private static void exchangeCoupons(AgentScriptContext ctx) {
         int target = AgentBotPqRuntime.kpqCouponTarget(ctx.entry());
         if (ctx.bot().getItemQuantity(ITEM_COUPON, false) >= target) {
             InventoryManipulator.removeById(ctx.bot().getClient(), InventoryType.ETC, ITEM_COUPON, target, false, false);
@@ -179,7 +179,7 @@ final class BotKpqStage1 {
         AgentBotPqRuntime.queueSay(ctx.entry(), "Got my pass! Bringing it to you.");
     }
 
-    private static void queuePassDelivery(BotScriptContext ctx) {
+    private static void queuePassDelivery(AgentScriptContext ctx) {
         AgentBotPqRuntime.setKpqStageState(ctx.entry(), DELIVERING);
         ctx.queueFollowUntilNearOwner(NEAR_OWNER_PX);
         ctx.queueDrop(InventoryType.ETC, ITEM_COUPON, (short) 0);

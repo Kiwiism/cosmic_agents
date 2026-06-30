@@ -1,18 +1,21 @@
-package server.bots;
+package server.agents.plans;
 
 import client.Character;
 import client.inventory.InventoryType;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
+import server.bots.BotEntry;
+import server.bots.BotManager;
+import server.bots.BotTask;
 
 import java.awt.*;
 
-public final class BotScriptContext {
+public final class AgentScriptContext {
     private final BotEntry entry;
     private final Character bot;
     private final Character owner;
     private final BotManager manager;
 
-    BotScriptContext(BotEntry entry, Character bot, Character owner, BotManager manager) {
+    public AgentScriptContext(BotEntry entry, Character bot, Character owner, BotManager manager) {
         this.entry = entry;
         this.bot = bot;
         this.owner = owner;

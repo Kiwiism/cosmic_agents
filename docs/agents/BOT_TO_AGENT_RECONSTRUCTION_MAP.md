@@ -79,6 +79,10 @@ Recent map updates:
 - `server.bots.BotScriptRuntime` has moved to
   `server.agents.plans.AgentScriptRuntimeState`. `BotEntry` still carries the
   state during reconstruction, but the script runtime state bag is Agent-owned.
+- `server.bots.BotScript`, `BotScriptContext`, `BotScriptStep`, and
+  `BotScriptRunner` have moved to `server.agents.plans` as `AgentScript`,
+  `AgentScriptContext`, `AgentScriptStep`, and `AgentScriptRunner`. KPQ script
+  content still lives under the legacy PQ package and behavior is unchanged.
 
 | Current file | Target Agent destination | Status |
 | --- | --- | --- |
@@ -123,11 +127,11 @@ Recent map updates:
 | `src/main/java/server/bots/BotPerformanceMonitor.java` | `server.agents.runtime.AgentPerformanceMonitor` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotPhysicsEngine.java` | `server.agents.capabilities.movement.AgentPhysicsEngine` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/BotPotionManager.java` | `server.agents.capabilities.supplies.AgentPotionService`, `server.agents.capabilities.supplies.AgentAutopotPolicy`, `server.agents.capabilities.supplies.AgentPotionInventoryPolicy`, `server.agents.capabilities.supplies.AgentPassiveRecoveryPolicy`, `server.agents.capabilities.dialogue.AgentDialogueCatalog` | `MIGRATE_TO_AGENT`; autopot potion tier ranking, HP/MP slot choice policy, pure recovery potion stack counting, passive HP/MP recovery formula/skill-bonus lookup, and potion request/offer/low-donor/low-return dialogue pools are Agent-owned |
-| `src/main/java/server/bots/BotScript.java` | `server.agents.plans.legacy.LegacyBotScript` or later deletion | `LEGACY_PROFILE` |
-| `src/main/java/server/bots/BotScriptContext.java` | `server.agents.plans.legacy.LegacyBotScriptContext` | `LEGACY_PROFILE` |
-| `src/main/java/server/bots/BotScriptRunner.java` | `server.agents.plans.legacy.LegacyBotScriptRunner` | `LEGACY_PROFILE` |
+| `src/main/java/server/bots/BotScript.java` | `server.agents.plans.AgentScript` | `MIGRATED_TO_AGENT` |
+| `src/main/java/server/bots/BotScriptContext.java` | `server.agents.plans.AgentScriptContext` | `MIGRATED_TO_AGENT` |
+| `src/main/java/server/bots/BotScriptRunner.java` | `server.agents.plans.AgentScriptRunner` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotScriptRuntime.java` | `server.agents.plans.AgentScriptRuntimeState` | `MIGRATED_TO_AGENT` |
-| `src/main/java/server/bots/BotScriptStep.java` | `server.agents.plans.AgentPlanStep` | `MIGRATE_TO_AGENT` |
+| `src/main/java/server/bots/BotScriptStep.java` | `server.agents.plans.AgentScriptStep` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotScrollReactionManager.java` | `server.agents.capabilities.social` and `dialogue` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
 | `src/main/java/server/bots/BotSessionLifecycleSideEffects.java` | `server.agents.integration.AgentBotSessionLifecycleSideEffects` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotShopManager.java` | `server.agents.capabilities.shop`, `server.agents.capabilities.dialogue.AgentDialogueCatalog` | `SPLIT_TO_MULTIPLE_AGENT_MODULES`; shop resupply/shopping dialogue pools, fixed sell-trash/shop visit/shortfall result messages, shop approach geometry, ammo resupply/recharge policy, and potion shop selection policy are Agent-owned |

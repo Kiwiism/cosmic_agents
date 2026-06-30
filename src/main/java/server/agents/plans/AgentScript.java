@@ -1,15 +1,17 @@
-package server.bots;
+package server.agents.plans;
 
 import client.Character;
+import server.bots.BotEntry;
+import server.bots.BotManager;
 
 import java.util.List;
 
-public interface BotScript {
+public interface AgentScript {
     String id();
 
     boolean applies(BotEntry entry, Character bot, Character owner);
 
-    List<BotScriptStep> steps();
+    List<AgentScriptStep> steps();
 
     default void onExit(BotEntry entry) {
         BotManager.getInstance().clearScriptTasks(entry);
