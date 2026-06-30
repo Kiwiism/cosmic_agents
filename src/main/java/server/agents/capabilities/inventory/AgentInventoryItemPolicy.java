@@ -2,9 +2,13 @@ package server.agents.capabilities.inventory;
 
 import client.Character;
 import client.inventory.Inventory;
+import client.inventory.InventoryType;
 import client.inventory.Item;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.IntPredicate;
+import java.util.function.Predicate;
 
 public final class AgentInventoryItemPolicy {
     private AgentInventoryItemPolicy() {
@@ -28,5 +32,23 @@ public final class AgentInventoryItemPolicy {
         if (item.isUntradeable() && !untradeableItemsTradeable) return false;
         if (isQuestItem.test(item.getItemId())) return false;
         return true;
+    }
+
+    public static List<Item> collectSafeItems(Character agent,
+                                              InventoryType type,
+                                              Predicate<Item> filter,
+                                              IntPredicate isQuestItem,
+                                              boolean untradeableItemsTradeable) {
+        List<Item> result = new ArrayList<>();
+        Inventory inventory = agent.getInventory(type);
+        for (short slot = 1; slot <= inventory.getSlotLimit(); slot++) {
+            Item item = inventory.getItem(slot);
+            if (item != null
+                    && isSafeToDrop(item, isQuestItem, untradeableItemsTradeable)
+                    && filter.test(item)) {
+                result.add(item);
+            }
+        }
+        return result;
     }
 }

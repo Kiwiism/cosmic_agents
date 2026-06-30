@@ -1100,11 +1100,9 @@ public class BotInventoryManager {
 
     private static void collectFromBag(Character bot, List<Item> result,
                                        InventoryType type, Predicate<Item> filter) {
-        Inventory inv = bot.getInventory(type);
-        for (short slot = 1; slot <= inv.getSlotLimit(); slot++) {
-            Item item = inv.getItem(slot);
-            if (item != null && isSafeToDrop(item) && filter.test(item)) result.add(item);
-        }
+        result.addAll(AgentInventoryItemPolicy.collectSafeItems(bot, type, filter,
+                ItemInformationProvider.getInstance()::isQuestItem,
+                YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE));
     }
 
     public static boolean hasItem(Character bot, Item item) {

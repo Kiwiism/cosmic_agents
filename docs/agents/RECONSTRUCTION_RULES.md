@@ -1325,6 +1325,9 @@ Recent reconstruction notes:
 - Inventory drop-safety checks now enter through `AgentInventoryItemPolicy`.
   Untradeable and quest-item rejection rules are unchanged, with server config
   and item-info lookups passed in from the temporary bot drop execution seam.
+- Inventory safe-bag collection now enters through `AgentInventoryItemPolicy`.
+  Slot-order scans still filter through the same drop-safety rule and caller
+  predicate before appending candidates for trade/drop flows.
 - Physics position, horizontal-speed, and ground-travel carry state now enter
   through `AgentBotMovementPhysicsStateRuntime`; BotPhysicsEngine preserves
   landing, grounded travel, swim, airborne collision, climb-position, and reset
