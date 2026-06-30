@@ -1229,7 +1229,8 @@ class BotCombatManagerTest {
                      Mockito.mockStatic(AgentBotMobTouchRuntime.class, Mockito.CALLS_REAL_METHODS)) {
             combat.when(() -> AgentBotMobTouchRuntime.isMobTouchingAgent(any(BotEntry.class), any(Character.class),
                     any(Monster.class), anyInt())).thenReturn(true);
-            runWithStubbedBotAfter(() -> BotCombatManager.tickMobDamage(entry, bot));
+            runWithStubbedBotAfter(() -> AgentBotCombatDamageRuntime.tickMobDamage(
+                    entry, bot, BotCombatManager.cfg, BotMovementManager::tickDown));
         }
 
         assertEquals(20_000, bot.getHp());
@@ -1248,7 +1249,8 @@ class BotCombatManagerTest {
                      Mockito.mockStatic(AgentBotMobTouchRuntime.class, Mockito.CALLS_REAL_METHODS)) {
             combat.when(() -> AgentBotMobTouchRuntime.isMobTouchingAgent(any(BotEntry.class), any(Character.class),
                     any(Monster.class), anyInt())).thenReturn(true);
-            runWithStubbedBotAfter(() -> BotCombatManager.tickMobDamage(entry, bot));
+            runWithStubbedBotAfter(() -> AgentBotCombatDamageRuntime.tickMobDamage(
+                    entry, bot, BotCombatManager.cfg, BotMovementManager::tickDown));
         }
 
         assertTrue(bot.getHp() < 20_000, "hostile contact should reduce bot HP");

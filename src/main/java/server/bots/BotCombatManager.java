@@ -21,7 +21,6 @@ import server.agents.capabilities.combat.AgentCombatRangePolicy;
 import server.agents.capabilities.combat.AgentCombatScoringPolicy;
 import server.agents.capabilities.combat.AgentCombatSkillUsePolicy;
 import server.agents.capabilities.combat.AgentCombatSupportPolicy;
-import server.agents.capabilities.combat.AgentCombatTargetEligibilityPolicy;
 import server.agents.capabilities.combat.AgentCombatTargetSelector;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
 import server.agents.capabilities.combat.AgentScoredGrindTarget;
@@ -58,7 +57,6 @@ import server.StatEffect;
 import server.agents.capabilities.combat.data.AgentAttackDataProvider;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.integration.AgentBotAmmoStateRuntime;
-import server.agents.integration.AgentBotCombatActionStateRuntime;
 import server.agents.integration.AgentBotCombatAlertRuntime;
 import server.agents.integration.AgentBotCombatBuffRuntime;
 import server.agents.integration.AgentBotCombatFacingRuntime;
@@ -70,7 +68,6 @@ import server.agents.integration.AgentBotCombatHealRuntime;
 import server.agents.integration.AgentBotCombatDeathRuntime;
 import server.agents.integration.AgentBotCombatDamageRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotMobTouchRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
@@ -105,26 +102,8 @@ public class BotCombatManager {
 
     public static AgentCombatConfig.Config cfg = AgentCombatConfig.cfg;
 
-    /** Check every alive monster on the map; if bot is inside its bounding box, apply a hit. */
     static void tickMobDamage(BotEntry entry, Character bot) {
-        Point botPos = bot.getPosition();
-        try {
-            if (AgentBotCombatCooldownStateRuntime.hasMobHitCooldown(entry)) {
-                AgentBotCombatCooldownStateRuntime.tickMobHitCooldown(entry, BotMovementManager::tickDown);
-                return;
-            }
-            if (bot.getHp() <= 0) return;
-
-            for (Monster mob : bot.getMap().getAllMonsters()) {
-                if (!AgentCombatTargetEligibilityPolicy.isHostileLivingMonster(mob)) continue;
-                if (AgentBotMobTouchRuntime.isMobTouchingAgent(entry, bot, mob, cfg.MOB_TOUCH_SWEEP_HEIGHT)) {
-                    applyMobHit(entry, bot, mob);
-                    return;
-                }
-            }
-        } finally {
-            AgentBotMobTouchRuntime.rememberMobTouchCheck(entry, bot, botPos);
-        }
+        AgentBotCombatDamageRuntime.tickMobDamage(entry, bot, cfg, BotMovementManager::tickDown);
     }
 
     /**

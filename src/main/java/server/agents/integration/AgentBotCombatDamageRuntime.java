@@ -3,6 +3,7 @@ package server.agents.integration;
 import client.BuffStat;
 import client.Character;
 import server.agents.capabilities.combat.AgentCombatConfig;
+import server.agents.capabilities.combat.AgentCombatTargetEligibilityPolicy;
 import server.agents.capabilities.combat.AgentFallDamageCalculator;
 import server.agents.capabilities.combat.AgentMobKnockbackPolicy;
 import server.agents.capabilities.combat.data.AgentDefenseDataProvider;
@@ -14,6 +15,7 @@ import tools.PacketCreator;
 
 import java.awt.Point;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.IntUnaryOperator;
 
 public final class AgentBotCombatDamageRuntime {
     private AgentBotCombatDamageRuntime() {
@@ -25,6 +27,28 @@ public final class AgentBotCombatDamageRuntime {
                 AgentMobKnockbackPolicy.resolveMobHitKnockback(
                         bot.getPosition(), mob.getPosition(), config.KNOCKBACK_HSPEED, BotMovementManager.configuredTickMs());
         applyDamage(entry, bot, dmg, -1, mob.getId(), kb.direction(), kb.airVelX(), config);
+    }
+
+    public static void tickMobDamage(BotEntry entry, Character bot, AgentCombatConfig.Config config,
+                                     IntUnaryOperator cooldownTickDown) {
+        Point botPos = bot.getPosition();
+        try {
+            if (AgentBotCombatCooldownStateRuntime.hasMobHitCooldown(entry)) {
+                AgentBotCombatCooldownStateRuntime.tickMobHitCooldown(entry, cooldownTickDown);
+                return;
+            }
+            if (bot.getHp() <= 0) return;
+
+            for (Monster mob : bot.getMap().getAllMonsters()) {
+                if (!AgentCombatTargetEligibilityPolicy.isHostileLivingMonster(mob)) continue;
+                if (AgentBotMobTouchRuntime.isMobTouchingAgent(entry, bot, mob, config.MOB_TOUCH_SWEEP_HEIGHT)) {
+                    applyMobHit(entry, bot, mob, config);
+                    return;
+                }
+            }
+        } finally {
+            AgentBotMobTouchRuntime.rememberMobTouchCheck(entry, bot, botPos);
+        }
     }
 
     public static void applyFallDamage(BotEntry entry, Character bot,
