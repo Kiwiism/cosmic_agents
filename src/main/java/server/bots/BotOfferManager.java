@@ -1,5 +1,6 @@
 package server.bots;
 
+import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 
 
@@ -591,7 +592,7 @@ public final class BotOfferManager {
     }
 
     private static List<Character> eligibleBotRecipients(Character owner, Character donor) {
-        BotOwnershipService ownership = BotOwnershipService.getInstance();
+        AgentOwnershipService ownership = AgentOwnershipService.getInstance();
         return owner.getPartyMembersOnSameMap().stream()
                 .filter(member -> member != null)
                 .filter(member -> member.getId() != owner.getId())

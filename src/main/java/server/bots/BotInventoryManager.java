@@ -1,5 +1,6 @@
 package server.bots;
 
+import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentCombatConfig;
 
@@ -281,7 +282,7 @@ public class BotInventoryManager {
             boolean isPeerBotTrade = partner != null
                     && partner.getChr().getClient() instanceof client.BotClient
                     && owner != null
-                    && BotOwnershipService.getInstance().isAuthorizedOwner(partner.getChr().getId(), owner.getId());
+                    && AgentOwnershipService.getInstance().isAuthorizedOwner(partner.getChr().getId(), owner.getId());
             if (!isPeerBotTrade) {
                 manualTradeGreetingSent.remove(bot.getId());
                 return;

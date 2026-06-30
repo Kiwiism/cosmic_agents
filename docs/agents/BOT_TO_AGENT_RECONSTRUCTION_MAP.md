@@ -60,6 +60,10 @@ Recent map updates:
   `AgentMemoryStore`, `AgentPromptBuilder`, `AgentSituationBuilder`,
   `AgentSenderRelation`, and `OllamaClient`. The old source/test package is
   empty, and `BotManager` calls the Agent reply service directly.
+- `server.bots.BotOwnershipService` has moved to
+  `server.agents.auth.AgentOwnershipService`. Character resolution,
+  `bot_owners` lookup/registration, same-account adoption, denial messages, and
+  authorization results are unchanged.
 - `server.bots.BotCommandParser` has moved to
   `server.agents.integration.AgentBotCommandParser`. Bot-entry target
   adaptation, transfer command wrapping, and targeted-command feedback are
@@ -128,7 +132,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotNavigationMapLoader.java` | `server.agents.capabilities.navigation.AgentNavigationMapLoader` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotNavigationProbe.java` | `server.agents.capabilities.navigation.AgentNavigationProbe` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/BotOfferManager.java` | `server.agents.capabilities.trade.AgentOfferService`, `equipment`, `server.agents.capabilities.dialogue.AgentDialogueCatalog` | `SPLIT_TO_MULTIPLE_AGENT_MODULES`; offer accept/decline replies, owner-upgrade request prompts, and loot-offer prompt templates are Agent-owned |
-| `src/main/java/server/bots/BotOwnershipService.java` | `server.agents.legacy.LegacyBotOwnershipAdapter` initially; later replace/remove | `LEGACY_PROFILE` |
+| `src/main/java/server/bots/BotOwnershipService.java` | `server.agents.auth.AgentOwnershipService` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotPathLogger.java` | `server.agents.runtime.AgentPathLogger` or monitoring package later | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/BotPerformanceMonitor.java` | `server.agents.runtime.AgentPerformanceMonitor` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotPhysicsEngine.java` | `server.agents.capabilities.movement.AgentPhysicsEngine` | `MIGRATE_TO_AGENT` |

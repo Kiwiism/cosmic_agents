@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 import server.ChatLogger;
 import server.agents.registry.AgentResolvedCharacter;
 import server.bots.BotManager;
-import server.bots.BotOwnershipService;
+import server.agents.auth.AgentOwnershipService;
 import tools.PacketCreator;
 import tools.PacketCreator.WhisperFlag;
 
@@ -56,7 +56,7 @@ public final class WhisperHandler extends AbstractPacketHandler {
         if (target == null) {
             // Bots should always appear online; suppress the not-found reply for any
             // registered bot name (whisper-spam during the bot-spawn flow is noise).
-            BotOwnershipService ownership = BotOwnershipService.getInstance();
+            AgentOwnershipService ownership = AgentOwnershipService.getInstance();
             AgentResolvedCharacter resolved = ownership.resolveCharacterByName(name);
             if (resolved == null || ownership.getRegisteredOwnerId(resolved.id()) == null) {
                 c.sendPacket(PacketCreator.getWhisperResult(name, false));

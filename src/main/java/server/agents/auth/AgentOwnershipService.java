@@ -1,8 +1,7 @@
-package server.bots;
+package server.agents.auth;
 
 import client.Character;
 import net.server.Server;
-import server.agents.auth.AgentAuthorizationResult;
 import server.agents.registry.AgentResolvedCharacter;
 import tools.DatabaseConnection;
 
@@ -11,14 +10,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public final class BotOwnershipService {
-    private static final BotOwnershipService instance = new BotOwnershipService();
+public final class AgentOwnershipService {
+    private static final AgentOwnershipService instance = new AgentOwnershipService();
 
-    public static BotOwnershipService getInstance() {
+    public static AgentOwnershipService getInstance() {
         return instance;
     }
 
-    private BotOwnershipService() {
+    private AgentOwnershipService() {
     }
 
     public AgentResolvedCharacter resolveCharacterByName(String name) {

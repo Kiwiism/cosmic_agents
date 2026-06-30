@@ -4,7 +4,7 @@ import client.Character;
 import client.Client;
 import client.command.Command;
 import server.agents.registry.AgentResolvedCharacter;
-import server.bots.BotOwnershipService;
+import server.agents.auth.AgentOwnershipService;
 
 public class TakeBotOwnerCommand extends Command {
     {
@@ -19,7 +19,7 @@ public class TakeBotOwnerCommand extends Command {
             return;
         }
 
-        BotOwnershipService ownershipService = BotOwnershipService.getInstance();
+        AgentOwnershipService ownershipService = AgentOwnershipService.getInstance();
         String[] rawArgs = player.getLastCommandMessage().trim().split("[ ]", 2);
         String botName = rawArgs[0];
 

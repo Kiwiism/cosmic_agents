@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.registry.AgentResolvedCharacter;
 import server.bots.BotManager;
-import server.bots.BotOwnershipService;
+import server.agents.auth.AgentOwnershipService;
 import tools.BCrypt;
 import tools.DatabaseConnection;
 
@@ -31,7 +31,7 @@ public final class AgentSpawnCommandExecutor {
     public void execute(Client c, String[] params) {
         Character player = c.getPlayer();
         BotManager botManager = BotManager.getInstance();
-        BotOwnershipService ownershipService = BotOwnershipService.getInstance();
+        AgentOwnershipService ownershipService = AgentOwnershipService.getInstance();
         if (params.length < 1) {
             player.yellowMessage("Syntax: @spawnbot <name> [confirm]");
             return;

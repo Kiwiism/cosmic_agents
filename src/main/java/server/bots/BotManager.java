@@ -1,5 +1,6 @@
 package server.bots;
 
+import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.combat.AgentAttackRoute;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
@@ -380,7 +381,7 @@ public class BotManager {
 
     /** Spawn a registered bot for the given owner, placing it at the owner's current position in follow mode. */
     public SpawnResult spawnBotForOwner(Character owner, String botName) {
-        BotOwnershipService ownershipService = BotOwnershipService.getInstance();
+        AgentOwnershipService ownershipService = AgentOwnershipService.getInstance();
         AgentResolvedCharacter resolved = ownershipService.resolveCharacterByName(botName);
         if (resolved == null) {
             return SpawnResult.fail("No character named '" + botName + "' exists.");
@@ -675,7 +676,7 @@ public class BotManager {
         if (bot == null) return "No ownerless bot named '" + botName + "' found.";
 
         AgentAuthorizationResult auth =
-                BotOwnershipService.getInstance().ensureCanControl(
+                AgentOwnershipService.getInstance().ensureCanControl(
                         owner,
                         new AgentResolvedCharacter(
                                 bot.getId(),
@@ -703,7 +704,7 @@ public class BotManager {
         if (target.getId() == ownerCharId) return "That's you.";
 
         AgentAuthorizationResult auth =
-                BotOwnershipService.getInstance().ensureCanControl(
+                AgentOwnershipService.getInstance().ensureCanControl(
                         target,
                         new AgentResolvedCharacter(
                                 AgentBotRuntimeIdentityRuntime.botId(found),

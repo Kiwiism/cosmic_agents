@@ -30,7 +30,7 @@ import client.CharacterNameAndId;
 import client.Client;
 import net.AbstractPacketHandler;
 import server.agents.registry.AgentResolvedCharacter;
-import server.bots.BotOwnershipService;
+import server.agents.auth.AgentOwnershipService;
 import net.packet.InPacket;
 import net.server.world.World;
 import tools.DatabaseConnection;
@@ -112,7 +112,7 @@ public class BuddylistModifyHandler extends AbstractPacketHandler {
                     }
                     if (charWithId != null) {
                         // Bot shortcut: skip pending request, add immediately as always-online
-                        BotOwnershipService ownershipService = BotOwnershipService.getInstance();
+                        AgentOwnershipService ownershipService = AgentOwnershipService.getInstance();
                         AgentResolvedCharacter resolved = ownershipService.resolveCharacterById(charWithId.getId());
                         if (resolved != null && ownershipService.ensureCanControl(player, resolved).allowed()) {
                             buddylist.put(new BuddylistEntry(charWithId.getName(), group, charWithId.getId(), 1, true));

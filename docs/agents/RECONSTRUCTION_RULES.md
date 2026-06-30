@@ -1288,10 +1288,11 @@ Recent reconstruction notes:
   BotEntry, chat handlers, reply runtimes, offer replies, LLM gating, and tests;
   the legacy `server.bots.ReplyChannel` enum has been removed without changing
   MAP/PARTY/WHISPER routing behavior.
-- Bot ownership lookup and authorization result contracts now use
-  `AgentResolvedCharacter` and `AgentAuthorizationResult`; BotOwnershipService
-  remains the temporary DB-backed compatibility service, while callers no
-  longer depend on bot-package nested ownership result records.
+- Bot ownership lookup and authorization now live in
+  `AgentOwnershipService` with `AgentResolvedCharacter` and
+  `AgentAuthorizationResult`; the same DB-backed `bot_owners` behavior is
+  preserved for this reconstruction stage, but the service is no longer owned
+  by the bot package.
 - Fidget mode and trigger state now use `AgentFidgetMode` and
   `AgentFidgetTrigger` under the Agent movement fidget capability; BotEntry and
   BotFidgetManager preserve the same NONE/WAIT/JUMP/DIAGONAL_JUMP/PRONE/
