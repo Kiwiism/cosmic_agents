@@ -1,6 +1,7 @@
 package server.bots;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.shop.AgentShopAmmoPolicy;
@@ -430,7 +431,7 @@ public final class BotShopManager {
     }
 
     private static boolean needsFixedAmmoForShop(Character bot, Shop shop, WeaponType wt, int threshold) {
-        if (!needsAmmo(bot, wt) || BotCombatManager.countAmmo(bot, wt) >= threshold) {
+        if (!needsAmmo(bot, wt) || AgentCombatAmmoCounter.countAmmo(bot, wt) >= threshold) {
             return false;
         }
         return shop == null || findAmmoItem(shop, wt) != null;
@@ -454,7 +455,8 @@ public final class BotShopManager {
     }
 
     static boolean shouldBuyFixedAmmoWhileShopping(Character bot, WeaponType wt) {
-        return AgentShopAmmoPolicy.shouldBuyFixedAmmo(wt, BotCombatManager.countAmmo(bot, wt), ammoTargetThreshold());
+        return AgentShopAmmoPolicy.shouldBuyFixedAmmo(wt, AgentCombatAmmoCounter.countAmmo(bot, wt),
+                ammoTargetThreshold());
     }
 
     private static boolean isRechargeWeaponType(WeaponType wt) {
@@ -489,7 +491,7 @@ public final class BotShopManager {
         }
 
         int target = ammoTargetThreshold();
-        int current = BotCombatManager.countAmmo(bot, wt);
+        int current = AgentCombatAmmoCounter.countAmmo(bot, wt);
         return buyFixedCostItem(bot, shop, ammo, Math.max(0, target - current), 1000);
     }
 

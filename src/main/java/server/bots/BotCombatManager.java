@@ -926,7 +926,8 @@ public class BotCombatManager {
                 effect.getBulletConsume(),
                 shadowPartnerHitMultiplier(bot, route),
                 route,
-                () -> countAmmo(bot, weaponType)) != AgentSkillAttackPlanner.SkillAmmoReadiness.READY) {
+                () -> AgentCombatAmmoCounter.countAmmo(bot, weaponType))
+                != AgentSkillAttackPlanner.SkillAmmoReadiness.READY) {
             return null;
         }
         // Resolve the animated action once up front: weapon-action sampling is random, so the
@@ -1675,7 +1676,7 @@ public class BotCombatManager {
                 }
             }
         } else if (rangedAmmoWeapon) {
-            ammo = countAmmo(bot, weaponType);
+            ammo = AgentCombatAmmoCounter.countAmmo(bot, weaponType);
         }
 
         AgentCombatAmmoPolicy.AmmoCheckDecision decision = AgentCombatAmmoPolicy.ammoCheckDecision(
@@ -1709,11 +1710,6 @@ public class BotCombatManager {
             case NO_CHANGE -> {
             }
         }
-    }
-
-    /** Counts total ammo in USE inventory matching the bot's equipped weapon type. */
-    public static int countAmmo(Character bot, WeaponType weaponType) {
-        return AgentCombatAmmoCounter.countAmmo(bot, weaponType);
     }
 
     private static boolean hasNearbyPartyMemberMissingBuff(Character bot, StatEffect fx) {

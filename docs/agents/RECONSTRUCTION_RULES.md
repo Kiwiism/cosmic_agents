@@ -1535,6 +1535,10 @@ Recent reconstruction notes:
 - Ranged-ammo weapon classification now calls `AgentCombatAmmoCounter` directly
   from combat and manager flows; the temporary `BotCombatManager` ammo-weapon
   wrapper has been removed while preserving bow/crossbow/claw/gun detection.
+- Ammo counting now calls `AgentCombatAmmoCounter` directly from combat,
+  ammo-share, and shop-resupply flows; the temporary `BotCombatManager`
+  count-ammo wrapper has been removed while preserving USE-inventory projectile
+  matching and Soul Arrow/Shadow Claw unlimited-ammo behavior.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

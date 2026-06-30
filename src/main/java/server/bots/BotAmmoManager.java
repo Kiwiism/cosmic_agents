@@ -1,6 +1,7 @@
 package server.bots;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 
 import client.Character;
 import client.inventory.Item;
@@ -35,7 +36,7 @@ public final class BotAmmoManager {
             return false;
         }
 
-        int ammo = BotCombatManager.countAmmo(bot, weaponType);
+        int ammo = AgentCombatAmmoCounter.countAmmo(bot, weaponType);
         if (ammo >= BotCombatManager.cfg.AMMO_LOW_WARN) {
             AgentBotAmmoStateRuntime.clearAmmoShareRequested(entry);
             return false;
@@ -139,7 +140,7 @@ public final class BotAmmoManager {
             if (sibling == excludedEntry || donorBot == null || donorBot.getMapId() != mapId) {
                 continue;
             }
-            int count = BotCombatManager.countAmmo(donorBot, needyWeaponType);
+            int count = AgentCombatAmmoCounter.countAmmo(donorBot, needyWeaponType);
             if (count < BotCombatManager.cfg.AMMO_LOW_WARN) {
                 continue;
             }
