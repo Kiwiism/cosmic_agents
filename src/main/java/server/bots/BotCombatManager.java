@@ -334,7 +334,8 @@ public class BotCombatManager {
                         AgentBotCombatSkillCacheStateRuntime.hasBuffSkillIds(entry));
         if (tickDecision != AgentCombatSupportPolicy.SkillBuffTickDecision.READY) {
             if (tickDecision.legacyDebugSummary() != null) {
-                noteSkillBuffDecision(entry, tickDecision.legacyDebugSummary());
+                AgentBotSkillBuffDebugStateRuntime.rememberAction(
+                        entry, System.currentTimeMillis(), tickDecision.legacyDebugSummary());
             }
             return;
         }
@@ -363,7 +364,8 @@ public class BotCombatManager {
                 return;
             }
         }
-        noteSkillBuffDecision(entry, AgentCombatSupportPolicy.allSkillBuffsActiveOrOnCooldownSummary());
+        AgentBotSkillBuffDebugStateRuntime.rememberAction(
+                entry, System.currentTimeMillis(), AgentCombatSupportPolicy.allSkillBuffsActiveOrOnCooldownSummary());
     }
 
     /**
@@ -1252,10 +1254,6 @@ public class BotCombatManager {
         AgentBotMobTouchStateRuntime.rememberCheck(entry, position, bot.getMapId());
     }
 
-    private static void noteSkillBuffDecision(BotEntry entry, String summary) {
-        AgentBotSkillBuffDebugStateRuntime.rememberAction(entry, System.currentTimeMillis(), summary);
-    }
-
     public static List<String> getSkillBuffDebugLines(BotEntry entry, Character bot) {
         return AgentBotCombatReportRuntime.skillBuffDebugLines(entry, bot);
     }
@@ -1316,12 +1314,15 @@ public class BotCombatManager {
         String readinessSummary = readiness.legacyDebugSummary(
                 AgentCombatDialogueReporter.combatSkillLabel(skill.getId()));
         if (readinessSummary != null) {
-            noteSkillBuffDecision(entry, readinessSummary);
+            AgentBotSkillBuffDebugStateRuntime.rememberAction(entry, System.currentTimeMillis(), readinessSummary);
             return false;
         }
         if (!dispatchSupportSpecialMove(bot, skill, skillLevel)) {
-            noteSkillBuffDecision(entry, AgentCombatSupportPolicy.supportSpecialMoveFailedSummary(
-                    AgentCombatDialogueReporter.combatSkillLabel(skill.getId())));
+            AgentBotSkillBuffDebugStateRuntime.rememberAction(
+                    entry,
+                    System.currentTimeMillis(),
+                    AgentCombatSupportPolicy.supportSpecialMoveFailedSummary(
+                            AgentCombatDialogueReporter.combatSkillLabel(skill.getId())));
             return false;
         }
 
@@ -1339,8 +1340,11 @@ public class BotCombatManager {
         AgentBotCombatCooldownStateRuntime.maxAttackCooldown(entry,
                 AgentCombatSupportPolicy.supportCastCooldownMs(skillTiming.cooldownMs(), skill.getAnimationTime()));
         markAlerted(entry);
-        noteSkillBuffDecision(entry, AgentCombatSupportPolicy.supportCastSummary(
-                AgentCombatDialogueReporter.combatSkillLabel(skill.getId())));
+        AgentBotSkillBuffDebugStateRuntime.rememberAction(
+                entry,
+                System.currentTimeMillis(),
+                AgentCombatSupportPolicy.supportCastSummary(
+                        AgentCombatDialogueReporter.combatSkillLabel(skill.getId())));
         return true;
     }
 

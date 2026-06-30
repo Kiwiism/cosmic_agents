@@ -1650,6 +1650,10 @@ Recent reconstruction notes:
 - The no-entry `BotCombatManager.findGrindTarget(Character)` compatibility
   overload has been removed; combat debug fallback target search now uses the
   entry-aware target-search path available to the caller.
+- Skill-buff debug decision recording now calls
+  `AgentBotSkillBuffDebugStateRuntime.rememberAction` directly from the
+  remaining support-buff flow; the temporary `BotCombatManager` reporting helper
+  has been removed while preserving the same timestamp source and summary text.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
