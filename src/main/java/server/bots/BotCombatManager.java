@@ -69,6 +69,7 @@ import server.agents.capabilities.combat.data.AgentMobHitboxProvider;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotAmmoStateRuntime;
+import server.agents.integration.AgentBotCombatFacingRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatBuffStateRuntime;
 import server.agents.integration.AgentBotCombatReportRuntime;
@@ -753,14 +754,8 @@ public class BotCombatManager {
 
         AgentAttackExecutionProvider.applyAttackRoute(attackPlan.route, attack, bot);
         AgentBotCombatCooldownStateRuntime.maxAttackCooldown(entry, attackPlan.cooldownMs);
-        rememberAttackFacing(entry, attackPlan.stance);
+        AgentBotCombatFacingRuntime.rememberAttackFacing(entry, attackPlan.stance);
         markAlerted(entry);
-    }
-
-    static void rememberAttackFacing(BotEntry entry, int attackPacketStance) {
-        AgentBotMovementStateRuntime.setFacingDirection(entry,
-                AgentAttackExecutionProvider.facingDirFromAttackPacketStance(attackPacketStance));
-        BotPhysicsEngine.syncCharacterState(entry);
     }
 
     static void tickActionLock(BotEntry entry) {

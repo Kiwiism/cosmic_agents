@@ -40,6 +40,7 @@ import org.mockito.ArgumentCaptor;
 import server.StatEffect;
 import server.agents.integration.AgentBotCombatBuffStateRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentBotCombatFacingRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotMobTouchStateRuntime;
@@ -1311,7 +1312,7 @@ class BotCombatManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.facingDir = 1;
 
-        BotCombatManager.rememberAttackFacing(entry, AgentAttackExecutionProvider.attackPacketStance(true));
+        AgentBotCombatFacingRuntime.rememberAttackFacing(entry, AgentAttackExecutionProvider.attackPacketStance(true));
 
         assertEquals(-1, entry.facingDir);
         assertEquals(CharacterStance.STAND_LEFT_STANCE, bot.getStance());
@@ -1323,7 +1324,7 @@ class BotCombatManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.facingDir = -1;
 
-        BotCombatManager.rememberAttackFacing(entry, AgentAttackExecutionProvider.attackPacketStance(false));
+        AgentBotCombatFacingRuntime.rememberAttackFacing(entry, AgentAttackExecutionProvider.attackPacketStance(false));
 
         assertEquals(1, entry.facingDir);
         assertEquals(CharacterStance.STAND_RIGHT_STANCE, bot.getStance());

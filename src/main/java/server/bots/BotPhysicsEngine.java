@@ -1407,7 +1407,7 @@ public final class BotPhysicsEngine {
         return CharacterStance.isStanding(stance);
     }
 
-    static void syncCharacterState(BotEntry entry) {
+    public static void syncCharacterState(BotEntry entry) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (bot == null) {
             return;

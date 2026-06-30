@@ -1669,6 +1669,10 @@ Recent reconstruction notes:
   `AgentSupportSpecialMoveExecutor`; `BotCombatManager` calls the Agent-owned
   executor while preserving the same packet builder, timestamp, packet handler
   lookup, validation, and dispatch flow.
+- Attack-facing memory now lives in `AgentBotCombatFacingRuntime`;
+  `BotCombatManager` calls the Agent-owned runtime while preserving the same
+  attack-packet stance conversion, facing direction update, and character-state
+  sync.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
