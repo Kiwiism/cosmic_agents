@@ -1474,6 +1474,10 @@ Recent reconstruction notes:
   `AgentCombatSkillClassifier`, preserving the legacy active-support-skill plus
   buff-blacklist gate while BotCombatManager still mutates the temporary
   buff-skill cache and rebuff timers.
+- Skill-cache bucket classification for attack, summon, and support-buff
+  branches now uses `AgentCombatSkillClassifier.SkillCacheBucket`, preserving
+  legacy cache mutation in BotCombatManager while moving branch ownership into
+  Agent combat classification.
 - Support-buff no-living-mobs preflight now lives in
   `AgentCombatSupportPolicy`, preserving the legacy skip when a map has no
   alive monsters while BotCombatManager still performs the live map scan and

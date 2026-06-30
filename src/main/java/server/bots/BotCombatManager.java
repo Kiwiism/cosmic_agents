@@ -331,6 +331,8 @@ public class BotCombatManager {
             StatEffect fx = skill.getEffect(lvl);
             int atk = effectiveHitCount(fx);
             int mobs = fx.getMobCount();
+            AgentCombatSkillClassifier.SkillCacheBucket cacheBucket =
+                    AgentCombatSkillClassifier.classifySkillCacheBucket(skill, fx);
 
             if (isHealSkill(skill.getId())) {
                 if (isActiveHealSkill(skill, fx)) {
@@ -339,7 +341,7 @@ public class BotCombatManager {
                 continue;  // not an attack skill; offensive use against undead handled in tickSupportHealing
             }
 
-            if (isActiveAttackSkill(skill, fx)) {
+            if (cacheBucket == AgentCombatSkillClassifier.SkillCacheBucket.ACTIVE_ATTACK) {
                 AgentBotCombatSkillCacheStateRuntime.addAttackSkillId(entry, skill.getId());
                 if (mobs >= 2) {
                     long score = AgentCombatSkillClassifier.aoeSkillScore(fx, atk, mobs);
@@ -358,13 +360,13 @@ public class BotCombatManager {
                 continue;
             }
 
-            if (isSummonSkill(fx)) {
+            if (cacheBucket == AgentCombatSkillClassifier.SkillCacheBucket.SUMMON) {
                 // Own bucket, not rebuffable — see BotEntry.summonSkillIds.
                 AgentBotCombatSkillCacheStateRuntime.addSummonSkillId(entry, skill.getId());
                 continue;
             }
 
-            if (!AgentCombatSkillClassifier.isCacheableSupportBuffSkill(skill, fx)) continue;
+            if (cacheBucket != AgentCombatSkillClassifier.SkillCacheBucket.SUPPORT_BUFF) continue;
             AgentBotCombatSkillCacheStateRuntime.addBuffSkillId(entry, skill.getId());
             AgentBotCombatBuffStateRuntime.ensureNextBuffAt(entry, skill.getId(), 0L);
         }

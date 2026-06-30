@@ -84,6 +84,45 @@ class AgentCombatSkillClassifierTest {
     }
 
     @Test
+    void classifiesLegacySkillCacheBuckets() {
+        Skill heal = skill(Cleric.HEAL, false);
+        when(heal.getAction()).thenReturn(true);
+        StatEffect healEffect = mock(StatEffect.class);
+
+        Skill attack = skill(Warrior.POWER_STRIKE, false);
+        StatEffect attackEffect = mock(StatEffect.class);
+        when(attackEffect.hasDamage()).thenReturn(true);
+        when(attackEffect.getMpCon()).thenReturn((short) 1);
+
+        Skill summon = skill(Assassin.HASTE + 1000, false);
+        StatEffect summonEffect = mock(StatEffect.class);
+        when(summonEffect.getStatups()).thenReturn(List.of(new Pair<>(BuffStat.SUMMON, 1)));
+
+        Skill support = skill(Assassin.HASTE, false);
+        when(support.getAction()).thenReturn(true);
+        StatEffect supportEffect = mock(StatEffect.class);
+        when(supportEffect.isOverTime()).thenReturn(true);
+        when(supportEffect.getDuration()).thenReturn(10_000);
+        when(supportEffect.getStatups()).thenReturn(List.of(new Pair<>(BuffStat.SPEED, 20)));
+
+        Skill darkSight = skill(Rogue.DARK_SIGHT, false);
+        when(darkSight.getAction()).thenReturn(true);
+
+        assertEquals(AgentCombatSkillClassifier.SkillCacheBucket.ACTIVE_HEAL,
+                AgentCombatSkillClassifier.classifySkillCacheBucket(heal, healEffect));
+        assertEquals(AgentCombatSkillClassifier.SkillCacheBucket.ACTIVE_ATTACK,
+                AgentCombatSkillClassifier.classifySkillCacheBucket(attack, attackEffect));
+        assertEquals(AgentCombatSkillClassifier.SkillCacheBucket.SUMMON,
+                AgentCombatSkillClassifier.classifySkillCacheBucket(summon, summonEffect));
+        assertEquals(AgentCombatSkillClassifier.SkillCacheBucket.SUPPORT_BUFF,
+                AgentCombatSkillClassifier.classifySkillCacheBucket(support, supportEffect));
+        assertEquals(AgentCombatSkillClassifier.SkillCacheBucket.IGNORE,
+                AgentCombatSkillClassifier.classifySkillCacheBucket(darkSight, supportEffect));
+        assertEquals(AgentCombatSkillClassifier.SkillCacheBucket.IGNORE,
+                AgentCombatSkillClassifier.classifySkillCacheBucket(null, supportEffect));
+    }
+
+    @Test
     void computesSkillCacheSignatureFromLearnedSkillsAndLevels() {
         Character bot = mock(Character.class);
         Skill luckySeven = skill(Rogue.LUCKY_SEVEN, false);
