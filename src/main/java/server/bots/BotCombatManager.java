@@ -423,7 +423,12 @@ public class BotCombatManager {
                 ? fx.calculateBoundingBox(bot.getPosition(), bot.isFacingLeft())
                 : null;
         boolean selfNeedsHeal = AgentCombatSupportPolicy.needsHeal(bot, cfg.SUPPORT_HEAL_TARGET_RATIO);
-        boolean partyNeedsHeal = selfNeedsHeal || hasPartyMemberInBoundsNeedingHeal(bot, healBounds);
+        boolean partyNeedsHeal = selfNeedsHeal || AgentCombatSupportPolicy.hasPartyMemberInBoundsNeedingHeal(
+                bot,
+                healBounds,
+                cfg.SUPPORT_RANGE,
+                cfg.SUPPORT_VERTICAL_RANGE,
+                cfg.SUPPORT_HEAL_TARGET_RATIO);
         List<Monster> undeadTargets = getUndeadMobsInHealRange(bot, fx, healBounds);
         if (!AgentCombatSupportPolicy.shouldCastSupportHeal(partyNeedsHeal, !undeadTargets.isEmpty())) return false;
 
@@ -1424,7 +1429,8 @@ public class BotCombatManager {
             }
 
             StatEffect fx = skill.getEffect(lvl);
-            if (!hasNearbyPartyMemberMissingBuff(bot, fx)) {
+            if (!AgentCombatSupportPolicy.hasNearbyPartyMemberMissingBuff(
+                    bot, fx, cfg.SUPPORT_RANGE, cfg.SUPPORT_VERTICAL_RANGE)) {
                 continue;
             }
 
@@ -1564,22 +1570,4 @@ public class BotCombatManager {
         }
     }
 
-    private static boolean hasNearbyPartyMemberMissingBuff(Character bot, StatEffect fx) {
-        return AgentCombatSupportPolicy.hasNearbyPartyMemberMissingBuff(bot, fx,
-                cfg.SUPPORT_RANGE, cfg.SUPPORT_VERTICAL_RANGE);
-    }
-
-    /**
-     * True when any party member inside the heal skill's WZ bounding box is below the heal
-     * threshold. Using the skill bounds (not cfg.SUPPORT_RANGE) avoids the infinite-cast loop that
-     * occurs when a member sits inside the looser support range but outside the actual heal hitbox:
-     * applyTo() would never include them, so their HP never recovers and the decision fires again.
-     *
-     * <p>Falls back to the legacy SUPPORT_RANGE box if the skill has no WZ bounding box, which is
-     * defensive — Cleric.HEAL always has lt/rb, but other heal-like skills added later might not.
-     */
-    private static boolean hasPartyMemberInBoundsNeedingHeal(Character bot, Rectangle healBounds) {
-        return AgentCombatSupportPolicy.hasPartyMemberInBoundsNeedingHeal(bot, healBounds,
-                cfg.SUPPORT_RANGE, cfg.SUPPORT_VERTICAL_RANGE, cfg.SUPPORT_HEAL_TARGET_RATIO);
-    }
 }

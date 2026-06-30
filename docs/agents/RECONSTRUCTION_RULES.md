@@ -1583,6 +1583,10 @@ Recent reconstruction notes:
   directly from attack execution readiness; the temporary `BotCombatManager`
   skill-use wrapper has been removed while preserving SkillFactory/effect cost
   behavior.
+- Support party missing-buff and heal-bounds checks now call
+  `AgentCombatSupportPolicy` directly from support buff/heal orchestration; the
+  temporary `BotCombatManager` wrappers have been removed while preserving the
+  same support range, vertical range, heal hitbox, and heal-ratio inputs.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
