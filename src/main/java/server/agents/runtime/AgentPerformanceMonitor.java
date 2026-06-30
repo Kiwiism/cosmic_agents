@@ -91,7 +91,7 @@ public final class AgentPerformanceMonitor {
         notes.put("common-script-tasks", "tickScriptTasks (BotScriptRunner)");
         notes.put("common-action-lock", "AgentBotCombatActionLockRuntime.tickActionLock (attack/move cooldown decay)");
         notes.put("common-skill-cache", "AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded");
-        notes.put("common-support-heal", "BotCombatManager.tickSupportHealing (cleric heal)");
+        notes.put("common-support-heal", "AgentBotCombatHealRuntime.tickSupportHealing (cleric heal)");
         notes.put("common-combat-buffs", "AgentBotCombatBuffRuntime.tickBuffs (player skill rebuff)");
         notes.put("common-buff-pots", "BotBuffManager.tick (consumable buff pots)");
         // Dispatch buckets

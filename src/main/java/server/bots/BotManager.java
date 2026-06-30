@@ -1284,7 +1284,7 @@ public class BotManager {
         return ownerFormations.getOrDefault(owner.getId(), FormationState.defaultStagger());
     }
 
-    Character resolveFollowAnchor(BotEntry entry, Character owner) {
+    public Character resolveFollowAnchor(BotEntry entry, Character owner) {
         if (owner == null) {
             return null;
         }

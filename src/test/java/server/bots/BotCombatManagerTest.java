@@ -44,6 +44,7 @@ import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatFacingRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheRuntime;
+import server.agents.integration.AgentBotCombatHealRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotMobTouchStateRuntime;
 import server.agents.integration.AgentBotMobTouchRuntime;
@@ -1077,6 +1078,16 @@ class BotCombatManagerTest {
         assertEquals("no skill buff checks yet", AgentBotSkillBuffDebugStateRuntime.lastActionSummary(entry));
         assertEquals(0L, AgentBotCombatBuffStateRuntime.nextSupportBuffAt(entry, Cleric.BLESS));
         assertEquals(0, AgentBotCombatCooldownStateRuntime.attackCooldownMs(entry));
+    }
+
+    @Test
+    void supportHealRuntimeReturnsFalseWhenNoHealSkillIsCached() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        BotEntry entry = new BotEntry(bot, null, null);
+        entry.following = true;
+
+        assertFalse(AgentBotCombatHealRuntime.tickSupportHealing(entry, bot, BotCombatManager.cfg));
     }
 
     @Test

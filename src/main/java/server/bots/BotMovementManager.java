@@ -847,7 +847,7 @@ public class BotMovementManager {
         return stepX;
     }
 
-    static void initiateJump(BotEntry entry, Character bot, int dx) {
+    public static void initiateJump(BotEntry entry, Character bot, int dx) {
         BotPhysicsEngine.beginGroundJump(entry, bot, resolveAirVelocityX(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry), dx));
         broadcastMovement(entry);
     }
@@ -886,7 +886,7 @@ public class BotMovementManager {
         return dx > 0 ? walkStep : -walkStep;
     }
 
-    static void broadcastMovement(BotEntry entry) {
+    public static void broadcastMovement(BotEntry entry) {
         if (!AgentPerformanceMonitor.enabled()) {
             doBroadcastMovement(entry);
             return;

@@ -1706,6 +1706,12 @@ Recent reconstruction notes:
   same skill signature guard, attack/AoE/heal/summon/support-buff bucket
   selection, best single-target skill ordering, and support-buff next-tick
   initialization.
+- Combat support-heal orchestration now lives in
+  `AgentBotCombatHealRuntime`; `BotCombatManager.tickSupportHealing` is a
+  temporary compatibility delegate while the Agent runtime preserves the same
+  heal-skill gate, HP/undead target decision, jump-heal movement, Heal attack
+  packet construction, cooldown, move-window, alert, and movement-broadcast
+  behavior.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

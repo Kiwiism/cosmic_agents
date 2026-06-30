@@ -67,11 +67,11 @@ import server.agents.integration.AgentBotCombatAlertRuntime;
 import server.agents.integration.AgentBotCombatBuffRuntime;
 import server.agents.integration.AgentBotCombatFacingRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
-import server.agents.integration.AgentBotCombatBuffStateRuntime;
 import server.agents.integration.AgentBotCombatReportRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheRuntime;
 import server.agents.integration.AgentBotCombatRuntime;
+import server.agents.integration.AgentBotCombatHealRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
@@ -262,143 +262,8 @@ public class BotCombatManager {
         AgentBotCombatBuffRuntime.tickBuffs(entry, bot, cfg);
     }
 
-    /**
-     * Healing is the cleric bot's top priority: runs before any attack decision (see BotManager tick)
-     * and casts whenever the bot itself OR any nearby party member is below
-     * {@link AgentCombatConfig.Config#SUPPORT_HEAL_TARGET_RATIO}. There is no decision-side cooldown — the only
-     * throttle is the Agent combat cooldown state, which we set from the skill's animation timing so
-     * consecutive casts match what a legit client would send (~600ms between Heal packets per the
-     * captured monitored-packets-cleric-heal-only.log reference).
-     *
-     * <p>The cast packet is broadcast even when no undead targets are in range so other clients see
-     * the heal animation play (matches real player behaviour when Heal is pressed with no mob in range).
-     */
     static boolean tickSupportHealing(BotEntry entry, Character bot) {
-        int healSkillId = AgentBotCombatSkillCacheStateRuntime.healSkillId(entry);
-        if (!AgentCombatSupportPolicy.shouldTickSupportHealing(
-                AgentBotCombatCooldownStateRuntime.blocksGroundedAttack(entry, AgentBotMovementStateRuntime.inAir(entry)),
-                AgentBotCombatBuffStateRuntime.supportHealsEnabled(entry),
-                AgentBotModeStateRuntime.following(entry),
-                AgentBotModeStateRuntime.grinding(entry),
-                healSkillId,
-                bot.skillIsCooling(healSkillId))) {
-            return false;
-        }
-
-        Skill skill = SkillFactory.getSkill(healSkillId);
-        int lvl = bot.getSkillLevel(skill);
-        if (lvl <= 0) return false;
-        StatEffect fx = skill.getEffect(lvl);
-
-        // Decision range MUST match the skill's actual WZ hitbox. If we decide to heal based on a
-        // looser SUPPORT_RANGE but fx.applyTo() iterates only members inside the heal bbox, a party
-        // member outside the bbox but inside SUPPORT_RANGE would never receive HP and the bot would
-        // re-cast every tick forever. Anchor both self- and party-checks to fx.calculateBoundingBox.
-        Rectangle healBounds = fx.hasBoundingBox()
-                ? fx.calculateBoundingBox(bot.getPosition(), bot.isFacingLeft())
-                : null;
-        boolean selfNeedsHeal = AgentCombatSupportPolicy.needsHeal(bot, cfg.SUPPORT_HEAL_TARGET_RATIO);
-        boolean partyNeedsHeal = selfNeedsHeal || AgentCombatSupportPolicy.hasPartyMemberInBoundsNeedingHeal(
-                bot,
-                healBounds,
-                cfg.SUPPORT_RANGE,
-                cfg.SUPPORT_VERTICAL_RANGE,
-                cfg.SUPPORT_HEAL_TARGET_RATIO);
-        List<Monster> undeadTargets = AgentCombatTargetSelector.collectUndeadMobsInHealRange(bot, fx, healBounds);
-        if (!AgentCombatSupportPolicy.shouldCastSupportHeal(partyNeedsHeal, !undeadTargets.isEmpty())) return false;
-
-        // Jump-heal: when following and the leader has pulled ahead, kick a diagonal jump toward
-        // them right before the cast. The top guard already permits casts while inAir, so the
-        // heal animation plays mid-flight instead of forcing a planted stand-and-cast.
-        boolean jumpHealing = false;
-        if (AgentBotModeStateRuntime.following(entry)
-                && AgentBotMovementStateRuntime.grounded(entry)
-                && AgentBotMovementStateRuntime.notClimbing(entry)
-                && cfg.JUMP_HEAL_LEADER_AHEAD_PX > 0) {
-            Character anchor = BotManager.getInstance().resolveFollowAnchor(entry, AgentBotRuntimeIdentityRuntime.owner(entry));
-            if (anchor != null && anchor != bot && anchor.getMap() == bot.getMap()) {
-                int dx = anchor.getPosition().x - bot.getPosition().x;
-                if (Math.abs(dx) >= cfg.JUMP_HEAL_LEADER_AHEAD_PX) {
-                    BotMovementManager.initiateJump(entry, bot, dx);
-                    jumpHealing = true;
-                }
-            }
-        }
-
-        if (!fx.canPaySkillCost(bot) || !fx.applyTo(bot)) return false;
-
-        long now = System.currentTimeMillis();
-        AgentAttackExecutionProvider.BasicAttackData fallbackAttackData =
-                AgentAttackExecutionProvider.buildBasicAttackData(bot, bot.getPosition());
-        String action = AgentAttackExecutionProvider.resolveSkillAttackAction(bot, skill, lvl,
-                AgentAttackExecutionProvider.getEquippedWeaponType(bot));
-        AgentAttackExecutionProvider.SkillAttackTiming skillTiming =
-                AgentAttackExecutionProvider.resolveSkillAttackTiming(skill, action, bot, fallbackAttackData);
-        AgentBotCombatCooldownStateRuntime.maxAttackCooldown(entry, skillTiming.cooldownMs());
-        if (partyNeedsHeal && fx.getCooldown() > 0) {
-            bot.addCooldown(healSkillId, now, fx.getCooldown() * 1000L);
-        }
-
-        // Always send the attack/cast packet so the animation plays even when there are no undead
-        // to hit — the packet carries an empty targets map in that case, which is what a real client
-        // does when a player presses Heal with no mob in range.
-        sendHealAttack(healSkillId, lvl, bot, undeadTargets, fallbackAttackData, skillTiming);
-        AgentBotCombatAlertRuntime.markAlerted(entry);
-        AgentBotCombatCooldownStateRuntime.maxMoveWindow(entry, cfg.HEAL_MOVE_WINDOW_MS);
-        if (!jumpHealing) {
-            // Stop walk-in-place: broadcast STAND→ALERT immediately on the heal tick.
-            // Skipped on jump-heal — initiateJump already broadcast the airborne stance and
-            // zeroing moveDir here would cancel the diagonal air-steering toward the leader.
-            AgentBotMovementStateRuntime.clearMoveDirection(entry);
-            BotMovementManager.broadcastMovement(entry);
-        }
-        return true;
-    }
-
-    /**
-     * Sends a skill attack packet targeting undead mobs with Heal damage.
-     * Called after fx.applyTo() has already handled the party heal and MP cost,
-     * so we build the AttackInfo directly rather than going through attackMonster()
-     * (which would re-check MP via canUseSkill and fail).
-     */
-    private static void sendHealAttack(int healSkillId, int lvl, Character bot,
-            List<Monster> undeadTargets,
-            AgentAttackExecutionProvider.BasicAttackData fallbackAttackData,
-            AgentAttackExecutionProvider.SkillAttackTiming skillTiming) {
-        AgentAttackRoute route = AgentAttackExecutionProvider.determineSkillRoute(bot, healSkillId);
-        // N in Russt's target multiplier is caster + damaged targets. When no undead are in range
-        // the damage profile is unused (numAttacked=0) but we still pass 1 to avoid a divide-by-zero
-        // surprise if the profile gets reused elsewhere.
-        int healTargetCount = Math.max(1, undeadTargets.size() + 1);
-        CombatFormulaProvider.DamageProfile damageProfile = CombatFormulaProvider.getInstance()
-                .resolveDamageProfile(bot, healSkillId, lvl, true, healTargetCount);
-        AbstractDealDamageHandler.AttackInfo attack = new AbstractDealDamageHandler.AttackInfo();
-        attack.skill = healSkillId;
-        attack.skilllevel = lvl;
-        attack.numDamage = 1;
-        attack.numAttacked = undeadTargets.size();
-        attack.numAttackedAndDamage = (undeadTargets.size() << 4) | 1;
-        attack.speed = fallbackAttackData.speed();
-        // Real cleric Heal packet (captured in monitored-packets-cleric-heal-only.log) encodes
-        // the direction byte as bodyActionId("alert2") = 41 (0x29) so other clients render the
-        // caster in the magic-casting "alert2" pose rather than the idle-frame default. The
-        // stance byte is the shared facing mask used by every attack-plan builder.
-        boolean facingLeft = bot.isFacingLeft();
-        AgentAttackExecutionProvider.CloseRangePacketFields castFields =
-                AgentAttackExecutionProvider.mimicCloseRangePacketFields("alert2", "alert2", facingLeft);
-        attack.display = castFields.display();
-        attack.direction = castFields.bodyActionId();
-        attack.stance = AgentAttackExecutionProvider.attackPacketStance(facingLeft);
-        attack.rangedirection = AgentAttackExecutionProvider.attackPacketStance(facingLeft);
-        attack.ranged = false;
-        attack.magic = damageProfile.magicAttack();
-        attack.targets = new HashMap<>();
-        for (Monster target : undeadTargets) {
-            attack.targets.put(target.getObjectId(),
-                    CombatFormulaProvider.getInstance().makeTarget(
-                            bot, target, 1, healSkillId, damageProfile, skillTiming.hitDelayMs()));
-        }
-        AgentAttackExecutionProvider.applyAttackRoute(route, attack, bot);
+        return AgentBotCombatHealRuntime.tickSupportHealing(entry, bot, cfg);
     }
 
     /** Returns the most convenient reachable target (deterministic — closest/best score wins). */
@@ -1078,5 +943,6 @@ public class BotCombatManager {
     }
 
 }
+
 
 
