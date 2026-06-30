@@ -693,7 +693,12 @@ public class BotCombatManager {
                 (candidate, hitBox) -> AgentCombatTargetSelector.resolveEffectivePrimary(
                         bot.getPosition(), candidate, hitBox, bot.getMap().getAllMonsters()),
                 AgentCombatHitboxIntersection::intersectsMonster,
-                candidate -> findReachableOnOppositeFacing(bot, candidate));
+                candidate -> bot == null ? null : AgentCombatTargetSelector.findReachableOnOppositeFacing(
+                        bot.getPosition(),
+                        candidate,
+                        mirroredPos -> AgentAttackExecutionProvider.buildBasicAttackData(bot, mirroredPos).hitBox(),
+                        hitBox -> AgentCombatTargetSelector.resolveEffectivePrimary(
+                                bot.getPosition(), candidate, hitBox, bot.getMap().getAllMonsters())));
         if (selection == null) {
             return null;
         }
@@ -705,18 +710,6 @@ public class BotCombatManager {
                 basicAttackData.speed(), basicAttackData.hitDelayMs(), basicAttackData.cooldownMs(),
                 AgentCombatWeaponPolicy.damageWeaponTypeForAction(
                         0, AgentAttackExecutionProvider.getEquippedWeaponType(bot), basicAttackData.action()));
-    }
-
-    private static Monster findReachableOnOppositeFacing(Character bot, Monster originalTarget) {
-        if (bot == null) {
-            return null;
-        }
-        return AgentCombatTargetSelector.findReachableOnOppositeFacing(
-                bot.getPosition(),
-                originalTarget,
-                mirroredPos -> AgentAttackExecutionProvider.buildBasicAttackData(bot, mirroredPos).hitBox(),
-                hitBox -> AgentCombatTargetSelector.resolveEffectivePrimary(
-                        bot.getPosition(), originalTarget, hitBox, bot.getMap().getAllMonsters()));
     }
 
     static void attackMonster(BotEntry entry, Character bot, AttackPlan attackPlan) {
@@ -849,7 +842,16 @@ public class BotCombatManager {
         // its own lt/rb gates the hit on this action's afterimage box).
         String action = AgentAttackExecutionProvider.resolveSkillAttackAction(bot, skill, skillLevel, weaponType);
         if (AgentCombatSkillHitboxPolicy.isStrikePointAnchoredAoeSkill(skillId)) {
-            primaryTarget = resolveStrikePointPrimaryByBasicWeapon(bot, primaryTarget, route);
+            // Strike-point-anchored skills center their bbox on the target, so hitbox
+            // intersection is not a reach gate. MAGIC route remains ungated to preserve legacy behavior.
+            Monster strikePointFallback = primaryTarget;
+            primaryTarget = bot == null ? primaryTarget : AgentCombatTargetSelector.resolveStrikePointPrimaryByBasicWeapon(
+                    bot.getPosition(),
+                    strikePointFallback,
+                    route,
+                    facingLeft -> AgentCombatRangePolicy.basicWeaponReachRect(bot, facingLeft, route),
+                    hitBox -> AgentCombatTargetSelector.resolveEffectivePrimary(
+                            bot.getPosition(), strikePointFallback, hitBox, bot.getMap().getAllMonsters()));
         }
         Rectangle hitBox = AgentCombatSkillHitboxPolicy.calculateSkillHitBox(
                 effect, bot, primaryTarget, route, skillId, action);
@@ -1263,21 +1265,6 @@ public class BotCombatManager {
         }
 
         AgentBotMobTouchStateRuntime.rememberCheck(entry, position, bot.getMapId());
-    }
-
-    private static Monster resolveStrikePointPrimaryByBasicWeapon(Character bot, Monster fallback, AgentAttackRoute route) {
-        if (bot == null) {
-            return fallback;
-        }
-        // Strike-point-anchored skills center their bbox on the target, so hitbox
-        // intersection is not a reach gate. MAGIC route remains ungated to preserve legacy behavior.
-        return AgentCombatTargetSelector.resolveStrikePointPrimaryByBasicWeapon(
-                bot.getPosition(),
-                fallback,
-                route,
-                facingLeft -> AgentCombatRangePolicy.basicWeaponReachRect(bot, facingLeft, route),
-                hitBox -> AgentCombatTargetSelector.resolveEffectivePrimary(
-                        bot.getPosition(), fallback, hitBox, bot.getMap().getAllMonsters()));
     }
 
     private static void noteSkillBuffDecision(BotEntry entry, String summary) {
