@@ -1,4 +1,4 @@
-package server.bots;
+package server.agents.capabilities.navigation;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
 
@@ -11,6 +11,11 @@ import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotMovementTargetRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.bots.BotEntry;
+import server.bots.BotManager;
+import server.bots.BotNavigationGraph;
+import server.bots.BotNavigationGraphProvider;
+import server.bots.BotNavigationManager;
 import server.StatEffect;
 import server.TimerManager;
 import server.maps.MapleMap;
@@ -26,7 +31,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 
-public final class BotNavigationDebugOverlay {
+public final class AgentNavigationDebugOverlay {
     private static final int AUTO_CLEAR_MS = 30_000;
     private static final int MAX_MISTS = 900;
     private static final int NODE_SIZE = 10;
@@ -40,7 +45,7 @@ public final class BotNavigationDebugOverlay {
 
     private static final Map<Integer, OverlayState> overlaysByViewerId = new ConcurrentHashMap<>();
 
-    private BotNavigationDebugOverlay() {
+    private AgentNavigationDebugOverlay() {
     }
 
     public static synchronized String showGraph(Character viewer) {

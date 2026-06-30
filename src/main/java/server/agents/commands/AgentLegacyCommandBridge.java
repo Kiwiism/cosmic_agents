@@ -4,7 +4,7 @@ import server.agents.runtime.AgentPerformanceMonitor;
 
 import client.Character;
 import server.bots.BotManager;
-import server.bots.BotNavigationDebugOverlay;
+import server.agents.capabilities.navigation.AgentNavigationDebugOverlay;
 import server.agents.capabilities.dialogue.llm.AgentLlmConfig;
 
 import java.util.List;
@@ -43,19 +43,19 @@ public final class AgentLegacyCommandBridge {
     }
 
     public static String showNavigationGraph(Character player) {
-        return BotNavigationDebugOverlay.showGraph(player);
+        return AgentNavigationDebugOverlay.showGraph(player);
     }
 
     public static String showNavigationPath(Character player, String agentName) {
-        return BotNavigationDebugOverlay.showPath(player, agentName);
+        return AgentNavigationDebugOverlay.showPath(player, agentName);
     }
 
     public static String writeNavigationPathLog(Character player, String agentName, String note) {
-        return BotNavigationDebugOverlay.pathLog(player, agentName, note);
+        return AgentNavigationDebugOverlay.pathLog(player, agentName, note);
     }
 
     public static String clearNavigationOverlay(Character player) {
-        return BotNavigationDebugOverlay.clear(player);
+        return AgentNavigationDebugOverlay.clear(player);
     }
 
     public static boolean togglePerformanceMonitor() {

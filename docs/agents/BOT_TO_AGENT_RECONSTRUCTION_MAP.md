@@ -78,6 +78,10 @@ Recent map updates:
   `server.agents.capabilities.navigation.AgentNavigationProbe`. `@regennav`,
   CLI probe formatting, graph build reporting, point/edge/path probes, and
   optimality measurement behavior are unchanged.
+- `server.bots.BotNavigationDebugOverlay` has moved to
+  `server.agents.capabilities.navigation.AgentNavigationDebugOverlay`. `!botnav`
+  graph/path/pathlog/clear command routing, fake-mist drawing, active-edge
+  highlighting, and auto-clear behavior are unchanged.
 - `server.bots.BotCommandParser` has moved to
   `server.agents.integration.AgentBotCommandParser`. Bot-entry target
   adaptation, transfer command wrapping, and targeted-command feedback are
@@ -139,7 +143,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotMovementManager.java` | `server.agents.capabilities.movement` | `SPLIT_TO_MULTIPLE_AGENT_MODULES`; cooldown/delay countdown math, climb idle/snap/rope identity decision policy, and ground horizontal step policy are Agent-owned |
 | `src/main/java/server/bots/BotMovementTargetSideEffects.java` | `server.agents.integration.AgentBotMovementTargetSideEffects` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotMovementProfile.java` | `server.agents.capabilities.movement.AgentMovementProfile` | `MIGRATED_TO_AGENT` |
-| `src/main/java/server/bots/BotNavigationDebugOverlay.java` | `server.agents.capabilities.navigation.AgentNavigationDebugOverlay` | `MIGRATE_TO_AGENT` |
+| `src/main/java/server/bots/BotNavigationDebugOverlay.java` | `server.agents.capabilities.navigation.AgentNavigationDebugOverlay` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotNavigationGraph.java` | `server.agents.capabilities.navigation.AgentNavigationGraph` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/BotNavigationGraphProvider.java` | `server.agents.capabilities.navigation.AgentNavigationGraphService` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
 | `src/main/java/server/bots/BotNavigationManager.java` | `server.agents.capabilities.navigation` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |

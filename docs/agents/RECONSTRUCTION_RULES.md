@@ -1305,6 +1305,10 @@ Recent reconstruction notes:
   `server.agents.capabilities.navigation.AgentNavigationProbe`; `@regennav`
   output, CLI probe formatting, graph build reports, and optimality measurement
   remain unchanged.
+- Navigation debug overlay tooling now lives in
+  `server.agents.capabilities.navigation.AgentNavigationDebugOverlay`; `!botnav`
+  graph/path/pathlog/clear routing, fake-mist rendering, and auto-clear behavior
+  remain unchanged.
 - Fidget mode and trigger state now use `AgentFidgetMode` and
   `AgentFidgetTrigger` under the Agent movement fidget capability; BotEntry and
   BotFidgetManager preserve the same NONE/WAIT/JUMP/DIAGONAL_JUMP/PRONE/
