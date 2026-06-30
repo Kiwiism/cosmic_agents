@@ -1791,6 +1791,10 @@ Recent reconstruction notes:
   `AgentBotCombatDamageRuntime.applyFallDamage` directly. The same
   peak-to-landing fall distance, threshold behavior, packet side effects, and
   shared combat config are preserved.
+- Skill-cache focused combat tests now call
+  `AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded` directly instead
+  of the temporary `BotCombatManager` compatibility delegate. The covered cache
+  signature, attack/AOE/heal/support bucket, and rebuild behavior are unchanged.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

@@ -31,6 +31,10 @@ Recent map updates:
 - BotPhysicsEngine fall-damage dispatch now calls
   `AgentBotCombatDamageRuntime.applyFallDamage` directly instead of the
   temporary `BotCombatManager` facade.
+- Combat skill-cache tests now exercise
+  `AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded` directly, reducing
+  remaining `BotCombatManager` usage to compatibility-specific plan, target,
+  damage, and config checks.
 
 | Current file | Target Agent destination | Status |
 | --- | --- | --- |

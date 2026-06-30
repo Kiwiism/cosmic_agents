@@ -219,7 +219,7 @@ class BotCombatManagerTest {
         }).when(bot).getSkillLevel(any(Skill.class));
 
         BotEntry entry = new BotEntry(bot, null, null);
-        BotCombatManager.rebuildSkillCacheIfNeeded(entry, bot);
+        AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
 
         assertEquals(ILWizard.THUNDERBOLT, AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry));
         assertEquals(0, AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry));
@@ -242,7 +242,7 @@ class BotCombatManagerTest {
         when(bot.getSkillLevel(any(Skill.class))).thenReturn((byte) 1);
 
         BotEntry entry = new BotEntry(bot, null, null);
-        BotCombatManager.rebuildSkillCacheIfNeeded(entry, bot);
+        AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
 
         assertFalse(AgentBotCombatSkillCacheStateRuntime.buffSkillIds(entry).contains(Cleric.MP_EATER));
         assertTrue(AgentBotCombatSkillCacheStateRuntime.buffSkillIds(entry).contains(Cleric.BLESS));
@@ -270,7 +270,7 @@ class BotCombatManagerTest {
         }).when(bot).getSkillLevel(any(Skill.class));
 
         BotEntry entry = new BotEntry(bot, null, null);
-        BotCombatManager.rebuildSkillCacheIfNeeded(entry, bot);
+        AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
 
         assertTrue(AgentBotCombatSkillCacheStateRuntime.summonSkillIds(entry).contains(Bowmaster.PHOENIX));
         assertFalse(AgentBotCombatSkillCacheStateRuntime.buffSkillIds(entry).contains(Bowmaster.PHOENIX));
@@ -296,7 +296,7 @@ class BotCombatManagerTest {
         }).when(bot).getSkillLevel(any(Skill.class));
 
         BotEntry entry = new BotEntry(bot, null, null);
-        BotCombatManager.rebuildSkillCacheIfNeeded(entry, bot);
+        AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
 
         assertEquals(Magician.MAGIC_CLAW, AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry));
     }
@@ -320,7 +320,7 @@ class BotCombatManagerTest {
         }).when(bot).getSkillLevel(any(Skill.class));
 
         BotEntry entry = new BotEntry(bot, null, null);
-        BotCombatManager.rebuildSkillCacheIfNeeded(entry, bot);
+        AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
 
         assertEquals(Archer.DOUBLE_SHOT, AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry));
     }
@@ -344,7 +344,7 @@ class BotCombatManagerTest {
         }).when(bot).getSkillLevel(any(Skill.class));
 
         BotEntry entry = new BotEntry(bot, null, null);
-        BotCombatManager.rebuildSkillCacheIfNeeded(entry, bot);
+        AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
 
         assertEquals(Rogue.LUCKY_SEVEN, AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry));
     }
@@ -368,7 +368,7 @@ class BotCombatManagerTest {
         }).when(bot).getSkillLevel(any(Skill.class));
 
         BotEntry entry = new BotEntry(bot, null, null);
-        BotCombatManager.rebuildSkillCacheIfNeeded(entry, bot);
+        AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
 
         assertEquals(ILWizard.THUNDERBOLT, AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry));
     }
@@ -397,7 +397,7 @@ class BotCombatManagerTest {
         }).when(bot).getSkillLevel(any(Skill.class));
 
         BotEntry entry = new BotEntry(bot, null, null);
-        BotCombatManager.rebuildSkillCacheIfNeeded(entry, bot);
+        AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
 
         assertEquals(0, AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry));
         assertEquals(0, AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry));
@@ -419,7 +419,7 @@ class BotCombatManagerTest {
         when(bot.getSkillLevel(any(Skill.class))).thenReturn((byte) 1);
 
         BotEntry entry = new BotEntry(bot, null, null);
-        BotCombatManager.rebuildSkillCacheIfNeeded(entry, bot);
+        AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
 
         assertEquals(0, AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry));
         assertEquals(0, AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry));
@@ -486,7 +486,7 @@ class BotCombatManagerTest {
         }).when(bot).getSkillLevel(any(Skill.class));
 
         BotEntry entry = new BotEntry(bot, null, null);
-        BotCombatManager.rebuildSkillCacheIfNeeded(entry, bot);
+        AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
 
         assertTrue(AgentBotCombatSkillCacheStateRuntime.attackSkillIds(entry).contains(DragonKnight.SPEAR_CRUSHER));
         assertTrue(AgentBotCombatSkillCacheStateRuntime.attackSkillIds(entry).contains(DragonKnight.SPEAR_DRAGON_FURY));
@@ -522,7 +522,7 @@ class BotCombatManagerTest {
         }).when(bot).getSkillLevel(any(Skill.class));
 
         BotEntry entry = new BotEntry(bot, null, null);
-        BotCombatManager.rebuildSkillCacheIfNeeded(entry, bot);
+        AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
 
         assertEquals(0, AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry));
         assertFalse(AgentBotCombatSkillCacheStateRuntime.attackSkillIds(entry).contains(ILWizard.TELEPORT));
@@ -1970,7 +1970,7 @@ class BotCombatManagerTest {
         }).when(bot).getSkillLevel(any(Skill.class));
 
         BotEntry entry = new BotEntry(bot, null, null);
-        BotCombatManager.rebuildSkillCacheIfNeeded(entry, bot);
+        AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
 
         assertEquals(expectedAttackSkillId, AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry));
         assertEquals(expectedAoeSkillId, AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry));
