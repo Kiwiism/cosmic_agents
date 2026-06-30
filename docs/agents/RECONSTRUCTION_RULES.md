@@ -2070,6 +2070,10 @@ Recent reconstruction notes:
   `AgentAmmoService`; the remaining `BotInventoryManager.collectAmmoShareItems`
   compatibility method delegates to it, while ammo-share trade execution remains
   a later inventory/trade migration slice.
+- Trade-window share quantity capping and restore-slot transfer now call
+  `AgentBotPendingTradeStateRuntime` directly; the old `BotInventoryManager`
+  pass-through helpers have been removed while preserving split-stack and
+  temporarily-unequipped restore behavior.
 - Ammo trade grouping now lives in `AgentInventoryAmmoPolicy`;
   BotInventoryManager preserves the same safe-item filtering, own-ammo versus
   non-own-ammo split, non-own item-id ordering, and own-ammo projectile attack

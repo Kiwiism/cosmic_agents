@@ -711,7 +711,7 @@ public class BotInventoryManager {
             AgentBotPendingTradeStateRuntime.incrementItemIndex(entry);
             AgentBotPendingTradeStateRuntime.setTimerMs(entry, BotMovementManager.delayAfterCurrentTick(500)); // 500 ms before next
 
-            short tradeQty = capTradeQuantityByShareBudget(entry, item.getQuantity());
+            short tradeQty = AgentBotPendingTradeStateRuntime.capShareQuantity(entry, item.getQuantity());
 
             InventoryType invType = item.getInventoryType();
             Inventory inv = bot.getInventory(invType);
@@ -725,7 +725,7 @@ public class BotInventoryManager {
                 tradeItem.setQuantity(tradeQty);
 
                 if (trade.addItem(tradeItem)) {
-                    rememberTradeWindowItemForRestore(entry, item, tradeItem);
+                    AgentBotPendingTradeStateRuntime.transferRestoreSlot(entry, item, tradeItem);
                     InventoryManipulator.removeFromSlot(bot.getClient(),
                             invType, item.getPosition(), tradeQty, false);
                     bot.sendPacket(PacketCreator.getTradeItemAdd((byte) 0, tradeItem));
@@ -794,14 +794,6 @@ public class BotInventoryManager {
         if (hadRestores && bot != null) {
             BotEquipManager.autoEquip(bot, AgentBotRuntimeIdentityRuntime.owner(entry), null);
         }
-    }
-
-    static void rememberTradeWindowItemForRestore(BotEntry entry, Item inventoryItem, Item tradeItem) {
-        AgentBotPendingTradeStateRuntime.transferRestoreSlot(entry, inventoryItem, tradeItem);
-    }
-
-    static short capTradeQuantityByShareBudget(BotEntry entry, short availableQty) {
-        return AgentBotPendingTradeStateRuntime.capShareQuantity(entry, availableQty);
     }
 
     private static void completeTradeAndThank(BotEntry entry, Character bot, Trade trade) {

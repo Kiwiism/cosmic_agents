@@ -1337,7 +1337,7 @@ class BotManagerTest {
         BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
         AgentBotPendingTradeStateRuntime.setShareBudget(entry, 2250);
 
-        short tradeQty = BotInventoryManager.capTradeQuantityByShareBudget(entry, (short) 5000);
+        short tradeQty = AgentBotPendingTradeStateRuntime.capShareQuantity(entry, (short) 5000);
 
         assertEquals(2250, tradeQty);
         assertEquals(0, AgentBotPendingTradeStateRuntime.shareBudget(entry));
@@ -1351,7 +1351,7 @@ class BotManagerTest {
 
         AgentBotPendingTradeStateRuntime.rememberRestoreSlot(entry, equippedItem, (short) -5);
 
-        BotInventoryManager.rememberTradeWindowItemForRestore(entry, equippedItem, tradeWindowCopy);
+        AgentBotPendingTradeStateRuntime.transferRestoreSlot(entry, equippedItem, tradeWindowCopy);
 
         assertFalse(AgentBotPendingTradeStateRuntime.restoreSlotEntries(entry).stream()
                 .anyMatch(restore -> restore.getKey() == equippedItem));
