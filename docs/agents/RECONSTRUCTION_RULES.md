@@ -2087,6 +2087,11 @@ Recent reconstruction notes:
   Agent-owned boundary over the remaining `BotInventoryManager` transfer state
   machine until category counting, choice execution, and transfer sequencing
   are migrated into Agent trade/inventory modules.
+- Named-item trade/drop collection, count aggregation, query normalization, and
+  item-name normalization cache now live in `AgentInventoryNamedItemService`;
+  BotInventoryManager preserves the same named-item trade and drop behavior by
+  calling the Agent inventory service while trade sequencing remains in the
+  temporary compatibility layer.
 - Ammo trade grouping now lives in `AgentInventoryAmmoPolicy`;
   BotInventoryManager preserves the same safe-item filtering, own-ammo versus
   non-own-ammo split, non-own item-id ordering, and own-ammo projectile attack

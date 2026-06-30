@@ -28,10 +28,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
-import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
+import server.agents.capabilities.inventory.AgentInventoryNamedItemService;
 import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy.AmmoTradeGroups;
@@ -86,7 +86,6 @@ public class BotInventoryManager {
         }
     }
     private static final Set<Integer> manualTradeGreetingSent = ConcurrentHashMap.newKeySet();
-    private static final Map<Integer, String> normalizedItemNameCache = new ConcurrentHashMap<>();
     static void tickPassiveLoot(BotEntry entry, Character bot) {
         if (AgentBotInventoryStateRuntime.hasLootInhibit(entry)) {
             AgentBotInventoryStateRuntime.tickLootInhibit(entry, BotMovementManager::tickDown);
@@ -506,7 +505,7 @@ public class BotInventoryManager {
         }
         if (category != null && category.startsWith("name:")) {
             String fragment = category.substring(5);
-            int total = countNamedItems(fragment, bot);
+            int total = AgentInventoryNamedItemService.countNamedItems(bot, fragment);
             short[] slots = BotEquipManager.slotsFromName(fragment);
             if (slots.length > 0) {
                 Inventory equipped = bot.getInventory(InventoryType.EQUIPPED);
@@ -521,10 +520,6 @@ public class BotInventoryManager {
             return total;
         }
         return AgentInventoryTradePolicy.itemQuantitySum(collectItems(category, entry, bot));
-    }
-
-    private static int countNamedItems(String fragment, Character bot) {
-        return AgentInventoryTradePolicy.itemQuantitySum(collectNamedItems(fragment, bot));
     }
 
     /** Opens a trade for the first ≤9 items; remaining items are re-collected next batch. */
@@ -850,31 +845,10 @@ public class BotInventoryManager {
             if (equippedSlotItems.errorMessage() != null || !equippedSlotItems.items().isEmpty()) {
                 return equippedSlotItems;
             }
-            return new PreparedTradeItems(collectNamedItems(fragment, bot), null);
+            return new PreparedTradeItems(AgentInventoryNamedItemService.collectNamedItems(bot, fragment), null);
         }
 
         return new PreparedTradeItems(collectItems(category, entry, bot), null);
-    }
-
-    private static List<Item> collectNamedItems(String fragment, Character bot) {
-        return AgentInventoryItemPolicy.collectNamedItems(bot, fragment,
-                AgentItemQueryNormalizer::normalize,
-                BotInventoryManager::normalizedItemName,
-                ItemInformationProvider.getInstance()::isQuestItem,
-                YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE);
-    }
-
-    private static String normalizedItemName(int itemId) {
-        return normalizedItemNameCache.computeIfAbsent(itemId, BotInventoryManager::loadNormalizedItemName);
-    }
-
-    private static String loadNormalizedItemName(int itemId) {
-        ItemInformationProvider ii = ItemInformationProvider.getInstance();
-        String name;
-        synchronized (ii) {
-            name = ii.getName(itemId);
-        }
-        return name != null ? AgentItemQueryNormalizer.normalize(name) : "";
     }
 
     private static boolean hasEquippedSlotItems(Character bot, String fragment) {
@@ -1009,7 +983,7 @@ public class BotInventoryManager {
                         if (ammoGroup != null) {
                             result.addAll(classifyAmmoTradeGroups(bot).itemsFor(ammoGroup));
                         } else if (category.startsWith("name:")) {
-                            result.addAll(collectNamedItems(category.substring(5), bot));
+                            result.addAll(AgentInventoryNamedItemService.collectNamedItems(bot, category.substring(5)));
                         }
                     }
                 }
@@ -1097,14 +1071,12 @@ public class BotInventoryManager {
     }
 
     static void dropByName(BotEntry entry, Character bot, String nameFragment) {
-        String normalizedFragment = AgentItemQueryNormalizer.normalize(nameFragment);
+        String normalizedFragment = AgentInventoryNamedItemService.normalizeQuery(nameFragment);
         int total = 0;
         for (InventoryType type : List.of(
                 InventoryType.EQUIP, InventoryType.USE, InventoryType.ETC, InventoryType.SETUP)) {
-            total += dropFromBag(bot, type, item -> {
-                String name = normalizedItemName(item.getItemId());
-                return name != null && name.contains(normalizedFragment);
-            });
+            total += dropFromBag(bot, type,
+                    item -> AgentInventoryNamedItemService.itemNameContains(item.getItemId(), normalizedFragment));
         }
         if (total <= 0) {
             AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeNamedItemNotFoundReply(nameFragment));
