@@ -309,7 +309,7 @@ public final class BotPhysicsEngine {
         return fh;
     }
 
-    static Foothold findGroundFoothold(MapleMap map, Point position) {
+    public static Foothold findGroundFoothold(MapleMap map, Point position) {
         if (map == null || map.getFootholds() == null || position == null) {
             return null;
         }

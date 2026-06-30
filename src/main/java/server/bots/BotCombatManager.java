@@ -49,6 +49,7 @@ import server.agents.integration.AgentBotCombatSkillCacheRuntime;
 import server.agents.integration.AgentBotCombatHealRuntime;
 import server.agents.integration.AgentBotCombatDeathRuntime;
 import server.agents.integration.AgentBotCombatDamageRuntime;
+import server.agents.integration.AgentBotCombatGroundRuntime;
 import server.agents.integration.AgentBotCombatPlanRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
@@ -136,7 +137,7 @@ public class BotCombatManager {
         try {
             Point botPos = bot.getPosition();
             double rangeSq = (double) BotCombatManager.cfg.GRIND_SEEK_RANGE * BotCombatManager.cfg.GRIND_SEEK_RANGE;
-            Foothold botFoothold = findGroundFoothold(botPos, bot);
+            Foothold botFoothold = AgentBotCombatGroundRuntime.findGroundFoothold(botPos, bot);
             List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(bot, botPos, rangeSq);
             if (candidates.isEmpty()) return null;
 
@@ -164,7 +165,7 @@ public class BotCombatManager {
             }
             Point botPos = bot.getPosition();
             double rangeSq = (double) cfg.GRIND_SEEK_RANGE * cfg.GRIND_SEEK_RANGE;
-            Foothold botFoothold = findGroundFoothold(botPos, bot);
+            Foothold botFoothold = AgentBotCombatGroundRuntime.findGroundFoothold(botPos, bot);
             List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(bot, botPos, rangeSq);
             if (candidates.isEmpty()) {
                 return null;
@@ -227,7 +228,7 @@ public class BotCombatManager {
                 return null;
             }
 
-            Foothold botFoothold = findGroundFoothold(botPos, bot);
+            Foothold botFoothold = AgentBotCombatGroundRuntime.findGroundFoothold(botPos, bot);
             GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, botPos);
             List<AgentScoredGrindTarget> localTargets = AgentCombatGrindTargetPolicy.scoreFollowLocalTargets(
                     candidates,
@@ -325,7 +326,7 @@ public class BotCombatManager {
                                                Character bot,
                                                Foothold botFoothold,
                                                Monster target) {
-        Foothold targetFoothold = botFoothold == null ? null : findGroundFoothold(target.getPosition(), bot);
+        Foothold targetFoothold = botFoothold == null ? null : AgentBotCombatGroundRuntime.findGroundFoothold(target.getPosition(), bot);
         return AgentCombatGrindTargetPolicy.isLocalCombatTarget(
                 botFoothold,
                 targetFoothold,
@@ -401,7 +402,7 @@ public class BotCombatManager {
 
     private static long grindTargetScore(Character bot, Point botPos, Foothold botFoothold, Monster target) {
         Point targetPos = target.getPosition();
-        Foothold targetFoothold = findGroundFoothold(targetPos, bot);
+        Foothold targetFoothold = AgentBotCombatGroundRuntime.findGroundFoothold(targetPos, bot);
 
         boolean sameFoothold = botFoothold != null && targetFoothold != null && botFoothold.getId() == targetFoothold.getId();
         return AgentCombatScoringPolicy.localTargetScore(botPos, targetPos, sameFoothold, cfg.ATTACK_RANGE_Y);
@@ -533,14 +534,6 @@ public class BotCombatManager {
 
         return AgentCombatGrindTargetPolicy.occupancyPenalty(occupiedCount,
                 cfg.GRIND_REGION_OCCUPANCY_PENALTY, cfg.GRIND_REGION_OCCUPANCY_PENALTY_CAP);
-    }
-
-    private static Foothold findGroundFoothold(Point position, Character bot) {
-        if (position == null || bot == null || bot.getMap() == null) {
-            return null;
-        }
-
-        return BotPhysicsEngine.findGroundFoothold(bot.getMap(), position);
     }
 
     private record GrindGraphContext(BotEntry entry,

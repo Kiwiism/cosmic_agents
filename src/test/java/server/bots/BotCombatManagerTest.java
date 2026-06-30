@@ -50,6 +50,7 @@ import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatDamageRuntime;
 import server.agents.integration.AgentBotCombatDeathRuntime;
 import server.agents.integration.AgentBotCombatFacingRuntime;
+import server.agents.integration.AgentBotCombatGroundRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheRuntime;
 import server.agents.integration.AgentBotCombatHealRuntime;
@@ -1214,6 +1215,16 @@ class BotCombatManagerTest {
             assertEquals(0, plan.skillId);
             assertEquals(List.of(target), plan.targets);
         }
+    }
+
+    @Test
+    void combatGroundRuntimeReturnsNullWithoutMapContext() {
+        Character bot = mock(Character.class);
+        when(bot.getMap()).thenReturn(null);
+
+        assertNull(AgentBotCombatGroundRuntime.findGroundFoothold(new Point(100, 200), bot));
+        assertNull(AgentBotCombatGroundRuntime.findGroundFoothold(null, bot));
+        assertNull(AgentBotCombatGroundRuntime.findGroundFoothold(new Point(100, 200), null));
     }
 
     @Test
