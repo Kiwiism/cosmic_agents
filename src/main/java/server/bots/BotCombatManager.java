@@ -1645,10 +1645,6 @@ public class BotCombatManager {
     }
 
     /** Returns true if the bot's weapon type requires projectile ammo. */
-    static boolean isAirborneRangedAttackBlockedWeapon(WeaponType weaponType) {
-        return AgentCombatRangePolicy.isAirborneRangedAttackBlockedWeapon(weaponType);
-    }
-
     /**
      * Periodically checks ammo for ranged bots. Piggybacks on the pot-check timer.
      * Warns at AMMO_LOW_WARN, stops grinding and follows owner at 0.

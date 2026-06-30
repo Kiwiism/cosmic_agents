@@ -1539,6 +1539,9 @@ Recent reconstruction notes:
   ammo-share, and shop-resupply flows; the temporary `BotCombatManager`
   count-ammo wrapper has been removed while preserving USE-inventory projectile
   matching and Soul Arrow/Shadow Claw unlimited-ammo behavior.
+- The unused `BotCombatManager` airborne ranged-weapon compatibility wrapper has
+  been removed; airborne ranged-route gating remains Agent-owned in
+  `AgentCombatRangePolicy`.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
