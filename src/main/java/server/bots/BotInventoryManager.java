@@ -893,87 +893,24 @@ public class BotInventoryManager {
     }
 
     static List<Item> prioritizeEtcTradeItems(List<Item> items, Character recipient) {
-        if (items.size() <= 1) {
-            return items;
-        }
-
-        List<Item> serverSortedItems = sortItemsByItemId(items);
-        if (recipient == null) {
-            return serverSortedItems;
-        }
-
-        Inventory recipientEtc = recipient.getInventory(InventoryType.ETC);
-        if (recipientEtc == null) {
-            return serverSortedItems;
-        }
-
-        Set<Integer> recipientEtcItemIds = new HashSet<>();
-        for (Item recipientItem : recipientEtc) {
-            recipientEtcItemIds.add(recipientItem.getItemId());
-        }
-
-        List<Item> prioritized = new ArrayList<>(items.size());
-        List<Item> remainder = new ArrayList<>(items.size());
-        for (Item item : serverSortedItems) {
-            if (item.getInventoryType() == InventoryType.ETC && recipientEtcItemIds.contains(item.getItemId())) {
-                prioritized.add(item);
-            } else {
-                remainder.add(item);
-            }
-        }
-        prioritized.addAll(remainder);
-        return prioritized;
+        return AgentInventoryTradePolicy.prioritizeEtcTradeItems(items, recipient);
     }
 
     private static List<Item> prioritizeRecipientDuplicateItemIds(List<Item> items,
                                                                   InventoryType type,
                                                                   Character recipient) {
-        if (items.size() <= 1) {
-            return items;
-        }
-
-        List<Item> sorted = sortItemsByItemId(items);
-        if (recipient == null) {
-            return sorted;
-        }
-
-        Inventory recipientInventory = recipient.getInventory(type);
-        if (recipientInventory == null) {
-            return sorted;
-        }
-
-        Set<Integer> recipientItemIds = new HashSet<>();
-        for (Item recipientItem : recipientInventory) {
-            recipientItemIds.add(recipientItem.getItemId());
-        }
-
-        List<Item> prioritized = new ArrayList<>(items.size());
-        List<Item> remainder = new ArrayList<>(items.size());
-        for (Item item : sorted) {
-            if (recipientItemIds.contains(item.getItemId())) {
-                prioritized.add(item);
-            } else {
-                remainder.add(item);
-            }
-        }
-        prioritized.addAll(remainder);
-        return prioritized;
+        return AgentInventoryTradePolicy.prioritizeRecipientDuplicateItemIds(items, type, recipient);
     }
 
     static List<Item> prioritizeTradeUseItems(List<Item> uncategorized,
                                               List<Item> categorizedOther,
                                               List<Item> potionAmmo,
                                               Character recipient) {
-        List<Item> ordered = new ArrayList<>(
-                uncategorized.size() + categorizedOther.size() + potionAmmo.size());
-        ordered.addAll(prioritizeRecipientDuplicateItemIds(uncategorized, InventoryType.USE, recipient));
-        ordered.addAll(prioritizeRecipientDuplicateItemIds(categorizedOther, InventoryType.USE, recipient));
-        ordered.addAll(prioritizeRecipientDuplicateItemIds(potionAmmo, InventoryType.USE, recipient));
-        return ordered;
+        return AgentInventoryTradePolicy.prioritizeTradeUseItems(uncategorized, categorizedOther, potionAmmo, recipient);
     }
 
     static List<Item> prioritizeScrollTradeItems(List<Item> items, Character recipient) {
-        return prioritizeRecipientDuplicateItemIds(items, InventoryType.USE, recipient);
+        return AgentInventoryTradePolicy.prioritizeScrollTradeItems(items, recipient);
     }
 
     private static List<Item> collectNamedItems(String fragment, Character bot) {

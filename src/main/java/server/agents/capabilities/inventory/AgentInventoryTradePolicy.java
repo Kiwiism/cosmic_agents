@@ -3,13 +3,17 @@ package server.agents.capabilities.inventory;
 import client.Character;
 import client.Job;
 import client.inventory.Equip;
+import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import constants.game.GameConstants;
 import server.agents.capabilities.equipment.AgentWeaponCompatibilityPolicy;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public final class AgentInventoryTradePolicy {
     public static final int TRADE_WINDOW_ITEM_LIMIT = 9;
@@ -163,5 +167,68 @@ public final class AgentInventoryTradePolicy {
             secondary = equip.getDex();
         }
         return 4 * equip.getWatk() + equip.getMatk() + main + secondary;
+    }
+
+    public static List<Item> prioritizeEtcTradeItems(List<Item> items, Character recipient) {
+        return prioritizeRecipientDuplicateItemIds(items, InventoryType.ETC, recipient, true);
+    }
+
+    public static List<Item> prioritizeTradeUseItems(List<Item> uncategorized,
+                                                     List<Item> categorizedOther,
+                                                     List<Item> potionAmmo,
+                                                     Character recipient) {
+        List<Item> ordered = new ArrayList<>(
+                uncategorized.size() + categorizedOther.size() + potionAmmo.size());
+        ordered.addAll(prioritizeRecipientDuplicateItemIds(uncategorized, InventoryType.USE, recipient));
+        ordered.addAll(prioritizeRecipientDuplicateItemIds(categorizedOther, InventoryType.USE, recipient));
+        ordered.addAll(prioritizeRecipientDuplicateItemIds(potionAmmo, InventoryType.USE, recipient));
+        return ordered;
+    }
+
+    public static List<Item> prioritizeScrollTradeItems(List<Item> items, Character recipient) {
+        return prioritizeRecipientDuplicateItemIds(items, InventoryType.USE, recipient);
+    }
+
+    public static List<Item> prioritizeRecipientDuplicateItemIds(List<Item> items,
+                                                                 InventoryType type,
+                                                                 Character recipient) {
+        return prioritizeRecipientDuplicateItemIds(items, type, recipient, false);
+    }
+
+    private static List<Item> prioritizeRecipientDuplicateItemIds(List<Item> items,
+                                                                  InventoryType type,
+                                                                  Character recipient,
+                                                                  boolean requireMatchingItemType) {
+        if (items.size() <= 1) {
+            return items;
+        }
+
+        List<Item> sorted = sortItemsByItemId(items);
+        if (recipient == null) {
+            return sorted;
+        }
+
+        Inventory recipientInventory = recipient.getInventory(type);
+        if (recipientInventory == null) {
+            return sorted;
+        }
+
+        Set<Integer> recipientItemIds = new HashSet<>();
+        for (Item recipientItem : recipientInventory) {
+            recipientItemIds.add(recipientItem.getItemId());
+        }
+
+        List<Item> prioritized = new ArrayList<>(items.size());
+        List<Item> remainder = new ArrayList<>(items.size());
+        for (Item item : sorted) {
+            boolean typeMatches = !requireMatchingItemType || item.getInventoryType() == type;
+            if (typeMatches && recipientItemIds.contains(item.getItemId())) {
+                prioritized.add(item);
+            } else {
+                remainder.add(item);
+            }
+        }
+        prioritized.addAll(remainder);
+        return prioritized;
     }
 }

@@ -1303,6 +1303,10 @@ Recent reconstruction notes:
   detection, page parsing, and trade-window page sizing preserve the same
   legacy tokens while `BotInventoryManager` keeps item classification and trade
   sequencing.
+- Duplicate-aware trade item prioritization now enters through
+  `AgentInventoryTradePolicy`. ETC, scroll, and USE bucket ordering still sorts
+  by item id/position first and then moves item ids already present in the
+  recipient inventory ahead within the same legacy buckets.
 - Physics position, horizontal-speed, and ground-travel carry state now enter
   through `AgentBotMovementPhysicsStateRuntime`; BotPhysicsEngine preserves
   landing, grounded travel, swim, airborne collision, climb-position, and reset

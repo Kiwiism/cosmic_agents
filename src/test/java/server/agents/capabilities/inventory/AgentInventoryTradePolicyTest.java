@@ -1,6 +1,8 @@
 package server.agents.capabilities.inventory;
 
+import client.Character;
 import client.inventory.InventoryType;
+import client.inventory.Inventory;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 
@@ -80,10 +82,56 @@ class AgentInventoryTradePolicyTest {
                 item(InventoryType.SETUP, -4))));
     }
 
+    @Test
+    void shouldPrioritizeEtcItemsAlreadyOwnedByRecipientAfterItemIdSort() {
+        Item highIdDuplicate = item(InventoryType.ETC, 3000, 1);
+        Item lowIdRemainder = item(InventoryType.ETC, 1000, 1);
+        Item midIdDuplicate = item(InventoryType.ETC, 2000, 1);
+        Character recipient = mock(Character.class);
+        Inventory recipientEtc = inventoryWith(item(InventoryType.ETC, 2000, 1), item(InventoryType.ETC, 3000, 1));
+        when(recipient.getInventory(InventoryType.ETC)).thenReturn(recipientEtc);
+
+        List<Item> prioritized = AgentInventoryTradePolicy.prioritizeEtcTradeItems(
+                List.of(highIdDuplicate, lowIdRemainder, midIdDuplicate),
+                recipient);
+
+        assertEquals(List.of(midIdDuplicate, highIdDuplicate, lowIdRemainder), prioritized);
+    }
+
+    @Test
+    void shouldPrioritizeUseBucketsIndependentlyByRecipientDuplicateIds() {
+        Item uncategorized = item(InventoryType.USE, 3000, 1);
+        Item uncategorizedDuplicate = item(InventoryType.USE, 2000, 1);
+        Item categorized = item(InventoryType.USE, 5000, 1);
+        Item potionAmmoDuplicate = item(InventoryType.USE, 1000, 1);
+        Character recipient = mock(Character.class);
+        Inventory recipientUse = inventoryWith(item(InventoryType.USE, 1000, 1), item(InventoryType.USE, 2000, 1));
+        when(recipient.getInventory(InventoryType.USE)).thenReturn(recipientUse);
+
+        List<Item> prioritized = AgentInventoryTradePolicy.prioritizeTradeUseItems(
+                List.of(uncategorized, uncategorizedDuplicate),
+                List.of(categorized),
+                List.of(potionAmmoDuplicate),
+                recipient);
+
+        assertEquals(List.of(uncategorizedDuplicate, uncategorized, categorized, potionAmmoDuplicate), prioritized);
+    }
+
     private static Item item(InventoryType type, int quantity) {
+        return item(type, 0, quantity);
+    }
+
+    private static Item item(InventoryType type, int itemId, int quantity) {
         Item item = mock(Item.class);
         when(item.getInventoryType()).thenReturn(type);
+        when(item.getItemId()).thenReturn(itemId);
         when(item.getQuantity()).thenReturn((short) quantity);
         return item;
+    }
+
+    private static Inventory inventoryWith(Item... items) {
+        Inventory inventory = mock(Inventory.class);
+        when(inventory.iterator()).thenReturn(List.of(items).iterator());
+        return inventory;
     }
 }
