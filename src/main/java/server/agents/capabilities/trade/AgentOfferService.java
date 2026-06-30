@@ -17,6 +17,7 @@ import config.YamlConfig;
 import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
+import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.integration.AgentBotOfferRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
@@ -161,7 +162,7 @@ public final class AgentOfferService {
                 || AgentBotPendingActionStateRuntime.hasPendingAction(entry)
                 || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry)
                 || hasOfferReservation(entry)
-                || !BotInventoryManager.hasItem(bot, item)) {
+                || !AgentInventoryItemPolicy.hasItem(bot, item)) {
             return;
         }
 
@@ -244,7 +245,7 @@ public final class AgentOfferService {
     private static boolean offerGearItem(BotEntry entry, Character bot, Character recipient, Item item,
                                          GearOfferNeed need) {
         if (AgentBotPendingActionStateRuntime.hasPendingAction(entry) || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry) || hasOfferReservation(entry)
-                || !BotInventoryManager.hasItem(bot, item)) {
+                || !AgentInventoryItemPolicy.hasItem(bot, item)) {
             return false;
         }
         AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
@@ -272,7 +273,7 @@ public final class AgentOfferService {
                 || AgentBotPendingActionStateRuntime.hasPendingAction(entry)
                 || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry)
                 || recipient == null
-                || !BotInventoryManager.hasItem(bot, item)) {
+                || !AgentInventoryItemPolicy.hasItem(bot, item)) {
             clearPendingOffer(entry);
             return;
         }

@@ -18,6 +18,7 @@ import constants.game.GameConstants;
 import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
+import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotShopBuyReport;
 import server.agents.integration.AgentBotShopPurchaseAction;
@@ -374,7 +375,7 @@ public final class AgentShopService {
         }
 
         List<Item> items = plan.stream()
-                .filter(item -> BotInventoryManager.hasItem(bot, item))
+                .filter(item -> AgentInventoryItemPolicy.hasItem(bot, item))
                 .filter(item -> !failedItems.contains(item))
                 .toList();
         if (items.isEmpty()) {
@@ -392,7 +393,7 @@ public final class AgentShopService {
         }
 
         Item item = items.get(0);
-        if (!BotInventoryManager.hasItem(bot, item)) {
+        if (!AgentInventoryItemPolicy.hasItem(bot, item)) {
             scheduleShopStep(entry, SELL_TRASH_STEP_DELAY_MS,
                     () -> runSellTrashStep(entry, bot, npcPos, soldCount, failedItems, plan, bought, firstShortfall));
             return;
@@ -410,7 +411,7 @@ public final class AgentShopService {
         }
 
         shop.sell(bot.getClient(), InventoryType.EQUIP, item.getPosition(), (short) 1);
-        if (BotInventoryManager.hasItem(bot, item)) {
+        if (AgentInventoryItemPolicy.hasItem(bot, item)) {
             failedItems.add(item);
             scheduleShopStep(entry, SELL_TRASH_STEP_DELAY_MS,
                     () -> runSellTrashStep(entry, bot, npcPos, soldCount, failedItems, plan, bought, firstShortfall));

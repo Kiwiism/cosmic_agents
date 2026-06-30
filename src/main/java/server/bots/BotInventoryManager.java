@@ -31,6 +31,7 @@ import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
 import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy;
+import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.capabilities.inventory.AgentInventorySellTrashPolicy;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.AmmoGroup;
@@ -1107,17 +1108,7 @@ public class BotInventoryManager {
     }
 
     public static boolean hasItem(Character bot, Item item) {
-        if (bot == null || item == null) {
-            return false;
-        }
-
-        Inventory inv = bot.getInventory(item.getInventoryType());
-        if (inv == null) {
-            return false;
-        }
-
-        Item current = inv.getItem(item.getPosition());
-        return current == item;
+        return AgentInventoryItemPolicy.hasItem(bot, item);
     }
 
     private static Character resolveTradeRecipient(BotEntry entry, Character bot) {

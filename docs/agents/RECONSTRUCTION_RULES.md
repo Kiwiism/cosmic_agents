@@ -1318,6 +1318,10 @@ Recent reconstruction notes:
 - Trade-ammo weapon-type eligibility now enters through
   `AgentInventoryAmmoPolicy`; bow, crossbow, claw, and gun remain the only
   weapon families that request ammo-share behavior.
+- Inventory item-presence checks now enter through `AgentInventoryItemPolicy`.
+  Agent offer/shop code no longer calls the bot inventory seam to verify that
+  the exact item object still occupies its recorded inventory slot; the old
+  `BotInventoryManager.hasItem` method remains a compatibility delegate.
 - Physics position, horizontal-speed, and ground-travel carry state now enter
   through `AgentBotMovementPhysicsStateRuntime`; BotPhysicsEngine preserves
   landing, grounded travel, swim, airborne collision, climb-position, and reset
