@@ -42,6 +42,7 @@ import server.agents.integration.AgentBotCombatActionStateRuntime;
 import server.agents.integration.AgentBotCombatBuffStateRuntime;
 import server.agents.integration.AgentBotCombatBuffRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentBotCombatDamageRuntime;
 import server.agents.integration.AgentBotCombatDeathRuntime;
 import server.agents.integration.AgentBotCombatFacingRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
@@ -1127,7 +1128,7 @@ class BotCombatManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.facingDir = 1;
 
-        runWithStubbedBotAfter(() -> BotCombatManager.applyMobHit(entry, bot, mob));
+        runWithStubbedBotAfter(() -> AgentBotCombatDamageRuntime.applyMobHit(entry, bot, mob, BotCombatManager.cfg));
 
         assertTrue(entry.inAir);
         assertFalse(entry.climbing);

@@ -130,7 +130,7 @@ public class BotMovementManager {
         return AgentMovementTimingPolicy.tickDown(remainingMs, BotPhysicsEngine.cfg.TICK_MS);
     }
 
-    static int delayAfterCurrentTick(int durationMs) {
+    public static int delayAfterCurrentTick(int durationMs) {
         return AgentMovementTimingPolicy.delayAfterCurrentTick(durationMs, BotPhysicsEngine.cfg.TICK_MS);
     }
 

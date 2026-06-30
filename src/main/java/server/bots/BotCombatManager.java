@@ -10,7 +10,6 @@ import server.agents.capabilities.combat.AgentBasicAttackPlanner;
 import server.agents.capabilities.combat.AgentCombatAttackExecutionPolicy;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
-import server.agents.capabilities.combat.AgentFallDamageCalculator;
 import server.agents.capabilities.combat.AgentCombatSkillClassifier;
 import server.agents.capabilities.combat.AgentCombatWeaponPolicy;
 import server.agents.capabilities.combat.AgentCombatSkillHitboxPolicy;
@@ -24,7 +23,6 @@ import server.agents.capabilities.combat.AgentCombatSkillUsePolicy;
 import server.agents.capabilities.combat.AgentCombatSupportPolicy;
 import server.agents.capabilities.combat.AgentCombatTargetEligibilityPolicy;
 import server.agents.capabilities.combat.AgentCombatTargetSelector;
-import server.agents.capabilities.combat.AgentMobKnockbackPolicy;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
 import server.agents.capabilities.combat.AgentScoredGrindTarget;
 import server.agents.capabilities.combat.AgentSkillAttackPlanner;
@@ -34,7 +32,6 @@ import server.agents.runtime.AgentPerformanceMonitor;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
 
-import client.BuffStat;
 import client.Character;
 import client.Skill;
 import client.SkillFactory;
@@ -59,7 +56,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.StatEffect;
 import server.agents.capabilities.combat.data.AgentAttackDataProvider;
-import server.agents.capabilities.combat.data.AgentDefenseDataProvider;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.integration.AgentBotAmmoStateRuntime;
 import server.agents.integration.AgentBotCombatActionStateRuntime;
@@ -72,6 +68,7 @@ import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheRuntime;
 import server.agents.integration.AgentBotCombatHealRuntime;
 import server.agents.integration.AgentBotCombatDeathRuntime;
+import server.agents.integration.AgentBotCombatDamageRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMobTouchRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
@@ -82,7 +79,6 @@ import server.combat.CombatFormulaProvider;
 import server.life.Monster;
 import server.maps.Foothold;
 import server.maps.MapleMap;
-import tools.PacketCreator;
 import tools.Pair;
 
 import java.awt.*;
@@ -93,7 +89,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class BotCombatManager {
     private static final Logger log = LoggerFactory.getLogger(BotCombatManager.class);
@@ -137,11 +132,7 @@ public class BotCombatManager {
      * Uses the bot's shared character WDEF cache instead of ignoring defense entirely.
      */
     static void applyMobHit(BotEntry entry, Character bot, Monster mob) {
-        int dmg = AgentDefenseDataProvider.getInstance().rollPhysicalTouchDamage(bot, mob);
-        AgentMobKnockbackPolicy.MobHitKnockback kb =
-                AgentMobKnockbackPolicy.resolveMobHitKnockback(
-                        bot.getPosition(), mob.getPosition(), cfg.KNOCKBACK_HSPEED, BotMovementManager.cfg.TICK_MS);
-        applyDamage(entry, bot, dmg, -1, mob.getId(), kb.direction(), kb.airVelX());
+        AgentBotCombatDamageRuntime.applyMobHit(entry, bot, mob, cfg);
     }
 
     /**
@@ -160,77 +151,7 @@ public class BotCombatManager {
      * the recoil arc points backward along the bot's movement direction.
      */
     static void applyFallDamage(BotEntry entry, Character bot, float fallDistancePx) {
-        if (bot.getHp() <= 0) return;
-        if (AgentBotCombatCooldownStateRuntime.hasMobHitCooldown(entry)) return; // damage invincibility window
-        int dmg = AgentFallDamageCalculator.fallDamageFromDistance(fallDistancePx);
-        if (dmg <= 0) return;
-        int dirSign = AgentBotMovementStateRuntime.facingDirectionSign(entry);
-        int airVelX = Math.round(-dirSign
-                * AgentMobKnockbackPolicy.scaledOpenStoryStep(cfg.KNOCKBACK_HSPEED, BotMovementManager.cfg.TICK_MS));
-        applyDamage(entry, bot, dmg, -3, 0, 0, airVelX);
-    }
-
-    /**
-     * Core damage application: HP loss, DAMAGE_PLAYER broadcast, alert pose, knockback.
-     * Shared by mob-touch (damageFrom=-1) and fall (damageFrom=-3). Call via helpers
-     * {@link #applyMobHit} / {@link #applyFallDamage} so magic numbers stay out of call sites.
-     *
-     * @param broadcastDirection direction byte in DAMAGE_PLAYER packet (0 or 1).
-     *                           Mob-hit: derived from attacker side.
-     *                           Fall:    always 0 (observed in real-client samples).
-     * @param knockbackAirVelX   signed horizontal impulse for physics knockback (px/tick-step).
-     */
-    private static void applyDamage(BotEntry entry, Character bot, int dmg,
-                                    int damageFrom, int monsterId,
-                                    int broadcastDirection, int knockbackAirVelX) {
-        AgentCombatConfig.Config cc = BotCombatManager.cfg;
-        Point botPos = bot.getPosition();
-
-        if (dmg <= 0) {
-            bot.getMap().broadcastMessage(bot,
-                    PacketCreator.damagePlayer(damageFrom, monsterId, bot.getId(), 0, 0,
-                            broadcastDirection, false, 0, false, 0, 0, 0), false);
-            AgentBotCombatCooldownStateRuntime.setMobHitCooldownMs(
-                    entry,
-                    BotMovementManager.delayAfterCurrentTick(cc.MOB_HIT_COOLDOWN_MS));
-            AgentBotCombatAlertRuntime.markAlerted(entry);
-            return;
-        }
-
-        bot.addMPHPAndTriggerAutopot(-dmg, 0);
-
-        bot.getMap().broadcastMessage(bot,
-                PacketCreator.damagePlayer(damageFrom, monsterId, bot.getId(), dmg, 0,
-                        broadcastDirection, false, 0, false, 0, 0, 0), false);
-
-        AgentBotCombatCooldownStateRuntime.setMobHitCooldownMs(
-                entry,
-                BotMovementManager.delayAfterCurrentTick(cc.MOB_HIT_COOLDOWN_MS));
-        AgentBotCombatAlertRuntime.markAlerted(entry);
-
-        if (bot.getHp() <= 0) {
-            enterDeadState(entry, bot, true);
-            return;
-        }
-
-        if (!AgentMobKnockbackPolicy.shouldApplyMobKnockback(
-                AgentBotMovementStateRuntime.climbing(entry),
-                bot.getHp(),
-                bot.getBuffedValue(BuffStat.STANCE),
-                ThreadLocalRandom.current().nextFloat())) {
-            return;
-        }
-
-        AgentBotCombatActionStateRuntime.clearActionState(entry);
-        if (AgentBotMovementStateRuntime.inAir(entry)) {
-            BotPhysicsEngine.applyAirKnockback(entry, bot, knockbackAirVelX);
-        } else {
-            BotPhysicsEngine.beginKnockback(entry, bot, botPos,
-                    -AgentMobKnockbackPolicy.scaledOpenStoryStep(
-                            cfg.KNOCKBACK_VFORCE, BotMovementManager.cfg.TICK_MS),
-                    knockbackAirVelX);
-        }
-        BotMovementManager.broadcastMovement(entry);
+        AgentBotCombatDamageRuntime.applyFallDamage(entry, bot, fallDistancePx, cfg);
     }
 
     static void enterDeadState(BotEntry entry, Character bot, boolean announceDeath) {
