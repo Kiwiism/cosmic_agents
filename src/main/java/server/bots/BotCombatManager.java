@@ -505,10 +505,6 @@ public class BotCombatManager {
         AgentAttackExecutionProvider.applyAttackRoute(route, attack, bot);
     }
 
-    static Monster findGrindTarget(Character bot) {
-        return findGrindTarget(null, bot);
-    }
-
     /** Returns the most convenient reachable target (deterministic — closest/best score wins). */
     static Monster findGrindTarget(BotEntry entry, Character bot) {
         long startedAt = System.nanoTime();
@@ -1267,7 +1263,7 @@ public class BotCombatManager {
     public static String describeDebugStats(BotEntry entry, Character bot) {
         Monster target = AgentBotGrindTargetStateRuntime.target(entry);
         if (target == null || !target.isAlive()) {
-            target = findGrindTarget(bot);
+            target = findGrindTarget(entry, bot);
         }
 
         AttackPlan plan = target != null ? planAttack(entry, bot, target) : null;

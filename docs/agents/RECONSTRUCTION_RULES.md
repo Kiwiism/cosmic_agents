@@ -1647,6 +1647,9 @@ Recent reconstruction notes:
   Rectangle)` directly; the temporary `BotCombatManager` helper has been
   removed while preserving the same map-object query, WZ mob cap, and null-bounds
   empty-target behavior.
+- The no-entry `BotCombatManager.findGrindTarget(Character)` compatibility
+  overload has been removed; combat debug fallback target search now uses the
+  entry-aware target-search path available to the caller.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
