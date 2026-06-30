@@ -2078,6 +2078,10 @@ Recent reconstruction notes:
   `AgentSupplyShareTradeService`; the remaining `BotInventoryManager`
   compatibility methods delegate to it while generic trade transfer and trade
   ticking remain later migration slices.
+- Trade command profiling category selection and slow-command logging decision
+  now live in `AgentTradeCommandProfiler`; `BotInventoryManager` retains
+  compatibility methods that delegate to the Agent profiler while generic
+  transfer counting and start remain later slices.
 - Ammo trade grouping now lives in `AgentInventoryAmmoPolicy`;
   BotInventoryManager preserves the same safe-item filtering, own-ammo versus
   non-own-ammo split, non-own item-id ordering, and own-ammo projectile attack

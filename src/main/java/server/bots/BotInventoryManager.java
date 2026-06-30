@@ -43,6 +43,7 @@ import server.agents.capabilities.supplies.AgentAmmoService;
 import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.trade.AgentSupplyShareTradeService;
+import server.agents.capabilities.trade.AgentTradeCommandProfiler;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotInventoryStateRuntime;
@@ -492,26 +493,11 @@ public class BotInventoryManager {
     }
 
     public static boolean profileTradeCategory(String category) {
-        return "trash".equals(category) || "equips".equals(category) || AgentInventoryTradePolicy.isReservedEquipsCategory(category);
+        return AgentTradeCommandProfiler.profileCategory(category);
     }
 
     public static void logSlowTradeCommand(String category, String phase, BotEntry entry, Character bot, long startedAt) {
-        if (startedAt == 0L || !profileTradeCategory(category)) {
-            return;
-        }
-        long elapsedNs = System.nanoTime() - startedAt;
-        if (elapsedNs < TRADE_COMMAND_PROFILE_WARN_NS) {
-            return;
-        }
-        String botName = bot != null ? bot.getName() : "?";
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
-        String ownerName = owner != null ? owner.getName() : "?";
-        log.warn("Slow bot trade command phase: category={} phase={} took {} ms bot={} owner={}",
-                category,
-                phase,
-                String.format("%.1f", elapsedNs / 1_000_000.0),
-                botName,
-                ownerName);
+        AgentTradeCommandProfiler.logSlowCommand(category, phase, entry, bot, startedAt, TRADE_COMMAND_PROFILE_WARN_NS, log);
     }
 
     public static int countTransferableItems(String category, BotEntry entry, Character bot) {

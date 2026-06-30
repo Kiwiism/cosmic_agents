@@ -5,6 +5,7 @@ import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.dialogue.AgentChatTransferFlow;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
+import server.agents.capabilities.trade.AgentTradeCommandProfiler;
 import server.bots.BotEntry;
 import server.bots.BotInventoryManager;
 
@@ -26,6 +27,7 @@ public final class AgentBotTransferRuntime {
         return thread;
     });
     private static final Map<Integer, AtomicInteger> PENDING_TRANSFER_REQUESTS = new ConcurrentHashMap<>();
+    private static final long TRADE_COMMAND_PROFILE_WARN_NS = 50_000_000L;
 
     private record TransferCommandResult(boolean hasItems, int count) {}
     private record ItemQueryResult(int count) {}
@@ -80,10 +82,17 @@ public final class AgentBotTransferRuntime {
                                                                  String category,
                                                                  Character bot) {
         long hasItemsStartedAt = transferCommand.mode() == AgentChatTransferFlow.TransferMode.TRADE
-                && BotInventoryManager.profileTradeCategory(category)
-                ? System.nanoTime() : 0L;
+                ? AgentTradeCommandProfiler.startIfProfiled(category)
+                : 0L;
         boolean hasItems = BotInventoryManager.hasTransferableItems(category, entry, bot);
-        BotInventoryManager.logSlowTradeCommand(category, "hasTransferableItems", entry, bot, hasItemsStartedAt);
+        AgentTradeCommandProfiler.logSlowCommand(
+                category,
+                "hasTransferableItems",
+                entry,
+                bot,
+                hasItemsStartedAt,
+                TRADE_COMMAND_PROFILE_WARN_NS,
+                org.slf4j.LoggerFactory.getLogger(AgentBotTransferRuntime.class));
         int count = hasItems && transferCommand.mode() == AgentChatTransferFlow.TransferMode.CHOICE
                 ? BotInventoryManager.countTransferableItems(category, entry, bot)
                 : 0;
