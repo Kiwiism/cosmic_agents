@@ -30,6 +30,7 @@ import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy;
+import server.agents.capabilities.inventory.AgentInventoryDropService;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.capabilities.inventory.AgentInventoryNamedItemService;
 import server.agents.capabilities.inventory.AgentInventorySellTrashService;
@@ -53,7 +54,6 @@ import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.ItemInformationProvider;
 import server.Trade;
-import server.maps.FieldLimit;
 import server.maps.MapItem;
 import server.maps.MapleMap;
 import tools.PacketCreator;
@@ -369,22 +369,7 @@ public class BotInventoryManager {
     }
 
     private static void dropCategory(String category, BotEntry entry, Character bot) {
-        // When items aren't globally tradable, drops on drop-limited maps (e.g. free market)
-        // silently vanish. Refuse and tell the owner why instead of destroying the items.
-        if (!YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE
-                && FieldLimit.DROP_LIMIT.check(bot.getMap().getFieldLimit())) {
-            AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.dropLimitedMapReply());
-            return;
-        }
-        switch (category) {
-            case "scrolls" -> dropScrolls(entry, bot);
-            case "pots"    -> dropPotions(entry, bot);
-            case "buff"    -> dropBuffPots(entry, bot);
-            case "equips"  -> dropEquips(entry, bot);
-            case "trash"   -> dropTrashEquips(entry, bot);
-            case "etc"     -> dropEtc(entry, bot);
-            default -> { if (category.startsWith("name:")) dropByName(entry, bot, category.substring(5)); }
-        }
+        AgentInventoryDropService.dropCategory(category, entry, bot, BotInventoryManager::collectSellTrashEquips);
     }
 
     // ─── Trade actions (actual trade window) ─────────────────────────────────
@@ -1032,57 +1017,6 @@ public class BotInventoryManager {
 
     // ─── Drop actions (floor) ─────────────────────────────────────────────────
 
-    static void dropScrolls(BotEntry entry, Character bot) {
-        int count = dropFromBag(bot, InventoryType.USE,
-                item -> ItemConstants.isEquipScroll(item.getItemId()));
-        reply(entry, bot, count, "scroll");
-    }
-
-    static void dropPotions(BotEntry entry, Character bot) {
-        int count = dropFromBag(bot, InventoryType.USE,
-                item -> AgentUseItemClassificationPolicy.isRecoveryPotion(item.getItemId()));
-        reply(entry, bot, count, "potion");
-    }
-
-    static void dropEquips(BotEntry entry, Character bot) {
-        int count = dropFromBag(bot, InventoryType.EQUIP, item -> true);
-        AgentBotInventoryRuntime.replyNow(entry,
-                count > 0 ? "dropped " + count + " equip" + (count != 1 ? "s" : "") + "!"
-                          : "equip bag is already empty");
-    }
-
-    static void dropTrashEquips(BotEntry entry, Character bot) {
-        Set<Item> trash = new java.util.HashSet<>(collectTrashEquips(entry, bot));
-        int count = dropFromBag(bot, InventoryType.EQUIP, trash::contains);
-        AgentBotInventoryRuntime.replyNow(entry,
-                count > 0 ? "dropped " + count + " trash equip" + (count != 1 ? "s" : "") + "!"
-                          : "no trash equips to drop");
-    }
-
-    static void dropBuffPots(BotEntry entry, Character bot) {
-        int count = dropFromBag(bot, InventoryType.USE,
-                item -> AgentUseItemClassificationPolicy.isBuffConsumable(item.getItemId()));
-        reply(entry, bot, count, "buff pot");
-    }
-
-    static void dropEtc(BotEntry entry, Character bot) {
-        int count = dropFromBag(bot, InventoryType.ETC, item -> true);
-        reply(entry, bot, count, "etc item");
-    }
-
-    static void dropByName(BotEntry entry, Character bot, String nameFragment) {
-        String normalizedFragment = AgentInventoryNamedItemService.normalizeQuery(nameFragment);
-        int total = 0;
-        for (InventoryType type : List.of(
-                InventoryType.EQUIP, InventoryType.USE, InventoryType.ETC, InventoryType.SETUP)) {
-            total += dropFromBag(bot, type,
-                    item -> AgentInventoryNamedItemService.itemNameContains(item.getItemId(), normalizedFragment));
-        }
-        if (total <= 0) {
-            AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeNamedItemNotFoundReply(nameFragment));
-        }
-    }
-
     // ─── Inventory info ───────────────────────────────────────────────────────
 
     /** occupied/total for each bag: "equip: 10/24, use: 8/24, etc: 3/24, setup: 0/24" */
@@ -1253,32 +1187,6 @@ public class BotInventoryManager {
 
     private static boolean isOwnClassEquip(Character bot, ItemInformationProvider ii, Equip equip) {
         return AgentEquipmentReservePolicy.isOwnClassEquip(bot, ii, equip);
-    }
-
-    private static int dropFromBag(Character bot, InventoryType type, Predicate<Item> filter) {
-        Inventory inv = bot.getInventory(type);
-        List<Short> slots = AgentInventoryItemPolicy.selectSafeDropSlots(bot, type, filter,
-                ItemInformationProvider.getInstance()::isQuestItem,
-                YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE);
-        int count = 0;
-        for (short slot : slots) {
-            Item item = inv.getItem(slot);
-            if (item == null) continue;
-            InventoryManipulator.drop(bot.getClient(), type, slot, item.getQuantity());
-            count++;
-        }
-        return count;
-    }
-
-    static boolean isSafeToDrop(Item item) {
-        return AgentInventoryItemPolicy.isSafeToDrop(item, ItemInformationProvider.getInstance()::isQuestItem,
-                YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE);
-    }
-
-    private static void reply(BotEntry entry, Character bot, int count, String noun) {
-        AgentBotInventoryRuntime.replyNow(entry,
-                count > 0 ? "dropped " + count + " " + noun + (count != 1 ? "s" : "") + "!"
-                          : "no " + noun + "s to drop");
     }
 
     // ─── Pot-share helpers ────────────────────────────────────────────────────

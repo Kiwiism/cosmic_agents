@@ -2092,6 +2092,10 @@ Recent reconstruction notes:
   BotInventoryManager preserves the same named-item trade and drop behavior by
   calling the Agent inventory service while trade sequencing remains in the
   temporary compatibility layer.
+- Inventory floor-drop command execution now lives in `AgentInventoryDropService`;
+  BotInventoryManager preserves the same drop-limited-map guard, category
+  routing, floor-drop side effect, named-item miss reply, and drop-count reply
+  wording through a temporary dispatcher.
 - Ammo trade grouping now lives in `AgentInventoryAmmoPolicy`;
   BotInventoryManager preserves the same safe-item filtering, own-ammo versus
   non-own-ammo split, non-own item-id ordering, and own-ammo projectile attack
