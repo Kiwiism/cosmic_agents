@@ -5,6 +5,7 @@ import server.agents.capabilities.combat.AgentAttackRoute;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentCombatWeaponPolicy;
 import server.agents.capabilities.combat.AgentCombatRangePolicy;
+import server.agents.capabilities.combat.AgentCombatTargetSelector;
 import server.agents.capabilities.combat.AgentSupportSpecialMovePacketBuilder;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
@@ -1138,11 +1139,13 @@ class BotCombatManagerTest {
 
         // Only a friendly mob on the map -> no attackable target, even though it is in range.
         when(map.getAllMonsters()).thenReturn(List.of(friendly));
-        assertNull(BotCombatManager.findClosestAliveMonster(bot, 1_000_000d));
+        assertNull(AgentCombatTargetSelector.findClosestAliveMonster(
+                map.getAllMonsters(), bot.getPosition(), 1_000_000d));
 
         // Friendly mob is closer, but the bot must skip it and pick the farther hostile mob.
         when(map.getAllMonsters()).thenReturn(List.of(friendly, hostile));
-        assertEquals(hostile, BotCombatManager.findClosestAliveMonster(bot, 1_000_000d));
+        assertEquals(hostile, AgentCombatTargetSelector.findClosestAliveMonster(
+                map.getAllMonsters(), bot.getPosition(), 1_000_000d));
     }
 
     @Test

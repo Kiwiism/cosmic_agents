@@ -690,7 +690,8 @@ public class BotCombatManager {
         AgentBasicAttackPlanner.BasicAttackSelection selection = AgentBasicAttackPlanner.selectBasicAttack(
                 target,
                 candidate -> AgentAttackExecutionProvider.buildBasicAttackData(bot, candidate.getPosition()),
-                (candidate, hitBox) -> resolveEffectivePrimary(bot, candidate, hitBox),
+                (candidate, hitBox) -> AgentCombatTargetSelector.resolveEffectivePrimary(
+                        bot.getPosition(), candidate, hitBox, bot.getMap().getAllMonsters()),
                 AgentCombatHitboxIntersection::intersectsMonster,
                 candidate -> findReachableOnOppositeFacing(bot, candidate));
         if (selection == null) {
@@ -714,7 +715,8 @@ public class BotCombatManager {
                 bot.getPosition(),
                 originalTarget,
                 mirroredPos -> AgentAttackExecutionProvider.buildBasicAttackData(bot, mirroredPos).hitBox(),
-                hitBox -> resolveEffectivePrimary(bot, originalTarget, hitBox));
+                hitBox -> AgentCombatTargetSelector.resolveEffectivePrimary(
+                        bot.getPosition(), originalTarget, hitBox, bot.getMap().getAllMonsters()));
     }
 
     static boolean isTargetInAttackRange(AttackPlan attackPlan, Character bot, Monster target) {
@@ -882,7 +884,8 @@ public class BotCombatManager {
                         hitBox,
                         () -> AgentCombatRangePolicy.isPrimaryReachableByBasicWeapon(
                                 bot, preSelectionPrimaryTarget, route),
-                        (candidate, candidateHitBox) -> resolveEffectivePrimary(bot, candidate, candidateHitBox),
+                        (candidate, candidateHitBox) -> AgentCombatTargetSelector.resolveEffectivePrimary(
+                                bot.getPosition(), candidate, candidateHitBox, bot.getMap().getAllMonsters()),
                         AgentCombatHitboxIntersection::intersectsMonster);
         if (targetSelection == null) {
             return null;
@@ -1320,17 +1323,8 @@ public class BotCombatManager {
                 fallback,
                 route,
                 facingLeft -> AgentCombatRangePolicy.basicWeaponReachRect(bot, facingLeft, route),
-                hitBox -> resolveEffectivePrimary(bot, fallback, hitBox));
-    }
-
-    static Monster resolveEffectivePrimary(Character bot, Monster fallback, Rectangle hitBox) {
-        Point botPos = bot.getPosition();
-        return AgentCombatTargetSelector.resolveEffectivePrimary(botPos, fallback, hitBox, bot.getMap().getAllMonsters());
-    }
-
-    static Monster findClosestAliveMonster(Character bot, double maxRangeSq) {
-        Point botPos = bot.getPosition();
-        return AgentCombatTargetSelector.findClosestAliveMonster(bot.getMap().getAllMonsters(), botPos, maxRangeSq);
+                hitBox -> AgentCombatTargetSelector.resolveEffectivePrimary(
+                        bot.getPosition(), fallback, hitBox, bot.getMap().getAllMonsters()));
     }
 
     private static void noteSkillBuffDecision(BotEntry entry, String summary) {

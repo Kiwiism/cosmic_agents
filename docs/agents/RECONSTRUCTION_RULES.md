@@ -1612,6 +1612,11 @@ Recent reconstruction notes:
   `BotManager` and focused tests; the temporary `BotCombatManager`
   `isTargetJumpable` wrappers have been removed while preserving the same
   movement profile and `BotPhysicsEngine` jump-height input.
+- Effective-primary and closest-alive target selection now call
+  `AgentCombatTargetSelector` directly from combat planning and focused tests;
+  the temporary `BotCombatManager` target-selector pass-through wrappers have
+  been removed while preserving the same map monster source and bot-position
+  inputs.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
