@@ -44,6 +44,7 @@ import server.agents.integration.AgentBotCombatFacingRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotMobTouchStateRuntime;
+import server.agents.integration.AgentBotMobTouchRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 import server.agents.integration.AgentBotSkillBuffDebugStateRuntime;
@@ -1181,10 +1182,10 @@ class BotCombatManagerTest {
         when(map.getAllMonsters()).thenReturn(List.of(friendly));
         BotEntry entry = new BotEntry(bot, null, null);
 
-        try (MockedStatic<BotCombatManager> combat =
-                     Mockito.mockStatic(BotCombatManager.class, Mockito.CALLS_REAL_METHODS)) {
-            combat.when(() -> BotCombatManager.isMobTouchingBot(any(BotEntry.class), any(Character.class),
-                    any(Monster.class))).thenReturn(true);
+        try (MockedStatic<AgentBotMobTouchRuntime> combat =
+                     Mockito.mockStatic(AgentBotMobTouchRuntime.class, Mockito.CALLS_REAL_METHODS)) {
+            combat.when(() -> AgentBotMobTouchRuntime.isMobTouchingAgent(any(BotEntry.class), any(Character.class),
+                    any(Monster.class), anyInt())).thenReturn(true);
             runWithStubbedBotAfter(() -> BotCombatManager.tickMobDamage(entry, bot));
         }
 
@@ -1200,10 +1201,10 @@ class BotCombatManagerTest {
         when(map.getAllMonsters()).thenReturn(List.of(hostile));
         BotEntry entry = new BotEntry(bot, null, null);
 
-        try (MockedStatic<BotCombatManager> combat =
-                     Mockito.mockStatic(BotCombatManager.class, Mockito.CALLS_REAL_METHODS)) {
-            combat.when(() -> BotCombatManager.isMobTouchingBot(any(BotEntry.class), any(Character.class),
-                    any(Monster.class))).thenReturn(true);
+        try (MockedStatic<AgentBotMobTouchRuntime> combat =
+                     Mockito.mockStatic(AgentBotMobTouchRuntime.class, Mockito.CALLS_REAL_METHODS)) {
+            combat.when(() -> AgentBotMobTouchRuntime.isMobTouchingAgent(any(BotEntry.class), any(Character.class),
+                    any(Monster.class), anyInt())).thenReturn(true);
             runWithStubbedBotAfter(() -> BotCombatManager.tickMobDamage(entry, bot));
         }
 
@@ -1374,7 +1375,7 @@ class BotCombatManagerTest {
         Character bot = mockBot(new Point(100, 200), mock(MapleMap.class), 20_000, null);
         BotEntry entry = new BotEntry(bot, null, null);
 
-        Rectangle bounds = BotCombatManager.getBotTouchBounds(entry, bot);
+        Rectangle bounds = AgentBotMobTouchRuntime.agentTouchBounds(entry, bot, BotCombatManager.cfg.MOB_TOUCH_SWEEP_HEIGHT);
 
         assertEquals(new Rectangle(100, 150, 1, 51), bounds);
     }
@@ -1386,7 +1387,7 @@ class BotCombatManagerTest {
         Monster mob = mockMob(new Point(122, 200), 100100);
         when(mob.isFacingLeft()).thenReturn(false);
 
-        assertFalse(BotCombatManager.isMobTouchingBot(entry, bot, mob));
+        assertFalse(AgentBotMobTouchRuntime.isMobTouchingAgent(entry, bot, mob, BotCombatManager.cfg.MOB_TOUCH_SWEEP_HEIGHT));
     }
 
     @Test
@@ -1398,7 +1399,7 @@ class BotCombatManagerTest {
         Monster mob = mockMob(new Point(96, 200), 100100);
         when(mob.isFacingLeft()).thenReturn(false);
 
-        assertTrue(BotCombatManager.isMobTouchingBot(entry, bot, mob));
+        assertTrue(AgentBotMobTouchRuntime.isMobTouchingAgent(entry, bot, mob, BotCombatManager.cfg.MOB_TOUCH_SWEEP_HEIGHT));
     }
 
     @Test

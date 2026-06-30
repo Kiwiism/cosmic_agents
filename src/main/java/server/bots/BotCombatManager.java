@@ -25,7 +25,6 @@ import server.agents.capabilities.combat.AgentCombatSkillUsePolicy;
 import server.agents.capabilities.combat.AgentCombatSupportPolicy;
 import server.agents.capabilities.combat.AgentCombatTargetEligibilityPolicy;
 import server.agents.capabilities.combat.AgentCombatTargetSelector;
-import server.agents.capabilities.combat.AgentMobTouchPolicy;
 import server.agents.capabilities.combat.AgentMobKnockbackPolicy;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
 import server.agents.capabilities.combat.AgentScoredGrindTarget;
@@ -65,7 +64,6 @@ import org.slf4j.LoggerFactory;
 import server.StatEffect;
 import server.agents.capabilities.combat.data.AgentAttackDataProvider;
 import server.agents.capabilities.combat.data.AgentDefenseDataProvider;
-import server.agents.capabilities.combat.data.AgentMobHitboxProvider;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotAmmoStateRuntime;
@@ -79,7 +77,7 @@ import server.agents.integration.AgentBotCombatRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotMobTouchStateRuntime;
+import server.agents.integration.AgentBotMobTouchRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
@@ -129,13 +127,13 @@ public class BotCombatManager {
 
             for (Monster mob : bot.getMap().getAllMonsters()) {
                 if (!AgentCombatTargetEligibilityPolicy.isHostileLivingMonster(mob)) continue;
-                if (isMobTouchingBot(entry, bot, mob)) {
+                if (AgentBotMobTouchRuntime.isMobTouchingAgent(entry, bot, mob, cfg.MOB_TOUCH_SWEEP_HEIGHT)) {
                     applyMobHit(entry, bot, mob);
                     return;
                 }
             }
         } finally {
-            rememberMobTouchCheck(entry, bot, botPos);
+            AgentBotMobTouchRuntime.rememberMobTouchCheck(entry, bot, botPos);
         }
     }
 
@@ -1173,34 +1171,6 @@ public class BotCombatManager {
         boolean available() {
             return graph != null && map != null && startPos != null && startRegionId >= 0 && entry != null;
         }
-    }
-
-    static boolean isMobTouchingBot(BotEntry entry, Character bot, Monster mob) {
-        Rectangle botBounds = getBotTouchBounds(entry, bot);
-        Rectangle mobBounds = AgentMobHitboxProvider.getInstance().getMobBounds(mob);
-        if (mobBounds == null) {
-            return false;
-        }
-        return AgentMobTouchPolicy.lowerHalfIntersects(mobBounds, botBounds);
-    }
-
-    static Rectangle getBotTouchBounds(BotEntry entry, Character bot) {
-        Point currentPos = bot.getPosition();
-        Point previousPos = currentPos;
-        Point rememberedPos = AgentBotMobTouchStateRuntime.previousCheckPositionOnMap(entry, bot.getMapId());
-        if (rememberedPos != null) {
-            previousPos = rememberedPos;
-        }
-
-        return AgentMobTouchPolicy.botTouchSweepBounds(previousPos, currentPos, cfg.MOB_TOUCH_SWEEP_HEIGHT);
-    }
-
-    private static void rememberMobTouchCheck(BotEntry entry, Character bot, Point position) {
-        if (entry == null || bot == null || position == null) {
-            return;
-        }
-
-        AgentBotMobTouchStateRuntime.rememberCheck(entry, position, bot.getMapId());
     }
 
     public static String describeDebugStats(BotEntry entry, Character bot) {

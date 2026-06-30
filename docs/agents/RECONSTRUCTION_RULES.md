@@ -1680,6 +1680,10 @@ Recent reconstruction notes:
 - Combat alert stance timing and reset scheduling now live in
   `AgentBotCombatAlertRuntime`; BotCombatManager preserves the same damage,
   heal, attack, and support-buff alert triggers through the Agent-owned runtime.
+- Mob-touch sweep bounds, lower-body touch checks, and last-check position
+  memory now live in `AgentBotMobTouchRuntime`; BotCombatManager preserves the
+  same hostile-living-monster filtering and damage application path while
+  delegating touch detection to Agent runtime.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

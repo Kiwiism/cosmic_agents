@@ -1,0 +1,43 @@
+package server.agents.integration;
+
+import client.Character;
+import server.agents.capabilities.combat.AgentMobTouchPolicy;
+import server.agents.capabilities.combat.data.AgentMobHitboxProvider;
+import server.bots.BotEntry;
+import server.life.Monster;
+
+import java.awt.Point;
+import java.awt.Rectangle;
+
+public final class AgentBotMobTouchRuntime {
+    private AgentBotMobTouchRuntime() {
+    }
+
+    public static boolean isMobTouchingAgent(BotEntry entry, Character agent, Monster mob, int sweepHeight) {
+        Rectangle agentBounds = agentTouchBounds(entry, agent, sweepHeight);
+        Rectangle mobBounds = AgentMobHitboxProvider.getInstance().getMobBounds(mob);
+        if (mobBounds == null) {
+            return false;
+        }
+        return AgentMobTouchPolicy.lowerHalfIntersects(mobBounds, agentBounds);
+    }
+
+    public static Rectangle agentTouchBounds(BotEntry entry, Character agent, int sweepHeight) {
+        Point currentPos = agent.getPosition();
+        Point previousPos = currentPos;
+        Point rememberedPos = AgentBotMobTouchStateRuntime.previousCheckPositionOnMap(entry, agent.getMapId());
+        if (rememberedPos != null) {
+            previousPos = rememberedPos;
+        }
+
+        return AgentMobTouchPolicy.botTouchSweepBounds(previousPos, currentPos, sweepHeight);
+    }
+
+    public static void rememberMobTouchCheck(BotEntry entry, Character agent, Point position) {
+        if (entry == null || agent == null || position == null) {
+            return;
+        }
+
+        AgentBotMobTouchStateRuntime.rememberCheck(entry, position, agent.getMapId());
+    }
+}
