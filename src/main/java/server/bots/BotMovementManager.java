@@ -213,7 +213,7 @@ public class BotMovementManager {
         AgentBotMovementBroadcastStateRuntime.invalidate(entry);
     }
 
-    static void clearNavigationState(BotEntry entry) {
+    public static void clearNavigationState(BotEntry entry) {
         AgentBotNavigationDebugStateRuntime.clearActiveNavigationEdge(entry);
         AgentBotNavigationDebugStateRuntime.clearNavJumpLaunch(entry);
         AgentBotNavigationDebugStateRuntime.clearNavTarget(entry);

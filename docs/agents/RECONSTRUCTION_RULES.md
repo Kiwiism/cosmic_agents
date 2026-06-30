@@ -1712,6 +1712,10 @@ Recent reconstruction notes:
   heal-skill gate, HP/undead target decision, jump-heal movement, Heal attack
   packet construction, cooldown, move-window, alert, and movement-broadcast
   behavior.
+- Combat action-state clearing now lives in
+  `AgentBotCombatActionStateRuntime`; the damage/death path calls the Agent
+  helper while preserving the same grind target, attack cooldown, move window,
+  navigation state, and movement broadcast invalidation reset.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

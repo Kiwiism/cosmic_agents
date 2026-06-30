@@ -63,6 +63,7 @@ import server.agents.capabilities.combat.data.AgentDefenseDataProvider;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotAmmoStateRuntime;
+import server.agents.integration.AgentBotCombatActionStateRuntime;
 import server.agents.integration.AgentBotCombatAlertRuntime;
 import server.agents.integration.AgentBotCombatBuffRuntime;
 import server.agents.integration.AgentBotCombatFacingRuntime;
@@ -73,10 +74,8 @@ import server.agents.integration.AgentBotCombatSkillCacheRuntime;
 import server.agents.integration.AgentBotCombatRuntime;
 import server.agents.integration.AgentBotCombatHealRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
-import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMobTouchRuntime;
-import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
@@ -224,7 +223,7 @@ public class BotCombatManager {
             return;
         }
 
-        clearActionState(entry);
+        AgentBotCombatActionStateRuntime.clearActionState(entry);
         if (AgentBotMovementStateRuntime.inAir(entry)) {
             BotPhysicsEngine.applyAirKnockback(entry, bot, knockbackAirVelX);
         } else {
@@ -237,21 +236,13 @@ public class BotCombatManager {
     }
 
     static void enterDeadState(BotEntry entry, Character bot, boolean announceDeath) {
-        clearActionState(entry);
+        AgentBotCombatActionStateRuntime.clearActionState(entry);
         BotPhysicsEngine.markDead(entry, bot);
         BotMovementManager.broadcastMovement(entry);
         AgentBotDeathStateRuntime.enterDeadState(entry, System.currentTimeMillis(), cfg.BOT_DEAD_MS);
         if (announceDeath) {
             AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(AgentDialogueCatalog.combatDeathReplies()));
         }
-    }
-
-    private static void clearActionState(BotEntry entry) {
-        AgentBotGrindTargetStateRuntime.clear(entry);
-        AgentBotCombatCooldownStateRuntime.clearAttackCooldown(entry);
-        AgentBotCombatCooldownStateRuntime.clearMoveWindow(entry);
-        BotMovementManager.clearNavigationState(entry);
-        AgentBotMovementBroadcastStateRuntime.invalidate(entry);
     }
 
     static void rebuildSkillCacheIfNeeded(BotEntry entry, Character bot) {

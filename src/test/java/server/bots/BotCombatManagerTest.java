@@ -38,6 +38,7 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.ArgumentCaptor;
 import server.StatEffect;
+import server.agents.integration.AgentBotCombatActionStateRuntime;
 import server.agents.integration.AgentBotCombatBuffStateRuntime;
 import server.agents.integration.AgentBotCombatBuffRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
@@ -46,6 +47,7 @@ import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheRuntime;
 import server.agents.integration.AgentBotCombatHealRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
+import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotMobTouchStateRuntime;
 import server.agents.integration.AgentBotMobTouchRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
@@ -1088,6 +1090,22 @@ class BotCombatManagerTest {
         entry.following = true;
 
         assertFalse(AgentBotCombatHealRuntime.tickSupportHealing(entry, bot, BotCombatManager.cfg));
+    }
+
+    @Test
+    void combatActionStateRuntimeClearsTargetAndActionLocks() {
+        Character bot = mockBot(new Point(100, 200), mock(MapleMap.class), 20_000, null);
+        BotEntry entry = new BotEntry(bot, null, null);
+        Monster target = mockMob(new Point(140, 200), 9300504);
+        AgentBotGrindTargetStateRuntime.setTarget(entry, target);
+        AgentBotCombatCooldownStateRuntime.maxAttackCooldown(entry, 500);
+        AgentBotCombatCooldownStateRuntime.maxMoveWindow(entry, 250);
+
+        AgentBotCombatActionStateRuntime.clearActionState(entry);
+
+        assertNull(AgentBotGrindTargetStateRuntime.target(entry));
+        assertEquals(0, AgentBotCombatCooldownStateRuntime.attackCooldownMs(entry));
+        assertEquals(0, AgentBotCombatCooldownStateRuntime.moveWindowMs(entry));
     }
 
     @Test
