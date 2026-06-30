@@ -22,7 +22,7 @@ import java.awt.*;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
-final class BotFidgetManager {
+public final class BotFidgetManager {
     private static final int SPAM_BASE_DELAY_MIN_MS = 100;
     private static final int SPAM_BASE_DELAY_MAX_MS = 250;
     private static final int SPAM_JITTER_MS = 50;
@@ -126,14 +126,14 @@ final class BotFidgetManager {
                 now + BotManager.randMs(4000, 8000));
     }
 
-    static boolean maybeStartGreetingFidget(BotEntry entry, int roll) {
+    public static boolean maybeStartGreetingFidget(BotEntry entry, int roll) {
         if (roll >= 50) {
             return false;
         }
         return maybeStartSocialFidget(entry);
     }
 
-    static boolean maybeStartSocialFidget(BotEntry entry) {
+    public static boolean maybeStartSocialFidget(BotEntry entry) {
         if (entry == null
                 || AgentBotFidgetStateRuntime.active(entry)
                 || !AgentBotModeStateRuntime.following(entry)

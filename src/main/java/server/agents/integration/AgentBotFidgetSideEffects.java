@@ -1,11 +1,14 @@
-package server.bots;
+package server.agents.integration;
+
+import server.bots.BotEntry;
+import server.bots.BotFidgetManager;
 
 /**
  * Temporary bot-side gateway for fidget side effects that still live in the
  * legacy bot package.
  */
-public final class BotFidgetSideEffects {
-    private BotFidgetSideEffects() {
+public final class AgentBotFidgetSideEffects {
+    private AgentBotFidgetSideEffects() {
     }
 
     public static void maybeStartSocialFidget(BotEntry entry) {

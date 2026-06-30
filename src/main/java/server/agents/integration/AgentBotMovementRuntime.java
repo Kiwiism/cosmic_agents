@@ -4,7 +4,6 @@ import server.agents.capabilities.dialogue.AgentEmote;
 
 import server.agents.capabilities.dialogue.AgentChatMovementFlow;
 import server.bots.BotEntry;
-import server.bots.BotFidgetSideEffects;
 import server.bots.BotPotionManager;
 import server.agents.capabilities.dialogue.AgentEmote;
 
@@ -99,7 +98,7 @@ public final class AgentBotMovementRuntime {
             public void fidget() {
                 AgentBotMovementSchedulerRuntime.afterRandomDelay(250, 500, () -> {
                     entry.bot().changeFaceExpression(AgentBotMovementStatusRuntime.randomFidgetExpression());
-                    BotFidgetSideEffects.maybeStartSocialFidget(entry);
+                    AgentBotFidgetSideEffects.maybeStartSocialFidget(entry);
                 });
             }
 
@@ -107,7 +106,7 @@ public final class AgentBotMovementRuntime {
             public void greeting() {
                 AgentBotMovementSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
                     entry.bot().changeFaceExpression(AgentEmote.HAPPY.getValue());
-                    BotFidgetSideEffects.maybeStartGreetingFidget(entry, ThreadLocalRandom.current().nextInt(100));
+                    AgentBotFidgetSideEffects.maybeStartGreetingFidget(entry, ThreadLocalRandom.current().nextInt(100));
                     AgentBotMovementReplyRuntime.queueReply(entry, AgentChatMovementFlow.greetingReply());
                     AgentBotMovementStatusRuntime.checkMovementStatus(entry, entry.bot());
                 });

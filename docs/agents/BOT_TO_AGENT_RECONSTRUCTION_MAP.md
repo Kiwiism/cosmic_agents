@@ -64,6 +64,10 @@ Recent map updates:
   `server.agents.integration.AgentBotCommandParser`. Bot-entry target
   adaptation, transfer command wrapping, and targeted-command feedback are
   unchanged; `AgentCommandParser` remains the shared parser core.
+- `server.bots.BotFidgetSideEffects` has moved to
+  `server.agents.integration.AgentBotFidgetSideEffects`. Greeting/social
+  fidget dispatch still delegates to the unchanged legacy fidget runtime, but
+  the Agent movement callback no longer imports the bot-side shim.
 
 | Current file | Target Agent destination | Status |
 | --- | --- | --- |
@@ -88,6 +92,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotEquipManager.java` | `server.agents.capabilities.equipment` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
 | `src/main/java/server/bots/BotFallbackMovementManager.java` | `server.agents.capabilities.movement.AgentFallbackMovementService` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/BotFidgetManager.java` | `server.agents.capabilities.social` and `server.agents.capabilities.movement` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
+| `src/main/java/server/bots/BotFidgetSideEffects.java` | `server.agents.integration.AgentBotFidgetSideEffects` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotInventoryManager.java` | `server.agents.capabilities.inventory`, `looting`, `trade`, `server.agents.capabilities.dialogue.AgentItemQueryNormalizer`, `server.agents.capabilities.dialogue.AgentDialogueCatalog`, `server.agents.capabilities.supplies.AgentPotionSharePolicy` | `SPLIT_TO_MULTIPLE_AGENT_MODULES`; item query normalization, trade page/meso/item-quantity policy, sell-trash equipment protection policy, ammo item-to-weapon classification, potion-share recovery scoring/slot eligibility, USE-item recovery/buff classification, drop-limited-map reply, and trade reply/result/error pools are Agent-owned |
 | `src/main/java/server/bots/BotLootEligibility.java` | `server.agents.capabilities.looting.AgentLootEligibility` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotMakerManager.java` | `server.agents.capabilities.build` or later deletion | `LEGACY_PROFILE` |

@@ -1830,6 +1830,10 @@ Recent reconstruction notes:
   `AgentLlmReplyService.maybeRespond` directly. Prompt text, memory JSONL
   serialization, compaction behavior, in-flight gating, reply splitting,
   sanitization, and follow-up scheduling are unchanged.
+- Greeting/social fidget side-effect dispatch now enters through
+  `AgentBotFidgetSideEffects`; the old bot-side fidget side-effect shim has
+  been removed, while `BotFidgetManager` still owns the legacy fidget behavior
+  until the full fidget capability is extracted.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
