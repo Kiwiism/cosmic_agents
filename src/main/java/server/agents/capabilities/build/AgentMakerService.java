@@ -8,11 +8,11 @@ import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.processor.action.MakerProcessor;
 import server.ItemInformationProvider;
+import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.integration.AgentBotMakerRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
 import server.bots.BotEntry;
-import server.bots.BotInventoryManager;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -91,11 +91,11 @@ public final class AgentMakerService {
                 });
     }
 
-    /** Trash equips (SSOT: {@link BotInventoryManager#collectSellTrashEquips}) that actually
+    /** Trash equips (SSOT: {@link AgentInventorySellTrashService#collectSellTrashEquips}) that actually
      *  have a Maker disassembly recipe — others would just abort the batch. */
     private static List<Equip> collectDisassemblableTrash(BotEntry entry, Character bot) {
         List<Equip> out = new ArrayList<>();
-        for (Item item : BotInventoryManager.collectSellTrashEquips(entry, bot)) {
+        for (Item item : AgentInventorySellTrashService.collectSellTrashEquips(entry, bot)) {
             if (item instanceof Equip equip && MakerProcessor.canDisassemble(equip.getItemId())) {
                 out.add(equip);
             }

@@ -2050,6 +2050,10 @@ Recent reconstruction notes:
   `AgentInventorySellTrashPolicy` directly; the old `BotInventoryManager`
   protection helper shims have been removed while preserving the same scrolled,
   high-stat, weapon-attack, and class-gated protection rules.
+- Sell-trash equipment collection for shop and Maker automation now lives in
+  `AgentInventorySellTrashService`; Agent shop/build callers no longer depend on
+  `BotInventoryManager.collectSellTrashEquips`, while the remaining bot
+  compatibility method delegates to the Agent service.
 - USE-item effect lookup plus recovery-potion and buff-consumable classification
   now call `AgentUseItemClassificationPolicy` directly from Agent combat,
   supplies, ammo-check, and remaining inventory compatibility paths; the old

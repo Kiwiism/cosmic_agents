@@ -19,6 +19,7 @@ import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
+import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotShopBuyReport;
@@ -33,7 +34,6 @@ import server.Shop;
 import server.ShopFactory;
 import server.ShopItem;
 import server.bots.BotEntry;
-import server.bots.BotInventoryManager;
 import server.bots.BotManager;
 import server.bots.BotMovementManager;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
@@ -121,7 +121,7 @@ public final class AgentShopService {
         if (entry == null || bot == null || bot.getMap() == null) {
             return;
         }
-        if (BotInventoryManager.collectSellTrashEquips(entry, bot).isEmpty()) {
+        if (AgentInventorySellTrashService.collectSellTrashEquips(entry, bot).isEmpty()) {
             AgentBotShopRuntime.replyNow(entry, AgentDialogueCatalog.shopNoTrashEquipsReply());
             return;
         }
@@ -347,7 +347,7 @@ public final class AgentShopService {
     }
 
     private static void startSellTrashSequence(AgentBotShopPurchaseSequence sequence) {
-        List<Item> items = BotInventoryManager.collectSellTrashEquips(sequence.entry(), sequence.bot());
+        List<Item> items = AgentInventorySellTrashService.collectSellTrashEquips(sequence.entry(), sequence.bot());
         if (items.isEmpty()) {
             AgentBotShopStateRuntime.setShopSellTrashPending(sequence.entry(), false);
             AgentBotShopRuntime.sayMapNow(sequence.bot(), AgentDialogueCatalog.shopNoTrashEquipsReply());

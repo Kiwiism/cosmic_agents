@@ -32,7 +32,7 @@ import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
-import server.agents.capabilities.inventory.AgentInventorySellTrashPolicy;
+import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy.AmmoTradeGroups;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.AmmoGroup;
@@ -1227,19 +1227,7 @@ public class BotInventoryManager {
     }
 
     public static List<Item> collectSellTrashEquips(BotEntry entry, Character bot) {
-        List<Item> trash = collectTrashEquips(entry, bot);
-        if (trash.isEmpty()) {
-            return trash;
-        }
-
-        ItemInformationProvider ii = ItemInformationProvider.getInstance();
-        List<Item> result = new ArrayList<>(trash.size());
-        for (Item item : trash) {
-            if (item instanceof Equip equip && !AgentInventorySellTrashPolicy.shouldKeepForSellTrash(ii, equip)) {
-                result.add(item);
-            }
-        }
-        return result;
+        return AgentInventorySellTrashService.collectSellTrashEquips(entry, bot);
     }
 
     private static EquipTradeGroups classifyEquipTradeGroups(BotEntry entry, Character bot) {

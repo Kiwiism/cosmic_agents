@@ -12,12 +12,12 @@ import client.inventory.Item;
 import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.integration.AgentBotShopRuntime;
 import server.agents.integration.AgentBotShopStateRuntime;
 import server.Shop;
 import server.ShopFactory;
 import server.bots.BotEntry;
-import server.bots.BotInventoryManager;
 import server.life.NPC;
 import server.maps.MapleMap;
 import testutil.Items;
@@ -43,9 +43,9 @@ class AgentShopServiceTest {
         when(bot.getMap()).thenReturn(map);
         BotEntry entry = new BotEntry(bot, null, null);
 
-        try (MockedStatic<BotInventoryManager> inventories = mockStatic(BotInventoryManager.class);
+        try (MockedStatic<AgentInventorySellTrashService> inventories = mockStatic(AgentInventorySellTrashService.class);
              MockedStatic<AgentBotShopRuntime> replies = mockStatic(AgentBotShopRuntime.class)) {
-            inventories.when(() -> BotInventoryManager.collectSellTrashEquips(entry, bot))
+            inventories.when(() -> AgentInventorySellTrashService.collectSellTrashEquips(entry, bot))
                     .thenReturn(List.of());
 
             AgentShopService.requestSellTrashVisit(entry, bot);
@@ -162,13 +162,13 @@ class AgentShopServiceTest {
                      mockStatic(AgentAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS);
              MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class);
              MockedStatic<ShopFactory> shops = mockStatic(ShopFactory.class);
-             MockedStatic<BotInventoryManager> inventories = mockStatic(BotInventoryManager.class)) {
+             MockedStatic<AgentInventorySellTrashService> inventories = mockStatic(AgentInventorySellTrashService.class)) {
             ShopFactory factory = mock(ShopFactory.class);
             shops.when(ShopFactory::getInstance).thenReturn(factory);
             when(factory.getShopForNPC(npc.getId())).thenReturn(shop);
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.CLAW);
             potions.when(() -> AgentPotionService.countPotions(bot)).thenReturn(new int[]{9999, 9999});
-            inventories.when(() -> BotInventoryManager.collectSellTrashEquips(entry, bot))
+            inventories.when(() -> AgentInventorySellTrashService.collectSellTrashEquips(entry, bot))
                     .thenReturn(List.of(mock(Item.class)));
 
             AgentShopService.requestSellTrashVisit(entry, bot);
