@@ -1741,6 +1741,12 @@ Recent reconstruction notes:
   Agent-owned logic preserves basic attack target correction, opposite-facing
   pivot checks, Shadow Partner damage-line multiplier, packet field selection,
   timing, cooldown, and damage weapon type resolution.
+- Skill attack planning now lives in `AgentSkillAttackPlanRuntime`;
+  `BotCombatManager.planSkillAttack` is a temporary compatibility adapter while
+  Agent-owned logic preserves skill readiness, MP/HP and ammo gates,
+  strike-point AoE primary correction, hitbox calculation, target collection,
+  Dragon Roar support safety, packet field selection, timing, cooldown, and
+  damage weapon type resolution.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

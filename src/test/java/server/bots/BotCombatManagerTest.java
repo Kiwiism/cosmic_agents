@@ -9,6 +9,7 @@ import server.agents.capabilities.combat.AgentCombatWeaponPolicy;
 import server.agents.capabilities.combat.AgentCombatRangePolicy;
 import server.agents.capabilities.combat.AgentCombatScoringPolicy;
 import server.agents.capabilities.combat.AgentCombatTargetSelector;
+import server.agents.capabilities.combat.AgentSkillAttackPlanRuntime;
 import server.agents.capabilities.combat.AgentSupportSpecialMovePacketBuilder;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
@@ -1159,6 +1160,35 @@ class BotCombatManagerTest {
             assertNotNull(plan);
             assertEquals(0, plan.skillId);
             assertEquals(1, plan.numDamage);
+            assertEquals(List.of(target), plan.targets);
+            assertEquals(AgentAttackRoute.CLOSE, plan.route);
+            assertNotNull(plan.hitBox);
+        }
+    }
+
+    @Test
+    void skillAttackPlanRuntimeBuildsSkillAttackPlan() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        Monster target = mockMob(new Point(140, 200), 9300507);
+        when(map.getAllMonsters()).thenReturn(List.of(target));
+
+        Skill powerStrike = skillWithAttackBox(Warrior.POWER_STRIKE, 1, 1, 180,
+                new Rectangle(90, 150, 120, 80));
+        when(bot.getSkillLevel(powerStrike)).thenReturn((byte) 1);
+
+        try (MockedStatic<SkillFactory> skillFactory = Mockito.mockStatic(SkillFactory.class);
+             MockedStatic<AgentAttackExecutionProvider> attacks =
+                     Mockito.mockStatic(AgentAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS)) {
+            skillFactory.when(() -> SkillFactory.getSkill(Warrior.POWER_STRIKE)).thenReturn(powerStrike);
+            attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.SWORD1H);
+
+            AgentAttackPlan plan = AgentSkillAttackPlanRuntime.planSkillAttack(
+                    bot, target, Warrior.POWER_STRIKE, BotCombatManager.cfg);
+
+            assertNotNull(plan);
+            assertEquals(Warrior.POWER_STRIKE, plan.skillId);
+            assertEquals(1, plan.skillLevel);
             assertEquals(List.of(target), plan.targets);
             assertEquals(AgentAttackRoute.CLOSE, plan.route);
             assertNotNull(plan.hitBox);

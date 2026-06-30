@@ -8,21 +8,15 @@ import server.agents.capabilities.combat.AgentAttackPlanScoringPolicy;
 import server.agents.capabilities.combat.AgentAttackPlanTieBreakPolicy;
 import server.agents.capabilities.combat.AgentBasicAttackPlanRuntime;
 import server.agents.capabilities.combat.AgentCombatConfig;
-import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 import server.agents.capabilities.combat.AgentCombatSkillClassifier;
-import server.agents.capabilities.combat.AgentCombatWeaponPolicy;
-import server.agents.capabilities.combat.AgentCombatSkillHitboxPolicy;
-import server.agents.capabilities.combat.AgentCombatHitCounter;
-import server.agents.capabilities.combat.AgentCombatHitboxIntersection;
 import server.agents.capabilities.combat.AgentCombatImmediateTargetPolicy;
 import server.agents.capabilities.combat.AgentCombatGrindTargetPolicy;
 import server.agents.capabilities.combat.AgentCombatRangePolicy;
 import server.agents.capabilities.combat.AgentCombatScoringPolicy;
-import server.agents.capabilities.combat.AgentCombatSupportPolicy;
 import server.agents.capabilities.combat.AgentCombatTargetSelector;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
 import server.agents.capabilities.combat.AgentScoredGrindTarget;
-import server.agents.capabilities.combat.AgentSkillAttackPlanner;
+import server.agents.capabilities.combat.AgentSkillAttackPlanRuntime;
 import server.agents.capabilities.combat.AgentGrindTargetGroup;
 
 import server.agents.runtime.AgentPerformanceMonitor;
@@ -30,8 +24,6 @@ import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.capabilities.movement.AgentMovementProfile;
 
 import client.Character;
-import client.Skill;
-import client.SkillFactory;
 import client.inventory.WeaponType;
 import constants.skills.Assassin;
 import constants.skills.Bandit;
@@ -40,7 +32,6 @@ import constants.skills.Buccaneer;
 import constants.skills.Corsair;
 import constants.skills.Crusader;
 import constants.skills.DawnWarrior;
-import constants.skills.DragonKnight;
 import constants.skills.Fighter;
 import constants.skills.GM;
 import constants.skills.Marksman;
@@ -50,8 +41,6 @@ import constants.skills.ThunderBreaker;
 import constants.skills.WhiteKnight;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import server.StatEffect;
-import server.agents.capabilities.combat.data.AgentAttackDataProvider;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.integration.AgentBotAmmoStateRuntime;
 import server.agents.integration.AgentBotCombatAttackRuntime;
@@ -343,145 +332,7 @@ public class BotCombatManager {
     }
 
     private static AttackPlan planSkillAttack(BotEntry entry, Character bot, Monster primaryTarget, int skillId) {
-        Skill skill = SkillFactory.getSkill(skillId);
-        int skillLevel = skill == null ? 0 : bot.getSkillLevel(skill);
-        StatEffect effect = skill == null || skillLevel <= 0 ? null : skill.getEffect(skillLevel);
-        AgentSkillAttackPlanner.SkillAttackReadiness readiness = AgentSkillAttackPlanner.skillAttackReadiness(
-                skillId,
-                skillId != 0 && bot.skillIsCooling(skillId),
-                skill != null,
-                skillLevel,
-                () -> effect.canPaySkillCost(bot),
-                () -> AgentCombatWeaponPolicy.canUseAttackSkillWithWeapon(
-                        skillId, AgentAttackExecutionProvider.getEquippedWeaponType(bot)));
-        if (readiness != AgentSkillAttackPlanner.SkillAttackReadiness.READY) {
-            return null;
-        }
-        WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
-        AgentAttackRoute route = AgentAttackExecutionProvider.determineSkillRoute(bot, skillId);
-        // Ammo gate: ranged skills with bulletCount need that many arrows/stars/bullets in
-        // the bot's USE inventory. canPaySkillCost only covers MP/HP. countAmmo returns
-        // MAX_VALUE for non-ammo weapons and while Soul Arrow / Shadow Claw are active.
-        // Avenger / Iron Arrow set bulletConsume (e.g. 3 for Avenger) for ammo cost without
-        // changing the visible projectile count, so use the larger of the two. Shadow
-        // Partner doubles the actual consume (see RangedAttackHandler.bulletConsume *= 2).
-        if (AgentSkillAttackPlanner.skillAmmoReadiness(
-                effect.getBulletCount(),
-                effect.getBulletConsume(),
-                AgentCombatHitCounter.shadowPartnerHitMultiplier(bot, route),
-                route,
-                () -> AgentCombatAmmoCounter.countAmmo(bot, weaponType))
-                != AgentSkillAttackPlanner.SkillAmmoReadiness.READY) {
-            return null;
-        }
-        // Resolve the animated action once up front: weapon-action sampling is random, so the
-        // reach hitbox and the broadcast packet must share the same swing (a close skill without
-        // its own lt/rb gates the hit on this action's afterimage box).
-        String action = AgentAttackExecutionProvider.resolveSkillAttackAction(bot, skill, skillLevel, weaponType);
-        if (AgentCombatSkillHitboxPolicy.isStrikePointAnchoredAoeSkill(skillId)) {
-            // Strike-point-anchored skills center their bbox on the target, so hitbox
-            // intersection is not a reach gate. MAGIC route remains ungated to preserve legacy behavior.
-            Monster strikePointFallback = primaryTarget;
-            primaryTarget = bot == null ? primaryTarget : AgentCombatTargetSelector.resolveStrikePointPrimaryByBasicWeapon(
-                    bot.getPosition(),
-                    strikePointFallback,
-                    route,
-                    facingLeft -> AgentCombatRangePolicy.basicWeaponReachRect(bot, facingLeft, route),
-                    hitBox -> AgentCombatTargetSelector.resolveEffectivePrimary(
-                            bot.getPosition(), strikePointFallback, hitBox, bot.getMap().getAllMonsters()));
-        }
-        Rectangle hitBox = AgentCombatSkillHitboxPolicy.calculateSkillHitBox(
-                effect, bot, primaryTarget, route, skillId, action);
-        if (hitBox == null) {
-            return null;
-        }
-
-        boolean strikePointAnchored = AgentCombatSkillHitboxPolicy.isStrikePointAnchoredAoeSkill(skillId);
-        Monster preSelectionPrimaryTarget = primaryTarget;
-        AgentSkillAttackPlanner.SkillPrimaryTargetSelection targetSelection =
-                AgentSkillAttackPlanner.resolvePrimaryTargetAfterHitbox(
-                        strikePointAnchored,
-                        preSelectionPrimaryTarget,
-                        hitBox,
-                        () -> AgentCombatRangePolicy.isPrimaryReachableByBasicWeapon(
-                                bot, preSelectionPrimaryTarget, route),
-                        (candidate, candidateHitBox) -> AgentCombatTargetSelector.resolveEffectivePrimary(
-                                bot.getPosition(), candidate, candidateHitBox, bot.getMap().getAllMonsters()),
-                        AgentCombatHitboxIntersection::intersectsMonster);
-        if (targetSelection == null) {
-            return null;
-        }
-        primaryTarget = targetSelection.target();
-
-        int attackCount = AgentCombatHitCounter.effectiveHitCount(effect)
-                * AgentCombatHitCounter.shadowPartnerHitMultiplier(bot, route);
-        if (!AgentAttackExecutionProvider.canUseRangedAttackRoute(route, weaponType, bot.getPosition(), primaryTarget.getPosition())) {
-            return null;
-        }
-        AgentAttackExecutionProvider.BasicAttackData fallbackAttackData =
-                AgentAttackExecutionProvider.buildBasicAttackData(bot, primaryTarget.getPosition());
-        AgentAttackDataProvider.AttackAnimationSpec attackSpec = AgentAttackDataProvider.getInstance().getBasicAttackSpec(weaponType);
-        String fallbackAction = attackSpec.primaryAction();
-        AgentSkillAttackPlanner.SkillAttackPacketFields packetFields =
-                AgentSkillAttackPlanner.resolveSkillAttackPacketFields(
-                        route, weaponType, bot.getPosition(), primaryTarget.getPosition(), action, fallbackAction);
-        AgentAttackExecutionProvider.SkillAttackTiming skillTiming =
-                AgentAttackExecutionProvider.resolveSkillAttackTiming(skill, action, bot, fallbackAttackData);
-        List<Monster> targets = AgentCombatTargetSelector.collectTargetsInHitBox(
-                primaryTarget, hitBox, Math.max(1, effect.getMobCount()), bot.getMap().getAllMonsters());
-        if (skillId == DragonKnight.DRAGON_ROAR
-                && !AgentCombatSupportPolicy.canUseDragonRoarPlan(
-                bot, targets.size(),
-                AgentCombatSupportPolicy.hasNearbyHealSkillAlly(
-                        bot, cfg.SUPPORT_RANGE, cfg.SUPPORT_VERTICAL_RANGE))) {
-            return null;
-        }
-        return new AttackPlan(skillId, skillLevel, attackCount, hitBox, targets,
-                route, packetFields.display(),
-                packetFields.direction(), packetFields.rangedDirection(),
-                packetFields.stance(),
-                fallbackAttackData.speed(), skillTiming.hitDelayMs(), skillTiming.cooldownMs(),
-                AgentCombatWeaponPolicy.damageWeaponTypeForAction(skillId, weaponType, action));
-    }
-
-    /**
-     * Returns the number of damage lines a skill fires per target.
-     * Uses the larger of attackCount and bulletCount from skill data —
-     * claw skills like Lucky Seven store their projectile count in bulletCount.
-     */
-    // Shadow Partner (Hermit / NightWalker / DualBlade book) doubles the per-mob damage
-    // line count for ranged attacks: the client packs `numDamage * 2` into
-    // numAttackedAndDamage and the second half of each mob's lines are rolled at half
-    // damage. The server validates this in AbstractDealDamageHandler (`maxattack * 2`
-    // autoban headroom) and RangedAttackHandler (`bulletConsume * 2`). Bots inherit the
-    // multiplier automatically once the buff lands on them (future admin command).
-    // Melee and magic routes are left untouched here — Shadow Partner's melee/magic
-    // doubling for thief skills (e.g. Triple Throw is ranged-claw, so it covers itself)
-    // can be enabled per-skill later if needed.
-    /**
-     * True iff the AoE skill's expected total damage (damage% × hits × targets) beats
-     * the bot's best single-target option (best of configured attack skill or basic 100%).
-     * Used to gate AoE selection when only a small cluster is in range.
-     */
-    private static boolean beatsSingleTargetScore(Character bot, BotEntry entry, StatEffect aoeEffect,
-                                                  int aoeAttackCount, int targetCount) {
-        int aoeDamage = Math.max(0, aoeEffect.getDamage());
-        long singleScore = 100L; // basic attack: 100% damage × 1 line
-        int attackSkillId = AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry);
-        if (attackSkillId != 0) {
-            Skill skill = SkillFactory.getSkill(attackSkillId);
-            int level = skill == null ? 0 : bot.getSkillLevel(skill);
-            if (level > 0) {
-                StatEffect fx = skill.getEffect(level);
-                if (fx != null) {
-                    singleScore = Math.max(singleScore,
-                            AgentCombatScoringPolicy.bestSingleTargetScore(
-                                    fx.getDamage(), AgentCombatHitCounter.effectiveHitCount(fx)));
-                }
-            }
-        }
-        return AgentCombatScoringPolicy.aoeBeatsSingleTargetScore(aoeDamage, aoeAttackCount, targetCount,
-                singleScore);
+        return toBotAttackPlan(AgentSkillAttackPlanRuntime.planSkillAttack(bot, primaryTarget, skillId, cfg));
     }
 
     private static List<AgentScoredGrindTarget> scoreGrindTargets(BotEntry entry,
