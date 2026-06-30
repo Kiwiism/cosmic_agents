@@ -527,7 +527,7 @@ public class BotCombatManager {
             Point botPos = bot.getPosition();
             double rangeSq = (double) BotCombatManager.cfg.GRIND_SEEK_RANGE * BotCombatManager.cfg.GRIND_SEEK_RANGE;
             Foothold botFoothold = findGroundFoothold(botPos, bot);
-            List<Monster> candidates = aliveMonstersInRange(bot, botPos, rangeSq);
+            List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(bot, botPos, rangeSq);
             if (candidates.isEmpty()) return null;
 
             List<AgentScoredGrindTarget> scoredTargets = scoreGrindTargets(entry, bot, botPos, botFoothold, candidates);
@@ -555,7 +555,7 @@ public class BotCombatManager {
             Point botPos = bot.getPosition();
             double rangeSq = (double) cfg.GRIND_SEEK_RANGE * cfg.GRIND_SEEK_RANGE;
             Foothold botFoothold = findGroundFoothold(botPos, bot);
-            List<Monster> candidates = aliveMonstersInRange(bot, botPos, rangeSq);
+            List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(bot, botPos, rangeSq);
             if (candidates.isEmpty()) {
                 return null;
             }
@@ -612,7 +612,7 @@ public class BotCombatManager {
                     AgentProjectileHitbox.CLIENT_PROJECTILE_BASE_RANGE
                             + AgentProjectileHitbox.passiveProjectileRangeBonus(bot),
                     BotCombatManager.cfg.ATTACK_RANGE_X + BotCombatManager.cfg.ATTACK_JUMP_X_EXTRA);
-            List<Monster> candidates = aliveMonstersInRange(bot, botPos, range * range);
+            List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(bot, botPos, range * range);
             if (candidates.isEmpty()) {
                 return null;
             }
@@ -955,10 +955,6 @@ public class BotCombatManager {
                 graphContext.available(),
                 () -> scoreLocalTargets(entry, bot, botPos, botFoothold, candidates),
                 () -> scoreTargetRegions(entry, graphContext, bot, botPos, botFoothold, candidates));
-    }
-
-    private static List<Monster> aliveMonstersInRange(Character bot, Point botPos, double rangeSq) {
-        return AgentCombatTargetSelector.aliveMonstersInRange(bot.getMap().getAllMonsters(), botPos, rangeSq);
     }
 
     private static boolean isLocalCombatTarget(GrindGraphContext context,

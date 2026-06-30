@@ -1,8 +1,10 @@
 package server.agents.capabilities.combat;
 
+import client.Character;
 import org.junit.jupiter.api.Test;
 import server.life.Monster;
 import server.life.MonsterStats;
+import server.maps.MapleMap;
 
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -58,6 +60,20 @@ class AgentCombatTargetSelectorTest {
 
         assertEquals(List.of(near), AgentCombatTargetSelector.aliveMonstersInRange(
                 List.of(far, deadNear, near, friendlyNear), new Point(100, 100), 50 * 50));
+    }
+
+    @Test
+    void shouldCollectAliveMonstersFromAgentCurrentMap() {
+        Character agent = mock(Character.class);
+        MapleMap map = mock(MapleMap.class);
+        Monster near = monster(1, new Point(110, 100), true, false);
+        Monster far = monster(2, new Point(300, 100), true, false);
+
+        when(agent.getMap()).thenReturn(map);
+        when(map.getAllMonsters()).thenReturn(List.of(far, near));
+
+        assertEquals(List.of(near), AgentCombatTargetSelector.aliveMonstersInRange(
+                agent, new Point(100, 100), 50 * 50));
     }
 
     @Test

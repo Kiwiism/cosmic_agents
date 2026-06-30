@@ -1632,6 +1632,11 @@ Recent reconstruction notes:
 - The unused bot-side inclusive-rectangle pass-through has been removed from
   `BotCombatManager`; mob-touch sweep geometry remains Agent-owned in
   `AgentMobTouchPolicy`.
+- Map-backed alive-monster range collection now calls
+  `AgentCombatTargetSelector.aliveMonstersInRange(Character, Point, double)`
+  directly from grind, patrol, and follow target search; the temporary
+  `BotCombatManager` helper has been removed while preserving the same current
+  map monster source and hostile/living/range filters.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

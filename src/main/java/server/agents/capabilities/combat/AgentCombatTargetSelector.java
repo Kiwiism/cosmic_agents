@@ -1,5 +1,6 @@
 package server.agents.capabilities.combat;
 
+import client.Character;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.ArrayList;
@@ -61,6 +62,10 @@ public final class AgentCombatTargetSelector {
             }
         }
         return targets;
+    }
+
+    public static List<Monster> aliveMonstersInRange(Character agent, Point origin, double rangeSq) {
+        return aliveMonstersInRange(agent.getMap().getAllMonsters(), origin, rangeSq);
     }
 
     public static Monster resolveEffectivePrimary(Point origin,
