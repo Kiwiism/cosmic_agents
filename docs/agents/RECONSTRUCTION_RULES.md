@@ -1700,6 +1700,12 @@ Recent reconstruction notes:
   compatibility delegate while the Agent runtime preserves the same buff-enable
   gates, living-mob preflight, party-support checks, SPECIAL_MOVE dispatch,
   cooldown windows, and debug summaries.
+- Combat skill-cache rebuild orchestration now lives in
+  `AgentBotCombatSkillCacheRuntime`; `BotCombatManager.rebuildSkillCacheIfNeeded`
+  is a temporary compatibility delegate while the Agent runtime preserves the
+  same skill signature guard, attack/AoE/heal/summon/support-buff bucket
+  selection, best single-target skill ordering, and support-buff next-tick
+  initialization.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

@@ -43,6 +43,7 @@ import server.agents.integration.AgentBotCombatBuffRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatFacingRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
+import server.agents.integration.AgentBotCombatSkillCacheRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotMobTouchStateRuntime;
 import server.agents.integration.AgentBotMobTouchRuntime;
@@ -179,7 +180,7 @@ class BotCombatManagerTest {
         }).when(bot).getSkillLevel(any(Skill.class));
 
         BotEntry entry = new BotEntry(bot, null, null);
-        BotCombatManager.rebuildSkillCacheIfNeeded(entry, bot);
+        AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
 
         assertEquals(Warrior.POWER_STRIKE, AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry));
         assertEquals(Warrior.SLASH_BLAST, AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry));
