@@ -1513,6 +1513,10 @@ Recent reconstruction notes:
   `AgentCombatSkillClassifier`/`AgentCombatHitCounter` directly; the remaining
   bot-side skill-classification wrapper methods have been removed while
   preserving the same classification precedence.
+- Effective hit-count reads inside combat planning now call
+  `AgentCombatHitCounter` directly; the temporary `BotCombatManager` wrapper has
+  been removed while preserving the legacy max(attackCount, bulletCount, 1)
+  formula.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

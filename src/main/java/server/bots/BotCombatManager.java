@@ -325,7 +325,7 @@ public class BotCombatManager {
             if (lvl <= 0) continue;
 
             StatEffect fx = skill.getEffect(lvl);
-            int atk = effectiveHitCount(fx);
+            int atk = AgentCombatHitCounter.effectiveHitCount(fx);
             int mobs = fx.getMobCount();
             AgentCombatSkillClassifier.SkillCacheBucket cacheBucket =
                     AgentCombatSkillClassifier.classifySkillCacheBucket(skill, fx);
@@ -957,7 +957,7 @@ public class BotCombatManager {
         }
         primaryTarget = targetSelection.target();
 
-        int attackCount = effectiveHitCount(effect) * shadowPartnerHitMultiplier(bot, route);
+        int attackCount = AgentCombatHitCounter.effectiveHitCount(effect) * shadowPartnerHitMultiplier(bot, route);
         if (!AgentAttackExecutionProvider.canUseRangedAttackRoute(route, weaponType, bot.getPosition(), primaryTarget.getPosition())) {
             return null;
         }
@@ -1061,10 +1061,6 @@ public class BotCombatManager {
      * Uses the larger of attackCount and bulletCount from skill data —
      * claw skills like Lucky Seven store their projectile count in bulletCount.
      */
-    static int effectiveHitCount(StatEffect effect) {
-        return AgentCombatHitCounter.effectiveHitCount(effect);
-    }
-
     // Shadow Partner (Hermit / NightWalker / DualBlade book) doubles the per-mob damage
     // line count for ranged attacks: the client packs `numDamage * 2` into
     // numAttackedAndDamage and the second half of each mob's lines are rolled at half
@@ -1095,7 +1091,8 @@ public class BotCombatManager {
                 StatEffect fx = skill.getEffect(level);
                 if (fx != null) {
                     singleScore = Math.max(singleScore,
-                            AgentCombatScoringPolicy.bestSingleTargetScore(fx.getDamage(), effectiveHitCount(fx)));
+                            AgentCombatScoringPolicy.bestSingleTargetScore(
+                                    fx.getDamage(), AgentCombatHitCounter.effectiveHitCount(fx)));
                 }
             }
         }
