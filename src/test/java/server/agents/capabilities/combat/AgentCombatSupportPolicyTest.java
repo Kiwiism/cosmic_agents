@@ -184,6 +184,12 @@ class AgentCombatSupportPolicyTest {
     }
 
     @Test
+    void shouldScheduleSupportBuffRefreshAtLegacyNinetyPercentDuration() {
+        assertEquals(10_900L, AgentCombatSupportPolicy.nextSupportBuffRefreshAt(10_000L, 1_000L));
+        assertEquals(10_899L, AgentCombatSupportPolicy.nextSupportBuffRefreshAt(10_000L, 999L));
+    }
+
+    @Test
     void shouldDetectNearbyHealSkillAlly() {
         Character bot = characterAt(1, new Point(100, 100), true);
         Character healer = characterAt(2, new Point(130, 110), true);

@@ -164,6 +164,10 @@ public final class AgentCombatSupportPolicy {
         return "all skill buffs active or on cooldown";
     }
 
+    public static long nextSupportBuffRefreshAt(long now, long durationMs) {
+        return now + (long) (durationMs * 0.9);
+    }
+
     public static boolean hasNearbyHealSkillAlly(Character bot, int supportRange, int supportVerticalRange) {
         for (Character member : nearbyPartyMembers(bot, supportRange, supportVerticalRange)) {
             if (hasHealSkill(member)) {

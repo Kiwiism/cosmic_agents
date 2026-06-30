@@ -1494,6 +1494,9 @@ Recent reconstruction notes:
   `AgentCombatSupportPolicy`, preserving the legacy “all skill buffs active or
   on cooldown” debug line while BotCombatManager still records it in the
   temporary skill-buff debug state.
+- Support-buff refresh timing now lives in `AgentCombatSupportPolicy`,
+  preserving the legacy `now + (long) (duration * 0.9)` rebuff schedule while
+  BotCombatManager still writes the temporary next-buff runtime state.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

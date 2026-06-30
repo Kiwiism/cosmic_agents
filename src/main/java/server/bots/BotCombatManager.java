@@ -1612,7 +1612,8 @@ public class BotCombatManager {
 
         long dur = fx.getDuration();
         if (dur > 0) {
-            AgentBotCombatBuffStateRuntime.setNextBuffAt(entry, skill.getId(), now + (long) (dur * 0.9));
+            AgentBotCombatBuffStateRuntime.setNextBuffAt(
+                    entry, skill.getId(), AgentCombatSupportPolicy.nextSupportBuffRefreshAt(now, dur));
         }
         AgentAttackExecutionProvider.BasicAttackData fallbackAttackData =
                 AgentAttackExecutionProvider.buildBasicAttackData(bot, bot.getPosition());
