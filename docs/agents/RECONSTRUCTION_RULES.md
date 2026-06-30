@@ -1591,6 +1591,10 @@ Recent reconstruction notes:
   directly from the remaining combat shell; the temporary `BotCombatManager`
   reporting wrapper has been removed while preserving SkillFactory display-name
   fallback behavior.
+- Support SPECIAL_MOVE packet layout tests and dispatch now call
+  `AgentSupportSpecialMovePacketBuilder` directly; the temporary
+  `BotCombatManager` packet-builder wrapper has been removed while preserving
+  the captured self-buff and party-buff packet shapes.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

@@ -1476,21 +1476,13 @@ public class BotCombatManager {
         return true;
     }
 
-    // Real v83 self-buff SPECIAL_MOVE captures show two shapes:
-    // - self-only buffs like Magic Guard / Invincible: timestamp, skillId, skillLevel, 00 00
-    // - party support buffs like Bless: timestamp, skillId, skillLevel, pos(x,y), facingMask, 00 00
-    // Bot buffs must mimic those client parameters and then run through the normal SpecialMoveHandler.
-    static byte[] buildSupportSpecialMovePacket(Character bot, int skillId, int skillLevel, int packetTimestamp) {
-        return AgentSupportSpecialMovePacketBuilder.build(bot, skillId, skillLevel, packetTimestamp);
-    }
-
     private static boolean dispatchSupportSpecialMove(Character bot, Skill skill, int skillLevel) {
         Client client = bot.getClient();
         if (client == null) {
             return false;
         }
 
-        byte[] packetBytes = buildSupportSpecialMovePacket(
+        byte[] packetBytes = AgentSupportSpecialMovePacketBuilder.build(
                 bot,
                 skill.getId(),
                 skillLevel,
