@@ -908,7 +908,8 @@ public class BotCombatManager {
                         strikePointAnchored,
                         preSelectionPrimaryTarget,
                         hitBox,
-                        () -> isPrimaryReachableByBasicWeapon(bot, preSelectionPrimaryTarget, route),
+                        () -> AgentCombatRangePolicy.isPrimaryReachableByBasicWeapon(
+                                bot, preSelectionPrimaryTarget, route),
                         (candidate, candidateHitBox) -> resolveEffectivePrimary(bot, candidate, candidateHitBox),
                         BotCombatManager::doesHitBoxIntersectMonster);
         if (targetSelection == null) {
@@ -948,10 +949,6 @@ public class BotCombatManager {
     private static List<Monster> collectTargetsInHitBox(Character bot, Monster primaryTarget, Rectangle hitBox, int maxTargets) {
         return AgentCombatTargetSelector.collectTargetsInHitBox(primaryTarget, hitBox, maxTargets,
                 bot.getMap().getAllMonsters());
-    }
-
-    private static boolean isBasicAttackInRange(Point botPos, Point targetPos) {
-        return AgentCombatRangePolicy.isBasicAttackInRange(botPos, targetPos);
     }
 
     /**
@@ -1374,33 +1371,18 @@ public class BotCombatManager {
         return AgentCombatHitboxIntersection.intersectsMonster(hitBox, monster);
     }
 
-    // Strike-point-anchored skills (e.g. Arrow Bomb) center their bbox on the target, so
-    // doesHitBoxIntersectMonster(hitBox, target) is trivially true and does not gate reach.
-    // Use the bot's basic weapon rectangle as a separate reach check. MAGIC route is left
-    // ungated for now — untested.
-    private static boolean isPrimaryReachableByBasicWeapon(Character bot, Monster target, AgentAttackRoute route) {
-        return AgentCombatRangePolicy.isPrimaryReachableByBasicWeapon(bot, target, route);
-    }
-
     private static Monster resolveStrikePointPrimaryByBasicWeapon(Character bot, Monster fallback, AgentAttackRoute route) {
         if (bot == null) {
             return fallback;
         }
+        // Strike-point-anchored skills center their bbox on the target, so hitbox
+        // intersection is not a reach gate. MAGIC route remains ungated to preserve legacy behavior.
         return AgentCombatTargetSelector.resolveStrikePointPrimaryByBasicWeapon(
                 bot.getPosition(),
                 fallback,
                 route,
-                facingLeft -> basicWeaponReachRect(bot, facingLeft, route),
+                facingLeft -> AgentCombatRangePolicy.basicWeaponReachRect(bot, facingLeft, route),
                 hitBox -> resolveEffectivePrimary(bot, fallback, hitBox));
-    }
-
-    /**
-     * Rect the bot's *basic* (un-skilled) weapon attack would cover for the given facing/route.
-     * RANGED -> projectile reach (400 px + passive bonuses); CLOSE -> ATTACK_RANGE_X/Y/DOWN_MAX
-     * around bot origin. Returns null for routes with no rect-based reach (e.g. MAGIC).
-     */
-    private static Rectangle basicWeaponReachRect(Character bot, boolean facingLeft, AgentAttackRoute route) {
-        return AgentCombatRangePolicy.basicWeaponReachRect(bot, facingLeft, route);
     }
 
     static Monster resolveEffectivePrimary(Character bot, Monster fallback, Rectangle hitBox) {

@@ -1564,6 +1564,9 @@ Recent reconstruction notes:
   from the remaining combat shell; temporary `BotCombatManager` fallback and
   projectile hitbox wrappers have been removed after moving their duplicate
   geometry coverage into Agent combat tests.
+- Strike-point basic-reach checks and basic weapon reach rectangles now call
+  `AgentCombatRangePolicy` directly; temporary `BotCombatManager` range wrappers
+  have been removed while preserving the legacy MAGIC-route reach behavior.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
