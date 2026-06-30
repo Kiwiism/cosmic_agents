@@ -153,7 +153,7 @@ public class BotCombatManager {
             if (bot.getHp() <= 0) return;
 
             for (Monster mob : bot.getMap().getAllMonsters()) {
-                if (!isHostileLivingMonster(mob)) continue;
+                if (!AgentCombatTargetEligibilityPolicy.isHostileLivingMonster(mob)) continue;
                 if (isMobTouchingBot(entry, bot, mob)) {
                     applyMobHit(entry, bot, mob);
                     return;
@@ -636,7 +636,11 @@ public class BotCombatManager {
                     candidates,
                     botPos,
                     candidate -> isLocalCombatTarget(graphContext, bot, botFoothold, candidate)
-                            || isImmediateProjectileTarget(entry, bot, candidate),
+                            || AgentCombatImmediateTargetPolicy.isImmediateProjectileTarget(
+                                    bot,
+                                    candidate,
+                                    entry == null || AgentBotAmmoStateRuntime.noAmmo(entry),
+                                    entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry)),
                     candidate -> grindTargetScore(bot, botPos, botFoothold, candidate),
                     candidate -> aoeClusterBonus(entry, candidate, candidates));
             return pickFromBestTargets(localTargets);
@@ -652,7 +656,11 @@ public class BotCombatManager {
                 ? GrindGraphContext.resolve(entry, bot, bot.getPosition())
                 : null;
         boolean immediateProjectileTarget = targetPresentAndAlive && hasRuntimeContext
-                && isImmediateProjectileTarget(entry, bot, target);
+                && AgentCombatImmediateTargetPolicy.isImmediateProjectileTarget(
+                        bot,
+                        target,
+                        entry == null || AgentBotAmmoStateRuntime.noAmmo(entry),
+                        entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry));
         boolean graphAvailable = graphContext != null && graphContext.available();
         long targetCost = targetPresentAndAlive && hasRuntimeContext && !immediateProjectileTarget && graphAvailable
                 ? graphTargetCost(graphContext, target)
@@ -1017,22 +1025,6 @@ public class BotCombatManager {
                 context.startRegionId());
     }
 
-    private static boolean isImmediateProjectileTarget(BotEntry entry, Character bot, Monster target) {
-        return AgentCombatImmediateTargetPolicy.isImmediateProjectileTarget(
-                bot,
-                target,
-                entry == null || AgentBotAmmoStateRuntime.noAmmo(entry),
-                entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry));
-    }
-
-    private static boolean isImmediateProjectileSkillTarget(BotEntry entry, Character bot, Monster target) {
-        if (entry == null) {
-            return AgentCombatImmediateTargetPolicy.isImmediateProjectileSkillTarget(bot, target, 0);
-        }
-        int attackSkillId = AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry);
-        return AgentCombatImmediateTargetPolicy.isImmediateProjectileSkillTarget(bot, target, attackSkillId);
-    }
-
     private static List<AgentScoredGrindTarget> scoreLocalTargets(BotEntry entry,
                                                              Character bot,
                                                              Point botPos,
@@ -1379,13 +1371,6 @@ public class BotCombatManager {
     static Monster findClosestAliveMonster(Character bot, double maxRangeSq) {
         Point botPos = bot.getPosition();
         return AgentCombatTargetSelector.findClosestAliveMonster(bot.getMap().getAllMonsters(), botPos, maxRangeSq);
-    }
-
-    /** A living monster the bot may attack and be hit by — alive and not a friendly (escort/PQ) mob. */
-    // Thanks to ReinderKas for finding and implementing the friendly-mob
-    // interaction (escort/PQ mobs should not be attacked or deal contact damage).
-    private static boolean isHostileLivingMonster(Monster monster) {
-        return AgentCombatTargetEligibilityPolicy.isHostileLivingMonster(monster);
     }
 
     private static AgentAttackExecutionProvider.BasicAttackData buildBasicAttackData(Character bot, Monster primaryTarget) {

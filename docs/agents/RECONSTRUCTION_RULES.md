@@ -1575,6 +1575,10 @@ Recent reconstruction notes:
   `AgentCombatScoringPolicy` directly; temporary `BotCombatManager` scoring
   wrappers have been removed while preserving the same points, movement profile,
   and cluster inputs.
+- Hostile target eligibility and immediate projectile target checks now call
+  `AgentCombatTargetEligibilityPolicy` and `AgentCombatImmediateTargetPolicy`
+  directly; temporary `BotCombatManager` wrappers have been removed while
+  preserving ammo-state and cached attack-skill inputs.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
