@@ -1567,6 +1567,10 @@ Recent reconstruction notes:
 - Strike-point basic-reach checks and basic weapon reach rectangles now call
   `AgentCombatRangePolicy` directly; temporary `BotCombatManager` range wrappers
   have been removed while preserving the legacy MAGIC-route reach behavior.
+- Skill target collection and hitbox intersection now call
+  `AgentCombatTargetSelector` and `AgentCombatHitboxIntersection` directly from
+  the combat shell; temporary `BotCombatManager` target-hitbox wrappers have
+  been removed while preserving the same live map monster source.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

@@ -696,7 +696,7 @@ public class BotCombatManager {
                 target,
                 candidate -> buildBasicAttackData(bot, candidate),
                 (candidate, hitBox) -> resolveEffectivePrimary(bot, candidate, hitBox),
-                BotCombatManager::doesHitBoxIntersectMonster,
+                AgentCombatHitboxIntersection::intersectsMonster,
                 candidate -> findReachableOnOppositeFacing(bot, candidate));
         if (selection == null) {
             return null;
@@ -911,7 +911,7 @@ public class BotCombatManager {
                         () -> AgentCombatRangePolicy.isPrimaryReachableByBasicWeapon(
                                 bot, preSelectionPrimaryTarget, route),
                         (candidate, candidateHitBox) -> resolveEffectivePrimary(bot, candidate, candidateHitBox),
-                        BotCombatManager::doesHitBoxIntersectMonster);
+                        AgentCombatHitboxIntersection::intersectsMonster);
         if (targetSelection == null) {
             return null;
         }
@@ -930,7 +930,8 @@ public class BotCombatManager {
                         route, weaponType, bot.getPosition(), primaryTarget.getPosition(), action, fallbackAction);
         AgentAttackExecutionProvider.SkillAttackTiming skillTiming =
                 AgentAttackExecutionProvider.resolveSkillAttackTiming(skill, action, bot, fallbackAttackData);
-        List<Monster> targets = collectTargetsInHitBox(bot, primaryTarget, hitBox, Math.max(1, effect.getMobCount()));
+        List<Monster> targets = AgentCombatTargetSelector.collectTargetsInHitBox(
+                primaryTarget, hitBox, Math.max(1, effect.getMobCount()), bot.getMap().getAllMonsters());
         if (skillId == DragonKnight.DRAGON_ROAR
                 && !AgentCombatSupportPolicy.canUseDragonRoarPlan(
                 bot, targets.size(),
@@ -944,11 +945,6 @@ public class BotCombatManager {
                 packetFields.stance(),
                 fallbackAttackData.speed(), skillTiming.hitDelayMs(), skillTiming.cooldownMs(),
                 AgentCombatWeaponPolicy.damageWeaponTypeForAction(skillId, weaponType, action));
-    }
-
-    private static List<Monster> collectTargetsInHitBox(Character bot, Monster primaryTarget, Rectangle hitBox, int maxTargets) {
-        return AgentCombatTargetSelector.collectTargetsInHitBox(primaryTarget, hitBox, maxTargets,
-                bot.getMap().getAllMonsters());
     }
 
     /**
@@ -1213,7 +1209,8 @@ public class BotCombatManager {
         if (sweetPrimary == null) {
             return null;
         }
-        List<Monster> sweetTargets = collectTargetsInHitBox(bot, sweetPrimary, shifted, aoeSkillMobs);
+        List<Monster> sweetTargets = AgentCombatTargetSelector.collectTargetsInHitBox(
+                sweetPrimary, shifted, aoeSkillMobs, bot.getMap().getAllMonsters());
         if (sweetTargets.size() <= fireNowBest.targets.size()) {
             return null; // repositioning wouldn't actually catch more mobs
         }
@@ -1365,10 +1362,6 @@ public class BotCombatManager {
         }
 
         AgentBotMobTouchStateRuntime.rememberCheck(entry, position, bot.getMapId());
-    }
-
-    private static boolean doesHitBoxIntersectMonster(Rectangle hitBox, Monster monster) {
-        return AgentCombatHitboxIntersection.intersectsMonster(hitBox, monster);
     }
 
     private static Monster resolveStrikePointPrimaryByBasicWeapon(Character bot, Monster fallback, AgentAttackRoute route) {
