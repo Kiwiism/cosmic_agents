@@ -1343,10 +1343,12 @@ Recent reconstruction notes:
 - Combat skill-label formatting now lives in `AgentCombatDialogueReporter`;
   BotCombatManager preserves the same SkillFactory lookup and `skill#<id>`
   fallback for AoE reposition logs and skill-buff debug/failure summaries.
-- Skill-buff debug report assembly now lives in `AgentBotCombatReportRuntime`;
-  BotCombatManager keeps a temporary compatibility delegate while active-buff,
-  cached-buff, cooldown, and last-action report lines are assembled through the
-  Agent integration/reporting path.
+- Combat debug-stat and skill-buff debug report assembly now lives in
+  `AgentBotCombatReportRuntime`; BotCombatManager keeps temporary compatibility
+  delegates while debug-stat formatting, active-buff, cached-buff, cooldown, and
+  last-action report lines are assembled through the Agent integration/reporting
+  path. The debug-stat report still reads target/attack-plan inputs from the
+  legacy combat planner until that planner slice migrates.
 - Inventory trade page/meso policy now lives in `AgentInventoryTradePolicy`;
   BotInventoryManager preserves the same reserved-equips category, trade-page
   clamp, meso category parsing, requested-meso parsing, and insufficient-meso
@@ -1688,6 +1690,11 @@ Recent reconstruction notes:
   `AgentBotCombatAmmoCheckRuntime`; potion and shop flows call the Agent-owned
   runtime while preserving the same ammo thresholds, no-ammo state, follow-owner
   fallback, and map-chat replies.
+- Combat debug-stat report assembly now lives in
+  `AgentBotCombatReportRuntime`; `BotCombatManager.describeDebugStats` is a
+  temporary compatibility delegate while the Agent reporting runtime preserves
+  the same target lookup, attack route, speed, cooldown, tick, and AI cadence
+  output.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

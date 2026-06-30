@@ -2,12 +2,16 @@ package server.agents.integration;
 
 import client.Character;
 import net.server.PlayerBuffValueHolder;
+import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.bots.BotBuffManager;
 import server.bots.BotCombatManager;
 import server.bots.BotEntry;
+import server.bots.BotManager;
+import server.bots.BotMovementManager;
 import server.StatEffect;
 import server.combat.CombatFormulaProvider;
+import server.life.Monster;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +25,25 @@ public final class AgentBotCombatReportRuntime {
     }
 
     public static String debugStatsReport(BotEntry entry, Character bot) {
-        return BotCombatManager.describeDebugStats(entry, bot);
+        Monster target = AgentBotGrindTargetStateRuntime.target(entry);
+        if (target == null || !target.isAlive()) {
+            target = BotCombatManager.findGrindTarget(entry, bot);
+        }
+
+        BotCombatManager.AttackPlan plan = target != null ? BotCombatManager.planAttack(entry, bot, target) : null;
+        String route = plan != null
+                ? plan.route.name().toLowerCase()
+                : AgentAttackExecutionProvider.determineBasicAttackRoute(bot).name().toLowerCase();
+        int speed = plan != null
+                ? plan.speed
+                : AgentAttackExecutionProvider.buildBasicAttackData(bot, bot.getPosition()).speed();
+        double cooldownSeconds = (plan != null ? plan.cooldownMs : 0) / 1000.0;
+        double remainingSeconds = AgentBotCombatCooldownStateRuntime.attackCooldownMs(entry) / 1000.0;
+        String targetName = target != null ? target.getName() : "none";
+
+        return AgentCombatDialogueReporter.debugStatsReport(
+                route, speed, cooldownSeconds, remainingSeconds,
+                BotMovementManager.configuredTickMs(), BotManager.cfg.AI_TICK_MS, targetName);
     }
 
     public static String critDebugReport(Character bot) {

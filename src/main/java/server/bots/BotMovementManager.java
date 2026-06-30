@@ -117,6 +117,10 @@ public class BotMovementManager {
         return cfg.WALK_VEL;
     }
 
+    public static int configuredTickMs() {
+        return BotPhysicsEngine.cfg.TICK_MS;
+    }
+
     private static Config bindConfig(Config config) {
         BotPhysicsEngine.cfg = config;
         return config;

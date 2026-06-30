@@ -2,14 +2,19 @@ package server.bots;
 
 import client.Character;
 import client.SkillFactory;
+import client.inventory.WeaponType;
 import net.server.PlayerBuffValueHolder;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.capabilities.combat.AgentAttackRoute;
+import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatReportRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import server.StatEffect;
 import server.combat.CombatFormulaProvider;
+import server.life.Monster;
 
+import java.awt.Rectangle;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,16 +24,34 @@ import static org.mockito.Mockito.when;
 
 class AgentBotCombatReportRuntimeTest {
     @Test
-    void debugReportsDelegateToLegacyCombatAndBuffManagers() {
+    void debugStatsReportUsesAgentOwnedReportAssembly() {
+        Character bot = mock(Character.class);
+        BotEntry entry = new BotEntry(bot, null, null);
+        Monster target = mock(Monster.class);
+        BotCombatManager.AttackPlan plan = new BotCombatManager.AttackPlan(
+                0, 0, 1, new Rectangle(), List.of(target),
+                AgentAttackRoute.RANGED, 0, 0, 0, 0, 5,
+                0, 1500, WeaponType.BOW);
+        AgentBotCombatCooldownStateRuntime.maxAttackCooldown(entry, 250);
+        when(target.isAlive()).thenReturn(true);
+        when(target.getName()).thenReturn("Slime");
+
+        try (MockedStatic<BotCombatManager> combat = mockStatic(BotCombatManager.class)) {
+            combat.when(() -> BotCombatManager.findGrindTarget(entry, bot)).thenReturn(target);
+            combat.when(() -> BotCombatManager.planAttack(entry, bot, target)).thenReturn(plan);
+
+            assertEquals("debug: route ranged, atk speed 5, atk cd 1.50s, remaining 0.25s, tick 50ms, ai 100ms, target Slime",
+                    AgentBotCombatReportRuntime.debugStatsReport(entry, bot));
+        }
+    }
+
+    @Test
+    void buffDebugReportsDelegateToLegacyBuffManager() {
         Character bot = mock(Character.class);
         BotEntry entry = new BotEntry(bot, null, null);
 
-        try (MockedStatic<BotCombatManager> combat = mockStatic(BotCombatManager.class);
-             MockedStatic<BotBuffManager> buffs = mockStatic(BotBuffManager.class)) {
-            combat.when(() -> BotCombatManager.describeDebugStats(entry, bot)).thenReturn("debug");
+        try (MockedStatic<BotBuffManager> buffs = mockStatic(BotBuffManager.class)) {
             buffs.when(() -> BotBuffManager.getDebugLines(entry, bot)).thenReturn(List.of("buff"));
-
-            assertEquals("debug", AgentBotCombatReportRuntime.debugStatsReport(entry, bot));
             assertEquals(List.of("buff"), AgentBotCombatReportRuntime.buffDebugLines(entry, bot));
         }
     }

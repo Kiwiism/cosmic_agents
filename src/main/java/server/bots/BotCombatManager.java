@@ -101,7 +101,7 @@ public class BotCombatManager {
     private static final Logger log = LoggerFactory.getLogger(BotCombatManager.class);
     private static final long UNREACHABLE_GRAPH_COST = Long.MAX_VALUE / 4;
 
-    static final class AttackPlan extends AgentAttackPlan {
+    public static final class AttackPlan extends AgentAttackPlan {
         AttackPlan(int skillId, int skillLevel, int numDamage, Rectangle hitBox, List<Monster> targets,
                    AgentAttackRoute route, int display, int direction, int rangedDirection, int stance, int speed,
                    int hitDelayMs, int cooldownMs, WeaponType damageWeaponType) {
@@ -499,7 +499,7 @@ public class BotCombatManager {
     }
 
     /** Returns the most convenient reachable target (deterministic — closest/best score wins). */
-    static Monster findGrindTarget(BotEntry entry, Character bot) {
+    public static Monster findGrindTarget(BotEntry entry, Character bot) {
         long startedAt = System.nanoTime();
         try {
             Point botPos = bot.getPosition();
@@ -656,7 +656,7 @@ public class BotCombatManager {
                 UNREACHABLE_GRAPH_COST);
     }
 
-    static AttackPlan planAttack(BotEntry entry, Character bot, Monster target) {
+    public static AttackPlan planAttack(BotEntry entry, Character bot, Monster target) {
         long startedAt = System.nanoTime();
         try {
             List<AttackPlan> candidates = new ArrayList<>(3);
@@ -1171,21 +1171,7 @@ public class BotCombatManager {
     }
 
     public static String describeDebugStats(BotEntry entry, Character bot) {
-        Monster target = AgentBotGrindTargetStateRuntime.target(entry);
-        if (target == null || !target.isAlive()) {
-            target = findGrindTarget(entry, bot);
-        }
-
-        AttackPlan plan = target != null ? planAttack(entry, bot, target) : null;
-        String route = plan != null ? plan.route.name().toLowerCase() : AgentAttackExecutionProvider.determineBasicAttackRoute(bot).name().toLowerCase();
-        int speed = plan != null ? plan.speed : AgentAttackExecutionProvider.buildBasicAttackData(bot, bot.getPosition()).speed();
-        double cooldownSeconds = (plan != null ? plan.cooldownMs : 0) / 1000.0;
-        double remainingSeconds = AgentBotCombatCooldownStateRuntime.attackCooldownMs(entry) / 1000.0;
-        String targetName = target != null ? target.getName() : "none";
-
-        return AgentCombatDialogueReporter.debugStatsReport(
-                route, speed, cooldownSeconds, remainingSeconds,
-                BotMovementManager.cfg.TICK_MS, BotManager.cfg.AI_TICK_MS, targetName);
+        return AgentBotCombatReportRuntime.debugStatsReport(entry, bot);
     }
 
     private static boolean trySupportBuff(BotEntry entry, Character bot, long now) {
