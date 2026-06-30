@@ -93,7 +93,7 @@ public final class AgentPerformanceMonitor {
         notes.put("common-skill-cache", "AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded");
         notes.put("common-support-heal", "AgentBotCombatHealRuntime.tickSupportHealing (cleric heal)");
         notes.put("common-combat-buffs", "AgentBotCombatBuffRuntime.tickBuffs (player skill rebuff)");
-        notes.put("common-buff-pots", "BotBuffManager.tick (consumable buff pots)");
+        notes.put("common-buff-pots", "AgentBuffService.tick (consumable buff pots)");
         // Dispatch buckets
         notes.put("tick-idle", "tickIdleEntry physics-only idle dispatch");
         notes.put("tick-trade-physics", "tickTradePhysicsOnly (trade-window safe physics)");

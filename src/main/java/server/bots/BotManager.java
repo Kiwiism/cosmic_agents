@@ -4,6 +4,7 @@ import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.combat.AgentAttackRoute;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+import server.agents.capabilities.combat.AgentBuffService;
 import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 import server.agents.capabilities.combat.AgentCombatConfig;
@@ -3487,7 +3488,7 @@ public class BotManager {
             AgentBotCombatBuffRuntime.tickBuffs(entry, bot, AgentCombatConfig.cfg);
             if (perf) AgentPerformanceMonitor.record("common-combat-buffs", System.nanoTime() - t);
             if (perf) t = System.nanoTime();
-            BotBuffManager.tick(entry, bot);
+            AgentBuffService.tick(entry, bot);
             if (perf) AgentPerformanceMonitor.record("common-buff-pots", System.nanoTime() - t);
         }
         return tickActionLocked(entry);

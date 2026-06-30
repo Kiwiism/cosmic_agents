@@ -1,4 +1,4 @@
-package server.bots;
+package server.agents.capabilities.combat;
 
 import client.BuffStat;
 import client.Character;
@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class BotBuffManagerTest {
+class AgentBuffServiceTest {
     @Test
     void shouldOnlyUseMatkForMagesAndWatkForNonMages() {
         Character mage = mock(Character.class);
@@ -23,14 +23,14 @@ class BotBuffManagerTest {
         Character nonMage = mock(Character.class);
         when(nonMage.getJobStyle()).thenReturn(Job.WARRIOR);
 
-        assertTrue(BotBuffManager.isRelevantBuffStat(mage, BuffStat.MATK));
-        assertFalse(BotBuffManager.isRelevantBuffStat(mage, BuffStat.WATK));
+        assertTrue(AgentBuffService.isRelevantBuffStat(mage, BuffStat.MATK));
+        assertFalse(AgentBuffService.isRelevantBuffStat(mage, BuffStat.WATK));
 
-        assertFalse(BotBuffManager.isRelevantBuffStat(nonMage, BuffStat.MATK));
-        assertTrue(BotBuffManager.isRelevantBuffStat(nonMage, BuffStat.WATK));
+        assertFalse(AgentBuffService.isRelevantBuffStat(nonMage, BuffStat.MATK));
+        assertTrue(AgentBuffService.isRelevantBuffStat(nonMage, BuffStat.WATK));
 
-        assertTrue(BotBuffManager.isRelevantBuffStat(mage, BuffStat.ACC));
-        assertTrue(BotBuffManager.isRelevantBuffStat(nonMage, BuffStat.ACC));
+        assertTrue(AgentBuffService.isRelevantBuffStat(mage, BuffStat.ACC));
+        assertTrue(AgentBuffService.isRelevantBuffStat(nonMage, BuffStat.ACC));
     }
 
     @Test
@@ -42,16 +42,16 @@ class BotBuffManagerTest {
         when(mage.getJobStyle()).thenReturn(Job.MAGICIAN);
 
         // +12 WATK is the cap: kept.
-        assertFalse(BotBuffManager.exceedsCheapAtkCap(warrior, fxWith(BuffStat.WATK, 12)));
+        assertFalse(AgentBuffService.exceedsCheapAtkCap(warrior, fxWith(BuffStat.WATK, 12)));
         // +13 WATK exceeds the cap: skipped in cheap mode.
-        assertTrue(BotBuffManager.exceedsCheapAtkCap(warrior, fxWith(BuffStat.WATK, 13)));
+        assertTrue(AgentBuffService.exceedsCheapAtkCap(warrior, fxWith(BuffStat.WATK, 13)));
         // +20 MATK for a mage exceeds the cap.
-        assertTrue(BotBuffManager.exceedsCheapAtkCap(mage, fxWith(BuffStat.MATK, 20)));
+        assertTrue(AgentBuffService.exceedsCheapAtkCap(mage, fxWith(BuffStat.MATK, 20)));
 
         // Irrelevant stat for the job is ignored: a warrior never cares about MATK.
-        assertFalse(BotBuffManager.exceedsCheapAtkCap(warrior, fxWith(BuffStat.MATK, 99)));
+        assertFalse(AgentBuffService.exceedsCheapAtkCap(warrior, fxWith(BuffStat.MATK, 99)));
         // Non-atk stats are never capped.
-        assertFalse(BotBuffManager.exceedsCheapAtkCap(warrior, fxWith(BuffStat.ACC, 99)));
+        assertFalse(AgentBuffService.exceedsCheapAtkCap(warrior, fxWith(BuffStat.ACC, 99)));
     }
 
     private static StatEffect fxWith(BuffStat stat, int value) {

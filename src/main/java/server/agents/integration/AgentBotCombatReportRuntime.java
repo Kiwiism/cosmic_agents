@@ -6,7 +6,7 @@ import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
-import server.bots.BotBuffManager;
+import server.agents.capabilities.combat.AgentBuffService;
 import server.bots.BotEntry;
 import server.bots.BotManager;
 import server.bots.BotMovementManager;
@@ -57,7 +57,7 @@ public final class AgentBotCombatReportRuntime {
     }
 
     public static List<String> buffDebugLines(BotEntry entry, Character bot) {
-        return BotBuffManager.getDebugLines(entry, bot);
+        return AgentBuffService.getDebugLines(entry, bot);
     }
 
     public static List<String> skillBuffDebugLines(BotEntry entry, Character bot) {

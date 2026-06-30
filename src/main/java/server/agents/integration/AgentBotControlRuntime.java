@@ -3,7 +3,7 @@ package server.agents.integration;
 import server.agents.capabilities.dialogue.AgentChatBuffQueryFlow;
 import server.agents.capabilities.dialogue.AgentChatRespecFlow;
 import server.agents.capabilities.dialogue.AgentChatToggleFlow;
-import server.bots.BotBuffManager;
+import server.agents.capabilities.combat.AgentBuffService;
 import server.bots.BotBuildManager;
 import server.bots.BotEntry;
 
@@ -67,7 +67,7 @@ public final class AgentBotControlRuntime {
             @Override
             public void reportBuffList() {
                 AgentBotControlSchedulerRuntime.afterRandomDelay(500, 700, () -> {
-                    String summary = BotBuffManager.getChatSummary(
+                    String summary = AgentBuffService.getChatSummary(
                             AgentBotBuffStateRuntime.enabled(entry), AgentBotBuffStateRuntime.cheapMode(entry), entry.bot());
                     AgentBotControlReplyRuntime.replyNow(entry, summary);
                 });

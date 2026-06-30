@@ -1151,7 +1151,7 @@ public class BotInventoryManager {
         return AgentUseItemClassificationPolicy.isRecoveryPotion(itemEffect(itemId));
     }
 
-    static boolean isBuffConsumable(int itemId) {
+    public static boolean isBuffConsumable(int itemId) {
         return AgentUseItemClassificationPolicy.isBuffConsumable(itemEffect(itemId));
     }
 

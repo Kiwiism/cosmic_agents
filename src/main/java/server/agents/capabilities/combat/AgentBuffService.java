@@ -1,4 +1,4 @@
-package server.bots;
+package server.agents.capabilities.combat;
 
 import client.BuffStat;
 import client.Character;
@@ -13,6 +13,8 @@ import server.agents.capabilities.dialogue.AgentBuffDialogueReporter;
 import server.agents.integration.AgentBotBuffStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.StatEffect;
+import server.bots.BotEntry;
+import server.bots.BotInventoryManager;
 import server.combat.CombatFormulaProvider;
 import server.life.Monster;
 import tools.Pair;
@@ -34,7 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * Default: off. Configured via chat ("buff on/off", "buff cheap/max").
  */
-public final class BotBuffManager {
+public final class AgentBuffService {
 
     private static final long TICK_MS = 3_000;
     private static final double ACC_HIT_THRESHOLD = 0.90;
@@ -49,7 +51,7 @@ public final class BotBuffManager {
 
     private record ActiveBuff(int itemId, String name, StatEffect effect, int remainingMs) {}
 
-    private BotBuffManager() {}
+    private AgentBuffService() {}
 
     public static void tick(BotEntry entry, Character bot) {
         if (!AgentBotBuffStateRuntime.enabled(entry)) return;
@@ -107,7 +109,7 @@ public final class BotBuffManager {
                 summarizeAvailable(buildSelection(bot, AgentBotBuffStateRuntime.cheapMode(entry)), 5, bot));
     }
 
-    static String formatDebugState(BotEntry entry) {
+    public static String formatDebugState(BotEntry entry) {
         return AgentBuffDialogueReporter.debugState(
                 AgentBotBuffStateRuntime.enabled(entry),
                 AgentBotBuffStateRuntime.cheapMode(entry));
@@ -237,7 +239,7 @@ public final class BotBuffManager {
     }
 
     /** True if a relevant WATK/MATK statup exceeds {@link #CHEAP_ATK_CAP}; cheap mode skips these. */
-    static boolean exceedsCheapAtkCap(Character bot, StatEffect fx) {
+    public static boolean exceedsCheapAtkCap(Character bot, StatEffect fx) {
         for (Pair<BuffStat, Integer> statup : fx.getStatups()) {
             BuffStat stat = statup.getLeft();
             if ((stat == BuffStat.WATK || stat == BuffStat.MATK)
@@ -249,7 +251,7 @@ public final class BotBuffManager {
         return false;
     }
 
-    static boolean isRelevantBuffStat(Character bot, BuffStat stat) {
+    public static boolean isRelevantBuffStat(Character bot, BuffStat stat) {
         boolean mageJob = bot.getJobStyle() == Job.MAGICIAN;
         if (stat == BuffStat.WATK) {
             return !mageJob;

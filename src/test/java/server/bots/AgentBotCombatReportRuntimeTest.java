@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentAttackRoute;
+import server.agents.capabilities.combat.AgentBuffService;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatPlanRuntime;
@@ -53,12 +54,12 @@ class AgentBotCombatReportRuntimeTest {
     }
 
     @Test
-    void buffDebugReportsDelegateToLegacyBuffManager() {
+    void buffDebugReportsDelegateToAgentBuffService() {
         Character bot = mock(Character.class);
         BotEntry entry = new BotEntry(bot, null, null);
 
-        try (MockedStatic<BotBuffManager> buffs = mockStatic(BotBuffManager.class)) {
-            buffs.when(() -> BotBuffManager.getDebugLines(entry, bot)).thenReturn(List.of("buff"));
+        try (MockedStatic<AgentBuffService> buffs = mockStatic(AgentBuffService.class)) {
+            buffs.when(() -> AgentBuffService.getDebugLines(entry, bot)).thenReturn(List.of("buff"));
             assertEquals(List.of("buff"), AgentBotCombatReportRuntime.buffDebugLines(entry, bot));
         }
     }

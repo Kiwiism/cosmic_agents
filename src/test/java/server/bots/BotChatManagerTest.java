@@ -11,6 +11,7 @@ import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.fidget.AgentFidgetMode;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
+import server.agents.capabilities.combat.AgentBuffService;
 import server.agents.capabilities.social.AgentScrollReactionService;
 import server.agents.integration.AgentBotChatReportRuntime;
 import server.agents.integration.AgentBotActivityStateRuntime;
@@ -243,11 +244,11 @@ class BotChatManagerTest {
 
         AgentBotBuffStateRuntime.setEnabled(entry, true);
         AgentBotBuffStateRuntime.setCheapMode(entry, true);
-        assertEquals("buff on(cheap)", BotBuffManager.formatDebugState(entry));
+        assertEquals("buff on(cheap)", AgentBuffService.formatDebugState(entry));
 
         AgentBotBuffStateRuntime.setEnabled(entry, false);
         AgentBotBuffStateRuntime.setCheapMode(entry, false);
-        assertEquals("buff off(best)", BotBuffManager.formatDebugState(entry));
+        assertEquals("buff off(best)", AgentBuffService.formatDebugState(entry));
     }
 
     @Test
