@@ -1834,6 +1834,10 @@ Recent reconstruction notes:
   `AgentBotFidgetSideEffects`; the old bot-side fidget side-effect shim has
   been removed, while `BotFidgetManager` still owns the legacy fidget behavior
   until the full fidget capability is extracted.
+- Relog and owner-bot session lifecycle bridge calls now enter through
+  `AgentBotSessionLifecycleSideEffects`; the old bot-side session lifecycle
+  shim has been removed while `BotManager` still performs the unchanged relog
+  and owner-entry lookup side effects.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

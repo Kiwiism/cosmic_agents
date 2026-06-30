@@ -1,13 +1,15 @@
-package server.bots;
+package server.agents.integration;
 
 import java.util.List;
+import server.bots.BotEntry;
+import server.bots.BotManager;
 
 /**
  * Temporary bot-side gateway for session lifecycle side effects that still need
  * BotManager package access while orchestration moves into Agent modules.
  */
-public final class BotSessionLifecycleSideEffects {
-    private BotSessionLifecycleSideEffects() {
+public final class AgentBotSessionLifecycleSideEffects {
+    private AgentBotSessionLifecycleSideEffects() {
     }
 
     public static void reloginBot(int charId, int ownerCharId, int world, int channel) {

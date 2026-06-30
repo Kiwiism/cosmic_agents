@@ -6,7 +6,6 @@ import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.dialogue.AgentChatSessionRequestFlow;
 import server.bots.BotEntry;
 import server.bots.BotManager;
-import server.bots.BotSessionLifecycleSideEffects;
 
 /**
  * Agent-owned session facade over temporary bot-side lifecycle side effects.
@@ -60,7 +59,7 @@ public final class AgentBotSessionRuntime {
                 entry.bot().saveCharToDB(true);
                 entry.bot().getClient().disconnect(false, false);
                 AgentBotSessionSchedulerRuntime.afterRandomDelay(10000, 10100,
-                        () -> BotSessionLifecycleSideEffects.reloginBot(charId, ownerCharId, world, channel));
+                        () -> AgentBotSessionLifecycleSideEffects.reloginBot(charId, ownerCharId, world, channel));
             });
         });
     }
@@ -161,7 +160,7 @@ public final class AgentBotSessionRuntime {
             return;
         }
 
-        for (BotEntry owned : BotSessionLifecycleSideEffects.getBotEntries(owner.getId())) {
+        for (BotEntry owned : AgentBotSessionLifecycleSideEffects.getBotEntries(owner.getId())) {
             BotManager.getInstance().issueStop(owned);
             AgentBotSessionSchedulerRuntime.afterRandomDelay(1200, 1800, () -> {
                 owned.bot().saveCharToDB(true);

@@ -3894,7 +3894,7 @@ public class BotManager {
     }
 
 
-    void reloginBot(int charId, int ownerCharId, int world, int channel) {
+    public void reloginBot(int charId, int ownerCharId, int world, int channel) {
         Character owner = Server.getInstance()
                 .getWorld(world)
                 .getPlayerStorage()
