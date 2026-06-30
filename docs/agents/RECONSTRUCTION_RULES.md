@@ -1782,6 +1782,11 @@ Recent reconstruction notes:
   directly instead of the `BotCombatManager.cfg` alias. The alias remains only
   for compatibility-focused tests and legacy facade callers, preserving the
   same mutable config object and live tuning behavior.
+- BotManager common combat lifecycle ticks now call Agent combat runtimes
+  directly for mob-touch damage, dead-state entry, skill-cache rebuild,
+  support-heal, and support-buff orchestration. The subsystem order, performance
+  metric labels, cooldown/death gates, movement tick-down callback, and shared
+  config object are unchanged.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

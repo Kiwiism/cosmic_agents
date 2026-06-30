@@ -28,9 +28,14 @@ import server.agents.integration.AgentBotBuffStateRuntime;
 import server.agents.integration.AgentBotCombatActionLockRuntime;
 import server.agents.integration.AgentBotCombatAoeRepositionRuntime;
 import server.agents.integration.AgentBotCombatAttackRuntime;
+import server.agents.integration.AgentBotCombatBuffRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentBotCombatDamageRuntime;
+import server.agents.integration.AgentBotCombatDeathRuntime;
+import server.agents.integration.AgentBotCombatHealRuntime;
 import server.agents.integration.AgentBotCombatPlanRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
+import server.agents.integration.AgentBotCombatSkillCacheRuntime;
 import server.agents.integration.AgentBotCombatTargetRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
@@ -3391,7 +3396,7 @@ public class BotManager {
 
     private boolean handleDeadTick(BotEntry entry, Character bot, Character owner) {
         if (AgentBotDeathStateRuntime.shouldEnterDeadState(entry, bot.getHp())) {
-            BotCombatManager.enterDeadState(entry, bot, false);
+            AgentBotCombatDeathRuntime.enterDeadState(entry, bot, false, AgentCombatConfig.cfg);
         }
         if (!AgentBotDeathStateRuntime.isDead(entry)) {
             return false;
@@ -3408,11 +3413,11 @@ public class BotManager {
         // allocates timing state, while the enabled path keeps every per-subsystem label.
         boolean perf = AgentPerformanceMonitor.enabled();
         long t = perf ? System.nanoTime() : 0L;
-        BotCombatManager.tickMobDamage(entry, bot);
+        AgentBotCombatDamageRuntime.tickMobDamage(entry, bot, AgentCombatConfig.cfg, BotMovementManager::tickDown);
         if (perf) AgentPerformanceMonitor.record("common-mob-damage", System.nanoTime() - t);
         if (bot.getHp() <= 0) {
             if (!AgentBotDeathStateRuntime.isDead(entry)) {
-                BotCombatManager.enterDeadState(entry, bot, false);
+                AgentBotCombatDeathRuntime.enterDeadState(entry, bot, false, AgentCombatConfig.cfg);
             }
             return true;
         }
@@ -3461,17 +3466,17 @@ public class BotManager {
         if (perf) AgentPerformanceMonitor.record("common-action-lock", System.nanoTime() - t);
         if (runAiTick) {
             if (perf) t = System.nanoTime();
-            BotCombatManager.rebuildSkillCacheIfNeeded(entry, bot);
+            AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
             if (perf) AgentPerformanceMonitor.record("common-skill-cache", System.nanoTime() - t);
             // Support healing is top priority — runs before buffs so that a bot below the heal
             // threshold casts Heal before a rebuff uses up this tick's action window. If it fires,
             // Agent combat cooldown state is set to the heal animation lock and tickActionLocked()
             // will return true, causing the caller to skip attack logic this tick.
             if (perf) t = System.nanoTime();
-            BotCombatManager.tickSupportHealing(entry, bot);
+            AgentBotCombatHealRuntime.tickSupportHealing(entry, bot, AgentCombatConfig.cfg);
             if (perf) AgentPerformanceMonitor.record("common-support-heal", System.nanoTime() - t);
             if (perf) t = System.nanoTime();
-            BotCombatManager.tickBuffs(entry, bot);
+            AgentBotCombatBuffRuntime.tickBuffs(entry, bot, AgentCombatConfig.cfg);
             if (perf) AgentPerformanceMonitor.record("common-combat-buffs", System.nanoTime() - t);
             if (perf) t = System.nanoTime();
             BotBuffManager.tick(entry, bot);

@@ -67,7 +67,7 @@ public final class AgentPerformanceMonitor {
         notes.put("combat-target-search", "monster scan, distance filtering, foothold lookup, and candidate sorting");
         notes.put("combat-plan", "skill/basic attack route selection and hitbox construction");
         // Common tick systems (run every tick, instrumented in BotManager.runCommonTickSystems)
-        notes.put("common-mob-damage", "BotCombatManager.tickMobDamage (mob damage decay timers)");
+        notes.put("common-mob-damage", "AgentBotCombatDamageRuntime.tickMobDamage (mob damage decay timers)");
         notes.put("common-release-mob", "tickReleaseMonsterControl (release stale controlled mobs)");
         notes.put("common-passive-loot", "BotInventoryManager.tickPassiveLoot (scan drops + pickup + autoEquip)");
         notes.put("common-potion-check", "BotPotionManager.tickPotionCheck (HP/MP potion request)");

@@ -25,6 +25,9 @@ Recent map updates:
 - Ammo, inventory, movement, potion, shop, and BotManager production callers now
   read live combat config through `AgentCombatConfig.cfg` instead of the
   temporary `BotCombatManager.cfg` compatibility alias.
+- BotManager common tick combat lifecycle now calls Agent runtimes directly for
+  mob damage, death-state entry, skill-cache rebuild, support healing, and
+  combat buff ticks.
 
 | Current file | Target Agent destination | Status |
 | --- | --- | --- |
