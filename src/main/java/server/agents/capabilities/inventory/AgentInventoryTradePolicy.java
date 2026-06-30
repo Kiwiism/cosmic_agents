@@ -14,6 +14,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.IntPredicate;
 
 public final class AgentInventoryTradePolicy {
     public static final int TRADE_WINDOW_ITEM_LIMIT = 9;
@@ -49,6 +50,8 @@ public final class AgentInventoryTradePolicy {
             return next < values.length ? values[next] : null;
         }
     }
+
+    public record UseTradeGroups(List<Item> uncategorized, List<Item> categorized) {}
 
     public static String reservedEquipsCategory(int requestedPage) {
         return RESERVED_EQUIPS_CATEGORY_PREFIX + requestedPage;
@@ -183,6 +186,36 @@ public final class AgentInventoryTradePolicy {
         ordered.addAll(prioritizeRecipientDuplicateItemIds(categorizedOther, InventoryType.USE, recipient));
         ordered.addAll(prioritizeRecipientDuplicateItemIds(potionAmmo, InventoryType.USE, recipient));
         return ordered;
+    }
+
+    public static UseTradeGroups classifyUseTradeGroups(Character agent,
+                                                        Character recipient,
+                                                        IntPredicate isRecoveryPotion,
+                                                        IntPredicate isTradeAmmoItem,
+                                                        IntPredicate isEquipScroll,
+                                                        IntPredicate isBuffConsumable,
+                                                        IntPredicate isQuestItem,
+                                                        boolean untradeableItemsTradeable) {
+        List<Item> uncategorized = new ArrayList<>();
+        List<Item> categorizedOther = new ArrayList<>();
+        List<Item> potionAmmo = new ArrayList<>();
+        uncategorized.addAll(AgentInventoryItemPolicy.collectSafeItems(agent, InventoryType.USE, item -> {
+            int id = item.getItemId();
+            if (isRecoveryPotion.test(id) || isTradeAmmoItem.test(id)) {
+                potionAmmo.add(item);
+                return false;
+            }
+            if (isEquipScroll.test(id) || isBuffConsumable.test(id)) {
+                categorizedOther.add(item);
+                return false;
+            }
+            return true;
+        }, isQuestItem, untradeableItemsTradeable));
+        List<Item> ordered = prioritizeTradeUseItems(uncategorized, categorizedOther, potionAmmo, recipient);
+        int uncategorizedCount = uncategorized.size();
+        return new UseTradeGroups(
+                new ArrayList<>(ordered.subList(0, uncategorizedCount)),
+                new ArrayList<>(ordered.subList(uncategorizedCount, ordered.size())));
     }
 
     public static List<Item> prioritizeScrollTradeItems(List<Item> items, Character recipient) {

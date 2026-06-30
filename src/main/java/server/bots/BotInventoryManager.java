@@ -36,6 +36,7 @@ import server.agents.capabilities.inventory.AgentInventorySellTrashPolicy;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.AmmoGroup;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.EquipsGroup;
+import server.agents.capabilities.inventory.AgentInventoryTradePolicy.UseTradeGroups;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.supplies.AgentPotionSharePolicy;
 import server.agents.capabilities.trade.AgentOfferService;
@@ -81,7 +82,6 @@ public class BotInventoryManager {
             };
         }
     }
-    private record UseTradeGroups(List<Item> uncategorized, List<Item> categorized) {}
     private record AmmoTradeGroups(List<Item> nonOwn, List<Item> own) {
         List<Item> itemsFor(AmmoGroup group) {
             return switch (group) {
@@ -1319,26 +1319,13 @@ public class BotInventoryManager {
     }
 
     private static UseTradeGroups classifyUseTradeGroups(Character bot, Character recipient) {
-        List<Item> uncategorized = new ArrayList<>();
-        List<Item> categorizedOther = new ArrayList<>();
-        List<Item> potionAmmo = new ArrayList<>();
-        collectFromBag(bot, uncategorized, InventoryType.USE, item -> {
-            int id = item.getItemId();
-            if (isRecoveryPotion(id) || isTradeAmmoItem(id)) {
-                potionAmmo.add(item);
-                return false;
-            }
-            if (ItemConstants.isEquipScroll(id) || isBuffConsumable(id)) {
-                categorizedOther.add(item);
-                return false;
-            }
-            return true;
-        });
-        List<Item> ordered = prioritizeTradeUseItems(uncategorized, categorizedOther, potionAmmo, recipient);
-        int uncategorizedCount = uncategorized.size();
-        return new UseTradeGroups(
-                new ArrayList<>(ordered.subList(0, uncategorizedCount)),
-                new ArrayList<>(ordered.subList(uncategorizedCount, ordered.size())));
+        return AgentInventoryTradePolicy.classifyUseTradeGroups(bot, recipient,
+                BotInventoryManager::isRecoveryPotion,
+                BotInventoryManager::isTradeAmmoItem,
+                ItemConstants::isEquipScroll,
+                BotInventoryManager::isBuffConsumable,
+                ItemInformationProvider.getInstance()::isQuestItem,
+                YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE);
     }
 
     private static AmmoTradeGroups classifyAmmoTradeGroups(Character bot) {

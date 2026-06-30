@@ -117,6 +117,31 @@ class AgentInventoryTradePolicyTest {
         assertEquals(List.of(uncategorizedDuplicate, uncategorized, categorized, potionAmmoDuplicate), prioritized);
     }
 
+    @Test
+    void shouldClassifyUseTradeGroupsLikeLegacyInventory() {
+        Item uncategorized = item(InventoryType.USE, 3000, 1);
+        Item scroll = item(InventoryType.USE, 2040000, 1);
+        Item potion = item(InventoryType.USE, 2000000, 5);
+        Item ammo = item(InventoryType.USE, 2060000, 50);
+        Item questItem = item(InventoryType.USE, 4000000, 1);
+        Character agent = mock(Character.class);
+        Inventory useInventory = slottedInventory(uncategorized, scroll, potion, ammo, questItem);
+        when(agent.getInventory(InventoryType.USE)).thenReturn(useInventory);
+
+        AgentInventoryTradePolicy.UseTradeGroups groups = AgentInventoryTradePolicy.classifyUseTradeGroups(
+                agent,
+                null,
+                id -> id == 2000000,
+                id -> id == 2060000,
+                id -> id == 2040000,
+                id -> false,
+                id -> id == 4000000,
+                false);
+
+        assertEquals(List.of(uncategorized), groups.uncategorized());
+        assertEquals(List.of(scroll, potion, ammo), groups.categorized());
+    }
+
     private static Item item(InventoryType type, int quantity) {
         return item(type, 0, quantity);
     }
@@ -132,6 +157,15 @@ class AgentInventoryTradePolicyTest {
     private static Inventory inventoryWith(Item... items) {
         Inventory inventory = mock(Inventory.class);
         when(inventory.iterator()).thenReturn(List.of(items).iterator());
+        return inventory;
+    }
+
+    private static Inventory slottedInventory(Item... items) {
+        Inventory inventory = mock(Inventory.class);
+        when(inventory.getSlotLimit()).thenReturn((byte) items.length);
+        for (short slot = 1; slot <= items.length; slot++) {
+            when(inventory.getItem(slot)).thenReturn(items[slot - 1]);
+        }
         return inventory;
     }
 }

@@ -2035,6 +2035,10 @@ Recent reconstruction notes:
   callbacks preserve the same thresholds, cooldown/backoff timing, donor
   ordering, delayed transfer timing, and map-chat behavior through compatibility
   delegates.
+- USE-item trade grouping now lives in `AgentInventoryTradePolicy`;
+  BotInventoryManager preserves the same safe-item filtering, recovery/ammo,
+  scroll/buff, uncategorized bucket split, and recipient-duplicate ordering
+  through a compatibility delegate.
 - Maker crystal creation and trash-disassembly batch orchestration now live in
   `AgentMakerService`; utility chat callbacks preserve the same guard replies,
   lazy item-data lookup, five-second step cadence, ACTIVE set, and
