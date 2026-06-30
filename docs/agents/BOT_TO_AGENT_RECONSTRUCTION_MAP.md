@@ -72,6 +72,10 @@ Recent map updates:
   `server.agents.integration.AgentBotSessionLifecycleSideEffects`. Relog and
   owner-entry lookup behavior still delegates to `BotManager`, but session
   orchestration no longer imports a bot-side lifecycle shim.
+- `server.bots.BotMovementTargetSideEffects` has moved to
+  `server.agents.integration.AgentBotMovementTargetSideEffects`. Snapshot
+  conversion and raw navigation-target override behavior are unchanged while
+  BotManager remains the temporary target-snapshot source.
 
 | Current file | Target Agent destination | Status |
 | --- | --- | --- |
@@ -102,6 +106,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotMakerManager.java` | `server.agents.capabilities.build` or later deletion | `LEGACY_PROFILE` |
 | `src/main/java/server/bots/BotManager.java` | `server.agents.runtime`, `commands`, `events`, capability orchestrators | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
 | `src/main/java/server/bots/BotMovementManager.java` | `server.agents.capabilities.movement` | `SPLIT_TO_MULTIPLE_AGENT_MODULES`; cooldown/delay countdown math, climb idle/snap/rope identity decision policy, and ground horizontal step policy are Agent-owned |
+| `src/main/java/server/bots/BotMovementTargetSideEffects.java` | `server.agents.integration.AgentBotMovementTargetSideEffects` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotMovementProfile.java` | `server.agents.capabilities.movement.AgentMovementProfile` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotNavigationDebugOverlay.java` | `server.agents.capabilities.navigation.AgentNavigationDebugOverlay` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/BotNavigationGraph.java` | `server.agents.capabilities.navigation.AgentNavigationGraph` | `MIGRATE_TO_AGENT` |

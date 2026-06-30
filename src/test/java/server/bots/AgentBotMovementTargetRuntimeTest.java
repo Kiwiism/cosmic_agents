@@ -3,6 +3,7 @@ package server.bots;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentBotMovementTargetSideEffects;
 
 import java.awt.Point;
 
@@ -80,7 +81,7 @@ class AgentBotMovementTargetRuntimeTest {
                 new Point(17, 27),
                 "move-target");
 
-        AgentMovementTargetSnapshot snapshot = BotMovementTargetSideEffects.from(entry, targetSnapshot);
+        AgentMovementTargetSnapshot snapshot = AgentBotMovementTargetSideEffects.from(entry, targetSnapshot);
 
         assertEquals("SPREAD", snapshot.formationType());
         assertEquals(70, snapshot.formationPx());
@@ -117,7 +118,7 @@ class AgentBotMovementTargetRuntimeTest {
                 new Point(5, 5),
                 "follow-target");
 
-        AgentMovementTargetSnapshot snapshot = BotMovementTargetSideEffects.from(entry, targetSnapshot);
+        AgentMovementTargetSnapshot snapshot = AgentBotMovementTargetSideEffects.from(entry, targetSnapshot);
 
         assertEquals(new Point(90, 91), snapshot.steeringTargetPosition());
         assertEquals("nav-waypoint", snapshot.steeringTargetSource());
@@ -142,7 +143,7 @@ class AgentBotMovementTargetRuntimeTest {
                 "follow-target");
         Point rawTarget = new Point(60, 61);
 
-        AgentMovementTargetSnapshot snapshot = BotMovementTargetSideEffects.from(entry, new BotManager.TargetSnapshot(
+        AgentMovementTargetSnapshot snapshot = AgentBotMovementTargetSideEffects.from(entry, new BotManager.TargetSnapshot(
                 targetSnapshot.formation(),
                 targetSnapshot.rawOwnerPos(),
                 targetSnapshot.followAnchorPos(),

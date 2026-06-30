@@ -13,6 +13,7 @@ import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
+import server.agents.integration.AgentBotMovementTargetSideEffects;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
@@ -230,7 +231,7 @@ public final class BotNavigationManager {
     }
 
     private static AgentMovementTargetSnapshot captureTargetSnapshot(BotEntry entry, Point rawTargetPos) {
-        return BotMovementTargetSideEffects.captureTargetSnapshot(entry, rawTargetPos);
+        return AgentBotMovementTargetSideEffects.captureTargetSnapshot(entry, rawTargetPos);
     }
 
     private static void notifyWarmup(BotEntry entry, Character bot) {

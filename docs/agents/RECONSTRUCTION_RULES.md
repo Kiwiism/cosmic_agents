@@ -1838,6 +1838,10 @@ Recent reconstruction notes:
   `AgentBotSessionLifecycleSideEffects`; the old bot-side session lifecycle
   shim has been removed while `BotManager` still performs the unchanged relog
   and owner-entry lookup side effects.
+- Movement target snapshot capture now enters through
+  `AgentBotMovementTargetSideEffects`; the old bot-side movement-target shim has
+  been removed while `BotManager` still owns temporary target-snapshot
+  construction and steering-source resolution.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

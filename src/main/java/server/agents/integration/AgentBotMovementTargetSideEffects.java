@@ -1,6 +1,8 @@
-package server.bots;
+package server.agents.integration;
 
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
+import server.bots.BotEntry;
+import server.bots.BotManager;
 
 import java.awt.Point;
 
@@ -8,8 +10,8 @@ import java.awt.Point;
  * Temporary bot-side gateway for TargetSnapshot reads while BotManager owns
  * target resolution.
  */
-public final class BotMovementTargetSideEffects {
-    private BotMovementTargetSideEffects() {
+public final class AgentBotMovementTargetSideEffects {
+    private AgentBotMovementTargetSideEffects() {
     }
 
     public static AgentMovementTargetSnapshot captureTargetSnapshot(BotEntry entry) {
@@ -35,7 +37,7 @@ public final class BotMovementTargetSideEffects {
                 "nav-input"));
     }
 
-    static AgentMovementTargetSnapshot from(BotEntry entry, BotManager.TargetSnapshot snapshot) {
+    public static AgentMovementTargetSnapshot from(BotEntry entry, BotManager.TargetSnapshot snapshot) {
         return new AgentMovementTargetSnapshot(
                 snapshot.formation().type().name(),
                 snapshot.formation().px(),

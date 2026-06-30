@@ -188,9 +188,9 @@ public class BotManager {
     // portal in the return map; later bots warp to a randomized nearby offset.
     // Cleared when the owner becomes active again.
     private final Map<Integer, Point> townClusterAnchors = new ConcurrentHashMap<>();
-    enum FormationType { STAGGER, RANDOM, STACK, SPREAD, LEFT, RIGHT }
+    public enum FormationType { STAGGER, RANDOM, STACK, SPREAD, LEFT, RIGHT }
 
-    record FormationState(FormationType type, int px, int snapRange) {
+    public record FormationState(FormationType type, int px, int snapRange) {
         static FormationState defaultStagger() { return new FormationState(FormationType.STAGGER, cfg.FOLLOW_STAGGER, BotMovementManager.cfg.FOLLOW_Y_CAP); }
         int offsetFor(int idx, int total) {
             return switch (type) {
@@ -206,23 +206,23 @@ public class BotManager {
         }
     }
 
-    record TargetSnapshot(FormationState formation,
-                          Point rawOwnerPos,
-                          Point followAnchorPos,
-                          String followAnchorName,
-                          Point followBasePos,
-                          Point followTargetPos,
-                          Point moveTargetPos,
-                          Point farmAnchorPos,
-                          Point grindTargetPos,
-                          Point primaryTargetPos,
-                          String primaryTargetSource) {
-        Point steeringTargetPos(BotEntry entry) {
+    public record TargetSnapshot(FormationState formation,
+                                 Point rawOwnerPos,
+                                 Point followAnchorPos,
+                                 String followAnchorName,
+                                 Point followBasePos,
+                                 Point followTargetPos,
+                                 Point moveTargetPos,
+                                 Point farmAnchorPos,
+                                 Point grindTargetPos,
+                                 Point primaryTargetPos,
+                                 String primaryTargetSource) {
+        public Point steeringTargetPos(BotEntry entry) {
             Point navTargetPos = AgentBotNavigationDebugStateRuntime.navTargetPosition(entry);
             return navTargetPos != null ? navTargetPos : new Point(primaryTargetPos);
         }
 
-        String steeringTargetSource(BotEntry entry) {
+        public String steeringTargetSource(BotEntry entry) {
             return AgentBotNavigationDebugStateRuntime.hasNavTargetPosition(entry) ? "nav-waypoint" : primaryTargetSource;
         }
     }
@@ -1343,7 +1343,7 @@ public class BotManager {
         }
     }
 
-    TargetSnapshot captureTargetSnapshot(BotEntry entry) {
+    public TargetSnapshot captureTargetSnapshot(BotEntry entry) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         Character followAnchor = resolveFollowAnchor(entry, owner);
