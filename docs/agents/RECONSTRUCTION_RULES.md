@@ -2107,6 +2107,11 @@ Recent reconstruction notes:
   `AgentLootTargetService`; BotManager calls the Agent looting capability
   directly and supplies the existing grind-loot retry suppression rule so the
   target-selection behavior remains unchanged.
+- Equipped-slot named trade preparation now lives in
+  `AgentEquippedSlotTradeService`; BotInventoryManager still owns the enclosing
+  trade sequence but delegates slot counting, temporary unequip preparation,
+  restore-slot recording, and legacy failure replies to the Agent inventory
+  service.
 - Ammo trade grouping now lives in `AgentInventoryAmmoPolicy`;
   BotInventoryManager preserves the same safe-item filtering, own-ammo versus
   non-own-ammo split, non-own item-id ordering, and own-ammo projectile attack

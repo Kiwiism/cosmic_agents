@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
+import server.agents.capabilities.inventory.AgentEquippedSlotTradeService;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy;
 import server.agents.capabilities.inventory.AgentInventoryDropService;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
@@ -378,7 +379,7 @@ public class BotInventoryManager {
 
         if (category != null && category.startsWith("name:")) {
             String fragment = category.substring(5);
-            if (hasEquippedSlotItems(bot, fragment)) {
+            if (AgentEquippedSlotTradeService.hasEquippedSlotItems(bot, fragment, BotEquipManager::slotsFromName)) {
                 return true;
             }
         }
@@ -393,17 +394,7 @@ public class BotInventoryManager {
         if (category != null && category.startsWith("name:")) {
             String fragment = category.substring(5);
             int total = AgentInventoryNamedItemService.countNamedItems(bot, fragment);
-            short[] slots = BotEquipManager.slotsFromName(fragment);
-            if (slots.length > 0) {
-                Inventory equipped = bot.getInventory(InventoryType.EQUIPPED);
-                ItemInformationProvider ii = ItemInformationProvider.getInstance();
-                for (short slot : slots) {
-                    Item item = equipped.getItem(slot);
-                    if (item != null && !ii.isCash(item.getItemId())) {
-                        total++;
-                    }
-                }
-            }
+            total += AgentEquippedSlotTradeService.countEquippedSlotItems(bot, fragment, BotEquipManager::slotsFromName);
             return total;
         }
         return AgentInventoryTradePolicy.itemQuantitySum(collectItems(category, entry, bot));
@@ -728,77 +719,20 @@ public class BotInventoryManager {
     private static PreparedTradeItems prepareTradeItems(String category, BotEntry entry, Character bot) {
         if (category != null && category.startsWith("name:")) {
             String fragment = category.substring(5).trim();
-            PreparedTradeItems equippedSlotItems = prepareEquippedSlotTradeItems(fragment, entry, bot);
+            AgentEquippedSlotTradeService.PreparedTradeItems equippedSlotItems =
+                    AgentEquippedSlotTradeService.prepareEquippedSlotTradeItems(
+                            fragment,
+                            entry,
+                            bot,
+                            BotEquipManager::slotsFromName,
+                            () -> restoreTemporarilyUnequippedItems(entry, bot));
             if (equippedSlotItems.errorMessage() != null || !equippedSlotItems.items().isEmpty()) {
-                return equippedSlotItems;
+                return new PreparedTradeItems(equippedSlotItems.items(), equippedSlotItems.errorMessage());
             }
             return new PreparedTradeItems(AgentInventoryNamedItemService.collectNamedItems(bot, fragment), null);
         }
 
         return new PreparedTradeItems(collectItems(category, entry, bot), null);
-    }
-
-    private static boolean hasEquippedSlotItems(Character bot, String fragment) {
-        short[] slots = BotEquipManager.slotsFromName(fragment);
-        if (slots.length == 0) {
-            return false;
-        }
-
-        Inventory equipped = bot.getInventory(InventoryType.EQUIPPED);
-        ItemInformationProvider ii = ItemInformationProvider.getInstance();
-        for (short slot : slots) {
-            Item item = equipped.getItem(slot);
-            if (item != null && !ii.isCash(item.getItemId())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static PreparedTradeItems prepareEquippedSlotTradeItems(String fragment, BotEntry entry, Character bot) {
-        short[] slots = BotEquipManager.slotsFromName(fragment);
-        if (slots.length == 0) {
-            return new PreparedTradeItems(List.of(), null);
-        }
-
-        Inventory equipped = bot.getInventory(InventoryType.EQUIPPED);
-        Inventory equipBag = bot.getInventory(InventoryType.EQUIP);
-        ItemInformationProvider ii = ItemInformationProvider.getInstance();
-        List<Short> occupiedSlots = new ArrayList<>();
-        for (short slot : slots) {
-            Item item = equipped.getItem(slot);
-            if (item != null && !ii.isCash(item.getItemId())) {
-                occupiedSlots.add(slot);
-            }
-        }
-        if (occupiedSlots.isEmpty()) {
-            return new PreparedTradeItems(List.of(), null);
-        }
-        if (equipBag.getNumFreeSlot() < occupiedSlots.size()) {
-            return new PreparedTradeItems(List.of(), AgentDialogueCatalog.tradeEquipBagFullReply());
-        }
-
-        occupiedSlots.sort(Short::compare);
-        List<Item> result = new ArrayList<>();
-        for (short srcSlot : occupiedSlots) {
-            short dstSlot = equipBag.getNextFreeSlot();
-            if (dstSlot < 0) {
-                restoreTemporarilyUnequippedItems(entry, bot);
-                return new PreparedTradeItems(List.of(), AgentDialogueCatalog.tradeEquipSlotsFullReply());
-            }
-
-            InventoryManipulator.handleItemMove(bot.getClient(), InventoryType.EQUIP, srcSlot, dstSlot, (short) 1);
-            Item moved = equipBag.getItem(dstSlot);
-            if (moved == null) {
-                restoreTemporarilyUnequippedItems(entry, bot);
-                return new PreparedTradeItems(List.of(), AgentDialogueCatalog.tradeEquippedItemPrepareFailedReply());
-            }
-
-            AgentBotPendingTradeStateRuntime.rememberRestoreSlot(entry, moved, srcSlot);
-            result.add(moved);
-        }
-
-        return new PreparedTradeItems(result, null);
     }
 
     private static void restoreTemporarilyUnequippedItems(BotEntry entry, Character bot) {
