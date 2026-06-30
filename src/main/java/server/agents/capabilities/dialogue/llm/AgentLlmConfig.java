@@ -1,6 +1,6 @@
-package server.bots.llm;
+package server.agents.capabilities.dialogue.llm;
 
-public final class BotLlmConfig {
+public final class AgentLlmConfig {
     public static volatile boolean enabled = false;
     public static volatile boolean typoSuggesterEnabled = false; // recommended off if LLM on; it can block casual chat
 
@@ -52,5 +52,5 @@ public final class BotLlmConfig {
     public static volatile int compactBatchSize = 8;
     public static volatile int summaryMaxPredictTokens = 300;
 
-    private BotLlmConfig() {}
+    private AgentLlmConfig() {}
 }

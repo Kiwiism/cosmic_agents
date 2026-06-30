@@ -1,5 +1,7 @@
 package server.bots.llm;
 
+import server.agents.capabilities.dialogue.llm.AgentLlmConfig;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,14 +28,14 @@ public final class OllamaClient {
     private OllamaClient() {}
 
     public static Optional<String> generate(String prompt, String system) {
-        return send(prompt, system, BotLlmConfig.maxPredictTokens, BotLlmConfig.requestTimeoutMs);
+        return send(prompt, system, AgentLlmConfig.maxPredictTokens, AgentLlmConfig.requestTimeoutMs);
     }
 
     /** Variant for non-chat calls (e.g. memory summarization) where we want a bigger
      *  token budget and a proportionally longer timeout. */
     public static Optional<String> generateLong(String prompt, String system, int numPredict) {
         // Rough scale: small CPU produces ~10 tok/s, so allow numPredict*200ms + base.
-        int timeoutMs = Math.max(BotLlmConfig.requestTimeoutMs, 5000 + numPredict * 200);
+        int timeoutMs = Math.max(AgentLlmConfig.requestTimeoutMs, 5000 + numPredict * 200);
         return send(prompt, system, numPredict, timeoutMs);
     }
 
@@ -41,7 +43,7 @@ public final class OllamaClient {
         String body = buildBody(prompt, system, numPredict);
         HttpRequest req;
         try {
-            req = HttpRequest.newBuilder(URI.create(BotLlmConfig.endpoint + "/api/generate"))
+            req = HttpRequest.newBuilder(URI.create(AgentLlmConfig.endpoint + "/api/generate"))
                     .timeout(Duration.ofMillis(timeoutMs))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(body))
@@ -71,31 +73,31 @@ public final class OllamaClient {
     private static String buildBody(String prompt, String system, int numPredict) {
         StringBuilder sb = new StringBuilder(384);
         sb.append('{');
-        sb.append("\"model\":\"").append(jsonEscape(BotLlmConfig.model)).append("\",");
+        sb.append("\"model\":\"").append(jsonEscape(AgentLlmConfig.model)).append("\",");
         sb.append("\"stream\":false,");
-        if (BotLlmConfig.keepAlive != null && !BotLlmConfig.keepAlive.isBlank()) {
-            sb.append("\"keep_alive\":\"").append(jsonEscape(BotLlmConfig.keepAlive)).append("\",");
+        if (AgentLlmConfig.keepAlive != null && !AgentLlmConfig.keepAlive.isBlank()) {
+            sb.append("\"keep_alive\":\"").append(jsonEscape(AgentLlmConfig.keepAlive)).append("\",");
         }
         if (system != null && !system.isEmpty()) {
             sb.append("\"system\":\"").append(jsonEscape(system)).append("\",");
         }
         sb.append("\"prompt\":\"").append(jsonEscape(prompt)).append("\",");
-        if (BotLlmConfig.disableThinking) {
+        if (AgentLlmConfig.disableThinking) {
             sb.append("\"think\":false,");
         }
         sb.append("\"options\":{")
                 .append("\"num_predict\":").append(numPredict)
-                .append(",\"temperature\":").append(BotLlmConfig.temperature)
-                .append(",\"top_p\":").append(BotLlmConfig.topP)
-                .append(",\"top_k\":").append(BotLlmConfig.topK)
-                .append(",\"min_p\":").append(BotLlmConfig.minP)
-                .append(",\"presence_penalty\":").append(BotLlmConfig.presencePenalty)
-                .append(",\"repeat_penalty\":").append(BotLlmConfig.repeatPenalty);
-        if (BotLlmConfig.numCtx > 0) {
-            sb.append(",\"num_ctx\":").append(BotLlmConfig.numCtx);
+                .append(",\"temperature\":").append(AgentLlmConfig.temperature)
+                .append(",\"top_p\":").append(AgentLlmConfig.topP)
+                .append(",\"top_k\":").append(AgentLlmConfig.topK)
+                .append(",\"min_p\":").append(AgentLlmConfig.minP)
+                .append(",\"presence_penalty\":").append(AgentLlmConfig.presencePenalty)
+                .append(",\"repeat_penalty\":").append(AgentLlmConfig.repeatPenalty);
+        if (AgentLlmConfig.numCtx > 0) {
+            sb.append(",\"num_ctx\":").append(AgentLlmConfig.numCtx);
         }
-        if (BotLlmConfig.numThreads > 0) {
-            sb.append(",\"num_thread\":").append(BotLlmConfig.numThreads);
+        if (AgentLlmConfig.numThreads > 0) {
+            sb.append(",\"num_thread\":").append(AgentLlmConfig.numThreads);
         }
         sb.append("}}");
         return sb.toString();

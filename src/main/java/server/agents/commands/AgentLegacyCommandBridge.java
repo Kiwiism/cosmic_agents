@@ -5,7 +5,7 @@ import server.agents.runtime.AgentPerformanceMonitor;
 import client.Character;
 import server.bots.BotManager;
 import server.bots.BotNavigationDebugOverlay;
-import server.bots.llm.BotLlmConfig;
+import server.agents.capabilities.dialogue.llm.AgentLlmConfig;
 
 import java.util.List;
 
@@ -30,16 +30,16 @@ public final class AgentLegacyCommandBridge {
     }
 
     public static boolean llmEnabled() {
-        return BotLlmConfig.enabled;
+        return AgentLlmConfig.enabled;
     }
 
     public static boolean llmDebugLog() {
-        return BotLlmConfig.debugLog;
+        return AgentLlmConfig.debugLog;
     }
 
     public static void setLlm(boolean enabled, boolean debugLog) {
-        BotLlmConfig.enabled = enabled;
-        BotLlmConfig.debugLog = debugLog;
+        AgentLlmConfig.enabled = enabled;
+        AgentLlmConfig.debugLog = debugLog;
     }
 
     public static String showNavigationGraph(Character player) {

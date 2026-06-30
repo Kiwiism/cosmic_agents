@@ -1,5 +1,7 @@
 package server.bots.llm;
 
+import server.agents.capabilities.dialogue.llm.AgentLlmConfig;
+
 import client.Character;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,8 +36,8 @@ public final class BotLlmReplyManager {
         return t;
     });
 
-    private static volatile Semaphore globalGate = new Semaphore(BotLlmConfig.maxConcurrentGlobal);
-    private static volatile int gateCapacity = BotLlmConfig.maxConcurrentGlobal;
+    private static volatile Semaphore globalGate = new Semaphore(AgentLlmConfig.maxConcurrentGlobal);
+    private static volatile int gateCapacity = AgentLlmConfig.maxConcurrentGlobal;
 
     /** Tracks per-bot in-flight requests so we don't queue more than one. */
     private static final java.util.concurrent.ConcurrentHashMap<Integer, AtomicInteger> inflightByBotId =
@@ -46,7 +48,7 @@ public final class BotLlmReplyManager {
     private BotLlmReplyManager() {}
 
     private static Semaphore gate() {
-        int cap = BotLlmConfig.maxConcurrentGlobal;
+        int cap = AgentLlmConfig.maxConcurrentGlobal;
         if (cap != gateCapacity) {
             synchronized (BotLlmReplyManager.class) {
                 if (cap != gateCapacity) {
@@ -59,7 +61,7 @@ public final class BotLlmReplyManager {
     }
 
     public static void maybeRespond(BotEntry entry, Character sender, String message) {
-        if (!BotLlmConfig.enabled) return;
+        if (!AgentLlmConfig.enabled) return;
         if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry) || sender == null) return;
         if (message == null || message.isBlank()) return;
 
@@ -101,50 +103,50 @@ public final class BotLlmReplyManager {
         String botName = AgentBotRuntimeIdentityRuntime.botName(entry);
         int botId = AgentBotRuntimeIdentityRuntime.botId(entry);
         // Use disk-backed memory only when enabled; otherwise keep a tiny recent in-memory window.
-        String summary = BotLlmConfig.memoryEnabled ? BotMemoryStore.loadSummary(botName) : "";
+        String summary = AgentLlmConfig.memoryEnabled ? BotMemoryStore.loadSummary(botName) : "";
         // Prompt shows ALL uncompacted turns (cursor..end). The summary covers everything before
         // cursor — together they're gap-free. Compaction (below) keeps the uncompacted window
         // bounded to recentTurnsInPrompt..recentTurnsInPrompt+compactBatchSize turns.
-        List<BotMemoryStore.Turn> recent = BotLlmConfig.memoryEnabled
+        List<BotMemoryStore.Turn> recent = AgentLlmConfig.memoryEnabled
                 ? BotMemoryStore.loadUncompacted(botName)
                 : loadRecentMemory(botId, System.currentTimeMillis());
         String system = PromptBuilder.buildSystem(entry, relation, senderName);
         String prompt = PromptBuilder.buildPrompt(entry, senderName, message, summary, recent);
 
         long t0 = System.currentTimeMillis();
-        if (BotLlmConfig.debugLog) {
+        if (AgentLlmConfig.debugLog) {
             log.info("llm[{}] <- {}: {}", botName, senderName, message);
             log.info("llm[{}] system: {}", botName, system);
             log.info("llm[{}] prompt ({} chars, {} recent turns, num_ctx={}, num_predict={}):\n{}",
                     botName, prompt.length(), recent.size(),
-                    BotLlmConfig.numCtx, BotLlmConfig.maxPredictTokens, prompt);
+                    AgentLlmConfig.numCtx, AgentLlmConfig.maxPredictTokens, prompt);
         }
 
         Optional<String> raw = OllamaClient.generate(prompt, system);
         long elapsed = System.currentTimeMillis() - t0;
 
         if (raw.isEmpty()) {
-            if (BotLlmConfig.debugLog) log.info("llm[{}] no reply ({} ms)", botName, elapsed);
+            if (AgentLlmConfig.debugLog) log.info("llm[{}] no reply ({} ms)", botName, elapsed);
             return;
         }
         String reply = sanitize(raw.get());
-        if (BotLlmConfig.debugLog) {
+        if (AgentLlmConfig.debugLog) {
             log.info("llm[{}] raw ({} ms, {} chars): {}", botName, elapsed, raw.get().length(), raw.get());
             log.info("llm[{}] sanitized ({} chars): {}", botName, reply.length(), reply);
         }
 //        if (looksLowQuality(message, reply)) {
 //            String fallback = fallbackReply(message);
-//            if (BotLlmConfig.debugLog) {
+//            if (AgentLlmConfig.debugLog) {
 //                log.info("llm[{}] rejected low-quality reply: {}, fallback: {}", botName, reply, fallback);
 //            }
 //            reply = fallback;
 //        }
         if (reply.isEmpty()) return;
 
-        List<String> parts = splitForChat(reply, BotLlmConfig.maxReplyMessages,
-                BotLlmConfig.maxReplyCharsPerMessage);
+        List<String> parts = splitForChat(reply, AgentLlmConfig.maxReplyMessages,
+                AgentLlmConfig.maxReplyCharsPerMessage);
         if (parts.isEmpty()) return;
-        if (BotLlmConfig.debugLog && parts.size() > 1) {
+        if (AgentLlmConfig.debugLog && parts.size() > 1) {
             log.info("llm[{}] split into {} messages", botName, parts.size());
         }
 
@@ -154,7 +156,7 @@ public final class BotLlmReplyManager {
         if (!looksLowQuality(message, reply)) {
             BotMemoryStore.Turn turn = new BotMemoryStore.Turn(System.currentTimeMillis(),
                     relation.name().toLowerCase(), senderName, message, reply);
-            if (BotLlmConfig.memoryEnabled) {
+            if (AgentLlmConfig.memoryEnabled) {
                 BotMemoryStore.appendTurn(botName, turn);
             } else {
                 rememberRecent(botId, turn);
@@ -162,14 +164,14 @@ public final class BotLlmReplyManager {
         }
 
         // Compact when uncompacted overflows the window. One LLM call per compactBatchSize turns.
-        if (BotLlmConfig.memoryEnabled && BotMemoryStore.countUncompacted(botName)
-                > BotLlmConfig.recentTurnsInPrompt + BotLlmConfig.compactBatchSize) {
+        if (AgentLlmConfig.memoryEnabled && BotMemoryStore.countUncompacted(botName)
+                > AgentLlmConfig.recentTurnsInPrompt + AgentLlmConfig.compactBatchSize) {
             EXEC.submit(() -> BotMemoryStore.compact(botName));
         }
     }
 
     private static List<BotMemoryStore.Turn> loadRecentMemory(int botId, long now) {
-        if (!BotLlmConfig.recentMemoryEnabled) return List.of();
+        if (!AgentLlmConfig.recentMemoryEnabled) return List.of();
         java.util.ArrayDeque<BotMemoryStore.Turn> turns = recentMemoryByBotId.get(botId);
         if (turns == null) return List.of();
         synchronized (turns) {
@@ -179,7 +181,7 @@ public final class BotLlmReplyManager {
     }
 
     private static void rememberRecent(int botId, BotMemoryStore.Turn turn) {
-        if (!BotLlmConfig.recentMemoryEnabled || turn == null) return;
+        if (!AgentLlmConfig.recentMemoryEnabled || turn == null) return;
         java.util.ArrayDeque<BotMemoryStore.Turn> turns =
                 recentMemoryByBotId.computeIfAbsent(botId, k -> new java.util.ArrayDeque<>());
         synchronized (turns) {
@@ -189,8 +191,8 @@ public final class BotLlmReplyManager {
     }
 
     private static void pruneRecent(java.util.ArrayDeque<BotMemoryStore.Turn> turns, long now) {
-        long maxAge = Math.max(0L, BotLlmConfig.recentMemoryMaxAgeMs);
-        int maxTurns = Math.max(0, BotLlmConfig.recentMemoryMaxTurns);
+        long maxAge = Math.max(0L, AgentLlmConfig.recentMemoryMaxAgeMs);
+        int maxTurns = Math.max(0, AgentLlmConfig.recentMemoryMaxTurns);
         while (!turns.isEmpty() && (maxTurns == 0 || turns.size() > maxTurns
                 || now - turns.peekFirst().ts() > maxAge)) {
             turns.removeFirst();
@@ -213,7 +215,7 @@ public final class BotLlmReplyManager {
                 } catch (Throwable t) {
                     log.warn("llm follow-up reply failed: {}", t.toString());
                 }
-            }, (long) BotLlmConfig.multiMessageDelayMs * i);
+            }, (long) AgentLlmConfig.multiMessageDelayMs * i);
         }
     }
 
@@ -299,7 +301,7 @@ public final class BotLlmReplyManager {
         s = s.replaceAll("[\\p{So}\\x{1F300}-\\x{1FAFF}\\x{2600}-\\x{27BF}]", "").trim();
         // keep the chat style consistent even when the model ignores the style instruction
         s = s.toLowerCase(Locale.ROOT);
-        int cap = BotLlmConfig.maxReplyChars();
+        int cap = AgentLlmConfig.maxReplyChars();
         if (s.length() > cap) {
             s = s.substring(0, cap).trim();
         }

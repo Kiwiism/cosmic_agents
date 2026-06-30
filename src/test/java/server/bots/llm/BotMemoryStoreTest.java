@@ -1,5 +1,7 @@
 package server.bots.llm;
 
+import server.agents.capabilities.dialogue.llm.AgentLlmConfig;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,13 +22,13 @@ class BotMemoryStoreTest {
     @BeforeEach
     void setUp() throws IOException {
         tmpDir = Files.createTempDirectory("bot-llm-memory-test");
-        origMemoryDir = BotLlmConfig.memoryDir;
-        BotLlmConfig.memoryDir = tmpDir.toString();
+        origMemoryDir = AgentLlmConfig.memoryDir;
+        AgentLlmConfig.memoryDir = tmpDir.toString();
     }
 
     @AfterEach
     void tearDown() throws IOException {
-        BotLlmConfig.memoryDir = origMemoryDir;
+        AgentLlmConfig.memoryDir = origMemoryDir;
         if (Files.exists(tmpDir)) {
             try (var s = Files.walk(tmpDir)) {
                 s.sorted(Comparator.reverseOrder()).forEach(p -> {

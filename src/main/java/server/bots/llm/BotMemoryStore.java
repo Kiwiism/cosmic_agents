@@ -1,5 +1,7 @@
 package server.bots.llm;
 
+import server.agents.capabilities.dialogue.llm.AgentLlmConfig;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +43,7 @@ public final class BotMemoryStore {
 
     public static synchronized void ensureDir() {
         try {
-            Path dir = Paths.get(BotLlmConfig.memoryDir);
+            Path dir = Paths.get(AgentLlmConfig.memoryDir);
             Files.createDirectories(dir);
             Path ignore = dir.resolve(".gitignore");
             if (!Files.exists(ignore)) {
@@ -134,8 +136,8 @@ public final class BotMemoryStore {
             int cursor = loadCursor(botName);
             if (cursor > all.size()) cursor = all.size();
             int uncompacted = all.size() - cursor;
-            int keep = BotLlmConfig.recentTurnsInPrompt;
-            int batch = BotLlmConfig.compactBatchSize;
+            int keep = AgentLlmConfig.recentTurnsInPrompt;
+            int batch = AgentLlmConfig.compactBatchSize;
             if (uncompacted <= keep + batch) return; // not enough to bother
 
             List<String> oldLines = all.subList(cursor, cursor + batch);
@@ -182,7 +184,7 @@ public final class BotMemoryStore {
     }
 
     private static String trySummarize(String botName, String previousSummary, List<String> oldLines) {
-        if (!BotLlmConfig.enabled) return null;
+        if (!AgentLlmConfig.enabled) return null;
         StringBuilder convo = new StringBuilder();
         if (!previousSummary.isBlank()) {
             convo.append("Prior memory (keep core facts from this; merge new chat into it, do not lose anything important):\n")
@@ -202,19 +204,19 @@ public final class BotMemoryStore {
                 + "promises made, gear/items mentioned, places visited, jokes/nicknames, anything personal. "
                 + "Drop small-talk filler. If prior memory exists, integrate the new chat into it without "
                 + "discarding earlier facts unless directly contradicted. Stay under 800 chars.";
-        return OllamaClient.generateLong(convo.toString(), sys, BotLlmConfig.summaryMaxPredictTokens).orElse(null);
+        return OllamaClient.generateLong(convo.toString(), sys, AgentLlmConfig.summaryMaxPredictTokens).orElse(null);
     }
 
     private static Path jsonlPath(String botName) {
-        return Paths.get(BotLlmConfig.memoryDir, sanitize(botName) + ".jsonl");
+        return Paths.get(AgentLlmConfig.memoryDir, sanitize(botName) + ".jsonl");
     }
 
     private static Path summaryPath(String botName) {
-        return Paths.get(BotLlmConfig.memoryDir, sanitize(botName) + ".summary.txt");
+        return Paths.get(AgentLlmConfig.memoryDir, sanitize(botName) + ".summary.txt");
     }
 
     private static Path cursorPath(String botName) {
-        return Paths.get(BotLlmConfig.memoryDir, sanitize(botName) + ".cursor");
+        return Paths.get(AgentLlmConfig.memoryDir, sanitize(botName) + ".cursor");
     }
 
     private static String sanitize(String name) {

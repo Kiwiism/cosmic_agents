@@ -51,6 +51,10 @@ Recent map updates:
 - `server.bots.llm.CommandTypoSuggester` has moved to
   `server.agents.commands.AgentCommandTypoSuggester`; production and focused
   tests now use the Agent-owned command typo utility directly.
+- `server.bots.llm.BotLlmConfig` has moved to
+  `server.agents.capabilities.dialogue.llm.AgentLlmConfig`; existing LLM
+  runtime, memory, Ollama client, command bridge, and chat routing code now
+  share the Agent-owned static config.
 
 | Current file | Target Agent destination | Status |
 | --- | --- | --- |
@@ -114,7 +118,7 @@ Recent map updates:
 | `src/main/java/server/bots/combat/BotDefenseDataProvider.java` | `server.agents.capabilities.combat.data.AgentDefenseDataProvider` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/combat/BotMobHitboxProvider.java` | `server.agents.capabilities.combat.data.AgentMobHitboxProvider` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/combat/BotWzXml.java` | `server.agents.capabilities.combat.data.AgentWzXml` | `MIGRATED_TO_AGENT` |
-| `src/main/java/server/bots/llm/BotLlmConfig.java` | `server.agents.capabilities.dialogue.llm.AgentLlmConfig` | `MIGRATE_TO_AGENT` |
+| `src/main/java/server/bots/llm/BotLlmConfig.java` | `server.agents.capabilities.dialogue.llm.AgentLlmConfig` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/llm/BotLlmReplyManager.java` | `server.agents.capabilities.dialogue.llm.AgentLlmReplyService` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/llm/BotMemoryStore.java` | `server.agents.capabilities.dialogue.llm.AgentMemoryStore` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/llm/CommandTypoSuggester.java` | `server.agents.commands.AgentCommandTypoSuggester` | `MIGRATED_TO_AGENT` |

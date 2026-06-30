@@ -1818,6 +1818,11 @@ Recent reconstruction notes:
   Agent-owned suggester directly, and the old `server.bots.llm`
   implementation/test have been removed. Known verbs, denylist, bounded
   Levenshtein behavior, and suggestion thresholds are unchanged.
+- LLM configuration now lives in
+  `server.agents.capabilities.dialogue.llm.AgentLlmConfig`. Legacy LLM runtime,
+  memory, Ollama client, command bridge, and chat routing code read and mutate
+  the same static config fields through the Agent-owned class; defaults and
+  runtime behavior are unchanged.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

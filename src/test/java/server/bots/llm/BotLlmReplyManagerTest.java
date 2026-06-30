@@ -1,5 +1,7 @@
 package server.bots.llm;
 
+import server.agents.capabilities.dialogue.llm.AgentLlmConfig;
+
 import client.Character;
 import client.Job;
 import org.junit.jupiter.api.Test;
@@ -22,8 +24,8 @@ class BotLlmReplyManagerTest {
     @Test
     void deliverReplyPartsRoutesImmediateAndFollowUpsThroughAgentReplyRuntime() throws Exception {
         BotEntry entry = newBotEntry();
-        int oldDelay = BotLlmConfig.multiMessageDelayMs;
-        BotLlmConfig.multiMessageDelayMs = 250;
+        int oldDelay = AgentLlmConfig.multiMessageDelayMs;
+        AgentLlmConfig.multiMessageDelayMs = 250;
         List<Long> delays = new ArrayList<>();
         List<Runnable> actions = new ArrayList<>();
 
@@ -40,7 +42,7 @@ class BotLlmReplyManagerTest {
             replies.verify(() -> AgentBotLlmRuntime.replyNow(entry, "two"));
             replies.verify(() -> AgentBotLlmRuntime.replyNow(entry, "three"));
         } finally {
-            BotLlmConfig.multiMessageDelayMs = oldDelay;
+            AgentLlmConfig.multiMessageDelayMs = oldDelay;
         }
     }
 

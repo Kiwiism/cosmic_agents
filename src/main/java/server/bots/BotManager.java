@@ -72,6 +72,7 @@ import server.agents.integration.AgentBotTargetedCommandMatch;
 import server.agents.integration.AgentBotTransferCommand;
 import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
 import server.agents.capabilities.dialogue.AgentChatRuntime;
+import server.agents.capabilities.dialogue.llm.AgentLlmConfig;
 import server.agents.integration.AgentBotChatOrchestratorContext;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.commands.AgentCommandTypoSuggester;
@@ -1047,7 +1048,7 @@ public class BotManager {
             }
             AgentBotReplyChannelStateRuntime.setReplyChannel(targetedBot.entry(), channel);
             String cmd = targetedBot.commandText();
-            if (server.bots.llm.BotLlmConfig.typoSuggesterEnabled) {
+            if (AgentLlmConfig.typoSuggesterEnabled) {
                 String typo = AgentCommandTypoSuggester.suggest(cmd);
                 if (typo != null) {
                     AgentBotManagerReplyRuntime.queueReply(targetedBot.entry(), "did you mean '" + typo + "'?");
@@ -1062,7 +1063,7 @@ public class BotManager {
                         targetedBot.entry(), cmd, System.currentTimeMillis());
             }
             // Fall through to LLM only if no command pattern matched.
-            if (server.bots.llm.BotLlmConfig.enabled && !matched) {
+            if (AgentLlmConfig.enabled && !matched) {
                 server.bots.llm.BotLlmReplyManager.maybeRespond(targetedBot.entry(), owner, cmd);
             }
             return;
@@ -1093,7 +1094,7 @@ public class BotManager {
         }
 
         // No name prefix — typo-suggest once via the first bot, otherwise broadcast.
-        if (server.bots.llm.BotLlmConfig.typoSuggesterEnabled) {
+        if (AgentLlmConfig.typoSuggesterEnabled) {
             String typo = AgentCommandTypoSuggester.suggest(message);
             if (typo != null) {
                 BotEntry first = entries.get(0);
