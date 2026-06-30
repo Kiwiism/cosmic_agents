@@ -895,7 +895,8 @@ public class BotCombatManager {
         if (AgentCombatSkillHitboxPolicy.isStrikePointAnchoredAoeSkill(skillId)) {
             primaryTarget = resolveStrikePointPrimaryByBasicWeapon(bot, primaryTarget, route);
         }
-        Rectangle hitBox = calculateSkillHitBox(effect, bot, primaryTarget, route, skillId, action);
+        Rectangle hitBox = AgentCombatSkillHitboxPolicy.calculateSkillHitBox(
+                effect, bot, primaryTarget, route, skillId, action);
         if (hitBox == null) {
             return null;
         }
@@ -942,40 +943,6 @@ public class BotCombatManager {
                 packetFields.stance(),
                 fallbackAttackData.speed(), skillTiming.hitDelayMs(), skillTiming.cooldownMs(),
                 AgentCombatWeaponPolicy.damageWeaponTypeForAction(skillId, weaponType, action));
-    }
-
-    private static Rectangle calculateSkillHitBox(StatEffect effect, Character bot, Monster primaryTarget, AgentAttackRoute route, int skillId, String action) {
-        return AgentCombatSkillHitboxPolicy.calculateSkillHitBox(effect, bot, primaryTarget, route, skillId, action);
-    }
-
-    static Rectangle fallbackCloseRangeSkillHitBox(StatEffect effect, Character bot, String action, boolean facingLeft) {
-        return AgentCombatSkillHitboxPolicy.fallbackCloseRangeSkillHitBox(effect, bot, action, facingLeft);
-    }
-
-    static Rectangle fallbackSkillHitBox(StatEffect effect, Character bot, boolean facingLeft, AgentAttackRoute route, int skillId, String action) {
-        return AgentCombatSkillHitboxPolicy.fallbackSkillHitBox(effect, bot, facingLeft, route, skillId, action);
-    }
-
-    public static Rectangle clientProjectileHitBox(Character bot, boolean facingLeft, float horizontalScale) {
-        return AgentProjectileHitbox.clientProjectileHitBox(bot, facingLeft, horizontalScale);
-    }
-
-    // Vertical extents are signed offsets from the character feet (origin.y):
-    //   yAboveOrigin >  0 → box top is yAboveOrigin px above feet.
-    //   yBelowOrigin >  0 → box bottom is yBelowOrigin px below feet.
-    //   yBelowOrigin <  0 → box bottom is |yBelowOrigin| px above feet (used for thin
-    //                       pierce-line projectiles fired from mid-body).
-    // Empirically (see kb-pierce-line-projectile-vertical) the projectile launches from
-    // approximately player.Y - 30 (mid-body) and its vertical reach is the projectile
-    // sprite half-height. The bot derives this from per-skill measurements rather than
-    // the client's WZ projectile asset because we do not yet parse those.
-    public static Rectangle clientProjectileHitBox(Character bot, boolean facingLeft, float horizontalScale,
-                                            int yAboveOrigin, int yBelowOrigin) {
-        return AgentProjectileHitbox.clientProjectileHitBox(bot, facingLeft, horizontalScale, yAboveOrigin, yBelowOrigin);
-    }
-
-    static float projectileRangeScale(StatEffect effect) {
-        return AgentProjectileHitbox.projectileRangeScale(effect);
     }
 
     private static List<Monster> collectTargetsInHitBox(Character bot, Monster primaryTarget, Rectangle hitBox, int maxTargets) {

@@ -36,6 +36,61 @@ class AgentCombatSkillHitboxPolicyTest {
     }
 
     @Test
+    void preservesDefaultCloseRangeFallbackGeometry() {
+        Character agent = mock(Character.class);
+        when(agent.getPosition()).thenReturn(new Point(100, 200));
+        StatEffect effect = mock(StatEffect.class);
+        when(effect.getRange()).thenReturn(0);
+
+        Rectangle hitBox = AgentCombatSkillHitboxPolicy.fallbackCloseRangeSkillHitBox(effect, agent, null, false);
+
+        assertEquals(new Rectangle(100, 150, 80, 70), hitBox);
+    }
+
+    @Test
+    void preservesLeftFacingCloseRangeFallbackGeometry() {
+        Character agent = mock(Character.class);
+        when(agent.getPosition()).thenReturn(new Point(100, 200));
+        StatEffect effect = mock(StatEffect.class);
+        when(effect.getRange()).thenReturn(130);
+
+        Rectangle hitBox = AgentCombatSkillHitboxPolicy.fallbackCloseRangeSkillHitBox(effect, agent, null, true);
+
+        assertEquals(new Rectangle(-30, 150, 130, 70), hitBox);
+    }
+
+    @Test
+    void preservesProjectileFallbackGeometryForRangedAndMagicRoutes() {
+        Character agent = mock(Character.class);
+        when(agent.getPosition()).thenReturn(new Point(100, 200));
+        when(agent.getSkills()).thenReturn(java.util.Map.of());
+        StatEffect effect = mock(StatEffect.class);
+        when(effect.getRange()).thenReturn(0);
+
+        Rectangle ranged = AgentCombatSkillHitboxPolicy.fallbackSkillHitBox(
+                effect, agent, false, AgentAttackRoute.RANGED, 0, null);
+        Rectangle magicLeft = AgentCombatSkillHitboxPolicy.fallbackSkillHitBox(
+                effect, agent, true, AgentAttackRoute.MAGIC, 0, null);
+
+        assertEquals(new Rectangle(105, 150, 395, 100), ranged);
+        assertEquals(new Rectangle(-300, 150, 395, 100), magicLeft);
+    }
+
+    @Test
+    void preservesProjectileFallbackRangeScaling() {
+        Character agent = mock(Character.class);
+        when(agent.getPosition()).thenReturn(new Point(100, 200));
+        when(agent.getSkills()).thenReturn(java.util.Map.of());
+        StatEffect effect = mock(StatEffect.class);
+        when(effect.getRange()).thenReturn(150);
+
+        Rectangle hitBox = AgentCombatSkillHitboxPolicy.fallbackSkillHitBox(
+                effect, agent, false, AgentAttackRoute.MAGIC, 0, null);
+
+        assertEquals(new Rectangle(105, 150, 595, 100), hitBox);
+    }
+
+    @Test
     void usesMeasuredPierceLineProjectileReach() {
         Character agent = mock(Character.class);
         when(agent.getPosition()).thenReturn(new Point(100, 200));

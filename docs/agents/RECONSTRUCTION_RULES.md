@@ -1560,6 +1560,10 @@ Recent reconstruction notes:
 - Shadow Partner hit multiplier checks now call `AgentCombatHitCounter`
   directly; the temporary `BotCombatManager` multiplier wrapper has been
   removed while preserving ranged-only Shadow Partner doubling behavior.
+- Skill-hitbox construction now calls `AgentCombatSkillHitboxPolicy` directly
+  from the remaining combat shell; temporary `BotCombatManager` fallback and
+  projectile hitbox wrappers have been removed after moving their duplicate
+  geometry coverage into Agent combat tests.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
