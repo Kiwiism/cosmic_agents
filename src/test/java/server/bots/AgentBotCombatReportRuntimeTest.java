@@ -6,10 +6,14 @@ import client.inventory.WeaponType;
 import net.server.PlayerBuffValueHolder;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentAttackRoute;
+import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentBotCombatPlanRuntime;
 import server.agents.integration.AgentBotCombatReportRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
+import server.agents.integration.AgentBotCombatTargetRuntime;
 import server.StatEffect;
 import server.combat.CombatFormulaProvider;
 import server.life.Monster;
@@ -28,7 +32,7 @@ class AgentBotCombatReportRuntimeTest {
         Character bot = mock(Character.class);
         BotEntry entry = new BotEntry(bot, null, null);
         Monster target = mock(Monster.class);
-        BotCombatManager.AttackPlan plan = new BotCombatManager.AttackPlan(
+        AgentAttackPlan plan = new AgentAttackPlan(
                 0, 0, 1, new Rectangle(), List.of(target),
                 AgentAttackRoute.RANGED, 0, 0, 0, 0, 5,
                 0, 1500, WeaponType.BOW);
@@ -36,9 +40,12 @@ class AgentBotCombatReportRuntimeTest {
         when(target.isAlive()).thenReturn(true);
         when(target.getName()).thenReturn("Slime");
 
-        try (MockedStatic<BotCombatManager> combat = mockStatic(BotCombatManager.class)) {
-            combat.when(() -> BotCombatManager.findGrindTarget(entry, bot)).thenReturn(target);
-            combat.when(() -> BotCombatManager.planAttack(entry, bot, target)).thenReturn(plan);
+        try (MockedStatic<AgentBotCombatTargetRuntime> targets = mockStatic(AgentBotCombatTargetRuntime.class);
+             MockedStatic<AgentBotCombatPlanRuntime> plans = mockStatic(AgentBotCombatPlanRuntime.class)) {
+            targets.when(() -> AgentBotCombatTargetRuntime.findGrindTarget(entry, bot, AgentCombatConfig.cfg))
+                    .thenReturn(target);
+            plans.when(() -> AgentBotCombatPlanRuntime.planAttack(entry, bot, target, AgentCombatConfig.cfg))
+                    .thenReturn(plan);
 
             assertEquals("debug: route ranged, atk speed 5, atk cd 1.50s, remaining 0.25s, tick 50ms, ai 100ms, target Slime",
                     AgentBotCombatReportRuntime.debugStatsReport(entry, bot));

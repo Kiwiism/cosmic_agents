@@ -1695,6 +1695,11 @@ Recent reconstruction notes:
   temporary compatibility delegate while the Agent reporting runtime preserves
   the same target lookup, attack route, speed, cooldown, tick, and AI cadence
   output.
+- Combat debug-stat target search and attack-plan lookup now call
+  `AgentBotCombatTargetRuntime` and `AgentBotCombatPlanRuntime` directly from
+  `AgentBotCombatReportRuntime`; the report path no longer calls back through
+  `BotCombatManager.findGrindTarget` or `BotCombatManager.planAttack` while
+  preserving the same shared combat config object and report output.
 - Combat support-buff tick orchestration now lives in
   `AgentBotCombatBuffRuntime`; `BotCombatManager.tickBuffs` is a temporary
   compatibility delegate while the Agent runtime preserves the same buff-enable

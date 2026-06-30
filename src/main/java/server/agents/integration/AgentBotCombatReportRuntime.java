@@ -3,9 +3,10 @@ package server.agents.integration;
 import client.Character;
 import net.server.PlayerBuffValueHolder;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+import server.agents.capabilities.combat.AgentAttackPlan;
+import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.bots.BotBuffManager;
-import server.bots.BotCombatManager;
 import server.bots.BotEntry;
 import server.bots.BotManager;
 import server.bots.BotMovementManager;
@@ -27,10 +28,12 @@ public final class AgentBotCombatReportRuntime {
     public static String debugStatsReport(BotEntry entry, Character bot) {
         Monster target = AgentBotGrindTargetStateRuntime.target(entry);
         if (target == null || !target.isAlive()) {
-            target = BotCombatManager.findGrindTarget(entry, bot);
+            target = AgentBotCombatTargetRuntime.findGrindTarget(entry, bot, AgentCombatConfig.cfg);
         }
 
-        BotCombatManager.AttackPlan plan = target != null ? BotCombatManager.planAttack(entry, bot, target) : null;
+        AgentAttackPlan plan = target != null
+                ? AgentBotCombatPlanRuntime.planAttack(entry, bot, target, AgentCombatConfig.cfg)
+                : null;
         String route = plan != null
                 ? plan.route.name().toLowerCase()
                 : AgentAttackExecutionProvider.determineBasicAttackRoute(bot).name().toLowerCase();

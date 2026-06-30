@@ -10,6 +10,14 @@ Status values:
 
 This map tracks reconstruction from the source/master bot baseline into neutral Agent modules.
 
+Recent map updates:
+
+- `BotCombatManager` debug-stat target search and attack-plan lookup no longer
+  sit on the report path. `AgentBotCombatReportRuntime` now calls
+  `AgentBotCombatTargetRuntime` and `AgentBotCombatPlanRuntime` directly, while
+  `BotCombatManager.describeDebugStats` remains only a temporary compatibility
+  delegate.
+
 | Current file | Target Agent destination | Status |
 | --- | --- | --- |
 | `src/main/java/client/BotClient.java` | `client.AgentClient` or `server.agents.integration.cosmic.CosmicAgentClientAdapter` | `MIGRATE_TO_AGENT` |
