@@ -1,16 +1,14 @@
-package server.bots;
+package server.agents.integration;
 
 import java.util.List;
 import server.agents.commands.AgentCommandParser;
-import server.agents.integration.AgentBotCommandTarget;
-import server.agents.integration.AgentBotTargetedCommandMatch;
-import server.agents.integration.AgentBotTransferCommand;
+import server.bots.BotEntry;
 
-final class BotCommandParser {
-    private BotCommandParser() {
+public final class AgentBotCommandParser {
+    private AgentBotCommandParser() {
     }
 
-    static AgentBotTransferCommand matchBotTransferCommand(String message) {
+    public static AgentBotTransferCommand matchBotTransferCommand(String message) {
         AgentCommandParser.AgentTransferCommand command = AgentCommandParser.matchTransferCommand(message);
         if (command == null) {
             return null;
@@ -19,7 +17,7 @@ final class BotCommandParser {
         return new AgentBotTransferCommand(command.agentName(), command.targetName());
     }
 
-    static AgentBotTargetedCommandMatch resolveTargetedBot(List<BotEntry> entries, String message) {
+    public static AgentBotTargetedCommandMatch resolveTargetedBot(List<BotEntry> entries, String message) {
         List<AgentBotCommandTarget> targets = entries == null
                 ? null
                 : entries.stream().map(AgentBotCommandTarget::new).toList();

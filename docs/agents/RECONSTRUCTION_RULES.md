@@ -1196,9 +1196,9 @@ Recent reconstruction notes:
   read climb, airborne, crouch, down-jump, velocity, or active-edge fields
   directly in production.
 - Bot command target-name resolution now enters through
-  `AgentBotRuntimeIdentityRuntime`; BotCommandParser keeps the same targeted
-  command matching behavior but no longer reads the bot character directly from
-  BotEntry in production.
+  `AgentBotRuntimeIdentityRuntime` and the Agent-owned
+  `AgentBotCommandParser`; targeted command matching behavior is unchanged, and
+  the old bot-package command parser shim has been removed.
 - Starter-kit job advancement identity now enters through
   `AgentBotRuntimeIdentityRuntime`; BotStarterKitManager preserves job-change,
   starter-kit grant, auto-equip, and build-status ordering while no longer
@@ -1276,11 +1276,11 @@ Recent reconstruction notes:
   preserves the same donor selection ordering, same-ammo preference, donation
   quantity, delay, and transfer behavior while the donor plan context is owned
   by the Agent integration layer instead of a bot package record.
-- Bot command target, transfer, and targeted-command match records now use
-  `AgentBotCommandTarget`, `AgentBotTransferCommand`, and
-  `AgentBotTargetedCommandMatch`; BotCommandParser remains the temporary
-  bot-package shim over `AgentCommandParser`, while parsed command boundary
-  data is owned by the Agent integration layer.
+- Bot command target, transfer, targeted-command match, and bot-entry parser
+  adapter now use `AgentBotCommandTarget`, `AgentBotTransferCommand`,
+  `AgentBotTargetedCommandMatch`, and `AgentBotCommandParser`; parsed command
+  boundary data and bot-entry adaptation are owned by the Agent integration
+  layer while preserving the same `AgentCommandParser` matching behavior.
 - First-job starter-kit data now lives in `AgentStarterKitCatalog` with
   `AgentStarterItemGrant`; BotStarterKitManager preserves the same job-change,
   grant, auto-equip, and build-status behavior while the static kit table and

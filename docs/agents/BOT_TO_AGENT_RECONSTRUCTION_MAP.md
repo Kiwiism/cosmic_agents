@@ -60,6 +60,10 @@ Recent map updates:
   `AgentMemoryStore`, `AgentPromptBuilder`, `AgentSituationBuilder`,
   `AgentSenderRelation`, and `OllamaClient`. The old source/test package is
   empty, and `BotManager` calls the Agent reply service directly.
+- `server.bots.BotCommandParser` has moved to
+  `server.agents.integration.AgentBotCommandParser`. Bot-entry target
+  adaptation, transfer command wrapping, and targeted-command feedback are
+  unchanged; `AgentCommandParser` remains the shared parser core.
 
 | Current file | Target Agent destination | Status |
 | --- | --- | --- |
@@ -79,7 +83,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotBuildManager.java` | `server.agents.capabilities.build` and `server.agents.profiles.SkillBuildProfile` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
 | `src/main/java/server/bots/BotChatManager.java` | `server.agents.capabilities.dialogue.AgentDialogueCatalog`, `server.agents.capabilities.dialogue.AgentChatRuntime`, `server.agents.capabilities.dialogue.AgentChatCommandClassifier`, `server.agents.capabilities.dialogue.AgentTradeDialogueClassifier`, `server.agents.capabilities.dialogue.AgentUtilityDialogueClassifier`, `server.agents.capabilities.dialogue.AgentEquipmentDialogueClassifier`, `server.agents.capabilities.dialogue.AgentSocialDialogueClassifier`, `server.agents.capabilities.dialogue.AgentBuildDialogueClassifier`, `server.agents.capabilities.dialogue.AgentDialogueReportFormatter`, `server.agents.commands.AgentReplyQueue`, `server.agents.events` | `MIGRATED_TO_AGENT`; source file deleted after named random reply pools, reply queue, movement/follow/fidget, supply-request/direct supply, query/toggle, support/heal/buff toggle, logout/relog/away session request and confirmation normalization, report/debug, trade/drop/item and pending drop-choice, trade-invite/shop/maker utility, equipment/autoequip, greeting/fame, build/job/AP/SP classification, skill-tree choice resolution, job advancement resolution, report/AP-build/job-display/skill-tree/learned-skill formatting, upgrade-request classification, handled-state, and top-level chat orchestration moved to Agent-owned modules |
 | `src/main/java/server/bots/BotCombatManager.java` | `server.agents.capabilities.combat`, `server.agents.capabilities.dialogue`, and `server.agents.integration.AgentBotCombatReportRuntime` | `MIGRATED_TO_AGENT`; source file deleted after config, combat planning, target search, AoE reposition, damage/death, support, skill-cache, debug-stat, packet execution, and combat reply behavior moved to Agent-owned modules |
-| `src/main/java/server/bots/BotCommandParser.java` | `server.agents.commands.AgentCommandParser` | `COMPATIBILITY_ALIAS_TEMPORARY` |
+| `src/main/java/server/bots/BotCommandParser.java` | `server.agents.integration.AgentBotCommandParser` and `server.agents.commands.AgentCommandParser` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotEntry.java` | `server.agents.runtime.AgentSession` and capability state objects | `SPLIT_TO_MULTIPLE_AGENT_MODULES`; message queue now uses Agent-owned queued message type |
 | `src/main/java/server/bots/BotEquipManager.java` | `server.agents.capabilities.equipment` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
 | `src/main/java/server/bots/BotFallbackMovementManager.java` | `server.agents.capabilities.movement.AgentFallbackMovementService` | `MIGRATE_TO_AGENT` |

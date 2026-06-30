@@ -25,6 +25,7 @@ import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotAmmoStateRuntime;
 import server.agents.integration.AgentBotBreakoutStateRuntime;
 import server.agents.integration.AgentBotBuffStateRuntime;
+import server.agents.integration.AgentBotCommandParser;
 import server.agents.integration.AgentBotCombatActionLockRuntime;
 import server.agents.integration.AgentBotCombatAoeRepositionRuntime;
 import server.agents.integration.AgentBotCombatAttackRuntime;
@@ -946,7 +947,7 @@ public class BotManager {
             return;
         }
 
-        AgentBotTransferCommand transferCommand = BotCommandParser.matchBotTransferCommand(message);
+        AgentBotTransferCommand transferCommand = AgentBotCommandParser.matchBotTransferCommand(message);
         if (transferCommand != null) {
             String err = giveBot(owner.getId(), owner, transferCommand.botName(), transferCommand.targetName());
             if (err != null) owner.yellowMessage(err);
@@ -1039,7 +1040,7 @@ public class BotManager {
         }
 
         // Name-prefix routing: "Jason pots?" → only Jason responds
-        AgentBotTargetedCommandMatch targetedBot = BotCommandParser.resolveTargetedBot(entries, message);
+        AgentBotTargetedCommandMatch targetedBot = AgentBotCommandParser.resolveTargetedBot(entries, message);
         if (targetedBot.entry() != null) {
             String followTargetToken = AgentChatCommandClassifier.matchFollowTarget(targetedBot.commandText());
             if (followTargetToken != null) {
@@ -1136,7 +1137,7 @@ public class BotManager {
             }
         }
 
-        AgentBotTargetedCommandMatch targetedBot = BotCommandParser.resolveTargetedBot(matches, message);
+        AgentBotTargetedCommandMatch targetedBot = AgentBotCommandParser.resolveTargetedBot(matches, message);
         if (targetedBot.entry() != null) {
             return BotOfferManager.handlePendingOfferResponse(targetedBot.entry(), speaker, targetedBot.commandText());
         }
