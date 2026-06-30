@@ -1532,6 +1532,9 @@ Recent reconstruction notes:
   `AgentCombatSkillHitboxPolicy` directly; the temporary `BotCombatManager`
   anchor-check wrapper has been removed while preserving Arrow Bomb reach
   gating behavior.
+- Ranged-ammo weapon classification now calls `AgentCombatAmmoCounter` directly
+  from combat and manager flows; the temporary `BotCombatManager` ammo-weapon
+  wrapper has been removed while preserving bow/crossbow/claw/gun detection.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

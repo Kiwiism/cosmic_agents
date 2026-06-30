@@ -3,6 +3,7 @@ package server.bots;
 import server.agents.capabilities.combat.AgentAttackRoute;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
 
 import server.agents.capabilities.dialogue.AgentEmote;
@@ -2401,7 +2402,7 @@ public class BotManager {
                 boolean attacked = AgentBotCombatCooldownStateRuntime.attackCooldownMs(entry) != prevCooldown;
                 // If a ranged bot just did a degenerate close-range hit, force retreat next tick
                 if (attacked && attackPlan.isCloseRangeRoute()
-                        && BotCombatManager.isRangedAmmoWeapon(grindWeaponType)) {
+                        && AgentCombatAmmoCounter.isRangedAmmoWeapon(grindWeaponType)) {
                     AgentBotDegenerateAttackStateRuntime.markDegenAttackDone(entry);
                 }
                 // Don't short-circuit when a cross-region retreat is in progress — the
@@ -2530,7 +2531,7 @@ public class BotManager {
         }
 
         WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
-        if (!BotCombatManager.isRangedAmmoWeapon(weaponType)) {
+        if (!AgentCombatAmmoCounter.isRangedAmmoWeapon(weaponType)) {
             return null;
         }
         if (isNonDegenerateRangedAttackTarget(entry, bot, botPos, weaponType, preferredTarget)) {
@@ -2643,7 +2644,7 @@ public class BotManager {
                     && BotCombatManager.isTargetInAttackRange(attackPlan, bot, localTarget)) {
                 BotCombatManager.attackMonster(entry, bot, attackPlan);
                 if (allowCombatMovement && attackPlan.isCloseRangeRoute()
-                        && BotCombatManager.isRangedAmmoWeapon(weaponType)) {
+                        && AgentCombatAmmoCounter.isRangedAmmoWeapon(weaponType)) {
                     AgentBotDegenerateAttackStateRuntime.markDegenAttackDone(entry);
                 }
             }
@@ -2667,7 +2668,7 @@ public class BotManager {
             BotCombatManager.attackMonster(entry, bot, attackPlan);
             setLocalAttackMoveWindow(entry, botPos, moveWindowReferencePos);
             if (allowCombatMovement && attackPlan.isCloseRangeRoute()
-                    && BotCombatManager.isRangedAmmoWeapon(weaponType)) {
+                    && AgentCombatAmmoCounter.isRangedAmmoWeapon(weaponType)) {
                 AgentBotDegenerateAttackStateRuntime.markDegenAttackDone(entry);
             }
             return new LocalOpportunityAttackResult(!AgentBotMovementStateRuntime.inAir(entry), targetPos);

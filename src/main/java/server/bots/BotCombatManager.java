@@ -1644,10 +1644,6 @@ public class BotCombatManager {
     }
 
     /** Returns true if the bot's weapon type requires projectile ammo. */
-    static boolean isRangedAmmoWeapon(WeaponType weaponType) {
-        return AgentCombatAmmoCounter.isRangedAmmoWeapon(weaponType);
-    }
-
     static boolean isAirborneRangedAttackBlockedWeapon(WeaponType weaponType) {
         return AgentCombatRangePolicy.isAirborneRangedAttackBlockedWeapon(weaponType);
     }
@@ -1659,7 +1655,7 @@ public class BotCombatManager {
     static void tickAmmoCheck(BotEntry entry, Character bot) {
         WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
         boolean mage = weaponType == WeaponType.WAND || weaponType == WeaponType.STAFF;
-        boolean rangedAmmoWeapon = isRangedAmmoWeapon(weaponType);
+        boolean rangedAmmoWeapon = AgentCombatAmmoCounter.isRangedAmmoWeapon(weaponType);
         int mpPotionCount = 0;
         int ammo = Integer.MAX_VALUE;
         if (mage) {
