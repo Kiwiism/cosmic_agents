@@ -17,6 +17,13 @@ Rules:
 
 Recent reconstruction notes:
 
+- Shop visit and purchase orchestration has moved from
+  `server.bots.BotShopManager` to
+  `server.agents.capabilities.shop.AgentShopService`. Bot manager and utility
+  callbacks now call the Agent-owned service while preserving the same
+  resupply triggers, sell-trash visit routing, NPC approach timing, stuck/timeout
+  behavior, purchase/recharge order, delayed step scheduling, and visible shop
+  dialogue.
 - Gear offer orchestration has moved from `server.bots.BotOfferManager` to
   `server.agents.capabilities.trade.AgentOfferService`. Bot manager,
   inventory, active-mode, build-status, supply, and offer runtime callbacks now
@@ -316,7 +323,7 @@ Recent reconstruction notes:
   through `AgentBotPqRuntime`; the KPQ script classes no longer reach directly
   into the lower-level reply runtime for party-quest-owned dialogue.
 - Sell-trash shop owner-directed replies and delayed shop step callbacks now
-  enter through `AgentBotShopRuntime`; `BotShopManager` no longer reaches
+  enter through `AgentBotShopRuntime`; `AgentShopService` no longer reaches
   directly into the lower-level reply or scheduler runtime for shop-owned
   flows. Map-only resupply/shop chatter remains on the legacy visible-say path
   until exact map-visible delivery has an Agent adapter.
@@ -508,7 +515,7 @@ Recent reconstruction notes:
   random reply pools, follow-owner fallback, and warning flags remain intact.
 - Shop resupply, approach-timeout, shopping, purchase summary, shortfall,
   sell-trash, and abort visible replies now enter through `AgentBotShopRuntime`;
-  `BotShopManager` no longer calls `BotManager.botSay` directly for shop-owned
+  `AgentShopService` no longer calls `BotManager.botSay` directly for shop-owned
   reply delivery, while the same text, random reply pools, and delayed shop
   sequencing remain intact.
 - The unused `BotManager.botVisibleSay` and `BotManager.botReply`
@@ -1109,7 +1116,7 @@ Recent reconstruction notes:
   mob-avoidance checks keep BotEntry as the temporary backing store but no
   longer read or write `navEdge` directly in production.
 - Shop visit lifecycle state now enters through `AgentBotShopStateRuntime`;
-  BotShopManager resupply/sell-trash visit setup, approach delay, sequence
+  AgentShopService resupply/sell-trash visit setup, approach delay, sequence
   activation, stuck fallback, sequence validation, scheduled-step guard, abort,
   and cleanup keep BotEntry as the temporary backing store but no longer read or
   write shop visit fields directly in production. Shop approach graph profile
@@ -1270,12 +1277,12 @@ Recent reconstruction notes:
   progress reporting, exchange, and pass delivery behavior while no longer
   reading script context runtime fields directly.
 - Shop purchase sequencing now uses `AgentBotShopPurchaseSequence` and
-  `AgentBotShopPurchaseAction`; BotShopManager preserves resupply, recharge,
+  `AgentBotShopPurchaseAction`; AgentShopService preserves resupply, recharge,
   potion purchase, trash-sale, shortfall, announcement, and finish behavior
   while the active purchase context is owned by the Agent integration layer
   instead of a private bot runtime record.
 - Shop purchase shortfall reporting now uses `AgentBotShopBuyReport` and
-  `AgentBotShopShortfallReason`; BotShopManager preserves the same quantity,
+  `AgentBotShopShortfallReason`; AgentShopService preserves the same quantity,
   meso, space, and generic-failure reporting while the purchase report value
   object is owned by the Agent integration layer.
 - Potion donor planning now uses `AgentBotPotionDonorPlan`; AgentPotionService
@@ -1430,7 +1437,7 @@ Recent reconstruction notes:
   preserves the same random reply selection, trade chat, and visible map-chat
   delivery through compatibility delegates.
 - Shop resupply and shopping dialogue pools now live in
-  `AgentDialogueCatalog`; BotShopManager preserves the same random reply
+  `AgentDialogueCatalog`; AgentShopService preserves the same random reply
   selection and visible map-chat delivery through compatibility delegates.
 - Gear/loot offer accept/decline replies, busy/no-upgrade fixed replies,
   owner-upgrade request prompts, and current/future loot-offer prompt templates
@@ -1906,19 +1913,19 @@ Recent reconstruction notes:
   callback and random selection timing while delegating the wording and owner
   name formatting to Agent dialogue.
 - Fixed shop visit, sell-trash, purchase-summary, and shortfall result messages
-  now live in `AgentDialogueCatalog`; BotShopManager preserves the same shop
+  now live in `AgentDialogueCatalog`; AgentShopService preserves the same shop
   state, item-name resolution, comma-count formatting, delayed step handling,
   and map/reply delivery behavior through compatibility delegates.
 - Shop approach Manhattan distance and foothold candidate generation now live in
-  `AgentShopApproachPolicy`; BotShopManager preserves the same NPC approach
+  `AgentShopApproachPolicy`; AgentShopService preserves the same NPC approach
   radius, graph reachability filtering, random candidate choice, and shop
   sequence timing through compatibility delegates.
 - Shop fixed-ammo and rechargeable-ammo resupply policy now lives in
-  `AgentShopAmmoPolicy`; BotShopManager preserves the same low-ammo
+  `AgentShopAmmoPolicy`; AgentShopService preserves the same low-ammo
   thresholds, projectile attack ranking, slot-max lookup, shop item selection,
   and purchase/recharge side effects through compatibility delegates.
 - Shop potion selection policy now lives in `AgentShopPotionPolicy`;
-  BotShopManager preserves the same HP/MP recovery band, percent-potion skip,
+  AgentShopService preserves the same HP/MP recovery band, percent-potion skip,
   cheapest in-band preference, too-low/too-high fallback ordering, and purchase
   side effects through compatibility delegates.
 - Fixed inventory trade preflight, recipient-missing, item-missing, cancel,

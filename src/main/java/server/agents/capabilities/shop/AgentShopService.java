@@ -1,4 +1,4 @@
-package server.bots;
+package server.agents.capabilities.shop;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
@@ -30,6 +30,13 @@ import server.agents.integration.AgentBotCombatAmmoCheckRuntime;
 import server.Shop;
 import server.ShopFactory;
 import server.ShopItem;
+import server.bots.BotEntry;
+import server.bots.BotInventoryManager;
+import server.bots.BotManager;
+import server.bots.BotMovementManager;
+import server.bots.BotNavigationGraph;
+import server.bots.BotNavigationGraphProvider;
+import server.bots.BotNavigationManager;
 import server.life.NPC;
 import server.maps.MapObject;
 import server.maps.MapObjectType;
@@ -44,10 +51,10 @@ import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.IntUnaryOperator;
 
-public final class BotShopManager {
+public final class AgentShopService {
 
     // Test seam: ItemInformationProvider's WZ/DB static initializer can't run in unit tests,
-    // so projectile attack / slot-max lookups go through overridable hooks (see BotShopManagerTest).
+    // so projectile attack / slot-max lookups go through overridable hooks (see AgentShopServiceTest).
     @FunctionalInterface
     interface SlotMaxLookup {
         short slotMax(Character bot, int itemId);
@@ -75,13 +82,13 @@ public final class BotShopManager {
     private static final int AMMO_TARGET_THRESHOLD = 10; // full target when buying at shop
     private static final int RECHARGE_MAX_SETS = 10; // cap recharge to the best N own-type stacks
 
-    private BotShopManager() {}
+    private AgentShopService() {}
 
     private record NpcShopMatch(NPC npc, Shop shop, Point npcPos) {}
 
     private record ShopSlotItem(short slot, ShopItem shopItem) {}
 
-    static void onMapChange(BotEntry entry, Character bot) {
+    public static void onMapChange(BotEntry entry, Character bot) {
         clearShopState(entry);
 
         NpcShopMatch match = findBestShop(bot, false);
@@ -142,7 +149,7 @@ public final class BotShopManager {
                 System.currentTimeMillis());
     }
 
-    static boolean tickShopVisit(BotEntry entry, Character bot) {
+    public static boolean tickShopVisit(BotEntry entry, Character bot) {
         if (!AgentBotShopStateRuntime.shopVisitPending(entry)) {
             return false;
         }
@@ -639,7 +646,7 @@ public final class BotShopManager {
                 && findNpcNear(bot, npcPos) != null;
     }
 
-    static void cancelShopVisit(BotEntry entry) {
+    public static void cancelShopVisit(BotEntry entry) {
         clearShopState(entry);
     }
 

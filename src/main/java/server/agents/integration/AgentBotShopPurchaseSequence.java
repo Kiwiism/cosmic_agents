@@ -7,7 +7,7 @@ import java.awt.Point;
 import java.util.List;
 
 /**
- * Agent-owned runtime context for the temporary BotShopManager purchase flow.
+ * Agent-owned runtime context for the temporary AgentShopService purchase flow.
  */
 public record AgentBotShopPurchaseSequence(BotEntry entry,
                                            Character bot,

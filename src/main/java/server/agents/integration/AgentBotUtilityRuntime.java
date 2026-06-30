@@ -5,7 +5,7 @@ import server.Trade;
 import server.agents.capabilities.dialogue.AgentChatUtilityFlow;
 import server.bots.BotEntry;
 import server.agents.capabilities.build.AgentMakerService;
-import server.bots.BotShopManager;
+import server.agents.capabilities.shop.AgentShopService;
 
 /**
  * Agent-owned utility chat callback facade over temporary bot-side trade,
@@ -36,7 +36,7 @@ public final class AgentBotUtilityRuntime {
             @Override
             public void sellTrash() {
                 AgentBotUtilitySchedulerRuntime.afterRandomDelay(500, 700,
-                        () -> BotShopManager.requestSellTrashVisit(entry, entry.bot()));
+                        () -> AgentShopService.requestSellTrashVisit(entry, entry.bot()));
             }
 
             @Override

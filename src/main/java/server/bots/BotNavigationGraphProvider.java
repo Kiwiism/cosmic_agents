@@ -367,7 +367,7 @@ public final class BotNavigationGraphProvider {
      * replacing the bare {@link #peekGraph(MapleMap)} arbitrary-first-entry pick at profile-aware
      * call sites and the open-coded exact-then-closest fallback duplicated across callers.
      */
-    static BotNavigationGraph peekBestGraph(MapleMap map, AgentMovementProfile movementProfile) {
+    public static BotNavigationGraph peekBestGraph(MapleMap map, AgentMovementProfile movementProfile) {
         BotNavigationGraph exact = peekGraph(map, movementProfile);
         return exact != null ? exact : peekClosestGraph(map, movementProfile);
     }

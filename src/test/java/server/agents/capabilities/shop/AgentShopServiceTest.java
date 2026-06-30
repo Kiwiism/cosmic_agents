@@ -1,4 +1,4 @@
-package server.bots;
+package server.agents.capabilities.shop;
 
 import server.agents.capabilities.supplies.AgentPotionService;
 
@@ -13,8 +13,11 @@ import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotShopRuntime;
+import server.agents.integration.AgentBotShopStateRuntime;
 import server.Shop;
 import server.ShopFactory;
+import server.bots.BotEntry;
+import server.bots.BotInventoryManager;
 import server.life.NPC;
 import server.maps.MapleMap;
 import testutil.Items;
@@ -32,7 +35,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-class BotShopManagerTest {
+class AgentShopServiceTest {
     @Test
     void sellTrashNoItemsReplyUsesAgentReplyAdapter() {
         Character bot = mock(Character.class);
@@ -45,7 +48,7 @@ class BotShopManagerTest {
             inventories.when(() -> BotInventoryManager.collectSellTrashEquips(entry, bot))
                     .thenReturn(List.of());
 
-            BotShopManager.requestSellTrashVisit(entry, bot);
+            AgentShopService.requestSellTrashVisit(entry, bot);
 
             replies.verify(() -> AgentBotShopRuntime.replyNow(entry, "no trash equips worth selling"));
         }
@@ -73,10 +76,10 @@ class BotShopManagerTest {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.CLAW);
             potions.when(() -> AgentPotionService.countPotions(bot)).thenReturn(new int[]{9999, 9999});
 
-            BotShopManager.onMapChange(entry, bot);
+            AgentShopService.onMapChange(entry, bot);
         }
 
-        assertFalse(entry.shopVisitPending);
+        assertFalse(AgentBotShopStateRuntime.shopVisitPending(entry));
     }
 
     @Test
@@ -101,10 +104,10 @@ class BotShopManagerTest {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.CLAW);
             potions.when(() -> AgentPotionService.countPotions(bot)).thenReturn(new int[]{9999, 9999});
 
-            BotShopManager.onMapChange(entry, bot);
+            AgentShopService.onMapChange(entry, bot);
         }
 
-        assertTrue(entry.shopVisitPending);
+        assertTrue(AgentBotShopStateRuntime.shopVisitPending(entry));
     }
 
     @Test
@@ -117,7 +120,7 @@ class BotShopManagerTest {
 
         try (Seam seam = withStarStats()) {
             assertTrue(entryWouldTriggerShopVisit(bot, WeaponType.CLAW));
-            assertTrue(BotShopManager.shouldRechargeWhileShopping(bot, WeaponType.CLAW));
+            assertTrue(AgentShopService.shouldRechargeWhileShopping(bot, WeaponType.CLAW));
         }
     }
 
@@ -128,7 +131,7 @@ class BotShopManagerTest {
 
         try (Seam seam = withStarStats()) {
             assertFalse(entryWouldTriggerShopVisit(bot, WeaponType.CLAW));
-            assertFalse(BotShopManager.shouldRechargeWhileShopping(bot, WeaponType.CLAW));
+            assertFalse(AgentShopService.shouldRechargeWhileShopping(bot, WeaponType.CLAW));
         }
     }
 
@@ -137,7 +140,7 @@ class BotShopManagerTest {
         Character bot = bowBotWithArrows(4500);
 
         assertFalse(entryWouldTriggerShopVisit(bot, WeaponType.BOW));
-        assertTrue(BotShopManager.shouldBuyFixedAmmoWhileShopping(bot, WeaponType.BOW));
+        assertTrue(AgentShopService.shouldBuyFixedAmmoWhileShopping(bot, WeaponType.BOW));
     }
 
     @Test
@@ -168,12 +171,12 @@ class BotShopManagerTest {
             inventories.when(() -> BotInventoryManager.collectSellTrashEquips(entry, bot))
                     .thenReturn(List.of(mock(Item.class)));
 
-            BotShopManager.requestSellTrashVisit(entry, bot);
+            AgentShopService.requestSellTrashVisit(entry, bot);
         }
 
-        assertTrue(entry.shopVisitPending);
-        assertTrue(entry.shopSellTrashPending);
-        assertEquals(new Point(20, 0), entry.shopNpcPos);
+        assertTrue(AgentBotShopStateRuntime.shopVisitPending(entry));
+        assertTrue(AgentBotShopStateRuntime.shopSellTrashPending(entry));
+        assertEquals(new Point(20, 0), AgentBotShopStateRuntime.shopNpcPosition(entry));
     }
 
     private static Character clawBotWithStars(int... quantities) {
@@ -201,18 +204,18 @@ class BotShopManagerTest {
     // Stub the ItemInformationProvider-backed seam: star 2070018 is the strongest, all stacks
     // are well under slot-max so any partial stack counts as refillable. Restored on close.
     private static Seam withStarStats() {
-        IntUnaryOperator prevWatk = BotShopManager.projectileWatk;
-        BotShopManager.SlotMaxLookup prevSlot = BotShopManager.ammoSlotMax;
-        BotShopManager.projectileWatk = id -> id == 2070018 ? 50 : 10;
-        BotShopManager.ammoSlotMax = (bot, id) -> (short) 10000;
+        IntUnaryOperator prevWatk = AgentShopService.projectileWatk;
+        AgentShopService.SlotMaxLookup prevSlot = AgentShopService.ammoSlotMax;
+        AgentShopService.projectileWatk = id -> id == 2070018 ? 50 : 10;
+        AgentShopService.ammoSlotMax = (bot, id) -> (short) 10000;
         return new Seam(prevWatk, prevSlot);
     }
 
-    private record Seam(IntUnaryOperator watk, BotShopManager.SlotMaxLookup slot) implements AutoCloseable {
+    private record Seam(IntUnaryOperator watk, AgentShopService.SlotMaxLookup slot) implements AutoCloseable {
         @Override
         public void close() {
-            BotShopManager.projectileWatk = watk;
-            BotShopManager.ammoSlotMax = slot;
+            AgentShopService.projectileWatk = watk;
+            AgentShopService.ammoSlotMax = slot;
         }
     }
 
@@ -247,10 +250,10 @@ class BotShopManagerTest {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(weaponType);
             potions.when(() -> AgentPotionService.countPotions(bot)).thenReturn(new int[]{9999, 9999});
 
-            BotShopManager.onMapChange(entry, bot);
+            AgentShopService.onMapChange(entry, bot);
         }
 
-        return entry.shopVisitPending;
+        return AgentBotShopStateRuntime.shopVisitPending(entry);
     }
 
     private static NPC shopNpc(Point position) {

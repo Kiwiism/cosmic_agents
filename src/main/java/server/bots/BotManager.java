@@ -19,6 +19,7 @@ import server.agents.runtime.AgentPerformanceMonitor;
 
 import server.agents.capabilities.looting.AgentLootEligibility;
 import server.agents.capabilities.social.AgentScrollReactionService;
+import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.trade.AgentOfferService;
 
@@ -359,7 +360,7 @@ public class BotManager {
     }
 
     /** Uniform random delay in [lo, hi) ms — use wherever a fixed delay would feel robotic. */
-    static long randMs(int lo, int hi) {
+    public static long randMs(int lo, int hi) {
         return lo + ThreadLocalRandom.current().nextInt(hi - lo);
     }
 
@@ -2189,7 +2190,7 @@ public class BotManager {
                 if (AgentPartyQuestHooks.requiresGrind(entry, bot)) { issueGrind(entry); }
                 else if (AgentPartyQuestHooks.requiresFollow(entry, bot)) { issueFollowOwner(entry); }
                 else { AgentBotPqRuntime.resetKpqStage5Claimed(entry); } // left KPQ — reset for next run
-                BotShopManager.onMapChange(entry, bot);
+                AgentShopService.onMapChange(entry, bot);
                 AgentBotManagerStatusRuntime.checkManagerStatus(entry, bot);
             } else {
                 long tMapChange = System.nanoTime();
@@ -2204,7 +2205,7 @@ public class BotManager {
                     if (AgentPartyQuestHooks.requiresGrind(entry, bot)) { issueGrind(entry); }
                     else if (AgentPartyQuestHooks.requiresFollow(entry, bot)) { issueFollowOwner(entry); }
                     else { AgentBotPqRuntime.resetKpqStage5Claimed(entry); } // left KPQ — reset for next run
-                    BotShopManager.onMapChange(entry, bot);
+                    AgentShopService.onMapChange(entry, bot);
                     AgentBotManagerStatusRuntime.checkManagerStatus(entry, bot);
                 } finally {
                     AgentPerformanceMonitor.record("tick-map-change", System.nanoTime() - tMapChange);
@@ -2219,10 +2220,10 @@ public class BotManager {
         if (AgentBotShopStateRuntime.shopVisitPending(entry)) {
             boolean consumed;
             if (!perf) {
-                consumed = BotShopManager.tickShopVisit(entry, bot);
+                consumed = AgentShopService.tickShopVisit(entry, bot);
             } else {
                 long tShop = System.nanoTime();
-                consumed = BotShopManager.tickShopVisit(entry, bot);
+                consumed = AgentShopService.tickShopVisit(entry, bot);
                 AgentPerformanceMonitor.record("tick-shop-visit", System.nanoTime() - tShop);
             }
             targetPos = AgentBotShopStateRuntime.activeShopTargetPosition(entry);
@@ -2883,7 +2884,7 @@ public class BotManager {
 
     private void prepareOwnerInactiveIdle(BotEntry entry, int ownerCharId) {
         clearScriptTasks(entry);
-        BotShopManager.cancelShopVisit(entry);
+        AgentShopService.cancelShopVisit(entry);
         clearMode(entry);
         AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
         AgentBotGrindTargetStateRuntime.clear(entry);
@@ -2999,7 +3000,7 @@ public class BotManager {
             return;
         }
         clearScriptTasks(entry);
-        BotShopManager.cancelShopVisit(entry);
+        AgentShopService.cancelShopVisit(entry);
         startMoveTo(entry, dest, precise);
     }
 
@@ -3013,7 +3014,7 @@ public class BotManager {
             return;
         }
         clearScriptTasks(entry);
-        BotShopManager.cancelShopVisit(entry);
+        AgentShopService.cancelShopVisit(entry);
         startFarmHere(entry, dest);
     }
 
@@ -3039,7 +3040,7 @@ public class BotManager {
             return;
         }
         clearScriptTasks(entry);
-        BotShopManager.cancelShopVisit(entry);
+        AgentShopService.cancelShopVisit(entry);
         startPatrol(entry, regionId);
     }
 
@@ -3066,7 +3067,7 @@ public class BotManager {
             return;
         }
         clearScriptTasks(entry);
-        BotShopManager.cancelShopVisit(entry);
+        AgentShopService.cancelShopVisit(entry);
         startFollow(entry, target);
     }
 
@@ -3092,7 +3093,7 @@ public class BotManager {
             return;
         }
         clearScriptTasks(entry);
-        BotShopManager.cancelShopVisit(entry);
+        AgentShopService.cancelShopVisit(entry);
         startGrind(entry);
     }
 
@@ -3132,7 +3133,7 @@ public class BotManager {
             return;
         }
         clearScriptTasks(entry);
-        BotShopManager.cancelShopVisit(entry);
+        AgentShopService.cancelShopVisit(entry);
         startStop(entry);
     }
 
@@ -3680,14 +3681,14 @@ public class BotManager {
             BotPhysicsEngine.teleportTo(entry, bot, ground != null ? ground : cur);
             BotMovementManager.resetEntryStateAfterTeleport(entry);
             BotMovementManager.broadcastMovement(entry);
-            BotShopManager.onMapChange(entry, bot);
+            AgentShopService.onMapChange(entry, bot);
             AgentBotManagerStatusRuntime.checkManagerStatus(entry, bot);
             return;
         }
 
         // Shop visit: navigate to approach point before resuming normal flow.
         if (AgentBotShopStateRuntime.shopVisitPending(entry)) {
-            boolean consumed = BotShopManager.tickShopVisit(entry, bot);
+            boolean consumed = AgentShopService.tickShopVisit(entry, bot);
             targetPos = AgentBotShopStateRuntime.activeShopTargetPosition(entry);
             if (!consumed && AgentBotShopStateRuntime.shopApproachDelayMs(entry) > 0) {
                 return;

@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.shop.AgentShopService;
+
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -22,7 +24,7 @@ class AgentBotUtilityRuntimeTest {
 
         try (MockedStatic<AgentBotUtilitySchedulerRuntime> scheduler =
                      mockStatic(AgentBotUtilitySchedulerRuntime.class);
-             MockedStatic<BotShopManager> shops = mockStatic(BotShopManager.class)) {
+             MockedStatic<AgentShopService> shops = mockStatic(AgentShopService.class)) {
             scheduler.when(() -> AgentBotUtilitySchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
@@ -31,7 +33,7 @@ class AgentBotUtilityRuntimeTest {
 
             AgentBotUtilityRuntime.utilityCallbacks(entry).sellTrash();
 
-            shops.verify(() -> BotShopManager.requestSellTrashVisit(entry, bot));
+            shops.verify(() -> AgentShopService.requestSellTrashVisit(entry, bot));
         }
     }
 

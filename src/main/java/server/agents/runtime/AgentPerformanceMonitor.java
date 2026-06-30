@@ -97,7 +97,7 @@ public final class AgentPerformanceMonitor {
         // Dispatch buckets
         notes.put("tick-idle", "tickIdleEntry physics-only idle dispatch");
         notes.put("tick-trade-physics", "tickTradePhysicsOnly (trade-window safe physics)");
-        notes.put("tick-shop-visit", "BotShopManager.tickShopVisit");
+        notes.put("tick-shop-visit", "AgentShopService.tickShopVisit");
         notes.put("tick-anchored-farm", "tickAnchoredFarm dispatch");
         notes.put("tick-standalone-move", "tickStandaloneMoveTarget (owner-offline move)");
         notes.put("tick-grind-dispatch", "grind mode dispatch in tickCore");
