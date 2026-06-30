@@ -933,7 +933,7 @@ public class BotCombatManager {
         // reach hitbox and the broadcast packet must share the same swing (a close skill without
         // its own lt/rb gates the hit on this action's afterimage box).
         String action = AgentAttackExecutionProvider.resolveSkillAttackAction(bot, skill, skillLevel, weaponType);
-        if (isStrikePointAnchoredAoeSkill(skillId)) {
+        if (AgentCombatSkillHitboxPolicy.isStrikePointAnchoredAoeSkill(skillId)) {
             primaryTarget = resolveStrikePointPrimaryByBasicWeapon(bot, primaryTarget, route);
         }
         Rectangle hitBox = calculateSkillHitBox(effect, bot, primaryTarget, route, skillId, action);
@@ -941,7 +941,7 @@ public class BotCombatManager {
             return null;
         }
 
-        boolean strikePointAnchored = isStrikePointAnchoredAoeSkill(skillId);
+        boolean strikePointAnchored = AgentCombatSkillHitboxPolicy.isStrikePointAnchoredAoeSkill(skillId);
         Monster preSelectionPrimaryTarget = primaryTarget;
         AgentSkillAttackPlanner.SkillPrimaryTargetSelection targetSelection =
                 AgentSkillAttackPlanner.resolvePrimaryTargetAfterHitbox(
@@ -1002,10 +1002,6 @@ public class BotCombatManager {
 
     private static Rectangle calculateSkillHitBox(StatEffect effect, Character bot, Monster primaryTarget, AgentAttackRoute route, int skillId, String action) {
         return AgentCombatSkillHitboxPolicy.calculateSkillHitBox(effect, bot, primaryTarget, route, skillId, action);
-    }
-
-    static boolean isStrikePointAnchoredAoeSkill(int skillId) {
-        return AgentCombatSkillHitboxPolicy.isStrikePointAnchoredAoeSkill(skillId);
     }
 
     static Rectangle fallbackCloseRangeSkillHitBox(StatEffect effect, Character bot, String action, boolean facingLeft) {

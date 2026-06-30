@@ -1528,6 +1528,10 @@ Recent reconstruction notes:
 - Fall-damage application now calls `AgentFallDamageCalculator` directly; the
   temporary `BotCombatManager` fall-damage formula wrapper has been removed
   while preserving the captured legacy fall-distance damage curve.
+- Skill-attack strike-point anchoring checks now call
+  `AgentCombatSkillHitboxPolicy` directly; the temporary `BotCombatManager`
+  anchor-check wrapper has been removed while preserving Arrow Bomb reach
+  gating behavior.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
