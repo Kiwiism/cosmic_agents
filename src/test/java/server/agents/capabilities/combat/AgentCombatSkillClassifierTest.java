@@ -121,6 +121,18 @@ class AgentCombatSkillClassifierTest {
     }
 
     @Test
+    void scoresAoeSkillWithLegacyDamageHitAndMobClamp() {
+        StatEffect effect = mock(StatEffect.class);
+        when(effect.getDamagePercent()).thenReturn(120);
+
+        assertEquals(720, AgentCombatSkillClassifier.aoeSkillScore(effect, 2, 3));
+        assertEquals(120, AgentCombatSkillClassifier.aoeSkillScore(effect, 0, 0));
+
+        when(effect.getDamagePercent()).thenReturn(-10);
+        assertEquals(0, AgentCombatSkillClassifier.aoeSkillScore(effect, 5, 6));
+    }
+
+    @Test
     void shouldPreferCachedAttackSkillListWhenPresent() {
         List<Integer> cached = List.of(1001004, 1001005);
 

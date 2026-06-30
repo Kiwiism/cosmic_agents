@@ -342,7 +342,7 @@ public class BotCombatManager {
             if (isActiveAttackSkill(skill, fx)) {
                 AgentBotCombatSkillCacheStateRuntime.addAttackSkillId(entry, skill.getId());
                 if (mobs >= 2) {
-                    long score = (long) Math.max(0, fx.getDamagePercent()) * Math.max(1, atk) * Math.max(1, mobs);
+                    long score = AgentCombatSkillClassifier.aoeSkillScore(fx, atk, mobs);
                     if (score > bestAoeScore) {
                         bestAoeScore = score;
                         AgentBotCombatSkillCacheStateRuntime.setAoeSkill(entry, skill.getId(), mobs);

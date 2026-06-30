@@ -169,6 +169,12 @@ public final class AgentCombatSkillClassifier {
         return currentBestSkillId == 0 || skill.getId() < currentBestSkillId;
     }
 
+    public static long aoeSkillScore(StatEffect effect, int attackCount, int mobCount) {
+        return (long) Math.max(0, effect.getDamagePercent())
+                * Math.max(1, attackCount)
+                * Math.max(1, mobCount);
+    }
+
     public static int singleTargetSkillPriority(Character bot, Skill skill) {
         if (skill == null) {
             return Integer.MIN_VALUE;

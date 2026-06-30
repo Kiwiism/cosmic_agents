@@ -1467,6 +1467,9 @@ Recent reconstruction notes:
   low-ammo warning, projectile no-ammo stop, and already-warned no-op outcomes.
   BotCombatManager still counts concrete inventory items and performs follow,
   state, and dialogue side effects.
+- AoE skill-cache score calculation now lives in `AgentCombatSkillClassifier`,
+  preserving the legacy `max(0, damage) * max(1, hits) * max(1, mobs)` ranking
+  formula while BotCombatManager still mutates the temporary skill-cache state.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
