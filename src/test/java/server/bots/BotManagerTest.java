@@ -13,6 +13,7 @@ import server.agents.capabilities.combat.AgentAttackRoute;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentCombatConfig;
+import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 
 import server.agents.integration.AgentBotCombatAttackRuntime;
 import server.agents.integration.AgentBotCombatPlanRuntime;
@@ -1372,7 +1373,7 @@ class BotManagerTest {
         Item item4000000 = new Item(4000000, (short) 1, (short) 10);
         Item item4000001 = new Item(4000001, (short) 2, (short) 10);
 
-        List<Item> ordered = BotInventoryManager.prioritizeEtcTradeItems(
+        List<Item> ordered = AgentInventoryTradePolicy.prioritizeEtcTradeItems(
                 List.of(item4000002, item4000000, item4000001), recipient);
 
         assertEquals(List.of(item4000001, item4000000, item4000002), ordered);
@@ -1406,7 +1407,7 @@ class BotManagerTest {
         ownerUse.addItem(Items.itemWithQuantity(2040000, 1));
         when(owner.getInventory(InventoryType.USE)).thenReturn(ownerUse);
 
-        List<Item> ordered = BotInventoryManager.prioritizeTradeUseItems(
+        List<Item> ordered = AgentInventoryTradePolicy.prioritizeTradeUseItems(
                 List.of(
                         Items.itemWithQuantity(2030001, 1),
                         Items.itemWithQuantity(2030000, 1)),
@@ -1428,7 +1429,7 @@ class BotManagerTest {
         ownerUse.addItem(Items.itemWithQuantity(2040000, 1)); // scroll owner already has
         when(owner.getInventory(InventoryType.USE)).thenReturn(ownerUse);
 
-        List<Item> ordered = BotInventoryManager.prioritizeTradeUseItems(
+        List<Item> ordered = AgentInventoryTradePolicy.prioritizeTradeUseItems(
                 List.of(Items.itemWithQuantity(2030000, 1)),
                 List.of(
                         Items.itemWithQuantity(2040001, 1),
@@ -1449,7 +1450,7 @@ class BotManagerTest {
         recipientUse.addItem(Items.itemWithQuantity(2040001, 1));
         when(recipient.getInventory(InventoryType.USE)).thenReturn(recipientUse);
 
-        List<Item> ordered = BotInventoryManager.prioritizeScrollTradeItems(
+        List<Item> ordered = AgentInventoryTradePolicy.prioritizeScrollTradeItems(
                 List.of(
                         Items.itemWithQuantity(2040002, 1),
                         Items.itemWithQuantity(2040000, 1),

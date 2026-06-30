@@ -885,27 +885,6 @@ public class BotInventoryManager {
         return new PreparedTradeItems(collectItems(category, entry, bot), null);
     }
 
-    static List<Item> prioritizeEtcTradeItems(List<Item> items, Character recipient) {
-        return AgentInventoryTradePolicy.prioritizeEtcTradeItems(items, recipient);
-    }
-
-    private static List<Item> prioritizeRecipientDuplicateItemIds(List<Item> items,
-                                                                  InventoryType type,
-                                                                  Character recipient) {
-        return AgentInventoryTradePolicy.prioritizeRecipientDuplicateItemIds(items, type, recipient);
-    }
-
-    static List<Item> prioritizeTradeUseItems(List<Item> uncategorized,
-                                              List<Item> categorizedOther,
-                                              List<Item> potionAmmo,
-                                              Character recipient) {
-        return AgentInventoryTradePolicy.prioritizeTradeUseItems(uncategorized, categorizedOther, potionAmmo, recipient);
-    }
-
-    static List<Item> prioritizeScrollTradeItems(List<Item> items, Character recipient) {
-        return AgentInventoryTradePolicy.prioritizeScrollTradeItems(items, recipient);
-    }
-
     private static List<Item> collectNamedItems(String fragment, Character bot) {
         return AgentInventoryItemPolicy.collectNamedItems(bot, fragment,
                 BotInventoryManager::normalizeItemQuery,
@@ -1026,7 +1005,7 @@ public class BotInventoryManager {
             case "scrolls" -> {
                 collectFromBag(bot, result, InventoryType.USE,
                         item -> ItemConstants.isEquipScroll(item.getItemId()));
-                result = prioritizeScrollTradeItems(result, AgentBotRuntimeIdentityRuntime.owner(entry));
+                result = AgentInventoryTradePolicy.prioritizeScrollTradeItems(result, AgentBotRuntimeIdentityRuntime.owner(entry));
             }
             case "pots"    -> collectFromBag(bot, result, InventoryType.USE,
                     item -> isRecoveryPotion(item.getItemId()));
@@ -1049,7 +1028,7 @@ public class BotInventoryManager {
             case "trash" -> result.addAll(collectTrashEquips(entry, bot));
             case "etc" -> {
                 collectFromBag(bot, result, InventoryType.ETC, item -> true);
-                result = prioritizeEtcTradeItems(result, AgentBotRuntimeIdentityRuntime.owner(entry));
+                result = AgentInventoryTradePolicy.prioritizeEtcTradeItems(result, AgentBotRuntimeIdentityRuntime.owner(entry));
             }
             default -> {
                 if (isReservedEquipsCategory(category)) {
