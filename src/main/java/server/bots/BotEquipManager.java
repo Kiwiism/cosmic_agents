@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.ItemInformationProvider;
 import server.agents.capabilities.combat.data.AgentAttackDataProvider;
+import server.agents.capabilities.equipment.AgentEquipRecommendation;
 import server.agents.capabilities.equipment.AgentMapDamageProfile;
 import server.agents.capabilities.equipment.AgentWeaponCompatibilityPolicy;
 import server.agents.integration.AgentBotEquipmentRuntime;
@@ -47,30 +48,6 @@ public class BotEquipManager {
     private static final int MAX_PARETO_STATES = 2000;
     private static final long AUTOEQUIP_THROTTLE_MS = 30_000L;
     private static final Map<Integer, Long> LAST_AUTOEQUIP_MS = new java.util.concurrent.ConcurrentHashMap<>();
-
-    public static final class EquipRecommendation {
-        private final short targetSlot;
-        private final Equip current;
-        private final Equip candidate;
-
-        private EquipRecommendation(short targetSlot, Equip current, Equip candidate) {
-            this.targetSlot = targetSlot;
-            this.current = current;
-            this.candidate = candidate;
-        }
-
-        short targetSlot() {
-            return targetSlot;
-        }
-
-        Equip current() {
-            return current;
-        }
-
-        public Equip candidate() {
-            return candidate;
-        }
-    }
 
     record EquipScore(int damage, int statSum) {}
     record WeaponScoreBreakdown(int rawMax, int preCycleDamage, int cycleMs, int normalizedDamage) {}
@@ -1221,23 +1198,23 @@ public class BotEquipManager {
         return bySlot;
     }
 
-    public static List<EquipRecommendation> findRecommendedEquips(Character receiver, Character holder) {
+    public static List<AgentEquipRecommendation> findRecommendedEquips(Character receiver, Character holder) {
         return findRecommendedEquips(receiver, holder, RecommendationScope.IMMEDIATE);
     }
 
-    static List<EquipRecommendation> findFutureRecommendedEquips(Character receiver, Character holder) {
+    static List<AgentEquipRecommendation> findFutureRecommendedEquips(Character receiver, Character holder) {
         return findRecommendedEquips(receiver, holder, RecommendationScope.FUTURE);
     }
 
-    public static List<EquipRecommendation> findRecommendedEquipsFromItems(Character receiver, Collection<Equip> holderItems) {
+    public static List<AgentEquipRecommendation> findRecommendedEquipsFromItems(Character receiver, Collection<Equip> holderItems) {
         return buildRecommendations(receiver, holderItems, RecommendationScope.IMMEDIATE);
     }
 
-    static List<EquipRecommendation> findFutureRecommendedEquipsFromItems(Character receiver, Collection<Equip> holderItems) {
+    static List<AgentEquipRecommendation> findFutureRecommendedEquipsFromItems(Character receiver, Collection<Equip> holderItems) {
         return buildRecommendations(receiver, holderItems, RecommendationScope.FUTURE);
     }
 
-    private static List<EquipRecommendation> findRecommendedEquips(Character receiver, Character holder,
+    private static List<AgentEquipRecommendation> findRecommendedEquips(Character receiver, Character holder,
                                                                    RecommendationScope scope) {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         Inventory holderEquipInv = holder.getInventory(InventoryType.EQUIP);
@@ -1265,19 +1242,19 @@ public class BotEquipManager {
         return buildRecommendations(receiver, holderItems, scope);
     }
 
-    private static List<EquipRecommendation> buildRecommendations(Character receiver, Collection<Equip> holderItems,
+    private static List<AgentEquipRecommendation> buildRecommendations(Character receiver, Collection<Equip> holderItems,
                                                                   RecommendationScope scope) {
         Inventory receiverEquippedInv = receiver.getInventory(InventoryType.EQUIPPED);
-        List<EquipRecommendation> recommendations = new ArrayList<>();
+        List<AgentEquipRecommendation> recommendations = new ArrayList<>();
         OptimizerResult opt = runOptimizerWithExtras(receiver, holderItems, scope);
         if (opt.weapon() != null && holderItems.contains(opt.weapon())) {
             Equip cur = (Equip) receiverEquippedInv.getItem((short) -11);
-            recommendations.add(new EquipRecommendation((short) -11, cur, opt.weapon()));
+            recommendations.add(new AgentEquipRecommendation((short) -11, cur, opt.weapon()));
         }
         for (Map.Entry<Short, Equip> p : opt.picks().entrySet()) {
             if (holderItems.contains(p.getValue())) {
                 Equip cur = (Equip) receiverEquippedInv.getItem(p.getKey());
-                recommendations.add(new EquipRecommendation(p.getKey(), cur, p.getValue()));
+                recommendations.add(new AgentEquipRecommendation(p.getKey(), cur, p.getValue()));
             }
         }
         return recommendations;
@@ -1285,19 +1262,19 @@ public class BotEquipManager {
 
     static List<Item> collectRecommendedItems(Character receiver, Character holder) {
         return new ArrayList<>(findRecommendedEquips(receiver, holder).stream()
-                .map(EquipRecommendation::candidate)
+                .map(AgentEquipRecommendation::candidate)
                 .toList());
     }
 
-    public static EquipRecommendation findRecommendationForItem(Character receiver, Character holder, Item holderItem) {
+    public static AgentEquipRecommendation findRecommendationForItem(Character receiver, Character holder, Item holderItem) {
         return findRecommendationForItem(receiver, holder, holderItem, RecommendationScope.IMMEDIATE);
     }
 
-    static EquipRecommendation findFutureRecommendationForItem(Character receiver, Character holder, Item holderItem) {
+    static AgentEquipRecommendation findFutureRecommendationForItem(Character receiver, Character holder, Item holderItem) {
         return findRecommendationForItem(receiver, holder, holderItem, RecommendationScope.FUTURE);
     }
 
-    private static EquipRecommendation findRecommendationForItem(Character receiver, Character holder, Item holderItem,
+    private static AgentEquipRecommendation findRecommendationForItem(Character receiver, Character holder, Item holderItem,
                                                                 RecommendationScope scope) {
         if (!(holderItem instanceof Equip candidate)) return null;
 
@@ -1333,12 +1310,12 @@ public class BotEquipManager {
         OptimizerResult opt = runOptimizerWithExtras(receiver, List.of(candidate), scope);
         if (opt.weapon() == candidate) {
             Equip cur = (Equip) receiverEquippedInv.getItem((short) -11);
-            return new EquipRecommendation((short) -11, cur, candidate);
+            return new AgentEquipRecommendation((short) -11, cur, candidate);
         }
         for (Map.Entry<Short, Equip> p : opt.picks().entrySet()) {
             if (p.getValue() == candidate) {
                 Equip cur = (Equip) receiverEquippedInv.getItem(p.getKey());
-                return new EquipRecommendation(p.getKey(), cur, candidate);
+                return new AgentEquipRecommendation(p.getKey(), cur, candidate);
             }
         }
         return null;
@@ -1652,7 +1629,7 @@ public class BotEquipManager {
     }
 
     static String recommendationSummary(Character receiver, Character holder, int maxItems) {
-        List<EquipRecommendation> recommendations = findRecommendedEquips(receiver, holder);
+        List<AgentEquipRecommendation> recommendations = findRecommendedEquips(receiver, holder);
         if (recommendations.isEmpty()) {
             return null;
         }
@@ -1661,7 +1638,7 @@ public class BotEquipManager {
         StringBuilder summary = new StringBuilder("better gear for you: ");
         int count = Math.min(maxItems, recommendations.size());
         for (int i = 0; i < count; i++) {
-            EquipRecommendation recommendation = recommendations.get(i);
+            AgentEquipRecommendation recommendation = recommendations.get(i);
             if (i > 0) {
                 summary.append(", ");
             }

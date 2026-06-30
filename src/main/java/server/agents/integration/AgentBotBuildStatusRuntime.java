@@ -1,5 +1,7 @@
 package server.agents.integration;
 
+import server.agents.capabilities.equipment.AgentEquipRecommendation;
+
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.capabilities.build.AgentBuildService;
@@ -86,7 +88,7 @@ public final class AgentBotBuildStatusRuntime {
             @Override
             public void offerSpawnUpgradeIfAvailable() {
                 Character owner = entry.owner();
-                List<BotEquipManager.EquipRecommendation> recs =
+                List<AgentEquipRecommendation> recs =
                         BotEquipManager.findRecommendedEquips(bot, owner);
                 if (!recs.isEmpty()) {
                     AgentOfferService.notifyOwnerGainedEquip(entry, bot, recs.get(0).candidate());

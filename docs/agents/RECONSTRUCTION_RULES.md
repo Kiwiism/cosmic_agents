@@ -1271,6 +1271,11 @@ Recent reconstruction notes:
   First-job skill-family detection, warrior weapon-family checks, mage grouping,
   and self-reserve weapon track labels are unchanged; `BotEquipManager` keeps
   compatibility wrapper methods while the larger optimizer is reconstructed.
+- Equipment recommendation result data now uses
+  `server.agents.capabilities.equipment.AgentEquipRecommendation`. Optimizer
+  recommendation ordering, current/candidate/target-slot values, and trade/build
+  consumers are unchanged while recommendation generation remains temporarily in
+  `BotEquipManager`.
 - Physics position, horizontal-speed, and ground-travel carry state now enter
   through `AgentBotMovementPhysicsStateRuntime`; BotPhysicsEngine preserves
   landing, grounded travel, swim, airborne collision, climb-position, and reset

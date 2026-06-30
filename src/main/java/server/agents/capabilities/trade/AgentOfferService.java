@@ -1,5 +1,7 @@
 package server.agents.capabilities.trade;
 
+import server.agents.capabilities.equipment.AgentEquipRecommendation;
+
 import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 
@@ -87,7 +89,7 @@ public final class AgentOfferService {
             AgentBotOfferRuntime.replyNow(entry, AgentDialogueCatalog.offerBusyReply());
             return;
         }
-        List<BotEquipManager.EquipRecommendation> recs = BotEquipManager.findRecommendedEquips(bot, owner);
+        List<AgentEquipRecommendation> recs = BotEquipManager.findRecommendedEquips(bot, owner);
         if (recs.isEmpty()) {
             AgentBotOfferRuntime.replyNow(entry, AgentDialogueCatalog.offerNoUpgradeNeededReply());
             return;
@@ -446,7 +448,7 @@ public final class AgentOfferService {
     private static GearOfferChoice findBestGearOffer(BotEntry entry, Character recipient, Character donor) {
         List<Equip> offerable = collectOfferableEquips(donor);
         offerable.removeIf(equip -> !isWeaponOfferCompatible(recipient, equip));
-        List<BotEquipManager.EquipRecommendation> current =
+        List<AgentEquipRecommendation> current =
                 BotEquipManager.findRecommendedEquipsFromItems(recipient, offerable);
         if (!current.isEmpty()) {
             return new GearOfferChoice(current.get(0).candidate(), GearOfferNeed.CURRENT);
