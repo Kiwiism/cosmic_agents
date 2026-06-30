@@ -1298,11 +1298,11 @@ class BotCombatManagerTest {
                 List.of(mockMob(new Point(120, 200), 9300201)), AgentAttackRoute.CLOSE,
                 4, 1, 1, 0, 4, 300, 600, null);
 
-        assertFalse(BotCombatManager.canUseAttackPlanNow(entry, WeaponType.BOW, rangedBowPlan));
-        assertFalse(BotCombatManager.canUseAttackPlanNow(entry, WeaponType.CROSSBOW, rangedBowPlan));
-        assertFalse(BotCombatManager.canUseAttackPlanNow(entry, WeaponType.GUN, rangedBowPlan));
-        assertTrue(BotCombatManager.canUseAttackPlanNow(entry, WeaponType.CLAW, rangedBowPlan));
-        assertTrue(BotCombatManager.canUseAttackPlanNow(entry, WeaponType.BOW, closePlan));
+        assertFalse(AgentCombatRangePolicy.canUseAttackPlanNow(false, WeaponType.BOW, rangedBowPlan.route));
+        assertFalse(AgentCombatRangePolicy.canUseAttackPlanNow(false, WeaponType.CROSSBOW, rangedBowPlan.route));
+        assertFalse(AgentCombatRangePolicy.canUseAttackPlanNow(false, WeaponType.GUN, rangedBowPlan.route));
+        assertTrue(AgentCombatRangePolicy.canUseAttackPlanNow(false, WeaponType.CLAW, rangedBowPlan.route));
+        assertTrue(AgentCombatRangePolicy.canUseAttackPlanNow(false, WeaponType.BOW, closePlan.route));
     }
 
     @Test

@@ -1621,6 +1621,10 @@ Recent reconstruction notes:
   `AgentCombatScoringPolicy` directly from `BotManager` and focused tests; the
   temporary `BotCombatManager` AoE scoring wrappers have been removed while
   preserving the same cached AoE skill id and mob-count inputs.
+- Attack-plan airborne/grounded readiness now calls `AgentCombatRangePolicy`
+  directly from `BotManager`, `BotCombatManager.attackMonster`, and focused
+  tests; the temporary `BotCombatManager` `canUseAttackPlanNow` wrapper has been
+  removed while preserving the same grounded, weapon, and route inputs.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

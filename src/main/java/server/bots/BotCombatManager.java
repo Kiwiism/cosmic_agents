@@ -730,16 +730,6 @@ public class BotCombatManager {
                 target.getPosition());
     }
 
-    static boolean canUseAttackPlanNow(BotEntry entry, WeaponType weaponType, AttackPlan attackPlan) {
-        if (entry == null || attackPlan == null) {
-            return false;
-        }
-        if (AgentBotMovementStateRuntime.grounded(entry)) {
-            return true;
-        }
-        return AgentCombatRangePolicy.canUseAttackPlanNow(false, weaponType, attackPlan.route);
-    }
-
     static void attackMonster(BotEntry entry, Character bot, AttackPlan attackPlan) {
         AgentCombatAttackExecutionPolicy.AttackExecutionReadiness readiness =
                 AgentCombatAttackExecutionPolicy.attackExecutionReadiness(
@@ -748,7 +738,10 @@ public class BotCombatManager {
                         attackPlan.skillId,
                         () -> AgentCombatSkillUsePolicy.canPaySkillCost(
                                 bot, attackPlan.skillId, attackPlan.skillLevel),
-                        () -> canUseAttackPlanNow(entry, AgentAttackExecutionProvider.getEquippedWeaponType(bot), attackPlan));
+                        () -> entry != null && attackPlan != null && AgentCombatRangePolicy.canUseAttackPlanNow(
+                                AgentBotMovementStateRuntime.grounded(entry),
+                                AgentAttackExecutionProvider.getEquippedWeaponType(bot),
+                                attackPlan.route));
         if (readiness != AgentCombatAttackExecutionPolicy.AttackExecutionReadiness.READY) {
             return;
         }

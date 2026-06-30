@@ -2416,7 +2416,8 @@ public class BotManager {
         if (!AgentBotMovementStateRuntime.climbing(entry)) {
             if (aoeRepositionPos == null
                     && attackGateOpen && BotCombatManager.isTargetInAttackRange(attackPlan, bot, target)
-                    && BotCombatManager.canUseAttackPlanNow(entry, grindWeaponType, attackPlan)) {
+                    && AgentCombatRangePolicy.canUseAttackPlanNow(
+                            AgentBotMovementStateRuntime.grounded(entry), grindWeaponType, attackPlan.route)) {
                 attackAttemptedInRange = true;
                 // In range — attack if grounded, or during ascent of a jump
                 int prevCooldown = AgentBotCombatCooldownStateRuntime.attackCooldownMs(entry);
@@ -2595,7 +2596,8 @@ public class BotManager {
         return plan != null
                 && plan.route == AgentAttackRoute.RANGED
                 && BotCombatManager.isTargetInAttackRange(plan, bot, target)
-                && BotCombatManager.canUseAttackPlanNow(entry, weaponType, plan);
+                && AgentCombatRangePolicy.canUseAttackPlanNow(
+                        AgentBotMovementStateRuntime.grounded(entry), weaponType, plan.route);
     }
 
     private void tickAnchoredFarm(BotEntry entry, Character bot, Point botPos, boolean runAiTick) {
@@ -2663,7 +2665,8 @@ public class BotManager {
             return new LocalOpportunityAttackResult(false, targetPos);
         }
         if (AgentBotMovementStateRuntime.inAir(entry)) {
-            if (BotCombatManager.canUseAttackPlanNow(entry, weaponType, attackPlan)
+            if (AgentCombatRangePolicy.canUseAttackPlanNow(
+                    AgentBotMovementStateRuntime.grounded(entry), weaponType, attackPlan.route)
                     && BotCombatManager.isTargetInAttackRange(attackPlan, bot, localTarget)) {
                 BotCombatManager.attackMonster(entry, bot, attackPlan);
                 if (allowCombatMovement && attackPlan.isCloseRangeRoute()

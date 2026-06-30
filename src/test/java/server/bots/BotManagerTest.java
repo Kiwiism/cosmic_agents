@@ -442,7 +442,6 @@ class BotManagerTest {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.CLAW);
             combat.when(() -> BotCombatManager.planAttack(entry, bot, target)).thenReturn(rangedPlan);
             combat.when(() -> BotCombatManager.isTargetInAttackRange(rangedPlan, bot, target)).thenReturn(true);
-            combat.when(() -> BotCombatManager.canUseAttackPlanNow(entry, WeaponType.CLAW, rangedPlan)).thenReturn(true);
             combat.when(() -> BotCombatManager.attackMonster(entry, bot, rangedPlan)).thenAnswer(invocation -> null);
 
             BotManager.getInstance().stepMovementOnly(entry, target.getPosition(), target.getPosition(), false);
