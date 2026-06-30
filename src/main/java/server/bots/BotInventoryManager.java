@@ -1171,15 +1171,6 @@ public class BotInventoryManager {
 
     // ─── Internals ────────────────────────────────────────────────────────────
 
-    /** Orders own reserved equips worst-to-best using the existing trade score helper. */
-    private static List<Item> sortEquipsByTradeScore(List<Item> items, Character bot) {
-        return AgentInventoryTradePolicy.sortReservedEquipsByTradeScore(items, bot);
-    }
-
-    private static List<Item> collectEquipsGroup(EquipsGroup group, BotEntry entry, Character bot) {
-        return classifyEquipTradeGroups(entry, bot).itemsFor(group);
-    }
-
     static String reservedEquipsCategory(int requestedPage) {
         return AgentInventoryTradePolicy.reservedEquipsCategory(requestedPage);
     }
@@ -1262,7 +1253,7 @@ public class BotInventoryManager {
     }
 
     private static List<Item> collectTrashEquips(BotEntry entry, Character bot) {
-        return collectEquipsGroup(EquipsGroup.NORMAL, entry, bot);
+        return classifyEquipTradeGroups(entry, bot).itemsFor(EquipsGroup.NORMAL);
     }
 
     public static List<Item> collectSellTrashEquips(BotEntry entry, Character bot) {
@@ -1321,7 +1312,7 @@ public class BotInventoryManager {
         long sortStartedAt = startedAt != 0L ? System.nanoTime() : 0L;
         List<Item> normalSorted = AgentInventoryTradePolicy.sortEquipsByItemId(normal);
         List<Item> reservedForOtherSorted = AgentInventoryTradePolicy.sortEquipsByItemId(reservedForOther);
-        List<Item> reservedForSelfSorted = sortEquipsByTradeScore(reservedForSelf, bot);
+        List<Item> reservedForSelfSorted = AgentInventoryTradePolicy.sortReservedEquipsByTradeScore(reservedForSelf, bot);
         long sortNs = startedAt != 0L ? System.nanoTime() - sortStartedAt : 0L;
         if (startedAt != 0L) {
             long elapsedNs = System.nanoTime() - startedAt;

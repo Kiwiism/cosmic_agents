@@ -2068,6 +2068,10 @@ Recent reconstruction notes:
 - Reserved-equipment trade page slicing now lives in `AgentInventoryTradePolicy`;
   BotInventoryManager still supplies the temporary reserved-item source but no
   longer owns page clamping or sublist selection.
+- Equip group and reserved-equip score sort pass-through wrappers have been
+  removed from BotInventoryManager; temporary equip classification still runs
+  there, but the reserved self-sort call now goes directly to
+  `AgentInventoryTradePolicy`.
 - Maker crystal creation and trash-disassembly batch orchestration now live in
   `AgentMakerService`; utility chat callbacks preserve the same guard replies,
   lazy item-data lookup, five-second step cadence, ACTIVE set, and
