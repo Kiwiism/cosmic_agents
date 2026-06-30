@@ -82,6 +82,10 @@ Recent map updates:
   `server.agents.capabilities.navigation.AgentNavigationDebugOverlay`. `!botnav`
   graph/path/pathlog/clear command routing, fake-mist drawing, active-edge
   highlighting, and auto-clear behavior are unchanged.
+- `server.bots.BotScrollReactionManager` has moved to
+  `server.agents.capabilities.social.AgentScrollReactionService`. Range
+  filtering, reaction chances, streak/load math, emote/chat/fidget behavior, and
+  scheduler/reply adapter calls are unchanged.
 - `server.bots.BotCommandParser` has moved to
   `server.agents.integration.AgentBotCommandParser`. Bot-entry target
   adaptation, transfer command wrapping, and targeted-command feedback are
@@ -160,7 +164,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotScriptRunner.java` | `server.agents.plans.AgentScriptRunner` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotScriptRuntime.java` | `server.agents.plans.AgentScriptRuntimeState` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotScriptStep.java` | `server.agents.plans.AgentScriptStep` | `MIGRATED_TO_AGENT` |
-| `src/main/java/server/bots/BotScrollReactionManager.java` | `server.agents.capabilities.social` and `dialogue` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
+| `src/main/java/server/bots/BotScrollReactionManager.java` | `server.agents.capabilities.social.AgentScrollReactionService` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotSessionLifecycleSideEffects.java` | `server.agents.integration.AgentBotSessionLifecycleSideEffects` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotShopManager.java` | `server.agents.capabilities.shop`, `server.agents.capabilities.dialogue.AgentDialogueCatalog` | `SPLIT_TO_MULTIPLE_AGENT_MODULES`; shop resupply/shopping dialogue pools, fixed sell-trash/shop visit/shortfall result messages, shop approach geometry, ammo resupply/recharge policy, and potion shop selection policy are Agent-owned |
 | `src/main/java/server/bots/BotStarterKitManager.java` | `server.agents.capabilities.build.AgentStarterKitService` | `MIGRATED_TO_AGENT` |

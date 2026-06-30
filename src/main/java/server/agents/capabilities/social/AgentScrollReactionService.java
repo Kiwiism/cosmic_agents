@@ -1,4 +1,4 @@
-package server.bots;
+package server.agents.capabilities.social;
 
 import server.agents.capabilities.dialogue.AgentEmote;
 
@@ -10,6 +10,9 @@ import server.agents.integration.AgentBotScrollReactionStateRuntime;
 import client.Character;
 import client.inventory.Equip;
 import server.ItemInformationProvider;
+import server.bots.BotEntry;
+import server.bots.BotFidgetManager;
+import server.bots.BotManager;
 
 import java.awt.*;
 import java.util.Collection;
@@ -17,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
-final class BotScrollReactionManager {
+public final class AgentScrollReactionService {
     private static final int REACTION_RADIUS_PX = 600;
     private static final int EMOTE_CHANCE_PCT = 20;
     private static final int CHAT_CHANCE_PCT = 15;
@@ -66,13 +69,13 @@ final class BotScrollReactionManager {
             "ok thats just mean",
             "this map is cold");
 
-    private BotScrollReactionManager() {
+    private AgentScrollReactionService() {
     }
 
-    static void handleScrollEvent(Character source,
-                                  Equip.ScrollResult result,
-                                  int scrollItemId,
-                                  Collection<List<BotEntry>> allEntries) {
+    public static void handleScrollEvent(Character source,
+                                         Equip.ScrollResult result,
+                                         int scrollItemId,
+                                         Collection<List<BotEntry>> allEntries) {
         if (source == null || source.getMap() == null || result == null || allEntries == null) {
             return;
         }
@@ -117,7 +120,7 @@ final class BotScrollReactionManager {
         }
     }
 
-    static void maybeReact(BotEntry entry, int scrollerId, boolean success, int scrollSuccessRate, long now) {
+    public static void maybeReact(BotEntry entry, int scrollerId, boolean success, int scrollSuccessRate, long now) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (entry == null || bot == null) {
             return;
@@ -157,11 +160,11 @@ final class BotScrollReactionManager {
         }
     }
 
-    static double recordReactionLoad(BotEntry entry, long now) {
+    public static double recordReactionLoad(BotEntry entry, long now) {
         return AgentBotScrollReactionStateRuntime.recordReactionLoad(entry, now, LOAD_DECAY_MS);
     }
 
-    static double reactionChanceScale(double load) {
+    public static double reactionChanceScale(double load) {
         if (load <= 2.5) {
             return 1.0;
         }
@@ -174,7 +177,7 @@ final class BotScrollReactionManager {
         return 0.3;
     }
 
-    static double successRateChanceScale(int scrollSuccessRate) {
+    public static double successRateChanceScale(int scrollSuccessRate) {
         if (scrollSuccessRate <= 20) {
             return 3;
         }
@@ -190,7 +193,7 @@ final class BotScrollReactionManager {
         return 0.25;
     }
 
-    static int updateReactionStreak(BotEntry entry, int scrollerId, boolean success, long now) {
+    public static int updateReactionStreak(BotEntry entry, int scrollerId, boolean success, long now) {
         if (entry == null || scrollerId <= 0) {
             return 0;
         }
@@ -199,7 +202,7 @@ final class BotScrollReactionManager {
                 entry, scrollerId, success, now, STREAK_WINDOW_MS, STREAK_PRUNE_INTERVAL_MS);
     }
 
-    static double streakChanceScale(int streak, boolean success, int scrollSuccessRate) {
+    public static double streakChanceScale(int streak, boolean success, int scrollSuccessRate) {
         if (streak < 2 || scrollSuccessRate >= 100) {
             return 1.0;
         }
@@ -211,11 +214,11 @@ final class BotScrollReactionManager {
         }
     }
 
-    static boolean isStreakChatEligible(int streak, int scrollSuccessRate) {
+    public static boolean isStreakChatEligible(int streak, int scrollSuccessRate) {
         return streak >= 3 && scrollSuccessRate < 100;
     }
 
-    static int streakWindowMs() {
+    public static int streakWindowMs() {
         return STREAK_WINDOW_MS;
     }
 

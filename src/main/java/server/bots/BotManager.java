@@ -16,6 +16,7 @@ import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.runtime.AgentPerformanceMonitor;
 
 import server.agents.capabilities.looting.AgentLootEligibility;
+import server.agents.capabilities.social.AgentScrollReactionService;
 
 
 import server.agents.integration.AgentBotManagerReplyRuntime;
@@ -820,7 +821,7 @@ public class BotManager {
                                          int scrollItemId,
                                          long delayMs) {
         AgentBotManagerSchedulerRuntime.afterDelay(Math.max(0L, delayMs), () ->
-                BotScrollReactionManager.handleScrollEvent(source, result, scrollItemId, bots.values()));
+                AgentScrollReactionService.handleScrollEvent(source, result, scrollItemId, bots.values()));
     }
 
     public BotEntry getBotEntry(int ownerCharId, String botName) {

@@ -11,6 +11,7 @@ import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.fidget.AgentFidgetMode;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
+import server.agents.capabilities.social.AgentScrollReactionService;
 import server.agents.integration.AgentBotChatReportRuntime;
 import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotBuffStateRuntime;
@@ -215,15 +216,15 @@ class BotChatManagerTest {
         int alice = 101;
         int bob = 202;
 
-        assertEquals(1, BotScrollReactionManager.updateReactionStreak(entry, alice, true, start));
-        assertEquals(2, BotScrollReactionManager.updateReactionStreak(entry, alice, true, start + 30_000L));
-        assertEquals(3, BotScrollReactionManager.updateReactionStreak(entry, alice, true, start + 60_000L));
+        assertEquals(1, AgentScrollReactionService.updateReactionStreak(entry, alice, true, start));
+        assertEquals(2, AgentScrollReactionService.updateReactionStreak(entry, alice, true, start + 30_000L));
+        assertEquals(3, AgentScrollReactionService.updateReactionStreak(entry, alice, true, start + 60_000L));
 
-        assertEquals(1, BotScrollReactionManager.updateReactionStreak(entry, bob, true, start + 10_000L));
-        assertEquals(1, BotScrollReactionManager.updateReactionStreak(entry, alice, false, start + 90_000L));
-        assertEquals(2, BotScrollReactionManager.updateReactionStreak(entry, alice, false, start + 120_000L));
-        assertEquals(1, BotScrollReactionManager.updateReactionStreak(
-                entry, alice, false, start + 120_000L + BotScrollReactionManager.streakWindowMs() + 1L));
+        assertEquals(1, AgentScrollReactionService.updateReactionStreak(entry, bob, true, start + 10_000L));
+        assertEquals(1, AgentScrollReactionService.updateReactionStreak(entry, alice, false, start + 90_000L));
+        assertEquals(2, AgentScrollReactionService.updateReactionStreak(entry, alice, false, start + 120_000L));
+        assertEquals(1, AgentScrollReactionService.updateReactionStreak(
+                entry, alice, false, start + 120_000L + AgentScrollReactionService.streakWindowMs() + 1L));
     }
 
     @Test

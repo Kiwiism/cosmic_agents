@@ -1,10 +1,11 @@
-package server.bots;
+package server.agents.capabilities.social;
 
 import client.Character;
 import client.inventory.Equip;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotScrollReactionRuntime;
+import server.bots.BotEntry;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -16,7 +17,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-class BotScrollReactionManagerTest {
+class AgentScrollReactionServiceTest {
     @Test
     void scrollReactionSchedulingUsesAgentScrollReactionRuntime() {
         MapleMap map = mock(MapleMap.class);
@@ -35,7 +36,7 @@ class BotScrollReactionManagerTest {
         try (MockedStatic<AgentBotScrollReactionRuntime> scheduler = mockStatic(AgentBotScrollReactionRuntime.class)) {
             scheduler.when(() -> AgentBotScrollReactionRuntime.randomDelayMs(0, 2001)).thenReturn(123L);
 
-            BotScrollReactionManager.handleScrollEvent(
+            AgentScrollReactionService.handleScrollEvent(
                     source,
                     Equip.ScrollResult.SUCCESS,
                     0,

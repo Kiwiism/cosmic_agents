@@ -1309,6 +1309,10 @@ Recent reconstruction notes:
   `server.agents.capabilities.navigation.AgentNavigationDebugOverlay`; `!botnav`
   graph/path/pathlog/clear routing, fake-mist rendering, and auto-clear behavior
   remain unchanged.
+- Scroll reaction behavior now lives in
+  `server.agents.capabilities.social.AgentScrollReactionService`; reaction
+  radius, load/streak math, chat/emote/fidget chances, and scheduler/reply
+  adapter calls remain unchanged.
 - Fidget mode and trigger state now use `AgentFidgetMode` and
   `AgentFidgetTrigger` under the Agent movement fidget capability; BotEntry and
   BotFidgetManager preserve the same NONE/WAIT/JUMP/DIAGONAL_JUMP/PRONE/
