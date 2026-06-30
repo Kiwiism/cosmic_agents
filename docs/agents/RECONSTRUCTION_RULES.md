@@ -1474,6 +1474,10 @@ Recent reconstruction notes:
   `AgentCombatSkillClassifier`, preserving the legacy active-support-skill plus
   buff-blacklist gate while BotCombatManager still mutates the temporary
   buff-skill cache and rebuff timers.
+- Support-buff no-living-mobs preflight now lives in
+  `AgentCombatSupportPolicy`, preserving the legacy skip when a map has no
+  alive monsters while BotCombatManager still performs the live map scan and
+  support-buff side effects.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

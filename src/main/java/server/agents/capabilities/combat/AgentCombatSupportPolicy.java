@@ -123,6 +123,10 @@ public final class AgentCombatSupportPolicy {
         return partyNeedsHeal || hasUndeadTargets;
     }
 
+    public static boolean shouldSkipSkillBuffsWithoutLivingMobs(boolean hasLivingMobs) {
+        return !hasLivingMobs;
+    }
+
     public static SupportCastReadiness supportCastReadiness(int skillLevel,
                                                             boolean alive,
                                                             BooleanSupplier canPaySkillCost) {

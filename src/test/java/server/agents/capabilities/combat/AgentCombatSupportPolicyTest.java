@@ -129,6 +129,12 @@ class AgentCombatSupportPolicyTest {
     }
 
     @Test
+    void shouldSkipSkillBuffsOnlyWhenMapHasNoLivingMobs() {
+        assertTrue(AgentCombatSupportPolicy.shouldSkipSkillBuffsWithoutLivingMobs(false));
+        assertFalse(AgentCombatSupportPolicy.shouldSkipSkillBuffsWithoutLivingMobs(true));
+    }
+
+    @Test
     void shouldPreserveSupportCastReadinessOrder() {
         AtomicBoolean costChecked = new AtomicBoolean(false);
 

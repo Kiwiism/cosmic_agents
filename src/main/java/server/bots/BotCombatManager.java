@@ -388,7 +388,8 @@ public class BotCombatManager {
             }
             return;
         }
-        if (bot.getMap().getAllMonsters().stream().noneMatch(Monster::isAlive)) return;
+        boolean hasLivingMobs = bot.getMap().getAllMonsters().stream().anyMatch(Monster::isAlive);
+        if (AgentCombatSupportPolicy.shouldSkipSkillBuffsWithoutLivingMobs(hasLivingMobs)) return;
 
         long now = System.currentTimeMillis();
         if (trySupportBuff(entry, bot, now)) {
