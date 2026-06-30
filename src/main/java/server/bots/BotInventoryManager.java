@@ -33,6 +33,8 @@ import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy;
 import server.agents.capabilities.inventory.AgentInventorySellTrashPolicy;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
+import server.agents.capabilities.inventory.AgentInventoryTradePolicy.AmmoGroup;
+import server.agents.capabilities.inventory.AgentInventoryTradePolicy.EquipsGroup;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.supplies.AgentPotionSharePolicy;
 import server.agents.capabilities.trade.AgentOfferService;
@@ -66,8 +68,6 @@ public class BotInventoryManager {
     private static final Logger log = LoggerFactory.getLogger(BotInventoryManager.class);
     private static final long TRADE_COMMAND_PROFILE_WARN_NS = 50_000_000L;
     private static final int MANUAL_TRADE_TIMEOUT_MS = 60_000;
-    private static final int TRADE_WINDOW_ITEM_LIMIT = 9;
-    private static final String RESERVED_EQUIPS_CATEGORY_PREFIX = "equips:reserved:";
     private record PreparedTradeItems(List<Item> items, String errorMessage) {}
     private record EquipTradeGroups(List<Item> normal,
                                     List<Item> reservedForOther,
@@ -580,8 +580,8 @@ public class BotInventoryManager {
             cancelTradeSequence(entry, bot, "can't trade right now, stopping");
             return;
         }
-        AgentBotPendingTradeStateRuntime.setItems(entry, items.size() > TRADE_WINDOW_ITEM_LIMIT
-                ? new ArrayList<>(items.subList(0, TRADE_WINDOW_ITEM_LIMIT))
+        AgentBotPendingTradeStateRuntime.setItems(entry, items.size() > AgentInventoryTradePolicy.TRADE_WINDOW_ITEM_LIMIT
+                ? new ArrayList<>(items.subList(0, AgentInventoryTradePolicy.TRADE_WINDOW_ITEM_LIMIT))
                 : new ArrayList<>(items));
         AgentBotPendingTradeStateRuntime.setMeso(entry, mesos);
         AgentBotPendingTradeStateRuntime.clearItemIndex(entry);
@@ -1130,11 +1130,11 @@ public class BotInventoryManager {
                 if (isReservedEquipsCategory(category)) {
                     result.addAll(collectReservedEquipTradePage(category, entry, bot));
                 } else {
-                    EquipsGroup eg = EquipsGroup.fromCategory(category);
+                    EquipsGroup eg = AgentInventoryTradePolicy.equipsGroupFromCategory(category);
                     if (eg != null) {
                         result.addAll(classifyEquipTradeGroups(entry, bot).itemsFor(eg));
                     } else {
-                        AmmoGroup ammoGroup = AmmoGroup.fromCategory(category);
+                        AmmoGroup ammoGroup = AgentInventoryTradePolicy.ammoGroupFromCategory(category);
                         if (ammoGroup != null) {
                             result.addAll(classifyAmmoTradeGroups(bot).itemsFor(ammoGroup));
                         } else if (category.startsWith("name:")) {
@@ -1293,42 +1293,6 @@ public class BotInventoryManager {
         return AgentInventoryTradePolicy.sortReservedEquipsByTradeScore(items, bot);
     }
 
-    private enum EquipsGroup {
-        NORMAL, RESERVED_FOR_OTHER, RESERVED_FOR_SELF;
-
-        String categoryString() { return "equips:" + name().toLowerCase(); }
-
-        static EquipsGroup fromCategory(String category) {
-            if (category == null || !category.startsWith("equips:")) return null;
-            try { return valueOf(category.substring("equips:".length()).toUpperCase()); }
-            catch (IllegalArgumentException e) { return null; }
-        }
-
-        EquipsGroup next() {
-            EquipsGroup[] vals = values();
-            int next = ordinal() + 1;
-            return next < vals.length ? vals[next] : null;
-        }
-    }
-
-    private enum AmmoGroup {
-        NON_OWN, OWN;
-
-        String categoryString() { return "ammo:" + name().toLowerCase(); }
-
-        static AmmoGroup fromCategory(String category) {
-            if (category == null || !category.startsWith("ammo:")) return null;
-            try { return valueOf(category.substring("ammo:".length()).toUpperCase()); }
-            catch (IllegalArgumentException e) { return null; }
-        }
-
-        AmmoGroup next() {
-            AmmoGroup[] vals = values();
-            int next = ordinal() + 1;
-            return next < vals.length ? vals[next] : null;
-        }
-    }
-
     private static List<Item> collectEquipsGroup(EquipsGroup group, BotEntry entry, Character bot) {
         return classifyEquipTradeGroups(entry, bot).itemsFor(group);
     }
@@ -1342,18 +1306,11 @@ public class BotInventoryManager {
     }
 
     private static boolean isReservedEquipsCategory(String category) {
-        return category != null && category.startsWith(RESERVED_EQUIPS_CATEGORY_PREFIX);
+        return AgentInventoryTradePolicy.isReservedEquipsCategory(category);
     }
 
     private static int requestedReservedEquipsPage(String category) {
-        if (!isReservedEquipsCategory(category)) {
-            return 1;
-        }
-        try {
-            return Integer.parseInt(category.substring(RESERVED_EQUIPS_CATEGORY_PREFIX.length()));
-        } catch (NumberFormatException ignored) {
-            return 1;
-        }
+        return AgentInventoryTradePolicy.requestedReservedEquipsPage(category);
     }
 
     private static List<Item> collectReservedEquips(EquipTradeGroups groups) {
@@ -1367,8 +1324,8 @@ public class BotInventoryManager {
             return List.of();
         }
         int page = clampTradePage(requestedReservedEquipsPage(category), reserved.size());
-        int from = (page - 1) * TRADE_WINDOW_ITEM_LIMIT;
-        int to = Math.min(from + TRADE_WINDOW_ITEM_LIMIT, reserved.size());
+        int from = (page - 1) * AgentInventoryTradePolicy.TRADE_WINDOW_ITEM_LIMIT;
+        int to = Math.min(from + AgentInventoryTradePolicy.TRADE_WINDOW_ITEM_LIMIT, reserved.size());
         return new ArrayList<>(reserved.subList(from, to));
     }
 
@@ -1384,7 +1341,7 @@ public class BotInventoryManager {
     }
 
     private static String equipsGroupMsg(String category) {
-        EquipsGroup group = EquipsGroup.fromCategory(category);
+        EquipsGroup group = AgentInventoryTradePolicy.equipsGroupFromCategory(category);
         if (group == null) return null;
         return switch (group) {
             case RESERVED_FOR_OTHER -> BotManager.randomReply(AgentDialogueCatalog.tradeReservedForOtherReplies());
@@ -1394,7 +1351,7 @@ public class BotInventoryManager {
     }
 
     private static String nextEquipsGroup(String category, BotEntry entry, Character bot) {
-        EquipsGroup current = EquipsGroup.fromCategory(category);
+        EquipsGroup current = AgentInventoryTradePolicy.equipsGroupFromCategory(category);
         if (current == null) return null;
         EquipTradeGroups groups = classifyEquipTradeGroups(entry, bot);
         for (EquipsGroup g = current.next(); g != null; g = g.next()) {
@@ -1404,7 +1361,7 @@ public class BotInventoryManager {
     }
 
     private static String nextAmmoGroup(String category, Character bot) {
-        AmmoGroup current = AmmoGroup.fromCategory(category);
+        AmmoGroup current = AgentInventoryTradePolicy.ammoGroupFromCategory(category);
         if (current == null) return null;
         AmmoTradeGroups groups = classifyAmmoTradeGroups(bot);
         for (AmmoGroup group = current.next(); group != null; group = group.next()) {

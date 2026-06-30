@@ -16,6 +16,12 @@ class AgentInventoryTradePolicyTest {
     @Test
     void shouldBuildReservedEquipsCategoryLikeLegacyInventory() {
         assertEquals("equips:reserved:3", AgentInventoryTradePolicy.reservedEquipsCategory(3));
+        assertTrue(AgentInventoryTradePolicy.isReservedEquipsCategory("equips:reserved:2"));
+        assertFalse(AgentInventoryTradePolicy.isReservedEquipsCategory("equips:reserved"));
+        assertFalse(AgentInventoryTradePolicy.isReservedEquipsCategory(null));
+        assertEquals(2, AgentInventoryTradePolicy.requestedReservedEquipsPage("equips:reserved:2"));
+        assertEquals(1, AgentInventoryTradePolicy.requestedReservedEquipsPage("equips:reserved:nope"));
+        assertEquals(1, AgentInventoryTradePolicy.requestedReservedEquipsPage("equips:normal"));
     }
 
     @Test
@@ -38,6 +44,25 @@ class AgentInventoryTradePolicyTest {
         assertEquals(1500, AgentInventoryTradePolicy.requestedTradeMesos("mesos:1500"));
         assertEquals(0, AgentInventoryTradePolicy.requestedTradeMesos("mesos:nope"));
         assertEquals(0, AgentInventoryTradePolicy.requestedTradeMesos("items"));
+    }
+
+    @Test
+    void shouldParseEquipAndAmmoGroupCategoriesLikeLegacyInventory() {
+        assertEquals(AgentInventoryTradePolicy.EquipsGroup.NORMAL,
+                AgentInventoryTradePolicy.equipsGroupFromCategory("equips:normal"));
+        assertEquals(AgentInventoryTradePolicy.EquipsGroup.RESERVED_FOR_SELF,
+                AgentInventoryTradePolicy.equipsGroupFromCategory("equips:reserved_for_self"));
+        assertEquals("equips:reserved_for_other",
+                AgentInventoryTradePolicy.EquipsGroup.RESERVED_FOR_OTHER.categoryString());
+        assertEquals(AgentInventoryTradePolicy.EquipsGroup.RESERVED_FOR_SELF,
+                AgentInventoryTradePolicy.EquipsGroup.RESERVED_FOR_OTHER.next());
+        assertEquals(AgentInventoryTradePolicy.AmmoGroup.NON_OWN,
+                AgentInventoryTradePolicy.ammoGroupFromCategory("ammo:non_own"));
+        assertEquals(AgentInventoryTradePolicy.AmmoGroup.OWN,
+                AgentInventoryTradePolicy.AmmoGroup.NON_OWN.next());
+        assertEquals("ammo:own", AgentInventoryTradePolicy.AmmoGroup.OWN.categoryString());
+        assertEquals(null, AgentInventoryTradePolicy.equipsGroupFromCategory("equips:reserved:1"));
+        assertEquals(null, AgentInventoryTradePolicy.ammoGroupFromCategory("ammo"));
     }
 
     @Test

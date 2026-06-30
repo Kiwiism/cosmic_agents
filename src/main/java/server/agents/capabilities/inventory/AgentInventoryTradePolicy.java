@@ -18,8 +18,69 @@ public final class AgentInventoryTradePolicy {
     private AgentInventoryTradePolicy() {
     }
 
+    public enum EquipsGroup {
+        NORMAL, RESERVED_FOR_OTHER, RESERVED_FOR_SELF;
+
+        public String categoryString() {
+            return "equips:" + name().toLowerCase();
+        }
+
+        public EquipsGroup next() {
+            EquipsGroup[] values = values();
+            int next = ordinal() + 1;
+            return next < values.length ? values[next] : null;
+        }
+    }
+
+    public enum AmmoGroup {
+        NON_OWN, OWN;
+
+        public String categoryString() {
+            return "ammo:" + name().toLowerCase();
+        }
+
+        public AmmoGroup next() {
+            AmmoGroup[] values = values();
+            int next = ordinal() + 1;
+            return next < values.length ? values[next] : null;
+        }
+    }
+
     public static String reservedEquipsCategory(int requestedPage) {
         return RESERVED_EQUIPS_CATEGORY_PREFIX + requestedPage;
+    }
+
+    public static boolean isReservedEquipsCategory(String category) {
+        return category != null && category.startsWith(RESERVED_EQUIPS_CATEGORY_PREFIX);
+    }
+
+    public static int requestedReservedEquipsPage(String category) {
+        if (!isReservedEquipsCategory(category)) {
+            return 1;
+        }
+        try {
+            return Integer.parseInt(category.substring(RESERVED_EQUIPS_CATEGORY_PREFIX.length()));
+        } catch (NumberFormatException ignored) {
+            return 1;
+        }
+    }
+
+    public static EquipsGroup equipsGroupFromCategory(String category) {
+        if (category == null || !category.startsWith("equips:")) return null;
+        try {
+            return EquipsGroup.valueOf(category.substring("equips:".length()).toUpperCase());
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
+    }
+
+    public static AmmoGroup ammoGroupFromCategory(String category) {
+        if (category == null || !category.startsWith("ammo:")) return null;
+        try {
+            return AmmoGroup.valueOf(category.substring("ammo:".length()).toUpperCase());
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
     }
 
     public static int clampTradePage(int requestedPage, int totalItems) {

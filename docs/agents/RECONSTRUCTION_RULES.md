@@ -1298,6 +1298,11 @@ Recent reconstruction notes:
 - Inventory item-id trade ordering now enters through `AgentInventoryTradePolicy`.
   Plain inventory-view sorting still orders by item id then bag position, and
   bot trade sequencing remains unchanged through compatibility delegates.
+- Inventory trade category parsing now enters through `AgentInventoryTradePolicy`.
+  Equip/ammo group category strings, next-group ordering, reserved-equip page
+  detection, page parsing, and trade-window page sizing preserve the same
+  legacy tokens while `BotInventoryManager` keeps item classification and trade
+  sequencing.
 - Physics position, horizontal-speed, and ground-travel carry state now enter
   through `AgentBotMovementPhysicsStateRuntime`; BotPhysicsEngine preserves
   landing, grounded travel, swim, airborne collision, climb-position, and reset
