@@ -1293,6 +1293,10 @@ Recent reconstruction notes:
   `AgentAuthorizationResult`; the same DB-backed `bot_owners` behavior is
   preserved for this reconstruction stage, but the service is no longer owned
   by the bot package.
+- Navigation path logging now lives in
+  `server.agents.monitoring.AgentPathLogger`; the `BotEntry` attachment point
+  and path-log output format are preserved while the diagnostic runtime is no
+  longer owned by the bot package.
 - Fidget mode and trigger state now use `AgentFidgetMode` and
   `AgentFidgetTrigger` under the Agent movement fidget capability; BotEntry and
   BotFidgetManager preserve the same NONE/WAIT/JUMP/DIAGONAL_JUMP/PRONE/

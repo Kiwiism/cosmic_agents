@@ -267,7 +267,7 @@ public final class BotPhysicsEngine {
         return walkStep(map, AgentMovementProfile.base());
     }
 
-    static int walkStep(MapleMap map, AgentMovementProfile profile) {
+    public static int walkStep(MapleMap map, AgentMovementProfile profile) {
         double step = maxHSpeedPerClientStep(profile) * cfg.TICK_MS * mapGroundSpeedScale(map) / CLIENT_GROUND_STEP_MS;
         return Math.max(1, (int) Math.round(step));
     }

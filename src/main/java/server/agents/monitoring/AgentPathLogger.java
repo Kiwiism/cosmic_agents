@@ -1,4 +1,4 @@
-package server.bots;
+package server.agents.monitoring;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
 
@@ -23,6 +23,12 @@ import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotTickCadenceStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
+import server.bots.BotEntry;
+import server.bots.BotManager;
+import server.bots.BotNavigationGraph;
+import server.bots.BotNavigationGraphProvider;
+import server.bots.BotNavigationManager;
+import server.bots.BotPhysicsEngine;
 import server.maps.MapleMap;
 import server.maps.Rope;
 
@@ -30,7 +36,7 @@ import server.maps.Rope;
  * Records per-tick navigation snapshots for a single bot and dumps them to a human-readable file.
  * Attach to BotEntry.pathLogger to start recording; call dumpToFile() to write the report.
  */
-public final class BotPathLogger {
+public final class AgentPathLogger {
     private static final int MAX_TICKS = 120; // 6s at 50ms tick
     private static final Path LOG_DIR = Path.of("logs", "bot-nav");
     private static final DateTimeFormatter FILE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HHmmss");
@@ -66,7 +72,7 @@ public final class BotPathLogger {
     private final long startMs = System.currentTimeMillis();
     private final Deque<TickRecord> history = new ArrayDeque<>(MAX_TICKS + 1);
 
-    public BotPathLogger(String botName, int mapId) {
+    public AgentPathLogger(String botName, int mapId) {
         this.botName = botName;
         this.mapId = mapId;
     }

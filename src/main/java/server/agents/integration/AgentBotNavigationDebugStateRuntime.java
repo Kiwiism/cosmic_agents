@@ -2,8 +2,8 @@ package server.agents.integration;
 
 import client.Character;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
+import server.agents.monitoring.AgentPathLogger;
 import server.bots.BotEntry;
-import server.bots.BotPathLogger;
 
 import java.awt.Point;
 
@@ -21,11 +21,11 @@ public final class AgentBotNavigationDebugStateRuntime {
 
     public static void startPathLogging(BotEntry entry) {
         Character bot = entry.bot();
-        entry.setPathLogger(new BotPathLogger(bot.getName(), bot.getMapId()));
+        entry.setPathLogger(new AgentPathLogger(bot.getName(), bot.getMapId()));
     }
 
     public static String dumpPathLog(BotEntry entry, AgentMovementTargetSnapshot targetSnapshot, String note) {
-        BotPathLogger logger = entry.pathLogger();
+        AgentPathLogger logger = entry.pathLogger();
         entry.clearPathLogger();
         return logger.dumpToFile(entry, targetSnapshot, note);
     }
@@ -169,7 +169,7 @@ public final class AgentBotNavigationDebugStateRuntime {
                                      int botRegionId,
                                      boolean consumedTick,
                                      boolean aiTick) {
-        BotPathLogger logger = entry == null ? null : entry.pathLogger();
+        AgentPathLogger logger = entry == null ? null : entry.pathLogger();
         if (logger != null) {
             logger.record(entry, targetSnapshot, botRegionId, consumedTick, aiTick);
         }

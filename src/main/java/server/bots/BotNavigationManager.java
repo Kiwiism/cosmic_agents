@@ -782,11 +782,11 @@ public final class BotNavigationManager {
         return collapseLeadingWalkEdges(path);
     }
 
-    static List<BotNavigationGraph.Edge> findPath(BotNavigationGraph graph,
-                                                  Character bot,
-                                                  int startRegionId,
-                                                  int targetRegionId,
-                                                  Point targetPos) {
+    public static List<BotNavigationGraph.Edge> findPath(BotNavigationGraph graph,
+                                                         Character bot,
+                                                         int startRegionId,
+                                                         int targetRegionId,
+                                                         Point targetPos) {
         return findPath(graph, bot.getMap(), bot.getPosition(), startRegionId, targetRegionId, targetPos);
     }
 

@@ -13,6 +13,7 @@ import server.agents.commands.AgentQueuedMessage;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.capabilities.movement.fidget.AgentFidgetMode;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
+import server.agents.monitoring.AgentPathLogger;
 import server.agents.plans.AgentTask;
 import server.agents.plans.AgentScriptRuntimeState;
 
@@ -1817,15 +1818,15 @@ public class BotEntry {
     long nextScrollReactionStreakPruneAtMs = 0L;
 
     // Path logging (debug)
-    BotPathLogger pathLogger = null;
+    AgentPathLogger pathLogger = null;
     String lastNavDecision = "-";
     private long pendingGearPromptAt = 0L;
 
-    public BotPathLogger pathLogger() {
+    public AgentPathLogger pathLogger() {
         return pathLogger;
     }
 
-    public void setPathLogger(BotPathLogger pathLogger) {
+    public void setPathLogger(AgentPathLogger pathLogger) {
         this.pathLogger = pathLogger;
     }
 

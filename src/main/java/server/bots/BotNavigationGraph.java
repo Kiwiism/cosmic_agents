@@ -22,7 +22,7 @@ public final class BotNavigationGraph implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    enum EdgeType {
+    public enum EdgeType {
         WALK,
         JUMP,
         DROP,
@@ -204,18 +204,18 @@ public final class BotNavigationGraph implements Serializable {
         @Serial
         private static final long serialVersionUID = 1L;
 
-        final int fromRegionId;
-        final int toRegionId;
-        final EdgeType type;
-        final Point startPoint;
-        final Point endPoint;
-        final int launchMinX;
-        final int launchMaxX;
-        final int launchStepX;
-        final int portalId;
-        final int ropeX;
-        final int ropeTopY;
-        final int ropeBottomY;
+        public final int fromRegionId;
+        public final int toRegionId;
+        public final EdgeType type;
+        public final Point startPoint;
+        public final Point endPoint;
+        public final int launchMinX;
+        public final int launchMaxX;
+        public final int launchStepX;
+        public final int portalId;
+        public final int ropeX;
+        public final int ropeTopY;
+        public final int ropeBottomY;
         public final int cost;
 
         Edge(int fromRegionId,
@@ -271,8 +271,8 @@ public final class BotNavigationGraph implements Serializable {
     }
 
     final int mapId;
-    final int version;
-    final AgentMovementProfile movementProfile;
+    public final int version;
+    public final AgentMovementProfile movementProfile;
     final List<Region> regions;
     final Map<Integer, Region> regionsById;
     final Map<Integer, Integer> regionIdByFootholdId;
