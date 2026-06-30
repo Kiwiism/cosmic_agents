@@ -2039,6 +2039,9 @@ Recent reconstruction notes:
   BotInventoryManager preserves the same safe-item filtering, recovery/ammo,
   scroll/buff, uncategorized bucket split, and recipient-duplicate ordering
   through a compatibility delegate.
+- Item query normalization call sites now use `AgentItemQueryNormalizer`
+  directly; the old `BotInventoryManager.normalizeItemQuery` compatibility shim
+  has been removed while preserving the same plural/punctuation/case handling.
 - Ammo trade grouping now lives in `AgentInventoryAmmoPolicy`;
   BotInventoryManager preserves the same safe-item filtering, own-ammo versus
   non-own-ammo split, non-own item-id ordering, and own-ammo projectile attack

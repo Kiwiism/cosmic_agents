@@ -14,6 +14,7 @@ import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
+import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
 
 import server.agents.integration.AgentBotCombatAttackRuntime;
 import server.agents.integration.AgentBotCombatPlanRuntime;
@@ -1393,7 +1394,7 @@ class BotManagerTest {
 
     @Test
     void shouldNormalizeNamedItemCommandsAndQueries() {
-        assertEquals("warrior potion", BotInventoryManager.normalizeItemQuery("Warrior Potions?!"));
+        assertEquals("warrior potion", AgentItemQueryNormalizer.normalize("Warrior Potions?!"));
         assertEquals("name:warrior potion", AgentTradeDialogueClassifier.matchChoiceCategory("drop warrior potions?"));
         assertEquals("name:warrior potion", AgentTradeDialogueClassifier.matchTradeCategory("trade me warrior potions"));
         assertEquals("warrior potion", AgentTradeDialogueClassifier.matchItemQuery("anybody got warrior potions?"));

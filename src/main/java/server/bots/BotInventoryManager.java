@@ -883,7 +883,7 @@ public class BotInventoryManager {
 
     private static List<Item> collectNamedItems(String fragment, Character bot) {
         return AgentInventoryItemPolicy.collectNamedItems(bot, fragment,
-                BotInventoryManager::normalizeItemQuery,
+                AgentItemQueryNormalizer::normalize,
                 BotInventoryManager::normalizedItemName,
                 ItemInformationProvider.getInstance()::isQuestItem,
                 YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE);
@@ -899,11 +899,7 @@ public class BotInventoryManager {
         synchronized (ii) {
             name = ii.getName(itemId);
         }
-        return name != null ? normalizeItemQuery(name) : "";
-    }
-
-    static String normalizeItemQuery(String text) {
-        return AgentItemQueryNormalizer.normalize(text);
+        return name != null ? AgentItemQueryNormalizer.normalize(name) : "";
     }
 
     private static boolean hasEquippedSlotItems(Character bot, String fragment) {
@@ -1143,7 +1139,7 @@ public class BotInventoryManager {
     }
 
     static void dropByName(BotEntry entry, Character bot, String nameFragment) {
-        String normalizedFragment = normalizeItemQuery(nameFragment);
+        String normalizedFragment = AgentItemQueryNormalizer.normalize(nameFragment);
         int total = 0;
         for (InventoryType type : List.of(
                 InventoryType.EQUIP, InventoryType.USE, InventoryType.ETC, InventoryType.SETUP)) {
