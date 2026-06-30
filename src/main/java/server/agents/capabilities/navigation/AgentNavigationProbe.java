@@ -1,9 +1,11 @@
-package server.bots;
-
-import server.agents.capabilities.navigation.AgentNavigationMapLoader;
+package server.agents.capabilities.navigation;
 
 import server.maps.Foothold;
 import server.maps.MapleMap;
+import server.bots.BotMovementManager;
+import server.bots.BotNavigationGraph;
+import server.bots.BotNavigationGraphProvider;
+import server.bots.BotNavigationManager;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -12,8 +14,8 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
-public final class BotNavigationProbe {
-    private BotNavigationProbe() {
+public final class AgentNavigationProbe {
+    private AgentNavigationProbe() {
     }
 
     public static List<String> rebuildGraphReport(MapleMap map) {
@@ -199,10 +201,10 @@ public final class BotNavigationProbe {
     }
 
     private static void printUsage() {
-        System.out.println("Usage: BotNavigationProbe <mapId> [--rebuild] [--point x,y] [--jump x,y] [--path x1,y1:x2,y2]");
-        System.out.println("       BotNavigationProbe <mapId> [--region id] [--edges id] [--path-region fromRegion:toRegion] [--ropes] [--undersides] [--foothold id]");
-        System.out.println("       BotNavigationProbe <mapId> --measure <maxPairs>   (compare current A* heuristic vs admissible h=0 optimal; e.g. --measure 60000)");
-        System.out.println("Example: BotNavigationProbe 100000000 --rebuild --point 1080,334 --jump 1080,334 --path 990,334:938,274");
+        System.out.println("Usage: AgentNavigationProbe <mapId> [--rebuild] [--point x,y] [--jump x,y] [--path x1,y1:x2,y2]");
+        System.out.println("       AgentNavigationProbe <mapId> [--region id] [--edges id] [--path-region fromRegion:toRegion] [--ropes] [--undersides] [--foothold id]");
+        System.out.println("       AgentNavigationProbe <mapId> --measure <maxPairs>   (compare current A* heuristic vs admissible h=0 optimal; e.g. --measure 60000)");
+        System.out.println("Example: AgentNavigationProbe 100000000 --rebuild --point 1080,334 --jump 1080,334 --path 990,334:938,274");
     }
 
     private static String nextArg(String[] args, int index, String flag) {

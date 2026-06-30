@@ -790,12 +790,12 @@ public final class BotNavigationManager {
         return findPath(graph, bot.getMap(), bot.getPosition(), startRegionId, targetRegionId, targetPos);
     }
 
-    static List<BotNavigationGraph.Edge> findPath(BotNavigationGraph graph,
-                                                  MapleMap map,
-                                                  Point startPos,
-                                                  int startRegionId,
-                                                  int targetRegionId,
-                                                  Point targetPos) {
+    public static List<BotNavigationGraph.Edge> findPath(BotNavigationGraph graph,
+                                                         MapleMap map,
+                                                         Point startPos,
+                                                         int startRegionId,
+                                                         int targetRegionId,
+                                                         Point targetPos) {
         return findPath(graph, map, startPos, startRegionId, targetRegionId, targetPos, null);
     }
 
@@ -962,22 +962,22 @@ public final class BotNavigationManager {
     }
 
     /** Side-by-side comparison of the production heuristic vs the admissible (h=0) optimal search. */
-    record PathOptimality(int currentCost, int optimalCost, boolean currentUsesPortal,
-                          boolean optimalUsesPortal, int currentExpanded, int optimalExpanded) {
-        boolean reachable() {
+    public record PathOptimality(int currentCost, int optimalCost, boolean currentUsesPortal,
+                                 boolean optimalUsesPortal, int currentExpanded, int optimalExpanded) {
+        public boolean reachable() {
             return currentCost != Integer.MAX_VALUE && optimalCost != Integer.MAX_VALUE;
         }
 
-        boolean suboptimal() {
+        public boolean suboptimal() {
             return reachable() && currentCost > optimalCost;
         }
 
-        int costDelta() {
+        public int costDelta() {
             return reachable() ? currentCost - optimalCost : 0;
         }
 
         /** True when the heuristic walked a longer route while the optimal path took a portal. */
-        boolean portalSkipped() {
+        public boolean portalSkipped() {
             return suboptimal() && optimalUsesPortal && !currentUsesPortal;
         }
     }
@@ -987,12 +987,12 @@ public final class BotNavigationManager {
      * the admissible h=0 heuristic, returning both costs so callers can quantify how often (and by
      * how much) the current heuristic returns a non-optimal path. Not used on any production path.
      */
-    static PathOptimality measureOptimality(BotNavigationGraph graph,
-                                            MapleMap map,
-                                            Point startPos,
-                                            int startRegionId,
-                                            int targetRegionId,
-                                            Point targetPos) {
+    public static PathOptimality measureOptimality(BotNavigationGraph graph,
+                                                   MapleMap map,
+                                                   Point startPos,
+                                                   int startRegionId,
+                                                   int targetRegionId,
+                                                   Point targetPos) {
         SearchOutcome current = runSearch(graph, map, startPos, startRegionId, targetRegionId, targetPos,
                 "measure", false, false);
         SearchOutcome optimal = runSearch(graph, map, startPos, startRegionId, targetRegionId, targetPos,

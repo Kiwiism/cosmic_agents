@@ -3,7 +3,7 @@ package client.command.commands.gm3;
 import client.Character;
 import client.Client;
 import client.command.Command;
-import server.bots.BotNavigationProbe;
+import server.agents.capabilities.navigation.AgentNavigationProbe;
 import server.maps.MapleMap;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class RegenNavCommand extends Command {
             return;
         }
 
-        List<String> lines = BotNavigationProbe.rebuildGraphReport(map);
+        List<String> lines = AgentNavigationProbe.rebuildGraphReport(map);
         for (String line : lines) {
             player.yellowMessage(line);
         }

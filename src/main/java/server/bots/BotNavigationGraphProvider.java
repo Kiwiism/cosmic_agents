@@ -63,37 +63,37 @@ public final class BotNavigationGraphProvider {
         }
     }
 
-    static final class GraphBuildReport {
-        final long buildAnchorPointsNs;
-        final int mapId;
-        final int totalSpeedStat;
-        final int totalJumpStat;
-        final int footholdCount;
-        final int walkableFootholdCount;
-        final int ropeCount;
-        final int regionCount;
-        final int totalEdgeCount;
-        final int walkEdgeCount;
-        final int jumpEdgeCount;
-        final int dropEdgeCount;
-        final int climbEdgeCount;
-        final int portalEdgeCount;
-        final long collectFootholdsNs;
-        final long buildRegionsNs;
-        final long addRopeRegionsNs;
-        final long buildFeatureXsNs;
-        final long buildWalkEdgesNs;
-        final long buildDropEdgesNs;
-        final long buildJumpEdgesNs;
-        final long buildRopeEntryEdgesNs;
-        final long buildRopeExitEdgesNs;
-        final long buildPortalEdgesNs;
-        final long totalBuildNs;
-        final long jumpSampleCount;
-        final long jumpCacheHitCount;
-        final long jumpCacheMissCount;
-        final long jumpBoundaryRefineProbeCount;
-        final List<JumpRegionProfile> slowestJumpRegions;
+    public static final class GraphBuildReport {
+        public final long buildAnchorPointsNs;
+        public final int mapId;
+        public final int totalSpeedStat;
+        public final int totalJumpStat;
+        public final int footholdCount;
+        public final int walkableFootholdCount;
+        public final int ropeCount;
+        public final int regionCount;
+        public final int totalEdgeCount;
+        public final int walkEdgeCount;
+        public final int jumpEdgeCount;
+        public final int dropEdgeCount;
+        public final int climbEdgeCount;
+        public final int portalEdgeCount;
+        public final long collectFootholdsNs;
+        public final long buildRegionsNs;
+        public final long addRopeRegionsNs;
+        public final long buildFeatureXsNs;
+        public final long buildWalkEdgesNs;
+        public final long buildDropEdgesNs;
+        public final long buildJumpEdgesNs;
+        public final long buildRopeEntryEdgesNs;
+        public final long buildRopeExitEdgesNs;
+        public final long buildPortalEdgesNs;
+        public final long totalBuildNs;
+        public final long jumpSampleCount;
+        public final long jumpCacheHitCount;
+        public final long jumpCacheMissCount;
+        public final long jumpBoundaryRefineProbeCount;
+        public final List<JumpRegionProfile> slowestJumpRegions;
 
         GraphBuildReport(int mapId,
                          int totalSpeedStat,
@@ -158,13 +158,13 @@ public final class BotNavigationGraphProvider {
         }
     }
 
-    record JumpRegionProfile(int regionId,
-                             int width,
-                             int sampleCount,
-                             int edgeCount,
-                             int cacheHits,
-                             int cacheMisses,
-                             long elapsedNs) {
+    public record JumpRegionProfile(int regionId,
+                                    int width,
+                                    int sampleCount,
+                                    int edgeCount,
+                                    int cacheHits,
+                                    int cacheMisses,
+                                    long elapsedNs) {
     }
 
     private static final class BuildProfileBuilder {
@@ -298,11 +298,11 @@ public final class BotNavigationGraphProvider {
         private final Set<RopeGrabKey> misses = new HashSet<>();
     }
 
-    static BotNavigationGraph getGraph(MapleMap map) {
+    public static BotNavigationGraph getGraph(MapleMap map) {
         return getGraph(map, AgentMovementProfile.base());
     }
 
-    static BotNavigationGraph getGraph(MapleMap map, AgentMovementProfile movementProfile) {
+    public static BotNavigationGraph getGraph(MapleMap map, AgentMovementProfile movementProfile) {
         if (map == null) {
             return null;
         }
@@ -383,11 +383,11 @@ public final class BotNavigationGraphProvider {
         getOrStartGraphLoad(map, movementProfile, key, true);
     }
 
-    static BotNavigationGraph rebuildGraph(MapleMap map) {
+    public static BotNavigationGraph rebuildGraph(MapleMap map) {
         return rebuildGraph(map, AgentMovementProfile.base());
     }
 
-    static BotNavigationGraph rebuildGraph(MapleMap map, AgentMovementProfile movementProfile) {
+    public static BotNavigationGraph rebuildGraph(MapleMap map, AgentMovementProfile movementProfile) {
         GraphCacheKey key = GraphCacheKey.from(map.getId(), movementProfile);
         BotNavigationGraph rebuilt = buildGraph(map, movementProfile);
         GRAPHS.put(key, rebuilt);
@@ -639,11 +639,11 @@ public final class BotNavigationGraphProvider {
         }
     }
 
-    static GraphBuildReport getLastBuildReport(int mapId) {
+    public static GraphBuildReport getLastBuildReport(int mapId) {
         return getLastBuildReport(mapId, AgentMovementProfile.base());
     }
 
-    static GraphBuildReport getLastBuildReport(int mapId, AgentMovementProfile movementProfile) {
+    public static GraphBuildReport getLastBuildReport(int mapId, AgentMovementProfile movementProfile) {
         return LAST_BUILD_REPORTS.get(GraphCacheKey.from(mapId, movementProfile));
     }
 

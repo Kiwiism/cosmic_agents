@@ -79,7 +79,7 @@ public class BotMovementManager {
         }
     }
 
-    static final class JumpLanding {
+    public static final class JumpLanding {
         private final Point point;
         private final Foothold foothold;
 
@@ -88,11 +88,11 @@ public class BotMovementManager {
             this.foothold = foothold;
         }
 
-        Point point() {
+        public Point point() {
             return point;
         }
 
-        Foothold foothold() {
+        public Foothold foothold() {
             return foothold;
         }
     }
@@ -155,7 +155,7 @@ public class BotMovementManager {
         return wrapLanding(BotPhysicsEngine.simulateJumpLanding(map, from, stepX));
     }
 
-    static JumpLanding simulateJumpLanding(MapleMap map, Point from, int stepX, AgentMovementProfile profile) {
+    public static JumpLanding simulateJumpLanding(MapleMap map, Point from, int stepX, AgentMovementProfile profile) {
         return wrapLanding(BotPhysicsEngine.simulateJumpLanding(map, from, stepX, profile));
     }
 

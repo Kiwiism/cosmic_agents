@@ -1301,6 +1301,10 @@ Recent reconstruction notes:
   `server.agents.capabilities.social.airshow.AgentAirshowService`; command
   routing, scripted frame timing, trail packet behavior, and restore/reset
   behavior are preserved.
+- Navigation probe/report tooling now lives in
+  `server.agents.capabilities.navigation.AgentNavigationProbe`; `@regennav`
+  output, CLI probe formatting, graph build reports, and optimality measurement
+  remain unchanged.
 - Fidget mode and trigger state now use `AgentFidgetMode` and
   `AgentFidgetTrigger` under the Agent movement fidget capability; BotEntry and
   BotFidgetManager preserve the same NONE/WAIT/JUMP/DIAGONAL_JUMP/PRONE/

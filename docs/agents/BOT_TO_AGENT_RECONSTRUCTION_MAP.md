@@ -74,6 +74,10 @@ Recent map updates:
   `server.agents.capabilities.social.airshow.AgentAirshowService`. Airshow
   command syntax, frame timing, trail monster packets, and restore behavior are
   unchanged.
+- `server.bots.BotNavigationProbe` has moved to
+  `server.agents.capabilities.navigation.AgentNavigationProbe`. `@regennav`,
+  CLI probe formatting, graph build reporting, point/edge/path probes, and
+  optimality measurement behavior are unchanged.
 - `server.bots.BotCommandParser` has moved to
   `server.agents.integration.AgentBotCommandParser`. Bot-entry target
   adaptation, transfer command wrapping, and targeted-command feedback are
@@ -140,7 +144,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotNavigationGraphProvider.java` | `server.agents.capabilities.navigation.AgentNavigationGraphService` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
 | `src/main/java/server/bots/BotNavigationManager.java` | `server.agents.capabilities.navigation` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
 | `src/main/java/server/bots/BotNavigationMapLoader.java` | `server.agents.capabilities.navigation.AgentNavigationMapLoader` | `MIGRATED_TO_AGENT` |
-| `src/main/java/server/bots/BotNavigationProbe.java` | `server.agents.capabilities.navigation.AgentNavigationProbe` | `MIGRATE_TO_AGENT` |
+| `src/main/java/server/bots/BotNavigationProbe.java` | `server.agents.capabilities.navigation.AgentNavigationProbe` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotOfferManager.java` | `server.agents.capabilities.trade.AgentOfferService`, `equipment`, `server.agents.capabilities.dialogue.AgentDialogueCatalog` | `SPLIT_TO_MULTIPLE_AGENT_MODULES`; offer accept/decline replies, owner-upgrade request prompts, and loot-offer prompt templates are Agent-owned |
 | `src/main/java/server/bots/BotOwnershipService.java` | `server.agents.auth.AgentOwnershipService` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotPathLogger.java` | `server.agents.monitoring.AgentPathLogger` | `MIGRATED_TO_AGENT` |
