@@ -1266,6 +1266,11 @@ Recent reconstruction notes:
   live-mob and spawn-template fallback behavior, and range-report inputs are
   unchanged while the remaining equipment optimizer still lives temporarily in
   `BotEquipManager`.
+- Equipment weapon/job compatibility and weapon usefulness track-key selection
+  now live in `server.agents.capabilities.equipment.AgentWeaponCompatibilityPolicy`.
+  First-job skill-family detection, warrior weapon-family checks, mage grouping,
+  and self-reserve weapon track labels are unchanged; `BotEquipManager` keeps
+  compatibility wrapper methods while the larger optimizer is reconstructed.
 - Physics position, horizontal-speed, and ground-travel carry state now enter
   through `AgentBotMovementPhysicsStateRuntime`; BotPhysicsEngine preserves
   landing, grounded travel, swim, airborne collision, climb-position, and reset
