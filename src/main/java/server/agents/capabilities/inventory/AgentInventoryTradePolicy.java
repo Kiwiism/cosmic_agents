@@ -59,6 +59,20 @@ public final class AgentInventoryTradePolicy {
         return total;
     }
 
+    public static List<Item> sortItemsByItemId(List<Item> items) {
+        return items.stream()
+                .sorted(Comparator.comparingInt(Item::getItemId).thenComparingInt(Item::getPosition))
+                .toList();
+    }
+
+    public static List<Item> sortEquipsByItemId(List<Item> items) {
+        if (items.size() <= 1) return items;
+        List<Item> sorted = sortItemsByItemId(items);
+        items.clear();
+        items.addAll(sorted);
+        return items;
+    }
+
     public static List<Item> sortReservedEquipsByTradeScore(List<Item> items, Character agent) {
         if (items.size() <= 1) return items;
         Job job = agent.getJob();

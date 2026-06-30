@@ -231,10 +231,7 @@ class BotInventoryManagerTest {
         when(midId.getItemId()).thenReturn(1070000);
         when(midId.getPosition()).thenReturn((short) 2);
 
-        Method sortEquipsByItemId = method(BotInventoryManager.class, "sortEquipsByItemId", List.class);
-
-        List<Item> sorted = (List<Item>) sortEquipsByItemId.invoke(
-                null,
+        List<Item> sorted = AgentInventoryTradePolicy.sortEquipsByItemId(
                 new java.util.ArrayList<>(List.of(lowScoreHighId, highScoreLowId, midId)));
 
         assertEquals(List.of(highScoreLowId, midId, lowScoreHighId), sorted);

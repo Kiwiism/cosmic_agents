@@ -1295,6 +1295,9 @@ Recent reconstruction notes:
   `AgentInventoryTradePolicy`: own-class reserved equip scoring and
   worst-to-best sort order preserve the same job-sensitive stat weighting while
   `BotInventoryManager` remains the temporary trade sequencing seam.
+- Inventory item-id trade ordering now enters through `AgentInventoryTradePolicy`.
+  Plain inventory-view sorting still orders by item id then bag position, and
+  bot trade sequencing remains unchanged through compatibility delegates.
 - Physics position, horizontal-speed, and ground-travel carry state now enter
   through `AgentBotMovementPhysicsStateRuntime`; BotPhysicsEngine preserves
   landing, grounded travel, swim, airborne collision, climb-position, and reset

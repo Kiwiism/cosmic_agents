@@ -1285,11 +1285,7 @@ public class BotInventoryManager {
 
     /** Orders equips like a plain inventory view: itemId first, then bag position. */
     private static List<Item> sortEquipsByItemId(List<Item> items) {
-        if (items.size() <= 1) return items;
-        List<Item> sorted = sortItemsByItemId(items);
-        items.clear();
-        items.addAll(sorted);
-        return items;
+        return AgentInventoryTradePolicy.sortEquipsByItemId(items);
     }
 
     /** Orders own reserved equips worst-to-best using the existing trade score helper. */
@@ -1599,12 +1595,7 @@ public class BotInventoryManager {
     }
 
     private static List<Item> sortItemsByItemId(List<Item> items) {
-        if (items.size() <= 1) {
-            return items;
-        }
-        List<Item> sorted = new ArrayList<>(items);
-        sorted.sort(Comparator.comparingInt(Item::getItemId).thenComparingInt(Item::getPosition));
-        return sorted;
+        return AgentInventoryTradePolicy.sortItemsByItemId(items);
     }
 
     private static int dropFromBag(Character bot, InventoryType type, Predicate<Item> filter) {
