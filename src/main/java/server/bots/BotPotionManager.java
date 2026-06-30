@@ -22,6 +22,7 @@ import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.agents.integration.AgentBotPotionDonorPlan;
 import server.agents.integration.AgentBotPotionRuntime;
 import server.agents.integration.AgentBotPotionStateRuntime;
+import server.agents.integration.AgentBotCombatAmmoCheckRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.StatEffect;
 
@@ -173,7 +174,8 @@ public final class BotPotionManager {
         AgentPerformanceMonitor.recordSince("potion-autopot", startedAt);
 
         startedAt = AgentPerformanceMonitor.start();
-        BotCombatManager.tickAmmoCheck(entry, bot);
+        AgentBotCombatAmmoCheckRuntime.tickAmmoCheck(entry, bot,
+                BotCombatManager.cfg.AMMO_LOW_WARN, BotManager.cfg.POT_LOW_WARN);
         AgentPerformanceMonitor.recordSince("potion-ammo-check", startedAt);
 
         if (!AgentBotModeStateRuntime.grinding(entry) && !AgentBotModeStateRuntime.following(entry)) {

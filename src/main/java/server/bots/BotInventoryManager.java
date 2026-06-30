@@ -1140,7 +1140,7 @@ public class BotInventoryManager {
         return result;
     }
 
-    static StatEffect itemEffect(int itemId) {
+    public static StatEffect itemEffect(int itemId) {
         try { return ItemInformationProvider.getInstance().getItemEffect(itemId); }
         catch (Exception e) { return null; }
     }

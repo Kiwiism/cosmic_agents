@@ -332,7 +332,7 @@ public class BotManager {
         return true;
     }
 
-    static String randomReply(List<String> list) {
+    public static String randomReply(List<String> list) {
         return list.get(ThreadLocalRandom.current().nextInt(list.size()));
     }
 

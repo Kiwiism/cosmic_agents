@@ -1684,6 +1684,10 @@ Recent reconstruction notes:
   memory now live in `AgentBotMobTouchRuntime`; BotCombatManager preserves the
   same hostile-living-monster filtering and damage application path while
   delegating touch detection to Agent runtime.
+- Combat ammo/MP-potion shortage checks now live in
+  `AgentBotCombatAmmoCheckRuntime`; potion and shop flows call the Agent-owned
+  runtime while preserving the same ammo thresholds, no-ammo state, follow-owner
+  fallback, and map-chat replies.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

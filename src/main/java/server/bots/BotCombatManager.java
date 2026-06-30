@@ -10,7 +10,6 @@ import server.agents.capabilities.combat.AgentBasicAttackPlanner;
 import server.agents.capabilities.combat.AgentCombatAttackExecutionPolicy;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
-import server.agents.capabilities.combat.AgentCombatAmmoPolicy;
 import server.agents.capabilities.combat.AgentFallDamageCalculator;
 import server.agents.capabilities.combat.AgentCombatSkillClassifier;
 import server.agents.capabilities.combat.AgentCombatWeaponPolicy;
@@ -40,8 +39,6 @@ import client.BuffStat;
 import client.Character;
 import client.Skill;
 import client.SkillFactory;
-import client.inventory.InventoryType;
-import client.inventory.Item;
 import client.inventory.WeaponType;
 import constants.skills.Assassin;
 import constants.skills.Bandit;
@@ -1261,70 +1258,6 @@ public class BotCombatManager {
                 AgentCombatSupportPolicy.supportCastSummary(
                         AgentCombatDialogueReporter.combatSkillLabel(skill.getId())));
         return true;
-    }
-
-    /** Returns true if the bot's weapon type requires projectile ammo. */
-    /**
-     * Periodically checks ammo for ranged bots. Piggybacks on the pot-check timer.
-     * Warns at AMMO_LOW_WARN, stops grinding and follows owner at 0.
-     */
-    static void tickAmmoCheck(BotEntry entry, Character bot) {
-        WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
-        boolean mage = weaponType == WeaponType.WAND || weaponType == WeaponType.STAFF;
-        boolean rangedAmmoWeapon = AgentCombatAmmoCounter.isRangedAmmoWeapon(weaponType);
-        int mpPotionCount = 0;
-        int ammo = Integer.MAX_VALUE;
-        if (mage) {
-            for (Item item : bot.getInventory(InventoryType.USE).list()) {
-                if (item.getQuantity() <= 0) {
-                    continue;
-                }
-                StatEffect effect = BotInventoryManager.itemEffect(item.getItemId());
-                if (effect == null || !effect.getStatups().isEmpty()) {
-                    continue;
-                }
-                if (effect.getMp() > 0 || effect.getMpRate() > 0) {
-                    mpPotionCount += item.getQuantity();
-                    if (mpPotionCount >= BotManager.cfg.POT_LOW_WARN) {
-                        break;
-                    }
-                }
-            }
-        } else if (rangedAmmoWeapon) {
-            ammo = AgentCombatAmmoCounter.countAmmo(bot, weaponType);
-        }
-
-        AgentCombatAmmoPolicy.AmmoCheckDecision decision = AgentCombatAmmoPolicy.ammoCheckDecision(
-                mage,
-                rangedAmmoWeapon,
-                mpPotionCount,
-                ammo,
-                cfg.AMMO_LOW_WARN,
-                AgentBotAmmoStateRuntime.ammoWarnSent(entry),
-                AgentBotAmmoStateRuntime.noAmmo(entry));
-        switch (decision) {
-            case CLEAR_WARNING_STATE -> AgentBotAmmoStateRuntime.clearAmmoWarningState(entry);
-            case MAGE_NO_MP_POTS -> {
-                AgentBotAmmoStateRuntime.setNoAmmo(entry, true);
-                if (AgentBotModeStateRuntime.grinding(entry)) {
-                    BotManager.getInstance().issueFollowOwner(entry);
-                    AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(AgentDialogueCatalog.combatMpPotsOutReplies()));
-                }
-            }
-            case PROJECTILE_LOW_AMMO -> {
-                AgentBotAmmoStateRuntime.setAmmoWarnSent(entry, true);
-                AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(AgentDialogueCatalog.combatAmmoLowReplies()));
-            }
-            case PROJECTILE_NO_AMMO -> {
-                AgentBotAmmoStateRuntime.setNoAmmo(entry, true);
-                if (AgentBotModeStateRuntime.grinding(entry)) {
-                    BotManager.getInstance().issueFollowOwner(entry);
-                    AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(AgentDialogueCatalog.combatAmmoOutReplies()));
-                }
-            }
-            case NO_CHANGE -> {
-            }
-        }
     }
 
 }
