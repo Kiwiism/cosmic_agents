@@ -119,6 +119,10 @@ public final class AgentCombatSupportPolicy {
                 && !healSkillCooling;
     }
 
+    public static boolean shouldCastSupportHeal(boolean partyNeedsHeal, boolean hasUndeadTargets) {
+        return partyNeedsHeal || hasUndeadTargets;
+    }
+
     public static SupportCastReadiness supportCastReadiness(int skillLevel,
                                                             boolean alive,
                                                             BooleanSupplier canPaySkillCost) {

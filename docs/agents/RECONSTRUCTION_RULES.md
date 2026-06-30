@@ -1457,6 +1457,11 @@ Recent reconstruction notes:
   zero-display path, shared direction/ranged-direction value, and facing stance
   calculation. BotCombatManager still resolves concrete skill actions and
   attack timing.
+- Support-heal cast trigger policy now lives in `AgentCombatSupportPolicy`,
+  preserving the legacy rule that Heal casts when either the party needs HP or
+  undead targets are inside the Heal hitbox. BotCombatManager still resolves
+  the concrete skill bounds, live map monsters, packet broadcast, HP/MP
+  application, and movement side effects.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

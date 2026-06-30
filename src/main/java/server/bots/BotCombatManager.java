@@ -464,7 +464,7 @@ public class BotCombatManager {
         boolean selfNeedsHeal = needsHeal(bot);
         boolean partyNeedsHeal = selfNeedsHeal || hasPartyMemberInBoundsNeedingHeal(bot, healBounds);
         List<Monster> undeadTargets = getUndeadMobsInHealRange(bot, fx, healBounds);
-        if (!partyNeedsHeal && undeadTargets.isEmpty()) return false;
+        if (!AgentCombatSupportPolicy.shouldCastSupportHeal(partyNeedsHeal, !undeadTargets.isEmpty())) return false;
 
         // Jump-heal: when following and the leader has pulled ahead, kick a diagonal jump toward
         // them right before the cast. The top guard already permits casts while inAir, so the

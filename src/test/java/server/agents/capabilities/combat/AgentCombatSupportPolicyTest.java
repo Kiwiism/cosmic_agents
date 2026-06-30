@@ -121,6 +121,14 @@ class AgentCombatSupportPolicyTest {
     }
 
     @Test
+    void shouldCastSupportHealForPartyNeedOrUndeadTargetsOnly() {
+        assertTrue(AgentCombatSupportPolicy.shouldCastSupportHeal(true, false));
+        assertTrue(AgentCombatSupportPolicy.shouldCastSupportHeal(false, true));
+        assertTrue(AgentCombatSupportPolicy.shouldCastSupportHeal(true, true));
+        assertFalse(AgentCombatSupportPolicy.shouldCastSupportHeal(false, false));
+    }
+
+    @Test
     void shouldPreserveSupportCastReadinessOrder() {
         AtomicBoolean costChecked = new AtomicBoolean(false);
 
