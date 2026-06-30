@@ -1,4 +1,4 @@
-package server.bots.build;
+package server.agents.capabilities.build.profiles;
 
 import client.Job;
 import client.Skill;

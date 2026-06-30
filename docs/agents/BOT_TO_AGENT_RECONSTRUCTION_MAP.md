@@ -67,6 +67,9 @@ Recent map updates:
 - `server.bots.BotPathLogger` has moved to
   `server.agents.monitoring.AgentPathLogger`. Navigation tick capture, path-log
   formatting, graph snapshot resolution, and file output are unchanged.
+- Static skill build profile tables have moved from `server.bots.build` to
+  `server.agents.capabilities.build.profiles`. Warrior, bowman, thief, mage,
+  and build-step ordering data are unchanged.
 - `server.bots.BotCommandParser` has moved to
   `server.agents.integration.AgentBotCommandParser`. Bot-entry target
   adaptation, transfer command wrapping, and targeted-command feedback are
@@ -152,11 +155,11 @@ Recent map updates:
 | `src/main/java/server/bots/BotTask.java` | `server.agents.plans.AgentTask` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/Emote.java` | `server.agents.capabilities.dialogue.AgentEmote` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/ReplyChannel.java` | `server.agents.commands.AgentReplyChannel` | `COMPATIBILITY_ALIAS_TEMPORARY` |
-| `src/main/java/server/bots/build/BowmanBuilds.java` | `server.agents.profiles.SkillBuildProfile` | `MIGRATE_TO_AGENT` |
-| `src/main/java/server/bots/build/BuildStep.java` | `server.agents.profiles.SkillBuildStep` | `MIGRATE_TO_AGENT` |
-| `src/main/java/server/bots/build/MageBuilds.java` | `server.agents.profiles.SkillBuildProfile` | `MIGRATE_TO_AGENT` |
-| `src/main/java/server/bots/build/ThiefBuilds.java` | `server.agents.profiles.SkillBuildProfile` | `MIGRATE_TO_AGENT` |
-| `src/main/java/server/bots/build/WarriorBuilds.java` | `server.agents.profiles.SkillBuildProfile` | `MIGRATE_TO_AGENT` |
+| `src/main/java/server/bots/build/BowmanBuilds.java` | `server.agents.capabilities.build.profiles.BowmanBuilds` | `MIGRATED_TO_AGENT` |
+| `src/main/java/server/bots/build/BuildStep.java` | `server.agents.capabilities.build.profiles.BuildStep` | `MIGRATED_TO_AGENT` |
+| `src/main/java/server/bots/build/MageBuilds.java` | `server.agents.capabilities.build.profiles.MageBuilds` | `MIGRATED_TO_AGENT` |
+| `src/main/java/server/bots/build/ThiefBuilds.java` | `server.agents.capabilities.build.profiles.ThiefBuilds` | `MIGRATED_TO_AGENT` |
+| `src/main/java/server/bots/build/WarriorBuilds.java` | `server.agents.capabilities.build.profiles.WarriorBuilds` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/combat/BotAttackDataProvider.java` | `server.agents.capabilities.combat.data.AgentAttackDataProvider` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/combat/BotAttackTiming.java` | `server.agents.capabilities.combat.data.AgentAttackTiming` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/combat/BotDefenseDataProvider.java` | `server.agents.capabilities.combat.data.AgentDefenseDataProvider` | `MIGRATED_TO_AGENT` |
