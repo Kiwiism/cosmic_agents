@@ -2100,6 +2100,9 @@ Recent reconstruction notes:
   reports, sell-trash collection, and pot/ammo share collection/startup have
   been removed; production callers already use the Agent reporter, inventory,
   supplies, and trade services directly.
+- BotInventoryManager trade profiling pass-through wrappers have been removed;
+  the remaining trade state machine now calls `AgentTradeCommandProfiler`
+  directly for category profiling and slow-command logging.
 - Ammo trade grouping now lives in `AgentInventoryAmmoPolicy`;
   BotInventoryManager preserves the same safe-item filtering, own-ammo versus
   non-own-ammo split, non-own item-id ordering, and own-ammo projectile attack

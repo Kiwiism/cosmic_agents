@@ -375,7 +375,7 @@ public class BotInventoryManager {
      * Items are batched ≤9 per trade window; subsequent batches open new trades automatically.
      */
     public static void startTradeTransfer(String category, BotEntry entry, Character bot) {
-        long startedAt = profileTradeCategory(category) ? System.nanoTime() : 0L;
+        long startedAt = AgentTradeCommandProfiler.profileCategory(category) ? System.nanoTime() : 0L;
         if (AgentInventoryTradePolicy.isMesoCategory(category)) {
             startTradeMesoTransfer(category, entry, bot);
             return;
@@ -396,8 +396,8 @@ public class BotInventoryManager {
         if ("equips".equals(category)) {
             long equipsStartedAt = startedAt != 0L ? System.nanoTime() : 0L;
             startEquipsGroupTradeTransfer(owner, entry, bot);
-            logSlowTradeCommand(category, "startEquipsGroupTradeTransfer", entry, bot, equipsStartedAt);
-            logSlowTradeCommand(category, "startTradeTransfer", entry, bot, startedAt);
+            AgentTradeCommandProfiler.logSlowCommand(category, "startEquipsGroupTradeTransfer", entry, bot, equipsStartedAt, TRADE_COMMAND_PROFILE_WARN_NS, log);
+            AgentTradeCommandProfiler.logSlowCommand(category, "startTradeTransfer", entry, bot, startedAt, TRADE_COMMAND_PROFILE_WARN_NS, log);
             return;
         }
         if (AgentInventoryTradePolicy.isReservedEquipsCategory(category)) {
@@ -408,17 +408,17 @@ public class BotInventoryManager {
             }
             startTradeSequence(category, owner, items, 0, true, entry, bot);
             AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, reservedEquipsPageMessage(category, entry, bot));
-            logSlowTradeCommand(category, "startTradeTransfer", entry, bot, startedAt);
+            AgentTradeCommandProfiler.logSlowCommand(category, "startTradeTransfer", entry, bot, startedAt, TRADE_COMMAND_PROFILE_WARN_NS, log);
             return;
         }
         if ("ammo".equals(category)) {
             startAmmoGroupTradeTransfer(owner, entry, bot);
-            logSlowTradeCommand(category, "startTradeTransfer", entry, bot, startedAt);
+            AgentTradeCommandProfiler.logSlowCommand(category, "startTradeTransfer", entry, bot, startedAt, TRADE_COMMAND_PROFILE_WARN_NS, log);
             return;
         }
         long prepareStartedAt = startedAt != 0L ? System.nanoTime() : 0L;
         PreparedTradeItems prepared = prepareTradeItems(category, entry, bot);
-        logSlowTradeCommand(category, "prepareTradeItems", entry, bot, prepareStartedAt);
+        AgentTradeCommandProfiler.logSlowCommand(category, "prepareTradeItems", entry, bot, prepareStartedAt, TRADE_COMMAND_PROFILE_WARN_NS, log);
         if (prepared.errorMessage() != null) {
             AgentBotInventoryRuntime.replyNow(entry, prepared.errorMessage());
             return;
@@ -429,7 +429,7 @@ public class BotInventoryManager {
             return;
         }
         startTradeSequence(category, owner, items, 0, AgentBotPendingTradeStateRuntime.hasRestoreSlots(entry), entry, bot);
-        logSlowTradeCommand(category, "startTradeTransfer", entry, bot, startedAt);
+        AgentTradeCommandProfiler.logSlowCommand(category, "startTradeTransfer", entry, bot, startedAt, TRADE_COMMAND_PROFILE_WARN_NS, log);
     }
 
     public static void startTradeTransfer(Item item, Character recipient, BotEntry entry, Character bot) {
@@ -470,14 +470,6 @@ public class BotInventoryManager {
         }
 
         return !collectItems(category, entry, bot).isEmpty();
-    }
-
-    public static boolean profileTradeCategory(String category) {
-        return AgentTradeCommandProfiler.profileCategory(category);
-    }
-
-    public static void logSlowTradeCommand(String category, String phase, BotEntry entry, Character bot, long startedAt) {
-        AgentTradeCommandProfiler.logSlowCommand(category, phase, entry, bot, startedAt, TRADE_COMMAND_PROFILE_WARN_NS, log);
     }
 
     public static int countTransferableItems(String category, BotEntry entry, Character bot) {
@@ -1099,7 +1091,7 @@ public class BotInventoryManager {
     }
 
     private static EquipTradeGroups classifyEquipTradeGroups(BotEntry entry, Character bot) {
-        long startedAt = profileTradeCategory("equips") ? System.nanoTime() : 0L;
+        long startedAt = AgentTradeCommandProfiler.profileCategory("equips") ? System.nanoTime() : 0L;
         long bagScanStartedAt = startedAt != 0L ? System.nanoTime() : 0L;
         List<Item> all = new ArrayList<>();
         collectFromBag(bot, all, InventoryType.EQUIP, item -> true);
