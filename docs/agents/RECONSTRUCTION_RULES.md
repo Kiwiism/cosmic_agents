@@ -2074,6 +2074,10 @@ Recent reconstruction notes:
   `AgentBotPendingTradeStateRuntime` directly; the old `BotInventoryManager`
   pass-through helpers have been removed while preserving split-stack and
   temporarily-unequipped restore behavior.
+- Potion/ammo supply-share trade startup and busy-retry scheduling now live in
+  `AgentSupplyShareTradeService`; the remaining `BotInventoryManager`
+  compatibility methods delegate to it while generic trade transfer and trade
+  ticking remain later migration slices.
 - Ammo trade grouping now lives in `AgentInventoryAmmoPolicy`;
   BotInventoryManager preserves the same safe-item filtering, own-ammo versus
   non-own-ammo split, non-own item-id ordering, and own-ammo projectile attack

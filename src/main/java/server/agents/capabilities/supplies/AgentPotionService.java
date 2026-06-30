@@ -13,6 +13,7 @@ import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
+import server.agents.capabilities.trade.AgentSupplyShareTradeService;
 import server.agents.capabilities.supplies.AgentAutopotPolicy.AutopotChoice;
 import server.agents.capabilities.supplies.AgentAutopotPolicy.PotionRanking;
 import server.agents.integration.AgentBotModeStateRuntime;
@@ -24,7 +25,6 @@ import server.agents.integration.AgentBotPotionStateRuntime;
 import server.agents.integration.AgentBotCombatAmmoCheckRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
-import server.bots.BotInventoryManager;
 import server.bots.BotManager;
 import server.bots.BotMovementManager;
 import server.bots.BotPhysicsEngine;
@@ -391,7 +391,7 @@ public final class AgentPotionService {
             AgentBotPotionRuntime.sayMapNow(donorBot, BotManager.randomReply(
                     forHp ? AgentDialogueCatalog.potOfferHpReplies() : AgentDialogueCatalog.potOfferMpReplies()));
             AgentBotPotionRuntime.afterRandomDelay(900, 1100, () ->
-                    BotInventoryManager.startPotShareTransfer(items, recipient, donorEntry, donorBot, maxQty));
+                    AgentSupplyShareTradeService.startPotShareTransfer(items, recipient, donorEntry, donorBot, maxQty));
         });
     }
 

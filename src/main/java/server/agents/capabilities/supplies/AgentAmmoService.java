@@ -12,13 +12,13 @@ import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy;
 import server.agents.capabilities.supplies.AgentAmmoSharePolicy;
 import server.agents.capabilities.supplies.AgentAmmoSharePolicy.DonorScore;
+import server.agents.capabilities.trade.AgentSupplyShareTradeService;
 import server.agents.integration.AgentBotAmmoDonorPlan;
 import server.agents.integration.AgentBotAmmoRuntime;
 import server.agents.integration.AgentBotAmmoStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
-import server.bots.BotInventoryManager;
 import server.bots.BotManager;
 
 import java.util.List;
@@ -182,7 +182,7 @@ public final class AgentAmmoService {
             }
             AgentBotAmmoRuntime.sayMapNow(donorBot, BotManager.randomReply(AgentDialogueCatalog.ammoOfferReplies()));
             AgentBotAmmoRuntime.afterRandomDelay(900, 1100, () ->
-                    BotInventoryManager.startAmmoShareTransfer(items, recipient, donorEntry, donorBot, maxQty));
+                    AgentSupplyShareTradeService.startAmmoShareTransfer(items, recipient, donorEntry, donorBot, maxQty));
         });
     }
 

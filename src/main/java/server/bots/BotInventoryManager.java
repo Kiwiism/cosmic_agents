@@ -42,6 +42,7 @@ import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.supplies.AgentAmmoService;
 import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.trade.AgentOfferService;
+import server.agents.capabilities.trade.AgentSupplyShareTradeService;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotInventoryStateRuntime;
@@ -1335,16 +1336,7 @@ public class BotInventoryManager {
 
     /** Initiates a bot-to-bot pot-share trade (single batch; donor auto-confirms). */
     public static void startPotShareTransfer(List<Item> items, Character recipient, BotEntry entry, Character bot, int maxQty) {
-        if (items.isEmpty()) return;
-        if (bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry) || recipient.getTrade() != null) {
-            AgentBotPendingTradeStateRuntime.queueRetry(
-                    entry,
-                    () -> startPotShareTransfer(items, recipient, entry, bot, maxQty),
-                    BotMovementManager.delayAfterCurrentTick(10_000));
-            return;
-        }
-        AgentBotPendingTradeStateRuntime.setShareBudget(entry, maxQty);
-        startTradeSequence("pot_share", recipient, items, 0, true, entry, bot);
+        AgentSupplyShareTradeService.startPotShareTransfer(items, recipient, entry, bot, maxQty);
     }
 
     public static List<Item> collectAmmoShareItems(Character donorBot, WeaponType needyWeaponType, int maxQty) {
@@ -1352,16 +1344,7 @@ public class BotInventoryManager {
     }
 
     public static void startAmmoShareTransfer(List<Item> items, Character recipient, BotEntry entry, Character bot, int maxQty) {
-        if (items.isEmpty()) return;
-        if (bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry) || recipient.getTrade() != null) {
-            AgentBotPendingTradeStateRuntime.queueRetry(
-                    entry,
-                    () -> startAmmoShareTransfer(items, recipient, entry, bot, maxQty),
-                    BotMovementManager.delayAfterCurrentTick(10_000));
-            return;
-        }
-        AgentBotPendingTradeStateRuntime.setShareBudget(entry, maxQty);
-        startTradeSequence("ammo_share", recipient, items, 0, true, entry, bot);
+        AgentSupplyShareTradeService.startAmmoShareTransfer(items, recipient, entry, bot, maxQty);
     }
 
 }
