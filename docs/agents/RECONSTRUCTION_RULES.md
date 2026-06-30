@@ -1261,6 +1261,11 @@ Recent reconstruction notes:
   remain temporary explicit seams during navigation reconstruction. The old
   `server.bots.BotNavigationGraph` and `server.bots.BotNavigationGraphProvider`
   source files have been removed.
+- Equipment map-damage benchmarking now lives in
+  `server.agents.capabilities.equipment.AgentMapDamageProfile`. Mob selection,
+  live-mob and spawn-template fallback behavior, and range-report inputs are
+  unchanged while the remaining equipment optimizer still lives temporarily in
+  `BotEquipManager`.
 - Physics position, horizontal-speed, and ground-travel carry state now enter
   through `AgentBotMovementPhysicsStateRuntime`; BotPhysicsEngine preserves
   landing, grounded travel, swim, airborne collision, climb-position, and reset

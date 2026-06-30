@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.equipment.AgentMapDamageProfile;
+
 import client.Character;
 import client.Job;
 import org.junit.jupiter.api.Test;
@@ -20,7 +22,7 @@ class AgentBotRangeReportRuntimeTest {
         when(bot.getTotalLuk()).thenReturn(50);
 
         String report = AgentBotRangeReportRuntime.rangeReport(bot,
-                new BotEquipManager.MapDamageProfile(100, 30, 50));
+                new AgentMapDamageProfile(100, 30, 50));
 
         assertEquals("my dmg is 3-9, matk 200, magic acc 75 | hit 26% vs hardest mob (avd 30)", report);
     }

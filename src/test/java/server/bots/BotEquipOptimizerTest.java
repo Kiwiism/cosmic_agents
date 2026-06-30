@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.equipment.AgentMapDamageProfile;
+
 import client.Character;
 import client.Job;
 import client.inventory.Equip;
@@ -70,8 +72,8 @@ class BotEquipOptimizerTest {
                 /*watk*/ 0, /*magic*/ 0, /*flatAcc*/ 0,
                 /*level*/ 50, /*fame*/ 0, Job.BOWMAN);
 
-        BotEquipManager.MapDamageProfile mob =
-                new BotEquipManager.MapDamageProfile(/*wdef*/ 50, /*avoid*/ 30, /*level*/ 55);
+        AgentMapDamageProfile mob =
+                new AgentMapDamageProfile(/*wdef*/ 50, /*avoid*/ 30, /*level*/ 55);
 
         BotEquipManager.DpResult resultW1 = BotEquipManager.solveForWeapon(
                 bot, hooks, naked, w1, asList(CHAIN_SLOTS), currentBySlot, bySlot, mob);
@@ -119,8 +121,8 @@ class BotEquipOptimizerTest {
 
         BotEquipManager.StatSnapshot naked = new BotEquipManager.StatSnapshot(
                 4, 30, 4, 4, 0, 0, 0, 50, 0, Job.BOWMAN);
-        BotEquipManager.MapDamageProfile mob =
-                new BotEquipManager.MapDamageProfile(50, 30, 55);
+        AgentMapDamageProfile mob =
+                new AgentMapDamageProfile(50, 30, 55);
 
         BotEquipManager.DpResult resultW0 = BotEquipManager.solveForWeapon(
                 bot, hooks, naked, w0, asList(CHAIN_SLOTS), currentBySlot, bySlot, mob);
@@ -230,8 +232,8 @@ class BotEquipOptimizerTest {
                 /*str*/ 4, /*dex*/ 50, /*int_*/ 4, /*luk*/ 152,
                 /*watk*/ 0, /*magic*/ 0, /*flatAcc*/ 0,
                 /*level*/ 38, /*fame*/ 0, Job.ASSASSIN);
-        BotEquipManager.MapDamageProfile mob =
-                new BotEquipManager.MapDamageProfile(/*wdef*/ 70, /*avoid*/ 0, /*level*/ 40);
+        AgentMapDamageProfile mob =
+                new AgentMapDamageProfile(/*wdef*/ 70, /*avoid*/ 0, /*level*/ 40);
 
         BotEquipManager.DpResult result = BotEquipManager.solveForWeapon(
                 bot, hooks, naked, claw, List.of(S_GLOVE), currentBySlot, bySlot, mob);
@@ -292,8 +294,8 @@ class BotEquipOptimizerTest {
                 /*str*/ 4, /*dex*/ 4, /*int_*/ 200, /*luk*/ 42,
                 /*watk*/ 0, /*magic*/ 200, /*flatAcc*/ 0,
                 /*level*/ 46, /*fame*/ 0, Job.CLERIC);
-        BotEquipManager.MapDamageProfile mob =
-                new BotEquipManager.MapDamageProfile(/*wdef*/ 0, /*avoid*/ 0, /*level*/ 50);
+        AgentMapDamageProfile mob =
+                new AgentMapDamageProfile(/*wdef*/ 0, /*avoid*/ 0, /*level*/ 50);
 
         BotEquipManager.DpResult result = BotEquipManager.solveForWeapon(
                 bot, hooks, naked, /*weapon*/ null, List.of(S_HAT), currentBySlot, bySlot, mob);

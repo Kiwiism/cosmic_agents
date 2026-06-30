@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.equipment.AgentMapDamageProfile;
+
 import client.Character;
 import client.Job;
 import client.inventory.Equip;
@@ -210,7 +212,7 @@ class BotEquipManagerTest {
         moreEvasive.setAvoidability(25);
         moreEvasive.setPDDamage(80);
 
-        BotEquipManager.MapDamageProfile profile = BotEquipManager.MapDamageProfile.fromStats(
+        AgentMapDamageProfile profile = AgentMapDamageProfile.fromStats(
                 List.of(weaker, moreEvasive));
 
         assertEquals(48, profile.mobLevel());
@@ -952,7 +954,7 @@ class BotEquipManagerTest {
                 (short) -49, medal);
         BotEquipManager.StatSnapshot naked = new BotEquipManager.StatSnapshot(
                 4, 35, 4, 227, 21, 24, 25, 50, 2, Job.ASSASSIN);
-        BotEquipManager.MapDamageProfile mob = new BotEquipManager.MapDamageProfile(120, 16, 41);
+        AgentMapDamageProfile mob = new AgentMapDamageProfile(120, 16, 41);
 
         long startedAt = System.nanoTime();
         boolean anyCap = false;

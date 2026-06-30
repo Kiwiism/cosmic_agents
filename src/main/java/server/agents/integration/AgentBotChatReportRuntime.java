@@ -1,5 +1,7 @@
 package server.agents.integration;
 
+import server.agents.capabilities.equipment.AgentMapDamageProfile;
+
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatReportFlow;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
@@ -35,7 +37,7 @@ public final class AgentBotChatReportRuntime {
         return AgentBotRangeReportRuntime.rangeReport(bot);
     }
 
-    public static String buildRangeReport(Character bot, BotEquipManager.MapDamageProfile mobProfile) {
+    public static String buildRangeReport(Character bot, AgentMapDamageProfile mobProfile) {
         return AgentBotRangeReportRuntime.rangeReport(bot, mobProfile);
     }
 

@@ -1,5 +1,7 @@
 package server.agents.integration;
 
+import server.agents.capabilities.equipment.AgentMapDamageProfile;
+
 import client.Character;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.bots.BotEquipManager;
@@ -13,17 +15,17 @@ public final class AgentBotRangeReportRuntime {
     }
 
     public static String rangeReport(Character bot) {
-        BotEquipManager.MapDamageProfile dmgProfile = BotEquipManager.MapDamageProfile.snapshot(bot);
-        BotEquipManager.MapDamageProfile hitProfile = BotEquipManager.MapDamageProfile.snapshotByAvoid(bot);
+        AgentMapDamageProfile dmgProfile = AgentMapDamageProfile.snapshot(bot);
+        AgentMapDamageProfile hitProfile = AgentMapDamageProfile.snapshotByAvoid(bot);
         return rangeReport(bot, dmgProfile, hitProfile);
     }
 
-    public static String rangeReport(Character bot, BotEquipManager.MapDamageProfile mobProfile) {
+    public static String rangeReport(Character bot, AgentMapDamageProfile mobProfile) {
         return rangeReport(bot, mobProfile, mobProfile);
     }
 
-    private static String rangeReport(Character bot, BotEquipManager.MapDamageProfile mobProfile,
-                                      BotEquipManager.MapDamageProfile hitProfile) {
+    private static String rangeReport(Character bot, AgentMapDamageProfile mobProfile,
+                                      AgentMapDamageProfile hitProfile) {
         AgentCombatDialogueReporter.MobHitProfile agentHitProfile = hitProfile == null
                 ? null
                 : new AgentCombatDialogueReporter.MobHitProfile(hitProfile.mobLevel(), hitProfile.mobAvoid());

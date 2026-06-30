@@ -22,15 +22,11 @@ import constants.skills.WhiteKnight;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.ItemInformationProvider;
+import server.agents.capabilities.combat.data.AgentAttackDataProvider;
+import server.agents.capabilities.equipment.AgentMapDamageProfile;
 import server.agents.integration.AgentBotEquipmentRuntime;
 import server.agents.integration.AgentBotRangeReportRuntime;
-import server.agents.capabilities.combat.data.AgentAttackDataProvider;
 import server.combat.CombatFormulaProvider;
-import server.life.LifeFactory;
-import server.life.Monster;
-import server.life.MonsterStats;
-import server.life.SpawnPoint;
-import server.maps.MapleMap;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -114,7 +110,7 @@ public class BotEquipManager {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         Inventory eqpInv = bot.getInventory(InventoryType.EQUIP);
         Inventory eqdInv = bot.getInventory(InventoryType.EQUIPPED);
-        MapDamageProfile mob = MapDamageProfile.snapshotByAvoid(bot);
+        AgentMapDamageProfile mob = AgentMapDamageProfile.snapshotByAvoid(bot);
 
         Map<Short, List<Equip>> bySlot = collectAutoEquipCandidates(bot, ii, eqpInv, eqdInv, pendingOffer);
         Map<Short, Equip> currentBySlot = new HashMap<>();
@@ -230,7 +226,7 @@ public class BotEquipManager {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         Inventory eqpInv = bot.getInventory(InventoryType.EQUIP);
         Inventory eqdInv = bot.getInventory(InventoryType.EQUIPPED);
-        MapDamageProfile mob = MapDamageProfile.snapshotByAvoid(bot);
+        AgentMapDamageProfile mob = AgentMapDamageProfile.snapshotByAvoid(bot);
 
         List<String> out = new ArrayList<>();
         if (mob == null) {
@@ -344,7 +340,7 @@ public class BotEquipManager {
      */
     @SuppressWarnings("unchecked")
     private static String writeAutoEquipDumpFile(Character bot, ItemInformationProvider ii,
-            Inventory eqpInv, Inventory eqdInv, MapDamageProfile mob, StatSnapshot naked,
+            Inventory eqpInv, Inventory eqdInv, AgentMapDamageProfile mob, StatSnapshot naked,
             Map<Short, List<Equip>> bySlot, List<Short> dpSlots, List<Equip> weaponPool,
             List<?> branches, boolean anyCap) {
         java.time.LocalDateTime now = java.time.LocalDateTime.now();
@@ -578,7 +574,7 @@ public class BotEquipManager {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         Inventory eqpInv = bot.getInventory(InventoryType.EQUIP);
         Inventory eqdInv = bot.getInventory(InventoryType.EQUIPPED);
-        MapDamageProfile mob = MapDamageProfile.snapshotByAvoid(bot);
+        AgentMapDamageProfile mob = AgentMapDamageProfile.snapshotByAvoid(bot);
 
         Map<Short, List<Equip>> bySlot = scope == RecommendationScope.IMMEDIATE
                 ? collectAutoEquipCandidates(bot, ii, eqpInv, eqdInv, null)
@@ -735,7 +731,7 @@ public class BotEquipManager {
                                             List<Short> dpSlots,
                                             Map<Short, Equip> currentBySlot,
                                             Map<Short, List<Equip>> bySlot,
-                                            MapDamageProfile mob) {
+                                            AgentMapDamageProfile mob) {
         return solveForWeapon(bot, ii, naked, weapon, dpSlots, currentBySlot, bySlot,
                 mob, scanReqRelevantDims(bySlot, ii));
     }
@@ -745,7 +741,7 @@ public class BotEquipManager {
                                             List<Short> dpSlots,
                                             Map<Short, Equip> currentBySlot,
                                             Map<Short, List<Equip>> bySlot,
-                                            MapDamageProfile mob,
+                                            AgentMapDamageProfile mob,
                                             boolean[] reqRel) {
         return solveForWeapon(bot, OptimizerHooks.from(ii), naked, weapon, dpSlots,
                               currentBySlot, bySlot, mob, reqRel);
@@ -756,7 +752,7 @@ public class BotEquipManager {
                                             List<Short> dpSlots,
                                             Map<Short, Equip> currentBySlot,
                                             Map<Short, List<Equip>> bySlot,
-                                            MapDamageProfile mob) {
+                                            AgentMapDamageProfile mob) {
         return solveForWeapon(bot, hooks, naked, weapon, dpSlots, currentBySlot, bySlot,
                 mob, scanReqRelevantDims(bySlot, hooks));
     }
@@ -766,7 +762,7 @@ public class BotEquipManager {
                                             List<Short> dpSlots,
                                             Map<Short, Equip> currentBySlot,
                                             Map<Short, List<Equip>> bySlot,
-                                            MapDamageProfile mob,
+                                            AgentMapDamageProfile mob,
                                             boolean[] reqRel) {
         StatSnapshot init = weapon != null ? naked.swap(null, weapon) : naked;
         boolean is2H = weapon != null && hooks.isTwoHanded(weapon.getItemId());
@@ -1085,7 +1081,7 @@ public class BotEquipManager {
         return new DpNode(s, hp, mp, statSum, picks);
     }
 
-    private static EquipScore scoreNode(DpNode node, Equip weapon, WeaponType wt, MapDamageProfile mob) {
+    private static EquipScore scoreNode(DpNode node, Equip weapon, WeaponType wt, AgentMapDamageProfile mob) {
         if (isMageJob(node.snap.job())) {
             return new EquipScore(magicScore(node.snap), node.statSum);
         }
@@ -1107,7 +1103,7 @@ public class BotEquipManager {
     }
 
     private static WeaponScoreBreakdown weaponScoreBreakdown(StatSnapshot sim, Equip weapon, WeaponType wt,
-                                                             MapDamageProfile mob) {
+                                                             AgentMapDamageProfile mob) {
         if (isMageJob(sim.job()) || wt == null) {
             return new WeaponScoreBreakdown(0, 0, 0, 0);
         }
@@ -1814,13 +1810,13 @@ public class BotEquipManager {
     }
 
     /**
-     * Computes max-base damage from a simulated stat snapshot, then if a {@link MapDamageProfile}
+     * Computes max-base damage from a simulated stat snapshot, then if a {@link AgentMapDamageProfile}
      * is available approximates expected per-hit damage as the integral of
      * {@code max(1, uniform[min,max] - wdef)} where min ≈ max/2 (low-mastery proxy). Falls back
      * to raw max when no map context (town, recommendations from trade).
      */
     private static int damageWith(StatSnapshot sim, ItemInformationProvider ii, WeaponType wtype,
-                                   MapDamageProfile mobProfile) {
+                                   AgentMapDamageProfile mobProfile) {
         int rawMax = rawPhysicalMax(sim, wtype);
         if (rawMax <= 0) return 0;
         if (mobProfile == null) {
@@ -2141,84 +2137,6 @@ public class BotEquipManager {
 
         private static int d(Equip a, Equip r, ToIntFunction<Equip> g) {
             return (a != null ? g.applyAsInt(a) : 0) - (r != null ? g.applyAsInt(r) : 0);
-        }
-    }
-
-    /**
-     * Stats of the highest-level non-friendly mob on the bot's map. Includes currently
-     * alive mobs and normal spawn templates, so an equip pass that runs while the room is
-     * briefly clear still benchmarks against the map's mobs instead of raw damage.
-     * Returns null when no map context is available or no map mobs are present.
-     */
-    public record MapDamageProfile(int mobWdef, int mobAvoid, int mobLevel) {
-        public static MapDamageProfile snapshot(Character bot) {
-            return fromStats(collectCandidates(bot));
-        }
-
-        public static MapDamageProfile snapshotByAvoid(Character bot) {
-            return fromStatsByAvoid(collectCandidates(bot));
-        }
-
-        private static List<MonsterStats> collectCandidates(Character bot) {
-            if (bot == null) return null;
-            MapleMap map;
-            try { map = bot.getMap(); } catch (Throwable t) { return null; }
-            if (map == null) return null;
-            List<MonsterStats> candidates = new ArrayList<>();
-            List<Monster> mobs;
-            try { mobs = map.getAllMonsters(); } catch (Throwable t) { return null; }
-            if (mobs != null) {
-                for (Monster m : mobs) {
-                    if (m == null || !m.isAlive()) continue;
-                    MonsterStats s = m.getStats();
-                    if (s != null) candidates.add(s);
-                }
-            }
-            try {
-                for (SpawnPoint spawn : map.getMonsterSpawn()) {
-                    if (spawn == null || spawn.getDenySpawn() || spawn.getMobTime() < 0) continue;
-                    Monster template = LifeFactory.getMonster(spawn.getMonsterId());
-                    if (template != null && template.getStats() != null) {
-                        candidates.add(template.getStats());
-                    }
-                }
-            } catch (Throwable ignored) {
-                // Live mobs are enough; spawn templates are only a fallback/stabilizer.
-            }
-            return candidates;
-        }
-
-        static MapDamageProfile fromStats(List<MonsterStats> candidates) {
-            if (candidates == null || candidates.isEmpty()) return null;
-            MonsterStats picked = null;
-            for (MonsterStats s : candidates) {
-                if (s == null || s.isFriendly()) continue;
-                if (picked == null
-                        || s.getLevel() > picked.getLevel()
-                        || (s.getLevel() == picked.getLevel() && s.getAvoidability() > picked.getAvoidability())
-                        || (s.getLevel() == picked.getLevel()
-                            && s.getAvoidability() == picked.getAvoidability()
-                            && s.getPDDamage() > picked.getPDDamage())) {
-                    picked = s;
-                }
-            }
-            if (picked == null) return null;
-            return new MapDamageProfile(picked.getPDDamage(), picked.getAvoidability(), picked.getLevel());
-        }
-
-        static MapDamageProfile fromStatsByAvoid(List<MonsterStats> candidates) {
-            if (candidates == null || candidates.isEmpty()) return null;
-            MonsterStats picked = null;
-            for (MonsterStats s : candidates) {
-                if (s == null || s.isFriendly()) continue;
-                if (picked == null
-                        || s.getAvoidability() > picked.getAvoidability()
-                        || (s.getAvoidability() == picked.getAvoidability() && s.getLevel() > picked.getLevel())) {
-                    picked = s;
-                }
-            }
-            if (picked == null) return null;
-            return new MapDamageProfile(picked.getPDDamage(), picked.getAvoidability(), picked.getLevel());
         }
     }
 

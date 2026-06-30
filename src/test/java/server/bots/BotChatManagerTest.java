@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.equipment.AgentMapDamageProfile;
+
 import server.agents.capabilities.trade.AgentOfferService;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
@@ -328,7 +330,7 @@ class BotChatManagerTest {
         when(bot.calculateMaxBaseDamage(20)).thenReturn(99);
 
         String report = AgentBotChatReportRuntime.buildRangeReport(bot,
-                new BotEquipManager.MapDamageProfile(100, 40, 48));
+                new AgentMapDamageProfile(100, 40, 48));
 
         assertEquals("my dmg is 50-99, watk 20, acc 100 | hit 47% vs hardest mob (avd 40)", report);
     }
@@ -343,7 +345,7 @@ class BotChatManagerTest {
         when(bot.getTotalLuk()).thenReturn(50);
 
         String report = AgentBotChatReportRuntime.buildRangeReport(bot,
-                new BotEquipManager.MapDamageProfile(100, 30, 50));
+                new AgentMapDamageProfile(100, 30, 50));
 
         assertEquals("my dmg is 3-9, matk 200, magic acc 75 | hit 26% vs hardest mob (avd 30)", report);
     }
