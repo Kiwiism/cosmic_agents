@@ -1,9 +1,10 @@
-package server.bots;
+package server.agents.capabilities.build;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotMakerRuntime;
+import server.bots.BotEntry;
 
 import java.lang.reflect.Field;
 import java.util.Set;
@@ -12,7 +13,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-class BotMakerManagerTest {
+class AgentMakerServiceTest {
     @Test
     void makeCrystalsBusyReplyUsesAgentReplyAdapter() throws Exception {
         Character bot = mock(Character.class);
@@ -22,7 +23,7 @@ class BotMakerManagerTest {
         active.add(100);
 
         try (MockedStatic<AgentBotMakerRuntime> replies = mockStatic(AgentBotMakerRuntime.class)) {
-            BotMakerManager.handleMakeCrystals(entry);
+            AgentMakerService.handleMakeCrystals(entry);
 
             replies.verify(() -> AgentBotMakerRuntime.replyNow(entry, "still working on the last batch, hang on"));
         } finally {
@@ -39,7 +40,7 @@ class BotMakerManagerTest {
         active.add(200);
 
         try (MockedStatic<AgentBotMakerRuntime> replies = mockStatic(AgentBotMakerRuntime.class)) {
-            BotMakerManager.handleDisassembleTrash(entry);
+            AgentMakerService.handleDisassembleTrash(entry);
 
             replies.verify(() -> AgentBotMakerRuntime.replyNow(entry, "still working on the last batch, hang on"));
         } finally {
@@ -49,7 +50,7 @@ class BotMakerManagerTest {
 
     @SuppressWarnings("unchecked")
     private static Set<Integer> activeMakerSet() throws ReflectiveOperationException {
-        Field active = BotMakerManager.class.getDeclaredField("ACTIVE");
+        Field active = AgentMakerService.class.getDeclaredField("ACTIVE");
         active.setAccessible(true);
         return (Set<Integer>) active.get(null);
     }

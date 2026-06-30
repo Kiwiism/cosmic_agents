@@ -1494,7 +1494,7 @@ public class BotInventoryManager {
         return collectEquipsGroup(EquipsGroup.NORMAL, entry, bot);
     }
 
-    static List<Item> collectSellTrashEquips(BotEntry entry, Character bot) {
+    public static List<Item> collectSellTrashEquips(BotEntry entry, Character bot) {
         List<Item> trash = collectTrashEquips(entry, bot);
         if (trash.isEmpty()) {
             return trash;

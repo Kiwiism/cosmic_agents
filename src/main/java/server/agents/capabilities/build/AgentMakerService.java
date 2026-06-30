@@ -1,4 +1,4 @@
-package server.bots;
+package server.agents.capabilities.build;
 
 import client.Character;
 import client.Client;
@@ -11,6 +11,8 @@ import server.ItemInformationProvider;
 import server.agents.integration.AgentBotMakerRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
+import server.bots.BotEntry;
+import server.bots.BotInventoryManager;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -28,7 +30,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * self-interrupt when the player issues a new directive (follow/stop/move/...): see
  * {@link AgentBotScriptTaskStateRuntime#activityEpoch(BotEntry)}.
  */
-public final class BotMakerManager {
+public final class AgentMakerService {
     private static final int LEFTOVERS_PER_CRYSTAL = 100;   // Maker type-3 recipe req count
     private static final long STEP_INTERVAL_MS = 5000L;     // 5 seconds per operation
     private static final int LONG_BATCH_THRESHOLD = 10;     // "will take a while" past this many ops
@@ -45,7 +47,7 @@ public final class BotMakerManager {
         int run(Client c);
     }
 
-    private BotMakerManager() {
+    private AgentMakerService() {
     }
 
     public static void handleMakeCrystals(BotEntry entry) {

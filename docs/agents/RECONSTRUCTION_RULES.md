@@ -293,7 +293,7 @@ Recent reconstruction notes:
   for AP-build selection confirmation, but it still owns the legacy AP
   assignment behavior for this reconstruction stage.
 - Maker batch command replies and delayed batch steps now enter through
-  `AgentBotMakerRuntime`; `BotMakerManager` no longer reaches directly into the
+  `AgentBotMakerRuntime`; `AgentMakerService` no longer reaches directly into the
   lower-level reply or scheduler runtime for Maker-owned flows. It still lazily
   resolves `ItemInformationProvider` so guard paths and Agent adapter tests do
   not initialize database-backed item data before it is needed.
@@ -884,7 +884,7 @@ Recent reconstruction notes:
   read or write `lastMapId` or `fhIndex` directly in production.
 - Script task queue and activity-epoch state now enter through
   `AgentBotScriptTaskStateRuntime`; BotManager task clearing, queueing,
-  active-task activation/completion, scripted local-combat checks, BotMakerManager
+  active-task activation/completion, scripted local-combat checks, AgentMakerService
   batch-interruption checks, and focused tests keep BotEntry as the temporary
   backing store but no longer read or write `activityEpoch`, `scriptTasks`, or
   `activeScriptTask` directly in production.
@@ -1126,7 +1126,7 @@ Recent reconstruction notes:
   immediate AP assignment keep BotEntry as the temporary backing store but no
   longer read `bot` directly in production.
 - Maker automation bot identity now enters through
-  `AgentBotRuntimeIdentityRuntime`; BotMakerManager crystal creation,
+  `AgentBotRuntimeIdentityRuntime`; AgentMakerService crystal creation,
   disassembly, batch start, and delayed batch step checks keep BotEntry as the
   temporary backing store but no longer read `bot` directly in production.
 - Scroll reaction bot identity now enters through
@@ -1927,6 +1927,10 @@ Recent reconstruction notes:
   callbacks preserve the same thresholds, cooldown/backoff timing, donor
   ordering, delayed transfer timing, and map-chat behavior through compatibility
   delegates.
+- Maker crystal creation and trash-disassembly batch orchestration now live in
+  `AgentMakerService`; utility chat callbacks preserve the same guard replies,
+  lazy item-data lookup, five-second step cadence, ACTIVE set, and
+  MakerProcessor player-path calls through Agent runtime adapters.
 
 Initial reconstruction order:
 

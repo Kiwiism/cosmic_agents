@@ -4,7 +4,7 @@ import client.Character;
 import server.Trade;
 import server.agents.capabilities.dialogue.AgentChatUtilityFlow;
 import server.bots.BotEntry;
-import server.bots.BotMakerManager;
+import server.agents.capabilities.build.AgentMakerService;
 import server.bots.BotShopManager;
 
 /**
@@ -42,13 +42,13 @@ public final class AgentBotUtilityRuntime {
             @Override
             public void makeCrystals() {
                 AgentBotUtilitySchedulerRuntime.afterRandomDelay(500, 700,
-                        () -> BotMakerManager.handleMakeCrystals(entry));
+                        () -> AgentMakerService.handleMakeCrystals(entry));
             }
 
             @Override
             public void disassembleTrash() {
                 AgentBotUtilitySchedulerRuntime.afterRandomDelay(500, 700,
-                        () -> BotMakerManager.handleDisassembleTrash(entry));
+                        () -> AgentMakerService.handleDisassembleTrash(entry));
             }
         };
     }
