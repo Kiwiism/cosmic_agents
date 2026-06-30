@@ -1,5 +1,9 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
+
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+
 import server.agents.capabilities.movement.AgentMovementProfile;
 
 import client.Character;
@@ -39,7 +43,7 @@ class BotMovementManagerTest {
         Foothold foothold = new Foothold(new Point(0, 100), new Point(200, 100), 1);
         footholds.insert(foothold);
         map.setFootholds(footholds);
-        BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraphService.rebuildGraph(map);
 
         Character bot = mockBot(new Point(100, 100), map);
 
@@ -60,7 +64,7 @@ class BotMovementManagerTest {
         footholds.insert(leftFoothold);
         footholds.insert(rightFoothold);
         map.setFootholds(footholds);
-        BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraphService.rebuildGraph(map);
 
         Character bot = mockBot(new Point(-100, 100), map);
 
@@ -84,7 +88,7 @@ class BotMovementManagerTest {
         footholds.insert(leftFoothold);
         footholds.insert(rightFoothold);
         map.setFootholds(footholds);
-        BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraphService.rebuildGraph(map);
 
         Character bot = mockBot(new Point(-150, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
@@ -102,7 +106,7 @@ class BotMovementManagerTest {
         Foothold foothold = new Foothold(new Point(0, 100), new Point(60, 100), 1);
         footholds.insert(foothold);
         map.setFootholds(footholds);
-        BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraphService.rebuildGraph(map);
 
         Character bot = mockBot(new Point(20, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
@@ -125,8 +129,8 @@ class BotMovementManagerTest {
         entry.physX = 0;
         entry.physY = 0;
         entry.velY = -10f;
-        entry.navEdge = new BotNavigationGraph.Edge(
-                25, 14, BotNavigationGraph.EdgeType.CLIMB,
+        entry.navEdge = new AgentNavigationGraph.Edge(
+                25, 14, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(-437, -181), new Point(-473, -211),
                 -8, 0, -437, -1471, 84, 250
         );
@@ -139,8 +143,8 @@ class BotMovementManagerTest {
     @Test
     void shouldNotHoldClimbIdleWhileCommittedClimbEdgeIsActive() {
         BotEntry entry = new BotEntry(null, null, null);
-        entry.navEdge = new BotNavigationGraph.Edge(
-                1, 2, BotNavigationGraph.EdgeType.CLIMB,
+        entry.navEdge = new AgentNavigationGraph.Edge(
+                1, 2, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(0, 0), new Point(0, -100),
                 0, 0, 10, -100, 40, 100
         );
@@ -188,8 +192,8 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.climbing = true;
         entry.climbRope = new Rope(668, 1727, 1980, false);
-        entry.navEdge = new BotNavigationGraph.Edge(
-                68, 54, BotNavigationGraph.EdgeType.CLIMB,
+        entry.navEdge = new AgentNavigationGraph.Edge(
+                68, 54, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(668, 1757), new Point(796, 2025),
                 8, 0, 668, 1727, 1980, 650
         );
@@ -216,8 +220,8 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.climbing = true;
         entry.climbRope = new Rope(-437, -1471, 84, false);
-        entry.navEdge = new BotNavigationGraph.Edge(
-                25, 2, BotNavigationGraph.EdgeType.CLIMB,
+        entry.navEdge = new AgentNavigationGraph.Edge(
+                25, 2, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(-437, -1141), new Point(-477, -1166),
                 -8, 0, -437, -1471, 84, 250
         );
@@ -288,8 +292,8 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.climbing = true;
         entry.climbRope = new Rope(3398, 126, 332, false);
-        entry.navEdge = new BotNavigationGraph.Edge(
-                53, 25, BotNavigationGraph.EdgeType.CLIMB,
+        entry.navEdge = new AgentNavigationGraph.Edge(
+                53, 25, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(3398, 156), new Point(3443, 124),
                 0, 0, 3398, 126, 332, 400
         );
@@ -308,23 +312,23 @@ class BotMovementManagerTest {
         // stopDist=4 caused it to idle short of the entry, blocking canExecuteClimbEntry forever.
         // CLIMB still needs stopDist=1 to reach the exact anchor, but JUMP uses a launch window
         // and must keep walking until it is inside that window, so stopDist=0 is intentional.
-        BotNavigationGraph.Edge climbEdge = new BotNavigationGraph.Edge(
-                3, 27, BotNavigationGraph.EdgeType.CLIMB,
+        AgentNavigationGraph.Edge climbEdge = new AgentNavigationGraph.Edge(
+                3, 27, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(967, 1545), new Point(879, 1545),
                 0, 0, 879, 1503, 1545, 787
         );
-        BotNavigationGraph.Edge jumpEdge = new BotNavigationGraph.Edge(
-                1, 2, BotNavigationGraph.EdgeType.JUMP,
+        AgentNavigationGraph.Edge jumpEdge = new AgentNavigationGraph.Edge(
+                1, 2, AgentNavigationGraph.EdgeType.JUMP,
                 new Point(100, 0), new Point(200, -50),
                 8, 0, 0, 0, 0, 300
         );
-        BotNavigationGraph.Edge downJumpEdge = new BotNavigationGraph.Edge(
-                1, 2, BotNavigationGraph.EdgeType.DROP,
+        AgentNavigationGraph.Edge downJumpEdge = new AgentNavigationGraph.Edge(
+                1, 2, AgentNavigationGraph.EdgeType.DROP,
                 new Point(100, 0), new Point(100, 120),
                 96, 104, 0, 0, 0, 0, 0, 250
         );
-        BotNavigationGraph.Edge walkEdge = new BotNavigationGraph.Edge(
-                358, 355, BotNavigationGraph.EdgeType.WALK,
+        AgentNavigationGraph.Edge walkEdge = new AgentNavigationGraph.Edge(
+                358, 355, AgentNavigationGraph.EdgeType.WALK,
                 new Point(46, -61), new Point(54, -58),
                 0, 0, 0, 0, 0, 100
         );
@@ -360,8 +364,8 @@ class BotMovementManagerTest {
         when(bot.getHp()).thenReturn(100);
 
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.navEdge = new BotNavigationGraph.Edge(
-                1, 2, BotNavigationGraph.EdgeType.WALK,
+        entry.navEdge = new AgentNavigationGraph.Edge(
+                1, 2, AgentNavigationGraph.EdgeType.WALK,
                 new Point(8, 100), new Point(60, 100),
                 0, 0, 0, 0, 0, 100
         );
@@ -379,7 +383,7 @@ class BotMovementManagerTest {
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
         footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
         map.setFootholds(footholds);
-        BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraphService.rebuildGraph(map);
         doReturn(List.of(mockMob(new Point(130, 100), 100100))).when(map).getAllMonsters();
 
         Character bot = mockBot(new Point(100, 100), map);
@@ -403,7 +407,7 @@ class BotMovementManagerTest {
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
         footholds.insert(new Foothold(new Point(0, 100), new Point(140, 100), 1));
         map.setFootholds(footholds);
-        BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraphService.rebuildGraph(map);
         doReturn(List.of(mockMob(new Point(120, 100), 100100))).when(map).getAllMonsters();
 
         Character bot = mockBot(new Point(100, 100), map);
@@ -432,8 +436,8 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.climbing = true;
         entry.climbRope = new Rope(-157, -115, 118, false);
-        entry.navEdge = new BotNavigationGraph.Edge(
-                47, 39, BotNavigationGraph.EdgeType.CLIMB,
+        entry.navEdge = new AgentNavigationGraph.Edge(
+                47, 39, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(-157, -25), new Point(-61, 121),
                 8, 0, -157, -115, 118, 650
         );
@@ -950,8 +954,8 @@ class BotMovementManagerTest {
         entry.physY = 100;
         entry.velY = 0f;
         entry.airVelX = -8;
-        entry.navEdge = new BotNavigationGraph.Edge(
-                1, 2, BotNavigationGraph.EdgeType.JUMP,
+        entry.navEdge = new AgentNavigationGraph.Edge(
+                1, 2, AgentNavigationGraph.EdgeType.JUMP,
                 new Point(100, 100), new Point(50, 50),
                 -8, 0, 0, 0, 0, 300
         );
@@ -988,7 +992,7 @@ class BotMovementManagerTest {
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
         footholds.insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
         map.setFootholds(footholds);
-        BotNavigationGraphProvider.rebuildGraph(map, AgentMovementProfile.base());
+        AgentNavigationGraphService.rebuildGraph(map, AgentMovementProfile.base());
 
         Character bot = mockBot(new Point(20, 100), map);
         when(bot.getTotalMoveSpeedStat()).thenReturn(109);
@@ -999,8 +1003,8 @@ class BotMovementManagerTest {
 
         AgentMovementProfile targetProfile = AgentMovementProfile.fromCharacter(bot);
         assertEquals(new AgentMovementProfile(105, 105), targetProfile);
-        entry.navEdge = new BotNavigationGraph.Edge(
-                1, 2, BotNavigationGraph.EdgeType.JUMP,
+        entry.navEdge = new AgentNavigationGraph.Edge(
+                1, 2, AgentNavigationGraph.EdgeType.JUMP,
                 new Point(20, 100), new Point(80, 40),
                 8, 0, 0, 0, 0, 300
         );

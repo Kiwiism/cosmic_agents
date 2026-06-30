@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+
 import server.agents.capabilities.build.AgentBuildService;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
@@ -1493,7 +1495,7 @@ public class BotEntry {
     int ignoredGrindLootObjectId = 0;
     long ignoredGrindLootUntilMs = 0L;
     // "Patrol" region — bot wanders within this nav region and attacks opportunistically.
-    int patrolRegionId = -1;    // BotNavigationGraph.Region id; -1 = inactive
+    int patrolRegionId = -1;    // AgentNavigationGraph.Region id; -1 = inactive
     int patrolMapId = -1;
     Point patrolWanderTarget = null;
 
@@ -1593,8 +1595,8 @@ public class BotEntry {
 
     // Cached movement state shared across ticks
     Point navTargetPos = null;
-    BotNavigationGraph.Edge navEdge = null;
-    BotNavigationGraph.Edge navJumpLaunchEdge = null;
+    AgentNavigationGraph.Edge navEdge = null;
+    AgentNavigationGraph.Edge navJumpLaunchEdge = null;
     int navJumpLaunchX = Integer.MIN_VALUE;
     int navTargetRegionId = -1;
     boolean navPreciseTarget = false;
@@ -1611,7 +1613,7 @@ public class BotEntry {
     }
 
     public void setActiveNavigationEdge(Object edge) {
-        navEdge = edge instanceof BotNavigationGraph.Edge navEdge ? navEdge : null;
+        navEdge = edge instanceof AgentNavigationGraph.Edge navEdge ? navEdge : null;
     }
 
     public void clearActiveNavigationEdge() {
@@ -1885,7 +1887,7 @@ public class BotEntry {
     }
 
     public boolean matchesNavJumpLaunchEdge(Object edge) {
-        return edge instanceof BotNavigationGraph.Edge navEdge && sameNavEdge(navJumpLaunchEdge, navEdge);
+        return edge instanceof AgentNavigationGraph.Edge navEdge && sameNavEdge(navJumpLaunchEdge, navEdge);
     }
 
     public boolean hasNavJumpLaunchEdge() {
@@ -1897,11 +1899,11 @@ public class BotEntry {
     }
 
     public void setNavJumpLaunch(Object navJumpLaunchEdge, int navJumpLaunchX) {
-        this.navJumpLaunchEdge = navJumpLaunchEdge instanceof BotNavigationGraph.Edge navEdge ? navEdge : null;
+        this.navJumpLaunchEdge = navJumpLaunchEdge instanceof AgentNavigationGraph.Edge navEdge ? navEdge : null;
         this.navJumpLaunchX = navJumpLaunchX;
     }
 
-    private static boolean sameNavEdge(BotNavigationGraph.Edge a, BotNavigationGraph.Edge b) {
+    private static boolean sameNavEdge(AgentNavigationGraph.Edge a, AgentNavigationGraph.Edge b) {
         if (a == b) return true;
         if (a == null || b == null) return false;
         return a.type == b.type

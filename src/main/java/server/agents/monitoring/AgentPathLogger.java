@@ -25,8 +25,8 @@ import server.agents.integration.AgentBotTickCadenceStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
 import server.bots.BotEntry;
 import server.bots.BotManager;
-import server.bots.BotNavigationGraph;
-import server.bots.BotNavigationGraphProvider;
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.bots.BotNavigationManager;
 import server.bots.BotPhysicsEngine;
 import server.maps.MapleMap;
@@ -63,7 +63,7 @@ public final class AgentPathLogger {
 
     private record GraphSnapshot(
             AgentMovementProfile requestedProfile,
-            BotNavigationGraph graph,
+            AgentNavigationGraph graph,
             String source
     ) {}
 
@@ -124,7 +124,7 @@ public final class AgentPathLogger {
         String filename = "pathlog-" + botName + "-" + now.format(FILE_FMT) + ".txt";
 
         GraphSnapshot graphSnapshot = resolveGraphSnapshot(entry);
-        BotNavigationGraph graph = graphSnapshot.graph();
+        AgentNavigationGraph graph = graphSnapshot.graph();
         Point botPos = AgentBotRuntimeIdentityRuntime.botPosition(entry);
         Point goalTargetPos = targetSnapshot.primaryTargetPosition();
         Point steeringTargetPos = targetSnapshot.steeringTargetPosition();
@@ -164,28 +164,28 @@ public final class AgentPathLogger {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
         AgentMovementProfile requestedProfile = AgentBotMovementStateRuntime.movementProfileOrCharacter(entry, bot);
-        BotNavigationGraph exact = BotNavigationGraphProvider.peekGraph(map, requestedProfile);
+        AgentNavigationGraph exact = AgentNavigationGraphService.peekGraph(map, requestedProfile);
         if (exact != null) {
             return new GraphSnapshot(requestedProfile, exact, "exact");
         }
 
-        BotNavigationGraph closest = BotNavigationGraphProvider.peekClosestGraph(map, requestedProfile);
+        AgentNavigationGraph closest = AgentNavigationGraphService.peekClosestGraph(map, requestedProfile);
         if (closest != null) {
             return new GraphSnapshot(requestedProfile, closest, "closest");
         }
 
-        BotNavigationGraphProvider.warmGraphAsync(map, requestedProfile);
+        AgentNavigationGraphService.warmGraphAsync(map, requestedProfile);
         return new GraphSnapshot(requestedProfile, null, "none/warming");
     }
 
-    private static int resolveCurrentRegionId(BotNavigationGraph graph, BotEntry entry, Point point) {
+    private static int resolveCurrentRegionId(AgentNavigationGraph graph, BotEntry entry, Point point) {
         if (graph == null) {
             return -1;
         }
         return BotNavigationManager.resolveCurrentRegionId(graph, entry, AgentBotRuntimeIdentityRuntime.botMap(entry), point);
     }
 
-    private static int resolveTargetRegionId(BotNavigationGraph graph, BotEntry entry, Point point) {
+    private static int resolveTargetRegionId(AgentNavigationGraph graph, BotEntry entry, Point point) {
         if (graph == null) {
             return -1;
         }
@@ -289,7 +289,7 @@ public final class AgentPathLogger {
                 .append(" walkVel=").append(String.format("%.1f", requested.walkVelocityPxs()))
                 .append(" jumpForce=").append(String.format("%.1f", requested.jumpSpeedPxs()))
                 .append("\n");
-        BotNavigationGraph graph = graphSnapshot.graph();
+        AgentNavigationGraph graph = graphSnapshot.graph();
         if (graph == null) {
             sb.append("Graph:      none/warming requestedSpeed=").append(requested.totalSpeedStat()).append("%")
                     .append(" requestedJump=").append(requested.totalJumpStat()).append("%\n");
@@ -316,7 +316,7 @@ public final class AgentPathLogger {
                                    int goalRegionId,
                                    int rawOwnerRegionId,
                                    int botRegionId,
-                                   BotNavigationGraph graph) {
+                                   AgentNavigationGraph graph) {
         sb.append("--- CURRENT A* PATH ---\n");
         sb.append("Goal basis:  ").append(targetSnapshot.primaryTargetSource())
                 .append(" ").append(pointRegionStr(targetSnapshot.primaryTargetPosition(), goalRegionId)).append("\n");
@@ -333,7 +333,7 @@ public final class AgentPathLogger {
                             Point targetPos,
                             int targetRegionId,
                             int botRegionId,
-                            BotNavigationGraph graph) {
+                            AgentNavigationGraph graph) {
         if (graph == null) {
             sb.append("  graph unavailable - exact graph warming and no closest cached graph\n");
             return;
@@ -345,7 +345,7 @@ public final class AgentPathLogger {
             sb.append("  same region - no inter-region path\n");
         } else {
             Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-            List<BotNavigationGraph.Edge> path = BotNavigationManager.findPath(
+            List<AgentNavigationGraph.Edge> path = BotNavigationManager.findPath(
                     graph, bot, botRegionId, targetRegionId, targetPos);
             if (path.isEmpty()) {
                 sb.append("  no path found\n");
@@ -414,7 +414,7 @@ public final class AgentPathLogger {
     }
 
     static String navEdgeSummary(BotEntry entry) {
-        BotNavigationGraph.Edge e = (BotNavigationGraph.Edge) AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry);
+        AgentNavigationGraph.Edge e = (AgentNavigationGraph.Edge) AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry);
         if (e == null) {
             return "none";
         }
@@ -434,7 +434,7 @@ public final class AgentPathLogger {
                 + (AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry) ? "[precise]" : "");
     }
 
-    private static String edgeStr(BotNavigationGraph.Edge e) {
+    private static String edgeStr(AgentNavigationGraph.Edge e) {
         return e.type + " r" + e.fromRegionId + "->r" + e.toRegionId
                 + "  (" + e.startPoint.x + "," + e.startPoint.y
                 + ")->(" + e.endPoint.x + "," + e.endPoint.y + ")"
@@ -443,9 +443,9 @@ public final class AgentPathLogger {
                 + "  cost=" + e.cost;
     }
 
-    private static String launchWindowSummary(BotNavigationGraph.Edge edge) {
-        if ((edge.type != BotNavigationGraph.EdgeType.JUMP
-                && !(edge.type == BotNavigationGraph.EdgeType.DROP && edge.launchStepX == 0))
+    private static String launchWindowSummary(AgentNavigationGraph.Edge edge) {
+        if ((edge.type != AgentNavigationGraph.EdgeType.JUMP
+                && !(edge.type == AgentNavigationGraph.EdgeType.DROP && edge.launchStepX == 0))
                 || edge.launchMinX == edge.launchMaxX) {
             return "";
         }

@@ -1253,6 +1253,14 @@ Recent reconstruction notes:
   down-jump, ledge walk-off, and fallback jump behavior while no longer reading
   BotEntry runtime fields directly in production. The old
   `server.bots.BotFallbackMovementManager` source file has been removed.
+- Navigation graph data and graph build/cache orchestration now live in
+  `server.agents.capabilities.navigation.AgentNavigationGraph` and
+  `AgentNavigationGraphService`. Graph region/edge/segment shape, cache
+  versioning, warmup executors, build reports, collidable foothold caches, and
+  graph lookup behavior are unchanged; BotNavigationManager and BotPhysicsEngine
+  remain temporary explicit seams during navigation reconstruction. The old
+  `server.bots.BotNavigationGraph` and `server.bots.BotNavigationGraphProvider`
+  source files have been removed.
 - Physics position, horizontal-speed, and ground-travel carry state now enter
   through `AgentBotMovementPhysicsStateRuntime`; BotPhysicsEngine preserves
   landing, grounded travel, swim, airborne collision, climb-position, and reset

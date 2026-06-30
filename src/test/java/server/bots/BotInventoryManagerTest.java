@@ -1,5 +1,9 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
+
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+
 import server.agents.capabilities.looting.AgentLootEligibility;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
@@ -250,13 +254,13 @@ class BotInventoryManagerTest {
         footholds.insert(returnableFoothold);
         map.setFootholds(footholds);
 
-        BotNavigationGraph.Region homeRegion = new BotNavigationGraph.Region(
-                1, List.of(new BotNavigationGraph.Segment(homeFoothold)));
-        BotNavigationGraph.Region oneWayRegion = new BotNavigationGraph.Region(
-                2, List.of(new BotNavigationGraph.Segment(oneWayFoothold)));
-        BotNavigationGraph.Region returnableRegion = new BotNavigationGraph.Region(
-                3, List.of(new BotNavigationGraph.Segment(returnableFoothold)));
-        BotNavigationGraph graph = new BotNavigationGraph(
+        AgentNavigationGraph.Region homeRegion = new AgentNavigationGraph.Region(
+                1, List.of(new AgentNavigationGraph.Segment(homeFoothold)));
+        AgentNavigationGraph.Region oneWayRegion = new AgentNavigationGraph.Region(
+                2, List.of(new AgentNavigationGraph.Segment(oneWayFoothold)));
+        AgentNavigationGraph.Region returnableRegion = new AgentNavigationGraph.Region(
+                3, List.of(new AgentNavigationGraph.Segment(returnableFoothold)));
+        AgentNavigationGraph graph = new AgentNavigationGraph(
                 map.getId(),
                 1,
                 AgentMovementProfile.base(),
@@ -265,11 +269,11 @@ class BotInventoryManagerTest {
                 Map.of(1, 1, 2, 2, 3, 3),
                 Map.of(
                         1, List.of(
-                                new BotNavigationGraph.Edge(1, 2, BotNavigationGraph.EdgeType.DROP,
+                                new AgentNavigationGraph.Edge(1, 2, AgentNavigationGraph.EdgeType.DROP,
                                         new Point(100, 100), new Point(200, 140), 0, 0, 0, 0, 0, 100),
-                                new BotNavigationGraph.Edge(1, 3, BotNavigationGraph.EdgeType.WALK,
+                                new AgentNavigationGraph.Edge(1, 3, AgentNavigationGraph.EdgeType.WALK,
                                         new Point(100, 100), new Point(400, 100), 0, 0, 0, 0, 0, 120)),
-                        3, List.of(new BotNavigationGraph.Edge(3, 1, BotNavigationGraph.EdgeType.WALK,
+                        3, List.of(new AgentNavigationGraph.Edge(3, 1, AgentNavigationGraph.EdgeType.WALK,
                                 new Point(400, 100), new Point(100, 100), 0, 0, 0, 0, 0, 120))),
                 Set.of());
 
@@ -285,11 +289,11 @@ class BotInventoryManagerTest {
         when(returnableLoot.getPosition()).thenReturn(new Point(440, 100));
         doReturn(List.of(oneWayLoot, returnableLoot)).when(map).getDroppedItems();
 
-        try (MockedStatic<BotNavigationGraphProvider> graphProvider =
-                     mockStatic(BotNavigationGraphProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS);
+        try (MockedStatic<AgentNavigationGraphService> graphProvider =
+                     mockStatic(AgentNavigationGraphService.class, org.mockito.Mockito.CALLS_REAL_METHODS);
              MockedStatic<AgentLootEligibility> lootEligibility =
                      mockStatic(AgentLootEligibility.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
-            graphProvider.when(() -> BotNavigationGraphProvider.peekBestGraph(eq(map), any())).thenReturn(graph);
+            graphProvider.when(() -> AgentNavigationGraphService.peekBestGraph(eq(map), any())).thenReturn(graph);
             lootEligibility.when(() -> AgentLootEligibility.canBotTargetLoot(
                     eq(entry), eq(bot), eq(map), eq(oneWayLoot), anyLong())).thenReturn(true);
             lootEligibility.when(() -> AgentLootEligibility.canBotTargetLoot(
@@ -309,9 +313,9 @@ class BotInventoryManagerTest {
         footholds.insert(foothold);
         map.setFootholds(footholds);
 
-        BotNavigationGraph.Region region = new BotNavigationGraph.Region(
-                1, List.of(new BotNavigationGraph.Segment(foothold)));
-        BotNavigationGraph graph = new BotNavigationGraph(
+        AgentNavigationGraph.Region region = new AgentNavigationGraph.Region(
+                1, List.of(new AgentNavigationGraph.Segment(foothold)));
+        AgentNavigationGraph graph = new AgentNavigationGraph(
                 map.getId(),
                 1,
                 AgentMovementProfile.base(),
@@ -343,11 +347,11 @@ class BotInventoryManagerTest {
 
         BotManager manager = mock(BotManager.class);
 
-        try (MockedStatic<BotNavigationGraphProvider> graphProvider =
-                     mockStatic(BotNavigationGraphProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS);
+        try (MockedStatic<AgentNavigationGraphService> graphProvider =
+                     mockStatic(AgentNavigationGraphService.class, org.mockito.Mockito.CALLS_REAL_METHODS);
              MockedStatic<BotManager> botManagers =
                      mockStatic(BotManager.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
-            graphProvider.when(() -> BotNavigationGraphProvider.peekBestGraph(eq(map), any())).thenReturn(graph);
+            graphProvider.when(() -> AgentNavigationGraphService.peekBestGraph(eq(map), any())).thenReturn(graph);
             botManagers.when(BotManager::getInstance).thenReturn(manager);
 
             assertEquals(new Point(240, 100), BotInventoryManager.findNearestPatrolLootTarget(entry, 1));

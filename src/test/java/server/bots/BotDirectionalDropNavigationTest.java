@@ -1,5 +1,9 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
+
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.maps.Foothold;
@@ -76,10 +80,10 @@ class BotDirectionalDropNavigationTest {
         footholds.insert(lower);
         map.setFootholds(footholds);
 
-        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
-        BotNavigationGraph.Edge edge = graph.regions.stream()
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(map);
+        AgentNavigationGraph.Edge edge = graph.regions.stream()
                 .flatMap(region -> graph.getOutgoing(region.id).stream())
-                .filter(candidate -> candidate.type == BotNavigationGraph.EdgeType.DROP
+                .filter(candidate -> candidate.type == AgentNavigationGraph.EdgeType.DROP
                         && (dropRight ? candidate.launchStepX > 0 : candidate.launchStepX < 0))
                 .filter(candidate -> candidate.endPoint.y > candidate.startPoint.y)
                 .findFirst()
@@ -105,7 +109,7 @@ class BotDirectionalDropNavigationTest {
     }
 
     private record DropTestFixture(MapleMap map,
-                                   BotNavigationGraph graph,
-                                   BotNavigationGraph.Edge edge) {
+                                   AgentNavigationGraph graph,
+                                   AgentNavigationGraph.Edge edge) {
     }
 }

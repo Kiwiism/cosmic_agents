@@ -1,5 +1,9 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
+
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+
 import server.agents.capabilities.navigation.AgentNavigationMapLoader;
 
 import client.Character;
@@ -405,7 +409,7 @@ class BotPhysicsEngineTest {
         footholds.insert(lowerLeft);
         footholds.insert(lowerRight);
         footholds.insert(upper);
-        BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraphService.rebuildGraph(map);
 
         Point ground = BotPhysicsEngine.findWalkRegionGroundPoint(map, lowerLeft, 24, 100);
 
@@ -415,7 +419,7 @@ class BotPhysicsEngineTest {
 
     @Test
     void shouldKeepWalkingAcrossKpqPlatformEvenWithNearbyPlatformAbove() {
-        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(kpqS1());
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(kpqS1());
         Point start = new Point(-335, 116);
         Point target = new Point(-170, 103);
         int startRegionId = graph.findRegionId(kpqS1(), start);
@@ -521,10 +525,10 @@ class BotPhysicsEngineTest {
         return null;
     }
 
-    private static BotNavigationGraph.Edge findFirstStraightDropEdge(BotNavigationGraph graph) {
-        for (BotNavigationGraph.Region region : graph.regions) {
-            for (BotNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
-                if (edge.type == BotNavigationGraph.EdgeType.DROP && edge.launchStepX == 0) {
+    private static AgentNavigationGraph.Edge findFirstStraightDropEdge(AgentNavigationGraph graph) {
+        for (AgentNavigationGraph.Region region : graph.regions) {
+            for (AgentNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
+                if (edge.type == AgentNavigationGraph.EdgeType.DROP && edge.launchStepX == 0) {
                     return edge;
                 }
             }
@@ -700,9 +704,9 @@ class BotPhysicsEngineTest {
     @Test
     void shouldTreatMap193000000BottomAnchoredWallsAsCollidable() {
         MapleMap map = AgentNavigationMapLoader.loadMapGeometry(193000000);
-        BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraphService.rebuildGraph(map);
 
-        java.util.Set<Integer> collidableWallIds = BotNavigationGraphProvider.getCachedCollidableWallIds(map.getId());
+        java.util.Set<Integer> collidableWallIds = AgentNavigationGraphService.getCachedCollidableWallIds(map.getId());
 
         assertNotNull(collidableWallIds);
         assertTrue(collidableWallIds.contains(2), "top-right shaft wall should be collidable");
@@ -712,9 +716,9 @@ class BotPhysicsEngineTest {
 
     @Test
     void shouldCacheKerningPharmacyBlockedUndersidesAtGraphBuild() {
-        BotNavigationGraphProvider.rebuildGraph(kerningPharmacy());
+        AgentNavigationGraphService.rebuildGraph(kerningPharmacy());
 
-        java.util.Set<Integer> collidableFromBelowIds = BotNavigationGraphProvider.getCachedCollidableFromBelowIds(kerningPharmacy().getId());
+        java.util.Set<Integer> collidableFromBelowIds = AgentNavigationGraphService.getCachedCollidableFromBelowIds(kerningPharmacy().getId());
 
         assertNotNull(collidableFromBelowIds);
         assertTrue(collidableFromBelowIds.contains(1), "left pharmacy box lower edge should block jumps from below");
@@ -724,9 +728,9 @@ class BotPhysicsEngineTest {
 
     @Test
     void shouldCacheMushroomShrineDoughnutUndersidesAtGraphBuild() {
-        BotNavigationGraphProvider.rebuildGraph(mushroomShrine());
+        AgentNavigationGraphService.rebuildGraph(mushroomShrine());
 
-        java.util.Set<Integer> collidableFromBelowIds = BotNavigationGraphProvider.getCachedCollidableFromBelowIds(mushroomShrine().getId());
+        java.util.Set<Integer> collidableFromBelowIds = AgentNavigationGraphService.getCachedCollidableFromBelowIds(mushroomShrine().getId());
 
         assertNotNull(collidableFromBelowIds);
         assertTrue(collidableFromBelowIds.contains(248), "outer doughnut lower edge should block jumps from below");
@@ -754,7 +758,7 @@ class BotPhysicsEngineTest {
         footholds.insert(right);
         footholds.insert(upper);
         footholds.insert(left);
-        BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraphService.rebuildGraph(map);
 
         Character bot = mockBot(new Point(20, 120), map);
         BotEntry entry = new BotEntry(bot, null, null);

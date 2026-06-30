@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+
 import server.agents.capabilities.navigation.AgentNavigationMapLoader;
 
 import server.maps.MapleMap;
@@ -196,7 +198,7 @@ public final class BotMovementSimulationCli {
         String botName = parts[0].trim();
         int fromRegionId = Integer.parseInt(parts[1].trim());
         int toRegionId = Integer.parseInt(parts[2].trim());
-        BotNavigationGraph.EdgeType type = BotNavigationGraph.EdgeType.valueOf(parts[3].trim().toUpperCase());
+        AgentNavigationGraph.EdgeType type = AgentNavigationGraph.EdgeType.valueOf(parts[3].trim().toUpperCase());
         Point startPoint = parsePoint(parts[4].trim());
         Point endPoint = parsePoint(parts[5].trim());
         int stepX = Integer.parseInt(parts[6].trim());
@@ -217,7 +219,7 @@ public final class BotMovementSimulationCli {
             nextIndex++;
         }
         boolean precise = parts.length > nextIndex && Boolean.parseBoolean(parts[nextIndex].trim());
-        BotNavigationGraph.Edge edge = new BotNavigationGraph.Edge(
+        AgentNavigationGraph.Edge edge = new AgentNavigationGraph.Edge(
                 fromRegionId, toRegionId, type, startPoint, endPoint,
                 stepX, 0, ropeX, ropeTopY, ropeBottomY, cost);
         return new NavEdgeSpec(botName, edge, targetRegionId, precise);
@@ -254,7 +256,7 @@ public final class BotMovementSimulationCli {
     private record RopeAttachSpec(String botName, int ropeX, int topY, int bottomY, int attachY, boolean ladder) {
     }
 
-    private record NavEdgeSpec(String botName, BotNavigationGraph.Edge edge, int targetRegionId, boolean precise) {
+    private record NavEdgeSpec(String botName, AgentNavigationGraph.Edge edge, int targetRegionId, boolean precise) {
     }
 
     private record TraceSpec(String botName, int limit) {

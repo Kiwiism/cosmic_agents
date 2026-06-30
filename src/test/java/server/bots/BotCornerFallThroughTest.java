@@ -1,5 +1,9 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
+
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+
 import server.agents.capabilities.navigation.AgentNavigationMapLoader;
 
 import client.Character;
@@ -54,7 +58,7 @@ class BotCornerFallThroughTest {
     @Test
     void shouldNotFallThroughCornerUnderAnyKnockback() {
         MapleMap map = AgentNavigationMapLoader.loadMapGeometry(MAP_ID);
-        BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraphService.rebuildGraph(map);
 
         List<String> failures = new ArrayList<>();
         // startX, airVelX (knock dir*mag), velY (negative = up)

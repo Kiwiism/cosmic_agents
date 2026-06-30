@@ -1,5 +1,9 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
+
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+
 import server.agents.capabilities.trade.AgentOfferService;
 
 import server.agents.capabilities.supplies.AgentPotionService;
@@ -279,7 +283,7 @@ class BotManagerTest {
         MapleMap map = createEmptyTestMap(910000020);
         FootholdTree footholds = map.getFootholds();
         footholds.insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
-        BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraphService.rebuildGraph(map);
 
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(map);
@@ -298,7 +302,7 @@ class BotManagerTest {
         FootholdTree footholds = map.getFootholds();
         footholds.insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
         footholds.insert(new Foothold(new Point(0, 40), new Point(200, 40), 2));
-        BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraphService.rebuildGraph(map);
 
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(map);
@@ -318,7 +322,7 @@ class BotManagerTest {
         footholds.insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
         footholds.insert(new Foothold(new Point(0, 40), new Point(200, 40), 2));
         map.addRope(new Rope(100, 40, 100, false));
-        BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraphService.rebuildGraph(map);
 
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(map);
@@ -356,7 +360,7 @@ class BotManagerTest {
         FootholdTree footholds = map.getFootholds();
         footholds.insert(new Foothold(new Point(0, 100), new Point(500, 100), 1));
         footholds.insert(new Foothold(new Point(0, 220), new Point(500, 220), 2));
-        BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraphService.rebuildGraph(map);
 
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(map);
@@ -375,7 +379,7 @@ class BotManagerTest {
         FootholdTree footholds = map.getFootholds();
         footholds.insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
         footholds.insert(new Foothold(new Point(250, 100), new Point(500, 100), 2));
-        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(map);
 
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(map);
@@ -394,10 +398,10 @@ class BotManagerTest {
 
         int startRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, map, new Point(300, 100));
         int retreatRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, map, retreat);
-        List<BotNavigationGraph.Edge> path = BotNavigationManager.findPath(
+        List<AgentNavigationGraph.Edge> path = BotNavigationManager.findPath(
                 graph, map, new Point(300, 100), startRegionId, retreatRegionId, retreat);
         assertFalse(path.isEmpty());
-        assertEquals(BotNavigationGraph.EdgeType.JUMP, path.get(0).type);
+        assertEquals(AgentNavigationGraph.EdgeType.JUMP, path.get(0).type);
     }
 
     @Test
@@ -467,7 +471,7 @@ class BotManagerTest {
     void shouldCommitToBreakoutDirectionWhenSurroundedDespiteTargetSwap() {
         MapleMap map = spy(createEmptyTestMap(910000063));
         map.getFootholds().insert(new Foothold(new Point(-500, 100), new Point(500, 100), 1));
-        BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraphService.rebuildGraph(map);
         Character bot = mock(Character.class);
         Point botPos = new Point(100, 100);
         when(bot.getMap()).thenReturn(map);
@@ -501,7 +505,7 @@ class BotManagerTest {
     void shouldClearBreakoutOnceNoLongerSurrounded() {
         MapleMap map = spy(createEmptyTestMap(910000064));
         map.getFootholds().insert(new Foothold(new Point(-500, 100), new Point(500, 100), 1));
-        BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraphService.rebuildGraph(map);
         Character bot = mock(Character.class);
         Point botPos = new Point(100, 100);
         when(bot.getMap()).thenReturn(map);
@@ -526,7 +530,7 @@ class BotManagerTest {
     void shouldNotEngageBreakoutForSingleMobKiting() {
         MapleMap map = spy(createEmptyTestMap(910000065));
         map.getFootholds().insert(new Foothold(new Point(-500, 100), new Point(500, 100), 1));
-        BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraphService.rebuildGraph(map);
         Character bot = mock(Character.class);
         Point botPos = new Point(100, 100);
         when(bot.getMap()).thenReturn(map);
@@ -946,7 +950,7 @@ class BotManagerTest {
         MapleMap map = createEmptyTestMap(910000025);
         map.getFootholds().insert(new Foothold(new Point(0, 100), new Point(400, 100), 1));
         map.addRope(new Rope(100, 40, 100, false));
-        BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraphService.rebuildGraph(map);
 
         Character owner = mock(Character.class);
         when(owner.getId()).thenReturn(77);
@@ -970,10 +974,10 @@ class BotManagerTest {
         Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
         bots.put(owner.getId(), List.of(followerEntry, anchorEntry));
         try {
-            BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map);
+            AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map);
             int targetRegionId = BotNavigationManager.resolveTargetRegionId(
                     graph, followerEntry, map, new Point(300, 100));
-            BotNavigationGraph.Region targetRegion = graph.getRegion(targetRegionId);
+            AgentNavigationGraph.Region targetRegion = graph.getRegion(targetRegionId);
 
             assertNotNull(targetRegion);
             assertFalse(targetRegion.isRopeRegion,

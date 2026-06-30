@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
@@ -118,10 +120,10 @@ class AgentBotNavigationDebugStateRuntimeTest {
     @Test
     void adaptsNavJumpLaunchCacheState() {
         BotEntry entry = new BotEntry(null, null, null);
-        BotNavigationGraph.Edge edge = new BotNavigationGraph.Edge(
+        AgentNavigationGraph.Edge edge = new AgentNavigationGraph.Edge(
                 1,
                 2,
-                BotNavigationGraph.EdgeType.JUMP,
+                AgentNavigationGraph.EdgeType.JUMP,
                 new Point(10, 20),
                 new Point(30, 40),
                 0,
@@ -147,10 +149,10 @@ class AgentBotNavigationDebugStateRuntimeTest {
     @Test
     void adaptsActiveNavigationEdgePresence() {
         BotEntry entry = new BotEntry(null, null, null);
-        BotNavigationGraph.Edge edge = new BotNavigationGraph.Edge(
+        AgentNavigationGraph.Edge edge = new AgentNavigationGraph.Edge(
                 1,
                 2,
-                BotNavigationGraph.EdgeType.WALK,
+                AgentNavigationGraph.EdgeType.WALK,
                 new Point(10, 20),
                 new Point(30, 20),
                 0,

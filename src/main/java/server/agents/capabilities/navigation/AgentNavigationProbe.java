@@ -3,8 +3,8 @@ package server.agents.capabilities.navigation;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.bots.BotMovementManager;
-import server.bots.BotNavigationGraph;
-import server.bots.BotNavigationGraphProvider;
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.bots.BotNavigationManager;
 
 import java.awt.*;
@@ -19,14 +19,14 @@ public final class AgentNavigationProbe {
     }
 
     public static List<String> rebuildGraphReport(MapleMap map) {
-        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
-        return formatBuildReport(graph, BotNavigationGraphProvider.getLastBuildReport(map.getId(), graph.movementProfile));
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(map);
+        return formatBuildReport(graph, AgentNavigationGraphService.getLastBuildReport(map.getId(), graph.movementProfile));
     }
 
     public static List<String> lastBuildReport(MapleMap map) {
-        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(map);
+        AgentNavigationGraph graph = AgentNavigationGraphService.getGraph(map);
         return formatBuildReport(graph,
-                BotNavigationGraphProvider.getLastBuildReport(map.getId(), graph.movementProfile));
+                AgentNavigationGraphService.getLastBuildReport(map.getId(), graph.movementProfile));
     }
 
     public static void main(String[] args) {
@@ -71,13 +71,13 @@ public final class AgentNavigationProbe {
         }
 
         MapleMap map = AgentNavigationMapLoader.loadMapGeometry(mapId);
-        BotNavigationGraph graph = rebuild
-                ? BotNavigationGraphProvider.rebuildGraph(map)
-                : BotNavigationGraphProvider.getGraph(map);
+        AgentNavigationGraph graph = rebuild
+                ? AgentNavigationGraphService.rebuildGraph(map)
+                : AgentNavigationGraphService.getGraph(map);
 
         printSummary(map, graph);
         if (rebuild) {
-            for (String line : formatBuildReport(graph, BotNavigationGraphProvider.getLastBuildReport(map.getId(), graph.movementProfile))) {
+            for (String line : formatBuildReport(graph, AgentNavigationGraphService.getLastBuildReport(map.getId(), graph.movementProfile))) {
                 System.out.println(line);
             }
         }
@@ -119,9 +119,9 @@ public final class AgentNavigationProbe {
      * much, and how often the optimal route took a portal the heuristic walked past. The expansion
      * ratio is a proxy for the extra CPU an h=0 (Dijkstra) search would cost.
      */
-    private static void runMeasurement(MapleMap map, BotNavigationGraph graph, int maxPairs) {
-        List<BotNavigationGraph.Region> regions = new ArrayList<>();
-        for (BotNavigationGraph.Region region : graph.regions) {
+    private static void runMeasurement(MapleMap map, AgentNavigationGraph graph, int maxPairs) {
+        List<AgentNavigationGraph.Region> regions = new ArrayList<>();
+        for (AgentNavigationGraph.Region region : graph.regions) {
             if (!region.isRopeRegion) {
                 regions.add(region);
             }
@@ -143,9 +143,9 @@ public final class AgentNavigationProbe {
         List<String> examples = new ArrayList<>();
 
         long counter = 0;
-        for (BotNavigationGraph.Region start : regions) {
+        for (AgentNavigationGraph.Region start : regions) {
             Point startPoint = start.centerPoint();
-            for (BotNavigationGraph.Region target : regions) {
+            for (AgentNavigationGraph.Region target : regions) {
                 if (start.id == target.id) {
                     continue;
                 }
@@ -238,14 +238,14 @@ public final class AgentNavigationProbe {
         return new RegionPathProbe(Integer.parseInt(parts[0].trim()), Integer.parseInt(parts[1].trim()));
     }
 
-    private static void printSummary(MapleMap map, BotNavigationGraph graph) {
+    private static void printSummary(MapleMap map, AgentNavigationGraph graph) {
         int jumpEdges = 0;
         int dropEdges = 0;
         int climbEdges = 0;
         int portalEdges = 0;
         int walkEdges = 0;
-        for (BotNavigationGraph.Region region : graph.regions) {
-            for (BotNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
+        for (AgentNavigationGraph.Region region : graph.regions) {
+            for (AgentNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
                 switch (edge.type) {
                     case WALK -> walkEdges++;
                     case JUMP -> jumpEdges++;
@@ -266,8 +266,8 @@ public final class AgentNavigationProbe {
                 graph.regions.size(), walkEdges, jumpEdges, dropEdges, climbEdges, portalEdges);
     }
 
-    private static List<String> formatBuildReport(BotNavigationGraph graph,
-                                                  BotNavigationGraphProvider.GraphBuildReport report) {
+    private static List<String> formatBuildReport(AgentNavigationGraph graph,
+                                                  AgentNavigationGraphService.GraphBuildReport report) {
         if (report == null) {
             return List.of("Bot nav build report unavailable.");
         }
@@ -310,7 +310,7 @@ public final class AgentNavigationProbe {
                 report.jumpBoundaryRefineProbeCount));
         if (!report.slowestJumpRegions.isEmpty()) {
             StringBuilder slowRegions = new StringBuilder("Slow jump regions:");
-            for (BotNavigationGraphProvider.JumpRegionProfile profile : report.slowestJumpRegions) {
+            for (AgentNavigationGraphService.JumpRegionProfile profile : report.slowestJumpRegions) {
                 slowRegions.append(String.format(" r%d[w=%d samples=%d edges=%d hits=%d misses=%d time=%.2fms]",
                         profile.regionId(),
                         profile.width(),
@@ -333,10 +333,10 @@ public final class AgentNavigationProbe {
         return nanos / 1_000_000.0;
     }
 
-    private static void probePoint(MapleMap map, BotNavigationGraph graph, Point point) {
+    private static void probePoint(MapleMap map, AgentNavigationGraph graph, Point point) {
         Foothold foothold = map.getFootholds().findBelow(point);
         int regionId = graph.findRegionId(map, point);
-        BotNavigationGraph.Region region = graph.getRegion(regionId);
+        AgentNavigationGraph.Region region = graph.getRegion(regionId);
 
         System.out.printf("%nPoint %d,%d%n", point.x, point.y);
         System.out.printf("  below foothold=%s  region=%d%n", foothold == null ? "none" : foothold.getId(), regionId);
@@ -347,26 +347,26 @@ public final class AgentNavigationProbe {
         System.out.printf("  region span=[%d,%d] y=[%d,%d] segments=%d%n",
                 region.minX, region.maxX, region.minY, region.maxY, region.segments.size());
 
-        Map<BotNavigationGraph.EdgeType, Integer> counts = new EnumMap<>(BotNavigationGraph.EdgeType.class);
-        for (BotNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
+        Map<AgentNavigationGraph.EdgeType, Integer> counts = new EnumMap<>(AgentNavigationGraph.EdgeType.class);
+        for (AgentNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
             counts.merge(edge.type, 1, Integer::sum);
         }
         System.out.printf("  outgoing %s%n", counts);
 
-        List<BotNavigationGraph.Edge> nearbyJumpEdges = findNearbyEdges(graph, region.id, point, BotNavigationGraph.EdgeType.JUMP, 24, 16);
+        List<AgentNavigationGraph.Edge> nearbyJumpEdges = findNearbyEdges(graph, region.id, point, AgentNavigationGraph.EdgeType.JUMP, 24, 16);
         if (nearbyJumpEdges.isEmpty()) {
             System.out.println("  nearby jump edges: none");
             return;
         }
 
         System.out.println("  nearby jump edges:");
-        for (BotNavigationGraph.Edge edge : nearbyJumpEdges) {
+        for (AgentNavigationGraph.Edge edge : nearbyJumpEdges) {
             System.out.printf("    %d,%d -> %d,%d  %s  toRegion=%d%n",
                     edge.startPoint.x, edge.startPoint.y, edge.endPoint.x, edge.endPoint.y, edgeDetails(edge), edge.toRegionId);
         }
     }
 
-    private static void probeJump(MapleMap map, BotNavigationGraph graph, Point point) {
+    private static void probeJump(MapleMap map, AgentNavigationGraph graph, Point point) {
         int walkStep = BotMovementManager.walkStep(map, graph.movementProfile);
         int regionId = graph.findRegionId(map, point);
 
@@ -383,22 +383,22 @@ public final class AgentNavigationProbe {
                     stepX, landing.point().x, landing.point().y, landing.foothold().getId(), landingRegionId);
         }
 
-        List<BotNavigationGraph.Edge> nearbyJumpEdges = regionId < 0
+        List<AgentNavigationGraph.Edge> nearbyJumpEdges = regionId < 0
                 ? List.of()
-                : findNearbyEdges(graph, regionId, point, BotNavigationGraph.EdgeType.JUMP, 24, 16);
+                : findNearbyEdges(graph, regionId, point, AgentNavigationGraph.EdgeType.JUMP, 24, 16);
         if (nearbyJumpEdges.isEmpty()) {
             System.out.println("  graph jump edges near start: none");
             return;
         }
 
         System.out.println("  graph jump edges near start:");
-        for (BotNavigationGraph.Edge edge : nearbyJumpEdges) {
+        for (AgentNavigationGraph.Edge edge : nearbyJumpEdges) {
             System.out.printf("    %d,%d -> %d,%d  %s  toRegion=%d%n",
                     edge.startPoint.x, edge.startPoint.y, edge.endPoint.x, edge.endPoint.y, edgeDetails(edge), edge.toRegionId);
         }
     }
 
-    private static void probeUndersides(BotNavigationGraph graph) {
+    private static void probeUndersides(AgentNavigationGraph graph) {
         List<Integer> ids = new ArrayList<>(graph.collidableFromBelowIds);
         ids.sort(Integer::compareTo);
         System.out.printf("%nCollidable from below ids (%d): %s%n", ids.size(), ids);
@@ -424,16 +424,16 @@ public final class AgentNavigationProbe {
                 foothold.getPrev(), foothold.getNext(), foothold.isWall(), foothold.isForbidFallDown());
     }
 
-    private static void probeRegion(BotNavigationGraph graph, int regionId) {
-        BotNavigationGraph.Region region = graph.getRegion(regionId);
+    private static void probeRegion(AgentNavigationGraph graph, int regionId) {
+        AgentNavigationGraph.Region region = graph.getRegion(regionId);
         System.out.printf("%nRegion %d%n", regionId);
         if (region == null) {
             System.out.println("  missing");
             return;
         }
 
-        Map<BotNavigationGraph.EdgeType, Integer> counts = new EnumMap<>(BotNavigationGraph.EdgeType.class);
-        for (BotNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
+        Map<AgentNavigationGraph.EdgeType, Integer> counts = new EnumMap<>(AgentNavigationGraph.EdgeType.class);
+        for (AgentNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
             counts.merge(edge.type, 1, Integer::sum);
         }
 
@@ -443,16 +443,16 @@ public final class AgentNavigationProbe {
         System.out.printf("  outgoing %s%n", counts);
     }
 
-    private static void probeEdges(BotNavigationGraph graph, int regionId) {
-        BotNavigationGraph.Region region = graph.getRegion(regionId);
+    private static void probeEdges(AgentNavigationGraph graph, int regionId) {
+        AgentNavigationGraph.Region region = graph.getRegion(regionId);
         System.out.printf("%nEdges from region %d%n", regionId);
         if (region == null) {
             System.out.println("  missing");
             return;
         }
 
-        List<BotNavigationGraph.Edge> edges = new ArrayList<>(graph.getOutgoing(regionId));
-        edges.sort(Comparator.comparing((BotNavigationGraph.Edge edge) -> edge.type)
+        List<AgentNavigationGraph.Edge> edges = new ArrayList<>(graph.getOutgoing(regionId));
+        edges.sort(Comparator.comparing((AgentNavigationGraph.Edge edge) -> edge.type)
                 .thenComparingInt(edge -> edge.toRegionId)
                 .thenComparingInt(edge -> edge.startPoint.x)
                 .thenComparingInt(edge -> edge.startPoint.y)
@@ -463,14 +463,14 @@ public final class AgentNavigationProbe {
             return;
         }
 
-        for (BotNavigationGraph.Edge edge : edges) {
+        for (AgentNavigationGraph.Edge edge : edges) {
             System.out.printf("  %s %d,%d -> %d,%d  %s  toRegion=%d  cost=%d%n",
                     edge.type, edge.startPoint.x, edge.startPoint.y, edge.endPoint.x, edge.endPoint.y,
                     edgeDetails(edge), edge.toRegionId, edge.cost);
         }
     }
 
-    private static void probeRopes(BotNavigationGraph graph, MapleMap map) {
+    private static void probeRopes(AgentNavigationGraph graph, MapleMap map) {
         System.out.printf("%nRopes (%d)%n", map.getRopes().size());
         int index = 0;
         for (server.maps.Rope rope : map.getRopes()) {
@@ -481,10 +481,10 @@ public final class AgentNavigationProbe {
         }
     }
 
-    private static void probePath(MapleMap map, BotNavigationGraph graph, PathProbe pathProbe) {
+    private static void probePath(MapleMap map, AgentNavigationGraph graph, PathProbe pathProbe) {
         int startRegionId = graph.findRegionId(map, pathProbe.start);
         int targetRegionId = graph.findRegionId(map, pathProbe.target);
-        List<BotNavigationGraph.Edge> path = startRegionId < 0 || targetRegionId < 0 || startRegionId == targetRegionId
+        List<AgentNavigationGraph.Edge> path = startRegionId < 0 || targetRegionId < 0 || startRegionId == targetRegionId
                 ? List.of()
                 : BotNavigationManager.findPath(graph, map, pathProbe.start, startRegionId, targetRegionId, pathProbe.target);
 
@@ -496,19 +496,19 @@ public final class AgentNavigationProbe {
         }
 
         for (int i = 0; i < path.size(); i++) {
-            BotNavigationGraph.Edge edge = path.get(i);
+            AgentNavigationGraph.Edge edge = path.get(i);
             System.out.printf("  %d. %s %d,%d -> %d,%d  %s  toRegion=%d  cost=%d%n",
                     i + 1, edge.type, edge.startPoint.x, edge.startPoint.y, edge.endPoint.x, edge.endPoint.y,
                     edgeDetails(edge), edge.toRegionId, edge.cost);
         }
     }
 
-    private static void probeRegionPath(BotNavigationGraph graph, RegionPathProbe regionPath) {
-        BotNavigationGraph.Region targetRegion = graph.getRegion(regionPath.targetRegionId);
+    private static void probeRegionPath(AgentNavigationGraph graph, RegionPathProbe regionPath) {
+        AgentNavigationGraph.Region targetRegion = graph.getRegion(regionPath.targetRegionId);
         Point targetPoint = targetRegion == null ? null : targetRegion.centerPoint();
-        BotNavigationGraph.Region startRegion = graph.getRegion(regionPath.startRegionId);
+        AgentNavigationGraph.Region startRegion = graph.getRegion(regionPath.startRegionId);
         Point startPoint = startRegion == null ? null : startRegion.centerPoint();
-        List<BotNavigationGraph.Edge> path = targetPoint == null
+        List<AgentNavigationGraph.Edge> path = targetPoint == null
                 ? List.of()
                 : BotNavigationManager.findPath(graph, AgentNavigationMapLoader.loadMapGeometry(graph.mapId),
                 startPoint, regionPath.startRegionId, regionPath.targetRegionId, targetPoint);
@@ -521,19 +521,19 @@ public final class AgentNavigationProbe {
 
         System.out.printf("  target center %d,%d%n", targetPoint.x, targetPoint.y);
         for (int i = 0; i < path.size(); i++) {
-            BotNavigationGraph.Edge edge = path.get(i);
+            AgentNavigationGraph.Edge edge = path.get(i);
             System.out.printf("  %d. %s %d,%d -> %d,%d  %s  toRegion=%d  cost=%d%n",
                     i + 1, edge.type, edge.startPoint.x, edge.startPoint.y, edge.endPoint.x, edge.endPoint.y,
                     edgeDetails(edge), edge.toRegionId, edge.cost);
         }
     }
 
-    private static String edgeDetails(BotNavigationGraph.Edge edge) {
+    private static String edgeDetails(AgentNavigationGraph.Edge edge) {
         List<String> parts = new ArrayList<>();
         if (edge.launchStepX != 0) {
             parts.add("stepX=" + edge.launchStepX);
         }
-        if (edge.type == BotNavigationGraph.EdgeType.JUMP && edge.launchMinX != edge.launchMaxX) {
+        if (edge.type == AgentNavigationGraph.EdgeType.JUMP && edge.launchMinX != edge.launchMaxX) {
             parts.add("launchX=" + edge.launchMinX + ".." + edge.launchMaxX);
         }
         if (edge.portalId != 0) {
@@ -545,11 +545,11 @@ public final class AgentNavigationProbe {
         return parts.isEmpty() ? "-" : String.join(" ", parts);
     }
 
-    private static int countClimbEdgesForRope(BotNavigationGraph graph, server.maps.Rope rope) {
+    private static int countClimbEdgesForRope(AgentNavigationGraph graph, server.maps.Rope rope) {
         int count = 0;
-        for (BotNavigationGraph.Region region : graph.regions) {
-            for (BotNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
-                if (edge.type != BotNavigationGraph.EdgeType.CLIMB) {
+        for (AgentNavigationGraph.Region region : graph.regions) {
+            for (AgentNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
+                if (edge.type != AgentNavigationGraph.EdgeType.CLIMB) {
                     continue;
                 }
                 if (edge.ropeX == rope.x() && edge.ropeTopY == rope.topY() && edge.ropeBottomY == rope.bottomY()) {
@@ -560,14 +560,14 @@ public final class AgentNavigationProbe {
         return count;
     }
 
-    private static List<BotNavigationGraph.Edge> findNearbyEdges(BotNavigationGraph graph,
+    private static List<AgentNavigationGraph.Edge> findNearbyEdges(AgentNavigationGraph graph,
                                                                  int regionId,
                                                                  Point point,
-                                                                 BotNavigationGraph.EdgeType type,
+                                                                 AgentNavigationGraph.EdgeType type,
                                                                  int maxDx,
                                                                  int maxDy) {
-        List<BotNavigationGraph.Edge> nearby = new ArrayList<>();
-        for (BotNavigationGraph.Edge edge : graph.getOutgoing(regionId)) {
+        List<AgentNavigationGraph.Edge> nearby = new ArrayList<>();
+        for (AgentNavigationGraph.Edge edge : graph.getOutgoing(regionId)) {
             if (edge.type != type) {
                 continue;
             }

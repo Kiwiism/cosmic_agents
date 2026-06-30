@@ -1,4 +1,4 @@
-package server.bots;
+package server.agents.capabilities.navigation;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
 
@@ -8,6 +8,8 @@ import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Portal;
 import server.maps.Rope;
+import server.bots.BotMovementManager;
+import server.bots.BotPhysicsEngine;
 
 import java.awt.*;
 import java.io.IOException;
@@ -27,8 +29,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public final class BotNavigationGraphProvider {
-    private static final Logger log = LoggerFactory.getLogger(BotNavigationGraphProvider.class);
+public final class AgentNavigationGraphService {
+    private static final Logger log = LoggerFactory.getLogger(AgentNavigationGraphService.class);
 
     private static final int GRAPH_VERSION = 46;
     private static final int ENDPOINT_ANCHOR_SPACING_PX = 10;
@@ -39,8 +41,8 @@ public final class BotNavigationGraphProvider {
     private static final int MAX_PROFILED_JUMP_REGIONS = 5;
     private static final int FAST_WARMUP_MAX_FOOTHOLDS = 200;
     private static final Path CACHE_DIR = Path.of("cache", "bot-nav", "v" + GRAPH_VERSION);
-    private static final Map<GraphCacheKey, BotNavigationGraph> GRAPHS = new ConcurrentHashMap<>();
-    private static final Map<GraphCacheKey, CompletableFuture<BotNavigationGraph>> PENDING_GRAPHS = new ConcurrentHashMap<>();
+    private static final Map<GraphCacheKey, AgentNavigationGraph> GRAPHS = new ConcurrentHashMap<>();
+    private static final Map<GraphCacheKey, CompletableFuture<AgentNavigationGraph>> PENDING_GRAPHS = new ConcurrentHashMap<>();
     private static final Map<GraphCacheKey, GraphBuildReport> LAST_BUILD_REPORTS = new ConcurrentHashMap<>();
     private static final Map<Integer, Set<Integer>> COLLIDABLE_WALL_IDS_BY_MAP_ID = new ConcurrentHashMap<>();
     private static final Map<Integer, Set<Integer>> COLLIDABLE_FROM_BELOW_IDS_BY_MAP_ID = new ConcurrentHashMap<>();
@@ -205,7 +207,7 @@ public final class BotNavigationGraphProvider {
             this.totalJumpStat = movementProfile.totalJumpStat();
         }
 
-        private void recordEdge(BotNavigationGraph.EdgeType type) {
+        private void recordEdge(AgentNavigationGraph.EdgeType type) {
             totalEdgeCount++;
             switch (type) {
                 case WALK -> walkEdgeCount++;
@@ -298,16 +300,16 @@ public final class BotNavigationGraphProvider {
         private final Set<RopeGrabKey> misses = new HashSet<>();
     }
 
-    public static BotNavigationGraph getGraph(MapleMap map) {
+    public static AgentNavigationGraph getGraph(MapleMap map) {
         return getGraph(map, AgentMovementProfile.base());
     }
 
-    public static BotNavigationGraph getGraph(MapleMap map, AgentMovementProfile movementProfile) {
+    public static AgentNavigationGraph getGraph(MapleMap map, AgentMovementProfile movementProfile) {
         if (map == null) {
             return null;
         }
         GraphCacheKey key = GraphCacheKey.from(map.getId(), movementProfile);
-        BotNavigationGraph cached = GRAPHS.get(key);
+        AgentNavigationGraph cached = GRAPHS.get(key);
         if (cached != null) {
             return cached;
         }
@@ -315,11 +317,11 @@ public final class BotNavigationGraphProvider {
     }
 
     /** Returns the cached graph without triggering a build. */
-    static BotNavigationGraph peekGraph(MapleMap map) {
+    public static AgentNavigationGraph peekGraph(MapleMap map) {
         if (map == null) {
             return null;
         }
-        for (Map.Entry<GraphCacheKey, BotNavigationGraph> entry : GRAPHS.entrySet()) {
+        for (Map.Entry<GraphCacheKey, AgentNavigationGraph> entry : GRAPHS.entrySet()) {
             if (entry.getKey().mapId() == map.getId()) {
                 return entry.getValue();
             }
@@ -328,7 +330,7 @@ public final class BotNavigationGraphProvider {
     }
 
     /** Returns the cached graph for the requested profile without triggering a build. */
-    public static BotNavigationGraph peekGraph(MapleMap map, AgentMovementProfile movementProfile) {
+    public static AgentNavigationGraph peekGraph(MapleMap map, AgentMovementProfile movementProfile) {
         if (map == null) {
             return null;
         }
@@ -336,15 +338,15 @@ public final class BotNavigationGraphProvider {
     }
 
     /** Returns the closest cached graph for this map when the exact profile graph is unavailable. */
-    public static BotNavigationGraph peekClosestGraph(MapleMap map, AgentMovementProfile movementProfile) {
+    public static AgentNavigationGraph peekClosestGraph(MapleMap map, AgentMovementProfile movementProfile) {
         if (map == null) {
             return null;
         }
 
         GraphCacheKey requested = GraphCacheKey.from(map.getId(), movementProfile);
-        BotNavigationGraph bestGraph = null;
+        AgentNavigationGraph bestGraph = null;
         int bestDistance = Integer.MAX_VALUE;
-        for (Map.Entry<GraphCacheKey, BotNavigationGraph> entry : GRAPHS.entrySet()) {
+        for (Map.Entry<GraphCacheKey, AgentNavigationGraph> entry : GRAPHS.entrySet()) {
             GraphCacheKey key = entry.getKey();
             if (key.mapId() != requested.mapId()) {
                 continue;
@@ -367,8 +369,8 @@ public final class BotNavigationGraphProvider {
      * replacing the bare {@link #peekGraph(MapleMap)} arbitrary-first-entry pick at profile-aware
      * call sites and the open-coded exact-then-closest fallback duplicated across callers.
      */
-    public static BotNavigationGraph peekBestGraph(MapleMap map, AgentMovementProfile movementProfile) {
-        BotNavigationGraph exact = peekGraph(map, movementProfile);
+    public static AgentNavigationGraph peekBestGraph(MapleMap map, AgentMovementProfile movementProfile) {
+        AgentNavigationGraph exact = peekGraph(map, movementProfile);
         return exact != null ? exact : peekClosestGraph(map, movementProfile);
     }
 
@@ -383,15 +385,15 @@ public final class BotNavigationGraphProvider {
         getOrStartGraphLoad(map, movementProfile, key, true);
     }
 
-    public static BotNavigationGraph rebuildGraph(MapleMap map) {
+    public static AgentNavigationGraph rebuildGraph(MapleMap map) {
         return rebuildGraph(map, AgentMovementProfile.base());
     }
 
-    public static BotNavigationGraph rebuildGraph(MapleMap map, AgentMovementProfile movementProfile) {
+    public static AgentNavigationGraph rebuildGraph(MapleMap map, AgentMovementProfile movementProfile) {
         GraphCacheKey key = GraphCacheKey.from(map.getId(), movementProfile);
-        BotNavigationGraph rebuilt = buildGraph(map, movementProfile);
+        AgentNavigationGraph rebuilt = buildGraph(map, movementProfile);
         GRAPHS.put(key, rebuilt);
-        CompletableFuture<BotNavigationGraph> pending = PENDING_GRAPHS.remove(key);
+        CompletableFuture<AgentNavigationGraph> pending = PENDING_GRAPHS.remove(key);
         if (pending != null) {
             pending.complete(rebuilt);
         }
@@ -399,29 +401,29 @@ public final class BotNavigationGraphProvider {
         return rebuilt;
     }
 
-    private static CompletableFuture<BotNavigationGraph> getOrStartGraphLoad(MapleMap map,
+    private static CompletableFuture<AgentNavigationGraph> getOrStartGraphLoad(MapleMap map,
                                                                              AgentMovementProfile movementProfile,
                                                                              GraphCacheKey key,
                                                                              boolean async) {
-        BotNavigationGraph cached = GRAPHS.get(key);
+        AgentNavigationGraph cached = GRAPHS.get(key);
         if (cached != null) {
             return CompletableFuture.completedFuture(cached);
         }
 
-        CompletableFuture<BotNavigationGraph> existing = PENDING_GRAPHS.get(key);
+        CompletableFuture<AgentNavigationGraph> existing = PENDING_GRAPHS.get(key);
         if (existing != null) {
             return existing;
         }
 
-        CompletableFuture<BotNavigationGraph> future = new CompletableFuture<>();
-        CompletableFuture<BotNavigationGraph> race = PENDING_GRAPHS.putIfAbsent(key, future);
+        CompletableFuture<AgentNavigationGraph> future = new CompletableFuture<>();
+        CompletableFuture<AgentNavigationGraph> race = PENDING_GRAPHS.putIfAbsent(key, future);
         if (race != null) {
             return race;
         }
 
         Runnable task = () -> {
             try {
-                BotNavigationGraph graph = loadOrBuildGraph(map, movementProfile, key);
+                AgentNavigationGraph graph = loadOrBuildGraph(map, movementProfile, key);
                 GRAPHS.put(key, graph);
                 future.complete(graph);
             } catch (Throwable t) {
@@ -452,20 +454,20 @@ public final class BotNavigationGraphProvider {
         return map.getFootholds().getAllFootholds().size() <= FAST_WARMUP_MAX_FOOTHOLDS;
     }
 
-    private static BotNavigationGraph loadOrBuildGraph(MapleMap map,
+    private static AgentNavigationGraph loadOrBuildGraph(MapleMap map,
                                                        AgentMovementProfile movementProfile,
                                                        GraphCacheKey key) {
-        BotNavigationGraph cached = loadGraph(key);
+        AgentNavigationGraph cached = loadGraph(key);
         if (cached != null) {
             return cached;
         }
 
-        BotNavigationGraph built = buildGraph(map, movementProfile);
+        AgentNavigationGraph built = buildGraph(map, movementProfile);
         saveGraph(built);
         return built;
     }
 
-    private static BotNavigationGraph loadGraph(GraphCacheKey key) {
+    private static AgentNavigationGraph loadGraph(GraphCacheKey key) {
         Path file = graphFile(key);
         if (!Files.isRegularFile(file)) {
             return null;
@@ -473,7 +475,7 @@ public final class BotNavigationGraphProvider {
 
         try (ObjectInputStream in = new ObjectInputStream(Files.newInputStream(file))) {
             Object loaded = in.readObject();
-            if (!(loaded instanceof BotNavigationGraph graph)) {
+            if (!(loaded instanceof AgentNavigationGraph graph)) {
                 return null;
             }
             if (graph.version != GRAPH_VERSION
@@ -491,7 +493,7 @@ public final class BotNavigationGraphProvider {
         }
     }
 
-    private static void saveGraph(BotNavigationGraph graph) {
+    private static void saveGraph(AgentNavigationGraph graph) {
         try {
             Files.createDirectories(CACHE_DIR);
             try (ObjectOutputStream out = new ObjectOutputStream(Files.newOutputStream(graphFile(GraphCacheKey.from(graph.mapId, graph.movementProfile))))) {
@@ -506,7 +508,7 @@ public final class BotNavigationGraphProvider {
         return CACHE_DIR.resolve(key.mapId() + "-s" + key.totalSpeedStat() + "-j" + key.totalJumpStat() + ".bin");
     }
 
-    private static BotNavigationGraph buildGraph(MapleMap map, AgentMovementProfile movementProfile) {
+    private static AgentNavigationGraph buildGraph(MapleMap map, AgentMovementProfile movementProfile) {
         movementProfile = movementProfile == null ? AgentMovementProfile.base() : movementProfile;
         BuildProfileBuilder buildProfile = new BuildProfileBuilder(map.getId(), movementProfile);
         ACTIVE_BUILD_PROFILE.set(buildProfile);
@@ -536,8 +538,8 @@ public final class BotNavigationGraphProvider {
             COLLIDABLE_WALL_IDS_BY_MAP_ID.put(map.getId(), new HashSet<>(collidableWallIds));
             COLLIDABLE_FROM_BELOW_IDS_BY_MAP_ID.put(map.getId(), new HashSet<>(collidableFromBelowIds));
 
-            List<BotNavigationGraph.Region> regions = new ArrayList<>();
-            Map<Integer, BotNavigationGraph.Region> regionsById = new HashMap<>();
+            List<AgentNavigationGraph.Region> regions = new ArrayList<>();
+            Map<Integer, AgentNavigationGraph.Region> regionsById = new HashMap<>();
             Map<Integer, Integer> regionIdByFootholdId = new HashMap<>();
             phaseStartedAt = System.nanoTime();
             buildRegions(walkableFootholds, footholdsById, collidableFromBelowIds, regions, regionsById, regionIdByFootholdId);
@@ -546,7 +548,7 @@ public final class BotNavigationGraphProvider {
             phaseStartedAt = System.nanoTime();
             int nextRegionId = regions.stream().mapToInt(r -> r.id).max().orElse(0) + 1;
             for (Rope rope : map.getRopes()) {
-                BotNavigationGraph.Region ropeRegion = new BotNavigationGraph.Region(
+                AgentNavigationGraph.Region ropeRegion = new AgentNavigationGraph.Region(
                         nextRegionId++, rope.x(), rope.topY(), rope.bottomY(), rope.isLadder());
                 regions.add(ropeRegion);
                 regionsById.put(ropeRegion.id, ropeRegion);
@@ -560,9 +562,9 @@ public final class BotNavigationGraphProvider {
             phaseStartedAt = System.nanoTime();
             Map<Integer, List<Point>> anchorsByRegionId = buildAnchorsByRegionId(map, regions, featureXsByRegionId, movementProfile);
             buildProfile.buildAnchorPointsNs = System.nanoTime() - phaseStartedAt;
-            List<BotNavigationGraph.Region> groundRegions = new ArrayList<>();
-            List<BotNavigationGraph.Region> ropeRegions = new ArrayList<>();
-            for (BotNavigationGraph.Region region : regions) {
+            List<AgentNavigationGraph.Region> groundRegions = new ArrayList<>();
+            List<AgentNavigationGraph.Region> ropeRegions = new ArrayList<>();
+            for (AgentNavigationGraph.Region region : regions) {
                 if (region.isRopeRegion) {
                     ropeRegions.add(region);
                 } else {
@@ -570,7 +572,7 @@ public final class BotNavigationGraphProvider {
                 }
             }
             Map<Integer, Rope> ropeByRegionId = buildRopeByRegionId(map, ropeRegions);
-            Map<Integer, List<BotNavigationGraph.Edge>> outgoing = new HashMap<>();
+            Map<Integer, List<AgentNavigationGraph.Edge>> outgoing = new HashMap<>();
             Set<String> edgeKeys = new HashSet<>();
             JumpLandingCache jumpLandingCache = new JumpLandingCache();
             RopeGrabCache ropeGrabCache = new RopeGrabCache();
@@ -584,28 +586,28 @@ public final class BotNavigationGraphProvider {
             buildProfile.buildWalkEdgesNs = System.nanoTime() - phaseStartedAt;
 
             phaseStartedAt = System.nanoTime();
-            for (BotNavigationGraph.Region region : groundRegions) {
+            for (AgentNavigationGraph.Region region : groundRegions) {
                 addDropEdges(region, map, regionsById, regionIdByFootholdId,
                         anchorsByRegionId.getOrDefault(region.id, List.of()), outgoing, edgeKeys, movementProfile);
             }
             buildProfile.buildDropEdgesNs = System.nanoTime() - phaseStartedAt;
 
             phaseStartedAt = System.nanoTime();
-            for (BotNavigationGraph.Region region : groundRegions) {
+            for (AgentNavigationGraph.Region region : groundRegions) {
                 addJumpEdges(region, map, regionsById, regionIdByFootholdId,
                         anchorsByRegionId.getOrDefault(region.id, List.of()), outgoing, edgeKeys, jumpLandingCache, movementProfile);
             }
             buildProfile.buildJumpEdgesNs = System.nanoTime() - phaseStartedAt;
 
             phaseStartedAt = System.nanoTime();
-            for (BotNavigationGraph.Region region : ropeRegions) {
+            for (AgentNavigationGraph.Region region : ropeRegions) {
                 addRopeEntryEdges(region, groundRegions, ropeByRegionId, map, anchorsByRegionId,
                         outgoing, edgeKeys, ropeGrabCache, movementProfile);
             }
             buildProfile.buildRopeEntryEdgesNs = System.nanoTime() - phaseStartedAt;
 
             phaseStartedAt = System.nanoTime();
-            for (BotNavigationGraph.Region region : ropeRegions) {
+            for (AgentNavigationGraph.Region region : ropeRegions) {
                 addRopeExitEdges(region, ropeRegions, ropeByRegionId, map, regionsById, regionIdByFootholdId, outgoing, edgeKeys, movementProfile);
             }
             buildProfile.buildRopeExitEdgesNs = System.nanoTime() - phaseStartedAt;
@@ -616,7 +618,7 @@ public final class BotNavigationGraphProvider {
             }
             buildProfile.buildPortalEdgesNs = System.nanoTime() - phaseStartedAt;
 
-            BotNavigationGraph graph = new BotNavigationGraph(
+            AgentNavigationGraph graph = new AgentNavigationGraph(
                     map.getId(), GRAPH_VERSION, movementProfile, regions, regionsById, regionIdByFootholdId, outgoing,
                     collidableWallIds, collidableFromBelowIds);
             GraphBuildReport report = buildProfile.finish();
@@ -647,15 +649,15 @@ public final class BotNavigationGraphProvider {
         return LAST_BUILD_REPORTS.get(GraphCacheKey.from(mapId, movementProfile));
     }
 
-    static Set<Integer> getCachedCollidableWallIds(int mapId) {
+    public static Set<Integer> getCachedCollidableWallIds(int mapId) {
         return COLLIDABLE_WALL_IDS_BY_MAP_ID.get(mapId);
     }
 
-    static Set<Integer> getCachedCollidableFromBelowIds(int mapId) {
+    public static Set<Integer> getCachedCollidableFromBelowIds(int mapId) {
         return COLLIDABLE_FROM_BELOW_IDS_BY_MAP_ID.get(mapId);
     }
 
-    static Set<Integer> computeCollidableFromBelowIds(MapleMap map) {
+    public static Set<Integer> computeCollidableFromBelowIds(MapleMap map) {
         if (map == null || map.getFootholds() == null) {
             return Set.of();
         }
@@ -672,7 +674,7 @@ public final class BotNavigationGraphProvider {
         return computed;
     }
 
-    private static void seedCachedFootholdCollisionIds(BotNavigationGraph graph) {
+    private static void seedCachedFootholdCollisionIds(AgentNavigationGraph graph) {
         COLLIDABLE_WALL_IDS_BY_MAP_ID.put(graph.mapId, new HashSet<>(graph.collidableWallIds));
         COLLIDABLE_FROM_BELOW_IDS_BY_MAP_ID.put(graph.mapId, new HashSet<>(graph.collidableFromBelowIds));
     }
@@ -779,7 +781,7 @@ public final class BotNavigationGraphProvider {
 
     private static List<ClassifiedLoop> classifyClosedLoops(List<ClosedLoop> loops) {
         List<ClosedLoop> ordered = new ArrayList<>(loops);
-        ordered.sort(Comparator.comparingDouble(BotNavigationGraphProvider::loopBoundingArea).reversed());
+        ordered.sort(Comparator.comparingDouble(AgentNavigationGraphService::loopBoundingArea).reversed());
 
         List<ClassifiedLoop> classified = new ArrayList<>(ordered.size());
         for (ClosedLoop loop : ordered) {
@@ -842,8 +844,8 @@ public final class BotNavigationGraphProvider {
     private static void buildRegions(List<Foothold> footholds,
                                      Map<Integer, Foothold> footholdsById,
                                      Set<Integer> collidableFromBelowIds,
-                                     List<BotNavigationGraph.Region> regions,
-                                     Map<Integer, BotNavigationGraph.Region> regionsById,
+                                     List<AgentNavigationGraph.Region> regions,
+                                     Map<Integer, AgentNavigationGraph.Region> regionsById,
                                      Map<Integer, Integer> regionIdByFootholdId) {
         UnionFind unionFind = new UnionFind();
         for (Foothold foothold : footholds) {
@@ -862,24 +864,24 @@ public final class BotNavigationGraphProvider {
 
         List<List<Foothold>> groups = new ArrayList<>(groupedFootholds.values());
         groups.sort(Comparator
-                .comparingInt(BotNavigationGraphProvider::groupMinY)
-                .thenComparingInt(BotNavigationGraphProvider::groupMinX));
+                .comparingInt(AgentNavigationGraphService::groupMinY)
+                .thenComparingInt(AgentNavigationGraphService::groupMinX));
 
         int nextRegionId = 1;
         for (List<Foothold> group : groups) {
             group.sort(Comparator
-                    .comparingInt(BotNavigationGraphProvider::footholdMinX)
+                    .comparingInt(AgentNavigationGraphService::footholdMinX)
                     .thenComparingInt(foothold -> Math.min(foothold.getY1(), foothold.getY2()))
                     .thenComparingInt(Foothold::getId));
 
-            List<BotNavigationGraph.Segment> segments = new ArrayList<>(group.size());
+            List<AgentNavigationGraph.Segment> segments = new ArrayList<>(group.size());
             for (Foothold foothold : group) {
-                segments.add(new BotNavigationGraph.Segment(
+                segments.add(new AgentNavigationGraph.Segment(
                         foothold,
                         collidableFromBelowIds.contains(foothold.getId())));
             }
 
-            BotNavigationGraph.Region region = new BotNavigationGraph.Region(nextRegionId++, segments);
+            AgentNavigationGraph.Region region = new AgentNavigationGraph.Region(nextRegionId++, segments);
             regions.add(region);
             regionsById.put(region.id, region);
             for (Foothold foothold : group) {
@@ -897,9 +899,9 @@ public final class BotNavigationGraphProvider {
 
     private static void addWalkEdges(Foothold foothold,
                                      Map<Integer, Foothold> footholdsById,
-                                     Map<Integer, BotNavigationGraph.Region> regionsById,
+                                     Map<Integer, AgentNavigationGraph.Region> regionsById,
                                      Map<Integer, Integer> regionIdByFootholdId,
-                                     Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
+                                     Map<Integer, List<AgentNavigationGraph.Edge>> outgoing,
                                      Set<String> edgeKeys,
                                      AgentMovementProfile movementProfile) {
         addWalkEdge(foothold, footholdsById.get(foothold.getPrev()), regionsById, regionIdByFootholdId, outgoing, edgeKeys, movementProfile);
@@ -908,9 +910,9 @@ public final class BotNavigationGraphProvider {
 
     private static void addWalkEdge(Foothold fromFoothold,
                                     Foothold targetFoothold,
-                                    Map<Integer, BotNavigationGraph.Region> regionsById,
+                                    Map<Integer, AgentNavigationGraph.Region> regionsById,
                                     Map<Integer, Integer> regionIdByFootholdId,
-                                    Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
+                                    Map<Integer, List<AgentNavigationGraph.Edge>> outgoing,
                                     Set<String> edgeKeys,
                                     AgentMovementProfile movementProfile) {
         if (fromFoothold == null || targetFoothold == null || targetFoothold.isWall()) {
@@ -928,8 +930,8 @@ public final class BotNavigationGraphProvider {
             return;
         }
 
-        BotNavigationGraph.Region from = regionsById.get(fromRegionId);
-        BotNavigationGraph.Region to = regionsById.get(toRegionId);
+        AgentNavigationGraph.Region from = regionsById.get(fromRegionId);
+        AgentNavigationGraph.Region to = regionsById.get(toRegionId);
         if (from == null || to == null) {
             return;
         }
@@ -937,16 +939,16 @@ public final class BotNavigationGraphProvider {
         Point start = from.pointAt(connection.from.x);
         Point end = to.pointAt(connection.to.x);
         int cost = estimateWalkCost(start, end, movementProfile);
-        addEdge(from.id, to.id, BotNavigationGraph.EdgeType.WALK, start, end, 0, 0, cost, outgoing, edgeKeys);
-        addEdge(to.id, from.id, BotNavigationGraph.EdgeType.WALK, end, start, 0, 0, cost, outgoing, edgeKeys);
+        addEdge(from.id, to.id, AgentNavigationGraph.EdgeType.WALK, start, end, 0, 0, cost, outgoing, edgeKeys);
+        addEdge(to.id, from.id, AgentNavigationGraph.EdgeType.WALK, end, start, 0, 0, cost, outgoing, edgeKeys);
     }
 
-    private static void addDropEdges(BotNavigationGraph.Region from,
+    private static void addDropEdges(AgentNavigationGraph.Region from,
                                      MapleMap map,
-                                     Map<Integer, BotNavigationGraph.Region> regionsById,
+                                     Map<Integer, AgentNavigationGraph.Region> regionsById,
                                      Map<Integer, Integer> regionIdByFootholdId,
                                      List<Point> anchors,
-                                     Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
+                                     Map<Integer, List<AgentNavigationGraph.Edge>> outgoing,
                                      Set<String> edgeKeys,
                                      AgentMovementProfile movementProfile) {
         addDirectionalDropEdge(from, map, regionsById, regionIdByFootholdId, -1, outgoing, edgeKeys, movementProfile);
@@ -964,24 +966,24 @@ public final class BotNavigationGraphProvider {
             }
 
             int toRegionId = findRegionIdBelow(map, regionIdByFootholdId, launchWindow.endPoint());
-            BotNavigationGraph.Region below = regionsById.get(toRegionId);
+            AgentNavigationGraph.Region below = regionsById.get(toRegionId);
             if (below == null || below.id == from.id) {
                 continue;
             }
 
-            addEdge(from.id, below.id, BotNavigationGraph.EdgeType.DROP,
+            addEdge(from.id, below.id, AgentNavigationGraph.EdgeType.DROP,
                     launchWindow.startPoint(), launchWindow.endPoint(),
                     launchWindow.minX(), launchWindow.maxX(),
                     0, 0, launchWindow.landingTimeMs(), outgoing, edgeKeys);
         }
     }
 
-    private static void addDirectionalDropEdge(BotNavigationGraph.Region from,
+    private static void addDirectionalDropEdge(AgentNavigationGraph.Region from,
                                                MapleMap map,
-                                               Map<Integer, BotNavigationGraph.Region> regionsById,
+                                               Map<Integer, AgentNavigationGraph.Region> regionsById,
                                                Map<Integer, Integer> regionIdByFootholdId,
                                                int direction,
-                                               Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
+                                               Map<Integer, List<AgentNavigationGraph.Edge>> outgoing,
                                                Set<String> edgeKeys,
                                                AgentMovementProfile movementProfile) {
         if (direction == 0) {
@@ -1020,7 +1022,7 @@ public final class BotNavigationGraphProvider {
         }
 
         int toRegionId = regionIdByFootholdId.getOrDefault(landing.foothold().getId(), -1);
-        BotNavigationGraph.Region below = regionsById.get(toRegionId);
+        AgentNavigationGraph.Region below = regionsById.get(toRegionId);
         if (below == null || below.id == from.id) {
             return;
         }
@@ -1031,7 +1033,7 @@ public final class BotNavigationGraphProvider {
         int travelMs = BotPhysicsEngine.estimateFallLandingTimeMs(map, endpoint, stepX)
                 + estimateHorizontalTravelTimeMs(actualRunway, movementProfile);
 
-        addEdge(from.id, below.id, BotNavigationGraph.EdgeType.DROP,
+        addEdge(from.id, below.id, AgentNavigationGraph.EdgeType.DROP,
                 startPoint,
                 landing.point(),
                 stepX,
@@ -1041,12 +1043,12 @@ public final class BotNavigationGraphProvider {
                 edgeKeys);
     }
 
-    private static void addJumpEdges(BotNavigationGraph.Region from,
+    private static void addJumpEdges(AgentNavigationGraph.Region from,
                                      MapleMap map,
-                                     Map<Integer, BotNavigationGraph.Region> regionsById,
+                                     Map<Integer, AgentNavigationGraph.Region> regionsById,
                                      Map<Integer, Integer> regionIdByFootholdId,
                                      List<Point> anchors,
-                                     Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
+                                     Map<Integer, List<AgentNavigationGraph.Edge>> outgoing,
                                      Set<String> edgeKeys,
                                      JumpLandingCache jumpLandingCache,
                                      AgentMovementProfile movementProfile) {
@@ -1063,7 +1065,7 @@ public final class BotNavigationGraphProvider {
                 BotPhysicsEngine.JumpLanding landing = simulatedLanding.landing();
 
                 int toRegionId = regionIdByFootholdId.getOrDefault(simulatedLanding.finalFoothold().getId(), -1);
-                BotNavigationGraph.Region to = regionsById.get(toRegionId);
+                AgentNavigationGraph.Region to = regionsById.get(toRegionId);
                 if (to == null || to.id == from.id) {
                     continue;
                 }
@@ -1077,7 +1079,7 @@ public final class BotNavigationGraphProvider {
                     continue;
                 }
 
-                addEdge(from.id, to.id, BotNavigationGraph.EdgeType.JUMP,
+                addEdge(from.id, to.id, AgentNavigationGraph.EdgeType.JUMP,
                         launchWindow.startPoint(), launchWindow.endPoint(),
                         launchWindow.minX(), launchWindow.maxX(),
                         launchStepX, 0, launchWindow.landingTimeMs(),
@@ -1170,11 +1172,11 @@ public final class BotNavigationGraphProvider {
     }
 
     private static Map<Integer, List<Point>> buildAnchorsByRegionId(MapleMap map,
-                                                                    List<BotNavigationGraph.Region> regions,
+                                                                    List<AgentNavigationGraph.Region> regions,
                                                                     Map<Integer, List<Integer>> featureXsByRegionId,
                                                                     AgentMovementProfile movementProfile) {
         Map<Integer, List<Point>> anchorsByRegionId = new HashMap<>();
-        for (BotNavigationGraph.Region region : regions) {
+        for (AgentNavigationGraph.Region region : regions) {
             if (region.isRopeRegion) {
                 continue;
             }
@@ -1183,7 +1185,7 @@ public final class BotNavigationGraphProvider {
         return anchorsByRegionId;
     }
 
-    private static JumpLaunchWindow expandJumpLaunchWindow(BotNavigationGraph.Region from,
+    private static JumpLaunchWindow expandJumpLaunchWindow(AgentNavigationGraph.Region from,
                                                            MapleMap map,
                                                            Map<Integer, Integer> regionIdByFootholdId,
                                                            int anchorX,
@@ -1219,7 +1221,7 @@ public final class BotNavigationGraphProvider {
                 representativeSimulation.landing().timeMs());
     }
 
-    private static JumpLaunchWindow expandDownJumpLaunchWindow(BotNavigationGraph.Region from,
+    private static JumpLaunchWindow expandDownJumpLaunchWindow(AgentNavigationGraph.Region from,
                                                                MapleMap map,
                                                                Map<Integer, Integer> regionIdByFootholdId,
                                                                int anchorX,
@@ -1250,7 +1252,7 @@ public final class BotNavigationGraphProvider {
                 representativeLanding.point(), representativeLanding.timeMs());
     }
 
-    private static int findJumpBoundary(BotNavigationGraph.Region from,
+    private static int findJumpBoundary(AgentNavigationGraph.Region from,
                                         MapleMap map,
                                         Map<Integer, Integer> regionIdByFootholdId,
                                         int startX,
@@ -1298,7 +1300,7 @@ public final class BotNavigationGraphProvider {
         return validX;
     }
 
-    private static int findDownJumpBoundary(BotNavigationGraph.Region from,
+    private static int findDownJumpBoundary(AgentNavigationGraph.Region from,
                                             MapleMap map,
                                             Map<Integer, Integer> regionIdByFootholdId,
                                             int startX,
@@ -1343,7 +1345,7 @@ public final class BotNavigationGraphProvider {
         return validX;
     }
 
-    private static boolean isValidJumpLaunchX(BotNavigationGraph.Region from,
+    private static boolean isValidJumpLaunchX(AgentNavigationGraph.Region from,
                                               MapleMap map,
                                               Map<Integer, Integer> regionIdByFootholdId,
                                               int launchX,
@@ -1362,7 +1364,7 @@ public final class BotNavigationGraphProvider {
                 && regionIdByFootholdId.getOrDefault(landing.finalFoothold().getId(), -1) == targetRegionId;
     }
 
-    private static BotPhysicsEngine.JumpLanding validateDownJumpLaunchX(BotNavigationGraph.Region from,
+    private static BotPhysicsEngine.JumpLanding validateDownJumpLaunchX(AgentNavigationGraph.Region from,
                                                                          MapleMap map,
                                                                          Map<Integer, Integer> regionIdByFootholdId,
                                                                          int launchX,
@@ -1370,7 +1372,7 @@ public final class BotNavigationGraphProvider {
         return validateDownJumpLaunchX(from, map, regionIdByFootholdId, launchX, movementProfile, Integer.MIN_VALUE);
     }
 
-    private static boolean isValidDownJumpLaunchX(BotNavigationGraph.Region from,
+    private static boolean isValidDownJumpLaunchX(AgentNavigationGraph.Region from,
                                                   MapleMap map,
                                                   Map<Integer, Integer> regionIdByFootholdId,
                                                   int launchX,
@@ -1379,7 +1381,7 @@ public final class BotNavigationGraphProvider {
         return validateDownJumpLaunchX(from, map, regionIdByFootholdId, launchX, movementProfile, targetRegionId) != null;
     }
 
-    private static BotPhysicsEngine.JumpLanding validateDownJumpLaunchX(BotNavigationGraph.Region from,
+    private static BotPhysicsEngine.JumpLanding validateDownJumpLaunchX(AgentNavigationGraph.Region from,
                                                                          MapleMap map,
                                                                          Map<Integer, Integer> regionIdByFootholdId,
                                                                          int launchX,
@@ -1413,7 +1415,7 @@ public final class BotNavigationGraphProvider {
         return landing;
     }
 
-    private static boolean isApproachableJumpLaunchX(BotNavigationGraph.Region from, MapleMap map, int launchX) {
+    private static boolean isApproachableJumpLaunchX(AgentNavigationGraph.Region from, MapleMap map, int launchX) {
         if (from == null || from.isRopeRegion || map == null) {
             return false;
         }
@@ -1427,7 +1429,7 @@ public final class BotNavigationGraphProvider {
         return launchX < from.maxX && canWalkToLaunchX(from, map, launchX + 1, launchX);
     }
 
-    private static JumpLaunchWindow expandRopeGrabLaunchWindow(BotNavigationGraph.Region from,
+    private static JumpLaunchWindow expandRopeGrabLaunchWindow(AgentNavigationGraph.Region from,
                                                                MapleMap map,
                                                                int anchorX,
                                                                int launchStepX,
@@ -1457,7 +1459,7 @@ public final class BotNavigationGraphProvider {
         return new JumpLaunchWindow(minX, maxX, representativeStart, representativeGrab, travelMs);
     }
 
-    private static int findRopeGrabBoundary(BotNavigationGraph.Region from,
+    private static int findRopeGrabBoundary(AgentNavigationGraph.Region from,
                                             MapleMap map,
                                             int startX,
                                             int launchStepX,
@@ -1502,7 +1504,7 @@ public final class BotNavigationGraphProvider {
         return validX;
     }
 
-    private static boolean isValidRopeGrabLaunchX(BotNavigationGraph.Region from,
+    private static boolean isValidRopeGrabLaunchX(AgentNavigationGraph.Region from,
                                                   MapleMap map,
                                                   int launchX,
                                                   int launchStepX,
@@ -1544,7 +1546,7 @@ public final class BotNavigationGraphProvider {
         return false;
     }
 
-    private static boolean canWalkToLaunchX(BotNavigationGraph.Region from, MapleMap map, int fromX, int launchX) {
+    private static boolean canWalkToLaunchX(AgentNavigationGraph.Region from, MapleMap map, int fromX, int launchX) {
         Point fromPoint = from.pointAt(fromX);
         Point launchPoint = from.pointAt(launchX);
         if (fromPoint == null || launchPoint == null || fromPoint.equals(launchPoint)) {
@@ -1555,12 +1557,12 @@ public final class BotNavigationGraphProvider {
 
     // --- Rope entry edges: ground/rope region → rope region ---
 
-    private static void addRopeEntryEdges(BotNavigationGraph.Region ropeRegion,
-                                          List<BotNavigationGraph.Region> groundRegions,
+    private static void addRopeEntryEdges(AgentNavigationGraph.Region ropeRegion,
+                                          List<AgentNavigationGraph.Region> groundRegions,
                                           Map<Integer, Rope> ropeByRegionId,
                                           MapleMap map,
                                           Map<Integer, List<Point>> anchorsByRegionId,
-                                          Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
+                                          Map<Integer, List<AgentNavigationGraph.Edge>> outgoing,
                                           Set<String> edgeKeys,
                                           RopeGrabCache ropeGrabCache,
                                           AgentMovementProfile movementProfile) {
@@ -1572,28 +1574,28 @@ public final class BotNavigationGraphProvider {
         int ropeX = rope.x();
         int walkStep = BotMovementManager.walkStep(map, movementProfile);
         JumpBuildStats stats = new JumpBuildStats();
-        for (BotNavigationGraph.Region ground : groundRegions) {
+        for (AgentNavigationGraph.Region ground : groundRegions) {
             for (Point anchor : anchorsByRegionId.getOrDefault(ground.id, List.of())) {
                 int firstClimbableY = BotPhysicsEngine.firstClimbableY(rope);
-                boolean canGrab = Math.abs(anchor.x - ropeX) <= BotMovementManager.cfg.ROPE_GRAB_X
+                boolean canGrab = Math.abs(anchor.x - ropeX) <= BotPhysicsEngine.configuredRopeGrabX()
                         && anchor.y >= firstClimbableY && anchor.y <= rope.bottomY();
-                boolean canTopGrab = Math.abs(anchor.x - ropeX) <= BotMovementManager.cfg.ROPE_GRAB_X
+                boolean canTopGrab = Math.abs(anchor.x - ropeX) <= BotPhysicsEngine.configuredRopeGrabX()
                         && anchor.y < rope.topY()
-                        && rope.topY() - anchor.y <= BotPhysicsEngine.cfg.MAX_SNAP_DROP;
+                        && rope.topY() - anchor.y <= BotPhysicsEngine.configuredMaxSnapDrop();
                 boolean canJumpGrab = BotMovementManager.canReachRopeFromGround(map, anchor, rope, movementProfile);
-                boolean canTopStep = anchor.y <= rope.topY() + BotMovementManager.cfg.JUMP_Y_THRESH
-                        && Math.abs(anchor.x - ropeX) <= BotMovementManager.cfg.ROPE_GRAB_X;
+                boolean canTopStep = anchor.y <= rope.topY() + BotMovementManager.configuredJumpYThreshold()
+                        && Math.abs(anchor.x - ropeX) <= BotPhysicsEngine.configuredRopeGrabX();
 
                 if (canGrab) {
                     Point ropePoint = new Point(ropeX, Math.max(firstClimbableY, Math.min(anchor.y, rope.bottomY())));
-                    addEdge(ground.id, ropeRegion.id, BotNavigationGraph.EdgeType.CLIMB,
-                            anchor, ropePoint, 0, 0, BotPhysicsEngine.cfg.TICK_MS, outgoing, edgeKeys);
+                    addEdge(ground.id, ropeRegion.id, AgentNavigationGraph.EdgeType.CLIMB,
+                            anchor, ropePoint, 0, 0, BotMovementManager.configuredTickMs(), outgoing, edgeKeys);
                     continue;
                 }
 
                 if (canTopGrab) {
-                    addEdge(ground.id, ropeRegion.id, BotNavigationGraph.EdgeType.CLIMB,
-                            anchor, new Point(ropeX, firstClimbableY), 0, 0, BotPhysicsEngine.cfg.TICK_MS, outgoing, edgeKeys);
+                    addEdge(ground.id, ropeRegion.id, AgentNavigationGraph.EdgeType.CLIMB,
+                            anchor, new Point(ropeX, firstClimbableY), 0, 0, BotMovementManager.configuredTickMs(), outgoing, edgeKeys);
                     continue;
                 }
 
@@ -1601,7 +1603,7 @@ public final class BotNavigationGraphProvider {
                     Point ropeGrab = BotPhysicsEngine.simulateDownJumpRopeGrab(map, anchor, rope);
                     if (ropeGrab != null) {
                         int cost = BotPhysicsEngine.estimateDownJumpRopeGrabTimeMs(map, anchor, rope);
-                        addEdge(ground.id, ropeRegion.id, BotNavigationGraph.EdgeType.CLIMB,
+                        addEdge(ground.id, ropeRegion.id, AgentNavigationGraph.EdgeType.CLIMB,
                                 anchor, ropeGrab, 0, 0, cost, outgoing, edgeKeys);
                     }
                 }
@@ -1613,7 +1615,7 @@ public final class BotNavigationGraphProvider {
                         if (launchWindow == null) {
                             continue;
                         }
-                        addEdge(ground.id, ropeRegion.id, BotNavigationGraph.EdgeType.CLIMB,
+                        addEdge(ground.id, ropeRegion.id, AgentNavigationGraph.EdgeType.CLIMB,
                                 launchWindow.startPoint(), launchWindow.endPoint(),
                                 launchWindow.minX(), launchWindow.maxX(),
                                 jumpStep, 0, launchWindow.landingTimeMs(), outgoing, edgeKeys);
@@ -1625,13 +1627,13 @@ public final class BotNavigationGraphProvider {
 
     // --- Rope exit edges: rope region → ground/rope region ---
 
-    private static void addRopeExitEdges(BotNavigationGraph.Region ropeRegion,
-                                         List<BotNavigationGraph.Region> ropeRegions,
+    private static void addRopeExitEdges(AgentNavigationGraph.Region ropeRegion,
+                                         List<AgentNavigationGraph.Region> ropeRegions,
                                          Map<Integer, Rope> ropeByRegionId,
                                          MapleMap map,
-                                         Map<Integer, BotNavigationGraph.Region> regionsById,
+                                         Map<Integer, AgentNavigationGraph.Region> regionsById,
                                          Map<Integer, Integer> regionIdByFootholdId,
-                                         Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
+                                         Map<Integer, List<AgentNavigationGraph.Edge>> outgoing,
                                          Set<String> edgeKeys,
                                          AgentMovementProfile movementProfile) {
         Rope rope = ropeByRegionId.get(ropeRegion.id);
@@ -1650,19 +1652,19 @@ public final class BotNavigationGraphProvider {
         for (int anchorY : ropeAnchorYs(rope)) {
             Point ropePoint = new Point(ropeX, anchorY);
             for (int stepX : new int[]{-jumpStep, 0, jumpStep}) {
-                BotMovementManager.JumpLanding landing = BotMovementManager.simulateRopeJumpLanding(map, ropePoint, stepX, movementProfile);
+                BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateRopeJumpLanding(map, ropePoint, stepX, movementProfile);
                 if (landing == null) {
                     continue;
                 }
 
                 int toRegionId = regionIdByFootholdId.getOrDefault(landing.foothold().getId(), -1);
-                BotNavigationGraph.Region toRegion = regionsById.get(toRegionId);
+                AgentNavigationGraph.Region toRegion = regionsById.get(toRegionId);
                 if (toRegion == null || toRegion.isRopeRegion) {
                     continue;
                 }
 
                 int cost = BotPhysicsEngine.estimateRopeJumpLandingTimeMs(map, ropePoint, stepX, movementProfile);
-                addEdge(ropeRegion.id, toRegion.id, BotNavigationGraph.EdgeType.CLIMB,
+                addEdge(ropeRegion.id, toRegion.id, AgentNavigationGraph.EdgeType.CLIMB,
                         ropePoint, landing.point(), stepX, 0, cost, outgoing, edgeKeys);
             }
         }
@@ -1670,7 +1672,7 @@ public final class BotNavigationGraphProvider {
         // Rope-to-rope transfers need a tighter vertical sweep than generic rope exits.
         for (int anchorY : ropeTransferAnchorYs(rope)) {
             Point ropePoint = new Point(ropeX, anchorY);
-            for (BotNavigationGraph.Region otherRope : ropeRegions) {
+            for (AgentNavigationGraph.Region otherRope : ropeRegions) {
                 if (otherRope.id == ropeRegion.id) {
                     continue;
                 }
@@ -1692,18 +1694,18 @@ public final class BotNavigationGraphProvider {
                 }
 
                 int cost = BotPhysicsEngine.estimateRopeJumpGrabTimeMs(map, ropePoint, launchDir, targetRope, movementProfile);
-                addEdge(ropeRegion.id, otherRope.id, BotNavigationGraph.EdgeType.CLIMB,
+                addEdge(ropeRegion.id, otherRope.id, AgentNavigationGraph.EdgeType.CLIMB,
                         ropePoint, ropeGrab, launchDir, 0, cost, outgoing, edgeKeys);
             }
         }
     }
 
-    private static void addTopStepOffEdge(BotNavigationGraph.Region ropeRegion,
+    private static void addTopStepOffEdge(AgentNavigationGraph.Region ropeRegion,
                                           Rope rope,
                                           MapleMap map,
-                                          Map<Integer, BotNavigationGraph.Region> regionsById,
+                                          Map<Integer, AgentNavigationGraph.Region> regionsById,
                                           Map<Integer, Integer> regionIdByFootholdId,
-                                          Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
+                                          Map<Integer, List<AgentNavigationGraph.Edge>> outgoing,
                                           Set<String> edgeKeys) {
         Point probe = new Point(rope.x(), rope.topY() - 3);
         Point landPoint = map.getPointBelow(probe);
@@ -1716,14 +1718,14 @@ public final class BotNavigationGraphProvider {
             return;
         }
 
-        BotNavigationGraph.Region ground = regionsById.get(regionIdByFootholdId.getOrDefault(foothold.getId(), -1));
+        AgentNavigationGraph.Region ground = regionsById.get(regionIdByFootholdId.getOrDefault(foothold.getId(), -1));
         if (ground == null || ground.isRopeRegion) {
             return;
         }
 
         Point ropePoint = new Point(rope.x(), rope.topY());
-        addEdge(ropeRegion.id, ground.id, BotNavigationGraph.EdgeType.CLIMB,
-                ropePoint, landPoint, 0, 0, BotPhysicsEngine.cfg.TICK_MS, outgoing, edgeKeys);
+        addEdge(ropeRegion.id, ground.id, AgentNavigationGraph.EdgeType.CLIMB,
+                ropePoint, landPoint, 0, 0, BotMovementManager.configuredTickMs(), outgoing, edgeKeys);
     }
     private static List<Integer> ropeAnchorYs(Rope rope) {
         List<Integer> ys = new ArrayList<>();
@@ -1740,9 +1742,9 @@ public final class BotNavigationGraphProvider {
         return ys;
     }
 
-    private static Map<Integer, Rope> buildRopeByRegionId(MapleMap map, List<BotNavigationGraph.Region> ropeRegions) {
+    private static Map<Integer, Rope> buildRopeByRegionId(MapleMap map, List<AgentNavigationGraph.Region> ropeRegions) {
         Map<Integer, Rope> ropeByRegionId = new HashMap<>();
-        for (BotNavigationGraph.Region ropeRegion : ropeRegions) {
+        for (AgentNavigationGraph.Region ropeRegion : ropeRegions) {
             Rope rope = findRopeFromRegion(map, ropeRegion);
             if (rope != null) {
                 ropeByRegionId.put(ropeRegion.id, rope);
@@ -1764,7 +1766,7 @@ public final class BotNavigationGraphProvider {
         return ys;
     }
 
-    static Rope findRopeFromRegion(MapleMap map, BotNavigationGraph.Region ropeRegion) {
+    public static Rope findRopeFromRegion(MapleMap map, AgentNavigationGraph.Region ropeRegion) {
         if (ropeRegion == null || !ropeRegion.isRopeRegion) {
             return null;
         }
@@ -1778,9 +1780,9 @@ public final class BotNavigationGraphProvider {
 
     private static void addPortalEdges(Portal portal,
                                        MapleMap map,
-                                       Map<Integer, BotNavigationGraph.Region> regionsById,
+                                       Map<Integer, AgentNavigationGraph.Region> regionsById,
                                        Map<Integer, Integer> regionIdByFootholdId,
-                                       Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
+                                       Map<Integer, List<AgentNavigationGraph.Edge>> outgoing,
                                        Set<String> edgeKeys) {
         if (portal.getTargetMapId() != map.getId()) {
             return;
@@ -1794,10 +1796,10 @@ public final class BotNavigationGraphProvider {
         // Portal WZ positions can sit a few pixels below the foothold surface they belong to,
         // causing findBelow to skip the correct foothold and land on the next lower platform.
         // Probe MAX_SNAP_DROP above the portal position so findBelow always finds the right foothold.
-        int snapUp = BotPhysicsEngine.cfg.MAX_SNAP_DROP;
-        BotNavigationGraph.Region from = findRegionBelow(map, regionsById, regionIdByFootholdId,
+        int snapUp = BotPhysicsEngine.configuredMaxSnapDrop();
+        AgentNavigationGraph.Region from = findRegionBelow(map, regionsById, regionIdByFootholdId,
                 new Point(portal.getPosition().x, portal.getPosition().y - snapUp));
-        BotNavigationGraph.Region to = findRegionBelow(map, regionsById, regionIdByFootholdId,
+        AgentNavigationGraph.Region to = findRegionBelow(map, regionsById, regionIdByFootholdId,
                 new Point(targetPortal.getPosition().x, targetPortal.getPosition().y - snapUp));
         if (from == null || to == null) {
             return;
@@ -1809,11 +1811,11 @@ public final class BotNavigationGraphProvider {
         // portal costs is the post-use cooldown the bot pays when it chains straight into another
         // portal; that is modelled path-dependently in BotNavigationManager's A* (the viaPortal
         // state flag), not as a flat per-edge cost. See PORTAL_USE_COOLDOWN_MS.
-        addEdge(from.id, to.id, BotNavigationGraph.EdgeType.PORTAL, start, end, 0, portal.getId(), 0, outgoing, edgeKeys);
+        addEdge(from.id, to.id, AgentNavigationGraph.EdgeType.PORTAL, start, end, 0, portal.getId(), 0, outgoing, edgeKeys);
     }
 
     private static Map<Integer, List<Integer>> buildFeatureXsByRegionId(MapleMap map,
-                                                                        List<BotNavigationGraph.Region> regions,
+                                                                        List<AgentNavigationGraph.Region> regions,
                                                                         Map<Integer, Integer> regionIdByFootholdId) {
         Map<Integer, Set<Integer>> featureXs = new HashMap<>();
 
@@ -1821,11 +1823,11 @@ public final class BotNavigationGraphProvider {
             addFeatureX(featureXs, findRegionIdBelow(map, regionIdByFootholdId, new Point(rope.x(), rope.bottomY() - 1)), rope.x());
             addFeatureX(featureXs, findRegionIdBelow(map, regionIdByFootholdId, new Point(rope.x(), rope.topY() - 1)), rope.x());
             addFeatureX(featureXs, findRegionIdBelow(map, regionIdByFootholdId,
-                    new Point(rope.x(), rope.topY() - BotMovementManager.cfg.JUMP_Y_THRESH * 2)), rope.x());
+                    new Point(rope.x(), rope.topY() - BotMovementManager.configuredJumpYThreshold() * 2)), rope.x());
         }
 
         for (Portal portal : map.getPortals()) {
-            int snapUp = BotPhysicsEngine.cfg.MAX_SNAP_DROP;
+            int snapUp = BotPhysicsEngine.configuredMaxSnapDrop();
             Point portalProbe = new Point(portal.getPosition().x, portal.getPosition().y - snapUp);
             addFeatureX(featureXs, findRegionIdBelow(map, regionIdByFootholdId, portalProbe), portal.getPosition().x);
             if (portal.getTargetMapId() != map.getId()) {
@@ -1839,7 +1841,7 @@ public final class BotNavigationGraphProvider {
             }
         }
 
-        for (BotNavigationGraph.Region region : regions) {
+        for (AgentNavigationGraph.Region region : regions) {
             if (region.isRopeRegion) {
                 continue;
             }
@@ -1895,8 +1897,8 @@ public final class BotNavigationGraphProvider {
         return regionIdByFootholdId.getOrDefault(foothold.getId(), -1);
     }
 
-    private static BotNavigationGraph.Region findRegionBelow(MapleMap map,
-                                                             Map<Integer, BotNavigationGraph.Region> regionsById,
+    private static AgentNavigationGraph.Region findRegionBelow(MapleMap map,
+                                                             Map<Integer, AgentNavigationGraph.Region> regionsById,
                                                              Map<Integer, Integer> regionIdByFootholdId,
                                                              Point point) {
         int regionId = findRegionIdBelow(map, regionIdByFootholdId, point);
@@ -1907,13 +1909,13 @@ public final class BotNavigationGraphProvider {
     }
 
     private static List<Point> anchorPoints(MapleMap map,
-                                            BotNavigationGraph.Region region,
+                                            AgentNavigationGraph.Region region,
                                             List<Integer> featureXs,
                                             AgentMovementProfile movementProfile) {
         List<Point> points = new ArrayList<>();
         addAnchor(points, region.leftPoint());
         // Near-edge anchors for better jump/drop accuracy at platform boundaries
-        int edgeInset = Math.max(8, (int) Math.round(movementProfile.walkVelocityPxs() * BotPhysicsEngine.cfg.TICK_MS / 1000.0));
+        int edgeInset = Math.max(8, (int) Math.round(movementProfile.walkVelocityPxs() * BotMovementManager.configuredTickMs() / 1000.0));
         if (region.width() > edgeInset * 2) {
             addAnchor(points, region.pointAt(region.minX + edgeInset), ENDPOINT_ANCHOR_SPACING_PX);
             addAnchor(points, region.pointAt(region.maxX - edgeInset), ENDPOINT_ANCHOR_SPACING_PX);
@@ -1940,14 +1942,14 @@ public final class BotNavigationGraphProvider {
                 addAnchor(points, region.pointAt(x), 0);
             }
         }
-        for (BotNavigationGraph.Segment segment : region.segments) {
+        for (AgentNavigationGraph.Segment segment : region.segments) {
             addAnchor(points, new Point(segment.x1, segment.y1), ENDPOINT_ANCHOR_SPACING_PX);
             addAnchor(points, new Point(segment.x2, segment.y2), ENDPOINT_ANCHOR_SPACING_PX);
         }
-        if (region.width() >= Math.max(BotMovementManager.cfg.FOLLOW_DIST * 2, 140)) {
+        if (region.width() >= Math.max(BotMovementManager.configuredFollowDist() * 2, 140)) {
             addAnchor(points, region.centerPoint());
         }
-        if (region.width() >= Math.max(BotMovementManager.cfg.FOLLOW_DIST * 4, 260)) {
+        if (region.width() >= Math.max(BotMovementManager.configuredFollowDist() * 4, 260)) {
             addAnchor(points, region.pointAt(region.minX + region.width() / 3));
             addAnchor(points, region.pointAt(region.maxX - region.width() / 3));
         }
@@ -1987,7 +1989,7 @@ public final class BotNavigationGraphProvider {
 
     private static void addEdge(int fromRegionId,
                                 int toRegionId,
-                                BotNavigationGraph.EdgeType type,
+                                AgentNavigationGraph.EdgeType type,
                                 Point startPoint,
                                 Point endPoint,
                                 int launchMinX,
@@ -1995,7 +1997,7 @@ public final class BotNavigationGraphProvider {
                                 int launchStepX,
                                 int portalId,
                                 int cost,
-                                Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
+                                Map<Integer, List<AgentNavigationGraph.Edge>> outgoing,
                                 Set<String> edgeKeys) {
         addEdge(fromRegionId, toRegionId, type, startPoint, endPoint, launchMinX, launchMaxX, launchStepX, portalId,
                 0, 0, 0, cost, outgoing, edgeKeys);
@@ -2003,13 +2005,13 @@ public final class BotNavigationGraphProvider {
 
     private static void addEdge(int fromRegionId,
                                 int toRegionId,
-                                BotNavigationGraph.EdgeType type,
+                                AgentNavigationGraph.EdgeType type,
                                 Point startPoint,
                                 Point endPoint,
                                 int launchStepX,
                                 int portalId,
                                 int cost,
-                                Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
+                                Map<Integer, List<AgentNavigationGraph.Edge>> outgoing,
                                 Set<String> edgeKeys) {
         addEdge(fromRegionId, toRegionId, type, startPoint, endPoint, startPoint.x, startPoint.x, launchStepX, portalId,
                 0, 0, 0, cost, outgoing, edgeKeys);
@@ -2017,7 +2019,7 @@ public final class BotNavigationGraphProvider {
 
     private static void addEdge(int fromRegionId,
                                 int toRegionId,
-                                BotNavigationGraph.EdgeType type,
+                                AgentNavigationGraph.EdgeType type,
                                 Point startPoint,
                                 Point endPoint,
                                 int launchMinX,
@@ -2028,7 +2030,7 @@ public final class BotNavigationGraphProvider {
                                 int ropeTopY,
                                 int ropeBottomY,
                                 int cost,
-                                Map<Integer, List<BotNavigationGraph.Edge>> outgoing,
+                                Map<Integer, List<AgentNavigationGraph.Edge>> outgoing,
                                 Set<String> edgeKeys) {
         String key = fromRegionId + ":" + toRegionId + ":" + type + ":" + startPoint.x + ":" + startPoint.y + ":"
                 + endPoint.x + ":" + endPoint.y + ":" + launchStepX + ":" + portalId + ":"
@@ -2038,7 +2040,7 @@ public final class BotNavigationGraphProvider {
         }
 
         outgoing.computeIfAbsent(fromRegionId, ignored -> new ArrayList<>())
-                .add(new BotNavigationGraph.Edge(fromRegionId, toRegionId, type, startPoint, endPoint,
+                .add(new AgentNavigationGraph.Edge(fromRegionId, toRegionId, type, startPoint, endPoint,
                         launchMinX, launchMaxX, launchStepX, portalId, ropeX, ropeTopY, ropeBottomY, cost));
         BuildProfileBuilder profile = ACTIVE_BUILD_PROFILE.get();
         if (profile != null) {
@@ -2122,7 +2124,7 @@ public final class BotNavigationGraphProvider {
         return Math.max(0, (int) Math.round((dx * 1000.0) / Math.max(1.0, movementProfile.walkVelocityPxs())));
     }
 
-    private static int dropLaunchStep(BotNavigationGraph.Region region, MapleMap map, Point anchor, AgentMovementProfile movementProfile) {
+    private static int dropLaunchStep(AgentNavigationGraph.Region region, MapleMap map, Point anchor, AgentMovementProfile movementProfile) {
         Point left = region.leftPoint();
         if (Math.abs(anchor.x - left.x) <= ENDPOINT_ANCHOR_SPACING_PX && Math.abs(anchor.y - left.y) <= 12) {
             return -BotMovementManager.walkStep(map, movementProfile);

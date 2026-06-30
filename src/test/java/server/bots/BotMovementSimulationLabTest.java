@@ -1,5 +1,9 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
+
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+
 import server.agents.capabilities.navigation.AgentNavigationMapLoader;
 
 import org.junit.jupiter.api.Test;
@@ -97,7 +101,7 @@ class BotMovementSimulationLabTest {
     @Test
     void shouldResolveSlashRopeOscillationDumpByRefreshingPendingExitEdge() {
         MapleMap map = AgentNavigationMapLoader.loadMapGeometry(103000000);
-        BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraphService.rebuildGraph(map);
         BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);
         lab.spawnActor("OWNER", 20, map, new Point(-69, 156));
         BotEntry entry = lab.spawnBot("SLASH", 21, map, new Point(366, -117));
@@ -109,8 +113,8 @@ class BotMovementSimulationLabTest {
                 .findFirst()
                 .orElseThrow();
         lab.attachBotToRope("SLASH", rope, -117);
-        lab.setNavState("SLASH", new BotNavigationGraph.Edge(
-                160, 116, BotNavigationGraph.EdgeType.CLIMB,
+        lab.setNavState("SLASH", new AgentNavigationGraph.Edge(
+                160, 116, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(366, -118), new Point(427, -101),
                 8, 0, 366, -358, -111, 400
         ), 148, true);
@@ -134,7 +138,7 @@ class BotMovementSimulationLabTest {
     @Test
     void shouldResolveBashRopeOscillationDumpByExecutingImmediatelyFromRopeAnchorWindow() {
         MapleMap map = AgentNavigationMapLoader.loadMapGeometry(103000800);
-        BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraphService.rebuildGraph(map);
         BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);
         lab.spawnActor("OWNER", 30, map, new Point(-437, -859));
         lab.spawnBot("BASH", 31, map, new Point(-437, -1142));
@@ -145,8 +149,8 @@ class BotMovementSimulationLabTest {
                 .findFirst()
                 .orElseThrow();
         lab.attachBotToRope("BASH", rope, -1142);
-        lab.setNavState("BASH", new BotNavigationGraph.Edge(
-                25, 2, BotNavigationGraph.EdgeType.CLIMB,
+        lab.setNavState("BASH", new AgentNavigationGraph.Edge(
+                25, 2, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(-437, -1141), new Point(-477, -1166),
                 -8, 0, -437, -1471, 84, 250
         ), 6, true);
@@ -164,7 +168,7 @@ class BotMovementSimulationLabTest {
     @Test
     void shouldCommitJohnSecondJumpOnTheNextAiTickAfterLanding() {
         MapleMap map = AgentNavigationMapLoader.loadMapGeometry(101020001);
-        BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraphService.rebuildGraph(map);
         BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);
         lab.spawnActor("OWNER", 50, map, new Point(115, -1521));
         lab.spawnBot("JOHN", 51, map, new Point(114, -1091));
@@ -172,8 +176,8 @@ class BotMovementSimulationLabTest {
         lab.setFormation("OWNER", BotManager.FormationType.STAGGER, 60, 200);
         lab.setFollowOffset("JOHN", 180);
         lab.setAiAccumulator("JOHN", 50);
-        lab.setNavState("JOHN", new BotNavigationGraph.Edge(
-                28, 27, BotNavigationGraph.EdgeType.JUMP,
+        lab.setNavState("JOHN", new AgentNavigationGraph.Edge(
+                28, 27, AgentNavigationGraph.EdgeType.JUMP,
                 new Point(148, -1098), new Point(148, -1150),
                 0, 0, 0, 0, 0, 400
         ), 19, true);
@@ -196,7 +200,7 @@ class BotMovementSimulationLabTest {
     @Test
     void shouldUsePetWalkingRoadLocalWalkOffDrop() {
         MapleMap map = AgentNavigationMapLoader.loadMapGeometry(100000202);
-        BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraphService.rebuildGraph(map);
         BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);
         lab.spawnActor("OWNER", 40, map, new Point(-1799, -926));
         lab.spawnBot("JOHN", 41, map, new Point(-1366, -664));
@@ -222,7 +226,7 @@ class BotMovementSimulationLabTest {
     @Test
     void shouldWalkOffLedgeDropsViaGroundPhysicsWithoutExplicitDropExec() {
         MapleMap map = createWalkOffDropMap(910000401);
-        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(map);
         LedgeDropScenario scenario = findLedgeDropScenario(graph, map);
 
         assertNotNull(scenario, "Expected at least one walk-off drop with a still-grounded start point");
@@ -269,10 +273,10 @@ class BotMovementSimulationLabTest {
         return map;
     }
 
-    private static LedgeDropScenario findLedgeDropScenario(BotNavigationGraph graph, MapleMap map) {
-        for (BotNavigationGraph.Region region : graph.regions) {
-            for (BotNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
-                if (edge.type != BotNavigationGraph.EdgeType.DROP || edge.launchStepX == 0) {
+    private static LedgeDropScenario findLedgeDropScenario(AgentNavigationGraph graph, MapleMap map) {
+        for (AgentNavigationGraph.Region region : graph.regions) {
+            for (AgentNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
+                if (edge.type != AgentNavigationGraph.EdgeType.DROP || edge.launchStepX == 0) {
                     continue;
                 }
 
@@ -285,10 +289,10 @@ class BotMovementSimulationLabTest {
         return null;
     }
 
-    private static Point findWalkableStartBeforeLedge(BotNavigationGraph graph,
+    private static Point findWalkableStartBeforeLedge(AgentNavigationGraph graph,
                                                       MapleMap map,
-                                                      BotNavigationGraph.Edge edge) {
-        BotNavigationGraph.Region region = graph.getRegion(edge.fromRegionId);
+                                                      AgentNavigationGraph.Edge edge) {
+        AgentNavigationGraph.Region region = graph.getRegion(edge.fromRegionId);
         if (region == null) {
             return null;
         }
@@ -315,6 +319,6 @@ class BotMovementSimulationLabTest {
         return null;
     }
 
-    private record LedgeDropScenario(BotNavigationGraph.Edge edge, Point startPoint) {
+    private record LedgeDropScenario(AgentNavigationGraph.Edge edge, Point startPoint) {
     }
 }

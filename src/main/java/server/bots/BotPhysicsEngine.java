@@ -1,5 +1,9 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
+
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.movement.AgentMovementProfile;
 
@@ -27,7 +31,7 @@ public final class BotPhysicsEngine {
     private static final int REGION_STITCH_GAP_PX = 2;
     private static final int SYNTHETIC_MAP_BOUND_SIZE = 1 << 18;
     // Max horizontal gap between adjacent foothold endpoints that the bot can walk across.
-    // Shared with BotNavigationGraphProvider so walk-edge generation and physics agree.
+    // Shared with AgentNavigationGraphService so walk-edge generation and physics agree.
     static final int WALK_GAP_PX = 12;
 
     static class Config {
@@ -117,7 +121,7 @@ public final class BotPhysicsEngine {
     }
 
     private record WalkRegionLookup(int mapId,
-                                    Map<Integer, BotNavigationGraph.Region> regionsById,
+                                    Map<Integer, AgentNavigationGraph.Region> regionsById,
                                     Map<Integer, Integer> regionIdByFootholdId,
                                     Map<Integer, Foothold> footholdsById) {
     }
@@ -152,7 +156,7 @@ public final class BotPhysicsEngine {
             return point;
         }
 
-        Foothold foothold() {
+        public Foothold foothold() {
             return foothold;
         }
 
@@ -164,15 +168,15 @@ public final class BotPhysicsEngine {
             return incomingDeltaY;
         }
 
-        int timeMs() {
+        public int timeMs() {
             return ticks * cfg.TICK_MS;
         }
     }
 
-    record PostLandingJump(JumpLanding landing,
-                           Point finalPoint,
-                           Foothold finalFoothold,
-                           boolean lostGround) {
+    public record PostLandingJump(JumpLanding landing,
+                                  Point finalPoint,
+                                  Foothold finalFoothold,
+                                  boolean lostGround) {
     }
 
     record WalkOffLanding(Point launchPoint,
@@ -270,7 +274,7 @@ public final class BotPhysicsEngine {
         return Math.max(1, Math.round(cfg.CLIMB_SPEED_PXS * tickS()));
     }
 
-    static float gravityPerTick() {
+    public static float gravityPerTick() {
         float t = tickS();
         return cfg.GRAVITY_PXS2 * t * t;
     }
@@ -293,7 +297,7 @@ public final class BotPhysicsEngine {
      * Time to ~95% terminal ≈ 3/(friction+slope). We use a fixed multiple of walkStep that comfortably
      * exceeds the 95% mark for the calibrated constants without iterating.
      */
-    static int launchRunwayPx(MapleMap map, AgentMovementProfile profile) {
+    public static int launchRunwayPx(MapleMap map, AgentMovementProfile profile) {
         int step = walkStep(map, profile);
         return Math.max(40, step * 6);
     }
@@ -364,7 +368,7 @@ public final class BotPhysicsEngine {
 
     // Canonical walk-connectivity rule shared by graph region merging and runtime ground traversal.
     // If two foothold endpoints form a walkable local step, they must be in the same walk region.
-    static boolean canWalkAcrossFootholds(Foothold first, Foothold second) {
+    public static boolean canWalkAcrossFootholds(Foothold first, Foothold second) {
         if (first == null || second == null || first.isWall() || second.isWall()) {
             return false;
         }
@@ -444,7 +448,7 @@ public final class BotPhysicsEngine {
         return preview != null && preview.blocked();
     }
 
-    static boolean isGroundRunwayBlockedByWall(MapleMap map, Point from, Point to) {
+    public static boolean isGroundRunwayBlockedByWall(MapleMap map, Point from, Point to) {
         return findGroundWallCollision(map, from, to).type() == AirCollisionType.WALL;
     }
 
@@ -477,23 +481,23 @@ public final class BotPhysicsEngine {
             return null;
         }
         int regionId = lookup.regionIdByFootholdId().getOrDefault(foothold.getId(), -1);
-        BotNavigationGraph.Region region = lookup.regionsById().get(regionId);
+        AgentNavigationGraph.Region region = lookup.regionsById().get(regionId);
         if (region == null || region.isRopeRegion) {
             return null;
         }
 
-        BotNavigationGraph.Segment bestSegment = null;
+        AgentNavigationGraph.Segment bestSegment = null;
         Point bestPoint = null;
         int bestScore = Integer.MAX_VALUE;
         boolean foundContainingSegment = false;
-        for (BotNavigationGraph.Segment segment : region.segments) {
+        for (AgentNavigationGraph.Segment segment : region.segments) {
             if (segment.containsX(x)) {
                 foundContainingSegment = true;
                 break;
             }
         }
 
-        for (BotNavigationGraph.Segment segment : region.segments) {
+        for (AgentNavigationGraph.Segment segment : region.segments) {
             int dx = distanceToSegmentX(segment, x);
             boolean containsX = segment.containsX(x);
             if (!containsX && (foundContainingSegment || dx > REGION_STITCH_GAP_PX)) {
@@ -527,8 +531,8 @@ public final class BotPhysicsEngine {
         return new GroundRegionSample(bestPoint, bestFoothold);
     }
 
-    static void setBuildWalkRegionLookup(MapleMap map,
-                                         Map<Integer, BotNavigationGraph.Region> regionsById,
+    public static void setBuildWalkRegionLookup(MapleMap map,
+                                         Map<Integer, AgentNavigationGraph.Region> regionsById,
                                          Map<Integer, Integer> regionIdByFootholdId,
                                          Map<Integer, Foothold> footholdsById) {
         if (map == null || regionsById == null || regionIdByFootholdId == null || footholdsById == null) {
@@ -538,7 +542,7 @@ public final class BotPhysicsEngine {
         ACTIVE_BUILD_WALK_REGION_LOOKUP.set(new WalkRegionLookup(map.getId(), regionsById, regionIdByFootholdId, footholdsById));
     }
 
-    static void clearBuildWalkRegionLookup() {
+    public static void clearBuildWalkRegionLookup() {
         ACTIVE_BUILD_WALK_REGION_LOOKUP.remove();
     }
 
@@ -552,7 +556,7 @@ public final class BotPhysicsEngine {
             return activeLookup;
         }
 
-        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map);
+        AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map);
         if (graph == null) {
             return null;
         }
@@ -617,7 +621,7 @@ public final class BotPhysicsEngine {
         return new GroundStepPreview(baseY, snappedPoint, snappedFoothold, lostGround, false);
     }
 
-    private static int distanceToSegmentX(BotNavigationGraph.Segment segment, int x) {
+    private static int distanceToSegmentX(AgentNavigationGraph.Segment segment, int x) {
         if (segment.containsX(x)) {
             return 0;
         }
@@ -1454,7 +1458,7 @@ public final class BotPhysicsEngine {
         return maxHorizontalTravel(map, profile, ropeJumpForcePerTick(profile));
     }
 
-    static int maxRopeGrabSimulationHorizontalTravel(MapleMap map, AgentMovementProfile profile) {
+    public static int maxRopeGrabSimulationHorizontalTravel(MapleMap map, AgentMovementProfile profile) {
         int maxTicks = Math.max(1, 1500 / cfg.TICK_MS);
         return walkStep(map, profile) * maxTicks;
     }
@@ -1463,7 +1467,7 @@ public final class BotPhysicsEngine {
         return simulateRopeJumpGrab(map, from, stepX, targetRope, AgentMovementProfile.base());
     }
 
-    static Point simulateRopeJumpGrab(MapleMap map, Point from, int stepX, Rope targetRope, AgentMovementProfile profile) {
+    public static Point simulateRopeJumpGrab(MapleMap map, Point from, int stepX, Rope targetRope, AgentMovementProfile profile) {
         return simulateRopeGrab(map, from, -ropeJumpForcePerTick(profile), stepX, targetRope, 0L);
     }
 
@@ -1471,11 +1475,11 @@ public final class BotPhysicsEngine {
         return simulateGroundJumpRopeGrab(map, from, stepX, targetRope, AgentMovementProfile.base());
     }
 
-    static Point simulateGroundJumpRopeGrab(MapleMap map, Point from, int stepX, Rope targetRope, AgentMovementProfile profile) {
+    public static Point simulateGroundJumpRopeGrab(MapleMap map, Point from, int stepX, Rope targetRope, AgentMovementProfile profile) {
         return simulateRopeGrab(map, from, -jumpForcePerTick(profile), stepX, targetRope, 0L);
     }
 
-    static Point simulateDownJumpRopeGrab(MapleMap map, Point from, Rope targetRope) {
+    public static Point simulateDownJumpRopeGrab(MapleMap map, Point from, Rope targetRope) {
         return simulateRopeGrab(map, from, -downJumpForcePerTick(), 0, targetRope, cfg.DOWN_JUMP_GRACE_MS);
     }
 
@@ -1510,7 +1514,7 @@ public final class BotPhysicsEngine {
         return simulateLanding(map, from, -jumpForcePerTick(profile), stepX, 0L);
     }
 
-    static PostLandingJump simulateJumpLandingWithPostLandingTicks(MapleMap map,
+    public static PostLandingJump simulateJumpLandingWithPostLandingTicks(MapleMap map,
                                                                    Point from,
                                                                    int stepX,
                                                                    AgentMovementProfile profile,
@@ -1522,14 +1526,14 @@ public final class BotPhysicsEngine {
         return simulatePostLandingGroundTicks(map, landing, Integer.compare(stepX, 0), profile, postLandingTicks);
     }
 
-    static JumpLanding simulateDownJumpLanding(MapleMap map, Point from) {
+    public static JumpLanding simulateDownJumpLanding(MapleMap map, Point from) {
         if (!canStartDownJump(map, from)) {
             return null;
         }
         return simulateLanding(map, from, -downJumpForcePerTick(), 0, cfg.DOWN_JUMP_GRACE_MS);
     }
 
-    static JumpLanding simulateFallLanding(MapleMap map, Point from, int stepX) {
+    public static JumpLanding simulateFallLanding(MapleMap map, Point from, int stepX) {
         return simulateLanding(map, from, 0f, stepX, 0L);
     }
 
@@ -1537,7 +1541,7 @@ public final class BotPhysicsEngine {
         return simulateRopeJumpLanding(map, from, stepX, AgentMovementProfile.base());
     }
 
-    static JumpLanding simulateRopeJumpLanding(MapleMap map, Point from, int stepX, AgentMovementProfile profile) {
+    public static JumpLanding simulateRopeJumpLanding(MapleMap map, Point from, int stepX, AgentMovementProfile profile) {
         return simulateLanding(map, from, -ropeJumpForcePerTick(profile), stepX, 0L);
     }
 
@@ -1553,7 +1557,7 @@ public final class BotPhysicsEngine {
         return estimateLandingTimeMs(map, from, -downJumpForcePerTick(), 0, cfg.DOWN_JUMP_GRACE_MS);
     }
 
-    static int estimateFallLandingTimeMs(MapleMap map, Point from, int stepX) {
+    public static int estimateFallLandingTimeMs(MapleMap map, Point from, int stepX) {
         return estimateLandingTimeMs(map, from, 0f, stepX, 0L);
     }
 
@@ -1561,7 +1565,7 @@ public final class BotPhysicsEngine {
         return estimateRopeJumpLandingTimeMs(map, from, stepX, AgentMovementProfile.base());
     }
 
-    static int estimateRopeJumpLandingTimeMs(MapleMap map, Point from, int stepX, AgentMovementProfile profile) {
+    public static int estimateRopeJumpLandingTimeMs(MapleMap map, Point from, int stepX, AgentMovementProfile profile) {
         return estimateLandingTimeMs(map, from, -ropeJumpForcePerTick(profile), stepX, 0L);
     }
 
@@ -1569,11 +1573,11 @@ public final class BotPhysicsEngine {
         return estimateGroundJumpRopeGrabTimeMs(map, from, stepX, targetRope, AgentMovementProfile.base());
     }
 
-    static int estimateGroundJumpRopeGrabTimeMs(MapleMap map, Point from, int stepX, Rope targetRope, AgentMovementProfile profile) {
+    public static int estimateGroundJumpRopeGrabTimeMs(MapleMap map, Point from, int stepX, Rope targetRope, AgentMovementProfile profile) {
         return estimateRopeGrabTimeMs(map, from, -jumpForcePerTick(profile), stepX, targetRope, 0L);
     }
 
-    static int estimateDownJumpRopeGrabTimeMs(MapleMap map, Point from, Rope targetRope) {
+    public static int estimateDownJumpRopeGrabTimeMs(MapleMap map, Point from, Rope targetRope) {
         return estimateRopeGrabTimeMs(map, from, -downJumpForcePerTick(), 0, targetRope, cfg.DOWN_JUMP_GRACE_MS);
     }
 
@@ -1581,7 +1585,7 @@ public final class BotPhysicsEngine {
         return estimateRopeJumpGrabTimeMs(map, from, stepX, targetRope, AgentMovementProfile.base());
     }
 
-    static int estimateRopeJumpGrabTimeMs(MapleMap map, Point from, int stepX, Rope targetRope, AgentMovementProfile profile) {
+    public static int estimateRopeJumpGrabTimeMs(MapleMap map, Point from, int stepX, Rope targetRope, AgentMovementProfile profile) {
         return estimateRopeGrabTimeMs(map, from, -ropeJumpForcePerTick(profile), stepX, targetRope, 0L);
     }
 
@@ -1667,7 +1671,7 @@ public final class BotPhysicsEngine {
         return ground.y <= rope.topY() + climbStepPerTick() + 2 ? ground : null;
     }
 
-    static int firstClimbableY(Rope rope) {
+    public static int firstClimbableY(Rope rope) {
         return Math.min(rope.bottomY(), rope.topY() + 1);
     }
 
@@ -1774,7 +1778,7 @@ public final class BotPhysicsEngine {
 
     // True if a step between two endpoint positions is physically walkable (same criteria as
     // graph walk-edge generation, so physics and graph agree on which transitions are valid).
-    static boolean isWalkableEndpointStep(int dx, int dy) {
+    public static boolean isWalkableEndpointStep(int dx, int dy) {
         return dx <= WALK_GAP_PX
                 && dy <= cfg.MAX_SNAP_DROP
                 && dy >= -cfg.MAX_SLOPE_UP;
@@ -1950,7 +1954,7 @@ public final class BotPhysicsEngine {
      * is still being built.
      */
     private static java.util.Set<Integer> getCollidableWallIds(MapleMap map) {
-        java.util.Set<Integer> cached = BotNavigationGraphProvider.getCachedCollidableWallIds(map.getId());
+        java.util.Set<Integer> cached = AgentNavigationGraphService.getCachedCollidableWallIds(map.getId());
         if (cached != null) {
             return cached;
         }
@@ -1969,11 +1973,11 @@ public final class BotPhysicsEngine {
     }
 
     private static java.util.Set<Integer> getCollidableFromBelowIds(MapleMap map) {
-        java.util.Set<Integer> cached = BotNavigationGraphProvider.getCachedCollidableFromBelowIds(map.getId());
+        java.util.Set<Integer> cached = AgentNavigationGraphService.getCachedCollidableFromBelowIds(map.getId());
         if (cached != null) {
             return cached;
         }
-        return BotNavigationGraphProvider.computeCollidableFromBelowIds(map);
+        return AgentNavigationGraphService.computeCollidableFromBelowIds(map);
     }
 
     private static AirCollision landingAtX(MapleMap map,

@@ -1,5 +1,9 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
+
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+
 import server.agents.capabilities.navigation.AgentNavigationMapLoader;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
@@ -59,20 +63,20 @@ class BotNavigationManagerTest {
 
     @Test
     void shouldPromoteFirstActionableEdgePastLeadingZeroDistanceWalks() {
-        BotNavigationGraph.Edge collapsed = BotNavigationManager.collapseLeadingWalkEdges(List.of(
-                new BotNavigationGraph.Edge(1, 2, BotNavigationGraph.EdgeType.WALK,
+        AgentNavigationGraph.Edge collapsed = BotNavigationManager.collapseLeadingWalkEdges(List.of(
+                new AgentNavigationGraph.Edge(1, 2, AgentNavigationGraph.EdgeType.WALK,
                         new Point(528, -914), new Point(528, -914),
                         0, 0, 0, 0, 0, 50),
-                new BotNavigationGraph.Edge(2, 3, BotNavigationGraph.EdgeType.WALK,
+                new AgentNavigationGraph.Edge(2, 3, AgentNavigationGraph.EdgeType.WALK,
                         new Point(528, -914), new Point(528, -914),
                         0, 0, 0, 0, 0, 50),
-                new BotNavigationGraph.Edge(3, 4, BotNavigationGraph.EdgeType.JUMP,
+                new AgentNavigationGraph.Edge(3, 4, AgentNavigationGraph.EdgeType.JUMP,
                         new Point(540, -914), new Point(612, -980),
                         9, 0, 0, 0, 0, 300)
         ));
 
         assertNotNull(collapsed);
-        assertEquals(BotNavigationGraph.EdgeType.JUMP, collapsed.type);
+        assertEquals(AgentNavigationGraph.EdgeType.JUMP, collapsed.type);
         assertEquals(1, collapsed.fromRegionId);
         assertEquals(4, collapsed.toRegionId);
         assertEquals(new Point(540, -914), collapsed.startPoint);
@@ -82,20 +86,20 @@ class BotNavigationManagerTest {
 
     @Test
     void shouldKeepFirstRealWalkInsteadOfCollapsingPastLaterZeroDistanceHandoff() {
-        BotNavigationGraph.Edge collapsed = BotNavigationManager.collapseLeadingWalkEdges(List.of(
-                new BotNavigationGraph.Edge(24, 22, BotNavigationGraph.EdgeType.WALK,
+        AgentNavigationGraph.Edge collapsed = BotNavigationManager.collapseLeadingWalkEdges(List.of(
+                new AgentNavigationGraph.Edge(24, 22, AgentNavigationGraph.EdgeType.WALK,
                         new Point(-947, 153), new Point(-751, 142),
                         0, 0, 0, 0, 0, 120),
-                new BotNavigationGraph.Edge(22, 20, BotNavigationGraph.EdgeType.WALK,
+                new AgentNavigationGraph.Edge(22, 20, AgentNavigationGraph.EdgeType.WALK,
                         new Point(-751, 142), new Point(-751, 142),
                         0, 0, 0, 0, 0, 50),
-                new BotNavigationGraph.Edge(20, 27, BotNavigationGraph.EdgeType.CLIMB,
+                new AgentNavigationGraph.Edge(20, 27, AgentNavigationGraph.EdgeType.CLIMB,
                         new Point(-437, 121), new Point(-437, 84),
                         0, 0, -437, 84, 121, 250)
         ));
 
         assertNotNull(collapsed);
-        assertEquals(BotNavigationGraph.EdgeType.WALK, collapsed.type);
+        assertEquals(AgentNavigationGraph.EdgeType.WALK, collapsed.type);
         assertEquals(24, collapsed.fromRegionId);
         assertEquals(22, collapsed.toRegionId);
         assertEquals(new Point(-947, 153), collapsed.startPoint);
@@ -105,11 +109,11 @@ class BotNavigationManagerTest {
 
     @Test
     void shouldDropLeadingWalkChainWhenItConsumesNoMovement() {
-        BotNavigationGraph.Edge collapsed = BotNavigationManager.collapseLeadingWalkEdges(List.of(
-                new BotNavigationGraph.Edge(181, 184, BotNavigationGraph.EdgeType.WALK,
+        AgentNavigationGraph.Edge collapsed = BotNavigationManager.collapseLeadingWalkEdges(List.of(
+                new AgentNavigationGraph.Edge(181, 184, AgentNavigationGraph.EdgeType.WALK,
                         new Point(565, -2135), new Point(565, -2135),
                         0, 0, 0, 0, 0, 50),
-                new BotNavigationGraph.Edge(184, 190, BotNavigationGraph.EdgeType.WALK,
+                new AgentNavigationGraph.Edge(184, 190, AgentNavigationGraph.EdgeType.WALK,
                         new Point(565, -2135), new Point(565, -2135),
                         0, 0, 0, 0, 0, 50)
         ));
@@ -120,13 +124,13 @@ class BotNavigationManagerTest {
     @Test
     void shouldOnlySnapZeroStepClimbExitAtRopeTop() {
         Rope rope = new Rope(675, 143, 215, false);
-        BotNavigationGraph.Edge topExit = new BotNavigationGraph.Edge(
-                49, 45, BotNavigationGraph.EdgeType.CLIMB,
+        AgentNavigationGraph.Edge topExit = new AgentNavigationGraph.Edge(
+                49, 45, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(675, 143), new Point(675, 141),
                 0, 0, 675, 143, 215, 250
         );
-        BotNavigationGraph.Edge bottomExit = new BotNavigationGraph.Edge(
-                49, 45, BotNavigationGraph.EdgeType.CLIMB,
+        AgentNavigationGraph.Edge bottomExit = new AgentNavigationGraph.Edge(
+                49, 45, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(675, 215), new Point(675, 215),
                 0, 0, 675, 143, 215, 250
         );
@@ -144,8 +148,8 @@ class BotNavigationManagerTest {
         footholds.insert(new Foothold(new Point(40, 120), new Point(160, 120), 2));
         map.setFootholds(footholds);
 
-        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
-        BotNavigationGraph.Edge downJump = findFirstStraightDropEdge(graph);
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(map);
+        AgentNavigationGraph.Edge downJump = findFirstStraightDropEdge(graph);
 
         assertNotNull(downJump, "fixture should produce a straight down-jump edge");
         assertTrue(downJump.launchMinX < downJump.launchMaxX);
@@ -161,13 +165,13 @@ class BotNavigationManagerTest {
 
     @Test
     void shouldUsePreciseTargetForCommittedWalkRegionHandoffs() {
-        BotNavigationGraph.Edge walkHandoff = new BotNavigationGraph.Edge(
-                343, 341, BotNavigationGraph.EdgeType.WALK,
+        AgentNavigationGraph.Edge walkHandoff = new AgentNavigationGraph.Edge(
+                343, 341, AgentNavigationGraph.EdgeType.WALK,
                 new Point(28, -1167), new Point(13, -1170),
                 0, 0, 0, 0, 0, 100
         );
-        BotNavigationGraph.Edge noMoveWalk = new BotNavigationGraph.Edge(
-                343, 342, BotNavigationGraph.EdgeType.WALK,
+        AgentNavigationGraph.Edge noMoveWalk = new AgentNavigationGraph.Edge(
+                343, 342, AgentNavigationGraph.EdgeType.WALK,
                 new Point(28, -1167), new Point(28, -1167),
                 0, 0, 0, 0, 0, 50
         );
@@ -181,8 +185,8 @@ class BotNavigationManagerTest {
         // Regression: pathlog-SLASH-2026-04-02 — collapsed r358→r355 WALK edge (via r359),
         // bot steps into r359 mid-traverse; old code returned null here (fromRegionId mismatch),
         // dropping the edge every tick and causing an oscillation loop.
-        BotNavigationGraph.Edge collapsedWalk = new BotNavigationGraph.Edge(
-                358, 355, BotNavigationGraph.EdgeType.WALK,
+        AgentNavigationGraph.Edge collapsedWalk = new AgentNavigationGraph.Edge(
+                358, 355, AgentNavigationGraph.EdgeType.WALK,
                 new Point(46, -61), new Point(54, -58),
                 0, 0, 0, 0, 0, 100
         );
@@ -191,18 +195,18 @@ class BotNavigationManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.navEdge = collapsedWalk;
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, 355);
-        BotNavigationGraph graph = mock(BotNavigationGraph.class);
+        AgentNavigationGraph graph = mock(AgentNavigationGraph.class);
 
         // Bot is in intermediate region 359 — neither source (358) nor destination (355)
-        BotNavigationGraph.Edge result = BotNavigationManager.reuseCommittedEdge(graph, entry, 359, 355);
+        AgentNavigationGraph.Edge result = BotNavigationManager.reuseCommittedEdge(graph, entry, 359, 355);
 
         assertNull(result, "Stale collapsed WALK edge must be dropped once the bot leaves its source region");
     }
 
     @Test
     void shouldDropCollapsedWalkEdgeOnceDestinationRegionReached() {
-        BotNavigationGraph.Edge collapsedWalk = new BotNavigationGraph.Edge(
-                358, 355, BotNavigationGraph.EdgeType.WALK,
+        AgentNavigationGraph.Edge collapsedWalk = new AgentNavigationGraph.Edge(
+                358, 355, AgentNavigationGraph.EdgeType.WALK,
                 new Point(46, -61), new Point(54, -58),
                 0, 0, 0, 0, 0, 100
         );
@@ -211,9 +215,9 @@ class BotNavigationManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.navEdge = collapsedWalk;
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, 355);
-        BotNavigationGraph graph = mock(BotNavigationGraph.class);
+        AgentNavigationGraph graph = mock(AgentNavigationGraph.class);
 
-        BotNavigationGraph.Edge result = BotNavigationManager.reuseCommittedEdge(graph, entry, 355, 355);
+        AgentNavigationGraph.Edge result = BotNavigationManager.reuseCommittedEdge(graph, entry, 355, 355);
 
         assertNull(result, "WALK edge must be dropped once bot reaches destination region");
     }
@@ -221,12 +225,12 @@ class BotNavigationManagerTest {
     @Test
     void shouldUseGraphDerivedJumpLaunchWindowInsteadOfGenericTolerance() {
         Foothold foothold = new Foothold(new Point(500, 107), new Point(530, 107), 1);
-        BotNavigationGraph.Region fromRegion = new BotNavigationGraph.Region(20, List.of(new BotNavigationGraph.Segment(foothold)));
-        BotNavigationGraph graph = mock(BotNavigationGraph.class);
+        AgentNavigationGraph.Region fromRegion = new AgentNavigationGraph.Region(20, List.of(new AgentNavigationGraph.Segment(foothold)));
+        AgentNavigationGraph graph = mock(AgentNavigationGraph.class);
         when(graph.getRegion(20)).thenReturn(fromRegion);
 
-        BotNavigationGraph.Edge jump = new BotNavigationGraph.Edge(
-                20, 15, BotNavigationGraph.EdgeType.JUMP,
+        AgentNavigationGraph.Edge jump = new AgentNavigationGraph.Edge(
+                20, 15, AgentNavigationGraph.EdgeType.JUMP,
                 new Point(520, 107), new Point(480, 36),
                 516, 523, -8, 0, 0, 0, 0, 850
         );
@@ -246,14 +250,14 @@ class BotNavigationManagerTest {
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
         footholds.insert(new Foothold(new Point(500, 107), new Point(530, 107), 1));
         map.setFootholds(footholds);
-        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(map);
 
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(map);
         BotEntry entry = new BotEntry(bot, null, null);
 
-        BotNavigationGraph.Edge jump = new BotNavigationGraph.Edge(
-                1, 15, BotNavigationGraph.EdgeType.JUMP,
+        AgentNavigationGraph.Edge jump = new AgentNavigationGraph.Edge(
+                1, 15, AgentNavigationGraph.EdgeType.JUMP,
                 new Point(520, 107), new Point(480, 36),
                 516, 523, -8, 0, 0, 0, 0, 850
         );
@@ -275,24 +279,24 @@ class BotNavigationManagerTest {
     @Test
     void shouldChooseTargetRegionEntryBasedOnInRegionPathTarget() {
         MapleMap map = new MapleMap(910000026, 0, 0, 910000026, 1.0f);
-        BotNavigationGraph.Region startRegion = new BotNavigationGraph.Region(
-                1, List.of(new BotNavigationGraph.Segment(new Foothold(new Point(0, 100), new Point(100, 100), 1))));
-        BotNavigationGraph.Region targetRegion = new BotNavigationGraph.Region(
-                2, List.of(new BotNavigationGraph.Segment(new Foothold(new Point(0, 200), new Point(200, 200), 2))));
-        Map<Integer, BotNavigationGraph.Region> regionsById = new HashMap<>();
+        AgentNavigationGraph.Region startRegion = new AgentNavigationGraph.Region(
+                1, List.of(new AgentNavigationGraph.Segment(new Foothold(new Point(0, 100), new Point(100, 100), 1))));
+        AgentNavigationGraph.Region targetRegion = new AgentNavigationGraph.Region(
+                2, List.of(new AgentNavigationGraph.Segment(new Foothold(new Point(0, 200), new Point(200, 200), 2))));
+        Map<Integer, AgentNavigationGraph.Region> regionsById = new HashMap<>();
         regionsById.put(1, startRegion);
         regionsById.put(2, targetRegion);
-        BotNavigationGraph.Edge leftEntry = new BotNavigationGraph.Edge(
-                1, 2, BotNavigationGraph.EdgeType.CLIMB,
+        AgentNavigationGraph.Edge leftEntry = new AgentNavigationGraph.Edge(
+                1, 2, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(50, 100), new Point(0, 200),
                 0, 0, 0, 0, 0, 100
         );
-        BotNavigationGraph.Edge rightEntry = new BotNavigationGraph.Edge(
-                1, 2, BotNavigationGraph.EdgeType.CLIMB,
+        AgentNavigationGraph.Edge rightEntry = new AgentNavigationGraph.Edge(
+                1, 2, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(50, 100), new Point(200, 200),
                 0, 0, 0, 0, 0, 100
         );
-        BotNavigationGraph graph = new BotNavigationGraph(
+        AgentNavigationGraph graph = new AgentNavigationGraph(
                 map.getId(),
                 1,
                 List.of(startRegion, targetRegion),
@@ -302,9 +306,9 @@ class BotNavigationManagerTest {
                 Set.of()
         );
 
-        List<BotNavigationGraph.Edge> leftPath = BotNavigationManager.findPath(
+        List<AgentNavigationGraph.Edge> leftPath = BotNavigationManager.findPath(
                 graph, map, new Point(50, 100), 1, 2, new Point(40, 200));
-        List<BotNavigationGraph.Edge> rightPath = BotNavigationManager.findPath(
+        List<AgentNavigationGraph.Edge> rightPath = BotNavigationManager.findPath(
                 graph, map, new Point(50, 100), 1, 2, new Point(160, 200));
 
         assertEquals(List.of(leftEntry), leftPath,
@@ -322,7 +326,7 @@ class BotNavigationManagerTest {
         footholds.insert(new Foothold(new Point(200, 120), new Point(300, 120), 3));
         map.setFootholds(footholds);
 
-        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(map);
         Point botPos = new Point(50, 0);
         Point leftTarget = new Point(50, 120);
         Point rightTarget = new Point(250, 120);
@@ -330,18 +334,18 @@ class BotNavigationManagerTest {
         int leftTargetRegionId = graph.findRegionId(map, leftTarget);
         int rightTargetRegionId = graph.findRegionId(map, rightTarget);
 
-        List<BotNavigationGraph.Edge> leftPath = BotNavigationManager.findPath(
+        List<AgentNavigationGraph.Edge> leftPath = BotNavigationManager.findPath(
                 graph, map, botPos, startRegionId, leftTargetRegionId, leftTarget);
-        List<BotNavigationGraph.Edge> rightPath = BotNavigationManager.findPath(
+        List<AgentNavigationGraph.Edge> rightPath = BotNavigationManager.findPath(
                 graph, map, botPos, startRegionId, rightTargetRegionId, rightTarget);
 
         assertFalse(leftPath.isEmpty(), "fixture should produce a left-side drop path");
         assertFalse(rightPath.isEmpty(), "fixture should produce a right-side drop path");
 
-        BotNavigationGraph.Edge staleEdge = leftPath.getFirst();
-        BotNavigationGraph.Edge freshEdge = rightPath.getFirst();
-        assertEquals(BotNavigationGraph.EdgeType.DROP, staleEdge.type);
-        assertEquals(BotNavigationGraph.EdgeType.DROP, freshEdge.type);
+        AgentNavigationGraph.Edge staleEdge = leftPath.getFirst();
+        AgentNavigationGraph.Edge freshEdge = rightPath.getFirst();
+        assertEquals(AgentNavigationGraph.EdgeType.DROP, staleEdge.type);
+        assertEquals(AgentNavigationGraph.EdgeType.DROP, freshEdge.type);
         assertNotEquals(staleEdge.toRegionId, freshEdge.toRegionId,
                 "regression requires different first actionable drop edges from the same source region");
 
@@ -364,26 +368,26 @@ class BotNavigationManagerTest {
     @Test
     void shouldDropStaleCommittedGroundEdgeWhenLiveTargetRegionDiffersFromEdgeDestination() {
         MapleMap map = mock(MapleMap.class);
-        BotNavigationGraph.Region source = new BotNavigationGraph.Region(
-                1, List.of(new BotNavigationGraph.Segment(new Foothold(new Point(0, 100), new Point(200, 100), 1))));
-        BotNavigationGraph.Region staleLower = new BotNavigationGraph.Region(
-                2, List.of(new BotNavigationGraph.Segment(new Foothold(new Point(0, 220), new Point(100, 220), 2))));
-        BotNavigationGraph.Region ownerUpper = new BotNavigationGraph.Region(
-                3, List.of(new BotNavigationGraph.Segment(new Foothold(new Point(90, 40), new Point(210, 40), 3))));
-        Map<Integer, BotNavigationGraph.Region> regionsById = new HashMap<>();
+        AgentNavigationGraph.Region source = new AgentNavigationGraph.Region(
+                1, List.of(new AgentNavigationGraph.Segment(new Foothold(new Point(0, 100), new Point(200, 100), 1))));
+        AgentNavigationGraph.Region staleLower = new AgentNavigationGraph.Region(
+                2, List.of(new AgentNavigationGraph.Segment(new Foothold(new Point(0, 220), new Point(100, 220), 2))));
+        AgentNavigationGraph.Region ownerUpper = new AgentNavigationGraph.Region(
+                3, List.of(new AgentNavigationGraph.Segment(new Foothold(new Point(90, 40), new Point(210, 40), 3))));
+        Map<Integer, AgentNavigationGraph.Region> regionsById = new HashMap<>();
         regionsById.put(1, source);
         regionsById.put(2, staleLower);
         regionsById.put(3, ownerUpper);
 
-        BotNavigationGraph.Edge staleDrop = new BotNavigationGraph.Edge(
-                1, 2, BotNavigationGraph.EdgeType.DROP,
+        AgentNavigationGraph.Edge staleDrop = new AgentNavigationGraph.Edge(
+                1, 2, AgentNavigationGraph.EdgeType.DROP,
                 new Point(20, 100), new Point(40, 220),
                 20, 20, 0, 0, 0, 0, 0, 300);
-        BotNavigationGraph.Edge directJump = new BotNavigationGraph.Edge(
-                1, 3, BotNavigationGraph.EdgeType.JUMP,
+        AgentNavigationGraph.Edge directJump = new AgentNavigationGraph.Edge(
+                1, 3, AgentNavigationGraph.EdgeType.JUMP,
                 new Point(100, 100), new Point(140, 40),
                 90, 110, 6, 0, 0, 0, 0, 250);
-        BotNavigationGraph graph = new BotNavigationGraph(
+        AgentNavigationGraph graph = new AgentNavigationGraph(
                 910000213, 1, AgentMovementProfile.base(),
                 List.of(source, staleLower, ownerUpper),
                 regionsById,
@@ -393,7 +397,7 @@ class BotNavigationManagerTest {
 
         Point botPos = new Point(100, 100);
         Point ownerPos = new Point(140, 40);
-        List<BotNavigationGraph.Edge> path = BotNavigationManager.findPath(
+        List<AgentNavigationGraph.Edge> path = BotNavigationManager.findPath(
                 graph, map, botPos, 1, 3, ownerPos);
         assertEquals(List.of(directJump), path,
                 "synthetic fixture should prefer the direct jump to the live owner region");
@@ -409,13 +413,13 @@ class BotNavigationManagerTest {
 
     @Test
     void shouldRetainCommittedGroundEdgeWhenAlternativeLeadsToSameDestinationRegion() {
-        BotNavigationGraph.Edge committedDrop = new BotNavigationGraph.Edge(
-                80, 83, BotNavigationGraph.EdgeType.DROP,
+        AgentNavigationGraph.Edge committedDrop = new AgentNavigationGraph.Edge(
+                80, 83, AgentNavigationGraph.EdgeType.DROP,
                 new Point(7, -34), new Point(-84, 99),
                 7, 7, 0, 0, 0, 655
         );
-        BotNavigationGraph.Edge replacementJump = new BotNavigationGraph.Edge(
-                80, 83, BotNavigationGraph.EdgeType.JUMP,
+        AgentNavigationGraph.Edge replacementJump = new AgentNavigationGraph.Edge(
+                80, 83, AgentNavigationGraph.EdgeType.JUMP,
                 new Point(5, -34), new Point(-99, 95),
                 -35, 45, -7, 0, 0, 0, 0, 750
         );
@@ -426,13 +430,13 @@ class BotNavigationManagerTest {
 
     @Test
     void shouldNotRetainCommittedGroundEdgeWhenAlternativeChangesDestinationRegion() {
-        BotNavigationGraph.Edge committedDrop = new BotNavigationGraph.Edge(
-                1, 2, BotNavigationGraph.EdgeType.DROP,
+        AgentNavigationGraph.Edge committedDrop = new AgentNavigationGraph.Edge(
+                1, 2, AgentNavigationGraph.EdgeType.DROP,
                 new Point(10, 0), new Point(10, 100),
                 10, 10, 0, 0, 0, 300
         );
-        BotNavigationGraph.Edge replacementDrop = new BotNavigationGraph.Edge(
-                1, 3, BotNavigationGraph.EdgeType.DROP,
+        AgentNavigationGraph.Edge replacementDrop = new AgentNavigationGraph.Edge(
+                1, 3, AgentNavigationGraph.EdgeType.DROP,
                 new Point(40, 0), new Point(40, 100),
                 40, 40, 0, 0, 0, 300
         );
@@ -461,7 +465,7 @@ class BotNavigationManagerTest {
         assertTrue(AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry));
         assertNull(entry.navEdge);
 
-        BotNavigationGraphProvider.getGraph(map, entry.movementProfile);
+        AgentNavigationGraphService.getGraph(map, entry.movementProfile);
     }
 
     @Test
@@ -472,8 +476,8 @@ class BotNavigationManagerTest {
         entry.climbing = true;
         entry.climbRope = new Rope(-1251, -137, 2, true);
 
-        BotNavigationGraph.Edge climbExit = new BotNavigationGraph.Edge(
-                189, 157, BotNavigationGraph.EdgeType.CLIMB,
+        AgentNavigationGraph.Edge climbExit = new AgentNavigationGraph.Edge(
+                189, 157, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(-1251, -107), new Point(-1132, 156),
                 8, 0, -1251, -137, 2, 650
         );
@@ -492,8 +496,8 @@ class BotNavigationManagerTest {
         entry.climbing = true;
         entry.climbRope = new Rope(-1251, -137, 2, true);
 
-        BotNavigationGraph.Edge climbExit = new BotNavigationGraph.Edge(
-                189, 157, BotNavigationGraph.EdgeType.CLIMB,
+        AgentNavigationGraph.Edge climbExit = new AgentNavigationGraph.Edge(
+                189, 157, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(-1251, -107), new Point(-1132, 156),
                 8, 0, -1251, -137, 2, 650
         );
@@ -510,8 +514,8 @@ class BotNavigationManagerTest {
         entry.climbing = true;
         entry.climbRope = new Rope(707, -769, -455, false);
 
-        BotNavigationGraph.Edge climbExit = new BotNavigationGraph.Edge(
-                104, 101, BotNavigationGraph.EdgeType.CLIMB,
+        AgentNavigationGraph.Edge climbExit = new AgentNavigationGraph.Edge(
+                104, 101, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(707, -734), new Point(627, -602),
                 -6, 0, 707, -769, -455, 950
         );
@@ -526,15 +530,15 @@ class BotNavigationManagerTest {
         when(bot.getMap()).thenReturn(mock(MapleMap.class));
         BotEntry entry = new BotEntry(bot, null, null);
         entry.inAir = true;
-        entry.navEdge = new BotNavigationGraph.Edge(
-                25, 14, BotNavigationGraph.EdgeType.CLIMB,
+        entry.navEdge = new AgentNavigationGraph.Edge(
+                25, 14, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(-437, -181), new Point(-473, -211),
                 -8, 0, -437, -1471, 84, 250
         );
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, 14);
-        BotNavigationGraph graph = mock(BotNavigationGraph.class);
+        AgentNavigationGraph graph = mock(AgentNavigationGraph.class);
 
-        BotNavigationGraph.Edge reused = BotNavigationManager.reuseCommittedEdge(graph, entry, 20, 14);
+        AgentNavigationGraph.Edge reused = BotNavigationManager.reuseCommittedEdge(graph, entry, 20, 14);
 
         assertEquals(entry.navEdge, reused);
     }
@@ -542,17 +546,17 @@ class BotNavigationManagerTest {
     @Test
     void shouldUseTopRopeEntryInsteadOfDroppingToBottomInLithHarbor() {
         MapleMap lithHarbor = AgentNavigationMapLoader.loadMapGeometry(104000000);
-        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(lithHarbor);
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(lithHarbor);
         Point start = new Point(1189, 287);
         Point target = new Point(1265, 331);
         int startRegionId = graph.findRegionId(lithHarbor, start);
         int targetRegionId = graph.findRopeRegionId(target);
 
-        List<BotNavigationGraph.Edge> path = BotNavigationManager.findPath(
+        List<AgentNavigationGraph.Edge> path = BotNavigationManager.findPath(
                 graph, lithHarbor, start, startRegionId, targetRegionId, target);
 
         assertFalse(path.isEmpty());
-        assertEquals(BotNavigationGraph.EdgeType.CLIMB, path.getFirst().type);
+        assertEquals(AgentNavigationGraph.EdgeType.CLIMB, path.getFirst().type);
         assertEquals(targetRegionId, path.getFirst().toRegionId);
         assertTrue(path.getFirst().endPoint.y <= target.y + BotMovementManager.cfg.JUMP_Y_THRESH);
     }
@@ -560,7 +564,7 @@ class BotNavigationManagerTest {
     @Test
     void shouldNotLaunchVerticalRopeEntryFromOutsideRopeGrabWindow() {
         MapleMap lithHarbor = AgentNavigationMapLoader.loadMapGeometry(104000000);
-        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(lithHarbor);
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(lithHarbor);
         Point start = new Point(1245, 647);
         Point target = new Point(1265, 331);
         int startRegionId = graph.findRegionId(lithHarbor, start);
@@ -568,8 +572,8 @@ class BotNavigationManagerTest {
         // The intent of this test is to verify out-of-launch-window rope entries are rejected.
         // Look up the vertical (stepX=0) rope-entry edge in the graph directly rather than via
         // findPath, which now picks the time-cheapest entry (often a horizontal jump-grab).
-        BotNavigationGraph.Edge ropeEntry = graph.getOutgoing(startRegionId).stream()
-                .filter(edge -> edge.type == BotNavigationGraph.EdgeType.CLIMB
+        AgentNavigationGraph.Edge ropeEntry = graph.getOutgoing(startRegionId).stream()
+                .filter(edge -> edge.type == AgentNavigationGraph.EdgeType.CLIMB
                         && edge.toRegionId == targetRegionId
                         && edge.launchStepX == 0
                         && edge.containsLaunchX(1257))
@@ -578,7 +582,7 @@ class BotNavigationManagerTest {
         assertNotNull(ropeEntry, "expected a vertical (stepX=0) rope-entry CLIMB edge containing x=1257");
         assertTrue(ropeEntry.launchMinX < ropeEntry.launchMaxX);
 
-        BotNavigationGraph.Region fromRegion = graph.getRegion(ropeEntry.fromRegionId);
+        AgentNavigationGraph.Region fromRegion = graph.getRegion(ropeEntry.fromRegionId);
         int outsideLaunchX = ropeEntry.launchMaxX < fromRegion.maxX
                 ? ropeEntry.launchMaxX + 1
                 : ropeEntry.launchMinX - 1;
@@ -601,16 +605,16 @@ class BotNavigationManagerTest {
     @Test
     void shouldJumpOffTopRopeBeforePhysicsAutoDismountsToUpperPlatform() {
         MapleMap lithHarbor = AgentNavigationMapLoader.loadMapGeometry(104000000);
-        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(lithHarbor);
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(lithHarbor);
         Point botPos = new Point(1265, 294);
         Point target = new Point(1802, 647);
         int startRegionId = graph.findRopeRegionId(botPos);
         int targetRegionId = graph.findRegionId(lithHarbor, target);
-        List<BotNavigationGraph.Edge> path = BotNavigationManager.findPath(
+        List<AgentNavigationGraph.Edge> path = BotNavigationManager.findPath(
                 graph, lithHarbor, botPos, startRegionId, targetRegionId, target);
         assertFalse(path.isEmpty());
-        BotNavigationGraph.Edge ropeExit = path.getFirst();
-        assertEquals(BotNavigationGraph.EdgeType.CLIMB, ropeExit.type);
+        AgentNavigationGraph.Edge ropeExit = path.getFirst();
+        assertEquals(AgentNavigationGraph.EdgeType.CLIMB, ropeExit.type);
         assertTrue(ropeExit.launchStepX > 0);
         assertEquals(new Point(1265, 290), ropeExit.startPoint);
 
@@ -632,7 +636,7 @@ class BotNavigationManagerTest {
     @Test
     void shouldPreferCurrentRopeRegionAtRopeTopWhenBotStanceIsClimbing() {
         MapleMap map = topRopeSyntheticMap(910000101);
-        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map, new AgentMovementProfile(105, 100));
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(map, new AgentMovementProfile(105, 100));
         Point ropeTop = new Point(100, 100);
         assertNotEquals(graph.findRopeRegionId(ropeTop), graph.findRegionId(map, ropeTop));
 
@@ -648,11 +652,11 @@ class BotNavigationManagerTest {
     @Test
     void shouldModelTopStepOffAtPhysicsLandingX() {
         MapleMap map = topRopeSyntheticMap(910000102);
-        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map, new AgentMovementProfile(105, 100));
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(map, new AgentMovementProfile(105, 100));
         Point ropeTop = new Point(100, 100);
         int startRegionId = graph.findRopeRegionId(ropeTop);
-        BotNavigationGraph.Edge topExit = graph.getOutgoing(startRegionId).stream()
-                .filter(edge -> edge.type == BotNavigationGraph.EdgeType.CLIMB)
+        AgentNavigationGraph.Edge topExit = graph.getOutgoing(startRegionId).stream()
+                .filter(edge -> edge.type == AgentNavigationGraph.EdgeType.CLIMB)
                 .filter(edge -> edge.launchStepX == 0)
                 .filter(edge -> edge.startPoint.equals(ropeTop))
                 .findFirst()
@@ -712,7 +716,7 @@ class BotNavigationManagerTest {
     @Test
     void shouldUseExplicitRopeEntryInsteadOfDownJumpFromTopPlatform() {
         MapleMap map = topRopeSyntheticMap(910000201);
-        BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraphService.rebuildGraph(map);
 
         Character bot = mockBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
@@ -842,10 +846,10 @@ class BotNavigationManagerTest {
         return bot;
     }
 
-    private static BotNavigationGraph.Edge findFirstStraightDropEdge(BotNavigationGraph graph) {
-        for (BotNavigationGraph.Region region : graph.regions) {
-            for (BotNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
-                if (edge.type == BotNavigationGraph.EdgeType.DROP && edge.launchStepX == 0) {
+    private static AgentNavigationGraph.Edge findFirstStraightDropEdge(AgentNavigationGraph graph) {
+        for (AgentNavigationGraph.Region region : graph.regions) {
+            for (AgentNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
+                if (edge.type == AgentNavigationGraph.EdgeType.DROP && edge.launchStepX == 0) {
                     return edge;
                 }
             }

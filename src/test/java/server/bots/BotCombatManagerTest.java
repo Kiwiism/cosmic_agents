@@ -1,5 +1,9 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
+
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+
 import server.agents.capabilities.combat.AgentAttackRoute;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
@@ -1604,7 +1608,7 @@ class BotCombatManagerTest {
         footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
         footholds.insert(new Foothold(new Point(0, 200), new Point(300, 200), 2));
         map.setFootholds(footholds);
-        BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraphService.rebuildGraph(map);
 
         Character bot = mockBot(new Point(100, 100), map, 20_000, null);
         Monster currentFootholdMob = mockMob(new Point(180, 100), 100100);
@@ -1627,7 +1631,7 @@ class BotCombatManagerTest {
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
         footholds.insert(new Foothold(new Point(-400, 100), new Point(400, 100), 1));
         map.setFootholds(footholds);
-        BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraphService.rebuildGraph(map);
 
         Character bot = mockBot(new Point(100, 100), map, 20_000, null);
         Monster loneClose = mockMob(new Point(160, 100), 100100);
@@ -1660,13 +1664,13 @@ class BotCombatManagerTest {
         footholds.insert(openFoothold);
         map.setFootholds(footholds);
 
-        BotNavigationGraph.Region startRegion = new BotNavigationGraph.Region(
-                1, List.of(new BotNavigationGraph.Segment(startFoothold)));
-        BotNavigationGraph.Region occupiedRegion = new BotNavigationGraph.Region(
-                2, List.of(new BotNavigationGraph.Segment(occupiedFoothold)));
-        BotNavigationGraph.Region openRegion = new BotNavigationGraph.Region(
-                3, List.of(new BotNavigationGraph.Segment(openFoothold)));
-        BotNavigationGraph graph = new BotNavigationGraph(
+        AgentNavigationGraph.Region startRegion = new AgentNavigationGraph.Region(
+                1, List.of(new AgentNavigationGraph.Segment(startFoothold)));
+        AgentNavigationGraph.Region occupiedRegion = new AgentNavigationGraph.Region(
+                2, List.of(new AgentNavigationGraph.Segment(occupiedFoothold)));
+        AgentNavigationGraph.Region openRegion = new AgentNavigationGraph.Region(
+                3, List.of(new AgentNavigationGraph.Segment(openFoothold)));
+        AgentNavigationGraph graph = new AgentNavigationGraph(
                 map.getId(),
                 1,
                 AgentMovementProfile.base(),
@@ -1674,9 +1678,9 @@ class BotCombatManagerTest {
                 Map.of(1, startRegion, 2, occupiedRegion, 3, openRegion),
                 Map.of(1, 1, 2, 2, 3, 3),
                 Map.of(1, List.of(
-                        new BotNavigationGraph.Edge(1, 2, BotNavigationGraph.EdgeType.WALK,
+                        new AgentNavigationGraph.Edge(1, 2, AgentNavigationGraph.EdgeType.WALK,
                                 new Point(100, 100), new Point(200, 100), 0, 0, 0, 0, 0, 100),
-                        new BotNavigationGraph.Edge(1, 3, BotNavigationGraph.EdgeType.WALK,
+                        new AgentNavigationGraph.Edge(1, 3, AgentNavigationGraph.EdgeType.WALK,
                                 new Point(100, 100), new Point(320, 100), 0, 0, 0, 0, 0, 150))),
                 Set.of());
 
@@ -1696,9 +1700,9 @@ class BotCombatManagerTest {
         BotManager manager = BotManager.getInstance();
         Map<Integer, List<BotEntry>> bots = botEntries(manager);
         bots.put(owner.getId(), new CopyOnWriteArrayList<>(List.of(entry, siblingEntry)));
-        try (MockedStatic<BotNavigationGraphProvider> graphProvider =
-                     Mockito.mockStatic(BotNavigationGraphProvider.class, Mockito.CALLS_REAL_METHODS)) {
-            graphProvider.when(() -> BotNavigationGraphProvider.peekGraph(map, AgentMovementProfile.base()))
+        try (MockedStatic<AgentNavigationGraphService> graphProvider =
+                     Mockito.mockStatic(AgentNavigationGraphService.class, Mockito.CALLS_REAL_METHODS)) {
+            graphProvider.when(() -> AgentNavigationGraphService.peekGraph(map, AgentMovementProfile.base()))
                     .thenReturn(graph);
 
             Monster target = AgentBotCombatTargetRuntime.findGrindTarget(entry, bot, AgentCombatConfig.cfg);
@@ -1716,7 +1720,7 @@ class BotCombatManagerTest {
         footholds.insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
         footholds.insert(new Foothold(new Point(250, 130), new Point(450, 130), 2));
         map.setFootholds(footholds);
-        BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraphService.rebuildGraph(map);
 
         Character bot = mockBot(new Point(100, 100), map, 20_000, null);
         Monster otherRegionMob = mockMob(new Point(300, 130), 100100);
@@ -1746,13 +1750,13 @@ class BotCombatManagerTest {
         footholds.insert(returnableFoothold);
         map.setFootholds(footholds);
 
-        BotNavigationGraph.Region homeRegion = new BotNavigationGraph.Region(
-                1, List.of(new BotNavigationGraph.Segment(homeFoothold)));
-        BotNavigationGraph.Region oneWayRegion = new BotNavigationGraph.Region(
-                2, List.of(new BotNavigationGraph.Segment(oneWayFoothold)));
-        BotNavigationGraph.Region returnableRegion = new BotNavigationGraph.Region(
-                3, List.of(new BotNavigationGraph.Segment(returnableFoothold)));
-        BotNavigationGraph graph = new BotNavigationGraph(
+        AgentNavigationGraph.Region homeRegion = new AgentNavigationGraph.Region(
+                1, List.of(new AgentNavigationGraph.Segment(homeFoothold)));
+        AgentNavigationGraph.Region oneWayRegion = new AgentNavigationGraph.Region(
+                2, List.of(new AgentNavigationGraph.Segment(oneWayFoothold)));
+        AgentNavigationGraph.Region returnableRegion = new AgentNavigationGraph.Region(
+                3, List.of(new AgentNavigationGraph.Segment(returnableFoothold)));
+        AgentNavigationGraph graph = new AgentNavigationGraph(
                 map.getId(),
                 1,
                 AgentMovementProfile.base(),
@@ -1761,11 +1765,11 @@ class BotCombatManagerTest {
                 Map.of(1, 1, 2, 2, 3, 3),
                 Map.of(
                         1, List.of(
-                                new BotNavigationGraph.Edge(1, 2, BotNavigationGraph.EdgeType.DROP,
+                                new AgentNavigationGraph.Edge(1, 2, AgentNavigationGraph.EdgeType.DROP,
                                         new Point(100, 100), new Point(200, 140), 0, 0, 0, 0, 0, 100),
-                                new BotNavigationGraph.Edge(1, 3, BotNavigationGraph.EdgeType.WALK,
+                                new AgentNavigationGraph.Edge(1, 3, AgentNavigationGraph.EdgeType.WALK,
                                         new Point(100, 100), new Point(400, 100), 0, 0, 0, 0, 0, 120)),
-                        3, List.of(new BotNavigationGraph.Edge(3, 1, BotNavigationGraph.EdgeType.WALK,
+                        3, List.of(new AgentNavigationGraph.Edge(3, 1, AgentNavigationGraph.EdgeType.WALK,
                                 new Point(400, 100), new Point(100, 100), 0, 0, 0, 0, 0, 120))),
                 Set.of());
 
@@ -1777,9 +1781,9 @@ class BotCombatManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         AgentBotPatrolStateRuntime.startPatrol(entry, 1, map.getId());
 
-        try (MockedStatic<BotNavigationGraphProvider> graphProvider =
-                     Mockito.mockStatic(BotNavigationGraphProvider.class, Mockito.CALLS_REAL_METHODS)) {
-            graphProvider.when(() -> BotNavigationGraphProvider.peekGraph(map, AgentMovementProfile.base()))
+        try (MockedStatic<AgentNavigationGraphService> graphProvider =
+                     Mockito.mockStatic(AgentNavigationGraphService.class, Mockito.CALLS_REAL_METHODS)) {
+            graphProvider.when(() -> AgentNavigationGraphService.peekGraph(map, AgentMovementProfile.base()))
                     .thenReturn(graph);
 
             Monster target = AgentBotCombatTargetRuntime.findPatrolTarget(entry, bot, AgentCombatConfig.cfg);

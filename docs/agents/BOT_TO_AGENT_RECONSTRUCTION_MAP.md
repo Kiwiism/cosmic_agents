@@ -132,6 +132,12 @@ Recent map updates:
   fallback, ledge walk-off targeting, and jump-probe fallback behavior are
   unchanged; BotEntry, BotMovementManager, and BotPhysicsEngine remain
   temporary backing seams during movement reconstruction.
+- `server.bots.BotNavigationGraph` and `server.bots.BotNavigationGraphProvider`
+  have moved to `server.agents.capabilities.navigation.AgentNavigationGraph`
+  and `AgentNavigationGraphService`. Graph cache shape, graph version, warmup
+  executors, build reports, region/edge construction, collidable-footing caches,
+  and pathfinding inputs are unchanged; BotNavigationManager and BotPhysicsEngine
+  remain temporary movement/navigation backing seams.
 
 | Current file | Target Agent destination | Status |
 | --- | --- | --- |
@@ -165,8 +171,8 @@ Recent map updates:
 | `src/main/java/server/bots/BotMovementTargetSideEffects.java` | `server.agents.integration.AgentBotMovementTargetSideEffects` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotMovementProfile.java` | `server.agents.capabilities.movement.AgentMovementProfile` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotNavigationDebugOverlay.java` | `server.agents.capabilities.navigation.AgentNavigationDebugOverlay` | `MIGRATED_TO_AGENT` |
-| `src/main/java/server/bots/BotNavigationGraph.java` | `server.agents.capabilities.navigation.AgentNavigationGraph` | `MIGRATE_TO_AGENT` |
-| `src/main/java/server/bots/BotNavigationGraphProvider.java` | `server.agents.capabilities.navigation.AgentNavigationGraphService` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
+| `src/main/java/server/bots/BotNavigationGraph.java` | `server.agents.capabilities.navigation.AgentNavigationGraph` | `MIGRATED_TO_AGENT`; graph model, region/edge/segment data, cache serialization shape, and lookup helpers moved unchanged |
+| `src/main/java/server/bots/BotNavigationGraphProvider.java` | `server.agents.capabilities.navigation.AgentNavigationGraphService` | `MIGRATED_TO_AGENT`; graph build/warmup/cache/report/collidable helper behavior moved unchanged, with BotPhysicsEngine/BotMovementManager as temporary explicit seams |
 | `src/main/java/server/bots/BotNavigationManager.java` | `server.agents.capabilities.navigation` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
 | `src/main/java/server/bots/BotNavigationMapLoader.java` | `server.agents.capabilities.navigation.AgentNavigationMapLoader` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotNavigationProbe.java` | `server.agents.capabilities.navigation.AgentNavigationProbe` | `MIGRATED_TO_AGENT` |

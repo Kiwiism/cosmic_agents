@@ -1,5 +1,9 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
+
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+
 import server.agents.runtime.AgentPerformanceMonitor;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
@@ -109,9 +113,9 @@ public final class BotNavigationManager {
                 return new NavigationDirective(rawTargetPos, false);
             }
 
-            BotNavigationGraph graph = resolveActiveGraph(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
+            AgentNavigationGraph graph = resolveActiveGraph(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
             if (graph == null) {
-                BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
+                AgentNavigationGraphService.warmGraphAsync(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
                 AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
                 notifyWarmup(entry, bot);
                 AgentBotNavigationDebugStateRuntime.setLastDecision(entry, "graph-warmup");
@@ -120,8 +124,8 @@ public final class BotNavigationManager {
                 AgentBotNavigationDebugStateRuntime.recordPathLog(entry, captureTargetSnapshot(entry, rawTargetPos), -1, false, runAiTick);
                 return new NavigationDirective(fallbackTarget, false);
             }
-            if (BotNavigationGraphProvider.peekGraph(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry)) == null) {
-                BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
+            if (AgentNavigationGraphService.peekGraph(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry)) == null) {
+                AgentNavigationGraphService.warmGraphAsync(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
                 AgentBotNavigationDebugStateRuntime.setLastDecision(entry, "graph-fallback-profile");
             }
             AgentBotNavigationDebugStateRuntime.clearGraphWarmupFallback(entry);
@@ -130,17 +134,17 @@ public final class BotNavigationManager {
             int targetRegionId = resolveTargetRegionId(graph, entry, bot.getMap(), rawTargetPos);
             Point pathTargetPos = adjustPathTarget(entry, graph, targetRegionId, rawTargetPos);
 
-            BotNavigationGraph.Edge edge = reuseCommittedEdge(graph, entry, startRegionId, targetRegionId);
+            AgentNavigationGraph.Edge edge = reuseCommittedEdge(graph, entry, startRegionId, targetRegionId);
             boolean edgeReused = (edge != null);
             if (edgeReused) {
-                BotNavigationGraph.Edge refreshedEdge = refreshPendingClimbExitEdge(
+                AgentNavigationGraph.Edge refreshedEdge = refreshPendingClimbExitEdge(
                         graph, entry, bot, botPos, startRegionId, targetRegionId, pathTargetPos, edge, runAiTick);
                 if (refreshedEdge != edge) {
                     edge = refreshedEdge;
                     edgeReused = edge != null;
                 }
                 if (edgeReused) {
-                    BotNavigationGraph.Edge refreshedGroundEdge = refreshCommittedGroundEdge(
+                    AgentNavigationGraph.Edge refreshedGroundEdge = refreshCommittedGroundEdge(
                             graph, entry, bot, startRegionId, targetRegionId, pathTargetPos, edge, runAiTick);
                     if (refreshedGroundEdge != edge) {
                         edge = refreshedGroundEdge;
@@ -203,14 +207,14 @@ public final class BotNavigationManager {
         // discard a DROP/JUMP edge whose toRegionId matches the bot's current region. Without this
         // check, tryExecuteDrop re-fires from the landing platform where there's no lower foothold,
         // sending the bot out of the map.
-        BotNavigationGraph graph = resolveActiveGraph(AgentBotRuntimeIdentityRuntime.botMap(entry), AgentBotMovementStateRuntime.movementProfile(entry));
+        AgentNavigationGraph graph = resolveActiveGraph(AgentBotRuntimeIdentityRuntime.botMap(entry), AgentBotMovementStateRuntime.movementProfile(entry));
         if (graph == null) {
-            BotNavigationGraphProvider.warmGraphAsync(AgentBotRuntimeIdentityRuntime.botMap(entry), AgentBotMovementStateRuntime.movementProfile(entry));
+            AgentNavigationGraphService.warmGraphAsync(AgentBotRuntimeIdentityRuntime.botMap(entry), AgentBotMovementStateRuntime.movementProfile(entry));
             return false;
         }
         Point botPos = AgentBotRuntimeIdentityRuntime.bot(entry).getPosition();
         int startRegionId = resolveCurrentRegionId(graph, entry, AgentBotRuntimeIdentityRuntime.botMap(entry), botPos);
-        BotNavigationGraph.Edge edge = reuseCommittedEdge(graph, entry, startRegionId,
+        AgentNavigationGraph.Edge edge = reuseCommittedEdge(graph, entry, startRegionId,
                 AgentBotNavigationDebugStateRuntime.navTargetRegionId(entry));
         if (edge == null) {
             BotMovementManager.clearNavigationState(entry);
@@ -253,19 +257,19 @@ public final class BotNavigationManager {
         owner.dropMessage(5, bot.getName() + " is warming map navigation cache, using fallback movement...");
     }
 
-    private static BotNavigationGraph.Edge refreshPendingClimbExitEdge(BotNavigationGraph graph,
+    private static AgentNavigationGraph.Edge refreshPendingClimbExitEdge(AgentNavigationGraph graph,
                                                                        BotEntry entry,
                                                                        Character bot,
                                                                        Point botPos,
                                                                        int startRegionId,
                                                                        int targetRegionId,
                                                                        Point targetPos,
-                                                                       BotNavigationGraph.Edge edge,
+                                                                       AgentNavigationGraph.Edge edge,
                                                                        boolean runAiTick) {
         if (!runAiTick
                 || edge == null
                 || !AgentBotClimbStateRuntime.climbing(entry)
-                || edge.type != BotNavigationGraph.EdgeType.CLIMB
+                || edge.type != AgentNavigationGraph.EdgeType.CLIMB
                 || edge.launchStepX == 0
                 || startRegionId < 0
                 || targetRegionId < 0
@@ -277,7 +281,7 @@ public final class BotNavigationManager {
             return edge;
         }
 
-        BotNavigationGraph.Edge bestEdge = findNextEdge(graph, bot, startRegionId, targetRegionId, targetPos);
+        AgentNavigationGraph.Edge bestEdge = findNextEdge(graph, bot, startRegionId, targetRegionId, targetPos);
         if (sameEdge(edge, bestEdge) || bestEdge == null) {
             return edge;
         }
@@ -289,13 +293,13 @@ public final class BotNavigationManager {
         return bestEdge;
     }
 
-    private static BotNavigationGraph.Edge refreshCommittedGroundEdge(BotNavigationGraph graph,
+    private static AgentNavigationGraph.Edge refreshCommittedGroundEdge(AgentNavigationGraph graph,
                                                                       BotEntry entry,
                                                                       Character bot,
                                                                       int startRegionId,
                                                                       int targetRegionId,
                                                                       Point targetPos,
-                                                                      BotNavigationGraph.Edge edge,
+                                                                      AgentNavigationGraph.Edge edge,
                                                                       boolean runAiTick) {
         if (!runAiTick
                 || edge == null
@@ -307,7 +311,7 @@ public final class BotNavigationManager {
             return edge;
         }
 
-        BotNavigationGraph.Edge bestEdge = findNextEdge(graph, bot, startRegionId, targetRegionId, targetPos);
+        AgentNavigationGraph.Edge bestEdge = findNextEdge(graph, bot, startRegionId, targetRegionId, targetPos);
         if (bestEdge == null || sameEdge(edge, bestEdge)) {
             return edge;
         }
@@ -322,11 +326,11 @@ public final class BotNavigationManager {
         return bestEdge;
     }
 
-    static BotNavigationGraph.Edge reuseCommittedEdge(BotNavigationGraph graph,
+    static AgentNavigationGraph.Edge reuseCommittedEdge(AgentNavigationGraph graph,
                                                       BotEntry entry,
                                                       int startRegionId,
                                                       int targetRegionId) {
-        BotNavigationGraph.Edge edge = (BotNavigationGraph.Edge) AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry);
+        AgentNavigationGraph.Edge edge = (AgentNavigationGraph.Edge) AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry);
         if (edge == null) {
             return null;
         }
@@ -380,11 +384,11 @@ public final class BotNavigationManager {
         // Keep the edge until landing. Only retain if the bot is in a region consistent with
         // this arc (destination or unmapped) — prevents looping in a wrong region mid-air.
         if (AgentBotMovementStateRuntime.inAir(entry) && (startRegionId < 0 || startRegionId == edge.toRegionId)
-                && (edge.type == BotNavigationGraph.EdgeType.DROP
-                    || edge.type == BotNavigationGraph.EdgeType.JUMP)) {
+                && (edge.type == AgentNavigationGraph.EdgeType.DROP
+                    || edge.type == AgentNavigationGraph.EdgeType.JUMP)) {
             return edge;
         }
-        if (AgentBotMovementStateRuntime.inAir(entry) && edge.type == BotNavigationGraph.EdgeType.CLIMB && edge.launchStepX != 0) {
+        if (AgentBotMovementStateRuntime.inAir(entry) && edge.type == AgentNavigationGraph.EdgeType.CLIMB && edge.launchStepX != 0) {
             // Rope-exit jump arcs use the same sampled ballistic model as JUMP/DROP edges.
             // Keep the committed edge until the bot actually lands or grabs a rope again;
             // otherwise mid-air replans can steer the bot off the authored landing path.
@@ -393,12 +397,12 @@ public final class BotNavigationManager {
         return null;
     }
 
-    private static NavigationDirective tryExecuteEdge(BotNavigationGraph graph,
+    private static NavigationDirective tryExecuteEdge(AgentNavigationGraph graph,
                                                       BotEntry entry,
                                                       Character bot,
                                                       Point botPos,
                                                       Point rawTargetPos,
-                                                      BotNavigationGraph.Edge edge,
+                                                      AgentNavigationGraph.Edge edge,
                                                       boolean runAiTick) {
         if (!runAiTick) {
             return null;
@@ -413,11 +417,11 @@ public final class BotNavigationManager {
         };
     }
 
-    private static NavigationDirective tryExecuteJump(BotNavigationGraph graph,
+    private static NavigationDirective tryExecuteJump(AgentNavigationGraph graph,
                                                       BotEntry entry,
                                                       Character bot,
                                                       Point rawTargetPos,
-                                                      BotNavigationGraph.Edge edge) {
+                                                      AgentNavigationGraph.Edge edge) {
         if (AgentBotMovementStateRuntime.inAir(entry) || AgentBotClimbStateRuntime.climbing(entry)) {
             return null;
         }
@@ -426,7 +430,7 @@ public final class BotNavigationManager {
             // Bot may be standing at the top of a rope region whose bottom is the jump entry.
             // Grab the rope and descend — tickClimbing will naturally drive toward edge.startPoint.
             if (edge.startPoint.y > botPos.y) {
-                BotNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);
+                AgentNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);
                 if (fromRegion != null && fromRegion.isRopeRegion) {
                     Rope rope = findRopeForRegion(bot.getMap(), fromRegion);
                     if (rope != null && canGrabRopeAtCurrentPosition(botPos, rope)) {
@@ -447,12 +451,12 @@ public final class BotNavigationManager {
         return new NavigationDirective(rawTargetPos, true);
     }
 
-    private static NavigationDirective tryExecuteDrop(BotNavigationGraph graph,
+    private static NavigationDirective tryExecuteDrop(AgentNavigationGraph graph,
                                                       BotEntry entry,
                                                       Character bot,
                                                       Point botPos,
                                                       Point rawTargetPos,
-                                                      BotNavigationGraph.Edge edge) {
+                                                      AgentNavigationGraph.Edge edge) {
         if (AgentBotMovementStateRuntime.inAir(entry) || AgentBotClimbStateRuntime.climbing(entry) || AgentBotMovementStateRuntime.downJumpPending(entry)) {
             return null;
         }
@@ -473,12 +477,12 @@ public final class BotNavigationManager {
         return new NavigationDirective(rawTargetPos, true);
     }
 
-    private static NavigationDirective tryExecuteClimb(BotNavigationGraph graph,
+    private static NavigationDirective tryExecuteClimb(AgentNavigationGraph graph,
                                                        BotEntry entry,
                                                        Character bot,
                                                        Point botPos,
                                                        Point rawTargetPos,
-                                                       BotNavigationGraph.Edge edge) {
+                                                       AgentNavigationGraph.Edge edge) {
         if (AgentBotMovementStateRuntime.inAir(entry) || AgentBotMovementStateRuntime.downJumpPending(entry)) {
             return null;
         }
@@ -490,13 +494,13 @@ public final class BotNavigationManager {
         }
     }
 
-    private static NavigationDirective tryExecuteClimbEntry(BotNavigationGraph graph,
+    private static NavigationDirective tryExecuteClimbEntry(AgentNavigationGraph graph,
                                                              BotEntry entry,
                                                              Character bot,
                                                              Point botPos,
                                                              Point rawTargetPos,
-                                                             BotNavigationGraph.Edge edge) {
-        BotNavigationGraph.Region toRegion = graph.getRegion(edge.toRegionId);
+                                                             AgentNavigationGraph.Edge edge) {
+        AgentNavigationGraph.Region toRegion = graph.getRegion(edge.toRegionId);
         Rope rope = findRopeForRegion(bot.getMap(), toRegion);
         if (rope == null) {
             return null;
@@ -538,16 +542,16 @@ public final class BotNavigationManager {
         return null;
     }
 
-    private static NavigationDirective tryExecuteClimbExit(BotNavigationGraph graph,
+    private static NavigationDirective tryExecuteClimbExit(AgentNavigationGraph graph,
                                                             BotEntry entry,
                                                             Character bot,
                                                             Point botPos,
                                                             Point rawTargetPos,
-                                                            BotNavigationGraph.Edge edge) {
+                                                            AgentNavigationGraph.Edge edge) {
         if (!canExecuteClimbExitFromCurrentPosition(graph, bot.getMap(), botPos, edge)) {
             return null;
         }
-        BotNavigationGraph.Region toRegion = graph.getRegion(edge.toRegionId);
+        AgentNavigationGraph.Region toRegion = graph.getRegion(edge.toRegionId);
 
         if (toRegion != null && toRegion.isRopeRegion) {
             // Rope-to-rope: jump to the other rope
@@ -576,11 +580,11 @@ public final class BotNavigationManager {
         return new NavigationDirective(rawTargetPos, true);
     }
 
-    static boolean canExecuteDropFromCurrentPosition(BotNavigationGraph graph,
+    static boolean canExecuteDropFromCurrentPosition(AgentNavigationGraph graph,
                                                      MapleMap map,
                                                      Point botPos,
-                                                     BotNavigationGraph.Edge edge) {
-        if (edge.type != BotNavigationGraph.EdgeType.DROP) {
+                                                     AgentNavigationGraph.Edge edge) {
+        if (edge.type != AgentNavigationGraph.EdgeType.DROP) {
             return false;
         }
         if (edge.launchStepX != 0) {
@@ -595,7 +599,7 @@ public final class BotNavigationManager {
     private static NavigationDirective tryExecutePortal(BotEntry entry,
                                                         Character bot,
                                                         Point rawTargetPos,
-                                                        BotNavigationGraph.Edge edge) {
+                                                        AgentNavigationGraph.Edge edge) {
         if (AgentBotNavigationDebugStateRuntime.portalUseOnCooldown(entry, System.currentTimeMillis())) {
             return null;
         }
@@ -610,10 +614,10 @@ public final class BotNavigationManager {
         return new NavigationDirective(rawTargetPos, true);
     }
 
-    private static boolean shouldUsePreciseTarget(BotNavigationGraph graph,
+    private static boolean shouldUsePreciseTarget(AgentNavigationGraph graph,
                                                   BotEntry entry,
                                                   Point botPos,
-                                                  BotNavigationGraph.Edge edge) {
+                                                  AgentNavigationGraph.Edge edge) {
         if (AgentBotMovementStateRuntime.inAir(entry)) {
             return false;
         }
@@ -631,7 +635,7 @@ public final class BotNavigationManager {
         };
     }
 
-    private static Point selectWaypoint(BotEntry entry, BotNavigationGraph graph, Point botPos, BotNavigationGraph.Edge edge) {
+    private static Point selectWaypoint(BotEntry entry, AgentNavigationGraph graph, Point botPos, AgentNavigationGraph.Edge edge) {
         return switch (edge.type) {
             case WALK -> new Point(edge.endPoint);
             case CLIMB -> selectClimbWaypoint(graph, entry, botPos, edge);
@@ -641,20 +645,20 @@ public final class BotNavigationManager {
         };
     }
 
-    static Point selectJumpWaypoint(BotEntry entry, Point botPos, BotNavigationGraph.Edge edge) {
-        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(AgentBotRuntimeIdentityRuntime.botMap(entry), AgentBotMovementStateRuntime.movementProfile(entry));
+    static Point selectJumpWaypoint(BotEntry entry, Point botPos, AgentNavigationGraph.Edge edge) {
+        AgentNavigationGraph graph = AgentNavigationGraphService.getGraph(AgentBotRuntimeIdentityRuntime.botMap(entry), AgentBotMovementStateRuntime.movementProfile(entry));
         return selectJumpWaypoint(graph, entry, botPos, edge);
     }
 
-    static Point selectJumpWaypoint(BotNavigationGraph graph, Point botPos, BotNavigationGraph.Edge edge) {
+    static Point selectJumpWaypoint(AgentNavigationGraph graph, Point botPos, AgentNavigationGraph.Edge edge) {
         return selectJumpWaypoint(graph, null, botPos, edge);
     }
 
-    private static Point selectJumpWaypoint(BotNavigationGraph graph,
+    private static Point selectJumpWaypoint(AgentNavigationGraph graph,
                                             BotEntry entry,
                                             Point botPos,
-                                            BotNavigationGraph.Edge edge) {
-        BotNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);
+                                            AgentNavigationGraph.Edge edge) {
+        AgentNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);
         if (fromRegion == null || fromRegion.isRopeRegion) {
             return new Point(edge.startPoint);
         }
@@ -664,12 +668,12 @@ public final class BotNavigationManager {
         return fromRegion.pointAt(targetX);
     }
 
-    static Point selectClimbWaypoint(BotEntry entry, Point botPos, BotNavigationGraph.Edge edge) {
-        BotNavigationGraph graph = resolveActiveGraph(AgentBotRuntimeIdentityRuntime.botMap(entry), AgentBotMovementStateRuntime.movementProfile(entry));
+    static Point selectClimbWaypoint(BotEntry entry, Point botPos, AgentNavigationGraph.Edge edge) {
+        AgentNavigationGraph graph = resolveActiveGraph(AgentBotRuntimeIdentityRuntime.botMap(entry), AgentBotMovementStateRuntime.movementProfile(entry));
         return selectClimbWaypoint(graph, entry, botPos, edge);
     }
 
-    static Point selectClimbWaypoint(BotNavigationGraph graph, BotEntry entry, Point botPos, BotNavigationGraph.Edge edge) {
+    static Point selectClimbWaypoint(AgentNavigationGraph graph, BotEntry entry, Point botPos, AgentNavigationGraph.Edge edge) {
         if (AgentBotMovementStateRuntime.inAir(entry)) {
             return new Point(edge.endPoint);
         }
@@ -696,19 +700,19 @@ public final class BotNavigationManager {
         return new Point(edge.startPoint);
     }
 
-    private static BotNavigationGraph resolveActiveGraph(MapleMap map, AgentMovementProfile movementProfile) {
-        return BotNavigationGraphProvider.peekBestGraph(map, movementProfile);
+    private static AgentNavigationGraph resolveActiveGraph(MapleMap map, AgentMovementProfile movementProfile) {
+        return AgentNavigationGraphService.peekBestGraph(map, movementProfile);
     }
 
     static Point selectDropWaypoint(BotEntry entry,
-                                    BotNavigationGraph graph,
+                                    AgentNavigationGraph graph,
                                     Point botPos,
-                                    BotNavigationGraph.Edge edge) {
+                                    AgentNavigationGraph.Edge edge) {
         if (AgentBotMovementStateRuntime.inAir(entry)) {
             return new Point(edge.endPoint);
         }
         if (edge.launchStepX == 0) {
-            BotNavigationGraph.Region fromRegion = graph != null ? graph.getRegion(edge.fromRegionId) : null;
+            AgentNavigationGraph.Region fromRegion = graph != null ? graph.getRegion(edge.fromRegionId) : null;
             if (fromRegion == null || fromRegion.isRopeRegion) {
                 return new Point(edge.startPoint);
             }
@@ -722,7 +726,7 @@ public final class BotNavigationManager {
             return new Point(edge.endPoint);
         }
 
-        BotNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);
+        AgentNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);
         if (fromRegion == null || fromRegion.isRopeRegion) {
             return new Point(edge.endPoint);
         }
@@ -740,7 +744,7 @@ public final class BotNavigationManager {
         return new Point(edge.startPoint);
     }
 
-    private static boolean hasReachedDirectionalDropRunway(Point botPos, BotNavigationGraph.Edge edge) {
+    private static boolean hasReachedDirectionalDropRunway(Point botPos, AgentNavigationGraph.Edge edge) {
         if (botPos == null || edge == null || edge.launchStepX == 0) {
             return false;
         }
@@ -751,8 +755,8 @@ public final class BotNavigationManager {
                 : botPos.x <= edge.startPoint.x;
     }
 
-    private static boolean matchesDirectionalDrop(BotNavigationGraph.Edge edge,
-                                                  BotNavigationGraph graph,
+    private static boolean matchesDirectionalDrop(AgentNavigationGraph.Edge edge,
+                                                  AgentNavigationGraph graph,
                                                   BotPhysicsEngine.WalkOffLanding outcome) {
         if (outcome == null || outcome.landing() == null) {
             return false;
@@ -770,19 +774,19 @@ public final class BotNavigationManager {
                 && Math.abs(outcome.landing().point().y - edge.endPoint.y) <= yTolerance;
     }
 
-    private static BotNavigationGraph.Edge findNextEdge(BotNavigationGraph graph,
+    private static AgentNavigationGraph.Edge findNextEdge(AgentNavigationGraph graph,
                                                         Character bot,
                                                         int startRegionId,
                                                         int targetRegionId,
                                                         Point targetPos) {
-        List<BotNavigationGraph.Edge> path = findPath(graph, bot.getMap(), bot.getPosition(), startRegionId, targetRegionId, targetPos);
+        List<AgentNavigationGraph.Edge> path = findPath(graph, bot.getMap(), bot.getPosition(), startRegionId, targetRegionId, targetPos);
         if (path.isEmpty()) {
             return null;
         }
         return collapseLeadingWalkEdges(path);
     }
 
-    public static List<BotNavigationGraph.Edge> findPath(BotNavigationGraph graph,
+    public static List<AgentNavigationGraph.Edge> findPath(AgentNavigationGraph graph,
                                                          Character bot,
                                                          int startRegionId,
                                                          int targetRegionId,
@@ -790,7 +794,7 @@ public final class BotNavigationManager {
         return findPath(graph, bot.getMap(), bot.getPosition(), startRegionId, targetRegionId, targetPos);
     }
 
-    public static List<BotNavigationGraph.Edge> findPath(BotNavigationGraph graph,
+    public static List<AgentNavigationGraph.Edge> findPath(AgentNavigationGraph graph,
                                                          MapleMap map,
                                                          Point startPos,
                                                          int startRegionId,
@@ -799,7 +803,7 @@ public final class BotNavigationManager {
         return findPath(graph, map, startPos, startRegionId, targetRegionId, targetPos, null);
     }
 
-    public static List<BotNavigationGraph.Edge> findPathForTargetScore(BotNavigationGraph graph,
+    public static List<AgentNavigationGraph.Edge> findPathForTargetScore(AgentNavigationGraph graph,
                                                                 MapleMap map,
                                                                 Point startPos,
                                                                 int startRegionId,
@@ -818,7 +822,7 @@ public final class BotNavigationManager {
      */
     static boolean useAdmissibleHeuristic = true;
 
-    private static List<BotNavigationGraph.Edge> findPath(BotNavigationGraph graph,
+    private static List<AgentNavigationGraph.Edge> findPath(AgentNavigationGraph graph,
                                                           MapleMap map,
                                                           Point startPos,
                                                           int startRegionId,
@@ -836,7 +840,7 @@ public final class BotNavigationManager {
      * jumps) and return a longer route. {@code instrument=false} skips slow-path logging and the
      * perf record so measurement callers can run the search twice cheaply.
      */
-    static SearchOutcome runSearch(BotNavigationGraph graph,
+    static SearchOutcome runSearch(AgentNavigationGraph graph,
                                    MapleMap map,
                                    Point startPos,
                                    int startRegionId,
@@ -851,7 +855,7 @@ public final class BotNavigationManager {
             PriorityQueue<SearchNode> open = new PriorityQueue<>(Comparator.comparingInt(node -> node.score));
             Map<SearchState, Integer> gScore = new HashMap<>();
             Map<SearchState, SearchState> cameFrom = new HashMap<>();
-            Map<SearchState, BotNavigationGraph.Edge> cameByEdge = new HashMap<>();
+            Map<SearchState, AgentNavigationGraph.Edge> cameByEdge = new HashMap<>();
             SearchState startState = new SearchState(startRegionId, new Point(startPos), false);
             SearchState bestGoalState = null;
             int bestGoalCost = Integer.MAX_VALUE;
@@ -884,14 +888,14 @@ public final class BotNavigationManager {
                     }
                 }
 
-                for (BotNavigationGraph.Edge edge : graph.getOutgoing(current.state.regionId)) {
+                for (AgentNavigationGraph.Edge edge : graph.getOutgoing(current.state.regionId)) {
                     edgeChecks++;
                     if (!isEdgeUsable(graph, map, edge)) {
                         continue;
                     }
                     usableEdges++;
 
-                    boolean isPortal = edge.type == BotNavigationGraph.EdgeType.PORTAL;
+                    boolean isPortal = edge.type == AgentNavigationGraph.EdgeType.PORTAL;
                     // Portals are free on their own (edge.cost == 0). Charge PORTAL_USE_COOLDOWN_MS
                     // only when the bot enters a portal *through the exit* of the one it just took —
                     // i.e. it landed on a portal and immediately re-enters without walking. A
@@ -918,7 +922,7 @@ public final class BotNavigationManager {
                 }
             }
 
-            List<BotNavigationGraph.Edge> path = reconstructPath(startState, bestGoalState, cameFrom, cameByEdge);
+            List<AgentNavigationGraph.Edge> path = reconstructPath(startState, bestGoalState, cameFrom, cameByEdge);
             profile = new PathfindProfile(
                     System.nanoTime() - startedAt,
                     expandedNodes,
@@ -930,8 +934,8 @@ public final class BotNavigationManager {
                     bestGoalCost,
                     path.size());
             boolean usesPortal = false;
-            for (BotNavigationGraph.Edge edge : path) {
-                if (edge.type == BotNavigationGraph.EdgeType.PORTAL) {
+            for (AgentNavigationGraph.Edge edge : path) {
+                if (edge.type == AgentNavigationGraph.EdgeType.PORTAL) {
                     usesPortal = true;
                     break;
                 }
@@ -958,7 +962,7 @@ public final class BotNavigationManager {
     }
 
     /** Result of a single {@link #runSearch} call. */
-    record SearchOutcome(List<BotNavigationGraph.Edge> path, int cost, int expandedNodes, boolean usesPortal) {
+    record SearchOutcome(List<AgentNavigationGraph.Edge> path, int cost, int expandedNodes, boolean usesPortal) {
     }
 
     /** Side-by-side comparison of the production heuristic vs the admissible (h=0) optimal search. */
@@ -987,7 +991,7 @@ public final class BotNavigationManager {
      * the admissible h=0 heuristic, returning both costs so callers can quantify how often (and by
      * how much) the current heuristic returns a non-optimal path. Not used on any production path.
      */
-    public static PathOptimality measureOptimality(BotNavigationGraph graph,
+    public static PathOptimality measureOptimality(AgentNavigationGraph graph,
                                                    MapleMap map,
                                                    Point startPos,
                                                    int startRegionId,
@@ -1001,7 +1005,7 @@ public final class BotNavigationManager {
                 optimal.usesPortal(), current.expandedNodes(), optimal.expandedNodes());
     }
 
-    private static void logSlowPathfind(BotNavigationGraph graph,
+    private static void logSlowPathfind(AgentNavigationGraph graph,
                                         MapleMap map,
                                         Point startPos,
                                         int startRegionId,
@@ -1039,18 +1043,18 @@ public final class BotNavigationManager {
                 profile.resultEdges());
     }
 
-    private static List<BotNavigationGraph.Edge> reconstructPath(SearchState startState,
+    private static List<AgentNavigationGraph.Edge> reconstructPath(SearchState startState,
                                                                  SearchState goalState,
                                                                  Map<SearchState, SearchState> cameFrom,
-                                                                 Map<SearchState, BotNavigationGraph.Edge> cameByEdge) {
+                                                                 Map<SearchState, AgentNavigationGraph.Edge> cameByEdge) {
         if (goalState == null || !cameByEdge.containsKey(goalState)) {
             return List.of();
         }
 
-        List<BotNavigationGraph.Edge> path = new ArrayList<>();
+        List<AgentNavigationGraph.Edge> path = new ArrayList<>();
         SearchState cursor = goalState;
         while (!cursor.equals(startState)) {
-            BotNavigationGraph.Edge edge = cameByEdge.get(cursor);
+            AgentNavigationGraph.Edge edge = cameByEdge.get(cursor);
             if (edge == null) {
                 return List.of();
             }
@@ -1065,9 +1069,9 @@ public final class BotNavigationManager {
         return path;
     }
 
-    static BotNavigationGraph.Edge collapseLeadingWalkEdges(List<BotNavigationGraph.Edge> path) {
-        BotNavigationGraph.Edge first = path.get(0);
-        if (first.type != BotNavigationGraph.EdgeType.WALK) {
+    static AgentNavigationGraph.Edge collapseLeadingWalkEdges(List<AgentNavigationGraph.Edge> path) {
+        AgentNavigationGraph.Edge first = path.get(0);
+        if (first.type != AgentNavigationGraph.EdgeType.WALK) {
             return first;
         }
 
@@ -1078,8 +1082,8 @@ public final class BotNavigationManager {
         int totalCost = 0;
         int walkCount = 0;
         while (walkCount < path.size()) {
-            BotNavigationGraph.Edge edge = path.get(walkCount);
-            if (edge.type != BotNavigationGraph.EdgeType.WALK
+            AgentNavigationGraph.Edge edge = path.get(walkCount);
+            if (edge.type != AgentNavigationGraph.EdgeType.WALK
                     || !isNoMovementWalk(edge.startPoint, edge.endPoint)) {
                 break;
             }
@@ -1091,17 +1095,17 @@ public final class BotNavigationManager {
             return null;
         }
 
-        BotNavigationGraph.Edge next = path.get(walkCount);
-        return new BotNavigationGraph.Edge(first.fromRegionId, next.toRegionId, next.type,
+        AgentNavigationGraph.Edge next = path.get(walkCount);
+        return new AgentNavigationGraph.Edge(first.fromRegionId, next.toRegionId, next.type,
                 next.startPoint, next.endPoint, next.launchMinX, next.launchMaxX, next.launchStepX, next.portalId,
                 next.ropeX, next.ropeTopY, next.ropeBottomY, totalCost + next.cost);
     }
 
-    private static boolean isEdgeUsable(BotNavigationGraph graph, Character bot, BotNavigationGraph.Edge edge) {
+    private static boolean isEdgeUsable(AgentNavigationGraph graph, Character bot, AgentNavigationGraph.Edge edge) {
         return isEdgeUsable(graph, bot.getMap(), edge);
     }
 
-    private static boolean sameEdge(BotNavigationGraph.Edge left, BotNavigationGraph.Edge right) {
+    private static boolean sameEdge(AgentNavigationGraph.Edge left, AgentNavigationGraph.Edge right) {
         return left == right || (left != null
                 && right != null
                 && left.fromRegionId == right.fromRegionId
@@ -1118,8 +1122,8 @@ public final class BotNavigationManager {
                 && left.endPoint.equals(right.endPoint));
     }
 
-    static boolean shouldRetainCommittedGroundEdge(BotNavigationGraph.Edge current,
-                                                   BotNavigationGraph.Edge replacement) {
+    static boolean shouldRetainCommittedGroundEdge(AgentNavigationGraph.Edge current,
+                                                   AgentNavigationGraph.Edge replacement) {
         if (current == null || replacement == null) {
             return false;
         }
@@ -1131,11 +1135,11 @@ public final class BotNavigationManager {
         // approach cost as the bot shuffles on the source platform. Replacing the committed edge
         // every AI tick creates oscillation loops like the John 2026-05-01 down-jump trace,
         // where nav flips between a straight DROP and a nearby JUMP before either can execute.
-        return current.type != BotNavigationGraph.EdgeType.WALK
-                && replacement.type != BotNavigationGraph.EdgeType.WALK;
+        return current.type != AgentNavigationGraph.EdgeType.WALK
+                && replacement.type != AgentNavigationGraph.EdgeType.WALK;
     }
 
-    private static boolean isEdgeUsable(BotNavigationGraph graph, MapleMap map, BotNavigationGraph.Edge edge) {
+    private static boolean isEdgeUsable(AgentNavigationGraph graph, MapleMap map, AgentNavigationGraph.Edge edge) {
         return switch (edge.type) {
             case WALK, JUMP, DROP, CLIMB -> true;
             case PORTAL -> {
@@ -1157,7 +1161,7 @@ public final class BotNavigationManager {
         return bot.getMapId() != oldMapId || !bot.getPosition().equals(oldPos);
     }
 
-    private static boolean isReadyForEdge(Point botPos, BotNavigationGraph.Edge edge) {
+    private static boolean isReadyForEdge(Point botPos, AgentNavigationGraph.Edge edge) {
         int dx = Math.abs(botPos.x - edge.startPoint.x);
         int dy = Math.abs(botPos.y - edge.startPoint.y);
 
@@ -1169,21 +1173,21 @@ public final class BotNavigationManager {
         };
     }
 
-    static boolean canExecuteJumpFromCurrentPosition(BotNavigationGraph graph,
+    static boolean canExecuteJumpFromCurrentPosition(AgentNavigationGraph graph,
                                                      MapleMap map,
                                                      Point botPos,
-                                                     BotNavigationGraph.Edge edge) {
-        if (edge.type != BotNavigationGraph.EdgeType.JUMP) {
+                                                     AgentNavigationGraph.Edge edge) {
+        if (edge.type != AgentNavigationGraph.EdgeType.JUMP) {
             return false;
         }
         return isWithinJumpLaunchWindow(graph, botPos, edge);
     }
 
-    private static boolean canExecuteSelectedJumpFromCurrentPosition(BotNavigationGraph graph,
+    private static boolean canExecuteSelectedJumpFromCurrentPosition(AgentNavigationGraph graph,
                                                                      BotEntry entry,
                                                                      MapleMap map,
                                                                      Point botPos,
-                                                                     BotNavigationGraph.Edge edge) {
+                                                                     AgentNavigationGraph.Edge edge) {
         if (!canExecuteJumpFromCurrentPosition(graph, map, botPos, edge)) {
             return false;
         }
@@ -1193,12 +1197,12 @@ public final class BotNavigationManager {
         return Math.abs(botPos.x - launchX) <= tolerance;
     }
 
-    private static boolean isReachableWithinRegion(BotNavigationGraph graph,
+    private static boolean isReachableWithinRegion(AgentNavigationGraph graph,
                                                    MapleMap map,
                                                    int regionId,
                                                    Point fromPos,
                                                    Point toPos) {
-        BotNavigationGraph.Region region = graph.getRegion(regionId);
+        AgentNavigationGraph.Region region = graph.getRegion(regionId);
         if (region == null || fromPos == null || toPos == null) {
             return false;
         }
@@ -1228,14 +1232,14 @@ public final class BotNavigationManager {
         return true;
     }
 
-    static boolean isWithinJumpLaunchWindow(BotNavigationGraph graph,
+    static boolean isWithinJumpLaunchWindow(AgentNavigationGraph graph,
                                             Point botPos,
-                                            BotNavigationGraph.Edge edge) {
-        if (botPos == null || edge.type != BotNavigationGraph.EdgeType.JUMP || !edge.containsLaunchX(botPos.x)) {
+                                            AgentNavigationGraph.Edge edge) {
+        if (botPos == null || edge.type != AgentNavigationGraph.EdgeType.JUMP || !edge.containsLaunchX(botPos.x)) {
             return false;
         }
 
-        BotNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);
+        AgentNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);
         if (fromRegion == null) {
             return false;
         }
@@ -1244,11 +1248,11 @@ public final class BotNavigationManager {
         return Math.abs(botPos.y - expectedLaunchPoint.y) <= BotMovementManager.cfg.JUMP_Y_THRESH;
     }
 
-    static boolean isWithinDropLaunchWindow(BotNavigationGraph graph,
+    static boolean isWithinDropLaunchWindow(AgentNavigationGraph graph,
                                             Point botPos,
-                                            BotNavigationGraph.Edge edge) {
+                                            AgentNavigationGraph.Edge edge) {
         if (botPos == null
-                || edge.type != BotNavigationGraph.EdgeType.DROP
+                || edge.type != AgentNavigationGraph.EdgeType.DROP
                 || edge.launchStepX != 0
                 || !edge.containsLaunchX(botPos.x)) {
             return false;
@@ -1258,7 +1262,7 @@ public final class BotNavigationManager {
             return Math.abs(botPos.y - edge.startPoint.y) <= BotMovementManager.cfg.JUMP_Y_THRESH;
         }
 
-        BotNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);
+        AgentNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);
         if (fromRegion == null || fromRegion.isRopeRegion) {
             return false;
         }
@@ -1268,12 +1272,12 @@ public final class BotNavigationManager {
     }
 
     private static int selectedJumpLaunchX(BotEntry entry,
-                                           BotNavigationGraph graph,
-                                           BotNavigationGraph.Edge edge) {
-        if (entry == null || graph == null || edge == null || edge.type != BotNavigationGraph.EdgeType.JUMP) {
+                                           AgentNavigationGraph graph,
+                                           AgentNavigationGraph.Edge edge) {
+        if (entry == null || graph == null || edge == null || edge.type != AgentNavigationGraph.EdgeType.JUMP) {
             return edge != null ? edge.startPoint.x : 0;
         }
-        BotNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);
+        AgentNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);
         if (fromRegion == null || fromRegion.isRopeRegion) {
             return edge.startPoint.x;
         }
@@ -1308,13 +1312,13 @@ public final class BotNavigationManager {
         return selectedX;
     }
 
-    private static int intraRegionTravelCost(BotNavigationGraph graph, Point from, Point to) {
+    private static int intraRegionTravelCost(AgentNavigationGraph graph, Point from, Point to) {
         int dx = Math.abs(to.x - from.x);
         return Math.max(0, (int) Math.round((dx * 1000.0) / Math.max(1.0, graph.movementProfile.walkVelocityPxs())));
     }
 
-    private static int intraRegionTravelCost(BotNavigationGraph graph, int regionId, Point from, Point to) {
-        BotNavigationGraph.Region region = graph.getRegion(regionId);
+    private static int intraRegionTravelCost(AgentNavigationGraph graph, int regionId, Point from, Point to) {
+        AgentNavigationGraph.Region region = graph.getRegion(regionId);
         if (region != null && region.isRopeRegion) {
             int travel = Math.abs(to.y - from.y);
             return Math.max(0, (int) Math.round((travel * 1000.0) / Math.max(1, BotMovementManager.cfg.CLIMB_SPEED_PXS)));
@@ -1322,13 +1326,13 @@ public final class BotNavigationManager {
         return intraRegionTravelCost(graph, from, to);
     }
 
-    private static int heuristic(BotNavigationGraph graph, Point from, Point targetPos) {
+    private static int heuristic(AgentNavigationGraph graph, Point from, Point targetPos) {
         return intraRegionTravelCost(graph, from, targetPos);
     }
 
-    static boolean shouldUsePreciseWalkTarget(BotNavigationGraph.Edge edge) {
+    static boolean shouldUsePreciseWalkTarget(AgentNavigationGraph.Edge edge) {
         return edge != null
-                && edge.type == BotNavigationGraph.EdgeType.WALK
+                && edge.type == AgentNavigationGraph.EdgeType.WALK
                 && !isNoMovementWalk(edge.startPoint, edge.endPoint);
     }
 
@@ -1343,21 +1347,21 @@ public final class BotNavigationManager {
                 && botPos.y <= rope.bottomY();
     }
 
-    private static boolean canAttachToRopeFromTopPlatform(BotNavigationGraph.Edge edge, Point botPos, Rope rope) {
+    private static boolean canAttachToRopeFromTopPlatform(AgentNavigationGraph.Edge edge, Point botPos, Rope rope) {
         return Math.abs(botPos.x - rope.x()) <= BotMovementManager.cfg.ROPE_GRAB_X
                 && edge.endPoint.y == BotPhysicsEngine.firstClimbableY(rope)
                 && botPos.y < rope.topY()
                 && rope.topY() - botPos.y <= BotPhysicsEngine.cfg.MAX_SNAP_DROP;
     }
 
-    private static boolean canGrabRopeFromTopPlatform(BotNavigationGraph.Edge edge, Point botPos, Rope rope) {
+    private static boolean canGrabRopeFromTopPlatform(AgentNavigationGraph.Edge edge, Point botPos, Rope rope) {
         return edge.startPoint.y <= rope.topY() + BotMovementManager.cfg.JUMP_Y_THRESH
                 && Math.abs(botPos.x - rope.x()) <= BotMovementManager.cfg.ROPE_GRAB_X;
     }
 
     private static boolean canExecuteClimbEntryFromCurrentPosition(MapleMap map,
                                                                    Point botPos,
-                                                                   BotNavigationGraph.Edge edge,
+                                                                   AgentNavigationGraph.Edge edge,
                                                                    Rope rope) {
         return rope != null && (canGrabRopeAtCurrentPosition(botPos, rope)
                 || canAttachToRopeFromTopPlatform(edge, botPos, rope)
@@ -1366,19 +1370,19 @@ public final class BotNavigationManager {
     }
 
     private static boolean canExecuteGroundRopeJumpEntryFromCurrentPosition(Point botPos,
-                                                                           BotNavigationGraph.Edge edge) {
-        if (botPos == null || edge == null || edge.type != BotNavigationGraph.EdgeType.CLIMB) {
+                                                                           AgentNavigationGraph.Edge edge) {
+        if (botPos == null || edge == null || edge.type != AgentNavigationGraph.EdgeType.CLIMB) {
             return false;
         }
         return edge.containsLaunchX(botPos.x)
                 && Math.abs(botPos.y - edge.startPoint.y) <= BotMovementManager.cfg.JUMP_Y_THRESH * 2;
     }
 
-    private static boolean canExecuteClimbExitFromCurrentPosition(BotNavigationGraph graph,
+    private static boolean canExecuteClimbExitFromCurrentPosition(AgentNavigationGraph graph,
                                                                   MapleMap map,
                                                                   Point botPos,
-                                                                  BotNavigationGraph.Edge edge) {
-        if (edge.type != BotNavigationGraph.EdgeType.CLIMB) {
+                                                                  AgentNavigationGraph.Edge edge) {
+        if (edge.type != AgentNavigationGraph.EdgeType.CLIMB) {
             return false;
         }
 
@@ -1392,7 +1396,7 @@ public final class BotNavigationManager {
             }
         }
 
-        BotNavigationGraph.Region toRegion = graph.getRegion(edge.toRegionId);
+        AgentNavigationGraph.Region toRegion = graph.getRegion(edge.toRegionId);
         if (toRegion != null && toRegion.isRopeRegion) {
             return Math.abs(botPos.y - edge.startPoint.y) <= BotMovementManager.cfg.JUMP_Y_THRESH * 2;
         }
@@ -1405,7 +1409,7 @@ public final class BotNavigationManager {
         return Math.abs(botPos.y - edge.startPoint.y) <= BotMovementManager.cfg.JUMP_Y_THRESH * 2;
     }
 
-    private static boolean isTopRopeJumpExitReady(Rope rope, Point botPos, BotNavigationGraph.Edge edge) {
+    private static boolean isTopRopeJumpExitReady(Rope rope, Point botPos, AgentNavigationGraph.Edge edge) {
         // Top-of-rope tolerance window only: the bot lands at firstClimbableY when grabbing
         // from above (canTopGrab/canTopStep), and the launch arc is invariant within the first
         // climbStep below the top. Non-top anchors are single-point launch windows whose arcs
@@ -1430,19 +1434,19 @@ public final class BotNavigationManager {
         BotMovementManager.broadcastMovement(entry);
     }
 
-    private static void setEdgeExecutionTarget(BotEntry entry, BotNavigationGraph.Edge edge) {
+    private static void setEdgeExecutionTarget(BotEntry entry, AgentNavigationGraph.Edge edge) {
         AgentBotNavigationDebugStateRuntime.setNavWaypoint(entry, edge.endPoint, false);
     }
 
     private static Point adjustPathTarget(BotEntry entry,
-                                          BotNavigationGraph graph,
+                                          AgentNavigationGraph graph,
                                           int targetRegionId,
                                           Point rawTargetPos) {
         if (rawTargetPos == null || !AgentBotModeStateRuntime.grinding(entry) || targetRegionId < 0) {
             return rawTargetPos;
         }
 
-        BotNavigationGraph.Region targetRegion = graph.getRegion(targetRegionId);
+        AgentNavigationGraph.Region targetRegion = graph.getRegion(targetRegionId);
         if (targetRegion == null || targetRegion.isRopeRegion) {
             return rawTargetPos;
         }
@@ -1457,14 +1461,14 @@ public final class BotNavigationManager {
         return targetRegion.pointAt(clampedX);
     }
 
-    private static int landingRegionId(BotNavigationGraph graph, BotPhysicsEngine.JumpLanding landing) {
+    private static int landingRegionId(AgentNavigationGraph graph, BotPhysicsEngine.JumpLanding landing) {
         if (landing == null) {
             return -1;
         }
         return graph.regionIdByFootholdId.getOrDefault(landing.foothold().getId(), -1);
     }
 
-    public static int resolveCurrentRegionId(BotNavigationGraph graph,
+    public static int resolveCurrentRegionId(AgentNavigationGraph graph,
                                       BotEntry entry,
                                       MapleMap map,
                                       Point botPos) {
@@ -1489,7 +1493,7 @@ public final class BotNavigationManager {
         return graph.findRegionId(map, botPos);
     }
 
-    public static int resolveTargetRegionId(BotNavigationGraph graph,
+    public static int resolveTargetRegionId(AgentNavigationGraph graph,
                                      BotEntry entry,
                                      MapleMap map,
                                      Point targetPos) {
@@ -1527,7 +1531,7 @@ public final class BotNavigationManager {
         return resolvePointTargetRegionId(graph, map, targetPos);
     }
 
-    static int resolveCharacterRegionId(BotNavigationGraph graph,
+    static int resolveCharacterRegionId(AgentNavigationGraph graph,
                                         MapleMap map,
                                         Character character) {
         if (character == null) {
@@ -1549,7 +1553,7 @@ public final class BotNavigationManager {
         return resolvePointTargetRegionId(graph, map, position);
     }
 
-    static int resolvePointTargetRegionId(BotNavigationGraph graph,
+    static int resolvePointTargetRegionId(AgentNavigationGraph graph,
                                           MapleMap map,
                                           Point position) {
         int ropeRegionId = graph.findRopeRegionId(position);
@@ -1563,17 +1567,17 @@ public final class BotNavigationManager {
         return BotPhysicsEngine.isGroundFarBelow(map, position);
     }
 
-    private static boolean isRopeEntryEdge(BotNavigationGraph graph, BotNavigationGraph.Edge edge) {
-        if (edge.type != BotNavigationGraph.EdgeType.CLIMB) {
+    private static boolean isRopeEntryEdge(AgentNavigationGraph graph, AgentNavigationGraph.Edge edge) {
+        if (edge.type != AgentNavigationGraph.EdgeType.CLIMB) {
             return false;
         }
 
-        BotNavigationGraph.Region from = graph.getRegion(edge.fromRegionId);
-        BotNavigationGraph.Region to = graph.getRegion(edge.toRegionId);
+        AgentNavigationGraph.Region from = graph.getRegion(edge.fromRegionId);
+        AgentNavigationGraph.Region to = graph.getRegion(edge.toRegionId);
         return from != null && to != null && !from.isRopeRegion && to.isRopeRegion;
     }
 
-    static boolean isTopStepOffExit(Rope rope, Point botPos, BotNavigationGraph.Edge edge) {
+    static boolean isTopStepOffExit(Rope rope, Point botPos, AgentNavigationGraph.Edge edge) {
         if (rope == null || botPos == null || edge == null || edge.launchStepX != 0) {
             return false;
         }
@@ -1582,8 +1586,8 @@ public final class BotNavigationManager {
                 && botPos.y <= rope.topY() + BotMovementManager.cfg.JUMP_Y_THRESH * 2;
     }
 
-    private static Rope findRopeForRegion(MapleMap map, BotNavigationGraph.Region region) {
-        return BotNavigationGraphProvider.findRopeFromRegion(map, region);
+    private static Rope findRopeForRegion(MapleMap map, AgentNavigationGraph.Region region) {
+        return AgentNavigationGraphService.findRopeFromRegion(map, region);
     }
 
 }

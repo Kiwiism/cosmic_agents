@@ -13,8 +13,8 @@ import server.agents.integration.AgentBotMovementTargetRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
 import server.bots.BotManager;
-import server.bots.BotNavigationGraph;
-import server.bots.BotNavigationGraphProvider;
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.bots.BotNavigationManager;
 import server.StatEffect;
 import server.TimerManager;
@@ -54,17 +54,17 @@ public final class AgentNavigationDebugOverlay {
         }
 
         OverlayBuilder overlay = new OverlayBuilder(viewer);
-        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(viewer.getMap(), AgentMovementProfile.fromCharacter(viewer));
+        AgentNavigationGraph graph = AgentNavigationGraphService.getGraph(viewer.getMap(), AgentMovementProfile.fromCharacter(viewer));
         Set<String> drawnEdges = new HashSet<>();
 
-        for (BotNavigationGraph.Region region : graph.regions) {
+        for (AgentNavigationGraph.Region region : graph.regions) {
             overlay.drawApproxRegion(region, OverlayType.REGION);
             overlay.drawNode(region.centerPoint(), OverlayType.NODE, GRAPH_NODE_SIZE);
         }
 
-        for (BotNavigationGraph.Region region : graph.regions) {
-            for (BotNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
-                if (edge.type == BotNavigationGraph.EdgeType.WALK) {
+        for (AgentNavigationGraph.Region region : graph.regions) {
+            for (AgentNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
+                if (edge.type == AgentNavigationGraph.EdgeType.WALK) {
                     continue;
                 }
 
@@ -99,10 +99,10 @@ public final class AgentNavigationDebugOverlay {
 
         AgentMovementTargetSnapshot targetSnapshot = AgentBotMovementTargetRuntime.snapshot(entry);
         Point targetPos = targetSnapshot.primaryTargetPosition();
-        BotNavigationGraph graph = BotNavigationGraphProvider.getGraph(bot.getMap(), AgentMovementProfile.fromCharacter(bot));
+        AgentNavigationGraph graph = AgentNavigationGraphService.getGraph(bot.getMap(), AgentMovementProfile.fromCharacter(bot));
         int startRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, bot.getMap(), bot.getPosition());
         int targetRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, bot.getMap(), targetPos);
-        List<BotNavigationGraph.Edge> path = startRegionId >= 0 && targetRegionId >= 0 && startRegionId != targetRegionId
+        List<AgentNavigationGraph.Edge> path = startRegionId >= 0 && targetRegionId >= 0 && startRegionId != targetRegionId
                 ? BotNavigationManager.findPath(graph, bot, startRegionId, targetRegionId, targetPos)
                 : List.of();
 
@@ -112,11 +112,11 @@ public final class AgentNavigationDebugOverlay {
             drawRegion(overlay, graph.getRegion(targetRegionId), OverlayType.TRANSITION);
         }
 
-        for (BotNavigationGraph.Edge edge : path) {
+        for (AgentNavigationGraph.Edge edge : path) {
             overlay.drawSparseLine(edge.startPoint, edge.endPoint, OverlayType.PATH, PATH_THICKNESS, PATH_EDGE_SPACING);
         }
 
-        BotNavigationGraph.Edge activeEdge = activeNavigationEdge(entry);
+        AgentNavigationGraph.Edge activeEdge = activeNavigationEdge(entry);
         if (activeEdge != null) {
             overlay.drawSparseLine(activeEdge.startPoint, activeEdge.endPoint, OverlayType.CURRENT_EDGE, PATH_THICKNESS + 2, PATH_EDGE_SPACING);
             overlay.drawNode(activeEdge.startPoint, OverlayType.CURRENT_EDGE, NODE_SIZE + 2);
@@ -157,7 +157,7 @@ public final class AgentNavigationDebugOverlay {
         return "Path log for '" + AgentBotRuntimeIdentityRuntime.botName(entry) + "' dumped: " + filePath;
     }
 
-    private static void drawRegion(OverlayBuilder overlay, BotNavigationGraph.Region region, OverlayType type) {
+    private static void drawRegion(OverlayBuilder overlay, AgentNavigationGraph.Region region, OverlayType type) {
         if (region == null) {
             return;
         }
@@ -188,7 +188,7 @@ public final class AgentNavigationDebugOverlay {
         return new BotSelection(entry, null);
     }
 
-    private static String buildGraphMessage(BotNavigationGraph graph, OverlayBuilder overlay) {
+    private static String buildGraphMessage(AgentNavigationGraph graph, OverlayBuilder overlay) {
         return "Bot nav graph overlay: regions=" + graph.regions.size()
                 + ", mists=" + overlay.objectIds().size()
                 + (overlay.truncated() ? " (truncated)" : "")
@@ -198,10 +198,10 @@ public final class AgentNavigationDebugOverlay {
     private static String buildPathMessage(Character bot,
                                            int startRegionId,
                                            int targetRegionId,
-                                           List<BotNavigationGraph.Edge> path,
+                                           List<AgentNavigationGraph.Edge> path,
                                            BotEntry entry,
                                            OverlayBuilder overlay) {
-        BotNavigationGraph.Edge activeEdge = activeNavigationEdge(entry);
+        AgentNavigationGraph.Edge activeEdge = activeNavigationEdge(entry);
         String currentEdge = activeEdge == null ? "none" : activeEdge.type.name();
         String status;
         if (startRegionId == targetRegionId && activeEdge == null) {
@@ -222,9 +222,9 @@ public final class AgentNavigationDebugOverlay {
                 + ", auto-clear " + (AUTO_CLEAR_MS / 1000) + "s.";
     }
 
-    private static BotNavigationGraph.Edge activeNavigationEdge(BotEntry entry) {
+    private static AgentNavigationGraph.Edge activeNavigationEdge(BotEntry entry) {
         Object edge = AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry);
-        return edge instanceof BotNavigationGraph.Edge navEdge ? navEdge : null;
+        return edge instanceof AgentNavigationGraph.Edge navEdge ? navEdge : null;
     }
 
     private static void replaceOverlay(Character viewer, List<Integer> objectIds) {
@@ -247,7 +247,7 @@ public final class AgentNavigationDebugOverlay {
         }
     }
 
-    private static String canonicalEdgeKey(BotNavigationGraph.Edge edge) {
+    private static String canonicalEdgeKey(AgentNavigationGraph.Edge edge) {
         Point first = edge.startPoint;
         Point second = edge.endPoint;
         if (first.x > second.x || (first.x == second.x && first.y > second.y)) {
@@ -272,7 +272,7 @@ public final class AgentNavigationDebugOverlay {
         return null;
     }
 
-    private static OverlayType overlayTypeForEdge(BotNavigationGraph.EdgeType edgeType) {
+    private static OverlayType overlayTypeForEdge(AgentNavigationGraph.EdgeType edgeType) {
         return switch (edgeType) {
             case DROP, PORTAL -> OverlayType.TRANSITION;
             case JUMP, CLIMB -> OverlayType.PATH;
@@ -361,7 +361,7 @@ public final class AgentNavigationDebugOverlay {
             }
         }
 
-        private void drawApproxRegion(BotNavigationGraph.Region region, OverlayType type) {
+        private void drawApproxRegion(AgentNavigationGraph.Region region, OverlayType type) {
             if (region == null) {
                 return;
             }

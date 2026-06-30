@@ -13,8 +13,8 @@ import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.bots.BotEntry;
 import server.bots.BotManager;
-import server.bots.BotNavigationGraph;
-import server.bots.BotNavigationGraphProvider;
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.bots.BotNavigationManager;
 import server.life.Monster;
 import server.maps.Foothold;
@@ -69,7 +69,7 @@ public final class AgentBotCombatTargetRuntime {
             if (!graphContext.available()) {
                 return null;
             }
-            BotNavigationGraph graph = graphContext.graph();
+            AgentNavigationGraph graph = graphContext.graph();
             MapleMap map = graphContext.map();
             int patrolId = AgentBotPatrolStateRuntime.patrolRegionId(entry);
             Set<Integer> adjacentIds = graph.getMutualAdjacentRegionIds(patrolId);
@@ -246,7 +246,7 @@ public final class AgentBotCombatTargetRuntime {
                 UNREACHABLE_GRAPH_COST);
     }
 
-    private static long graphPathCost(BotNavigationGraph graph,
+    private static long graphPathCost(AgentNavigationGraph graph,
                                       MapleMap map,
                                       Point startPos,
                                       int startRegionId,
@@ -262,10 +262,10 @@ public final class AgentBotCombatTargetRuntime {
                     List.of(), UNREACHABLE_GRAPH_COST);
         }
 
-        List<BotNavigationGraph.Edge> path = BotNavigationManager.findPathForTargetScore(
+        List<AgentNavigationGraph.Edge> path = BotNavigationManager.findPathForTargetScore(
                 graph, map, startPos, startRegionId, targetRegionId, targetPos);
         List<Long> edgeCosts = new ArrayList<>(path.size());
-        for (BotNavigationGraph.Edge edge : path) {
+        for (AgentNavigationGraph.Edge edge : path) {
             edgeCosts.add((long) edge.cost);
         }
         return AgentCombatGrindTargetPolicy.graphPathCost(true, false, 0L, edgeCosts, UNREACHABLE_GRAPH_COST);
@@ -322,7 +322,7 @@ public final class AgentBotCombatTargetRuntime {
 
     private record GrindGraphContext(BotEntry entry,
                                      MapleMap map,
-                                     BotNavigationGraph graph,
+                                     AgentNavigationGraph graph,
                                      AgentMovementProfile profile,
                                      Point startPos,
                                      int startRegionId) {
@@ -332,10 +332,10 @@ public final class AgentBotCombatTargetRuntime {
             }
 
             AgentMovementProfile profile = AgentBotMovementStateRuntime.movementProfileOrCharacter(entry, bot);
-            BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(bot.getMap(), profile);
+            AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(bot.getMap(), profile);
             if (graph == null) {
-                BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), profile);
-                graph = BotNavigationGraphProvider.peekClosestGraph(bot.getMap(), profile);
+                AgentNavigationGraphService.warmGraphAsync(bot.getMap(), profile);
+                graph = AgentNavigationGraphService.peekClosestGraph(bot.getMap(), profile);
             }
             if (graph == null) {
                 return unavailable(entry, bot, botPos);

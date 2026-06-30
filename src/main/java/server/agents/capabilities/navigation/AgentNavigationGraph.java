@@ -1,7 +1,8 @@
-package server.bots;
+package server.agents.capabilities.navigation;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
 
+import server.bots.BotPhysicsEngine;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 
@@ -15,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public final class BotNavigationGraph implements Serializable {
+public final class AgentNavigationGraph implements Serializable {
     // Cached nav graphs are serialized to disk. Keep explicit serialVersionUIDs so
     // harmless method-only edits do not break cache loading; use GRAPH_VERSION for
     // intentional cache invalidation when the serialized data shape changes.
@@ -31,7 +32,7 @@ public final class BotNavigationGraph implements Serializable {
     }
 
     public static final class Segment implements Serializable {
-        // Part of the on-disk BotNavigationGraph cache schema; do not remove.
+        // Part of the on-disk AgentNavigationGraph cache schema; do not remove.
         @Serial
         private static final long serialVersionUID = 1L;
 
@@ -45,11 +46,11 @@ public final class BotNavigationGraph implements Serializable {
         public final boolean forbidFallDown;
         public final boolean collidableFromBelow;
 
-        Segment(Foothold foothold) {
+        public Segment(Foothold foothold) {
             this(foothold, false);
         }
 
-        Segment(Foothold foothold, boolean collidableFromBelow) {
+        public Segment(Foothold foothold, boolean collidableFromBelow) {
             this.footholdId = foothold.getId();
             this.x1 = foothold.getX1();
             this.y1 = foothold.getY1();
@@ -88,7 +89,7 @@ public final class BotNavigationGraph implements Serializable {
     }
 
     public static final class Region implements Serializable {
-        // Part of the on-disk BotNavigationGraph cache schema; do not remove.
+        // Part of the on-disk AgentNavigationGraph cache schema; do not remove.
         @Serial
         private static final long serialVersionUID = 1L;
 
@@ -101,7 +102,7 @@ public final class BotNavigationGraph implements Serializable {
         public final boolean isRopeRegion;
         public final boolean isLadder;
 
-        Region(int id, List<Segment> segments) {
+        public Region(int id, List<Segment> segments) {
             if (segments.isEmpty()) {
                 throw new IllegalArgumentException("Bot nav region requires at least one segment");
             }
@@ -128,7 +129,7 @@ public final class BotNavigationGraph implements Serializable {
             this.maxY = regionMaxY;
         }
 
-        Region(int id, int ropeX, int topY, int bottomY, boolean isLadder) {
+        public Region(int id, int ropeX, int topY, int bottomY, boolean isLadder) {
             this.id = id;
             this.segments = List.of();
             this.isRopeRegion = true;
@@ -200,7 +201,7 @@ public final class BotNavigationGraph implements Serializable {
     }
 
     public static final class Edge implements Serializable {
-        // Part of the on-disk BotNavigationGraph cache schema; do not remove.
+        // Part of the on-disk AgentNavigationGraph cache schema; do not remove.
         @Serial
         private static final long serialVersionUID = 1L;
 
@@ -218,7 +219,7 @@ public final class BotNavigationGraph implements Serializable {
         public final int ropeBottomY;
         public final int cost;
 
-        Edge(int fromRegionId,
+        public Edge(int fromRegionId,
              int toRegionId,
              EdgeType type,
              Point startPoint,
@@ -246,7 +247,7 @@ public final class BotNavigationGraph implements Serializable {
             this.cost = cost;
         }
 
-        Edge(int fromRegionId,
+        public Edge(int fromRegionId,
              int toRegionId,
              EdgeType type,
              Point startPoint,
@@ -261,11 +262,11 @@ public final class BotNavigationGraph implements Serializable {
                     startPoint.x, startPoint.x, launchStepX, portalId, ropeX, ropeTopY, ropeBottomY, cost);
         }
 
-        boolean containsLaunchX(int x) {
+        public boolean containsLaunchX(int x) {
             return x >= launchMinX && x <= launchMaxX;
         }
 
-        boolean containsLaunchX(int x, int tolerance) {
+        public boolean containsLaunchX(int x, int tolerance) {
             return x >= launchMinX - tolerance && x <= launchMaxX + tolerance;
         }
     }
@@ -274,13 +275,13 @@ public final class BotNavigationGraph implements Serializable {
     public final int version;
     public final AgentMovementProfile movementProfile;
     public final List<Region> regions;
-    final Map<Integer, Region> regionsById;
+    public final Map<Integer, Region> regionsById;
     public final Map<Integer, Integer> regionIdByFootholdId;
     final Map<Integer, List<Edge>> outgoingByRegionId;
     final java.util.Set<Integer> collidableWallIds;
     public final java.util.Set<Integer> collidableFromBelowIds;
 
-    BotNavigationGraph(int mapId,
+    public AgentNavigationGraph(int mapId,
                        int version,
                        AgentMovementProfile movementProfile,
                        List<Region> regions,
@@ -291,7 +292,7 @@ public final class BotNavigationGraph implements Serializable {
         this(mapId, version, movementProfile, regions, regionsById, regionIdByFootholdId, outgoingByRegionId, collidableWallIds, java.util.Set.of());
     }
 
-    BotNavigationGraph(int mapId,
+    public AgentNavigationGraph(int mapId,
                        int version,
                        AgentMovementProfile movementProfile,
                        List<Region> regions,
@@ -314,7 +315,7 @@ public final class BotNavigationGraph implements Serializable {
         this.collidableFromBelowIds = new java.util.HashSet<>(collidableFromBelowIds);
     }
 
-    BotNavigationGraph(int mapId,
+    public AgentNavigationGraph(int mapId,
                        int version,
                        List<Region> regions,
                        Map<Integer, Region> regionsById,
@@ -324,7 +325,7 @@ public final class BotNavigationGraph implements Serializable {
         this(mapId, version, AgentMovementProfile.base(), regions, regionsById, regionIdByFootholdId, outgoingByRegionId, collidableWallIds, java.util.Set.of());
     }
 
-    BotNavigationGraph(int mapId,
+    public AgentNavigationGraph(int mapId,
                        int version,
                        List<Region> regions,
                        Map<Integer, Region> regionsById,
@@ -381,12 +382,12 @@ public final class BotNavigationGraph implements Serializable {
         return findRopeRegionId(position);
     }
 
-    int findRopeRegionId(Point position) {
+    public int findRopeRegionId(Point position) {
         for (Region region : regions) {
             if (!region.isRopeRegion) {
                 continue;
             }
-            if (Math.abs(position.x - region.minX) <= BotPhysicsEngine.cfg.ROPE_GRAB_X
+            if (Math.abs(position.x - region.minX) <= BotPhysicsEngine.configuredRopeGrabX()
                     && position.y >= region.minY
                     && position.y <= region.maxY) {
                 return region.id;

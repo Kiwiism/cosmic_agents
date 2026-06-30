@@ -34,8 +34,8 @@ import server.bots.BotEntry;
 import server.bots.BotInventoryManager;
 import server.bots.BotManager;
 import server.bots.BotMovementManager;
-import server.bots.BotNavigationGraph;
-import server.bots.BotNavigationGraphProvider;
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.bots.BotNavigationManager;
 import server.life.NPC;
 import server.maps.MapObject;
@@ -697,7 +697,7 @@ public final class AgentShopService {
             return npcPos;
         }
         AgentMovementProfile profile = AgentBotMovementStateRuntime.movementProfileOrCharacter(entry, bot);
-        BotNavigationGraph graph = BotNavigationGraphProvider.peekBestGraph(bot.getMap(), profile);
+        AgentNavigationGraph graph = AgentNavigationGraphService.peekBestGraph(bot.getMap(), profile);
         if (graph != null) {
             Point botPos = bot.getPosition();
             int startRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, bot.getMap(), botPos);

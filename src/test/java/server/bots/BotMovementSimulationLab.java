@@ -1,5 +1,9 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
+
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+
 import server.agents.capabilities.navigation.AgentNavigationMapLoader;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
@@ -49,7 +53,7 @@ final class BotMovementSimulationLab {
     }
 
     static BotMovementSimulationLab fromMap(MapleMap map) {
-        BotNavigationGraphProvider.rebuildGraph(map);
+        AgentNavigationGraphService.rebuildGraph(map);
         return new BotMovementSimulationLab();
     }
 
@@ -133,7 +137,7 @@ final class BotMovementSimulationLab {
         primeMapState(botName);
     }
 
-    void setNavState(String botName, BotNavigationGraph.Edge edge, int targetRegionId, boolean preciseTarget) {
+    void setNavState(String botName, AgentNavigationGraph.Edge edge, int targetRegionId, boolean preciseTarget) {
         BotEntry entry = requireBot(botName);
         entry.navEdge = edge;
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
@@ -380,7 +384,7 @@ final class BotMovementSimulationLab {
             return "GND";
         }
 
-        private static String describeEdge(BotNavigationGraph.Edge edge) {
+        private static String describeEdge(AgentNavigationGraph.Edge edge) {
             if (edge == null) {
                 return "none";
             }

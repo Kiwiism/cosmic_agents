@@ -1,5 +1,9 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
+
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+
 import server.agents.runtime.AgentPerformanceMonitor;
 
 import server.agents.capabilities.navigation.AgentNavigationMapLoader;
@@ -115,7 +119,7 @@ public class BotFollowTickPerfHarness {
         Scenario(int botCount, int mapId) {
             ensureWzPath();
             this.map = AgentNavigationMapLoader.loadMapGeometry(mapId);
-            BotNavigationGraphProvider.rebuildGraph(map);
+            AgentNavigationGraphService.rebuildGraph(map);
             this.owner = mockCharacter("owner", 1, map, new Point(0, -200));
             this.entries = new ArrayList<>();
             for (int i = 0; i < botCount; i++) {

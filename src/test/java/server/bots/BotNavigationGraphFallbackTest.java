@@ -1,5 +1,9 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
+
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+
 import server.agents.capabilities.movement.AgentMovementProfile;
 
 import client.Character;
@@ -19,7 +23,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class BotNavigationGraphFallbackTest {
+class AgentNavigationGraphFallbackTest {
     @Test
     void shouldUseClosestCachedGraphBeforeHeuristicFallback() {
         MapleMap map = new MapleMap(910000042, 0, 0, 910000042, 1.0f);
@@ -28,7 +32,7 @@ class BotNavigationGraphFallbackTest {
         footholds.insert(new Foothold(new Point(106, 160), new Point(280, 160), 2));
         map.setFootholds(footholds);
 
-        BotNavigationGraph cachedGraph = BotNavigationGraphProvider.rebuildGraph(map, AgentMovementProfile.base());
+        AgentNavigationGraph cachedGraph = AgentNavigationGraphService.rebuildGraph(map, AgentMovementProfile.base());
         assertNotNull(cachedGraph);
 
         Character bot = mockBot(new Point(60, 100), map);
@@ -61,11 +65,11 @@ class BotNavigationGraphFallbackTest {
         footholds.insert(upper);
         map.setFootholds(footholds);
 
-        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map, AgentMovementProfile.base());
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(map, AgentMovementProfile.base());
         int upperRegionId = graph.findRegionId(map, new Point(100, 80));
 
         assertTrue(graph.getOutgoing(upperRegionId).stream()
-                        .anyMatch(edge -> edge.type == BotNavigationGraph.EdgeType.DROP && edge.launchStepX < 0),
+                        .anyMatch(edge -> edge.type == AgentNavigationGraph.EdgeType.DROP && edge.launchStepX < 0),
                 "a wall whose top is level with the current ground is a walk-off ledge");
     }
 
@@ -83,12 +87,12 @@ class BotNavigationGraphFallbackTest {
         footholds.insert(lower);
         map.setFootholds(footholds);
 
-        BotNavigationGraph graph = BotNavigationGraphProvider.rebuildGraph(map, AgentMovementProfile.base());
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(map, AgentMovementProfile.base());
         int lowerRegionId = graph.findRegionId(map, new Point(51, 100));
         int upperRegionId = graph.findRegionId(map, new Point(49, 60));
 
         assertFalse(graph.getOutgoing(lowerRegionId).stream()
-                        .anyMatch(edge -> edge.type == BotNavigationGraph.EdgeType.JUMP
+                        .anyMatch(edge -> edge.type == AgentNavigationGraph.EdgeType.JUMP
                                 && edge.toRegionId == upperRegionId
                                 && edge.containsLaunchX(50)),
                 "jump launch windows must not include a collidable wall boundary");

@@ -10,7 +10,7 @@ import java.io.Serial;
 import java.io.Serializable;
 
 public record AgentMovementProfile(int totalSpeedStat, int totalJumpStat) implements Serializable {
-    // Serialized inside cached BotNavigationGraph instances; keep explicit so
+    // Serialized inside cached AgentNavigationGraph instances; keep explicit so
     // cache compatibility is controlled by GRAPH_VERSION instead of compiler-generated UIDs.
     @Serial
     private static final long serialVersionUID = 1L;

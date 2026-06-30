@@ -1,5 +1,9 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
+
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+
 import server.agents.runtime.AgentPerformanceMonitor;
 
 import server.agents.capabilities.combat.AgentCombatConfig;
@@ -189,7 +193,7 @@ public class BotMovementManager {
         return BotPhysicsEngine.canReachRopeFromGround(map, from, rope);
     }
 
-    static boolean canReachRopeFromGround(MapleMap map, Point from, Rope rope, AgentMovementProfile profile) {
+    public static boolean canReachRopeFromGround(MapleMap map, Point from, Rope rope, AgentMovementProfile profile) {
         return BotPhysicsEngine.canReachRopeFromGround(map, from, rope, profile);
     }
 
@@ -203,8 +207,8 @@ public class BotMovementManager {
         MapleMap map = bot != null ? bot.getMap() : null;
         if (map != null
                 && map.getFootholds() != null
-                && BotNavigationGraphProvider.peekGraph(map, updated) == null) {
-            BotNavigationGraphProvider.warmGraphAsync(map, updated);
+                && AgentNavigationGraphService.peekGraph(map, updated) == null) {
+            AgentNavigationGraphService.warmGraphAsync(map, updated);
         }
 
         AgentBotMovementStateRuntime.setMovementProfile(entry, updated);
@@ -437,13 +441,13 @@ public class BotMovementManager {
         if (AgentBotMovementStateRuntime.hasDownJumpGracePeriod(entry)) {
             return false;
         }
-        BotNavigationGraph.Edge navEdge = (BotNavigationGraph.Edge) AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry);
+        AgentNavigationGraph.Edge navEdge = (AgentNavigationGraph.Edge) AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry);
         if (navEdge == null) {
             return true;
         }
-        return navEdge.type != BotNavigationGraph.EdgeType.JUMP
-                && navEdge.type != BotNavigationGraph.EdgeType.DROP
-                && !(navEdge.type == BotNavigationGraph.EdgeType.CLIMB
+        return navEdge.type != AgentNavigationGraph.EdgeType.JUMP
+                && navEdge.type != AgentNavigationGraph.EdgeType.DROP
+                && !(navEdge.type == AgentNavigationGraph.EdgeType.CLIMB
                 && navEdge.launchStepX != 0);
     }
 
@@ -579,15 +583,15 @@ public class BotMovementManager {
      * authored launch window, not stop just outside it. Other precise edge types
      * (CLIMB, PORTAL, non-windowed fallback cases) use 1px to reach the exact anchor.
      */
-    static int preciseNavStopDist(BotNavigationGraph.Edge navEdge) {
+    static int preciseNavStopDist(AgentNavigationGraph.Edge navEdge) {
         if (navEdge != null
-                && (navEdge.type == BotNavigationGraph.EdgeType.JUMP
-                || (navEdge.type == BotNavigationGraph.EdgeType.DROP && navEdge.launchStepX == 0))) {
+                && (navEdge.type == AgentNavigationGraph.EdgeType.JUMP
+                || (navEdge.type == AgentNavigationGraph.EdgeType.DROP && navEdge.launchStepX == 0))) {
             // Bot must walk INTO the launch window, not just near it. The launch window checks
             // are strict, so stopDist=1 can halt the bot exactly 1px before the valid range.
             return 0;
         }
-        if (navEdge != null && navEdge.type != BotNavigationGraph.EdgeType.WALK) {
+        if (navEdge != null && navEdge.type != AgentNavigationGraph.EdgeType.WALK) {
             return 1;
         }
         return 4;
@@ -603,9 +607,9 @@ public class BotMovementManager {
 
         MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
         AgentMovementProfile profile = AgentBotMovementStateRuntime.movementProfile(entry);
-        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map, profile);
+        AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map, profile);
         if (graph == null) {
-            BotNavigationGraphProvider.warmGraphAsync(map, profile);
+            AgentNavigationGraphService.warmGraphAsync(map, profile);
             return targetPos;
         }
         Point botPos = AgentBotRuntimeIdentityRuntime.bot(entry).getPosition();
@@ -615,7 +619,7 @@ public class BotMovementManager {
             return targetPos;
         }
 
-        BotNavigationGraph.Region currentRegion = graph.getRegion(currentRegionId);
+        AgentNavigationGraph.Region currentRegion = graph.getRegion(currentRegionId);
         if (currentRegion == null || currentRegion.isRopeRegion) {
             return targetPos;
         }
@@ -631,7 +635,7 @@ public class BotMovementManager {
     }
 
     private static MoveAction planGroundAction(BotEntry entry, Foothold currentFh, Point botPos, Point targetPos) {
-        BotNavigationGraph.Edge navEdge = (BotNavigationGraph.Edge) AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry);
+        AgentNavigationGraph.Edge navEdge = (AgentNavigationGraph.Edge) AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry);
         boolean directionalDrop = isDirectionalDropEdge(navEdge);
         int stopDist = directionalDrop ? 0 : AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry) ? preciseNavStopDist(navEdge) : cfg.STOP_DIST;
         // No hysteresis when navigating to an edge — always move toward the waypoint
@@ -655,7 +659,7 @@ public class BotMovementManager {
             // replan instead of holding a walk stance into the wall.
             if (blockedByWall && navEdge != null) {
                 clearNavigationState(entry);
-            } else if (navEdge != null && navEdge.type == BotNavigationGraph.EdgeType.WALK) {
+            } else if (navEdge != null && navEdge.type == AgentNavigationGraph.EdgeType.WALK) {
                 clearNavigationState(entry);
             }
             return MoveAction.idle();
@@ -728,7 +732,7 @@ public class BotMovementManager {
             return true;
         }
 
-        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(
+        AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(
                 AgentBotRuntimeIdentityRuntime.botMap(entry), AgentBotMovementStateRuntime.movementProfile(entry));
         if (graph == null) {
             return false;
@@ -750,7 +754,7 @@ public class BotMovementManager {
             return false;
         }
 
-        BotNavigationGraph graph = BotNavigationGraphProvider.peekGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
+        AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
         if (graph == null) {
             return landing.foothold().getId() == currentFh.getId();
         }
@@ -764,9 +768,9 @@ public class BotMovementManager {
         return new Rectangle(left, top, Math.max(1, right - left + 1), Math.max(1, bottom - top + 1));
     }
 
-    private static boolean isDirectionalDropEdge(BotNavigationGraph.Edge navEdge) {
+    private static boolean isDirectionalDropEdge(AgentNavigationGraph.Edge navEdge) {
         return navEdge != null
-                && navEdge.type == BotNavigationGraph.EdgeType.DROP
+                && navEdge.type == AgentNavigationGraph.EdgeType.DROP
                 && navEdge.launchStepX != 0;
     }
 
