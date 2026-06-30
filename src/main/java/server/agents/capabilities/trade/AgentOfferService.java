@@ -26,7 +26,6 @@ import server.agents.integration.AgentBotReplyChannelStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
 import server.bots.BotEquipManager;
-import server.bots.BotInventoryManager;
 import server.bots.BotManager;
 
 import java.util.ArrayList;
@@ -198,7 +197,7 @@ public final class AgentOfferService {
                 AgentBotOfferStateRuntime.clearPendingOfferForAcceptedTransfer(entry);
                 AgentBotOfferRuntime.afterRandomDelay(900, 1100, () -> {
                     AgentBotOfferStateRuntime.clearPendingOfferItem(entry);
-                    BotInventoryManager.startTradeTransfer(
+                    AgentInventoryTransferService.startTradeTransfer(
                             item, speaker, entry, AgentBotRuntimeIdentityRuntime.bot(entry));
                 });
             }

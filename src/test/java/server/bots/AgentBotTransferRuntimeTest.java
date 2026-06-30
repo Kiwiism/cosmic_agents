@@ -4,6 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatTransferFlow;
+import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 import server.agents.integration.AgentBotTransferReplyRuntime;
@@ -30,7 +31,7 @@ class AgentBotTransferRuntimeTest {
     }
 
     @Test
-    void mesoTradeSchedulesLegacyTransferDirectly() {
+    void mesoTradeSchedulesAgentTransferDirectly() {
         Character bot = mock(Character.class);
         BotEntry entry = new BotEntry(bot, null, null);
         AgentChatTransferFlow.TransferCommand command =
@@ -38,7 +39,7 @@ class AgentBotTransferRuntimeTest {
 
         try (MockedStatic<AgentBotTransferSchedulerRuntime> scheduler =
                      mockStatic(AgentBotTransferSchedulerRuntime.class);
-             MockedStatic<BotInventoryManager> inventory = mockStatic(BotInventoryManager.class)) {
+             MockedStatic<AgentInventoryTransferService> inventory = mockStatic(AgentInventoryTransferService.class)) {
             scheduler.when(() -> AgentBotTransferSchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
@@ -47,7 +48,7 @@ class AgentBotTransferRuntimeTest {
 
             AgentBotTransferRuntime.handleTransferCommand(entry, command, "trade me mesos");
 
-            inventory.verify(() -> BotInventoryManager.startTradeTransfer("mesos", entry, bot));
+            inventory.verify(() -> AgentInventoryTransferService.startTradeTransfer("mesos", entry, bot));
         }
     }
 

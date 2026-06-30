@@ -2082,6 +2082,11 @@ Recent reconstruction notes:
   now live in `AgentTradeCommandProfiler`; `BotInventoryManager` retains
   compatibility methods that delegate to the Agent profiler while generic
   transfer counting and start remain later slices.
+- Agent transfer command, pending item-choice, and accepted-offer callers now
+  enter through `AgentInventoryTransferService`; the service is a temporary
+  Agent-owned boundary over the remaining `BotInventoryManager` transfer state
+  machine until category counting, choice execution, and transfer sequencing
+  are migrated into Agent trade/inventory modules.
 - Ammo trade grouping now lives in `AgentInventoryAmmoPolicy`;
   BotInventoryManager preserves the same safe-item filtering, own-ammo versus
   non-own-ammo split, non-own item-id ordering, and own-ammo projectile attack

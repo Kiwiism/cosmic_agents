@@ -5,9 +5,9 @@ import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.dialogue.AgentChatTransferFlow;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
+import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
 import server.bots.BotEntry;
-import server.bots.BotInventoryManager;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -49,7 +49,7 @@ public final class AgentBotTransferRuntime {
         if (transferCommand.mode() == AgentChatTransferFlow.TransferMode.TRADE
                 && AgentInventoryTradePolicy.isMesoCategory(category)) {
             AgentBotTransferSchedulerRuntime.afterRandomDelay(500, 700,
-                    () -> BotInventoryManager.startTradeTransfer(category, entry, entry.bot()));
+                    () -> AgentInventoryTransferService.startTradeTransfer(category, entry, entry.bot()));
             return;
         }
 
@@ -84,7 +84,7 @@ public final class AgentBotTransferRuntime {
         long hasItemsStartedAt = transferCommand.mode() == AgentChatTransferFlow.TransferMode.TRADE
                 ? AgentTradeCommandProfiler.startIfProfiled(category)
                 : 0L;
-        boolean hasItems = BotInventoryManager.hasTransferableItems(category, entry, bot);
+        boolean hasItems = AgentInventoryTransferService.hasTransferableItems(category, entry, bot);
         AgentTradeCommandProfiler.logSlowCommand(
                 category,
                 "hasTransferableItems",
@@ -94,7 +94,7 @@ public final class AgentBotTransferRuntime {
                 TRADE_COMMAND_PROFILE_WARN_NS,
                 org.slf4j.LoggerFactory.getLogger(AgentBotTransferRuntime.class));
         int count = hasItems && transferCommand.mode() == AgentChatTransferFlow.TransferMode.CHOICE
-                ? BotInventoryManager.countTransferableItems(category, entry, bot)
+                ? AgentInventoryTransferService.countTransferableItems(category, entry, bot)
                 : 0;
         return new TransferCommandResult(hasItems, count);
     }
@@ -135,7 +135,7 @@ public final class AgentBotTransferRuntime {
         long requestedAt = System.nanoTime();
         CompletableFuture
                 .supplyAsync(() -> new ItemQueryResult(
-                        BotInventoryManager.countTransferableItems(category, entry, bot)), TRADE_COMMAND_EXECUTOR)
+                        AgentInventoryTransferService.countTransferableItems(category, entry, bot)), TRADE_COMMAND_EXECUTOR)
                 .thenAccept(result -> {
                     long elapsedMs = (System.nanoTime() - requestedAt) / 1_000_000L;
                     long remainingDelay = Math.max(0L, replyDelay - elapsedMs);
@@ -161,7 +161,7 @@ public final class AgentBotTransferRuntime {
                                                     AgentChatTransferFlow.TransferResultDecision decision) {
         switch (decision.action()) {
             case REPLY -> AgentBotTransferReplyRuntime.replyNow(entry, decision.reply());
-            case START_TRADE -> BotInventoryManager.startTradeTransfer(category, entry, bot);
+            case START_TRADE -> AgentInventoryTransferService.startTradeTransfer(category, entry, bot);
             case PROMPT_ITEM_CHOICE -> {
                 AgentBotPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.ITEM_CHOICE);
                 AgentBotPendingActionStateRuntime.setPendingDropCategory(entry, decision.category());

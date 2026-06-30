@@ -5,8 +5,8 @@ import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
 import server.agents.capabilities.dialogue.AgentSkillDialogueReporter;
 import server.agents.capabilities.dialogue.AgentSkillReportFlow;
+import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.bots.BotEntry;
-import server.bots.BotInventoryManager;
 
 import java.util.List;
 import java.util.Map;
@@ -53,7 +53,7 @@ public final class AgentBotPendingActionRuntime {
             @Override
             public void executeItemChoice(String category, boolean trade) {
                 AgentBotPendingActionSchedulerRuntime.afterRandomDelay(400, 600,
-                        () -> BotInventoryManager.executeChoice(category, trade, entry, entry.bot()));
+                        () -> AgentInventoryTransferService.executeChoice(category, trade, entry, entry.bot()));
             }
 
             @Override

@@ -5,6 +5,7 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
 import server.agents.capabilities.dialogue.AgentSkillReportFlow;
+import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.integration.AgentBotPendingActionRuntime;
 import server.agents.integration.AgentBotPendingActionReplyRuntime;
 import server.agents.integration.AgentBotPendingActionSchedulerRuntime;
@@ -42,14 +43,14 @@ class AgentBotPendingActionRuntimeTest {
     }
 
     @Test
-    void itemChoiceCallbacksScheduleLegacyInventoryChoice() {
+    void itemChoiceCallbacksScheduleAgentInventoryChoice() {
         BotEntry entry = new BotEntry(null, null, null);
         AgentPendingChatActionFlow.PendingActionCallbacks callbacks =
                 AgentBotPendingActionRuntime.pendingActionCallbacks(entry);
 
         try (MockedStatic<AgentBotPendingActionSchedulerRuntime> scheduler =
                      mockStatic(AgentBotPendingActionSchedulerRuntime.class);
-             MockedStatic<BotInventoryManager> inventory = mockStatic(BotInventoryManager.class)) {
+             MockedStatic<AgentInventoryTransferService> inventory = mockStatic(AgentInventoryTransferService.class)) {
             scheduler.when(() -> AgentBotPendingActionSchedulerRuntime.afterRandomDelay(eq(400), eq(600), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
@@ -58,7 +59,7 @@ class AgentBotPendingActionRuntimeTest {
 
             callbacks.executeItemChoice("scrolls", true);
 
-            inventory.verify(() -> BotInventoryManager.executeChoice("scrolls", true, entry, null));
+            inventory.verify(() -> AgentInventoryTransferService.executeChoice("scrolls", true, entry, null));
         }
     }
 
