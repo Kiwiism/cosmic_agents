@@ -7,7 +7,9 @@ import server.agents.capabilities.combat.AgentCombatConfig;
 import client.Character;
 import client.inventory.Item;
 import client.inventory.WeaponType;
+import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
+import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy;
 import server.agents.capabilities.supplies.AgentAmmoSharePolicy;
 import server.agents.capabilities.supplies.AgentAmmoSharePolicy.DonorScore;
 import server.agents.integration.AgentBotAmmoDonorPlan;
@@ -174,7 +176,7 @@ public final class AgentAmmoService {
             if (donorBot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(donorEntry) || recipient.getTrade() != null) {
                 return;
             }
-            List<Item> items = BotInventoryManager.collectAmmoShareItems(donorBot, weaponType, maxQty);
+            List<Item> items = collectAmmoShareItems(donorBot, weaponType, maxQty);
             if (items.isEmpty()) {
                 return;
             }
@@ -182,6 +184,11 @@ public final class AgentAmmoService {
             AgentBotAmmoRuntime.afterRandomDelay(900, 1100, () ->
                     BotInventoryManager.startAmmoShareTransfer(items, recipient, donorEntry, donorBot, maxQty));
         });
+    }
+
+    public static List<Item> collectAmmoShareItems(Character donorBot, WeaponType needyWeaponType, int maxQty) {
+        return AgentInventoryAmmoPolicy.collectShareItems(donorBot, needyWeaponType, maxQty,
+                ItemInformationProvider.getInstance()::getWatkForProjectile);
     }
 
     private static boolean isBetterDonor(AgentBotAmmoDonorPlan candidate, AgentBotAmmoDonorPlan best) {

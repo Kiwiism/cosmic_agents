@@ -2066,6 +2066,10 @@ Recent reconstruction notes:
   `AgentPotionService`; the remaining `BotInventoryManager.collectPotShareItems`
   compatibility method delegates to it, while pot-share trade execution remains a
   later inventory/trade migration slice.
+- Ammo share item collection now has an Agent-owned entry point on
+  `AgentAmmoService`; the remaining `BotInventoryManager.collectAmmoShareItems`
+  compatibility method delegates to it, while ammo-share trade execution remains
+  a later inventory/trade migration slice.
 - Ammo trade grouping now lives in `AgentInventoryAmmoPolicy`;
   BotInventoryManager preserves the same safe-item filtering, own-ammo versus
   non-own-ammo split, non-own item-id ordering, and own-ammo projectile attack

@@ -39,6 +39,7 @@ import server.agents.capabilities.inventory.AgentInventoryTradePolicy.AmmoGroup;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.EquipsGroup;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.UseTradeGroups;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
+import server.agents.capabilities.supplies.AgentAmmoService;
 import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
@@ -1355,8 +1356,7 @@ public class BotInventoryManager {
     }
 
     public static List<Item> collectAmmoShareItems(Character donorBot, WeaponType needyWeaponType, int maxQty) {
-        return AgentInventoryAmmoPolicy.collectShareItems(donorBot, needyWeaponType, maxQty,
-                ItemInformationProvider.getInstance()::getWatkForProjectile);
+        return AgentAmmoService.collectAmmoShareItems(donorBot, needyWeaponType, maxQty);
     }
 
     public static void startAmmoShareTransfer(List<Item> items, Character recipient, BotEntry entry, Character bot, int maxQty) {
