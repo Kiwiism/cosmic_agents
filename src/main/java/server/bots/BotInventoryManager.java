@@ -1536,42 +1536,14 @@ public class BotInventoryManager {
     // ─── Pot-share helpers ────────────────────────────────────────────────────
 
     /**
-     * Recovery score used to sort pots "worst first" (ascending).
-     * Flat HP/MP values come first; hpRate/mpRate pots score 1 000 000+ so they're
-     * always considered better than any flat-value pot. Within each tier lower = worse.
-     */
-    private static int potRecoveryScore(int itemId, boolean forHp) {
-        return AgentPotionSharePolicy.recoveryScore(itemEffect(itemId), forHp);
-    }
-
-    /**
      * Collects the donor bot's worst recovery pots (sorted ascending by recovery score)
      * up to {@code maxQty} total quantity or 9 item stacks, whichever limit is reached first.
      * Only pure recovery pots are included (buff pots excluded via isRecoveryPotion).
      */
     public static List<Item> collectPotShareItems(Character donorBot, boolean forHp, int maxQty) {
-        if (maxQty <= 0) return List.of();
-        List<Item> candidates = new ArrayList<>();
-        Inventory useInv = donorBot.getInventory(InventoryType.USE);
-        for (short slot = 1; slot <= useInv.getSlotLimit(); slot++) {
-            Item item = useInv.getItem(slot);
-            if (item == null || !isRecoveryPotion(item.getItemId())) continue;
-            StatEffect eff = itemEffect(item.getItemId());
-            if (eff == null) continue;
-            if (!AgentPotionSharePolicy.canShareForSlot(eff, forHp)) continue;
-            candidates.add(item);
-        }
-        candidates.sort((a, b) -> Integer.compare(
-                potRecoveryScore(a.getItemId(), forHp),
-                potRecoveryScore(b.getItemId(), forHp)));
-        List<Item> result = new ArrayList<>();
-        int totalQty = 0;
-        for (Item item : candidates) {
-            if (result.size() >= 9 || totalQty >= maxQty) break;
-            result.add(item);
-            totalQty += item.getQuantity();
-        }
-        return result;
+        return AgentPotionSharePolicy.collectShareItems(donorBot, forHp, maxQty,
+                BotInventoryManager::isRecoveryPotion,
+                BotInventoryManager::itemEffect);
     }
 
     /** Initiates a bot-to-bot pot-share trade (single batch; donor auto-confirms). */

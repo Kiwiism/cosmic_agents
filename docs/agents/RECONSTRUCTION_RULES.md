@@ -1307,6 +1307,10 @@ Recent reconstruction notes:
   `AgentInventoryTradePolicy`. ETC, scroll, and USE bucket ordering still sorts
   by item id/position first and then moves item ids already present in the
   recipient inventory ahead within the same legacy buckets.
+- Potion-share stack selection now enters through `AgentPotionSharePolicy`.
+  Donor USE-inventory scanning, recovery-pot filtering, HP/MP slot matching,
+  worst-first recovery sorting, and nine-stack/share-budget limits are unchanged;
+  trade start/retry side effects remain in the temporary inventory seam.
 - Physics position, horizontal-speed, and ground-travel carry state now enter
   through `AgentBotMovementPhysicsStateRuntime`; BotPhysicsEngine preserves
   landing, grounded travel, swim, airborne collision, climb-position, and reset
