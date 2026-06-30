@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.IntSupplier;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
 import java.util.function.ToLongFunction;
 import server.life.Monster;
@@ -68,6 +69,12 @@ public final class AgentCombatGrindTargetPolicy {
             return null;
         }
         return selectable.get(0).monster();
+    }
+
+    public static List<AgentScoredGrindTarget> scoreGrindTargets(boolean graphAvailable,
+                                                                 Supplier<List<AgentScoredGrindTarget>> localScores,
+                                                                 Supplier<List<AgentScoredGrindTarget>> regionScores) {
+        return graphAvailable ? regionScores.get() : localScores.get();
     }
 
     public static List<AgentScoredGrindTarget> scoreLocalTargets(List<Monster> candidates,

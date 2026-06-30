@@ -105,6 +105,38 @@ class AgentCombatGrindTargetPolicyTest {
     }
 
     @Test
+    void shouldDispatchGrindScoringToLocalScoresWhenGraphUnavailable() {
+        Monster local = mock(Monster.class);
+        AtomicBoolean regionScored = new AtomicBoolean(false);
+        List<AgentScoredGrindTarget> localScores = List.of(new AgentScoredGrindTarget(local, 1, 1, 1.0));
+
+        assertEquals(localScores, AgentCombatGrindTargetPolicy.scoreGrindTargets(
+                false,
+                () -> localScores,
+                () -> {
+                    regionScored.set(true);
+                    return List.of();
+                }));
+        assertFalse(regionScored.get());
+    }
+
+    @Test
+    void shouldDispatchGrindScoringToRegionScoresWhenGraphAvailable() {
+        Monster region = mock(Monster.class);
+        AtomicBoolean localScored = new AtomicBoolean(false);
+        List<AgentScoredGrindTarget> regionScores = List.of(new AgentScoredGrindTarget(region, 1, 1, 1.0));
+
+        assertEquals(regionScores, AgentCombatGrindTargetPolicy.scoreGrindTargets(
+                true,
+                () -> {
+                    localScored.set(true);
+                    return List.of();
+                },
+                () -> regionScores));
+        assertFalse(localScored.get());
+    }
+
+    @Test
     void shouldScoreLocalTargetsWithAdjustedLocalScoreAndDistance() {
         Monster near = monsterAt(130, 100);
         Monster far = monsterAt(200, 100);

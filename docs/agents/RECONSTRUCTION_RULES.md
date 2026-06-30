@@ -1327,6 +1327,9 @@ Recent reconstruction notes:
   `AgentCombatGrindTargetPolicy`; BotCombatManager still supplies the scored
   candidates while Agent combat owns legacy ordering, reachable-target
   preference, and all-unreachable rejection.
+- Grind-target local-vs-region scoring dispatch now lives in
+  `AgentCombatGrindTargetPolicy`; BotCombatManager still resolves the live
+  navigation graph context and supplies lazy local/region scoring callbacks.
 - Reachable grind-target decision logic now lives in
   `AgentCombatGrindTargetPolicy`; BotCombatManager still resolves immediate
   projectile eligibility and graph target cost lazily while Agent combat owns

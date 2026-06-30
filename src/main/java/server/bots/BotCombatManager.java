@@ -1113,11 +1113,10 @@ public class BotCombatManager {
                                                              Foothold botFoothold,
                                                              List<Monster> candidates) {
         GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, botPos);
-        if (!graphContext.available()) {
-            return scoreLocalTargets(entry, bot, botPos, botFoothold, candidates);
-        }
-
-        return scoreTargetRegions(entry, graphContext, bot, botPos, botFoothold, candidates);
+        return AgentCombatGrindTargetPolicy.scoreGrindTargets(
+                graphContext.available(),
+                () -> scoreLocalTargets(entry, bot, botPos, botFoothold, candidates),
+                () -> scoreTargetRegions(entry, graphContext, bot, botPos, botFoothold, candidates));
     }
 
     private static List<Monster> aliveMonstersInRange(Character bot, Point botPos, double rangeSq) {
