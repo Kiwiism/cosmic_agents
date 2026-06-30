@@ -1486,6 +1486,10 @@ Recent reconstruction notes:
   preserving the legacy special-move-failed and successful-cast debug wording
   while BotCombatManager still dispatches the SPECIAL_MOVE packet and applies
   cooldown/facing side effects.
+- The fixed support-buff cooldown summary now lives in
+  `AgentCombatSupportPolicy`, preserving the legacy “all skill buffs active or
+  on cooldown” debug line while BotCombatManager still records it in the
+  temporary skill-buff debug state.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

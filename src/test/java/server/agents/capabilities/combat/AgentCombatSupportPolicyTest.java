@@ -179,6 +179,8 @@ class AgentCombatSupportPolicyTest {
         assertEquals("special move failed for Bless",
                 AgentCombatSupportPolicy.supportSpecialMoveFailedSummary("Bless"));
         assertEquals("cast Bless", AgentCombatSupportPolicy.supportCastSummary("Bless"));
+        assertEquals("all skill buffs active or on cooldown",
+                AgentCombatSupportPolicy.allSkillBuffsActiveOrOnCooldownSummary());
     }
 
     @Test

@@ -160,6 +160,10 @@ public final class AgentCombatSupportPolicy {
         return "cast " + skillLabel;
     }
 
+    public static String allSkillBuffsActiveOrOnCooldownSummary() {
+        return "all skill buffs active or on cooldown";
+    }
+
     public static boolean hasNearbyHealSkillAlly(Character bot, int supportRange, int supportVerticalRange) {
         for (Character member : nearbyPartyMembers(bot, supportRange, supportVerticalRange)) {
             if (hasHealSkill(member)) {

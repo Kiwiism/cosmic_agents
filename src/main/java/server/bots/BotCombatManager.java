@@ -412,7 +412,7 @@ public class BotCombatManager {
                 return;
             }
         }
-        noteSkillBuffDecision(entry, "all skill buffs active or on cooldown");
+        noteSkillBuffDecision(entry, AgentCombatSupportPolicy.allSkillBuffsActiveOrOnCooldownSummary());
     }
 
     private static boolean shouldUseAsBestSingleTargetSkill(Character bot, Skill skill, StatEffect effect,
