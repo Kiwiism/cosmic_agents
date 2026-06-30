@@ -1505,6 +1505,10 @@ Recent reconstruction notes:
   preserving the legacy rule that both active and inactive Heal skills stop
   further attack/summon/support cache classification while only active Heal
   writes the temporary heal-skill cache id.
+- Physical mob touch damage now calls the Agent-owned
+  `AgentDefenseDataProvider` directly from the temporary bot side-effect path;
+  the leftover `BotCombatManager` wrapper has been removed while preserving the
+  existing mob-hit damage and knockback flow.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

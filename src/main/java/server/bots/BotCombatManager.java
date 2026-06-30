@@ -169,7 +169,7 @@ public class BotCombatManager {
      * Uses the bot's shared character WDEF cache instead of ignoring defense entirely.
      */
     static void applyMobHit(BotEntry entry, Character bot, Monster mob) {
-        int dmg = rollPhysicalMobDamage(bot, mob);
+        int dmg = AgentDefenseDataProvider.getInstance().rollPhysicalTouchDamage(bot, mob);
         AgentMobKnockbackPolicy.MobHitKnockback kb = resolveMobHitKnockback(bot.getPosition(), mob.getPosition());
         applyDamage(entry, bot, dmg, -1, mob.getId(), kb.direction(), kb.airVelX());
     }
@@ -269,10 +269,6 @@ public class BotCombatManager {
             BotPhysicsEngine.beginKnockback(entry, bot, botPos, -scaledOpenStoryStep(cfg.KNOCKBACK_VFORCE), knockbackAirVelX);
         }
         BotMovementManager.broadcastMovement(entry);
-    }
-
-    private static int rollPhysicalMobDamage(Character bot, Monster mob) {
-        return AgentDefenseDataProvider.getInstance().rollPhysicalTouchDamage(bot, mob);
     }
 
     private static boolean shouldApplyMobKnockback(BotEntry entry, Character bot) {
