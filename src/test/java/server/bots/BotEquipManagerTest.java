@@ -1,6 +1,7 @@
 package server.bots;
 
 import server.agents.capabilities.equipment.AgentMapDamageProfile;
+import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 
 import client.Character;
 import client.Job;
@@ -248,8 +249,8 @@ class BotEquipManagerTest {
         List<Equip> bagItems = List.of(redMarker, bronzeWolfskin, blueMoon, orichalcon,
                                        dexEq2, dexEq4, dexUneq3, dexUneq5);
 
-        Set<Equip> keep = BotEquipManager.selectItemsBeatingBaseline(
-                BotEquipManager.relevantStatsFor(Job.ASSASSIN), bagItems, baseline);
+        Set<Equip> keep = AgentEquipmentReservePolicy.selectItemsBeatingBaseline(
+                AgentEquipmentReservePolicy.relevantStatsFor(Job.ASSASSIN), bagItems, baseline);
 
         // Identity comparison: orichalcon beats LUK baseline 4, dexEq4 ties DEX baseline 4,
         // dexUneq5 beats DEX baseline 4. Everything else fails on every relevant stat.
@@ -286,8 +287,8 @@ class BotEquipManagerTest {
         List<Equip> bagItems = List.of(balanced99, dexHeavy108, lukHeavy101,
                 strictlyWorseLuk, strictlyWorseDex);
 
-        Set<Equip> keep = BotEquipManager.selectItemsBeatingBaseline(
-                BotEquipManager.relevantStatsFor(Job.ASSASSIN), bagItems, baseline);
+        Set<Equip> keep = AgentEquipmentReservePolicy.selectItemsBeatingBaseline(
+                AgentEquipmentReservePolicy.relevantStatsFor(Job.ASSASSIN), bagItems, baseline);
 
         assertTrue(keep.contains(balanced99), "(9 LUK, 9 DEX) should be kept — not dominated by either pure baseline");
         assertTrue(keep.contains(dexHeavy108), "(8 LUK, 10 DEX) should be kept");
@@ -311,8 +312,8 @@ class BotEquipManagerTest {
         Equip dexHeavy108 = glove(/*luk*/ 8, /*dex*/ 10, 0);
         Equip dexHeavy107 = glove(/*luk*/ 7, /*dex*/ 10, 0);
 
-        Set<Equip> keep = BotEquipManager.selectItemsBeatingBaseline(
-                BotEquipManager.relevantStatsFor(Job.ASSASSIN),
+        Set<Equip> keep = AgentEquipmentReservePolicy.selectItemsBeatingBaseline(
+                AgentEquipmentReservePolicy.relevantStatsFor(Job.ASSASSIN),
                 List.of(dexHeavy108, dexHeavy107), baseline);
 
         assertTrue(keep.contains(dexHeavy108), "(LUK8, DEX10) should be kept");
@@ -332,8 +333,8 @@ class BotEquipManagerTest {
         List<Equip> baseline = List.of(pureLuk15, luk15Dex1);   // both naked-wearable
         List<Equip> bagItems = List.of(pureLuk15, luk15Dex1);
 
-        Set<Equip> keep = BotEquipManager.selectItemsBeatingBaseline(
-                BotEquipManager.relevantStatsFor(Job.ASSASSIN), bagItems, baseline);
+        Set<Equip> keep = AgentEquipmentReservePolicy.selectItemsBeatingBaseline(
+                AgentEquipmentReservePolicy.relevantStatsFor(Job.ASSASSIN), bagItems, baseline);
 
         assertTrue(keep.contains(luk15Dex1), "(LUK15, DEX1) should be kept");
         assertFalse(keep.contains(pureLuk15),
@@ -342,24 +343,24 @@ class BotEquipManagerTest {
 
     @Test
     void selectItemsBeatingBaselineUsesConservativeWatkMainStatEquivalence() {
-        EnumSet<BotEquipManager.RelevantStat> assassin = BotEquipManager.relevantStatsFor(Job.ASSASSIN);
+        EnumSet<AgentEquipmentReservePolicy.RelevantStat> assassin = AgentEquipmentReservePolicy.relevantStatsFor(Job.ASSASSIN);
         Equip tenAtkTwoLuk = glove(/*luk*/ 2, 0, /*watk*/ 10);
         Equip nineAtkFourLuk = glove(/*luk*/ 4, 0, /*watk*/ 9);
         Equip nineAtkTenLuk = glove(/*luk*/ 10, 0, /*watk*/ 9);
         Equip elevenAtkZeroLuk = glove(/*luk*/ 0, 0, /*watk*/ 11);
         Equip tenAtkOneLuk = glove(/*luk*/ 1, 0, /*watk*/ 10);
 
-        Set<Equip> first = BotEquipManager.selectItemsBeatingBaseline(
+        Set<Equip> first = AgentEquipmentReservePolicy.selectItemsBeatingBaseline(
                 assassin, List.of(nineAtkFourLuk), List.of(tenAtkTwoLuk));
         assertFalse(first.contains(nineAtkFourLuk),
                 "10 atk + 2 main should dominate 9 atk + 4 main under conservative equivalence");
 
-        Set<Equip> second = BotEquipManager.selectItemsBeatingBaseline(
+        Set<Equip> second = AgentEquipmentReservePolicy.selectItemsBeatingBaseline(
                 assassin, List.of(elevenAtkZeroLuk), List.of(nineAtkTenLuk));
         assertFalse(second.contains(elevenAtkZeroLuk),
                 "9 atk + 10 main should dominate 11 atk + 0 main under conservative equivalence");
 
-        Set<Equip> nearMiss = BotEquipManager.selectItemsBeatingBaseline(
+        Set<Equip> nearMiss = AgentEquipmentReservePolicy.selectItemsBeatingBaseline(
                 assassin, List.of(nineAtkFourLuk), List.of(tenAtkOneLuk));
         assertTrue(nearMiss.contains(nineAtkFourLuk),
                 "equivalence must stay conservative: 10 atk + 1 main should not dominate 9 atk + 4 main");
@@ -367,24 +368,24 @@ class BotEquipManagerTest {
 
     @Test
     void relevantStatsForJobMatchesClassRoles() {
-        assertEquals(EnumSet.of(BotEquipManager.RelevantStat.LUK, BotEquipManager.RelevantStat.DEX,
-                                BotEquipManager.RelevantStat.WATK),
-                BotEquipManager.relevantStatsFor(Job.ASSASSIN));
-        assertEquals(EnumSet.of(BotEquipManager.RelevantStat.STR, BotEquipManager.RelevantStat.DEX,
-                                BotEquipManager.RelevantStat.WATK, BotEquipManager.RelevantStat.ACC),
-                BotEquipManager.relevantStatsFor(Job.FIGHTER));
-        assertEquals(EnumSet.of(BotEquipManager.RelevantStat.STR, BotEquipManager.RelevantStat.DEX,
-                                BotEquipManager.RelevantStat.WATK, BotEquipManager.RelevantStat.ACC),
-                BotEquipManager.relevantStatsFor(Job.BRAWLER));
-        assertEquals(EnumSet.of(BotEquipManager.RelevantStat.DEX, BotEquipManager.RelevantStat.STR,
-                                BotEquipManager.RelevantStat.WATK),
-                BotEquipManager.relevantStatsFor(Job.GUNSLINGER));
-        assertEquals(EnumSet.of(BotEquipManager.RelevantStat.DEX, BotEquipManager.RelevantStat.STR,
-                                BotEquipManager.RelevantStat.WATK),
-                BotEquipManager.relevantStatsFor(Job.HUNTER));
-        assertEquals(EnumSet.of(BotEquipManager.RelevantStat.INT, BotEquipManager.RelevantStat.LUK,
-                                BotEquipManager.RelevantStat.MATK),
-                BotEquipManager.relevantStatsFor(Job.CLERIC));
+        assertEquals(EnumSet.of(AgentEquipmentReservePolicy.RelevantStat.LUK, AgentEquipmentReservePolicy.RelevantStat.DEX,
+                                AgentEquipmentReservePolicy.RelevantStat.WATK),
+                AgentEquipmentReservePolicy.relevantStatsFor(Job.ASSASSIN));
+        assertEquals(EnumSet.of(AgentEquipmentReservePolicy.RelevantStat.STR, AgentEquipmentReservePolicy.RelevantStat.DEX,
+                                AgentEquipmentReservePolicy.RelevantStat.WATK, AgentEquipmentReservePolicy.RelevantStat.ACC),
+                AgentEquipmentReservePolicy.relevantStatsFor(Job.FIGHTER));
+        assertEquals(EnumSet.of(AgentEquipmentReservePolicy.RelevantStat.STR, AgentEquipmentReservePolicy.RelevantStat.DEX,
+                                AgentEquipmentReservePolicy.RelevantStat.WATK, AgentEquipmentReservePolicy.RelevantStat.ACC),
+                AgentEquipmentReservePolicy.relevantStatsFor(Job.BRAWLER));
+        assertEquals(EnumSet.of(AgentEquipmentReservePolicy.RelevantStat.DEX, AgentEquipmentReservePolicy.RelevantStat.STR,
+                                AgentEquipmentReservePolicy.RelevantStat.WATK),
+                AgentEquipmentReservePolicy.relevantStatsFor(Job.GUNSLINGER));
+        assertEquals(EnumSet.of(AgentEquipmentReservePolicy.RelevantStat.DEX, AgentEquipmentReservePolicy.RelevantStat.STR,
+                                AgentEquipmentReservePolicy.RelevantStat.WATK),
+                AgentEquipmentReservePolicy.relevantStatsFor(Job.HUNTER));
+        assertEquals(EnumSet.of(AgentEquipmentReservePolicy.RelevantStat.INT, AgentEquipmentReservePolicy.RelevantStat.LUK,
+                                AgentEquipmentReservePolicy.RelevantStat.MATK),
+                AgentEquipmentReservePolicy.relevantStatsFor(Job.CLERIC));
     }
 
     private static Equip glove(int luk, int dex, int watk) {
@@ -406,10 +407,10 @@ class BotEquipManagerTest {
         // This validates the Pareto predicate shared by self-reserve and sibling-reserve.
         Equip pureInt = mageOverall(/*int*/ 7, /*luk*/ 0);
 
-        Set<Equip> usefulToMage = BotEquipManager.selectItemsBeatingBaseline(
-                BotEquipManager.relevantStatsFor(Job.MAGICIAN), List.of(pureInt), List.of());
-        Set<Equip> usefulToSin = BotEquipManager.selectItemsBeatingBaseline(
-                BotEquipManager.relevantStatsFor(Job.ASSASSIN), List.of(pureInt), List.of());
+        Set<Equip> usefulToMage = AgentEquipmentReservePolicy.selectItemsBeatingBaseline(
+                AgentEquipmentReservePolicy.relevantStatsFor(Job.MAGICIAN), List.of(pureInt), List.of());
+        Set<Equip> usefulToSin = AgentEquipmentReservePolicy.selectItemsBeatingBaseline(
+                AgentEquipmentReservePolicy.relevantStatsFor(Job.ASSASSIN), List.of(pureInt), List.of());
 
         assertTrue(usefulToMage.contains(pureInt),
                 "INT overall beats empty baseline for mage sibling");
@@ -422,8 +423,8 @@ class BotEquipManagerTest {
         Equip blueCalas    = mageOverall(/*int*/ 7,  /*luk*/ 0);
         Equip betterOverall = mageOverall(/*int*/ 10, /*luk*/ 0);
 
-        Set<Equip> useful = BotEquipManager.selectItemsBeatingBaseline(
-                BotEquipManager.relevantStatsFor(Job.MAGICIAN),
+        Set<Equip> useful = AgentEquipmentReservePolicy.selectItemsBeatingBaseline(
+                AgentEquipmentReservePolicy.relevantStatsFor(Job.MAGICIAN),
                 List.of(blueCalas), List.of(betterOverall));
 
         assertFalse(useful.contains(blueCalas),
@@ -459,7 +460,7 @@ class BotEquipManagerTest {
         when(redPierre.getMatk()).thenReturn((short) 0);
         when(redPierre.getAcc()).thenReturn((short) 0);
 
-        BotEquipManager.EquipUsefulnessHooks hooks = mock(BotEquipManager.EquipUsefulnessHooks.class);
+        AgentEquipmentReservePolicy.EquipUsefulnessHooks hooks = mock(AgentEquipmentReservePolicy.EquipUsefulnessHooks.class);
         when(hooks.isCash(1072082)).thenReturn(false);
         when(hooks.isCash(1072132)).thenReturn(false);
         when(hooks.getEquipmentSlot(1072082)).thenReturn("So");
@@ -470,7 +471,7 @@ class BotEquipManagerTest {
         when(hooks.meetsReqs(redPierre, Job.HUNTER, Short.MAX_VALUE,
                 Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4,
                 Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4, 0)).thenReturn(true);
-        assertTrue(BotEquipManager.shouldReserveOwnedItem(bot, hooks, redPierre),
+        assertTrue(AgentEquipmentReservePolicy.shouldReserveOwnedItem(bot, hooks, redPierre),
                 "John's +8 STR Red Pierre Shoes should stay reserved for self ahead of owner/sibling offers");
     }
 
@@ -482,11 +483,11 @@ class BotEquipManagerTest {
         Equip equippedBlueWork = equipWithIdStats(1082001, 0, 7, 0);
         Equip bagMithrilScaler = equipWithIdStats(1082047, 0, 2, 0);
 
-        BotEquipManager.SelfReserveHooks hooks = mock(BotEquipManager.SelfReserveHooks.class);
+        AgentEquipmentReservePolicy.SelfReserveHooks hooks = mock(AgentEquipmentReservePolicy.SelfReserveHooks.class);
         stubReserveItem(hooks, Job.HUNTER, equippedBlueWork, "Gv", 10, 0, 0, 0, 0, 0, 0);
         stubReserveItem(hooks, Job.HUNTER, bagMithrilScaler, "Gv", 35, 4, 0, 115, 0, 0, 0);
 
-        Set<Equip> keep = BotEquipManager.selectOwnedItemsForSelfReserve(bot, hooks,
+        Set<Equip> keep = AgentEquipmentReservePolicy.selectOwnedItemsForSelfReserve(bot, hooks,
                 List.of(equippedBlueWork, bagMithrilScaler));
 
         assertTrue(keep.contains(equippedBlueWork), "equipped baseline glove should stay in the reserve set");
@@ -509,7 +510,7 @@ class BotEquipManagerTest {
         Equip candidateSword = equipWithIdStats(1300002, 8, 0, 0);
         when(equipped.list()).thenReturn(List.of(equippedAxe));
 
-        BotEquipManager.EquipUsefulnessHooks hooks = mock(BotEquipManager.EquipUsefulnessHooks.class);
+        AgentEquipmentReservePolicy.EquipUsefulnessHooks hooks = mock(AgentEquipmentReservePolicy.EquipUsefulnessHooks.class);
         when(hooks.isCash(1300001)).thenReturn(false);
         when(hooks.isCash(1300002)).thenReturn(false);
         when(hooks.getEquipmentSlot(1300001)).thenReturn("Wp");
@@ -523,7 +524,7 @@ class BotEquipManagerTest {
                 Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4,
                 Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4, 0)).thenReturn(true);
 
-        assertTrue(BotEquipManager.shouldReserveOwnedItem(bot, hooks, candidateSword),
+        assertTrue(AgentEquipmentReservePolicy.shouldReserveOwnedItem(bot, hooks, candidateSword),
                 "equipped axe should not block a sword-spec fighter from reserving a sword");
     }
 
@@ -542,7 +543,7 @@ class BotEquipManagerTest {
         Equip candidateAxe = equipWithIdStats(1300001, 8, 0, 0);
         when(equipped.list()).thenReturn(List.of(equippedSword));
 
-        BotEquipManager.EquipUsefulnessHooks hooks = mock(BotEquipManager.EquipUsefulnessHooks.class);
+        AgentEquipmentReservePolicy.EquipUsefulnessHooks hooks = mock(AgentEquipmentReservePolicy.EquipUsefulnessHooks.class);
         when(hooks.isCash(1400001)).thenReturn(false);
         when(hooks.isCash(1300001)).thenReturn(false);
         when(hooks.getEquipmentSlot(1400001)).thenReturn("Wp");
@@ -556,9 +557,9 @@ class BotEquipManagerTest {
                 Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4,
                 Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4, 0)).thenReturn(true);
 
-        assertTrue(BotEquipManager.shouldReserveOwnedItem(bot, hooks, equippedSword),
+        assertTrue(AgentEquipmentReservePolicy.shouldReserveOwnedItem(bot, hooks, equippedSword),
                 "dual-mastery fighter should keep sword family");
-        assertTrue(BotEquipManager.shouldReserveOwnedItem(bot, hooks, candidateAxe),
+        assertTrue(AgentEquipmentReservePolicy.shouldReserveOwnedItem(bot, hooks, candidateAxe),
                 "dual-mastery fighter should also keep axe family");
     }
 
@@ -574,7 +575,7 @@ class BotEquipManagerTest {
         Equip ivoryPant2 = equipWithIdStats(1060076, 0, 2, 0);
         Equip ivoryPant1 = equipWithIdStats(1060076, 0, 1, 2);
 
-        BotEquipManager.SelfReserveHooks hooks = mock(BotEquipManager.SelfReserveHooks.class);
+        AgentEquipmentReservePolicy.SelfReserveHooks hooks = mock(AgentEquipmentReservePolicy.SelfReserveHooks.class);
         stubReserveItem(hooks, Job.SPEARMAN, ivoryTop8, "Ma", 50, 1, 180, 0, 0, 0, 20);
         stubReserveItem(hooks, Job.SPEARMAN, ivoryTop7, "Ma", 50, 1, 180, 0, 0, 0, 20);
         stubReserveItem(hooks, Job.SPEARMAN, ivoryTop3, "Ma", 50, 1, 180, 0, 0, 0, 20);
@@ -582,7 +583,7 @@ class BotEquipManagerTest {
         stubReserveItem(hooks, Job.SPEARMAN, ivoryPant2, "Pn", 50, 1, 180, 0, 0, 0, 20);
         stubReserveItem(hooks, Job.SPEARMAN, ivoryPant1, "Pn", 50, 1, 180, 0, 0, 0, 20);
 
-        Set<Equip> keep = BotEquipManager.selectOwnedItemsForSelfReserve(bot, hooks,
+        Set<Equip> keep = AgentEquipmentReservePolicy.selectOwnedItemsForSelfReserve(bot, hooks,
                 List.of(ivoryTop8, ivoryTop7, ivoryTop3, ivoryPant6, ivoryPant2, ivoryPant1));
 
         assertTrue(keep.contains(ivoryTop8));
@@ -604,13 +605,13 @@ class BotEquipManagerTest {
         Equip bronzeWdef1 = clawWithStats(1472010, 2, 21, 1);
         Equip bronzeWdef2 = clawWithStats(1472010, 2, 21, 2);
 
-        BotEquipManager.SelfReserveHooks hooks = mock(BotEquipManager.SelfReserveHooks.class);
+        AgentEquipmentReservePolicy.SelfReserveHooks hooks = mock(AgentEquipmentReservePolicy.SelfReserveHooks.class);
         stubReserveItem(hooks, Job.ASSASSIN, bronzeWdef0, "Wp", 35, 8, 0, 70, 0, 95, 0);
         stubReserveItem(hooks, Job.ASSASSIN, bronzeWdef1, "Wp", 35, 8, 0, 70, 0, 95, 0);
         stubReserveItem(hooks, Job.ASSASSIN, bronzeWdef2, "Wp", 35, 8, 0, 70, 0, 95, 0);
         when(hooks.getWeaponType(1472010)).thenReturn(WeaponType.CLAW);
 
-        Set<Equip> keep = BotEquipManager.selectOwnedItemsForSelfReserve(bot, hooks,
+        Set<Equip> keep = AgentEquipmentReservePolicy.selectOwnedItemsForSelfReserve(bot, hooks,
                 List.of(bronzeWdef0, bronzeWdef1, bronzeWdef2));
 
         assertFalse(keep.contains(bronzeWdef0));
@@ -627,11 +628,11 @@ class BotEquipManagerTest {
         Equip itemA = equipWithIdStats(2000001, 0, 8, 0);
         Equip itemB = equipWithIdStats(2000002, 0, 7, 0);
 
-        BotEquipManager.SelfReserveHooks hooks = mock(BotEquipManager.SelfReserveHooks.class);
+        AgentEquipmentReservePolicy.SelfReserveHooks hooks = mock(AgentEquipmentReservePolicy.SelfReserveHooks.class);
         stubReserveItem(hooks, Job.SPEARMAN, itemA, "Ma", 50, 1, 180, 0, 0, 0, 20);
         stubReserveItem(hooks, Job.SPEARMAN, itemB, "Ma", 50, 1, 180, 0, 0, 0, 20);
 
-        Set<Equip> keep = BotEquipManager.selectOwnedItemsForSelfReserve(bot, hooks, List.of(itemA, itemB));
+        Set<Equip> keep = AgentEquipmentReservePolicy.selectOwnedItemsForSelfReserve(bot, hooks, List.of(itemA, itemB));
 
         assertTrue(keep.contains(itemA));
         assertFalse(keep.contains(itemB),
@@ -649,11 +650,11 @@ class BotEquipManagerTest {
         Equip redBandana = equipWithIdStats(1002022, 0, 0, 4);
         Equip yellowMetalGear = equipWithIdStats(1002053, 0, 7, 0);
 
-        BotEquipManager.SelfReserveHooks hooks = mock(BotEquipManager.SelfReserveHooks.class);
+        AgentEquipmentReservePolicy.SelfReserveHooks hooks = mock(AgentEquipmentReservePolicy.SelfReserveHooks.class);
         stubReserveItem(hooks, Job.SPEARMAN, redBandana, "Cp", 10, 0, 0, 0, 0, 0, 0);
         stubReserveItem(hooks, Job.SPEARMAN, yellowMetalGear, "Cp", 10, 0, 0, 0, 0, 0, 0);
 
-        Set<Equip> keep = BotEquipManager.selectOwnedItemsForSelfReserve(bot, hooks,
+        Set<Equip> keep = AgentEquipmentReservePolicy.selectOwnedItemsForSelfReserve(bot, hooks,
                 List.of(redBandana, yellowMetalGear));
 
         assertTrue(keep.contains(yellowMetalGear));
@@ -672,11 +673,11 @@ class BotEquipManagerTest {
         Equip ivoryPants10 = equipWithIdStats(1060076, 0, 6, 4);
         Equip ivoryPants21 = equipWithIdStats(1060076, 0, 8, 3);
 
-        BotEquipManager.SelfReserveHooks hooks = mock(BotEquipManager.SelfReserveHooks.class);
+        AgentEquipmentReservePolicy.SelfReserveHooks hooks = mock(AgentEquipmentReservePolicy.SelfReserveHooks.class);
         stubReserveItem(hooks, Job.SPEARMAN, ivoryPants10, "Pn", 50, 1, 180, 0, 0, 0, 0);
         stubReserveItem(hooks, Job.SPEARMAN, ivoryPants21, "Pn", 50, 1, 180, 0, 0, 0, 0);
 
-        Set<Equip> keep = BotEquipManager.selectOwnedItemsForSelfReserve(bot, hooks,
+        Set<Equip> keep = AgentEquipmentReservePolicy.selectOwnedItemsForSelfReserve(bot, hooks,
                 List.of(ivoryPants10, ivoryPants21));
 
         assertTrue(keep.contains(ivoryPants21));
@@ -699,7 +700,7 @@ class BotEquipManagerTest {
         Equip polearm = equipWithIdStats(1442012, 4, 0, 0);
         Equip axe = equipWithIdStats(1312012, 6, 0, 0);
 
-        BotEquipManager.SelfReserveHooks hooks = mock(BotEquipManager.SelfReserveHooks.class);
+        AgentEquipmentReservePolicy.SelfReserveHooks hooks = mock(AgentEquipmentReservePolicy.SelfReserveHooks.class);
         stubReserveItem(hooks, Job.SPEARMAN, spear, "Wp", 43, 1, 0, 0, 0, 0, 0);
         stubReserveItem(hooks, Job.SPEARMAN, polearm, "Wp", 43, 1, 0, 0, 0, 0, 0);
         stubReserveItem(hooks, Job.SPEARMAN, axe, "Wp", 43, 1, 0, 0, 0, 0, 0);
@@ -707,7 +708,7 @@ class BotEquipManagerTest {
         when(hooks.getWeaponType(1442012)).thenReturn(WeaponType.POLE_ARM_SWING);
         when(hooks.getWeaponType(1312012)).thenReturn(WeaponType.GENERAL2H_SWING);
 
-        Set<Equip> keep = BotEquipManager.selectOwnedItemsForSelfReserve(bot, hooks,
+        Set<Equip> keep = AgentEquipmentReservePolicy.selectOwnedItemsForSelfReserve(bot, hooks,
                 List.of(spear, polearm, axe));
 
         assertTrue(keep.contains(spear), "spear-mastery spearman should keep spears");
@@ -730,7 +731,7 @@ class BotEquipManagerTest {
         Equip mapleImpaler = equipWithIdStats(1432012, 2, 0, 0);
         Equip mapleDoomSinger = equipWithIdStats(1422014, 4, 0, 0);
 
-        BotEquipManager.SelfReserveHooks hooks = mock(BotEquipManager.SelfReserveHooks.class);
+        AgentEquipmentReservePolicy.SelfReserveHooks hooks = mock(AgentEquipmentReservePolicy.SelfReserveHooks.class);
         stubReserveItem(hooks, Job.SPEARMAN, mapleImpaler, "Wp", 43, 1, 0, 0, 0, 0, 0);
         // Maple Doom Singer (item 1422014) is a 2-handed weapon — text slot "WpSi", not "Wp".
         // The earlier bug was that isWeaponSlot only matched "Wp", so 2H weapons skipped the
@@ -739,7 +740,7 @@ class BotEquipManagerTest {
         when(hooks.getWeaponType(1432012)).thenReturn(WeaponType.SPEAR_STAB);
         when(hooks.getWeaponType(1422014)).thenReturn(WeaponType.GENERAL2H_SWING);
 
-        Set<Equip> keep = BotEquipManager.selectOwnedItemsForSelfReserve(bot, hooks,
+        Set<Equip> keep = AgentEquipmentReservePolicy.selectOwnedItemsForSelfReserve(bot, hooks,
                 List.of(mapleImpaler, mapleDoomSinger));
 
         assertTrue(keep.contains(mapleImpaler));
@@ -760,7 +761,7 @@ class BotEquipManagerTest {
         Equip polearm = equipWithIdStats(1442012, 4, 0, 0);
         Equip axe = equipWithIdStats(1312012, 6, 0, 0);
 
-        BotEquipManager.SelfReserveHooks hooks = mock(BotEquipManager.SelfReserveHooks.class);
+        AgentEquipmentReservePolicy.SelfReserveHooks hooks = mock(AgentEquipmentReservePolicy.SelfReserveHooks.class);
         stubReserveItem(hooks, Job.SPEARMAN, spear, "Wp", 43, 1, 0, 0, 0, 0, 0);
         stubReserveItem(hooks, Job.SPEARMAN, polearm, "Wp", 43, 1, 0, 0, 0, 0, 0);
         stubReserveItem(hooks, Job.SPEARMAN, axe, "Wp", 43, 1, 0, 0, 0, 0, 0);
@@ -768,7 +769,7 @@ class BotEquipManagerTest {
         when(hooks.getWeaponType(1442012)).thenReturn(WeaponType.POLE_ARM_SWING);
         when(hooks.getWeaponType(1312012)).thenReturn(WeaponType.GENERAL2H_SWING);
 
-        Set<Equip> keep = BotEquipManager.selectOwnedItemsForSelfReserve(bot, hooks,
+        Set<Equip> keep = AgentEquipmentReservePolicy.selectOwnedItemsForSelfReserve(bot, hooks,
                 List.of(spear, polearm, axe));
 
         assertTrue(keep.contains(spear));
@@ -784,11 +785,11 @@ class BotEquipManagerTest {
         Equip currentAllClassGlove = equipWithIdStats(1082000, 0, 8, 0);
         Equip worseBowmanGlove = equipWithIdStats(1082100, 0, 2, 0);
 
-        BotEquipManager.SelfReserveHooks hooks = mock(BotEquipManager.SelfReserveHooks.class);
+        AgentEquipmentReservePolicy.SelfReserveHooks hooks = mock(AgentEquipmentReservePolicy.SelfReserveHooks.class);
         stubReserveItem(hooks, Job.HUNTER, currentAllClassGlove, "Gv", 10, 0, 0, 0, 0, 0, 0);
         stubReserveItem(hooks, Job.HUNTER, worseBowmanGlove, "Gv", 35, 4, 0, 0, 0, 0, 0);
 
-        Set<Equip> keep = BotEquipManager.selectOwnedItemsForSelfReserve(bot, hooks,
+        Set<Equip> keep = AgentEquipmentReservePolicy.selectOwnedItemsForSelfReserve(bot, hooks,
                 List.of(currentAllClassGlove, worseBowmanGlove));
 
         assertTrue(keep.contains(currentAllClassGlove));
@@ -805,7 +806,7 @@ class BotEquipManagerTest {
 
         Equip statBlocked = mock(Equip.class);
         Equip levelBlocked = mock(Equip.class);
-        BotEquipManager.EquipUsefulnessHooks hooks = mock(BotEquipManager.EquipUsefulnessHooks.class);
+        AgentEquipmentReservePolicy.EquipUsefulnessHooks hooks = mock(AgentEquipmentReservePolicy.EquipUsefulnessHooks.class);
 
         when(hooks.meetsReqs(statBlocked, Job.ASSASSIN, 43,
                 Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4,
@@ -833,7 +834,7 @@ class BotEquipManagerTest {
         Equip levelBlocked = clawWithStats(1472052, 7, 27, 0);
         Equip fameBlocked = clawWithStats(1472053, 4, 28, 0);
 
-        BotEquipManager.SelfReserveHooks hooks = mock(BotEquipManager.SelfReserveHooks.class);
+        AgentEquipmentReservePolicy.SelfReserveHooks hooks = mock(AgentEquipmentReservePolicy.SelfReserveHooks.class);
         stubReserveItem(hooks, Job.ASSASSIN, wearable, "Wp", 35, 8, 0, 70, 0, 95, 0);
         stubReserveItem(hooks, Job.ASSASSIN, levelBlocked, "Wp", 50, 8, 0, 90, 0, 140, 0);
         stubReserveItem(hooks, Job.ASSASSIN, fameBlocked, "Wp", 50, 8, 0, 90, 0, 140, 20);
@@ -856,9 +857,9 @@ class BotEquipManagerTest {
                 Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4,
                 Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4, Short.MAX_VALUE)).thenReturn(true);
 
-        Set<Equip> levelKeep = BotEquipManager.selectOwnedItemsForSelfReserve(bot, hooks,
+        Set<Equip> levelKeep = AgentEquipmentReservePolicy.selectOwnedItemsForSelfReserve(bot, hooks,
                 List.of(wearable, levelBlocked));
-        Set<Equip> fameKeep = BotEquipManager.selectOwnedItemsForSelfReserve(bot, hooks,
+        Set<Equip> fameKeep = AgentEquipmentReservePolicy.selectOwnedItemsForSelfReserve(bot, hooks,
                 List.of(wearable, fameBlocked));
 
         assertTrue(levelKeep.contains(wearable));
@@ -1094,7 +1095,7 @@ class BotEquipManagerTest {
         }
     }
 
-    private static void stubReserveItem(BotEquipManager.SelfReserveHooks hooks, Job job, Equip equip, String slot,
+    private static void stubReserveItem(AgentEquipmentReservePolicy.SelfReserveHooks hooks, Job job, Equip equip, String slot,
                                         int reqLevel, int reqJob, int reqStr, int reqDex,
                                         int reqInt, int reqLuk, int reqPop) {
         int itemId = equip.getItemId();

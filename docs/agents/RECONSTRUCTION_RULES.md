@@ -1276,6 +1276,12 @@ Recent reconstruction notes:
   recommendation ordering, current/candidate/target-slot values, and trade/build
   consumers are unchanged while recommendation generation remains temporarily in
   `BotEquipManager`.
+- Equipment self-reserve/usefulness policy now lives in
+  `server.agents.capabilities.equipment.AgentEquipmentReservePolicy`. Relevant
+  stat tracks, Pareto baseline filtering, owned-item reserve selection,
+  incoming-item reserve checks, future own-class eligibility, text-slot
+  filtering, and usefulness scoring are unchanged; `BotEquipManager` keeps
+  wrapper methods for callers that still enter through the temporary bot seam.
 - Physics position, horizontal-speed, and ground-travel carry state now enter
   through `AgentBotMovementPhysicsStateRuntime`; BotPhysicsEngine preserves
   landing, grounded travel, swim, airborne collision, climb-position, and reset
