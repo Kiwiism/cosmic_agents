@@ -1658,6 +1658,10 @@ Recent reconstruction notes:
   `AgentCombatScoringPolicy.legacyAoeClusterBonus` directly from follow, local,
   and region target scoring; the temporary `BotCombatManager` cluster-bonus
   helper has been removed while preserving the same multi-mob cache-state inputs.
+- Reachable-grind-target graph cost now resolves the target region directly at
+  the decision site; the one-use `BotCombatManager` graph-target-cost helper has
+  been removed while preserving the same unreachable fallback and graph path cost
+  calculation.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

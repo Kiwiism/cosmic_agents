@@ -640,9 +640,22 @@ public class BotCombatManager {
                         entry == null || AgentBotAmmoStateRuntime.noAmmo(entry),
                         entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry));
         boolean graphAvailable = graphContext != null && graphContext.available();
-        long targetCost = targetPresentAndAlive && hasRuntimeContext && !immediateProjectileTarget && graphAvailable
-                ? graphTargetCost(graphContext, target)
-                : UNREACHABLE_GRAPH_COST;
+        long targetCost = UNREACHABLE_GRAPH_COST;
+        if (targetPresentAndAlive && hasRuntimeContext && !immediateProjectileTarget && graphAvailable) {
+            Point targetPos = target.getPosition();
+            int targetRegionId = BotNavigationManager.resolveTargetRegionId(
+                    graphContext.graph(), graphContext.entry(), graphContext.map(), targetPos);
+            if (targetRegionId >= 0) {
+                targetCost = graphPathCost(
+                        graphContext.graph(),
+                        graphContext.map(),
+                        graphContext.startPos(),
+                        graphContext.startRegionId(),
+                        targetPos,
+                        targetRegionId,
+                        graphContext.profile());
+            }
+        }
         return AgentCombatGrindTargetPolicy.isReachableGrindTarget(
                 targetPresentAndAlive,
                 hasRuntimeContext,
@@ -1001,18 +1014,6 @@ public class BotCombatManager {
                         group.bestMonster().getPosition(), group.regionId(), context.profile()),
                 group -> grindRegionOccupancyPenalty(context, bot, group.regionId()),
                 UNREACHABLE_GRAPH_COST);
-    }
-
-    private static long graphTargetCost(GrindGraphContext context, Monster target) {
-        Point targetPos = target.getPosition();
-        int targetRegionId = BotNavigationManager.resolveTargetRegionId(
-                context.graph(), context.entry(), context.map(), targetPos);
-        if (targetRegionId < 0) {
-            return UNREACHABLE_GRAPH_COST;
-        }
-
-        return graphPathCost(context.graph(), context.map(), context.startPos(), context.startRegionId(),
-                targetPos, targetRegionId, context.profile());
     }
 
     private static long graphPathCost(BotNavigationGraph graph,
