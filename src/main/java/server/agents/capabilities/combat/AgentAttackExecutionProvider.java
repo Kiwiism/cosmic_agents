@@ -671,7 +671,7 @@ public final class AgentAttackExecutionProvider {
     }
 
     private static int toCooldownMs(int attackDelayMillis) {
-        // Attack cooldown is assigned after BotCombatManager.tickActionLock() has already
+        // Attack cooldown is assigned after AgentBotCombatActionLockRuntime.tickActionLock() has already
         // consumed this server tick. Do not subtract TICK_MS here, or the next AI pass can
         // start a new attack on the same tick the previous animation expires, skipping the
         // short stand/recovery frame a real client shows between attacks.

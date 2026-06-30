@@ -122,7 +122,7 @@ public class BotMovementManager {
         return config;
     }
 
-    static int tickDown(int remainingMs) {
+    public static int tickDown(int remainingMs) {
         return AgentMovementTimingPolicy.tickDown(remainingMs, BotPhysicsEngine.cfg.TICK_MS);
     }
 

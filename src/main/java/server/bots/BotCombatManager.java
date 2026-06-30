@@ -758,15 +758,6 @@ public class BotCombatManager {
         markAlerted(entry);
     }
 
-    static void tickActionLock(BotEntry entry) {
-        if (AgentBotCombatCooldownStateRuntime.hasAttackCooldown(entry)) {
-            AgentBotCombatCooldownStateRuntime.tickAttackCooldown(entry, BotMovementManager::tickDown);
-        } else if (AgentBotCombatCooldownStateRuntime.hasMoveWindow(entry)) {
-            // Movement window: animation done, bot may walk but not attack yet.
-            AgentBotCombatCooldownStateRuntime.tickMoveWindow(entry, BotMovementManager::tickDown);
-        }
-    }
-
     // Matches maplestory-wasm CharLook::set_alerted(5000): called on attack, skill cast, and
     // damage taken. Always an absolute reset to now+5s (never additive), mirroring TimedBool::set_for.
     private static final long ALERT_DURATION_MS = 5000L;

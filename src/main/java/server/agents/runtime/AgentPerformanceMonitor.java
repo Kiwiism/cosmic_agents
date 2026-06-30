@@ -89,7 +89,7 @@ public final class AgentPerformanceMonitor {
         notes.put("common-manual-trade", "BotInventoryManager.tickManualTrade (manual bot/player trade)");
         notes.put("common-pq-hooks", "BotPqHooks.tick (KPQ / OPQ / LPQ state machines)");
         notes.put("common-script-tasks", "tickScriptTasks (BotScriptRunner)");
-        notes.put("common-action-lock", "BotCombatManager.tickActionLock (attack/move cooldown decay)");
+        notes.put("common-action-lock", "AgentBotCombatActionLockRuntime.tickActionLock (attack/move cooldown decay)");
         notes.put("common-skill-cache", "BotCombatManager.rebuildSkillCacheIfNeeded");
         notes.put("common-support-heal", "BotCombatManager.tickSupportHealing (cleric heal)");
         notes.put("common-combat-buffs", "BotCombatManager.tickBuffs (player skill rebuff)");

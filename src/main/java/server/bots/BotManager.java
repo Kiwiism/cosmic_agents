@@ -24,6 +24,7 @@ import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotAmmoStateRuntime;
 import server.agents.integration.AgentBotBreakoutStateRuntime;
 import server.agents.integration.AgentBotBuffStateRuntime;
+import server.agents.integration.AgentBotCombatActionLockRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
@@ -3450,7 +3451,7 @@ public class BotManager {
             return true;
         }
         if (perf) t = System.nanoTime();
-        BotCombatManager.tickActionLock(entry);
+        AgentBotCombatActionLockRuntime.tickActionLock(entry);
         if (perf) AgentPerformanceMonitor.record("common-action-lock", System.nanoTime() - t);
         if (runAiTick) {
             if (perf) t = System.nanoTime();

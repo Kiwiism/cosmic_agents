@@ -1673,6 +1673,10 @@ Recent reconstruction notes:
   `BotCombatManager` calls the Agent-owned runtime while preserving the same
   attack-packet stance conversion, facing direction update, and character-state
   sync.
+- Attack/move action-lock countdown routing now lives in
+  `AgentBotCombatActionLockRuntime`; BotManager calls the Agent-owned runtime
+  while preserving the same legacy movement tick-down cadence and attack-before-
+  move-window priority.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
