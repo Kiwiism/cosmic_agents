@@ -1501,9 +1501,8 @@ public class BotInventoryManager {
     }
 
     static boolean isSafeToDrop(Item item) {
-        if (item.isUntradeable() && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) return false;
-        if (ItemInformationProvider.getInstance().isQuestItem(item.getItemId())) return false;
-        return true;
+        return AgentInventoryItemPolicy.isSafeToDrop(item, ItemInformationProvider.getInstance()::isQuestItem,
+                YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE);
     }
 
     private static void reply(BotEntry entry, Character bot, int count, String noun) {

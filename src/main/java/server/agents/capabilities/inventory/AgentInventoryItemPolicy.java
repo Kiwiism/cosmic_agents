@@ -4,6 +4,8 @@ import client.Character;
 import client.inventory.Inventory;
 import client.inventory.Item;
 
+import java.util.function.IntPredicate;
+
 public final class AgentInventoryItemPolicy {
     private AgentInventoryItemPolicy() {
     }
@@ -20,5 +22,11 @@ public final class AgentInventoryItemPolicy {
 
         Item current = inventory.getItem(item.getPosition());
         return current == item;
+    }
+
+    public static boolean isSafeToDrop(Item item, IntPredicate isQuestItem, boolean untradeableItemsTradeable) {
+        if (item.isUntradeable() && !untradeableItemsTradeable) return false;
+        if (isQuestItem.test(item.getItemId())) return false;
+        return true;
     }
 }

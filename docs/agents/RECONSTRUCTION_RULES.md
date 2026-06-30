@@ -1322,6 +1322,9 @@ Recent reconstruction notes:
   Agent offer/shop code no longer calls the bot inventory seam to verify that
   the exact item object still occupies its recorded inventory slot; the old
   `BotInventoryManager.hasItem` method remains a compatibility delegate.
+- Inventory drop-safety checks now enter through `AgentInventoryItemPolicy`.
+  Untradeable and quest-item rejection rules are unchanged, with server config
+  and item-info lookups passed in from the temporary bot drop execution seam.
 - Physics position, horizontal-speed, and ground-travel carry state now enter
   through `AgentBotMovementPhysicsStateRuntime`; BotPhysicsEngine preserves
   landing, grounded travel, swim, airborne collision, climb-position, and reset

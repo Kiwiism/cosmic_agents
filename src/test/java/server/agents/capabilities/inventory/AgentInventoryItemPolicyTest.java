@@ -49,4 +49,21 @@ class AgentInventoryItemPolicyTest {
 
         assertFalse(AgentInventoryItemPolicy.hasItem(agent, item));
     }
+
+    @Test
+    void shouldRejectUnsafeDropItemsLikeLegacyInventory() {
+        Item untradeable = mock(Item.class);
+        Item questItem = mock(Item.class);
+        Item normal = mock(Item.class);
+
+        when(untradeable.isUntradeable()).thenReturn(true);
+        when(untradeable.getItemId()).thenReturn(1001);
+        when(questItem.getItemId()).thenReturn(1002);
+        when(normal.getItemId()).thenReturn(1003);
+
+        assertFalse(AgentInventoryItemPolicy.isSafeToDrop(untradeable, itemId -> itemId == 1002, false));
+        assertTrue(AgentInventoryItemPolicy.isSafeToDrop(untradeable, itemId -> itemId == 1002, true));
+        assertFalse(AgentInventoryItemPolicy.isSafeToDrop(questItem, itemId -> itemId == 1002, true));
+        assertTrue(AgentInventoryItemPolicy.isSafeToDrop(normal, itemId -> itemId == 1002, false));
+    }
 }
