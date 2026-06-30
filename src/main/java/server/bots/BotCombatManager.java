@@ -738,15 +738,6 @@ public class BotCombatManager {
         return AgentCombatRangePolicy.canUseAttackPlanNow(false, weaponType, attackPlan.route);
     }
 
-    static boolean isTargetJumpable(AgentMovementProfile movementProfile, boolean closeRangeRoute, Point botPos, Point targetPos) {
-        return AgentCombatRangePolicy.isTargetJumpable(movementProfile, closeRangeRoute, botPos, targetPos,
-                BotPhysicsEngine.calculateMaxJumpHeight(movementProfile));
-    }
-
-    static boolean isTargetJumpable(boolean closeRangeRoute, Point botPos, Point targetPos) {
-        return isTargetJumpable(AgentMovementProfile.base(), closeRangeRoute, botPos, targetPos);
-    }
-
     static void attackMonster(BotEntry entry, Character bot, AttackPlan attackPlan) {
         AgentCombatAttackExecutionPolicy.AttackExecutionReadiness readiness =
                 AgentCombatAttackExecutionPolicy.attackExecutionReadiness(

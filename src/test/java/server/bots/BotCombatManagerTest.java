@@ -4,6 +4,7 @@ import server.agents.capabilities.combat.AgentAttackRoute;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentCombatWeaponPolicy;
+import server.agents.capabilities.combat.AgentCombatRangePolicy;
 import server.agents.capabilities.combat.AgentSupportSpecialMovePacketBuilder;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
@@ -1244,12 +1245,16 @@ class BotCombatManagerTest {
 
     @Test
     void shouldAllowDiagonalJumpAttackForCloseRangeTargetsSlightlyAbove() {
-        assertTrue(BotCombatManager.isTargetJumpable(true, new Point(100, 200), new Point(230, 135)));
+        assertTrue(AgentCombatRangePolicy.isTargetJumpable(
+                AgentMovementProfile.base(), true, new Point(100, 200), new Point(230, 135),
+                BotPhysicsEngine.calculateMaxJumpHeight(AgentMovementProfile.base())));
     }
 
     @Test
     void shouldRejectJumpAttackForNonCloseRangeRoutes() {
-        assertFalse(BotCombatManager.isTargetJumpable(false, new Point(100, 200), new Point(170, 135)));
+        assertFalse(AgentCombatRangePolicy.isTargetJumpable(
+                AgentMovementProfile.base(), false, new Point(100, 200), new Point(170, 135),
+                BotPhysicsEngine.calculateMaxJumpHeight(AgentMovementProfile.base())));
     }
 
     @Test
@@ -1328,8 +1333,12 @@ class BotCombatManagerTest {
 
     @Test
     void shouldRejectJumpAttackWhenTargetIsTooHighOrTooFar() {
-        assertFalse(BotCombatManager.isTargetJumpable(true, new Point(100, 200), new Point(241, 135)));
-        assertFalse(BotCombatManager.isTargetJumpable(true, new Point(100, 200), new Point(170, 60)));
+        assertFalse(AgentCombatRangePolicy.isTargetJumpable(
+                AgentMovementProfile.base(), true, new Point(100, 200), new Point(241, 135),
+                BotPhysicsEngine.calculateMaxJumpHeight(AgentMovementProfile.base())));
+        assertFalse(AgentCombatRangePolicy.isTargetJumpable(
+                AgentMovementProfile.base(), true, new Point(100, 200), new Point(170, 60),
+                BotPhysicsEngine.calculateMaxJumpHeight(AgentMovementProfile.base())));
     }
 
     @Test

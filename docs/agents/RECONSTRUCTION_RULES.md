@@ -1608,6 +1608,10 @@ Recent reconstruction notes:
   `BotManager`; the temporary `BotCombatManager` config pass-through methods
   have been removed while preserving live config field listing, lookup, and
   mutation behavior.
+- Jumpable target checks now call `AgentCombatRangePolicy` directly from
+  `BotManager` and focused tests; the temporary `BotCombatManager`
+  `isTargetJumpable` wrappers have been removed while preserving the same
+  movement profile and `BotPhysicsEngine` jump-height input.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

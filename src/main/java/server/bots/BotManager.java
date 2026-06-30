@@ -5,6 +5,7 @@ import server.agents.capabilities.combat.AgentAttackRoute;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 import server.agents.capabilities.combat.AgentCombatConfig;
+import server.agents.capabilities.combat.AgentCombatRangePolicy;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
 
 import server.agents.capabilities.dialogue.AgentEmote;
@@ -2413,11 +2414,12 @@ public class BotManager {
                 }
             } else if (!AgentBotMovementStateRuntime.inAir(entry)
                     && attackPlan != null
-                    && BotCombatManager.isTargetJumpable(
+                    && AgentCombatRangePolicy.isTargetJumpable(
                             AgentBotMovementStateRuntime.movementProfile(entry),
                             attackPlan.isCloseRangeRoute(),
                             botPos,
-                            tp)
+                            tp,
+                            BotPhysicsEngine.calculateMaxJumpHeight(AgentBotMovementStateRuntime.movementProfile(entry)))
                     && grindWeaponType != WeaponType.BOW && grindWeaponType != WeaponType.CROSSBOW
                     && grindWeaponType != WeaponType.WAND && grindWeaponType != WeaponType.STAFF) {
                 // Target is above but within jump height — jump toward it
@@ -2655,11 +2657,12 @@ public class BotManager {
         if (allowJumpTowardTarget
                 && weaponType != WeaponType.BOW && weaponType != WeaponType.CROSSBOW
                 && weaponType != WeaponType.WAND && weaponType != WeaponType.STAFF
-                && BotCombatManager.isTargetJumpable(
+                && AgentCombatRangePolicy.isTargetJumpable(
                         AgentBotMovementStateRuntime.movementProfile(entry),
                         true,
                         botPos,
-                        localTargetPos)) {
+                        localTargetPos,
+                        BotPhysicsEngine.calculateMaxJumpHeight(AgentBotMovementStateRuntime.movementProfile(entry)))) {
             BotMovementManager.initiateJump(entry, bot, localTargetPos.x - botPos.x);
             return new LocalOpportunityAttackResult(true, targetPos);
         }
