@@ -170,7 +170,7 @@ public class BotManager {
 
     public static BotManager getInstance() { return instance; }
 
-    // Public facade for the !botcfg GM command (BotCombatManager is package-private).
+    // Public facade for the !botcfg GM command.
     public static List<String> botCombatConfigLines() { return AgentCombatConfig.configFieldLines(); }
     public static String botCombatConfigLine(String name) { return AgentCombatConfig.configFieldLine(name); }
     public static String setBotCombatConfig(String name, String value) { return AgentCombatConfig.setConfigField(name, value); }

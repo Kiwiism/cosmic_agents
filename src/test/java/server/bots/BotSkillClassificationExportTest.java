@@ -100,7 +100,7 @@ public class BotSkillClassificationExportTest {
     }
 
     /**
-     * Mirrors the precedence in {@link BotCombatManager} recompute(): heal → attack → support →
+     * Mirrors the precedence in Agent combat skill-cache recompute(): heal → attack → support →
      * passive, calling the real predicates. Skills the bot does NOT act on are sub-labelled
      * data-drivenly (no skill-id lists) so a human can see WHY they were excluded:
      *   MOB_DEBUFF      — overTime + duration + no caster statup (mobCount/bbox); Threaten/Slow/...

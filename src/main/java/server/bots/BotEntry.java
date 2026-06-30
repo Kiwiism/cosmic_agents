@@ -881,7 +881,7 @@ public class BotEntry {
     // Mirrors CharLook::alerted (TimedBool, 5000ms) in maplestory-wasm. Absolute reset on each
     // trigger (attack/hit/heal/buff), never additive.
     private long alertedUntilMs = 0L;
-    // Debounce flag for the scheduled stance-reset callback in BotCombatManager.markAlerted.
+    // Debounce flag for the scheduled stance-reset callback in Agent combat alert runtime.
     // Without this, when the bot stops moving while alerted (e.g. "stay" command), no new
     // movement snapshot ever fires — so the wire stance stays ALERT forever. The callback
     // pushes a fresh STAND broadcast once the timer expires.

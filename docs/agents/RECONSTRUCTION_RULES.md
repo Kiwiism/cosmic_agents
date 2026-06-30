@@ -1802,6 +1802,11 @@ Recent reconstruction notes:
   `planAttack`, `attackMonster`, target-search, reachable-target, and
   AoE-reposition compatibility delegates have been removed because production
   and focused test callers no longer need them.
+- The remaining `BotCombatManager` compatibility facade has been removed after
+  mob-hit tests moved to `AgentBotCombatDamageRuntime` and stale source/test
+  comments stopped referring to the deleted class. Combat behavior remains
+  owned by Agent combat runtimes; the legacy `BotCombatManagerTest` class name
+  is retained only as the historical focused combat parity suite.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

@@ -1304,7 +1304,7 @@ class BotCombatManagerTest {
         entry.airVelX = -4;
         entry.facingDir = -1;
 
-        runWithStubbedBotAfter(() -> BotCombatManager.applyMobHit(entry, bot, mob));
+        runWithStubbedBotAfter(() -> AgentBotCombatDamageRuntime.applyMobHit(entry, bot, mob, AgentCombatConfig.cfg));
 
         assertTrue(entry.inAir);
         assertTrue(entry.climbUpIntent);
@@ -1323,7 +1323,7 @@ class BotCombatManagerTest {
         Monster mob = mockMob(new Point(140, 200), 9300002);
         BotEntry entry = new BotEntry(bot, null, null);
 
-        runWithStubbedBotAfter(() -> BotCombatManager.applyMobHit(entry, bot, mob));
+        runWithStubbedBotAfter(() -> AgentBotCombatDamageRuntime.applyMobHit(entry, bot, mob, AgentCombatConfig.cfg));
 
         assertFalse(entry.inAir);
         assertFalse(entry.climbing);
@@ -1341,7 +1341,7 @@ class BotCombatManagerTest {
         entry.facingDir = -1;
         Monster mob = mockMob(new Point(140, 200), 9300003);
 
-        runWithStubbedBotAfter(() -> BotCombatManager.applyMobHit(entry, bot, mob));
+        runWithStubbedBotAfter(() -> AgentBotCombatDamageRuntime.applyMobHit(entry, bot, mob, AgentCombatConfig.cfg));
 
         assertEquals(CharacterStance.DEAD_LEFT_STANCE, bot.getStance());
         assertTrue(AgentBotDeathStateRuntime.deadUntilMs(entry) > 0);

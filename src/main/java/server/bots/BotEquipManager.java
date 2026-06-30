@@ -1887,7 +1887,7 @@ public class BotEquipManager {
 
     /**
      * Returns the effective attack cycle in milliseconds for a weapon using the same formula
-     * as BotCombatManager.
+     * as Agent combat planning.
      * The raw animation comes from the weapon's WZ XML; the speed value scales playback rate,
      * so two weapons with the same speed tier but different base animations have different DPS.
      * Returns 0 if no WZ profile is available — caller skips DPS scaling.
