@@ -1,4 +1,4 @@
-package server.bots.llm;
+package server.agents.capabilities.dialogue.llm;
 
 import client.Character;
 import constants.game.ExpTable;
@@ -21,8 +21,8 @@ import java.util.LinkedHashMap;
  * null/missing piece is silently skipped so a partial state still produces a
  * useful block.
  */
-public final class SituationBuilder {
-    private SituationBuilder() {}
+public final class AgentSituationBuilder {
+    private AgentSituationBuilder() {}
 
     public static String build(BotEntry entry) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);

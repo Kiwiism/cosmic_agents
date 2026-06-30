@@ -1,4 +1,4 @@
-package server.bots.llm;
+package server.agents.capabilities.dialogue.llm;
 
 import server.agents.capabilities.dialogue.llm.AgentLlmConfig;
 
@@ -15,7 +15,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class BotMemoryStoreTest {
+class AgentMemoryStoreTest {
     private Path tmpDir;
     private String origMemoryDir;
 
@@ -40,12 +40,12 @@ class BotMemoryStoreTest {
 
     @Test
     void appendAndLoadRoundTrip() {
-        BotMemoryStore.appendTurn("Jason",
-                new BotMemoryStore.Turn(1L, "owner", "Player1", "hi", "hey"));
-        BotMemoryStore.appendTurn("Jason",
-                new BotMemoryStore.Turn(2L, "stranger", "Player2", "yo bot", "hi stranger"));
+        AgentMemoryStore.appendTurn("Jason",
+                new AgentMemoryStore.Turn(1L, "owner", "Player1", "hi", "hey"));
+        AgentMemoryStore.appendTurn("Jason",
+                new AgentMemoryStore.Turn(2L, "stranger", "Player2", "yo bot", "hi stranger"));
 
-        List<BotMemoryStore.Turn> recent = BotMemoryStore.loadUncompacted("Jason");
+        List<AgentMemoryStore.Turn> recent = AgentMemoryStore.loadUncompacted("Jason");
         assertEquals(2, recent.size());
         assertEquals("Player1", recent.get(0).sender());
         assertEquals("hi", recent.get(0).msg());
@@ -55,9 +55,9 @@ class BotMemoryStoreTest {
     @Test
     void loadUncompactedReturnsEverythingWhenNoCompactionRan() {
         for (int i = 0; i < 10; i++) {
-            BotMemoryStore.appendTurn("B", new BotMemoryStore.Turn(i, "owner", "p", "m" + i, "r" + i));
+            AgentMemoryStore.appendTurn("B", new AgentMemoryStore.Turn(i, "owner", "p", "m" + i, "r" + i));
         }
-        List<BotMemoryStore.Turn> recent = BotMemoryStore.loadUncompacted("B");
+        List<AgentMemoryStore.Turn> recent = AgentMemoryStore.loadUncompacted("B");
         assertEquals(10, recent.size());
         assertEquals("m0", recent.get(0).msg());
         assertEquals("r9", recent.get(9).reply());
@@ -67,26 +67,26 @@ class BotMemoryStoreTest {
     void compactPreservesJsonlHistory() throws IOException {
         // Compact without Ollama available: cursor must NOT advance, jsonl untouched.
         for (int i = 0; i < 20; i++) {
-            BotMemoryStore.appendTurn("Z", new BotMemoryStore.Turn(i, "owner", "p", "m" + i, "r" + i));
+            AgentMemoryStore.appendTurn("Z", new AgentMemoryStore.Turn(i, "owner", "p", "m" + i, "r" + i));
         }
-        BotMemoryStore.compact("Z");
+        AgentMemoryStore.compact("Z");
         // Whether Ollama is up or not, the full jsonl history must survive.
-        assertEquals(20, BotMemoryStore.countTurns("Z"));
+        assertEquals(20, AgentMemoryStore.countTurns("Z"));
     }
 
     @Test
     void specialCharactersInMessagesSurviveRoundTrip() {
         String tricky = "hello \"world\" \\ \n new line";
-        BotMemoryStore.appendTurn("C",
-                new BotMemoryStore.Turn(1L, "party", "Friend", tricky, "ok"));
-        List<BotMemoryStore.Turn> recent = BotMemoryStore.loadUncompacted("C");
+        AgentMemoryStore.appendTurn("C",
+                new AgentMemoryStore.Turn(1L, "party", "Friend", tricky, "ok"));
+        List<AgentMemoryStore.Turn> recent = AgentMemoryStore.loadUncompacted("C");
         assertEquals(1, recent.size());
         assertEquals(tricky, recent.get(0).msg());
     }
 
     @Test
     void ensureDirCreatesGitignore() throws IOException {
-        BotMemoryStore.ensureDir();
+        AgentMemoryStore.ensureDir();
         assertTrue(Files.exists(tmpDir.resolve(".gitignore")));
     }
 }

@@ -1064,7 +1064,7 @@ public class BotManager {
             }
             // Fall through to LLM only if no command pattern matched.
             if (AgentLlmConfig.enabled && !matched) {
-                server.bots.llm.BotLlmReplyManager.maybeRespond(targetedBot.entry(), owner, cmd);
+                server.agents.capabilities.dialogue.llm.AgentLlmReplyService.maybeRespond(targetedBot.entry(), owner, cmd);
             }
             return;
         }

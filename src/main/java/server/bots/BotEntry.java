@@ -904,7 +904,7 @@ public class BotEntry {
     }
 
     // Most recent command the owner issued that handleChat actually matched.
-    // Used by SituationBuilder to give the LLM context like "owner told you to
+    // Used by AgentSituationBuilder to give the LLM context like "owner told you to
     // farm here 3 min ago" so 'what are you doing' answers stay coherent.
     private volatile String lastOwnerCommand = null;
     private volatile long lastOwnerCommandAtMs = 0L;
@@ -2179,7 +2179,7 @@ public class BotEntry {
         this.task = task;
     }
 
-    // Accessors for code outside the server.bots package (e.g. server.bots.llm).
+    // Accessors for code outside the server.bots package (e.g. server.agents.capabilities.dialogue.llm).
     // Mutations stay package-private to preserve existing invariants.
     public Character getBot() { return bot; }
     public Character getOwner() { return owner; }

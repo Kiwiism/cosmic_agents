@@ -1823,6 +1823,13 @@ Recent reconstruction notes:
   memory, Ollama client, command bridge, and chat routing code read and mutate
   the same static config fields through the Agent-owned class; defaults and
   runtime behavior are unchanged.
+- LLM reply orchestration, memory storage, prompt/situation building, sender
+  relation classification, and the Ollama HTTP client now live under
+  `server.agents.capabilities.dialogue.llm`. The old `server.bots.llm` source
+  and test package is empty; bot chat routing calls
+  `AgentLlmReplyService.maybeRespond` directly. Prompt text, memory JSONL
+  serialization, compaction behavior, in-flight gating, reply splitting,
+  sanitization, and follow-up scheduling are unchanged.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

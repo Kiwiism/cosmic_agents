@@ -1,4 +1,4 @@
-package server.bots.llm;
+package server.agents.capabilities.dialogue.llm;
 
 import server.agents.capabilities.dialogue.llm.AgentLlmConfig;
 
@@ -32,14 +32,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * it folds the oldest compactBatchSize uncompacted turns into the summary and advances
  * the cursor by that amount. Failures leave the cursor untouched (try again next turn).
  */
-public final class BotMemoryStore {
-    private static final Logger log = LoggerFactory.getLogger(BotMemoryStore.class);
+public final class AgentMemoryStore {
+    private static final Logger log = LoggerFactory.getLogger(AgentMemoryStore.class);
 
     public record Turn(long ts, String relation, String sender, String msg, String reply) {}
 
     private static final ConcurrentHashMap<String, AtomicBoolean> COMPACTION_LOCKS = new ConcurrentHashMap<>();
 
-    private BotMemoryStore() {}
+    private AgentMemoryStore() {}
 
     public static synchronized void ensureDir() {
         try {

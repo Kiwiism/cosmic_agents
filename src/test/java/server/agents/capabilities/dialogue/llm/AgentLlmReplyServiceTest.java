@@ -1,4 +1,4 @@
-package server.bots.llm;
+package server.agents.capabilities.dialogue.llm;
 
 import server.agents.capabilities.dialogue.llm.AgentLlmConfig;
 
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-class BotLlmReplyManagerTest {
+class AgentLlmReplyServiceTest {
     @Test
     void deliverReplyPartsRoutesImmediateAndFollowUpsThroughAgentReplyRuntime() throws Exception {
         BotEntry entry = newBotEntry();
@@ -30,7 +30,7 @@ class BotLlmReplyManagerTest {
         List<Runnable> actions = new ArrayList<>();
 
         try (MockedStatic<AgentBotLlmRuntime> replies = mockStatic(AgentBotLlmRuntime.class)) {
-            BotLlmReplyManager.deliverReplyParts(entry, List.of("one", "two", "three"), (action, delayMs) -> {
+            AgentLlmReplyService.deliverReplyParts(entry, List.of("one", "two", "three"), (action, delayMs) -> {
                 delays.add(delayMs);
                 actions.add(action);
             });
@@ -47,15 +47,15 @@ class BotLlmReplyManagerTest {
     }
 
     @Test
-    void promptBuildersUseAgentIdentityBoundaryValues() throws Exception {
+    void AgentPromptBuildersUseAgentIdentityBoundaryValues() throws Exception {
         Character bot = mock(Character.class);
         when(bot.getName()).thenReturn("agent123");
         when(bot.getJob()).thenReturn(Job.THIEF);
         when(bot.getLevel()).thenReturn(30);
         BotEntry entry = newBotEntry(bot, null);
 
-        String system = PromptBuilder.buildSystem(entry, SenderRelation.STRANGER, "Alice");
-        String prompt = PromptBuilder.buildPrompt(entry, "Alice", "hi", "", List.of());
+        String system = AgentPromptBuilder.buildSystem(entry, AgentSenderRelation.STRANGER, "Alice");
+        String prompt = AgentPromptBuilder.buildPrompt(entry, "Alice", "hi", "", List.of());
 
         assertTrue(system.contains("Your IGN is agent123."));
         assertTrue(system.contains("level 30 thief"));
@@ -63,7 +63,7 @@ class BotLlmReplyManagerTest {
     }
 
     @Test
-    void senderRelationUsesAgentIdentityBoundaryValues() throws Exception {
+    void AgentSenderRelationUsesAgentIdentityBoundaryValues() throws Exception {
         Character bot = mock(Character.class);
         Character owner = mock(Character.class);
         Character sender = mock(Character.class);
@@ -71,7 +71,7 @@ class BotLlmReplyManagerTest {
         when(sender.getId()).thenReturn(10);
         BotEntry entry = newBotEntry(bot, owner);
 
-        assertEquals(SenderRelation.OWNER, SenderRelation.resolve(entry, sender));
+        assertEquals(AgentSenderRelation.OWNER, AgentSenderRelation.resolve(entry, sender));
     }
 
     private static BotEntry newBotEntry() throws Exception {

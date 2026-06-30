@@ -1,4 +1,4 @@
-package server.bots.llm;
+package server.agents.capabilities.dialogue.llm;
 
 import server.agents.capabilities.dialogue.llm.AgentLlmConfig;
 

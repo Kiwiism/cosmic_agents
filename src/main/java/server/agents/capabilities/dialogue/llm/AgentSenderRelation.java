@@ -1,4 +1,4 @@
-package server.bots.llm;
+package server.agents.capabilities.dialogue.llm;
 
 import client.Character;
 import net.server.world.Party;
@@ -6,10 +6,10 @@ import net.server.world.PartyCharacter;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
 
-public enum SenderRelation {
+public enum AgentSenderRelation {
     OWNER, PARTY, STRANGER;
 
-    public static SenderRelation resolve(BotEntry entry, Character sender) {
+    public static AgentSenderRelation resolve(BotEntry entry, Character sender) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (entry == null || bot == null || sender == null) {
             return STRANGER;

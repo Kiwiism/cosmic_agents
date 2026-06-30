@@ -1,4 +1,4 @@
-package server.bots.llm;
+package server.agents.capabilities.dialogue.llm;
 
 import client.Character;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
@@ -6,10 +6,10 @@ import server.bots.BotEntry;
 
 import java.util.List;
 
-public final class PromptBuilder {
-    private PromptBuilder() {}
+public final class AgentPromptBuilder {
+    private AgentPromptBuilder() {}
 
-    public static String buildSystem(BotEntry entry, SenderRelation relation, String senderName) {
+    public static String buildSystem(BotEntry entry, AgentSenderRelation relation, String senderName) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         String botName = bot != null ? bot.getName() : "bot";
         String job = bot != null ? bot.getJob().toString().toLowerCase().replace('_', ' ') : "adventurer";
@@ -31,12 +31,12 @@ public final class PromptBuilder {
     }
 
     public static String buildPrompt(BotEntry entry, String senderName, String newMessage,
-                                     String summary, List<BotMemoryStore.Turn> recent) {
+                                     String summary, List<AgentMemoryStore.Turn> recent) {
         StringBuilder sb = new StringBuilder(512);
         if (summary != null && !summary.isBlank()) {
             sb.append("What you remember: ").append(summary).append("\n\n");
         }
-        String situation = SituationBuilder.build(entry);
+        String situation = AgentSituationBuilder.build(entry);
         if (!situation.isEmpty()) {
             sb.append(situation).append('\n');
         }
@@ -46,8 +46,8 @@ public final class PromptBuilder {
                     ? AgentBotRuntimeIdentityRuntime.botName(entry)
                     : "bot";
             long now = System.currentTimeMillis();
-            for (BotMemoryStore.Turn t : recent) {
-                String age = SituationBuilder.ago(now - t.ts());
+            for (AgentMemoryStore.Turn t : recent) {
+                String age = AgentSituationBuilder.ago(now - t.ts());
                 sb.append('[').append(age).append(" ago] ")
                         .append(t.sender()).append(": ").append(t.msg()).append('\n');
                 sb.append(botName).append(": ").append(t.reply()).append('\n');

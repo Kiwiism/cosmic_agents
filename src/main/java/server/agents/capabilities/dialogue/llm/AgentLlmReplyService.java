@@ -1,4 +1,4 @@
-package server.bots.llm;
+package server.agents.capabilities.dialogue.llm;
 
 import server.agents.capabilities.dialogue.llm.AgentLlmConfig;
 
@@ -27,8 +27,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * - Per-bot in-flight gate prevents queueing multiple replies for one bot.
  * - All errors are swallowed; LLM failures must never crash a bot tick.
  */
-public final class BotLlmReplyManager {
-    private static final Logger log = LoggerFactory.getLogger(BotLlmReplyManager.class);
+public final class AgentLlmReplyService {
+    private static final Logger log = LoggerFactory.getLogger(AgentLlmReplyService.class);
 
     private static final ScheduledExecutorService EXEC = Executors.newScheduledThreadPool(2, r -> {
         Thread t = new Thread(r, "bot-llm");
@@ -42,15 +42,15 @@ public final class BotLlmReplyManager {
     /** Tracks per-bot in-flight requests so we don't queue more than one. */
     private static final java.util.concurrent.ConcurrentHashMap<Integer, AtomicInteger> inflightByBotId =
             new java.util.concurrent.ConcurrentHashMap<>();
-    private static final java.util.concurrent.ConcurrentHashMap<Integer, java.util.ArrayDeque<BotMemoryStore.Turn>> recentMemoryByBotId =
+    private static final java.util.concurrent.ConcurrentHashMap<Integer, java.util.ArrayDeque<AgentMemoryStore.Turn>> recentMemoryByBotId =
             new java.util.concurrent.ConcurrentHashMap<>();
 
-    private BotLlmReplyManager() {}
+    private AgentLlmReplyService() {}
 
     private static Semaphore gate() {
         int cap = AgentLlmConfig.maxConcurrentGlobal;
         if (cap != gateCapacity) {
-            synchronized (BotLlmReplyManager.class) {
+            synchronized (AgentLlmReplyService.class) {
                 if (cap != gateCapacity) {
                     globalGate = new Semaphore(cap);
                     gateCapacity = cap;
@@ -65,10 +65,10 @@ public final class BotLlmReplyManager {
         if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry) || sender == null) return;
         if (message == null || message.isBlank()) return;
 
-        SenderRelation relation = SenderRelation.resolve(entry, sender);
+        AgentSenderRelation relation = AgentSenderRelation.resolve(entry, sender);
         // Strangers' whispers are dropped pre-LLM (whisper hook isn't wired in
         // Phase 1 anyway, but defend in depth).
-        if (relation == SenderRelation.STRANGER
+        if (relation == AgentSenderRelation.STRANGER
                 && AgentBotReplyChannelStateRuntime.replyChannel(entry) == AgentReplyChannel.WHISPER) {
             return;
         }
@@ -99,19 +99,19 @@ public final class BotLlmReplyManager {
         });
     }
 
-    private static void runReply(BotEntry entry, String senderName, SenderRelation relation, String message) {
+    private static void runReply(BotEntry entry, String senderName, AgentSenderRelation relation, String message) {
         String botName = AgentBotRuntimeIdentityRuntime.botName(entry);
         int botId = AgentBotRuntimeIdentityRuntime.botId(entry);
         // Use disk-backed memory only when enabled; otherwise keep a tiny recent in-memory window.
-        String summary = AgentLlmConfig.memoryEnabled ? BotMemoryStore.loadSummary(botName) : "";
+        String summary = AgentLlmConfig.memoryEnabled ? AgentMemoryStore.loadSummary(botName) : "";
         // Prompt shows ALL uncompacted turns (cursor..end). The summary covers everything before
         // cursor — together they're gap-free. Compaction (below) keeps the uncompacted window
         // bounded to recentTurnsInPrompt..recentTurnsInPrompt+compactBatchSize turns.
-        List<BotMemoryStore.Turn> recent = AgentLlmConfig.memoryEnabled
-                ? BotMemoryStore.loadUncompacted(botName)
+        List<AgentMemoryStore.Turn> recent = AgentLlmConfig.memoryEnabled
+                ? AgentMemoryStore.loadUncompacted(botName)
                 : loadRecentMemory(botId, System.currentTimeMillis());
-        String system = PromptBuilder.buildSystem(entry, relation, senderName);
-        String prompt = PromptBuilder.buildPrompt(entry, senderName, message, summary, recent);
+        String system = AgentPromptBuilder.buildSystem(entry, relation, senderName);
+        String prompt = AgentPromptBuilder.buildPrompt(entry, senderName, message, summary, recent);
 
         long t0 = System.currentTimeMillis();
         if (AgentLlmConfig.debugLog) {
@@ -154,25 +154,25 @@ public final class BotLlmReplyManager {
                 (action, delayMs) -> EXEC.schedule(action, delayMs, TimeUnit.MILLISECONDS));
 
         if (!looksLowQuality(message, reply)) {
-            BotMemoryStore.Turn turn = new BotMemoryStore.Turn(System.currentTimeMillis(),
+            AgentMemoryStore.Turn turn = new AgentMemoryStore.Turn(System.currentTimeMillis(),
                     relation.name().toLowerCase(), senderName, message, reply);
             if (AgentLlmConfig.memoryEnabled) {
-                BotMemoryStore.appendTurn(botName, turn);
+                AgentMemoryStore.appendTurn(botName, turn);
             } else {
                 rememberRecent(botId, turn);
             }
         }
 
         // Compact when uncompacted overflows the window. One LLM call per compactBatchSize turns.
-        if (AgentLlmConfig.memoryEnabled && BotMemoryStore.countUncompacted(botName)
+        if (AgentLlmConfig.memoryEnabled && AgentMemoryStore.countUncompacted(botName)
                 > AgentLlmConfig.recentTurnsInPrompt + AgentLlmConfig.compactBatchSize) {
-            EXEC.submit(() -> BotMemoryStore.compact(botName));
+            EXEC.submit(() -> AgentMemoryStore.compact(botName));
         }
     }
 
-    private static List<BotMemoryStore.Turn> loadRecentMemory(int botId, long now) {
+    private static List<AgentMemoryStore.Turn> loadRecentMemory(int botId, long now) {
         if (!AgentLlmConfig.recentMemoryEnabled) return List.of();
-        java.util.ArrayDeque<BotMemoryStore.Turn> turns = recentMemoryByBotId.get(botId);
+        java.util.ArrayDeque<AgentMemoryStore.Turn> turns = recentMemoryByBotId.get(botId);
         if (turns == null) return List.of();
         synchronized (turns) {
             pruneRecent(turns, now);
@@ -180,9 +180,9 @@ public final class BotLlmReplyManager {
         }
     }
 
-    private static void rememberRecent(int botId, BotMemoryStore.Turn turn) {
+    private static void rememberRecent(int botId, AgentMemoryStore.Turn turn) {
         if (!AgentLlmConfig.recentMemoryEnabled || turn == null) return;
-        java.util.ArrayDeque<BotMemoryStore.Turn> turns =
+        java.util.ArrayDeque<AgentMemoryStore.Turn> turns =
                 recentMemoryByBotId.computeIfAbsent(botId, k -> new java.util.ArrayDeque<>());
         synchronized (turns) {
             turns.addLast(turn);
@@ -190,7 +190,7 @@ public final class BotLlmReplyManager {
         }
     }
 
-    private static void pruneRecent(java.util.ArrayDeque<BotMemoryStore.Turn> turns, long now) {
+    private static void pruneRecent(java.util.ArrayDeque<AgentMemoryStore.Turn> turns, long now) {
         long maxAge = Math.max(0L, AgentLlmConfig.recentMemoryMaxAgeMs);
         int maxTurns = Math.max(0, AgentLlmConfig.recentMemoryMaxTurns);
         while (!turns.isEmpty() && (maxTurns == 0 || turns.size() > maxTurns
