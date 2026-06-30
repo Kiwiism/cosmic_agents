@@ -40,6 +40,25 @@ class AgentCombatSkillClassifierTest {
     }
 
     @Test
+    void identifiesOnlyNonBlacklistedActiveSupportBuffsAsCacheable() {
+        Skill haste = skill(Assassin.HASTE, false);
+        when(haste.getAction()).thenReturn(true);
+        StatEffect support = mock(StatEffect.class);
+        when(support.isOverTime()).thenReturn(true);
+        when(support.getDuration()).thenReturn(10_000);
+        when(support.getStatups()).thenReturn(List.of(new Pair<>(BuffStat.SPEED, 20)));
+
+        Skill darkSight = skill(Rogue.DARK_SIGHT, false);
+        when(darkSight.getAction()).thenReturn(true);
+
+        StatEffect passive = mock(StatEffect.class);
+
+        assertTrue(AgentCombatSkillClassifier.isCacheableSupportBuffSkill(haste, support));
+        assertFalse(AgentCombatSkillClassifier.isCacheableSupportBuffSkill(darkSight, support));
+        assertFalse(AgentCombatSkillClassifier.isCacheableSupportBuffSkill(haste, passive));
+    }
+
+    @Test
     void identifiesHealSkillIdsAndActiveHealEffects() {
         Skill heal = mock(Skill.class);
         StatEffect effect = mock(StatEffect.class);

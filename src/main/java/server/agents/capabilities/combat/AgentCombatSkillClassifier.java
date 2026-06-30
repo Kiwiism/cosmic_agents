@@ -69,6 +69,33 @@ public final class AgentCombatSkillClassifier {
     private AgentCombatSkillClassifier() {
     }
 
+    public enum SkillCacheBucket {
+        ACTIVE_HEAL,
+        ACTIVE_ATTACK,
+        SUMMON,
+        SUPPORT_BUFF,
+        IGNORE
+    }
+
+    public static SkillCacheBucket classifySkillCacheBucket(Skill skill, StatEffect effect) {
+        if (skill == null) {
+            return SkillCacheBucket.IGNORE;
+        }
+        if (isHealSkill(skill.getId())) {
+            return isActiveHealSkill(skill, effect) ? SkillCacheBucket.ACTIVE_HEAL : SkillCacheBucket.IGNORE;
+        }
+        if (isActiveAttackSkill(skill, effect)) {
+            return SkillCacheBucket.ACTIVE_ATTACK;
+        }
+        if (isSummonSkill(effect)) {
+            return SkillCacheBucket.SUMMON;
+        }
+        if (isActiveSupportSkill(skill, effect) && !isBuffBlacklisted(skill.getId())) {
+            return SkillCacheBucket.SUPPORT_BUFF;
+        }
+        return SkillCacheBucket.IGNORE;
+    }
+
     public static boolean isPartySupportSkill(int skillId) {
         return PARTY_SUPPORT_SKILL_IDS.contains(skillId);
     }
@@ -114,6 +141,10 @@ public final class AgentCombatSkillClassifier {
             return false;
         }
         return skill.getAction() || skill.getSkillType() == 2;
+    }
+
+    public static boolean isCacheableSupportBuffSkill(Skill skill, StatEffect effect) {
+        return isActiveSupportSkill(skill, effect) && !isBuffBlacklisted(skill.getId());
     }
 
     public static boolean isSummonSkill(StatEffect effect) {

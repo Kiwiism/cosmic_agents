@@ -364,8 +364,7 @@ public class BotCombatManager {
                 continue;
             }
 
-            if (!isActiveSupportSkill(skill, fx)) continue;
-            if (AgentCombatSkillClassifier.isBuffBlacklisted(skill.getId())) continue;
+            if (!AgentCombatSkillClassifier.isCacheableSupportBuffSkill(skill, fx)) continue;
             AgentBotCombatSkillCacheStateRuntime.addBuffSkillId(entry, skill.getId());
             AgentBotCombatBuffStateRuntime.ensureNextBuffAt(entry, skill.getId(), 0L);
         }

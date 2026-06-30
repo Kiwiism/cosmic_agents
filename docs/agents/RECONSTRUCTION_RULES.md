@@ -1470,6 +1470,10 @@ Recent reconstruction notes:
 - AoE skill-cache score calculation now lives in `AgentCombatSkillClassifier`,
   preserving the legacy `max(0, damage) * max(1, hits) * max(1, mobs)` ranking
   formula while BotCombatManager still mutates the temporary skill-cache state.
+- Support-buff skill-cache eligibility now lives in
+  `AgentCombatSkillClassifier`, preserving the legacy active-support-skill plus
+  buff-blacklist gate while BotCombatManager still mutates the temporary
+  buff-skill cache and rebuff timers.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
