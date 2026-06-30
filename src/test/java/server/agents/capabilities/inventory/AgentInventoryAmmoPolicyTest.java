@@ -43,6 +43,15 @@ class AgentInventoryAmmoPolicyTest {
     }
 
     @Test
+    void shouldAllowTradeAmmoOnlyForProjectileWeaponTypes() {
+        assertEquals(WeaponType.BOW, AgentInventoryAmmoPolicy.tradeAmmoWeaponType(WeaponType.BOW));
+        assertEquals(WeaponType.CROSSBOW, AgentInventoryAmmoPolicy.tradeAmmoWeaponType(WeaponType.CROSSBOW));
+        assertEquals(WeaponType.CLAW, AgentInventoryAmmoPolicy.tradeAmmoWeaponType(WeaponType.CLAW));
+        assertEquals(WeaponType.GUN, AgentInventoryAmmoPolicy.tradeAmmoWeaponType(WeaponType.GUN));
+        assertNull(AgentInventoryAmmoPolicy.tradeAmmoWeaponType(WeaponType.SWORD1H));
+    }
+
+    @Test
     void shouldCollectMatchingAmmoStacksByProjectileWatkThenItemId() {
         Character donor = mock(Character.class);
         Inventory use = mock(Inventory.class);

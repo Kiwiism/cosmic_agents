@@ -46,6 +46,13 @@ public final class AgentInventoryAmmoPolicy {
         return null;
     }
 
+    public static WeaponType tradeAmmoWeaponType(WeaponType weaponType) {
+        return switch (weaponType) {
+            case BOW, CROSSBOW, CLAW, GUN -> weaponType;
+            default -> null;
+        };
+    }
+
     public static List<Item> collectShareItems(Character donorAgent,
                                                WeaponType needyWeaponType,
                                                int maxQty,

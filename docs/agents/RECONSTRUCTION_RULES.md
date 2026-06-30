@@ -1315,6 +1315,9 @@ Recent reconstruction notes:
   Donor USE-inventory scanning, weapon-ammo filtering, projectile WATK/item-id
   ordering, and nine-stack/share-budget limits are unchanged; trade start/retry
   side effects remain in the temporary inventory seam.
+- Trade-ammo weapon-type eligibility now enters through
+  `AgentInventoryAmmoPolicy`; bow, crossbow, claw, and gun remain the only
+  weapon families that request ammo-share behavior.
 - Physics position, horizontal-speed, and ground-travel carry state now enter
   through `AgentBotMovementPhysicsStateRuntime`; BotPhysicsEngine preserves
   landing, grounded travel, swim, airborne collision, climb-position, and reset

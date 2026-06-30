@@ -1592,9 +1592,6 @@ public class BotInventoryManager {
 
     private static WeaponType tradeAmmoWeaponType(Character bot) {
         WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
-        return switch (weaponType) {
-            case BOW, CROSSBOW, CLAW, GUN -> weaponType;
-            default -> null;
-        };
+        return AgentInventoryAmmoPolicy.tradeAmmoWeaponType(weaponType);
     }
 }
