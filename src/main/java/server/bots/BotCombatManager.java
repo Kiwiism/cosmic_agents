@@ -1261,10 +1261,6 @@ public class BotCombatManager {
         return AgentMobTouchPolicy.botTouchSweepBounds(previousPos, currentPos, cfg.MOB_TOUCH_SWEEP_HEIGHT);
     }
 
-    private static Rectangle inclusiveRectangle(int left, int top, int right, int bottom) {
-        return AgentMobTouchPolicy.inclusiveRectangle(left, top, right, bottom);
-    }
-
     private static void rememberMobTouchCheck(BotEntry entry, Character bot, Point position) {
         if (entry == null || bot == null || position == null) {
             return;

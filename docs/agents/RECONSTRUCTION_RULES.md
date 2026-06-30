@@ -1629,6 +1629,9 @@ Recent reconstruction notes:
   from `BotManager`; the temporary `BotCombatManager`
   `isTargetInAttackRange` wrapper has been removed while preserving the same
   null-plan rejection, plan-hitbox intersection, and basic-range fallback.
+- The unused bot-side inclusive-rectangle pass-through has been removed from
+  `BotCombatManager`; mob-touch sweep geometry remains Agent-owned in
+  `AgentMobTouchPolicy`.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
