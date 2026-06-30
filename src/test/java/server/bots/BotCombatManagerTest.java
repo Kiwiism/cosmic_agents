@@ -39,6 +39,7 @@ import org.mockito.Mockito;
 import org.mockito.ArgumentCaptor;
 import server.StatEffect;
 import server.agents.integration.AgentBotCombatBuffStateRuntime;
+import server.agents.integration.AgentBotCombatBuffRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatFacingRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
@@ -1069,7 +1070,7 @@ class BotCombatManagerTest {
         try (MockedStatic<SkillFactory> skillFactory = Mockito.mockStatic(SkillFactory.class)) {
             skillFactory.when(() -> SkillFactory.getSkill(Cleric.BLESS)).thenReturn(bless);
 
-            BotCombatManager.tickBuffs(entry, bot);
+            AgentBotCombatBuffRuntime.tickBuffs(entry, bot, BotCombatManager.cfg);
         }
 
         assertEquals("no skill buff checks yet", AgentBotSkillBuffDebugStateRuntime.lastActionSummary(entry));

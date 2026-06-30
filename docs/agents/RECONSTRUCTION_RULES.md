@@ -1695,6 +1695,11 @@ Recent reconstruction notes:
   temporary compatibility delegate while the Agent reporting runtime preserves
   the same target lookup, attack route, speed, cooldown, tick, and AI cadence
   output.
+- Combat support-buff tick orchestration now lives in
+  `AgentBotCombatBuffRuntime`; `BotCombatManager.tickBuffs` is a temporary
+  compatibility delegate while the Agent runtime preserves the same buff-enable
+  gates, living-mob preflight, party-support checks, SPECIAL_MOVE dispatch,
+  cooldown windows, and debug summaries.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
