@@ -51,4 +51,22 @@ public final class AgentInventoryItemPolicy {
         }
         return result;
     }
+
+    public static List<Short> selectSafeDropSlots(Character agent,
+                                                  InventoryType type,
+                                                  Predicate<Item> filter,
+                                                  IntPredicate isQuestItem,
+                                                  boolean untradeableItemsTradeable) {
+        List<Short> slots = new ArrayList<>();
+        Inventory inventory = agent.getInventory(type);
+        for (short slot = 1; slot <= inventory.getSlotLimit(); slot++) {
+            Item item = inventory.getItem(slot);
+            if (item != null
+                    && isSafeToDrop(item, isQuestItem, untradeableItemsTradeable)
+                    && filter.test(item)) {
+                slots.add(slot);
+            }
+        }
+        return slots;
+    }
 }

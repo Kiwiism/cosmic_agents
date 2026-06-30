@@ -95,4 +95,30 @@ class AgentInventoryItemPolicyTest {
 
         assertEquals(List.of(kept), items);
     }
+
+    @Test
+    void shouldSelectSafeDropSlotsInSlotOrder() {
+        Character agent = mock(Character.class);
+        Inventory inventory = mock(Inventory.class);
+        Item first = mock(Item.class);
+        Item quest = mock(Item.class);
+        Item second = mock(Item.class);
+
+        when(agent.getInventory(InventoryType.USE)).thenReturn(inventory);
+        when(inventory.getSlotLimit()).thenReturn((byte) 4);
+        when(inventory.getItem((short) 1)).thenReturn(first);
+        when(inventory.getItem((short) 2)).thenReturn(quest);
+        when(inventory.getItem((short) 3)).thenReturn(null);
+        when(inventory.getItem((short) 4)).thenReturn(second);
+        when(first.getItemId()).thenReturn(3001);
+        when(quest.getItemId()).thenReturn(3002);
+        when(second.getItemId()).thenReturn(3003);
+
+        List<Short> slots = AgentInventoryItemPolicy.selectSafeDropSlots(agent, InventoryType.USE,
+                item -> item.getItemId() != 3003,
+                itemId -> itemId == 3002,
+                false);
+
+        assertEquals(List.of((short) 1), slots);
+    }
 }

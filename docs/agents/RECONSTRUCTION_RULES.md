@@ -1328,6 +1328,9 @@ Recent reconstruction notes:
 - Inventory safe-bag collection now enters through `AgentInventoryItemPolicy`.
   Slot-order scans still filter through the same drop-safety rule and caller
   predicate before appending candidates for trade/drop flows.
+- Inventory drop-slot selection now enters through `AgentInventoryItemPolicy`.
+  Drop commands still execute through the bot seam, but the slot list is chosen
+  by the same Agent-owned safety and caller predicate rules.
 - Physics position, horizontal-speed, and ground-travel carry state now enter
   through `AgentBotMovementPhysicsStateRuntime`; BotPhysicsEngine preserves
   landing, grounded travel, swim, airborne collision, climb-position, and reset

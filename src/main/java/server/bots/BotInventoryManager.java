@@ -1483,11 +1483,9 @@ public class BotInventoryManager {
 
     private static int dropFromBag(Character bot, InventoryType type, Predicate<Item> filter) {
         Inventory inv = bot.getInventory(type);
-        List<Short> slots = new ArrayList<>();
-        for (short slot = 1; slot <= inv.getSlotLimit(); slot++) {
-            Item item = inv.getItem(slot);
-            if (item != null && isSafeToDrop(item) && filter.test(item)) slots.add(slot);
-        }
+        List<Short> slots = AgentInventoryItemPolicy.selectSafeDropSlots(bot, type, filter,
+                ItemInformationProvider.getInstance()::isQuestItem,
+                YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE);
         int count = 0;
         for (short slot : slots) {
             Item item = inv.getItem(slot);
