@@ -48,6 +48,9 @@ Recent map updates:
 - `src/main/java/server/bots/BotChatManager.java` has been deleted. `BotManager`
   now calls `AgentChatRuntime` with `AgentBotChatOrchestratorContext` directly;
   `BotChatManagerTest` remains only as a historical parity test class name.
+- `server.bots.llm.CommandTypoSuggester` has moved to
+  `server.agents.commands.AgentCommandTypoSuggester`; production and focused
+  tests now use the Agent-owned command typo utility directly.
 
 | Current file | Target Agent destination | Status |
 | --- | --- | --- |
@@ -114,7 +117,7 @@ Recent map updates:
 | `src/main/java/server/bots/llm/BotLlmConfig.java` | `server.agents.capabilities.dialogue.llm.AgentLlmConfig` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/llm/BotLlmReplyManager.java` | `server.agents.capabilities.dialogue.llm.AgentLlmReplyService` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/llm/BotMemoryStore.java` | `server.agents.capabilities.dialogue.llm.AgentMemoryStore` | `MIGRATE_TO_AGENT` |
-| `src/main/java/server/bots/llm/CommandTypoSuggester.java` | `server.agents.commands.AgentCommandTypoSuggester` | `MIGRATE_TO_AGENT` |
+| `src/main/java/server/bots/llm/CommandTypoSuggester.java` | `server.agents.commands.AgentCommandTypoSuggester` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/llm/OllamaClient.java` | `server.agents.capabilities.dialogue.llm.OllamaClient` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/llm/PromptBuilder.java` | `server.agents.capabilities.dialogue.llm.AgentPromptBuilder` | `MIGRATE_TO_AGENT` |
 | `src/main/java/server/bots/llm/SenderRelation.java` | `server.agents.capabilities.dialogue.llm.AgentSenderRelation` | `MIGRATE_TO_AGENT` |

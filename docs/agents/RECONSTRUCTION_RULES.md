@@ -1813,6 +1813,11 @@ Recent reconstruction notes:
   fall-through, targeted-command, group-supply, broadcast, and whisper behavior.
   The legacy `BotChatManagerTest` class name remains only as the historical
   focused chat/dialogue parity suite.
+- Command typo suggestion now lives in
+  `server.agents.commands.AgentCommandTypoSuggester`; `BotManager` uses the
+  Agent-owned suggester directly, and the old `server.bots.llm`
+  implementation/test have been removed. Known verbs, denylist, bounded
+  Levenshtein behavior, and suggestion thresholds are unchanged.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

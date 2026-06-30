@@ -74,6 +74,7 @@ import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
 import server.agents.capabilities.dialogue.AgentChatRuntime;
 import server.agents.integration.AgentBotChatOrchestratorContext;
 import server.agents.commands.AgentReplyChannel;
+import server.agents.commands.AgentCommandTypoSuggester;
 import server.agents.auth.AgentAuthorizationResult;
 import server.agents.registry.AgentResolvedCharacter;
 import client.BotClient;
@@ -1047,7 +1048,7 @@ public class BotManager {
             AgentBotReplyChannelStateRuntime.setReplyChannel(targetedBot.entry(), channel);
             String cmd = targetedBot.commandText();
             if (server.bots.llm.BotLlmConfig.typoSuggesterEnabled) {
-                String typo = server.bots.llm.CommandTypoSuggester.suggest(cmd);
+                String typo = AgentCommandTypoSuggester.suggest(cmd);
                 if (typo != null) {
                     AgentBotManagerReplyRuntime.queueReply(targetedBot.entry(), "did you mean '" + typo + "'?");
                     return;
@@ -1093,7 +1094,7 @@ public class BotManager {
 
         // No name prefix — typo-suggest once via the first bot, otherwise broadcast.
         if (server.bots.llm.BotLlmConfig.typoSuggesterEnabled) {
-            String typo = server.bots.llm.CommandTypoSuggester.suggest(message);
+            String typo = AgentCommandTypoSuggester.suggest(message);
             if (typo != null) {
                 BotEntry first = entries.get(0);
                 AgentBotReplyChannelStateRuntime.setReplyChannel(first, channel);
