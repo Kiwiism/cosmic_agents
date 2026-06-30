@@ -20,6 +20,7 @@ import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.capabilities.looting.AgentLootEligibility;
 import server.agents.capabilities.social.AgentScrollReactionService;
 import server.agents.capabilities.supplies.AgentPotionService;
+import server.agents.capabilities.trade.AgentOfferService;
 
 
 import server.agents.integration.AgentBotManagerReplyRuntime;
@@ -798,7 +799,7 @@ public class BotManager {
         // by one timer tick keeps rapid pickups from stalling the player behind K×N DPs.
         AgentBotManagerSchedulerRuntime.afterDelay(0L, () -> {
             for (BotEntry entry : entries) {
-                BotOfferManager.notifyOwnerGainedEquip(entry, AgentBotRuntimeIdentityRuntime.bot(entry), item);
+                AgentOfferService.notifyOwnerGainedEquip(entry, AgentBotRuntimeIdentityRuntime.bot(entry), item);
             }
         });
     }
@@ -1134,7 +1135,7 @@ public class BotManager {
         List<BotEntry> matches = new ArrayList<>();
         for (List<BotEntry> entries : bots.values()) {
             for (BotEntry entry : entries) {
-                BotOfferManager.expirePendingOffer(entry);
+                AgentOfferService.expirePendingOffer(entry);
                 if (!isPendingLootOfferTarget(entry, speaker)) {
                     continue;
                 }
@@ -1145,7 +1146,7 @@ public class BotManager {
 
         AgentBotTargetedCommandMatch targetedBot = AgentBotCommandParser.resolveTargetedBot(matches, message);
         if (targetedBot.entry() != null) {
-            return BotOfferManager.handlePendingOfferResponse(targetedBot.entry(), speaker, targetedBot.commandText());
+            return AgentOfferService.handlePendingOfferResponse(targetedBot.entry(), speaker, targetedBot.commandText());
         }
         if (targetedBot.feedbackMessage() != null) {
             speaker.dropMessage(5, targetedBot.feedbackMessage());
@@ -1153,7 +1154,7 @@ public class BotManager {
         }
 
         if (matches.size() == 1) {
-            return BotOfferManager.handlePendingOfferResponse(matches.get(0), speaker, message);
+            return AgentOfferService.handlePendingOfferResponse(matches.get(0), speaker, message);
         }
         if (matches.size() > 1 && looksLikeConfirmation(message)) {
             speaker.dropMessage(5, "More than one bot is waiting on you. Say '<botname> yes' or '<slot> yes'.");
@@ -1165,7 +1166,7 @@ public class BotManager {
 
     private boolean isPendingLootOfferTarget(BotEntry entry, Character speaker) {
         return entry != null
-                && BotOfferManager.hasPendingOffer(entry)
+                && AgentOfferService.hasPendingOffer(entry)
                 && AgentBotOfferStateRuntime.pendingOfferRecipientIs(entry, speaker)
                 && AgentBotRuntimeIdentityRuntime.botMapId(entry) == speaker.getMapId();
     }
@@ -2082,7 +2083,7 @@ public class BotManager {
             BotMovementManager.broadcastMovement(entry);
         }
 
-        BotOfferManager.expirePendingOffer(entry);
+        AgentOfferService.expirePendingOffer(entry);
         boolean runAiTick = consumeAiTick(entry);
         AgentBotTickStateRuntime.recordTick(entry, runAiTick, System.currentTimeMillis());
 

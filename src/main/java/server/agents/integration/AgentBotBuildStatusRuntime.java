@@ -5,7 +5,7 @@ import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.capabilities.build.AgentBuildService;
 import server.bots.BotEntry;
 import server.bots.BotEquipManager;
-import server.bots.BotOfferManager;
+import server.agents.capabilities.trade.AgentOfferService;
 
 import java.util.List;
 
@@ -61,7 +61,7 @@ public final class AgentBotBuildStatusRuntime {
                         AgentBotStatusRuntime.gearSuggestionState(entry),
                         AgentChatStatusRuntime.gearSuggestionActions(
                                 entry.owner() != null,
-                                () -> BotOfferManager.offerBestRecommendedGear(entry, bot, entry.owner())),
+                                () -> AgentOfferService.offerBestRecommendedGear(entry, bot, entry.owner())),
                         System.currentTimeMillis());
             }
 
@@ -71,7 +71,7 @@ public final class AgentBotBuildStatusRuntime {
                         AgentBotStatusRuntime.gearSuggestionState(entry),
                         AgentChatStatusRuntime.gearSuggestionActions(
                                 entry.owner() != null,
-                                () -> BotOfferManager.offerBestGearToSibling(entry, bot)),
+                                () -> AgentOfferService.offerBestGearToSibling(entry, bot)),
                         System.currentTimeMillis());
             }
 
@@ -80,7 +80,7 @@ public final class AgentBotBuildStatusRuntime {
                 return entry.owner() != null
                         && !AgentChatStatusRuntime.isOwnerIdle(AgentBotStatusRuntime.statusState(entry))
                         && !AgentBotPendingActionStateRuntime.hasPendingAction(entry)
-                        && !BotOfferManager.hasPendingOffer(entry);
+                        && !AgentOfferService.hasPendingOffer(entry);
             }
 
             @Override
@@ -89,7 +89,7 @@ public final class AgentBotBuildStatusRuntime {
                 List<BotEquipManager.EquipRecommendation> recs =
                         BotEquipManager.findRecommendedEquips(bot, owner);
                 if (!recs.isEmpty()) {
-                    BotOfferManager.notifyOwnerGainedEquip(entry, bot, recs.get(0).candidate());
+                    AgentOfferService.notifyOwnerGainedEquip(entry, bot, recs.get(0).candidate());
                 }
             }
         };

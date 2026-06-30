@@ -1,4 +1,4 @@
-package server.bots;
+package server.agents.capabilities.trade;
 
 import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
@@ -21,12 +21,16 @@ import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.agents.integration.AgentBotReplyChannelStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.bots.BotEntry;
+import server.bots.BotEquipManager;
+import server.bots.BotInventoryManager;
+import server.bots.BotManager;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public final class BotOfferManager {
+public final class AgentOfferService {
     private static final Pattern POSITIVE_CONFIRM_PATTERN = Pattern.compile(
             "\\b(yes|yep|yeah|yea|y|ok|sure|confirm|do\\s+it|go\\s+(ahead|for\\s+it))\\b",
             Pattern.CASE_INSENSITIVE);
@@ -41,9 +45,9 @@ public final class BotOfferManager {
 
     private record GearOfferChoice(Item item, GearOfferNeed need) {}
 
-    private BotOfferManager() {}
+    private AgentOfferService() {}
 
-    static boolean hasOfferReservation(BotEntry entry) {
+    public static boolean hasOfferReservation(BotEntry entry) {
         return AgentBotOfferStateRuntime.hasOfferReservation(entry);
     }
 
@@ -145,7 +149,7 @@ public final class BotOfferManager {
                 && offerGearItem(entry, bot, starRecipient, throwingStar, GearOfferNeed.CURRENT);
     }
 
-    static void scheduleLootOfferPrompt(BotEntry entry, Character bot, Item item, long delayMs) {
+    public static void scheduleLootOfferPrompt(BotEntry entry, Character bot, Item item, long delayMs) {
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         long now = System.currentTimeMillis();
         if (owner == null
@@ -172,7 +176,7 @@ public final class BotOfferManager {
         AgentBotOfferRuntime.afterDelay(delayMs, () -> promptLootOfferAfterLoot(entry, bot, item, recipient.getId(), scheduledAt));
     }
 
-    static boolean handlePendingOfferResponse(BotEntry entry, Character speaker, String message) {
+    public static boolean handlePendingOfferResponse(BotEntry entry, Character speaker, String message) {
         expirePendingOffer(entry);
         if (!hasPendingOffer(entry)
                 || speaker == null
@@ -213,7 +217,7 @@ public final class BotOfferManager {
         return false;
     }
 
-    static void expirePendingOffer(BotEntry entry) {
+    public static void expirePendingOffer(BotEntry entry) {
         if (AgentBotOfferStateRuntime.pendingOfferExpired(entry, System.currentTimeMillis())) {
             clearPendingOffer(entry);
         }
@@ -306,11 +310,11 @@ public final class BotOfferManager {
         handlePendingOfferResponse(entry, recipientBot, "yes");
     }
 
-    static String buildLootOfferPrompt(String recipientName, String itemName, boolean targetIsOwner) {
+    public static String buildLootOfferPrompt(String recipientName, String itemName, boolean targetIsOwner) {
         return buildSharedLootOfferPrompt(recipientName, itemName, false);
     }
 
-    static String buildLootOfferPrompt(String recipientName, String itemName, boolean targetIsOwner, boolean forLater) {
+    public static String buildLootOfferPrompt(String recipientName, String itemName, boolean targetIsOwner, boolean forLater) {
         return buildSharedLootOfferPrompt(recipientName, itemName, forLater);
     }
 
@@ -491,7 +495,7 @@ public final class BotOfferManager {
         return null;
     }
 
-    static boolean isWeaponOfferCompatible(Character recipient, Item item) {
+    public static boolean isWeaponOfferCompatible(Character recipient, Item item) {
         if (!(item instanceof Equip equip)) {
             return true;
         }
@@ -502,11 +506,11 @@ public final class BotOfferManager {
         return isWeaponOfferCompatible(recipient, ii.getWeaponType(equip.getItemId()));
     }
 
-    static boolean isWeaponOfferCompatible(Character recipient, WeaponType weaponType) {
+    public static boolean isWeaponOfferCompatible(Character recipient, WeaponType weaponType) {
         return BotEquipManager.isWeaponCompatible(recipient, weaponType);
     }
 
-    static boolean isReservedForOtherRecipients(BotEntry entry, Character donor, Item item) {
+    public static boolean isReservedForOtherRecipients(BotEntry entry, Character donor, Item item) {
         if (entry == null || donor == null || item == null) {
             return false;
         }

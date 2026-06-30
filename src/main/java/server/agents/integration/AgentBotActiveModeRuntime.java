@@ -4,7 +4,7 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.bots.BotEntry;
 import server.bots.BotEquipManager;
-import server.bots.BotOfferManager;
+import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.supplies.AgentPotionService;
 
 /**
@@ -55,7 +55,7 @@ public final class AgentBotActiveModeRuntime {
                 AgentBotStatusRuntime.gearSuggestionState(entry),
                 AgentChatStatusRuntime.gearSuggestionActions(
                         entry.owner() != null,
-                        () -> BotOfferManager.offerBestGearToSibling(entry, bot)),
+                        () -> AgentOfferService.offerBestGearToSibling(entry, bot)),
                 System.currentTimeMillis());
     }
 

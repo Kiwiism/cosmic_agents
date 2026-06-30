@@ -1,4 +1,4 @@
-package server.bots;
+package server.agents.capabilities.trade;
 
 import client.Character;
 import client.Job;
@@ -9,6 +9,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotOfferRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
+import server.bots.BotEntry;
+import server.bots.BotEquipManager;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -19,20 +21,20 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class BotOfferManagerTest {
+class AgentOfferServiceTest {
 
     @Test
     void crossbowmanRejectsBowOffers() {
         Character recipient = mock(Character.class);
         when(recipient.getJob()).thenReturn(Job.CROSSBOWMAN);
-        assertFalse(BotOfferManager.isWeaponOfferCompatible(recipient, WeaponType.BOW));
+        assertFalse(AgentOfferService.isWeaponOfferCompatible(recipient, WeaponType.BOW));
     }
 
     @Test
     void crossbowmanAcceptsCrossbowOffers() {
         Character recipient = mock(Character.class);
         when(recipient.getJob()).thenReturn(Job.CROSSBOWMAN);
-        assertTrue(BotOfferManager.isWeaponOfferCompatible(recipient, WeaponType.CROSSBOW));
+        assertTrue(AgentOfferService.isWeaponOfferCompatible(recipient, WeaponType.CROSSBOW));
     }
 
     @Test
@@ -43,7 +45,7 @@ class BotOfferManagerTest {
         entry.setPendingAction("trade");
 
         try (MockedStatic<AgentBotOfferRuntime> offers = mockStatic(AgentBotOfferRuntime.class)) {
-            BotOfferManager.requestBestUpgradeFromOwner(entry, bot);
+            AgentOfferService.requestBestUpgradeFromOwner(entry, bot);
 
             offers.verify(() -> AgentBotOfferRuntime.replyNow(entry, "busy rn, ask me again in a bit"));
         }
@@ -60,7 +62,7 @@ class BotOfferManagerTest {
              MockedStatic<BotEquipManager> equipment = mockStatic(BotEquipManager.class)) {
             offers.when(() -> AgentBotOfferRuntime.isOwnerIdleForOffer(entry)).thenReturn(true);
 
-            BotOfferManager.notifyOwnerGainedEquip(entry, bot, item);
+            AgentOfferService.notifyOwnerGainedEquip(entry, bot, item);
 
             equipment.verify(() -> BotEquipManager.findRecommendationForItem(bot, owner, item), never());
         }
@@ -77,7 +79,7 @@ class BotOfferManagerTest {
 
         ArgumentCaptor<Runnable> action = ArgumentCaptor.forClass(Runnable.class);
         try (MockedStatic<AgentBotOfferRuntime> offers = mockStatic(AgentBotOfferRuntime.class)) {
-            assertTrue(BotOfferManager.handlePendingOfferResponse(entry, owner, "yes"));
+            assertTrue(AgentOfferService.handlePendingOfferResponse(entry, owner, "yes"));
 
             offers.verify(() -> AgentBotOfferRuntime.afterRandomDelay(eq(400), eq(600), action.capture()));
             action.getValue().run();
@@ -96,7 +98,7 @@ class BotOfferManagerTest {
 
         ArgumentCaptor<Runnable> action = ArgumentCaptor.forClass(Runnable.class);
         try (MockedStatic<AgentBotOfferRuntime> offers = mockStatic(AgentBotOfferRuntime.class)) {
-            assertTrue(BotOfferManager.handlePendingOfferResponse(entry, owner, "no"));
+            assertTrue(AgentOfferService.handlePendingOfferResponse(entry, owner, "no"));
 
             offers.verify(() -> AgentBotOfferRuntime.afterRandomDelay(eq(400), eq(600), action.capture()));
             action.getValue().run();
@@ -117,7 +119,7 @@ class BotOfferManagerTest {
 
         ArgumentCaptor<Runnable> action = ArgumentCaptor.forClass(Runnable.class);
         try (MockedStatic<AgentBotOfferRuntime> offers = mockStatic(AgentBotOfferRuntime.class)) {
-            assertTrue(BotOfferManager.handlePendingOfferResponse(entry, speaker, "no"));
+            assertTrue(AgentOfferService.handlePendingOfferResponse(entry, speaker, "no"));
 
             offers.verify(() -> AgentBotOfferRuntime.afterRandomDelay(eq(400), eq(600), action.capture()));
             action.getValue().run();

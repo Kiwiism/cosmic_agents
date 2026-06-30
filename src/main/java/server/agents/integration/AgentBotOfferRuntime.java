@@ -4,7 +4,7 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.commands.AgentReplyChannel;
 import server.bots.BotEntry;
-import server.bots.BotOfferManager;
+import server.agents.capabilities.trade.AgentOfferService;
 
 /**
  * Temporary Agent-owned bridge to legacy bot offer side effects.
@@ -77,7 +77,7 @@ public final class AgentBotOfferRuntime {
 
             @Override
             public boolean offerBestRecommendedGear() {
-                return BotOfferManager.offerBestRecommendedGear(entry, bot, owner);
+                return AgentOfferService.offerBestRecommendedGear(entry, bot, owner);
             }
 
             @Override

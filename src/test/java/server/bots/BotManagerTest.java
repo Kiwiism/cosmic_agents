@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.trade.AgentOfferService;
+
 import server.agents.capabilities.supplies.AgentPotionService;
 
 import server.agents.capabilities.combat.AgentAttackRoute;
@@ -124,7 +126,7 @@ class BotManagerTest {
         Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
         bots.put(owner.getId(), List.of(sourceEntry, observerEntry));
 
-        try (MockedStatic<BotOfferManager> offers = mockStatic(BotOfferManager.class)) {
+        try (MockedStatic<AgentOfferService> offers = mockStatic(AgentOfferService.class)) {
             manager.notifyOwnerGainedTradeItem(owner, tradedEquip, sourceBot);
 
             offers.verifyNoInteractions();
@@ -153,13 +155,13 @@ class BotManagerTest {
             ((Runnable) inv.getArgument(0)).run();
             return null;
         });
-        try (MockedStatic<BotOfferManager> offers = mockStatic(BotOfferManager.class);
+        try (MockedStatic<AgentOfferService> offers = mockStatic(AgentOfferService.class);
              MockedStatic<TimerManager> timer = mockStatic(TimerManager.class)) {
             timer.when(TimerManager::getInstance).thenReturn(inlineTimer);
 
             manager.notifyOwnerGainedTradeItem(owner, tradedEquip, sourcePlayer);
 
-            offers.verify(() -> BotOfferManager.notifyOwnerGainedEquip(observerEntry, observerBot, tradedEquip));
+            offers.verify(() -> AgentOfferService.notifyOwnerGainedEquip(observerEntry, observerBot, tradedEquip));
         } finally {
             bots.remove(owner.getId());
         }

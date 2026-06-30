@@ -17,6 +17,12 @@ Rules:
 
 Recent reconstruction notes:
 
+- Gear offer orchestration has moved from `server.bots.BotOfferManager` to
+  `server.agents.capabilities.trade.AgentOfferService`. Bot manager,
+  inventory, active-mode, build-status, supply, and offer runtime callbacks now
+  call the Agent-owned service while preserving the same owner/sibling offer
+  selection, reservation checks, confirmation parsing, prompt text, delayed
+  trade transfer timing, and pending-offer state behavior.
 - Potion supply orchestration has moved from `server.bots.BotPotionManager` to
   `server.agents.capabilities.supplies.AgentPotionService`. Legacy bot manager,
   shop, movement, and supply callbacks now call the Agent-owned service while
@@ -289,7 +295,7 @@ Recent reconstruction notes:
   legacy BotManager packet-delivery methods.
 - Loot/gear offer owner-directed replies, queued offer prompts, estimated prompt
   delay reads, and delayed offer actions now enter through
-  `AgentBotOfferRuntime`; `BotOfferManager` no longer reaches directly into the
+  `AgentBotOfferRuntime`; `AgentOfferService` no longer reaches directly into the
   lower-level reply or scheduler runtime for offer-owned flows. The remaining
   bot-side map-only `botSay(Character, ...)` branch is intentionally unchanged
   until map-only visible delivery has an exact Agent adapter.
@@ -429,7 +435,7 @@ Recent reconstruction notes:
   `AgentStarterKitService` no longer call the broad chat-status facade directly
   for job/level build status prompts.
 - Gear-offer idle gating now enters through
-  `AgentBotOfferRuntime.isOwnerIdleForOffer`; `BotOfferManager` no longer
+  `AgentBotOfferRuntime.isOwnerIdleForOffer`; `AgentOfferService` no longer
   reaches directly into the broad chat-status facade for offer prompt checks.
 - Fidget idle gating now enters through
   `AgentBotFidgetRuntime.isLeaderIdleForFidget`; `BotFidgetManager` no longer
@@ -459,7 +465,7 @@ Recent reconstruction notes:
   reaches directly into the lower-level reply or scheduler runtime for those
   inventory-owned flows.
 - Recommended-gear prompt reservation state now enters through
-  `AgentBotOfferRuntime`; `BotOfferManager` no longer reads or clears the
+  `AgentBotOfferRuntime`; `AgentOfferService` no longer reads or clears the
   `pendingGearPromptAt` entry field directly, while the same legacy field and
   timing semantics remain intact behind the Agent-owned offer boundary.
 - Agent reply queue ownership now uses narrow queue operations on
@@ -476,7 +482,7 @@ Recent reconstruction notes:
   the same 500-700 ms command delay, but no longer reaches directly into the
   broad chat-report facade for those control-owned report callbacks.
 - Offer-manager map-visible rejection replies and bot-to-bot loot-offer accept
-  replies now enter through `AgentBotOfferRuntime`; `BotOfferManager` no longer
+  replies now enter through `AgentBotOfferRuntime`; `AgentOfferService` no longer
   calls `BotManager.botSay` directly for offer-owned reply delivery, while the
   same reply channel, random reply pool, and delay behavior remain intact.
 - Ammo low-supply request and ammo-donor offer visible replies now enter
@@ -870,7 +876,7 @@ Recent reconstruction notes:
   the adapter.
 - Reply-channel state now enters through `AgentBotReplyChannelStateRuntime`;
   BotManager command routing/reply delivery, Agent reply runtime delivery, and
-  BotOfferManager auto-accept replies keep BotEntry as the temporary backing
+  AgentOfferService auto-accept replies keep BotEntry as the temporary backing
   store but no longer read or write `replyChannel` directly outside the adapter.
 - Tick cadence state now enters through `AgentBotTickCadenceStateRuntime`;
   BotManager spawn/normalize reset, tick skip-delay handling, AI tick cadence
@@ -904,7 +910,7 @@ Recent reconstruction notes:
   tests keep BotEntry as the temporary backing store but no longer read or write
   `buffConsumablesEnabled` or `buffCheapMode` directly outside the adapter.
 - Pending loot-offer tuple state now enters through
-  `AgentBotOfferStateRuntime`; BotManager offer-recipient checks, BotOfferManager
+  `AgentBotOfferStateRuntime`; BotManager offer-recipient checks, AgentOfferService
   reservation/prompt/expiry/accepted-transfer cleanup, BotInventoryManager
   pickup auto-equip, Agent active/equipment bridges, and focused tests keep
   BotEntry as the temporary backing store but no longer read or write
@@ -1110,7 +1116,7 @@ Recent reconstruction notes:
   lookup now reads through `AgentBotMovementStateRuntime`, and delayed abort
   identity reads through `AgentBotRuntimeIdentityRuntime`.
 - Offer request/proactive-offer state now enters through
-  `AgentBotOfferStateRuntime`; BotOfferManager owner upgrade request memory,
+  `AgentBotOfferStateRuntime`; AgentOfferService owner upgrade request memory,
   proactive shared-loot offer checks, accepted/declined offer callbacks, sibling
   recipient scans, and reserved-offer recipient resolution keep BotEntry as the
   temporary backing store but no longer read `requestedUpgradeItemIds`,
@@ -1246,7 +1252,7 @@ Recent reconstruction notes:
   `groundPhysicsCarryMs` directly in production.
 - Combat grind-region sibling occupancy and sibling gear-offer targeting now
   enter through `AgentBotRuntimeIdentityRuntime` and `AgentBotModeStateRuntime`;
-  BotCombatManager and BotOfferManager preserve sibling filtering, map matching,
+  BotCombatManager and AgentOfferService preserve sibling filtering, map matching,
   and recipient selection while no longer reading sibling bot/owner/grinding
   fields directly in those paths.
 - BotManager sibling target discovery, bot-id lookup, replacement cancellation,
@@ -1428,7 +1434,7 @@ Recent reconstruction notes:
   selection and visible map-chat delivery through compatibility delegates.
 - Gear/loot offer accept/decline replies, busy/no-upgrade fixed replies,
   owner-upgrade request prompts, and current/future loot-offer prompt templates
-  now live in `AgentDialogueCatalog`; BotOfferManager preserves the same random
+  now live in `AgentDialogueCatalog`; AgentOfferService preserves the same random
   reply selection, prompt formatting, delayed delivery, and trade-transfer
   behavior through compatibility delegates.
 - Legacy AoE cluster target-selection radius/bonus defaults and default cluster

@@ -31,6 +31,7 @@ import server.agents.capabilities.inventory.AgentInventorySellTrashPolicy;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.supplies.AgentPotionSharePolicy;
+import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotInventoryStateRuntime;
@@ -156,10 +157,10 @@ public class BotInventoryManager {
                 if (pickedType == InventoryType.EQUIP) {
                     BotEquipManager.autoEquip(bot, owner, AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
                     if (hasItem(bot, pickedItem)) {
-                        BotOfferManager.scheduleLootOfferPrompt(entry, bot, pickedItem, 5_000L);
+                        AgentOfferService.scheduleLootOfferPrompt(entry, bot, pickedItem, 5_000L);
                     }
                 } else if (ItemConstants.isThrowingStar(pickedItemId)) {
-                    BotOfferManager.scheduleLootOfferPrompt(entry, bot, pickedItem, 5_000L);
+                    AgentOfferService.scheduleLootOfferPrompt(entry, bot, pickedItem, 5_000L);
                 }
             }
         }
@@ -452,7 +453,7 @@ public class BotInventoryManager {
         logSlowTradeCommand(category, "startTradeTransfer", entry, bot, startedAt);
     }
 
-    static void startTradeTransfer(Item item, Character recipient, BotEntry entry, Character bot) {
+    public static void startTradeTransfer(Item item, Character recipient, BotEntry entry, Character bot) {
         if (recipient == null) {
             AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeRecipientNotFoundReply());
             return;
@@ -1164,7 +1165,7 @@ public class BotInventoryManager {
         }
     }
 
-    static boolean hasItem(Character bot, Item item) {
+    public static boolean hasItem(Character bot, Item item) {
         if (bot == null || item == null) {
             return false;
         }
@@ -1532,7 +1533,7 @@ public class BotInventoryManager {
                 continue;
             }
             long reservedOtherStartedAt = startedAt != 0L ? System.nanoTime() : 0L;
-            boolean isOther = BotOfferManager.isReservedForOtherRecipients(entry, bot, item);
+            boolean isOther = AgentOfferService.isReservedForOtherRecipients(entry, bot, item);
             if (startedAt != 0L) {
                 reservedOtherNs += System.nanoTime() - reservedOtherStartedAt;
                 reservedOtherChecks++;

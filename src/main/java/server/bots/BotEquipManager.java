@@ -1241,7 +1241,7 @@ public class BotEquipManager {
         return findRecommendedEquips(receiver, holder, RecommendationScope.FUTURE);
     }
 
-    static List<EquipRecommendation> findRecommendedEquipsFromItems(Character receiver, Collection<Equip> holderItems) {
+    public static List<EquipRecommendation> findRecommendedEquipsFromItems(Character receiver, Collection<Equip> holderItems) {
         return buildRecommendations(receiver, holderItems, RecommendationScope.IMMEDIATE);
     }
 
@@ -1301,7 +1301,7 @@ public class BotEquipManager {
                 .toList());
     }
 
-    static EquipRecommendation findRecommendationForItem(Character receiver, Character holder, Item holderItem) {
+    public static EquipRecommendation findRecommendationForItem(Character receiver, Character holder, Item holderItem) {
         return findRecommendationForItem(receiver, holder, holderItem, RecommendationScope.IMMEDIATE);
     }
 
@@ -1356,7 +1356,7 @@ public class BotEquipManager {
         return null;
     }
 
-    static boolean shouldReserveOwnedItem(Character bot, Item item) {
+    public static boolean shouldReserveOwnedItem(Character bot, Item item) {
         if (item instanceof Equip equip) {
             return shouldReserveOwnedItem(bot, ItemInformationProvider.getInstance(), equip);
         }
@@ -1364,15 +1364,15 @@ public class BotEquipManager {
                 || findRecommendationForItem(bot, bot, item, RecommendationScope.FUTURE) != null;
     }
 
-    static boolean shouldReserveOwnedItem(Character bot, EquipUsefulnessHooks hooks, Equip item) {
+    public static boolean shouldReserveOwnedItem(Character bot, EquipUsefulnessHooks hooks, Equip item) {
         return isEquipUsefulToBot(bot, hooks, item);
     }
 
-    static boolean shouldReserveOwnedItem(Character bot, ItemInformationProvider ii, Equip item) {
+    public static boolean shouldReserveOwnedItem(Character bot, ItemInformationProvider ii, Equip item) {
         return selectOwnedItemsForSelfReserve(bot, SelfReserveHooks.from(ii), collectOwnedEquips(bot, ii)).contains(item);
     }
 
-    static boolean wouldReserveIncomingItem(Character bot, ItemInformationProvider ii, Equip item) {
+    public static boolean wouldReserveIncomingItem(Character bot, ItemInformationProvider ii, Equip item) {
         List<Equip> owned = collectOwnedEquips(bot, ii);
         owned.add(item);
         return selectOwnedItemsForSelfReserve(bot, SelfReserveHooks.from(ii), owned).contains(item);
@@ -1972,7 +1972,7 @@ public class BotEquipManager {
         };
     }
 
-    static boolean isWeaponCompatible(Character bot, WeaponType weaponType) {
+    public static boolean isWeaponCompatible(Character bot, WeaponType weaponType) {
         if (weaponType == null || weaponType == WeaponType.NOT_A_WEAPON) {
             return true;
         }

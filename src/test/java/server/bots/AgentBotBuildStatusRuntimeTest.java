@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.trade.AgentOfferService;
+
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -61,8 +63,8 @@ class AgentBotBuildStatusRuntimeTest {
         AgentChatStatusRuntime.StatusCheckActions actions =
                 AgentBotBuildStatusRuntime.statusCheckActions(entry, bot);
 
-        try (MockedStatic<BotOfferManager> offers = mockStatic(BotOfferManager.class)) {
-            offers.when(() -> BotOfferManager.hasPendingOffer(entry)).thenReturn(false);
+        try (MockedStatic<AgentOfferService> offers = mockStatic(AgentOfferService.class)) {
+            offers.when(() -> AgentOfferService.hasPendingOffer(entry)).thenReturn(false);
 
             assertTrue(actions.canOfferSpawnUpgrade());
 

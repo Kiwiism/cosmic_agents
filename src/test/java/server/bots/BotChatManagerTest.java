@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.trade.AgentOfferService;
+
 import server.agents.capabilities.movement.AgentMovementProfile;
 
 
@@ -347,7 +349,7 @@ class BotChatManagerTest {
 
     @Test
     void shouldBuildOwnerLootOfferPrompt() {
-        String prompt = BotOfferManager.buildLootOfferPrompt("Owner", "Blue Moon", true);
+        String prompt = AgentOfferService.buildLootOfferPrompt("Owner", "Blue Moon", true);
         assertTrue(Set.of(
                 "Owner, I have Blue Moon, you want?",
                 "Owner, picked up Blue Moon, want it?",
@@ -359,7 +361,7 @@ class BotChatManagerTest {
 
     @Test
     void shouldBuildPartyLootOfferPrompt() {
-        String prompt = BotOfferManager.buildLootOfferPrompt("Alice", "Blue Moon", false);
+        String prompt = AgentOfferService.buildLootOfferPrompt("Alice", "Blue Moon", false);
         assertTrue(Set.of(
                 "Alice, I have Blue Moon, you want?",
                 "Alice, picked up Blue Moon, want it?",
@@ -421,7 +423,7 @@ class BotChatManagerTest {
                 entry, new Item(1002000, (short) 1, (short) 1), 123, Long.MAX_VALUE, true);
         AgentBotOfferStateRuntime.reserveGearPrompt(entry, Long.MAX_VALUE);
 
-        BotOfferManager.clearPendingOfferForOwnerAsk(entry);
+        AgentOfferService.clearPendingOfferForOwnerAsk(entry);
 
         assertNull(AgentBotPendingActionStateRuntime.pendingDropCategory(entry));
         assertNull(AgentBotOfferStateRuntime.pendingLootOfferItem(entry));

@@ -8,7 +8,7 @@ import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
 import server.agents.capabilities.dialogue.AgentSupplyRequestOutcomeFlow;
 import server.agents.capabilities.supplies.AgentAmmoService;
 import server.bots.BotEntry;
-import server.bots.BotOfferManager;
+import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.supplies.AgentPotionService;
 
 /**
@@ -39,11 +39,11 @@ public final class AgentBotSupplyRuntime {
     }
 
     public static void handleRequestUpgradeCommand(BotEntry entry, Character bot) {
-        BotOfferManager.clearPendingOfferForOwnerAsk(entry);
+        AgentOfferService.clearPendingOfferForOwnerAsk(entry);
         if (AgentPotionService.requestLowSuppliesFromOwnerAsk(entry, bot)) {
             return;
         }
-        BotOfferManager.requestBestUpgradeFromOwner(entry, bot);
+        AgentOfferService.requestBestUpgradeFromOwner(entry, bot);
     }
 
     public static void handleNeedAnyPotionCommand(BotEntry entry) {

@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.trade.AgentOfferService;
+
 import server.agents.capabilities.supplies.AgentPotionService;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
@@ -29,14 +31,14 @@ class AgentBotSupplyRuntimeTest {
         Character bot = mock(Character.class);
         BotEntry entry = new BotEntry(bot, null, null);
 
-        try (MockedStatic<BotOfferManager> offers = mockStatic(BotOfferManager.class);
+        try (MockedStatic<AgentOfferService> offers = mockStatic(AgentOfferService.class);
              MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class)) {
             potions.when(() -> AgentPotionService.requestLowSuppliesFromOwnerAsk(entry, bot)).thenReturn(false);
 
             AgentBotSupplyRuntime.handleRequestUpgradeCommand(entry, bot);
 
-            offers.verify(() -> BotOfferManager.clearPendingOfferForOwnerAsk(entry));
-            offers.verify(() -> BotOfferManager.requestBestUpgradeFromOwner(entry, bot));
+            offers.verify(() -> AgentOfferService.clearPendingOfferForOwnerAsk(entry));
+            offers.verify(() -> AgentOfferService.requestBestUpgradeFromOwner(entry, bot));
         }
     }
 
