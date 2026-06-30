@@ -35,6 +35,12 @@ Recent map updates:
   `AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded` directly, reducing
   remaining `BotCombatManager` usage to compatibility-specific plan, target,
   damage, and config checks.
+- Combat plan, target-search, and AoE-reposition tests now exercise Agent-owned
+  runtimes directly. The old `BotCombatManager.AttackPlan`, `planAttack`,
+  `attackMonster`, target-search, reachable-target, and AoE-reposition
+  compatibility delegates have been removed; remaining `BotCombatManager`
+  surface is now limited to config, damage/death, support, skill-cache, and
+  debug-stat compatibility.
 
 | Current file | Target Agent destination | Status |
 | --- | --- | --- |

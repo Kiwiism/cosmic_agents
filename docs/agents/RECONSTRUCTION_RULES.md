@@ -1795,6 +1795,13 @@ Recent reconstruction notes:
   `AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded` directly instead
   of the temporary `BotCombatManager` compatibility delegate. The covered cache
   signature, attack/AOE/heal/support bucket, and rebuild behavior are unchanged.
+- Combat planning, target-search, and AoE-reposition focused tests now call
+  `AgentBotCombatPlanRuntime`, `AgentBotCombatTargetRuntime`, and
+  `AgentBotCombatAoeRepositionRuntime` directly with `AgentAttackPlan` and
+  `AgentCombatConfig.cfg`. The temporary `BotCombatManager.AttackPlan`,
+  `planAttack`, `attackMonster`, target-search, reachable-target, and
+  AoE-reposition compatibility delegates have been removed because production
+  and focused test callers no longer need them.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

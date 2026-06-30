@@ -1,37 +1,17 @@
 package server.bots;
 
-import server.agents.capabilities.combat.AgentAttackRoute;
-
-import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentCombatConfig;
 
 import client.Character;
-import client.inventory.WeaponType;
-import server.agents.integration.AgentBotCombatAoeRepositionRuntime;
-import server.agents.integration.AgentBotCombatAttackRuntime;
 import server.agents.integration.AgentBotCombatBuffRuntime;
 import server.agents.integration.AgentBotCombatReportRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheRuntime;
 import server.agents.integration.AgentBotCombatHealRuntime;
 import server.agents.integration.AgentBotCombatDeathRuntime;
 import server.agents.integration.AgentBotCombatDamageRuntime;
-import server.agents.integration.AgentBotCombatPlanRuntime;
-import server.agents.integration.AgentBotCombatTargetRuntime;
 import server.life.Monster;
 
-import java.awt.*;
-import java.util.List;
-
 public class BotCombatManager {
-    public static final class AttackPlan extends AgentAttackPlan {
-        AttackPlan(int skillId, int skillLevel, int numDamage, Rectangle hitBox, List<Monster> targets,
-                   AgentAttackRoute route, int display, int direction, int rangedDirection, int stance, int speed,
-                   int hitDelayMs, int cooldownMs, WeaponType damageWeaponType) {
-            super(skillId, skillLevel, numDamage, hitBox, targets, route, display, direction, rangedDirection,
-                    stance, speed, hitDelayMs, cooldownMs, damageWeaponType);
-        }
-    }
-
     public static AgentCombatConfig.Config cfg = AgentCombatConfig.cfg;
 
     static void tickMobDamage(BotEntry entry, Character bot) {
@@ -81,41 +61,6 @@ public class BotCombatManager {
         return AgentBotCombatHealRuntime.tickSupportHealing(entry, bot, cfg);
     }
 
-    public static Monster findGrindTarget(BotEntry entry, Character bot) {
-        return AgentBotCombatTargetRuntime.findGrindTarget(entry, bot, cfg);
-    }
-
-    static Monster findPatrolTarget(BotEntry entry, Character bot) {
-        return AgentBotCombatTargetRuntime.findPatrolTarget(entry, bot, cfg);
-    }
-
-    static Monster findFollowAttackTarget(BotEntry entry, Character bot) {
-        return AgentBotCombatTargetRuntime.findFollowAttackTarget(entry, bot, cfg);
-    }
-
-    static boolean isReachableGrindTarget(BotEntry entry, Character bot, Monster target) {
-        return AgentBotCombatTargetRuntime.isReachableGrindTarget(entry, bot, target);
-    }
-    public static AttackPlan planAttack(BotEntry entry, Character bot, Monster target) {
-        return toBotAttackPlan(AgentBotCombatPlanRuntime.planAttack(entry, bot, target, cfg));
-    }
-
-    private static AttackPlan toBotAttackPlan(AgentAttackPlan plan) {
-        if (plan == null) {
-            return null;
-        }
-        return new AttackPlan(plan.skillId, plan.skillLevel, plan.numDamage, plan.hitBox, plan.targets,
-                plan.route, plan.display, plan.direction, plan.rangedDirection, plan.stance, plan.speed,
-                plan.hitDelayMs, plan.cooldownMs, plan.damageWeaponType);
-    }
-
-    static void attackMonster(BotEntry entry, Character bot, AttackPlan attackPlan) {
-        AgentBotCombatAttackRuntime.attackMonster(entry, bot, attackPlan);
-    }
-
-    static Point aoeRepositionTarget(BotEntry entry, Character bot, Monster primaryTarget, AttackPlan fireNowBest) {
-        return AgentBotCombatAoeRepositionRuntime.aoeRepositionTarget(entry, bot, primaryTarget, fireNowBest, cfg);
-    }
     public static String describeDebugStats(BotEntry entry, Character bot) {
         return AgentBotCombatReportRuntime.debugStatsReport(entry, bot);
     }
