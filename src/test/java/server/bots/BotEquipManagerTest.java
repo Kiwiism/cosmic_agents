@@ -822,6 +822,42 @@ class BotEquipManagerTest {
     }
 
     @Test
+    void requirementComparisonAllowsEasierAllClassLowerRequirementItem() {
+        Equip easier = mock(Equip.class);
+        Equip harder = mock(Equip.class);
+        when(easier.getItemId()).thenReturn(1001);
+        when(harder.getItemId()).thenReturn(1002);
+
+        AgentEquipmentReservePolicy.SelfReserveHooks hooks = mock(AgentEquipmentReservePolicy.SelfReserveHooks.class);
+        when(hooks.getEquipLevelReq(1001)).thenReturn(20);
+        when(hooks.getEquipLevelReq(1002)).thenReturn(30);
+        when(hooks.getEquipStats(1001)).thenReturn(Map.of(
+                "reqJob", 0, "reqSTR", 10, "reqDEX", 5, "reqINT", 0, "reqLUK", 0, "reqPOP", 0));
+        when(hooks.getEquipStats(1002)).thenReturn(Map.of(
+                "reqJob", 400, "reqSTR", 20, "reqDEX", 10, "reqINT", 0, "reqLUK", 0, "reqPOP", 0));
+
+        assertTrue(AgentEquipmentReservePolicy.reqsAtLeastAsEasy(hooks, easier, harder));
+    }
+
+    @Test
+    void requirementComparisonRejectsHigherLevelStatOrDifferentSpecificJobRequirement() {
+        Equip candidate = mock(Equip.class);
+        Equip baseline = mock(Equip.class);
+        when(candidate.getItemId()).thenReturn(2001);
+        when(baseline.getItemId()).thenReturn(2002);
+
+        AgentEquipmentReservePolicy.SelfReserveHooks hooks = mock(AgentEquipmentReservePolicy.SelfReserveHooks.class);
+        when(hooks.getEquipLevelReq(2001)).thenReturn(31);
+        when(hooks.getEquipLevelReq(2002)).thenReturn(30);
+        when(hooks.getEquipStats(2001)).thenReturn(Map.of(
+                "reqJob", 300, "reqSTR", 10, "reqDEX", 11, "reqINT", 0, "reqLUK", 0, "reqPOP", 0));
+        when(hooks.getEquipStats(2002)).thenReturn(Map.of(
+                "reqJob", 400, "reqSTR", 10, "reqDEX", 10, "reqINT", 0, "reqLUK", 0, "reqPOP", 0));
+
+        assertFalse(AgentEquipmentReservePolicy.reqsAtLeastAsEasy(hooks, candidate, baseline));
+    }
+
+    @Test
     void selfReserveKeepsFutureGearBlockedByCurrentLevelOrFame() {
         Character bot = mock(Character.class);
         when(bot.getJob()).thenReturn(Job.ASSASSIN);

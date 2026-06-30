@@ -128,6 +128,31 @@ public final class AgentEquipmentReservePolicy {
         return statOnlyBlocked(agent, ii, equip);
     }
 
+    public static boolean reqsAtLeastAsEasy(ItemInformationProvider ii, Equip better, Equip worse) {
+        return reqsAtLeastAsEasy(SelfReserveHooks.from(ii), better, worse);
+    }
+
+    public static boolean reqsAtLeastAsEasy(SelfReserveHooks hooks, Equip better, Equip worse) {
+        if (hooks.getEquipLevelReq(better.getItemId()) > hooks.getEquipLevelReq(worse.getItemId())) return false;
+        Map<String, Integer> betterStats = hooks.getEquipStats(better.getItemId());
+        Map<String, Integer> worseStats = hooks.getEquipStats(worse.getItemId());
+        if (betterStats == null || worseStats == null) return betterStats == worseStats;
+        if (!reqJobAtLeastAsEasy(betterStats.getOrDefault("reqJob", 0), worseStats.getOrDefault("reqJob", 0))) {
+            return false;
+        }
+        for (String key : new String[]{"reqSTR", "reqDEX", "reqINT", "reqLUK", "reqPOP"}) {
+            if (betterStats.getOrDefault(key, 0) > worseStats.getOrDefault(key, 0)) return false;
+        }
+        return true;
+    }
+
+    public static boolean sameFutureTrack(ItemInformationProvider ii, Equip a, Equip b) {
+        String slotA = ii.getEquipmentSlot(a.getItemId());
+        String slotB = ii.getEquipmentSlot(b.getItemId());
+        if (!Objects.equals(slotA, slotB)) return false;
+        return ii.getWeaponType(a.getItemId()) == ii.getWeaponType(b.getItemId());
+    }
+
     public static EnumSet<RelevantStat> relevantStatsFor(Job job) {
         if (job == null) return ALL_RELEVANT_STATS.clone();
         if (AgentWeaponCompatibilityPolicy.isMageJob(job)) return EnumSet.of(RelevantStat.INT, RelevantStat.LUK, RelevantStat.MATK);
@@ -379,18 +404,6 @@ public final class AgentEquipmentReservePolicy {
 
     private static boolean isWeaponSlot(String textSlot) {
         return "Wp".equals(textSlot) || "WpSi".equals(textSlot) || "WpSp".equals(textSlot);
-    }
-
-    private static boolean reqsAtLeastAsEasy(SelfReserveHooks hooks, Equip b, Equip a) {
-        if (hooks.getEquipLevelReq(b.getItemId()) > hooks.getEquipLevelReq(a.getItemId())) return false;
-        Map<String, Integer> bs = hooks.getEquipStats(b.getItemId());
-        Map<String, Integer> as = hooks.getEquipStats(a.getItemId());
-        if (bs == null || as == null) return bs == as;
-        if (!reqJobAtLeastAsEasy(bs.getOrDefault("reqJob", 0), as.getOrDefault("reqJob", 0))) return false;
-        for (String key : new String[]{"reqSTR", "reqDEX", "reqINT", "reqLUK", "reqPOP"}) {
-            if (bs.getOrDefault(key, 0) > as.getOrDefault(key, 0)) return false;
-        }
-        return true;
     }
 
     private static boolean reqJobAtLeastAsEasy(int betterReqJob, int worseReqJob) {

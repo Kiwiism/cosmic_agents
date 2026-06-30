@@ -35,7 +35,6 @@ import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.ToIntFunction;
 
@@ -1907,38 +1906,15 @@ public class BotEquipManager {
     }
 
     private static boolean reqsAtLeastAsEasy(ItemInformationProvider ii, Equip b, Equip a) {
-        if (ii.getEquipLevelReq(b.getItemId()) > ii.getEquipLevelReq(a.getItemId())) return false;
-        Map<String, Integer> bs = ii.getEquipStats(b.getItemId());
-        Map<String, Integer> as = ii.getEquipStats(a.getItemId());
-        if (bs == null || as == null) return bs == as;
-        if (!reqJobAtLeastAsEasy(bs.getOrDefault("reqJob", 0), as.getOrDefault("reqJob", 0))) return false;
-        for (String key : new String[]{"reqSTR", "reqDEX", "reqINT", "reqLUK", "reqPOP"}) {
-            if (bs.getOrDefault(key, 0) > as.getOrDefault(key, 0)) return false;
-        }
-        return true;
+        return AgentEquipmentReservePolicy.reqsAtLeastAsEasy(ii, b, a);
     }
 
     private static boolean reqsAtLeastAsEasy(SelfReserveHooks hooks, Equip b, Equip a) {
-        if (hooks.getEquipLevelReq(b.getItemId()) > hooks.getEquipLevelReq(a.getItemId())) return false;
-        Map<String, Integer> bs = hooks.getEquipStats(b.getItemId());
-        Map<String, Integer> as = hooks.getEquipStats(a.getItemId());
-        if (bs == null || as == null) return bs == as;
-        if (!reqJobAtLeastAsEasy(bs.getOrDefault("reqJob", 0), as.getOrDefault("reqJob", 0))) return false;
-        for (String key : new String[]{"reqSTR", "reqDEX", "reqINT", "reqLUK", "reqPOP"}) {
-            if (bs.getOrDefault(key, 0) > as.getOrDefault(key, 0)) return false;
-        }
-        return true;
-    }
-
-    private static boolean reqJobAtLeastAsEasy(int betterReqJob, int worseReqJob) {
-        return betterReqJob == 0 || betterReqJob == worseReqJob;
+        return AgentEquipmentReservePolicy.reqsAtLeastAsEasy(hooks, b, a);
     }
 
     private static boolean sameFutureTrack(ItemInformationProvider ii, Equip a, Equip b) {
-        String slotA = ii.getEquipmentSlot(a.getItemId());
-        String slotB = ii.getEquipmentSlot(b.getItemId());
-        if (!Objects.equals(slotA, slotB)) return false;
-        return ii.getWeaponType(a.getItemId()) == ii.getWeaponType(b.getItemId());
+        return AgentEquipmentReservePolicy.sameFutureTrack(ii, a, b);
     }
 
     private static int[] statVec(Equip e) {

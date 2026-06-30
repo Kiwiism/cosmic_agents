@@ -1287,6 +1287,10 @@ Recent reconstruction notes:
   wearability checks, and future-only candidate gates preserve the same
   huge-stat requirement simulation while reducing direct BotEquipManager use
   from inventory grouping code.
+- Equipment requirement comparison predicates now enter through
+  `AgentEquipmentReservePolicy`: level/job/stat/fame ease checks and future
+  slot/weapon-track matching preserve the same dominance-pruning behavior while
+  `BotEquipManager` remains the temporary optimizer compatibility seam.
 - Physics position, horizontal-speed, and ground-travel carry state now enter
   through `AgentBotMovementPhysicsStateRuntime`; BotPhysicsEngine preserves
   landing, grounded travel, swim, airborne collision, climb-position, and reset
