@@ -1517,6 +1517,10 @@ Recent reconstruction notes:
   `AgentCombatHitCounter` directly; the temporary `BotCombatManager` wrapper has
   been removed while preserving the legacy max(attackCount, bulletCount, 1)
   formula.
+- Dragon Knight weapon-family attack gating now calls
+  `AgentCombatWeaponPolicy` directly from skill planning and tests; the
+  temporary `BotCombatManager` compatibility wrapper has been removed while
+  preserving the same spear/polearm restrictions.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

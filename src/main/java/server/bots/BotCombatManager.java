@@ -910,7 +910,8 @@ public class BotCombatManager {
                 skill != null,
                 skillLevel,
                 () -> effect.canPaySkillCost(bot),
-                () -> canUseAttackSkillWithWeapon(skillId, AgentAttackExecutionProvider.getEquippedWeaponType(bot)));
+                () -> AgentCombatWeaponPolicy.canUseAttackSkillWithWeapon(
+                        skillId, AgentAttackExecutionProvider.getEquippedWeaponType(bot)));
         if (readiness != AgentSkillAttackPlanner.SkillAttackReadiness.READY) {
             return null;
         }
@@ -991,10 +992,6 @@ public class BotCombatManager {
 
     private static WeaponType damageWeaponTypeForAction(int skillId, WeaponType equippedWeaponType, String action) {
         return AgentCombatWeaponPolicy.damageWeaponTypeForAction(skillId, equippedWeaponType, action);
-    }
-
-    static boolean canUseAttackSkillWithWeapon(int skillId, WeaponType weaponType) {
-        return AgentCombatWeaponPolicy.canUseAttackSkillWithWeapon(skillId, weaponType);
     }
 
     private static boolean isSpearWeapon(WeaponType weaponType) {

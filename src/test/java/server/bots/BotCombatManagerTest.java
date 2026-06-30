@@ -3,6 +3,7 @@ package server.bots;
 import server.agents.capabilities.combat.AgentAttackRoute;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+import server.agents.capabilities.combat.AgentCombatWeaponPolicy;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
 
@@ -697,11 +698,16 @@ class BotCombatManagerTest {
 
     @Test
     void shouldSkipPolearmDragonKnightSkillsWhenSpearIsEquipped() {
-        assertTrue(BotCombatManager.canUseAttackSkillWithWeapon(DragonKnight.SPEAR_CRUSHER, WeaponType.SPEAR_STAB));
-        assertTrue(BotCombatManager.canUseAttackSkillWithWeapon(DragonKnight.SPEAR_DRAGON_FURY, WeaponType.SPEAR_STAB));
-        assertFalse(BotCombatManager.canUseAttackSkillWithWeapon(DragonKnight.POLE_ARM_CRUSHER, WeaponType.SPEAR_STAB));
-        assertFalse(BotCombatManager.canUseAttackSkillWithWeapon(DragonKnight.POLE_ARM_DRAGON_FURY, WeaponType.SPEAR_STAB));
-        assertTrue(BotCombatManager.canUseAttackSkillWithWeapon(DragonKnight.POLE_ARM_CRUSHER, WeaponType.POLE_ARM_SWING));
+        assertTrue(AgentCombatWeaponPolicy.canUseAttackSkillWithWeapon(
+                DragonKnight.SPEAR_CRUSHER, WeaponType.SPEAR_STAB));
+        assertTrue(AgentCombatWeaponPolicy.canUseAttackSkillWithWeapon(
+                DragonKnight.SPEAR_DRAGON_FURY, WeaponType.SPEAR_STAB));
+        assertFalse(AgentCombatWeaponPolicy.canUseAttackSkillWithWeapon(
+                DragonKnight.POLE_ARM_CRUSHER, WeaponType.SPEAR_STAB));
+        assertFalse(AgentCombatWeaponPolicy.canUseAttackSkillWithWeapon(
+                DragonKnight.POLE_ARM_DRAGON_FURY, WeaponType.SPEAR_STAB));
+        assertTrue(AgentCombatWeaponPolicy.canUseAttackSkillWithWeapon(
+                DragonKnight.POLE_ARM_CRUSHER, WeaponType.POLE_ARM_SWING));
     }
 
     @Test
