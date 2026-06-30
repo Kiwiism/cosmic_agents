@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
+import server.agents.plans.AgentTask;
 
 import java.awt.Point;
 
@@ -16,8 +17,8 @@ class AgentBotScriptTaskStateRuntimeTest {
     @Test
     void queuesAndActivatesTasksInOrder() {
         BotEntry entry = new BotEntry(null, null, null);
-        BotTask first = BotTask.moveTo(new Point(10, 20), true);
-        BotTask second = BotTask.stop();
+        AgentTask first = AgentTask.moveTo(new Point(10, 20), true);
+        AgentTask second = AgentTask.stop();
 
         AgentBotScriptTaskStateRuntime.queueTask(entry, first);
         AgentBotScriptTaskStateRuntime.queueTask(entry, second);
@@ -34,7 +35,7 @@ class AgentBotScriptTaskStateRuntimeTest {
     void clearingTasksBumpsActivityEpoch() {
         BotEntry entry = new BotEntry(null, null, null);
         int epoch = AgentBotScriptTaskStateRuntime.activityEpoch(entry);
-        AgentBotScriptTaskStateRuntime.queueTask(entry, BotTask.stop());
+        AgentBotScriptTaskStateRuntime.queueTask(entry, AgentTask.stop());
 
         AgentBotScriptTaskStateRuntime.clearTasksAndBumpEpoch(entry);
 
@@ -47,7 +48,7 @@ class AgentBotScriptTaskStateRuntimeTest {
     void detectsActiveLocalOpportunityMove() {
         BotEntry entry = new BotEntry(null, null, null);
         Point point = new Point(10, 20);
-        BotTask task = BotTask.moveTo(point, true, BotTask.MoveCombatMode.LOCAL_OPPORTUNITY);
+        AgentTask task = AgentTask.moveTo(point, true, AgentTask.MoveCombatMode.LOCAL_OPPORTUNITY);
 
         AgentBotScriptTaskStateRuntime.queueTask(entry, task);
         AgentBotScriptTaskStateRuntime.activateNextTask(entry);

@@ -1,7 +1,7 @@
 package server.agents.integration;
 
 import server.bots.BotEntry;
-import server.bots.BotTask;
+import server.agents.plans.AgentTask;
 
 import java.awt.Point;
 
@@ -25,7 +25,7 @@ public final class AgentBotScriptTaskStateRuntime {
         entry.clearScriptTasks();
     }
 
-    public static void queueTask(BotEntry entry, BotTask task) {
+    public static void queueTask(BotEntry entry, AgentTask task) {
         entry.addScriptTask(task);
     }
 
@@ -33,7 +33,7 @@ public final class AgentBotScriptTaskStateRuntime {
         return entry != null && entry.hasScriptTasks();
     }
 
-    public static BotTask activeTask(BotEntry entry) {
+    public static AgentTask activeTask(BotEntry entry) {
         return entry.activeScriptTask();
     }
 
@@ -41,8 +41,8 @@ public final class AgentBotScriptTaskStateRuntime {
         return activeTask(entry) != null;
     }
 
-    public static BotTask activateNextTask(BotEntry entry) {
-        BotTask activeTask = entry.activeScriptTask();
+    public static AgentTask activateNextTask(BotEntry entry) {
+        AgentTask activeTask = entry.activeScriptTask();
         if (activeTask != null) {
             return activeTask;
         }
@@ -59,12 +59,12 @@ public final class AgentBotScriptTaskStateRuntime {
         if (entry == null || targetPos == null) {
             return false;
         }
-        BotTask activeTask = activeTask(entry);
+        AgentTask activeTask = activeTask(entry);
         if (activeTask == null) {
             return false;
         }
-        if (activeTask.type() != BotTask.Type.MOVE_TO
-                || activeTask.moveCombatMode() != BotTask.MoveCombatMode.LOCAL_OPPORTUNITY) {
+        if (activeTask.type() != AgentTask.Type.MOVE_TO
+                || activeTask.moveCombatMode() != AgentTask.MoveCombatMode.LOCAL_OPPORTUNITY) {
             return false;
         }
         if (!AgentBotMoveTargetStateRuntime.moveTargetEquals(entry, activeTask.point())) {

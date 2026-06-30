@@ -1849,8 +1849,11 @@ Recent reconstruction notes:
 - Generic script primitives now live in `server.agents.plans` as
   `AgentScript`, `AgentScriptContext`, `AgentScriptStep`, and
   `AgentScriptRunner`. KPQ still supplies legacy script content from the bot PQ
-  package, and script tasks still queue the same legacy `BotTask` objects until
-  the task primitive is migrated.
+  package, and script tasks still queue through the same BotEntry/BotManager
+  execution path.
+- Script task primitives now live in `server.agents.plans.AgentTask`; BotEntry
+  and BotManager still temporarily store and execute the task queue, but task
+  type, target, movement, and drop-item value data are no longer bot-owned.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

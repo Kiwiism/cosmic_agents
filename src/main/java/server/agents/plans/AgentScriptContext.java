@@ -5,7 +5,7 @@ import client.inventory.InventoryType;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
 import server.bots.BotEntry;
 import server.bots.BotManager;
-import server.bots.BotTask;
+import server.agents.plans.AgentTask;
 
 import java.awt.*;
 
@@ -55,27 +55,27 @@ public final class AgentScriptContext {
     }
 
     public void queueMoveTo(Point point, boolean precise) {
-        manager.queueTask(entry, BotTask.moveTo(point, precise));
+        manager.queueTask(entry, AgentTask.moveTo(point, precise));
     }
 
     public void queueMoveToWithLocalCombat(Point point, boolean precise) {
-        manager.queueTask(entry, BotTask.moveTo(point, precise, BotTask.MoveCombatMode.LOCAL_OPPORTUNITY));
+        manager.queueTask(entry, AgentTask.moveTo(point, precise, AgentTask.MoveCombatMode.LOCAL_OPPORTUNITY));
     }
 
     public void queueFollowUntilNearOwner(int nearPx) {
-        manager.queueTask(entry, BotTask.followUntilNear(owner, nearPx));
+        manager.queueTask(entry, AgentTask.followUntilNear(owner, nearPx));
     }
 
     public void queueGrind() {
-        manager.queueTask(entry, BotTask.grind());
+        manager.queueTask(entry, AgentTask.grind());
     }
 
     public void queueStop() {
-        manager.queueTask(entry, BotTask.stop());
+        manager.queueTask(entry, AgentTask.stop());
     }
 
     public void queueDrop(InventoryType type, int itemId, short quantity) {
-        manager.queueTask(entry, BotTask.dropItem(type, itemId, quantity));
+        manager.queueTask(entry, AgentTask.dropItem(type, itemId, quantity));
     }
 
     public boolean tasksDone() {

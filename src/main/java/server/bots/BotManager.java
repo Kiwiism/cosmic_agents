@@ -71,6 +71,7 @@ import server.agents.integration.AgentBotTickStateRuntime;
 import server.agents.integration.AgentBotTickFailureStateRuntime;
 import server.agents.integration.AgentBotTargetedCommandMatch;
 import server.agents.integration.AgentBotTransferCommand;
+import server.agents.plans.AgentTask;
 import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
 import server.agents.capabilities.dialogue.AgentChatRuntime;
 import server.agents.capabilities.dialogue.llm.AgentLlmConfig;
@@ -3163,7 +3164,7 @@ public class BotManager {
         AgentBotScriptTaskStateRuntime.clearTasksAndBumpEpoch(entry);   // signal background batches (Maker craft/disassembly) to self-interrupt
     }
 
-    public void queueTask(BotEntry entry, BotTask task) {
+    public void queueTask(BotEntry entry, AgentTask task) {
         if (entry == null || task == null) {
             return;
         }
@@ -3171,21 +3172,21 @@ public class BotManager {
     }
 
     public void queueMoveTo(BotEntry entry, Point point, boolean precise) {
-        queueTask(entry, BotTask.moveTo(point, precise));
+        queueTask(entry, AgentTask.moveTo(point, precise));
     }
 
-    public void queueMoveTo(BotEntry entry, Point point, boolean precise, BotTask.MoveCombatMode moveCombatMode) {
-        queueTask(entry, BotTask.moveTo(point, precise, moveCombatMode));
+    public void queueMoveTo(BotEntry entry, Point point, boolean precise, AgentTask.MoveCombatMode moveCombatMode) {
+        queueTask(entry, AgentTask.moveTo(point, precise, moveCombatMode));
     }
 
     public void queueMoveThenDropItem(BotEntry entry, Point point, boolean precise, InventoryType type, int itemId, short quantity) {
-        queueTask(entry, BotTask.moveTo(point, precise));
-        queueTask(entry, BotTask.dropItem(type, itemId, quantity));
+        queueTask(entry, AgentTask.moveTo(point, precise));
+        queueTask(entry, AgentTask.dropItem(type, itemId, quantity));
     }
 
     public void queueFollowThenDropItem(BotEntry entry, Character target, int nearPx, InventoryType type, int itemId, short quantity) {
-        queueTask(entry, BotTask.followUntilNear(target, nearPx));
-        queueTask(entry, BotTask.dropItem(type, itemId, quantity));
+        queueTask(entry, AgentTask.followUntilNear(target, nearPx));
+        queueTask(entry, AgentTask.dropItem(type, itemId, quantity));
     }
 
     public boolean hasQueuedTasks(BotEntry entry) {
@@ -3265,7 +3266,7 @@ public class BotManager {
         }
 
         while (true) {
-            BotTask activeScriptTask = AgentBotScriptTaskStateRuntime.activeTask(entry);
+            AgentTask activeScriptTask = AgentBotScriptTaskStateRuntime.activeTask(entry);
             if (activeScriptTask == null) {
                 activeScriptTask = AgentBotScriptTaskStateRuntime.activateNextTask(entry);
                 if (activeScriptTask == null) {
@@ -3281,27 +3282,27 @@ public class BotManager {
         }
     }
 
-    private void startScriptTask(BotEntry entry, BotTask task) {
-        switch (task.type) {
-            case MOVE_TO -> startMoveTo(entry, task.point, task.precise);
+    private void startScriptTask(BotEntry entry, AgentTask task) {
+        switch (task.type()) {
+            case MOVE_TO -> startMoveTo(entry, task.point(), task.precise());
             case FOLLOW_OWNER -> startFollow(entry, AgentBotRuntimeIdentityRuntime.owner(entry));
-            case FOLLOW_TARGET -> startFollow(entry, resolveFollowCharacterById(entry, task.targetCharacterId));
-            case FOLLOW_UNTIL_NEAR -> startFollow(entry, resolveFollowCharacterById(entry, task.targetCharacterId));
+            case FOLLOW_TARGET -> startFollow(entry, resolveFollowCharacterById(entry, task.targetCharacterId()));
+            case FOLLOW_UNTIL_NEAR -> startFollow(entry, resolveFollowCharacterById(entry, task.targetCharacterId()));
             case GRIND -> startGrind(entry);
             case STOP -> startStop(entry);
-            case DROP_ITEM -> issueDropItem(entry, task.inventoryType, task.itemId, task.quantity);
+            case DROP_ITEM -> issueDropItem(entry, task.inventoryType(), task.itemId(), task.quantity());
         }
     }
 
-    private boolean isScriptTaskComplete(BotEntry entry, BotTask task) {
-        return switch (task.type) {
-            case MOVE_TO -> !AgentBotMoveTargetStateRuntime.hasMoveTarget(entry) || isNear(AgentBotRuntimeIdentityRuntime.botPosition(entry), task.point,
-                    task.precise ? 8 : BotMovementManager.cfg.STOP_DIST);
+    private boolean isScriptTaskComplete(BotEntry entry, AgentTask task) {
+        return switch (task.type()) {
+            case MOVE_TO -> !AgentBotMoveTargetStateRuntime.hasMoveTarget(entry) || isNear(AgentBotRuntimeIdentityRuntime.botPosition(entry), task.point(),
+                    task.precise() ? 8 : BotMovementManager.cfg.STOP_DIST);
             case FOLLOW_UNTIL_NEAR -> {
-                Character target = resolveFollowCharacterById(entry, task.targetCharacterId);
+                Character target = resolveFollowCharacterById(entry, task.targetCharacterId());
                 yield target != null
                         && AgentBotRuntimeIdentityRuntime.botMapId(entry) == target.getMapId()
-                        && isNear(AgentBotRuntimeIdentityRuntime.botPosition(entry), target.getPosition(), task.nearPx);
+                        && isNear(AgentBotRuntimeIdentityRuntime.botPosition(entry), target.getPosition(), task.nearPx());
             }
             case FOLLOW_OWNER, FOLLOW_TARGET, GRIND, STOP, DROP_ITEM -> true;
         };

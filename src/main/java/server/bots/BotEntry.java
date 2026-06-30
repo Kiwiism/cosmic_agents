@@ -13,6 +13,7 @@ import server.agents.commands.AgentQueuedMessage;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.capabilities.movement.fidget.AgentFidgetMode;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
+import server.agents.plans.AgentTask;
 import server.agents.plans.AgentScriptRuntimeState;
 
 import java.awt.*;
@@ -1335,8 +1336,8 @@ public class BotEntry {
 
     // Generic scripted task queue. Per-map scripts enqueue small primitives
     // (move, follow, grind, drop) and the shared manager executes them.
-    final ArrayDeque<BotTask> scriptTasks = new ArrayDeque<>();
-    BotTask activeScriptTask = null;
+    final ArrayDeque<AgentTask> scriptTasks = new ArrayDeque<>();
+    AgentTask activeScriptTask = null;
 
     public int activityEpoch() {
         return activityEpoch;
@@ -1346,19 +1347,19 @@ public class BotEntry {
         return ++activityEpoch;
     }
 
-    public void addScriptTask(BotTask task) {
+    public void addScriptTask(AgentTask task) {
         scriptTasks.add(task);
     }
 
-    public BotTask activeScriptTask() {
+    public AgentTask activeScriptTask() {
         return activeScriptTask;
     }
 
-    public void setActiveScriptTask(BotTask activeScriptTask) {
+    public void setActiveScriptTask(AgentTask activeScriptTask) {
         this.activeScriptTask = activeScriptTask;
     }
 
-    public BotTask pollScriptTask() {
+    public AgentTask pollScriptTask() {
         return scriptTasks.poll();
     }
 
