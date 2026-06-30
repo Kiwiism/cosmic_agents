@@ -18,7 +18,6 @@ import client.inventory.Equip;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
-import client.inventory.WeaponType;
 import client.inventory.manipulator.InventoryManipulator;
 import config.YamlConfig;
 import constants.id.ItemId;
@@ -40,10 +39,7 @@ import server.agents.capabilities.inventory.AgentInventoryTradePolicy.AmmoGroup;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.EquipsGroup;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.UseTradeGroups;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
-import server.agents.capabilities.supplies.AgentAmmoService;
-import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.trade.AgentOfferService;
-import server.agents.capabilities.trade.AgentSupplyShareTradeService;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
 import server.agents.integration.AgentBotInventoryRuntime;
@@ -369,7 +365,7 @@ public class BotInventoryManager {
     }
 
     private static void dropCategory(String category, BotEntry entry, Character bot) {
-        AgentInventoryDropService.dropCategory(category, entry, bot, BotInventoryManager::collectSellTrashEquips);
+        AgentInventoryDropService.dropCategory(category, entry, bot, AgentInventorySellTrashService::collectSellTrashEquips);
     }
 
     // ─── Trade actions (actual trade window) ─────────────────────────────────
@@ -1019,16 +1015,6 @@ public class BotInventoryManager {
 
     // ─── Inventory info ───────────────────────────────────────────────────────
 
-    /** occupied/total for each bag: "equip: 10/24, use: 8/24, etc: 3/24, setup: 0/24" */
-    static String slotsReport(Character bot) {
-        return AgentInventoryDialogueReporter.slotsReport(bot);
-    }
-
-    /** Full bag summary: "equip 10/24 | use 8/24 (3 scrolls, 5 pots, 2 buffs) | etc 3/24" */
-    static String inventorySummary(Character bot) {
-        return AgentInventoryDialogueReporter.inventorySummary(bot);
-    }
-
     // ─── Internals ────────────────────────────────────────────────────────────
 
     private static List<Item> collectReservedEquips(EquipTradeGroups groups) {
@@ -1112,10 +1098,6 @@ public class BotInventoryManager {
         return classifyEquipTradeGroups(entry, bot).itemsFor(EquipsGroup.NORMAL);
     }
 
-    public static List<Item> collectSellTrashEquips(BotEntry entry, Character bot) {
-        return AgentInventorySellTrashService.collectSellTrashEquips(entry, bot);
-    }
-
     private static EquipTradeGroups classifyEquipTradeGroups(BotEntry entry, Character bot) {
         long startedAt = profileTradeCategory("equips") ? System.nanoTime() : 0L;
         long bagScanStartedAt = startedAt != 0L ? System.nanoTime() : 0L;
@@ -1190,27 +1172,5 @@ public class BotInventoryManager {
     }
 
     // ─── Pot-share helpers ────────────────────────────────────────────────────
-
-    /**
-     * Collects the donor bot's worst recovery pots (sorted ascending by recovery score)
-     * up to {@code maxQty} total quantity or 9 item stacks, whichever limit is reached first.
-     * Only pure recovery pots are included (buff pots excluded via isRecoveryPotion).
-     */
-    public static List<Item> collectPotShareItems(Character donorBot, boolean forHp, int maxQty) {
-        return AgentPotionService.collectPotShareItems(donorBot, forHp, maxQty);
-    }
-
-    /** Initiates a bot-to-bot pot-share trade (single batch; donor auto-confirms). */
-    public static void startPotShareTransfer(List<Item> items, Character recipient, BotEntry entry, Character bot, int maxQty) {
-        AgentSupplyShareTradeService.startPotShareTransfer(items, recipient, entry, bot, maxQty);
-    }
-
-    public static List<Item> collectAmmoShareItems(Character donorBot, WeaponType needyWeaponType, int maxQty) {
-        return AgentAmmoService.collectAmmoShareItems(donorBot, needyWeaponType, maxQty);
-    }
-
-    public static void startAmmoShareTransfer(List<Item> items, Character recipient, BotEntry entry, Character bot, int maxQty) {
-        AgentSupplyShareTradeService.startAmmoShareTransfer(items, recipient, entry, bot, maxQty);
-    }
 
 }

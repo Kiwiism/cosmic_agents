@@ -2096,6 +2096,10 @@ Recent reconstruction notes:
   BotInventoryManager preserves the same drop-limited-map guard, category
   routing, floor-drop side effect, named-item miss reply, and drop-count reply
   wording through a temporary dispatcher.
+- Dead BotInventoryManager pass-through wrappers for inventory slot/summary
+  reports, sell-trash collection, and pot/ammo share collection/startup have
+  been removed; production callers already use the Agent reporter, inventory,
+  supplies, and trade services directly.
 - Ammo trade grouping now lives in `AgentInventoryAmmoPolicy`;
   BotInventoryManager preserves the same safe-item filtering, own-ammo versus
   non-own-ammo split, non-own item-id ordering, and own-ammo projectile attack
