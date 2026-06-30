@@ -1253,10 +1253,6 @@ public class BotCombatManager {
         AgentBotMobTouchStateRuntime.rememberCheck(entry, position, bot.getMapId());
     }
 
-    public static List<String> getSkillBuffDebugLines(BotEntry entry, Character bot) {
-        return AgentBotCombatReportRuntime.skillBuffDebugLines(entry, bot);
-    }
-
     public static String describeDebugStats(BotEntry entry, Character bot) {
         Monster target = AgentBotGrindTargetStateRuntime.target(entry);
         if (target == null || !target.isAlive()) {

@@ -1662,6 +1662,9 @@ Recent reconstruction notes:
   the decision site; the one-use `BotCombatManager` graph-target-cost helper has
   been removed while preserving the same unreachable fallback and graph path cost
   calculation.
+- The unused `BotCombatManager.getSkillBuffDebugLines` reporting wrapper has
+  been removed; skill-buff debug lines remain owned by
+  `AgentBotCombatReportRuntime`.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
