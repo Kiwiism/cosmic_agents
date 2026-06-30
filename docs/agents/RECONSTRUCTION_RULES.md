@@ -1462,6 +1462,11 @@ Recent reconstruction notes:
   undead targets are inside the Heal hitbox. BotCombatManager still resolves
   the concrete skill bounds, live map monsters, packet broadcast, HP/MP
   application, and movement side effects.
+- Combat ammo-check decision policy now lives in `AgentCombatAmmoPolicy`,
+  preserving the legacy non-ammo clear, mage MP-potion outage, projectile
+  low-ammo warning, projectile no-ammo stop, and already-warned no-op outcomes.
+  BotCombatManager still counts concrete inventory items and performs follow,
+  state, and dialogue side effects.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

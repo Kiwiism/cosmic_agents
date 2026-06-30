@@ -10,6 +10,7 @@ import server.agents.capabilities.combat.AgentBasicAttackPlanner;
 import server.agents.capabilities.combat.AgentCombatAttackExecutionPolicy;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
+import server.agents.capabilities.combat.AgentCombatAmmoPolicy;
 import server.agents.capabilities.combat.AgentFallDamageCalculator;
 import server.agents.capabilities.combat.AgentCombatSkillClassifier;
 import server.agents.capabilities.combat.AgentCombatWeaponPolicy;
@@ -1685,13 +1686,10 @@ public class BotCombatManager {
     static void tickAmmoCheck(BotEntry entry, Character bot) {
         WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
         boolean mage = weaponType == WeaponType.WAND || weaponType == WeaponType.STAFF;
-        if (!mage && !isRangedAmmoWeapon(weaponType)) {
-            AgentBotAmmoStateRuntime.clearAmmoWarningState(entry);
-            return;
-        }
-
+        boolean rangedAmmoWeapon = isRangedAmmoWeapon(weaponType);
+        int mpPotionCount = 0;
+        int ammo = Integer.MAX_VALUE;
         if (mage) {
-            int mpPotionCount = 0;
             for (Item item : bot.getInventory(InventoryType.USE).list()) {
                 if (item.getQuantity() <= 0) {
                     continue;
@@ -1707,37 +1705,39 @@ public class BotCombatManager {
                     }
                 }
             }
-            if (mpPotionCount > 0) {
-                AgentBotAmmoStateRuntime.clearAmmoWarningState(entry);
-                return;
-            }
-            if (!AgentBotAmmoStateRuntime.noAmmo(entry)) {
+        } else if (rangedAmmoWeapon) {
+            ammo = countAmmo(bot, weaponType);
+        }
+
+        AgentCombatAmmoPolicy.AmmoCheckDecision decision = AgentCombatAmmoPolicy.ammoCheckDecision(
+                mage,
+                rangedAmmoWeapon,
+                mpPotionCount,
+                ammo,
+                cfg.AMMO_LOW_WARN,
+                AgentBotAmmoStateRuntime.ammoWarnSent(entry),
+                AgentBotAmmoStateRuntime.noAmmo(entry));
+        switch (decision) {
+            case CLEAR_WARNING_STATE -> AgentBotAmmoStateRuntime.clearAmmoWarningState(entry);
+            case MAGE_NO_MP_POTS -> {
                 AgentBotAmmoStateRuntime.setNoAmmo(entry, true);
                 if (AgentBotModeStateRuntime.grinding(entry)) {
                     BotManager.getInstance().issueFollowOwner(entry);
                     AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(AgentDialogueCatalog.combatMpPotsOutReplies()));
                 }
             }
-            return;
-        }
-
-        int ammo = countAmmo(bot, weaponType);
-        if (ammo >= cfg.AMMO_LOW_WARN) {
-            AgentBotAmmoStateRuntime.clearAmmoWarningState(entry);
-            return;
-        }
-
-        if (ammo > 0 && !AgentBotAmmoStateRuntime.ammoWarnSent(entry)) {
-            AgentBotAmmoStateRuntime.setAmmoWarnSent(entry, true);
-            AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(AgentDialogueCatalog.combatAmmoLowReplies()));
-            return;
-        }
-
-        if (ammo <= 0 && !AgentBotAmmoStateRuntime.noAmmo(entry)) {
-            AgentBotAmmoStateRuntime.setNoAmmo(entry, true);
-            if (AgentBotModeStateRuntime.grinding(entry)) {
-                BotManager.getInstance().issueFollowOwner(entry);
-                AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(AgentDialogueCatalog.combatAmmoOutReplies()));
+            case PROJECTILE_LOW_AMMO -> {
+                AgentBotAmmoStateRuntime.setAmmoWarnSent(entry, true);
+                AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(AgentDialogueCatalog.combatAmmoLowReplies()));
+            }
+            case PROJECTILE_NO_AMMO -> {
+                AgentBotAmmoStateRuntime.setNoAmmo(entry, true);
+                if (AgentBotModeStateRuntime.grinding(entry)) {
+                    BotManager.getInstance().issueFollowOwner(entry);
+                    AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(AgentDialogueCatalog.combatAmmoOutReplies()));
+                }
+            }
+            case NO_CHANGE -> {
             }
         }
     }
