@@ -168,6 +168,14 @@ public final class AgentCombatSupportPolicy {
         return now + (long) (durationMs * 0.9);
     }
 
+    public static int supportCastAnimationMs(int skillAnimationMs) {
+        return skillAnimationMs > 0 ? skillAnimationMs : 1000;
+    }
+
+    public static int supportCastCooldownMs(int skillTimingCooldownMs, int skillAnimationMs) {
+        return Math.max(skillTimingCooldownMs, supportCastAnimationMs(skillAnimationMs));
+    }
+
     public static boolean hasNearbyHealSkillAlly(Character bot, int supportRange, int supportVerticalRange) {
         for (Character member : nearbyPartyMembers(bot, supportRange, supportVerticalRange)) {
             if (hasHealSkill(member)) {

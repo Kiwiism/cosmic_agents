@@ -190,6 +190,14 @@ class AgentCombatSupportPolicyTest {
     }
 
     @Test
+    void shouldUseLegacySupportCastCooldownFloor() {
+        assertEquals(1000, AgentCombatSupportPolicy.supportCastAnimationMs(0));
+        assertEquals(750, AgentCombatSupportPolicy.supportCastAnimationMs(750));
+        assertEquals(1200, AgentCombatSupportPolicy.supportCastCooldownMs(1200, 750));
+        assertEquals(1000, AgentCombatSupportPolicy.supportCastCooldownMs(500, 0));
+    }
+
+    @Test
     void shouldDetectNearbyHealSkillAlly() {
         Character bot = characterAt(1, new Point(100, 100), true);
         Character healer = characterAt(2, new Point(130, 110), true);

@@ -1497,6 +1497,10 @@ Recent reconstruction notes:
 - Support-buff refresh timing now lives in `AgentCombatSupportPolicy`,
   preserving the legacy `now + (long) (duration * 0.9)` rebuff schedule while
   BotCombatManager still writes the temporary next-buff runtime state.
+- Support-buff cast cooldown calculation now lives in
+  `AgentCombatSupportPolicy`, preserving the legacy 1000ms animation fallback
+  and `max(skillTimingCooldown, animationMs)` cooldown floor while
+  BotCombatManager still writes the temporary attack cooldown state.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

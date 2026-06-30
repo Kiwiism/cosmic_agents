@@ -1621,8 +1621,8 @@ public class BotCombatManager {
                 AgentAttackExecutionProvider.getEquippedWeaponType(bot));
         AgentAttackExecutionProvider.SkillAttackTiming skillTiming =
                 AgentAttackExecutionProvider.resolveSkillAttackTiming(skill, action, bot, fallbackAttackData);
-        int animMs = skill.getAnimationTime() > 0 ? skill.getAnimationTime() : 1000;
-        AgentBotCombatCooldownStateRuntime.maxAttackCooldown(entry, Math.max(skillTiming.cooldownMs(), animMs));
+        AgentBotCombatCooldownStateRuntime.maxAttackCooldown(entry,
+                AgentCombatSupportPolicy.supportCastCooldownMs(skillTiming.cooldownMs(), skill.getAnimationTime()));
         markAlerted(entry);
         noteSkillBuffDecision(entry, AgentCombatSupportPolicy.supportCastSummary(skillLabel(skill.getId())));
         return true;
