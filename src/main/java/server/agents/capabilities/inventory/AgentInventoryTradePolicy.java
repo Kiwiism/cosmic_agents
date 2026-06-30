@@ -82,6 +82,16 @@ public final class AgentInventoryTradePolicy {
         return "reserved equips page " + page + "/" + lastPage;
     }
 
+    public static List<Item> reservedEquipsPageItems(String category, List<Item> reservedItems) {
+        if (reservedItems.isEmpty()) {
+            return List.of();
+        }
+        int page = clampTradePage(requestedReservedEquipsPage(category), reservedItems.size());
+        int from = (page - 1) * TRADE_WINDOW_ITEM_LIMIT;
+        int to = Math.min(from + TRADE_WINDOW_ITEM_LIMIT, reservedItems.size());
+        return new ArrayList<>(reservedItems.subList(from, to));
+    }
+
     public static EquipsGroup equipsGroupFromCategory(String category) {
         if (category == null || !category.startsWith("equips:")) return null;
         try {

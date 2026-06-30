@@ -45,6 +45,29 @@ class AgentInventoryTradePolicyTest {
     }
 
     @Test
+    void shouldSelectReservedEquipPageItemsLikeLegacyInventory() {
+        List<Item> reserved = List.of(
+                item(InventoryType.EQUIP, 1000, 1),
+                item(InventoryType.EQUIP, 1001, 1),
+                item(InventoryType.EQUIP, 1002, 1),
+                item(InventoryType.EQUIP, 1003, 1),
+                item(InventoryType.EQUIP, 1004, 1),
+                item(InventoryType.EQUIP, 1005, 1),
+                item(InventoryType.EQUIP, 1006, 1),
+                item(InventoryType.EQUIP, 1007, 1),
+                item(InventoryType.EQUIP, 1008, 1),
+                item(InventoryType.EQUIP, 1009, 1));
+
+        assertEquals(List.of(), AgentInventoryTradePolicy.reservedEquipsPageItems("equips:reserved:1", List.of()));
+        assertEquals(reserved.subList(0, 9),
+                AgentInventoryTradePolicy.reservedEquipsPageItems("equips:reserved:1", reserved));
+        assertEquals(reserved.subList(9, 10),
+                AgentInventoryTradePolicy.reservedEquipsPageItems("equips:reserved:2", reserved));
+        assertEquals(reserved.subList(9, 10),
+                AgentInventoryTradePolicy.reservedEquipsPageItems("equips:reserved:99", reserved));
+    }
+
+    @Test
     void shouldParseMesoTradeCategoriesLikeLegacyInventory() {
         assertTrue(AgentInventoryTradePolicy.isMesoCategory("mesos"));
         assertTrue(AgentInventoryTradePolicy.isMesoCategory("mesos:1500"));

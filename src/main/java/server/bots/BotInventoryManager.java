@@ -1190,15 +1190,7 @@ public class BotInventoryManager {
 
     private static List<Item> collectReservedEquipTradePage(String category, BotEntry entry, Character bot) {
         EquipTradeGroups groups = classifyEquipTradeGroups(entry, bot);
-        List<Item> reserved = collectReservedEquips(groups);
-        if (reserved.isEmpty()) {
-            return List.of();
-        }
-        int page = AgentInventoryTradePolicy.clampTradePage(
-                AgentInventoryTradePolicy.requestedReservedEquipsPage(category), reserved.size());
-        int from = (page - 1) * AgentInventoryTradePolicy.TRADE_WINDOW_ITEM_LIMIT;
-        int to = Math.min(from + AgentInventoryTradePolicy.TRADE_WINDOW_ITEM_LIMIT, reserved.size());
-        return new ArrayList<>(reserved.subList(from, to));
+        return AgentInventoryTradePolicy.reservedEquipsPageItems(category, collectReservedEquips(groups));
     }
 
     private static String reservedEquipsPageMessage(String category, BotEntry entry, Character bot) {
