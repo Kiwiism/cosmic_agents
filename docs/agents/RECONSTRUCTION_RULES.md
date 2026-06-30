@@ -1501,6 +1501,10 @@ Recent reconstruction notes:
   `AgentCombatSupportPolicy`, preserving the legacy 1000ms animation fallback
   and `max(skillTimingCooldown, animationMs)` cooldown floor while
   BotCombatManager still writes the temporary attack cooldown state.
+- Heal skill-cache stop policy now lives in `AgentCombatSkillClassifier`,
+  preserving the legacy rule that both active and inactive Heal skills stop
+  further attack/summon/support cache classification while only active Heal
+  writes the temporary heal-skill cache id.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

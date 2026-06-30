@@ -334,8 +334,8 @@ public class BotCombatManager {
             AgentCombatSkillClassifier.SkillCacheBucket cacheBucket =
                     AgentCombatSkillClassifier.classifySkillCacheBucket(skill, fx);
 
-            if (isHealSkill(skill.getId())) {
-                if (isActiveHealSkill(skill, fx)) {
+            if (AgentCombatSkillClassifier.shouldStopCacheScanAfterHealSkill(skill)) {
+                if (cacheBucket == AgentCombatSkillClassifier.SkillCacheBucket.ACTIVE_HEAL) {
                     AgentBotCombatSkillCacheStateRuntime.setHealSkillId(entry, skill.getId());
                 }
                 continue;  // not an attack skill; offensive use against undead handled in tickSupportHealing
@@ -1791,12 +1791,5 @@ public class BotCombatManager {
         return AgentCombatSkillClassifier.isSummonSkill(effect);
     }
 
-    static boolean isActiveHealSkill(Skill skill, StatEffect effect) {
-        return AgentCombatSkillClassifier.isActiveHealSkill(skill, effect);
-    }
-
-    static boolean isHealSkill(int skillId) {
-        return AgentCombatSkillClassifier.isHealSkill(skillId);
-    }
 }
 

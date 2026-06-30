@@ -168,6 +168,10 @@ public final class AgentCombatSkillClassifier {
         return skillId == Cleric.HEAL || skillId == SuperGM.HEAL_PLUS_DISPEL;
     }
 
+    public static boolean shouldStopCacheScanAfterHealSkill(Skill skill) {
+        return skill != null && isHealSkill(skill.getId());
+    }
+
     public static int skillCacheSignature(Character bot) {
         int result = 1;
         for (Map.Entry<Skill, Character.SkillEntry> learned : bot.getSkills().entrySet()) {

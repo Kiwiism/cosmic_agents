@@ -89,6 +89,8 @@ class AgentCombatSkillClassifierTest {
         when(heal.getAction()).thenReturn(true);
         StatEffect healEffect = mock(StatEffect.class);
 
+        Skill inactiveHeal = skill(SuperGM.HEAL_PLUS_DISPEL, false);
+
         Skill attack = skill(Warrior.POWER_STRIKE, false);
         StatEffect attackEffect = mock(StatEffect.class);
         when(attackEffect.hasDamage()).thenReturn(true);
@@ -110,6 +112,12 @@ class AgentCombatSkillClassifierTest {
 
         assertEquals(AgentCombatSkillClassifier.SkillCacheBucket.ACTIVE_HEAL,
                 AgentCombatSkillClassifier.classifySkillCacheBucket(heal, healEffect));
+        assertEquals(AgentCombatSkillClassifier.SkillCacheBucket.IGNORE,
+                AgentCombatSkillClassifier.classifySkillCacheBucket(inactiveHeal, healEffect));
+        assertTrue(AgentCombatSkillClassifier.shouldStopCacheScanAfterHealSkill(heal));
+        assertTrue(AgentCombatSkillClassifier.shouldStopCacheScanAfterHealSkill(inactiveHeal));
+        assertFalse(AgentCombatSkillClassifier.shouldStopCacheScanAfterHealSkill(attack));
+        assertFalse(AgentCombatSkillClassifier.shouldStopCacheScanAfterHealSkill(null));
         assertEquals(AgentCombatSkillClassifier.SkillCacheBucket.ACTIVE_ATTACK,
                 AgentCombatSkillClassifier.classifySkillCacheBucket(attack, attackEffect));
         assertEquals(AgentCombatSkillClassifier.SkillCacheBucket.SUMMON,
