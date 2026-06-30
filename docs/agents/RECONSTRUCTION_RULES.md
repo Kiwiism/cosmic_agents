@@ -1747,6 +1747,10 @@ Recent reconstruction notes:
   strike-point AoE primary correction, hitbox calculation, target collection,
   Dragon Roar support safety, packet field selection, timing, cooldown, and
   damage weapon type resolution.
+- Attack-plan orchestration now lives in `AgentBotCombatPlanRuntime`;
+  `BotCombatManager.planAttack` is a temporary compatibility adapter while the
+  Agent runtime preserves cached skill candidate ordering, basic attack fallback,
+  best-plan scoring, and the existing `combat-plan` performance metric.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

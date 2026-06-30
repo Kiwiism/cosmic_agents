@@ -6,9 +6,7 @@ import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentAttackPlanScoringPolicy;
 import server.agents.capabilities.combat.AgentAttackPlanTieBreakPolicy;
-import server.agents.capabilities.combat.AgentBasicAttackPlanRuntime;
 import server.agents.capabilities.combat.AgentCombatConfig;
-import server.agents.capabilities.combat.AgentCombatSkillClassifier;
 import server.agents.capabilities.combat.AgentCombatImmediateTargetPolicy;
 import server.agents.capabilities.combat.AgentCombatGrindTargetPolicy;
 import server.agents.capabilities.combat.AgentCombatRangePolicy;
@@ -51,6 +49,7 @@ import server.agents.integration.AgentBotCombatSkillCacheRuntime;
 import server.agents.integration.AgentBotCombatHealRuntime;
 import server.agents.integration.AgentBotCombatDeathRuntime;
 import server.agents.integration.AgentBotCombatDamageRuntime;
+import server.agents.integration.AgentBotCombatPlanRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
@@ -290,32 +289,7 @@ public class BotCombatManager {
     }
 
     public static AttackPlan planAttack(BotEntry entry, Character bot, Monster target) {
-        long startedAt = System.nanoTime();
-        try {
-            List<AttackPlan> candidates = new ArrayList<>(3);
-
-            for (int skillId : AgentCombatSkillClassifier.cachedAttackSkillIds(
-                    AgentBotCombatSkillCacheStateRuntime.attackSkillIds(entry),
-                    AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry),
-                    AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry))) {
-                AttackPlan skillAttack = planSkillAttack(entry, bot, target, skillId);
-                if (skillAttack != null) {
-                    candidates.add(skillAttack);
-                }
-            }
-
-            AttackPlan basicAttack = planBasicAttack(bot, target);
-            if (basicAttack != null) {
-                candidates.add(basicAttack);
-            }
-            return AgentAttackPlanScoringPolicy.selectBestAttackPlan(bot, candidates);
-        } finally {
-            AgentPerformanceMonitor.record("combat-plan", System.nanoTime() - startedAt);
-        }
-    }
-
-    private static AttackPlan planBasicAttack(Character bot, Monster target) {
-        return toBotAttackPlan(AgentBasicAttackPlanRuntime.planBasicAttack(bot, target));
+        return toBotAttackPlan(AgentBotCombatPlanRuntime.planAttack(entry, bot, target, cfg));
     }
 
     private static AttackPlan toBotAttackPlan(AgentAttackPlan plan) {

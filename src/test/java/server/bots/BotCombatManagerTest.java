@@ -53,6 +53,7 @@ import server.agents.integration.AgentBotCombatFacingRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheRuntime;
 import server.agents.integration.AgentBotCombatHealRuntime;
+import server.agents.integration.AgentBotCombatPlanRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotMobTouchStateRuntime;
@@ -1192,6 +1193,26 @@ class BotCombatManagerTest {
             assertEquals(List.of(target), plan.targets);
             assertEquals(AgentAttackRoute.CLOSE, plan.route);
             assertNotNull(plan.hitBox);
+        }
+    }
+
+    @Test
+    void combatPlanRuntimeSelectsBasicAttackWhenNoSkillIsCached() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        Monster target = mockMob(new Point(140, 200), 9300508);
+        when(map.getAllMonsters()).thenReturn(List.of(target));
+        BotEntry entry = new BotEntry(bot, null, null);
+
+        try (MockedStatic<AgentAttackExecutionProvider> attacks =
+                     Mockito.mockStatic(AgentAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS)) {
+            attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.SWORD1H);
+
+            AgentAttackPlan plan = AgentBotCombatPlanRuntime.planAttack(entry, bot, target, BotCombatManager.cfg);
+
+            assertNotNull(plan);
+            assertEquals(0, plan.skillId);
+            assertEquals(List.of(target), plan.targets);
         }
     }
 
