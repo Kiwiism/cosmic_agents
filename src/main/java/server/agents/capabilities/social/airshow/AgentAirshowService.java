@@ -1,4 +1,4 @@
-package server.bots;
+package server.agents.capabilities.social.airshow;
 
 import client.Character;
 import constants.game.CharacterStance;
@@ -14,13 +14,17 @@ import server.agents.integration.AgentBotAirshowStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.bots.BotEntry;
+import server.bots.BotManager;
+import server.bots.BotMovementManager;
+import server.bots.BotPhysicsEngine;
 import server.maps.MapleMap;
 import tools.PacketCreator;
 
 import java.awt.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public final class BotAirshowManager {
+public final class AgentAirshowService {
     private static final int FRAME_MS = 50;
     private static final int HORIZONTAL_SPEED_PX_PER_SEC = 2000;
     private static final int VERTICAL_SPEED_PX_PER_SEC = 1200;
@@ -29,7 +33,7 @@ public final class BotAirshowManager {
     private static final long BETWEEN_RUN_DELAY_MS = 1000L;
     private static final AtomicInteger TRAIL_OBJECT_IDS = new AtomicInteger(1_900_000_000);
 
-    private BotAirshowManager() {
+    private AgentAirshowService() {
     }
 
     public static String start(Character owner, String botName) {

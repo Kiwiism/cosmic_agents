@@ -621,7 +621,7 @@ public final class BotPhysicsEngine {
         syncCharacterState(entry);
     }
 
-    static void teleportTo(BotEntry entry, Character bot, Point position) {
+    public static void teleportTo(BotEntry entry, Character bot, Point position) {
         bot.setPosition(position);
         clearMovementState(entry, position);
         syncCharacterState(entry);

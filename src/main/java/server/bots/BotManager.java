@@ -823,7 +823,7 @@ public class BotManager {
                 BotScrollReactionManager.handleScrollEvent(source, result, scrollItemId, bots.values()));
     }
 
-    BotEntry getBotEntry(int ownerCharId, String botName) {
+    public BotEntry getBotEntry(int ownerCharId, String botName) {
         List<BotEntry> entries = bots.get(ownerCharId);
         if (entries == null || botName == null) {
             return null;

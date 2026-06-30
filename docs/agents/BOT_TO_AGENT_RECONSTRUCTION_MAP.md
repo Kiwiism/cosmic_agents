@@ -70,6 +70,10 @@ Recent map updates:
 - Static skill build profile tables have moved from `server.bots.build` to
   `server.agents.capabilities.build.profiles`. Warrior, bowman, thief, mage,
   and build-step ordering data are unchanged.
+- `server.bots.BotAirshowManager` has moved to
+  `server.agents.capabilities.social.airshow.AgentAirshowService`. Airshow
+  command syntax, frame timing, trail monster packets, and restore behavior are
+  unchanged.
 - `server.bots.BotCommandParser` has moved to
   `server.agents.integration.AgentBotCommandParser`. Bot-entry target
   adaptation, transfer command wrapping, and targeted-command feedback are
@@ -111,7 +115,7 @@ Recent map updates:
 | `src/main/java/client/command/commands/gm3/BotLlmCommand.java` | `server.agents.commands.AgentLegacyCommandBridge` | `COMPATIBILITY_ALIAS_TEMPORARY` |
 | `src/main/java/client/command/commands/gm3/BotNavCommand.java` | `server.agents.commands.AgentLegacyCommandBridge` | `COMPATIBILITY_ALIAS_TEMPORARY` |
 | `src/main/java/client/command/commands/gm3/BotPerfDebugCommand.java` | `server.agents.commands.AgentLegacyCommandBridge` | `COMPATIBILITY_ALIAS_TEMPORARY` |
-| `src/main/java/server/bots/BotAirshowManager.java` | `server.agents.capabilities.social.airshow` | `MIGRATE_TO_AGENT` |
+| `src/main/java/server/bots/BotAirshowManager.java` | `server.agents.capabilities.social.airshow.AgentAirshowService` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotAmmoManager.java` | `server.agents.capabilities.supplies.AgentAmmoService`, `server.agents.capabilities.supplies.AgentAmmoSharePolicy`, `server.agents.capabilities.dialogue.AgentDialogueCatalog` | `MIGRATE_TO_AGENT`; ammo-share request eligibility, donor quantity math, donor tie-break policy, and ammo request/offer dialogue pools are Agent-owned |
 | `src/main/java/server/bots/BotAttackExecutionProvider.java` | `server.agents.capabilities.combat.AgentAttackExecutionProvider` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotBuffManager.java` | `server.agents.capabilities.combat.AgentBuffService` | `MIGRATE_TO_AGENT` |

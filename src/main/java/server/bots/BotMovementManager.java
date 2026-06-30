@@ -199,7 +199,7 @@ public class BotMovementManager {
         clearTransientState(entry);
     }
 
-    static void resetEntryStateAfterTeleport(BotEntry entry) {
+    public static void resetEntryStateAfterTeleport(BotEntry entry) {
         clearTransientState(entry);
     }
 

@@ -3,7 +3,7 @@ package client.command.commands.gm3;
 import client.Character;
 import client.Client;
 import client.command.Command;
-import server.bots.BotAirshowManager;
+import server.agents.capabilities.social.airshow.AgentAirshowService;
 
 public class AirshowCommand extends Command {
     {
@@ -18,7 +18,7 @@ public class AirshowCommand extends Command {
             return;
         }
 
-        String result = BotAirshowManager.start(player, params[0]);
+        String result = AgentAirshowService.start(player, params[0]);
         player.yellowMessage(result);
     }
 }

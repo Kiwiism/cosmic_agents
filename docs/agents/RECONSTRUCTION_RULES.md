@@ -1297,6 +1297,10 @@ Recent reconstruction notes:
   `server.agents.monitoring.AgentPathLogger`; the `BotEntry` attachment point
   and path-log output format are preserved while the diagnostic runtime is no
   longer owned by the bot package.
+- Airshow side effects now live in
+  `server.agents.capabilities.social.airshow.AgentAirshowService`; command
+  routing, scripted frame timing, trail packet behavior, and restore/reset
+  behavior are preserved.
 - Fidget mode and trigger state now use `AgentFidgetMode` and
   `AgentFidgetTrigger` under the Agent movement fidget capability; BotEntry and
   BotFidgetManager preserve the same NONE/WAIT/JUMP/DIAGONAL_JUMP/PRONE/
