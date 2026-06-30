@@ -1,6 +1,7 @@
 package server.bots;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+import server.agents.capabilities.combat.AgentCombatConfig;
 
 import server.agents.capabilities.dialogue.AgentEmote;
 
@@ -174,7 +175,7 @@ public class BotInventoryManager {
 
         long now = System.currentTimeMillis();
         Point botPos = bot.getPosition();
-        double seekRangeSq = (double) BotCombatManager.cfg.GRIND_SEEK_RANGE * BotCombatManager.cfg.GRIND_SEEK_RANGE;
+        double seekRangeSq = (double) AgentCombatConfig.cfg.GRIND_SEEK_RANGE * AgentCombatConfig.cfg.GRIND_SEEK_RANGE;
         MapItem nearest = null;
         double nearestDistSq = Double.MAX_VALUE;
 

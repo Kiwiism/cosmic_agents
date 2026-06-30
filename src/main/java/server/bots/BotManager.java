@@ -1402,7 +1402,7 @@ public class BotManager {
         long now = System.currentTimeMillis();
         if (AgentBotAoeRepositionStateRuntime.hasAnchor(entry)) {
             boolean done = AgentBotAoeRepositionStateRuntime.isExpiredOrArrived(
-                    entry, botPos, now, BotCombatManager.cfg.AOE_REPOSITION_ARRIVAL_X)
+                    entry, botPos, now, AgentCombatConfig.cfg.AOE_REPOSITION_ARRIVAL_X)
                     || target == null || !target.isAlive();
             if (done) {
                 AgentBotAoeRepositionStateRuntime.clear(entry);
@@ -1414,7 +1414,7 @@ public class BotManager {
                 entry, bot, target, attackPlan, AgentCombatConfig.cfg);
         if (anchor != null) {
             AgentBotAoeRepositionStateRuntime.setAnchor(
-                    entry, anchor, now + BotCombatManager.cfg.AOE_REPOSITION_MAX_MS);
+                    entry, anchor, now + AgentCombatConfig.cfg.AOE_REPOSITION_MAX_MS);
         }
         return anchor;
     }
@@ -1460,7 +1460,7 @@ public class BotManager {
             int dxHold = AgentBotRetreatHoldStateRuntime.distanceFromHoldX(entry, botPos);
             if (dxHold <= RETREAT_ARRIVAL_TOLERANCE_X) {
                 AgentBotRetreatHoldStateRuntime.clear(entry);
-            } else if (dxHold > BotCombatManager.cfg.RANGED_RETREAT_DISTANCE_X * 2) {
+            } else if (dxHold > AgentCombatConfig.cfg.RANGED_RETREAT_DISTANCE_X * 2) {
                 AgentBotRetreatHoldStateRuntime.clear(entry);
             } else {
                 return AgentBotRetreatHoldStateRuntime.holdPosition(entry);
@@ -1489,7 +1489,7 @@ public class BotManager {
         if (AgentAttackExecutionProvider.isSurrounded(bot, botPos)) {
             int dir = pickBreakoutDirection(entry, botPos, combatTargetPos);
             AgentBotBreakoutStateRuntime.setBreakoutCommitment(
-                    entry, dir, now + BotCombatManager.cfg.BREAKOUT_MAX_MS);
+                    entry, dir, now + AgentCombatConfig.cfg.BREAKOUT_MAX_MS);
             // Drop any stale one-step hysteresis so it can't fight the committed breakout.
             AgentBotRetreatHoldStateRuntime.clear(entry);
             return breakoutStep(botPos, dir);
@@ -1504,7 +1504,7 @@ public class BotManager {
     }
 
     private static Point breakoutStep(Point botPos, int dir) {
-        return new Point(botPos.x + dir * BotCombatManager.cfg.RANGED_RETREAT_DISTANCE_X, botPos.y);
+        return new Point(botPos.x + dir * AgentCombatConfig.cfg.RANGED_RETREAT_DISTANCE_X, botPos.y);
     }
 
     /**
@@ -1589,7 +1589,7 @@ public class BotManager {
 
         int projectileRange = AgentProjectileHitbox.CLIENT_PROJECTILE_BASE_RANGE
                 + AgentProjectileHitbox.passiveProjectileRangeBonus(bot);
-        int yReachable = BotCombatManager.cfg.RANGED_DEGENERATE_RANGE_Y * 2;
+        int yReachable = AgentCombatConfig.cfg.RANGED_DEGENERATE_RANGE_Y * 2;
 
         Point reachableRetreat = selectReachableProjectileRetreatTarget(
                 graph, map, botPos, botRegionId, targetRegionId, combatTargetPos, projectileRange, yReachable);
@@ -1618,7 +1618,7 @@ public class BotManager {
                 continue;
             }
             // Don't land back inside the degenerate band — that defeats the retreat.
-            if (dx <= BotCombatManager.cfg.RANGED_DEGENERATE_RANGE_X) {
+            if (dx <= AgentCombatConfig.cfg.RANGED_DEGENERATE_RANGE_X) {
                 continue;
             }
 
@@ -1698,7 +1698,7 @@ public class BotManager {
             return null;
         }
 
-        int minShootDx = BotCombatManager.cfg.RANGED_DEGENERATE_RANGE_X + 20;
+        int minShootDx = AgentCombatConfig.cfg.RANGED_DEGENERATE_RANGE_X + 20;
         int bestScore = Integer.MIN_VALUE;
         Point bestPoint = null;
         int[] probes = {
@@ -2316,7 +2316,7 @@ public class BotManager {
      */
     private LocalOpportunityAttackResult tickGrindMode(BotEntry entry, Character bot, Point botPos,
             Point targetPos, boolean runAiTick) {
-        double seekRangeSq = (double) BotCombatManager.cfg.GRIND_SEEK_RANGE * BotCombatManager.cfg.GRIND_SEEK_RANGE;
+        double seekRangeSq = (double) AgentCombatConfig.cfg.GRIND_SEEK_RANGE * AgentCombatConfig.cfg.GRIND_SEEK_RANGE;
         Monster target = AgentBotGrindTargetStateRuntime.targetInSeekRange(entry, bot, botPos, seekRangeSq);
         long now = System.currentTimeMillis();
         AgentAttackPlan attackPlan = target == null
@@ -2338,7 +2338,7 @@ public class BotManager {
                 attackPlan = null;
             }
             AgentBotGrindSearchStateRuntime.scheduleNextSearch(
-                    entry, now + BotCombatManager.cfg.GRIND_RETARGET_INTERVAL_MS);
+                    entry, now + AgentCombatConfig.cfg.GRIND_RETARGET_INTERVAL_MS);
         }
         // Search for a convenient loot drop every AI tick (grind mode only)
         if (runAiTick && !AgentBotPatrolStateRuntime.hasPatrolRegion(entry)) {

@@ -1,6 +1,7 @@
 package server.bots;
 
 import server.agents.capabilities.dialogue.AgentEmote;
+import server.agents.capabilities.combat.AgentCombatConfig;
 
 import server.agents.runtime.AgentPerformanceMonitor;
 
@@ -175,7 +176,7 @@ public final class BotPotionManager {
 
         startedAt = AgentPerformanceMonitor.start();
         AgentBotCombatAmmoCheckRuntime.tickAmmoCheck(entry, bot,
-                BotCombatManager.cfg.AMMO_LOW_WARN, BotManager.cfg.POT_LOW_WARN);
+                AgentCombatConfig.cfg.AMMO_LOW_WARN, BotManager.cfg.POT_LOW_WARN);
         AgentPerformanceMonitor.recordSince("potion-ammo-check", startedAt);
 
         if (!AgentBotModeStateRuntime.grinding(entry) && !AgentBotModeStateRuntime.following(entry)) {

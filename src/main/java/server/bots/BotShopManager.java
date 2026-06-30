@@ -2,6 +2,7 @@ package server.bots;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
+import server.agents.capabilities.combat.AgentCombatConfig;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.shop.AgentShopAmmoPolicy;
@@ -327,7 +328,7 @@ public final class BotShopManager {
             AgentBotShopRuntime.sayMapNow(sequence.bot(), AgentDialogueCatalog.shopBoughtReply(sequence.bought()));
             BotPotionManager.setupAutopotForBot(sequence.bot());
             AgentBotCombatAmmoCheckRuntime.tickAmmoCheck(sequence.entry(), sequence.bot(),
-                    BotCombatManager.cfg.AMMO_LOW_WARN, BotManager.cfg.POT_LOW_WARN);
+                    AgentCombatConfig.cfg.AMMO_LOW_WARN, BotManager.cfg.POT_LOW_WARN);
             scheduleShopStep(sequence.entry(), finish);
             return;
         }
@@ -425,11 +426,11 @@ public final class BotShopManager {
     }
 
     private static int ammoTriggerThreshold() {
-        return AgentShopAmmoPolicy.triggerThreshold(BotCombatManager.cfg.AMMO_LOW_WARN, AMMO_TRIGGER_THRESHOLD);
+        return AgentShopAmmoPolicy.triggerThreshold(AgentCombatConfig.cfg.AMMO_LOW_WARN, AMMO_TRIGGER_THRESHOLD);
     }
 
     private static int ammoTargetThreshold() {
-        return AgentShopAmmoPolicy.targetThreshold(BotCombatManager.cfg.AMMO_LOW_WARN, AMMO_TARGET_THRESHOLD);
+        return AgentShopAmmoPolicy.targetThreshold(AgentCombatConfig.cfg.AMMO_LOW_WARN, AMMO_TARGET_THRESHOLD);
     }
 
     private static boolean needsFixedAmmoForShop(Character bot, Shop shop, WeaponType wt, int threshold) {

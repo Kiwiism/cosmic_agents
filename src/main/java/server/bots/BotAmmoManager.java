@@ -2,6 +2,7 @@ package server.bots;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
+import server.agents.capabilities.combat.AgentCombatConfig;
 
 import client.Character;
 import client.inventory.Item;
@@ -37,7 +38,7 @@ public final class BotAmmoManager {
         }
 
         int ammo = AgentCombatAmmoCounter.countAmmo(bot, weaponType);
-        if (ammo >= BotCombatManager.cfg.AMMO_LOW_WARN) {
+        if (ammo >= AgentCombatConfig.cfg.AMMO_LOW_WARN) {
             AgentBotAmmoStateRuntime.clearAmmoShareRequested(entry);
             return false;
         }
@@ -64,7 +65,7 @@ public final class BotAmmoManager {
         if (owner == null || bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry)) {
             return false;
         }
-        if (!canRequestShare(weaponType) || currentAmmo >= BotCombatManager.cfg.AMMO_LOW_WARN) {
+        if (!canRequestShare(weaponType) || currentAmmo >= AgentCombatConfig.cfg.AMMO_LOW_WARN) {
             return false;
         }
 
@@ -141,14 +142,14 @@ public final class BotAmmoManager {
                 continue;
             }
             int count = AgentCombatAmmoCounter.countAmmo(donorBot, needyWeaponType);
-            if (count < BotCombatManager.cfg.AMMO_LOW_WARN) {
+            if (count < AgentCombatConfig.cfg.AMMO_LOW_WARN) {
                 continue;
             }
             WeaponType donorWeaponType = AgentAttackExecutionProvider.getEquippedWeaponType(donorBot);
             boolean donorNeedsSameAmmo = donorWeaponType == needyWeaponType;
             int donationQty = AgentAmmoSharePolicy.donationQuantity(
                     count,
-                    BotCombatManager.cfg.AMMO_LOW_WARN,
+                    AgentCombatConfig.cfg.AMMO_LOW_WARN,
                     donorNeedsSameAmmo);
             if (donationQty <= 0) {
                 continue;

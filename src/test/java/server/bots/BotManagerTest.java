@@ -384,7 +384,7 @@ class BotManagerTest {
 
         assertNotNull(retreat);
         assertTrue(retreat.x <= 200);
-        assertTrue(Math.abs(retreat.x - 330) > BotCombatManager.cfg.RANGED_DEGENERATE_RANGE_X);
+        assertTrue(Math.abs(retreat.x - 330) > AgentCombatConfig.cfg.RANGED_DEGENERATE_RANGE_X);
 
         int startRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, map, new Point(300, 100));
         int retreatRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, map, retreat);

@@ -22,6 +22,9 @@ Recent map updates:
   exists for older callers, but the main tick path no longer depends on
   `BotCombatManager.planAttack`, `attackMonster`, `findGrindTarget`,
   `findPatrolTarget`, `findFollowAttackTarget`, or `aoeRepositionTarget`.
+- Ammo, inventory, movement, potion, shop, and BotManager production callers now
+  read live combat config through `AgentCombatConfig.cfg` instead of the
+  temporary `BotCombatManager.cfg` compatibility alias.
 
 | Current file | Target Agent destination | Status |
 | --- | --- | --- |

@@ -2,6 +2,7 @@ package server.bots;
 
 import server.agents.runtime.AgentPerformanceMonitor;
 
+import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.movement.AgentClimbMovementPolicy;
 import server.agents.capabilities.movement.AgentGroundMovementPolicy;
 import server.agents.capabilities.movement.AgentMovementProfile;
@@ -674,7 +675,7 @@ public class BotMovementManager {
         int laneEndX = botPos.x + direction * lookahead;
         Rectangle lane = inclusiveRectangle(
                 Math.min(botPos.x, laneEndX),
-                botPos.y - BotCombatManager.cfg.MOB_TOUCH_SWEEP_HEIGHT,
+                botPos.y - AgentCombatConfig.cfg.MOB_TOUCH_SWEEP_HEIGHT,
                 Math.max(botPos.x, laneEndX),
                 botPos.y);
 

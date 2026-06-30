@@ -1777,6 +1777,11 @@ Recent reconstruction notes:
   remains a temporary compatibility facade for older callers and tests, while
   the main tick path preserves the same config object, target ordering, attack
   gating, cooldown checks, and packet side effects.
+- Remaining production combat config reads in ammo, inventory, movement,
+  potion, shop, and BotManager callers now read `AgentCombatConfig.cfg`
+  directly instead of the `BotCombatManager.cfg` alias. The alias remains only
+  for compatibility-focused tests and legacy facade callers, preserving the
+  same mutable config object and live tuning behavior.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
