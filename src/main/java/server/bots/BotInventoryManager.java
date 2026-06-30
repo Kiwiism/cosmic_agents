@@ -1274,13 +1274,7 @@ public class BotInventoryManager {
     }
 
     private static String nextAmmoGroup(String category, Character bot) {
-        AmmoGroup current = AgentInventoryTradePolicy.ammoGroupFromCategory(category);
-        if (current == null) return null;
-        AmmoTradeGroups groups = classifyAmmoTradeGroups(bot);
-        for (AmmoGroup group = current.next(); group != null; group = group.next()) {
-            if (!groups.itemsFor(group).isEmpty()) return group.categoryString();
-        }
-        return null;
+        return AgentInventoryAmmoPolicy.nextAvailableGroupCategory(category, classifyAmmoTradeGroups(bot));
     }
 
     private static void startEquipsGroupTradeTransfer(Character owner, BotEntry entry, Character bot) {
@@ -1300,12 +1294,10 @@ public class BotInventoryManager {
 
     private static void startAmmoGroupTradeTransfer(Character owner, BotEntry entry, Character bot) {
         AmmoTradeGroups groups = classifyAmmoTradeGroups(bot);
-        for (AmmoGroup group : AmmoGroup.values()) {
-            List<Item> items = groups.itemsFor(group);
-            if (!items.isEmpty()) {
-                startTradeSequence(group.categoryString(), owner, items, 0, false, entry, bot);
-                return;
-            }
+        AmmoGroup group = AgentInventoryAmmoPolicy.firstAvailableGroup(groups);
+        if (group != null) {
+            startTradeSequence(group.categoryString(), owner, groups.itemsFor(group), 0, false, entry, bot);
+            return;
         }
         AgentBotInventoryRuntime.replyNow(entry, noItemsReply("ammo"));
     }

@@ -2043,6 +2043,10 @@ Recent reconstruction notes:
   BotInventoryManager preserves the same safe-item filtering, own-ammo versus
   non-own-ammo split, non-own item-id ordering, and own-ammo projectile attack
   ordering through a compatibility delegate.
+- Ammo trade category selection now lives in `AgentInventoryAmmoPolicy`;
+  BotInventoryManager preserves the same first non-empty group selection and
+  next-group advancement while keeping trade sequence side effects in the
+  temporary compatibility layer.
 - Maker crystal creation and trash-disassembly batch orchestration now live in
   `AgentMakerService`; utility chat callbacks preserve the same guard replies,
   lazy item-data lookup, five-second step cadence, ACTIVE set, and

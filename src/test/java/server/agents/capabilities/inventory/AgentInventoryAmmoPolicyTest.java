@@ -119,6 +119,28 @@ class AgentInventoryAmmoPolicyTest {
         assertEquals(groups.own(), groups.itemsFor(AgentInventoryTradePolicy.AmmoGroup.OWN));
     }
 
+    @Test
+    void shouldSelectAmmoTradeGroupsLikeLegacyInventory() {
+        Item nonOwn = item(2061000, 10);
+        Item own = item(2060000, 10);
+        AgentInventoryAmmoPolicy.AmmoTradeGroups bothGroups =
+                new AgentInventoryAmmoPolicy.AmmoTradeGroups(List.of(nonOwn), List.of(own));
+        AgentInventoryAmmoPolicy.AmmoTradeGroups ownOnly =
+                new AgentInventoryAmmoPolicy.AmmoTradeGroups(List.of(), List.of(own));
+        AgentInventoryAmmoPolicy.AmmoTradeGroups empty =
+                new AgentInventoryAmmoPolicy.AmmoTradeGroups(List.of(), List.of());
+
+        assertEquals(AgentInventoryTradePolicy.AmmoGroup.NON_OWN,
+                AgentInventoryAmmoPolicy.firstAvailableGroup(bothGroups));
+        assertEquals(AgentInventoryTradePolicy.AmmoGroup.OWN,
+                AgentInventoryAmmoPolicy.firstAvailableGroup(ownOnly));
+        assertNull(AgentInventoryAmmoPolicy.firstAvailableGroup(empty));
+        assertEquals("ammo:own",
+                AgentInventoryAmmoPolicy.nextAvailableGroupCategory("ammo:non_own", bothGroups));
+        assertNull(AgentInventoryAmmoPolicy.nextAvailableGroupCategory("ammo:own", bothGroups));
+        assertNull(AgentInventoryAmmoPolicy.nextAvailableGroupCategory("ammo:nope", bothGroups));
+    }
+
     private static Item item(int itemId, int quantity) {
         Item item = mock(Item.class);
         when(item.getItemId()).thenReturn(itemId);

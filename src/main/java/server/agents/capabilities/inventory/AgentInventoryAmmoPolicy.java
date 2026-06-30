@@ -118,4 +118,24 @@ public final class AgentInventoryAmmoPolicy {
                 .thenComparingInt(Item::getItemId));
         return new AmmoTradeGroups(nonOwn, own);
     }
+
+    public static AgentInventoryTradePolicy.AmmoGroup firstAvailableGroup(AmmoTradeGroups groups) {
+        for (AgentInventoryTradePolicy.AmmoGroup group : AgentInventoryTradePolicy.AmmoGroup.values()) {
+            if (!groups.itemsFor(group).isEmpty()) {
+                return group;
+            }
+        }
+        return null;
+    }
+
+    public static String nextAvailableGroupCategory(String category, AmmoTradeGroups groups) {
+        AgentInventoryTradePolicy.AmmoGroup current = AgentInventoryTradePolicy.ammoGroupFromCategory(category);
+        if (current == null) return null;
+        for (AgentInventoryTradePolicy.AmmoGroup group = current.next(); group != null; group = group.next()) {
+            if (!groups.itemsFor(group).isEmpty()) {
+                return group.categoryString();
+            }
+        }
+        return null;
+    }
 }
