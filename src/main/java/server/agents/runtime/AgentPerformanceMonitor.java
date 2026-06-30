@@ -87,7 +87,7 @@ public final class AgentPerformanceMonitor {
         notes.put("common-afk-check", "AgentBotManagerStatusRuntime.tickAfkCheck (owner-AFK detection)");
         notes.put("common-trade", "BotInventoryManager.tickTrade (in-progress bot trade state machine)");
         notes.put("common-manual-trade", "BotInventoryManager.tickManualTrade (manual bot/player trade)");
-        notes.put("common-pq-hooks", "BotPqHooks.tick (KPQ / OPQ / LPQ state machines)");
+        notes.put("common-pq-hooks", "AgentPartyQuestHooks.tick (KPQ / OPQ / LPQ state machines)");
         notes.put("common-script-tasks", "tickScriptTasks (AgentScriptRunner)");
         notes.put("common-action-lock", "AgentBotCombatActionLockRuntime.tickActionLock (attack/move cooldown decay)");
         notes.put("common-skill-cache", "AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded");

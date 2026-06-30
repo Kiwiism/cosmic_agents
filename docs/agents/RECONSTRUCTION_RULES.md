@@ -1207,10 +1207,10 @@ Recent reconstruction notes:
   behavior while no longer reading KPQ coupon target state directly from
   BotEntry in production.
 - KPQ grind-requirement stage reads now enter through `AgentBotPqRuntime`;
-  BotPqHooks preserves stage-1 grind gating while no longer reading KPQ state
+  AgentPartyQuestHooks preserves stage-1 grind gating while no longer reading KPQ state
   directly from BotEntry in production.
 - KPQ stage-5 reward-claim state now enters through `AgentBotPqRuntime`;
-  BotKpqStage5 preserves reward-claim and announcement behavior while no
+  AgentKpqStage5 preserves reward-claim and announcement behavior while no
   longer reading or writing stage-5 claimed state directly on BotEntry in
   production.
 - LLM identity and reply-channel reads now enter through
@@ -1224,7 +1224,7 @@ Recent reconstruction notes:
   step advancement, script-local ints, wait timers, and queued-task behavior
   while no longer reading or writing `entry.script` directly in production.
 - KPQ stage-1 state-machine fields now enter through `AgentBotPqRuntime`;
-  BotKpqStage1 preserves stage transitions, coupon target assignment, progress
+  AgentKpqStage1 preserves stage transitions, coupon target assignment, progress
   reporting, pass exchange, pass delivery, and reset behavior while no longer
   reading or writing KPQ or script runtime fields directly on BotEntry in
   production.
@@ -1931,6 +1931,11 @@ Recent reconstruction notes:
   `AgentMakerService`; utility chat callbacks preserve the same guard replies,
   lazy item-data lookup, five-second step cadence, ACTIVE set, and
   MakerProcessor player-path calls through Agent runtime adapters.
+- KPQ party-quest automation now lives in `AgentPartyQuestHooks` and
+  `server.agents.capabilities.partyquest.kpq`; BotManager and loot eligibility
+  preserve the same tick order, stage-1 grind/follow defaults, NPC lock,
+  coupon-loot suppression, pass exchange, and stage-5 reward claim behavior
+  through Agent capability calls.
 
 Initial reconstruction order:
 

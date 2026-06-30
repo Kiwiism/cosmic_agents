@@ -1570,7 +1570,7 @@ public class BotEntry {
     }
 
     // Party-quest state (one slot per PQ type; null = not in that PQ)
-    public server.bots.pq.BotKpqState kpq = new server.bots.pq.BotKpqState();
+    public server.agents.capabilities.partyquest.kpq.AgentKpqState kpq = new server.agents.capabilities.partyquest.kpq.AgentKpqState();
 
     public void resetKpqStage5Claimed() {
         kpq.stage5Claimed = false;

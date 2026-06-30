@@ -7,7 +7,7 @@ import constants.inventory.ItemConstants;
 import server.agents.integration.AgentBotPqRuntime;
 import server.bots.BotEntry;
 import server.bots.BotManager;
-import server.bots.pq.BotPqHooks;
+import server.agents.capabilities.partyquest.AgentPartyQuestHooks;
 import server.maps.MapItem;
 import server.maps.MapleMap;
 
@@ -41,7 +41,7 @@ public final class AgentLootEligibility {
             return false;
         }
         int kpqCouponTarget = AgentBotPqRuntime.kpqCouponTarget(entry);
-        if (itemId == KPQ_COUPON && (BotPqHooks.shouldSkipCouponLoot(entry)
+        if (itemId == KPQ_COUPON && (AgentPartyQuestHooks.shouldSkipCouponLoot(entry)
                 || (kpqCouponTarget > 0 && bot.getItemQuantity(KPQ_COUPON, false) >= kpqCouponTarget))) {
             return false;
         }

@@ -1,4 +1,4 @@
-package server.bots.pq;
+package server.agents.capabilities.partyquest.kpq;
 
 import client.Character;
 import client.inventory.InventoryType;
@@ -19,9 +19,9 @@ import java.util.concurrent.ThreadLocalRandom;
  * KPQ Stage 1 automation expressed as a generic bot script:
  * move -> wait -> assign -> grind -> move -> wait -> exchange -> follow/drop.
  */
-final class BotKpqStage1 {
+public final class AgentKpqStage1 {
 
-    static final int KPQ_STAGE1_MAP = 103000800;
+    public static final int KPQ_STAGE1_MAP = 103000800;
     private static final int NPC_CLOTO = 9020001;
     private static final int ITEM_COUPON = 4001007;
     private static final int ITEM_PASS = 4001008;
@@ -29,10 +29,10 @@ final class BotKpqStage1 {
     // Question index (1-9) -> required coupon count; index 0 unused.
     private static final int[] ANSWERS = {0, 8, 10, 10, 10, 15, 20, 25, 25, 35};
 
-    static final int IDLE = 0;
+    public static final int IDLE = 0;
     static final int FIRST_WALK = 1;
     static final int FIRST_WAIT = 2;
-    static final int GRINDING = 3;
+    public static final int GRINDING = 3;
     static final int SECOND_WALK = 4;
     static final int SECOND_WAIT = 5;
     static final int DELIVERING = 6;
@@ -50,19 +50,19 @@ final class BotKpqStage1 {
                     ctx.queueStop();
                     ctx.waitMs(WAIT_MS);
                 }, null, AgentScriptContext::waitDone),
-                AgentScriptStep.action(BotKpqStage1::assignCouponTarget),
+                AgentScriptStep.action(AgentKpqStage1::assignCouponTarget),
                 AgentScriptStep.of(ctx -> {
                     AgentBotPqRuntime.setKpqStageState(ctx.entry(), GRINDING);
                     ctx.queueGrind();
-                }, BotKpqStage1::tickCouponGrinding, BotKpqStage1::hasRequiredCoupons),
+                }, AgentKpqStage1::tickCouponGrinding, AgentKpqStage1::hasRequiredCoupons),
                 moveToCloto(SECOND_WALK),
                 AgentScriptStep.of(ctx -> {
                     AgentBotPqRuntime.setKpqStageState(ctx.entry(), SECOND_WAIT);
                     ctx.queueStop();
                     ctx.waitMs(WAIT_MS);
                 }, null, AgentScriptContext::waitDone),
-                AgentScriptStep.action(BotKpqStage1::exchangeCoupons),
-                AgentScriptStep.of(BotKpqStage1::queuePassDelivery, null, AgentScriptContext::tasksDone),
+                AgentScriptStep.action(AgentKpqStage1::exchangeCoupons),
+                AgentScriptStep.of(AgentKpqStage1::queuePassDelivery, null, AgentScriptContext::tasksDone),
                 AgentScriptStep.action(ctx -> {
                     AgentBotPqRuntime.queueSay(ctx.entry(), "Here's your pass!");
                     AgentBotPqRuntime.setKpqStageState(ctx.entry(), DONE);
@@ -91,15 +91,15 @@ final class BotKpqStage1 {
         }
     };
 
-    static AgentScript script() {
+    public static AgentScript script() {
         return SCRIPT;
     }
 
-    static boolean shouldSkipCouponLoot(BotEntry entry) {
+    public static boolean shouldSkipCouponLoot(BotEntry entry) {
         return AgentBotPqRuntime.kpqStageStateAtLeast(entry, SECOND_WALK);
     }
 
-    static boolean isNpcLocked(BotEntry entry) {
+    public static boolean isNpcLocked(BotEntry entry) {
         return AgentBotPqRuntime.kpqStageStateIs(entry, FIRST_WAIT)
                 || AgentBotPqRuntime.kpqStageStateIs(entry, SECOND_WAIT);
     }
@@ -108,7 +108,7 @@ final class BotKpqStage1 {
         return AgentScriptStep.of(ctx -> {
             AgentBotPqRuntime.setKpqStageState(ctx.entry(), state);
             queueMoveToCloto(ctx);
-        }, BotKpqStage1::tickMoveToCloto, ctx -> {
+        }, AgentKpqStage1::tickMoveToCloto, ctx -> {
             Point npcPos = getNpcPos(ctx.bot());
             return npcPos != null && near(ctx.bot(), npcPos, NEAR_NPC_PX) && ctx.tasksDone();
         });

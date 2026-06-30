@@ -105,7 +105,7 @@ import server.ItemInformationProvider;
 import server.StatEffect;
 import server.TimerManager;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
-import server.bots.pq.BotPqHooks;
+import server.agents.capabilities.partyquest.AgentPartyQuestHooks;
 import server.life.Monster;
 import server.life.MobSkill;
 import server.maps.Foothold;
@@ -2183,8 +2183,8 @@ public class BotManager {
                 BotMovementManager.resetEntryStateAfterTeleport(entry);
                 BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
                 BotMovementManager.broadcastMovement(entry);
-                if (BotPqHooks.requiresGrind(entry, bot)) { issueGrind(entry); }
-                else if (BotPqHooks.requiresFollow(entry, bot)) { issueFollowOwner(entry); }
+                if (AgentPartyQuestHooks.requiresGrind(entry, bot)) { issueGrind(entry); }
+                else if (AgentPartyQuestHooks.requiresFollow(entry, bot)) { issueFollowOwner(entry); }
                 else { AgentBotPqRuntime.resetKpqStage5Claimed(entry); } // left KPQ — reset for next run
                 BotShopManager.onMapChange(entry, bot);
                 AgentBotManagerStatusRuntime.checkManagerStatus(entry, bot);
@@ -2198,8 +2198,8 @@ public class BotManager {
                     BotMovementManager.resetEntryStateAfterTeleport(entry);
                     BotNavigationGraphProvider.warmGraphAsync(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
                     BotMovementManager.broadcastMovement(entry);
-                    if (BotPqHooks.requiresGrind(entry, bot)) { issueGrind(entry); }
-                    else if (BotPqHooks.requiresFollow(entry, bot)) { issueFollowOwner(entry); }
+                    if (AgentPartyQuestHooks.requiresGrind(entry, bot)) { issueGrind(entry); }
+                    else if (AgentPartyQuestHooks.requiresFollow(entry, bot)) { issueFollowOwner(entry); }
                     else { AgentBotPqRuntime.resetKpqStage5Claimed(entry); } // left KPQ — reset for next run
                     BotShopManager.onMapChange(entry, bot);
                     AgentBotManagerStatusRuntime.checkManagerStatus(entry, bot);
@@ -3462,12 +3462,12 @@ public class BotManager {
         BotInventoryManager.tickManualTrade(entry, bot);
         if (perf) AgentPerformanceMonitor.record("common-manual-trade", System.nanoTime() - t);
         if (perf) t = System.nanoTime();
-        BotPqHooks.tick(entry, bot, owner);
+        AgentPartyQuestHooks.tick(entry, bot, owner);
         if (perf) AgentPerformanceMonitor.record("common-pq-hooks", System.nanoTime() - t);
         if (perf) t = System.nanoTime();
         tickScriptTasks(entry);
         if (perf) AgentPerformanceMonitor.record("common-script-tasks", System.nanoTime() - t);
-        if (BotPqHooks.isNpcLocked(entry)) {
+        if (AgentPartyQuestHooks.isNpcLocked(entry)) {
             return true;
         }
         if (perf) t = System.nanoTime();

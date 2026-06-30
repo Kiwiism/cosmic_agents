@@ -1,4 +1,4 @@
-package server.bots.pq;
+package server.agents.capabilities.partyquest.kpq;
 
 import client.Character;
 import client.inventory.Inventory;
@@ -16,11 +16,11 @@ import java.util.Map;
  * KPQ Stage 5 reward automation — detects when the stage is cleared and
  * claims the event reward on behalf of the bot without requiring NPC interaction.
  */
-final class BotKpqStage5 {
+public final class AgentKpqStage5 {
 
     static final int KPQ_STAGE5_MAP = 103000804;
 
-    static void tick(BotEntry entry, Character bot) {
+    public static void tick(BotEntry entry, Character bot) {
         if (bot.getMapId() != KPQ_STAGE5_MAP) return;
         if (AgentBotPqRuntime.kpqStage5Claimed(entry)) return;
 
