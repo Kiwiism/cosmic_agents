@@ -11,7 +11,7 @@ import client.Character;
 import client.inventory.Equip;
 import server.ItemInformationProvider;
 import server.bots.BotEntry;
-import server.bots.BotFidgetManager;
+import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.bots.BotManager;
 
 import java.awt.*;
@@ -151,7 +151,7 @@ public final class AgentScrollReactionService {
         }
 
         if (rollPercent(FIDGET_CHANCE_PCT, chanceScale)) {
-            BotFidgetManager.maybeStartSocialFidget(entry);
+            AgentFidgetService.maybeStartSocialFidget(entry);
             reacted = true;
         }
 

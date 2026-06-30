@@ -445,7 +445,7 @@ Recent reconstruction notes:
   `AgentBotOfferRuntime.isOwnerIdleForOffer`; `AgentOfferService` no longer
   reaches directly into the broad chat-status facade for offer prompt checks.
 - Fidget idle gating now enters through
-  `AgentBotFidgetRuntime.isLeaderIdleForFidget`; `BotFidgetManager` no longer
+  `AgentBotFidgetRuntime.isLeaderIdleForFidget`; `AgentFidgetService` no longer
   reaches directly into the broad chat-status facade for fidget eligibility.
 - Movement-triggered active-mode preparation, post-movement status checks, and
   random fidget expressions now enter through `AgentBotMovementStatusRuntime`;
@@ -870,7 +870,7 @@ Recent reconstruction notes:
   write `grindTarget` directly outside the adapter.
 - High-level mode state now enters through `AgentBotModeStateRuntime`;
   BotManager follow/grind/stop transitions, BotMovementManager movement gates,
-  BotFidgetManager social fidget gates, BotCombatManager buff/heal/ammo gates,
+  AgentFidgetService social fidget gates, BotCombatManager buff/heal/ammo gates,
   AgentPotionService share/low-pot gates, BotNavigationManager follow/grind
   target adjustment, BotPathLogger mode reporting, LLM situation reporting,
   movement snapshots, and focused tests keep BotEntry as the temporary backing
@@ -1153,19 +1153,19 @@ Recent reconstruction notes:
   temporary backing store but no longer read `bot` directly in production.
 - Fidget bot identity and movement profile reads now enter through
   `AgentBotRuntimeIdentityRuntime` and `AgentBotMovementStateRuntime`;
-  BotFidgetManager tick eligibility, fidget origin capture, walk-step
+  AgentFidgetService tick eligibility, fidget origin capture, walk-step
   calculations, grounded execution, diagonal/sideways direction selection, and
   prone visual broadcast keep BotEntry as the temporary backing store but no
   longer read `bot` or `movementProfile` directly in production.
 - Fidget movement/nav gate state now enters through
   `AgentBotMovementStateRuntime` and `AgentBotNavigationDebugStateRuntime`;
-  BotFidgetManager social fidget eligibility, active fidget eligibility,
+  AgentFidgetService social fidget eligibility, active fidget eligibility,
   airborne/climb dispatch, air-steer movement intent, grounded sideways
   movement intent, and prone visual facing keep BotEntry as the temporary
   backing store but no longer read or write `inAir`, `climbing`, `navEdge`,
   `downJumpPending`, `moveDir`, or `facingDir` directly in production.
 - Fidget state-machine fields now enter through `AgentBotFidgetStateRuntime`;
-  BotFidgetManager fidget mode/trigger, timers, origin position, spam-air-steer,
+  AgentFidgetService fidget mode/trigger, timers, origin position, spam-air-steer,
   jump/sideways direction, crouch checks, visual cooldown, and idle/speed-roll
   scheduling keep BotEntry as the temporary backing store but no longer read or
   write fidget fields directly in production. `AgentFidgetMode` and
@@ -1337,7 +1337,7 @@ Recent reconstruction notes:
   remain unchanged.
 - Fidget mode and trigger state now use `AgentFidgetMode` and
   `AgentFidgetTrigger` under the Agent movement fidget capability; BotEntry and
-  BotFidgetManager preserve the same NONE/WAIT/JUMP/DIAGONAL_JUMP/PRONE/
+  AgentFidgetService preserve the same NONE/WAIT/JUMP/DIAGONAL_JUMP/PRONE/
   SPAM_PRONE/SPAM_SIDEWAYS and NONE/AUTO_FOLLOW/IDLE/SOCIAL behavior while the
   enum ownership moves out of `server.bots`.
 - AoE single-target detection and capped cluster-size policy now live in
@@ -1872,10 +1872,17 @@ Recent reconstruction notes:
   `AgentLlmReplyService.maybeRespond` directly. Prompt text, memory JSONL
   serialization, compaction behavior, in-flight gating, reply splitting,
   sanitization, and follow-up scheduling are unchanged.
+- Fidget behavior now lives in
+  `server.agents.capabilities.movement.fidget.AgentFidgetService`. The old
+  `server.bots.BotFidgetManager` source file has been removed; active fidget
+  ticks, idle/social/greeting rolls, speed-mismatch fidget gates, jump/prone/
+  sideways execution, origin-return cleanup, and prone attack visuals are
+  unchanged while BotEntry, BotManager, BotMovementManager, and
+  BotPhysicsEngine remain temporary backing seams.
 - Greeting/social fidget side-effect dispatch now enters through
   `AgentBotFidgetSideEffects`; the old bot-side fidget side-effect shim has
-  been removed, while `BotFidgetManager` still owns the legacy fidget behavior
-  until the full fidget capability is extracted.
+  been removed, while `AgentFidgetService` owns the legacy fidget behavior in
+  the Agent movement capability.
 - Relog and owner-bot session lifecycle bridge calls now enter through
   `AgentBotSessionLifecycleSideEffects`; the old bot-side session lifecycle
   shim has been removed while `BotManager` still performs the unchanged relog

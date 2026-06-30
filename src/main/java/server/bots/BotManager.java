@@ -18,6 +18,7 @@ import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.runtime.AgentPerformanceMonitor;
 
 import server.agents.capabilities.looting.AgentLootEligibility;
+import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.agents.capabilities.social.AgentScrollReactionService;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.supplies.AgentPotionService;
@@ -3767,7 +3768,7 @@ public class BotManager {
                 && !AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
             AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
         }
-        if (BotFidgetManager.tryHandleTick(entry, steeringTarget, runAiTick)) {
+        if (AgentFidgetService.tryHandleTick(entry, steeringTarget, runAiTick)) {
             return;
         }
 

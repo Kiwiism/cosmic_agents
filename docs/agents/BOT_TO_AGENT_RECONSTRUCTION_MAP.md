@@ -119,6 +119,13 @@ Recent map updates:
 - `server.bots.BotStarterKitManager` has moved to
   `server.agents.capabilities.build.AgentStarterKitService`. Job-change,
   starter-kit grant, auto-equip, and build-status behavior are unchanged.
+- `server.bots.BotFidgetManager` has moved to
+  `server.agents.capabilities.movement.fidget.AgentFidgetService`. Active
+  fidget ticking, idle/social/greeting fidget rolls, speed-mismatch fidget
+  eligibility, jump/prone/sideways fidget execution, origin-return cleanup, and
+  prone attack visuals are unchanged; BotEntry, BotMovementManager, BotManager,
+  and BotPhysicsEngine remain temporary backing seams during movement
+  reconstruction.
 
 | Current file | Target Agent destination | Status |
 | --- | --- | --- |
@@ -142,7 +149,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotEntry.java` | `server.agents.runtime.AgentSession` and capability state objects | `SPLIT_TO_MULTIPLE_AGENT_MODULES`; message queue now uses Agent-owned queued message type |
 | `src/main/java/server/bots/BotEquipManager.java` | `server.agents.capabilities.equipment` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
 | `src/main/java/server/bots/BotFallbackMovementManager.java` | `server.agents.capabilities.movement.AgentFallbackMovementService` | `MIGRATE_TO_AGENT` |
-| `src/main/java/server/bots/BotFidgetManager.java` | `server.agents.capabilities.social` and `server.agents.capabilities.movement` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
+| `src/main/java/server/bots/BotFidgetManager.java` | `server.agents.capabilities.movement.fidget.AgentFidgetService` | `MIGRATED_TO_AGENT`; active fidget state machine and social/greeting fidget start behavior moved unchanged, while BotEntry and movement/physics helpers remain temporary backing seams |
 | `src/main/java/server/bots/BotFidgetSideEffects.java` | `server.agents.integration.AgentBotFidgetSideEffects` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotInventoryManager.java` | `server.agents.capabilities.inventory`, `looting`, `trade`, `server.agents.capabilities.dialogue.AgentItemQueryNormalizer`, `server.agents.capabilities.dialogue.AgentDialogueCatalog`, `server.agents.capabilities.supplies.AgentPotionSharePolicy` | `SPLIT_TO_MULTIPLE_AGENT_MODULES`; item query normalization, trade page/meso/item-quantity policy, sell-trash equipment protection policy, ammo item-to-weapon classification, potion-share recovery scoring/slot eligibility, USE-item recovery/buff classification, drop-limited-map reply, and trade reply/result/error pools are Agent-owned |
 | `src/main/java/server/bots/BotLootEligibility.java` | `server.agents.capabilities.looting.AgentLootEligibility` | `MIGRATED_TO_AGENT` |

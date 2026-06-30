@@ -414,7 +414,7 @@ public final class BotPhysicsEngine {
         return sample == null ? null : sample.point();
     }
 
-    static boolean canWalkGroundStep(MapleMap map, Point currentPos, int stepX) {
+    public static boolean canWalkGroundStep(MapleMap map, Point currentPos, int stepX) {
         if (map == null || currentPos == null) {
             return false;
         }
@@ -632,7 +632,7 @@ public final class BotPhysicsEngine {
         syncCharacterState(entry);
     }
 
-    static void idleOnGround(BotEntry entry, Character bot) {
+    public static void idleOnGround(BotEntry entry, Character bot) {
         Point position = bot.getPosition();
         AgentBotMovementStateRuntime.setInAir(entry, false);
         AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
@@ -650,7 +650,7 @@ public final class BotPhysicsEngine {
         syncCharacterState(entry);
     }
 
-    static void proneOnGround(BotEntry entry, Character bot) {
+    public static void proneOnGround(BotEntry entry, Character bot) {
         idleOnGround(entry, bot);
         AgentBotMovementStateRuntime.setCrouching(entry, true);
         AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
@@ -904,7 +904,7 @@ public final class BotPhysicsEngine {
      * via force/friction model. Movement layer sets intent before calling;
      * physics never returns velocity to movement.
      */
-    static GroundMotion applyGroundMotion(BotEntry entry, Character bot, Foothold foothold) {
+    public static GroundMotion applyGroundMotion(BotEntry entry, Character bot, Foothold foothold) {
         MapleMap map = bot.getMap();
         Point currentPos = bot.getPosition();
         int desiredDir = AgentBotMovementStateRuntime.moveDirection(entry);

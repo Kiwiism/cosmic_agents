@@ -1,7 +1,7 @@
 package server.agents.integration;
 
 import server.bots.BotEntry;
-import server.bots.BotFidgetManager;
+import server.agents.capabilities.movement.fidget.AgentFidgetService;
 
 /**
  * Temporary bot-side gateway for fidget side effects that still live in the
@@ -12,10 +12,10 @@ public final class AgentBotFidgetSideEffects {
     }
 
     public static void maybeStartSocialFidget(BotEntry entry) {
-        BotFidgetManager.maybeStartSocialFidget(entry);
+        AgentFidgetService.maybeStartSocialFidget(entry);
     }
 
     public static void maybeStartGreetingFidget(BotEntry entry, int roll) {
-        BotFidgetManager.maybeStartGreetingFidget(entry, roll);
+        AgentFidgetService.maybeStartGreetingFidget(entry, roll);
     }
 }

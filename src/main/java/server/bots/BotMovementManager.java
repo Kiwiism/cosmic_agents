@@ -7,6 +7,7 @@ import server.agents.capabilities.movement.AgentClimbMovementPolicy;
 import server.agents.capabilities.movement.AgentGroundMovementPolicy;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementTimingPolicy;
+import server.agents.capabilities.movement.fidget.AgentFidgetService;
 
 import client.Character;
 import io.netty.buffer.Unpooled;
@@ -122,6 +123,14 @@ public class BotMovementManager {
         return BotPhysicsEngine.cfg.TICK_MS;
     }
 
+    public static int configuredFollowDist() {
+        return cfg.FOLLOW_DIST;
+    }
+
+    public static int configuredJumpYThreshold() {
+        return cfg.JUMP_Y_THRESH;
+    }
+
     private static Config bindConfig(Config config) {
         BotPhysicsEngine.cfg = config;
         return config;
@@ -209,7 +218,7 @@ public class BotMovementManager {
         AgentBotCombatCooldownStateRuntime.clearAttackCooldown(entry);
         AgentBotNavigationDebugStateRuntime.clearGraphWarmupFallback(entry);
         AgentBotOwnerMotionStateRuntime.clearObservedOwnerStep(entry);
-        BotFidgetManager.clear(entry);
+        AgentFidgetService.clear(entry);
         clearNavigationState(entry);
         AgentBotMovementBroadcastStateRuntime.invalidate(entry);
     }
@@ -333,7 +342,7 @@ public class BotMovementManager {
                 BotPhysicsEngine.climbStepPerTick());
     }
 
-    static void tickAirborne(BotEntry entry, Point targetPos) {
+    public static void tickAirborne(BotEntry entry, Point targetPos) {
         long startedAt = System.nanoTime();
         try {
             AgentBotSwimStateRuntime.setSwimming(entry, false);

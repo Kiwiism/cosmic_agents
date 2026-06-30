@@ -1,11 +1,9 @@
-package server.bots;
+package server.agents.capabilities.movement.fidget;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 
 import client.Character;
 import net.packet.Packet;
-import server.agents.capabilities.movement.fidget.AgentFidgetMode;
-import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 import server.agents.integration.AgentBotFidgetRuntime;
 import server.agents.integration.AgentBotFidgetStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
@@ -15,6 +13,10 @@ import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
+import server.bots.BotEntry;
+import server.bots.BotManager;
+import server.bots.BotMovementManager;
+import server.bots.BotPhysicsEngine;
 import server.maps.Foothold;
 import tools.PacketCreator;
 
@@ -22,15 +24,15 @@ import java.awt.*;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
-public final class BotFidgetManager {
+public final class AgentFidgetService {
     private static final int SPAM_BASE_DELAY_MIN_MS = 100;
     private static final int SPAM_BASE_DELAY_MAX_MS = 250;
     private static final int SPAM_JITTER_MS = 50;
 
-    private BotFidgetManager() {
+    private AgentFidgetService() {
     }
 
-    static boolean tryHandleTick(BotEntry entry, Point targetPos, boolean runAiTick) {
+    public static boolean tryHandleTick(BotEntry entry, Point targetPos, boolean runAiTick) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (entry == null || bot == null || targetPos == null) {
             clear(entry);
@@ -64,7 +66,7 @@ public final class BotFidgetManager {
         return handleActiveTick(entry, botPos, targetPos, now);
     }
 
-    static void clear(BotEntry entry) {
+    public static void clear(BotEntry entry) {
         if (entry == null) {
             return;
         }
@@ -96,11 +98,11 @@ public final class BotFidgetManager {
         return Math.abs(botPos.x - origin.x) > 8 || Math.abs(botPos.y - origin.y) > 8;
     }
 
-    static void startFidget(BotEntry entry, AgentFidgetMode mode, long now, int durationMs) {
+    public static void startFidget(BotEntry entry, AgentFidgetMode mode, long now, int durationMs) {
         startFidget(entry, mode, now, durationMs, AgentFidgetTrigger.AUTO_FOLLOW);
     }
 
-    static void startFidget(BotEntry entry,
+    public static void startFidget(BotEntry entry,
                            AgentFidgetMode mode,
                            long now,
                            int durationMs,
@@ -173,7 +175,7 @@ public final class BotFidgetManager {
                 && !AgentBotMovementStateRuntime.climbing(entry)
                 && (!inAir || airborneJumpFidget)
                 && !AgentBotMovementStateRuntime.downJumpPending(entry)
-                && (airborneJumpFidget || Math.abs(targetPos.y - botPos.y) <= BotMovementManager.cfg.JUMP_Y_THRESH * 2);
+                && (airborneJumpFidget || Math.abs(targetPos.y - botPos.y) <= BotMovementManager.configuredJumpYThreshold() * 2);
     }
 
     private static boolean shouldKeepRunning(BotEntry entry, Point botPos, Point targetPos, long now) {
@@ -186,7 +188,7 @@ public final class BotFidgetManager {
         }
         int walkStep = BotPhysicsEngine.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         int absDx = Math.abs(targetPos.x - botPos.x);
-        return absDx <= BotMovementManager.cfg.FOLLOW_DIST + walkStep * 3;
+        return absDx <= BotMovementManager.configuredFollowDist() + walkStep * 3;
     }
 
     private static boolean isJumpFidget(AgentFidgetMode mode) {
@@ -197,7 +199,7 @@ public final class BotFidgetManager {
         if (!AgentBotTickStateRuntime.lastTickWasAi(entry) || !isOwnerMostlyIdle(entry)) {
             return;
         }
-        if (Math.abs(targetPos.x - botPos.x) > BotMovementManager.cfg.FOLLOW_DIST) {
+        if (Math.abs(targetPos.x - botPos.x) > BotMovementManager.configuredFollowDist()) {
             return;
         }
         if (AgentBotFidgetStateRuntime.idleRollNotScheduled(entry)) {
@@ -232,7 +234,7 @@ public final class BotFidgetManager {
         startRandomFidget(entry, now, (int) BotManager.randMs(2000, 4500), AgentFidgetTrigger.AUTO_FOLLOW);
     }
 
-    static boolean shouldStartSpeedMismatchFidget(BotEntry entry, Point botPos, Point targetPos) {
+    public static boolean shouldStartSpeedMismatchFidget(BotEntry entry, Point botPos, Point targetPos) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (entry == null || bot == null || botPos == null || targetPos == null) {
             return false;
@@ -244,7 +246,7 @@ public final class BotFidgetManager {
         int walkStep = BotPhysicsEngine.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         int absDx = Math.abs(targetPos.x - botPos.x);
         int ownerStep = AgentBotOwnerMotionStateRuntime.maxObservedOwnerStep(entry);
-        return absDx <= BotMovementManager.cfg.FOLLOW_DIST + walkStep
+        return absDx <= BotMovementManager.configuredFollowDist() + walkStep
                 && ownerStep < walkStep;
     }
 
@@ -252,11 +254,11 @@ public final class BotFidgetManager {
         return AgentBotOwnerMotionStateRuntime.ownerMostlyIdle(entry);
     }
 
-    static void startRandomFidget(BotEntry entry, long now, int durationMs) {
+    public static void startRandomFidget(BotEntry entry, long now, int durationMs) {
         startRandomFidget(entry, now, durationMs, AgentFidgetTrigger.AUTO_FOLLOW);
     }
 
-    static void startRandomFidget(BotEntry entry, long now, int durationMs, AgentFidgetTrigger trigger) {
+    public static void startRandomFidget(BotEntry entry, long now, int durationMs, AgentFidgetTrigger trigger) {
         AgentFidgetMode mode = switch (ThreadLocalRandom.current().nextInt(6)) {
             case 0 -> AgentFidgetMode.WAIT;
             case 1 -> AgentFidgetMode.JUMP;
@@ -458,9 +460,9 @@ public final class BotFidgetManager {
     }
 
     private static int randomTickAlignedBaseDelayMs() {
-        int ticks = ThreadLocalRandom.current().nextInt(SPAM_BASE_DELAY_MIN_MS / BotPhysicsEngine.cfg.TICK_MS,
-                SPAM_BASE_DELAY_MAX_MS / BotPhysicsEngine.cfg.TICK_MS + 1);
-        return ticks * BotPhysicsEngine.cfg.TICK_MS;
+        int ticks = ThreadLocalRandom.current().nextInt(SPAM_BASE_DELAY_MIN_MS / BotMovementManager.configuredTickMs(),
+                SPAM_BASE_DELAY_MAX_MS / BotMovementManager.configuredTickMs() + 1);
+        return ticks * BotMovementManager.configuredTickMs();
     }
 
     private static long jitteredDelayMs(int baseDelayMs) {
