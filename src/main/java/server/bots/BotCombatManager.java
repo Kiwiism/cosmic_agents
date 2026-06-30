@@ -719,17 +719,6 @@ public class BotCombatManager {
                         bot.getPosition(), originalTarget, hitBox, bot.getMap().getAllMonsters()));
     }
 
-    static boolean isTargetInAttackRange(AttackPlan attackPlan, Character bot, Monster target) {
-        if (attackPlan == null) {
-            return false;
-        }
-        return AgentCombatRangePolicy.isTargetInAttackRange(
-                attackPlan.hasHitBox() ? attackPlan.hitBox : null,
-                target,
-                bot.getPosition(),
-                target.getPosition());
-    }
-
     static void attackMonster(BotEntry entry, Character bot, AttackPlan attackPlan) {
         AgentCombatAttackExecutionPolicy.AttackExecutionReadiness readiness =
                 AgentCombatAttackExecutionPolicy.attackExecutionReadiness(

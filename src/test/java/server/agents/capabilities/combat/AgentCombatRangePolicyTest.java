@@ -11,6 +11,7 @@ import client.Character;
 import client.inventory.WeaponType;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.life.Monster;
@@ -46,6 +47,20 @@ class AgentCombatRangePolicyTest {
                 null, target, new Point(100, 200), new Point(120, 200)));
         assertFalse(AgentCombatRangePolicy.isTargetInAttackRange(
                 null, target, new Point(100, 200), new Point(250, 200)));
+    }
+
+    @Test
+    void shouldResolveAttackPlanRangeUsingAgentAndTargetPositions() {
+        Character agent = characterAt(new Point(100, 200));
+        Monster target = monsterAt(120, 200);
+        AgentAttackPlan plan = new AgentAttackPlan(
+                0, 0, 1, null, List.of(target), AgentAttackRoute.CLOSE,
+                0, 0, 0, 0, 0, 0, 0, null);
+
+        assertTrue(AgentCombatRangePolicy.isTargetInAttackRange(plan, agent, target));
+        assertFalse(AgentCombatRangePolicy.isTargetInAttackRange(null, agent, target));
+        assertFalse(AgentCombatRangePolicy.isTargetInAttackRange(plan, null, target));
+        assertFalse(AgentCombatRangePolicy.isTargetInAttackRange(plan, agent, null));
     }
 
     @Test

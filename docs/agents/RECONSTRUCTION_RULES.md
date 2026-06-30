@@ -1625,6 +1625,10 @@ Recent reconstruction notes:
   directly from `BotManager`, `BotCombatManager.attackMonster`, and focused
   tests; the temporary `BotCombatManager` `canUseAttackPlanNow` wrapper has been
   removed while preserving the same grounded, weapon, and route inputs.
+- Attack-plan target range checks now call `AgentCombatRangePolicy` directly
+  from `BotManager`; the temporary `BotCombatManager`
+  `isTargetInAttackRange` wrapper has been removed while preserving the same
+  null-plan rejection, plan-hitbox intersection, and basic-range fallback.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

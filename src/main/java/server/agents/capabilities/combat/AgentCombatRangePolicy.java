@@ -33,6 +33,17 @@ public final class AgentCombatRangePolicy {
         return isBasicAttackInRange(agentPosition, targetPosition);
     }
 
+    public static boolean isTargetInAttackRange(AgentAttackPlan attackPlan, Character agent, Monster target) {
+        if (attackPlan == null || agent == null || target == null) {
+            return false;
+        }
+        return isTargetInAttackRange(
+                attackPlan.hasHitBox() ? attackPlan.hitBox : null,
+                target,
+                agent.getPosition(),
+                target.getPosition());
+    }
+
     public static Rectangle basicWeaponReachRect(Character bot, boolean facingLeft, AgentAttackRoute route) {
         if (bot == null || bot.getPosition() == null) {
             return null;

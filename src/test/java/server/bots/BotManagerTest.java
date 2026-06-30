@@ -412,7 +412,6 @@ class BotManagerTest {
                      mockStatic(BotCombatManager.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.BOW);
             combat.when(() -> BotCombatManager.planAttack(entry, bot, rangedMob)).thenReturn(rangedPlan);
-            combat.when(() -> BotCombatManager.isTargetInAttackRange(rangedPlan, bot, rangedMob)).thenReturn(true);
 
             assertEquals(rangedMob, BotManager.selectPriorityRangedAttackTarget(entry, bot, botPos, closeMob));
         }
@@ -441,7 +440,6 @@ class BotManagerTest {
                      mockStatic(BotCombatManager.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.CLAW);
             combat.when(() -> BotCombatManager.planAttack(entry, bot, target)).thenReturn(rangedPlan);
-            combat.when(() -> BotCombatManager.isTargetInAttackRange(rangedPlan, bot, target)).thenReturn(true);
             combat.when(() -> BotCombatManager.attackMonster(entry, bot, rangedPlan)).thenAnswer(invocation -> null);
 
             BotManager.getInstance().stepMovementOnly(entry, target.getPosition(), target.getPosition(), false);

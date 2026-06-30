@@ -1824,7 +1824,7 @@ public class BotManager {
         }
         if (bot == null
                 || currentAttackPlan == null
-                || !BotCombatManager.isTargetInAttackRange(currentAttackPlan, bot, currentTarget)) {
+                || !AgentCombatRangePolicy.isTargetInAttackRange(currentAttackPlan, bot, currentTarget)) {
             return true;
         }
         // In range we normally stay committed (avoids flip-flop). Exception: an AoE bot stuck
@@ -1850,7 +1850,7 @@ public class BotManager {
             return false;
         }
         if (current == null || bot == null || currentPlan == null
-                || !BotCombatManager.isTargetInAttackRange(currentPlan, bot, current)) {
+                || !AgentCombatRangePolicy.isTargetInAttackRange(currentPlan, bot, current)) {
             return true;
         }
         int searchedClusterSize = bot.getMap() == null || searched.getPosition() == null
@@ -2408,14 +2408,14 @@ public class BotManager {
         // and walk into the cluster centroid if the AoE would beat it on DPS there (bounded).
         // Suppressed during ranged-spacing/cross-region retreats — spacing takes priority.
         Point aoeRepositionPos = (!shouldRetreatForRangedSpacing && crossRegionRetreatPos == null
-                && attackGateOpen && BotCombatManager.isTargetInAttackRange(attackPlan, bot, target))
+                && attackGateOpen && AgentCombatRangePolicy.isTargetInAttackRange(attackPlan, bot, target))
                 ? resolveAoeReposition(entry, bot, target, attackPlan, botPos)
                 : null;
 
         boolean attackAttemptedInRange = false;
         if (!AgentBotMovementStateRuntime.climbing(entry)) {
             if (aoeRepositionPos == null
-                    && attackGateOpen && BotCombatManager.isTargetInAttackRange(attackPlan, bot, target)
+                    && attackGateOpen && AgentCombatRangePolicy.isTargetInAttackRange(attackPlan, bot, target)
                     && AgentCombatRangePolicy.canUseAttackPlanNow(
                             AgentBotMovementStateRuntime.grounded(entry), grindWeaponType, attackPlan.route)) {
                 attackAttemptedInRange = true;
@@ -2456,7 +2456,7 @@ public class BotManager {
                 && !shouldRetreatForRangedSpacing && crossRegionRetreatPos == null
                 && aoeRepositionPos == null
                 && !attackAttemptedInRange
-                && BotCombatManager.isTargetInAttackRange(attackPlan, bot, target)) {
+                && AgentCombatRangePolicy.isTargetInAttackRange(attackPlan, bot, target)) {
             BotPhysicsEngine.idleOnGround(entry, bot);
             BotMovementManager.broadcastMovement(entry);
             return new LocalOpportunityAttackResult(true, targetPos);
@@ -2595,7 +2595,7 @@ public class BotManager {
         BotCombatManager.AttackPlan plan = BotCombatManager.planAttack(entry, bot, target);
         return plan != null
                 && plan.route == AgentAttackRoute.RANGED
-                && BotCombatManager.isTargetInAttackRange(plan, bot, target)
+                && AgentCombatRangePolicy.isTargetInAttackRange(plan, bot, target)
                 && AgentCombatRangePolicy.canUseAttackPlanNow(
                         AgentBotMovementStateRuntime.grounded(entry), weaponType, plan.route);
     }
@@ -2667,7 +2667,7 @@ public class BotManager {
         if (AgentBotMovementStateRuntime.inAir(entry)) {
             if (AgentCombatRangePolicy.canUseAttackPlanNow(
                     AgentBotMovementStateRuntime.grounded(entry), weaponType, attackPlan.route)
-                    && BotCombatManager.isTargetInAttackRange(attackPlan, bot, localTarget)) {
+                    && AgentCombatRangePolicy.isTargetInAttackRange(attackPlan, bot, localTarget)) {
                 BotCombatManager.attackMonster(entry, bot, attackPlan);
                 if (allowCombatMovement && attackPlan.isCloseRangeRoute()
                         && AgentCombatAmmoCounter.isRangedAmmoWeapon(weaponType)) {
@@ -2691,7 +2691,7 @@ public class BotManager {
         }
 
         if (!AgentBotCombatCooldownStateRuntime.hasMoveWindow(entry)
-                && BotCombatManager.isTargetInAttackRange(attackPlan, bot, localTarget)) {
+                && AgentCombatRangePolicy.isTargetInAttackRange(attackPlan, bot, localTarget)) {
             BotCombatManager.attackMonster(entry, bot, attackPlan);
             setLocalAttackMoveWindow(entry, botPos, moveWindowReferencePos);
             if (allowCombatMovement && attackPlan.isCloseRangeRoute()
