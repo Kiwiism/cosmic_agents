@@ -31,7 +31,7 @@ import server.agents.capabilities.combat.AgentProjectileHitbox;
 import server.agents.capabilities.combat.AgentScoredGrindTarget;
 import server.agents.capabilities.combat.AgentSkillAttackPlanner;
 import server.agents.capabilities.combat.AgentGrindTargetGroup;
-import server.agents.capabilities.combat.AgentSupportSpecialMovePacketBuilder;
+import server.agents.capabilities.combat.AgentSupportSpecialMoveExecutor;
 
 import server.agents.runtime.AgentPerformanceMonitor;
 
@@ -39,7 +39,6 @@ import server.agents.capabilities.movement.AgentMovementProfile;
 
 import client.BuffStat;
 import client.Character;
-import client.Client;
 import client.Skill;
 import client.SkillFactory;
 import client.inventory.InventoryType;
@@ -60,11 +59,6 @@ import constants.skills.Priest;
 import constants.skills.Spearman;
 import constants.skills.ThunderBreaker;
 import constants.skills.WhiteKnight;
-import io.netty.buffer.Unpooled;
-import net.PacketHandler;
-import net.PacketProcessor;
-import net.packet.ByteBufInPacket;
-import net.packet.InPacket;
 import net.server.channel.handlers.AbstractDealDamageHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1312,7 +1306,7 @@ public class BotCombatManager {
             AgentBotSkillBuffDebugStateRuntime.rememberAction(entry, System.currentTimeMillis(), readinessSummary);
             return false;
         }
-        if (!dispatchSupportSpecialMove(bot, skill, skillLevel)) {
+        if (!AgentSupportSpecialMoveExecutor.dispatch(bot, skill, skillLevel)) {
             AgentBotSkillBuffDebugStateRuntime.rememberAction(
                     entry,
                     System.currentTimeMillis(),
@@ -1340,28 +1334,6 @@ public class BotCombatManager {
                 System.currentTimeMillis(),
                 AgentCombatSupportPolicy.supportCastSummary(
                         AgentCombatDialogueReporter.combatSkillLabel(skill.getId())));
-        return true;
-    }
-
-    private static boolean dispatchSupportSpecialMove(Character bot, Skill skill, int skillLevel) {
-        Client client = bot.getClient();
-        if (client == null) {
-            return false;
-        }
-
-        byte[] packetBytes = AgentSupportSpecialMovePacketBuilder.build(
-                bot,
-                skill.getId(),
-                skillLevel,
-                net.server.Server.getInstance().getCurrentTimestamp());
-        InPacket packet = new ByteBufInPacket(Unpooled.wrappedBuffer(packetBytes));
-        short packetId = packet.readShort();
-        PacketHandler handler = PacketProcessor.getProcessor(bot.getWorld(), client.getChannel()).getHandler(packetId);
-        if (handler == null || !handler.validateState(client)) {
-            return false;
-        }
-
-        handler.handlePacket(packet, client);
         return true;
     }
 

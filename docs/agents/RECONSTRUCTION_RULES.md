@@ -1665,6 +1665,10 @@ Recent reconstruction notes:
 - The unused `BotCombatManager.getSkillBuffDebugLines` reporting wrapper has
   been removed; skill-buff debug lines remain owned by
   `AgentBotCombatReportRuntime`.
+- Support buff SPECIAL_MOVE dispatch now lives in
+  `AgentSupportSpecialMoveExecutor`; `BotCombatManager` calls the Agent-owned
+  executor while preserving the same packet builder, timestamp, packet handler
+  lookup, validation, and dispatch flow.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
