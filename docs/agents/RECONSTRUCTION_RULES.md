@@ -1807,6 +1807,12 @@ Recent reconstruction notes:
   comments stopped referring to the deleted class. Combat behavior remains
   owned by Agent combat runtimes; the legacy `BotCombatManagerTest` class name
   is retained only as the historical focused combat parity suite.
+- The remaining `BotChatManager` compatibility facade has been removed.
+  `BotManager` now calls `AgentChatRuntime` directly with
+  `AgentBotChatOrchestratorContext`, preserving the same handled-state
+  fall-through, targeted-command, group-supply, broadcast, and whisper behavior.
+  The legacy `BotChatManagerTest` class name remains only as the historical
+  focused chat/dialogue parity suite.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

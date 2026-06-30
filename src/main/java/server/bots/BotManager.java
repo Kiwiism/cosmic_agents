@@ -71,6 +71,8 @@ import server.agents.integration.AgentBotTickFailureStateRuntime;
 import server.agents.integration.AgentBotTargetedCommandMatch;
 import server.agents.integration.AgentBotTransferCommand;
 import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
+import server.agents.capabilities.dialogue.AgentChatRuntime;
+import server.agents.integration.AgentBotChatOrchestratorContext;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.auth.AgentAuthorizationResult;
 import server.agents.registry.AgentResolvedCharacter;
@@ -1051,8 +1053,8 @@ public class BotManager {
                     return;
                 }
             }
-            BotChatManager.handleChat(targetedBot.entry(), cmd);
-            boolean matched = BotChatManager.wasLastChatHandled();
+            handleAgentChat(targetedBot.entry(), cmd);
+            boolean matched = AgentChatRuntime.wasLastChatHandled();
             if (matched && targetedBot.entry().getOwner() != null
                     && owner.getId() == targetedBot.entry().getOwner().getId()) {
                 AgentBotActivityStateRuntime.recordLastOwnerCommand(
@@ -1084,7 +1086,7 @@ public class BotManager {
             BotEntry responder = pickGroupSupplyResponder(owner, entries);
             if (responder != null) {
                 AgentBotReplyChannelStateRuntime.setReplyChannel(responder, channel);
-                BotChatManager.handleChat(responder, message);
+                handleAgentChat(responder, message);
             }
             return;
         }
@@ -1101,7 +1103,7 @@ public class BotManager {
         }
         for (BotEntry entry : entries) {
             AgentBotReplyChannelStateRuntime.setReplyChannel(entry, channel);
-            BotChatManager.handleChat(entry, message);
+            handleAgentChat(entry, message);
         }
     }
 
@@ -3993,12 +3995,16 @@ public class BotManager {
             return;
         }
         AgentBotReplyChannelStateRuntime.setWhisper(entry);
-        BotChatManager.handleChat(entry, message);
+        handleAgentChat(entry, message);
     }
 
     private boolean consumeAiTick(BotEntry entry) {
         return AgentBotTickCadenceStateRuntime.consumeAiTick(
                 entry, BotMovementManager.cfg.TICK_MS, cfg.AI_TICK_MS);
+    }
+
+    private static void handleAgentChat(BotEntry entry, String message) {
+        AgentChatRuntime.handleChat(message, new AgentBotChatOrchestratorContext(entry));
     }
 
     // ===== Owned-bot accessors used by the androidequip.cpp BotEquipHandler =====
