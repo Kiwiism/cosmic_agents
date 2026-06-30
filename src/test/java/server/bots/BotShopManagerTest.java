@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.supplies.AgentPotionService;
+
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 
 import client.BuffStat;
@@ -63,13 +65,13 @@ class BotShopManagerTest {
         try (Seam seam = withStarStats();
              MockedStatic<AgentAttackExecutionProvider> attacks =
                      mockStatic(AgentAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS);
-             MockedStatic<BotPotionManager> potions = mockStatic(BotPotionManager.class);
+             MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class);
              MockedStatic<ShopFactory> shops = mockStatic(ShopFactory.class)) {
             ShopFactory factory = mock(ShopFactory.class);
             shops.when(ShopFactory::getInstance).thenReturn(factory);
             when(factory.getShopForNPC(npc.getId())).thenReturn(shop);
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.CLAW);
-            potions.when(() -> BotPotionManager.countPotions(bot)).thenReturn(new int[]{9999, 9999});
+            potions.when(() -> AgentPotionService.countPotions(bot)).thenReturn(new int[]{9999, 9999});
 
             BotShopManager.onMapChange(entry, bot);
         }
@@ -91,13 +93,13 @@ class BotShopManagerTest {
         try (Seam seam = withStarStats();
              MockedStatic<AgentAttackExecutionProvider> attacks =
                      mockStatic(AgentAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS);
-             MockedStatic<BotPotionManager> potions = mockStatic(BotPotionManager.class);
+             MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class);
              MockedStatic<ShopFactory> shops = mockStatic(ShopFactory.class)) {
             ShopFactory factory = mock(ShopFactory.class);
             shops.when(ShopFactory::getInstance).thenReturn(factory);
             when(factory.getShopForNPC(npc.getId())).thenReturn(shop);
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.CLAW);
-            potions.when(() -> BotPotionManager.countPotions(bot)).thenReturn(new int[]{9999, 9999});
+            potions.when(() -> AgentPotionService.countPotions(bot)).thenReturn(new int[]{9999, 9999});
 
             BotShopManager.onMapChange(entry, bot);
         }
@@ -155,14 +157,14 @@ class BotShopManagerTest {
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks =
                      mockStatic(AgentAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS);
-             MockedStatic<BotPotionManager> potions = mockStatic(BotPotionManager.class);
+             MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class);
              MockedStatic<ShopFactory> shops = mockStatic(ShopFactory.class);
              MockedStatic<BotInventoryManager> inventories = mockStatic(BotInventoryManager.class)) {
             ShopFactory factory = mock(ShopFactory.class);
             shops.when(ShopFactory::getInstance).thenReturn(factory);
             when(factory.getShopForNPC(npc.getId())).thenReturn(shop);
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.CLAW);
-            potions.when(() -> BotPotionManager.countPotions(bot)).thenReturn(new int[]{9999, 9999});
+            potions.when(() -> AgentPotionService.countPotions(bot)).thenReturn(new int[]{9999, 9999});
             inventories.when(() -> BotInventoryManager.collectSellTrashEquips(entry, bot))
                     .thenReturn(List.of(mock(Item.class)));
 
@@ -237,13 +239,13 @@ class BotShopManagerTest {
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks =
                      mockStatic(AgentAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS);
-             MockedStatic<BotPotionManager> potions = mockStatic(BotPotionManager.class);
+             MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class);
              MockedStatic<ShopFactory> shops = mockStatic(ShopFactory.class)) {
             ShopFactory factory = mock(ShopFactory.class);
             shops.when(ShopFactory::getInstance).thenReturn(factory);
             when(factory.getShopForNPC(npc.getId())).thenReturn(shop);
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(weaponType);
-            potions.when(() -> BotPotionManager.countPotions(bot)).thenReturn(new int[]{9999, 9999});
+            potions.when(() -> AgentPotionService.countPotions(bot)).thenReturn(new int[]{9999, 9999});
 
             BotShopManager.onMapChange(entry, bot);
         }

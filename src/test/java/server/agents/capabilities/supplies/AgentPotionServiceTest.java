@@ -1,9 +1,11 @@
-package server.bots;
+package server.agents.capabilities.supplies;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotPotionRuntime;
+import server.bots.BotEntry;
+import server.bots.BotManager;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -17,7 +19,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-class BotPotionManagerTest {
+class AgentPotionServiceTest {
     @Test
     @SuppressWarnings("unchecked")
     void ownerPotionShareSchedulesThroughAgentPotionRuntime() throws Exception {
@@ -36,13 +38,13 @@ class BotPotionManagerTest {
         Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
         bots.put(owner.getId(), List.of(entry, donorEntry));
 
-        try (MockedStatic<BotPotionManager> potions = mockStatic(BotPotionManager.class, CALLS_REAL_METHODS);
+        try (MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class, CALLS_REAL_METHODS);
              MockedStatic<AgentBotPotionRuntime> scheduler = mockStatic(AgentBotPotionRuntime.class)) {
-            potions.when(() -> BotPotionManager.countPotions(donorBot)).thenReturn(new int[]{400, 0});
+            potions.when(() -> AgentPotionService.countPotions(donorBot)).thenReturn(new int[]{400, 0});
             scheduler.when(() -> AgentBotPotionRuntime.randomDelayMs(900, 1400)).thenReturn(77L);
 
-            assertEquals(BotPotionManager.OwnerPotShareResult.OFFERED,
-                    BotPotionManager.offerPotShareToOwner(entry, true));
+            assertEquals(AgentPotionService.OwnerPotShareResult.OFFERED,
+                    AgentPotionService.offerPotShareToOwner(entry, true));
 
             scheduler.verify(() -> AgentBotPotionRuntime.randomDelayMs(900, 1400));
             scheduler.verify(() -> AgentBotPotionRuntime.afterDelay(eq(77L), any(Runnable.class)));

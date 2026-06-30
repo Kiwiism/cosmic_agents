@@ -1147,7 +1147,7 @@ public class BotInventoryManager {
         catch (Exception e) { return null; }
     }
 
-    static boolean isRecoveryPotion(int itemId) {
+    public static boolean isRecoveryPotion(int itemId) {
         return AgentUseItemClassificationPolicy.isRecoveryPotion(itemEffect(itemId));
     }
 
@@ -1681,7 +1681,7 @@ public class BotInventoryManager {
      * up to {@code maxQty} total quantity or 9 item stacks, whichever limit is reached first.
      * Only pure recovery pots are included (buff pots excluded via isRecoveryPotion).
      */
-    static List<Item> collectPotShareItems(Character donorBot, boolean forHp, int maxQty) {
+    public static List<Item> collectPotShareItems(Character donorBot, boolean forHp, int maxQty) {
         if (maxQty <= 0) return List.of();
         List<Item> candidates = new ArrayList<>();
         Inventory useInv = donorBot.getInventory(InventoryType.USE);
@@ -1707,7 +1707,7 @@ public class BotInventoryManager {
     }
 
     /** Initiates a bot-to-bot pot-share trade (single batch; donor auto-confirms). */
-    static void startPotShareTransfer(List<Item> items, Character recipient, BotEntry entry, Character bot, int maxQty) {
+    public static void startPotShareTransfer(List<Item> items, Character recipient, BotEntry entry, Character bot, int maxQty) {
         if (items.isEmpty()) return;
         if (bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry) || recipient.getTrade() != null) {
             AgentBotPendingTradeStateRuntime.queueRetry(

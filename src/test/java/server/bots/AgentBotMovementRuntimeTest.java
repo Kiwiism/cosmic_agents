@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.supplies.AgentPotionService;
+
 import server.agents.capabilities.dialogue.AgentEmote;
 
 import client.Character;
@@ -82,7 +84,7 @@ class AgentBotMovementRuntimeTest {
                      mockStatic(AgentBotMovementSchedulerRuntime.class);
              MockedStatic<AgentBotActiveModeRuntime> activeMode = mockStatic(AgentBotActiveModeRuntime.class);
              MockedStatic<AgentBotMovementReplyRuntime> replies = mockStatic(AgentBotMovementReplyRuntime.class);
-             MockedStatic<BotPotionManager> potions = mockStatic(BotPotionManager.class);
+             MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class);
              MockedStatic<BotManager> botManager = mockStatic(BotManager.class)) {
             botManager.when(BotManager::getInstance).thenReturn(manager);
             scheduler.when(() -> AgentBotMovementSchedulerRuntime.afterRandomDelay(eq(1500), eq(2000), any(Runnable.class)))
@@ -100,7 +102,7 @@ class AgentBotMovementRuntimeTest {
 
             activeMode.verify(() -> AgentBotActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry));
             replies.verify(() -> AgentBotMovementReplyRuntime.replyNow(eq(entry), anyString()));
-            potions.verify(() -> BotPotionManager.checkPotShareOnModeStart(entry, bot));
+            potions.verify(() -> AgentPotionService.checkPotShareOnModeStart(entry, bot));
             verify(manager).issueFollowOwner(entry);
         }
     }

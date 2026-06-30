@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.supplies.AgentPotionService;
+
 import server.agents.capabilities.combat.AgentAttackRoute;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
@@ -262,7 +264,7 @@ class BotManagerTest {
                 2000004, dualEffect,
                 2040002, nonPotionEffect);
 
-        int[] counts = BotPotionManager.countPotions(
+        int[] counts = AgentPotionService.countPotions(
                 java.util.List.of(hpItem, mpItem, dualItem, nonPotion),
                 effects::get);
 
@@ -1087,18 +1089,18 @@ class BotManagerTest {
         @SuppressWarnings("unchecked")
         Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
         @SuppressWarnings("unchecked")
-        Map<Integer, Long> sharedCooldown = (Map<Integer, Long>) field(BotPotionManager.class, "potShareCooldownUntil").get(null);
+        Map<Integer, Long> sharedCooldown = (Map<Integer, Long>) field(AgentPotionService.class, "potShareCooldownUntil").get(null);
         @SuppressWarnings("unchecked")
-        Map<Integer, Long> hpBackoff = (Map<Integer, Long>) field(BotPotionManager.class, "potShareHpBackoffUntil").get(null);
+        Map<Integer, Long> hpBackoff = (Map<Integer, Long>) field(AgentPotionService.class, "potShareHpBackoffUntil").get(null);
         @SuppressWarnings("unchecked")
-        Map<Integer, Long> mpBackoff = (Map<Integer, Long>) field(BotPotionManager.class, "potShareMpBackoffUntil").get(null);
+        Map<Integer, Long> mpBackoff = (Map<Integer, Long>) field(AgentPotionService.class, "potShareMpBackoffUntil").get(null);
 
         bots.put(owner.getId(), List.of(entry));
         sharedCooldown.remove(owner.getId());
         hpBackoff.remove(owner.getId());
         mpBackoff.remove(owner.getId());
 
-        Method requestPotShare = BotPotionManager.class.getDeclaredMethod("requestPotShare", BotEntry.class, Character.class, boolean.class);
+        Method requestPotShare = AgentPotionService.class.getDeclaredMethod("requestPotShare", BotEntry.class, Character.class, boolean.class);
         requestPotShare.setAccessible(true);
         try {
             assertTrue((Boolean) requestPotShare.invoke(null, entry, bot, false),
@@ -1135,15 +1137,15 @@ class BotManagerTest {
         when(owner.getTrade()).thenReturn(null);
 
         Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
-        Map<Integer, Long> sharedCooldown = (Map<Integer, Long>) field(BotPotionManager.class, "potShareCooldownUntil").get(null);
-        Map<Integer, Long> hpBackoff = (Map<Integer, Long>) field(BotPotionManager.class, "potShareHpBackoffUntil").get(null);
+        Map<Integer, Long> sharedCooldown = (Map<Integer, Long>) field(AgentPotionService.class, "potShareCooldownUntil").get(null);
+        Map<Integer, Long> hpBackoff = (Map<Integer, Long>) field(AgentPotionService.class, "potShareHpBackoffUntil").get(null);
 
         bots.put(owner.getId(), List.of());
         sharedCooldown.put(owner.getId(), Long.MAX_VALUE);
         hpBackoff.put(owner.getId(), Long.MAX_VALUE);
         try {
-            assertEquals(BotPotionManager.OwnerPotShareResult.NO_DONOR,
-                    BotPotionManager.offerPotShareToOwner(entry, true),
+            assertEquals(AgentPotionService.OwnerPotShareResult.NO_DONOR,
+                    AgentPotionService.offerPotShareToOwner(entry, true),
                     "manual owner requests should still attempt donor lookup while automatic share cooldowns are active");
         } finally {
             bots.remove(owner.getId());
@@ -1199,15 +1201,15 @@ class BotManagerTest {
         when(bot.getMap()).thenReturn(map);
 
         Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
-        Map<Integer, Long> sharedCooldown = (Map<Integer, Long>) field(BotPotionManager.class, "potShareCooldownUntil").get(null);
-        Map<Integer, Long> hpBackoff = (Map<Integer, Long>) field(BotPotionManager.class, "potShareHpBackoffUntil").get(null);
+        Map<Integer, Long> sharedCooldown = (Map<Integer, Long>) field(AgentPotionService.class, "potShareCooldownUntil").get(null);
+        Map<Integer, Long> hpBackoff = (Map<Integer, Long>) field(AgentPotionService.class, "potShareHpBackoffUntil").get(null);
 
         bots.put(owner.getId(), List.of(entry));
         sharedCooldown.put(owner.getId(), Long.MAX_VALUE);
         hpBackoff.put(owner.getId(), Long.MAX_VALUE);
 
         try {
-            assertTrue(BotPotionManager.requestPotShare(entry, bot, true, true),
+            assertTrue(AgentPotionService.requestPotShare(entry, bot, true, true),
                     "player-asked bot supply checks should bypass automatic cooldown/backoff guards");
             assertEquals(Long.MAX_VALUE, sharedCooldown.get(owner.getId()));
             assertEquals(Long.MAX_VALUE, hpBackoff.get(owner.getId()));

@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.supplies.AgentPotionService;
+
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -14,8 +16,8 @@ class AgentBotSupplyReportRuntimeTest {
     void potionReportUsesLegacyPotionCountDataAndAgentFormatting() {
         Character bot = mock(Character.class);
 
-        try (MockedStatic<BotPotionManager> potions = mockStatic(BotPotionManager.class)) {
-            potions.when(() -> BotPotionManager.countPotions(bot)).thenReturn(new int[]{2, 3});
+        try (MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class)) {
+            potions.when(() -> AgentPotionService.countPotions(bot)).thenReturn(new int[]{2, 3});
 
             assertEquals("I have 2 hp pots and 3 mp pots", AgentBotSupplyReportRuntime.potionReport(bot));
         }
@@ -25,8 +27,8 @@ class AgentBotSupplyReportRuntimeTest {
     void autopotDebugReportDelegatesToLegacyAutopotDataSource() {
         Character bot = mock(Character.class);
 
-        try (MockedStatic<BotPotionManager> potions = mockStatic(BotPotionManager.class)) {
-            potions.when(() -> BotPotionManager.autopotDebugReport(bot)).thenReturn("pots: debug");
+        try (MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class)) {
+            potions.when(() -> AgentPotionService.autopotDebugReport(bot)).thenReturn("pots: debug");
 
             assertEquals("pots: debug", AgentBotSupplyReportRuntime.autopotDebugReport(bot));
         }

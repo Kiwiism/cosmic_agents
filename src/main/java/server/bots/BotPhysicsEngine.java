@@ -1358,7 +1358,7 @@ public final class BotPhysicsEngine {
         return baseStance;
     }
 
-    static int resolveStance(BotEntry entry) {
+    public static int resolveStance(BotEntry entry) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (bot != null && bot.getHp() <= 0) {
             return resolveDeadStance(entry);
@@ -1405,7 +1405,7 @@ public final class BotPhysicsEngine {
                 : CharacterStance.DEAD_LEFT_STANCE;
     }
 
-    static boolean isStandingStance(int stance) {
+    public static boolean isStandingStance(int stance) {
         return CharacterStance.isStanding(stance);
     }
 

@@ -4,7 +4,7 @@ import server.agents.capabilities.dialogue.AgentEmote;
 
 import server.agents.capabilities.dialogue.AgentChatMovementFlow;
 import server.bots.BotEntry;
-import server.bots.BotPotionManager;
+import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.dialogue.AgentEmote;
 
 import java.awt.Point;
@@ -66,7 +66,7 @@ public final class AgentBotMovementRuntime {
                 AgentBotMovementSchedulerRuntime.afterRandomDelay(1500, 2000, () -> {
                     AgentBotActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry);
                     AgentBotMovementReplyRuntime.replyNow(entry, AgentChatMovementFlow.followReply());
-                    BotPotionManager.checkPotShareOnModeStart(entry, entry.bot());
+                    AgentPotionService.checkPotShareOnModeStart(entry, entry.bot());
                     AgentBotMovementSchedulerRuntime.afterRandomDelay(250, 750,
                             () -> AgentBotMovementCommandRuntime.followOwner(entry));
                 });
@@ -76,7 +76,7 @@ public final class AgentBotMovementRuntime {
             public void grind() {
                 AgentBotMovementSchedulerRuntime.afterRandomDelay(1500, 2000, () -> {
                     AgentBotMovementStatusRuntime.prepareMovementActiveMode(entry);
-                    AgentBotMovementReplyRuntime.replyNow(entry, BotPotionManager.grindStartMessage(entry.bot()));
+                    AgentBotMovementReplyRuntime.replyNow(entry, AgentPotionService.grindStartMessage(entry.bot()));
                     AgentBotMovementSchedulerRuntime.afterRandomDelay(250, 750, () -> {
                         AgentBotMovementCommandRuntime.grind(entry);
                         AgentBotMovementStatusRuntime.checkMovementStatus(entry, entry.bot());

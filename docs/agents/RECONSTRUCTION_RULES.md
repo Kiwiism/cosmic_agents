@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Potion supply orchestration has moved from `server.bots.BotPotionManager` to
+  `server.agents.capabilities.supplies.AgentPotionService`. Legacy bot manager,
+  shop, movement, and supply callbacks now call the Agent-owned service while
+  preserving the same autopot selection, low-supply request/backoff timing,
+  donor selection, passive recovery, map-visible dialogue, and transfer timing.
 - Combat config ownership moved to
   `server.agents.capabilities.combat.AgentCombatConfig`. `BotCombatManager.cfg`
   remains as a compatibility alias to the same live config object, so existing
@@ -315,7 +320,7 @@ Recent reconstruction notes:
   request/offer chat remains unchanged on the legacy map-visible say path.
 - Potion-share donor selection delays, low-supply fallback delay, and delayed
   transfer callbacks now enter through `AgentBotPotionRuntime`;
-  `BotPotionManager` no longer reaches directly into the lower-level scheduler
+  `AgentPotionService` no longer reaches directly into the lower-level scheduler
   runtime for potion-owned timing. Visible potion request/offer chat remains
   unchanged on the legacy map-visible say path.
 - Bot physics identity reads now enter through `AgentBotRuntimeIdentityRuntime`;
@@ -480,7 +485,7 @@ Recent reconstruction notes:
   random reply pools and transfer timing remain intact.
 - Potion grind-stop warnings, low-supply requests, no-qualified-donor
   deflections, and donor offer visible replies now enter through
-  `AgentBotPotionRuntime`; `BotPotionManager` no longer calls
+  `AgentBotPotionRuntime`; `AgentPotionService` no longer calls
   `BotManager.botSay` directly for potion-owned reply delivery, while the same
   text, random reply pools, and transfer timing remain intact.
 - Equipment auto-equip clutter warnings now enter through
@@ -853,7 +858,7 @@ Recent reconstruction notes:
 - High-level mode state now enters through `AgentBotModeStateRuntime`;
   BotManager follow/grind/stop transitions, BotMovementManager movement gates,
   BotFidgetManager social fidget gates, BotCombatManager buff/heal/ammo gates,
-  BotPotionManager share/low-pot gates, BotNavigationManager follow/grind
+  AgentPotionService share/low-pot gates, BotNavigationManager follow/grind
   target adjustment, BotPathLogger mode reporting, LLM situation reporting,
   movement snapshots, and focused tests keep BotEntry as the temporary backing
   store but no longer read or write `following`, `grinding`, or
@@ -1112,7 +1117,7 @@ Recent reconstruction notes:
   `proactiveUpgradeOffers`, `owner`, or `bot` directly in production.
 - Potion sharing and passive recovery gates now enter through
   `AgentBotRuntimeIdentityRuntime` and `AgentBotMovementStateRuntime`;
-  BotPotionManager owner lookup, donor bot selection, delayed low-supply
+  AgentPotionService owner lookup, donor bot selection, delayed low-supply
   replies, transfer donor identity, and standing-still recovery checks keep
   BotEntry as the temporary backing store but no longer read `owner`, `bot`,
   `inAir`, `climbing`, or `moveDir` directly in production.
@@ -1267,7 +1272,7 @@ Recent reconstruction notes:
   `AgentBotShopShortfallReason`; BotShopManager preserves the same quantity,
   meso, space, and generic-failure reporting while the purchase report value
   object is owned by the Agent integration layer.
-- Potion donor planning now uses `AgentBotPotionDonorPlan`; BotPotionManager
+- Potion donor planning now uses `AgentBotPotionDonorPlan`; AgentPotionService
   preserves the same donor selection, qualification threshold, donation
   quantity, delay, and transfer behavior while the donor plan context is owned
   by the Agent integration layer instead of a private bot runtime record.
@@ -1387,7 +1392,7 @@ Recent reconstruction notes:
   bullet matching plus trade-ammo item detection through compatibility
   delegates.
 - Autopot potion tier ranking and HP/MP slot choice policy now live in
-  `AgentAutopotPolicy`; BotPotionManager preserves the same USE-inventory scan,
+  `AgentAutopotPolicy`; AgentPotionService preserves the same USE-inventory scan,
   keybinding assignment, alert thresholds, and debug-report wiring through
   compatibility delegates.
 - Potion-share recovery scoring and HP/MP share-slot eligibility now live in
@@ -1403,15 +1408,15 @@ Recent reconstruction notes:
   dialogue reporting preserve their existing item-effect lookup and category
   behavior through compatibility delegates.
 - Pure recovery potion HP/MP stack counting now lives in
-  `AgentPotionInventoryPolicy`; BotPotionManager preserves the same USE
+  `AgentPotionInventoryPolicy`; AgentPotionService preserves the same USE
   inventory scan, item-effect lookup, timing metric, and public count API
   through a compatibility delegate.
 - Passive HP/MP recovery formula and legacy recovery skill-bonus lookup now
-  live in `AgentPassiveRecoveryPolicy`; BotPotionManager preserves the same
+  live in `AgentPassiveRecoveryPolicy`; AgentPotionService preserves the same
   movement/air/climb/stance standing-still gate and MP recovery tick timing
   through compatibility delegates.
 - Potion and ammo sharing request/offer dialogue pools now live in
-  `AgentDialogueCatalog`; BotPotionManager and AgentAmmoService preserve the same
+  `AgentDialogueCatalog`; AgentPotionService and AgentAmmoService preserve the same
   random reply selection and visible map-chat delivery through compatibility
   delegates.
 - Inventory trade invitation, thanks, freebie, all-done, and reserved-equip
@@ -1891,7 +1896,7 @@ Recent reconstruction notes:
   was-moving, direction, and walk-step inputs while keeping runtime movement
   state updates in the legacy compatibility layer.
 - Potion-share low-donor deflection templates now live in
-  `AgentDialogueCatalog`; BotPotionManager preserves the same delayed map-chat
+  `AgentDialogueCatalog`; AgentPotionService preserves the same delayed map-chat
   callback and random selection timing while delegating the wording and owner
   name formatting to Agent dialogue.
 - Fixed shop visit, sell-trash, purchase-summary, and shortfall result messages
@@ -1919,11 +1924,11 @@ Recent reconstruction notes:
   BotInventoryManager preserves the same equip-as-one behavior, stack quantity
   summing, and negative quantity clamp through a compatibility delegate.
 - The remaining fixed drop-limited-map and low-potion return notices now live in
-  `AgentDialogueCatalog`; BotInventoryManager and BotPotionManager preserve the
+  `AgentDialogueCatalog`; BotInventoryManager and AgentPotionService preserve the
   same drop gating, grind-stop/follow-owner behavior, emote change, and map/reply
   delivery behavior through compatibility delegates.
 - Low-ammo request, donor selection, ammo-share scheduling, and owner-offer
-  routing now live in `AgentAmmoService`; BotPotionManager and supply request
+  routing now live in `AgentAmmoService`; AgentPotionService and supply request
   callbacks preserve the same thresholds, cooldown/backoff timing, donor
   ordering, delayed transfer timing, and map-chat behavior through compatibility
   delegates.

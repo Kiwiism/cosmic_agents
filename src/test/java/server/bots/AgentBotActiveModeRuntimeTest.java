@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.supplies.AgentPotionService;
+
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -21,7 +23,7 @@ class AgentBotActiveModeRuntimeTest {
         AgentChatStatusRuntime.ActiveModeActions actions = AgentBotActiveModeRuntime.activeModeActions(entry);
 
         try (MockedStatic<BotEquipManager> equips = mockStatic(BotEquipManager.class);
-             MockedStatic<BotPotionManager> potions = mockStatic(BotPotionManager.class);
+             MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class);
              MockedStatic<BotOfferManager> offers = mockStatic(BotOfferManager.class)) {
             offers.when(() -> BotOfferManager.offerBestGearToSibling(entry, bot)).thenReturn(true);
 
@@ -34,8 +36,8 @@ class AgentBotActiveModeRuntimeTest {
             equips.verify(() -> BotEquipManager.autoEquip(bot, owner, null));
             assertTrue(entry.nextGearSuggestionAt() > System.currentTimeMillis());
             offers.verify(() -> BotOfferManager.offerBestGearToSibling(entry, bot));
-            potions.verify(() -> BotPotionManager.setupAutopotForBot(bot));
-            potions.verify(() -> BotPotionManager.checkPotShareOnModeStart(entry, bot));
+            potions.verify(() -> AgentPotionService.setupAutopotForBot(bot));
+            potions.verify(() -> AgentPotionService.checkPotShareOnModeStart(entry, bot));
         }
     }
 

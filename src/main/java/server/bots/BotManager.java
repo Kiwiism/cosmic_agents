@@ -19,6 +19,7 @@ import server.agents.runtime.AgentPerformanceMonitor;
 
 import server.agents.capabilities.looting.AgentLootEligibility;
 import server.agents.capabilities.social.AgentScrollReactionService;
+import server.agents.capabilities.supplies.AgentPotionService;
 
 
 import server.agents.integration.AgentBotManagerReplyRuntime;
@@ -345,7 +346,7 @@ public class BotManager {
                         AgentBotRuntimeIdentityRuntime.bot(entry),
                         AgentBotRuntimeIdentityRuntime.owner(entry),
                         AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
-                BotPotionManager.checkPotShareOnModeStart(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+                AgentPotionService.checkPotShareOnModeStart(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
                 issueFollow(entry, target);
             });
         }
@@ -3445,10 +3446,10 @@ public class BotManager {
             if (perf) AgentPerformanceMonitor.record("common-passive-loot", System.nanoTime() - t);
         }
         if (perf) t = System.nanoTime();
-        BotPotionManager.tickPotionCheck(entry, bot);
+        AgentPotionService.tickPotionCheck(entry, bot);
         if (perf) AgentPerformanceMonitor.record("common-potion-check", System.nanoTime() - t);
         if (perf) t = System.nanoTime();
-        BotPotionManager.tickPassiveRecovery(entry, bot);
+        AgentPotionService.tickPassiveRecovery(entry, bot);
         if (perf) AgentPerformanceMonitor.record("common-passive-recovery", System.nanoTime() - t);
         if (perf) t = System.nanoTime();
         AgentBuildService.checkLevelUp(entry, bot);

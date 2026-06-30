@@ -2,7 +2,7 @@ package server.agents.integration;
 
 import client.Character;
 import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
-import server.bots.BotPotionManager;
+import server.agents.capabilities.supplies.AgentPotionService;
 
 /**
  * Temporary Agent-owned bridge to legacy bot supply report data.
@@ -12,10 +12,10 @@ public final class AgentBotSupplyReportRuntime {
     }
 
     public static String potionReport(Character bot) {
-        return AgentSupplyDialogueReporter.potionReport(BotPotionManager.countPotions(bot));
+        return AgentSupplyDialogueReporter.potionReport(AgentPotionService.countPotions(bot));
     }
 
     public static String autopotDebugReport(Character bot) {
-        return BotPotionManager.autopotDebugReport(bot);
+        return AgentPotionService.autopotDebugReport(bot);
     }
 }

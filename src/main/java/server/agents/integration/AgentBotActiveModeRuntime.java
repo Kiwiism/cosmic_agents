@@ -5,7 +5,7 @@ import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.bots.BotEntry;
 import server.bots.BotEquipManager;
 import server.bots.BotOfferManager;
-import server.bots.BotPotionManager;
+import server.agents.capabilities.supplies.AgentPotionService;
 
 /**
  * Temporary Agent-owned bridge for active-mode side effects while equipment,
@@ -34,12 +34,12 @@ public final class AgentBotActiveModeRuntime {
 
             @Override
             public void setupAutopot() {
-                BotPotionManager.setupAutopotForBot(entry.bot());
+                AgentPotionService.setupAutopotForBot(entry.bot());
             }
 
             @Override
             public void checkPotShareOnModeStart() {
-                BotPotionManager.checkPotShareOnModeStart(entry, entry.bot());
+                AgentPotionService.checkPotShareOnModeStart(entry, entry.bot());
             }
         };
     }

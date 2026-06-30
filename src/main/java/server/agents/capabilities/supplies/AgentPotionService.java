@@ -1,4 +1,4 @@
-package server.bots;
+package server.agents.capabilities.supplies;
 
 import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.capabilities.combat.AgentCombatConfig;
@@ -12,12 +12,8 @@ import client.keybind.KeyBinding;
 import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
-import server.agents.capabilities.supplies.AgentAutopotPolicy;
 import server.agents.capabilities.supplies.AgentAutopotPolicy.AutopotChoice;
 import server.agents.capabilities.supplies.AgentAutopotPolicy.PotionRanking;
-import server.agents.capabilities.supplies.AgentAmmoService;
-import server.agents.capabilities.supplies.AgentPassiveRecoveryPolicy;
-import server.agents.capabilities.supplies.AgentPotionInventoryPolicy;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
@@ -26,6 +22,11 @@ import server.agents.integration.AgentBotPotionRuntime;
 import server.agents.integration.AgentBotPotionStateRuntime;
 import server.agents.integration.AgentBotCombatAmmoCheckRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.bots.BotEntry;
+import server.bots.BotInventoryManager;
+import server.bots.BotManager;
+import server.bots.BotMovementManager;
+import server.bots.BotPhysicsEngine;
 import server.StatEffect;
 
 import java.util.List;
@@ -33,18 +34,18 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-public final class BotPotionManager {
+public final class AgentPotionService {
     // ownerCharId -> shared HP/MP 30 s request cooldown
     private static final Map<Integer, Long> potShareCooldownUntil = new ConcurrentHashMap<>();
     // ownerCharId -> category-specific 10 min failed-request backoff
     private static final Map<Integer, Long> potShareHpBackoffUntil = new ConcurrentHashMap<>();
     private static final Map<Integer, Long> potShareMpBackoffUntil = new ConcurrentHashMap<>();
 
-    private BotPotionManager() {
+    private AgentPotionService() {
     }
 
     /** Single source of truth: items the bot has that count as recovery pots. */
-    static List<Item> recoveryPotions(Character bot) {
+    public static List<Item> recoveryPotions(Character bot) {
         long startedAt = AgentPerformanceMonitor.start();
         List<Item> result = new java.util.ArrayList<>();
         for (Item item : bot.getInventory(InventoryType.USE).list()) {
@@ -68,7 +69,7 @@ public final class BotPotionManager {
         return counts;
     }
 
-    static int[] countPotions(List<Item> items, Function<Integer, StatEffect> effectLookup) {
+    public static int[] countPotions(List<Item> items, Function<Integer, StatEffect> effectLookup) {
         long startedAt = AgentPerformanceMonitor.start();
         int hp = 0;
         int mp = 0;
@@ -98,12 +99,12 @@ public final class BotPotionManager {
      * Within the same tier, the smaller recovery value wins (burn cheap pots first;
      * preserve big pots for emergencies). Buff potions (statups present) are excluded.
      */
-    static PotionRanking classifyForSlot(StatEffect fx, boolean hpSlot) {
+    public static PotionRanking classifyForSlot(StatEffect fx, boolean hpSlot) {
         return AgentAutopotPolicy.classifyForSlot(fx, hpSlot);
     }
 
     /** Shared selection used by both keybind setup and the debug report. */
-    static AutopotChoice computeAutopotChoice(Character bot) {
+    public static AutopotChoice computeAutopotChoice(Character bot) {
         long startedAt = AgentPerformanceMonitor.start();
         AutopotChoice choice = AgentAutopotPolicy.computeChoice(
                 bot.getInventory(InventoryType.USE).list(),
@@ -162,7 +163,7 @@ public final class BotPotionManager {
                 BotManager.cfg.POT_LOW_WARN);
     }
 
-    static void tickPotionCheck(BotEntry entry, Character bot) {
+    public static void tickPotionCheck(BotEntry entry, Character bot) {
         if (AgentBotPotionStateRuntime.hasPotCheckDelay(entry)) {
             AgentBotPotionStateRuntime.tickPotCheckDelay(entry, BotMovementManager::tickDown);
             return;
@@ -252,7 +253,7 @@ public final class BotPotionManager {
         return true;
     }
 
-    static void tickPassiveRecovery(BotEntry entry, Character bot) {
+    public static void tickPassiveRecovery(BotEntry entry, Character bot) {
         boolean hpFull = bot.getHp() >= bot.getCurrentMaxHp();
         boolean mpFull = bot.getMp() >= bot.getCurrentMaxMp();
         if (hpFull && mpFull) {
@@ -277,11 +278,11 @@ public final class BotPotionManager {
         bot.addMPHP(hpRecovery, mpRecovery);
     }
 
-    static boolean requestPotShare(BotEntry entry, Character bot, boolean forHp) {
+    public static boolean requestPotShare(BotEntry entry, Character bot, boolean forHp) {
         return requestPotShare(entry, bot, forHp, false);
     }
 
-    static boolean requestPotShare(BotEntry entry, Character bot, boolean forHp, boolean bypassShareLimits) {
+    public static boolean requestPotShare(BotEntry entry, Character bot, boolean forHp, boolean bypassShareLimits) {
         long startedAt = AgentPerformanceMonitor.start();
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner == null || bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry)) {

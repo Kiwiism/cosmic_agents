@@ -9,7 +9,7 @@ import server.agents.capabilities.dialogue.AgentSupplyRequestOutcomeFlow;
 import server.agents.capabilities.supplies.AgentAmmoService;
 import server.bots.BotEntry;
 import server.bots.BotOfferManager;
-import server.bots.BotPotionManager;
+import server.agents.capabilities.supplies.AgentPotionService;
 
 /**
  * Agent-owned supply chat callback facade over temporary bot-side potion,
@@ -40,7 +40,7 @@ public final class AgentBotSupplyRuntime {
 
     public static void handleRequestUpgradeCommand(BotEntry entry, Character bot) {
         BotOfferManager.clearPendingOfferForOwnerAsk(entry);
-        if (BotPotionManager.requestLowSuppliesFromOwnerAsk(entry, bot)) {
+        if (AgentPotionService.requestLowSuppliesFromOwnerAsk(entry, bot)) {
             return;
         }
         BotOfferManager.requestBestUpgradeFromOwner(entry, bot);
@@ -50,14 +50,14 @@ public final class AgentBotSupplyRuntime {
         if (entry.owner() == null) {
             return;
         }
-        int[] pots = BotPotionManager.countPotions(entry.owner());
+        int[] pots = AgentPotionService.countPotions(entry.owner());
         handleNeedPotionCommand(entry, pots[0] <= pots[1]);
     }
 
     public static void handleNeedPotionCommand(BotEntry entry, boolean forHp) {
-        BotPotionManager.OwnerPotShareResult result = BotPotionManager.offerPotShareToOwner(entry, forHp);
+        AgentPotionService.OwnerPotShareResult result = AgentPotionService.offerPotShareToOwner(entry, forHp);
         String reply = AgentSupplyRequestOutcomeFlow.potionShareReply(
-                result == BotPotionManager.OwnerPotShareResult.NO_DONOR,
+                result == AgentPotionService.OwnerPotShareResult.NO_DONOR,
                 forHp);
         if (reply != null) {
             AgentBotSupplyReplyRuntime.queueReply(entry, reply);

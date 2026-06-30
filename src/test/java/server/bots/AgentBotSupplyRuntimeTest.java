@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.supplies.AgentPotionService;
+
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 
 import client.Character;
@@ -28,8 +30,8 @@ class AgentBotSupplyRuntimeTest {
         BotEntry entry = new BotEntry(bot, null, null);
 
         try (MockedStatic<BotOfferManager> offers = mockStatic(BotOfferManager.class);
-             MockedStatic<BotPotionManager> potions = mockStatic(BotPotionManager.class)) {
-            potions.when(() -> BotPotionManager.requestLowSuppliesFromOwnerAsk(entry, bot)).thenReturn(false);
+             MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class)) {
+            potions.when(() -> AgentPotionService.requestLowSuppliesFromOwnerAsk(entry, bot)).thenReturn(false);
 
             AgentBotSupplyRuntime.handleRequestUpgradeCommand(entry, bot);
 
@@ -43,9 +45,9 @@ class AgentBotSupplyRuntimeTest {
         BotEntry entry = new BotEntry(null, null, null);
         AgentBotMessageQueueStateRuntime.setSending(entry, true);
 
-        try (MockedStatic<BotPotionManager> potions = mockStatic(BotPotionManager.class)) {
-            potions.when(() -> BotPotionManager.offerPotShareToOwner(entry, true))
-                    .thenReturn(BotPotionManager.OwnerPotShareResult.NO_DONOR);
+        try (MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class)) {
+            potions.when(() -> AgentPotionService.offerPotShareToOwner(entry, true))
+                    .thenReturn(AgentPotionService.OwnerPotShareResult.NO_DONOR);
 
             AgentBotSupplyRuntime.handleNeedPotionCommand(entry, true);
 
@@ -57,10 +59,10 @@ class AgentBotSupplyRuntimeTest {
     void potionRequestQueuesReplyThroughSupplyReplyAdapter() {
         BotEntry entry = new BotEntry(null, null, null);
 
-        try (MockedStatic<BotPotionManager> potions = mockStatic(BotPotionManager.class);
+        try (MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class);
              MockedStatic<AgentBotSupplyReplyRuntime> replies = mockStatic(AgentBotSupplyReplyRuntime.class)) {
-            potions.when(() -> BotPotionManager.offerPotShareToOwner(entry, true))
-                    .thenReturn(BotPotionManager.OwnerPotShareResult.NO_DONOR);
+            potions.when(() -> AgentPotionService.offerPotShareToOwner(entry, true))
+                    .thenReturn(AgentPotionService.OwnerPotShareResult.NO_DONOR);
 
             AgentBotSupplyRuntime.handleNeedPotionCommand(entry, true);
 
