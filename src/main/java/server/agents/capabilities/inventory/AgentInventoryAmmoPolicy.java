@@ -10,9 +10,19 @@ import constants.inventory.ItemConstants;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
 
 public final class AgentInventoryAmmoPolicy {
+    public record AmmoTradeGroups(List<Item> nonOwn, List<Item> own) {
+        public List<Item> itemsFor(AgentInventoryTradePolicy.AmmoGroup group) {
+            return switch (group) {
+                case NON_OWN -> nonOwn;
+                case OWN -> own;
+            };
+        }
+    }
+
     private AgentInventoryAmmoPolicy() {
     }
 
@@ -81,5 +91,31 @@ public final class AgentInventoryAmmoPolicy {
             }
         }
         return result;
+    }
+
+    public static AmmoTradeGroups classifyTradeGroups(Character agent,
+                                                      WeaponType equippedWeaponType,
+                                                      IntUnaryOperator projectileWatkLookup,
+                                                      IntPredicate isQuestItem,
+                                                      boolean untradeableItemsTradeable) {
+        List<Item> nonOwn = new ArrayList<>();
+        List<Item> own = new ArrayList<>();
+        WeaponType ownAmmoWeaponType = tradeAmmoWeaponType(equippedWeaponType);
+        nonOwn.addAll(AgentInventoryItemPolicy.collectSafeItems(agent, InventoryType.USE, item -> {
+            WeaponType ammoType = ammoWeaponType(item.getItemId());
+            if (ammoType == null) {
+                return false;
+            }
+            if (ammoType == ownAmmoWeaponType) {
+                own.add(item);
+                return false;
+            }
+            return true;
+        }, isQuestItem, untradeableItemsTradeable));
+        nonOwn.sort(Comparator.comparingInt(Item::getItemId));
+        own.sort(Comparator
+                .comparingInt((Item item) -> projectileWatkLookup.applyAsInt(item.getItemId()))
+                .thenComparingInt(Item::getItemId));
+        return new AmmoTradeGroups(nonOwn, own);
     }
 }

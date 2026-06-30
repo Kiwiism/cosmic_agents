@@ -89,6 +89,36 @@ class AgentInventoryAmmoPolicyTest {
         assertEquals(List.of(first), items);
     }
 
+    @Test
+    void shouldClassifyTradeAmmoGroupsLikeLegacyInventory() {
+        Character agent = mock(Character.class);
+        Inventory use = mock(Inventory.class);
+        Item ownStrongArrow = item(2060002, 10);
+        Item crossbowArrow = item(2061000, 10);
+        Item ownWeakArrow = item(2060000, 10);
+        Item potion = item(2000000, 1);
+        Item questBullet = item(ItemId.BULLET, 10);
+        when(agent.getInventory(InventoryType.USE)).thenReturn(use);
+        when(use.getSlotLimit()).thenReturn((byte) 5);
+        when(use.getItem((short) 1)).thenReturn(ownStrongArrow);
+        when(use.getItem((short) 2)).thenReturn(crossbowArrow);
+        when(use.getItem((short) 3)).thenReturn(ownWeakArrow);
+        when(use.getItem((short) 4)).thenReturn(potion);
+        when(use.getItem((short) 5)).thenReturn(questBullet);
+
+        AgentInventoryAmmoPolicy.AmmoTradeGroups groups = AgentInventoryAmmoPolicy.classifyTradeGroups(
+                agent,
+                WeaponType.BOW,
+                itemId -> itemId == 2060002 ? 2 : 1,
+                itemId -> itemId == ItemId.BULLET,
+                false);
+
+        assertEquals(List.of(crossbowArrow), groups.nonOwn());
+        assertEquals(List.of(ownWeakArrow, ownStrongArrow), groups.own());
+        assertEquals(groups.nonOwn(), groups.itemsFor(AgentInventoryTradePolicy.AmmoGroup.NON_OWN));
+        assertEquals(groups.own(), groups.itemsFor(AgentInventoryTradePolicy.AmmoGroup.OWN));
+    }
+
     private static Item item(int itemId, int quantity) {
         Item item = mock(Item.class);
         when(item.getItemId()).thenReturn(itemId);

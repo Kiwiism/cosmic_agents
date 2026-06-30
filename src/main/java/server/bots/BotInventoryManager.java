@@ -34,6 +34,7 @@ import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.capabilities.inventory.AgentInventorySellTrashPolicy;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
+import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy.AmmoTradeGroups;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.AmmoGroup;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.EquipsGroup;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.UseTradeGroups;
@@ -82,15 +83,6 @@ public class BotInventoryManager {
             };
         }
     }
-    private record AmmoTradeGroups(List<Item> nonOwn, List<Item> own) {
-        List<Item> itemsFor(AmmoGroup group) {
-            return switch (group) {
-                case NON_OWN -> nonOwn;
-                case OWN -> own;
-            };
-        }
-    }
-
     private static final Set<Integer> manualTradeGreetingSent = ConcurrentHashMap.newKeySet();
     private static final Map<Integer, String> normalizedItemNameCache = new ConcurrentHashMap<>();
     static void tickPassiveLoot(BotEntry entry, Character bot) {
@@ -1329,25 +1321,11 @@ public class BotInventoryManager {
     }
 
     private static AmmoTradeGroups classifyAmmoTradeGroups(Character bot) {
-        List<Item> nonOwn = new ArrayList<>();
-        List<Item> own = new ArrayList<>();
-        WeaponType ownAmmoWeaponType = tradeAmmoWeaponType(bot);
-        collectFromBag(bot, nonOwn, InventoryType.USE, item -> {
-            WeaponType ammoType = ammoWeaponType(item.getItemId());
-            if (ammoType == null) {
-                return false;
-            }
-            if (ammoType == ownAmmoWeaponType) {
-                own.add(item);
-                return false;
-            }
-            return true;
-        });
-        nonOwn.sort(Comparator.comparingInt(Item::getItemId));
-        own.sort(Comparator
-                .comparingInt((Item item) -> ItemInformationProvider.getInstance().getWatkForProjectile(item.getItemId()))
-                .thenComparingInt(Item::getItemId));
-        return new AmmoTradeGroups(nonOwn, own);
+        return AgentInventoryAmmoPolicy.classifyTradeGroups(bot,
+                AgentAttackExecutionProvider.getEquippedWeaponType(bot),
+                ItemInformationProvider.getInstance()::getWatkForProjectile,
+                ItemInformationProvider.getInstance()::isQuestItem,
+                YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE);
     }
 
     private static List<Item> collectTrashEquips(BotEntry entry, Character bot) {
@@ -1546,20 +1524,7 @@ public class BotInventoryManager {
         startTradeSequence("ammo_share", recipient, items, 0, true, entry, bot);
     }
 
-    private static boolean isAmmoForWeapon(int itemId, WeaponType weaponType) {
-        return AgentInventoryAmmoPolicy.isAmmoForWeapon(itemId, weaponType);
-    }
-
     private static boolean isTradeAmmoItem(int itemId) {
         return AgentInventoryAmmoPolicy.isTradeAmmoItem(itemId);
-    }
-
-    private static WeaponType ammoWeaponType(int itemId) {
-        return AgentInventoryAmmoPolicy.ammoWeaponType(itemId);
-    }
-
-    private static WeaponType tradeAmmoWeaponType(Character bot) {
-        WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
-        return AgentInventoryAmmoPolicy.tradeAmmoWeaponType(weaponType);
     }
 }
