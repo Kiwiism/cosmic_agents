@@ -5,6 +5,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
 import server.agents.capabilities.looting.AgentLootEligibility;
+import server.agents.capabilities.looting.AgentLootTargetService;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
 
@@ -299,7 +300,7 @@ class BotInventoryManagerTest {
             lootEligibility.when(() -> AgentLootEligibility.canBotTargetLoot(
                     eq(entry), eq(bot), eq(map), eq(returnableLoot), anyLong())).thenReturn(true);
 
-            Point target = BotInventoryManager.findNearestPatrolLootTarget(entry, 1);
+            Point target = AgentLootTargetService.findNearestPatrolLootTarget(entry, 1);
 
             assertEquals(new Point(440, 100), target);
         }
@@ -354,7 +355,7 @@ class BotInventoryManagerTest {
             graphProvider.when(() -> AgentNavigationGraphService.peekBestGraph(eq(map), any())).thenReturn(graph);
             botManagers.when(BotManager::getInstance).thenReturn(manager);
 
-            assertEquals(new Point(240, 100), BotInventoryManager.findNearestPatrolLootTarget(entry, 1));
+            assertEquals(new Point(240, 100), AgentLootTargetService.findNearestPatrolLootTarget(entry, 1));
         }
     }
 

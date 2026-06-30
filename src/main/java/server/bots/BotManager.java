@@ -22,6 +22,7 @@ import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.runtime.AgentPerformanceMonitor;
 
 import server.agents.capabilities.looting.AgentLootEligibility;
+import server.agents.capabilities.looting.AgentLootTargetService;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.agents.capabilities.social.AgentScrollReactionService;
 import server.agents.capabilities.shop.AgentShopService;
@@ -2003,7 +2004,7 @@ public class BotManager {
             return resolveNoGrindTargetPosition(entry, botPos, map);
         }
         // Seek loot before roaming
-        Point lootTarget = BotInventoryManager.findNearestPatrolLootTarget(entry, patrolRegionId);
+        Point lootTarget = AgentLootTargetService.findNearestPatrolLootTarget(entry, patrolRegionId);
         if (lootTarget != null) {
             AgentBotPatrolStateRuntime.setPatrolWanderTarget(entry, lootTarget);
             return lootTarget;
@@ -2365,7 +2366,11 @@ public class BotManager {
         }
         // Search for a convenient loot drop every AI tick (grind mode only)
         if (runAiTick && !AgentBotPatrolStateRuntime.hasPatrolRegion(entry)) {
-            AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, BotInventoryManager.findNearestGrindLootTarget(entry, bot));
+            AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, AgentLootTargetService.findNearestGrindLootTarget(
+                    entry,
+                    bot,
+                    BotManager.cfg.LOOT_RADIUS,
+                    BotManager::isGrindLootRetrySuppressed));
         }
         if (target == null) {
             AgentBotGrindTargetStateRuntime.clear(entry);

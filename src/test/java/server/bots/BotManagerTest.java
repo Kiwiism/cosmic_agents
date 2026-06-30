@@ -14,6 +14,7 @@ import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
+import server.agents.capabilities.looting.AgentLootTargetService;
 import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
 
 import server.agents.integration.AgentBotCombatAttackRuntime;
@@ -805,7 +806,7 @@ class BotManagerTest {
         doReturn(passiveLoot).when(map).getMapObject(passiveLootObjectId);
         doReturn(activeLoot).when(map).getMapObject(activeLootObjectId);
 
-        assertEquals(activeLoot, BotInventoryManager.findNearestGrindLootTarget(entry, bot));
+        assertEquals(activeLoot, AgentLootTargetService.findNearestGrindLootTarget(entry, bot, BotManager.cfg.LOOT_RADIUS, BotManager::isGrindLootRetrySuppressed));
     }
 
     @Test
@@ -828,7 +829,7 @@ class BotManagerTest {
         try (MockedStatic<BotManager> botManagers = mockStatic(BotManager.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
             botManagers.when(BotManager::getInstance).thenReturn(manager);
 
-            assertNull(BotInventoryManager.findNearestGrindLootTarget(entry, bot));
+            assertNull(AgentLootTargetService.findNearestGrindLootTarget(entry, bot, BotManager.cfg.LOOT_RADIUS, BotManager::isGrindLootRetrySuppressed));
         }
     }
 
@@ -872,7 +873,7 @@ class BotManagerTest {
         BotManager.resolveNoGrindTargetPosition(entry, bot.getPosition());
         bot.setPosition(new Point(99, 100));
 
-        assertNull(BotInventoryManager.findNearestGrindLootTarget(entry, bot));
+        assertNull(AgentLootTargetService.findNearestGrindLootTarget(entry, bot, BotManager.cfg.LOOT_RADIUS, BotManager::isGrindLootRetrySuppressed));
     }
 
     @Test
@@ -886,7 +887,7 @@ class BotManagerTest {
         when(bot.getInventory(InventoryType.EQUIP)).thenReturn(fullEquip);
         doReturn(List.of(loot)).when(map).getDroppedItems();
 
-        assertNull(BotInventoryManager.findNearestGrindLootTarget(entry, bot));
+        assertNull(AgentLootTargetService.findNearestGrindLootTarget(entry, bot, BotManager.cfg.LOOT_RADIUS, BotManager::isGrindLootRetrySuppressed));
     }
 
     @Test
@@ -899,7 +900,7 @@ class BotManagerTest {
         doReturn(List.of(pass)).when(map).getDroppedItems();
         doReturn(pass).when(map).getMapObject(passObjectId);
 
-        assertNull(BotInventoryManager.findNearestGrindLootTarget(entry, bot));
+        assertNull(AgentLootTargetService.findNearestGrindLootTarget(entry, bot, BotManager.cfg.LOOT_RADIUS, BotManager::isGrindLootRetrySuppressed));
     }
 
     @Test
@@ -913,7 +914,7 @@ class BotManagerTest {
         doReturn(List.of(coupon)).when(map).getDroppedItems();
         doReturn(coupon).when(map).getMapObject(couponObjectId);
 
-        assertNull(BotInventoryManager.findNearestGrindLootTarget(entry, bot));
+        assertNull(AgentLootTargetService.findNearestGrindLootTarget(entry, bot, BotManager.cfg.LOOT_RADIUS, BotManager::isGrindLootRetrySuppressed));
     }
 
     @Test
@@ -927,7 +928,7 @@ class BotManagerTest {
         doReturn(List.of(questDrop)).when(map).getDroppedItems();
         doReturn(questDrop).when(map).getMapObject(questDropObjectId);
 
-        assertNull(BotInventoryManager.findNearestGrindLootTarget(entry, bot));
+        assertNull(AgentLootTargetService.findNearestGrindLootTarget(entry, bot, BotManager.cfg.LOOT_RADIUS, BotManager::isGrindLootRetrySuppressed));
     }
 
     @Test

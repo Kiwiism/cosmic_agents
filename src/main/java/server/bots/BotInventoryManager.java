@@ -1,12 +1,7 @@
 package server.bots;
 
-import server.agents.capabilities.navigation.AgentNavigationGraphService;
-
-import server.agents.capabilities.navigation.AgentNavigationGraph;
-
 import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
-import server.agents.capabilities.combat.AgentCombatConfig;
 
 import server.agents.capabilities.dialogue.AgentEmote;
 
@@ -44,20 +39,17 @@ import server.agents.capabilities.trade.AgentTradeCommandProfiler;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotInventoryStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.ItemInformationProvider;
 import server.Trade;
 import server.maps.MapItem;
-import server.maps.MapleMap;
 import tools.PacketCreator;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -158,84 +150,6 @@ public class BotInventoryManager {
                 }
             }
         }
-    }
-
-    /**
-     * Returns the nearest lootable drop within GRIND_SEEK_RANGE, with no region
-     * restriction. Returns null when any inventory is full or no eligible drop exists.
-     */
-    static MapItem findNearestGrindLootTarget(BotEntry entry, Character bot) {
-        if (bot == null || hasAnyInventoryFull(bot)) return null;
-        MapleMap map = bot.getMap();
-        if (map == null) return null;
-
-        long now = System.currentTimeMillis();
-        Point botPos = bot.getPosition();
-        double seekRangeSq = (double) AgentCombatConfig.cfg.GRIND_SEEK_RANGE * AgentCombatConfig.cfg.GRIND_SEEK_RANGE;
-        MapItem nearest = null;
-        double nearestDistSq = Double.MAX_VALUE;
-
-        for (MapItem drop : map.getDroppedItems()) {
-            if (!AgentLootEligibility.canBotTargetLoot(entry, bot, map, drop, now)) continue;
-            if (BotManager.isGrindLootRetrySuppressed(entry, drop, now)) continue;
-            Point dropPos = drop.getPosition();
-            if (Math.abs(dropPos.x - botPos.x) <= BotManager.cfg.LOOT_RADIUS
-                    && Math.abs(dropPos.y - botPos.y) <= BotManager.cfg.LOOT_RADIUS) {
-                continue;
-            }
-            double distSq = dropPos.distanceSq(botPos);
-            if (distSq > seekRangeSq || distSq >= nearestDistSq) continue;
-            nearestDistSq = distSq;
-            nearest = drop;
-        }
-        return nearest;
-    }
-
-    static boolean hasAnyInventoryFull(Character bot) {
-        if (bot == null) return false;
-        for (InventoryType type : new InventoryType[]{
-                InventoryType.EQUIP, InventoryType.USE, InventoryType.SETUP, InventoryType.ETC}) {
-            Inventory inv = bot.getInventory(type);
-            if (inv != null && inv.isFull()) return true;
-        }
-        return false;
-    }
-
-    /**
-     * Returns the position of the nearest lootable drop within the patrol region
-     * and its immediate neighbours (1 graph hop). Returns null when no eligible
-     * drop exists, the graph is unavailable, or any inventory is full.
-     */
-    static Point findNearestPatrolLootTarget(BotEntry entry, int patrolRegionId) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        if (bot == null) return null;
-        if (hasAnyInventoryFull(bot)) return null;
-        MapleMap map = bot.getMap();
-        if (map == null) return null;
-
-        AgentNavigationGraph graph = AgentNavigationGraphService.peekBestGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
-        if (graph == null) return null;
-
-        Set<Integer> allowed = new HashSet<>();
-        allowed.add(patrolRegionId);
-        allowed.addAll(graph.getMutualAdjacentRegionIds(patrolRegionId));
-
-        long now = System.currentTimeMillis();
-        Point botPos = bot.getPosition();
-        Point nearest = null;
-        double nearestDistSq = Double.MAX_VALUE;
-
-        for (MapItem drop : map.getDroppedItems()) {
-            if (!AgentLootEligibility.canBotTargetLoot(entry, bot, map, drop, now)) continue;
-            Point dropPos = drop.getPosition();
-            if (!allowed.contains(graph.findRegionId(map, dropPos))) continue;
-            double distSq = dropPos.distanceSq(botPos);
-            if (distSq < nearestDistSq) {
-                nearestDistSq = distSq;
-                nearest = dropPos;
-            }
-        }
-        return nearest;
     }
 
     static void tickManualTrade(BotEntry entry, Character bot) {

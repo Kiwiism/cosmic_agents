@@ -2103,6 +2103,10 @@ Recent reconstruction notes:
 - BotInventoryManager trade profiling pass-through wrappers have been removed;
   the remaining trade state machine now calls `AgentTradeCommandProfiler`
   directly for category profiling and slow-command logging.
+- Grind and patrol loot target selection now lives in
+  `AgentLootTargetService`; BotManager calls the Agent looting capability
+  directly and supplies the existing grind-loot retry suppression rule so the
+  target-selection behavior remains unchanged.
 - Ammo trade grouping now lives in `AgentInventoryAmmoPolicy`;
   BotInventoryManager preserves the same safe-item filtering, own-ammo versus
   non-own-ammo split, non-own item-id ordering, and own-ammo projectile attack
