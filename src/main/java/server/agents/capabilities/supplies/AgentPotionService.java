@@ -12,6 +12,7 @@ import client.keybind.KeyBinding;
 import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
+import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.supplies.AgentAutopotPolicy.AutopotChoice;
 import server.agents.capabilities.supplies.AgentAutopotPolicy.PotionRanking;
 import server.agents.integration.AgentBotModeStateRuntime;
@@ -52,7 +53,7 @@ public final class AgentPotionService {
             if (item.getQuantity() <= 0) {
                 continue;
             }
-            if (BotInventoryManager.isRecoveryPotion(item.getItemId())) {
+            if (AgentUseItemClassificationPolicy.isRecoveryPotion(item.getItemId())) {
                 result.add(item);
             }
         }
@@ -64,7 +65,7 @@ public final class AgentPotionService {
         long startedAt = AgentPerformanceMonitor.start();
         int[] counts = AgentPotionInventoryPolicy.countPureRecoveryPotions(
                 bot.getInventory(InventoryType.USE).list(),
-                BotInventoryManager::itemEffect);
+                AgentUseItemClassificationPolicy::itemEffect);
         AgentPerformanceMonitor.recordSince("potion-recovery-scan", startedAt);
         return counts;
     }
@@ -108,7 +109,7 @@ public final class AgentPotionService {
         long startedAt = AgentPerformanceMonitor.start();
         AutopotChoice choice = AgentAutopotPolicy.computeChoice(
                 bot.getInventory(InventoryType.USE).list(),
-                BotInventoryManager::itemEffect);
+                AgentUseItemClassificationPolicy::itemEffect);
         AgentPerformanceMonitor.recordSince("potion-recovery-scan", startedAt);
         return choice;
     }

@@ -9,8 +9,8 @@ import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 import server.agents.capabilities.combat.AgentCombatAmmoPolicy;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
+import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.bots.BotEntry;
-import server.bots.BotInventoryManager;
 import server.bots.BotManager;
 
 public final class AgentBotCombatAmmoCheckRuntime {
@@ -28,7 +28,7 @@ public final class AgentBotCombatAmmoCheckRuntime {
                 if (item.getQuantity() <= 0) {
                     continue;
                 }
-                StatEffect effect = BotInventoryManager.itemEffect(item.getItemId());
+                StatEffect effect = AgentUseItemClassificationPolicy.itemEffect(item.getItemId());
                 if (effect == null || !effect.getStatups().isEmpty()) {
                     continue;
                 }

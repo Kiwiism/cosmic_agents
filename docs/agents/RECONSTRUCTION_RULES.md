@@ -2050,6 +2050,11 @@ Recent reconstruction notes:
   `AgentInventorySellTrashPolicy` directly; the old `BotInventoryManager`
   protection helper shims have been removed while preserving the same scrolled,
   high-stat, weapon-attack, and class-gated protection rules.
+- USE-item effect lookup plus recovery-potion and buff-consumable classification
+  now call `AgentUseItemClassificationPolicy` directly from Agent combat,
+  supplies, ammo-check, and remaining inventory compatibility paths; the old
+  `BotInventoryManager` item-effect/classification shims have been removed while
+  preserving the same null-on-lookup-failure behavior.
 - Ammo trade grouping now lives in `AgentInventoryAmmoPolicy`;
   BotInventoryManager preserves the same safe-item filtering, own-ammo versus
   non-own-ammo split, non-own item-id ordering, and own-ammo projectile attack

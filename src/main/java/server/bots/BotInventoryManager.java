@@ -49,7 +49,6 @@ import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.ItemInformationProvider;
-import server.StatEffect;
 import server.Trade;
 import server.maps.FieldLimit;
 import server.maps.MapItem;
@@ -996,9 +995,9 @@ public class BotInventoryManager {
                 result = AgentInventoryTradePolicy.prioritizeScrollTradeItems(result, AgentBotRuntimeIdentityRuntime.owner(entry));
             }
             case "pots"    -> collectFromBag(bot, result, InventoryType.USE,
-                    item -> isRecoveryPotion(item.getItemId()));
+                    item -> AgentUseItemClassificationPolicy.isRecoveryPotion(item.getItemId()));
             case "buff"    -> collectFromBag(bot, result, InventoryType.USE,
-                    item -> isBuffConsumable(item.getItemId()));
+                    item -> AgentUseItemClassificationPolicy.isBuffConsumable(item.getItemId()));
             case "use"     -> {
                 UseTradeGroups groups = classifyUseTradeGroups(bot, AgentBotRuntimeIdentityRuntime.owner(entry));
                 result.addAll(groups.uncategorized());
@@ -1037,19 +1036,6 @@ public class BotInventoryManager {
             }
         }
         return result;
-    }
-
-    public static StatEffect itemEffect(int itemId) {
-        try { return ItemInformationProvider.getInstance().getItemEffect(itemId); }
-        catch (Exception e) { return null; }
-    }
-
-    public static boolean isRecoveryPotion(int itemId) {
-        return AgentUseItemClassificationPolicy.isRecoveryPotion(itemEffect(itemId));
-    }
-
-    public static boolean isBuffConsumable(int itemId) {
-        return AgentUseItemClassificationPolicy.isBuffConsumable(itemEffect(itemId));
     }
 
     private static void collectFromBag(Character bot, List<Item> result,
@@ -1100,7 +1086,7 @@ public class BotInventoryManager {
 
     static void dropPotions(BotEntry entry, Character bot) {
         int count = dropFromBag(bot, InventoryType.USE,
-                item -> isRecoveryPotion(item.getItemId()));
+                item -> AgentUseItemClassificationPolicy.isRecoveryPotion(item.getItemId()));
         reply(entry, bot, count, "potion");
     }
 
@@ -1121,7 +1107,7 @@ public class BotInventoryManager {
 
     static void dropBuffPots(BotEntry entry, Character bot) {
         int count = dropFromBag(bot, InventoryType.USE,
-                item -> isBuffConsumable(item.getItemId()));
+                item -> AgentUseItemClassificationPolicy.isBuffConsumable(item.getItemId()));
         reply(entry, bot, count, "buff pot");
     }
 
@@ -1220,10 +1206,10 @@ public class BotInventoryManager {
 
     private static UseTradeGroups classifyUseTradeGroups(Character bot, Character recipient) {
         return AgentInventoryTradePolicy.classifyUseTradeGroups(bot, recipient,
-                BotInventoryManager::isRecoveryPotion,
+                AgentUseItemClassificationPolicy::isRecoveryPotion,
                 BotInventoryManager::isTradeAmmoItem,
                 ItemConstants::isEquipScroll,
-                BotInventoryManager::isBuffConsumable,
+                AgentUseItemClassificationPolicy::isBuffConsumable,
                 ItemInformationProvider.getInstance()::isQuestItem,
                 YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE);
     }
@@ -1364,8 +1350,8 @@ public class BotInventoryManager {
      */
     public static List<Item> collectPotShareItems(Character donorBot, boolean forHp, int maxQty) {
         return AgentPotionSharePolicy.collectShareItems(donorBot, forHp, maxQty,
-                BotInventoryManager::isRecoveryPotion,
-                BotInventoryManager::itemEffect);
+                AgentUseItemClassificationPolicy::isRecoveryPotion,
+                AgentUseItemClassificationPolicy::itemEffect);
     }
 
     /** Initiates a bot-to-bot pot-share trade (single batch; donor auto-confirms). */

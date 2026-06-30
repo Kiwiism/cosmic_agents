@@ -19,6 +19,7 @@ import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
+import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotShopBuyReport;
 import server.agents.integration.AgentBotShopPurchaseAction;
@@ -565,8 +566,8 @@ public final class AgentShopService {
                 shop.getItems(),
                 maxStat,
                 forHp,
-                BotInventoryManager::isRecoveryPotion,
-                BotInventoryManager::itemEffect);
+                AgentUseItemClassificationPolicy::isRecoveryPotion,
+                AgentUseItemClassificationPolicy::itemEffect);
         return selected == null ? null : new ShopSlotItem(selected.slot(), selected.shopItem());
     }
 

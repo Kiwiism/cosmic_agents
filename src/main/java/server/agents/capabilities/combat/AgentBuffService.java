@@ -10,11 +10,11 @@ import net.server.PlayerBuffValueHolder;
 import net.server.channel.handlers.UseItemHandler;
 import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentBuffDialogueReporter;
+import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.integration.AgentBotBuffStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.StatEffect;
 import server.bots.BotEntry;
-import server.bots.BotInventoryManager;
 import server.combat.CombatFormulaProvider;
 import server.life.Monster;
 import tools.Pair;
@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Manages automatic use of buff consumable items from the bot's USE inventory.
  *
- * Validity check: BotInventoryManager.isBuffConsumable (has statups) - same predicate used by
+ * Validity check: AgentUseItemClassificationPolicy.isBuffConsumable (has statups) - same predicate used by
  * inv? and the trade/drop "buff" category, so all commands are consistent.
  *
  * Default: off. Configured via chat ("buff on/off", "buff cheap/max").
@@ -124,9 +124,9 @@ public final class AgentBuffService {
             if (item == null || item.getQuantity() <= 0) continue;
 
             int itemId = item.getItemId();
-            if (!BotInventoryManager.isBuffConsumable(itemId)) continue;
+            if (!AgentUseItemClassificationPolicy.isBuffConsumable(itemId)) continue;
 
-            StatEffect fx = fxCache.computeIfAbsent(itemId, BotInventoryManager::itemEffect);
+            StatEffect fx = fxCache.computeIfAbsent(itemId, AgentUseItemClassificationPolicy::itemEffect);
             if (fx == null || fx.getStatups().isEmpty()) continue;
 
             List<BuffStat> statKey = buildStatKey(bot, fx);
@@ -196,7 +196,7 @@ public final class AgentBuffService {
             }
 
             int itemId = effect.getSourceId();
-            if (!BotInventoryManager.isBuffConsumable(itemId)) {
+            if (!AgentUseItemClassificationPolicy.isBuffConsumable(itemId)) {
                 continue;
             }
             if (buildStatKey(bot, effect).isEmpty()) {
