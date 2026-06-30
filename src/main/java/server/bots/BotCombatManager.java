@@ -1225,7 +1225,8 @@ public class BotCombatManager {
                 double pct = fireNowScore.rawDps > 0 ? sweetScore.rawDps / fireNowScore.rawDps * 100.0d : 0.0d;
                 log.info("AoE reposition[{}]: stepping {}px {} to hit {} mobs (vs {}) with {} for {}% DPS ({} vs {} dps)",
                         bot.getName(), Math.abs(shift), shift < 0 ? "left" : "right",
-                        sweetTargets.size(), fireNowBest.targets.size(), skillLabel(aoeSkillId),
+                        sweetTargets.size(), fireNowBest.targets.size(),
+                        AgentCombatDialogueReporter.combatSkillLabel(aoeSkillId),
                         Math.round(pct), Math.round(sweetScore.rawDps), Math.round(fireNowScore.rawDps));
             }
             return new Point(botPos.x + shift, botPos.y);
@@ -1391,10 +1392,6 @@ public class BotCombatManager {
         return AgentBotCombatReportRuntime.skillBuffDebugLines(entry, bot);
     }
 
-    private static String skillLabel(int skillId) {
-        return AgentCombatDialogueReporter.combatSkillLabel(skillId);
-    }
-
     public static String describeDebugStats(BotEntry entry, Character bot) {
         Monster target = AgentBotGrindTargetStateRuntime.target(entry);
         if (target == null || !target.isAlive()) {
@@ -1448,13 +1445,15 @@ public class BotCombatManager {
         int skillLevel = bot.getSkillLevel(skill);
         AgentCombatSupportPolicy.SupportCastReadiness readiness =
                 AgentCombatSupportPolicy.supportCastReadiness(skillLevel, bot.isAlive(), () -> fx.canPaySkillCost(bot));
-        String readinessSummary = readiness.legacyDebugSummary(skillLabel(skill.getId()));
+        String readinessSummary = readiness.legacyDebugSummary(
+                AgentCombatDialogueReporter.combatSkillLabel(skill.getId()));
         if (readinessSummary != null) {
             noteSkillBuffDecision(entry, readinessSummary);
             return false;
         }
         if (!dispatchSupportSpecialMove(bot, skill, skillLevel)) {
-            noteSkillBuffDecision(entry, AgentCombatSupportPolicy.supportSpecialMoveFailedSummary(skillLabel(skill.getId())));
+            noteSkillBuffDecision(entry, AgentCombatSupportPolicy.supportSpecialMoveFailedSummary(
+                    AgentCombatDialogueReporter.combatSkillLabel(skill.getId())));
             return false;
         }
 
@@ -1472,7 +1471,8 @@ public class BotCombatManager {
         AgentBotCombatCooldownStateRuntime.maxAttackCooldown(entry,
                 AgentCombatSupportPolicy.supportCastCooldownMs(skillTiming.cooldownMs(), skill.getAnimationTime()));
         markAlerted(entry);
-        noteSkillBuffDecision(entry, AgentCombatSupportPolicy.supportCastSummary(skillLabel(skill.getId())));
+        noteSkillBuffDecision(entry, AgentCombatSupportPolicy.supportCastSummary(
+                AgentCombatDialogueReporter.combatSkillLabel(skill.getId())));
         return true;
     }
 

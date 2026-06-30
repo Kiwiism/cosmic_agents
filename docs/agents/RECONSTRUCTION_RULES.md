@@ -1587,6 +1587,10 @@ Recent reconstruction notes:
   `AgentCombatSupportPolicy` directly from support buff/heal orchestration; the
   temporary `BotCombatManager` wrappers have been removed while preserving the
   same support range, vertical range, heal hitbox, and heal-ratio inputs.
+- Combat skill label formatting now calls `AgentCombatDialogueReporter`
+  directly from the remaining combat shell; the temporary `BotCombatManager`
+  reporting wrapper has been removed while preserving SkillFactory display-name
+  fallback behavior.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
