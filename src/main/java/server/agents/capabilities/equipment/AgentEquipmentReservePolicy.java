@@ -110,6 +110,24 @@ public final class AgentEquipmentReservePolicy {
         return isEquipUsefulToAgent(recipient, EquipUsefulnessHooks.from(ii), item);
     }
 
+    public static boolean statOnlyBlocked(Character agent, ItemInformationProvider ii, Equip equip) {
+        return statOnlyBlocked(agent, EquipUsefulnessHooks.from(ii), equip);
+    }
+
+    public static boolean statOnlyBlocked(Character agent, EquipUsefulnessHooks hooks, Equip equip) {
+        return hooks.meetsReqs(equip, agent.getJob(), agent.getLevel(),
+                Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4,
+                Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4, agent.getFame());
+    }
+
+    public static boolean isOwnClassEquip(Character agent, ItemInformationProvider ii, Equip equip) {
+        return isOwnClassEquip(agent, EquipUsefulnessHooks.from(ii), equip);
+    }
+
+    public static boolean futureOnlyBlocked(Character agent, ItemInformationProvider ii, Equip equip) {
+        return statOnlyBlocked(agent, ii, equip);
+    }
+
     public static EnumSet<RelevantStat> relevantStatsFor(Job job) {
         if (job == null) return ALL_RELEVANT_STATS.clone();
         if (AgentWeaponCompatibilityPolicy.isMageJob(job)) return EnumSet.of(RelevantStat.INT, RelevantStat.LUK, RelevantStat.MATK);

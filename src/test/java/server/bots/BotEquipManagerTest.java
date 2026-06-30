@@ -815,9 +815,9 @@ class BotEquipManagerTest {
                 Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4,
                 Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4, 1)).thenReturn(false);
 
-        assertTrue(BotEquipManager.statOnlyBlocked(bot, hooks, statBlocked),
+        assertTrue(AgentEquipmentReservePolicy.statOnlyBlocked(bot, hooks, statBlocked),
                 "immediate optimizer may consider gear that only needs more stats");
-        assertFalse(BotEquipManager.statOnlyBlocked(bot, hooks, levelBlocked),
+        assertFalse(AgentEquipmentReservePolicy.statOnlyBlocked(bot, hooks, levelBlocked),
                 "immediate optimizer must skip gear blocked by current level/job/fame");
     }
 

@@ -1098,29 +1098,20 @@ public class BotEquipManager {
      * requirements. Used to seed the weapon lookahead pool.
      */
     static boolean statOnlyBlocked(Character bot, ItemInformationProvider ii, Equip equip) {
-        // Pass huge stat values: if it still fails, level/job/fame is blocking, skip.
-        return statOnlyBlocked(bot, EquipUsefulnessHooks.from(ii), equip);
+        return AgentEquipmentReservePolicy.statOnlyBlocked(bot, ii, equip);
     }
 
     static boolean statOnlyBlocked(Character bot, EquipUsefulnessHooks hooks, Equip equip) {
-        // Pass huge stat values: if it still fails, level/job/fame is blocking, skip.
-        return hooks.meetsReqs(equip, bot.getJob(), bot.getLevel(),
-                Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4,
-                Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4, bot.getFame());
+        return AgentEquipmentReservePolicy.statOnlyBlocked(bot, hooks, equip);
     }
 
     /** Current level/fame wearability gate: only stat reqs are treated as satisfiable by gear. */
     static boolean isOwnClassEquip(Character bot, ItemInformationProvider ii, Equip equip) {
-        return ii.meetsEquipRequirements(equip, bot.getJob(), bot.getLevel(),
-                Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4,
-                Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4, bot.getFame());
+        return AgentEquipmentReservePolicy.isOwnClassEquip(bot, ii, equip);
     }
 
     static boolean futureOnlyBlocked(Character bot, ItemInformationProvider ii, Equip equip) {
-        // Pass huge stat values only: if it still fails, job/level/fame is blocking, skip.
-        return ii.meetsEquipRequirements(equip, bot.getJob(), bot.getLevel(),
-                Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4,
-                Integer.MAX_VALUE / 4, Integer.MAX_VALUE / 4, bot.getFame());
+        return AgentEquipmentReservePolicy.futureOnlyBlocked(bot, ii, equip);
     }
 
     private static boolean isRecommendationCandidate(Character bot, ItemInformationProvider ii, Equip equip,

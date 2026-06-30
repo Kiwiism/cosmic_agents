@@ -1282,6 +1282,11 @@ Recent reconstruction notes:
   incoming-item reserve checks, future own-class eligibility, text-slot
   filtering, and usefulness scoring are unchanged; `BotEquipManager` keeps
   wrapper methods for callers that still enter through the temporary bot seam.
+- Equipment requirement-gate helpers now also enter through
+  `AgentEquipmentReservePolicy`: stat-only blocked checks, own-class
+  wearability checks, and future-only candidate gates preserve the same
+  huge-stat requirement simulation while reducing direct BotEquipManager use
+  from inventory grouping code.
 - Physics position, horizontal-speed, and ground-travel carry state now enter
   through `AgentBotMovementPhysicsStateRuntime`; BotPhysicsEngine preserves
   landing, grounded travel, swim, airborne collision, climb-position, and reset

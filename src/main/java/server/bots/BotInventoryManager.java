@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
 import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
+import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy;
 import server.agents.capabilities.inventory.AgentInventorySellTrashPolicy;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
@@ -1585,7 +1586,7 @@ public class BotInventoryManager {
     }
 
     private static boolean isOwnClassEquip(Character bot, ItemInformationProvider ii, Equip equip) {
-        return BotEquipManager.isOwnClassEquip(bot, ii, equip);
+        return AgentEquipmentReservePolicy.isOwnClassEquip(bot, ii, equip);
     }
 
     static boolean shouldKeepForSellTrash(ItemInformationProvider ii, Equip equip) {
