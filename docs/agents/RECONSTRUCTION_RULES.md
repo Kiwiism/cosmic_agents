@@ -421,7 +421,7 @@ Recent reconstruction notes:
   boundary instead of the removed BotManager delivery/scheduler bridge.
 - Build-triggered status checks now enter through
   `AgentBotBuildStatusRuntime.checkBuildStatus`; `BotBuildManager` and
-  `BotStarterKitManager` no longer call the broad chat-status facade directly
+  `AgentStarterKitService` no longer call the broad chat-status facade directly
   for job/level build status prompts.
 - Gear-offer idle gating now enters through
   `AgentBotOfferRuntime.isOwnerIdleForOffer`; `BotOfferManager` no longer
@@ -1199,10 +1199,9 @@ Recent reconstruction notes:
   `AgentBotRuntimeIdentityRuntime` and the Agent-owned
   `AgentBotCommandParser`; targeted command matching behavior is unchanged, and
   the old bot-package command parser shim has been removed.
-- Starter-kit job advancement identity now enters through
-  `AgentBotRuntimeIdentityRuntime`; BotStarterKitManager preserves job-change,
-  starter-kit grant, auto-equip, and build-status ordering while no longer
-  reading bot or leader characters directly from BotEntry in production.
+- Starter-kit job advancement now lives in `AgentStarterKitService` and reads
+  identity through `AgentBotRuntimeIdentityRuntime`; job-change, starter-kit
+  grant, auto-equip, and build-status ordering are unchanged.
 - KPQ coupon-target loot eligibility now enters through `AgentBotPqRuntime`;
   AgentLootEligibility preserves coupon/pass/rice-cake and quest-item filtering
   behavior while no longer reading KPQ coupon target state directly from
@@ -1281,10 +1280,10 @@ Recent reconstruction notes:
   `AgentBotTargetedCommandMatch`, and `AgentBotCommandParser`; parsed command
   boundary data and bot-entry adaptation are owned by the Agent integration
   layer while preserving the same `AgentCommandParser` matching behavior.
-- First-job starter-kit data now lives in `AgentStarterKitCatalog` with
-  `AgentStarterItemGrant`; BotStarterKitManager preserves the same job-change,
-  grant, auto-equip, and build-status behavior while the static kit table and
-  grant value object are owned by the Agent build capability.
+- First-job starter-kit service/data now live in `AgentStarterKitService`,
+  `AgentStarterKitCatalog`, and `AgentStarterItemGrant`; the old
+  `BotStarterKitManager` file has been removed without changing job-change,
+  grant, auto-equip, or build-status behavior.
 - Reply-channel state now uses the Agent-owned `AgentReplyChannel` enum across
   BotEntry, chat handlers, reply runtimes, offer replies, LLM gating, and tests;
   the legacy `server.bots.ReplyChannel` enum has been removed without changing

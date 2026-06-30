@@ -125,7 +125,7 @@ public final class BotBuildManager {
         return "ok, rebuilt my ap using the bot build";
     }
 
-    static void handleJobAdvance(BotEntry entry, Character bot, Job oldJob, Job newJob) {
+    public static void handleJobAdvance(BotEntry entry, Character bot, Job oldJob, Job newJob) {
         if (oldJob == Job.BEGINNER && oldJob != newJob && AgentBotBuildStateRuntime.hasApBuild(entry)) {
             reallocateAp(entry, bot);
         }

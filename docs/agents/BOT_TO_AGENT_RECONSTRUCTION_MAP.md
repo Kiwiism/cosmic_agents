@@ -86,6 +86,9 @@ Recent map updates:
 - `server.bots.BotTask` has moved to `server.agents.plans.AgentTask`. The
   queue/execution path is still temporarily backed by BotEntry and BotManager,
   but the task value model is Agent-owned.
+- `server.bots.BotStarterKitManager` has moved to
+  `server.agents.capabilities.build.AgentStarterKitService`. Job-change,
+  starter-kit grant, auto-equip, and build-status behavior are unchanged.
 
 | Current file | Target Agent destination | Status |
 | --- | --- | --- |
@@ -138,7 +141,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotScrollReactionManager.java` | `server.agents.capabilities.social` and `dialogue` | `SPLIT_TO_MULTIPLE_AGENT_MODULES` |
 | `src/main/java/server/bots/BotSessionLifecycleSideEffects.java` | `server.agents.integration.AgentBotSessionLifecycleSideEffects` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotShopManager.java` | `server.agents.capabilities.shop`, `server.agents.capabilities.dialogue.AgentDialogueCatalog` | `SPLIT_TO_MULTIPLE_AGENT_MODULES`; shop resupply/shopping dialogue pools, fixed sell-trash/shop visit/shortfall result messages, shop approach geometry, ammo resupply/recharge policy, and potion shop selection policy are Agent-owned |
-| `src/main/java/server/bots/BotStarterKitManager.java` | `server.agents.capabilities.inventory.AgentStarterKitService` | `MIGRATE_TO_AGENT` |
+| `src/main/java/server/bots/BotStarterKitManager.java` | `server.agents.capabilities.build.AgentStarterKitService` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotTask.java` | `server.agents.plans.AgentTask` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/Emote.java` | `server.agents.capabilities.dialogue.AgentEmote` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/ReplyChannel.java` | `server.agents.commands.AgentReplyChannel` | `COMPATIBILITY_ALIAS_TEMPORARY` |

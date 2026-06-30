@@ -1,11 +1,13 @@
-package server.bots;
+package server.agents.capabilities.build;
 
 import client.Character;
 import client.Job;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.capabilities.build.AgentStarterItemGrant;
 import server.agents.integration.AgentBotBuildStatusRuntime;
+import server.bots.BotBuildManager;
+import server.bots.BotEntry;
+import server.bots.BotEquipManager;
 
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
@@ -18,35 +20,35 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class BotStarterKitManagerTest {
+class AgentStarterKitServiceTest {
     @Test
     void shouldExposeExplorerFirstJobStarterKits() {
         assertEquals(List.of(new AgentStarterItemGrant(1302077, (short) 1)),
-                BotStarterKitManager.starterKitFor(Job.WARRIOR));
+                AgentStarterKitService.starterKitFor(Job.WARRIOR));
         assertEquals(List.of(new AgentStarterItemGrant(1372043, (short) 1)),
-                BotStarterKitManager.starterKitFor(Job.MAGICIAN));
+                AgentStarterKitService.starterKitFor(Job.MAGICIAN));
         assertEquals(List.of(
                         new AgentStarterItemGrant(1452051, (short) 1),
                         new AgentStarterItemGrant(2060000, (short) 1000)),
-                BotStarterKitManager.starterKitFor(Job.BOWMAN));
+                AgentStarterKitService.starterKitFor(Job.BOWMAN));
         assertEquals(List.of(
                         new AgentStarterItemGrant(1472061, (short) 1),
                         new AgentStarterItemGrant(1332063, (short) 1),
                         new AgentStarterItemGrant(2070015, (short) 500)),
-                BotStarterKitManager.starterKitFor(Job.THIEF));
+                AgentStarterKitService.starterKitFor(Job.THIEF));
         assertEquals(List.of(
                         new AgentStarterItemGrant(1492000, (short) 1),
                         new AgentStarterItemGrant(1482000, (short) 1),
                         new AgentStarterItemGrant(2330000, (short) 1000)),
-                BotStarterKitManager.starterKitFor(Job.PIRATE));
+                AgentStarterKitService.starterKitFor(Job.PIRATE));
     }
 
     @Test
     void shouldOnlyGrantKitsForBeginnerToFirstJobAdvancements() {
-        assertTrue(BotStarterKitManager.isFirstJobAdvancement(Job.BEGINNER, Job.WARRIOR));
-        assertTrue(BotStarterKitManager.isFirstJobAdvancement(Job.BEGINNER, Job.MAGICIAN));
-        assertFalse(BotStarterKitManager.isFirstJobAdvancement(Job.WARRIOR, Job.FIGHTER));
-        assertFalse(BotStarterKitManager.isFirstJobAdvancement(Job.BEGINNER, Job.FIGHTER));
+        assertTrue(AgentStarterKitService.isFirstJobAdvancement(Job.BEGINNER, Job.WARRIOR));
+        assertTrue(AgentStarterKitService.isFirstJobAdvancement(Job.BEGINNER, Job.MAGICIAN));
+        assertFalse(AgentStarterKitService.isFirstJobAdvancement(Job.WARRIOR, Job.FIGHTER));
+        assertFalse(AgentStarterKitService.isFirstJobAdvancement(Job.BEGINNER, Job.FIGHTER));
     }
 
     @Test
@@ -60,7 +62,7 @@ class BotStarterKitManagerTest {
         try (MockedStatic<BotBuildManager> buildManager = mockStatic(BotBuildManager.class);
              MockedStatic<AgentBotBuildStatusRuntime> statusRuntime = mockStatic(AgentBotBuildStatusRuntime.class);
              MockedStatic<BotEquipManager> equipManager = mockStatic(BotEquipManager.class)) {
-            BotStarterKitManager.advanceJob(entry, Job.HUNTER);
+            AgentStarterKitService.advanceJob(entry, Job.HUNTER);
 
             verify(bot).changeJob(Job.HUNTER);
             buildManager.verify(() -> BotBuildManager.handleJobAdvance(entry, bot, Job.BOWMAN, Job.HUNTER));

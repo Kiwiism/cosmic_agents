@@ -5,9 +5,9 @@ import server.agents.capabilities.dialogue.AgentApBuildDialogueResolver;
 import server.agents.capabilities.dialogue.AgentBuildDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentChatBuildFlow;
 import server.agents.capabilities.dialogue.AgentChatJobAdvancementFlow;
+import server.agents.capabilities.build.AgentStarterKitService;
 import server.bots.BotBuildManager;
 import server.bots.BotEntry;
-import server.bots.BotStarterKitManager;
 
 /**
  * Agent-owned build callback facade over temporary bot-side AP/SP/job side
@@ -57,7 +57,7 @@ public final class AgentBotBuildRuntime {
         return advJob -> {
             String reply = AgentChatJobAdvancementFlow.jobChangeReply(advJob);
             AgentBotBuildReplyRuntime.replyNow(entry, reply);
-            AgentBotBuildSchedulerRuntime.afterRandomDelay(900, 1100, () -> BotStarterKitManager.advanceJob(entry, advJob));
+            AgentBotBuildSchedulerRuntime.afterRandomDelay(900, 1100, () -> AgentStarterKitService.advanceJob(entry, advJob));
         };
     }
 

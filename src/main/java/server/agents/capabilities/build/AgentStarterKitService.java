@@ -1,4 +1,4 @@
-package server.bots;
+package server.agents.capabilities.build;
 
 import client.Character;
 import client.Job;
@@ -7,17 +7,18 @@ import client.inventory.manipulator.InventoryManipulator;
 import constants.inventory.ItemConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import server.agents.capabilities.build.AgentStarterItemGrant;
-import server.agents.capabilities.build.AgentStarterKitCatalog;
 import server.agents.integration.AgentBotBuildStatusRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.bots.BotBuildManager;
+import server.bots.BotEntry;
+import server.bots.BotEquipManager;
 
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
-public final class BotStarterKitManager {
-    private static final Logger log = LoggerFactory.getLogger(BotStarterKitManager.class);
+public final class AgentStarterKitService {
+    private static final Logger log = LoggerFactory.getLogger(AgentStarterKitService.class);
 
     public static void advanceJob(BotEntry entry, Job newJob) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
@@ -30,11 +31,11 @@ public final class BotStarterKitManager {
         AgentBotBuildStatusRuntime.checkBuildStatus(entry, bot);
     }
 
-    static List<AgentStarterItemGrant> starterKitFor(Job job) {
+    public static List<AgentStarterItemGrant> starterKitFor(Job job) {
         return AgentStarterKitCatalog.firstJobKitFor(job);
     }
 
-    static boolean isFirstJobAdvancement(Job oldJob, Job newJob) {
+    public static boolean isFirstJobAdvancement(Job oldJob, Job newJob) {
         return AgentStarterKitCatalog.isFirstJobAdvancement(oldJob, newJob);
     }
 

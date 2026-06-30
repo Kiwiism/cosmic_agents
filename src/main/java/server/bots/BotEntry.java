@@ -2175,7 +2175,7 @@ public class BotEntry {
         this.lastBroadcastFh = lastBroadcastFh;
     }
 
-    BotEntry(Character bot, Character owner, ScheduledFuture<?> task) {
+    public BotEntry(Character bot, Character owner, ScheduledFuture<?> task) {
         this.bot = bot;
         this.owner = owner;
         this.task = task;
