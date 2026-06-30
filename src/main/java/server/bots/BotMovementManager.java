@@ -4,6 +4,7 @@ import server.agents.runtime.AgentPerformanceMonitor;
 
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.movement.AgentClimbMovementPolicy;
+import server.agents.capabilities.movement.AgentFallbackMovementService;
 import server.agents.capabilities.movement.AgentGroundMovementPolicy;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementTimingPolicy;
@@ -125,6 +126,14 @@ public class BotMovementManager {
 
     public static int configuredFollowDist() {
         return cfg.FOLLOW_DIST;
+    }
+
+    public static int configuredStopDist() {
+        return cfg.STOP_DIST;
+    }
+
+    public static int configuredFollowYCap() {
+        return cfg.FOLLOW_Y_CAP;
     }
 
     public static int configuredJumpYThreshold() {
@@ -551,10 +560,10 @@ public class BotMovementManager {
 
             targetPos = adjustGrindingTargetPosition(entry, currentFh, targetPos);
             if (AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry) && targetPos != null) {
-                if (BotFallbackMovementManager.tryImmediateAction(entry, botPos, targetPos)) {
+                if (AgentFallbackMovementService.tryImmediateAction(entry, botPos, targetPos)) {
                     return;
                 }
-                targetPos = BotFallbackMovementManager.resolveSteeringTarget(entry, botPos, targetPos);
+                targetPos = AgentFallbackMovementService.resolveSteeringTarget(entry, botPos, targetPos);
             }
             MoveAction action = planGroundAction(entry, currentFh, botPos, targetPos);
             applyGroundAction(entry, currentFh, action);
@@ -637,7 +646,7 @@ public class BotMovementManager {
             boolean blockedByWall = BotPhysicsEngine.isGroundStepBlockedByWall(AgentBotRuntimeIdentityRuntime.botMap(entry), botPos, stepX);
             if (!blockedByWall
                     && ((directionalDrop && Integer.signum(stepX) == Integer.signum(navEdge.launchStepX))
-                    || BotFallbackMovementManager.shouldWalkOffLedge(entry, botPos, targetPos, stepX))) {
+                    || AgentFallbackMovementService.shouldWalkOffLedge(entry, botPos, targetPos, stepX))) {
                 // Walk-off drops should keep walking in the authored direction until physics
                 // detects lost ground and transitions into a fall with preserved momentum.
                 return MoveAction.walk(stepX);
@@ -761,7 +770,7 @@ public class BotMovementManager {
                 && navEdge.launchStepX != 0;
     }
 
-    static int resolveGroundStepX(BotEntry entry, Point botPos, Point targetPos, int stopDist, int followDist) {
+    public static int resolveGroundStepX(BotEntry entry, Point botPos, Point targetPos, int stopDist, int followDist) {
         if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry) || botPos == null || targetPos == null) {
             return 0;
         }
@@ -883,7 +892,7 @@ public class BotMovementManager {
         broadcastMovement(entry);
     }
 
-    static void initiateRopeJump(BotEntry entry, Character bot, int dx) {
+    public static void initiateRopeJump(BotEntry entry, Character bot, int dx) {
         BotPhysicsEngine.beginClimbUpJump(entry, bot, resolveAirVelocityX(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry), dx));
         broadcastMovement(entry);
     }

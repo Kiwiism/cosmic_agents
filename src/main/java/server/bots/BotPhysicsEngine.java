@@ -125,7 +125,7 @@ public final class BotPhysicsEngine {
     record MovementSnapshot(int velX, int velY, int stance) {
     }
 
-    static final class JumpLanding {
+    public static final class JumpLanding {
         private final Point point;
         private final Foothold foothold;
         private final double incomingDeltaX;
@@ -148,7 +148,7 @@ public final class BotPhysicsEngine {
             this.ticks = ticks;
         }
 
-        Point point() {
+        public Point point() {
             return point;
         }
 
@@ -220,6 +220,18 @@ public final class BotPhysicsEngine {
 
     public static float configuredRopeJumpSpeedPxs() {
         return cfg.JUMP_ROPE_PXS;
+    }
+
+    public static int configuredMaxSnapDrop() {
+        return cfg.MAX_SNAP_DROP;
+    }
+
+    public static int configuredMaxSlopeUp() {
+        return cfg.MAX_SLOPE_UP;
+    }
+
+    public static int configuredRopeGrabX() {
+        return cfg.ROPE_GRAB_X;
     }
 
     private static AgentMovementProfile profileOrBase(AgentMovementProfile profile) {
@@ -436,7 +448,7 @@ public final class BotPhysicsEngine {
         return findGroundWallCollision(map, from, to).type() == AirCollisionType.WALL;
     }
 
-    static boolean isGroundFarBelow(MapleMap map, Point position) {
+    public static boolean isGroundFarBelow(MapleMap map, Point position) {
         if (map == null || position == null) {
             return true;
         }
@@ -657,7 +669,7 @@ public final class BotPhysicsEngine {
         syncCharacterState(entry);
     }
 
-    static void queueDownJump(BotEntry entry, Character bot) {
+    public static void queueDownJump(BotEntry entry, Character bot) {
         idleOnGround(entry, bot);
         AgentBotMovementStateRuntime.setDownJumpPending(entry, true);
         AgentBotMovementStateRuntime.setCrouching(entry, true);
@@ -841,7 +853,7 @@ public final class BotPhysicsEngine {
         AgentBotMovementPhysicsStateRuntime.resetFallPeakPhysicsY(entry);
     }
 
-    static void attachToRope(BotEntry entry, Character bot, Rope rope, int y) {
+    public static void attachToRope(BotEntry entry, Character bot, Rope rope, int y) {
         int ropeY = Math.clamp(y, firstClimbableY(rope), rope.bottomY());
         AgentBotClimbStateRuntime.setClimbVerticalDirection(entry, 0);
         setClimbPosition(entry, bot, rope, ropeY);
@@ -1471,7 +1483,7 @@ public final class BotPhysicsEngine {
         return canReachRopeFromGround(map, from, rope, AgentMovementProfile.base());
     }
 
-    static boolean canReachRopeFromGround(MapleMap map, Point from, Rope rope, AgentMovementProfile profile) {
+    public static boolean canReachRopeFromGround(MapleMap map, Point from, Rope rope, AgentMovementProfile profile) {
         int dx = Math.abs(rope.x() - from.x);
         if (dx <= cfg.ROPE_GRAB_X && from.y >= firstClimbableY(rope) && from.y <= rope.bottomY()) {
             return true;
@@ -1485,7 +1497,7 @@ public final class BotPhysicsEngine {
                 && dx <= maxJumpHorizontalTravel(map, profile);
     }
 
-    static boolean canStartDownJump(MapleMap map, Point from) {
+    public static boolean canStartDownJump(MapleMap map, Point from) {
         Foothold foothold = findGroundFoothold(map, from);
         return foothold != null && !foothold.isForbidFallDown();
     }
@@ -1494,7 +1506,7 @@ public final class BotPhysicsEngine {
         return simulateJumpLanding(map, from, stepX, AgentMovementProfile.base());
     }
 
-    static JumpLanding simulateJumpLanding(MapleMap map, Point from, int stepX, AgentMovementProfile profile) {
+    public static JumpLanding simulateJumpLanding(MapleMap map, Point from, int stepX, AgentMovementProfile profile) {
         return simulateLanding(map, from, -jumpForcePerTick(profile), stepX, 0L);
     }
 

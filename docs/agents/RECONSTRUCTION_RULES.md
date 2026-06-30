@@ -1249,9 +1249,10 @@ Recent reconstruction notes:
 - Fallback movement identity, map, movement-profile, and movement-gate reads
   now enter through `AgentBotRuntimeIdentityRuntime`,
   `AgentBotMovementStateRuntime`, and `AgentBotMovementPhysicsStateRuntime`;
-  BotFallbackMovementManager preserves rope attach/jump, swim jump-up,
+  `AgentFallbackMovementService` preserves rope attach/jump, swim jump-up,
   down-jump, ledge walk-off, and fallback jump behavior while no longer reading
-  BotEntry runtime fields directly in production.
+  BotEntry runtime fields directly in production. The old
+  `server.bots.BotFallbackMovementManager` source file has been removed.
 - Physics position, horizontal-speed, and ground-travel carry state now enter
   through `AgentBotMovementPhysicsStateRuntime`; BotPhysicsEngine preserves
   landing, grounded travel, swim, airborne collision, climb-position, and reset

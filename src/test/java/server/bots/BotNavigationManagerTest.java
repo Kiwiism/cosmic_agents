@@ -3,6 +3,7 @@ package server.bots;
 import server.agents.capabilities.navigation.AgentNavigationMapLoader;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
+import server.agents.capabilities.movement.AgentFallbackMovementService;
 
 import client.Character;
 import constants.game.CharacterStance;
@@ -747,7 +748,7 @@ class BotNavigationManagerTest {
         AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         Point target = new Point(130, 220);
-        boolean immediateAction = BotFallbackMovementManager.tryImmediateAction(entry, bot.getPosition(), target);
+        boolean immediateAction = AgentFallbackMovementService.tryImmediateAction(entry, bot.getPosition(), target);
 
         assertTrue(immediateAction);
         assertTrue(entry.downJumpPending);
@@ -767,7 +768,7 @@ class BotNavigationManagerTest {
         AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         Point target = new Point(130, 220);
-        boolean immediateAction = BotFallbackMovementManager.tryImmediateAction(entry, bot.getPosition(), target);
+        boolean immediateAction = AgentFallbackMovementService.tryImmediateAction(entry, bot.getPosition(), target);
 
         assertTrue(immediateAction);
         assertTrue(entry.downJumpPending);
@@ -787,8 +788,8 @@ class BotNavigationManagerTest {
         AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         Point target = new Point(260, 220);
-        Point steeringTarget = BotFallbackMovementManager.resolveSteeringTarget(entry, bot.getPosition(), target);
-        boolean immediateAction = BotFallbackMovementManager.tryImmediateAction(entry, bot.getPosition(), target);
+        Point steeringTarget = AgentFallbackMovementService.resolveSteeringTarget(entry, bot.getPosition(), target);
+        boolean immediateAction = AgentFallbackMovementService.tryImmediateAction(entry, bot.getPosition(), target);
 
         assertFalse(immediateAction);
         assertFalse(entry.downJumpPending);
@@ -811,8 +812,8 @@ class BotNavigationManagerTest {
         AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         Point target = new Point(320, 212);
-        Point steeringTarget = BotFallbackMovementManager.resolveSteeringTarget(entry, bot.getPosition(), target);
-        boolean immediateAction = BotFallbackMovementManager.tryImmediateAction(entry, bot.getPosition(), target);
+        Point steeringTarget = AgentFallbackMovementService.resolveSteeringTarget(entry, bot.getPosition(), target);
+        boolean immediateAction = AgentFallbackMovementService.tryImmediateAction(entry, bot.getPosition(), target);
 
         assertFalse(immediateAction);
         assertFalse(entry.downJumpPending);

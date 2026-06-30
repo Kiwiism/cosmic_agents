@@ -1,23 +1,24 @@
-package server.bots;
-
-import server.agents.capabilities.movement.AgentMovementProfile;
+package server.agents.capabilities.movement;
 
 import client.Character;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.bots.BotEntry;
+import server.bots.BotMovementManager;
+import server.bots.BotPhysicsEngine;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Rope;
 
 import java.awt.*;
 
-final class BotFallbackMovementManager {
-    private BotFallbackMovementManager() {
+public final class AgentFallbackMovementService {
+    private AgentFallbackMovementService() {
     }
 
-    static Point resolveSteeringTarget(BotEntry entry, Point botPos, Point targetPos) {
+    public static Point resolveSteeringTarget(BotEntry entry, Point botPos, Point targetPos) {
         Rope rope = selectNearbyRope(entry, botPos, targetPos);
         Point ledgeTarget = resolveFallbackLedgeTarget(entry, botPos, targetPos, rope);
         if (ledgeTarget != null) {
@@ -29,7 +30,7 @@ final class BotFallbackMovementManager {
         return new Point(rope.x(), botPos.y);
     }
 
-    static boolean tryImmediateAction(BotEntry entry, Point botPos, Point targetPos) {
+    public static boolean tryImmediateAction(BotEntry entry, Point botPos, Point targetPos) {
         Character bot = bot(entry);
         MapleMap map = map(entry);
         Rope rope = selectNearbyRope(entry, botPos, targetPos);
@@ -42,7 +43,7 @@ final class BotFallbackMovementManager {
             }
 
             int ropeDx = rope.x() - botPos.x;
-            int ropeJumpRange = Math.max(BotPhysicsEngine.cfg.ROPE_GRAB_X * 2,
+            int ropeJumpRange = Math.max(BotPhysicsEngine.configuredRopeGrabX() * 2,
                     BotPhysicsEngine.walkStep(map, movementProfile(entry)) * 2);
             if (Math.abs(ropeDx) <= ropeJumpRange
                     && BotPhysicsEngine.canReachRopeFromGround(map, botPos, rope, movementProfile(entry))) {
@@ -68,8 +69,8 @@ final class BotFallbackMovementManager {
         }
 
         Point steeringTarget = rope == null ? targetPos : new Point(rope.x(), targetPos.y);
-        int stepX = BotMovementManager.resolveGroundStepX(entry, botPos, steeringTarget,
-                BotMovementManager.cfg.STOP_DIST, BotMovementManager.cfg.FOLLOW_DIST);
+            int stepX = BotMovementManager.resolveGroundStepX(entry, botPos, steeringTarget,
+                BotMovementManager.configuredStopDist(), BotMovementManager.configuredFollowDist());
         if (stepX == 0 || BotPhysicsEngine.canWalkGroundStep(map, botPos, stepX)) {
             return false;
         }
@@ -98,14 +99,14 @@ final class BotFallbackMovementManager {
         }
         // Target must be sufficiently above bot. dy < 0 = target higher in MS coords.
         int dy = targetPos.y - botPos.y;
-        return dy < -Math.max(BotMovementManager.cfg.JUMP_Y_THRESH * 2, 60);
+        return dy < -Math.max(BotMovementManager.configuredJumpYThreshold() * 2, 60);
     }
 
-    static boolean shouldWalkOffLedge(BotEntry entry, Point botPos, Point targetPos, int stepX) {
+    public static boolean shouldWalkOffLedge(BotEntry entry, Point botPos, Point targetPos, int stepX) {
         if (entry == null || !AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry) || botPos == null || targetPos == null || stepX == 0) {
             return false;
         }
-        if (targetPos.y <= botPos.y + BotPhysicsEngine.cfg.MAX_SNAP_DROP) {
+        if (targetPos.y <= botPos.y + BotPhysicsEngine.configuredMaxSnapDrop()) {
             return false;
         }
         Point ahead = new Point(botPos.x + stepX, botPos.y);
@@ -118,7 +119,7 @@ final class BotFallbackMovementManager {
         }
 
         int dy = targetPos.y - botPos.y;
-        if (Math.abs(dy) < Math.max(BotMovementManager.cfg.JUMP_Y_THRESH * 2, 60)) {
+        if (Math.abs(dy) < Math.max(BotMovementManager.configuredJumpYThreshold() * 2, 60)) {
             return null;
         }
 
@@ -134,23 +135,23 @@ final class BotFallbackMovementManager {
             }
 
             if (dy < 0) {
-                if (rope.topY() >= botPos.y - BotPhysicsEngine.cfg.MAX_SNAP_DROP) {
+                if (rope.topY() >= botPos.y - BotPhysicsEngine.configuredMaxSnapDrop()) {
                     continue;
                 }
-                if (rope.bottomY() < botPos.y - BotPhysicsEngine.cfg.MAX_SNAP_DROP) {
+                if (rope.bottomY() < botPos.y - BotPhysicsEngine.configuredMaxSnapDrop()) {
                     continue;
                 }
-                if (rope.topY() > targetPos.y + BotMovementManager.cfg.FOLLOW_Y_CAP) {
+                if (rope.topY() > targetPos.y + BotMovementManager.configuredFollowYCap()) {
                     continue;
                 }
             } else {
-                if (rope.bottomY() <= botPos.y + BotPhysicsEngine.cfg.MAX_SNAP_DROP) {
+                if (rope.bottomY() <= botPos.y + BotPhysicsEngine.configuredMaxSnapDrop()) {
                     continue;
                 }
-                if (rope.topY() > botPos.y + BotPhysicsEngine.cfg.MAX_SLOPE_UP) {
+                if (rope.topY() > botPos.y + BotPhysicsEngine.configuredMaxSlopeUp()) {
                     continue;
                 }
-                if (rope.bottomY() < targetPos.y - BotMovementManager.cfg.FOLLOW_Y_CAP) {
+                if (rope.bottomY() < targetPos.y - BotMovementManager.configuredFollowYCap()) {
                     continue;
                 }
             }
@@ -175,9 +176,9 @@ final class BotFallbackMovementManager {
         // motion as the real client. attachY snaps to rope.topY in the caller.
         return botPos != null
                 && rope != null
-                && Math.abs(botPos.x - rope.x()) <= BotPhysicsEngine.cfg.ROPE_GRAB_X
-                && botPos.y >= rope.topY() - BotPhysicsEngine.cfg.MAX_SNAP_DROP
-                && botPos.y <= rope.bottomY() + BotPhysicsEngine.cfg.MAX_SNAP_DROP;
+                && Math.abs(botPos.x - rope.x()) <= BotPhysicsEngine.configuredRopeGrabX()
+                && botPos.y >= rope.topY() - BotPhysicsEngine.configuredMaxSnapDrop()
+                && botPos.y <= rope.bottomY() + BotPhysicsEngine.configuredMaxSnapDrop();
     }
 
     private static Point resolveFallbackLedgeTarget(BotEntry entry, Point botPos, Point targetPos, Rope rope) {
@@ -212,7 +213,7 @@ final class BotFallbackMovementManager {
                 || !BotPhysicsEngine.canStartDownJump(map, botPos)) {
             return false;
         }
-        return Math.abs(targetPos.x - botPos.x) <= Math.max(BotMovementManager.cfg.FOLLOW_DIST,
+        return Math.abs(targetPos.x - botPos.x) <= Math.max(BotMovementManager.configuredFollowDist(),
                 BotPhysicsEngine.walkStep(map, movementProfile(entry)) * 4);
     }
 
@@ -221,7 +222,7 @@ final class BotFallbackMovementManager {
             return false;
         }
         int dy = targetPos.y - botPos.y;
-        if (dy < Math.max(BotPhysicsEngine.cfg.MAX_SNAP_DROP * 3, 90)) {
+        if (dy < Math.max(BotPhysicsEngine.configuredMaxSnapDrop() * 3, 90)) {
             return false;
         }
 
@@ -312,8 +313,8 @@ final class BotFallbackMovementManager {
             return false;
         }
 
-        boolean targetIsAboveOrLevel = steeringTarget.y <= botPos.y + BotPhysicsEngine.cfg.MAX_SNAP_DROP;
-        boolean landingIsAboveOrLevel = landingPoint.y <= botPos.y + BotPhysicsEngine.cfg.MAX_SNAP_DROP;
+        boolean targetIsAboveOrLevel = steeringTarget.y <= botPos.y + BotPhysicsEngine.configuredMaxSnapDrop();
+        boolean landingIsAboveOrLevel = landingPoint.y <= botPos.y + BotPhysicsEngine.configuredMaxSnapDrop();
         return targetIsAboveOrLevel && landingIsAboveOrLevel;
     }
 }
