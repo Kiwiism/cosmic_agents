@@ -2042,6 +2042,10 @@ Recent reconstruction notes:
 - Item query normalization call sites now use `AgentItemQueryNormalizer`
   directly; the old `BotInventoryManager.normalizeItemQuery` compatibility shim
   has been removed while preserving the same plural/punctuation/case handling.
+- Inventory item-presence checks, meso-category checks, reserved-equip category
+  formatting, and no-items reply selection now call Agent inventory/dialogue
+  policies directly; the matching `BotInventoryManager` compatibility shims have
+  been removed without changing trade, restore-slot, or loot-offer behavior.
 - Ammo trade grouping now lives in `AgentInventoryAmmoPolicy`;
   BotInventoryManager preserves the same safe-item filtering, own-ammo versus
   non-own-ammo split, non-own item-id ordering, and own-ammo projectile attack

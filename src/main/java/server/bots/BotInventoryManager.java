@@ -149,11 +149,11 @@ public class BotInventoryManager {
                 bot.pickupItem(drop);
             }
             cleanupBotLootGhostDrop(bot, drop);
-            if (pickedItem != null && pickedItemId > 0 && hasItem(bot, pickedItem)) {
+            if (pickedItem != null && pickedItemId > 0 && AgentInventoryItemPolicy.hasItem(bot, pickedItem)) {
                 InventoryType pickedType = ItemConstants.getInventoryType(pickedItemId);
                 if (pickedType == InventoryType.EQUIP) {
                     BotEquipManager.autoEquip(bot, owner, AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
-                    if (hasItem(bot, pickedItem)) {
+                    if (AgentInventoryItemPolicy.hasItem(bot, pickedItem)) {
                         AgentOfferService.scheduleLootOfferPrompt(entry, bot, pickedItem, 5_000L);
                     }
                 } else if (ItemConstants.isThrowingStar(pickedItemId)) {
@@ -394,7 +394,7 @@ public class BotInventoryManager {
      */
     public static void startTradeTransfer(String category, BotEntry entry, Character bot) {
         long startedAt = profileTradeCategory(category) ? System.nanoTime() : 0L;
-        if (isMesoCategory(category)) {
+        if (AgentInventoryTradePolicy.isMesoCategory(category)) {
             startTradeMesoTransfer(category, entry, bot);
             return;
         }
@@ -421,7 +421,7 @@ public class BotInventoryManager {
         if (AgentInventoryTradePolicy.isReservedEquipsCategory(category)) {
             List<Item> items = collectReservedEquipTradePage(category, entry, bot);
             if (items.isEmpty()) {
-                AgentBotInventoryRuntime.replyNow(entry, noItemsReply(category));
+                AgentBotInventoryRuntime.replyNow(entry, AgentInventoryDialogueReporter.noItemsReply(category));
                 return;
             }
             startTradeSequence(category, owner, items, 0, true, entry, bot);
@@ -443,7 +443,7 @@ public class BotInventoryManager {
         }
         List<Item> items = prepared.items();
         if (items.isEmpty()) {
-            AgentBotInventoryRuntime.replyNow(entry, noItemsReply(category));
+            AgentBotInventoryRuntime.replyNow(entry, AgentInventoryDialogueReporter.noItemsReply(category));
             return;
         }
         startTradeSequence(category, owner, items, 0, AgentBotPendingTradeStateRuntime.hasRestoreSlots(entry), entry, bot);
@@ -455,7 +455,7 @@ public class BotInventoryManager {
             AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeRecipientNotFoundReply());
             return;
         }
-        if (!hasItem(bot, item)) {
+        if (!AgentInventoryItemPolicy.hasItem(bot, item)) {
             AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeItemMissingReply());
             return;
         }
@@ -470,7 +470,7 @@ public class BotInventoryManager {
     }
 
     public static boolean hasTransferableItems(String category, BotEntry entry, Character bot) {
-        if (isMesoCategory(category)) {
+        if (AgentInventoryTradePolicy.isMesoCategory(category)) {
             int currentMesos = bot.getMeso();
             if (currentMesos <= 0) {
                 return false;
@@ -514,7 +514,7 @@ public class BotInventoryManager {
     }
 
     public static int countTransferableItems(String category, BotEntry entry, Character bot) {
-        if (isMesoCategory(category)) {
+        if (AgentInventoryTradePolicy.isMesoCategory(category)) {
             return bot.getMeso();
         }
         if (category != null && category.startsWith("name:")) {
@@ -538,10 +538,6 @@ public class BotInventoryManager {
 
     private static int countNamedItems(String fragment, Character bot) {
         return AgentInventoryTradePolicy.itemQuantitySum(collectNamedItems(fragment, bot));
-    }
-
-    static String noItemsReply(String category) {
-        return AgentInventoryDialogueReporter.noItemsReply(category);
     }
 
     /** Opens a trade for the first ≤9 items; remaining items are re-collected next batch. */
@@ -849,7 +845,7 @@ public class BotInventoryManager {
 
         int currentMesos = bot.getMeso();
         if (currentMesos <= 0) {
-            AgentBotInventoryRuntime.replyNow(entry, noItemsReply(category));
+            AgentBotInventoryRuntime.replyNow(entry, AgentInventoryDialogueReporter.noItemsReply(category));
             return;
         }
 
@@ -977,7 +973,7 @@ public class BotInventoryManager {
         for (Map.Entry<Item, Short> restoreEntry : restoreEntries) {
             Item item = restoreEntry.getKey();
             short dstSlot = restoreEntry.getValue();
-            if (!hasItem(bot, item) || equipped.getItem(dstSlot) != null) {
+            if (!AgentInventoryItemPolicy.hasItem(bot, item) || equipped.getItem(dstSlot) != null) {
                 continue;
             }
             InventoryManipulator.handleItemMove(bot.getClient(), InventoryType.EQUIP, item.getPosition(), dstSlot, (short) 1);
@@ -1061,10 +1057,6 @@ public class BotInventoryManager {
         result.addAll(AgentInventoryItemPolicy.collectSafeItems(bot, type, filter,
                 ItemInformationProvider.getInstance()::isQuestItem,
                 YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE));
-    }
-
-    public static boolean hasItem(Character bot, Item item) {
-        return AgentInventoryItemPolicy.hasItem(bot, item);
     }
 
     private static Character resolveTradeRecipient(BotEntry entry, Character bot) {
@@ -1167,10 +1159,6 @@ public class BotInventoryManager {
 
     // ─── Internals ────────────────────────────────────────────────────────────
 
-    static String reservedEquipsCategory(int requestedPage) {
-        return AgentInventoryTradePolicy.reservedEquipsCategory(requestedPage);
-    }
-
     private static List<Item> collectReservedEquips(EquipTradeGroups groups) {
         return new ArrayList<>(groups.reservedForSelf());
     }
@@ -1217,7 +1205,7 @@ public class BotInventoryManager {
             if (msg != null) AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, msg);
             return;
         }
-        AgentBotInventoryRuntime.replyNow(entry, noItemsReply("equips"));
+        AgentBotInventoryRuntime.replyNow(entry, AgentInventoryDialogueReporter.noItemsReply("equips"));
     }
 
     private static void startAmmoGroupTradeTransfer(Character owner, BotEntry entry, Character bot) {
@@ -1227,7 +1215,7 @@ public class BotInventoryManager {
             startTradeSequence(group.categoryString(), owner, groups.itemsFor(group), 0, false, entry, bot);
             return;
         }
-        AgentBotInventoryRuntime.replyNow(entry, noItemsReply("ammo"));
+        AgentBotInventoryRuntime.replyNow(entry, AgentInventoryDialogueReporter.noItemsReply("ammo"));
     }
 
     private static UseTradeGroups classifyUseTradeGroups(Character bot, Character recipient) {
@@ -1381,10 +1369,6 @@ public class BotInventoryManager {
         AgentBotInventoryRuntime.replyNow(entry,
                 count > 0 ? "dropped " + count + " " + noun + (count != 1 ? "s" : "") + "!"
                           : "no " + noun + "s to drop");
-    }
-
-    public static boolean isMesoCategory(String category) {
-        return AgentInventoryTradePolicy.isMesoCategory(category);
     }
 
     // ─── Pot-share helpers ────────────────────────────────────────────────────
