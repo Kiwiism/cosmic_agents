@@ -1677,6 +1677,9 @@ Recent reconstruction notes:
   `AgentBotCombatActionLockRuntime`; BotManager calls the Agent-owned runtime
   while preserving the same legacy movement tick-down cadence and attack-before-
   move-window priority.
+- Combat alert stance timing and reset scheduling now live in
+  `AgentBotCombatAlertRuntime`; BotCombatManager preserves the same damage,
+  heal, attack, and support-buff alert triggers through the Agent-owned runtime.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

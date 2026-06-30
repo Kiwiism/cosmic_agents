@@ -69,6 +69,7 @@ import server.agents.capabilities.combat.data.AgentMobHitboxProvider;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotAmmoStateRuntime;
+import server.agents.integration.AgentBotCombatAlertRuntime;
 import server.agents.integration.AgentBotCombatFacingRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatBuffStateRuntime;
@@ -199,7 +200,7 @@ public class BotCombatManager {
             AgentBotCombatCooldownStateRuntime.setMobHitCooldownMs(
                     entry,
                     BotMovementManager.delayAfterCurrentTick(cc.MOB_HIT_COOLDOWN_MS));
-            markAlerted(entry);
+            AgentBotCombatAlertRuntime.markAlerted(entry);
             return;
         }
 
@@ -212,7 +213,7 @@ public class BotCombatManager {
         AgentBotCombatCooldownStateRuntime.setMobHitCooldownMs(
                 entry,
                 BotMovementManager.delayAfterCurrentTick(cc.MOB_HIT_COOLDOWN_MS));
-        markAlerted(entry);
+        AgentBotCombatAlertRuntime.markAlerted(entry);
 
         if (bot.getHp() <= 0) {
             enterDeadState(entry, bot, true);
@@ -444,7 +445,7 @@ public class BotCombatManager {
         // to hit — the packet carries an empty targets map in that case, which is what a real client
         // does when a player presses Heal with no mob in range.
         sendHealAttack(healSkillId, lvl, bot, undeadTargets, fallbackAttackData, skillTiming);
-        markAlerted(entry);
+        AgentBotCombatAlertRuntime.markAlerted(entry);
         AgentBotCombatCooldownStateRuntime.maxMoveWindow(entry, cfg.HEAL_MOVE_WINDOW_MS);
         if (!jumpHealing) {
             // Stop walk-in-place: broadcast STAND→ALERT immediately on the heal tick.
@@ -755,38 +756,7 @@ public class BotCombatManager {
         AgentAttackExecutionProvider.applyAttackRoute(attackPlan.route, attack, bot);
         AgentBotCombatCooldownStateRuntime.maxAttackCooldown(entry, attackPlan.cooldownMs);
         AgentBotCombatFacingRuntime.rememberAttackFacing(entry, attackPlan.stance);
-        markAlerted(entry);
-    }
-
-    // Matches maplestory-wasm CharLook::set_alerted(5000): called on attack, skill cast, and
-    // damage taken. Always an absolute reset to now+5s (never additive), mirroring TimedBool::set_for.
-    private static final long ALERT_DURATION_MS = 5000L;
-
-    static void markAlerted(BotEntry entry) {
-        AgentBotCombatCooldownStateRuntime.setAlertedUntilMs(entry, System.currentTimeMillis() + ALERT_DURATION_MS);
-        scheduleAlertReset(entry);
-    }
-
-    // Ensures the bot broadcasts a fresh STAND packet when the alert timer expires, even if
-    // it has stopped moving in the meantime (otherwise the last-sent ALERT wire stance sticks).
-    // Self-reschedules if markAlerted extended the deadline while we were waiting.
-    private static void scheduleAlertReset(BotEntry entry) {
-        if (AgentBotCombatCooldownStateRuntime.alertResetScheduled(entry)) return;
-        AgentBotCombatCooldownStateRuntime.setAlertResetScheduled(entry, true);
-        long delay = Math.max(50L, AgentBotCombatCooldownStateRuntime.alertedUntilMs(entry) - System.currentTimeMillis() + 100L);
-        AgentBotCombatRuntime.afterDelay(delay, () -> {
-            long now = System.currentTimeMillis();
-            if (now < AgentBotCombatCooldownStateRuntime.alertedUntilMs(entry)) {
-                AgentBotCombatCooldownStateRuntime.setAlertResetScheduled(entry, false);
-                scheduleAlertReset(entry);
-                return;
-            }
-            AgentBotCombatCooldownStateRuntime.setAlertResetScheduled(entry, false);
-            try {
-                Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-                if (bot != null) bot.broadcastStance();
-            } catch (Throwable ignored) {}
-        });
+        AgentBotCombatAlertRuntime.markAlerted(entry);
     }
 
     private static AttackPlan planSkillAttack(BotEntry entry, Character bot, Monster primaryTarget, int skillId) {
@@ -1314,7 +1284,7 @@ public class BotCombatManager {
                 AgentAttackExecutionProvider.resolveSkillAttackTiming(skill, action, bot, fallbackAttackData);
         AgentBotCombatCooldownStateRuntime.maxAttackCooldown(entry,
                 AgentCombatSupportPolicy.supportCastCooldownMs(skillTiming.cooldownMs(), skill.getAnimationTime()));
-        markAlerted(entry);
+        AgentBotCombatAlertRuntime.markAlerted(entry);
         AgentBotSkillBuffDebugStateRuntime.rememberAction(
                 entry,
                 System.currentTimeMillis(),
@@ -1388,3 +1358,4 @@ public class BotCombatManager {
     }
 
 }
+
