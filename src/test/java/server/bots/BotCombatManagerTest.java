@@ -32,6 +32,7 @@ import constants.skills.Magician;
 import constants.skills.Rogue;
 import constants.skills.Spearman;
 import constants.skills.Warrior;
+import net.server.channel.handlers.AbstractDealDamageHandler;
 import net.packet.Packet;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -39,6 +40,7 @@ import org.mockito.Mockito;
 import org.mockito.ArgumentCaptor;
 import server.StatEffect;
 import server.agents.integration.AgentBotCombatActionStateRuntime;
+import server.agents.integration.AgentBotCombatAttackRuntime;
 import server.agents.integration.AgentBotCombatBuffStateRuntime;
 import server.agents.integration.AgentBotCombatBuffRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
@@ -1108,6 +1110,35 @@ class BotCombatManagerTest {
         assertNull(AgentBotGrindTargetStateRuntime.target(entry));
         assertEquals(0, AgentBotCombatCooldownStateRuntime.attackCooldownMs(entry));
         assertEquals(0, AgentBotCombatCooldownStateRuntime.moveWindowMs(entry));
+    }
+
+    @Test
+    void combatAttackRuntimeDispatchesAttackAndUpdatesCombatState() {
+        Character bot = mockBot(new Point(100, 200), mock(MapleMap.class), 20_000, null);
+        BotEntry entry = new BotEntry(bot, null, null);
+        Monster target = mockMob(new Point(140, 200), 9300505);
+        BotCombatManager.AttackPlan plan = new BotCombatManager.AttackPlan(
+                0, 0, 1, new Rectangle(100, 150, 80, 70),
+                List.of(target), AgentAttackRoute.CLOSE,
+                4, 1, 1, AgentAttackExecutionProvider.attackPacketStance(true),
+                4, 300, 600, WeaponType.SWORD1H);
+
+        try (MockedStatic<AgentAttackExecutionProvider> attacks =
+                     Mockito.mockStatic(AgentAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS)) {
+            attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.SWORD1H);
+            attacks.when(() -> AgentAttackExecutionProvider.applyAttackRoute(
+                    any(AgentAttackRoute.class), any(AbstractDealDamageHandler.AttackInfo.class), eq(bot)))
+                    .thenAnswer(invocation -> null);
+
+            runWithStubbedBotAfter(() -> AgentBotCombatAttackRuntime.attackMonster(entry, bot, plan));
+
+            attacks.verify(() -> AgentAttackExecutionProvider.applyAttackRoute(
+                    eq(AgentAttackRoute.CLOSE), any(AbstractDealDamageHandler.AttackInfo.class), eq(bot)));
+        }
+
+        assertEquals(600, AgentBotCombatCooldownStateRuntime.attackCooldownMs(entry));
+        assertEquals(-1, entry.facingDir);
+        assertTrue(AgentBotCombatCooldownStateRuntime.alertedUntilMs(entry) > System.currentTimeMillis());
     }
 
     @Test

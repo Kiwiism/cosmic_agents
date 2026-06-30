@@ -1731,6 +1731,11 @@ Recent reconstruction notes:
   the Agent runtime preserves mob-hit cooldown countdown, hostile-only contact
   filtering, client-style touch sweep checks, first-hit return behavior, and
   last touch-check position memory.
+- Combat attack execution now lives in `AgentBotCombatAttackRuntime`;
+  `BotCombatManager.attackMonster` is a temporary compatibility delegate while
+  the Agent runtime preserves attack readiness gates, AttackInfo packet fields,
+  shared damage profile/target construction, route dispatch, attack cooldown,
+  facing memory, and alert stance side effects.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

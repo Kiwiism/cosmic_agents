@@ -7,7 +7,6 @@ import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentAttackPlanScoringPolicy;
 import server.agents.capabilities.combat.AgentAttackPlanTieBreakPolicy;
 import server.agents.capabilities.combat.AgentBasicAttackPlanner;
-import server.agents.capabilities.combat.AgentCombatAttackExecutionPolicy;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 import server.agents.capabilities.combat.AgentCombatSkillClassifier;
@@ -19,7 +18,6 @@ import server.agents.capabilities.combat.AgentCombatImmediateTargetPolicy;
 import server.agents.capabilities.combat.AgentCombatGrindTargetPolicy;
 import server.agents.capabilities.combat.AgentCombatRangePolicy;
 import server.agents.capabilities.combat.AgentCombatScoringPolicy;
-import server.agents.capabilities.combat.AgentCombatSkillUsePolicy;
 import server.agents.capabilities.combat.AgentCombatSupportPolicy;
 import server.agents.capabilities.combat.AgentCombatTargetSelector;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
@@ -50,17 +48,14 @@ import constants.skills.Priest;
 import constants.skills.Spearman;
 import constants.skills.ThunderBreaker;
 import constants.skills.WhiteKnight;
-import net.server.channel.handlers.AbstractDealDamageHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.StatEffect;
 import server.agents.capabilities.combat.data.AgentAttackDataProvider;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.integration.AgentBotAmmoStateRuntime;
-import server.agents.integration.AgentBotCombatAlertRuntime;
+import server.agents.integration.AgentBotCombatAttackRuntime;
 import server.agents.integration.AgentBotCombatBuffRuntime;
-import server.agents.integration.AgentBotCombatFacingRuntime;
-import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatReportRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheRuntime;
@@ -72,7 +67,6 @@ import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSkillBuffDebugStateRuntime;
-import server.combat.CombatFormulaProvider;
 import server.life.Monster;
 import server.maps.Foothold;
 import server.maps.MapleMap;
@@ -80,7 +74,6 @@ import tools.Pair;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -359,50 +352,7 @@ public class BotCombatManager {
     }
 
     static void attackMonster(BotEntry entry, Character bot, AttackPlan attackPlan) {
-        AgentCombatAttackExecutionPolicy.AttackExecutionReadiness readiness =
-                AgentCombatAttackExecutionPolicy.attackExecutionReadiness(
-                        AgentBotCombatCooldownStateRuntime.hasAttackCooldown(entry),
-                        AgentBotAmmoStateRuntime.noAmmo(entry),
-                        attackPlan.skillId,
-                        () -> AgentCombatSkillUsePolicy.canPaySkillCost(
-                                bot, attackPlan.skillId, attackPlan.skillLevel),
-                        () -> entry != null && attackPlan != null && AgentCombatRangePolicy.canUseAttackPlanNow(
-                                AgentBotMovementStateRuntime.grounded(entry),
-                                AgentAttackExecutionProvider.getEquippedWeaponType(bot),
-                                attackPlan.route));
-        if (readiness != AgentCombatAttackExecutionPolicy.AttackExecutionReadiness.READY) {
-            return;
-        }
-
-        int numAttacked = attackPlan.targets.size();
-        AbstractDealDamageHandler.AttackInfo attack = new AbstractDealDamageHandler.AttackInfo();
-        attack.skill = attackPlan.skillId;
-        attack.skilllevel = attackPlan.skillLevel;
-        attack.numDamage = attackPlan.numDamage;
-        attack.numAttacked = numAttacked;
-        attack.numAttackedAndDamage = (numAttacked << 4) | attackPlan.numDamage;
-        attack.speed = attackPlan.speed;
-        attack.stance = attackPlan.stance; // Historical server name: packet byte 3.
-        attack.display = attackPlan.display;
-        attack.direction = attackPlan.direction; // Historical server name: packet byte 2.
-        attack.rangedirection = attackPlan.rangedDirection; // Extra ranged byte after speed.
-        attack.ranged = attackPlan.route == AgentAttackRoute.RANGED;
-        CombatFormulaProvider.DamageProfile damageProfile = CombatFormulaProvider.getInstance().resolveDamageProfile(
-                bot, attackPlan.skillId, attackPlan.skillLevel,
-                attackPlan.route == AgentAttackRoute.MAGIC, attackPlan.damageWeaponType);
-        attack.magic = damageProfile.magicAttack();
-        attack.targets = new HashMap<>();
-
-        for (Monster target : attackPlan.targets) {
-            attack.targets.put(target.getObjectId(),
-                    CombatFormulaProvider.getInstance().makeTarget(bot, target, attackPlan.numDamage,
-                            attackPlan.skillId, damageProfile, attackPlan.hitDelayMs));
-        }
-
-        AgentAttackExecutionProvider.applyAttackRoute(attackPlan.route, attack, bot);
-        AgentBotCombatCooldownStateRuntime.maxAttackCooldown(entry, attackPlan.cooldownMs);
-        AgentBotCombatFacingRuntime.rememberAttackFacing(entry, attackPlan.stance);
-        AgentBotCombatAlertRuntime.markAlerted(entry);
+        AgentBotCombatAttackRuntime.attackMonster(entry, bot, attackPlan);
     }
 
     private static AttackPlan planSkillAttack(BotEntry entry, Character bot, Monster primaryTarget, int skillId) {
