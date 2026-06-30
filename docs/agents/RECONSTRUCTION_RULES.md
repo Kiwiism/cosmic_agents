@@ -1521,6 +1521,10 @@ Recent reconstruction notes:
   `AgentCombatWeaponPolicy` directly from skill planning and tests; the
   temporary `BotCombatManager` compatibility wrapper has been removed while
   preserving the same spear/polearm restrictions.
+- Follow-mode projectile range checks now call
+  `AgentProjectileHitbox.passiveProjectileRangeBonus` directly; the temporary
+  `BotCombatManager` projectile-range wrapper has been removed while preserving
+  the same Eye of Amazon/Keen Eyes range bonus behavior.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

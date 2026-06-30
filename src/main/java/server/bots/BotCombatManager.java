@@ -664,7 +664,9 @@ public class BotCombatManager {
         long startedAt = System.nanoTime();
         try {
             Point botPos = bot.getPosition();
-            double range = Math.max(AgentProjectileHitbox.CLIENT_PROJECTILE_BASE_RANGE + passiveProjectileRangeBonus(bot),
+            double range = Math.max(
+                    AgentProjectileHitbox.CLIENT_PROJECTILE_BASE_RANGE
+                            + AgentProjectileHitbox.passiveProjectileRangeBonus(bot),
                     BotCombatManager.cfg.ATTACK_RANGE_X + BotCombatManager.cfg.ATTACK_JUMP_X_EXTRA);
             List<Monster> candidates = aliveMonstersInRange(bot, botPos, range * range);
             if (candidates.isEmpty()) {
@@ -1038,10 +1040,6 @@ public class BotCombatManager {
 
     static float projectileRangeScale(StatEffect effect) {
         return AgentProjectileHitbox.projectileRangeScale(effect);
-    }
-
-    static int passiveProjectileRangeBonus(Character bot) {
-        return AgentProjectileHitbox.passiveProjectileRangeBonus(bot);
     }
 
     private static List<Monster> collectTargetsInHitBox(Character bot, Monster primaryTarget, Rectangle hitBox, int maxTargets) {
