@@ -403,7 +403,8 @@ public class BotCombatManager {
             if (lvl <= 0) continue;
 
             StatEffect fx = skill.getEffect(lvl);
-            if (!isActiveSupportSkill(skill, fx) || AgentCombatSkillClassifier.isBuffBlacklisted(skill.getId())) {
+            if (!AgentCombatSkillClassifier.isActiveSupportSkill(skill, fx)
+                    || AgentCombatSkillClassifier.isBuffBlacklisted(skill.getId())) {
                 continue;
             }
             if (castSupportSkill(entry, bot, skill, fx, now)) {
@@ -1565,7 +1566,7 @@ public class BotCombatManager {
     private static boolean trySupportBuff(BotEntry entry, Character bot, long now) {
         for (int skillId : AgentBotCombatSkillCacheStateRuntime.buffSkillIds(entry)) {
             if (!AgentCombatSupportPolicy.shouldConsiderSupportBuff(
-                    isPartySupportSkill(skillId),
+                    AgentCombatSkillClassifier.isPartySupportSkill(skillId),
                     bot.skillIsCooling(skillId),
                     AgentBotCombatBuffStateRuntime.supportBuffOnCooldown(entry, skillId, now))) {
                 continue;
@@ -1753,39 +1754,4 @@ public class BotCombatManager {
         return AgentCombatSupportPolicy.hasPartyMemberInBoundsNeedingHeal(bot, healBounds,
                 cfg.SUPPORT_RANGE, cfg.SUPPORT_VERTICAL_RANGE, cfg.SUPPORT_HEAL_TARGET_RATIO);
     }
-
-    static boolean isPartySupportSkill(int skillId) {
-        return AgentCombatSkillClassifier.isPartySupportSkill(skillId);
-    }
-
-    static boolean isActiveAttackSkill(Skill skill, StatEffect effect) {
-        return AgentCombatSkillClassifier.isActiveAttackSkill(skill, effect);
-    }
-
-    // Identifies skills the WZ source declares as offensive. Three WZ shapes cover every
-    // attack skill we know of in v83; combined with isOverTime() this rejects utility skills
-    // (Teleport, Magic Guard, Haste) that would otherwise pass numeric checks because the
-    // StatEffect loader defaults "damage" to 100 and "mad" to 0 when those keys are absent.
-    //   1. "damage" key present  → physical attack skill (Power Strike, Strafe, Iron Arrow).
-    //   2. "mad" key present     → magic attack skill (Magic Claw, Cold Beam, Thunder Bolt).
-    //   3. mobCount > 1 + bbox   → bomb/explosion skill that derives damage from "x" instead
-    private static boolean declaresOffense(StatEffect effect) {
-        return AgentCombatSkillClassifier.declaresOffense(effect);
-    }
-
-    static boolean isActiveSupportSkill(Skill skill, StatEffect effect) {
-        return AgentCombatSkillClassifier.isActiveSupportSkill(skill, effect);
-    }
-
-    /**
-     * Data-driven summon test: a summon's effect grants only the SUMMON (follow/circle hawk-type)
-     * or PUPPET (stationary decoy) buffstat — the WZ marks the summoned creature, not a caster
-     * stat boost. Detecting it from the statups avoids a per-skill id list and matches the
-     * server's spawn path (StatEffect.applyTo spawns the creature only when given a position).
-     */
-    static boolean isSummonSkill(StatEffect effect) {
-        return AgentCombatSkillClassifier.isSummonSkill(effect);
-    }
-
 }
-

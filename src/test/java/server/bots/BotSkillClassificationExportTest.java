@@ -3,6 +3,7 @@ package server.bots;
 import client.Skill;
 import client.SkillFactory;
 import org.junit.jupiter.api.Test;
+import server.agents.capabilities.combat.AgentCombatHitCounter;
 import server.agents.capabilities.combat.AgentCombatSkillClassifier;
 import server.StatEffect;
 import tools.Pair;
@@ -94,7 +95,7 @@ public class BotSkillClassificationExportTest {
         return new Row(id, name, job, category, issue, descriptions.getOrDefault(id, ""),
                 skill.getSkillType(), skill.getAction(), fx.isOverTime(), fx.getDuration(),
                 fx.getMpCon(), fx.getHpCon(), fx.hasDamage(), fx.hasMatk(),
-                fx.getMobCount(), BotCombatManager.effectiveHitCount(fx),
+                fx.getMobCount(), AgentCombatHitCounter.effectiveHitCount(fx),
                 fx.getStatups().size(), statups.toString());
     }
 
@@ -111,13 +112,13 @@ public class BotSkillClassificationExportTest {
         if (AgentCombatSkillClassifier.shouldStopCacheScanAfterHealSkill(skill)) {
             return AgentCombatSkillClassifier.isActiveHealSkill(skill, fx) ? "HEAL" : "HEAL_INACTIVE";
         }
-        if (BotCombatManager.isActiveAttackSkill(skill, fx)) {
+        if (AgentCombatSkillClassifier.isActiveAttackSkill(skill, fx)) {
             return fx.getMobCount() >= 2 ? "AOE_ATTACK" : "ATTACK";
         }
-        if (BotCombatManager.isSummonSkill(fx)) {
+        if (AgentCombatSkillClassifier.isSummonSkill(fx)) {
             return "SUMMON";
         }
-        if (BotCombatManager.isActiveSupportSkill(skill, fx)) {
+        if (AgentCombatSkillClassifier.isActiveSupportSkill(skill, fx)) {
             return AgentCombatSkillClassifier.isBuffBlacklisted(id) ? "BLACKLISTED" : "SUPPORT_BUFF";
         }
         boolean rawBuff = fx.isOverTime() && (skill.getAction() || skill.getSkillType() == 2);

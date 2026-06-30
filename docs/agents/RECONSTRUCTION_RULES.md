@@ -1509,6 +1509,10 @@ Recent reconstruction notes:
   `AgentDefenseDataProvider` directly from the temporary bot side-effect path;
   the leftover `BotCombatManager` wrapper has been removed while preserving the
   existing mob-hit damage and knockback flow.
+- Skill classification export and support-buff checks now call
+  `AgentCombatSkillClassifier`/`AgentCombatHitCounter` directly; the remaining
+  bot-side skill-classification wrapper methods have been removed while
+  preserving the same classification precedence.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
