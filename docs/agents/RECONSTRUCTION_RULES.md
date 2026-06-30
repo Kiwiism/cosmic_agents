@@ -1542,6 +1542,10 @@ Recent reconstruction notes:
 - The unused `BotCombatManager` airborne ranged-weapon compatibility wrapper has
   been removed; airborne ranged-route gating remains Agent-owned in
   `AgentCombatRangePolicy`.
+- Mob-hit and fall-knockback code now calls `AgentMobKnockbackPolicy` directly;
+  temporary `BotCombatManager` wrappers for knockback eligibility, direction,
+  and OpenStory-step scaling have been removed while preserving the same stance,
+  climbing, HP, direction, and tick-length inputs.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

@@ -170,7 +170,9 @@ public class BotCombatManager {
      */
     static void applyMobHit(BotEntry entry, Character bot, Monster mob) {
         int dmg = AgentDefenseDataProvider.getInstance().rollPhysicalTouchDamage(bot, mob);
-        AgentMobKnockbackPolicy.MobHitKnockback kb = resolveMobHitKnockback(bot.getPosition(), mob.getPosition());
+        AgentMobKnockbackPolicy.MobHitKnockback kb =
+                AgentMobKnockbackPolicy.resolveMobHitKnockback(
+                        bot.getPosition(), mob.getPosition(), cfg.KNOCKBACK_HSPEED, BotMovementManager.cfg.TICK_MS);
         applyDamage(entry, bot, dmg, -1, mob.getId(), kb.direction(), kb.airVelX());
     }
 
@@ -195,21 +197,10 @@ public class BotCombatManager {
         int dmg = AgentFallDamageCalculator.fallDamageFromDistance(fallDistancePx);
         if (dmg <= 0) return;
         int dirSign = AgentBotMovementStateRuntime.facingDirectionSign(entry);
-        int airVelX = Math.round(-dirSign * scaledOpenStoryStep(cfg.KNOCKBACK_HSPEED));
+        int airVelX = Math.round(-dirSign
+                * AgentMobKnockbackPolicy.scaledOpenStoryStep(cfg.KNOCKBACK_HSPEED, BotMovementManager.cfg.TICK_MS));
         applyDamage(entry, bot, dmg, -3, 0, 0, airVelX);
     }
-
-    /**
-     * Fall-damage curve — smooth single formula (no hard breakpoint):
-     *   dmg = SAT * (1 - exp(-k*u)) + tail*u,    where u = max(0, dist - threshold)
-     * Saturating exponential models the steep knee; linear tail models the slow
-     * deep-fall growth (damage keeps scaling past the knee in the real client).
-     *
-     * Grid-search fit against real-client samples — all within ±1 dmg:
-     *   916 → 8, 1094 → 27 (a=26), 1132 → 27 (a=28), 1421 → 29, 3861 → 35.
-     *
-     * O(1): one exp, two multiplies, one add, one round.
-     */
 
     /**
      * Core damage application: HP loss, DAMAGE_PLAYER broadcast, alert pose, knockback.
@@ -254,7 +245,11 @@ public class BotCombatManager {
             return;
         }
 
-        if (!shouldApplyMobKnockback(entry, bot)) {
+        if (!AgentMobKnockbackPolicy.shouldApplyMobKnockback(
+                AgentBotMovementStateRuntime.climbing(entry),
+                bot.getHp(),
+                bot.getBuffedValue(BuffStat.STANCE),
+                ThreadLocalRandom.current().nextFloat())) {
             return;
         }
 
@@ -262,26 +257,12 @@ public class BotCombatManager {
         if (AgentBotMovementStateRuntime.inAir(entry)) {
             BotPhysicsEngine.applyAirKnockback(entry, bot, knockbackAirVelX);
         } else {
-            BotPhysicsEngine.beginKnockback(entry, bot, botPos, -scaledOpenStoryStep(cfg.KNOCKBACK_VFORCE), knockbackAirVelX);
+            BotPhysicsEngine.beginKnockback(entry, bot, botPos,
+                    -AgentMobKnockbackPolicy.scaledOpenStoryStep(
+                            cfg.KNOCKBACK_VFORCE, BotMovementManager.cfg.TICK_MS),
+                    knockbackAirVelX);
         }
         BotMovementManager.broadcastMovement(entry);
-    }
-
-    private static boolean shouldApplyMobKnockback(BotEntry entry, Character bot) {
-        return AgentMobKnockbackPolicy.shouldApplyMobKnockback(
-                AgentBotMovementStateRuntime.climbing(entry),
-                bot.getHp(),
-                bot.getBuffedValue(BuffStat.STANCE),
-                ThreadLocalRandom.current().nextFloat());
-    }
-
-    private static AgentMobKnockbackPolicy.MobHitKnockback resolveMobHitKnockback(Point botPos, Point attackOrigin) {
-        return AgentMobKnockbackPolicy.resolveMobHitKnockback(
-                botPos, attackOrigin, cfg.KNOCKBACK_HSPEED, BotMovementManager.cfg.TICK_MS);
-    }
-
-    private static float scaledOpenStoryStep(float openStoryStepValue) {
-        return AgentMobKnockbackPolicy.scaledOpenStoryStep(openStoryStepValue, BotMovementManager.cfg.TICK_MS);
     }
 
     static void enterDeadState(BotEntry entry, Character bot, boolean announceDeath) {
