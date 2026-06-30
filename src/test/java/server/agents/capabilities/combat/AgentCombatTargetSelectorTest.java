@@ -2,6 +2,7 @@ package server.agents.capabilities.combat;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
+import server.StatEffect;
 import server.life.Monster;
 import server.life.MonsterStats;
 import server.maps.MapleMap;
@@ -14,6 +15,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -197,10 +200,36 @@ class AgentCombatTargetSelectorTest {
     }
 
     @Test
+    void shouldCollectUndeadHealTargetsFromAgentCurrentMap() {
+        Character agent = mock(Character.class);
+        MapleMap map = mock(MapleMap.class);
+        StatEffect effect = mock(StatEffect.class);
+        Rectangle bounds = new Rectangle(0, 0, 250, 250);
+        Monster undead = monster(1, new Point(100, 100), true, false, true);
+        Monster livingNonUndead = monster(2, new Point(110, 100), true, false, false);
+
+        when(agent.getMap()).thenReturn(map);
+        when(effect.getMobCount()).thenReturn(5);
+        when(map.getMapObjectsInRect(eq(bounds), anyList())).thenReturn(List.of(livingNonUndead, undead));
+
+        assertEquals(List.of(undead), AgentCombatTargetSelector.collectUndeadMobsInHealRange(
+                agent, effect, bounds));
+    }
+
+    @Test
     void shouldReturnEmptyUndeadHealTargetsWhenBoundsMissing() {
         Monster undead = monster(1, new Point(100, 100), true, false, true);
 
         assertEquals(List.of(), AgentCombatTargetSelector.collectUndeadMobsInHealRange(null, List.of(undead), 5));
+    }
+
+    @Test
+    void shouldReturnEmptyUndeadHealTargetsFromAgentWhenBoundsMissing() {
+        Character agent = mock(Character.class);
+        StatEffect effect = mock(StatEffect.class);
+        when(effect.getMobCount()).thenReturn(5);
+
+        assertEquals(List.of(), AgentCombatTargetSelector.collectUndeadMobsInHealRange(agent, effect, null));
     }
 
     private static Monster monster(int objectId, Point position, boolean alive, boolean friendly) {

@@ -92,15 +92,12 @@ import server.agents.integration.AgentBotSkillBuffDebugStateRuntime;
 import server.combat.CombatFormulaProvider;
 import server.life.Monster;
 import server.maps.Foothold;
-import server.maps.MapObject;
-import server.maps.MapObjectType;
 import server.maps.MapleMap;
 import tools.PacketCreator;
 import tools.Pair;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -411,7 +408,7 @@ public class BotCombatManager {
                 cfg.SUPPORT_RANGE,
                 cfg.SUPPORT_VERTICAL_RANGE,
                 cfg.SUPPORT_HEAL_TARGET_RATIO);
-        List<Monster> undeadTargets = getUndeadMobsInHealRange(bot, fx, healBounds);
+        List<Monster> undeadTargets = AgentCombatTargetSelector.collectUndeadMobsInHealRange(bot, fx, healBounds);
         if (!AgentCombatSupportPolicy.shouldCastSupportHeal(partyNeedsHeal, !undeadTargets.isEmpty())) return false;
 
         // Jump-heal: when following and the leader has pulled ahead, kick a diagonal jump toward
@@ -506,14 +503,6 @@ public class BotCombatManager {
                             bot, target, 1, healSkillId, damageProfile, skillTiming.hitDelayMs()));
         }
         AgentAttackExecutionProvider.applyAttackRoute(route, attack, bot);
-    }
-
-    private static List<Monster> getUndeadMobsInHealRange(Character bot, StatEffect fx, Rectangle bounds) {
-        if (bounds == null) {
-            return AgentCombatTargetSelector.collectUndeadMobsInHealRange(null, List.of(), fx.getMobCount());
-        }
-        List<MapObject> objects = bot.getMap().getMapObjectsInRect(bounds, Arrays.asList(MapObjectType.MONSTER));
-        return AgentCombatTargetSelector.collectUndeadMobsInHealRange(bounds, objects, fx.getMobCount());
     }
 
     static Monster findGrindTarget(Character bot) {

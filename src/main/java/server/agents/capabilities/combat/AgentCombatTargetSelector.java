@@ -4,11 +4,14 @@ import client.Character;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
+import server.StatEffect;
 import server.life.Monster;
 import server.maps.MapObject;
+import server.maps.MapObjectType;
 
 public final class AgentCombatTargetSelector {
     private AgentCombatTargetSelector() {
@@ -166,5 +169,13 @@ public final class AgentCombatTargetSelector {
             }
         }
         return undead;
+    }
+
+    public static List<Monster> collectUndeadMobsInHealRange(Character agent, StatEffect effect, Rectangle bounds) {
+        if (bounds == null) {
+            return collectUndeadMobsInHealRange(null, List.of(), effect.getMobCount());
+        }
+        List<MapObject> objects = agent.getMap().getMapObjectsInRect(bounds, Arrays.asList(MapObjectType.MONSTER));
+        return collectUndeadMobsInHealRange(bounds, objects, effect.getMobCount());
     }
 }

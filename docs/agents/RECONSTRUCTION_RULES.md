@@ -1642,6 +1642,11 @@ Recent reconstruction notes:
   combat planner; the temporary `BotCombatManager` target-selector pass-through
   helpers have been removed while preserving the same mirrored hitbox and basic
   weapon reach inputs.
+- Support-heal undead target collection now calls
+  `AgentCombatTargetSelector.collectUndeadMobsInHealRange(Character, StatEffect,
+  Rectangle)` directly; the temporary `BotCombatManager` helper has been
+  removed while preserving the same map-object query, WZ mob cap, and null-bounds
+  empty-target behavior.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
