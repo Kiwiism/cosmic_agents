@@ -1561,30 +1561,8 @@ public class BotInventoryManager {
     }
 
     public static List<Item> collectAmmoShareItems(Character donorBot, WeaponType needyWeaponType, int maxQty) {
-        if (maxQty <= 0) return List.of();
-        List<Item> candidates = new ArrayList<>();
-        Inventory useInv = donorBot.getInventory(InventoryType.USE);
-        for (short slot = 1; slot <= useInv.getSlotLimit(); slot++) {
-            Item item = useInv.getItem(slot);
-            if (item == null || !isAmmoForWeapon(item.getItemId(), needyWeaponType)) {
-                continue;
-            }
-            candidates.add(item);
-        }
-        candidates.sort(Comparator
-                .comparingInt((Item item) -> ItemInformationProvider.getInstance().getWatkForProjectile(item.getItemId()))
-                .thenComparingInt(Item::getItemId));
-
-        List<Item> result = new ArrayList<>();
-        int totalQty = 0;
-        for (Item item : candidates) {
-            result.add(item);
-            totalQty += item.getQuantity();
-            if (result.size() >= 9 || totalQty >= maxQty) {
-                break;
-            }
-        }
-        return result;
+        return AgentInventoryAmmoPolicy.collectShareItems(donorBot, needyWeaponType, maxQty,
+                ItemInformationProvider.getInstance()::getWatkForProjectile);
     }
 
     public static void startAmmoShareTransfer(List<Item> items, Character recipient, BotEntry entry, Character bot, int maxQty) {

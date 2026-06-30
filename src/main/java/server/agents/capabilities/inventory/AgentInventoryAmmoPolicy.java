@@ -1,7 +1,16 @@
 package server.agents.capabilities.inventory;
 
+import client.Character;
+import client.inventory.Inventory;
+import client.inventory.InventoryType;
+import client.inventory.Item;
 import client.inventory.WeaponType;
 import constants.inventory.ItemConstants;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.function.IntUnaryOperator;
 
 public final class AgentInventoryAmmoPolicy {
     private AgentInventoryAmmoPolicy() {
@@ -35,5 +44,35 @@ public final class AgentInventoryAmmoPolicy {
             return WeaponType.GUN;
         }
         return null;
+    }
+
+    public static List<Item> collectShareItems(Character donorAgent,
+                                               WeaponType needyWeaponType,
+                                               int maxQty,
+                                               IntUnaryOperator projectileWatkLookup) {
+        if (maxQty <= 0) return List.of();
+        List<Item> candidates = new ArrayList<>();
+        Inventory useInv = donorAgent.getInventory(InventoryType.USE);
+        for (short slot = 1; slot <= useInv.getSlotLimit(); slot++) {
+            Item item = useInv.getItem(slot);
+            if (item == null || !isAmmoForWeapon(item.getItemId(), needyWeaponType)) {
+                continue;
+            }
+            candidates.add(item);
+        }
+        candidates.sort(Comparator
+                .comparingInt((Item item) -> projectileWatkLookup.applyAsInt(item.getItemId()))
+                .thenComparingInt(Item::getItemId));
+
+        List<Item> result = new ArrayList<>();
+        int totalQty = 0;
+        for (Item item : candidates) {
+            result.add(item);
+            totalQty += item.getQuantity();
+            if (result.size() >= 9 || totalQty >= maxQty) {
+                break;
+            }
+        }
+        return result;
     }
 }
