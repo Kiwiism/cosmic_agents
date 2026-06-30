@@ -1654,6 +1654,10 @@ Recent reconstruction notes:
   `AgentBotSkillBuffDebugStateRuntime.rememberAction` directly from the
   remaining support-buff flow; the temporary `BotCombatManager` reporting helper
   has been removed while preserving the same timestamp source and summary text.
+- AoE cluster target bias now calls
+  `AgentCombatScoringPolicy.legacyAoeClusterBonus` directly from follow, local,
+  and region target scoring; the temporary `BotCombatManager` cluster-bonus
+  helper has been removed while preserving the same multi-mob cache-state inputs.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

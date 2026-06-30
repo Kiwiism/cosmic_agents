@@ -610,13 +610,17 @@ public class BotCombatManager {
                     candidates,
                     botPos,
                     candidate -> isLocalCombatTarget(graphContext, bot, botFoothold, candidate)
-                            || AgentCombatImmediateTargetPolicy.isImmediateProjectileTarget(
-                                    bot,
-                                    candidate,
-                                    entry == null || AgentBotAmmoStateRuntime.noAmmo(entry),
-                                    entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry)),
+                    || AgentCombatImmediateTargetPolicy.isImmediateProjectileTarget(
+                            bot,
+                            candidate,
+                            entry == null || AgentBotAmmoStateRuntime.noAmmo(entry),
+                            entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry)),
                     candidate -> grindTargetScore(bot, botPos, botFoothold, candidate),
-                    candidate -> aoeClusterBonus(entry, candidate, candidates));
+                    candidate -> AgentCombatScoringPolicy.legacyAoeClusterBonus(
+                            candidate,
+                            candidates,
+                            entry != null && AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
+                            entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry)));
             return AgentCombatGrindTargetPolicy.pickFromBestTargets(localTargets);
         } finally {
             AgentPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
@@ -969,7 +973,11 @@ public class BotCombatManager {
                 candidates,
                 botPos,
                 candidate -> grindTargetScore(bot, botPos, botFoothold, candidate),
-                candidate -> aoeClusterBonus(entry, candidate, candidates));
+                candidate -> AgentCombatScoringPolicy.legacyAoeClusterBonus(
+                        candidate,
+                        candidates,
+                        entry != null && AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
+                        entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry)));
     }
 
     private static List<AgentScoredGrindTarget> scoreTargetRegions(BotEntry entry,
@@ -984,7 +992,11 @@ public class BotCombatManager {
                 candidate -> BotNavigationManager.resolveTargetRegionId(
                         context.graph(), context.entry(), context.map(), candidate.getPosition()),
                 candidate -> grindTargetScore(bot, botPos, botFoothold, candidate)
-                        - aoeClusterBonus(entry, candidate, candidates),
+                        - AgentCombatScoringPolicy.legacyAoeClusterBonus(
+                                candidate,
+                                candidates,
+                                entry != null && AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
+                                entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry)),
                 group -> graphPathCost(context.graph(), context.map(), context.startPos(), context.startRegionId(),
                         group.bestMonster().getPosition(), group.regionId(), context.profile()),
                 group -> grindRegionOccupancyPenalty(context, bot, group.regionId()),
@@ -1036,21 +1048,7 @@ public class BotCombatManager {
         return AgentCombatScoringPolicy.localTargetScore(botPos, targetPos, sameFoothold, cfg.ATTACK_RANGE_Y);
     }
 
-    // Cluster-density bonus: when the bot has an AoE skill, bias target selection toward
-    // mobs that anchor a cluster. The single-skill DPS scorer already prefers AoE plans
-    // over basic ones on the same target (selectBestAttackPlan), but it never sees the
-    // alternative cluster if target selection passed it over for a closer/lone mob.
-    //
-    // Returns a non-negative bonus that is subtracted from the candidate's localScore
-    // (lower score wins). Capped by the AoE skill's mobCount-1 so a 6-mob skill on a
-    // pile of 10 mobs doesn't crater scores past the natural distance/foothold penalties.
-    private static long aoeClusterBonus(BotEntry entry, Monster target, List<Monster> candidates) {
-        return AgentCombatScoringPolicy.legacyAoeClusterBonus(target, candidates,
-                entry != null && AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
-                entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
-    }
-
-    // AoE positioning: target selection (aoeClusterBonus) steers the bot toward a cluster, but the
+    // AoE positioning: target selection (AgentCombatScoringPolicy.legacyAoeClusterBonus) steers the bot toward a cluster, but the
     // fire site still throws the single-target skill the instant one mob is in range — the AoE box
     // at the cluster *edge* catches only that mob, so it ties the denominator and loses on per-hit
     // damage. This returns a sweet-spot Point (the cluster centroid) to walk to when an AoE thrown
