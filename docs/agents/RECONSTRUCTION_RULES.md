@@ -1525,6 +1525,9 @@ Recent reconstruction notes:
   `AgentProjectileHitbox.passiveProjectileRangeBonus` directly; the temporary
   `BotCombatManager` projectile-range wrapper has been removed while preserving
   the same Eye of Amazon/Keen Eyes range bonus behavior.
+- Fall-damage application now calls `AgentFallDamageCalculator` directly; the
+  temporary `BotCombatManager` fall-damage formula wrapper has been removed
+  while preserving the captured legacy fall-distance damage curve.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

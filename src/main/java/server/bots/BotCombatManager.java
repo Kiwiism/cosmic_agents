@@ -192,7 +192,7 @@ public class BotCombatManager {
     static void applyFallDamage(BotEntry entry, Character bot, float fallDistancePx) {
         if (bot.getHp() <= 0) return;
         if (AgentBotCombatCooldownStateRuntime.hasMobHitCooldown(entry)) return; // damage invincibility window
-        int dmg = fallDamageFromDistance(fallDistancePx);
+        int dmg = AgentFallDamageCalculator.fallDamageFromDistance(fallDistancePx);
         if (dmg <= 0) return;
         int dirSign = AgentBotMovementStateRuntime.facingDirectionSign(entry);
         int airVelX = Math.round(-dirSign * scaledOpenStoryStep(cfg.KNOCKBACK_HSPEED));
@@ -210,10 +210,6 @@ public class BotCombatManager {
      *
      * O(1): one exp, two multiplies, one add, one round.
      */
-
-    static int fallDamageFromDistance(float distancePx) {
-        return AgentFallDamageCalculator.fallDamageFromDistance(distancePx);
-    }
 
     /**
      * Core damage application: HP loss, DAMAGE_PLAYER broadcast, alert pose, knockback.
