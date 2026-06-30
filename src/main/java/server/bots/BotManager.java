@@ -1,6 +1,7 @@
 package server.bots;
 
 import server.agents.auth.AgentOwnershipService;
+import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.combat.AgentAttackRoute;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
@@ -3450,7 +3451,7 @@ public class BotManager {
         BotPotionManager.tickPassiveRecovery(entry, bot);
         if (perf) AgentPerformanceMonitor.record("common-passive-recovery", System.nanoTime() - t);
         if (perf) t = System.nanoTime();
-        BotBuildManager.checkLevelUp(entry, bot);
+        AgentBuildService.checkLevelUp(entry, bot);
         if (perf) AgentPerformanceMonitor.record("common-build-levelup", System.nanoTime() - t);
         if (perf) t = System.nanoTime();
         AgentBotManagerStatusRuntime.tickAfkCheck(entry, owner);

@@ -2,7 +2,7 @@ package server.agents.integration;
 
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
-import server.bots.BotBuildManager;
+import server.agents.capabilities.build.AgentBuildService;
 import server.bots.BotEntry;
 import server.bots.BotEquipManager;
 import server.bots.BotOfferManager;
@@ -27,17 +27,17 @@ public final class AgentBotBuildStatusRuntime {
         return new AgentChatStatusRuntime.StatusCheckActions() {
             @Override
             public String buildJobPrompt() {
-                return BotBuildManager.buildJobPrompt(entry, bot);
+                return AgentBuildService.buildJobPrompt(entry, bot);
             }
 
             @Override
             public String buildSpVariantPrompt() {
-                return BotBuildManager.buildSpVariantPrompt(entry, bot);
+                return AgentBuildService.buildSpVariantPrompt(entry, bot);
             }
 
             @Override
             public String buildApPrompt() {
-                return BotBuildManager.buildApPrompt(entry, bot);
+                return AgentBuildService.buildApPrompt(entry, bot);
             }
 
             @Override
@@ -47,12 +47,12 @@ public final class AgentBotBuildStatusRuntime {
 
             @Override
             public void autoAssignSp() {
-                BotBuildManager.autoAssignSp(entry, bot);
+                AgentBuildService.autoAssignSp(entry, bot);
             }
 
             @Override
             public void autoAssignAp() {
-                BotBuildManager.autoAssignAp(entry, bot);
+                AgentBuildService.autoAssignAp(entry, bot);
             }
 
             @Override

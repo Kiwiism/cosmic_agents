@@ -5,6 +5,7 @@ import client.Job;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
+import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.dialogue.AgentBuildDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentChatBuildFlow;
 import server.agents.capabilities.dialogue.AgentChatJobAdvancementFlow;
@@ -30,12 +31,12 @@ class AgentBotBuildRuntimeTest {
         BotEntry entry = new BotEntry(bot, null, null);
 
         try (MockedStatic<AgentBotBuildReplyRuntime> replies = mockStatic(AgentBotBuildReplyRuntime.class);
-             MockedStatic<BotBuildManager> buildManager = mockStatic(BotBuildManager.class)) {
+             MockedStatic<AgentBuildService> buildManager = mockStatic(AgentBuildService.class)) {
             AgentBotBuildRuntime.spVariantCallbacks(entry).oneHanded();
 
             assertEquals(AgentBuildDialogueClassifier.ONE_HANDED_SP_VARIANT, AgentBotBuildStateRuntime.spVariant(entry));
             replies.verify(() -> AgentBotBuildReplyRuntime.replyNow(entry, AgentChatBuildFlow.oneHandedSpVariantReply()));
-            buildManager.verify(() -> BotBuildManager.autoAssignSp(entry, bot));
+            buildManager.verify(() -> AgentBuildService.autoAssignSp(entry, bot));
         }
     }
 
@@ -47,18 +48,18 @@ class AgentBotBuildRuntimeTest {
         when(bot.getLuk()).thenReturn(40);
         when(bot.getStr()).thenReturn(4);
         BotEntry entry = new BotEntry(bot, null, null);
-        ArgumentCaptor<BotBuildManager.ApBuild> buildCaptor = ArgumentCaptor.forClass(BotBuildManager.ApBuild.class);
+        ArgumentCaptor<AgentBuildService.ApBuild> buildCaptor = ArgumentCaptor.forClass(AgentBuildService.ApBuild.class);
 
-        try (MockedStatic<BotBuildManager> buildManager = mockStatic(BotBuildManager.class)) {
+        try (MockedStatic<AgentBuildService> buildManager = mockStatic(AgentBuildService.class)) {
             AgentBotBuildRuntime.apBuildCallbacks(entry).selectBuild("dexless");
 
-            buildManager.verify(() -> BotBuildManager.setApBuild(
+            buildManager.verify(() -> AgentBuildService.setApBuild(
                     org.mockito.ArgumentMatchers.eq(entry),
                     buildCaptor.capture(),
                     org.mockito.ArgumentMatchers.anyString()));
-            BotBuildManager.ApBuild build = buildCaptor.getValue();
-            assertEquals(BotBuildManager.StatType.LUK, build.primaryStat());
-            assertEquals(BotBuildManager.StatType.DEX, build.secondaryStat());
+            AgentBuildService.ApBuild build = buildCaptor.getValue();
+            assertEquals(AgentBuildService.StatType.LUK, build.primaryStat());
+            assertEquals(AgentBuildService.StatType.DEX, build.secondaryStat());
             assertEquals(4, build.secondaryTarget());
         }
     }

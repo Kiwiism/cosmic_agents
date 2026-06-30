@@ -1,4 +1,4 @@
-package server.bots;
+package server.agents.capabilities.build;
 
 import client.Character;
 import client.Job;
@@ -20,8 +20,10 @@ import server.agents.integration.AgentBotBuildRuntime;
 import server.agents.integration.AgentBotBuildStateRuntime;
 import server.agents.integration.AgentBotBuildStatusRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.bots.BotEntry;
+import server.bots.BotManager;
 
-public final class BotBuildManager {
+public final class AgentBuildService {
     public enum StatType {
         STR,
         DEX,
@@ -311,7 +313,7 @@ public final class BotBuildManager {
     /**
      * Detects level-up and sends prompts before spending SP/AP so gating can apply.
      */
-    static void checkLevelUp(BotEntry entry, Character bot) {
+    public static void checkLevelUp(BotEntry entry, Character bot) {
         int lvl = bot.getLevel();
         if (AgentBotBuildStateRuntime.lastKnownLevel(entry) == lvl) return;
 

@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.capabilities.build.AgentBuildService;
+
 import server.agents.capabilities.movement.AgentMovementProfile;
 
 import client.Character;
@@ -927,8 +929,8 @@ public class BotEntry {
         this.lastOwnerCommand = command;
         this.lastOwnerCommandAtMs = commandAtMs;
     }
-    public BotBuildManager.ApBuild apBuild() { return apBuild; }
-    public void setApBuild(BotBuildManager.ApBuild apBuild) {
+    public AgentBuildService.ApBuild apBuild() { return apBuild; }
+    public void setApBuild(AgentBuildService.ApBuild apBuild) {
         this.apBuild = apBuild;
         this.apPromptSent = false;
     }
@@ -1107,7 +1109,7 @@ public class BotEntry {
     }
 
     // AP/SP builds
-    private BotBuildManager.ApBuild apBuild = null;
+    private AgentBuildService.ApBuild apBuild = null;
     private boolean apPromptSent = false;
     private String spVariant = null;
     private boolean spVariantPromptSent = false;

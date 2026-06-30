@@ -6,7 +6,7 @@ import server.agents.capabilities.dialogue.AgentBuildDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentChatBuildFlow;
 import server.agents.capabilities.dialogue.AgentChatJobAdvancementFlow;
 import server.agents.capabilities.build.AgentStarterKitService;
-import server.bots.BotBuildManager;
+import server.agents.capabilities.build.AgentBuildService;
 import server.bots.BotEntry;
 
 /**
@@ -23,14 +23,14 @@ public final class AgentBotBuildRuntime {
             public void oneHanded() {
                 AgentBotBuildStateRuntime.setSpVariant(entry, AgentBuildDialogueClassifier.ONE_HANDED_SP_VARIANT);
                 AgentBotBuildReplyRuntime.replyNow(entry, AgentChatBuildFlow.oneHandedSpVariantReply());
-                BotBuildManager.autoAssignSp(entry, entry.bot());
+                AgentBuildService.autoAssignSp(entry, entry.bot());
             }
 
             @Override
             public void twoHanded() {
                 AgentBotBuildStateRuntime.setSpVariant(entry, AgentBuildDialogueClassifier.TWO_HANDED_SP_VARIANT);
                 AgentBotBuildReplyRuntime.replyNow(entry, AgentChatBuildFlow.twoHandedSpVariantReply());
-                BotBuildManager.autoAssignSp(entry, entry.bot());
+                AgentBuildService.autoAssignSp(entry, entry.bot());
             }
         };
     }
@@ -40,7 +40,7 @@ public final class AgentBotBuildRuntime {
             @Override
             public void requestBuildPrompt() {
                 AgentBotBuildStateRuntime.clearApBuildPromptState(entry);
-                String prompt = BotBuildManager.requestApBuildPrompt(entry, entry.bot());
+                String prompt = AgentBuildService.requestApBuildPrompt(entry, entry.bot());
                 if (prompt != null) {
                     AgentBotBuildReplyRuntime.replyNow(entry, prompt);
                 }
@@ -74,35 +74,35 @@ public final class AgentBotBuildRuntime {
         }
     }
 
-    private static BotBuildManager.ApBuild toBotApBuild(AgentApBuildDialogueResolver.ApBuildChoice choice) {
-        return new BotBuildManager.ApBuild(
+    private static AgentBuildService.ApBuild toBotApBuild(AgentApBuildDialogueResolver.ApBuildChoice choice) {
+        return new AgentBuildService.ApBuild(
                 toBotStatType(choice.primaryStat()),
                 toBotStatType(choice.secondaryStat()),
                 choice.secondaryTarget());
     }
 
-    private static BotBuildManager.StatType toBotStatType(AgentApBuildDialogueResolver.StatType statType) {
+    private static AgentBuildService.StatType toBotStatType(AgentApBuildDialogueResolver.StatType statType) {
         return switch (statType) {
-            case STR -> BotBuildManager.StatType.STR;
-            case DEX -> BotBuildManager.StatType.DEX;
-            case INT -> BotBuildManager.StatType.INT;
-            case LUK -> BotBuildManager.StatType.LUK;
+            case STR -> AgentBuildService.StatType.STR;
+            case DEX -> AgentBuildService.StatType.DEX;
+            case INT -> AgentBuildService.StatType.INT;
+            case LUK -> AgentBuildService.StatType.LUK;
         };
     }
 
     private static void applyApBuildChoice(
             BotEntry entry,
-            BotBuildManager.ApBuild build,
+            AgentBuildService.ApBuild build,
             String confirmMsg,
             String alreadyMsg) {
         if (sameApBuild(AgentBotBuildStateRuntime.apBuild(entry), build)) {
             AgentBotBuildReplyRuntime.replyNow(entry, alreadyMsg);
             return;
         }
-        BotBuildManager.setApBuild(entry, build, confirmMsg);
+        AgentBuildService.setApBuild(entry, build, confirmMsg);
     }
 
-    private static boolean sameApBuild(BotBuildManager.ApBuild left, BotBuildManager.ApBuild right) {
+    private static boolean sameApBuild(AgentBuildService.ApBuild left, AgentBuildService.ApBuild right) {
         return left != null
                 && right != null
                 && left.primaryStat() == right.primaryStat()

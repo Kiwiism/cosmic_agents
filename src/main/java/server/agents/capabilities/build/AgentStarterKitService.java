@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.integration.AgentBotBuildStatusRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotBuildManager;
+import server.agents.capabilities.build.AgentBuildService;
 import server.bots.BotEntry;
 import server.bots.BotEquipManager;
 
@@ -25,7 +25,7 @@ public final class AgentStarterKitService {
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         Job oldJob = bot.getJob();
         bot.changeJob(newJob);
-        BotBuildManager.handleJobAdvance(entry, bot, oldJob, newJob);
+        AgentBuildService.handleJobAdvance(entry, bot, oldJob, newJob);
         grantStarterKitIfEligible(bot, oldJob, newJob);
         BotEquipManager.autoEquip(bot, owner, null);
         AgentBotBuildStatusRuntime.checkBuildStatus(entry, bot);

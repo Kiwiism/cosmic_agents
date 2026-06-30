@@ -1,6 +1,6 @@
 package server.agents.integration;
 
-import server.bots.BotBuildManager;
+import server.agents.capabilities.build.AgentBuildService;
 import server.bots.BotEntry;
 
 /**
@@ -10,7 +10,7 @@ public final class AgentBotBuildStateRuntime {
     private AgentBotBuildStateRuntime() {
     }
 
-    public static BotBuildManager.ApBuild apBuild(BotEntry entry) {
+    public static AgentBuildService.ApBuild apBuild(BotEntry entry) {
         return entry.apBuild();
     }
 
@@ -18,7 +18,7 @@ public final class AgentBotBuildStateRuntime {
         return entry.apBuild() != null;
     }
 
-    public static void setApBuild(BotEntry entry, BotBuildManager.ApBuild build) {
+    public static void setApBuild(BotEntry entry, AgentBuildService.ApBuild build) {
         entry.setApBuild(build);
     }
 

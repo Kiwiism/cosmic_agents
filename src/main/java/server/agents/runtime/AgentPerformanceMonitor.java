@@ -83,7 +83,7 @@ public final class AgentPerformanceMonitor {
         notes.put("potion-request", "BotPotionManager.requestPotShare total");
         notes.put("potion-donor-select", "BotPotionManager.selectPotDonor sibling scan");
         notes.put("common-passive-recovery", "BotPotionManager.tickPassiveRecovery (regen / mana recovery)");
-        notes.put("common-build-levelup", "BotBuildManager.checkLevelUp (skill point allocation)");
+        notes.put("common-build-levelup", "AgentBuildService.checkLevelUp (skill point allocation)");
         notes.put("common-afk-check", "AgentBotManagerStatusRuntime.tickAfkCheck (owner-AFK detection)");
         notes.put("common-trade", "BotInventoryManager.tickTrade (in-progress bot trade state machine)");
         notes.put("common-manual-trade", "BotInventoryManager.tickManualTrade (manual bot/player trade)");

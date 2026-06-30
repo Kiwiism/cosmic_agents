@@ -420,7 +420,7 @@ Recent reconstruction notes:
   and combat delayed callbacks now assert the Agent reply/scheduler runtime
   boundary instead of the removed BotManager delivery/scheduler bridge.
 - Build-triggered status checks now enter through
-  `AgentBotBuildStatusRuntime.checkBuildStatus`; `BotBuildManager` and
+  `AgentBotBuildStatusRuntime.checkBuildStatus`; `AgentBuildService` and
   `AgentStarterKitService` no longer call the broad chat-status facade directly
   for job/level build status prompts.
 - Gear-offer idle gating now enters through
@@ -1122,7 +1122,7 @@ Recent reconstruction notes:
   temporary backing store but no longer read `owner` or `bot` directly in
   production.
 - AP build assignment identity now enters through
-  `AgentBotRuntimeIdentityRuntime`; BotBuildManager set-build confirmation and
+  `AgentBotRuntimeIdentityRuntime`; AgentBuildService set-build confirmation and
   immediate AP assignment keep BotEntry as the temporary backing store but no
   longer read `bot` directly in production.
 - Maker automation bot identity now enters through

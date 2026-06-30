@@ -3,6 +3,7 @@ package server.bots;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.integration.AgentBotBuildReplyRuntime;
 import server.agents.integration.AgentBotBuildStatusRuntime;
@@ -35,10 +36,10 @@ class AgentBotBuildStatusRuntimeTest {
         AgentChatStatusRuntime.StatusCheckActions actions =
                 AgentBotBuildStatusRuntime.statusCheckActions(entry, bot);
 
-        try (MockedStatic<BotBuildManager> buildManager = mockStatic(BotBuildManager.class)) {
-            buildManager.when(() -> BotBuildManager.buildJobPrompt(entry, bot)).thenReturn("job?");
-            buildManager.when(() -> BotBuildManager.buildSpVariantPrompt(entry, bot)).thenReturn("sp?");
-            buildManager.when(() -> BotBuildManager.buildApPrompt(entry, bot)).thenReturn("ap?");
+        try (MockedStatic<AgentBuildService> buildManager = mockStatic(AgentBuildService.class)) {
+            buildManager.when(() -> AgentBuildService.buildJobPrompt(entry, bot)).thenReturn("job?");
+            buildManager.when(() -> AgentBuildService.buildSpVariantPrompt(entry, bot)).thenReturn("sp?");
+            buildManager.when(() -> AgentBuildService.buildApPrompt(entry, bot)).thenReturn("ap?");
 
             assertEquals("job?", actions.buildJobPrompt());
             assertEquals("sp?", actions.buildSpVariantPrompt());
@@ -47,8 +48,8 @@ class AgentBotBuildStatusRuntimeTest {
             actions.autoAssignSp();
             actions.autoAssignAp();
 
-            buildManager.verify(() -> BotBuildManager.autoAssignSp(entry, bot));
-            buildManager.verify(() -> BotBuildManager.autoAssignAp(entry, bot));
+            buildManager.verify(() -> AgentBuildService.autoAssignSp(entry, bot));
+            buildManager.verify(() -> AgentBuildService.autoAssignAp(entry, bot));
         }
     }
 

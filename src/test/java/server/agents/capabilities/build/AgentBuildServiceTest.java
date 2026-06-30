@@ -1,4 +1,4 @@
-package server.bots;
+package server.agents.capabilities.build;
 
 import client.Character;
 import client.Job;
@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotBuildRuntime;
 import server.agents.integration.AgentBotBuildStateRuntime;
+import server.bots.BotEntry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -35,19 +36,19 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class BotBuildManagerTest {
+class AgentBuildServiceTest {
     @Test
     void setApBuildConfirmsThroughAgentBuildRuntime() {
         Character bot = mock(Character.class);
         when(bot.getRemainingAp()).thenReturn(0);
         BotEntry entry = new BotEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
-        BotBuildManager.ApBuild build = new BotBuildManager.ApBuild(
-                BotBuildManager.StatType.LUK,
-                BotBuildManager.StatType.DEX,
+        AgentBuildService.ApBuild build = new AgentBuildService.ApBuild(
+                AgentBuildService.StatType.LUK,
+                AgentBuildService.StatType.DEX,
                 25);
 
         try (MockedStatic<AgentBotBuildRuntime> buildRuntime = mockStatic(AgentBotBuildRuntime.class)) {
-            BotBuildManager.setApBuild(entry, build, "confirm");
+            AgentBuildService.setApBuild(entry, build, "confirm");
 
             buildRuntime.verify(() -> AgentBotBuildRuntime.confirmApBuild(entry, "confirm"));
         }
@@ -74,7 +75,7 @@ class BotBuildManagerTest {
             skillFactory.when(() -> SkillFactory.getSkill(anyInt()))
                     .thenAnswer(invocation -> mockSkill(invocation.getArgument(0), 20, false));
 
-            BotBuildManager.checkLevelUp(entry, bot);
+            AgentBuildService.checkLevelUp(entry, bot);
         }
 
         assertEquals(10, AgentBotBuildStateRuntime.lastKnownLevel(entry));
@@ -94,7 +95,7 @@ class BotBuildManagerTest {
         when(bot.getRemainingSps()).thenReturn(remainingSps);
         when(bot.getRemainingAp()).thenReturn(0);
 
-        BotBuildManager.checkLevelUp(entry, bot);
+        AgentBuildService.checkLevelUp(entry, bot);
 
         assertEquals(120, AgentBotBuildStateRuntime.lastKnownLevel(entry));
         assertEquals(1, remainingSps[3]);
@@ -125,7 +126,7 @@ class BotBuildManagerTest {
             skillFactory.when(() -> SkillFactory.getSkill(anyInt()))
                     .thenAnswer(invocation -> skills.get(invocation.getArgument(0)));
 
-            BotBuildManager.autoAssignSp(entry, bot);
+            AgentBuildService.autoAssignSp(entry, bot);
         }
 
         assertEquals(0, remainingSps[warriorBook]);
@@ -167,7 +168,7 @@ class BotBuildManagerTest {
             skillFactory.when(() -> SkillFactory.getSkill(anyInt()))
                     .thenAnswer(invocation -> skills.get(invocation.getArgument(0)));
 
-            assertEquals("ok, rebuilt my sp using the bot build", BotBuildManager.respecSp(entry, bot));
+            assertEquals("ok, rebuilt my sp using the bot build", AgentBuildService.respecSp(entry, bot));
         }
 
         assertEquals(0, remainingSps[warriorBook]);
@@ -201,7 +202,7 @@ class BotBuildManagerTest {
             skillFactory.when(() -> SkillFactory.getSkill(anyInt()))
                     .thenAnswer(invocation -> skills.get(invocation.getArgument(0)));
 
-            BotBuildManager.autoAssignSp(entry, bot);
+            AgentBuildService.autoAssignSp(entry, bot);
         }
 
         assertEquals(0, remainingSps[mageBook]);
@@ -235,7 +236,7 @@ class BotBuildManagerTest {
             skillFactory.when(() -> SkillFactory.getSkill(anyInt()))
                     .thenAnswer(invocation -> skills.get(invocation.getArgument(0)));
 
-            BotBuildManager.autoAssignSp(entry, bot);
+            AgentBuildService.autoAssignSp(entry, bot);
         }
 
         assertEquals(0, remainingSps[bowmanBook]);
@@ -269,7 +270,7 @@ class BotBuildManagerTest {
             skillFactory.when(() -> SkillFactory.getSkill(anyInt()))
                     .thenAnswer(invocation -> skills.get(invocation.getArgument(0)));
 
-            BotBuildManager.autoAssignSp(entry, bot);
+            AgentBuildService.autoAssignSp(entry, bot);
         }
 
         assertEquals(0, remainingSps[thiefBook]);
@@ -313,7 +314,7 @@ class BotBuildManagerTest {
                 return mockSkill(skillId, maxLevels.getOrDefault(skillId, 30), true);
             });
 
-            BotBuildManager.autoAssignSp(entry, bot);
+            AgentBuildService.autoAssignSp(entry, bot);
         }
 
         assertEquals(5, remainingSps[bishopBook]);
@@ -325,12 +326,12 @@ class BotBuildManagerTest {
     void mageLuklessBuildDumpsRemainingApIntoInt() {
         Character bot = mock(Character.class);
         BotEntry entry = new BotEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
-        AgentBotBuildStateRuntime.setApBuild(entry, new BotBuildManager.ApBuild(BotBuildManager.StatType.INT, BotBuildManager.StatType.LUK, 4));
+        AgentBotBuildStateRuntime.setApBuild(entry, new AgentBuildService.ApBuild(AgentBuildService.StatType.INT, AgentBuildService.StatType.LUK, 4));
 
         when(bot.getRemainingAp()).thenReturn(5);
         when(bot.getLuk()).thenReturn(4);
 
-        BotBuildManager.autoAssignAp(entry, bot);
+        AgentBuildService.autoAssignAp(entry, bot);
 
         verify(bot).assignStrDexIntLuk(0, 0, 5, 0);
     }
@@ -339,12 +340,12 @@ class BotBuildManagerTest {
     void thiefFixedDexBuildFillsDexBeforeLuk() {
         Character bot = mock(Character.class);
         BotEntry entry = new BotEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
-        AgentBotBuildStateRuntime.setApBuild(entry, new BotBuildManager.ApBuild(BotBuildManager.StatType.LUK, BotBuildManager.StatType.DEX, 25));
+        AgentBotBuildStateRuntime.setApBuild(entry, new AgentBuildService.ApBuild(AgentBuildService.StatType.LUK, AgentBuildService.StatType.DEX, 25));
 
         when(bot.getRemainingAp()).thenReturn(5);
         when(bot.getDex()).thenReturn(22);
 
-        BotBuildManager.autoAssignAp(entry, bot);
+        AgentBuildService.autoAssignAp(entry, bot);
 
         verify(bot).assignStrDexIntLuk(0, 3, 0, 2);
     }
@@ -353,12 +354,12 @@ class BotBuildManagerTest {
     void bowmanStrlessBuildDumpsRemainingApIntoDex() {
         Character bot = mock(Character.class);
         BotEntry entry = new BotEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
-        AgentBotBuildStateRuntime.setApBuild(entry, new BotBuildManager.ApBuild(BotBuildManager.StatType.DEX, BotBuildManager.StatType.STR, 4));
+        AgentBotBuildStateRuntime.setApBuild(entry, new AgentBuildService.ApBuild(AgentBuildService.StatType.DEX, AgentBuildService.StatType.STR, 4));
 
         when(bot.getRemainingAp()).thenReturn(5);
         when(bot.getStr()).thenReturn(4);
 
-        BotBuildManager.autoAssignAp(entry, bot);
+        AgentBuildService.autoAssignAp(entry, bot);
 
         verify(bot).assignStrDexIntLuk(0, 5, 0, 0);
     }
@@ -367,7 +368,7 @@ class BotBuildManagerTest {
     void apRespecResetsToBaseStatsThenRebuildsUsingSavedPlan() {
         Character bot = mock(Character.class);
         BotEntry entry = new BotEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
-        AgentBotBuildStateRuntime.setApBuild(entry, new BotBuildManager.ApBuild(BotBuildManager.StatType.INT, BotBuildManager.StatType.LUK, 4));
+        AgentBotBuildStateRuntime.setApBuild(entry, new AgentBuildService.ApBuild(AgentBuildService.StatType.INT, AgentBuildService.StatType.LUK, 4));
 
         AtomicInteger str = new AtomicInteger(35);
         AtomicInteger dex = new AtomicInteger(24);
@@ -394,7 +395,7 @@ class BotBuildManagerTest {
             return true;
         }).when(bot).assignStrDexIntLuk(anyInt(), anyInt(), anyInt(), anyInt());
 
-        assertEquals("ok, rebuilt my ap using the bot build", BotBuildManager.respecAp(entry, bot));
+        assertEquals("ok, rebuilt my ap using the bot build", AgentBuildService.respecAp(entry, bot));
 
         verify(bot, times(2)).assignStrDexIntLuk(anyInt(), anyInt(), anyInt(), anyInt());
         assertEquals(4, str.get());
@@ -408,7 +409,7 @@ class BotBuildManagerTest {
     void apRespecKeepsFirstJobRequiredDexForThiefBuilds() {
         Character bot = mock(Character.class);
         BotEntry entry = new BotEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
-        AgentBotBuildStateRuntime.setApBuild(entry, new BotBuildManager.ApBuild(BotBuildManager.StatType.LUK, BotBuildManager.StatType.DEX, 4));
+        AgentBotBuildStateRuntime.setApBuild(entry, new AgentBuildService.ApBuild(AgentBuildService.StatType.LUK, AgentBuildService.StatType.DEX, 4));
 
         AtomicInteger str = new AtomicInteger(20);
         AtomicInteger dex = new AtomicInteger(60);
@@ -435,7 +436,7 @@ class BotBuildManagerTest {
             return true;
         }).when(bot).assignStrDexIntLuk(anyInt(), anyInt(), anyInt(), anyInt());
 
-        assertEquals("ok, rebuilt my ap using the bot build", BotBuildManager.respecAp(entry, bot));
+        assertEquals("ok, rebuilt my ap using the bot build", AgentBuildService.respecAp(entry, bot));
 
         assertEquals(4, str.get());
         assertEquals(25, dex.get());

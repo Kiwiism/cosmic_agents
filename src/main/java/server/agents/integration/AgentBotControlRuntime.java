@@ -4,7 +4,7 @@ import server.agents.capabilities.dialogue.AgentChatBuffQueryFlow;
 import server.agents.capabilities.dialogue.AgentChatRespecFlow;
 import server.agents.capabilities.dialogue.AgentChatToggleFlow;
 import server.agents.capabilities.combat.AgentBuffService;
-import server.bots.BotBuildManager;
+import server.agents.capabilities.build.AgentBuildService;
 import server.bots.BotEntry;
 
 /**
@@ -92,13 +92,13 @@ public final class AgentBotControlRuntime {
             @Override
             public void respecAp() {
                 AgentBotControlSchedulerRuntime.afterRandomDelay(500, 700, () ->
-                        AgentBotControlReplyRuntime.replyNow(entry, BotBuildManager.respecAp(entry, entry.bot())));
+                        AgentBotControlReplyRuntime.replyNow(entry, AgentBuildService.respecAp(entry, entry.bot())));
             }
 
             @Override
             public void respecSp() {
                 AgentBotControlSchedulerRuntime.afterRandomDelay(500, 700, () ->
-                        AgentBotControlReplyRuntime.replyNow(entry, BotBuildManager.respecSp(entry, entry.bot())));
+                        AgentBotControlReplyRuntime.replyNow(entry, AgentBuildService.respecSp(entry, entry.bot())));
             }
         };
     }
