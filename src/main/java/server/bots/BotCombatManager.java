@@ -6,7 +6,7 @@ import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentAttackPlanScoringPolicy;
 import server.agents.capabilities.combat.AgentAttackPlanTieBreakPolicy;
-import server.agents.capabilities.combat.AgentBasicAttackPlanner;
+import server.agents.capabilities.combat.AgentBasicAttackPlanRuntime;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 import server.agents.capabilities.combat.AgentCombatSkillClassifier;
@@ -326,29 +326,16 @@ public class BotCombatManager {
     }
 
     private static AttackPlan planBasicAttack(Character bot, Monster target) {
-        AgentBasicAttackPlanner.BasicAttackSelection selection = AgentBasicAttackPlanner.selectBasicAttack(
-                target,
-                candidate -> AgentAttackExecutionProvider.buildBasicAttackData(bot, candidate.getPosition()),
-                (candidate, hitBox) -> AgentCombatTargetSelector.resolveEffectivePrimary(
-                        bot.getPosition(), candidate, hitBox, bot.getMap().getAllMonsters()),
-                AgentCombatHitboxIntersection::intersectsMonster,
-                candidate -> bot == null ? null : AgentCombatTargetSelector.findReachableOnOppositeFacing(
-                        bot.getPosition(),
-                        candidate,
-                        mirroredPos -> AgentAttackExecutionProvider.buildBasicAttackData(bot, mirroredPos).hitBox(),
-                        hitBox -> AgentCombatTargetSelector.resolveEffectivePrimary(
-                                bot.getPosition(), candidate, hitBox, bot.getMap().getAllMonsters())));
-        if (selection == null) {
+        return toBotAttackPlan(AgentBasicAttackPlanRuntime.planBasicAttack(bot, target));
+    }
+
+    private static AttackPlan toBotAttackPlan(AgentAttackPlan plan) {
+        if (plan == null) {
             return null;
         }
-        AgentAttackExecutionProvider.BasicAttackData basicAttackData = selection.attackData();
-        Monster effective = selection.target();
-        int numDamage = AgentCombatHitCounter.shadowPartnerHitMultiplier(bot, basicAttackData.route());
-        return new AttackPlan(0, 0, numDamage, basicAttackData.hitBox(), List.of(effective), basicAttackData.route(),
-                basicAttackData.display(), basicAttackData.direction(), basicAttackData.rangedDirection(), basicAttackData.stance(),
-                basicAttackData.speed(), basicAttackData.hitDelayMs(), basicAttackData.cooldownMs(),
-                AgentCombatWeaponPolicy.damageWeaponTypeForAction(
-                        0, AgentAttackExecutionProvider.getEquippedWeaponType(bot), basicAttackData.action()));
+        return new AttackPlan(plan.skillId, plan.skillLevel, plan.numDamage, plan.hitBox, plan.targets,
+                plan.route, plan.display, plan.direction, plan.rangedDirection, plan.stance, plan.speed,
+                plan.hitDelayMs, plan.cooldownMs, plan.damageWeaponType);
     }
 
     static void attackMonster(BotEntry entry, Character bot, AttackPlan attackPlan) {

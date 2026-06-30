@@ -1736,6 +1736,11 @@ Recent reconstruction notes:
   the Agent runtime preserves attack readiness gates, AttackInfo packet fields,
   shared damage profile/target construction, route dispatch, attack cooldown,
   facing memory, and alert stance side effects.
+- Basic attack planning now lives in `AgentBasicAttackPlanRuntime`;
+  `BotCombatManager.planBasicAttack` is a temporary compatibility adapter while
+  Agent-owned logic preserves basic attack target correction, opposite-facing
+  pivot checks, Shadow Partner damage-line multiplier, packet field selection,
+  timing, cooldown, and damage weapon type resolution.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for

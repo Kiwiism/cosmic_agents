@@ -3,6 +3,8 @@ package server.bots;
 import server.agents.capabilities.combat.AgentAttackRoute;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+import server.agents.capabilities.combat.AgentAttackPlan;
+import server.agents.capabilities.combat.AgentBasicAttackPlanRuntime;
 import server.agents.capabilities.combat.AgentCombatWeaponPolicy;
 import server.agents.capabilities.combat.AgentCombatRangePolicy;
 import server.agents.capabilities.combat.AgentCombatScoringPolicy;
@@ -1139,6 +1141,28 @@ class BotCombatManagerTest {
         assertEquals(600, AgentBotCombatCooldownStateRuntime.attackCooldownMs(entry));
         assertEquals(-1, entry.facingDir);
         assertTrue(AgentBotCombatCooldownStateRuntime.alertedUntilMs(entry) > System.currentTimeMillis());
+    }
+
+    @Test
+    void basicAttackPlanRuntimeBuildsBasicAttackPlan() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        Monster target = mockMob(new Point(140, 200), 9300506);
+        when(map.getAllMonsters()).thenReturn(List.of(target));
+
+        try (MockedStatic<AgentAttackExecutionProvider> attacks =
+                     Mockito.mockStatic(AgentAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS)) {
+            attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.SWORD1H);
+
+            AgentAttackPlan plan = AgentBasicAttackPlanRuntime.planBasicAttack(bot, target);
+
+            assertNotNull(plan);
+            assertEquals(0, plan.skillId);
+            assertEquals(1, plan.numDamage);
+            assertEquals(List.of(target), plan.targets);
+            assertEquals(AgentAttackRoute.CLOSE, plan.route);
+            assertNotNull(plan.hitBox);
+        }
     }
 
     @Test
