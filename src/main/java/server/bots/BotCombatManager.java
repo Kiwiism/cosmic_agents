@@ -707,7 +707,8 @@ public class BotCombatManager {
         return new AttackPlan(0, 0, numDamage, basicAttackData.hitBox(), List.of(effective), basicAttackData.route(),
                 basicAttackData.display(), basicAttackData.direction(), basicAttackData.rangedDirection(), basicAttackData.stance(),
                 basicAttackData.speed(), basicAttackData.hitDelayMs(), basicAttackData.cooldownMs(),
-                damageWeaponTypeForAction(0, AgentAttackExecutionProvider.getEquippedWeaponType(bot), basicAttackData.action()));
+                AgentCombatWeaponPolicy.damageWeaponTypeForAction(
+                        0, AgentAttackExecutionProvider.getEquippedWeaponType(bot), basicAttackData.action()));
     }
 
     private static Monster findReachableOnOppositeFacing(Character bot, Monster originalTarget) {
@@ -939,19 +940,7 @@ public class BotCombatManager {
                 packetFields.direction(), packetFields.rangedDirection(),
                 packetFields.stance(),
                 fallbackAttackData.speed(), skillTiming.hitDelayMs(), skillTiming.cooldownMs(),
-                damageWeaponTypeForAction(skillId, weaponType, action));
-    }
-
-    private static WeaponType damageWeaponTypeForAction(int skillId, WeaponType equippedWeaponType, String action) {
-        return AgentCombatWeaponPolicy.damageWeaponTypeForAction(skillId, equippedWeaponType, action);
-    }
-
-    private static boolean isSpearWeapon(WeaponType weaponType) {
-        return AgentCombatWeaponPolicy.isSpearWeapon(weaponType);
-    }
-
-    private static boolean isPolearmWeapon(WeaponType weaponType) {
-        return AgentCombatWeaponPolicy.isPolearmWeapon(weaponType);
+                AgentCombatWeaponPolicy.damageWeaponTypeForAction(skillId, weaponType, action));
     }
 
     private static Rectangle calculateSkillHitBox(StatEffect effect, Character bot, Monster primaryTarget, AgentAttackRoute route, int skillId, String action) {

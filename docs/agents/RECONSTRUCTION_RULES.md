@@ -1554,6 +1554,9 @@ Recent reconstruction notes:
 - Dragon Roar support-safety checks now call `AgentCombatSupportPolicy` directly;
   the temporary `BotCombatManager` Dragon Roar/healer-ally wrappers have been
   removed while preserving target-count and nearby-healer inputs.
+- Damage weapon-type resolution now calls `AgentCombatWeaponPolicy` directly;
+  temporary `BotCombatManager` weapon policy wrappers have been removed while
+  preserving Dragon Knight spear/polearm and action-name normalization behavior.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
