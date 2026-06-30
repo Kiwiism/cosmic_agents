@@ -1095,7 +1095,8 @@ public class BotCombatManager {
         }
         if (startRegionId == targetRegionId) {
             return AgentCombatGrindTargetPolicy.graphPathCost(true, true,
-                    estimateLocalTravelCostMs(startPos, targetPos, profile), List.of(), UNREACHABLE_GRAPH_COST);
+                    AgentCombatScoringPolicy.estimateLocalTravelCostMs(startPos, targetPos, profile),
+                    List.of(), UNREACHABLE_GRAPH_COST);
         }
 
         List<BotNavigationGraph.Edge> path = BotNavigationManager.findPathForTargetScore(
@@ -1105,10 +1106,6 @@ public class BotCombatManager {
             edgeCosts.add((long) edge.cost);
         }
         return AgentCombatGrindTargetPolicy.graphPathCost(true, false, 0L, edgeCosts, UNREACHABLE_GRAPH_COST);
-    }
-
-    private static long estimateLocalTravelCostMs(Point from, Point to, AgentMovementProfile profile) {
-        return AgentCombatScoringPolicy.estimateLocalTravelCostMs(from, to, profile);
     }
 
     private static long grindTargetScore(Character bot, Point botPos, Foothold botFoothold, Monster target) {
@@ -1205,7 +1202,7 @@ public class BotCombatManager {
         }
         Rectangle shifted = new Rectangle(aoeNow.hitBox);
         shifted.translate(shift, 0);
-        Monster sweetPrimary = nearestMonster(cluster, centroidX, tp.y);
+        Monster sweetPrimary = AgentCombatScoringPolicy.nearestMonster(cluster, centroidX, tp.y);
         if (sweetPrimary == null) {
             return null;
         }
@@ -1240,10 +1237,6 @@ public class BotCombatManager {
 
     private static List<Monster> clusterMonsters(Character bot, Monster primaryTarget) {
         return AgentCombatScoringPolicy.legacyClusterMonsters(primaryTarget, bot.getMap().getAllMonsters());
-    }
-
-    private static Monster nearestMonster(List<Monster> monsters, int x, int y) {
-        return AgentCombatScoringPolicy.nearestMonster(monsters, x, y);
     }
 
     private static long grindRegionOccupancyPenalty(GrindGraphContext context, Character bot, int targetRegionId) {

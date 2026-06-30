@@ -1571,6 +1571,10 @@ Recent reconstruction notes:
   `AgentCombatTargetSelector` and `AgentCombatHitboxIntersection` directly from
   the combat shell; temporary `BotCombatManager` target-hitbox wrappers have
   been removed while preserving the same live map monster source.
+- Local travel-cost estimation and nearest-cluster monster selection now call
+  `AgentCombatScoringPolicy` directly; temporary `BotCombatManager` scoring
+  wrappers have been removed while preserving the same points, movement profile,
+  and cluster inputs.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
