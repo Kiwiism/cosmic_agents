@@ -4,6 +4,7 @@ import server.agents.capabilities.combat.AgentAttackRoute;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
+import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
 
 import server.agents.capabilities.dialogue.AgentEmote;
@@ -156,9 +157,9 @@ public class BotManager {
     public static BotManager getInstance() { return instance; }
 
     // Public facade for the !botcfg GM command (BotCombatManager is package-private).
-    public static List<String> botCombatConfigLines() { return BotCombatManager.configFieldLines(); }
-    public static String botCombatConfigLine(String name) { return BotCombatManager.configFieldLine(name); }
-    public static String setBotCombatConfig(String name, String value) { return BotCombatManager.setConfigField(name, value); }
+    public static List<String> botCombatConfigLines() { return AgentCombatConfig.configFieldLines(); }
+    public static String botCombatConfigLine(String name) { return AgentCombatConfig.configFieldLine(name); }
+    public static String setBotCombatConfig(String name, String value) { return AgentCombatConfig.setConfigField(name, value); }
 
     // ownerCharId → list of owned bot entries (1:N)
     private final Map<Integer, List<BotEntry>> bots = new ConcurrentHashMap<>();

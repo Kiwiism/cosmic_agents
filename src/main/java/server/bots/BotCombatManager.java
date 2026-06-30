@@ -124,24 +124,6 @@ public class BotCombatManager {
 
     public static AgentCombatConfig.Config cfg = AgentCombatConfig.cfg;
 
-    /** Admin/debug (!botcfg): "FIELD = value" for every public combat config field, sorted. */
-    public static List<String> configFieldLines() {
-        return AgentCombatConfig.configFieldLines();
-    }
-
-    /** Admin/debug (!botcfg): "FIELD = value" for one field (case-insensitive), or null if unknown. */
-    public static String configFieldLine(String name) {
-        return AgentCombatConfig.configFieldLine(name);
-    }
-
-    /**
-     * Admin/debug (!botcfg): set a combat config field by name (case-insensitive) on the live cfg.
-     * Returns a human-readable result; success messages start with "OK".
-     */
-    public static String setConfigField(String name, String rawValue) {
-        return AgentCombatConfig.setConfigField(name, rawValue);
-    }
-
     /** Check every alive monster on the map; if bot is inside its bounding box, apply a hit. */
     static void tickMobDamage(BotEntry entry, Character bot) {
         Point botPos = bot.getPosition();

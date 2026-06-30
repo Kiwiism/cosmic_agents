@@ -1604,6 +1604,10 @@ Recent reconstruction notes:
   `AgentAttackPlanScoringPolicy.AgentAttackPlanScore` directly; the temporary
   `BotCombatManager` `PlanScore` mirror and score wrapper have been removed
   while preserving the same DPS and guaranteed-kill comparisons.
+- Bot combat config command facades now call `AgentCombatConfig` directly from
+  `BotManager`; the temporary `BotCombatManager` config pass-through methods
+  have been removed while preserving live config field listing, lookup, and
+  mutation behavior.
 - Movement cooldown/delay countdown math now lives in
   `AgentMovementTimingPolicy`; BotMovementManager preserves the same
   physics-tick input and remains the temporary compatibility delegate for
