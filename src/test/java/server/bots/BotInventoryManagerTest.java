@@ -160,11 +160,11 @@ class BotInventoryManagerTest {
 
     @Test
     void shouldClampReservedTradePages() {
-        assertEquals(1, BotInventoryManager.clampTradePage(-4, 0));
-        assertEquals(1, BotInventoryManager.clampTradePage(0, 5));
-        assertEquals(1, BotInventoryManager.clampTradePage(1, 9));
-        assertEquals(2, BotInventoryManager.clampTradePage(2, 10));
-        assertEquals(2, BotInventoryManager.clampTradePage(99, 10));
+        assertEquals(1, AgentInventoryTradePolicy.clampTradePage(-4, 0));
+        assertEquals(1, AgentInventoryTradePolicy.clampTradePage(0, 5));
+        assertEquals(1, AgentInventoryTradePolicy.clampTradePage(1, 9));
+        assertEquals(2, AgentInventoryTradePolicy.clampTradePage(2, 10));
+        assertEquals(2, AgentInventoryTradePolicy.clampTradePage(99, 10));
     }
 
     @Test

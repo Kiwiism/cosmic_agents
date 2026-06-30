@@ -2062,6 +2062,9 @@ Recent reconstruction notes:
   compatibility wrappers have been removed from BotInventoryManager; production
   callers now use `AgentInventoryTradePolicy` directly for those policy
   decisions.
+- Reserved-equipment category, page-clamp, and dead item-sort compatibility
+  wrappers have been removed from BotInventoryManager; production and historical
+  parity tests now use `AgentInventoryTradePolicy` directly for those helpers.
 - Maker crystal creation and trash-disassembly batch orchestration now live in
   `AgentMakerService`; utility chat callbacks preserve the same guard replies,
   lazy item-data lookup, five-second step cadence, ACTIVE set, and

@@ -418,7 +418,7 @@ public class BotInventoryManager {
             logSlowTradeCommand(category, "startTradeTransfer", entry, bot, startedAt);
             return;
         }
-        if (isReservedEquipsCategory(category)) {
+        if (AgentInventoryTradePolicy.isReservedEquipsCategory(category)) {
             List<Item> items = collectReservedEquipTradePage(category, entry, bot);
             if (items.isEmpty()) {
                 AgentBotInventoryRuntime.replyNow(entry, noItemsReply(category));
@@ -491,7 +491,7 @@ public class BotInventoryManager {
     }
 
     public static boolean profileTradeCategory(String category) {
-        return "trash".equals(category) || "equips".equals(category) || isReservedEquipsCategory(category);
+        return "trash".equals(category) || "equips".equals(category) || AgentInventoryTradePolicy.isReservedEquipsCategory(category);
     }
 
     public static void logSlowTradeCommand(String category, String phase, BotEntry entry, Character bot, long startedAt) {
@@ -1027,7 +1027,7 @@ public class BotInventoryManager {
                 result = AgentInventoryTradePolicy.prioritizeEtcTradeItems(result, AgentBotRuntimeIdentityRuntime.owner(entry));
             }
             default -> {
-                if (isReservedEquipsCategory(category)) {
+                if (AgentInventoryTradePolicy.isReservedEquipsCategory(category)) {
                     result.addAll(collectReservedEquipTradePage(category, entry, bot));
                 } else {
                     EquipsGroup eg = AgentInventoryTradePolicy.equipsGroupFromCategory(category);
@@ -1184,18 +1184,6 @@ public class BotInventoryManager {
         return AgentInventoryTradePolicy.reservedEquipsCategory(requestedPage);
     }
 
-    static int clampTradePage(int requestedPage, int totalItems) {
-        return AgentInventoryTradePolicy.clampTradePage(requestedPage, totalItems);
-    }
-
-    private static boolean isReservedEquipsCategory(String category) {
-        return AgentInventoryTradePolicy.isReservedEquipsCategory(category);
-    }
-
-    private static int requestedReservedEquipsPage(String category) {
-        return AgentInventoryTradePolicy.requestedReservedEquipsPage(category);
-    }
-
     private static List<Item> collectReservedEquips(EquipTradeGroups groups) {
         return new ArrayList<>(groups.reservedForSelf());
     }
@@ -1206,7 +1194,8 @@ public class BotInventoryManager {
         if (reserved.isEmpty()) {
             return List.of();
         }
-        int page = clampTradePage(requestedReservedEquipsPage(category), reserved.size());
+        int page = AgentInventoryTradePolicy.clampTradePage(
+                AgentInventoryTradePolicy.requestedReservedEquipsPage(category), reserved.size());
         int from = (page - 1) * AgentInventoryTradePolicy.TRADE_WINDOW_ITEM_LIMIT;
         int to = Math.min(from + AgentInventoryTradePolicy.TRADE_WINDOW_ITEM_LIMIT, reserved.size());
         return new ArrayList<>(reserved.subList(from, to));
@@ -1387,10 +1376,6 @@ public class BotInventoryManager {
 
     static boolean hasProtectedSellTrashWeaponStat(Map<String, Integer> stats, Equip equip, Equip baseEquip) {
         return AgentInventorySellTrashPolicy.hasProtectedSellTrashWeaponStat(stats, equip, baseEquip);
-    }
-
-    private static List<Item> sortItemsByItemId(List<Item> items) {
-        return AgentInventoryTradePolicy.sortItemsByItemId(items);
     }
 
     private static int dropFromBag(Character bot, InventoryType type, Predicate<Item> filter) {
