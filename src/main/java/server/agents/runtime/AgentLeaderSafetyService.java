@@ -18,9 +18,24 @@ import java.awt.Rectangle;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public final class AgentLeaderSafetyService {
+    public record TownScrollHooks(Supplier<MapleMap> currentMap,
+                                  Runnable markReturnHandled,
+                                  Runnable idleOnGround,
+                                  BooleanSupplier tryUseReturnScroll,
+                                  Consumer<MapleMap> changeMap,
+                                  Runnable groundAfterMapChange,
+                                  Supplier<Point> currentPosition,
+                                  Function<Point, Point> putTownClusterAnchorIfAbsent,
+                                  BiFunction<MapleMap, Point, Point> resolveClusterTarget,
+                                  Runnable resetEntryState,
+                                  Consumer<Point> startPreciseMoveToClusterTarget) {
+    }
+
     private AgentLeaderSafetyService() {
     }
 
@@ -180,5 +195,37 @@ public final class AgentLeaderSafetyService {
 
         idleInPlace.run();
         return false;
+    }
+
+    public static boolean scrollInactiveAgentToTown(BotEntry entry, TownScrollHooks hooks) {
+        MapleMap currentMap = hooks.currentMap().get();
+        if (currentMap == null) {
+            return false;
+        }
+
+        MapleMap returnMap = currentMap.getReturnMap();
+        if (returnMap == null || returnMap.getId() == currentMap.getId()) {
+            hooks.markReturnHandled().run();
+            return false;
+        }
+
+        hooks.idleOnGround().run();
+        if (!hooks.tryUseReturnScroll().getAsBoolean()) {
+            hooks.changeMap().accept(returnMap);
+        }
+        hooks.groundAfterMapChange().run();
+
+        Point post = new Point(hooks.currentPosition().get());
+        Point anchor = hooks.putTownClusterAnchorIfAbsent().apply(post);
+        if (anchor == null) {
+            anchor = post;
+        }
+        Point target = hooks.resolveClusterTarget().apply(returnMap, anchor);
+
+        startInactiveTownClusterMove(
+                entry,
+                hooks.resetEntryState(),
+                () -> hooks.startPreciseMoveToClusterTarget().accept(target));
+        return true;
     }
 }

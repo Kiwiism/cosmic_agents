@@ -52,6 +52,12 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentLeaderSafetyService`. Preparation still runs
   before the town-vs-idle branch, and the town branch still returns the scroll
   result while idle returns false.
+- BotManager inactive town-scroll orchestration now delegates to
+  `server.agents.runtime.AgentLeaderSafetyService`. The null-map, no-return-map,
+  idle-before-scroll, return-scroll fallback, map-change grounding, cluster
+  anchor, target resolution, movement reset, precise move start, and returned
+  state order are unchanged; BotManager still supplies Cosmic side-effect
+  callbacks.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

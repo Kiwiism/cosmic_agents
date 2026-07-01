@@ -41,6 +41,11 @@ Recent map updates:
 - BotManager inactive safe-mode entry branching moved to
   `server.agents.runtime.AgentLeaderSafetyService`; BotManager only supplies
   temporary prepare, town-scroll, and in-place idle callbacks.
+- BotManager inactive town-scroll orchestration moved to
+  `server.agents.runtime.AgentLeaderSafetyService`; BotManager only supplies
+  temporary Cosmic callbacks for current map, return-scroll use, map changing,
+  map-change grounding, town-cluster anchor storage, target resolution, movement
+  reset, and precise move start.
 - BotManager script task completion rules moved to
   `server.agents.runtime.AgentScriptTaskCompletionService`; BotManager only
   supplies temporary follow-target resolution and movement distance config.

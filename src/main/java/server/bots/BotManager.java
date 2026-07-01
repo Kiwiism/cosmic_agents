@@ -2703,42 +2703,20 @@ public class BotManager {
     }
 
     private boolean scrollBotToTown(BotEntry entry, Character bot, int ownerCharId) {
-        MapleMap currentMap = bot.getMap();
-        if (currentMap == null) {
-            return false;
-        }
-        MapleMap returnMap = currentMap.getReturnMap();
-        if (returnMap == null || returnMap.getId() == currentMap.getId()) {
-            // No return map (e.g. some PQ/town maps): mark handled to avoid re-evaluating every tick.
-            AgentLeaderSafetyService.markInactiveTownReturnHandled(entry);
-            return false;
-        }
-
-        BotPhysicsEngine.idleOnGround(entry, bot);
-
-        // Every bot uses the same path: applyTo handles scroll-consume + random
-        // portal warp. Falls back to a plain changeMap when the bot has no scroll.
-        if (!tryUseReturnScroll(bot)) {
-            bot.changeMap(returnMap);
-        }
-        groundAfterMapChange(entry, bot);
-
-        // Capture the cluster anchor at the first bot's post-warp position, then let
-        // every bot walk to the deterministic formation slot around that anchor. This
-        // mirrors the owner's current follow formation instead of stacking everyone on
-        // the same portal landing point.
-        Point post = new Point(bot.getPosition());
-        Point anchor = townClusterAnchors.putIfAbsent(ownerCharId, post);
-        if (anchor == null) {
-            anchor = post;
-        }
-        Point target = resolveTownClusterTarget(entry, ownerCharId, returnMap, anchor);
-
-        AgentLeaderSafetyService.startInactiveTownClusterMove(
+        return AgentLeaderSafetyService.scrollInactiveAgentToTown(
                 entry,
-                () -> BotMovementManager.resetEntryState(entry),
-                () -> startMoveTo(entry, target, true));
-        return true;
+                new AgentLeaderSafetyService.TownScrollHooks(
+                        bot::getMap,
+                        () -> AgentLeaderSafetyService.markInactiveTownReturnHandled(entry),
+                        () -> BotPhysicsEngine.idleOnGround(entry, bot),
+                        () -> tryUseReturnScroll(bot),
+                        bot::changeMap,
+                        () -> groundAfterMapChange(entry, bot),
+                        bot::getPosition,
+                        post -> townClusterAnchors.putIfAbsent(ownerCharId, post),
+                        (returnMap, anchor) -> resolveTownClusterTarget(entry, ownerCharId, returnMap, anchor),
+                        () -> BotMovementManager.resetEntryState(entry),
+                        target -> startMoveTo(entry, target, true)));
     }
 
     private Point resolveTownClusterTarget(BotEntry entry, int ownerCharId, MapleMap map, Point anchor) {

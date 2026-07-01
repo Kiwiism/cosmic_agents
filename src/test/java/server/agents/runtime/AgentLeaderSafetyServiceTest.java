@@ -311,6 +311,67 @@ class AgentLeaderSafetyServiceTest {
         assertEquals(2, order.get());
     }
 
+    @Test
+    void scrollInactiveAgentToTownReturnsFalseWhenCurrentMapIsMissing() {
+        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        TownScrollCounters counters = new TownScrollCounters();
+
+        boolean consumed = AgentLeaderSafetyService.scrollInactiveAgentToTown(entry, new AgentLeaderSafetyService.TownScrollHooks(
+                () -> null,
+                counters::markReturnHandled,
+                counters::idleOnGround,
+                () -> true,
+                ignored -> counters.changeMap(),
+                counters::groundAfterMapChange,
+                () -> new Point(10, 20),
+                counters::putAnchor,
+                counters::resolveTarget,
+                counters::resetEntryState,
+                counters::startMove));
+
+        assertFalse(consumed);
+        counters.assertCounts(0, 0, 0, 0, 0, 0, 0);
+    }
+
+    @Test
+    void scrollInactiveAgentToTownMarksHandledWhenReturnMapIsMissing() {
+        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        MapleMap map = map(100, null);
+        TownScrollCounters counters = new TownScrollCounters();
+
+        boolean consumed = AgentLeaderSafetyService.scrollInactiveAgentToTown(entry, townHooks(map, counters, true));
+
+        assertFalse(consumed);
+        counters.assertCounts(1, 0, 0, 0, 0, 0, 0);
+    }
+
+    @Test
+    void scrollInactiveAgentToTownUsesReturnScrollWhenAvailableAndStartsClusterMove() {
+        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        MapleMap returnMap = map(200, null);
+        MapleMap map = map(100, returnMap);
+        TownScrollCounters counters = new TownScrollCounters();
+
+        boolean consumed = AgentLeaderSafetyService.scrollInactiveAgentToTown(entry, townHooks(map, counters, true));
+
+        assertTrue(consumed);
+        counters.assertCounts(0, 1, 0, 1, 1, 1, 1);
+        assertEquals(new Point(31, 41), counters.startedMove.get());
+    }
+
+    @Test
+    void scrollInactiveAgentToTownChangesMapWhenReturnScrollIsUnavailable() {
+        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        MapleMap returnMap = map(200, null);
+        MapleMap map = map(100, returnMap);
+        TownScrollCounters counters = new TownScrollCounters();
+
+        boolean consumed = AgentLeaderSafetyService.scrollInactiveAgentToTown(entry, townHooks(map, counters, false));
+
+        assertTrue(consumed);
+        counters.assertCounts(0, 1, 1, 1, 1, 1, 1);
+    }
+
     private static MapleMap map(int id, MapleMap returnMap, Monster... monsters) {
         MapleMap map = mock(MapleMap.class);
         when(map.getId()).thenReturn(id);
@@ -333,6 +394,22 @@ class AgentLeaderSafetyServiceTest {
         when(agent.getMap()).thenReturn(map);
         when(agent.getMapId()).thenReturn(mapId);
         return new BotEntry(agent, mock(Character.class), null);
+    }
+
+    private static AgentLeaderSafetyService.TownScrollHooks townHooks(
+            MapleMap map, TownScrollCounters counters, boolean returnScrollAvailable) {
+        return new AgentLeaderSafetyService.TownScrollHooks(
+                () -> map,
+                counters::markReturnHandled,
+                counters::idleOnGround,
+                () -> returnScrollAvailable,
+                ignored -> counters.changeMap(),
+                counters::groundAfterMapChange,
+                () -> new Point(30, 40),
+                counters::putAnchor,
+                counters::resolveTarget,
+                counters::resetEntryState,
+                counters::startMove);
     }
 
     private static Monster livingMonster() {
@@ -375,6 +452,67 @@ class AgentLeaderSafetyServiceTest {
             assertEquals(expectedMoveTargetClears, moveTargetClears.get());
             assertEquals(expectedAnchorRemoves, anchorRemoves.get());
             assertEquals(expectedAnnouncements, announcements.get());
+        }
+    }
+
+    private static final class TownScrollCounters {
+        private final AtomicInteger returnHandled = new AtomicInteger();
+        private final AtomicInteger idleOnGround = new AtomicInteger();
+        private final AtomicInteger changeMap = new AtomicInteger();
+        private final AtomicInteger groundAfterMapChange = new AtomicInteger();
+        private final AtomicInteger anchors = new AtomicInteger();
+        private final AtomicInteger resets = new AtomicInteger();
+        private final AtomicInteger starts = new AtomicInteger();
+        private final AtomicReference<Point> startedMove = new AtomicReference<>();
+
+        private void markReturnHandled() {
+            returnHandled.incrementAndGet();
+        }
+
+        private void idleOnGround() {
+            idleOnGround.incrementAndGet();
+        }
+
+        private void changeMap() {
+            changeMap.incrementAndGet();
+        }
+
+        private void groundAfterMapChange() {
+            groundAfterMapChange.incrementAndGet();
+        }
+
+        private Point putAnchor(Point post) {
+            anchors.incrementAndGet();
+            return null;
+        }
+
+        private Point resolveTarget(MapleMap returnMap, Point anchor) {
+            return new Point(anchor.x + 1, anchor.y + 1);
+        }
+
+        private void resetEntryState() {
+            resets.incrementAndGet();
+        }
+
+        private void startMove(Point target) {
+            starts.incrementAndGet();
+            startedMove.set(new Point(target));
+        }
+
+        private void assertCounts(int expectedReturnHandled,
+                                  int expectedIdleOnGround,
+                                  int expectedChangeMap,
+                                  int expectedGroundAfterMapChange,
+                                  int expectedAnchors,
+                                  int expectedResets,
+                                  int expectedStarts) {
+            assertEquals(expectedReturnHandled, returnHandled.get());
+            assertEquals(expectedIdleOnGround, idleOnGround.get());
+            assertEquals(expectedChangeMap, changeMap.get());
+            assertEquals(expectedGroundAfterMapChange, groundAfterMapChange.get());
+            assertEquals(expectedAnchors, anchors.get());
+            assertEquals(expectedResets, resets.get());
+            assertEquals(expectedStarts, starts.get());
         }
     }
 }
