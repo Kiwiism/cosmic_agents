@@ -31,6 +31,10 @@ Recent map updates:
 - BotManager non-town inactive safe-mode idle sequence moved to
   `server.agents.runtime.AgentLeaderSafetyService`; BotManager only supplies
   temporary physics and movement-broadcast callbacks.
+- BotManager inactive-town cluster target calculation moved to
+  `server.agents.runtime.AgentLeaderSafetyService`; BotManager only supplies
+  temporary leader-entry snapshots, formation state, edge-inset config, and
+  ground-point lookup.
 - BotManager script task completion rules moved to
   `server.agents.runtime.AgentScriptTaskCompletionService`; BotManager only
   supplies temporary follow-target resolution and movement distance config.

@@ -39,6 +39,11 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentLeaderSafetyService`. The idle-on-ground,
   movement-broadcast, and returned-to-town state order is unchanged; BotManager
   still supplies the temporary physics and packet callbacks.
+- BotManager inactive-town cluster target calculation now delegates to
+  `server.agents.runtime.AgentLeaderSafetyService`. The formation index,
+  platform-edge clamp, map-bounds clamp, ground lookup, and anchor fallback
+  order are unchanged; BotManager still supplies temporary formation storage and
+  ground-physics callbacks.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

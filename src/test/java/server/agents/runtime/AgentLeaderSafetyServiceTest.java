@@ -194,12 +194,87 @@ class AgentLeaderSafetyServiceTest {
         assertTrue(AgentBotActivityStateRuntime.ownerReturnedToTown(entry));
     }
 
+    @Test
+    void townClusterTargetReturnsAnchorWhenAgentOrMapIsMissing() {
+        Point anchor = new Point(40, 80);
+        Point target = AgentLeaderSafetyService.resolveTownClusterTarget(
+                null,
+                null,
+                anchor,
+                List.of(),
+                new AgentFormationService.FormationState(AgentFormationService.FormationType.STACK, 0, 0),
+                12,
+                (map, point) -> {
+                    throw new AssertionError("ground lookup should not run");
+                });
+
+        assertEquals(anchor, target);
+    }
+
+    @Test
+    void townClusterTargetAppliesFormationAndClampsToMapAreaBeforeGroundLookup() {
+        MapleMap map = mapWithArea(100, new java.awt.Rectangle(0, 0, 100, 200));
+        BotEntry other = entryAt(new Point(10, 80), map, 100);
+        BotEntry entry = entryAt(new Point(20, 80), map, 100);
+        AtomicReference<Point> query = new AtomicReference<>();
+
+        Point target = AgentLeaderSafetyService.resolveTownClusterTarget(
+                entry,
+                map,
+                new Point(50, 80),
+                List.of(other, entry),
+                new AgentFormationService.FormationState(AgentFormationService.FormationType.RIGHT, 30, 0),
+                12,
+                (ignoredMap, point) -> {
+                    query.set(new Point(point));
+                    return new Point(point.x, 90);
+                });
+
+        assertEquals(new Point(100, 79), query.get());
+        assertEquals(new Point(100, 90), target);
+    }
+
+    @Test
+    void townClusterTargetFallsBackToAnchorGroundThenBase() {
+        MapleMap map = mapWithArea(100, new java.awt.Rectangle(0, 0, 100, 200));
+        BotEntry entry = entryAt(new Point(20, 80), map, 100);
+        AtomicInteger calls = new AtomicInteger();
+
+        Point target = AgentLeaderSafetyService.resolveTownClusterTarget(
+                entry,
+                map,
+                new Point(50, 80),
+                List.of(entry),
+                new AgentFormationService.FormationState(AgentFormationService.FormationType.RIGHT, 30, 0),
+                12,
+                (ignoredMap, point) -> calls.getAndIncrement() == 0 ? null : new Point(point.x, 91));
+
+        assertEquals(new Point(50, 91), target);
+        assertEquals(2, calls.get());
+    }
+
     private static MapleMap map(int id, MapleMap returnMap, Monster... monsters) {
         MapleMap map = mock(MapleMap.class);
         when(map.getId()).thenReturn(id);
         when(map.getReturnMap()).thenReturn(returnMap);
         when(map.getAllMonsters()).thenReturn(List.of(monsters));
         return map;
+    }
+
+    private static MapleMap mapWithArea(int id, java.awt.Rectangle area) {
+        MapleMap map = mock(MapleMap.class);
+        when(map.getId()).thenReturn(id);
+        when(map.getMapArea()).thenReturn(area);
+        when(map.getFootholds()).thenReturn(null);
+        return map;
+    }
+
+    private static BotEntry entryAt(Point position, MapleMap map, int mapId) {
+        Character agent = mock(Character.class);
+        when(agent.getPosition()).thenReturn(new Point(position));
+        when(agent.getMap()).thenReturn(map);
+        when(agent.getMapId()).thenReturn(mapId);
+        return new BotEntry(agent, mock(Character.class), null);
     }
 
     private static Monster livingMonster() {

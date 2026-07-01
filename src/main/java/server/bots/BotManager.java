@@ -2743,58 +2743,11 @@ public class BotManager {
     }
 
     private Point resolveTownClusterTarget(BotEntry entry, int ownerCharId, MapleMap map, Point anchor) {
-        Point base = anchor != null ? new Point(anchor) : new Point(AgentBotRuntimeIdentityRuntime.botPosition(entry));
-        if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry) || map == null) {
-            return base;
-        }
-
         List<BotEntry> entries = getBotEntries(ownerCharId);
-        int idx = 0;
-        for (int i = 0; i < entries.size(); i++) {
-            if (entries.get(i) == entry) {
-                idx = i;
-                break;
-            }
-        }
-
         AgentFormationService.FormationState formation =
                 AgentFormationService.stateForLeader(ownerFormations, ownerCharId, defaultFormationState());
-        int offsetX = formation.offsetFor(idx, Math.max(1, entries.size()));
-        int targetX = base.x + offsetX;
-
-        AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
-        if (graph != null) {
-            int anchorRegionId = graph.findRegionId(map, base);
-            AgentNavigationGraph.Region anchorRegion = graph.getRegion(anchorRegionId);
-            if (anchorRegion != null && !anchorRegion.isRopeRegion) {
-                int edgeMargin = PLATFORM_EDGE_INSET_PX;
-                int minX = anchorRegion.minX;
-                int maxX = anchorRegion.maxX;
-                if (maxX - minX > 2 * edgeMargin) {
-                    minX += edgeMargin;
-                    maxX -= edgeMargin;
-                }
-                int clampedX = Math.max(minX, Math.min(maxX, targetX));
-                return anchorRegion.pointAt(clampedX);
-            }
-        }
-
-        Rectangle area = map.getMapArea();
-        int minX = area != null ? area.x : targetX;
-        int maxX = area != null ? area.x + area.width : targetX;
-        if (map.getFootholds() != null && map.getFootholds().getMinDropX() < map.getFootholds().getMaxDropX()) {
-            minX = map.getFootholds().getMinDropX();
-            maxX = map.getFootholds().getMaxDropX();
-        }
-
-        int clampedX = Math.max(minX, Math.min(maxX, targetX));
-        Point ground = BotPhysicsEngine.findGroundPoint(map, new Point(clampedX, base.y - 1));
-        if (ground != null) {
-            return ground;
-        }
-
-        Point anchorGround = BotPhysicsEngine.findGroundPoint(map, new Point(base.x, base.y - 1));
-        return anchorGround != null ? anchorGround : base;
+        return AgentLeaderSafetyService.resolveTownClusterTarget(
+                entry, map, anchor, entries, formation, PLATFORM_EDGE_INSET_PX, BotPhysicsEngine::findGroundPoint);
     }
 
     /**
