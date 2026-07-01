@@ -42,6 +42,7 @@ import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.trade.AgentMesoTradeService;
 import server.agents.capabilities.trade.AgentTradeBatchService;
+import server.agents.capabilities.trade.AgentTradeCancellationService;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
 import server.agents.capabilities.trade.AgentTradeRecipientService;
 import server.agents.capabilities.trade.AgentTradeStateService;
@@ -547,9 +548,7 @@ public class BotInventoryManager {
     }
 
     private static void cancelTradeSequence(BotEntry entry, Character bot, String msg) {
-        AgentBotInventoryRuntime.replyNow(entry, msg);
-        if (bot.getTrade() != null) Trade.cancelTrade(bot, Trade.TradeResult.NO_RESPONSE);
-        resetTradeState(entry, bot);
+        AgentTradeCancellationService.cancelSequence(entry, bot, msg, () -> resetTradeState(entry, bot));
     }
 
     private static void clearManualTradeState(BotEntry entry, Character bot) {

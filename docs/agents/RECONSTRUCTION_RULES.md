@@ -2152,6 +2152,10 @@ Recent reconstruction notes:
   temporary recipient lookup/cancel/start/invite/reply callbacks, but recipient
   availability checks, batch-state initialization, invite announcement guards,
   and invite reply delivery are Agent-owned.
+- Trade cancellation reply/cancel/reset orchestration now lives in
+  `AgentTradeCancellationService`; BotInventoryManager still supplies the
+  temporary reset callback while the Agent service preserves the same reply,
+  `NO_RESPONSE` cancel, and reset ordering.
 - Equipped-slot named trade preparation now lives in
   `AgentEquippedSlotTradeService`; BotInventoryManager still owns the enclosing
   trade sequence but delegates slot counting, temporary unequip preparation,
