@@ -11,6 +11,7 @@ import server.maps.MapleMap;
 import java.awt.Point;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -29,6 +30,16 @@ public final class AgentMapTransitionService {
                                  Consumer<BotEntry> movementBroadcaster) {
     }
 
+    public record MapChangeHooks(GroundingHooks groundingHooks,
+                                 BiPredicate<BotEntry, Character> requiresGrind,
+                                 Consumer<BotEntry> issueGrind,
+                                 BiPredicate<BotEntry, Character> requiresFollow,
+                                 Consumer<BotEntry> issueFollow,
+                                 Consumer<BotEntry> resetPartyQuestStage,
+                                 BiConsumer<BotEntry, Character> shopMapChange,
+                                 BiConsumer<BotEntry, Character> statusCheck) {
+    }
+
     private AgentMapTransitionService() {
     }
 
@@ -45,6 +56,23 @@ public final class AgentMapTransitionService {
         hooks.afterTeleportReset().accept(entry);
         hooks.graphWarmer().accept(map, AgentBotMovementStateRuntime.movementProfile(entry));
         hooks.movementBroadcaster().accept(entry);
+        return true;
+    }
+
+    public static boolean handleTrackedMapChange(BotEntry entry, Character agent, MapChangeHooks hooks) {
+        if (!groundAfterMapChange(entry, agent, hooks.groundingHooks())) {
+            return false;
+        }
+
+        if (hooks.requiresGrind().test(entry, agent)) {
+            hooks.issueGrind().accept(entry);
+        } else if (hooks.requiresFollow().test(entry, agent)) {
+            hooks.issueFollow().accept(entry);
+        } else {
+            hooks.resetPartyQuestStage().accept(entry);
+        }
+        hooks.shopMapChange().accept(entry, agent);
+        hooks.statusCheck().accept(entry, agent);
         return true;
     }
 }

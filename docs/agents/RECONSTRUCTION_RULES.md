@@ -2872,6 +2872,12 @@ Recent reconstruction notes:
   live in `server.agents.runtime.AgentTickStateMaintenanceService`; BotManager
   keeps the same call sites but no longer owns the delta calculation or precise
   move-target cleanup rule when a farm anchor is cleared after a map change.
+- Tracked map-change tick handling now lives in
+  `server.agents.runtime.AgentMapTransitionService`; BotManager still supplies
+  temporary Cosmic grounding, graph-warm, mode-command, shop, and status
+  callbacks. The same grounding order, KPQ grind-vs-follow-vs-reset decision,
+  shop map-change notification, manager-status check, and performance timer
+  behavior are preserved.
 
 Initial reconstruction order:
 

@@ -1659,41 +1659,24 @@ public class BotManager {
         }
 
         // On any map change (e.g. NPC-triggered portal): rebuild footholds, reset physics,
-        // and snap to ground so the bot doesn't carry over airborne state from the previous map.
-        if (!AgentBotMapStateRuntime.isTrackingMap(entry, bot.getMapId())) {
-            if (!perf) {
-                AgentBotMapStateRuntime.setMapTracking(entry, bot.getMapId(), BotMovementManager.buildFhIndex(bot.getMap()));
-                Point cur = bot.getPosition();
-                Point ground = BotPhysicsEngine.findGroundPoint(bot.getMap(), new Point(cur.x, cur.y - 1));
-                BotPhysicsEngine.teleportTo(entry, bot, ground != null ? ground : cur);
-                BotMovementManager.resetEntryStateAfterTeleport(entry);
-                AgentNavigationGraphService.warmGraphAsync(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
-                BotMovementManager.broadcastMovement(entry);
-                if (AgentPartyQuestHooks.requiresGrind(entry, bot)) { issueGrind(entry); }
-                else if (AgentPartyQuestHooks.requiresFollow(entry, bot)) { issueFollowOwner(entry); }
-                else { AgentBotPqRuntime.resetKpqStage5Claimed(entry); } // left KPQ — reset for next run
-                AgentShopService.onMapChange(entry, bot);
-                AgentBotManagerStatusRuntime.checkManagerStatus(entry, bot);
-            } else {
-                long tMapChange = System.nanoTime();
-                try {
-                    AgentBotMapStateRuntime.setMapTracking(entry, bot.getMapId(), BotMovementManager.buildFhIndex(bot.getMap()));
-                    Point cur = bot.getPosition();
-                    Point ground = BotPhysicsEngine.findGroundPoint(bot.getMap(), new Point(cur.x, cur.y - 1));
-                    BotPhysicsEngine.teleportTo(entry, bot, ground != null ? ground : cur);
-                    BotMovementManager.resetEntryStateAfterTeleport(entry);
-                    AgentNavigationGraphService.warmGraphAsync(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
-                    BotMovementManager.broadcastMovement(entry);
-                    if (AgentPartyQuestHooks.requiresGrind(entry, bot)) { issueGrind(entry); }
-                    else if (AgentPartyQuestHooks.requiresFollow(entry, bot)) { issueFollowOwner(entry); }
-                    else { AgentBotPqRuntime.resetKpqStage5Claimed(entry); } // left KPQ — reset for next run
-                    AgentShopService.onMapChange(entry, bot);
-                    AgentBotManagerStatusRuntime.checkManagerStatus(entry, bot);
-                } finally {
+        // and snap to ground so the bot does not carry over airborne state from the previous map.
+        if (!perf) {
+            if (handleTrackedMapChange(entry, bot)) {
+                return;
+            }
+        } else {
+            long tMapChange = System.nanoTime();
+            boolean changed = false;
+            try {
+                changed = handleTrackedMapChange(entry, bot);
+            } finally {
+                if (changed) {
                     AgentPerformanceMonitor.record("tick-map-change", System.nanoTime() - tMapChange);
                 }
             }
-            return;
+            if (changed) {
+                return;
+            }
         }
 
         // Shop visit: navigate to approach point before resuming normal flow.
@@ -2532,6 +2515,21 @@ public class BotManager {
 
     private boolean groundAfterMapChange(BotEntry entry, Character bot) {
         return AgentMapTransitionService.groundAfterMapChange(entry, bot, mapTransitionHooks());
+    }
+
+    private boolean handleTrackedMapChange(BotEntry entry, Character bot) {
+        return AgentMapTransitionService.handleTrackedMapChange(
+                entry,
+                bot,
+                new AgentMapTransitionService.MapChangeHooks(
+                        mapTransitionHooks(),
+                        AgentPartyQuestHooks::requiresGrind,
+                        this::issueGrind,
+                        AgentPartyQuestHooks::requiresFollow,
+                        this::issueFollowOwner,
+                        AgentBotPqRuntime::resetKpqStage5Claimed,
+                        AgentShopService::onMapChange,
+                        AgentBotManagerStatusRuntime::checkManagerStatus));
     }
 
     private AgentMapTransitionService.GroundingHooks mapTransitionHooks() {

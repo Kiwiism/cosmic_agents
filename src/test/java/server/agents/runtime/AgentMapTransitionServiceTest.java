@@ -68,6 +68,76 @@ class AgentMapTransitionServiceTest {
         assertEquals(current, counters.teleportPoint.get());
     }
 
+    @Test
+    void trackedMapChangeRunsGrindBeforeFollowAndCommonSideEffects() {
+        MapleMap map = map(100000003);
+        Character agent = character(200, map, map.getId(), new Point(10, 20));
+        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        Counters counters = new Counters();
+
+        boolean handled = AgentMapTransitionService.handleTrackedMapChange(
+                entry, agent, mapChangeHooks(counters, true, true));
+
+        assertTrue(handled);
+        assertEquals(1, counters.grindIssues.get());
+        assertEquals(0, counters.followIssues.get());
+        assertEquals(0, counters.partyQuestResets.get());
+        assertEquals(1, counters.shopMapChanges.get());
+        assertEquals(1, counters.statusChecks.get());
+    }
+
+    @Test
+    void trackedMapChangeRunsFollowWhenGrindIsNotRequired() {
+        MapleMap map = map(100000004);
+        Character agent = character(200, map, map.getId(), new Point(10, 20));
+        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        Counters counters = new Counters();
+
+        boolean handled = AgentMapTransitionService.handleTrackedMapChange(
+                entry, agent, mapChangeHooks(counters, false, true));
+
+        assertTrue(handled);
+        assertEquals(0, counters.grindIssues.get());
+        assertEquals(1, counters.followIssues.get());
+        assertEquals(0, counters.partyQuestResets.get());
+    }
+
+    @Test
+    void trackedMapChangeResetsPartyQuestWhenNoModeIsRequired() {
+        MapleMap map = map(100000005);
+        Character agent = character(200, map, map.getId(), new Point(10, 20));
+        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        Counters counters = new Counters();
+
+        boolean handled = AgentMapTransitionService.handleTrackedMapChange(
+                entry, agent, mapChangeHooks(counters, false, false));
+
+        assertTrue(handled);
+        assertEquals(0, counters.grindIssues.get());
+        assertEquals(0, counters.followIssues.get());
+        assertEquals(1, counters.partyQuestResets.get());
+    }
+
+    @Test
+    void trackedMapChangeSkipsSideEffectsWhenMapIsAlreadyTracked() {
+        MapleMap map = map(100000006);
+        Character agent = character(200, map, map.getId(), new Point(10, 20));
+        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentBotMapStateRuntime.setMapTracking(entry, map.getId(), Map.of());
+        Counters counters = new Counters();
+
+        boolean handled = AgentMapTransitionService.handleTrackedMapChange(
+                entry, agent, mapChangeHooks(counters, true, true));
+
+        assertFalse(handled);
+        counters.assertNoSideEffects();
+        assertEquals(0, counters.grindIssues.get());
+        assertEquals(0, counters.followIssues.get());
+        assertEquals(0, counters.partyQuestResets.get());
+        assertEquals(0, counters.shopMapChanges.get());
+        assertEquals(0, counters.statusChecks.get());
+    }
+
     private static AgentMapTransitionService.GroundingHooks hooks(Counters counters, Point groundPoint) {
         return new AgentMapTransitionService.GroundingHooks(
                 map -> {
@@ -89,6 +159,20 @@ class AgentMapTransitionServiceTest {
                     counters.graphWarmMap.set(map);
                 },
                 entry -> counters.broadcasts.incrementAndGet());
+    }
+
+    private static AgentMapTransitionService.MapChangeHooks mapChangeHooks(Counters counters,
+                                                                           boolean requiresGrind,
+                                                                           boolean requiresFollow) {
+        return new AgentMapTransitionService.MapChangeHooks(
+                hooks(counters, null),
+                (entry, agent) -> requiresGrind,
+                entry -> counters.grindIssues.incrementAndGet(),
+                (entry, agent) -> requiresFollow,
+                entry -> counters.followIssues.incrementAndGet(),
+                entry -> counters.partyQuestResets.incrementAndGet(),
+                (entry, agent) -> counters.shopMapChanges.incrementAndGet(),
+                (entry, agent) -> counters.statusChecks.incrementAndGet());
     }
 
     private static Character character(int id, MapleMap map, int mapId, Point position) {
@@ -113,6 +197,11 @@ class AgentMapTransitionServiceTest {
         private final AtomicInteger resets = new AtomicInteger();
         private final AtomicInteger graphWarms = new AtomicInteger();
         private final AtomicInteger broadcasts = new AtomicInteger();
+        private final AtomicInteger grindIssues = new AtomicInteger();
+        private final AtomicInteger followIssues = new AtomicInteger();
+        private final AtomicInteger partyQuestResets = new AtomicInteger();
+        private final AtomicInteger shopMapChanges = new AtomicInteger();
+        private final AtomicInteger statusChecks = new AtomicInteger();
         private final AtomicReference<Point> groundQuery = new AtomicReference<>();
         private final AtomicReference<Point> teleportPoint = new AtomicReference<>();
         private final AtomicReference<MapleMap> graphWarmMap = new AtomicReference<>();
