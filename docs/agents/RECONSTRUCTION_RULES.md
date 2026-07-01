@@ -2953,6 +2953,11 @@ Recent reconstruction notes:
   degenerate-target rejection, RANGED attack-plan requirement, range/cooldown
   gate, preferred-target fast path, and nearest valid fallback scan are
   preserved.
+- AoE reposition commitment now lives in
+  `server.agents.capabilities.combat.AgentAoeRepositionService`; BotManager
+  keeps a compatibility delegate while `tickGrindMode` is still being
+  reconstructed. Existing-anchor reuse, arrival/expiry/dead-target clearing,
+  planner invocation, anchor storage, and max-duration deadline are preserved.
 
 Initial reconstruction order:
 

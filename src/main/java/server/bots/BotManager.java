@@ -8,6 +8,7 @@ import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentBuffService;
+import server.agents.capabilities.combat.AgentAoeRepositionService;
 import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 import server.agents.capabilities.combat.AgentCombatConfig;
@@ -81,14 +82,12 @@ import server.agents.plans.AgentScriptMoveTargetService;
 import server.agents.integration.AgentBotManagerReplyRuntime;
 import server.agents.integration.AgentBotManagerSchedulerRuntime;
 import server.agents.integration.AgentBotManagerStatusRuntime;
-import server.agents.integration.AgentBotAoeRepositionStateRuntime;
 import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotAmmoStateRuntime;
 import server.agents.integration.AgentBotBreakoutStateRuntime;
 import server.agents.integration.AgentBotBuffStateRuntime;
 import server.agents.integration.AgentBotCommandParser;
 import server.agents.integration.AgentBotCombatActionLockRuntime;
-import server.agents.integration.AgentBotCombatAoeRepositionRuntime;
 import server.agents.integration.AgentBotCombatAttackRuntime;
 import server.agents.integration.AgentBotCombatBuffRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
@@ -928,24 +927,7 @@ public class BotManager {
     // bounded-chase deadline expires, or the target dies/clears.
     private static Point resolveAoeReposition(BotEntry entry, Character bot, Monster target,
                                               AgentAttackPlan attackPlan, Point botPos) {
-        long now = System.currentTimeMillis();
-        if (AgentBotAoeRepositionStateRuntime.hasAnchor(entry)) {
-            boolean done = AgentBotAoeRepositionStateRuntime.isExpiredOrArrived(
-                    entry, botPos, now, AgentCombatConfig.cfg.AOE_REPOSITION_ARRIVAL_X)
-                    || target == null || !target.isAlive();
-            if (done) {
-                AgentBotAoeRepositionStateRuntime.clear(entry);
-                return null;
-            }
-            return AgentBotAoeRepositionStateRuntime.anchor(entry);
-        }
-        Point anchor = AgentBotCombatAoeRepositionRuntime.aoeRepositionTarget(
-                entry, bot, target, attackPlan, AgentCombatConfig.cfg);
-        if (anchor != null) {
-            AgentBotAoeRepositionStateRuntime.setAnchor(
-                    entry, anchor, now + AgentCombatConfig.cfg.AOE_REPOSITION_MAX_MS);
-        }
-        return anchor;
+        return AgentAoeRepositionService.resolveAoeReposition(entry, bot, target, attackPlan, botPos);
     }
 
     static Point selectGrindNavigationTarget(BotEntry entry, Point botPos, Point combatTargetPos) {
