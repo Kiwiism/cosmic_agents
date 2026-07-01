@@ -73,6 +73,10 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentScriptTaskTickService`. The no-agent skip,
   activate-next behavior, start-on-activation, incomplete retention, and
   clear-and-continue loop are unchanged.
+- BotManager script-task queue helpers now delegate to
+  `server.agents.runtime.AgentScriptTaskQueueService`. Clear-and-bump,
+  null-safe queueing, move queueing, move-then-drop, follow-then-drop, and
+  queued-task checks are unchanged.
 - BotManager move/farm/patrol/follow/grind/stop command-mode preparation now delegates to
   `server.agents.runtime.AgentCommandModeService`. The null-entry skip and
   guard-before-clear, clear-script-tasks, cancel-shop, start-mode order are

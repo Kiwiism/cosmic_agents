@@ -62,6 +62,10 @@ Recent map updates:
 - BotManager script task tick loop moved to
   `server.agents.runtime.AgentScriptTaskTickService`; BotManager only supplies
   temporary callbacks for task start and completion checks.
+- BotManager script task queue helpers moved to
+  `server.agents.runtime.AgentScriptTaskQueueService`; BotManager remains a
+  temporary compatibility facade for clear, queue, move, move-then-drop,
+  follow-then-drop, and has-queued checks.
 - BotManager move/farm/patrol/follow/grind/stop command-mode preparation moved to
   `server.agents.runtime.AgentCommandModeService`; BotManager only supplies
   temporary guards and callbacks for script-task clearing, shop cancellation,

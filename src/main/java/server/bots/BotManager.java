@@ -33,6 +33,7 @@ import server.agents.runtime.AgentLeaderSafetyService;
 import server.agents.runtime.AgentMapTransitionService;
 import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentScriptTaskCompletionService;
+import server.agents.runtime.AgentScriptTaskQueueService;
 import server.agents.runtime.AgentScriptTaskStartService;
 import server.agents.runtime.AgentScriptTaskTickService;
 import server.agents.runtime.AgentTargetSnapshot;
@@ -2869,39 +2870,31 @@ public class BotManager {
     }
 
     public void clearScriptTasks(BotEntry entry) {
-        if (entry == null) {
-            return;
-        }
-        AgentBotScriptTaskStateRuntime.clearTasksAndBumpEpoch(entry);   // signal background batches (Maker craft/disassembly) to self-interrupt
+        AgentScriptTaskQueueService.clearTasks(entry);   // signal background batches (Maker craft/disassembly) to self-interrupt
     }
 
     public void queueTask(BotEntry entry, AgentTask task) {
-        if (entry == null || task == null) {
-            return;
-        }
-        AgentBotScriptTaskStateRuntime.queueTask(entry, task);
+        AgentScriptTaskQueueService.queueTask(entry, task);
     }
 
     public void queueMoveTo(BotEntry entry, Point point, boolean precise) {
-        queueTask(entry, AgentTask.moveTo(point, precise));
+        AgentScriptTaskQueueService.queueMoveTo(entry, point, precise);
     }
 
     public void queueMoveTo(BotEntry entry, Point point, boolean precise, AgentTask.MoveCombatMode moveCombatMode) {
-        queueTask(entry, AgentTask.moveTo(point, precise, moveCombatMode));
+        AgentScriptTaskQueueService.queueMoveTo(entry, point, precise, moveCombatMode);
     }
 
     public void queueMoveThenDropItem(BotEntry entry, Point point, boolean precise, InventoryType type, int itemId, short quantity) {
-        queueTask(entry, AgentTask.moveTo(point, precise));
-        queueTask(entry, AgentTask.dropItem(type, itemId, quantity));
+        AgentScriptTaskQueueService.queueMoveThenDropItem(entry, point, precise, type, itemId, quantity);
     }
 
     public void queueFollowThenDropItem(BotEntry entry, Character target, int nearPx, InventoryType type, int itemId, short quantity) {
-        queueTask(entry, AgentTask.followUntilNear(target, nearPx));
-        queueTask(entry, AgentTask.dropItem(type, itemId, quantity));
+        AgentScriptTaskQueueService.queueFollowThenDropItem(entry, target, nearPx, type, itemId, quantity);
     }
 
     public boolean hasQueuedTasks(BotEntry entry) {
-        return AgentBotScriptTaskStateRuntime.hasQueuedTasks(entry);
+        return AgentScriptTaskQueueService.hasQueuedTasks(entry);
     }
 
     public boolean isCheapScriptMoveTarget(BotEntry entry,
