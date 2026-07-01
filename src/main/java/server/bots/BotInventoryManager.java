@@ -56,7 +56,7 @@ import server.agents.capabilities.trade.AgentTradeRecipientService;
 import server.agents.capabilities.trade.AgentTradeResetService;
 import server.agents.capabilities.trade.AgentTradeSequenceService;
 import server.agents.capabilities.trade.AgentTradeStateService;
-import server.agents.capabilities.trade.AgentTradeTransferStartGuard;
+import server.agents.capabilities.trade.AgentTradeTransferRouter;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotInventoryStateRuntime;
@@ -253,55 +253,46 @@ public class BotInventoryManager {
      */
     public static void startTradeTransfer(String category, BotEntry entry, Character bot) {
         long startedAt = AgentTradeCommandProfiler.profileCategory(category) ? System.nanoTime() : 0L;
-        if (AgentInventoryTradePolicy.isMesoCategory(category)) {
-            startTradeMesoTransfer(category, entry, bot);
-            return;
-        }
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
-        AgentTradeTransferStartGuard.Decision startDecision = AgentTradeTransferStartGuard.evaluate(
+
+        AgentTradeTransferRouter.routeCategoryTransfer(
+                category,
                 owner != null,
                 bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry),
-                owner != null && owner.getTrade() != null);
-        if (!startDecision.proceed()) {
-            AgentBotInventoryRuntime.replyNow(entry, startDecision.reply());
-            return;
-        }
-        if ("equips".equals(category)) {
-            long equipsStartedAt = startedAt != 0L ? System.nanoTime() : 0L;
-            startEquipsGroupTradeTransfer(owner, entry, bot);
-            AgentTradeCommandProfiler.logSlowCommand(category, "startEquipsGroupTradeTransfer", entry, bot, equipsStartedAt, TRADE_COMMAND_PROFILE_WARN_NS, log);
-            AgentTradeCommandProfiler.logSlowCommand(category, "startTradeTransfer", entry, bot, startedAt, TRADE_COMMAND_PROFILE_WARN_NS, log);
-            return;
-        }
-        if (AgentInventoryTradePolicy.isReservedEquipsCategory(category)) {
-            List<Item> items = collectReservedEquipTradePage(category, entry, bot);
-            AgentReservedEquipTradeTransferService.startReservedEquipTradeTransfer(
-                    category,
-                    items,
-                    () -> reservedEquipsPageMessage(category, entry, bot),
-                    (reservedCategory, reservedItems) -> startTradeSequence(
-                            reservedCategory, owner, reservedItems, 0, true, entry, bot),
-                    message -> AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, message),
-                    reply -> AgentBotInventoryRuntime.replyNow(entry, reply));
-            AgentTradeCommandProfiler.logSlowCommand(category, "startTradeTransfer", entry, bot, startedAt, TRADE_COMMAND_PROFILE_WARN_NS, log);
-            return;
-        }
-        if ("ammo".equals(category)) {
-            startAmmoGroupTradeTransfer(owner, entry, bot);
-            AgentTradeCommandProfiler.logSlowCommand(category, "startTradeTransfer", entry, bot, startedAt, TRADE_COMMAND_PROFILE_WARN_NS, log);
-            return;
-        }
-        long prepareStartedAt = startedAt != 0L ? System.nanoTime() : 0L;
-        PreparedTradeItems prepared = prepareTradeItems(category, entry, bot);
-        AgentTradeCommandProfiler.logSlowCommand(category, "prepareTradeItems", entry, bot, prepareStartedAt, TRADE_COMMAND_PROFILE_WARN_NS, log);
-        AgentPreparedTradeTransferService.startPreparedTradeTransfer(
-                category,
-                prepared,
-                () -> AgentBotPendingTradeStateRuntime.hasRestoreSlots(entry),
-                (preparedCategory, preparedItems, restoreSlots) ->
-                        startTradeSequence(preparedCategory, owner, preparedItems, 0, restoreSlots, entry, bot),
-                reply -> AgentBotInventoryRuntime.replyNow(entry, reply));
-        AgentTradeCommandProfiler.logSlowCommand(category, "startTradeTransfer", entry, bot, startedAt, TRADE_COMMAND_PROFILE_WARN_NS, log);
+                owner != null && owner.getTrade() != null,
+                startedAt,
+                AgentTradeTransferRouter.TransferCallbacks.of(
+                        () -> startTradeMesoTransfer(category, entry, bot),
+                        () -> startEquipsGroupTradeTransfer(owner, entry, bot),
+                        () -> {
+                            List<Item> items = collectReservedEquipTradePage(category, entry, bot);
+                            AgentReservedEquipTradeTransferService.startReservedEquipTradeTransfer(
+                                    category,
+                                    items,
+                                    () -> reservedEquipsPageMessage(category, entry, bot),
+                                    (reservedCategory, reservedItems) -> startTradeSequence(
+                                            reservedCategory, owner, reservedItems, 0, true, entry, bot),
+                                    message -> AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, message),
+                                    reply -> AgentBotInventoryRuntime.replyNow(entry, reply));
+                        },
+                        () -> startAmmoGroupTradeTransfer(owner, entry, bot),
+                        () -> prepareTradeItems(category, entry, bot),
+                        prepared -> AgentPreparedTradeTransferService.startPreparedTradeTransfer(
+                                category,
+                                prepared,
+                                () -> AgentBotPendingTradeStateRuntime.hasRestoreSlots(entry),
+                                (preparedCategory, preparedItems, restoreSlots) ->
+                                        startTradeSequence(preparedCategory, owner, preparedItems, 0, restoreSlots, entry, bot),
+                                reply -> AgentBotInventoryRuntime.replyNow(entry, reply)),
+                        reply -> AgentBotInventoryRuntime.replyNow(entry, reply),
+                        (operation, operationStartedAt) -> AgentTradeCommandProfiler.logSlowCommand(
+                                category,
+                                operation,
+                                entry,
+                                bot,
+                                operationStartedAt,
+                                TRADE_COMMAND_PROFILE_WARN_NS,
+                                log)));
     }
 
     public static void startTradeTransfer(Item item, Character recipient, BotEntry entry, Character bot) {
