@@ -47,6 +47,7 @@ import server.agents.runtime.AgentScriptTaskTickService;
 import server.agents.runtime.AgentTargetSnapshot;
 import server.agents.runtime.AgentTargetSnapshotService;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.AgentSpawnPositionService;
 import server.agents.runtime.AgentTickFailurePolicy;
 import server.agents.runtime.AgentTickOrchestrator;
 
@@ -446,12 +447,7 @@ public class BotManager {
     }
 
     public Point resolveSpawnPosition(MapleMap map, Point desiredPosition) {
-        if (map == null || desiredPosition == null) {
-            return desiredPosition;
-        }
-
-        Point groundPoint = BotPhysicsEngine.findGroundPoint(map, new Point(desiredPosition.x, desiredPosition.y - 1));
-        return groundPoint != null ? groundPoint : desiredPosition;
+        return AgentSpawnPositionService.resolveSpawnPosition(map, desiredPosition);
     }
 
     private BotEntry registerBotInternal(int ownerCharId, Character owner, Character bot, boolean normalizeSpawnState) {

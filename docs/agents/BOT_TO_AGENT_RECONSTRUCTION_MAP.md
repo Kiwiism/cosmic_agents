@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- BotManager spawn-position resolution moved to
+  `server.agents.runtime.AgentSpawnPositionService`. BotManager keeps
+  `resolveSpawnPosition` as a compatibility delegate while offline load,
+  online placement, and spawn normalization continue to use the same
+  BotPhysicsEngine ground lookup through the Agent runtime service.
 - BotManager post-spawn party lifecycle side effects moved to
   `server.agents.runtime.AgentPartyLifecycleService`. BotManager keeps
   `joinBotToOwnerParty` as a temporary compatibility delegate, and Agent spawn

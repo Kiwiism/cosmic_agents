@@ -17,6 +17,7 @@ class AgentFoundationStructureTest {
                 "server.agents.api.AgentService",
                 "server.agents.runtime.AgentSession",
                 "server.agents.runtime.AgentPartyLifecycleService",
+                "server.agents.runtime.AgentSpawnPositionService",
                 "server.agents.runtime.AgentTickScheduler",
                 "server.agents.commands.AgentCommandRouter",
                 "server.agents.commands.AgentCommandParser",

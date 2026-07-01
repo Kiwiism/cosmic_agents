@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- BotManager spawn-position grounding now lives in
+  `server.agents.runtime.AgentSpawnPositionService`. The same null map/position
+  bypass, one-pixel-above ground lookup, and desired-position fallback are
+  preserved; production still uses `BotPhysicsEngine.findGroundPoint` as a
+  temporary physics seam.
 - BotManager post-spawn party join orchestration now lives in
   `server.agents.runtime.AgentPartyLifecycleService`. `BotManager.joinBotToOwnerParty`
   remains only as a compatibility delegate, while Agent spawn command and
