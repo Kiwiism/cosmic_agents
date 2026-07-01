@@ -126,6 +126,9 @@ Recent map updates:
 - BotManager follow-owner, grind, and stop entry points now delegate to
   `AgentBotMovementCommandRuntime`, reducing BotManager to compatibility
   routing for those mode commands while preserving command setup behavior.
+- BotManager inactive-town return-scroll item use moved to
+  `server.agents.runtime.AgentReturnScrollService`; BotManager remains only the
+  leader-safety callback site for this action.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.

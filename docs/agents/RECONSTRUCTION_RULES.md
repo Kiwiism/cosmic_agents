@@ -138,6 +138,10 @@ Recent reconstruction notes:
   `AgentBotMovementCommandRuntime`; command preparation, script-task clearing,
   shop cancellation, mode transitions, and navigation clearing remain
   behavior-equivalent.
+- Return-scroll use for inactive leader safety now lives in
+  `AgentReturnScrollService`; BotManager only calls the Agent runtime helper
+  from the existing leader-safety callback, preserving 2030000 lookup, effect
+  application, and one-scroll consumption behavior.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

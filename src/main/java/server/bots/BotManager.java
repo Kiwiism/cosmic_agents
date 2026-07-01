@@ -33,6 +33,7 @@ import server.agents.runtime.AgentLeaderSafetyService;
 import server.agents.runtime.AgentMapTransitionService;
 import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentPositionService;
+import server.agents.runtime.AgentReturnScrollService;
 import server.agents.runtime.AgentScriptTaskCompletionService;
 import server.agents.runtime.AgentScriptTaskQueueService;
 import server.agents.runtime.AgentScriptTaskStartService;
@@ -133,8 +134,6 @@ import net.server.world.PartyCharacter;
 import net.server.world.PartyOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import server.ItemInformationProvider;
-import server.StatEffect;
 import server.TimerManager;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.partyquest.AgentPartyQuestHooks;
@@ -2955,30 +2954,7 @@ public class BotManager {
      * Returns false when no 2030000 is in the bot's USE inventory or applyTo failed.
      */
     private boolean tryUseReturnScroll(Character bot) {
-        var use = bot.getInventory(InventoryType.USE);
-        if (use == null) {
-            return false;
-        }
-        for (Item item : use.list()) {
-            if (item == null || item.getQuantity() <= 0) {
-                continue;
-            }
-            if (item.getItemId() != 2030000) {
-                continue;
-            }
-            StatEffect effect;
-            try {
-                effect = ItemInformationProvider.getInstance().getItemEffect(2030000);
-            } catch (Exception e) {
-                return false;
-            }
-            if (effect == null || !effect.applyTo(bot)) {
-                return false;
-            }
-            InventoryManipulator.removeFromSlot(bot.getClient(), InventoryType.USE, item.getPosition(), (short) 1, false);
-            return true;
-        }
-        return false;
+        return AgentReturnScrollService.tryUseNearestTownReturnScroll(bot);
     }
 
     /**
