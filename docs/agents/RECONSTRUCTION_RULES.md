@@ -17,6 +17,13 @@ Rules:
 
 Recent reconstruction notes:
 
+- Tick failure escalation and volatile-action cleanup now live in
+  `server.agents.runtime.AgentTickFailurePolicy.handleFailure`. BotManager keeps
+  only temporary hooks for logging, movement-state reset, disable/removal, and
+  forced-idle reply delivery. The same missing-entry error, failure-window
+  counting, pending action/drop cleanup, grind target/loot cleanup, patrol
+  wander cleanup, second-failure idle fallback, third-failure disable, and
+  warning/error log metadata are preserved.
 - Scheduled tick guard orchestration now lives in
   `server.agents.runtime.AgentTickOrchestrator.runGuardedTick`. BotManager keeps
   `tickCore` and failure handling as temporary hooks, while the Agent

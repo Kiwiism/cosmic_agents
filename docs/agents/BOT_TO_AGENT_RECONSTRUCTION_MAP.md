@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Tick failure escalation and volatile-action cleanup moved from BotManager to
+  `server.agents.runtime.AgentTickFailurePolicy.handleFailure`; BotManager now
+  supplies compatibility hooks for logging, movement reset, removal, and idle
+  reply side effects.
 - Scheduled tick guard orchestration moved from BotManager to
   `server.agents.runtime.AgentTickOrchestrator.runGuardedTick`; BotManager
   remains the temporary hook provider for `tickCore` and failure handling.

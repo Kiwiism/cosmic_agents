@@ -109,7 +109,6 @@ import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
-import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotPotionStateRuntime;
 import server.agents.integration.AgentBotPqRuntime;
 import server.agents.integration.AgentBotReplyChannelStateRuntime;
@@ -2005,46 +2004,27 @@ public class BotManager {
     }
 
     private void handleBotTickFailure(BotEntry entry, int ownerCharId, int botCharId, Throwable t) {
-        if (entry == null) {
-            log.error("Bot tick failed for missing entry ownerCharId={} botCharId={}", ownerCharId, botCharId, t);
-            return;
-        }
-
-        long now = System.currentTimeMillis();
-        AgentTickFailurePolicy.Decision decision = AgentTickFailurePolicy.recordFailure(entry, now);
-        int failureCount = decision.failureCount();
-
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
-        String botName = bot != null ? bot.getName() : "?";
-        String ownerName = owner != null ? owner.getName() : "?";
-        int mapId = bot != null ? bot.getMapId() : -1;
-
-        clearBotVolatileActions(entry);
-        if (decision.disableAgent()) {
-            log.error("Disabling bot '{}' after {} tick failures within {} ms (owner={}, map={}, grinding={}, following={})",
-                    botName, failureCount, AgentTickFailurePolicy.FAILURE_WINDOW_MS, ownerName, mapId,
-                    AgentBotModeStateRuntime.grinding(entry), AgentBotModeStateRuntime.following(entry), t);
-            removeBotByCharId(botCharId);
-            return;
-        }
-
-        if (decision.forceIdle()) {
-            forceBotIdleAfterTickFailure(entry);
-        }
-
-        log.warn("Bot '{}' tick failed {}/{} (owner={}, map={}, grinding={}, following={})",
-                botName, failureCount, AgentTickFailurePolicy.FAILURE_LIMIT, ownerName, mapId,
-                AgentBotModeStateRuntime.grinding(entry), AgentBotModeStateRuntime.following(entry), t);
-    }
-
-    private static void clearBotVolatileActions(BotEntry entry) {
-        AgentBotPendingActionStateRuntime.clearPendingAction(entry);
-        AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
-        AgentBotGrindTargetStateRuntime.clear(entry);
-        AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
-        AgentBotPatrolStateRuntime.clearPatrolWanderTarget(entry);
-        BotMovementManager.resetEntryStateAfterTeleport(entry);
+        AgentTickFailurePolicy.handleFailure(
+                entry,
+                ownerCharId,
+                botCharId,
+                t,
+                System.currentTimeMillis(),
+                new AgentTickFailurePolicy.FailureHooks(
+                        (leaderCharId, agentCharId, failure) ->
+                                log.error("Bot tick failed for missing entry ownerCharId={} botCharId={}",
+                                        leaderCharId, agentCharId, failure),
+                        (failedEntry, failure) -> BotMovementManager.resetEntryStateAfterTeleport(failedEntry),
+                        failedEntry -> removeBotByCharId(botCharId),
+                        this::forceBotIdleAfterTickFailure,
+                        (context, failure) -> log.error(
+                                "Disabling bot '{}' after {} tick failures within {} ms (owner={}, map={}, grinding={}, following={})",
+                                context.agentName(), context.failureCount(), AgentTickFailurePolicy.FAILURE_WINDOW_MS,
+                                context.leaderName(), context.mapId(), context.grinding(), context.following(), failure),
+                        (context, failure) -> log.warn(
+                                "Bot '{}' tick failed {}/{} (owner={}, map={}, grinding={}, following={})",
+                                context.agentName(), context.failureCount(), AgentTickFailurePolicy.FAILURE_LIMIT,
+                                context.leaderName(), context.mapId(), context.grinding(), context.following(), failure)));
     }
 
     private void forceBotIdleAfterTickFailure(BotEntry entry) {
