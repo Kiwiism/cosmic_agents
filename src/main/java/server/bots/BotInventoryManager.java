@@ -328,31 +328,11 @@ public class BotInventoryManager {
 
         // ── Trade was closed externally ────────────────────────────────────
         if (trade == null) {
-            if (AgentTradeClosedWindowService.handleClosedTrade(
+            AgentTradeClosedWindowService.handleClosedTrade(
                     entry,
                     () -> BotMovementManager.delayAfterCurrentTick(1_000),
                     () -> resetTradeState(entry, bot),
-                    () -> BotEquipManager.autoEquip(bot, AgentBotRuntimeIdentityRuntime.owner(entry), null))) {
-                return;
-            }
-            if (AgentBotPendingTradeStateRuntime.botDone(entry)) {
-                // Both sides confirmed — sequence complete or cancelled after bot OK
-                if (AgentBotPendingTradeStateRuntime.singleBatch(entry)) {
-                    resetTradeState(entry, bot);
-                    BotEquipManager.autoEquip(bot, AgentBotRuntimeIdentityRuntime.owner(entry), null);
-                    return;
-                }
-                AgentTradeStateService.enterBetweenBatches(entry, BotMovementManager.delayAfterCurrentTick(1_000));
-            } else if (AgentBotPendingTradeStateRuntime.allItemsAdded(entry)) {
-                // Owner cancelled after items were added (items returned to bot)
-                AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeCancelledReply());
-                resetTradeState(entry, bot);
-                BotEquipManager.autoEquip(bot, AgentBotRuntimeIdentityRuntime.owner(entry), null);
-            } else {
-                // Owner declined invite
-                AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeDeclinedReply());
-                resetTradeState(entry, bot);
-            }
+                    () -> BotEquipManager.autoEquip(bot, AgentBotRuntimeIdentityRuntime.owner(entry), null));
             return;
         }
 

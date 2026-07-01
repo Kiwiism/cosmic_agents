@@ -2125,6 +2125,10 @@ Recent reconstruction notes:
   `AgentTradeBetweenBatchService`; `BotInventoryManager.tickTrade` still
   supplies temporary collection, category-advance, reset, and open-batch
   callbacks while preserving the same batching behavior.
+- The bypassed BotInventoryManager closed-window fallback body was removed;
+  the `trade == null` branch now delegates directly to
+  `AgentTradeClosedWindowService`, which already owns all completion,
+  cancellation, decline, reset, and refill decisions for that branch.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and
