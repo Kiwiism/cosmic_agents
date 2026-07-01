@@ -22,6 +22,7 @@ import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentFormationService;
+import server.agents.runtime.AgentTargetSnapshot;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentTickFailurePolicy;
 import server.agents.runtime.AgentTickOrchestrator;
@@ -206,27 +207,6 @@ public class BotManager {
     // portal in the return map; later bots warp to a randomized nearby offset.
     // Cleared when the owner becomes active again.
     private final Map<Integer, Point> townClusterAnchors = new ConcurrentHashMap<>();
-    public record TargetSnapshot(AgentFormationService.FormationState formation,
-                                 Point rawOwnerPos,
-                                 Point followAnchorPos,
-                                 String followAnchorName,
-                                 Point followBasePos,
-                                 Point followTargetPos,
-                                 Point moveTargetPos,
-                                 Point farmAnchorPos,
-                                 Point grindTargetPos,
-                                 Point primaryTargetPos,
-                                 String primaryTargetSource) {
-        public Point steeringTargetPos(BotEntry entry) {
-            Point navTargetPos = AgentBotNavigationDebugStateRuntime.navTargetPosition(entry);
-            return navTargetPos != null ? navTargetPos : new Point(primaryTargetPos);
-        }
-
-        public String steeringTargetSource(BotEntry entry) {
-            return AgentBotNavigationDebugStateRuntime.hasNavTargetPosition(entry) ? "nav-waypoint" : primaryTargetSource;
-        }
-    }
-
     private record LocalOpportunityAttackResult(boolean consumedTick, Point targetPos) {}
 
     private static final Pattern DISMISS_PATTERN = Pattern.compile(
@@ -1296,7 +1276,7 @@ public class BotManager {
         return AgentFormationService.defaultStagger(cfg.FOLLOW_STAGGER, BotMovementManager.cfg.FOLLOW_Y_CAP);
     }
 
-    public TargetSnapshot captureTargetSnapshot(BotEntry entry) {
+    public AgentTargetSnapshot captureTargetSnapshot(BotEntry entry) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         Character followAnchor = resolveFollowAnchor(entry, owner);
@@ -1339,7 +1319,7 @@ public class BotManager {
             primaryTargetPos = rawOwnerPos;
             primaryTargetSource = "owner-raw";
         }
-        return new TargetSnapshot(
+        return new AgentTargetSnapshot(
                 formation,
                 new Point(rawOwnerPos),
                 new Point(rawFollowAnchorPos),
@@ -2066,7 +2046,7 @@ public class BotManager {
 
         Point botPos = bot.getPosition();
         Character followAnchor = resolveFollowAnchor(entry, owner);
-        TargetSnapshot targetSnapshot = captureTargetSnapshot(entry);
+        AgentTargetSnapshot targetSnapshot = captureTargetSnapshot(entry);
         Point ownerPos = targetSnapshot.rawOwnerPos();
         updateObservedOwnerMotion(entry, ownerPos);
         AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, ownerPos); // raw owner pos before formation offset/snap
@@ -2691,7 +2671,7 @@ public class BotManager {
 
     private static void clearFollowActionMoveWindowIfSettled(BotEntry entry,
                                                              Point botPos,
-                                                             TargetSnapshot targetSnapshot) {
+                                                             AgentTargetSnapshot targetSnapshot) {
         if (entry == null || !AgentBotModeStateRuntime.following(entry) || targetSnapshot == null) {
             return;
         }
@@ -3588,7 +3568,7 @@ public class BotManager {
         boolean runAiTick = AgentTickOrchestrator.prepareTick(
                 entry, BotMovementManager.cfg.TICK_MS, cfg.AI_TICK_MS, tickAtMs);
 
-        TargetSnapshot targetSnapshot = captureTargetSnapshot(entry);
+        AgentTargetSnapshot targetSnapshot = captureTargetSnapshot(entry);
         Point ownerPos = targetSnapshot.rawOwnerPos();
         updateObservedOwnerMotion(entry, ownerPos);
         AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, ownerPos);

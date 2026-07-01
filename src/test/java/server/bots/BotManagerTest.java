@@ -20,6 +20,7 @@ import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
 import server.agents.integration.AgentBotCombatAttackRuntime;
 import server.agents.integration.AgentBotCombatPlanRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
+import server.agents.runtime.AgentTargetSnapshot;
 import client.Character;
 import client.BuffStat;
 import client.inventory.Inventory;
@@ -1002,7 +1003,7 @@ class BotManagerTest {
         entry.shopNpcPos = new Point(900, 100);
         entry.shopTargetPos = new Point(850, 100);
 
-        BotManager.TargetSnapshot snapshot = BotManager.getInstance().captureTargetSnapshot(entry);
+        AgentTargetSnapshot snapshot = BotManager.getInstance().captureTargetSnapshot(entry);
 
         assertEquals(new Point(850, 100), snapshot.primaryTargetPos());
         assertEquals("shop-target", snapshot.primaryTargetSource());
@@ -1024,7 +1025,7 @@ class BotManagerTest {
         assertFalse(AgentBotModeStateRuntime.following(entry));
         assertTrue(AgentBotModeStateRuntime.grinding(entry));
 
-        BotManager.TargetSnapshot snapshot = BotManager.getInstance().captureTargetSnapshot(entry);
+        AgentTargetSnapshot snapshot = BotManager.getInstance().captureTargetSnapshot(entry);
         assertEquals(new Point(300, 100), snapshot.primaryTargetPos());
         assertEquals("move-target", snapshot.primaryTargetSource());
     }
@@ -1037,7 +1038,7 @@ class BotManagerTest {
         BotEntry entry = new BotEntry(bot, owner, null);
         AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(300, 100), map.getId());
 
-        BotManager.TargetSnapshot snapshot = BotManager.getInstance().captureTargetSnapshot(entry);
+        AgentTargetSnapshot snapshot = BotManager.getInstance().captureTargetSnapshot(entry);
 
         assertEquals(new Point(300, 100), snapshot.primaryTargetPos());
         assertEquals("farm-anchor", snapshot.primaryTargetSource());

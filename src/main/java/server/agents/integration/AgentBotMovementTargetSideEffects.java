@@ -1,14 +1,15 @@
 package server.agents.integration;
 
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
+import server.agents.runtime.AgentTargetSnapshot;
 import server.bots.BotEntry;
 import server.bots.BotManager;
 
 import java.awt.Point;
 
 /**
- * Temporary bot-side gateway for TargetSnapshot reads while BotManager owns
- * target resolution.
+ * Temporary bot-side gateway for AgentTargetSnapshot reads while BotManager
+ * still assembles target resolution.
  */
 public final class AgentBotMovementTargetSideEffects {
     private AgentBotMovementTargetSideEffects() {
@@ -19,11 +20,11 @@ public final class AgentBotMovementTargetSideEffects {
     }
 
     public static AgentMovementTargetSnapshot captureTargetSnapshot(BotEntry entry, Point rawTargetPos) {
-        BotManager.TargetSnapshot snapshot = BotManager.getInstance().captureTargetSnapshot(entry);
+        AgentTargetSnapshot snapshot = BotManager.getInstance().captureTargetSnapshot(entry);
         if (rawTargetPos == null || rawTargetPos.equals(snapshot.primaryTargetPos())) {
             return from(entry, snapshot);
         }
-        return from(entry, new BotManager.TargetSnapshot(
+        return from(entry, new AgentTargetSnapshot(
                 snapshot.formation(),
                 snapshot.rawOwnerPos(),
                 snapshot.followAnchorPos(),
@@ -37,7 +38,7 @@ public final class AgentBotMovementTargetSideEffects {
                 "nav-input"));
     }
 
-    public static AgentMovementTargetSnapshot from(BotEntry entry, BotManager.TargetSnapshot snapshot) {
+    public static AgentMovementTargetSnapshot from(BotEntry entry, AgentTargetSnapshot snapshot) {
         return new AgentMovementTargetSnapshot(
                 snapshot.formation().type().name(),
                 snapshot.formation().px(),

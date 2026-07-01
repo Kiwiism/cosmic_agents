@@ -5,6 +5,7 @@ import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotMovementTargetSideEffects;
 import server.agents.runtime.AgentFormationService;
+import server.agents.runtime.AgentTargetSnapshot;
 
 import java.awt.Point;
 
@@ -67,9 +68,9 @@ class AgentBotMovementTargetRuntimeTest {
     }
 
     @Test
-    void conversionFromBotTargetSnapshotPreservesFields() {
+    void conversionFromAgentTargetSnapshotPreservesFields() {
         BotEntry entry = new BotEntry(null, null, null);
-        BotManager.TargetSnapshot targetSnapshot = new BotManager.TargetSnapshot(
+        AgentTargetSnapshot targetSnapshot = new AgentTargetSnapshot(
                 new AgentFormationService.FormationState(AgentFormationService.FormationType.SPREAD, 70, 140),
                 new Point(10, 20),
                 new Point(11, 21),
@@ -106,7 +107,7 @@ class AgentBotMovementTargetRuntimeTest {
         BotEntry entry = new BotEntry(null, null, null);
         Point navTargetPos = new Point(90, 91);
         AgentBotNavigationDebugStateRuntime.setNavTargetPosition(entry, navTargetPos);
-        BotManager.TargetSnapshot targetSnapshot = new BotManager.TargetSnapshot(
+        AgentTargetSnapshot targetSnapshot = new AgentTargetSnapshot(
                 new AgentFormationService.FormationState(AgentFormationService.FormationType.STACK, 0, 120),
                 new Point(1, 1),
                 new Point(2, 2),
@@ -130,7 +131,7 @@ class AgentBotMovementTargetRuntimeTest {
     @Test
     void conversionCanOverridePrimaryTargetForNavigationInput() {
         BotEntry entry = new BotEntry(null, null, null);
-        BotManager.TargetSnapshot targetSnapshot = new BotManager.TargetSnapshot(
+        AgentTargetSnapshot targetSnapshot = new AgentTargetSnapshot(
                 new AgentFormationService.FormationState(AgentFormationService.FormationType.STACK, 0, 120),
                 new Point(1, 1),
                 new Point(2, 2),
@@ -144,7 +145,7 @@ class AgentBotMovementTargetRuntimeTest {
                 "follow-target");
         Point rawTarget = new Point(60, 61);
 
-        AgentMovementTargetSnapshot snapshot = AgentBotMovementTargetSideEffects.from(entry, new BotManager.TargetSnapshot(
+        AgentMovementTargetSnapshot snapshot = AgentBotMovementTargetSideEffects.from(entry, new AgentTargetSnapshot(
                 targetSnapshot.formation(),
                 targetSnapshot.rawOwnerPos(),
                 targetSnapshot.followAnchorPos(),
