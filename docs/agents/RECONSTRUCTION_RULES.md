@@ -2567,6 +2567,9 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentActionLockPhysicsService`; BotManager still
   supplies temporary swim-map and movement physics callbacks, preserving the
   legacy climbing-airborne branch behavior.
+- Dead-state tick handling now lives in
+  `server.agents.runtime.AgentDeathTickService`; BotManager still supplies the
+  temporary combat death-state entry and respawn side-effect callbacks.
 
 Initial reconstruction order:
 

@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- BotManager dead-state tick handling moved to
+  `server.agents.runtime.AgentDeathTickService`; BotManager only supplies
+  temporary combat death-entry and respawn callbacks.
 - BotManager attack-lock physics dispatch moved to
   `server.agents.runtime.AgentActionLockPhysicsService`; BotManager only
   supplies temporary swim-map and movement physics callbacks.

@@ -20,6 +20,7 @@ import server.agents.capabilities.combat.AgentProjectileHitbox;
 import server.agents.capabilities.dialogue.AgentEmote;
 
 import server.agents.runtime.AgentActionLockPhysicsService;
+import server.agents.runtime.AgentDeathTickService;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentFollowAnchorService;
@@ -3217,16 +3218,13 @@ public class BotManager {
     }
 
     private boolean handleDeadTick(BotEntry entry, Character bot, Character owner) {
-        if (AgentBotDeathStateRuntime.shouldEnterDeadState(entry, bot.getHp())) {
-            AgentBotCombatDeathRuntime.enterDeadState(entry, bot, false, AgentCombatConfig.cfg);
-        }
-        if (!AgentBotDeathStateRuntime.isDead(entry)) {
-            return false;
-        }
-        if (AgentBotDeathStateRuntime.isRespawnDue(entry, System.currentTimeMillis())) {
-            respawnBot(entry, bot, owner);
-        }
-        return true;
+        return AgentDeathTickService.handleDeadTick(
+                entry,
+                bot,
+                () -> AgentBotDeathStateRuntime.shouldEnterDeadState(entry, bot.getHp()),
+                (deadEntry, deadBot) -> AgentBotCombatDeathRuntime.enterDeadState(deadEntry, deadBot, false, AgentCombatConfig.cfg),
+                () -> respawnBot(entry, bot, owner),
+                System.currentTimeMillis());
     }
 
     private boolean runCommonTickSystems(BotEntry entry, Character bot, Character owner, boolean runAiTick) {
