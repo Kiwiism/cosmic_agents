@@ -31,6 +31,7 @@ import server.agents.integration.AgentBotShopRuntime;
 import server.agents.integration.AgentBotShopShortfallReason;
 import server.agents.integration.AgentBotShopStateRuntime;
 import server.agents.integration.AgentBotCombatAmmoCheckRuntime;
+import server.agents.runtime.AgentRandom;
 import server.Shop;
 import server.ShopFactory;
 import server.ShopItem;
@@ -148,7 +149,7 @@ public final class AgentShopService {
                 entry,
                 match.npcPos,
                 pickShopApproachPoint(match.npcPos, entry, bot),
-                (int) BotManager.randMs(0, SHOP_APPROACH_DELAY_MAX_MS),
+                (int) AgentRandom.randMs(0, SHOP_APPROACH_DELAY_MAX_MS),
                 System.currentTimeMillis());
     }
 

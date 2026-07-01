@@ -35,6 +35,7 @@ import server.agents.runtime.AgentMapEnvironmentService;
 import server.agents.runtime.AgentMapTransitionService;
 import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentPositionService;
+import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentReturnScrollService;
 import server.agents.runtime.AgentScriptTaskCompletionService;
 import server.agents.runtime.AgentScriptTaskQueueService;
@@ -348,7 +349,7 @@ public class BotManager {
 
     /** Uniform random delay in [lo, hi) ms — use wherever a fixed delay would feel robotic. */
     public static long randMs(int lo, int hi) {
-        return lo + ThreadLocalRandom.current().nextInt(hi - lo);
+        return AgentRandom.randMs(lo, hi);
     }
 
     // -------------------------------------------------------------------------

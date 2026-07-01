@@ -157,6 +157,10 @@ Recent reconstruction notes:
 - Random dialogue selection now lives in `AgentDialogueSelector`; BotManager's
   `randomReply` is a compatibility delegate and Agent capability/runtime modules
   no longer call it directly.
+- Random delay selection now lives in `AgentRandom`; BotManager's `randMs`
+  remains a compatibility delegate, and Agent fidget/shop timing uses the
+  Agent-owned helper while preserving the same lower-inclusive, upper-exclusive
+  delay behavior.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

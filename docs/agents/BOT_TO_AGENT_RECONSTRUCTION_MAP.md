@@ -144,6 +144,9 @@ Recent map updates:
 - Random dialogue selection moved to
   `server.agents.capabilities.dialogue.AgentDialogueSelector`; Agent runtime and
   capability modules no longer depend on BotManager for `randomReply`.
+- Random delay selection moved to `server.agents.runtime.AgentRandom`;
+  BotManager remains a compatibility delegate for legacy callers, while Agent
+  fidget/shop timing no longer asks BotManager for random delay values.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.

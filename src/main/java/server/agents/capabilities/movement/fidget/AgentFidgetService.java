@@ -13,8 +13,8 @@ import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
+import server.agents.runtime.AgentRandom;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 import server.bots.BotMovementManager;
 import server.bots.BotPhysicsEngine;
 import server.maps.Foothold;
@@ -124,8 +124,8 @@ public final class AgentFidgetService {
                 spamAirSteer,
                 randomActionBaseDelayMs(mode, spamAirSteer),
                 bot == null ? null : new Point(bot.getPosition()),
-                now + BotManager.randMs(500, 1200),
-                now + BotManager.randMs(4000, 8000));
+                now + AgentRandom.randMs(500, 1200),
+                now + AgentRandom.randMs(4000, 8000));
     }
 
     public static boolean maybeStartGreetingFidget(BotEntry entry, int roll) {
@@ -150,7 +150,7 @@ public final class AgentFidgetService {
             return false;
         }
 
-        startRandomFidget(entry, System.currentTimeMillis(), (int) BotManager.randMs(2000, 5000), AgentFidgetTrigger.SOCIAL);
+        startRandomFidget(entry, System.currentTimeMillis(), (int) AgentRandom.randMs(2000, 5000), AgentFidgetTrigger.SOCIAL);
         return true;
     }
 
@@ -203,19 +203,19 @@ public final class AgentFidgetService {
             return;
         }
         if (AgentBotFidgetStateRuntime.idleRollNotScheduled(entry)) {
-            AgentBotFidgetStateRuntime.setNextIdleRollAtMs(entry, now + BotManager.randMs(30_000, 60_000));
+            AgentBotFidgetStateRuntime.setNextIdleRollAtMs(entry, now + AgentRandom.randMs(30_000, 60_000));
             return;
         }
         if (!AgentBotFidgetStateRuntime.idleRollDue(entry, now)) {
             return;
         }
 
-        AgentBotFidgetStateRuntime.setNextIdleRollAtMs(entry, now + BotManager.randMs(30_000, 60_000));
+        AgentBotFidgetStateRuntime.setNextIdleRollAtMs(entry, now + AgentRandom.randMs(30_000, 60_000));
         if (ThreadLocalRandom.current().nextInt(100) >= 20) {
             return;
         }
 
-        startRandomFidget(entry, now, (int) BotManager.randMs(2000, 10_000), AgentFidgetTrigger.IDLE);
+        startRandomFidget(entry, now, (int) AgentRandom.randMs(2000, 10_000), AgentFidgetTrigger.IDLE);
     }
 
     private static void maybeStartSpeedMismatchFidget(BotEntry entry, Point botPos, Point targetPos, long now, boolean runAiTick) {
@@ -226,12 +226,12 @@ public final class AgentFidgetService {
             return;
         }
 
-        AgentBotFidgetStateRuntime.setNextFidgetAtMs(entry, now + BotManager.randMs(1500, 3000));
+        AgentBotFidgetStateRuntime.setNextFidgetAtMs(entry, now + AgentRandom.randMs(1500, 3000));
         if (ThreadLocalRandom.current().nextInt(100) >= 35) {
             return;
         }
 
-        startRandomFidget(entry, now, (int) BotManager.randMs(2000, 4500), AgentFidgetTrigger.AUTO_FOLLOW);
+        startRandomFidget(entry, now, (int) AgentRandom.randMs(2000, 4500), AgentFidgetTrigger.AUTO_FOLLOW);
     }
 
     public static boolean shouldStartSpeedMismatchFidget(BotEntry entry, Point botPos, Point targetPos) {
@@ -325,7 +325,7 @@ public final class AgentFidgetService {
                         BotPhysicsEngine.proneOnGround(entry, bot);
                     }
                     BotMovementManager.broadcastMovement(entry);
-                    AgentBotFidgetStateRuntime.setNextActionAtMs(entry, now + BotManager.randMs(120, 350));
+                    AgentBotFidgetStateRuntime.setNextActionAtMs(entry, now + AgentRandom.randMs(120, 350));
                 }
                 maybeBroadcastProneAttackVisual(entry, now);
                 yield true;
@@ -380,7 +380,7 @@ public final class AgentFidgetService {
         }
 
         BotMovementManager.initiateJump(entry, bot, jumpDx);
-        AgentBotFidgetStateRuntime.setNextJumpAtMs(entry, now + BotManager.randMs(200, 400));
+        AgentBotFidgetStateRuntime.setNextJumpAtMs(entry, now + AgentRandom.randMs(200, 400));
     }
 
     private static int nextDiagonalJumpDir(BotEntry entry, Character bot, Point botPos) {
@@ -478,7 +478,7 @@ public final class AgentFidgetService {
             return;
         }
 
-        AgentBotFidgetStateRuntime.setNextVisualAtMs(entry, now + BotManager.randMs(700, 1600));
+        AgentBotFidgetStateRuntime.setNextVisualAtMs(entry, now + AgentRandom.randMs(700, 1600));
         if (ThreadLocalRandom.current().nextInt(100) >= 35) {
             return;
         }
