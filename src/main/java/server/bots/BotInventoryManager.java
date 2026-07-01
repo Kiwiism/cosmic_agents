@@ -360,7 +360,7 @@ public class BotInventoryManager {
 
         // ── WAITING FOR OWNER TO CLICK OK ─────────────────────────────────
         if (!AgentBotPendingTradeStateRuntime.botDone(entry)) {
-            if (AgentTradeConfirmWaitService.tickWaitingForConfirmation(
+            AgentTradeConfirmWaitService.tickWaitingForConfirmation(
                     entry,
                     bot,
                     trade,
@@ -368,21 +368,7 @@ public class BotInventoryManager {
                     () -> AgentTradeRecipientService.resolveTradeRecipient(entry, bot),
                     recipient -> recipient.getClient() instanceof client.BotClient,
                     () -> completeTradeAndThank(entry, bot, trade),
-                    () -> resetTradeState(entry, bot))) {
-                return;
-            }
-            AgentBotPendingTradeStateRuntime.addTimerMs(entry, BotMovementManager.cfg.TICK_MS);
-            Character recipient = AgentTradeRecipientService.resolveTradeRecipient(entry, bot);
-            boolean recipientIsBot = recipient != null && recipient.getClient() instanceof client.BotClient;
-            if (recipientIsBot || trade.isPartnerConfirmed()) {
-                completeTradeAndThank(entry, bot, trade);
-                AgentBotPendingTradeStateRuntime.markBotDone(entry);
-                AgentBotPendingTradeStateRuntime.clearTimer(entry);
-            } else if (AgentBotPendingTradeStateRuntime.timerMs(entry) > 60_000) { // 60 s timeout
-                AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeConfirmTimeoutReply());
-                Trade.cancelTrade(bot, Trade.TradeResult.NO_RESPONSE);
-                resetTradeState(entry, bot);
-            }
+                    () -> resetTradeState(entry, bot));
         }
         // pendingTradeBotDone=true: wait for bot.getTrade() to become null (handled above)
     }

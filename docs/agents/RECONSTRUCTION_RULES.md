@@ -2133,6 +2133,10 @@ Recent reconstruction notes:
   `BotInventoryManager.tickTrade` supplies the same delay/reply/cancel
   callbacks while the Agent service orders timer, meso, all-done, category
   announcement, and add-next-item behavior.
+- The bypassed BotInventoryManager owner-confirm fallback body was removed;
+  the confirmation branch now delegates directly to
+  `AgentTradeConfirmWaitService`, which already owns completion, timeout,
+  cancellation, and bot-recipient confirmation behavior.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and
