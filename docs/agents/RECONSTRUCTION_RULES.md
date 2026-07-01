@@ -145,6 +145,9 @@ Recent reconstruction notes:
 - Swim-map classification now lives in `AgentMapEnvironmentService`; BotManager
   movement, idle-physics, and action-lock paths call the Agent runtime helper
   while preserving the same null-map and `MapleMap.isSwim()` behavior.
+- Grind-loot retry suppression now uses
+  `AgentBotGrindLootStateRuntime::isRetrySuppressed` directly; BotManager no
+  longer owns the pass-through predicate used by Agent loot targeting.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

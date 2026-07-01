@@ -132,6 +132,9 @@ Recent map updates:
 - BotManager swim-map helper moved to
   `server.agents.runtime.AgentMapEnvironmentService`; BotManager no longer owns
   that map-environment predicate for movement/tick physics routing.
+- BotManager grind-loot retry suppression predicate was removed; Agent loot
+  targeting now consumes `AgentBotGrindLootStateRuntime::isRetrySuppressed`
+  directly.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.

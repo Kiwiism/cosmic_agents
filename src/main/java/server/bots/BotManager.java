@@ -1821,10 +1821,6 @@ public class BotManager {
                 System.currentTimeMillis() + cfg.GRIND_LOOT_RETRY_SUPPRESS_MS);
     }
 
-    static boolean isGrindLootRetrySuppressed(BotEntry entry, MapItem loot, long now) {
-        return AgentBotGrindLootStateRuntime.isRetrySuppressed(entry, loot, now);
-    }
-
     static double activeLootTravelDistSq(Point botPos, Point lootPos) {
         if (botPos == null || lootPos == null) {
             return Double.MAX_VALUE;
@@ -2215,7 +2211,7 @@ public class BotManager {
                     entry,
                     bot,
                     BotManager.cfg.LOOT_RADIUS,
-                    BotManager::isGrindLootRetrySuppressed));
+                    AgentBotGrindLootStateRuntime::isRetrySuppressed));
         }
         if (target == null) {
             AgentBotGrindTargetStateRuntime.clear(entry);
