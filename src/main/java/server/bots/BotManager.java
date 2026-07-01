@@ -2643,27 +2643,11 @@ public class BotManager {
         boolean inactive = (owner == null) || (owner.getHp() <= 0);
 
         if (!inactive) {
-            if (AgentBotActivityStateRuntime.ownerAwaySafeMode(entry)
-                    && !AgentBotActivityStateRuntime.ownerInactiveTimerStarted(entry)) {
-                return false;
-            }
-            if (AgentBotActivityStateRuntime.ownerInactiveTimerStarted(entry)
-                    || AgentBotActivityStateRuntime.ownerReturnedToTown(entry)) {
-                boolean justReturnedFromTown = AgentBotActivityStateRuntime.ownerReturnedToTown(entry);
-                AgentBotActivityStateRuntime.clearOwnerInactiveState(entry);
-                // Cancel any in-flight cluster walk: while owner was offline the
-                // only setter of moveTarget was the offline-town path, so clearing
-                // here is safe and avoids stale state when owner reconnects.
-                AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
-                // Race-safe single-representative wb: each bot tries to remove the
-                // group's anchor entry; only the winner (first to observe owner
-                // active) speaks. Other bots find the anchor already cleared and
-                // skip the announcement, so the party sees one wb line, not N.
-                Point removedAnchor = townClusterAnchors.remove(ownerCharId);
-                if (justReturnedFromTown && removedAnchor != null) {
-                    AgentBotManagerStatusRuntime.announceOwnerReturnedFromOffline(entry);
-                }
-            }
+            AgentLeaderSafetyService.handleActiveLeaderReturn(
+                    entry,
+                    () -> AgentBotMoveTargetStateRuntime.clearMoveTarget(entry),
+                    () -> townClusterAnchors.remove(ownerCharId),
+                    () -> AgentBotManagerStatusRuntime.announceOwnerReturnedFromOffline(entry));
             return false;
         }
 

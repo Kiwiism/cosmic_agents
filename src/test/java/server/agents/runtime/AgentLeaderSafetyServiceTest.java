@@ -15,6 +15,7 @@ import server.maps.MapleMap;
 import java.awt.Point;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -93,6 +94,50 @@ class AgentLeaderSafetyServiceTest {
         assertTrue(AgentBotActivityStateRuntime.ownerAwaySafeMode(entry));
     }
 
+    @Test
+    void activeLeaderReturnDoesNothingForAwaySafeModeWithoutTimer() {
+        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentBotActivityStateRuntime.setOwnerAwaySafeMode(entry, true);
+        Counters counters = new Counters();
+
+        AgentLeaderSafetyService.handleActiveLeaderReturn(
+                entry, () -> clearMoveTarget(entry, counters), counters::removeAnchor, counters::announce);
+
+        counters.assertCounts(0, 0, 0);
+        assertTrue(AgentBotActivityStateRuntime.ownerAwaySafeMode(entry));
+    }
+
+    @Test
+    void activeLeaderReturnClearsTimerAndMoveTargetWithoutAnnouncementWhenNotReturnedToTown() {
+        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentBotActivityStateRuntime.startOwnerInactiveTimer(entry, 1_000L);
+        AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(10, 20), true);
+        Counters counters = new Counters();
+
+        AgentLeaderSafetyService.handleActiveLeaderReturn(
+                entry, () -> clearMoveTarget(entry, counters), counters::removeAnchor, counters::announce);
+
+        counters.assertCounts(1, 1, 0);
+        assertFalse(AgentBotActivityStateRuntime.ownerInactiveTimerStarted(entry));
+        assertFalse(AgentBotMoveTargetStateRuntime.hasMoveTarget(entry));
+    }
+
+    @Test
+    void activeLeaderReturnAnnouncesOnlyWhenReturnedToTownAnchorWasRemoved() {
+        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentBotActivityStateRuntime.setOwnerReturnedToTown(entry, true);
+        AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(10, 20), true);
+        Counters counters = new Counters();
+        counters.anchor.set(new Point(50, 60));
+
+        AgentLeaderSafetyService.handleActiveLeaderReturn(
+                entry, () -> clearMoveTarget(entry, counters), counters::removeAnchor, counters::announce);
+
+        counters.assertCounts(1, 1, 1);
+        assertFalse(AgentBotActivityStateRuntime.ownerReturnedToTown(entry));
+        assertFalse(AgentBotMoveTargetStateRuntime.hasMoveTarget(entry));
+    }
+
     private static MapleMap map(int id, MapleMap returnMap, Monster... monsters) {
         MapleMap map = mock(MapleMap.class);
         when(map.getId()).thenReturn(id);
@@ -111,5 +156,36 @@ class AgentLeaderSafetyServiceTest {
         Monster monster = mock(Monster.class);
         when(monster.isAlive()).thenReturn(false);
         return monster;
+    }
+
+    private static void clearMoveTarget(BotEntry entry, Counters counters) {
+        counters.clearMoveTarget();
+        AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
+    }
+
+    private static final class Counters {
+        private final AtomicInteger moveTargetClears = new AtomicInteger();
+        private final AtomicInteger anchorRemoves = new AtomicInteger();
+        private final AtomicInteger announcements = new AtomicInteger();
+        private final AtomicReference<Point> anchor = new AtomicReference<>();
+
+        private void clearMoveTarget() {
+            moveTargetClears.incrementAndGet();
+        }
+
+        private Point removeAnchor() {
+            anchorRemoves.incrementAndGet();
+            return anchor.getAndSet(null);
+        }
+
+        private void announce() {
+            announcements.incrementAndGet();
+        }
+
+        private void assertCounts(int expectedMoveTargetClears, int expectedAnchorRemoves, int expectedAnnouncements) {
+            assertEquals(expectedMoveTargetClears, moveTargetClears.get());
+            assertEquals(expectedAnchorRemoves, anchorRemoves.get());
+            assertEquals(expectedAnnouncements, announcements.get());
+        }
     }
 }

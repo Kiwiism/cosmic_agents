@@ -26,6 +26,11 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentLeaderSafetyService`. The reset order and state
   effects are unchanged: script tasks, shop visit, mode, move target, grind
   target, degenerate attack, buff consumables, and away-safe-mode state.
+- BotManager active-leader return cleanup now delegates to
+  `server.agents.runtime.AgentLeaderSafetyService`. The away-safe no-op,
+  inactive-state clear, move-target clear, and single welcome-back announcement
+  rule are unchanged; BotManager still owns the temporary town-anchor map and
+  visible announcement callback.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

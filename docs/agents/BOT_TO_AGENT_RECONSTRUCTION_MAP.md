@@ -20,6 +20,10 @@ Recent map updates:
   `server.agents.runtime.AgentLeaderSafetyService`; BotManager only supplies
   temporary callbacks for script-task clearing, shop cancellation, and mode
   clearing.
+- BotManager active-leader return cleanup and single-representative welcome-back
+  rule moved to `server.agents.runtime.AgentLeaderSafetyService`; BotManager
+  only supplies temporary callbacks for move-target clearing, town-cluster anchor
+  removal, and party-visible return announcement.
 - BotManager script task completion rules moved to
   `server.agents.runtime.AgentScriptTaskCompletionService`; BotManager only
   supplies temporary follow-target resolution and movement distance config.

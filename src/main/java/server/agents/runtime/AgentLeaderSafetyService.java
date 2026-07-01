@@ -9,6 +9,9 @@ import server.bots.BotEntry;
 import server.maps.MapleMap;
 import server.life.Monster;
 
+import java.awt.Point;
+import java.util.function.Supplier;
+
 public final class AgentLeaderSafetyService {
     private AgentLeaderSafetyService() {
     }
@@ -39,5 +42,27 @@ public final class AgentLeaderSafetyService {
         AgentBotDegenerateAttackStateRuntime.clear(entry);
         AgentBotBuffStateRuntime.disable(entry);
         AgentBotActivityStateRuntime.setOwnerAwaySafeMode(entry, true);
+    }
+
+    public static void handleActiveLeaderReturn(BotEntry entry,
+                                                Runnable clearMoveTarget,
+                                                Supplier<Point> removeTownClusterAnchor,
+                                                Runnable announceReturnedFromTown) {
+        if (AgentBotActivityStateRuntime.ownerAwaySafeMode(entry)
+                && !AgentBotActivityStateRuntime.ownerInactiveTimerStarted(entry)) {
+            return;
+        }
+        if (!AgentBotActivityStateRuntime.ownerInactiveTimerStarted(entry)
+                && !AgentBotActivityStateRuntime.ownerReturnedToTown(entry)) {
+            return;
+        }
+
+        boolean justReturnedFromTown = AgentBotActivityStateRuntime.ownerReturnedToTown(entry);
+        AgentBotActivityStateRuntime.clearOwnerInactiveState(entry);
+        clearMoveTarget.run();
+        Point removedAnchor = removeTownClusterAnchor.get();
+        if (justReturnedFromTown && removedAnchor != null) {
+            announceReturnedFromTown.run();
+        }
     }
 }
