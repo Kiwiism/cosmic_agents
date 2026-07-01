@@ -576,12 +576,10 @@ public class BotInventoryManager {
                 bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry),
                 owner != null && owner.getTrade() != null,
                 bot.getMeso());
-        if (decision.shouldReply()) {
-            AgentBotInventoryRuntime.replyNow(entry, decision.reply());
-            return;
-        }
-
-        startTradeSequence(category, owner, List.of(), decision.mesos(), true, entry, bot);
+        AgentMesoTradeService.routeStart(
+                decision,
+                mesos -> startTradeSequence(category, owner, List.of(), mesos, true, entry, bot),
+                reply -> AgentBotInventoryRuntime.replyNow(entry, reply));
     }
 
     // ─── Item collection helpers ──────────────────────────────────────────────

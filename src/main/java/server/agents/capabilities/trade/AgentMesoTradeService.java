@@ -55,4 +55,13 @@ public final class AgentMesoTradeService {
 
         return MesoTradeStartDecision.startTrade(requestedMesos > 0 ? requestedMesos : currentMesos);
     }
+
+    public static void routeStart(MesoTradeStartDecision decision,
+                                  java.util.function.IntConsumer startTrade,
+                                  java.util.function.Consumer<String> reply) {
+        switch (decision.action()) {
+            case REPLY -> reply.accept(decision.reply());
+            case START_TRADE -> startTrade.accept(decision.mesos());
+        }
+    }
 }

@@ -2109,6 +2109,8 @@ Recent reconstruction notes:
 - Direct item trade reply/retry/start routing now lives in
   `AgentDirectItemTradeService`; `BotInventoryManager` still supplies temporary
   retry scheduling and trade-sequence callbacks.
+- Meso trade reply/start routing now lives in `AgentMesoTradeService`;
+  `BotInventoryManager` still supplies the temporary trade-sequence callback.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and
