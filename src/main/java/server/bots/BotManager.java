@@ -32,6 +32,7 @@ import server.agents.runtime.AgentLeaderSessionService;
 import server.agents.runtime.AgentLeaderSafetyService;
 import server.agents.runtime.AgentMapTransitionService;
 import server.agents.runtime.AgentModeService;
+import server.agents.runtime.AgentPositionService;
 import server.agents.runtime.AgentScriptTaskCompletionService;
 import server.agents.runtime.AgentScriptTaskQueueService;
 import server.agents.runtime.AgentScriptTaskStartService;
@@ -1776,7 +1777,7 @@ public class BotManager {
         AgentNavigationGraph.Region region = graph != null ? graph.getRegion(regionId) : null;
         if (region != null && !region.isRopeRegion && region.width() > 0) {
             Point wander = AgentBotPatrolStateRuntime.patrolWanderTarget(entry);
-            if (wander == null || isNear(botPos, wander, BotMovementManager.cfg.STOP_DIST)) {
+            if (wander == null || AgentPositionService.isNear(botPos, wander, BotMovementManager.cfg.STOP_DIST)) {
                 int x = ThreadLocalRandom.current().nextInt(region.minX, region.maxX + 1);
                 wander = region.pointAt(x);
                 AgentBotPatrolStateRuntime.setPatrolWanderTarget(entry, wander);
@@ -1868,7 +1869,7 @@ public class BotManager {
         }
         // Roam within region
         Point wander = AgentBotPatrolStateRuntime.patrolWanderTarget(entry);
-        if (wander == null || isNear(botPos, wander, BotMovementManager.cfg.STOP_DIST)) {
+        if (wander == null || AgentPositionService.isNear(botPos, wander, BotMovementManager.cfg.STOP_DIST)) {
             int x = ThreadLocalRandom.current().nextInt(region.minX, region.maxX + 1);
             wander = region.pointAt(x);
             AgentBotPatrolStateRuntime.setPatrolWanderTarget(entry, wander);
@@ -2503,7 +2504,7 @@ public class BotManager {
             }
         }
 
-        if (isNear(botPos, anchor, 8) && !AgentBotMovementStateRuntime.inAir(entry) && !AgentBotMovementStateRuntime.climbing(entry)) {
+        if (AgentPositionService.isNear(botPos, anchor, 8) && !AgentBotMovementStateRuntime.inAir(entry) && !AgentBotMovementStateRuntime.climbing(entry)) {
             AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
             BotPhysicsEngine.idleOnGround(entry, bot);
             BotMovementManager.broadcastMovement(entry);
@@ -2953,12 +2954,6 @@ public class BotManager {
 
     private static void clearMode(BotEntry entry) {
         AgentModeService.clearMode(entry);
-    }
-
-    private static boolean isNear(Point source, Point target, int dist) {
-        return source != null && target != null
-                && Math.abs(source.x - target.x) <= dist
-                && Math.abs(source.y - target.y) <= dist;
     }
 
     private void tickScriptTasks(BotEntry entry) {

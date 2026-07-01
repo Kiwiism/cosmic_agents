@@ -66,6 +66,9 @@ Recent map updates:
   `server.agents.runtime.AgentScriptTaskQueueService`; BotManager remains a
   temporary compatibility facade for clear, queue, move, move-then-drop,
   follow-then-drop, and has-queued checks.
+- BotManager local near-distance helper moved to
+  `server.agents.runtime.AgentPositionService`; BotManager movement/combat tick
+  paths now use the Agent-owned geometry helper.
 - BotManager move/farm/patrol/follow/grind/stop command-mode preparation moved to
   `server.agents.runtime.AgentCommandModeService`; BotManager only supplies
   temporary guards and callbacks for script-task clearing, shop cancellation,

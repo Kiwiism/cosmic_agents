@@ -77,6 +77,9 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentScriptTaskQueueService`. Clear-and-bump,
   null-safe queueing, move queueing, move-then-drop, follow-then-drop, and
   queued-task checks are unchanged.
+- BotManager local near-distance checks now delegate to
+  `server.agents.runtime.AgentPositionService`. The null handling and
+  inclusive per-axis distance behavior are unchanged.
 - BotManager move/farm/patrol/follow/grind/stop command-mode preparation now delegates to
   `server.agents.runtime.AgentCommandModeService`. The null-entry skip and
   guard-before-clear, clear-script-tasks, cancel-shop, start-mode order are
