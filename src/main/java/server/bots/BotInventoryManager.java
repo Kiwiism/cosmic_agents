@@ -20,6 +20,7 @@ import server.agents.capabilities.looting.AgentLootCleanupService;
 import server.agents.capabilities.looting.AgentPassiveLootService;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy.AmmoTradeGroups;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
+import server.agents.capabilities.trade.AgentManualTradeCallbackService;
 import server.agents.capabilities.trade.AgentManualOwnerTradeService;
 import server.agents.capabilities.trade.AgentManualPeerTradeService;
 import server.agents.capabilities.trade.AgentManualTradeService;
@@ -85,7 +86,7 @@ public class BotInventoryManager {
         AgentManualTradeTickService.tickManualTrade(
                 bot,
                 owner,
-                AgentManualTradeTickService.ManualTradeTickCallbacks.of(
+                AgentManualTradeCallbackService.manualTradeTickCallbacks(
                         () -> AgentBotPendingTradeStateRuntime.hasActiveSequence(entry),
                         Character::getTrade,
                         agent -> AgentManualTradeService.clearState(entry, agent),
@@ -102,7 +103,7 @@ public class BotInventoryManager {
                                 tradeOwner,
                                 trade,
                                 isOwnerTrade,
-                                AgentManualPeerTradeService.PeerTradeCallbacks.of(
+                                AgentManualTradeCallbackService.peerTradeCallbacks(
                                         peer -> peer.getClient() instanceof client.BotClient,
                                         (peerId, ownerId) -> AgentOwnershipService.getInstance().isAuthorizedOwner(peerId, ownerId),
                                         (inviter, pendingTrade) -> AgentManualTradeService.acceptInviteWhenReady(
@@ -119,7 +120,7 @@ public class BotInventoryManager {
                                 agent,
                                 tradeOwner,
                                 trade,
-                                AgentManualOwnerTradeService.OwnerTradeCallbacks.of(
+                                AgentManualTradeCallbackService.ownerTradeCallbacks(
                                         (inviter, pendingTrade) -> AgentManualTradeService.acceptInviteWhenReady(
                                                 entry,
                                                 agent,

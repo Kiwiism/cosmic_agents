@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- `BotInventoryManager.tickManualTrade` callback construction moved to
+  `server.agents.capabilities.trade.AgentManualTradeCallbackService`. The bot
+  inventory shell still supplies the same temporary active-sequence, timeout,
+  authorization, invite-accept, greeting, completion, and refill hooks while the
+  manual/peer/owner callback objects are Agent-owned.
 - `BotInventoryManager.tickTrade` item-add callback construction moved to
   `server.agents.capabilities.trade.AgentTradeItemAddTickCallbackService`.
   The bot inventory shell still wires the exact legacy insufficient-meso cancel
