@@ -25,6 +25,7 @@ import server.agents.capabilities.trade.AgentManualPeerTradeService;
 import server.agents.capabilities.trade.AgentManualTradeService;
 import server.agents.capabilities.trade.AgentManualTradeTickService;
 import server.agents.capabilities.trade.AgentOfferService;
+import server.agents.capabilities.trade.AgentTradeBetweenBatchCallbackService;
 import server.agents.capabilities.trade.AgentTradeBetweenBatchService;
 import server.agents.capabilities.trade.AgentTradeClosedWindowService;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
@@ -220,7 +221,7 @@ public class BotInventoryManager {
                         bot::getTrade,
                         () -> AgentTradeBetweenBatchService.tickBetweenBatches(
                                 entry,
-                                AgentTradeBetweenBatchService.BetweenBatchCallbacks.of(
+                                AgentTradeBetweenBatchCallbackService.betweenBatchCallbacks(
                                         BotMovementManager::tickDown,
                                         category -> collectItems(category, entry, bot),
                                         category -> nextEquipsGroup(category, entry, bot),

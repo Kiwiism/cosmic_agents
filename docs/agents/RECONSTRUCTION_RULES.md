@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- `BotInventoryManager.tickTrade` between-batch callback construction moved to
+  `server.agents.capabilities.trade.AgentTradeBetweenBatchCallbackService`.
+  The bot inventory shell still supplies temporary item-collection, equip/ammo
+  group selection, open-batch, and reset hooks, but the callback object is now
+  Agent-owned and uses the same countdown and batch-advance behavior.
 - Shop visit and purchase orchestration has moved from
   `server.bots.BotShopManager` to
   `server.agents.capabilities.shop.AgentShopService`. Bot manager and utility
