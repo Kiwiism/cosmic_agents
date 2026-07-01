@@ -5,8 +5,8 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import constants.inventory.ItemConstants;
 import server.agents.integration.AgentBotPqRuntime;
+import server.agents.integration.AgentBotSessionLifecycleSideEffects;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 import server.agents.capabilities.partyquest.AgentPartyQuestHooks;
 import server.maps.MapItem;
 import server.maps.MapleMap;
@@ -76,6 +76,6 @@ public final class AgentLootEligibility {
         int ownerId = drop.getOwnerId();
         return drop.isPlayerDrop()
                 && ownerId > 0
-                && BotManager.getInstance().getActiveOwnerByBotCharId(ownerId) != null;
+                && AgentBotSessionLifecycleSideEffects.activeLeaderByAgentCharacterId(ownerId) != null;
     }
 }

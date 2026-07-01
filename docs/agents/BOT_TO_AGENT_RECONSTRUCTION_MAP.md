@@ -106,6 +106,9 @@ Recent map updates:
 - Ammo-share, potion-share, and sibling gear offer scans now read sibling
   Agents through `AgentBotSessionLifecycleSideEffects.getBotEntries`, removing
   direct BotManager entry-list calls from those capability donor scans.
+- Bot-inventory-drop loot delay detection now reads active Agent ownership via
+  `AgentBotSessionLifecycleSideEffects.activeLeaderByAgentCharacterId`, removing
+  the direct BotManager lookup from `AgentLootEligibility`.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.

@@ -1,5 +1,7 @@
 package server.agents.integration;
 
+import client.Character;
+
 import java.util.List;
 import server.bots.BotEntry;
 import server.bots.BotManager;
@@ -22,5 +24,9 @@ public final class AgentBotSessionLifecycleSideEffects {
 
     public static void issueOwnerAwaySafeModeForLeader(int ownerCharId, boolean town) {
         BotManager.getInstance().issueOwnerAwaySafeModeForOwner(ownerCharId, town);
+    }
+
+    public static Character activeLeaderByAgentCharacterId(int agentCharId) {
+        return BotManager.getInstance().getActiveOwnerByBotCharId(agentCharId);
     }
 }

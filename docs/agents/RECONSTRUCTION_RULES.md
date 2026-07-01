@@ -118,6 +118,9 @@ Recent reconstruction notes:
 - Ammo-share donor selection, potion-share donor selection, and sibling gear
   offer scans now read sibling Agents through the Agent session lifecycle
   gateway; donor scoring, cooldowns, and offer behavior are unchanged.
+- Bot-inventory-drop loot delay detection now asks the Agent session lifecycle
+  gateway whether a drop owner is an active Agent, instead of calling
+  `BotManager.getActiveOwnerByBotCharId` directly.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but
