@@ -36,7 +36,6 @@ import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.capabilities.trade.AgentManualTradeService;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.trade.AgentTradeBetweenBatchService;
-import server.agents.capabilities.trade.AgentTradeBatchService;
 import server.agents.capabilities.trade.AgentTradeCancellationService;
 import server.agents.capabilities.trade.AgentTradeClosedWindowService;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
@@ -46,7 +45,7 @@ import server.agents.capabilities.trade.AgentTradeItemAddTickService;
 import server.agents.capabilities.trade.AgentTradeInviteWaitService;
 import server.agents.capabilities.trade.AgentTradeRecipientService;
 import server.agents.capabilities.trade.AgentTradeResetService;
-import server.agents.capabilities.trade.AgentTradeSequenceService;
+import server.agents.capabilities.trade.AgentTradeSequenceOrchestrator;
 import server.agents.capabilities.trade.AgentTradeStateService;
 import server.agents.capabilities.trade.AgentTradeTickService;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
@@ -276,22 +275,28 @@ public class BotInventoryManager {
                                            boolean singleBatch,
                                            BotEntry entry,
                                            Character bot) {
-        AgentTradeSequenceService.startSequence(
+        AgentTradeSequenceOrchestrator.startTradeSequence(
                 category,
                 recipient,
                 items,
                 mesos,
                 singleBatch,
                 entry,
-                (batchItems, batchMesos) -> openTradeBatch(entry, bot, batchItems, batchMesos));
+                bot,
+                tradeSequenceCallbacks(entry, bot));
     }
 
     private static void openTradeBatch(BotEntry entry, Character bot, List<Item> items, int mesos) {
-        AgentTradeBatchService.openBatch(
+        AgentTradeSequenceOrchestrator.openTradeBatch(
                 entry,
                 bot,
                 items,
                 mesos,
+                tradeSequenceCallbacks(entry, bot));
+    }
+
+    private static AgentTradeSequenceOrchestrator.SequenceCallbacks tradeSequenceCallbacks(BotEntry entry, Character bot) {
+        return AgentTradeSequenceOrchestrator.SequenceCallbacks.of(
                 () -> AgentTradeRecipientService.resolveTradeRecipient(entry, bot),
                 () -> cancelTradeSequence(entry, bot, "can't trade right now, stopping"),
                 () -> Trade.startTrade(bot),
