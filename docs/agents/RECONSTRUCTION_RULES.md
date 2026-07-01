@@ -2173,6 +2173,11 @@ Recent reconstruction notes:
   inventory/trade/equipment services. The private `startTradeSequence`
   compatibility wrapper remains because focused regression tests still exercise
   the legacy invite-once behavior through it.
+- Passive loot tick orchestration now lives in `AgentPassiveLootService`;
+  `BotInventoryManager.tickPassiveLoot` supplies temporary callbacks for loot
+  inhibit, active trade suppression, inventory-full warning cooldowns, owner
+  lookup, pickup side effects, auto-equip, loot-offer prompts, and ghost-drop
+  cleanup.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and

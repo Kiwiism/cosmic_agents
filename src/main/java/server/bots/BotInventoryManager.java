@@ -3,15 +3,9 @@ package server.bots;
 import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 
-import server.agents.capabilities.looting.AgentLootEligibility;
-
 import client.Character;
-import client.inventory.Inventory;
-import client.inventory.InventoryType;
 import client.inventory.Item;
 import config.YamlConfig;
-import constants.id.ItemId;
-import constants.inventory.ItemConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
@@ -26,6 +20,7 @@ import server.agents.capabilities.inventory.AgentInventoryNamedItemService;
 import server.agents.capabilities.inventory.AgentInventoryTradeCollectionService;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.capabilities.looting.AgentLootCleanupService;
+import server.agents.capabilities.looting.AgentPassiveLootService;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy.AmmoTradeGroups;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
@@ -55,9 +50,7 @@ import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.ItemInformationProvider;
 import server.Trade;
-import server.maps.MapItem;
 
-import java.awt.*;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -66,81 +59,27 @@ public class BotInventoryManager {
     private static final long TRADE_COMMAND_PROFILE_WARN_NS = 50_000_000L;
     private static final int MANUAL_TRADE_TIMEOUT_MS = 60_000;
     static void tickPassiveLoot(BotEntry entry, Character bot) {
-        if (AgentBotInventoryStateRuntime.hasLootInhibit(entry)) {
-            AgentBotInventoryStateRuntime.tickLootInhibit(entry, BotMovementManager::tickDown);
-            return;
-        }
-        if (AgentBotPendingTradeStateRuntime.hasActiveSequence(entry)) {
-            return;
-        }
-
-        AgentBotInventoryStateRuntime.tickInventoryFullWarnCooldown(entry, BotMovementManager::tickDown);
-        Point botPos = bot.getPosition();
-        long now = System.currentTimeMillis();
-        for (MapItem drop : bot.getMap().getDroppedItems()) {
-            if (!AgentLootEligibility.isPresent(bot.getMap(), drop)) {
-                AgentLootCleanupService.cleanupGhostDrop(bot, drop);
-                continue;
-            }
-
-            Point dropPos = drop.getPosition();
-            if (Math.abs(dropPos.x - botPos.x) > BotManager.cfg.LOOT_RADIUS
-                    || Math.abs(dropPos.y - botPos.y) > BotManager.cfg.LOOT_RADIUS) {
-                continue;
-            }
-
-            if (!AgentLootEligibility.canBotTargetLoot(entry, bot, bot.getMap(), drop, now)) {
-                if (AgentLootEligibility.canBotLoot(entry, bot, drop)) {
-                    continue;
-                }
-                if (drop.getMeso() <= 0 && drop.getItemId() > 0) {
-                    InventoryType type = ItemConstants.getInventoryType(drop.getItemId());
-                    Inventory inventory = bot.getInventory(type);
-                    if (inventory != null && inventory.isFull() && AgentBotInventoryStateRuntime.canWarnInventoryFull(entry)) {
-                        AgentBotInventoryRuntime.replyNow(entry, type.name().toLowerCase() + " inventory is full!");
-                        AgentBotInventoryStateRuntime.setInventoryFullWarnCooldownMs(
-                                entry,
-                                BotMovementManager.delayAfterCurrentTick(BotManager.cfg.INV_FULL_WARN_CD_MS));
-                    }
-                }
-                continue;
-            }
-
-            if (drop.getMeso() <= 0 && drop.getItemId() > 0) {
-                InventoryType type = ItemConstants.getInventoryType(drop.getItemId());
-                Inventory inventory = bot.getInventory(type);
-                if (inventory != null && inventory.isFull()) {
-                    if (AgentBotInventoryStateRuntime.canWarnInventoryFull(entry)) {
-                        AgentBotInventoryRuntime.replyNow(entry, type.name().toLowerCase() + " inventory is full!");
-                        AgentBotInventoryStateRuntime.setInventoryFullWarnCooldownMs(
-                                entry,
-                                BotMovementManager.delayAfterCurrentTick(BotManager.cfg.INV_FULL_WARN_CD_MS));
-                    }
-                    continue;
-                }
-            }
-
-            Item pickedItem = drop.getItem();
-            int pickedItemId = drop.getItemId();
-            Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
-            if (ItemId.isNxCard(pickedItemId) && owner != null && owner.getMap() == bot.getMap()) {
-                owner.pickupItem(drop);
-            } else {
-                bot.pickupItem(drop);
-            }
-            AgentLootCleanupService.cleanupGhostDrop(bot, drop);
-            if (pickedItem != null && pickedItemId > 0 && AgentInventoryItemPolicy.hasItem(bot, pickedItem)) {
-                InventoryType pickedType = ItemConstants.getInventoryType(pickedItemId);
-                if (pickedType == InventoryType.EQUIP) {
-                    BotEquipManager.autoEquip(bot, owner, AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
-                    if (AgentInventoryItemPolicy.hasItem(bot, pickedItem)) {
-                        AgentOfferService.scheduleLootOfferPrompt(entry, bot, pickedItem, 5_000L);
-                    }
-                } else if (ItemConstants.isThrowingStar(pickedItemId)) {
-                    AgentOfferService.scheduleLootOfferPrompt(entry, bot, pickedItem, 5_000L);
-                }
-            }
-        }
+        AgentPassiveLootService.tickPassiveLoot(
+                entry,
+                bot,
+                AgentPassiveLootService.PassiveLootCallbacks.of(
+                        () -> AgentBotInventoryStateRuntime.hasLootInhibit(entry),
+                        () -> AgentBotInventoryStateRuntime.tickLootInhibit(entry, BotMovementManager::tickDown),
+                        () -> AgentBotPendingTradeStateRuntime.hasActiveSequence(entry),
+                        () -> AgentBotInventoryStateRuntime.tickInventoryFullWarnCooldown(entry, BotMovementManager::tickDown),
+                        System::currentTimeMillis,
+                        () -> BotManager.cfg.LOOT_RADIUS,
+                        () -> AgentBotInventoryStateRuntime.canWarnInventoryFull(entry),
+                        AgentBotInventoryRuntime::replyNow,
+                        () -> BotMovementManager.delayAfterCurrentTick(BotManager.cfg.INV_FULL_WARN_CD_MS),
+                        cooldown -> AgentBotInventoryStateRuntime.setInventoryFullWarnCooldownMs(entry, cooldown),
+                        () -> AgentBotRuntimeIdentityRuntime.owner(entry),
+                        () -> AgentBotOfferStateRuntime.pendingLootOfferItem(entry),
+                        AgentInventoryItemPolicy::hasItem,
+                        BotEquipManager::autoEquip,
+                        AgentOfferService::scheduleLootOfferPrompt,
+                        AgentLootCleanupService::cleanupGhostDrop,
+                        Character::pickupItem));
     }
 
     static void tickManualTrade(BotEntry entry, Character bot) {

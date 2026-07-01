@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotInventoryManager.tickPassiveLoot` passive pickup orchestration now lives
+  in `AgentPassiveLootService`; the bot inventory shell only wires temporary
+  callbacks for runtime state, owner lookup, pickup/auto-equip side effects,
+  offer prompts, inventory-full warnings, and ghost-drop cleanup.
 - Dead `BotInventoryManager` helper bodies for trash-equip collection and
   own-class equip checks were removed; their active callers already route
   through Agent inventory/trade/equipment services. The private
