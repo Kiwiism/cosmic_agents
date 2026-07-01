@@ -2739,12 +2739,12 @@ public class BotManager {
      * detected by the existing clearReachedMoveTarget logic.
      */
     public void issueMoveTo(BotEntry entry, Point dest, boolean precise) {
-        if (entry == null || dest == null) {
-            return;
-        }
-        clearScriptTasks(entry);
-        AgentShopService.cancelShopVisit(entry);
-        startMoveTo(entry, dest, precise);
+        AgentCommandModeService.runPreparedModeCommand(
+                entry,
+                () -> dest != null,
+                () -> clearScriptTasks(entry),
+                () -> AgentShopService.cancelShopVisit(entry),
+                () -> startMoveTo(entry, dest, precise));
     }
 
     private void startMoveTo(BotEntry entry, Point dest, boolean precise) {
@@ -2752,12 +2752,12 @@ public class BotManager {
     }
 
     public void issueFarmHere(BotEntry entry, Point dest) {
-        if (entry == null || dest == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry)) {
-            return;
-        }
-        clearScriptTasks(entry);
-        AgentShopService.cancelShopVisit(entry);
-        startFarmHere(entry, dest);
+        AgentCommandModeService.runPreparedModeCommand(
+                entry,
+                () -> dest != null && AgentBotRuntimeIdentityRuntime.hasBot(entry),
+                () -> clearScriptTasks(entry),
+                () -> AgentShopService.cancelShopVisit(entry),
+                () -> startFarmHere(entry, dest));
     }
 
     private void startFarmHere(BotEntry entry, Point dest) {
@@ -2779,9 +2779,11 @@ public class BotManager {
             AgentBotManagerReplyRuntime.replyNow(entry, "can't find a patrol region here");
             return;
         }
-        clearScriptTasks(entry);
-        AgentShopService.cancelShopVisit(entry);
-        startPatrol(entry, regionId);
+        AgentCommandModeService.runPreparedModeCommand(
+                entry,
+                () -> clearScriptTasks(entry),
+                () -> AgentShopService.cancelShopVisit(entry),
+                () -> startPatrol(entry, regionId));
     }
 
     private void startPatrol(BotEntry entry, int regionId) {

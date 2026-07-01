@@ -73,9 +73,10 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentScriptTaskTickService`. The no-agent skip,
   activate-next behavior, start-on-activation, incomplete retention, and
   clear-and-continue loop are unchanged.
-- BotManager follow/grind/stop command-mode preparation now delegates to
+- BotManager move/farm/patrol/follow/grind/stop command-mode preparation now delegates to
   `server.agents.runtime.AgentCommandModeService`. The null-entry skip and
-  clear-script-tasks, cancel-shop, start-mode order are unchanged.
+  guard-before-clear, clear-script-tasks, cancel-shop, start-mode order are
+  unchanged.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

@@ -62,10 +62,10 @@ Recent map updates:
 - BotManager script task tick loop moved to
   `server.agents.runtime.AgentScriptTaskTickService`; BotManager only supplies
   temporary callbacks for task start and completion checks.
-- BotManager follow/grind/stop command-mode preparation moved to
+- BotManager move/farm/patrol/follow/grind/stop command-mode preparation moved to
   `server.agents.runtime.AgentCommandModeService`; BotManager only supplies
-  temporary callbacks for script-task clearing, shop cancellation, and mode
-  start side effects.
+  temporary guards and callbacks for script-task clearing, shop cancellation,
+  and mode start side effects.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.

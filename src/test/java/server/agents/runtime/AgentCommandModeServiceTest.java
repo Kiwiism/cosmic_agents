@@ -33,4 +33,37 @@ class AgentCommandModeServiceTest {
 
         assertEquals(3, order.get());
     }
+
+    @Test
+    void skipsWhenGuardFails() {
+        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AtomicInteger calls = new AtomicInteger();
+
+        AgentCommandModeService.runPreparedModeCommand(
+                entry,
+                () -> false,
+                calls::incrementAndGet,
+                calls::incrementAndGet,
+                calls::incrementAndGet);
+
+        assertEquals(0, calls.get());
+    }
+
+    @Test
+    void evaluatesGuardBeforeClearingTasks() {
+        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AtomicInteger order = new AtomicInteger();
+
+        AgentCommandModeService.runPreparedModeCommand(
+                entry,
+                () -> {
+                    assertEquals(0, order.getAndIncrement());
+                    return true;
+                },
+                () -> assertEquals(1, order.getAndIncrement()),
+                () -> assertEquals(2, order.getAndIncrement()),
+                () -> assertEquals(3, order.getAndIncrement()));
+
+        assertEquals(4, order.get());
+    }
 }
