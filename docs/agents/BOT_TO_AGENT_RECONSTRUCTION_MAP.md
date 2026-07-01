@@ -135,6 +135,9 @@ Recent map updates:
 - BotManager grind-loot retry suppression predicate was removed; Agent loot
   targeting now consumes `AgentBotGrindLootStateRuntime::isRetrySuppressed`
   directly.
+- BotManager script item-drop behavior moved to
+  `server.agents.plans.AgentScriptItemActionService`; BotManager remains a
+  compatibility delegate and AgentScriptRunner uses the Agent service directly.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.

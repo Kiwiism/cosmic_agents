@@ -36,7 +36,7 @@ public final class AgentScriptRunner {
                 bot,
                 owner,
                 BotManager.getInstance()::isCheapScriptMoveTarget,
-                BotManager.getInstance()::issueDropItem);
+                AgentScriptItemActionService::dropItem);
         AgentScriptStep step = steps.get(AgentBotScriptTaskStateRuntime.scriptStepIndex(entry));
         if (!AgentBotScriptTaskStateRuntime.scriptStepEntered(entry)) {
             step.enter(ctx);

@@ -109,6 +109,7 @@ import server.agents.integration.AgentBotTickStateRuntime;
 import server.agents.integration.AgentBotTargetedCommandMatch;
 import server.agents.integration.AgentBotTransferCommand;
 import server.agents.plans.AgentTask;
+import server.agents.plans.AgentScriptItemActionService;
 import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
 import server.agents.capabilities.dialogue.AgentChatRuntime;
 import server.agents.capabilities.dialogue.llm.AgentLlmConfig;
@@ -125,7 +126,6 @@ import client.QuestStatus;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.WeaponType;
-import client.inventory.manipulator.InventoryManipulator;
 import client.keybind.KeyBinding;
 import constants.game.CharacterStance;
 import constants.inventory.ItemConstants;
@@ -2813,21 +2813,7 @@ public class BotManager {
      * stack of {@code itemId}. Use {@code quantity <= 0} to drop the whole stack.
      */
     public boolean issueDropItem(BotEntry entry, InventoryType type, int itemId, short quantity) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        if (bot == null || type == null) {
-            return false;
-        }
-        var inventory = bot.getInventory(type);
-        if (inventory == null) {
-            return false;
-        }
-        Item item = inventory.findById(itemId);
-        if (item == null || item.getQuantity() <= 0) {
-            return false;
-        }
-        short dropQuantity = quantity <= 0 ? item.getQuantity() : (short) Math.min(quantity, item.getQuantity());
-        InventoryManipulator.drop(bot.getClient(), type, item.getPosition(), dropQuantity);
-        return true;
+        return AgentScriptItemActionService.dropItem(entry, type, itemId, quantity);
     }
 
     public void clearScriptTasks(BotEntry entry) {
@@ -2930,7 +2916,7 @@ public class BotManager {
                         targetId -> resolveFollowCharacterById(entry, targetId),
                         () -> startGrind(entry),
                         () -> startStop(entry),
-                        (type, itemId, quantity) -> issueDropItem(entry, type, itemId, quantity)));
+                        (type, itemId, quantity) -> AgentScriptItemActionService.dropItem(entry, type, itemId, quantity)));
     }
 
     private boolean isScriptTaskComplete(BotEntry entry, AgentTask task) {

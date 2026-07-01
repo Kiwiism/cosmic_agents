@@ -148,6 +148,9 @@ Recent reconstruction notes:
 - Grind-loot retry suppression now uses
   `AgentBotGrindLootStateRuntime::isRetrySuppressed` directly; BotManager no
   longer owns the pass-through predicate used by Agent loot targeting.
+- Script-driven item dropping now lives in `AgentScriptItemActionService`;
+  BotManager keeps only the compatibility `issueDropItem` wrapper, and
+  `AgentScriptRunner` calls the Agent service directly for script contexts.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but
