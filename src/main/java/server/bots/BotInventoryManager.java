@@ -9,9 +9,8 @@ import config.YamlConfig;
 import server.agents.capabilities.inventory.AgentEquippedSlotTradeService;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.capabilities.inventory.AgentInventoryNamedItemService;
-import server.agents.capabilities.looting.AgentPassiveLootCallbackService;
 import server.agents.capabilities.looting.AgentLootCleanupService;
-import server.agents.capabilities.looting.AgentPassiveLootService;
+import server.agents.capabilities.looting.AgentPassiveLootRuntimeService;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.capabilities.trade.AgentInventoryTradeRuntimeService;
 import server.agents.capabilities.trade.AgentManualTradeRuntimeService;
@@ -34,27 +33,10 @@ import java.util.List;
 
 public class BotInventoryManager {
     static void tickPassiveLoot(BotEntry entry, Character bot) {
-        AgentPassiveLootService.tickPassiveLoot(
+        AgentPassiveLootRuntimeService.tickPassiveLoot(
                 entry,
                 bot,
-                AgentPassiveLootCallbackService.passiveLootCallbacks(
-                        () -> AgentBotInventoryStateRuntime.hasLootInhibit(entry),
-                        () -> AgentBotInventoryStateRuntime.tickLootInhibit(entry, BotMovementManager::tickDown),
-                        () -> AgentBotPendingTradeStateRuntime.hasActiveSequence(entry),
-                        () -> AgentBotInventoryStateRuntime.tickInventoryFullWarnCooldown(entry, BotMovementManager::tickDown),
-                        System::currentTimeMillis,
-                        () -> BotManager.cfg.LOOT_RADIUS,
-                        () -> AgentBotInventoryStateRuntime.canWarnInventoryFull(entry),
-                        AgentBotInventoryRuntime::replyNow,
-                        () -> BotMovementManager.delayAfterCurrentTick(BotManager.cfg.INV_FULL_WARN_CD_MS),
-                        cooldown -> AgentBotInventoryStateRuntime.setInventoryFullWarnCooldownMs(entry, cooldown),
-                        () -> AgentBotRuntimeIdentityRuntime.owner(entry),
-                        () -> AgentBotOfferStateRuntime.pendingLootOfferItem(entry),
-                        AgentInventoryItemPolicy::hasItem,
-                        BotEquipManager::autoEquip,
-                        AgentOfferService::scheduleLootOfferPrompt,
-                        AgentLootCleanupService::cleanupGhostDrop,
-                        Character::pickupItem));
+                passiveLootRuntimeCallbacks());
     }
 
     static void tickManualTrade(BotEntry entry, Character bot) {
@@ -146,6 +128,27 @@ public class BotInventoryManager {
                 AgentBotRuntimeIdentityRuntime::owner,
                 AgentInventoryNamedItemService::countNamedItems,
                 (agent, fragment) -> AgentEquippedSlotTradeService.countEquippedSlotItems(agent, fragment, BotEquipManager::slotsFromName));
+    }
+
+    private static AgentPassiveLootRuntimeService.RuntimeCallbacks passiveLootRuntimeCallbacks() {
+        return AgentPassiveLootRuntimeService.RuntimeCallbacks.of(
+                AgentBotInventoryStateRuntime::hasLootInhibit,
+                entry -> AgentBotInventoryStateRuntime.tickLootInhibit(entry, BotMovementManager::tickDown),
+                AgentBotPendingTradeStateRuntime::hasActiveSequence,
+                entry -> AgentBotInventoryStateRuntime.tickInventoryFullWarnCooldown(entry, BotMovementManager::tickDown),
+                System::currentTimeMillis,
+                () -> BotManager.cfg.LOOT_RADIUS,
+                AgentBotInventoryStateRuntime::canWarnInventoryFull,
+                AgentBotInventoryRuntime::replyNow,
+                () -> BotMovementManager.delayAfterCurrentTick(BotManager.cfg.INV_FULL_WARN_CD_MS),
+                AgentBotInventoryStateRuntime::setInventoryFullWarnCooldownMs,
+                AgentBotRuntimeIdentityRuntime::owner,
+                AgentBotOfferStateRuntime::pendingLootOfferItem,
+                AgentInventoryItemPolicy::hasItem,
+                BotEquipManager::autoEquip,
+                AgentOfferService::scheduleLootOfferPrompt,
+                AgentLootCleanupService::cleanupGhostDrop,
+                Character::pickupItem);
     }
 
     private static AgentManualTradeRuntimeService.RuntimeCallbacks manualTradeRuntimeCallbacks(BotEntry entry) {

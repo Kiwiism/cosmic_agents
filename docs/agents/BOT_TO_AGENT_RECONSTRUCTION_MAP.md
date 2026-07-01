@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotInventoryManager.tickPassiveLoot` runtime callback assembly now lives in
+  `AgentPassiveLootRuntimeService`; the bot inventory shell only supplies
+  temporary loot-inhibit, active-sequence, cooldown, config, reply, owner,
+  offer, item-presence, auto-equip, cleanup, and pickup hooks.
 - `BotInventoryManager` transfer availability/count runtime callback assembly
   now lives in `AgentTradeTransferAvailabilityRuntimeService`; the bot inventory
   shell only supplies temporary owner, named-item, and equipped-slot counter

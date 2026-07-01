@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Passive loot runtime callback assembly moved from `BotInventoryManager` to
+  `server.agents.capabilities.looting.AgentPassiveLootRuntimeService`. The bot
+  inventory shell still supplies temporary loot-inhibit, trade-sequence,
+  cooldown, config, reply, owner, offer, item-presence, auto-equip, cleanup,
+  and pickup hooks while Agent looting owns passive-loot callback construction.
 - Transfer availability/count runtime callback assembly moved from
   `BotInventoryManager` to
   `server.agents.capabilities.trade.AgentTradeTransferAvailabilityRuntimeService`.
