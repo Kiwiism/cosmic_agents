@@ -134,6 +134,10 @@ Recent reconstruction notes:
   `AgentFollowAnchorService` with sibling entries from the Agent session
   lifecycle gateway instead of calling `BotManager.resolveFollowAnchor`;
   follow, sibling-target, and rope/climb targeting behavior are unchanged.
+- BotManager follow-owner, grind, and stop compatibility hooks now delegate to
+  `AgentBotMovementCommandRuntime`; command preparation, script-task clearing,
+  shop cancellation, mode transitions, and navigation clearing remain
+  behavior-equivalent.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

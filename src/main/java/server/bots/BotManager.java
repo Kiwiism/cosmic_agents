@@ -2770,7 +2770,7 @@ public class BotManager {
      * fields directly.
      */
     public void issueFollowOwner(BotEntry entry) {
-        issueFollow(entry, AgentBotRuntimeIdentityRuntime.owner(entry));
+        AgentBotMovementCommandRuntime.followOwner(entry);
     }
 
     /**
@@ -2796,11 +2796,7 @@ public class BotManager {
      * navigation command.
      */
     public void issueGrind(BotEntry entry) {
-        AgentCommandModeService.runPreparedModeCommand(
-                entry,
-                () -> clearScriptTasks(entry),
-                () -> AgentShopService.cancelShopVisit(entry),
-                () -> startGrind(entry));
+        AgentBotMovementCommandRuntime.grind(entry);
     }
 
     private void startGrind(BotEntry entry) {
@@ -2809,11 +2805,7 @@ public class BotManager {
 
     /** Public hook: stop all scripted movement/combat mode and idle in place. */
     public void issueStop(BotEntry entry) {
-        AgentCommandModeService.runPreparedModeCommand(
-                entry,
-                () -> clearScriptTasks(entry),
-                () -> AgentShopService.cancelShopVisit(entry),
-                () -> startStop(entry));
+        AgentBotMovementCommandRuntime.stop(entry);
     }
 
     private void startStop(BotEntry entry) {

@@ -123,6 +123,9 @@ Recent map updates:
   through `server.agents.runtime.AgentFollowAnchorService`, removing its direct
   `BotManager.resolveFollowAnchor` call while preserving follow target
   behavior.
+- BotManager follow-owner, grind, and stop entry points now delegate to
+  `AgentBotMovementCommandRuntime`, reducing BotManager to compatibility
+  routing for those mode commands while preserving command setup behavior.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.

@@ -1083,6 +1083,45 @@ class BotManagerTest {
     }
 
     @Test
+    void shouldCancelShopVisitWhenOwnerIssuesStop() {
+        MapleMap map = createEmptyTestMap(910000034);
+        Character owner = mockMovingBot(new Point(50, 100), map);
+        Character bot = mockMovingBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, owner, null);
+        entry.shopVisitPending = true;
+        entry.shopSequenceActive = true;
+        entry.shopNpcPos = new Point(900, 100);
+        entry.shopTargetPos = new Point(850, 100);
+        AgentBotModeStateRuntime.setFollowing(entry, true);
+        AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, new Point(300, 100));
+
+        BotManager.getInstance().issueStop(entry);
+
+        assertFalse(entry.shopVisitPending);
+        assertFalse(entry.shopSequenceActive);
+        assertNull(entry.shopNpcPos);
+        assertNull(entry.shopTargetPos);
+        assertFalse(AgentBotModeStateRuntime.following(entry));
+        assertNull(AgentBotMoveTargetStateRuntime.moveTarget(entry));
+    }
+
+    @Test
+    void shouldEnterGrindThroughAgentMovementCommandRuntime() {
+        MapleMap map = createEmptyTestMap(910000035);
+        Character owner = mockMovingBot(new Point(50, 100), map);
+        Character bot = mockMovingBot(new Point(100, 100), map);
+        BotEntry entry = new BotEntry(bot, owner, null);
+        AgentBotModeStateRuntime.setFollowing(entry, true);
+        AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, new Point(300, 100));
+
+        BotManager.getInstance().issueGrind(entry);
+
+        assertFalse(AgentBotModeStateRuntime.following(entry));
+        assertTrue(AgentBotModeStateRuntime.grinding(entry));
+        assertNull(AgentBotMoveTargetStateRuntime.moveTarget(entry));
+    }
+
+    @Test
     void shouldKeepTenMinutePotShareBackoffSeparateForHpAndMp() throws Exception {
         BotManager manager = BotManager.getInstance();
         MapleMap map = mock(MapleMap.class);
