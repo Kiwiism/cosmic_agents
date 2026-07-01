@@ -93,6 +93,10 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentCommandModeService`. The null-entry skip and
   guard-before-clear, clear-script-tasks, cancel-shop, start-mode order are
   unchanged.
+- Agent movement command facade now calls Agent runtime mode/queue services
+  directly for follow-owner, stop, move-to, farm-here, and grind. Patrol still
+  delegates to BotManager temporarily for graph-region validation and the
+  visible "can't find a patrol region here" reply.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

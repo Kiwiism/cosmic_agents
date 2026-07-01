@@ -81,6 +81,10 @@ Recent map updates:
   `server.agents.runtime.AgentCommandModeService`; BotManager only supplies
   temporary guards and callbacks for script-task clearing, shop cancellation,
   and mode start side effects.
+- Agent movement command facade now routes follow-owner, stop, move-to,
+  farm-here, and grind through Agent runtime mode/queue services directly.
+  Patrol remains a temporary BotManager delegation until graph-region
+  validation and visible failure replies move.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.
