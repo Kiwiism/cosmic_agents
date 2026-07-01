@@ -33,6 +33,7 @@ import server.agents.capabilities.trade.AgentTradeClosedWindowService;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
 import server.agents.capabilities.trade.AgentTradeConfirmWaitService;
 import server.agents.capabilities.trade.AgentTradeDialogueService;
+import server.agents.capabilities.trade.AgentTradeGroupNavigationService;
 import server.agents.capabilities.trade.AgentTradeItemAddTickService;
 import server.agents.capabilities.trade.AgentTradeItemAddTickCallbackService;
 import server.agents.capabilities.trade.AgentTradeItemCollectionCallbackService;
@@ -192,8 +193,12 @@ public class BotInventoryManager {
                                 AgentTradeBetweenBatchCallbackService.betweenBatchCallbacks(
                                         BotMovementManager::tickDown,
                                         category -> collectItems(category, entry, bot),
-                                        category -> nextEquipsGroup(category, entry, bot),
-                                        category -> nextAmmoGroup(category, bot),
+                                        category -> AgentTradeGroupNavigationService.nextEquipsGroup(
+                                                category,
+                                                () -> classifyEquipTradeGroups(entry, bot)),
+                                        category -> AgentTradeGroupNavigationService.nextAmmoGroup(
+                                                category,
+                                                () -> classifyAmmoTradeGroups(bot)),
                                         AgentInventoryTransferService::equipsGroupMessage,
                                         items -> AgentTradeSequenceRuntimeService.openTradeBatch(
                                                 entry,
@@ -284,14 +289,6 @@ public class BotInventoryManager {
     // ─── Inventory info ───────────────────────────────────────────────────────
 
     // ─── Internals ────────────────────────────────────────────────────────────
-
-    private static String nextEquipsGroup(String category, BotEntry entry, Character bot) {
-        return AgentEquipTradeGroupService.nextEquipsGroup(category, classifyEquipTradeGroups(entry, bot));
-    }
-
-    private static String nextAmmoGroup(String category, Character bot) {
-        return AgentAmmoTradeClassificationService.nextAmmoGroup(category, classifyAmmoTradeGroups(bot));
-    }
 
     private static AmmoTradeGroups classifyAmmoTradeGroups(Character bot) {
         return AgentAmmoTradeClassificationService.classifyAmmoTradeGroups(

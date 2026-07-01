@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Grouped trade category navigation moved to
+  `AgentTradeGroupNavigationService`; `BotInventoryManager` no longer owns the
+  private next-equip-group or next-ammo-group helpers.
 - Recommended trade item selection moved to `AgentTradeRecommendationService`;
   `BotInventoryManager` no longer owns the null-owner recommendation rule.
 - Equip trade slow-classification warning threshold and formatting moved to

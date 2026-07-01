@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Grouped trade category navigation moved from `BotInventoryManager` private
+  helpers to `server.agents.capabilities.trade.AgentTradeGroupNavigationService`.
+  Equip and ammo "next group" selection still delegates to the same Agent-owned
+  equip/ammo group policies.
 - Recommended equipment trade item selection moved from `BotInventoryManager`
   to `server.agents.capabilities.trade.AgentTradeRecommendationService`. The
   legacy null-owner empty-list behavior and recommendation collector call are
