@@ -2726,14 +2726,11 @@ public class BotManager {
     }
 
     private void prepareOwnerInactiveIdle(BotEntry entry, int ownerCharId) {
-        clearScriptTasks(entry);
-        AgentShopService.cancelShopVisit(entry);
-        clearMode(entry);
-        AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
-        AgentBotGrindTargetStateRuntime.clear(entry);
-        AgentBotDegenerateAttackStateRuntime.clear(entry);
-        AgentBotBuffStateRuntime.disable(entry);
-        AgentBotActivityStateRuntime.setOwnerAwaySafeMode(entry, true);
+        AgentLeaderSafetyService.prepareInactiveIdle(
+                entry,
+                () -> clearScriptTasks(entry),
+                () -> AgentShopService.cancelShopVisit(entry),
+                () -> clearMode(entry));
     }
 
     private boolean scrollBotToTown(BotEntry entry, Character bot, int ownerCharId) {

@@ -22,6 +22,10 @@ Recent reconstruction notes:
   alive-monster, and different-return-map requirements are preserved; BotManager
   still owns the temporary offline/dead leader side effects and town-cluster
   movement wiring.
+- BotManager inactive-leader idle preparation now delegates to
+  `server.agents.runtime.AgentLeaderSafetyService`. The reset order and state
+  effects are unchanged: script tasks, shop visit, mode, move target, grind
+  target, degenerate attack, buff consumables, and away-safe-mode state.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

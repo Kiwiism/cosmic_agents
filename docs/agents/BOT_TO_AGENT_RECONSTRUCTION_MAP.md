@@ -16,6 +16,10 @@ Recent map updates:
   `server.agents.runtime.AgentLeaderSafetyService`; BotManager still owns the
   temporary offline/dead leader side effects, return-scroll execution, and town
   cluster target wiring.
+- BotManager inactive-leader idle preparation sequence moved to
+  `server.agents.runtime.AgentLeaderSafetyService`; BotManager only supplies
+  temporary callbacks for script-task clearing, shop cancellation, and mode
+  clearing.
 - BotManager script task completion rules moved to
   `server.agents.runtime.AgentScriptTaskCompletionService`; BotManager only
   supplies temporary follow-target resolution and movement distance config.
