@@ -65,6 +65,10 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentLeaderSafetyService`. The no-map skip and
   `town && eligible` behavior are unchanged; BotManager still supplies
   temporary runtime snapshots and safe-mode callbacks.
+- BotManager script-task start dispatch now delegates to
+  `server.agents.runtime.AgentScriptTaskStartService`. The same task-type to
+  side-effect mapping is preserved; BotManager still supplies temporary move,
+  follow, grind, stop, and drop callbacks.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

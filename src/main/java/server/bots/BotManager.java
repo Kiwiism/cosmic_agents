@@ -32,6 +32,7 @@ import server.agents.runtime.AgentLeaderSafetyService;
 import server.agents.runtime.AgentMapTransitionService;
 import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentScriptTaskCompletionService;
+import server.agents.runtime.AgentScriptTaskStartService;
 import server.agents.runtime.AgentTargetSnapshot;
 import server.agents.runtime.AgentTargetSnapshotService;
 import server.agents.runtime.AgentRuntimeRegistry;
@@ -2989,15 +2990,16 @@ public class BotManager {
     }
 
     private void startScriptTask(BotEntry entry, AgentTask task) {
-        switch (task.type()) {
-            case MOVE_TO -> startMoveTo(entry, task.point(), task.precise());
-            case FOLLOW_OWNER -> startFollow(entry, AgentBotRuntimeIdentityRuntime.owner(entry));
-            case FOLLOW_TARGET -> startFollow(entry, resolveFollowCharacterById(entry, task.targetCharacterId()));
-            case FOLLOW_UNTIL_NEAR -> startFollow(entry, resolveFollowCharacterById(entry, task.targetCharacterId()));
-            case GRIND -> startGrind(entry);
-            case STOP -> startStop(entry);
-            case DROP_ITEM -> issueDropItem(entry, task.inventoryType(), task.itemId(), task.quantity());
-        }
+        AgentScriptTaskStartService.start(
+                entry,
+                task,
+                new AgentScriptTaskStartService.StartHooks(
+                        (point, precise) -> startMoveTo(entry, point, precise),
+                        target -> startFollow(entry, target),
+                        targetId -> resolveFollowCharacterById(entry, targetId),
+                        () -> startGrind(entry),
+                        () -> startStop(entry),
+                        (type, itemId, quantity) -> issueDropItem(entry, type, itemId, quantity)));
     }
 
     private boolean isScriptTaskComplete(BotEntry entry, AgentTask task) {

@@ -56,6 +56,9 @@ Recent map updates:
 - BotManager script task completion rules moved to
   `server.agents.runtime.AgentScriptTaskCompletionService`; BotManager only
   supplies temporary follow-target resolution and movement distance config.
+- BotManager script task start dispatch moved to
+  `server.agents.runtime.AgentScriptTaskStartService`; BotManager only supplies
+  temporary callbacks for move, follow, grind, stop, and drop side effects.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.
