@@ -14,6 +14,7 @@ import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentGrindTargetSearchPolicy;
+import server.agents.capabilities.combat.AgentGrindNavigationTargetSelector;
 import server.agents.capabilities.combat.AgentRangedPriorityTargetSelector;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.capabilities.looting.AgentLootTargetService;
@@ -296,11 +297,12 @@ class BotManagerTest {
         when(bot.getMap()).thenReturn(map);
         BotEntry entry = new BotEntry(bot, null, null);
 
-        assertTrue(BotManager.shouldUseLocalCombatRetreatTarget(
+        assertTrue(AgentGrindNavigationTargetSelector.shouldUseLocalCombatRetreatTarget(
                 entry,
                 new Point(100, 100),
                 new Point(130, 100),
-                new Point(60, 100)));
+                new Point(60, 100),
+                grindNavigationHooks()));
     }
 
     @Test
@@ -315,11 +317,12 @@ class BotManagerTest {
         when(bot.getMap()).thenReturn(map);
         BotEntry entry = new BotEntry(bot, null, null);
 
-        assertFalse(BotManager.shouldUseLocalCombatRetreatTarget(
+        assertFalse(AgentGrindNavigationTargetSelector.shouldUseLocalCombatRetreatTarget(
                 entry,
                 new Point(100, 100),
                 new Point(100, 40),
-                new Point(60, 100)));
+                new Point(60, 100),
+                grindNavigationHooks()));
     }
 
     @Test
@@ -337,11 +340,12 @@ class BotManagerTest {
         entry.climbing = true;
         entry.climbRope = new Rope(100, 40, 100, false);
 
-        assertFalse(BotManager.shouldUseLocalCombatRetreatTarget(
+        assertFalse(AgentGrindNavigationTargetSelector.shouldUseLocalCombatRetreatTarget(
                 entry,
                 new Point(100, 100),
                 new Point(140, 40),
-                new Point(60, 100)));
+                new Point(60, 100),
+                grindNavigationHooks()));
     }
 
     @Test
@@ -374,10 +378,11 @@ class BotManagerTest {
         when(bot.getPosition()).thenReturn(new Point(250, 100));
         BotEntry entry = new BotEntry(bot, null, null);
 
-        assertNull(BotManager.selectCrossRegionRetreatTarget(
+        assertNull(AgentGrindNavigationTargetSelector.selectCrossRegionRetreatTarget(
                 entry,
                 new Point(250, 100),
-                new Point(300, 100)));
+                new Point(300, 100),
+                grindNavigationHooks()));
     }
 
     @Test
@@ -394,10 +399,11 @@ class BotManagerTest {
         when(bot.getSkills()).thenReturn(Map.of());
         BotEntry entry = new BotEntry(bot, null, null);
 
-        Point retreat = BotManager.selectCrossRegionRetreatTarget(
+        Point retreat = AgentGrindNavigationTargetSelector.selectCrossRegionRetreatTarget(
                 entry,
                 new Point(300, 100),
-                new Point(330, 100));
+                new Point(330, 100),
+                grindNavigationHooks());
 
         assertNotNull(retreat);
         assertTrue(retreat.x <= 200);
@@ -495,16 +501,16 @@ class BotManagerTest {
                      mockStatic(AgentAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.BOW);
 
-            Point first = BotManager.selectGrindNavigationTarget(entry, botPos, rightMob.getPosition());
+            Point first = AgentGrindNavigationTargetSelector.selectGrindNavigationTarget(entry, botPos, rightMob.getPosition(), grindNavigationHooks());
             int dir1 = Integer.signum(first.x - botPos.x);
             assertTrue(dir1 != 0);
             assertTrue(AgentBotBreakoutStateRuntime.hasBreakoutCommitment(entry));
 
             // Crowding-swap points the active target at the OTHER flank on later ticks; the
             // committed breakout must not reverse (that flip is the oscillation we are fixing).
-            Point second = BotManager.selectGrindNavigationTarget(entry, botPos, leftMob.getPosition());
+            Point second = AgentGrindNavigationTargetSelector.selectGrindNavigationTarget(entry, botPos, leftMob.getPosition(), grindNavigationHooks());
             assertEquals(dir1, Integer.signum(second.x - botPos.x));
-            Point third = BotManager.selectGrindNavigationTarget(entry, botPos, rightMob.getPosition());
+            Point third = AgentGrindNavigationTargetSelector.selectGrindNavigationTarget(entry, botPos, rightMob.getPosition(), grindNavigationHooks());
             assertEquals(dir1, Integer.signum(third.x - botPos.x));
         }
     }
@@ -529,7 +535,7 @@ class BotManagerTest {
                      mockStatic(AgentAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.BOW);
 
-            BotManager.selectGrindNavigationTarget(entry, botPos, rightMob.getPosition());
+            AgentGrindNavigationTargetSelector.selectGrindNavigationTarget(entry, botPos, rightMob.getPosition(), grindNavigationHooks());
             assertFalse(AgentBotBreakoutStateRuntime.hasBreakoutCommitment(entry));
         }
     }
@@ -552,7 +558,7 @@ class BotManagerTest {
                      mockStatic(AgentAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.BOW);
 
-            Point nav = BotManager.selectGrindNavigationTarget(entry, botPos, rightMob.getPosition());
+            Point nav = AgentGrindNavigationTargetSelector.selectGrindNavigationTarget(entry, botPos, rightMob.getPosition(), grindNavigationHooks());
             // Single mob -> ordinary local kiting (retreat away from the mob), no breakout latch.
             assertFalse(AgentBotBreakoutStateRuntime.hasBreakoutCommitment(entry));
             assertEquals(AgentAttackExecutionProvider.retreatTargetPosition(bot, botPos, rightMob.getPosition()), nav);
@@ -1524,6 +1530,15 @@ class BotManagerTest {
                 0, 0, 0, 0, 0, 0, 0, null);
     }
 
+    private static AgentGrindNavigationTargetSelector.NavigationHooks grindNavigationHooks() {
+        return new AgentGrindNavigationTargetSelector.NavigationHooks(
+                BotNavigationManager::resolveCurrentRegionId,
+                BotNavigationManager::resolveTargetRegionId,
+                BotNavigationManager::findPath,
+                BotMovementManager.cfg.GRIND_EDGE_MARGIN,
+                BotMovementManager.cfg.JUMP_Y_THRESH);
+    }
+
     private static MapleMap createEmptyTestMap(int mapId) {
         MapleMap map = new MapleMap(mapId, 0, 0, mapId, 1.0f);
         map.setFootholds(new FootholdTree(new Point(-2000, -2000), new Point(2000, 2000)));
@@ -1610,3 +1625,5 @@ class BotManagerTest {
         return method;
     }
 }
+
+

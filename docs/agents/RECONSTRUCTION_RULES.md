@@ -2958,6 +2958,13 @@ Recent reconstruction notes:
   keeps a compatibility delegate while `tickGrindMode` is still being
   reconstructed. Existing-anchor reuse, arrival/expiry/dead-target clearing,
   planner invocation, anchor storage, and max-duration deadline are preserved.
+- Grind navigation/retreat target selection now lives in
+  `server.agents.capabilities.combat.AgentGrindNavigationTargetSelector`;
+  BotManager keeps compatibility delegates and supplies temporary
+  BotNavigationManager hooks plus legacy movement constants. Surround-breakout
+  latching, retreat-hold hysteresis, cross-region retreat scoring,
+  projectile-reachable retreat selection, portal-path rejection, local retreat
+  same-region guards, and region mob counting are preserved.
 
 Initial reconstruction order:
 

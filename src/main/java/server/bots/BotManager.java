@@ -14,7 +14,7 @@ import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatRangePolicy;
 import server.agents.capabilities.combat.AgentGrindTargetSearchPolicy;
-import server.agents.capabilities.combat.AgentProjectileHitbox;
+import server.agents.capabilities.combat.AgentGrindNavigationTargetSelector;
 import server.agents.capabilities.combat.AgentRangedPriorityTargetSelector;
 import server.agents.capabilities.quest.AgentPartyQuestSyncService;
 
@@ -84,7 +84,6 @@ import server.agents.integration.AgentBotManagerSchedulerRuntime;
 import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotAmmoStateRuntime;
-import server.agents.integration.AgentBotBreakoutStateRuntime;
 import server.agents.integration.AgentBotBuffStateRuntime;
 import server.agents.integration.AgentBotCommandParser;
 import server.agents.integration.AgentBotCombatActionLockRuntime;
@@ -111,14 +110,12 @@ import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementCommandRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotPotionStateRuntime;
 import server.agents.integration.AgentBotPqRuntime;
 import server.agents.integration.AgentBotReplyChannelStateRuntime;
-import server.agents.integration.AgentBotRetreatHoldStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
 import server.agents.integration.AgentBotShopStateRuntime;
@@ -918,9 +915,6 @@ public class BotManager {
                                 followBase, followAnchor, followAnchorPos, snapRange, map, PLATFORM_EDGE_INSET_PX));
     }
 
-    private static final int RETREAT_HOLD_MS = 600;
-    private static final int RETREAT_ARRIVAL_TOLERANCE_X = 25; // 50ms tick can't land on an exact pixel
-
     // AoE reposition commitment: returns the sweet-spot Point to walk to before firing, or null to
     // fire now. Scores once when a commitment starts (AgentBotCombatAoeRepositionRuntime); while
     // committed it just returns the stored anchor — no further scoring — until the bot arrives, the
@@ -931,401 +925,39 @@ public class BotManager {
     }
 
     static Point selectGrindNavigationTarget(BotEntry entry, Point botPos, Point combatTargetPos) {
-        return selectGrindNavigationTarget(entry, botPos, combatTargetPos, false);
+        return AgentGrindNavigationTargetSelector.selectGrindNavigationTarget(
+                entry, botPos, combatTargetPos, grindNavigationHooks());
     }
 
     private static Point selectGrindNavigationTarget(BotEntry entry,
                                                      Point botPos,
                                                      Point combatTargetPos,
                                                      boolean crossRegionRetreatChecked) {
-        if (entry == null || botPos == null || combatTargetPos == null) {
-            return combatTargetPos;
-        }
-
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        if (bot == null) {
-            return combatTargetPos;
-        }
-
-        long now = System.currentTimeMillis();
-        boolean retreatNeeded = AgentAttackExecutionProvider.shouldRetreatFromNearbyTarget(
-                AgentAttackExecutionProvider.getEquippedWeaponType(bot), botPos, combatTargetPos);
-
-        // Surround-breakout commitment: once pincered, keep bursting the SAME way until the
-        // bot is no longer flanked on both sides (or a safety timeout), re-issuing a forward
-        // step each tick. A per-step local retreat here would walk into the opposite mob and
-        // flip direction every time it arrives — the swarm oscillation we are fixing.
-        if (AgentBotBreakoutStateRuntime.hasBreakoutCommitment(entry)) {
-            if (AgentBotBreakoutStateRuntime.isExpired(entry, now)
-                    || !AgentAttackExecutionProvider.isSurrounded(bot, botPos)) {
-                AgentBotBreakoutStateRuntime.clear(entry);
-            } else {
-                return breakoutStep(botPos, AgentBotBreakoutStateRuntime.direction(entry));
-            }
-        }
-
-        // Hysteresis: a previously committed retreat keeps its goal until either the
-        // hold expires, the bot has effectively arrived, or the bot wandered too far
-        // from the hold pos for it to still be the right answer.
-        if (AgentBotRetreatHoldStateRuntime.hasActiveHold(entry, now)) {
-            int dxHold = AgentBotRetreatHoldStateRuntime.distanceFromHoldX(entry, botPos);
-            if (dxHold <= RETREAT_ARRIVAL_TOLERANCE_X) {
-                AgentBotRetreatHoldStateRuntime.clear(entry);
-            } else if (dxHold > AgentCombatConfig.cfg.RANGED_RETREAT_DISTANCE_X * 2) {
-                AgentBotRetreatHoldStateRuntime.clear(entry);
-            } else {
-                return AgentBotRetreatHoldStateRuntime.holdPosition(entry);
-            }
-        } else if (AgentBotRetreatHoldStateRuntime.hasHold(entry)) {
-            AgentBotRetreatHoldStateRuntime.clear(entry);
-        }
-
-        if (!retreatNeeded) {
-            return combatTargetPos;
-        }
-
-        // Prefer landing on a different walkable region than the target — mobs there can't
-        // path to the bot without traversing a nav edge, while the bot can still shoot across.
-        // Empty/sparse adjacent regions score highest. Cross-region uses the nav-edge
-        // pipeline for stickiness, so no separate hysteresis is set here.
-        Point crossRegionPos = crossRegionRetreatChecked
-                ? null
-                : selectCrossRegionRetreatTarget(entry, botPos, combatTargetPos);
-        if (crossRegionPos != null) {
-            return crossRegionPos;
-        }
-
-        // No separated region to flee to (e.g. one open platform). If the bot is pincered,
-        // commit to bursting out one side instead of micro-retreating into the other wall.
-        if (AgentAttackExecutionProvider.isSurrounded(bot, botPos)) {
-            int dir = pickBreakoutDirection(entry, botPos, combatTargetPos);
-            AgentBotBreakoutStateRuntime.setBreakoutCommitment(
-                    entry, dir, now + AgentCombatConfig.cfg.BREAKOUT_MAX_MS);
-            // Drop any stale one-step hysteresis so it can't fight the committed breakout.
-            AgentBotRetreatHoldStateRuntime.clear(entry);
-            return breakoutStep(botPos, dir);
-        }
-
-        Point retreatPos = AgentAttackExecutionProvider.retreatTargetPosition(bot, botPos, combatTargetPos);
-        if (shouldUseLocalCombatRetreatTarget(entry, botPos, combatTargetPos, retreatPos)) {
-            AgentBotRetreatHoldStateRuntime.setHold(entry, retreatPos, now + RETREAT_HOLD_MS);
-            return retreatPos;
-        }
-        return combatTargetPos;
+        return AgentGrindNavigationTargetSelector.selectGrindNavigationTarget(
+                entry, botPos, combatTargetPos, crossRegionRetreatChecked, grindNavigationHooks());
     }
 
-    private static Point breakoutStep(Point botPos, int dir) {
-        return new Point(botPos.x + dir * AgentCombatConfig.cfg.RANGED_RETREAT_DISTANCE_X, botPos.y);
-    }
-
-    /**
-     * Choose which way to burst out of a surrounding swarm. Base preference is the more open
-     * side (the flank whose nearest mob is farther). When the nav graph is available, override
-     * with the side whose reachable walkable neighbor is less crowded, so the bot runs toward
-     * an exit instead of into a dead-end wall. Ties fall back to the open-side preference.
-     */
-    private static int pickBreakoutDirection(BotEntry entry, Point botPos, Point combatTargetPos) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        int base = AgentAttackExecutionProvider.pickRetreatDirection(bot, botPos, combatTargetPos);
-        MapleMap map = bot != null ? bot.getMap() : null;
-        if (map == null || map.getFootholds() == null) {
-            return base;
-        }
-        AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
-        if (graph == null) {
-            return base;
-        }
-        int botRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, map, botPos);
-        if (botRegionId < 0) {
-            return base;
-        }
-        int leftBestMobs = Integer.MAX_VALUE;
-        int rightBestMobs = Integer.MAX_VALUE;
-        for (AgentNavigationGraph.Edge edge : graph.getOutgoing(botRegionId)) {
-            if (edge.type != AgentNavigationGraph.EdgeType.WALK) {
-                continue;
-            }
-            AgentNavigationGraph.Region region = graph.getRegion(edge.toRegionId);
-            if (region == null || region.isRopeRegion) {
-                continue;
-            }
-            int side = Integer.signum(edge.endPoint.x - botPos.x);
-            int mobs = countMobsInRegion(graph, map, region);
-            if (side < 0) {
-                leftBestMobs = Math.min(leftBestMobs, mobs);
-            } else if (side > 0) {
-                rightBestMobs = Math.min(rightBestMobs, mobs);
-            }
-        }
-        if (leftBestMobs == rightBestMobs) {
-            return base;
-        }
-        return leftBestMobs < rightBestMobs ? -1 : 1;
-    }
-
-    /**
-     * Pick a one-edge-away region to retreat into, preferring regions that are NOT
-     * the target's region and contain the fewest mobs. Returns the edge's landing
-     * point so nav can route through the existing edge-traversal pipeline. Null
-     * means no separated region qualifies — caller falls back to in-region retreat.
-     *
-     * Scoring is simple by design (easy to eyeball in-game):
-     *   +1000  destination region has zero live mobs ("the empty platform next door")
-     *   -100*N each live mob in the destination region
-     *   -dx/10  prefer anchors closer to the target so projectiles still land
-     */
     static Point selectCrossRegionRetreatTarget(BotEntry entry, Point botPos, Point combatTargetPos) {
-        if (entry == null || botPos == null || combatTargetPos == null) {
-            return null;
-        }
-        if (AgentBotMovementStateRuntime.climbing(entry) || AgentBotMovementStateRuntime.inAir(entry) || AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
-            return null;
-        }
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        MapleMap map = bot != null ? bot.getMap() : null;
-        if (map == null || map.getFootholds() == null) {
-            return null;
-        }
-        AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
-        if (graph == null) {
-            AgentNavigationGraphService.warmGraphAsync(map, AgentBotMovementStateRuntime.movementProfile(entry));
-            return null;
-        }
-
-        int botRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, map, botPos);
-        if (botRegionId < 0) {
-            return null;
-        }
-        int targetRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, map, combatTargetPos);
-
-        int projectileRange = AgentProjectileHitbox.CLIENT_PROJECTILE_BASE_RANGE
-                + AgentProjectileHitbox.passiveProjectileRangeBonus(bot);
-        int yReachable = AgentCombatConfig.cfg.RANGED_DEGENERATE_RANGE_Y * 2;
-
-        Point reachableRetreat = selectReachableProjectileRetreatTarget(
-                graph, map, botPos, botRegionId, targetRegionId, combatTargetPos, projectileRange, yReachable);
-        if (reachableRetreat != null) {
-            return reachableRetreat;
-        }
-
-        AgentNavigationGraph.Edge bestEdge = null;
-        int bestScore = Integer.MIN_VALUE;
-        for (AgentNavigationGraph.Edge edge : graph.getOutgoing(botRegionId)) {
-            if (edge.type != AgentNavigationGraph.EdgeType.WALK) {
-                continue;
-            }
-            int toRegionId = edge.toRegionId;
-            if (toRegionId == botRegionId || toRegionId == targetRegionId) {
-                continue;
-            }
-            AgentNavigationGraph.Region region = graph.getRegion(toRegionId);
-            if (region == null || region.isRopeRegion) {
-                continue;
-            }
-            Point anchor = edge.endPoint;
-            int dx = Math.abs(anchor.x - combatTargetPos.x);
-            int dy = Math.abs(anchor.y - combatTargetPos.y);
-            if (dx > projectileRange || dy > yReachable) {
-                continue;
-            }
-            // Don't land back inside the degenerate band — that defeats the retreat.
-            if (dx <= AgentCombatConfig.cfg.RANGED_DEGENERATE_RANGE_X) {
-                continue;
-            }
-
-            int mobsInRegion = countMobsInRegion(graph, map, region);
-            int score = (mobsInRegion == 0 ? 1000 : 0) - mobsInRegion * 100 - dx / 10;
-            if (score > bestScore) {
-                bestScore = score;
-                bestEdge = edge;
-            }
-        }
-
-        return bestEdge != null ? new Point(bestEdge.endPoint) : null;
-    }
-
-    private static Point selectReachableProjectileRetreatTarget(AgentNavigationGraph graph,
-                                                                MapleMap map,
-                                                                Point botPos,
-                                                                int botRegionId,
-                                                                int targetRegionId,
-                                                                Point combatTargetPos,
-                                                                int projectileRange,
-                                                                int yReachable) {
-        Point bestPoint = null;
-        int bestScore = Integer.MIN_VALUE;
-        for (AgentNavigationGraph.Region region : graph.regions) {
-            if (region == null || region.isRopeRegion) {
-                continue;
-            }
-            if (region.id == botRegionId || region.id == targetRegionId) {
-                continue;
-            }
-
-            Point candidate = selectProjectileRetreatPoint(region, combatTargetPos, projectileRange, yReachable);
-            if (candidate == null) {
-                continue;
-            }
-
-            List<AgentNavigationGraph.Edge> path = BotNavigationManager.findPath(
-                    graph, map, botPos, botRegionId, region.id, candidate);
-            if (path.isEmpty() || pathUsesPortal(path)) {
-                continue;
-            }
-
-            int pathCost = path.stream().mapToInt(pathEdge -> pathEdge.cost).sum();
-            int mobsInRegion = countMobsInRegion(graph, map, region);
-            int dx = Math.abs(candidate.x - combatTargetPos.x);
-            int score = (mobsInRegion == 0 ? 1500 : 0) - mobsInRegion * 150 - pathCost / 10 - dx / 10;
-            if (score > bestScore) {
-                bestScore = score;
-                bestPoint = candidate;
-            }
-        }
-        return bestPoint;
-    }
-
-    private static boolean pathUsesPortal(List<AgentNavigationGraph.Edge> path) {
-        for (AgentNavigationGraph.Edge edge : path) {
-            if (edge.type == AgentNavigationGraph.EdgeType.PORTAL) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static Point selectProjectileRetreatPoint(AgentNavigationGraph.Region region,
-                                                      Point combatTargetPos,
-                                                      int projectileRange,
-                                                      int yReachable) {
-        int edgeMargin = Math.min(BotMovementManager.cfg.GRIND_EDGE_MARGIN, Math.max(0, region.width() / 4));
-        int minX = Math.max(region.minX + edgeMargin, combatTargetPos.x - projectileRange);
-        int maxX = Math.min(region.maxX - edgeMargin, combatTargetPos.x + projectileRange);
-        if (minX > maxX) {
-            minX = Math.max(region.minX, combatTargetPos.x - projectileRange);
-            maxX = Math.min(region.maxX, combatTargetPos.x + projectileRange);
-        }
-        if (minX > maxX) {
-            return null;
-        }
-
-        int minShootDx = AgentCombatConfig.cfg.RANGED_DEGENERATE_RANGE_X + 20;
-        int bestScore = Integer.MIN_VALUE;
-        Point bestPoint = null;
-        int[] probes = {
-                minX,
-                maxX,
-                combatTargetPos.x - minShootDx,
-                combatTargetPos.x + minShootDx,
-                (minX + maxX) / 2
-        };
-        for (int probe : probes) {
-            Point candidate = projectileRetreatCandidate(region, probe, minX, maxX,
-                    combatTargetPos, projectileRange, yReachable, minShootDx);
-            if (candidate == null) {
-                continue;
-            }
-            int dx = Math.abs(candidate.x - combatTargetPos.x);
-            int dy = Math.abs(candidate.y - combatTargetPos.y);
-            int score = -dx * 10 - dy;
-            if (score > bestScore) {
-                bestScore = score;
-                bestPoint = candidate;
-            }
-        }
-        return bestPoint;
-    }
-
-    private static Point projectileRetreatCandidate(AgentNavigationGraph.Region region,
-                                                    int probeX,
-                                                    int minX,
-                                                    int maxX,
-                                                    Point combatTargetPos,
-                                                    int projectileRange,
-                                                    int yReachable,
-                                                    int minShootDx) {
-        int x = Math.max(minX, Math.min(maxX, probeX));
-        if (x < combatTargetPos.x && combatTargetPos.x - x < minShootDx) {
-            x = combatTargetPos.x - minShootDx;
-        } else if (x > combatTargetPos.x && x - combatTargetPos.x < minShootDx) {
-            x = combatTargetPos.x + minShootDx;
-        } else if (x == combatTargetPos.x) {
-            int leftX = combatTargetPos.x - minShootDx;
-            int rightX = combatTargetPos.x + minShootDx;
-            x = leftX >= minX ? leftX : rightX;
-        }
-        if (x < minX || x > maxX) {
-            return null;
-        }
-
-        Point point = region.pointAt(x);
-        int dx = Math.abs(point.x - combatTargetPos.x);
-        int dy = Math.abs(point.y - combatTargetPos.y);
-        if (dx < minShootDx
-                || dx > projectileRange
-                || dy > yReachable
-                || point.y > combatTargetPos.y + BotMovementManager.cfg.JUMP_Y_THRESH) {
-            return null;
-        }
-        return point;
-    }
-
-    private static int countMobsInRegion(AgentNavigationGraph graph,
-                                         MapleMap map,
-                                         AgentNavigationGraph.Region region) {
-        int count = 0;
-        for (server.life.Monster m : map.getAllMonsters()) {
-            if (!m.isAlive()) {
-                continue;
-            }
-            Point mp = m.getPosition();
-            if (mp == null) {
-                continue;
-            }
-            // Cheap bbox prefilter — region.findRegionId does foothold lookup, more expensive.
-            if (mp.x < region.minX - 5 || mp.x > region.maxX + 5
-                    || mp.y < region.minY - 80 || mp.y > region.maxY + 80) {
-                continue;
-            }
-            if (graph.findRegionId(map, mp) == region.id) {
-                count++;
-            }
-        }
-        return count;
+        return AgentGrindNavigationTargetSelector.selectCrossRegionRetreatTarget(
+                entry, botPos, combatTargetPos, grindNavigationHooks());
     }
 
     static boolean shouldUseLocalCombatRetreatTarget(BotEntry entry,
                                                      Point botPos,
                                                      Point combatTargetPos,
                                                      Point retreatPos) {
-        if (entry == null || botPos == null || combatTargetPos == null || retreatPos == null) {
-            return false;
-        }
-        if (AgentBotMovementStateRuntime.climbing(entry) || AgentBotMovementStateRuntime.inAir(entry) || AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
-            return false;
-        }
-
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        MapleMap map = bot != null ? bot.getMap() : null;
-        if (map == null || map.getFootholds() == null) {
-            return false;
-        }
-
-        AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
-        if (graph == null) {
-            AgentNavigationGraphService.warmGraphAsync(map, AgentBotMovementStateRuntime.movementProfile(entry));
-            return false;
-        }
-        int botRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, map, botPos);
-        int combatTargetRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, map, combatTargetPos);
-        if (botRegionId < 0 || combatTargetRegionId < 0 || botRegionId != combatTargetRegionId) {
-            return false;
-        }
-
-        int retreatRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, map, retreatPos);
-        return retreatRegionId == botRegionId;
+        return AgentGrindNavigationTargetSelector.shouldUseLocalCombatRetreatTarget(
+                entry, botPos, combatTargetPos, retreatPos, grindNavigationHooks());
     }
 
+    private static AgentGrindNavigationTargetSelector.NavigationHooks grindNavigationHooks() {
+        return new AgentGrindNavigationTargetSelector.NavigationHooks(
+                BotNavigationManager::resolveCurrentRegionId,
+                BotNavigationManager::resolveTargetRegionId,
+                BotNavigationManager::findPath,
+                BotMovementManager.cfg.GRIND_EDGE_MARGIN,
+                BotMovementManager.cfg.JUMP_Y_THRESH);
+    }
 
     static Point resolveNoGrindTargetPosition(BotEntry entry, Point botPos, MapleMap map) {
         return AgentGrindTargetPositionService.resolveNoGrindTargetPosition(
