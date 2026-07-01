@@ -2143,6 +2143,11 @@ Recent reconstruction notes:
   `AgentTradeStateService`; BotInventoryManager and AgentSupplyShareTradeService
   preserve the same trade side effects while sharing the Agent-owned state
   mutation helpers.
+- Trade batch-open orchestration now lives in `AgentTradeBatchService`;
+  BotInventoryManager and AgentSupplyShareTradeService still supply the
+  temporary recipient lookup/cancel/start/invite/reply callbacks, but recipient
+  availability checks, batch-state initialization, invite announcement guards,
+  and invite reply delivery are Agent-owned.
 - Equipped-slot named trade preparation now lives in
   `AgentEquippedSlotTradeService`; BotInventoryManager still owns the enclosing
   trade sequence but delegates slot counting, temporary unequip preparation,

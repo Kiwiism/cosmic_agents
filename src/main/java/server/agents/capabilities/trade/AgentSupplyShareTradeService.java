@@ -2,7 +2,6 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import client.inventory.Item;
-import server.Trade;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
@@ -66,19 +65,20 @@ public final class AgentSupplyShareTradeService {
     }
 
     private static void openTradeBatch(BotEntry entry, Character agent, Character recipient, List<Item> items) {
-        if (recipient.getTrade() != null) {
-            AgentBotInventoryRuntime.replyNow(entry, "can't trade right now, stopping");
-            AgentTradeStateService.clearSequence(entry);
-            return;
-        }
-        AgentTradeStateService.initializeBatch(entry, items, 0);
-        Trade.startTrade(agent);
-        Trade.inviteTrade(agent, recipient);
-        if (!AgentBotPendingTradeStateRuntime.inviteAnnounced(entry)
-                && !AgentBotPendingTradeStateRuntime.isSupplyShareCategory(entry)) {
-            AgentBotPendingTradeStateRuntime.markInviteAnnounced(entry);
-            AgentBotInventoryRuntime.replyNow(entry, BotManager.randomReply(AgentDialogueCatalog.tradeInvitationReplies()));
-        }
+        AgentTradeBatchService.openBatch(
+                entry,
+                agent,
+                items,
+                0,
+                () -> recipient,
+                () -> {
+                    AgentBotInventoryRuntime.replyNow(entry, "can't trade right now, stopping");
+                    AgentTradeStateService.clearSequence(entry);
+                },
+                () -> server.Trade.startTrade(agent),
+                server.Trade::inviteTrade,
+                () -> BotManager.randomReply(AgentDialogueCatalog.tradeInvitationReplies()),
+                message -> AgentBotInventoryRuntime.replyNow(entry, message));
     }
 
 }

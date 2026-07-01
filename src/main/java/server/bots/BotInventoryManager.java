@@ -42,6 +42,7 @@ import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.trade.AgentDirectItemTradeService;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.trade.AgentMesoTradeService;
+import server.agents.capabilities.trade.AgentTradeBatchService;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
 import server.agents.capabilities.trade.AgentTradeRecipientService;
 import server.agents.capabilities.trade.AgentTradeStateService;
@@ -374,20 +375,17 @@ public class BotInventoryManager {
     }
 
     private static void openTradeBatch(BotEntry entry, Character bot, List<Item> items, int mesos) {
-        Character recipient = AgentTradeRecipientService.resolveTradeRecipient(entry, bot);
-        if (recipient == null || recipient.getTrade() != null) {
-            cancelTradeSequence(entry, bot, "can't trade right now, stopping");
-            return;
-        }
-        AgentTradeStateService.initializeBatch(entry, items, mesos);
-        Trade.startTrade(bot);
-        Trade.inviteTrade(bot, recipient);
-        // pot_share already announced itself ("got some HP pots, inv u") — skip the redundant "k i inv"
-        if (!AgentBotPendingTradeStateRuntime.inviteAnnounced(entry)
-                && !AgentBotPendingTradeStateRuntime.isSupplyShareCategory(entry)) {
-            AgentBotPendingTradeStateRuntime.markInviteAnnounced(entry);
-            AgentBotInventoryRuntime.replyNow(entry, BotManager.randomReply(AgentDialogueCatalog.tradeInvitationReplies()));
-        }
+        AgentTradeBatchService.openBatch(
+                entry,
+                bot,
+                items,
+                mesos,
+                () -> AgentTradeRecipientService.resolveTradeRecipient(entry, bot),
+                () -> cancelTradeSequence(entry, bot, "can't trade right now, stopping"),
+                () -> Trade.startTrade(bot),
+                Trade::inviteTrade,
+                () -> BotManager.randomReply(AgentDialogueCatalog.tradeInvitationReplies()),
+                message -> AgentBotInventoryRuntime.replyNow(entry, message));
     }
 
     /** Called every bot simulation tick while a trade sequence is in progress. */
