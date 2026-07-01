@@ -28,6 +28,9 @@ Recent map updates:
   `server.agents.runtime.AgentLeaderSafetyService`; BotManager still performs
   the temporary safe-mode entry side effects once the Agent-owned gate says the
   delay has elapsed.
+- BotManager non-town inactive safe-mode idle sequence moved to
+  `server.agents.runtime.AgentLeaderSafetyService`; BotManager only supplies
+  temporary physics and movement-broadcast callbacks.
 - BotManager script task completion rules moved to
   `server.agents.runtime.AgentScriptTaskCompletionService`; BotManager only
   supplies temporary follow-target resolution and movement distance config.

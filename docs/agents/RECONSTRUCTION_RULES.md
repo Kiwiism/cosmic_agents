@@ -35,6 +35,10 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentLeaderSafetyService`. The first inactive tick,
   returned-to-town away-safe timer start, and configured delay comparison are
   unchanged; BotManager still owns the safe-mode side effects after the gate.
+- BotManager non-town inactive safe-mode idle now delegates to
+  `server.agents.runtime.AgentLeaderSafetyService`. The idle-on-ground,
+  movement-broadcast, and returned-to-town state order is unchanged; BotManager
+  still supplies the temporary physics and packet callbacks.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

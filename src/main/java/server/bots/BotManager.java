@@ -2689,9 +2689,10 @@ public class BotManager {
             return scrollBotToTown(entry, bot, ownerCharId);
         }
 
-        BotPhysicsEngine.idleOnGround(entry, bot);
-        BotMovementManager.broadcastMovement(entry);
-        AgentBotActivityStateRuntime.setOwnerReturnedToTown(entry, true);
+        AgentLeaderSafetyService.idleInactiveAgentInPlace(
+                entry,
+                () -> BotPhysicsEngine.idleOnGround(entry, bot),
+                () -> BotMovementManager.broadcastMovement(entry));
         return false;
     }
 

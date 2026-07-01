@@ -82,4 +82,12 @@ public final class AgentLeaderSafetyService {
 
         return nowMs - AgentBotActivityStateRuntime.ownerOfflineOrDeadSinceMs(entry) >= inactiveTownReturnMs;
     }
+
+    public static void idleInactiveAgentInPlace(BotEntry entry,
+                                                Runnable idleOnGround,
+                                                Runnable broadcastMovement) {
+        idleOnGround.run();
+        broadcastMovement.run();
+        AgentBotActivityStateRuntime.setOwnerReturnedToTown(entry, true);
+    }
 }
