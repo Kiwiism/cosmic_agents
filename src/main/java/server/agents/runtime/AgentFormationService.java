@@ -1,9 +1,12 @@
 package server.agents.runtime;
 
+import client.Character;
 import server.agents.integration.AgentBotFormationStateRuntime;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -33,6 +36,22 @@ public final class AgentFormationService {
 
     public static FormationState defaultStagger(int followStaggerPx, int snapRange) {
         return new FormationState(FormationType.STAGGER, followStaggerPx, snapRange);
+    }
+
+    public static FormationState stateForEntry(BotEntry entry,
+                                               Map<Integer, FormationState> formationsByLeaderId,
+                                               FormationState defaultFormation) {
+        Character leader = AgentBotRuntimeIdentityRuntime.owner(entry);
+        if (leader == null) {
+            return defaultFormation;
+        }
+        return stateForLeader(formationsByLeaderId, leader.getId(), defaultFormation);
+    }
+
+    public static FormationState stateForLeader(Map<Integer, FormationState> formationsByLeaderId,
+                                                int leaderCharId,
+                                                FormationState defaultFormation) {
+        return formationsByLeaderId.getOrDefault(leaderCharId, defaultFormation);
     }
 
     public static void applyOffsets(List<BotEntry> entries, FormationState formation) {

@@ -531,7 +531,8 @@ public class BotManager {
         AgentBotMovementStateRuntime.refreshMovementProfile(entry, bot);
         AgentNavigationGraphService.warmGraphAsync(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         entries.add(entry);
-        AgentFormationService.FormationState fs = ownerFormations.getOrDefault(ownerCharId, defaultFormationState());
+        AgentFormationService.FormationState fs =
+                AgentFormationService.stateForLeader(ownerFormations, ownerCharId, defaultFormationState());
         AgentFormationService.applyOffsets(entries, fs);
         if (normalizeSpawnState) {
             normalizeSpawnedBot(entry);
@@ -895,7 +896,7 @@ public class BotManager {
                 return;
             }
             AgentFormationService.FormationState current =
-                    ownerFormations.getOrDefault(owner.getId(), defaultFormationState());
+                    AgentFormationService.stateForLeader(ownerFormations, owner.getId(), defaultFormationState());
             // snap [px|on|off] — changes Y-snap range, preserves type/px
             if (typeStr.equalsIgnoreCase("snap")) {
                 String qualifier = fm.group(2);
@@ -1221,11 +1222,7 @@ public class BotManager {
     }
 
     AgentFormationService.FormationState formationStateFor(BotEntry entry) {
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
-        if (owner == null) {
-            return defaultFormationState();
-        }
-        return ownerFormations.getOrDefault(owner.getId(), defaultFormationState());
+        return AgentFormationService.stateForEntry(entry, ownerFormations, defaultFormationState());
     }
 
     public Character resolveFollowAnchor(BotEntry entry, Character owner) {
@@ -2798,7 +2795,7 @@ public class BotManager {
         }
 
         AgentFormationService.FormationState formation =
-                ownerFormations.getOrDefault(ownerCharId, defaultFormationState());
+                AgentFormationService.stateForLeader(ownerFormations, ownerCharId, defaultFormationState());
         int offsetX = formation.offsetFor(idx, Math.max(1, entries.size()));
         int targetX = base.x + offsetX;
 

@@ -8,9 +8,11 @@ import server.agents.runtime.AgentFormationService.FormationType;
 import server.bots.BotEntry;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class AgentFormationServiceTest {
     @Test
@@ -37,5 +39,21 @@ class AgentFormationServiceTest {
 
         assertEquals(60, AgentBotFormationStateRuntime.followOffsetX(first));
         assertEquals(-60, AgentBotFormationStateRuntime.followOffsetX(second));
+    }
+
+    @Test
+    void resolvesFormationStateByLeaderOrDefault() {
+        Character leader = mock(Character.class);
+        when(leader.getId()).thenReturn(100);
+        FormationState defaultFormation = AgentFormationService.defaultStagger(60, 120);
+        FormationState customFormation = new FormationState(FormationType.LEFT, 80, 90);
+        Map<Integer, FormationState> formations = Map.of(leader.getId(), customFormation);
+
+        assertEquals(customFormation, AgentFormationService.stateForLeader(formations, leader.getId(), defaultFormation));
+        assertEquals(defaultFormation, AgentFormationService.stateForLeader(formations, 999, defaultFormation));
+        assertEquals(customFormation, AgentFormationService.stateForEntry(
+                new BotEntry(mock(Character.class), leader, null), formations, defaultFormation));
+        assertEquals(defaultFormation, AgentFormationService.stateForEntry(
+                new BotEntry(mock(Character.class), null, null), formations, defaultFormation));
     }
 }

@@ -2539,6 +2539,10 @@ Recent reconstruction notes:
   the temporary Cosmic player-storage lookup callback while preserving the
   cached-leader, mismatched-leader, offline-leader, and missing-leader behavior
   exactly.
+- Formation state lookup now lives in
+  `server.agents.runtime.AgentFormationService`; BotManager still owns the
+  temporary per-leader formation map but no longer owns the default-vs-custom
+  resolution rule.
 
 Initial reconstruction order:
 

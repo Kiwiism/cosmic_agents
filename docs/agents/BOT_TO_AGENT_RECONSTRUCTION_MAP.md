@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- BotManager formation state lookup moved to
+  `server.agents.runtime.AgentFormationService`; BotManager still stores the
+  temporary per-leader formation map for command compatibility.
 - BotManager tick leader/session refresh moved to
   `server.agents.runtime.AgentLeaderSessionService`; BotManager remains a
   compatibility wrapper that supplies the current Cosmic player-storage lookup.
