@@ -488,18 +488,18 @@ public class BotManager {
 
     /** Disown a bot by name - cancels its AI tick and leaves it idle in the map. */
     public boolean dismissBot(int ownerCharId, String botName) {
-        List<BotEntry> entries = bots.get(ownerCharId);
-        if (entries == null) return false;
-        BotEntry entry = getBotEntry(ownerCharId, botName);
-        if (entry == null) return false;
-        entries.remove(entry);
-        AgentBotManagerSchedulerRuntime.cancelScheduledTask(entry);
-        issueStop(entry);
-        AgentBotManagerSchedulerRuntime.afterDelay(randMs(400, 600), () ->
-                AgentBotManagerReplyRuntime.replyNow(entry, randomReply(List.of(
-                        "ok", "sure", "alright", "gotcha",
-                        "later!", "see ya", "take care", "cya", "peace out"))));
-        return true;
+        return AgentLifecycleService.dismissAgentByName(
+                ownerCharId,
+                botName,
+                new AgentLifecycleService.DismissHooks(
+                        AgentBotManagerSchedulerRuntime::cancelScheduledTask,
+                        this::issueStop,
+                        AgentBotManagerSchedulerRuntime::afterDelay,
+                        () -> randMs(400, 600),
+                        AgentBotManagerReplyRuntime::replyNow,
+                        () -> randomReply(List.of(
+                                "ok", "sure", "alright", "gotcha",
+                                "later!", "see ya", "take care", "cya", "peace out"))));
     }
 
     /** Recruit an ownerless bot by name into the owner's group. Returns an error string on failure, null on success. */

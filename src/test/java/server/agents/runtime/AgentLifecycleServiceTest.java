@@ -210,6 +210,62 @@ class AgentLifecycleServiceTest {
     }
 
     @Test
+    void dismissAgentByNameReturnsFalseWhenMissing() {
+        AgentRuntimeRegistry.entriesByLeaderId().clear();
+
+        boolean dismissed = AgentLifecycleService.dismissAgentByName(
+                100,
+                "Alpha",
+                noSideEffectDismissHooks());
+
+        assertFalse(dismissed);
+    }
+
+    @Test
+    void dismissAgentByNameRemovesEntryCancelsStopsAndSchedulesFarewell() {
+        Character leader = character(100, "Leader");
+        Character agent = character(200, "Alpha");
+        BotEntry entry = new BotEntry(agent, leader, null);
+        AtomicReference<Runnable> delayedAction = new AtomicReference<>();
+        AtomicInteger cancelled = new AtomicInteger();
+        AtomicInteger stopped = new AtomicInteger();
+        AtomicReference<String> said = new AtomicReference<>();
+        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(entry);
+
+        boolean dismissed = AgentLifecycleService.dismissAgentByName(
+                leader.getId(),
+                "alpha",
+                new AgentLifecycleService.DismissHooks(
+                        cancelledEntry -> {
+                            assertSame(entry, cancelledEntry);
+                            cancelled.incrementAndGet();
+                        },
+                        stoppedEntry -> {
+                            assertSame(entry, stoppedEntry);
+                            stopped.incrementAndGet();
+                        },
+                        (delayMs, action) -> {
+                            assertEquals(500L, delayMs);
+                            delayedAction.set(action);
+                        },
+                        () -> 500L,
+                        (speakingEntry, text) -> {
+                            assertSame(entry, speakingEntry);
+                            said.set(text);
+                        },
+                        () -> "ok"));
+
+        assertTrue(dismissed);
+        assertEquals(List.of(), AgentRuntimeRegistry.entriesForLeader(leader.getId()));
+        assertEquals(1, cancelled.get());
+        assertEquals(1, stopped.get());
+        delayedAction.get().run();
+        assertEquals("ok", said.get());
+        AgentRuntimeRegistry.entriesByLeaderId().clear();
+    }
+
+    @Test
     void spawnsOnlineAgentWithLegacyHooks() throws SQLException {
         Character leader = character(100, "Leader");
         Character agent = character(200, "Alpha", new BotClient(0, 0));
@@ -472,5 +528,23 @@ class AgentLifecycleServiceTest {
                 (agent, spawnMap, spawnPosition) -> {
                     throw new AssertionError("should not change map");
                 });
+    }
+
+    private static AgentLifecycleService.DismissHooks noSideEffectDismissHooks() {
+        return new AgentLifecycleService.DismissHooks(
+                entry -> {
+                    throw new AssertionError("should not cancel task");
+                },
+                entry -> {
+                    throw new AssertionError("should not stop agent");
+                },
+                (delayMs, action) -> {
+                    throw new AssertionError("should not schedule farewell");
+                },
+                () -> 500L,
+                (entry, text) -> {
+                    throw new AssertionError("should not speak");
+                },
+                () -> "ok");
     }
 }

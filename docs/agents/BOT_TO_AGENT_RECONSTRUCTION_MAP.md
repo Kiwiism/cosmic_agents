@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Dismiss-by-name lifecycle moved from BotManager to
+  `server.agents.runtime.AgentLifecycleService.dismissAgentByName`. BotManager
+  remains the compatibility wrapper for stop-mode, scheduler, and reply hooks.
 - Monster-control release moved from BotManager to
   `server.agents.runtime.AgentMonsterControlService`; common tick now delegates
   to the Agent-owned service.

@@ -17,6 +17,13 @@ Rules:
 
 Recent reconstruction notes:
 
+- Dismiss-by-name lifecycle now lives in
+  `server.agents.runtime.AgentLifecycleService.dismissAgentByName`. BotManager
+  keeps `dismissBot` as a compatibility wrapper and supplies temporary hooks
+  for task cancellation, stop-mode entry, delayed scheduling, reply delivery,
+  delay selection, and legacy farewell text selection. The same missing-entry
+  false return, registry removal, cancel-before-stop order, delayed farewell,
+  and reply text pool are preserved.
 - Monster-control release now lives in
   `server.agents.runtime.AgentMonsterControlService`. BotManager's common tick
   calls the Agent service directly, preserving the same controlled-monster scan

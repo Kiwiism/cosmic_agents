@@ -107,6 +107,24 @@ public final class AgentLifecycleService {
         void say(Character agent, String text);
     }
 
+    public record DismissHooks(Consumer<BotEntry> cancelTask,
+                               Consumer<BotEntry> stopAgent,
+                               DelayedActionScheduler delayedActionScheduler,
+                               LongSupplier farewellDelayMs,
+                               AgentEntrySpeaker entrySpeaker,
+                               FarewellMessageSupplier farewellMessageSupplier) {
+    }
+
+    @FunctionalInterface
+    public interface AgentEntrySpeaker {
+        void say(BotEntry entry, String text);
+    }
+
+    @FunctionalInterface
+    public interface FarewellMessageSupplier {
+        String message();
+    }
+
     private AgentLifecycleService() {
     }
 
@@ -215,6 +233,24 @@ public final class AgentLifecycleService {
             hooks.mapSpeaker().say(agent, "back!!");
             agent.changeFaceExpression(AgentEmote.HAPPY.getValue());
         });
+        return true;
+    }
+
+    public static boolean dismissAgentByName(int leaderCharId, String agentName, DismissHooks hooks) {
+        List<BotEntry> entries = AgentRuntimeRegistry.entriesByLeaderId().get(leaderCharId);
+        if (entries == null) {
+            return false;
+        }
+        BotEntry entry = AgentRuntimeRegistry.findByName(leaderCharId, agentName);
+        if (entry == null) {
+            return false;
+        }
+
+        entries.remove(entry);
+        hooks.cancelTask().accept(entry);
+        hooks.stopAgent().accept(entry);
+        hooks.delayedActionScheduler().schedule(hooks.farewellDelayMs().getAsLong(), () ->
+                hooks.entrySpeaker().say(entry, hooks.farewellMessageSupplier().message()));
         return true;
     }
 
