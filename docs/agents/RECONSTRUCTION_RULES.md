@@ -2115,6 +2115,9 @@ Recent reconstruction notes:
   `AgentInventoryTransferService` owns the category/direct transfer start
   entry points, and `BotInventoryManager.startTradeTransfer` is now a
   compatibility pass-through for legacy callers.
+- Dead BotInventoryManager transfer-start helper bodies for meso, prepared
+  item, reserved-equipment page, and grouped equip/ammo starts were removed
+  after the Agent transfer service became the owner of those paths.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and

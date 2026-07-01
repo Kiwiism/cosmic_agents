@@ -27,17 +27,14 @@ import server.agents.capabilities.inventory.AgentInventoryCollectionService;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.capabilities.inventory.AgentInventoryNamedItemService;
 import server.agents.capabilities.inventory.AgentInventoryTradeCollectionService;
-import server.agents.capabilities.inventory.AgentInventoryTradeCollectionService.PreparedTradeItems;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.capabilities.looting.AgentLootCleanupService;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy.AmmoTradeGroups;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.EquipsGroup;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
-import server.agents.capabilities.trade.AgentGroupedTradeTransferService;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.capabilities.trade.AgentManualTradeService;
 import server.agents.capabilities.trade.AgentOfferService;
-import server.agents.capabilities.trade.AgentMesoTradeService;
 import server.agents.capabilities.trade.AgentTradeAllItemsAddedService;
 import server.agents.capabilities.trade.AgentTradeBatchService;
 import server.agents.capabilities.trade.AgentTradeCancellationService;
@@ -503,42 +500,7 @@ public class BotInventoryManager {
                 () -> ThreadLocalRandom.current().nextBoolean());
     }
 
-    private static void startTradeMesoTransfer(String category, BotEntry entry, Character bot) {
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
-        AgentMesoTradeService.MesoTradeStartDecision decision = AgentMesoTradeService.decideStart(
-                category,
-                owner != null,
-                bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry),
-                owner != null && owner.getTrade() != null,
-                bot.getMeso());
-        AgentMesoTradeService.routeStart(
-                decision,
-                mesos -> startTradeSequence(category, owner, List.of(), mesos, true, entry, bot),
-                reply -> AgentBotInventoryRuntime.replyNow(entry, reply));
-    }
-
     // ─── Item collection helpers ──────────────────────────────────────────────
-
-    private static PreparedTradeItems prepareTradeItems(String category, BotEntry entry, Character bot) {
-        return AgentInventoryTradeCollectionService.prepareTradeItems(
-                category,
-                bot,
-                fragment -> {
-                    AgentEquippedSlotTradeService.PreparedTradeItems equippedSlotItems =
-                            AgentEquippedSlotTradeService.prepareEquippedSlotTradeItems(
-                                    fragment,
-                                    entry,
-                                    bot,
-                                    BotEquipManager::slotsFromName,
-                                    () -> AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems(entry, bot));
-                    return new PreparedTradeItems(equippedSlotItems.items(), equippedSlotItems.errorMessage());
-                },
-                fragment -> AgentInventoryNamedItemService.collectNamedItems(bot, fragment),
-                () -> recommendedItems(entry, bot),
-                () -> classifyEquipTradeGroups(entry, bot),
-                () -> classifyAmmoTradeGroups(bot),
-                AgentBotRuntimeIdentityRuntime.owner(entry));
-    }
 
     private static List<Item> collectItems(String category, BotEntry entry, Character bot) {
         return AgentInventoryTradeCollectionService.collectItems(
@@ -556,14 +518,6 @@ public class BotInventoryManager {
 
     // ─── Internals ────────────────────────────────────────────────────────────
 
-    private static List<Item> collectReservedEquipTradePage(String category, BotEntry entry, Character bot) {
-        return AgentEquipTradeGroupService.reservedEquipTradePage(category, classifyEquipTradeGroups(entry, bot));
-    }
-
-    private static String reservedEquipsPageMessage(String category, BotEntry entry, Character bot) {
-        return AgentEquipTradeGroupService.reservedEquipsPageMessage(category, classifyEquipTradeGroups(entry, bot));
-    }
-
     private static String equipsGroupMsg(String category) {
         return AgentEquipTradeGroupService.equipsGroupMessage(
                 category,
@@ -577,22 +531,6 @@ public class BotInventoryManager {
 
     private static String nextAmmoGroup(String category, Character bot) {
         return AgentInventoryAmmoPolicy.nextAvailableGroupCategory(category, classifyAmmoTradeGroups(bot));
-    }
-
-    private static void startEquipsGroupTradeTransfer(Character owner, BotEntry entry, Character bot) {
-        AgentGroupedTradeTransferService.startEquipsGroupTradeTransfer(
-                classifyEquipTradeGroups(entry, bot),
-                (category, items) -> startTradeSequence(category, owner, items, 0, false, entry, bot),
-                BotInventoryManager::equipsGroupMsg,
-                (category, message) -> AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, message),
-                reply -> AgentBotInventoryRuntime.replyNow(entry, reply));
-    }
-
-    private static void startAmmoGroupTradeTransfer(Character owner, BotEntry entry, Character bot) {
-        AgentGroupedTradeTransferService.startAmmoGroupTradeTransfer(
-                classifyAmmoTradeGroups(bot),
-                (category, items) -> startTradeSequence(category, owner, items, 0, false, entry, bot),
-                reply -> AgentBotInventoryRuntime.replyNow(entry, reply));
     }
 
     private static List<Item> recommendedItems(BotEntry entry, Character bot) {
