@@ -23,6 +23,7 @@ import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.inventory.AgentEquippedSlotTradeService;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy;
+import server.agents.capabilities.inventory.AgentInventoryCollectionService;
 import server.agents.capabilities.inventory.AgentInventoryDropService;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.capabilities.inventory.AgentInventoryNamedItemService;
@@ -56,7 +57,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.Predicate;
 
 public class BotInventoryManager {
     private static final Logger log = LoggerFactory.getLogger(BotInventoryManager.class);
@@ -706,14 +706,14 @@ public class BotInventoryManager {
                 }
             }
             case "scrolls" -> {
-                collectFromBag(bot, result, InventoryType.USE,
-                        item -> ItemConstants.isEquipScroll(item.getItemId()));
+                result.addAll(AgentInventoryCollectionService.collectFromBag(bot, InventoryType.USE,
+                        item -> ItemConstants.isEquipScroll(item.getItemId())));
                 result = AgentInventoryTradePolicy.prioritizeScrollTradeItems(result, AgentBotRuntimeIdentityRuntime.owner(entry));
             }
-            case "pots"    -> collectFromBag(bot, result, InventoryType.USE,
-                    item -> AgentUseItemClassificationPolicy.isRecoveryPotion(item.getItemId()));
-            case "buff"    -> collectFromBag(bot, result, InventoryType.USE,
-                    item -> AgentUseItemClassificationPolicy.isBuffConsumable(item.getItemId()));
+            case "pots"    -> result.addAll(AgentInventoryCollectionService.collectFromBag(bot, InventoryType.USE,
+                    item -> AgentUseItemClassificationPolicy.isRecoveryPotion(item.getItemId())));
+            case "buff"    -> result.addAll(AgentInventoryCollectionService.collectFromBag(bot, InventoryType.USE,
+                    item -> AgentUseItemClassificationPolicy.isBuffConsumable(item.getItemId())));
             case "use"     -> {
                 UseTradeGroups groups = classifyUseTradeGroups(bot, AgentBotRuntimeIdentityRuntime.owner(entry));
                 result.addAll(groups.uncategorized());
@@ -730,7 +730,7 @@ public class BotInventoryManager {
             }
             case "trash" -> result.addAll(collectTrashEquips(entry, bot));
             case "etc" -> {
-                collectFromBag(bot, result, InventoryType.ETC, item -> true);
+                result.addAll(AgentInventoryCollectionService.collectFromBag(bot, InventoryType.ETC, item -> true));
                 result = AgentInventoryTradePolicy.prioritizeEtcTradeItems(result, AgentBotRuntimeIdentityRuntime.owner(entry));
             }
             default -> {
@@ -752,13 +752,6 @@ public class BotInventoryManager {
             }
         }
         return result;
-    }
-
-    private static void collectFromBag(Character bot, List<Item> result,
-                                       InventoryType type, Predicate<Item> filter) {
-        result.addAll(AgentInventoryItemPolicy.collectSafeItems(bot, type, filter,
-                ItemInformationProvider.getInstance()::isQuestItem,
-                YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE));
     }
 
     // ─── Drop actions (floor) ─────────────────────────────────────────────────
@@ -852,7 +845,7 @@ public class BotInventoryManager {
         long startedAt = AgentTradeCommandProfiler.profileCategory("equips") ? System.nanoTime() : 0L;
         long bagScanStartedAt = startedAt != 0L ? System.nanoTime() : 0L;
         List<Item> all = new ArrayList<>();
-        collectFromBag(bot, all, InventoryType.EQUIP, item -> true);
+        all.addAll(AgentInventoryCollectionService.collectFromBag(bot, InventoryType.EQUIP, item -> true));
         long bagScanNs = startedAt != 0L ? System.nanoTime() - bagScanStartedAt : 0L;
         long selfKeepStartedAt = startedAt != 0L ? System.nanoTime() : 0L;
         Set<Item> selfKeep = BotEquipManager.collectPotentialSelfUpgradeItems(bot);

@@ -2111,6 +2111,10 @@ Recent reconstruction notes:
   BotInventoryManager preserves the same passive-loot pickup flow but delegates
   ghost-drop visibility cleanup and remove-item packet delivery to the Agent
   looting capability.
+- Generic safe bag collection now lives in `AgentInventoryCollectionService`;
+  BotInventoryManager preserves the same slot-order collection, quest-item
+  exclusion, untradeable policy flag, and caller-supplied item filters for
+  scroll, potion, buff, ETC, and equip trade collection.
 - Equipped-slot named trade preparation now lives in
   `AgentEquippedSlotTradeService`; BotInventoryManager still owns the enclosing
   trade sequence but delegates slot counting, temporary unequip preparation,
