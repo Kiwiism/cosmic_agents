@@ -22,8 +22,7 @@ import server.agents.capabilities.trade.AgentTradeDialogueService;
 import server.agents.capabilities.trade.AgentTradeLifecycleRuntimeService;
 import server.agents.capabilities.trade.AgentTradeRecipientService;
 import server.agents.capabilities.trade.AgentTradeTickRuntimeService;
-import server.agents.capabilities.trade.AgentTradeTransferAvailabilityService;
-import server.agents.capabilities.trade.AgentTradeTransferAvailabilityCallbackService;
+import server.agents.capabilities.trade.AgentTradeTransferAvailabilityRuntimeService;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotInventoryStateRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
@@ -92,23 +91,21 @@ public class BotInventoryManager {
     }
 
     public static boolean hasTransferableItems(String category, BotEntry entry, Character bot) {
-        return AgentTradeTransferAvailabilityService.hasTransferableItems(
+        return AgentTradeTransferAvailabilityRuntimeService.hasTransferableItems(
                 category,
+                entry,
                 bot,
-                AgentTradeTransferAvailabilityCallbackService.transferAvailabilityCallbacks(
-                        fragment -> 0,
-                        fragment -> AgentEquippedSlotTradeService.countEquippedSlotItems(bot, fragment, BotEquipManager::slotsFromName),
-                        () -> collectItems(category, entry, bot)));
+                transferAvailabilityRuntimeCallbacks(),
+                tradeRuntimeCallbacks(entry, bot));
     }
 
     public static int countTransferableItems(String category, BotEntry entry, Character bot) {
-        return AgentTradeTransferAvailabilityService.countTransferableItems(
+        return AgentTradeTransferAvailabilityRuntimeService.countTransferableItems(
                 category,
+                entry,
                 bot,
-                AgentTradeTransferAvailabilityCallbackService.transferAvailabilityCallbacks(
-                        fragment -> AgentInventoryNamedItemService.countNamedItems(bot, fragment),
-                        fragment -> AgentEquippedSlotTradeService.countEquippedSlotItems(bot, fragment, BotEquipManager::slotsFromName),
-                        () -> collectItems(category, entry, bot)));
+                transferAvailabilityRuntimeCallbacks(),
+                tradeRuntimeCallbacks(entry, bot));
     }
 
     /** Called every bot simulation tick while a trade sequence is in progress. */
@@ -142,6 +139,13 @@ public class BotInventoryManager {
                 BotManager::randMs,
                 AgentTradeDialogueService::thanksReply,
                 AgentTradeDialogueService::freebieReply);
+    }
+
+    private static AgentTradeTransferAvailabilityRuntimeService.RuntimeCallbacks transferAvailabilityRuntimeCallbacks() {
+        return AgentTradeTransferAvailabilityRuntimeService.RuntimeCallbacks.of(
+                AgentBotRuntimeIdentityRuntime::owner,
+                AgentInventoryNamedItemService::countNamedItems,
+                (agent, fragment) -> AgentEquippedSlotTradeService.countEquippedSlotItems(agent, fragment, BotEquipManager::slotsFromName));
     }
 
     private static AgentManualTradeRuntimeService.RuntimeCallbacks manualTradeRuntimeCallbacks(BotEntry entry) {

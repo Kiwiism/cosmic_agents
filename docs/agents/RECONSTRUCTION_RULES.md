@@ -17,6 +17,12 @@ Rules:
 
 Recent reconstruction notes:
 
+- Transfer availability/count runtime callback assembly moved from
+  `BotInventoryManager` to
+  `server.agents.capabilities.trade.AgentTradeTransferAvailabilityRuntimeService`.
+  The bot inventory shell still supplies temporary owner, named-item, and
+  equipped-slot counter hooks while Agent trade owns the availability/count
+  callback construction and item collection hookup.
 - Trade tick runtime callback assembly moved from `BotInventoryManager` to
   `server.agents.capabilities.trade.AgentTradeTickRuntimeService`. The bot
   inventory shell still supplies temporary timing, current-trade, owner,

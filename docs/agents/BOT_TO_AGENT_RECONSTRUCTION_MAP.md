@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotInventoryManager` transfer availability/count runtime callback assembly
+  now lives in `AgentTradeTransferAvailabilityRuntimeService`; the bot inventory
+  shell only supplies temporary owner, named-item, and equipped-slot counter
+  hooks.
 - `BotInventoryManager.tickTrade` runtime callback assembly now lives in
   `AgentTradeTickRuntimeService`; the bot inventory shell only supplies
   temporary timing, current-trade, owner, recipient, and refill hooks.
