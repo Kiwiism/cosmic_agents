@@ -6,7 +6,6 @@ import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.looting.AgentLootEligibility;
 
 import client.Character;
-import client.inventory.Equip;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
@@ -17,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
-import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.inventory.AgentEquipTradeClassificationService;
 import server.agents.capabilities.inventory.AgentEquipTradeGroupService;
 import server.agents.capabilities.inventory.AgentEquipTradeGroupService.AgentEquipTradeGroups;
@@ -29,7 +27,6 @@ import server.agents.capabilities.inventory.AgentInventoryTradeCollectionService
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.capabilities.looting.AgentLootCleanupService;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy.AmmoTradeGroups;
-import server.agents.capabilities.inventory.AgentInventoryTradePolicy.EquipsGroup;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.capabilities.trade.AgentManualOwnerTradeService;
@@ -403,10 +400,6 @@ public class BotInventoryManager {
                 YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE);
     }
 
-    private static List<Item> collectTrashEquips(BotEntry entry, Character bot) {
-        return classifyEquipTradeGroups(entry, bot).itemsFor(EquipsGroup.NORMAL);
-    }
-
     private static AgentEquipTradeGroups classifyEquipTradeGroups(BotEntry entry, Character bot) {
         return AgentEquipTradeClassificationService.classifyEquipTradeGroups(
                 bot,
@@ -433,10 +426,6 @@ public class BotInventoryManager {
                         report.reservedOtherChecks(),
                         report.reservedOtherHits(),
                         String.format("%.1f", report.sortNs() / 1_000_000.0))));
-    }
-
-    private static boolean isOwnClassEquip(Character bot, ItemInformationProvider ii, Equip equip) {
-        return AgentEquipmentReservePolicy.isOwnClassEquip(bot, ii, equip);
     }
 
     // ─── Pot-share helpers ────────────────────────────────────────────────────

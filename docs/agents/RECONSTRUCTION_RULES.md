@@ -2168,6 +2168,11 @@ Recent reconstruction notes:
   `AgentInventoryTransferService` supply temporary callbacks for bag scans,
   self-reserve collection, other-recipient reservation checks, owner lookup,
   and slow-classification logging.
+- Dead `BotInventoryManager` helper bodies for trash-equip collection and
+  own-class equip checks were removed after their callers moved into Agent
+  inventory/trade/equipment services. The private `startTradeSequence`
+  compatibility wrapper remains because focused regression tests still exercise
+  the legacy invite-once behavior through it.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and

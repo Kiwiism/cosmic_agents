@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Dead `BotInventoryManager` helper bodies for trash-equip collection and
+  own-class equip checks were removed; their active callers already route
+  through Agent inventory/trade/equipment services. The private
+  `startTradeSequence` compatibility wrapper remains for legacy invite-once
+  regression coverage.
 - `BotInventoryManager` and `AgentInventoryTransferService` equip trade
   classification orchestration now lives in
   `AgentEquipTradeClassificationService`; callers only wire temporary bag scan,
