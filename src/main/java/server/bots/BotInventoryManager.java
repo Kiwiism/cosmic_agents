@@ -44,6 +44,7 @@ import server.agents.capabilities.trade.AgentTradeCancellationService;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
 import server.agents.capabilities.trade.AgentTradeCompletionService;
 import server.agents.capabilities.trade.AgentTradeRecipientService;
+import server.agents.capabilities.trade.AgentTradeResetService;
 import server.agents.capabilities.trade.AgentTradeSequenceService;
 import server.agents.capabilities.trade.AgentTradeStateService;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
@@ -559,6 +560,15 @@ public class BotInventoryManager {
     }
 
     private static void resetTradeState(BotEntry entry, Character bot) {
+        AgentTradeResetService.reset(
+                entry,
+                bot,
+                () -> AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems(entry, bot),
+                () -> clearManualTradeState(entry, bot),
+                () -> BotEquipManager.autoEquip(bot, AgentBotRuntimeIdentityRuntime.owner(entry), null));
+    }
+
+    private static void resetTradeStateLegacy(BotEntry entry, Character bot) {
         boolean hadRestores = AgentBotPendingTradeStateRuntime.hasRestoreSlots(entry);
         AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems(entry, bot);
         clearManualTradeState(entry, bot);

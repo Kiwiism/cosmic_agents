@@ -2151,6 +2151,11 @@ Recent reconstruction notes:
   `AgentTradeSequenceService`; BotInventoryManager still supplies the temporary
   first-batch callback while the Agent service preserves the same missing
   recipient reply and pending-trade initialization.
+- Trade reset restore/manual-clear/sequence-clear/refill ordering now lives in
+  `AgentTradeResetService`; BotInventoryManager still supplies temporary
+  callbacks for equipped-slot restoration, manual-trade state clear, and
+  auto-equip refill. The old bot reset body is retained only as an unused
+  legacy helper until the surrounding trade tick state machine is migrated.
 - Trade batch-open orchestration now lives in `AgentTradeBatchService`;
   BotInventoryManager and AgentSupplyShareTradeService still supply the
   temporary recipient lookup/cancel/start/invite/reply callbacks, but recipient
