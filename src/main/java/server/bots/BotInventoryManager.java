@@ -9,11 +9,11 @@ import config.YamlConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
+import server.agents.capabilities.inventory.AgentAmmoTradeClassificationService;
 import server.agents.capabilities.inventory.AgentEquipTradeClassificationService;
 import server.agents.capabilities.inventory.AgentEquipTradeGroupService;
 import server.agents.capabilities.inventory.AgentEquipTradeGroupService.AgentEquipTradeGroups;
 import server.agents.capabilities.inventory.AgentEquippedSlotTradeService;
-import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.capabilities.inventory.AgentInventoryNamedItemService;
 import server.agents.capabilities.inventory.AgentInventoryTradeCollectionService;
@@ -321,7 +321,7 @@ public class BotInventoryManager {
     }
 
     private static String nextAmmoGroup(String category, Character bot) {
-        return AgentInventoryAmmoPolicy.nextAvailableGroupCategory(category, classifyAmmoTradeGroups(bot));
+        return AgentAmmoTradeClassificationService.nextAmmoGroup(category, classifyAmmoTradeGroups(bot));
     }
 
     private static List<Item> recommendedItems(BotEntry entry, Character bot) {
@@ -330,11 +330,13 @@ public class BotInventoryManager {
     }
 
     private static AmmoTradeGroups classifyAmmoTradeGroups(Character bot) {
-        return AgentInventoryAmmoPolicy.classifyTradeGroups(bot,
-                AgentAttackExecutionProvider.getEquippedWeaponType(bot),
-                ItemInformationProvider.getInstance()::getWatkForProjectile,
-                ItemInformationProvider.getInstance()::isQuestItem,
-                YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE);
+        return AgentAmmoTradeClassificationService.classifyAmmoTradeGroups(
+                bot,
+                AgentAmmoTradeClassificationService.AmmoTradeCallbacks.of(
+                        () -> AgentAttackExecutionProvider.getEquippedWeaponType(bot),
+                        ItemInformationProvider.getInstance()::getWatkForProjectile,
+                        ItemInformationProvider.getInstance()::isQuestItem,
+                        () -> YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE));
     }
 
     private static AgentEquipTradeGroups classifyEquipTradeGroups(BotEntry entry, Character bot) {

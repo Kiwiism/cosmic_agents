@@ -2189,6 +2189,10 @@ Recent reconstruction notes:
 - Stale `BotInventoryManager` imports for migrated inventory dialogue,
   inventory trade policy, USE-item classification, and manual-trade state
   helpers were removed after those responsibilities moved to Agent modules.
+- Ammo trade classification orchestration now lives in
+  `AgentAmmoTradeClassificationService`; `BotInventoryManager` and
+  `AgentInventoryTransferService` supply temporary runtime hooks for equipped
+  weapon type, projectile WATK lookup, quest-item checks, and tradeable config.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and

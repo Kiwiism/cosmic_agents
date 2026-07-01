@@ -10,12 +10,12 @@ import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.equipment.AgentEquipRecommendation;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
+import server.agents.capabilities.inventory.AgentAmmoTradeClassificationService;
 import server.agents.capabilities.inventory.AgentEquipTradeClassificationService;
 import server.agents.capabilities.inventory.AgentEquipTradeGroupService;
 import server.agents.capabilities.inventory.AgentEquipTradeGroupService.AgentEquipTradeGroups;
 import server.agents.capabilities.inventory.AgentEquippedSlotTradeService;
 import server.agents.capabilities.inventory.AgentInventoryDropService;
-import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy.AmmoTradeGroups;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.capabilities.inventory.AgentInventoryNamedItemService;
@@ -293,10 +293,12 @@ public final class AgentInventoryTransferService {
     }
 
     private static AmmoTradeGroups classifyAmmoTradeGroups(Character agent) {
-        return AgentInventoryAmmoPolicy.classifyTradeGroups(agent,
-                AgentAttackExecutionProvider.getEquippedWeaponType(agent),
-                ItemInformationProvider.getInstance()::getWatkForProjectile,
-                ItemInformationProvider.getInstance()::isQuestItem,
-                YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE);
+        return AgentAmmoTradeClassificationService.classifyAmmoTradeGroups(
+                agent,
+                AgentAmmoTradeClassificationService.AmmoTradeCallbacks.of(
+                        () -> AgentAttackExecutionProvider.getEquippedWeaponType(agent),
+                        ItemInformationProvider.getInstance()::getWatkForProjectile,
+                        ItemInformationProvider.getInstance()::isQuestItem,
+                        () -> YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE));
     }
 }

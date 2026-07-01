@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotInventoryManager` and `AgentInventoryTransferService` ammo trade
+  classification orchestration now lives in
+  `AgentAmmoTradeClassificationService`; callers only wire temporary runtime
+  hooks for weapon type, projectile WATK, quest-item checks, and config.
 - Stale `BotInventoryManager` imports for migrated inventory dialogue,
   inventory trade policy, USE-item classification, and manual-trade state
   helpers were removed.
