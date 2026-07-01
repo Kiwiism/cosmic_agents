@@ -2121,6 +2121,10 @@ Recent reconstruction notes:
 - Queued bot-initiated trade retry ticking now lives in
   `AgentTradeQueuedRetryService`; `BotInventoryManager.tickTrade` delegates the
   idle retry-delay/run branch unchanged.
+- Between-batch trade progression now lives in
+  `AgentTradeBetweenBatchService`; `BotInventoryManager.tickTrade` still
+  supplies temporary collection, category-advance, reset, and open-batch
+  callbacks while preserving the same batching behavior.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and

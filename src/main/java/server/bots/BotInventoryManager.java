@@ -36,6 +36,7 @@ import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.capabilities.trade.AgentManualTradeService;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.trade.AgentTradeAllItemsAddedService;
+import server.agents.capabilities.trade.AgentTradeBetweenBatchService;
 import server.agents.capabilities.trade.AgentTradeBatchService;
 import server.agents.capabilities.trade.AgentTradeCancellationService;
 import server.agents.capabilities.trade.AgentTradeCategoryAnnouncementService;
@@ -312,31 +313,16 @@ public class BotInventoryManager {
         Trade trade = bot.getTrade();
 
         // ── PAUSE between batches (items == null) ──────────────────────────
-        if (AgentBotPendingTradeStateRuntime.isBetweenBatches(entry)) {
-            if (AgentBotPendingTradeStateRuntime.singleBatch(entry)) {
-                resetTradeState(entry, bot);
-                return;
-            }
-            if (AgentBotPendingTradeStateRuntime.timerMs(entry) > 0) {
-                AgentBotPendingTradeStateRuntime.tickTimerDown(entry, BotMovementManager::tickDown);
-                return;
-            }
-            List<Item> next = collectItems(AgentBotPendingTradeStateRuntime.category(entry), entry, bot);
-            if (next.isEmpty()) {
-                String advanced = nextEquipsGroup(AgentBotPendingTradeStateRuntime.category(entry), entry, bot);
-                if (advanced == null) {
-                    advanced = nextAmmoGroup(AgentBotPendingTradeStateRuntime.category(entry), bot);
-                }
-                if (advanced != null) {
-                    AgentBotPendingTradeStateRuntime.setCategory(entry, advanced);
-                    AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, equipsGroupMsg(advanced));
-                    openTradeBatch(entry, bot, collectItems(advanced, entry, bot), 0);
-                } else {
-                    resetTradeState(entry, bot);
-                }
-            } else {
-                openTradeBatch(entry, bot, next, 0);
-            }
+        if (AgentTradeBetweenBatchService.tickBetweenBatches(
+                entry,
+                AgentTradeBetweenBatchService.BetweenBatchCallbacks.of(
+                        BotMovementManager::tickDown,
+                        category -> collectItems(category, entry, bot),
+                        category -> nextEquipsGroup(category, entry, bot),
+                        category -> nextAmmoGroup(category, bot),
+                        BotInventoryManager::equipsGroupMsg,
+                        items -> openTradeBatch(entry, bot, items, 0),
+                        () -> resetTradeState(entry, bot)))) {
             return;
         }
 
