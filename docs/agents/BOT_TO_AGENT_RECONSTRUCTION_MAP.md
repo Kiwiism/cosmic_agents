@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Bot autopot/potion retry request routing moved from BotManager to
+  `server.agents.capabilities.supplies.AgentPotionCheckRequestService`.
+  Character and pet-autopot paths call the Agent capability directly, while
+  BotManager keeps a temporary compatibility delegate.
 - Scroll reaction notification scheduling moved from BotManager to
   `server.agents.capabilities.social.AgentScrollReactionNotificationService`.
   Scroll packet handlers call the Agent capability directly, while BotManager

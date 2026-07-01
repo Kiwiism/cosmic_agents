@@ -58,6 +58,7 @@ import server.agents.capabilities.looting.AgentLootTargetService;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.agents.capabilities.social.AgentScrollReactionNotificationService;
 import server.agents.capabilities.shop.AgentShopService;
+import server.agents.capabilities.supplies.AgentPotionCheckRequestService;
 import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
 import server.agents.capabilities.trade.AgentOfferService;
@@ -613,19 +614,7 @@ public class BotManager {
     }
 
     public void requestBotPotionCheckSoon(Character bot) {
-        if (bot == null || !(bot.getClient() instanceof BotClient)) {
-            return;
-        }
-        Character owner = getActiveOwnerByBotCharId(bot.getId());
-        if (owner == null) {
-            return;
-        }
-        BotEntry entry = getBotEntry(owner.getId(), bot.getId());
-        if (entry == null) {
-            return;
-        }
-        int soonDelayMs = Math.max(0, cfg.POT_CHECK_RETRY_SOON_MS);
-        AgentBotPotionStateRuntime.requestPotionCheckSoon(entry, soonDelayMs);
+        AgentPotionCheckRequestService.requestPotionCheckSoon(bot);
     }
 
     /** Finds a bot-client character with the given name that is not currently owned by anyone. */

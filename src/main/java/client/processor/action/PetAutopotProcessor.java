@@ -30,7 +30,7 @@ import client.inventory.manipulator.InventoryManipulator;
 import config.YamlConfig;
 import server.ItemInformationProvider;
 import server.StatEffect;
-import server.bots.BotManager;
+import server.agents.capabilities.supplies.AgentPotionCheckRequestService;
 import tools.PacketCreator;
 
 import java.util.List;
@@ -71,7 +71,7 @@ public class PetAutopotProcessor {
             }
 
             if (chr.getClient() instanceof client.BotClient) {
-                BotManager.getInstance().requestBotPotionCheckSoon(chr);
+                AgentPotionCheckRequestService.requestPotionCheckSoon(chr);
             }
             return false;
         }

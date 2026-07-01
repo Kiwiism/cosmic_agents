@@ -17,6 +17,12 @@ Rules:
 
 Recent reconstruction notes:
 
+- Bot autopot/potion retry requests now live in
+  `server.agents.capabilities.supplies.AgentPotionCheckRequestService`.
+  Character stat-loss autopot and pet-autopot depletion paths call the Agent
+  service directly; BotManager keeps a compatibility delegate. BotClient-only
+  filtering, active leader/entry lookup, and configured retry-delay clamping
+  are unchanged.
 - Scroll reaction notification scheduling now lives in
   `server.agents.capabilities.social.AgentScrollReactionNotificationService`.
   Normal scrolls and cash-item scrolls call the Agent service directly;
