@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotInventoryManager` and `AgentInventoryTransferService` trade item
+  collection wiring now lives in `AgentTradeItemCollectionService`; callers
+  only supply temporary recommended/equip/ammo group callbacks.
 - `BotInventoryManager` and `AgentInventoryTransferService` ammo trade
   classification orchestration now lives in
   `AgentAmmoTradeClassificationService`; callers only wire temporary runtime

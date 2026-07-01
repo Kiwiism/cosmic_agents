@@ -139,13 +139,14 @@ public final class AgentInventoryTransferService {
     }
 
     private static List<Item> collectItems(String category, BotEntry entry, Character agent) {
-        return AgentInventoryTradeCollectionService.collectItems(
+        return AgentTradeItemCollectionService.collectItems(
                 category,
                 agent,
                 AgentBotRuntimeIdentityRuntime.owner(entry),
-                () -> recommendedItems(entry, agent),
-                () -> classifyEquipTradeGroups(entry, agent),
-                () -> classifyAmmoTradeGroups(agent));
+                AgentTradeItemCollectionService.TradeItemCollectionCallbacks.of(
+                        () -> recommendedItems(entry, agent),
+                        () -> classifyEquipTradeGroups(entry, agent),
+                        () -> classifyAmmoTradeGroups(agent)));
     }
 
     private static void startTradeSequence(String category,

@@ -33,6 +33,7 @@ import server.agents.capabilities.trade.AgentTradeCommandProfiler;
 import server.agents.capabilities.trade.AgentTradeCompletionService;
 import server.agents.capabilities.trade.AgentTradeConfirmWaitService;
 import server.agents.capabilities.trade.AgentTradeItemAddTickService;
+import server.agents.capabilities.trade.AgentTradeItemCollectionService;
 import server.agents.capabilities.trade.AgentTradeInviteWaitService;
 import server.agents.capabilities.trade.AgentTradeRecipientService;
 import server.agents.capabilities.trade.AgentTradeResetService;
@@ -294,13 +295,14 @@ public class BotInventoryManager {
     // ─── Item collection helpers ──────────────────────────────────────────────
 
     private static List<Item> collectItems(String category, BotEntry entry, Character bot) {
-        return AgentInventoryTradeCollectionService.collectItems(
+        return AgentTradeItemCollectionService.collectItems(
                 category,
                 bot,
                 AgentBotRuntimeIdentityRuntime.owner(entry),
-                () -> recommendedItems(entry, bot),
-                () -> classifyEquipTradeGroups(entry, bot),
-                () -> classifyAmmoTradeGroups(bot));
+                AgentTradeItemCollectionService.TradeItemCollectionCallbacks.of(
+                        () -> recommendedItems(entry, bot),
+                        () -> classifyEquipTradeGroups(entry, bot),
+                        () -> classifyAmmoTradeGroups(bot)));
     }
 
     // ─── Drop actions (floor) ─────────────────────────────────────────────────
