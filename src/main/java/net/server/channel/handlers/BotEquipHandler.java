@@ -25,8 +25,8 @@ import client.inventory.Item;
 import client.inventory.manipulator.InventoryManipulator;
 import net.AbstractPacketHandler;
 import net.packet.InPacket;
+import server.agents.runtime.AgentRuntimeRegistry;
 import server.ItemInformationProvider;
-import server.bots.BotManager;
 import config.YamlConfig;
 import tools.PacketCreator;
 
@@ -45,7 +45,7 @@ public final class BotEquipHandler extends AbstractPacketHandler {
         int action = p.readByte();
 
         if (action == REQ_LIST) {
-            int count = BotManager.getInstance().spawnedBotCount(player.getId());
+            int count = AgentRuntimeRegistry.activeAgentCountForLeader(player.getId());
             c.sendPacket(PacketCreator.botEquipList(count));
             return;
         }
@@ -102,7 +102,7 @@ public final class BotEquipHandler extends AbstractPacketHandler {
         if (botIndex < 1) {
             return null;
         }
-        List<Character> bots = BotManager.getInstance().getOwnedBotCharacters(player.getId());
+        List<Character> bots = AgentRuntimeRegistry.activeAgentCharactersForLeader(player.getId());
         if (botIndex > bots.size()) {
             return null;
         }

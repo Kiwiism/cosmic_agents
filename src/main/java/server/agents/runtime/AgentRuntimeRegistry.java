@@ -94,4 +94,21 @@ public final class AgentRuntimeRegistry {
         }
         return List.copyOf(entries);
     }
+
+    public static int activeAgentCountForLeader(int leaderCharId) {
+        List<BotEntry> entries = entriesByLeaderId.get(leaderCharId);
+        return entries == null ? 0 : entries.size();
+    }
+
+    public static List<Character> activeAgentCharactersForLeader(int leaderCharId) {
+        List<BotEntry> entries = entriesByLeaderId.get(leaderCharId);
+        if (entries == null || entries.isEmpty()) {
+            return List.of();
+        }
+
+        return entries.stream()
+                .map(AgentBotRuntimeIdentityRuntime::bot)
+                .filter(agent -> agent != null)
+                .toList();
+    }
 }

@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Active Agent count/list access for the bot equip window moved to
+  `server.agents.runtime.AgentRuntimeRegistry`. `BotEquipHandler` no longer
+  imports BotManager for those lookups, while BotManager keeps compatibility
+  accessors for older callers.
 - BotManager bot-only autopot cleanup moved to
   `server.agents.runtime.AgentAutopotRuntimeCleanupService`. BotManager
   `cleanupBotRuntimeState` remains the temporary lifecycle wrapper that removes

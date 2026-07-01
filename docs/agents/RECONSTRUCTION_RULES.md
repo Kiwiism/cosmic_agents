@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- BotEquipHandler active-Agent count and character-list lookup now reads
+  `server.agents.runtime.AgentRuntimeRegistry` directly. BotManager keeps
+  `spawnedBotCount` and `getOwnedBotCharacters` as compatibility delegates, and
+  the same active-entry count plus null-agent filtering behavior is preserved.
 - BotManager bot-only autopot cleanup now lives in
   `server.agents.runtime.AgentAutopotRuntimeCleanupService`. Runtime release
   still removes the live entry first, then clears HP/MP autopot alerts and

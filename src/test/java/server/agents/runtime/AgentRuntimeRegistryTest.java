@@ -77,6 +77,25 @@ class AgentRuntimeRegistryTest {
         AgentRuntimeRegistry.entriesByLeaderId().clear();
     }
 
+    @Test
+    void countsAndListsActiveAgentCharactersFromLiveStore() {
+        Character leader = character(100, "Leader");
+        Character alpha = character(200, "Alpha");
+        Character beta = character(201, "Beta");
+        AgentRuntimeRegistry.entriesByLeaderId().clear();
+
+        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new BotEntry(alpha, leader, null));
+        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new BotEntry(null, leader, null));
+        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new BotEntry(beta, leader, null));
+
+        assertEquals(3, AgentRuntimeRegistry.activeAgentCountForLeader(leader.getId()));
+        assertEquals(List.of(alpha, beta), AgentRuntimeRegistry.activeAgentCharactersForLeader(leader.getId()));
+        assertEquals(0, AgentRuntimeRegistry.activeAgentCountForLeader(999));
+        assertEquals(List.of(), AgentRuntimeRegistry.activeAgentCharactersForLeader(999));
+
+        AgentRuntimeRegistry.entriesByLeaderId().clear();
+    }
+
     private static Character character(int id, String name) {
         Character character = mock(Character.class);
         when(character.getId()).thenReturn(id);
