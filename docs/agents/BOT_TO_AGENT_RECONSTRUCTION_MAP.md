@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotInventoryManager` and `AgentInventoryTransferService` equip trade
+  classification orchestration now lives in
+  `AgentEquipTradeClassificationService`; callers only wire temporary bag scan,
+  self-reserve, reservation-check, owner-lookup, and slow-log callbacks.
 - `BotInventoryManager` transfer availability/count routing now lives in
   `AgentTradeTransferAvailabilityService`; the bot inventory shell only wires
   current equipped-slot, named-item, and category-collection callbacks.

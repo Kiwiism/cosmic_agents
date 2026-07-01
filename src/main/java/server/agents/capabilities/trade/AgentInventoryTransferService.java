@@ -2,7 +2,6 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import client.inventory.Item;
-import client.inventory.InventoryType;
 import config.YamlConfig;
 import server.ItemInformationProvider;
 import org.slf4j.Logger;
@@ -11,14 +10,13 @@ import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.equipment.AgentEquipRecommendation;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
+import server.agents.capabilities.inventory.AgentEquipTradeClassificationService;
 import server.agents.capabilities.inventory.AgentEquipTradeGroupService;
-import server.agents.capabilities.inventory.AgentEquipTradeGroupService.AgentEquipTradeClassification;
 import server.agents.capabilities.inventory.AgentEquipTradeGroupService.AgentEquipTradeGroups;
 import server.agents.capabilities.inventory.AgentEquippedSlotTradeService;
 import server.agents.capabilities.inventory.AgentInventoryDropService;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy.AmmoTradeGroups;
-import server.agents.capabilities.inventory.AgentInventoryCollectionService;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.capabilities.inventory.AgentInventoryNamedItemService;
 import server.agents.capabilities.inventory.AgentInventorySellTrashService;
@@ -36,7 +34,6 @@ import server.bots.BotMovementManager;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Agent-owned boundary for inventory transfer commands while the deeper trade
@@ -268,47 +265,31 @@ public final class AgentInventoryTransferService {
     }
 
     private static AgentEquipTradeGroups classifyEquipTradeGroups(BotEntry entry, Character agent) {
-        long startedAt = AgentTradeCommandProfiler.profileCategory("equips") ? System.nanoTime() : 0L;
-        long bagScanStartedAt = startedAt != 0L ? System.nanoTime() : 0L;
-        List<Item> all = new ArrayList<>();
-        all.addAll(AgentInventoryCollectionService.collectFromBag(agent, InventoryType.EQUIP, item -> true));
-        long bagScanNs = startedAt != 0L ? System.nanoTime() - bagScanStartedAt : 0L;
-        long selfKeepStartedAt = startedAt != 0L ? System.nanoTime() : 0L;
-        Set<Item> selfKeep = AgentEquipmentReservePolicy.collectPotentialSelfUpgradeItems(agent);
-        long selfKeepNs = startedAt != 0L ? System.nanoTime() - selfKeepStartedAt : 0L;
-
-        AgentEquipTradeClassification classification = AgentEquipTradeGroupService.classifyEquipGroups(
+        return AgentEquipTradeClassificationService.classifyEquipTradeGroups(
                 agent,
-                all,
-                selfKeep,
-                item -> AgentOfferService.isReservedForOtherRecipients(entry, agent, item),
-                startedAt != 0L);
-        AgentEquipTradeGroups groups = classification.groups();
-        if (startedAt != 0L) {
-            long elapsedNs = System.nanoTime() - startedAt;
-            if (elapsedNs >= TRADE_COMMAND_PROFILE_WARN_NS) {
-                String agentName = agent != null ? agent.getName() : "?";
-                Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
-                String ownerName = owner != null ? owner.getName() : "?";
-                log.warn(
+                AgentEquipTradeClassificationService.ClassificationCallbacks.of(
+                        () -> AgentTradeCommandProfiler.profileCategory("equips"),
+                        () -> TRADE_COMMAND_PROFILE_WARN_NS,
+                        AgentEquipTradeClassificationService.ClassificationCallbacks::collectEquipBag,
+                        AgentEquipmentReservePolicy::collectPotentialSelfUpgradeItems,
+                        item -> AgentOfferService.isReservedForOtherRecipients(entry, agent, item),
+                        () -> AgentBotRuntimeIdentityRuntime.owner(entry),
+                        report -> log.warn(
                         "Slow equip trade classification: took {} ms bot={} owner={} bagItems={} selfKeep={} normalItems={} reservedOtherItems={} reservedSelfItems={} bagScanMs={} selfKeepMs={} reservedOtherMs={} reservedOtherChecks={} reservedOtherHits={} sortMs={}",
-                        String.format("%.1f", elapsedNs / 1_000_000.0),
-                        agentName,
-                        ownerName,
-                        all.size(),
-                        selfKeep.size(),
-                        groups.normal().size(),
-                        groups.reservedForOther().size(),
-                        groups.reservedForSelf().size(),
-                        String.format("%.1f", bagScanNs / 1_000_000.0),
-                        String.format("%.1f", selfKeepNs / 1_000_000.0),
-                        String.format("%.1f", classification.reservedOtherNs() / 1_000_000.0),
-                        classification.reservedOtherChecks(),
-                        classification.reservedOtherHits(),
-                        String.format("%.1f", classification.sortNs() / 1_000_000.0));
-            }
-        }
-        return groups;
+                        String.format("%.1f", report.elapsedNs() / 1_000_000.0),
+                        report.agentName(),
+                        report.ownerName(),
+                        report.bagItems(),
+                        report.selfKeep(),
+                        report.normalItems(),
+                        report.reservedOtherItems(),
+                        report.reservedSelfItems(),
+                        String.format("%.1f", report.bagScanNs() / 1_000_000.0),
+                        String.format("%.1f", report.selfKeepNs() / 1_000_000.0),
+                        String.format("%.1f", report.reservedOtherNs() / 1_000_000.0),
+                        report.reservedOtherChecks(),
+                        report.reservedOtherHits(),
+                        String.format("%.1f", report.sortNs() / 1_000_000.0))));
     }
 
     private static AmmoTradeGroups classifyAmmoTradeGroups(Character agent) {

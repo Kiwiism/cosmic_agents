@@ -2163,6 +2163,11 @@ Recent reconstruction notes:
   `AgentTradeTransferAvailabilityService`; `BotInventoryManager` supplies
   temporary callbacks for equipped-slot counts, named-item counts, and current
   category item collection.
+- Equip trade classification orchestration now lives in
+  `AgentEquipTradeClassificationService`; `BotInventoryManager` and
+  `AgentInventoryTransferService` supply temporary callbacks for bag scans,
+  self-reserve collection, other-recipient reservation checks, owner lookup,
+  and slow-classification logging.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and
