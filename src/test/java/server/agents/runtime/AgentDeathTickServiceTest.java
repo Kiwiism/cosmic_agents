@@ -2,17 +2,115 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
+import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.integration.AgentBotDeathStateRuntime;
 import server.bots.BotEntry;
+import server.maps.MapleMap;
 
+import java.awt.Point;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class AgentDeathTickServiceTest {
+    @Test
+    void respawnNearLeaderRestoresHpTeleportsAndAnnounces() {
+        MapleMap map = mock(MapleMap.class);
+        Character leader = character(100, 1, map, new Point(50, 100));
+        Character agent = character(200, 1, map, new Point(10, 100));
+        BotEntry entry = new BotEntry(agent, leader, null);
+        Point ground = new Point(50, 99);
+        AtomicInteger mapChanges = new AtomicInteger();
+        AtomicReference<Point> groundedFrom = new AtomicReference<>();
+        AtomicReference<Point> teleportedTo = new AtomicReference<>();
+        AtomicInteger resets = new AtomicInteger();
+        AtomicInteger broadcasts = new AtomicInteger();
+        AtomicReference<String> spoken = new AtomicReference<>();
+        AgentBotDeathStateRuntime.enterDeadState(entry, 1_000L, 500L);
+        when(agent.getMaxHp()).thenReturn(123);
+
+        AgentDeathTickService.respawnNearLeader(
+                entry,
+                agent,
+                leader,
+                new AgentDeathTickService.RespawnHooks(
+                        (changedAgent, leaderMap, leaderPosition) -> mapChanges.incrementAndGet(),
+                        (targetMap, point) -> {
+                            assertSame(map, targetMap);
+                            groundedFrom.set(point);
+                            return ground;
+                        },
+                        (teleportEntry, teleportAgent, point) -> {
+                            assertSame(entry, teleportEntry);
+                            assertSame(agent, teleportAgent);
+                            teleportedTo.set(point);
+                        },
+                        (resetEntry, resetAgent) -> {
+                            assertSame(entry, resetEntry);
+                            assertSame(agent, resetAgent);
+                            resets.incrementAndGet();
+                        },
+                        (broadcastEntry, broadcastAgent) -> {
+                            assertSame(entry, broadcastEntry);
+                            assertSame(agent, broadcastAgent);
+                            broadcasts.incrementAndGet();
+                        },
+                        (speakingAgent, text) -> {
+                            assertSame(agent, speakingAgent);
+                            spoken.set(text);
+                        }));
+
+        assertFalse(AgentBotDeathStateRuntime.isDead(entry));
+        verify(agent).updateHp(123);
+        assertEquals(0, mapChanges.get());
+        assertEquals(new Point(50, 99), groundedFrom.get());
+        assertSame(ground, teleportedTo.get());
+        assertEquals(1, resets.get());
+        assertEquals(1, broadcasts.get());
+        assertEquals("back!", spoken.get());
+        verify(agent).changeFaceExpression(AgentEmote.GLARE.getValue());
+    }
+
+    @Test
+    void respawnNearLeaderChangesMapWhenAgentIsElsewhereAndFallsBackToLeaderPosition() {
+        MapleMap leaderMap = mock(MapleMap.class);
+        MapleMap agentMap = mock(MapleMap.class);
+        Point leaderPosition = new Point(50, 100);
+        Character leader = character(100, 1, leaderMap, leaderPosition);
+        Character agent = character(200, 2, agentMap, new Point(10, 100));
+        BotEntry entry = new BotEntry(agent, leader, null);
+        AtomicInteger mapChanges = new AtomicInteger();
+        AtomicReference<Point> teleportedTo = new AtomicReference<>();
+        when(agent.getMaxHp()).thenReturn(123);
+
+        AgentDeathTickService.respawnNearLeader(
+                entry,
+                agent,
+                leader,
+                new AgentDeathTickService.RespawnHooks(
+                        (changedAgent, targetMap, targetPosition) -> {
+                            assertSame(agent, changedAgent);
+                            assertSame(leaderMap, targetMap);
+                            assertSame(leaderPosition, targetPosition);
+                            mapChanges.incrementAndGet();
+                        },
+                        (targetMap, point) -> null,
+                        (teleportEntry, teleportAgent, point) -> teleportedTo.set(point),
+                        (resetEntry, resetAgent) -> {},
+                        (broadcastEntry, broadcastAgent) -> {},
+                        (speakingAgent, text) -> {}));
+
+        assertEquals(1, mapChanges.get());
+        assertSame(leaderPosition, teleportedTo.get());
+    }
+
     @Test
     void returnsFalseWhenAgentIsAliveAndDoesNotNeedDeadState() {
         BotEntry entry = entry();
@@ -74,6 +172,15 @@ class AgentDeathTickServiceTest {
 
     private static BotEntry entry() {
         return new BotEntry(mock(Character.class), mock(Character.class), null);
+    }
+
+    private static Character character(int id, int mapId, MapleMap map, Point position) {
+        Character character = mock(Character.class);
+        when(character.getId()).thenReturn(id);
+        when(character.getMapId()).thenReturn(mapId);
+        when(character.getMap()).thenReturn(map);
+        when(character.getPosition()).thenReturn(position);
+        return character;
     }
 
     private static Character agent(BotEntry entry) {

@@ -17,6 +17,12 @@ Rules:
 
 Recent reconstruction notes:
 
+- Death respawn recovery now lives in
+  `server.agents.runtime.AgentDeathTickService.respawnNearLeader`. BotManager
+  keeps only temporary hooks for map-change portal selection, ground lookup,
+  physics teleport, movement reset, movement broadcast, and map chat. The same
+  death-state clear, HP restore, cross-map leader warp, ground fallback,
+  `"back!"` line, and glare face expression are preserved.
 - Offline Agent relogin orchestration now lives in
   `server.agents.runtime.AgentLifecycleService.reloginAgent`. BotManager keeps
   `reloginBot` as a compatibility wrapper and supplies temporary hooks for

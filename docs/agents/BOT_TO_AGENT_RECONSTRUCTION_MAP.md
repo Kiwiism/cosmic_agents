@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Death respawn recovery moved from BotManager to
+  `server.agents.runtime.AgentDeathTickService.respawnNearLeader`. BotManager
+  remains the temporary hook provider for portal selection, physics, broadcast,
+  and map chat side effects.
 - Offline Agent relogin moved from BotManager to
   `server.agents.runtime.AgentLifecycleService.reloginAgent`. BotManager
   remains the temporary compatibility wrapper for server lookup, DB loading,

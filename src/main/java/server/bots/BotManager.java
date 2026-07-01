@@ -18,7 +18,6 @@ import server.agents.capabilities.combat.AgentCombatScoringPolicy;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
 import server.agents.capabilities.quest.AgentPartyQuestSyncService;
 
-import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.dialogue.AgentWhisperCommandService;
 
@@ -3067,19 +3066,18 @@ public class BotManager {
     }
 
     private void respawnBot(BotEntry entry, Character bot, Character owner) {
-        AgentBotDeathStateRuntime.clear(entry);
-        bot.updateHp(bot.getMaxHp());
-
-        if (bot.getMapId() != owner.getMapId()) {
-            bot.forceChangeMap(owner.getMap(), owner.getMap().findClosestPortal(owner.getPosition()));
-        }
-        Point ownerPos = owner.getPosition();
-        Point spawnPos = bot.getMap().getPointBelow(new Point(ownerPos.x, ownerPos.y - 1));
-        BotPhysicsEngine.teleportTo(entry, bot, spawnPos != null ? spawnPos : ownerPos);
-        BotMovementManager.resetEntryStateAfterTeleport(entry);
-        BotMovementManager.broadcastMovement(entry);
-        botSay(bot, "back!");
-        bot.changeFaceExpression(AgentEmote.GLARE.getValue());
+        AgentDeathTickService.respawnNearLeader(
+                entry,
+                bot,
+                owner,
+                new AgentDeathTickService.RespawnHooks(
+                        (respawnBot, leaderMap, leaderPosition) ->
+                                respawnBot.forceChangeMap(leaderMap, leaderMap.findClosestPortal(leaderPosition)),
+                        MapleMap::getPointBelow,
+                        BotPhysicsEngine::teleportTo,
+                        (respawnEntry, ignoredBot) -> BotMovementManager.resetEntryStateAfterTeleport(respawnEntry),
+                        (respawnEntry, ignoredBot) -> BotMovementManager.broadcastMovement(respawnEntry),
+                        this::botSay));
     }
 
     // -------------------------------------------------------------------------
