@@ -30,6 +30,7 @@ import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentFollowAnchorService;
 import server.agents.runtime.AgentFormationService;
 import server.agents.runtime.AgentFollowTargetPositionService;
+import server.agents.runtime.AgentFollowMapSyncService;
 import server.agents.runtime.AgentHeartbeatService;
 import server.agents.runtime.AgentIdlePhysicsService;
 import server.agents.runtime.AgentLeaderSessionService;
@@ -2612,22 +2613,15 @@ public class BotManager {
     }
 
     private boolean syncFollowMap(BotEntry entry, Character bot, Character followAnchor) {
-        if (!AgentBotModeStateRuntime.following(entry) || followAnchor == null || bot.getMapId() == followAnchor.getMapId()) {
-            return false;
-        }
-        // Ground against the anchor's actual position in their NEW map. The previously-passed
-        // followTargetPos was computed from the bot's OLD map (foothold snaps, formation offsets),
-        // so it could land off-map in the new map and cause far-away/OOB spawns.
-        MapleMap targetMap = followAnchor.getMap();
-        Point anchorPos = followAnchor.getPosition();
-        Point spawn = BotPhysicsEngine.findGroundPoint(targetMap, new Point(anchorPos.x, anchorPos.y - 1));
-        if (spawn == null) {
-            spawn = anchorPos;
-        }
-        BotPhysicsEngine.idleOnGround(entry, bot);
-        bot.changeMap(targetMap, spawn);
-        BotMovementManager.resetEntryState(entry);
-        return true;
+        return AgentFollowMapSyncService.syncFollowMap(entry, bot, followAnchor, followMapSyncHooks());
+    }
+
+    private AgentFollowMapSyncService.FollowMapSyncHooks followMapSyncHooks() {
+        return new AgentFollowMapSyncService.FollowMapSyncHooks(
+                BotPhysicsEngine::findGroundPoint,
+                BotPhysicsEngine::idleOnGround,
+                Character::changeMap,
+                BotMovementManager::resetEntryState);
     }
 
     private boolean recoverTeleportDistance(BotEntry entry, Character bot, Point targetPos) {

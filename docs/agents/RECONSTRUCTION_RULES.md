@@ -2884,6 +2884,11 @@ Recent reconstruction notes:
   The regular target-distance recovery, out-of-bounds recovery, grind-party
   anchor recovery, shop/move-target/farm-anchor guards, and distance multiplier
   behavior are preserved.
+- Cross-map follow synchronization now lives in
+  `server.agents.runtime.AgentFollowMapSyncService`; BotManager still supplies
+  temporary Cosmic ground-point, idle-ground, change-map, and movement reset
+  hooks. The same following/null/same-map guards and anchor-position grounding
+  fallback are preserved.
 
 Initial reconstruction order:
 
