@@ -2913,6 +2913,12 @@ Recent reconstruction notes:
 - Precise move-target navigation marker maintenance now lives in
   `server.agents.runtime.AgentTickStateMaintenanceService`; BotManager no
   longer owns the precise-target flag rule after navigation target resolution.
+- Movement-core tick orchestration now lives in
+  `server.agents.runtime.AgentMovementTickService`; BotManager still supplies
+  temporary navigation, fidget, movement phase, committed-edge, stuck-detection,
+  and move-target cleanup hooks. The navigation-consumed early return, fidget
+  early return, committed-edge grounded AI gate, stuck detection, and reached
+  move-target cleanup ordering are preserved.
 
 Initial reconstruction order:
 

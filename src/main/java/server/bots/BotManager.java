@@ -41,6 +41,7 @@ import server.agents.runtime.AgentMapTransitionService;
 import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentMonsterControlService;
 import server.agents.runtime.AgentMovementPhaseService;
+import server.agents.runtime.AgentMovementTickService;
 import server.agents.runtime.AgentOwnerlessTickService;
 import server.agents.runtime.AgentPartyLifecycleService;
 import server.agents.runtime.AgentPositionService;
@@ -2741,23 +2742,21 @@ public class BotManager {
     private void stepMovementCore(BotEntry entry,
                                   Point targetPos,
                                   boolean runAiTick) {
-        BotNavigationManager.NavigationDirective navDirective = BotNavigationManager.resolveTarget(entry, targetPos, runAiTick);
-        if (navDirective.consumedTick) {
-            return;
-        }
+        AgentMovementTickService.stepMovementCore(entry, targetPos, runAiTick, movementTickHooks());
+    }
 
-        Point steeringTarget = navDirective.targetPos;
-        AgentTickStateMaintenanceService.markPreciseNavigationTargetIfNeeded(entry);
-        if (AgentFidgetService.tryHandleTick(entry, steeringTarget, runAiTick)) {
-            return;
-        }
-
-        tickMovementPhase(entry, steeringTarget, runAiTick);
-        if (runAiTick && !AgentBotMovementStateRuntime.inAir(entry) && !AgentBotMovementStateRuntime.climbing(entry)) {
-            BotNavigationManager.tryExecuteCommittedEdgeAfterGroundMovement(entry, targetPos);
-        }
-        tickStuckDetection(entry);
-        AgentTickStateMaintenanceService.clearReachedMoveTarget(entry, BotMovementManager.cfg.STOP_DIST);
+    private AgentMovementTickService.MovementTickHooks movementTickHooks() {
+        return new AgentMovementTickService.MovementTickHooks(
+                (entry, targetPos, runAiTick) -> {
+                    BotNavigationManager.NavigationDirective directive =
+                            BotNavigationManager.resolveTarget(entry, targetPos, runAiTick);
+                    return new AgentMovementTickService.NavigationResult(directive.consumedTick, directive.targetPos);
+                },
+                AgentFidgetService::tryHandleTick,
+                this::tickMovementPhase,
+                BotNavigationManager::tryExecuteCommittedEdgeAfterGroundMovement,
+                BotManager::tickStuckDetection,
+                entry -> AgentTickStateMaintenanceService.clearReachedMoveTarget(entry, BotMovementManager.cfg.STOP_DIST));
     }
 
     private void tickMovementPhase(BotEntry entry, Point targetPos, boolean runAiTick) {
