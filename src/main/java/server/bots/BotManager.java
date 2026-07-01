@@ -23,6 +23,7 @@ import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentFollowAnchorService;
 import server.agents.runtime.AgentFormationService;
+import server.agents.runtime.AgentHeartbeatService;
 import server.agents.runtime.AgentLeaderSessionService;
 import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentTargetSnapshot;
@@ -1930,11 +1931,8 @@ public class BotManager {
         // movement packet every 10 minutes so the server never considers the bot idle.
         // Covers all modes: idle, follow, and grind.
         long nowMs = System.currentTimeMillis();
-        if (AgentBotTickStateRuntime.heartbeatDue(entry, nowMs, 600_000L)) {
-            AgentBotTickStateRuntime.markHeartbeat(entry, nowMs);
-            bot.getClient().updateLastPacket();
-            BotMovementManager.broadcastMovement(entry);
-        }
+        AgentHeartbeatService.tickHeartbeat(
+                entry, bot, nowMs, 600_000L, agent -> agent.getClient().updateLastPacket(), BotMovementManager::broadcastMovement);
 
         AgentOfferService.expirePendingOffer(entry);
         boolean runAiTick = AgentTickOrchestrator.prepareTick(

@@ -2553,6 +2553,9 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentModeService`; BotManager still owns command/script
   entry-point side effects such as clearing script tasks, cancelling shop visits,
   and clearing movement navigation state.
+- Tick heartbeat due-check, timestamp update, and heartbeat side-effect ordering
+  now live in `server.agents.runtime.AgentHeartbeatService`; BotManager still
+  supplies temporary packet freshness and movement broadcast callbacks.
 
 Initial reconstruction order:
 
