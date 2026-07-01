@@ -57,6 +57,7 @@ import server.agents.runtime.AgentTargetSnapshot;
 import server.agents.runtime.AgentTargetSnapshotService;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSpawnPositionService;
+import server.agents.runtime.AgentStuckDetectionService;
 import server.agents.runtime.AgentTickFailurePolicy;
 import server.agents.runtime.AgentTickOrchestrator;
 import server.agents.runtime.AgentTickStateMaintenanceService;
@@ -109,7 +110,6 @@ import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementCommandRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
@@ -2775,55 +2775,16 @@ public class BotManager {
                 BotMovementManager::tickAirborne,
                 BotMovementManager::tickGrounded);
     }
-
     private static void tickStuckDetection(BotEntry entry) {
-        if (!AgentPerformanceMonitor.enabled()) {
-            doStuckDetection(entry);
-            return;
-        }
-
-        long startedAt = System.nanoTime();
-        try {
-            doStuckDetection(entry);
-        } finally {
-            AgentPerformanceMonitor.record("stuck-detect", System.nanoTime() - startedAt);
-        }
+        AgentStuckDetectionService.tickStuckDetection(entry, stuckDetectionHooks());
     }
 
-    private static void doStuckDetection(BotEntry entry) {
-        AgentBotMovementStuckStateRuntime.setUnstuckCooldownMs(
-                entry,
-                BotMovementManager.tickDown(AgentBotMovementStuckStateRuntime.unstuckCooldownMs(entry)));
-
-        // Only detect/act while actively navigating — idling near owner is not stuck.
-        if (AgentBotMovementStateRuntime.inAir(entry) || AgentBotMovementStateRuntime.climbing(entry)
-                || AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)
-                || (!AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
-                        && !AgentBotMoveTargetStateRuntime.hasMoveTarget(entry))) {
-            AgentBotMovementStuckStateRuntime.resetStuckProgress(entry);
-            return;
-        }
-
-        Point botPos = AgentBotRuntimeIdentityRuntime.botPosition(entry);
-        if (!AgentBotMovementStuckStateRuntime.hasStuckCheckPosition(entry)) {
-            AgentBotMovementStuckStateRuntime.rememberStuckCheckPosition(entry, botPos);
-            return;
-        }
-
-        boolean moved = AgentBotMovementStuckStateRuntime.movedSinceStuckCheck(entry, botPos, 8);
-        if (moved) {
-            AgentBotMovementStuckStateRuntime.resetStuckMs(entry);
-            AgentBotMovementStuckStateRuntime.rememberStuckCheckPosition(entry, botPos);
-        } else {
-            AgentBotMovementStuckStateRuntime.addStuckMs(entry, BotPhysicsEngine.cfg.TICK_MS);
-        }
-
-        if (cfg.ENABLE_UNSTUCK
-                && AgentBotMovementStuckStateRuntime.stuckForAtLeast(entry, 500)
-                && !AgentBotMovementStuckStateRuntime.hasUnstuckCooldown(entry)) {
-            AgentBotMovementStuckStateRuntime.resetStuckProgress(entry);
-            BotMovementManager.tickUnstuck(entry);
-        }
+    private static AgentStuckDetectionService.StuckDetectionHooks stuckDetectionHooks() {
+        return new AgentStuckDetectionService.StuckDetectionHooks(
+                BotMovementManager::tickDown,
+                BotMovementManager::tickUnstuck,
+                BotPhysicsEngine.cfg.TICK_MS,
+                cfg.ENABLE_UNSTUCK);
     }
 
     private boolean tickActionLocked(BotEntry entry) {

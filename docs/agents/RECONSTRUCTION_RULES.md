@@ -2905,6 +2905,11 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentMovementPhaseService`; BotManager still supplies
   temporary BotMovementManager hooks. The climb, swim-while-airborne, airborne,
   then grounded ordering is preserved.
+- Movement stuck detection and unstuck triggering now live in
+  `server.agents.runtime.AgentStuckDetectionService`; BotManager still supplies
+  temporary tick-down, movement tick duration, enable flag, and unstuck action
+  hooks. The active-navigation guard, 8px movement threshold, 500ms stuck
+  threshold, cooldown handling, and performance metric name are preserved.
 
 Initial reconstruction order:
 
