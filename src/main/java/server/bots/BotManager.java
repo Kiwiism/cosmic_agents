@@ -38,6 +38,7 @@ import server.agents.runtime.AgentMapEnvironmentService;
 import server.agents.runtime.AgentMapTransitionService;
 import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentMonsterControlService;
+import server.agents.runtime.AgentOwnerlessTickService;
 import server.agents.runtime.AgentPartyLifecycleService;
 import server.agents.runtime.AgentPositionService;
 import server.agents.runtime.AgentRandom;
@@ -1581,21 +1582,13 @@ public class BotManager {
             return;
         }
         if (owner == null) {
-            AgentBotModeStateRuntime.setFollowing(entry, false);
-            if (groundAfterMapChange(entry, bot)) {
-                return;
-            }
-            // Owner-offline pass-through: when explicit move target is set (currently by
-            // the offline-town cluster, but any caller of issueMoveTo) the bot still
-            // walks toward it. Same field and movement core as the player "here"
-            // command — only the tick gate differs because the regular pipeline is
-            // tightly coupled to `owner` for combat/follow/heal logic that's all
-            // skipped here.
-            if (AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)) {
-                tickStandaloneMoveTarget(entry, bot, runAiTick);
-            } else {
-                tickIdleEntry(entry, bot);
-            }
+            AgentOwnerlessTickService.tickOwnerless(
+                    entry,
+                    bot,
+                    runAiTick,
+                    this::groundAfterMapChange,
+                    this::tickStandaloneMoveTarget,
+                    () -> tickIdleEntry(entry, bot));
             return;
         }
 

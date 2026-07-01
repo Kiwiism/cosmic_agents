@@ -2863,6 +2863,11 @@ Recent reconstruction notes:
 - Script task completion rules now live in
   `server.agents.runtime.AgentScriptTaskCompletionService`; BotManager still
   supplies temporary follow-target resolution and movement-distance configuration.
+- Ownerless/offline-leader tick branching now lives in
+  `server.agents.runtime.AgentOwnerlessTickService`; BotManager still supplies
+  temporary grounding, standalone move-target, and idle callbacks. This preserves
+  the same following-clear, map-change grounding early return, explicit
+  move-target pass-through, and idle fallback ordering.
 
 Initial reconstruction order:
 
