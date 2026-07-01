@@ -37,6 +37,7 @@ import server.agents.runtime.AgentHeartbeatService;
 import server.agents.runtime.AgentIdlePhysicsService;
 import server.agents.runtime.AgentLeaderSessionService;
 import server.agents.runtime.AgentLeaderSafetyService;
+import server.agents.runtime.AgentLocalAttackMoveWindowService;
 import server.agents.runtime.AgentMapEnvironmentService;
 import server.agents.runtime.AgentMapTransitionService;
 import server.agents.runtime.AgentModeService;
@@ -2185,40 +2186,37 @@ public class BotManager {
     }
 
     private static void setLocalAttackMoveWindow(BotEntry entry, Point botPos, Point referencePos) {
-        if (botPos == null || referencePos == null) {
-            AgentBotCombatCooldownStateRuntime.clearMoveWindow(entry);
-            return;
-        }
-        int dx = Math.abs(botPos.x - referencePos.x);
-        AgentBotCombatCooldownStateRuntime.setMoveWindowMs(entry,
-                dx > BotMovementManager.cfg.FOLLOW_DIST * 3 ? 1000
-                        : dx > BotMovementManager.cfg.FOLLOW_DIST ? 200
-                        : 0);
-        clearActionMoveWindowIfSettled(entry, botPos, referencePos);
+        AgentLocalAttackMoveWindowService.setLocalAttackMoveWindow(
+                entry,
+                botPos,
+                referencePos,
+                BotMovementManager.cfg.FOLLOW_DIST,
+                BotMovementManager.cfg.STOP_DIST,
+                BotMovementManager.cfg.FOLLOW_Y_CAP);
     }
 
     private static void clearFollowActionMoveWindowIfSettled(BotEntry entry,
                                                              Point botPos,
                                                              AgentTargetSnapshot targetSnapshot) {
-        if (entry == null || !AgentBotModeStateRuntime.following(entry) || targetSnapshot == null) {
-            return;
-        }
-        clearActionMoveWindowIfSettled(entry, botPos, targetSnapshot.followTargetPos());
+        AgentLocalAttackMoveWindowService.clearFollowActionMoveWindowIfSettled(
+                entry,
+                botPos,
+                targetSnapshot,
+                BotMovementManager.cfg.FOLLOW_DIST,
+                BotMovementManager.cfg.STOP_DIST,
+                BotMovementManager.cfg.FOLLOW_Y_CAP);
     }
 
     private static void clearActionMoveWindowIfSettled(BotEntry entry,
                                                        Point botPos,
                                                        Point targetPos) {
-        if (entry == null || !AgentBotCombatCooldownStateRuntime.hasMoveWindow(entry)
-                || botPos == null || targetPos == null) {
-            return;
-        }
-
-        int followStopBand = Math.max(BotMovementManager.cfg.STOP_DIST, BotMovementManager.cfg.FOLLOW_DIST);
-        if (Math.abs(botPos.x - targetPos.x) <= followStopBand
-                && Math.abs(botPos.y - targetPos.y) <= BotMovementManager.cfg.FOLLOW_Y_CAP) {
-            AgentBotCombatCooldownStateRuntime.clearMoveWindow(entry);
-        }
+        AgentLocalAttackMoveWindowService.clearActionMoveWindowIfSettled(
+                entry,
+                botPos,
+                targetPos,
+                BotMovementManager.cfg.FOLLOW_DIST,
+                BotMovementManager.cfg.STOP_DIST,
+                BotMovementManager.cfg.FOLLOW_Y_CAP);
     }
 
     private Character resolveTickOwner(BotEntry entry, int ownerCharId) {

@@ -2930,6 +2930,11 @@ Recent reconstruction notes:
   movement-core hooks. The farm-anchor map guard, attack-consumed early return,
   at-anchor idle/clear behavior, precise anchor target assignment, and movement
   dispatch order are preserved.
+- Local-opportunity attack movement-window timing now lives in
+  `server.agents.runtime.AgentLocalAttackMoveWindowService`; BotManager still
+  passes the legacy movement distance config. The null clear behavior, 1000ms
+  far window, 200ms medium window, immediate settle window, follow-mode guard,
+  stop-band, and vertical-cap clearing rule are preserved.
 
 Initial reconstruction order:
 
