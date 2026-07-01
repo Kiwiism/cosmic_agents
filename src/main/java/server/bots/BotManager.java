@@ -20,6 +20,7 @@ import server.agents.capabilities.combat.AgentProjectileHitbox;
 import server.agents.capabilities.dialogue.AgentEmote;
 
 import server.agents.runtime.AgentActionLockPhysicsService;
+import server.agents.runtime.AgentCommandModeService;
 import server.agents.runtime.AgentDeathTickService;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentLifecycleService;
@@ -2801,12 +2802,11 @@ public class BotManager {
      * (or null) means regular owner-follow.
      */
     public void issueFollow(BotEntry entry, Character target) {
-        if (entry == null) {
-            return;
-        }
-        clearScriptTasks(entry);
-        AgentShopService.cancelShopVisit(entry);
-        startFollow(entry, target);
+        AgentCommandModeService.runPreparedModeCommand(
+                entry,
+                () -> clearScriptTasks(entry),
+                () -> AgentShopService.cancelShopVisit(entry),
+                () -> startFollow(entry, target));
     }
 
     private void startFollow(BotEntry entry, Character target) {
@@ -2820,12 +2820,11 @@ public class BotManager {
      * navigation command.
      */
     public void issueGrind(BotEntry entry) {
-        if (entry == null) {
-            return;
-        }
-        clearScriptTasks(entry);
-        AgentShopService.cancelShopVisit(entry);
-        startGrind(entry);
+        AgentCommandModeService.runPreparedModeCommand(
+                entry,
+                () -> clearScriptTasks(entry),
+                () -> AgentShopService.cancelShopVisit(entry),
+                () -> startGrind(entry));
     }
 
     private void startGrind(BotEntry entry) {
@@ -2834,12 +2833,11 @@ public class BotManager {
 
     /** Public hook: stop all scripted movement/combat mode and idle in place. */
     public void issueStop(BotEntry entry) {
-        if (entry == null) {
-            return;
-        }
-        clearScriptTasks(entry);
-        AgentShopService.cancelShopVisit(entry);
-        startStop(entry);
+        AgentCommandModeService.runPreparedModeCommand(
+                entry,
+                () -> clearScriptTasks(entry),
+                () -> AgentShopService.cancelShopVisit(entry),
+                () -> startStop(entry));
     }
 
     private void startStop(BotEntry entry) {
