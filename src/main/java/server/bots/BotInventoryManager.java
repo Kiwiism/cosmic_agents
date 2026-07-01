@@ -50,6 +50,7 @@ import server.agents.capabilities.trade.AgentTradeRecipientService;
 import server.agents.capabilities.trade.AgentTradeResetService;
 import server.agents.capabilities.trade.AgentTradeSequenceOrchestrator;
 import server.agents.capabilities.trade.AgentTradeTickService;
+import server.agents.capabilities.trade.AgentTradeTransferAvailabilityService;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotInventoryStateRuntime;
@@ -227,7 +228,7 @@ public class BotInventoryManager {
     }
 
     public static boolean hasTransferableItems(String category, BotEntry entry, Character bot) {
-        return AgentInventoryTradeCollectionService.hasTransferableItems(
+        return AgentTradeTransferAvailabilityService.hasTransferableItems(
                 category,
                 bot,
                 fragment -> AgentEquippedSlotTradeService.countEquippedSlotItems(bot, fragment, BotEquipManager::slotsFromName),
@@ -235,12 +236,12 @@ public class BotInventoryManager {
     }
 
     public static int countTransferableItems(String category, BotEntry entry, Character bot) {
-        return AgentInventoryTradeCollectionService.countTransferableItems(
+        return AgentTradeTransferAvailabilityService.countTransferableItems(
                 category,
                 bot,
                 fragment -> AgentInventoryNamedItemService.countNamedItems(bot, fragment),
                 fragment -> AgentEquippedSlotTradeService.countEquippedSlotItems(bot, fragment, BotEquipManager::slotsFromName),
-                () -> AgentInventoryTradePolicy.itemQuantitySum(collectItems(category, entry, bot)));
+                () -> collectItems(category, entry, bot));
     }
 
     /** Opens a trade for the first ≤9 items; remaining items are re-collected next batch. */

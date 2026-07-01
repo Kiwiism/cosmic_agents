@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotInventoryManager` transfer availability/count routing now lives in
+  `AgentTradeTransferAvailabilityService`; the bot inventory shell only wires
+  current equipped-slot, named-item, and category-collection callbacks.
 - `BotInventoryManager.tickManualTrade` top-level manual trade tick
   orchestration now lives in `AgentManualTradeTickService`; the bot inventory
   shell only supplies temporary callbacks for active transfer suppression,

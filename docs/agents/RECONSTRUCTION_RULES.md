@@ -2159,6 +2159,10 @@ Recent reconstruction notes:
   `BotInventoryManager.tickManualTrade` supplies temporary callbacks for active
   transfer suppression, trade-window lookup, timeout handling, owner/peer
   branch routing, and owner-side trade handling.
+- Transfer availability/count routing now lives in
+  `AgentTradeTransferAvailabilityService`; `BotInventoryManager` supplies
+  temporary callbacks for equipped-slot counts, named-item counts, and current
+  category item collection.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and
