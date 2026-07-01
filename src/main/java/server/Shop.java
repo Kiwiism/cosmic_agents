@@ -30,6 +30,7 @@ import constants.id.ItemId;
 import constants.inventory.ItemConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
 import tools.DatabaseConnection;
 import tools.PacketCreator;
 
@@ -235,7 +236,7 @@ public class Shop {
         if (ItemConstants.getInventoryType(itemId) != InventoryType.EQUIP) return;
         Item bought = c.getPlayer().getInventory(InventoryType.EQUIP).findById(itemId);
         if (bought != null) {
-            server.bots.BotManager.getInstance().notifyOwnerGainedItem(c.getPlayer(), bought);
+            AgentOwnerItemNotificationService.notifyOwnerGainedItem(c.getPlayer(), bought);
         }
     }
 

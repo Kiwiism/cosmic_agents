@@ -17,6 +17,12 @@ Rules:
 
 Recent reconstruction notes:
 
+- Owner item/equipment pickup and trade-item notification routing now lives in
+  `server.agents.capabilities.trade.AgentOwnerItemNotificationService`. Shop
+  equip purchases and trade completion call the Agent service directly;
+  BotManager keeps compatibility delegates. Equip-only filtering, delayed
+  upgrade scan scheduling, and circular own-Agent trade suppression are
+  unchanged.
 - BotManager party Bot quest start/progress/complete mirroring now lives in
   `server.agents.capabilities.quest.AgentPartyQuestSyncService`. Quest start,
   force-start, completion, force-completion, and Character quest-progress hooks

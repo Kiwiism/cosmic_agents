@@ -59,6 +59,7 @@ import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.agents.capabilities.social.AgentScrollReactionService;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.supplies.AgentPotionService;
+import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.trade.AgentTradeDialogueService;
 import server.agents.plans.AgentScriptMoveTargetService;
@@ -134,7 +135,6 @@ import client.Disease;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.WeaponType;
-import constants.inventory.ItemConstants;
 import net.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -652,34 +652,12 @@ public class BotManager {
 
     /** Called when the owner picks up or receives an item; notifies bots that might want it. */
     public void notifyOwnerGainedItem(Character owner, Item item) {
-        if (owner == null || item == null) return;
-        if (ItemConstants.getInventoryType(item.getItemId()) != InventoryType.EQUIP) return;
-        List<BotEntry> entries = getBotEntries(owner.getId());
-        if (entries.isEmpty()) return;
-        // Run the per-bot upgrade-recommendation scan off the player's pickup thread. The
-        // scan is fire-and-forget (its only effect is a possible chat-prompt) so deferring
-        // by one timer tick keeps rapid pickups from stalling the player behind K×N DPs.
-        AgentBotManagerSchedulerRuntime.afterDelay(0L, () -> {
-            for (BotEntry entry : entries) {
-                AgentOfferService.notifyOwnerGainedEquip(entry, AgentBotRuntimeIdentityRuntime.bot(entry), item);
-            }
-        });
+        AgentOwnerItemNotificationService.notifyOwnerGainedItem(owner, item);
     }
 
     /** Called when a trade recipient receives an item; skips circular own-bot trade scans. */
     public void notifyOwnerGainedTradeItem(Character recipient, Item item, Character source) {
-        if (isItemFromOwnedBot(recipient, source)) {
-            return;
-        }
-        notifyOwnerGainedItem(recipient, item);
-    }
-
-    private boolean isItemFromOwnedBot(Character owner, Character source) {
-        if (owner == null || source == null || !(source.getClient() instanceof BotClient)) {
-            return false;
-        }
-        Character activeOwner = getActiveOwnerByBotCharId(source.getId());
-        return activeOwner != null && activeOwner.getId() == owner.getId();
+        AgentOwnerItemNotificationService.notifyOwnerGainedTradeItem(recipient, item, source);
     }
 
     public void notifyNearbyBotsOfScroll(Character source,

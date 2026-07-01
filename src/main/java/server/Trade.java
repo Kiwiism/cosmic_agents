@@ -35,6 +35,7 @@ import net.server.coordinator.world.InviteCoordinator.InviteResultType;
 import net.server.coordinator.world.InviteCoordinator.InviteType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
 import tools.PacketCreator;
 import tools.Pair;
 
@@ -127,7 +128,7 @@ public class Trade {
         for (Item item : exchangeItems) {
             KarmaManipulator.toggleKarmaFlagToUntradeable(item);
             InventoryManipulator.addFromDrop(chr.getClient(), item, show);
-            server.bots.BotManager.getInstance().notifyOwnerGainedTradeItem(chr, item, partner.getChr());
+            AgentOwnerItemNotificationService.notifyOwnerGainedTradeItem(chr, item, partner.getChr());
         }
 
         if (exchangeMeso > 0) {

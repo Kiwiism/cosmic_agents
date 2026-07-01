@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Owner equip pickup/trade notification behavior moved from BotManager to
+  `server.agents.capabilities.trade.AgentOwnerItemNotificationService`. `Shop`
+  and `Trade` now call the Agent capability directly, and BotManager keeps
+  temporary compatibility delegates for older callers.
 - Party Agent quest mirroring moved from BotManager to
   `server.agents.capabilities.quest.AgentPartyQuestSyncService`. `Quest` and
   `Character` now call the Agent capability directly for start/complete/progress
