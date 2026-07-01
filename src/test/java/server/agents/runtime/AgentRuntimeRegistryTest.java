@@ -10,9 +10,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -32,6 +34,8 @@ class AgentRuntimeRegistryTest {
         assertSame(leader, AgentRuntimeRegistry.activeLeaderByAgentCharacterId(entries, alpha.getId()));
         assertSame(alpha, AgentRuntimeRegistry.firstAgent(entries, leader.getId()));
         assertSame(alphaEntry, AgentRuntimeRegistry.firstEntry(entries, leader.getId()));
+        assertTrue(AgentRuntimeRegistry.isFirstEntryForLeader(entries, alphaEntry));
+        assertFalse(AgentRuntimeRegistry.isFirstEntryForLeader(entries, betaEntry));
     }
 
     @Test
@@ -44,6 +48,7 @@ class AgentRuntimeRegistryTest {
         assertNull(AgentRuntimeRegistry.activeLeaderByAgentCharacterId(entries, 200));
         assertNull(AgentRuntimeRegistry.firstAgent(entries, 100));
         assertNull(AgentRuntimeRegistry.firstEntry(entries, 100));
+        assertFalse(AgentRuntimeRegistry.isFirstEntryForLeader(entries, null));
         assertEquals(List.of(), AgentRuntimeRegistry.entriesForLeader(entries, 100));
     }
 

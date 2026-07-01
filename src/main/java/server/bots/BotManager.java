@@ -2668,9 +2668,7 @@ public class BotManager {
     }
 
     public boolean isFirstBotEntry(BotEntry entry) {
-        return entry != null
-                && AgentBotRuntimeIdentityRuntime.owner(entry) != null
-                && getFirstBotEntry(AgentBotRuntimeIdentityRuntime.ownerId(entry)) == entry;
+        return AgentRuntimeRegistry.isFirstEntryForLeader(bots, entry);
     }
 
     public void issueOwnerAwaySafeModeForOwner(int ownerCharId, boolean town) {

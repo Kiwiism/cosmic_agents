@@ -67,6 +67,13 @@ public final class AgentRuntimeRegistry {
         return entries != null && !entries.isEmpty() ? entries.get(0) : null;
     }
 
+    public static boolean isFirstEntryForLeader(Map<Integer, List<BotEntry>> entriesByLeaderId, BotEntry entry) {
+        if (entry == null || AgentBotRuntimeIdentityRuntime.owner(entry) == null) {
+            return false;
+        }
+        return firstEntry(entriesByLeaderId, AgentBotRuntimeIdentityRuntime.ownerId(entry)) == entry;
+    }
+
     public static List<BotEntry> entriesForLeader(Map<Integer, List<BotEntry>> entriesByLeaderId,
                                                   int leaderCharId) {
         List<BotEntry> entries = entriesByLeaderId.get(leaderCharId);

@@ -46,6 +46,9 @@ Recent map updates:
   temporary Cosmic callbacks for current map, return-scroll use, map changing,
   map-change grounding, town-cluster anchor storage, target resolution, movement
   reset, and precise move start.
+- BotManager first-entry/representative lookup rule moved to
+  `server.agents.runtime.AgentRuntimeRegistry`; BotManager only supplies the
+  temporary runtime map.
 - BotManager script task completion rules moved to
   `server.agents.runtime.AgentScriptTaskCompletionService`; BotManager only
   supplies temporary follow-target resolution and movement distance config.

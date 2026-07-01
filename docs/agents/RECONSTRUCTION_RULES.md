@@ -58,6 +58,9 @@ Recent reconstruction notes:
   anchor, target resolution, movement reset, precise move start, and returned
   state order are unchanged; BotManager still supplies Cosmic side-effect
   callbacks.
+- BotManager first-entry/representative lookup now delegates to
+  `server.agents.runtime.AgentRuntimeRegistry`. BotManager still owns the
+  temporary runtime map, but the first-entry predicate is Agent-owned.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but
