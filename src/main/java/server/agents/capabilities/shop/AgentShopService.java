@@ -32,11 +32,11 @@ import server.agents.integration.AgentBotShopShortfallReason;
 import server.agents.integration.AgentBotShopStateRuntime;
 import server.agents.integration.AgentBotCombatAmmoCheckRuntime;
 import server.agents.runtime.AgentRandom;
+import server.agents.runtime.AgentRuntimeConfig;
 import server.Shop;
 import server.ShopFactory;
 import server.ShopItem;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 import server.bots.BotMovementManager;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
@@ -104,7 +104,7 @@ public final class AgentShopService {
         boolean needsRecharge = needsRechargeForShop(bot, wt, ammoTriggerThreshold());
         boolean needsAmmoForShop = needsFixedAmmoForShop(bot, match.shop, wt, ammoTriggerThreshold());
         int[] pots = AgentPotionService.countPotions(bot);
-        int potTrigger = BotManager.cfg.POT_LOW_WARN * POT_TRIGGER_THRESHOLD;
+        int potTrigger = AgentRuntimeConfig.cfg.POT_LOW_WARN * POT_TRIGGER_THRESHOLD;
         boolean needsHpPots = pots[0] < potTrigger && findPotionItem(match.shop, bot, true) != null;
         boolean needsMpPots = pots[1] < potTrigger && findPotionItem(match.shop, bot, false) != null;
         if (!needsRecharge && !needsAmmoForShop && !needsHpPots && !needsMpPots) {
@@ -236,10 +236,10 @@ public final class AgentShopService {
             return true;
         }
         int[] pots = AgentPotionService.countPotions(bot);
-        if (pots[0] < BotManager.cfg.POT_LOW_WARN * 5 && findPotionItem(shop, bot, true) != null) {
+        if (pots[0] < AgentRuntimeConfig.cfg.POT_LOW_WARN * 5 && findPotionItem(shop, bot, true) != null) {
             return true;
         }
-        if (pots[1] < BotManager.cfg.POT_LOW_WARN * 5 && findPotionItem(shop, bot, false) != null) {
+        if (pots[1] < AgentRuntimeConfig.cfg.POT_LOW_WARN * 5 && findPotionItem(shop, bot, false) != null) {
             return true;
         }
         return false;
@@ -271,14 +271,14 @@ public final class AgentShopService {
         }
         actions.add((sequence, shop) -> {
             int[] pots = AgentPotionService.countPotions(bot);
-            if (pots[0] < BotManager.cfg.POT_LOW_WARN * 5) {
+            if (pots[0] < AgentRuntimeConfig.cfg.POT_LOW_WARN * 5) {
                 return appendBuyReport(sequence, buyPotions(bot, shop, true), "HP pots");
             }
             return sequence;
         });
         actions.add((sequence, shop) -> {
             int[] pots = AgentPotionService.countPotions(bot);
-            if (pots[1] < BotManager.cfg.POT_LOW_WARN * 5) {
+            if (pots[1] < AgentRuntimeConfig.cfg.POT_LOW_WARN * 5) {
                 return appendBuyReport(sequence, buyPotions(bot, shop, false), "MP pots");
             }
             return sequence;
@@ -340,7 +340,7 @@ public final class AgentShopService {
             AgentBotShopRuntime.sayMapNow(sequence.bot(), AgentDialogueCatalog.shopBoughtReply(sequence.bought()));
             AgentPotionService.setupAutopotForBot(sequence.bot());
             AgentBotCombatAmmoCheckRuntime.tickAmmoCheck(sequence.entry(), sequence.bot(),
-                    AgentCombatConfig.cfg.AMMO_LOW_WARN, BotManager.cfg.POT_LOW_WARN);
+                    AgentCombatConfig.cfg.AMMO_LOW_WARN, AgentRuntimeConfig.cfg.POT_LOW_WARN);
             scheduleShopStep(sequence.entry(), finish);
             return;
         }
@@ -579,7 +579,7 @@ public final class AgentShopService {
             return new AgentBotShopBuyReport(0, 0, 0, AgentBotShopShortfallReason.NONE);
         }
 
-        int target = BotManager.cfg.POT_LOW_WARN * POT_TARGET_THRESHOLD;
+        int target = AgentRuntimeConfig.cfg.POT_LOW_WARN * POT_TARGET_THRESHOLD;
         int[] pots = AgentPotionService.countPotions(bot);
         int current = forHp ? pots[0] : pots[1];
         return buyFixedCostItem(bot, shop, pot, Math.max(0, target - current), 100);

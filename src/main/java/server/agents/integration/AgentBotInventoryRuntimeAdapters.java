@@ -22,9 +22,10 @@ import server.agents.capabilities.trade.AgentTradeRecipientService;
 import server.agents.capabilities.trade.AgentTradeTickRuntimeService;
 import server.agents.capabilities.trade.AgentTradeTransferAvailabilityRuntimeService;
 import server.agents.capabilities.equipment.AgentEquipRecommendation;
+import server.agents.runtime.AgentRandom;
+import server.agents.runtime.AgentRuntimeConfig;
 import server.bots.BotEntry;
 import server.bots.BotEquipManager;
-import server.bots.BotManager;
 import server.bots.BotMovementManager;
 
 import java.util.ArrayList;
@@ -40,10 +41,10 @@ public final class AgentBotInventoryRuntimeAdapters {
                 AgentBotPendingTradeStateRuntime::hasActiveSequence,
                 entry -> AgentBotInventoryStateRuntime.tickInventoryFullWarnCooldown(entry, BotMovementManager::tickDown),
                 System::currentTimeMillis,
-                () -> BotManager.cfg.LOOT_RADIUS,
+                () -> AgentRuntimeConfig.cfg.LOOT_RADIUS,
                 AgentBotInventoryStateRuntime::canWarnInventoryFull,
                 AgentBotInventoryRuntime::replyNow,
-                () -> BotMovementManager.delayAfterCurrentTick(BotManager.cfg.INV_FULL_WARN_CD_MS),
+                () -> BotMovementManager.delayAfterCurrentTick(AgentRuntimeConfig.cfg.INV_FULL_WARN_CD_MS),
                 AgentBotInventoryStateRuntime::setInventoryFullWarnCooldownMs,
                 AgentBotRuntimeIdentityRuntime::owner,
                 AgentBotOfferStateRuntime::pendingLootOfferItem,
@@ -83,7 +84,7 @@ public final class AgentBotInventoryRuntimeAdapters {
                 AgentManualTradeService::clearState,
                 AgentBotRuntimeIdentityRuntime::owner,
                 (agent, owner) -> BotEquipManager.autoEquip(agent, owner, null),
-                BotManager::randMs,
+                AgentRandom::randMs,
                 AgentTradeDialogueService::thanksReply,
                 AgentTradeDialogueService::freebieReply);
     }

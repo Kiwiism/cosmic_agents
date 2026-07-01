@@ -23,8 +23,8 @@ import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotTickCadenceStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
+import server.agents.runtime.AgentRuntimeConfig;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.bots.BotNavigationManager;
@@ -260,7 +260,7 @@ public final class AgentPathLogger {
             sb.append("  [blocked: ").append(AgentBotNavigationDebugStateRuntime.lastEdgeBlockReason(entry)).append("]");
         }
         sb.append("\n");
-        sb.append("AI cadence:  every ").append(BotManager.cfg.AI_TICK_MS).append("ms")
+        sb.append("AI cadence:  every ").append(AgentRuntimeConfig.cfg.AI_TICK_MS).append("ms")
                 .append("  accum=").append(AgentBotTickCadenceStateRuntime.aiTickAccumulatorMs(entry)).append("ms")
                 .append("  lastTick=").append(AgentBotTickStateRuntime.lastTickWasAi(entry) ? "AI" : "non-AI");
         long lastTickAtMs = AgentBotTickStateRuntime.lastTickAtMs(entry);

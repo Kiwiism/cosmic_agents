@@ -27,8 +27,8 @@ import server.agents.integration.AgentBotPotionStateRuntime;
 import server.agents.integration.AgentBotCombatAmmoCheckRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
+import server.agents.runtime.AgentRuntimeConfig;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 import server.bots.BotMovementManager;
 import server.bots.BotPhysicsEngine;
 import server.StatEffect;
@@ -122,7 +122,7 @@ public final class AgentPotionService {
 
         if (choice.hpItemId() > 0) {
             bot.changeKeybinding(91, new KeyBinding(7, choice.hpItemId()));
-            bot.setAutopotHpAlert(BotManager.cfg.AUTOPOT_HP_THRESH);
+            bot.setAutopotHpAlert(AgentRuntimeConfig.cfg.AUTOPOT_HP_THRESH);
         } else {
             bot.getKeymap().remove(91);
             bot.setAutopotHpAlert(0f);
@@ -130,7 +130,7 @@ public final class AgentPotionService {
 
         if (choice.mpItemId() > 0) {
             bot.changeKeybinding(92, new KeyBinding(7, choice.mpItemId()));
-            bot.setAutopotMpAlert(BotManager.cfg.AUTOPOT_MP_THRESH);
+            bot.setAutopotMpAlert(AgentRuntimeConfig.cfg.AUTOPOT_MP_THRESH);
         } else {
             bot.getKeymap().remove(92);
             bot.setAutopotMpAlert(0f);
@@ -164,7 +164,7 @@ public final class AgentPotionService {
                 AgentDialogueSelector.randomReply(AgentDialogueCatalog.grindReplies()),
                 pots[0],
                 pots[1],
-                BotManager.cfg.POT_LOW_WARN);
+                AgentRuntimeConfig.cfg.POT_LOW_WARN);
     }
 
     public static void tickPotionCheck(BotEntry entry, Character bot) {
@@ -174,7 +174,7 @@ public final class AgentPotionService {
         }
         AgentBotPotionStateRuntime.setPotCheckTimerMs(
                 entry,
-                BotMovementManager.delayAfterCurrentTick(BotManager.cfg.POT_CHECK_INTERVAL_MS));
+                BotMovementManager.delayAfterCurrentTick(AgentRuntimeConfig.cfg.POT_CHECK_INTERVAL_MS));
 
         long startedAt = AgentPerformanceMonitor.start();
         setupAutopotForBot(bot);
@@ -182,7 +182,7 @@ public final class AgentPotionService {
 
         startedAt = AgentPerformanceMonitor.start();
         AgentBotCombatAmmoCheckRuntime.tickAmmoCheck(entry, bot,
-                AgentCombatConfig.cfg.AMMO_LOW_WARN, BotManager.cfg.POT_LOW_WARN);
+                AgentCombatConfig.cfg.AMMO_LOW_WARN, AgentRuntimeConfig.cfg.POT_LOW_WARN);
         AgentPerformanceMonitor.recordSince("potion-ammo-check", startedAt);
 
         if (!AgentBotModeStateRuntime.grinding(entry) && !AgentBotModeStateRuntime.following(entry)) {
@@ -208,7 +208,7 @@ public final class AgentPotionService {
             return;
         }
         startedAt = AgentPerformanceMonitor.start();
-        if (pots[0] < BotManager.cfg.POT_STOP && bot.getHp() < bot.getMaxHp() * 0.4f) {
+        if (pots[0] < AgentRuntimeConfig.cfg.POT_STOP && bot.getHp() < bot.getMaxHp() * 0.4f) {
             AgentBotMovementCommandRuntime.followOwner(entry);
             AgentBotPotionRuntime.sayMapNow(bot, AgentDialogueCatalog.potLowReturnReply());
             bot.changeFaceExpression(AgentEmote.GLARE.getValue());
@@ -243,7 +243,7 @@ public final class AgentPotionService {
                                               int count,
                                               boolean forHp,
                                               boolean bypassShareLimits) {
-        if (count >= BotManager.cfg.POT_LOW_WARN) {
+        if (count >= AgentRuntimeConfig.cfg.POT_LOW_WARN) {
             AgentBotPotionStateRuntime.clearPotShareRequested(entry, forHp);
             return false;
         }
@@ -271,7 +271,7 @@ public final class AgentPotionService {
 
         AgentBotPotionStateRuntime.setMpRecoveryTimerMs(
                 entry,
-                BotMovementManager.delayAfterCurrentTick(BotManager.cfg.MP_RECOVERY_INTERVAL_MS));
+                BotMovementManager.delayAfterCurrentTick(AgentRuntimeConfig.cfg.MP_RECOVERY_INTERVAL_MS));
 
         int hpRecovery = hpFull ? 0 : calculatePassiveHpRecovery(entry, bot);
         int mpRecovery = mpFull ? 0 : calculatePassiveMpRecovery(entry, bot);
@@ -407,14 +407,14 @@ public final class AgentPotionService {
     private static int calculatePassiveHpRecovery(BotEntry entry, Character bot) {
         return AgentPassiveRecoveryPolicy.hpRecovery(
                 bot,
-                BotManager.cfg.BASE_HP_RECOVERY,
+                AgentRuntimeConfig.cfg.BASE_HP_RECOVERY,
                 isStandingStillForRecovery(entry));
     }
 
     private static int calculatePassiveMpRecovery(BotEntry entry, Character bot) {
         return AgentPassiveRecoveryPolicy.mpRecovery(
                 bot,
-                BotManager.cfg.BASE_MP_RECOVERY,
+                AgentRuntimeConfig.cfg.BASE_MP_RECOVERY,
                 isStandingStillForRecovery(entry));
     }
 

@@ -165,6 +165,10 @@ Recent reconstruction notes:
   `AgentScriptMoveTargetService`; BotManager's `isCheapScriptMoveTarget`
   remains a compatibility delegate that supplies the legacy loot-radius config,
   and `AgentScriptRunner` uses the Agent-owned runtime bridge directly.
+- General runtime config now lives in `AgentRuntimeConfig`; `BotManager.cfg`
+  remains a compatibility alias to the same mutable config object, while Agent
+  reporting, shop, supplies, inventory adapters, and script move checks read
+  config through the Agent-owned runtime config.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

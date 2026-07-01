@@ -151,6 +151,9 @@ Recent map updates:
   `server.agents.plans.AgentScriptMoveTargetService`; BotManager now delegates
   the legacy method, and AgentScriptRunner calls the Agent runtime bridge
   instead of BotManager.
+- BotManager general runtime config moved to
+  `server.agents.runtime.AgentRuntimeConfig`; BotManager keeps `cfg` as a
+  compatibility alias while Agent modules consume the Agent-owned config source.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.
