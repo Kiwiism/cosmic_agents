@@ -65,4 +65,21 @@ public final class AgentLeaderSafetyService {
             announceReturnedFromTown.run();
         }
     }
+
+    public static boolean shouldEnterInactiveSafeMode(BotEntry entry, long nowMs, long inactiveTownReturnMs) {
+        if (AgentBotActivityStateRuntime.ownerReturnedToTown(entry)) {
+            if (AgentBotActivityStateRuntime.ownerAwaySafeMode(entry)
+                    && !AgentBotActivityStateRuntime.ownerInactiveTimerStarted(entry)) {
+                AgentBotActivityStateRuntime.startOwnerInactiveTimer(entry, nowMs);
+            }
+            return false;
+        }
+
+        if (!AgentBotActivityStateRuntime.ownerInactiveTimerStarted(entry)) {
+            AgentBotActivityStateRuntime.startOwnerInactiveTimer(entry, nowMs);
+            return false;
+        }
+
+        return nowMs - AgentBotActivityStateRuntime.ownerOfflineOrDeadSinceMs(entry) >= inactiveTownReturnMs;
+    }
 }

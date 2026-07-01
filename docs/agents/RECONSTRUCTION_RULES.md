@@ -31,6 +31,10 @@ Recent reconstruction notes:
   inactive-state clear, move-target clear, and single welcome-back announcement
   rule are unchanged; BotManager still owns the temporary town-anchor map and
   visible announcement callback.
+- BotManager inactive-leader timer gating now delegates to
+  `server.agents.runtime.AgentLeaderSafetyService`. The first inactive tick,
+  returned-to-town away-safe timer start, and configured delay comparison are
+  unchanged; BotManager still owns the safe-mode side effects after the gate.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

@@ -24,6 +24,10 @@ Recent map updates:
   rule moved to `server.agents.runtime.AgentLeaderSafetyService`; BotManager
   only supplies temporary callbacks for move-target clearing, town-cluster anchor
   removal, and party-visible return announcement.
+- BotManager inactive-leader timer gate moved to
+  `server.agents.runtime.AgentLeaderSafetyService`; BotManager still performs
+  the temporary safe-mode entry side effects once the Agent-owned gate says the
+  delay has elapsed.
 - BotManager script task completion rules moved to
   `server.agents.runtime.AgentScriptTaskCompletionService`; BotManager only
   supplies temporary follow-target resolution and movement distance config.

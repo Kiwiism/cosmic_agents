@@ -2651,21 +2651,7 @@ public class BotManager {
             return false;
         }
 
-        if (AgentBotActivityStateRuntime.ownerReturnedToTown(entry)) {
-            if (AgentBotActivityStateRuntime.ownerAwaySafeMode(entry)
-                    && !AgentBotActivityStateRuntime.ownerInactiveTimerStarted(entry)) {
-                AgentBotActivityStateRuntime.startOwnerInactiveTimer(entry, nowMs);
-            }
-            return false;
-        }
-
-        if (!AgentBotActivityStateRuntime.ownerInactiveTimerStarted(entry)) {
-            AgentBotActivityStateRuntime.startOwnerInactiveTimer(entry, nowMs);
-            return false;
-        }
-
-        if (nowMs - AgentBotActivityStateRuntime.ownerOfflineOrDeadSinceMs(entry)
-                < cfg.OWNER_INACTIVE_TOWN_RETURN_MS) {
+        if (!AgentLeaderSafetyService.shouldEnterInactiveSafeMode(entry, nowMs, cfg.OWNER_INACTIVE_TOWN_RETURN_MS)) {
             return false;
         }
 

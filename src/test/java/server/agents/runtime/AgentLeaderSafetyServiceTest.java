@@ -138,6 +138,48 @@ class AgentLeaderSafetyServiceTest {
         assertFalse(AgentBotMoveTargetStateRuntime.hasMoveTarget(entry));
     }
 
+    @Test
+    void inactiveLeaderStartsTimerAndDoesNotEnterSafeModeImmediately() {
+        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+
+        boolean enterSafeMode = AgentLeaderSafetyService.shouldEnterInactiveSafeMode(entry, 1_000L, 5_000L);
+
+        assertFalse(enterSafeMode);
+        assertEquals(1_000L, AgentBotActivityStateRuntime.ownerOfflineOrDeadSinceMs(entry));
+    }
+
+    @Test
+    void inactiveLeaderWaitsUntilConfiguredDelayElapses() {
+        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentBotActivityStateRuntime.startOwnerInactiveTimer(entry, 1_000L);
+
+        assertFalse(AgentLeaderSafetyService.shouldEnterInactiveSafeMode(entry, 5_999L, 5_000L));
+        assertTrue(AgentLeaderSafetyService.shouldEnterInactiveSafeMode(entry, 6_000L, 5_000L));
+    }
+
+    @Test
+    void returnedToTownAwaySafeModeStartsTimerButDoesNotReenterSafeMode() {
+        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentBotActivityStateRuntime.setOwnerReturnedToTown(entry, true);
+        AgentBotActivityStateRuntime.setOwnerAwaySafeMode(entry, true);
+
+        boolean enterSafeMode = AgentLeaderSafetyService.shouldEnterInactiveSafeMode(entry, 2_000L, 5_000L);
+
+        assertFalse(enterSafeMode);
+        assertEquals(2_000L, AgentBotActivityStateRuntime.ownerOfflineOrDeadSinceMs(entry));
+    }
+
+    @Test
+    void returnedToTownWithoutAwaySafeModeDoesNotStartTimer() {
+        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentBotActivityStateRuntime.setOwnerReturnedToTown(entry, true);
+
+        boolean enterSafeMode = AgentLeaderSafetyService.shouldEnterInactiveSafeMode(entry, 2_000L, 5_000L);
+
+        assertFalse(enterSafeMode);
+        assertFalse(AgentBotActivityStateRuntime.ownerInactiveTimerStarted(entry));
+    }
+
     private static MapleMap map(int id, MapleMap returnMap, Monster... monsters) {
         MapleMap map = mock(MapleMap.class);
         when(map.getId()).thenReturn(id);
