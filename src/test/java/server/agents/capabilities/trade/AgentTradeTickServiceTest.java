@@ -1,0 +1,174 @@
+package server.agents.capabilities.trade;
+
+import client.Character;
+import org.junit.jupiter.api.Test;
+import server.Trade;
+import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.bots.BotEntry;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.IntUnaryOperator;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+class AgentTradeTickServiceTest {
+    @Test
+    void queuedRetryRunsBeforeTradeLookup() {
+        BotEntry entry = entry();
+        List<String> events = new ArrayList<>();
+        AgentBotPendingTradeStateRuntime.queueRetry(entry, () -> events.add("retry"), 0);
+
+        AgentTradeTickService.tickTrade(entry, mock(Character.class), callbacks(events, null));
+
+        assertEquals(List.of("retry"), events);
+    }
+
+    @Test
+    void idleStateDoesNothing() {
+        List<String> events = new ArrayList<>();
+
+        AgentTradeTickService.tickTrade(entry(), mock(Character.class), callbacks(events, null));
+
+        assertEquals(List.of(), events);
+    }
+
+    @Test
+    void betweenBatchRunsBeforeClosedWindowHandling() {
+        BotEntry entry = activeEntry();
+        List<String> events = new ArrayList<>();
+        TraceCallbacks callbacks = callbacks(events, null);
+        callbacks.betweenBatch = true;
+
+        AgentTradeTickService.tickTrade(entry, mock(Character.class), callbacks);
+
+        assertEquals(List.of("trade", "between"), events);
+    }
+
+    @Test
+    void nullTradeHandlesClosedWindow() {
+        BotEntry entry = activeEntry();
+        List<String> events = new ArrayList<>();
+
+        AgentTradeTickService.tickTrade(entry, mock(Character.class), callbacks(events, null));
+
+        assertEquals(List.of("trade", "between", "closed"), events);
+    }
+
+    @Test
+    void nonFullTradeWaitsForAccept() {
+        BotEntry entry = activeEntry();
+        Trade trade = mock(Trade.class);
+        when(trade.isFullTrade()).thenReturn(false);
+        List<String> events = new ArrayList<>();
+
+        AgentTradeTickService.tickTrade(entry, mock(Character.class), callbacks(events, trade));
+
+        assertEquals(List.of("trade", "between", "accept"), events);
+    }
+
+    @Test
+    void addingItemsRunsBeforeConfirmation() {
+        BotEntry entry = activeEntry();
+        Trade trade = mock(Trade.class);
+        when(trade.isFullTrade()).thenReturn(true);
+        List<String> events = new ArrayList<>();
+        TraceCallbacks callbacks = callbacks(events, trade);
+        callbacks.adding = true;
+
+        AgentTradeTickService.tickTrade(entry, mock(Character.class), callbacks);
+
+        assertEquals(List.of("trade", "between", "adding"), events);
+    }
+
+    @Test
+    void confirmationRunsWhenItemsAreAddedAndBotIsNotDone() {
+        BotEntry entry = activeEntry();
+        Trade trade = mock(Trade.class);
+        when(trade.isFullTrade()).thenReturn(true);
+        List<String> events = new ArrayList<>();
+
+        AgentTradeTickService.tickTrade(entry, mock(Character.class), callbacks(events, trade));
+
+        assertEquals(List.of("trade", "between", "adding", "confirm"), events);
+    }
+
+    @Test
+    void botDoneWaitsForClosedWindowAfterItemsAreAdded() {
+        BotEntry entry = activeEntry();
+        Trade trade = mock(Trade.class);
+        when(trade.isFullTrade()).thenReturn(true);
+        AgentBotPendingTradeStateRuntime.markBotDone(entry);
+        List<String> events = new ArrayList<>();
+
+        AgentTradeTickService.tickTrade(entry, mock(Character.class), callbacks(events, trade));
+
+        assertEquals(List.of("trade", "between", "adding"), events);
+    }
+
+    private static BotEntry entry() {
+        return new BotEntry(mock(Character.class), null, null);
+    }
+
+    private static BotEntry activeEntry() {
+        BotEntry entry = entry();
+        AgentBotPendingTradeStateRuntime.setCategory(entry, "scrolls");
+        return entry;
+    }
+
+    private static TraceCallbacks callbacks(List<String> events, Trade trade) {
+        return new TraceCallbacks(events, trade);
+    }
+
+    private static final class TraceCallbacks implements AgentTradeTickService.TradeTickCallbacks {
+        private final List<String> events;
+        private final Trade trade;
+        boolean betweenBatch;
+        boolean adding;
+
+        private TraceCallbacks(List<String> events, Trade trade) {
+            this.events = events;
+            this.trade = trade;
+        }
+
+        @Override
+        public IntUnaryOperator tickDown() {
+            return remaining -> remaining - 100;
+        }
+
+        @Override
+        public Trade currentTrade() {
+            events.add("trade");
+            return trade;
+        }
+
+        @Override
+        public boolean tickBetweenBatches() {
+            events.add("between");
+            return betweenBatch;
+        }
+
+        @Override
+        public void handleClosedTrade() {
+            events.add("closed");
+        }
+
+        @Override
+        public void tickWaitingForAccept(Trade trade) {
+            events.add("accept");
+        }
+
+        @Override
+        public boolean tickAddingItems(Trade trade) {
+            events.add("adding");
+            return adding;
+        }
+
+        @Override
+        public void tickWaitingForConfirmation(Trade trade) {
+            events.add("confirm");
+        }
+    }
+}

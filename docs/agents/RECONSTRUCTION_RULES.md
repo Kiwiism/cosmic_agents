@@ -2137,6 +2137,10 @@ Recent reconstruction notes:
   the confirmation branch now delegates directly to
   `AgentTradeConfirmWaitService`, which already owns completion, timeout,
   cancellation, and bot-recipient confirmation behavior.
+- Top-level trade tick ordering now lives in `AgentTradeTickService`;
+  `BotInventoryManager.tickTrade` remains as a compatibility wiring shell for
+  current Cosmic trade lookup, open-batch, reset, delay, recipient, and reply
+  callbacks.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and

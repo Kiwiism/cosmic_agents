@@ -44,11 +44,11 @@ import server.agents.capabilities.trade.AgentTradeCompletionService;
 import server.agents.capabilities.trade.AgentTradeConfirmWaitService;
 import server.agents.capabilities.trade.AgentTradeItemAddTickService;
 import server.agents.capabilities.trade.AgentTradeInviteWaitService;
-import server.agents.capabilities.trade.AgentTradeQueuedRetryService;
 import server.agents.capabilities.trade.AgentTradeRecipientService;
 import server.agents.capabilities.trade.AgentTradeResetService;
 import server.agents.capabilities.trade.AgentTradeSequenceService;
 import server.agents.capabilities.trade.AgentTradeStateService;
+import server.agents.capabilities.trade.AgentTradeTickService;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotInventoryStateRuntime;
@@ -302,75 +302,52 @@ public class BotInventoryManager {
 
     /** Called every bot simulation tick while a trade sequence is in progress. */
     static void tickTrade(BotEntry entry, Character bot) {
-        if (AgentTradeQueuedRetryService.tickQueuedRetry(entry, BotMovementManager::tickDown)) {
-            return;
-        }
-        if (AgentBotPendingTradeStateRuntime.isIdle(entry)) return;
-
-        Trade trade = bot.getTrade();
-
-        // ── PAUSE between batches (items == null) ──────────────────────────
-        if (AgentTradeBetweenBatchService.tickBetweenBatches(
-                entry,
-                AgentTradeBetweenBatchService.BetweenBatchCallbacks.of(
-                        BotMovementManager::tickDown,
-                        category -> collectItems(category, entry, bot),
-                        category -> nextEquipsGroup(category, entry, bot),
-                        category -> nextAmmoGroup(category, bot),
-                        BotInventoryManager::equipsGroupMsg,
-                        items -> openTradeBatch(entry, bot, items, 0),
-                        () -> resetTradeState(entry, bot)))) {
-            return;
-        }
-
-        // ── Trade was closed externally ────────────────────────────────────
-        if (trade == null) {
-            AgentTradeClosedWindowService.handleClosedTrade(
-                    entry,
-                    () -> BotMovementManager.delayAfterCurrentTick(1_000),
-                    () -> resetTradeState(entry, bot),
-                    () -> BotEquipManager.autoEquip(bot, AgentBotRuntimeIdentityRuntime.owner(entry), null));
-            return;
-        }
-
-        // ── WAITING FOR ACCEPT ────────────────────────────────────────────
-        if (!trade.isFullTrade()) {
-            AgentTradeInviteWaitService.tickWaitingForAccept(
-                    entry,
-                    bot,
-                    BotMovementManager.cfg.TICK_MS,
-                    () -> resetTradeState(entry, bot));
-            return;
-        }
-
-        // ── ADDING ITEMS ──────────────────────────────────────────────────
-        if (AgentTradeItemAddTickService.tickAddingItems(
+        AgentTradeTickService.tickTrade(
                 entry,
                 bot,
-                trade,
-                AgentTradeItemAddTickService.ItemAddTickCallbacks.of(
+                AgentTradeTickService.TradeTickCallbacks.of(
                         BotMovementManager::tickDown,
-                        () -> cancelTradeSequence(entry, bot, "don't have that many mesos anymore"),
-                        () -> BotMovementManager.delayAfterCurrentTick(500),
-                        () -> BotManager.randomReply(AgentDialogueCatalog.tradeAllDoneReplies()),
-                        () -> BotMovementManager.delayAfterCurrentTick(600),
-                        () -> BotMovementManager.delayAfterCurrentTick(500)))) {
-            return;
-        }
-
-        // ── WAITING FOR OWNER TO CLICK OK ─────────────────────────────────
-        if (!AgentBotPendingTradeStateRuntime.botDone(entry)) {
-            AgentTradeConfirmWaitService.tickWaitingForConfirmation(
-                    entry,
-                    bot,
-                    trade,
-                    BotMovementManager.cfg.TICK_MS,
-                    () -> AgentTradeRecipientService.resolveTradeRecipient(entry, bot),
-                    recipient -> recipient.getClient() instanceof client.BotClient,
-                    () -> completeTradeAndThank(entry, bot, trade),
-                    () -> resetTradeState(entry, bot));
-        }
-        // pendingTradeBotDone=true: wait for bot.getTrade() to become null (handled above)
+                        bot::getTrade,
+                        () -> AgentTradeBetweenBatchService.tickBetweenBatches(
+                                entry,
+                                AgentTradeBetweenBatchService.BetweenBatchCallbacks.of(
+                                        BotMovementManager::tickDown,
+                                        category -> collectItems(category, entry, bot),
+                                        category -> nextEquipsGroup(category, entry, bot),
+                                        category -> nextAmmoGroup(category, bot),
+                                        BotInventoryManager::equipsGroupMsg,
+                                        items -> openTradeBatch(entry, bot, items, 0),
+                                        () -> resetTradeState(entry, bot))),
+                        () -> AgentTradeClosedWindowService.handleClosedTrade(
+                                entry,
+                                () -> BotMovementManager.delayAfterCurrentTick(1_000),
+                                () -> resetTradeState(entry, bot),
+                                () -> BotEquipManager.autoEquip(bot, AgentBotRuntimeIdentityRuntime.owner(entry), null)),
+                        trade -> AgentTradeInviteWaitService.tickWaitingForAccept(
+                                entry,
+                                bot,
+                                BotMovementManager.cfg.TICK_MS,
+                                () -> resetTradeState(entry, bot)),
+                        trade -> AgentTradeItemAddTickService.tickAddingItems(
+                                entry,
+                                bot,
+                                trade,
+                                AgentTradeItemAddTickService.ItemAddTickCallbacks.of(
+                                        BotMovementManager::tickDown,
+                                        () -> cancelTradeSequence(entry, bot, "don't have that many mesos anymore"),
+                                        () -> BotMovementManager.delayAfterCurrentTick(500),
+                                        () -> BotManager.randomReply(AgentDialogueCatalog.tradeAllDoneReplies()),
+                                        () -> BotMovementManager.delayAfterCurrentTick(600),
+                                        () -> BotMovementManager.delayAfterCurrentTick(500))),
+                        trade -> AgentTradeConfirmWaitService.tickWaitingForConfirmation(
+                                entry,
+                                bot,
+                                trade,
+                                BotMovementManager.cfg.TICK_MS,
+                                () -> AgentTradeRecipientService.resolveTradeRecipient(entry, bot),
+                                recipient -> recipient.getClient() instanceof client.BotClient,
+                                () -> completeTradeAndThank(entry, bot, trade),
+                                () -> resetTradeState(entry, bot))));
     }
 
     private static void cancelTradeSequence(BotEntry entry, Character bot, String msg) {
