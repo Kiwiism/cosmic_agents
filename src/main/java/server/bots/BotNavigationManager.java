@@ -1536,9 +1536,9 @@ public final class BotNavigationManager {
         return resolvePointTargetRegionId(graph, map, targetPos);
     }
 
-    static int resolveCharacterRegionId(AgentNavigationGraph graph,
-                                        MapleMap map,
-                                        Character character) {
+    public static int resolveCharacterRegionId(AgentNavigationGraph graph,
+                                               MapleMap map,
+                                               Character character) {
         if (character == null) {
             return -1;
         }

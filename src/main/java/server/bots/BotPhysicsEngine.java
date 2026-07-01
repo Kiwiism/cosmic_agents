@@ -347,7 +347,7 @@ public final class BotPhysicsEngine {
         return Math.abs(offsetGround.y - position.y) < Math.abs(exactGround.y - position.y) ? offset : exact;
     }
 
-    static Point findGroundPoint(MapleMap map, Point position) {
+    public static Point findGroundPoint(MapleMap map, Point position) {
         if (map == null || position == null) {
             return null;
         }

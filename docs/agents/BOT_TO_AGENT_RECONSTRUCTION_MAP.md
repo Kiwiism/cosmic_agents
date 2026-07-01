@@ -157,6 +157,9 @@ Recent map updates:
 - BotManager formation map storage moved to
   `server.agents.runtime.AgentFormationService`; BotManager still contains the
   temporary command parsing and snapshot wiring around that Agent-owned store.
+- BotManager follow-target position resolver moved to
+  `server.agents.runtime.AgentFollowTargetPositionService`; the Agent movement
+  target gateway now captures snapshots without calling BotManager.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.

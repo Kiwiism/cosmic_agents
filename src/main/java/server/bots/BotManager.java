@@ -27,6 +27,7 @@ import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentFollowAnchorService;
 import server.agents.runtime.AgentFormationService;
+import server.agents.runtime.AgentFollowTargetPositionService;
 import server.agents.runtime.AgentHeartbeatService;
 import server.agents.runtime.AgentIdlePhysicsService;
 import server.agents.runtime.AgentLeaderSessionService;
@@ -131,7 +132,6 @@ import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.WeaponType;
 import client.keybind.KeyBinding;
-import constants.game.CharacterStance;
 import constants.inventory.ItemConstants;
 import net.server.Server;
 import net.server.world.Party;
@@ -144,7 +144,6 @@ import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.partyquest.AgentPartyQuestHooks;
 import server.life.Monster;
 import server.life.MobSkill;
-import server.maps.Foothold;
 import server.maps.MapItem;
 import server.maps.MapleMap;
 import server.quest.Quest;
@@ -1062,127 +1061,6 @@ public class BotManager {
     }
 
     // -------------------------------------------------------------------------
-    /**
-     * Resolve the follow target by sweeping for a real platform at followBase.x within
-     * snapRange pixels of ownerPos.y. If a platform exists there, the bot may stand on
-     * a platform different from the owner's (formation spread). If no platform is found
-     * within range, or snap is disabled, fall back to the owner's foothold with X clamped
-     * so the bot never targets a position that isn't on a real standing surface.
-     * If the owner is on a rope, target the rope region instead of searching for ground platforms.
-     */
-    private static Point resolveFollowTargetPos(Point followBase,
-                                                Character owner,
-                                                Point ownerPos,
-                                                int snapRange,
-                                                MapleMap map) {
-        if (owner != null && CharacterStance.isClimbing(owner.getStance()) && map != null) {
-            return clampedOnOwnerRegion(followBase.x, owner, ownerPos, map);
-        }
-
-        if (snapRange > 0 && map != null) {
-            Point below = BotPhysicsEngine.findGroundPoint(map, followBase);
-            Point above = BotPhysicsEngine.findGroundPoint(map, new Point(followBase.x, ownerPos.y - snapRange));
-            boolean belowOk = below != null && Math.abs(below.y - ownerPos.y) <= snapRange;
-            boolean aboveOk = above != null && Math.abs(above.y - ownerPos.y) <= snapRange;
-            if (belowOk || aboveOk) {
-                if (!belowOk) return above;
-                if (!aboveOk) return below;
-                return Math.abs(below.y - ownerPos.y) <= Math.abs(above.y - ownerPos.y) ? below : above;
-            }
-        }
-        // Swim maps: when owner is themselves swimming (mid-water) and no
-        // platform is within snapRange, target the raw owner position so the
-        // bot swims up to mid-water. If owner is grounded on a platform but
-        // we couldn't snap-match it (e.g. very tall stack), keep the normal
-        // clampedOnOwnerRegion behaviour — bot should land on a real floor,
-        // not hover in water under a grounded owner.
-        if (map != null && map.isSwim()
-                && owner != null && CharacterStance.isSwimming(owner.getStance())) {
-            return new Point(followBase.x, ownerPos.y);
-        }
-        return clampedOnOwnerRegion(followBase.x, owner, ownerPos, map);
-    }
-
-    /**
-     * Clamps targetX to the owner's current walk region and returns a real standing point.
-     * Falls back to the owner's foothold segment if the region cannot be resolved.
-     * For rope targets, finds the nearest rope to the formation target position.
-     */
-    private static Point clampedOnOwnerRegion(int targetX, Character owner, Point ownerPos, MapleMap map) {
-        if (map != null) {
-            AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map);
-            if (graph != null) {
-                int ownerRegionId = owner != null
-                        ? BotNavigationManager.resolveCharacterRegionId(graph, map, owner)
-                        : graph.findRegionId(map, ownerPos);
-                AgentNavigationGraph.Region ownerRegion = graph.getRegion(ownerRegionId);
-                if (ownerRegion != null) {
-                    if (ownerRegion.isRopeRegion) {
-                        // Find nearest rope at the post-formation offset position.
-                        // If no rope is nearby, fall back to the owner's own rope so
-                        // the bot still climbs up to follow rather than standing
-                        // on the platform below.
-                        AgentNavigationGraph.Region nearestRope = findNearestRopeAtY(graph, targetX, ownerPos.y);
-                        if (nearestRope == null) {
-                            nearestRope = ownerRegion;
-                        }
-                        return new Point(nearestRope.minX, ownerPos.y);
-                    } else {
-                        // Inset by a small margin so the bot doesn't aim at the
-                        // exact platform edge — owner's hit-region extends past
-                        // the foothold endpoints, but the bot needs a real
-                        // standing surface under its feet, and the integrator
-                        // routinely overshoots edges by 1-2 px in swim maps.
-                        int edgeMargin = PLATFORM_EDGE_INSET_PX;
-                        int minX = ownerRegion.minX;
-                        int maxX = ownerRegion.maxX;
-                        if (maxX - minX > 2 * edgeMargin) {
-                            minX += edgeMargin;
-                            maxX -= edgeMargin;
-                        }
-                        int clampedX = Math.max(minX, Math.min(maxX, targetX));
-                        return ownerRegion.pointAt(clampedX);
-                    }
-                }
-            }
-        }
-
-        Foothold ownerFh = BotPhysicsEngine.findGroundFoothold(map, ownerPos);
-        if (ownerFh != null) {
-            int x1 = Math.min(ownerFh.getX1(), ownerFh.getX2());
-            int x2 = Math.max(ownerFh.getX1(), ownerFh.getX2());
-            targetX = Math.max(x1, Math.min(x2, targetX));
-        }
-        Point fallback = map == null ? null : BotPhysicsEngine.findGroundPoint(map, new Point(targetX, ownerPos.y));
-        return fallback != null ? fallback : new Point(targetX, ownerPos.y);
-    }
-
-    /**
-     * Finds the rope region nearest to the target position (targetX, targetY).
-     * Returns null if no rope region is found within reasonable distance.
-     */
-    private static AgentNavigationGraph.Region findNearestRopeAtY(AgentNavigationGraph graph, int targetX, int targetY) {
-        AgentNavigationGraph.Region nearestRope = null;
-        int nearestDistance = Integer.MAX_VALUE;
-        int maxDistance = 400;
-
-        for (AgentNavigationGraph.Region region : graph.regions) {
-            if (region.isRopeRegion) {
-                if (region.minY > targetY || region.maxY < targetY) {
-                    continue;
-                }
-                int ropeX = region.minX;
-                int distance = Math.abs(ropeX - targetX);
-                if (distance < nearestDistance && distance <= maxDistance) {
-                    nearestDistance = distance;
-                    nearestRope = region;
-                }
-            }
-        }
-
-        return nearestRope;
-    }
-
     AgentFormationService.FormationState formationStateFor(BotEntry entry) {
         return AgentFormationService.stateForEntry(entry, AgentFormationService.formationsByLeaderId(), defaultFormationState());
     }
@@ -1218,7 +1096,13 @@ public class BotManager {
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         List<BotEntry> siblingEntries = owner == null ? List.of() : getBotEntries(owner.getId());
         return AgentTargetSnapshotService.capture(
-                entry, siblingEntries, AgentFormationService.formationsByLeaderId(), defaultFormationState(), BotManager::resolveFollowTargetPos);
+                entry,
+                siblingEntries,
+                AgentFormationService.formationsByLeaderId(),
+                defaultFormationState(),
+                (followBase, followAnchor, followAnchorPos, snapRange, map) ->
+                        AgentFollowTargetPositionService.resolve(
+                                followBase, followAnchor, followAnchorPos, snapRange, map, PLATFORM_EDGE_INSET_PX));
     }
 
     private static final int RETREAT_HOLD_MS = 600;
@@ -3485,3 +3369,4 @@ public class BotManager {
     }
 
 }
+

@@ -1,26 +1,33 @@
 package server.agents.integration;
 
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
+import server.agents.runtime.AgentFollowTargetPositionService;
+import server.agents.runtime.AgentFormationService;
+import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentTargetSnapshot;
+import server.agents.runtime.AgentTargetSnapshotService;
 import server.bots.BotEntry;
-import server.bots.BotManager;
+import server.bots.BotMovementManager;
 
 import java.awt.Point;
+import java.util.List;
 
 /**
  * Temporary bot-side gateway for AgentTargetSnapshot reads while BotManager
  * still assembles target resolution.
  */
 public final class AgentBotMovementTargetSideEffects {
+    private static final int PLATFORM_EDGE_INSET_PX = 12;
+
     private AgentBotMovementTargetSideEffects() {
     }
 
     public static AgentMovementTargetSnapshot captureTargetSnapshot(BotEntry entry) {
-        return from(entry, BotManager.getInstance().captureTargetSnapshot(entry));
+        return from(entry, captureAgentTargetSnapshot(entry));
     }
 
     public static AgentMovementTargetSnapshot captureTargetSnapshot(BotEntry entry, Point rawTargetPos) {
-        AgentTargetSnapshot snapshot = BotManager.getInstance().captureTargetSnapshot(entry);
+        AgentTargetSnapshot snapshot = captureAgentTargetSnapshot(entry);
         if (rawTargetPos == null || rawTargetPos.equals(snapshot.primaryTargetPos())) {
             return from(entry, snapshot);
         }
@@ -55,5 +62,26 @@ public final class AgentBotMovementTargetSideEffects {
                 snapshot.primaryTargetSource(),
                 snapshot.steeringTargetPos(entry),
                 snapshot.steeringTargetSource(entry));
+    }
+
+    private static AgentTargetSnapshot captureAgentTargetSnapshot(BotEntry entry) {
+        client.Character leader = AgentBotRuntimeIdentityRuntime.owner(entry);
+        List<BotEntry> siblingEntries = leader == null
+                ? List.of()
+                : AgentBotSessionLifecycleSideEffects.getBotEntries(leader.getId());
+        return AgentTargetSnapshotService.capture(
+                entry,
+                siblingEntries,
+                AgentFormationService.formationsByLeaderId(),
+                defaultFormationState(),
+                (followBase, followAnchor, followAnchorPos, snapRange, map) ->
+                        AgentFollowTargetPositionService.resolve(
+                                followBase, followAnchor, followAnchorPos, snapRange, map, PLATFORM_EDGE_INSET_PX));
+    }
+
+    private static AgentFormationService.FormationState defaultFormationState() {
+        return AgentFormationService.defaultStagger(
+                AgentRuntimeConfig.cfg.FOLLOW_STAGGER,
+                BotMovementManager.configuredFollowYCap());
     }
 }
