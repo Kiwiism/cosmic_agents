@@ -73,8 +73,11 @@ import server.expeditions.ExpeditionBossLog;
 import server.life.PlayerNPC;
 import server.monitoring.ServerLoadMonitor;
 import server.monitoring.ServerMetricsSnapshot;
+import server.monitoring.SlowOperationLogger;
 import server.quest.Quest;
 import scripting.AbstractPlayerInteraction;
+import scripting.npc.NPCScriptManager;
+import scripting.quest.QuestScriptManager;
 import service.NoteService;
 import tools.DatabaseConnection;
 import tools.Pair;
@@ -871,7 +874,7 @@ public class Server {
         Instant beforeInit = Instant.now();
         log.info("Cosmic v{} starting up.", ServerConstants.VERSION);
 
-
+        warnRiskyRuntimeFeatures();
 
         if (YamlConfig.config.server.SHUTDOWNHOOK) {
             Runtime.getRuntime().addShutdownHook(new Thread(shutdown(false)));
@@ -897,6 +900,7 @@ public class Server {
         TimeZone.setDefault(TimeZone.getTimeZone(YamlConfig.config.server.TIMEZONE));
 
         final int worldCount = Math.min(GameConstants.WORLD_NAMES.length, YamlConfig.config.server.WORLDS);
+        long startupDbStartedNs = SlowOperationLogger.start();
         try (Connection con = DatabaseConnection.getConnection()) {
             setAllLoggedOut(con);
             setAllMerchantsInactive(con);
@@ -911,6 +915,8 @@ public class Server {
         } catch (SQLException sqle) {
             log.error("Failed to run all startup-bound database tasks", sqle);
             throw new IllegalStateException(sqle);
+        } finally {
+            SlowOperationLogger.warnIfSlow("startup-db-bound-tasks", startupDbStartedNs, 5_000);
         }
 
         ThreadManager.getInstance().start();
@@ -978,6 +984,31 @@ public class Server {
         return loginServer;
     }
 
+    private void warnRiskyRuntimeFeatures() {
+        if (YamlConfig.config.server.SCROLL_SUCCESS_BONUS_ENABLED) {
+            log.warn("Runtime feature enabled: scroll success bonus +{}%. Review before production parity runs.",
+                    YamlConfig.config.server.SCROLL_SUCCESS_BONUS);
+        }
+        if (YamlConfig.config.server.GODLY_STATS_ENABLED) {
+            log.warn("Runtime feature enabled: godly stats drop={} maker={} quest={} npc={} scaling={} hpmpScaling={}",
+                    YamlConfig.config.server.GODLY_STATS_DROP_CHANCE,
+                    YamlConfig.config.server.GODLY_STATS_MAKER_CHANCE,
+                    YamlConfig.config.server.GODLY_STATS_QUEST_CHANCE,
+                    YamlConfig.config.server.GODLY_STATS_NPC_CHANCE,
+                    YamlConfig.config.server.GODLY_STATS_BONUS_SCALING,
+                    YamlConfig.config.server.GODLY_STATS_HPMP_SCALING);
+        }
+        if (YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) {
+            log.warn("Runtime feature enabled: untradeable items can be traded/dropped.");
+        }
+        if (YamlConfig.config.server.DISABLE_ONE_OF_A_KIND_CHECK) {
+            log.warn("Runtime feature enabled: one-of-a-kind item checks are disabled.");
+        }
+        if (YamlConfig.config.server.ALWAYS_MAX_INVENTORY_SLOTS) {
+            log.warn("Runtime feature enabled: characters normalize to max inventory slots.");
+        }
+    }
+
     private static void setAllLoggedOut(Connection con) throws SQLException {
         try (PreparedStatement ps = con.prepareStatement("UPDATE accounts SET loggedin = 0")) {
             ps.executeUpdate();
@@ -1020,12 +1051,16 @@ public class Server {
         int previousHighWatermark = loadedMapHighWatermark;
         loadedMapHighWatermark = Math.max(loadedMapHighWatermark, snapshot.loadedMaps());
 
-        log.info("Scale health {} expDebugCleaned={} expDebugActive={} monitoredChr={} npcPendingRuntime={} loadedMapHighWatermark={}",
+        log.info("Scale health {} expDebugCleaned={} expDebugActive={} monitoredChr={} npcPendingRuntime={} npcConversations={} npcScripts={} questActions={} questScripts={} loadedMapHighWatermark={}",
                 snapshot.compact(),
                 cleanedExpDebugSessions,
                 ExpDebugTracker.activeSessionCount(),
                 net.packet.logging.MonitoredChrLogger.monitoredCharacterCount(),
                 AbstractPlayerInteraction.pendingCharacterRuntimeStateCount(),
+                NPCScriptManager.getInstance().activeConversationCount(),
+                NPCScriptManager.getInstance().activeScriptCount(),
+                QuestScriptManager.getInstance().activeQuestActionCount(),
+                QuestScriptManager.getInstance().activeScriptCount(),
                 loadedMapHighWatermark);
 
         if (snapshot.idleMapCandidates() > 0 || snapshot.loadedMaps() >= previousHighWatermark + 100) {

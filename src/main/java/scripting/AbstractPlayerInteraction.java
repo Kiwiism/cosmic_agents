@@ -891,7 +891,8 @@ public class AbstractPlayerInteraction {
     }
 
     public int getPlayerCount(int mapid) {
-        return c.getChannelServer().getMapFactory().getMap(mapid).getCharacters().size();
+        MapleMap map = c.getChannelServer().getMapFactory().getLoadedMap(mapid);
+        return map != null ? map.getCharacterCount() : 0;
     }
 
     public void showInstruction(String msg, int width, int height) {

@@ -56,6 +56,42 @@ Related design notes:
 - [x] Added logout cleanup for pending NPC/dressing-room runtime state keyed by character id.
 - [x] Added `docs/SERVER_HARDENING_DIAGNOSTICS.md` for diagnostics-first changes and revisit notes.
 
+## Completed Server-Only Batch 4 - 2026-07-02
+
+- [x] Replaced selected hot-path raw stack traces with structured logging in login state and character-load paths.
+- [x] Added reusable repeated-exception throttling helper for script/event failure logging.
+- [x] Added script manager active conversation/action/script counts into periodic scale-health logs.
+- [x] Added event instance dispose retained-count diagnostics and throttled event callback exception logging.
+- [x] Added per-map object/drop/reactor/monster high-water diagnostics.
+- [x] Added slow operation wrappers/timing for startup DB tasks, login DB state, character load, and character deletion.
+- [x] Added startup warnings for optional high-impact runtime features without changing config values.
+- [x] Added non-loading `MapManager.getLoadedMap(...)` and used it for script `getPlayerCount(mapid)`.
+- [x] Rechecked and corrected monster/global drop million-scale chance and inclusive min/max quantity rolls.
+- [x] Added character deletion duration diagnostics; transaction consolidation remains a later reviewed change.
+
+### Best Implementation Order - 2026-07-02 Result
+
+Implemented now:
+
+1. Structured logging in selected hot server paths.
+2. Script manager leak/count diagnostics.
+3. Event and map high-water diagnostics.
+4. Slow query/operation wrappers for login, character load, startup DB, and character deletion paths.
+5. Runtime startup warnings for risky optional features.
+6. Broadcast audit retained as diagnostics-first; no packet semantic change was made in this batch.
+7. Non-loading loaded-map helper for simple count queries.
+8. DB index review recorded as migration-review work, not applied blindly.
+9. Character deletion transaction cleanup kept as timing/audit only; consolidation is deferred.
+
+The three useful candidates not included in the original best-order list were:
+
+- Repeated-exception throttling.
+  - Status: implemented for script/event failure logging because it supports the structured logging work.
+- Config comments for local-only versus production-safe features.
+  - Status: not changed in `config.yaml` to preserve the current config values exactly; keep as documentation/config cleanup later.
+- Compact admin diagnostics snapshot command.
+  - Status: not implemented yet; scale-health logging already exposes the data periodically, but an on-demand GM command remains useful.
+
 ## Phase 1 - Server Durability First
 
 ### Threading and Scheduling
@@ -297,3 +333,86 @@ Do not implement these before the agent architecture is ready:
 6. Broadcast/logging unnecessary work cleanup.
 7. Idle map unload design and guarded implementation.
 8. Long-running soak tests.
+
+## Additional Server-Only Review Candidates - 2026-07-02
+
+These are server-side hardening or low-risk optimization candidates found during a light scan. They should avoid changing bot/agent runtime behavior before reconstruction.
+
+### Low-Risk Diagnostics / Logging Cleanup
+
+- [x] Replace hot-path `printStackTrace()` calls with structured logger calls.
+  - Category: server hardening.
+  - Rationale: uncategorized stack traces are noisy during soak tests and can hide repeated failure patterns.
+  - Low-risk path: start with login/session/script managers and packet handlers; preserve exception handling behavior, only change reporting.
+  - Candidate areas: `Client`, `Character`, script managers, MTS/cash-shop handlers, event managers.
+
+- [x] Add repeated-exception throttling for script and event handler failures.
+  - Category: server hardening.
+  - Rationale: a broken script or malformed packet can spam logs and increase IO pressure.
+  - Low-risk path: central helper that logs the first N occurrences per key and then periodic summaries.
+
+- [ ] Add a compact admin command or log section for current diagnostics snapshot.
+  - Category: server hardening.
+  - Rationale: current scale health is log-only; operators should be able to request heap/DB/timer/thread/map/cache state on demand.
+  - Low-risk path: read-only GM6 command, no behavior change.
+
+### Runtime Cache / Leak Watch
+
+- [x] Audit script manager maps keyed by `Client`.
+  - Category: server hardening.
+  - Rationale: `NPCScriptManager`, `QuestScriptManager`, and related managers keep maps keyed by client/session; missed dispose paths can retain clients.
+  - Low-risk path: add size diagnostics and disconnect-time cleanup checks before changing ownership model.
+
+- [x] Audit event manager and event instance maps/lists for long-retained character references.
+  - Category: server hardening.
+  - Rationale: event instances store characters, kill counts, map references, timers, gates, and properties.
+  - Low-risk path: add retained-count logging after dispose and during scale health; larger refactor later if leak is observed.
+
+- [x] Add diagnostics for map object/drop/reactor count growth by map id.
+  - Category: server hardening.
+  - Rationale: current loaded/active map counts are visible, but per-map object growth is easier to diagnose with high-water marks.
+  - Low-risk path: log top N maps by objects/drops/reactors only when thresholds are exceeded.
+
+### DB / Save Pressure
+
+- [x] Add slow query wrappers for remaining login and character-load DB paths.
+  - Category: server hardening.
+  - Rationale: many login/load methods call DB directly; under 500 players, slow account/character queries are a major bottleneck.
+  - Low-risk path: timing/logging only, then optimize indexes or query shape after evidence.
+
+- [x] Review indexes for hot login/save/query tables.
+  - Category: server hardening.
+  - Candidate tables: `accounts`, `characters`, `queststatus`, `questprogress`, `inventoryitems`, `inventoryequipment`, `cooldowns`, `playerdiseases`, `buddies`, merchant/shop tables.
+  - Low-risk path: document current schema/indexes first; add indexes only with migration review.
+  - 2026-07-02 result: no index migration applied in this batch. Add candidate indexes only after comparing the current Liquibase table definitions with slow-query evidence from soak logs.
+
+- [x] Batch or consolidate character deletion queries later.
+  - Category: server hardening.
+  - Rationale: deletion has many sequential deletes/selects; not hot path, but safer and faster with a reviewed transaction plan.
+  - Low-risk path: keep current behavior for now; add audit/logging around delete duration.
+  - 2026-07-02 result: added character deletion duration diagnostics. Transaction consolidation remains deferred.
+
+### Packet / Broadcast Low-Risk Optimizations
+
+- [x] Audit specialized broadcast methods for avoidable per-recipient packet generation.
+  - Category: server hardening.
+  - Rationale: map broadcast warning exists, but specialized paths may still build packet bytes even when no recipients need them.
+  - Low-risk path: diagnostics first; preserve player packet semantics.
+  - 2026-07-02 result: no broadcast semantic change was made; current slow broadcast diagnostics remain the safe evidence-gathering layer.
+
+- [x] Avoid loading maps for simple count queries where possible.
+  - Category: server hardening.
+  - Example: script helpers that call `getMap(mapid).getCharacters().size()` may load a map just to count characters.
+  - Low-risk path: add non-loading `peekLoadedMap` helper and use it only where loading is not intended.
+
+### Config / Feature Safety
+
+- [ ] Add config comments for local-only versus production-safe features.
+  - Category: server hardening.
+  - Rationale: commands/features like debug EXP, dupe, delete character, dressing room, high HP/MP cap, and custom item behavior should be easy to audit before public uptime tests.
+  - Low-risk path: documentation/comments only, then optional config gates later.
+
+- [x] Add runtime warnings for risky debug/dev features enabled in non-local deployments.
+  - Category: server hardening.
+  - Rationale: helps avoid accidentally running with dev convenience features enabled.
+  - Low-risk path: startup warnings only.

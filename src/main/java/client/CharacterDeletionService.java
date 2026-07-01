@@ -4,6 +4,7 @@ import net.server.Server;
 import net.server.world.Party;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.monitoring.SlowOperationLogger;
 import tools.DatabaseConnection;
 
 import java.sql.Connection;
@@ -47,6 +48,7 @@ public final class CharacterDeletionService {
     }
 
     public static Result checkDeletionEligibility(int cid) {
+        long startedNs = SlowOperationLogger.start();
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement("SELECT `world`, `guildid`, `guildrank`, `familyId` FROM characters WHERE id = ?");
              PreparedStatement ps2 = con.prepareStatement("SELECT COUNT(*) AS rowcount FROM worldtransfers WHERE `characterid` = ? AND completionTime IS NULL")) {
@@ -86,6 +88,8 @@ public final class CharacterDeletionService {
         } catch (SQLException e) {
             log.error("Failed to validate chrId {} for deletion", cid, e);
             return Result.ERROR;
+        } finally {
+            SlowOperationLogger.warnIfSlow("character-delete-eligibility cid=" + cid, startedNs, 1_000);
         }
     }
 
@@ -103,6 +107,7 @@ public final class CharacterDeletionService {
     }
 
     private static boolean deleteCharacterInternal(int cid, int senderAccId) {
+        long startedNs = SlowOperationLogger.start();
         try {
             Client deleteClient = new Client(Client.Type.LOGIN, -1, "character-delete", null, 0, 1);
             Character chr = Character.loadCharFromDB(cid, deleteClient, false);
@@ -124,6 +129,8 @@ public final class CharacterDeletionService {
         } catch (SQLException | RuntimeException ex) {
             log.error("Failed to delete chrId {}", cid, ex);
             return false;
+        } finally {
+            SlowOperationLogger.warnIfSlow("character-delete cid=" + cid, startedNs, 5_000);
         }
     }
 }

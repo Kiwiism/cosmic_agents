@@ -37,6 +37,7 @@ import server.ItemInformationProvider;
 import server.StatEffect;
 import server.ThreadManager;
 import server.TimerManager;
+import server.monitoring.ThrottledLogger;
 import server.expeditions.Expedition;
 import server.life.LifeFactory;
 import server.life.Monster;
@@ -272,7 +273,8 @@ public class EventInstanceManager {
         try {
             invokeScriptFunction("playerExit", EventInstanceManager.this, chr);
         } catch (ScriptException | NoSuchMethodException ex) {
-            ex.printStackTrace();
+            ThrottledLogger.error("event-monster-killed:" + name, log,
+                    "Event {} monsterKilled script failed", ex, name);
         }
     }
 
@@ -620,14 +622,24 @@ public class EventInstanceManager {
         try {
             invokeScriptFunction("dispose", EventInstanceManager.this);
         } catch (ScriptException | NoSuchMethodException ex) {
-            ex.printStackTrace();
+            ThrottledLogger.error("event-dispose:" + name, log,
+                    "Event {} dispose script failed", ex, name);
         }
         disposed = true;
 
         ess.dispose();
 
+        int retainedChars;
+        int retainedMobs;
+        int retainedKillCounts;
+        int retainedMaps;
+        int retainedProps;
+        int retainedObjectProps;
+
         writeLock.lock();
         try {
+            retainedChars = chars.size();
+            retainedMobs = mobs.size();
             for (Character chr : chars.values()) {
                 chr.setEventInstance(null);
             }
@@ -637,6 +649,11 @@ public class EventInstanceManager {
         } finally {
             writeLock.unlock();
         }
+
+        retainedKillCounts = killCount.size();
+        retainedMaps = mapIds.size();
+        retainedProps = props.size();
+        retainedObjectProps = objectProps.size();
 
         if (event_schedule != null) {
             event_schedule.cancel(false);
@@ -649,6 +666,12 @@ public class EventInstanceManager {
         objectProps.clear();
 
         disposeExpedition();
+
+        if (retainedChars > 0 || retainedMobs > 0 || retainedKillCounts > 0 || retainedMaps > 0
+                || retainedProps > 0 || retainedObjectProps > 0) {
+            log.debug("Disposed event {} retainedBeforeClear chars={} mobs={} killCounts={} mapIds={} props={} objectProps={}",
+                    name, retainedChars, retainedMobs, retainedKillCounts, retainedMaps, retainedProps, retainedObjectProps);
+        }
 
         scriptLock.lock();
         try {
@@ -683,7 +706,8 @@ public class EventInstanceManager {
                     try {
                         invokeScriptFunction(methodName, EventInstanceManager.this);
                     } catch (ScriptException | NoSuchMethodException ex) {
-                        ex.printStackTrace();
+                        ThrottledLogger.error("event-schedule:" + name + ":" + methodName, log,
+                                "Event {} scheduled method {} failed", ex, name, methodName);
                     }
                 };
 

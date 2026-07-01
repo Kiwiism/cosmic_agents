@@ -32,12 +32,17 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class MapManager {
     private static final Logger log = LoggerFactory.getLogger(MapManager.class);
     private static final long IDLE_MAP_DIAGNOSTIC_MS = 30 * 60 * 1000L;
+    private static final int HIGH_WATER_OBJECT_WARN = 500;
+    private static final int HIGH_WATER_DROP_WARN = 200;
+    private static final int HIGH_WATER_REACTOR_WARN = 100;
+    private static final int HIGH_WATER_MONSTER_WARN = 200;
 
     private final int channel;
     private final int world;
     private EventInstanceManager event;
 
     private final Map<Integer, MapleMap> maps = new HashMap<>();
+    private final Map<Integer, MapHighWatermark> highWatermarks = new HashMap<>();
 
     private final Lock mapsRLock;
     private final Lock mapsWLock;
@@ -106,6 +111,15 @@ public class MapManager {
         return (map != null) ? map : loadMapFromWz(mapid, true);
     }
 
+    public MapleMap getLoadedMap(int mapid) {
+        mapsRLock.lock();
+        try {
+            return maps.get(mapid);
+        } finally {
+            mapsRLock.unlock();
+        }
+    }
+
     public MapleMap getDisposableMap(int mapid) {
         return loadMapFromWz(mapid, false);
     }
@@ -167,8 +181,40 @@ public class MapManager {
             }
             map.respawn();
             map.mobMpRecovery();
+            recordHighWatermarks(map);
             server.monitoring.SlowOperationLogger.warnIfSlow("map-update map=" + map.getId() + " active=" + active,
                     startedNs, 250);
+        }
+    }
+
+    private void recordHighWatermarks(MapleMap map) {
+        int objectCount = map.getLoadedObjectCount();
+        int dropCount = map.getDroppedItemCount();
+        int reactorCount = map.countReactors();
+        int monsterCount = map.getSpawnedMonsterCount();
+
+        MapHighWatermark watermark = highWatermarks.computeIfAbsent(map.getId(), ignored -> new MapHighWatermark());
+        boolean warn = false;
+        if (objectCount > watermark.objects) {
+            watermark.objects = objectCount;
+            warn |= objectCount >= HIGH_WATER_OBJECT_WARN;
+        }
+        if (dropCount > watermark.drops) {
+            watermark.drops = dropCount;
+            warn |= dropCount >= HIGH_WATER_DROP_WARN;
+        }
+        if (reactorCount > watermark.reactors) {
+            watermark.reactors = reactorCount;
+            warn |= reactorCount >= HIGH_WATER_REACTOR_WARN;
+        }
+        if (monsterCount > watermark.monsters) {
+            watermark.monsters = monsterCount;
+            warn |= monsterCount >= HIGH_WATER_MONSTER_WARN;
+        }
+
+        if (warn) {
+            log.warn("Map high-water world={} channel={} map={} objects={} drops={} reactors={} monsters={}",
+                    world, channel, map.getId(), watermark.objects, watermark.drops, watermark.reactors, watermark.monsters);
         }
     }
 
@@ -178,6 +224,13 @@ public class MapManager {
         }
 
         this.event = null;
+    }
+
+    private static final class MapHighWatermark {
+        private int objects;
+        private int drops;
+        private int reactors;
+        private int monsters;
     }
 
 }

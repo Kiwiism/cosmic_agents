@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripting.AbstractScriptManager;
 import server.ItemInformationProvider.ScriptedItem;
+import server.monitoring.ThrottledLogger;
 import tools.PacketCreator;
 
 import javax.script.Invocable;
@@ -102,7 +103,8 @@ public class NPCScriptManager extends AbstractScriptManager {
             try {
                 invocable.invokeFunction("start", chrs);
             } catch (final NoSuchMethodException nsme) {
-                nsme.printStackTrace();
+                ThrottledLogger.error("npc-start-missing:" + filename, log,
+                        "NPC script {} has no party start function", nsme, filename);
             }
 
         } catch (final Exception e) {
@@ -148,7 +150,8 @@ public class NPCScriptManager extends AbstractScriptManager {
                     try {
                         iv.invokeFunction("start", chr);
                     } catch (final NoSuchMethodException nsma) {
-                        nsma.printStackTrace();
+                        ThrottledLogger.error("npc-start-missing:" + npc, log,
+                                "NPC script {} has no compatible start function", nsma, npc);
                     }
                 }
             } else {
@@ -204,6 +207,14 @@ public class NPCScriptManager extends AbstractScriptManager {
 
     public NPCConversationManager getCM(Client c) {
         return cms.get(c);
+    }
+
+    public int activeConversationCount() {
+        return cms.size();
+    }
+
+    public int activeScriptCount() {
+        return scripts.size();
     }
 
 }

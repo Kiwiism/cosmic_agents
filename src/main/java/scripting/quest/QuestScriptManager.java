@@ -205,6 +205,14 @@ public class QuestScriptManager extends AbstractScriptManager {
         return qms.get(c);
     }
 
+    public int activeQuestActionCount() {
+        return qms.size();
+    }
+
+    public int activeScriptCount() {
+        return scripts.size();
+    }
+
     public void reloadQuestScripts() {
         scripts.clear();
         qms.clear();

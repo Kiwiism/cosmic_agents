@@ -66,6 +66,7 @@ import server.life.Monster;
 import server.maps.FieldLimit;
 import server.maps.MapleMap;
 import server.maps.MiniDungeonInfo;
+import server.monitoring.SlowOperationLogger;
 import tools.BCrypt;
 import tools.DatabaseConnection;
 import tools.HexTool;
@@ -640,90 +641,95 @@ public class Client extends ChannelInboundHandlerAdapter {
     }
 
     public int login(String login, String pwd, Hwid hwid) {
+        long loginStartedNs = SlowOperationLogger.start();
         int loginok = 5;
 
-        loginattempt++;
-        if (loginattempt > 4) {
-            loggedIn = false;
-            SessionCoordinator.getInstance().closeSession(this, false);
-            return 6;   // thanks Survival_Project for finding out an issue with AUTOMATIC_REGISTER here
-        }
+        try {
+            loginattempt++;
+            if (loginattempt > 4) {
+                loggedIn = false;
+                SessionCoordinator.getInstance().closeSession(this, false);
+                return 6;   // thanks Survival_Project for finding out an issue with AUTOMATIC_REGISTER here
+            }
 
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT id, password, gender, banned, pin, pic, characterslots, tos, language FROM accounts WHERE name = ?")) {
-            ps.setString(1, login);
+            try (Connection con = DatabaseConnection.getConnection();
+                 PreparedStatement ps = con.prepareStatement("SELECT id, password, gender, banned, pin, pic, characterslots, tos, language FROM accounts WHERE name = ?")) {
+                ps.setString(1, login);
 
-            try (ResultSet rs = ps.executeQuery()) {
-                accId = -2;
-                if (rs.next()) {
-                    accId = rs.getInt("id");
-                    if (accId <= 0) {
-                        log.warn("Tried to log in with accId {}", accId);
-                        return 15;
-                    }
+                try (ResultSet rs = ps.executeQuery()) {
+                    accId = -2;
+                    if (rs.next()) {
+                        accId = rs.getInt("id");
+                        if (accId <= 0) {
+                            log.warn("Tried to log in with accId {}", accId);
+                            return 15;
+                        }
 
-                    boolean banned = (rs.getByte("banned") == 1);
-                    gmlevel = 0;
-                    pin = rs.getString("pin");
-                    pic = rs.getString("pic");
-                    gender = rs.getByte("gender");
-                    characterSlots = rs.getByte("characterslots");
-                    lang = rs.getInt("language");
-                    String passhash = rs.getString("password");
-                    byte tos = rs.getByte("tos");
+                        boolean banned = (rs.getByte("banned") == 1);
+                        gmlevel = 0;
+                        pin = rs.getString("pin");
+                        pic = rs.getString("pic");
+                        gender = rs.getByte("gender");
+                        characterSlots = rs.getByte("characterslots");
+                        lang = rs.getInt("language");
+                        String passhash = rs.getString("password");
+                        byte tos = rs.getByte("tos");
 
-                    if (banned) {
-                        return 3;
-                    }
+                        if (banned) {
+                            return 3;
+                        }
 
-                    if (getLoginState() > LOGIN_NOTLOGGEDIN) { // already loggedin
-                        loggedIn = false;
-                        loginok = 7;
-                    } else if (passhash.charAt(0) == '$' && passhash.charAt(1) == '2' && BCrypt.checkpw(pwd, passhash)) {
-                        loginok = (tos == 0) ? 23 : 0;
-                    } else if (pwd.equals(passhash) || checkHash(passhash, "SHA-1", pwd) || checkHash(passhash, "SHA-512", pwd)) {
-                        // thanks GabrielSin for detecting some no-bcrypt inconsistencies here
-                        loginok = (tos == 0) ? (!YamlConfig.config.server.BCRYPT_MIGRATION ? 23 : -23) : (!YamlConfig.config.server.BCRYPT_MIGRATION ? 0 : -10); // migrate to bcrypt
+                        if (getLoginState() > LOGIN_NOTLOGGEDIN) { // already loggedin
+                            loggedIn = false;
+                            loginok = 7;
+                        } else if (passhash.charAt(0) == '$' && passhash.charAt(1) == '2' && BCrypt.checkpw(pwd, passhash)) {
+                            loginok = (tos == 0) ? 23 : 0;
+                        } else if (pwd.equals(passhash) || checkHash(passhash, "SHA-1", pwd) || checkHash(passhash, "SHA-512", pwd)) {
+                            // thanks GabrielSin for detecting some no-bcrypt inconsistencies here
+                            loginok = (tos == 0) ? (!YamlConfig.config.server.BCRYPT_MIGRATION ? 23 : -23) : (!YamlConfig.config.server.BCRYPT_MIGRATION ? 0 : -10); // migrate to bcrypt
+                        } else {
+                            loggedIn = false;
+                            loginok = 4;
+                        }
                     } else {
-                        loggedIn = false;
-                        loginok = 4;
+                        accId = -3;
                     }
-                } else {
-                    accId = -3;
                 }
+            } catch (SQLException e) {
+                log.error("Login DB lookup failed", e);
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
 
-        if (loginok == 0 || loginok == 4) {
-            AntiMulticlientResult res = SessionCoordinator.getInstance().attemptLoginSession(this, hwid, accId, loginok == 4);
+            if (loginok == 0 || loginok == 4) {
+                AntiMulticlientResult res = SessionCoordinator.getInstance().attemptLoginSession(this, hwid, accId, loginok == 4);
 
-            switch (res) {
-                case SUCCESS:
-                    if (loginok == 0) {
-                        loginattempt = 0;
-                    }
+                switch (res) {
+                    case SUCCESS:
+                        if (loginok == 0) {
+                            loginattempt = 0;
+                        }
 
-                    return loginok;
+                        return loginok;
 
-                case REMOTE_LOGGEDIN:
-                    return 17;
+                    case REMOTE_LOGGEDIN:
+                        return 17;
 
-                case REMOTE_REACHED_LIMIT:
-                    return 13;
+                    case REMOTE_REACHED_LIMIT:
+                        return 13;
 
-                case REMOTE_PROCESSING:
-                    return 10;
+                    case REMOTE_PROCESSING:
+                        return 10;
 
-                case MANY_ACCOUNT_ATTEMPTS:
-                    return 16;
+                    case MANY_ACCOUNT_ATTEMPTS:
+                        return 16;
 
-                default:
-                    return 8;
+                    default:
+                        return 8;
+                }
+            } else {
+                return loginok;
             }
-        } else {
-            return loginok;
+        } finally {
+            SlowOperationLogger.warnIfSlow("client-login accId=" + accId, loginStartedNs, 1_000);
         }
     }
 
@@ -821,6 +827,7 @@ public class Client extends ChannelInboundHandlerAdapter {
     }
 
     public void updateLoginState(int newState) {
+        long startedNs = SlowOperationLogger.start();
         // rules out possibility of multiple account entries
         if (newState == LOGIN_LOGGEDIN) {
             SessionCoordinator.getInstance().updateOnlineClient(this);
@@ -835,7 +842,10 @@ public class Client extends ChannelInboundHandlerAdapter {
             ps.setInt(3, getAccID());
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Failed to update login state accId={} newState={}", getAccID(), newState, e);
+        } finally {
+            SlowOperationLogger.warnIfSlow("update-login-state accId=" + getAccID() + " newState=" + newState,
+                    startedNs, 1_000);
         }
 
         if (newState == LOGIN_NOTLOGGEDIN) {
@@ -849,6 +859,7 @@ public class Client extends ChannelInboundHandlerAdapter {
     }
 
     public int getLoginState() {  // 0 = LOGIN_NOTLOGGEDIN, 1= LOGIN_SERVER_TRANSITION, 2 = LOGIN_LOGGEDIN
+        long startedNs = SlowOperationLogger.start();
         try (Connection con = DatabaseConnection.getConnection()) {
             int state;
             try (PreparedStatement ps = con.prepareStatement("SELECT loggedin, lastlogin, birthday FROM accounts WHERE id = ?")) {
@@ -889,8 +900,10 @@ public class Client extends ChannelInboundHandlerAdapter {
             return state;
         } catch (SQLException e) {
             loggedIn = false;
-            e.printStackTrace();
+            log.error("Failed to get login state accId={}", getAccID(), e);
             throw new RuntimeException("login state");
+        } finally {
+            SlowOperationLogger.warnIfSlow("get-login-state accId=" + getAccID(), startedNs, 1_000);
         }
     }
 

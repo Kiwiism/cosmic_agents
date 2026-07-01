@@ -146,6 +146,7 @@ import server.maps.Portal;
 import server.maps.SavedLocation;
 import server.maps.SavedLocationType;
 import server.maps.Summon;
+import server.monitoring.SlowOperationLogger;
 import server.minigame.RockPaperScissor;
 import server.partyquest.AriantColiseum;
 import server.partyquest.MonsterCarnival;
@@ -7094,6 +7095,7 @@ public class Character extends AbstractCharacterObject {
     }
 
     public static Character loadCharFromDB(final int charid, Client client, boolean channelserver) throws SQLException {
+        long loadStartedNs = SlowOperationLogger.start();
         Character ret = new Character();
         ret.client = client;
         ret.id = charid;
@@ -7600,7 +7602,10 @@ public class Character extends AbstractCharacterObject {
 
             return ret;
         } catch (SQLException | RuntimeException e) {
-            e.printStackTrace();
+            log.error("Failed to load character charId={} channelserver={}", charid, channelserver, e);
+        } finally {
+            SlowOperationLogger.warnIfSlow("load-character charId=" + charid + " channelserver=" + channelserver,
+                    loadStartedNs, 5_000);
         }
         return null;
     }
