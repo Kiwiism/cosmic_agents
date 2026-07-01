@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -55,5 +56,16 @@ class AgentFormationServiceTest {
                 new BotEntry(mock(Character.class), leader, null), formations, defaultFormation));
         assertEquals(defaultFormation, AgentFormationService.stateForEntry(
                 new BotEntry(mock(Character.class), null, null), formations, defaultFormation));
+    }
+
+    @Test
+    void exposesAgentOwnedFormationStore() {
+        FormationState formation = new FormationState(FormationType.RIGHT, 70, 80);
+        AgentFormationService.formationsByLeaderId().clear();
+
+        AgentFormationService.formationsByLeaderId().put(123, formation);
+
+        assertSame(formation, AgentFormationService.formationsByLeaderId().get(123));
+        AgentFormationService.formationsByLeaderId().clear();
     }
 }

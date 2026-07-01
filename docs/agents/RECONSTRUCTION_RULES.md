@@ -169,6 +169,9 @@ Recent reconstruction notes:
   remains a compatibility alias to the same mutable config object, while Agent
   reporting, shop, supplies, inventory adapters, and script move checks read
   config through the Agent-owned runtime config.
+- Live formation storage now lives in `AgentFormationService`; BotManager still
+  routes formation commands and lifecycle cleanup through compatibility calls,
+  but no longer owns the in-memory leader-to-formation map.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

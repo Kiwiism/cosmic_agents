@@ -179,8 +179,6 @@ public class BotManager {
 
     // ownerCharId → list of owned bot entries (1:N)
     private final Map<Integer, List<BotEntry>> bots = new ConcurrentHashMap<>();
-    // ownerCharId → current formation (in-memory only, defaults to stagger)
-    private final Map<Integer, AgentFormationService.FormationState> ownerFormations = new ConcurrentHashMap<>();
     // ownerCharId → cluster-anchor town position. First bot to warp picks a random
     // portal in the return map; later bots warp to a randomized nearby offset.
     // Cleared when the owner becomes active again.
@@ -508,7 +506,7 @@ public class BotManager {
         AgentNavigationGraphService.warmGraphAsync(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         entries.add(entry);
         AgentFormationService.FormationState fs =
-                AgentFormationService.stateForLeader(ownerFormations, ownerCharId, defaultFormationState());
+                AgentFormationService.stateForLeader(AgentFormationService.formationsByLeaderId(), ownerCharId, defaultFormationState());
         AgentFormationService.applyOffsets(entries, fs);
         if (normalizeSpawnState) {
             normalizeSpawnedBot(entry);
@@ -540,13 +538,13 @@ public class BotManager {
 
     public void removeBot(int ownerCharId) {
         AgentLifecycleService.removeLeaderEntries(
-                bots, ownerFormations, townClusterAnchors, ownerCharId, this::cancelBotTask);
+                bots, AgentFormationService.formationsByLeaderId(), townClusterAnchors, ownerCharId, this::cancelBotTask);
     }
 
     /** Cancel and remove a bot by the bot character's own ID (used during shutdown/disconnect). */
     public boolean removeBotByCharId(int botCharId) {
         return AgentLifecycleService.removeAgentByCharacterId(
-                bots, ownerFormations, townClusterAnchors, botCharId, this::cancelBotTask);
+                bots, AgentFormationService.formationsByLeaderId(), townClusterAnchors, botCharId, this::cancelBotTask);
     }
 
     /** Release bot-owned runtime state before this character leaves bot control. */
@@ -860,7 +858,7 @@ public class BotManager {
                 return;
             }
             AgentFormationService.FormationState current =
-                    AgentFormationService.stateForLeader(ownerFormations, owner.getId(), defaultFormationState());
+                    AgentFormationService.stateForLeader(AgentFormationService.formationsByLeaderId(), owner.getId(), defaultFormationState());
             // snap [px|on|off] — changes Y-snap range, preserves type/px
             if (typeStr.equalsIgnoreCase("snap")) {
                 String qualifier = fm.group(2);
@@ -879,7 +877,7 @@ public class BotManager {
                 }
                 AgentFormationService.FormationState fs =
                         new AgentFormationService.FormationState(current.type(), current.px(), newSnapRange);
-                ownerFormations.put(owner.getId(), fs);
+                AgentFormationService.formationsByLeaderId().put(owner.getId(), fs);
                 String status = newSnapRange > 0 ? "on (" + newSnapRange + "px)" : "off";
                 if (fEntries != null && !fEntries.isEmpty())
                     AgentBotManagerReplyRuntime.queueReply(fEntries.get(0), "snap: " + status);
@@ -907,7 +905,7 @@ public class BotManager {
             }
             AgentFormationService.FormationState fs =
                     new AgentFormationService.FormationState(type, px, current.snapRange());
-            ownerFormations.put(owner.getId(), fs);
+            AgentFormationService.formationsByLeaderId().put(owner.getId(), fs);
             if (fEntries != null) {
                 AgentFormationService.applyOffsets(fEntries, fs);
                 if (!fEntries.isEmpty()) {
@@ -1186,7 +1184,7 @@ public class BotManager {
     }
 
     AgentFormationService.FormationState formationStateFor(BotEntry entry) {
-        return AgentFormationService.stateForEntry(entry, ownerFormations, defaultFormationState());
+        return AgentFormationService.stateForEntry(entry, AgentFormationService.formationsByLeaderId(), defaultFormationState());
     }
 
     public Character resolveFollowAnchor(BotEntry entry, Character owner) {
@@ -1204,7 +1202,7 @@ public class BotManager {
         }
 
         AgentFormationService.FormationState formation = new AgentFormationService.FormationState(type, px, snapRange);
-        ownerFormations.put(owner.getId(), formation);
+        AgentFormationService.formationsByLeaderId().put(owner.getId(), formation);
         if (entries == null) {
             return;
         }
@@ -1220,7 +1218,7 @@ public class BotManager {
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         List<BotEntry> siblingEntries = owner == null ? List.of() : getBotEntries(owner.getId());
         return AgentTargetSnapshotService.capture(
-                entry, siblingEntries, ownerFormations, defaultFormationState(), BotManager::resolveFollowTargetPos);
+                entry, siblingEntries, AgentFormationService.formationsByLeaderId(), defaultFormationState(), BotManager::resolveFollowTargetPos);
     }
 
     private static final int RETREAT_HOLD_MS = 600;
@@ -2672,7 +2670,7 @@ public class BotManager {
     private Point resolveTownClusterTarget(BotEntry entry, int ownerCharId, MapleMap map, Point anchor) {
         List<BotEntry> entries = getBotEntries(ownerCharId);
         AgentFormationService.FormationState formation =
-                AgentFormationService.stateForLeader(ownerFormations, ownerCharId, defaultFormationState());
+                AgentFormationService.stateForLeader(AgentFormationService.formationsByLeaderId(), ownerCharId, defaultFormationState());
         return AgentLeaderSafetyService.resolveTownClusterTarget(
                 entry, map, anchor, entries, formation, PLATFORM_EDGE_INSET_PX, BotPhysicsEngine::findGroundPoint);
     }

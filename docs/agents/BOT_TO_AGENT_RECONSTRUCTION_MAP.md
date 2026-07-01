@@ -154,6 +154,9 @@ Recent map updates:
 - BotManager general runtime config moved to
   `server.agents.runtime.AgentRuntimeConfig`; BotManager keeps `cfg` as a
   compatibility alias while Agent modules consume the Agent-owned config source.
+- BotManager formation map storage moved to
+  `server.agents.runtime.AgentFormationService`; BotManager still contains the
+  temporary command parsing and snapshot wiring around that Agent-owned store.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.

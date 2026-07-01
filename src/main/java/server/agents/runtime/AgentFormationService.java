@@ -7,6 +7,7 @@ import server.bots.BotEntry;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -14,6 +15,8 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public final class AgentFormationService {
     public enum FormationType { STAGGER, RANDOM, STACK, SPREAD, LEFT, RIGHT }
+
+    private static final Map<Integer, FormationState> formationsByLeaderId = new ConcurrentHashMap<>();
 
     public record FormationState(FormationType type, int px, int snapRange) {
         public int offsetFor(int idx, int total) {
@@ -36,6 +39,10 @@ public final class AgentFormationService {
 
     public static FormationState defaultStagger(int followStaggerPx, int snapRange) {
         return new FormationState(FormationType.STAGGER, followStaggerPx, snapRange);
+    }
+
+    public static Map<Integer, FormationState> formationsByLeaderId() {
+        return formationsByLeaderId;
     }
 
     public static FormationState stateForEntry(BotEntry entry,
