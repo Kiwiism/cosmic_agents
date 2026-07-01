@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- BotManager tick failure count/window/disable/force-idle decision ownership
+  moved to `server.agents.runtime.AgentTickFailurePolicy`; BotManager still owns
+  side effects for this slice.
 - BotManager AI-cadence consumption and tick timestamp recording moved to
   `server.agents.runtime.AgentTickOrchestrator`; full tick dispatch remains in
   BotManager for later slices.

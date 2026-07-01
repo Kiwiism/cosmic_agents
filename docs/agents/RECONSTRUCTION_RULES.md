@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- BotManager tick failure counting and escalation thresholds moved to
+  `server.agents.runtime.AgentTickFailurePolicy`. BotManager still performs
+  failure cleanup, logging, forced idle, and removal side effects with the same
+  3-failure/10-second behavior.
 - BotManager AI-cadence consumption and tick timestamp recording now enter
   through `server.agents.runtime.AgentTickOrchestrator.prepareTick`. The same
   movement tick, AI tick, accumulator, and last-tick semantics are preserved.

@@ -22,6 +22,7 @@ import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.AgentTickFailurePolicy;
 import server.agents.runtime.AgentTickOrchestrator;
 
 import server.agents.capabilities.looting.AgentLootEligibility;
@@ -84,7 +85,6 @@ import server.agents.integration.AgentBotScriptTaskStateRuntime;
 import server.agents.integration.AgentBotShopStateRuntime;
 import server.agents.integration.AgentBotTickCadenceStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
-import server.agents.integration.AgentBotTickFailureStateRuntime;
 import server.agents.integration.AgentBotTargetedCommandMatch;
 import server.agents.integration.AgentBotTransferCommand;
 import server.agents.plans.AgentTask;
@@ -255,9 +255,6 @@ public class BotManager {
             Pattern.CASE_INSENSITIVE);
     private static final int MIN_PREFIX_TARGET_LENGTH = 2;
     private static final int PLATFORM_EDGE_INSET_PX = 12;
-    private static final int BOT_TICK_FAILURE_LIMIT = 3;
-    private static final long BOT_TICK_FAILURE_WINDOW_MS = 10_000L;
-
     private Character resolveFollowTarget(Character owner, String targetToken) {
         if (owner == null || targetToken == null || targetToken.isBlank()) {
             if (owner != null) {
@@ -2482,7 +2479,8 @@ public class BotManager {
         }
 
         long now = System.currentTimeMillis();
-        int failureCount = AgentBotTickFailureStateRuntime.recordFailure(entry, now, BOT_TICK_FAILURE_WINDOW_MS);
+        AgentTickFailurePolicy.Decision decision = AgentTickFailurePolicy.recordFailure(entry, now);
+        int failureCount = decision.failureCount();
 
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
@@ -2491,28 +2489,25 @@ public class BotManager {
         int mapId = bot != null ? bot.getMapId() : -1;
 
         clearBotVolatileActions(entry);
-        if (failureCount >= BOT_TICK_FAILURE_LIMIT) {
+        if (decision.disableAgent()) {
             log.error("Disabling bot '{}' after {} tick failures within {} ms (owner={}, map={}, grinding={}, following={})",
-                    botName, failureCount, BOT_TICK_FAILURE_WINDOW_MS, ownerName, mapId,
+                    botName, failureCount, AgentTickFailurePolicy.FAILURE_WINDOW_MS, ownerName, mapId,
                     AgentBotModeStateRuntime.grinding(entry), AgentBotModeStateRuntime.following(entry), t);
             removeBotByCharId(botCharId);
             return;
         }
 
-        if (failureCount == 2) {
+        if (decision.forceIdle()) {
             forceBotIdleAfterTickFailure(entry);
         }
 
         log.warn("Bot '{}' tick failed {}/{} (owner={}, map={}, grinding={}, following={})",
-                botName, failureCount, BOT_TICK_FAILURE_LIMIT, ownerName, mapId,
+                botName, failureCount, AgentTickFailurePolicy.FAILURE_LIMIT, ownerName, mapId,
                 AgentBotModeStateRuntime.grinding(entry), AgentBotModeStateRuntime.following(entry), t);
     }
 
     private static void resetBotTickFailures(BotEntry entry) {
-        if (entry == null || !AgentBotTickFailureStateRuntime.hasFailures(entry)) {
-            return;
-        }
-        AgentBotTickFailureStateRuntime.clear(entry);
+        AgentTickFailurePolicy.resetFailures(entry);
     }
 
     private static void clearBotVolatileActions(BotEntry entry) {
