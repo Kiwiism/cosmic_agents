@@ -331,47 +331,25 @@ public class BotManager {
 
     /** Spawn a registered bot for the given owner, placing it at the owner's current position in follow mode. */
     public SpawnResult spawnBotForOwner(Character owner, String botName) {
-        AgentOwnershipService ownershipService = AgentOwnershipService.getInstance();
-        AgentResolvedCharacter resolved = ownershipService.resolveCharacterByName(botName);
-        if (resolved == null) {
-            return SpawnResult.fail("No character named '" + botName + "' exists.");
-        }
-        if (resolved.isOnline() && !resolved.isOnlineAsBot()) {
-            return SpawnResult.fail("'" + botName + "' is currently being played by a real player.");
-        }
-        AgentAuthorizationResult auth = ownershipService.ensureCanControl(owner, resolved);
-        if (!auth.allowed()) {
-            return SpawnResult.fail(auth.failureMessage());
-        }
-        MapleMap map = owner.getMap();
-        Point pos = resolveSpawnPosition(map, owner.getPosition());
-        if (resolved.isOnline()) {
-            Character botChar = resolved.onlineCharacter();
-            Character activeOwner = getActiveOwnerByBotCharId(botChar.getId());
-            if (activeOwner != null && activeOwner.getId() != owner.getId()) {
-                return SpawnResult.fail("Bot '" + botName + "' is controlled by " + activeOwner.getName() + ".");
+        try {
+            AgentLifecycleService.AgentSpawnResult result = AgentLifecycleService.spawnAgentForLeader(
+                    owner,
+                    botName,
+                    AgentOwnershipService.getInstance(),
+                    new AgentLifecycleService.SpawnHooks(
+                            this::resolveSpawnPosition,
+                            this::registerSpawnedBot,
+                            this::loadOfflineBot,
+                            BotManager::placeSpawnedOnlineBot,
+                            this::issueFollowOwner,
+                            (botChar, map, pos) -> botChar.forceChangeMap(map, map.findClosestPortal(pos))));
+            if (!result.success()) {
+                return SpawnResult.fail(result.errorMessage());
             }
-            BotEntry entry = activeOwner == null
-                    ? registerSpawnedBot(owner.getId(), owner, botChar)
-                    : getBotEntry(owner.getId(), botChar.getId());
-            if (botChar.getMapId() != map.getId()) {
-                botChar.forceChangeMap(map, map.findClosestPortal(pos));
-            }
-            placeSpawnedOnlineBot(entry, botChar, map, pos);
-            if (entry != null) {
-                issueFollowOwner(entry);
-            }
-            return SpawnResult.ok(botChar, auth.autoRegistered());
-        } else {
-            try {
-                Character botChar = loadOfflineBot(resolved.id(), owner.getClient().getWorld(), owner.getClient().getChannel(), map, pos);
-                BotEntry entry = registerSpawnedBot(owner.getId(), owner, botChar);
-                issueFollowOwner(entry);
-                return SpawnResult.ok(botChar, auth.autoRegistered());
-            } catch (SQLException e) {
-                log.warn("Failed to load bot character '{}' for owner '{}'", botName, owner.getName(), e);
-                return SpawnResult.fail("Failed to load bot character '" + botName + "'.");
-            }
+            return SpawnResult.ok(result.agent(), result.autoRegistered());
+        } catch (SQLException e) {
+            log.warn("Failed to load bot character '{}' for owner '{}'", botName, owner.getName(), e);
+            return SpawnResult.fail("Failed to load bot character '" + botName + "'.");
         }
     }
 

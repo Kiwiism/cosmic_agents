@@ -17,6 +17,14 @@ Rules:
 
 Recent reconstruction notes:
 
+- Spawn-for-leader branching now lives in
+  `server.agents.runtime.AgentLifecycleService.spawnAgentForLeader`. BotManager
+  keeps the public `spawnBotForOwner` compatibility API and supplies temporary
+  hooks for spawn-position resolution, online placement, offline DB loading,
+  registry mutation, map-change portal choice, and follow startup. The same
+  missing-character, real-player-online, authorization, controlled-by-other-
+  leader, online placement, offline loading, and auto-registration result
+  behavior is preserved.
 - Active Agent lookup helpers now live behind live-store methods on
   `server.agents.runtime.AgentRuntimeRegistry`. BotManager and the temporary
   Agent session lifecycle gateway keep compatibility delegates, but no longer

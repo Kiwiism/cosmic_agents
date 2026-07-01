@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Spawn lifecycle branching moved from BotManager to
+  `server.agents.runtime.AgentLifecycleService.spawnAgentForLeader`. BotManager
+  remains the compatibility facade and temporary side-effect provider for
+  loading, registering, placing, map changing, and starting follow mode.
 - Active Agent lookup helpers moved to live-store methods on
   `server.agents.runtime.AgentRuntimeRegistry`. BotManager and
   `AgentBotSessionLifecycleSideEffects` remain temporary compatibility
