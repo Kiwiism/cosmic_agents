@@ -253,6 +253,29 @@ class AgentLeaderSafetyServiceTest {
         assertEquals(2, calls.get());
     }
 
+    @Test
+    void markInactiveTownReturnHandledSetsReturnedToTown() {
+        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+
+        AgentLeaderSafetyService.markInactiveTownReturnHandled(entry);
+
+        assertTrue(AgentBotActivityStateRuntime.ownerReturnedToTown(entry));
+    }
+
+    @Test
+    void startInactiveTownClusterMoveResetsThenStartsMoveThenMarksReturnedToTown() {
+        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AtomicInteger order = new AtomicInteger();
+
+        AgentLeaderSafetyService.startInactiveTownClusterMove(
+                entry,
+                () -> assertEquals(0, order.getAndIncrement()),
+                () -> assertEquals(1, order.getAndIncrement()));
+
+        assertEquals(2, order.get());
+        assertTrue(AgentBotActivityStateRuntime.ownerReturnedToTown(entry));
+    }
+
     private static MapleMap map(int id, MapleMap returnMap, Monster... monsters) {
         MapleMap map = mock(MapleMap.class);
         when(map.getId()).thenReturn(id);

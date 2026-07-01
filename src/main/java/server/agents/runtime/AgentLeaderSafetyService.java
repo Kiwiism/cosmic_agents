@@ -155,4 +155,16 @@ public final class AgentLeaderSafetyService {
         Point anchorGround = groundPointResolver.apply(map, new Point(base.x, base.y - 1));
         return anchorGround != null ? anchorGround : base;
     }
+
+    public static void markInactiveTownReturnHandled(BotEntry entry) {
+        AgentBotActivityStateRuntime.setOwnerReturnedToTown(entry, true);
+    }
+
+    public static void startInactiveTownClusterMove(BotEntry entry,
+                                                    Runnable resetEntryState,
+                                                    Runnable startPreciseMoveToClusterTarget) {
+        resetEntryState.run();
+        startPreciseMoveToClusterTarget.run();
+        markInactiveTownReturnHandled(entry);
+    }
 }

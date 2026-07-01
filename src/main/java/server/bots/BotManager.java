@@ -2712,7 +2712,7 @@ public class BotManager {
         MapleMap returnMap = currentMap.getReturnMap();
         if (returnMap == null || returnMap.getId() == currentMap.getId()) {
             // No return map (e.g. some PQ/town maps): mark handled to avoid re-evaluating every tick.
-            AgentBotActivityStateRuntime.setOwnerReturnedToTown(entry, true);
+            AgentLeaderSafetyService.markInactiveTownReturnHandled(entry);
             return false;
         }
 
@@ -2736,9 +2736,10 @@ public class BotManager {
         }
         Point target = resolveTownClusterTarget(entry, ownerCharId, returnMap, anchor);
 
-        BotMovementManager.resetEntryState(entry);
-        startMoveTo(entry, target, true);
-        AgentBotActivityStateRuntime.setOwnerReturnedToTown(entry, true);
+        AgentLeaderSafetyService.startInactiveTownClusterMove(
+                entry,
+                () -> BotMovementManager.resetEntryState(entry),
+                () -> startMoveTo(entry, target, true));
         return true;
     }
 

@@ -44,6 +44,10 @@ Recent reconstruction notes:
   platform-edge clamp, map-bounds clamp, ground lookup, and anchor fallback
   order are unchanged; BotManager still supplies temporary formation storage and
   ground-physics callbacks.
+- BotManager inactive-town return completion state sequencing now delegates to
+  `server.agents.runtime.AgentLeaderSafetyService`. No-return-map handling and
+  cluster movement still mark returned-to-town at the same point; BotManager
+  still supplies the temporary movement reset and precise move-start callbacks.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

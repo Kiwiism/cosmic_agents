@@ -35,6 +35,9 @@ Recent map updates:
   `server.agents.runtime.AgentLeaderSafetyService`; BotManager only supplies
   temporary leader-entry snapshots, formation state, edge-inset config, and
   ground-point lookup.
+- BotManager inactive-town return completion state sequencing moved to
+  `server.agents.runtime.AgentLeaderSafetyService`; BotManager only supplies
+  temporary movement reset and precise move-start callbacks.
 - BotManager script task completion rules moved to
   `server.agents.runtime.AgentScriptTaskCompletionService`; BotManager only
   supplies temporary follow-target resolution and movement distance config.
