@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotInventoryManager` runtime hook factories moved to
+  `AgentBotInventoryRuntimeAdapters`; `BotInventoryManager` is now a thin
+  compatibility shell over Agent looting/trade/inventory services.
 - Dead `BotInventoryManager.collectItems` compatibility body was removed after
   all active item collection paths routed through Agent-owned runtime services.
 - `BotInventoryManager.tickPassiveLoot` runtime callback assembly now lives in

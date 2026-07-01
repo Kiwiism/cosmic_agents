@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Bot-inventory runtime hook factory ownership moved from `BotInventoryManager`
+  to `server.agents.integration.AgentBotInventoryRuntimeAdapters`. The bot
+  inventory class is now a compatibility shell over Agent-owned looting,
+  transfer, manual-trade, trade-tick, and availability runtimes.
 - The dead `BotInventoryManager.collectItems` compatibility helper was removed
   after passive loot, trade tick, transfer availability, and trade collection
   paths all routed through Agent-owned runtime services.
