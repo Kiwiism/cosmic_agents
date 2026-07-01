@@ -2924,6 +2924,12 @@ Recent reconstruction notes:
   temporary idle, follow-map sync, follow-anchor, recovery, map-change, shop,
   follow-idle, and movement-core hooks. The existing early-return order is
   preserved for movement simulations and movement-only tests.
+- Anchored farm/sentry tick orchestration now lives in
+  `server.agents.runtime.AgentAnchoredFarmTickService`; BotManager still
+  supplies temporary local-opportunity attack, idle, ground-idle broadcast, and
+  movement-core hooks. The farm-anchor map guard, attack-consumed early return,
+  at-anchor idle/clear behavior, precise anchor target assignment, and movement
+  dispatch order are preserved.
 
 Initial reconstruction order:
 

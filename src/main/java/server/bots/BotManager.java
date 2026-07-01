@@ -22,6 +22,7 @@ import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.dialogue.AgentWhisperCommandService;
 
 import server.agents.runtime.AgentActionLockPhysicsService;
+import server.agents.runtime.AgentAnchoredFarmTickService;
 import server.agents.runtime.AgentCommonTickService;
 import server.agents.runtime.AgentCommandModeService;
 import server.agents.runtime.AgentDeathTickService;
@@ -2075,30 +2076,35 @@ public class BotManager {
     }
 
     private void tickAnchoredFarm(BotEntry entry, Character bot, Point botPos, boolean runAiTick) {
-        if (!AgentBotFarmAnchorStateRuntime.isFarmAnchorInMap(entry, bot.getMapId())) {
-            AgentTickStateMaintenanceService.clearFarmAnchorOnMapChange(entry, bot);
-            tickIdleEntry(entry, bot);
-            return;
-        }
+        AgentAnchoredFarmTickService.tickAnchoredFarm(
+                entry,
+                bot,
+                botPos,
+                runAiTick,
+                anchoredFarmHooks());
+    }
 
-        Point anchor = AgentBotFarmAnchorStateRuntime.farmAnchor(entry);
-        if (runAiTick) {
-            LocalOpportunityAttackResult attackResult = tryLocalOpportunityAttack(
-                    entry, bot, botPos, anchor, anchor, false, false);
-            if (attackResult.consumedTick()) {
-                return;
-            }
-        }
-
-        if (AgentPositionService.isNear(botPos, anchor, 8) && !AgentBotMovementStateRuntime.inAir(entry) && !AgentBotMovementStateRuntime.climbing(entry)) {
-            AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
-            BotPhysicsEngine.idleOnGround(entry, bot);
-            BotMovementManager.broadcastMovement(entry);
-            return;
-        }
-
-        AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, anchor);
-        stepMovementCore(entry, anchor, runAiTick);
+    private AgentAnchoredFarmTickService.AnchoredFarmHooks anchoredFarmHooks() {
+        return new AgentAnchoredFarmTickService.AnchoredFarmHooks(
+                (entry, bot, botPos, movementTargetPos, moveWindowReferencePos,
+                 allowCombatMovement, allowJumpTowardTarget) -> {
+                    LocalOpportunityAttackResult result = tryLocalOpportunityAttack(
+                            entry,
+                            bot,
+                            botPos,
+                            movementTargetPos,
+                            moveWindowReferencePos,
+                            allowCombatMovement,
+                            allowJumpTowardTarget);
+                    return new AgentAnchoredFarmTickService.LocalOpportunityResult(
+                            result.consumedTick(), result.targetPos());
+                },
+                this::tickIdleEntry,
+                (entry, bot) -> {
+                    BotPhysicsEngine.idleOnGround(entry, bot);
+                    BotMovementManager.broadcastMovement(entry);
+                },
+                this::stepMovementCore);
     }
 
     private static boolean shouldUseScriptedMoveLocalCombat(BotEntry entry, Point targetPos) {
