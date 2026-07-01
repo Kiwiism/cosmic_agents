@@ -233,7 +233,7 @@ public class BotInventoryManager {
                                         category -> collectItems(category, entry, bot),
                                         category -> nextEquipsGroup(category, entry, bot),
                                         category -> nextAmmoGroup(category, bot),
-                                        BotInventoryManager::equipsGroupMsg,
+                                        AgentInventoryTransferService::equipsGroupMessage,
                                         items -> openTradeBatch(entry, bot, items, 0),
                                         () -> resetTradeState(entry, bot))),
                         () -> AgentTradeClosedWindowService.handleClosedTrade(
@@ -315,13 +315,6 @@ public class BotInventoryManager {
     // ─── Inventory info ───────────────────────────────────────────────────────
 
     // ─── Internals ────────────────────────────────────────────────────────────
-
-    private static String equipsGroupMsg(String category) {
-        return AgentEquipTradeGroupService.equipsGroupMessage(
-                category,
-                () -> BotManager.randomReply(AgentDialogueCatalog.tradeReservedForOtherReplies()),
-                () -> BotManager.randomReply(AgentDialogueCatalog.tradeReservedForSelfReplies()));
-    }
 
     private static String nextEquipsGroup(String category, BotEntry entry, Character bot) {
         return AgentEquipTradeGroupService.nextEquipsGroup(category, classifyEquipTradeGroups(entry, bot));

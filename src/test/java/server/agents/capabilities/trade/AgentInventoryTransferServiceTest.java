@@ -3,14 +3,17 @@ package server.agents.capabilities.trade;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.inventory.AgentInventoryDropService;
 import server.agents.integration.AgentBotInventoryStateRuntime;
 import server.bots.BotEntry;
+import server.bots.BotManager;
 import server.bots.BotMovementManager;
 
 import java.util.function.BiFunction;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -85,5 +88,19 @@ class AgentInventoryTransferServiceTest {
         assertEquals(true, AgentInventoryTransferService.hasTransferableItems("mesos:1000", entry, bot));
         assertEquals(false, AgentInventoryTransferService.hasTransferableItems("mesos:2000", entry, bot));
         assertEquals(1_500, AgentInventoryTransferService.countTransferableItems("mesos", entry, bot));
+    }
+
+    @Test
+    void equipsGroupMessageUsesAgentDialogueCatalogPools() {
+        try (MockedStatic<BotManager> botManager = mockStatic(BotManager.class)) {
+            botManager.when(() -> BotManager.randomReply(AgentDialogueCatalog.tradeReservedForOtherReplies()))
+                    .thenReturn("other");
+            botManager.when(() -> BotManager.randomReply(AgentDialogueCatalog.tradeReservedForSelfReplies()))
+                    .thenReturn("self");
+
+            assertEquals("other", AgentInventoryTransferService.equipsGroupMessage("equips:reserved_for_other"));
+            assertEquals("self", AgentInventoryTransferService.equipsGroupMessage("equips:reserved_for_self"));
+            assertNull(AgentInventoryTransferService.equipsGroupMessage("equips:normal"));
+        }
     }
 }

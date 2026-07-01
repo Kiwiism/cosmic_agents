@@ -232,7 +232,7 @@ public final class AgentInventoryTransferService {
         return AgentEquipTradeGroupService.reservedEquipsPageMessage(category, classifyEquipTradeGroups(entry, agent));
     }
 
-    private static String equipsGroupMsg(String category) {
+    public static String equipsGroupMessage(String category) {
         return AgentEquipTradeGroupService.equipsGroupMessage(
                 category,
                 () -> BotManager.randomReply(AgentDialogueCatalog.tradeReservedForOtherReplies()),
@@ -243,7 +243,7 @@ public final class AgentInventoryTransferService {
         AgentGroupedTradeTransferService.startEquipsGroupTradeTransfer(
                 classifyEquipTradeGroups(entry, agent),
                 (category, items) -> startTradeSequence(category, owner, items, 0, false, entry, agent),
-                AgentInventoryTransferService::equipsGroupMsg,
+                AgentInventoryTransferService::equipsGroupMessage,
                 (category, message) -> AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, message),
                 reply -> AgentBotInventoryRuntime.replyNow(entry, reply));
     }

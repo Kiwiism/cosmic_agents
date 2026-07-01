@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotInventoryManager` no longer owns duplicate reserved-equip group reply
+  selection; it now uses `AgentInventoryTransferService.equipsGroupMessage` for
+  the same Agent dialogue catalog pools.
 - `BotInventoryManager` equip-trade classification callback construction now
   lives in `AgentEquipTradeCallbackService`; the bot inventory shell only wires
   temporary profiling, bag-scan, self-reserve, reservation, owner, and slow-log

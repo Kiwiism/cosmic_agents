@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Duplicate reserved-equip group reply selection was removed from
+  `BotInventoryManager`; between-batch trade progression now uses
+  `server.agents.capabilities.trade.AgentInventoryTransferService.equipsGroupMessage`
+  for the same Agent dialogue catalog reply pools.
 - `BotInventoryManager` equip-trade classification callback construction moved
   to `server.agents.capabilities.inventory.AgentEquipTradeCallbackService`. The
   bot inventory shell still supplies temporary profiling, bag-scan,
