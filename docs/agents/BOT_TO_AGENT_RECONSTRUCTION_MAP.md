@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- BotManager attack-lock physics dispatch moved to
+  `server.agents.runtime.AgentActionLockPhysicsService`; BotManager only
+  supplies temporary swim-map and movement physics callbacks.
 - BotManager map-change grounding moved to
   `server.agents.runtime.AgentMapTransitionService`; BotManager only supplies
   temporary foothold/physics/navigation callbacks.

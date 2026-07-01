@@ -2563,6 +2563,10 @@ Recent reconstruction notes:
   warmup, and movement broadcast ordering now live in
   `server.agents.runtime.AgentMapTransitionService`; BotManager still supplies
   temporary foothold, physics, navigation, and broadcast callbacks.
+- Attack-lock physics dispatch now lives in
+  `server.agents.runtime.AgentActionLockPhysicsService`; BotManager still
+  supplies temporary swim-map and movement physics callbacks, preserving the
+  legacy climbing-airborne branch behavior.
 
 Initial reconstruction order:
 

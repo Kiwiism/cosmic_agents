@@ -19,6 +19,7 @@ import server.agents.capabilities.combat.AgentProjectileHitbox;
 
 import server.agents.capabilities.dialogue.AgentEmote;
 
+import server.agents.runtime.AgentActionLockPhysicsService;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentFollowAnchorService;
@@ -3674,23 +3675,12 @@ public class BotManager {
     }
 
     private boolean tickActionLocked(BotEntry entry) {
-        if (!AgentBotCombatCooldownStateRuntime.hasAttackCooldown(entry)) {
-            return false;
-        }
-        if (isSwimMap(entry) && AgentBotMovementStateRuntime.inAir(entry) && !AgentBotMovementStateRuntime.climbing(entry)) {
-            BotMovementManager.tickSwimming(entry, null);
-        } else if (AgentBotMovementStateRuntime.inAir(entry)) {
-            BotMovementManager.tickAirborne(entry, null);
-        } else if (!AgentBotMovementStateRuntime.climbing(entry)) {
-            // Ground physics must keep ticking during attack lock so prior walk momentum decays
-            // via friction, walk-offs trigger falls, and broadcastMovement updates stance from
-            // WALK→STAND. Without this the client extrapolates the last walk packet for the
-            // entire animation lock and the bot visibly "walks in place" until cooldown ends.
-            // External forces (mob knockback) replace this state via applyAirKnockback /
-            // beginKnockback before this tick runs, so passing null target is safe.
-            BotMovementManager.tickGrounded(entry, null);
-        }
-        return true;
+        return AgentActionLockPhysicsService.tickActionLocked(
+                entry,
+                BotManager::isSwimMap,
+                locked -> BotMovementManager.tickSwimming(locked, null),
+                locked -> BotMovementManager.tickAirborne(locked, null),
+                locked -> BotMovementManager.tickGrounded(locked, null));
     }
 
 
