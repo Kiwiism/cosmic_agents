@@ -17,6 +17,14 @@ Rules:
 
 Recent reconstruction notes:
 
+- Live Agent registration now lives in
+  `server.agents.runtime.AgentLifecycleService.registerAgent`. BotManager keeps
+  `registerBot` and `registerSpawnedBot` as compatibility wrappers and supplies
+  temporary hooks for tick scheduling, tick callback dispatch, replacement-task
+  cancellation, spawn normalization, and status-check delay selection. The same
+  same-character replacement, captured-entry tick lambda, movement-profile
+  refresh, navigation warmup, formation offset application, optional spawn
+  normalization, and delayed spawn status check are preserved.
 - Spawn-for-leader branching now lives in
   `server.agents.runtime.AgentLifecycleService.spawnAgentForLeader`. BotManager
   keeps the public `spawnBotForOwner` compatibility API and supplies temporary

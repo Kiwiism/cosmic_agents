@@ -4,8 +4,10 @@ import client.Character;
 import client.BotClient;
 import client.Client;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 import server.agents.auth.AgentAuthorizationResult;
 import server.agents.auth.AgentOwnershipService;
+import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.registry.AgentResolvedCharacter;
 import server.bots.BotEntry;
 import server.maps.MapleMap;
@@ -16,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -24,9 +28,100 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 class AgentLifecycleServiceTest {
+    @Test
+    void registersAgentWithScheduledTickAndSpawnStatusCheck() {
+        Character leader = character(100, "Leader");
+        Character agent = character(200, "Alpha");
+        ScheduledFuture<?> scheduledTask = mock(ScheduledFuture.class);
+        AtomicReference<Runnable> scheduledTick = new AtomicReference<>();
+        AtomicReference<BotEntry> tickedEntry = new AtomicReference<>();
+        AtomicReference<BotEntry> normalizedEntry = new AtomicReference<>();
+        AtomicBoolean normalized = new AtomicBoolean();
+        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentFormationService.formationsByLeaderId().clear();
+
+        try (MockedStatic<AgentBotManagerStatusRuntime> status = mockStatic(AgentBotManagerStatusRuntime.class)) {
+            BotEntry entry = AgentLifecycleService.registerAgent(
+                    leader.getId(),
+                    leader,
+                    agent,
+                    true,
+                    new AgentLifecycleService.RegisterHooks(
+                            50L,
+                            (tick, periodMs) -> {
+                                assertEquals(50L, periodMs);
+                                scheduledTick.set(tick);
+                                return scheduledTask;
+                            },
+                            (activeEntry, leaderCharId, agentCharId) -> {
+                                tickedEntry.set(activeEntry);
+                                assertEquals(leader.getId(), leaderCharId);
+                                assertEquals(agent.getId(), agentCharId);
+                            },
+                            ignored -> {
+                                throw new AssertionError("nothing should be replaced");
+                            },
+                            AgentFormationService.defaultStagger(60, 120),
+                            entryToNormalize -> {
+                                normalizedEntry.set(entryToNormalize);
+                                normalized.set(true);
+                            },
+                            () -> 123L));
+
+            assertEquals(List.of(entry), AgentRuntimeRegistry.entriesForLeader(leader.getId()));
+            assertSame(entry, normalizedEntry.get());
+            assertTrue(normalized.get());
+            scheduledTick.get().run();
+            assertSame(entry, tickedEntry.get());
+            status.verify(() -> AgentBotManagerStatusRuntime.scheduleSpawnStatusCheck(entry, agent, 123L));
+        } finally {
+            AgentRuntimeRegistry.entriesByLeaderId().clear();
+            AgentFormationService.formationsByLeaderId().clear();
+        }
+    }
+
+    @Test
+    void registerAgentReplacesSameCharacterAndCancelsOldTask() {
+        Character leader = character(100, "Leader");
+        Character agent = character(200, "Alpha");
+        BotEntry oldEntry = new BotEntry(agent, leader, mock(ScheduledFuture.class));
+        ScheduledFuture<?> newTask = mock(ScheduledFuture.class);
+        AtomicInteger cancelled = new AtomicInteger();
+        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(oldEntry);
+
+        try (MockedStatic<AgentBotManagerStatusRuntime> status = mockStatic(AgentBotManagerStatusRuntime.class)) {
+            BotEntry newEntry = AgentLifecycleService.registerAgent(
+                    leader.getId(),
+                    leader,
+                    agent,
+                    false,
+                    new AgentLifecycleService.RegisterHooks(
+                            50L,
+                            (tick, periodMs) -> newTask,
+                            (entry, leaderCharId, agentCharId) -> {},
+                            entry -> {
+                                assertSame(oldEntry, entry);
+                                cancelled.incrementAndGet();
+                            },
+                            AgentFormationService.defaultStagger(60, 120),
+                            entry -> {
+                                throw new AssertionError("normalize should not run");
+                            },
+                            () -> 456L));
+
+            assertEquals(1, cancelled.get());
+            assertEquals(List.of(newEntry), AgentRuntimeRegistry.entriesForLeader(leader.getId()));
+            status.verify(() -> AgentBotManagerStatusRuntime.scheduleSpawnStatusCheck(newEntry, agent, 456L));
+        } finally {
+            AgentRuntimeRegistry.entriesByLeaderId().clear();
+        }
+    }
+
     @Test
     void spawnsOnlineAgentWithLegacyHooks() throws SQLException {
         Character leader = character(100, "Leader");

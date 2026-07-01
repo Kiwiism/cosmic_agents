@@ -3,6 +3,9 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.auth.AgentAuthorizationResult;
 import server.agents.auth.AgentOwnershipService;
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.integration.AgentBotManagerStatusRuntime;
+import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.registry.AgentResolvedCharacter;
 import server.bots.BotEntry;
@@ -14,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.LongSupplier;
+import java.util.concurrent.ScheduledFuture;
 
 /**
  * Agent-owned lifecycle map mutation helpers over the temporary BotEntry store.
@@ -56,6 +61,25 @@ public final class AgentLifecycleService {
     @FunctionalInterface
     public interface ChangeMapToSpawn {
         void change(Character agent, MapleMap spawnMap, Point spawnPosition);
+    }
+
+    public record RegisterHooks(long tickMs,
+                                AgentTickScheduler tickScheduler,
+                                AgentTickCallback tickCallback,
+                                Consumer<BotEntry> cancelExistingTask,
+                                AgentFormationService.FormationState defaultFormation,
+                                Consumer<BotEntry> normalizeSpawnedAgent,
+                                LongSupplier spawnStatusDelayMs) {
+    }
+
+    @FunctionalInterface
+    public interface AgentTickScheduler {
+        ScheduledFuture<?> schedule(Runnable tick, long periodMs);
+    }
+
+    @FunctionalInterface
+    public interface AgentTickCallback {
+        void tick(BotEntry entry, int leaderCharId, int agentCharId);
     }
 
     private AgentLifecycleService() {
@@ -109,6 +133,43 @@ public final class AgentLifecycleService {
         BotEntry entry = hooks.registerSpawnedAgent().register(leader.getId(), leader, agent);
         hooks.startFollowLeader().accept(entry);
         return AgentSpawnResult.ok(agent, auth.autoRegistered());
+    }
+
+    public static BotEntry registerAgent(int leaderCharId,
+                                         Character leader,
+                                         Character agent,
+                                         boolean normalizeSpawnState,
+                                         RegisterHooks hooks) {
+        List<BotEntry> entries = AgentRuntimeRegistry.mutableEntriesForLeader(leaderCharId);
+        entries.removeIf(entry -> {
+            if (AgentBotRuntimeIdentityRuntime.botIs(entry, agent.getId())) {
+                hooks.cancelExistingTask().accept(entry);
+                return true;
+            }
+            return false;
+        });
+
+        int agentCharId = agent.getId();
+        BotEntry[] ref = new BotEntry[1];
+        ScheduledFuture<?> task = hooks.tickScheduler().schedule(
+                () -> hooks.tickCallback().tick(ref[0], leaderCharId, agentCharId),
+                hooks.tickMs());
+        BotEntry entry = new BotEntry(agent, leader, task);
+        ref[0] = entry;
+
+        AgentBotMovementStateRuntime.refreshMovementProfile(entry, agent);
+        AgentNavigationGraphService.warmGraphAsync(agent.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
+        entries.add(entry);
+
+        AgentFormationService.FormationState formation = AgentFormationService.stateForLeader(
+                AgentFormationService.formationsByLeaderId(), leaderCharId, hooks.defaultFormation());
+        AgentFormationService.applyOffsets(entries, formation);
+
+        if (normalizeSpawnState) {
+            hooks.normalizeSpawnedAgent().accept(entry);
+        }
+        AgentBotManagerStatusRuntime.scheduleSpawnStatusCheck(entry, agent, hooks.spawnStatusDelayMs().getAsLong());
+        return entry;
     }
 
     public static void removeLeaderEntries(Map<Integer, List<BotEntry>> entriesByLeaderId,

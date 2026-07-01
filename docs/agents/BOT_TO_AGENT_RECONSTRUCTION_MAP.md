@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Live Agent registration moved from BotManager to
+  `server.agents.runtime.AgentLifecycleService.registerAgent`. BotManager's
+  register APIs remain temporary compatibility wrappers around the Agent-owned
+  registration sequence.
 - Spawn lifecycle branching moved from BotManager to
   `server.agents.runtime.AgentLifecycleService.spawnAgentForLeader`. BotManager
   remains the compatibility facade and temporary side-effect provider for

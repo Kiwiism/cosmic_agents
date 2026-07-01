@@ -157,7 +157,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -430,38 +429,19 @@ public class BotManager {
     }
 
     private BotEntry registerBotInternal(int ownerCharId, Character owner, Character bot, boolean normalizeSpawnState) {
-        List<BotEntry> entries = AgentRuntimeRegistry.mutableEntriesForLeader(ownerCharId);
-        // Replace if same bot character is already registered (e.g. relog)
-        entries.removeIf(e -> {
-            if (AgentBotRuntimeIdentityRuntime.botIs(e, bot.getId())) {
-                AgentBotManagerSchedulerRuntime.cancelScheduledTask(e);
-                return true;
-            }
-            return false;
-        });
-        int botCharId = bot.getId();
-        // Capture the BotEntry directly in the tick lambda instead of re-resolving it from the
-        // registry every tick (ConcurrentHashMap.get + linear CopyOnWriteArrayList scan). The
-        // task is bound to exactly one entry and is cancelled on every removal/replace path, so
-        // the captured reference is always the live entry. The holder breaks the task<->entry
-        // construction cycle (BotEntry.task is final); the only window where ref[0] is null is
-        // before the assignment two lines below, which tickCore already tolerates.
-        BotEntry[] ref = new BotEntry[1];
-        ScheduledFuture<?> task = TimerManager.getInstance().register(
-                () -> tick(ref[0], ownerCharId, botCharId), BotMovementManager.cfg.TICK_MS);
-        BotEntry entry = new BotEntry(bot, owner, task);
-        ref[0] = entry;
-        AgentBotMovementStateRuntime.refreshMovementProfile(entry, bot);
-        AgentNavigationGraphService.warmGraphAsync(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
-        entries.add(entry);
-        AgentFormationService.FormationState fs =
-                AgentFormationService.stateForLeader(AgentFormationService.formationsByLeaderId(), ownerCharId, defaultFormationState());
-        AgentFormationService.applyOffsets(entries, fs);
-        if (normalizeSpawnState) {
-            normalizeSpawnedBot(entry);
-        }
-        AgentBotManagerStatusRuntime.scheduleSpawnStatusCheck(entry, bot, randMs(30_000, 31_000));
-        return entry;
+        return AgentLifecycleService.registerAgent(
+                ownerCharId,
+                owner,
+                bot,
+                normalizeSpawnState,
+                new AgentLifecycleService.RegisterHooks(
+                        BotMovementManager.cfg.TICK_MS,
+                        TimerManager.getInstance()::register,
+                        this::tick,
+                        AgentBotManagerSchedulerRuntime::cancelScheduledTask,
+                        defaultFormationState(),
+                        this::normalizeSpawnedBot,
+                        () -> randMs(30_000, 31_000)));
     }
 
     private void normalizeSpawnedBot(BotEntry entry) {
