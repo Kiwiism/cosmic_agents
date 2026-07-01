@@ -23,6 +23,7 @@ import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentFollowAnchorService;
 import server.agents.runtime.AgentFormationService;
+import server.agents.runtime.AgentLeaderSessionService;
 import server.agents.runtime.AgentTargetSnapshot;
 import server.agents.runtime.AgentTargetSnapshotService;
 import server.agents.runtime.AgentRuntimeRegistry;
@@ -2622,15 +2623,10 @@ public class BotManager {
     }
 
     private Character resolveTickOwner(BotEntry entry, int ownerCharId) {
-        Character owner = AgentBotLeaderStateRuntime.leader(entry);
-        if (owner == null || !AgentBotLeaderStateRuntime.matchesLeaderId(entry, ownerCharId) || !owner.isLoggedinWorld()) {
-            owner = Server.getInstance()
-                    .getWorld(AgentBotRuntimeIdentityRuntime.bot(entry).getWorld())
-                    .getPlayerStorage()
-                    .getCharacterById(ownerCharId);
-            AgentBotLeaderStateRuntime.setLeader(entry, owner);
-        }
-        return owner;
+        return AgentLeaderSessionService.resolveTickLeader(entry, ownerCharId, id -> Server.getInstance()
+                .getWorld(AgentBotRuntimeIdentityRuntime.bot(entry).getWorld())
+                .getPlayerStorage()
+                .getCharacterById(id));
     }
 
     /**

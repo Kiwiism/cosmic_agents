@@ -2534,6 +2534,11 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentFollowAnchorService`; BotManager still supplies
   the temporary same-leader sibling entry list while preserving the owner,
   party-member, sibling-agent, and fallback resolution order exactly.
+- Tick leader/session refresh now lives in
+  `server.agents.runtime.AgentLeaderSessionService`; BotManager still supplies
+  the temporary Cosmic player-storage lookup callback while preserving the
+  cached-leader, mismatched-leader, offline-leader, and missing-leader behavior
+  exactly.
 
 Initial reconstruction order:
 

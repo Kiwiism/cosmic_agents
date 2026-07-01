@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- BotManager tick leader/session refresh moved to
+  `server.agents.runtime.AgentLeaderSessionService`; BotManager remains a
+  compatibility wrapper that supplies the current Cosmic player-storage lookup.
 - BotManager follow-anchor resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager remains a
   compatibility wrapper that supplies the temporary sibling list until runtime
