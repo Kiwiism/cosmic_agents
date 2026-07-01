@@ -1,0 +1,27 @@
+package server.agents.capabilities.trade;
+
+import client.Character;
+import server.Trade;
+import server.agents.capabilities.dialogue.AgentDialogueCatalog;
+import server.agents.integration.AgentBotInventoryRuntime;
+import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.bots.BotEntry;
+
+public final class AgentTradeInviteWaitService {
+    private static final int REQUEST_TIMEOUT_MS = 30_000;
+
+    private AgentTradeInviteWaitService() {
+    }
+
+    public static void tickWaitingForAccept(BotEntry entry,
+                                            Character agent,
+                                            int tickMs,
+                                            Runnable resetTradeState) {
+        AgentBotPendingTradeStateRuntime.addTimerMs(entry, tickMs);
+        if (AgentBotPendingTradeStateRuntime.timerMs(entry) > REQUEST_TIMEOUT_MS) {
+            AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeRequestTimeoutReply());
+            Trade.cancelTrade(agent, Trade.TradeResult.NO_RESPONSE);
+            resetTradeState.run();
+        }
+    }
+}

@@ -2174,6 +2174,10 @@ Recent reconstruction notes:
   enclosing trade tick but delegates the first-item category-message check,
   message consumption, trade chat line, and announcement delay timer to Agent
   trade code.
+- Trade invite-wait timeout handling now lives in
+  `AgentTradeInviteWaitService`; BotInventoryManager still owns the enclosing
+  trade tick but delegates the accept-wait timer, request-timeout reply,
+  `NO_RESPONSE` trade cancellation, and reset callback to Agent trade code.
 - Trade batch-open orchestration now lives in `AgentTradeBatchService`;
   BotInventoryManager and AgentSupplyShareTradeService still supply the
   temporary recipient lookup/cancel/start/invite/reply callbacks, but recipient

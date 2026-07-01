@@ -45,6 +45,7 @@ import server.agents.capabilities.trade.AgentTradeCategoryAnnouncementService;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
 import server.agents.capabilities.trade.AgentTradeCompletionService;
 import server.agents.capabilities.trade.AgentTradeItemAddService;
+import server.agents.capabilities.trade.AgentTradeInviteWaitService;
 import server.agents.capabilities.trade.AgentTradeMesoAddService;
 import server.agents.capabilities.trade.AgentTradeRecipientService;
 import server.agents.capabilities.trade.AgentTradeResetService;
@@ -454,12 +455,11 @@ public class BotInventoryManager {
 
         // ── WAITING FOR ACCEPT ────────────────────────────────────────────
         if (!trade.isFullTrade()) {
-            AgentBotPendingTradeStateRuntime.addTimerMs(entry, BotMovementManager.cfg.TICK_MS);
-            if (AgentBotPendingTradeStateRuntime.timerMs(entry) > 30_000) {
-                AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeRequestTimeoutReply());
-                Trade.cancelTrade(bot, Trade.TradeResult.NO_RESPONSE);
-                resetTradeState(entry, bot);
-            }
+            AgentTradeInviteWaitService.tickWaitingForAccept(
+                    entry,
+                    bot,
+                    BotMovementManager.cfg.TICK_MS,
+                    () -> resetTradeState(entry, bot));
             return;
         }
 
