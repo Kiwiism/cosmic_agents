@@ -2124,6 +2124,11 @@ Recent reconstruction notes:
   other-recipient reservation callbacks plus slow-classification log delivery,
   but the normal/reserved-for-other/reserved-for-self bucketing, bucket sorting,
   and profiling counters are Agent-owned.
+- Trade item category collection and `name:` preparation routing now live in
+  `AgentInventoryTradeCollectionService`; BotInventoryManager still supplies
+  temporary callbacks for recommended gear, equipped-slot preparation,
+  equip-group classification, and ammo-group classification while the enclosing
+  transfer state machine remains in the bot compatibility layer.
 - Equipped-slot named trade preparation now lives in
   `AgentEquippedSlotTradeService`; BotInventoryManager still owns the enclosing
   trade sequence but delegates slot counting, temporary unequip preparation,

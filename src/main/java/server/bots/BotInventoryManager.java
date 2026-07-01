@@ -31,12 +31,13 @@ import server.agents.capabilities.inventory.AgentInventoryDropService;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.capabilities.inventory.AgentInventoryNamedItemService;
 import server.agents.capabilities.inventory.AgentInventorySellTrashService;
+import server.agents.capabilities.inventory.AgentInventoryTradeCollectionService;
+import server.agents.capabilities.inventory.AgentInventoryTradeCollectionService.PreparedTradeItems;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.capabilities.looting.AgentLootCleanupService;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy.AmmoTradeGroups;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.AmmoGroup;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.EquipsGroup;
-import server.agents.capabilities.inventory.AgentInventoryTradePolicy.UseTradeGroups;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.trade.AgentMesoTradeService;
@@ -65,7 +66,6 @@ public class BotInventoryManager {
     private static final Logger log = LoggerFactory.getLogger(BotInventoryManager.class);
     private static final long TRADE_COMMAND_PROFILE_WARN_NS = 50_000_000L;
     private static final int MANUAL_TRADE_TIMEOUT_MS = 60_000;
-    private record PreparedTradeItems(List<Item> items, String errorMessage) {}
     private static final Set<Integer> manualTradeGreetingSent = ConcurrentHashMap.newKeySet();
     static void tickPassiveLoot(BotEntry entry, Character bot) {
         if (AgentBotInventoryStateRuntime.hasLootInhibit(entry)) {
@@ -670,79 +670,34 @@ public class BotInventoryManager {
     // ─── Item collection helpers ──────────────────────────────────────────────
 
     private static PreparedTradeItems prepareTradeItems(String category, BotEntry entry, Character bot) {
-        if (category != null && category.startsWith("name:")) {
-            String fragment = category.substring(5).trim();
-            AgentEquippedSlotTradeService.PreparedTradeItems equippedSlotItems =
-                    AgentEquippedSlotTradeService.prepareEquippedSlotTradeItems(
-                            fragment,
-                            entry,
-                            bot,
-                            BotEquipManager::slotsFromName,
-                            () -> AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems(entry, bot));
-            if (equippedSlotItems.errorMessage() != null || !equippedSlotItems.items().isEmpty()) {
-                return new PreparedTradeItems(equippedSlotItems.items(), equippedSlotItems.errorMessage());
-            }
-            return new PreparedTradeItems(AgentInventoryNamedItemService.collectNamedItems(bot, fragment), null);
-        }
-
-        return new PreparedTradeItems(collectItems(category, entry, bot), null);
+        return AgentInventoryTradeCollectionService.prepareTradeItems(
+                category,
+                bot,
+                fragment -> {
+                    AgentEquippedSlotTradeService.PreparedTradeItems equippedSlotItems =
+                            AgentEquippedSlotTradeService.prepareEquippedSlotTradeItems(
+                                    fragment,
+                                    entry,
+                                    bot,
+                                    BotEquipManager::slotsFromName,
+                                    () -> AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems(entry, bot));
+                    return new PreparedTradeItems(equippedSlotItems.items(), equippedSlotItems.errorMessage());
+                },
+                fragment -> AgentInventoryNamedItemService.collectNamedItems(bot, fragment),
+                () -> recommendedItems(entry, bot),
+                () -> classifyEquipTradeGroups(entry, bot),
+                () -> classifyAmmoTradeGroups(bot),
+                AgentBotRuntimeIdentityRuntime.owner(entry));
     }
 
     private static List<Item> collectItems(String category, BotEntry entry, Character bot) {
-        List<Item> result = new ArrayList<>();
-        switch (category) {
-            case "recommended" -> {
-                Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
-                if (owner != null) {
-                    result.addAll(BotEquipManager.collectRecommendedItems(owner, bot));
-                }
-            }
-            case "scrolls" -> {
-                result.addAll(AgentInventoryCollectionService.collectFromBag(bot, InventoryType.USE,
-                        item -> ItemConstants.isEquipScroll(item.getItemId())));
-                result = AgentInventoryTradePolicy.prioritizeScrollTradeItems(result, AgentBotRuntimeIdentityRuntime.owner(entry));
-            }
-            case "pots"    -> result.addAll(AgentInventoryCollectionService.collectFromBag(bot, InventoryType.USE,
-                    item -> AgentUseItemClassificationPolicy.isRecoveryPotion(item.getItemId())));
-            case "buff"    -> result.addAll(AgentInventoryCollectionService.collectFromBag(bot, InventoryType.USE,
-                    item -> AgentUseItemClassificationPolicy.isBuffConsumable(item.getItemId())));
-            case "use"     -> {
-                UseTradeGroups groups = classifyUseTradeGroups(bot, AgentBotRuntimeIdentityRuntime.owner(entry));
-                result.addAll(groups.uncategorized());
-                result.addAll(groups.categorized());
-            }
-            case "ammo" -> {
-                AmmoTradeGroups groups = classifyAmmoTradeGroups(bot);
-                result.addAll(groups.nonOwn());
-                result.addAll(groups.own());
-            }
-            case "equips" -> {
-                result.addAll(AgentEquipTradeGroupService.allTradeItems(classifyEquipTradeGroups(entry, bot)));
-            }
-            case "trash" -> result.addAll(collectTrashEquips(entry, bot));
-            case "etc" -> {
-                result.addAll(AgentInventoryCollectionService.collectFromBag(bot, InventoryType.ETC, item -> true));
-                result = AgentInventoryTradePolicy.prioritizeEtcTradeItems(result, AgentBotRuntimeIdentityRuntime.owner(entry));
-            }
-            default -> {
-                if (AgentInventoryTradePolicy.isReservedEquipsCategory(category)) {
-                    result.addAll(collectReservedEquipTradePage(category, entry, bot));
-                } else {
-                    EquipsGroup eg = AgentInventoryTradePolicy.equipsGroupFromCategory(category);
-                    if (eg != null) {
-                        result.addAll(classifyEquipTradeGroups(entry, bot).itemsFor(eg));
-                    } else {
-                        AmmoGroup ammoGroup = AgentInventoryTradePolicy.ammoGroupFromCategory(category);
-                        if (ammoGroup != null) {
-                            result.addAll(classifyAmmoTradeGroups(bot).itemsFor(ammoGroup));
-                        } else if (category.startsWith("name:")) {
-                            result.addAll(AgentInventoryNamedItemService.collectNamedItems(bot, category.substring(5)));
-                        }
-                    }
-                }
-            }
-        }
-        return result;
+        return AgentInventoryTradeCollectionService.collectItems(
+                category,
+                bot,
+                AgentBotRuntimeIdentityRuntime.owner(entry),
+                () -> recommendedItems(entry, bot),
+                () -> classifyEquipTradeGroups(entry, bot),
+                () -> classifyAmmoTradeGroups(bot));
     }
 
     // ─── Drop actions (floor) ─────────────────────────────────────────────────
@@ -797,14 +752,9 @@ public class BotInventoryManager {
         AgentBotInventoryRuntime.replyNow(entry, AgentInventoryDialogueReporter.noItemsReply("ammo"));
     }
 
-    private static UseTradeGroups classifyUseTradeGroups(Character bot, Character recipient) {
-        return AgentInventoryTradePolicy.classifyUseTradeGroups(bot, recipient,
-                AgentUseItemClassificationPolicy::isRecoveryPotion,
-                AgentInventoryAmmoPolicy::isTradeAmmoItem,
-                ItemConstants::isEquipScroll,
-                AgentUseItemClassificationPolicy::isBuffConsumable,
-                ItemInformationProvider.getInstance()::isQuestItem,
-                YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE);
+    private static List<Item> recommendedItems(BotEntry entry, Character bot) {
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+        return owner != null ? BotEquipManager.collectRecommendedItems(owner, bot) : List.of();
     }
 
     private static AmmoTradeGroups classifyAmmoTradeGroups(Character bot) {
