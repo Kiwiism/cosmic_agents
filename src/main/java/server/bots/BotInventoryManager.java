@@ -9,6 +9,7 @@ import config.YamlConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
+import server.agents.capabilities.inventory.AgentAmmoTradeCallbackService;
 import server.agents.capabilities.inventory.AgentAmmoTradeClassificationService;
 import server.agents.capabilities.inventory.AgentEquipTradeClassificationService;
 import server.agents.capabilities.inventory.AgentEquipTradeGroupService;
@@ -337,7 +338,7 @@ public class BotInventoryManager {
     private static AmmoTradeGroups classifyAmmoTradeGroups(Character bot) {
         return AgentAmmoTradeClassificationService.classifyAmmoTradeGroups(
                 bot,
-                AgentAmmoTradeClassificationService.AmmoTradeCallbacks.of(
+                AgentAmmoTradeCallbackService.ammoTradeCallbacks(
                         () -> AgentAttackExecutionProvider.getEquippedWeaponType(bot),
                         ItemInformationProvider.getInstance()::getWatkForProjectile,
                         ItemInformationProvider.getInstance()::isQuestItem,

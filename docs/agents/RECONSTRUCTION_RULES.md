@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- `BotInventoryManager` ammo-trade callback construction moved to
+  `server.agents.capabilities.inventory.AgentAmmoTradeCallbackService`. The bot
+  inventory shell still supplies temporary weapon-type, projectile-WATK,
+  quest-item, and untradeable-config hooks while the ammo callback object is
+  Agent-owned.
 - `BotInventoryManager` item-collection callback construction moved to
   `server.agents.capabilities.trade.AgentTradeItemCollectionCallbackService`.
   The bot inventory shell still supplies temporary recommended-item,
