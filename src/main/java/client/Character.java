@@ -99,6 +99,7 @@ import org.slf4j.LoggerFactory;
 import scripting.AbstractPlayerInteraction;
 import scripting.event.EventInstanceManager;
 import scripting.item.ItemScriptManager;
+import server.agents.capabilities.quest.AgentPartyQuestSyncService;
 import server.CashShop;
 import server.ExpLogger;
 import server.ExpLogger.ExpLogRecord;
@@ -7682,7 +7683,7 @@ public class Character extends AbstractCharacterObject {
                         if (qs.getInfoNumber() > 0) {
                             announceUpdateQuest(DelayedQuestUpdate.UPDATE, qs, true);
                         }
-                        BotManager.getInstance().syncPartyBotsQuestProgress(this, qs.getQuest().getId(), id, qs.getProgress(id));
+                        AgentPartyQuestSyncService.syncPartyAgentsQuestProgress(this, qs.getQuest().getId(), id, qs.getProgress(id));
                     }
                 }
             }
@@ -9735,7 +9736,7 @@ public class Character extends AbstractCharacterObject {
         if (qs.getInfoNumber() > 0) {
             announceUpdateQuest(DelayedQuestUpdate.UPDATE, qs, true);
         }
-        BotManager.getInstance().syncPartyBotsQuestProgress(this, id, infoNumber, progress);
+        AgentPartyQuestSyncService.syncPartyAgentsQuestProgress(this, id, infoNumber, progress);
     }
 
     public void awardQuestPoint(int awardedPoints) {

@@ -17,6 +17,13 @@ Rules:
 
 Recent reconstruction notes:
 
+- BotManager party Bot quest start/progress/complete mirroring now lives in
+  `server.agents.capabilities.quest.AgentPartyQuestSyncService`. Quest start,
+  force-start, completion, force-completion, and Character quest-progress hooks
+  call the Agent service directly; BotManager keeps compatibility delegates.
+  The same party-member filtering, BotClient-only Agent selection, already-
+  started skip, forced action calls, progress update, and Maple Administrator
+  NPC fallback are preserved.
 - BotEquipHandler active-Agent count and character-list lookup now reads
   `server.agents.runtime.AgentRuntimeRegistry` directly. BotManager keeps
   `spawnedBotCount` and `getOwnedBotCharacters` as compatibility delegates, and

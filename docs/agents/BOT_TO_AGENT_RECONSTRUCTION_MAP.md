@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Party Agent quest mirroring moved from BotManager to
+  `server.agents.capabilities.quest.AgentPartyQuestSyncService`. `Quest` and
+  `Character` now call the Agent capability directly for start/complete/progress
+  sync, while BotManager keeps temporary compatibility delegates.
 - Active Agent count/list access for the bot equip window moved to
   `server.agents.runtime.AgentRuntimeRegistry`. `BotEquipHandler` no longer
   imports BotManager for those lookups, while BotManager keeps compatibility

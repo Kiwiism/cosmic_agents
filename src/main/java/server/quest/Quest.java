@@ -32,7 +32,7 @@ import provider.DataProvider;
 import provider.DataProviderFactory;
 import provider.DataTool;
 import provider.wz.WZFiles;
-import server.bots.BotManager;
+import server.agents.capabilities.quest.AgentPartyQuestSyncService;
 import server.quest.actions.AbstractQuestAction;
 import server.quest.actions.BuffAction;
 import server.quest.actions.ExpAction;
@@ -326,7 +326,7 @@ public class Quest {
                 a.run(chr, null);
             }
             forceStart(chr, npc, false);
-            BotManager.getInstance().syncPartyBotsQuestStart(chr, this, npc);
+            AgentPartyQuestSyncService.syncPartyAgentsQuestStart(chr, this, npc);
         }
     }
 
@@ -349,7 +349,7 @@ public class Quest {
             if (!this.hasNextQuestAction()) {
                 chr.announceUpdateQuest(Character.DelayedQuestUpdate.INFO, chr.getQuest(this));
             }
-            BotManager.getInstance().syncPartyBotsQuestComplete(chr, this, npc, selection);
+            AgentPartyQuestSyncService.syncPartyAgentsQuestComplete(chr, this, npc, selection);
         }
     }
 
@@ -408,7 +408,7 @@ public class Quest {
 
         chr.updateQuestStatus(newStatus);
         if (syncPartyBots) {
-            BotManager.getInstance().syncPartyBotsQuestStart(chr, this, npc);
+            AgentPartyQuestSyncService.syncPartyAgentsQuestStart(chr, this, npc);
         }
 
         return true;
@@ -432,7 +432,7 @@ public class Quest {
         chr.sendPacket(PacketCreator.showSpecialEffect(9)); // Quest completion
         chr.getMap().broadcastMessage(chr, PacketCreator.showForeignEffect(chr.getId(), 9), false); //use 9 instead of 12 for both
         if (syncPartyBots) {
-            BotManager.getInstance().syncPartyBotsQuestComplete(chr, this, npc, null);
+            AgentPartyQuestSyncService.syncPartyAgentsQuestComplete(chr, this, npc, null);
         }
         return true;
     }
