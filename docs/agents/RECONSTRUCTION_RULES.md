@@ -2940,6 +2940,12 @@ Recent reconstruction notes:
   still schedules the next search tick and performs the selected target lookup.
   The retarget interval guard, null-target adoption, in-range commitment,
   AoE-single-target scan exception, and larger-cluster hysteresis are preserved.
+- Grind fallback target and opportunistic loot steering now live in
+  `server.agents.runtime.AgentGrindTargetPositionService`; BotManager keeps
+  compatibility delegates for existing tests and call sites. The no-graph
+  wander fallback, region wander reuse, cached loot validation, passive pickup
+  radius suppression, retry suppression window, loot travel-distance scoring,
+  convenient-loot ratio, and patrol wander/loot priority are preserved.
 
 Initial reconstruction order:
 

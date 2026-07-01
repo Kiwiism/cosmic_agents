@@ -34,6 +34,7 @@ import server.agents.runtime.AgentFollowIdleMovementService;
 import server.agents.runtime.AgentFollowTargetPositionService;
 import server.agents.runtime.AgentFollowMapSyncService;
 import server.agents.runtime.AgentHeartbeatService;
+import server.agents.runtime.AgentGrindTargetPositionService;
 import server.agents.runtime.AgentIdlePhysicsService;
 import server.agents.runtime.AgentLeaderSessionService;
 import server.agents.runtime.AgentLeaderSafetyService;
@@ -66,7 +67,6 @@ import server.agents.runtime.AgentTickFailurePolicy;
 import server.agents.runtime.AgentTickOrchestrator;
 import server.agents.runtime.AgentTickStateMaintenanceService;
 
-import server.agents.capabilities.looting.AgentLootEligibility;
 import server.agents.capabilities.looting.AgentLootTargetService;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.agents.capabilities.social.AgentScrollReactionNotificationService;
@@ -165,7 +165,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -1348,117 +1347,64 @@ public class BotManager {
 
 
     static Point resolveNoGrindTargetPosition(BotEntry entry, Point botPos, MapleMap map) {
-        if (entry == null || botPos == null) {
-            return botPos;
-        }
-        if (AgentBotGrindLootStateRuntime.hasGrindLootTarget(entry)) {
-            Point lootPos = activeGrindLootPosition(entry, botPos);
-            if (lootPos != null) {
-                return lootPos;
-            }
-        }
-
-        AgentNavigationGraph graph = map != null
-                ? AgentNavigationGraphService.peekBestGraph(map, AgentBotMovementStateRuntime.movementProfile(entry))
-                : null;
-        int regionId = graph != null ? BotNavigationManager.resolveCurrentRegionId(graph, entry, map, botPos) : -1;
-        AgentNavigationGraph.Region region = graph != null ? graph.getRegion(regionId) : null;
-        if (region != null && !region.isRopeRegion && region.width() > 0) {
-            Point wander = AgentBotPatrolStateRuntime.patrolWanderTarget(entry);
-            if (wander == null || AgentPositionService.isNear(botPos, wander, BotMovementManager.cfg.STOP_DIST)) {
-                int x = ThreadLocalRandom.current().nextInt(region.minX, region.maxX + 1);
-                wander = region.pointAt(x);
-                AgentBotPatrolStateRuntime.setPatrolWanderTarget(entry, wander);
-            }
-            return wander;
-        }
-
-        AgentBotPatrolStateRuntime.clearPatrolWanderTarget(entry);
-        return new Point(botPos.x + AgentBotGrindWanderStateRuntime.ensureWanderDirection(entry) * 200, botPos.y);
+        return AgentGrindTargetPositionService.resolveNoGrindTargetPosition(
+                entry,
+                botPos,
+                map,
+                cfg.LOOT_RADIUS,
+                BotMovementManager.cfg.STOP_DIST,
+                cfg.GRIND_LOOT_RETRY_SUPPRESS_MS,
+                BotNavigationManager::resolveCurrentRegionId);
     }
 
     static Point resolveNoGrindTargetPosition(BotEntry entry, Point botPos) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        MapleMap map = bot != null ? bot.getMap() : null;
-        return resolveNoGrindTargetPosition(entry, botPos, map);
+        return AgentGrindTargetPositionService.resolveNoGrindTargetPosition(
+                entry,
+                botPos,
+                cfg.LOOT_RADIUS,
+                BotMovementManager.cfg.STOP_DIST,
+                cfg.GRIND_LOOT_RETRY_SUPPRESS_MS,
+                BotNavigationManager::resolveCurrentRegionId);
     }
 
     private static Point activeGrindLootPosition(BotEntry entry, Point botPos) {
-        MapItem loot = AgentBotGrindLootStateRuntime.grindLootTarget(entry);
-        if (loot == null || botPos == null) {
-            AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
-            return null;
-        }
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        if (loot.isPickedUp() || bot == null || bot.getMap() == null
-                || bot.getMap().getMapObject(loot.getObjectId()) != loot) {
-            AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
-            return null;
-        }
-        if (!AgentLootEligibility.canBotTargetLoot(entry, bot, bot.getMap(), loot, System.currentTimeMillis())) {
-            AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
-            return null;
-        }
-        Point lootPos = loot.getPosition();
-        if (Math.abs(lootPos.x - botPos.x) <= cfg.LOOT_RADIUS
-                && Math.abs(lootPos.y - botPos.y) <= cfg.LOOT_RADIUS) {
-            suppressGrindLootRetry(entry, loot);
-            AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
-            return null;
-        }
-        return lootPos;
+        return AgentGrindTargetPositionService.activeGrindLootPosition(
+                entry,
+                botPos,
+                cfg.LOOT_RADIUS,
+                cfg.GRIND_LOOT_RETRY_SUPPRESS_MS);
     }
 
     static void suppressGrindLootRetry(BotEntry entry, MapItem loot) {
-        if (entry == null || loot == null) {
-            return;
-        }
-        AgentBotGrindLootStateRuntime.suppressRetry(
+        AgentGrindTargetPositionService.suppressGrindLootRetry(
                 entry,
                 loot,
-                System.currentTimeMillis() + cfg.GRIND_LOOT_RETRY_SUPPRESS_MS);
+                cfg.GRIND_LOOT_RETRY_SUPPRESS_MS);
     }
 
     static double activeLootTravelDistSq(Point botPos, Point lootPos) {
-        if (botPos == null || lootPos == null) {
-            return Double.MAX_VALUE;
-        }
-        int dx = Math.max(0, Math.abs(lootPos.x - botPos.x) - cfg.LOOT_RADIUS);
-        int dy = Math.max(0, Math.abs(lootPos.y - botPos.y) - cfg.LOOT_RADIUS);
-        return (double) dx * dx + (double) dy * dy;
+        return AgentGrindTargetPositionService.activeLootTravelDistSq(botPos, lootPos, cfg.LOOT_RADIUS);
     }
 
     static Point convenientLootTarget(BotEntry entry, Point botPos, Point mobPos) {
-        Point lootPos = activeGrindLootPosition(entry, botPos);
-        if (lootPos == null) {
-            return null;
-        }
-        double lootDistSq = activeLootTravelDistSq(botPos, lootPos);
-        double mobDistSq = mobPos.distanceSq(botPos);
-        return lootDistSq < mobDistSq * cfg.GRIND_LOOT_CONVENIENCE_RATIO ? lootPos : null;
+        return AgentGrindTargetPositionService.convenientLootTarget(
+                entry,
+                botPos,
+                mobPos,
+                cfg.LOOT_RADIUS,
+                cfg.GRIND_LOOT_CONVENIENCE_RATIO,
+                cfg.GRIND_LOOT_RETRY_SUPPRESS_MS);
     }
 
     private static Point resolvePatrolWanderTarget(BotEntry entry, Point botPos, MapleMap map) {
-        AgentNavigationGraph graph = AgentNavigationGraphService.peekBestGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
-        int patrolRegionId = AgentBotPatrolStateRuntime.patrolRegionId(entry);
-        AgentNavigationGraph.Region region = graph != null ? graph.getRegion(patrolRegionId) : null;
-        if (region == null || region.isRopeRegion || region.width() == 0) {
-            return resolveNoGrindTargetPosition(entry, botPos, map);
-        }
-        // Seek loot before roaming
-        Point lootTarget = AgentLootTargetService.findNearestPatrolLootTarget(entry, patrolRegionId);
-        if (lootTarget != null) {
-            AgentBotPatrolStateRuntime.setPatrolWanderTarget(entry, lootTarget);
-            return lootTarget;
-        }
-        // Roam within region
-        Point wander = AgentBotPatrolStateRuntime.patrolWanderTarget(entry);
-        if (wander == null || AgentPositionService.isNear(botPos, wander, BotMovementManager.cfg.STOP_DIST)) {
-            int x = ThreadLocalRandom.current().nextInt(region.minX, region.maxX + 1);
-            wander = region.pointAt(x);
-            AgentBotPatrolStateRuntime.setPatrolWanderTarget(entry, wander);
-        }
-        return wander;
+        return AgentGrindTargetPositionService.resolvePatrolWanderTarget(
+                entry,
+                botPos,
+                map,
+                cfg.LOOT_RADIUS,
+                BotMovementManager.cfg.STOP_DIST,
+                cfg.GRIND_LOOT_RETRY_SUPPRESS_MS,
+                BotNavigationManager::resolveCurrentRegionId);
     }
 
     // Main tick
