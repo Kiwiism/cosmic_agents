@@ -8,6 +8,7 @@ import client.creator.BotCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.registry.AgentResolvedCharacter;
+import server.agents.runtime.AgentPartyLifecycleService;
 import server.bots.BotManager;
 import server.agents.auth.AgentOwnershipService;
 import tools.BCrypt;
@@ -78,7 +79,7 @@ public final class AgentSpawnCommandExecutor {
             player.yellowMessage(result.errorMessage());
             return;
         }
-        botManager.joinBotToOwnerParty(player, result.bot());
+        AgentPartyLifecycleService.joinAgentToLeaderParty(player, result.bot());
         if (result.autoRegistered()) {
             player.yellowMessage("Bot '" + result.bot().getName() + "' auto-registered to " + player.getName() + " because it is on the same account.");
         }

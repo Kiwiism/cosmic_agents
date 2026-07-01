@@ -24,6 +24,7 @@ package net.server.channel.handlers;
 import client.Character;
 import client.Client;
 import net.AbstractPacketHandler;
+import server.agents.runtime.AgentPartyLifecycleService;
 import server.bots.BotManager;
 import net.packet.InPacket;
 import net.server.coordinator.world.InviteCoordinator;
@@ -104,7 +105,7 @@ public final class MessengerHandler extends AbstractPacketHandler {
                                 } else {
                                     BotManager.SpawnResult spawnResult = BotManager.getInstance().spawnBotForOwner(player, input);
                                     if (spawnResult.success()) {
-                                        BotManager.getInstance().joinBotToOwnerParty(player, spawnResult.bot());
+                                        AgentPartyLifecycleService.joinAgentToLeaderParty(player, spawnResult.bot());
                                     } else {
                                         c.sendPacket(PacketCreator.messengerNote(input, 4, 0));
                                     }

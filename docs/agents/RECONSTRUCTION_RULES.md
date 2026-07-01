@@ -17,6 +17,12 @@ Rules:
 
 Recent reconstruction notes:
 
+- BotManager post-spawn party join orchestration now lives in
+  `server.agents.runtime.AgentPartyLifecycleService`. `BotManager.joinBotToOwnerParty`
+  remains only as a compatibility delegate, while Agent spawn command and
+  Messenger respawn paths call the Agent runtime service directly. Party
+  creation, same-party online refresh, different-party leave, join, and HP
+  update behavior are unchanged.
 - BotManager inactive-leader town-warp eligibility now delegates to
   `server.agents.runtime.AgentLeaderSafetyService`. The same null-map,
   alive-monster, and different-return-map requirements are preserved; BotManager

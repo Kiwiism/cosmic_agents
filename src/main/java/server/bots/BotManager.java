@@ -35,6 +35,7 @@ import server.agents.runtime.AgentLeaderSafetyService;
 import server.agents.runtime.AgentMapEnvironmentService;
 import server.agents.runtime.AgentMapTransitionService;
 import server.agents.runtime.AgentModeService;
+import server.agents.runtime.AgentPartyLifecycleService;
 import server.agents.runtime.AgentPositionService;
 import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentReturnScrollService;
@@ -134,9 +135,6 @@ import client.inventory.WeaponType;
 import client.keybind.KeyBinding;
 import constants.inventory.ItemConstants;
 import net.server.Server;
-import net.server.world.Party;
-import net.server.world.PartyCharacter;
-import net.server.world.PartyOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.TimerManager;
@@ -376,30 +374,7 @@ public class BotManager {
     }
 
     public void joinBotToOwnerParty(Character owner, Character bot) {
-        net.server.world.Party botParty = bot.getParty();
-        if (botParty != null) {
-            net.server.world.Party ownerParty = owner.getParty();
-            if (ownerParty != null && botParty.getId() == ownerParty.getId()) {
-                // Ensure the party member entry is marked online with a live character reference
-                PartyCharacter pchar = new PartyCharacter(bot);
-                pchar.setChannel(bot.getClient().getChannel());
-                pchar.setMapId(bot.getMapId());
-                bot.getWorldServer().updateParty(ownerParty.getId(), PartyOperation.LOG_ONOFF, pchar);
-                bot.updatePartyMemberHP();
-                return;
-            }
-            // Bot is in a different party — leave it first
-            Party.leaveParty(botParty, bot.getClient());
-        }
-        net.server.world.Party ownerParty = owner.getParty();
-        if (ownerParty == null) {
-            if (!Party.createParty(owner, true)) return;
-            ownerParty = owner.getParty();
-        }
-        if (ownerParty == null) return;
-        if (Party.joinParty(bot, ownerParty.getId(), true)) {
-            bot.updatePartyMemberHP();
-        }
+        AgentPartyLifecycleService.joinAgentToLeaderParty(owner, bot);
     }
 
     private BotEntry getBotEntry(int ownerCharId, int botCharId) {
@@ -531,7 +506,7 @@ public class BotManager {
         BotMovementManager.broadcastMovement(entry);
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner != null) {
-            joinBotToOwnerParty(owner, bot);
+            AgentPartyLifecycleService.joinAgentToLeaderParty(owner, bot);
         }
     }
 

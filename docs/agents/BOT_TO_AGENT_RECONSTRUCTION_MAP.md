@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- BotManager post-spawn party lifecycle side effects moved to
+  `server.agents.runtime.AgentPartyLifecycleService`. BotManager keeps
+  `joinBotToOwnerParty` as a temporary compatibility delegate, and Agent spawn
+  command plus Messenger respawn paths now use the Agent runtime service
+  directly.
 - BotManager inactive-leader town-warp eligibility moved to
   `server.agents.runtime.AgentLeaderSafetyService`; BotManager still owns the
   temporary offline/dead leader side effects, return-scroll execution, and town
