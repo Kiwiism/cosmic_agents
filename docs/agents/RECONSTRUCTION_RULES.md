@@ -106,6 +106,9 @@ Recent reconstruction notes:
 - Patrol command graph-region validation, visible failure reply, and mode-state
   transition now live in `AgentBotMovementCommandRuntime`; `BotManager.issuePatrol`
   is a compatibility delegate.
+- Session first-agent checks, away-town offer checks, and away-safe command
+  routing now enter through `AgentBotSessionControlRuntime`; actual away-safe
+  map/state side effects still use the temporary BotManager lifecycle bridge.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

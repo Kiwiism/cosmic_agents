@@ -94,6 +94,9 @@ Recent map updates:
 - Patrol command graph-region validation, visible failure reply, and active
   patrol mode transition moved into `AgentBotMovementCommandRuntime`;
   `BotManager.issuePatrol` remains a compatibility delegate.
+- Session first-agent checks, away-town offer checks, and away-safe command
+  routing moved behind `AgentBotSessionControlRuntime`; BotManager remains only
+  the temporary side-effect bridge for away-safe state changes.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.

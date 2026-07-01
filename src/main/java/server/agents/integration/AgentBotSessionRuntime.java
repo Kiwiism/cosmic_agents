@@ -5,7 +5,6 @@ import server.agents.capabilities.dialogue.AgentChatAwayFlow;
 import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.dialogue.AgentChatSessionRequestFlow;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 
 /**
  * Agent-owned session facade over temporary bot-side lifecycle side effects.
@@ -36,7 +35,7 @@ public final class AgentBotSessionRuntime {
 
             @Override
             public void requestAway() {
-                if (!BotManager.getInstance().isFirstBotEntry(entry)) {
+                if (!AgentBotSessionControlRuntime.isPrimarySession(entry)) {
                     return;
                 }
                 AgentBotSessionSchedulerRuntime.afterRandomDelay(900, 1100, () -> promptOwnerAway(entry));
@@ -77,13 +76,13 @@ public final class AgentBotSessionRuntime {
     public static void handleOwnerAwayChoice(BotEntry entry, String message) {
         AgentChatAwayFlow.handleOwnerAwayChoice(
                 message,
-                BotManager.getInstance().shouldOfferTownForAwayCommand(entry),
+                AgentBotSessionControlRuntime.shouldOfferTownForAwayCommand(entry),
                 awayChoiceCallbacks(entry));
     }
 
     private static void promptOwnerAway(BotEntry entry) {
         AgentChatAwayFlow.promptOwnerAway(
-                BotManager.getInstance().shouldOfferTownForAwayCommand(entry),
+                AgentBotSessionControlRuntime.shouldOfferTownForAwayCommand(entry),
                 awayPromptCallbacks(entry));
     }
 
@@ -130,7 +129,7 @@ public final class AgentBotSessionRuntime {
             public void townOrStay(boolean townOffered) {
                 int ownerId = entry.owner() != null ? entry.owner().getId() : 0;
                 if (ownerId != 0) {
-                    BotManager.getInstance().issueOwnerAwaySafeModeForOwner(ownerId, townOffered);
+                    AgentBotSessionControlRuntime.issueOwnerAwaySafeModeForLeader(ownerId, townOffered);
                 }
                 AgentBotSessionSchedulerRuntime.afterRandomDelay(700, 900, () ->
                         AgentBotSessionReplyRuntime.replyNow(entry, AgentChatAwayFlow.townOrStayConfirmReply(townOffered)));
@@ -140,7 +139,7 @@ public final class AgentBotSessionRuntime {
             public void stay() {
                 int ownerId = entry.owner() != null ? entry.owner().getId() : 0;
                 if (ownerId != 0) {
-                    BotManager.getInstance().issueOwnerAwaySafeModeForOwner(ownerId, false);
+                    AgentBotSessionControlRuntime.issueOwnerAwaySafeModeForLeader(ownerId, false);
                 }
                 AgentBotSessionSchedulerRuntime.afterRandomDelay(700, 900, () ->
                         AgentBotSessionReplyRuntime.replyNow(entry, AgentChatAwayFlow.stayConfirmReply()));

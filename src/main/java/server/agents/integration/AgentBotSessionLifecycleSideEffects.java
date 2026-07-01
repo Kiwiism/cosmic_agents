@@ -19,4 +19,8 @@ public final class AgentBotSessionLifecycleSideEffects {
     public static List<BotEntry> getBotEntries(int ownerCharId) {
         return BotManager.getInstance().getBotEntries(ownerCharId);
     }
+
+    public static void issueOwnerAwaySafeModeForLeader(int ownerCharId, boolean town) {
+        BotManager.getInstance().issueOwnerAwaySafeModeForOwner(ownerCharId, town);
+    }
 }

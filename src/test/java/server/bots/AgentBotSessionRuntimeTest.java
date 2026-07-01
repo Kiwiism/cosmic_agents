@@ -9,6 +9,7 @@ import server.agents.integration.AgentBotMovementCommandRuntime;
 import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentBotSessionControlRuntime;
 import server.agents.integration.AgentBotSessionReplyRuntime;
 import server.agents.integration.AgentBotSessionRuntime;
 import server.agents.integration.AgentBotSessionSchedulerRuntime;
@@ -20,20 +21,16 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AgentBotSessionRuntimeTest {
     @Test
     void relogRequestSchedulesStopPromptAndPendingAction() {
         BotEntry entry = new BotEntry(null, null, null);
-        BotManager manager = mock(BotManager.class);
 
         try (MockedStatic<AgentBotSessionSchedulerRuntime> scheduler = mockStatic(AgentBotSessionSchedulerRuntime.class);
              MockedStatic<AgentBotMovementCommandRuntime> movementCommands = mockStatic(AgentBotMovementCommandRuntime.class);
-             MockedStatic<AgentBotSessionReplyRuntime> replies = mockStatic(AgentBotSessionReplyRuntime.class);
-             MockedStatic<BotManager> botManager = mockStatic(BotManager.class)) {
-            botManager.when(BotManager::getInstance).thenReturn(manager);
+             MockedStatic<AgentBotSessionReplyRuntime> replies = mockStatic(AgentBotSessionReplyRuntime.class)) {
             scheduler.when(() -> AgentBotSessionSchedulerRuntime.afterRandomDelay(eq(900), eq(1100), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
@@ -51,15 +48,13 @@ class AgentBotSessionRuntimeTest {
     @Test
     void awayRequestPromptsFirstBotAndSetsPendingOwnerAway() {
         BotEntry entry = new BotEntry(null, null, null);
-        BotManager manager = mock(BotManager.class);
 
         try (MockedStatic<AgentBotSessionSchedulerRuntime> scheduler = mockStatic(AgentBotSessionSchedulerRuntime.class);
              MockedStatic<AgentBotMovementCommandRuntime> movementCommands = mockStatic(AgentBotMovementCommandRuntime.class);
-             MockedStatic<AgentBotSessionReplyRuntime> replies = mockStatic(AgentBotSessionReplyRuntime.class);
-             MockedStatic<BotManager> botManager = mockStatic(BotManager.class)) {
-            botManager.when(BotManager::getInstance).thenReturn(manager);
-            when(manager.isFirstBotEntry(entry)).thenReturn(true);
-            when(manager.shouldOfferTownForAwayCommand(entry)).thenReturn(true);
+             MockedStatic<AgentBotSessionControlRuntime> sessionControl = mockStatic(AgentBotSessionControlRuntime.class);
+             MockedStatic<AgentBotSessionReplyRuntime> replies = mockStatic(AgentBotSessionReplyRuntime.class)) {
+            sessionControl.when(() -> AgentBotSessionControlRuntime.isPrimarySession(entry)).thenReturn(true);
+            sessionControl.when(() -> AgentBotSessionControlRuntime.shouldOfferTownForAwayCommand(entry)).thenReturn(true);
             scheduler.when(() -> AgentBotSessionSchedulerRuntime.afterRandomDelay(eq(900), eq(1100), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
@@ -80,13 +75,11 @@ class AgentBotSessionRuntimeTest {
         when(owner.getId()).thenReturn(123);
         BotEntry entry = new BotEntry(null, owner, null);
         entry.setPendingAction(AgentChatPendingAction.OWNER_AWAY);
-        BotManager manager = mock(BotManager.class);
 
         try (MockedStatic<AgentBotSessionSchedulerRuntime> scheduler = mockStatic(AgentBotSessionSchedulerRuntime.class);
-             MockedStatic<AgentBotSessionReplyRuntime> replies = mockStatic(AgentBotSessionReplyRuntime.class);
-             MockedStatic<BotManager> botManager = mockStatic(BotManager.class)) {
-            botManager.when(BotManager::getInstance).thenReturn(manager);
-            when(manager.shouldOfferTownForAwayCommand(entry)).thenReturn(false);
+             MockedStatic<AgentBotSessionControlRuntime> sessionControl = mockStatic(AgentBotSessionControlRuntime.class);
+             MockedStatic<AgentBotSessionReplyRuntime> replies = mockStatic(AgentBotSessionReplyRuntime.class)) {
+            sessionControl.when(() -> AgentBotSessionControlRuntime.shouldOfferTownForAwayCommand(entry)).thenReturn(false);
             scheduler.when(() -> AgentBotSessionSchedulerRuntime.afterRandomDelay(eq(700), eq(900), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
@@ -96,7 +89,7 @@ class AgentBotSessionRuntimeTest {
             AgentBotSessionRuntime.handleOwnerAwayChoice(entry, "stay");
 
             assertNull(AgentBotPendingActionStateRuntime.pendingAction(entry));
-            verify(manager).issueOwnerAwaySafeModeForOwner(123, false);
+            sessionControl.verify(() -> AgentBotSessionControlRuntime.issueOwnerAwaySafeModeForLeader(123, false));
             replies.verify(() -> AgentBotSessionReplyRuntime.replyNow(entry, AgentChatAwayFlow.stayConfirmReply()));
         }
     }
