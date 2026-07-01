@@ -41,6 +41,7 @@ import server.agents.capabilities.trade.AgentMesoTradeService;
 import server.agents.capabilities.trade.AgentTradeAllItemsAddedService;
 import server.agents.capabilities.trade.AgentTradeBatchService;
 import server.agents.capabilities.trade.AgentTradeCancellationService;
+import server.agents.capabilities.trade.AgentTradeCategoryAnnouncementService;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
 import server.agents.capabilities.trade.AgentTradeCompletionService;
 import server.agents.capabilities.trade.AgentTradeItemAddService;
@@ -490,10 +491,10 @@ public class BotInventoryManager {
                 return;
             }
 
-            // Send group announcement before the first item
-            if (idx == 0 && AgentBotPendingTradeStateRuntime.categoryMessage(entry) != null) {
-                trade.chat(AgentBotPendingTradeStateRuntime.takeCategoryMessage(entry));
-                AgentBotPendingTradeStateRuntime.setTimerMs(entry, BotMovementManager.delayAfterCurrentTick(600));
+            if (AgentTradeCategoryAnnouncementService.announceBeforeFirstItem(
+                    entry,
+                    trade,
+                    () -> BotMovementManager.delayAfterCurrentTick(600))) {
                 return;
             }
 

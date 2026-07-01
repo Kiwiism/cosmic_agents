@@ -2169,6 +2169,11 @@ Recent reconstruction notes:
   BotInventoryManager still owns the enclosing trade tick but delegates the
   item-index completion check, all-items-added flag, timer clear, and all-done
   trade chat line to Agent trade code.
+- Trade category announcement handling now lives in
+  `AgentTradeCategoryAnnouncementService`; BotInventoryManager still owns the
+  enclosing trade tick but delegates the first-item category-message check,
+  message consumption, trade chat line, and announcement delay timer to Agent
+  trade code.
 - Trade batch-open orchestration now lives in `AgentTradeBatchService`;
   BotInventoryManager and AgentSupplyShareTradeService still supply the
   temporary recipient lookup/cancel/start/invite/reply callbacks, but recipient
