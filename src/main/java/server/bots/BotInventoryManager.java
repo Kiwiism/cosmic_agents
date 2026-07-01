@@ -10,7 +10,6 @@ import client.inventory.Equip;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
-import client.inventory.manipulator.InventoryManipulator;
 import config.YamlConfig;
 import constants.id.ItemId;
 import constants.inventory.ItemConstants;
@@ -43,6 +42,7 @@ import server.agents.capabilities.trade.AgentTradeBatchService;
 import server.agents.capabilities.trade.AgentTradeCancellationService;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
 import server.agents.capabilities.trade.AgentTradeCompletionService;
+import server.agents.capabilities.trade.AgentTradeItemAddService;
 import server.agents.capabilities.trade.AgentTradeMesoAddService;
 import server.agents.capabilities.trade.AgentTradeRecipientService;
 import server.agents.capabilities.trade.AgentTradeResetService;
@@ -57,7 +57,6 @@ import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.ItemInformationProvider;
 import server.Trade;
 import server.maps.MapItem;
-import tools.PacketCreator;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -497,36 +496,7 @@ public class BotInventoryManager {
                 return;
             }
 
-            // Add next item
-            Item item = items.get(idx);
-            AgentBotPendingTradeStateRuntime.incrementItemIndex(entry);
-            AgentBotPendingTradeStateRuntime.setTimerMs(entry, BotMovementManager.delayAfterCurrentTick(500)); // 500 ms before next
-
-            short tradeQty = AgentBotPendingTradeStateRuntime.capShareQuantity(entry, item.getQuantity());
-
-            InventoryType invType = item.getInventoryType();
-            Inventory inv = bot.getInventory(invType);
-            inv.lockInventory();
-            try {
-                Item current  = inv.getItem(item.getPosition());
-                if (current == null || current != item) return; // slot changed, skip
-
-                Item tradeItem = item.copy();
-                tradeItem.setPosition((short) (idx + 1)); // trade-window slot 1-9
-                tradeItem.setQuantity(tradeQty);
-
-                if (trade.addItem(tradeItem)) {
-                    AgentBotPendingTradeStateRuntime.transferRestoreSlot(entry, item, tradeItem);
-                    InventoryManipulator.removeFromSlot(bot.getClient(),
-                            invType, item.getPosition(), tradeQty, false);
-                    bot.sendPacket(PacketCreator.getTradeItemAdd((byte) 0, tradeItem));
-                    if (trade.getPartner() != null) {
-                        trade.getPartner().getChr().sendPacket(PacketCreator.getTradeItemAdd((byte) 1, tradeItem));
-                    }
-                }
-            } finally {
-                inv.unlockInventory();
-            }
+            AgentTradeItemAddService.addNextItem(entry, bot, trade, BotMovementManager.delayAfterCurrentTick(500));
             return;
         }
 

@@ -2160,6 +2160,11 @@ Recent reconstruction notes:
   BotInventoryManager still owns the enclosing trade tick but delegates the
   pending-meso check, insufficient-meso cancel decision, `Trade.setMeso`,
   meso-added flag, and add-delay timer mutation to Agent trade code.
+- Trade-window item add handling now lives in `AgentTradeItemAddService`;
+  BotInventoryManager still owns the enclosing trade tick but delegates item
+  index advancement, per-item delay, share quantity cap, inventory locking,
+  trade-window item copy/position/quantity setup, restore-slot transfer,
+  inventory removal, and trade item add packet sends to Agent trade code.
 - Trade batch-open orchestration now lives in `AgentTradeBatchService`;
   BotInventoryManager and AgentSupplyShareTradeService still supply the
   temporary recipient lookup/cancel/start/invite/reply callbacks, but recipient
