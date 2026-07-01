@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotInventoryManager.tickManualTrade` top-level manual trade tick
+  orchestration now lives in `AgentManualTradeTickService`; the bot inventory
+  shell only supplies temporary callbacks for active transfer suppression,
+  trade-window lookup, timeout handling, and owner/peer branch wiring.
 - `BotInventoryManager.tickManualTrade` owner-side manual trade routing now
   lives in `AgentManualOwnerTradeService`; the bot inventory shell only supplies
   temporary callbacks for delayed owner-invite accept, one-time greeting,
