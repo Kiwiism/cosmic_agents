@@ -2110,8 +2110,8 @@ Recent reconstruction notes:
 - Equipped-slot named trade preparation now lives in
   `AgentEquippedSlotTradeService`; BotInventoryManager still owns the enclosing
   trade sequence but delegates slot counting, temporary unequip preparation,
-  restore-slot recording, and legacy failure replies to the Agent inventory
-  service.
+  restore-slot recording, restore-to-equipped-slot execution, and legacy failure
+  replies to the Agent inventory service.
 - Trade recipient resolution now lives in `AgentTradeRecipientService`;
   BotInventoryManager still owns trade sequencing but delegates owner/map/party
   recipient lookup to the Agent trade capability.

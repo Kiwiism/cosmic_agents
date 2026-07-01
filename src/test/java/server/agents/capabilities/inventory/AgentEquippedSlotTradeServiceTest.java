@@ -138,6 +138,33 @@ class AgentEquippedSlotTradeServiceTest {
         }
     }
 
+    @Test
+    void restoreTemporarilyUnequippedItemsMovesBagItemsBackAndClearsState() {
+        Character agent = mock(Character.class);
+        Client client = mock(Client.class);
+        Inventory equipped = mock(Inventory.class);
+        Inventory equipBag = mock(Inventory.class);
+        Item hat = item(1000);
+        BotEntry entry = new BotEntry(agent, null, null);
+
+        when(agent.getClient()).thenReturn(client);
+        when(agent.getInventory(InventoryType.EQUIPPED)).thenReturn(equipped);
+        when(agent.getInventory(InventoryType.EQUIP)).thenReturn(equipBag);
+        when(equipBag.getItem((short) 1)).thenReturn(hat);
+        when(hat.getInventoryType()).thenReturn(InventoryType.EQUIP);
+        when(hat.getPosition()).thenReturn((short) 1);
+        when(equipped.getItem((short) -1)).thenReturn(null);
+        AgentBotPendingTradeStateRuntime.rememberRestoreSlot(entry, hat, (short) -1);
+
+        try (MockedStatic<InventoryManipulator> inventory = mockStatic(InventoryManipulator.class)) {
+            AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems(entry, agent);
+
+            inventory.verify(() -> InventoryManipulator.handleItemMove(
+                    client, InventoryType.EQUIP, (short) 1, (short) -1, (short) 1));
+            assertFalse(AgentBotPendingTradeStateRuntime.hasRestoreSlots(entry));
+        }
+    }
+
     private static Item item(int itemId) {
         Item item = mock(Item.class);
         when(item.getItemId()).thenReturn(itemId);

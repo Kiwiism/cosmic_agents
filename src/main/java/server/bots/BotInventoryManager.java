@@ -51,7 +51,6 @@ import tools.PacketCreator;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -631,7 +630,7 @@ public class BotInventoryManager {
 
     private static void resetTradeState(BotEntry entry, Character bot) {
         boolean hadRestores = AgentBotPendingTradeStateRuntime.hasRestoreSlots(entry);
-        restoreTemporarilyUnequippedItems(entry, bot);
+        AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems(entry, bot);
         clearManualTradeState(entry, bot);
         AgentBotPendingTradeStateRuntime.clearCategory(entry);
         AgentBotPendingTradeStateRuntime.clearCategoryMessage(entry);
@@ -726,7 +725,7 @@ public class BotInventoryManager {
                             entry,
                             bot,
                             BotEquipManager::slotsFromName,
-                            () -> restoreTemporarilyUnequippedItems(entry, bot));
+                            () -> AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems(entry, bot));
             if (equippedSlotItems.errorMessage() != null || !equippedSlotItems.items().isEmpty()) {
                 return new PreparedTradeItems(equippedSlotItems.items(), equippedSlotItems.errorMessage());
             }
@@ -734,26 +733,6 @@ public class BotInventoryManager {
         }
 
         return new PreparedTradeItems(collectItems(category, entry, bot), null);
-    }
-
-    private static void restoreTemporarilyUnequippedItems(BotEntry entry, Character bot) {
-        if (bot == null || !AgentBotPendingTradeStateRuntime.hasRestoreSlots(entry)) {
-            AgentBotPendingTradeStateRuntime.clearRestoreSlots(entry);
-            return;
-        }
-
-        Inventory equipped = bot.getInventory(InventoryType.EQUIPPED);
-        List<Map.Entry<Item, Short>> restoreEntries = AgentBotPendingTradeStateRuntime.restoreSlotEntries(entry);
-        restoreEntries.sort(Comparator.comparingInt(Map.Entry::getValue));
-        for (Map.Entry<Item, Short> restoreEntry : restoreEntries) {
-            Item item = restoreEntry.getKey();
-            short dstSlot = restoreEntry.getValue();
-            if (!AgentInventoryItemPolicy.hasItem(bot, item) || equipped.getItem(dstSlot) != null) {
-                continue;
-            }
-            InventoryManipulator.handleItemMove(bot.getClient(), InventoryType.EQUIP, item.getPosition(), dstSlot, (short) 1);
-        }
-        AgentBotPendingTradeStateRuntime.clearRestoreSlots(entry);
     }
 
     private static List<Item> collectItems(String category, BotEntry entry, Character bot) {

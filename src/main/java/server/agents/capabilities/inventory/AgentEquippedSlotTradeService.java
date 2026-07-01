@@ -11,7 +11,9 @@ import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.bots.BotEntry;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.function.IntPredicate;
 import java.util.function.Function;
 
@@ -96,5 +98,25 @@ public final class AgentEquippedSlotTradeService {
         }
 
         return new PreparedTradeItems(result, null);
+    }
+
+    public static void restoreTemporarilyUnequippedItems(BotEntry entry, Character agent) {
+        if (agent == null || !AgentBotPendingTradeStateRuntime.hasRestoreSlots(entry)) {
+            AgentBotPendingTradeStateRuntime.clearRestoreSlots(entry);
+            return;
+        }
+
+        Inventory equipped = agent.getInventory(InventoryType.EQUIPPED);
+        List<Map.Entry<Item, Short>> restoreEntries = AgentBotPendingTradeStateRuntime.restoreSlotEntries(entry);
+        restoreEntries.sort(Comparator.comparingInt(Map.Entry::getValue));
+        for (Map.Entry<Item, Short> restoreEntry : restoreEntries) {
+            Item item = restoreEntry.getKey();
+            short dstSlot = restoreEntry.getValue();
+            if (!AgentInventoryItemPolicy.hasItem(agent, item) || equipped.getItem(dstSlot) != null) {
+                continue;
+            }
+            InventoryManipulator.handleItemMove(agent.getClient(), InventoryType.EQUIP, item.getPosition(), dstSlot, (short) 1);
+        }
+        AgentBotPendingTradeStateRuntime.clearRestoreSlots(entry);
     }
 }
