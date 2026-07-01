@@ -73,6 +73,22 @@ class AgentTradeTransferAvailabilityServiceTest {
     }
 
     @Test
+    void callbackOverloadPreservesAvailabilityBehavior() {
+        Character agent = mock(Character.class);
+        Item item = item(2000, 4);
+
+        boolean result = AgentTradeTransferAvailabilityService.hasTransferableItems(
+                "pots",
+                agent,
+                AgentTradeTransferAvailabilityService.TransferAvailabilityCallbacks.of(
+                        fragment -> 0,
+                        fragment -> 0,
+                        () -> List.of(item)));
+
+        assertTrue(result);
+    }
+
+    @Test
     void genericCategoryCountSumsCollectedItemQuantities() {
         Character agent = mock(Character.class);
         Item first = item(2000, 4);
@@ -91,6 +107,23 @@ class AgentTradeTransferAvailabilityServiceTest {
 
         assertEquals(10, count);
         assertTrue(collected.get());
+    }
+
+    @Test
+    void callbackOverloadPreservesCountBehavior() {
+        Character agent = mock(Character.class);
+        Item first = item(2000, 4);
+        Item second = item(2001, 6);
+
+        int count = AgentTradeTransferAvailabilityService.countTransferableItems(
+                "pots",
+                agent,
+                AgentTradeTransferAvailabilityService.TransferAvailabilityCallbacks.of(
+                        fragment -> 0,
+                        fragment -> 0,
+                        () -> List.of(first, second)));
+
+        assertEquals(10, count);
     }
 
     @Test

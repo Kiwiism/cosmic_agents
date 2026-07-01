@@ -47,6 +47,7 @@ import server.agents.capabilities.trade.AgentTradeSequenceOrchestrator;
 import server.agents.capabilities.trade.AgentTradeTickCallbackService;
 import server.agents.capabilities.trade.AgentTradeTickService;
 import server.agents.capabilities.trade.AgentTradeTransferAvailabilityService;
+import server.agents.capabilities.trade.AgentTradeTransferAvailabilityCallbackService;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotInventoryStateRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
@@ -167,17 +168,20 @@ public class BotInventoryManager {
         return AgentTradeTransferAvailabilityService.hasTransferableItems(
                 category,
                 bot,
-                fragment -> AgentEquippedSlotTradeService.countEquippedSlotItems(bot, fragment, BotEquipManager::slotsFromName),
-                () -> collectItems(category, entry, bot));
+                AgentTradeTransferAvailabilityCallbackService.transferAvailabilityCallbacks(
+                        fragment -> 0,
+                        fragment -> AgentEquippedSlotTradeService.countEquippedSlotItems(bot, fragment, BotEquipManager::slotsFromName),
+                        () -> collectItems(category, entry, bot)));
     }
 
     public static int countTransferableItems(String category, BotEntry entry, Character bot) {
         return AgentTradeTransferAvailabilityService.countTransferableItems(
                 category,
                 bot,
-                fragment -> AgentInventoryNamedItemService.countNamedItems(bot, fragment),
-                fragment -> AgentEquippedSlotTradeService.countEquippedSlotItems(bot, fragment, BotEquipManager::slotsFromName),
-                () -> collectItems(category, entry, bot));
+                AgentTradeTransferAvailabilityCallbackService.transferAvailabilityCallbacks(
+                        fragment -> AgentInventoryNamedItemService.countNamedItems(bot, fragment),
+                        fragment -> AgentEquippedSlotTradeService.countEquippedSlotItems(bot, fragment, BotEquipManager::slotsFromName),
+                        () -> collectItems(category, entry, bot)));
     }
 
     /** Opens a trade for the first ≤9 items; remaining items are re-collected next batch. */

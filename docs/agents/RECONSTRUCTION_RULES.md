@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- `BotInventoryManager` transfer availability/count callback construction moved
+  to `server.agents.capabilities.trade.AgentTradeTransferAvailabilityCallbackService`.
+  The bot inventory shell still supplies temporary named-item, equipped-slot,
+  and category collection hooks while the availability callback object is
+  Agent-owned.
 - Trade dialogue reply selection moved to
   `server.agents.capabilities.trade.AgentTradeDialogueService`. Bot inventory
   and inventory transfer code now call Agent-owned selectors for invitation,

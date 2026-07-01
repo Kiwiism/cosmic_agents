@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotInventoryManager` transfer availability/count callback construction now
+  lives in `AgentTradeTransferAvailabilityCallbackService`; the bot inventory
+  shell only wires temporary named-item, equipped-slot, and category collection
+  hooks.
 - Trade dialogue reply selection now lives in `AgentTradeDialogueService`.
   `BotInventoryManager` and `AgentInventoryTransferService` use Agent-owned
   selectors for invitation, all-done, thanks, freebie, and reserved-equipment
