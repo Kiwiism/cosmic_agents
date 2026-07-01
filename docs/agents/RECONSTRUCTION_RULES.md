@@ -17,6 +17,12 @@ Rules:
 
 Recent reconstruction notes:
 
+- Trade tick runtime callback assembly moved from `BotInventoryManager` to
+  `server.agents.capabilities.trade.AgentTradeTickRuntimeService`. The bot
+  inventory shell still supplies temporary timing, current-trade, owner,
+  recipient, and equipment-refill hooks while Agent trade now owns the
+  between-batch, closed-window, invite-wait, item-add, confirmation, and
+  lifecycle wiring for active trade sequences.
 - Trade lifecycle runtime callback construction moved from `BotInventoryManager`
   to `server.agents.capabilities.trade.AgentTradeLifecycleRuntimeService`. The
   bot inventory shell still supplies temporary restore, manual-clear, owner,

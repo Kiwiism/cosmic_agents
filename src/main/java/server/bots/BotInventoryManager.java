@@ -17,22 +17,11 @@ import server.agents.capabilities.trade.AgentInventoryTradeRuntimeService;
 import server.agents.capabilities.trade.AgentManualTradeRuntimeService;
 import server.agents.capabilities.trade.AgentManualTradeService;
 import server.agents.capabilities.trade.AgentOfferService;
-import server.agents.capabilities.trade.AgentTradeBetweenBatchCallbackService;
-import server.agents.capabilities.trade.AgentTradeBetweenBatchService;
-import server.agents.capabilities.trade.AgentTradeClosedWindowService;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
-import server.agents.capabilities.trade.AgentTradeConfirmWaitService;
 import server.agents.capabilities.trade.AgentTradeDialogueService;
-import server.agents.capabilities.trade.AgentTradeGroupNavigationService;
-import server.agents.capabilities.trade.AgentTradeItemAddTickService;
-import server.agents.capabilities.trade.AgentTradeItemAddTickCallbackService;
-import server.agents.capabilities.trade.AgentTradeInviteWaitService;
 import server.agents.capabilities.trade.AgentTradeLifecycleRuntimeService;
-import server.agents.capabilities.trade.AgentTradeLifecycleService;
 import server.agents.capabilities.trade.AgentTradeRecipientService;
-import server.agents.capabilities.trade.AgentTradeSequenceRuntimeService;
-import server.agents.capabilities.trade.AgentTradeTickCallbackService;
-import server.agents.capabilities.trade.AgentTradeTickService;
+import server.agents.capabilities.trade.AgentTradeTickRuntimeService;
 import server.agents.capabilities.trade.AgentTradeTransferAvailabilityService;
 import server.agents.capabilities.trade.AgentTradeTransferAvailabilityCallbackService;
 import server.agents.integration.AgentBotInventoryRuntime;
@@ -41,7 +30,6 @@ import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.ItemInformationProvider;
-import server.Trade;
 
 import java.util.List;
 
@@ -125,81 +113,24 @@ public class BotInventoryManager {
 
     /** Called every bot simulation tick while a trade sequence is in progress. */
     static void tickTrade(BotEntry entry, Character bot) {
-        AgentTradeTickService.tickTrade(
+        AgentTradeTickRuntimeService.tickTrade(
                 entry,
                 bot,
-                AgentTradeTickCallbackService.tradeTickCallbacks(
-                        BotMovementManager::tickDown,
-                        bot::getTrade,
-                        () -> AgentTradeBetweenBatchService.tickBetweenBatches(
-                                entry,
-                                AgentTradeBetweenBatchCallbackService.betweenBatchCallbacks(
-                                        BotMovementManager::tickDown,
-                                        category -> collectItems(category, entry, bot),
-                                        category -> AgentTradeGroupNavigationService.nextEquipsGroup(
-                                                category,
-                                                () -> AgentInventoryTradeRuntimeService.classifyEquipTradeGroups(
-                                                        bot,
-                                                        tradeRuntimeCallbacks(entry, bot))),
-                                        category -> AgentTradeGroupNavigationService.nextAmmoGroup(
-                                                category,
-                                                () -> AgentInventoryTradeRuntimeService.classifyAmmoTradeGroups(
-                                                        bot,
-                                                        tradeRuntimeCallbacks(entry, bot))),
-                                        AgentInventoryTransferService::equipsGroupMessage,
-                                        items -> AgentTradeSequenceRuntimeService.openTradeBatch(
-                                                entry,
-                                                bot,
-                                                items,
-                                                0,
-                                                () -> cancelTradeSequence(entry, bot, "can't trade right now, stopping")),
-                                        () -> resetTradeState(entry, bot))),
-                        () -> AgentTradeClosedWindowService.handleClosedTrade(
-                                entry,
-                                () -> BotMovementManager.delayAfterCurrentTick(1_000),
-                                () -> resetTradeState(entry, bot),
-                                () -> BotEquipManager.autoEquip(bot, AgentBotRuntimeIdentityRuntime.owner(entry), null)),
-                        trade -> AgentTradeInviteWaitService.tickWaitingForAccept(
-                                entry,
-                                bot,
-                                BotMovementManager.cfg.TICK_MS,
-                                () -> resetTradeState(entry, bot)),
-                        trade -> AgentTradeItemAddTickService.tickAddingItems(
-                                entry,
-                                bot,
-                                trade,
-                                AgentTradeItemAddTickCallbackService.itemAddTickCallbacks(
-                                        BotMovementManager::tickDown,
-                                        () -> cancelTradeSequence(entry, bot, "don't have that many mesos anymore"),
-                                        () -> BotMovementManager.delayAfterCurrentTick(500),
-                                        AgentTradeDialogueService::allDoneReply,
-                                        () -> BotMovementManager.delayAfterCurrentTick(600),
-                                        () -> BotMovementManager.delayAfterCurrentTick(500))),
-                        trade -> AgentTradeConfirmWaitService.tickWaitingForConfirmation(
-                                entry,
-                                bot,
-                                trade,
-                                BotMovementManager.cfg.TICK_MS,
-                                () -> AgentTradeRecipientService.resolveTradeRecipient(entry, bot),
-                                recipient -> recipient.getClient() instanceof client.BotClient,
-                                () -> completeTradeAndThank(entry, bot, trade),
-                                () -> resetTradeState(entry, bot))));
+                tradeTickRuntimeCallbacks(),
+                tradeRuntimeCallbacks(entry, bot),
+                tradeLifecycleRuntimeCallbacks());
     }
 
-    private static void cancelTradeSequence(BotEntry entry, Character bot, String msg) {
-        AgentTradeLifecycleRuntimeService.cancelTradeSequence(entry, bot, msg, tradeLifecycleRuntimeCallbacks());
-    }
-
-    private static void clearManualTradeState(BotEntry entry, Character bot) {
-        AgentTradeLifecycleRuntimeService.clearManualTradeState(entry, bot, tradeLifecycleRuntimeCallbacks());
-    }
-
-    private static void resetTradeState(BotEntry entry, Character bot) {
-        AgentTradeLifecycleRuntimeService.resetTradeState(entry, bot, tradeLifecycleRuntimeCallbacks());
-    }
-
-    private static void completeTradeAndThank(BotEntry entry, Character bot, Trade trade) {
-        AgentTradeLifecycleRuntimeService.completeTradeAndReact(entry, bot, trade, tradeLifecycleRuntimeCallbacks());
+    private static AgentTradeTickRuntimeService.RuntimeCallbacks tradeTickRuntimeCallbacks() {
+        return AgentTradeTickRuntimeService.RuntimeCallbacks.of(
+                BotMovementManager::tickDown,
+                Character::getTrade,
+                BotMovementManager::delayAfterCurrentTick,
+                () -> BotMovementManager.cfg.TICK_MS,
+                AgentBotRuntimeIdentityRuntime::owner,
+                (agent, owner) -> BotEquipManager.autoEquip(agent, owner, null),
+                AgentTradeRecipientService::resolveTradeRecipient,
+                recipient -> recipient.getClient() instanceof client.BotClient);
     }
 
     private static AgentTradeLifecycleRuntimeService.RuntimeCallbacks tradeLifecycleRuntimeCallbacks() {
