@@ -4,6 +4,7 @@ import client.Character;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
 
 import java.awt.Point;
@@ -30,6 +31,16 @@ public final class AgentTickStateMaintenanceService {
             if (AgentBotMoveTargetStateRuntime.isPrecise(entry)) {
                 AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
             }
+        }
+    }
+
+    public static void clearReachedMoveTarget(BotEntry entry, int normalArrivalDistance) {
+        if (!AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)) {
+            return;
+        }
+        Point agentPosition = AgentBotRuntimeIdentityRuntime.botPosition(entry);
+        if (AgentBotMoveTargetStateRuntime.hasReachedMoveTarget(entry, agentPosition, normalArrivalDistance)) {
+            AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
         }
     }
 }

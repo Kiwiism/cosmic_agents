@@ -2759,7 +2759,7 @@ public class BotManager {
             BotNavigationManager.tryExecuteCommittedEdgeAfterGroundMovement(entry, targetPos);
         }
         tickStuckDetection(entry);
-        clearReachedMoveTarget(entry);
+        AgentTickStateMaintenanceService.clearReachedMoveTarget(entry, BotMovementManager.cfg.STOP_DIST);
     }
 
     private void tickMovementPhase(BotEntry entry, Point targetPos, boolean runAiTick) {
@@ -2771,16 +2771,6 @@ public class BotManager {
             BotMovementManager.tickAirborne(entry, targetPos);
         } else {
             BotMovementManager.tickGrounded(entry, targetPos);
-        }
-    }
-
-    private void clearReachedMoveTarget(BotEntry entry) {
-        if (!AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)) {
-            return;
-        }
-        Point botPos = AgentBotRuntimeIdentityRuntime.botPosition(entry);
-        if (AgentBotMoveTargetStateRuntime.hasReachedMoveTarget(entry, botPos, BotMovementManager.cfg.STOP_DIST)) {
-            AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
         }
     }
 

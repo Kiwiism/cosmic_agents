@@ -64,13 +64,56 @@ class AgentTickStateMaintenanceServiceTest {
         assertFalse(AgentBotMoveTargetStateRuntime.hasMoveTarget(entry));
     }
 
+    @Test
+    void clearsReachedNormalMoveTargetUsingConfiguredDistance() {
+        Character agent = agentAt(new Point(95, 100));
+        BotEntry entry = entry(agent);
+        AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(100, 100), false);
+
+        AgentTickStateMaintenanceService.clearReachedMoveTarget(entry, 10);
+
+        assertFalse(AgentBotMoveTargetStateRuntime.hasMoveTarget(entry));
+    }
+
+    @Test
+    void keepsUnreachedMoveTarget() {
+        Character agent = agentAt(new Point(80, 100));
+        BotEntry entry = entry(agent);
+        AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(100, 100), false);
+
+        AgentTickStateMaintenanceService.clearReachedMoveTarget(entry, 10);
+
+        assertTrue(AgentBotMoveTargetStateRuntime.hasMoveTarget(entry));
+    }
+
+    @Test
+    void preciseMoveTargetUsesPreciseArrivalDistance() {
+        Character agent = agentAt(new Point(91, 100));
+        BotEntry entry = entry(agent);
+        AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, new Point(100, 100));
+
+        AgentTickStateMaintenanceService.clearReachedMoveTarget(entry, 10);
+
+        assertTrue(AgentBotMoveTargetStateRuntime.hasMoveTarget(entry));
+    }
+
     private static Character agentOnMap(int mapId) {
         Character agent = mock(Character.class);
         when(agent.getMapId()).thenReturn(mapId);
         return agent;
     }
 
+    private static Character agentAt(Point position) {
+        Character agent = mock(Character.class);
+        when(agent.getPosition()).thenReturn(new Point(position));
+        return agent;
+    }
+
     private static BotEntry entry() {
         return new BotEntry(mock(Character.class), mock(Character.class), null);
+    }
+
+    private static BotEntry entry(Character agent) {
+        return new BotEntry(agent, mock(Character.class), null);
     }
 }

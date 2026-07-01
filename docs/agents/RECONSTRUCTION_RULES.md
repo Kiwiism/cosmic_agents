@@ -2894,6 +2894,10 @@ Recent reconstruction notes:
   keeps a compatibility wrapper for existing tests and call sites. The same
   one-second recheck window, `idle-fast` debug marker, stuck-progress reset,
   and movement/owner-motion/shop/navigation guards are preserved.
+- Reached move-target cleanup now lives in
+  `server.agents.runtime.AgentTickStateMaintenanceService`; BotManager passes
+  the existing stop-distance config and no longer owns the normal-vs-precise
+  arrival cleanup rule.
 
 Initial reconstruction order:
 
