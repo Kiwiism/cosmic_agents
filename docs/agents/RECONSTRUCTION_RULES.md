@@ -2091,6 +2091,9 @@ Recent reconstruction notes:
   `AgentInventoryTransferService` through Agent inventory collection policies;
   only the actual trade-sequence start remains delegated to the temporary
   `BotInventoryManager` state machine.
+- Manual trade timeout cancellation, state clearing, and one-time greeting
+  bookkeeping now live in `AgentManualTradeService`; `BotInventoryManager`
+  still owns the enclosing manual-trade tick and peer/owner trade branching.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and

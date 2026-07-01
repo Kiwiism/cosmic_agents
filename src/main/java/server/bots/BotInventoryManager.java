@@ -36,6 +36,7 @@ import server.agents.capabilities.inventory.AgentInventoryTradePolicy.EquipsGrou
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.trade.AgentDirectItemTradeService;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
+import server.agents.capabilities.trade.AgentManualTradeService;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.trade.AgentMesoTradeService;
 import server.agents.capabilities.trade.AgentTradeAllItemsAddedService;
@@ -69,14 +70,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class BotInventoryManager {
     private static final Logger log = LoggerFactory.getLogger(BotInventoryManager.class);
     private static final long TRADE_COMMAND_PROFILE_WARN_NS = 50_000_000L;
     private static final int MANUAL_TRADE_TIMEOUT_MS = 60_000;
-    private static final Set<Integer> manualTradeGreetingSent = ConcurrentHashMap.newKeySet();
     static void tickPassiveLoot(BotEntry entry, Character bot) {
         if (AgentBotInventoryStateRuntime.hasLootInhibit(entry)) {
             AgentBotInventoryStateRuntime.tickLootInhibit(entry, BotMovementManager::tickDown);
@@ -161,22 +160,17 @@ public class BotInventoryManager {
         Trade trade = bot.getTrade();
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (trade == null) {
-            clearManualTradeState(entry, bot);
+            AgentManualTradeService.clearState(entry, bot);
             return;
         }
 
-        if (trade != AgentBotManualTradeStateRuntime.tradeRef(entry)) {
-            manualTradeGreetingSent.remove(bot.getId());
-            AgentBotManualTradeStateRuntime.beginTrade(entry, trade, MANUAL_TRADE_TIMEOUT_MS);
-        } else if (AgentBotManualTradeStateRuntime.timeoutMs(entry) > 0) {
-            AgentBotManualTradeStateRuntime.setTimeoutMs(
-                    entry,
-                    BotMovementManager.tickDown(AgentBotManualTradeStateRuntime.timeoutMs(entry)));
-            if (AgentBotManualTradeStateRuntime.timeoutMs(entry) == 0) {
-                Trade.cancelTrade(bot, Trade.TradeResult.NO_RESPONSE);
-                clearManualTradeState(entry, bot);
-                return;
-            }
+        if (AgentManualTradeService.beginOrTickTimeout(
+                entry,
+                bot,
+                trade,
+                MANUAL_TRADE_TIMEOUT_MS,
+                BotMovementManager::tickDown)) {
+            return;
         }
 
         if (owner == null) {
@@ -196,7 +190,7 @@ public class BotInventoryManager {
                     && owner != null
                     && AgentOwnershipService.getInstance().isAuthorizedOwner(partner.getChr().getId(), owner.getId());
             if (!isPeerBotTrade) {
-                manualTradeGreetingSent.remove(bot.getId());
+                AgentManualTradeService.clearGreeting(bot);
                 return;
             }
             // Accept invite if not yet joined — small delay so it feels human
@@ -233,9 +227,7 @@ public class BotInventoryManager {
             if (trade == null || !trade.isFullTrade()) return;
         }
 
-        if (manualTradeGreetingSent.add(bot.getId())) {
-            trade.chat(BotManager.getInstance().manualTradeGreeting());
-        }
+        AgentManualTradeService.sendGreetingOnce(bot, trade, () -> BotManager.getInstance().manualTradeGreeting());
 
         if (trade.isPartnerConfirmed()) {
             completeTradeAndThank(entry, bot, trade);
@@ -542,8 +534,7 @@ public class BotInventoryManager {
     }
 
     private static void clearManualTradeState(BotEntry entry, Character bot) {
-        manualTradeGreetingSent.remove(bot.getId());
-        AgentBotManualTradeStateRuntime.clear(entry);
+        AgentManualTradeService.clearState(entry, bot);
     }
 
     private static void resetTradeState(BotEntry entry, Character bot) {
