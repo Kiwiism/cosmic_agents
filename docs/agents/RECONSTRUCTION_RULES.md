@@ -77,6 +77,10 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentScriptTaskQueueService`. Clear-and-bump,
   null-safe queueing, move queueing, move-then-drop, follow-then-drop, and
   queued-task checks are unchanged.
+- Agent script context and runner queue operations now call
+  `server.agents.runtime.AgentScriptTaskQueueService` directly instead of
+  routing through BotManager. The same queued task shapes and clear-and-bump
+  behavior are preserved.
 - BotManager local near-distance checks now delegate to
   `server.agents.runtime.AgentPositionService`. The null handling and
   inclusive per-axis distance behavior are unchanged.

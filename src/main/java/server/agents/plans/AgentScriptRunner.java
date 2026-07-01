@@ -2,6 +2,7 @@ package server.agents.plans;
 
 import client.Character;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
+import server.agents.runtime.AgentScriptTaskQueueService;
 import server.bots.BotEntry;
 import server.bots.BotManager;
 
@@ -14,14 +15,14 @@ public final class AgentScriptRunner {
         AgentScript script = findScript(entry, bot, owner, scripts);
         if (script == null) {
             if (AgentBotScriptTaskStateRuntime.hasScriptId(entry)) {
-                BotManager.getInstance().clearScriptTasks(entry);
+                AgentScriptTaskQueueService.clearTasks(entry);
                 AgentBotScriptTaskStateRuntime.resetScript(entry, null);
             }
             return;
         }
 
         if (!script.id().equals(AgentBotScriptTaskStateRuntime.scriptId(entry))) {
-            BotManager.getInstance().clearScriptTasks(entry);
+            AgentScriptTaskQueueService.clearTasks(entry);
             AgentBotScriptTaskStateRuntime.resetScript(entry, script.id());
         }
 

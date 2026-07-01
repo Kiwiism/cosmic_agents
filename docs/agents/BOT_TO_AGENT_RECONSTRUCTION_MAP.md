@@ -66,6 +66,10 @@ Recent map updates:
   `server.agents.runtime.AgentScriptTaskQueueService`; BotManager remains a
   temporary compatibility facade for clear, queue, move, move-then-drop,
   follow-then-drop, and has-queued checks.
+- Agent script context and runner task queue operations now call
+  `server.agents.runtime.AgentScriptTaskQueueService` directly instead of
+  routing queue/clear checks through BotManager; BotManager remains only for the
+  temporary cheap-move helper used by script context.
 - BotManager local near-distance helper moved to
   `server.agents.runtime.AgentPositionService`; BotManager movement/combat tick
   paths now use the Agent-owned geometry helper.

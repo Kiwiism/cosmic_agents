@@ -3,9 +3,9 @@ package server.agents.plans;
 import client.Character;
 import client.inventory.InventoryType;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
+import server.agents.runtime.AgentScriptTaskQueueService;
 import server.bots.BotEntry;
 import server.bots.BotManager;
-import server.agents.plans.AgentTask;
 
 import java.awt.*;
 
@@ -55,31 +55,31 @@ public final class AgentScriptContext {
     }
 
     public void queueMoveTo(Point point, boolean precise) {
-        manager.queueTask(entry, AgentTask.moveTo(point, precise));
+        AgentScriptTaskQueueService.queueMoveTo(entry, point, precise);
     }
 
     public void queueMoveToWithLocalCombat(Point point, boolean precise) {
-        manager.queueTask(entry, AgentTask.moveTo(point, precise, AgentTask.MoveCombatMode.LOCAL_OPPORTUNITY));
+        AgentScriptTaskQueueService.queueMoveTo(entry, point, precise, AgentTask.MoveCombatMode.LOCAL_OPPORTUNITY);
     }
 
     public void queueFollowUntilNearOwner(int nearPx) {
-        manager.queueTask(entry, AgentTask.followUntilNear(owner, nearPx));
+        AgentScriptTaskQueueService.queueTask(entry, AgentTask.followUntilNear(owner, nearPx));
     }
 
     public void queueGrind() {
-        manager.queueTask(entry, AgentTask.grind());
+        AgentScriptTaskQueueService.queueTask(entry, AgentTask.grind());
     }
 
     public void queueStop() {
-        manager.queueTask(entry, AgentTask.stop());
+        AgentScriptTaskQueueService.queueTask(entry, AgentTask.stop());
     }
 
     public void queueDrop(InventoryType type, int itemId, short quantity) {
-        manager.queueTask(entry, AgentTask.dropItem(type, itemId, quantity));
+        AgentScriptTaskQueueService.queueTask(entry, AgentTask.dropItem(type, itemId, quantity));
     }
 
     public boolean tasksDone() {
-        return !manager.hasQueuedTasks(entry);
+        return !AgentScriptTaskQueueService.hasQueuedTasks(entry);
     }
 
     public boolean isCheapMoveTarget(Point point, int maxPathCost, int fallbackRangeX, int fallbackRangeY) {

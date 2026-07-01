@@ -1,8 +1,8 @@
 package server.agents.plans;
 
 import client.Character;
+import server.agents.runtime.AgentScriptTaskQueueService;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 
 import java.util.List;
 
@@ -14,6 +14,6 @@ public interface AgentScript {
     List<AgentScriptStep> steps();
 
     default void onExit(BotEntry entry) {
-        BotManager.getInstance().clearScriptTasks(entry);
+        AgentScriptTaskQueueService.clearTasks(entry);
     }
 }
