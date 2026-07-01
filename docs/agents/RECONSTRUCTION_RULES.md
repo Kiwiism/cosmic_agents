@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- BotManager leader-wide removal and agent-character removal map mutation now
+  delegates to `server.agents.runtime.AgentLifecycleService`. BotManager still
+  supplies the scheduled-task cancellation callback and keeps the temporary
+  backing maps, preserving cleanup timing while moving removal rules into Agent
+  runtime.
 - BotManager active-runtime lookup helpers for agent ID, agent name, active
   leader, first agent, first entry, and per-leader entry snapshots now delegate
   to `server.agents.runtime.AgentRuntimeRegistry`. The live storage map remains

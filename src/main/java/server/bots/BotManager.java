@@ -20,6 +20,7 @@ import server.agents.capabilities.combat.AgentProjectileHitbox;
 import server.agents.capabilities.dialogue.AgentEmote;
 
 import server.agents.runtime.AgentPerformanceMonitor;
+import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentRuntimeRegistry;
 
 import server.agents.capabilities.looting.AgentLootEligibility;
@@ -600,35 +601,14 @@ public class BotManager {
     }
 
     public void removeBot(int ownerCharId) {
-        List<BotEntry> entries = bots.remove(ownerCharId);
-        if (entries != null) {
-            entries.forEach(this::cancelBotTask);
-        }
-        ownerFormations.remove(ownerCharId);
-        townClusterAnchors.remove(ownerCharId);
+        AgentLifecycleService.removeLeaderEntries(
+                bots, ownerFormations, townClusterAnchors, ownerCharId, this::cancelBotTask);
     }
 
     /** Cancel and remove a bot by the bot character's own ID (used during shutdown/disconnect). */
     public boolean removeBotByCharId(int botCharId) {
-        boolean removed = false;
-        for (Map.Entry<Integer, List<BotEntry>> ownerEntry : bots.entrySet()) {
-            List<BotEntry> entries = ownerEntry.getValue();
-            boolean removedFromOwner = entries.removeIf(e -> {
-                if (AgentBotRuntimeIdentityRuntime.botIs(e, botCharId)) {
-                    cancelBotTask(e);
-                    return true;
-                }
-                return false;
-            });
-            if (removedFromOwner) {
-                removed = true;
-                if (entries.isEmpty() && bots.remove(ownerEntry.getKey(), entries)) {
-                    ownerFormations.remove(ownerEntry.getKey());
-                    townClusterAnchors.remove(ownerEntry.getKey());
-                }
-            }
-        }
-        return removed;
+        return AgentLifecycleService.removeAgentByCharacterId(
+                bots, ownerFormations, townClusterAnchors, botCharId, this::cancelBotTask);
     }
 
     /** Release bot-owned runtime state before this character leaves bot control. */

@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotManager.removeBot` and `BotManager.removeBotByCharId` now delegate map
+  mutation to `server.agents.runtime.AgentLifecycleService`; BotManager still
+  owns the temporary backing maps and cancellation side-effect callback.
 - `BotManager` active-runtime lookup loops moved to
   `server.agents.runtime.AgentRuntimeRegistry`; BotManager still owns the
   temporary backing map and lifecycle mutation in this slice, but lookup
