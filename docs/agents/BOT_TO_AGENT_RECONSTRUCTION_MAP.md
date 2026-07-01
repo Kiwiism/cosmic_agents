@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Scheduled tick guard orchestration moved from BotManager to
+  `server.agents.runtime.AgentTickOrchestrator.runGuardedTick`; BotManager
+  remains the temporary hook provider for `tickCore` and failure handling.
 - Common tick system ordering moved from BotManager to
   `server.agents.runtime.AgentCommonTickService`; BotManager now supplies a
   compatibility hook bundle for existing subsystem implementations.

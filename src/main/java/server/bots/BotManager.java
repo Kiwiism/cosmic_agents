@@ -1519,17 +1519,7 @@ public class BotManager {
     // -------------------------------------------------------------------------
 
     private void tick(BotEntry entry, int ownerCharId, int botCharId) {
-        long startedAt = AgentPerformanceMonitor.enabled() ? System.nanoTime() : 0L;
-        try {
-            tickCore(entry, ownerCharId, botCharId);
-            resetBotTickFailures(entry);
-        } catch (Throwable t) {
-            handleBotTickFailure(entry, ownerCharId, botCharId, t);
-        } finally {
-            if (startedAt != 0L) {
-                AgentPerformanceMonitor.record("tick-total", System.nanoTime() - startedAt);
-            }
-        }
+        AgentTickOrchestrator.runGuardedTick(entry, ownerCharId, botCharId, this::tickCore, this::handleBotTickFailure);
     }
 
     /** Test-only hook: invokes {@link #runCommonTickSystems} on a caller-owned entry. */
@@ -2046,10 +2036,6 @@ public class BotManager {
         log.warn("Bot '{}' tick failed {}/{} (owner={}, map={}, grinding={}, following={})",
                 botName, failureCount, AgentTickFailurePolicy.FAILURE_LIMIT, ownerName, mapId,
                 AgentBotModeStateRuntime.grinding(entry), AgentBotModeStateRuntime.following(entry), t);
-    }
-
-    private static void resetBotTickFailures(BotEntry entry) {
-        AgentTickFailurePolicy.resetFailures(entry);
     }
 
     private static void clearBotVolatileActions(BotEntry entry) {

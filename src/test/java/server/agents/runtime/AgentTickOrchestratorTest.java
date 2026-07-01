@@ -3,15 +3,65 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotTickCadenceStateRuntime;
+import server.agents.integration.AgentBotTickFailureStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
 import server.bots.BotEntry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 class AgentTickOrchestratorTest {
+    @Test
+    void guardedTickRunsCoreAndClearsPreviousFailures() {
+        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentBotTickFailureStateRuntime.recordFailure(entry, 1_000L, 10_000L);
+        int[] coreRuns = {0};
+        int[] failures = {0};
+
+        AgentTickOrchestrator.runGuardedTick(
+                entry,
+                100,
+                200,
+                (tickEntry, leaderId, agentId) -> {
+                    assertSame(entry, tickEntry);
+                    assertEquals(100, leaderId);
+                    assertEquals(200, agentId);
+                    coreRuns[0]++;
+                },
+                (tickEntry, leaderId, agentId, failure) -> failures[0]++);
+
+        assertEquals(1, coreRuns[0]);
+        assertEquals(0, failures[0]);
+        assertFalse(AgentBotTickFailureStateRuntime.hasFailures(entry));
+    }
+
+    @Test
+    void guardedTickRoutesFailureToHandler() {
+        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        RuntimeException failure = new RuntimeException("boom");
+        int[] failures = {0};
+
+        AgentTickOrchestrator.runGuardedTick(
+                entry,
+                100,
+                200,
+                (tickEntry, leaderId, agentId) -> {
+                    throw failure;
+                },
+                (tickEntry, leaderId, agentId, handledFailure) -> {
+                    assertSame(entry, tickEntry);
+                    assertEquals(100, leaderId);
+                    assertEquals(200, agentId);
+                    assertSame(failure, handledFailure);
+                    failures[0]++;
+                });
+
+        assertEquals(1, failures[0]);
+    }
+
     @Test
     void prepareTickRecordsNonAiTickUntilCadenceIsDue() {
         BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);

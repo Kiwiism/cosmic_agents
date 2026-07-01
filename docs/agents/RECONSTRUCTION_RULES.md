@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Scheduled tick guard orchestration now lives in
+  `server.agents.runtime.AgentTickOrchestrator.runGuardedTick`. BotManager keeps
+  `tickCore` and failure handling as temporary hooks, while the Agent
+  orchestrator owns tick-total timing, success failure-reset, failure routing,
+  and final performance recording.
 - Common tick system ordering now lives in
   `server.agents.runtime.AgentCommonTickService`. BotManager keeps only a
   compatibility hook bundle for the existing subsystem implementations. The same
