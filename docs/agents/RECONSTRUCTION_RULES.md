@@ -2919,6 +2919,11 @@ Recent reconstruction notes:
   and move-target cleanup hooks. The navigation-consumed early return, fidget
   early return, committed-edge grounded AI gate, stuck detection, and reached
   move-target cleanup ordering are preserved.
+- Movement-only tick orchestration now lives in
+  `server.agents.runtime.AgentMovementOnlyTickService`; BotManager still supplies
+  temporary idle, follow-map sync, follow-anchor, recovery, map-change, shop,
+  follow-idle, and movement-core hooks. The existing early-return order is
+  preserved for movement simulations and movement-only tests.
 
 Initial reconstruction order:
 

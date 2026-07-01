@@ -41,6 +41,7 @@ import server.agents.runtime.AgentMapTransitionService;
 import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentMonsterControlService;
 import server.agents.runtime.AgentMovementPhaseService;
+import server.agents.runtime.AgentMovementOnlyTickService;
 import server.agents.runtime.AgentMovementTickService;
 import server.agents.runtime.AgentOwnerlessTickService;
 import server.agents.runtime.AgentPartyLifecycleService;
@@ -2675,58 +2676,43 @@ public class BotManager {
                           Point targetPos,
                           Point ownerPos,
                           boolean runAiTick) {
-        if (!AgentBotRuntimeIdentityRuntime.hasBot(entry) || targetPos == null) {
-            return;
-        }
+        AgentMovementOnlyTickService.stepMovementOnly(
+                entry,
+                targetPos,
+                runAiTick,
+                AgentBotTickStateRuntime.lastTickAtMs(entry),
+                movementOnlyHooks());
+    }
 
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+    private AgentMovementOnlyTickService.MovementOnlyHooks movementOnlyHooks() {
+        return new AgentMovementOnlyTickService.MovementOnlyHooks(
+                this::tickIdleEntry,
+                (entry, bot) -> AgentBotShopStateRuntime.shopVisitPending(entry),
+                this::syncFollowMap,
+                this::resolveFollowAnchor,
+                this::recoverGrindPartyTeleportDistance,
+                this::recoverTeleportDistance,
+                this::handleMovementOnlyMapChange,
+                AgentShopService::tickShopVisit,
+                AgentBotShopStateRuntime::activeShopTargetPosition,
+                AgentBotShopStateRuntime::shopApproachDelayMs,
+                BotManager::tryFollowIdleMovementFastPath,
+                this::stepMovementCore);
+    }
 
-        if (tickIdleEntry(entry, bot)) {
-            return;
+    private boolean handleMovementOnlyMapChange(BotEntry entry, Character bot) {
+        if (AgentBotMapStateRuntime.isTrackingMap(entry, bot.getMapId())) {
+            return false;
         }
-
-        if (owner != null && !AgentBotShopStateRuntime.shopVisitPending(entry) && syncFollowMap(entry, bot, owner)) {
-            return;
-        }
-        Character followAnchor = resolveFollowAnchor(entry, owner);
-        if (recoverGrindPartyTeleportDistance(entry, bot, followAnchor)) {
-            return;
-        }
-        if (recoverTeleportDistance(entry, bot, targetPos)) {
-            return;
-        }
-
-        if (!AgentBotMapStateRuntime.isTrackingMap(entry, bot.getMapId())) {
-            AgentBotMapStateRuntime.setMapTracking(entry, bot.getMapId(), BotMovementManager.buildFhIndex(bot.getMap()));
-            Point cur = bot.getPosition();
-            Point ground = BotPhysicsEngine.findGroundPoint(bot.getMap(), new Point(cur.x, cur.y - 1));
-            BotPhysicsEngine.teleportTo(entry, bot, ground != null ? ground : cur);
-            BotMovementManager.resetEntryStateAfterTeleport(entry);
-            BotMovementManager.broadcastMovement(entry);
-            AgentShopService.onMapChange(entry, bot);
-            AgentBotManagerStatusRuntime.checkManagerStatus(entry, bot);
-            return;
-        }
-
-        // Shop visit: navigate to approach point before resuming normal flow.
-        if (AgentBotShopStateRuntime.shopVisitPending(entry)) {
-            boolean consumed = AgentShopService.tickShopVisit(entry, bot);
-            targetPos = AgentBotShopStateRuntime.activeShopTargetPosition(entry);
-            if (!consumed && AgentBotShopStateRuntime.shopApproachDelayMs(entry) > 0) {
-                return;
-            }
-            if (targetPos != null) {
-                stepMovementCore(entry, targetPos, runAiTick);
-            }
-            return;
-        }
-
-        if (tryFollowIdleMovementFastPath(entry, bot, targetPos, AgentBotTickStateRuntime.lastTickAtMs(entry))) {
-            return;
-        }
-
-        stepMovementCore(entry, targetPos, runAiTick);
+        AgentBotMapStateRuntime.setMapTracking(entry, bot.getMapId(), BotMovementManager.buildFhIndex(bot.getMap()));
+        Point cur = bot.getPosition();
+        Point ground = BotPhysicsEngine.findGroundPoint(bot.getMap(), new Point(cur.x, cur.y - 1));
+        BotPhysicsEngine.teleportTo(entry, bot, ground != null ? ground : cur);
+        BotMovementManager.resetEntryStateAfterTeleport(entry);
+        BotMovementManager.broadcastMovement(entry);
+        AgentShopService.onMapChange(entry, bot);
+        AgentBotManagerStatusRuntime.checkManagerStatus(entry, bot);
+        return true;
     }
 
     static boolean tryFollowIdleMovementFastPath(BotEntry entry, Character bot, Point targetPos, long nowMs) {
