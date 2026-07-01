@@ -22,6 +22,7 @@ import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.AgentTickOrchestrator;
 
 import server.agents.capabilities.looting.AgentLootEligibility;
 import server.agents.capabilities.looting.AgentLootTargetService;
@@ -2044,8 +2045,8 @@ public class BotManager {
         }
 
         AgentOfferService.expirePendingOffer(entry);
-        boolean runAiTick = consumeAiTick(entry);
-        AgentBotTickStateRuntime.recordTick(entry, runAiTick, System.currentTimeMillis());
+        boolean runAiTick = AgentTickOrchestrator.prepareTick(
+                entry, BotMovementManager.cfg.TICK_MS, cfg.AI_TICK_MS, System.currentTimeMillis());
 
         Character owner = resolveTickOwner(entry, ownerCharId);
         if (handleOwnerOfflineOrDead(entry, bot, owner, nowMs, ownerCharId)) {
@@ -3600,8 +3601,8 @@ public class BotManager {
             return false;
         }
 
-        boolean runAiTick = consumeAiTick(entry);
-        AgentBotTickStateRuntime.recordTick(entry, runAiTick, tickAtMs);
+        boolean runAiTick = AgentTickOrchestrator.prepareTick(
+                entry, BotMovementManager.cfg.TICK_MS, cfg.AI_TICK_MS, tickAtMs);
 
         TargetSnapshot targetSnapshot = captureTargetSnapshot(entry);
         Point ownerPos = targetSnapshot.rawOwnerPos();
@@ -3970,11 +3971,6 @@ public class BotManager {
         }
         AgentBotReplyChannelStateRuntime.setWhisper(entry);
         handleAgentChat(entry, message);
-    }
-
-    private boolean consumeAiTick(BotEntry entry) {
-        return AgentBotTickCadenceStateRuntime.consumeAiTick(
-                entry, BotMovementManager.cfg.TICK_MS, cfg.AI_TICK_MS);
     }
 
     private static void handleAgentChat(BotEntry entry, String message) {

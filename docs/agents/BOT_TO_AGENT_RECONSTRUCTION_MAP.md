@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- BotManager AI-cadence consumption and tick timestamp recording moved to
+  `server.agents.runtime.AgentTickOrchestrator`; full tick dispatch remains in
+  BotManager for later slices.
 - `BotManager.removeBot` and `BotManager.removeBotByCharId` now delegate map
   mutation to `server.agents.runtime.AgentLifecycleService`; BotManager still
   owns the temporary backing maps and cancellation side-effect callback.

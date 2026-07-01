@@ -17,6 +17,9 @@ Rules:
 
 Recent reconstruction notes:
 
+- BotManager AI-cadence consumption and tick timestamp recording now enter
+  through `server.agents.runtime.AgentTickOrchestrator.prepareTick`. The same
+  movement tick, AI tick, accumulator, and last-tick semantics are preserved.
 - BotManager leader-wide removal and agent-character removal map mutation now
   delegates to `server.agents.runtime.AgentLifecycleService`. BotManager still
   supplies the scheduled-task cancellation callback and keeps the temporary
