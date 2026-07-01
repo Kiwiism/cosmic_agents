@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Common tick system ordering moved from BotManager to
+  `server.agents.runtime.AgentCommonTickService`; BotManager now supplies a
+  compatibility hook bundle for existing subsystem implementations.
 - Dismiss-by-name lifecycle moved from BotManager to
   `server.agents.runtime.AgentLifecycleService.dismissAgentByName`. BotManager
   remains the compatibility wrapper for stop-mode, scheduler, and reply hooks.

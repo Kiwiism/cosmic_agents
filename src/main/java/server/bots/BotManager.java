@@ -22,6 +22,7 @@ import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.dialogue.AgentWhisperCommandService;
 
 import server.agents.runtime.AgentActionLockPhysicsService;
+import server.agents.runtime.AgentCommonTickService;
 import server.agents.runtime.AgentCommandModeService;
 import server.agents.runtime.AgentDeathTickService;
 import server.agents.runtime.AgentPerformanceMonitor;
@@ -2594,81 +2595,36 @@ public class BotManager {
     }
 
     private boolean runCommonTickSystems(BotEntry entry, Character bot, Character owner, boolean runAiTick) {
-        // Single source of truth for the subsystem sequence. Perf instrumentation is gated by
-        // `perf` so the hot (monitor-disabled) path pays only cheap branch checks and never
-        // allocates timing state, while the enabled path keeps every per-subsystem label.
-        boolean perf = AgentPerformanceMonitor.enabled();
-        long t = perf ? System.nanoTime() : 0L;
-        AgentBotCombatDamageRuntime.tickMobDamage(entry, bot, AgentCombatConfig.cfg, BotMovementManager::tickDown);
-        if (perf) AgentPerformanceMonitor.record("common-mob-damage", System.nanoTime() - t);
-        if (bot.getHp() <= 0) {
-            if (!AgentBotDeathStateRuntime.isDead(entry)) {
-                AgentBotCombatDeathRuntime.enterDeadState(entry, bot, false, AgentCombatConfig.cfg);
-            }
-            return true;
-        }
-        if (perf) t = System.nanoTime();
-        AgentMonsterControlService.releaseControlledMonsters(bot);
-        if (perf) AgentPerformanceMonitor.record("common-release-mob", System.nanoTime() - t);
-        // While a trade window is open, suppress passive loot pickup. pickupItem() runs on
-        // this scheduler thread and races Trade.completeTrade()'s addFromDrop on the packet
-        // thread: fitsInInventory() can pass, then this fills the last slot before addFromDrop
-        // runs, and the silently-ignored false return loses the partner's item.
-        // See memory/kb_bot_trade_dupe_loss_audit.md.
-        if (bot.getTrade() == null) {
-            if (perf) t = System.nanoTime();
-            BotInventoryManager.tickPassiveLoot(entry, bot);
-            if (perf) AgentPerformanceMonitor.record("common-passive-loot", System.nanoTime() - t);
-        }
-        if (perf) t = System.nanoTime();
-        AgentPotionService.tickPotionCheck(entry, bot);
-        if (perf) AgentPerformanceMonitor.record("common-potion-check", System.nanoTime() - t);
-        if (perf) t = System.nanoTime();
-        AgentPotionService.tickPassiveRecovery(entry, bot);
-        if (perf) AgentPerformanceMonitor.record("common-passive-recovery", System.nanoTime() - t);
-        if (perf) t = System.nanoTime();
-        AgentBuildService.checkLevelUp(entry, bot);
-        if (perf) AgentPerformanceMonitor.record("common-build-levelup", System.nanoTime() - t);
-        if (perf) t = System.nanoTime();
-        AgentBotManagerStatusRuntime.tickAfkCheck(entry, owner);
-        if (perf) AgentPerformanceMonitor.record("common-afk-check", System.nanoTime() - t);
-        if (perf) t = System.nanoTime();
-        BotInventoryManager.tickTrade(entry, bot);
-        if (perf) AgentPerformanceMonitor.record("common-trade", System.nanoTime() - t);
-        if (perf) t = System.nanoTime();
-        BotInventoryManager.tickManualTrade(entry, bot);
-        if (perf) AgentPerformanceMonitor.record("common-manual-trade", System.nanoTime() - t);
-        if (perf) t = System.nanoTime();
-        AgentPartyQuestHooks.tick(entry, bot, owner);
-        if (perf) AgentPerformanceMonitor.record("common-pq-hooks", System.nanoTime() - t);
-        if (perf) t = System.nanoTime();
-        tickScriptTasks(entry);
-        if (perf) AgentPerformanceMonitor.record("common-script-tasks", System.nanoTime() - t);
-        if (AgentPartyQuestHooks.isNpcLocked(entry)) {
-            return true;
-        }
-        if (perf) t = System.nanoTime();
-        AgentBotCombatActionLockRuntime.tickActionLock(entry);
-        if (perf) AgentPerformanceMonitor.record("common-action-lock", System.nanoTime() - t);
-        if (runAiTick) {
-            if (perf) t = System.nanoTime();
-            AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
-            if (perf) AgentPerformanceMonitor.record("common-skill-cache", System.nanoTime() - t);
-            // Support healing is top priority — runs before buffs so that a bot below the heal
-            // threshold casts Heal before a rebuff uses up this tick's action window. If it fires,
-            // Agent combat cooldown state is set to the heal animation lock and tickActionLocked()
-            // will return true, causing the caller to skip attack logic this tick.
-            if (perf) t = System.nanoTime();
-            AgentBotCombatHealRuntime.tickSupportHealing(entry, bot, AgentCombatConfig.cfg);
-            if (perf) AgentPerformanceMonitor.record("common-support-heal", System.nanoTime() - t);
-            if (perf) t = System.nanoTime();
-            AgentBotCombatBuffRuntime.tickBuffs(entry, bot, AgentCombatConfig.cfg);
-            if (perf) AgentPerformanceMonitor.record("common-combat-buffs", System.nanoTime() - t);
-            if (perf) t = System.nanoTime();
-            AgentBuffService.tick(entry, bot);
-            if (perf) AgentPerformanceMonitor.record("common-buff-pots", System.nanoTime() - t);
-        }
-        return tickActionLocked(entry);
+        return AgentCommonTickService.runCommonTickSystems(
+                entry,
+                bot,
+                owner,
+                runAiTick,
+                new AgentCommonTickService.CommonTickHooks(
+                        (tickEntry, tickBot) -> AgentBotCombatDamageRuntime.tickMobDamage(
+                                tickEntry, tickBot, AgentCombatConfig.cfg, BotMovementManager::tickDown),
+                        (tickEntry, tickBot) -> AgentBotDeathStateRuntime.isDead(tickEntry),
+                        (tickEntry, tickBot) -> AgentBotCombatDeathRuntime.enterDeadState(
+                                tickEntry, tickBot, false, AgentCombatConfig.cfg),
+                        AgentMonsterControlService::releaseControlledMonsters,
+                        BotInventoryManager::tickPassiveLoot,
+                        AgentPotionService::tickPotionCheck,
+                        AgentPotionService::tickPassiveRecovery,
+                        AgentBuildService::checkLevelUp,
+                        (tickEntry, tickBot, tickOwner) -> AgentBotManagerStatusRuntime.tickAfkCheck(tickEntry, tickOwner),
+                        BotInventoryManager::tickTrade,
+                        BotInventoryManager::tickManualTrade,
+                        AgentPartyQuestHooks::tick,
+                        this::tickScriptTasks,
+                        AgentPartyQuestHooks::isNpcLocked,
+                        AgentBotCombatActionLockRuntime::tickActionLock,
+                        AgentBotCombatSkillCacheRuntime::rebuildSkillCacheIfNeeded,
+                        (tickEntry, tickBot) -> AgentBotCombatHealRuntime.tickSupportHealing(
+                                tickEntry, tickBot, AgentCombatConfig.cfg),
+                        (tickEntry, tickBot) -> AgentBotCombatBuffRuntime.tickBuffs(
+                                tickEntry, tickBot, AgentCombatConfig.cfg),
+                        AgentBuffService::tick,
+                        this::tickActionLocked));
     }
 
     /**

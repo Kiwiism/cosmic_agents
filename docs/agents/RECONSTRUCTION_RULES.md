@@ -17,6 +17,13 @@ Rules:
 
 Recent reconstruction notes:
 
+- Common tick system ordering now lives in
+  `server.agents.runtime.AgentCommonTickService`. BotManager keeps only a
+  compatibility hook bundle for the existing subsystem implementations. The same
+  mob-damage/death early return, monster-control release, trade-window passive
+  loot suppression, potion/recovery/build/AFK/trade/PQ/script ordering, NPC-lock
+  early return, action-lock decay, AI-only combat cache/heal/buff/pot sequence,
+  performance labels, and final action-locked physics return are preserved.
 - Dismiss-by-name lifecycle now lives in
   `server.agents.runtime.AgentLifecycleService.dismissAgentByName`. BotManager
   keeps `dismissBot` as a compatibility wrapper and supplies temporary hooks
