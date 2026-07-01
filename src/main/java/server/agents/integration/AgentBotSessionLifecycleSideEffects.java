@@ -22,6 +22,10 @@ public final class AgentBotSessionLifecycleSideEffects {
         return BotManager.getInstance().getBotEntries(ownerCharId);
     }
 
+    public static BotEntry getBotEntry(int ownerCharId, String agentName) {
+        return BotManager.getInstance().getBotEntry(ownerCharId, agentName);
+    }
+
     public static void issueOwnerAwaySafeModeForLeader(int ownerCharId, boolean town) {
         BotManager.getInstance().issueOwnerAwaySafeModeForOwner(ownerCharId, town);
     }

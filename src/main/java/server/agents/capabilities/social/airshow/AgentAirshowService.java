@@ -14,8 +14,8 @@ import server.agents.integration.AgentBotAirshowStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentBotSessionLifecycleSideEffects;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 import server.bots.BotMovementManager;
 import server.bots.BotPhysicsEngine;
 import server.maps.MapleMap;
@@ -44,7 +44,7 @@ public final class AgentAirshowService {
             return "Syntax: !airshow <botname>";
         }
 
-        BotEntry entry = BotManager.getInstance().getBotEntry(owner.getId(), botName);
+        BotEntry entry = AgentBotSessionLifecycleSideEffects.getBotEntry(owner.getId(), botName);
         if (entry == null) {
             return "No active owned bot named '" + botName + "'.";
         }

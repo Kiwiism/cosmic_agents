@@ -121,6 +121,9 @@ Recent reconstruction notes:
 - Bot-inventory-drop loot delay detection now asks the Agent session lifecycle
   gateway whether a drop owner is an active Agent, instead of calling
   `BotManager.getActiveOwnerByBotCharId` directly.
+- Airshow named-Agent lookup now enters through the Agent session lifecycle
+  gateway instead of calling `BotManager.getBotEntry` directly; validation
+  messages and airshow side effects are unchanged.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

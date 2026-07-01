@@ -109,6 +109,9 @@ Recent map updates:
 - Bot-inventory-drop loot delay detection now reads active Agent ownership via
   `AgentBotSessionLifecycleSideEffects.activeLeaderByAgentCharacterId`, removing
   the direct BotManager lookup from `AgentLootEligibility`.
+- Airshow named-Agent lookup now reads through
+  `AgentBotSessionLifecycleSideEffects.getBotEntry`, removing the direct
+  BotManager lookup from `AgentAirshowService`.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.
