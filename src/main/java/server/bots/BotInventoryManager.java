@@ -38,6 +38,7 @@ import server.agents.capabilities.trade.AgentDirectItemTradeService;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.trade.AgentMesoTradeService;
+import server.agents.capabilities.trade.AgentTradeAllItemsAddedService;
 import server.agents.capabilities.trade.AgentTradeBatchService;
 import server.agents.capabilities.trade.AgentTradeCancellationService;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
@@ -482,10 +483,10 @@ public class BotInventoryManager {
 
             if (idx >= items.size()) {
                 // All items added — say so in trade chat and wait for owner OK
-                AgentBotPendingTradeStateRuntime.markAllItemsAdded(entry);
-                AgentBotPendingTradeStateRuntime.clearTimer(entry);
-                String msg = BotManager.randomReply(AgentDialogueCatalog.tradeAllDoneReplies());
-                trade.chat(msg);
+                AgentTradeAllItemsAddedService.markCompleteIfNoMoreItems(
+                        entry,
+                        trade,
+                        () -> BotManager.randomReply(AgentDialogueCatalog.tradeAllDoneReplies()));
                 return;
             }
 

@@ -2165,6 +2165,10 @@ Recent reconstruction notes:
   index advancement, per-item delay, share quantity cap, inventory locking,
   trade-window item copy/position/quantity setup, restore-slot transfer,
   inventory removal, and trade item add packet sends to Agent trade code.
+- Trade all-items-added handling now lives in `AgentTradeAllItemsAddedService`;
+  BotInventoryManager still owns the enclosing trade tick but delegates the
+  item-index completion check, all-items-added flag, timer clear, and all-done
+  trade chat line to Agent trade code.
 - Trade batch-open orchestration now lives in `AgentTradeBatchService`;
   BotInventoryManager and AgentSupplyShareTradeService still supply the
   temporary recipient lookup/cancel/start/invite/reply callbacks, but recipient
