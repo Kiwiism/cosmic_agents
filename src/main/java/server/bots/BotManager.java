@@ -2747,10 +2747,7 @@ public class BotManager {
         }
 
         Point steeringTarget = navDirective.targetPos;
-        if (AgentBotMoveTargetStateRuntime.isPrecise(entry)
-                && !AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
-            AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
-        }
+        AgentTickStateMaintenanceService.markPreciseNavigationTargetIfNeeded(entry);
         if (AgentFidgetService.tryHandleTick(entry, steeringTarget, runAiTick)) {
             return;
         }

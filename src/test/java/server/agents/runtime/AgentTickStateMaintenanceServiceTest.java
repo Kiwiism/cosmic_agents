@@ -4,6 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
+import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.bots.BotEntry;
@@ -118,6 +119,26 @@ class AgentTickStateMaintenanceServiceTest {
         AgentTickStateMaintenanceService.clearPatrolOnMapChange(entry, agent);
 
         assertFalse(AgentBotPatrolStateRuntime.hasPatrolRegion(entry));
+    }
+
+    @Test
+    void marksPreciseNavigationTargetForPreciseMoveTarget() {
+        BotEntry entry = entry();
+        AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, new Point(100, 100));
+
+        AgentTickStateMaintenanceService.markPreciseNavigationTargetIfNeeded(entry);
+
+        assertTrue(AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry));
+    }
+
+    @Test
+    void doesNotMarkPreciseNavigationTargetForNormalMoveTarget() {
+        BotEntry entry = entry();
+        AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(100, 100), false);
+
+        AgentTickStateMaintenanceService.markPreciseNavigationTargetIfNeeded(entry);
+
+        assertFalse(AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry));
     }
 
     private static Character agentOnMap(int mapId) {

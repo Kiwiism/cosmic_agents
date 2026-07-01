@@ -3,6 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
+import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
@@ -50,5 +51,12 @@ public final class AgentTickStateMaintenanceService {
             return;
         }
         AgentBotPatrolStateRuntime.clearPatrolIfMapChanged(entry, agent.getMapId());
+    }
+
+    public static void markPreciseNavigationTargetIfNeeded(BotEntry entry) {
+        if (AgentBotMoveTargetStateRuntime.isPrecise(entry)
+                && !AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
+            AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
+        }
     }
 }

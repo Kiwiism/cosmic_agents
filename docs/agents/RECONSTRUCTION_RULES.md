@@ -2910,6 +2910,9 @@ Recent reconstruction notes:
   temporary tick-down, movement tick duration, enable flag, and unstuck action
   hooks. The active-navigation guard, 8px movement threshold, 500ms stuck
   threshold, cooldown handling, and performance metric name are preserved.
+- Precise move-target navigation marker maintenance now lives in
+  `server.agents.runtime.AgentTickStateMaintenanceService`; BotManager no
+  longer owns the precise-target flag rule after navigation target resolution.
 
 Initial reconstruction order:
 
