@@ -14,6 +14,7 @@ import server.maps.MapleMap;
 
 import java.awt.Point;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -370,6 +371,71 @@ class AgentLeaderSafetyServiceTest {
 
         assertTrue(consumed);
         counters.assertCounts(0, 1, 1, 1, 1, 1, 1);
+    }
+
+    @Test
+    void issueInactiveSafeModeForLeaderSkipsEntriesWithoutMaps() {
+        BotEntry skipped = new BotEntry(mock(Character.class), mock(Character.class), null);
+        BotEntry handled = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AtomicInteger handledCount = new AtomicInteger();
+
+        AgentLeaderSafetyService.issueInactiveSafeModeForLeader(
+                List.of(skipped, handled),
+                true,
+                entry -> entry == handled,
+                entry -> true,
+                (entry, town) -> {
+                    assertEquals(handled, entry);
+                    assertTrue(town);
+                    handledCount.incrementAndGet();
+                });
+
+        assertEquals(1, handledCount.get());
+    }
+
+    @Test
+    void issueInactiveSafeModeForLeaderCombinesTownRequestWithEligibility() {
+        BotEntry eligible = new BotEntry(mock(Character.class), mock(Character.class), null);
+        BotEntry ineligible = new BotEntry(mock(Character.class), mock(Character.class), null);
+        Map<BotEntry, Boolean> eligibility = Map.of(eligible, true, ineligible, false);
+        AtomicInteger townEntries = new AtomicInteger();
+        AtomicInteger idleEntries = new AtomicInteger();
+
+        AgentLeaderSafetyService.issueInactiveSafeModeForLeader(
+                List.of(eligible, ineligible),
+                true,
+                entry -> true,
+                eligibility::get,
+                (entry, town) -> {
+                    if (town) {
+                        townEntries.incrementAndGet();
+                    } else {
+                        idleEntries.incrementAndGet();
+                    }
+                });
+
+        assertEquals(1, townEntries.get());
+        assertEquals(1, idleEntries.get());
+    }
+
+    @Test
+    void issueInactiveSafeModeForLeaderNeverTownsWhenTownWasNotRequested() {
+        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AtomicInteger idleEntries = new AtomicInteger();
+
+        AgentLeaderSafetyService.issueInactiveSafeModeForLeader(
+                List.of(entry),
+                false,
+                ignored -> true,
+                ignored -> {
+                    throw new AssertionError("town eligibility should not matter when town was not requested");
+                },
+                (ignoredEntry, town) -> {
+                    assertFalse(town);
+                    idleEntries.incrementAndGet();
+                });
+
+        assertEquals(1, idleEntries.get());
     }
 
     private static MapleMap map(int id, MapleMap returnMap, Monster... monsters) {

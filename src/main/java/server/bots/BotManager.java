@@ -2672,13 +2672,13 @@ public class BotManager {
     }
 
     public void issueOwnerAwaySafeModeForOwner(int ownerCharId, boolean town) {
-        for (BotEntry entry : getBotEntries(ownerCharId)) {
-            if (!AgentBotRuntimeIdentityRuntime.botHasMap(entry)) {
-                continue;
-            }
-            enterOwnerInactiveSafeMode(entry, AgentBotRuntimeIdentityRuntime.bot(entry), ownerCharId,
-                    town && shouldTownWarpForOwnerInactive(entry));
-        }
+        AgentLeaderSafetyService.issueInactiveSafeModeForLeader(
+                getBotEntries(ownerCharId),
+                town,
+                AgentBotRuntimeIdentityRuntime::botHasMap,
+                this::shouldTownWarpForOwnerInactive,
+                (entry, shouldTown) -> enterOwnerInactiveSafeMode(
+                        entry, AgentBotRuntimeIdentityRuntime.bot(entry), ownerCharId, shouldTown));
     }
 
     private boolean enterOwnerInactiveSafeMode(BotEntry entry, Character bot, int ownerCharId, boolean town) {

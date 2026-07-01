@@ -49,6 +49,10 @@ Recent map updates:
 - BotManager first-entry/representative lookup rule moved to
   `server.agents.runtime.AgentRuntimeRegistry`; BotManager only supplies the
   temporary runtime map.
+- BotManager leader away-safe-mode entry loop moved to
+  `server.agents.runtime.AgentLeaderSafetyService`; BotManager only supplies
+  temporary entry snapshots, map-presence checks, town eligibility, and
+  safe-mode entry callbacks.
 - BotManager script task completion rules moved to
   `server.agents.runtime.AgentScriptTaskCompletionService`; BotManager only
   supplies temporary follow-target resolution and movement distance config.

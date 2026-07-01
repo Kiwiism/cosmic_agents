@@ -61,6 +61,10 @@ Recent reconstruction notes:
 - BotManager first-entry/representative lookup now delegates to
   `server.agents.runtime.AgentRuntimeRegistry`. BotManager still owns the
   temporary runtime map, but the first-entry predicate is Agent-owned.
+- BotManager leader away-safe-mode entry loop now delegates to
+  `server.agents.runtime.AgentLeaderSafetyService`. The no-map skip and
+  `town && eligible` behavior are unchanged; BotManager still supplies
+  temporary runtime snapshots and safe-mode callbacks.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

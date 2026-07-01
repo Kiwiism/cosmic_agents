@@ -16,10 +16,12 @@ import server.life.Monster;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public final class AgentLeaderSafetyService {
@@ -227,5 +229,18 @@ public final class AgentLeaderSafetyService {
                 hooks.resetEntryState(),
                 () -> hooks.startPreciseMoveToClusterTarget().accept(target));
         return true;
+    }
+
+    public static void issueInactiveSafeModeForLeader(List<BotEntry> entries,
+                                                      boolean town,
+                                                      Predicate<BotEntry> hasMap,
+                                                      Predicate<BotEntry> shouldTownWarp,
+                                                      BiConsumer<BotEntry, Boolean> enterSafeMode) {
+        for (BotEntry entry : entries) {
+            if (!hasMap.test(entry)) {
+                continue;
+            }
+            enterSafeMode.accept(entry, town && shouldTownWarp.test(entry));
+        }
     }
 }
