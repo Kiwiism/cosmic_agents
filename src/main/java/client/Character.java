@@ -101,6 +101,7 @@ import scripting.event.EventInstanceManager;
 import scripting.item.ItemScriptManager;
 import server.agents.capabilities.quest.AgentPartyQuestSyncService;
 import server.agents.capabilities.supplies.AgentPotionCheckRequestService;
+import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
 import server.CashShop;
 import server.ExpLogger;
 import server.ExpLogger.ExpLogRecord;
@@ -2178,7 +2179,7 @@ public class Character extends AbstractCharacterObject {
                             updateAriantScore();
                         }
                         try {
-                            server.bots.BotManager.getInstance().notifyOwnerGainedItem(this, mItem);
+                            AgentOwnerItemNotificationService.notifyOwnerGainedItem(this, mItem);
                         } catch (Exception e) {
                             log.warn("Bot notification failed on item pickup (item {})", mItem.getItemId(), e);
                         }

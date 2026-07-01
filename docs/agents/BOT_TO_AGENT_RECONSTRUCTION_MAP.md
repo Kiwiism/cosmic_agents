@@ -21,9 +21,10 @@ Recent map updates:
   Scroll packet handlers call the Agent capability directly, while BotManager
   keeps a temporary compatibility delegate.
 - Owner equip pickup/trade notification behavior moved from BotManager to
-  `server.agents.capabilities.trade.AgentOwnerItemNotificationService`. `Shop`
-  and `Trade` now call the Agent capability directly, and BotManager keeps
-  temporary compatibility delegates for older callers.
+  `server.agents.capabilities.trade.AgentOwnerItemNotificationService`.
+  `Shop`, `Trade`, and field item pickup now call the Agent capability
+  directly, and BotManager keeps temporary compatibility delegates for older
+  callers.
 - Party Agent quest mirroring moved from BotManager to
   `server.agents.capabilities.quest.AgentPartyQuestSyncService`. `Quest` and
   `Character` now call the Agent capability directly for start/complete/progress
