@@ -12,7 +12,6 @@ import server.agents.capabilities.combat.AgentScoredGrindTarget;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.bots.BotNavigationManager;
@@ -289,7 +288,7 @@ public final class AgentBotCombatTargetRuntime {
         }
 
         int occupiedCount = 0;
-        for (BotEntry sibling : BotManager.getInstance().getBotEntries(owner.getId())) {
+        for (BotEntry sibling : AgentBotSessionLifecycleSideEffects.getBotEntries(owner.getId())) {
             if (sibling == context.entry() || sibling == null || !AgentBotModeStateRuntime.grinding(sibling)) {
                 continue;
             }

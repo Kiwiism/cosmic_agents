@@ -100,6 +100,9 @@ Recent map updates:
 - Support-heal jump-anchor resolution now uses `AgentFollowAnchorService` plus
   `AgentBotSessionLifecycleSideEffects.getBotEntries`, removing the direct
   `BotManager.resolveFollowAnchor` call from Agent combat heal runtime.
+- Combat grind region-occupancy scoring now reads sibling Agents through
+  `AgentBotSessionLifecycleSideEffects.getBotEntries`, removing another direct
+  `BotManager.getBotEntries` call from Agent combat target runtime.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.

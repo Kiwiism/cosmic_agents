@@ -112,6 +112,9 @@ Recent reconstruction notes:
 - Support-heal jump-anchor resolution now uses `AgentFollowAnchorService` and
   the Agent session lifecycle gateway instead of calling `BotManager` directly;
   heal targeting, cooldown, jump, and packet behavior are unchanged.
+- Combat grind region-occupancy scoring now reads sibling Agents through the
+  Agent session lifecycle gateway instead of directly calling BotManager; the
+  occupancy filter and penalty math are unchanged.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but
