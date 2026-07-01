@@ -2185,6 +2185,12 @@ Recent reconstruction notes:
   `NO_RESPONSE` cancellation, and reset callback to Agent trade code. The old
   in-method body remains bypassed as compatibility text until the full trade
   tick state machine is migrated.
+- Trade closed-window handling now lives in `AgentTradeClosedWindowService`;
+  BotInventoryManager still owns the enclosing trade tick but delegates
+  single-batch completion reset/refill, multi-batch between-batch transition,
+  owner-cancelled reply/reset/refill, and declined-invite reply/reset to Agent
+  trade code. The old in-method body remains bypassed as compatibility text
+  until the full trade tick state machine is migrated.
 - Trade batch-open orchestration now lives in `AgentTradeBatchService`;
   BotInventoryManager and AgentSupplyShareTradeService still supply the
   temporary recipient lookup/cancel/start/invite/reply callbacks, but recipient

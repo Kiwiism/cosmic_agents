@@ -42,6 +42,7 @@ import server.agents.capabilities.trade.AgentTradeAllItemsAddedService;
 import server.agents.capabilities.trade.AgentTradeBatchService;
 import server.agents.capabilities.trade.AgentTradeCancellationService;
 import server.agents.capabilities.trade.AgentTradeCategoryAnnouncementService;
+import server.agents.capabilities.trade.AgentTradeClosedWindowService;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
 import server.agents.capabilities.trade.AgentTradeCompletionService;
 import server.agents.capabilities.trade.AgentTradeConfirmWaitService;
@@ -433,6 +434,13 @@ public class BotInventoryManager {
 
         // ── Trade was closed externally ────────────────────────────────────
         if (trade == null) {
+            if (AgentTradeClosedWindowService.handleClosedTrade(
+                    entry,
+                    () -> BotMovementManager.delayAfterCurrentTick(1_000),
+                    () -> resetTradeState(entry, bot),
+                    () -> BotEquipManager.autoEquip(bot, AgentBotRuntimeIdentityRuntime.owner(entry), null))) {
+                return;
+            }
             if (AgentBotPendingTradeStateRuntime.botDone(entry)) {
                 // Both sides confirmed — sequence complete or cancelled after bot OK
                 if (AgentBotPendingTradeStateRuntime.singleBatch(entry)) {
