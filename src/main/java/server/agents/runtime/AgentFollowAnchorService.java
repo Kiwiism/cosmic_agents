@@ -16,7 +16,16 @@ public final class AgentFollowAnchorService {
             return null;
         }
 
-        int targetId = AgentBotModeStateRuntime.followTargetId(entry);
+        return resolveTarget(entry, leader, AgentBotModeStateRuntime.followTargetId(entry), siblingEntries);
+    }
+
+    public static Character resolveTarget(BotEntry entry,
+                                          Character leader,
+                                          int targetId,
+                                          List<BotEntry> siblingEntries) {
+        if (leader == null) {
+            return null;
+        }
         if (targetId <= 0 || targetId == leader.getId() || targetId == AgentBotRuntimeIdentityRuntime.botId(entry)) {
             return leader;
         }

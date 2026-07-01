@@ -2570,6 +2570,9 @@ Recent reconstruction notes:
 - Dead-state tick handling now lives in
   `server.agents.runtime.AgentDeathTickService`; BotManager still supplies the
   temporary combat death-state entry and respawn side-effect callbacks.
+- Scripted follow-target character resolution now lives in
+  `server.agents.runtime.AgentFollowAnchorService`; BotManager still supplies
+  the temporary same-leader sibling entry list for script task compatibility.
 
 Initial reconstruction order:
 

@@ -3128,28 +3128,8 @@ public class BotManager {
 
     private Character resolveFollowCharacterById(BotEntry entry, int targetCharacterId) {
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
-        if (entry == null || targetCharacterId <= 0) {
-            return owner;
-        }
-        if (owner != null && owner.getId() == targetCharacterId) {
-            return owner;
-        }
-        if (owner != null && owner.getParty() != null) {
-            for (Character member : owner.getPartyMembersOnline()) {
-                if (member != null && member.getId() == targetCharacterId && member.isLoggedinWorld()) {
-                    return member;
-                }
-            }
-        }
-        if (owner != null) {
-            for (BotEntry sibling : getBotEntries(owner.getId())) {
-                Character siblingBot = AgentBotRuntimeIdentityRuntime.bot(sibling);
-                if (siblingBot != null && siblingBot.getId() == targetCharacterId && siblingBot.isLoggedinWorld()) {
-                    return siblingBot;
-                }
-            }
-        }
-        return owner;
+        List<BotEntry> siblingEntries = owner == null ? List.of() : getBotEntries(owner.getId());
+        return AgentFollowAnchorService.resolveTarget(entry, owner, targetCharacterId, siblingEntries);
     }
 
     /**

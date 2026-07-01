@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- BotManager scripted follow-target resolution moved to
+  `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
+  the temporary sibling entry list.
 - BotManager dead-state tick handling moved to
   `server.agents.runtime.AgentDeathTickService`; BotManager only supplies
   temporary combat death-entry and respawn callbacks.

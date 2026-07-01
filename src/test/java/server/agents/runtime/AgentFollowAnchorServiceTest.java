@@ -90,6 +90,57 @@ class AgentFollowAnchorServiceTest {
         assertSame(leader, resolved);
     }
 
+    @Test
+    void resolveTargetReturnsNullWhenLeaderIsMissing() {
+        BotEntry entry = new BotEntry(character(200, true), null, null);
+
+        assertNull(AgentFollowAnchorService.resolveTarget(entry, null, 300, List.of()));
+    }
+
+    @Test
+    void resolveTargetReturnsLeaderForMissingLeaderTargetOrSelfTarget() {
+        Character leader = character(100, true);
+        Character agent = character(200, true);
+        BotEntry entry = new BotEntry(agent, leader, null);
+
+        assertSame(leader, AgentFollowAnchorService.resolveTarget(entry, leader, 0, List.of()));
+        assertSame(leader, AgentFollowAnchorService.resolveTarget(entry, leader, leader.getId(), List.of()));
+        assertSame(leader, AgentFollowAnchorService.resolveTarget(entry, leader, agent.getId(), List.of()));
+    }
+
+    @Test
+    void resolveTargetUsesOnlinePartyMemberBeforeSibling() {
+        Character leader = character(100, true);
+        Character partyMember = character(300, true);
+        Character siblingAgent = character(300, true);
+        BotEntry entry = new BotEntry(character(200, true), leader, null);
+        when(leader.getParty()).thenReturn(mock(Party.class));
+        when(leader.getPartyMembersOnline()).thenReturn(List.of(partyMember));
+
+        Character resolved = AgentFollowAnchorService.resolveTarget(
+                entry,
+                leader,
+                partyMember.getId(),
+                List.of(new BotEntry(siblingAgent, leader, null)));
+
+        assertSame(partyMember, resolved);
+    }
+
+    @Test
+    void resolveTargetUsesOnlineSiblingWhenPartyDoesNotMatch() {
+        Character leader = character(100, true);
+        Character siblingAgent = character(300, true);
+        BotEntry entry = new BotEntry(character(200, true), leader, null);
+
+        Character resolved = AgentFollowAnchorService.resolveTarget(
+                entry,
+                leader,
+                siblingAgent.getId(),
+                List.of(new BotEntry(siblingAgent, leader, null)));
+
+        assertSame(siblingAgent, resolved);
+    }
+
     private static Character character(int id, boolean loggedIn) {
         Character character = mock(Character.class);
         when(character.getId()).thenReturn(id);
