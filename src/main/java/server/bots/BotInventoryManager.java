@@ -39,6 +39,7 @@ import server.agents.capabilities.trade.AgentTradeItemAddTickService;
 import server.agents.capabilities.trade.AgentTradeInviteWaitService;
 import server.agents.capabilities.trade.AgentTradeRecipientService;
 import server.agents.capabilities.trade.AgentTradeResetService;
+import server.agents.capabilities.trade.AgentTradeSequenceCallbackService;
 import server.agents.capabilities.trade.AgentTradeSequenceOrchestrator;
 import server.agents.capabilities.trade.AgentTradeTickService;
 import server.agents.capabilities.trade.AgentTradeTransferAvailabilityService;
@@ -205,7 +206,7 @@ public class BotInventoryManager {
     }
 
     private static AgentTradeSequenceOrchestrator.SequenceCallbacks tradeSequenceCallbacks(BotEntry entry, Character bot) {
-        return AgentTradeSequenceOrchestrator.SequenceCallbacks.of(
+        return AgentTradeSequenceCallbackService.sequenceCallbacks(
                 () -> AgentTradeRecipientService.resolveTradeRecipient(entry, bot),
                 () -> cancelTradeSequence(entry, bot, "can't trade right now, stopping"),
                 () -> Trade.startTrade(bot),

@@ -2178,6 +2178,10 @@ Recent reconstruction notes:
   inhibit, active trade suppression, inventory-full warning cooldowns, owner
   lookup, pickup side effects, auto-equip, loot-offer prompts, and ghost-drop
   cleanup.
+- Trade sequence callback construction now lives in
+  `AgentTradeSequenceCallbackService`; `BotInventoryManager` supplies temporary
+  operations for recipient resolution, unavailable-trade cancellation, trade
+  start/invite, invitation reply selection, and immediate reply delivery.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and

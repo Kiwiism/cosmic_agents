@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotInventoryManager` trade sequence callback construction now lives in
+  `AgentTradeSequenceCallbackService`; the bot inventory shell only wires
+  temporary recipient/cancel/start/invite/reply operations.
 - `BotInventoryManager.tickPassiveLoot` passive pickup orchestration now lives
   in `AgentPassiveLootService`; the bot inventory shell only wires temporary
   callbacks for runtime state, owner lookup, pickup/auto-equip side effects,
