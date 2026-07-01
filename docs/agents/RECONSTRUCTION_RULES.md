@@ -2186,6 +2186,9 @@ Recent reconstruction notes:
   `BotInventoryManager.tickTrade` supplies temporary operations for countdown,
   current trade lookup, between-batch progression, closed-window handling,
   invite wait, item add, and confirmation wait handling.
+- Stale `BotInventoryManager` imports for migrated inventory dialogue,
+  inventory trade policy, USE-item classification, and manual-trade state
+  helpers were removed after those responsibilities moved to Agent modules.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and

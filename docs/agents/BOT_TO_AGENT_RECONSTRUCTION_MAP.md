@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Stale `BotInventoryManager` imports for migrated inventory dialogue,
+  inventory trade policy, USE-item classification, and manual-trade state
+  helpers were removed.
 - `BotInventoryManager.tickTrade` trade tick callback construction now lives in
   `AgentTradeTickCallbackService`; the bot inventory shell only wires temporary
   countdown/current-trade/between-batch/closed-window/invite/item/confirm
