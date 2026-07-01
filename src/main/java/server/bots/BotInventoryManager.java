@@ -41,6 +41,7 @@ import server.agents.capabilities.trade.AgentTradeRecipientService;
 import server.agents.capabilities.trade.AgentTradeResetService;
 import server.agents.capabilities.trade.AgentTradeSequenceCallbackService;
 import server.agents.capabilities.trade.AgentTradeSequenceOrchestrator;
+import server.agents.capabilities.trade.AgentTradeTickCallbackService;
 import server.agents.capabilities.trade.AgentTradeTickService;
 import server.agents.capabilities.trade.AgentTradeTransferAvailabilityService;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
@@ -220,7 +221,7 @@ public class BotInventoryManager {
         AgentTradeTickService.tickTrade(
                 entry,
                 bot,
-                AgentTradeTickService.TradeTickCallbacks.of(
+                AgentTradeTickCallbackService.tradeTickCallbacks(
                         BotMovementManager::tickDown,
                         bot::getTrade,
                         () -> AgentTradeBetweenBatchService.tickBetweenBatches(

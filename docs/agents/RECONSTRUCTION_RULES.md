@@ -2182,6 +2182,10 @@ Recent reconstruction notes:
   `AgentTradeSequenceCallbackService`; `BotInventoryManager` supplies temporary
   operations for recipient resolution, unavailable-trade cancellation, trade
   start/invite, invitation reply selection, and immediate reply delivery.
+- Trade tick callback construction now lives in `AgentTradeTickCallbackService`;
+  `BotInventoryManager.tickTrade` supplies temporary operations for countdown,
+  current trade lookup, between-batch progression, closed-window handling,
+  invite wait, item add, and confirmation wait handling.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and

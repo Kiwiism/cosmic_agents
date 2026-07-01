@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotInventoryManager.tickTrade` trade tick callback construction now lives in
+  `AgentTradeTickCallbackService`; the bot inventory shell only wires temporary
+  countdown/current-trade/between-batch/closed-window/invite/item/confirm
+  operations.
 - `BotInventoryManager` trade sequence callback construction now lives in
   `AgentTradeSequenceCallbackService`; the bot inventory shell only wires
   temporary recipient/cancel/start/invite/reply operations.
