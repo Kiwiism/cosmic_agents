@@ -6,13 +6,25 @@ import server.bots.BotEntry;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Agent-owned lookup helpers over the temporary BotEntry-backed runtime map.
  * Storage remains in BotManager during reconstruction; lookup behavior lives here.
  */
 public final class AgentRuntimeRegistry {
+    private static final Map<Integer, List<BotEntry>> entriesByLeaderId = new ConcurrentHashMap<>();
+
     private AgentRuntimeRegistry() {
+    }
+
+    public static Map<Integer, List<BotEntry>> entriesByLeaderId() {
+        return entriesByLeaderId;
+    }
+
+    public static List<BotEntry> mutableEntriesForLeader(int leaderCharId) {
+        return entriesByLeaderId.computeIfAbsent(leaderCharId, ignored -> new CopyOnWriteArrayList<>());
     }
 
     public static BotEntry findByCharacterId(Map<Integer, List<BotEntry>> entriesByLeaderId,

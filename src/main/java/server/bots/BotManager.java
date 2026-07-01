@@ -177,7 +177,7 @@ public class BotManager {
     public static String setBotCombatConfig(String name, String value) { return AgentCombatConfig.setConfigField(name, value); }
 
     // ownerCharId → list of owned bot entries (1:N)
-    private final Map<Integer, List<BotEntry>> bots = new ConcurrentHashMap<>();
+    private final Map<Integer, List<BotEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
     // ownerCharId → cluster-anchor town position. First bot to warp picks a random
     // portal in the return map; later bots warp to a randomized nearby offset.
     // Cleared when the owner becomes active again.
@@ -480,7 +480,7 @@ public class BotManager {
     }
 
     private BotEntry registerBotInternal(int ownerCharId, Character owner, Character bot, boolean normalizeSpawnState) {
-        List<BotEntry> entries = bots.computeIfAbsent(ownerCharId, k -> new CopyOnWriteArrayList<>());
+        List<BotEntry> entries = AgentRuntimeRegistry.mutableEntriesForLeader(ownerCharId);
         // Replace if same bot character is already registered (e.g. relog)
         entries.removeIf(e -> {
             if (AgentBotRuntimeIdentityRuntime.botIs(e, bot.getId())) {

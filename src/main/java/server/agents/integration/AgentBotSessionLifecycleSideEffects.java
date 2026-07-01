@@ -3,6 +3,7 @@ package server.agents.integration;
 import client.Character;
 
 import java.util.List;
+import server.agents.runtime.AgentRuntimeRegistry;
 import server.bots.BotEntry;
 import server.bots.BotManager;
 
@@ -19,11 +20,11 @@ public final class AgentBotSessionLifecycleSideEffects {
     }
 
     public static List<BotEntry> getBotEntries(int ownerCharId) {
-        return BotManager.getInstance().getBotEntries(ownerCharId);
+        return AgentRuntimeRegistry.entriesForLeader(AgentRuntimeRegistry.entriesByLeaderId(), ownerCharId);
     }
 
     public static BotEntry getBotEntry(int ownerCharId, String agentName) {
-        return BotManager.getInstance().getBotEntry(ownerCharId, agentName);
+        return AgentRuntimeRegistry.findByName(AgentRuntimeRegistry.entriesByLeaderId(), ownerCharId, agentName);
     }
 
     public static void issueOwnerAwaySafeModeForLeader(int ownerCharId, boolean town) {
@@ -31,6 +32,6 @@ public final class AgentBotSessionLifecycleSideEffects {
     }
 
     public static Character activeLeaderByAgentCharacterId(int agentCharId) {
-        return BotManager.getInstance().getActiveOwnerByBotCharId(agentCharId);
+        return AgentRuntimeRegistry.activeLeaderByAgentCharacterId(AgentRuntimeRegistry.entriesByLeaderId(), agentCharId);
     }
 }

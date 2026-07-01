@@ -160,6 +160,9 @@ Recent map updates:
 - BotManager follow-target position resolver moved to
   `server.agents.runtime.AgentFollowTargetPositionService`; the Agent movement
   target gateway now captures snapshots without calling BotManager.
+- BotManager live entry map moved to
+  `server.agents.runtime.AgentRuntimeRegistry`; BotManager keeps a compatibility
+  alias while Agent session lookup bridges read the Agent-owned registry.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.

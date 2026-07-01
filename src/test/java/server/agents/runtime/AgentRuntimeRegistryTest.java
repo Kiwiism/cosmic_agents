@@ -65,6 +65,18 @@ class AgentRuntimeRegistryTest {
         assertThrows(UnsupportedOperationException.class, () -> snapshot.add(entry));
     }
 
+    @Test
+    void ownsMutableLiveEntryStore() {
+        Character leader = character(100, "Leader");
+        BotEntry entry = new BotEntry(character(200, "Alpha"), leader, null);
+        AgentRuntimeRegistry.entriesByLeaderId().clear();
+
+        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(entry);
+
+        assertSame(entry, AgentRuntimeRegistry.firstEntry(AgentRuntimeRegistry.entriesByLeaderId(), leader.getId()));
+        AgentRuntimeRegistry.entriesByLeaderId().clear();
+    }
+
     private static Character character(int id, String name) {
         Character character = mock(Character.class);
         when(character.getId()).thenReturn(id);

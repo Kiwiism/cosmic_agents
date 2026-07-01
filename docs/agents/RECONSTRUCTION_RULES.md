@@ -176,6 +176,9 @@ Recent reconstruction notes:
   `AgentFollowTargetPositionService`, and `AgentBotMovementTargetSideEffects`
   captures movement snapshots directly through Agent runtime services instead
   of calling `BotManager.captureTargetSnapshot`.
+- Live runtime entry storage now lives in `AgentRuntimeRegistry`; BotManager's
+  `bots` field remains a compatibility alias, and Agent session lookup bridges
+  read entries directly from the Agent-owned registry.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

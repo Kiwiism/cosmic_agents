@@ -20,6 +20,7 @@ import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
 import server.agents.integration.AgentBotCombatAttackRuntime;
 import server.agents.integration.AgentBotCombatPlanRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
+import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentTargetSnapshot;
 import client.Character;
 import client.BuffStat;
@@ -818,21 +819,23 @@ class BotManagerTest {
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
         MapItem loot = mockLoot(1, new Point(100 + BotManager.cfg.LOOT_RADIUS + 1, 100));
         int lootObjectId = loot.getObjectId();
-        BotManager manager = mock(BotManager.class);
         Character dropBotOwner = mock(Character.class);
+        Character dropBot = mock(Character.class);
 
+        when(dropBot.getId()).thenReturn(99);
         when(loot.getOwnerId()).thenReturn(99);
         when(loot.isPlayerDrop()).thenReturn(true);
         when(loot.getDropTime()).thenReturn(System.currentTimeMillis() - 14_000L);
-        when(manager.getActiveOwnerByBotCharId(99)).thenReturn(dropBotOwner);
         doReturn(List.of(loot)).when(map).getDroppedItems();
         doReturn(loot).when(map).getMapObject(lootObjectId);
 
-        try (MockedStatic<BotManager> botManagers = mockStatic(BotManager.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
-            botManagers.when(BotManager::getInstance).thenReturn(manager);
+        AgentRuntimeRegistry.entriesByLeaderId().put(1, new CopyOnWriteArrayList<>(List.of(new BotEntry(dropBot, dropBotOwner, null))));
+        try {
 
             assertNull(AgentLootTargetService.findNearestGrindLootTarget(
                     entry, bot, BotManager.cfg.LOOT_RADIUS, AgentBotGrindLootStateRuntime::isRetrySuppressed));
+        } finally {
+            AgentRuntimeRegistry.entriesByLeaderId().clear();
         }
     }
 
@@ -843,21 +846,23 @@ class BotManagerTest {
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
         MapItem loot = mockLoot(1, new Point(100 + BotManager.cfg.LOOT_RADIUS + 21, 100));
         int lootObjectId = loot.getObjectId();
-        BotManager manager = mock(BotManager.class);
         Character dropBotOwner = mock(Character.class);
+        Character dropBot = mock(Character.class);
 
         AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, loot);
+        when(dropBot.getId()).thenReturn(99);
         when(loot.getOwnerId()).thenReturn(99);
         when(loot.isPlayerDrop()).thenReturn(true);
         when(loot.getDropTime()).thenReturn(System.currentTimeMillis() - 14_000L);
-        when(manager.getActiveOwnerByBotCharId(99)).thenReturn(dropBotOwner);
         doReturn(loot).when(map).getMapObject(lootObjectId);
 
-        try (MockedStatic<BotManager> botManagers = mockStatic(BotManager.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
-            botManagers.when(BotManager::getInstance).thenReturn(manager);
+        AgentRuntimeRegistry.entriesByLeaderId().put(1, new CopyOnWriteArrayList<>(List.of(new BotEntry(dropBot, dropBotOwner, null))));
+        try {
 
             assertNull(BotManager.convenientLootTarget(entry, bot.getPosition(), new Point(500, 100)));
             assertNull(AgentBotGrindLootStateRuntime.grindLootTarget(entry));
+        } finally {
+            AgentRuntimeRegistry.entriesByLeaderId().clear();
         }
     }
 
