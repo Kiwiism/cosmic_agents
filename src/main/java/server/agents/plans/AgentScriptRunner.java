@@ -31,7 +31,12 @@ public final class AgentScriptRunner {
             return;
         }
 
-        AgentScriptContext ctx = new AgentScriptContext(entry, bot, owner, BotManager.getInstance());
+        AgentScriptContext ctx = new AgentScriptContext(
+                entry,
+                bot,
+                owner,
+                BotManager.getInstance()::isCheapScriptMoveTarget,
+                BotManager.getInstance()::issueDropItem);
         AgentScriptStep step = steps.get(AgentBotScriptTaskStateRuntime.scriptStepIndex(entry));
         if (!AgentBotScriptTaskStateRuntime.scriptStepEntered(entry)) {
             step.enter(ctx);

@@ -148,7 +148,7 @@ public final class AgentKpqStage1 {
         int need = AgentBotPqRuntime.kpqCouponTarget(ctx.entry());
 
         if (have > need) {
-            ctx.manager().issueDropItem(ctx.entry(), InventoryType.ETC, ITEM_COUPON, (short) (have - need));
+            ctx.dropItem(InventoryType.ETC, ITEM_COUPON, (short) (have - need));
             have = need;
         }
 

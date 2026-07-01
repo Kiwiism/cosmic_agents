@@ -5,21 +5,36 @@ import client.inventory.InventoryType;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
 import server.agents.runtime.AgentScriptTaskQueueService;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 
 import java.awt.*;
 
 public final class AgentScriptContext {
+    @FunctionalInterface
+    public interface CheapMoveTargetCheck {
+        boolean isCheap(BotEntry entry, Point point, int maxPathCost, int fallbackRangeX, int fallbackRangeY);
+    }
+
+    @FunctionalInterface
+    public interface DropItemAction {
+        boolean drop(BotEntry entry, InventoryType type, int itemId, short quantity);
+    }
+
     private final BotEntry entry;
     private final Character bot;
     private final Character owner;
-    private final BotManager manager;
+    private final CheapMoveTargetCheck cheapMoveTargetCheck;
+    private final DropItemAction dropItemAction;
 
-    public AgentScriptContext(BotEntry entry, Character bot, Character owner, BotManager manager) {
+    public AgentScriptContext(BotEntry entry,
+                              Character bot,
+                              Character owner,
+                              CheapMoveTargetCheck cheapMoveTargetCheck,
+                              DropItemAction dropItemAction) {
         this.entry = entry;
         this.bot = bot;
         this.owner = owner;
-        this.manager = manager;
+        this.cheapMoveTargetCheck = cheapMoveTargetCheck;
+        this.dropItemAction = dropItemAction;
     }
 
     public BotEntry entry() {
@@ -32,10 +47,6 @@ public final class AgentScriptContext {
 
     public Character owner() {
         return owner;
-    }
-
-    public BotManager manager() {
-        return manager;
     }
 
     public int getInt(String key) {
@@ -78,11 +89,15 @@ public final class AgentScriptContext {
         AgentScriptTaskQueueService.queueTask(entry, AgentTask.dropItem(type, itemId, quantity));
     }
 
+    public boolean dropItem(InventoryType type, int itemId, short quantity) {
+        return dropItemAction.drop(entry, type, itemId, quantity);
+    }
+
     public boolean tasksDone() {
         return !AgentScriptTaskQueueService.hasQueuedTasks(entry);
     }
 
     public boolean isCheapMoveTarget(Point point, int maxPathCost, int fallbackRangeX, int fallbackRangeY) {
-        return manager.isCheapScriptMoveTarget(entry, point, maxPathCost, fallbackRangeX, fallbackRangeY);
+        return cheapMoveTargetCheck.isCheap(entry, point, maxPathCost, fallbackRangeX, fallbackRangeY);
     }
 }

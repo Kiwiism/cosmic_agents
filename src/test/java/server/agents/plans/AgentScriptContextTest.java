@@ -5,12 +5,13 @@ import client.inventory.InventoryType;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 
 import java.awt.Point;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -67,6 +68,49 @@ class AgentScriptContextTest {
         assertFalse(context.tasksDone());
     }
 
+    @Test
+    void cheapMoveTargetUsesInjectedCheck() {
+        AgentScriptContext context = context();
+        AtomicReference<BotEntry> checkedEntry = new AtomicReference<>();
+        AgentScriptContext checkedContext = new AgentScriptContext(
+                context.entry(),
+                context.bot(),
+                context.owner(),
+                (entry, point, maxPathCost, fallbackRangeX, fallbackRangeY) -> {
+                    checkedEntry.set(entry);
+                    assertEquals(new Point(10, 20), point);
+                    assertEquals(100, maxPathCost);
+                    assertEquals(30, fallbackRangeX);
+                    assertEquals(40, fallbackRangeY);
+                    return true;
+                },
+                (entry, type, itemId, quantity) -> false);
+
+        assertTrue(checkedContext.isCheapMoveTarget(new Point(10, 20), 100, 30, 40));
+        assertSame(context.entry(), checkedEntry.get());
+    }
+
+    @Test
+    void dropItemUsesInjectedAction() {
+        AgentScriptContext context = context();
+        AtomicReference<BotEntry> droppedEntry = new AtomicReference<>();
+        AgentScriptContext dropContext = new AgentScriptContext(
+                context.entry(),
+                context.bot(),
+                context.owner(),
+                (entry, point, maxPathCost, fallbackRangeX, fallbackRangeY) -> false,
+                (entry, type, itemId, quantity) -> {
+                    droppedEntry.set(entry);
+                    assertEquals(InventoryType.ETC, type);
+                    assertEquals(4000000, itemId);
+                    assertEquals((short) 2, quantity);
+                    return true;
+                });
+
+        assertTrue(dropContext.dropItem(InventoryType.ETC, 4000000, (short) 2));
+        assertSame(context.entry(), droppedEntry.get());
+    }
+
     private static AgentTask nextTask(AgentScriptContext context) {
         AgentTask task = AgentBotScriptTaskStateRuntime.activateNextTask(context.entry());
         AgentBotScriptTaskStateRuntime.clearActiveTask(context.entry());
@@ -76,7 +120,9 @@ class AgentScriptContextTest {
     private static AgentScriptContext context() {
         Character owner = character(100);
         BotEntry entry = new BotEntry(character(200), owner, null);
-        return new AgentScriptContext(entry, entry.bot(), owner, mock(BotManager.class));
+        return new AgentScriptContext(entry, entry.bot(), owner, (ignoredEntry, ignoredPoint, ignoredMaxPathCost,
+                ignoredFallbackRangeX, ignoredFallbackRangeY) -> false, (ignoredEntry, ignoredType, ignoredItemId,
+                ignoredQuantity) -> false);
     }
 
     private static Character character(int id) {

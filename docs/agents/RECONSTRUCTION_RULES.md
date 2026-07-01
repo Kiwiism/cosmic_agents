@@ -81,6 +81,11 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentScriptTaskQueueService` directly instead of
   routing through BotManager. The same queued task shapes and clear-and-bump
   behavior are preserved.
+- Agent script context now receives a narrow cheap-move callback instead of a
+  `BotManager` instance, plus a narrow drop-item callback for KPQ coupon drops.
+  `AgentScriptRunner` still supplies the current BotManager-backed callbacks
+  temporarily, preserving the exact cheap-move and drop results while shrinking
+  the context dependency.
 - BotManager local near-distance checks now delegate to
   `server.agents.runtime.AgentPositionService`. The null handling and
   inclusive per-axis distance behavior are unchanged.
