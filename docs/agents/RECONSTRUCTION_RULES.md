@@ -2151,6 +2151,10 @@ Recent reconstruction notes:
   `BotInventoryManager.tickManualTrade` supplies temporary callbacks for
   same-owner authorization, delayed invite accept, completion, refill, and
   greeting clearing while preserving the old branch behavior.
+- Manual owner trade routing now lives in `AgentManualOwnerTradeService`;
+  `BotInventoryManager.tickManualTrade` supplies temporary callbacks for
+  delayed owner-invite accept, one-time greeting emission, completion, and
+  post-trade auto-equip refill while preserving the old branch behavior.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and

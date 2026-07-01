@@ -33,8 +33,9 @@ import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy.AmmoTradeGr
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.EquipsGroup;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
-import server.agents.capabilities.trade.AgentManualTradeService;
+import server.agents.capabilities.trade.AgentManualOwnerTradeService;
 import server.agents.capabilities.trade.AgentManualPeerTradeService;
+import server.agents.capabilities.trade.AgentManualTradeService;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.trade.AgentTradeBetweenBatchService;
 import server.agents.capabilities.trade.AgentTradeCancellationService;
@@ -198,25 +199,22 @@ public class BotInventoryManager {
             return;
         }
 
-        if (!trade.isFullTrade()) {
-            // Only accept on bot's behalf when the owner was the initiator (bot is slot 1).
-            // When bot is slot 0 (bot initiated via "trade me"), wait for owner to accept.
-            trade = AgentManualTradeService.acceptInviteWhenReady(
-                    entry,
-                    bot,
-                    owner,
-                    trade,
-                    500 + BotMovementManager.cfg.TICK_MS,
-                    BotMovementManager::tickDown);
-            if (trade == null || !trade.isFullTrade()) return;
-        }
-
-        AgentManualTradeService.sendGreetingOnce(bot, trade, () -> BotManager.getInstance().manualTradeGreeting());
-
-        if (trade.isPartnerConfirmed()) {
-            completeTradeAndThank(entry, bot, trade);
-            BotEquipManager.autoEquip(bot, owner, null);
-        }
+        AgentManualOwnerTradeService.tickOwnerTrade(
+                bot,
+                owner,
+                trade,
+                AgentManualOwnerTradeService.OwnerTradeCallbacks.of(
+                        (inviter, pendingTrade) -> AgentManualTradeService.acceptInviteWhenReady(
+                                entry,
+                                bot,
+                                inviter,
+                                pendingTrade,
+                                500 + BotMovementManager.cfg.TICK_MS,
+                                BotMovementManager::tickDown),
+                        AgentManualTradeService::sendGreetingOnce,
+                        () -> BotManager.getInstance().manualTradeGreeting(),
+                        completedTrade -> completeTradeAndThank(entry, bot, completedTrade),
+                        tradeOwner -> BotEquipManager.autoEquip(bot, tradeOwner, null)));
     }
 
     // ─── Entry point from chat choice ─────────────────────────────────────────

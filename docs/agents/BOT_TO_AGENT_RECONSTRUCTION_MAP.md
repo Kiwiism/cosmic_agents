@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotInventoryManager.tickManualTrade` owner-side manual trade routing now
+  lives in `AgentManualOwnerTradeService`; the bot inventory shell only supplies
+  temporary callbacks for delayed owner-invite accept, one-time greeting,
+  completion, and post-trade auto-equip refill.
 - `BotCombatManager` debug-stat target search and attack-plan lookup no longer
   sit on the report path. `AgentBotCombatReportRuntime` now calls
   `AgentBotCombatTargetRuntime` and `AgentBotCombatPlanRuntime` directly, while
