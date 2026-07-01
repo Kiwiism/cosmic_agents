@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotInventoryManager` trade lifecycle helper wiring now lives in
+  `AgentTradeLifecycleService`; the bot inventory shell only supplies temporary
+  callbacks for restore/clear/owner/refill/reply-randomization operations.
 - `BotInventoryManager` no longer imports `AgentInventoryTradeCollectionService`
   directly after item collection wiring moved to `AgentTradeItemCollectionService`.
 - `BotInventoryManager` and `AgentInventoryTransferService` trade item

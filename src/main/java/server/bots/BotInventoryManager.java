@@ -34,6 +34,7 @@ import server.agents.capabilities.trade.AgentTradeConfirmWaitService;
 import server.agents.capabilities.trade.AgentTradeItemAddTickService;
 import server.agents.capabilities.trade.AgentTradeItemCollectionService;
 import server.agents.capabilities.trade.AgentTradeInviteWaitService;
+import server.agents.capabilities.trade.AgentTradeLifecycleService;
 import server.agents.capabilities.trade.AgentTradeRecipientService;
 import server.agents.capabilities.trade.AgentTradeResetService;
 import server.agents.capabilities.trade.AgentTradeSequenceCallbackService;
@@ -263,28 +264,28 @@ public class BotInventoryManager {
     }
 
     private static void cancelTradeSequence(BotEntry entry, Character bot, String msg) {
-        AgentTradeCancellationService.cancelSequence(entry, bot, msg, () -> resetTradeState(entry, bot));
+        AgentTradeLifecycleService.cancelTradeSequence(entry, bot, msg, tradeLifecycleCallbacks());
     }
 
     private static void clearManualTradeState(BotEntry entry, Character bot) {
-        AgentManualTradeService.clearState(entry, bot);
+        AgentTradeLifecycleService.clearManualTradeState(entry, bot, tradeLifecycleCallbacks());
     }
 
     private static void resetTradeState(BotEntry entry, Character bot) {
-        AgentTradeResetService.reset(
-                entry,
-                bot,
-                () -> AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems(entry, bot),
-                () -> clearManualTradeState(entry, bot),
-                () -> BotEquipManager.autoEquip(bot, AgentBotRuntimeIdentityRuntime.owner(entry), null));
+        AgentTradeLifecycleService.resetTradeState(entry, bot, tradeLifecycleCallbacks());
     }
 
     private static void completeTradeAndThank(BotEntry entry, Character bot, Trade trade) {
-        AgentTradeCompletionService.completeAndReact(
-                entry,
-                bot,
-                trade,
-                () -> BotManager.randMs(800, 1300),
+        AgentTradeLifecycleService.completeTradeAndReact(entry, bot, trade, tradeLifecycleCallbacks());
+    }
+
+    private static AgentTradeLifecycleService.LifecycleCallbacks tradeLifecycleCallbacks() {
+        return AgentTradeLifecycleService.LifecycleCallbacks.of(
+                AgentEquippedSlotTradeService::restoreTemporarilyUnequippedItems,
+                AgentManualTradeService::clearState,
+                AgentBotRuntimeIdentityRuntime::owner,
+                (agent, owner) -> BotEquipManager.autoEquip(agent, owner, null),
+                BotManager::randMs,
                 () -> BotManager.randomReply(AgentDialogueCatalog.tradeThanksReplies()),
                 () -> BotManager.randomReply(AgentDialogueCatalog.tradeFreebieReplies()),
                 () -> ThreadLocalRandom.current().nextInt(100),

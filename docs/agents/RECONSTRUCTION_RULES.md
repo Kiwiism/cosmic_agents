@@ -2199,6 +2199,10 @@ Recent reconstruction notes:
 - The stale `BotInventoryManager` direct import of
   `AgentInventoryTradeCollectionService` was removed after item collection
   wiring moved behind `AgentTradeItemCollectionService`.
+- Trade lifecycle helper wiring now lives in `AgentTradeLifecycleService`;
+  `BotInventoryManager` supplies temporary callbacks for manual-state clearing,
+  temporarily unequipped item restoration, owner lookup, equipment refill, reply
+  delay/randomization, and trade reaction replies.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and
