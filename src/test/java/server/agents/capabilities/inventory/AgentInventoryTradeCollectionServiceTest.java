@@ -10,10 +10,12 @@ import server.agents.capabilities.inventory.AgentInventoryTradeCollectionService
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -145,6 +147,63 @@ class AgentInventoryTradeCollectionServiceTest {
         assertEquals(List.of(own), AgentInventoryTradeCollectionService.collectItems(
                 "ammo:own", mock(Character.class), mock(Character.class), List::of,
                 () -> groups(List.of(), List.of(), List.of()), () -> groups));
+    }
+
+    @Test
+    void transferableAvailabilityHandlesMesosLikeLegacyInventory() {
+        Character agent = mock(Character.class);
+        when(agent.getMeso()).thenReturn(1000);
+
+        assertTrue(AgentInventoryTradeCollectionService.hasTransferableItems(
+                "mesos", agent, fragment -> 0, List::of));
+        assertTrue(AgentInventoryTradeCollectionService.hasTransferableItems(
+                "mesos:500", agent, fragment -> 0, List::of));
+        assertFalse(AgentInventoryTradeCollectionService.hasTransferableItems(
+                "mesos:1500", agent, fragment -> 0, List::of));
+        assertEquals(1000, AgentInventoryTradeCollectionService.countTransferableItems(
+                "mesos:500", agent, fragment -> 0, fragment -> 0, () -> 7));
+    }
+
+    @Test
+    void transferableAvailabilityChecksEquippedNamedItemsBeforeBagItems() {
+        Character agent = mock(Character.class);
+        AtomicReference<String> fragmentSeen = new AtomicReference<>();
+        AtomicBoolean collected = new AtomicBoolean(false);
+
+        boolean hasItems = AgentInventoryTradeCollectionService.hasTransferableItems(
+                "name:cape",
+                agent,
+                fragment -> {
+                    fragmentSeen.set(fragment);
+                    return 1;
+                },
+                () -> {
+                    collected.set(true);
+                    return List.of();
+                });
+
+        assertTrue(hasItems);
+        assertEquals("cape", fragmentSeen.get());
+        assertFalse(collected.get());
+    }
+
+    @Test
+    void transferableCountAddsNamedBagAndEquippedSlotItems() {
+        Character agent = mock(Character.class);
+        AtomicInteger equippedCount = new AtomicInteger();
+
+        int count = AgentInventoryTradeCollectionService.countTransferableItems(
+                "name:cape",
+                agent,
+                fragment -> 3,
+                fragment -> {
+                    equippedCount.set(2);
+                    return 2;
+                },
+                () -> 99);
+
+        assertEquals(2, equippedCount.get());
+        assertEquals(5, count);
     }
 
     private static AgentEquipTradeGroups groups(List<Item> normal, List<Item> other, List<Item> self) {

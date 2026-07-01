@@ -2129,6 +2129,11 @@ Recent reconstruction notes:
   temporary callbacks for recommended gear, equipped-slot preparation,
   equip-group classification, and ammo-group classification while the enclosing
   transfer state machine remains in the bot compatibility layer.
+- Transfer availability and transfer count decisions now live in
+  `AgentInventoryTradeCollectionService`; BotInventoryManager still supplies
+  temporary callbacks for equipped-slot counts and collected item quantity while
+  the Agent transfer boundary continues to delegate the public compatibility
+  methods.
 - Equipped-slot named trade preparation now lives in
   `AgentEquippedSlotTradeService`; BotInventoryManager still owns the enclosing
   trade sequence but delegates slot counting, temporary unequip preparation,

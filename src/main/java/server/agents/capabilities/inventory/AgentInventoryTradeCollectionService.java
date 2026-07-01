@@ -13,6 +13,7 @@ import server.agents.capabilities.inventory.AgentInventoryTradePolicy.UseTradeGr
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 public final class AgentInventoryTradeCollectionService {
@@ -100,6 +101,47 @@ public final class AgentInventoryTradeCollectionService {
             }
         }
         return result;
+    }
+
+    public static boolean hasTransferableItems(String category,
+                                               Character agent,
+                                               Function<String, Integer> equippedSlotItemCounter,
+                                               Supplier<List<Item>> collectedItems) {
+        if (AgentInventoryTradePolicy.isMesoCategory(category)) {
+            int currentMesos = agent.getMeso();
+            if (currentMesos <= 0) {
+                return false;
+            }
+
+            int requestedMesos = AgentInventoryTradePolicy.requestedTradeMesos(category);
+            return requestedMesos <= 0 || currentMesos >= requestedMesos;
+        }
+
+        if (category != null && category.startsWith("name:")) {
+            String fragment = category.substring(5);
+            if (equippedSlotItemCounter.apply(fragment) > 0) {
+                return true;
+            }
+        }
+
+        return !collectedItems.get().isEmpty();
+    }
+
+    public static int countTransferableItems(String category,
+                                             Character agent,
+                                             Function<String, Integer> namedItemCounter,
+                                             Function<String, Integer> equippedSlotItemCounter,
+                                             IntSupplier collectedItemQuantity) {
+        if (AgentInventoryTradePolicy.isMesoCategory(category)) {
+            return agent.getMeso();
+        }
+        if (category != null && category.startsWith("name:")) {
+            String fragment = category.substring(5);
+            int total = namedItemCounter.apply(fragment);
+            total += equippedSlotItemCounter.apply(fragment);
+            return total;
+        }
+        return collectedItemQuantity.getAsInt();
     }
 
     public static UseTradeGroups classifyUseTradeGroups(Character agent, Character recipient) {

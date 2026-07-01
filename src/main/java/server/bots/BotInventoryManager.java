@@ -338,37 +338,20 @@ public class BotInventoryManager {
     }
 
     public static boolean hasTransferableItems(String category, BotEntry entry, Character bot) {
-        if (AgentInventoryTradePolicy.isMesoCategory(category)) {
-            int currentMesos = bot.getMeso();
-            if (currentMesos <= 0) {
-                return false;
-            }
-
-            int requestedMesos = AgentInventoryTradePolicy.requestedTradeMesos(category);
-            return requestedMesos <= 0 || currentMesos >= requestedMesos;
-        }
-
-        if (category != null && category.startsWith("name:")) {
-            String fragment = category.substring(5);
-            if (AgentEquippedSlotTradeService.hasEquippedSlotItems(bot, fragment, BotEquipManager::slotsFromName)) {
-                return true;
-            }
-        }
-
-        return !collectItems(category, entry, bot).isEmpty();
+        return AgentInventoryTradeCollectionService.hasTransferableItems(
+                category,
+                bot,
+                fragment -> AgentEquippedSlotTradeService.countEquippedSlotItems(bot, fragment, BotEquipManager::slotsFromName),
+                () -> collectItems(category, entry, bot));
     }
 
     public static int countTransferableItems(String category, BotEntry entry, Character bot) {
-        if (AgentInventoryTradePolicy.isMesoCategory(category)) {
-            return bot.getMeso();
-        }
-        if (category != null && category.startsWith("name:")) {
-            String fragment = category.substring(5);
-            int total = AgentInventoryNamedItemService.countNamedItems(bot, fragment);
-            total += AgentEquippedSlotTradeService.countEquippedSlotItems(bot, fragment, BotEquipManager::slotsFromName);
-            return total;
-        }
-        return AgentInventoryTradePolicy.itemQuantitySum(collectItems(category, entry, bot));
+        return AgentInventoryTradeCollectionService.countTransferableItems(
+                category,
+                bot,
+                fragment -> AgentInventoryNamedItemService.countNamedItems(bot, fragment),
+                fragment -> AgentEquippedSlotTradeService.countEquippedSlotItems(bot, fragment, BotEquipManager::slotsFromName),
+                () -> AgentInventoryTradePolicy.itemQuantitySum(collectItems(category, entry, bot)));
     }
 
     /** Opens a trade for the first ≤9 items; remaining items are re-collected next batch. */
