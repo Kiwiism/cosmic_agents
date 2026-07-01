@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Whisper-to-Agent command ingress moved from BotManager to
+  `server.agents.capabilities.dialogue.AgentWhisperCommandService`.
+  `WhisperHandler` now calls the Agent dialogue service directly, while
+  BotManager keeps a temporary compatibility delegate.
 - Runtime cleanup/removal by Agent character ID moved to
   `server.agents.runtime.AgentRuntimeCleanupService`. Character/Client
   disconnect paths and the delete-character command now call Agent runtime

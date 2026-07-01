@@ -17,6 +17,12 @@ Rules:
 
 Recent reconstruction notes:
 
+- Whisper command ingress now lives in
+  `server.agents.capabilities.dialogue.AgentWhisperCommandService`.
+  `WhisperHandler` calls the Agent service directly, and BotManager keeps a
+  compatibility delegate. The same null checks, BotClient target guard,
+  leader-owned active Agent lookup, whisper reply-channel assignment, and Agent
+  chat runtime dispatch are preserved.
 - Agent runtime cleanup/removal by backing character ID now lives in
   `server.agents.runtime.AgentRuntimeCleanupService`. Character client swap,
   BotClient disconnect, and delete-character cleanup call the Agent runtime

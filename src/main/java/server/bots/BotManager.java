@@ -20,6 +20,7 @@ import server.agents.capabilities.quest.AgentPartyQuestSyncService;
 
 import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
+import server.agents.capabilities.dialogue.AgentWhisperCommandService;
 
 import server.agents.runtime.AgentActionLockPhysicsService;
 import server.agents.runtime.AgentCommandModeService;
@@ -3177,18 +3178,7 @@ public class BotManager {
      * the bot uniquely. No-op if target isn't a bot owned by the speaker.
      */
     public void handleWhisperToBot(Character owner, Character target, String message) {
-        if (owner == null || target == null || message == null) {
-            return;
-        }
-        if (!(target.getClient() instanceof BotClient)) {
-            return;
-        }
-        BotEntry entry = getBotEntry(owner.getId(), target.getId());
-        if (entry == null) {
-            return;
-        }
-        AgentBotReplyChannelStateRuntime.setWhisper(entry);
-        handleAgentChat(entry, message);
+        AgentWhisperCommandService.handleWhisperToAgent(owner, target, message);
     }
 
     private static void handleAgentChat(BotEntry entry, String message) {
