@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- `BotInventoryManager.tickTrade` item-add callback construction moved to
+  `server.agents.capabilities.trade.AgentTradeItemAddTickCallbackService`.
+  The bot inventory shell still wires the exact legacy insufficient-meso cancel
+  reply, all-done reply pool, and delay callbacks, but the callback object is
+  Agent-owned.
 - `BotInventoryManager.tickTrade` between-batch callback construction moved to
   `server.agents.capabilities.trade.AgentTradeBetweenBatchCallbackService`.
   The bot inventory shell still supplies temporary item-collection, equip/ammo

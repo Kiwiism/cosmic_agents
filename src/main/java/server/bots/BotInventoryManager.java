@@ -31,6 +31,7 @@ import server.agents.capabilities.trade.AgentTradeClosedWindowService;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
 import server.agents.capabilities.trade.AgentTradeConfirmWaitService;
 import server.agents.capabilities.trade.AgentTradeItemAddTickService;
+import server.agents.capabilities.trade.AgentTradeItemAddTickCallbackService;
 import server.agents.capabilities.trade.AgentTradeItemCollectionService;
 import server.agents.capabilities.trade.AgentTradeInviteWaitService;
 import server.agents.capabilities.trade.AgentTradeLifecycleService;
@@ -243,7 +244,7 @@ public class BotInventoryManager {
                                 entry,
                                 bot,
                                 trade,
-                                AgentTradeItemAddTickService.ItemAddTickCallbacks.of(
+                                AgentTradeItemAddTickCallbackService.itemAddTickCallbacks(
                                         BotMovementManager::tickDown,
                                         () -> cancelTradeSequence(entry, bot, "don't have that many mesos anymore"),
                                         () -> BotMovementManager.delayAfterCurrentTick(500),

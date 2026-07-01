@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotInventoryManager.tickTrade` item-add callback construction now lives in
+  `AgentTradeItemAddTickCallbackService`; the bot inventory shell only wires
+  temporary cancel, delay, and all-done reply hooks.
 - `BotInventoryManager.tickTrade` between-batch callback construction now lives
   in `AgentTradeBetweenBatchCallbackService`; the bot inventory shell only wires
   temporary countdown, category item collection, equip/ammo group selection,
