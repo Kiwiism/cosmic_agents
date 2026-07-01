@@ -2156,6 +2156,10 @@ Recent reconstruction notes:
   callbacks for equipped-slot restoration, manual-trade state clear, and
   auto-equip refill. The old bot reset body is retained only as an unused
   legacy helper until the surrounding trade tick state machine is migrated.
+- Trade-window meso add handling now lives in `AgentTradeMesoAddService`;
+  BotInventoryManager still owns the enclosing trade tick but delegates the
+  pending-meso check, insufficient-meso cancel decision, `Trade.setMeso`,
+  meso-added flag, and add-delay timer mutation to Agent trade code.
 - Trade batch-open orchestration now lives in `AgentTradeBatchService`;
   BotInventoryManager and AgentSupplyShareTradeService still supply the
   temporary recipient lookup/cancel/start/invite/reply callbacks, but recipient

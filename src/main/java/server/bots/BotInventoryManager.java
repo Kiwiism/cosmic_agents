@@ -43,6 +43,7 @@ import server.agents.capabilities.trade.AgentTradeBatchService;
 import server.agents.capabilities.trade.AgentTradeCancellationService;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
 import server.agents.capabilities.trade.AgentTradeCompletionService;
+import server.agents.capabilities.trade.AgentTradeMesoAddService;
 import server.agents.capabilities.trade.AgentTradeRecipientService;
 import server.agents.capabilities.trade.AgentTradeResetService;
 import server.agents.capabilities.trade.AgentTradeSequenceService;
@@ -468,15 +469,12 @@ public class BotInventoryManager {
                 return;
             }
 
-            if (AgentBotPendingTradeStateRuntime.hasMesoToAdd(entry)) {
-                if (bot.getMeso() < AgentBotPendingTradeStateRuntime.meso(entry)) {
-                    cancelTradeSequence(entry, bot, "don't have that many mesos anymore");
-                    return;
-                }
-
-                trade.setMeso(AgentBotPendingTradeStateRuntime.meso(entry));
-                AgentBotPendingTradeStateRuntime.markMesoAdded(entry);
-                AgentBotPendingTradeStateRuntime.setTimerMs(entry, BotMovementManager.delayAfterCurrentTick(500));
+            if (AgentTradeMesoAddService.handlePendingMeso(
+                    entry,
+                    bot,
+                    trade,
+                    () -> cancelTradeSequence(entry, bot, "don't have that many mesos anymore"),
+                    () -> BotMovementManager.delayAfterCurrentTick(500))) {
                 return;
             }
 
