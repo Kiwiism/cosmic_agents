@@ -2946,6 +2946,13 @@ Recent reconstruction notes:
   wander fallback, region wander reuse, cached loot validation, passive pickup
   radius suppression, retry suppression window, loot travel-distance scoring,
   convenient-loot ratio, and patrol wander/loot priority are preserved.
+- Ranged priority target selection now lives in
+  `server.agents.capabilities.combat.AgentRangedPriorityTargetSelector`;
+  BotManager keeps a compatibility delegate while grind-mode combat is still
+  being reconstructed. The no-ammo/null guards, ranged-weapon gate,
+  degenerate-target rejection, RANGED attack-plan requirement, range/cooldown
+  gate, preferred-target fast path, and nearest valid fallback scan are
+  preserved.
 
 Initial reconstruction order:
 

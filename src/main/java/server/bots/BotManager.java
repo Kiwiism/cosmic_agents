@@ -6,8 +6,6 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 
 import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.build.AgentBuildService;
-import server.agents.capabilities.combat.AgentAttackRoute;
-
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentBuffService;
 import server.agents.capabilities.combat.AgentAttackPlan;
@@ -16,6 +14,7 @@ import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatRangePolicy;
 import server.agents.capabilities.combat.AgentGrindTargetSearchPolicy;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
+import server.agents.capabilities.combat.AgentRangedPriorityTargetSelector;
 import server.agents.capabilities.quest.AgentPartyQuestSyncService;
 
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
@@ -1910,54 +1909,11 @@ public class BotManager {
                                                    Character bot,
                                                    Point botPos,
                                                    Monster preferredTarget) {
-        if (entry == null || AgentBotAmmoStateRuntime.noAmmo(entry) || bot == null || botPos == null) {
-            return null;
-        }
-
-        WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
-        if (!AgentCombatAmmoCounter.isRangedAmmoWeapon(weaponType)) {
-            return null;
-        }
-        if (isNonDegenerateRangedAttackTarget(entry, bot, botPos, weaponType, preferredTarget)) {
-            return preferredTarget;
-        }
-
-        Monster best = null;
-        double bestDistanceSq = Double.MAX_VALUE;
-        for (Monster candidate : bot.getMap().getAllMonsters()) {
-            if (candidate == preferredTarget) {
-                continue;
-            }
-            if (!isNonDegenerateRangedAttackTarget(entry, bot, botPos, weaponType, candidate)) {
-                continue;
-            }
-            double distanceSq = candidate.getPosition().distanceSq(botPos);
-            if (distanceSq < bestDistanceSq) {
-                bestDistanceSq = distanceSq;
-                best = candidate;
-            }
-        }
-        return best;
-    }
-
-    private static boolean isNonDegenerateRangedAttackTarget(BotEntry entry,
-                                                            Character bot,
-                                                            Point botPos,
-                                                            WeaponType weaponType,
-                                                            Monster target) {
-        if (target == null || !target.isAlive()) {
-            return false;
-        }
-        Point targetPos = target.getPosition();
-        if (AgentAttackExecutionProvider.shouldDegenerateRangedAttack(weaponType, botPos, targetPos)) {
-            return false;
-        }
-        AgentAttackPlan plan = AgentBotCombatPlanRuntime.planAttack(entry, bot, target, AgentCombatConfig.cfg);
-        return plan != null
-                && plan.route == AgentAttackRoute.RANGED
-                && AgentCombatRangePolicy.isTargetInAttackRange(plan, bot, target)
-                && AgentCombatRangePolicy.canUseAttackPlanNow(
-                        AgentBotMovementStateRuntime.grounded(entry), weaponType, plan.route);
+        return AgentRangedPriorityTargetSelector.selectPriorityRangedAttackTarget(
+                entry,
+                bot,
+                botPos,
+                preferredTarget);
     }
 
     private void tickAnchoredFarm(BotEntry entry, Character bot, Point botPos, boolean runAiTick) {

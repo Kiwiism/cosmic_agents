@@ -14,6 +14,7 @@ import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentGrindTargetSearchPolicy;
+import server.agents.capabilities.combat.AgentRangedPriorityTargetSelector;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.capabilities.looting.AgentLootTargetService;
 import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
@@ -434,7 +435,8 @@ class BotManagerTest {
             plans.when(() -> AgentBotCombatPlanRuntime.planAttack(entry, bot, rangedMob, AgentCombatConfig.cfg))
                     .thenReturn(rangedPlan);
 
-            assertEquals(rangedMob, BotManager.selectPriorityRangedAttackTarget(entry, bot, botPos, closeMob));
+            assertEquals(rangedMob, AgentRangedPriorityTargetSelector.selectPriorityRangedAttackTarget(
+                    entry, bot, botPos, closeMob));
         }
     }
 
