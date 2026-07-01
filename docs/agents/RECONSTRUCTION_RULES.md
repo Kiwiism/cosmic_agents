@@ -2112,8 +2112,9 @@ Recent reconstruction notes:
 - Meso trade reply/start routing now lives in `AgentMesoTradeService`;
   `BotInventoryManager` still supplies the temporary trade-sequence callback.
 - Top-level category transfer routing now lives in `AgentTradeTransferRouter`;
-  `BotInventoryManager.startTradeTransfer` remains as a compatibility shell
-  that supplies collection, prepared-item, and trade-sequence callbacks.
+  `AgentInventoryTransferService` owns the category/direct transfer start
+  entry points, and `BotInventoryManager.startTradeTransfer` is now a
+  compatibility pass-through for legacy callers.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and

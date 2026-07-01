@@ -6,16 +6,17 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.inventory.AgentInventoryDropService;
 import server.agents.integration.AgentBotInventoryStateRuntime;
 import server.bots.BotEntry;
-import server.bots.BotInventoryManager;
 import server.bots.BotMovementManager;
 
 import java.util.function.BiFunction;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
 class AgentInventoryTransferServiceTest {
     @Test
@@ -23,10 +24,16 @@ class AgentInventoryTransferServiceTest {
         Character bot = mock(Character.class);
         BotEntry entry = new BotEntry(bot, null, null);
 
-        try (MockedStatic<BotInventoryManager> inventory = mockStatic(BotInventoryManager.class)) {
+        try (MockedStatic<AgentTradeTransferRouter> router = mockStatic(AgentTradeTransferRouter.class)) {
             AgentInventoryTransferService.executeChoice("scrolls", true, entry, bot);
 
-            inventory.verify(() -> BotInventoryManager.startTradeTransfer("scrolls", entry, bot));
+            router.verify(() -> AgentTradeTransferRouter.routeCategoryTransfer(
+                    eq("scrolls"),
+                    eq(false),
+                    eq(false),
+                    eq(false),
+                    anyLong(),
+                    any(AgentTradeTransferRouter.TransferCallbacks.class)));
         }
     }
 
@@ -51,14 +58,21 @@ class AgentInventoryTransferServiceTest {
     }
 
     @Test
-    void startTradeTransferDelegatesToLegacyInventoryStateMachine() {
+    void startTradeTransferRoutesThroughAgentTradeRouter() {
         Character bot = mock(Character.class);
         BotEntry entry = new BotEntry(bot, null, null);
+        when(bot.getTrade()).thenReturn(null);
 
-        try (MockedStatic<BotInventoryManager> inventory = mockStatic(BotInventoryManager.class)) {
+        try (MockedStatic<AgentTradeTransferRouter> router = mockStatic(AgentTradeTransferRouter.class)) {
             AgentInventoryTransferService.startTradeTransfer("scrolls", entry, bot);
 
-            inventory.verify(() -> BotInventoryManager.startTradeTransfer("scrolls", entry, bot));
+            router.verify(() -> AgentTradeTransferRouter.routeCategoryTransfer(
+                    eq("scrolls"),
+                    eq(false),
+                    eq(false),
+                    eq(false),
+                    anyLong(),
+                    any(AgentTradeTransferRouter.TransferCallbacks.class)));
         }
     }
 

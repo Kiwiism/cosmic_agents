@@ -33,14 +33,11 @@ import server.agents.capabilities.looting.AgentLootCleanupService;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy.AmmoTradeGroups;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.EquipsGroup;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
-import server.agents.capabilities.trade.AgentDirectItemTradeService;
 import server.agents.capabilities.trade.AgentGroupedTradeTransferService;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.capabilities.trade.AgentManualTradeService;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.trade.AgentMesoTradeService;
-import server.agents.capabilities.trade.AgentPreparedTradeTransferService;
-import server.agents.capabilities.trade.AgentReservedEquipTradeTransferService;
 import server.agents.capabilities.trade.AgentTradeAllItemsAddedService;
 import server.agents.capabilities.trade.AgentTradeBatchService;
 import server.agents.capabilities.trade.AgentTradeCancellationService;
@@ -56,7 +53,6 @@ import server.agents.capabilities.trade.AgentTradeRecipientService;
 import server.agents.capabilities.trade.AgentTradeResetService;
 import server.agents.capabilities.trade.AgentTradeSequenceService;
 import server.agents.capabilities.trade.AgentTradeStateService;
-import server.agents.capabilities.trade.AgentTradeTransferRouter;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotInventoryStateRuntime;
@@ -252,63 +248,11 @@ public class BotInventoryManager {
      * Items are batched ≤9 per trade window; subsequent batches open new trades automatically.
      */
     public static void startTradeTransfer(String category, BotEntry entry, Character bot) {
-        long startedAt = AgentTradeCommandProfiler.profileCategory(category) ? System.nanoTime() : 0L;
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
-
-        AgentTradeTransferRouter.routeCategoryTransfer(
-                category,
-                owner != null,
-                bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry),
-                owner != null && owner.getTrade() != null,
-                startedAt,
-                AgentTradeTransferRouter.TransferCallbacks.of(
-                        () -> startTradeMesoTransfer(category, entry, bot),
-                        () -> startEquipsGroupTradeTransfer(owner, entry, bot),
-                        () -> {
-                            List<Item> items = collectReservedEquipTradePage(category, entry, bot);
-                            AgentReservedEquipTradeTransferService.startReservedEquipTradeTransfer(
-                                    category,
-                                    items,
-                                    () -> reservedEquipsPageMessage(category, entry, bot),
-                                    (reservedCategory, reservedItems) -> startTradeSequence(
-                                            reservedCategory, owner, reservedItems, 0, true, entry, bot),
-                                    message -> AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, message),
-                                    reply -> AgentBotInventoryRuntime.replyNow(entry, reply));
-                        },
-                        () -> startAmmoGroupTradeTransfer(owner, entry, bot),
-                        () -> prepareTradeItems(category, entry, bot),
-                        prepared -> AgentPreparedTradeTransferService.startPreparedTradeTransfer(
-                                category,
-                                prepared,
-                                () -> AgentBotPendingTradeStateRuntime.hasRestoreSlots(entry),
-                                (preparedCategory, preparedItems, restoreSlots) ->
-                                        startTradeSequence(preparedCategory, owner, preparedItems, 0, restoreSlots, entry, bot),
-                                reply -> AgentBotInventoryRuntime.replyNow(entry, reply)),
-                        reply -> AgentBotInventoryRuntime.replyNow(entry, reply),
-                        (operation, operationStartedAt) -> AgentTradeCommandProfiler.logSlowCommand(
-                                category,
-                                operation,
-                                entry,
-                                bot,
-                                operationStartedAt,
-                                TRADE_COMMAND_PROFILE_WARN_NS,
-                                log)));
+        AgentInventoryTransferService.startTradeTransfer(category, entry, bot);
     }
 
     public static void startTradeTransfer(Item item, Character recipient, BotEntry entry, Character bot) {
-        AgentDirectItemTradeService.DirectItemTradeDecision decision = AgentDirectItemTradeService.decideStart(
-                recipient != null,
-                AgentInventoryItemPolicy.hasItem(bot, item),
-                bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry),
-                recipient != null && recipient.getTrade() != null);
-        AgentDirectItemTradeService.routeStart(
-                decision,
-                () -> startTradeSequence("loot_offer", recipient, List.of(item), 0, true, entry, bot),
-                () -> AgentBotPendingTradeStateRuntime.queueRetry(
-                        entry,
-                        () -> startTradeTransfer(item, recipient, entry, bot),
-                        BotMovementManager.delayAfterCurrentTick(10_000)),
-                reply -> AgentBotInventoryRuntime.replyNow(entry, reply));
+        AgentInventoryTransferService.startTradeTransfer(item, recipient, entry, bot);
     }
 
     public static boolean hasTransferableItems(String category, BotEntry entry, Character bot) {
