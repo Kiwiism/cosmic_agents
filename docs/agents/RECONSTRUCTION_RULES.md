@@ -2889,6 +2889,11 @@ Recent reconstruction notes:
   temporary Cosmic ground-point, idle-ground, change-map, and movement reset
   hooks. The same following/null/same-map guards and anchor-position grounding
   fallback are preserved.
+- Parked follow-mode idle movement fast-path eligibility and recheck timing now
+  live in `server.agents.runtime.AgentFollowIdleMovementService`; BotManager
+  keeps a compatibility wrapper for existing tests and call sites. The same
+  one-second recheck window, `idle-fast` debug marker, stuck-progress reset,
+  and movement/owner-motion/shop/navigation guards are preserved.
 
 Initial reconstruction order:
 

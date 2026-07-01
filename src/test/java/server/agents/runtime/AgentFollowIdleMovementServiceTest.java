@@ -1,0 +1,98 @@
+package server.agents.runtime;
+
+import client.Character;
+import org.junit.jupiter.api.Test;
+import server.agents.integration.AgentBotModeStateRuntime;
+import server.agents.integration.AgentBotMoveTargetStateRuntime;
+import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentBotMovementStuckStateRuntime;
+import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentBotOwnerMotionStateRuntime;
+import server.agents.integration.AgentBotTickStateRuntime;
+import server.bots.BotEntry;
+
+import java.awt.Point;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+class AgentFollowIdleMovementServiceTest {
+    @Test
+    void parksFollowMovementBetweenPeriodicChecks() {
+        Character agent = agentAt(new Point(80, 100));
+        BotEntry entry = entry(agent);
+        AgentBotModeStateRuntime.setFollowing(entry, true);
+        AgentBotMovementStuckStateRuntime.addStuckMs(entry, 500);
+        AgentBotMovementStuckStateRuntime.rememberStuckCheckPosition(entry, new Point(70, 100));
+
+        assertTrue(AgentFollowIdleMovementService.tryFollowIdleMovementFastPath(
+                entry, agent, new Point(100, 100), 1_000L, 50, 10));
+        assertEquals("idle-fast", AgentBotNavigationDebugStateRuntime.lastDecision(entry));
+        assertEquals(0, AgentBotMovementStuckStateRuntime.stuckMs(entry));
+        assertEquals(2_000L, AgentBotTickStateRuntime.nextFollowIdleMovementCheckAtMs(entry));
+
+        assertTrue(AgentFollowIdleMovementService.tryFollowIdleMovementFastPath(
+                entry, agent, new Point(100, 100), 1_500L, 50, 10));
+        assertFalse(AgentFollowIdleMovementService.tryFollowIdleMovementFastPath(
+                entry, agent, new Point(100, 100), 2_000L, 50, 10));
+        assertEquals(3_000L, AgentBotTickStateRuntime.nextFollowIdleMovementCheckAtMs(entry));
+    }
+
+    @Test
+    void rejectsWhenNotParkedNearTarget() {
+        Character agent = agentAt(new Point(0, 100));
+        BotEntry entry = entry(agent);
+        AgentBotModeStateRuntime.setFollowing(entry, true);
+
+        assertFalse(AgentFollowIdleMovementService.tryFollowIdleMovementFastPath(
+                entry, agent, new Point(100, 100), 1_000L, 50, 10));
+    }
+
+    @Test
+    void rejectsWhenMovementOrOwnerMotionRequiresNormalResolution() {
+        Character agent = agentAt(new Point(80, 100));
+        BotEntry entry = entry(agent);
+        AgentBotModeStateRuntime.setFollowing(entry, true);
+        AgentBotMovementStateRuntime.setMovementVelocity(entry, 1, 0);
+
+        assertFalse(AgentFollowIdleMovementService.tryFollowIdleMovementFastPath(
+                entry, agent, new Point(100, 100), 1_000L, 50, 10));
+
+        AgentBotMovementStateRuntime.setMovementVelocity(entry, 0, 0);
+        AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, new Point(10, 10));
+        AgentBotOwnerMotionStateRuntime.updateObservedOwnerStep(entry, new Point(11, 10));
+
+        assertFalse(AgentFollowIdleMovementService.tryFollowIdleMovementFastPath(
+                entry, agent, new Point(100, 100), 1_000L, 50, 10));
+    }
+
+    @Test
+    void rejectsWhenOtherModesOrTargetsAreActive() {
+        Character agent = agentAt(new Point(80, 100));
+        BotEntry entry = entry(agent);
+        AgentBotModeStateRuntime.setFollowing(entry, true);
+        AgentBotModeStateRuntime.setGrinding(entry, true);
+
+        assertFalse(AgentFollowIdleMovementService.tryFollowIdleMovementFastPath(
+                entry, agent, new Point(100, 100), 1_000L, 50, 10));
+
+        AgentBotModeStateRuntime.setGrinding(entry, false);
+        AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(100, 100), false);
+
+        assertFalse(AgentFollowIdleMovementService.tryFollowIdleMovementFastPath(
+                entry, agent, new Point(100, 100), 1_000L, 50, 10));
+    }
+
+    private static BotEntry entry(Character agent) {
+        return new BotEntry(agent, mock(Character.class), null);
+    }
+
+    private static Character agentAt(Point position) {
+        Character agent = mock(Character.class);
+        when(agent.getPosition()).thenReturn(new Point(position));
+        return agent;
+    }
+}

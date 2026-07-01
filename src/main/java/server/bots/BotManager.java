@@ -29,6 +29,7 @@ import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentFollowAnchorService;
 import server.agents.runtime.AgentFormationService;
+import server.agents.runtime.AgentFollowIdleMovementService;
 import server.agents.runtime.AgentFollowTargetPositionService;
 import server.agents.runtime.AgentFollowMapSyncService;
 import server.agents.runtime.AgentHeartbeatService;
@@ -96,7 +97,6 @@ import server.agents.integration.AgentBotCombatTargetRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
-import server.agents.integration.AgentBotFidgetRuntime;
 import server.agents.integration.AgentBotGrindLootStateRuntime;
 import server.agents.integration.AgentBotGrindSearchStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
@@ -2728,51 +2728,13 @@ public class BotManager {
     }
 
     static boolean tryFollowIdleMovementFastPath(BotEntry entry, Character bot, Point targetPos, long nowMs) {
-        if (!isFollowIdleMovementFastPathEligible(entry, bot, targetPos)) {
-            return false;
-        }
-
-        if (AgentBotTickStateRuntime.nextFollowIdleMovementCheckAtMs(entry) == 0L) {
-            AgentBotTickStateRuntime.setNextFollowIdleMovementCheckAtMs(entry, nowMs + 1000L);
-        } else if (nowMs >= AgentBotTickStateRuntime.nextFollowIdleMovementCheckAtMs(entry)) {
-            AgentBotTickStateRuntime.setNextFollowIdleMovementCheckAtMs(entry, nowMs + 1000L);
-            return false;
-        }
-
-        AgentBotNavigationDebugStateRuntime.setLastDecision(entry, "idle-fast");
-        AgentBotMovementStuckStateRuntime.resetStuckProgress(entry);
-        return true;
-    }
-
-    private static boolean isFollowIdleMovementFastPathEligible(BotEntry entry, Character bot, Point targetPos) {
-        if (entry == null || bot == null || targetPos == null) {
-            return false;
-        }
-        if (!AgentBotModeStateRuntime.following(entry) || AgentBotModeStateRuntime.grinding(entry) || AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)) {
-            return false;
-        }
-        if (AgentBotMovementStateRuntime.inAir(entry) || AgentBotMovementStateRuntime.climbing(entry) || AgentBotMovementStateRuntime.downJumpPending(entry) || AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)) {
-            return false;
-        }
-        if (AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
-                || AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry)
-                || AgentBotFidgetRuntime.hasActiveFidgetMode(entry)) {
-            return false;
-        }
-        if (AgentBotShopStateRuntime.hasActiveShopTransition(entry)) {
-            return false;
-        }
-        if (AgentBotMovementStateRuntime.wasMovingX(entry) || AgentBotMovementStateRuntime.hasMoveDirection(entry)
-                || AgentBotMovementStateRuntime.hasMovementVelocity(entry)) {
-            return false;
-        }
-        if (AgentBotOwnerMotionStateRuntime.observedOwnerMoved(entry)) {
-            return false;
-        }
-
-        Point botPos = bot.getPosition();
-        return Math.abs(targetPos.x - botPos.x) <= BotMovementManager.cfg.FOLLOW_DIST
-                && Math.abs(targetPos.y - botPos.y) <= BotMovementManager.cfg.STOP_DIST;
+        return AgentFollowIdleMovementService.tryFollowIdleMovementFastPath(
+                entry,
+                bot,
+                targetPos,
+                nowMs,
+                BotMovementManager.cfg.FOLLOW_DIST,
+                BotMovementManager.cfg.STOP_DIST);
     }
 
     private void stepMovementCore(BotEntry entry,
