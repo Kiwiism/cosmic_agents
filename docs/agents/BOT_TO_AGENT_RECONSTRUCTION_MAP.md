@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- BotManager idle/trade physics mode selection moved to
+  `server.agents.runtime.AgentIdlePhysicsService`; BotManager only supplies
+  temporary movement/physics callbacks.
 - BotManager tick heartbeat ownership moved to
   `server.agents.runtime.AgentHeartbeatService`; BotManager only supplies
   temporary packet freshness and movement broadcast callbacks.

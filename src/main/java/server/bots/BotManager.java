@@ -24,6 +24,7 @@ import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentFollowAnchorService;
 import server.agents.runtime.AgentFormationService;
 import server.agents.runtime.AgentHeartbeatService;
+import server.agents.runtime.AgentIdlePhysicsService;
 import server.agents.runtime.AgentLeaderSessionService;
 import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentTargetSnapshot;
@@ -3312,38 +3313,22 @@ public class BotManager {
      * no movement input (no follow, grind, teleport, shop visit, or attack).
      */
     private void tickTradePhysicsOnly(BotEntry entry, Character bot) {
-        if (isSwimMap(entry) && AgentBotMovementStateRuntime.inAir(entry) && !AgentBotMovementStateRuntime.climbing(entry)) {
-            BotMovementManager.tickSwimming(entry, null);
-        } else if (AgentBotMovementStateRuntime.inAir(entry)) {
-            BotMovementManager.tickAirborne(entry, null);
-        } else if (!AgentBotMovementStateRuntime.climbing(entry)) {
-            int expectedIdleStance = BotPhysicsEngine.resolveIdleGroundStance(entry);
-            if (BotPhysicsEngine.resolveStance(entry) != expectedIdleStance
-                    || bot.getStance() != expectedIdleStance) {
-                BotPhysicsEngine.idleOnGround(entry, bot);
-                BotMovementManager.broadcastMovement(entry);
-            }
-        }
+        AgentIdlePhysicsService.tickPhysicsOnly(entry, bot, idlePhysicsHooks());
     }
 
     private boolean tickIdleEntry(BotEntry entry, Character bot) {
-        if (AgentBotModeStateRuntime.following(entry) || AgentBotModeStateRuntime.grinding(entry) || AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)
-                || AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry) || AgentBotShopStateRuntime.shopVisitPending(entry)) {
-            return false;
-        }
-        if (isSwimMap(entry) && AgentBotMovementStateRuntime.inAir(entry) && !AgentBotMovementStateRuntime.climbing(entry)) {
-            BotMovementManager.tickSwimming(entry, null);
-        } else if (AgentBotMovementStateRuntime.inAir(entry)) {
-            BotMovementManager.tickAirborne(entry, null);
-        } else if (!AgentBotMovementStateRuntime.climbing(entry)) {
-            int expectedIdleStance = BotPhysicsEngine.resolveIdleGroundStance(entry);
-            if (BotPhysicsEngine.resolveStance(entry) != expectedIdleStance
-                    || bot.getStance() != expectedIdleStance) {
-                BotPhysicsEngine.idleOnGround(entry, bot);
-                BotMovementManager.broadcastMovement(entry);
-            }
-        }
-        return true;
+        return AgentIdlePhysicsService.tickIdleEntry(entry, bot, idlePhysicsHooks());
+    }
+
+    private AgentIdlePhysicsService.PhysicsHooks idlePhysicsHooks() {
+        return new AgentIdlePhysicsService.PhysicsHooks(
+                BotManager::isSwimMap,
+                entry -> BotMovementManager.tickSwimming(entry, null),
+                entry -> BotMovementManager.tickAirborne(entry, null),
+                BotPhysicsEngine::resolveIdleGroundStance,
+                BotPhysicsEngine::resolveStance,
+                BotPhysicsEngine::idleOnGround,
+                BotMovementManager::broadcastMovement);
     }
 
     private boolean syncFollowMap(BotEntry entry, Character bot, Character followAnchor) {

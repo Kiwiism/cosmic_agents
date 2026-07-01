@@ -2556,6 +2556,9 @@ Recent reconstruction notes:
 - Tick heartbeat due-check, timestamp update, and heartbeat side-effect ordering
   now live in `server.agents.runtime.AgentHeartbeatService`; BotManager still
   supplies temporary packet freshness and movement broadcast callbacks.
+- Idle and trade-window physics mode selection now lives in
+  `server.agents.runtime.AgentIdlePhysicsService`; BotManager still supplies the
+  temporary swim-map, movement, physics, and broadcast callbacks.
 
 Initial reconstruction order:
 
