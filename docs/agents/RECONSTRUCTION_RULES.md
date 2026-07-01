@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Manual trade's legacy 60-second timeout constant moved from
+  `BotInventoryManager` to
+  `server.agents.capabilities.trade.AgentManualTradeService`. The bot inventory
+  shell now calls the Agent-owned default timeout path while preserving the same
+  timeout duration and tick-down behavior.
 - `BotInventoryManager` no longer owns the private trade-sequence/open-batch
   wrapper cluster. Legacy sequence runtime wiring moved to
   `server.agents.capabilities.trade.AgentTradeSequenceRuntimeService`, including

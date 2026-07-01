@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Manual trade timeout ownership moved to `AgentManualTradeService`; the
+  `BotInventoryManager` shell no longer carries the legacy 60-second timeout
+  constant.
 - `BotInventoryManager` private trade-sequence/open-batch wrappers moved to
   `AgentTradeSequenceRuntimeService`; legacy tests now cover the Agent-owned
   runtime service directly for first-batch invite announcement behavior.

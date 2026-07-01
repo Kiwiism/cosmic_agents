@@ -33,6 +33,19 @@ class AgentManualTradeServiceTest {
     }
 
     @Test
+    void defaultManualTradeTimeoutMatchesLegacyDuration() {
+        Character bot = mock(Character.class);
+        Trade trade = mock(Trade.class);
+        BotEntry entry = new BotEntry(bot, null, null);
+
+        boolean cancelled = AgentManualTradeService.beginOrTickTimeout(entry, bot, trade, value -> value);
+
+        assertFalse(cancelled);
+        assertSame(trade, AgentBotManualTradeStateRuntime.tradeRef(entry));
+        assertEquals(60_000, AgentBotManualTradeStateRuntime.timeoutMs(entry));
+    }
+
+    @Test
     void cancelsAndClearsManualTradeWhenTimeoutExpires() {
         Character bot = mock(Character.class);
         when(bot.getId()).thenReturn(88);

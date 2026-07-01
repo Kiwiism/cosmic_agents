@@ -61,7 +61,6 @@ import java.util.concurrent.ThreadLocalRandom;
 public class BotInventoryManager {
     private static final Logger log = LoggerFactory.getLogger(BotInventoryManager.class);
     private static final long TRADE_COMMAND_PROFILE_WARN_NS = 50_000_000L;
-    private static final int MANUAL_TRADE_TIMEOUT_MS = 60_000;
     static void tickPassiveLoot(BotEntry entry, Character bot) {
         AgentPassiveLootService.tickPassiveLoot(
                 entry,
@@ -99,7 +98,6 @@ public class BotInventoryManager {
                                 entry,
                                 agent,
                                 trade,
-                                MANUAL_TRADE_TIMEOUT_MS,
                                 BotMovementManager::tickDown),
                         Character::getTrade,
                         (agent, tradeOwner, trade, isOwnerTrade) -> AgentManualPeerTradeService.tickPeerTrade(

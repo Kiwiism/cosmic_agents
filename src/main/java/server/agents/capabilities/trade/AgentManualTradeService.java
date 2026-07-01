@@ -15,9 +15,17 @@ import java.util.function.Supplier;
  * still hosted by the temporary bot inventory shell.
  */
 public final class AgentManualTradeService {
+    public static final int DEFAULT_MANUAL_TRADE_TIMEOUT_MS = 60_000;
     private static final Set<Integer> GREETING_SENT = ConcurrentHashMap.newKeySet();
 
     private AgentManualTradeService() {
+    }
+
+    public static boolean beginOrTickTimeout(BotEntry entry,
+                                             Character agent,
+                                             Trade trade,
+                                             IntUnaryOperator tickDown) {
+        return beginOrTickTimeout(entry, agent, trade, DEFAULT_MANUAL_TRADE_TIMEOUT_MS, tickDown);
     }
 
     public static boolean beginOrTickTimeout(BotEntry entry,
