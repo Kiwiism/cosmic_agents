@@ -129,6 +129,9 @@ Recent map updates:
 - BotManager inactive-town return-scroll item use moved to
   `server.agents.runtime.AgentReturnScrollService`; BotManager remains only the
   leader-safety callback site for this action.
+- BotManager swim-map helper moved to
+  `server.agents.runtime.AgentMapEnvironmentService`; BotManager no longer owns
+  that map-environment predicate for movement/tick physics routing.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.

@@ -142,6 +142,9 @@ Recent reconstruction notes:
   `AgentReturnScrollService`; BotManager only calls the Agent runtime helper
   from the existing leader-safety callback, preserving 2030000 lookup, effect
   application, and one-scroll consumption behavior.
+- Swim-map classification now lives in `AgentMapEnvironmentService`; BotManager
+  movement, idle-physics, and action-lock paths call the Agent runtime helper
+  while preserving the same null-map and `MapleMap.isSwim()` behavior.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

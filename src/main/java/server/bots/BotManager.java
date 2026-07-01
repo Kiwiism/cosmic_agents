@@ -30,6 +30,7 @@ import server.agents.runtime.AgentHeartbeatService;
 import server.agents.runtime.AgentIdlePhysicsService;
 import server.agents.runtime.AgentLeaderSessionService;
 import server.agents.runtime.AgentLeaderSafetyService;
+import server.agents.runtime.AgentMapEnvironmentService;
 import server.agents.runtime.AgentMapTransitionService;
 import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentPositionService;
@@ -2218,7 +2219,7 @@ public class BotManager {
         }
         if (target == null) {
             AgentBotGrindTargetStateRuntime.clear(entry);
-            if (isSwimMap(entry) && AgentBotMovementStateRuntime.inAir(entry)) {
+            if (AgentMapEnvironmentService.isSwimMap(entry) && AgentBotMovementStateRuntime.inAir(entry)) {
                 BotMovementManager.tickSwimming(entry, targetPos);
                 return new LocalOpportunityAttackResult(true, targetPos);
             } else if (AgentBotMovementStateRuntime.inAir(entry)) {
@@ -3093,7 +3094,7 @@ public class BotManager {
 
     private AgentIdlePhysicsService.PhysicsHooks idlePhysicsHooks() {
         return new AgentIdlePhysicsService.PhysicsHooks(
-                BotManager::isSwimMap,
+                AgentMapEnvironmentService::isSwimMap,
                 entry -> BotMovementManager.tickSwimming(entry, null),
                 entry -> BotMovementManager.tickAirborne(entry, null),
                 BotPhysicsEngine::resolveIdleGroundStance,
@@ -3345,18 +3346,13 @@ public class BotManager {
     private void tickMovementPhase(BotEntry entry, Point targetPos, boolean runAiTick) {
         if (AgentBotMovementStateRuntime.climbing(entry)) {
             BotMovementManager.tickClimbing(entry, targetPos, runAiTick);
-        } else if (isSwimMap(entry) && AgentBotMovementStateRuntime.inAir(entry)) {
+        } else if (AgentMapEnvironmentService.isSwimMap(entry) && AgentBotMovementStateRuntime.inAir(entry)) {
             BotMovementManager.tickSwimming(entry, targetPos);
         } else if (AgentBotMovementStateRuntime.inAir(entry)) {
             BotMovementManager.tickAirborne(entry, targetPos);
         } else {
             BotMovementManager.tickGrounded(entry, targetPos);
         }
-    }
-
-    private static boolean isSwimMap(BotEntry entry) {
-        MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
-        return map != null && map.isSwim();
     }
 
     private void clearReachedMoveTarget(BotEntry entry) {
@@ -3447,7 +3443,7 @@ public class BotManager {
     private boolean tickActionLocked(BotEntry entry) {
         return AgentActionLockPhysicsService.tickActionLocked(
                 entry,
-                BotManager::isSwimMap,
+                AgentMapEnvironmentService::isSwimMap,
                 locked -> BotMovementManager.tickSwimming(locked, null),
                 locked -> BotMovementManager.tickAirborne(locked, null),
                 locked -> BotMovementManager.tickGrounded(locked, null));
