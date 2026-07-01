@@ -4,14 +4,12 @@ import client.Character;
 import client.inventory.Item;
 import server.Trade;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
-import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.bots.BotEntry;
 import server.bots.BotManager;
 import server.bots.BotMovementManager;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public final class AgentSupplyShareTradeService {
@@ -63,28 +61,17 @@ public final class AgentSupplyShareTradeService {
             AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeRecipientNotFoundReply());
             return;
         }
-        AgentBotPendingTradeStateRuntime.setCategory(entry, category);
-        AgentBotPendingTradeStateRuntime.setRecipientId(entry, recipient.getId());
-        AgentBotPendingTradeStateRuntime.setSingleBatch(entry, true);
-        AgentBotPendingTradeStateRuntime.clearInviteAnnounced(entry);
+        AgentTradeStateService.initializeSequence(entry, category, recipient.getId(), true);
         openTradeBatch(entry, agent, recipient, items);
     }
 
     private static void openTradeBatch(BotEntry entry, Character agent, Character recipient, List<Item> items) {
         if (recipient.getTrade() != null) {
             AgentBotInventoryRuntime.replyNow(entry, "can't trade right now, stopping");
-            clearTradeState(entry);
+            AgentTradeStateService.clearSequence(entry);
             return;
         }
-        AgentBotPendingTradeStateRuntime.setItems(entry, items.size() > AgentInventoryTradePolicy.TRADE_WINDOW_ITEM_LIMIT
-                ? new ArrayList<>(items.subList(0, AgentInventoryTradePolicy.TRADE_WINDOW_ITEM_LIMIT))
-                : new ArrayList<>(items));
-        AgentBotPendingTradeStateRuntime.setMeso(entry, 0);
-        AgentBotPendingTradeStateRuntime.clearItemIndex(entry);
-        AgentBotPendingTradeStateRuntime.clearTimer(entry);
-        AgentBotPendingTradeStateRuntime.clearMesoAdded(entry);
-        AgentBotPendingTradeStateRuntime.clearAllItemsAdded(entry);
-        AgentBotPendingTradeStateRuntime.clearBotDone(entry);
+        AgentTradeStateService.initializeBatch(entry, items, 0);
         Trade.startTrade(agent);
         Trade.inviteTrade(agent, recipient);
         if (!AgentBotPendingTradeStateRuntime.inviteAnnounced(entry)
@@ -94,19 +81,4 @@ public final class AgentSupplyShareTradeService {
         }
     }
 
-    private static void clearTradeState(BotEntry entry) {
-        AgentBotPendingTradeStateRuntime.clearCategory(entry);
-        AgentBotPendingTradeStateRuntime.clearCategoryMessage(entry);
-        AgentBotPendingTradeStateRuntime.clearItems(entry);
-        AgentBotPendingTradeStateRuntime.clearRecipientId(entry);
-        AgentBotPendingTradeStateRuntime.clearMeso(entry);
-        AgentBotPendingTradeStateRuntime.clearItemIndex(entry);
-        AgentBotPendingTradeStateRuntime.clearTimer(entry);
-        AgentBotPendingTradeStateRuntime.clearMesoAdded(entry);
-        AgentBotPendingTradeStateRuntime.clearAllItemsAdded(entry);
-        AgentBotPendingTradeStateRuntime.clearBotDone(entry);
-        AgentBotPendingTradeStateRuntime.clearSingleBatch(entry);
-        AgentBotPendingTradeStateRuntime.clearInviteAnnounced(entry);
-        AgentBotPendingTradeStateRuntime.clearShareBudget(entry);
-    }
 }

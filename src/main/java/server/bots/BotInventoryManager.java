@@ -44,6 +44,7 @@ import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.trade.AgentMesoTradeService;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
 import server.agents.capabilities.trade.AgentTradeRecipientService;
+import server.agents.capabilities.trade.AgentTradeStateService;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotInventoryStateRuntime;
@@ -368,10 +369,7 @@ public class BotInventoryManager {
             AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeRecipientNotFoundReply());
             return;
         }
-        AgentBotPendingTradeStateRuntime.setCategory(entry, category);
-        AgentBotPendingTradeStateRuntime.setRecipientId(entry, recipient.getId());
-        AgentBotPendingTradeStateRuntime.setSingleBatch(entry, singleBatch);
-        AgentBotPendingTradeStateRuntime.clearInviteAnnounced(entry);
+        AgentTradeStateService.initializeSequence(entry, category, recipient.getId(), singleBatch);
         openTradeBatch(entry, bot, items, mesos);
     }
 
@@ -381,15 +379,7 @@ public class BotInventoryManager {
             cancelTradeSequence(entry, bot, "can't trade right now, stopping");
             return;
         }
-        AgentBotPendingTradeStateRuntime.setItems(entry, items.size() > AgentInventoryTradePolicy.TRADE_WINDOW_ITEM_LIMIT
-                ? new ArrayList<>(items.subList(0, AgentInventoryTradePolicy.TRADE_WINDOW_ITEM_LIMIT))
-                : new ArrayList<>(items));
-        AgentBotPendingTradeStateRuntime.setMeso(entry, mesos);
-        AgentBotPendingTradeStateRuntime.clearItemIndex(entry);
-        AgentBotPendingTradeStateRuntime.clearTimer(entry);
-        AgentBotPendingTradeStateRuntime.clearMesoAdded(entry);
-        AgentBotPendingTradeStateRuntime.clearAllItemsAdded(entry);
-        AgentBotPendingTradeStateRuntime.clearBotDone(entry);
+        AgentTradeStateService.initializeBatch(entry, items, mesos);
         Trade.startTrade(bot);
         Trade.inviteTrade(bot, recipient);
         // pot_share already announced itself ("got some HP pots, inv u") — skip the redundant "k i inv"
@@ -456,10 +446,7 @@ public class BotInventoryManager {
                     BotEquipManager.autoEquip(bot, AgentBotRuntimeIdentityRuntime.owner(entry), null);
                     return;
                 }
-                AgentBotPendingTradeStateRuntime.clearItems(entry);
-                AgentBotPendingTradeStateRuntime.clearAllItemsAdded(entry);
-                AgentBotPendingTradeStateRuntime.clearBotDone(entry);
-                AgentBotPendingTradeStateRuntime.setTimerMs(entry, BotMovementManager.delayAfterCurrentTick(1_000));
+                AgentTradeStateService.enterBetweenBatches(entry, BotMovementManager.delayAfterCurrentTick(1_000));
             } else if (AgentBotPendingTradeStateRuntime.allItemsAdded(entry)) {
                 // Owner cancelled after items were added (items returned to bot)
                 AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeCancelledReply());
@@ -588,20 +575,7 @@ public class BotInventoryManager {
         boolean hadRestores = AgentBotPendingTradeStateRuntime.hasRestoreSlots(entry);
         AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems(entry, bot);
         clearManualTradeState(entry, bot);
-        AgentBotPendingTradeStateRuntime.clearCategory(entry);
-        AgentBotPendingTradeStateRuntime.clearCategoryMessage(entry);
-        AgentBotPendingTradeStateRuntime.clearItems(entry);
-        AgentBotPendingTradeStateRuntime.clearRecipientId(entry);
-        AgentBotPendingTradeStateRuntime.clearMeso(entry);
-        AgentBotPendingTradeStateRuntime.clearItemIndex(entry);
-        AgentBotPendingTradeStateRuntime.clearTimer(entry);
-        AgentBotPendingTradeStateRuntime.clearMesoAdded(entry);
-        AgentBotPendingTradeStateRuntime.clearAllItemsAdded(entry);
-        AgentBotPendingTradeStateRuntime.clearBotDone(entry);
-        AgentBotPendingTradeStateRuntime.clearSingleBatch(entry);
-        AgentBotPendingTradeStateRuntime.clearInviteAnnounced(entry);
-        AgentBotPendingTradeStateRuntime.clearShareBudget(entry);
-        AgentBotPendingTradeStateRuntime.clearOwnerGivenItems(entry);
+        AgentTradeStateService.clearSequence(entry);
         // Safety net: if any items were temporarily unequipped for a trade that ended without
         // completing (declined invite / cancel / timeout), the per-slot restore above may fail
         // (slot occupied, item lost via window-swap bookkeeping). Re-run autoEquip so empty

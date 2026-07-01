@@ -2138,6 +2138,11 @@ Recent reconstruction notes:
   BotInventoryManager still owns the loot-offer trade sequence side effect and
   retry scheduling, but recipient-missing, item-missing, busy-retry, and
   start-trade decisions are Agent-owned.
+- Trade sequence initialization, first-window batch setup, batch-progress clear,
+  between-batch transition, and full pending-trade state clear now live in
+  `AgentTradeStateService`; BotInventoryManager and AgentSupplyShareTradeService
+  preserve the same trade side effects while sharing the Agent-owned state
+  mutation helpers.
 - Equipped-slot named trade preparation now lives in
   `AgentEquippedSlotTradeService`; BotInventoryManager still owns the enclosing
   trade sequence but delegates slot counting, temporary unequip preparation,
