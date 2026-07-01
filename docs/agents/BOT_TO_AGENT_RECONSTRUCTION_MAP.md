@@ -103,6 +103,9 @@ Recent map updates:
 - Combat grind region-occupancy scoring now reads sibling Agents through
   `AgentBotSessionLifecycleSideEffects.getBotEntries`, removing another direct
   `BotManager.getBotEntries` call from Agent combat target runtime.
+- Ammo-share, potion-share, and sibling gear offer scans now read sibling
+  Agents through `AgentBotSessionLifecycleSideEffects.getBotEntries`, removing
+  direct BotManager entry-list calls from those capability donor scans.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.

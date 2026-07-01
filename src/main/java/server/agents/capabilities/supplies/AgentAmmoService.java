@@ -18,6 +18,7 @@ import server.agents.integration.AgentBotAmmoRuntime;
 import server.agents.integration.AgentBotAmmoStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentBotSessionLifecycleSideEffects;
 import server.bots.BotEntry;
 import server.bots.BotManager;
 
@@ -142,7 +143,7 @@ public final class AgentAmmoService {
 
     private static AgentBotAmmoDonorPlan selectAmmoDonor(int ownerId, int mapId, BotEntry excludedEntry, WeaponType needyWeaponType) {
         AgentBotAmmoDonorPlan best = null;
-        for (BotEntry sibling : BotManager.getInstance().getBotEntries(ownerId)) {
+        for (BotEntry sibling : AgentBotSessionLifecycleSideEffects.getBotEntries(ownerId)) {
             Character donorBot = AgentBotRuntimeIdentityRuntime.bot(sibling);
             if (sibling == excludedEntry || donorBot == null || donorBot.getMapId() != mapId) {
                 continue;
