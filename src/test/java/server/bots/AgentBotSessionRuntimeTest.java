@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatAwayFlow;
 import server.agents.capabilities.dialogue.AgentChatPendingAction;
+import server.agents.integration.AgentBotMovementCommandRuntime;
 import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
@@ -29,6 +30,7 @@ class AgentBotSessionRuntimeTest {
         BotManager manager = mock(BotManager.class);
 
         try (MockedStatic<AgentBotSessionSchedulerRuntime> scheduler = mockStatic(AgentBotSessionSchedulerRuntime.class);
+             MockedStatic<AgentBotMovementCommandRuntime> movementCommands = mockStatic(AgentBotMovementCommandRuntime.class);
              MockedStatic<AgentBotSessionReplyRuntime> replies = mockStatic(AgentBotSessionReplyRuntime.class);
              MockedStatic<BotManager> botManager = mockStatic(BotManager.class)) {
             botManager.when(BotManager::getInstance).thenReturn(manager);
@@ -41,7 +43,7 @@ class AgentBotSessionRuntimeTest {
             AgentBotSessionRuntime.sessionRequestCallbacks(entry).requestRelog();
 
             assertEquals(AgentChatPendingAction.RELOG, AgentBotPendingActionStateRuntime.pendingAction(entry));
-            verify(manager).issueStop(entry);
+            movementCommands.verify(() -> AgentBotMovementCommandRuntime.stop(entry));
             replies.verify(() -> AgentBotSessionReplyRuntime.replyNow(eq(entry), anyString()));
         }
     }
@@ -52,6 +54,7 @@ class AgentBotSessionRuntimeTest {
         BotManager manager = mock(BotManager.class);
 
         try (MockedStatic<AgentBotSessionSchedulerRuntime> scheduler = mockStatic(AgentBotSessionSchedulerRuntime.class);
+             MockedStatic<AgentBotMovementCommandRuntime> movementCommands = mockStatic(AgentBotMovementCommandRuntime.class);
              MockedStatic<AgentBotSessionReplyRuntime> replies = mockStatic(AgentBotSessionReplyRuntime.class);
              MockedStatic<BotManager> botManager = mockStatic(BotManager.class)) {
             botManager.when(BotManager::getInstance).thenReturn(manager);
@@ -66,7 +69,7 @@ class AgentBotSessionRuntimeTest {
             AgentBotSessionRuntime.sessionRequestCallbacks(entry).requestAway();
 
             assertEquals(AgentChatPendingAction.OWNER_AWAY, AgentBotPendingActionStateRuntime.pendingAction(entry));
-            verify(manager).issueStop(entry);
+            movementCommands.verify(() -> AgentBotMovementCommandRuntime.stop(entry));
             replies.verify(() -> AgentBotSessionReplyRuntime.replyNow(entry, AgentChatAwayFlow.townOrLogoutPrompt()));
         }
     }

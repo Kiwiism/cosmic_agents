@@ -20,7 +20,7 @@ public final class AgentBotSessionRuntime {
             public void requestRelog() {
                 AgentBotSessionSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
                     AgentBotPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.RELOG);
-                    BotManager.getInstance().issueStop(entry);
+                    AgentBotMovementCommandRuntime.stop(entry);
                     AgentBotSessionReplyRuntime.replyNow(entry, AgentChatSessionRequestFlow.relogConfirmPrompt());
                 });
             }
@@ -29,7 +29,7 @@ public final class AgentBotSessionRuntime {
             public void requestLogout() {
                 AgentBotSessionSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
                     AgentBotPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.LOGOUT);
-                    BotManager.getInstance().issueStop(entry);
+                    AgentBotMovementCommandRuntime.stop(entry);
                     AgentBotSessionReplyRuntime.replyNow(entry, AgentChatSessionRequestFlow.logoutConfirmPrompt());
                 });
             }
@@ -96,7 +96,7 @@ public final class AgentBotSessionRuntime {
 
             @Override
             public void stopAgent() {
-                BotManager.getInstance().issueStop(entry);
+                AgentBotMovementCommandRuntime.stop(entry);
             }
 
             @Override
@@ -161,7 +161,7 @@ public final class AgentBotSessionRuntime {
         }
 
         for (BotEntry owned : AgentBotSessionLifecycleSideEffects.getBotEntries(owner.getId())) {
-            BotManager.getInstance().issueStop(owned);
+            AgentBotMovementCommandRuntime.stop(owned);
             AgentBotSessionSchedulerRuntime.afterRandomDelay(1200, 1800, () -> {
                 owned.bot().saveCharToDB(true);
                 owned.bot().getClient().disconnect(false, false);

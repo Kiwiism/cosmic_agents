@@ -4,7 +4,6 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentChatEquipmentFlow;
 import server.bots.BotEntry;
 import server.bots.BotEquipManager;
-import server.bots.BotManager;
 
 import java.util.List;
 
@@ -36,7 +35,7 @@ public final class AgentBotEquipmentRuntime {
             @Override
             public void unequipAll() {
                 AgentBotEquipmentSchedulerRuntime.afterRandomDelay(500, 700, () -> {
-                    BotManager.getInstance().issueStop(entry);
+                    AgentBotMovementCommandRuntime.stop(entry);
                     AgentBotEquipmentReplyRuntime.replyNow(entry, BotEquipManager.unequipAll(entry.bot()));
                 });
             }

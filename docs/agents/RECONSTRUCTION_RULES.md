@@ -100,6 +100,9 @@ Recent reconstruction notes:
 - Build, potion, and combat ammo fallback paths now request follow-owner via
   `AgentBotMovementCommandRuntime` instead of direct BotManager calls. The same
   follow-owner mode transition and visible dialogue behavior are preserved.
+- Session relog/logout/away prompts and equipment unequip-all now request stop
+  via `AgentBotMovementCommandRuntime` instead of direct BotManager calls. The
+  same pending-action, reply timing, and equipment side effects are preserved.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

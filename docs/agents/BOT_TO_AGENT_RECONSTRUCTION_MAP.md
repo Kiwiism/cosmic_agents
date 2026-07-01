@@ -88,6 +88,9 @@ Recent map updates:
 - Build level-up, potion stop, and combat ammo-stop paths now request
   follow-owner through `AgentBotMovementCommandRuntime` instead of calling
   `BotManager.issueFollowOwner` directly.
+- Session relog/logout/away prompts and equipment unequip-all now request stop
+  through `AgentBotMovementCommandRuntime` instead of calling
+  `BotManager.issueStop` directly.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.
