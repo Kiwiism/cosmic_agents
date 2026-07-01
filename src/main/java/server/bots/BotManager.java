@@ -23,6 +23,7 @@ import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentFormationService;
 import server.agents.runtime.AgentTargetSnapshot;
+import server.agents.runtime.AgentTargetSnapshotService;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentTickFailurePolicy;
 import server.agents.runtime.AgentTickOrchestrator;
@@ -61,7 +62,6 @@ import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotFidgetRuntime;
-import server.agents.integration.AgentBotFormationStateRuntime;
 import server.agents.integration.AgentBotGrindLootStateRuntime;
 import server.agents.integration.AgentBotGrindSearchStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
@@ -1277,60 +1277,10 @@ public class BotManager {
     }
 
     public AgentTargetSnapshot captureTargetSnapshot(BotEntry entry) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         Character followAnchor = resolveFollowAnchor(entry, owner);
-        Point fallbackPos = bot.getPosition();
-        Point rawOwnerPos = owner != null ? owner.getPosition() : fallbackPos;
-        Point rawFollowAnchorPos = followAnchor != null ? followAnchor.getPosition() : rawOwnerPos;
-        String followAnchorName = followAnchor != null ? followAnchor.getName() : "owner";
         AgentFormationService.FormationState formation = formationStateFor(entry);
-        Point followBasePos = new Point(rawFollowAnchorPos.x + AgentBotFormationStateRuntime.followOffsetX(entry), rawFollowAnchorPos.y);
-        Point followTargetPos = resolveFollowTargetPos(followBasePos, followAnchor, rawFollowAnchorPos, formation.snapRange(), bot.getMap());
-        Point rawShopTargetPos = AgentBotShopStateRuntime.shopVisitPending(entry)
-                ? AgentBotShopStateRuntime.activeShopTargetPosition(entry)
-                : null;
-        Point shopTargetPos = rawShopTargetPos == null ? null : new Point(rawShopTargetPos);
-        Point moveTargetPos = AgentBotMoveTargetStateRuntime.moveTarget(entry);
-        Point farmAnchorPos = AgentBotFarmAnchorStateRuntime.farmAnchorInMap(entry, bot.getMapId());
-        Monster activeGrindTarget = AgentBotGrindTargetStateRuntime.activeTargetInMap(entry, bot.getMap());
-        Point grindTargetPos = activeGrindTarget == null ? null : new Point(activeGrindTarget.getPosition());
-        Point primaryTargetPos;
-        String primaryTargetSource;
-        if (shopTargetPos != null) {
-            primaryTargetPos = shopTargetPos;
-            primaryTargetSource = "shop-target";
-        } else if (moveTargetPos != null) {
-            primaryTargetPos = moveTargetPos;
-            primaryTargetSource = "move-target";
-        } else if (farmAnchorPos != null) {
-            primaryTargetPos = farmAnchorPos;
-            primaryTargetSource = "farm-anchor";
-        } else if (grindTargetPos != null) {
-            primaryTargetPos = grindTargetPos;
-            primaryTargetSource = "grind-target";
-        } else if (AgentBotModeStateRuntime.grinding(entry)) {
-            primaryTargetPos = fallbackPos;
-            primaryTargetSource = "grind-idle";
-        } else if (AgentBotModeStateRuntime.following(entry)) {
-            primaryTargetPos = followTargetPos;
-            primaryTargetSource = "follow-target";
-        } else {
-            primaryTargetPos = rawOwnerPos;
-            primaryTargetSource = "owner-raw";
-        }
-        return new AgentTargetSnapshot(
-                formation,
-                new Point(rawOwnerPos),
-                new Point(rawFollowAnchorPos),
-                followAnchorName,
-                new Point(followBasePos),
-                new Point(followTargetPos),
-                moveTargetPos,
-                farmAnchorPos,
-                grindTargetPos,
-                new Point(primaryTargetPos),
-                primaryTargetSource);
+        return AgentTargetSnapshotService.capture(entry, followAnchor, formation, BotManager::resolveFollowTargetPos);
     }
 
     private static final int RETREAT_HOLD_MS = 600;

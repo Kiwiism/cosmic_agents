@@ -17,9 +17,12 @@ Rules:
 
 Recent reconstruction notes:
 
-- BotManager target snapshot data moved to `server.agents.runtime.AgentTargetSnapshot`.
-  BotManager still assembles the snapshot for this slice, but movement/navigation
-  callers and tests now consume the Agent-owned record.
+- BotManager target snapshot assembly moved to
+  `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
+  temporary follow-anchor, formation, and follow-target-position callbacks, but
+  primary target precedence and snapshot construction are Agent-owned.
+- BotManager target snapshot data lives in `server.agents.runtime.AgentTargetSnapshot`;
+  movement/navigation callers and tests consume the Agent-owned record.
 - BotManager formation type/state and follow-offset application moved to
   `server.agents.runtime.AgentFormationService`. BotManager still owns the
   formation command text flow and temporary per-leader formation map, but the

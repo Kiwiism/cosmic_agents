@@ -12,9 +12,12 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- BotManager target snapshot assembly moved to
+  `server.agents.runtime.AgentTargetSnapshotService`; BotManager still supplies
+  temporary follow-anchor and follow-target-position callbacks for this slice.
 - BotManager target snapshot record moved to
-  `server.agents.runtime.AgentTargetSnapshot`; snapshot assembly remains in
-  BotManager until the target-resolution service slice.
+  `server.agents.runtime.AgentTargetSnapshot`; movement/navigation callers and
+  tests consume the Agent-owned record.
 - BotManager formation type/state and offset calculation moved to
   `server.agents.runtime.AgentFormationService`; command parsing and the
   temporary per-leader map remain in BotManager for now.
