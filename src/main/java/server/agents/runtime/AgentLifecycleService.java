@@ -4,6 +4,7 @@ import client.Character;
 import server.agents.auth.AgentAuthorizationResult;
 import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
@@ -80,6 +81,30 @@ public final class AgentLifecycleService {
     @FunctionalInterface
     public interface AgentTickCallback {
         void tick(BotEntry entry, int leaderCharId, int agentCharId);
+    }
+
+    public record ReloginHooks(LeaderResolver resolveLeader,
+                               BiFunction<MapleMap, Point, Point> resolveSpawnPosition,
+                               OfflineAgentLoader loadOfflineAgent,
+                               RegisterSpawnedAgent registerSpawnedAgent,
+                               DelayedActionScheduler delayedActionScheduler,
+                               LongSupplier returnAnnouncementDelayMs,
+                               AgentMapSpeaker mapSpeaker) {
+    }
+
+    @FunctionalInterface
+    public interface LeaderResolver {
+        Character resolve(int world, int leaderCharId);
+    }
+
+    @FunctionalInterface
+    public interface DelayedActionScheduler {
+        void schedule(long delayMs, Runnable action);
+    }
+
+    @FunctionalInterface
+    public interface AgentMapSpeaker {
+        void say(Character agent, String text);
     }
 
     private AgentLifecycleService() {
@@ -170,6 +195,27 @@ public final class AgentLifecycleService {
         }
         AgentBotManagerStatusRuntime.scheduleSpawnStatusCheck(entry, agent, hooks.spawnStatusDelayMs().getAsLong());
         return entry;
+    }
+
+    public static boolean reloginAgent(int agentCharId,
+                                       int leaderCharId,
+                                       int world,
+                                       int channel,
+                                       ReloginHooks hooks) throws SQLException {
+        Character leader = hooks.resolveLeader().resolve(world, leaderCharId);
+        if (leader == null) {
+            return false;
+        }
+
+        MapleMap map = leader.getMap();
+        Point spawnPosition = hooks.resolveSpawnPosition().apply(map, leader.getPosition());
+        Character agent = hooks.loadOfflineAgent().load(agentCharId, world, channel, map, spawnPosition);
+        hooks.registerSpawnedAgent().register(leaderCharId, leader, agent);
+        hooks.delayedActionScheduler().schedule(hooks.returnAnnouncementDelayMs().getAsLong(), () -> {
+            hooks.mapSpeaker().say(agent, "back!!");
+            agent.changeFaceExpression(AgentEmote.HAPPY.getValue());
+        });
+        return true;
     }
 
     public static void removeLeaderEntries(Map<Integer, List<BotEntry>> entriesByLeaderId,

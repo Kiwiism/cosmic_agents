@@ -17,6 +17,13 @@ Rules:
 
 Recent reconstruction notes:
 
+- Offline Agent relogin orchestration now lives in
+  `server.agents.runtime.AgentLifecycleService.reloginAgent`. BotManager keeps
+  `reloginBot` as a compatibility wrapper and supplies temporary hooks for
+  leader lookup, spawn-position resolution, offline loading, registration,
+  delayed scheduling, and map chat. The same leader-offline skip, leader-map
+  spawn positioning, offline character load, spawned registration, delayed
+  `"back!!"` line, and happy face expression are preserved.
 - Live Agent registration now lives in
   `server.agents.runtime.AgentLifecycleService.registerAgent`. BotManager keeps
   `registerBot` and `registerSpawnedBot` as compatibility wrappers and supplies

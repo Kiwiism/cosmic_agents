@@ -3044,22 +3044,23 @@ public class BotManager {
 
 
     public void reloginBot(int charId, int ownerCharId, int world, int channel) {
-        Character owner = Server.getInstance()
-                .getWorld(world)
-                .getPlayerStorage()
-                .getCharacterById(ownerCharId);
-        if (owner == null) return; // owner logged off — skip
-
         try {
-            MapleMap map = owner.getMap();
-            Point pos = resolveSpawnPosition(map, owner.getPosition());
-            Character botChar = loadOfflineBot(charId, world, channel, map, pos);
-
-            registerSpawnedBot(ownerCharId, owner, botChar);
-            AgentBotManagerSchedulerRuntime.afterDelay(randMs(900, 1100), () -> {
-                botSay(botChar, "back!!");
-                botChar.changeFaceExpression(AgentEmote.HAPPY.getValue());
-            });
+            AgentLifecycleService.reloginAgent(
+                    charId,
+                    ownerCharId,
+                    world,
+                    channel,
+                    new AgentLifecycleService.ReloginHooks(
+                            (targetWorld, leaderCharId) -> Server.getInstance()
+                                    .getWorld(targetWorld)
+                                    .getPlayerStorage()
+                                    .getCharacterById(leaderCharId),
+                            this::resolveSpawnPosition,
+                            this::loadOfflineBot,
+                            this::registerSpawnedBot,
+                            AgentBotManagerSchedulerRuntime::afterDelay,
+                            () -> randMs(900, 1100),
+                            this::botSay));
         } catch (SQLException e) {
             log.warn("reloginBot: failed to reload charId={}", charId, e);
         }

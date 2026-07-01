@@ -123,6 +123,93 @@ class AgentLifecycleServiceTest {
     }
 
     @Test
+    void reloginAgentSkipsWhenLeaderIsOffline() throws SQLException {
+        boolean relogged = AgentLifecycleService.reloginAgent(
+                200,
+                100,
+                1,
+                2,
+                new AgentLifecycleService.ReloginHooks(
+                        (world, leaderCharId) -> null,
+                        (map, point) -> {
+                            throw new AssertionError("should not resolve spawn position");
+                        },
+                        (charId, world, channel, targetMap, desiredPosition) -> {
+                            throw new AssertionError("should not load agent");
+                        },
+                        (leaderId, leader, agent) -> {
+                            throw new AssertionError("should not register agent");
+                        },
+                        (delayMs, action) -> {
+                            throw new AssertionError("should not schedule announcement");
+                        },
+                        () -> 1000L,
+                        (agent, text) -> {
+                            throw new AssertionError("should not speak");
+                        }));
+
+        assertFalse(relogged);
+    }
+
+    @Test
+    void reloginAgentLoadsRegistersAndSchedulesReturnAnnouncement() throws SQLException {
+        Character leader = character(100, "Leader");
+        Character agent = character(200, "Alpha");
+        MapleMap map = mock(MapleMap.class);
+        Point leaderPosition = new Point(10, 20);
+        Point spawnPosition = new Point(11, 21);
+        AtomicReference<Runnable> delayedAction = new AtomicReference<>();
+        AtomicReference<BotEntry> registeredEntry = new AtomicReference<>();
+        AtomicReference<String> spoken = new AtomicReference<>();
+        when(leader.getMap()).thenReturn(map);
+        when(leader.getPosition()).thenReturn(leaderPosition);
+
+        boolean relogged = AgentLifecycleService.reloginAgent(
+                agent.getId(),
+                leader.getId(),
+                1,
+                2,
+                new AgentLifecycleService.ReloginHooks(
+                        (world, leaderCharId) -> {
+                            assertEquals(1, world);
+                            assertEquals(leader.getId(), leaderCharId);
+                            return leader;
+                        },
+                        (spawnMap, point) -> {
+                            assertSame(map, spawnMap);
+                            assertSame(leaderPosition, point);
+                            return spawnPosition;
+                        },
+                        (charId, world, channel, targetMap, desiredPosition) -> {
+                            assertEquals(agent.getId(), charId);
+                            assertEquals(1, world);
+                            assertEquals(2, channel);
+                            assertSame(map, targetMap);
+                            assertSame(spawnPosition, desiredPosition);
+                            return agent;
+                        },
+                        (leaderId, resolvedLeader, resolvedAgent) -> {
+                            BotEntry entry = new BotEntry(resolvedAgent, resolvedLeader, null);
+                            registeredEntry.set(entry);
+                            return entry;
+                        },
+                        (delayMs, action) -> {
+                            assertEquals(1000L, delayMs);
+                            delayedAction.set(action);
+                        },
+                        () -> 1000L,
+                        (speakingAgent, text) -> {
+                            assertSame(agent, speakingAgent);
+                            spoken.set(text);
+                        }));
+
+        assertTrue(relogged);
+        assertSame(agent, registeredEntry.get().getBot());
+        delayedAction.get().run();
+        assertEquals("back!!", spoken.get());
+    }
+
+    @Test
     void spawnsOnlineAgentWithLegacyHooks() throws SQLException {
         Character leader = character(100, "Leader");
         Character agent = character(200, "Alpha", new BotClient(0, 0));

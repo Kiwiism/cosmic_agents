@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Offline Agent relogin moved from BotManager to
+  `server.agents.runtime.AgentLifecycleService.reloginAgent`. BotManager
+  remains the temporary compatibility wrapper for server lookup, DB loading,
+  registration hooks, delayed scheduling, and map chat.
 - Live Agent registration moved from BotManager to
   `server.agents.runtime.AgentLifecycleService.registerAgent`. BotManager's
   register APIs remain temporary compatibility wrappers around the Agent-owned
