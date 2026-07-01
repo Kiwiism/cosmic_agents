@@ -34,6 +34,7 @@ import server.agents.capabilities.trade.AgentTradeCommandProfiler;
 import server.agents.capabilities.trade.AgentTradeConfirmWaitService;
 import server.agents.capabilities.trade.AgentTradeItemAddTickService;
 import server.agents.capabilities.trade.AgentTradeItemAddTickCallbackService;
+import server.agents.capabilities.trade.AgentTradeItemCollectionCallbackService;
 import server.agents.capabilities.trade.AgentTradeItemCollectionService;
 import server.agents.capabilities.trade.AgentTradeInviteWaitService;
 import server.agents.capabilities.trade.AgentTradeLifecycleCallbackService;
@@ -301,7 +302,7 @@ public class BotInventoryManager {
                 category,
                 bot,
                 AgentBotRuntimeIdentityRuntime.owner(entry),
-                AgentTradeItemCollectionService.TradeItemCollectionCallbacks.of(
+                AgentTradeItemCollectionCallbackService.tradeItemCollectionCallbacks(
                         () -> recommendedItems(entry, bot),
                         () -> classifyEquipTradeGroups(entry, bot),
                         () -> classifyAmmoTradeGroups(bot)));

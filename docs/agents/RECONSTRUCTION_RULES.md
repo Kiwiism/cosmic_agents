@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- `BotInventoryManager` item-collection callback construction moved to
+  `server.agents.capabilities.trade.AgentTradeItemCollectionCallbackService`.
+  The bot inventory shell still supplies temporary recommended-item,
+  equip-group, and ammo-group hooks while the collection callback object is
+  Agent-owned.
 - `BotInventoryManager.tickPassiveLoot` passive-loot callback construction moved
   to `server.agents.capabilities.looting.AgentPassiveLootCallbackService`. The
   bot inventory shell still supplies temporary runtime-state, countdown,
