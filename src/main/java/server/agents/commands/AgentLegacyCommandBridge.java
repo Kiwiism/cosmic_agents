@@ -3,7 +3,7 @@ package server.agents.commands;
 import server.agents.runtime.AgentPerformanceMonitor;
 
 import client.Character;
-import server.bots.BotManager;
+import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.navigation.AgentNavigationDebugOverlay;
 import server.agents.capabilities.dialogue.llm.AgentLlmConfig;
 
@@ -18,15 +18,15 @@ public final class AgentLegacyCommandBridge {
     }
 
     public static List<String> combatConfigLines() {
-        return BotManager.botCombatConfigLines();
+        return AgentCombatConfig.configFieldLines();
     }
 
     public static String combatConfigLine(String name) {
-        return BotManager.botCombatConfigLine(name);
+        return AgentCombatConfig.configFieldLine(name);
     }
 
     public static String setCombatConfig(String name, String value) {
-        return BotManager.setBotCombatConfig(name, value);
+        return AgentCombatConfig.setConfigField(name, value);
     }
 
     public static boolean llmEnabled() {

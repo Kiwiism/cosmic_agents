@@ -151,6 +151,9 @@ Recent reconstruction notes:
 - Script-driven item dropping now lives in `AgentScriptItemActionService`;
   BotManager keeps only the compatibility `issueDropItem` wrapper, and
   `AgentScriptRunner` calls the Agent service directly for script contexts.
+- Legacy command combat-config routing now calls `AgentCombatConfig` directly
+  through `AgentLegacyCommandBridge` instead of passing through BotManager's
+  static compatibility wrappers.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but
