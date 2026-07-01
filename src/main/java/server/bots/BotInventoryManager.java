@@ -39,6 +39,7 @@ import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.capabilities.trade.AgentManualTradeService;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.trade.AgentMesoTradeService;
+import server.agents.capabilities.trade.AgentReservedEquipTradeTransferService;
 import server.agents.capabilities.trade.AgentTradeAllItemsAddedService;
 import server.agents.capabilities.trade.AgentTradeBatchService;
 import server.agents.capabilities.trade.AgentTradeCancellationService;
@@ -273,12 +274,14 @@ public class BotInventoryManager {
         }
         if (AgentInventoryTradePolicy.isReservedEquipsCategory(category)) {
             List<Item> items = collectReservedEquipTradePage(category, entry, bot);
-            if (items.isEmpty()) {
-                AgentBotInventoryRuntime.replyNow(entry, AgentInventoryDialogueReporter.noItemsReply(category));
-                return;
-            }
-            startTradeSequence(category, owner, items, 0, true, entry, bot);
-            AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, reservedEquipsPageMessage(category, entry, bot));
+            AgentReservedEquipTradeTransferService.startReservedEquipTradeTransfer(
+                    category,
+                    items,
+                    () -> reservedEquipsPageMessage(category, entry, bot),
+                    (reservedCategory, reservedItems) -> startTradeSequence(
+                            reservedCategory, owner, reservedItems, 0, true, entry, bot),
+                    message -> AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, message),
+                    reply -> AgentBotInventoryRuntime.replyNow(entry, reply));
             AgentTradeCommandProfiler.logSlowCommand(category, "startTradeTransfer", entry, bot, startedAt, TRADE_COMMAND_PROFILE_WARN_NS, log);
             return;
         }
