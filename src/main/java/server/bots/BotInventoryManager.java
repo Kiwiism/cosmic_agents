@@ -3,8 +3,6 @@ package server.bots;
 import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 
-import server.agents.capabilities.dialogue.AgentEmote;
-
 import server.agents.capabilities.looting.AgentLootEligibility;
 
 import client.Character;
@@ -44,6 +42,7 @@ import server.agents.capabilities.trade.AgentMesoTradeService;
 import server.agents.capabilities.trade.AgentTradeBatchService;
 import server.agents.capabilities.trade.AgentTradeCancellationService;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
+import server.agents.capabilities.trade.AgentTradeCompletionService;
 import server.agents.capabilities.trade.AgentTradeRecipientService;
 import server.agents.capabilities.trade.AgentTradeStateService;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
@@ -572,27 +571,15 @@ public class BotInventoryManager {
     }
 
     private static void completeTradeAndThank(BotEntry entry, Character bot, Trade trade) {
-        // Snapshot equips the owner is giving us before the trade clears their side.
-        // Trade reuses the same item objects, so identity comparison in ownerGivenItems works.
-        if (trade.getPartner() != null) {
-            for (Item item : trade.getPartner().getItems()) {
-                if (ItemConstants.getInventoryType(item.getItemId()) == InventoryType.EQUIP) {
-                    AgentBotPendingTradeStateRuntime.addOwnerGivenItem(entry, item);
-                }
-            }
-        }
-        boolean receivedSomething = trade.getPartner() != null && trade.getPartner().hasAnyOffer();
-        Trade.completeTrade(bot);
-        long replyDelay = BotManager.randMs(800, 1300);
-        if (receivedSomething) {
-            bot.changeFaceExpression(AgentEmote.HAPPY.getValue());
-            AgentBotInventoryRuntime.afterDelay(replyDelay, () ->
-                    AgentBotInventoryRuntime.visibleSayNow(entry, BotManager.randomReply(AgentDialogueCatalog.tradeThanksReplies())));
-        } else if (ThreadLocalRandom.current().nextInt(100) < 20) {
-            bot.changeFaceExpression(ThreadLocalRandom.current().nextBoolean() ? AgentEmote.GLARE.getValue() : AgentEmote.ANNOYED.getValue());
-            AgentBotInventoryRuntime.afterDelay(replyDelay, () ->
-                    AgentBotInventoryRuntime.visibleSayNow(entry, BotManager.randomReply(AgentDialogueCatalog.tradeFreebieReplies())));
-        }
+        AgentTradeCompletionService.completeAndReact(
+                entry,
+                bot,
+                trade,
+                () -> BotManager.randMs(800, 1300),
+                () -> BotManager.randomReply(AgentDialogueCatalog.tradeThanksReplies()),
+                () -> BotManager.randomReply(AgentDialogueCatalog.tradeFreebieReplies()),
+                () -> ThreadLocalRandom.current().nextInt(100),
+                () -> ThreadLocalRandom.current().nextBoolean());
     }
 
     private static void startTradeMesoTransfer(String category, BotEntry entry, Character bot) {

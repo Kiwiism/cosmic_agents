@@ -2156,6 +2156,11 @@ Recent reconstruction notes:
   `AgentTradeCancellationService`; BotInventoryManager still supplies the
   temporary reset callback while the Agent service preserves the same reply,
   `NO_RESPONSE` cancel, and reset ordering.
+- Trade completion owner-given equip snapshot, `Trade.completeTrade`, thank
+  reaction, and empty-trade freebie reaction now live in
+  `AgentTradeCompletionService`; BotInventoryManager still supplies the same
+  random delay/reply/roll providers while trade tick orchestration remains a
+  later migration slice.
 - Equipped-slot named trade preparation now lives in
   `AgentEquippedSlotTradeService`; BotInventoryManager still owns the enclosing
   trade sequence but delegates slot counting, temporary unequip preparation,
