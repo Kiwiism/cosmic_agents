@@ -50,6 +50,7 @@ import server.agents.capabilities.social.AgentScrollReactionService;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.trade.AgentOfferService;
+import server.agents.capabilities.trade.AgentTradeDialogueService;
 
 
 import server.agents.integration.AgentBotManagerReplyRuntime;
@@ -817,19 +818,7 @@ public class BotManager {
     }
 
     public String manualTradeGreeting() {
-        return randomReply(List.of(
-                "?",
-                "got something for me?",
-                "what you got?",
-                "trade?",
-                "show me",
-                "lets see",
-                "whatcha got",
-                "tryna trade?",
-                "yes?",
-                "sup",
-                "ooh what is it",
-                "what's up"));
+        return AgentTradeDialogueService.manualTradeGreeting();
     }
 
     private List<Character> getPartyBots(Character source) {

@@ -112,6 +112,9 @@ Recent map updates:
 - Airshow named-Agent lookup now reads through
   `AgentBotSessionLifecycleSideEffects.getBotEntry`, removing the direct
   BotManager lookup from `AgentAirshowService`.
+- Manual trade greeting selection moved to `AgentTradeDialogueService` backed
+  by `AgentDialogueCatalog`; inventory runtime adapters no longer call
+  `BotManager.getInstance().manualTradeGreeting`.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.

@@ -124,6 +124,9 @@ Recent reconstruction notes:
 - Airshow named-Agent lookup now enters through the Agent session lifecycle
   gateway instead of calling `BotManager.getBotEntry` directly; validation
   messages and airshow side effects are unchanged.
+- Manual trade greeting selection now lives in `AgentDialogueCatalog` and
+  `AgentTradeDialogueService`; `BotManager.manualTradeGreeting` remains only a
+  compatibility delegate.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

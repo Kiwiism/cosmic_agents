@@ -61,7 +61,7 @@ public final class AgentBotInventoryRuntimeAdapters {
                 BotMovementManager::configuredTickMs,
                 peer -> peer.getClient() instanceof client.BotClient,
                 (peerId, ownerId) -> AgentOwnershipService.getInstance().isAuthorizedOwner(peerId, ownerId),
-                () -> BotManager.getInstance().manualTradeGreeting(),
+                AgentTradeDialogueService::manualTradeGreeting,
                 (agent, owner) -> BotEquipManager.autoEquip(agent, owner, null));
     }
 

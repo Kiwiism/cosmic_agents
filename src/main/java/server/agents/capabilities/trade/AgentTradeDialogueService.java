@@ -16,6 +16,10 @@ public final class AgentTradeDialogueService {
         return BotManager.randomReply(AgentDialogueCatalog.tradeAllDoneReplies());
     }
 
+    public static String manualTradeGreeting() {
+        return BotManager.randomReply(AgentDialogueCatalog.manualTradeGreetingReplies());
+    }
+
     public static String thanksReply() {
         return BotManager.randomReply(AgentDialogueCatalog.tradeThanksReplies());
     }

@@ -217,6 +217,19 @@ public final class AgentDialogueCatalog {
     private static final List<String> TRADE_ALL_DONE_REPLIES = List.of(
             "that's all!", "done adding stuff!", "all set!", "everything's in!",
             "that's everything!", "done!", "added it all", "check it out");
+    private static final List<String> MANUAL_TRADE_GREETING_REPLIES = List.of(
+            "?",
+            "got something for me?",
+            "what you got?",
+            "trade?",
+            "show me",
+            "lets see",
+            "whatcha got",
+            "tryna trade?",
+            "yes?",
+            "sup",
+            "ooh what is it",
+            "what's up");
     private static final List<String> TRADE_RESERVED_FOR_OTHER_REPLIES = List.of(
             "these might be needed by others, maybe don't sell them",
             "careful with these, they could be for someone else",
@@ -641,6 +654,10 @@ public final class AgentDialogueCatalog {
 
     public static List<String> tradeAllDoneReplies() {
         return TRADE_ALL_DONE_REPLIES;
+    }
+
+    public static List<String> manualTradeGreetingReplies() {
+        return MANUAL_TRADE_GREETING_REPLIES;
     }
 
     public static List<String> tradeReservedForOtherReplies() {
