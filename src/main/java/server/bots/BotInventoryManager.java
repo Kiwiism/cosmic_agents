@@ -195,14 +195,13 @@ public class BotInventoryManager {
             }
             // Accept invite if not yet joined — small delay so it feels human
             if (!trade.isFullTrade()) {
-                if (trade.getNumber() != 1) return;
-                AgentBotManualTradeStateRuntime.ensureAcceptDelay(entry, 500 + BotMovementManager.cfg.TICK_MS);
-                AgentBotManualTradeStateRuntime.setAcceptDelayMs(
+                trade = AgentManualTradeService.acceptInviteWhenReady(
                         entry,
-                        BotMovementManager.tickDown(AgentBotManualTradeStateRuntime.acceptDelayMs(entry)));
-                if (AgentBotManualTradeStateRuntime.acceptDelayMs(entry) > 0) return;
-                Trade.visitTrade(bot, partner.getChr());
-                trade = bot.getTrade();
+                        bot,
+                        partner.getChr(),
+                        trade,
+                        500 + BotMovementManager.cfg.TICK_MS,
+                        BotMovementManager::tickDown);
                 if (trade == null || !trade.isFullTrade()) return;
             }
             // Confirm once the offering bot has confirmed its side
@@ -216,14 +215,13 @@ public class BotInventoryManager {
         if (!trade.isFullTrade()) {
             // Only accept on bot's behalf when the owner was the initiator (bot is slot 1).
             // When bot is slot 0 (bot initiated via "trade me"), wait for owner to accept.
-            if (trade.getNumber() != 1) return;
-            AgentBotManualTradeStateRuntime.ensureAcceptDelay(entry, 500 + BotMovementManager.cfg.TICK_MS);
-            AgentBotManualTradeStateRuntime.setAcceptDelayMs(
+            trade = AgentManualTradeService.acceptInviteWhenReady(
                     entry,
-                    BotMovementManager.tickDown(AgentBotManualTradeStateRuntime.acceptDelayMs(entry)));
-            if (AgentBotManualTradeStateRuntime.acceptDelayMs(entry) > 0) return;
-            Trade.visitTrade(bot, owner);
-            trade = bot.getTrade();
+                    bot,
+                    owner,
+                    trade,
+                    500 + BotMovementManager.cfg.TICK_MS,
+                    BotMovementManager::tickDown);
             if (trade == null || !trade.isFullTrade()) return;
         }
 

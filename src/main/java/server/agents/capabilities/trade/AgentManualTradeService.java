@@ -63,4 +63,30 @@ public final class AgentManualTradeService {
             trade.chat(greeting.get());
         }
     }
+
+    public static Trade acceptInviteWhenReady(BotEntry entry,
+                                              Character agent,
+                                              Character inviter,
+                                              Trade trade,
+                                              int delayMs,
+                                              IntUnaryOperator tickDown) {
+        if (trade.getNumber() != 1) {
+            return trade;
+        }
+
+        AgentBotManualTradeStateRuntime.ensureAcceptDelay(entry, delayMs);
+        AgentBotManualTradeStateRuntime.setAcceptDelayMs(
+                entry,
+                tickDown.applyAsInt(AgentBotManualTradeStateRuntime.acceptDelayMs(entry)));
+        if (AgentBotManualTradeStateRuntime.acceptDelayMs(entry) > 0) {
+            return trade;
+        }
+
+        Trade.visitTrade(agent, inviter);
+        Trade joined = agent.getTrade();
+        if (joined == null || !joined.isFullTrade()) {
+            return null;
+        }
+        return joined;
+    }
 }

@@ -67,4 +67,37 @@ class AgentManualTradeServiceTest {
 
         verify(trade).chat("hi after clear");
     }
+
+    @Test
+    void waitsBeforeAcceptingManualTradeInvite() {
+        Character bot = mock(Character.class);
+        Character inviter = mock(Character.class);
+        Trade trade = mock(Trade.class);
+        BotEntry entry = new BotEntry(bot, null, null);
+        when(trade.getNumber()).thenReturn((byte) 1);
+
+        Trade result = AgentManualTradeService.acceptInviteWhenReady(entry, bot, inviter, trade, 600, value -> 100);
+
+        assertSame(trade, result);
+        assertEquals(100, AgentBotManualTradeStateRuntime.acceptDelayMs(entry));
+    }
+
+    @Test
+    void acceptsManualTradeInviteAfterDelayExpires() {
+        Character bot = mock(Character.class);
+        Character inviter = mock(Character.class);
+        Trade trade = mock(Trade.class);
+        Trade joinedTrade = mock(Trade.class);
+        BotEntry entry = new BotEntry(bot, null, null);
+        when(trade.getNumber()).thenReturn((byte) 1);
+        when(bot.getTrade()).thenReturn(joinedTrade);
+        when(joinedTrade.isFullTrade()).thenReturn(true);
+
+        try (MockedStatic<Trade> trades = mockStatic(Trade.class)) {
+            Trade result = AgentManualTradeService.acceptInviteWhenReady(entry, bot, inviter, trade, 600, value -> 0);
+
+            trades.verify(() -> Trade.visitTrade(bot, inviter));
+            assertSame(joinedTrade, result);
+        }
+    }
 }

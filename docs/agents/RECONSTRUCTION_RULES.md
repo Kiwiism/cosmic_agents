@@ -2094,6 +2094,9 @@ Recent reconstruction notes:
 - Manual trade timeout cancellation, state clearing, and one-time greeting
   bookkeeping now live in `AgentManualTradeService`; `BotInventoryManager`
   still owns the enclosing manual-trade tick and peer/owner trade branching.
+- Manual trade accept-delay countdown and invite-join side effect now also live
+  in `AgentManualTradeService`; `BotInventoryManager` still decides whether the
+  current manual trade is an owner or peer-bot trade.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and
