@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotManager` active-runtime lookup loops moved to
+  `server.agents.runtime.AgentRuntimeRegistry`; BotManager still owns the
+  temporary backing map and lifecycle mutation in this slice, but lookup
+  behavior is Agent-owned.
 - Agent performance monitor notes for passive loot, trade tick, manual trade,
   and grind-loot scanning now name Agent-owned runtime services while preserving
   the same section keys and timing behavior.

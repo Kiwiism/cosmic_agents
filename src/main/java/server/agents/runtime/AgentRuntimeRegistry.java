@@ -1,5 +1,78 @@
 package server.agents.runtime;
 
-public interface AgentRuntimeRegistry {
-}
+import client.Character;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.bots.BotEntry;
 
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Agent-owned lookup helpers over the temporary BotEntry-backed runtime map.
+ * Storage remains in BotManager during reconstruction; lookup behavior lives here.
+ */
+public final class AgentRuntimeRegistry {
+    private AgentRuntimeRegistry() {
+    }
+
+    public static BotEntry findByCharacterId(Map<Integer, List<BotEntry>> entriesByLeaderId,
+                                             int leaderCharId,
+                                             int agentCharId) {
+        List<BotEntry> entries = entriesByLeaderId.get(leaderCharId);
+        if (entries == null) {
+            return null;
+        }
+        for (BotEntry entry : entries) {
+            if (AgentBotRuntimeIdentityRuntime.botIs(entry, agentCharId)) {
+                return entry;
+            }
+        }
+        return null;
+    }
+
+    public static BotEntry findByName(Map<Integer, List<BotEntry>> entriesByLeaderId,
+                                      int leaderCharId,
+                                      String agentName) {
+        List<BotEntry> entries = entriesByLeaderId.get(leaderCharId);
+        if (entries == null || agentName == null) {
+            return null;
+        }
+        for (BotEntry entry : entries) {
+            if (AgentBotRuntimeIdentityRuntime.botNameEquals(entry, agentName)) {
+                return entry;
+            }
+        }
+        return null;
+    }
+
+    public static Character activeLeaderByAgentCharacterId(Map<Integer, List<BotEntry>> entriesByLeaderId,
+                                                           int agentCharId) {
+        for (List<BotEntry> entries : entriesByLeaderId.values()) {
+            for (BotEntry entry : entries) {
+                if (AgentBotRuntimeIdentityRuntime.botIs(entry, agentCharId)) {
+                    return AgentBotRuntimeIdentityRuntime.owner(entry);
+                }
+            }
+        }
+        return null;
+    }
+
+    public static Character firstAgent(Map<Integer, List<BotEntry>> entriesByLeaderId, int leaderCharId) {
+        BotEntry entry = firstEntry(entriesByLeaderId, leaderCharId);
+        return entry == null ? null : AgentBotRuntimeIdentityRuntime.bot(entry);
+    }
+
+    public static BotEntry firstEntry(Map<Integer, List<BotEntry>> entriesByLeaderId, int leaderCharId) {
+        List<BotEntry> entries = entriesByLeaderId.get(leaderCharId);
+        return entries != null && !entries.isEmpty() ? entries.get(0) : null;
+    }
+
+    public static List<BotEntry> entriesForLeader(Map<Integer, List<BotEntry>> entriesByLeaderId,
+                                                  int leaderCharId) {
+        List<BotEntry> entries = entriesByLeaderId.get(leaderCharId);
+        if (entries == null || entries.isEmpty()) {
+            return List.of();
+        }
+        return List.copyOf(entries);
+    }
+}

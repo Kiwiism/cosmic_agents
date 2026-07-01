@@ -20,6 +20,7 @@ import server.agents.capabilities.combat.AgentProjectileHitbox;
 import server.agents.capabilities.dialogue.AgentEmote;
 
 import server.agents.runtime.AgentPerformanceMonitor;
+import server.agents.runtime.AgentRuntimeRegistry;
 
 import server.agents.capabilities.looting.AgentLootEligibility;
 import server.agents.capabilities.looting.AgentLootTargetService;
@@ -465,12 +466,7 @@ public class BotManager {
     }
 
     private BotEntry getBotEntry(int ownerCharId, int botCharId) {
-        List<BotEntry> entries = bots.get(ownerCharId);
-        if (entries == null) return null;
-        for (BotEntry e : entries) {
-            if (AgentBotRuntimeIdentityRuntime.botIs(e, botCharId)) return e;
-        }
-        return null;
+        return AgentRuntimeRegistry.findByCharacterId(bots, ownerCharId, botCharId);
     }
 
     public Character loadOfflineBot(int charId, int world, int channel, MapleMap targetMap, Point desiredPosition) throws SQLException {
@@ -741,14 +737,7 @@ public class BotManager {
     }
 
     public Character getActiveOwnerByBotCharId(int botCharId) {
-        for (List<BotEntry> entries : bots.values()) {
-            for (BotEntry entry : entries) {
-                if (AgentBotRuntimeIdentityRuntime.botIs(entry, botCharId)) {
-                    return AgentBotRuntimeIdentityRuntime.owner(entry);
-                }
-            }
-        }
-        return null;
+        return AgentRuntimeRegistry.activeLeaderByAgentCharacterId(bots, botCharId);
     }
 
     public void requestBotPotionCheckSoon(Character bot) {
@@ -778,21 +767,15 @@ public class BotManager {
     }
 
     public Character getBot(int ownerCharId) {
-        List<BotEntry> entries = bots.get(ownerCharId);
-        return (entries != null && !entries.isEmpty()) ? AgentBotRuntimeIdentityRuntime.bot(entries.get(0)) : null;
+        return AgentRuntimeRegistry.firstAgent(bots, ownerCharId);
     }
 
     BotEntry getFirstBotEntry(int ownerCharId) {
-        List<BotEntry> entries = bots.get(ownerCharId);
-        return (entries != null && !entries.isEmpty()) ? entries.get(0) : null;
+        return AgentRuntimeRegistry.firstEntry(bots, ownerCharId);
     }
 
     public List<BotEntry> getBotEntries(int ownerCharId) {
-        List<BotEntry> entries = bots.get(ownerCharId);
-        if (entries == null || entries.isEmpty()) {
-            return List.of();
-        }
-        return List.copyOf(entries);
+        return AgentRuntimeRegistry.entriesForLeader(bots, ownerCharId);
     }
 
     /** Called when the owner picks up or receives an item; notifies bots that might want it. */
@@ -836,17 +819,7 @@ public class BotManager {
     }
 
     public BotEntry getBotEntry(int ownerCharId, String botName) {
-        List<BotEntry> entries = bots.get(ownerCharId);
-        if (entries == null || botName == null) {
-            return null;
-        }
-
-        for (BotEntry entry : entries) {
-            if (AgentBotRuntimeIdentityRuntime.botNameEquals(entry, botName)) {
-                return entry;
-            }
-        }
-        return null;
+        return AgentRuntimeRegistry.findByName(bots, ownerCharId, botName);
     }
 
     public void syncPartyBotsQuestStart(Character source, Quest quest, int npc) {

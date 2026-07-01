@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- BotManager active-runtime lookup helpers for agent ID, agent name, active
+  leader, first agent, first entry, and per-leader entry snapshots now delegate
+  to `server.agents.runtime.AgentRuntimeRegistry`. The live storage map remains
+  in BotManager for this slice, preserving registration/removal behavior while
+  moving lookup ownership into Agent runtime.
 - Agent performance monitor inventory/trade section notes now point at the
   Agent-owned looting/trade runtime services instead of the temporary
   `BotInventoryManager` compatibility shell. Section keys and timing behavior
