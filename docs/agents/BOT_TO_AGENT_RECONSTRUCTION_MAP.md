@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Monster-control release moved from BotManager to
+  `server.agents.runtime.AgentMonsterControlService`; common tick now delegates
+  to the Agent-owned service.
 - Death respawn recovery moved from BotManager to
   `server.agents.runtime.AgentDeathTickService.respawnNearLeader`. BotManager
   remains the temporary hook provider for portal selection, physics, broadcast,

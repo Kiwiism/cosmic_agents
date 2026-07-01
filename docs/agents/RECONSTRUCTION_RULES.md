@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Monster-control release now lives in
+  `server.agents.runtime.AgentMonsterControlService`. BotManager's common tick
+  calls the Agent service directly, preserving the same controlled-monster scan
+  and `aggroRedirectController` handoff for every monster assigned to a headless
+  Agent.
 - Death respawn recovery now lives in
   `server.agents.runtime.AgentDeathTickService.respawnNearLeader`. BotManager
   keeps only temporary hooks for map-change portal selection, ground lookup,

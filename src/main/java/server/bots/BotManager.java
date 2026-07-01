@@ -36,6 +36,7 @@ import server.agents.runtime.AgentLeaderSafetyService;
 import server.agents.runtime.AgentMapEnvironmentService;
 import server.agents.runtime.AgentMapTransitionService;
 import server.agents.runtime.AgentModeService;
+import server.agents.runtime.AgentMonsterControlService;
 import server.agents.runtime.AgentPartyLifecycleService;
 import server.agents.runtime.AgentPositionService;
 import server.agents.runtime.AgentRandom;
@@ -2607,7 +2608,7 @@ public class BotManager {
             return true;
         }
         if (perf) t = System.nanoTime();
-        tickReleaseMonsterControl(bot);
+        AgentMonsterControlService.releaseControlledMonsters(bot);
         if (perf) AgentPerformanceMonitor.record("common-release-mob", System.nanoTime() - t);
         // While a trade window is open, suppress passive loot pickup. pickupItem() runs on
         // this scheduler thread and races Trade.completeTrade()'s addFromDrop on the packet
@@ -3078,26 +3079,6 @@ public class BotManager {
                         (respawnEntry, ignoredBot) -> BotMovementManager.resetEntryStateAfterTeleport(respawnEntry),
                         (respawnEntry, ignoredBot) -> BotMovementManager.broadcastMovement(respawnEntry),
                         this::botSay));
-    }
-
-    // -------------------------------------------------------------------------
-    // Monster control hand-off
-    // -------------------------------------------------------------------------
-
-    /**
-     * Bots can't drive mob AI (BotClient.sendPacket is a no-op), so any monster
-     * assigned to a bot as controller would freeze. Release it from the bot and
-     * let the upstream controller-selection SSOT ({@link Monster#aggroUpdateController})
-     * pick an eligible real player, or leave it released if none is eligible.
-     * Bots and hidden GMs are excluded by that SSOT, so neither is ever handed control.
-     */
-    private static void tickReleaseMonsterControl(Character bot) {
-        java.util.Collection<Monster> controlled = bot.getControlledMonsters();
-        if (controlled.isEmpty()) return;
-
-        for (Monster monster : controlled) {
-            monster.aggroRedirectController();
-        }
     }
 
     // -------------------------------------------------------------------------
