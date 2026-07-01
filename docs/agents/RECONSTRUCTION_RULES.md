@@ -2573,6 +2573,9 @@ Recent reconstruction notes:
 - Scripted follow-target character resolution now lives in
   `server.agents.runtime.AgentFollowAnchorService`; BotManager still supplies
   the temporary same-leader sibling entry list for script task compatibility.
+- Script task completion rules now live in
+  `server.agents.runtime.AgentScriptTaskCompletionService`; BotManager still
+  supplies temporary follow-target resolution and movement-distance configuration.
 
 Initial reconstruction order:
 

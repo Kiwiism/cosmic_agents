@@ -30,6 +30,7 @@ import server.agents.runtime.AgentIdlePhysicsService;
 import server.agents.runtime.AgentLeaderSessionService;
 import server.agents.runtime.AgentMapTransitionService;
 import server.agents.runtime.AgentModeService;
+import server.agents.runtime.AgentScriptTaskCompletionService;
 import server.agents.runtime.AgentTargetSnapshot;
 import server.agents.runtime.AgentTargetSnapshotService;
 import server.agents.runtime.AgentRuntimeRegistry;
@@ -3113,17 +3114,8 @@ public class BotManager {
     }
 
     private boolean isScriptTaskComplete(BotEntry entry, AgentTask task) {
-        return switch (task.type()) {
-            case MOVE_TO -> !AgentBotMoveTargetStateRuntime.hasMoveTarget(entry) || isNear(AgentBotRuntimeIdentityRuntime.botPosition(entry), task.point(),
-                    task.precise() ? 8 : BotMovementManager.cfg.STOP_DIST);
-            case FOLLOW_UNTIL_NEAR -> {
-                Character target = resolveFollowCharacterById(entry, task.targetCharacterId());
-                yield target != null
-                        && AgentBotRuntimeIdentityRuntime.botMapId(entry) == target.getMapId()
-                        && isNear(AgentBotRuntimeIdentityRuntime.botPosition(entry), target.getPosition(), task.nearPx());
-            }
-            case FOLLOW_OWNER, FOLLOW_TARGET, GRIND, STOP, DROP_ITEM -> true;
-        };
+        return AgentScriptTaskCompletionService.isComplete(
+                entry, task, BotMovementManager.cfg.STOP_DIST, targetId -> resolveFollowCharacterById(entry, targetId));
     }
 
     private Character resolveFollowCharacterById(BotEntry entry, int targetCharacterId) {
