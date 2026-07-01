@@ -12,6 +12,8 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Recommended trade item selection moved to `AgentTradeRecommendationService`;
+  `BotInventoryManager` no longer owns the null-owner recommendation rule.
 - Equip trade slow-classification warning threshold and formatting moved to
   `AgentEquipTradeSlowLogService`; `BotInventoryManager` no longer owns that
   logger, threshold, or warning message body.

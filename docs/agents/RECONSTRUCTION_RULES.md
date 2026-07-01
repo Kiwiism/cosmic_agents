@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Recommended equipment trade item selection moved from `BotInventoryManager`
+  to `server.agents.capabilities.trade.AgentTradeRecommendationService`. The
+  legacy null-owner empty-list behavior and recommendation collector call are
+  unchanged.
 - Equip trade slow-classification warning ownership moved from
   `BotInventoryManager` to
   `server.agents.capabilities.inventory.AgentEquipTradeSlowLogService`. The

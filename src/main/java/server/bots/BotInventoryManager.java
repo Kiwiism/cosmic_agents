@@ -40,6 +40,7 @@ import server.agents.capabilities.trade.AgentTradeItemCollectionService;
 import server.agents.capabilities.trade.AgentTradeInviteWaitService;
 import server.agents.capabilities.trade.AgentTradeLifecycleCallbackService;
 import server.agents.capabilities.trade.AgentTradeLifecycleService;
+import server.agents.capabilities.trade.AgentTradeRecommendationService;
 import server.agents.capabilities.trade.AgentTradeRecipientService;
 import server.agents.capabilities.trade.AgentTradeSequenceRuntimeService;
 import server.agents.capabilities.trade.AgentTradeTickCallbackService;
@@ -270,7 +271,10 @@ public class BotInventoryManager {
                 bot,
                 AgentBotRuntimeIdentityRuntime.owner(entry),
                 AgentTradeItemCollectionCallbackService.tradeItemCollectionCallbacks(
-                        () -> recommendedItems(entry, bot),
+                        () -> AgentTradeRecommendationService.recommendedItems(
+                                AgentBotRuntimeIdentityRuntime.owner(entry),
+                                bot,
+                                BotEquipManager::collectRecommendedItems),
                         () -> classifyEquipTradeGroups(entry, bot),
                         () -> classifyAmmoTradeGroups(bot)));
     }
@@ -287,11 +291,6 @@ public class BotInventoryManager {
 
     private static String nextAmmoGroup(String category, Character bot) {
         return AgentAmmoTradeClassificationService.nextAmmoGroup(category, classifyAmmoTradeGroups(bot));
-    }
-
-    private static List<Item> recommendedItems(BotEntry entry, Character bot) {
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
-        return owner != null ? BotEquipManager.collectRecommendedItems(owner, bot) : List.of();
     }
 
     private static AmmoTradeGroups classifyAmmoTradeGroups(Character bot) {
