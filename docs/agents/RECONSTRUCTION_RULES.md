@@ -2085,8 +2085,12 @@ Recent reconstruction notes:
 - Agent transfer command, pending item-choice, and accepted-offer callers now
   enter through `AgentInventoryTransferService`; the service is a temporary
   Agent-owned boundary over the remaining `BotInventoryManager` transfer state
-  machine until category counting, choice execution, and transfer sequencing
-  are migrated into Agent trade/inventory modules.
+  machine until transfer sequencing is migrated into Agent trade/inventory
+  modules.
+- Transfer availability and item-count decisions now run inside
+  `AgentInventoryTransferService` through Agent inventory collection policies;
+  only the actual trade-sequence start remains delegated to the temporary
+  `BotInventoryManager` state machine.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and

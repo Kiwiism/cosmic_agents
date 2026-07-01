@@ -61,4 +61,15 @@ class AgentInventoryTransferServiceTest {
             inventory.verify(() -> BotInventoryManager.startTradeTransfer("scrolls", entry, bot));
         }
     }
+
+    @Test
+    void countsMesoTransfersThroughAgentBoundary() {
+        Character bot = mock(Character.class);
+        BotEntry entry = new BotEntry(bot, null, null);
+        org.mockito.Mockito.when(bot.getMeso()).thenReturn(1_500);
+
+        assertEquals(true, AgentInventoryTransferService.hasTransferableItems("mesos:1000", entry, bot));
+        assertEquals(false, AgentInventoryTransferService.hasTransferableItems("mesos:2000", entry, bot));
+        assertEquals(1_500, AgentInventoryTransferService.countTransferableItems("mesos", entry, bot));
+    }
 }
