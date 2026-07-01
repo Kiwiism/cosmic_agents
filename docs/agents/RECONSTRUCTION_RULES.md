@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- BotManager bot-only autopot cleanup now lives in
+  `server.agents.runtime.AgentAutopotRuntimeCleanupService`. Runtime release
+  still removes the live entry first, then clears HP/MP autopot alerts and
+  normalizes pet autopot keys 91/92 to type 7 with the same action values.
 - BotManager spawn-position grounding now lives in
   `server.agents.runtime.AgentSpawnPositionService`. The same null map/position
   bypass, one-pixel-above ground lookup, and desired-position fallback are

@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- BotManager bot-only autopot cleanup moved to
+  `server.agents.runtime.AgentAutopotRuntimeCleanupService`. BotManager
+  `cleanupBotRuntimeState` remains the temporary lifecycle wrapper that removes
+  the entry and then calls the Agent-owned cleanup helper.
 - BotManager spawn-position resolution moved to
   `server.agents.runtime.AgentSpawnPositionService`. BotManager keeps
   `resolveSpawnPosition` as a compatibility delegate while offline load,

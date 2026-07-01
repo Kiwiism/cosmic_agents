@@ -21,6 +21,7 @@ import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 
 import server.agents.runtime.AgentActionLockPhysicsService;
+import server.agents.runtime.AgentAutopotRuntimeCleanupService;
 import server.agents.runtime.AgentCommandModeService;
 import server.agents.runtime.AgentDeathTickService;
 import server.agents.runtime.AgentPerformanceMonitor;
@@ -133,7 +134,6 @@ import client.QuestStatus;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.WeaponType;
-import client.keybind.KeyBinding;
 import constants.inventory.ItemConstants;
 import net.server.Server;
 import org.slf4j.Logger;
@@ -524,27 +524,13 @@ public class BotManager {
         }
 
         boolean removed = removeBotByCharId(bot.getId());
-        clearBotOnlyAutopotState(bot);
+        AgentAutopotRuntimeCleanupService.clearBotOnlyAutopotState(bot);
         return removed;
     }
 
     private void cancelBotTask(BotEntry entry) {
         if (AgentBotManagerSchedulerRuntime.hasScheduledTask(entry)) {
             AgentBotManagerSchedulerRuntime.cancelScheduledTask(entry);
-        }
-    }
-
-    private static void clearBotOnlyAutopotState(Character bot) {
-        bot.setAutopotHpAlert(0f);
-        bot.setAutopotMpAlert(0f);
-        normalizeAutopotKey(bot, 91);
-        normalizeAutopotKey(bot, 92);
-    }
-
-    private static void normalizeAutopotKey(Character bot, int key) {
-        KeyBinding binding = bot.getKeymap().get(key);
-        if (binding != null && binding.getType() != 7 && binding.getAction() > 0) {
-            bot.changeKeybinding(key, new KeyBinding(7, binding.getAction()));
         }
     }
 
