@@ -40,6 +40,7 @@ import server.agents.runtime.AgentMapEnvironmentService;
 import server.agents.runtime.AgentMapTransitionService;
 import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentMonsterControlService;
+import server.agents.runtime.AgentMovementPhaseService;
 import server.agents.runtime.AgentOwnerlessTickService;
 import server.agents.runtime.AgentPartyLifecycleService;
 import server.agents.runtime.AgentPositionService;
@@ -2763,15 +2764,16 @@ public class BotManager {
     }
 
     private void tickMovementPhase(BotEntry entry, Point targetPos, boolean runAiTick) {
-        if (AgentBotMovementStateRuntime.climbing(entry)) {
-            BotMovementManager.tickClimbing(entry, targetPos, runAiTick);
-        } else if (AgentMapEnvironmentService.isSwimMap(entry) && AgentBotMovementStateRuntime.inAir(entry)) {
-            BotMovementManager.tickSwimming(entry, targetPos);
-        } else if (AgentBotMovementStateRuntime.inAir(entry)) {
-            BotMovementManager.tickAirborne(entry, targetPos);
-        } else {
-            BotMovementManager.tickGrounded(entry, targetPos);
-        }
+        AgentMovementPhaseService.tickMovementPhase(entry, targetPos, runAiTick, movementPhaseHooks());
+    }
+
+    private AgentMovementPhaseService.MovementPhaseHooks movementPhaseHooks() {
+        return new AgentMovementPhaseService.MovementPhaseHooks(
+                (entry, target) -> AgentMapEnvironmentService.isSwimMap(entry),
+                BotMovementManager::tickClimbing,
+                BotMovementManager::tickSwimming,
+                BotMovementManager::tickAirborne,
+                BotMovementManager::tickGrounded);
     }
 
     private static void tickStuckDetection(BotEntry entry) {

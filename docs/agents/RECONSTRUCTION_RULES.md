@@ -2901,6 +2901,10 @@ Recent reconstruction notes:
 - Patrol map-change cleanup now lives in
   `server.agents.runtime.AgentTickStateMaintenanceService`; BotManager no
   longer owns the null/map guard around the BotEntry-backed patrol clear rule.
+- Movement phase dispatch now lives in
+  `server.agents.runtime.AgentMovementPhaseService`; BotManager still supplies
+  temporary BotMovementManager hooks. The climb, swim-while-airborne, airborne,
+  then grounded ordering is preserved.
 
 Initial reconstruction order:
 
