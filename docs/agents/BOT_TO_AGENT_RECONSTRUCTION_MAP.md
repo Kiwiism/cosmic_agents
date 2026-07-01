@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- BotManager target snapshot composition moved further into
+  `server.agents.runtime.AgentTargetSnapshotService`; BotManager now only wires
+  temporary sibling/formation storage and the follow-target resolver callback.
 - BotManager formation state lookup moved to
   `server.agents.runtime.AgentFormationService`; BotManager still stores the
   temporary per-leader formation map for command compatibility.

@@ -1254,9 +1254,9 @@ public class BotManager {
 
     public AgentTargetSnapshot captureTargetSnapshot(BotEntry entry) {
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
-        Character followAnchor = resolveFollowAnchor(entry, owner);
-        AgentFormationService.FormationState formation = formationStateFor(entry);
-        return AgentTargetSnapshotService.capture(entry, followAnchor, formation, BotManager::resolveFollowTargetPos);
+        List<BotEntry> siblingEntries = owner == null ? List.of() : getBotEntries(owner.getId());
+        return AgentTargetSnapshotService.capture(
+                entry, siblingEntries, ownerFormations, defaultFormationState(), BotManager::resolveFollowTargetPos);
     }
 
     private static final int RETREAT_HOLD_MS = 600;

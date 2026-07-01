@@ -2543,6 +2543,11 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentFormationService`; BotManager still owns the
   temporary per-leader formation map but no longer owns the default-vs-custom
   resolution rule.
+- Target snapshot composition now lives in
+  `server.agents.runtime.AgentTargetSnapshotService`; BotManager still supplies
+  the temporary sibling entry list, per-leader formation map, and follow-target
+  resolver callback, but no longer composes follow-anchor plus formation before
+  snapshot capture.
 
 Initial reconstruction order:
 

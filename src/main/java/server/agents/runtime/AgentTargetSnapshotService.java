@@ -13,6 +13,8 @@ import server.life.Monster;
 import server.maps.MapleMap;
 
 import java.awt.Point;
+import java.util.List;
+import java.util.Map;
 
 public final class AgentTargetSnapshotService {
     @FunctionalInterface
@@ -21,6 +23,18 @@ public final class AgentTargetSnapshotService {
     }
 
     private AgentTargetSnapshotService() {
+    }
+
+    public static AgentTargetSnapshot capture(BotEntry entry,
+                                              List<BotEntry> siblingEntries,
+                                              Map<Integer, AgentFormationService.FormationState> formationsByLeaderId,
+                                              AgentFormationService.FormationState defaultFormation,
+                                              FollowTargetResolver followTargetResolver) {
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+        Character followAnchor = AgentFollowAnchorService.resolve(entry, owner, siblingEntries);
+        AgentFormationService.FormationState formation =
+                AgentFormationService.stateForEntry(entry, formationsByLeaderId, defaultFormation);
+        return capture(entry, followAnchor, formation, followTargetResolver);
     }
 
     public static AgentTargetSnapshot capture(BotEntry entry,
