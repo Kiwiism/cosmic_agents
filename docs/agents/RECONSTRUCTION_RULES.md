@@ -2129,6 +2129,10 @@ Recent reconstruction notes:
   the `trade == null` branch now delegates directly to
   `AgentTradeClosedWindowService`, which already owns all completion,
   cancellation, decline, reset, and refill decisions for that branch.
+- Trade item-add tick ordering now lives in `AgentTradeItemAddTickService`;
+  `BotInventoryManager.tickTrade` supplies the same delay/reply/cancel
+  callbacks while the Agent service orders timer, meso, all-done, category
+  announcement, and add-next-item behavior.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and

@@ -35,18 +35,15 @@ import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.capabilities.trade.AgentManualTradeService;
 import server.agents.capabilities.trade.AgentOfferService;
-import server.agents.capabilities.trade.AgentTradeAllItemsAddedService;
 import server.agents.capabilities.trade.AgentTradeBetweenBatchService;
 import server.agents.capabilities.trade.AgentTradeBatchService;
 import server.agents.capabilities.trade.AgentTradeCancellationService;
-import server.agents.capabilities.trade.AgentTradeCategoryAnnouncementService;
 import server.agents.capabilities.trade.AgentTradeClosedWindowService;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
 import server.agents.capabilities.trade.AgentTradeCompletionService;
 import server.agents.capabilities.trade.AgentTradeConfirmWaitService;
-import server.agents.capabilities.trade.AgentTradeItemAddService;
+import server.agents.capabilities.trade.AgentTradeItemAddTickService;
 import server.agents.capabilities.trade.AgentTradeInviteWaitService;
-import server.agents.capabilities.trade.AgentTradeMesoAddService;
 import server.agents.capabilities.trade.AgentTradeQueuedRetryService;
 import server.agents.capabilities.trade.AgentTradeRecipientService;
 import server.agents.capabilities.trade.AgentTradeResetService;
@@ -347,41 +344,17 @@ public class BotInventoryManager {
         }
 
         // ── ADDING ITEMS ──────────────────────────────────────────────────
-        if (!AgentBotPendingTradeStateRuntime.allItemsAdded(entry)) {
-            if (AgentBotPendingTradeStateRuntime.timerMs(entry) > 0) {
-                AgentBotPendingTradeStateRuntime.tickTimerDown(entry, BotMovementManager::tickDown);
-                return;
-            }
-
-            if (AgentTradeMesoAddService.handlePendingMeso(
-                    entry,
-                    bot,
-                    trade,
-                    () -> cancelTradeSequence(entry, bot, "don't have that many mesos anymore"),
-                    () -> BotMovementManager.delayAfterCurrentTick(500))) {
-                return;
-            }
-
-            List<Item> items = AgentBotPendingTradeStateRuntime.items(entry);
-            int idx = AgentBotPendingTradeStateRuntime.itemIndex(entry);
-
-            if (idx >= items.size()) {
-                // All items added — say so in trade chat and wait for owner OK
-                AgentTradeAllItemsAddedService.markCompleteIfNoMoreItems(
-                        entry,
-                        trade,
-                        () -> BotManager.randomReply(AgentDialogueCatalog.tradeAllDoneReplies()));
-                return;
-            }
-
-            if (AgentTradeCategoryAnnouncementService.announceBeforeFirstItem(
-                    entry,
-                    trade,
-                    () -> BotMovementManager.delayAfterCurrentTick(600))) {
-                return;
-            }
-
-            AgentTradeItemAddService.addNextItem(entry, bot, trade, BotMovementManager.delayAfterCurrentTick(500));
+        if (AgentTradeItemAddTickService.tickAddingItems(
+                entry,
+                bot,
+                trade,
+                AgentTradeItemAddTickService.ItemAddTickCallbacks.of(
+                        BotMovementManager::tickDown,
+                        () -> cancelTradeSequence(entry, bot, "don't have that many mesos anymore"),
+                        () -> BotMovementManager.delayAfterCurrentTick(500),
+                        () -> BotManager.randomReply(AgentDialogueCatalog.tradeAllDoneReplies()),
+                        () -> BotMovementManager.delayAfterCurrentTick(600),
+                        () -> BotMovementManager.delayAfterCurrentTick(500)))) {
             return;
         }
 
