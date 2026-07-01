@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- `BotInventoryManager` equip-trade classification callback construction moved
+  to `server.agents.capabilities.inventory.AgentEquipTradeCallbackService`. The
+  bot inventory shell still supplies temporary profiling, bag-scan,
+  self-reserve, reservation, owner, and slow-log hooks while the equip
+  classification callback object is Agent-owned.
 - `BotInventoryManager` ammo-trade callback construction moved to
   `server.agents.capabilities.inventory.AgentAmmoTradeCallbackService`. The bot
   inventory shell still supplies temporary weapon-type, projectile-WATK,

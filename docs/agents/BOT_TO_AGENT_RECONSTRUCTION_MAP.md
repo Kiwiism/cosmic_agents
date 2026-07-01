@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotInventoryManager` equip-trade classification callback construction now
+  lives in `AgentEquipTradeCallbackService`; the bot inventory shell only wires
+  temporary profiling, bag-scan, self-reserve, reservation, owner, and slow-log
+  hooks.
 - `BotInventoryManager` ammo-trade callback construction now lives in
   `AgentAmmoTradeCallbackService`; the bot inventory shell only wires temporary
   weapon-type, projectile-WATK, quest-item, and untradeable-config hooks.

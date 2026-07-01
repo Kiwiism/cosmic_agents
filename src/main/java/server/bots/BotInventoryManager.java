@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.inventory.AgentAmmoTradeCallbackService;
 import server.agents.capabilities.inventory.AgentAmmoTradeClassificationService;
+import server.agents.capabilities.inventory.AgentEquipTradeCallbackService;
 import server.agents.capabilities.inventory.AgentEquipTradeClassificationService;
 import server.agents.capabilities.inventory.AgentEquipTradeGroupService;
 import server.agents.capabilities.inventory.AgentEquipTradeGroupService.AgentEquipTradeGroups;
@@ -348,7 +349,7 @@ public class BotInventoryManager {
     private static AgentEquipTradeGroups classifyEquipTradeGroups(BotEntry entry, Character bot) {
         return AgentEquipTradeClassificationService.classifyEquipTradeGroups(
                 bot,
-                AgentEquipTradeClassificationService.ClassificationCallbacks.of(
+                AgentEquipTradeCallbackService.equipTradeCallbacks(
                         () -> AgentTradeCommandProfiler.profileCategory("equips"),
                         () -> TRADE_COMMAND_PROFILE_WARN_NS,
                         AgentEquipTradeClassificationService.ClassificationCallbacks::collectEquipBag,
