@@ -9,9 +9,9 @@ import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 import server.agents.capabilities.combat.AgentCombatAmmoPolicy;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
+import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 
 public final class AgentBotCombatAmmoCheckRuntime {
     private AgentBotCombatAmmoCheckRuntime() {
@@ -57,18 +57,18 @@ public final class AgentBotCombatAmmoCheckRuntime {
                 AgentBotAmmoStateRuntime.setNoAmmo(entry, true);
                 if (AgentBotModeStateRuntime.grinding(entry)) {
                     AgentBotMovementCommandRuntime.followOwner(entry);
-                    AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(AgentDialogueCatalog.combatMpPotsOutReplies()));
+                    AgentBotCombatRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.combatMpPotsOutReplies()));
                 }
             }
             case PROJECTILE_LOW_AMMO -> {
                 AgentBotAmmoStateRuntime.setAmmoWarnSent(entry, true);
-                AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(AgentDialogueCatalog.combatAmmoLowReplies()));
+                AgentBotCombatRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.combatAmmoLowReplies()));
             }
             case PROJECTILE_NO_AMMO -> {
                 AgentBotAmmoStateRuntime.setNoAmmo(entry, true);
                 if (AgentBotModeStateRuntime.grinding(entry)) {
                     AgentBotMovementCommandRuntime.followOwner(entry);
-                    AgentBotCombatRuntime.sayMapNow(bot, BotManager.randomReply(AgentDialogueCatalog.combatAmmoOutReplies()));
+                    AgentBotCombatRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.combatAmmoOutReplies()));
                 }
             }
             case NO_CHANGE -> {

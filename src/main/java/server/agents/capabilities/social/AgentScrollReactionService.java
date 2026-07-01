@@ -1,6 +1,7 @@
 package server.agents.capabilities.social;
 
 import server.agents.capabilities.dialogue.AgentEmote;
+import server.agents.capabilities.dialogue.AgentDialogueSelector;
 
 
 import server.agents.integration.AgentBotMessageQueueStateRuntime;
@@ -12,7 +13,6 @@ import client.inventory.Equip;
 import server.ItemInformationProvider;
 import server.bots.BotEntry;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
-import server.bots.BotManager;
 
 import java.awt.*;
 import java.util.Collection;
@@ -224,9 +224,9 @@ public final class AgentScrollReactionService {
 
     private static String selectChatLine(boolean success, int streak, int scrollSuccessRate) {
         if (isStreakChatEligible(streak, scrollSuccessRate) && ThreadLocalRandom.current().nextInt(100) < 75) {
-            return BotManager.randomReply(success ? SCROLL_SUCCESS_STREAK_REACTIONS : SCROLL_FAIL_STREAK_REACTIONS);
+            return AgentDialogueSelector.randomReply(success ? SCROLL_SUCCESS_STREAK_REACTIONS : SCROLL_FAIL_STREAK_REACTIONS);
         } // 75% chance to use streak chat
-        return BotManager.randomReply(success ? SCROLL_SUCCESS_REACTIONS : SCROLL_FAIL_REACTIONS);
+        return AgentDialogueSelector.randomReply(success ? SCROLL_SUCCESS_REACTIONS : SCROLL_FAIL_REACTIONS);
     }
 
     private static int resolveScrollSuccessRate(int scrollItemId) {

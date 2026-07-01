@@ -11,6 +11,7 @@ import client.inventory.Item;
 import client.keybind.KeyBinding;
 import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
+import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.trade.AgentSupplyShareTradeService;
@@ -160,7 +161,7 @@ public final class AgentPotionService {
     public static String grindStartMessage(Character bot) {
         int[] pots = countPotions(bot);
         return AgentSupplyDialogueReporter.grindStartMessage(
-                BotManager.randomReply(AgentDialogueCatalog.grindReplies()),
+                AgentDialogueSelector.randomReply(AgentDialogueCatalog.grindReplies()),
                 pots[0],
                 pots[1],
                 BotManager.cfg.POT_LOW_WARN);
@@ -307,7 +308,7 @@ public final class AgentPotionService {
             potShareCooldownUntil.put(owner.getId(), now + 30_000L);
         }
 
-        AgentBotPotionRuntime.sayMapNow(bot, BotManager.randomReply(
+        AgentBotPotionRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(
                 forHp ? AgentDialogueCatalog.potRequestHpReplies() : AgentDialogueCatalog.potRequestMpReplies()));
 
         AgentBotPotionDonorPlan plan = selectPotDonor(owner, bot, entry, forHp);
@@ -328,7 +329,7 @@ public final class AgentPotionService {
                     AgentBotPotionRuntime.sayMapNow(
                             AgentBotRuntimeIdentityRuntime.bot(plan.entry()),
                             AgentDialogueCatalog.formatPotDonorLowReply(
-                                    BotManager.randomReply(AgentDialogueCatalog.potDonorLowTemplates()),
+                                    AgentDialogueSelector.randomReply(AgentDialogueCatalog.potDonorLowTemplates()),
                                     ownerName)));
         } else {
             schedulePotShare(plan, bot, forHp, AgentBotPotionRuntime.randomDelayMs(2000, 3000));
@@ -390,7 +391,7 @@ public final class AgentPotionService {
             if (items.isEmpty()) {
                 return;
             }
-            AgentBotPotionRuntime.sayMapNow(donorBot, BotManager.randomReply(
+            AgentBotPotionRuntime.sayMapNow(donorBot, AgentDialogueSelector.randomReply(
                     forHp ? AgentDialogueCatalog.potOfferHpReplies() : AgentDialogueCatalog.potOfferMpReplies()));
             AgentBotPotionRuntime.afterRandomDelay(900, 1100, () ->
                     AgentSupplyShareTradeService.startPotShareTransfer(items, recipient, donorEntry, donorBot, maxQty));

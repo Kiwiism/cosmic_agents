@@ -18,6 +18,7 @@ import constants.game.GameConstants;
 import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
+import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
@@ -111,7 +112,7 @@ public final class AgentShopService {
 
         long distSq = (long) bot.getPosition().distanceSq(match.npcPos);
         if (distSq > 1000L * 1000L) {
-            AgentBotShopRuntime.sayMapNow(bot, BotManager.randomReply(AgentDialogueCatalog.shopResupplyReplies()));
+            AgentBotShopRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.shopResupplyReplies()));
         }
 
         startShopVisit(entry, bot, match);
@@ -185,7 +186,7 @@ public final class AgentShopService {
         if (reachedApproach || stuckAtNpc) {
             if (!AgentBotShopStateRuntime.shopSequenceActive(entry)) {
                 AgentBotShopStateRuntime.markShopSequenceActive(entry, System.currentTimeMillis());
-                AgentBotShopRuntime.sayMapNow(bot, BotManager.randomReply(AgentDialogueCatalog.shoppingReplies()));
+                AgentBotShopRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.shoppingReplies()));
                 Point npcPos = AgentBotShopStateRuntime.shopNpcPosition(entry);
                 scheduleShopStep(entry, () -> executePurchases(entry, bot, npcPos));
             }

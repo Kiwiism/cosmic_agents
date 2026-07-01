@@ -3,10 +3,10 @@ package server.agents.capabilities.trade;
 import client.Character;
 import client.inventory.Item;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
+import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 import server.bots.BotMovementManager;
 
 import java.util.List;
@@ -77,7 +77,7 @@ public final class AgentSupplyShareTradeService {
                 },
                 () -> server.Trade.startTrade(agent),
                 server.Trade::inviteTrade,
-                () -> BotManager.randomReply(AgentDialogueCatalog.tradeInvitationReplies()),
+                () -> AgentDialogueSelector.randomReply(AgentDialogueCatalog.tradeInvitationReplies()),
                 message -> AgentBotInventoryRuntime.replyNow(entry, message));
     }
 

@@ -9,6 +9,7 @@ import client.inventory.Item;
 import client.inventory.WeaponType;
 import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
+import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy;
 import server.agents.capabilities.supplies.AgentAmmoSharePolicy;
 import server.agents.capabilities.supplies.AgentAmmoSharePolicy.DonorScore;
@@ -20,7 +21,6 @@ import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 
 import java.util.List;
 import java.util.Map;
@@ -88,7 +88,7 @@ public final class AgentAmmoService {
             ammoShareCooldownUntil.put(owner.getId(), now + 30_000L);
         }
 
-        AgentBotAmmoRuntime.sayMapNow(bot, BotManager.randomReply(
+        AgentBotAmmoRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(
                 weaponType == WeaponType.BOW
                         ? AgentDialogueCatalog.arrowRequestReplies()
                         : AgentDialogueCatalog.boltRequestReplies()));
@@ -181,7 +181,7 @@ public final class AgentAmmoService {
             if (items.isEmpty()) {
                 return;
             }
-            AgentBotAmmoRuntime.sayMapNow(donorBot, BotManager.randomReply(AgentDialogueCatalog.ammoOfferReplies()));
+            AgentBotAmmoRuntime.sayMapNow(donorBot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.ammoOfferReplies()));
             AgentBotAmmoRuntime.afterRandomDelay(900, 1100, () ->
                     AgentSupplyShareTradeService.startAmmoShareTransfer(items, recipient, donorEntry, donorBot, maxQty));
         });

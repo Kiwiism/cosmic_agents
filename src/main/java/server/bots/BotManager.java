@@ -18,6 +18,7 @@ import server.agents.capabilities.combat.AgentCombatScoringPolicy;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
 
 import server.agents.capabilities.dialogue.AgentEmote;
+import server.agents.capabilities.dialogue.AgentDialogueSelector;
 
 import server.agents.runtime.AgentActionLockPhysicsService;
 import server.agents.runtime.AgentCommandModeService;
@@ -342,7 +343,7 @@ public class BotManager {
     }
 
     public static String randomReply(List<String> list) {
-        return list.get(ThreadLocalRandom.current().nextInt(list.size()));
+        return AgentDialogueSelector.randomReply(list);
     }
 
     /** Uniform random delay in [lo, hi) ms — use wherever a fixed delay would feel robotic. */

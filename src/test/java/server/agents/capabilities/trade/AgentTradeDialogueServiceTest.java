@@ -3,7 +3,7 @@ package server.agents.capabilities.trade;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
-import server.bots.BotManager;
+import server.agents.capabilities.dialogue.AgentDialogueSelector;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -12,18 +12,18 @@ import static org.mockito.Mockito.mockStatic;
 class AgentTradeDialogueServiceTest {
     @Test
     void selectsTradeRepliesFromAgentDialogueCatalogPools() {
-        try (MockedStatic<BotManager> botManager = mockStatic(BotManager.class)) {
-            botManager.when(() -> BotManager.randomReply(AgentDialogueCatalog.tradeInvitationReplies()))
+        try (MockedStatic<AgentDialogueSelector> dialogueSelector = mockStatic(AgentDialogueSelector.class)) {
+            dialogueSelector.when(() -> AgentDialogueSelector.randomReply(AgentDialogueCatalog.tradeInvitationReplies()))
                     .thenReturn("invite");
-            botManager.when(() -> BotManager.randomReply(AgentDialogueCatalog.tradeAllDoneReplies()))
+            dialogueSelector.when(() -> AgentDialogueSelector.randomReply(AgentDialogueCatalog.tradeAllDoneReplies()))
                     .thenReturn("done");
-            botManager.when(() -> BotManager.randomReply(AgentDialogueCatalog.tradeThanksReplies()))
+            dialogueSelector.when(() -> AgentDialogueSelector.randomReply(AgentDialogueCatalog.tradeThanksReplies()))
                     .thenReturn("thanks");
-            botManager.when(() -> BotManager.randomReply(AgentDialogueCatalog.tradeFreebieReplies()))
+            dialogueSelector.when(() -> AgentDialogueSelector.randomReply(AgentDialogueCatalog.tradeFreebieReplies()))
                     .thenReturn("freebie");
-            botManager.when(() -> BotManager.randomReply(AgentDialogueCatalog.tradeReservedForOtherReplies()))
+            dialogueSelector.when(() -> AgentDialogueSelector.randomReply(AgentDialogueCatalog.tradeReservedForOtherReplies()))
                     .thenReturn("other");
-            botManager.when(() -> BotManager.randomReply(AgentDialogueCatalog.tradeReservedForSelfReplies()))
+            dialogueSelector.when(() -> AgentDialogueSelector.randomReply(AgentDialogueCatalog.tradeReservedForSelfReplies()))
                     .thenReturn("self");
 
             assertEquals("invite", AgentTradeDialogueService.invitationReply());

@@ -1,39 +1,39 @@
 package server.agents.capabilities.trade;
 
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
+import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.inventory.AgentEquipTradeGroupService;
-import server.bots.BotManager;
 
 public final class AgentTradeDialogueService {
     private AgentTradeDialogueService() {
     }
 
     public static String invitationReply() {
-        return BotManager.randomReply(AgentDialogueCatalog.tradeInvitationReplies());
+        return AgentDialogueSelector.randomReply(AgentDialogueCatalog.tradeInvitationReplies());
     }
 
     public static String allDoneReply() {
-        return BotManager.randomReply(AgentDialogueCatalog.tradeAllDoneReplies());
+        return AgentDialogueSelector.randomReply(AgentDialogueCatalog.tradeAllDoneReplies());
     }
 
     public static String manualTradeGreeting() {
-        return BotManager.randomReply(AgentDialogueCatalog.manualTradeGreetingReplies());
+        return AgentDialogueSelector.randomReply(AgentDialogueCatalog.manualTradeGreetingReplies());
     }
 
     public static String thanksReply() {
-        return BotManager.randomReply(AgentDialogueCatalog.tradeThanksReplies());
+        return AgentDialogueSelector.randomReply(AgentDialogueCatalog.tradeThanksReplies());
     }
 
     public static String freebieReply() {
-        return BotManager.randomReply(AgentDialogueCatalog.tradeFreebieReplies());
+        return AgentDialogueSelector.randomReply(AgentDialogueCatalog.tradeFreebieReplies());
     }
 
     public static String reservedForOtherReply() {
-        return BotManager.randomReply(AgentDialogueCatalog.tradeReservedForOtherReplies());
+        return AgentDialogueSelector.randomReply(AgentDialogueCatalog.tradeReservedForOtherReplies());
     }
 
     public static String reservedForSelfReply() {
-        return BotManager.randomReply(AgentDialogueCatalog.tradeReservedForSelfReplies());
+        return AgentDialogueSelector.randomReply(AgentDialogueCatalog.tradeReservedForSelfReplies());
     }
 
     public static String equipsGroupMessage(String category) {

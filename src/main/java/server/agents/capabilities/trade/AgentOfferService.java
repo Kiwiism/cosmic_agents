@@ -17,6 +17,7 @@ import config.YamlConfig;
 import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
+import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.integration.AgentBotOfferRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
@@ -27,7 +28,6 @@ import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
 import server.bots.BotEntry;
 import server.bots.BotEquipManager;
-import server.bots.BotManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -238,7 +238,7 @@ public final class AgentOfferService {
         AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
         AgentBotOfferStateRuntime.setPendingLootOffer(entry, ownerItem, owner.getId(), System.currentTimeMillis() + 45_000L, true);
 
-        String promptTemplate = BotManager.randomReply(AgentDialogueCatalog.ownerUpgradeRequestPromptTemplates());
+        String promptTemplate = AgentDialogueSelector.randomReply(AgentDialogueCatalog.ownerUpgradeRequestPromptTemplates());
         AgentBotOfferRuntime.queueSay(entry, AgentDialogueCatalog.formatOwnerUpgradeRequestPrompt(promptTemplate, itemDesc));
     }
 
@@ -309,7 +309,7 @@ public final class AgentOfferService {
         }
         AgentBotOfferRuntime.sayNow(recipientBot,
                 AgentBotReplyChannelStateRuntime.replyChannel(entry),
-                BotManager.randomReply(AgentDialogueCatalog.offerAcceptReplies()));
+                AgentDialogueSelector.randomReply(AgentDialogueCatalog.offerAcceptReplies()));
         handlePendingOfferResponse(entry, recipientBot, "yes");
     }
 
@@ -322,7 +322,7 @@ public final class AgentOfferService {
     }
 
     private static String buildSharedLootOfferPrompt(String recipientName, String itemName, boolean forLater) {
-        String format = BotManager.randomReply(AgentDialogueCatalog.lootOfferPromptTemplates(forLater));
+        String format = AgentDialogueSelector.randomReply(AgentDialogueCatalog.lootOfferPromptTemplates(forLater));
         return AgentDialogueCatalog.formatLootOfferPrompt(format, recipientName, itemName);
     }
 

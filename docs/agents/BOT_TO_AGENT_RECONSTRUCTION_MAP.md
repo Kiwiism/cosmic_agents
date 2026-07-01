@@ -141,6 +141,9 @@ Recent map updates:
 - Legacy command combat-config behavior now routes directly through
   `server.agents.capabilities.combat.AgentCombatConfig`; the Agent command
   bridge no longer imports BotManager for those compatibility wrappers.
+- Random dialogue selection moved to
+  `server.agents.capabilities.dialogue.AgentDialogueSelector`; Agent runtime and
+  capability modules no longer depend on BotManager for `randomReply`.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.

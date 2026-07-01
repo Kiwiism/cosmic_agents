@@ -154,6 +154,9 @@ Recent reconstruction notes:
 - Legacy command combat-config routing now calls `AgentCombatConfig` directly
   through `AgentLegacyCommandBridge` instead of passing through BotManager's
   static compatibility wrappers.
+- Random dialogue selection now lives in `AgentDialogueSelector`; BotManager's
+  `randomReply` is a compatibility delegate and Agent capability/runtime modules
+  no longer call it directly.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but
