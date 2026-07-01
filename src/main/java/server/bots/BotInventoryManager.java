@@ -53,6 +53,7 @@ import server.agents.capabilities.trade.AgentTradeRecipientService;
 import server.agents.capabilities.trade.AgentTradeResetService;
 import server.agents.capabilities.trade.AgentTradeSequenceService;
 import server.agents.capabilities.trade.AgentTradeStateService;
+import server.agents.capabilities.trade.AgentTradeTransferStartGuard;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotInventoryStateRuntime;
@@ -265,16 +266,12 @@ public class BotInventoryManager {
             return;
         }
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
-        if (owner == null) {
-            AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeOwnerNotFoundReply());
-            return;
-        }
-        if (bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry)) {
-            AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeBotBusyReply());
-            return;
-        }
-        if (owner.getTrade() != null) {
-            AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeOwnerBusyReply());
+        AgentTradeTransferStartGuard.Decision startDecision = AgentTradeTransferStartGuard.evaluate(
+                owner != null,
+                bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry),
+                owner != null && owner.getTrade() != null);
+        if (!startDecision.proceed()) {
+            AgentBotInventoryRuntime.replyNow(entry, startDecision.reply());
             return;
         }
         if ("equips".equals(category)) {

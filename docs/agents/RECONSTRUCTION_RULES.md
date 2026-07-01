@@ -2191,6 +2191,10 @@ Recent reconstruction notes:
   owner-cancelled reply/reset/refill, and declined-invite reply/reset to Agent
   trade code. The old in-method body remains bypassed as compatibility text
   until the full trade tick state machine is migrated.
+- Trade transfer start guard replies now live in
+  `AgentTradeTransferStartGuard`; BotInventoryManager still owns category
+  routing and collection, but delegates owner-missing, bot-busy, and
+  owner-busy reply selection to Agent trade code.
 - Trade batch-open orchestration now lives in `AgentTradeBatchService`;
   BotInventoryManager and AgentSupplyShareTradeService still supply the
   temporary recipient lookup/cancel/start/invite/reply callbacks, but recipient
