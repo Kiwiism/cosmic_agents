@@ -20,11 +20,11 @@ public final class AgentBotSessionLifecycleSideEffects {
     }
 
     public static List<BotEntry> getBotEntries(int ownerCharId) {
-        return AgentRuntimeRegistry.entriesForLeader(AgentRuntimeRegistry.entriesByLeaderId(), ownerCharId);
+        return AgentRuntimeRegistry.entriesForLeader(ownerCharId);
     }
 
     public static BotEntry getBotEntry(int ownerCharId, String agentName) {
-        return AgentRuntimeRegistry.findByName(AgentRuntimeRegistry.entriesByLeaderId(), ownerCharId, agentName);
+        return AgentRuntimeRegistry.findByName(ownerCharId, agentName);
     }
 
     public static void issueOwnerAwaySafeModeForLeader(int ownerCharId, boolean town) {
@@ -32,6 +32,6 @@ public final class AgentBotSessionLifecycleSideEffects {
     }
 
     public static Character activeLeaderByAgentCharacterId(int agentCharId) {
-        return AgentRuntimeRegistry.activeLeaderByAgentCharacterId(AgentRuntimeRegistry.entriesByLeaderId(), agentCharId);
+        return AgentRuntimeRegistry.activeLeaderByAgentCharacterId(agentCharId);
     }
 }

@@ -42,6 +42,10 @@ public final class AgentRuntimeRegistry {
         return null;
     }
 
+    public static BotEntry findByCharacterId(int leaderCharId, int agentCharId) {
+        return findByCharacterId(entriesByLeaderId, leaderCharId, agentCharId);
+    }
+
     public static BotEntry findByName(Map<Integer, List<BotEntry>> entriesByLeaderId,
                                       int leaderCharId,
                                       String agentName) {
@@ -57,6 +61,10 @@ public final class AgentRuntimeRegistry {
         return null;
     }
 
+    public static BotEntry findByName(int leaderCharId, String agentName) {
+        return findByName(entriesByLeaderId, leaderCharId, agentName);
+    }
+
     public static Character activeLeaderByAgentCharacterId(Map<Integer, List<BotEntry>> entriesByLeaderId,
                                                            int agentCharId) {
         for (List<BotEntry> entries : entriesByLeaderId.values()) {
@@ -69,14 +77,26 @@ public final class AgentRuntimeRegistry {
         return null;
     }
 
+    public static Character activeLeaderByAgentCharacterId(int agentCharId) {
+        return activeLeaderByAgentCharacterId(entriesByLeaderId, agentCharId);
+    }
+
     public static Character firstAgent(Map<Integer, List<BotEntry>> entriesByLeaderId, int leaderCharId) {
         BotEntry entry = firstEntry(entriesByLeaderId, leaderCharId);
         return entry == null ? null : AgentBotRuntimeIdentityRuntime.bot(entry);
     }
 
+    public static Character firstAgent(int leaderCharId) {
+        return firstAgent(entriesByLeaderId, leaderCharId);
+    }
+
     public static BotEntry firstEntry(Map<Integer, List<BotEntry>> entriesByLeaderId, int leaderCharId) {
         List<BotEntry> entries = entriesByLeaderId.get(leaderCharId);
         return entries != null && !entries.isEmpty() ? entries.get(0) : null;
+    }
+
+    public static BotEntry firstEntry(int leaderCharId) {
+        return firstEntry(entriesByLeaderId, leaderCharId);
     }
 
     public static boolean isFirstEntryForLeader(Map<Integer, List<BotEntry>> entriesByLeaderId, BotEntry entry) {
@@ -86,6 +106,10 @@ public final class AgentRuntimeRegistry {
         return firstEntry(entriesByLeaderId, AgentBotRuntimeIdentityRuntime.ownerId(entry)) == entry;
     }
 
+    public static boolean isFirstEntryForLeader(BotEntry entry) {
+        return isFirstEntryForLeader(entriesByLeaderId, entry);
+    }
+
     public static List<BotEntry> entriesForLeader(Map<Integer, List<BotEntry>> entriesByLeaderId,
                                                   int leaderCharId) {
         List<BotEntry> entries = entriesByLeaderId.get(leaderCharId);
@@ -93,6 +117,10 @@ public final class AgentRuntimeRegistry {
             return List.of();
         }
         return List.copyOf(entries);
+    }
+
+    public static List<BotEntry> entriesForLeader(int leaderCharId) {
+        return entriesForLeader(entriesByLeaderId, leaderCharId);
     }
 
     public static int activeAgentCountForLeader(int leaderCharId) {

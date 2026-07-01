@@ -380,7 +380,7 @@ public class BotManager {
     }
 
     private BotEntry getBotEntry(int ownerCharId, int botCharId) {
-        return AgentRuntimeRegistry.findByCharacterId(bots, ownerCharId, botCharId);
+        return AgentRuntimeRegistry.findByCharacterId(ownerCharId, botCharId);
     }
 
     public Character loadOfflineBot(int charId, int world, int channel, MapleMap targetMap, Point desiredPosition) throws SQLException {
@@ -603,7 +603,7 @@ public class BotManager {
     }
 
     public Character getActiveOwnerByBotCharId(int botCharId) {
-        return AgentRuntimeRegistry.activeLeaderByAgentCharacterId(bots, botCharId);
+        return AgentRuntimeRegistry.activeLeaderByAgentCharacterId(botCharId);
     }
 
     public void requestBotPotionCheckSoon(Character bot) {
@@ -621,15 +621,15 @@ public class BotManager {
     }
 
     public Character getBot(int ownerCharId) {
-        return AgentRuntimeRegistry.firstAgent(bots, ownerCharId);
+        return AgentRuntimeRegistry.firstAgent(ownerCharId);
     }
 
     BotEntry getFirstBotEntry(int ownerCharId) {
-        return AgentRuntimeRegistry.firstEntry(bots, ownerCharId);
+        return AgentRuntimeRegistry.firstEntry(ownerCharId);
     }
 
     public List<BotEntry> getBotEntries(int ownerCharId) {
-        return AgentRuntimeRegistry.entriesForLeader(bots, ownerCharId);
+        return AgentRuntimeRegistry.entriesForLeader(ownerCharId);
     }
 
     /** Called when the owner picks up or receives an item; notifies bots that might want it. */
@@ -650,7 +650,7 @@ public class BotManager {
     }
 
     public BotEntry getBotEntry(int ownerCharId, String botName) {
-        return AgentRuntimeRegistry.findByName(bots, ownerCharId, botName);
+        return AgentRuntimeRegistry.findByName(ownerCharId, botName);
     }
 
     public void syncPartyBotsQuestStart(Character source, Quest quest, int npc) {
@@ -2352,7 +2352,7 @@ public class BotManager {
     }
 
     public boolean isFirstBotEntry(BotEntry entry) {
-        return AgentRuntimeRegistry.isFirstEntryForLeader(bots, entry);
+        return AgentRuntimeRegistry.isFirstEntryForLeader(entry);
     }
 
     public void issueOwnerAwaySafeModeForOwner(int ownerCharId, boolean town) {

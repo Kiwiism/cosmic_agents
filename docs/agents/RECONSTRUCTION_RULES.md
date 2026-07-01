@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Active Agent lookup helpers now live behind live-store methods on
+  `server.agents.runtime.AgentRuntimeRegistry`. BotManager and the temporary
+  Agent session lifecycle gateway keep compatibility delegates, but no longer
+  need to pass the backing registry map into lookup helpers for active leader,
+  first Agent, named Agent, character-id, entry-list, or first-entry checks.
 - Whisper command ingress now lives in
   `server.agents.capabilities.dialogue.AgentWhisperCommandService`.
   `WhisperHandler` calls the Agent service directly, and BotManager keeps a

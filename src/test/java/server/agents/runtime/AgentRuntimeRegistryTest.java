@@ -68,12 +68,20 @@ class AgentRuntimeRegistryTest {
     @Test
     void ownsMutableLiveEntryStore() {
         Character leader = character(100, "Leader");
-        BotEntry entry = new BotEntry(character(200, "Alpha"), leader, null);
+        Character alpha = character(200, "Alpha");
+        BotEntry entry = new BotEntry(alpha, leader, null);
         AgentRuntimeRegistry.entriesByLeaderId().clear();
 
         AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(entry);
 
         assertSame(entry, AgentRuntimeRegistry.firstEntry(AgentRuntimeRegistry.entriesByLeaderId(), leader.getId()));
+        assertSame(entry, AgentRuntimeRegistry.firstEntry(leader.getId()));
+        assertSame(alpha, AgentRuntimeRegistry.firstAgent(leader.getId()));
+        assertSame(entry, AgentRuntimeRegistry.findByCharacterId(leader.getId(), alpha.getId()));
+        assertSame(entry, AgentRuntimeRegistry.findByName(leader.getId(), "alpha"));
+        assertSame(leader, AgentRuntimeRegistry.activeLeaderByAgentCharacterId(alpha.getId()));
+        assertTrue(AgentRuntimeRegistry.isFirstEntryForLeader(entry));
+        assertEquals(List.of(entry), AgentRuntimeRegistry.entriesForLeader(leader.getId()));
         AgentRuntimeRegistry.entriesByLeaderId().clear();
     }
 

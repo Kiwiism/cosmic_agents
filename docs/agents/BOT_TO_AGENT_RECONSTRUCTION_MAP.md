@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Active Agent lookup helpers moved to live-store methods on
+  `server.agents.runtime.AgentRuntimeRegistry`. BotManager and
+  `AgentBotSessionLifecycleSideEffects` remain temporary compatibility
+  delegates for older callers, while lookup ownership sits in Agent runtime.
 - Whisper-to-Agent command ingress moved from BotManager to
   `server.agents.capabilities.dialogue.AgentWhisperCommandService`.
   `WhisperHandler` now calls the Agent dialogue service directly, while
