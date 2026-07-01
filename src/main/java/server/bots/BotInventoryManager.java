@@ -22,6 +22,7 @@ import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.inventory.AgentEquipTradeGroupService;
+import server.agents.capabilities.inventory.AgentEquipTradeGroupService.AgentEquipTradeClassification;
 import server.agents.capabilities.inventory.AgentEquipTradeGroupService.AgentEquipTradeGroups;
 import server.agents.capabilities.inventory.AgentEquippedSlotTradeService;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy;
@@ -828,38 +829,13 @@ public class BotInventoryManager {
         Set<Item> selfKeep = BotEquipManager.collectPotentialSelfUpgradeItems(bot);
         long selfKeepNs = startedAt != 0L ? System.nanoTime() - selfKeepStartedAt : 0L;
 
-        List<Item> normal = new ArrayList<>();
-        List<Item> reservedForOther = new ArrayList<>();
-        List<Item> reservedForSelf = new ArrayList<>();
-        long reservedOtherNs = 0L;
-        int reservedOtherChecks = 0;
-        int reservedOtherHits = 0;
-        for (Item item : all) {
-            if (selfKeep.contains(item)) {
-                reservedForSelf.add(item);
-                continue;
-            }
-            long reservedOtherStartedAt = startedAt != 0L ? System.nanoTime() : 0L;
-            boolean isOther = AgentOfferService.isReservedForOtherRecipients(entry, bot, item);
-            if (startedAt != 0L) {
-                reservedOtherNs += System.nanoTime() - reservedOtherStartedAt;
-                reservedOtherChecks++;
-                if (isOther) {
-                    reservedOtherHits++;
-                }
-            }
-            if (isOther) {
-                reservedForOther.add(item);
-            } else {
-                normal.add(item);
-            }
-        }
-
-        long sortStartedAt = startedAt != 0L ? System.nanoTime() : 0L;
-        List<Item> normalSorted = AgentInventoryTradePolicy.sortEquipsByItemId(normal);
-        List<Item> reservedForOtherSorted = AgentInventoryTradePolicy.sortEquipsByItemId(reservedForOther);
-        List<Item> reservedForSelfSorted = AgentInventoryTradePolicy.sortReservedEquipsByTradeScore(reservedForSelf, bot);
-        long sortNs = startedAt != 0L ? System.nanoTime() - sortStartedAt : 0L;
+        AgentEquipTradeClassification classification = AgentEquipTradeGroupService.classifyEquipGroups(
+                bot,
+                all,
+                selfKeep,
+                item -> AgentOfferService.isReservedForOtherRecipients(entry, bot, item),
+                startedAt != 0L);
+        AgentEquipTradeGroups groups = classification.groups();
         if (startedAt != 0L) {
             long elapsedNs = System.nanoTime() - startedAt;
             if (elapsedNs >= TRADE_COMMAND_PROFILE_WARN_NS) {
@@ -873,18 +849,18 @@ public class BotInventoryManager {
                         ownerName,
                         all.size(),
                         selfKeep.size(),
-                        normalSorted.size(),
-                        reservedForOtherSorted.size(),
-                        reservedForSelfSorted.size(),
+                        groups.normal().size(),
+                        groups.reservedForOther().size(),
+                        groups.reservedForSelf().size(),
                         String.format("%.1f", bagScanNs / 1_000_000.0),
                         String.format("%.1f", selfKeepNs / 1_000_000.0),
-                        String.format("%.1f", reservedOtherNs / 1_000_000.0),
-                        reservedOtherChecks,
-                        reservedOtherHits,
-                        String.format("%.1f", sortNs / 1_000_000.0));
+                        String.format("%.1f", classification.reservedOtherNs() / 1_000_000.0),
+                        classification.reservedOtherChecks(),
+                        classification.reservedOtherHits(),
+                        String.format("%.1f", classification.sortNs() / 1_000_000.0));
             }
         }
-        return new AgentEquipTradeGroups(normalSorted, reservedForOtherSorted, reservedForSelfSorted);
+        return groups;
     }
 
     private static boolean isOwnClassEquip(Character bot, ItemInformationProvider ii, Equip equip) {

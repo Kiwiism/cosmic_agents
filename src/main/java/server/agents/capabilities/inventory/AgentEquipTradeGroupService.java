@@ -1,10 +1,13 @@
 package server.agents.capabilities.inventory;
 
+import client.Character;
 import client.inventory.Item;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.EquipsGroup;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public final class AgentEquipTradeGroupService {
@@ -22,6 +25,12 @@ public final class AgentEquipTradeGroupService {
             };
         }
     }
+
+    public record AgentEquipTradeClassification(AgentEquipTradeGroups groups,
+                                                long reservedOtherNs,
+                                                int reservedOtherChecks,
+                                                int reservedOtherHits,
+                                                long sortNs) {}
 
     public static List<Item> allTradeItems(AgentEquipTradeGroups groups) {
         List<Item> result = new ArrayList<>();
@@ -64,5 +73,50 @@ public final class AgentEquipTradeGroupService {
 
     public static EquipsGroup firstAvailableGroup(AgentEquipTradeGroups groups) {
         return AgentInventoryTradePolicy.firstAvailableEquipsGroup(group -> !groups.itemsFor(group).isEmpty());
+    }
+
+    public static AgentEquipTradeClassification classifyEquipGroups(Character agent,
+                                                                    List<Item> all,
+                                                                    Set<Item> selfKeep,
+                                                                    Predicate<Item> isReservedForOther,
+                                                                    boolean profile) {
+        List<Item> normal = new ArrayList<>();
+        List<Item> reservedForOther = new ArrayList<>();
+        List<Item> reservedForSelf = new ArrayList<>();
+        long reservedOtherNs = 0L;
+        int reservedOtherChecks = 0;
+        int reservedOtherHits = 0;
+        for (Item item : all) {
+            if (selfKeep.contains(item)) {
+                reservedForSelf.add(item);
+                continue;
+            }
+            long reservedOtherStartedAt = profile ? System.nanoTime() : 0L;
+            boolean isOther = isReservedForOther.test(item);
+            if (profile) {
+                reservedOtherNs += System.nanoTime() - reservedOtherStartedAt;
+                reservedOtherChecks++;
+                if (isOther) {
+                    reservedOtherHits++;
+                }
+            }
+            if (isOther) {
+                reservedForOther.add(item);
+            } else {
+                normal.add(item);
+            }
+        }
+
+        long sortStartedAt = profile ? System.nanoTime() : 0L;
+        List<Item> normalSorted = AgentInventoryTradePolicy.sortEquipsByItemId(normal);
+        List<Item> reservedForOtherSorted = AgentInventoryTradePolicy.sortEquipsByItemId(reservedForOther);
+        List<Item> reservedForSelfSorted = AgentInventoryTradePolicy.sortReservedEquipsByTradeScore(reservedForSelf, agent);
+        long sortNs = profile ? System.nanoTime() - sortStartedAt : 0L;
+        return new AgentEquipTradeClassification(
+                new AgentEquipTradeGroups(normalSorted, reservedForOtherSorted, reservedForSelfSorted),
+                reservedOtherNs,
+                reservedOtherChecks,
+                reservedOtherHits,
+                sortNs);
     }
 }

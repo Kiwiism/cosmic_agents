@@ -4,9 +4,11 @@ import client.inventory.InventoryType;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.inventory.AgentEquipTradeGroupService.AgentEquipTradeGroups;
+import server.agents.capabilities.inventory.AgentEquipTradeGroupService.AgentEquipTradeClassification;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.EquipsGroup;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -71,10 +73,36 @@ class AgentEquipTradeGroupServiceTest {
         assertNull(AgentEquipTradeGroupService.nextEquipsGroup("equips:reserved_for_self", groups));
     }
 
+    @Test
+    void classifiesSelfKeepBeforeOtherReservationsAndSortsBuckets() {
+        Item normalHigh = item(3000, (short) 3);
+        Item normalLow = item(1000, (short) 1);
+        Item reservedOther = item(2000, (short) 2);
+        Item reservedSelf = item(4000, (short) 4);
+
+        AgentEquipTradeClassification classification = AgentEquipTradeGroupService.classifyEquipGroups(
+                mock(client.Character.class),
+                List.of(normalHigh, reservedSelf, reservedOther, normalLow),
+                Set.of(reservedSelf),
+                item -> item == reservedOther || item == reservedSelf,
+                true);
+
+        assertEquals(List.of(normalLow, normalHigh), classification.groups().normal());
+        assertEquals(List.of(reservedOther), classification.groups().reservedForOther());
+        assertEquals(List.of(reservedSelf), classification.groups().reservedForSelf());
+        assertEquals(3, classification.reservedOtherChecks());
+        assertEquals(1, classification.reservedOtherHits());
+    }
+
     private static Item item(int itemId) {
+        return item(itemId, (short) itemId);
+    }
+
+    private static Item item(int itemId, short position) {
         Item item = mock(Item.class);
         when(item.getInventoryType()).thenReturn(InventoryType.EQUIP);
         when(item.getItemId()).thenReturn(itemId);
+        when(item.getPosition()).thenReturn(position);
         return item;
     }
 }

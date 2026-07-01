@@ -2119,6 +2119,11 @@ Recent reconstruction notes:
   page message selection, reserved bucket message selection, and next/first
   group navigation now live in `AgentEquipTradeGroupService`; BotInventoryManager
   still owns the temporary classification loop and trade sequence side effects.
+- Equip trade group classification now lives in `AgentEquipTradeGroupService`;
+  BotInventoryManager still supplies the temporary self-upgrade and
+  other-recipient reservation callbacks plus slow-classification log delivery,
+  but the normal/reserved-for-other/reserved-for-self bucketing, bucket sorting,
+  and profiling counters are Agent-owned.
 - Equipped-slot named trade preparation now lives in
   `AgentEquippedSlotTradeService`; BotInventoryManager still owns the enclosing
   trade sequence but delegates slot counting, temporary unequip preparation,
