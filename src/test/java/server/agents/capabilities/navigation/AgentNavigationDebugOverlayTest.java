@@ -3,10 +3,15 @@ package server.agents.capabilities.navigation;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.commands.AgentLegacyCommandBridge;
+import server.agents.integration.AgentBotSessionLifecycleSideEffects;
+import server.bots.BotEntry;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
 class AgentNavigationDebugOverlayTest {
     @Test
@@ -19,6 +24,34 @@ class AgentNavigationDebugOverlayTest {
             assertEquals("Bot nav overlay cleared.", AgentLegacyCommandBridge.clearNavigationOverlay(viewer));
 
             overlay.verify(() -> AgentNavigationDebugOverlay.clear(viewer));
+        }
+    }
+
+    @Test
+    void pathLogUsesAgentSessionEntriesForBlankTarget() {
+        Character viewer = mock(Character.class);
+        when(viewer.getId()).thenReturn(123);
+
+        try (var lifecycle = mockStatic(AgentBotSessionLifecycleSideEffects.class)) {
+            lifecycle.when(() -> AgentBotSessionLifecycleSideEffects.getBotEntries(123))
+                    .thenReturn(List.of());
+
+            assertEquals("No owned bot found. Spawn one first or use !botnav path <botName>.",
+                    AgentNavigationDebugOverlay.pathLog(viewer, "", "note"));
+        }
+    }
+
+    @Test
+    void pathLogUsesAgentSessionNamedLookup() {
+        Character viewer = mock(Character.class);
+        when(viewer.getId()).thenReturn(123);
+
+        try (var lifecycle = mockStatic(AgentBotSessionLifecycleSideEffects.class)) {
+            lifecycle.when(() -> AgentBotSessionLifecycleSideEffects.getBotEntry(123, "alpha"))
+                    .thenReturn(null);
+
+            assertEquals("No owned bot named 'alpha' found.",
+                    AgentNavigationDebugOverlay.pathLog(viewer, "alpha", "note"));
         }
     }
 }

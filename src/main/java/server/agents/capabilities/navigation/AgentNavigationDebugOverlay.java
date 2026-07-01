@@ -11,8 +11,8 @@ import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotMovementTargetRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentBotSessionLifecycleSideEffects;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.bots.BotNavigationManager;
@@ -165,9 +165,8 @@ public final class AgentNavigationDebugOverlay {
     }
 
     private static BotSelection selectBotEntry(Character viewer, String botName) {
-        BotManager botManager = BotManager.getInstance();
         if (botName == null || botName.isBlank()) {
-            List<BotEntry> entries = botManager.getBotEntries(viewer.getId());
+            List<BotEntry> entries = AgentBotSessionLifecycleSideEffects.getBotEntries(viewer.getId());
             if (entries.isEmpty()) {
                 return new BotSelection(null, "No owned bot found. Spawn one first or use !botnav path <botName>.");
             }
@@ -181,7 +180,7 @@ public final class AgentNavigationDebugOverlay {
             }
             return new BotSelection(entries.getFirst(), null);
         }
-        BotEntry entry = botManager.getBotEntry(viewer.getId(), botName);
+        BotEntry entry = AgentBotSessionLifecycleSideEffects.getBotEntry(viewer.getId(), botName);
         if (entry == null) {
             return new BotSelection(null, "No owned bot named '" + botName + "' found.");
         }

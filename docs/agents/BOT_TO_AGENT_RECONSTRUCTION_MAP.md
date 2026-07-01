@@ -115,6 +115,9 @@ Recent map updates:
 - Manual trade greeting selection moved to `AgentTradeDialogueService` backed
   by `AgentDialogueCatalog`; inventory runtime adapters no longer call
   `BotManager.getInstance().manualTradeGreeting`.
+- Navigation debug overlay bot selection now reads Agent entries through
+  `AgentBotSessionLifecycleSideEffects`, removing direct BotManager lookup from
+  `AgentNavigationDebugOverlay`.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.

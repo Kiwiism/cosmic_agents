@@ -127,6 +127,9 @@ Recent reconstruction notes:
 - Manual trade greeting selection now lives in `AgentDialogueCatalog` and
   `AgentTradeDialogueService`; `BotManager.manualTradeGreeting` remains only a
   compatibility delegate.
+- Navigation debug overlay bot selection now reads Agent entries through the
+  Agent session lifecycle gateway instead of direct BotManager lookups; overlay
+  messages and path logging behavior are unchanged.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but
