@@ -34,6 +34,7 @@ import server.agents.capabilities.inventory.AgentInventoryTradePolicy.EquipsGrou
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.capabilities.trade.AgentManualTradeService;
+import server.agents.capabilities.trade.AgentManualPeerTradeService;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.trade.AgentTradeBetweenBatchService;
 import server.agents.capabilities.trade.AgentTradeCancellationService;
@@ -175,32 +176,25 @@ public class BotInventoryManager {
                 && partner == ownerTrade
                 && ownerTrade.getPartner() == trade
                 && owner.getId() == ownerTrade.getChr().getId();
-        if (!isOwnerTrade) {
-            // Handle peer-bot trade: same-owner bot offering an item to this bot
-            boolean isPeerBotTrade = partner != null
-                    && partner.getChr().getClient() instanceof client.BotClient
-                    && owner != null
-                    && AgentOwnershipService.getInstance().isAuthorizedOwner(partner.getChr().getId(), owner.getId());
-            if (!isPeerBotTrade) {
-                AgentManualTradeService.clearGreeting(bot);
-                return;
-            }
-            // Accept invite if not yet joined — small delay so it feels human
-            if (!trade.isFullTrade()) {
-                trade = AgentManualTradeService.acceptInviteWhenReady(
-                        entry,
-                        bot,
-                        partner.getChr(),
-                        trade,
-                        500 + BotMovementManager.cfg.TICK_MS,
-                        BotMovementManager::tickDown);
-                if (trade == null || !trade.isFullTrade()) return;
-            }
-            // Confirm once the offering bot has confirmed its side
-            if (trade.isPartnerConfirmed()) {
-                completeTradeAndThank(entry, bot, trade);
-                BotEquipManager.autoEquip(bot, owner, null);
-            }
+        if (AgentManualPeerTradeService.tickPeerTrade(
+                entry,
+                bot,
+                owner,
+                trade,
+                isOwnerTrade,
+                AgentManualPeerTradeService.PeerTradeCallbacks.of(
+                        peer -> peer.getClient() instanceof client.BotClient,
+                        (peerId, ownerId) -> AgentOwnershipService.getInstance().isAuthorizedOwner(peerId, ownerId),
+                        (inviter, pendingTrade) -> AgentManualTradeService.acceptInviteWhenReady(
+                                entry,
+                                bot,
+                                inviter,
+                                pendingTrade,
+                                500 + BotMovementManager.cfg.TICK_MS,
+                                BotMovementManager::tickDown),
+                        completedTrade -> completeTradeAndThank(entry, bot, completedTrade),
+                        peerOwner -> BotEquipManager.autoEquip(bot, peerOwner, null),
+                        AgentManualTradeService::clearGreeting))) {
             return;
         }
 

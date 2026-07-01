@@ -2147,6 +2147,10 @@ Recent reconstruction notes:
   trade creation, invite packets, invitation reply selection, and reply emit.
 - Dead `BotInventoryManager.resetTradeStateLegacy` was removed after all live
   reset paths used `AgentTradeResetService`.
+- Manual peer-bot trade routing now lives in `AgentManualPeerTradeService`;
+  `BotInventoryManager.tickManualTrade` supplies temporary callbacks for
+  same-owner authorization, delayed invite accept, completion, refill, and
+  greeting clearing while preserving the old branch behavior.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and
