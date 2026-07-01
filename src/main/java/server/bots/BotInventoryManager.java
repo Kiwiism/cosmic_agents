@@ -27,10 +27,8 @@ import server.agents.capabilities.inventory.AgentEquipTradeGroupService.AgentEqu
 import server.agents.capabilities.inventory.AgentEquippedSlotTradeService;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy;
 import server.agents.capabilities.inventory.AgentInventoryCollectionService;
-import server.agents.capabilities.inventory.AgentInventoryDropService;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.capabilities.inventory.AgentInventoryNamedItemService;
-import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.capabilities.inventory.AgentInventoryTradeCollectionService;
 import server.agents.capabilities.inventory.AgentInventoryTradeCollectionService.PreparedTradeItems;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
@@ -40,6 +38,7 @@ import server.agents.capabilities.inventory.AgentInventoryTradePolicy.AmmoGroup;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.EquipsGroup;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.trade.AgentDirectItemTradeService;
+import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.trade.AgentMesoTradeService;
 import server.agents.capabilities.trade.AgentTradeBatchService;
@@ -243,18 +242,7 @@ public class BotInventoryManager {
      * category: "scrolls", "pots", "equips", "etc", or "name:<fragment>"
      */
     public static void executeChoice(String category, boolean tradeToOwner, BotEntry entry, Character bot) {
-        if (tradeToOwner) {
-            startTradeTransfer(category, entry, bot);
-        } else {
-            dropCategory(category, entry, bot);
-            AgentBotInventoryStateRuntime.setLootInhibitMs(
-                    entry,
-                    BotMovementManager.delayAfterCurrentTick(20_000)); // ~20s: prevents bot re-looting its own floor drops
-        }
-    }
-
-    private static void dropCategory(String category, BotEntry entry, Character bot) {
-        AgentInventoryDropService.dropCategory(category, entry, bot, AgentInventorySellTrashService::collectSellTrashEquips);
+        AgentInventoryTransferService.executeChoice(category, tradeToOwner, entry, bot);
     }
 
     // ─── Trade actions (actual trade window) ─────────────────────────────────

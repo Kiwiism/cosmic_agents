@@ -2,8 +2,12 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import client.inventory.Item;
+import server.agents.capabilities.inventory.AgentInventoryDropService;
+import server.agents.capabilities.inventory.AgentInventorySellTrashService;
+import server.agents.integration.AgentBotInventoryStateRuntime;
 import server.bots.BotEntry;
 import server.bots.BotInventoryManager;
+import server.bots.BotMovementManager;
 
 /**
  * Agent-owned boundary for inventory transfer commands while the deeper trade
@@ -14,7 +18,18 @@ public final class AgentInventoryTransferService {
     }
 
     public static void executeChoice(String category, boolean tradeToOwner, BotEntry entry, Character agent) {
-        BotInventoryManager.executeChoice(category, tradeToOwner, entry, agent);
+        if (tradeToOwner) {
+            startTradeTransfer(category, entry, agent);
+            return;
+        }
+        AgentInventoryDropService.dropCategory(
+                category,
+                entry,
+                agent,
+                AgentInventorySellTrashService::collectSellTrashEquips);
+        AgentBotInventoryStateRuntime.setLootInhibitMs(
+                entry,
+                BotMovementManager.delayAfterCurrentTick(20_000));
     }
 
     public static void startTradeTransfer(String category, BotEntry entry, Character agent) {

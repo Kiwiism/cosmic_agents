@@ -2087,6 +2087,10 @@ Recent reconstruction notes:
   Agent-owned boundary over the remaining `BotInventoryManager` transfer state
   machine until category counting, choice execution, and transfer sequencing
   are migrated into Agent trade/inventory modules.
+- Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
+  the legacy BotInventoryManager entry point delegates to it, while the Agent
+  service preserves the same trade path, inventory-drop capability call, and
+  post-drop loot-inhibit delay.
 - Named-item trade/drop collection, count aggregation, query normalization, and
   item-name normalization cache now live in `AgentInventoryNamedItemService`;
   BotInventoryManager preserves the same named-item trade and drop behavior by
