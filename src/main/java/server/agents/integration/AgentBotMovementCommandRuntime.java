@@ -1,12 +1,14 @@
 package server.agents.integration;
 
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 import server.bots.BotMovementManager;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.runtime.AgentCommandModeService;
 import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentScriptTaskQueueService;
+import server.maps.MapleMap;
 
 import java.awt.Point;
 
@@ -52,7 +54,22 @@ public final class AgentBotMovementCommandRuntime {
     }
 
     public static void patrol(BotEntry entry, Point ownerPos) {
-        BotManager.getInstance().issuePatrol(entry, ownerPos);
+        if (entry == null || ownerPos == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry)) {
+            return;
+        }
+        MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
+        AgentNavigationGraph graph = AgentNavigationGraphService.peekBestGraph(
+                map, AgentBotMovementStateRuntime.movementProfile(entry));
+        int regionId = graph != null ? graph.findRegionId(map, ownerPos) : -1;
+        if (regionId < 0) {
+            AgentBotManagerReplyRuntime.replyNow(entry, "can't find a patrol region here");
+            return;
+        }
+        AgentCommandModeService.runPreparedModeCommand(
+                entry,
+                () -> AgentScriptTaskQueueService.clearTasks(entry),
+                () -> AgentShopService.cancelShopVisit(entry),
+                () -> AgentModeService.startPatrol(entry, regionId, BotMovementManager::clearNavigationState));
     }
 
     public static void grind(BotEntry entry) {

@@ -91,6 +91,9 @@ Recent map updates:
 - Session relog/logout/away prompts and equipment unequip-all now request stop
   through `AgentBotMovementCommandRuntime` instead of calling
   `BotManager.issueStop` directly.
+- Patrol command graph-region validation, visible failure reply, and active
+  patrol mode transition moved into `AgentBotMovementCommandRuntime`;
+  `BotManager.issuePatrol` remains a compatibility delegate.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.

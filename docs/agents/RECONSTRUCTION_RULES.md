@@ -103,6 +103,9 @@ Recent reconstruction notes:
 - Session relog/logout/away prompts and equipment unequip-all now request stop
   via `AgentBotMovementCommandRuntime` instead of direct BotManager calls. The
   same pending-action, reply timing, and equipment side effects are preserved.
+- Patrol command graph-region validation, visible failure reply, and mode-state
+  transition now live in `AgentBotMovementCommandRuntime`; `BotManager.issuePatrol`
+  is a compatibility delegate.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

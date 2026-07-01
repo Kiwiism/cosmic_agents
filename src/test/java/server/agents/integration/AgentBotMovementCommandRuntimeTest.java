@@ -3,8 +3,10 @@ package server.agents.integration;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.bots.BotEntry;
-import server.bots.BotManager;
+import server.maps.MapleMap;
 
 import java.awt.Point;
 
@@ -13,7 +15,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AgentBotMovementCommandRuntimeTest {
@@ -73,17 +74,45 @@ class AgentBotMovementCommandRuntimeTest {
     }
 
     @Test
-    void patrolRemainsTemporaryBotManagerDelegation() {
-        BotEntry entry = new BotEntry(character(200, 100000000), character(100, 100000000), null);
+    void patrolRepliesWhenNoGraphRegionExists() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = character(200, 100000000);
+        when(bot.getMap()).thenReturn(map);
+        BotEntry entry = new BotEntry(bot, character(100, 100000000), null);
         Point patrolPos = new Point(30, 40);
-        BotManager manager = mock(BotManager.class);
 
-        try (MockedStatic<BotManager> botManager = mockStatic(BotManager.class)) {
-            botManager.when(BotManager::getInstance).thenReturn(manager);
+        try (MockedStatic<AgentNavigationGraphService> graphs = mockStatic(AgentNavigationGraphService.class);
+             MockedStatic<AgentBotManagerReplyRuntime> replies = mockStatic(AgentBotManagerReplyRuntime.class)) {
+            graphs.when(() -> AgentNavigationGraphService.peekBestGraph(map, AgentBotMovementStateRuntime.movementProfile(entry)))
+                    .thenReturn(null);
 
             AgentBotMovementCommandRuntime.patrol(entry, patrolPos);
 
-            verify(manager).issuePatrol(entry, patrolPos);
+            replies.verify(() -> AgentBotManagerReplyRuntime.replyNow(entry, "can't find a patrol region here"));
+            assertFalse(AgentBotPatrolStateRuntime.hasPatrolRegion(entry));
+        }
+    }
+
+    @Test
+    void patrolUsesAgentModeStateDirectlyWhenRegionExists() {
+        MapleMap map = mock(MapleMap.class);
+        when(map.getId()).thenReturn(100000000);
+        Character bot = character(200, 100000000);
+        when(bot.getMap()).thenReturn(map);
+        BotEntry entry = new BotEntry(bot, character(100, 100000000), null);
+        Point patrolPos = new Point(30, 40);
+        AgentNavigationGraph graph = mock(AgentNavigationGraph.class);
+
+        try (MockedStatic<AgentNavigationGraphService> graphs = mockStatic(AgentNavigationGraphService.class)) {
+            graphs.when(() -> AgentNavigationGraphService.peekBestGraph(map, AgentBotMovementStateRuntime.movementProfile(entry)))
+                    .thenReturn(graph);
+            when(graph.findRegionId(map, patrolPos)).thenReturn(7);
+
+            AgentBotMovementCommandRuntime.patrol(entry, patrolPos);
+
+            assertTrue(AgentBotModeStateRuntime.grinding(entry));
+            assertEquals(7, AgentBotPatrolStateRuntime.patrolRegionId(entry));
+            assertEquals(100000000, AgentBotPatrolStateRuntime.patrolMapId(entry));
         }
     }
 

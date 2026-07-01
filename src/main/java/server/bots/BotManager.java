@@ -86,6 +86,7 @@ import server.agents.integration.AgentBotMapStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
+import server.agents.integration.AgentBotMovementCommandRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
@@ -2771,25 +2772,7 @@ public class BotManager {
     }
 
     public void issuePatrol(BotEntry entry, Point ownerPos) {
-        if (entry == null || ownerPos == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry)) {
-            return;
-        }
-        MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
-        AgentNavigationGraph graph = AgentNavigationGraphService.peekBestGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
-        int regionId = graph != null ? graph.findRegionId(map, ownerPos) : -1;
-        if (regionId < 0) {
-            AgentBotManagerReplyRuntime.replyNow(entry, "can't find a patrol region here");
-            return;
-        }
-        AgentCommandModeService.runPreparedModeCommand(
-                entry,
-                () -> clearScriptTasks(entry),
-                () -> AgentShopService.cancelShopVisit(entry),
-                () -> startPatrol(entry, regionId));
-    }
-
-    private void startPatrol(BotEntry entry, int regionId) {
-        AgentModeService.startPatrol(entry, regionId, BotMovementManager::clearNavigationState);
+        AgentBotMovementCommandRuntime.patrol(entry, ownerPos);
     }
 
     /**
