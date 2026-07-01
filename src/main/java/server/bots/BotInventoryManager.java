@@ -7,7 +7,6 @@ import server.agents.capabilities.dialogue.AgentEmote;
 
 import server.agents.capabilities.looting.AgentLootEligibility;
 
-import client.BotClient;
 import client.Character;
 import client.inventory.Equip;
 import client.inventory.Inventory;
@@ -17,7 +16,6 @@ import client.inventory.manipulator.InventoryManipulator;
 import config.YamlConfig;
 import constants.id.ItemId;
 import constants.inventory.ItemConstants;
-import net.packet.Packet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
@@ -30,6 +28,7 @@ import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.capabilities.inventory.AgentInventoryNamedItemService;
 import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
+import server.agents.capabilities.looting.AgentLootCleanupService;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy.AmmoTradeGroups;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.AmmoGroup;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.EquipsGroup;
@@ -90,7 +89,7 @@ public class BotInventoryManager {
         long now = System.currentTimeMillis();
         for (MapItem drop : bot.getMap().getDroppedItems()) {
             if (!AgentLootEligibility.isPresent(bot.getMap(), drop)) {
-                cleanupBotLootGhostDrop(bot, drop);
+                AgentLootCleanupService.cleanupGhostDrop(bot, drop);
                 continue;
             }
 
@@ -139,7 +138,7 @@ public class BotInventoryManager {
             } else {
                 bot.pickupItem(drop);
             }
-            cleanupBotLootGhostDrop(bot, drop);
+            AgentLootCleanupService.cleanupGhostDrop(bot, drop);
             if (pickedItem != null && pickedItemId > 0 && AgentInventoryItemPolicy.hasItem(bot, pickedItem)) {
                 InventoryType pickedType = ItemConstants.getInventoryType(pickedItemId);
                 if (pickedType == InventoryType.EQUIP) {
@@ -243,27 +242,6 @@ public class BotInventoryManager {
     }
 
     // ─── Entry point from chat choice ─────────────────────────────────────────
-
-    private static void cleanupBotLootGhostDrop(Character bot, MapItem drop) {
-        if (drop == null) {
-            return;
-        }
-        if (!drop.isPickedUp() && bot.getMap().getMapObject(drop.getObjectId()) == drop) {
-            return;
-        }
-
-        Packet removePacket = PacketCreator.removeItemFromMap(drop.getObjectId(), 1, 0);
-        for (Character player : bot.getMap().getAllPlayers()) {
-            if (player.getClient() instanceof BotClient) {
-                continue;
-            }
-            if (!player.isMapObjectVisible(drop)) {
-                continue;
-            }
-            player.removeVisibleMapObject(drop);
-            player.sendPacket(removePacket);
-        }
-    }
 
     /**
      * Called after the owner chooses "drop" or "trade" in the item-choice prompt.

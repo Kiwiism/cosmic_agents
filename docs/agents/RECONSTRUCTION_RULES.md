@@ -2107,6 +2107,10 @@ Recent reconstruction notes:
   `AgentLootTargetService`; BotManager calls the Agent looting capability
   directly and supplies the existing grind-loot retry suppression rule so the
   target-selection behavior remains unchanged.
+- Stale loot cleanup now lives in `AgentLootCleanupService`;
+  BotInventoryManager preserves the same passive-loot pickup flow but delegates
+  ghost-drop visibility cleanup and remove-item packet delivery to the Agent
+  looting capability.
 - Equipped-slot named trade preparation now lives in
   `AgentEquippedSlotTradeService`; BotInventoryManager still owns the enclosing
   trade sequence but delegates slot counting, temporary unequip preparation,
