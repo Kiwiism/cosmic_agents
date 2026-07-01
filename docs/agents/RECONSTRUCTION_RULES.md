@@ -2878,6 +2878,12 @@ Recent reconstruction notes:
   callbacks. The same grounding order, KPQ grind-vs-follow-vs-reset decision,
   shop map-change notification, manager-status check, and performance timer
   behavior are preserved.
+- Movement recovery teleport checks now live in
+  `server.agents.runtime.AgentRecoveryTeleportService`; BotManager still
+  supplies temporary Cosmic ground-point, teleport, reset, and broadcast hooks.
+  The regular target-distance recovery, out-of-bounds recovery, grind-party
+  anchor recovery, shop/move-target/farm-anchor guards, and distance multiplier
+  behavior are preserved.
 
 Initial reconstruction order:
 

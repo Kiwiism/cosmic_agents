@@ -42,6 +42,7 @@ import server.agents.runtime.AgentOwnerlessTickService;
 import server.agents.runtime.AgentPartyLifecycleService;
 import server.agents.runtime.AgentPositionService;
 import server.agents.runtime.AgentRandom;
+import server.agents.runtime.AgentRecoveryTeleportService;
 import server.agents.runtime.AgentReturnScrollService;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeCleanupService;
@@ -2630,77 +2631,32 @@ public class BotManager {
     }
 
     private boolean recoverTeleportDistance(BotEntry entry, Character bot, Point targetPos) {
-        Point botPos = bot.getPosition();
-        int manhattan = Math.abs(botPos.x - targetPos.x) + Math.abs(botPos.y - targetPos.y);
-        if (manhattan > BotMovementManager.cfg.TELEPORT_DIST) {
-            return executeRecoveryTeleport(entry, bot, targetPos);
-        }
-        // Out-of-bounds recovery: airborne physics has no VR-bottom hard stop, so a bot that
-        // slips below the floor (or past the side walls in rare cases) keeps free-falling
-        // indefinitely until the 4000 Manhattan fallback catches it. That can leave the bot
-        // out of the map for several seconds with the owner still on the same screen
-        // (manhattan < 4000). Trigger a tighter teleport once we can prove the bot is
-        // outside the map's VR rectangle.
-        Rectangle area = bot.getMap() == null ? null : bot.getMap().getMapArea();
-        if (area != null && area.width > 0 && area.height > 0
-                && !area.contains(botPos)
-                && manhattan > BotMovementManager.cfg.OOB_TELEPORT_DIST) {
-            return executeRecoveryTeleport(entry, bot, targetPos);
-        }
-        return false;
+        return AgentRecoveryTeleportService.recoverTeleportDistance(
+                entry,
+                bot,
+                targetPos,
+                BotMovementManager.cfg.TELEPORT_DIST,
+                BotMovementManager.cfg.OOB_TELEPORT_DIST,
+                recoveryTeleportHooks());
     }
 
     private boolean recoverGrindPartyTeleportDistance(BotEntry entry, Character bot, Character partyAnchor) {
-        if (entry == null || bot == null || partyAnchor == null || !AgentBotModeStateRuntime.grinding(entry)
-                || AgentBotShopStateRuntime.shopVisitPending(entry)) {
-            return false;
-        }
-        if (AgentBotMoveTargetStateRuntime.hasMoveTarget(entry) || AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry)) {
-            return false;
-        }
-        if (bot.getMap() == null || partyAnchor.getMap() != bot.getMap()) {
-            return false;
-        }
-
-        Point botPos = bot.getPosition();
-        Point anchorPos = partyAnchor.getPosition();
-        if (botPos == null || anchorPos == null || !isInKnownMapBounds(bot.getMap(), anchorPos)) {
-            return false;
-        }
-
-        int manhattan = Math.abs(botPos.x - anchorPos.x) + Math.abs(botPos.y - anchorPos.y);
-        int multiplier = Math.max(1, cfg.GRIND_PARTY_TELEPORT_DIST_MULTIPLIER);
-        if (manhattan > BotMovementManager.cfg.TELEPORT_DIST * multiplier) {
-            return executeRecoveryTeleport(entry, bot, anchorPos);
-        }
-
-        Rectangle area = bot.getMap().getMapArea();
-        if (hasKnownMapBounds(area)
-                && !area.contains(botPos)
-                && manhattan > BotMovementManager.cfg.OOB_TELEPORT_DIST * multiplier) {
-            return executeRecoveryTeleport(entry, bot, anchorPos);
-        }
-        return false;
+        return AgentRecoveryTeleportService.recoverGrindPartyTeleportDistance(
+                entry,
+                bot,
+                partyAnchor,
+                BotMovementManager.cfg.TELEPORT_DIST,
+                BotMovementManager.cfg.OOB_TELEPORT_DIST,
+                cfg.GRIND_PARTY_TELEPORT_DIST_MULTIPLIER,
+                recoveryTeleportHooks());
     }
 
-    private static boolean isInKnownMapBounds(MapleMap map, Point point) {
-        Rectangle area = map == null ? null : map.getMapArea();
-        return !hasKnownMapBounds(area) || area.contains(point);
-    }
-
-    private static boolean hasKnownMapBounds(Rectangle area) {
-        return area != null && area.width > 0 && area.height > 0;
-    }
-
-    private boolean executeRecoveryTeleport(BotEntry entry, Character bot, Point targetPos) {
-        Point spawn = BotPhysicsEngine.findGroundPoint(bot.getMap(), new Point(targetPos.x, targetPos.y - 1));
-        if (spawn == null) {
-            spawn = targetPos;
-        }
-        BotPhysicsEngine.teleportTo(entry, bot, spawn);
-        BotMovementManager.resetEntryStateAfterTeleport(entry);
-        BotMovementManager.broadcastMovement(entry);
-        return true;
+    private AgentRecoveryTeleportService.RecoveryHooks recoveryTeleportHooks() {
+        return new AgentRecoveryTeleportService.RecoveryHooks(
+                BotPhysicsEngine::findGroundPoint,
+                BotPhysicsEngine::teleportTo,
+                BotMovementManager::resetEntryStateAfterTeleport,
+                BotMovementManager::broadcastMovement);
     }
 
     boolean stepMovementOnly(BotEntry entry, long tickAtMs) {
