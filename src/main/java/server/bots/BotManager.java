@@ -55,6 +55,7 @@ import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.trade.AgentTradeDialogueService;
+import server.agents.plans.AgentScriptMoveTargetService;
 
 
 import server.agents.integration.AgentBotManagerReplyRuntime;
@@ -2851,53 +2852,13 @@ public class BotManager {
                                            int maxPathCost,
                                            int fallbackRangeX,
                                            int fallbackRangeY) {
-        if (!AgentBotRuntimeIdentityRuntime.hasBot(entry) || targetPos == null) {
-            return false;
-        }
-
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        Point botPos = bot.getPosition();
-        if (botPos == null) {
-            return false;
-        }
-        if (Math.abs(targetPos.x - botPos.x) <= cfg.LOOT_RADIUS
-                && Math.abs(targetPos.y - botPos.y) <= cfg.LOOT_RADIUS) {
-            return false;
-        }
-
-        MapleMap map = bot.getMap();
-        if (map == null || map.getFootholds() == null) {
-            return false;
-        }
-
-        AgentNavigationGraph graph = AgentNavigationGraphService.peekBestGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
-        if (graph == null) {
-            return Math.abs(targetPos.x - botPos.x) <= fallbackRangeX
-                    && Math.abs(targetPos.y - botPos.y) <= fallbackRangeY;
-        }
-
-        int startRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, map, botPos);
-        int targetRegionId = BotNavigationManager.resolvePointTargetRegionId(graph, map, targetPos);
-        if (startRegionId < 0 || targetRegionId < 0) {
-            return false;
-        }
-        if (startRegionId == targetRegionId) {
-            return true;
-        }
-
-        List<AgentNavigationGraph.Edge> path = BotNavigationManager.findPath(graph, bot, startRegionId, targetRegionId, targetPos);
-        if (path.isEmpty()) {
-            return false;
-        }
-
-        int totalCost = 0;
-        for (AgentNavigationGraph.Edge edge : path) {
-            totalCost += edge.cost;
-            if (totalCost > maxPathCost) {
-                return false;
-            }
-        }
-        return true;
+        return AgentScriptMoveTargetService.isCheapMoveTarget(
+                entry,
+                targetPos,
+                maxPathCost,
+                fallbackRangeX,
+                fallbackRangeY,
+                cfg.LOOT_RADIUS);
     }
 
     private static void clearMode(BotEntry entry) {

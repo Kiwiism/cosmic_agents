@@ -1558,9 +1558,9 @@ public final class BotNavigationManager {
         return resolvePointTargetRegionId(graph, map, position);
     }
 
-    static int resolvePointTargetRegionId(AgentNavigationGraph graph,
-                                          MapleMap map,
-                                          Point position) {
+    public static int resolvePointTargetRegionId(AgentNavigationGraph graph,
+                                                 MapleMap map,
+                                                 Point position) {
         int ropeRegionId = graph.findRopeRegionId(position);
         if (ropeRegionId >= 0 && shouldPreferRopeRegion(map, position)) {
             return ropeRegionId;

@@ -161,6 +161,10 @@ Recent reconstruction notes:
   remains a compatibility delegate, and Agent fidget/shop timing uses the
   Agent-owned helper while preserving the same lower-inclusive, upper-exclusive
   delay behavior.
+- Script cheap-move target classification now lives in
+  `AgentScriptMoveTargetService`; BotManager's `isCheapScriptMoveTarget`
+  remains a compatibility delegate that supplies the legacy loot-radius config,
+  and `AgentScriptRunner` uses the Agent-owned runtime bridge directly.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

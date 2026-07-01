@@ -147,6 +147,10 @@ Recent map updates:
 - Random delay selection moved to `server.agents.runtime.AgentRandom`;
   BotManager remains a compatibility delegate for legacy callers, while Agent
   fidget/shop timing no longer asks BotManager for random delay values.
+- Script cheap-move target classification moved to
+  `server.agents.plans.AgentScriptMoveTargetService`; BotManager now delegates
+  the legacy method, and AgentScriptRunner calls the Agent runtime bridge
+  instead of BotManager.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.

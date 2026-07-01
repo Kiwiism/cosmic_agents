@@ -1,10 +1,10 @@
 package server.agents.plans;
 
 import client.Character;
+import server.agents.integration.AgentBotScriptMoveTargetRuntime;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
 import server.agents.runtime.AgentScriptTaskQueueService;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 
 import java.util.List;
 
@@ -35,7 +35,7 @@ public final class AgentScriptRunner {
                 entry,
                 bot,
                 owner,
-                BotManager.getInstance()::isCheapScriptMoveTarget,
+                AgentBotScriptMoveTargetRuntime::isCheapMoveTarget,
                 AgentScriptItemActionService::dropItem);
         AgentScriptStep step = steps.get(AgentBotScriptTaskStateRuntime.scriptStepIndex(entry));
         if (!AgentBotScriptTaskStateRuntime.scriptStepEntered(entry)) {
