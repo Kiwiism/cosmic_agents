@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Runtime cleanup/removal by Agent character ID moved to
+  `server.agents.runtime.AgentRuntimeCleanupService`. Character/Client
+  disconnect paths and the delete-character command now call Agent runtime
+  directly, while BotManager keeps temporary compatibility delegates.
 - BotManager inactive-leader town-cluster anchor storage moved to
   `server.agents.runtime.AgentLeaderSafetyService`. BotManager now references
   the Agent-owned map while lifecycle cleanup and return clustering keep the

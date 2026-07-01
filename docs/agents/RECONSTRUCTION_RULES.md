@@ -17,6 +17,12 @@ Rules:
 
 Recent reconstruction notes:
 
+- Agent runtime cleanup/removal by backing character ID now lives in
+  `server.agents.runtime.AgentRuntimeCleanupService`. Character client swap,
+  BotClient disconnect, and delete-character cleanup call the Agent runtime
+  service directly; BotManager keeps compatibility delegates. Scheduled-task
+  cancellation, live registry removal, formation cleanup, town-cluster cleanup,
+  and bot-only autopot cleanup remain behavior-equivalent.
 - Inactive-leader town-cluster anchor storage now lives in
   `server.agents.runtime.AgentLeaderSafetyService`. BotManager keeps a
   compatibility reference to the Agent-owned map while existing leader-safety

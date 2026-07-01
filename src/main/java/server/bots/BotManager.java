@@ -22,7 +22,6 @@ import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 
 import server.agents.runtime.AgentActionLockPhysicsService;
-import server.agents.runtime.AgentAutopotRuntimeCleanupService;
 import server.agents.runtime.AgentCommandModeService;
 import server.agents.runtime.AgentDeathTickService;
 import server.agents.runtime.AgentPerformanceMonitor;
@@ -42,6 +41,7 @@ import server.agents.runtime.AgentPositionService;
 import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentReturnScrollService;
 import server.agents.runtime.AgentRuntimeConfig;
+import server.agents.runtime.AgentRuntimeCleanupService;
 import server.agents.runtime.AgentScriptTaskCompletionService;
 import server.agents.runtime.AgentScriptTaskQueueService;
 import server.agents.runtime.AgentScriptTaskStartService;
@@ -513,19 +513,12 @@ public class BotManager {
 
     /** Cancel and remove a bot by the bot character's own ID (used during shutdown/disconnect). */
     public boolean removeBotByCharId(int botCharId) {
-        return AgentLifecycleService.removeAgentByCharacterId(
-                bots, AgentFormationService.formationsByLeaderId(), townClusterAnchors, botCharId, this::cancelBotTask);
+        return AgentRuntimeCleanupService.removeAgentByCharacterId(botCharId);
     }
 
     /** Release bot-owned runtime state before this character leaves bot control. */
     public boolean cleanupBotRuntimeState(Character bot) {
-        if (bot == null) {
-            return false;
-        }
-
-        boolean removed = removeBotByCharId(bot.getId());
-        AgentAutopotRuntimeCleanupService.clearBotOnlyAutopotState(bot);
-        return removed;
+        return AgentRuntimeCleanupService.cleanupAgentRuntimeState(bot);
     }
 
     private void cancelBotTask(BotEntry entry) {

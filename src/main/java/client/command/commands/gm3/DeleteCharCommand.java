@@ -8,7 +8,7 @@ import client.command.Command;
 import net.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import server.bots.BotManager;
+import server.agents.runtime.AgentRuntimeCleanupService;
 import tools.DatabaseConnection;
 
 import java.sql.Connection;
@@ -66,7 +66,7 @@ public class DeleteCharCommand extends Command {
 
         if (target.onlineCharacter != null) {
             if (target.onlineCharacter.getClient() instanceof BotClient) {
-                BotManager.getInstance().removeBotByCharId(target.id);
+                AgentRuntimeCleanupService.removeAgentByCharacterId(target.id);
             }
             target.onlineCharacter.getClient().forceDisconnect();
         }

@@ -102,6 +102,7 @@ import scripting.item.ItemScriptManager;
 import server.agents.capabilities.quest.AgentPartyQuestSyncService;
 import server.agents.capabilities.supplies.AgentPotionCheckRequestService;
 import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
+import server.agents.runtime.AgentRuntimeCleanupService;
 import server.CashShop;
 import server.ExpLogger;
 import server.ExpLogger.ExpLogRecord;
@@ -114,7 +115,6 @@ import server.Storage;
 import server.ThreadManager;
 import server.TimerManager;
 import server.Trade;
-import server.bots.BotManager;
 import server.events.Events;
 import server.events.RescueGaga;
 import server.events.gm.Fitness;
@@ -985,7 +985,7 @@ public class Character extends AbstractCharacterObject {
     public void newClient(Client c) {
         this.loggedIn = true;
         if (this.client instanceof BotClient && !(c instanceof BotClient)) {
-            BotManager.getInstance().cleanupBotRuntimeState(this);
+            AgentRuntimeCleanupService.cleanupAgentRuntimeState(this);
         }
         c.setAccountName(this.client.getAccountName());//No null's for accountName
         this.setClient(c);
