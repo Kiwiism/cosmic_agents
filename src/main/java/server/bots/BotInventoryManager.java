@@ -27,7 +27,7 @@ import server.agents.capabilities.trade.AgentTradeGroupNavigationService;
 import server.agents.capabilities.trade.AgentTradeItemAddTickService;
 import server.agents.capabilities.trade.AgentTradeItemAddTickCallbackService;
 import server.agents.capabilities.trade.AgentTradeInviteWaitService;
-import server.agents.capabilities.trade.AgentTradeLifecycleCallbackService;
+import server.agents.capabilities.trade.AgentTradeLifecycleRuntimeService;
 import server.agents.capabilities.trade.AgentTradeLifecycleService;
 import server.agents.capabilities.trade.AgentTradeRecipientService;
 import server.agents.capabilities.trade.AgentTradeSequenceRuntimeService;
@@ -44,7 +44,6 @@ import server.ItemInformationProvider;
 import server.Trade;
 
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class BotInventoryManager {
     static void tickPassiveLoot(BotEntry entry, Character bot) {
@@ -77,7 +76,7 @@ public class BotInventoryManager {
                 bot,
                 AgentBotRuntimeIdentityRuntime.owner(entry),
                 manualTradeRuntimeCallbacks(entry),
-                tradeLifecycleCallbacks());
+                AgentTradeLifecycleRuntimeService.lifecycleCallbacks(tradeLifecycleRuntimeCallbacks()));
     }
 
     // ─── Entry point from chat choice ─────────────────────────────────────────
@@ -188,32 +187,30 @@ public class BotInventoryManager {
     }
 
     private static void cancelTradeSequence(BotEntry entry, Character bot, String msg) {
-        AgentTradeLifecycleService.cancelTradeSequence(entry, bot, msg, tradeLifecycleCallbacks());
+        AgentTradeLifecycleRuntimeService.cancelTradeSequence(entry, bot, msg, tradeLifecycleRuntimeCallbacks());
     }
 
     private static void clearManualTradeState(BotEntry entry, Character bot) {
-        AgentTradeLifecycleService.clearManualTradeState(entry, bot, tradeLifecycleCallbacks());
+        AgentTradeLifecycleRuntimeService.clearManualTradeState(entry, bot, tradeLifecycleRuntimeCallbacks());
     }
 
     private static void resetTradeState(BotEntry entry, Character bot) {
-        AgentTradeLifecycleService.resetTradeState(entry, bot, tradeLifecycleCallbacks());
+        AgentTradeLifecycleRuntimeService.resetTradeState(entry, bot, tradeLifecycleRuntimeCallbacks());
     }
 
     private static void completeTradeAndThank(BotEntry entry, Character bot, Trade trade) {
-        AgentTradeLifecycleService.completeTradeAndReact(entry, bot, trade, tradeLifecycleCallbacks());
+        AgentTradeLifecycleRuntimeService.completeTradeAndReact(entry, bot, trade, tradeLifecycleRuntimeCallbacks());
     }
 
-    private static AgentTradeLifecycleService.LifecycleCallbacks tradeLifecycleCallbacks() {
-        return AgentTradeLifecycleCallbackService.lifecycleCallbacks(
+    private static AgentTradeLifecycleRuntimeService.RuntimeCallbacks tradeLifecycleRuntimeCallbacks() {
+        return AgentTradeLifecycleRuntimeService.RuntimeCallbacks.of(
                 AgentEquippedSlotTradeService::restoreTemporarilyUnequippedItems,
                 AgentManualTradeService::clearState,
                 AgentBotRuntimeIdentityRuntime::owner,
                 (agent, owner) -> BotEquipManager.autoEquip(agent, owner, null),
                 BotManager::randMs,
                 AgentTradeDialogueService::thanksReply,
-                AgentTradeDialogueService::freebieReply,
-                () -> ThreadLocalRandom.current().nextInt(100),
-                () -> ThreadLocalRandom.current().nextBoolean());
+                AgentTradeDialogueService::freebieReply);
     }
 
     private static AgentManualTradeRuntimeService.RuntimeCallbacks manualTradeRuntimeCallbacks(BotEntry entry) {

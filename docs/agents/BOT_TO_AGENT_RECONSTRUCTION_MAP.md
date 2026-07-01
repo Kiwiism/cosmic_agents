@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotInventoryManager` trade lifecycle runtime callback construction now lives
+  in `AgentTradeLifecycleRuntimeService`; the bot inventory shell only supplies
+  temporary restore, manual-clear, owner, refill, reply-delay, and reply-pool
+  hooks.
 - `BotInventoryManager.tickManualTrade` runtime callback assembly now lives in
   `AgentManualTradeRuntimeService`; the bot inventory shell only supplies
   temporary active-sequence, countdown, tick cadence, peer authorization,

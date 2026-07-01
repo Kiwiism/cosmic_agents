@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Trade lifecycle runtime callback construction moved from `BotInventoryManager`
+  to `server.agents.capabilities.trade.AgentTradeLifecycleRuntimeService`. The
+  bot inventory shell still supplies temporary restore, manual-clear, owner,
+  refill, reply-delay, and reply-pool hooks while Agent trade owns the callback
+  assembly plus freebie/glare randomness.
 - Manual-trade runtime callback assembly moved from `BotInventoryManager` to
   `server.agents.capabilities.trade.AgentManualTradeRuntimeService`. The bot
   inventory shell still supplies temporary runtime hooks for active-sequence
