@@ -2097,6 +2097,9 @@ Recent reconstruction notes:
 - Manual trade accept-delay countdown and invite-join side effect now also live
   in `AgentManualTradeService`; `BotInventoryManager` still decides whether the
   current manual trade is an owner or peer-bot trade.
+- Equip/ammo grouped trade transfer routing now lives in
+  `AgentGroupedTradeTransferService`; `BotInventoryManager` still supplies the
+  temporary item-classification and trade-sequence callbacks.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and

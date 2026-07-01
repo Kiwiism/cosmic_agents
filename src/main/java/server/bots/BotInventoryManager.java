@@ -31,10 +31,10 @@ import server.agents.capabilities.inventory.AgentInventoryTradeCollectionService
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.capabilities.looting.AgentLootCleanupService;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy.AmmoTradeGroups;
-import server.agents.capabilities.inventory.AgentInventoryTradePolicy.AmmoGroup;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.EquipsGroup;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.trade.AgentDirectItemTradeService;
+import server.agents.capabilities.trade.AgentGroupedTradeTransferService;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.capabilities.trade.AgentManualTradeService;
 import server.agents.capabilities.trade.AgentOfferService;
@@ -650,26 +650,19 @@ public class BotInventoryManager {
     }
 
     private static void startEquipsGroupTradeTransfer(Character owner, BotEntry entry, Character bot) {
-        AgentEquipTradeGroups groups = classifyEquipTradeGroups(entry, bot);
-        EquipsGroup group = AgentEquipTradeGroupService.firstAvailableGroup(groups);
-        if (group != null) {
-            String category = group.categoryString();
-            startTradeSequence(category, owner, groups.itemsFor(group), 0, false, entry, bot);
-            String msg = equipsGroupMsg(category);
-            if (msg != null) AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, msg);
-            return;
-        }
-        AgentBotInventoryRuntime.replyNow(entry, AgentInventoryDialogueReporter.noItemsReply("equips"));
+        AgentGroupedTradeTransferService.startEquipsGroupTradeTransfer(
+                classifyEquipTradeGroups(entry, bot),
+                (category, items) -> startTradeSequence(category, owner, items, 0, false, entry, bot),
+                BotInventoryManager::equipsGroupMsg,
+                (category, message) -> AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, message),
+                reply -> AgentBotInventoryRuntime.replyNow(entry, reply));
     }
 
     private static void startAmmoGroupTradeTransfer(Character owner, BotEntry entry, Character bot) {
-        AmmoTradeGroups groups = classifyAmmoTradeGroups(bot);
-        AmmoGroup group = AgentInventoryAmmoPolicy.firstAvailableGroup(groups);
-        if (group != null) {
-            startTradeSequence(group.categoryString(), owner, groups.itemsFor(group), 0, false, entry, bot);
-            return;
-        }
-        AgentBotInventoryRuntime.replyNow(entry, AgentInventoryDialogueReporter.noItemsReply("ammo"));
+        AgentGroupedTradeTransferService.startAmmoGroupTradeTransfer(
+                classifyAmmoTradeGroups(bot),
+                (category, items) -> startTradeSequence(category, owner, items, 0, false, entry, bot),
+                reply -> AgentBotInventoryRuntime.replyNow(entry, reply));
     }
 
     private static List<Item> recommendedItems(BotEntry entry, Character bot) {
