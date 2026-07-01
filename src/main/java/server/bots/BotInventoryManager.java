@@ -36,6 +36,7 @@ import server.agents.capabilities.inventory.AgentInventoryTradePolicy.EquipsGrou
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.UseTradeGroups;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.trade.AgentOfferService;
+import server.agents.capabilities.trade.AgentMesoTradeService;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
 import server.agents.capabilities.trade.AgentTradeRecipientService;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
@@ -682,36 +683,18 @@ public class BotInventoryManager {
 
     private static void startTradeMesoTransfer(String category, BotEntry entry, Character bot) {
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
-        if (owner == null) {
-            AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeOwnerNotFoundReply());
-            return;
-        }
-        if (bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry)) {
-            AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeBotBusyReply());
-            return;
-        }
-        if (owner.getTrade() != null) {
-            AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeOwnerBusyReply());
-            return;
-        }
-
-        int currentMesos = bot.getMeso();
-        if (currentMesos <= 0) {
-            AgentBotInventoryRuntime.replyNow(entry, AgentInventoryDialogueReporter.noItemsReply(category));
+        AgentMesoTradeService.MesoTradeStartDecision decision = AgentMesoTradeService.decideStart(
+                category,
+                owner != null,
+                bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry),
+                owner != null && owner.getTrade() != null,
+                bot.getMeso());
+        if (decision.shouldReply()) {
+            AgentBotInventoryRuntime.replyNow(entry, decision.reply());
             return;
         }
 
-        int requestedMesos = AgentInventoryTradePolicy.requestedTradeMesos(category);
-        if (requestedMesos == 0) {
-            AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeMesoInvalidReply());
-            return;
-        }
-        if (requestedMesos > 0 && currentMesos < requestedMesos) {
-            AgentBotInventoryRuntime.replyNow(entry, AgentInventoryTradePolicy.notEnoughMesosReply(requestedMesos, currentMesos));
-            return;
-        }
-
-        startTradeSequence(category, owner, List.of(), requestedMesos > 0 ? requestedMesos : currentMesos, true, entry, bot);
+        startTradeSequence(category, owner, List.of(), decision.mesos(), true, entry, bot);
     }
 
     // ─── Item collection helpers ──────────────────────────────────────────────

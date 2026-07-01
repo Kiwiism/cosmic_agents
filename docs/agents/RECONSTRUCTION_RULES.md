@@ -2115,6 +2115,10 @@ Recent reconstruction notes:
 - Trade recipient resolution now lives in `AgentTradeRecipientService`;
   BotInventoryManager still owns trade sequencing but delegates owner/map/party
   recipient lookup to the Agent trade capability.
+- Meso trade start decisions now live in `AgentMesoTradeService`;
+  BotInventoryManager still owns the enclosing trade sequence but delegates
+  owner/busy/no-meso/invalid/insufficient-meso guards and selected meso amount
+  to the Agent trade capability.
 - Ammo trade grouping now lives in `AgentInventoryAmmoPolicy`;
   BotInventoryManager preserves the same safe-item filtering, own-ammo versus
   non-own-ammo split, non-own item-id ordering, and own-ammo projectile attack
