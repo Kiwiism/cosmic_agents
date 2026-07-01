@@ -2103,6 +2103,9 @@ Recent reconstruction notes:
 - Reserved-equips transfer routing now lives in
   `AgentReservedEquipTradeTransferService`; `BotInventoryManager` still supplies
   the temporary reserved-page collection and trade-sequence callbacks.
+- Generic prepared-items transfer routing now lives in
+  `AgentPreparedTradeTransferService`; `BotInventoryManager` still supplies the
+  temporary item-preparation and trade-sequence callbacks.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and

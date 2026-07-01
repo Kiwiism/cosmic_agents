@@ -39,6 +39,7 @@ import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.capabilities.trade.AgentManualTradeService;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.trade.AgentMesoTradeService;
+import server.agents.capabilities.trade.AgentPreparedTradeTransferService;
 import server.agents.capabilities.trade.AgentReservedEquipTradeTransferService;
 import server.agents.capabilities.trade.AgentTradeAllItemsAddedService;
 import server.agents.capabilities.trade.AgentTradeBatchService;
@@ -293,16 +294,13 @@ public class BotInventoryManager {
         long prepareStartedAt = startedAt != 0L ? System.nanoTime() : 0L;
         PreparedTradeItems prepared = prepareTradeItems(category, entry, bot);
         AgentTradeCommandProfiler.logSlowCommand(category, "prepareTradeItems", entry, bot, prepareStartedAt, TRADE_COMMAND_PROFILE_WARN_NS, log);
-        if (prepared.errorMessage() != null) {
-            AgentBotInventoryRuntime.replyNow(entry, prepared.errorMessage());
-            return;
-        }
-        List<Item> items = prepared.items();
-        if (items.isEmpty()) {
-            AgentBotInventoryRuntime.replyNow(entry, AgentInventoryDialogueReporter.noItemsReply(category));
-            return;
-        }
-        startTradeSequence(category, owner, items, 0, AgentBotPendingTradeStateRuntime.hasRestoreSlots(entry), entry, bot);
+        AgentPreparedTradeTransferService.startPreparedTradeTransfer(
+                category,
+                prepared,
+                () -> AgentBotPendingTradeStateRuntime.hasRestoreSlots(entry),
+                (preparedCategory, preparedItems, restoreSlots) ->
+                        startTradeSequence(preparedCategory, owner, preparedItems, 0, restoreSlots, entry, bot),
+                reply -> AgentBotInventoryRuntime.replyNow(entry, reply));
         AgentTradeCommandProfiler.logSlowCommand(category, "startTradeTransfer", entry, bot, startedAt, TRADE_COMMAND_PROFILE_WARN_NS, log);
     }
 
