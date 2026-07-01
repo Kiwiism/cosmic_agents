@@ -68,6 +68,7 @@ import server.life.MonsterListener;
 import server.life.NPC;
 import server.life.PlayerNPC;
 import server.life.SpawnPoint;
+import server.integration.AgentPresence;
 import server.partyquest.CarnivalFactory;
 import server.partyquest.CarnivalFactory.MCSkill;
 import server.partyquest.GuardianSpawnPoint;
@@ -169,6 +170,7 @@ public class MapleMap {
     private boolean allowSummons = true; // All maps should have this true at the beginning
     private Character mapOwner = null;
     private long mapOwnerLastActivityTime = Long.MAX_VALUE;
+    private volatile long lastActiveTime = System.currentTimeMillis();
 
     // events
     private boolean eventstarted = false, isMuted = false;
@@ -2731,7 +2733,10 @@ public class MapleMap {
     }
 
     private void broadcastMessage(Character source, Packet packet, double rangeSq, Point rangedFrom) {
-        net.packet.logging.MonitoredChrLogger.logBroadcastIfMonitored(source, packet.getBytes());
+        long broadcastStartedNs = server.monitoring.SlowOperationLogger.start();
+        if (net.packet.logging.MonitoredChrLogger.hasMonitoredCharacters()) {
+            net.packet.logging.MonitoredChrLogger.logBroadcastIfMonitored(source, packet.getBytes());
+        }
         chrRLock.lock();
         try {
             for (Character chr : characters) {
@@ -2747,6 +2752,8 @@ public class MapleMap {
             }
         } finally {
             chrRLock.unlock();
+            server.monitoring.SlowOperationLogger.warnIfSlow("map-broadcast map=" + mapid + " chars=" + characters.size(),
+                    broadcastStartedNs, 100);
         }
     }
 
@@ -3123,6 +3130,59 @@ public class MapleMap {
         } finally {
             chrRLock.unlock();
         }
+    }
+
+    public int getLoadedObjectCount() {
+        objectRLock.lock();
+        try {
+            return mapobjects.size();
+        } finally {
+            objectRLock.unlock();
+        }
+    }
+
+    public boolean isActiveForMaintenance() {
+        boolean active = event != null
+                || mapOwner != null
+                || mapEffect != null
+                || eventstarted
+                || !droppedItems.isEmpty()
+                || droppedItemCount.get() > 0
+                || spawnedMonstersOnMap.get() > 0
+                || getCharacters().size() > 0;
+        if (active) {
+            lastActiveTime = System.currentTimeMillis();
+        }
+        return active;
+    }
+
+    public long getIdleTimeMillis() {
+        return System.currentTimeMillis() - lastActiveTime;
+    }
+
+    public boolean hasAgentCharacter() {
+        return AgentPresence.hasAgentInMap(this);
+    }
+
+    public boolean hasVisibleNonAgentControllerCandidate() {
+        chrRLock.lock();
+        try {
+            for (Character chr : characters) {
+                if (!chr.isHidden() && !AgentPresence.isAgent(chr)) {
+                    return true;
+                }
+            }
+            return false;
+        } finally {
+            chrRLock.unlock();
+        }
+    }
+
+    public boolean shouldAllowHiddenMobSimulation(Character chr) {
+        return chr.isHidden()
+                && !AgentPresence.isAgent(chr)
+                && hasAgentCharacter()
+                && !hasVisibleNonAgentControllerCandidate();
     }
 
     public Character getCharacterById(int id) {

@@ -35,6 +35,16 @@ public class DatabaseConnection {
         return dataSource.getConnection();
     }
 
+    public static String poolStats() {
+        if (dataSource == null || dataSource.getHikariPoolMXBean() == null) {
+            return "dbPool=uninitialized";
+        }
+        return "dbPool active=" + dataSource.getHikariPoolMXBean().getActiveConnections()
+                + " idle=" + dataSource.getHikariPoolMXBean().getIdleConnections()
+                + " total=" + dataSource.getHikariPoolMXBean().getTotalConnections()
+                + " waiting=" + dataSource.getHikariPoolMXBean().getThreadsAwaitingConnection();
+    }
+
     public static Handle getHandle() {
         if (jdbi == null) {
             throw new IllegalStateException("Unable to get handle - connection pool is uninitialized");

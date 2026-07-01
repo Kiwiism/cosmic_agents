@@ -264,10 +264,27 @@ public final class PlayerInteractionHandler extends AbstractPacketHandler {
                         c.getWorldServer().registerPlayerShop(shop);
                         //c.sendPacket(PacketCreator.getPlayerShopRemoveVisitor(1));
                     } else if (ItemConstants.isHiredMerchant(itemId)) {
+                        if (chr.getHiredMerchant() != null || chr.hasMerchant()
+                                || c.getWorldServer().getHiredMerchant(chr.getId()) != null
+                                || c.getChannelServer().getHiredMerchants().containsKey(chr.getId())) {
+                            chr.dropMessage(1, "You already have a hired merchant open.");
+                            chr.sendPacket(PacketCreator.enableActions());
+                            return;
+                        }
+
                         HiredMerchant merchant = new HiredMerchant(chr, desc, itemId);
+                        if (!c.getWorldServer().tryRegisterHiredMerchant(merchant)) {
+                            chr.dropMessage(1, "You already have a hired merchant open.");
+                            chr.sendPacket(PacketCreator.enableActions());
+                            return;
+                        }
+                        if (!chr.getClient().getChannelServer().tryAddHiredMerchant(chr.getId(), merchant)) {
+                            c.getWorldServer().unregisterHiredMerchant(merchant);
+                            chr.dropMessage(1, "You already have a hired merchant open.");
+                            chr.sendPacket(PacketCreator.enableActions());
+                            return;
+                        }
                         chr.setHiredMerchant(merchant);
-                        c.getWorldServer().registerHiredMerchant(merchant);
-                        chr.getClient().getChannelServer().addHiredMerchant(chr.getId(), merchant);
                         chr.sendPacket(PacketCreator.getHiredMerchant(chr, merchant, true));
                     }
                 }

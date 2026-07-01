@@ -1697,6 +1697,27 @@ public class World {
         }
     }
 
+    public boolean tryRegisterHiredMerchant(HiredMerchant hm) {
+        activeMerchantsLock.lock();
+        try {
+            if (activeMerchants.containsKey(hm.getOwnerId())) {
+                return false;
+            }
+
+            int initProc;
+            if (Server.getInstance().getCurrentTime() - merchantUpdate > MINUTES.toMillis(5)) {
+                initProc = 1;
+            } else {
+                initProc = 0;
+            }
+
+            activeMerchants.put(hm.getOwnerId(), new Pair<>(hm, initProc));
+            return true;
+        } finally {
+            activeMerchantsLock.unlock();
+        }
+    }
+
     public void unregisterHiredMerchant(HiredMerchant hm) {
         activeMerchantsLock.lock();
         try {

@@ -19,11 +19,15 @@
 */
 package server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -32,6 +36,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * @author Ronan
  */
 public class ThreadManager {
+    private static final Logger log = LoggerFactory.getLogger(ThreadManager.class);
     private static final ThreadManager instance = new ThreadManager();
 
     public static ThreadManager getInstance() {
@@ -39,20 +44,28 @@ public class ThreadManager {
     }
 
     private ThreadPoolExecutor tpe;
+    private final AtomicLong submittedTasks = new AtomicLong();
+    private final AtomicLong rejectedTasks = new AtomicLong();
 
-    private ThreadManager() {}
+    private ThreadManager() {
+    }
 
     private class RejectedExecutionHandlerImpl implements RejectedExecutionHandler {
 
         @Override
         public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-            Thread t = new Thread(r);
-            t.start();
+            rejectedTasks.incrementAndGet();
+            log.warn("ThreadManager rejected task. active={} queued={} completed={} rejected={}",
+                    executor.getActiveCount(), executor.getQueue().size(), executor.getCompletedTaskCount(), rejectedTasks.get());
+            if (!executor.isShutdown()) {
+                r.run();
+            }
         }
 
     }
 
     public void newTask(Runnable r) {
+        submittedTasks.incrementAndGet();
         tpe.execute(r);
     }
 
@@ -73,6 +86,18 @@ public class ThreadManager {
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
         }
+    }
+
+    public String diagnostics() {
+        if (tpe == null) {
+            return "ThreadManager stopped";
+        }
+        return "ThreadManager active=" + tpe.getActiveCount()
+                + " queued=" + tpe.getQueue().size()
+                + " pool=" + tpe.getPoolSize()
+                + " completed=" + tpe.getCompletedTaskCount()
+                + " submitted=" + submittedTasks.get()
+                + " rejected=" + rejectedTasks.get();
     }
 
 }

@@ -254,6 +254,18 @@ public final class Channel {
         return mapManager;
     }
 
+    public int loadedMapCount() {
+        return mapManager.loadedMapCount();
+    }
+
+    public int activeMapCount() {
+        return mapManager.activeMapCount();
+    }
+
+    public int idleMapCandidateCount() {
+        return mapManager.idleMapCandidateCount();
+    }
+
     public BaseService getServiceAccess(ChannelServices sv) {
         return services.getAccess(sv).getService();
     }
@@ -370,6 +382,19 @@ public final class Channel {
         merchWlock.lock();
         try {
             hiredMerchants.put(chrid, hm);
+        } finally {
+            merchWlock.unlock();
+        }
+    }
+
+    public boolean tryAddHiredMerchant(int chrid, HiredMerchant hm) {
+        merchWlock.lock();
+        try {
+            if (hiredMerchants.containsKey(chrid)) {
+                return false;
+            }
+            hiredMerchants.put(chrid, hm);
+            return true;
         } finally {
             merchWlock.unlock();
         }

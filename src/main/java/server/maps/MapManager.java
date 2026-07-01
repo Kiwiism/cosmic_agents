@@ -19,6 +19,8 @@
 */
 package server.maps;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scripting.event.EventInstanceManager;
 
 import java.util.HashMap;
@@ -28,6 +30,9 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class MapManager {
+    private static final Logger log = LoggerFactory.getLogger(MapManager.class);
+    private static final long IDLE_MAP_DIAGNOSTIC_MS = 30 * 60 * 1000L;
+
     private final int channel;
     private final int world;
     private EventInstanceManager event;
@@ -76,7 +81,7 @@ public class MapManager {
 
         map = MapFactory.loadMapFromWz(mapid, world, channel, event);
 
-        if (cache) {
+        if (cache && map != null) {
             mapsWLock.lock();
             try {
                 maps.put(mapid, map);
@@ -123,10 +128,47 @@ public class MapManager {
         }
     }
 
+    public int loadedMapCount() {
+        mapsRLock.lock();
+        try {
+            return maps.size();
+        } finally {
+            mapsRLock.unlock();
+        }
+    }
+
+    public int activeMapCount() {
+        int count = 0;
+        for (MapleMap map : getMaps().values()) {
+            if (map.isActiveForMaintenance()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public int idleMapCandidateCount() {
+        int count = 0;
+        for (MapleMap map : getMaps().values()) {
+            if (!map.isActiveForMaintenance() && map.getIdleTimeMillis() >= IDLE_MAP_DIAGNOSTIC_MS) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     public void updateMaps() {
         for (MapleMap map : getMaps().values()) {
+            long startedNs = server.monitoring.SlowOperationLogger.start();
+            boolean active = map.isActiveForMaintenance();
+            if (!active && map.getIdleTimeMillis() >= IDLE_MAP_DIAGNOSTIC_MS) {
+                log.debug("Idle map tick candidate world={} channel={} map={} idleMs={} objects={}",
+                        world, channel, map.getId(), map.getIdleTimeMillis(), map.getLoadedObjectCount());
+            }
             map.respawn();
             map.mobMpRecovery();
+            server.monitoring.SlowOperationLogger.warnIfSlow("map-update map=" + map.getId() + " active=" + active,
+                    startedNs, 250);
         }
     }
 

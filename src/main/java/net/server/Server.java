@@ -23,6 +23,7 @@ package net.server;
 
 import client.Character;
 import client.Client;
+import client.ExpDebugTracker;
 import client.Family;
 import client.SkillFactory;
 import client.command.CommandsExecutor;
@@ -70,7 +71,10 @@ import server.ThreadManager;
 import server.TimerManager;
 import server.expeditions.ExpeditionBossLog;
 import server.life.PlayerNPC;
+import server.monitoring.ServerLoadMonitor;
+import server.monitoring.ServerMetricsSnapshot;
 import server.quest.Quest;
+import scripting.AbstractPlayerInteraction;
 import service.NoteService;
 import tools.DatabaseConnection;
 import tools.Pair;
@@ -160,6 +164,7 @@ public class Server {
     private volatile boolean availableDeveloperRoom = false;
     private boolean online = false;
     public static long uptime = System.currentTimeMillis();
+    private int loadedMapHighWatermark = 0;
 
     private Server() {
         ReadWriteLock worldLock = new ReentrantReadWriteLock(true);
@@ -994,18 +999,70 @@ public class Server {
         long timeLeft = getTimeLeftForNextHour();
         tMan.register(new CharacterDiseaseTask(), YamlConfig.config.server.UPDATE_INTERVAL, YamlConfig.config.server.UPDATE_INTERVAL);
         tMan.register(new CouponTask(), YamlConfig.config.server.COUPON_INTERVAL, timeLeft);
-        tMan.register(new RankingCommandTask(), MINUTES.toMillis(5), MINUTES.toMillis(5));
-        tMan.register(new RankingLoginTask(), YamlConfig.config.server.RANKING_INTERVAL, timeLeft);
+        tMan.register(TimerManager.SchedulerLane.LOW_PRIORITY, new RankingCommandTask(), MINUTES.toMillis(5), MINUTES.toMillis(5));
+        tMan.register(TimerManager.SchedulerLane.LOW_PRIORITY, new RankingLoginTask(), YamlConfig.config.server.RANKING_INTERVAL, timeLeft);
         tMan.register(new LoginCoordinatorTask(), HOURS.toMillis(1), timeLeft);
         tMan.register(new EventRecallCoordinatorTask(), HOURS.toMillis(1), timeLeft);
-        tMan.register(new LoginStorageTask(), MINUTES.toMillis(2), MINUTES.toMillis(2));
-        tMan.register(new DueyFredrickTask(channelDependencies.fredrickProcessor()), HOURS.toMillis(1), timeLeft);
-        tMan.register(new InvitationTask(), SECONDS.toMillis(30), SECONDS.toMillis(30));
-        tMan.register(new RespawnTask(), YamlConfig.config.server.RESPAWN_INTERVAL, YamlConfig.config.server.RESPAWN_INTERVAL);
+        tMan.register(TimerManager.SchedulerLane.SAVE, new LoginStorageTask(), MINUTES.toMillis(2), MINUTES.toMillis(2));
+        tMan.register(TimerManager.SchedulerLane.SAVE, new DueyFredrickTask(channelDependencies.fredrickProcessor()), HOURS.toMillis(1), timeLeft);
+        tMan.register(TimerManager.SchedulerLane.EVENT, new InvitationTask(), SECONDS.toMillis(30), SECONDS.toMillis(30));
+        tMan.register(TimerManager.SchedulerLane.MAP, new RespawnTask(), YamlConfig.config.server.RESPAWN_INTERVAL, YamlConfig.config.server.RESPAWN_INTERVAL);
+        tMan.register(TimerManager.SchedulerLane.LOW_PRIORITY, this::logScaleHealth, MINUTES.toMillis(5), MINUTES.toMillis(5));
 
         timeLeft = getTimeLeftForNextDay();
         ExpeditionBossLog.resetBossLogTable();
-        tMan.register(new BossLogTask(), DAYS.toMillis(1), timeLeft);
+        tMan.register(TimerManager.SchedulerLane.SAVE, new BossLogTask(), DAYS.toMillis(1), timeLeft);
+    }
+
+    private void logScaleHealth() {
+        ServerMetricsSnapshot snapshot = buildMetricsSnapshot();
+        int cleanedExpDebugSessions = ExpDebugTracker.cleanupExpiredSessions();
+        int previousHighWatermark = loadedMapHighWatermark;
+        loadedMapHighWatermark = Math.max(loadedMapHighWatermark, snapshot.loadedMaps());
+
+        log.info("Scale health {} expDebugCleaned={} expDebugActive={} monitoredChr={} npcPendingRuntime={} loadedMapHighWatermark={}",
+                snapshot.compact(),
+                cleanedExpDebugSessions,
+                ExpDebugTracker.activeSessionCount(),
+                net.packet.logging.MonitoredChrLogger.monitoredCharacterCount(),
+                AbstractPlayerInteraction.pendingCharacterRuntimeStateCount(),
+                loadedMapHighWatermark);
+
+        if (snapshot.idleMapCandidates() > 0 || snapshot.loadedMaps() >= previousHighWatermark + 100) {
+            log.warn("Scale health map growth watch loaded={} active={} idleCandidates={} previousHighWatermark={} highWatermark={}",
+                    snapshot.loadedMaps(), snapshot.activeMaps(), snapshot.idleMapCandidates(), previousHighWatermark, loadedMapHighWatermark);
+        }
+    }
+
+    private ServerMetricsSnapshot buildMetricsSnapshot() {
+        Runtime runtime = Runtime.getRuntime();
+        long usedHeapMb = (runtime.totalMemory() - runtime.freeMemory()) / 1024 / 1024;
+        long maxHeapMb = runtime.maxMemory() / 1024 / 1024;
+
+        int onlinePlayers = 0;
+        int loadedMaps = 0;
+        int activeMaps = 0;
+        int idleMapCandidates = 0;
+        for (World world : getWorlds()) {
+            onlinePlayers += world.getPlayerStorage().getSize();
+            for (Channel channel : world.getChannels()) {
+                loadedMaps += channel.loadedMapCount();
+                activeMaps += channel.activeMapCount();
+                idleMapCandidates += channel.idleMapCandidateCount();
+            }
+        }
+
+        return new ServerMetricsSnapshot(
+                onlinePlayers,
+                loadedMaps,
+                activeMaps,
+                idleMapCandidates,
+                usedHeapMb,
+                maxHeapMb,
+                DatabaseConnection.poolStats(),
+                ThreadManager.getInstance().diagnostics(),
+                TimerManager.getInstance().diagnostics(),
+                ServerLoadMonitor.currentLevel());
     }
 
     public static void main(String[] args) {

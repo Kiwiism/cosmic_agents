@@ -1207,6 +1207,15 @@ public class AbstractPlayerInteraction {
         return pendingDressingRoomSelections.remove(characterId) != null;
     }
 
+    public static void clearPendingCharacterRuntimeState(int characterId) {
+        pendingNpcTalkMessages.remove(characterId);
+        pendingDressingRoomSelections.remove(characterId);
+    }
+
+    public static int pendingCharacterRuntimeStateCount() {
+        return pendingNpcTalkMessages.size() + pendingDressingRoomSelections.size();
+    }
+
     public void npcTalk(int npcid, String message) {
         pendingNpcTalkMessages.put(c.getPlayer().getId(), message);
         pendingDressingRoomSelections.remove(c.getPlayer().getId());

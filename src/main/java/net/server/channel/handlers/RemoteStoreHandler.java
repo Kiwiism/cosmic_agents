@@ -24,6 +24,7 @@ package net.server.channel.handlers;
 
 import client.Character;
 import client.Client;
+import client.inventory.InventoryType;
 import net.AbstractPacketHandler;
 import net.packet.InPacket;
 import server.maps.HiredMerchant;
@@ -33,11 +34,18 @@ import tools.PacketCreator;
  * @author kevintjuh93 - :3
  */
 public class RemoteStoreHandler extends AbstractPacketHandler {
+    private static final int STORE_REMOTE_CONTROLLER = 5470000;
+
     @Override
     public void handlePacket(InPacket p, Client c) {
         Character chr = c.getPlayer();
         HiredMerchant hm = getMerchant(c);
         if (hm != null && hm.isOwner(chr)) {
+            if (isRemoteAccess(chr, hm) && !hasRemoteStoreController(chr)) {
+                chr.dropMessage(1, "You need a Store Remote Controller to access your merchant from here.");
+                c.sendPacket(PacketCreator.enableActions());
+                return;
+            }
             if (hm.getChannel() == chr.getClient().getChannel()) {
                 hm.visitShop(chr);
             } else {
@@ -55,5 +63,14 @@ public class RemoteStoreHandler extends AbstractPacketHandler {
             return c.getWorldServer().getHiredMerchant(c.getPlayer().getId());
         }
         return null;
+    }
+
+    private static boolean isRemoteAccess(Character chr, HiredMerchant hm) {
+        return hm.getChannel() != chr.getClient().getChannel()
+                || chr.getMapId() != hm.getMapId();
+    }
+
+    private static boolean hasRemoteStoreController(Character chr) {
+        return chr.getInventory(InventoryType.CASH).countById(STORE_REMOTE_CONTROLLER) > 0;
     }
 }

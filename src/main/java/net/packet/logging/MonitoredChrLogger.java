@@ -63,6 +63,14 @@ public class MonitoredChrLogger {
         return monitoredChrIds;
     }
 
+    public static boolean hasMonitoredCharacters() {
+        return !monitoredChrIds.isEmpty();
+    }
+
+    public static int monitoredCharacterCount() {
+        return monitoredChrIds.size();
+    }
+
     public static void logPacketIfMonitored(Client c, short packetId, byte[] packetContent) {
         Character chr = c.getPlayer();
         if (chr == null) {

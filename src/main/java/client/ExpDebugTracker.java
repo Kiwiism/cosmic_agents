@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ExpDebugTracker {
     private static final String LOG_BASE_DIR = "D:/GameServers/Maplestory/Cosmic/logs/expdebug/";
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
+    private static final long SESSION_TTL_MS = 2 * 60 * 60 * 1000L;
 
     /** Per-character tracking state */
     public static class ExpSession {
@@ -32,6 +33,7 @@ public class ExpDebugTracker {
         public final int level;
         public final boolean isBot;
         public long startTime;
+        public volatile long lastTouched;
         public final AtomicLong totalPersonalExp = new AtomicLong(0);
         public final AtomicLong totalPartyExp = new AtomicLong(0);
         public final AtomicLong totalEquipExp = new AtomicLong(0);
@@ -44,6 +46,7 @@ public class ExpDebugTracker {
             this.level = level;
             this.isBot = isBot;
             this.startTime = System.currentTimeMillis();
+            this.lastTouched = this.startTime;
         }
 
         public long elapsedSeconds() {
@@ -57,6 +60,10 @@ public class ExpDebugTracker {
             }
             return ((double) (totalPersonalExp.get() + totalPartyExp.get())) / seconds * 60.0;
         }
+
+        public void touch() {
+            lastTouched = System.currentTimeMillis();
+        }
     }
 
     // Active tracking sessions keyed by character ID
@@ -69,6 +76,7 @@ public class ExpDebugTracker {
     }
 
     public static void setTrackingEnabled(boolean enabled) {
+        cleanupExpiredSessions();
         trackingEnabled = enabled;
     }
 
@@ -95,11 +103,29 @@ public class ExpDebugTracker {
         }
 
         if (session.active) {
+            session.touch();
             session.totalPersonalExp.addAndGet(personalExp);
             session.totalPartyExp.addAndGet(partyExp);
             session.totalEquipExp.addAndGet(equipExp);
             session.expGainCount.incrementAndGet();
         }
+    }
+
+    public static int cleanupExpiredSessions() {
+        long now = System.currentTimeMillis();
+        int before = activeSessions.size();
+        activeSessions.entrySet().removeIf(entry -> {
+            ExpSession session = entry.getValue();
+            return !session.active || now - session.lastTouched > SESSION_TTL_MS;
+        });
+        if (activeSessions.isEmpty()) {
+            trackingEnabled = false;
+        }
+        return before - activeSessions.size();
+    }
+
+    public static int activeSessionCount() {
+        return activeSessions.size();
     }
 
     /**

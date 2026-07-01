@@ -57,6 +57,7 @@ import org.slf4j.LoggerFactory;
 import scripting.event.EventInstanceManager;
 import server.StatEffect;
 import server.TimerManager;
+import server.integration.AgentPresence;
 import server.loot.LootManager;
 import server.maps.AbstractAnimatedMapObject;
 import server.maps.MapObjectType;
@@ -1868,8 +1869,13 @@ public class Monster extends AbstractLoadedLife {
 
         Character newControllerWithPuppet = null;
 
+        boolean allowHiddenController = getMap().hasAgentCharacter()
+                && !getMap().hasVisibleNonAgentControllerCandidate();
+
         for (Character chr : getMap().getAllPlayers()) {
-            if (!chr.isHidden() && !(chr.getClient() instanceof BotClient)) {
+            if ((!chr.isHidden() || allowHiddenController)
+                    && !AgentPresence.isAgent(chr)
+                    && !(chr.getClient() instanceof BotClient)) {
                 int ctrlMonsSize = chr.getNumControlledMonsters();
 
                 if (isCharacterPuppetInVicinity(chr)) {

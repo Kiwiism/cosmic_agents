@@ -51,7 +51,8 @@ public final class PlayerMapTransitionHandler extends AbstractPacketHandler {
             chr.sendPacket(PacketCreator.giveBuff(1, beaconid, stat));
         }
 
-        if (!chr.isHidden()) {  // thanks Lame (Conrad) for noticing hidden characters controlling mobs
+        boolean canControlMobs = !chr.isHidden() || chr.getMap().shouldAllowHiddenMobSimulation(chr);
+        if (canControlMobs) {  // hidden characters are allowed only by the agent-simulation server hook
             for (MapObject mo : chr.getMap().getMonsters()) {    // thanks BHB, IxianMace, Jefe for noticing several issues regarding mob statuses (such as freeze)
                 Monster m = (Monster) mo;
                 if (m.getSpawnEffect() == 0 || m.getHp() < m.getMaxHp()) {     // avoid effect-spawning mobs
