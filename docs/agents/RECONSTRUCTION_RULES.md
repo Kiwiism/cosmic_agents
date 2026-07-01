@@ -2559,6 +2559,10 @@ Recent reconstruction notes:
 - Idle and trade-window physics mode selection now lives in
   `server.agents.runtime.AgentIdlePhysicsService`; BotManager still supplies the
   temporary swim-map, movement, physics, and broadcast callbacks.
+- Map-change grounding, map tracking, post-teleport reset, navigation graph
+  warmup, and movement broadcast ordering now live in
+  `server.agents.runtime.AgentMapTransitionService`; BotManager still supplies
+  temporary foothold, physics, navigation, and broadcast callbacks.
 
 Initial reconstruction order:
 

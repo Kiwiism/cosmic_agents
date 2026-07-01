@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- BotManager map-change grounding moved to
+  `server.agents.runtime.AgentMapTransitionService`; BotManager only supplies
+  temporary foothold/physics/navigation callbacks.
 - BotManager idle/trade physics mode selection moved to
   `server.agents.runtime.AgentIdlePhysicsService`; BotManager only supplies
   temporary movement/physics callbacks.

@@ -26,6 +26,7 @@ import server.agents.runtime.AgentFormationService;
 import server.agents.runtime.AgentHeartbeatService;
 import server.agents.runtime.AgentIdlePhysicsService;
 import server.agents.runtime.AgentLeaderSessionService;
+import server.agents.runtime.AgentMapTransitionService;
 import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentTargetSnapshot;
 import server.agents.runtime.AgentTargetSnapshotService;
@@ -3201,18 +3202,17 @@ public class BotManager {
     }
 
     private boolean groundAfterMapChange(BotEntry entry, Character bot) {
-        if (AgentBotMapStateRuntime.isTrackingMap(entry, bot.getMapId())) {
-            return false;
-        }
+        return AgentMapTransitionService.groundAfterMapChange(entry, bot, mapTransitionHooks());
+    }
 
-        AgentBotMapStateRuntime.setMapTracking(entry, bot.getMapId(), BotMovementManager.buildFhIndex(bot.getMap()));
-        Point cur = bot.getPosition();
-        Point ground = BotPhysicsEngine.findGroundPoint(bot.getMap(), new Point(cur.x, cur.y - 1));
-        BotPhysicsEngine.teleportTo(entry, bot, ground != null ? ground : cur);
-        BotMovementManager.resetEntryStateAfterTeleport(entry);
-        AgentNavigationGraphService.warmGraphAsync(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
-        BotMovementManager.broadcastMovement(entry);
-        return true;
+    private AgentMapTransitionService.GroundingHooks mapTransitionHooks() {
+        return new AgentMapTransitionService.GroundingHooks(
+                BotMovementManager::buildFhIndex,
+                BotPhysicsEngine::findGroundPoint,
+                BotPhysicsEngine::teleportTo,
+                BotMovementManager::resetEntryStateAfterTeleport,
+                AgentNavigationGraphService::warmGraphAsync,
+                BotMovementManager::broadcastMovement);
     }
 
     private boolean handleDeadTick(BotEntry entry, Character bot, Character owner) {
