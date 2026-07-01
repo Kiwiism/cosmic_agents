@@ -7,6 +7,9 @@ import server.agents.capabilities.trade.AgentDirectItemTradeService.DirectItemTr
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 class AgentDirectItemTradeServiceTest {
     @Test
@@ -42,5 +45,33 @@ class AgentDirectItemTradeServiceTest {
 
         assertEquals(Action.START_TRADE, decision.action());
         assertNull(decision.reply());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void routesDirectTradeStartDecisionToCallbacks() {
+        Runnable start = mock(Runnable.class);
+        Runnable retry = mock(Runnable.class);
+        java.util.function.Consumer<String> reply = mock(java.util.function.Consumer.class);
+
+        AgentDirectItemTradeService.routeStart(DirectItemTradeDecision.startTrade(), start, retry, reply);
+
+        verify(start).run();
+        verify(retry, never()).run();
+        verify(reply, never()).accept(org.mockito.ArgumentMatchers.anyString());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void routesDirectTradeRetryDecisionToCallbacks() {
+        Runnable start = mock(Runnable.class);
+        Runnable retry = mock(Runnable.class);
+        java.util.function.Consumer<String> reply = mock(java.util.function.Consumer.class);
+
+        AgentDirectItemTradeService.routeStart(DirectItemTradeDecision.retry(), start, retry, reply);
+
+        verify(retry).run();
+        verify(start, never()).run();
+        verify(reply, never()).accept(org.mockito.ArgumentMatchers.anyString());
     }
 }

@@ -41,4 +41,15 @@ public final class AgentDirectItemTradeService {
         }
         return DirectItemTradeDecision.startTrade();
     }
+
+    public static void routeStart(DirectItemTradeDecision decision,
+                                  Runnable startTrade,
+                                  Runnable retry,
+                                  java.util.function.Consumer<String> reply) {
+        switch (decision.action()) {
+            case REPLY -> reply.accept(decision.reply());
+            case RETRY -> retry.run();
+            case START_TRADE -> startTrade.run();
+        }
+    }
 }

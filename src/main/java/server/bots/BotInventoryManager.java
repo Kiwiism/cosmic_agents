@@ -310,18 +310,14 @@ public class BotInventoryManager {
                 AgentInventoryItemPolicy.hasItem(bot, item),
                 bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry),
                 recipient != null && recipient.getTrade() != null);
-        if (decision.action() == AgentDirectItemTradeService.Action.REPLY) {
-            AgentBotInventoryRuntime.replyNow(entry, decision.reply());
-            return;
-        }
-        if (decision.action() == AgentDirectItemTradeService.Action.RETRY) {
-            AgentBotPendingTradeStateRuntime.queueRetry(
-                    entry,
-                    () -> startTradeTransfer(item, recipient, entry, bot),
-                    BotMovementManager.delayAfterCurrentTick(10_000));
-            return;
-        }
-        startTradeSequence("loot_offer", recipient, List.of(item), 0, true, entry, bot);
+        AgentDirectItemTradeService.routeStart(
+                decision,
+                () -> startTradeSequence("loot_offer", recipient, List.of(item), 0, true, entry, bot),
+                () -> AgentBotPendingTradeStateRuntime.queueRetry(
+                        entry,
+                        () -> startTradeTransfer(item, recipient, entry, bot),
+                        BotMovementManager.delayAfterCurrentTick(10_000)),
+                reply -> AgentBotInventoryRuntime.replyNow(entry, reply));
     }
 
     public static boolean hasTransferableItems(String category, BotEntry entry, Character bot) {
