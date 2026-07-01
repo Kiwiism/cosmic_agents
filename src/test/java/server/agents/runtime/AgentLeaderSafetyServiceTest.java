@@ -276,6 +276,41 @@ class AgentLeaderSafetyServiceTest {
         assertTrue(AgentBotActivityStateRuntime.ownerReturnedToTown(entry));
     }
 
+    @Test
+    void enterInactiveSafeModePreparesThenRunsTownScrollAndReturnsResult() {
+        AtomicInteger order = new AtomicInteger();
+
+        boolean consumed = AgentLeaderSafetyService.enterInactiveSafeMode(
+                () -> assertEquals(0, order.getAndIncrement()),
+                true,
+                () -> {
+                    assertEquals(1, order.getAndIncrement());
+                    return true;
+                },
+                () -> {
+                    throw new AssertionError("idle branch should not run");
+                });
+
+        assertTrue(consumed);
+        assertEquals(2, order.get());
+    }
+
+    @Test
+    void enterInactiveSafeModePreparesThenRunsIdleBranchAndReturnsFalse() {
+        AtomicInteger order = new AtomicInteger();
+
+        boolean consumed = AgentLeaderSafetyService.enterInactiveSafeMode(
+                () -> assertEquals(0, order.getAndIncrement()),
+                false,
+                () -> {
+                    throw new AssertionError("town branch should not run");
+                },
+                () -> assertEquals(1, order.getAndIncrement()));
+
+        assertFalse(consumed);
+        assertEquals(2, order.get());
+    }
+
     private static MapleMap map(int id, MapleMap returnMap, Monster... monsters) {
         MapleMap map = mock(MapleMap.class);
         when(map.getId()).thenReturn(id);

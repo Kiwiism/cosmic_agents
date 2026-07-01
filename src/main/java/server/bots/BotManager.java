@@ -2684,16 +2684,14 @@ public class BotManager {
     }
 
     private boolean enterOwnerInactiveSafeMode(BotEntry entry, Character bot, int ownerCharId, boolean town) {
-        prepareOwnerInactiveIdle(entry, ownerCharId);
-        if (town) {
-            return scrollBotToTown(entry, bot, ownerCharId);
-        }
-
-        AgentLeaderSafetyService.idleInactiveAgentInPlace(
-                entry,
-                () -> BotPhysicsEngine.idleOnGround(entry, bot),
-                () -> BotMovementManager.broadcastMovement(entry));
-        return false;
+        return AgentLeaderSafetyService.enterInactiveSafeMode(
+                () -> prepareOwnerInactiveIdle(entry, ownerCharId),
+                town,
+                () -> scrollBotToTown(entry, bot, ownerCharId),
+                () -> AgentLeaderSafetyService.idleInactiveAgentInPlace(
+                        entry,
+                        () -> BotPhysicsEngine.idleOnGround(entry, bot),
+                        () -> BotMovementManager.broadcastMovement(entry)));
     }
 
     private void prepareOwnerInactiveIdle(BotEntry entry, int ownerCharId) {

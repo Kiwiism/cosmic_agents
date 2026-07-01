@@ -48,6 +48,10 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentLeaderSafetyService`. No-return-map handling and
   cluster movement still mark returned-to-town at the same point; BotManager
   still supplies the temporary movement reset and precise move-start callbacks.
+- BotManager inactive safe-mode entry branching now delegates to
+  `server.agents.runtime.AgentLeaderSafetyService`. Preparation still runs
+  before the town-vs-idle branch, and the town branch still returns the scroll
+  result while idle returns false.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

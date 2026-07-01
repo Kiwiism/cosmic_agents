@@ -38,6 +38,9 @@ Recent map updates:
 - BotManager inactive-town return completion state sequencing moved to
   `server.agents.runtime.AgentLeaderSafetyService`; BotManager only supplies
   temporary movement reset and precise move-start callbacks.
+- BotManager inactive safe-mode entry branching moved to
+  `server.agents.runtime.AgentLeaderSafetyService`; BotManager only supplies
+  temporary prepare, town-scroll, and in-place idle callbacks.
 - BotManager script task completion rules moved to
   `server.agents.runtime.AgentScriptTaskCompletionService`; BotManager only
   supplies temporary follow-target resolution and movement distance config.

@@ -17,6 +17,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.List;
 import java.util.function.BiFunction;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 public final class AgentLeaderSafetyService {
@@ -166,5 +167,18 @@ public final class AgentLeaderSafetyService {
         resetEntryState.run();
         startPreciseMoveToClusterTarget.run();
         markInactiveTownReturnHandled(entry);
+    }
+
+    public static boolean enterInactiveSafeMode(Runnable prepareInactiveIdle,
+                                                boolean town,
+                                                BooleanSupplier scrollToTown,
+                                                Runnable idleInPlace) {
+        prepareInactiveIdle.run();
+        if (town) {
+            return scrollToTown.getAsBoolean();
+        }
+
+        idleInPlace.run();
+        return false;
     }
 }
