@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- BotManager mode transition state ownership moved to
+  `server.agents.runtime.AgentModeService`; BotManager remains the temporary
+  command/script side-effect wrapper for follow, grind, stop, move-to,
+  farm-here, and patrol entry points.
 - BotManager target snapshot composition moved further into
   `server.agents.runtime.AgentTargetSnapshotService`; BotManager now only wires
   temporary sibling/formation storage and the follow-target resolver callback.

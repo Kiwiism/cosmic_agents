@@ -24,6 +24,7 @@ import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentFollowAnchorService;
 import server.agents.runtime.AgentFormationService;
 import server.agents.runtime.AgentLeaderSessionService;
+import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentTargetSnapshot;
 import server.agents.runtime.AgentTargetSnapshotService;
 import server.agents.runtime.AgentRuntimeRegistry;
@@ -2854,8 +2855,7 @@ public class BotManager {
     }
 
     private void startMoveTo(BotEntry entry, Point dest, boolean precise) {
-        clearMode(entry);
-        AgentBotMoveTargetStateRuntime.setMoveTarget(entry, dest, precise);
+        AgentModeService.startMoveTo(entry, dest, precise);
     }
 
     public void issueFarmHere(BotEntry entry, Point dest) {
@@ -2872,9 +2872,7 @@ public class BotManager {
         // Route through the shared active-mode reset so it stays in lock-step with
         // grind/patrol (self-buff, pot-share, ammo-low, "low on pots" fallback all
         // gate on Agent mode state — see kb feedback_bot_coding_guidelines).
-        enterActiveMode(entry);
-        AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, dest, AgentBotRuntimeIdentityRuntime.botMapId(entry));
-        AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, dest);
+        AgentModeService.startFarmHere(entry, dest, BotMovementManager::clearNavigationState);
     }
 
     public void issuePatrol(BotEntry entry, Point ownerPos) {
@@ -2894,8 +2892,7 @@ public class BotManager {
     }
 
     private void startPatrol(BotEntry entry, int regionId) {
-        enterActiveMode(entry);
-        AgentBotPatrolStateRuntime.startPatrol(entry, regionId, AgentBotRuntimeIdentityRuntime.botMapId(entry));
+        AgentModeService.startPatrol(entry, regionId, BotMovementManager::clearNavigationState);
     }
 
     /**
@@ -2921,14 +2918,7 @@ public class BotManager {
     }
 
     private void startFollow(BotEntry entry, Character target) {
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
-        AgentBotModeStateRuntime.setFollowTargetId(entry, owner != null && target != null && owner.getId() != target.getId()
-                ? target.getId()
-                : 0);
-        AgentBotModeStateRuntime.setGrinding(entry, false);
-        AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
-        AgentBotFarmAnchorStateRuntime.clearFarmAnchor(entry);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
+        AgentModeService.startFollow(entry, target);
     }
 
     /**
@@ -2947,33 +2937,7 @@ public class BotManager {
     }
 
     private void startGrind(BotEntry entry) {
-        enterActiveMode(entry);
-    }
-
-    /**
-     * Shared baseline for all active combat modes (grind / sentry / patrol). Sets
-     * {@code grinding = true} and zeros out follow, move, and sub-mode state so
-     * each mode starts from the same baseline. Mode-specific fields (anchor /
-     * patrol region) are set by the caller after this returns.
-     *
-     * When adding a new active mode, route it through this helper to avoid the
-     * sentry-mode regression where {@code grinding=false} silently disabled the
-     * pot-share, self-buff, and ammo-low fallback paths.
-     */
-    private void enterActiveMode(BotEntry entry) {
-        AgentBotModeStateRuntime.stopFollowing(entry);
-        AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
-        AgentBotFarmAnchorStateRuntime.clearFarmAnchor(entry);
-        AgentBotPatrolStateRuntime.clearPatrol(entry);
-        AgentBotGrindTargetStateRuntime.clear(entry);
-        AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
-        AgentBotGrindSearchStateRuntime.clear(entry);
-        AgentBotCombatCooldownStateRuntime.clearMoveWindow(entry);
-        AgentBotDegenerateAttackStateRuntime.clear(entry);
-        AgentBotRetreatHoldStateRuntime.clear(entry);
-        AgentBotGrindWanderStateRuntime.clearWanderDirection(entry);
-        BotMovementManager.clearNavigationState(entry);
-        AgentBotModeStateRuntime.startGrinding(entry);
+        AgentModeService.startGrind(entry, BotMovementManager::clearNavigationState);
     }
 
     /** Public hook: stop all scripted movement/combat mode and idle in place. */
@@ -2987,8 +2951,7 @@ public class BotManager {
     }
 
     private void startStop(BotEntry entry) {
-        clearMode(entry);
-        AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
+        AgentModeService.startStop(entry);
     }
 
     /**
@@ -3104,10 +3067,7 @@ public class BotManager {
     }
 
     private static void clearMode(BotEntry entry) {
-        AgentBotModeStateRuntime.stopMovementModes(entry);
-        AgentBotFarmAnchorStateRuntime.clearFarmAnchor(entry);
-        AgentBotPatrolStateRuntime.clearPatrol(entry);
-        AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
+        AgentModeService.clearMode(entry);
     }
 
     private static boolean isNear(Point source, Point target, int dist) {

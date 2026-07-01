@@ -2548,6 +2548,11 @@ Recent reconstruction notes:
   the temporary sibling entry list, per-leader formation map, and follow-target
   resolver callback, but no longer composes follow-anchor plus formation before
   snapshot capture.
+- Mode transition state ownership for follow, grind, stop, move-to, farm-here,
+  patrol, active-mode reset, and clear-mode now lives in
+  `server.agents.runtime.AgentModeService`; BotManager still owns command/script
+  entry-point side effects such as clearing script tasks, cancelling shop visits,
+  and clearing movement navigation state.
 
 Initial reconstruction order:
 
