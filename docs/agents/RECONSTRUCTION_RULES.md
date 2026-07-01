@@ -97,6 +97,9 @@ Recent reconstruction notes:
   directly for follow-owner, stop, move-to, farm-here, and grind. Patrol still
   delegates to BotManager temporarily for graph-region validation and the
   visible "can't find a patrol region here" reply.
+- Build, potion, and combat ammo fallback paths now request follow-owner via
+  `AgentBotMovementCommandRuntime` instead of direct BotManager calls. The same
+  follow-owner mode transition and visible dialogue behavior are preserved.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

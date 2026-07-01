@@ -85,6 +85,9 @@ Recent map updates:
   farm-here, and grind through Agent runtime mode/queue services directly.
   Patrol remains a temporary BotManager delegation until graph-region
   validation and visible failure replies move.
+- Build level-up, potion stop, and combat ammo-stop paths now request
+  follow-owner through `AgentBotMovementCommandRuntime` instead of calling
+  `BotManager.issueFollowOwner` directly.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.
