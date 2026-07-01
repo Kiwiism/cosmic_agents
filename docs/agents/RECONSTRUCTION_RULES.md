@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Trade dialogue reply selection moved to
+  `server.agents.capabilities.trade.AgentTradeDialogueService`. Bot inventory
+  and inventory transfer code now call Agent-owned selectors for invitation,
+  all-done, thanks, freebie, and reserved-equipment group replies while keeping
+  the same `BotManager.randomReply` selection behavior and dialogue pools.
 - Duplicate reserved-equip group reply selection was removed from
   `BotInventoryManager`; between-batch trade progression now uses
   `server.agents.capabilities.trade.AgentInventoryTransferService.equipsGroupMessage`

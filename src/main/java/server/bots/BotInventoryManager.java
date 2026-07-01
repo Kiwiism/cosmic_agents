@@ -8,7 +8,6 @@ import client.inventory.Item;
 import config.YamlConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.inventory.AgentAmmoTradeCallbackService;
 import server.agents.capabilities.inventory.AgentAmmoTradeClassificationService;
 import server.agents.capabilities.inventory.AgentEquipTradeCallbackService;
@@ -34,6 +33,7 @@ import server.agents.capabilities.trade.AgentTradeBetweenBatchService;
 import server.agents.capabilities.trade.AgentTradeClosedWindowService;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
 import server.agents.capabilities.trade.AgentTradeConfirmWaitService;
+import server.agents.capabilities.trade.AgentTradeDialogueService;
 import server.agents.capabilities.trade.AgentTradeItemAddTickService;
 import server.agents.capabilities.trade.AgentTradeItemAddTickCallbackService;
 import server.agents.capabilities.trade.AgentTradeItemCollectionCallbackService;
@@ -214,7 +214,7 @@ public class BotInventoryManager {
                 () -> cancelTradeSequence(entry, bot, "can't trade right now, stopping"),
                 () -> Trade.startTrade(bot),
                 Trade::inviteTrade,
-                () -> BotManager.randomReply(AgentDialogueCatalog.tradeInvitationReplies()),
+                AgentTradeDialogueService::invitationReply,
                 message -> AgentBotInventoryRuntime.replyNow(entry, message));
     }
 
@@ -254,7 +254,7 @@ public class BotInventoryManager {
                                         BotMovementManager::tickDown,
                                         () -> cancelTradeSequence(entry, bot, "don't have that many mesos anymore"),
                                         () -> BotMovementManager.delayAfterCurrentTick(500),
-                                        () -> BotManager.randomReply(AgentDialogueCatalog.tradeAllDoneReplies()),
+                                        AgentTradeDialogueService::allDoneReply,
                                         () -> BotMovementManager.delayAfterCurrentTick(600),
                                         () -> BotMovementManager.delayAfterCurrentTick(500))),
                         trade -> AgentTradeConfirmWaitService.tickWaitingForConfirmation(
@@ -291,8 +291,8 @@ public class BotInventoryManager {
                 AgentBotRuntimeIdentityRuntime::owner,
                 (agent, owner) -> BotEquipManager.autoEquip(agent, owner, null),
                 BotManager::randMs,
-                () -> BotManager.randomReply(AgentDialogueCatalog.tradeThanksReplies()),
-                () -> BotManager.randomReply(AgentDialogueCatalog.tradeFreebieReplies()),
+                AgentTradeDialogueService::thanksReply,
+                AgentTradeDialogueService::freebieReply,
                 () -> ThreadLocalRandom.current().nextInt(100),
                 () -> ThreadLocalRandom.current().nextBoolean());
     }

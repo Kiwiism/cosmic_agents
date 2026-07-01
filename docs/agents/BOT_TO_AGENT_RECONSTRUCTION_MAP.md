@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Trade dialogue reply selection now lives in `AgentTradeDialogueService`.
+  `BotInventoryManager` and `AgentInventoryTransferService` use Agent-owned
+  selectors for invitation, all-done, thanks, freebie, and reserved-equipment
+  group replies while preserving the same `BotManager.randomReply` behavior.
 - `BotInventoryManager` no longer owns duplicate reserved-equip group reply
   selection; it now uses `AgentInventoryTransferService.equipsGroupMessage` for
   the same Agent dialogue catalog pools.

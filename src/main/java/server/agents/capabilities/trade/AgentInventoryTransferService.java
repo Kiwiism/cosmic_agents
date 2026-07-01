@@ -7,7 +7,6 @@ import server.ItemInformationProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
-import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.equipment.AgentEquipRecommendation;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.inventory.AgentAmmoTradeClassificationService;
@@ -29,7 +28,6 @@ import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
 import server.bots.BotEquipManager;
-import server.bots.BotManager;
 import server.bots.BotMovementManager;
 
 import java.util.ArrayList;
@@ -185,7 +183,7 @@ public final class AgentInventoryTransferService {
                                 () -> BotEquipManager.autoEquip(agent, AgentBotRuntimeIdentityRuntime.owner(entry), null))),
                 () -> server.Trade.startTrade(agent),
                 server.Trade::inviteTrade,
-                () -> BotManager.randomReply(AgentDialogueCatalog.tradeInvitationReplies()),
+                AgentTradeDialogueService::invitationReply,
                 message -> AgentBotInventoryRuntime.replyNow(entry, message));
     }
 
@@ -233,10 +231,7 @@ public final class AgentInventoryTransferService {
     }
 
     public static String equipsGroupMessage(String category) {
-        return AgentEquipTradeGroupService.equipsGroupMessage(
-                category,
-                () -> BotManager.randomReply(AgentDialogueCatalog.tradeReservedForOtherReplies()),
-                () -> BotManager.randomReply(AgentDialogueCatalog.tradeReservedForSelfReplies()));
+        return AgentTradeDialogueService.equipsGroupMessage(category);
     }
 
     private static void startEquipsGroupTradeTransfer(Character owner, BotEntry entry, Character agent) {
