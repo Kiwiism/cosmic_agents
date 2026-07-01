@@ -2868,6 +2868,10 @@ Recent reconstruction notes:
   temporary grounding, standalone move-target, and idle callbacks. This preserves
   the same following-clear, map-change grounding early return, explicit
   move-target pass-through, and idle fallback ordering.
+- Tick-time leader-motion observation and farm-anchor map-change cleanup now
+  live in `server.agents.runtime.AgentTickStateMaintenanceService`; BotManager
+  keeps the same call sites but no longer owns the delta calculation or precise
+  move-target cleanup rule when a farm anchor is cleared after a map change.
 
 Initial reconstruction order:
 

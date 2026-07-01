@@ -55,6 +55,7 @@ import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSpawnPositionService;
 import server.agents.runtime.AgentTickFailurePolicy;
 import server.agents.runtime.AgentTickOrchestrator;
+import server.agents.runtime.AgentTickStateMaintenanceService;
 
 import server.agents.capabilities.looting.AgentLootEligibility;
 import server.agents.capabilities.looting.AgentLootTargetService;
@@ -1604,9 +1605,9 @@ public class BotManager {
         Character followAnchor = resolveFollowAnchor(entry, owner);
         AgentTargetSnapshot targetSnapshot = captureTargetSnapshot(entry);
         Point ownerPos = targetSnapshot.rawOwnerPos();
-        updateObservedOwnerMotion(entry, ownerPos);
+        AgentTickStateMaintenanceService.updateObservedLeaderMotion(entry, ownerPos);
         AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, ownerPos); // raw owner pos before formation offset/snap
-        clearFarmAnchorOnMapChange(entry, bot);
+        AgentTickStateMaintenanceService.clearFarmAnchorOnMapChange(entry, bot);
         clearPatrolOnMapChange(entry, bot);
         Point targetPos = targetSnapshot.primaryTargetPos();
         boolean perf = AgentPerformanceMonitor.enabled();
@@ -2087,7 +2088,7 @@ public class BotManager {
 
     private void tickAnchoredFarm(BotEntry entry, Character bot, Point botPos, boolean runAiTick) {
         if (!AgentBotFarmAnchorStateRuntime.isFarmAnchorInMap(entry, bot.getMapId())) {
-            clearFarmAnchorOnMapChange(entry, bot);
+            AgentTickStateMaintenanceService.clearFarmAnchorOnMapChange(entry, bot);
             tickIdleEntry(entry, bot);
             return;
         }
@@ -2714,7 +2715,7 @@ public class BotManager {
 
         AgentTargetSnapshot targetSnapshot = captureTargetSnapshot(entry);
         Point ownerPos = targetSnapshot.rawOwnerPos();
-        updateObservedOwnerMotion(entry, ownerPos);
+        AgentTickStateMaintenanceService.updateObservedLeaderMotion(entry, ownerPos);
         AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, ownerPos);
         stepMovementOnly(entry, targetSnapshot.primaryTargetPos(), ownerPos, runAiTick);
         return runAiTick;
@@ -2870,24 +2871,6 @@ public class BotManager {
         Point botPos = AgentBotRuntimeIdentityRuntime.botPosition(entry);
         if (AgentBotMoveTargetStateRuntime.hasReachedMoveTarget(entry, botPos, BotMovementManager.cfg.STOP_DIST)) {
             AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
-        }
-    }
-
-    private static void updateObservedOwnerMotion(BotEntry entry, Point ownerPos) {
-        if (entry == null || ownerPos == null) {
-            return;
-        }
-        AgentBotOwnerMotionStateRuntime.updateObservedOwnerStep(entry, ownerPos);
-    }
-
-    private static void clearFarmAnchorOnMapChange(BotEntry entry, Character bot) {
-        if (entry == null || bot == null || !AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry)) {
-            return;
-        }
-        if (AgentBotFarmAnchorStateRuntime.clearFarmAnchorIfMapChanged(entry, bot.getMapId())) {
-            if (AgentBotMoveTargetStateRuntime.isPrecise(entry)) {
-                AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
-            }
         }
     }
 
