@@ -44,6 +44,7 @@ import server.agents.capabilities.trade.AgentTradeCancellationService;
 import server.agents.capabilities.trade.AgentTradeCategoryAnnouncementService;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
 import server.agents.capabilities.trade.AgentTradeCompletionService;
+import server.agents.capabilities.trade.AgentTradeConfirmWaitService;
 import server.agents.capabilities.trade.AgentTradeItemAddService;
 import server.agents.capabilities.trade.AgentTradeInviteWaitService;
 import server.agents.capabilities.trade.AgentTradeMesoAddService;
@@ -504,6 +505,17 @@ public class BotInventoryManager {
 
         // ── WAITING FOR OWNER TO CLICK OK ─────────────────────────────────
         if (!AgentBotPendingTradeStateRuntime.botDone(entry)) {
+            if (AgentTradeConfirmWaitService.tickWaitingForConfirmation(
+                    entry,
+                    bot,
+                    trade,
+                    BotMovementManager.cfg.TICK_MS,
+                    () -> AgentTradeRecipientService.resolveTradeRecipient(entry, bot),
+                    recipient -> recipient.getClient() instanceof client.BotClient,
+                    () -> completeTradeAndThank(entry, bot, trade),
+                    () -> resetTradeState(entry, bot))) {
+                return;
+            }
             AgentBotPendingTradeStateRuntime.addTimerMs(entry, BotMovementManager.cfg.TICK_MS);
             Character recipient = AgentTradeRecipientService.resolveTradeRecipient(entry, bot);
             boolean recipientIsBot = recipient != null && recipient.getClient() instanceof client.BotClient;

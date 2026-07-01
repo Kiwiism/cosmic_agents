@@ -2178,6 +2178,13 @@ Recent reconstruction notes:
   `AgentTradeInviteWaitService`; BotInventoryManager still owns the enclosing
   trade tick but delegates the accept-wait timer, request-timeout reply,
   `NO_RESPONSE` trade cancellation, and reset callback to Agent trade code.
+- Trade owner-confirm wait handling now lives in
+  `AgentTradeConfirmWaitService`; BotInventoryManager still owns the enclosing
+  trade tick but delegates the confirm-wait timer, bot-recipient/partner-confirm
+  completion decision, bot-done/timer clear, confirm-timeout reply,
+  `NO_RESPONSE` cancellation, and reset callback to Agent trade code. The old
+  in-method body remains bypassed as compatibility text until the full trade
+  tick state machine is migrated.
 - Trade batch-open orchestration now lives in `AgentTradeBatchService`;
   BotInventoryManager and AgentSupplyShareTradeService still supply the
   temporary recipient lookup/cancel/start/invite/reply callbacks, but recipient
