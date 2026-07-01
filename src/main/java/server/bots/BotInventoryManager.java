@@ -46,6 +46,7 @@ import server.agents.capabilities.trade.AgentTradeConfirmWaitService;
 import server.agents.capabilities.trade.AgentTradeItemAddService;
 import server.agents.capabilities.trade.AgentTradeInviteWaitService;
 import server.agents.capabilities.trade.AgentTradeMesoAddService;
+import server.agents.capabilities.trade.AgentTradeQueuedRetryService;
 import server.agents.capabilities.trade.AgentTradeRecipientService;
 import server.agents.capabilities.trade.AgentTradeResetService;
 import server.agents.capabilities.trade.AgentTradeSequenceService;
@@ -303,16 +304,7 @@ public class BotInventoryManager {
 
     /** Called every bot simulation tick while a trade sequence is in progress. */
     static void tickTrade(BotEntry entry, Character bot) {
-        // Fire a queued bot-initiated retry once this bot is free and the delay expires.
-        if (AgentBotPendingTradeStateRuntime.isIdle(entry) && AgentBotPendingTradeStateRuntime.hasQueuedRetry(entry)) {
-            if (AgentBotPendingTradeStateRuntime.retryDelayMs(entry) > 0) {
-                AgentBotPendingTradeStateRuntime.setRetryDelayMs(
-                        entry,
-                        BotMovementManager.tickDown(AgentBotPendingTradeStateRuntime.retryDelayMs(entry)));
-                return;
-            }
-            Runnable retry = AgentBotPendingTradeStateRuntime.takeRetry(entry);
-            retry.run();
+        if (AgentTradeQueuedRetryService.tickQueuedRetry(entry, BotMovementManager::tickDown)) {
             return;
         }
         if (AgentBotPendingTradeStateRuntime.isIdle(entry)) return;

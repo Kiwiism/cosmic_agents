@@ -2118,6 +2118,9 @@ Recent reconstruction notes:
 - Dead BotInventoryManager transfer-start helper bodies for meso, prepared
   item, reserved-equipment page, and grouped equip/ammo starts were removed
   after the Agent transfer service became the owner of those paths.
+- Queued bot-initiated trade retry ticking now lives in
+  `AgentTradeQueuedRetryService`; `BotInventoryManager.tickTrade` delegates the
+  idle retry-delay/run branch unchanged.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and
