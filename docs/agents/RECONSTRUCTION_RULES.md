@@ -2898,6 +2898,9 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentTickStateMaintenanceService`; BotManager passes
   the existing stop-distance config and no longer owns the normal-vs-precise
   arrival cleanup rule.
+- Patrol map-change cleanup now lives in
+  `server.agents.runtime.AgentTickStateMaintenanceService`; BotManager no
+  longer owns the null/map guard around the BotEntry-backed patrol clear rule.
 
 Initial reconstruction order:
 

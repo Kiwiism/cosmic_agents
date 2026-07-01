@@ -1610,7 +1610,7 @@ public class BotManager {
         AgentTickStateMaintenanceService.updateObservedLeaderMotion(entry, ownerPos);
         AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, ownerPos); // raw owner pos before formation offset/snap
         AgentTickStateMaintenanceService.clearFarmAnchorOnMapChange(entry, bot);
-        clearPatrolOnMapChange(entry, bot);
+        AgentTickStateMaintenanceService.clearPatrolOnMapChange(entry, bot);
         Point targetPos = targetSnapshot.primaryTargetPos();
         boolean perf = AgentPerformanceMonitor.enabled();
         clearFollowActionMoveWindowIfSettled(entry, botPos, targetSnapshot);
@@ -2772,13 +2772,6 @@ public class BotManager {
         } else {
             BotMovementManager.tickGrounded(entry, targetPos);
         }
-    }
-
-    private static void clearPatrolOnMapChange(BotEntry entry, Character bot) {
-        if (entry == null || bot == null || !AgentBotPatrolStateRuntime.hasPatrolRegion(entry)) {
-            return;
-        }
-        AgentBotPatrolStateRuntime.clearPatrolIfMapChanged(entry, bot.getMapId());
     }
 
     private static void tickStuckDetection(BotEntry entry) {

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
+import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.bots.BotEntry;
 
 import java.awt.Point;
@@ -95,6 +96,28 @@ class AgentTickStateMaintenanceServiceTest {
         AgentTickStateMaintenanceService.clearReachedMoveTarget(entry, 10);
 
         assertTrue(AgentBotMoveTargetStateRuntime.hasMoveTarget(entry));
+    }
+
+    @Test
+    void keepsPatrolOnSameMap() {
+        Character agent = agentOnMap(100000000);
+        BotEntry entry = entry(agent);
+        AgentBotPatrolStateRuntime.startPatrol(entry, 7, 100000000);
+
+        AgentTickStateMaintenanceService.clearPatrolOnMapChange(entry, agent);
+
+        assertTrue(AgentBotPatrolStateRuntime.hasPatrolRegion(entry));
+    }
+
+    @Test
+    void clearsPatrolOnMapChange() {
+        Character agent = agentOnMap(200000000);
+        BotEntry entry = entry(agent);
+        AgentBotPatrolStateRuntime.startPatrol(entry, 7, 100000000);
+
+        AgentTickStateMaintenanceService.clearPatrolOnMapChange(entry, agent);
+
+        assertFalse(AgentBotPatrolStateRuntime.hasPatrolRegion(entry));
     }
 
     private static Character agentOnMap(int mapId) {

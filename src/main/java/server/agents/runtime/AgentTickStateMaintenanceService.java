@@ -4,6 +4,7 @@ import client.Character;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
+import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
 
@@ -42,5 +43,12 @@ public final class AgentTickStateMaintenanceService {
         if (AgentBotMoveTargetStateRuntime.hasReachedMoveTarget(entry, agentPosition, normalArrivalDistance)) {
             AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
         }
+    }
+
+    public static void clearPatrolOnMapChange(BotEntry entry, Character agent) {
+        if (entry == null || agent == null || !AgentBotPatrolStateRuntime.hasPatrolRegion(entry)) {
+            return;
+        }
+        AgentBotPatrolStateRuntime.clearPatrolIfMapChanged(entry, agent.getMapId());
     }
 }
