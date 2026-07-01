@@ -2203,6 +2203,9 @@ Recent reconstruction notes:
   `BotInventoryManager` supplies temporary callbacks for manual-state clearing,
   temporarily unequipped item restoration, owner lookup, equipment refill, reply
   delay/randomization, and trade reaction replies.
+- Stale `BotInventoryManager` imports for direct trade cancellation,
+  completion, and reset services were removed after lifecycle wiring moved
+  behind `AgentTradeLifecycleService`.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and
