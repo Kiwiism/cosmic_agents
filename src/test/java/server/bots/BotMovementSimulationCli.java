@@ -1,6 +1,7 @@
 package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
+import server.agents.runtime.AgentFormationService;
 
 import server.agents.capabilities.navigation.AgentNavigationMapLoader;
 
@@ -151,7 +152,7 @@ public final class BotMovementSimulationCli {
         }
         return new FormationSpec(
                 parts[0].trim(),
-                BotManager.FormationType.valueOf(parts[1].trim().toUpperCase()),
+                AgentFormationService.FormationType.valueOf(parts[1].trim().toUpperCase()),
                 Integer.parseInt(parts[2].trim()),
                 Integer.parseInt(parts[3].trim()));
     }
@@ -244,7 +245,7 @@ public final class BotMovementSimulationCli {
     private record MoveSpec(String botName, Point position, boolean precise) {
     }
 
-    private record FormationSpec(String ownerName, BotManager.FormationType type, int px, int snapRange) {
+    private record FormationSpec(String ownerName, AgentFormationService.FormationType type, int px, int snapRange) {
     }
 
     private record OffsetSpec(String botName, int offsetX) {

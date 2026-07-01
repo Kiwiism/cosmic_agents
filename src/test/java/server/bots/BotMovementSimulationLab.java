@@ -16,6 +16,7 @@ import org.mockito.stubbing.Answer;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotMovementTargetSideEffects;
+import server.agents.runtime.AgentFormationService;
 import server.maps.MapleMap;
 import server.maps.Rope;
 
@@ -112,7 +113,7 @@ final class BotMovementSimulationLab {
         }
     }
 
-    void setFormation(String ownerName, BotManager.FormationType type, int px, int snapRange) {
+    void setFormation(String ownerName, AgentFormationService.FormationType type, int px, int snapRange) {
         Character owner = requireActor(ownerName);
         manager.setFormationState(owner, type, px, snapRange, followersOf(owner));
     }
@@ -229,8 +230,8 @@ final class BotMovementSimulationLab {
 
     private void refreshFormation(Character owner) {
         List<BotEntry> followers = followersOf(owner);
-        BotManager.FormationState formation = followers.isEmpty()
-                ? BotManager.FormationState.defaultStagger()
+        AgentFormationService.FormationState formation = followers.isEmpty()
+                ? AgentFormationService.defaultStagger(BotManager.cfg.FOLLOW_STAGGER, BotMovementManager.cfg.FOLLOW_Y_CAP)
                 : manager.formationStateFor(followers.getFirst());
         manager.setFormationState(owner, formation.type(), formation.px(), formation.snapRange(), followers);
     }

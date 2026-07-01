@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotMovementTargetSideEffects;
+import server.agents.runtime.AgentFormationService;
 
 import java.awt.Point;
 
@@ -69,7 +70,7 @@ class AgentBotMovementTargetRuntimeTest {
     void conversionFromBotTargetSnapshotPreservesFields() {
         BotEntry entry = new BotEntry(null, null, null);
         BotManager.TargetSnapshot targetSnapshot = new BotManager.TargetSnapshot(
-                new BotManager.FormationState(BotManager.FormationType.SPREAD, 70, 140),
+                new AgentFormationService.FormationState(AgentFormationService.FormationType.SPREAD, 70, 140),
                 new Point(10, 20),
                 new Point(11, 21),
                 "Leader",
@@ -106,7 +107,7 @@ class AgentBotMovementTargetRuntimeTest {
         Point navTargetPos = new Point(90, 91);
         AgentBotNavigationDebugStateRuntime.setNavTargetPosition(entry, navTargetPos);
         BotManager.TargetSnapshot targetSnapshot = new BotManager.TargetSnapshot(
-                new BotManager.FormationState(BotManager.FormationType.STACK, 0, 120),
+                new AgentFormationService.FormationState(AgentFormationService.FormationType.STACK, 0, 120),
                 new Point(1, 1),
                 new Point(2, 2),
                 "owner",
@@ -130,7 +131,7 @@ class AgentBotMovementTargetRuntimeTest {
     void conversionCanOverridePrimaryTargetForNavigationInput() {
         BotEntry entry = new BotEntry(null, null, null);
         BotManager.TargetSnapshot targetSnapshot = new BotManager.TargetSnapshot(
-                new BotManager.FormationState(BotManager.FormationType.STACK, 0, 120),
+                new AgentFormationService.FormationState(AgentFormationService.FormationType.STACK, 0, 120),
                 new Point(1, 1),
                 new Point(2, 2),
                 "owner",

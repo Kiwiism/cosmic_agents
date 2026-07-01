@@ -21,6 +21,7 @@ import server.agents.capabilities.dialogue.AgentEmote;
 
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentLifecycleService;
+import server.agents.runtime.AgentFormationService;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentTickFailurePolicy;
 import server.agents.runtime.AgentTickOrchestrator;
@@ -200,30 +201,12 @@ public class BotManager {
     // ownerCharId → list of owned bot entries (1:N)
     private final Map<Integer, List<BotEntry>> bots = new ConcurrentHashMap<>();
     // ownerCharId → current formation (in-memory only, defaults to stagger)
-    private final Map<Integer, FormationState> ownerFormations = new ConcurrentHashMap<>();
+    private final Map<Integer, AgentFormationService.FormationState> ownerFormations = new ConcurrentHashMap<>();
     // ownerCharId → cluster-anchor town position. First bot to warp picks a random
     // portal in the return map; later bots warp to a randomized nearby offset.
     // Cleared when the owner becomes active again.
     private final Map<Integer, Point> townClusterAnchors = new ConcurrentHashMap<>();
-    public enum FormationType { STAGGER, RANDOM, STACK, SPREAD, LEFT, RIGHT }
-
-    public record FormationState(FormationType type, int px, int snapRange) {
-        static FormationState defaultStagger() { return new FormationState(FormationType.STAGGER, cfg.FOLLOW_STAGGER, BotMovementManager.cfg.FOLLOW_Y_CAP); }
-        int offsetFor(int idx, int total) {
-            return switch (type) {
-                case STAGGER -> (idx % 2 == 0 ? 1 : -1) * (idx / 2 + 1) * px;
-                // range scales with total so avg spread matches stagger: ±(px/2 * total)
-                case RANDOM  -> { int range = px * total / 2; yield range > 0 ? ThreadLocalRandom.current().nextInt(-range, range + 1) : 0; }
-                case STACK   -> 0;
-                // idx 0 = owner, then alternating ±: 0, +px, -px, +2px, -2px …
-                case SPREAD  -> idx == 0 ? 0 : (idx % 2 == 1 ? 1 : -1) * ((idx + 1) / 2) * px;
-                case LEFT    -> -(idx + 1) * px;
-                case RIGHT   ->  (idx + 1) * px;
-            };
-        }
-    }
-
-    public record TargetSnapshot(FormationState formation,
+    public record TargetSnapshot(AgentFormationService.FormationState formation,
                                  Point rawOwnerPos,
                                  Point followAnchorPos,
                                  String followAnchorName,
@@ -566,10 +549,8 @@ public class BotManager {
         AgentBotMovementStateRuntime.refreshMovementProfile(entry, bot);
         AgentNavigationGraphService.warmGraphAsync(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         entries.add(entry);
-        FormationState fs = ownerFormations.getOrDefault(ownerCharId, FormationState.defaultStagger());
-        for (int i = 0; i < entries.size(); i++) {
-            AgentBotFormationStateRuntime.setFollowOffsetX(entries.get(i), fs.offsetFor(i, entries.size()));
-        }
+        AgentFormationService.FormationState fs = ownerFormations.getOrDefault(ownerCharId, defaultFormationState());
+        AgentFormationService.applyOffsets(entries, fs);
         if (normalizeSpawnState) {
             normalizeSpawnedBot(entry);
         }
@@ -931,7 +912,8 @@ public class BotManager {
                 else owner.yellowMessage(help);
                 return;
             }
-            FormationState current = ownerFormations.getOrDefault(owner.getId(), FormationState.defaultStagger());
+            AgentFormationService.FormationState current =
+                    ownerFormations.getOrDefault(owner.getId(), defaultFormationState());
             // snap [px|on|off] — changes Y-snap range, preserves type/px
             if (typeStr.equalsIgnoreCase("snap")) {
                 String qualifier = fm.group(2);
@@ -948,7 +930,8 @@ public class BotManager {
                 } else {
                     newSnapRange = Integer.parseInt(qualifier);
                 }
-                FormationState fs = new FormationState(current.type(), current.px(), newSnapRange);
+                AgentFormationService.FormationState fs =
+                        new AgentFormationService.FormationState(current.type(), current.px(), newSnapRange);
                 ownerFormations.put(owner.getId(), fs);
                 String status = newSnapRange > 0 ? "on (" + newSnapRange + "px)" : "off";
                 if (fEntries != null && !fEntries.isEmpty())
@@ -962,25 +945,24 @@ public class BotManager {
                           : pxToken.equalsIgnoreCase("on")
                             || pxToken.equalsIgnoreCase("off")   ? cfg.FOLLOW_STAGGER
                           : Integer.parseInt(pxToken);
-            FormationType type;
+            AgentFormationService.FormationType type;
             int px = defaultPx;
             switch (typeStr.toLowerCase()) {
-                case "tight"          -> { type = FormationType.STAGGER; px = 30; }
-                case "loose"          -> { type = FormationType.STAGGER; px = 120; }
-                case "stack"          -> { type = FormationType.STACK;   px = 0; }
-                case "spread"         -> { type = FormationType.SPREAD;  px = defaultPx; }
-                case "left"           -> { type = FormationType.LEFT;    px = defaultPx; }
-                case "right"          -> { type = FormationType.RIGHT;   px = defaultPx; }
-                case "random"         -> { type = FormationType.RANDOM;  px = defaultPx; }
-                case "split","stagger"-> { type = FormationType.STAGGER; px = defaultPx; }
-                default               -> { type = FormationType.STAGGER; px = defaultPx; }
+                case "tight"          -> { type = AgentFormationService.FormationType.STAGGER; px = 30; }
+                case "loose"          -> { type = AgentFormationService.FormationType.STAGGER; px = 120; }
+                case "stack"          -> { type = AgentFormationService.FormationType.STACK;   px = 0; }
+                case "spread"         -> { type = AgentFormationService.FormationType.SPREAD;  px = defaultPx; }
+                case "left"           -> { type = AgentFormationService.FormationType.LEFT;    px = defaultPx; }
+                case "right"          -> { type = AgentFormationService.FormationType.RIGHT;   px = defaultPx; }
+                case "random"         -> { type = AgentFormationService.FormationType.RANDOM;  px = defaultPx; }
+                case "split","stagger"-> { type = AgentFormationService.FormationType.STAGGER; px = defaultPx; }
+                default               -> { type = AgentFormationService.FormationType.STAGGER; px = defaultPx; }
             }
-            FormationState fs = new FormationState(type, px, current.snapRange());
+            AgentFormationService.FormationState fs =
+                    new AgentFormationService.FormationState(type, px, current.snapRange());
             ownerFormations.put(owner.getId(), fs);
             if (fEntries != null) {
-                for (int i = 0; i < fEntries.size(); i++) {
-                    AgentBotFormationStateRuntime.setFollowOffsetX(fEntries.get(i), fs.offsetFor(i, fEntries.size()));
-                }
+                AgentFormationService.applyOffsets(fEntries, fs);
                 if (!fEntries.isEmpty()) {
                     String label = typeStr.toLowerCase() + (px > 0 ? " " + px + "px" : "");
                     AgentBotManagerReplyRuntime.queueReply(fEntries.get(0), "formation: " + label);
@@ -1256,12 +1238,12 @@ public class BotManager {
         return nearestRope;
     }
 
-    FormationState formationStateFor(BotEntry entry) {
+    AgentFormationService.FormationState formationStateFor(BotEntry entry) {
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner == null) {
-            return FormationState.defaultStagger();
+            return defaultFormationState();
         }
-        return ownerFormations.getOrDefault(owner.getId(), FormationState.defaultStagger());
+        return ownerFormations.getOrDefault(owner.getId(), defaultFormationState());
     }
 
     public Character resolveFollowAnchor(BotEntry entry, Character owner) {
@@ -1292,20 +1274,26 @@ public class BotManager {
         return owner;
     }
 
-    void setFormationState(Character owner, FormationType type, int px, int snapRange, List<BotEntry> entries) {
+    void setFormationState(Character owner,
+                           AgentFormationService.FormationType type,
+                           int px,
+                           int snapRange,
+                           List<BotEntry> entries) {
         if (owner == null) {
             return;
         }
 
-        FormationState formation = new FormationState(type, px, snapRange);
+        AgentFormationService.FormationState formation = new AgentFormationService.FormationState(type, px, snapRange);
         ownerFormations.put(owner.getId(), formation);
         if (entries == null) {
             return;
         }
 
-        for (int i = 0; i < entries.size(); i++) {
-            AgentBotFormationStateRuntime.setFollowOffsetX(entries.get(i), formation.offsetFor(i, entries.size()));
-        }
+        AgentFormationService.applyOffsets(entries, formation);
+    }
+
+    private static AgentFormationService.FormationState defaultFormationState() {
+        return AgentFormationService.defaultStagger(cfg.FOLLOW_STAGGER, BotMovementManager.cfg.FOLLOW_Y_CAP);
     }
 
     public TargetSnapshot captureTargetSnapshot(BotEntry entry) {
@@ -1316,7 +1304,7 @@ public class BotManager {
         Point rawOwnerPos = owner != null ? owner.getPosition() : fallbackPos;
         Point rawFollowAnchorPos = followAnchor != null ? followAnchor.getPosition() : rawOwnerPos;
         String followAnchorName = followAnchor != null ? followAnchor.getName() : "owner";
-        FormationState formation = formationStateFor(entry);
+        AgentFormationService.FormationState formation = formationStateFor(entry);
         Point followBasePos = new Point(rawFollowAnchorPos.x + AgentBotFormationStateRuntime.followOffsetX(entry), rawFollowAnchorPos.y);
         Point followTargetPos = resolveFollowTargetPos(followBasePos, followAnchor, rawFollowAnchorPos, formation.snapRange(), bot.getMap());
         Point rawShopTargetPos = AgentBotShopStateRuntime.shopVisitPending(entry)
@@ -2905,7 +2893,8 @@ public class BotManager {
             }
         }
 
-        FormationState formation = ownerFormations.getOrDefault(ownerCharId, FormationState.defaultStagger());
+        AgentFormationService.FormationState formation =
+                ownerFormations.getOrDefault(ownerCharId, defaultFormationState());
         int offsetX = formation.offsetFor(idx, Math.max(1, entries.size()));
         int targetX = base.x + offsetX;
 

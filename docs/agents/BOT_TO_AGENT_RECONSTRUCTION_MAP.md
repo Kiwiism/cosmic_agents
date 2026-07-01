@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- BotManager formation type/state and offset calculation moved to
+  `server.agents.runtime.AgentFormationService`; command parsing and the
+  temporary per-leader map remain in BotManager for now.
 - BotManager tick failure count/window/disable/force-idle decision ownership
   moved to `server.agents.runtime.AgentTickFailurePolicy`; BotManager still owns
   side effects for this slice.

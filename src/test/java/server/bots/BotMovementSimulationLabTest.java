@@ -7,6 +7,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationMapLoader;
 
 import org.junit.jupiter.api.Test;
+import server.agents.runtime.AgentFormationService;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Rope;
@@ -43,7 +44,7 @@ class BotMovementSimulationLabTest {
         BotEntry entry = lab.spawnBot("CRASH", 11, map, new Point(120, 100));
 
         lab.setFollow("CRASH", "OWNER");
-        lab.setFormation("OWNER", BotManager.FormationType.LEFT, 120, 200);
+        lab.setFormation("OWNER", AgentFormationService.FormationType.LEFT, 120, 200);
         lab.step(100);
 
         Point finalPos = lab.position("CRASH");
@@ -173,7 +174,7 @@ class BotMovementSimulationLabTest {
         lab.spawnActor("OWNER", 50, map, new Point(115, -1521));
         lab.spawnBot("JOHN", 51, map, new Point(114, -1091));
         lab.setFollow("JOHN", "OWNER");
-        lab.setFormation("OWNER", BotManager.FormationType.STAGGER, 60, 200);
+        lab.setFormation("OWNER", AgentFormationService.FormationType.STAGGER, 60, 200);
         lab.setFollowOffset("JOHN", 180);
         lab.setAiAccumulator("JOHN", 50);
         lab.setNavState("JOHN", new AgentNavigationGraph.Edge(
@@ -205,7 +206,7 @@ class BotMovementSimulationLabTest {
         lab.spawnActor("OWNER", 40, map, new Point(-1799, -926));
         lab.spawnBot("JOHN", 41, map, new Point(-1366, -664));
         lab.setFollow("JOHN", "OWNER");
-        lab.setFormation("OWNER", BotManager.FormationType.STAGGER, 60, 200);
+        lab.setFormation("OWNER", AgentFormationService.FormationType.STAGGER, 60, 200);
         lab.setFollowOffset("JOHN", 180);
         lab.setAiAccumulator("JOHN", 50);
         lab.primeMapState("JOHN");

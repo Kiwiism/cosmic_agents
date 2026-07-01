@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- BotManager formation type/state and follow-offset application moved to
+  `server.agents.runtime.AgentFormationService`. BotManager still owns the
+  formation command text flow and temporary per-leader formation map, but the
+  formation model and legacy offset math are Agent-owned.
 - BotManager tick failure counting and escalation thresholds moved to
   `server.agents.runtime.AgentTickFailurePolicy`. BotManager still performs
   failure cleanup, logging, forced idle, and removal side effects with the same
