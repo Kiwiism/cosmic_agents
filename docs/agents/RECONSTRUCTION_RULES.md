@@ -17,6 +17,12 @@ Rules:
 
 Recent reconstruction notes:
 
+- Manual-trade runtime callback assembly moved from `BotInventoryManager` to
+  `server.agents.capabilities.trade.AgentManualTradeRuntimeService`. The bot
+  inventory shell still supplies temporary runtime hooks for active-sequence
+  suppression, movement countdown, tick cadence, peer authorization, greeting
+  text, and equipment refill, while the Agent trade runtime now owns the
+  manual/peer/owner branch wiring.
 - Trade item collection plus ammo/equip classification runtime composition moved
   from `BotInventoryManager` to
   `server.agents.capabilities.trade.AgentInventoryTradeRuntimeService`. The bot

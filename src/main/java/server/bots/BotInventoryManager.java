@@ -14,11 +14,8 @@ import server.agents.capabilities.looting.AgentLootCleanupService;
 import server.agents.capabilities.looting.AgentPassiveLootService;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.capabilities.trade.AgentInventoryTradeRuntimeService;
-import server.agents.capabilities.trade.AgentManualTradeCallbackService;
-import server.agents.capabilities.trade.AgentManualOwnerTradeService;
-import server.agents.capabilities.trade.AgentManualPeerTradeService;
+import server.agents.capabilities.trade.AgentManualTradeRuntimeService;
 import server.agents.capabilities.trade.AgentManualTradeService;
-import server.agents.capabilities.trade.AgentManualTradeTickService;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.trade.AgentTradeBetweenBatchCallbackService;
 import server.agents.capabilities.trade.AgentTradeBetweenBatchService;
@@ -75,55 +72,12 @@ public class BotInventoryManager {
     }
 
     static void tickManualTrade(BotEntry entry, Character bot) {
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
-        AgentManualTradeTickService.tickManualTrade(
+        AgentManualTradeRuntimeService.tickManualTrade(
+                entry,
                 bot,
-                owner,
-                AgentManualTradeCallbackService.manualTradeTickCallbacks(
-                        () -> AgentBotPendingTradeStateRuntime.hasActiveSequence(entry),
-                        Character::getTrade,
-                        agent -> AgentManualTradeService.clearState(entry, agent),
-                        (agent, trade) -> AgentManualTradeService.beginOrTickTimeout(
-                                entry,
-                                agent,
-                                trade,
-                                BotMovementManager::tickDown),
-                        Character::getTrade,
-                        (agent, tradeOwner, trade, isOwnerTrade) -> AgentManualPeerTradeService.tickPeerTrade(
-                                entry,
-                                agent,
-                                tradeOwner,
-                                trade,
-                                isOwnerTrade,
-                                AgentManualTradeCallbackService.peerTradeCallbacks(
-                                        peer -> peer.getClient() instanceof client.BotClient,
-                                        (peerId, ownerId) -> AgentOwnershipService.getInstance().isAuthorizedOwner(peerId, ownerId),
-                                        (inviter, pendingTrade) -> AgentManualTradeService.acceptInviteWhenReady(
-                                                entry,
-                                                agent,
-                                                inviter,
-                                                pendingTrade,
-                                                500 + BotMovementManager.cfg.TICK_MS,
-                                                BotMovementManager::tickDown),
-                                        completedTrade -> completeTradeAndThank(entry, agent, completedTrade),
-                                        peerOwner -> BotEquipManager.autoEquip(agent, peerOwner, null),
-                                        AgentManualTradeService::clearGreeting)),
-                        (agent, tradeOwner, trade) -> AgentManualOwnerTradeService.tickOwnerTrade(
-                                agent,
-                                tradeOwner,
-                                trade,
-                                AgentManualTradeCallbackService.ownerTradeCallbacks(
-                                        (inviter, pendingTrade) -> AgentManualTradeService.acceptInviteWhenReady(
-                                                entry,
-                                                agent,
-                                                inviter,
-                                                pendingTrade,
-                                                500 + BotMovementManager.cfg.TICK_MS,
-                                                BotMovementManager::tickDown),
-                                        AgentManualTradeService::sendGreetingOnce,
-                                        () -> BotManager.getInstance().manualTradeGreeting(),
-                                        completedTrade -> completeTradeAndThank(entry, agent, completedTrade),
-                                        refillOwner -> BotEquipManager.autoEquip(agent, refillOwner, null)))));
+                AgentBotRuntimeIdentityRuntime.owner(entry),
+                manualTradeRuntimeCallbacks(entry),
+                tradeLifecycleCallbacks());
     }
 
     // ─── Entry point from chat choice ─────────────────────────────────────────
@@ -260,6 +214,17 @@ public class BotInventoryManager {
                 AgentTradeDialogueService::freebieReply,
                 () -> ThreadLocalRandom.current().nextInt(100),
                 () -> ThreadLocalRandom.current().nextBoolean());
+    }
+
+    private static AgentManualTradeRuntimeService.RuntimeCallbacks manualTradeRuntimeCallbacks(BotEntry entry) {
+        return AgentManualTradeRuntimeService.RuntimeCallbacks.of(
+                () -> AgentBotPendingTradeStateRuntime.hasActiveSequence(entry),
+                BotMovementManager::tickDown,
+                () -> BotMovementManager.cfg.TICK_MS,
+                peer -> peer.getClient() instanceof client.BotClient,
+                (peerId, ownerId) -> AgentOwnershipService.getInstance().isAuthorizedOwner(peerId, ownerId),
+                () -> BotManager.getInstance().manualTradeGreeting(),
+                (agent, owner) -> BotEquipManager.autoEquip(agent, owner, null));
     }
 
     // ─── Item collection helpers ──────────────────────────────────────────────

@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotInventoryManager.tickManualTrade` runtime callback assembly now lives in
+  `AgentManualTradeRuntimeService`; the bot inventory shell only supplies
+  temporary active-sequence, countdown, tick cadence, peer authorization,
+  greeting, and refill hooks.
 - `BotInventoryManager` trade item collection plus ammo/equip classification
   runtime composition now lives in
   `AgentInventoryTradeRuntimeService`; the bot inventory shell only supplies
