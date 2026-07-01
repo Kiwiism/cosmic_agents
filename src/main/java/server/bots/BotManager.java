@@ -28,6 +28,7 @@ import server.agents.runtime.AgentFormationService;
 import server.agents.runtime.AgentHeartbeatService;
 import server.agents.runtime.AgentIdlePhysicsService;
 import server.agents.runtime.AgentLeaderSessionService;
+import server.agents.runtime.AgentLeaderSafetyService;
 import server.agents.runtime.AgentMapTransitionService;
 import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentScriptTaskCompletionService;
@@ -2689,17 +2690,7 @@ public class BotManager {
 
     private boolean shouldTownWarpForOwnerInactive(BotEntry entry) {
         MapleMap currentMap = AgentBotRuntimeIdentityRuntime.botMap(entry);
-        return currentMap != null
-                && currentMap.getAllMonsters().stream().anyMatch(Monster::isAlive)
-                && canReturnToDifferentMap(currentMap);
-    }
-
-    private static boolean canReturnToDifferentMap(MapleMap currentMap) {
-        if (currentMap == null) {
-            return false;
-        }
-        MapleMap returnMap = currentMap.getReturnMap();
-        return returnMap != null && returnMap.getId() != currentMap.getId();
+        return AgentLeaderSafetyService.shouldTownWarpForInactiveLeader(currentMap);
     }
 
     public boolean shouldOfferTownForAwayCommand(BotEntry entry) {

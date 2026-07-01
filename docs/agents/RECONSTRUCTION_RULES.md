@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- BotManager inactive-leader town-warp eligibility now delegates to
+  `server.agents.runtime.AgentLeaderSafetyService`. The same null-map,
+  alive-monster, and different-return-map requirements are preserved; BotManager
+  still owns the temporary offline/dead leader side effects and town-cluster
+  movement wiring.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but
