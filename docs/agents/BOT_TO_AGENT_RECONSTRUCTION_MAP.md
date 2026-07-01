@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- BotManager inactive-leader town-cluster anchor storage moved to
+  `server.agents.runtime.AgentLeaderSafetyService`. BotManager now references
+  the Agent-owned map while lifecycle cleanup and return clustering keep the
+  same behavior.
 - Bot autopot/potion retry request routing moved from BotManager to
   `server.agents.capabilities.supplies.AgentPotionCheckRequestService`.
   Character and pet-autopot paths call the Agent capability directly, while

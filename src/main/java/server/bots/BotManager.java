@@ -155,7 +155,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
@@ -181,7 +180,7 @@ public class BotManager {
     // ownerCharId → cluster-anchor town position. First bot to warp picks a random
     // portal in the return map; later bots warp to a randomized nearby offset.
     // Cleared when the owner becomes active again.
-    private final Map<Integer, Point> townClusterAnchors = new ConcurrentHashMap<>();
+    private final Map<Integer, Point> townClusterAnchors = AgentLeaderSafetyService.townClusterAnchorsByLeaderId();
     private record LocalOpportunityAttackResult(boolean consumedTick, Point targetPos) {}
 
     private static final Pattern DISMISS_PATTERN = Pattern.compile(

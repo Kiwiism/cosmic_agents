@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Inactive-leader town-cluster anchor storage now lives in
+  `server.agents.runtime.AgentLeaderSafetyService`. BotManager keeps a
+  compatibility reference to the Agent-owned map while existing leader-safety
+  return cleanup, town scroll clustering, and lifecycle removal semantics remain
+  unchanged.
 - Bot autopot/potion retry requests now live in
   `server.agents.capabilities.supplies.AgentPotionCheckRequestService`.
   Character stat-loss autopot and pet-autopot depletion paths call the Agent

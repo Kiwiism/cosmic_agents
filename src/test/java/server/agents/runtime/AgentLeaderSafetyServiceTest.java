@@ -27,6 +27,17 @@ import static org.mockito.Mockito.when;
 
 class AgentLeaderSafetyServiceTest {
     @Test
+    void ownsTownClusterAnchorStore() {
+        AgentLeaderSafetyService.townClusterAnchorsByLeaderId().clear();
+        Point anchor = new Point(10, 20);
+
+        AgentLeaderSafetyService.townClusterAnchorsByLeaderId().put(123, anchor);
+
+        assertEquals(anchor, AgentLeaderSafetyService.townClusterAnchorsByLeaderId().get(123));
+        AgentLeaderSafetyService.townClusterAnchorsByLeaderId().clear();
+    }
+
+    @Test
     void doesNotTownWarpWhenMapIsMissing() {
         assertFalse(AgentLeaderSafetyService.shouldTownWarpForInactiveLeader(null));
         assertFalse(AgentLeaderSafetyService.canReturnToDifferentMap(null));

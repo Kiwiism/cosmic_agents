@@ -16,6 +16,8 @@ import server.life.Monster;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
@@ -25,6 +27,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public final class AgentLeaderSafetyService {
+    private static final Map<Integer, Point> townClusterAnchorsByLeaderId = new ConcurrentHashMap<>();
+
     public record TownScrollHooks(Supplier<MapleMap> currentMap,
                                   Runnable markReturnHandled,
                                   Runnable idleOnGround,
@@ -39,6 +43,10 @@ public final class AgentLeaderSafetyService {
     }
 
     private AgentLeaderSafetyService() {
+    }
+
+    public static Map<Integer, Point> townClusterAnchorsByLeaderId() {
+        return townClusterAnchorsByLeaderId;
     }
 
     public static boolean shouldTownWarpForInactiveLeader(MapleMap currentMap) {
