@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Scroll reaction notification scheduling now lives in
+  `server.agents.capabilities.social.AgentScrollReactionNotificationService`.
+  Normal scrolls and cash-item scrolls call the Agent service directly;
+  BotManager keeps a compatibility delegate. Delay clamping and forwarding into
+  `AgentScrollReactionService` over the live Agent registry are unchanged.
 - Owner item/equipment pickup and trade-item notification routing now lives in
   `server.agents.capabilities.trade.AgentOwnerItemNotificationService`. Shop
   equip purchases and trade completion call the Agent service directly;

@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Scroll reaction notification scheduling moved from BotManager to
+  `server.agents.capabilities.social.AgentScrollReactionNotificationService`.
+  Scroll packet handlers call the Agent capability directly, while BotManager
+  keeps a temporary compatibility delegate.
 - Owner equip pickup/trade notification behavior moved from BotManager to
   `server.agents.capabilities.trade.AgentOwnerItemNotificationService`. `Shop`
   and `Trade` now call the Agent capability directly, and BotManager keeps

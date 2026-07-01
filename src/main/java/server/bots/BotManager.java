@@ -56,7 +56,7 @@ import server.agents.runtime.AgentTickOrchestrator;
 import server.agents.capabilities.looting.AgentLootEligibility;
 import server.agents.capabilities.looting.AgentLootTargetService;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
-import server.agents.capabilities.social.AgentScrollReactionService;
+import server.agents.capabilities.social.AgentScrollReactionNotificationService;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
@@ -664,8 +664,7 @@ public class BotManager {
                                          client.inventory.Equip.ScrollResult result,
                                          int scrollItemId,
                                          long delayMs) {
-        AgentBotManagerSchedulerRuntime.afterDelay(Math.max(0L, delayMs), () ->
-                AgentScrollReactionService.handleScrollEvent(source, result, scrollItemId, bots.values()));
+        AgentScrollReactionNotificationService.notifyNearbyAgentsOfScroll(source, result, scrollItemId, delayMs);
     }
 
     public BotEntry getBotEntry(int ownerCharId, String botName) {

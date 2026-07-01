@@ -37,7 +37,7 @@ import constants.inventory.ItemConstants;
 import net.AbstractPacketHandler;
 import net.packet.InPacket;
 import server.ItemInformationProvider;
-import server.bots.BotManager;
+import server.agents.capabilities.social.AgentScrollReactionNotificationService;
 import tools.PacketCreator;
 
 import java.util.ArrayList;
@@ -170,7 +170,7 @@ public final class ScrollHandler extends AbstractPacketHandler {
                 }
                 c.sendPacket(PacketCreator.modifyInventory(true, mods));
                 chr.getMap().broadcastMessage(PacketCreator.getScrollEffect(chr.getId(), scrollSuccess, legendarySpirit, whiteScroll));
-                BotManager.getInstance().notifyNearbyBotsOfScroll(chr, scrollSuccess, scroll.getItemId(), 3_000L);
+                AgentScrollReactionNotificationService.notifyNearbyAgentsOfScroll(chr, scrollSuccess, scroll.getItemId(), 3_000L);
                 if (equipSlot < 0 && (scrollSuccess == Equip.ScrollResult.SUCCESS || scrollSuccess == Equip.ScrollResult.CURSE)) {
                     chr.equipChanged();
                 }
