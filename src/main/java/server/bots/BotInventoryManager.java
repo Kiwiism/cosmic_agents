@@ -29,8 +29,6 @@ import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.ItemInformationProvider;
 
-import java.util.List;
-
 public class BotInventoryManager {
     static void tickPassiveLoot(BotEntry entry, Character bot) {
         AgentPassiveLootRuntimeService.tickPassiveLoot(
@@ -160,16 +158,6 @@ public class BotInventoryManager {
                 (peerId, ownerId) -> AgentOwnershipService.getInstance().isAuthorizedOwner(peerId, ownerId),
                 () -> BotManager.getInstance().manualTradeGreeting(),
                 (agent, owner) -> BotEquipManager.autoEquip(agent, owner, null));
-    }
-
-    // ─── Item collection helpers ──────────────────────────────────────────────
-
-    private static List<Item> collectItems(String category, BotEntry entry, Character bot) {
-        return AgentInventoryTradeRuntimeService.collectItems(
-                category,
-                bot,
-                AgentBotRuntimeIdentityRuntime.owner(entry),
-                tradeRuntimeCallbacks(entry, bot));
     }
 
     // ─── Drop actions (floor) ─────────────────────────────────────────────────

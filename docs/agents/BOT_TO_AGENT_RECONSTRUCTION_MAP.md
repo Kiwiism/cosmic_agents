@@ -12,6 +12,8 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Dead `BotInventoryManager.collectItems` compatibility body was removed after
+  all active item collection paths routed through Agent-owned runtime services.
 - `BotInventoryManager.tickPassiveLoot` runtime callback assembly now lives in
   `AgentPassiveLootRuntimeService`; the bot inventory shell only supplies
   temporary loot-inhibit, active-sequence, cooldown, config, reply, owner,

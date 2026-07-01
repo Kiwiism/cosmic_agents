@@ -17,6 +17,9 @@ Rules:
 
 Recent reconstruction notes:
 
+- The dead `BotInventoryManager.collectItems` compatibility helper was removed
+  after passive loot, trade tick, transfer availability, and trade collection
+  paths all routed through Agent-owned runtime services.
 - Passive loot runtime callback assembly moved from `BotInventoryManager` to
   `server.agents.capabilities.looting.AgentPassiveLootRuntimeService`. The bot
   inventory shell still supplies temporary loot-inhibit, trade-sequence,
