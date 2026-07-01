@@ -69,6 +69,10 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentScriptTaskStartService`. The same task-type to
   side-effect mapping is preserved; BotManager still supplies temporary move,
   follow, grind, stop, and drop callbacks.
+- BotManager script-task tick loop now delegates to
+  `server.agents.runtime.AgentScriptTaskTickService`. The no-agent skip,
+  activate-next behavior, start-on-activation, incomplete retention, and
+  clear-and-continue loop are unchanged.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

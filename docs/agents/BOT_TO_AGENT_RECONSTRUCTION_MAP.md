@@ -59,6 +59,9 @@ Recent map updates:
 - BotManager script task start dispatch moved to
   `server.agents.runtime.AgentScriptTaskStartService`; BotManager only supplies
   temporary callbacks for move, follow, grind, stop, and drop side effects.
+- BotManager script task tick loop moved to
+  `server.agents.runtime.AgentScriptTaskTickService`; BotManager only supplies
+  temporary callbacks for task start and completion checks.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.

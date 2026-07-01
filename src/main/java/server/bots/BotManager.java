@@ -33,6 +33,7 @@ import server.agents.runtime.AgentMapTransitionService;
 import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentScriptTaskCompletionService;
 import server.agents.runtime.AgentScriptTaskStartService;
+import server.agents.runtime.AgentScriptTaskTickService;
 import server.agents.runtime.AgentTargetSnapshot;
 import server.agents.runtime.AgentTargetSnapshotService;
 import server.agents.runtime.AgentRuntimeRegistry;
@@ -2968,25 +2969,7 @@ public class BotManager {
     }
 
     private void tickScriptTasks(BotEntry entry) {
-        if (!AgentBotRuntimeIdentityRuntime.hasBot(entry)) {
-            return;
-        }
-
-        while (true) {
-            AgentTask activeScriptTask = AgentBotScriptTaskStateRuntime.activeTask(entry);
-            if (activeScriptTask == null) {
-                activeScriptTask = AgentBotScriptTaskStateRuntime.activateNextTask(entry);
-                if (activeScriptTask == null) {
-                    return;
-                }
-                startScriptTask(entry, activeScriptTask);
-            }
-
-            if (!isScriptTaskComplete(entry, activeScriptTask)) {
-                return;
-            }
-            AgentBotScriptTaskStateRuntime.clearActiveTask(entry);
-        }
+        AgentScriptTaskTickService.tick(entry, this::startScriptTask, this::isScriptTaskComplete);
     }
 
     private void startScriptTask(BotEntry entry, AgentTask task) {
