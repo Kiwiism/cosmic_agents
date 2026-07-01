@@ -2134,6 +2134,10 @@ Recent reconstruction notes:
   temporary callbacks for equipped-slot counts and collected item quantity while
   the Agent transfer boundary continues to delegate the public compatibility
   methods.
+- Direct item trade preflight now lives in `AgentDirectItemTradeService`;
+  BotInventoryManager still owns the loot-offer trade sequence side effect and
+  retry scheduling, but recipient-missing, item-missing, busy-retry, and
+  start-trade decisions are Agent-owned.
 - Equipped-slot named trade preparation now lives in
   `AgentEquippedSlotTradeService`; BotInventoryManager still owns the enclosing
   trade sequence but delegates slot counting, temporary unequip preparation,

@@ -39,6 +39,7 @@ import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy.AmmoTradeGr
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.AmmoGroup;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.EquipsGroup;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
+import server.agents.capabilities.trade.AgentDirectItemTradeService;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.trade.AgentMesoTradeService;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
@@ -319,15 +320,16 @@ public class BotInventoryManager {
     }
 
     public static void startTradeTransfer(Item item, Character recipient, BotEntry entry, Character bot) {
-        if (recipient == null) {
-            AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeRecipientNotFoundReply());
+        AgentDirectItemTradeService.DirectItemTradeDecision decision = AgentDirectItemTradeService.decideStart(
+                recipient != null,
+                AgentInventoryItemPolicy.hasItem(bot, item),
+                bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry),
+                recipient != null && recipient.getTrade() != null);
+        if (decision.action() == AgentDirectItemTradeService.Action.REPLY) {
+            AgentBotInventoryRuntime.replyNow(entry, decision.reply());
             return;
         }
-        if (!AgentInventoryItemPolicy.hasItem(bot, item)) {
-            AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeItemMissingReply());
-            return;
-        }
-        if (bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry) || recipient.getTrade() != null) {
+        if (decision.action() == AgentDirectItemTradeService.Action.RETRY) {
             AgentBotPendingTradeStateRuntime.queueRetry(
                     entry,
                     () -> startTradeTransfer(item, recipient, entry, bot),
