@@ -21,6 +21,7 @@ import server.agents.capabilities.dialogue.AgentEmote;
 
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentLifecycleService;
+import server.agents.runtime.AgentFollowAnchorService;
 import server.agents.runtime.AgentFormationService;
 import server.agents.runtime.AgentTargetSnapshot;
 import server.agents.runtime.AgentTargetSnapshotService;
@@ -1227,31 +1228,8 @@ public class BotManager {
     }
 
     public Character resolveFollowAnchor(BotEntry entry, Character owner) {
-        if (owner == null) {
-            return null;
-        }
-
-        int targetId = AgentBotModeStateRuntime.followTargetId(entry);
-        if (targetId <= 0 || targetId == owner.getId() || targetId == AgentBotRuntimeIdentityRuntime.botId(entry)) {
-            return owner;
-        }
-
-        if (owner.getParty() != null) {
-            for (Character member : owner.getPartyMembersOnline()) {
-                if (member != null && member.getId() == targetId && member.isLoggedinWorld()) {
-                    return member;
-                }
-            }
-        }
-
-        for (BotEntry sibling : getBotEntries(owner.getId())) {
-            Character siblingBot = AgentBotRuntimeIdentityRuntime.bot(sibling);
-            if (siblingBot != null && siblingBot.getId() == targetId && siblingBot.isLoggedinWorld()) {
-                return siblingBot;
-            }
-        }
-
-        return owner;
+        List<BotEntry> siblingEntries = owner == null ? List.of() : getBotEntries(owner.getId());
+        return AgentFollowAnchorService.resolve(entry, owner, siblingEntries);
     }
 
     void setFormationState(Character owner,

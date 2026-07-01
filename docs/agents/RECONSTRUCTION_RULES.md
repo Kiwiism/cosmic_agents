@@ -2530,6 +2530,10 @@ Recent reconstruction notes:
   preserve the same tick order, stage-1 grind/follow defaults, NPC lock,
   coupon-loot suppression, pass exchange, and stage-5 reward claim behavior
   through Agent capability calls.
+- Follow-anchor resolution now lives in
+  `server.agents.runtime.AgentFollowAnchorService`; BotManager still supplies
+  the temporary same-leader sibling entry list while preserving the owner,
+  party-member, sibling-agent, and fallback resolution order exactly.
 
 Initial reconstruction order:
 

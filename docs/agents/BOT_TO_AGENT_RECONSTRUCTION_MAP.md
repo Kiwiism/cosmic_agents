@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- BotManager follow-anchor resolution moved to
+  `server.agents.runtime.AgentFollowAnchorService`; BotManager remains a
+  compatibility wrapper that supplies the temporary sibling list until runtime
+  registry ownership is fully moved.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`; BotManager still supplies
   temporary follow-anchor and follow-target-position callbacks for this slice.
