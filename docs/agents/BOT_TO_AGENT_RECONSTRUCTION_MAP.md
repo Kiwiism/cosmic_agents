@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Equip trade slow-classification warning threshold and formatting moved to
+  `AgentEquipTradeSlowLogService`; `BotInventoryManager` no longer owns that
+  logger, threshold, or warning message body.
 - Manual trade timeout ownership moved to `AgentManualTradeService`; the
   `BotInventoryManager` shell no longer carries the legacy 60-second timeout
   constant.

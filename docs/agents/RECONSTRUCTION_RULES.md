@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Equip trade slow-classification warning ownership moved from
+  `BotInventoryManager` to
+  `server.agents.capabilities.inventory.AgentEquipTradeSlowLogService`. The
+  legacy 50 ms threshold, one-decimal millisecond formatting, and warning fields
+  are unchanged.
 - Manual trade's legacy 60-second timeout constant moved from
   `BotInventoryManager` to
   `server.agents.capabilities.trade.AgentManualTradeService`. The bot inventory

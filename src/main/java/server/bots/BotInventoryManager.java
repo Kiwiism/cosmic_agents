@@ -6,14 +6,13 @@ import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import client.Character;
 import client.inventory.Item;
 import config.YamlConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import server.agents.capabilities.inventory.AgentAmmoTradeCallbackService;
 import server.agents.capabilities.inventory.AgentAmmoTradeClassificationService;
 import server.agents.capabilities.inventory.AgentEquipTradeCallbackService;
 import server.agents.capabilities.inventory.AgentEquipTradeClassificationService;
 import server.agents.capabilities.inventory.AgentEquipTradeGroupService;
 import server.agents.capabilities.inventory.AgentEquipTradeGroupService.AgentEquipTradeGroups;
+import server.agents.capabilities.inventory.AgentEquipTradeSlowLogService;
 import server.agents.capabilities.inventory.AgentEquippedSlotTradeService;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.capabilities.inventory.AgentInventoryNamedItemService;
@@ -59,8 +58,6 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class BotInventoryManager {
-    private static final Logger log = LoggerFactory.getLogger(BotInventoryManager.class);
-    private static final long TRADE_COMMAND_PROFILE_WARN_NS = 50_000_000L;
     static void tickPassiveLoot(BotEntry entry, Character bot) {
         AgentPassiveLootService.tickPassiveLoot(
                 entry,
@@ -312,27 +309,12 @@ public class BotInventoryManager {
                 bot,
                 AgentEquipTradeCallbackService.equipTradeCallbacks(
                         () -> AgentTradeCommandProfiler.profileCategory("equips"),
-                        () -> TRADE_COMMAND_PROFILE_WARN_NS,
+                        AgentEquipTradeSlowLogService::slowWarnNs,
                         AgentEquipTradeClassificationService.ClassificationCallbacks::collectEquipBag,
                         BotEquipManager::collectPotentialSelfUpgradeItems,
                         item -> AgentOfferService.isReservedForOtherRecipients(entry, bot, item),
                         () -> AgentBotRuntimeIdentityRuntime.owner(entry),
-                        report -> log.warn(
-                        "Slow equip trade classification: took {} ms bot={} owner={} bagItems={} selfKeep={} normalItems={} reservedOtherItems={} reservedSelfItems={} bagScanMs={} selfKeepMs={} reservedOtherMs={} reservedOtherChecks={} reservedOtherHits={} sortMs={}",
-                        String.format("%.1f", report.elapsedNs() / 1_000_000.0),
-                        report.agentName(),
-                        report.ownerName(),
-                        report.bagItems(),
-                        report.selfKeep(),
-                        report.normalItems(),
-                        report.reservedOtherItems(),
-                        report.reservedSelfItems(),
-                        String.format("%.1f", report.bagScanNs() / 1_000_000.0),
-                        String.format("%.1f", report.selfKeepNs() / 1_000_000.0),
-                        String.format("%.1f", report.reservedOtherNs() / 1_000_000.0),
-                        report.reservedOtherChecks(),
-                        report.reservedOtherHits(),
-                        String.format("%.1f", report.sortNs() / 1_000_000.0))));
+                        AgentEquipTradeSlowLogService::warnSlowClassification));
     }
 
     // ─── Pot-share helpers ────────────────────────────────────────────────────
