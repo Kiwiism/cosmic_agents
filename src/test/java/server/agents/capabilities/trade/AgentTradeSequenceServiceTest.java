@@ -1,0 +1,78 @@
+package server.agents.capabilities.trade;
+
+import client.Character;
+import client.inventory.Item;
+import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import server.agents.capabilities.dialogue.AgentDialogueCatalog;
+import server.agents.integration.AgentBotInventoryRuntime;
+import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.bots.BotEntry;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
+
+class AgentTradeSequenceServiceTest {
+    @Test
+    void missingRecipientRepliesWithoutOpeningBatch() {
+        BotEntry entry = new BotEntry(null, null, null);
+        AtomicInteger opened = new AtomicInteger();
+
+        try (MockedStatic<AgentBotInventoryRuntime> replies = mockStatic(AgentBotInventoryRuntime.class)) {
+            AgentTradeSequenceService.startSequence(
+                    "scrolls",
+                    null,
+                    List.of(item(2040000)),
+                    0,
+                    true,
+                    entry,
+                    (items, mesos) -> opened.incrementAndGet());
+
+            replies.verify(() -> AgentBotInventoryRuntime.replyNow(
+                    entry,
+                    AgentDialogueCatalog.tradeRecipientNotFoundReply()));
+            assertEquals(0, opened.get());
+            assertFalse(AgentBotPendingTradeStateRuntime.hasActiveSequence(entry));
+        }
+    }
+
+    @Test
+    void recipientInitializesSequenceAndOpensBatch() {
+        BotEntry entry = new BotEntry(null, null, null);
+        Character recipient = mock(Character.class);
+        Item item = item(2040000);
+        AtomicReference<List<Item>> openedItems = new AtomicReference<>();
+        AtomicInteger openedMesos = new AtomicInteger();
+        when(recipient.getId()).thenReturn(123);
+
+        AgentTradeSequenceService.startSequence(
+                "scrolls",
+                recipient,
+                List.of(item),
+                456,
+                false,
+                entry,
+                (items, mesos) -> {
+                    openedItems.set(items);
+                    openedMesos.set(mesos);
+                });
+
+        assertEquals("scrolls", AgentBotPendingTradeStateRuntime.category(entry));
+        assertEquals(123, AgentBotPendingTradeStateRuntime.recipientId(entry));
+        assertEquals(false, AgentBotPendingTradeStateRuntime.singleBatch(entry));
+        assertSame(item, openedItems.get().get(0));
+        assertEquals(456, openedMesos.get());
+    }
+
+    private static Item item(int itemId) {
+        return new Item(itemId, (short) 1, (short) 1);
+    }
+}

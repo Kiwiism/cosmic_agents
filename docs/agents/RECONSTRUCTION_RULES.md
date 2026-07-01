@@ -2147,6 +2147,10 @@ Recent reconstruction notes:
   `AgentTradeStateService`; BotInventoryManager and AgentSupplyShareTradeService
   preserve the same trade side effects while sharing the Agent-owned state
   mutation helpers.
+- Trade sequence recipient guard and initial sequence opening now live in
+  `AgentTradeSequenceService`; BotInventoryManager still supplies the temporary
+  first-batch callback while the Agent service preserves the same missing
+  recipient reply and pending-trade initialization.
 - Trade batch-open orchestration now lives in `AgentTradeBatchService`;
   BotInventoryManager and AgentSupplyShareTradeService still supply the
   temporary recipient lookup/cancel/start/invite/reply callbacks, but recipient

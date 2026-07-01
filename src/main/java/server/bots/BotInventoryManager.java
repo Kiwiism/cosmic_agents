@@ -44,6 +44,7 @@ import server.agents.capabilities.trade.AgentTradeCancellationService;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
 import server.agents.capabilities.trade.AgentTradeCompletionService;
 import server.agents.capabilities.trade.AgentTradeRecipientService;
+import server.agents.capabilities.trade.AgentTradeSequenceService;
 import server.agents.capabilities.trade.AgentTradeStateService;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
 import server.agents.integration.AgentBotInventoryRuntime;
@@ -354,12 +355,14 @@ public class BotInventoryManager {
                                            boolean singleBatch,
                                            BotEntry entry,
                                            Character bot) {
-        if (recipient == null) {
-            AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeRecipientNotFoundReply());
-            return;
-        }
-        AgentTradeStateService.initializeSequence(entry, category, recipient.getId(), singleBatch);
-        openTradeBatch(entry, bot, items, mesos);
+        AgentTradeSequenceService.startSequence(
+                category,
+                recipient,
+                items,
+                mesos,
+                singleBatch,
+                entry,
+                (batchItems, batchMesos) -> openTradeBatch(entry, bot, batchItems, batchMesos));
     }
 
     private static void openTradeBatch(BotEntry entry, Character bot, List<Item> items, int mesos) {
