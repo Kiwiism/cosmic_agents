@@ -46,7 +46,6 @@ import server.agents.capabilities.trade.AgentTradeInviteWaitService;
 import server.agents.capabilities.trade.AgentTradeRecipientService;
 import server.agents.capabilities.trade.AgentTradeResetService;
 import server.agents.capabilities.trade.AgentTradeSequenceOrchestrator;
-import server.agents.capabilities.trade.AgentTradeStateService;
 import server.agents.capabilities.trade.AgentTradeTickService;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
 import server.agents.integration.AgentBotInventoryRuntime;
@@ -370,21 +369,6 @@ public class BotInventoryManager {
                 () -> AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems(entry, bot),
                 () -> clearManualTradeState(entry, bot),
                 () -> BotEquipManager.autoEquip(bot, AgentBotRuntimeIdentityRuntime.owner(entry), null));
-    }
-
-    private static void resetTradeStateLegacy(BotEntry entry, Character bot) {
-        boolean hadRestores = AgentBotPendingTradeStateRuntime.hasRestoreSlots(entry);
-        AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems(entry, bot);
-        clearManualTradeState(entry, bot);
-        AgentTradeStateService.clearSequence(entry);
-        // Safety net: if any items were temporarily unequipped for a trade that ended without
-        // completing (declined invite / cancel / timeout), the per-slot restore above may fail
-        // (slot occupied, item lost via window-swap bookkeeping). Re-run autoEquip so empty
-        // slots get refilled from the bot's bag — prevents leaving the bot wearing e.g. pants
-        // without a top after a declined trade.
-        if (hadRestores && bot != null) {
-            BotEquipManager.autoEquip(bot, AgentBotRuntimeIdentityRuntime.owner(entry), null);
-        }
     }
 
     private static void completeTradeAndThank(BotEntry entry, Character bot, Trade trade) {

@@ -2145,6 +2145,8 @@ Recent reconstruction notes:
   `AgentTradeSequenceOrchestrator`; `BotInventoryManager` supplies only the
   temporary Cosmic callbacks for recipient lookup, unavailable-trade cancel,
   trade creation, invite packets, invitation reply selection, and reply emit.
+- Dead `BotInventoryManager.resetTradeStateLegacy` was removed after all live
+  reset paths used `AgentTradeResetService`.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and
