@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotInventoryManager.tickPassiveLoot` passive-loot callback construction now
+  lives in `AgentPassiveLootCallbackService`; the bot inventory shell only wires
+  temporary runtime-state, countdown, config, reply, owner, auto-equip, offer,
+  cleanup, and pickup hooks.
 - `BotInventoryManager` trade lifecycle callback construction now lives in
   `AgentTradeLifecycleCallbackService`; the bot inventory shell only wires
   temporary restore, manual-clear, owner, refill, reply-delay, reply-pool, and

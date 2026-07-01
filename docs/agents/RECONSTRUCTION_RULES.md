@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- `BotInventoryManager.tickPassiveLoot` passive-loot callback construction moved
+  to `server.agents.capabilities.looting.AgentPassiveLootCallbackService`. The
+  bot inventory shell still supplies temporary runtime-state, countdown,
+  config, reply, owner, auto-equip, offer, cleanup, and pickup hooks while the
+  passive-loot callback object is Agent-owned.
 - `BotInventoryManager` trade lifecycle callback construction moved to
   `server.agents.capabilities.trade.AgentTradeLifecycleCallbackService`. The
   bot inventory shell still supplies temporary restore, manual-clear, owner,

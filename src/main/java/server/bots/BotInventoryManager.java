@@ -16,6 +16,7 @@ import server.agents.capabilities.inventory.AgentEquipTradeGroupService.AgentEqu
 import server.agents.capabilities.inventory.AgentEquippedSlotTradeService;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.capabilities.inventory.AgentInventoryNamedItemService;
+import server.agents.capabilities.looting.AgentPassiveLootCallbackService;
 import server.agents.capabilities.looting.AgentLootCleanupService;
 import server.agents.capabilities.looting.AgentPassiveLootService;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy.AmmoTradeGroups;
@@ -62,7 +63,7 @@ public class BotInventoryManager {
         AgentPassiveLootService.tickPassiveLoot(
                 entry,
                 bot,
-                AgentPassiveLootService.PassiveLootCallbacks.of(
+                AgentPassiveLootCallbackService.passiveLootCallbacks(
                         () -> AgentBotInventoryStateRuntime.hasLootInhibit(entry),
                         () -> AgentBotInventoryStateRuntime.tickLootInhibit(entry, BotMovementManager::tickDown),
                         () -> AgentBotPendingTradeStateRuntime.hasActiveSequence(entry),
