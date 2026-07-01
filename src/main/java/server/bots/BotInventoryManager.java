@@ -42,8 +42,7 @@ import server.agents.capabilities.trade.AgentTradeInviteWaitService;
 import server.agents.capabilities.trade.AgentTradeLifecycleCallbackService;
 import server.agents.capabilities.trade.AgentTradeLifecycleService;
 import server.agents.capabilities.trade.AgentTradeRecipientService;
-import server.agents.capabilities.trade.AgentTradeSequenceCallbackService;
-import server.agents.capabilities.trade.AgentTradeSequenceOrchestrator;
+import server.agents.capabilities.trade.AgentTradeSequenceRuntimeService;
 import server.agents.capabilities.trade.AgentTradeTickCallbackService;
 import server.agents.capabilities.trade.AgentTradeTickService;
 import server.agents.capabilities.trade.AgentTradeTransferAvailabilityService;
@@ -184,44 +183,6 @@ public class BotInventoryManager {
                         () -> collectItems(category, entry, bot)));
     }
 
-    /** Opens a trade for the first ≤9 items; remaining items are re-collected next batch. */
-    private static void startTradeSequence(String category,
-                                           Character recipient,
-                                           List<Item> items,
-                                           int mesos,
-                                           boolean singleBatch,
-                                           BotEntry entry,
-                                           Character bot) {
-        AgentTradeSequenceOrchestrator.startTradeSequence(
-                category,
-                recipient,
-                items,
-                mesos,
-                singleBatch,
-                entry,
-                bot,
-                tradeSequenceCallbacks(entry, bot));
-    }
-
-    private static void openTradeBatch(BotEntry entry, Character bot, List<Item> items, int mesos) {
-        AgentTradeSequenceOrchestrator.openTradeBatch(
-                entry,
-                bot,
-                items,
-                mesos,
-                tradeSequenceCallbacks(entry, bot));
-    }
-
-    private static AgentTradeSequenceOrchestrator.SequenceCallbacks tradeSequenceCallbacks(BotEntry entry, Character bot) {
-        return AgentTradeSequenceCallbackService.sequenceCallbacks(
-                () -> AgentTradeRecipientService.resolveTradeRecipient(entry, bot),
-                () -> cancelTradeSequence(entry, bot, "can't trade right now, stopping"),
-                () -> Trade.startTrade(bot),
-                Trade::inviteTrade,
-                AgentTradeDialogueService::invitationReply,
-                message -> AgentBotInventoryRuntime.replyNow(entry, message));
-    }
-
     /** Called every bot simulation tick while a trade sequence is in progress. */
     static void tickTrade(BotEntry entry, Character bot) {
         AgentTradeTickService.tickTrade(
@@ -238,7 +199,12 @@ public class BotInventoryManager {
                                         category -> nextEquipsGroup(category, entry, bot),
                                         category -> nextAmmoGroup(category, bot),
                                         AgentInventoryTransferService::equipsGroupMessage,
-                                        items -> openTradeBatch(entry, bot, items, 0),
+                                        items -> AgentTradeSequenceRuntimeService.openTradeBatch(
+                                                entry,
+                                                bot,
+                                                items,
+                                                0,
+                                                () -> cancelTradeSequence(entry, bot, "can't trade right now, stopping")),
                                         () -> resetTradeState(entry, bot))),
                         () -> AgentTradeClosedWindowService.handleClosedTrade(
                                 entry,

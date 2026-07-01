@@ -19,6 +19,7 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.capabilities.inventory.AgentInventorySellTrashPolicy;
+import server.agents.capabilities.trade.AgentTradeSequenceRuntimeService;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
 import server.Trade;
@@ -27,7 +28,6 @@ import server.maps.MapItem;
 import server.maps.MapleMap;
 
 import java.awt.*;
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,16 +49,10 @@ import static org.mockito.Mockito.when;
 
 class BotInventoryManagerTest {
     @Test
-    void shouldOnlyAnnounceTradeInviteOnFirstBatchOfSequence() throws Exception {
+    void shouldOnlyAnnounceTradeInviteOnFirstBatchOfSequence() {
         BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
         Character bot = entry.bot;
         Character owner = entry.owner;
-        Method startTradeSequence = method(BotInventoryManager.class,
-                "startTradeSequence",
-                String.class, Character.class, List.class, int.class, boolean.class, BotEntry.class, Character.class);
-        Method openTradeBatch = method(BotInventoryManager.class,
-                "openTradeBatch",
-                BotEntry.class, Character.class, List.class, int.class);
 
         when(owner.getId()).thenReturn(42);
         when(owner.getTrade()).thenReturn(null);
@@ -66,8 +60,21 @@ class BotInventoryManagerTest {
 
         try (MockedStatic<AgentBotInventoryRuntime> replies = mockStatic(AgentBotInventoryRuntime.class);
              MockedStatic<Trade> trades = mockStatic(Trade.class)) {
-            startTradeSequence.invoke(null, "trash", owner, List.of(mock(Item.class)), 0, false, entry, bot);
-            openTradeBatch.invoke(null, entry, bot, List.of(mock(Item.class)), 0);
+            AgentTradeSequenceRuntimeService.startTradeSequence(
+                    "trash",
+                    owner,
+                    List.of(mock(Item.class)),
+                    0,
+                    false,
+                    entry,
+                    bot,
+                    () -> {});
+            AgentTradeSequenceRuntimeService.openTradeBatch(
+                    entry,
+                    bot,
+                    List.of(mock(Item.class)),
+                    0,
+                    () -> {});
 
             replies.verify(() -> AgentBotInventoryRuntime.replyNow(eq(entry), anyString()), times(1));
         }
@@ -357,11 +364,5 @@ class BotInventoryManagerTest {
 
             assertEquals(new Point(240, 100), AgentLootTargetService.findNearestPatrolLootTarget(entry, 1));
         }
-    }
-
-    private static Method method(Class<?> type, String name, Class<?>... parameterTypes) throws Exception {
-        Method method = type.getDeclaredMethod(name, parameterTypes);
-        method.setAccessible(true);
-        return method;
     }
 }

@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotInventoryManager` private trade-sequence/open-batch wrappers moved to
+  `AgentTradeSequenceRuntimeService`; legacy tests now cover the Agent-owned
+  runtime service directly for first-batch invite announcement behavior.
 - `BotInventoryManager` transfer availability/count callback construction now
   lives in `AgentTradeTransferAvailabilityCallbackService`; the bot inventory
   shell only wires temporary named-item, equipped-slot, and category collection

@@ -1,0 +1,58 @@
+package server.agents.capabilities.trade;
+
+import client.Character;
+import client.inventory.Item;
+import server.Trade;
+import server.agents.integration.AgentBotInventoryRuntime;
+import server.bots.BotEntry;
+
+import java.util.List;
+
+public final class AgentTradeSequenceRuntimeService {
+    private AgentTradeSequenceRuntimeService() {
+    }
+
+    public static void startTradeSequence(String category,
+                                          Character recipient,
+                                          List<Item> items,
+                                          int mesos,
+                                          boolean singleBatch,
+                                          BotEntry entry,
+                                          Character agent,
+                                          Runnable cancelUnavailableTrade) {
+        AgentTradeSequenceOrchestrator.startTradeSequence(
+                category,
+                recipient,
+                items,
+                mesos,
+                singleBatch,
+                entry,
+                agent,
+                sequenceCallbacks(entry, agent, cancelUnavailableTrade));
+    }
+
+    public static void openTradeBatch(BotEntry entry,
+                                      Character agent,
+                                      List<Item> items,
+                                      int mesos,
+                                      Runnable cancelUnavailableTrade) {
+        AgentTradeSequenceOrchestrator.openTradeBatch(
+                entry,
+                agent,
+                items,
+                mesos,
+                sequenceCallbacks(entry, agent, cancelUnavailableTrade));
+    }
+
+    static AgentTradeSequenceOrchestrator.SequenceCallbacks sequenceCallbacks(BotEntry entry,
+                                                                              Character agent,
+                                                                              Runnable cancelUnavailableTrade) {
+        return AgentTradeSequenceCallbackService.sequenceCallbacks(
+                () -> AgentTradeRecipientService.resolveTradeRecipient(entry, agent),
+                cancelUnavailableTrade,
+                () -> Trade.startTrade(agent),
+                Trade::inviteTrade,
+                AgentTradeDialogueService::invitationReply,
+                message -> AgentBotInventoryRuntime.replyNow(entry, message));
+    }
+}

@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- `BotInventoryManager` no longer owns the private trade-sequence/open-batch
+  wrapper cluster. Legacy sequence runtime wiring moved to
+  `server.agents.capabilities.trade.AgentTradeSequenceRuntimeService`, including
+  recipient resolution, unavailable-recipient cancellation, trade-start/invite
+  calls, invitation dialogue selection, and reply delivery.
 - `BotInventoryManager` transfer availability/count callback construction moved
   to `server.agents.capabilities.trade.AgentTradeTransferAvailabilityCallbackService`.
   The bot inventory shell still supplies temporary named-item, equipped-slot,
