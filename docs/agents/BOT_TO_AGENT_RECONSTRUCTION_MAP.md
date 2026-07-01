@@ -118,6 +118,11 @@ Recent map updates:
 - Navigation debug overlay bot selection now reads Agent entries through
   `AgentBotSessionLifecycleSideEffects`, removing direct BotManager lookup from
   `AgentNavigationDebugOverlay`.
+- BotNavigationManager follow-anchor region resolution now reads sibling Agent
+  entries through `AgentBotSessionLifecycleSideEffects` and resolves anchors
+  through `server.agents.runtime.AgentFollowAnchorService`, removing its direct
+  `BotManager.resolveFollowAnchor` call while preserving follow target
+  behavior.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.

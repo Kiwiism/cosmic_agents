@@ -130,6 +130,10 @@ Recent reconstruction notes:
 - Navigation debug overlay bot selection now reads Agent entries through the
   Agent session lifecycle gateway instead of direct BotManager lookups; overlay
   messages and path logging behavior are unchanged.
+- BotNavigationManager follow-anchor region resolution now uses
+  `AgentFollowAnchorService` with sibling entries from the Agent session
+  lifecycle gateway instead of calling `BotManager.resolveFollowAnchor`;
+  follow, sibling-target, and rope/climb targeting behavior are unchanged.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but

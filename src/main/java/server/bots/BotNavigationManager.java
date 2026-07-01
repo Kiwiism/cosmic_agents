@@ -22,7 +22,9 @@ import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentBotSessionLifecycleSideEffects;
 import server.agents.integration.AgentBotShopStateRuntime;
+import server.agents.runtime.AgentFollowAnchorService;
 import server.maps.MapleMap;
 import server.maps.Foothold;
 import server.maps.Portal;
@@ -1502,7 +1504,10 @@ public final class BotNavigationManager {
         }
 
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
-        Character followAnchor = BotManager.getInstance().resolveFollowAnchor(entry, owner);
+        List<BotEntry> siblingEntries = owner == null
+                ? List.of()
+                : AgentBotSessionLifecycleSideEffects.getBotEntries(owner.getId());
+        Character followAnchor = AgentFollowAnchorService.resolve(entry, owner, siblingEntries);
         if (AgentBotModeStateRuntime.following(entry)
                 && !AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)
                 && !AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry)

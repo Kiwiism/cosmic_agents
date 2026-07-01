@@ -12,7 +12,10 @@ import server.agents.capabilities.movement.AgentFallbackMovementService;
 import client.Character;
 import constants.game.CharacterStance;
 import org.junit.jupiter.api.BeforeAll;
+import org.mockito.MockedStatic;
+import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentBotSessionLifecycleSideEffects;
 import server.maps.MapleMap;
 import server.maps.Foothold;
 import server.maps.Rope;
@@ -38,6 +41,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 class BotNavigationManagerTest {
@@ -220,6 +224,39 @@ class BotNavigationManagerTest {
         AgentNavigationGraph.Edge result = BotNavigationManager.reuseCommittedEdge(graph, entry, 355, 355);
 
         assertNull(result, "WALK edge must be dropped once bot reaches destination region");
+    }
+
+    @Test
+    void shouldResolveFollowTargetRegionFromSiblingAgentThroughAgentRuntime() {
+        MapleMap map = mock(MapleMap.class);
+        AgentNavigationGraph graph = mock(AgentNavigationGraph.class);
+        Point siblingPosition = new Point(320, 120);
+        Character owner = mock(Character.class);
+        Character bot = mock(Character.class);
+        Character sibling = mock(Character.class);
+        when(owner.getId()).thenReturn(100);
+        when(bot.getId()).thenReturn(200);
+        when(sibling.getId()).thenReturn(300);
+        when(sibling.isLoggedinWorld()).thenReturn(true);
+        when(sibling.getMap()).thenReturn(map);
+        when(sibling.getPosition()).thenReturn(siblingPosition);
+        when(sibling.getStance()).thenReturn(CharacterStance.ROPE_RIGHT_STANCE);
+        when(graph.findRopeRegionId(siblingPosition)).thenReturn(77);
+
+        BotEntry entry = new BotEntry(bot, owner, null);
+        BotEntry siblingEntry = new BotEntry(sibling, owner, null);
+        AgentBotModeStateRuntime.setFollowing(entry, true);
+        AgentBotModeStateRuntime.setFollowTargetId(entry, sibling.getId());
+
+        try (MockedStatic<AgentBotSessionLifecycleSideEffects> lifecycle =
+                     mockStatic(AgentBotSessionLifecycleSideEffects.class)) {
+            lifecycle.when(() -> AgentBotSessionLifecycleSideEffects.getBotEntries(owner.getId()))
+                    .thenReturn(List.of(siblingEntry));
+
+            int regionId = BotNavigationManager.resolveTargetRegionId(graph, entry, map, siblingPosition);
+
+            assertEquals(77, regionId);
+        }
     }
 
     @Test
