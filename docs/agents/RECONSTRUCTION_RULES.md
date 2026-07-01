@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Agent performance monitor inventory/trade section notes now point at the
+  Agent-owned looting/trade runtime services instead of the temporary
+  `BotInventoryManager` compatibility shell. Section keys and timing behavior
+  are unchanged.
 - Bot-inventory runtime hook factory ownership moved from `BotInventoryManager`
   to `server.agents.integration.AgentBotInventoryRuntimeAdapters`. The bot
   inventory class is now a compatibility shell over Agent-owned looting,

@@ -35,7 +35,8 @@ import java.util.List;
 
 /**
  * Agent-owned boundary for inventory transfer commands while the deeper trade
- * state machine is still being reconstructed out of BotInventoryManager.
+ * state machine is still being reconstructed out of temporary bot runtime
+ * callbacks.
  */
 public final class AgentInventoryTransferService {
     private static final Logger log = LoggerFactory.getLogger(AgentInventoryTransferService.class);

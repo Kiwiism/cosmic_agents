@@ -69,7 +69,7 @@ public final class AgentPerformanceMonitor {
         // Common tick systems (run every tick, instrumented in BotManager.runCommonTickSystems)
         notes.put("common-mob-damage", "AgentBotCombatDamageRuntime.tickMobDamage (mob damage decay timers)");
         notes.put("common-release-mob", "tickReleaseMonsterControl (release stale controlled mobs)");
-        notes.put("common-passive-loot", "BotInventoryManager.tickPassiveLoot (scan drops + pickup + autoEquip)");
+        notes.put("common-passive-loot", "AgentPassiveLootRuntimeService.tickPassiveLoot (scan drops + pickup + autoEquip)");
         notes.put("common-potion-check", "AgentPotionService.tickPotionCheck (HP/MP potion request)");
         notes.put("potion-autopot", "AgentPotionService.setupAutopotForBot (scan USE bag + choose HP/MP autopot bindings)");
         notes.put("potion-ammo-check", "AgentBotCombatAmmoCheckRuntime.tickAmmoCheck invoked from potion check");
@@ -85,8 +85,8 @@ public final class AgentPerformanceMonitor {
         notes.put("common-passive-recovery", "AgentPotionService.tickPassiveRecovery (regen / mana recovery)");
         notes.put("common-build-levelup", "AgentBuildService.checkLevelUp (skill point allocation)");
         notes.put("common-afk-check", "AgentBotManagerStatusRuntime.tickAfkCheck (owner-AFK detection)");
-        notes.put("common-trade", "BotInventoryManager.tickTrade (in-progress bot trade state machine)");
-        notes.put("common-manual-trade", "BotInventoryManager.tickManualTrade (manual bot/player trade)");
+        notes.put("common-trade", "AgentTradeTickRuntimeService.tickTrade (in-progress agent trade state machine)");
+        notes.put("common-manual-trade", "AgentManualTradeRuntimeService.tickManualTrade (manual agent/player trade)");
         notes.put("common-pq-hooks", "AgentPartyQuestHooks.tick (KPQ / OPQ / LPQ state machines)");
         notes.put("common-script-tasks", "tickScriptTasks (AgentScriptRunner)");
         notes.put("common-action-lock", "AgentBotCombatActionLockRuntime.tickActionLock (attack/move cooldown decay)");
@@ -106,7 +106,7 @@ public final class AgentPerformanceMonitor {
         notes.put("opportunity-attack", "tryLocalOpportunityAttack");
         notes.put("broadcast-move", "BotMovementManager.broadcastMovement (packet build + map broadcast)");
         notes.put("stuck-detect", "tickStuckDetection");
-        notes.put("grind-loot-scan", "BotInventoryManager.findNearestGrindLootTarget");
+        notes.put("grind-loot-scan", "AgentPassiveLootRuntimeService grind loot target selection");
         notes.put("auto-equip", "BotEquipManager.autoEquip (Pareto DP) triggered on equip pickup");
         SECTION_NOTES = notes;
     }

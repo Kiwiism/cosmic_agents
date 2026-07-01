@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Agent performance monitor notes for passive loot, trade tick, manual trade,
+  and grind-loot scanning now name Agent-owned runtime services while preserving
+  the same section keys and timing behavior.
 - `BotInventoryManager` runtime hook factories moved to
   `AgentBotInventoryRuntimeAdapters`; `BotInventoryManager` is now a thin
   compatibility shell over Agent looting/trade/inventory services.
