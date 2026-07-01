@@ -2196,6 +2196,9 @@ Recent reconstruction notes:
 - Trade item collection wiring now lives in `AgentTradeItemCollectionService`;
   `BotInventoryManager` and `AgentInventoryTransferService` supply temporary
   callbacks for recommended equipment, equip groups, and ammo groups.
+- The stale `BotInventoryManager` direct import of
+  `AgentInventoryTradeCollectionService` was removed after item collection
+  wiring moved behind `AgentTradeItemCollectionService`.
 - Item-choice trade/drop branching now lives in `AgentInventoryTransferService`;
   the legacy BotInventoryManager entry point delegates to it, while the Agent
   service preserves the same trade path, inventory-drop capability call, and
