@@ -179,7 +179,7 @@ Recent map updates:
   class name.
 - `src/main/java/server/bots/BotChatManager.java` has been deleted. `BotManager`
   now calls `AgentChatRuntime` with `AgentBotChatOrchestratorContext` directly;
-  `BotChatManagerTest` remains only as a historical parity test class name.
+  the historical parity suite is now named `AgentChatRuntimeParityTest`.
 - `server.bots.llm.CommandTypoSuggester` has moved to
   `server.agents.commands.AgentCommandTypoSuggester`; production and focused
   tests now use the Agent-owned command typo utility directly.

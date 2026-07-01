@@ -30,9 +30,9 @@ Reconstruction progress:
 - `server.bots.BotCommandParser` remains as a temporary compatibility adapter.
 - GM bot command entry classes still keep their visible command names, but their bodies now route through `server.agents.commands` bridge/executor classes.
 - Reply queue behavior now lives in `server.agents.commands.AgentReplyQueue`.
-- `server.bots.BotChatManager` still exposes the legacy queue methods and adapts bot runtime state into the Agent queue, but no longer exposes thin chat/trade classification wrapper methods.
+- Legacy chat queue behavior is now reached through Agent-owned dialogue/runtime modules and Agent integration adapters; `server.bots.BotChatManager` has been removed.
 - Named random dialogue pools now live in `server.agents.capabilities.dialogue.AgentDialogueCatalog`.
-- BotChatManager no longer contains inline `randomReply(List.of(...))` pools; those variants are cataloged under Agent dialogue.
+- The old chat manager no longer contains inline `randomReply(List.of(...))` pools; those variants are cataloged under Agent dialogue.
 - Away/logout, support/heal/buff/proactive toggle, SP variant, help, equipment recommendation, fame, skill-report fallback, and trade-choice fallback fixed prompt and confirmation lines also live in `AgentDialogueCatalog`.
 - Follow-target chat classification, group supply request classification, and direct HP/MP/potion/ammo supply command classification now live in `server.agents.capabilities.dialogue.AgentChatCommandClassifier`.
 - Movement-mode chat classification (`follow`, `stop`, `move here`, `grind`, patrol/farm-here, fidget) also lives in `AgentChatCommandClassifier`.
@@ -46,7 +46,7 @@ Reconstruction progress:
 - Job/build/AP/SP choice classification, skill-tree choice resolution, and job advancement resolution now lives in `server.agents.capabilities.dialogue.AgentBuildDialogueClassifier`.
 - Help, report, buff-list, and debug query classification now lives in `server.agents.capabilities.dialogue.AgentChatCommandClassifier`.
 - Stats/range/build/crit/EXP/supply/meso/movement, drop-or-trade prompt, selected catalog-template text, AP-build replies, job display, skill-tree prompt, and learned-skill report formatting now lives in `server.agents.capabilities.dialogue.AgentDialogueReportFormatter`.
-- `server.bots.BotChatManager` still owns chat parsing and most direct response strings while it is split incrementally.
+- Chat parsing, direct response strings, dialogue classification, report formatting, and reply runtime ownership have moved into Agent-owned dialogue and integration modules. Remaining bot-side chat references are compatibility entry points or historical parity tests.
 - Bot runtime behavior still lives under `server.bots` and has not been functionally changed.
 
 Important baseline note:

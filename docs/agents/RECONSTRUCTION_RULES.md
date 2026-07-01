@@ -393,12 +393,10 @@ Recent reconstruction notes:
   temporary integration adapter still reads legacy bot physics values, but
   Agent dialogue/report code no longer assembles those bot metrics inline.
 - Top-level chat handled-state ownership now lives in `AgentChatRuntime`;
-  `BotChatRuntime` remains only as a temporary adapter from `BotEntry` to the
-  Agent chat orchestrator context.
+  the temporary `BotChatRuntime` adapter has been removed.
 - Top-level chat orchestrator context ownership now lives in
   `AgentBotChatOrchestratorContext`; the old bot-side context class has been
-  removed, and `BotChatRuntime` only creates the temporary Agent integration
-  adapter.
+  removed, and `BotManager` now creates the Agent integration adapter directly.
 - Unused bot-side chat compatibility shims for build, control, equipment,
   movement, pending-action, social, transfer, and utility callbacks have been
   removed after the Agent orchestrator context switched directly to Agent
@@ -411,8 +409,8 @@ Recent reconstruction notes:
 - Unused bot-side chat session and supply compatibility shims have been
   removed; session and supply chat orchestration is reached through Agent
   integration facades.
-- `BotChatRuntime` has been removed; `BotChatManager` is now the only bot-side
-  chat compatibility facade and delegates directly to `AgentChatRuntime` with
+- `BotChatRuntime` and `BotChatManager` have been removed; `BotManager` now
+  delegates directly to `AgentChatRuntime` with
   `AgentBotChatOrchestratorContext`.
 - Immediate Agent integration reply delivery now routes through
   `AgentBotReplyRuntime.replyNow`, `visibleSayNow`, and `sayPartyNow`; scattered
@@ -2055,8 +2053,8 @@ Recent reconstruction notes:
   `BotManager` now calls `AgentChatRuntime` directly with
   `AgentBotChatOrchestratorContext`, preserving the same handled-state
   fall-through, targeted-command, group-supply, broadcast, and whisper behavior.
-  The legacy `BotChatManagerTest` class name remains only as the historical
-  focused chat/dialogue parity suite.
+  The historical focused chat/dialogue parity suite has been renamed to
+  `AgentChatRuntimeParityTest`.
 - Command typo suggestion now lives in
   `server.agents.commands.AgentCommandTypoSuggester`; `BotManager` uses the
   Agent-owned suggester directly, and the old `server.bots.llm`
@@ -2506,7 +2504,15 @@ Initial reconstruction order:
 
 1. Runtime shell and registry.
 2. Command parser/router boundaries. Initial parser and GM command bridge completed; old bot runtime remains underneath.
-3. Chat/reply/dialogue boundaries. Reply queue primitive has moved to Agent commands; named random dialogue pools and away/logout/support/heal/buff/proactive/SP-variant/help/equipment-recommendation/fame/skill-report/trade-choice/pending-action-cancel/movement-stats-unavailable/supply-shortage/no-items/grind-start fixed prompt lines and buff-consumable mode labels have moved to Agent dialogue catalog; movement/follow/fidget, supply-request/direct supply, query/toggle, support/heal/buff toggle/replies, logout/relog/away session request and confirmation normalization, respec, upgrade-request, report/debug, trade/drop/item and pending drop-choice, trade-invite/shop/maker utility, equipment/autoequip, greeting/fame/self-target, build/job/AP/SP classification/replies, SP variant labels, pending chat action labels, trade category labels, skill-tree choice resolution, AP-build choice resolution, and job advancement resolution have moved to Agent dialogue classifiers/resolvers; session request routing/reply selection, pending chat-action branching/replies, away prompt/choice routing/replies, AFK welcome-back routing/reply selection, chat toggle routing/replies, buff query routing, respec routing, equipment chat routing/replies, recommended-gear reply selection, supply request routing/outcome reply selection, social/fame command routing, fame outcome routing/reply selection, movement/greeting chat routing/reply selection, utility chat routing/reply selection, SP/AP build selection routing/replies, help/report-query routing/help-line ownership, transfer command/item-query/weird-transfer routing/result routing, job-advancement routing/reply selection, skill-report/skill-tree-choice routing/model ownership, top-level chat route ordering, reply runtime ownership, Agent-owned bot reply adapter ownership, Agent-owned bot scheduler adapter ownership, Agent-owned bot status-state adapter ownership, Agent-owned recommended-gear cooldown state adapter ownership, Agent-owned AFK/offline return side-effect adapter ownership, Agent-owned gear-suggestion action adapter ownership, Agent-owned report offer action adapter ownership, Agent-owned supply report data adapter ownership, Agent-owned character report data adapter ownership, Agent-owned inventory report data adapter ownership, Agent-owned skill report data adapter ownership, Agent-owned build/status check adapter ownership, Agent-owned active-mode side-effect adapter ownership, Agent-owned range report data adapter ownership, Agent-owned movement report data adapter ownership, Agent-owned combat/buff report data adapter ownership, Agent status-state runtime ownership, Agent status-check, active-mode preparation, gear-suggestion cooldown, offline-return announcement, AFK-return announcement, and AFK tick callback orchestration ownership, Agent report scheduling runtime ownership, Agent status/report scheduling bridge ownership, Agent report action construction ownership, Agent-owned report operation adapter ownership, Agent-owned report delivery adapter ownership, direct report callback-operation wiring ownership, help report queueing ownership, single-line and multi-line report queueing ownership, skill-report decision orchestration ownership, recommended-gear report orchestration and reply selection ownership, report bridge ownership, report callback scheduling ownership, pending-action state/callback bridge ownership, session/relog/logout/away side-effect bridge ownership, manual supply/request-upgrade bridge ownership, async transfer/item-query bridge ownership, social/fame bridge ownership, toggle/buff/respec control bridge ownership, Agent-owned control callback adapter ownership, equipment chat bridge ownership, Agent-owned equipment callback adapter ownership, utility chat bridge ownership, build/AP/SP/job-advance bridge ownership, status/welcome-back bridge ownership, movement/greeting bridge ownership, same-package reply/status runtime wiring, PQ reply-runtime wiring, handled-state runtime bridge ownership, and direct orchestrator-context adapter wiring have moved to Agent dialogue flow orchestration; stats/range/build/crit/EXP/supply/meso/scroll/movement report formatting and basic stats/build/range/crit/EXP/meso/skill/movement/inventory-slot/inventory-summary/potion-count/buff-summary/autopot-debug/skill-buff-debug/combat-debug/grind-start report builders, range stat labels, potion type labels, fame reply formatting, no-items category formatting, buff debug-state formatting, skill-buff age/status formatting, combat debug stat formatting, grind-start low-supply formatting, build prompt wording, drop-or-trade prompt formatting, offline welcome-back map fallback formatting, selected catalog-template formatting, AP-build profile labels/job-display/skill-tree/learned-skill formatting, and item query normalization have moved to Agent dialogue; thin bot-side classifier, basic report/drop-or-trade/basic reply-pool pass-through wrappers, report helper shims, BotChatManager queue/status shims, and `BotChatReplyRuntime` have been removed; `AgentBotReplyRuntime`, `AgentBotSchedulerRuntime`, `AgentBotStatusRuntime`, `AgentChatStatusRuntime`, `AgentChatReportRuntime`, `BotChatRuntime`, `BotChatOrchestratorContext`, `BotChatReportRuntime`, `BotChatPendingActionRuntime`, `BotChatSessionRuntime`, `BotChatSupplyRuntime`, `BotChatTransferRuntime`, `BotChatSocialRuntime`, `BotChatControlRuntime`, `BotChatEquipmentRuntime`, `BotChatUtilityRuntime`, `BotChatBuildRuntime`, `BotChatStatusRuntime`, and `BotChatMovementRuntime` are temporary adapters from Agent chat orchestration/reply/report/scheduling/status-state/pending-action/session/supply/transfer/social/control/equipment/utility/build/status/movement runtime to bot runtime side effects; `BotChatManager` is now only a legacy compatibility facade over `BotChatRuntime`.
+3. Chat/reply/dialogue boundaries. Reply queue, dialogue catalogs, command and
+   trade classification, utility/equipment/social/build routing, status/report
+   formatting, reply delivery, pending-action/session/supply/transfer/social/
+   control/equipment/utility/build/status/movement bridges, handled-state
+   runtime, and top-level chat orchestration have moved to Agent-owned dialogue
+   and integration modules. `BotChatRuntime`, `BotChatOrchestratorContext`,
+   `BotChatReplyRuntime`, and `BotChatManager` have been removed; `BotManager`
+   now enters `AgentChatRuntime` through `AgentBotChatOrchestratorContext`, and
+   `AgentChatRuntimeParityTest` is the historical focused parity suite.
 4. Movement and navigation.
 5. Combat.
 6. Loot and supplies.

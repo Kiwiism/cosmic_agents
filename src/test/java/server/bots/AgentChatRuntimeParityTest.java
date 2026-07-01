@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class BotChatManagerTest {
+class AgentChatRuntimeParityTest {
     @Test
     void shouldParseTradeMesosAsAllWhenNoAmountIsSpecified() {
         assertEquals("mesos", AgentTradeDialogueClassifier.matchTradeCategory("trade mesos"));
