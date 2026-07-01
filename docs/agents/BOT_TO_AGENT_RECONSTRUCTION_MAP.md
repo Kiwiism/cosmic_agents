@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotInventoryManager` trade item collection plus ammo/equip classification
+  runtime composition now lives in
+  `AgentInventoryTradeRuntimeService`; the bot inventory shell only supplies
+  temporary runtime hooks for recommendation, weapon/projectile, config,
+  profiling, self-reserve, reservation, and owner lookup behavior.
 - Grouped trade category navigation moved to
   `AgentTradeGroupNavigationService`; `BotInventoryManager` no longer owns the
   private next-equip-group or next-ammo-group helpers.

@@ -6,21 +6,14 @@ import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import client.Character;
 import client.inventory.Item;
 import config.YamlConfig;
-import server.agents.capabilities.inventory.AgentAmmoTradeCallbackService;
-import server.agents.capabilities.inventory.AgentAmmoTradeClassificationService;
-import server.agents.capabilities.inventory.AgentEquipTradeCallbackService;
-import server.agents.capabilities.inventory.AgentEquipTradeClassificationService;
-import server.agents.capabilities.inventory.AgentEquipTradeGroupService;
-import server.agents.capabilities.inventory.AgentEquipTradeGroupService.AgentEquipTradeGroups;
-import server.agents.capabilities.inventory.AgentEquipTradeSlowLogService;
 import server.agents.capabilities.inventory.AgentEquippedSlotTradeService;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.capabilities.inventory.AgentInventoryNamedItemService;
 import server.agents.capabilities.looting.AgentPassiveLootCallbackService;
 import server.agents.capabilities.looting.AgentLootCleanupService;
 import server.agents.capabilities.looting.AgentPassiveLootService;
-import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy.AmmoTradeGroups;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
+import server.agents.capabilities.trade.AgentInventoryTradeRuntimeService;
 import server.agents.capabilities.trade.AgentManualTradeCallbackService;
 import server.agents.capabilities.trade.AgentManualOwnerTradeService;
 import server.agents.capabilities.trade.AgentManualPeerTradeService;
@@ -36,12 +29,9 @@ import server.agents.capabilities.trade.AgentTradeDialogueService;
 import server.agents.capabilities.trade.AgentTradeGroupNavigationService;
 import server.agents.capabilities.trade.AgentTradeItemAddTickService;
 import server.agents.capabilities.trade.AgentTradeItemAddTickCallbackService;
-import server.agents.capabilities.trade.AgentTradeItemCollectionCallbackService;
-import server.agents.capabilities.trade.AgentTradeItemCollectionService;
 import server.agents.capabilities.trade.AgentTradeInviteWaitService;
 import server.agents.capabilities.trade.AgentTradeLifecycleCallbackService;
 import server.agents.capabilities.trade.AgentTradeLifecycleService;
-import server.agents.capabilities.trade.AgentTradeRecommendationService;
 import server.agents.capabilities.trade.AgentTradeRecipientService;
 import server.agents.capabilities.trade.AgentTradeSequenceRuntimeService;
 import server.agents.capabilities.trade.AgentTradeTickCallbackService;
@@ -195,10 +185,14 @@ public class BotInventoryManager {
                                         category -> collectItems(category, entry, bot),
                                         category -> AgentTradeGroupNavigationService.nextEquipsGroup(
                                                 category,
-                                                () -> classifyEquipTradeGroups(entry, bot)),
+                                                () -> AgentInventoryTradeRuntimeService.classifyEquipTradeGroups(
+                                                        bot,
+                                                        tradeRuntimeCallbacks(entry, bot))),
                                         category -> AgentTradeGroupNavigationService.nextAmmoGroup(
                                                 category,
-                                                () -> classifyAmmoTradeGroups(bot)),
+                                                () -> AgentInventoryTradeRuntimeService.classifyAmmoTradeGroups(
+                                                        bot,
+                                                        tradeRuntimeCallbacks(entry, bot))),
                                         AgentInventoryTransferService::equipsGroupMessage,
                                         items -> AgentTradeSequenceRuntimeService.openTradeBatch(
                                                 entry,
@@ -271,17 +265,11 @@ public class BotInventoryManager {
     // ─── Item collection helpers ──────────────────────────────────────────────
 
     private static List<Item> collectItems(String category, BotEntry entry, Character bot) {
-        return AgentTradeItemCollectionService.collectItems(
+        return AgentInventoryTradeRuntimeService.collectItems(
                 category,
                 bot,
                 AgentBotRuntimeIdentityRuntime.owner(entry),
-                AgentTradeItemCollectionCallbackService.tradeItemCollectionCallbacks(
-                        () -> AgentTradeRecommendationService.recommendedItems(
-                                AgentBotRuntimeIdentityRuntime.owner(entry),
-                                bot,
-                                BotEquipManager::collectRecommendedItems),
-                        () -> classifyEquipTradeGroups(entry, bot),
-                        () -> classifyAmmoTradeGroups(bot)));
+                tradeRuntimeCallbacks(entry, bot));
     }
 
     // ─── Drop actions (floor) ─────────────────────────────────────────────────
@@ -290,27 +278,17 @@ public class BotInventoryManager {
 
     // ─── Internals ────────────────────────────────────────────────────────────
 
-    private static AmmoTradeGroups classifyAmmoTradeGroups(Character bot) {
-        return AgentAmmoTradeClassificationService.classifyAmmoTradeGroups(
-                bot,
-                AgentAmmoTradeCallbackService.ammoTradeCallbacks(
-                        () -> AgentAttackExecutionProvider.getEquippedWeaponType(bot),
-                        ItemInformationProvider.getInstance()::getWatkForProjectile,
-                        ItemInformationProvider.getInstance()::isQuestItem,
-                        () -> YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE));
-    }
-
-    private static AgentEquipTradeGroups classifyEquipTradeGroups(BotEntry entry, Character bot) {
-        return AgentEquipTradeClassificationService.classifyEquipTradeGroups(
-                bot,
-                AgentEquipTradeCallbackService.equipTradeCallbacks(
-                        () -> AgentTradeCommandProfiler.profileCategory("equips"),
-                        AgentEquipTradeSlowLogService::slowWarnNs,
-                        AgentEquipTradeClassificationService.ClassificationCallbacks::collectEquipBag,
-                        BotEquipManager::collectPotentialSelfUpgradeItems,
-                        item -> AgentOfferService.isReservedForOtherRecipients(entry, bot, item),
-                        () -> AgentBotRuntimeIdentityRuntime.owner(entry),
-                        AgentEquipTradeSlowLogService::warnSlowClassification));
+    private static AgentInventoryTradeRuntimeService.RuntimeCallbacks tradeRuntimeCallbacks(BotEntry entry, Character bot) {
+        return AgentInventoryTradeRuntimeService.RuntimeCallbacks.of(
+                BotEquipManager::collectRecommendedItems,
+                AgentAttackExecutionProvider::getEquippedWeaponType,
+                ItemInformationProvider.getInstance()::getWatkForProjectile,
+                ItemInformationProvider.getInstance()::isQuestItem,
+                () -> YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE,
+                () -> AgentTradeCommandProfiler.profileCategory("equips"),
+                BotEquipManager::collectPotentialSelfUpgradeItems,
+                item -> AgentOfferService.isReservedForOtherRecipients(entry, bot, item),
+                () -> AgentBotRuntimeIdentityRuntime.owner(entry));
     }
 
     // ─── Pot-share helpers ────────────────────────────────────────────────────

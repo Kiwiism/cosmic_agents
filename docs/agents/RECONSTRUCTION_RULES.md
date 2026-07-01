@@ -17,6 +17,13 @@ Rules:
 
 Recent reconstruction notes:
 
+- Trade item collection plus ammo/equip classification runtime composition moved
+  from `BotInventoryManager` to
+  `server.agents.capabilities.trade.AgentInventoryTradeRuntimeService`. The bot
+  inventory shell still supplies temporary runtime hooks for recommendations,
+  equipped weapon type, projectile WATK, quest-item checks, untradeable config,
+  equip profiling, self-reserve items, reservation checks, and owner lookup,
+  while the Agent trade capability now owns how those hooks are assembled.
 - Grouped trade category navigation moved from `BotInventoryManager` private
   helpers to `server.agents.capabilities.trade.AgentTradeGroupNavigationService`.
   Equip and ammo "next group" selection still delegates to the same Agent-owned
