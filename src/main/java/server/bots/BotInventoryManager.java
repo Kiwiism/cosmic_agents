@@ -35,6 +35,7 @@ import server.agents.capabilities.trade.AgentTradeItemAddTickService;
 import server.agents.capabilities.trade.AgentTradeItemAddTickCallbackService;
 import server.agents.capabilities.trade.AgentTradeItemCollectionService;
 import server.agents.capabilities.trade.AgentTradeInviteWaitService;
+import server.agents.capabilities.trade.AgentTradeLifecycleCallbackService;
 import server.agents.capabilities.trade.AgentTradeLifecycleService;
 import server.agents.capabilities.trade.AgentTradeRecipientService;
 import server.agents.capabilities.trade.AgentTradeSequenceCallbackService;
@@ -280,7 +281,7 @@ public class BotInventoryManager {
     }
 
     private static AgentTradeLifecycleService.LifecycleCallbacks tradeLifecycleCallbacks() {
-        return AgentTradeLifecycleService.LifecycleCallbacks.of(
+        return AgentTradeLifecycleCallbackService.lifecycleCallbacks(
                 AgentEquippedSlotTradeService::restoreTemporarilyUnequippedItems,
                 AgentManualTradeService::clearState,
                 AgentBotRuntimeIdentityRuntime::owner,

@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- `BotInventoryManager` trade lifecycle callback construction moved to
+  `server.agents.capabilities.trade.AgentTradeLifecycleCallbackService`. The
+  bot inventory shell still supplies temporary restore, manual-clear, owner,
+  refill, reply-delay, reply-pool, and reaction-randomness hooks while the
+  lifecycle callback object is Agent-owned.
 - `BotInventoryManager.tickManualTrade` callback construction moved to
   `server.agents.capabilities.trade.AgentManualTradeCallbackService`. The bot
   inventory shell still supplies the same temporary active-sequence, timeout,
