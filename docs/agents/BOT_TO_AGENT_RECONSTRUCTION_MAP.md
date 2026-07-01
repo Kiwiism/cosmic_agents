@@ -97,6 +97,9 @@ Recent map updates:
 - Session first-agent checks, away-town offer checks, and away-safe command
   routing moved behind `AgentBotSessionControlRuntime`; BotManager remains only
   the temporary side-effect bridge for away-safe state changes.
+- Support-heal jump-anchor resolution now uses `AgentFollowAnchorService` plus
+  `AgentBotSessionLifecycleSideEffects.getBotEntries`, removing the direct
+  `BotManager.resolveFollowAnchor` call from Agent combat heal runtime.
 - BotManager scripted follow-target resolution moved to
   `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.

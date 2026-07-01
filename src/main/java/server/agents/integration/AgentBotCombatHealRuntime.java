@@ -10,8 +10,8 @@ import server.agents.capabilities.combat.AgentAttackRoute;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatSupportPolicy;
 import server.agents.capabilities.combat.AgentCombatTargetSelector;
+import server.agents.runtime.AgentFollowAnchorService;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 import server.bots.BotMovementManager;
 import server.combat.CombatFormulaProvider;
 import server.life.Monster;
@@ -59,7 +59,11 @@ public final class AgentBotCombatHealRuntime {
                 && AgentBotMovementStateRuntime.grounded(entry)
                 && AgentBotMovementStateRuntime.notClimbing(entry)
                 && config.JUMP_HEAL_LEADER_AHEAD_PX > 0) {
-            Character anchor = BotManager.getInstance().resolveFollowAnchor(entry, AgentBotRuntimeIdentityRuntime.owner(entry));
+            Character leader = AgentBotRuntimeIdentityRuntime.owner(entry);
+            Character anchor = AgentFollowAnchorService.resolve(
+                    entry,
+                    leader,
+                    leader == null ? List.of() : AgentBotSessionLifecycleSideEffects.getBotEntries(leader.getId()));
             if (anchor != null && anchor != bot && anchor.getMap() == bot.getMap()) {
                 int dx = anchor.getPosition().x - bot.getPosition().x;
                 if (Math.abs(dx) >= config.JUMP_HEAL_LEADER_AHEAD_PX) {

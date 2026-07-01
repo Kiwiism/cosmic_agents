@@ -109,6 +109,9 @@ Recent reconstruction notes:
 - Session first-agent checks, away-town offer checks, and away-safe command
   routing now enter through `AgentBotSessionControlRuntime`; actual away-safe
   map/state side effects still use the temporary BotManager lifecycle bridge.
+- Support-heal jump-anchor resolution now uses `AgentFollowAnchorService` and
+  the Agent session lifecycle gateway instead of calling `BotManager` directly;
+  heal targeting, cooldown, jump, and packet behavior are unchanged.
 - BotManager target snapshot assembly moved to
   `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but
