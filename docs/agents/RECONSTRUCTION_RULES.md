@@ -2115,6 +2115,10 @@ Recent reconstruction notes:
   BotInventoryManager preserves the same slot-order collection, quest-item
   exclusion, untradeable policy flag, and caller-supplied item filters for
   scroll, potion, buff, ETC, and equip trade collection.
+- Equip trade group model, aggregate ordering, reserved-page slicing, reserved
+  page message selection, reserved bucket message selection, and next/first
+  group navigation now live in `AgentEquipTradeGroupService`; BotInventoryManager
+  still owns the temporary classification loop and trade sequence side effects.
 - Equipped-slot named trade preparation now lives in
   `AgentEquippedSlotTradeService`; BotInventoryManager still owns the enclosing
   trade sequence but delegates slot counting, temporary unequip preparation,

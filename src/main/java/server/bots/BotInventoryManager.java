@@ -21,6 +21,8 @@ import org.slf4j.LoggerFactory;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
+import server.agents.capabilities.inventory.AgentEquipTradeGroupService;
+import server.agents.capabilities.inventory.AgentEquipTradeGroupService.AgentEquipTradeGroups;
 import server.agents.capabilities.inventory.AgentEquippedSlotTradeService;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy;
 import server.agents.capabilities.inventory.AgentInventoryCollectionService;
@@ -63,17 +65,6 @@ public class BotInventoryManager {
     private static final long TRADE_COMMAND_PROFILE_WARN_NS = 50_000_000L;
     private static final int MANUAL_TRADE_TIMEOUT_MS = 60_000;
     private record PreparedTradeItems(List<Item> items, String errorMessage) {}
-    private record EquipTradeGroups(List<Item> normal,
-                                    List<Item> reservedForOther,
-                                    List<Item> reservedForSelf) {
-        List<Item> itemsFor(EquipsGroup group) {
-            return switch (group) {
-                case NORMAL -> normal;
-                case RESERVED_FOR_OTHER -> reservedForOther;
-                case RESERVED_FOR_SELF -> reservedForSelf;
-            };
-        }
-    }
     private static final Set<Integer> manualTradeGreetingSent = ConcurrentHashMap.newKeySet();
     static void tickPassiveLoot(BotEntry entry, Character bot) {
         if (AgentBotInventoryStateRuntime.hasLootInhibit(entry)) {
@@ -725,8 +716,7 @@ public class BotInventoryManager {
                 result.addAll(groups.own());
             }
             case "equips" -> {
-                EquipTradeGroups groups = classifyEquipTradeGroups(entry, bot);
-                for (EquipsGroup g : EquipsGroup.values()) result.addAll(groups.itemsFor(g));
+                result.addAll(AgentEquipTradeGroupService.allTradeItems(classifyEquipTradeGroups(entry, bot)));
             }
             case "trash" -> result.addAll(collectTrashEquips(entry, bot));
             case "etc" -> {
@@ -760,35 +750,23 @@ public class BotInventoryManager {
 
     // ─── Internals ────────────────────────────────────────────────────────────
 
-    private static List<Item> collectReservedEquips(EquipTradeGroups groups) {
-        return new ArrayList<>(groups.reservedForSelf());
-    }
-
     private static List<Item> collectReservedEquipTradePage(String category, BotEntry entry, Character bot) {
-        EquipTradeGroups groups = classifyEquipTradeGroups(entry, bot);
-        return AgentInventoryTradePolicy.reservedEquipsPageItems(category, collectReservedEquips(groups));
+        return AgentEquipTradeGroupService.reservedEquipTradePage(category, classifyEquipTradeGroups(entry, bot));
     }
 
     private static String reservedEquipsPageMessage(String category, BotEntry entry, Character bot) {
-        EquipTradeGroups groups = classifyEquipTradeGroups(entry, bot);
-        List<Item> reserved = collectReservedEquips(groups);
-        return AgentInventoryTradePolicy.reservedEquipsPageMessage(category, reserved.size());
+        return AgentEquipTradeGroupService.reservedEquipsPageMessage(category, classifyEquipTradeGroups(entry, bot));
     }
 
     private static String equipsGroupMsg(String category) {
-        EquipsGroup group = AgentInventoryTradePolicy.equipsGroupFromCategory(category);
-        if (group == null) return null;
-        return switch (group) {
-            case RESERVED_FOR_OTHER -> BotManager.randomReply(AgentDialogueCatalog.tradeReservedForOtherReplies());
-            case RESERVED_FOR_SELF  -> BotManager.randomReply(AgentDialogueCatalog.tradeReservedForSelfReplies());
-            default -> null;
-        };
+        return AgentEquipTradeGroupService.equipsGroupMessage(
+                category,
+                () -> BotManager.randomReply(AgentDialogueCatalog.tradeReservedForOtherReplies()),
+                () -> BotManager.randomReply(AgentDialogueCatalog.tradeReservedForSelfReplies()));
     }
 
     private static String nextEquipsGroup(String category, BotEntry entry, Character bot) {
-        EquipTradeGroups groups = classifyEquipTradeGroups(entry, bot);
-        return AgentInventoryTradePolicy.nextAvailableEquipsGroupCategory(category,
-                group -> !groups.itemsFor(group).isEmpty());
+        return AgentEquipTradeGroupService.nextEquipsGroup(category, classifyEquipTradeGroups(entry, bot));
     }
 
     private static String nextAmmoGroup(String category, Character bot) {
@@ -796,9 +774,8 @@ public class BotInventoryManager {
     }
 
     private static void startEquipsGroupTradeTransfer(Character owner, BotEntry entry, Character bot) {
-        EquipTradeGroups groups = classifyEquipTradeGroups(entry, bot);
-        EquipsGroup group = AgentInventoryTradePolicy.firstAvailableEquipsGroup(
-                candidate -> !groups.itemsFor(candidate).isEmpty());
+        AgentEquipTradeGroups groups = classifyEquipTradeGroups(entry, bot);
+        EquipsGroup group = AgentEquipTradeGroupService.firstAvailableGroup(groups);
         if (group != null) {
             String category = group.categoryString();
             startTradeSequence(category, owner, groups.itemsFor(group), 0, false, entry, bot);
@@ -841,7 +818,7 @@ public class BotInventoryManager {
         return classifyEquipTradeGroups(entry, bot).itemsFor(EquipsGroup.NORMAL);
     }
 
-    private static EquipTradeGroups classifyEquipTradeGroups(BotEntry entry, Character bot) {
+    private static AgentEquipTradeGroups classifyEquipTradeGroups(BotEntry entry, Character bot) {
         long startedAt = AgentTradeCommandProfiler.profileCategory("equips") ? System.nanoTime() : 0L;
         long bagScanStartedAt = startedAt != 0L ? System.nanoTime() : 0L;
         List<Item> all = new ArrayList<>();
@@ -907,7 +884,7 @@ public class BotInventoryManager {
                         String.format("%.1f", sortNs / 1_000_000.0));
             }
         }
-        return new EquipTradeGroups(normalSorted, reservedForOtherSorted, reservedForSelfSorted);
+        return new AgentEquipTradeGroups(normalSorted, reservedForOtherSorted, reservedForSelfSorted);
     }
 
     private static boolean isOwnClassEquip(Character bot, ItemInformationProvider ii, Equip equip) {
