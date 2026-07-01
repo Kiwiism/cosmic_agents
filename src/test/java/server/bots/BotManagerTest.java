@@ -13,6 +13,7 @@ import server.agents.capabilities.combat.AgentAttackRoute;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentCombatConfig;
+import server.agents.capabilities.combat.AgentGrindTargetSearchPolicy;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.capabilities.looting.AgentLootTargetService;
 import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
@@ -704,7 +705,7 @@ class BotManagerTest {
         when(target.getPosition()).thenReturn(new Point(140, 100));
         AgentAttackPlan plan = basicClosePlan(target);
 
-        assertFalse(BotManager.shouldSearchForGrindTarget(entry, bot, target, plan, 1_000L));
+        assertFalse(AgentGrindTargetSearchPolicy.shouldSearchForGrindTarget(entry, bot, target, plan, 1_000L));
     }
 
     @Test
@@ -717,7 +718,7 @@ class BotManagerTest {
         when(target.getPosition()).thenReturn(new Point(300, 100));
         AgentAttackPlan plan = basicClosePlan(target);
 
-        assertTrue(BotManager.shouldSearchForGrindTarget(entry, bot, target, plan, 1_000L));
+        assertTrue(AgentGrindTargetSearchPolicy.shouldSearchForGrindTarget(entry, bot, target, plan, 1_000L));
     }
 
     @Test
@@ -733,7 +734,7 @@ class BotManagerTest {
         AgentAttackPlan singleTargetPlan = basicClosePlan(target);
 
         // In range, but a multi-mob AoE bot stuck single-targeting should keep scanning for a cluster.
-        assertTrue(BotManager.shouldSearchForGrindTarget(entry, bot, target, singleTargetPlan, 1_000L));
+        assertTrue(AgentGrindTargetSearchPolicy.shouldSearchForGrindTarget(entry, bot, target, singleTargetPlan, 1_000L));
     }
 
     @Test
@@ -747,7 +748,7 @@ class BotManagerTest {
         when(searched.getPosition()).thenReturn(new Point(160, 100));
         AgentAttackPlan plan = basicClosePlan(current);
 
-        assertTrue(BotManager.shouldSwitchToSearchedTarget(entry, bot, current, searched, plan));
+        assertTrue(AgentGrindTargetSearchPolicy.shouldSwitchToSearchedTarget(entry, bot, current, searched, plan));
     }
 
     @Test
@@ -764,7 +765,7 @@ class BotManagerTest {
         AgentAttackPlan plan = basicClosePlan(current);
 
         // Committed to an in-range target and the searched mob anchors no larger cluster (empty map).
-        assertFalse(BotManager.shouldSwitchToSearchedTarget(entry, bot, current, searched, plan));
+        assertFalse(AgentGrindTargetSearchPolicy.shouldSwitchToSearchedTarget(entry, bot, current, searched, plan));
     }
 
     @Test

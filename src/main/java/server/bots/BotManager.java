@@ -14,7 +14,7 @@ import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatRangePolicy;
-import server.agents.capabilities.combat.AgentCombatScoringPolicy;
+import server.agents.capabilities.combat.AgentGrindTargetSearchPolicy;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
 import server.agents.capabilities.quest.AgentPartyQuestSyncService;
 
@@ -97,7 +97,6 @@ import server.agents.integration.AgentBotCombatDamageRuntime;
 import server.agents.integration.AgentBotCombatDeathRuntime;
 import server.agents.integration.AgentBotCombatHealRuntime;
 import server.agents.integration.AgentBotCombatPlanRuntime;
-import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheRuntime;
 import server.agents.integration.AgentBotCombatTargetRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
@@ -1347,67 +1346,6 @@ public class BotManager {
         return retreatRegionId == botRegionId;
     }
 
-    static boolean shouldSearchForGrindTarget(BotEntry entry,
-                                              Character bot,
-                                              Monster currentTarget,
-                                              AgentAttackPlan currentAttackPlan,
-                                              long now) {
-        if (entry == null) {
-            return false;
-        }
-        if (currentTarget == null) {
-            return true;
-        }
-        if (AgentBotGrindSearchStateRuntime.searchBlocked(entry, now)) {
-            return false;
-        }
-        if (bot == null
-                || currentAttackPlan == null
-                || !AgentCombatRangePolicy.isTargetInAttackRange(currentAttackPlan, bot, currentTarget)) {
-            return true;
-        }
-        // In range we normally stay committed (avoids flip-flop). Exception: an AoE bot stuck
-        // single-targeting keeps scanning for a better cluster — the switch itself is gated by
-        // cluster-size hysteresis in shouldSwitchToSearchedTarget.
-        return AgentCombatScoringPolicy.isAoeSingleTargeting(
-                currentAttackPlan.skillId,
-                currentAttackPlan.targets.size(),
-                AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
-                AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry),
-                AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
-    }
-
-    /**
-     * Decide whether to adopt a freshly searched grind target over the current one. Always adopts
-     * when not committed (current null, no plan, or current out of attack range). When committed to
-     * an in-range target, only switches if the searched target anchors a strictly larger AoE cluster
-     * — hysteresis that prevents flip-flop between near-equal targets.
-     */
-    static boolean shouldSwitchToSearchedTarget(BotEntry entry, Character bot, Monster current,
-                                                Monster searched, AgentAttackPlan currentPlan) {
-        if (searched == null || searched == current) {
-            return false;
-        }
-        if (current == null || bot == null || currentPlan == null
-                || !AgentCombatRangePolicy.isTargetInAttackRange(currentPlan, bot, current)) {
-            return true;
-        }
-        int searchedClusterSize = bot.getMap() == null || searched.getPosition() == null
-                ? 0
-                : AgentCombatScoringPolicy.legacyCappedAoeClusterSize(
-                        searched,
-                        bot.getMap().getAllMonsters(),
-                        AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
-                        AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
-        int currentClusterSize = bot.getMap() == null || current.getPosition() == null
-                ? 0
-                : AgentCombatScoringPolicy.legacyCappedAoeClusterSize(
-                        current,
-                        bot.getMap().getAllMonsters(),
-                        AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
-                        AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
-        return searchedClusterSize > currentClusterSize;
-    }
 
     static Point resolveNoGrindTargetPosition(BotEntry entry, Point botPos, MapleMap map) {
         if (entry == null || botPos == null) {
@@ -1819,11 +1757,11 @@ public class BotManager {
                 AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
             }
         }
-        if (runAiTick && shouldSearchForGrindTarget(entry, bot, target, attackPlan, now)) {
+        if (runAiTick && AgentGrindTargetSearchPolicy.shouldSearchForGrindTarget(entry, bot, target, attackPlan, now)) {
             Monster searchedTarget = AgentBotPatrolStateRuntime.hasPatrolRegion(entry)
                     ? AgentBotCombatTargetRuntime.findPatrolTarget(entry, bot, AgentCombatConfig.cfg)
                     : AgentBotCombatTargetRuntime.findGrindTarget(entry, bot, AgentCombatConfig.cfg);
-            if (shouldSwitchToSearchedTarget(entry, bot, target, searchedTarget, attackPlan)) {
+            if (AgentGrindTargetSearchPolicy.shouldSwitchToSearchedTarget(entry, bot, target, searchedTarget, attackPlan)) {
                 target = searchedTarget;
                 attackPlan = null;
             }

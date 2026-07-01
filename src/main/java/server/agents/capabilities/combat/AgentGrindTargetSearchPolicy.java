@@ -1,0 +1,80 @@
+package server.agents.capabilities.combat;
+
+import client.Character;
+import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
+import server.agents.integration.AgentBotGrindSearchStateRuntime;
+import server.bots.BotEntry;
+import server.life.Monster;
+
+/**
+ * Agent-owned grind target search and searched-target adoption policy.
+ */
+public final class AgentGrindTargetSearchPolicy {
+    private AgentGrindTargetSearchPolicy() {
+    }
+
+    public static boolean shouldSearchForGrindTarget(BotEntry entry,
+                                                     Character agent,
+                                                     Monster currentTarget,
+                                                     AgentAttackPlan currentAttackPlan,
+                                                     long now) {
+        if (entry == null) {
+            return false;
+        }
+        if (currentTarget == null) {
+            return true;
+        }
+        if (AgentBotGrindSearchStateRuntime.searchBlocked(entry, now)) {
+            return false;
+        }
+        if (agent == null
+                || currentAttackPlan == null
+                || !AgentCombatRangePolicy.isTargetInAttackRange(currentAttackPlan, agent, currentTarget)) {
+            return true;
+        }
+        // In range we normally stay committed (avoids flip-flop). Exception: an AoE bot stuck
+        // single-targeting keeps scanning for a better cluster; the switch itself is gated by
+        // cluster-size hysteresis in shouldSwitchToSearchedTarget.
+        return AgentCombatScoringPolicy.isAoeSingleTargeting(
+                currentAttackPlan.skillId,
+                currentAttackPlan.targets.size(),
+                AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
+                AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry),
+                AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
+    }
+
+    /**
+     * Decide whether to adopt a freshly searched grind target over the current one. Always adopts
+     * when not committed (current null, no plan, or current out of attack range). When committed to
+     * an in-range target, only switches if the searched target anchors a strictly larger AoE cluster
+     * to prevent flip-flop between near-equal targets.
+     */
+    public static boolean shouldSwitchToSearchedTarget(BotEntry entry,
+                                                       Character agent,
+                                                       Monster current,
+                                                       Monster searched,
+                                                       AgentAttackPlan currentPlan) {
+        if (searched == null || searched == current) {
+            return false;
+        }
+        if (current == null || agent == null || currentPlan == null
+                || !AgentCombatRangePolicy.isTargetInAttackRange(currentPlan, agent, current)) {
+            return true;
+        }
+        int searchedClusterSize = agent.getMap() == null || searched.getPosition() == null
+                ? 0
+                : AgentCombatScoringPolicy.legacyCappedAoeClusterSize(
+                        searched,
+                        agent.getMap().getAllMonsters(),
+                        AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
+                        AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
+        int currentClusterSize = agent.getMap() == null || current.getPosition() == null
+                ? 0
+                : AgentCombatScoringPolicy.legacyCappedAoeClusterSize(
+                        current,
+                        agent.getMap().getAllMonsters(),
+                        AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
+                        AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
+        return searchedClusterSize > currentClusterSize;
+    }
+}

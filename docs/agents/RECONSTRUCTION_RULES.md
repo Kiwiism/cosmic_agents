@@ -2935,6 +2935,11 @@ Recent reconstruction notes:
   passes the legacy movement distance config. The null clear behavior, 1000ms
   far window, 200ms medium window, immediate settle window, follow-mode guard,
   stop-band, and vertical-cap clearing rule are preserved.
+- Grind target search/adoption policy now lives in
+  `server.agents.capabilities.combat.AgentGrindTargetSearchPolicy`; BotManager
+  still schedules the next search tick and performs the selected target lookup.
+  The retarget interval guard, null-target adoption, in-range commitment,
+  AoE-single-target scan exception, and larger-cluster hysteresis are preserved.
 
 Initial reconstruction order:
 
