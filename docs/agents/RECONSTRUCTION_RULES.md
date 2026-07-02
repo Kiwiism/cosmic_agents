@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- BotManager runtime/lifecycle/tick reconstruction milestone audit: production
+  source no longer imports `server.bots.BotManager` or calls
+  `BotManager.getInstance()`. BotManager remains as a legacy compatibility
+  facade whose methods delegate to Agent runtime/capability modules.
 - Manual and spawned registration entry points now enter through
   `AgentInteractionRuntime`, which supplies the Agent tick callback. BotManager
   no longer owns a private tick callback.

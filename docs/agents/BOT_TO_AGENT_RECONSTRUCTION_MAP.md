@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- BotManager runtime/lifecycle/tick milestone audit: production source no
+  longer imports `server.bots.BotManager` or calls `BotManager.getInstance()`.
+  Remaining BotManager methods are legacy compatibility delegates.
 - Manual and spawned registration entry points moved to
   `AgentInteractionRuntime`; BotManager no longer owns the private tick
   callback used by registration.
