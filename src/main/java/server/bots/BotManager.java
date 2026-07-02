@@ -56,6 +56,7 @@ import server.agents.runtime.AgentLiveTickContextService;
 import server.agents.runtime.AgentLiveModeTickService;
 import server.agents.runtime.AgentLiveTickGateService;
 import server.agents.runtime.AgentLocalAttackMoveWindowService;
+import server.agents.runtime.AgentLocalOpportunityAttackRuntime;
 import server.agents.runtime.AgentMapEnvironmentService;
 import server.agents.runtime.AgentMapTransitionRuntime;
 import server.agents.runtime.AgentModeService;
@@ -544,7 +545,7 @@ public class BotManager {
         return AgentAoeRepositionService.resolveAoeReposition(entry, bot, target, attackPlan, botPos);
     }
 
-    static Point selectGrindNavigationTarget(BotEntry entry, Point botPos, Point combatTargetPos) {
+    public static Point selectGrindNavigationTarget(BotEntry entry, Point botPos, Point combatTargetPos) {
         return AgentGrindNavigationTargetSelector.selectGrindNavigationTarget(
                 entry, botPos, combatTargetPos, grindNavigationHooks());
     }
@@ -1076,34 +1077,15 @@ public class BotManager {
                                                                   boolean allowCombatMovement,
                                                                   boolean allowJumpTowardTarget) {
         AgentLocalOpportunityAttackService.Result result =
-                AgentLocalOpportunityAttackService.tryLocalOpportunityAttack(
+                AgentLocalOpportunityAttackRuntime.tryLocalOpportunityAttack(
                         entry,
                         bot,
                         botPos,
                         movementTargetPos,
                         moveWindowReferencePos,
                         allowCombatMovement,
-                        allowJumpTowardTarget,
-                        localOpportunityAttackHooks());
+                        allowJumpTowardTarget);
         return new LocalOpportunityAttackResult(result.consumedTick(), result.targetPos());
-    }
-
-    private static AgentLocalOpportunityAttackService.Hooks localOpportunityAttackHooks() {
-        return new AgentLocalOpportunityAttackService.Hooks(
-                BotManager::selectGrindNavigationTarget,
-                BotPhysicsEngine::calculateMaxJumpHeight,
-                BotMovementManager::initiateJump,
-                BotManager::setLocalAttackMoveWindow);
-    }
-
-    private static void setLocalAttackMoveWindow(BotEntry entry, Point botPos, Point referencePos) {
-        AgentLocalAttackMoveWindowService.setLocalAttackMoveWindow(
-                entry,
-                botPos,
-                referencePos,
-                BotMovementManager.cfg.FOLLOW_DIST,
-                BotMovementManager.cfg.STOP_DIST,
-                BotMovementManager.cfg.FOLLOW_Y_CAP);
     }
 
     private static void clearFollowActionMoveWindowIfSettled(BotEntry entry,

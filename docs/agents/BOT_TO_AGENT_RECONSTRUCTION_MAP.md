@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Local-opportunity attack hook wiring moved from BotManager to
+  `server.agents.runtime.AgentLocalOpportunityAttackRuntime`. BotManager keeps
+  only a temporary result adapter while Agent runtime owns grind-navigation,
+  jump-height, jump-initiation, and local move-window hook construction.
 - Common tick hook wiring moved from BotManager to
   `server.agents.runtime.AgentCommonTickRuntime`. BotManager now passes only
   the temporary script-task callback while Agent runtime owns combat damage,

@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Local-opportunity attack hook construction now lives in
+  `server.agents.runtime.AgentLocalOpportunityAttackRuntime`. Its temporary
+  dependency on `BotManager.selectGrindNavigationTarget` should disappear when
+  grind navigation target selection is reconstructed.
 - Common tick hook construction now lives in
   `server.agents.runtime.AgentCommonTickRuntime`. BotManager should only pass
   the temporary script-task tick callback until script tasks are reconstructed.
