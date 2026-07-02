@@ -38,6 +38,7 @@ import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentFollowAnchorService;
 import server.agents.runtime.AgentFormationService;
 import server.agents.runtime.AgentFollowIdleMovementService;
+import server.agents.runtime.AgentFollowTargetResolutionService;
 import server.agents.runtime.AgentFollowTargetPositionService;
 import server.agents.runtime.AgentFollowMapSyncService;
 import server.agents.runtime.AgentFollowOpportunityTickService;
@@ -211,16 +212,17 @@ public class BotManager {
     private final Map<Integer, Point> townClusterAnchors = AgentLeaderSafetyService.townClusterAnchorsByLeaderId();
     private record LocalOpportunityAttackResult(boolean consumedTick, Point targetPos) {}
 
-    private static final int MIN_PREFIX_TARGET_LENGTH = 2;
     private static final int PLATFORM_EDGE_INSET_PX = 12;
     private Character resolveFollowTarget(Character owner, String targetToken) {
-        if (owner == null || targetToken == null || targetToken.isBlank()) {
-            if (owner != null) {
-                owner.yellowMessage("Can't follow that target.");
-            }
-            return null;
-        }
+        return AgentFollowTargetResolutionService.resolveFollowTarget(
+                owner,
+                targetToken,
+                new AgentFollowTargetResolutionService.Hooks(
+                        this::followTargetCandidates,
+                        Character::yellowMessage));
+    }
 
+    private List<Character> followTargetCandidates(Character owner) {
         List<Character> candidates = new ArrayList<>();
         if (owner.isLoggedinWorld()) {
             candidates.add(owner);
@@ -249,43 +251,7 @@ public class BotManager {
                 candidates.add(siblingBot);
             }
         }
-
-        for (Character candidate : candidates) {
-            if (candidate.getName().equalsIgnoreCase(targetToken)) {
-                return candidate;
-            }
-        }
-
-        if (targetToken.length() < MIN_PREFIX_TARGET_LENGTH) {
-            owner.yellowMessage("Follow target must use at least " + MIN_PREFIX_TARGET_LENGTH + " letters.");
-            return null;
-        }
-
-        List<Character> prefixMatches = new ArrayList<>();
-        for (Character candidate : candidates) {
-            if (candidate.getName().regionMatches(true, 0, targetToken, 0, targetToken.length())) {
-                prefixMatches.add(candidate);
-            }
-        }
-        if (prefixMatches.size() == 1) {
-            return prefixMatches.get(0);
-        }
-        if (prefixMatches.size() > 1) {
-            StringBuilder message = new StringBuilder("Ambiguous follow target '")
-                    .append(targetToken)
-                    .append("': ");
-            for (int i = 0; i < prefixMatches.size(); i++) {
-                if (i > 0) {
-                    message.append(", ");
-                }
-                message.append(prefixMatches.get(i).getName());
-            }
-            owner.yellowMessage(message.toString());
-            return null;
-        }
-
-        owner.yellowMessage("Can't follow '" + targetToken + "'. Target must be a same-party character or one of your active bots.");
-        return null;
+        return candidates;
     }
 
     private boolean applyFollowTargetCommand(Character owner, List<BotEntry> entries, String targetToken) {

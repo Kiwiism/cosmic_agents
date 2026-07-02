@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Follow-target name resolution now lives in
+  `server.agents.runtime.AgentFollowTargetResolutionService`. BotManager keeps
+  temporary candidate-list assembly and follow-mode application hooks. The same
+  exact-name match, two-letter prefix rule, ambiguous-target message, and
+  missing-target message are preserved.
 - Transfer chat command routing now lives in
   `server.agents.runtime.AgentTransferCommandService`. BotManager keeps a
   temporary compatibility hook bundle for transfer lifecycle delegation and

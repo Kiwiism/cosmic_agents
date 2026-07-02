@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Follow-target name resolution moved from BotManager to
+  `server.agents.runtime.AgentFollowTargetResolutionService`. BotManager now
+  supplies temporary candidate-list assembly and follow-mode application while
+  Agent runtime owns the exact/prefix/ambiguous/missing-target rules.
 - Transfer chat command routing moved from BotManager to
   `server.agents.runtime.AgentTransferCommandService`. BotManager now supplies
   temporary hooks for transfer lifecycle delegation and leader yellow-message
