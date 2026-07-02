@@ -410,7 +410,8 @@ public class BotManager {
 
     public void removeBot(int ownerCharId) {
         AgentLifecycleService.removeLeaderEntries(
-                bots, AgentFormationService.formationsByLeaderId(), townClusterAnchors, ownerCharId, this::cancelBotTask);
+                bots, AgentFormationService.formationsByLeaderId(), townClusterAnchors, ownerCharId,
+                AgentLifecycleService::cancelScheduledTickIfPresent);
     }
 
     /** Cancel and remove a bot by the bot character's own ID (used during shutdown/disconnect). */
@@ -421,12 +422,6 @@ public class BotManager {
     /** Release bot-owned runtime state before this character leaves bot control. */
     public boolean cleanupBotRuntimeState(Character bot) {
         return AgentRuntimeCleanupService.cleanupAgentRuntimeState(bot);
-    }
-
-    private void cancelBotTask(BotEntry entry) {
-        if (AgentBotManagerSchedulerRuntime.hasScheduledTask(entry)) {
-            AgentBotManagerSchedulerRuntime.cancelScheduledTask(entry);
-        }
     }
 
     /** Disown a bot by name - cancels its AI tick and leaves it idle in the map. */

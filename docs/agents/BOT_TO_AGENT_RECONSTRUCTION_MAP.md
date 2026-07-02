@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Scheduled tick cancellation for lifecycle removal moved from BotManager to
+  `server.agents.runtime.AgentLifecycleService.cancelScheduledTickIfPresent`.
+  BotManager now delegates the remove-leader callback to Agent lifecycle while
+  preserving the same scheduled-task presence check and non-interrupting
+  cancellation.
 - Pending-offer chat response hook wiring moved from BotManager to
   `server.agents.capabilities.trade.AgentPendingOfferChatRouteService`.
   BotManager now supplies only the temporary live-entry-group source while

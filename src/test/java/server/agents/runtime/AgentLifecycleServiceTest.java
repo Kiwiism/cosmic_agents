@@ -29,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AgentLifecycleServiceTest {
@@ -445,6 +446,18 @@ class AgentLifecycleServiceTest {
         assertFalse(formations.containsKey(leader.getId()));
         assertFalse(townAnchors.containsKey(leader.getId()));
         assertEquals(2, cancelled.get());
+    }
+
+    @Test
+    void cancelsScheduledTickOnlyWhenEntryHasTask() {
+        Character leader = character(100, "Leader");
+        ScheduledFuture<?> scheduledTask = mock(ScheduledFuture.class);
+
+        AgentLifecycleService.cancelScheduledTickIfPresent(null);
+        AgentLifecycleService.cancelScheduledTickIfPresent(new BotEntry(character(200, "NoTask"), leader, null));
+        AgentLifecycleService.cancelScheduledTickIfPresent(new BotEntry(character(201, "Task"), leader, scheduledTask));
+
+        verify(scheduledTask).cancel(false);
     }
 
     @Test

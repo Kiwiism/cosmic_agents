@@ -269,6 +269,12 @@ public final class AgentLifecycleService {
         townClusterAnchors.remove(leaderCharId);
     }
 
+    public static void cancelScheduledTickIfPresent(BotEntry entry) {
+        if (entry != null && entry.hasScheduledTask()) {
+            entry.cancelScheduledTask();
+        }
+    }
+
     public static boolean removeAgentByCharacterId(Map<Integer, List<BotEntry>> entriesByLeaderId,
                                                    Map<Integer, ?> leaderFormations,
                                                    Map<Integer, ?> townClusterAnchors,

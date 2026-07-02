@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Scheduled tick cancellation for lifecycle removal now lives in
+  `server.agents.runtime.AgentLifecycleService.cancelScheduledTickIfPresent`.
+  BotManager's leader-removal compatibility wrapper delegates to the Agent
+  lifecycle helper, preserving the same null/no-task guard and
+  `ScheduledFuture.cancel(false)` behavior.
 - Pending-offer chat response hook wiring now lives in
   `server.agents.capabilities.trade.AgentPendingOfferChatRouteService`.
   BotManager keeps only the temporary live-entry-group source. The same expiry,
