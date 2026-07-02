@@ -21,6 +21,7 @@ Target package groups:
   `AgentFormationRuntime`. Spawn and relogin registration callback composition
   now enters through `AgentSpawnRuntime` and `AgentReloginRuntime`; manual and
   spawned registration entry points enter through `AgentRegistrationRuntime`.
+  Spawn result ownership is `AgentLifecycleService.AgentSpawnResult`.
   BotManager remains only a temporary compatibility caller for legacy entry
   points.
 - `server.agents.model`: identity, mode, profile, leader reference.

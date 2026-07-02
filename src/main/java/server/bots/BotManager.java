@@ -157,23 +157,10 @@ public class BotManager {
         return AgentRegistrationRuntime.registerSpawnedAgent(ownerCharId, owner, bot, this::tick);
     }
 
-    public record SpawnResult(boolean success, Character bot, boolean autoRegistered, String errorMessage) {
-        static SpawnResult ok(Character bot, boolean autoRegistered) {
-            return new SpawnResult(true, bot, autoRegistered, null);
-        }
-        static SpawnResult fail(String msg) {
-            return new SpawnResult(false, null, false, msg);
-        }
-    }
-
     /** Spawn a registered bot for the given owner, placing it at the owner's current position in follow mode. */
-    public SpawnResult spawnBotForOwner(Character owner, String botName) {
-        AgentLifecycleService.AgentSpawnResult result = AgentSpawnRuntime.spawnAgentForLeader(
+    public AgentLifecycleService.AgentSpawnResult spawnBotForOwner(Character owner, String botName) {
+        return AgentSpawnRuntime.spawnAgentForLeader(
                 owner, botName, this::tick, this::issueFollowOwner, log);
-        if (!result.success()) {
-            return SpawnResult.fail(result.errorMessage());
-        }
-        return SpawnResult.ok(result.agent(), result.autoRegistered());
     }
 
     public void joinBotToOwnerParty(Character owner, Character bot) {

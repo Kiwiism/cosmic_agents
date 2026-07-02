@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- The spawn result contract is now the Agent-owned
+  `AgentLifecycleService.AgentSpawnResult`. BotManager no longer defines a
+  duplicate `SpawnResult` wrapper; spawn command, party invite, and messenger
+  invite callers consume the Agent lifecycle result directly.
 - Manual and spawned registration compatibility entry points now live in
   `server.agents.runtime.AgentRegistrationRuntime` as `registerManualAgent`
   and `registerSpawnedAgent`. BotManager no longer owns the private

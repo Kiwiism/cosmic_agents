@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- BotManager's duplicate spawn result wrapper was removed. `spawnBotForOwner`
+  now returns `AgentLifecycleService.AgentSpawnResult`, and command/party/
+  messenger callers consume the Agent lifecycle result directly.
 - BotManager's private registration branch moved to
   `server.agents.runtime.AgentRegistrationRuntime.registerManualAgent` and
   `registerSpawnedAgent`. BotManager now keeps only legacy public method names

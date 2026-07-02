@@ -8,6 +8,7 @@ import client.creator.BotCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.registry.AgentResolvedCharacter;
+import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentPartyLifecycleService;
 import server.bots.BotManager;
 import server.agents.auth.AgentOwnershipService;
@@ -74,16 +75,16 @@ public final class AgentSpawnCommandExecutor {
             }
         }
 
-        BotManager.SpawnResult result = botManager.spawnBotForOwner(player, botName);
+        AgentLifecycleService.AgentSpawnResult result = botManager.spawnBotForOwner(player, botName);
         if (!result.success()) {
             player.yellowMessage(result.errorMessage());
             return;
         }
-        AgentPartyLifecycleService.joinAgentToLeaderParty(player, result.bot());
+        AgentPartyLifecycleService.joinAgentToLeaderParty(player, result.agent());
         if (result.autoRegistered()) {
-            player.yellowMessage("Bot '" + result.bot().getName() + "' auto-registered to " + player.getName() + " because it is on the same account.");
+            player.yellowMessage("Bot '" + result.agent().getName() + "' auto-registered to " + player.getName() + " because it is on the same account.");
         }
-        player.yellowMessage("Bot '" + result.bot().getName() + "' spawned. Say 'follow me' or 'stop' to control it.");
+        player.yellowMessage("Bot '" + result.agent().getName() + "' spawned. Say 'follow me' or 'stop' to control it.");
     }
 
     private BotAccountResolution resolveBotAccount(String name) {
