@@ -11,6 +11,7 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatMovementFlow;
 import server.agents.integration.AgentBotActiveModeRuntime;
 import server.agents.integration.AgentBotFidgetSideEffects;
+import server.agents.integration.AgentBotMovementCommandRuntime;
 import server.agents.integration.AgentBotMovementReplyRuntime;
 import server.agents.integration.AgentBotMovementRuntime;
 import server.agents.integration.AgentBotMovementSchedulerRuntime;
@@ -38,15 +39,14 @@ class AgentBotMovementRuntimeTest {
         Character owner = mock(Character.class);
         when(owner.getPosition()).thenReturn(new Point(10, 20));
         BotEntry entry = new BotEntry(null, owner, null);
-        BotManager manager = mock(BotManager.class);
         ArgumentCaptor<Point> pointCaptor = ArgumentCaptor.forClass(Point.class);
 
         try (MockedStatic<AgentBotMovementSchedulerRuntime> scheduler =
                      mockStatic(AgentBotMovementSchedulerRuntime.class);
              MockedStatic<AgentBotMovementStatusRuntime> status = mockStatic(AgentBotMovementStatusRuntime.class);
              MockedStatic<AgentBotMovementReplyRuntime> replies = mockStatic(AgentBotMovementReplyRuntime.class);
-             MockedStatic<BotManager> botManager = mockStatic(BotManager.class)) {
-            botManager.when(BotManager::getInstance).thenReturn(manager);
+             MockedStatic<AgentBotMovementCommandRuntime> movementCommands =
+                     mockStatic(AgentBotMovementCommandRuntime.class)) {
             scheduler.when(() -> AgentBotMovementSchedulerRuntime.afterRandomDelay(eq(1000), eq(1500), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
@@ -56,7 +56,7 @@ class AgentBotMovementRuntimeTest {
             assertTrue(AgentBotMovementRuntime.movementCallbacks(entry).farmHere());
 
             status.verify(() -> AgentBotMovementStatusRuntime.prepareMovementActiveMode(entry));
-            verify(manager).issueFarmHere(eq(entry), pointCaptor.capture());
+            movementCommands.verify(() -> AgentBotMovementCommandRuntime.farmHere(eq(entry), pointCaptor.capture()));
             assertEquals(new Point(10, 20), pointCaptor.getValue());
             replies.verify(() -> AgentBotMovementReplyRuntime.replyNow(eq(entry), anyString()));
         }
@@ -78,15 +78,14 @@ class AgentBotMovementRuntimeTest {
     void followQueuesReplySupplyCheckAndNestedFollowCommand() {
         Character bot = mock(Character.class);
         BotEntry entry = new BotEntry(bot, null, null);
-        BotManager manager = mock(BotManager.class);
 
         try (MockedStatic<AgentBotMovementSchedulerRuntime> scheduler =
                      mockStatic(AgentBotMovementSchedulerRuntime.class);
              MockedStatic<AgentBotActiveModeRuntime> activeMode = mockStatic(AgentBotActiveModeRuntime.class);
              MockedStatic<AgentBotMovementReplyRuntime> replies = mockStatic(AgentBotMovementReplyRuntime.class);
              MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class);
-             MockedStatic<BotManager> botManager = mockStatic(BotManager.class)) {
-            botManager.when(BotManager::getInstance).thenReturn(manager);
+             MockedStatic<AgentBotMovementCommandRuntime> movementCommands =
+                     mockStatic(AgentBotMovementCommandRuntime.class)) {
             scheduler.when(() -> AgentBotMovementSchedulerRuntime.afterRandomDelay(eq(1500), eq(2000), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
@@ -103,7 +102,7 @@ class AgentBotMovementRuntimeTest {
             activeMode.verify(() -> AgentBotActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry));
             replies.verify(() -> AgentBotMovementReplyRuntime.replyNow(eq(entry), anyString()));
             potions.verify(() -> AgentPotionService.checkPotShareOnModeStart(entry, bot));
-            verify(manager).issueFollowOwner(entry);
+            movementCommands.verify(() -> AgentBotMovementCommandRuntime.followOwner(entry));
         }
     }
 

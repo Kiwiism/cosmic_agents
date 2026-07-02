@@ -56,6 +56,7 @@ import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotGrindWanderStateRuntime;
 import server.agents.integration.AgentBotMapStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
+import server.agents.integration.AgentBotMovementCommandRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
@@ -1025,7 +1026,7 @@ class BotManagerTest {
         Character bot = mockMovingBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, owner, null);
 
-        BotManager.getInstance().issueFarmHere(entry, new Point(300, 100));
+        AgentBotMovementCommandRuntime.farmHere(entry, new Point(300, 100));
 
         assertEquals(new Point(300, 100), AgentBotFarmAnchorStateRuntime.farmAnchor(entry));
         assertEquals(map.getId(), AgentBotFarmAnchorStateRuntime.farmAnchorMapId(entry));
@@ -1064,7 +1065,7 @@ class BotManagerTest {
         entry.shopNpcPos = new Point(900, 100);
         entry.shopTargetPos = new Point(850, 100);
 
-        BotManager.getInstance().issueFollowOwner(entry);
+        AgentBotMovementCommandRuntime.followOwner(entry);
 
         assertFalse(entry.shopVisitPending);
         assertFalse(entry.shopSequenceActive);
@@ -1082,7 +1083,7 @@ class BotManagerTest {
         AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(300, 100), map.getId());
         AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, new Point(300, 100));
 
-        BotManager.getInstance().issueFollowOwner(entry);
+        AgentBotMovementCommandRuntime.followOwner(entry);
 
         assertNull(AgentBotFarmAnchorStateRuntime.farmAnchor(entry));
         assertEquals(-1, AgentBotFarmAnchorStateRuntime.farmAnchorMapId(entry));
@@ -1104,7 +1105,7 @@ class BotManagerTest {
         AgentBotModeStateRuntime.setFollowing(entry, true);
         AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, new Point(300, 100));
 
-        BotManager.getInstance().issueStop(entry);
+        AgentBotMovementCommandRuntime.stop(entry);
 
         assertFalse(entry.shopVisitPending);
         assertFalse(entry.shopSequenceActive);
@@ -1123,7 +1124,7 @@ class BotManagerTest {
         AgentBotModeStateRuntime.setFollowing(entry, true);
         AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, new Point(300, 100));
 
-        BotManager.getInstance().issueGrind(entry);
+        AgentBotMovementCommandRuntime.grind(entry);
 
         assertFalse(AgentBotModeStateRuntime.following(entry));
         assertTrue(AgentBotModeStateRuntime.grinding(entry));

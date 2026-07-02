@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- BotManager movement command wrappers were removed. Spawn, lifecycle, tick,
+  movement chat tests, and movement parity tests now use
+  `AgentBotMovementCommandRuntime` directly.
 - BotManager leader-safety helpers for town-offer, primary-entry, and
   inactive-leader safe mode were removed. Agent session control/runtime now
   owns those checks and side effects without a BotManager compatibility hop.
@@ -601,9 +604,9 @@ Recent map updates:
   temporary guards and callbacks for script-task clearing, shop cancellation,
   and mode start side effects.
 - Agent movement command facade now routes follow-owner, stop, move-to,
-  farm-here, and grind through Agent runtime mode/queue services directly.
-  Patrol remains a temporary BotManager delegation until graph-region
-  validation and visible failure replies move.
+  farm-here, grind, and patrol through Agent runtime mode/queue services
+  directly, including patrol graph-region validation and visible failure
+  replies.
 - Build level-up, potion stop, and combat ammo-stop paths now request
   follow-owner through `AgentBotMovementCommandRuntime` instead of calling
   `BotManager.issueFollowOwner` directly.
@@ -611,8 +614,8 @@ Recent map updates:
   through `AgentBotMovementCommandRuntime` instead of calling
   `BotManager.issueStop` directly.
 - Patrol command graph-region validation, visible failure reply, and active
-  patrol mode transition moved into `AgentBotMovementCommandRuntime`;
-  `BotManager.issuePatrol` remains a compatibility delegate.
+  patrol mode transition moved into `AgentBotMovementCommandRuntime`; the
+  former `BotManager.issuePatrol` compatibility delegate has been removed.
 - Session first-agent checks, away-town offer checks, and away-safe command
   routing moved behind `AgentBotSessionControlRuntime`; BotManager remains only
   the temporary side-effect bridge for away-safe state changes.
@@ -642,9 +645,9 @@ Recent map updates:
   through `server.agents.runtime.AgentFollowAnchorService`, removing its direct
   `BotManager.resolveFollowAnchor` call while preserving follow target
   behavior.
-- BotManager follow-owner, grind, and stop entry points now delegate to
-  `AgentBotMovementCommandRuntime`, reducing BotManager to compatibility
-  routing for those mode commands while preserving command setup behavior.
+- BotManager follow-owner, grind, and stop entry points were removed. Callers
+  now use `AgentBotMovementCommandRuntime` directly while preserving command
+  setup behavior.
 - BotManager inactive-town return-scroll item use moved to
   `server.agents.runtime.AgentReturnScrollService`; BotManager remains only the
   leader-safety callback site for this action.

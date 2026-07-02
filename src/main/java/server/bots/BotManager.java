@@ -113,7 +113,7 @@ public class BotManager {
     /** Spawn a registered bot for the given owner, placing it at the owner's current position in follow mode. */
     public AgentLifecycleService.AgentSpawnResult spawnBotForOwner(Character owner, String botName) {
         return AgentSpawnRuntime.spawnAgentForLeader(
-                owner, botName, this::tick, this::issueFollowOwner, log);
+                owner, botName, this::tick, AgentBotMovementCommandRuntime::followOwner, log);
     }
 
     public void joinBotToOwnerParty(Character owner, Character bot) {
@@ -144,7 +144,7 @@ public class BotManager {
 
     /** Disown a bot by name - cancels its AI tick and leaves it idle in the map. */
     public boolean dismissBot(int ownerCharId, String botName) {
-        return AgentLifecycleChatCommandRuntime.dismissAgent(ownerCharId, botName, this::issueStop);
+        return AgentLifecycleChatCommandRuntime.dismissAgent(ownerCharId, botName, AgentBotMovementCommandRuntime::stop);
     }
 
     /** Recruit an ownerless bot by name into the owner's group. Returns an error string on failure, null on success. */
@@ -155,7 +155,7 @@ public class BotManager {
     /** Transfer a bot from this owner to another player in the same map. Returns an error string on failure, null on success. */
     public String giveBot(int ownerCharId, Character owner, String botName, String targetName) {
         return AgentLifecycleChatCommandRuntime.transferAgent(
-                ownerCharId, owner, botName, targetName, this::issueStop, this::registerBot);
+                ownerCharId, owner, botName, targetName, AgentBotMovementCommandRuntime::stop, this::registerBot);
     }
 
     public Character getActiveOwnerByBotCharId(int botCharId) {
@@ -229,67 +229,13 @@ public class BotManager {
     // -------------------------------------------------------------------------
 
     private void tick(BotEntry entry, int ownerCharId, int botCharId) {
-        AgentTickRuntime.tick(entry, ownerCharId, botCharId, this::issueGrind, this::issueFollowOwner);
+        AgentTickRuntime.tick(
+                entry,
+                ownerCharId,
+                botCharId,
+                AgentBotMovementCommandRuntime::grind,
+                AgentBotMovementCommandRuntime::followOwner);
     }
-
-    /**
-     * Public hook: tell a bot to walk to a fixed point using the same field and
-     * pipeline as the player "here" command. No owner reference required, so it
-     * works for bots whose owner is offline (e.g. owner-inactive town clustering)
-     * as well as any future code-driven "go here" feature.
-     *
-     * Movement runs through the regular tick when the owner is online, and
-     * through tickStandaloneMoveTarget when the owner is offline. Arrival is
-     * detected by the existing clearReachedMoveTarget logic.
-     */
-    public void issueMoveTo(BotEntry entry, Point dest, boolean precise) {
-        AgentBotMovementCommandRuntime.moveTo(entry, dest, precise);
-    }
-
-
-    public void issueFarmHere(BotEntry entry, Point dest) {
-        AgentBotMovementCommandRuntime.farmHere(entry, dest);
-    }
-
-
-    public void issuePatrol(BotEntry entry, Point ownerPos) {
-        AgentBotMovementCommandRuntime.patrol(entry, ownerPos);
-    }
-
-    /**
-     * Public hook: return the bot to ordinary owner-follow mode. Scripted map
-     * automation and chat commands should use this instead of writing mode
-     * fields directly.
-     */
-    public void issueFollowOwner(BotEntry entry) {
-        AgentBotMovementCommandRuntime.followOwner(entry);
-    }
-
-    /**
-     * Public hook: follow a concrete party/member/bot target. Passing the owner
-     * (or null) means regular owner-follow.
-     */
-    public void issueFollow(BotEntry entry, Character target) {
-        AgentBotMovementCommandRuntime.follow(entry, target);
-    }
-
-
-    /**
-     * Public hook: enter autonomous grind/combat mode using the same setup as
-     * player chat commands. This deliberately clears fixed movement and follow
-     * targets so scripted "grind" steps do not run in parallel with a stale
-     * navigation command.
-     */
-    public void issueGrind(BotEntry entry) {
-        AgentBotMovementCommandRuntime.grind(entry);
-    }
-
-
-    /** Public hook: stop all scripted movement/combat mode and idle in place. */
-    public void issueStop(BotEntry entry) {
-        AgentBotMovementCommandRuntime.stop(entry);
-    }
-
 
     /**
      * Public hook for map scripts: drop up to {@code quantity} from the first

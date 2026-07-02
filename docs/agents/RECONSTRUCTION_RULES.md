@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- BotManager movement command wrappers were removed. Spawn, transfer/dismiss,
+  live tick mode callbacks, movement chat tests, and movement parity tests now
+  call `AgentBotMovementCommandRuntime` directly for follow, stop, grind,
+  farm-here, patrol, and fixed move commands.
 - BotManager leader-safety compatibility helpers were removed. Session
   side-effect wiring now calls `AgentLeaderSafetyRuntime` directly for
   inactive-leader safe mode, and primary-session / town-offer checks live in
@@ -646,9 +650,8 @@ Recent reconstruction notes:
   guard-before-clear, clear-script-tasks, cancel-shop, start-mode order are
   unchanged.
 - Agent movement command facade now calls Agent runtime mode/queue services
-  directly for follow-owner, stop, move-to, farm-here, and grind. Patrol still
-  delegates to BotManager temporarily for graph-region validation and the
-  visible "can't find a patrol region here" reply.
+  directly for follow-owner, stop, move-to, farm-here, grind, and patrol,
+  including patrol graph-region validation and the visible failure reply.
 - Build, potion, and combat ammo fallback paths now request follow-owner via
   `AgentBotMovementCommandRuntime` instead of direct BotManager calls. The same
   follow-owner mode transition and visible dialogue behavior are preserved.
@@ -656,8 +659,8 @@ Recent reconstruction notes:
   via `AgentBotMovementCommandRuntime` instead of direct BotManager calls. The
   same pending-action, reply timing, and equipment side effects are preserved.
 - Patrol command graph-region validation, visible failure reply, and mode-state
-  transition now live in `AgentBotMovementCommandRuntime`; `BotManager.issuePatrol`
-  is a compatibility delegate.
+  transition now live in `AgentBotMovementCommandRuntime`; the former
+  `BotManager.issuePatrol` compatibility delegate has been removed.
 - Session first-agent checks, away-town offer checks, and away-safe command
   routing now enter through `AgentBotSessionControlRuntime`; actual away-safe
   map/state side effects still use the temporary BotManager lifecycle bridge.
@@ -686,10 +689,10 @@ Recent reconstruction notes:
   `AgentFollowAnchorService` with sibling entries from the Agent session
   lifecycle gateway instead of calling `BotManager.resolveFollowAnchor`;
   follow, sibling-target, and rope/climb targeting behavior are unchanged.
-- BotManager follow-owner, grind, and stop compatibility hooks now delegate to
-  `AgentBotMovementCommandRuntime`; command preparation, script-task clearing,
-  shop cancellation, mode transitions, and navigation clearing remain
-  behavior-equivalent.
+- BotManager follow-owner, grind, and stop compatibility hooks were removed.
+  Spawn/lifecycle/tick call sites now use `AgentBotMovementCommandRuntime`
+  directly; command preparation, script-task clearing, shop cancellation,
+  mode transitions, and navigation clearing remain behavior-equivalent.
 - Return-scroll use for inactive leader safety now lives in
   `AgentReturnScrollService`; BotManager only calls the Agent runtime helper
   from the existing leader-safety callback, preserving 2030000 lookup, effect
@@ -1119,8 +1122,8 @@ Recent reconstruction notes:
   Agent-owned facade in `AgentBotMovementRuntime`; `BotChatMovementRuntime`
   remains only as a temporary compatibility shim for legacy bot package callers.
 - Follow/stop/move/farm/patrol/grind command dispatch now has an Agent-owned
-  facade in `AgentBotMovementCommandRuntime`; `BotManager` remains the temporary
-  side-effect implementation for the actual movement state mutations.
+  facade in `AgentBotMovementCommandRuntime`; BotManager no longer exposes
+  temporary movement-command wrapper methods.
 - Read-only movement state snapshots now have Agent-owned types in
   `AgentMovementSnapshot`/`AgentMovementMode` and an integration facade in
   `AgentBotMovementStateRuntime`; `BotEntry` remains the temporary state source.
@@ -3393,10 +3396,10 @@ Recent reconstruction notes:
   projectile-reachable retreat selection, portal-path rejection, local retreat
   same-region guards, and region mob counting are preserved.
 - Public movement mode commands for explicit move, farm-here, and concrete
-  target-follow now delegate through
-  `server.agents.integration.AgentBotMovementCommandRuntime`; BotManager keeps
-  compatibility entry points and private script-task starters. The same script
-  task clearing, shop-visit cancellation, null guards, mode-state transitions,
+  target-follow now dispatch through
+  `server.agents.integration.AgentBotMovementCommandRuntime`; BotManager no
+  longer keeps those compatibility entry points. The same script task clearing,
+  shop-visit cancellation, null guards, mode-state transitions,
   and navigation-state clear hooks are preserved.
 - Script-task follow-target lookup now uses
   `server.agents.runtime.AgentFollowAnchorService.resolveTargetFromRuntimeRegistry`;
