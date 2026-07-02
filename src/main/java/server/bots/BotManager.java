@@ -54,7 +54,7 @@ import server.agents.runtime.AgentLeaderSafetyService;
 import server.agents.runtime.AgentLiveTickContextService;
 import server.agents.runtime.AgentLiveModeTickService;
 import server.agents.runtime.AgentLiveTickGateService;
-import server.agents.runtime.AgentLocalAttackMoveWindowService;
+import server.agents.runtime.AgentLocalAttackMoveWindowRuntime;
 import server.agents.runtime.AgentLocalOpportunityAttackRuntime;
 import server.agents.runtime.AgentMapEnvironmentService;
 import server.agents.runtime.AgentMapTransitionRuntime;
@@ -688,7 +688,7 @@ public class BotManager {
                 AgentBotOwnerMotionStateRuntime::rememberOwnerPosition,
                 AgentTickStateMaintenanceService::clearFarmAnchorOnMapChange,
                 AgentTickStateMaintenanceService::clearPatrolOnMapChange,
-                BotManager::clearFollowActionMoveWindowIfSettled);
+                AgentLocalAttackMoveWindowRuntime::clearFollowActionMoveWindowIfSettled);
     }
 
     private AgentLiveModeTickService.Hooks liveModeTickHooks(boolean perf) {
@@ -755,7 +755,7 @@ public class BotManager {
                                     scriptTargetPos,
                                     scriptRunAiTick,
                                     new AgentScriptedMoveCombatTickService.Hooks(
-                                            BotManager::clearActionMoveWindowIfSettled,
+                                            AgentLocalAttackMoveWindowRuntime::clearActionMoveWindowIfSettled,
                                             (attackEntry, attackBot, attackBotPos, attackTargetPos) -> {
                                                 LocalOpportunityAttackResult result;
                                                 if (!perf) {
@@ -1014,30 +1014,6 @@ public class BotManager {
                         allowCombatMovement,
                         allowJumpTowardTarget);
         return new LocalOpportunityAttackResult(result.consumedTick(), result.targetPos());
-    }
-
-    private static void clearFollowActionMoveWindowIfSettled(BotEntry entry,
-                                                             Point botPos,
-                                                             AgentTargetSnapshot targetSnapshot) {
-        AgentLocalAttackMoveWindowService.clearFollowActionMoveWindowIfSettled(
-                entry,
-                botPos,
-                targetSnapshot,
-                BotMovementManager.cfg.FOLLOW_DIST,
-                BotMovementManager.cfg.STOP_DIST,
-                BotMovementManager.cfg.FOLLOW_Y_CAP);
-    }
-
-    private static void clearActionMoveWindowIfSettled(BotEntry entry,
-                                                       Point botPos,
-                                                       Point targetPos) {
-        AgentLocalAttackMoveWindowService.clearActionMoveWindowIfSettled(
-                entry,
-                botPos,
-                targetPos,
-                BotMovementManager.cfg.FOLLOW_DIST,
-                BotMovementManager.cfg.STOP_DIST,
-                BotMovementManager.cfg.FOLLOW_Y_CAP);
     }
 
     private Character resolveTickOwner(BotEntry entry, int ownerCharId) {

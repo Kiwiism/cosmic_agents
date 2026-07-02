@@ -39,12 +39,6 @@ public final class AgentLocalOpportunityAttackRuntime {
     }
 
     private static void setLocalAttackMoveWindow(BotEntry entry, Point agentPosition, Point referencePosition) {
-        AgentLocalAttackMoveWindowService.setLocalAttackMoveWindow(
-                entry,
-                agentPosition,
-                referencePosition,
-                BotMovementManager.configuredFollowDist(),
-                BotMovementManager.configuredStopDist(),
-                BotMovementManager.configuredFollowYCap());
+        AgentLocalAttackMoveWindowRuntime.setLocalAttackMoveWindow(entry, agentPosition, referencePosition);
     }
 }

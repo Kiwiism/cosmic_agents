@@ -37,6 +37,10 @@ Recent reconstruction notes:
 - Local-opportunity attack hook construction now lives in
   `server.agents.runtime.AgentLocalOpportunityAttackRuntime`. Its temporary
   grind navigation dependency now points at `AgentGrindNavigationRuntime`.
+- Local attack move-window config-bound operations now live in
+  `server.agents.runtime.AgentLocalAttackMoveWindowRuntime`. BotManager no
+  longer owns the follow/script move-window settled callbacks; production live
+  tick context and scripted move combat hooks call the Agent runtime bridge.
 - Common tick hook construction now lives in
   `server.agents.runtime.AgentCommonTickRuntime`. BotManager should only pass
   the temporary script-task tick callback until script tasks are reconstructed.
