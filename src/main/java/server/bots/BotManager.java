@@ -1,23 +1,13 @@
 package server.bots;
 
-import server.agents.capabilities.navigation.AgentNavigationGraphService;
-
-import server.agents.capabilities.navigation.AgentNavigationGraph;
-
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.quest.AgentPartyQuestSyncService;
-
 import server.agents.capabilities.dialogue.AgentWhisperCommandService;
-
 import server.agents.runtime.AgentChatRouteRuntime;
 import server.agents.runtime.AgentLifecycleService;
-import server.agents.runtime.AgentFormationCommandRuntime;
 import server.agents.runtime.AgentLifecycleChatCommandRuntime;
-import server.agents.runtime.AgentLiveModeTickRuntime;
-import server.agents.runtime.AgentMapEnvironmentService;
 import server.agents.runtime.AgentOfflineLoadRuntime;
 import server.agents.runtime.AgentPartyLifecycleService;
-import server.agents.runtime.AgentPositionService;
 import server.agents.runtime.AgentRegistrationRuntime;
 import server.agents.runtime.AgentReloginRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
@@ -26,55 +16,22 @@ import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSpawnPositionService;
 import server.agents.runtime.AgentSpawnRuntime;
 import server.agents.runtime.AgentTickRuntime;
-
-import server.agents.capabilities.looting.AgentGrindLootTargetService;
 import server.agents.capabilities.social.AgentScrollReactionNotificationService;
 import server.agents.capabilities.supplies.AgentPotionCheckRequestService;
 import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
 import server.agents.capabilities.trade.AgentTradeDialogueService;
-import server.agents.integration.AgentBotAmmoStateRuntime;
-import server.agents.integration.AgentBotBuffStateRuntime;
-import server.agents.integration.AgentBotCombatCooldownStateRuntime;
-import server.agents.integration.AgentBotCombatPlanRuntime;
-import server.agents.integration.AgentBotCombatTargetRuntime;
-import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
-import server.agents.integration.AgentBotFarmAnchorStateRuntime;
-import server.agents.integration.AgentBotGrindLootStateRuntime;
-import server.agents.integration.AgentBotGrindTargetStateRuntime;
-import server.agents.integration.AgentBotLeaderStateRuntime;
-import server.agents.integration.AgentBotMapStateRuntime;
-import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementCommandRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotPatrolStateRuntime;
-import server.agents.integration.AgentBotPotionStateRuntime;
-import server.agents.integration.AgentBotPqRuntime;
-import server.agents.integration.AgentBotScriptTaskStateRuntime;
-import server.agents.integration.AgentBotShopStateRuntime;
-import server.agents.integration.AgentBotTargetedCommandMatch;
 import server.agents.commands.AgentReplyChannel;
-import server.agents.auth.AgentAuthorizationResult;
-import server.agents.registry.AgentResolvedCharacter;
 import client.Character;
-import client.Disease;
 import client.inventory.Item;
-import client.inventory.WeaponType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import server.TimerManager;
-import server.agents.capabilities.partyquest.AgentPartyQuestHooks;
-import server.life.MobSkill;
 import server.maps.MapleMap;
 import server.quest.Quest;
-import tools.PacketCreator;
-import tools.Pair;
 
 import java.awt.*;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class BotManager {
     private static final Logger log = LoggerFactory.getLogger(BotManager.class);
