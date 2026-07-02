@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Recruit chat command parsing now lives in
+  `server.agents.runtime.AgentRecruitCommandService`. BotManager keeps a
+  temporary compatibility hook bundle for ownerless-Agent recruitment and
+  leader yellow-message delivery. The same `recruit`, `adopt`, `hire`, and
+  `claim` aliases plus the legacy success/error reply behavior are preserved.
 - Dismiss chat command parsing now lives in
   `server.agents.runtime.AgentDismissCommandService`. BotManager keeps a
   temporary compatibility hook bundle for dismiss lifecycle delegation and

@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Recruit chat command parsing moved from BotManager to
+  `server.agents.runtime.AgentRecruitCommandService`. BotManager now supplies
+  temporary hooks for ownerless-Agent recruitment and leader yellow-message
+  delivery while the Agent runtime owns the legacy aliases and response text.
 - Dismiss chat command parsing moved from BotManager to
   `server.agents.runtime.AgentDismissCommandService`. BotManager now supplies
   temporary hooks for dismiss lifecycle delegation and leader yellow-message

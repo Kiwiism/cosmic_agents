@@ -71,6 +71,7 @@ import server.agents.runtime.AgentRecruitService;
 import server.agents.runtime.AgentRecoveryTickService;
 import server.agents.runtime.AgentRecoveryTeleportService;
 import server.agents.runtime.AgentReturnScrollService;
+import server.agents.runtime.AgentRecruitCommandService;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeCleanupService;
 import server.agents.runtime.AgentScriptedMoveCombatTickService;
@@ -187,8 +188,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class BotManager {
     private static final Logger log = LoggerFactory.getLogger(BotManager.class);
@@ -212,8 +211,6 @@ public class BotManager {
     private final Map<Integer, Point> townClusterAnchors = AgentLeaderSafetyService.townClusterAnchorsByLeaderId();
     private record LocalOpportunityAttackResult(boolean consumedTick, Point targetPos) {}
 
-    private static final Pattern RECRUIT_PATTERN = Pattern.compile(
-            "\\b(recruit|adopt|hire|claim)\\s+(\\S+)\\b", Pattern.CASE_INSENSITIVE);
     private static final int MIN_PREFIX_TARGET_LENGTH = 2;
     private static final int PLATFORM_EDGE_INSET_PX = 12;
     private Character resolveFollowTarget(Character owner, String targetToken) {
@@ -604,16 +601,12 @@ public class BotManager {
             return;
         }
 
-        // Recruit must work even when owner has no bots yet
-        Matcher rm = RECRUIT_PATTERN.matcher(message);
-        if (rm.find()) {
-            String name = rm.group(2);
-            String err = recruitBot(owner.getId(), owner, name);
-            if (err == null) {
-                owner.yellowMessage("Bot '" + name + "' recruited!");
-            } else {
-                owner.yellowMessage(err);
-            }
+        if (AgentRecruitCommandService.handleRecruitCommand(
+                owner,
+                message,
+                new AgentRecruitCommandService.Hooks(
+                        this::recruitBot,
+                        Character::yellowMessage))) {
             return;
         }
 
