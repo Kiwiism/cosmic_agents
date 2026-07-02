@@ -3103,6 +3103,11 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentFinalMovementTailService`. BotManager keeps a
   temporary compatibility adapter for movement-core stepping and performance
   timing. The same default fall-through target and AI-tick flag are preserved.
+- Grind-mode dispatch now lives in
+  `server.agents.runtime.AgentGrindModeDispatchService`. BotManager keeps a
+  temporary compatibility adapter for the existing grind tick hook and
+  performance timing. The same grind-mode gate, consumed-tick result, and target
+  update semantics are preserved.
 
 Initial reconstruction order:
 

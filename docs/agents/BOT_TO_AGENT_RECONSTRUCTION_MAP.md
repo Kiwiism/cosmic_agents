@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Grind-mode dispatch moved from BotManager to
+  `server.agents.runtime.AgentGrindModeDispatchService`. BotManager now supplies
+  only the temporary grind tick hook and performance timing; the grind decision
+  pipeline itself remains in `AgentGrindModeTickService`.
 - Final movement-tail dispatch moved from BotManager to
   `server.agents.runtime.AgentFinalMovementTailService`. BotManager now
   supplies only the temporary movement-core hook and performance timing.

@@ -40,6 +40,7 @@ import server.agents.runtime.AgentFollowIdleMovementService;
 import server.agents.runtime.AgentFollowTargetPositionService;
 import server.agents.runtime.AgentFollowMapSyncService;
 import server.agents.runtime.AgentFollowOpportunityTickService;
+import server.agents.runtime.AgentGrindModeDispatchService;
 import server.agents.runtime.AgentHeartbeatService;
 import server.agents.runtime.AgentIdleModeTickService;
 import server.agents.runtime.AgentGrindNoTargetFallbackService;
@@ -1294,24 +1295,30 @@ public class BotManager {
             return;
         }
 
-        // Grind mode: navigate toward nearest monster, attack when in range
-        if (AgentBotModeStateRuntime.grinding(entry)) {
-            LocalOpportunityAttackResult grindResult;
-            if (!perf) {
-                grindResult = tickGrindMode(entry, bot, botPos, targetPos, runAiTick);
-            } else {
-                long tGrindDispatch = System.nanoTime();
-                try {
-                    grindResult = tickGrindMode(entry, bot, botPos, targetPos, runAiTick);
-                } finally {
-                    AgentPerformanceMonitor.record("tick-grind-dispatch", System.nanoTime() - tGrindDispatch);
-                }
-            }
-            if (grindResult.consumedTick()) {
-                return;
-            }
-            targetPos = grindResult.targetPos();
+        AgentGrindModeDispatchService.Result grindDispatch = AgentGrindModeDispatchService.tickIfGrinding(
+                entry,
+                bot,
+                botPos,
+                targetPos,
+                runAiTick,
+                new AgentGrindModeDispatchService.Hooks((grindEntry, grindBot, grindBotPos, grindTargetPos, grindRunAiTick) -> {
+                    LocalOpportunityAttackResult grindResult;
+                    if (!perf) {
+                        grindResult = tickGrindMode(grindEntry, grindBot, grindBotPos, grindTargetPos, grindRunAiTick);
+                    } else {
+                        long tGrindDispatch = System.nanoTime();
+                        try {
+                            grindResult = tickGrindMode(grindEntry, grindBot, grindBotPos, grindTargetPos, grindRunAiTick);
+                        } finally {
+                            AgentPerformanceMonitor.record("tick-grind-dispatch", System.nanoTime() - tGrindDispatch);
+                        }
+                    }
+                    return new AgentGrindModeDispatchService.Result(grindResult.consumedTick(), grindResult.targetPos());
+                }));
+        if (grindDispatch.consumedTick()) {
+            return;
         }
+        targetPos = grindDispatch.targetPos();
 
         AgentFinalMovementTailService.stepFinalMovement(
                 entry,
