@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Dismiss chat command parsing now lives in
+  `server.agents.runtime.AgentDismissCommandService`. BotManager keeps a
+  temporary compatibility hook bundle for dismiss lifecycle delegation and
+  leader yellow-message delivery. The same `dismiss`, `disown`, and `release`
+  aliases plus the legacy success/failure messages are preserved.
 - Formation chat command parsing and formation-state mutation now lives in
   `server.agents.runtime.AgentFormationCommandService`. BotManager keeps a
   temporary compatibility hook bundle for active entries, stored formation

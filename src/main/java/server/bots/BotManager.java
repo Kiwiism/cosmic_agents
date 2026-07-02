@@ -31,6 +31,7 @@ import server.agents.runtime.AgentAnchoredFarmModeTickService;
 import server.agents.runtime.AgentAnchoredFarmTickService;
 import server.agents.runtime.AgentCommonTickService;
 import server.agents.runtime.AgentDeathTickService;
+import server.agents.runtime.AgentDismissCommandService;
 import server.agents.runtime.AgentFinalMovementTailService;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentLifecycleService;
@@ -211,8 +212,6 @@ public class BotManager {
     private final Map<Integer, Point> townClusterAnchors = AgentLeaderSafetyService.townClusterAnchorsByLeaderId();
     private record LocalOpportunityAttackResult(boolean consumedTick, Point targetPos) {}
 
-    private static final Pattern DISMISS_PATTERN = Pattern.compile(
-            "\\b(dismiss|disown|release)\\s+(\\S+)\\b", Pattern.CASE_INSENSITIVE);
     private static final Pattern RECRUIT_PATTERN = Pattern.compile(
             "\\b(recruit|adopt|hire|claim)\\s+(\\S+)\\b", Pattern.CASE_INSENSITIVE);
     private static final int MIN_PREFIX_TARGET_LENGTH = 2;
@@ -635,15 +634,12 @@ public class BotManager {
         List<BotEntry> entries = bots.get(owner.getId());
         if (entries == null || entries.isEmpty()) return;
 
-        // Dismiss: disown bot, leaves it idle in map
-        Matcher dm = DISMISS_PATTERN.matcher(message);
-        if (dm.find()) {
-            String name = dm.group(2);
-            if (dismissBot(owner.getId(), name)) {
-                owner.yellowMessage("Bot '" + name + "' disowned - now idle.");
-            } else {
-                owner.yellowMessage("No bot named '" + name + "' in your group.");
-            }
+        if (AgentDismissCommandService.handleDismissCommand(
+                owner,
+                message,
+                new AgentDismissCommandService.Hooks(
+                        this::dismissBot,
+                        Character::yellowMessage))) {
             return;
         }
 

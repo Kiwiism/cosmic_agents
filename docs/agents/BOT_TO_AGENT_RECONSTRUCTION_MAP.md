@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Dismiss chat command parsing moved from BotManager to
+  `server.agents.runtime.AgentDismissCommandService`. BotManager now supplies
+  temporary hooks for dismiss lifecycle delegation and leader yellow-message
+  delivery while the Agent runtime owns the legacy aliases and response text.
 - Formation chat command parsing and formation-state mutation moved from
   BotManager to `server.agents.runtime.AgentFormationCommandService`.
   BotManager now supplies temporary hooks for active entries, stored formation
