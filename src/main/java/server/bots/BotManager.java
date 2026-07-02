@@ -13,7 +13,7 @@ import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatRangePolicy;
-import server.agents.capabilities.combat.AgentGrindTargetSearchPolicy;
+import server.agents.capabilities.combat.AgentGrindTargetSearchService;
 import server.agents.capabilities.combat.AgentGrindNavigationTargetSelector;
 import server.agents.capabilities.combat.AgentLocalOpportunityAttackService;
 import server.agents.capabilities.combat.AgentRangedPriorityTargetSelector;
@@ -99,7 +99,6 @@ import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotGrindLootStateRuntime;
-import server.agents.integration.AgentBotGrindSearchStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotGrindWanderStateRuntime;
 import server.agents.integration.AgentBotLeaderStateRuntime;
@@ -1299,17 +1298,11 @@ public class BotManager {
                 ? null
                 : AgentBotCombatPlanRuntime.planAttack(entry, bot, target, AgentCombatConfig.cfg);
         AgentGrindLootTargetService.validateCachedGrindLootTarget(entry, bot);
-        if (runAiTick && AgentGrindTargetSearchPolicy.shouldSearchForGrindTarget(entry, bot, target, attackPlan, now)) {
-            Monster searchedTarget = AgentBotPatrolStateRuntime.hasPatrolRegion(entry)
-                    ? AgentBotCombatTargetRuntime.findPatrolTarget(entry, bot, AgentCombatConfig.cfg)
-                    : AgentBotCombatTargetRuntime.findGrindTarget(entry, bot, AgentCombatConfig.cfg);
-            if (AgentGrindTargetSearchPolicy.shouldSwitchToSearchedTarget(entry, bot, target, searchedTarget, attackPlan)) {
-                target = searchedTarget;
-                attackPlan = null;
-            }
-            AgentBotGrindSearchStateRuntime.scheduleNextSearch(
-                    entry, now + AgentCombatConfig.cfg.GRIND_RETARGET_INTERVAL_MS);
-        }
+        AgentGrindTargetSearchService.SearchResult searchResult =
+                AgentGrindTargetSearchService.searchIfDue(
+                        entry, bot, target, attackPlan, runAiTick, now, grindTargetSearchHooks());
+        target = searchResult.target();
+        attackPlan = searchResult.attackPlan();
         AgentGrindLootTargetService.refreshGrindLootTarget(entry, bot, runAiTick, BotManager.cfg.LOOT_RADIUS);
         if (target == null) {
             AgentBotGrindTargetStateRuntime.clear(entry);
@@ -1458,6 +1451,13 @@ public class BotManager {
             if (lootPos != null) targetPos = lootPos;
         }
         return new LocalOpportunityAttackResult(false, targetPos);
+    }
+
+    private static AgentGrindTargetSearchService.SearchHooks grindTargetSearchHooks() {
+        return new AgentGrindTargetSearchService.SearchHooks(
+                (entry, bot) -> AgentBotCombatTargetRuntime.findPatrolTarget(entry, bot, AgentCombatConfig.cfg),
+                (entry, bot) -> AgentBotCombatTargetRuntime.findGrindTarget(entry, bot, AgentCombatConfig.cfg),
+                AgentCombatConfig.cfg.GRIND_RETARGET_INTERVAL_MS);
     }
 
     private void handleBotTickFailure(BotEntry entry, int ownerCharId, int botCharId, Throwable t) {

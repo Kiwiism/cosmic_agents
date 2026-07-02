@@ -3002,6 +3002,12 @@ Recent reconstruction notes:
   BotManager delegates from `tickGrindMode`, preserving the picked-up/stale map
   object clear rule, patrol-region refresh suppression, retry-suppression
   callback, and legacy loot-radius input.
+- Grind-mode target search orchestration now lives in
+  `server.agents.capabilities.combat.AgentGrindTargetSearchService`.
+  BotManager supplies temporary patrol/grind target finder hooks, while the
+  service owns the AI-tick/search-policy gate, patrol-vs-grind finder choice,
+  searched-target adoption, attack-plan invalidation, and next-search scheduling
+  with the legacy retarget interval.
 
 Initial reconstruction order:
 
