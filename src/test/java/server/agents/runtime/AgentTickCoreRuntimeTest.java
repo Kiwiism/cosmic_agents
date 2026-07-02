@@ -16,6 +16,33 @@ import static org.mockito.Mockito.mockStatic;
 
 class AgentTickCoreRuntimeTest {
     @Test
+    void compactTickCoreEntryOwnsDefaultAgentRuntimeHooks() {
+        BotEntry entry = mock(BotEntry.class);
+        List<String> calls = new ArrayList<>();
+
+        try (MockedStatic<AgentTickCoreService> tickCore = mockStatic(AgentTickCoreService.class)) {
+            tickCore.when(() -> AgentTickCoreService.tickCore(
+                            eq(entry),
+                            eq(7),
+                            eq(9),
+                            any(AgentTickCoreService.Hooks.class)))
+                    .thenAnswer(invocation -> {
+                        calls.add("tickCore");
+                        return null;
+                    });
+
+            AgentTickCoreRuntime.tickCore(
+                    entry,
+                    7,
+                    9,
+                    tickEntry -> calls.add("grind"),
+                    tickEntry -> calls.add("follow"));
+
+            org.junit.jupiter.api.Assertions.assertEquals(List.of("tickCore"), calls);
+        }
+    }
+
+    @Test
     void defaultTickCoreUsesAgentRuntimeConfigAndHookBundle() {
         BotEntry entry = mock(BotEntry.class);
         List<String> calls = new ArrayList<>();

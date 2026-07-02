@@ -14,6 +14,38 @@ public final class AgentTickCoreRuntime {
     public static void tickCore(BotEntry entry,
                                 int leaderCharId,
                                 int agentCharId,
+                                Consumer<BotEntry> issueGrind,
+                                Consumer<BotEntry> issueFollow) {
+        tickCore(
+                entry,
+                leaderCharId,
+                agentCharId,
+                AgentLeaderSessionRuntime::resolveTickLeader,
+                AgentLeaderSafetyRuntime::handleInactiveLeaderTick,
+                AgentMapTransitionRuntime::groundAfterMapChange,
+                AgentStandaloneMoveTargetRuntime::tickStandaloneMoveTarget,
+                AgentDeathTickRuntime::handleDeadTick,
+                AgentTargetSnapshotRuntime::resolveFollowAnchor,
+                AgentTargetSnapshotRuntime::captureTargetSnapshot,
+                AgentScriptTaskRuntime::tick,
+                issueGrind,
+                issueFollow,
+                AgentLocalOpportunityAttackRuntime::tryLocalOpportunityAttackForLiveMode,
+                AgentMovementTickRuntime::stepMovementCore,
+                AgentAnchoredFarmRuntime::tickAnchoredFarm,
+                (grindEntry, grindAgent, grindAgentPosition, grindTargetPosition, grindRunAiTick) ->
+                        AgentGrindModeRuntime.tickGrindMode(
+                                grindEntry,
+                                grindAgent,
+                                grindAgentPosition,
+                                grindTargetPosition,
+                                grindRunAiTick,
+                                AgentMovementTickRuntime::stepMovementCore));
+    }
+
+    public static void tickCore(BotEntry entry,
+                                int leaderCharId,
+                                int agentCharId,
                                 AgentTickCoreService.LeaderResolver leaderResolver,
                                 AgentTickCoreService.InactiveLeaderTick inactiveLeaderTick,
                                 BiPredicate<BotEntry, Character> groundAfterMapChange,

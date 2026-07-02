@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Tick-core default hook-bundle ownership moved from BotManager to
+  `server.agents.runtime.AgentTickCoreRuntime`. BotManager now passes only the
+  temporary grind/follow mode callbacks into the compact Agent tick-core entry.
 - Script move-target default near-target radius handoff moved from BotManager
   and `AgentBotScriptMoveTargetRuntime` to
   `server.agents.plans.AgentScriptMoveTargetService`.

@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Tick-core default hook-bundle ownership now lives in
+  `AgentTickCoreRuntime.tickCore(entry, leaderId, agentId, issueGrind, issueFollow)`.
+  BotManager no longer assembles leader lookup, safety, map transition,
+  ownerless movement, death, target snapshot, script-task, local opportunity,
+  movement-core, anchored-farm, or grind-mode callbacks for ordinary ticks.
 - Script move-target default near-target radius ownership now lives in
   `AgentScriptMoveTargetService.isCheapMoveTarget(...)`. BotManager and the
   Agent integration wrapper no longer pass `LOOT_RADIUS` into script move

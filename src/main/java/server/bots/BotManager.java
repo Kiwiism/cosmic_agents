@@ -10,10 +10,8 @@ import server.agents.capabilities.quest.AgentPartyQuestSyncService;
 
 import server.agents.capabilities.dialogue.AgentWhisperCommandService;
 
-import server.agents.runtime.AgentAnchoredFarmRuntime;
 import server.agents.runtime.AgentChatRouteRuntime;
 import server.agents.runtime.AgentCommonTickRuntime;
-import server.agents.runtime.AgentDeathTickRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentFormationService;
@@ -21,18 +19,13 @@ import server.agents.runtime.AgentFormationRuntime;
 import server.agents.runtime.AgentFollowIdleMovementRuntime;
 import server.agents.runtime.AgentFormationCommandRuntime;
 import server.agents.runtime.AgentGrindCombatRuntime;
-import server.agents.runtime.AgentGrindModeRuntime;
 import server.agents.runtime.AgentGrindNavigationRuntime;
 import server.agents.runtime.AgentGrindTargetRuntime;
-import server.agents.runtime.AgentLeaderSessionRuntime;
 import server.agents.runtime.AgentLeaderSafetyRuntime;
 import server.agents.runtime.AgentLifecycleChatCommandRuntime;
 import server.agents.runtime.AgentLiveModeTickRuntime;
-import server.agents.runtime.AgentLocalOpportunityAttackRuntime;
 import server.agents.runtime.AgentMapEnvironmentService;
-import server.agents.runtime.AgentMapTransitionRuntime;
 import server.agents.runtime.AgentMovementOnlyStepRuntime;
-import server.agents.runtime.AgentMovementTickRuntime;
 import server.agents.runtime.AgentOfflineLoadRuntime;
 import server.agents.runtime.AgentPartyLifecycleService;
 import server.agents.runtime.AgentPositionService;
@@ -47,7 +40,6 @@ import server.agents.runtime.AgentTargetSnapshotRuntime;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSpawnPositionService;
 import server.agents.runtime.AgentSpawnRuntime;
-import server.agents.runtime.AgentStandaloneMoveTargetRuntime;
 import server.agents.runtime.AgentTickFailureRuntime;
 import server.agents.runtime.AgentTickCoreRuntime;
 import server.agents.runtime.AgentTickOrchestrator;
@@ -394,27 +386,8 @@ public class BotManager {
                 entry,
                 ownerCharId,
                 botCharId,
-                AgentLeaderSessionRuntime::resolveTickLeader,
-                AgentLeaderSafetyRuntime::handleInactiveLeaderTick,
-                AgentMapTransitionRuntime::groundAfterMapChange,
-                AgentStandaloneMoveTargetRuntime::tickStandaloneMoveTarget,
-                AgentDeathTickRuntime::handleDeadTick,
-                AgentTargetSnapshotRuntime::resolveFollowAnchor,
-                AgentTargetSnapshotRuntime::captureTargetSnapshot,
-                AgentScriptTaskRuntime::tick,
                 this::issueGrind,
-                this::issueFollowOwner,
-                AgentLocalOpportunityAttackRuntime::tryLocalOpportunityAttackForLiveMode,
-                AgentMovementTickRuntime::stepMovementCore,
-                AgentAnchoredFarmRuntime::tickAnchoredFarm,
-                (grindEntry, grindAgent, grindAgentPosition, grindTargetPosition, grindRunAiTick) ->
-                        AgentGrindModeRuntime.tickGrindMode(
-                                grindEntry,
-                                grindAgent,
-                                grindAgentPosition,
-                                grindTargetPosition,
-                                grindRunAiTick,
-                                AgentMovementTickRuntime::stepMovementCore));
+                this::issueFollowOwner);
     }
 
     static Monster selectPriorityRangedAttackTarget(BotEntry entry,
