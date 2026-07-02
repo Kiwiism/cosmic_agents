@@ -12,6 +12,8 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Dead BotManager reply/sanitizer compatibility helpers were removed; Agent
+  dialogue/reply runtime classes own those utilities directly.
 - Dead BotManager grind/navigation/combat compatibility helper wrappers were
   removed. Tests now exercise the Agent runtime/capability classes directly
   for no-target grind movement and convenient loot targeting.

@@ -17,6 +17,8 @@ Rules:
 
 Recent reconstruction notes:
 
+- Dead BotManager reply/sanitizer utility wrappers were removed. Reply routing
+  and chat sanitization remain in Agent-owned dialogue/reply runtime classes.
 - Dead BotManager grind/navigation/combat helper wrappers were removed after
   tests were switched to `AgentGrindTargetRuntime` and existing Agent
   navigation/combat runtime classes. BotManager no longer exposes those

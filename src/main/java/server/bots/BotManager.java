@@ -57,7 +57,6 @@ import server.agents.integration.AgentBotGrindLootStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotLeaderStateRuntime;
 import server.agents.integration.AgentBotMapStateRuntime;
-import server.agents.integration.AgentBotManagerReplyRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementCommandRuntime;
@@ -65,14 +64,12 @@ import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotPotionStateRuntime;
 import server.agents.integration.AgentBotPqRuntime;
-import server.agents.integration.AgentBotReplyChannelStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
 import server.agents.integration.AgentBotShopStateRuntime;
 import server.agents.integration.AgentBotTargetedCommandMatch;
 import server.agents.plans.AgentTask;
 import server.agents.plans.AgentScriptItemActionService;
-import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.auth.AgentAuthorizationResult;
 import server.agents.registry.AgentResolvedCharacter;
@@ -443,35 +440,6 @@ public class BotManager {
 
     public void reloginBot(int charId, int ownerCharId, int world, int channel) {
         AgentReloginRuntime.reloginAgent(charId, ownerCharId, world, channel, this::tick, log);
-    }
-
-    // -------------------------------------------------------------------------
-    // Utility
-    // -------------------------------------------------------------------------
-
-    void botSay(Character bot, String text) {
-        AgentBotManagerReplyRuntime.sayMapNow(bot, text);
-    }
-
-    static synchronized String sanitizeChat(String text) {
-        return AgentChatTextSanitizer.sanitize(text);
-    }
-
-    void botSay(Character bot, AgentReplyChannel channel, String text) {
-        AgentBotManagerReplyRuntime.sayNow(bot, channel, text);
-    }
-
-    /** Bot-to-bot visible say — routes MAP→map broadcast, PARTY→party, WHISPER→party fallback. */
-    void botSay(BotEntry entry, String text) {
-        botSay(AgentBotRuntimeIdentityRuntime.bot(entry), AgentBotReplyChannelStateRuntime.replyChannel(entry), text);
-    }
-
-    /**
-     * Broadcasts via party chat so the owner sees the message even when they're
-     * on a different map. Falls back to map chat if the bot has no party.
-     */
-    public void botSayParty(Character bot, String text) {
-        AgentBotManagerReplyRuntime.sayPartyNow(bot, text);
     }
 
     /**

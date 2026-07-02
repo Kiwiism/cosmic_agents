@@ -42,13 +42,11 @@ import org.junit.jupiter.api.Test;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.capabilities.supplies.AgentAmmoService;
-import server.agents.commands.AgentReplyChannel;
 import server.agents.integration.AgentBotAmmoDonorPlan;
 import server.agents.integration.AgentBotCommandParser;
 import server.agents.integration.AgentBotTargetedCommandMatch;
 import server.agents.integration.AgentBotTransferCommand;
 import server.agents.integration.AgentBotBreakoutStateRuntime;
-import server.agents.integration.AgentBotManagerReplyRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotGrindLootStateRuntime;
 import server.agents.integration.AgentBotGrindSearchStateRuntime;
@@ -207,18 +205,6 @@ class BotManagerTest {
         assertEquals(bob, match.entry());
         assertEquals("follow Alice", match.commandText());
         assertNull(match.feedbackMessage());
-    }
-
-    @Test
-    void shouldRouteArbitraryBotSayThroughPartyChannel() {
-        BotManager manager = BotManager.getInstance();
-        Character bot = mock(Character.class);
-
-        try (MockedStatic<AgentBotManagerReplyRuntime> replies = mockStatic(AgentBotManagerReplyRuntime.class)) {
-            manager.botSay(bot, AgentReplyChannel.PARTY, "sure!");
-
-            replies.verify(() -> AgentBotManagerReplyRuntime.sayNow(bot, AgentReplyChannel.PARTY, "sure!"));
-        }
     }
 
     @Test
