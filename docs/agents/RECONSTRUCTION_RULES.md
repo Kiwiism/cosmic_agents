@@ -17,6 +17,9 @@ Rules:
 
 Recent reconstruction notes:
 
+- Manual and spawned registration entry points now enter through
+  `AgentInteractionRuntime`, which supplies the Agent tick callback. BotManager
+  no longer owns a private tick callback.
 - Relogin entry wiring now enters through `AgentInteractionRuntime`; the
   session lifecycle bridge no longer imports BotManager for relogin, and
   BotManager's legacy relogin method delegates back to the Agent facade.

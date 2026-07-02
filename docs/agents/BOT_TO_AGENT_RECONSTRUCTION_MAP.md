@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Manual and spawned registration entry points moved to
+  `AgentInteractionRuntime`; BotManager no longer owns the private tick
+  callback used by registration.
 - Relogin entry wiring moved to `AgentInteractionRuntime`; the Agent session
   lifecycle bridge no longer imports BotManager for relogin side effects.
 - Server-facing chat and spawn entry points moved to

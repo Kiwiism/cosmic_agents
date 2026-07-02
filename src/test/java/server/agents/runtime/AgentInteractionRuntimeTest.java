@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.slf4j.Logger;
 import server.agents.commands.AgentReplyChannel;
+import server.bots.BotEntry;
 
 import java.util.function.Consumer;
 
@@ -14,6 +15,41 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
 class AgentInteractionRuntimeTest {
+    @Test
+    void registerAgentDelegatesToAgentRegistrationRuntimeWithAgentTickCallback() {
+        Character leader = mock(Character.class);
+        Character agent = mock(Character.class);
+
+        try (MockedStatic<AgentRegistrationRuntime> registrationRuntime = mockStatic(AgentRegistrationRuntime.class)) {
+            AgentInteractionRuntime.registerAgent(22, leader, agent);
+
+            registrationRuntime.verify(() -> AgentRegistrationRuntime.registerManualAgent(
+                    eq(22),
+                    eq(leader),
+                    eq(agent),
+                    any(AgentLifecycleService.AgentTickCallback.class)));
+        }
+    }
+
+    @Test
+    void registerSpawnedAgentDelegatesToAgentRegistrationRuntimeWithAgentTickCallback() {
+        Character leader = mock(Character.class);
+        Character agent = mock(Character.class);
+        BotEntry entry = new BotEntry(agent, leader, null);
+
+        try (MockedStatic<AgentRegistrationRuntime> registrationRuntime = mockStatic(AgentRegistrationRuntime.class)) {
+            registrationRuntime.when(() -> AgentRegistrationRuntime.registerSpawnedAgent(
+                            eq(22),
+                            eq(leader),
+                            eq(agent),
+                            any(AgentLifecycleService.AgentTickCallback.class)))
+                    .thenReturn(entry);
+
+            org.junit.jupiter.api.Assertions.assertSame(entry,
+                    AgentInteractionRuntime.registerSpawnedAgent(22, leader, agent));
+        }
+    }
+
     @Test
     void spawnDelegatesToAgentSpawnRuntimeWithAgentCallbacks() {
         Character leader = mock(Character.class);

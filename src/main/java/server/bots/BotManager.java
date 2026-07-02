@@ -8,12 +8,10 @@ import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentLifecycleChatCommandRuntime;
 import server.agents.runtime.AgentOfflineLoadRuntime;
 import server.agents.runtime.AgentPartyLifecycleService;
-import server.agents.runtime.AgentRegistrationRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeCleanupService;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSpawnPositionService;
-import server.agents.runtime.AgentTickRuntime;
 import server.agents.capabilities.social.AgentScrollReactionNotificationService;
 import server.agents.capabilities.supplies.AgentPotionCheckRequestService;
 import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
@@ -48,11 +46,11 @@ public class BotManager {
     // -------------------------------------------------------------------------
 
     public void registerBot(int ownerCharId, Character owner, Character bot) {
-        AgentRegistrationRuntime.registerManualAgent(ownerCharId, owner, bot, this::tick);
+        AgentInteractionRuntime.registerAgent(ownerCharId, owner, bot);
     }
 
     public BotEntry registerSpawnedBot(int ownerCharId, Character owner, Character bot) {
-        return AgentRegistrationRuntime.registerSpawnedAgent(ownerCharId, owner, bot, this::tick);
+        return AgentInteractionRuntime.registerSpawnedAgent(ownerCharId, owner, bot);
     }
 
     /** Spawn a registered bot for the given owner, placing it at the owner's current position in follow mode. */
@@ -161,18 +159,6 @@ public class BotManager {
 
     public void handleChat(Character owner, String message, AgentReplyChannel channel) {
         AgentInteractionRuntime.handleLeaderChat(owner, message, channel);
-    }
-
-    // Main tick
-    // -------------------------------------------------------------------------
-
-    private void tick(BotEntry entry, int ownerCharId, int botCharId) {
-        AgentTickRuntime.tick(
-                entry,
-                ownerCharId,
-                botCharId,
-                AgentBotMovementCommandRuntime::grind,
-                AgentBotMovementCommandRuntime::followOwner);
     }
 
     public void reloginBot(int charId, int ownerCharId, int world, int channel) {

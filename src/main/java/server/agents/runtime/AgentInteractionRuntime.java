@@ -17,6 +17,22 @@ public final class AgentInteractionRuntime {
     private AgentInteractionRuntime() {
     }
 
+    public static void registerAgent(int leaderCharId, Character leader, Character agent) {
+        AgentRegistrationRuntime.registerManualAgent(
+                leaderCharId,
+                leader,
+                agent,
+                AgentInteractionRuntime::tick);
+    }
+
+    public static BotEntry registerSpawnedAgent(int leaderCharId, Character leader, Character agent) {
+        return AgentRegistrationRuntime.registerSpawnedAgent(
+                leaderCharId,
+                leader,
+                agent,
+                AgentInteractionRuntime::tick);
+    }
+
     public static AgentLifecycleService.AgentSpawnResult spawnAgentForLeader(Character leader, String agentName) {
         return AgentSpawnRuntime.spawnAgentForLeader(
                 leader,
