@@ -3046,6 +3046,12 @@ Recent reconstruction notes:
   movement-profile refresh, and movement-core hooks. The same post-warp early
   return, profile refresh ordering, stored move-target lookup, and run-AI flag
   propagation are preserved.
+- Inactive leader tick gating now lives in
+  `server.agents.runtime.AgentLeaderSafetyService.handleInactiveLeaderTick`.
+  BotManager keeps a temporary compatibility adapter for active-leader return
+  cleanup, town-warp eligibility, and inactive safe-mode entry side effects.
+  The same active/inactive classification, inactive timer delay, town policy
+  lookup, and consumed-tick result are preserved.
 
 Initial reconstruction order:
 

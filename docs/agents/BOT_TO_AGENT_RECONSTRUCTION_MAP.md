@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Inactive leader tick gating moved from BotManager to
+  `server.agents.runtime.AgentLeaderSafetyService.handleInactiveLeaderTick`.
+  BotManager now supplies temporary hooks for active-leader return cleanup,
+  town-warp eligibility, and inactive safe-mode entry side effects.
 - Standalone move-target tick sequencing moved from BotManager to
   `server.agents.runtime.AgentStandaloneMoveTargetTickService`. BotManager now
   supplies temporary hooks for map-change grounding, movement-profile refresh,

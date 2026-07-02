@@ -1520,22 +1520,19 @@ public class BotManager {
      * short-circuit; map-change reset runs on the next tick).
      */
     private boolean handleOwnerOfflineOrDead(BotEntry entry, Character bot, Character owner, long nowMs, int ownerCharId) {
-        boolean inactive = (owner == null) || (owner.getHp() <= 0);
-
-        if (!inactive) {
-            AgentLeaderSafetyService.handleActiveLeaderReturn(
-                    entry,
-                    () -> AgentBotMoveTargetStateRuntime.clearMoveTarget(entry),
-                    () -> townClusterAnchors.remove(ownerCharId),
-                    () -> AgentBotManagerStatusRuntime.announceOwnerReturnedFromOffline(entry));
-            return false;
-        }
-
-        if (!AgentLeaderSafetyService.shouldEnterInactiveSafeMode(entry, nowMs, cfg.OWNER_INACTIVE_TOWN_RETURN_MS)) {
-            return false;
-        }
-
-        return enterOwnerInactiveSafeMode(entry, bot, ownerCharId, shouldTownWarpForOwnerInactive(entry));
+        return AgentLeaderSafetyService.handleInactiveLeaderTick(
+                entry,
+                owner,
+                nowMs,
+                new AgentLeaderSafetyService.InactiveLeaderTickHooks(
+                        activeEntry -> AgentLeaderSafetyService.handleActiveLeaderReturn(
+                                activeEntry,
+                                () -> AgentBotMoveTargetStateRuntime.clearMoveTarget(activeEntry),
+                                () -> townClusterAnchors.remove(ownerCharId),
+                                () -> AgentBotManagerStatusRuntime.announceOwnerReturnedFromOffline(activeEntry)),
+                        this::shouldTownWarpForOwnerInactive,
+                        (inactiveEntry, town) -> enterOwnerInactiveSafeMode(inactiveEntry, bot, ownerCharId, town),
+                        cfg.OWNER_INACTIVE_TOWN_RETURN_MS));
     }
 
     private boolean shouldTownWarpForOwnerInactive(BotEntry entry) {

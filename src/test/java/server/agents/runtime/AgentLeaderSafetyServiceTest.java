@@ -170,6 +170,86 @@ class AgentLeaderSafetyServiceTest {
     }
 
     @Test
+    void activeLeaderTickRunsReturnHandlerAndDoesNotConsumeTick() {
+        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        Character leader = mock(Character.class);
+        when(leader.getHp()).thenReturn(100);
+        AtomicInteger returns = new AtomicInteger();
+        AtomicInteger safeModes = new AtomicInteger();
+
+        boolean consumed = AgentLeaderSafetyService.handleInactiveLeaderTick(
+                entry,
+                leader,
+                1_000L,
+                new AgentLeaderSafetyService.InactiveLeaderTickHooks(
+                        returnedEntry -> returns.incrementAndGet(),
+                        inactiveEntry -> {
+                            throw new AssertionError("town policy should not run for active leader");
+                        },
+                        (inactiveEntry, town) -> {
+                            safeModes.incrementAndGet();
+                            return true;
+                        },
+                        5_000L));
+
+        assertFalse(consumed);
+        assertEquals(1, returns.get());
+        assertEquals(0, safeModes.get());
+    }
+
+    @Test
+    void inactiveLeaderTickStartsTimerAndWaits() {
+        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AtomicInteger safeModes = new AtomicInteger();
+
+        boolean consumed = AgentLeaderSafetyService.handleInactiveLeaderTick(
+                entry,
+                null,
+                1_000L,
+                new AgentLeaderSafetyService.InactiveLeaderTickHooks(
+                        returnedEntry -> {
+                            throw new AssertionError("return handler should not run for inactive leader");
+                        },
+                        inactiveEntry -> true,
+                        (inactiveEntry, town) -> {
+                            safeModes.incrementAndGet();
+                            return true;
+                        },
+                        5_000L));
+
+        assertFalse(consumed);
+        assertEquals(0, safeModes.get());
+        assertEquals(1_000L, AgentBotActivityStateRuntime.ownerOfflineOrDeadSinceMs(entry));
+    }
+
+    @Test
+    void inactiveLeaderTickEntersSafeModeAfterDelayWithTownDecision() {
+        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        Character leader = mock(Character.class);
+        when(leader.getHp()).thenReturn(0);
+        AgentBotActivityStateRuntime.startOwnerInactiveTimer(entry, 1_000L);
+        AtomicReference<Boolean> townDecisionSeen = new AtomicReference<>();
+
+        boolean consumed = AgentLeaderSafetyService.handleInactiveLeaderTick(
+                entry,
+                leader,
+                6_000L,
+                new AgentLeaderSafetyService.InactiveLeaderTickHooks(
+                        returnedEntry -> {
+                            throw new AssertionError("return handler should not run for inactive leader");
+                        },
+                        inactiveEntry -> true,
+                        (inactiveEntry, town) -> {
+                            townDecisionSeen.set(town);
+                            return town;
+                        },
+                        5_000L));
+
+        assertTrue(consumed);
+        assertEquals(Boolean.TRUE, townDecisionSeen.get());
+    }
+
+    @Test
     void returnedToTownAwaySafeModeStartsTimerButDoesNotReenterSafeMode() {
         BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
         AgentBotActivityStateRuntime.setOwnerReturnedToTown(entry, true);

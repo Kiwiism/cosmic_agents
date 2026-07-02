@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.integration.AgentBotActivityStateRuntime;
@@ -40,6 +41,27 @@ public final class AgentLeaderSafetyService {
                                   BiFunction<MapleMap, Point, Point> resolveClusterTarget,
                                   Runnable resetEntryState,
                                   Consumer<Point> startPreciseMoveToClusterTarget) {
+    }
+
+    public record InactiveLeaderTickHooks(ActiveLeaderReturnHandler activeLeaderReturnHandler,
+                                          InactiveTownWarpPolicy inactiveTownWarpPolicy,
+                                          InactiveSafeModeEntry inactiveSafeModeEntry,
+                                          long inactiveTownReturnMs) {
+    }
+
+    @FunctionalInterface
+    public interface ActiveLeaderReturnHandler {
+        void handle(BotEntry entry);
+    }
+
+    @FunctionalInterface
+    public interface InactiveTownWarpPolicy {
+        boolean shouldTownWarp(BotEntry entry);
+    }
+
+    @FunctionalInterface
+    public interface InactiveSafeModeEntry {
+        boolean enter(BotEntry entry, boolean town);
     }
 
     private AgentLeaderSafetyService() {
@@ -114,6 +136,24 @@ public final class AgentLeaderSafetyService {
         }
 
         return nowMs - AgentBotActivityStateRuntime.ownerOfflineOrDeadSinceMs(entry) >= inactiveTownReturnMs;
+    }
+
+    public static boolean handleInactiveLeaderTick(BotEntry entry,
+                                                   Character leader,
+                                                   long nowMs,
+                                                   InactiveLeaderTickHooks hooks) {
+        boolean inactive = leader == null || leader.getHp() <= 0;
+
+        if (!inactive) {
+            hooks.activeLeaderReturnHandler().handle(entry);
+            return false;
+        }
+
+        if (!shouldEnterInactiveSafeMode(entry, nowMs, hooks.inactiveTownReturnMs())) {
+            return false;
+        }
+
+        return hooks.inactiveSafeModeEntry().enter(entry, hooks.inactiveTownWarpPolicy().shouldTownWarp(entry));
     }
 
     public static void idleInactiveAgentInPlace(BotEntry entry,
