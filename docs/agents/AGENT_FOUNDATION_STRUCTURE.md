@@ -13,8 +13,9 @@ Target package groups:
   `AgentLiveTickGateRuntime` / `AgentLiveModeTickRuntime`, with tick-core
   composition through `AgentTickCoreRuntime` and script task composition
   through `AgentScriptTaskRuntime`. Grind-mode hook composition now enters
-  through `AgentGrindModeRuntime`, while BotManager remains only a temporary
-  compatibility caller for legacy entry points.
+  through `AgentGrindModeRuntime`, and local opportunity attack result
+  adaptation stays in `AgentLocalOpportunityAttackRuntime`, while BotManager
+  remains only a temporary compatibility caller for legacy entry points.
 - `server.agents.model`: identity, mode, profile, leader reference.
 - `server.agents.commands`: command parsing/routing/result boundaries.
 - `server.agents.plans`: objective and plan execution framework.

@@ -52,6 +52,9 @@ Recent map updates:
   the movement-core callback and legacy loot-radius value while Agent runtime
   owns target search, no-target fallback, target commitment, ranged engagement,
   navigation tail, and combat/navigation side-effect hook composition.
+- Local opportunity attack result adaptation moved from BotManager to
+  `server.agents.runtime.AgentLocalOpportunityAttackRuntime`. BotManager now
+  passes the Agent runtime method directly into tick-core wiring.
 - Anchored farm hook wiring moved from BotManager to
   `server.agents.runtime.AgentAnchoredFarmRuntime`. BotManager now passes only
   legacy movement config values while Agent runtime owns local-opportunity,

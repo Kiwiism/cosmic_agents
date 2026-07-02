@@ -30,6 +30,25 @@ public final class AgentLocalOpportunityAttackRuntime {
                 hooks());
     }
 
+    public static AgentLiveModeTickRuntime.LocalAttackResult tryLocalOpportunityAttackForLiveMode(
+            BotEntry entry,
+            Character agent,
+            Point agentPosition,
+            Point movementTargetPosition,
+            Point moveWindowReferencePosition,
+            boolean allowCombatMovement,
+            boolean allowJumpTowardTarget) {
+        AgentLocalOpportunityAttackService.Result result = tryLocalOpportunityAttack(
+                entry,
+                agent,
+                agentPosition,
+                movementTargetPosition,
+                moveWindowReferencePosition,
+                allowCombatMovement,
+                allowJumpTowardTarget);
+        return new AgentLiveModeTickRuntime.LocalAttackResult(result.consumedTick(), result.targetPos());
+    }
+
     private static AgentLocalOpportunityAttackService.Hooks hooks() {
         return new AgentLocalOpportunityAttackService.Hooks(
                 AgentGrindNavigationRuntime::selectGrindNavigationTarget,

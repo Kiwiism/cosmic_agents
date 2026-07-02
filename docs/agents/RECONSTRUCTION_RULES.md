@@ -3459,6 +3459,10 @@ Recent reconstruction notes:
   runtime owns grind target search, no-target fallback, target commitment,
   ranged engagement, navigation tail, and combat/navigation side-effect hook
   wiring.
+- Local opportunity attack live-mode adaptation now lives in
+  `server.agents.runtime.AgentLocalOpportunityAttackRuntime`. BotManager no
+  longer keeps a local result record or adapter method for converting local
+  attack capability results into live-mode tick results.
 
 Initial reconstruction order:
 

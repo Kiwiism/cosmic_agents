@@ -6,7 +6,6 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 
 import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentCombatConfig;
-import server.agents.capabilities.combat.AgentLocalOpportunityAttackService;
 import server.agents.capabilities.quest.AgentPartyQuestSyncService;
 
 import server.agents.capabilities.dialogue.AgentChatIngressService;
@@ -161,7 +160,6 @@ public class BotManager {
     // portal in the return map; later bots warp to a randomized nearby offset.
     // Cleared when the owner becomes active again.
     private final Map<Integer, Point> townClusterAnchors = AgentLeaderSafetyService.townClusterAnchorsByLeaderId();
-    private record LocalOpportunityAttackResult(boolean consumedTick, Point targetPos) {}
 
     private static final int PLATFORM_EDGE_INSET_PX = 12;
     // -------------------------------------------------------------------------
@@ -533,32 +531,10 @@ public class BotManager {
                 entryToTick -> AgentScriptTaskRuntime.tick(entryToTick, BotMovementManager.cfg.STOP_DIST),
                 this::issueGrind,
                 this::issueFollowOwner,
-                (attackEntry, attackBot, attackBotPos, attackTargetPos, attackFollowTargetPos, allowMoveWindow, updateMoveWindow) -> {
-                    LocalOpportunityAttackResult result = tryLocalOpportunityAttack(
-                            attackEntry,
-                            attackBot,
-                            attackBotPos,
-                            attackTargetPos,
-                            attackFollowTargetPos,
-                            allowMoveWindow,
-                            updateMoveWindow);
-                    return new AgentLiveModeTickRuntime.LocalAttackResult(
-                            result.consumedTick(),
-                            result.targetPos());
-                },
+                AgentLocalOpportunityAttackRuntime::tryLocalOpportunityAttackForLiveMode,
                 this::stepMovementCore,
                 this::tickAnchoredFarm,
-                (grindEntry, grindBot, grindBotPos, grindTargetPos, grindRunAiTick) -> {
-                    LocalOpportunityAttackResult result = tickGrindMode(
-                            grindEntry,
-                            grindBot,
-                            grindBotPos,
-                            grindTargetPos,
-                            grindRunAiTick);
-                    return new AgentLiveModeTickRuntime.LocalAttackResult(
-                            result.consumedTick(),
-                            result.targetPos());
-                },
+                this::tickGrindMode,
                 BotMovementManager.cfg.TELEPORT_DIST,
                 BotMovementManager.cfg.OOB_TELEPORT_DIST,
                 cfg.GRIND_PARTY_TELEPORT_DIST_MULTIPLIER,
@@ -571,9 +547,9 @@ public class BotManager {
      * for the shared stepMovementCore tail. Single source of truth shared by the perf and non-perf
      * dispatch arms in the bot tick.
      */
-    private LocalOpportunityAttackResult tickGrindMode(BotEntry entry, Character bot, Point botPos,
+    private AgentLiveModeTickRuntime.LocalAttackResult tickGrindMode(BotEntry entry, Character bot, Point botPos,
             Point targetPos, boolean runAiTick) {
-        AgentLiveModeTickRuntime.LocalAttackResult result = AgentGrindModeRuntime.tickGrindMode(
+        return AgentGrindModeRuntime.tickGrindMode(
                 entry,
                 bot,
                 botPos,
@@ -581,7 +557,6 @@ public class BotManager {
                 runAiTick,
                 this::stepMovementCore,
                 BotManager.cfg.LOOT_RADIUS);
-        return new LocalOpportunityAttackResult(result.consumedTick(), result.targetPos());
     }
 
     private void handleBotTickFailure(BotEntry entry, int ownerCharId, int botCharId, Throwable t) {
@@ -602,25 +577,6 @@ public class BotManager {
     private void tickAnchoredFarm(BotEntry entry, Character bot, Point botPos, boolean runAiTick) {
         AgentAnchoredFarmRuntime.tickAnchoredFarm(
                 entry, bot, botPos, runAiTick, cfg.ENABLE_UNSTUCK, BotMovementManager.cfg.STOP_DIST);
-    }
-
-    private LocalOpportunityAttackResult tryLocalOpportunityAttack(BotEntry entry,
-                                                                  Character bot,
-                                                                  Point botPos,
-                                                                  Point movementTargetPos,
-                                                                  Point moveWindowReferencePos,
-                                                                  boolean allowCombatMovement,
-                                                                  boolean allowJumpTowardTarget) {
-        AgentLocalOpportunityAttackService.Result result =
-                AgentLocalOpportunityAttackRuntime.tryLocalOpportunityAttack(
-                        entry,
-                        bot,
-                        botPos,
-                        movementTargetPos,
-                        moveWindowReferencePos,
-                        allowCombatMovement,
-                        allowJumpTowardTarget);
-        return new LocalOpportunityAttackResult(result.consumedTick(), result.targetPos());
     }
 
     private Character resolveTickOwner(BotEntry entry, int ownerCharId) {
