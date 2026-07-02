@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Tick preflight hook wiring moved from BotManager to
+  `server.agents.runtime.AgentTickPreflightRuntime`. Agent runtime now owns
+  airshow, skip-delay, removed-Agent cleanup, heartbeat, pending-offer expiry,
+  AI cadence, movement tick, AI tick, and heartbeat interval hook construction.
 - Tick failure side-effect wiring moved from BotManager to
   `server.agents.runtime.AgentTickFailureRuntime`. BotManager now passes only
   the temporary stop-mode callback and logger while Agent runtime owns movement

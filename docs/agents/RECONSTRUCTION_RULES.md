@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Tick preflight hook wiring now lives in
+  `server.agents.runtime.AgentTickPreflightRuntime`. BotManager no longer owns
+  the airshow, skip-delay, removed-Agent cleanup, heartbeat, pending-offer
+  expiry, AI cadence, movement tick, AI tick, or heartbeat interval hook bundle
+  for tick preflight.
 - Tick failure side-effect wiring now lives in
   `server.agents.runtime.AgentTickFailureRuntime`. BotManager supplies only the
   temporary stop-mode callback and logger while Agent runtime owns movement

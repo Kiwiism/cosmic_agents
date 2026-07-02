@@ -49,7 +49,6 @@ import server.agents.runtime.AgentFollowMapSyncService;
 import server.agents.runtime.AgentFollowOpportunityTickService;
 import server.agents.runtime.AgentFormationCommandService;
 import server.agents.runtime.AgentGrindModeDispatchService;
-import server.agents.runtime.AgentHeartbeatService;
 import server.agents.runtime.AgentIdleModeTickService;
 import server.agents.runtime.AgentGrindNoTargetFallbackService;
 import server.agents.runtime.AgentGrindTargetPositionService;
@@ -97,7 +96,7 @@ import server.agents.runtime.AgentStuckDetectionService;
 import server.agents.runtime.AgentTickFailureRuntime;
 import server.agents.runtime.AgentTickCoreService;
 import server.agents.runtime.AgentTickOrchestrator;
-import server.agents.runtime.AgentTickPreflightService;
+import server.agents.runtime.AgentTickPreflightRuntime;
 import server.agents.runtime.AgentTickStateMaintenanceService;
 import server.agents.runtime.AgentTradeWindowTickService;
 import server.agents.runtime.AgentTrackedMapChangeTickService;
@@ -112,7 +111,6 @@ import server.agents.capabilities.supplies.AgentGroupSupplyResponderSelector;
 import server.agents.capabilities.supplies.AgentPotionCheckRequestService;
 import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
-import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.trade.AgentPendingOfferChatRouteService;
 import server.agents.capabilities.trade.AgentTradeDialogueService;
 import server.agents.plans.AgentScriptMoveTargetService;
@@ -156,7 +154,6 @@ import server.agents.integration.AgentBotReplyChannelStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
 import server.agents.integration.AgentBotShopStateRuntime;
-import server.agents.integration.AgentBotTickCadenceStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
 import server.agents.integration.AgentBotTargetedCommandMatch;
 import server.agents.plans.AgentTask;
@@ -696,11 +693,7 @@ public class BotManager {
     private AgentTickCoreService.Hooks tickCoreHooks() {
         return new AgentTickCoreService.Hooks(
                 System::currentTimeMillis,
-                (entry, botCharId, nowMs) -> AgentTickPreflightService.runPreflight(
-                        entry,
-                        botCharId,
-                        nowMs,
-                        tickPreflightHooks()),
+                AgentTickPreflightRuntime::runPreflight,
                 this::resolveTickOwner,
                 this::handleOwnerOfflineOrDead,
                 (ownerlessEntry, ownerlessBot, ownerlessRunAiTick) -> AgentOwnerlessTickService.tickOwnerless(
@@ -740,25 +733,6 @@ public class BotManager {
                                         nowMs),
                                 liveModeTickHooks(perf)));
     }
-    private AgentTickPreflightService.Hooks tickPreflightHooks() {
-        return new AgentTickPreflightService.Hooks(
-                AgentBotManagerStatusRuntime::airshowActive,
-                AgentBotTickCadenceStateRuntime::consumeSkipDelay,
-                this::removeBotByCharId,
-                (entry, agent, nowMs, heartbeatIntervalMs) -> AgentHeartbeatService.tickHeartbeat(
-                        entry,
-                        agent,
-                        nowMs,
-                        heartbeatIntervalMs,
-                        heartbeatAgent -> heartbeatAgent.getClient().updateLastPacket(),
-                        BotMovementManager::broadcastMovement),
-                AgentOfferService::expirePendingOffer,
-                AgentTickOrchestrator::prepareTick,
-                BotMovementManager.cfg.TICK_MS,
-                cfg.AI_TICK_MS,
-                600_000L);
-    }
-
     private AgentLiveTickContextService.Hooks liveTickContextHooks() {
         return new AgentLiveTickContextService.Hooks(
                 BotMovementManager::refreshMovementProfile,
