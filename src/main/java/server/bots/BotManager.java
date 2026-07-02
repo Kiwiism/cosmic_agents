@@ -79,6 +79,7 @@ import server.agents.runtime.AgentTickOrchestrator;
 import server.agents.runtime.AgentTickPreflightService;
 import server.agents.runtime.AgentTickStateMaintenanceService;
 import server.agents.runtime.AgentTradeWindowTickService;
+import server.agents.runtime.AgentTrackedMapChangeTickService;
 
 import server.agents.capabilities.looting.AgentGrindLootTargetService;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
@@ -1154,23 +1155,25 @@ public class BotManager {
 
         // On any map change (e.g. NPC-triggered portal): rebuild footholds, reset physics,
         // and snap to ground so the bot does not carry over airborne state from the previous map.
-        if (!perf) {
-            if (handleTrackedMapChange(entry, bot)) {
-                return;
-            }
-        } else {
-            long tMapChange = System.nanoTime();
-            boolean changed = false;
-            try {
-                changed = handleTrackedMapChange(entry, bot);
-            } finally {
-                if (changed) {
-                    AgentPerformanceMonitor.record("tick-map-change", System.nanoTime() - tMapChange);
-                }
-            }
-            if (changed) {
-                return;
-            }
+        if (AgentTrackedMapChangeTickService.tickTrackedMapChange(
+                entry,
+                bot,
+                new AgentTrackedMapChangeTickService.Hooks((mapEntry, mapBot) -> {
+                    if (!perf) {
+                        return handleTrackedMapChange(mapEntry, mapBot);
+                    }
+                    long tMapChange = System.nanoTime();
+                    boolean changed = false;
+                    try {
+                        changed = handleTrackedMapChange(mapEntry, mapBot);
+                    } finally {
+                        if (changed) {
+                            AgentPerformanceMonitor.record("tick-map-change", System.nanoTime() - tMapChange);
+                        }
+                    }
+                    return changed;
+                }))) {
+            return;
         }
 
         // Shop visit: navigate to approach point before resuming normal flow.

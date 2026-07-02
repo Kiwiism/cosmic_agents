@@ -3094,6 +3094,11 @@ Recent reconstruction notes:
   compatibility hooks for follow-map synchronization, grind-party distance
   recovery, and target-distance recovery. The same shop-visit follow-sync guard,
   short-circuit order, and consumed/fall-through behavior are preserved.
+- Tracked map-change tick dispatch now lives in
+  `server.agents.runtime.AgentTrackedMapChangeTickService`. BotManager keeps a
+  temporary compatibility adapter for the existing tracked-map-change body and
+  performance timing. The same consumed/fall-through result and record-only-
+  when-changed performance behavior are preserved.
 
 Initial reconstruction order:
 

@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Tracked map-change tick dispatch moved from BotManager to
+  `server.agents.runtime.AgentTrackedMapChangeTickService`. BotManager now
+  supplies the temporary tracked-map-change handler and performance timing.
 - Follow map-sync and teleport recovery dispatch moved from BotManager to
   `server.agents.runtime.AgentRecoveryTickService`. BotManager now supplies
   temporary hooks for follow map sync, grind-party recovery teleport, and
