@@ -1,0 +1,91 @@
+package server.agents.runtime;
+
+import client.Character;
+import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyString;
+
+class AgentLifecycleChatCommandRuntimeTest {
+    @Test
+    void handlesRecruitCommandWithLegacyReply() {
+        Character leader = leader(7);
+        List<String> calls = new ArrayList<>();
+
+        boolean handled = AgentLifecycleChatCommandRuntime.handleRecruitCommand(
+                leader,
+                "recruit agent123",
+                (leaderId, commandLeader, agentName) -> {
+                    calls.add("recruit:" + leaderId + ":" + agentName);
+                    return null;
+                });
+
+        assertTrue(handled);
+        assertEquals(List.of("recruit:7:agent123"), calls);
+        verify(leader).yellowMessage("Bot 'agent123' recruited!");
+    }
+
+    @Test
+    void handlesTransferCommandWithLegacyReply() {
+        Character leader = leader(8);
+        List<String> calls = new ArrayList<>();
+
+        boolean handled = AgentLifecycleChatCommandRuntime.handleTransferCommand(
+                leader,
+                "transfer agent123 Bob",
+                (leaderId, commandLeader, agentName, targetName) -> {
+                    calls.add("transfer:" + leaderId + ":" + agentName + ":" + targetName);
+                    return null;
+                });
+
+        assertTrue(handled);
+        assertEquals(List.of("transfer:8:agent123:Bob"), calls);
+        verify(leader).yellowMessage("Bot 'agent123' transferred to Bob.");
+    }
+
+    @Test
+    void handlesDismissCommandWithLegacyReply() {
+        Character leader = leader(9);
+        List<String> calls = new ArrayList<>();
+
+        boolean handled = AgentLifecycleChatCommandRuntime.handleDismissCommand(
+                leader,
+                "dismiss agent123",
+                (leaderId, agentName) -> {
+                    calls.add("dismiss:" + leaderId + ":" + agentName);
+                    return true;
+                });
+
+        assertTrue(handled);
+        assertEquals(List.of("dismiss:9:agent123"), calls);
+        verify(leader).yellowMessage("Bot 'agent123' disowned - now idle.");
+    }
+
+    @Test
+    void returnsFalseForUnmatchedLifecycleCommand() {
+        Character leader = leader(10);
+
+        boolean handled = AgentLifecycleChatCommandRuntime.handleDismissCommand(
+                leader,
+                "follow me",
+                (leaderId, agentName) -> true);
+
+        assertFalse(handled);
+        verify(leader, never()).yellowMessage(anyString());
+    }
+
+    private static Character leader(int id) {
+        Character leader = mock(Character.class);
+        when(leader.getId()).thenReturn(id);
+        return leader;
+    }
+}

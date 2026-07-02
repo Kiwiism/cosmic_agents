@@ -6,6 +6,9 @@ Target package groups:
 
 - `server.agents.api`: stable public service/query/command surfaces.
 - `server.agents.runtime`: sessions, lifecycle, registry, scheduler, snapshots.
+  Current reconstruction runtime boundaries include lifecycle command wiring
+  such as `AgentLifecycleChatCommandRuntime`, while BotManager remains only a
+  temporary compatibility caller for legacy entry points.
 - `server.agents.model`: identity, mode, profile, leader reference.
 - `server.agents.commands`: command parsing/routing/result boundaries.
 - `server.agents.plans`: objective and plan execution framework.

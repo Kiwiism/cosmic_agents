@@ -3415,6 +3415,11 @@ Recent reconstruction notes:
   physics reset, movement broadcast, shop map-change, and manager status checks.
   The same map-tracking guard, ground fallback, and side-effect sequence are
   preserved.
+- Lifecycle chat command wiring for recruit, transfer, and dismiss now lives in
+  `server.agents.runtime.AgentLifecycleChatCommandRuntime`. BotManager keeps
+  only compatibility lifecycle entry points and supplies their callbacks to the
+  Agent runtime command boundary. The same command aliases, success/failure
+  messages, yellow-message delivery, and fall-through behavior are preserved.
 
 Initial reconstruction order:
 

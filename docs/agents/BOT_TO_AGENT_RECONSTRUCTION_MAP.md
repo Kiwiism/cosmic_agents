@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Lifecycle chat command wiring for recruit, transfer, and dismiss moved from
+  BotManager to `server.agents.runtime.AgentLifecycleChatCommandRuntime`.
+  BotManager now passes only temporary compatibility lifecycle actions while
+  Agent runtime owns command-service hook construction and preserves the same
+  legacy yellow-message replies.
 - Anchored farm hook wiring moved from BotManager to
   `server.agents.runtime.AgentAnchoredFarmRuntime`. BotManager now passes only
   legacy movement config values while Agent runtime owns local-opportunity,

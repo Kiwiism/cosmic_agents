@@ -26,8 +26,6 @@ import server.agents.runtime.AgentAnchoredFarmModeTickService;
 import server.agents.runtime.AgentAnchoredFarmRuntime;
 import server.agents.runtime.AgentCommonTickRuntime;
 import server.agents.runtime.AgentDeathTickService;
-import server.agents.runtime.AgentDismissCommandService;
-import server.agents.runtime.AgentDismissRuntime;
 import server.agents.runtime.AgentFinalMovementTailService;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentLifecycleService;
@@ -48,6 +46,7 @@ import server.agents.runtime.AgentGrindTargetRuntime;
 import server.agents.runtime.AgentIdlePhysicsRuntime;
 import server.agents.runtime.AgentLeaderSessionService;
 import server.agents.runtime.AgentLeaderSafetyService;
+import server.agents.runtime.AgentLifecycleChatCommandRuntime;
 import server.agents.runtime.AgentLiveTickContextService;
 import server.agents.runtime.AgentLiveModeTickService;
 import server.agents.runtime.AgentLiveTickGateService;
@@ -62,14 +61,12 @@ import server.agents.runtime.AgentOwnerlessTickService;
 import server.agents.runtime.AgentOfflineLoadRuntime;
 import server.agents.runtime.AgentPartyLifecycleService;
 import server.agents.runtime.AgentPositionService;
-import server.agents.runtime.AgentRecruitRuntime;
 import server.agents.runtime.AgentRegistrationRuntime;
 import server.agents.runtime.AgentReloginRuntime;
 import server.agents.runtime.AgentRecoveryTickService;
 import server.agents.runtime.AgentRecoveryTeleportRuntime;
 import server.agents.runtime.AgentRespawnRuntime;
 import server.agents.runtime.AgentReturnScrollService;
-import server.agents.runtime.AgentRecruitCommandService;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeCleanupService;
 import server.agents.runtime.AgentScriptedMoveCombatTickService;
@@ -91,8 +88,6 @@ import server.agents.runtime.AgentTickPreflightRuntime;
 import server.agents.runtime.AgentTickStateMaintenanceService;
 import server.agents.runtime.AgentTradeWindowTickService;
 import server.agents.runtime.AgentTrackedMapChangeTickService;
-import server.agents.runtime.AgentTransferCommandService;
-import server.agents.runtime.AgentTransferRuntime;
 
 import server.agents.capabilities.looting.AgentGrindLootTargetService;
 import server.agents.capabilities.social.AgentScrollReactionNotificationService;
@@ -264,17 +259,17 @@ public class BotManager {
 
     /** Disown a bot by name - cancels its AI tick and leaves it idle in the map. */
     public boolean dismissBot(int ownerCharId, String botName) {
-        return AgentDismissRuntime.dismissAgentByName(ownerCharId, botName, this::issueStop);
+        return AgentLifecycleChatCommandRuntime.dismissAgent(ownerCharId, botName, this::issueStop);
     }
 
     /** Recruit an ownerless bot by name into the owner's group. Returns an error string on failure, null on success. */
     public String recruitBot(int ownerCharId, Character owner, String botName) {
-        return AgentRecruitRuntime.recruitAgent(ownerCharId, owner, botName, this::registerBot);
+        return AgentLifecycleChatCommandRuntime.recruitAgent(ownerCharId, owner, botName, this::registerBot);
     }
 
     /** Transfer a bot from this owner to another player in the same map. Returns an error string on failure, null on success. */
     public String giveBot(int ownerCharId, Character owner, String botName, String targetName) {
-        return AgentTransferRuntime.transferAgent(
+        return AgentLifecycleChatCommandRuntime.transferAgent(
                 ownerCharId, owner, botName, targetName, this::issueStop, this::registerBot);
     }
 
@@ -342,29 +337,17 @@ public class BotManager {
     private AgentChatIngressService.Hooks chatIngressHooks() {
         return new AgentChatIngressService.Hooks(
                 this::handlePendingLootOfferResponse,
-                (leader, message) -> AgentRecruitCommandService.handleRecruitCommand(
-                        leader,
-                        message,
-                        new AgentRecruitCommandService.Hooks(
-                                this::recruitBot,
-                                Character::yellowMessage)),
-                (leader, message) -> AgentTransferCommandService.handleTransferCommand(
-                        leader,
-                        message,
-                        new AgentTransferCommandService.Hooks(
-                                this::giveBot,
-                                Character::yellowMessage)),
+                (leader, message) -> AgentLifecycleChatCommandRuntime.handleRecruitCommand(
+                        leader, message, this::recruitBot),
+                (leader, message) -> AgentLifecycleChatCommandRuntime.handleTransferCommand(
+                        leader, message, this::giveBot),
                 (leader, message) -> AgentFormationCommandService.handleFormationCommand(
                         leader,
                         message,
                         formationCommandHooks()),
                 bots::get,
-                (leader, message) -> AgentDismissCommandService.handleDismissCommand(
-                        leader,
-                        message,
-                        new AgentDismissCommandService.Hooks(
-                                this::dismissBot,
-                                Character::yellowMessage)),
+                (leader, message) -> AgentLifecycleChatCommandRuntime.handleDismissCommand(
+                        leader, message, this::dismissBot),
                 (leader, entries, message, channel) -> AgentTargetedChatRouteService.handleTargetedChat(
                         leader,
                         entries,
