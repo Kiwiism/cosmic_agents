@@ -28,6 +28,7 @@ Target package groups:
   Dead-state tick hook wiring enters through `AgentDeathTickRuntime`.
   Ownerless movement-only tick preparation enters through
   `AgentMovementOnlyStepRuntime`.
+  Movement-core config-bound stepping enters through `AgentMovementTickRuntime`.
   BotManager remains only a temporary compatibility caller for legacy entry
   points.
 - `server.agents.model`: identity, mode, profile, leader reference.

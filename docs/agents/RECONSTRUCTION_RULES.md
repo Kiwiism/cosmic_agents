@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Movement-core config-bound entry now lives in
+  `server.agents.runtime.AgentMovementTickRuntime.stepMovementCore(entry, target, runAiTick)`.
+  BotManager no longer passes unstuck/stop-distance config directly for its
+  movement-core compatibility wrapper.
 - Ownerless movement-only tick preparation now lives in
   `server.agents.runtime.AgentMovementOnlyStepRuntime`. BotManager delegates
   the compatibility step methods while Agent runtime owns the bot-present

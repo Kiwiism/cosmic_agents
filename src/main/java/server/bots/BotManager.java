@@ -650,7 +650,7 @@ public class BotManager {
     private void stepMovementCore(BotEntry entry,
                                   Point targetPos,
                                   boolean runAiTick) {
-        AgentMovementTickRuntime.stepMovementCore(entry, targetPos, runAiTick, cfg.ENABLE_UNSTUCK, BotMovementManager.cfg.STOP_DIST);
+        AgentMovementTickRuntime.stepMovementCore(entry, targetPos, runAiTick);
     }
 
     private static void tickStuckDetection(BotEntry entry) {

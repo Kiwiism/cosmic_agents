@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Movement-core config-bound entry moved from BotManager to
+  `server.agents.runtime.AgentMovementTickRuntime`. BotManager now delegates
+  movement-core stepping without assembling unstuck/stop-distance config.
 - Ownerless movement-only tick preparation moved from BotManager to
   `server.agents.runtime.AgentMovementOnlyStepRuntime`. BotManager now passes
   only legacy movement config values while Agent runtime owns cadence,

@@ -2,12 +2,24 @@ package server.agents.runtime;
 
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.bots.BotEntry;
+import server.bots.BotMovementManager;
 import server.bots.BotNavigationManager;
 
 import java.awt.Point;
 
 public final class AgentMovementTickRuntime {
     private AgentMovementTickRuntime() {
+    }
+
+    public static void stepMovementCore(BotEntry entry,
+                                        Point targetPosition,
+                                        boolean runAiTick) {
+        stepMovementCore(
+                entry,
+                targetPosition,
+                runAiTick,
+                AgentRuntimeConfig.cfg.ENABLE_UNSTUCK,
+                BotMovementManager.configuredStopDist());
     }
 
     public static void stepMovementCore(BotEntry entry,
