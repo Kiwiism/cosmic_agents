@@ -1918,9 +1918,7 @@ public class BotManager {
     }
 
     private Character resolveFollowCharacterById(BotEntry entry, int targetCharacterId) {
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
-        List<BotEntry> siblingEntries = owner == null ? List.of() : getBotEntries(owner.getId());
-        return AgentFollowAnchorService.resolveTarget(entry, owner, targetCharacterId, siblingEntries);
+        return AgentFollowAnchorService.resolveTargetFromRuntimeRegistry(entry, targetCharacterId);
     }
 
     /**

@@ -49,4 +49,12 @@ public final class AgentFollowAnchorService {
 
         return leader;
     }
+
+    public static Character resolveTargetFromRuntimeRegistry(BotEntry entry, int targetId) {
+        Character leader = AgentBotRuntimeIdentityRuntime.owner(entry);
+        List<BotEntry> siblingEntries = leader == null
+                ? List.of()
+                : AgentRuntimeRegistry.entriesForLeader(leader.getId());
+        return resolveTarget(entry, leader, targetId, siblingEntries);
+    }
 }

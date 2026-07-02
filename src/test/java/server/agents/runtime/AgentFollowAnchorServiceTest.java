@@ -141,6 +141,21 @@ class AgentFollowAnchorServiceTest {
         assertSame(siblingAgent, resolved);
     }
 
+    @Test
+    void resolveTargetFromRuntimeRegistryUsesLiveSiblingEntries() {
+        Character leader = character(100, true);
+        Character siblingAgent = character(300, true);
+        BotEntry entry = new BotEntry(character(200, true), leader, null);
+        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(entry);
+        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new BotEntry(siblingAgent, leader, null));
+
+        Character resolved = AgentFollowAnchorService.resolveTargetFromRuntimeRegistry(entry, siblingAgent.getId());
+
+        assertSame(siblingAgent, resolved);
+        AgentRuntimeRegistry.entriesByLeaderId().clear();
+    }
+
     private static Character character(int id, boolean loggedIn) {
         Character character = mock(Character.class);
         when(character.getId()).thenReturn(id);

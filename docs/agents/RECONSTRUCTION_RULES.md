@@ -2975,6 +2975,11 @@ Recent reconstruction notes:
   compatibility entry points and private script-task starters. The same script
   task clearing, shop-visit cancellation, null guards, mode-state transitions,
   and navigation-state clear hooks are preserved.
+- Script-task follow-target lookup now uses
+  `server.agents.runtime.AgentFollowAnchorService.resolveTargetFromRuntimeRegistry`;
+  BotManager keeps only the temporary script hook wrapper. The same leader
+  fallback, party-member priority, sibling-Agent fallback, and offline-target
+  rejection behavior are preserved.
 
 Initial reconstruction order:
 
