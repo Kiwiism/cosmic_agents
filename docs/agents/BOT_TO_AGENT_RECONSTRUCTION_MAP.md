@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Ownerless Agent recruit lifecycle moved from BotManager to
+  `server.agents.runtime.AgentRecruitService`. BotManager now supplies
+  temporary hooks for unclaimed online Agent lookup, control authorization, and
+  registration under the current leader.
 - Agent transfer between leaders moved from BotManager to
   `server.agents.runtime.AgentTransferService`. BotManager now supplies
   temporary hooks for current-entry lookup, same-map target lookup,

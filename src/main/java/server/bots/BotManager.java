@@ -65,6 +65,7 @@ import server.agents.runtime.AgentOfflineLoadService;
 import server.agents.runtime.AgentPartyLifecycleService;
 import server.agents.runtime.AgentPositionService;
 import server.agents.runtime.AgentRandom;
+import server.agents.runtime.AgentRecruitService;
 import server.agents.runtime.AgentRecoveryTickService;
 import server.agents.runtime.AgentRecoveryTeleportService;
 import server.agents.runtime.AgentReturnScrollService;
@@ -507,23 +508,14 @@ public class BotManager {
 
     /** Recruit an ownerless bot by name into the owner's group. Returns an error string on failure, null on success. */
     public String recruitBot(int ownerCharId, Character owner, String botName) {
-        Character bot = AgentRuntimeRegistry.findUnclaimedOnlineAgentByName(botName, owner.getWorld());
-        if (bot == null) return "No ownerless bot named '" + botName + "' found.";
-
-        AgentAuthorizationResult auth =
-                AgentOwnershipService.getInstance().ensureCanControl(
-                        owner,
-                        new AgentResolvedCharacter(
-                                bot.getId(),
-                                bot.getName(),
-                                bot.getAccountID(),
-                                bot));
-        if (!auth.allowed()) {
-            return auth.failureMessage();
-        }
-
-        registerSpawnedBot(ownerCharId, owner, bot);
-        return null;
+        return AgentRecruitService.recruitAgent(
+                ownerCharId,
+                owner,
+                botName,
+                new AgentRecruitService.Hooks(
+                        AgentRuntimeRegistry::findUnclaimedOnlineAgentByName,
+                        (leader, agent) -> AgentOwnershipService.getInstance().ensureCanControl(leader, agent),
+                        this::registerBot));
     }
 
     /** Transfer a bot from this owner to another player in the same map. Returns an error string on failure, null on success. */

@@ -17,6 +17,12 @@ Rules:
 
 Recent reconstruction notes:
 
+- Ownerless Agent recruit lifecycle now lives in
+  `server.agents.runtime.AgentRecruitService`. BotManager keeps a temporary
+  compatibility hook bundle for unclaimed online Agent lookup, control
+  authorization, and registration under the current leader. The same missing
+  ownerless-Agent message, authorization failure propagation, and registration
+  behavior are preserved.
 - Agent transfer between leaders now lives in
   `server.agents.runtime.AgentTransferService`. BotManager keeps a temporary
   compatibility hook bundle for current-entry lookup, same-map target lookup,
