@@ -36,7 +36,7 @@ import server.agents.runtime.AgentFollowTargetRuntime;
 import server.agents.runtime.AgentFollowTargetPositionService;
 import server.agents.runtime.AgentFollowMapSyncRuntime;
 import server.agents.runtime.AgentFollowOpportunityTickService;
-import server.agents.runtime.AgentFormationCommandService;
+import server.agents.runtime.AgentFormationCommandRuntime;
 import server.agents.runtime.AgentGrindCombatRuntime;
 import server.agents.runtime.AgentGrindNavigationRuntime;
 import server.agents.runtime.AgentGrindModeDispatchService;
@@ -341,10 +341,13 @@ public class BotManager {
                         leader, message, this::recruitBot),
                 (leader, message) -> AgentLifecycleChatCommandRuntime.handleTransferCommand(
                         leader, message, this::giveBot),
-                (leader, message) -> AgentFormationCommandService.handleFormationCommand(
+                (leader, message) -> AgentFormationCommandRuntime.handleFormationCommand(
                         leader,
                         message,
-                        formationCommandHooks()),
+                        bots::get,
+                        defaultFormationState(),
+                        cfg.FOLLOW_STAGGER,
+                        BotMovementManager.cfg.FOLLOW_Y_CAP),
                 bots::get,
                 (leader, message) -> AgentLifecycleChatCommandRuntime.handleDismissCommand(
                         leader, message, this::dismissBot),
@@ -399,22 +402,6 @@ public class BotManager {
     // -------------------------------------------------------------------------
     AgentFormationService.FormationState formationStateFor(BotEntry entry) {
         return AgentFormationService.stateForEntry(entry, AgentFormationService.formationsByLeaderId(), defaultFormationState());
-    }
-
-    private AgentFormationCommandService.Hooks formationCommandHooks() {
-        return new AgentFormationCommandService.Hooks(
-                bots::get,
-                (leaderCharId, defaultFormation) -> AgentFormationService.stateForLeader(
-                        AgentFormationService.formationsByLeaderId(),
-                        leaderCharId,
-                        defaultFormation),
-                AgentFormationService.formationsByLeaderId()::put,
-                AgentFormationService::applyOffsets,
-                AgentBotManagerReplyRuntime::queueReply,
-                Character::yellowMessage,
-                defaultFormationState(),
-                cfg.FOLLOW_STAGGER,
-                BotMovementManager.cfg.FOLLOW_Y_CAP);
     }
 
     public Character resolveFollowAnchor(BotEntry entry, Character owner) {

@@ -3420,6 +3420,11 @@ Recent reconstruction notes:
   only compatibility lifecycle entry points and supplies their callbacks to the
   Agent runtime command boundary. The same command aliases, success/failure
   messages, yellow-message delivery, and fall-through behavior are preserved.
+- Formation chat command hook construction now lives in
+  `server.agents.runtime.AgentFormationCommandRuntime`. BotManager keeps only
+  the temporary active-entry source plus legacy stagger/snap config values while
+  Agent runtime owns formation state lookup/write, offset application, reply
+  routing, and the legacy help/status text path.
 
 Initial reconstruction order:
 

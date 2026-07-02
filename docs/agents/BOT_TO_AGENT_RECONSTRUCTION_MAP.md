@@ -17,6 +17,11 @@ Recent map updates:
   BotManager now passes only temporary compatibility lifecycle actions while
   Agent runtime owns command-service hook construction and preserves the same
   legacy yellow-message replies.
+- Formation command hook wiring moved from BotManager to
+  `server.agents.runtime.AgentFormationCommandRuntime`. BotManager now passes
+  only the active-entry lookup and legacy formation config values while Agent
+  runtime owns state lookup/write, offset application, reply routing, and
+  fallback leader help messages.
 - Anchored farm hook wiring moved from BotManager to
   `server.agents.runtime.AgentAnchoredFarmRuntime`. BotManager now passes only
   legacy movement config values while Agent runtime owns local-opportunity,
