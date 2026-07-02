@@ -48,6 +48,7 @@ import server.agents.runtime.AgentGrindTargetPositionService;
 import server.agents.runtime.AgentIdlePhysicsService;
 import server.agents.runtime.AgentLeaderSessionService;
 import server.agents.runtime.AgentLeaderSafetyService;
+import server.agents.runtime.AgentLiveTickContextService;
 import server.agents.runtime.AgentLocalAttackMoveWindowService;
 import server.agents.runtime.AgentMapEnvironmentService;
 import server.agents.runtime.AgentMapTransitionService;
@@ -1095,19 +1096,16 @@ public class BotManager {
             return;
         }
 
-        BotMovementManager.refreshMovementProfile(entry);
-
-        Point botPos = bot.getPosition();
-        Character followAnchor = resolveFollowAnchor(entry, owner);
-        AgentTargetSnapshot targetSnapshot = captureTargetSnapshot(entry);
-        Point ownerPos = targetSnapshot.rawOwnerPos();
-        AgentTickStateMaintenanceService.updateObservedLeaderMotion(entry, ownerPos);
-        AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, ownerPos); // raw owner pos before formation offset/snap
-        AgentTickStateMaintenanceService.clearFarmAnchorOnMapChange(entry, bot);
-        AgentTickStateMaintenanceService.clearPatrolOnMapChange(entry, bot);
-        Point targetPos = targetSnapshot.primaryTargetPos();
+        AgentLiveTickContextService.Context liveContext = AgentLiveTickContextService.prepareLiveTickContext(
+                entry,
+                bot,
+                owner,
+                liveTickContextHooks());
+        Point botPos = liveContext.agentPosition();
+        Character followAnchor = liveContext.followAnchor();
+        AgentTargetSnapshot targetSnapshot = liveContext.targetSnapshot();
+        Point targetPos = liveContext.targetPosition();
         boolean perf = AgentPerformanceMonitor.enabled();
-        clearFollowActionMoveWindowIfSettled(entry, botPos, targetSnapshot);
 
         // These run in all modes (idle, follow, grind)
         if (runCommonTickSystems(entry, bot, owner, runAiTick)) {
@@ -1353,6 +1351,18 @@ public class BotManager {
                 BotMovementManager.cfg.TICK_MS,
                 cfg.AI_TICK_MS,
                 600_000L);
+    }
+
+    private AgentLiveTickContextService.Hooks liveTickContextHooks() {
+        return new AgentLiveTickContextService.Hooks(
+                BotMovementManager::refreshMovementProfile,
+                this::resolveFollowAnchor,
+                this::captureTargetSnapshot,
+                AgentTickStateMaintenanceService::updateObservedLeaderMotion,
+                AgentBotOwnerMotionStateRuntime::rememberOwnerPosition,
+                AgentTickStateMaintenanceService::clearFarmAnchorOnMapChange,
+                AgentTickStateMaintenanceService::clearPatrolOnMapChange,
+                BotManager::clearFollowActionMoveWindowIfSettled);
     }
 
     /**

@@ -17,6 +17,13 @@ Rules:
 
 Recent reconstruction notes:
 
+- Live tick context setup now lives in
+  `server.agents.runtime.AgentLiveTickContextService`. BotManager keeps a
+  temporary compatibility hook bundle for movement-profile refresh,
+  follow-anchor resolution, target snapshot capture, leader-motion tracking,
+  map-change cleanup, and follow action-window cleanup. The same refresh,
+  snapshot, raw leader-position, cleanup, and target-position ordering is
+  preserved.
 - Tick failure escalation and volatile-action cleanup now live in
   `server.agents.runtime.AgentTickFailurePolicy.handleFailure`. BotManager keeps
   only temporary hooks for logging, movement-state reset, disable/removal, and

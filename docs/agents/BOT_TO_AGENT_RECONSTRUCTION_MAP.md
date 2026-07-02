@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Live tick context setup moved from BotManager to
+  `server.agents.runtime.AgentLiveTickContextService`. BotManager now supplies
+  temporary hooks for movement-profile refresh, follow-anchor resolution,
+  target snapshot capture, leader motion tracking, map-change cleanup, and
+  follow action-window cleanup while Agent runtime owns the setup order.
 - Movement-only map-change handling moved from BotManager to
   `server.agents.runtime.AgentMovementOnlyMapChangeService`. BotManager now
   supplies temporary foothold, grounding, teleport, reset, broadcast, shop, and
