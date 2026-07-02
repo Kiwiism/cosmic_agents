@@ -43,6 +43,10 @@ Recent map updates:
   temporary leader/dead/script/mode callbacks while Agent runtime owns
   preflight, ownerless dispatch, live context, live gates, live modes, timing,
   and movement/recovery config handoff.
+- Script task tick callback wiring moved from BotManager to
+  `server.agents.runtime.AgentScriptTaskRuntime`. BotManager now passes only
+  the legacy stop-distance value while Agent runtime owns start/completion
+  callback composition over the existing script task services.
 - Anchored farm hook wiring moved from BotManager to
   `server.agents.runtime.AgentAnchoredFarmRuntime`. BotManager now passes only
   legacy movement config values while Agent runtime owns local-opportunity,

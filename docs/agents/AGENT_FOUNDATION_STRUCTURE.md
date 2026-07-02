@@ -11,8 +11,9 @@ Target package groups:
   `AgentFormationCommandRuntime`, plus live tick context preparation through
   `AgentLiveTickContextRuntime` and gate dispatch through
   `AgentLiveTickGateRuntime` / `AgentLiveModeTickRuntime`, with tick-core
-  composition through `AgentTickCoreRuntime`, while BotManager remains only a
-  temporary compatibility caller for legacy entry points.
+  composition through `AgentTickCoreRuntime` and script task composition
+  through `AgentScriptTaskRuntime`, while BotManager remains only a temporary
+  compatibility caller for legacy entry points.
 - `server.agents.model`: identity, mode, profile, leader reference.
 - `server.agents.commands`: command parsing/routing/result boundaries.
 - `server.agents.plans`: objective and plan execution framework.

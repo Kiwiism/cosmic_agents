@@ -56,9 +56,8 @@ import server.agents.runtime.AgentRespawnRuntime;
 import server.agents.runtime.AgentReturnScrollService;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeCleanupService;
-import server.agents.runtime.AgentScriptTaskExecutionService;
 import server.agents.runtime.AgentScriptTaskQueueService;
-import server.agents.runtime.AgentScriptTaskTickService;
+import server.agents.runtime.AgentScriptTaskRuntime;
 import server.agents.runtime.AgentTargetSnapshot;
 import server.agents.runtime.AgentTargetSnapshotService;
 import server.agents.runtime.AgentRuntimeRegistry;
@@ -496,7 +495,12 @@ public class BotManager {
 
     /** Test-only hook: invokes Agent common tick systems on a caller-owned entry. */
     void runCommonTickSystemsForTest(BotEntry entry, Character bot, Character owner, boolean runAiTick) {
-        AgentCommonTickRuntime.runCommonTickSystems(entry, bot, owner, runAiTick, this::tickScriptTasks);
+        AgentCommonTickRuntime.runCommonTickSystems(
+                entry,
+                bot,
+                owner,
+                runAiTick,
+                entryToTick -> AgentScriptTaskRuntime.tick(entryToTick, BotMovementManager.cfg.STOP_DIST));
     }
 
     /**
@@ -535,7 +539,7 @@ public class BotManager {
                 this::handleDeadTick,
                 this::resolveFollowAnchor,
                 this::captureTargetSnapshot,
-                this::tickScriptTasks,
+                entryToTick -> AgentScriptTaskRuntime.tick(entryToTick, BotMovementManager.cfg.STOP_DIST),
                 this::issueGrind,
                 this::issueFollowOwner,
                 (attackEntry, attackBot, attackBotPos, attackTargetPos, attackFollowTargetPos, allowMoveWindow, updateMoveWindow) -> {
@@ -890,18 +894,6 @@ public class BotManager {
 
     private static void clearMode(BotEntry entry) {
         AgentModeService.clearMode(entry);
-    }
-
-    private void tickScriptTasks(BotEntry entry) {
-        AgentScriptTaskTickService.tick(entry, this::startScriptTask, this::isScriptTaskComplete);
-    }
-
-    private void startScriptTask(BotEntry entry, AgentTask task) {
-        AgentScriptTaskExecutionService.start(entry, task);
-    }
-
-    private boolean isScriptTaskComplete(BotEntry entry, AgentTask task) {
-        return AgentScriptTaskExecutionService.isComplete(entry, task, BotMovementManager.cfg.STOP_DIST);
     }
 
     /**

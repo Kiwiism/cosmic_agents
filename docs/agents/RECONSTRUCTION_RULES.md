@@ -3448,6 +3448,11 @@ Recent reconstruction notes:
   movement/combat mode execution while Agent runtime owns preflight,
   ownerless ticking, live context preparation, live gate dispatch, live mode
   dispatch, timing, and config handoff.
+- Script task tick callback wiring now lives in
+  `server.agents.runtime.AgentScriptTaskRuntime`. BotManager keeps only
+  compatibility queue methods and supplies the legacy movement stop-distance
+  config while Agent runtime owns script task start/completion callback
+  composition.
 
 Initial reconstruction order:
 
