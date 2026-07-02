@@ -12,6 +12,12 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Targeted name-prefix chat routing moved from BotManager to
+  `server.agents.capabilities.dialogue.AgentTargetedChatRouteService`.
+  BotManager now supplies temporary hooks for targeted-command resolution,
+  follow-target command application, reply-channel state, typo suggestions,
+  Agent chat dispatch, command activity recording, LLM fallback, and leader
+  feedback while Agent dialogue owns the targeted route ordering.
 - Pending loot-offer target validation moved from BotManager to
   `server.agents.capabilities.trade.AgentPendingOfferResponseService`.
   BotManager now supplies only the temporary route-entry hook while Agent trade

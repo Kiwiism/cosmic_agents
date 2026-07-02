@@ -17,6 +17,13 @@ Rules:
 
 Recent reconstruction notes:
 
+- Targeted name-prefix chat routing now lives in
+  `server.agents.capabilities.dialogue.AgentTargetedChatRouteService`.
+  BotManager keeps temporary hooks for targeted-command resolution,
+  follow-target command application, reply-channel state, typo suggestions,
+  Agent chat dispatch, command activity recording, LLM fallback, and leader
+  feedback. The same targeted follow shortcut, typo reply, owner-command
+  recording gate, LLM fall-through, and feedback behavior are preserved.
 - Pending loot-offer target validation now lives in
   `server.agents.capabilities.trade.AgentPendingOfferResponseService`.
   BotManager keeps only the temporary route-entry hook. The same pending-offer,

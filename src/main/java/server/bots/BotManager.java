@@ -24,6 +24,7 @@ import server.agents.capabilities.combat.AgentGrindNavigationTailService;
 import server.agents.capabilities.quest.AgentPartyQuestSyncService;
 
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
+import server.agents.capabilities.dialogue.AgentTargetedChatRouteService;
 import server.agents.capabilities.dialogue.AgentWhisperCommandService;
 
 import server.agents.runtime.AgentActionLockPhysicsService;
@@ -577,41 +578,14 @@ public class BotManager {
             return;
         }
 
-        // Name-prefix routing: "Jason pots?" → only Jason responds
-        AgentBotTargetedCommandMatch targetedBot = AgentBotCommandParser.resolveTargetedBot(entries, message);
-        if (targetedBot.entry() != null) {
-            String followTargetToken = AgentChatCommandClassifier.matchFollowTarget(targetedBot.commandText());
-            if (followTargetToken != null) {
-                applyFollowTargetCommand(owner, List.of(targetedBot.entry()), followTargetToken);
-                return;
-            }
-            AgentBotReplyChannelStateRuntime.setReplyChannel(targetedBot.entry(), channel);
-            String cmd = targetedBot.commandText();
-            if (AgentLlmConfig.typoSuggesterEnabled) {
-                String typo = AgentCommandTypoSuggester.suggest(cmd);
-                if (typo != null) {
-                    AgentBotManagerReplyRuntime.queueReply(targetedBot.entry(), "did you mean '" + typo + "'?");
-                    return;
-                }
-            }
-            handleAgentChat(targetedBot.entry(), cmd);
-            boolean matched = AgentChatRuntime.wasLastChatHandled();
-            if (matched && targetedBot.entry().getOwner() != null
-                    && owner.getId() == targetedBot.entry().getOwner().getId()) {
-                AgentBotActivityStateRuntime.recordLastOwnerCommand(
-                        targetedBot.entry(), cmd, System.currentTimeMillis());
-            }
-            // Fall through to LLM only if no command pattern matched.
-            if (AgentLlmConfig.enabled && !matched) {
-                server.agents.capabilities.dialogue.llm.AgentLlmReplyService.maybeRespond(targetedBot.entry(), owner, cmd);
-            }
+        if (AgentTargetedChatRouteService.handleTargetedChat(
+                owner,
+                entries,
+                message,
+                channel,
+                targetedChatHooks())) {
             return;
         }
-        if (targetedBot.feedbackMessage() != null) {
-            owner.yellowMessage(targetedBot.feedbackMessage());
-            return;
-        }
-
         String followTargetToken = AgentChatCommandClassifier.matchFollowTarget(message);
         if (followTargetToken != null) {
             applyFollowTargetCommand(owner, entries, followTargetToken);
@@ -659,6 +633,24 @@ public class BotManager {
                         AgentBotCommandParser::resolveTargetedBot,
                         AgentOfferService::handlePendingOfferResponse,
                         (target, feedback) -> target.dropMessage(5, feedback)));
+    }
+
+    private AgentTargetedChatRouteService.Hooks targetedChatHooks() {
+        return new AgentTargetedChatRouteService.Hooks(
+                AgentBotCommandParser::resolveTargetedBot,
+                AgentChatCommandClassifier::matchFollowTarget,
+                this::applyFollowTargetCommand,
+                AgentBotReplyChannelStateRuntime::setReplyChannel,
+                () -> AgentLlmConfig.typoSuggesterEnabled,
+                AgentCommandTypoSuggester::suggest,
+                AgentBotManagerReplyRuntime::queueReply,
+                BotManager::handleAgentChat,
+                AgentChatRuntime::wasLastChatHandled,
+                System::currentTimeMillis,
+                AgentBotActivityStateRuntime::recordLastOwnerCommand,
+                () -> AgentLlmConfig.enabled,
+                server.agents.capabilities.dialogue.llm.AgentLlmReplyService::maybeRespond,
+                Character::yellowMessage);
     }
 
     // -------------------------------------------------------------------------
