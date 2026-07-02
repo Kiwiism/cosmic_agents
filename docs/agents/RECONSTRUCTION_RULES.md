@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Guarded tick entry ownership now lives in
+  `AgentTickRuntime.tick(entry, leaderId, agentId, issueGrind, issueFollow)`.
+  BotManager no longer calls `AgentTickOrchestrator.runGuardedTick` directly
+  for production ticks; it only supplies temporary grind/follow compatibility
+  callbacks.
 - Tick-core default hook-bundle ownership now lives in
   `AgentTickCoreRuntime.tickCore(entry, leaderId, agentId, issueGrind, issueFollow)`.
   BotManager no longer assembles leader lookup, safety, map transition,

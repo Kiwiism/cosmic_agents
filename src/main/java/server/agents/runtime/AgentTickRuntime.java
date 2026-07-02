@@ -1,0 +1,28 @@
+package server.agents.runtime;
+
+import server.bots.BotEntry;
+
+import java.util.function.Consumer;
+
+public final class AgentTickRuntime {
+    private AgentTickRuntime() {
+    }
+
+    public static void tick(BotEntry entry,
+                            int leaderCharId,
+                            int agentCharId,
+                            Consumer<BotEntry> issueGrind,
+                            Consumer<BotEntry> issueFollow) {
+        AgentTickOrchestrator.runGuardedTick(
+                entry,
+                leaderCharId,
+                agentCharId,
+                (tickEntry, tickLeaderId, tickAgentId) -> AgentTickCoreRuntime.tickCore(
+                        tickEntry,
+                        tickLeaderId,
+                        tickAgentId,
+                        issueGrind,
+                        issueFollow),
+                AgentTickFailureRuntime::handleFailure);
+    }
+}

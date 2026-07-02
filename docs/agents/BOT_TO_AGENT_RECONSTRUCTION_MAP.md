@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Guarded production tick entry moved from BotManager to
+  `server.agents.runtime.AgentTickRuntime`. BotManager now delegates production
+  ticks through that Agent runtime entry with only temporary grind/follow
+  callbacks.
 - Tick-core default hook-bundle ownership moved from BotManager to
   `server.agents.runtime.AgentTickCoreRuntime`. BotManager now passes only the
   temporary grind/follow mode callbacks into the compact Agent tick-core entry.

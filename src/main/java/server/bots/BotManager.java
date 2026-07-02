@@ -40,9 +40,8 @@ import server.agents.runtime.AgentTargetSnapshotRuntime;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSpawnPositionService;
 import server.agents.runtime.AgentSpawnRuntime;
-import server.agents.runtime.AgentTickFailureRuntime;
 import server.agents.runtime.AgentTickCoreRuntime;
-import server.agents.runtime.AgentTickOrchestrator;
+import server.agents.runtime.AgentTickRuntime;
 
 import server.agents.capabilities.looting.AgentGrindLootTargetService;
 import server.agents.capabilities.social.AgentScrollReactionNotificationService;
@@ -343,8 +342,7 @@ public class BotManager {
     // -------------------------------------------------------------------------
 
     private void tick(BotEntry entry, int ownerCharId, int botCharId) {
-        AgentTickOrchestrator.runGuardedTick(
-                entry, ownerCharId, botCharId, this::tickCore, AgentTickFailureRuntime::handleFailure);
+        AgentTickRuntime.tick(entry, ownerCharId, botCharId, this::issueGrind, this::issueFollowOwner);
     }
 
     /** Test-only hook: invokes Agent common tick systems on a caller-owned entry. */
@@ -371,7 +369,7 @@ public class BotManager {
         int ownerCharId = AgentBotRuntimeIdentityRuntime.ownerId(entry);
         long startedAt = AgentPerformanceMonitor.enabled() ? System.nanoTime() : 0L;
         try {
-            tickCore(entry, ownerCharId, botCharId);
+            AgentTickCoreRuntime.tickCore(entry, ownerCharId, botCharId, this::issueGrind, this::issueFollowOwner);
         } catch (Throwable t) {
             log.warn("runTickForTest: tickCore threw for bot {}", AgentBotRuntimeIdentityRuntime.botName(entry), t);
         } finally {
@@ -379,15 +377,6 @@ public class BotManager {
                 AgentPerformanceMonitor.record("tick-total", System.nanoTime() - startedAt);
             }
         }
-    }
-
-    private void tickCore(BotEntry entry, int ownerCharId, int botCharId) {
-        AgentTickCoreRuntime.tickCore(
-                entry,
-                ownerCharId,
-                botCharId,
-                this::issueGrind,
-                this::issueFollowOwner);
     }
 
     static Monster selectPriorityRangedAttackTarget(BotEntry entry,
