@@ -17,6 +17,9 @@ Rules:
 
 Recent reconstruction notes:
 
+- Dead BotManager script-task and script-item compatibility wrappers were
+  removed. Script queueing, drop-item execution, queued-task checks, and cheap
+  move-target checks now use Agent script services directly.
 - BotManager movement command wrappers were removed. Spawn, transfer/dismiss,
   live tick mode callbacks, movement chat tests, and movement parity tests now
   call `AgentBotMovementCommandRuntime` directly for follow, stop, grind,
@@ -704,8 +707,9 @@ Recent reconstruction notes:
   `AgentBotGrindLootStateRuntime::isRetrySuppressed` directly; BotManager no
   longer owns the pass-through predicate used by Agent loot targeting.
 - Script-driven item dropping now lives in `AgentScriptItemActionService`;
-  BotManager keeps only the compatibility `issueDropItem` wrapper, and
-  `AgentScriptRunner` calls the Agent service directly for script contexts.
+  the former BotManager `issueDropItem` compatibility wrapper was removed,
+  and `AgentScriptRunner` calls the Agent service directly for script
+  contexts.
 - Legacy command combat-config routing now calls `AgentCombatConfig` directly
   through `AgentLegacyCommandBridge` instead of passing through BotManager's
   static compatibility wrappers.
@@ -717,9 +721,9 @@ Recent reconstruction notes:
   Agent-owned helper while preserving the same lower-inclusive, upper-exclusive
   delay behavior.
 - Script cheap-move target classification now lives in
-  `AgentScriptMoveTargetService`; BotManager's `isCheapScriptMoveTarget`
-  remains a compatibility delegate that supplies the legacy loot-radius config,
-  and `AgentScriptRunner` uses the Agent-owned runtime bridge directly.
+  `AgentScriptMoveTargetService`; the former BotManager
+  `isCheapScriptMoveTarget` compatibility delegate was removed, and
+  `AgentScriptRunner` uses the Agent-owned runtime bridge directly.
 - General runtime config now lives in `AgentRuntimeConfig`; `BotManager.cfg`
   remains a compatibility alias to the same mutable config object, while Agent
   reporting, shop, supplies, inventory adapters, and script move checks read

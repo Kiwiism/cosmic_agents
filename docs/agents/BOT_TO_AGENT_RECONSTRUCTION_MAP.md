@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Dead BotManager script-task and script-item compatibility wrappers were
+  removed. Agent script services now own queueing, item drop execution,
+  queued-task checks, and cheap move-target checks directly.
 - BotManager movement command wrappers were removed. Spawn, lifecycle, tick,
   movement chat tests, and movement parity tests now use
   `AgentBotMovementCommandRuntime` directly.

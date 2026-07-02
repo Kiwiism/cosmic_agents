@@ -22,7 +22,6 @@ import server.agents.runtime.AgentRegistrationRuntime;
 import server.agents.runtime.AgentReloginRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeCleanupService;
-import server.agents.runtime.AgentScriptTaskQueueService;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSpawnPositionService;
 import server.agents.runtime.AgentSpawnRuntime;
@@ -33,9 +32,6 @@ import server.agents.capabilities.social.AgentScrollReactionNotificationService;
 import server.agents.capabilities.supplies.AgentPotionCheckRequestService;
 import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
 import server.agents.capabilities.trade.AgentTradeDialogueService;
-import server.agents.plans.AgentScriptMoveTargetService;
-
-
 import server.agents.integration.AgentBotAmmoStateRuntime;
 import server.agents.integration.AgentBotBuffStateRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
@@ -57,14 +53,11 @@ import server.agents.integration.AgentBotPqRuntime;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
 import server.agents.integration.AgentBotShopStateRuntime;
 import server.agents.integration.AgentBotTargetedCommandMatch;
-import server.agents.plans.AgentTask;
-import server.agents.plans.AgentScriptItemActionService;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.auth.AgentAuthorizationResult;
 import server.agents.registry.AgentResolvedCharacter;
 import client.Character;
 import client.Disease;
-import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.WeaponType;
 import org.slf4j.Logger;
@@ -237,54 +230,6 @@ public class BotManager {
                 AgentBotMovementCommandRuntime::followOwner);
     }
 
-    /**
-     * Public hook for map scripts: drop up to {@code quantity} from the first
-     * stack of {@code itemId}. Use {@code quantity <= 0} to drop the whole stack.
-     */
-    public boolean issueDropItem(BotEntry entry, InventoryType type, int itemId, short quantity) {
-        return AgentScriptItemActionService.dropItem(entry, type, itemId, quantity);
-    }
-
-    public void clearScriptTasks(BotEntry entry) {
-        AgentScriptTaskQueueService.clearTasks(entry);   // signal background batches (Maker craft/disassembly) to self-interrupt
-    }
-
-    public void queueTask(BotEntry entry, AgentTask task) {
-        AgentScriptTaskQueueService.queueTask(entry, task);
-    }
-
-    public void queueMoveTo(BotEntry entry, Point point, boolean precise) {
-        AgentScriptTaskQueueService.queueMoveTo(entry, point, precise);
-    }
-
-    public void queueMoveTo(BotEntry entry, Point point, boolean precise, AgentTask.MoveCombatMode moveCombatMode) {
-        AgentScriptTaskQueueService.queueMoveTo(entry, point, precise, moveCombatMode);
-    }
-
-    public void queueMoveThenDropItem(BotEntry entry, Point point, boolean precise, InventoryType type, int itemId, short quantity) {
-        AgentScriptTaskQueueService.queueMoveThenDropItem(entry, point, precise, type, itemId, quantity);
-    }
-
-    public void queueFollowThenDropItem(BotEntry entry, Character target, int nearPx, InventoryType type, int itemId, short quantity) {
-        AgentScriptTaskQueueService.queueFollowThenDropItem(entry, target, nearPx, type, itemId, quantity);
-    }
-
-    public boolean hasQueuedTasks(BotEntry entry) {
-        return AgentScriptTaskQueueService.hasQueuedTasks(entry);
-    }
-
-    public boolean isCheapScriptMoveTarget(BotEntry entry,
-                                           Point targetPos,
-                                           int maxPathCost,
-                                           int fallbackRangeX,
-                                           int fallbackRangeY) {
-        return AgentScriptMoveTargetService.isCheapMoveTarget(
-                entry,
-                targetPos,
-                maxPathCost,
-                fallbackRangeX,
-                fallbackRangeY);
-    }
     public void reloginBot(int charId, int ownerCharId, int world, int channel) {
         AgentReloginRuntime.reloginAgent(charId, ownerCharId, world, channel, this::tick, log);
     }
