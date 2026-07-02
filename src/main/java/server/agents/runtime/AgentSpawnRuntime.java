@@ -8,8 +8,8 @@ import server.bots.BotEntry;
 import java.util.function.Consumer;
 
 /**
- * Temporary Cosmic hook bundle for spawning an Agent while BotManager still
- * supplies tick and follow-start callbacks.
+ * Temporary Cosmic hook bundle for spawning an Agent while registration still
+ * receives tick and follow-start callbacks from the Agent runtime facade.
  */
 public final class AgentSpawnRuntime {
     private AgentSpawnRuntime() {

@@ -8,7 +8,7 @@ import server.bots.BotMovementManager;
 
 /**
  * Temporary legacy hook bundle for Agent registration scheduling while the live
- * tick callback is still supplied by the BotManager compatibility shell.
+ * tick callback is supplied by the Agent runtime facade.
  */
 public final class AgentRegistrationRuntime {
     private AgentRegistrationRuntime() {

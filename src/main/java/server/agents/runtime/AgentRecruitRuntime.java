@@ -5,7 +5,7 @@ import server.agents.auth.AgentOwnershipService;
 
 /**
  * Temporary legacy hook bundle for ownerless Agent recruitment while
- * registration still enters through the BotManager compatibility shell.
+ * registration still uses compatibility-shaped Agent lifecycle callbacks.
  */
 public final class AgentRecruitRuntime {
     private AgentRecruitRuntime() {

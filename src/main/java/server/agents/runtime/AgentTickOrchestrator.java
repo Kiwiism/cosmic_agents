@@ -6,7 +6,8 @@ import server.bots.BotEntry;
 
 /**
  * Agent-owned tick orchestration helpers over temporary BotEntry-backed state.
- * Full tick dispatch remains in BotManager while reconstruction proceeds.
+ * Full tick dispatch now enters through AgentInteractionRuntime and shared
+ * Agent tick services while BotEntry state is still being migrated.
  */
 public final class AgentTickOrchestrator {
     @FunctionalInterface

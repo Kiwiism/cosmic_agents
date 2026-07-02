@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 
 /**
  * Temporary legacy hook bundle for dismiss lifecycle side effects while
- * BotManager still owns mode-command entry points.
+ * mode-command entry points still use compatibility-shaped callbacks.
  */
 public final class AgentDismissRuntime {
     private static final List<String> FAREWELL_MESSAGES = List.of(

@@ -13,7 +13,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Agent-owned lookup helpers over the temporary BotEntry-backed runtime map.
- * Storage remains in BotManager during reconstruction; lookup behavior lives here.
+ * Runtime storage and lookup behavior live here while BotEntry is still the
+ * backing session object.
  */
 public final class AgentRuntimeRegistry {
     private static final Map<Integer, List<BotEntry>> entriesByLeaderId = new ConcurrentHashMap<>();

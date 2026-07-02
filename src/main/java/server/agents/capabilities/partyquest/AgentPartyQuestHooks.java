@@ -12,7 +12,8 @@ import java.util.List;
 
 /**
  * Single call-site for all per-map party-quest bot automation.
- * BotManager calls {@link #tick} once per bot tick; each PQ class handles its own map range.
+ * Agent common tick calls {@link #tick} once per Agent tick; each PQ class
+ * handles its own map range.
  */
 public final class AgentPartyQuestHooks {
     private static final List<AgentScript> SCRIPTS = List.of(AgentKpqStage1.script());
