@@ -3463,6 +3463,12 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentLocalOpportunityAttackRuntime`. BotManager no
   longer keeps a local result record or adapter method for converting local
   attack capability results into live-mode tick results.
+- Inactive leader safety and town-return hook wiring now lives in
+  `server.agents.runtime.AgentLeaderSafetyRuntime`. BotManager keeps only
+  compatibility methods for away/town commands while Agent runtime owns active
+  leader return cleanup, inactive safe-mode entry, town-scroll fallback,
+  cluster target resolution, movement reset, and mode/script/shop cleanup
+  composition.
 
 Initial reconstruction order:
 

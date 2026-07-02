@@ -29,13 +29,12 @@ import server.agents.runtime.AgentGrindModeRuntime;
 import server.agents.runtime.AgentGrindNavigationRuntime;
 import server.agents.runtime.AgentGrindTargetRuntime;
 import server.agents.runtime.AgentLeaderSessionService;
-import server.agents.runtime.AgentLeaderSafetyService;
+import server.agents.runtime.AgentLeaderSafetyRuntime;
 import server.agents.runtime.AgentLifecycleChatCommandRuntime;
 import server.agents.runtime.AgentLiveModeTickRuntime;
 import server.agents.runtime.AgentLocalOpportunityAttackRuntime;
 import server.agents.runtime.AgentMapEnvironmentService;
 import server.agents.runtime.AgentMapTransitionRuntime;
-import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentMovementOnlyRuntime;
 import server.agents.runtime.AgentMovementTickRuntime;
 import server.agents.runtime.AgentOfflineLoadRuntime;
@@ -44,7 +43,6 @@ import server.agents.runtime.AgentPositionService;
 import server.agents.runtime.AgentRegistrationRuntime;
 import server.agents.runtime.AgentReloginRuntime;
 import server.agents.runtime.AgentRespawnRuntime;
-import server.agents.runtime.AgentReturnScrollService;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeCleanupService;
 import server.agents.runtime.AgentScriptTaskQueueService;
@@ -63,7 +61,6 @@ import server.agents.runtime.AgentTickStateMaintenanceService;
 
 import server.agents.capabilities.looting.AgentGrindLootTargetService;
 import server.agents.capabilities.social.AgentScrollReactionNotificationService;
-import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.supplies.AgentGroupSupplyResponderSelector;
 import server.agents.capabilities.supplies.AgentPotionCheckRequestService;
 import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
@@ -73,7 +70,6 @@ import server.agents.plans.AgentScriptMoveTargetService;
 
 
 import server.agents.integration.AgentBotManagerReplyRuntime;
-import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotAmmoStateRuntime;
 import server.agents.integration.AgentBotBuffStateRuntime;
@@ -90,7 +86,6 @@ import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotLeaderStateRuntime;
 import server.agents.integration.AgentBotMapStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementCommandRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
@@ -159,7 +154,6 @@ public class BotManager {
     // ownerCharId → cluster-anchor town position. First bot to warp picks a random
     // portal in the return map; later bots warp to a randomized nearby offset.
     // Cleared when the owner becomes active again.
-    private final Map<Integer, Point> townClusterAnchors = AgentLeaderSafetyService.townClusterAnchorsByLeaderId();
 
     private static final int PLATFORM_EDGE_INSET_PX = 12;
     // -------------------------------------------------------------------------
@@ -595,24 +589,17 @@ public class BotManager {
      * short-circuit; map-change reset runs on the next tick).
      */
     private boolean handleOwnerOfflineOrDead(BotEntry entry, Character bot, Character owner, long nowMs, int ownerCharId) {
-        return AgentLeaderSafetyService.handleInactiveLeaderTick(
+        return AgentLeaderSafetyRuntime.handleInactiveLeaderTick(
                 entry,
+                bot,
                 owner,
                 nowMs,
-                new AgentLeaderSafetyService.InactiveLeaderTickHooks(
-                        activeEntry -> AgentLeaderSafetyService.handleActiveLeaderReturn(
-                                activeEntry,
-                                () -> AgentBotMoveTargetStateRuntime.clearMoveTarget(activeEntry),
-                                () -> townClusterAnchors.remove(ownerCharId),
-                                () -> AgentBotManagerStatusRuntime.announceOwnerReturnedFromOffline(activeEntry)),
-                        this::shouldTownWarpForOwnerInactive,
-                        (inactiveEntry, town) -> enterOwnerInactiveSafeMode(inactiveEntry, bot, ownerCharId, town),
-                        cfg.OWNER_INACTIVE_TOWN_RETURN_MS));
+                ownerCharId,
+                cfg.OWNER_INACTIVE_TOWN_RETURN_MS);
     }
 
     private boolean shouldTownWarpForOwnerInactive(BotEntry entry) {
-        MapleMap currentMap = AgentBotRuntimeIdentityRuntime.botMap(entry);
-        return AgentLeaderSafetyService.shouldTownWarpForInactiveLeader(currentMap);
+        return AgentLeaderSafetyRuntime.shouldTownWarpForInactiveEntry(entry);
     }
 
     public boolean shouldOfferTownForAwayCommand(BotEntry entry) {
@@ -624,57 +611,7 @@ public class BotManager {
     }
 
     public void issueOwnerAwaySafeModeForOwner(int ownerCharId, boolean town) {
-        AgentLeaderSafetyService.issueInactiveSafeModeForLeader(
-                getBotEntries(ownerCharId),
-                town,
-                AgentBotRuntimeIdentityRuntime::botHasMap,
-                this::shouldTownWarpForOwnerInactive,
-                (entry, shouldTown) -> enterOwnerInactiveSafeMode(
-                        entry, AgentBotRuntimeIdentityRuntime.bot(entry), ownerCharId, shouldTown));
-    }
-
-    private boolean enterOwnerInactiveSafeMode(BotEntry entry, Character bot, int ownerCharId, boolean town) {
-        return AgentLeaderSafetyService.enterInactiveSafeMode(
-                () -> prepareOwnerInactiveIdle(entry, ownerCharId),
-                town,
-                () -> scrollBotToTown(entry, bot, ownerCharId),
-                () -> AgentLeaderSafetyService.idleInactiveAgentInPlace(
-                        entry,
-                        () -> BotPhysicsEngine.idleOnGround(entry, bot),
-                        () -> BotMovementManager.broadcastMovement(entry)));
-    }
-
-    private void prepareOwnerInactiveIdle(BotEntry entry, int ownerCharId) {
-        AgentLeaderSafetyService.prepareInactiveIdle(
-                entry,
-                () -> clearScriptTasks(entry),
-                () -> AgentShopService.cancelShopVisit(entry),
-                () -> clearMode(entry));
-    }
-
-    private boolean scrollBotToTown(BotEntry entry, Character bot, int ownerCharId) {
-        return AgentLeaderSafetyService.scrollInactiveAgentToTown(
-                entry,
-                new AgentLeaderSafetyService.TownScrollHooks(
-                        bot::getMap,
-                        () -> AgentLeaderSafetyService.markInactiveTownReturnHandled(entry),
-                        () -> BotPhysicsEngine.idleOnGround(entry, bot),
-                        () -> tryUseReturnScroll(bot),
-                        bot::changeMap,
-                        () -> groundAfterMapChange(entry, bot),
-                        bot::getPosition,
-                        post -> townClusterAnchors.putIfAbsent(ownerCharId, post),
-                        (returnMap, anchor) -> resolveTownClusterTarget(entry, ownerCharId, returnMap, anchor),
-                        () -> BotMovementManager.resetEntryState(entry),
-                        target -> AgentModeService.startMoveTo(entry, target, true)));
-    }
-
-    private Point resolveTownClusterTarget(BotEntry entry, int ownerCharId, MapleMap map, Point anchor) {
-        List<BotEntry> entries = getBotEntries(ownerCharId);
-        AgentFormationService.FormationState formation =
-                AgentFormationService.stateForLeader(AgentFormationService.formationsByLeaderId(), ownerCharId, defaultFormationState());
-        return AgentLeaderSafetyService.resolveTownClusterTarget(
-                entry, map, anchor, entries, formation, PLATFORM_EDGE_INSET_PX, BotPhysicsEngine::findGroundPoint);
+        AgentLeaderSafetyRuntime.issueInactiveSafeModeForLeader(ownerCharId, town);
     }
 
     /**
@@ -786,20 +723,12 @@ public class BotManager {
                 cfg.LOOT_RADIUS);
     }
 
-    private static void clearMode(BotEntry entry) {
-        AgentModeService.clearMode(entry);
-    }
-
     /**
      * Apply Return Scroll - Nearest Town (item 2030000) via StatEffect.applyTo.
      * The standard scroll effect handles random-portal warp inside applyTo;
      * we only need to remove the consumable afterwards (mirrors ScrollHandler).
      * Returns false when no 2030000 is in the bot's USE inventory or applyTo failed.
      */
-    private boolean tryUseReturnScroll(Character bot) {
-        return AgentReturnScrollService.tryUseNearestTownReturnScroll(bot);
-    }
-
     /**
      * Owner-offline tick path for Agent move-target state — drives the bot to its
      * point using the same stepMovementCore as the regular pipeline. The

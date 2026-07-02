@@ -55,6 +55,12 @@ Recent map updates:
 - Local opportunity attack result adaptation moved from BotManager to
   `server.agents.runtime.AgentLocalOpportunityAttackRuntime`. BotManager now
   passes the Agent runtime method directly into tick-core wiring.
+- Inactive leader safety and town-return hook wiring moved from BotManager to
+  `server.agents.runtime.AgentLeaderSafetyRuntime`. BotManager now delegates
+  inactive-leader tick handling and explicit away safe-mode requests while
+  Agent runtime owns active-return cleanup, town scroll fallback, cluster
+  positioning, movement reset, mode cleanup, script cleanup, and shop cleanup
+  composition.
 - Anchored farm hook wiring moved from BotManager to
   `server.agents.runtime.AgentAnchoredFarmRuntime`. BotManager now passes only
   legacy movement config values while Agent runtime owns local-opportunity,
