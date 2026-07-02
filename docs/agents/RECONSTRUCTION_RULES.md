@@ -17,6 +17,13 @@ Rules:
 
 Recent reconstruction notes:
 
+- Live tick gate ordering now lives in
+  `server.agents.runtime.AgentLiveTickGateService`. BotManager keeps a
+  temporary compatibility hook bundle for common tick systems, trade-window
+  physics, idle-mode physics, recovery, and tracked map-change handling. The
+  same all-mode common-system early return, trade-window movement suppression,
+  idle-mode short-circuit, recovery ordering, and map-change snap/reset gate
+  are preserved before live-mode dispatch.
 - Live-mode tick ordering now lives in
   `server.agents.runtime.AgentLiveModeTickService`. BotManager keeps a
   temporary compatibility hook bundle for shop-visit, follow-opportunity,

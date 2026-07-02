@@ -50,6 +50,7 @@ import server.agents.runtime.AgentLeaderSessionService;
 import server.agents.runtime.AgentLeaderSafetyService;
 import server.agents.runtime.AgentLiveTickContextService;
 import server.agents.runtime.AgentLiveModeTickService;
+import server.agents.runtime.AgentLiveTickGateService;
 import server.agents.runtime.AgentLocalAttackMoveWindowService;
 import server.agents.runtime.AgentMapEnvironmentService;
 import server.agents.runtime.AgentMapTransitionService;
@@ -1108,76 +1109,11 @@ public class BotManager {
         Point targetPos = liveContext.targetPosition();
         boolean perf = AgentPerformanceMonitor.enabled();
 
-        // These run in all modes (idle, follow, grind)
-        if (runCommonTickSystems(entry, bot, owner, runAiTick)) {
+        if (AgentLiveTickGateService.tickLiveGates(
+                new AgentLiveTickGateService.Context(entry, bot, owner, followAnchor, targetPos, runAiTick),
+                liveTickGateHooks(perf))) {
             return;
         }
-
-        // Trade window open: keep physics consistent (gravity / swim / idle stance) but
-        // do not issue any movement input — no follow, grind, attack, teleport, or shop visit.
-        // Prevents the bot from wandering away or auto-equipping while the player is mid-trade.
-        if (AgentTradeWindowTickService.tickIfTradeWindowOpen(entry, bot, (tradeEntry, tradeBot) -> {
-            if (!perf) {
-                tickTradePhysicsOnly(tradeEntry, tradeBot);
-            } else {
-                long tTrade = System.nanoTime();
-                try { tickTradePhysicsOnly(tradeEntry, tradeBot); }
-                finally { AgentPerformanceMonitor.record("tick-trade-physics", System.nanoTime() - tTrade); }
-            }
-        })) {
-            return;
-        }
-
-        if (AgentIdleModeTickService.tickIdleMode(
-                entry,
-                bot,
-                new AgentIdleModeTickService.Hooks((idleEntry, idleBot) -> {
-                    if (!perf) {
-                        return tickIdleEntry(idleEntry, idleBot);
-                    }
-                    long tIdle = System.nanoTime();
-                    boolean consumed = tickIdleEntry(idleEntry, idleBot);
-                    AgentPerformanceMonitor.record("tick-idle", System.nanoTime() - tIdle);
-                    return consumed;
-                }))) {
-            return;
-        }
-
-        if (AgentRecoveryTickService.tickRecovery(
-                entry,
-                bot,
-                followAnchor,
-                targetPos,
-                new AgentRecoveryTickService.Hooks(
-                        this::syncFollowMap,
-                        this::recoverGrindPartyTeleportDistance,
-                        this::recoverTeleportDistance))) {
-            return;
-        }
-
-        // On any map change (e.g. NPC-triggered portal): rebuild footholds, reset physics,
-        // and snap to ground so the bot does not carry over airborne state from the previous map.
-        if (AgentTrackedMapChangeTickService.tickTrackedMapChange(
-                entry,
-                bot,
-                new AgentTrackedMapChangeTickService.Hooks((mapEntry, mapBot) -> {
-                    if (!perf) {
-                        return handleTrackedMapChange(mapEntry, mapBot);
-                    }
-                    long tMapChange = System.nanoTime();
-                    boolean changed = false;
-                    try {
-                        changed = handleTrackedMapChange(mapEntry, mapBot);
-                    } finally {
-                        if (changed) {
-                            AgentPerformanceMonitor.record("tick-map-change", System.nanoTime() - tMapChange);
-                        }
-                    }
-                    return changed;
-                }))) {
-            return;
-        }
-
         AgentLiveModeTickService.tickLiveModes(
                 new AgentLiveModeTickService.Context(
                         entry,
@@ -1357,6 +1293,59 @@ public class BotManager {
                         moveRunAiTick,
                         new AgentFinalMovementTailService.Hooks((tailEntry, tailTargetPos, tailRunAiTick) ->
                                 timedMovementCoreStep(tailEntry, tailTargetPos, tailRunAiTick, perf))));
+    }
+
+    private AgentLiveTickGateService.Hooks liveTickGateHooks(boolean perf) {
+        return new AgentLiveTickGateService.Hooks(
+                this::runCommonTickSystems,
+                (tradeEntry, tradeBot) -> AgentTradeWindowTickService.tickIfTradeWindowOpen(tradeEntry, tradeBot, (physicsEntry, physicsBot) -> {
+                    if (!perf) {
+                        tickTradePhysicsOnly(physicsEntry, physicsBot);
+                    } else {
+                        long tTrade = System.nanoTime();
+                        try { tickTradePhysicsOnly(physicsEntry, physicsBot); }
+                        finally { AgentPerformanceMonitor.record("tick-trade-physics", System.nanoTime() - tTrade); }
+                    }
+                }),
+                (idleEntry, idleBot) -> AgentIdleModeTickService.tickIdleMode(
+                        idleEntry,
+                        idleBot,
+                        new AgentIdleModeTickService.Hooks((physicsEntry, physicsBot) -> {
+                            if (!perf) {
+                                return tickIdleEntry(physicsEntry, physicsBot);
+                            }
+                            long tIdle = System.nanoTime();
+                            boolean consumed = tickIdleEntry(physicsEntry, physicsBot);
+                            AgentPerformanceMonitor.record("tick-idle", System.nanoTime() - tIdle);
+                            return consumed;
+                        })),
+                (recoveryEntry, recoveryBot, recoveryFollowAnchor, recoveryTargetPos) -> AgentRecoveryTickService.tickRecovery(
+                        recoveryEntry,
+                        recoveryBot,
+                        recoveryFollowAnchor,
+                        recoveryTargetPos,
+                        new AgentRecoveryTickService.Hooks(
+                                this::syncFollowMap,
+                                this::recoverGrindPartyTeleportDistance,
+                                this::recoverTeleportDistance)),
+                (mapEntry, mapBot) -> AgentTrackedMapChangeTickService.tickTrackedMapChange(
+                        mapEntry,
+                        mapBot,
+                        new AgentTrackedMapChangeTickService.Hooks((trackedEntry, trackedBot) -> {
+                            if (!perf) {
+                                return handleTrackedMapChange(trackedEntry, trackedBot);
+                            }
+                            long tMapChange = System.nanoTime();
+                            boolean changed = false;
+                            try {
+                                changed = handleTrackedMapChange(trackedEntry, trackedBot);
+                            } finally {
+                                if (changed) {
+                                    AgentPerformanceMonitor.record("tick-map-change", System.nanoTime() - tMapChange);
+                                }
+                            }
+                            return changed;
+                        })));
     }
 
     private void timedMovementCoreStep(BotEntry entry, Point targetPos, boolean runAiTick, boolean perf) {

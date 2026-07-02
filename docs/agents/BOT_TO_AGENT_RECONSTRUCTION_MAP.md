@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Live tick gate ordering moved from BotManager to
+  `server.agents.runtime.AgentLiveTickGateService`. BotManager now supplies
+  temporary hooks for common tick systems, trade-window physics, idle-mode
+  physics, recovery, and tracked map-change handling while Agent runtime owns
+  the short-circuit order before live-mode dispatch.
 - Live-mode tick ordering moved from BotManager to
   `server.agents.runtime.AgentLiveModeTickService`. BotManager now supplies
   temporary hooks for shop-visit, follow-opportunity, follow-idle fast path,
