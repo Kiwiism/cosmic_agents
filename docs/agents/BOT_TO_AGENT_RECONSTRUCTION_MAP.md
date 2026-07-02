@@ -70,6 +70,8 @@ Recent map updates:
   `server.agents.runtime.AgentFormationRuntime`. BotManager now delegates
   default formation creation, state lookup, and state update/offset application
   for compatibility harness callers.
+- The temporary BotManager grind-mode adapter method was removed; tick-core
+  wiring now passes `AgentGrindModeRuntime.tickGrindMode` directly.
 - Anchored farm hook wiring moved from BotManager to
   `server.agents.runtime.AgentAnchoredFarmRuntime`. BotManager now passes only
   legacy movement config values while Agent runtime owns local-opportunity,

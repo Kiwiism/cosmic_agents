@@ -448,29 +448,19 @@ public class BotManager {
                 AgentLocalOpportunityAttackRuntime::tryLocalOpportunityAttackForLiveMode,
                 this::stepMovementCore,
                 this::tickAnchoredFarm,
-                this::tickGrindMode,
+                (grindEntry, grindAgent, grindAgentPosition, grindTargetPosition, grindRunAiTick) ->
+                        AgentGrindModeRuntime.tickGrindMode(
+                                grindEntry,
+                                grindAgent,
+                                grindAgentPosition,
+                                grindTargetPosition,
+                                grindRunAiTick,
+                                this::stepMovementCore,
+                                BotManager.cfg.LOOT_RADIUS),
                 BotMovementManager.cfg.TELEPORT_DIST,
                 BotMovementManager.cfg.OOB_TELEPORT_DIST,
                 cfg.GRIND_PARTY_TELEPORT_DIST_MULTIPLIER,
                 BotMovementManager.cfg.FOLLOW_DIST);
-    }
-
-    /**
-     * Grind-mode decision pipeline. Returns a consumed result (caller returns immediately, any
-     * required movement already issued) or a fall-through result carrying the resolved targetPos
-     * for the shared stepMovementCore tail. Single source of truth shared by the perf and non-perf
-     * dispatch arms in the bot tick.
-     */
-    private AgentLiveModeTickRuntime.LocalAttackResult tickGrindMode(BotEntry entry, Character bot, Point botPos,
-            Point targetPos, boolean runAiTick) {
-        return AgentGrindModeRuntime.tickGrindMode(
-                entry,
-                bot,
-                botPos,
-                targetPos,
-                runAiTick,
-                this::stepMovementCore,
-                BotManager.cfg.LOOT_RADIUS);
     }
 
     private void handleBotTickFailure(BotEntry entry, int ownerCharId, int botCharId, Throwable t) {

@@ -3481,6 +3481,9 @@ Recent reconstruction notes:
   live in `server.agents.runtime.AgentFormationRuntime`. BotManager keeps only
   package-visible compatibility methods for the movement simulation harness and
   delegates target-snapshot/default formation needs to Agent runtime.
+- The remaining BotManager grind-mode adapter method was removed. Tick-core
+  wiring now passes `AgentGrindModeRuntime.tickGrindMode` directly with the
+  temporary movement-core callback and legacy loot-radius value.
 
 Initial reconstruction order:
 
