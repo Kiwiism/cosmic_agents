@@ -1,6 +1,8 @@
 package server.agents.runtime;
 
+import client.BotClient;
 import client.Character;
+import net.server.Server;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
 
@@ -79,6 +81,22 @@ public final class AgentRuntimeRegistry {
 
     public static Character activeLeaderByAgentCharacterId(int agentCharId) {
         return activeLeaderByAgentCharacterId(entriesByLeaderId, agentCharId);
+    }
+
+    public static Character findUnclaimedOnlineAgentByName(String agentName, int world) {
+        for (var channel : Server.getInstance().getWorld(world).getChannels()) {
+            Character candidate = channel.getPlayerStorage().getCharacterByName(agentName);
+            if (isUnclaimedBotClientCharacter(candidate)) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    public static boolean isUnclaimedBotClientCharacter(Character candidate) {
+        return candidate != null
+                && candidate.getClient() instanceof BotClient
+                && activeLeaderByAgentCharacterId(candidate.getId()) == null;
     }
 
     public static Character firstAgent(Map<Integer, List<BotEntry>> entriesByLeaderId, int leaderCharId) {

@@ -82,6 +82,10 @@ Recent reconstruction notes:
   Agent session lifecycle gateway keep compatibility delegates, but no longer
   need to pass the backing registry map into lookup helpers for active leader,
   first Agent, named Agent, character-id, entry-list, or first-entry checks.
+- Ownerless online Agent lookup now lives in
+  `server.agents.runtime.AgentRuntimeRegistry`. BotManager's recruit path
+  delegates to the registry for the same server/channel scan, BotClient guard,
+  and active-leader exclusion behavior.
 - Whisper command ingress now lives in
   `server.agents.capabilities.dialogue.AgentWhisperCommandService`.
   `WhisperHandler` calls the Agent service directly, and BotManager keeps a

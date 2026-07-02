@@ -506,7 +506,7 @@ public class BotManager {
 
     /** Recruit an ownerless bot by name into the owner's group. Returns an error string on failure, null on success. */
     public String recruitBot(int ownerCharId, Character owner, String botName) {
-        Character bot = findOwnerlessBot(botName, owner.getWorld());
+        Character bot = AgentRuntimeRegistry.findUnclaimedOnlineAgentByName(botName, owner.getWorld());
         if (bot == null) return "No ownerless bot named '" + botName + "' found.";
 
         AgentAuthorizationResult auth =
@@ -568,16 +568,6 @@ public class BotManager {
 
     public void requestBotPotionCheckSoon(Character bot) {
         AgentPotionCheckRequestService.requestPotionCheckSoon(bot);
-    }
-
-    /** Finds a bot-client character with the given name that is not currently owned by anyone. */
-    private Character findOwnerlessBot(String name, int world) {
-        for (var ch : Server.getInstance().getWorld(world).getChannels()) {
-            Character c = ch.getPlayerStorage().getCharacterByName(name);
-            if (c == null || !(c.getClient() instanceof BotClient)) continue;
-            if (getActiveOwnerByBotCharId(c.getId()) == null) return c;
-        }
-        return null;
     }
 
     public Character getBot(int ownerCharId) {

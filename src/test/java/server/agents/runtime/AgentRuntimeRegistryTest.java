@@ -1,6 +1,8 @@
 package server.agents.runtime;
 
+import client.BotClient;
 import client.Character;
+import client.Client;
 import org.junit.jupiter.api.Test;
 import server.bots.BotEntry;
 
@@ -100,6 +102,26 @@ class AgentRuntimeRegistryTest {
         assertEquals(List.of(alpha, beta), AgentRuntimeRegistry.activeAgentCharactersForLeader(leader.getId()));
         assertEquals(0, AgentRuntimeRegistry.activeAgentCountForLeader(999));
         assertEquals(List.of(), AgentRuntimeRegistry.activeAgentCharactersForLeader(999));
+
+        AgentRuntimeRegistry.entriesByLeaderId().clear();
+    }
+
+    @Test
+    void detectsOnlyUnclaimedBotClientCharacters() {
+        Character leader = character(100, "Leader");
+        Character agent = character(200, "Agent");
+        Character player = character(201, "Player");
+        when(agent.getClient()).thenReturn(mock(BotClient.class));
+        when(player.getClient()).thenReturn(mock(Client.class));
+        AgentRuntimeRegistry.entriesByLeaderId().clear();
+
+        assertTrue(AgentRuntimeRegistry.isUnclaimedBotClientCharacter(agent));
+        assertFalse(AgentRuntimeRegistry.isUnclaimedBotClientCharacter(player));
+        assertFalse(AgentRuntimeRegistry.isUnclaimedBotClientCharacter(null));
+
+        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new BotEntry(agent, leader, null));
+
+        assertFalse(AgentRuntimeRegistry.isUnclaimedBotClientCharacter(agent));
 
         AgentRuntimeRegistry.entriesByLeaderId().clear();
     }
