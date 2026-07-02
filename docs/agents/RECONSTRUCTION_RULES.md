@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- The unused BotManager `tickStuckDetection` compatibility wrapper was removed
+  after movement-core dispatch moved to `AgentMovementTickRuntime`. Stuck
+  detection still runs through `AgentStuckDetectionRuntime` from Agent movement
+  runtime, preserving behavior without a BotManager helper.
 - Inactive-leader town-return timeout ownership now lives in
   `server.agents.runtime.AgentLeaderSafetyRuntime.handleInactiveLeaderTick(entry, agent, leader, nowMs, leaderId)`.
   BotManager no longer passes `OWNER_INACTIVE_TOWN_RETURN_MS`; it only keeps a

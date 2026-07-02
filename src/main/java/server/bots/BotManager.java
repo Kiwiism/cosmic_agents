@@ -48,7 +48,6 @@ import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSpawnPositionService;
 import server.agents.runtime.AgentSpawnRuntime;
 import server.agents.runtime.AgentStandaloneMoveTargetRuntime;
-import server.agents.runtime.AgentStuckDetectionRuntime;
 import server.agents.runtime.AgentTickFailureRuntime;
 import server.agents.runtime.AgentTickCoreRuntime;
 import server.agents.runtime.AgentTickOrchestrator;
@@ -646,11 +645,6 @@ public class BotManager {
                                   boolean runAiTick) {
         AgentMovementTickRuntime.stepMovementCore(entry, targetPos, runAiTick);
     }
-
-    private static void tickStuckDetection(BotEntry entry) {
-        AgentStuckDetectionRuntime.tickStuckDetection(entry, cfg.ENABLE_UNSTUCK);
-    }
-
 
     public void reloginBot(int charId, int ownerCharId, int world, int channel) {
         AgentReloginRuntime.reloginAgent(charId, ownerCharId, world, channel, this::tick, log);
