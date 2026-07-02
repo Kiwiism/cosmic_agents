@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Tick failure side-effect wiring now lives in
+  `server.agents.runtime.AgentTickFailureRuntime`. BotManager supplies only the
+  temporary stop-mode callback and logger while Agent runtime owns movement
+  reset, runtime removal, forced-idle reply delivery, missing-entry logging,
+  warning/error log formatting, and failure escalation hook wiring.
 - Spawn hook wiring now lives in `server.agents.runtime.AgentSpawnRuntime`.
   BotManager supplies only the temporary spawned-registration and follow-start
   callbacks plus logger while Agent runtime owns ownership resolution, spawn

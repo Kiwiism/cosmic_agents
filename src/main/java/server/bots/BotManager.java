@@ -94,7 +94,7 @@ import server.agents.runtime.AgentSpawnPositionService;
 import server.agents.runtime.AgentSpawnRuntime;
 import server.agents.runtime.AgentStandaloneMoveTargetTickService;
 import server.agents.runtime.AgentStuckDetectionService;
-import server.agents.runtime.AgentTickFailurePolicy;
+import server.agents.runtime.AgentTickFailureRuntime;
 import server.agents.runtime.AgentTickCoreService;
 import server.agents.runtime.AgentTickOrchestrator;
 import server.agents.runtime.AgentTickPreflightService;
@@ -1047,38 +1047,7 @@ public class BotManager {
     }
 
     private void handleBotTickFailure(BotEntry entry, int ownerCharId, int botCharId, Throwable t) {
-        AgentTickFailurePolicy.handleFailure(
-                entry,
-                ownerCharId,
-                botCharId,
-                t,
-                System.currentTimeMillis(),
-                new AgentTickFailurePolicy.FailureHooks(
-                        (leaderCharId, agentCharId, failure) ->
-                                log.error("Bot tick failed for missing entry ownerCharId={} botCharId={}",
-                                        leaderCharId, agentCharId, failure),
-                        (failedEntry, failure) -> BotMovementManager.resetEntryStateAfterTeleport(failedEntry),
-                        failedEntry -> removeBotByCharId(botCharId),
-                        this::forceBotIdleAfterTickFailure,
-                        (context, failure) -> log.error(
-                                "Disabling bot '{}' after {} tick failures within {} ms (owner={}, map={}, grinding={}, following={})",
-                                context.agentName(), context.failureCount(), AgentTickFailurePolicy.FAILURE_WINDOW_MS,
-                                context.leaderName(), context.mapId(), context.grinding(), context.following(), failure),
-                        (context, failure) -> log.warn(
-                                "Bot '{}' tick failed {}/{} (owner={}, map={}, grinding={}, following={})",
-                                context.agentName(), context.failureCount(), AgentTickFailurePolicy.FAILURE_LIMIT,
-                                context.leaderName(), context.mapId(), context.grinding(), context.following(), failure)));
-    }
-
-    private void forceBotIdleAfterTickFailure(BotEntry entry) {
-        issueStop(entry);
-        try {
-            AgentBotManagerReplyRuntime.replyNow(entry, "unrecoverable error caught, idling");
-        } catch (Throwable chatError) {
-            Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-            log.warn("Failed to send bot failure idle message for '{}'",
-                    bot != null ? bot.getName() : "?", chatError);
-        }
+        AgentTickFailureRuntime.handleFailure(entry, ownerCharId, botCharId, t, log, this::issueStop);
     }
 
     static Monster selectPriorityRangedAttackTarget(BotEntry entry,

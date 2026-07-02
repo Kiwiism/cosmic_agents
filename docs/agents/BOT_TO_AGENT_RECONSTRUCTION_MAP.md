@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Tick failure side-effect wiring moved from BotManager to
+  `server.agents.runtime.AgentTickFailureRuntime`. BotManager now passes only
+  the temporary stop-mode callback and logger while Agent runtime owns movement
+  reset, runtime removal, forced-idle reply, missing-entry logging, warning/
+  error log formatting, and failure escalation hook wiring.
 - Spawn hook wiring moved from BotManager to
   `server.agents.runtime.AgentSpawnRuntime`. BotManager now passes only the
   temporary spawned-registration and follow-start callbacks plus logger while
