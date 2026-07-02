@@ -13,7 +13,6 @@ import server.agents.capabilities.combat.AgentCombatRangePolicy;
 import server.agents.capabilities.combat.AgentGrindTargetSearchService;
 import server.agents.capabilities.combat.AgentGrindTargetCommitmentService;
 import server.agents.capabilities.combat.AgentGrindModeTickService;
-import server.agents.capabilities.combat.AgentGrindNavigationTargetSelector;
 import server.agents.capabilities.combat.AgentLocalOpportunityAttackService;
 import server.agents.capabilities.combat.AgentRangedPriorityTargetSelector;
 import server.agents.capabilities.combat.AgentGrindRangedEngagementService;
@@ -45,6 +44,7 @@ import server.agents.runtime.AgentFollowTargetPositionService;
 import server.agents.runtime.AgentFollowMapSyncRuntime;
 import server.agents.runtime.AgentFollowOpportunityTickService;
 import server.agents.runtime.AgentFormationCommandService;
+import server.agents.runtime.AgentGrindNavigationRuntime;
 import server.agents.runtime.AgentGrindModeDispatchService;
 import server.agents.runtime.AgentIdleModeTickService;
 import server.agents.runtime.AgentGrindNoTargetFallbackService;
@@ -546,38 +546,27 @@ public class BotManager {
     }
 
     public static Point selectGrindNavigationTarget(BotEntry entry, Point botPos, Point combatTargetPos) {
-        return AgentGrindNavigationTargetSelector.selectGrindNavigationTarget(
-                entry, botPos, combatTargetPos, grindNavigationHooks());
+        return AgentGrindNavigationRuntime.selectGrindNavigationTarget(entry, botPos, combatTargetPos);
     }
 
     private static Point selectGrindNavigationTarget(BotEntry entry,
                                                      Point botPos,
                                                      Point combatTargetPos,
                                                      boolean crossRegionRetreatChecked) {
-        return AgentGrindNavigationTargetSelector.selectGrindNavigationTarget(
-                entry, botPos, combatTargetPos, crossRegionRetreatChecked, grindNavigationHooks());
+        return AgentGrindNavigationRuntime.selectGrindNavigationTarget(
+                entry, botPos, combatTargetPos, crossRegionRetreatChecked);
     }
 
     static Point selectCrossRegionRetreatTarget(BotEntry entry, Point botPos, Point combatTargetPos) {
-        return AgentGrindNavigationTargetSelector.selectCrossRegionRetreatTarget(
-                entry, botPos, combatTargetPos, grindNavigationHooks());
+        return AgentGrindNavigationRuntime.selectCrossRegionRetreatTarget(entry, botPos, combatTargetPos);
     }
 
     static boolean shouldUseLocalCombatRetreatTarget(BotEntry entry,
                                                      Point botPos,
                                                      Point combatTargetPos,
                                                      Point retreatPos) {
-        return AgentGrindNavigationTargetSelector.shouldUseLocalCombatRetreatTarget(
-                entry, botPos, combatTargetPos, retreatPos, grindNavigationHooks());
-    }
-
-    private static AgentGrindNavigationTargetSelector.NavigationHooks grindNavigationHooks() {
-        return new AgentGrindNavigationTargetSelector.NavigationHooks(
-                BotNavigationManager::resolveCurrentRegionId,
-                BotNavigationManager::resolveTargetRegionId,
-                BotNavigationManager::findPath,
-                BotMovementManager.cfg.GRIND_EDGE_MARGIN,
-                BotMovementManager.cfg.JUMP_Y_THRESH);
+        return AgentGrindNavigationRuntime.shouldUseLocalCombatRetreatTarget(
+                entry, botPos, combatTargetPos, retreatPos);
     }
 
     static Point resolveNoGrindTargetPosition(BotEntry entry, Point botPos, MapleMap map) {
@@ -1017,7 +1006,7 @@ public class BotManager {
 
     private static AgentGrindNavigationTailService.Hooks grindNavigationTailHooks() {
         return new AgentGrindNavigationTailService.Hooks(
-                BotManager::selectGrindNavigationTarget,
+                AgentGrindNavigationRuntime::selectGrindNavigationTarget,
                 AgentAttackExecutionProvider::shouldRetreatFromNearbyTarget,
                 BotManager::convenientLootTarget);
     }

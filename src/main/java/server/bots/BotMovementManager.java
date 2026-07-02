@@ -144,6 +144,10 @@ public class BotMovementManager {
         return cfg.JUMP_Y_THRESH;
     }
 
+    public static int configuredGrindEdgeMargin() {
+        return cfg.GRIND_EDGE_MARGIN;
+    }
+
     private static Config bindConfig(Config config) {
         BotPhysicsEngine.cfg = config;
         return config;

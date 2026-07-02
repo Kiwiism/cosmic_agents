@@ -3,7 +3,6 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.capabilities.combat.AgentLocalOpportunityAttackService;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 import server.bots.BotMovementManager;
 import server.bots.BotPhysicsEngine;
 
@@ -33,7 +32,7 @@ public final class AgentLocalOpportunityAttackRuntime {
 
     private static AgentLocalOpportunityAttackService.Hooks hooks() {
         return new AgentLocalOpportunityAttackService.Hooks(
-                BotManager::selectGrindNavigationTarget,
+                AgentGrindNavigationRuntime::selectGrindNavigationTarget,
                 BotPhysicsEngine::calculateMaxJumpHeight,
                 BotMovementManager::initiateJump,
                 AgentLocalOpportunityAttackRuntime::setLocalAttackMoveWindow);

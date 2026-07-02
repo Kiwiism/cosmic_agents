@@ -20,10 +20,14 @@ Recent reconstruction notes:
 - Anchored farm hook construction now lives in
   `server.agents.runtime.AgentAnchoredFarmRuntime`. BotManager keeps only
   legacy movement config values for this mode until config ownership moves.
+- Grind navigation hook construction now lives in
+  `server.agents.runtime.AgentGrindNavigationRuntime`. BotManager keeps
+  compatibility wrappers for legacy tests/callers, but no longer assembles the
+  navigation callback bundle directly; local-opportunity attack now calls the
+  Agent runtime helper instead of calling back into BotManager.
 - Local-opportunity attack hook construction now lives in
   `server.agents.runtime.AgentLocalOpportunityAttackRuntime`. Its temporary
-  dependency on `BotManager.selectGrindNavigationTarget` should disappear when
-  grind navigation target selection is reconstructed.
+  grind navigation dependency now points at `AgentGrindNavigationRuntime`.
 - Common tick hook construction now lives in
   `server.agents.runtime.AgentCommonTickRuntime`. BotManager should only pass
   the temporary script-task tick callback until script tasks are reconstructed.
