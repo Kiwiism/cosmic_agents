@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Death respawn hook wiring moved from BotManager to
+  `server.agents.runtime.AgentRespawnRuntime`. BotManager now delegates the
+  respawn side-effect bundle while Agent runtime owns cross-map leader portal
+  selection, ground resolution, physics teleport, movement reset/broadcast,
+  and the legacy "back!" map reply hook construction.
 - Tick preflight hook wiring moved from BotManager to
   `server.agents.runtime.AgentTickPreflightRuntime`. Agent runtime now owns
   airshow, skip-delay, removed-Agent cleanup, heartbeat, pending-offer expiry,

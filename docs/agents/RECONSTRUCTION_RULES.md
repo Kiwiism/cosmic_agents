@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Death respawn hook construction now lives in
+  `server.agents.runtime.AgentRespawnRuntime`. Keep the temporary direct
+  dependencies on `BotPhysicsEngine` and `BotMovementManager` there until the
+  movement/physics bins are reconstructed; `BotManager` should only delegate
+  respawn recovery.
 - Tick preflight hook wiring now lives in
   `server.agents.runtime.AgentTickPreflightRuntime`. BotManager no longer owns
   the airshow, skip-delay, removed-Agent cleanup, heartbeat, pending-offer

@@ -77,6 +77,7 @@ import server.agents.runtime.AgentRegistrationRuntime;
 import server.agents.runtime.AgentReloginRuntime;
 import server.agents.runtime.AgentRecoveryTickService;
 import server.agents.runtime.AgentRecoveryTeleportService;
+import server.agents.runtime.AgentRespawnRuntime;
 import server.agents.runtime.AgentReturnScrollService;
 import server.agents.runtime.AgentRecruitCommandService;
 import server.agents.runtime.AgentRuntimeConfig;
@@ -1646,18 +1647,7 @@ public class BotManager {
     }
 
     private void respawnBot(BotEntry entry, Character bot, Character owner) {
-        AgentDeathTickService.respawnNearLeader(
-                entry,
-                bot,
-                owner,
-                new AgentDeathTickService.RespawnHooks(
-                        (respawnBot, leaderMap, leaderPosition) ->
-                                respawnBot.forceChangeMap(leaderMap, leaderMap.findClosestPortal(leaderPosition)),
-                        MapleMap::getPointBelow,
-                        BotPhysicsEngine::teleportTo,
-                        (respawnEntry, ignoredBot) -> BotMovementManager.resetEntryStateAfterTeleport(respawnEntry),
-                        (respawnEntry, ignoredBot) -> BotMovementManager.broadcastMovement(respawnEntry),
-                        this::botSay));
+        AgentRespawnRuntime.respawnNearLeader(entry, bot, owner);
     }
 
     // -------------------------------------------------------------------------
