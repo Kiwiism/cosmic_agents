@@ -3,6 +3,7 @@ package server.agents.integration;
 import client.Character;
 
 import java.util.List;
+import server.agents.runtime.AgentLeaderSafetyRuntime;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.bots.BotEntry;
 import server.bots.BotManager;
@@ -28,7 +29,7 @@ public final class AgentBotSessionLifecycleSideEffects {
     }
 
     public static void issueOwnerAwaySafeModeForLeader(int ownerCharId, boolean town) {
-        BotManager.getInstance().issueOwnerAwaySafeModeForOwner(ownerCharId, town);
+        AgentLeaderSafetyRuntime.issueInactiveSafeModeForLeader(ownerCharId, town);
     }
 
     public static Character activeLeaderByAgentCharacterId(int agentCharId) {

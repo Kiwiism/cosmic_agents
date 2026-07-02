@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- BotManager leader-safety helpers for town-offer, primary-entry, and
+  inactive-leader safe mode were removed. Agent session control/runtime now
+  owns those checks and side effects without a BotManager compatibility hop.
 - BotManager's remaining formation, target snapshot, and movement-only test
   shims were removed. The simulation lab and BotManager parity tests now call
   `AgentFormationRuntime`, `AgentTargetSnapshotRuntime`, and

@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- BotManager leader-safety compatibility helpers were removed. Session
+  side-effect wiring now calls `AgentLeaderSafetyRuntime` directly for
+  inactive-leader safe mode, and primary-session / town-offer checks live in
+  Agent session control runtime.
 - BotManager formation, target snapshot, and movement-only test shims were
   removed. Bot movement simulation and parity tests now call
   `AgentFormationRuntime`, `AgentTargetSnapshotRuntime`, and
@@ -64,9 +68,8 @@ Recent reconstruction notes:
   `AgentTickCoreRuntime.tickCore(...)`. BotManager no longer passes teleport,
   out-of-bounds teleport, grind-party teleport multiplier, or follow distance
   into tick-core wiring.
-- The `shouldOfferTownForAwayCommand` compatibility API now calls
-  `AgentLeaderSafetyRuntime.shouldTownWarpForInactiveEntry` directly; the
-  private BotManager town-warp helper was removed.
+- The former `shouldOfferTownForAwayCommand` compatibility API was removed;
+  Agent session control now owns the town-warp prompt decision directly.
 - Tick-core callback wiring now points directly at Agent runtime modules for
   leader lookup, leader safety, map grounding, standalone move target, death
   handling, target snapshots, movement core, and anchored farm dispatch.

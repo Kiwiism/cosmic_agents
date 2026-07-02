@@ -12,7 +12,6 @@ import server.agents.capabilities.dialogue.AgentWhisperCommandService;
 import server.agents.runtime.AgentChatRouteRuntime;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentFormationCommandRuntime;
-import server.agents.runtime.AgentLeaderSafetyRuntime;
 import server.agents.runtime.AgentLifecycleChatCommandRuntime;
 import server.agents.runtime.AgentLiveModeTickRuntime;
 import server.agents.runtime.AgentMapEnvironmentService;
@@ -231,18 +230,6 @@ public class BotManager {
 
     private void tick(BotEntry entry, int ownerCharId, int botCharId) {
         AgentTickRuntime.tick(entry, ownerCharId, botCharId, this::issueGrind, this::issueFollowOwner);
-    }
-
-    public boolean shouldOfferTownForAwayCommand(BotEntry entry) {
-        return AgentLeaderSafetyRuntime.shouldTownWarpForInactiveEntry(entry);
-    }
-
-    public boolean isFirstBotEntry(BotEntry entry) {
-        return AgentRuntimeRegistry.isFirstEntryForLeader(entry);
-    }
-
-    public void issueOwnerAwaySafeModeForOwner(int ownerCharId, boolean town) {
-        AgentLeaderSafetyRuntime.issueInactiveSafeModeForLeader(ownerCharId, town);
     }
 
     /**
