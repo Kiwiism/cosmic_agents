@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Grind-mode default loot-radius handoff moved from BotManager to
+  `server.agents.runtime.AgentGrindModeRuntime`. Tick-core wiring now calls
+  grind mode without BotManager reading `LOOT_RADIUS`.
 - Script-task tick default stop-distance handoff moved from BotManager to
   `server.agents.runtime.AgentScriptTaskRuntime`. BotManager now passes
   `AgentScriptTaskRuntime::tick` directly into common tick and tick-core

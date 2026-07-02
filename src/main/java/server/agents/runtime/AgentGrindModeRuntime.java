@@ -27,6 +27,22 @@ public final class AgentGrindModeRuntime {
                                                                            Point agentPosition,
                                                                            Point targetPosition,
                                                                            boolean runAiTick,
+                                                                           AgentLiveModeTickRuntime.MovementCoreStep movementCoreStep) {
+        return tickGrindMode(
+                entry,
+                agent,
+                agentPosition,
+                targetPosition,
+                runAiTick,
+                movementCoreStep,
+                AgentRuntimeConfig.cfg.LOOT_RADIUS);
+    }
+
+    public static AgentLiveModeTickRuntime.LocalAttackResult tickGrindMode(BotEntry entry,
+                                                                           Character agent,
+                                                                           Point agentPosition,
+                                                                           Point targetPosition,
+                                                                           boolean runAiTick,
                                                                            AgentLiveModeTickRuntime.MovementCoreStep movementCoreStep,
                                                                            int lootRadius) {
         AgentGrindModeTickService.Result result = AgentGrindModeTickService.tickGrindMode(

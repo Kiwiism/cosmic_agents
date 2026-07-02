@@ -414,8 +414,7 @@ public class BotManager {
                                 grindAgentPosition,
                                 grindTargetPosition,
                                 grindRunAiTick,
-                                AgentMovementTickRuntime::stepMovementCore,
-                                BotManager.cfg.LOOT_RADIUS));
+                                AgentMovementTickRuntime::stepMovementCore));
     }
 
     static Monster selectPriorityRangedAttackTarget(BotEntry entry,

@@ -17,6 +17,9 @@ Rules:
 
 Recent reconstruction notes:
 
+- Grind-mode default loot-radius ownership now lives in
+  `AgentGrindModeRuntime.tickGrindMode(...)`. BotManager no longer passes
+  `LOOT_RADIUS` into live grind-mode tick dispatch.
 - Script-task tick default stop-distance ownership now lives in
   `AgentScriptTaskRuntime.tick(entry)`. BotManager no longer passes
   `BotMovementManager` stop-distance config into common tick or tick-core
