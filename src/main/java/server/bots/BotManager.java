@@ -72,6 +72,7 @@ import server.agents.runtime.AgentTickFailurePolicy;
 import server.agents.runtime.AgentTickOrchestrator;
 import server.agents.runtime.AgentTickPreflightService;
 import server.agents.runtime.AgentTickStateMaintenanceService;
+import server.agents.runtime.AgentTradeWindowTickService;
 
 import server.agents.capabilities.looting.AgentGrindLootTargetService;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
@@ -1106,14 +1107,15 @@ public class BotManager {
         // Trade window open: keep physics consistent (gravity / swim / idle stance) but
         // do not issue any movement input — no follow, grind, attack, teleport, or shop visit.
         // Prevents the bot from wandering away or auto-equipping while the player is mid-trade.
-        if (bot.getTrade() != null) {
+        if (AgentTradeWindowTickService.tickIfTradeWindowOpen(entry, bot, (tradeEntry, tradeBot) -> {
             if (!perf) {
-                tickTradePhysicsOnly(entry, bot);
+                tickTradePhysicsOnly(tradeEntry, tradeBot);
             } else {
                 long tTrade = System.nanoTime();
-                try { tickTradePhysicsOnly(entry, bot); }
+                try { tickTradePhysicsOnly(tradeEntry, tradeBot); }
                 finally { AgentPerformanceMonitor.record("tick-trade-physics", System.nanoTime() - tTrade); }
             }
+        })) {
             return;
         }
 

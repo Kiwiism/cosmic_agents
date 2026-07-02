@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Trade-window tick dispatch moved from BotManager to
+  `server.agents.runtime.AgentTradeWindowTickService`. BotManager now supplies
+  only the temporary physics-only tick hook while the Agent runtime owns the
+  trade-open consumed-tick decision.
 - Tick preflight sequencing moved from BotManager to
   `server.agents.runtime.AgentTickPreflightService`. BotManager now supplies
   temporary hooks for airshow skip, skip-delay consumption, removed-map cleanup,

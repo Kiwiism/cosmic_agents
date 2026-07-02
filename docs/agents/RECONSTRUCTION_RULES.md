@@ -3058,6 +3058,10 @@ Recent reconstruction notes:
   removed-map cleanup, heartbeat refresh/broadcast, pending-offer expiry, and
   AI cadence preparation. The same early-return order and tick timestamp input
   are preserved.
+- Trade-window tick dispatch now lives in
+  `server.agents.runtime.AgentTradeWindowTickService`. BotManager keeps a
+  temporary compatibility adapter for the physics-only tick body and performance
+  timing. The same `getTrade() != null` consumed-tick behavior is preserved.
 
 Initial reconstruction order:
 
