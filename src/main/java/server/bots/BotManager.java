@@ -111,7 +111,7 @@ import server.agents.capabilities.supplies.AgentPotionCheckRequestService;
 import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
 import server.agents.capabilities.trade.AgentOfferService;
-import server.agents.capabilities.trade.AgentPendingOfferResponseService;
+import server.agents.capabilities.trade.AgentPendingOfferChatRouteService;
 import server.agents.capabilities.trade.AgentTradeDialogueService;
 import server.agents.plans.AgentScriptMoveTargetService;
 
@@ -583,16 +583,7 @@ public class BotManager {
                         untargetedChatHooks()));
     }
     private boolean handlePendingLootOfferResponse(Character speaker, String message) {
-        return AgentPendingOfferResponseService.handlePendingOfferResponse(
-                bots.values(),
-                speaker,
-                message,
-                new AgentPendingOfferResponseService.Hooks(
-                        AgentOfferService::expirePendingOffer,
-                        AgentPendingOfferResponseService::isPendingOfferTarget,
-                        AgentBotCommandParser::resolveTargetedBot,
-                        AgentOfferService::handlePendingOfferResponse,
-                        (target, feedback) -> target.dropMessage(5, feedback)));
+        return AgentPendingOfferChatRouteService.handlePendingOfferResponse(bots.values(), speaker, message);
     }
 
     private AgentTargetedChatRouteService.Hooks targetedChatHooks() {

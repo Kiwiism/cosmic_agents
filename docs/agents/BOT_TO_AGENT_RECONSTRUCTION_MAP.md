@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Pending-offer chat response hook wiring moved from BotManager to
+  `server.agents.capabilities.trade.AgentPendingOfferChatRouteService`.
+  BotManager now supplies only the temporary live-entry-group source while
+  Agent trade owns expiry, target validation, targeted-command resolution,
+  response handling, and speaker feedback wiring.
 - Top-level chat ingress ordering moved from BotManager to
   `server.agents.capabilities.dialogue.AgentChatIngressService`. BotManager now
   supplies temporary hooks for pending-offer response routing, recruit/

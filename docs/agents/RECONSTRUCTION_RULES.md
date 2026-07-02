@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Pending-offer chat response hook wiring now lives in
+  `server.agents.capabilities.trade.AgentPendingOfferChatRouteService`.
+  BotManager keeps only the temporary live-entry-group source. The same expiry,
+  target validation, targeted-command resolution, response handling, and
+  speaker feedback wiring are preserved.
 - Top-level chat ingress ordering now lives in
   `server.agents.capabilities.dialogue.AgentChatIngressService`. BotManager
   keeps temporary hooks for pending-offer response routing, recruit/transfer/
