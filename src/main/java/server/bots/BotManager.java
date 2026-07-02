@@ -38,6 +38,7 @@ import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentFollowAnchorService;
 import server.agents.runtime.AgentFormationService;
 import server.agents.runtime.AgentFollowIdleMovementService;
+import server.agents.runtime.AgentFollowTargetCandidateService;
 import server.agents.runtime.AgentFollowTargetCommandService;
 import server.agents.runtime.AgentFollowTargetResolutionService;
 import server.agents.runtime.AgentFollowTargetPositionService;
@@ -224,35 +225,9 @@ public class BotManager {
     }
 
     private List<Character> followTargetCandidates(Character owner) {
-        List<Character> candidates = new ArrayList<>();
-        if (owner.isLoggedinWorld()) {
-            candidates.add(owner);
-        }
-        if (owner.getParty() != null) {
-            for (Character member : owner.getPartyMembersOnline()) {
-                if (member == null || !member.isLoggedinWorld() || member.getId() == owner.getId()) {
-                    continue;
-                }
-                candidates.add(member);
-            }
-        }
-        for (BotEntry sibling : getBotEntries(owner.getId())) {
-            Character siblingBot = AgentBotRuntimeIdentityRuntime.bot(sibling);
-            if (siblingBot == null || !siblingBot.isLoggedinWorld()) {
-                continue;
-            }
-            boolean duplicate = false;
-            for (Character candidate : candidates) {
-                if (candidate.getId() == siblingBot.getId()) {
-                    duplicate = true;
-                    break;
-                }
-            }
-            if (!duplicate) {
-                candidates.add(siblingBot);
-            }
-        }
-        return candidates;
+        return AgentFollowTargetCandidateService.candidates(
+                owner,
+                new AgentFollowTargetCandidateService.Hooks(this::getBotEntries));
     }
 
     private boolean applyFollowTargetCommand(Character owner, List<BotEntry> entries, String targetToken) {

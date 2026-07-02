@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Follow-target candidate assembly moved from BotManager to
+  `server.agents.runtime.AgentFollowTargetCandidateService`. BotManager now
+  supplies only a temporary sibling-entry lookup hook while Agent runtime owns
+  the leader/party/sibling ordering and duplicate filtering.
 - Follow-target command application moved from BotManager to
   `server.agents.runtime.AgentFollowTargetCommandService`. BotManager now
   supplies temporary hooks for target resolution, reply queueing, delay

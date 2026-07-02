@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Follow-target candidate assembly now lives in
+  `server.agents.runtime.AgentFollowTargetCandidateService`. BotManager keeps
+  only a temporary sibling-entry lookup hook. The same leader, party-member,
+  online sibling-Agent ordering and duplicate filtering are preserved.
 - Follow-target command application now lives in
   `server.agents.runtime.AgentFollowTargetCommandService`. BotManager keeps
   temporary hooks for target resolution, reply queueing, delay scheduling,
