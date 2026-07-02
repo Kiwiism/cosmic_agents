@@ -76,6 +76,7 @@ import server.agents.runtime.AgentPositionService;
 import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentRecruitRuntime;
 import server.agents.runtime.AgentRegistrationRuntime;
+import server.agents.runtime.AgentReloginRuntime;
 import server.agents.runtime.AgentRecoveryTickService;
 import server.agents.runtime.AgentRecoveryTeleportService;
 import server.agents.runtime.AgentReturnScrollService;
@@ -1710,23 +1711,7 @@ public class BotManager {
 
 
     public void reloginBot(int charId, int ownerCharId, int world, int channel) {
-        AgentLifecycleService.reloginAgentQuietly(
-                charId,
-                ownerCharId,
-                world,
-                channel,
-                new AgentLifecycleService.ReloginHooks(
-                        (targetWorld, leaderCharId) -> Server.getInstance()
-                                .getWorld(targetWorld)
-                                .getPlayerStorage()
-                                .getCharacterById(leaderCharId),
-                        this::resolveSpawnPosition,
-                        this::loadOfflineBot,
-                        this::registerSpawnedBot,
-                        AgentBotManagerSchedulerRuntime::afterDelay,
-                        () -> randMs(900, 1100),
-                        this::botSay),
-                (agentCharId, e) -> log.warn("reloginBot: failed to reload charId={}", agentCharId, e));
+        AgentReloginRuntime.reloginAgent(charId, ownerCharId, world, channel, this::registerSpawnedBot, log);
     }
 
     private void respawnBot(BotEntry entry, Character bot, Character owner) {

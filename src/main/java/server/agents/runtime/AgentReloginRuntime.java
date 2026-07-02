@@ -1,0 +1,53 @@
+package server.agents.runtime;
+
+import client.Character;
+import net.server.Server;
+import org.slf4j.Logger;
+import server.agents.integration.AgentBotManagerReplyRuntime;
+import server.agents.integration.AgentBotManagerSchedulerRuntime;
+import server.maps.MapleMap;
+
+import java.awt.Point;
+import java.sql.SQLException;
+
+/**
+ * Temporary Cosmic hook bundle for reloading an offline Agent while BotManager
+ * still supplies the spawned-registration callback.
+ */
+public final class AgentReloginRuntime {
+    private AgentReloginRuntime() {
+    }
+
+    public static void reloginAgent(int agentCharId,
+                                    int leaderCharId,
+                                    int world,
+                                    int channel,
+                                    AgentLifecycleService.RegisterSpawnedAgent registerSpawnedAgent,
+                                    Logger log) {
+        AgentLifecycleService.reloginAgentQuietly(
+                agentCharId,
+                leaderCharId,
+                world,
+                channel,
+                new AgentLifecycleService.ReloginHooks(
+                        (targetWorld, targetLeaderCharId) -> Server.getInstance()
+                                .getWorld(targetWorld)
+                                .getPlayerStorage()
+                                .getCharacterById(targetLeaderCharId),
+                        AgentSpawnPositionService::resolveSpawnPosition,
+                        AgentReloginRuntime::loadOfflineAgent,
+                        registerSpawnedAgent,
+                        AgentBotManagerSchedulerRuntime::afterDelay,
+                        () -> AgentRandom.randMs(900, 1100),
+                        AgentBotManagerReplyRuntime::sayMapNow),
+                (failedAgentCharId, e) -> log.warn("reloginBot: failed to reload charId={}", failedAgentCharId, e));
+    }
+
+    private static Character loadOfflineAgent(int agentCharId,
+                                              int world,
+                                              int channel,
+                                              MapleMap targetMap,
+                                              Point desiredPosition) throws SQLException {
+        return AgentOfflineLoadRuntime.loadOfflineAgent(agentCharId, world, channel, targetMap, desiredPosition);
+    }
+}
