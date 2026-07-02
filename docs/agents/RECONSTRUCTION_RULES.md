@@ -2993,6 +2993,10 @@ Recent reconstruction notes:
   temporary wrappers for tick integration only. The same move/follow/grind/stop
   command routing, drop-item action, runtime-registry follow-target resolution,
   and normal/precise arrival distance behavior are preserved.
+- Dead BotManager private mode-start wrappers were removed after command and
+  script execution moved to Agent-owned mode services. The inactive-leader
+  town-cluster scroll hook now calls `AgentModeService.startMoveTo` directly to
+  preserve its raw move-target behavior without clearing script/shop state.
 
 Initial reconstruction order:
 

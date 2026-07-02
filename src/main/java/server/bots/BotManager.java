@@ -1707,7 +1707,7 @@ public class BotManager {
                         post -> townClusterAnchors.putIfAbsent(ownerCharId, post),
                         (returnMap, anchor) -> resolveTownClusterTarget(entry, ownerCharId, returnMap, anchor),
                         () -> BotMovementManager.resetEntryState(entry),
-                        target -> startMoveTo(entry, target, true)));
+                        target -> AgentModeService.startMoveTo(entry, target, true)));
     }
 
     private Point resolveTownClusterTarget(BotEntry entry, int ownerCharId, MapleMap map, Point anchor) {
@@ -1732,21 +1732,11 @@ public class BotManager {
         AgentBotMovementCommandRuntime.moveTo(entry, dest, precise);
     }
 
-    private void startMoveTo(BotEntry entry, Point dest, boolean precise) {
-        AgentModeService.startMoveTo(entry, dest, precise);
-    }
 
     public void issueFarmHere(BotEntry entry, Point dest) {
         AgentBotMovementCommandRuntime.farmHere(entry, dest);
     }
 
-    private void startFarmHere(BotEntry entry, Point dest) {
-        // Sentry/farm-here is an active combat mode that just anchors to a fixed spot.
-        // Route through the shared active-mode reset so it stays in lock-step with
-        // grind/patrol (self-buff, pot-share, ammo-low, "low on pots" fallback all
-        // gate on Agent mode state — see kb feedback_bot_coding_guidelines).
-        AgentModeService.startFarmHere(entry, dest, BotMovementManager::clearNavigationState);
-    }
 
     public void issuePatrol(BotEntry entry, Point ownerPos) {
         AgentBotMovementCommandRuntime.patrol(entry, ownerPos);
@@ -1769,9 +1759,6 @@ public class BotManager {
         AgentBotMovementCommandRuntime.follow(entry, target);
     }
 
-    private void startFollow(BotEntry entry, Character target) {
-        AgentModeService.startFollow(entry, target);
-    }
 
     /**
      * Public hook: enter autonomous grind/combat mode using the same setup as
@@ -1783,18 +1770,12 @@ public class BotManager {
         AgentBotMovementCommandRuntime.grind(entry);
     }
 
-    private void startGrind(BotEntry entry) {
-        AgentModeService.startGrind(entry, BotMovementManager::clearNavigationState);
-    }
 
     /** Public hook: stop all scripted movement/combat mode and idle in place. */
     public void issueStop(BotEntry entry) {
         AgentBotMovementCommandRuntime.stop(entry);
     }
 
-    private void startStop(BotEntry entry) {
-        AgentModeService.startStop(entry);
-    }
 
     /**
      * Public hook for map scripts: drop up to {@code quantity} from the first
