@@ -12,6 +12,10 @@ Use this checklist to make long-running stability measurable. A soak test should
 record the same fields at fixed intervals so regressions are visible instead of
 anecdotal.
 
+Agent-specific implementation details:
+
+- `docs/agents/AGENT_SOAK_TEST_IMPLEMENTATION_SPEC.md`
+
 ## Test Stages
 
 ```text
@@ -146,4 +150,3 @@ restart works without manual DB cleanup
 ```
 
 Record exact numbers before moving to the next stage.
-

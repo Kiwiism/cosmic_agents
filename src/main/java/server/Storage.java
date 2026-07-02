@@ -146,7 +146,7 @@ public class Storage {
 
             ItemFactory.STORAGE.saveItems(itemsWithType, id, con);
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            log.error("Failed to save storage id={}", id, ex);
         }
     }
 

@@ -102,6 +102,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TimeZone;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -146,7 +147,7 @@ public class Server {
 
     private final PlayerBuffStorage buffStorage = new PlayerBuffStorage();
     private final Map<Integer, Alliance> alliances = new HashMap<>(100);
-    private final Map<Integer, NewYearCardRecord> newyears = new HashMap<>();
+    private final Map<Integer, NewYearCardRecord> newyears = new ConcurrentHashMap<>();
     private final List<Client> processDiseaseAnnouncePlayers = new LinkedList<>();
     private final List<Client> registeredDiseaseAnnouncePlayers = new LinkedList<>();
 
@@ -217,6 +218,10 @@ public class Server {
 
     public NewYearCardRecord removeNewYearCard(int cardid) {
         return newyears.remove(cardid);
+    }
+
+    public int newYearCardRuntimeCount() {
+        return newyears.size();
     }
 
     public void setAvailableDeveloperRoom() {
@@ -1051,7 +1056,8 @@ public class Server {
         int previousHighWatermark = loadedMapHighWatermark;
         loadedMapHighWatermark = Math.max(loadedMapHighWatermark, snapshot.loadedMaps());
 
-        log.info("Scale health {} expDebugCleaned={} expDebugActive={} monitoredChr={} npcPendingRuntime={} npcConversations={} npcScripts={} questActions={} questScripts={} loadedMapHighWatermark={}",
+        SessionCoordinator sessionCoordinator = SessionCoordinator.getInstance();
+        log.info("Scale health {} expDebugCleaned={} expDebugActive={} monitoredChr={} npcPendingRuntime={} npcConversations={} npcScripts={} questActions={} questScripts={} loginAttemptAccounts={} loginBypass={} newYearCards={} inLoginState={} loadedMapHighWatermark={}",
                 snapshot.compact(),
                 cleanedExpDebugSessions,
                 ExpDebugTracker.activeSessionCount(),
@@ -1061,12 +1067,45 @@ public class Server {
                 NPCScriptManager.getInstance().activeScriptCount(),
                 QuestScriptManager.getInstance().activeQuestActionCount(),
                 QuestScriptManager.getInstance().activeScriptCount(),
+                sessionCoordinator.trackedLoginAttemptAccountCount(),
+                sessionCoordinator.activeLoginBypassCount(),
+                newYearCardRuntimeCount(),
+                loginStateCount(),
                 loadedMapHighWatermark);
 
         if (snapshot.idleMapCandidates() > 0 || snapshot.loadedMaps() >= previousHighWatermark + 100) {
             log.warn("Scale health map growth watch loaded={} active={} idleCandidates={} previousHighWatermark={} highWatermark={}",
                     snapshot.loadedMaps(), snapshot.activeMaps(), snapshot.idleMapCandidates(), previousHighWatermark, loadedMapHighWatermark);
         }
+    }
+
+    public List<String> diagnosticLines() {
+        ServerMetricsSnapshot snapshot = buildMetricsSnapshot();
+        SessionCoordinator sessionCoordinator = SessionCoordinator.getInstance();
+        List<String> lines = new ArrayList<>();
+
+        lines.add("Server health: " + snapshot.compact());
+        lines.add("Runtime caches: expDebug=" + ExpDebugTracker.activeSessionCount()
+                + " monitoredChr=" + net.packet.logging.MonitoredChrLogger.monitoredCharacterCount()
+                + " npcPendingRuntime=" + AbstractPlayerInteraction.pendingCharacterRuntimeStateCount()
+                + " npcConversations=" + NPCScriptManager.getInstance().activeConversationCount()
+                + " npcScripts=" + NPCScriptManager.getInstance().activeScriptCount()
+                + " questActions=" + QuestScriptManager.getInstance().activeQuestActionCount()
+                + " questScripts=" + QuestScriptManager.getInstance().activeScriptCount());
+        lines.add("Login runtime: attempts=" + sessionCoordinator.trackedLoginAttemptAccountCount()
+                + " bypass=" + sessionCoordinator.activeLoginBypassCount()
+                + " newYearCards=" + newYearCardRuntimeCount()
+                + " inLoginState=" + loginStateCount());
+        lines.add("Map runtime: loaded=" + snapshot.loadedMaps()
+                + " active=" + snapshot.activeMaps()
+                + " idleCandidates=" + snapshot.idleMapCandidates()
+                + " highWatermark=" + loadedMapHighWatermark);
+        lines.add("DB: " + DatabaseConnection.poolStats());
+        lines.add("Threads: " + ThreadManager.getInstance().diagnostics());
+        lines.add("Timers: " + TimerManager.getInstance().diagnostics());
+        lines.add("Load level: " + ServerLoadMonitor.currentLevel());
+
+        return lines;
     }
 
     private ServerMetricsSnapshot buildMetricsSnapshot() {
@@ -1999,6 +2038,15 @@ public class Server {
         srvLock.lock();
         try {
             inLoginState.remove(c);
+        } finally {
+            srvLock.unlock();
+        }
+    }
+
+    private int loginStateCount() {
+        srvLock.lock();
+        try {
+            return inLoginState.size();
         } finally {
             srvLock.unlock();
         }

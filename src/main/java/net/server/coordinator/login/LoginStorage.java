@@ -28,7 +28,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 /**
  * @author Ronan
@@ -40,9 +39,12 @@ public class LoginStorage {
         List<Instant> attempts = loginHistory.computeIfAbsent(accountId, k -> new ArrayList<>());
 
         synchronized (attempts) {
+            final Instant now = Instant.ofEpochMilli(Server.getInstance().getCurrentTime());
+            attempts.removeIf(attempt -> attempt.isBefore(now));
+
             final Instant attemptExpiry = Instant.ofEpochMilli(Server.getInstance().getCurrentTime() + YamlConfig.config.server.LOGIN_ATTEMPT_DURATION);
 
-            if (attempts.size() > YamlConfig.config.server.MAX_ACCOUNT_LOGIN_ATTEMPT) {
+            if (attempts.size() >= YamlConfig.config.server.MAX_ACCOUNT_LOGIN_ATTEMPT) {
                 Collections.fill(attempts, attemptExpiry);
                 return false;
             }
@@ -59,13 +61,7 @@ public class LoginStorage {
         for (Entry<Integer, List<Instant>> loginEntries : loginHistory.entrySet()) {
             final List<Instant> attempts = loginEntries.getValue();
             synchronized (attempts) {
-                List<Instant> attemptsToRemove = attempts.stream()
-                        .filter(attempt -> attempt.isBefore(now))
-                        .collect(Collectors.toList());
-
-                for (Instant attemptToRemove : attemptsToRemove) {
-                    attempts.remove(attemptToRemove);
-                }
+                attempts.removeIf(attempt -> attempt.isBefore(now));
 
                 if (attempts.isEmpty()) {
                     accountIdsToClear.add(loginEntries.getKey());
@@ -76,5 +72,9 @@ public class LoginStorage {
         for (Integer accountId : accountIdsToClear) {
             loginHistory.remove(accountId);
         }
+    }
+
+    public int trackedAccountCount() {
+        return loginHistory.size();
     }
 }

@@ -737,6 +737,111 @@ Recommended package:
 agent-platform-installer
 ```
 
+### 21. Background Action Runtime
+
+Status: partially defined; detailed design notes exist in the optimization doc.
+
+Purpose:
+
+- Run unobserved agents through validated low-fidelity movement, combat, loot,
+  NPC/shop actions, and plan progress.
+- Keep visible/player-observed behavior on the normal presentation path.
+- Make 2000 concurrent agents plausible by skipping invisible packets,
+  per-kill map item creation, full physics, and per-action DB writes.
+
+Primary docs:
+
+- `docs/agents/AGENT_ENGINE_OPTIMIZATION.md`
+- `docs/agents/AGENT_ENGINE_SCALING_TRACK.md`
+
+Owns:
+
+- background action routing.
+- route ETA and same-map ETA execution.
+- abstract combat resolution.
+- direct loot credit and loot buffers.
+- inventory reconciliation from buffers.
+- background quest progress.
+- materialization from virtual state into visible state.
+- fairness/progress budgets.
+- background action journals.
+
+Does not own:
+
+- normal player-visible combat packets.
+- normal player loot/drop behavior.
+- static catalog generation.
+- profile/economy decisions.
+- core server validation rules.
+
+Implementation focus:
+
+1. Define presentation path versus background path contracts.
+2. Add background action router and simulation-mode gates.
+3. Implement direct loot buffer and reconciliation.
+4. Implement abstract combat resolver using shared formulas.
+5. Implement materialization safety when players enter a map.
+6. Add fairness budgets and strict debug comparison mode.
+
+Recommended package:
+
+```text
+agent-background-action-runtime
+```
+
+### 22. Agent Soak Test Harness
+
+Status: partially defined; implementation specification exists.
+
+Purpose:
+
+- Provide repeatable long-running scale tests for the reconstructed Agent
+  runtime.
+- Validate 50, 250, 500, 1000, and 2000-agent stages.
+- Capture server, Agent, persistence, map, and gameplay-validity metrics.
+- Test population spread, hidden simulation, materialization, DB pressure, and
+  shutdown/restart behavior.
+
+Primary docs:
+
+- `docs/agents/AGENT_SOAK_TEST_IMPLEMENTATION_SPEC.md`
+- `docs/SOAK_TEST_CHECKLIST.md`
+- `docs/agents/AGENT_ENGINE_SCALING_TRACK.md`
+
+Owns:
+
+- soak command surface.
+- scenario runner.
+- population preset loading for tests.
+- spawn wave runner.
+- periodic snapshot collector.
+- CSV/JSON output.
+- materialization storm tests.
+- DB pressure tests.
+- stage pass/fail reporting.
+
+Does not own:
+
+- Agent gameplay capability implementation.
+- player 500-concurrency testing.
+- LLM/economy validation.
+- server production monitoring outside soak runs.
+
+Implementation focus:
+
+1. Add snapshot collector and log writer.
+2. Add population preset runner.
+3. Add `!soak agents ...` command surface.
+4. Add scenario runner.
+5. Add materialization and DB pressure tests.
+6. Add long-run stage reports.
+
+Recommended package:
+
+```text
+agent-soak-test-harness
+```
+
 ## Recommended Implementation Order
 
 There are now two implementation tracks:
@@ -804,6 +909,8 @@ Second priority:
 2. Agent Observability design + technical specs.
 3. Simulation Tier Runtime design + technical specs.
 4. Perception Runtime design + technical specs.
+5. Background Action Runtime design + technical specs.
+6. Agent Soak Test Harness command/runner spec.
 
 Later:
 

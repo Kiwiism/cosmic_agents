@@ -77,6 +77,10 @@ These items were implemented as diagnostics-first changes because enabling full 
 
 - Logout now clears pending NPC/dressing-room runtime state keyed by character id.
 - Scale health logs pending NPC runtime cache count, monitored packet character count, and active EXP debug session count.
+- 2026-07-03 update:
+  - Logout now also disposes active NPC and quest script manager state for the client before character references are emptied.
+  - Scale health now logs login-attempt account count, active login-bypass count, pending New Year card runtime count, and in-login-state client count.
+  - New Year card runtime storage is concurrent and card deletion stops any repeating card notification task.
 - Revisit later:
   - keep reviewing all static maps keyed by character id/account id/object id.
   - add explicit cleanup hooks for any newly introduced runtime caches.

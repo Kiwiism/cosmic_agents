@@ -92,6 +92,73 @@ Reason:
   plan/capability loops.
 - Observability should come before optimization so bottlenecks are measurable.
 
+## Agent Runtime Bottleneck Backlog
+
+Moved from the server bottleneck review so these do not remain mixed into the
+server-only hardening backlog.
+
+### Highest-Value Agent Optimizations
+
+1. Sharded/budgeted Agent scheduler.
+   - Current bottleneck: per-Agent scheduled futures and broad tick callbacks
+     can multiply timer queue pressure.
+   - Target change: move Agent ticks into bounded scheduler shards with per-tick
+     budgets, queue depth metrics, p50/p95/p99 delay metrics, and load shedding.
+   - Expected value: very high for 2000 concurrent Agents.
+
+2. Simulation tier runtime.
+   - Current bottleneck: invisible Agents do too much presentation-grade work.
+   - Target change: switch Agents between presentation, background active, and
+     background abstract modes based on real-player map presence and map
+     sensitivity.
+   - Expected value: very high for CPU, broadcast, movement, and perception cost.
+
+3. Server-state perception instead of packet-based perception.
+   - Current bottleneck: packet construction and client-shaped state are poor
+     interfaces for Agent decision making.
+   - Target change: build compact perception snapshots from server state and let
+     Agents consume those instead of raw packet side effects.
+   - Expected value: very high for invisible/background Agents and LLM readiness.
+
+4. Broadcast/cosmetic suppression for non-visible Agents.
+   - Current bottleneck: movement, attack, effect, chat, emote, and fidget
+     presentation work has no value when no real player can observe it.
+   - Target change: suppress or defer visual packets/cosmetics outside
+     presentation mode while preserving validated state changes.
+   - Expected value: high, especially on maps populated only by Agents.
+
+5. Route ETA and background action runtime.
+   - Current bottleneck: full physics ticks for unobserved navigation and
+     same-map travel.
+   - Target change: use portal-to-portal route ETA catalogs and same-map ETA
+     heuristics, then materialize to valid footholds when needed.
+   - Expected value: high for large background populations.
+
+6. Agent memory lifecycle ownership.
+   - Current bottleneck: plans, profiles, route state, perception snapshots,
+     targets, conversations, and LLM state can retain stale `Character`,
+     `MapleMap`, or `MapObject` references if ownership is unclear.
+   - Target change: every Agent runtime cache declares owner, max expected size,
+     cleanup hook, and diagnostic count.
+   - Expected value: high for 30-day uptime.
+
+7. Agent-specific degradation policy.
+   - Current bottleneck: under server pressure, all Agent work may compete with
+     real player work unless explicitly prioritized.
+   - Target change: shed work in order: LLM calls, cosmetic chat, proactive
+     offers, long-range planning, background catalog queries, non-critical
+     movement/combat, while preserving core safety and player-visible state.
+   - Expected value: high for stability under bursts.
+
+### Server Dependency Notes
+
+- Core server scheduler lanes, DB diagnostics, map growth diagnostics, and cache
+  counts remain server-only support work.
+- Agent runtime should consume those diagnostics but must not require core server
+  files to depend on concrete Agent implementation classes.
+- `AgentPresence` provider installation belongs to the portable Agent package,
+  not core server hardening.
+
 ## Scaling Packages
 
 ### 1. Agent Observability
@@ -262,21 +329,41 @@ Purpose:
 
 - Execute background Agent actions with state fidelity and minimal presentation
   cost.
+- Keep "cheats" in a separate background path instead of mixing them into normal
+  player-visible combat/loot/server paths.
 
 Must provide:
 
+- presentation path versus background path contract.
 - background navigation arrival.
 - background combat rounds.
+- direct loot credit without map item creation when no real player can observe.
+- virtual loot and meso buffers.
+- inventory buffer reconciliation.
+- outcome batching for hidden farming slices.
+- probability smoothing for common drops and explicit rare-event rolls.
 - background NPC/quest validation and execution.
 - background loot pickup decisions.
+- background shop transaction shortcuts.
 - background recovery.
+- background death shortcut.
+- potion/rest resource model.
+- quest item reservation policy.
+- map crowding and region allocation hooks.
+- fairness/progress budgets.
+- strict debug comparison mode.
 - final state commit.
+- materialization when a real player enters the map.
 
 Rule:
 
 - Background actions still validate live state before mutation.
 - Background actions do not generate visual packets unless a real player can
   observe them.
+- Background actions may skip presentation mechanics, but must not skip server
+  validation or produce impossible final state.
+- Rare, player-relevant, or economy-sensitive outcomes should be journaled and
+  checkpointed earlier than routine background progress.
 
 ### 8. Load Shedding Policy
 

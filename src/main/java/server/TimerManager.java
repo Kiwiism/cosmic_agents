@@ -61,9 +61,9 @@ public class TimerManager implements TimerManagerMBean {
     private TimerManager() {
         MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
         try {
-            mBeanServer.registerMBean(this, new ObjectName("server:type=TimerManger"));
+            mBeanServer.registerMBean(this, new ObjectName("server:type=TimerManager"));
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("Failed to register TimerManager MBean", e);
         }
     }
 

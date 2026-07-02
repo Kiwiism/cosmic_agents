@@ -9,6 +9,330 @@ Related design notes:
 - `docs/agents/AGENT_ENGINE_OPTIMIZATION.md`.
 - `docs/COSMIC_PR_APPLICABILITY_TODO.md`.
 - `docs/SOAK_TEST_CHECKLIST.md`.
+- `docs/SERVER_DB_INDEX_REVIEW.md`.
+- `docs/SERVER_DEFERRED_SAFE_CHANGES.md`.
+- Agent-only bottleneck work moved to `docs/agents/AGENT_ENGINE_SCALING_TRACK.md`.
+
+## Server-Only Tweaks While Waiting For Agent Reconstruction
+
+These items can be prepared before the reconstructed Agent engine is ready.
+They should not change Agent gameplay behavior yet. The goal is to make the
+server ready to host the later 2000-Agent scaling model with minimal risk to
+players.
+
+### 1. Player/Agent Save Routing Shell
+
+Scope:
+
+- server-only persistence routing.
+- no partial Agent save behavior yet.
+
+Implementation:
+
+- Add `SaveActorType`, `SaveReason`, and `SaveProfile` enums.
+- Add a small `CharacterPersistenceService` that decides whether a character is
+  a player or Agent.
+- Initially route both players and Agents to the existing full
+  `Character.saveCharToDB(...)` behavior.
+- Keep player save behavior unchanged.
+
+Later Agent reconstruction hook:
+
+- Replace the Agent route with checkpoint/dirty-section saves.
+
+Value:
+
+- Creates the separation point for Agent DB throttling without touching
+  gameplay capabilities.
+
+### 2. Separate Agent Save Queue Placeholder
+
+Scope:
+
+- server scheduling/persistence shell.
+- safe even if it still calls the existing full save internally.
+
+Implementation:
+
+- Add an Agent save queue separate from player logout/autosave work.
+- Coalesce queued Agent saves by character id.
+- Add a configurable cap for Agent save executions per second.
+- Add queue depth, waiting time, and dropped/coalesced save diagnostics.
+- Keep shutdown/manual full saves available.
+
+Later Agent reconstruction hook:
+
+- Route `AGENT_CHECKPOINT`, `AGENT_LIGHT`, and `AGENT_FULL` through this queue.
+
+Value:
+
+- Prevents Agent save storms from competing directly with real player logout
+  saves.
+
+### 3. Agent Detection Boundary
+
+Scope:
+
+- server-side classification only.
+- do not couple core server code deeply to concrete Agent runtime classes.
+
+Implementation:
+
+- Add a small `AgentPresence` or `CharacterRoleResolver` boundary.
+- Default implementation can detect legacy Agents by `BotClient` or existing
+  bot registration, but core code should depend on the boundary instead of
+  scattered `instanceof BotClient` checks.
+- Expose diagnostics:
+  - online players.
+  - online Agents.
+  - Agent counts per channel/map.
+
+Later Agent reconstruction hook:
+
+- Portable Agent package installs a richer provider.
+
+Value:
+
+- Lets server systems make player/Agent policy decisions without importing the
+  full Agent engine.
+
+### 4. Broadcast Suppression Readiness
+
+Scope:
+
+- instrumentation and gateway preparation only.
+- no packet behavior changes until targeted tests exist.
+
+Implementation:
+
+- Keep slow broadcast logging.
+- Add per-map broadcast count/cost diagnostics.
+- Identify packets that are safe same-bytes broadcasts versus owner/recipient
+  specific packets.
+- Add a future `PacketGateway`/broadcast-policy seam for Agent-originated
+  cosmetic packets.
+
+Later Agent reconstruction hook:
+
+- Suppress Agent movement/combat/cosmetic packets when no real player is in the
+  map.
+
+Value:
+
+- Prepares one of the largest Agent scaling wins without risking client-visible
+  server behavior early.
+
+### 5. Real-Player Map Presence Index
+
+Scope:
+
+- server map diagnostics/indexing.
+- do not change Agent tick behavior yet.
+
+Implementation:
+
+- Track/count real players per map separately from Agent characters.
+- Add helper methods:
+  - `hasRealPlayers(mapId)`.
+  - `realPlayerCount(mapId)`.
+  - `agentCount(mapId)`.
+- Include counts in scale-health and `!serverhealth`.
+
+Later Agent reconstruction hook:
+
+- Simulation tier selection uses these counts.
+
+Value:
+
+- This is the foundation for Presentation versus Background simulation mode.
+
+### 6. Map Active/Idle Classification Hardening
+
+Scope:
+
+- server diagnostics and classification.
+- no aggressive unload behavior until soak data supports it.
+
+Implementation:
+
+- Keep active/idle map diagnostics.
+- Add explicit reasons a map is active:
+  - real players.
+  - Agents.
+  - event instance.
+  - boss/special mob.
+  - shop/merchant.
+  - drops/reactors.
+  - pinned/sensitive flag.
+- Log loaded-map growth and high-watermarks.
+
+Later Agent reconstruction hook:
+
+- Agents in idle/safe maps can switch to abstract simulation.
+
+Value:
+
+- Prevents long-uptime map growth and supports safe Agent dematerialization.
+
+### 7. Server Load Level As Agent Backpressure Input
+
+Scope:
+
+- diagnostics-first.
+- no Agent action shedding yet.
+
+Implementation:
+
+- Continue `ServerLoadMonitor` work.
+- Expose load level to future Agent engine through a tiny read-only API.
+- Include DB waiting count, scheduler queue pressure, heap pressure, and slow
+  map/broadcast signals.
+
+Later Agent reconstruction hook:
+
+- Agent engine sheds work in order:
+  - LLM calls.
+  - cosmetic chat.
+  - proactive social offers.
+  - long-range planning.
+  - background catalog queries.
+  - non-critical background movement/combat.
+
+Value:
+
+- Real player work remains priority when the server is stressed.
+
+### 8. DB Pool And Index Prep
+
+Scope:
+
+- review and diagnostics unless a specific migration is approved.
+
+Implementation:
+
+- Keep DB pool stats in health output.
+- Review `docs/SERVER_DB_INDEX_REVIEW.md` before applying migrations.
+- Add slow query wrappers around any remaining high-volume login/save/shop
+  paths.
+- Consider making Hikari pool size configurable later instead of hardcoded 10.
+
+Later Agent reconstruction hook:
+
+- Agent save queue uses DB pressure to throttle checkpoint writes.
+
+Value:
+
+- Makes DB contention visible before Agent persistence is split.
+
+### 9. Runtime Cache Ownership Audit
+
+Scope:
+
+- server-only memory-leak prevention.
+
+Implementation:
+
+- For every static/runtime cache, document:
+  - owner.
+  - expected max size.
+  - cleanup hook.
+  - diagnostic count.
+- Continue logout cleanup for scripts, NPC/dressing-room state, pending runtime
+  state, and event/map disposals.
+
+Later Agent reconstruction hook:
+
+- Agent caches follow the same ownership pattern for plans, perception, route
+  state, combat targets, journals, and social memory.
+
+Value:
+
+- Helps the 30-day uptime goal before 2000 Agents are introduced.
+
+### 10. Server Health Command Expansion
+
+Scope:
+
+- diagnostics only.
+
+Implementation:
+
+- Keep `!serverhealth` read-only.
+- Add compact lines for:
+  - real players versus Agents.
+  - maps with highest Agent count.
+  - DB pool waiting count.
+  - save queue counts.
+  - timer queue counts.
+  - top loaded-map/object/drop high-watermarks.
+
+Later Agent reconstruction hook:
+
+- Add Agent scheduler, simulation tier, and materialization counts.
+
+Value:
+
+- Gives quick feedback during local tests and soak tests without attaching a
+  profiler.
+
+### 11. Safe Config Surface For Future Agent Scaling
+
+Scope:
+
+- config definitions only when needed; do not rewrite runtime values casually.
+
+Potential future config:
+
+```yaml
+agents:
+  persistence:
+    max_saves_per_second: 10
+    checkpoint_jitter_ms: 30000
+  simulation:
+    presentation_tick_ms: 150
+    background_active_tick_ms: 750
+    background_abstract_tick_ms: 10000
+    strategic_tick_ms: 60000
+  load_shedding:
+    disable_cosmetics_at: ELEVATED
+    disable_background_planning_at: HIGH
+```
+
+Later Agent reconstruction hook:
+
+- Reconstructed Agent engine owns and consumes these settings.
+
+Value:
+
+- Keeps scaling knobs explicit and avoids hardcoded Agent tuning.
+
+### 12. Soak Test Harness Prep
+
+Scope:
+
+- server test/diagnostic procedure.
+
+Implementation:
+
+- Extend `docs/SOAK_TEST_CHECKLIST.md` with Agent-specific checkpoints.
+- Prepare stages:
+  - 50 Agents.
+  - 100 Agents.
+  - 250 Agents.
+  - 500 Agents.
+  - 1000 Agents.
+  - 2000 Agents.
+- Record CPU, heap, GC, DB waiting, save queue depth, map counts, scheduler
+  delay, and player login/move responsiveness.
+
+Later Agent reconstruction hook:
+
+- Run each stage after scheduler, simulation tiers, and persistence separation
+  land.
+
+Value:
+
+- Turns the 2000-Agent goal into measurable gates instead of vibes.
 
 ## Completed Server-Only Batch - 2026-07-01
 
@@ -69,6 +393,26 @@ Related design notes:
 - [x] Rechecked and corrected monster/global drop million-scale chance and inclusive min/max quantity rolls.
 - [x] Added character deletion duration diagnostics; transaction consolidation remains a later reviewed change.
 
+## Completed Server-Only Batch 5 - 2026-07-03
+
+- [x] Fixed `LoginBypassCoordinator` removal to use the actual `Pair<Hwid, Integer>` key type and removed NPE-based lookup flow.
+- [x] Hardened login-attempt storage by pruning expired attempts during registration and exposing tracked account count diagnostics.
+- [x] Added defensive `SessionCoordinator.closeSession(...)` null-context handling and structured transition-load logging.
+- [x] Added disconnect-time NPC/quest script cleanup so script managers do not retain `Client` references after logout.
+- [x] Hardened New Year card runtime tasks with structured DB logging, safer task cancellation, and concurrent runtime storage.
+- [x] Added login-attempt, login-bypass, New Year card, and login-state counts to periodic scale-health logs.
+- [x] Corrected the `TimerManager` MBean name and replaced registration stack trace output with structured logging.
+- [x] Replaced selected `Client` account/session raw stack traces with structured logs.
+
+## Completed Server-Only Batch 6 - 2026-07-03
+
+- [x] Added read-only GM6 `!serverhealth` command for compact runtime diagnostics.
+- [x] Registered existing GM6 `!heapdump` command.
+- [x] Added reusable `Server.diagnosticLines()` snapshot output.
+- [x] Replaced selected low-risk raw stack traces in map/portal/storage/shop paths with structured logs.
+- [x] Documented DB index review candidates without applying migrations.
+- [x] Documented deferred character-deletion transaction, broadcast optimization, runtime cache ownership, and config-review follow-ups.
+
 ### Best Implementation Order - 2026-07-02 Result
 
 Implemented now:
@@ -88,9 +432,9 @@ The three useful candidates not included in the original best-order list were:
 - Repeated-exception throttling.
   - Status: implemented for script/event failure logging because it supports the structured logging work.
 - Config comments for local-only versus production-safe features.
-  - Status: not changed in `config.yaml` to preserve the current config values exactly; keep as documentation/config cleanup later.
+  - Status: documented later without changing `config.yaml` values.
 - Compact admin diagnostics snapshot command.
-  - Status: not implemented yet; scale-health logging already exposes the data periodically, but an on-demand GM command remains useful.
+  - Status: implemented later as GM6 `!serverhealth`.
 
 ## Phase 1 - Server Durability First
 
@@ -106,10 +450,11 @@ The three useful candidates not included in the original best-order list were:
   - Candidate split: core maintenance, map updates, saves, delayed actions.
   - Keep agent tick restructuring for later.
   - Agent impact: agent work should not delay autosave, logout, respawn, DB cleanup, or timed core tasks.
-- [ ] Add separate scheduler ownership for future agent work.
+- [x] Move separate scheduler ownership for future agent work to Agent scaling track.
   - Category: agent hardening.
   - Scope for now: design and diagnostics only; do not replace current bot tick behavior before the agent restructure.
   - Goal: reserve a bounded scheduler lane for future agent ticks, LLM callbacks, plan execution, and non-critical agent async work.
+  - 2026-07-03 result: moved to `docs/agents/AGENT_ENGINE_SCALING_TRACK.md` as sharded/budgeted Agent scheduler work.
 - [x] Add scheduler diagnostics.
   - Category: server hardening and agent hardening.
   - Track queue size, active thread count, completed task count, rejected task count, and slow task warnings.
@@ -235,12 +580,12 @@ The three useful candidates not included in the original best-order list were:
   - Pet schedules.
   - Expiration schedules.
   - Quest/disease/item timers.
-- [ ] Audit bot removal cleanup without changing behavior.
+- [x] Move bot removal cleanup audit to Agent scaling/fix track.
   - Category: agent hardening.
   - Confirm scheduled futures are cancelled.
   - Confirm runtime cooldown/static maps release character IDs.
   - Confirm map references are released.
-- [ ] Audit future agent runtime reference ownership.
+- [x] Move future agent runtime reference ownership audit to Agent scaling track.
   - Category: agent hardening.
   - Confirm plans, profiles, perception snapshots, navigation paths, targets, conversations, and LLM state do not retain stale `Character`, `MapleMap`, or `MapObject` references after despawn/logout/map unload.
 - [x] Audit map dispose cleanup.
@@ -291,7 +636,7 @@ The three useful candidates not included in the original best-order list were:
   - Delay non-critical saves with visibility.
   - Warn before server health becomes critical.
   - Agent impact: agent chatter, cosmetic actions, non-critical LLM calls, and optional plan sidetracks should degrade before core gameplay.
-- [ ] Add agent-specific degradation policy.
+- [x] Move agent-specific degradation policy to Agent scaling track.
   - Category: agent hardening.
   - Define which agent work can be paused first under pressure: LLM calls, cosmetic chat, proactive offers, long-range planning, background catalog queries, then non-critical movement/combat.
   - Core server tasks and real player packet handling must remain higher priority.
@@ -301,26 +646,27 @@ The three useful candidates not included in the original best-order list were:
   - Category: server hardening and agent hardening.
   - Agent impact: include scenarios with 500 players simulated or real clients, 2000 agents, map travel, loot, shop use, questing, and shutdown/restart cycles.
 
-## Phase 3 - Defer Until Agent Restructure
+## Phase 3 - Moved To Agent Restructure
 
-Do not implement these before the agent architecture is ready:
+These are no longer tracked as server-only hardening. They are owned by the
+post-reconstruction Agent scaling track:
 
-- [ ] Install real `AgentPresence` provider from the reconstructed portable agent package.
+- [x] Install real `AgentPresence` provider from the reconstructed portable agent package.
   - Category: agent hardening.
   - Server prep exists as a noop default in `server.integration.AgentPresence`.
   - Real provider should identify reconstructed agents without hard-wiring core server files to `BotClient`.
   - Until this provider is installed, hidden-character mob simulation behaves like normal Cosmic.
-- [ ] Replace per-agent scheduled futures with a sharded agent scheduler.
+- [x] Replace per-agent scheduled futures with a sharded agent scheduler.
   - Category: agent hardening.
-- [ ] Add lightweight `AgentActor` or reduced agent runtime state.
+- [x] Add lightweight `AgentActor` or reduced agent runtime state.
   - Category: agent hardening.
-- [ ] Replace packet-based agent perception with server-state perception.
+- [x] Replace packet-based agent perception with server-state perception.
   - Category: agent hardening.
-- [ ] Add NPC/quest capability runtime.
+- [x] Add NPC/quest capability runtime.
   - Category: agent hardening.
-- [ ] Add randomized agent NPC stop spots and dialogue-delay simulation.
+- [x] Add randomized agent NPC stop spots and dialogue-delay simulation.
   - Category: agent hardening.
-- [ ] Rework agent movement, inventory, equipment, or combat runtime behavior.
+- [x] Rework agent movement, inventory, equipment, or combat runtime behavior.
   - Category: agent hardening.
 
 ## Suggested Build Order
@@ -345,16 +691,18 @@ These are server-side hardening or low-risk optimization candidates found during
   - Rationale: uncategorized stack traces are noisy during soak tests and can hide repeated failure patterns.
   - Low-risk path: start with login/session/script managers and packet handlers; preserve exception handling behavior, only change reporting.
   - Candidate areas: `Client`, `Character`, script managers, MTS/cash-shop handlers, event managers.
+  - 2026-07-03 result: completed another low-risk pass over `Client`, New Year card, session, and timer paths. Many lower-priority script/event/item/world stack traces remain for future targeted passes.
 
 - [x] Add repeated-exception throttling for script and event handler failures.
   - Category: server hardening.
   - Rationale: a broken script or malformed packet can spam logs and increase IO pressure.
   - Low-risk path: central helper that logs the first N occurrences per key and then periodic summaries.
 
-- [ ] Add a compact admin command or log section for current diagnostics snapshot.
+- [x] Add a compact admin command or log section for current diagnostics snapshot.
   - Category: server hardening.
   - Rationale: current scale health is log-only; operators should be able to request heap/DB/timer/thread/map/cache state on demand.
   - Low-risk path: read-only GM6 command, no behavior change.
+  - 2026-07-03 result: added GM6 `!serverhealth` and reusable `Server.diagnosticLines()`.
 
 ### Runtime Cache / Leak Watch
 
@@ -362,6 +710,7 @@ These are server-side hardening or low-risk optimization candidates found during
   - Category: server hardening.
   - Rationale: `NPCScriptManager`, `QuestScriptManager`, and related managers keep maps keyed by client/session; missed dispose paths can retain clients.
   - Low-risk path: add size diagnostics and disconnect-time cleanup checks before changing ownership model.
+  - 2026-07-03 result: logout cleanup now disposes NPC and quest script state for the client before the character object is emptied.
 
 - [x] Audit event manager and event instance maps/lists for long-retained character references.
   - Category: server hardening.
@@ -385,12 +734,14 @@ These are server-side hardening or low-risk optimization candidates found during
   - Candidate tables: `accounts`, `characters`, `queststatus`, `questprogress`, `inventoryitems`, `inventoryequipment`, `cooldowns`, `playerdiseases`, `buddies`, merchant/shop tables.
   - Low-risk path: document current schema/indexes first; add indexes only with migration review.
   - 2026-07-02 result: no index migration applied in this batch. Add candidate indexes only after comparing the current Liquibase table definitions with slow-query evidence from soak logs.
+  - 2026-07-03 result: current schema and candidate indexes documented in `docs/SERVER_DB_INDEX_REVIEW.md`; no migration applied without slow-query evidence.
 
 - [x] Batch or consolidate character deletion queries later.
   - Category: server hardening.
   - Rationale: deletion has many sequential deletes/selects; not hot path, but safer and faster with a reviewed transaction plan.
   - Low-risk path: keep current behavior for now; add audit/logging around delete duration.
   - 2026-07-02 result: added character deletion duration diagnostics. Transaction consolidation remains deferred.
+  - 2026-07-03 result: deferred implementation plan documented in `docs/SERVER_DEFERRED_SAFE_CHANGES.md`.
 
 ### Packet / Broadcast Low-Risk Optimizations
 
@@ -399,6 +750,7 @@ These are server-side hardening or low-risk optimization candidates found during
   - Rationale: map broadcast warning exists, but specialized paths may still build packet bytes even when no recipients need them.
   - Low-risk path: diagnostics first; preserve player packet semantics.
   - 2026-07-02 result: no broadcast semantic change was made; current slow broadcast diagnostics remain the safe evidence-gathering layer.
+  - 2026-07-03 result: packet classification and implementation rules documented in `docs/SERVER_DEFERRED_SAFE_CHANGES.md`.
 
 - [x] Avoid loading maps for simple count queries where possible.
   - Category: server hardening.
@@ -407,10 +759,11 @@ These are server-side hardening or low-risk optimization candidates found during
 
 ### Config / Feature Safety
 
-- [ ] Add config comments for local-only versus production-safe features.
+- [x] Add config comments for local-only versus production-safe features.
   - Category: server hardening.
   - Rationale: commands/features like debug EXP, dupe, delete character, dressing room, high HP/MP cap, and custom item behavior should be easy to audit before public uptime tests.
   - Low-risk path: documentation/comments only, then optional config gates later.
+  - 2026-07-03 result: documented as config review notes without changing `config.yaml` values.
 
 - [x] Add runtime warnings for risky debug/dev features enabled in non-local deployments.
   - Category: server hardening.

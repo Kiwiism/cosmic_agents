@@ -49,35 +49,36 @@ public class LoginBypassCoordinator {
     private final ConcurrentHashMap<Pair<Hwid, Integer>, Pair<Boolean, Long>> loginBypass = new ConcurrentHashMap<>();   // optimized PIN & PIC check
 
     public boolean canLoginBypass(Hwid hwid, int accId, boolean pic) {
-        try {
-            Pair<Hwid, Integer> entry = new Pair<>(hwid, accId);
-            Boolean p = loginBypass.get(entry).getLeft();
-
-            return !pic || p;
-        } catch (NullPointerException npe) {
+        Pair<Boolean, Long> bypass = loginBypass.get(new Pair<>(hwid, accId));
+        if (bypass == null) {
             return false;
         }
+
+        if (bypass.getRight() < Server.getInstance().getCurrentTime()) {
+            loginBypass.remove(new Pair<>(hwid, accId), bypass);
+            return false;
+        }
+
+        return !pic || bypass.getLeft();
     }
 
     public void registerLoginBypassEntry(Hwid hwid, int accId, boolean pic) {
         long expireTime = (pic ? YamlConfig.config.server.BYPASS_PIC_EXPIRATION : YamlConfig.config.server.BYPASS_PIN_EXPIRATION);
         if (expireTime > 0) {
             Pair<Hwid, Integer> entry = new Pair<>(hwid, accId);
-            expireTime = Server.getInstance().getCurrentTime() + MINUTES.toMillis(expireTime);
-            try {
-                pic |= loginBypass.get(entry).getLeft();
-                expireTime = Math.max(loginBypass.get(entry).getRight(), expireTime);
-            } catch (NullPointerException npe) {
+            long newExpireTime = Server.getInstance().getCurrentTime() + MINUTES.toMillis(expireTime);
+            Pair<Boolean, Long> current = loginBypass.get(entry);
+            if (current != null) {
+                pic |= current.getLeft();
+                newExpireTime = Math.max(current.getRight(), newExpireTime);
             }
 
-            loginBypass.put(entry, new Pair<>(pic, expireTime));
+            loginBypass.put(entry, new Pair<>(pic, newExpireTime));
         }
     }
 
     public void unregisterLoginBypassEntry(Hwid hwid, int accId) {
-        String hwidValue = hwid == null ? null : hwid.hwid();
-        Pair<String, Integer> entry = new Pair<>(hwidValue, accId);
-        loginBypass.remove(entry);
+        loginBypass.remove(new Pair<>(hwid, accId));
     }
 
     public void runUpdateLoginBypass() {
@@ -113,6 +114,10 @@ public class LoginBypassCoordinator {
                 }
             }
         }
+    }
+
+    public int activeBypassCount() {
+        return loginBypass.size();
     }
 
 }

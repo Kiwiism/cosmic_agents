@@ -63,7 +63,7 @@ public class MapScriptManager extends AbstractScriptManager {
                 iv.invokeFunction("start", new MapScriptMethods(c));
                 return true;
             } catch (final ScriptException | NoSuchMethodException e) {
-                e.printStackTrace();
+                log.error("Error running cached map script {}", mapScriptPath, e);
             }
         }
 

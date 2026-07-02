@@ -275,6 +275,10 @@ public class SessionCoordinator {
     }
 
     private static Client fetchInTransitionSessionClient(Client client) {
+        if (client == null) {
+            return null;
+        }
+
         Hwid hwid = SessionCoordinator.getInstance().getGameSessionHwid(client);
         if (hwid == null) {   // maybe this session was currently in-transition?
             return null;
@@ -287,7 +291,7 @@ public class SessionCoordinator {
             try {
                 fakeClient.setAccID(Character.loadCharFromDB(chrId, client, false).getAccountID());
             } catch (SQLException sqle) {
-                sqle.printStackTrace();
+                log.warn("Failed to load transition character {} while closing session", chrId, sqle);
             }
         }
 
@@ -297,6 +301,10 @@ public class SessionCoordinator {
     public void closeSession(Client client, Boolean immediately) {
         if (client == null) {
             client = fetchInTransitionSessionClient(client);
+            if (client == null) {
+                log.warn("Ignoring closeSession call with no client context immediately={}", immediately);
+                return;
+            }
         }
 
         final Hwid hwid = client.getHwid();
@@ -339,6 +347,14 @@ public class SessionCoordinator {
 
     public void runUpdateLoginHistory() {
         loginStorage.clearExpiredAttempts();
+    }
+
+    public int trackedLoginAttemptAccountCount() {
+        return loginStorage.trackedAccountCount();
+    }
+
+    public int activeLoginBypassCount() {
+        return net.server.coordinator.login.LoginBypassCoordinator.getInstance().activeBypassCount();
     }
 
     public void printSessionTrace() {

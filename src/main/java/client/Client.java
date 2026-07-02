@@ -334,7 +334,7 @@ public class Client extends ChannelInboundHandlerAdapter {
                 chars.add(Character.loadCharFromDB(cni.id, this, false));
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to load characters accId={} world={}", accId, serverId, e);
         }
         return chars;
     }
@@ -360,7 +360,7 @@ public class Client extends ChannelInboundHandlerAdapter {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Failed to load character list accId={} world={}", accId, worldId, e);
         }
         return chars;
     }
@@ -381,7 +381,7 @@ public class Client extends ChannelInboundHandlerAdapter {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Failed to check banned IP remote={}", remoteAddress, e);
         }
         return ret;
     }
@@ -436,7 +436,7 @@ public class Client extends ChannelInboundHandlerAdapter {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Failed to check banned HWID accId={}", accId, e);
         }
 
         return ret;
@@ -470,7 +470,7 @@ public class Client extends ChannelInboundHandlerAdapter {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to check banned MACs accId={}", accId, e);
         }
 
         return ret;
@@ -520,7 +520,7 @@ public class Client extends ChannelInboundHandlerAdapter {
                 ps.executeUpdate();
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Failed to ban HWID accId={}", accId, e);
         }
     }
 
@@ -555,7 +555,7 @@ public class Client extends ChannelInboundHandlerAdapter {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Failed to ban MACs accId={}", accId, e);
         }
     }
 
@@ -582,7 +582,7 @@ public class Client extends ChannelInboundHandlerAdapter {
             ps.setInt(2, accId);
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Failed to set PIN accId={}", accId, e);
         }
     }
 
@@ -615,7 +615,7 @@ public class Client extends ChannelInboundHandlerAdapter {
             ps.setInt(2, accId);
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Failed to set PIC accId={}", accId, e);
         }
     }
 
@@ -756,7 +756,7 @@ public class Client extends ChannelInboundHandlerAdapter {
             tempBanCalendar = lTempban;
             return lTempban;
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Failed to load temp ban accId={}", accId, e);
         }
 
         return null;//why oh why!?!
@@ -792,7 +792,7 @@ public class Client extends ChannelInboundHandlerAdapter {
             ps.setInt(2, accId);
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Failed to update HWID accId={}", accId, e);
         }
     }
 
@@ -814,7 +814,7 @@ public class Client extends ChannelInboundHandlerAdapter {
             ps.setInt(2, accId);
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Failed to update MACs accId={}", accId, e);
         }
     }
 
@@ -1097,6 +1097,7 @@ public class Client extends ChannelInboundHandlerAdapter {
     private void clear() {
         // player hard reference removal thanks to Steve (kaito1410)
         if (this.player != null) {
+            clearScriptRuntimeState();
             this.player.empty(true); // clears schedules and stuff
         }
 
@@ -1108,6 +1109,26 @@ public class Client extends ChannelInboundHandlerAdapter {
         this.birthday = null;
         this.engines = null;
         this.player = null;
+    }
+
+    private void clearScriptRuntimeState() {
+        try {
+            NPCScriptManager.getInstance().dispose(this);
+        } catch (Throwable t) {
+            log.warn("Failed to dispose NPC script state during client cleanup accId={} chr={}",
+                    accId, player == null ? null : player.getId(), t);
+        }
+
+        try {
+            QuestScriptManager.getInstance().dispose(this);
+        } catch (Throwable t) {
+            log.warn("Failed to dispose quest script state during client cleanup accId={} chr={}",
+                    accId, player == null ? null : player.getId(), t);
+        }
+
+        if (player != null) {
+            AbstractPlayerInteraction.clearPendingCharacterRuntimeState(player.getId());
+        }
     }
 
     public void setCharacterOnSessionTransitionState(int cid) {
@@ -1173,7 +1194,7 @@ public class Client extends ChannelInboundHandlerAdapter {
                     }
                 }
             } catch (NullPointerException e) {
-                e.printStackTrace();
+                log.warn("Idle check skipped because client state was already cleared remote={}", remoteAddress, e);
             }
         }, SECONDS.toMillis(15000));
     }
@@ -1234,7 +1255,7 @@ public class Client extends ChannelInboundHandlerAdapter {
                 ps.executeUpdate();
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Failed to accept ToS accId={}", accId, e);
         }
         return disconnect;
     }
@@ -1272,7 +1293,7 @@ public class Client extends ChannelInboundHandlerAdapter {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Failed to load vote points accId={}", accId, e);
         }
         votePoints = points;
         return votePoints;
@@ -1300,7 +1321,7 @@ public class Client extends ChannelInboundHandlerAdapter {
             ps.setInt(2, accId);
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Failed to save vote points accId={}", accId, e);
         }
     }
 
@@ -1395,7 +1416,7 @@ public class Client extends ChannelInboundHandlerAdapter {
                 ps.executeUpdate();
 
             } catch (SQLException e) {
-                e.printStackTrace();
+                log.error("Failed to gain character slot accId={}", accId, e);
             }
             return true;
         }
@@ -1413,7 +1434,7 @@ public class Client extends ChannelInboundHandlerAdapter {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Failed to load account ban reason accId={}", accId, e);
         }
         return 0;
     }
@@ -1431,7 +1452,7 @@ public class Client extends ChannelInboundHandlerAdapter {
             ps.setInt(2, accId);
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Failed to set gender accId={}", accId, e);
         }
     }
 
@@ -1530,7 +1551,7 @@ public class Client extends ChannelInboundHandlerAdapter {
         try {
             sendPacket(PacketCreator.getChannelChange(InetAddress.getByName(socket[0]), Integer.parseInt(socket[1])));
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Failed to send channel change packet accId={} target={}:{}", accId, socket[0], socket[1], e);
         }
     }
 

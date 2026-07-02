@@ -322,7 +322,7 @@ public class Shop {
 
     public static Shop createFromDB(int id, boolean isShopId) {
         Shop ret = null;
-        int shopId;
+        int shopId = -1;
         try (Connection con = DatabaseConnection.getConnection()) {
             final String query;
             if (isShopId) {
@@ -366,7 +366,7 @@ public class Shop {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Failed to load shop requestId={} isShopId={} resolvedShopId={}", id, isShopId, shopId, e);
         }
         return ret;
     }
