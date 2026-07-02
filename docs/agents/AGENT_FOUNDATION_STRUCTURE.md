@@ -24,6 +24,10 @@ Target package groups:
   Spawn result ownership is `AgentLifecycleService.AgentSpawnResult`.
   Follow-anchor and target-snapshot runtime wiring enters through
   `AgentTargetSnapshotRuntime`.
+  Formation state, target snapshots, and movement-only stepping are now called
+  directly by Agent tests/harnesses through `AgentFormationRuntime`,
+  `AgentTargetSnapshotRuntime`, and `AgentMovementOnlyStepRuntime` instead of
+  temporary BotManager helper methods.
   Tick leader/session lookup enters through `AgentLeaderSessionRuntime`.
   Dead-state tick hook wiring enters through `AgentDeathTickRuntime`.
   Ownerless movement-only tick preparation enters through

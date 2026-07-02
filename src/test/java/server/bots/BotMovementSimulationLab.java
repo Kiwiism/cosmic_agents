@@ -17,6 +17,8 @@ import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotMovementTargetSideEffects;
 import server.agents.runtime.AgentFormationService;
+import server.agents.runtime.AgentFormationRuntime;
+import server.agents.runtime.AgentMovementOnlyStepRuntime;
 import server.maps.MapleMap;
 import server.maps.Rope;
 
@@ -38,7 +40,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 final class BotMovementSimulationLab {
-    private final BotManager manager = BotManager.getInstance();
     private final Map<String, SimActor> actors = new LinkedHashMap<>();
     private final Map<String, BotEntry> bots = new LinkedHashMap<>();
     private final List<TraceFrame> trace = new ArrayList<>();
@@ -115,7 +116,7 @@ final class BotMovementSimulationLab {
 
     void setFormation(String ownerName, AgentFormationService.FormationType type, int px, int snapRange) {
         Character owner = requireActor(ownerName);
-        manager.setFormationState(owner, type, px, snapRange, followersOf(owner));
+        AgentFormationRuntime.setFormationState(owner, type, px, snapRange, followersOf(owner));
     }
 
     void setFollowOffset(String botName, int offsetX) {
@@ -163,10 +164,9 @@ final class BotMovementSimulationLab {
             }
 
             for (PendingStep pendingStep : pending) {
-                manager.stepMovementOnly(
+                AgentMovementOnlyStepRuntime.stepMovementOnly(
                         pendingStep.entry(),
                         pendingStep.targetSnapshot().primaryTargetPosition(),
-                        pendingStep.targetSnapshot().rawOwnerPosition(),
                         pendingStep.runAiTick());
                 trace.add(TraceFrame.capture(
                         trace.size(),
@@ -187,7 +187,7 @@ final class BotMovementSimulationLab {
         AgentMovementTargetSnapshot targetSnapshot = AgentBotMovementTargetSideEffects.captureTargetSnapshot(entry);
         Point ownerPos = targetSnapshot.rawOwnerPosition();
         entry.lastOwnerPos = new Point(ownerPos);
-        manager.stepMovementOnly(entry, new Point(targetPos), ownerPos, runAiTick);
+        AgentMovementOnlyStepRuntime.stepMovementOnly(entry, new Point(targetPos), runAiTick);
         trace.add(TraceFrame.capture(trace.size(), elapsedMs, botName, entry,
                 AgentBotMovementTargetSideEffects.captureTargetSnapshot(entry)));
     }
@@ -232,8 +232,8 @@ final class BotMovementSimulationLab {
         List<BotEntry> followers = followersOf(owner);
         AgentFormationService.FormationState formation = followers.isEmpty()
                 ? AgentFormationService.defaultStagger(BotManager.cfg.FOLLOW_STAGGER, BotMovementManager.cfg.FOLLOW_Y_CAP)
-                : manager.formationStateFor(followers.getFirst());
-        manager.setFormationState(owner, formation.type(), formation.px(), formation.snapRange(), followers);
+                : AgentFormationRuntime.formationStateFor(followers.getFirst());
+        AgentFormationRuntime.setFormationState(owner, formation.type(), formation.px(), formation.snapRange(), followers);
     }
 
     private List<BotEntry> followersOf(Character owner) {

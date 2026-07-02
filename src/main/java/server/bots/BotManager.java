@@ -11,14 +11,11 @@ import server.agents.capabilities.dialogue.AgentWhisperCommandService;
 
 import server.agents.runtime.AgentChatRouteRuntime;
 import server.agents.runtime.AgentLifecycleService;
-import server.agents.runtime.AgentFormationService;
-import server.agents.runtime.AgentFormationRuntime;
 import server.agents.runtime.AgentFormationCommandRuntime;
 import server.agents.runtime.AgentLeaderSafetyRuntime;
 import server.agents.runtime.AgentLifecycleChatCommandRuntime;
 import server.agents.runtime.AgentLiveModeTickRuntime;
 import server.agents.runtime.AgentMapEnvironmentService;
-import server.agents.runtime.AgentMovementOnlyStepRuntime;
 import server.agents.runtime.AgentOfflineLoadRuntime;
 import server.agents.runtime.AgentPartyLifecycleService;
 import server.agents.runtime.AgentPositionService;
@@ -27,8 +24,6 @@ import server.agents.runtime.AgentReloginRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeCleanupService;
 import server.agents.runtime.AgentScriptTaskQueueService;
-import server.agents.runtime.AgentTargetSnapshot;
-import server.agents.runtime.AgentTargetSnapshotRuntime;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSpawnPositionService;
 import server.agents.runtime.AgentSpawnRuntime;
@@ -231,27 +226,6 @@ public class BotManager {
                 this::dismissBot);
     }
 
-    // -------------------------------------------------------------------------
-    AgentFormationService.FormationState formationStateFor(BotEntry entry) {
-        return AgentFormationRuntime.formationStateFor(entry);
-    }
-
-    public Character resolveFollowAnchor(BotEntry entry, Character owner) {
-        return AgentTargetSnapshotRuntime.resolveFollowAnchor(entry, owner);
-    }
-
-    void setFormationState(Character owner,
-                           AgentFormationService.FormationType type,
-                           int px,
-                           int snapRange,
-                           List<BotEntry> entries) {
-        AgentFormationRuntime.setFormationState(owner, type, px, snapRange, entries);
-    }
-
-    public AgentTargetSnapshot captureTargetSnapshot(BotEntry entry) {
-        return AgentTargetSnapshotRuntime.captureTargetSnapshot(entry);
-    }
-
     // Main tick
     // -------------------------------------------------------------------------
 
@@ -378,17 +352,6 @@ public class BotManager {
                 fallbackRangeX,
                 fallbackRangeY);
     }
-    boolean stepMovementOnly(BotEntry entry, long tickAtMs) {
-        return AgentMovementOnlyStepRuntime.stepMovementOnly(entry, tickAtMs);
-    }
-
-    void stepMovementOnly(BotEntry entry,
-                          Point targetPos,
-                          Point ownerPos,
-                          boolean runAiTick) {
-        AgentMovementOnlyStepRuntime.stepMovementOnly(entry, targetPos, runAiTick);
-    }
-
     public void reloginBot(int charId, int ownerCharId, int world, int channel) {
         AgentReloginRuntime.reloginAgent(charId, ownerCharId, world, channel, this::tick, log);
     }

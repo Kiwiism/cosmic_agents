@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- BotManager formation, target snapshot, and movement-only test shims were
+  removed. Bot movement simulation and parity tests now call
+  `AgentFormationRuntime`, `AgentTargetSnapshotRuntime`, and
+  `AgentMovementOnlyStepRuntime` directly, so BotManager no longer exposes
+  these non-public runtime helper entry points.
 - BotManager test-only tick harness methods were removed. The perf harness now
   calls `AgentCommonTickRuntime`, `AgentScriptTaskRuntime`, and
   `AgentMovementOnlyStepRuntime` directly, so BotManager no longer owns

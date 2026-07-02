@@ -25,9 +25,11 @@ import server.agents.integration.AgentBotCombatPlanRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import server.agents.runtime.AgentFollowIdleMovementRuntime;
 import server.agents.runtime.AgentGrindTargetRuntime;
+import server.agents.runtime.AgentMovementOnlyStepRuntime;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSpawnPlacementRuntime;
 import server.agents.runtime.AgentTargetSnapshot;
+import server.agents.runtime.AgentTargetSnapshotRuntime;
 import server.agents.runtime.AgentTickFailureRuntime;
 import client.Character;
 import client.BuffStat;
@@ -348,7 +350,7 @@ class BotManagerTest {
         BotEntry entry = new BotEntry(bot, owner, null);
         AgentBotModeStateRuntime.setGrinding(entry, true);
 
-        BotManager.getInstance().stepMovementOnly(entry, bot.getPosition(), owner.getPosition(), true);
+        AgentMovementOnlyStepRuntime.stepMovementOnly(entry, bot.getPosition(), true);
 
         assertEquals(new Point(100, 100), bot.getPosition());
         assertFalse(entry.inAir);
@@ -465,7 +467,7 @@ class BotManagerTest {
             attacksRuntime.when(() -> AgentBotCombatAttackRuntime.attackMonster(entry, bot, rangedPlan))
                     .thenAnswer(invocation -> null);
 
-            BotManager.getInstance().stepMovementOnly(entry, target.getPosition(), target.getPosition(), false);
+            AgentMovementOnlyStepRuntime.stepMovementOnly(entry, target.getPosition(), false);
         }
 
         assertTrue(bot.getPosition().x < 100);
@@ -982,7 +984,6 @@ class BotManagerTest {
         followerEntry.followTargetId = followAnchor.getId();
         BotEntry anchorEntry = new BotEntry(followAnchor, owner, null);
 
-        BotManager manager = BotManager.getInstance();
         Map<Integer, List<BotEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
         bots.put(owner.getId(), List.of(followerEntry, anchorEntry));
         try {
@@ -994,7 +995,7 @@ class BotManagerTest {
             assertNotNull(targetRegion);
             assertFalse(targetRegion.isRopeRegion,
                     "botA follow botB should resolve navigation against botB, not owner's rope");
-            assertEquals("BotB", manager.captureTargetSnapshot(followerEntry).followAnchorName());
+            assertEquals("BotB", AgentTargetSnapshotRuntime.captureTargetSnapshot(followerEntry).followAnchorName());
         } finally {
             bots.remove(owner.getId());
         }
@@ -1011,7 +1012,7 @@ class BotManagerTest {
         entry.shopNpcPos = new Point(900, 100);
         entry.shopTargetPos = new Point(850, 100);
 
-        AgentTargetSnapshot snapshot = BotManager.getInstance().captureTargetSnapshot(entry);
+        AgentTargetSnapshot snapshot = AgentTargetSnapshotRuntime.captureTargetSnapshot(entry);
 
         assertEquals(new Point(850, 100), snapshot.primaryTargetPos());
         assertEquals("shop-target", snapshot.primaryTargetSource());
@@ -1033,7 +1034,7 @@ class BotManagerTest {
         assertFalse(AgentBotModeStateRuntime.following(entry));
         assertTrue(AgentBotModeStateRuntime.grinding(entry));
 
-        AgentTargetSnapshot snapshot = BotManager.getInstance().captureTargetSnapshot(entry);
+        AgentTargetSnapshot snapshot = AgentTargetSnapshotRuntime.captureTargetSnapshot(entry);
         assertEquals(new Point(300, 100), snapshot.primaryTargetPos());
         assertEquals("move-target", snapshot.primaryTargetSource());
     }
@@ -1046,7 +1047,7 @@ class BotManagerTest {
         BotEntry entry = new BotEntry(bot, owner, null);
         AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(300, 100), map.getId());
 
-        AgentTargetSnapshot snapshot = BotManager.getInstance().captureTargetSnapshot(entry);
+        AgentTargetSnapshot snapshot = AgentTargetSnapshotRuntime.captureTargetSnapshot(entry);
 
         assertEquals(new Point(300, 100), snapshot.primaryTargetPos());
         assertEquals("farm-anchor", snapshot.primaryTargetSource());
