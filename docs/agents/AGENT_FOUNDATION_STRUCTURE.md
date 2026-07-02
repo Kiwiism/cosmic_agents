@@ -62,6 +62,9 @@ Capability bins:
 - `combat`
 - `looting`
 - `inventory`
+  Inventory, passive loot, and trade tick entry ownership now starts at
+  `AgentInventoryTickRuntime`; `BotInventoryManager` is only a temporary
+  compatibility delegate.
 - `equipment`
 - `supplies`
 - `trade`

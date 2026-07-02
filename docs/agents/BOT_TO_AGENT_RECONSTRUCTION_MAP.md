@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `server.bots.BotInventoryManager` inventory/trade tick entry points moved to
+  `server.agents.capabilities.inventory.AgentInventoryTickRuntime`.
+  Production common ticks now call Agent inventory runtime directly; the old
+  bot class is a temporary compatibility delegate only.
 - BotManager runtime/lifecycle/tick milestone audit: production source no
   longer imports `server.bots.BotManager` or calls `BotManager.getInstance()`.
   Remaining BotManager methods are legacy compatibility delegates.
