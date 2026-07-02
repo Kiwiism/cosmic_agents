@@ -17,6 +17,12 @@ Rules:
 
 Recent reconstruction notes:
 
+- Transfer lifecycle hook wiring now lives in
+  `server.agents.runtime.AgentTransferRuntime`. BotManager supplies only the
+  temporary stop-mode and registration callbacks while Agent runtime owns
+  mutable live-entry lookup, target lookup, control authorization, task
+  cancellation, delayed greeting scheduling, reply delivery, delay selection,
+  and legacy transfer greeting selection.
 - Recruit lifecycle hook wiring now lives in
   `server.agents.runtime.AgentRecruitRuntime`. BotManager supplies only the
   temporary registration callback while Agent runtime owns ownerless online

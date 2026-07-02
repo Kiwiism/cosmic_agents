@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Transfer lifecycle hook wiring moved from BotManager to
+  `server.agents.runtime.AgentTransferRuntime`. BotManager now passes only the
+  temporary stop-mode and registration callbacks while Agent runtime owns
+  mutable entry lookup, target lookup, authorization, cancellation, delayed
+  greeting scheduling, reply delivery, and legacy greeting selection.
 - Recruit lifecycle hook wiring moved from BotManager to
   `server.agents.runtime.AgentRecruitRuntime`. BotManager now passes only the
   temporary registration callback while Agent runtime owns ownerless online

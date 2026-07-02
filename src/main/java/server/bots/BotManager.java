@@ -102,7 +102,7 @@ import server.agents.runtime.AgentTickStateMaintenanceService;
 import server.agents.runtime.AgentTradeWindowTickService;
 import server.agents.runtime.AgentTrackedMapChangeTickService;
 import server.agents.runtime.AgentTransferCommandService;
-import server.agents.runtime.AgentTransferService;
+import server.agents.runtime.AgentTransferRuntime;
 
 import server.agents.capabilities.looting.AgentGrindLootTargetService;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
@@ -359,27 +359,8 @@ public class BotManager {
 
     /** Transfer a bot from this owner to another player in the same map. Returns an error string on failure, null on success. */
     public String giveBot(int ownerCharId, Character owner, String botName, String targetName) {
-        return AgentTransferService.transferAgent(
-                ownerCharId,
-                owner,
-                botName,
-                targetName,
-                new AgentTransferService.Hooks(
-                        bots::get,
-                        this::getBotEntry,
-                        (leader, target) -> leader.getMap().getCharacterByName(target),
-                        (target, agent) -> AgentOwnershipService.getInstance().ensureCanControl(target, agent),
-                        AgentBotManagerSchedulerRuntime::cancelScheduledTask,
-                        this::issueStop,
-                        this::registerBot,
-                        AgentBotManagerSchedulerRuntime::afterDelay,
-                        () -> randMs(700, 900),
-                        this::botSay,
-                        () -> randomReply(List.of(
-                                "ok!",
-                                "sure!",
-                                "hey " + targetName + "!",
-                                "hi " + targetName + "!"))));
+        return AgentTransferRuntime.transferAgent(
+                ownerCharId, owner, botName, targetName, this::issueStop, this::registerBot);
     }
 
     public Character getActiveOwnerByBotCharId(int botCharId) {
