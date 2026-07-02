@@ -27,6 +27,11 @@ Recent map updates:
   only temporary follow-anchor and target-snapshot callbacks while Agent
   runtime owns movement-profile refresh, observed leader motion, remembered
   leader position, map-change cleanup, and follow action-window cleanup.
+- Live tick gate hook wiring moved from BotManager to
+  `server.agents.runtime.AgentLiveTickGateRuntime`. BotManager now passes only
+  temporary script-task, grind, and follow callbacks plus teleport config
+  values while Agent runtime owns common tick, trade-window physics, idle,
+  recovery, tracked map-change, and matching performance timing labels.
 - Anchored farm hook wiring moved from BotManager to
   `server.agents.runtime.AgentAnchoredFarmRuntime`. BotManager now passes only
   legacy movement config values while Agent runtime owns local-opportunity,

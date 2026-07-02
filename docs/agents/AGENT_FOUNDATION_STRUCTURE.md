@@ -9,7 +9,8 @@ Target package groups:
   Current reconstruction runtime boundaries include lifecycle command wiring
   such as `AgentLifecycleChatCommandRuntime` and
   `AgentFormationCommandRuntime`, plus live tick context preparation through
-  `AgentLiveTickContextRuntime`, while BotManager remains only a temporary
+  `AgentLiveTickContextRuntime` and gate dispatch through
+  `AgentLiveTickGateRuntime`, while BotManager remains only a temporary
   compatibility caller for legacy entry points.
 - `server.agents.model`: identity, mode, profile, leader reference.
 - `server.agents.commands`: command parsing/routing/result boundaries.

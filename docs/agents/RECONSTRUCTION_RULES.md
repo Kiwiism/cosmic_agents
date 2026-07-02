@@ -3430,6 +3430,11 @@ Recent reconstruction notes:
   temporary callbacks for follow-anchor resolution and target snapshot capture,
   while Agent runtime owns movement-profile refresh, leader motion observation,
   map-change cleanup, and follow action-window cleanup.
+- Live tick gate hook construction now lives in
+  `server.agents.runtime.AgentLiveTickGateRuntime`. BotManager keeps only
+  temporary script-task, grind, and follow callbacks plus legacy teleport
+  thresholds, while Agent runtime owns common-system, trade-window, idle,
+  recovery, and tracked map-change gate wiring and performance labels.
 
 Initial reconstruction order:
 

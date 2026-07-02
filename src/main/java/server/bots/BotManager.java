@@ -34,13 +34,11 @@ import server.agents.runtime.AgentFormationService;
 import server.agents.runtime.AgentFollowIdleMovementRuntime;
 import server.agents.runtime.AgentFollowTargetRuntime;
 import server.agents.runtime.AgentFollowTargetPositionService;
-import server.agents.runtime.AgentFollowMapSyncRuntime;
 import server.agents.runtime.AgentFollowOpportunityTickService;
 import server.agents.runtime.AgentFormationCommandRuntime;
 import server.agents.runtime.AgentGrindCombatRuntime;
 import server.agents.runtime.AgentGrindNavigationRuntime;
 import server.agents.runtime.AgentGrindModeDispatchService;
-import server.agents.runtime.AgentIdleModeTickService;
 import server.agents.runtime.AgentGrindNoTargetFallbackService;
 import server.agents.runtime.AgentGrindTargetRuntime;
 import server.agents.runtime.AgentIdlePhysicsRuntime;
@@ -48,6 +46,7 @@ import server.agents.runtime.AgentLeaderSessionService;
 import server.agents.runtime.AgentLeaderSafetyService;
 import server.agents.runtime.AgentLifecycleChatCommandRuntime;
 import server.agents.runtime.AgentLiveTickContextRuntime;
+import server.agents.runtime.AgentLiveTickGateRuntime;
 import server.agents.runtime.AgentLiveModeTickService;
 import server.agents.runtime.AgentLiveTickGateService;
 import server.agents.runtime.AgentLocalAttackMoveWindowRuntime;
@@ -63,8 +62,6 @@ import server.agents.runtime.AgentPartyLifecycleService;
 import server.agents.runtime.AgentPositionService;
 import server.agents.runtime.AgentRegistrationRuntime;
 import server.agents.runtime.AgentReloginRuntime;
-import server.agents.runtime.AgentRecoveryTickService;
-import server.agents.runtime.AgentRecoveryTeleportRuntime;
 import server.agents.runtime.AgentRespawnRuntime;
 import server.agents.runtime.AgentReturnScrollService;
 import server.agents.runtime.AgentRuntimeConfig;
@@ -86,8 +83,6 @@ import server.agents.runtime.AgentTickCoreService;
 import server.agents.runtime.AgentTickOrchestrator;
 import server.agents.runtime.AgentTickPreflightRuntime;
 import server.agents.runtime.AgentTickStateMaintenanceService;
-import server.agents.runtime.AgentTradeWindowTickService;
-import server.agents.runtime.AgentTrackedMapChangeTickService;
 
 import server.agents.capabilities.looting.AgentGrindLootTargetService;
 import server.agents.capabilities.social.AgentScrollReactionNotificationService;
@@ -567,7 +562,7 @@ public class BotManager {
                         this::captureTargetSnapshot),
                 AgentPerformanceMonitor::enabled,
                 (gateEntry, gateBot, gateOwner, gateFollowAnchor, liveContext, gateRunAiTick, perf) ->
-                        AgentLiveTickGateService.tickLiveGates(
+                        AgentLiveTickGateRuntime.tickLiveGates(
                                 new AgentLiveTickGateService.Context(
                                         gateEntry,
                                         gateBot,
@@ -575,7 +570,13 @@ public class BotManager {
                                         gateFollowAnchor,
                                         liveContext.targetPosition(),
                                         gateRunAiTick),
-                                liveTickGateHooks(perf)),
+                                perf,
+                                this::tickScriptTasks,
+                                this::issueGrind,
+                                this::issueFollowOwner,
+                                BotMovementManager.cfg.TELEPORT_DIST,
+                                BotMovementManager.cfg.OOB_TELEPORT_DIST,
+                                cfg.GRIND_PARTY_TELEPORT_DIST_MULTIPLIER),
                 (modeEntry, modeBot, modeFollowAnchor, liveContext, modeRunAiTick, nowMs, perf) ->
                         AgentLiveModeTickService.tickLiveModes(
                                 new AgentLiveModeTickService.Context(
@@ -724,73 +725,6 @@ public class BotManager {
                         moveRunAiTick,
                         new AgentFinalMovementTailService.Hooks((tailEntry, tailTargetPos, tailRunAiTick) ->
                                 timedMovementCoreStep(tailEntry, tailTargetPos, tailRunAiTick, perf))));
-    }
-
-    private AgentLiveTickGateService.Hooks liveTickGateHooks(boolean perf) {
-        return new AgentLiveTickGateService.Hooks(
-                (entry, bot, owner, runAiTick) ->
-                        AgentCommonTickRuntime.runCommonTickSystems(entry, bot, owner, runAiTick, this::tickScriptTasks),
-                (tradeEntry, tradeBot) -> AgentTradeWindowTickService.tickIfTradeWindowOpen(tradeEntry, tradeBot, (physicsEntry, physicsBot) -> {
-                    if (!perf) {
-                        AgentIdlePhysicsRuntime.tickPhysicsOnly(physicsEntry, physicsBot);
-                    } else {
-                        long tTrade = System.nanoTime();
-                        try { AgentIdlePhysicsRuntime.tickPhysicsOnly(physicsEntry, physicsBot); }
-                        finally { AgentPerformanceMonitor.record("tick-trade-physics", System.nanoTime() - tTrade); }
-                    }
-                }),
-                (idleEntry, idleBot) -> AgentIdleModeTickService.tickIdleMode(
-                        idleEntry,
-                        idleBot,
-                        new AgentIdleModeTickService.Hooks((physicsEntry, physicsBot) -> {
-                            if (!perf) {
-                                return AgentIdlePhysicsRuntime.tickIdleEntry(physicsEntry, physicsBot);
-                            }
-                            long tIdle = System.nanoTime();
-                            boolean consumed = AgentIdlePhysicsRuntime.tickIdleEntry(physicsEntry, physicsBot);
-                            AgentPerformanceMonitor.record("tick-idle", System.nanoTime() - tIdle);
-                            return consumed;
-                        })),
-                (recoveryEntry, recoveryBot, recoveryFollowAnchor, recoveryTargetPos) -> AgentRecoveryTickService.tickRecovery(
-                        recoveryEntry,
-                        recoveryBot,
-                        recoveryFollowAnchor,
-                        recoveryTargetPos,
-                        new AgentRecoveryTickService.Hooks(
-                                AgentFollowMapSyncRuntime::syncFollowMap,
-                                (entry, bot, anchor) -> AgentRecoveryTeleportRuntime.recoverGrindPartyTeleportDistance(
-                                        entry,
-                                        bot,
-                                        anchor,
-                                        BotMovementManager.cfg.TELEPORT_DIST,
-                                        BotMovementManager.cfg.OOB_TELEPORT_DIST,
-                                        cfg.GRIND_PARTY_TELEPORT_DIST_MULTIPLIER),
-                                (entry, bot, targetPos) -> AgentRecoveryTeleportRuntime.recoverTeleportDistance(
-                                        entry,
-                                        bot,
-                                        targetPos,
-                                        BotMovementManager.cfg.TELEPORT_DIST,
-                                        BotMovementManager.cfg.OOB_TELEPORT_DIST))),
-                (mapEntry, mapBot) -> AgentTrackedMapChangeTickService.tickTrackedMapChange(
-                        mapEntry,
-                        mapBot,
-                        new AgentTrackedMapChangeTickService.Hooks((trackedEntry, trackedBot) -> {
-                            if (!perf) {
-                                return AgentMapTransitionRuntime.handleTrackedMapChange(
-                                        trackedEntry, trackedBot, this::issueGrind, this::issueFollowOwner);
-                            }
-                            long tMapChange = System.nanoTime();
-                            boolean changed = false;
-                            try {
-                                changed = AgentMapTransitionRuntime.handleTrackedMapChange(
-                                        trackedEntry, trackedBot, this::issueGrind, this::issueFollowOwner);
-                            } finally {
-                                if (changed) {
-                                    AgentPerformanceMonitor.record("tick-map-change", System.nanoTime() - tMapChange);
-                                }
-                            }
-                            return changed;
-                        })));
     }
 
     private void timedMovementCoreStep(BotEntry entry, Point targetPos, boolean runAiTick, boolean perf) {
