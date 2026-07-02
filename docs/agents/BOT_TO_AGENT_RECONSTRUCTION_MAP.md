@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Leader-scoped Agent removal map wiring moved from BotManager to
+  `server.agents.runtime.AgentRuntimeCleanupService.removeAgentsForLeader`.
+  BotManager now keeps only the compatibility `removeBot(int)` entry point
+  while Agent runtime owns the live-registry, formation, town-anchor, and
+  scheduled-tick cleanup wiring.
 - Scheduled tick cancellation for lifecycle removal moved from BotManager to
   `server.agents.runtime.AgentLifecycleService.cancelScheduledTickIfPresent`.
   BotManager now delegates the remove-leader callback to Agent lifecycle while

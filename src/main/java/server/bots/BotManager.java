@@ -409,9 +409,7 @@ public class BotManager {
     }
 
     public void removeBot(int ownerCharId) {
-        AgentLifecycleService.removeLeaderEntries(
-                bots, AgentFormationService.formationsByLeaderId(), townClusterAnchors, ownerCharId,
-                AgentLifecycleService::cancelScheduledTickIfPresent);
+        AgentRuntimeCleanupService.removeAgentsForLeader(ownerCharId);
     }
 
     /** Cancel and remove a bot by the bot character's own ID (used during shutdown/disconnect). */

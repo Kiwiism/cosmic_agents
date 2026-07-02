@@ -22,6 +22,39 @@ import static org.mockito.Mockito.when;
 
 class AgentRuntimeCleanupServiceTest {
     @Test
+    void removesAllAgentRuntimeStateForLeader() {
+        Character leader = character(77);
+        Character firstAgent = character(88);
+        Character secondAgent = character(89);
+        ScheduledFuture<?> firstTask = mock(ScheduledFuture.class);
+        ScheduledFuture<?> secondTask = mock(ScheduledFuture.class);
+        BotEntry firstEntry = new BotEntry(firstAgent, leader, firstTask);
+        BotEntry secondEntry = new BotEntry(secondAgent, leader, secondTask);
+
+        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentFormationService.formationsByLeaderId().clear();
+        AgentLeaderSafetyService.townClusterAnchorsByLeaderId().clear();
+        AgentRuntimeRegistry.entriesByLeaderId().put(leader.getId(), new java.util.concurrent.CopyOnWriteArrayList<>(List.of(firstEntry, secondEntry)));
+        AgentFormationService.formationsByLeaderId().put(leader.getId(),
+                new AgentFormationService.FormationState(AgentFormationService.FormationType.STACK, 0, 0));
+        AgentLeaderSafetyService.townClusterAnchorsByLeaderId().put(leader.getId(), new Point(1, 2));
+
+        try {
+            AgentRuntimeCleanupService.removeAgentsForLeader(leader.getId());
+
+            assertFalse(AgentRuntimeRegistry.entriesByLeaderId().containsKey(leader.getId()));
+            assertFalse(AgentFormationService.formationsByLeaderId().containsKey(leader.getId()));
+            assertFalse(AgentLeaderSafetyService.townClusterAnchorsByLeaderId().containsKey(leader.getId()));
+            verify(firstTask).cancel(false);
+            verify(secondTask).cancel(false);
+        } finally {
+            AgentRuntimeRegistry.entriesByLeaderId().clear();
+            AgentFormationService.formationsByLeaderId().clear();
+            AgentLeaderSafetyService.townClusterAnchorsByLeaderId().clear();
+        }
+    }
+
+    @Test
     void removesAgentRuntimeStateByCharacterId() {
         Character leader = character(77);
         Character agent = character(88);

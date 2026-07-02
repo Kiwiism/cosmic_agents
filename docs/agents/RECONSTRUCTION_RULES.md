@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Leader-scoped Agent removal map wiring now lives in
+  `server.agents.runtime.AgentRuntimeCleanupService.removeAgentsForLeader`.
+  BotManager no longer passes the live registry, formation map, and town-anchor
+  map into lifecycle removal; it delegates to the Agent cleanup service while
+  preserving scheduled tick cancellation and leader-state cleanup.
 - Scheduled tick cancellation for lifecycle removal now lives in
   `server.agents.runtime.AgentLifecycleService.cancelScheduledTickIfPresent`.
   BotManager's leader-removal compatibility wrapper delegates to the Agent

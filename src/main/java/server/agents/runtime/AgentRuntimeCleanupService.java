@@ -1,10 +1,18 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotManagerSchedulerRuntime;
 
 public final class AgentRuntimeCleanupService {
     private AgentRuntimeCleanupService() {
+    }
+
+    public static void removeAgentsForLeader(int leaderCharId) {
+        AgentLifecycleService.removeLeaderEntries(
+                AgentRuntimeRegistry.entriesByLeaderId(),
+                AgentFormationService.formationsByLeaderId(),
+                AgentLeaderSafetyService.townClusterAnchorsByLeaderId(),
+                leaderCharId,
+                AgentLifecycleService::cancelScheduledTickIfPresent);
     }
 
     public static boolean removeAgentByCharacterId(int agentCharId) {
@@ -13,7 +21,7 @@ public final class AgentRuntimeCleanupService {
                 AgentFormationService.formationsByLeaderId(),
                 AgentLeaderSafetyService.townClusterAnchorsByLeaderId(),
                 agentCharId,
-                AgentBotManagerSchedulerRuntime::cancelScheduledTask);
+                AgentLifecycleService::cancelScheduledTickIfPresent);
     }
 
     public static boolean cleanupAgentRuntimeState(Character agent) {
