@@ -66,7 +66,7 @@ import server.agents.runtime.AgentTickFailurePolicy;
 import server.agents.runtime.AgentTickOrchestrator;
 import server.agents.runtime.AgentTickStateMaintenanceService;
 
-import server.agents.capabilities.looting.AgentLootTargetService;
+import server.agents.capabilities.looting.AgentGrindLootTargetService;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.agents.capabilities.social.AgentScrollReactionNotificationService;
 import server.agents.capabilities.shop.AgentShopService;
@@ -1298,13 +1298,7 @@ public class BotManager {
         AgentAttackPlan attackPlan = target == null
                 ? null
                 : AgentBotCombatPlanRuntime.planAttack(entry, bot, target, AgentCombatConfig.cfg);
-        // Validate cached loot target
-        if (AgentBotGrindLootStateRuntime.hasGrindLootTarget(entry)) {
-            MapItem loot = AgentBotGrindLootStateRuntime.grindLootTarget(entry);
-            if (loot.isPickedUp() || bot.getMap().getMapObject(loot.getObjectId()) != loot) {
-                AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
-            }
-        }
+        AgentGrindLootTargetService.validateCachedGrindLootTarget(entry, bot);
         if (runAiTick && AgentGrindTargetSearchPolicy.shouldSearchForGrindTarget(entry, bot, target, attackPlan, now)) {
             Monster searchedTarget = AgentBotPatrolStateRuntime.hasPatrolRegion(entry)
                     ? AgentBotCombatTargetRuntime.findPatrolTarget(entry, bot, AgentCombatConfig.cfg)
@@ -1316,14 +1310,7 @@ public class BotManager {
             AgentBotGrindSearchStateRuntime.scheduleNextSearch(
                     entry, now + AgentCombatConfig.cfg.GRIND_RETARGET_INTERVAL_MS);
         }
-        // Search for a convenient loot drop every AI tick (grind mode only)
-        if (runAiTick && !AgentBotPatrolStateRuntime.hasPatrolRegion(entry)) {
-            AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, AgentLootTargetService.findNearestGrindLootTarget(
-                    entry,
-                    bot,
-                    BotManager.cfg.LOOT_RADIUS,
-                    AgentBotGrindLootStateRuntime::isRetrySuppressed));
-        }
+        AgentGrindLootTargetService.refreshGrindLootTarget(entry, bot, runAiTick, BotManager.cfg.LOOT_RADIUS);
         if (target == null) {
             AgentBotGrindTargetStateRuntime.clear(entry);
             if (AgentMapEnvironmentService.isSwimMap(entry) && AgentBotMovementStateRuntime.inAir(entry)) {

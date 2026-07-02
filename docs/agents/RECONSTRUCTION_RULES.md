@@ -2997,6 +2997,11 @@ Recent reconstruction notes:
   script execution moved to Agent-owned mode services. The inactive-leader
   town-cluster scroll hook now calls `AgentModeService.startMoveTo` directly to
   preserve its raw move-target behavior without clearing script/shop state.
+- Grind-mode cached loot target validation and AI-tick loot-target refresh now
+  live in `server.agents.capabilities.looting.AgentGrindLootTargetService`.
+  BotManager delegates from `tickGrindMode`, preserving the picked-up/stale map
+  object clear rule, patrol-region refresh suppression, retry-suppression
+  callback, and legacy loot-radius input.
 
 Initial reconstruction order:
 
