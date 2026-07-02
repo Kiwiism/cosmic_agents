@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Relogin SQL failure handling moved from BotManager to
+  `server.agents.runtime.AgentLifecycleService.reloginAgentQuietly`. BotManager
+  now keeps only the compatibility `reloginBot` entry point and temporary hook
+  construction while Agent lifecycle owns the try/catch and false return.
 - Leader-scoped Agent removal map wiring moved from BotManager to
   `server.agents.runtime.AgentRuntimeCleanupService.removeAgentsForLeader`.
   BotManager now keeps only the compatibility `removeBot(int)` entry point

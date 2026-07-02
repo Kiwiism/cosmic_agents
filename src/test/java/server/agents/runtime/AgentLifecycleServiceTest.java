@@ -211,6 +211,43 @@ class AgentLifecycleServiceTest {
     }
 
     @Test
+    void reloginAgentQuietlyLogsSqlFailureAndReturnsFalse() {
+        SQLException failure = new SQLException("load failed");
+        AtomicInteger loggedAgentId = new AtomicInteger();
+        AtomicReference<SQLException> loggedFailure = new AtomicReference<>();
+
+        boolean relogged = AgentLifecycleService.reloginAgentQuietly(
+                200,
+                100,
+                1,
+                2,
+                new AgentLifecycleService.ReloginHooks(
+                        (world, leaderCharId) -> character(100, "Leader"),
+                        (map, point) -> new Point(1, 2),
+                        (charId, world, channel, targetMap, desiredPosition) -> {
+                            throw failure;
+                        },
+                        (leaderId, leader, agent) -> {
+                            throw new AssertionError("should not register after load failure");
+                        },
+                        (delayMs, action) -> {
+                            throw new AssertionError("should not schedule announcement");
+                        },
+                        () -> 1000L,
+                        (agent, text) -> {
+                            throw new AssertionError("should not speak");
+                        }),
+                (agentCharId, exception) -> {
+                    loggedAgentId.set(agentCharId);
+                    loggedFailure.set(exception);
+                });
+
+        assertFalse(relogged);
+        assertEquals(200, loggedAgentId.get());
+        assertSame(failure, loggedFailure.get());
+    }
+
+    @Test
     void dismissAgentByNameReturnsFalseWhenMissing() {
         AgentRuntimeRegistry.entriesByLeaderId().clear();
 

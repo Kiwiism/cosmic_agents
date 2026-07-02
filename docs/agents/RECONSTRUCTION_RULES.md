@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Relogin SQL failure handling now lives in
+  `server.agents.runtime.AgentLifecycleService.reloginAgentQuietly`.
+  BotManager supplies the temporary logger hook, but Agent lifecycle owns the
+  try/catch boundary and the same false-return-on-failure behavior.
 - Leader-scoped Agent removal map wiring now lives in
   `server.agents.runtime.AgentRuntimeCleanupService.removeAgentsForLeader`.
   BotManager no longer passes the live registry, formation map, and town-anchor

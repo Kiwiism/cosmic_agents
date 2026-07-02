@@ -1822,26 +1822,23 @@ public class BotManager {
 
 
     public void reloginBot(int charId, int ownerCharId, int world, int channel) {
-        try {
-            AgentLifecycleService.reloginAgent(
-                    charId,
-                    ownerCharId,
-                    world,
-                    channel,
-                    new AgentLifecycleService.ReloginHooks(
-                            (targetWorld, leaderCharId) -> Server.getInstance()
-                                    .getWorld(targetWorld)
-                                    .getPlayerStorage()
-                                    .getCharacterById(leaderCharId),
-                            this::resolveSpawnPosition,
-                            this::loadOfflineBot,
-                            this::registerSpawnedBot,
-                            AgentBotManagerSchedulerRuntime::afterDelay,
-                            () -> randMs(900, 1100),
-                            this::botSay));
-        } catch (SQLException e) {
-            log.warn("reloginBot: failed to reload charId={}", charId, e);
-        }
+        AgentLifecycleService.reloginAgentQuietly(
+                charId,
+                ownerCharId,
+                world,
+                channel,
+                new AgentLifecycleService.ReloginHooks(
+                        (targetWorld, leaderCharId) -> Server.getInstance()
+                                .getWorld(targetWorld)
+                                .getPlayerStorage()
+                                .getCharacterById(leaderCharId),
+                        this::resolveSpawnPosition,
+                        this::loadOfflineBot,
+                        this::registerSpawnedBot,
+                        AgentBotManagerSchedulerRuntime::afterDelay,
+                        () -> randMs(900, 1100),
+                        this::botSay),
+                (agentCharId, e) -> log.warn("reloginBot: failed to reload charId={}", agentCharId, e));
     }
 
     private void respawnBot(BotEntry entry, Character bot, Character owner) {

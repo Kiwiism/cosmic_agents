@@ -107,6 +107,11 @@ public final class AgentLifecycleService {
         void say(Character agent, String text);
     }
 
+    @FunctionalInterface
+    public interface ReloginFailureLogger {
+        void log(int agentCharId, SQLException exception);
+    }
+
     public record DismissHooks(Consumer<BotEntry> cancelTask,
                                Consumer<BotEntry> stopAgent,
                                DelayedActionScheduler delayedActionScheduler,
@@ -234,6 +239,20 @@ public final class AgentLifecycleService {
             agent.changeFaceExpression(AgentEmote.HAPPY.getValue());
         });
         return true;
+    }
+
+    public static boolean reloginAgentQuietly(int agentCharId,
+                                              int leaderCharId,
+                                              int world,
+                                              int channel,
+                                              ReloginHooks hooks,
+                                              ReloginFailureLogger failureLogger) {
+        try {
+            return reloginAgent(agentCharId, leaderCharId, world, channel, hooks);
+        } catch (SQLException e) {
+            failureLogger.log(agentCharId, e);
+            return false;
+        }
     }
 
     public static boolean dismissAgentByName(int leaderCharId, String agentName, DismissHooks hooks) {
