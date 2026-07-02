@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Group supply responder selection moved from BotManager to
+  `server.agents.capabilities.supplies.AgentGroupSupplyResponderSelector`.
+  BotManager now delegates the same same-map preference and first-entry
+  fallback used before forwarding group supply chat to a single Agent.
 - Pending loot-offer response routing moved from BotManager to
   `server.agents.capabilities.trade.AgentPendingOfferResponseService`.
   BotManager now supplies temporary hooks for offer expiry, target validation,

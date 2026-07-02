@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Group supply responder selection now lives in
+  `server.agents.capabilities.supplies.AgentGroupSupplyResponderSelector`.
+  BotManager delegates the same group-supply routing rule: prefer an Agent on
+  the leader's current map so visible replies/trades stay local, otherwise use
+  the first active group entry.
 - Pending loot-offer response routing now lives in
   `server.agents.capabilities.trade.AgentPendingOfferResponseService`.
   BotManager keeps a temporary compatibility hook bundle for offer expiry,

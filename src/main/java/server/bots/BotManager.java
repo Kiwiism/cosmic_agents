@@ -96,6 +96,7 @@ import server.agents.capabilities.looting.AgentGrindLootTargetService;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.agents.capabilities.social.AgentScrollReactionNotificationService;
 import server.agents.capabilities.shop.AgentShopService;
+import server.agents.capabilities.supplies.AgentGroupSupplyResponderSelector;
 import server.agents.capabilities.supplies.AgentPotionCheckRequestService;
 import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
@@ -759,7 +760,7 @@ public class BotManager {
         // selecting the same best-stocked donor → duplicate offer messages and
         // duplicate trade requests to the owner.
         if (AgentChatCommandClassifier.isGroupSupplyRequest(message)) {
-            BotEntry responder = pickGroupSupplyResponder(owner, entries);
+            BotEntry responder = AgentGroupSupplyResponderSelector.select(owner, entries);
             if (responder != null) {
                 AgentBotReplyChannelStateRuntime.setReplyChannel(responder, channel);
                 handleAgentChat(responder, message);
@@ -781,20 +782,6 @@ public class BotManager {
             AgentBotReplyChannelStateRuntime.setReplyChannel(entry, channel);
             handleAgentChat(entry, message);
         }
-    }
-
-    /** Prefer a bot in the owner's current map so its reply/trade is visible. */
-    private static BotEntry pickGroupSupplyResponder(Character owner, List<BotEntry> entries) {
-        if (entries == null || entries.isEmpty()) {
-            return null;
-        }
-        int ownerMapId = owner != null ? owner.getMapId() : -1;
-        for (BotEntry entry : entries) {
-            if (AgentBotRuntimeIdentityRuntime.botMapId(entry) == ownerMapId) {
-                return entry;
-            }
-        }
-        return entries.get(0);
     }
 
     private boolean handlePendingLootOfferResponse(Character speaker, String message) {
