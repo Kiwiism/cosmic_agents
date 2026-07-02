@@ -17,6 +17,13 @@ Rules:
 
 Recent reconstruction notes:
 
+- Top-level tick-core sequencing now lives in
+  `server.agents.runtime.AgentTickCoreService`. BotManager keeps a temporary
+  compatibility hook bundle for preflight, leader resolution, inactive-leader
+  handling, ownerless fallback, dead-state handling, live context setup, live
+  gate dispatch, and live-mode dispatch. The same preflight early return,
+  leader/offline/dead/ownerless gates, performance-enabled lookup point, and
+  final live-mode handoff are preserved.
 - Live tick gate ordering now lives in
   `server.agents.runtime.AgentLiveTickGateService`. BotManager keeps a
   temporary compatibility hook bundle for common tick systems, trade-window

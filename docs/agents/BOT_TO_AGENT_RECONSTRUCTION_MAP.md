@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Top-level tick-core sequencing moved from BotManager to
+  `server.agents.runtime.AgentTickCoreService`. BotManager now supplies
+  temporary hooks for preflight, leader resolution, inactive-leader handling,
+  ownerless fallback, dead-state handling, live context setup, gate dispatch,
+  and live-mode dispatch while Agent runtime owns the tick-core order.
 - Live tick gate ordering moved from BotManager to
   `server.agents.runtime.AgentLiveTickGateService`. BotManager now supplies
   temporary hooks for common tick systems, trade-window physics, idle-mode

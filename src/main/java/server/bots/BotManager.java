@@ -81,6 +81,7 @@ import server.agents.runtime.AgentSpawnPositionService;
 import server.agents.runtime.AgentStandaloneMoveTargetTickService;
 import server.agents.runtime.AgentStuckDetectionService;
 import server.agents.runtime.AgentTickFailurePolicy;
+import server.agents.runtime.AgentTickCoreService;
 import server.agents.runtime.AgentTickOrchestrator;
 import server.agents.runtime.AgentTickPreflightService;
 import server.agents.runtime.AgentTickStateMaintenanceService;
@@ -1065,68 +1066,56 @@ public class BotManager {
     }
 
     private void tickCore(BotEntry entry, int ownerCharId, int botCharId) {
-        long nowMs = System.currentTimeMillis();
-        AgentTickPreflightService.Result preflight = AgentTickPreflightService.runPreflight(
-                entry,
-                botCharId,
-                nowMs,
-                tickPreflightHooks());
-        if (preflight.consumedTick()) {
-            return;
-        }
-        Character bot = preflight.agent();
-        boolean runAiTick = preflight.runAiTick();
-
-        Character owner = resolveTickOwner(entry, ownerCharId);
-        if (handleOwnerOfflineOrDead(entry, bot, owner, nowMs, ownerCharId)) {
-            return;
-        }
-        if (owner == null) {
-            AgentOwnerlessTickService.tickOwnerless(
-                    entry,
-                    bot,
-                    runAiTick,
-                    this::groundAfterMapChange,
-                    this::tickStandaloneMoveTarget,
-                    () -> tickIdleEntry(entry, bot));
-            return;
-        }
-
-        // Dead state: skip AI until respawn timer expires.
-        // Also catch stale hp=0 (e.g. deadUntil was lost on save/reconnect) — re-enter dead state.
-        if (handleDeadTick(entry, bot, owner)) {
-            return;
-        }
-
-        AgentLiveTickContextService.Context liveContext = AgentLiveTickContextService.prepareLiveTickContext(
-                entry,
-                bot,
-                owner,
-                liveTickContextHooks());
-        Point botPos = liveContext.agentPosition();
-        Character followAnchor = liveContext.followAnchor();
-        AgentTargetSnapshot targetSnapshot = liveContext.targetSnapshot();
-        Point targetPos = liveContext.targetPosition();
-        boolean perf = AgentPerformanceMonitor.enabled();
-
-        if (AgentLiveTickGateService.tickLiveGates(
-                new AgentLiveTickGateService.Context(entry, bot, owner, followAnchor, targetPos, runAiTick),
-                liveTickGateHooks(perf))) {
-            return;
-        }
-        AgentLiveModeTickService.tickLiveModes(
-                new AgentLiveModeTickService.Context(
-                        entry,
-                        bot,
-                        botPos,
-                        targetPos,
-                        targetSnapshot.followTargetPos(),
-                        followAnchor,
-                        runAiTick,
-                        nowMs),
-                liveModeTickHooks(perf));
+        AgentTickCoreService.tickCore(entry, ownerCharId, botCharId, tickCoreHooks());
     }
 
+    private AgentTickCoreService.Hooks tickCoreHooks() {
+        return new AgentTickCoreService.Hooks(
+                System::currentTimeMillis,
+                (entry, botCharId, nowMs) -> AgentTickPreflightService.runPreflight(
+                        entry,
+                        botCharId,
+                        nowMs,
+                        tickPreflightHooks()),
+                this::resolveTickOwner,
+                this::handleOwnerOfflineOrDead,
+                (ownerlessEntry, ownerlessBot, ownerlessRunAiTick) -> AgentOwnerlessTickService.tickOwnerless(
+                        ownerlessEntry,
+                        ownerlessBot,
+                        ownerlessRunAiTick,
+                        this::groundAfterMapChange,
+                        this::tickStandaloneMoveTarget,
+                        () -> tickIdleEntry(ownerlessEntry, ownerlessBot)),
+                this::handleDeadTick,
+                (liveEntry, liveBot, liveOwner) -> AgentLiveTickContextService.prepareLiveTickContext(
+                        liveEntry,
+                        liveBot,
+                        liveOwner,
+                        liveTickContextHooks()),
+                AgentPerformanceMonitor::enabled,
+                (gateEntry, gateBot, gateOwner, gateFollowAnchor, liveContext, gateRunAiTick, perf) ->
+                        AgentLiveTickGateService.tickLiveGates(
+                                new AgentLiveTickGateService.Context(
+                                        gateEntry,
+                                        gateBot,
+                                        gateOwner,
+                                        gateFollowAnchor,
+                                        liveContext.targetPosition(),
+                                        gateRunAiTick),
+                                liveTickGateHooks(perf)),
+                (modeEntry, modeBot, modeFollowAnchor, liveContext, modeRunAiTick, nowMs, perf) ->
+                        AgentLiveModeTickService.tickLiveModes(
+                                new AgentLiveModeTickService.Context(
+                                        modeEntry,
+                                        modeBot,
+                                        liveContext.agentPosition(),
+                                        liveContext.targetPosition(),
+                                        liveContext.targetSnapshot().followTargetPos(),
+                                        modeFollowAnchor,
+                                        modeRunAiTick,
+                                        nowMs),
+                                liveModeTickHooks(perf)));
+    }
     private AgentTickPreflightService.Hooks tickPreflightHooks() {
         return new AgentTickPreflightService.Hooks(
                 AgentBotManagerStatusRuntime::airshowActive,
