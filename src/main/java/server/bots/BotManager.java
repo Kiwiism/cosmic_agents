@@ -15,6 +15,7 @@ import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatRangePolicy;
 import server.agents.capabilities.combat.AgentGrindTargetSearchPolicy;
 import server.agents.capabilities.combat.AgentGrindNavigationTargetSelector;
+import server.agents.capabilities.combat.AgentLocalOpportunityAttackService;
 import server.agents.capabilities.combat.AgentRangedPriorityTargetSelector;
 import server.agents.capabilities.quest.AgentPartyQuestSyncService;
 
@@ -1562,70 +1563,25 @@ public class BotManager {
                                                                   Point moveWindowReferencePos,
                                                                   boolean allowCombatMovement,
                                                                   boolean allowJumpTowardTarget) {
-        Point targetPos = movementTargetPos;
-        if (AgentBotAmmoStateRuntime.noAmmo(entry) || bot == null || botPos == null) {
-            return new LocalOpportunityAttackResult(false, targetPos);
-        }
-
-        Monster localTarget = AgentBotCombatTargetRuntime.findFollowAttackTarget(entry, bot, AgentCombatConfig.cfg);
-        if (localTarget == null) {
-            return new LocalOpportunityAttackResult(false, targetPos);
-        }
-
-        Point localTargetPos = localTarget.getPosition();
-        WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
-        boolean shouldRetreat = allowCombatMovement
-                && (AgentBotDegenerateAttackStateRuntime.degenAttackDone(entry)
-                || AgentAttackExecutionProvider.shouldRetreatFromNearbyTarget(weaponType, botPos, localTargetPos)
-                || AgentAttackExecutionProvider.isAnyMobNearerThanTarget(bot, botPos, localTargetPos));
-        if (shouldRetreat) {
-            AgentBotDegenerateAttackStateRuntime.clear(entry);
-            return new LocalOpportunityAttackResult(
-                    false, selectGrindNavigationTarget(entry, botPos, localTargetPos));
-        }
-
-        AgentAttackPlan attackPlan = AgentBotCombatPlanRuntime.planAttack(entry, bot, localTarget, AgentCombatConfig.cfg);
-        if (attackPlan == null) {
-            return new LocalOpportunityAttackResult(false, targetPos);
-        }
-        if (AgentBotMovementStateRuntime.inAir(entry)) {
-            if (AgentCombatRangePolicy.canUseAttackPlanNow(
-                    AgentBotMovementStateRuntime.grounded(entry), weaponType, attackPlan.route)
-                    && AgentCombatRangePolicy.isTargetInAttackRange(attackPlan, bot, localTarget)) {
-                AgentBotCombatAttackRuntime.attackMonster(entry, bot, attackPlan);
-                if (allowCombatMovement && attackPlan.isCloseRangeRoute()
-                        && AgentCombatAmmoCounter.isRangedAmmoWeapon(weaponType)) {
-                    AgentBotDegenerateAttackStateRuntime.markDegenAttackDone(entry);
-                }
-            }
-            return new LocalOpportunityAttackResult(false, targetPos);
-        }
-
-        if (allowJumpTowardTarget
-                && weaponType != WeaponType.BOW && weaponType != WeaponType.CROSSBOW
-                && weaponType != WeaponType.WAND && weaponType != WeaponType.STAFF
-                && AgentCombatRangePolicy.isTargetJumpable(
-                        AgentBotMovementStateRuntime.movementProfile(entry),
-                        true,
+        AgentLocalOpportunityAttackService.Result result =
+                AgentLocalOpportunityAttackService.tryLocalOpportunityAttack(
+                        entry,
+                        bot,
                         botPos,
-                        localTargetPos,
-                        BotPhysicsEngine.calculateMaxJumpHeight(AgentBotMovementStateRuntime.movementProfile(entry)))) {
-            BotMovementManager.initiateJump(entry, bot, localTargetPos.x - botPos.x);
-            return new LocalOpportunityAttackResult(true, targetPos);
-        }
+                        movementTargetPos,
+                        moveWindowReferencePos,
+                        allowCombatMovement,
+                        allowJumpTowardTarget,
+                        localOpportunityAttackHooks());
+        return new LocalOpportunityAttackResult(result.consumedTick(), result.targetPos());
+    }
 
-        if (!AgentBotCombatCooldownStateRuntime.hasMoveWindow(entry)
-                && AgentCombatRangePolicy.isTargetInAttackRange(attackPlan, bot, localTarget)) {
-            AgentBotCombatAttackRuntime.attackMonster(entry, bot, attackPlan);
-            setLocalAttackMoveWindow(entry, botPos, moveWindowReferencePos);
-            if (allowCombatMovement && attackPlan.isCloseRangeRoute()
-                    && AgentCombatAmmoCounter.isRangedAmmoWeapon(weaponType)) {
-                AgentBotDegenerateAttackStateRuntime.markDegenAttackDone(entry);
-            }
-            return new LocalOpportunityAttackResult(!AgentBotMovementStateRuntime.inAir(entry), targetPos);
-        }
-
-        return new LocalOpportunityAttackResult(false, targetPos);
+    private static AgentLocalOpportunityAttackService.Hooks localOpportunityAttackHooks() {
+        return new AgentLocalOpportunityAttackService.Hooks(
+                BotManager::selectGrindNavigationTarget,
+                BotPhysicsEngine::calculateMaxJumpHeight,
+                BotMovementManager::initiateJump,
+                BotManager::setLocalAttackMoveWindow);
     }
 
     private static void setLocalAttackMoveWindow(BotEntry entry, Point botPos, Point referencePos) {

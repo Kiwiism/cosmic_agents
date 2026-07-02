@@ -2980,6 +2980,14 @@ Recent reconstruction notes:
   BotManager keeps only the temporary script hook wrapper. The same leader
   fallback, party-member priority, sibling-Agent fallback, and offline-target
   rejection behavior are preserved.
+- Local opportunity attack decision flow now lives in
+  `server.agents.capabilities.combat.AgentLocalOpportunityAttackService`;
+  BotManager keeps a compatibility wrapper and supplies temporary hooks for
+  grind-navigation target selection, jump height, jump initiation, and local
+  attack move-window setup. The same no-ammo/null guards, follow-target search,
+  retreat decision, jump-toward-target branch, in-air attack behavior,
+  cooldown/move-window gate, degenerate ranged marker, and consumed-tick result
+  semantics are preserved.
 
 Initial reconstruction order:
 
