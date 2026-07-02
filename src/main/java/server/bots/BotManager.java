@@ -648,7 +648,7 @@ public class BotManager {
                         ownerlessRunAiTick,
                         this::groundAfterMapChange,
                         this::tickStandaloneMoveTarget,
-                        () -> tickIdleEntry(ownerlessEntry, ownerlessBot)),
+                        () -> AgentIdlePhysicsRuntime.tickIdleEntry(ownerlessEntry, ownerlessBot)),
                 this::handleDeadTick,
                 (liveEntry, liveBot, liveOwner) -> AgentLiveTickContextService.prepareLiveTickContext(
                         liveEntry,
@@ -833,10 +833,10 @@ public class BotManager {
                 this::runCommonTickSystems,
                 (tradeEntry, tradeBot) -> AgentTradeWindowTickService.tickIfTradeWindowOpen(tradeEntry, tradeBot, (physicsEntry, physicsBot) -> {
                     if (!perf) {
-                        tickTradePhysicsOnly(physicsEntry, physicsBot);
+                        AgentIdlePhysicsRuntime.tickPhysicsOnly(physicsEntry, physicsBot);
                     } else {
                         long tTrade = System.nanoTime();
-                        try { tickTradePhysicsOnly(physicsEntry, physicsBot); }
+                        try { AgentIdlePhysicsRuntime.tickPhysicsOnly(physicsEntry, physicsBot); }
                         finally { AgentPerformanceMonitor.record("tick-trade-physics", System.nanoTime() - tTrade); }
                     }
                 }),
@@ -845,10 +845,10 @@ public class BotManager {
                         idleBot,
                         new AgentIdleModeTickService.Hooks((physicsEntry, physicsBot) -> {
                             if (!perf) {
-                                return tickIdleEntry(physicsEntry, physicsBot);
+                                return AgentIdlePhysicsRuntime.tickIdleEntry(physicsEntry, physicsBot);
                             }
                             long tIdle = System.nanoTime();
-                            boolean consumed = tickIdleEntry(physicsEntry, physicsBot);
+                            boolean consumed = AgentIdlePhysicsRuntime.tickIdleEntry(physicsEntry, physicsBot);
                             AgentPerformanceMonitor.record("tick-idle", System.nanoTime() - tIdle);
                             return consumed;
                         })),
@@ -1306,20 +1306,6 @@ public class BotManager {
 
     private boolean runCommonTickSystems(BotEntry entry, Character bot, Character owner, boolean runAiTick) {
         return AgentCommonTickRuntime.runCommonTickSystems(entry, bot, owner, runAiTick, this::tickScriptTasks);
-    }
-
-    /**
-     * Physics-only tick used while a trade window is open. Mirrors {@link #tickIdleEntry}'s
-     * physics body but skips the active-mode early-return so gravity / swim / stance stay
-     * consistent even if the bot was following or grinding when the trade started. Issues
-     * no movement input (no follow, grind, teleport, shop visit, or attack).
-     */
-    private void tickTradePhysicsOnly(BotEntry entry, Character bot) {
-        AgentIdlePhysicsRuntime.tickPhysicsOnly(entry, bot);
-    }
-
-    private boolean tickIdleEntry(BotEntry entry, Character bot) {
-        return AgentIdlePhysicsRuntime.tickIdleEntry(entry, bot);
     }
 
     boolean stepMovementOnly(BotEntry entry, long tickAtMs) {
