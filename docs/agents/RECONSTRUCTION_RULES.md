@@ -78,6 +78,11 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentFollowIdleMovementRuntime`. BotManager keeps only
   a compatibility wrapper for legacy tests/callers; production live-mode hooks
   call the Agent runtime bridge directly.
+- Follow-target candidate lookup, target resolution, and follow-target chat
+  command execution now live in `server.agents.runtime.AgentFollowTargetRuntime`.
+  BotManager chat route hooks no longer own the candidate/resolve/apply wrappers;
+  the Agent runtime bridge preserves the legacy reply list, delay, auto-equip,
+  potion-share check, and follow-start order.
 - Idle/trade physics hook construction now lives in
   `server.agents.runtime.AgentIdlePhysicsRuntime`. The temporary public
   `BotPhysicsEngine.resolveIdleGroundStance` accessor exists only until physics

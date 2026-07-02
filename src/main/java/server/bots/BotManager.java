@@ -35,9 +35,7 @@ import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentFollowAnchorService;
 import server.agents.runtime.AgentFormationService;
 import server.agents.runtime.AgentFollowIdleMovementRuntime;
-import server.agents.runtime.AgentFollowTargetCandidateService;
-import server.agents.runtime.AgentFollowTargetCommandService;
-import server.agents.runtime.AgentFollowTargetResolutionService;
+import server.agents.runtime.AgentFollowTargetRuntime;
 import server.agents.runtime.AgentFollowTargetPositionService;
 import server.agents.runtime.AgentFollowMapSyncRuntime;
 import server.agents.runtime.AgentFollowOpportunityTickService;
@@ -103,7 +101,6 @@ import server.agents.capabilities.social.AgentScrollReactionNotificationService;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.supplies.AgentGroupSupplyResponderSelector;
 import server.agents.capabilities.supplies.AgentPotionCheckRequestService;
-import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
 import server.agents.capabilities.trade.AgentPendingOfferChatRouteService;
 import server.agents.capabilities.trade.AgentTradeDialogueService;
@@ -111,7 +108,6 @@ import server.agents.plans.AgentScriptMoveTargetService;
 
 
 import server.agents.integration.AgentBotManagerReplyRuntime;
-import server.agents.integration.AgentBotManagerSchedulerRuntime;
 import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotAmmoStateRuntime;
@@ -134,7 +130,6 @@ import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementCommandRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotPotionStateRuntime;
@@ -204,50 +199,6 @@ public class BotManager {
     private record LocalOpportunityAttackResult(boolean consumedTick, Point targetPos) {}
 
     private static final int PLATFORM_EDGE_INSET_PX = 12;
-    private Character resolveFollowTarget(Character owner, String targetToken) {
-        return AgentFollowTargetResolutionService.resolveFollowTarget(
-                owner,
-                targetToken,
-                new AgentFollowTargetResolutionService.Hooks(
-                        this::followTargetCandidates,
-                        Character::yellowMessage));
-    }
-
-    private List<Character> followTargetCandidates(Character owner) {
-        return AgentFollowTargetCandidateService.candidates(
-                owner,
-                new AgentFollowTargetCandidateService.Hooks(this::getBotEntries));
-    }
-
-    private boolean applyFollowTargetCommand(Character owner, List<BotEntry> entries, String targetToken) {
-        return AgentFollowTargetCommandService.applyFollowTargetCommand(
-                owner,
-                entries,
-                targetToken,
-                new AgentFollowTargetCommandService.Hooks(
-                        this::resolveFollowTarget,
-                        target -> randomReply(List.of(
-                                "ok",
-                                "k",
-                                "sure",
-                                "omw",
-                                "got it",
-                                "following " + target.getName(),
-                                "ok, following " + target.getName()
-                        )),
-                        AgentBotManagerReplyRuntime::queueReply,
-                        () -> randMs(250, 750),
-                        AgentBotManagerSchedulerRuntime::afterDelay,
-                        entry -> BotEquipManager.autoEquip(
-                                AgentBotRuntimeIdentityRuntime.bot(entry),
-                                AgentBotRuntimeIdentityRuntime.owner(entry),
-                                AgentBotOfferStateRuntime.pendingLootOfferItem(entry)),
-                        entry -> AgentPotionService.checkPotShareOnModeStart(
-                                entry,
-                                AgentBotRuntimeIdentityRuntime.bot(entry)),
-                        this::issueFollow));
-    }
-
     public static String randomReply(List<String> list) {
         return AgentDialogueSelector.randomReply(list);
     }
@@ -446,7 +397,7 @@ public class BotManager {
         return new AgentTargetedChatRouteService.Hooks(
                 AgentBotCommandParser::resolveTargetedBot,
                 AgentChatCommandClassifier::matchFollowTarget,
-                this::applyFollowTargetCommand,
+                AgentFollowTargetRuntime::applyFollowTargetCommand,
                 AgentBotReplyChannelStateRuntime::setReplyChannel,
                 () -> AgentLlmConfig.typoSuggesterEnabled,
                 AgentCommandTypoSuggester::suggest,
@@ -463,7 +414,7 @@ public class BotManager {
     private AgentUntargetedChatRouteService.Hooks untargetedChatHooks() {
         return new AgentUntargetedChatRouteService.Hooks(
                 AgentChatCommandClassifier::matchFollowTarget,
-                this::applyFollowTargetCommand,
+                AgentFollowTargetRuntime::applyFollowTargetCommand,
                 AgentChatCommandClassifier::isGroupSupplyRequest,
                 AgentGroupSupplyResponderSelector::select,
                 AgentBotReplyChannelStateRuntime::setReplyChannel,
