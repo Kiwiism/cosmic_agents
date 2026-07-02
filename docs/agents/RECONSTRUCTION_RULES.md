@@ -17,6 +17,13 @@ Rules:
 
 Recent reconstruction notes:
 
+- Pending loot-offer response routing now lives in
+  `server.agents.capabilities.trade.AgentPendingOfferResponseService`.
+  BotManager keeps a temporary compatibility hook bundle for offer expiry,
+  target validation, targeted-command resolution, offer-response handling, and
+  speaker feedback. The same all-entry expiry sweep, target filtering,
+  targeted response handling, feedback delivery, single-match default response,
+  ambiguous confirmation message, and no-match fall-through are preserved.
 - Ownerless Agent recruit lifecycle now lives in
   `server.agents.runtime.AgentRecruitService`. BotManager keeps a temporary
   compatibility hook bundle for unclaimed online Agent lookup, control

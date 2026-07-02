@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Pending loot-offer response routing moved from BotManager to
+  `server.agents.capabilities.trade.AgentPendingOfferResponseService`.
+  BotManager now supplies temporary hooks for offer expiry, target validation,
+  targeted-command resolution, offer-response handling, and speaker feedback.
 - Ownerless Agent recruit lifecycle moved from BotManager to
   `server.agents.runtime.AgentRecruitService`. BotManager now supplies
   temporary hooks for unclaimed online Agent lookup, control authorization, and

@@ -100,6 +100,7 @@ import server.agents.capabilities.supplies.AgentPotionCheckRequestService;
 import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
 import server.agents.capabilities.trade.AgentOfferService;
+import server.agents.capabilities.trade.AgentPendingOfferResponseService;
 import server.agents.capabilities.trade.AgentTradeDialogueService;
 import server.agents.plans.AgentScriptMoveTargetService;
 
@@ -797,48 +798,23 @@ public class BotManager {
     }
 
     private boolean handlePendingLootOfferResponse(Character speaker, String message) {
-        List<BotEntry> matches = new ArrayList<>();
-        for (List<BotEntry> entries : bots.values()) {
-            for (BotEntry entry : entries) {
-                AgentOfferService.expirePendingOffer(entry);
-                if (!isPendingLootOfferTarget(entry, speaker)) {
-                    continue;
-                }
-
-                matches.add(entry);
-            }
-        }
-
-        AgentBotTargetedCommandMatch targetedBot = AgentBotCommandParser.resolveTargetedBot(matches, message);
-        if (targetedBot.entry() != null) {
-            return AgentOfferService.handlePendingOfferResponse(targetedBot.entry(), speaker, targetedBot.commandText());
-        }
-        if (targetedBot.feedbackMessage() != null) {
-            speaker.dropMessage(5, targetedBot.feedbackMessage());
-            return true;
-        }
-
-        if (matches.size() == 1) {
-            return AgentOfferService.handlePendingOfferResponse(matches.get(0), speaker, message);
-        }
-        if (matches.size() > 1 && looksLikeConfirmation(message)) {
-            speaker.dropMessage(5, "More than one bot is waiting on you. Say '<botname> yes' or '<slot> yes'.");
-            return true;
-        }
-
-        return false;
+        return AgentPendingOfferResponseService.handlePendingOfferResponse(
+                bots.values(),
+                speaker,
+                message,
+                new AgentPendingOfferResponseService.Hooks(
+                        AgentOfferService::expirePendingOffer,
+                        BotManager::isPendingLootOfferTarget,
+                        AgentBotCommandParser::resolveTargetedBot,
+                        AgentOfferService::handlePendingOfferResponse,
+                        (target, feedback) -> target.dropMessage(5, feedback)));
     }
 
-    private boolean isPendingLootOfferTarget(BotEntry entry, Character speaker) {
+    private static boolean isPendingLootOfferTarget(BotEntry entry, Character speaker) {
         return entry != null
                 && AgentOfferService.hasPendingOffer(entry)
                 && AgentBotOfferStateRuntime.pendingOfferRecipientIs(entry, speaker)
                 && AgentBotRuntimeIdentityRuntime.botMapId(entry) == speaker.getMapId();
-    }
-
-    private boolean looksLikeConfirmation(String message) {
-        String normalized = message.trim().toLowerCase();
-        return normalized.matches(".*\\b(yes|yep|yeah|yea|y|ok|sure|confirm|no|nope|nah|nvm|never\\s*mind|dont|don't|not\\s+now|skip)\\b.*");
     }
 
     // -------------------------------------------------------------------------
