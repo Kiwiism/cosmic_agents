@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Anchored farm hook wiring moved from BotManager to
+  `server.agents.runtime.AgentAnchoredFarmRuntime`. BotManager now passes only
+  legacy movement config values while Agent runtime owns local-opportunity,
+  idle, ground-idle, broadcast, and movement-core hook construction.
 - Local-opportunity attack hook wiring moved from BotManager to
   `server.agents.runtime.AgentLocalOpportunityAttackRuntime`. BotManager keeps
   only a temporary result adapter while Agent runtime owns grind-navigation,

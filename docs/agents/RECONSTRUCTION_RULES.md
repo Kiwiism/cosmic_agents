@@ -17,6 +17,9 @@ Rules:
 
 Recent reconstruction notes:
 
+- Anchored farm hook construction now lives in
+  `server.agents.runtime.AgentAnchoredFarmRuntime`. BotManager keeps only
+  legacy movement config values for this mode until config ownership moves.
 - Local-opportunity attack hook construction now lives in
   `server.agents.runtime.AgentLocalOpportunityAttackRuntime`. Its temporary
   dependency on `BotManager.selectGrindNavigationTarget` should disappear when

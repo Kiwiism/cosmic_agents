@@ -27,7 +27,7 @@ import server.agents.capabilities.dialogue.AgentUntargetedChatRouteService;
 import server.agents.capabilities.dialogue.AgentWhisperCommandService;
 
 import server.agents.runtime.AgentAnchoredFarmModeTickService;
-import server.agents.runtime.AgentAnchoredFarmTickService;
+import server.agents.runtime.AgentAnchoredFarmRuntime;
 import server.agents.runtime.AgentCommonTickRuntime;
 import server.agents.runtime.AgentDeathTickService;
 import server.agents.runtime.AgentDismissCommandService;
@@ -1038,35 +1038,8 @@ public class BotManager {
     }
 
     private void tickAnchoredFarm(BotEntry entry, Character bot, Point botPos, boolean runAiTick) {
-        AgentAnchoredFarmTickService.tickAnchoredFarm(
-                entry,
-                bot,
-                botPos,
-                runAiTick,
-                anchoredFarmHooks());
-    }
-
-    private AgentAnchoredFarmTickService.AnchoredFarmHooks anchoredFarmHooks() {
-        return new AgentAnchoredFarmTickService.AnchoredFarmHooks(
-                (entry, bot, botPos, movementTargetPos, moveWindowReferencePos,
-                 allowCombatMovement, allowJumpTowardTarget) -> {
-                    LocalOpportunityAttackResult result = tryLocalOpportunityAttack(
-                            entry,
-                            bot,
-                            botPos,
-                            movementTargetPos,
-                            moveWindowReferencePos,
-                            allowCombatMovement,
-                            allowJumpTowardTarget);
-                    return new AgentAnchoredFarmTickService.LocalOpportunityResult(
-                            result.consumedTick(), result.targetPos());
-                },
-                this::tickIdleEntry,
-                (entry, bot) -> {
-                    BotPhysicsEngine.idleOnGround(entry, bot);
-                    BotMovementManager.broadcastMovement(entry);
-                },
-                this::stepMovementCore);
+        AgentAnchoredFarmRuntime.tickAnchoredFarm(
+                entry, bot, botPos, runAiTick, cfg.ENABLE_UNSTUCK, BotMovementManager.cfg.STOP_DIST);
     }
 
     private LocalOpportunityAttackResult tryLocalOpportunityAttack(BotEntry entry,
