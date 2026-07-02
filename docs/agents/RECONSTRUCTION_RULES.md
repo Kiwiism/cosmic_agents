@@ -3020,6 +3020,14 @@ Recent reconstruction notes:
   same grind-target assignment, wander/patrol target clearing, ranged-priority
   replacement, closer-threat crowding swap, attack-plan invalidation, and
   ranged-priority marker used by later spacing rules are preserved.
+- Grind-mode ranged engagement now lives in
+  `server.agents.capabilities.combat.AgentGrindRangedEngagementService`.
+  BotManager supplies temporary hooks for weapon lookup, degenerate/retreat
+  checks, cross-region retreat, AoE reposition, attack execution, jump, idle,
+  and movement broadcast. The same degenerate ranged one-shot gate,
+  cross-region retreat precompute, attack cooldown comparison, ranged degen
+  latch, jump-toward-target branch, and stand-still-in-range behavior are
+  preserved.
 
 Initial reconstruction order:
 

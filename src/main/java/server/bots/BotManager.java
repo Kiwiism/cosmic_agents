@@ -18,6 +18,7 @@ import server.agents.capabilities.combat.AgentGrindTargetCommitmentService;
 import server.agents.capabilities.combat.AgentGrindNavigationTargetSelector;
 import server.agents.capabilities.combat.AgentLocalOpportunityAttackService;
 import server.agents.capabilities.combat.AgentRangedPriorityTargetSelector;
+import server.agents.capabilities.combat.AgentGrindRangedEngagementService;
 import server.agents.capabilities.quest.AgentPartyQuestSyncService;
 
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
@@ -1321,80 +1322,16 @@ public class BotManager {
         if (attackPlan == null) {
             attackPlan = AgentBotCombatPlanRuntime.planAttack(entry, bot, target, AgentCombatConfig.cfg);
         }
-        WeaponType grindWeaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
-        boolean targetInDegenerateBand = AgentAttackExecutionProvider.shouldDegenerateRangedAttack(grindWeaponType, botPos, tp);
-        boolean degenAttackDone = AgentBotDegenerateAttackStateRuntime.degenAttackDone(entry);
-        boolean allowOneDegenerateAttack = targetInDegenerateBand && !degenAttackDone && rangedPriorityTarget == null;
-        boolean shouldRetreatForRangedSpacing = degenAttackDone
-                || (AgentAttackExecutionProvider.shouldRetreatFromNearbyTarget(grindWeaponType, botPos, tp)
-                && !allowOneDegenerateAttack);
-        // Opportunity attack: keep firing during retreat as long as the shot would land
-        // as a true ranged hit. Suppress only inside the degenerate band, since firing
-        // there would re-trigger degenAttackDone and extend the retreat indefinitely.
-        boolean canFireWithoutDegen = grindWeaponType == null
-                || !AgentAttackExecutionProvider.shouldDegenerateRangedAttack(grindWeaponType, botPos, tp);
-        boolean attackGateOpen = !shouldRetreatForRangedSpacing || canFireWithoutDegen || allowOneDegenerateAttack;
-        // Sticky cross-region retreat: pre-compute so an opportunity attack doesn't stall
-        // the traversal — bot fires AND keeps walking toward the safe vantage in the same tick.
-        Point crossRegionRetreatPos = shouldRetreatForRangedSpacing
-                ? selectCrossRegionRetreatTarget(entry, botPos, tp)
-                : null;
-        // AoE positioning: when in range but the chosen plan is single-target, defer the shot
-        // and walk into the cluster centroid if the AoE would beat it on DPS there (bounded).
-        // Suppressed during ranged-spacing/cross-region retreats — spacing takes priority.
-        Point aoeRepositionPos = (!shouldRetreatForRangedSpacing && crossRegionRetreatPos == null
-                && attackGateOpen && AgentCombatRangePolicy.isTargetInAttackRange(attackPlan, bot, target))
-                ? resolveAoeReposition(entry, bot, target, attackPlan, botPos)
-                : null;
-
-        boolean attackAttemptedInRange = false;
-        if (!AgentBotMovementStateRuntime.climbing(entry)) {
-            if (aoeRepositionPos == null
-                    && attackGateOpen && AgentCombatRangePolicy.isTargetInAttackRange(attackPlan, bot, target)
-                    && AgentCombatRangePolicy.canUseAttackPlanNow(
-                            AgentBotMovementStateRuntime.grounded(entry), grindWeaponType, attackPlan.route)) {
-                attackAttemptedInRange = true;
-                // In range — attack if grounded, or during ascent of a jump
-                int prevCooldown = AgentBotCombatCooldownStateRuntime.attackCooldownMs(entry);
-                AgentBotCombatAttackRuntime.attackMonster(entry, bot, attackPlan);
-                boolean attacked = AgentBotCombatCooldownStateRuntime.attackCooldownMs(entry) != prevCooldown;
-                // If a ranged bot just did a degenerate close-range hit, force retreat next tick
-                if (attacked && attackPlan.isCloseRangeRoute()
-                        && AgentCombatAmmoCounter.isRangedAmmoWeapon(grindWeaponType)) {
-                    AgentBotDegenerateAttackStateRuntime.markDegenAttackDone(entry);
-                }
-                // Don't short-circuit when a cross-region retreat is in progress — the
-                // bot must still walk to the edge launch this tick.
-                if (attacked && !AgentBotMovementStateRuntime.inAir(entry) && crossRegionRetreatPos == null) {
-                    return new LocalOpportunityAttackResult(true, targetPos);
-                }
-            } else if (!AgentBotMovementStateRuntime.inAir(entry)
-                    && attackPlan != null
-                    && AgentCombatRangePolicy.isTargetJumpable(
-                            AgentBotMovementStateRuntime.movementProfile(entry),
-                            attackPlan.isCloseRangeRoute(),
-                            botPos,
-                            tp,
-                            BotPhysicsEngine.calculateMaxJumpHeight(AgentBotMovementStateRuntime.movementProfile(entry)))
-                    && grindWeaponType != WeaponType.BOW && grindWeaponType != WeaponType.CROSSBOW
-                    && grindWeaponType != WeaponType.WAND && grindWeaponType != WeaponType.STAFF) {
-                // Target is above but within jump height — jump toward it
-                BotMovementManager.initiateJump(entry, bot, tp.x - botPos.x);
-                return new LocalOpportunityAttackResult(true, targetPos);
-            }
-        }
-        // Stand still when in attack range and no retreat is needed. Walking toward the
-        // mob during cooldown drops dx into the retreat band, triggering a walk-away the
-        // next tick — produces a tight (~100 ms) left-right oscillation when the bot is
-        // already in firing position.
-        if (target != null && !AgentBotMovementStateRuntime.inAir(entry) && !AgentBotMovementStateRuntime.climbing(entry)
-                && !shouldRetreatForRangedSpacing && crossRegionRetreatPos == null
-                && aoeRepositionPos == null
-                && !attackAttemptedInRange
-                && AgentCombatRangePolicy.isTargetInAttackRange(attackPlan, bot, target)) {
-            BotPhysicsEngine.idleOnGround(entry, bot);
-            BotMovementManager.broadcastMovement(entry);
-            return new LocalOpportunityAttackResult(true, targetPos);
+        AgentGrindRangedEngagementService.Result engagement =
+                AgentGrindRangedEngagementService.engage(
+                        entry, bot, botPos, targetPos, target, tp, attackPlan,
+                        rangedPriorityTarget, grindRangedEngagementHooks());
+        WeaponType grindWeaponType = engagement.weaponType();
+        boolean shouldRetreatForRangedSpacing = engagement.shouldRetreatForRangedSpacing();
+        Point crossRegionRetreatPos = engagement.crossRegionRetreatPos();
+        Point aoeRepositionPos = engagement.aoeRepositionPos();
+        if (engagement.consumedTick()) {
+            return new LocalOpportunityAttackResult(true, engagement.targetPos());
         }
         // Retreat positioning is a local combat adjustment, not an inter-region path target.
         // Feeding a synthetic same-Y retreat point into nav while the monster is elsewhere
@@ -1441,6 +1378,24 @@ public class BotManager {
         return new AgentGrindTargetCommitmentService.Hooks(
                 BotManager::selectPriorityRangedAttackTarget,
                 AgentAttackExecutionProvider::findCloserThreatMob);
+    }
+
+    private AgentGrindRangedEngagementService.Hooks grindRangedEngagementHooks() {
+        return new AgentGrindRangedEngagementService.Hooks(
+                AgentAttackExecutionProvider::getEquippedWeaponType,
+                AgentAttackExecutionProvider::shouldDegenerateRangedAttack,
+                AgentAttackExecutionProvider::shouldRetreatFromNearbyTarget,
+                BotManager::selectCrossRegionRetreatTarget,
+                AgentCombatRangePolicy::isTargetInAttackRange,
+                BotManager::resolveAoeReposition,
+                AgentCombatRangePolicy::canUseAttackPlanNow,
+                AgentBotCombatAttackRuntime::attackMonster,
+                AgentCombatAmmoCounter::isRangedAmmoWeapon,
+                AgentCombatRangePolicy::isTargetJumpable,
+                BotPhysicsEngine::calculateMaxJumpHeight,
+                BotMovementManager::initiateJump,
+                BotPhysicsEngine::idleOnGround,
+                BotMovementManager::broadcastMovement);
     }
 
     private void handleBotTickFailure(BotEntry entry, int ownerCharId, int botCharId, Throwable t) {
