@@ -3008,6 +3008,12 @@ Recent reconstruction notes:
   service owns the AI-tick/search-policy gate, patrol-vs-grind finder choice,
   searched-target adoption, attack-plan invalidation, and next-search scheduling
   with the legacy retarget interval.
+- Grind-mode no-target fallback handling now lives in
+  `server.agents.runtime.AgentGrindNoTargetFallbackService`. BotManager supplies
+  temporary swim, airborne, patrol/no-grind target resolution, and movement-step
+  hooks. The same grind-target clear, swim/airborne early return, legacy
+  wander-direction side effect, patrol-vs-free fallback target choice, and
+  consumed movement-step result are preserved.
 
 Initial reconstruction order:
 

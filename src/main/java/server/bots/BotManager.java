@@ -34,6 +34,7 @@ import server.agents.runtime.AgentFollowIdleMovementService;
 import server.agents.runtime.AgentFollowTargetPositionService;
 import server.agents.runtime.AgentFollowMapSyncService;
 import server.agents.runtime.AgentHeartbeatService;
+import server.agents.runtime.AgentGrindNoTargetFallbackService;
 import server.agents.runtime.AgentGrindTargetPositionService;
 import server.agents.runtime.AgentIdlePhysicsService;
 import server.agents.runtime.AgentLeaderSessionService;
@@ -1305,26 +1306,10 @@ public class BotManager {
         attackPlan = searchResult.attackPlan();
         AgentGrindLootTargetService.refreshGrindLootTarget(entry, bot, runAiTick, BotManager.cfg.LOOT_RADIUS);
         if (target == null) {
-            AgentBotGrindTargetStateRuntime.clear(entry);
-            if (AgentMapEnvironmentService.isSwimMap(entry) && AgentBotMovementStateRuntime.inAir(entry)) {
-                BotMovementManager.tickSwimming(entry, targetPos);
-                return new LocalOpportunityAttackResult(true, targetPos);
-            } else if (AgentBotMovementStateRuntime.inAir(entry)) {
-                BotMovementManager.tickAirborne(entry, targetPos);
-                return new LocalOpportunityAttackResult(true, targetPos);
-            } else {
-                // No mob in seek range — pick a wander direction once and walk that way until
-                // a mob enters range. Beats standing still and lets the bot self-relocate.
-                targetPos = new Point(botPos.x + AgentBotGrindWanderStateRuntime.ensureWanderDirection(entry) * 200, botPos.y);
-                // falls through to stepMovementCore below
-            }
-        }
-        if (target == null) {
-            targetPos = AgentBotPatrolStateRuntime.hasPatrolRegion(entry)
-                    ? resolvePatrolWanderTarget(entry, botPos, bot.getMap())
-                    : resolveNoGrindTargetPosition(entry, botPos, bot.getMap());
-            stepMovementCore(entry, targetPos, runAiTick);
-            return new LocalOpportunityAttackResult(true, targetPos);
+            AgentGrindNoTargetFallbackService.Result result =
+                    AgentGrindNoTargetFallbackService.handleNoTarget(
+                            entry, bot, botPos, targetPos, runAiTick, grindNoTargetFallbackHooks());
+            return new LocalOpportunityAttackResult(result.consumedTick(), result.targetPos());
         }
         AgentBotGrindTargetStateRuntime.setTarget(entry, target);
         AgentBotGrindWanderStateRuntime.clearWanderDirection(entry);
@@ -1458,6 +1443,15 @@ public class BotManager {
                 (entry, bot) -> AgentBotCombatTargetRuntime.findPatrolTarget(entry, bot, AgentCombatConfig.cfg),
                 (entry, bot) -> AgentBotCombatTargetRuntime.findGrindTarget(entry, bot, AgentCombatConfig.cfg),
                 AgentCombatConfig.cfg.GRIND_RETARGET_INTERVAL_MS);
+    }
+
+    private AgentGrindNoTargetFallbackService.Hooks grindNoTargetFallbackHooks() {
+        return new AgentGrindNoTargetFallbackService.Hooks(
+                BotMovementManager::tickSwimming,
+                BotMovementManager::tickAirborne,
+                BotManager::resolvePatrolWanderTarget,
+                BotManager::resolveNoGrindTargetPosition,
+                this::stepMovementCore);
     }
 
     private void handleBotTickFailure(BotEntry entry, int ownerCharId, int botCharId, Throwable t) {

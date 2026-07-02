@@ -1,0 +1,74 @@
+package server.agents.runtime;
+
+import client.Character;
+import server.agents.integration.AgentBotGrindTargetStateRuntime;
+import server.agents.integration.AgentBotGrindWanderStateRuntime;
+import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentBotPatrolStateRuntime;
+import server.bots.BotEntry;
+import server.maps.MapleMap;
+
+import java.awt.Point;
+
+public final class AgentGrindNoTargetFallbackService {
+    private AgentGrindNoTargetFallbackService() {
+    }
+
+    public record Result(boolean consumedTick, Point targetPos) {
+    }
+
+    public record Hooks(AirMovementTick swimTick,
+                        AirMovementTick airborneTick,
+                        PatrolWanderTargetResolver patrolWanderTargetResolver,
+                        NoGrindTargetResolver noGrindTargetResolver,
+                        MovementStep movementStep) {
+    }
+
+    @FunctionalInterface
+    public interface AirMovementTick {
+        void tick(BotEntry entry, Point targetPos);
+    }
+
+    @FunctionalInterface
+    public interface PatrolWanderTargetResolver {
+        Point resolve(BotEntry entry, Point agentPosition, MapleMap map);
+    }
+
+    @FunctionalInterface
+    public interface NoGrindTargetResolver {
+        Point resolve(BotEntry entry, Point agentPosition, MapleMap map);
+    }
+
+    @FunctionalInterface
+    public interface MovementStep {
+        void step(BotEntry entry, Point targetPos, boolean runAiTick);
+    }
+
+    public static Result handleNoTarget(BotEntry entry,
+                                        Character agent,
+                                        Point agentPosition,
+                                        Point currentTargetPos,
+                                        boolean runAiTick,
+                                        Hooks hooks) {
+        AgentBotGrindTargetStateRuntime.clear(entry);
+        if (AgentMapEnvironmentService.isSwimMap(entry) && AgentBotMovementStateRuntime.inAir(entry)) {
+            hooks.swimTick().tick(entry, currentTargetPos);
+            return new Result(true, currentTargetPos);
+        } else if (AgentBotMovementStateRuntime.inAir(entry)) {
+            hooks.airborneTick().tick(entry, currentTargetPos);
+            return new Result(true, currentTargetPos);
+        }
+
+        // Preserve the legacy pre-resolve wander-direction side effect before
+        // the shared no-target resolver recomputes the concrete target.
+        Point fallbackTargetPos = new Point(
+                agentPosition.x + AgentBotGrindWanderStateRuntime.ensureWanderDirection(entry) * 200,
+                agentPosition.y);
+        MapleMap map = agent.getMap();
+        fallbackTargetPos = AgentBotPatrolStateRuntime.hasPatrolRegion(entry)
+                ? hooks.patrolWanderTargetResolver().resolve(entry, agentPosition, map)
+                : hooks.noGrindTargetResolver().resolve(entry, agentPosition, map);
+        hooks.movementStep().step(entry, fallbackTargetPos, runAiTick);
+        return new Result(true, fallbackTargetPos);
+    }
+}
