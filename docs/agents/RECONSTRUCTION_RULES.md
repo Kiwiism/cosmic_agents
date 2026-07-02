@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Movement-only tick hook construction now lives in
+  `server.agents.runtime.AgentMovementOnlyRuntime`. BotManager keeps only the
+  temporary follow-anchor callback and legacy movement config values for this
+  path.
 - Movement-core hook construction now lives in
   `server.agents.runtime.AgentMovementTickRuntime`. BotManager should pass only
   the legacy unstuck and stop-distance config until movement config ownership

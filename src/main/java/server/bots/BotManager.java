@@ -64,8 +64,7 @@ import server.agents.runtime.AgentMapTransitionRuntime;
 import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentMonsterControlService;
 import server.agents.runtime.AgentMovementPhaseRuntime;
-import server.agents.runtime.AgentMovementOnlyTickService;
-import server.agents.runtime.AgentMovementOnlyMapChangeRuntime;
+import server.agents.runtime.AgentMovementOnlyRuntime;
 import server.agents.runtime.AgentMovementTickRuntime;
 import server.agents.runtime.AgentOwnerlessTickService;
 import server.agents.runtime.AgentOfflineLoadRuntime;
@@ -912,9 +911,20 @@ public class BotManager {
                         recoveryFollowAnchor,
                         recoveryTargetPos,
                         new AgentRecoveryTickService.Hooks(
-                                this::syncFollowMap,
-                                this::recoverGrindPartyTeleportDistance,
-                                this::recoverTeleportDistance)),
+                                AgentFollowMapSyncRuntime::syncFollowMap,
+                                (entry, bot, anchor) -> AgentRecoveryTeleportRuntime.recoverGrindPartyTeleportDistance(
+                                        entry,
+                                        bot,
+                                        anchor,
+                                        BotMovementManager.cfg.TELEPORT_DIST,
+                                        BotMovementManager.cfg.OOB_TELEPORT_DIST,
+                                        cfg.GRIND_PARTY_TELEPORT_DIST_MULTIPLIER),
+                                (entry, bot, targetPos) -> AgentRecoveryTeleportRuntime.recoverTeleportDistance(
+                                        entry,
+                                        bot,
+                                        targetPos,
+                                        BotMovementManager.cfg.TELEPORT_DIST,
+                                        BotMovementManager.cfg.OOB_TELEPORT_DIST))),
                 (mapEntry, mapBot) -> AgentTrackedMapChangeTickService.tickTrackedMapChange(
                         mapEntry,
                         mapBot,
@@ -1446,29 +1456,6 @@ public class BotManager {
         return AgentIdlePhysicsRuntime.tickIdleEntry(entry, bot);
     }
 
-    private boolean syncFollowMap(BotEntry entry, Character bot, Character followAnchor) {
-        return AgentFollowMapSyncRuntime.syncFollowMap(entry, bot, followAnchor);
-    }
-
-    private boolean recoverTeleportDistance(BotEntry entry, Character bot, Point targetPos) {
-        return AgentRecoveryTeleportRuntime.recoverTeleportDistance(
-                entry,
-                bot,
-                targetPos,
-                BotMovementManager.cfg.TELEPORT_DIST,
-                BotMovementManager.cfg.OOB_TELEPORT_DIST);
-    }
-
-    private boolean recoverGrindPartyTeleportDistance(BotEntry entry, Character bot, Character partyAnchor) {
-        return AgentRecoveryTeleportRuntime.recoverGrindPartyTeleportDistance(
-                entry,
-                bot,
-                partyAnchor,
-                BotMovementManager.cfg.TELEPORT_DIST,
-                BotMovementManager.cfg.OOB_TELEPORT_DIST,
-                cfg.GRIND_PARTY_TELEPORT_DIST_MULTIPLIER);
-    }
-
     boolean stepMovementOnly(BotEntry entry, long tickAtMs) {
         if (!AgentBotRuntimeIdentityRuntime.hasBot(entry)) {
             return false;
@@ -1489,32 +1476,19 @@ public class BotManager {
                           Point targetPos,
                           Point ownerPos,
                           boolean runAiTick) {
-        AgentMovementOnlyTickService.stepMovementOnly(
+        AgentMovementOnlyRuntime.stepMovementOnly(
                 entry,
                 targetPos,
                 runAiTick,
                 AgentBotTickStateRuntime.lastTickAtMs(entry),
-                movementOnlyHooks());
-    }
-
-    private AgentMovementOnlyTickService.MovementOnlyHooks movementOnlyHooks() {
-        return new AgentMovementOnlyTickService.MovementOnlyHooks(
-                this::tickIdleEntry,
-                (entry, bot) -> AgentBotShopStateRuntime.shopVisitPending(entry),
-                this::syncFollowMap,
                 this::resolveFollowAnchor,
-                this::recoverGrindPartyTeleportDistance,
-                this::recoverTeleportDistance,
-                this::handleMovementOnlyMapChange,
-                AgentShopService::tickShopVisit,
-                AgentBotShopStateRuntime::activeShopTargetPosition,
-                AgentBotShopStateRuntime::shopApproachDelayMs,
-                BotManager::tryFollowIdleMovementFastPath,
-                this::stepMovementCore);
-    }
-
-    private boolean handleMovementOnlyMapChange(BotEntry entry, Character bot) {
-        return AgentMovementOnlyMapChangeRuntime.handleMapChange(entry, bot);
+                new AgentMovementOnlyRuntime.MovementOnlyConfig(
+                        BotMovementManager.cfg.TELEPORT_DIST,
+                        BotMovementManager.cfg.OOB_TELEPORT_DIST,
+                        cfg.GRIND_PARTY_TELEPORT_DIST_MULTIPLIER,
+                        BotMovementManager.cfg.FOLLOW_DIST,
+                        BotMovementManager.cfg.STOP_DIST,
+                        cfg.ENABLE_UNSTUCK));
     }
 
     static boolean tryFollowIdleMovementFastPath(BotEntry entry, Character bot, Point targetPos, long nowMs) {

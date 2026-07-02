@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Movement-only tick hook wiring moved from BotManager to
+  `server.agents.runtime.AgentMovementOnlyRuntime`. BotManager now passes only
+  follow-anchor resolution and legacy movement distance/config values while
+  Agent runtime owns idle, shop, follow-sync, recovery, map-change, follow-idle,
+  and movement-core hook construction.
 - Movement-core hook wiring moved from BotManager to
   `server.agents.runtime.AgentMovementTickRuntime`. BotManager now passes only
   the legacy unstuck flag and stop distance while Agent runtime owns navigation,
