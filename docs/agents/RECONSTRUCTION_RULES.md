@@ -17,6 +17,14 @@ Rules:
 
 Recent reconstruction notes:
 
+- Spawn placement and normalization runtime reset ordering now lives in
+  `server.agents.runtime.AgentSpawnPlacementService`. BotManager keeps a
+  temporary compatibility hook bundle for spawn-position resolution, physics
+  teleport, movement reset, death-state clearing, map tracking, navigation
+  warmup, tick cadence reset, movement broadcast invalidation, movement
+  broadcast, party HP update, and leader-party join. The same null-entry
+  online placement path, HP restoration, map-id fallback, foothold-gated
+  warmup, and reset/broadcast ordering are preserved.
 - Top-level tick-core sequencing now lives in
   `server.agents.runtime.AgentTickCoreService`. BotManager keeps a temporary
   compatibility hook bundle for preflight, leader resolution, inactive-leader

@@ -78,6 +78,7 @@ import server.agents.runtime.AgentTargetSnapshot;
 import server.agents.runtime.AgentTargetSnapshotService;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSpawnPositionService;
+import server.agents.runtime.AgentSpawnPlacementService;
 import server.agents.runtime.AgentStandaloneMoveTargetTickService;
 import server.agents.runtime.AgentStuckDetectionService;
 import server.agents.runtime.AgentTickFailurePolicy;
@@ -421,28 +422,12 @@ public class BotManager {
     }
 
     static void placeSpawnedOnlineBot(BotEntry entry, Character botChar, MapleMap spawnMap, Point spawnPos) {
-        if (entry == null) {
-            botChar.setPosition(spawnPos);
-            botChar.broadcastStance();
-            botChar.updatePartyMemberHP();
-            return;
-        }
-
-        BotPhysicsEngine.teleportTo(entry, botChar, spawnPos);
-        BotMovementManager.resetEntryStateAfterTeleport(entry);
-        AgentBotDeathStateRuntime.clear(entry);
-        int spawnMapId = spawnMap != null ? spawnMap.getId() : botChar.getMapId();
-        if (spawnMap != null && spawnMap.getFootholds() != null) {
-            AgentBotMapStateRuntime.setMapTracking(entry, spawnMapId, BotMovementManager.buildFhIndex(spawnMap));
-            AgentNavigationGraphService.warmGraphAsync(spawnMap, AgentBotMovementStateRuntime.movementProfile(entry));
-        } else {
-            AgentBotMapStateRuntime.setMapTracking(entry, spawnMapId, null);
-        }
-        AgentBotTickCadenceStateRuntime.reset(entry);
-        AgentBotMovementStateRuntime.clearMoveDirection(entry);
-        AgentBotMovementBroadcastStateRuntime.invalidate(entry);
-        BotMovementManager.broadcastMovement(entry);
-        botChar.updatePartyMemberHP();
+        AgentSpawnPlacementService.placeSpawnedOnlineAgent(
+                entry,
+                botChar,
+                spawnMap,
+                spawnPos,
+                spawnPlacementHooks());
     }
 
     public Point resolveSpawnPosition(MapleMap map, Point desiredPosition) {
@@ -466,24 +451,28 @@ public class BotManager {
     }
 
     private void normalizeSpawnedBot(BotEntry entry) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        Point spawnPos = resolveSpawnPosition(bot.getMap(), bot.getPosition());
-        if (bot.getHp() <= 0) {
-            bot.updateHp(Math.max(1, bot.getCurrentMaxHp()));
-        }
+        AgentSpawnPlacementService.normalizeSpawnedAgent(entry, spawnPlacementHooks());
+    }
 
-        BotPhysicsEngine.teleportTo(entry, bot, spawnPos != null ? spawnPos : bot.getPosition());
-        BotMovementManager.resetEntryStateAfterTeleport(entry);
-        AgentBotDeathStateRuntime.clear(entry);
-        AgentBotMapStateRuntime.setMapTracking(entry, bot.getMapId(), BotMovementManager.buildFhIndex(bot.getMap()));
-        AgentBotTickCadenceStateRuntime.reset(entry);
-        AgentBotMovementStateRuntime.clearMoveDirection(entry);
-        AgentBotMovementBroadcastStateRuntime.invalidate(entry);
-        BotMovementManager.broadcastMovement(entry);
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
-        if (owner != null) {
-            AgentPartyLifecycleService.joinAgentToLeaderParty(owner, bot);
-        }
+    private static AgentSpawnPlacementService.Hooks spawnPlacementHooks() {
+        return new AgentSpawnPlacementService.Hooks(
+                AgentSpawnPositionService::resolveSpawnPosition,
+                BotPhysicsEngine::teleportTo,
+                BotMovementManager::resetEntryStateAfterTeleport,
+                AgentBotDeathStateRuntime::clear,
+                (entry, map, mapId) -> AgentBotMapStateRuntime.setMapTracking(
+                        entry,
+                        mapId,
+                        map != null && map.getFootholds() != null ? BotMovementManager.buildFhIndex(map) : null),
+                (entry, map) -> AgentNavigationGraphService.warmGraphAsync(
+                        map,
+                        AgentBotMovementStateRuntime.movementProfile(entry)),
+                AgentBotTickCadenceStateRuntime::reset,
+                AgentBotMovementStateRuntime::clearMoveDirection,
+                AgentBotMovementBroadcastStateRuntime::invalidate,
+                BotMovementManager::broadcastMovement,
+                Character::updatePartyMemberHP,
+                AgentPartyLifecycleService::joinAgentToLeaderParty);
     }
 
     public void removeBot(int ownerCharId) {

@@ -12,6 +12,12 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Spawn placement and normalization runtime reset ordering moved from
+  BotManager to `server.agents.runtime.AgentSpawnPlacementService`. BotManager
+  now supplies temporary hooks for spawn-position resolution, physics
+  teleport, movement reset, death-state clearing, map tracking, navigation
+  warmup, tick cadence reset, movement broadcast invalidation, movement
+  broadcast, party HP update, and leader-party join.
 - Top-level tick-core sequencing moved from BotManager to
   `server.agents.runtime.AgentTickCoreService`. BotManager now supplies
   temporary hooks for preflight, leader resolution, inactive-leader handling,
