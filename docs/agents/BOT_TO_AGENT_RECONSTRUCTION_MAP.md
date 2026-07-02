@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Standalone move-target tick sequencing moved from BotManager to
+  `server.agents.runtime.AgentStandaloneMoveTargetTickService`. BotManager now
+  supplies temporary hooks for map-change grounding, movement-profile refresh,
+  and movement-core stepping.
 - Grind-mode tick pipeline orchestration moved from BotManager to
   `server.agents.capabilities.combat.AgentGrindModeTickService`. BotManager
   now remains a compatibility adapter that supplies temporary search, fallback,

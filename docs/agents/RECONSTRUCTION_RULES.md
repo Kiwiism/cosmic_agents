@@ -3040,6 +3040,12 @@ Recent reconstruction notes:
   no-target fallback, target commitment, ranged engagement, and navigation-tail
   hook bundles. The same ordering, seek-range, loot-radius, attack-plan reuse,
   consumed-tick propagation, and final movement target semantics are preserved.
+- Standalone move-target tick sequencing now lives in
+  `server.agents.runtime.AgentStandaloneMoveTargetTickService`. BotManager
+  keeps a temporary compatibility adapter that supplies map-change grounding,
+  movement-profile refresh, and movement-core hooks. The same post-warp early
+  return, profile refresh ordering, stored move-target lookup, and run-AI flag
+  propagation are preserved.
 
 Initial reconstruction order:
 

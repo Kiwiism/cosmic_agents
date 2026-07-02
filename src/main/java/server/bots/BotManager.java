@@ -66,6 +66,7 @@ import server.agents.runtime.AgentTargetSnapshot;
 import server.agents.runtime.AgentTargetSnapshotService;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSpawnPositionService;
+import server.agents.runtime.AgentStandaloneMoveTargetTickService;
 import server.agents.runtime.AgentStuckDetectionService;
 import server.agents.runtime.AgentTickFailurePolicy;
 import server.agents.runtime.AgentTickOrchestrator;
@@ -1748,13 +1749,14 @@ public class BotManager {
      * inside stepMovementCore.
      */
     private void tickStandaloneMoveTarget(BotEntry entry, Character bot, boolean runAiTick) {
-        // Just warped in (likely via applyTo): rebuild physics state once.
-        if (groundAfterMapChange(entry, bot)) {
-            return;
-        }
-
-        BotMovementManager.refreshMovementProfile(entry);
-        stepMovementCore(entry, AgentBotMoveTargetStateRuntime.moveTarget(entry), runAiTick);
+        AgentStandaloneMoveTargetTickService.tickStandaloneMoveTarget(
+                entry,
+                bot,
+                runAiTick,
+                new AgentStandaloneMoveTargetTickService.Hooks(
+                        this::groundAfterMapChange,
+                        BotMovementManager::refreshMovementProfile,
+                        this::stepMovementCore));
     }
 
     private boolean groundAfterMapChange(BotEntry entry, Character bot) {
