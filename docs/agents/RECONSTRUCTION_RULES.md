@@ -3068,6 +3068,10 @@ Recent reconstruction notes:
   performance timing, and movement-core stepping. The same pending check,
   active target lookup, approach-delay early return, movement-step dispatch, and
   consumed-tick behavior are preserved.
+- Idle-mode consumed-tick dispatch now lives in
+  `server.agents.runtime.AgentIdleModeTickService`. BotManager keeps a
+  temporary compatibility adapter for the existing idle physics/mode body and
+  performance timing. The same consumed/fall-through result is preserved.
 
 Initial reconstruction order:
 

@@ -38,6 +38,7 @@ import server.agents.runtime.AgentFollowIdleMovementService;
 import server.agents.runtime.AgentFollowTargetPositionService;
 import server.agents.runtime.AgentFollowMapSyncService;
 import server.agents.runtime.AgentHeartbeatService;
+import server.agents.runtime.AgentIdleModeTickService;
 import server.agents.runtime.AgentGrindNoTargetFallbackService;
 import server.agents.runtime.AgentGrindTargetPositionService;
 import server.agents.runtime.AgentIdlePhysicsService;
@@ -1120,15 +1121,18 @@ public class BotManager {
             return;
         }
 
-        boolean idleConsumed;
-        if (!perf) {
-            idleConsumed = tickIdleEntry(entry, bot);
-        } else {
-            long tIdle = System.nanoTime();
-            idleConsumed = tickIdleEntry(entry, bot);
-            AgentPerformanceMonitor.record("tick-idle", System.nanoTime() - tIdle);
-        }
-        if (idleConsumed) {
+        if (AgentIdleModeTickService.tickIdleMode(
+                entry,
+                bot,
+                new AgentIdleModeTickService.Hooks((idleEntry, idleBot) -> {
+                    if (!perf) {
+                        return tickIdleEntry(idleEntry, idleBot);
+                    }
+                    long tIdle = System.nanoTime();
+                    boolean consumed = tickIdleEntry(idleEntry, idleBot);
+                    AgentPerformanceMonitor.record("tick-idle", System.nanoTime() - tIdle);
+                    return consumed;
+                }))) {
             return;
         }
 

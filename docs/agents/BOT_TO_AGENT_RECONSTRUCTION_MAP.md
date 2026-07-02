@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Idle-mode consumed-tick dispatch moved from BotManager to
+  `server.agents.runtime.AgentIdleModeTickService`. BotManager now supplies the
+  temporary idle physics/mode hook and performance timing.
 - Shop-visit tick dispatch moved from BotManager to
   `server.agents.runtime.AgentShopVisitTickService`. BotManager now supplies
   temporary hooks for the existing shop visit tick body and movement-core
