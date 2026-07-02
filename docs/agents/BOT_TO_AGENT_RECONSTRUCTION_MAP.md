@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Movement stuck-detection hook wiring moved from BotManager to
+  `server.agents.runtime.AgentStuckDetectionRuntime`. BotManager now passes
+  only the legacy unstuck-enable flag while Agent runtime owns tick-down,
+  unstuck action, and movement tick duration hook construction.
 - Death respawn hook wiring moved from BotManager to
   `server.agents.runtime.AgentRespawnRuntime`. BotManager now delegates the
   respawn side-effect bundle while Agent runtime owns cross-map leader portal

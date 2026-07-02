@@ -884,7 +884,7 @@ public class BotMovementManager {
      * Fires a random recovery action when the bot has been stuck in the same spot.
      * Clears the nav edge so A* replans on the next AI tick.
      */
-    static void tickUnstuck(BotEntry entry) {
+    public static void tickUnstuck(BotEntry entry) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         int walkStep = BotPhysicsEngine.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         switch (ThreadLocalRandom.current().nextInt(2)) {

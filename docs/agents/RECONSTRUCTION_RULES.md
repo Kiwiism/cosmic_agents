@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Movement stuck-detection hook construction now lives in
+  `server.agents.runtime.AgentStuckDetectionRuntime`. Keep temporary
+  `BotMovementManager` and `BotPhysicsEngine` calls isolated there until the
+  movement bin is reconstructed; BotManager should pass only the legacy enable
+  flag.
 - Death respawn hook construction now lives in
   `server.agents.runtime.AgentRespawnRuntime`. Keep the temporary direct
   dependencies on `BotPhysicsEngine` and `BotMovementManager` there until the

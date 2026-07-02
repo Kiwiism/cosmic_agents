@@ -93,7 +93,7 @@ import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSpawnPositionService;
 import server.agents.runtime.AgentSpawnRuntime;
 import server.agents.runtime.AgentStandaloneMoveTargetTickService;
-import server.agents.runtime.AgentStuckDetectionService;
+import server.agents.runtime.AgentStuckDetectionRuntime;
 import server.agents.runtime.AgentTickFailureRuntime;
 import server.agents.runtime.AgentTickCoreService;
 import server.agents.runtime.AgentTickOrchestrator;
@@ -1621,15 +1621,7 @@ public class BotManager {
                 BotMovementManager::tickGrounded);
     }
     private static void tickStuckDetection(BotEntry entry) {
-        AgentStuckDetectionService.tickStuckDetection(entry, stuckDetectionHooks());
-    }
-
-    private static AgentStuckDetectionService.StuckDetectionHooks stuckDetectionHooks() {
-        return new AgentStuckDetectionService.StuckDetectionHooks(
-                BotMovementManager::tickDown,
-                BotMovementManager::tickUnstuck,
-                BotPhysicsEngine.cfg.TICK_MS,
-                cfg.ENABLE_UNSTUCK);
+        AgentStuckDetectionRuntime.tickStuckDetection(entry, cfg.ENABLE_UNSTUCK);
     }
 
     private boolean tickActionLocked(BotEntry entry) {
