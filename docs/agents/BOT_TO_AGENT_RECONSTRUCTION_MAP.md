@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Grind-mode tick pipeline orchestration moved from BotManager to
+  `server.agents.capabilities.combat.AgentGrindModeTickService`. BotManager
+  now remains a compatibility adapter that supplies temporary search, fallback,
+  commitment, ranged-engagement, and navigation-tail hook bundles.
 - Tick failure escalation and volatile-action cleanup moved from BotManager to
   `server.agents.runtime.AgentTickFailurePolicy.handleFailure`; BotManager now
   supplies compatibility hooks for logging, movement reset, removal, and idle

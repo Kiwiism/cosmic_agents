@@ -3034,6 +3034,12 @@ Recent reconstruction notes:
   hooks. The same cross-region retreat priority, AoE navigation selection,
   degenerate-retreat latch clearing, patrol guard, and convenient-loot detour
   override are preserved.
+- Grind-mode tick pipeline orchestration now lives in
+  `server.agents.capabilities.combat.AgentGrindModeTickService`. BotManager
+  keeps a temporary compatibility adapter that assembles the existing search,
+  no-target fallback, target commitment, ranged engagement, and navigation-tail
+  hook bundles. The same ordering, seek-range, loot-radius, attack-plan reuse,
+  consumed-tick propagation, and final movement target semantics are preserved.
 
 Initial reconstruction order:
 

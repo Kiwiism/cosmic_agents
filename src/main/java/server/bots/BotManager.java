@@ -15,6 +15,7 @@ import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatRangePolicy;
 import server.agents.capabilities.combat.AgentGrindTargetSearchService;
 import server.agents.capabilities.combat.AgentGrindTargetCommitmentService;
+import server.agents.capabilities.combat.AgentGrindModeTickService;
 import server.agents.capabilities.combat.AgentGrindNavigationTargetSelector;
 import server.agents.capabilities.combat.AgentLocalOpportunityAttackService;
 import server.agents.capabilities.combat.AgentRangedPriorityTargetSelector;
@@ -1294,56 +1295,21 @@ public class BotManager {
      */
     private LocalOpportunityAttackResult tickGrindMode(BotEntry entry, Character bot, Point botPos,
             Point targetPos, boolean runAiTick) {
-        double seekRangeSq = (double) AgentCombatConfig.cfg.GRIND_SEEK_RANGE * AgentCombatConfig.cfg.GRIND_SEEK_RANGE;
-        Monster target = AgentBotGrindTargetStateRuntime.targetInSeekRange(entry, bot, botPos, seekRangeSq);
-        long now = System.currentTimeMillis();
-        AgentAttackPlan attackPlan = target == null
-                ? null
-                : AgentBotCombatPlanRuntime.planAttack(entry, bot, target, AgentCombatConfig.cfg);
-        AgentGrindLootTargetService.validateCachedGrindLootTarget(entry, bot);
-        AgentGrindTargetSearchService.SearchResult searchResult =
-                AgentGrindTargetSearchService.searchIfDue(
-                        entry, bot, target, attackPlan, runAiTick, now, grindTargetSearchHooks());
-        target = searchResult.target();
-        attackPlan = searchResult.attackPlan();
-        AgentGrindLootTargetService.refreshGrindLootTarget(entry, bot, runAiTick, BotManager.cfg.LOOT_RADIUS);
-        if (target == null) {
-            AgentGrindNoTargetFallbackService.Result result =
-                    AgentGrindNoTargetFallbackService.handleNoTarget(
-                            entry, bot, botPos, targetPos, runAiTick, grindNoTargetFallbackHooks());
-            return new LocalOpportunityAttackResult(result.consumedTick(), result.targetPos());
-        }
-        AgentGrindTargetCommitmentService.Result commitment =
-                AgentGrindTargetCommitmentService.commitTarget(
-                        entry, bot, botPos, target, attackPlan, grindTargetCommitmentHooks());
-        target = commitment.target();
-        Point tp = commitment.targetPosition();
-        attackPlan = commitment.attackPlan();
-        Monster rangedPriorityTarget = commitment.rangedPriorityTarget();
-        if (attackPlan == null) {
-            attackPlan = AgentBotCombatPlanRuntime.planAttack(entry, bot, target, AgentCombatConfig.cfg);
-        }
-        AgentGrindRangedEngagementService.Result engagement =
-                AgentGrindRangedEngagementService.engage(
-                        entry, bot, botPos, targetPos, target, tp, attackPlan,
-                        rangedPriorityTarget, grindRangedEngagementHooks());
-        WeaponType grindWeaponType = engagement.weaponType();
-        boolean shouldRetreatForRangedSpacing = engagement.shouldRetreatForRangedSpacing();
-        Point crossRegionRetreatPos = engagement.crossRegionRetreatPos();
-        Point aoeRepositionPos = engagement.aoeRepositionPos();
-        if (engagement.consumedTick()) {
-            return new LocalOpportunityAttackResult(true, engagement.targetPos());
-        }
-        targetPos = AgentGrindNavigationTailService.resolveNavigationTarget(
+        AgentGrindModeTickService.Result result = AgentGrindModeTickService.tickGrindMode(
                 entry,
+                bot,
                 botPos,
-                tp,
-                grindWeaponType,
-                crossRegionRetreatPos,
-                aoeRepositionPos,
-                shouldRetreatForRangedSpacing,
-                grindNavigationTailHooks());
-        return new LocalOpportunityAttackResult(false, targetPos);
+                targetPos,
+                runAiTick,
+                new AgentGrindModeTickService.Hooks(
+                        grindTargetSearchHooks(),
+                        grindNoTargetFallbackHooks(),
+                        grindTargetCommitmentHooks(),
+                        grindRangedEngagementHooks(),
+                        grindNavigationTailHooks(),
+                        AgentCombatConfig.cfg.GRIND_SEEK_RANGE,
+                        BotManager.cfg.LOOT_RADIUS));
+        return new LocalOpportunityAttackResult(result.consumedTick(), result.targetPos());
     }
 
     private static AgentGrindTargetSearchService.SearchHooks grindTargetSearchHooks() {
