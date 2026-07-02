@@ -450,6 +450,60 @@ class AgentLifecycleServiceTest {
     }
 
     @Test
+    void spawnAgentForLeaderQuietlyLogsSqlFailureAndReturnsLegacyMessage() {
+        Client client = mock(Client.class);
+        Character leader = character(100, "Leader");
+        MapleMap map = mock(MapleMap.class);
+        Point spawnPosition = new Point(11, 21);
+        SQLException failure = new SQLException("load failed");
+        AgentOwnershipService ownership = mock(AgentOwnershipService.class);
+        AtomicReference<String> loggedAgentName = new AtomicReference<>();
+        AtomicReference<Character> loggedLeader = new AtomicReference<>();
+        AtomicReference<SQLException> loggedFailure = new AtomicReference<>();
+        when(leader.getClient()).thenReturn(client);
+        when(client.getWorld()).thenReturn(1);
+        when(client.getChannel()).thenReturn(2);
+        when(leader.getMap()).thenReturn(map);
+        when(leader.getPosition()).thenReturn(new Point(10, 20));
+        when(ownership.resolveCharacterByName("Alpha")).thenReturn(new AgentResolvedCharacter(200, "Alpha", 1, null));
+        when(ownership.ensureCanControl(leader, new AgentResolvedCharacter(200, "Alpha", 1, null)))
+                .thenReturn(AgentAuthorizationResult.allowed(false));
+
+        AgentLifecycleService.AgentSpawnResult result = AgentLifecycleService.spawnAgentForLeaderQuietly(
+                leader,
+                "Alpha",
+                ownership,
+                new AgentLifecycleService.SpawnHooks(
+                        (spawnMap, point) -> spawnPosition,
+                        (leaderId, resolvedLeader, resolvedAgent) -> {
+                            throw new AssertionError("should not register after load failure");
+                        },
+                        (charId, world, channel, targetMap, desiredPosition) -> {
+                            throw failure;
+                        },
+                        (entry, placedAgent, spawnMap, position) -> {
+                            throw new AssertionError("offline spawn should not place online agent");
+                        },
+                        entry -> {
+                            throw new AssertionError("should not follow after load failure");
+                        },
+                        (changedAgent, spawnMap, position) -> {
+                            throw new AssertionError("offline spawn should not change online map");
+                        }),
+                (agentName, failedLeader, exception) -> {
+                    loggedAgentName.set(agentName);
+                    loggedLeader.set(failedLeader);
+                    loggedFailure.set(exception);
+                });
+
+        assertFalse(result.success());
+        assertEquals("Failed to load bot character 'Alpha'.", result.errorMessage());
+        assertEquals("Alpha", loggedAgentName.get());
+        assertSame(leader, loggedLeader.get());
+        assertSame(failure, loggedFailure.get());
+    }
+
+    @Test
     void returnsLegacySpawnFailures() throws SQLException {
         Character leader = character(100, "Leader");
         Character realPlayer = character(200, "Alpha", mock(Client.class));

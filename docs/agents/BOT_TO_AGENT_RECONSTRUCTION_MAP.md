@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Spawn SQL failure handling moved from BotManager to
+  `server.agents.runtime.AgentLifecycleService.spawnAgentForLeaderQuietly`.
+  BotManager now keeps the compatibility `spawnBotForOwner` result wrapper and
+  temporary hook construction, while Agent lifecycle owns SQL failure capture
+  and the legacy failure text.
 - Relogin SQL failure handling moved from BotManager to
   `server.agents.runtime.AgentLifecycleService.reloginAgentQuietly`. BotManager
   now keeps only the compatibility `reloginBot` entry point and temporary hook

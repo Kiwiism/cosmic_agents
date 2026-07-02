@@ -294,26 +294,23 @@ public class BotManager {
 
     /** Spawn a registered bot for the given owner, placing it at the owner's current position in follow mode. */
     public SpawnResult spawnBotForOwner(Character owner, String botName) {
-        try {
-            AgentLifecycleService.AgentSpawnResult result = AgentLifecycleService.spawnAgentForLeader(
-                    owner,
-                    botName,
-                    AgentOwnershipService.getInstance(),
-                    new AgentLifecycleService.SpawnHooks(
-                            this::resolveSpawnPosition,
-                            this::registerSpawnedBot,
-                            this::loadOfflineBot,
-                            BotManager::placeSpawnedOnlineBot,
-                            this::issueFollowOwner,
-                            (botChar, map, pos) -> botChar.forceChangeMap(map, map.findClosestPortal(pos))));
-            if (!result.success()) {
-                return SpawnResult.fail(result.errorMessage());
-            }
-            return SpawnResult.ok(result.agent(), result.autoRegistered());
-        } catch (SQLException e) {
-            log.warn("Failed to load bot character '{}' for owner '{}'", botName, owner.getName(), e);
-            return SpawnResult.fail("Failed to load bot character '" + botName + "'.");
+        AgentLifecycleService.AgentSpawnResult result = AgentLifecycleService.spawnAgentForLeaderQuietly(
+                owner,
+                botName,
+                AgentOwnershipService.getInstance(),
+                new AgentLifecycleService.SpawnHooks(
+                        this::resolveSpawnPosition,
+                        this::registerSpawnedBot,
+                        this::loadOfflineBot,
+                        BotManager::placeSpawnedOnlineBot,
+                        this::issueFollowOwner,
+                        (botChar, map, pos) -> botChar.forceChangeMap(map, map.findClosestPortal(pos))),
+                (agentName, leader, e) -> log.warn(
+                        "Failed to load bot character '{}' for owner '{}'", agentName, leader.getName(), e));
+        if (!result.success()) {
+            return SpawnResult.fail(result.errorMessage());
         }
+        return SpawnResult.ok(result.agent(), result.autoRegistered());
     }
 
     public void joinBotToOwnerParty(Character owner, Character bot) {

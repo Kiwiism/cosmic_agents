@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Spawn SQL failure handling now lives in
+  `server.agents.runtime.AgentLifecycleService.spawnAgentForLeaderQuietly`.
+  BotManager supplies the temporary logger hook and compatibility result
+  mapping, while Agent lifecycle owns the try/catch boundary and the same
+  `"Failed to load bot character '<name>'."` failure text.
 - Relogin SQL failure handling now lives in
   `server.agents.runtime.AgentLifecycleService.reloginAgentQuietly`.
   BotManager supplies the temporary logger hook, but Agent lifecycle owns the

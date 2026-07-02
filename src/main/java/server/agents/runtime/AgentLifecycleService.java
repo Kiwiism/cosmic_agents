@@ -64,6 +64,11 @@ public final class AgentLifecycleService {
         void change(Character agent, MapleMap spawnMap, Point spawnPosition);
     }
 
+    @FunctionalInterface
+    public interface SpawnFailureLogger {
+        void log(String agentName, Character leader, SQLException exception);
+    }
+
     public record RegisterHooks(long tickMs,
                                 AgentTickScheduler tickScheduler,
                                 AgentTickCallback tickCallback,
@@ -181,6 +186,19 @@ public final class AgentLifecycleService {
         BotEntry entry = hooks.registerSpawnedAgent().register(leader.getId(), leader, agent);
         hooks.startFollowLeader().accept(entry);
         return AgentSpawnResult.ok(agent, auth.autoRegistered());
+    }
+
+    public static AgentSpawnResult spawnAgentForLeaderQuietly(Character leader,
+                                                             String agentName,
+                                                             AgentOwnershipService ownershipService,
+                                                             SpawnHooks hooks,
+                                                             SpawnFailureLogger failureLogger) {
+        try {
+            return spawnAgentForLeader(leader, agentName, ownershipService, hooks);
+        } catch (SQLException e) {
+            failureLogger.log(agentName, leader, e);
+            return AgentSpawnResult.fail("Failed to load bot character '" + agentName + "'.");
+        }
     }
 
     public static BotEntry registerAgent(int leaderCharId,
