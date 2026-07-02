@@ -35,6 +35,7 @@ import server.agents.runtime.AgentAnchoredFarmTickService;
 import server.agents.runtime.AgentCommonTickService;
 import server.agents.runtime.AgentDeathTickService;
 import server.agents.runtime.AgentDismissCommandService;
+import server.agents.runtime.AgentDismissRuntime;
 import server.agents.runtime.AgentFinalMovementTailService;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentLifecycleService;
@@ -348,18 +349,7 @@ public class BotManager {
 
     /** Disown a bot by name - cancels its AI tick and leaves it idle in the map. */
     public boolean dismissBot(int ownerCharId, String botName) {
-        return AgentLifecycleService.dismissAgentByName(
-                ownerCharId,
-                botName,
-                new AgentLifecycleService.DismissHooks(
-                        AgentBotManagerSchedulerRuntime::cancelScheduledTask,
-                        this::issueStop,
-                        AgentBotManagerSchedulerRuntime::afterDelay,
-                        () -> randMs(400, 600),
-                        AgentBotManagerReplyRuntime::replyNow,
-                        () -> randomReply(List.of(
-                                "ok", "sure", "alright", "gotcha",
-                                "later!", "see ya", "take care", "cya", "peace out"))));
+        return AgentDismissRuntime.dismissAgentByName(ownerCharId, botName, this::issueStop);
     }
 
     /** Recruit an ownerless bot by name into the owner's group. Returns an error string on failure, null on success. */

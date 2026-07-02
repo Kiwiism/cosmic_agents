@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Dismiss lifecycle hook wiring moved from BotManager to
+  `server.agents.runtime.AgentDismissRuntime`. BotManager now passes only the
+  temporary stop-mode callback while Agent runtime owns cancellation, delayed
+  farewell scheduling, reply delivery, and legacy farewell selection.
 - Agent registration hook wiring moved from BotManager to
   `server.agents.runtime.AgentRegistrationRuntime`. BotManager now passes only
   its temporary tick callback while Agent runtime owns timer, cancellation,

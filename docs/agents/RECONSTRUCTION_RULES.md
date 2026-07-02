@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Dismiss lifecycle hook wiring now lives in
+  `server.agents.runtime.AgentDismissRuntime`. BotManager supplies only the
+  temporary stop-mode callback while Agent runtime owns scheduled-task
+  cancellation, delayed farewell scheduling, reply delivery, delay selection,
+  and legacy farewell text selection.
 - Agent registration hook wiring now lives in
   `server.agents.runtime.AgentRegistrationRuntime`. BotManager supplies only
   the temporary live tick callback while Agent runtime owns the legacy tick
