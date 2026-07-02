@@ -25,6 +25,10 @@ Recent reconstruction notes:
   compatibility wrappers for legacy tests/callers, but no longer assembles the
   navigation callback bundle directly; local-opportunity attack now calls the
   Agent runtime helper instead of calling back into BotManager.
+- Grind fallback, patrol-wander, and convenient-loot target hook construction
+  now lives in `server.agents.runtime.AgentGrindTargetRuntime`. BotManager keeps
+  compatibility wrappers for legacy tests/callers, but production grind-mode
+  fallback/tail hooks now call the Agent runtime bridge directly.
 - Local-opportunity attack hook construction now lives in
   `server.agents.runtime.AgentLocalOpportunityAttackRuntime`. Its temporary
   grind navigation dependency now points at `AgentGrindNavigationRuntime`.

@@ -48,7 +48,7 @@ import server.agents.runtime.AgentGrindNavigationRuntime;
 import server.agents.runtime.AgentGrindModeDispatchService;
 import server.agents.runtime.AgentIdleModeTickService;
 import server.agents.runtime.AgentGrindNoTargetFallbackService;
-import server.agents.runtime.AgentGrindTargetPositionService;
+import server.agents.runtime.AgentGrindTargetRuntime;
 import server.agents.runtime.AgentIdlePhysicsRuntime;
 import server.agents.runtime.AgentLeaderSessionService;
 import server.agents.runtime.AgentLeaderSafetyService;
@@ -570,64 +570,31 @@ public class BotManager {
     }
 
     static Point resolveNoGrindTargetPosition(BotEntry entry, Point botPos, MapleMap map) {
-        return AgentGrindTargetPositionService.resolveNoGrindTargetPosition(
-                entry,
-                botPos,
-                map,
-                cfg.LOOT_RADIUS,
-                BotMovementManager.cfg.STOP_DIST,
-                cfg.GRIND_LOOT_RETRY_SUPPRESS_MS,
-                BotNavigationManager::resolveCurrentRegionId);
+        return AgentGrindTargetRuntime.resolveNoGrindTargetPosition(entry, botPos, map);
     }
 
     static Point resolveNoGrindTargetPosition(BotEntry entry, Point botPos) {
-        return AgentGrindTargetPositionService.resolveNoGrindTargetPosition(
-                entry,
-                botPos,
-                cfg.LOOT_RADIUS,
-                BotMovementManager.cfg.STOP_DIST,
-                cfg.GRIND_LOOT_RETRY_SUPPRESS_MS,
-                BotNavigationManager::resolveCurrentRegionId);
+        return AgentGrindTargetRuntime.resolveNoGrindTargetPosition(entry, botPos);
     }
 
     private static Point activeGrindLootPosition(BotEntry entry, Point botPos) {
-        return AgentGrindTargetPositionService.activeGrindLootPosition(
-                entry,
-                botPos,
-                cfg.LOOT_RADIUS,
-                cfg.GRIND_LOOT_RETRY_SUPPRESS_MS);
+        return AgentGrindTargetRuntime.activeGrindLootPosition(entry, botPos);
     }
 
     static void suppressGrindLootRetry(BotEntry entry, MapItem loot) {
-        AgentGrindTargetPositionService.suppressGrindLootRetry(
-                entry,
-                loot,
-                cfg.GRIND_LOOT_RETRY_SUPPRESS_MS);
+        AgentGrindTargetRuntime.suppressGrindLootRetry(entry, loot);
     }
 
     static double activeLootTravelDistSq(Point botPos, Point lootPos) {
-        return AgentGrindTargetPositionService.activeLootTravelDistSq(botPos, lootPos, cfg.LOOT_RADIUS);
+        return AgentGrindTargetRuntime.activeLootTravelDistSq(botPos, lootPos);
     }
 
     static Point convenientLootTarget(BotEntry entry, Point botPos, Point mobPos) {
-        return AgentGrindTargetPositionService.convenientLootTarget(
-                entry,
-                botPos,
-                mobPos,
-                cfg.LOOT_RADIUS,
-                cfg.GRIND_LOOT_CONVENIENCE_RATIO,
-                cfg.GRIND_LOOT_RETRY_SUPPRESS_MS);
+        return AgentGrindTargetRuntime.convenientLootTarget(entry, botPos, mobPos);
     }
 
     private static Point resolvePatrolWanderTarget(BotEntry entry, Point botPos, MapleMap map) {
-        return AgentGrindTargetPositionService.resolvePatrolWanderTarget(
-                entry,
-                botPos,
-                map,
-                cfg.LOOT_RADIUS,
-                BotMovementManager.cfg.STOP_DIST,
-                cfg.GRIND_LOOT_RETRY_SUPPRESS_MS,
-                BotNavigationManager::resolveCurrentRegionId);
+        return AgentGrindTargetRuntime.resolvePatrolWanderTarget(entry, botPos, map);
     }
 
     // Main tick
@@ -975,8 +942,8 @@ public class BotManager {
         return new AgentGrindNoTargetFallbackService.Hooks(
                 BotMovementManager::tickSwimming,
                 BotMovementManager::tickAirborne,
-                BotManager::resolvePatrolWanderTarget,
-                BotManager::resolveNoGrindTargetPosition,
+                AgentGrindTargetRuntime::resolvePatrolWanderTarget,
+                AgentGrindTargetRuntime::resolveNoGrindTargetPosition,
                 this::stepMovementCore);
     }
 
@@ -1008,7 +975,7 @@ public class BotManager {
         return new AgentGrindNavigationTailService.Hooks(
                 AgentGrindNavigationRuntime::selectGrindNavigationTarget,
                 AgentAttackExecutionProvider::shouldRetreatFromNearbyTarget,
-                BotManager::convenientLootTarget);
+                AgentGrindTargetRuntime::convenientLootTarget);
     }
 
     private void handleBotTickFailure(BotEntry entry, int ownerCharId, int botCharId, Throwable t) {
