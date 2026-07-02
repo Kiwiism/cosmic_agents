@@ -17,6 +17,12 @@ Rules:
 
 Recent reconstruction notes:
 
+- Ownerless movement-only tick preparation now lives in
+  `server.agents.runtime.AgentMovementOnlyStepRuntime`. BotManager delegates
+  the compatibility step methods while Agent runtime owns the bot-present
+  guard, cadence preparation, target snapshot capture, observed-leader motion
+  update, remembered leader position update, follow-anchor resolver wiring, and
+  movement-only config handoff.
 - Dead-state tick wiring now lives in `server.agents.runtime.AgentDeathTickRuntime`.
   BotManager delegates the compatibility dead-tick method while Agent runtime
   owns the dead-state entry, respawn action, and current-time hook composition

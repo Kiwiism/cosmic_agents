@@ -31,7 +31,7 @@ import server.agents.runtime.AgentLiveModeTickRuntime;
 import server.agents.runtime.AgentLocalOpportunityAttackRuntime;
 import server.agents.runtime.AgentMapEnvironmentService;
 import server.agents.runtime.AgentMapTransitionRuntime;
-import server.agents.runtime.AgentMovementOnlyRuntime;
+import server.agents.runtime.AgentMovementOnlyStepRuntime;
 import server.agents.runtime.AgentMovementTickRuntime;
 import server.agents.runtime.AgentOfflineLoadRuntime;
 import server.agents.runtime.AgentPartyLifecycleService;
@@ -52,7 +52,6 @@ import server.agents.runtime.AgentStuckDetectionRuntime;
 import server.agents.runtime.AgentTickFailureRuntime;
 import server.agents.runtime.AgentTickCoreRuntime;
 import server.agents.runtime.AgentTickOrchestrator;
-import server.agents.runtime.AgentTickStateMaintenanceService;
 
 import server.agents.capabilities.looting.AgentGrindLootTargetService;
 import server.agents.capabilities.social.AgentScrollReactionNotificationService;
@@ -78,7 +77,6 @@ import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementCommandRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotPotionStateRuntime;
 import server.agents.integration.AgentBotPqRuntime;
@@ -86,7 +84,6 @@ import server.agents.integration.AgentBotReplyChannelStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
 import server.agents.integration.AgentBotShopStateRuntime;
-import server.agents.integration.AgentBotTickStateRuntime;
 import server.agents.integration.AgentBotTargetedCommandMatch;
 import server.agents.plans.AgentTask;
 import server.agents.plans.AgentScriptItemActionService;
@@ -624,38 +621,26 @@ public class BotManager {
     }
 
     boolean stepMovementOnly(BotEntry entry, long tickAtMs) {
-        if (!AgentBotRuntimeIdentityRuntime.hasBot(entry)) {
-            return false;
-        }
-
-        boolean runAiTick = AgentTickOrchestrator.prepareTick(
-                entry, BotMovementManager.cfg.TICK_MS, cfg.AI_TICK_MS, tickAtMs);
-
-        AgentTargetSnapshot targetSnapshot = captureTargetSnapshot(entry);
-        Point ownerPos = targetSnapshot.rawOwnerPos();
-        AgentTickStateMaintenanceService.updateObservedLeaderMotion(entry, ownerPos);
-        AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, ownerPos);
-        stepMovementOnly(entry, targetSnapshot.primaryTargetPos(), ownerPos, runAiTick);
-        return runAiTick;
+        return AgentMovementOnlyStepRuntime.stepMovementOnly(entry, tickAtMs, movementOnlyStepConfig());
     }
 
     void stepMovementOnly(BotEntry entry,
                           Point targetPos,
                           Point ownerPos,
                           boolean runAiTick) {
-        AgentMovementOnlyRuntime.stepMovementOnly(
-                entry,
-                targetPos,
-                runAiTick,
-                AgentBotTickStateRuntime.lastTickAtMs(entry),
-                this::resolveFollowAnchor,
-                new AgentMovementOnlyRuntime.MovementOnlyConfig(
-                        BotMovementManager.cfg.TELEPORT_DIST,
-                        BotMovementManager.cfg.OOB_TELEPORT_DIST,
-                        cfg.GRIND_PARTY_TELEPORT_DIST_MULTIPLIER,
-                        BotMovementManager.cfg.FOLLOW_DIST,
-                        BotMovementManager.cfg.STOP_DIST,
-                        cfg.ENABLE_UNSTUCK));
+        AgentMovementOnlyStepRuntime.stepMovementOnly(entry, targetPos, runAiTick, movementOnlyStepConfig());
+    }
+
+    private static AgentMovementOnlyStepRuntime.MovementOnlyStepConfig movementOnlyStepConfig() {
+        return new AgentMovementOnlyStepRuntime.MovementOnlyStepConfig(
+                BotMovementManager.cfg.TICK_MS,
+                cfg.AI_TICK_MS,
+                BotMovementManager.cfg.TELEPORT_DIST,
+                BotMovementManager.cfg.OOB_TELEPORT_DIST,
+                cfg.GRIND_PARTY_TELEPORT_DIST_MULTIPLIER,
+                BotMovementManager.cfg.FOLLOW_DIST,
+                BotMovementManager.cfg.STOP_DIST,
+                cfg.ENABLE_UNSTUCK);
     }
 
     static boolean tryFollowIdleMovementFastPath(BotEntry entry, Character bot, Point targetPos, long nowMs) {

@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Ownerless movement-only tick preparation moved from BotManager to
+  `server.agents.runtime.AgentMovementOnlyStepRuntime`. BotManager now passes
+  only legacy movement config values while Agent runtime owns cadence,
+  snapshot, leader-motion, and movement-only hook handoff.
 - Dead-state tick hook wiring moved from BotManager to
   `server.agents.runtime.AgentDeathTickRuntime`. BotManager now delegates
   dead-tick handling while Agent runtime owns dead-state entry, respawn, and

@@ -26,6 +26,8 @@ Target package groups:
   `AgentTargetSnapshotRuntime`.
   Tick leader/session lookup enters through `AgentLeaderSessionRuntime`.
   Dead-state tick hook wiring enters through `AgentDeathTickRuntime`.
+  Ownerless movement-only tick preparation enters through
+  `AgentMovementOnlyStepRuntime`.
   BotManager remains only a temporary compatibility caller for legacy entry
   points.
 - `server.agents.model`: identity, mode, profile, leader reference.
