@@ -23,6 +23,20 @@ public final class AgentLeaderSafetyRuntime {
                                                    Character agent,
                                                    Character leader,
                                                    long nowMs,
+                                                   int leaderCharId) {
+        return handleInactiveLeaderTick(
+                entry,
+                agent,
+                leader,
+                nowMs,
+                leaderCharId,
+                AgentRuntimeConfig.cfg.OWNER_INACTIVE_TOWN_RETURN_MS);
+    }
+
+    public static boolean handleInactiveLeaderTick(BotEntry entry,
+                                                   Character agent,
+                                                   Character leader,
+                                                   long nowMs,
                                                    int leaderCharId,
                                                    long inactiveTownReturnMs) {
         return AgentLeaderSafetyService.handleInactiveLeaderTick(

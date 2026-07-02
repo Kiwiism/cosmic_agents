@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Inactive-leader town-return timeout ownership now lives in
+  `server.agents.runtime.AgentLeaderSafetyRuntime.handleInactiveLeaderTick(entry, agent, leader, nowMs, leaderId)`.
+  BotManager no longer passes `OWNER_INACTIVE_TOWN_RETURN_MS`; it only keeps a
+  compatibility callback into the Agent runtime leader-safety entry.
 - Tick-failure default hook wiring now lives in
   `server.agents.runtime.AgentTickFailureRuntime.handleFailure(entry, leaderId, agentId, failure)`.
   BotManager no longer owns the private tick-failure callback or supplies the

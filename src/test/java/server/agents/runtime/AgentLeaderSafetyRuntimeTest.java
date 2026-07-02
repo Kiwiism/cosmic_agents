@@ -17,6 +17,36 @@ import static org.mockito.Mockito.mockStatic;
 
 class AgentLeaderSafetyRuntimeTest {
     @Test
+    void defaultInactiveLeaderTickUsesAgentRuntimeConfigTimeout() {
+        BotEntry entry = mock(BotEntry.class);
+        Character agent = mock(Character.class);
+        List<String> calls = new ArrayList<>();
+
+        try (MockedStatic<AgentLeaderSafetyService> service = mockStatic(AgentLeaderSafetyService.class)) {
+            service.when(() -> AgentLeaderSafetyService.handleInactiveLeaderTick(
+                            eq(entry),
+                            eq(null),
+                            eq(1234L),
+                            any(AgentLeaderSafetyService.InactiveLeaderTickHooks.class)))
+                    .thenAnswer(invocation -> {
+                        AgentLeaderSafetyService.InactiveLeaderTickHooks hooks = invocation.getArgument(3);
+                        calls.add("timeout:" + hooks.inactiveTownReturnMs());
+                        return true;
+                    });
+
+            boolean handled = AgentLeaderSafetyRuntime.handleInactiveLeaderTick(
+                    entry,
+                    agent,
+                    null,
+                    1234L,
+                    77);
+
+            assertTrue(handled);
+            assertEquals(List.of("timeout:" + AgentRuntimeConfig.cfg.OWNER_INACTIVE_TOWN_RETURN_MS), calls);
+        }
+    }
+
+    @Test
     void delegatesInactiveLeaderTickThroughAgentRuntimeHooks() {
         BotEntry entry = mock(BotEntry.class);
         Character agent = mock(Character.class);

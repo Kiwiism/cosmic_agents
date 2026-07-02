@@ -460,8 +460,7 @@ public class BotManager {
                 bot,
                 owner,
                 nowMs,
-                ownerCharId,
-                cfg.OWNER_INACTIVE_TOWN_RETURN_MS);
+                ownerCharId);
     }
 
     private boolean shouldTownWarpForOwnerInactive(BotEntry entry) {

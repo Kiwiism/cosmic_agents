@@ -33,6 +33,8 @@ Target package groups:
   Standalone move-target config-bound dispatch enters through
   `AgentStandaloneMoveTargetRuntime`.
   Tick-failure default hook wiring enters through `AgentTickFailureRuntime`.
+  Inactive-leader town-return timeout ownership enters through
+  `AgentLeaderSafetyRuntime`.
   BotManager remains only a temporary compatibility caller for legacy entry
   points.
 - `server.agents.model`: identity, mode, profile, leader reference.

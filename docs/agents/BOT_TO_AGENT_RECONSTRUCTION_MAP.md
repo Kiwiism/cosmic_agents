@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Inactive-leader town-return timeout ownership moved from BotManager to
+  `server.agents.runtime.AgentLeaderSafetyRuntime`. BotManager now delegates
+  inactive leader handling without reading the legacy runtime config itself.
 - Tick-failure default hook wiring moved from BotManager to
   `server.agents.runtime.AgentTickFailureRuntime`. BotManager now passes the
   Agent runtime failure handler directly into `AgentTickOrchestrator`.
