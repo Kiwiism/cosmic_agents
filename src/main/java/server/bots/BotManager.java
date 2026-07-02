@@ -19,6 +19,7 @@ import server.agents.capabilities.combat.AgentGrindNavigationTargetSelector;
 import server.agents.capabilities.combat.AgentLocalOpportunityAttackService;
 import server.agents.capabilities.combat.AgentRangedPriorityTargetSelector;
 import server.agents.capabilities.combat.AgentGrindRangedEngagementService;
+import server.agents.capabilities.combat.AgentGrindNavigationTailService;
 import server.agents.capabilities.quest.AgentPartyQuestSyncService;
 
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
@@ -1333,28 +1334,15 @@ public class BotManager {
         if (engagement.consumedTick()) {
             return new LocalOpportunityAttackResult(true, engagement.targetPos());
         }
-        // Retreat positioning is a local combat adjustment, not an inter-region path target.
-        // Feeding a synthetic same-Y retreat point into nav while the monster is elsewhere
-        // can make rope/ladder bots path back onto the nearby foothold instead of toward
-        // the monster's actual region.
-        targetPos = crossRegionRetreatPos != null
-                ? crossRegionRetreatPos
-                : aoeRepositionPos != null
-                ? selectGrindNavigationTarget(entry, botPos, aoeRepositionPos)
-                : selectGrindNavigationTarget(entry, botPos, tp, shouldRetreatForRangedSpacing);
-        // Clear only once the bot has physically left the retreat zone, not after the
-        // first retreat tick — otherwise the flag resets while the bot is still overlapping
-        // and allowOneDegenerateAttack re-opens the attack gate next tick.
-        if (AgentBotDegenerateAttackStateRuntime.degenAttackDone(entry)
-                && !AgentAttackExecutionProvider.shouldRetreatFromNearbyTarget(grindWeaponType, botPos, tp)) {
-            AgentBotDegenerateAttackStateRuntime.clear(entry);
-        }
-        // Small detour: take a very close loot drop on the way when not retreating.
-        if (crossRegionRetreatPos == null && !shouldRetreatForRangedSpacing
-                && aoeRepositionPos == null && !AgentBotPatrolStateRuntime.hasPatrolRegion(entry)) {
-            Point lootPos = convenientLootTarget(entry, botPos, tp);
-            if (lootPos != null) targetPos = lootPos;
-        }
+        targetPos = AgentGrindNavigationTailService.resolveNavigationTarget(
+                entry,
+                botPos,
+                tp,
+                grindWeaponType,
+                crossRegionRetreatPos,
+                aoeRepositionPos,
+                shouldRetreatForRangedSpacing,
+                grindNavigationTailHooks());
         return new LocalOpportunityAttackResult(false, targetPos);
     }
 
@@ -1396,6 +1384,13 @@ public class BotManager {
                 BotMovementManager::initiateJump,
                 BotPhysicsEngine::idleOnGround,
                 BotMovementManager::broadcastMovement);
+    }
+
+    private static AgentGrindNavigationTailService.Hooks grindNavigationTailHooks() {
+        return new AgentGrindNavigationTailService.Hooks(
+                BotManager::selectGrindNavigationTarget,
+                AgentAttackExecutionProvider::shouldRetreatFromNearbyTarget,
+                BotManager::convenientLootTarget);
     }
 
     private void handleBotTickFailure(BotEntry entry, int ownerCharId, int botCharId, Throwable t) {

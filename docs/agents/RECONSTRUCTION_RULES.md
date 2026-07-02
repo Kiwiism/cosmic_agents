@@ -3028,6 +3028,12 @@ Recent reconstruction notes:
   cross-region retreat precompute, attack cooldown comparison, ranged degen
   latch, jump-toward-target branch, and stand-still-in-range behavior are
   preserved.
+- Grind-mode navigation tail selection now lives in
+  `server.agents.capabilities.combat.AgentGrindNavigationTailService`.
+  BotManager supplies temporary navigation, retreat-policy, and convenient-loot
+  hooks. The same cross-region retreat priority, AoE navigation selection,
+  degenerate-retreat latch clearing, patrol guard, and convenient-loot detour
+  override are preserved.
 
 Initial reconstruction order:
 
