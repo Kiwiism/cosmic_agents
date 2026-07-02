@@ -59,7 +59,6 @@ import server.agents.runtime.AgentLocalOpportunityAttackRuntime;
 import server.agents.runtime.AgentMapEnvironmentService;
 import server.agents.runtime.AgentMapTransitionRuntime;
 import server.agents.runtime.AgentModeService;
-import server.agents.runtime.AgentMovementPhaseRuntime;
 import server.agents.runtime.AgentMovementOnlyRuntime;
 import server.agents.runtime.AgentMovementTickRuntime;
 import server.agents.runtime.AgentOwnerlessTickService;
@@ -1324,9 +1323,6 @@ public class BotManager {
         AgentMovementTickRuntime.stepMovementCore(entry, targetPos, runAiTick, cfg.ENABLE_UNSTUCK, BotMovementManager.cfg.STOP_DIST);
     }
 
-    private void tickMovementPhase(BotEntry entry, Point targetPos, boolean runAiTick) {
-        AgentMovementPhaseRuntime.tickMovementPhase(entry, targetPos, runAiTick);
-    }
     private static void tickStuckDetection(BotEntry entry) {
         AgentStuckDetectionRuntime.tickStuckDetection(entry, cfg.ENABLE_UNSTUCK);
     }

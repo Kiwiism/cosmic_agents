@@ -91,7 +91,8 @@ Recent reconstruction notes:
 - Movement phase hook construction now lives in
   `server.agents.runtime.AgentMovementPhaseRuntime`. The temporary public
   BotMovementManager phase methods exist only until movement internals are
-  reconstructed into Agent movement modules.
+  reconstructed into Agent movement modules. BotManager no longer keeps a dead
+  movement-phase wrapper; movement-core runtime owns the call.
 - Movement stuck-detection hook construction now lives in
   `server.agents.runtime.AgentStuckDetectionRuntime`. Keep temporary
   `BotMovementManager` and `BotPhysicsEngine` calls isolated there until the
