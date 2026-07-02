@@ -43,7 +43,8 @@ Recent reconstruction notes:
   tick context and scripted move combat hooks call the Agent runtime bridge.
 - Common tick hook construction now lives in
   `server.agents.runtime.AgentCommonTickRuntime`. BotManager should only pass
-  the temporary script-task tick callback until script tasks are reconstructed.
+  the temporary script-task tick callback until script tasks are reconstructed;
+  production live tick gates now call the Agent common tick runtime directly.
 - Standalone move-target hook construction now lives in
   `server.agents.runtime.AgentStandaloneMoveTargetRuntime`. BotManager passes
   only legacy movement config values for this ownerless movement path.

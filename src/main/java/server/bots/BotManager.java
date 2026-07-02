@@ -603,9 +603,9 @@ public class BotManager {
         AgentTickOrchestrator.runGuardedTick(entry, ownerCharId, botCharId, this::tickCore, this::handleBotTickFailure);
     }
 
-    /** Test-only hook: invokes {@link #runCommonTickSystems} on a caller-owned entry. */
+    /** Test-only hook: invokes Agent common tick systems on a caller-owned entry. */
     void runCommonTickSystemsForTest(BotEntry entry, Character bot, Character owner, boolean runAiTick) {
-        runCommonTickSystems(entry, bot, owner, runAiTick);
+        AgentCommonTickRuntime.runCommonTickSystems(entry, bot, owner, runAiTick, this::tickScriptTasks);
     }
 
     /**
@@ -830,7 +830,8 @@ public class BotManager {
 
     private AgentLiveTickGateService.Hooks liveTickGateHooks(boolean perf) {
         return new AgentLiveTickGateService.Hooks(
-                this::runCommonTickSystems,
+                (entry, bot, owner, runAiTick) ->
+                        AgentCommonTickRuntime.runCommonTickSystems(entry, bot, owner, runAiTick, this::tickScriptTasks),
                 (tradeEntry, tradeBot) -> AgentTradeWindowTickService.tickIfTradeWindowOpen(tradeEntry, tradeBot, (physicsEntry, physicsBot) -> {
                     if (!perf) {
                         AgentIdlePhysicsRuntime.tickPhysicsOnly(physicsEntry, physicsBot);
@@ -1276,10 +1277,6 @@ public class BotManager {
                 (deadEntry, deadBot) -> AgentBotCombatDeathRuntime.enterDeadState(deadEntry, deadBot, false, AgentCombatConfig.cfg),
                 () -> respawnBot(entry, bot, owner),
                 System.currentTimeMillis());
-    }
-
-    private boolean runCommonTickSystems(BotEntry entry, Character bot, Character owner, boolean runAiTick) {
-        return AgentCommonTickRuntime.runCommonTickSystems(entry, bot, owner, runAiTick, this::tickScriptTasks);
     }
 
     boolean stepMovementOnly(BotEntry entry, long tickAtMs) {
