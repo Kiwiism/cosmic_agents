@@ -54,9 +54,8 @@ import server.agents.runtime.AgentRecoveryTeleportService;
 import server.agents.runtime.AgentReturnScrollService;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeCleanupService;
-import server.agents.runtime.AgentScriptTaskCompletionService;
+import server.agents.runtime.AgentScriptTaskExecutionService;
 import server.agents.runtime.AgentScriptTaskQueueService;
-import server.agents.runtime.AgentScriptTaskStartService;
 import server.agents.runtime.AgentScriptTaskTickService;
 import server.agents.runtime.AgentTargetSnapshot;
 import server.agents.runtime.AgentTargetSnapshotService;
@@ -1856,25 +1855,11 @@ public class BotManager {
     }
 
     private void startScriptTask(BotEntry entry, AgentTask task) {
-        AgentScriptTaskStartService.start(
-                entry,
-                task,
-                new AgentScriptTaskStartService.StartHooks(
-                        (point, precise) -> startMoveTo(entry, point, precise),
-                        target -> startFollow(entry, target),
-                        targetId -> resolveFollowCharacterById(entry, targetId),
-                        () -> startGrind(entry),
-                        () -> startStop(entry),
-                        (type, itemId, quantity) -> AgentScriptItemActionService.dropItem(entry, type, itemId, quantity)));
+        AgentScriptTaskExecutionService.start(entry, task);
     }
 
     private boolean isScriptTaskComplete(BotEntry entry, AgentTask task) {
-        return AgentScriptTaskCompletionService.isComplete(
-                entry, task, BotMovementManager.cfg.STOP_DIST, targetId -> resolveFollowCharacterById(entry, targetId));
-    }
-
-    private Character resolveFollowCharacterById(BotEntry entry, int targetCharacterId) {
-        return AgentFollowAnchorService.resolveTargetFromRuntimeRegistry(entry, targetCharacterId);
+        return AgentScriptTaskExecutionService.isComplete(entry, task, BotMovementManager.cfg.STOP_DIST);
     }
 
     /**

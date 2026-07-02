@@ -2988,6 +2988,11 @@ Recent reconstruction notes:
   retreat decision, jump-toward-target branch, in-air attack behavior,
   cooldown/move-window gate, degenerate ranged marker, and consumed-tick result
   semantics are preserved.
+- Script-task start/completion hook wiring now lives in
+  `server.agents.runtime.AgentScriptTaskExecutionService`; BotManager keeps
+  temporary wrappers for tick integration only. The same move/follow/grind/stop
+  command routing, drop-item action, runtime-registry follow-target resolution,
+  and normal/precise arrival distance behavior are preserved.
 
 Initial reconstruction order:
 
