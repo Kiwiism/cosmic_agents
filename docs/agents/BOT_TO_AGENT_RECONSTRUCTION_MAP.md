@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Scripted move local-combat tick dispatch moved from BotManager to
+  `server.agents.runtime.AgentScriptedMoveCombatTickService`. BotManager now
+  supplies temporary hooks for action-window cleanup, local-opportunity attack,
+  movement-core stepping, and performance timing.
 - Follow-mode local opportunity attack dispatch moved from BotManager to
   `server.agents.runtime.AgentFollowOpportunityTickService`. BotManager now
   supplies the temporary local-opportunity attack hook and performance timing.

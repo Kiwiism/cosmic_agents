@@ -3078,6 +3078,12 @@ Recent reconstruction notes:
   and performance timing. The same following, AI-cadence, climbing, same-map,
   anchor-distance, target-position update, and consumed-tick rules are
   preserved.
+- Scripted move local-combat tick dispatch now lives in
+  `server.agents.runtime.AgentScriptedMoveCombatTickService`. BotManager keeps
+  a temporary compatibility adapter for action-window cleanup, local-opportunity
+  attack execution, movement-core stepping, and performance timing. The same
+  local-opportunity MOVE_TO predicate, consumed attack early return, movement
+  target update, and movement-core tail are preserved.
 
 Initial reconstruction order:
 

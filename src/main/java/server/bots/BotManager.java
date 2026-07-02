@@ -61,6 +61,7 @@ import server.agents.runtime.AgentRecoveryTeleportService;
 import server.agents.runtime.AgentReturnScrollService;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeCleanupService;
+import server.agents.runtime.AgentScriptedMoveCombatTickService;
 import server.agents.runtime.AgentScriptTaskExecutionService;
 import server.agents.runtime.AgentScriptTaskQueueService;
 import server.agents.runtime.AgentScriptTaskTickService;
@@ -1234,29 +1235,41 @@ public class BotManager {
             return;
         }
 
-        if (runAiTick && shouldUseScriptedMoveLocalCombat(entry, targetPos)) {
-            clearActionMoveWindowIfSettled(entry, botPos, targetPos);
-            LocalOpportunityAttackResult result;
-            if (!perf) {
-                result = tryLocalOpportunityAttack(
-                        entry, bot, botPos, targetPos, targetPos, true, true);
-            } else {
-                long tOppS = System.nanoTime();
-                result = tryLocalOpportunityAttack(
-                        entry, bot, botPos, targetPos, targetPos, true, true);
-                AgentPerformanceMonitor.record("opportunity-attack", System.nanoTime() - tOppS);
-            }
-            if (result.consumedTick()) {
-                return;
-            }
-            targetPos = result.targetPos();
-            if (!perf) {
-                stepMovementCore(entry, targetPos, runAiTick);
-            } else {
-                long tStep = System.nanoTime();
-                try { stepMovementCore(entry, targetPos, runAiTick); }
-                finally { AgentPerformanceMonitor.record("step-movement-core", System.nanoTime() - tStep); }
-            }
+        AgentScriptedMoveCombatTickService.Result scriptedMoveCombat =
+                AgentScriptedMoveCombatTickService.tickScriptedMoveCombat(
+                        entry,
+                        bot,
+                        botPos,
+                        targetPos,
+                        runAiTick,
+                        new AgentScriptedMoveCombatTickService.Hooks(
+                                BotManager::clearActionMoveWindowIfSettled,
+                                (attackEntry, attackBot, attackBotPos, attackTargetPos) -> {
+                                    LocalOpportunityAttackResult result;
+                                    if (!perf) {
+                                        result = tryLocalOpportunityAttack(
+                                                attackEntry, attackBot, attackBotPos, attackTargetPos,
+                                                attackTargetPos, true, true);
+                                    } else {
+                                        long tOppS = System.nanoTime();
+                                        result = tryLocalOpportunityAttack(
+                                                attackEntry, attackBot, attackBotPos, attackTargetPos,
+                                                attackTargetPos, true, true);
+                                        AgentPerformanceMonitor.record("opportunity-attack", System.nanoTime() - tOppS);
+                                    }
+                                    return new AgentScriptedMoveCombatTickService.Result(
+                                            result.consumedTick(), result.targetPos());
+                                },
+                                (moveEntry, moveTargetPos, moveRunAiTick) -> {
+                                    if (!perf) {
+                                        stepMovementCore(moveEntry, moveTargetPos, moveRunAiTick);
+                                    } else {
+                                        long tStep = System.nanoTime();
+                                        try { stepMovementCore(moveEntry, moveTargetPos, moveRunAiTick); }
+                                        finally { AgentPerformanceMonitor.record("step-movement-core", System.nanoTime() - tStep); }
+                                    }
+                                }));
+        if (scriptedMoveCombat.consumedTick()) {
             return;
         }
 
@@ -1466,10 +1479,6 @@ public class BotManager {
                     BotMovementManager.broadcastMovement(entry);
                 },
                 this::stepMovementCore);
-    }
-
-    private static boolean shouldUseScriptedMoveLocalCombat(BotEntry entry, Point targetPos) {
-        return AgentBotScriptTaskStateRuntime.isActiveLocalOpportunityMoveTo(entry, targetPos);
     }
 
     private LocalOpportunityAttackResult tryLocalOpportunityAttack(BotEntry entry,
