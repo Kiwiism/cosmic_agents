@@ -23,6 +23,7 @@ import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
 import server.agents.integration.AgentBotCombatAttackRuntime;
 import server.agents.integration.AgentBotCombatPlanRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
+import server.agents.runtime.AgentFollowIdleMovementRuntime;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSpawnPlacementRuntime;
 import server.agents.runtime.AgentTargetSnapshot;
@@ -690,15 +691,15 @@ class BotManagerTest {
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
         AgentBotModeStateRuntime.setFollowing(entry, true);
 
-        assertTrue(BotManager.tryFollowIdleMovementFastPath(entry, bot, new Point(100, 100), 1_000L));
+        assertTrue(AgentFollowIdleMovementRuntime.tryFollowIdleMovementFastPath(entry, bot, new Point(100, 100), 1_000L));
         assertEquals("idle-fast", AgentBotNavigationDebugStateRuntime.lastDecision(entry));
-        assertTrue(BotManager.tryFollowIdleMovementFastPath(entry, bot, new Point(100, 100), 1_500L),
+        assertTrue(AgentFollowIdleMovementRuntime.tryFollowIdleMovementFastPath(entry, bot, new Point(100, 100), 1_500L),
                 "idle follow bots should skip per-tick nav/ground movement between periodic checks");
-        assertFalse(BotManager.tryFollowIdleMovementFastPath(entry, bot, new Point(100, 100), 2_000L),
+        assertFalse(AgentFollowIdleMovementRuntime.tryFollowIdleMovementFastPath(entry, bot, new Point(100, 100), 2_000L),
                 "idle fast path should allow a periodic full movement/nav check");
 
         entry.observedOwnerStepX = 1;
-        assertFalse(BotManager.tryFollowIdleMovementFastPath(entry, bot, new Point(100, 100), 2_100L),
+        assertFalse(AgentFollowIdleMovementRuntime.tryFollowIdleMovementFastPath(entry, bot, new Point(100, 100), 2_100L),
                 "owner movement should force normal movement resolution");
     }
 

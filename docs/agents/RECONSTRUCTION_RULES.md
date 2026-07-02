@@ -17,6 +17,9 @@ Rules:
 
 Recent reconstruction notes:
 
+- The test-only BotManager `tryFollowIdleMovementFastPath` compatibility
+  wrapper was removed. Tests now call
+  `AgentFollowIdleMovementRuntime.tryFollowIdleMovementFastPath` directly.
 - Guarded tick entry ownership now lives in
   `AgentTickRuntime.tick(entry, leaderId, agentId, issueGrind, issueFollow)`.
   BotManager no longer calls `AgentTickOrchestrator.runGuardedTick` directly

@@ -16,7 +16,6 @@ import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentFormationService;
 import server.agents.runtime.AgentFormationRuntime;
-import server.agents.runtime.AgentFollowIdleMovementRuntime;
 import server.agents.runtime.AgentFormationCommandRuntime;
 import server.agents.runtime.AgentGrindCombatRuntime;
 import server.agents.runtime.AgentGrindNavigationRuntime;
@@ -518,10 +517,6 @@ public class BotManager {
                           Point ownerPos,
                           boolean runAiTick) {
         AgentMovementOnlyStepRuntime.stepMovementOnly(entry, targetPos, runAiTick);
-    }
-
-    static boolean tryFollowIdleMovementFastPath(BotEntry entry, Character bot, Point targetPos, long nowMs) {
-        return AgentFollowIdleMovementRuntime.tryFollowIdleMovementFastPath(entry, bot, targetPos, nowMs);
     }
 
     public void reloginBot(int charId, int ownerCharId, int world, int channel) {
