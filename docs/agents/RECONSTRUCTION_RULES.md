@@ -3435,6 +3435,12 @@ Recent reconstruction notes:
   temporary script-task, grind, and follow callbacks plus legacy teleport
   thresholds, while Agent runtime owns common-system, trade-window, idle,
   recovery, and tracked map-change gate wiring and performance labels.
+- Live mode hook construction now lives in
+  `server.agents.runtime.AgentLiveModeTickRuntime`. BotManager keeps only
+  temporary callbacks for local opportunity attacks, movement-core stepping,
+  anchored farm ticking, and grind-mode ticking while Agent runtime owns shop,
+  follow opportunity, follow idle, scripted move combat, anchored farm, grind
+  dispatch, final movement-tail wiring, and matching performance labels.
 
 Initial reconstruction order:
 

@@ -32,6 +32,12 @@ Recent map updates:
   temporary script-task, grind, and follow callbacks plus teleport config
   values while Agent runtime owns common tick, trade-window physics, idle,
   recovery, tracked map-change, and matching performance timing labels.
+- Live mode hook wiring moved from BotManager to
+  `server.agents.runtime.AgentLiveModeTickRuntime`. BotManager now passes only
+  temporary local-attack, movement-core, anchored-farm, and grind callbacks
+  while Agent runtime owns shop visit, follow opportunity, follow idle,
+  scripted move combat, anchored farm, grind dispatch, final movement tail, and
+  matching performance timing labels.
 - Anchored farm hook wiring moved from BotManager to
   `server.agents.runtime.AgentAnchoredFarmRuntime`. BotManager now passes only
   legacy movement config values while Agent runtime owns local-opportunity,
