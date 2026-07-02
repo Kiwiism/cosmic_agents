@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Tick-core callback wiring now points directly at Agent runtime modules for
+  leader lookup, leader safety, map grounding, standalone move target, death
+  handling, target snapshots, movement core, and anchored farm dispatch.
+  BotManager no longer keeps private forwarding wrappers for those runtime
+  seams, and an unused private character-id registry lookup was removed.
 - Movement-only default config ownership now lives in
   `AgentMovementOnlyStepRuntime.stepMovementOnly(entry, tickAtMs)` and
   `stepMovementOnly(entry, target, runAiTick)`. BotManager no longer builds

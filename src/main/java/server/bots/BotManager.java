@@ -156,10 +156,6 @@ public class BotManager {
         AgentPartyLifecycleService.joinAgentToLeaderParty(owner, bot);
     }
 
-    private BotEntry getBotEntry(int ownerCharId, int botCharId) {
-        return AgentRuntimeRegistry.findByCharacterId(ownerCharId, botCharId);
-    }
-
     public Character loadOfflineBot(int charId, int world, int channel, MapleMap targetMap, Point desiredPosition) throws SQLException {
         return AgentOfflineLoadRuntime.loadOfflineAgent(charId, world, channel, targetMap, desiredPosition);
     }
@@ -398,19 +394,19 @@ public class BotManager {
                 entry,
                 ownerCharId,
                 botCharId,
-                this::resolveTickOwner,
-                this::handleOwnerOfflineOrDead,
-                this::groundAfterMapChange,
-                this::tickStandaloneMoveTarget,
-                this::handleDeadTick,
-                this::resolveFollowAnchor,
-                this::captureTargetSnapshot,
+                AgentLeaderSessionRuntime::resolveTickLeader,
+                AgentLeaderSafetyRuntime::handleInactiveLeaderTick,
+                AgentMapTransitionRuntime::groundAfterMapChange,
+                AgentStandaloneMoveTargetRuntime::tickStandaloneMoveTarget,
+                AgentDeathTickRuntime::handleDeadTick,
+                AgentTargetSnapshotRuntime::resolveFollowAnchor,
+                AgentTargetSnapshotRuntime::captureTargetSnapshot,
                 entryToTick -> AgentScriptTaskRuntime.tick(entryToTick, BotMovementManager.cfg.STOP_DIST),
                 this::issueGrind,
                 this::issueFollowOwner,
                 AgentLocalOpportunityAttackRuntime::tryLocalOpportunityAttackForLiveMode,
-                this::stepMovementCore,
-                this::tickAnchoredFarm,
+                AgentMovementTickRuntime::stepMovementCore,
+                AgentAnchoredFarmRuntime::tickAnchoredFarm,
                 (grindEntry, grindAgent, grindAgentPosition, grindTargetPosition, grindRunAiTick) ->
                         AgentGrindModeRuntime.tickGrindMode(
                                 grindEntry,
@@ -418,7 +414,7 @@ public class BotManager {
                                 grindAgentPosition,
                                 grindTargetPosition,
                                 grindRunAiTick,
-                                this::stepMovementCore,
+                                AgentMovementTickRuntime::stepMovementCore,
                                 BotManager.cfg.LOOT_RADIUS),
                 BotMovementManager.cfg.TELEPORT_DIST,
                 BotMovementManager.cfg.OOB_TELEPORT_DIST,
@@ -435,31 +431,6 @@ public class BotManager {
                 bot,
                 botPos,
                 preferredTarget);
-    }
-
-    private void tickAnchoredFarm(BotEntry entry, Character bot, Point botPos, boolean runAiTick) {
-        AgentAnchoredFarmRuntime.tickAnchoredFarm(entry, bot, botPos, runAiTick);
-    }
-
-    private Character resolveTickOwner(BotEntry entry, int ownerCharId) {
-        return AgentLeaderSessionRuntime.resolveTickLeader(entry, ownerCharId);
-    }
-
-    /**
-     * If the owner has been offline or dead for >= 5 minutes, scroll/warp the
-     * bot to the nearest town and idle there. Prevents pot drain, death-loops
-     * with no anchor, and silent grinding while the owner is unable to leech.
-     *
-     * Returns true when a town warp was performed this tick (caller should
-     * short-circuit; map-change reset runs on the next tick).
-     */
-    private boolean handleOwnerOfflineOrDead(BotEntry entry, Character bot, Character owner, long nowMs, int ownerCharId) {
-        return AgentLeaderSafetyRuntime.handleInactiveLeaderTick(
-                entry,
-                bot,
-                owner,
-                nowMs,
-                ownerCharId);
     }
 
     private boolean shouldTownWarpForOwnerInactive(BotEntry entry) {
@@ -586,33 +557,6 @@ public class BotManager {
                 fallbackRangeY,
                 cfg.LOOT_RADIUS);
     }
-
-    /**
-     * Apply Return Scroll - Nearest Town (item 2030000) via StatEffect.applyTo.
-     * The standard scroll effect handles random-portal warp inside applyTo;
-     * we only need to remove the consumable afterwards (mirrors ScrollHandler).
-     * Returns false when no 2030000 is in the bot's USE inventory or applyTo failed.
-     */
-    /**
-     * Owner-offline tick path for Agent move-target state — drives the bot to its
-     * point using the same stepMovementCore as the regular pipeline. The
-     * regular tick handles moveTarget when owner is online; this is the
-     * minimal version for owner-null sessions (currently the offline-town
-     * cluster walk). Arrival is auto-detected by clearReachedMoveTarget
-     * inside stepMovementCore.
-     */
-    private void tickStandaloneMoveTarget(BotEntry entry, Character bot, boolean runAiTick) {
-        AgentStandaloneMoveTargetRuntime.tickStandaloneMoveTarget(entry, bot, runAiTick);
-    }
-
-    private boolean groundAfterMapChange(BotEntry entry, Character bot) {
-        return AgentMapTransitionRuntime.groundAfterMapChange(entry, bot);
-    }
-
-    private boolean handleDeadTick(BotEntry entry, Character bot, Character owner) {
-        return AgentDeathTickRuntime.handleDeadTick(entry, bot, owner);
-    }
-
     boolean stepMovementOnly(BotEntry entry, long tickAtMs) {
         return AgentMovementOnlyStepRuntime.stepMovementOnly(entry, tickAtMs);
     }
@@ -626,12 +570,6 @@ public class BotManager {
 
     static boolean tryFollowIdleMovementFastPath(BotEntry entry, Character bot, Point targetPos, long nowMs) {
         return AgentFollowIdleMovementRuntime.tryFollowIdleMovementFastPath(entry, bot, targetPos, nowMs);
-    }
-
-    private void stepMovementCore(BotEntry entry,
-                                  Point targetPos,
-                                  boolean runAiTick) {
-        AgentMovementTickRuntime.stepMovementCore(entry, targetPos, runAiTick);
     }
 
     public void reloginBot(int charId, int ownerCharId, int world, int channel) {

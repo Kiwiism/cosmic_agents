@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- BotManager tick-core callback wiring now uses direct Agent runtime method
+  references for leader/session lookup, inactive leader safety, map transition
+  grounding, ownerless move-target ticking, death ticks, target snapshots,
+  movement core, and anchored farm dispatch. The former private forwarding
+  wrappers were removed.
 - Movement-only default config assembly moved from BotManager to
   `server.agents.runtime.AgentMovementOnlyStepRuntime`. BotManager now keeps
   only compatibility step methods while Agent runtime owns legacy tick,
