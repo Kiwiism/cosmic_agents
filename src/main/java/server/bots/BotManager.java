@@ -55,6 +55,7 @@ import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentMonsterControlService;
 import server.agents.runtime.AgentMovementPhaseService;
 import server.agents.runtime.AgentMovementOnlyTickService;
+import server.agents.runtime.AgentMovementOnlyMapChangeService;
 import server.agents.runtime.AgentMovementTickService;
 import server.agents.runtime.AgentOwnerlessTickService;
 import server.agents.runtime.AgentPartyLifecycleService;
@@ -2001,18 +2002,17 @@ public class BotManager {
     }
 
     private boolean handleMovementOnlyMapChange(BotEntry entry, Character bot) {
-        if (AgentBotMapStateRuntime.isTrackingMap(entry, bot.getMapId())) {
-            return false;
-        }
-        AgentBotMapStateRuntime.setMapTracking(entry, bot.getMapId(), BotMovementManager.buildFhIndex(bot.getMap()));
-        Point cur = bot.getPosition();
-        Point ground = BotPhysicsEngine.findGroundPoint(bot.getMap(), new Point(cur.x, cur.y - 1));
-        BotPhysicsEngine.teleportTo(entry, bot, ground != null ? ground : cur);
-        BotMovementManager.resetEntryStateAfterTeleport(entry);
-        BotMovementManager.broadcastMovement(entry);
-        AgentShopService.onMapChange(entry, bot);
-        AgentBotManagerStatusRuntime.checkManagerStatus(entry, bot);
-        return true;
+        return AgentMovementOnlyMapChangeService.handleMapChange(
+                entry,
+                bot,
+                new AgentMovementOnlyMapChangeService.Hooks(
+                        BotMovementManager::buildFhIndex,
+                        BotPhysicsEngine::findGroundPoint,
+                        BotPhysicsEngine::teleportTo,
+                        BotMovementManager::resetEntryStateAfterTeleport,
+                        BotMovementManager::broadcastMovement,
+                        AgentShopService::onMapChange,
+                        AgentBotManagerStatusRuntime::checkManagerStatus));
     }
 
     static boolean tryFollowIdleMovementFastPath(BotEntry entry, Character bot, Point targetPos, long nowMs) {

@@ -3108,6 +3108,12 @@ Recent reconstruction notes:
   temporary compatibility adapter for the existing grind tick hook and
   performance timing. The same grind-mode gate, consumed-tick result, and target
   update semantics are preserved.
+- Movement-only map-change handling now lives in
+  `server.agents.runtime.AgentMovementOnlyMapChangeService`. BotManager keeps
+  temporary compatibility hooks for foothold indexing, ground lookup, teleport,
+  physics reset, movement broadcast, shop map-change, and manager status checks.
+  The same map-tracking guard, ground fallback, and side-effect sequence are
+  preserved.
 
 Initial reconstruction order:
 

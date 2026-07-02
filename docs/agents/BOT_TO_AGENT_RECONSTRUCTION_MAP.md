@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Movement-only map-change handling moved from BotManager to
+  `server.agents.runtime.AgentMovementOnlyMapChangeService`. BotManager now
+  supplies temporary foothold, grounding, teleport, reset, broadcast, shop, and
+  status hooks.
 - Grind-mode dispatch moved from BotManager to
   `server.agents.runtime.AgentGrindModeDispatchService`. BotManager now supplies
   only the temporary grind tick hook and performance timing; the grind decision
