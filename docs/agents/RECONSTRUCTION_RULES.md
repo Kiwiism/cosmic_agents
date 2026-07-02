@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Anchored-farm config-bound tick entry now lives in
+  `server.agents.runtime.AgentAnchoredFarmRuntime.tickAnchoredFarm(entry, agent, pos, runAiTick)`.
+  BotManager no longer passes unstuck/stop-distance config directly for
+  anchored-farm mode dispatch.
 - Movement-core config-bound entry now lives in
   `server.agents.runtime.AgentMovementTickRuntime.stepMovementCore(entry, target, runAiTick)`.
   BotManager no longer passes unstuck/stop-distance config directly for its

@@ -29,6 +29,7 @@ Target package groups:
   Ownerless movement-only tick preparation enters through
   `AgentMovementOnlyStepRuntime`.
   Movement-core config-bound stepping enters through `AgentMovementTickRuntime`.
+  Anchored-farm config-bound dispatch enters through `AgentAnchoredFarmRuntime`.
   BotManager remains only a temporary compatibility caller for legacy entry
   points.
 - `server.agents.model`: identity, mode, profile, leader reference.

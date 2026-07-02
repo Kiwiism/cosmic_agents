@@ -15,6 +15,19 @@ public final class AgentAnchoredFarmRuntime {
     public static void tickAnchoredFarm(BotEntry entry,
                                         Character agent,
                                         Point agentPosition,
+                                        boolean runAiTick) {
+        tickAnchoredFarm(
+                entry,
+                agent,
+                agentPosition,
+                runAiTick,
+                AgentRuntimeConfig.cfg.ENABLE_UNSTUCK,
+                BotMovementManager.configuredStopDist());
+    }
+
+    public static void tickAnchoredFarm(BotEntry entry,
+                                        Character agent,
+                                        Point agentPosition,
                                         boolean runAiTick,
                                         boolean enableUnstuck,
                                         int stopDistance) {

@@ -442,8 +442,7 @@ public class BotManager {
     }
 
     private void tickAnchoredFarm(BotEntry entry, Character bot, Point botPos, boolean runAiTick) {
-        AgentAnchoredFarmRuntime.tickAnchoredFarm(
-                entry, bot, botPos, runAiTick, cfg.ENABLE_UNSTUCK, BotMovementManager.cfg.STOP_DIST);
+        AgentAnchoredFarmRuntime.tickAnchoredFarm(entry, bot, botPos, runAiTick);
     }
 
     private Character resolveTickOwner(BotEntry entry, int ownerCharId) {
