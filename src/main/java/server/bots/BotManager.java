@@ -13,7 +13,7 @@ import server.agents.capabilities.dialogue.AgentWhisperCommandService;
 import server.agents.runtime.AgentAnchoredFarmRuntime;
 import server.agents.runtime.AgentChatRouteRuntime;
 import server.agents.runtime.AgentCommonTickRuntime;
-import server.agents.runtime.AgentDeathTickService;
+import server.agents.runtime.AgentDeathTickRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentFormationService;
@@ -38,7 +38,6 @@ import server.agents.runtime.AgentPartyLifecycleService;
 import server.agents.runtime.AgentPositionService;
 import server.agents.runtime.AgentRegistrationRuntime;
 import server.agents.runtime.AgentReloginRuntime;
-import server.agents.runtime.AgentRespawnRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeCleanupService;
 import server.agents.runtime.AgentScriptTaskQueueService;
@@ -66,10 +65,8 @@ import server.agents.plans.AgentScriptMoveTargetService;
 import server.agents.integration.AgentBotAmmoStateRuntime;
 import server.agents.integration.AgentBotBuffStateRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
-import server.agents.integration.AgentBotCombatDeathRuntime;
 import server.agents.integration.AgentBotCombatPlanRuntime;
 import server.agents.integration.AgentBotCombatTargetRuntime;
-import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotGrindLootStateRuntime;
@@ -623,13 +620,7 @@ public class BotManager {
     }
 
     private boolean handleDeadTick(BotEntry entry, Character bot, Character owner) {
-        return AgentDeathTickService.handleDeadTick(
-                entry,
-                bot,
-                () -> AgentBotDeathStateRuntime.shouldEnterDeadState(entry, bot.getHp()),
-                (deadEntry, deadBot) -> AgentBotCombatDeathRuntime.enterDeadState(deadEntry, deadBot, false, AgentCombatConfig.cfg),
-                () -> AgentRespawnRuntime.respawnNearLeader(entry, bot, owner),
-                System.currentTimeMillis());
+        return AgentDeathTickRuntime.handleDeadTick(entry, bot, owner);
     }
 
     boolean stepMovementOnly(BotEntry entry, long tickAtMs) {

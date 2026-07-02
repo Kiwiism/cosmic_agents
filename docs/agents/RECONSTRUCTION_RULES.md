@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Dead-state tick wiring now lives in `server.agents.runtime.AgentDeathTickRuntime`.
+  BotManager delegates the compatibility dead-tick method while Agent runtime
+  owns the dead-state entry, respawn action, and current-time hook composition
+  over `AgentDeathTickService`.
 - Tick leader/session lookup wiring now lives in
   `server.agents.runtime.AgentLeaderSessionRuntime`. BotManager delegates the
   compatibility tick-owner method while Agent runtime owns the Cosmic server

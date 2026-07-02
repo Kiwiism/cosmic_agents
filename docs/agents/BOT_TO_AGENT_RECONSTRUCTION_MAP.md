@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Dead-state tick hook wiring moved from BotManager to
+  `server.agents.runtime.AgentDeathTickRuntime`. BotManager now delegates
+  dead-tick handling while Agent runtime owns dead-state entry, respawn, and
+  current-time hook construction over `AgentDeathTickService`.
 - Tick leader/session lookup wiring moved from BotManager to
   `server.agents.runtime.AgentLeaderSessionRuntime`. BotManager now delegates
   tick-owner resolution while Agent runtime owns the Cosmic world/player lookup
