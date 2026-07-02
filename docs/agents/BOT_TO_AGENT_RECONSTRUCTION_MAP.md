@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Offline Agent load hook wiring moved from BotManager to
+  `server.agents.runtime.AgentOfflineLoadRuntime`. BotManager now keeps only a
+  compatibility `loadOfflineBot` delegate while Agent runtime owns the Cosmic
+  bootstrap hook bundle for loading offline backing characters.
 - Spawn placement hook wiring moved from BotManager to
   `server.agents.runtime.AgentSpawnPlacementRuntime`. BotManager now references
   Agent runtime placement entry points from spawn/register hooks, while Agent

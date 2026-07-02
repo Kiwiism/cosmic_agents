@@ -17,6 +17,12 @@ Rules:
 
 Recent reconstruction notes:
 
+- Offline Agent load hook wiring now lives in
+  `server.agents.runtime.AgentOfflineLoadRuntime`. BotManager keeps only the
+  `loadOfflineBot` compatibility delegate while Agent runtime owns the
+  BotClient creation, DB character load, disease restore, map lookup, spawn
+  position, rate initialization, channel/world/map registration, and map-add
+  hook wiring.
 - Spawn placement hook wiring now lives in
   `server.agents.runtime.AgentSpawnPlacementRuntime`. BotManager no longer owns
   the legacy BotPhysics/BotMovement placement hook list for online placement or

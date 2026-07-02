@@ -69,7 +69,7 @@ import server.agents.runtime.AgentMovementOnlyTickService;
 import server.agents.runtime.AgentMovementOnlyMapChangeService;
 import server.agents.runtime.AgentMovementTickService;
 import server.agents.runtime.AgentOwnerlessTickService;
-import server.agents.runtime.AgentOfflineLoadService;
+import server.agents.runtime.AgentOfflineLoadRuntime;
 import server.agents.runtime.AgentPartyLifecycleService;
 import server.agents.runtime.AgentPositionService;
 import server.agents.runtime.AgentRandom;
@@ -167,8 +167,6 @@ import server.agents.commands.AgentReplyChannel;
 import server.agents.commands.AgentCommandTypoSuggester;
 import server.agents.auth.AgentAuthorizationResult;
 import server.agents.registry.AgentResolvedCharacter;
-import client.BotClient;
-import config.YamlConfig;
 import client.Character;
 import client.Disease;
 import client.inventory.InventoryType;
@@ -322,33 +320,7 @@ public class BotManager {
     }
 
     public Character loadOfflineBot(int charId, int world, int channel, MapleMap targetMap, Point desiredPosition) throws SQLException {
-        return AgentOfflineLoadService.loadOfflineAgent(
-                charId,
-                world,
-                channel,
-                targetMap,
-                desiredPosition,
-                offlineLoadHooks());
-    }
-
-    private AgentOfflineLoadService.Hooks offlineLoadHooks() {
-        return new AgentOfflineLoadService.Hooks(
-                BotClient::new,
-                (characterId, client) -> Character.loadCharFromDB(characterId, client, true),
-                characterId -> Server.getInstance().getPlayerBuffStorage().getDiseasesFromStorage(characterId),
-                (world, channel, mapId) -> Server.getInstance().getChannel(world, channel).getMapFactory().getMap(mapId),
-                this::resolveSpawnPosition,
-                agent -> {
-                    agent.resetPlayerRates();
-                    if (YamlConfig.config.server.USE_ADD_RATES_BY_LEVEL) {
-                        agent.setPlayerRates();
-                    }
-                    agent.setWorldRates();
-                    agent.updateCouponRates();
-                },
-                (world, channel, agent) -> Server.getInstance().getChannel(world, channel).addPlayer(agent),
-                (world, channel, agent) -> Server.getInstance().getChannel(world, channel).getWorldServer().addPlayer(agent),
-                MapleMap::addPlayer);
+        return AgentOfflineLoadRuntime.loadOfflineAgent(charId, world, channel, targetMap, desiredPosition);
     }
 
     public Point resolveSpawnPosition(MapleMap map, Point desiredPosition) {
