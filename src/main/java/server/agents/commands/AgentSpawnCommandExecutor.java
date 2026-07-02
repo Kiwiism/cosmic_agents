@@ -8,9 +8,9 @@ import client.creator.BotCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.registry.AgentResolvedCharacter;
+import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentPartyLifecycleService;
-import server.bots.BotManager;
 import server.agents.auth.AgentOwnershipService;
 import tools.BCrypt;
 import tools.DatabaseConnection;
@@ -32,7 +32,6 @@ public final class AgentSpawnCommandExecutor {
 
     public void execute(Client c, String[] params) {
         Character player = c.getPlayer();
-        BotManager botManager = BotManager.getInstance();
         AgentOwnershipService ownershipService = AgentOwnershipService.getInstance();
         if (params.length < 1) {
             player.yellowMessage("Syntax: @spawnbot <name> [confirm]");
@@ -75,7 +74,7 @@ public final class AgentSpawnCommandExecutor {
             }
         }
 
-        AgentLifecycleService.AgentSpawnResult result = botManager.spawnBotForOwner(player, botName);
+        AgentLifecycleService.AgentSpawnResult result = AgentInteractionRuntime.spawnAgentForLeader(player, botName);
         if (!result.success()) {
             player.yellowMessage(result.errorMessage());
             return;

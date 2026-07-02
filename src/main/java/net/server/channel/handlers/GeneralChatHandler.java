@@ -30,7 +30,8 @@ import net.packet.InPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.ChatLogger;
-import server.bots.BotManager;
+import server.agents.commands.AgentReplyChannel;
+import server.agents.runtime.AgentInteractionRuntime;
 import tools.PacketCreator;
 
 public final class GeneralChatHandler extends AbstractPacketHandler {
@@ -68,7 +69,7 @@ public final class GeneralChatHandler extends AbstractPacketHandler {
                 ChatLogger.log(c, "GM General", s);
             }
 
-            BotManager.getInstance().handleChat(chr, s, server.agents.commands.AgentReplyChannel.MAP);
+            AgentInteractionRuntime.handleLeaderChat(chr, s, AgentReplyChannel.MAP);
             chr.getAutobanManager().spam(7);
         }
     }

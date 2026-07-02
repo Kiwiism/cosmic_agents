@@ -3,7 +3,7 @@ package server.bots;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.quest.AgentPartyQuestSyncService;
 import server.agents.capabilities.dialogue.AgentWhisperCommandService;
-import server.agents.runtime.AgentChatRouteRuntime;
+import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentLifecycleChatCommandRuntime;
 import server.agents.runtime.AgentOfflineLoadRuntime;
@@ -14,7 +14,6 @@ import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeCleanupService;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSpawnPositionService;
-import server.agents.runtime.AgentSpawnRuntime;
 import server.agents.runtime.AgentTickRuntime;
 import server.agents.capabilities.social.AgentScrollReactionNotificationService;
 import server.agents.capabilities.supplies.AgentPotionCheckRequestService;
@@ -62,8 +61,7 @@ public class BotManager {
 
     /** Spawn a registered bot for the given owner, placing it at the owner's current position in follow mode. */
     public AgentLifecycleService.AgentSpawnResult spawnBotForOwner(Character owner, String botName) {
-        return AgentSpawnRuntime.spawnAgentForLeader(
-                owner, botName, this::tick, AgentBotMovementCommandRuntime::followOwner, log);
+        return AgentInteractionRuntime.spawnAgentForLeader(owner, botName);
     }
 
     public void joinBotToOwnerParty(Character owner, Character bot) {
@@ -166,13 +164,7 @@ public class BotManager {
     }
 
     public void handleChat(Character owner, String message, AgentReplyChannel channel) {
-        AgentChatRouteRuntime.handleChat(
-                owner,
-                message,
-                channel,
-                this::recruitBot,
-                this::giveBot,
-                this::dismissBot);
+        AgentInteractionRuntime.handleLeaderChat(owner, message, channel);
     }
 
     // Main tick

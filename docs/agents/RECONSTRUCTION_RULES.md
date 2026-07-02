@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Server chat/spawn integration now enters through
+  `AgentInteractionRuntime`. General chat, party chat, messenger invite
+  fallback, party invite fallback, and `@spawnbot` no longer call
+  `BotManager.getInstance()` for chat/spawn behavior; BotManager keeps only
+  legacy compatibility delegates for those entry points.
 - Dead BotManager script-task and script-item compatibility wrappers were
   removed. Script queueing, drop-item execution, queued-task checks, and cheap
   move-target checks now use Agent script services directly.

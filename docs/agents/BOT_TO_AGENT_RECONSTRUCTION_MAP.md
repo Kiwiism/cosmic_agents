@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Server-facing chat and spawn entry points moved to
+  `server.agents.runtime.AgentInteractionRuntime`. Packet handlers and
+  `AgentSpawnCommandExecutor` now call the Agent runtime facade directly;
+  BotManager remains a compatibility facade for legacy callers.
 - Dead BotManager script-task and script-item compatibility wrappers were
   removed. Agent script services now own queueing, item drop execution,
   queued-task checks, and cheap move-target checks directly.

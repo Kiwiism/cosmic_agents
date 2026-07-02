@@ -22,7 +22,6 @@
 package net.server.channel.handlers;
 
 import client.BotClient;
-import server.bots.BotManager;
 import client.Character;
 import client.Client;
 import net.AbstractPacketHandler;
@@ -35,6 +34,7 @@ import net.server.world.Party;
 import net.server.world.PartyCharacter;
 import net.server.world.PartyOperation;
 import net.server.world.World;
+import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentLifecycleService;
 import tools.PacketCreator;
 
@@ -79,7 +79,8 @@ public final class PartyOperationHandler extends AbstractPacketHandler {
                 String name = p.readString();
                 Character invited = world.getPlayerStorage().getCharacterByName(name);
                 if (invited == null) {
-                    AgentLifecycleService.AgentSpawnResult spawnResult = BotManager.getInstance().spawnBotForOwner(player, name);
+                    AgentLifecycleService.AgentSpawnResult spawnResult =
+                            AgentInteractionRuntime.spawnAgentForLeader(player, name);
                     if (spawnResult.success()) invited = spawnResult.agent();
                 }
                 if (invited != null) {

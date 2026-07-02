@@ -31,7 +31,8 @@ import net.server.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.ChatLogger;
-import server.bots.BotManager;
+import server.agents.commands.AgentReplyChannel;
+import server.agents.runtime.AgentInteractionRuntime;
 import tools.PacketCreator;
 
 public final class MultiChatHandler extends AbstractPacketHandler {
@@ -66,7 +67,7 @@ public final class MultiChatHandler extends AbstractPacketHandler {
             ChatLogger.log(c, "Party", chattext);
             // Allow bot commands ("come", "follow", "stop"...) issued via party chat
             // so the owner doesn't have to be on the same map.
-            BotManager.getInstance().handleChat(player, chattext, server.agents.commands.AgentReplyChannel.PARTY);
+            AgentInteractionRuntime.handleLeaderChat(player, chattext, AgentReplyChannel.PARTY);
         } else if (type == 2 && player.getGuildId() > 0) {
             Server.getInstance().guildChat(player.getGuildId(), player.getName(), player.getId(), chattext);
             ChatLogger.log(c, "Guild", chattext);
