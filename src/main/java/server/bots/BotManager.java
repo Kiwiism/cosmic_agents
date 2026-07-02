@@ -91,7 +91,7 @@ import server.agents.runtime.AgentTargetSnapshotService;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSpawnPositionService;
 import server.agents.runtime.AgentSpawnRuntime;
-import server.agents.runtime.AgentStandaloneMoveTargetTickService;
+import server.agents.runtime.AgentStandaloneMoveTargetRuntime;
 import server.agents.runtime.AgentStuckDetectionRuntime;
 import server.agents.runtime.AgentTickFailureRuntime;
 import server.agents.runtime.AgentTickCoreService;
@@ -1381,14 +1381,8 @@ public class BotManager {
      * inside stepMovementCore.
      */
     private void tickStandaloneMoveTarget(BotEntry entry, Character bot, boolean runAiTick) {
-        AgentStandaloneMoveTargetTickService.tickStandaloneMoveTarget(
-                entry,
-                bot,
-                runAiTick,
-                new AgentStandaloneMoveTargetTickService.Hooks(
-                        this::groundAfterMapChange,
-                        BotMovementManager::refreshMovementProfile,
-                        this::stepMovementCore));
+        AgentStandaloneMoveTargetRuntime.tickStandaloneMoveTarget(
+                entry, bot, runAiTick, cfg.ENABLE_UNSTUCK, BotMovementManager.cfg.STOP_DIST);
     }
 
     private boolean groundAfterMapChange(BotEntry entry, Character bot) {

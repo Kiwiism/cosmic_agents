@@ -197,7 +197,7 @@ public class BotMovementManager {
         return BotPhysicsEngine.canReachRopeFromGround(map, from, rope, profile);
     }
 
-    static boolean refreshMovementProfile(BotEntry entry) {
+    public static boolean refreshMovementProfile(BotEntry entry) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         AgentMovementProfile updated = AgentMovementProfile.fromCharacter(bot);
         if (updated.equals(AgentBotMovementStateRuntime.movementProfile(entry))) {

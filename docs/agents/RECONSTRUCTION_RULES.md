@@ -17,6 +17,9 @@ Rules:
 
 Recent reconstruction notes:
 
+- Standalone move-target hook construction now lives in
+  `server.agents.runtime.AgentStandaloneMoveTargetRuntime`. BotManager passes
+  only legacy movement config values for this ownerless movement path.
 - Movement-only tick hook construction now lives in
   `server.agents.runtime.AgentMovementOnlyRuntime`. BotManager keeps only the
   temporary follow-anchor callback and legacy movement config values for this

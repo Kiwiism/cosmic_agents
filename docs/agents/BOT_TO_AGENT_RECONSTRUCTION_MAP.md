@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Standalone move-target hook wiring moved from BotManager to
+  `server.agents.runtime.AgentStandaloneMoveTargetRuntime`. BotManager now
+  delegates ownerless move-target ticking while Agent runtime owns map-change,
+  profile refresh, and movement-core hook construction.
 - Movement-only tick hook wiring moved from BotManager to
   `server.agents.runtime.AgentMovementOnlyRuntime`. BotManager now passes only
   follow-anchor resolution and legacy movement distance/config values while
