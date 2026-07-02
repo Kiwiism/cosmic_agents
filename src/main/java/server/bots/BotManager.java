@@ -8,12 +8,10 @@ import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.quest.AgentPartyQuestSyncService;
 
-import server.agents.capabilities.dialogue.AgentChatIngressService;
-import server.agents.capabilities.dialogue.AgentTargetedChatRouteService;
-import server.agents.capabilities.dialogue.AgentUntargetedChatRouteService;
 import server.agents.capabilities.dialogue.AgentWhisperCommandService;
 
 import server.agents.runtime.AgentAnchoredFarmRuntime;
+import server.agents.runtime.AgentChatRouteRuntime;
 import server.agents.runtime.AgentCommonTickRuntime;
 import server.agents.runtime.AgentDeathTickService;
 import server.agents.runtime.AgentPerformanceMonitor;
@@ -21,7 +19,6 @@ import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentFollowAnchorService;
 import server.agents.runtime.AgentFormationService;
 import server.agents.runtime.AgentFollowIdleMovementRuntime;
-import server.agents.runtime.AgentFollowTargetRuntime;
 import server.agents.runtime.AgentFollowTargetPositionService;
 import server.agents.runtime.AgentFormationCommandRuntime;
 import server.agents.runtime.AgentGrindCombatRuntime;
@@ -61,19 +58,14 @@ import server.agents.runtime.AgentTickStateMaintenanceService;
 
 import server.agents.capabilities.looting.AgentGrindLootTargetService;
 import server.agents.capabilities.social.AgentScrollReactionNotificationService;
-import server.agents.capabilities.supplies.AgentGroupSupplyResponderSelector;
 import server.agents.capabilities.supplies.AgentPotionCheckRequestService;
 import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
-import server.agents.capabilities.trade.AgentPendingOfferChatRouteService;
 import server.agents.capabilities.trade.AgentTradeDialogueService;
 import server.agents.plans.AgentScriptMoveTargetService;
 
 
-import server.agents.integration.AgentBotManagerReplyRuntime;
-import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotAmmoStateRuntime;
 import server.agents.integration.AgentBotBuffStateRuntime;
-import server.agents.integration.AgentBotCommandParser;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatDeathRuntime;
 import server.agents.integration.AgentBotCombatPlanRuntime;
@@ -85,6 +77,7 @@ import server.agents.integration.AgentBotGrindLootStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotLeaderStateRuntime;
 import server.agents.integration.AgentBotMapStateRuntime;
+import server.agents.integration.AgentBotManagerReplyRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementCommandRuntime;
@@ -102,11 +95,7 @@ import server.agents.integration.AgentBotTargetedCommandMatch;
 import server.agents.plans.AgentTask;
 import server.agents.plans.AgentScriptItemActionService;
 import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
-import server.agents.capabilities.dialogue.AgentChatRuntime;
-import server.agents.capabilities.dialogue.llm.AgentLlmConfig;
-import server.agents.integration.AgentBotChatOrchestratorContext;
 import server.agents.commands.AgentReplyChannel;
-import server.agents.commands.AgentCommandTypoSuggester;
 import server.agents.auth.AgentAuthorizationResult;
 import server.agents.registry.AgentResolvedCharacter;
 import client.Character;
@@ -118,7 +107,6 @@ import net.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.TimerManager;
-import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.partyquest.AgentPartyQuestHooks;
 import server.life.Monster;
 import server.life.MobSkill;
@@ -295,72 +283,17 @@ public class BotManager {
     }
 
     public void handleChat(Character owner, String message, AgentReplyChannel channel) {
-        AgentChatIngressService.handleChat(owner, message, channel, chatIngressHooks());
-    }
-
-    private AgentChatIngressService.Hooks chatIngressHooks() {
-        return new AgentChatIngressService.Hooks(
-                this::handlePendingLootOfferResponse,
-                (leader, message) -> AgentLifecycleChatCommandRuntime.handleRecruitCommand(
-                        leader, message, this::recruitBot),
-                (leader, message) -> AgentLifecycleChatCommandRuntime.handleTransferCommand(
-                        leader, message, this::giveBot),
-                (leader, message) -> AgentFormationCommandRuntime.handleFormationCommand(
-                        leader,
-                        message,
-                        bots::get,
-                        defaultFormationState(),
-                        cfg.FOLLOW_STAGGER,
-                        BotMovementManager.cfg.FOLLOW_Y_CAP),
-                bots::get,
-                (leader, message) -> AgentLifecycleChatCommandRuntime.handleDismissCommand(
-                        leader, message, this::dismissBot),
-                (leader, entries, message, channel) -> AgentTargetedChatRouteService.handleTargetedChat(
-                        leader,
-                        entries,
-                        message,
-                        channel,
-                        targetedChatHooks()),
-                (leader, entries, message, channel) -> AgentUntargetedChatRouteService.handleUntargetedChat(
-                        leader,
-                        entries,
-                        message,
-                        channel,
-                        untargetedChatHooks()));
-    }
-    private boolean handlePendingLootOfferResponse(Character speaker, String message) {
-        return AgentPendingOfferChatRouteService.handlePendingOfferResponse(bots.values(), speaker, message);
-    }
-
-    private AgentTargetedChatRouteService.Hooks targetedChatHooks() {
-        return new AgentTargetedChatRouteService.Hooks(
-                AgentBotCommandParser::resolveTargetedBot,
-                AgentChatCommandClassifier::matchFollowTarget,
-                AgentFollowTargetRuntime::applyFollowTargetCommand,
-                AgentBotReplyChannelStateRuntime::setReplyChannel,
-                () -> AgentLlmConfig.typoSuggesterEnabled,
-                AgentCommandTypoSuggester::suggest,
-                AgentBotManagerReplyRuntime::queueReply,
-                BotManager::handleAgentChat,
-                AgentChatRuntime::wasLastChatHandled,
-                System::currentTimeMillis,
-                AgentBotActivityStateRuntime::recordLastOwnerCommand,
-                () -> AgentLlmConfig.enabled,
-                server.agents.capabilities.dialogue.llm.AgentLlmReplyService::maybeRespond,
-                Character::yellowMessage);
-    }
-
-    private AgentUntargetedChatRouteService.Hooks untargetedChatHooks() {
-        return new AgentUntargetedChatRouteService.Hooks(
-                AgentChatCommandClassifier::matchFollowTarget,
-                AgentFollowTargetRuntime::applyFollowTargetCommand,
-                AgentChatCommandClassifier::isGroupSupplyRequest,
-                AgentGroupSupplyResponderSelector::select,
-                AgentBotReplyChannelStateRuntime::setReplyChannel,
-                BotManager::handleAgentChat,
-                () -> AgentLlmConfig.typoSuggesterEnabled,
-                AgentCommandTypoSuggester::suggest,
-                AgentBotManagerReplyRuntime::queueReply);
+        AgentChatRouteRuntime.handleChat(
+                owner,
+                message,
+                channel,
+                bots,
+                this::recruitBot,
+                this::giveBot,
+                this::dismissBot,
+                defaultFormationState(),
+                cfg.FOLLOW_STAGGER,
+                BotMovementManager.cfg.FOLLOW_Y_CAP);
     }
 
     // -------------------------------------------------------------------------
@@ -846,10 +779,6 @@ public class BotManager {
      */
     public void handleWhisperToBot(Character owner, Character target, String message) {
         AgentWhisperCommandService.handleWhisperToAgent(owner, target, message);
-    }
-
-    private static void handleAgentChat(BotEntry entry, String message) {
-        AgentChatRuntime.handleChat(message, new AgentBotChatOrchestratorContext(entry));
     }
 
     // ===== Owned-bot accessors used by the androidequip.cpp BotEquipHandler =====

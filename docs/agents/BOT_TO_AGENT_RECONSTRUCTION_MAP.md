@@ -61,6 +61,11 @@ Recent map updates:
   Agent runtime owns active-return cleanup, town scroll fallback, cluster
   positioning, movement reset, mode cleanup, script cleanup, and shop cleanup
   composition.
+- Chat route hook wiring moved from BotManager to
+  `server.agents.runtime.AgentChatRouteRuntime`. BotManager now passes only
+  lifecycle callbacks, formation defaults, and the active-entry map while Agent
+  runtime owns pending-offer, recruit, transfer, formation, dismiss, targeted,
+  and untargeted chat routing hook construction.
 - Anchored farm hook wiring moved from BotManager to
   `server.agents.runtime.AgentAnchoredFarmRuntime`. BotManager now passes only
   legacy movement config values while Agent runtime owns local-opportunity,

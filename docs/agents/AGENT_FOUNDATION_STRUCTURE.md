@@ -16,7 +16,8 @@ Target package groups:
   through `AgentGrindModeRuntime`, and local opportunity attack result
   adaptation stays in `AgentLocalOpportunityAttackRuntime`. Inactive leader
   safety and town-return composition now enter through
-  `AgentLeaderSafetyRuntime`, while BotManager remains only a temporary
+  `AgentLeaderSafetyRuntime`, and chat route composition enters through
+  `AgentChatRouteRuntime`, while BotManager remains only a temporary
   compatibility caller for legacy entry points.
 - `server.agents.model`: identity, mode, profile, leader reference.
 - `server.agents.commands`: command parsing/routing/result boundaries.

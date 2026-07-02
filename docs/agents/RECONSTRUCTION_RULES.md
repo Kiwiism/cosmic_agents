@@ -3469,6 +3469,14 @@ Recent reconstruction notes:
   leader return cleanup, inactive safe-mode entry, town-scroll fallback,
   cluster target resolution, movement reset, and mode/script/shop cleanup
   composition.
+- Chat ingress, targeted route, and untargeted route hook construction now
+  lives in `server.agents.runtime.AgentChatRouteRuntime`. BotManager keeps only
+  the public compatibility `handleChat` entry point and supplies lifecycle
+  action callbacks plus the active Agent entry map. Agent runtime owns pending
+  offer routing, lifecycle chat command routing, formation routing, targeted
+  command routing, typo suggestion wiring, reply-channel state, Agent chat
+  dispatch, owner-command recording, LLM fallback, group supply routing, and
+  broadcast-to-all untargeted routing.
 
 Initial reconstruction order:
 
