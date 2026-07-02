@@ -38,6 +38,11 @@ Recent map updates:
   while Agent runtime owns shop visit, follow opportunity, follow idle,
   scripted move combat, anchored farm, grind dispatch, final movement tail, and
   matching performance timing labels.
+- Tick-core hook wiring moved from BotManager to
+  `server.agents.runtime.AgentTickCoreRuntime`. BotManager now passes only
+  temporary leader/dead/script/mode callbacks while Agent runtime owns
+  preflight, ownerless dispatch, live context, live gates, live modes, timing,
+  and movement/recovery config handoff.
 - Anchored farm hook wiring moved from BotManager to
   `server.agents.runtime.AgentAnchoredFarmRuntime`. BotManager now passes only
   legacy movement config values while Agent runtime owns local-opportunity,

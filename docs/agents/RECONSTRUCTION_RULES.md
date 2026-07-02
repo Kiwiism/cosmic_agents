@@ -3441,6 +3441,13 @@ Recent reconstruction notes:
   anchored farm ticking, and grind-mode ticking while Agent runtime owns shop,
   follow opportunity, follow idle, scripted move combat, anchored farm, grind
   dispatch, final movement-tail wiring, and matching performance labels.
+- Tick-core hook construction now lives in
+  `server.agents.runtime.AgentTickCoreRuntime`. BotManager keeps only temporary
+  callbacks for leader resolution, inactive-leader handling, dead-state checks,
+  target snapshots, script tasks, command-mode transitions, and low-level
+  movement/combat mode execution while Agent runtime owns preflight,
+  ownerless ticking, live context preparation, live gate dispatch, live mode
+  dispatch, timing, and config handoff.
 
 Initial reconstruction order:
 

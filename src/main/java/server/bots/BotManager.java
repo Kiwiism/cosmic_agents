@@ -37,22 +37,16 @@ import server.agents.runtime.AgentGrindCombatRuntime;
 import server.agents.runtime.AgentGrindNavigationRuntime;
 import server.agents.runtime.AgentGrindNoTargetFallbackService;
 import server.agents.runtime.AgentGrindTargetRuntime;
-import server.agents.runtime.AgentIdlePhysicsRuntime;
 import server.agents.runtime.AgentLeaderSessionService;
 import server.agents.runtime.AgentLeaderSafetyService;
 import server.agents.runtime.AgentLifecycleChatCommandRuntime;
-import server.agents.runtime.AgentLiveTickContextRuntime;
-import server.agents.runtime.AgentLiveTickGateRuntime;
-import server.agents.runtime.AgentLiveModeTickService;
 import server.agents.runtime.AgentLiveModeTickRuntime;
-import server.agents.runtime.AgentLiveTickGateService;
 import server.agents.runtime.AgentLocalOpportunityAttackRuntime;
 import server.agents.runtime.AgentMapEnvironmentService;
 import server.agents.runtime.AgentMapTransitionRuntime;
 import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentMovementOnlyRuntime;
 import server.agents.runtime.AgentMovementTickRuntime;
-import server.agents.runtime.AgentOwnerlessTickService;
 import server.agents.runtime.AgentOfflineLoadRuntime;
 import server.agents.runtime.AgentPartyLifecycleService;
 import server.agents.runtime.AgentPositionService;
@@ -73,9 +67,8 @@ import server.agents.runtime.AgentSpawnRuntime;
 import server.agents.runtime.AgentStandaloneMoveTargetRuntime;
 import server.agents.runtime.AgentStuckDetectionRuntime;
 import server.agents.runtime.AgentTickFailureRuntime;
-import server.agents.runtime.AgentTickCoreService;
+import server.agents.runtime.AgentTickCoreRuntime;
 import server.agents.runtime.AgentTickOrchestrator;
-import server.agents.runtime.AgentTickPreflightRuntime;
 import server.agents.runtime.AgentTickStateMaintenanceService;
 
 import server.agents.capabilities.looting.AgentGrindLootTargetService;
@@ -531,85 +524,50 @@ public class BotManager {
     }
 
     private void tickCore(BotEntry entry, int ownerCharId, int botCharId) {
-        AgentTickCoreService.tickCore(entry, ownerCharId, botCharId, tickCoreHooks());
-    }
-
-    private AgentTickCoreService.Hooks tickCoreHooks() {
-        return new AgentTickCoreService.Hooks(
-                System::currentTimeMillis,
-                AgentTickPreflightRuntime::runPreflight,
+        AgentTickCoreRuntime.tickCore(
+                entry,
+                ownerCharId,
+                botCharId,
                 this::resolveTickOwner,
                 this::handleOwnerOfflineOrDead,
-                (ownerlessEntry, ownerlessBot, ownerlessRunAiTick) -> AgentOwnerlessTickService.tickOwnerless(
-                        ownerlessEntry,
-                        ownerlessBot,
-                        ownerlessRunAiTick,
-                        this::groundAfterMapChange,
-                        this::tickStandaloneMoveTarget,
-                        () -> AgentIdlePhysicsRuntime.tickIdleEntry(ownerlessEntry, ownerlessBot)),
+                this::groundAfterMapChange,
+                this::tickStandaloneMoveTarget,
                 this::handleDeadTick,
-                (liveEntry, liveBot, liveOwner) -> AgentLiveTickContextRuntime.prepareLiveTickContext(
-                        liveEntry,
-                        liveBot,
-                        liveOwner,
-                        this::resolveFollowAnchor,
-                        this::captureTargetSnapshot),
-                AgentPerformanceMonitor::enabled,
-                (gateEntry, gateBot, gateOwner, gateFollowAnchor, liveContext, gateRunAiTick, perf) ->
-                        AgentLiveTickGateRuntime.tickLiveGates(
-                                new AgentLiveTickGateService.Context(
-                                        gateEntry,
-                                        gateBot,
-                                        gateOwner,
-                                        gateFollowAnchor,
-                                        liveContext.targetPosition(),
-                                        gateRunAiTick),
-                                perf,
-                                this::tickScriptTasks,
-                                this::issueGrind,
-                                this::issueFollowOwner,
-                                BotMovementManager.cfg.TELEPORT_DIST,
-                                BotMovementManager.cfg.OOB_TELEPORT_DIST,
-                                cfg.GRIND_PARTY_TELEPORT_DIST_MULTIPLIER),
-                (modeEntry, modeBot, modeFollowAnchor, liveContext, modeRunAiTick, nowMs, perf) ->
-                        AgentLiveModeTickRuntime.tickLiveModes(
-                                new AgentLiveModeTickService.Context(
-                                        modeEntry,
-                                        modeBot,
-                                        liveContext.agentPosition(),
-                                        liveContext.targetPosition(),
-                                        liveContext.targetSnapshot().followTargetPos(),
-                                        modeFollowAnchor,
-                                        modeRunAiTick,
-                                        nowMs),
-                                perf,
-                                (attackEntry, attackBot, attackBotPos, attackTargetPos, attackFollowTargetPos, allowMoveWindow, updateMoveWindow) -> {
-                                    LocalOpportunityAttackResult result = tryLocalOpportunityAttack(
-                                            attackEntry,
-                                            attackBot,
-                                            attackBotPos,
-                                            attackTargetPos,
-                                            attackFollowTargetPos,
-                                            allowMoveWindow,
-                                            updateMoveWindow);
-                                    return new AgentLiveModeTickRuntime.LocalAttackResult(
-                                            result.consumedTick(),
-                                            result.targetPos());
-                                },
-                                this::stepMovementCore,
-                                this::tickAnchoredFarm,
-                                (grindEntry, grindBot, grindBotPos, grindTargetPos, grindRunAiTick) -> {
-                                    LocalOpportunityAttackResult result = tickGrindMode(
-                                            grindEntry,
-                                            grindBot,
-                                            grindBotPos,
-                                            grindTargetPos,
-                                            grindRunAiTick);
-                                    return new AgentLiveModeTickRuntime.LocalAttackResult(
-                                            result.consumedTick(),
-                                            result.targetPos());
-                                },
-                                BotMovementManager.cfg.FOLLOW_DIST));
+                this::resolveFollowAnchor,
+                this::captureTargetSnapshot,
+                this::tickScriptTasks,
+                this::issueGrind,
+                this::issueFollowOwner,
+                (attackEntry, attackBot, attackBotPos, attackTargetPos, attackFollowTargetPos, allowMoveWindow, updateMoveWindow) -> {
+                    LocalOpportunityAttackResult result = tryLocalOpportunityAttack(
+                            attackEntry,
+                            attackBot,
+                            attackBotPos,
+                            attackTargetPos,
+                            attackFollowTargetPos,
+                            allowMoveWindow,
+                            updateMoveWindow);
+                    return new AgentLiveModeTickRuntime.LocalAttackResult(
+                            result.consumedTick(),
+                            result.targetPos());
+                },
+                this::stepMovementCore,
+                this::tickAnchoredFarm,
+                (grindEntry, grindBot, grindBotPos, grindTargetPos, grindRunAiTick) -> {
+                    LocalOpportunityAttackResult result = tickGrindMode(
+                            grindEntry,
+                            grindBot,
+                            grindBotPos,
+                            grindTargetPos,
+                            grindRunAiTick);
+                    return new AgentLiveModeTickRuntime.LocalAttackResult(
+                            result.consumedTick(),
+                            result.targetPos());
+                },
+                BotMovementManager.cfg.TELEPORT_DIST,
+                BotMovementManager.cfg.OOB_TELEPORT_DIST,
+                cfg.GRIND_PARTY_TELEPORT_DIST_MULTIPLIER,
+                BotMovementManager.cfg.FOLLOW_DIST);
     }
 
     /**
