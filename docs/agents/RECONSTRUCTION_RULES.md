@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Tick leader/session lookup wiring now lives in
+  `server.agents.runtime.AgentLeaderSessionRuntime`. BotManager delegates the
+  compatibility tick-owner method while Agent runtime owns the Cosmic server
+  lookup callback over the existing cached-leader resolution rule.
 - Follow-anchor and target snapshot runtime wiring now lives in
   `server.agents.runtime.AgentTargetSnapshotRuntime`. BotManager delegates the
   compatibility methods while Agent runtime owns sibling lookup, formation

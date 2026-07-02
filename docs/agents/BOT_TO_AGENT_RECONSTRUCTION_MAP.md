@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Tick leader/session lookup wiring moved from BotManager to
+  `server.agents.runtime.AgentLeaderSessionRuntime`. BotManager now delegates
+  tick-owner resolution while Agent runtime owns the Cosmic world/player lookup
+  callback over `AgentLeaderSessionService`.
 - Follow-anchor resolution and target snapshot hook wiring moved from
   BotManager to `server.agents.runtime.AgentTargetSnapshotRuntime`. BotManager
   now keeps only compatibility delegates while Agent runtime owns live sibling

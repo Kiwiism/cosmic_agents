@@ -1,0 +1,29 @@
+package server.agents.runtime;
+
+import client.Character;
+import net.server.Server;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.bots.BotEntry;
+
+import java.util.function.IntFunction;
+
+/**
+ * Runtime wiring for resolving the live leader backing an Agent tick.
+ */
+public final class AgentLeaderSessionRuntime {
+    private AgentLeaderSessionRuntime() {
+    }
+
+    public static Character resolveTickLeader(BotEntry entry, int leaderCharId) {
+        return resolveTickLeader(entry, leaderCharId, id -> Server.getInstance()
+                .getWorld(AgentBotRuntimeIdentityRuntime.bot(entry).getWorld())
+                .getPlayerStorage()
+                .getCharacterById(id));
+    }
+
+    static Character resolveTickLeader(BotEntry entry,
+                                       int leaderCharId,
+                                       IntFunction<Character> leaderLookup) {
+        return AgentLeaderSessionService.resolveTickLeader(entry, leaderCharId, leaderLookup);
+    }
+}

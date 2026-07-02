@@ -24,6 +24,7 @@ Target package groups:
   Spawn result ownership is `AgentLifecycleService.AgentSpawnResult`.
   Follow-anchor and target-snapshot runtime wiring enters through
   `AgentTargetSnapshotRuntime`.
+  Tick leader/session lookup enters through `AgentLeaderSessionRuntime`.
   BotManager remains only a temporary compatibility caller for legacy entry
   points.
 - `server.agents.model`: identity, mode, profile, leader reference.

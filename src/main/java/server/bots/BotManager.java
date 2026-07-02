@@ -24,7 +24,7 @@ import server.agents.runtime.AgentGrindCombatRuntime;
 import server.agents.runtime.AgentGrindModeRuntime;
 import server.agents.runtime.AgentGrindNavigationRuntime;
 import server.agents.runtime.AgentGrindTargetRuntime;
-import server.agents.runtime.AgentLeaderSessionService;
+import server.agents.runtime.AgentLeaderSessionRuntime;
 import server.agents.runtime.AgentLeaderSafetyRuntime;
 import server.agents.runtime.AgentLifecycleChatCommandRuntime;
 import server.agents.runtime.AgentLiveModeTickRuntime;
@@ -102,7 +102,6 @@ import client.Disease;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.WeaponType;
-import net.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.TimerManager;
@@ -454,10 +453,7 @@ public class BotManager {
     }
 
     private Character resolveTickOwner(BotEntry entry, int ownerCharId) {
-        return AgentLeaderSessionService.resolveTickLeader(entry, ownerCharId, id -> Server.getInstance()
-                .getWorld(AgentBotRuntimeIdentityRuntime.bot(entry).getWorld())
-                .getPlayerStorage()
-                .getCharacterById(id));
+        return AgentLeaderSessionRuntime.resolveTickLeader(entry, ownerCharId);
     }
 
     /**
