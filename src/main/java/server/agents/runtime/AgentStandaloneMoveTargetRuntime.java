@@ -10,6 +10,17 @@ public final class AgentStandaloneMoveTargetRuntime {
 
     public static void tickStandaloneMoveTarget(BotEntry entry,
                                                 Character agent,
+                                                boolean runAiTick) {
+        tickStandaloneMoveTarget(
+                entry,
+                agent,
+                runAiTick,
+                AgentRuntimeConfig.cfg.ENABLE_UNSTUCK,
+                BotMovementManager.configuredStopDist());
+    }
+
+    public static void tickStandaloneMoveTarget(BotEntry entry,
+                                                Character agent,
                                                 boolean runAiTick,
                                                 boolean enableUnstuck,
                                                 int stopDistance) {

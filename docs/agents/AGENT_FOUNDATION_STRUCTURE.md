@@ -30,6 +30,8 @@ Target package groups:
   `AgentMovementOnlyStepRuntime`.
   Movement-core config-bound stepping enters through `AgentMovementTickRuntime`.
   Anchored-farm config-bound dispatch enters through `AgentAnchoredFarmRuntime`.
+  Standalone move-target config-bound dispatch enters through
+  `AgentStandaloneMoveTargetRuntime`.
   BotManager remains only a temporary compatibility caller for legacy entry
   points.
 - `server.agents.model`: identity, mode, profile, leader reference.

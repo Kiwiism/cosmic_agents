@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Standalone move-target config-bound tick entry moved from BotManager to
+  `server.agents.runtime.AgentStandaloneMoveTargetRuntime`. BotManager now
+  delegates ownerless move-target dispatch without assembling
+  unstuck/stop-distance config.
 - Anchored-farm config-bound tick entry moved from BotManager to
   `server.agents.runtime.AgentAnchoredFarmRuntime`. BotManager now delegates
   anchored-farm dispatch without assembling unstuck/stop-distance config.

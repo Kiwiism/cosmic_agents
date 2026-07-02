@@ -607,8 +607,7 @@ public class BotManager {
      * inside stepMovementCore.
      */
     private void tickStandaloneMoveTarget(BotEntry entry, Character bot, boolean runAiTick) {
-        AgentStandaloneMoveTargetRuntime.tickStandaloneMoveTarget(
-                entry, bot, runAiTick, cfg.ENABLE_UNSTUCK, BotMovementManager.cfg.STOP_DIST);
+        AgentStandaloneMoveTargetRuntime.tickStandaloneMoveTarget(entry, bot, runAiTick);
     }
 
     private boolean groundAfterMapChange(BotEntry entry, Character bot) {

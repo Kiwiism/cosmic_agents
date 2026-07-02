@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Standalone move-target config-bound tick entry now lives in
+  `server.agents.runtime.AgentStandaloneMoveTargetRuntime.tickStandaloneMoveTarget(entry, agent, runAiTick)`.
+  BotManager no longer passes unstuck/stop-distance config directly for the
+  ownerless move-target path.
 - Anchored-farm config-bound tick entry now lives in
   `server.agents.runtime.AgentAnchoredFarmRuntime.tickAnchoredFarm(entry, agent, pos, runAiTick)`.
   BotManager no longer passes unstuck/stop-distance config directly for
