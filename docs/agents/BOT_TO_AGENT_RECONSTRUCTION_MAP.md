@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Dead BotManager grind/navigation/combat compatibility helper wrappers were
+  removed. Tests now exercise the Agent runtime/capability classes directly
+  for no-target grind movement and convenient loot targeting.
 - Guarded production tick entry moved from BotManager to
   `server.agents.runtime.AgentTickRuntime`. BotManager now delegates production
   ticks through that Agent runtime entry with only temporary grind/follow

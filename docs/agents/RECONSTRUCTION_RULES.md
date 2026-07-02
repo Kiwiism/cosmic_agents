@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Dead BotManager grind/navigation/combat helper wrappers were removed after
+  tests were switched to `AgentGrindTargetRuntime` and existing Agent
+  navigation/combat runtime classes. BotManager no longer exposes those
+  static helper shims.
 - The test-only BotManager `tryFollowIdleMovementFastPath` compatibility
   wrapper was removed. Tests now call
   `AgentFollowIdleMovementRuntime.tryFollowIdleMovementFastPath` directly.

@@ -4,7 +4,6 @@ import server.agents.capabilities.navigation.AgentNavigationGraphService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
-import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.quest.AgentPartyQuestSyncService;
 
@@ -17,9 +16,6 @@ import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentFormationService;
 import server.agents.runtime.AgentFormationRuntime;
 import server.agents.runtime.AgentFormationCommandRuntime;
-import server.agents.runtime.AgentGrindCombatRuntime;
-import server.agents.runtime.AgentGrindNavigationRuntime;
-import server.agents.runtime.AgentGrindTargetRuntime;
 import server.agents.runtime.AgentLeaderSafetyRuntime;
 import server.agents.runtime.AgentLifecycleChatCommandRuntime;
 import server.agents.runtime.AgentLiveModeTickRuntime;
@@ -89,9 +85,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.TimerManager;
 import server.agents.capabilities.partyquest.AgentPartyQuestHooks;
-import server.life.Monster;
 import server.life.MobSkill;
-import server.maps.MapItem;
 import server.maps.MapleMap;
 import server.quest.Quest;
 import tools.PacketCreator;
@@ -276,67 +270,6 @@ public class BotManager {
         return AgentTargetSnapshotRuntime.captureTargetSnapshot(entry);
     }
 
-    // AoE reposition commitment: returns the sweet-spot Point to walk to before firing, or null to
-    // fire now. Scores once when a commitment starts (AgentBotCombatAoeRepositionRuntime); while
-    // committed it just returns the stored anchor — no further scoring — until the bot arrives, the
-    // bounded-chase deadline expires, or the target dies/clears.
-    private static Point resolveAoeReposition(BotEntry entry, Character bot, Monster target,
-                                              AgentAttackPlan attackPlan, Point botPos) {
-        return AgentGrindCombatRuntime.resolveAoeReposition(entry, bot, target, attackPlan, botPos);
-    }
-
-    public static Point selectGrindNavigationTarget(BotEntry entry, Point botPos, Point combatTargetPos) {
-        return AgentGrindNavigationRuntime.selectGrindNavigationTarget(entry, botPos, combatTargetPos);
-    }
-
-    private static Point selectGrindNavigationTarget(BotEntry entry,
-                                                     Point botPos,
-                                                     Point combatTargetPos,
-                                                     boolean crossRegionRetreatChecked) {
-        return AgentGrindNavigationRuntime.selectGrindNavigationTarget(
-                entry, botPos, combatTargetPos, crossRegionRetreatChecked);
-    }
-
-    static Point selectCrossRegionRetreatTarget(BotEntry entry, Point botPos, Point combatTargetPos) {
-        return AgentGrindNavigationRuntime.selectCrossRegionRetreatTarget(entry, botPos, combatTargetPos);
-    }
-
-    static boolean shouldUseLocalCombatRetreatTarget(BotEntry entry,
-                                                     Point botPos,
-                                                     Point combatTargetPos,
-                                                     Point retreatPos) {
-        return AgentGrindNavigationRuntime.shouldUseLocalCombatRetreatTarget(
-                entry, botPos, combatTargetPos, retreatPos);
-    }
-
-    static Point resolveNoGrindTargetPosition(BotEntry entry, Point botPos, MapleMap map) {
-        return AgentGrindTargetRuntime.resolveNoGrindTargetPosition(entry, botPos, map);
-    }
-
-    static Point resolveNoGrindTargetPosition(BotEntry entry, Point botPos) {
-        return AgentGrindTargetRuntime.resolveNoGrindTargetPosition(entry, botPos);
-    }
-
-    private static Point activeGrindLootPosition(BotEntry entry, Point botPos) {
-        return AgentGrindTargetRuntime.activeGrindLootPosition(entry, botPos);
-    }
-
-    static void suppressGrindLootRetry(BotEntry entry, MapItem loot) {
-        AgentGrindTargetRuntime.suppressGrindLootRetry(entry, loot);
-    }
-
-    static double activeLootTravelDistSq(Point botPos, Point lootPos) {
-        return AgentGrindTargetRuntime.activeLootTravelDistSq(botPos, lootPos);
-    }
-
-    static Point convenientLootTarget(BotEntry entry, Point botPos, Point mobPos) {
-        return AgentGrindTargetRuntime.convenientLootTarget(entry, botPos, mobPos);
-    }
-
-    private static Point resolvePatrolWanderTarget(BotEntry entry, Point botPos, MapleMap map) {
-        return AgentGrindTargetRuntime.resolvePatrolWanderTarget(entry, botPos, map);
-    }
-
     // Main tick
     // -------------------------------------------------------------------------
 
@@ -376,17 +309,6 @@ public class BotManager {
                 AgentPerformanceMonitor.record("tick-total", System.nanoTime() - startedAt);
             }
         }
-    }
-
-    static Monster selectPriorityRangedAttackTarget(BotEntry entry,
-                                                   Character bot,
-                                                   Point botPos,
-                                                   Monster preferredTarget) {
-        return AgentGrindCombatRuntime.selectPriorityRangedAttackTarget(
-                entry,
-                bot,
-                botPos,
-                preferredTarget);
     }
 
     public boolean shouldOfferTownForAwayCommand(BotEntry entry) {
