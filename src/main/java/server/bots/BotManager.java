@@ -28,7 +28,7 @@ import server.agents.capabilities.dialogue.AgentTargetedChatRouteService;
 import server.agents.capabilities.dialogue.AgentUntargetedChatRouteService;
 import server.agents.capabilities.dialogue.AgentWhisperCommandService;
 
-import server.agents.runtime.AgentActionLockPhysicsService;
+import server.agents.runtime.AgentActionLockPhysicsRuntime;
 import server.agents.runtime.AgentAnchoredFarmModeTickService;
 import server.agents.runtime.AgentAnchoredFarmTickService;
 import server.agents.runtime.AgentCommonTickService;
@@ -1616,12 +1616,7 @@ public class BotManager {
     }
 
     private boolean tickActionLocked(BotEntry entry) {
-        return AgentActionLockPhysicsService.tickActionLocked(
-                entry,
-                AgentMapEnvironmentService::isSwimMap,
-                locked -> BotMovementManager.tickSwimming(locked, null),
-                locked -> BotMovementManager.tickAirborne(locked, null),
-                locked -> BotMovementManager.tickGrounded(locked, null));
+        return AgentActionLockPhysicsRuntime.tickActionLocked(entry);
     }
 
 

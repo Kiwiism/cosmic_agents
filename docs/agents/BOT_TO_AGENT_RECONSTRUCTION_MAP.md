@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Attack-lock physics hook wiring moved from BotManager to
+  `server.agents.runtime.AgentActionLockPhysicsRuntime`. BotManager now
+  delegates locked movement dispatch while Agent runtime owns the temporary
+  swim/air/ground BotMovementManager hook construction.
 - Movement phase hook wiring moved from BotManager to
   `server.agents.runtime.AgentMovementPhaseRuntime`. BotManager now delegates
   climb/swim/air/ground phase dispatch while Agent runtime owns the temporary

@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Attack-lock physics hook construction now lives in
+  `server.agents.runtime.AgentActionLockPhysicsRuntime`. Keep this as the
+  temporary bridge for attack-cooldown movement dispatch until movement is
+  reconstructed out of BotMovementManager.
 - Movement phase hook construction now lives in
   `server.agents.runtime.AgentMovementPhaseRuntime`. The temporary public
   BotMovementManager phase methods exist only until movement internals are
