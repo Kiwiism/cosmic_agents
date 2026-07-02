@@ -65,7 +65,7 @@ import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentMonsterControlService;
 import server.agents.runtime.AgentMovementPhaseRuntime;
 import server.agents.runtime.AgentMovementOnlyTickService;
-import server.agents.runtime.AgentMovementOnlyMapChangeService;
+import server.agents.runtime.AgentMovementOnlyMapChangeRuntime;
 import server.agents.runtime.AgentMovementTickService;
 import server.agents.runtime.AgentOwnerlessTickService;
 import server.agents.runtime.AgentOfflineLoadRuntime;
@@ -1515,17 +1515,7 @@ public class BotManager {
     }
 
     private boolean handleMovementOnlyMapChange(BotEntry entry, Character bot) {
-        return AgentMovementOnlyMapChangeService.handleMapChange(
-                entry,
-                bot,
-                new AgentMovementOnlyMapChangeService.Hooks(
-                        BotMovementManager::buildFhIndex,
-                        BotPhysicsEngine::findGroundPoint,
-                        BotPhysicsEngine::teleportTo,
-                        BotMovementManager::resetEntryStateAfterTeleport,
-                        BotMovementManager::broadcastMovement,
-                        AgentShopService::onMapChange,
-                        AgentBotManagerStatusRuntime::checkManagerStatus));
+        return AgentMovementOnlyMapChangeRuntime.handleMapChange(entry, bot);
     }
 
     static boolean tryFollowIdleMovementFastPath(BotEntry entry, Character bot, Point targetPos, long nowMs) {

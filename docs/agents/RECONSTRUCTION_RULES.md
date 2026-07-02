@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Movement-only map-change hook construction now lives in
+  `server.agents.runtime.AgentMovementOnlyMapChangeRuntime`. Keep it separate
+  from the broader movement-only tick pipeline until that pipeline can move as
+  its own focused slice.
 - Map transition hook construction now lives in
   `server.agents.runtime.AgentMapTransitionRuntime`. BotManager should pass
   only temporary mode callbacks until follow/grind mode commands are fully

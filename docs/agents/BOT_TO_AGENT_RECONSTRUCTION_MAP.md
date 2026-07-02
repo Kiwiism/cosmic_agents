@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Movement-only map-change hook wiring moved from BotManager to
+  `server.agents.runtime.AgentMovementOnlyMapChangeRuntime`. BotManager now
+  delegates the movement-only map-change side-effect bundle while Agent runtime
+  owns grounding, teleport, reset, broadcast, shop, and status hooks.
 - Map transition hook wiring moved from BotManager to
   `server.agents.runtime.AgentMapTransitionRuntime`. BotManager now passes
   only its temporary grind/follow mode callbacks while Agent runtime owns
