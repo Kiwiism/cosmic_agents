@@ -12,6 +12,13 @@ import static org.mockito.Mockito.when;
 
 class AgentScriptMoveTargetServiceTest {
     @Test
+    void defaultRadiusPreservesNearTargetRejection() {
+        BotEntry entry = entryWithBotAt(new Point(100, 100));
+
+        assertFalse(AgentScriptMoveTargetService.isCheapMoveTarget(entry, new Point(150, 150), 100, 500, 500));
+    }
+
+    @Test
     void rejectsMissingBotOrTarget() {
         assertFalse(AgentScriptMoveTargetService.isCheapMoveTarget(null, new Point(10, 20), 100, 30, 40, 100));
         assertFalse(AgentScriptMoveTargetService.isCheapMoveTarget(entryWithBotAt(new Point(1, 2)), null, 100, 30, 40, 100));

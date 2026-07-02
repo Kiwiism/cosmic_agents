@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Script move-target default near-target radius ownership now lives in
+  `AgentScriptMoveTargetService.isCheapMoveTarget(...)`. BotManager and the
+  Agent integration wrapper no longer pass `LOOT_RADIUS` into script move
+  target checks.
 - Grind-mode default loot-radius ownership now lives in
   `AgentGrindModeRuntime.tickGrindMode(...)`. BotManager no longer passes
   `LOOT_RADIUS` into live grind-mode tick dispatch.

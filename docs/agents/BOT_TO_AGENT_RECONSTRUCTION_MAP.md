@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Script move-target default near-target radius handoff moved from BotManager
+  and `AgentBotScriptMoveTargetRuntime` to
+  `server.agents.plans.AgentScriptMoveTargetService`.
 - Grind-mode default loot-radius handoff moved from BotManager to
   `server.agents.runtime.AgentGrindModeRuntime`. Tick-core wiring now calls
   grind mode without BotManager reading `LOOT_RADIUS`.

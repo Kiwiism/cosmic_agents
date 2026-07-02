@@ -5,6 +5,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.runtime.AgentRuntimeConfig;
 import server.bots.BotEntry;
 import server.bots.BotNavigationManager;
 import server.maps.MapleMap;
@@ -14,6 +15,20 @@ import java.util.List;
 
 public final class AgentScriptMoveTargetService {
     private AgentScriptMoveTargetService() {
+    }
+
+    public static boolean isCheapMoveTarget(BotEntry entry,
+                                            Point targetPos,
+                                            int maxPathCost,
+                                            int fallbackRangeX,
+                                            int fallbackRangeY) {
+        return isCheapMoveTarget(
+                entry,
+                targetPos,
+                maxPathCost,
+                fallbackRangeX,
+                fallbackRangeY,
+                AgentRuntimeConfig.cfg.LOOT_RADIUS);
     }
 
     public static boolean isCheapMoveTarget(BotEntry entry,

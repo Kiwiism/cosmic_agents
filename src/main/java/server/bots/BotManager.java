@@ -545,8 +545,7 @@ public class BotManager {
                 targetPos,
                 maxPathCost,
                 fallbackRangeX,
-                fallbackRangeY,
-                cfg.LOOT_RADIUS);
+                fallbackRangeY);
     }
     boolean stepMovementOnly(BotEntry entry, long tickAtMs) {
         return AgentMovementOnlyStepRuntime.stepMovementOnly(entry, tickAtMs);

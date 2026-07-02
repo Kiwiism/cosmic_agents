@@ -1,7 +1,6 @@
 package server.agents.integration;
 
 import server.agents.plans.AgentScriptMoveTargetService;
-import server.agents.runtime.AgentRuntimeConfig;
 import server.bots.BotEntry;
 
 import java.awt.Point;
@@ -20,7 +19,6 @@ public final class AgentBotScriptMoveTargetRuntime {
                 targetPos,
                 maxPathCost,
                 fallbackRangeX,
-                fallbackRangeY,
-                AgentRuntimeConfig.cfg.LOOT_RADIUS);
+                fallbackRangeY);
     }
 }
