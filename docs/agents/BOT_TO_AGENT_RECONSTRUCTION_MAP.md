@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Recruit lifecycle hook wiring moved from BotManager to
+  `server.agents.runtime.AgentRecruitRuntime`. BotManager now passes only the
+  temporary registration callback while Agent runtime owns ownerless online
+  lookup and control authorization hook wiring.
 - Dismiss lifecycle hook wiring moved from BotManager to
   `server.agents.runtime.AgentDismissRuntime`. BotManager now passes only the
   temporary stop-mode callback while Agent runtime owns cancellation, delayed

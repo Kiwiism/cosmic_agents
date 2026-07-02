@@ -74,7 +74,7 @@ import server.agents.runtime.AgentOfflineLoadRuntime;
 import server.agents.runtime.AgentPartyLifecycleService;
 import server.agents.runtime.AgentPositionService;
 import server.agents.runtime.AgentRandom;
-import server.agents.runtime.AgentRecruitService;
+import server.agents.runtime.AgentRecruitRuntime;
 import server.agents.runtime.AgentRegistrationRuntime;
 import server.agents.runtime.AgentRecoveryTickService;
 import server.agents.runtime.AgentRecoveryTeleportService;
@@ -354,14 +354,7 @@ public class BotManager {
 
     /** Recruit an ownerless bot by name into the owner's group. Returns an error string on failure, null on success. */
     public String recruitBot(int ownerCharId, Character owner, String botName) {
-        return AgentRecruitService.recruitAgent(
-                ownerCharId,
-                owner,
-                botName,
-                new AgentRecruitService.Hooks(
-                        AgentRuntimeRegistry::findUnclaimedOnlineAgentByName,
-                        (leader, agent) -> AgentOwnershipService.getInstance().ensureCanControl(leader, agent),
-                        this::registerBot));
+        return AgentRecruitRuntime.recruitAgent(ownerCharId, owner, botName, this::registerBot);
     }
 
     /** Transfer a bot from this owner to another player in the same map. Returns an error string on failure, null on success. */

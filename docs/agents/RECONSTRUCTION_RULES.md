@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Recruit lifecycle hook wiring now lives in
+  `server.agents.runtime.AgentRecruitRuntime`. BotManager supplies only the
+  temporary registration callback while Agent runtime owns ownerless online
+  Agent lookup and control authorization hook construction.
 - Dismiss lifecycle hook wiring now lives in
   `server.agents.runtime.AgentDismissRuntime`. BotManager supplies only the
   temporary stop-mode callback while Agent runtime owns scheduled-task
