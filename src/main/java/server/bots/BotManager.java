@@ -61,6 +61,7 @@ import server.agents.runtime.AgentMovementOnlyTickService;
 import server.agents.runtime.AgentMovementOnlyMapChangeService;
 import server.agents.runtime.AgentMovementTickService;
 import server.agents.runtime.AgentOwnerlessTickService;
+import server.agents.runtime.AgentOfflineLoadService;
 import server.agents.runtime.AgentPartyLifecycleService;
 import server.agents.runtime.AgentPositionService;
 import server.agents.runtime.AgentRandom;
@@ -383,42 +384,33 @@ public class BotManager {
     }
 
     public Character loadOfflineBot(int charId, int world, int channel, MapleMap targetMap, Point desiredPosition) throws SQLException {
-        BotClient botClient = new BotClient(world, channel);
-        Character botChar = Character.loadCharFromDB(charId, botClient, true);
-        botClient.setPlayer(botChar);
-        botClient.setAccID(botChar.getAccountID());
-        Map<Disease, Pair<Long, MobSkill>> diseases =
-                Server.getInstance().getPlayerBuffStorage().getDiseasesFromStorage(charId);
-        if (diseases != null) {
-            botChar.silentApplyDiseases(diseases);
-        }
+        return AgentOfflineLoadService.loadOfflineAgent(
+                charId,
+                world,
+                channel,
+                targetMap,
+                desiredPosition,
+                offlineLoadHooks());
+    }
 
-        MapleMap spawnMap = targetMap != null
-                ? targetMap
-                : Server.getInstance().getChannel(world, channel).getMapFactory().getMap(botChar.getMapId());
-        Point spawnPos = resolveSpawnPosition(spawnMap, desiredPosition != null ? desiredPosition : botChar.getPosition());
-
-        botChar.setMapId(spawnMap.getId());
-        botChar.newClient(botClient);
-        botChar.recalcLocalStats();
-
-        botChar.resetPlayerRates();
-        if (YamlConfig.config.server.USE_ADD_RATES_BY_LEVEL) {
-            botChar.setPlayerRates();
-        }
-        botChar.setWorldRates();
-        botChar.updateCouponRates();
-
-        botChar.setPosition(spawnPos);
-
-        var channelServer = Server.getInstance().getChannel(world, channel);
-        channelServer.addPlayer(botChar);
-        channelServer.getWorldServer().addPlayer(botChar);
-        botChar.setEnteredChannelWorld();
-        spawnMap.addPlayer(botChar);
-        botChar.visitMap(spawnMap);
-        botChar.diseaseExpireTask();
-        return botChar;
+    private AgentOfflineLoadService.Hooks offlineLoadHooks() {
+        return new AgentOfflineLoadService.Hooks(
+                BotClient::new,
+                (characterId, client) -> Character.loadCharFromDB(characterId, client, true),
+                characterId -> Server.getInstance().getPlayerBuffStorage().getDiseasesFromStorage(characterId),
+                (world, channel, mapId) -> Server.getInstance().getChannel(world, channel).getMapFactory().getMap(mapId),
+                this::resolveSpawnPosition,
+                agent -> {
+                    agent.resetPlayerRates();
+                    if (YamlConfig.config.server.USE_ADD_RATES_BY_LEVEL) {
+                        agent.setPlayerRates();
+                    }
+                    agent.setWorldRates();
+                    agent.updateCouponRates();
+                },
+                (world, channel, agent) -> Server.getInstance().getChannel(world, channel).addPlayer(agent),
+                (world, channel, agent) -> Server.getInstance().getChannel(world, channel).getWorldServer().addPlayer(agent),
+                MapleMap::addPlayer);
     }
 
     static void placeSpawnedOnlineBot(BotEntry entry, Character botChar, MapleMap spawnMap, Point spawnPos) {

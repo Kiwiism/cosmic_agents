@@ -17,6 +17,14 @@ Rules:
 
 Recent reconstruction notes:
 
+- Offline Agent loading now lives in
+  `server.agents.runtime.AgentOfflineLoadService`. BotManager keeps a temporary
+  compatibility hook bundle for BotClient creation, character DB loading,
+  disease restore, map resolution, spawn-position resolution, rate
+  initialization, channel/world registration, and map registration. The same
+  client/account binding, stored disease restore, target-map fallback, local
+  stat recalculation, rate setup, entered-channel-world marker, map visit, and
+  disease-expiry task ordering are preserved.
 - Spawn placement and normalization runtime reset ordering now lives in
   `server.agents.runtime.AgentSpawnPlacementService`. BotManager keeps a
   temporary compatibility hook bundle for spawn-position resolution, physics

@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Offline Agent loading moved from BotManager to
+  `server.agents.runtime.AgentOfflineLoadService`. BotManager now supplies
+  temporary hooks for BotClient creation, character DB loading, disease restore,
+  map resolution, spawn-position resolution, rate initialization, channel/world
+  registration, and map registration.
 - Spawn placement and normalization runtime reset ordering moved from
   BotManager to `server.agents.runtime.AgentSpawnPlacementService`. BotManager
   now supplies temporary hooks for spawn-position resolution, physics
