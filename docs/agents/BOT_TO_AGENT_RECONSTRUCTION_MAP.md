@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Follow map-sync hook wiring moved from BotManager to
+  `server.agents.runtime.AgentFollowMapSyncRuntime`. BotManager now delegates
+  cross-map follow synchronization while Agent runtime owns the temporary
+  ground, map-change, idle, and movement-reset hook construction.
 - Idle/trade physics hook wiring moved from BotManager to
   `server.agents.runtime.AgentIdlePhysicsRuntime`. BotManager now delegates
   physics-only and idle-entry ticks while Agent runtime owns the temporary

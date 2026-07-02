@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Follow map-sync hook construction now lives in
+  `server.agents.runtime.AgentFollowMapSyncRuntime`. The temporary public
+  `BotMovementManager.resetEntryState` bridge exists only until movement state
+  reset behavior moves fully into Agent movement modules.
 - Idle/trade physics hook construction now lives in
   `server.agents.runtime.AgentIdlePhysicsRuntime`. The temporary public
   `BotPhysicsEngine.resolveIdleGroundStance` accessor exists only until physics

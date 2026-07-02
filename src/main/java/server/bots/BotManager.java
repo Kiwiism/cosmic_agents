@@ -45,7 +45,7 @@ import server.agents.runtime.AgentFollowTargetCandidateService;
 import server.agents.runtime.AgentFollowTargetCommandService;
 import server.agents.runtime.AgentFollowTargetResolutionService;
 import server.agents.runtime.AgentFollowTargetPositionService;
-import server.agents.runtime.AgentFollowMapSyncService;
+import server.agents.runtime.AgentFollowMapSyncRuntime;
 import server.agents.runtime.AgentFollowOpportunityTickService;
 import server.agents.runtime.AgentFormationCommandService;
 import server.agents.runtime.AgentGrindModeDispatchService;
@@ -1469,15 +1469,7 @@ public class BotManager {
     }
 
     private boolean syncFollowMap(BotEntry entry, Character bot, Character followAnchor) {
-        return AgentFollowMapSyncService.syncFollowMap(entry, bot, followAnchor, followMapSyncHooks());
-    }
-
-    private AgentFollowMapSyncService.FollowMapSyncHooks followMapSyncHooks() {
-        return new AgentFollowMapSyncService.FollowMapSyncHooks(
-                BotPhysicsEngine::findGroundPoint,
-                BotPhysicsEngine::idleOnGround,
-                Character::changeMap,
-                BotMovementManager::resetEntryState);
+        return AgentFollowMapSyncRuntime.syncFollowMap(entry, bot, followAnchor);
     }
 
     private boolean recoverTeleportDistance(BotEntry entry, Character bot, Point targetPos) {

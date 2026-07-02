@@ -216,7 +216,7 @@ public class BotMovementManager {
         return true;
     }
 
-    static void resetEntryState(BotEntry entry) {
+    public static void resetEntryState(BotEntry entry) {
         BotPhysicsEngine.resetMotion(entry, AgentBotRuntimeIdentityRuntime.bot(entry).getPosition());
         clearTransientState(entry);
     }
