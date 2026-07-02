@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Idle/trade physics hook construction now lives in
+  `server.agents.runtime.AgentIdlePhysicsRuntime`. The temporary public
+  `BotPhysicsEngine.resolveIdleGroundStance` accessor exists only until physics
+  internals move into Agent movement/physics modules.
 - Attack-lock physics hook construction now lives in
   `server.agents.runtime.AgentActionLockPhysicsRuntime`. Keep this as the
   temporary bridge for attack-cooldown movement dispatch until movement is

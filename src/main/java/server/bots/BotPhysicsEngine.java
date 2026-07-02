@@ -1413,7 +1413,7 @@ public final class BotPhysicsEngine {
         return resolveIdleGroundStance(entry);
     }
 
-    static int resolveIdleGroundStance(BotEntry entry) {
+    public static int resolveIdleGroundStance(BotEntry entry) {
         return AgentBotMovementStateRuntime.facingDirectionSign(entry) >= 0
                 ? CharacterStance.STAND_RIGHT_STANCE
                 : CharacterStance.STAND_LEFT_STANCE;

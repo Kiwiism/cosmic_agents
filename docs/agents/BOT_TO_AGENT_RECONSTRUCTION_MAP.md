@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Idle/trade physics hook wiring moved from BotManager to
+  `server.agents.runtime.AgentIdlePhysicsRuntime`. BotManager now delegates
+  physics-only and idle-entry ticks while Agent runtime owns the temporary
+  swim/air/stance/ground-idle/broadcast hook construction.
 - Attack-lock physics hook wiring moved from BotManager to
   `server.agents.runtime.AgentActionLockPhysicsRuntime`. BotManager now
   delegates locked movement dispatch while Agent runtime owns the temporary

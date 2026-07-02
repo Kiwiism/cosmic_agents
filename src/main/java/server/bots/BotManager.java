@@ -52,7 +52,7 @@ import server.agents.runtime.AgentGrindModeDispatchService;
 import server.agents.runtime.AgentIdleModeTickService;
 import server.agents.runtime.AgentGrindNoTargetFallbackService;
 import server.agents.runtime.AgentGrindTargetPositionService;
-import server.agents.runtime.AgentIdlePhysicsService;
+import server.agents.runtime.AgentIdlePhysicsRuntime;
 import server.agents.runtime.AgentLeaderSessionService;
 import server.agents.runtime.AgentLeaderSafetyService;
 import server.agents.runtime.AgentLiveTickContextService;
@@ -1461,22 +1461,11 @@ public class BotManager {
      * no movement input (no follow, grind, teleport, shop visit, or attack).
      */
     private void tickTradePhysicsOnly(BotEntry entry, Character bot) {
-        AgentIdlePhysicsService.tickPhysicsOnly(entry, bot, idlePhysicsHooks());
+        AgentIdlePhysicsRuntime.tickPhysicsOnly(entry, bot);
     }
 
     private boolean tickIdleEntry(BotEntry entry, Character bot) {
-        return AgentIdlePhysicsService.tickIdleEntry(entry, bot, idlePhysicsHooks());
-    }
-
-    private AgentIdlePhysicsService.PhysicsHooks idlePhysicsHooks() {
-        return new AgentIdlePhysicsService.PhysicsHooks(
-                AgentMapEnvironmentService::isSwimMap,
-                entry -> BotMovementManager.tickSwimming(entry, null),
-                entry -> BotMovementManager.tickAirborne(entry, null),
-                BotPhysicsEngine::resolveIdleGroundStance,
-                BotPhysicsEngine::resolveStance,
-                BotPhysicsEngine::idleOnGround,
-                BotMovementManager::broadcastMovement);
+        return AgentIdlePhysicsRuntime.tickIdleEntry(entry, bot);
     }
 
     private boolean syncFollowMap(BotEntry entry, Character bot, Character followAnchor) {
