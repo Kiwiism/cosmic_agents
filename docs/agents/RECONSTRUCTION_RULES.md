@@ -17,6 +17,14 @@ Rules:
 
 Recent reconstruction notes:
 
+- Live-mode tick ordering now lives in
+  `server.agents.runtime.AgentLiveModeTickService`. BotManager keeps a
+  temporary compatibility hook bundle for shop-visit, follow-opportunity,
+  follow-idle fast path, scripted move combat, anchored farm, grind dispatch,
+  and final movement tail execution. The same shop-target override,
+  follow-opportunity target propagation, scripted-move non-propagation,
+  anchored-farm short-circuit, grind fall-through target update, and final
+  movement tail order are preserved.
 - Live tick context setup now lives in
   `server.agents.runtime.AgentLiveTickContextService`. BotManager keeps a
   temporary compatibility hook bundle for movement-profile refresh,

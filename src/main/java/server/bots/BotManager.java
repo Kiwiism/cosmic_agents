@@ -49,6 +49,7 @@ import server.agents.runtime.AgentIdlePhysicsService;
 import server.agents.runtime.AgentLeaderSessionService;
 import server.agents.runtime.AgentLeaderSafetyService;
 import server.agents.runtime.AgentLiveTickContextService;
+import server.agents.runtime.AgentLiveModeTickService;
 import server.agents.runtime.AgentLocalAttackMoveWindowService;
 import server.agents.runtime.AgentMapEnvironmentService;
 import server.agents.runtime.AgentMapTransitionService;
@@ -1177,34 +1178,8 @@ public class BotManager {
             return;
         }
 
-        // Shop visit: navigate to approach point before resuming normal flow.
-        // Keep this ahead of follow/combat/grind logic so resupply movement is not
-        // coupled to owner proximity.
-        AgentShopVisitTickService.Result shopVisitResult = AgentShopVisitTickService.tickShopVisitIfPending(
-                entry,
-                bot,
-                runAiTick,
-                new AgentShopVisitTickService.Hooks(
-                        (shopEntry, shopBot) -> {
-                            if (!perf) {
-                                return AgentShopService.tickShopVisit(shopEntry, shopBot);
-                            }
-                            long tShop = System.nanoTime();
-                            boolean consumed = AgentShopService.tickShopVisit(shopEntry, shopBot);
-                            AgentPerformanceMonitor.record("tick-shop-visit", System.nanoTime() - tShop);
-                            return consumed;
-                        },
-                        this::stepMovementCore));
-        if (shopVisitResult.consumedTick()) {
-            return;
-        }
-        if (shopVisitResult.targetPos() != null) {
-            targetPos = shopVisitResult.targetPos();
-        }
-
-        // Follow mode: attack monsters already in attack range without chasing
-        AgentFollowOpportunityTickService.Result followOpportunity =
-                AgentFollowOpportunityTickService.tickFollowOpportunity(
+        AgentLiveModeTickService.tickLiveModes(
+                new AgentLiveModeTickService.Context(
                         entry,
                         bot,
                         botPos,
@@ -1212,126 +1187,8 @@ public class BotManager {
                         targetSnapshot.followTargetPos(),
                         followAnchor,
                         runAiTick,
-                        new AgentFollowOpportunityTickService.Hooks(
-                                (attackEntry, attackBot, attackBotPos, attackTargetPos, attackFollowTargetPos) -> {
-                                    LocalOpportunityAttackResult result;
-                                    if (!perf) {
-                                        result = tryLocalOpportunityAttack(
-                                                attackEntry, attackBot, attackBotPos, attackTargetPos,
-                                                attackFollowTargetPos, true, true);
-                                    } else {
-                                        long tOpp = System.nanoTime();
-                                        result = tryLocalOpportunityAttack(
-                                                attackEntry, attackBot, attackBotPos, attackTargetPos,
-                                                attackFollowTargetPos, true, true);
-                                        AgentPerformanceMonitor.record("opportunity-attack", System.nanoTime() - tOpp);
-                                    }
-                                    return new AgentFollowOpportunityTickService.Result(
-                                            result.consumedTick(), result.targetPos());
-                                },
-                                BotMovementManager.cfg.FOLLOW_DIST));
-        targetPos = followOpportunity.targetPos();
-        if (followOpportunity.consumedTick()) {
-            return;
-        }
-
-        if (tryFollowIdleMovementFastPath(entry, bot, targetPos, nowMs)) {
-            return;
-        }
-
-        AgentScriptedMoveCombatTickService.Result scriptedMoveCombat =
-                AgentScriptedMoveCombatTickService.tickScriptedMoveCombat(
-                        entry,
-                        bot,
-                        botPos,
-                        targetPos,
-                        runAiTick,
-                        new AgentScriptedMoveCombatTickService.Hooks(
-                                BotManager::clearActionMoveWindowIfSettled,
-                                (attackEntry, attackBot, attackBotPos, attackTargetPos) -> {
-                                    LocalOpportunityAttackResult result;
-                                    if (!perf) {
-                                        result = tryLocalOpportunityAttack(
-                                                attackEntry, attackBot, attackBotPos, attackTargetPos,
-                                                attackTargetPos, true, true);
-                                    } else {
-                                        long tOppS = System.nanoTime();
-                                        result = tryLocalOpportunityAttack(
-                                                attackEntry, attackBot, attackBotPos, attackTargetPos,
-                                                attackTargetPos, true, true);
-                                        AgentPerformanceMonitor.record("opportunity-attack", System.nanoTime() - tOppS);
-                                    }
-                                    return new AgentScriptedMoveCombatTickService.Result(
-                                            result.consumedTick(), result.targetPos());
-                                },
-                                (moveEntry, moveTargetPos, moveRunAiTick) -> {
-                                    if (!perf) {
-                                        stepMovementCore(moveEntry, moveTargetPos, moveRunAiTick);
-                                    } else {
-                                        long tStep = System.nanoTime();
-                                        try { stepMovementCore(moveEntry, moveTargetPos, moveRunAiTick); }
-                                        finally { AgentPerformanceMonitor.record("step-movement-core", System.nanoTime() - tStep); }
-                                    }
-                                }));
-        if (scriptedMoveCombat.consumedTick()) {
-            return;
-        }
-
-        if (AgentAnchoredFarmModeTickService.tickIfAnchoredFarm(
-                entry,
-                bot,
-                botPos,
-                runAiTick,
-                new AgentAnchoredFarmModeTickService.Hooks((farmEntry, farmBot, farmBotPos, farmRunAiTick) -> {
-                    if (!perf) {
-                        tickAnchoredFarm(farmEntry, farmBot, farmBotPos, farmRunAiTick);
-                    } else {
-                        long tFarm = System.nanoTime();
-                        try { tickAnchoredFarm(farmEntry, farmBot, farmBotPos, farmRunAiTick); }
-                        finally { AgentPerformanceMonitor.record("tick-anchored-farm", System.nanoTime() - tFarm); }
-                    }
-                }))) {
-            return;
-        }
-
-        AgentGrindModeDispatchService.Result grindDispatch = AgentGrindModeDispatchService.tickIfGrinding(
-                entry,
-                bot,
-                botPos,
-                targetPos,
-                runAiTick,
-                new AgentGrindModeDispatchService.Hooks((grindEntry, grindBot, grindBotPos, grindTargetPos, grindRunAiTick) -> {
-                    LocalOpportunityAttackResult grindResult;
-                    if (!perf) {
-                        grindResult = tickGrindMode(grindEntry, grindBot, grindBotPos, grindTargetPos, grindRunAiTick);
-                    } else {
-                        long tGrindDispatch = System.nanoTime();
-                        try {
-                            grindResult = tickGrindMode(grindEntry, grindBot, grindBotPos, grindTargetPos, grindRunAiTick);
-                        } finally {
-                            AgentPerformanceMonitor.record("tick-grind-dispatch", System.nanoTime() - tGrindDispatch);
-                        }
-                    }
-                    return new AgentGrindModeDispatchService.Result(grindResult.consumedTick(), grindResult.targetPos());
-                }));
-        if (grindDispatch.consumedTick()) {
-            return;
-        }
-        targetPos = grindDispatch.targetPos();
-
-        AgentFinalMovementTailService.stepFinalMovement(
-                entry,
-                targetPos,
-                runAiTick,
-                new AgentFinalMovementTailService.Hooks((moveEntry, moveTargetPos, moveRunAiTick) -> {
-                    if (!perf) {
-                        stepMovementCore(moveEntry, moveTargetPos, moveRunAiTick);
-                    } else {
-                        long tStepTail = System.nanoTime();
-                        try { stepMovementCore(moveEntry, moveTargetPos, moveRunAiTick); }
-                        finally { AgentPerformanceMonitor.record("step-movement-core", System.nanoTime() - tStepTail); }
-                    }
-                }));
+                        nowMs),
+                liveModeTickHooks(perf));
     }
 
     private AgentTickPreflightService.Hooks tickPreflightHooks() {
@@ -1363,6 +1220,156 @@ public class BotManager {
                 AgentTickStateMaintenanceService::clearFarmAnchorOnMapChange,
                 AgentTickStateMaintenanceService::clearPatrolOnMapChange,
                 BotManager::clearFollowActionMoveWindowIfSettled);
+    }
+
+    private AgentLiveModeTickService.Hooks liveModeTickHooks(boolean perf) {
+        return new AgentLiveModeTickService.Hooks(
+                (shopEntry, shopBot, shopRunAiTick) -> {
+                    AgentShopVisitTickService.Result shopVisitResult = AgentShopVisitTickService.tickShopVisitIfPending(
+                            shopEntry,
+                            shopBot,
+                            shopRunAiTick,
+                            new AgentShopVisitTickService.Hooks(
+                                    (visitEntry, visitBot) -> {
+                                        if (!perf) {
+                                            return AgentShopService.tickShopVisit(visitEntry, visitBot);
+                                        }
+                                        long tShop = System.nanoTime();
+                                        boolean consumed = AgentShopService.tickShopVisit(visitEntry, visitBot);
+                                        AgentPerformanceMonitor.record("tick-shop-visit", System.nanoTime() - tShop);
+                                        return consumed;
+                                    },
+                                    this::stepMovementCore));
+                    return new AgentLiveModeTickService.PhaseResult(
+                            shopVisitResult.consumedTick(),
+                            shopVisitResult.targetPos());
+                },
+                (attackEntry, attackBot, attackBotPos, attackTargetPos, attackFollowTargetPos, attackFollowAnchor, attackRunAiTick) -> {
+                    AgentFollowOpportunityTickService.Result followOpportunity =
+                            AgentFollowOpportunityTickService.tickFollowOpportunity(
+                                    attackEntry,
+                                    attackBot,
+                                    attackBotPos,
+                                    attackTargetPos,
+                                    attackFollowTargetPos,
+                                    attackFollowAnchor,
+                                    attackRunAiTick,
+                                    new AgentFollowOpportunityTickService.Hooks(
+                                            (localEntry, localBot, localBotPos, localTargetPos, localFollowTargetPos) -> {
+                                                LocalOpportunityAttackResult result;
+                                                if (!perf) {
+                                                    result = tryLocalOpportunityAttack(
+                                                            localEntry, localBot, localBotPos, localTargetPos,
+                                                            localFollowTargetPos, true, true);
+                                                } else {
+                                                    long tOpp = System.nanoTime();
+                                                    result = tryLocalOpportunityAttack(
+                                                            localEntry, localBot, localBotPos, localTargetPos,
+                                                            localFollowTargetPos, true, true);
+                                                    AgentPerformanceMonitor.record("opportunity-attack", System.nanoTime() - tOpp);
+                                                }
+                                                return new AgentFollowOpportunityTickService.Result(
+                                                        result.consumedTick(), result.targetPos());
+                                            },
+                                            BotMovementManager.cfg.FOLLOW_DIST));
+                    return new AgentLiveModeTickService.PhaseResult(
+                            followOpportunity.consumedTick(),
+                            followOpportunity.targetPos());
+                },
+                BotManager::tryFollowIdleMovementFastPath,
+                (scriptEntry, scriptBot, scriptBotPos, scriptTargetPos, scriptRunAiTick) -> {
+                    AgentScriptedMoveCombatTickService.Result scriptedMoveCombat =
+                            AgentScriptedMoveCombatTickService.tickScriptedMoveCombat(
+                                    scriptEntry,
+                                    scriptBot,
+                                    scriptBotPos,
+                                    scriptTargetPos,
+                                    scriptRunAiTick,
+                                    new AgentScriptedMoveCombatTickService.Hooks(
+                                            BotManager::clearActionMoveWindowIfSettled,
+                                            (attackEntry, attackBot, attackBotPos, attackTargetPos) -> {
+                                                LocalOpportunityAttackResult result;
+                                                if (!perf) {
+                                                    result = tryLocalOpportunityAttack(
+                                                            attackEntry, attackBot, attackBotPos, attackTargetPos,
+                                                            attackTargetPos, true, true);
+                                                } else {
+                                                    long tOppS = System.nanoTime();
+                                                    result = tryLocalOpportunityAttack(
+                                                            attackEntry, attackBot, attackBotPos, attackTargetPos,
+                                                            attackTargetPos, true, true);
+                                                    AgentPerformanceMonitor.record("opportunity-attack", System.nanoTime() - tOppS);
+                                                }
+                                                return new AgentScriptedMoveCombatTickService.Result(
+                                                        result.consumedTick(), result.targetPos());
+                                            },
+                                            (moveEntry, moveTargetPos, moveRunAiTick) -> timedMovementCoreStep(
+                                                    moveEntry,
+                                                    moveTargetPos,
+                                                    moveRunAiTick,
+                                                    perf)));
+                    return new AgentLiveModeTickService.PhaseResult(
+                            scriptedMoveCombat.consumedTick(),
+                            scriptedMoveCombat.targetPos());
+                },
+                (farmEntry, farmBot, farmBotPos, farmRunAiTick) -> AgentAnchoredFarmModeTickService.tickIfAnchoredFarm(
+                        farmEntry,
+                        farmBot,
+                        farmBotPos,
+                        farmRunAiTick,
+                        new AgentAnchoredFarmModeTickService.Hooks((anchoredEntry, anchoredBot, anchoredBotPos, anchoredRunAiTick) -> {
+                            if (!perf) {
+                                tickAnchoredFarm(anchoredEntry, anchoredBot, anchoredBotPos, anchoredRunAiTick);
+                            } else {
+                                long tFarm = System.nanoTime();
+                                try { tickAnchoredFarm(anchoredEntry, anchoredBot, anchoredBotPos, anchoredRunAiTick); }
+                                finally { AgentPerformanceMonitor.record("tick-anchored-farm", System.nanoTime() - tFarm); }
+                            }
+                        })),
+                (grindEntry, grindBot, grindBotPos, grindTargetPos, grindRunAiTick) -> {
+                    AgentGrindModeDispatchService.Result grindDispatch = AgentGrindModeDispatchService.tickIfGrinding(
+                            grindEntry,
+                            grindBot,
+                            grindBotPos,
+                            grindTargetPos,
+                            grindRunAiTick,
+                            new AgentGrindModeDispatchService.Hooks((dispatchEntry, dispatchBot, dispatchBotPos, dispatchTargetPos, dispatchRunAiTick) -> {
+                                LocalOpportunityAttackResult grindResult;
+                                if (!perf) {
+                                    grindResult = tickGrindMode(dispatchEntry, dispatchBot, dispatchBotPos, dispatchTargetPos, dispatchRunAiTick);
+                                } else {
+                                    long tGrindDispatch = System.nanoTime();
+                                    try {
+                                        grindResult = tickGrindMode(dispatchEntry, dispatchBot, dispatchBotPos, dispatchTargetPos, dispatchRunAiTick);
+                                    } finally {
+                                        AgentPerformanceMonitor.record("tick-grind-dispatch", System.nanoTime() - tGrindDispatch);
+                                    }
+                                }
+                                return new AgentGrindModeDispatchService.Result(grindResult.consumedTick(), grindResult.targetPos());
+                            }));
+                    return new AgentLiveModeTickService.PhaseResult(
+                            grindDispatch.consumedTick(),
+                            grindDispatch.targetPos());
+                },
+                (moveEntry, moveTargetPos, moveRunAiTick) -> AgentFinalMovementTailService.stepFinalMovement(
+                        moveEntry,
+                        moveTargetPos,
+                        moveRunAiTick,
+                        new AgentFinalMovementTailService.Hooks((tailEntry, tailTargetPos, tailRunAiTick) ->
+                                timedMovementCoreStep(tailEntry, tailTargetPos, tailRunAiTick, perf))));
+    }
+
+    private void timedMovementCoreStep(BotEntry entry, Point targetPos, boolean runAiTick, boolean perf) {
+        if (!perf) {
+            stepMovementCore(entry, targetPos, runAiTick);
+            return;
+        }
+        long tStep = System.nanoTime();
+        try {
+            stepMovementCore(entry, targetPos, runAiTick);
+        } finally {
+            AgentPerformanceMonitor.record("step-movement-core", System.nanoTime() - tStep);
+        }
     }
 
     /**

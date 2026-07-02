@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Live-mode tick ordering moved from BotManager to
+  `server.agents.runtime.AgentLiveModeTickService`. BotManager now supplies
+  temporary hooks for shop-visit, follow-opportunity, follow-idle fast path,
+  scripted move combat, anchored farm, grind dispatch, and final movement tail
+  execution while Agent runtime owns the dispatch order and target propagation.
 - Live tick context setup moved from BotManager to
   `server.agents.runtime.AgentLiveTickContextService`. BotManager now supplies
   temporary hooks for movement-profile refresh, follow-anchor resolution,
