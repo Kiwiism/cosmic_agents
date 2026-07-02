@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Follow-anchor and target snapshot runtime wiring now lives in
+  `server.agents.runtime.AgentTargetSnapshotRuntime`. BotManager delegates the
+  compatibility methods while Agent runtime owns sibling lookup, formation
+  lookup, default formation selection, and the legacy platform-edge inset used
+  by follow target resolution.
 - The spawn result contract is now the Agent-owned
   `AgentLifecycleService.AgentSpawnResult`. BotManager no longer defines a
   duplicate `SpawnResult` wrapper; spawn command, party invite, and messenger

@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Follow-anchor resolution and target snapshot hook wiring moved from
+  BotManager to `server.agents.runtime.AgentTargetSnapshotRuntime`. BotManager
+  now keeps only compatibility delegates while Agent runtime owns live sibling
+  lookup, formation lookup, and follow target resolver wiring.
 - BotManager's duplicate spawn result wrapper was removed. `spawnBotForOwner`
   now returns `AgentLifecycleService.AgentSpawnResult`, and command/party/
   messenger callers consume the Agent lifecycle result directly.

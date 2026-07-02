@@ -16,11 +16,9 @@ import server.agents.runtime.AgentCommonTickRuntime;
 import server.agents.runtime.AgentDeathTickService;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentLifecycleService;
-import server.agents.runtime.AgentFollowAnchorService;
 import server.agents.runtime.AgentFormationService;
 import server.agents.runtime.AgentFormationRuntime;
 import server.agents.runtime.AgentFollowIdleMovementRuntime;
-import server.agents.runtime.AgentFollowTargetPositionService;
 import server.agents.runtime.AgentFormationCommandRuntime;
 import server.agents.runtime.AgentGrindCombatRuntime;
 import server.agents.runtime.AgentGrindModeRuntime;
@@ -46,7 +44,7 @@ import server.agents.runtime.AgentRuntimeCleanupService;
 import server.agents.runtime.AgentScriptTaskQueueService;
 import server.agents.runtime.AgentScriptTaskRuntime;
 import server.agents.runtime.AgentTargetSnapshot;
-import server.agents.runtime.AgentTargetSnapshotService;
+import server.agents.runtime.AgentTargetSnapshotRuntime;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSpawnPositionService;
 import server.agents.runtime.AgentSpawnRuntime;
@@ -144,7 +142,6 @@ public class BotManager {
     // portal in the return map; later bots warp to a randomized nearby offset.
     // Cleared when the owner becomes active again.
 
-    private static final int PLATFORM_EDGE_INSET_PX = 12;
     // -------------------------------------------------------------------------
     // Public API
     // -------------------------------------------------------------------------
@@ -286,8 +283,7 @@ public class BotManager {
     }
 
     public Character resolveFollowAnchor(BotEntry entry, Character owner) {
-        List<BotEntry> siblingEntries = owner == null ? List.of() : getBotEntries(owner.getId());
-        return AgentFollowAnchorService.resolve(entry, owner, siblingEntries);
+        return AgentTargetSnapshotRuntime.resolveFollowAnchor(entry, owner);
     }
 
     void setFormationState(Character owner,
@@ -299,16 +295,7 @@ public class BotManager {
     }
 
     public AgentTargetSnapshot captureTargetSnapshot(BotEntry entry) {
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
-        List<BotEntry> siblingEntries = owner == null ? List.of() : getBotEntries(owner.getId());
-        return AgentTargetSnapshotService.capture(
-                entry,
-                siblingEntries,
-                AgentFormationService.formationsByLeaderId(),
-                AgentFormationRuntime.defaultFormationState(),
-                (followBase, followAnchor, followAnchorPos, snapRange, map) ->
-                        AgentFollowTargetPositionService.resolve(
-                                followBase, followAnchor, followAnchorPos, snapRange, map, PLATFORM_EDGE_INSET_PX));
+        return AgentTargetSnapshotRuntime.captureTargetSnapshot(entry);
     }
 
     // AoE reposition commitment: returns the sweet-spot Point to walk to before firing, or null to

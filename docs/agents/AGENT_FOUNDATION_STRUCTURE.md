@@ -22,6 +22,8 @@ Target package groups:
   now enters through `AgentSpawnRuntime` and `AgentReloginRuntime`; manual and
   spawned registration entry points enter through `AgentRegistrationRuntime`.
   Spawn result ownership is `AgentLifecycleService.AgentSpawnResult`.
+  Follow-anchor and target-snapshot runtime wiring enters through
+  `AgentTargetSnapshotRuntime`.
   BotManager remains only a temporary compatibility caller for legacy entry
   points.
 - `server.agents.model`: identity, mode, profile, leader reference.
