@@ -415,11 +415,7 @@ public class BotManager {
                                 grindTargetPosition,
                                 grindRunAiTick,
                                 AgentMovementTickRuntime::stepMovementCore,
-                                BotManager.cfg.LOOT_RADIUS),
-                BotMovementManager.cfg.TELEPORT_DIST,
-                BotMovementManager.cfg.OOB_TELEPORT_DIST,
-                cfg.GRIND_PARTY_TELEPORT_DIST_MULTIPLIER,
-                BotMovementManager.cfg.FOLLOW_DIST);
+                                BotManager.cfg.LOOT_RADIUS));
     }
 
     static Monster selectPriorityRangedAttackTarget(BotEntry entry,

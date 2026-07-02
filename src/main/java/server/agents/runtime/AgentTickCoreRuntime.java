@@ -2,12 +2,54 @@ package server.agents.runtime;
 
 import client.Character;
 import server.bots.BotEntry;
+import server.bots.BotMovementManager;
 
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
 public final class AgentTickCoreRuntime {
     private AgentTickCoreRuntime() {
+    }
+
+    public static void tickCore(BotEntry entry,
+                                int leaderCharId,
+                                int agentCharId,
+                                AgentTickCoreService.LeaderResolver leaderResolver,
+                                AgentTickCoreService.InactiveLeaderTick inactiveLeaderTick,
+                                BiPredicate<BotEntry, Character> groundAfterMapChange,
+                                AgentOwnerlessTickService.OwnerlessMoveTick standaloneMoveTargetTick,
+                                AgentTickCoreService.DeadTick deadTick,
+                                AgentLiveTickContextService.FollowAnchorResolver followAnchorResolver,
+                                AgentLiveTickContextService.TargetSnapshotCapture targetSnapshotCapture,
+                                Consumer<BotEntry> tickScriptTasks,
+                                Consumer<BotEntry> issueGrind,
+                                Consumer<BotEntry> issueFollow,
+                                AgentLiveModeTickRuntime.LocalOpportunityAttack localOpportunityAttack,
+                                AgentLiveModeTickRuntime.MovementCoreStep movementCoreStep,
+                                AgentLiveModeTickRuntime.AnchoredFarmTick anchoredFarmTick,
+                                AgentLiveModeTickRuntime.GrindModeTick grindModeTick) {
+        tickCore(
+                entry,
+                leaderCharId,
+                agentCharId,
+                leaderResolver,
+                inactiveLeaderTick,
+                groundAfterMapChange,
+                standaloneMoveTargetTick,
+                deadTick,
+                followAnchorResolver,
+                targetSnapshotCapture,
+                tickScriptTasks,
+                issueGrind,
+                issueFollow,
+                localOpportunityAttack,
+                movementCoreStep,
+                anchoredFarmTick,
+                grindModeTick,
+                BotMovementManager.configuredTeleportDist(),
+                BotMovementManager.configuredOutOfBoundsTeleportDist(),
+                AgentRuntimeConfig.cfg.GRIND_PARTY_TELEPORT_DIST_MULTIPLIER,
+                BotMovementManager.configuredFollowDist());
     }
 
     public static void tickCore(BotEntry entry,

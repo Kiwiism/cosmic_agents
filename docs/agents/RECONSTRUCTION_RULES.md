@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Tick-core default movement distance config ownership now lives in
+  `AgentTickCoreRuntime.tickCore(...)`. BotManager no longer passes teleport,
+  out-of-bounds teleport, grind-party teleport multiplier, or follow distance
+  into tick-core wiring.
 - The `shouldOfferTownForAwayCommand` compatibility API now calls
   `AgentLeaderSafetyRuntime.shouldTownWarpForInactiveEntry` directly; the
   private BotManager town-warp helper was removed.
