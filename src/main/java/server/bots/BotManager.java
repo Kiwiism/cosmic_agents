@@ -14,6 +14,7 @@ import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatRangePolicy;
 import server.agents.capabilities.combat.AgentGrindTargetSearchService;
+import server.agents.capabilities.combat.AgentGrindTargetCommitmentService;
 import server.agents.capabilities.combat.AgentGrindNavigationTargetSelector;
 import server.agents.capabilities.combat.AgentLocalOpportunityAttackService;
 import server.agents.capabilities.combat.AgentRangedPriorityTargetSelector;
@@ -101,7 +102,6 @@ import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotGrindLootStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
-import server.agents.integration.AgentBotGrindWanderStateRuntime;
 import server.agents.integration.AgentBotLeaderStateRuntime;
 import server.agents.integration.AgentBotMapStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
@@ -1311,30 +1311,13 @@ public class BotManager {
                             entry, bot, botPos, targetPos, runAiTick, grindNoTargetFallbackHooks());
             return new LocalOpportunityAttackResult(result.consumedTick(), result.targetPos());
         }
-        AgentBotGrindTargetStateRuntime.setTarget(entry, target);
-        AgentBotGrindWanderStateRuntime.clearWanderDirection(entry);
-        AgentBotPatrolStateRuntime.clearPatrolWanderTarget(entry);
-        Point tp = target.getPosition();
-        Monster rangedPriorityTarget = selectPriorityRangedAttackTarget(entry, bot, botPos, target);
-        if (rangedPriorityTarget != null && rangedPriorityTarget != target) {
-            target = rangedPriorityTarget;
-            AgentBotGrindTargetStateRuntime.setTarget(entry, rangedPriorityTarget);
-            tp = target.getPosition();
-            attackPlan = null;
-        }
-        // Crowding swap: if a closer mob is breaching the retreat band, attack THAT mob
-        // instead of fleeing the original far target. The bot would have retreated either
-        // way (the close mob also triggers retreat), but with the right target our shots
-        // land on the actual threat instead of pointing at the far one.
-        server.life.Monster closerThreat = rangedPriorityTarget == null
-                ? AgentAttackExecutionProvider.findCloserThreatMob(bot, botPos, tp)
-                : null;
-        if (closerThreat != null && closerThreat != target) {
-            target = closerThreat;
-            AgentBotGrindTargetStateRuntime.setTarget(entry, closerThreat);
-            tp = target.getPosition();
-            attackPlan = null;
-        }
+        AgentGrindTargetCommitmentService.Result commitment =
+                AgentGrindTargetCommitmentService.commitTarget(
+                        entry, bot, botPos, target, attackPlan, grindTargetCommitmentHooks());
+        target = commitment.target();
+        Point tp = commitment.targetPosition();
+        attackPlan = commitment.attackPlan();
+        Monster rangedPriorityTarget = commitment.rangedPriorityTarget();
         if (attackPlan == null) {
             attackPlan = AgentBotCombatPlanRuntime.planAttack(entry, bot, target, AgentCombatConfig.cfg);
         }
@@ -1452,6 +1435,12 @@ public class BotManager {
                 BotManager::resolvePatrolWanderTarget,
                 BotManager::resolveNoGrindTargetPosition,
                 this::stepMovementCore);
+    }
+
+    private static AgentGrindTargetCommitmentService.Hooks grindTargetCommitmentHooks() {
+        return new AgentGrindTargetCommitmentService.Hooks(
+                BotManager::selectPriorityRangedAttackTarget,
+                AgentAttackExecutionProvider::findCloserThreatMob);
     }
 
     private void handleBotTickFailure(BotEntry entry, int ownerCharId, int botCharId, Throwable t) {

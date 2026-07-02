@@ -3014,6 +3014,12 @@ Recent reconstruction notes:
   hooks. The same grind-target clear, swim/airborne early return, legacy
   wander-direction side effect, patrol-vs-free fallback target choice, and
   consumed movement-step result are preserved.
+- Grind-mode target commitment and replacement now live in
+  `server.agents.capabilities.combat.AgentGrindTargetCommitmentService`.
+  BotManager supplies temporary ranged-priority and closer-threat hooks. The
+  same grind-target assignment, wander/patrol target clearing, ranged-priority
+  replacement, closer-threat crowding swap, attack-plan invalidation, and
+  ranged-priority marker used by later spacing rules are preserved.
 
 Initial reconstruction order:
 
