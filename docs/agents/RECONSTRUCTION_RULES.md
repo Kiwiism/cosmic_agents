@@ -3062,6 +3062,12 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentTradeWindowTickService`. BotManager keeps a
   temporary compatibility adapter for the physics-only tick body and performance
   timing. The same `getTrade() != null` consumed-tick behavior is preserved.
+- Shop-visit tick dispatch now lives in
+  `server.agents.runtime.AgentShopVisitTickService`. BotManager keeps a
+  temporary compatibility adapter for the existing shop visit tick body,
+  performance timing, and movement-core stepping. The same pending check,
+  active target lookup, approach-delay early return, movement-step dispatch, and
+  consumed-tick behavior are preserved.
 
 Initial reconstruction order:
 

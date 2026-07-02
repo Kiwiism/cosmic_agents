@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Shop-visit tick dispatch moved from BotManager to
+  `server.agents.runtime.AgentShopVisitTickService`. BotManager now supplies
+  temporary hooks for the existing shop visit tick body and movement-core
+  stepping while Agent runtime owns the pending/delay/target consumed-tick flow.
 - Trade-window tick dispatch moved from BotManager to
   `server.agents.runtime.AgentTradeWindowTickService`. BotManager now supplies
   only the temporary physics-only tick hook while the Agent runtime owns the

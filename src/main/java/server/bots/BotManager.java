@@ -62,6 +62,7 @@ import server.agents.runtime.AgentRuntimeCleanupService;
 import server.agents.runtime.AgentScriptTaskExecutionService;
 import server.agents.runtime.AgentScriptTaskQueueService;
 import server.agents.runtime.AgentScriptTaskTickService;
+import server.agents.runtime.AgentShopVisitTickService;
 import server.agents.runtime.AgentTargetSnapshot;
 import server.agents.runtime.AgentTargetSnapshotService;
 import server.agents.runtime.AgentRuntimeRegistry;
@@ -1169,23 +1170,26 @@ public class BotManager {
         // Shop visit: navigate to approach point before resuming normal flow.
         // Keep this ahead of follow/combat/grind logic so resupply movement is not
         // coupled to owner proximity.
-        if (AgentBotShopStateRuntime.shopVisitPending(entry)) {
-            boolean consumed;
-            if (!perf) {
-                consumed = AgentShopService.tickShopVisit(entry, bot);
-            } else {
-                long tShop = System.nanoTime();
-                consumed = AgentShopService.tickShopVisit(entry, bot);
-                AgentPerformanceMonitor.record("tick-shop-visit", System.nanoTime() - tShop);
-            }
-            targetPos = AgentBotShopStateRuntime.activeShopTargetPosition(entry);
-            if (!consumed && AgentBotShopStateRuntime.shopApproachDelayMs(entry) > 0) {
-                return;
-            }
-            if (targetPos != null) {
-                stepMovementCore(entry, targetPos, runAiTick);
-            }
+        AgentShopVisitTickService.Result shopVisitResult = AgentShopVisitTickService.tickShopVisitIfPending(
+                entry,
+                bot,
+                runAiTick,
+                new AgentShopVisitTickService.Hooks(
+                        (shopEntry, shopBot) -> {
+                            if (!perf) {
+                                return AgentShopService.tickShopVisit(shopEntry, shopBot);
+                            }
+                            long tShop = System.nanoTime();
+                            boolean consumed = AgentShopService.tickShopVisit(shopEntry, shopBot);
+                            AgentPerformanceMonitor.record("tick-shop-visit", System.nanoTime() - tShop);
+                            return consumed;
+                        },
+                        this::stepMovementCore));
+        if (shopVisitResult.consumedTick()) {
             return;
+        }
+        if (shopVisitResult.targetPos() != null) {
+            targetPos = shopVisitResult.targetPos();
         }
 
         // Follow mode: attack monsters already in attack range without chasing
