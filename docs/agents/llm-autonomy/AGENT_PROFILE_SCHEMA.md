@@ -6,6 +6,12 @@ pure randomness.
 Goal: agents should feel different, adapt over time, and avoid synchronized
 behavior while still obeying server rules.
 
+Profile-specific plan sets and archetypes are defined in:
+`docs/agents/llm-autonomy/PROFILE_PLAN_SET_SYSTEM.md`.
+
+Event-driven self-learning and profile updates are defined in:
+`docs/agents/profile-platform/PROFILE_ADAPTATION_SYSTEM.md`.
+
 ## Profile Layers
 
 ```text
@@ -23,6 +29,9 @@ Mood:
 
 Memory:
   learned preferences, failures, prices, maps
+
+Adaptation:
+  bounded updates from plan, objective, market, and relationship outcomes
 
 Build Intent:
   long-term class, stat, skill, equipment, and upgrade direction
@@ -108,6 +117,24 @@ Policy:
     "maxSinglePurchaseMesos": 100000,
     "allowPlayerTrade": false,
     "allowScriptSensitiveNpc": false
+  },
+  "planProfile": {
+    "archetype": "careful-quester",
+    "planSetIds": ["default-beginner-progression"],
+    "selectionMode": "weighted-with-hard-constraints",
+    "hardConstraints": {
+      "allowedRegionIds": [],
+      "allowedMapIds": [],
+      "forbiddenNpcActions": [],
+      "forbiddenQuestCompletions": [],
+      "allowFreeMarket": true,
+      "allowJobAdvancement": true
+    },
+    "softPreferences": {
+      "preferredPlanCategories": ["questline", "training", "resupply"],
+      "preferredMapIds": [],
+      "returnHomeMapId": null
+    }
   }
 }
 ```

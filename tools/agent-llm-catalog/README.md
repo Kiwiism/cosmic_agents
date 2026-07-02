@@ -32,8 +32,16 @@ Generated files are written to `tmp/agent-llm-catalog/`:
 - `generated_item_source_index.json`
 - `generated_resupply_catalog.json`
 - `generated_action_affordance_catalog.json`
+- `generated_maple_island_mvp_catalog.json`
+- `generated_maple_island_mvp_fast_indexes.json`
 - `generated_catalog_manifest.json`
 - `AGENT_LLM_CATALOG_SUMMARY.md`
+
+The Maple Island MVP catalog is a curated slice for the first reconstructed
+Agent quest milestone. It records the `10000` start route, Yoona-before-Mai
+ordering, Pio reactor-box handling, Roger's Apple item use, Yoona Cash Shop item
+grant, auto-complete quest assumptions, Biggs `1046` start-only behavior, and
+Shanks/Lith Harbor forbidden actions.
 
 ## Intended Consumers
 

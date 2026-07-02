@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "planId": "maple-island-mvp",
+  "title": "Maple Island MVP Questline",
+  "category": "questline",
+  "priority": "high",
+  "status": "draft",
+  "objectiveMode": "ordered-with-live-quest-validation",
+  "focusPolicy": {
+    "focusLevel": "high",
+    "allowSidetracks": true,
+    "allowedSidetrackTypes": ["emergency"],
+    "returnToPlan": "always"
+  },
+  "entryCriteria": {
+    "requiredStartMapId": 10000,
+    "requiredRegion": "maple-island"
+  },
+  "exitCriteria": {
+    "completeWhen": "all-required-objectives-cleared",
+    "finalMapId": 2000000,
+    "allowedIncompleteQuestIds": [1046],
+    "blockedCompletedQuestIds": [1028],
+    "forbiddenActions": [
+      {
+        "type": "npc-travel",
+        "npcId": 22000,
+        "npcName": "Shanks",
+        "reason": "Stop at Southperry and do not leave Maple Island."
+      }
+    ]
+  },
+  "catalogHints": {
+    "routeCatalog": "generated_maple_island_mvp_catalog.json",
+    "fastIndexes": "generated_maple_island_mvp_fast_indexes.json",
+    "sequenceDoc": "docs/agents/MAPLE_ISLAND_MVP_SEQUENCE.md"
+  },
+  "questPolicy": {
+    "requiredQuestIds": [
+      1000, 1001, 1003, 1004, 1005, 1006, 1007, 1008,
+      1009, 1010, 1011, 1012, 1013, 1014, 1015, 1016,
+      1017, 1019, 1020, 1021, 1022, 1025, 1026, 1027,
+      1029, 1030, 1031, 1032, 1033, 1034, 1037, 1038,
+      1039, 1040, 1041, 1042, 1043, 1044, 8020, 8021,
+      8022, 8023, 8024, 8025, 8031
+    ],
+    "startOnlyQuestIds": [1046],
+    "excludedQuestIds": [1028, 8142],
+    "optionalReviewQuestIds": [1018, 1035]
+  },
+  "route": [
+    {
+      "mapId": 10000,
+      "label": "Mushroom Town",
+      "objectives": [
+        { "kind": "quest-start", "questId": 1000, "npcId": 2101 },
+        { "kind": "quest-complete", "questId": 1000, "npcId": 2100 },
+        { "kind": "quest-start", "questId": 1001, "npcId": 2100 },
+        { "kind": "quest-complete", "questId": 1001, "npcId": 2101 },
+        { "kind": "quest-if-available", "questId": 1031, "npcIds": [2101, 2100] }
+      ]
+    },
+    {
+      "mapId": 20000,
+      "label": "Snail Garden",
+      "objectives": [
+        { "kind": "quest-start", "questId": 1021, "npcId": 2000 },
+        { "kind": "use-item", "itemId": 2010007, "forQuestId": 1021 },
+        { "kind": "quest-complete", "questId": 1021, "npcId": 2000 }
+      ]
+    },
+    {
+      "mapId": 30000,
+      "label": "Snail Field of Flowers",
+      "objectives": [
+        { "kind": "quest-start", "questId": 1003, "npcId": 2102 },
+        { "kind": "quest-chain-if-available", "questIds": [1032, 1033, 1034], "npcIds": [2102, 2001] }
+      ]
+    },
+    {
+      "mapId": 30001,
+      "label": "Mushroom Town Townstreet",
+      "objectives": [
+        { "kind": "quest-complete", "questId": 1003, "npcId": 2001 },
+        { "kind": "quest-start", "questId": 1004, "npcId": 2001 }
+      ]
+    },
+    {
+      "mapId": 30000,
+      "label": "Snail Field of Flowers",
+      "objectives": [
+        { "kind": "quest-complete", "questId": 1004, "npcId": 2102 }
+      ]
+    },
+    {
+      "mapId": 40000,
+      "label": "In a Small Forest",
+      "objectives": [
+        { "kind": "skip-optional-review", "questIds": [1018, 1035], "reason": "Legacy/tutorial-sensitive Todd quests." }
+      ]
+    },
+    {
+      "mapId": 50000,
+      "label": "Dangerous Forest",
+      "objectives": [
+        { "kind": "quest-chain", "questIds": [1019, 1029, 1037], "npcId": 2005 }
+      ]
+    },
+    {
+      "mapId": 1000000,
+      "label": "Amherst",
+      "objectives": [
+        { "kind": "quest-chain", "questIds": [1005, 1006, 1025, 1026, 1030, 1037, 1038], "npcIds": [2103, 12000] },
+        { "kind": "quest-chain", "questIds": [1022, 1027, 1040, 8031], "npcId": 12000 },
+        { "kind": "quest-chain", "questIds": [1009, 1010, 1011, 1012, 1013, 1014, 1015], "npcId": 12101 },
+        { "kind": "quest-chain", "questIds": [1008, 1020], "npcId": 10000 },
+        { "kind": "reactor-box-items", "forQuestId": 1008, "itemIds": [4031161, 4031162] }
+      ]
+    },
+    {
+      "mapId": 1010000,
+      "label": "Entrance to Adventurer Training Center",
+      "objectives": [
+        { "kind": "quest-chain", "questIds": [1039, 8020, 8021, 8022, 8023, 8024, 8025], "npcId": 20100 },
+        { "kind": "grant-scripted-item", "forQuestId": 8020, "itemId": 4031180 },
+        { "kind": "quest-chain", "questIds": [1016, 1017, 1027, 1041, 1042, 1043, 1044], "npcId": 12100 }
+      ]
+    },
+    {
+      "mapId": 1020000,
+      "label": "Split Road of Destiny",
+      "objectives": [
+        { "kind": "navigate-through", "reason": "Route to Southperry without job/off-island progression." }
+      ]
+    },
+    {
+      "mapId": 2000000,
+      "label": "Southperry",
+      "objectives": [
+        { "kind": "quest-chain", "questIds": [1007], "npcId": 20002 },
+        { "kind": "quest-complete", "questId": 1026, "npcId": 22000, "forbiddenFollowUpActions": ["travel-off-island"] },
+        { "kind": "quest-start", "questId": 1046, "npcId": 20002 },
+        { "kind": "stop-plan", "reason": "MVP exits at Southperry with 1046 active/incomplete." }
+      ]
+    }
+  ]
+}

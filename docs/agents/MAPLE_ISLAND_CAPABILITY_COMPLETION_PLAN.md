@@ -9,7 +9,7 @@ Target:
 Spawn one Agent with a Maple Island plan card.
 Agent completes all selected Maple Island quest objectives.
 Agent stops at Southperry.
-Agent does not talk to Shanks or leave for Lith Harbor.
+Agent does not use Shanks travel or leave for Lith Harbor.
 ```
 
 ## Source Data Checked
@@ -74,7 +74,7 @@ Important NPC ids:
 | `10000` | Pio | quest/recycling |
 | `12000` | Lucas | Amherst quest flow |
 | `12100` | Mai | training quest flow |
-| `12101` | Rain | quiz/advice, optional unless selected plan includes it |
+| `12101` | Rain | quiz/advice, included in MVP selected plan |
 | `2000` | Roger | apple/tutorial quest |
 | `20002` | Biggs | Southperry quest/advice |
 | `2005` / `1011001` | Sam | Mushroom Town/Sam request flow |
@@ -83,7 +83,7 @@ Important NPC ids:
 | `2101` | Heena | early tutorial quest |
 | `2102` | Nina | early tutorial quest |
 | `2103` | Maria | Maria/Lucas/Shanks quest flow |
-| `22000` | Shanks | forbidden final-leave interaction |
+| `22000` | Shanks | allowed for quest completion, forbidden for final-leave travel |
 
 Candidate Maple Island quest ids from `QuestInfo.img.xml`:
 
@@ -395,6 +395,10 @@ AgentQuestCombatObjectiveService
 AgentMobObjectiveTargetPolicy
 AgentCombatStopCondition
 AgentNoMobBackoffPolicy
+AgentObjectiveFocusState
+AgentSpawnPressureTargetPolicy
+AgentFutureQuestLootPolicy
+AgentMobUtilityScorer
 ```
 
 Objective types:
@@ -412,6 +416,18 @@ Stop immediately when:
 - plan objective is cancelled.
 - HP/MP unsafe result asks recovery.
 - no target found after retry limit.
+
+Combat should keep the Agent in objective focus until exit criteria is met. When
+the current target mob is scarce but the map is full, a spawn-pressure policy may
+clear bounded filler mobs. Prefer filler mobs that provide prelootable future
+quest value, but never count quest-active-only drops before the relevant quest is
+active.
+
+Detailed focus and mixed-mob combat policy:
+
+```text
+docs/agents/QUEST_FOCUS_AND_COMBAT_POLICY.md
+```
 
 ### 8. Loot Objective Mode
 
@@ -547,6 +563,8 @@ Do not trust persisted objective completion over live quest status.
   result audit.
 - every combat/loot objective stops when live quest/inventory state satisfies
   it.
+- mixed-mob maps can optionally clear bounded filler mobs when target mobs are
+  scarce and map spawns are clogged.
 - inventory full, missing NPC, missing mob, missing portal, bad route, death,
   and quest mismatch produce structured blockers.
 - relog/restart resumes without duplicate quest rewards.

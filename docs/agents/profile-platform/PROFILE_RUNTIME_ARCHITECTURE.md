@@ -5,13 +5,18 @@ usable by Agent engines and LLM directors across Cosmic-like servers.
 
 It must not depend on server runtime classes.
 
+Profile self-learning and event-driven updates are specified in
+`docs/agents/profile-platform/PROFILE_ADAPTATION_SYSTEM.md`.
+
 ## Goals
 
 - Store stable agent identity.
 - Model behavior traits and preferences.
+- Support archetype-specific plan sets and hard identity constraints.
 - Track short-term mood.
 - Track long-term memory.
 - Track long-term build intent.
+- Adapt preferences from plan, objective, market, and relationship outcomes.
 - Record explainable strategic decisions.
 - Enforce policy limits.
 - Produce behavior decisions for the Agent engine.
@@ -27,6 +32,8 @@ flowchart TB
     Memory["Memory Store"]
     Relations["Relationship Memory"]
     Build["Build Intent Model"]
+    Events["Experience Event Log"]
+    Adapt["Adaptation Engine"]
     Journal["Decision Journal"]
     Policy["Policy Engine"]
     Sampler["Behavior Sampler"]
@@ -39,6 +46,10 @@ flowchart TB
     Store --> Memory
     Store --> Relations
     Store --> Build
+    Agent --> Events
+    Events --> Adapt
+    Adapt --> Store
+    Adapt --> Journal
     Store --> Journal
     Store --> Policy
     Traits --> Sampler
@@ -71,6 +82,9 @@ mood:
 memory:
   remembered events, routes, prices, successes, failures
 
+adaptation:
+  event-driven bounded profile updates from outcomes
+
 relationshipMemory:
   per-agent view of other agents, players, traders, and party members
 
@@ -82,6 +96,9 @@ decisionJournal:
 
 policy:
   hard limits and permissions
+
+planProfile:
+  archetype-specific plan sets, hard constraints, and plan selection weights
 ```
 
 ## Storage Model

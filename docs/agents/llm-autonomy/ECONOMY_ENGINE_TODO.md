@@ -6,6 +6,13 @@ The economy engine should be separate from the Cosmic server runtime and accesse
 through validated capabilities. The LLM may propose economy actions, but it must
 not directly mutate inventory, mesos, shops, trades, or prices.
 
+System architecture: `docs/agents/llm-autonomy/ADAPTIVE_ECONOMY_SYSTEM_PLAN.md`.
+Reader-friendly overview:
+`docs/agents/llm-autonomy/ECONOMY_ENGINE_VISION_AND_OVERVIEW.md`.
+Design specification: `docs/agents/llm-autonomy/ECONOMY_DESIGN_SPECIFICATION.md`.
+Technical specification:
+`docs/agents/llm-autonomy/ECONOMY_TECHNICAL_IMPLEMENTATION_SPECIFICATION.md`.
+
 ## Current State
 
 Available preparation:
@@ -19,6 +26,23 @@ Available preparation:
 - Plan card system design.
 
 Missing runtime pieces are listed below.
+
+## 0. Adaptive Economy Architecture
+
+- [x] Document layered adaptive economy system plan.
+- [x] Document full economy design specification.
+- [x] Document full economy technical implementation specification.
+- [ ] Implement static baseline value model.
+- [ ] Implement market observation lifecycle model.
+- [ ] Implement market learning state per `worldId + itemValuationKey`.
+- [ ] Implement global inflation and meso stability index.
+- [ ] Implement demand/supply forecast layer.
+- [ ] Implement equip stat valuation buckets and nonlinear stat premium.
+- [ ] Implement scroll expected-value model.
+- [ ] Implement agent personal belief and economy memory layer.
+- [ ] Implement manipulation risk engine.
+- [ ] Implement listing age, sale velocity, expiration, and relist metrics.
+- [ ] Implement validated LLM economy query layer.
 
 ## 1. Runtime Market Model
 

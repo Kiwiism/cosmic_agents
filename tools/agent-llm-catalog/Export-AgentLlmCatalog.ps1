@@ -428,6 +428,7 @@ function Export-QuestObjectiveCatalog {
         $objectives = New-ObjectList
         $startNpc = if ($quest.startNpcId) { $NpcById[[int] $quest.startNpcId] } else { $null }
         $completeNpc = if ($quest.completeNpcId) { $NpcById[[int] $quest.completeNpcId] } else { $null }
+        $flagValues = New-Object System.Collections.Generic.List[string]
 
         if ($quest.startNpcId) {
             [void] $objectives.Add([pscustomobject] @{
@@ -477,6 +478,13 @@ function Export-QuestObjectiveCatalog {
             })
         }
 
+        foreach ($flag in @($quest.flags)) {
+            if ($flag) { [void] $flagValues.Add($flag) }
+        }
+        if ($objectives.Count -eq 0) { [void] $flagValues.Add("no-derived-objectives") }
+        if ($quest.startNpcId -and $null -eq $startNpc) { [void] $flagValues.Add("start-npc-missing-from-npc-catalog") }
+        if ($quest.completeNpcId -and $null -eq $completeNpc) { [void] $flagValues.Add("complete-npc-missing-from-npc-catalog") }
+
         [void] $rows.Add([pscustomobject] @{
             schemaVersion = 1
             questId = $questId
@@ -496,6 +504,253 @@ function Export-QuestObjectiveCatalog {
         })
     }
     return ,$rows
+}
+
+function Get-ReachableMapIds {
+    param(
+        [object[]] $PortalGraph,
+        [int] $StartMapId
+    )
+
+    $reachable = [System.Collections.Generic.HashSet[int]]::new()
+    $queue = [System.Collections.Queue]::new()
+    [void] $reachable.Add($StartMapId)
+    $queue.Enqueue($StartMapId)
+
+    while ($queue.Count -gt 0) {
+        $mapId = [int] $queue.Dequeue()
+        foreach ($edge in @($PortalGraph | Where-Object { [int] $_.fromMapId -eq $mapId })) {
+            $toMapId = [int] $edge.toMapId
+            if ([int] $toMapId -eq 999999999) {
+                continue
+            }
+            if ($reachable.Add($toMapId)) {
+                $queue.Enqueue($toMapId)
+            }
+        }
+    }
+
+    $values = [System.Collections.Generic.List[int]]::new()
+    foreach ($mapId in @($reachable | Sort-Object)) {
+        [void] $values.Add([int] $mapId)
+    }
+    return @($values.ToArray())
+}
+
+function Get-QuestObjectiveById {
+    param(
+        [object[]] $QuestObjectiveCatalog,
+        [int] $QuestId
+    )
+
+    return @($QuestObjectiveCatalog | Where-Object { [int] $_.questId -eq $QuestId } | Select-Object -First 1)[0]
+}
+
+function Get-MapIdsForNpc {
+    param(
+        [hashtable] $NpcById,
+        [int] $NpcId
+    )
+
+    $npc = $NpcById[$NpcId]
+    if ($null -eq $npc) {
+        return @()
+    }
+    $values = [System.Collections.Generic.List[int]]::new()
+    foreach ($placement in @($npc.placements)) {
+        if ($null -ne $placement.mapId) {
+            [void] $values.Add([int] $placement.mapId)
+        }
+    }
+    return @($values.ToArray())
+}
+
+function Get-FirstReachableNpcMapId {
+    param(
+        [hashtable] $NpcById,
+        [int] $NpcId,
+        [object[]] $PreferredMapIds
+    )
+
+    $maps = @(Get-MapIdsForNpc $NpcById $NpcId)
+    foreach ($preferred in @($PreferredMapIds)) {
+        if (@($maps) -contains [int] $preferred) {
+            return [int] $preferred
+        }
+    }
+    return $null
+}
+
+function New-MapleQuestRule {
+    param(
+        [int] $QuestId,
+        [string] $Availability,
+        [string] $RouteRole,
+        [string[]] $Overrides = @(),
+        [string[]] $Notes = @(),
+        [bool] $Required = $true
+    )
+
+    return [pscustomobject] @{
+        questId = $QuestId
+        availability = $Availability
+        routeRole = $RouteRole
+        required = $Required
+        overrides = (New-StringList @($Overrides))
+        notes = (New-StringList @($Notes))
+    }
+}
+
+function Export-MapleIslandMvpCatalog {
+    param(
+        [object[]] $Maps,
+        [object[]] $PortalGraph,
+        [object[]] $QuestObjectiveCatalog,
+        [object[]] $NpcCatalog,
+        [object[]] $MobSpawnCatalog
+    )
+
+    $npcById = New-Index $NpcCatalog "npcId"
+    $mapById = New-Index $Maps "mapId"
+    $mobSpawnByMap = New-Index $MobSpawnCatalog "mapId"
+    $reachableMapIds = @(Get-ReachableMapIds $PortalGraph 10000)
+    $preferredNpcMaps = @(10000, 20000, 30000, 30001, 40000, 50000, 1000000, 1010000, 1020000, 2000000)
+
+    $questRules = @(
+        New-MapleQuestRule 1000 "reachable" "required"
+        New-MapleQuestRule 1001 "reachable" "required"
+        New-MapleQuestRule 1003 "reachable" "required"
+        New-MapleQuestRule 1004 "reachable" "required"
+        New-MapleQuestRule 1005 "reachable" "required"
+        New-MapleQuestRule 1006 "reachable" "required"
+        New-MapleQuestRule 1007 "reachable" "required"
+        New-MapleQuestRule 1008 "reachable-with-override" "required" @("reactor-box-items") @("Required recycled goods come from reactor boxes.")
+        New-MapleQuestRule 1009 "reachable" "required"
+        New-MapleQuestRule 1010 "reachable" "required"
+        New-MapleQuestRule 1011 "reachable" "required"
+        New-MapleQuestRule 1012 "reachable" "required"
+        New-MapleQuestRule 1013 "reachable" "required"
+        New-MapleQuestRule 1014 "reachable" "required"
+        New-MapleQuestRule 1015 "reachable" "required"
+        New-MapleQuestRule 1016 "reachable" "required"
+        New-MapleQuestRule 1017 "reachable" "required"
+        New-MapleQuestRule 1018 "optional-review" "optional" @("legacy-todd-review") @("NPCs are reachable from map 10000 route, but likely old/tutorial-sensitive.") $false
+        New-MapleQuestRule 1019 "reachable" "required"
+        New-MapleQuestRule 1020 "reachable" "required"
+        New-MapleQuestRule 1021 "reachable-with-override" "required" @("use-roger-apple") @("Agent must use item 2010007 before completing.")
+        New-MapleQuestRule 1022 "reachable" "required"
+        New-MapleQuestRule 1025 "reachable" "required"
+        New-MapleQuestRule 1026 "reachable" "required"
+        New-MapleQuestRule 1027 "reachable" "required"
+        New-MapleQuestRule 1028 "excluded" "excluded" @("off-island-completion") @("Completes after leaving Maple Island.") $false
+        New-MapleQuestRule 1029 "reachable" "required"
+        New-MapleQuestRule 1030 "reachable-with-override" "required" @("auto-complete-no-complete-npc") @("Assume no-complete-NPC quest auto-completes.")
+        New-MapleQuestRule 1031 "reachable" "required"
+        New-MapleQuestRule 1032 "reachable" "required"
+        New-MapleQuestRule 1033 "reachable" "required"
+        New-MapleQuestRule 1034 "reachable" "required"
+        New-MapleQuestRule 1035 "optional-review" "optional" @("legacy-todd-review") @("NPCs are reachable from map 10000 route, but likely old/tutorial-sensitive.") $false
+        New-MapleQuestRule 1037 "reachable" "required"
+        New-MapleQuestRule 1038 "reachable" "required"
+        New-MapleQuestRule 1039 "reachable" "required"
+        New-MapleQuestRule 1040 "reachable" "required"
+        New-MapleQuestRule 1041 "reachable" "required"
+        New-MapleQuestRule 1042 "reachable" "required"
+        New-MapleQuestRule 1043 "reachable" "required"
+        New-MapleQuestRule 1044 "reachable" "required"
+        New-MapleQuestRule 1046 "start-only" "required-start-only" @("leave-active-at-southperry") @("Start from Biggs, leave incomplete because completion is on Victoria Island.")
+        New-MapleQuestRule 8020 "reachable-with-override" "required" @("grant-cash-shop-shopping-guide") @("Shopping list item comes from Cash Shop flow; grant/spawn for agent.")
+        New-MapleQuestRule 8021 "reachable" "required"
+        New-MapleQuestRule 8022 "reachable" "required"
+        New-MapleQuestRule 8023 "reachable-with-override" "required" @("auto-complete-no-complete-npc") @("Assume no-complete-NPC quest auto-completes.")
+        New-MapleQuestRule 8024 "reachable" "required"
+        New-MapleQuestRule 8025 "reachable" "required"
+        New-MapleQuestRule 8031 "reachable" "required"
+        New-MapleQuestRule 8142 "excluded" "excluded" @("old-map-unreachable-from-10000") @("Todd quest in old tutorial map; not reachable from map 10000.") $false
+    )
+
+    $questRows = New-ObjectList
+    foreach ($rule in $questRules) {
+        $quest = Get-QuestObjectiveById $QuestObjectiveCatalog ([int] $rule.questId)
+        $startNpcId = if ($quest) { $quest.startNpcId } else { $null }
+        $completeNpcId = if ($quest) { $quest.completeNpcId } else { $null }
+        $startMapId = if ($startNpcId) { Get-FirstReachableNpcMapId $npcById ([int] $startNpcId) $preferredNpcMaps } else { $null }
+        $completeMapId = if ($completeNpcId) { Get-FirstReachableNpcMapId $npcById ([int] $completeNpcId) $preferredNpcMaps } else { $null }
+
+        [void] $questRows.Add([pscustomobject] @{
+            questId = [int] $rule.questId
+            availability = $rule.availability
+            routeRole = $rule.routeRole
+            required = $rule.required
+            startNpcId = $startNpcId
+            startMapId = $startMapId
+            completeNpcId = $completeNpcId
+            completeMapId = $completeMapId
+            objectives = if ($quest) { $quest.objectives } else { @() }
+            overrides = $rule.overrides
+            notes = $rule.notes
+        })
+    }
+
+    $routeMapRows = New-ObjectList
+    foreach ($mapId in @(10000, 20000, 30000, 30001, 40000, 50000, 1000000, 1010000, 1020000, 2000000, 1000001, 1000003, 2000001)) {
+        $map = $mapById[[int] $mapId]
+        $spawn = $mobSpawnByMap[[int] $mapId]
+        [void] $routeMapRows.Add([pscustomobject] @{
+            mapId = [int] $mapId
+            label = (Get-MapLabel $map)
+            reachableFromStartMap = $reachableMapIds -contains [int] $mapId
+            npcIds = if ($map) { (New-IntList @($map.npcIds)) } else { @() }
+            mobIds = if ($spawn) { (New-IntList @($spawn.mobs | ForEach-Object { $_.mobId })) } else { @() }
+        })
+    }
+
+    $fastIndexes = [pscustomobject] @{
+        questId_to_mvpRule = @{}
+        availability_to_questIds = @{}
+        routeRole_to_questIds = @{}
+        mapId_to_routeFacts = @{}
+    }
+
+    foreach ($quest in @($questRows)) {
+        $fastIndexes.questId_to_mvpRule[[string] $quest.questId] = $quest
+        if (!$fastIndexes.availability_to_questIds.ContainsKey($quest.availability)) {
+            $fastIndexes.availability_to_questIds[$quest.availability] = New-Object System.Collections.ArrayList
+        }
+        [void] $fastIndexes.availability_to_questIds[$quest.availability].Add([int] $quest.questId)
+        if (!$fastIndexes.routeRole_to_questIds.ContainsKey($quest.routeRole)) {
+            $fastIndexes.routeRole_to_questIds[$quest.routeRole] = New-Object System.Collections.ArrayList
+        }
+        [void] $fastIndexes.routeRole_to_questIds[$quest.routeRole].Add([int] $quest.questId)
+    }
+
+    foreach ($map in @($routeMapRows)) {
+        $fastIndexes.mapId_to_routeFacts[[string] $map.mapId] = $map
+    }
+
+    return [pscustomobject] @{
+        schemaVersion = 1
+        planId = "maple-island-mvp"
+        startMapId = 10000
+        finalMapId = 2000000
+        routeMapIds = (New-IntList @(10000, 20000, 30000, 30001, 40000, 50000, 1000000, 1010000, 1020000, 2000000))
+        sideMapIds = (New-IntList @(1000001, 1000003, 2000001))
+        reachableMapIds = (New-IntList @($reachableMapIds))
+        routeMaps = $routeMapRows
+        quests = $questRows
+        specialRules = @(
+            [pscustomobject] @{ ruleId = "pio-reactor-boxes"; questIds = @(1008); capability = "reactor.open-box"; items = @(4031161, 4031162) }
+            [pscustomobject] @{ ruleId = "auto-complete-no-complete-npc"; questIds = @(1030, 8023); capability = "quest.auto-complete" }
+            [pscustomobject] @{ ruleId = "yoona-cash-shop-shopping-guide"; questIds = @(8020); capability = "inventory.grant-scripted-item"; items = @(4031180) }
+            [pscustomobject] @{ ruleId = "roger-apple"; questIds = @(1021); capability = "inventory.use-item"; items = @(2010007) }
+            [pscustomobject] @{ ruleId = "biggs-1046-start-only"; questIds = @(1046); capability = "npc.startQuest"; exitState = "quest-active-incomplete" }
+        )
+        forbiddenActions = @(
+            [pscustomobject] @{ type = "npc-travel"; npcId = 22000; npcName = "Shanks"; reason = "MVP stops at Southperry and must not leave Maple Island." },
+            [pscustomobject] @{ type = "quest-complete"; questIds = @(1028, 1046); reason = "Completion target is off-island for MVP." }
+        )
+        fastIndexes = $fastIndexes
+    }
 }
 
 function Export-ItemSourceIndex {
@@ -747,6 +1002,7 @@ $questObjectiveCatalog = Export-QuestObjectiveCatalog $quests $npcById $mobById 
 $itemSourceIndex = Export-ItemSourceIndex $items $shops $dropsByItem
 $resupplyCatalog = Export-ResupplyCatalog $shops
 $actionAffordanceCatalog = Export-ActionAffordanceCatalog
+$mapleIslandMvpCatalog = Export-MapleIslandMvpCatalog $maps $portalGraph $questObjectiveCatalog $npcs $mobSpawnCatalog
 
 $out = @{
     portalGraph = Join-Path $OutputDir "generated_portal_graph.json"
@@ -756,6 +1012,8 @@ $out = @{
     itemSources = Join-Path $OutputDir "generated_item_source_index.json"
     resupply = Join-Path $OutputDir "generated_resupply_catalog.json"
     affordances = Join-Path $OutputDir "generated_action_affordance_catalog.json"
+    mapleIslandMvp = Join-Path $OutputDir "generated_maple_island_mvp_catalog.json"
+    mapleIslandMvpIndexes = Join-Path $OutputDir "generated_maple_island_mvp_fast_indexes.json"
     manifest = Join-Path $OutputDir "generated_catalog_manifest.json"
     summary = Join-Path $OutputDir "AGENT_LLM_CATALOG_SUMMARY.md"
 }
@@ -767,6 +1025,8 @@ $questObjectiveCatalog | ConvertTo-Json -Depth 16 | Set-Content -Encoding UTF8 $
 $itemSourceIndex | ConvertTo-Json -Depth 14 | Set-Content -Encoding UTF8 $out.itemSources
 $resupplyCatalog | ConvertTo-Json -Depth 10 | Set-Content -Encoding UTF8 $out.resupply
 $actionAffordanceCatalog | ConvertTo-Json -Depth 8 | Set-Content -Encoding UTF8 $out.affordances
+$mapleIslandMvpCatalog | ConvertTo-Json -Depth 18 | Set-Content -Encoding UTF8 $out.mapleIslandMvp
+$mapleIslandMvpCatalog.fastIndexes | ConvertTo-Json -Depth 16 | Set-Content -Encoding UTF8 $out.mapleIslandMvpIndexes
 
 $counts = @{
     maps = @($maps).Count
@@ -777,6 +1037,8 @@ $counts = @{
     itemSourceIndexes = @($itemSourceIndex).Count
     resupplyShops = @($resupplyCatalog).Count
     actionAffordances = @($actionAffordanceCatalog).Count
+    mapleIslandMvpQuests = @($mapleIslandMvpCatalog.quests).Count
+    mapleIslandMvpReachableMaps = @($mapleIslandMvpCatalog.reachableMapIds).Count
 }
 
 $manifest = Export-Manifest $out $counts
@@ -799,6 +1061,8 @@ $summary = @(
     "- Item source indexes: $($counts.itemSourceIndexes)",
     "- Resupply shops: $($counts.resupplyShops)",
     "- Action affordances: $($counts.actionAffordances)",
+    "- Maple Island MVP quest rules: $($counts.mapleIslandMvpQuests)",
+    "- Maps reachable from Maple Island MVP start: $($counts.mapleIslandMvpReachableMaps)",
     "",
     "## Outputs",
     "",
@@ -809,6 +1073,8 @@ $summary = @(
     "- `generated_item_source_index.json` - item-to-drop/shop availability index.",
     "- `generated_resupply_catalog.json` - NPC shops with potions, utility recovery items, projectiles, and bullets.",
     "- `generated_action_affordance_catalog.json` - capability/action contract hints for LLM command planning.",
+    "- `generated_maple_island_mvp_catalog.json` - Maple Island MVP route, quest availability, special handling, and forbidden actions.",
+    "- `generated_maple_island_mvp_fast_indexes.json` - compact lookup maps for Maple Island MVP quest/map decisions.",
     "- `generated_catalog_manifest.json` - file list and generation metadata.",
     "",
     "## Integration Notes",
@@ -824,3 +1090,4 @@ Write-Host "  Output: $OutputDir"
 Write-Host "  Portal edges: $($counts.portalEdges)"
 Write-Host "  Quest objective plans: $($counts.questObjectivePlans)"
 Write-Host "  Item source indexes: $($counts.itemSourceIndexes)"
+Write-Host "  Maple Island MVP quest rules: $($counts.mapleIslandMvpQuests)"

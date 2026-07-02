@@ -9,6 +9,14 @@ This TODO tracks the future portable Agent Knowledge Platform.
 - [x] Catalog query API.
 - [x] Profile runtime architecture.
 - [x] Profile decision API.
+- [x] Profile adaptation system.
+- [x] Agent profile system design specification.
+- [x] Agent profile system technical specification.
+- [x] Agent platform package registry.
+- [x] Agent engine scaling track.
+- [x] Agent gameplay track.
+- [x] Post-reconstruction Agent platform specification.
+- [x] Layman Agent engine vision and reconstruction overview.
 - [x] Server adapter contract.
 - [x] Minimal Cosmic edit install target.
 
@@ -24,6 +32,7 @@ This TODO tracks the future portable Agent Knowledge Platform.
 - [ ] Add extended full-game catalogs:
   - reactor/field object catalog.
   - foothold/reachability catalog.
+  - jump-quest route graph catalog.
   - travel service catalog.
   - quest reward choice catalog.
   - dialogue option catalog.
@@ -43,6 +52,12 @@ This TODO tracks the future portable Agent Knowledge Platform.
   - item/economy source indexes.
   - mob/combat/training indexes.
   - risk/manual-review/action-affordance indexes.
+  - quest edge-case status indexes.
+- [x] Document Victoria <30 quest status catalog override:
+  - `docs/agents/catalog-overrides/victoria-lt30-quest-status.catalog.json`.
+  - `docs/agents/catalog-overrides/VICTORIA_LT30_QUEST_STATUS_CATALOG.md`.
+- [ ] Merge catalog override inputs into the portable catalog builder so they
+  are emitted with normal bundle manifests and hashes.
 - [ ] Generate LLM summary indexes for maps, item acquisition, questlines,
   training, economy, and action affordances.
 
@@ -72,6 +87,15 @@ This TODO tracks the future portable Agent Knowledge Platform.
 - [ ] Create behavior sampler.
 - [ ] Create policy engine.
 - [ ] Add event feedback model.
+- [ ] Define `AgentExperienceEvent` and `ProfilePatch` schema files.
+- [ ] Add append-only profile event store.
+- [ ] Add append-only profile patch store.
+- [ ] Add profile adaptation engine with bounded rule evaluation.
+- [ ] Add profile patch validators that prevent hard policy mutation.
+- [ ] Add adaptation modes: off, observe-only, bounded, and fast-learn-test.
+- [ ] Add replay tooling to rebuild profile state from event and patch logs.
+- [ ] Add adaptation rules for plan/objective outcomes, navigation failures,
+  combat danger, farming dry streaks, market outcomes, and relationships.
 - [ ] Add strategic decision journal with reason codes, influences,
   alternatives considered, and outcomes.
 - [ ] Add profile decision APIs for build progression and equipment acquisition.
@@ -92,11 +116,14 @@ This TODO tracks the future portable Agent Knowledge Platform.
 - [ ] Add sidetrack/plan-stack persistence model.
 - [ ] Add LLM plan command tools.
 - [ ] Add direct LLM `NAVIGATE_TO_POINT` command as a temporary sidetrack plan/objective.
-- [ ] Add Maple Island sample plan card.
+- [x] Add Maple Island sample plan card.
 - [ ] Add validator for plan exit criteria and forbidden actions.
 
 ## Maple Island MVP Work
 
+- [x] Document final Maple Island MVP route handoff.
+- [x] Document Maple Island MVP design specification.
+- [x] Document Maple Island MVP technical implementation specification.
 - [ ] Add read-only plan card loader.
 - [ ] Add plan progress state model.
 - [ ] Add objective status model.
@@ -109,11 +136,17 @@ This TODO tracks the future portable Agent Knowledge Platform.
 - [ ] Add inventory count/free-slot APIs.
 - [ ] Add loot objective stop conditions.
 - [ ] Add combat objective stop conditions.
+- [ ] Add objective focus state and exit criteria model.
+- [ ] Add quest combat spawn-pressure target policy.
+- [ ] Add future quest loot/preloot policy.
+- [ ] Add reactor objective capability and catalog lookup.
+- [ ] Add jump-quest navigation graph support.
 - [ ] Add basic RecoveryCapability retry/block policy.
-- [ ] Build Maple Island catalog slice.
-- [ ] Build Maple Island fast lookup indexes and validation report from
+- [x] Build Maple Island catalog slice exporter.
+- [x] Build Maple Island fast lookup indexes from
   `docs/agents/MAPLE_ISLAND_CAPABILITY_COMPLETION_PLAN.md`.
-- [ ] Add `maple-island-mvp` plan card.
+- [ ] Add Maple Island validation report generation.
+- [x] Add `maple-island-mvp` plan card.
 - [ ] Add test command to assign `maple-island-mvp` to one agent.
 - [ ] Add objective progress logging.
 - [ ] Add one-agent full-run integration test.

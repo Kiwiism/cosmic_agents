@@ -6,6 +6,10 @@ behavior and Agent capabilities.
 It lets an Agent engine run structured plans such as questlines, farming loops,
 market scouting, supply runs, party support, and LLM-assigned goals.
 
+Profile-specific plan sets, archetypes, and hard identity constraints are
+defined in:
+`docs/agents/llm-autonomy/PROFILE_PLAN_SET_SYSTEM.md`.
+
 ## Design Rule
 
 ```text
@@ -715,3 +719,43 @@ AgentPlanProgressStore
 ```
 
 Legacy behavior can remain underneath as a fallback capability until replaced.
+
+## Presentation Policies
+
+Do not put human-like presentation details inside Plan Cards. A plan should say
+what the Agent should do, not exactly where it should stand or how long it
+should pretend to read.
+
+Examples that belong outside the Plan Card:
+
+- random NPC approach point selection.
+- dialogue-length delay simulation.
+- first-time vs repeated dialogue timing.
+- profile-specific reading speed.
+- micro-pauses and small interaction jitter.
+
+Those belong to the Agent profile, catalog data, and runtime interaction
+realism policy. See:
+
+```text
+docs/agents/INTERACTION_REALISM_POLICY.md
+```
+
+## Quest Edge Cases
+
+Plan Cards should also avoid embedding every quest exception. A plan can select
+or query quests, but edge-case behavior should come from the quest catalog.
+
+Examples:
+
+- completion outside current region should postpone, not block.
+- reactor objectives should route through reactor capability.
+- jump quest objectives should route through jump-quest navigation graphs.
+- seasonal/event/pet/PQ quests should be gated by policy.
+- unclear script or item-source behavior should be `manual-review-required`.
+
+Victoria Island `<30` review notes are tracked in:
+
+```text
+docs/agents/VICTORIA_LT30_QUEST_EDGE_CASE_REVIEW.md
+```

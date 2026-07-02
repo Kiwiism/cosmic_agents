@@ -22,6 +22,7 @@ Outputs are written to `tmp/npc-catalog/`:
 - `generated_npc_dialogue_options.json`
 - `generated_npc_services.json`
 - `generated_npc_reward_choices.json`
+- `generated_npc_shop_inventory.json`
 - `generated_npc_fast_indexes.json`
 - `generated_map_npc_summary.json`
 - `NPC_CATALOG_SUMMARY.md`
@@ -228,6 +229,30 @@ Important fields:
 - `destinationMapIds` when travel-related.
 - `safeForAutomation`.
 - `requiresManualReview`.
+
+## NPC Shop Inventory Row
+
+Each `generated_npc_shop_inventory.json` row links one NPC-facing shop to its
+seeded item list.
+
+Key:
+
+```text
+npcId + shopId
+```
+
+Important fields:
+
+- `inventoryKey`: stable key for audits and fast indexes.
+- `npcId`: NPC that opens the shop.
+- `shopId`: SQL shop id.
+- `itemCount`: number of seeded rows for that shop.
+- `items`: compact list of `itemId`, `price`, `pitch`, and `position`.
+- `sources`: SQL files used to derive the row.
+
+Use this for fast buy/sell planning and resupply decisions. Runtime still has
+to validate live shop availability, mesos, inventory space, and protected-item
+rules before buying or selling.
 
 ## NPC Reward Choice Row
 

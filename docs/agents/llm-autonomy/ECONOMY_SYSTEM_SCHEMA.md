@@ -5,6 +5,15 @@ prices without giving the LLM unsafe direct control over server state.
 
 Implementation backlog: `docs/agents/llm-autonomy/ECONOMY_ENGINE_TODO.md`.
 
+Layered adaptive market architecture:
+`docs/agents/llm-autonomy/ADAPTIVE_ECONOMY_SYSTEM_PLAN.md`.
+
+Full design specification:
+`docs/agents/llm-autonomy/ECONOMY_DESIGN_SPECIFICATION.md`.
+
+Full technical implementation specification:
+`docs/agents/llm-autonomy/ECONOMY_TECHNICAL_IMPLEMENTATION_SPECIFICATION.md`.
+
 ## Economy Goals
 
 - Agents can discover prices by scanning shops.

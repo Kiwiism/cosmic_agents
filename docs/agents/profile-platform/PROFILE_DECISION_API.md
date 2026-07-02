@@ -3,6 +3,10 @@
 The Profile Decision API lets Agent engine and LLM tooling ask how an agent is
 likely to behave.
 
+Profile updates should be fed through portable experience events and bounded
+patches as specified in
+`docs/agents/profile-platform/PROFILE_ADAPTATION_SYSTEM.md`.
+
 ## Service Shape
 
 ```java
@@ -24,8 +28,11 @@ public interface AgentProfileRuntime {
     ProfileDecision decideMicroBehavior(ProfileDecisionContext context);
 
     void recordEvent(ProfileEvent event);
+    void recordExperienceEvent(AgentExperienceEvent event);
     void recordDecision(ProfileDecisionRecord decision);
     void recordRelationshipEvent(RelationshipEvent event);
+    List<ProfilePatch> previewAdaptation(AgentExperienceEvent event);
+    void applyProfilePatch(ProfilePatch patch);
     void updateRole(ProfileRoleUpdate update);
     void updatePolicy(ProfilePolicyPatch patch);
 }

@@ -9,7 +9,7 @@ The milestone target is:
 ```text
 Spawn one Agent with a Maple Island plan card.
 Agent completes the Maple Island questline using server-validated capabilities.
-Agent stops at Southperry and does not talk to Shanks.
+Agent stops at Southperry and does not use Shanks to leave Maple Island.
 ```
 
 This is not an LLM milestone. The plan should work deterministically first. LLM
@@ -19,6 +19,40 @@ Detailed capability completion work is tracked in:
 
 ```text
 docs/agents/MAPLE_ISLAND_CAPABILITY_COMPLETION_PLAN.md
+```
+
+The selected quest route and portable plan-card draft are tracked in:
+
+```text
+docs/agents/MAPLE_ISLAND_MVP_SEQUENCE.md
+docs/agents/plans/maple-island-mvp.plan.json
+```
+
+Full MVP design and technical implementation specifications are tracked in:
+
+```text
+docs/agents/MAPLE_ISLAND_MVP_DESIGN_SPECIFICATION.md
+docs/agents/MAPLE_ISLAND_MVP_TECHNICAL_SPECIFICATION.md
+```
+
+NPC approach randomness and dialogue-length delay are runtime presentation
+policies, not Plan Card objectives. That design is tracked in:
+
+```text
+docs/agents/INTERACTION_REALISM_POLICY.md
+```
+
+The post-reconstruction implementation handoff is tracked in:
+
+```text
+docs/agents/MAPLE_ISLAND_MVP_HANDOFF.md
+```
+
+Quest objective focus and mixed-mob spawn-pressure combat behavior are tracked
+in:
+
+```text
+docs/agents/QUEST_FOCUS_AND_COMBAT_POLICY.md
 ```
 
 ## Scope
@@ -267,6 +301,10 @@ Responsibilities:
 - Target only quest-relevant mobs when running quest objectives.
 - Attack until kill count or drop requirement is satisfied.
 - Stop combat when the objective completes.
+- Maintain objective focus until the objective's exit criteria is met.
+- Optionally clear bounded filler mobs when target mobs are scarce and map
+  spawns are clogged.
+- Prefer filler mobs that provide prelootable future quest value when safe.
 - Avoid overfarming due to stale quest/inventory state.
 - Handle low HP/MP by requesting recovery.
 
@@ -282,6 +320,9 @@ Gaps to finish:
 
 - mob objective awareness
 - objective stop condition
+- objective focus state
+- spawn-pressure target policy
+- future quest loot policy
 - potion/buff survival parity
 - death recovery signal
 - no-mob retry/backoff
@@ -380,6 +421,15 @@ Create a sample plan card:
 docs/agents/plans/maple-island-mvp.plan.json
 ```
 
+The draft plan card uses the current route decision:
+
+- start from `10000 Mushroom Town`.
+- do Yoona before Mai in `1010000`.
+- start `1046 Biggs's Story on Victoria Island`, but leave it incomplete.
+- exclude `1028` and `8142`.
+- keep Todd `1018` and `1035` as optional-review until client availability is
+  verified.
+
 Plan-level requirements:
 
 - entry: agent is on Maple Island or can be moved there by test setup
@@ -387,7 +437,7 @@ Plan-level requirements:
 - focus: high
 - sidetracks: emergency only
 - final map: Southperry
-- forbidden action: interact with Shanks to leave Maple Island
+- forbidden action: use Shanks travel to leave Maple Island
 
 Minimum plan skeleton:
 
@@ -412,15 +462,15 @@ Minimum plan skeleton:
     "alsoRequire": [
       {
         "type": "agent-location",
-        "mapId": 60000,
+        "mapId": 2000000,
         "description": "Stop at Southperry."
       }
     ],
     "forbiddenActions": [
       {
-        "type": "npc-interact",
-        "npcId": 1022000,
-        "description": "Do not talk to Shanks."
+        "type": "npc-travel",
+        "npcId": 22000,
+        "description": "Do not use Shanks to leave Maple Island."
       }
     ]
   },
@@ -449,6 +499,10 @@ The runtime needs read-only catalog data for:
 - Mob spawn maps.
 - Final Southperry stop point.
 - Shanks forbidden interaction metadata.
+- Maple Island MVP quest availability classifications.
+- Special objective overrides for Pio reactor boxes, Roger's Apple, Yoona's Cash
+  Shop shopping guide, no-complete-NPC auto-complete quests, and Biggs `1046`
+  start-only behavior.
 
 Missing catalog data should not cause silent behavior. It should produce a
 blocked objective with a specific missing-data reason.
@@ -517,7 +571,7 @@ Do not trust persisted objective state over live quest state.
 - Direct quest completion applies rewards/actions.
 - `forceStart` and `forceComplete` are not used by the runtime path.
 - Inventory count reflects live item state.
-- Plan exit criteria blocks Shanks interaction.
+- Plan exit criteria blocks Shanks travel.
 - Missing NPC returns blocked state, not exception.
 - Missing portal returns blocked state, not exception.
 
@@ -532,7 +586,7 @@ Do not trust persisted objective state over live quest state.
 - Agent transitions maps through portals.
 - Agent resumes after relog/restart.
 - Agent stops at Southperry.
-- Agent does not talk to Shanks.
+- Agent does not use Shanks to leave Maple Island.
 
 ### Runtime Observability
 

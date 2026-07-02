@@ -60,6 +60,8 @@ flowchart TB
   - What agents can see and remember.
 - `ECONOMY_SYSTEM_SCHEMA.md`
   - Free Market, price memory, farming, trading, and economic roles.
+- `ECONOMY_ENGINE_VISION_AND_OVERVIEW.md`
+  - Reader-friendly overview of the economy engine vision and behavior.
 - `IMPLEMENTATION_ROADMAP.md`
   - Safe prep order before and after reconstruction.
 - `PLAN_CARD_SYSTEM.md`
@@ -73,6 +75,9 @@ Related portable platform contracts:
 - `../catalog-platform/PORTABLE_PLATFORM_TODO.md`
 - `../profile-platform/PROFILE_RUNTIME_ARCHITECTURE.md`
 - `../profile-platform/PROFILE_DECISION_API.md`
+- `../profile-platform/PROFILE_ADAPTATION_SYSTEM.md`
+- `../profile-platform/AGENT_PROFILE_SYSTEM_DESIGN_SPECIFICATION.md`
+- `../profile-platform/AGENT_PROFILE_SYSTEM_TECHNICAL_SPECIFICATION.md`
 - `../server-adapter/SERVER_ADAPTER_CONTRACT.md`
 
 ## Non-Goals For Now

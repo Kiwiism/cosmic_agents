@@ -136,6 +136,64 @@ function Get-ShopNpcIds {
     return $result
 }
 
+function Get-ShopItems {
+    param([string] $Path)
+
+    $result = @{}
+    if (!(Test-Path $Path)) {
+        return $result
+    }
+
+    $text = Get-Content -Raw $Path
+    foreach ($match in [regex]::Matches($text, "\((\d+),\s*(\d+),\s*(-?\d+),\s*(-?\d+),\s*(-?\d+)\)")) {
+        $shopId = [int] $match.Groups[1].Value
+        if (!$result.ContainsKey($shopId)) {
+            $result[$shopId] = New-Object System.Collections.Generic.List[object]
+        }
+
+        [void] $result[$shopId].Add([pscustomobject] @{
+            shopId = $shopId
+            itemId = [int] $match.Groups[2].Value
+            price = [int] $match.Groups[3].Value
+            pitch = [int] $match.Groups[4].Value
+            position = [int] $match.Groups[5].Value
+        })
+    }
+    return $result
+}
+
+function Get-NpcShopInventoryRows {
+    param(
+        [hashtable] $ShopNpcIds,
+        [hashtable] $ShopItems
+    )
+
+    $rows = New-Object System.Collections.Generic.List[object]
+    foreach ($npcId in ($ShopNpcIds.Keys | Sort-Object)) {
+        foreach ($shopId in @($ShopNpcIds[$npcId] | Sort-Object)) {
+            $items = if ($ShopItems.ContainsKey([int] $shopId)) {
+                @($ShopItems[[int] $shopId] | Sort-Object position, itemId)
+            } else {
+                @()
+            }
+
+            [void] $rows.Add([pscustomobject] @{
+                schemaVersion = 1
+                inventoryKey = "$npcId|$shopId"
+                npcId = [int] $npcId
+                shopId = [int] $shopId
+                itemCount = $items.Count
+                items = $items
+                sources = @(
+                    "src/main/resources/db/data/101-shops-data.sql",
+                    "src/main/resources/db/data/102-shopitems-data.sql"
+                )
+            })
+        }
+    }
+    return $rows
+}
+
 function Add-QuestNpc {
     param(
         [hashtable] $QuestMap,
@@ -758,7 +816,7 @@ function Get-QuestPhaseChecks {
         }
     }
 
-    return @{
+    return [pscustomobject] @{
         npcId = Get-IntChildValue $Phase "npc"
         minLevel = Get-IntChildValue $Phase "lvmin"
         maxLevel = Get-IntChildValue $Phase "lvmax"
@@ -786,7 +844,7 @@ function Get-QuestPhaseActs {
         }
     }
 
-    return @{
+    return [pscustomobject] @{
         exp = Get-IntChildValue $Phase "exp"
         mesos = Get-IntChildValue $Phase "money"
         items = $items
@@ -852,6 +910,152 @@ function Get-NpcQuestActions {
     return $result
 }
 
+function Get-ScriptVisibleTextLength {
+    param([string] $Text)
+
+    $total = 0
+    foreach ($match in [regex]::Matches($Text, "(?s)cm\.(?:send|ask)\w*\s*\((.*?)\)")) {
+        foreach ($stringMatch in [regex]::Matches($match.Groups[1].Value, '"((?:\\"|[^"])*)"')) {
+            $visible = Get-VisibleDialogueText ($stringMatch.Groups[1].Value -replace '\\"', '"')
+            $total += $visible.Length
+        }
+    }
+    return $total
+}
+
+function Get-NpcScriptCatalogRows {
+    param(
+        [string] $ScriptsRoot,
+        [hashtable] $NpcNames
+    )
+
+    $dialogueOptions = New-Object System.Collections.Generic.List[object]
+    $services = New-Object System.Collections.Generic.List[object]
+    if (!(Test-Path $ScriptsRoot)) {
+        Write-Output -NoEnumerate ([pscustomobject] @{
+            dialogueOptions = $dialogueOptions.ToArray()
+            services = $services.ToArray()
+        })
+        return
+    }
+
+    $scriptFiles = Get-ChildItem -Path $ScriptsRoot -File -Filter "*.js" |
+        Where-Object { $_.BaseName -match "^\d+$" }
+
+    foreach ($file in $scriptFiles) {
+        $npcId = [int] $file.BaseName
+        $text = Get-Content -Raw $file.FullName
+        $relativePath = $file.FullName
+        $visibleChars = Get-ScriptVisibleTextLength $text
+        $optionMatches = [regex]::Matches($text, "#L(-?\d+)#(.*?)#l")
+        foreach ($match in $optionMatches) {
+            $optionId = [int] $match.Groups[1].Value
+            $label = Get-VisibleDialogueText $match.Groups[2].Value
+            [void] $dialogueOptions.Add([pscustomobject] @{
+                schemaVersion = 1
+                optionKey = "$npcId|script|$optionId|$($dialogueOptions.Count)"
+                npcId = $npcId
+                npcName = $NpcNames[$npcId]
+                mapId = $null
+                scriptName = $file.Name
+                optionId = $optionId
+                actionType = "unknown"
+                labelHint = $label
+                selectionValue = $optionId
+                safeForAutomation = $false
+                requiresManualReview = $true
+                confidence = "script-scan"
+                visibleCharsInScript = $visibleChars
+                firstReadDelayMsRange = Get-EstimatedDelayRange $visibleChars $optionMatches.Count 1 $false
+                repeatReadDelayMsRange = Get-EstimatedDelayRange $visibleChars $optionMatches.Count 1 $true
+                source = $relativePath
+            })
+        }
+
+        $patterns = @(
+            @{ type = "shop-script"; regex = "(?i)\b(openShop|sendShop)\b|cm\.openShop|cm\.sendShop"; safe = $false },
+            @{ type = "storage-script"; regex = "(?i)\b(openStorage|sendStorage|getStorage)\b|cm\.sendStorage"; safe = $false },
+            @{ type = "travel-script"; regex = "(?i)\b(warp|changeMap|goTo|startMapEffect)\b|cm\.warp"; safe = $false },
+            @{ type = "job-advance-script"; regex = "(?i)\b(changeJob|jobAdvance|advancement)\b|cm\.changeJob"; safe = $false },
+            @{ type = "quest-start-script"; regex = "(?i)\b(startQuest|forceStart)\b|cm\.startQuest|qm\.forceStartQuest"; safe = $false },
+            @{ type = "quest-complete-script"; regex = "(?i)\b(completeQuest|forceComplete)\b|cm\.completeQuest|qm\.forceCompleteQuest"; safe = $false },
+            @{ type = "reward-script"; regex = "(?i)\b(gainItem|gainMeso|gainExp|gainNX|gainFame)\b|cm\.gain"; safe = $false },
+            @{ type = "party-event-script"; regex = "(?i)\b(getEventManager|party|PQ|startInstance|event)\b"; safe = $false },
+            @{ type = "style-cosmetic-script"; regex = "(?i)\b(setHair|setFace|changeHair|changeFace|cosmetic|style)\b"; safe = $false },
+            @{ type = "maker-crafting-script"; regex = "(?i)\b(Maker|maker|craft|createItem)\b"; safe = $false }
+        )
+
+        foreach ($pattern in $patterns) {
+            if ($text -match $pattern.regex) {
+                [void] $services.Add([pscustomobject] @{
+                    schemaVersion = 1
+                    serviceId = "$npcId|$($pattern.type)"
+                    npcId = $npcId
+                    npcName = $NpcNames[$npcId]
+                    serviceType = $pattern.type
+                    scriptName = $file.Name
+                    safeForAutomation = [bool] $pattern.safe
+                    requiresManualReview = $true
+                    confidence = "script-pattern"
+                    visibleCharsInScript = $visibleChars
+                    optionCount = $optionMatches.Count
+                    firstReadDelayMsRange = Get-EstimatedDelayRange $visibleChars $optionMatches.Count 1 $false
+                    repeatReadDelayMsRange = Get-EstimatedDelayRange $visibleChars $optionMatches.Count 1 $true
+                    source = $relativePath
+                })
+            }
+        }
+    }
+
+    Write-Output -NoEnumerate ([pscustomobject] @{
+        dialogueOptions = $dialogueOptions.ToArray()
+        services = $services.ToArray()
+    })
+}
+
+function Get-NpcRewardChoiceRows {
+    param($QuestActions)
+
+    $rows = New-Object System.Collections.Generic.List[object]
+    foreach ($action in $QuestActions) {
+        $rewardItems = @()
+        if ($null -ne $action.rewards) {
+            if ($action.rewards -is [System.Collections.IDictionary]) {
+                $rewardItems = @($action.rewards["items"])
+            } else {
+                $rewardItemsProperty = @($action.rewards.PSObject.Properties | Where-Object { $_.Name -eq "items" -and $_.MemberType -eq "NoteProperty" } | Select-Object -First 1)
+                if ($null -ne $rewardItemsProperty) {
+                    $rewardItems = @($rewardItemsProperty.Value)
+                }
+            }
+        }
+        $choiceItems = @($rewardItems | Where-Object { $null -ne $_.prop -or $null -ne $_.job })
+        if ($rewardItems.Count -le 1 -and $choiceItems.Count -eq 0) {
+            continue
+        }
+
+        [void] $rows.Add([pscustomobject] @{
+            schemaVersion = 1
+            rewardChoiceKey = "$($action.npcId)|$($action.questId)|$($action.phase)"
+            npcId = $action.npcId
+            questId = $action.questId
+            phase = $action.phase
+            actionKey = $action.actionKey
+            rewardItemCount = $rewardItems.Count
+            hasProbabilityWeights = @($rewardItems | Where-Object { $null -ne $_.prop }).Count -gt 0
+            hasJobSpecificRewards = @($rewardItems | Where-Object { $null -ne $_.job }).Count -gt 0
+            candidates = $rewardItems
+            policy = @{
+                safeForAutomation = $false
+                requiresRewardSelectionPolicy = $true
+                note = "Generated from Quest.wz/Act rewards. Runtime must choose with job/build/inventory policy."
+            }
+            source = "Quest.wz/Act.img.xml"
+        })
+    }
+    return $rows
+}
+
 function Add-IndexValue {
     param(
         [hashtable] $Index,
@@ -899,6 +1103,10 @@ function New-NpcFastIndexes {
         $ApproachRows,
         $DialogueTiming,
         $QuestActions,
+        $DialogueOptions,
+        $Services,
+        $RewardChoices,
+        $ShopInventory,
         [hashtable] $ShopNpcIds,
         $MapSummaries
     )
@@ -923,6 +1131,13 @@ function New-NpcFastIndexes {
     $questIdPhaseToAction = [ordered] @{}
     $actionKeyToRequirements = [ordered] @{}
     $actionKeyToRewards = [ordered] @{}
+    $npcIdToDialogueOptions = @{}
+    $npcIdToServices = @{}
+    $serviceTypeToNpcIds = @{}
+    $npcIdToRewardChoices = @{}
+    $questIdToRewardChoices = @{}
+    $npcIdToShopInventory = @{}
+    $shopIdToItems = [ordered] @{}
 
     foreach ($row in $Catalog) {
         $npcKey = [string] $row.npcId
@@ -988,6 +1203,25 @@ function New-NpcFastIndexes {
         $actionKeyToRewards[$action.actionKey] = $action.rewards
     }
 
+    foreach ($option in $DialogueOptions) {
+        Add-IndexValue $npcIdToDialogueOptions ([string] $option.npcId) $option
+    }
+
+    foreach ($service in $Services) {
+        Add-IndexValue $npcIdToServices ([string] $service.npcId) $service
+        Add-IndexValue $serviceTypeToNpcIds ([string] $service.serviceType) ([int] $service.npcId)
+    }
+
+    foreach ($choice in $RewardChoices) {
+        Add-IndexValue $npcIdToRewardChoices ([string] $choice.npcId) $choice
+        Add-IndexValue $questIdToRewardChoices ([string] $choice.questId) $choice
+    }
+
+    foreach ($inventory in $ShopInventory) {
+        Add-IndexValue $npcIdToShopInventory ([string] $inventory.npcId) $inventory
+        $shopIdToItems[[string] $inventory.shopId] = $inventory.items
+    }
+
     return [pscustomobject] @{
         schemaVersion = 1
         generatedBy = "tools/npc-catalog/Export-NpcCatalog.ps1"
@@ -1000,6 +1234,10 @@ function New-NpcFastIndexes {
                 "npc quest action links"
                 "npc approach points"
                 "npc dialogue timing"
+                "npc script dialogue option hints"
+                "npc script service hints"
+                "npc-facing reward choice hints"
+                "npc shop inventory snapshots"
                 "npc automation review flags"
             )
             gameCatalogOwns = @(
@@ -1032,6 +1270,13 @@ function New-NpcFastIndexes {
         questId_phase_to_action = $questIdPhaseToAction
         actionKey_to_requirements = $actionKeyToRequirements
         actionKey_to_rewards = $actionKeyToRewards
+        npcId_to_dialogueOptions = Convert-IndexLists $npcIdToDialogueOptions
+        npcId_to_services = Convert-IndexLists $npcIdToServices
+        serviceType_to_npcIds = Convert-IndexLists $serviceTypeToNpcIds
+        npcId_to_rewardChoices = Convert-IndexLists $npcIdToRewardChoices
+        questId_to_rewardChoices = Convert-IndexLists $questIdToRewardChoices
+        npcId_to_shopInventory = Convert-IndexLists $npcIdToShopInventory
+        shopId_to_items = $shopIdToItems
     }
 }
 
@@ -1040,9 +1285,15 @@ New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
 $npcNames = Get-StringTable (Join-Path $WzRoot "String.wz/Npc.img.xml")
 $mapNames = Get-MapStringTable (Join-Path $WzRoot "String.wz/Map.img.xml")
 $shopNpcIds = Get-ShopNpcIds "src/main/resources/db/data/101-shops-data.sql"
+$shopItems = Get-ShopItems "src/main/resources/db/data/102-shopitems-data.sql"
 $questNpcMap = Get-QuestNpcMap (Join-Path $WzRoot "Quest.wz/Check.img.xml")
 $questDialogueTiming = Get-QuestDialogueTiming (Join-Path $WzRoot "Quest.wz/Say.img.xml")
 $questActions = Get-NpcQuestActions (Join-Path $WzRoot "Quest.wz/Check.img.xml") (Join-Path $WzRoot "Quest.wz/Act.img.xml")
+$scriptCatalog = Get-NpcScriptCatalogRows "scripts/npc" $npcNames
+$dialogueOptions = @($scriptCatalog.dialogueOptions)
+$services = @($scriptCatalog.services)
+$rewardChoices = Get-NpcRewardChoiceRows $questActions
+$shopInventory = Get-NpcShopInventoryRows $shopNpcIds $shopItems
 $mapRoot = Join-Path $WzRoot "Map.wz/Map"
 $placements = Get-LifePlacements $mapRoot $npcNames $mapNames
 $approachRows = New-Object System.Collections.Generic.List[object]
@@ -1062,12 +1313,29 @@ foreach ($npcId in $shopNpcIds.Keys) {
 foreach ($npcId in $questNpcMap.Keys) {
     [void] $npcIds.Add([int] $npcId)
 }
+foreach ($option in $dialogueOptions) {
+    [void] $npcIds.Add([int] $option.npcId)
+}
+foreach ($service in $services) {
+    [void] $npcIds.Add([int] $service.npcId)
+}
 
 $catalog = foreach ($npcId in ($npcIds | Sort-Object)) {
     $npcPlacements = @($placements | Where-Object { $_.npcId -eq $npcId })
     $hasShop = $shopNpcIds.ContainsKey($npcId)
     $questInfo = $questNpcMap[$npcId]
+    $npcDialogueOptionCount = @($dialogueOptions | Where-Object { $_.npcId -eq $npcId }).Count
+    $npcServices = @($services | Where-Object { $_.npcId -eq $npcId })
     $interactionTypes = Get-NpcInteractionTypes $npcId $npcNames[$npcId] $hasShop $questInfo
+    if ($npcDialogueOptionCount -gt 0 -and !$interactionTypes.Contains("dialogue-option")) {
+        [void] $interactionTypes.Add("dialogue-option")
+    }
+    foreach ($service in $npcServices) {
+        $serviceType = [string] $service.serviceType
+        if (!$interactionTypes.Contains($serviceType)) {
+            [void] $interactionTypes.Add($serviceType)
+        }
+    }
     $baseRow = [pscustomobject] @{
         npcId = $npcId
         name = $npcNames[$npcId]
@@ -1085,6 +1353,11 @@ $catalog = foreach ($npcId in ($npcIds | Sort-Object)) {
                 shopIds = if ($hasShop) { New-IntList @($shopNpcIds[$npcId] | Sort-Object) } else { New-IntList @() }
             }
             quests = Convert-QuestSets $questInfo
+            dialogueOptions = @{
+                hasOptions = $npcDialogueOptionCount -gt 0
+                optionCount = $npcDialogueOptionCount
+            }
+            services = New-StringList @($npcServices | Select-Object -ExpandProperty serviceType -Unique | Sort-Object)
         }
         placements = $npcPlacements
         approach = @{
@@ -1113,6 +1386,10 @@ $placementsPath = Join-Path $OutputDir "generated_npc_placements.json"
 $approachPath = Join-Path $OutputDir "generated_npc_approach_points.json"
 $dialogueTimingPath = Join-Path $OutputDir "generated_quest_dialogue_timing.json"
 $actionsPath = Join-Path $OutputDir "generated_npc_action_catalog.json"
+$dialogueOptionsPath = Join-Path $OutputDir "generated_npc_dialogue_options.json"
+$servicesPath = Join-Path $OutputDir "generated_npc_services.json"
+$rewardChoicesPath = Join-Path $OutputDir "generated_npc_reward_choices.json"
+$shopInventoryPath = Join-Path $OutputDir "generated_npc_shop_inventory.json"
 $fastIndexesPath = Join-Path $OutputDir "generated_npc_fast_indexes.json"
 $mapSummaryPath = Join-Path $OutputDir "generated_map_npc_summary.json"
 $summaryPath = Join-Path $OutputDir "NPC_CATALOG_SUMMARY.md"
@@ -1160,6 +1437,10 @@ $fastIndexes = New-NpcFastIndexes `
     -ApproachRows $approachRows `
     -DialogueTiming $questDialogueTiming `
     -QuestActions $questActions `
+    -DialogueOptions $dialogueOptions `
+    -Services $services `
+    -RewardChoices $rewardChoices `
+    -ShopInventory $shopInventory `
     -ShopNpcIds $shopNpcIds `
     -MapSummaries $mapSummaries
 
@@ -1170,6 +1451,10 @@ if (!$SkipApproach) {
 }
 $questDialogueTiming | ConvertTo-Json -Depth 8 | Set-Content -Encoding UTF8 $dialogueTimingPath
 $questActions | ConvertTo-Json -Depth 12 | Set-Content -Encoding UTF8 $actionsPath
+$dialogueOptions | ConvertTo-Json -Depth 10 | Set-Content -Encoding UTF8 $dialogueOptionsPath
+$services | ConvertTo-Json -Depth 10 | Set-Content -Encoding UTF8 $servicesPath
+$rewardChoices | ConvertTo-Json -Depth 12 | Set-Content -Encoding UTF8 $rewardChoicesPath
+$shopInventory | ConvertTo-Json -Depth 10 | Set-Content -Encoding UTF8 $shopInventoryPath
 $fastIndexes | ConvertTo-Json -Depth 16 | Set-Content -Encoding UTF8 $fastIndexesPath
 $mapSummaries | ConvertTo-Json -Depth 8 | Set-Content -Encoding UTF8 $mapSummaryPath
 
@@ -1183,6 +1468,11 @@ $placementsWithApproachCount = @($approachRows | Where-Object { $_.candidates.Co
 $approachCandidateCount = ($approachRows | ForEach-Object { $_.candidates.Count } | Measure-Object -Sum).Sum
 $questDialogueTimingCount = @($questDialogueTiming).Count
 $questActionCount = @($questActions).Count
+$dialogueOptionCount = @($dialogueOptions).Count
+$serviceCount = @($services).Count
+$rewardChoiceCount = @($rewardChoices).Count
+$shopInventoryCount = @($shopInventory).Count
+$shopInventoryItemCount = ($shopInventory | ForEach-Object { $_.itemCount } | Measure-Object -Sum).Sum
 $missingNameRows = @($catalog | Where-Object { !$_.name } | Sort-Object npcId)
 $missingApproachRows = if (!$SkipApproach) { @($approachRows | Where-Object { $_.candidates.Count -eq 0 } | Sort-Object mapId, lifeIndex, npcId) } else { @() }
 $questWithoutPlacementRows = @($catalog | Where-Object {
@@ -1225,6 +1515,11 @@ $summary = @(
     "- Generated approach candidates: $approachCandidateCount"
     "- Quest dialogue timing rows: $questDialogueTimingCount"
     "- NPC quest action rows: $questActionCount"
+    "- NPC script dialogue option rows: $dialogueOptionCount"
+    "- NPC script service hint rows: $serviceCount"
+    "- NPC reward choice rows: $rewardChoiceCount"
+    "- NPC shop inventory rows: $shopInventoryCount"
+    "- NPC shop inventory item rows: $shopInventoryItemCount"
     ""
     "## Outputs"
     ""
@@ -1233,6 +1528,10 @@ $summary = @(
     $(if (!$SkipApproach) { "- ``generated_npc_approach_points.json``" } else { "- approach point generation skipped" })
     "- ``generated_quest_dialogue_timing.json``"
     "- ``generated_npc_action_catalog.json``"
+    "- ``generated_npc_dialogue_options.json``"
+    "- ``generated_npc_services.json``"
+    "- ``generated_npc_reward_choices.json``"
+    "- ``generated_npc_shop_inventory.json``"
     "- ``generated_npc_fast_indexes.json``"
     "- ``generated_map_npc_summary.json``"
     "- ``NPC_CATALOG_SUMMARY.md``"
@@ -1253,6 +1552,9 @@ $summary = @(
     "- Candidate standing points are generated from a default interaction box and raw foothold samples."
     "- Candidate points are not reachability/path validated yet; runtime integration should verify navigation before use."
     "- Quest dialogue timing is an estimate from WZ text length/options; runtime profiles should still apply per-agent jitter."
+    "- Script dialogue options and services are pattern-scanned hints; they require runtime validators or manual overrides before automation."
+    "- Reward choice rows identify NPC-facing quest rewards that need profile/build/inventory selection policy."
+    "- Shop inventory snapshots come from SQL seed data and are useful for fast buy/sell planning."
     "- Fast indexes are generated to avoid full-array scans during Agent/LLM runtime queries."
     "- Interaction types and automation confidence are generated hints for review, not permission to execute NPC actions."
 ) -join "`n"
@@ -1343,6 +1645,10 @@ $validation = @(
     "- Do-not-auto-use NPCs: $($doNotAutoUseRows.Count)"
     "- NPCs with more than 20 placements: $($highPlacementRows.Count)"
     "- NPCs with inferred interaction types: $($inferredTypeRows.Count)"
+    "- Script dialogue option hint rows: $dialogueOptionCount"
+    "- Script service hint rows: $serviceCount"
+    "- Reward choice rows needing policy: $rewardChoiceCount"
+    "- Shop inventory rows: $shopInventoryCount"
     ""
     "## Do Not Auto Use"
     ""
@@ -1378,7 +1684,10 @@ $validation = @(
     ""
     "- Keep generated JSON replaceable."
     "- Put hand-tuned quirks in overrides, not generated output."
-    "- Treat `manual`, `blocked`, or `doNotAutoUse` rows as runtime-gated until reviewed."
+    "- Treat ``manual``, ``blocked``, or ``doNotAutoUse`` rows as runtime-gated until reviewed."
+    "- Treat script-scanned dialogue option and service rows as hints, not executable scripts."
+    "- Add overrides for reviewed service flows before enabling automation for travel, storage, job advancement, PQ, event, style, or maker NPCs."
+    "- Add reward selection policy before enabling automated quest completion where multiple reward candidates exist."
     "- Reachability must still be validated by the future navigation/runtime layer."
 ) -join "`n"
 
@@ -1392,6 +1701,10 @@ if (!$SkipApproach) {
 }
 Write-Host "  $dialogueTimingPath"
 Write-Host "  $actionsPath"
+Write-Host "  $dialogueOptionsPath"
+Write-Host "  $servicesPath"
+Write-Host "  $rewardChoicesPath"
+Write-Host "  $shopInventoryPath"
 Write-Host "  $fastIndexesPath"
 Write-Host "  $mapSummaryPath"
 Write-Host "  $summaryPath"

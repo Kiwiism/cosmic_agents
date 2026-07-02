@@ -23,6 +23,7 @@ Generated files are written to `tmp/npc-catalog/`:
 - `generated_npc_dialogue_options.json`
 - `generated_npc_services.json`
 - `generated_npc_reward_choices.json`
+- `generated_npc_shop_inventory.json`
 - `generated_npc_fast_indexes.json`
 - `generated_map_npc_summary.json`
 - `NPC_CATALOG_SUMMARY.md`

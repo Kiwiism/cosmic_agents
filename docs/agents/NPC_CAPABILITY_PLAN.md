@@ -45,6 +45,10 @@ Do not start by executing quest/shop actions.
 The runtime-facing lookup contract is documented in
 `docs/agents/NPC_CATALOG_INTEGRATION_CONTRACT.md`.
 
+Human-like NPC approach variation and dialogue-length delay must be applied as
+runtime policy, not encoded inside plan objectives. The policy contract is
+documented in `docs/agents/INTERACTION_REALISM_POLICY.md`.
+
 ## Validation Boundary
 
 Before an Agent direct-calls quest or shop behavior, validate:
@@ -135,6 +139,7 @@ Agent tools that use the validators above.
 - optional item id/quantity.
 - attempt number.
 - presentation mode flag for simulated delay.
+- interaction realism mode: `OFF`, `LIGHT`, or `FULL`.
 
 `AgentNpcInteractionResult` should include:
 
