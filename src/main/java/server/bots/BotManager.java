@@ -1274,7 +1274,7 @@ public class BotManager {
                 bot,
                 () -> AgentBotDeathStateRuntime.shouldEnterDeadState(entry, bot.getHp()),
                 (deadEntry, deadBot) -> AgentBotCombatDeathRuntime.enterDeadState(deadEntry, deadBot, false, AgentCombatConfig.cfg),
-                () -> respawnBot(entry, bot, owner),
+                () -> AgentRespawnRuntime.respawnNearLeader(entry, bot, owner),
                 System.currentTimeMillis());
     }
 
@@ -1330,10 +1330,6 @@ public class BotManager {
 
     public void reloginBot(int charId, int ownerCharId, int world, int channel) {
         AgentReloginRuntime.reloginAgent(charId, ownerCharId, world, channel, this::registerSpawnedBot, log);
-    }
-
-    private void respawnBot(BotEntry entry, Character bot, Character owner) {
-        AgentRespawnRuntime.respawnNearLeader(entry, bot, owner);
     }
 
     // -------------------------------------------------------------------------
