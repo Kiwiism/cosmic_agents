@@ -24,7 +24,6 @@ import server.agents.capabilities.dialogue.AgentWhisperCommandService;
 import server.agents.runtime.AgentActionLockPhysicsService;
 import server.agents.runtime.AgentAnchoredFarmTickService;
 import server.agents.runtime.AgentCommonTickService;
-import server.agents.runtime.AgentCommandModeService;
 import server.agents.runtime.AgentDeathTickService;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentLifecycleService;
@@ -1775,12 +1774,7 @@ public class BotManager {
      * detected by the existing clearReachedMoveTarget logic.
      */
     public void issueMoveTo(BotEntry entry, Point dest, boolean precise) {
-        AgentCommandModeService.runPreparedModeCommand(
-                entry,
-                () -> dest != null,
-                () -> clearScriptTasks(entry),
-                () -> AgentShopService.cancelShopVisit(entry),
-                () -> startMoveTo(entry, dest, precise));
+        AgentBotMovementCommandRuntime.moveTo(entry, dest, precise);
     }
 
     private void startMoveTo(BotEntry entry, Point dest, boolean precise) {
@@ -1788,12 +1782,7 @@ public class BotManager {
     }
 
     public void issueFarmHere(BotEntry entry, Point dest) {
-        AgentCommandModeService.runPreparedModeCommand(
-                entry,
-                () -> dest != null && AgentBotRuntimeIdentityRuntime.hasBot(entry),
-                () -> clearScriptTasks(entry),
-                () -> AgentShopService.cancelShopVisit(entry),
-                () -> startFarmHere(entry, dest));
+        AgentBotMovementCommandRuntime.farmHere(entry, dest);
     }
 
     private void startFarmHere(BotEntry entry, Point dest) {
@@ -1822,11 +1811,7 @@ public class BotManager {
      * (or null) means regular owner-follow.
      */
     public void issueFollow(BotEntry entry, Character target) {
-        AgentCommandModeService.runPreparedModeCommand(
-                entry,
-                () -> clearScriptTasks(entry),
-                () -> AgentShopService.cancelShopVisit(entry),
-                () -> startFollow(entry, target));
+        AgentBotMovementCommandRuntime.follow(entry, target);
     }
 
     private void startFollow(BotEntry entry, Character target) {

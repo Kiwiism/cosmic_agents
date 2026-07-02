@@ -2969,6 +2969,12 @@ Recent reconstruction notes:
   latching, retreat-hold hysteresis, cross-region retreat scoring,
   projectile-reachable retreat selection, portal-path rejection, local retreat
   same-region guards, and region mob counting are preserved.
+- Public movement mode commands for explicit move, farm-here, and concrete
+  target-follow now delegate through
+  `server.agents.integration.AgentBotMovementCommandRuntime`; BotManager keeps
+  compatibility entry points and private script-task starters. The same script
+  task clearing, shop-visit cancellation, null guards, mode-state transitions,
+  and navigation-state clear hooks are preserved.
 
 Initial reconstruction order:
 

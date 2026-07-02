@@ -1,5 +1,6 @@
 package server.agents.integration;
 
+import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.bots.BotEntry;
@@ -20,11 +21,15 @@ public final class AgentBotMovementCommandRuntime {
     }
 
     public static void followOwner(BotEntry entry) {
+        follow(entry, AgentBotRuntimeIdentityRuntime.owner(entry));
+    }
+
+    public static void follow(BotEntry entry, Character target) {
         AgentCommandModeService.runPreparedModeCommand(
                 entry,
                 () -> AgentScriptTaskQueueService.clearTasks(entry),
                 () -> AgentShopService.cancelShopVisit(entry),
-                () -> AgentModeService.startFollow(entry, AgentBotRuntimeIdentityRuntime.owner(entry)));
+                () -> AgentModeService.startFollow(entry, target));
     }
 
     public static void stop(BotEntry entry) {

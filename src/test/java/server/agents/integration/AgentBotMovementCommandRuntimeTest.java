@@ -31,6 +31,18 @@ class AgentBotMovementCommandRuntimeTest {
     }
 
     @Test
+    void followTargetUsesAgentModeStateDirectly() {
+        Character target = character(300, 100000000);
+        BotEntry entry = new BotEntry(character(200, 100000000), character(100, 100000000), null);
+
+        AgentBotMovementCommandRuntime.follow(entry, target);
+
+        assertTrue(AgentBotModeStateRuntime.following(entry));
+        assertFalse(AgentBotModeStateRuntime.grinding(entry));
+        assertEquals(target.getId(), AgentBotModeStateRuntime.followTargetId(entry));
+    }
+
+    @Test
     void stopUsesAgentModeStateDirectly() {
         BotEntry entry = new BotEntry(character(200, 100000000), character(100, 100000000), null);
         AgentBotModeStateRuntime.setFollowing(entry, true);
