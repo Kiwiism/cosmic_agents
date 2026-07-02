@@ -3477,6 +3477,10 @@ Recent reconstruction notes:
   command routing, typo suggestion wiring, reply-channel state, Agent chat
   dispatch, owner-command recording, LLM fallback, group supply routing, and
   broadcast-to-all untargeted routing.
+- Formation default state, state lookup, and state update/apply helpers now
+  live in `server.agents.runtime.AgentFormationRuntime`. BotManager keeps only
+  package-visible compatibility methods for the movement simulation harness and
+  delegates target-snapshot/default formation needs to Agent runtime.
 
 Initial reconstruction order:
 

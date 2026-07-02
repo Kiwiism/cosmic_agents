@@ -17,7 +17,8 @@ Target package groups:
   adaptation stays in `AgentLocalOpportunityAttackRuntime`. Inactive leader
   safety and town-return composition now enter through
   `AgentLeaderSafetyRuntime`, and chat route composition enters through
-  `AgentChatRouteRuntime`, while BotManager remains only a temporary
+  `AgentChatRouteRuntime`. Formation defaults and state helpers enter through
+  `AgentFormationRuntime`, while BotManager remains only a temporary
   compatibility caller for legacy entry points.
 - `server.agents.model`: identity, mode, profile, leader reference.
 - `server.agents.commands`: command parsing/routing/result boundaries.

@@ -18,6 +18,7 @@ import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentFollowAnchorService;
 import server.agents.runtime.AgentFormationService;
+import server.agents.runtime.AgentFormationRuntime;
 import server.agents.runtime.AgentFollowIdleMovementRuntime;
 import server.agents.runtime.AgentFollowTargetPositionService;
 import server.agents.runtime.AgentFormationCommandRuntime;
@@ -291,14 +292,14 @@ public class BotManager {
                 this::recruitBot,
                 this::giveBot,
                 this::dismissBot,
-                defaultFormationState(),
+                AgentFormationRuntime.defaultFormationState(),
                 cfg.FOLLOW_STAGGER,
                 BotMovementManager.cfg.FOLLOW_Y_CAP);
     }
 
     // -------------------------------------------------------------------------
     AgentFormationService.FormationState formationStateFor(BotEntry entry) {
-        return AgentFormationService.stateForEntry(entry, AgentFormationService.formationsByLeaderId(), defaultFormationState());
+        return AgentFormationRuntime.formationStateFor(entry);
     }
 
     public Character resolveFollowAnchor(BotEntry entry, Character owner) {
@@ -311,21 +312,7 @@ public class BotManager {
                            int px,
                            int snapRange,
                            List<BotEntry> entries) {
-        if (owner == null) {
-            return;
-        }
-
-        AgentFormationService.FormationState formation = new AgentFormationService.FormationState(type, px, snapRange);
-        AgentFormationService.formationsByLeaderId().put(owner.getId(), formation);
-        if (entries == null) {
-            return;
-        }
-
-        AgentFormationService.applyOffsets(entries, formation);
-    }
-
-    private static AgentFormationService.FormationState defaultFormationState() {
-        return AgentFormationService.defaultStagger(cfg.FOLLOW_STAGGER, BotMovementManager.cfg.FOLLOW_Y_CAP);
+        AgentFormationRuntime.setFormationState(owner, type, px, snapRange, entries);
     }
 
     public AgentTargetSnapshot captureTargetSnapshot(BotEntry entry) {
@@ -335,7 +322,7 @@ public class BotManager {
                 entry,
                 siblingEntries,
                 AgentFormationService.formationsByLeaderId(),
-                defaultFormationState(),
+                AgentFormationRuntime.defaultFormationState(),
                 (followBase, followAnchor, followAnchorPos, snapRange, map) ->
                         AgentFollowTargetPositionService.resolve(
                                 followBase, followAnchor, followAnchorPos, snapRange, map, PLATFORM_EDGE_INSET_PX));

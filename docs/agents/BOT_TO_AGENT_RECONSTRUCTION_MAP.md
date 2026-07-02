@@ -66,6 +66,10 @@ Recent map updates:
   lifecycle callbacks, formation defaults, and the active-entry map while Agent
   runtime owns pending-offer, recruit, transfer, formation, dismiss, targeted,
   and untargeted chat routing hook construction.
+- Formation state helper wiring moved from BotManager to
+  `server.agents.runtime.AgentFormationRuntime`. BotManager now delegates
+  default formation creation, state lookup, and state update/offset application
+  for compatibility harness callers.
 - Anchored farm hook wiring moved from BotManager to
   `server.agents.runtime.AgentAnchoredFarmRuntime`. BotManager now passes only
   legacy movement config values while Agent runtime owns local-opportunity,
