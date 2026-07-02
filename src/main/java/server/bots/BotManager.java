@@ -37,6 +37,7 @@ import server.agents.runtime.AgentFormationService;
 import server.agents.runtime.AgentFollowIdleMovementService;
 import server.agents.runtime.AgentFollowTargetPositionService;
 import server.agents.runtime.AgentFollowMapSyncService;
+import server.agents.runtime.AgentFollowOpportunityTickService;
 import server.agents.runtime.AgentHeartbeatService;
 import server.agents.runtime.AgentIdleModeTickService;
 import server.agents.runtime.AgentGrindNoTargetFallbackService;
@@ -1197,24 +1198,36 @@ public class BotManager {
         }
 
         // Follow mode: attack monsters already in attack range without chasing
-        if (AgentBotModeStateRuntime.following(entry) && runAiTick && !AgentBotMovementStateRuntime.climbing(entry)
-                && followAnchor != null
-                && bot.getMapId() == followAnchor.getMapId()
-                && Math.abs(botPos.x - followAnchor.getPosition().x) <= BotMovementManager.cfg.FOLLOW_DIST * 5) {
-            LocalOpportunityAttackResult result;
-            if (!perf) {
-                result = tryLocalOpportunityAttack(
-                        entry, bot, botPos, targetPos, targetSnapshot.followTargetPos(), true, true);
-            } else {
-                long tOpp = System.nanoTime();
-                result = tryLocalOpportunityAttack(
-                        entry, bot, botPos, targetPos, targetSnapshot.followTargetPos(), true, true);
-                AgentPerformanceMonitor.record("opportunity-attack", System.nanoTime() - tOpp);
-            }
-            targetPos = result.targetPos();
-            if (result.consumedTick()) {
-                return;
-            }
+        AgentFollowOpportunityTickService.Result followOpportunity =
+                AgentFollowOpportunityTickService.tickFollowOpportunity(
+                        entry,
+                        bot,
+                        botPos,
+                        targetPos,
+                        targetSnapshot.followTargetPos(),
+                        followAnchor,
+                        runAiTick,
+                        new AgentFollowOpportunityTickService.Hooks(
+                                (attackEntry, attackBot, attackBotPos, attackTargetPos, attackFollowTargetPos) -> {
+                                    LocalOpportunityAttackResult result;
+                                    if (!perf) {
+                                        result = tryLocalOpportunityAttack(
+                                                attackEntry, attackBot, attackBotPos, attackTargetPos,
+                                                attackFollowTargetPos, true, true);
+                                    } else {
+                                        long tOpp = System.nanoTime();
+                                        result = tryLocalOpportunityAttack(
+                                                attackEntry, attackBot, attackBotPos, attackTargetPos,
+                                                attackFollowTargetPos, true, true);
+                                        AgentPerformanceMonitor.record("opportunity-attack", System.nanoTime() - tOpp);
+                                    }
+                                    return new AgentFollowOpportunityTickService.Result(
+                                            result.consumedTick(), result.targetPos());
+                                },
+                                BotMovementManager.cfg.FOLLOW_DIST));
+        targetPos = followOpportunity.targetPos();
+        if (followOpportunity.consumedTick()) {
+            return;
         }
 
         if (tryFollowIdleMovementFastPath(entry, bot, targetPos, nowMs)) {

@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Follow-mode local opportunity attack dispatch moved from BotManager to
+  `server.agents.runtime.AgentFollowOpportunityTickService`. BotManager now
+  supplies the temporary local-opportunity attack hook and performance timing.
 - Idle-mode consumed-tick dispatch moved from BotManager to
   `server.agents.runtime.AgentIdleModeTickService`. BotManager now supplies the
   temporary idle physics/mode hook and performance timing.

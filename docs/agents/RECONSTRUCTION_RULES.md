@@ -3072,6 +3072,12 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentIdleModeTickService`. BotManager keeps a
   temporary compatibility adapter for the existing idle physics/mode body and
   performance timing. The same consumed/fall-through result is preserved.
+- Follow-mode local opportunity attack dispatch now lives in
+  `server.agents.runtime.AgentFollowOpportunityTickService`. BotManager keeps a
+  temporary compatibility adapter for the existing local opportunity attack body
+  and performance timing. The same following, AI-cadence, climbing, same-map,
+  anchor-distance, target-position update, and consumed-tick rules are
+  preserved.
 
 Initial reconstruction order:
 
