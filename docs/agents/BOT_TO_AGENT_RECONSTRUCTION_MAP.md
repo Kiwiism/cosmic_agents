@@ -12,6 +12,8 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Relogin entry wiring moved to `AgentInteractionRuntime`; the Agent session
+  lifecycle bridge no longer imports BotManager for relogin side effects.
 - Server-facing chat and spawn entry points moved to
   `server.agents.runtime.AgentInteractionRuntime`. Packet handlers and
   `AgentSpawnCommandExecutor` now call the Agent runtime facade directly;

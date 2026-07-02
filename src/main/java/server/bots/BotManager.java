@@ -9,7 +9,6 @@ import server.agents.runtime.AgentLifecycleChatCommandRuntime;
 import server.agents.runtime.AgentOfflineLoadRuntime;
 import server.agents.runtime.AgentPartyLifecycleService;
 import server.agents.runtime.AgentRegistrationRuntime;
-import server.agents.runtime.AgentReloginRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeCleanupService;
 import server.agents.runtime.AgentRuntimeRegistry;
@@ -23,8 +22,6 @@ import server.agents.integration.AgentBotMovementCommandRuntime;
 import server.agents.commands.AgentReplyChannel;
 import client.Character;
 import client.inventory.Item;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import server.maps.MapleMap;
 import server.quest.Quest;
 
@@ -33,7 +30,6 @@ import java.sql.SQLException;
 import java.util.List;
 
 public class BotManager {
-    private static final Logger log = LoggerFactory.getLogger(BotManager.class);
     private static final BotManager instance = new BotManager();
 
     /** Compatibility alias for the Agent-owned runtime config. */
@@ -180,7 +176,7 @@ public class BotManager {
     }
 
     public void reloginBot(int charId, int ownerCharId, int world, int channel) {
-        AgentReloginRuntime.reloginAgent(charId, ownerCharId, world, channel, this::tick, log);
+        AgentInteractionRuntime.reloginAgent(charId, ownerCharId, world, channel);
     }
 
     /**

@@ -22,7 +22,7 @@ Target package groups:
   now enters through `AgentSpawnRuntime` and `AgentReloginRuntime`; manual and
   spawned registration entry points enter through `AgentRegistrationRuntime`.
   Spawn result ownership is `AgentLifecycleService.AgentSpawnResult`.
-  Public server-facing chat/spawn entry points now enter through
+  Public server-facing chat/spawn/relogin entry points now enter through
   `AgentInteractionRuntime`.
   Follow-anchor and target-snapshot runtime wiring enters through
   `AgentTargetSnapshotRuntime`.

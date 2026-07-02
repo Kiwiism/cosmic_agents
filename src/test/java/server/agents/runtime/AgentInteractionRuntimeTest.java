@@ -51,4 +51,19 @@ class AgentInteractionRuntimeTest {
                     any()));
         }
     }
+
+    @Test
+    void reloginDelegatesToAgentReloginRuntimeWithAgentTickCallback() {
+        try (MockedStatic<AgentReloginRuntime> reloginRuntime = mockStatic(AgentReloginRuntime.class)) {
+            AgentInteractionRuntime.reloginAgent(11, 22, 0, 1);
+
+            reloginRuntime.verify(() -> AgentReloginRuntime.reloginAgent(
+                    eq(11),
+                    eq(22),
+                    eq(0),
+                    eq(1),
+                    any(AgentLifecycleService.AgentTickCallback.class),
+                    any(Logger.class)));
+        }
+    }
 }

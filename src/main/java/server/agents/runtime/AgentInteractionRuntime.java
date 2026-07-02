@@ -36,6 +36,16 @@ public final class AgentInteractionRuntime {
                 AgentInteractionRuntime::dismissAgent);
     }
 
+    public static void reloginAgent(int agentCharId, int leaderCharId, int world, int channel) {
+        AgentReloginRuntime.reloginAgent(
+                agentCharId,
+                leaderCharId,
+                world,
+                channel,
+                AgentInteractionRuntime::tick,
+                log);
+    }
+
     private static void tick(BotEntry entry, int leaderCharId, int agentCharId) {
         AgentTickRuntime.tick(
                 entry,

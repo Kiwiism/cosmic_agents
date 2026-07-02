@@ -3,21 +3,21 @@ package server.agents.integration;
 import client.Character;
 
 import java.util.List;
+import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentLeaderSafetyRuntime;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 
 /**
- * Temporary bot-side gateway for session lifecycle side effects that still need
- * BotManager package access while orchestration moves into Agent modules.
+ * Temporary bot-side gateway for session lifecycle side effects while
+ * orchestration moves into Agent modules.
  */
 public final class AgentBotSessionLifecycleSideEffects {
     private AgentBotSessionLifecycleSideEffects() {
     }
 
     public static void reloginBot(int charId, int ownerCharId, int world, int channel) {
-        BotManager.getInstance().reloginBot(charId, ownerCharId, world, channel);
+        AgentInteractionRuntime.reloginAgent(charId, ownerCharId, world, channel);
     }
 
     public static List<BotEntry> getBotEntries(int ownerCharId) {

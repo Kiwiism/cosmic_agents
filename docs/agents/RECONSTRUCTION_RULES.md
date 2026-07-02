@@ -17,6 +17,9 @@ Rules:
 
 Recent reconstruction notes:
 
+- Relogin entry wiring now enters through `AgentInteractionRuntime`; the
+  session lifecycle bridge no longer imports BotManager for relogin, and
+  BotManager's legacy relogin method delegates back to the Agent facade.
 - Server chat/spawn integration now enters through
   `AgentInteractionRuntime`. General chat, party chat, messenger invite
   fallback, party invite fallback, and `@spawnbot` no longer call

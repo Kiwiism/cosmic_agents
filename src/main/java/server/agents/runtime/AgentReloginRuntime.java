@@ -11,8 +11,8 @@ import java.awt.Point;
 import java.sql.SQLException;
 
 /**
- * Temporary Cosmic hook bundle for reloading an offline Agent while BotManager
- * still supplies the tick callback.
+ * Temporary Cosmic hook bundle for reloading an offline Agent while the Agent
+ * interaction runtime supplies the tick callback.
  */
 public final class AgentReloginRuntime {
     private AgentReloginRuntime() {
