@@ -17,6 +17,12 @@ Rules:
 
 Recent reconstruction notes:
 
+- Formation chat command parsing and formation-state mutation now lives in
+  `server.agents.runtime.AgentFormationCommandService`. BotManager keeps a
+  temporary compatibility hook bundle for active entries, stored formation
+  state, offset application, first-Agent replies, and leader yellow messages.
+  The same help text, snap status, snap on/off/default behavior, type/px
+  parsing, offset application, and reply labels are preserved.
 - Group supply responder selection now lives in
   `server.agents.capabilities.supplies.AgentGroupSupplyResponderSelector`.
   BotManager delegates the same group-supply routing rule: prefer an Agent on

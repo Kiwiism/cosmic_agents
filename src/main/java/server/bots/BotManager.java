@@ -40,6 +40,7 @@ import server.agents.runtime.AgentFollowIdleMovementService;
 import server.agents.runtime.AgentFollowTargetPositionService;
 import server.agents.runtime.AgentFollowMapSyncService;
 import server.agents.runtime.AgentFollowOpportunityTickService;
+import server.agents.runtime.AgentFormationCommandService;
 import server.agents.runtime.AgentGrindModeDispatchService;
 import server.agents.runtime.AgentHeartbeatService;
 import server.agents.runtime.AgentIdleModeTickService;
@@ -214,9 +215,6 @@ public class BotManager {
             "\\b(dismiss|disown|release)\\s+(\\S+)\\b", Pattern.CASE_INSENSITIVE);
     private static final Pattern RECRUIT_PATTERN = Pattern.compile(
             "\\b(recruit|adopt|hire|claim)\\s+(\\S+)\\b", Pattern.CASE_INSENSITIVE);
-    private static final Pattern FORMATION_PATTERN = Pattern.compile(
-            "\\b(?:formation|form)\\b(?:\\s+(stagger|split|random|stack|spread|tight|loose|left|right|snap)(?:\\s+(\\d+|tight|loose|on|off))?)?",
-            Pattern.CASE_INSENSITIVE);
     private static final int MIN_PREFIX_TARGET_LENGTH = 2;
     private static final int PLATFORM_EDGE_INSET_PX = 12;
     private Character resolveFollowTarget(Character owner, String targetToken) {
@@ -628,76 +626,12 @@ public class BotManager {
             return;
         }
 
-        // Formation command
-        Matcher fm = FORMATION_PATTERN.matcher(message);
-        if (fm.find()) {
-            String typeStr = fm.group(1);
-            List<BotEntry> fEntries = bots.get(owner.getId());
-            if (typeStr == null) {
-                String help = "formations: stagger/split/random/spread/left/right <px>, stack, tight, loose | snap <px/on/off>";
-                if (fEntries != null && !fEntries.isEmpty()) AgentBotManagerReplyRuntime.queueReply(fEntries.get(0), help);
-                else owner.yellowMessage(help);
-                return;
-            }
-            AgentFormationService.FormationState current =
-                    AgentFormationService.stateForLeader(AgentFormationService.formationsByLeaderId(), owner.getId(), defaultFormationState());
-            // snap [px|on|off] — changes Y-snap range, preserves type/px
-            if (typeStr.equalsIgnoreCase("snap")) {
-                String qualifier = fm.group(2);
-                int newSnapRange;
-                if (qualifier == null) {
-                    String status = current.snapRange() > 0 ? "on (" + current.snapRange() + "px)" : "off";
-                    if (fEntries != null && !fEntries.isEmpty()) AgentBotManagerReplyRuntime.queueReply(fEntries.get(0), "snap: " + status);
-                    else owner.yellowMessage("snap: " + status);
-                    return;
-                } else if (qualifier.equalsIgnoreCase("off")) {
-                    newSnapRange = 0;
-                } else if (qualifier.equalsIgnoreCase("on")) {
-                    newSnapRange = current.snapRange() > 0 ? current.snapRange() : BotMovementManager.cfg.FOLLOW_Y_CAP;
-                } else {
-                    newSnapRange = Integer.parseInt(qualifier);
-                }
-                AgentFormationService.FormationState fs =
-                        new AgentFormationService.FormationState(current.type(), current.px(), newSnapRange);
-                AgentFormationService.formationsByLeaderId().put(owner.getId(), fs);
-                String status = newSnapRange > 0 ? "on (" + newSnapRange + "px)" : "off";
-                if (fEntries != null && !fEntries.isEmpty())
-                    AgentBotManagerReplyRuntime.queueReply(fEntries.get(0), "snap: " + status);
-                return;
-            }
-            String pxToken = fm.group(2);
-            int defaultPx = pxToken == null                      ? cfg.FOLLOW_STAGGER
-                          : pxToken.equalsIgnoreCase("tight")    ? 30
-                          : pxToken.equalsIgnoreCase("loose")    ? 120
-                          : pxToken.equalsIgnoreCase("on")
-                            || pxToken.equalsIgnoreCase("off")   ? cfg.FOLLOW_STAGGER
-                          : Integer.parseInt(pxToken);
-            AgentFormationService.FormationType type;
-            int px = defaultPx;
-            switch (typeStr.toLowerCase()) {
-                case "tight"          -> { type = AgentFormationService.FormationType.STAGGER; px = 30; }
-                case "loose"          -> { type = AgentFormationService.FormationType.STAGGER; px = 120; }
-                case "stack"          -> { type = AgentFormationService.FormationType.STACK;   px = 0; }
-                case "spread"         -> { type = AgentFormationService.FormationType.SPREAD;  px = defaultPx; }
-                case "left"           -> { type = AgentFormationService.FormationType.LEFT;    px = defaultPx; }
-                case "right"          -> { type = AgentFormationService.FormationType.RIGHT;   px = defaultPx; }
-                case "random"         -> { type = AgentFormationService.FormationType.RANDOM;  px = defaultPx; }
-                case "split","stagger"-> { type = AgentFormationService.FormationType.STAGGER; px = defaultPx; }
-                default               -> { type = AgentFormationService.FormationType.STAGGER; px = defaultPx; }
-            }
-            AgentFormationService.FormationState fs =
-                    new AgentFormationService.FormationState(type, px, current.snapRange());
-            AgentFormationService.formationsByLeaderId().put(owner.getId(), fs);
-            if (fEntries != null) {
-                AgentFormationService.applyOffsets(fEntries, fs);
-                if (!fEntries.isEmpty()) {
-                    String label = typeStr.toLowerCase() + (px > 0 ? " " + px + "px" : "");
-                    AgentBotManagerReplyRuntime.queueReply(fEntries.get(0), "formation: " + label);
-                }
-            }
+        if (AgentFormationCommandService.handleFormationCommand(
+                owner,
+                message,
+                formationCommandHooks())) {
             return;
         }
-
         List<BotEntry> entries = bots.get(owner.getId());
         if (entries == null || entries.isEmpty()) return;
 
@@ -807,6 +741,22 @@ public class BotManager {
     // -------------------------------------------------------------------------
     AgentFormationService.FormationState formationStateFor(BotEntry entry) {
         return AgentFormationService.stateForEntry(entry, AgentFormationService.formationsByLeaderId(), defaultFormationState());
+    }
+
+    private AgentFormationCommandService.Hooks formationCommandHooks() {
+        return new AgentFormationCommandService.Hooks(
+                bots::get,
+                (leaderCharId, defaultFormation) -> AgentFormationService.stateForLeader(
+                        AgentFormationService.formationsByLeaderId(),
+                        leaderCharId,
+                        defaultFormation),
+                AgentFormationService.formationsByLeaderId()::put,
+                AgentFormationService::applyOffsets,
+                AgentBotManagerReplyRuntime::queueReply,
+                Character::yellowMessage,
+                defaultFormationState(),
+                cfg.FOLLOW_STAGGER,
+                BotMovementManager.cfg.FOLLOW_Y_CAP);
     }
 
     public Character resolveFollowAnchor(BotEntry entry, Character owner) {

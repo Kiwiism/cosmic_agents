@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Formation chat command parsing and formation-state mutation moved from
+  BotManager to `server.agents.runtime.AgentFormationCommandService`.
+  BotManager now supplies temporary hooks for active entries, stored formation
+  state, offset application, first-Agent replies, and leader yellow messages.
 - Group supply responder selection moved from BotManager to
   `server.agents.capabilities.supplies.AgentGroupSupplyResponderSelector`.
   BotManager now delegates the same same-map preference and first-entry
