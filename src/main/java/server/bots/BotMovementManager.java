@@ -242,7 +242,7 @@ public class BotMovementManager {
         AgentBotNavigationDebugStateRuntime.clearNavTarget(entry);
     }
 
-    static void tickClimbing(BotEntry entry, Point targetPos, boolean runAiTick) {
+    public static void tickClimbing(BotEntry entry, Point targetPos, boolean runAiTick) {
         long startedAt = System.nanoTime();
         try {
             Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
@@ -451,7 +451,7 @@ public class BotMovementManager {
                 && navEdge.launchStepX != 0);
     }
 
-    static void tickSwimming(BotEntry entry, Point targetPos) {
+    public static void tickSwimming(BotEntry entry, Point targetPos) {
         long startedAt = System.nanoTime();
         try {
             BotPhysicsEngine.tickMotionTimers(entry);
@@ -538,7 +538,7 @@ public class BotMovementManager {
         }
     }
 
-    static void tickGrounded(BotEntry entry, Point targetPos) {
+    public static void tickGrounded(BotEntry entry, Point targetPos) {
         long startedAt = System.nanoTime();
         try {
             AgentBotSwimStateRuntime.setSwimming(entry, false);

@@ -63,7 +63,7 @@ import server.agents.runtime.AgentMapEnvironmentService;
 import server.agents.runtime.AgentMapTransitionService;
 import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentMonsterControlService;
-import server.agents.runtime.AgentMovementPhaseService;
+import server.agents.runtime.AgentMovementPhaseRuntime;
 import server.agents.runtime.AgentMovementOnlyTickService;
 import server.agents.runtime.AgentMovementOnlyMapChangeService;
 import server.agents.runtime.AgentMovementTickService;
@@ -1609,16 +1609,7 @@ public class BotManager {
     }
 
     private void tickMovementPhase(BotEntry entry, Point targetPos, boolean runAiTick) {
-        AgentMovementPhaseService.tickMovementPhase(entry, targetPos, runAiTick, movementPhaseHooks());
-    }
-
-    private AgentMovementPhaseService.MovementPhaseHooks movementPhaseHooks() {
-        return new AgentMovementPhaseService.MovementPhaseHooks(
-                (entry, target) -> AgentMapEnvironmentService.isSwimMap(entry),
-                BotMovementManager::tickClimbing,
-                BotMovementManager::tickSwimming,
-                BotMovementManager::tickAirborne,
-                BotMovementManager::tickGrounded);
+        AgentMovementPhaseRuntime.tickMovementPhase(entry, targetPos, runAiTick);
     }
     private static void tickStuckDetection(BotEntry entry) {
         AgentStuckDetectionRuntime.tickStuckDetection(entry, cfg.ENABLE_UNSTUCK);

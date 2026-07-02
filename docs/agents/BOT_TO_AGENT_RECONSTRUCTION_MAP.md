@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Movement phase hook wiring moved from BotManager to
+  `server.agents.runtime.AgentMovementPhaseRuntime`. BotManager now delegates
+  climb/swim/air/ground phase dispatch while Agent runtime owns the temporary
+  BotMovementManager hook construction.
 - Movement stuck-detection hook wiring moved from BotManager to
   `server.agents.runtime.AgentStuckDetectionRuntime`. BotManager now passes
   only the legacy unstuck-enable flag while Agent runtime owns tick-down,
