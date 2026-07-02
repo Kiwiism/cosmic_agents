@@ -17,6 +17,9 @@ Rules:
 
 Recent reconstruction notes:
 
+- The `shouldOfferTownForAwayCommand` compatibility API now calls
+  `AgentLeaderSafetyRuntime.shouldTownWarpForInactiveEntry` directly; the
+  private BotManager town-warp helper was removed.
 - Tick-core callback wiring now points directly at Agent runtime modules for
   leader lookup, leader safety, map grounding, standalone move target, death
   handling, target snapshots, movement core, and anchored farm dispatch.

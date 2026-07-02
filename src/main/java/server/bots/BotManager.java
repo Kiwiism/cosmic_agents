@@ -433,12 +433,8 @@ public class BotManager {
                 preferredTarget);
     }
 
-    private boolean shouldTownWarpForOwnerInactive(BotEntry entry) {
-        return AgentLeaderSafetyRuntime.shouldTownWarpForInactiveEntry(entry);
-    }
-
     public boolean shouldOfferTownForAwayCommand(BotEntry entry) {
-        return shouldTownWarpForOwnerInactive(entry);
+        return AgentLeaderSafetyRuntime.shouldTownWarpForInactiveEntry(entry);
     }
 
     public boolean isFirstBotEntry(BotEntry entry) {
