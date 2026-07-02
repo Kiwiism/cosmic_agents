@@ -32,6 +32,7 @@ Target package groups:
   Anchored-farm config-bound dispatch enters through `AgentAnchoredFarmRuntime`.
   Standalone move-target config-bound dispatch enters through
   `AgentStandaloneMoveTargetRuntime`.
+  Tick-failure default hook wiring enters through `AgentTickFailureRuntime`.
   BotManager remains only a temporary compatibility caller for legacy entry
   points.
 - `server.agents.model`: identity, mode, profile, leader reference.

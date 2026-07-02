@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Tick-failure default hook wiring moved from BotManager to
+  `server.agents.runtime.AgentTickFailureRuntime`. BotManager now passes the
+  Agent runtime failure handler directly into `AgentTickOrchestrator`.
 - Standalone move-target config-bound tick entry moved from BotManager to
   `server.agents.runtime.AgentStandaloneMoveTargetRuntime`. BotManager now
   delegates ownerless move-target dispatch without assembling

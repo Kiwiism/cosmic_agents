@@ -356,7 +356,8 @@ public class BotManager {
     // -------------------------------------------------------------------------
 
     private void tick(BotEntry entry, int ownerCharId, int botCharId) {
-        AgentTickOrchestrator.runGuardedTick(entry, ownerCharId, botCharId, this::tickCore, this::handleBotTickFailure);
+        AgentTickOrchestrator.runGuardedTick(
+                entry, ownerCharId, botCharId, this::tickCore, AgentTickFailureRuntime::handleFailure);
     }
 
     /** Test-only hook: invokes Agent common tick systems on a caller-owned entry. */
@@ -424,10 +425,6 @@ public class BotManager {
                 BotMovementManager.cfg.OOB_TELEPORT_DIST,
                 cfg.GRIND_PARTY_TELEPORT_DIST_MULTIPLIER,
                 BotMovementManager.cfg.FOLLOW_DIST);
-    }
-
-    private void handleBotTickFailure(BotEntry entry, int ownerCharId, int botCharId, Throwable t) {
-        AgentTickFailureRuntime.handleFailure(entry, ownerCharId, botCharId, t, log, this::issueStop);
     }
 
     static Monster selectPriorityRangedAttackTarget(BotEntry entry,

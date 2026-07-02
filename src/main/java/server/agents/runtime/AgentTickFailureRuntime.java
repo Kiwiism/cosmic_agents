@@ -2,7 +2,9 @@ package server.agents.runtime;
 
 import client.Character;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import server.agents.integration.AgentBotManagerReplyRuntime;
+import server.agents.integration.AgentBotMovementCommandRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
 import server.bots.BotMovementManager;
@@ -14,7 +16,16 @@ import java.util.function.Consumer;
  * still owns the guarded tick entry point.
  */
 public final class AgentTickFailureRuntime {
+    private static final Logger log = LoggerFactory.getLogger(AgentTickFailureRuntime.class);
+
     private AgentTickFailureRuntime() {
+    }
+
+    public static void handleFailure(BotEntry entry,
+                                     int leaderCharId,
+                                     int agentCharId,
+                                     Throwable failure) {
+        handleFailure(entry, leaderCharId, agentCharId, failure, log, AgentBotMovementCommandRuntime::stop);
     }
 
     public static void handleFailure(BotEntry entry,

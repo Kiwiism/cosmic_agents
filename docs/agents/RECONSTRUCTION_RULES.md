@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Tick-failure default hook wiring now lives in
+  `server.agents.runtime.AgentTickFailureRuntime.handleFailure(entry, leaderId, agentId, failure)`.
+  BotManager no longer owns the private tick-failure callback or supplies the
+  stop-mode callback; Agent runtime owns logger and forced-idle hook wiring.
 - Standalone move-target config-bound tick entry now lives in
   `server.agents.runtime.AgentStandaloneMoveTargetRuntime.tickStandaloneMoveTarget(entry, agent, runAiTick)`.
   BotManager no longer passes unstuck/stop-distance config directly for the

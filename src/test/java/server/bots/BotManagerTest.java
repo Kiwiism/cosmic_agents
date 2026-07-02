@@ -26,6 +26,7 @@ import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSpawnPlacementRuntime;
 import server.agents.runtime.AgentTargetSnapshot;
+import server.agents.runtime.AgentTickFailureRuntime;
 import client.Character;
 import client.BuffStat;
 import client.inventory.Inventory;
@@ -658,11 +659,8 @@ class BotManagerTest {
 
         Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
         bots.put(owner.getId(), new CopyOnWriteArrayList<>(List.of(entry)));
-        Method failureHandler = method(BotManager.class, "handleBotTickFailure",
-                BotEntry.class, int.class, int.class, Throwable.class);
-
         try {
-            failureHandler.invoke(manager, entry, owner.getId(), bot.getId(), new NullPointerException("bad drop"));
+            AgentTickFailureRuntime.handleFailure(entry, owner.getId(), bot.getId(), new NullPointerException("bad drop"));
             assertTrue(bots.containsKey(owner.getId()));
             assertNull(AgentBotPendingActionStateRuntime.pendingAction(entry));
             assertNull(AgentBotPendingActionStateRuntime.pendingDropCategory(entry));
@@ -670,13 +668,13 @@ class BotManagerTest {
             assertTrue(AgentBotModeStateRuntime.following(entry));
             assertTrue(AgentBotModeStateRuntime.grinding(entry));
 
-            failureHandler.invoke(manager, entry, owner.getId(), bot.getId(), new NullPointerException("bad drop"));
+            AgentTickFailureRuntime.handleFailure(entry, owner.getId(), bot.getId(), new NullPointerException("bad drop"));
             assertTrue(bots.containsKey(owner.getId()));
             assertFalse(AgentBotModeStateRuntime.following(entry));
             assertFalse(AgentBotModeStateRuntime.grinding(entry));
             assertNull(entry.moveTarget);
 
-            failureHandler.invoke(manager, entry, owner.getId(), bot.getId(), new NullPointerException("bad drop"));
+            AgentTickFailureRuntime.handleFailure(entry, owner.getId(), bot.getId(), new NullPointerException("bad drop"));
             assertFalse(bots.containsKey(owner.getId()));
             verify(task).cancel(false);
         } finally {
