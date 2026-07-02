@@ -3084,6 +3084,11 @@ Recent reconstruction notes:
   attack execution, movement-core stepping, and performance timing. The same
   local-opportunity MOVE_TO predicate, consumed attack early return, movement
   target update, and movement-core tail are preserved.
+- Anchored-farm mode dispatch now lives in
+  `server.agents.runtime.AgentAnchoredFarmModeTickService`. BotManager keeps a
+  temporary compatibility adapter for the existing anchored-farm tick body and
+  performance timing. The same farm-anchor presence check and consumed-tick
+  result are preserved.
 
 Initial reconstruction order:
 

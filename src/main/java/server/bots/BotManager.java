@@ -27,6 +27,7 @@ import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.dialogue.AgentWhisperCommandService;
 
 import server.agents.runtime.AgentActionLockPhysicsService;
+import server.agents.runtime.AgentAnchoredFarmModeTickService;
 import server.agents.runtime.AgentAnchoredFarmTickService;
 import server.agents.runtime.AgentCommonTickService;
 import server.agents.runtime.AgentDeathTickService;
@@ -1273,14 +1274,20 @@ public class BotManager {
             return;
         }
 
-        if (AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry)) {
-            if (!perf) {
-                tickAnchoredFarm(entry, bot, botPos, runAiTick);
-            } else {
-                long tFarm = System.nanoTime();
-                try { tickAnchoredFarm(entry, bot, botPos, runAiTick); }
-                finally { AgentPerformanceMonitor.record("tick-anchored-farm", System.nanoTime() - tFarm); }
-            }
+        if (AgentAnchoredFarmModeTickService.tickIfAnchoredFarm(
+                entry,
+                bot,
+                botPos,
+                runAiTick,
+                new AgentAnchoredFarmModeTickService.Hooks((farmEntry, farmBot, farmBotPos, farmRunAiTick) -> {
+                    if (!perf) {
+                        tickAnchoredFarm(farmEntry, farmBot, farmBotPos, farmRunAiTick);
+                    } else {
+                        long tFarm = System.nanoTime();
+                        try { tickAnchoredFarm(farmEntry, farmBot, farmBotPos, farmRunAiTick); }
+                        finally { AgentPerformanceMonitor.record("tick-anchored-farm", System.nanoTime() - tFarm); }
+                    }
+                }))) {
             return;
         }
 

@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Anchored-farm mode dispatch moved from BotManager to
+  `server.agents.runtime.AgentAnchoredFarmModeTickService`. BotManager now
+  supplies only the temporary anchored-farm tick hook and performance timing.
 - Scripted move local-combat tick dispatch moved from BotManager to
   `server.agents.runtime.AgentScriptedMoveCombatTickService`. BotManager now
   supplies temporary hooks for action-window cleanup, local-opportunity attack,
