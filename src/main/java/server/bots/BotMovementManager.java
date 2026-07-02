@@ -136,6 +136,14 @@ public class BotMovementManager {
         return cfg.STOP_DIST;
     }
 
+    public static int configuredTeleportDist() {
+        return cfg.TELEPORT_DIST;
+    }
+
+    public static int configuredOutOfBoundsTeleportDist() {
+        return cfg.OOB_TELEPORT_DIST;
+    }
+
     public static int configuredFollowYCap() {
         return cfg.FOLLOW_Y_CAP;
     }

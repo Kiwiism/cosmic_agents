@@ -4,6 +4,7 @@ import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
 import server.bots.BotEntry;
+import server.bots.BotMovementManager;
 
 import java.awt.Point;
 
@@ -12,6 +13,10 @@ import java.awt.Point;
  */
 public final class AgentMovementOnlyStepRuntime {
     private AgentMovementOnlyStepRuntime() {
+    }
+
+    public static boolean stepMovementOnly(BotEntry entry, long tickAtMs) {
+        return stepMovementOnly(entry, tickAtMs, defaultConfig());
     }
 
     public static boolean stepMovementOnly(BotEntry entry, long tickAtMs, MovementOnlyStepConfig config) {
@@ -35,6 +40,12 @@ public final class AgentMovementOnlyStepRuntime {
 
     public static void stepMovementOnly(BotEntry entry,
                                         Point targetPosition,
+                                        boolean runAiTick) {
+        stepMovementOnly(entry, targetPosition, runAiTick, defaultConfig());
+    }
+
+    public static void stepMovementOnly(BotEntry entry,
+                                        Point targetPosition,
                                         boolean runAiTick,
                                         MovementOnlyStepConfig config) {
         AgentMovementOnlyRuntime.stepMovementOnly(
@@ -44,6 +55,18 @@ public final class AgentMovementOnlyStepRuntime {
                 AgentBotTickStateRuntime.lastTickAtMs(entry),
                 AgentTargetSnapshotRuntime::resolveFollowAnchor,
                 config.movementOnlyConfig());
+    }
+
+    private static MovementOnlyStepConfig defaultConfig() {
+        return new MovementOnlyStepConfig(
+                BotMovementManager.configuredTickMs(),
+                AgentRuntimeConfig.cfg.AI_TICK_MS,
+                BotMovementManager.configuredTeleportDist(),
+                BotMovementManager.configuredOutOfBoundsTeleportDist(),
+                AgentRuntimeConfig.cfg.GRIND_PARTY_TELEPORT_DIST_MULTIPLIER,
+                BotMovementManager.configuredFollowDist(),
+                BotMovementManager.configuredStopDist(),
+                AgentRuntimeConfig.cfg.ENABLE_UNSTUCK);
     }
 
     public record MovementOnlyStepConfig(int tickMs,

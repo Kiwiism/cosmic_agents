@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Movement-only default config ownership now lives in
+  `AgentMovementOnlyStepRuntime.stepMovementOnly(entry, tickAtMs)` and
+  `stepMovementOnly(entry, target, runAiTick)`. BotManager no longer builds
+  `MovementOnlyStepConfig`; explicit config overloads remain for focused
+  parity tests and future profile/config migration.
 - The unused BotManager `tickStuckDetection` compatibility wrapper was removed
   after movement-core dispatch moved to `AgentMovementTickRuntime`. Stuck
   detection still runs through `AgentStuckDetectionRuntime` from Agent movement

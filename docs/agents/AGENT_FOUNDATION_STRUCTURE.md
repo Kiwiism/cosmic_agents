@@ -27,7 +27,8 @@ Target package groups:
   Tick leader/session lookup enters through `AgentLeaderSessionRuntime`.
   Dead-state tick hook wiring enters through `AgentDeathTickRuntime`.
   Ownerless movement-only tick preparation enters through
-  `AgentMovementOnlyStepRuntime`.
+  `AgentMovementOnlyStepRuntime`, including default movement-only config
+  assembly for BotManager compatibility entry points.
   Movement-core config-bound stepping enters through `AgentMovementTickRuntime`.
   Anchored-farm config-bound dispatch enters through `AgentAnchoredFarmRuntime`.
   Standalone move-target config-bound dispatch enters through

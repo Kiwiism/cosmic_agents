@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Movement-only default config assembly moved from BotManager to
+  `server.agents.runtime.AgentMovementOnlyStepRuntime`. BotManager now keeps
+  only compatibility step methods while Agent runtime owns legacy tick,
+  distance, teleport, and unstuck config handoff for movement-only stepping.
 - Inactive-leader town-return timeout ownership moved from BotManager to
   `server.agents.runtime.AgentLeaderSafetyRuntime`. BotManager now delegates
   inactive leader handling without reading the legacy runtime config itself.

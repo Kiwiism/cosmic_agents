@@ -614,26 +614,14 @@ public class BotManager {
     }
 
     boolean stepMovementOnly(BotEntry entry, long tickAtMs) {
-        return AgentMovementOnlyStepRuntime.stepMovementOnly(entry, tickAtMs, movementOnlyStepConfig());
+        return AgentMovementOnlyStepRuntime.stepMovementOnly(entry, tickAtMs);
     }
 
     void stepMovementOnly(BotEntry entry,
                           Point targetPos,
                           Point ownerPos,
                           boolean runAiTick) {
-        AgentMovementOnlyStepRuntime.stepMovementOnly(entry, targetPos, runAiTick, movementOnlyStepConfig());
-    }
-
-    private static AgentMovementOnlyStepRuntime.MovementOnlyStepConfig movementOnlyStepConfig() {
-        return new AgentMovementOnlyStepRuntime.MovementOnlyStepConfig(
-                BotMovementManager.cfg.TICK_MS,
-                cfg.AI_TICK_MS,
-                BotMovementManager.cfg.TELEPORT_DIST,
-                BotMovementManager.cfg.OOB_TELEPORT_DIST,
-                cfg.GRIND_PARTY_TELEPORT_DIST_MULTIPLIER,
-                BotMovementManager.cfg.FOLLOW_DIST,
-                BotMovementManager.cfg.STOP_DIST,
-                cfg.ENABLE_UNSTUCK);
+        AgentMovementOnlyStepRuntime.stepMovementOnly(entry, targetPos, runAiTick);
     }
 
     static boolean tryFollowIdleMovementFastPath(BotEntry entry, Character bot, Point targetPos, long nowMs) {
