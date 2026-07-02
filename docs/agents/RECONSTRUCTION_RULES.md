@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Transfer chat command routing now lives in
+  `server.agents.runtime.AgentTransferCommandService`. BotManager keeps a
+  temporary compatibility hook bundle for transfer lifecycle delegation and
+  leader yellow-message delivery. The same parser, no-op fall-through,
+  success message, and lifecycle error messages are preserved.
 - Recruit chat command parsing now lives in
   `server.agents.runtime.AgentRecruitCommandService`. BotManager keeps a
   temporary compatibility hook bundle for ownerless-Agent recruitment and

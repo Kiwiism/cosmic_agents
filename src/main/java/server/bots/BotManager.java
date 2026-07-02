@@ -93,6 +93,7 @@ import server.agents.runtime.AgentTickPreflightService;
 import server.agents.runtime.AgentTickStateMaintenanceService;
 import server.agents.runtime.AgentTradeWindowTickService;
 import server.agents.runtime.AgentTrackedMapChangeTickService;
+import server.agents.runtime.AgentTransferCommandService;
 import server.agents.runtime.AgentTransferService;
 
 import server.agents.capabilities.looting.AgentGrindLootTargetService;
@@ -150,7 +151,6 @@ import server.agents.integration.AgentBotShopStateRuntime;
 import server.agents.integration.AgentBotTickCadenceStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
 import server.agents.integration.AgentBotTargetedCommandMatch;
-import server.agents.integration.AgentBotTransferCommand;
 import server.agents.plans.AgentTask;
 import server.agents.plans.AgentScriptItemActionService;
 import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
@@ -610,11 +610,12 @@ public class BotManager {
             return;
         }
 
-        AgentBotTransferCommand transferCommand = AgentBotCommandParser.matchBotTransferCommand(message);
-        if (transferCommand != null) {
-            String err = giveBot(owner.getId(), owner, transferCommand.botName(), transferCommand.targetName());
-            if (err != null) owner.yellowMessage(err);
-            else owner.yellowMessage("Bot '" + transferCommand.botName() + "' transferred to " + transferCommand.targetName() + ".");
+        if (AgentTransferCommandService.handleTransferCommand(
+                owner,
+                message,
+                new AgentTransferCommandService.Hooks(
+                        this::giveBot,
+                        Character::yellowMessage))) {
             return;
         }
 

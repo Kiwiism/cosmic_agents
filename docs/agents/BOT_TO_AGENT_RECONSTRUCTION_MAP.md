@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Transfer chat command routing moved from BotManager to
+  `server.agents.runtime.AgentTransferCommandService`. BotManager now supplies
+  temporary hooks for transfer lifecycle delegation and leader yellow-message
+  delivery while Agent runtime owns the command routing response behavior.
 - Recruit chat command parsing moved from BotManager to
   `server.agents.runtime.AgentRecruitCommandService`. BotManager now supplies
   temporary hooks for ownerless-Agent recruitment and leader yellow-message
