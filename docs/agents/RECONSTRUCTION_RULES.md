@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Movement-core hook construction now lives in
+  `server.agents.runtime.AgentMovementTickRuntime`. BotManager should pass only
+  the legacy unstuck and stop-distance config until movement config ownership
+  moves into Agent runtime.
 - Movement-only map-change hook construction now lives in
   `server.agents.runtime.AgentMovementOnlyMapChangeRuntime`. Keep it separate
   from the broader movement-only tick pipeline until that pipeline can move as

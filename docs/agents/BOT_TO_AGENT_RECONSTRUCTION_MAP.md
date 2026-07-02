@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Movement-core hook wiring moved from BotManager to
+  `server.agents.runtime.AgentMovementTickRuntime`. BotManager now passes only
+  the legacy unstuck flag and stop distance while Agent runtime owns navigation,
+  fidget, phase, committed-edge, stuck-detection, and arrival-cleanup hooks.
 - Movement-only map-change hook wiring moved from BotManager to
   `server.agents.runtime.AgentMovementOnlyMapChangeRuntime`. BotManager now
   delegates the movement-only map-change side-effect bundle while Agent runtime

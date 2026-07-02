@@ -54,9 +54,9 @@ public final class BotNavigationManager {
     /** Throttle warmup notifications per (ownerId -> mapId -> lastNotifyMs). */
     private static final Map<Integer, Map<Integer, Long>> WARMUP_NOTIFIED = new ConcurrentHashMap<>();
 
-    static final class NavigationDirective {
-        final Point targetPos;
-        final boolean consumedTick;
+    public static final class NavigationDirective {
+        public final Point targetPos;
+        public final boolean consumedTick;
 
         NavigationDirective(Point targetPos, boolean consumedTick) {
             this.targetPos = targetPos;
@@ -94,7 +94,7 @@ public final class BotNavigationManager {
                                    int resultEdges) {
     }
 
-    static NavigationDirective resolveTarget(BotEntry entry, Point rawTargetPos, boolean runAiTick) {
+    public static NavigationDirective resolveTarget(BotEntry entry, Point rawTargetPos, boolean runAiTick) {
         long startedAt = System.nanoTime();
         try {
             Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
@@ -194,7 +194,7 @@ public final class BotNavigationManager {
         }
     }
 
-    static boolean tryExecuteCommittedEdgeAfterGroundMovement(BotEntry entry, Point rawTargetPos) {
+    public static boolean tryExecuteCommittedEdgeAfterGroundMovement(BotEntry entry, Point rawTargetPos) {
         if (entry == null
                 || !AgentBotRuntimeIdentityRuntime.hasBot(entry)
                 || !AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
