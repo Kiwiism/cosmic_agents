@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Final movement-tail dispatch moved from BotManager to
+  `server.agents.runtime.AgentFinalMovementTailService`. BotManager now
+  supplies only the temporary movement-core hook and performance timing.
 - Tracked map-change tick dispatch moved from BotManager to
   `server.agents.runtime.AgentTrackedMapChangeTickService`. BotManager now
   supplies the temporary tracked-map-change handler and performance timing.

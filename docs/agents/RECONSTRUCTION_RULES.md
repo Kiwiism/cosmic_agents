@@ -3099,6 +3099,10 @@ Recent reconstruction notes:
   temporary compatibility adapter for the existing tracked-map-change body and
   performance timing. The same consumed/fall-through result and record-only-
   when-changed performance behavior are preserved.
+- Final movement-tail dispatch now lives in
+  `server.agents.runtime.AgentFinalMovementTailService`. BotManager keeps a
+  temporary compatibility adapter for movement-core stepping and performance
+  timing. The same default fall-through target and AI-tick flag are preserved.
 
 Initial reconstruction order:
 

@@ -31,6 +31,7 @@ import server.agents.runtime.AgentAnchoredFarmModeTickService;
 import server.agents.runtime.AgentAnchoredFarmTickService;
 import server.agents.runtime.AgentCommonTickService;
 import server.agents.runtime.AgentDeathTickService;
+import server.agents.runtime.AgentFinalMovementTailService;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentFollowAnchorService;
@@ -1312,13 +1313,19 @@ public class BotManager {
             targetPos = grindResult.targetPos();
         }
 
-        if (!perf) {
-            stepMovementCore(entry, targetPos, runAiTick);
-        } else {
-            long tStepTail = System.nanoTime();
-            try { stepMovementCore(entry, targetPos, runAiTick); }
-            finally { AgentPerformanceMonitor.record("step-movement-core", System.nanoTime() - tStepTail); }
-        }
+        AgentFinalMovementTailService.stepFinalMovement(
+                entry,
+                targetPos,
+                runAiTick,
+                new AgentFinalMovementTailService.Hooks((moveEntry, moveTargetPos, moveRunAiTick) -> {
+                    if (!perf) {
+                        stepMovementCore(moveEntry, moveTargetPos, moveRunAiTick);
+                    } else {
+                        long tStepTail = System.nanoTime();
+                        try { stepMovementCore(moveEntry, moveTargetPos, moveRunAiTick); }
+                        finally { AgentPerformanceMonitor.record("step-movement-core", System.nanoTime() - tStepTail); }
+                    }
+                }));
     }
 
     private AgentTickPreflightService.Hooks tickPreflightHooks() {
