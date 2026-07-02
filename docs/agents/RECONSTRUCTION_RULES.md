@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Pending loot-offer target validation now lives in
+  `server.agents.capabilities.trade.AgentPendingOfferResponseService`.
+  BotManager keeps only the temporary route-entry hook. The same pending-offer,
+  recipient, and same-map checks are preserved.
 - Follow-target candidate assembly now lives in
   `server.agents.runtime.AgentFollowTargetCandidateService`. BotManager keeps
   only a temporary sibling-entry lookup hook. The same leader, party-member,

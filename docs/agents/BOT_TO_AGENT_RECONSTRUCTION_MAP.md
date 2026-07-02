@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Pending loot-offer target validation moved from BotManager to
+  `server.agents.capabilities.trade.AgentPendingOfferResponseService`.
+  BotManager now supplies only the temporary route-entry hook while Agent trade
+  owns the pending-offer, recipient, and same-map checks.
 - Follow-target candidate assembly moved from BotManager to
   `server.agents.runtime.AgentFollowTargetCandidateService`. BotManager now
   supplies only a temporary sibling-entry lookup hook while Agent runtime owns

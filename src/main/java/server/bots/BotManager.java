@@ -655,17 +655,10 @@ public class BotManager {
                 message,
                 new AgentPendingOfferResponseService.Hooks(
                         AgentOfferService::expirePendingOffer,
-                        BotManager::isPendingLootOfferTarget,
+                        AgentPendingOfferResponseService::isPendingOfferTarget,
                         AgentBotCommandParser::resolveTargetedBot,
                         AgentOfferService::handlePendingOfferResponse,
                         (target, feedback) -> target.dropMessage(5, feedback)));
-    }
-
-    private static boolean isPendingLootOfferTarget(BotEntry entry, Character speaker) {
-        return entry != null
-                && AgentOfferService.hasPendingOffer(entry)
-                && AgentBotOfferStateRuntime.pendingOfferRecipientIs(entry, speaker)
-                && AgentBotRuntimeIdentityRuntime.botMapId(entry) == speaker.getMapId();
     }
 
     // -------------------------------------------------------------------------

@@ -1,6 +1,8 @@
 package server.agents.capabilities.trade;
 
 import client.Character;
+import server.agents.integration.AgentBotOfferStateRuntime;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotTargetedCommandMatch;
 import server.bots.BotEntry;
 
@@ -81,5 +83,12 @@ public final class AgentPendingOfferResponseService {
     static boolean looksLikeConfirmation(String message) {
         String normalized = message.trim().toLowerCase();
         return normalized.matches(".*\\b(yes|yep|yeah|yea|y|ok|sure|confirm|no|nope|nah|nvm|never\\s*mind|dont|don't|not\\s+now|skip)\\b.*");
+    }
+
+    public static boolean isPendingOfferTarget(BotEntry entry, Character speaker) {
+        return entry != null
+                && AgentOfferService.hasPendingOffer(entry)
+                && AgentBotOfferStateRuntime.pendingOfferRecipientIs(entry, speaker)
+                && AgentBotRuntimeIdentityRuntime.botMapId(entry) == speaker.getMapId();
     }
 }

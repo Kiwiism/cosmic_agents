@@ -1,7 +1,9 @@
 package server.agents.capabilities.trade;
 
 import client.Character;
+import client.inventory.Item;
 import org.junit.jupiter.api.Test;
+import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotTargetedCommandMatch;
 import server.bots.BotEntry;
 
@@ -12,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class AgentPendingOfferResponseServiceTest {
     @Test
@@ -102,6 +105,29 @@ class AgentPendingOfferResponseServiceTest {
                 hooks(null, new ArrayList<>()));
 
         assertFalse(handled);
+    }
+
+    @Test
+    void defaultTargetCheckRequiresOfferRecipientAndSameMap() {
+        Character speaker = mock(Character.class);
+        Character agent = mock(Character.class);
+        when(speaker.getId()).thenReturn(100);
+        when(speaker.getMapId()).thenReturn(20000);
+        when(agent.getMapId()).thenReturn(20000);
+        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentBotOfferStateRuntime.setPendingLootOffer(entry, mock(Item.class), 100, 1L, false);
+
+        assertTrue(AgentPendingOfferResponseService.isPendingOfferTarget(entry, speaker));
+
+        when(speaker.getMapId()).thenReturn(30000);
+        assertFalse(AgentPendingOfferResponseService.isPendingOfferTarget(entry, speaker));
+
+        Character otherSpeaker = mock(Character.class);
+        when(otherSpeaker.getId()).thenReturn(101);
+        when(otherSpeaker.getMapId()).thenReturn(20000);
+        assertFalse(AgentPendingOfferResponseService.isPendingOfferTarget(entry, otherSpeaker));
+
+        assertFalse(AgentPendingOfferResponseService.isPendingOfferTarget(null, speaker));
     }
 
     private static AgentPendingOfferResponseService.Hooks hooks(BotEntry match, List<String> calls) {
