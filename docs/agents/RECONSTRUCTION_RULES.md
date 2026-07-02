@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Spawn hook wiring now lives in `server.agents.runtime.AgentSpawnRuntime`.
+  BotManager supplies only the temporary spawned-registration and follow-start
+  callbacks plus logger while Agent runtime owns ownership resolution, spawn
+  position resolution, offline load delegation, online placement, cross-map
+  force-change handling, and SQL-failure warning wiring.
 - Relogin hook wiring now lives in `server.agents.runtime.AgentReloginRuntime`.
   BotManager supplies only the temporary spawned-registration callback and
   logger while Agent runtime owns leader lookup, spawn position resolution,

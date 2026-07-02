@@ -4,7 +4,6 @@ import server.agents.capabilities.navigation.AgentNavigationGraphService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
-import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentBuffService;
@@ -91,8 +90,8 @@ import server.agents.runtime.AgentShopVisitTickService;
 import server.agents.runtime.AgentTargetSnapshot;
 import server.agents.runtime.AgentTargetSnapshotService;
 import server.agents.runtime.AgentRuntimeRegistry;
-import server.agents.runtime.AgentSpawnPlacementRuntime;
 import server.agents.runtime.AgentSpawnPositionService;
+import server.agents.runtime.AgentSpawnRuntime;
 import server.agents.runtime.AgentStandaloneMoveTargetTickService;
 import server.agents.runtime.AgentStuckDetectionService;
 import server.agents.runtime.AgentTickFailurePolicy;
@@ -295,19 +294,8 @@ public class BotManager {
 
     /** Spawn a registered bot for the given owner, placing it at the owner's current position in follow mode. */
     public SpawnResult spawnBotForOwner(Character owner, String botName) {
-        AgentLifecycleService.AgentSpawnResult result = AgentLifecycleService.spawnAgentForLeaderQuietly(
-                owner,
-                botName,
-                AgentOwnershipService.getInstance(),
-                new AgentLifecycleService.SpawnHooks(
-                        this::resolveSpawnPosition,
-                        this::registerSpawnedBot,
-                        this::loadOfflineBot,
-                        AgentSpawnPlacementRuntime::placeSpawnedOnlineAgent,
-                        this::issueFollowOwner,
-                        (botChar, map, pos) -> botChar.forceChangeMap(map, map.findClosestPortal(pos))),
-                (agentName, leader, e) -> log.warn(
-                        "Failed to load bot character '{}' for owner '{}'", agentName, leader.getName(), e));
+        AgentLifecycleService.AgentSpawnResult result = AgentSpawnRuntime.spawnAgentForLeader(
+                owner, botName, this::registerSpawnedBot, this::issueFollowOwner, log);
         if (!result.success()) {
             return SpawnResult.fail(result.errorMessage());
         }

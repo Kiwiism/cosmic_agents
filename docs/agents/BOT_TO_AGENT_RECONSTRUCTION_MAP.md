@@ -12,6 +12,12 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Spawn hook wiring moved from BotManager to
+  `server.agents.runtime.AgentSpawnRuntime`. BotManager now passes only the
+  temporary spawned-registration and follow-start callbacks plus logger while
+  Agent runtime owns ownership resolution, spawn position, offline load
+  delegation, online placement, cross-map force-change, and failure warning
+  wiring.
 - Relogin hook wiring moved from BotManager to
   `server.agents.runtime.AgentReloginRuntime`. BotManager now passes only the
   temporary spawned-registration callback and logger while Agent runtime owns
