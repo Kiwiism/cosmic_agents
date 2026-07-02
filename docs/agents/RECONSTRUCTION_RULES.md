@@ -3052,6 +3052,12 @@ Recent reconstruction notes:
   cleanup, town-warp eligibility, and inactive safe-mode entry side effects.
   The same active/inactive classification, inactive timer delay, town policy
   lookup, and consumed-tick result are preserved.
+- Tick preflight sequencing now lives in
+  `server.agents.runtime.AgentTickPreflightService`. BotManager keeps a
+  temporary compatibility adapter for airshow skip, skip-delay consumption,
+  removed-map cleanup, heartbeat refresh/broadcast, pending-offer expiry, and
+  AI cadence preparation. The same early-return order and tick timestamp input
+  are preserved.
 
 Initial reconstruction order:
 

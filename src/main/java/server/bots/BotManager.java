@@ -70,6 +70,7 @@ import server.agents.runtime.AgentStandaloneMoveTargetTickService;
 import server.agents.runtime.AgentStuckDetectionService;
 import server.agents.runtime.AgentTickFailurePolicy;
 import server.agents.runtime.AgentTickOrchestrator;
+import server.agents.runtime.AgentTickPreflightService;
 import server.agents.runtime.AgentTickStateMaintenanceService;
 
 import server.agents.capabilities.looting.AgentGrindLootTargetService;
@@ -1050,30 +1051,17 @@ public class BotManager {
     }
 
     private void tickCore(BotEntry entry, int ownerCharId, int botCharId) {
-        if (entry == null) return;
-        if (AgentBotManagerStatusRuntime.airshowActive(entry)) return;
-        if (AgentBotTickCadenceStateRuntime.consumeSkipDelay(entry, BotMovementManager.cfg.TICK_MS)) {
-            return;
-        }
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-
-        // Guard: bot was removed from its map externally (e.g. a prior disconnect race).
-        // Stop ticking and clean up rather than NPE-spamming TimerManager workers.
-        if (bot.getMap() == null) {
-            removeBotByCharId(botCharId);
-            return;
-        }
-
-        // Heartbeat: keep the bot's lastPacket fresh and broadcast a standing-in-place
-        // movement packet every 10 minutes so the server never considers the bot idle.
-        // Covers all modes: idle, follow, and grind.
         long nowMs = System.currentTimeMillis();
-        AgentHeartbeatService.tickHeartbeat(
-                entry, bot, nowMs, 600_000L, agent -> agent.getClient().updateLastPacket(), BotMovementManager::broadcastMovement);
-
-        AgentOfferService.expirePendingOffer(entry);
-        boolean runAiTick = AgentTickOrchestrator.prepareTick(
-                entry, BotMovementManager.cfg.TICK_MS, cfg.AI_TICK_MS, System.currentTimeMillis());
+        AgentTickPreflightService.Result preflight = AgentTickPreflightService.runPreflight(
+                entry,
+                botCharId,
+                nowMs,
+                tickPreflightHooks());
+        if (preflight.consumedTick()) {
+            return;
+        }
+        Character bot = preflight.agent();
+        boolean runAiTick = preflight.runAiTick();
 
         Character owner = resolveTickOwner(entry, ownerCharId);
         if (handleOwnerOfflineOrDead(entry, bot, owner, nowMs, ownerCharId)) {
@@ -1286,6 +1274,25 @@ public class BotManager {
             try { stepMovementCore(entry, targetPos, runAiTick); }
             finally { AgentPerformanceMonitor.record("step-movement-core", System.nanoTime() - tStepTail); }
         }
+    }
+
+    private AgentTickPreflightService.Hooks tickPreflightHooks() {
+        return new AgentTickPreflightService.Hooks(
+                AgentBotManagerStatusRuntime::airshowActive,
+                AgentBotTickCadenceStateRuntime::consumeSkipDelay,
+                this::removeBotByCharId,
+                (entry, agent, nowMs, heartbeatIntervalMs) -> AgentHeartbeatService.tickHeartbeat(
+                        entry,
+                        agent,
+                        nowMs,
+                        heartbeatIntervalMs,
+                        heartbeatAgent -> heartbeatAgent.getClient().updateLastPacket(),
+                        BotMovementManager::broadcastMovement),
+                AgentOfferService::expirePendingOffer,
+                AgentTickOrchestrator::prepareTick,
+                BotMovementManager.cfg.TICK_MS,
+                cfg.AI_TICK_MS,
+                600_000L);
     }
 
     /**

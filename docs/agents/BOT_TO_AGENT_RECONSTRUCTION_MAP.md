@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Tick preflight sequencing moved from BotManager to
+  `server.agents.runtime.AgentTickPreflightService`. BotManager now supplies
+  temporary hooks for airshow skip, skip-delay consumption, removed-map cleanup,
+  heartbeat, pending-offer expiry, and AI cadence preparation.
 - Inactive leader tick gating moved from BotManager to
   `server.agents.runtime.AgentLeaderSafetyService.handleInactiveLeaderTick`.
   BotManager now supplies temporary hooks for active-leader return cleanup,
