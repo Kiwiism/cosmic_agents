@@ -17,6 +17,13 @@ Rules:
 
 Recent reconstruction notes:
 
+- Agent transfer between leaders now lives in
+  `server.agents.runtime.AgentTransferService`. BotManager keeps a temporary
+  compatibility hook bundle for current-entry lookup, same-map target lookup,
+  authorization, scheduled-task cancel, stop-mode entry, re-registration,
+  delayed greeting scheduling, and greeting delivery. The same no-agent,
+  missing-agent, missing-target, self-target, authorization failure, remove,
+  cancel, stop, register, and delayed greeting behavior is preserved.
 - Offline Agent loading now lives in
   `server.agents.runtime.AgentOfflineLoadService`. BotManager keeps a temporary
   compatibility hook bundle for BotClient creation, character DB loading,

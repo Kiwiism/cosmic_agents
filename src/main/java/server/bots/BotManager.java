@@ -89,6 +89,7 @@ import server.agents.runtime.AgentTickPreflightService;
 import server.agents.runtime.AgentTickStateMaintenanceService;
 import server.agents.runtime.AgentTradeWindowTickService;
 import server.agents.runtime.AgentTrackedMapChangeTickService;
+import server.agents.runtime.AgentTransferService;
 
 import server.agents.capabilities.looting.AgentGrindLootTargetService;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
@@ -527,39 +528,27 @@ public class BotManager {
 
     /** Transfer a bot from this owner to another player in the same map. Returns an error string on failure, null on success. */
     public String giveBot(int ownerCharId, Character owner, String botName, String targetName) {
-        List<BotEntry> entries = bots.get(ownerCharId);
-        if (entries == null) return "You have no bots.";
-        BotEntry found = getBotEntry(ownerCharId, botName);
-        if (found == null) return "No bot named '" + botName + "' in your group.";
-
-        // Find target player in the same map
-        Character target = owner.getMap().getCharacterByName(targetName);
-        if (target == null) return "Player '" + targetName + "' not found in this map.";
-        if (target.getId() == ownerCharId) return "That's you.";
-
-        AgentAuthorizationResult auth =
-                AgentOwnershipService.getInstance().ensureCanControl(
-                        target,
-                        new AgentResolvedCharacter(
-                                AgentBotRuntimeIdentityRuntime.botId(found),
-                                AgentBotRuntimeIdentityRuntime.botName(found),
-                                AgentBotRuntimeIdentityRuntime.botAccountId(found),
-                                AgentBotRuntimeIdentityRuntime.bot(found)));
-        if (!auth.allowed()) {
-            return auth.failureMessage();
-        }
-
-        // Disown from current owner
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(found);
-        entries.remove(found);
-        AgentBotManagerSchedulerRuntime.cancelScheduledTask(found);
-        issueStop(found);
-
-        // Register under new owner
-        registerBot(target.getId(), target, bot);
-        AgentBotManagerSchedulerRuntime.afterDelay(randMs(700, 900), () ->
-                botSay(bot, randomReply(List.of("ok!", "sure!", "hey " + target.getName() + "!", "hi " + target.getName() + "!"))));
-        return null;
+        return AgentTransferService.transferAgent(
+                ownerCharId,
+                owner,
+                botName,
+                targetName,
+                new AgentTransferService.Hooks(
+                        bots::get,
+                        this::getBotEntry,
+                        (leader, target) -> leader.getMap().getCharacterByName(target),
+                        (target, agent) -> AgentOwnershipService.getInstance().ensureCanControl(target, agent),
+                        AgentBotManagerSchedulerRuntime::cancelScheduledTask,
+                        this::issueStop,
+                        this::registerBot,
+                        AgentBotManagerSchedulerRuntime::afterDelay,
+                        () -> randMs(700, 900),
+                        this::botSay,
+                        () -> randomReply(List.of(
+                                "ok!",
+                                "sure!",
+                                "hey " + targetName + "!",
+                                "hi " + targetName + "!"))));
     }
 
     public Character getActiveOwnerByBotCharId(int botCharId) {

@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Agent transfer between leaders moved from BotManager to
+  `server.agents.runtime.AgentTransferService`. BotManager now supplies
+  temporary hooks for current-entry lookup, same-map target lookup,
+  authorization, scheduled-task cancel, stop-mode entry, re-registration,
+  delayed greeting scheduling, and greeting delivery.
 - Offline Agent loading moved from BotManager to
   `server.agents.runtime.AgentOfflineLoadService`. BotManager now supplies
   temporary hooks for BotClient creation, character DB loading, disease restore,
