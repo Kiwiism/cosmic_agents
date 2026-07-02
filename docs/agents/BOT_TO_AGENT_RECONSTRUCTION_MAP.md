@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- BotManager's private registration branch moved to
+  `server.agents.runtime.AgentRegistrationRuntime.registerManualAgent` and
+  `registerSpawnedAgent`. BotManager now keeps only legacy public method names
+  for compatibility while Agent runtime owns the normalization-mode choice.
 - Spawn/relogin registration callback construction moved from BotManager to
   `server.agents.runtime.AgentSpawnRuntime` and
   `server.agents.runtime.AgentReloginRuntime`. BotManager now passes only its

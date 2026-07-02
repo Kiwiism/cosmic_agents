@@ -150,11 +150,11 @@ public class BotManager {
     // -------------------------------------------------------------------------
 
     public void registerBot(int ownerCharId, Character owner, Character bot) {
-        registerBotInternal(ownerCharId, owner, bot, false);
+        AgentRegistrationRuntime.registerManualAgent(ownerCharId, owner, bot, this::tick);
     }
 
     public BotEntry registerSpawnedBot(int ownerCharId, Character owner, Character bot) {
-        return registerBotInternal(ownerCharId, owner, bot, true);
+        return AgentRegistrationRuntime.registerSpawnedAgent(ownerCharId, owner, bot, this::tick);
     }
 
     public record SpawnResult(boolean success, Character bot, boolean autoRegistered, String errorMessage) {
@@ -190,10 +190,6 @@ public class BotManager {
 
     public Point resolveSpawnPosition(MapleMap map, Point desiredPosition) {
         return AgentSpawnPositionService.resolveSpawnPosition(map, desiredPosition);
-    }
-
-    private BotEntry registerBotInternal(int ownerCharId, Character owner, Character bot, boolean normalizeSpawnState) {
-        return AgentRegistrationRuntime.registerAgent(ownerCharId, owner, bot, normalizeSpawnState, this::tick);
     }
 
     public void removeBot(int ownerCharId) {

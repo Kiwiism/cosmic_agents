@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Manual and spawned registration compatibility entry points now live in
+  `server.agents.runtime.AgentRegistrationRuntime` as `registerManualAgent`
+  and `registerSpawnedAgent`. BotManager no longer owns the private
+  normalize-spawn-state branch; it only delegates legacy public registration
+  methods to Agent runtime with the temporary tick callback.
 - Spawn and relogin registration-callback construction now lives in
   `server.agents.runtime.AgentSpawnRuntime` and
   `server.agents.runtime.AgentReloginRuntime`. BotManager supplies only the

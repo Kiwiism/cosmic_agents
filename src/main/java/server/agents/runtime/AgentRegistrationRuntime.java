@@ -14,6 +14,20 @@ public final class AgentRegistrationRuntime {
     private AgentRegistrationRuntime() {
     }
 
+    public static BotEntry registerManualAgent(int leaderCharId,
+                                               Character leader,
+                                               Character agent,
+                                               AgentLifecycleService.AgentTickCallback tickCallback) {
+        return registerAgent(leaderCharId, leader, agent, false, tickCallback);
+    }
+
+    public static BotEntry registerSpawnedAgent(int leaderCharId,
+                                                Character leader,
+                                                Character agent,
+                                                AgentLifecycleService.AgentTickCallback tickCallback) {
+        return registerAgent(leaderCharId, leader, agent, true, tickCallback);
+    }
+
     public static BotEntry registerAgent(int leaderCharId,
                                          Character leader,
                                          Character agent,
