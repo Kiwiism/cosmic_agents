@@ -169,7 +169,7 @@ public class BotManager {
     /** Spawn a registered bot for the given owner, placing it at the owner's current position in follow mode. */
     public SpawnResult spawnBotForOwner(Character owner, String botName) {
         AgentLifecycleService.AgentSpawnResult result = AgentSpawnRuntime.spawnAgentForLeader(
-                owner, botName, this::registerSpawnedBot, this::issueFollowOwner, log);
+                owner, botName, this::tick, this::issueFollowOwner, log);
         if (!result.success()) {
             return SpawnResult.fail(result.errorMessage());
         }
@@ -717,7 +717,7 @@ public class BotManager {
 
 
     public void reloginBot(int charId, int ownerCharId, int world, int channel) {
-        AgentReloginRuntime.reloginAgent(charId, ownerCharId, world, channel, this::registerSpawnedBot, log);
+        AgentReloginRuntime.reloginAgent(charId, ownerCharId, world, channel, this::tick, log);
     }
 
     // -------------------------------------------------------------------------

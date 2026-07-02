@@ -18,8 +18,10 @@ Target package groups:
   safety and town-return composition now enter through
   `AgentLeaderSafetyRuntime`, and chat route composition enters through
   `AgentChatRouteRuntime`. Formation defaults and state helpers enter through
-  `AgentFormationRuntime`, while BotManager remains only a temporary
-  compatibility caller for legacy entry points.
+  `AgentFormationRuntime`. Spawn and relogin registration callback composition
+  now enters through `AgentSpawnRuntime` and `AgentReloginRuntime`, while
+  BotManager remains only a temporary compatibility caller for legacy entry
+  points.
 - `server.agents.model`: identity, mode, profile, leader reference.
 - `server.agents.commands`: command parsing/routing/result boundaries.
 - `server.agents.plans`: objective and plan execution framework.

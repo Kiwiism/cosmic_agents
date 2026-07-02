@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Spawn/relogin registration callback construction moved from BotManager to
+  `server.agents.runtime.AgentSpawnRuntime` and
+  `server.agents.runtime.AgentReloginRuntime`. BotManager now passes only its
+  temporary tick callback while Agent runtime composes
+  `AgentRegistrationRuntime.registerAgent` for spawned and relogged Agents.
 - Lifecycle chat command wiring for recruit, transfer, and dismiss moved from
   BotManager to `server.agents.runtime.AgentLifecycleChatCommandRuntime`.
   BotManager now passes only temporary compatibility lifecycle actions while
@@ -145,16 +150,17 @@ Recent map updates:
   reset, runtime removal, forced-idle reply, missing-entry logging, warning/
   error log formatting, and failure escalation hook wiring.
 - Spawn hook wiring moved from BotManager to
-  `server.agents.runtime.AgentSpawnRuntime`. BotManager now passes only the
-  temporary spawned-registration and follow-start callbacks plus logger while
-  Agent runtime owns ownership resolution, spawn position, offline load
-  delegation, online placement, cross-map force-change, and failure warning
-  wiring.
+  `server.agents.runtime.AgentSpawnRuntime`. BotManager now passes only its
+  temporary tick callback, follow-start callback, and logger while Agent
+  runtime owns spawned-registration callback construction, ownership
+  resolution, spawn position, offline load delegation, online placement,
+  cross-map force-change, and failure warning wiring.
 - Relogin hook wiring moved from BotManager to
-  `server.agents.runtime.AgentReloginRuntime`. BotManager now passes only the
-  temporary spawned-registration callback and logger while Agent runtime owns
-  leader lookup, spawn position, offline load delegation, delayed scheduling,
-  map announcement, and failure warning wiring.
+  `server.agents.runtime.AgentReloginRuntime`. BotManager now passes only its
+  temporary tick callback and logger while Agent runtime owns
+  spawned-registration callback construction, leader lookup, spawn position,
+  offline load delegation, delayed scheduling, map announcement, and failure
+  warning wiring.
 - Transfer lifecycle hook wiring moved from BotManager to
   `server.agents.runtime.AgentTransferRuntime`. BotManager now passes only the
   temporary stop-mode and registration callbacks while Agent runtime owns

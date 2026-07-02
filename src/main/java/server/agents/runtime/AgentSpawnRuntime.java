@@ -5,9 +5,11 @@ import org.slf4j.Logger;
 import server.agents.auth.AgentOwnershipService;
 import server.bots.BotEntry;
 
+import java.util.function.Consumer;
+
 /**
  * Temporary Cosmic hook bundle for spawning an Agent while BotManager still
- * supplies spawned registration and follow-start callbacks.
+ * supplies tick and follow-start callbacks.
  */
 public final class AgentSpawnRuntime {
     private AgentSpawnRuntime() {
@@ -15,8 +17,28 @@ public final class AgentSpawnRuntime {
 
     public static AgentLifecycleService.AgentSpawnResult spawnAgentForLeader(Character leader,
                                                                             String agentName,
+                                                                            AgentLifecycleService.AgentTickCallback tickCallback,
+                                                                            Consumer<BotEntry> startFollowLeader,
+                                                                            Logger log) {
+        AgentLifecycleService.RegisterSpawnedAgent registerSpawnedAgent =
+                (leaderCharId, spawnLeader, agent) -> AgentRegistrationRuntime.registerAgent(
+                        leaderCharId,
+                        spawnLeader,
+                        agent,
+                        true,
+                        tickCallback);
+        return spawnAgentForLeader(
+                leader,
+                agentName,
+                registerSpawnedAgent,
+                startFollowLeader,
+                log);
+    }
+
+    public static AgentLifecycleService.AgentSpawnResult spawnAgentForLeader(Character leader,
+                                                                            String agentName,
                                                                             AgentLifecycleService.RegisterSpawnedAgent registerSpawnedAgent,
-                                                                            java.util.function.Consumer<BotEntry> startFollowLeader,
+                                                                            Consumer<BotEntry> startFollowLeader,
                                                                             Logger log) {
         return AgentLifecycleService.spawnAgentForLeaderQuietly(
                 leader,

@@ -12,10 +12,32 @@ import java.sql.SQLException;
 
 /**
  * Temporary Cosmic hook bundle for reloading an offline Agent while BotManager
- * still supplies the spawned-registration callback.
+ * still supplies the tick callback.
  */
 public final class AgentReloginRuntime {
     private AgentReloginRuntime() {
+    }
+
+    public static void reloginAgent(int agentCharId,
+                                    int leaderCharId,
+                                    int world,
+                                    int channel,
+                                    AgentLifecycleService.AgentTickCallback tickCallback,
+                                    Logger log) {
+        AgentLifecycleService.RegisterSpawnedAgent registerSpawnedAgent =
+                (registeredLeaderCharId, leader, agent) -> AgentRegistrationRuntime.registerAgent(
+                        registeredLeaderCharId,
+                        leader,
+                        agent,
+                        true,
+                        tickCallback);
+        reloginAgent(
+                agentCharId,
+                leaderCharId,
+                world,
+                channel,
+                registerSpawnedAgent,
+                log);
     }
 
     public static void reloginAgent(int agentCharId,
