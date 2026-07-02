@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Agent registration hook wiring moved from BotManager to
+  `server.agents.runtime.AgentRegistrationRuntime`. BotManager now passes only
+  its temporary tick callback while Agent runtime owns timer, cancellation,
+  default formation, spawn normalization, and status-delay hook wiring.
 - Offline Agent load hook wiring moved from BotManager to
   `server.agents.runtime.AgentOfflineLoadRuntime`. BotManager now keeps only a
   compatibility `loadOfflineBot` delegate while Agent runtime owns the Cosmic

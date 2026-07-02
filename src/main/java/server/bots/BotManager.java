@@ -74,6 +74,7 @@ import server.agents.runtime.AgentPartyLifecycleService;
 import server.agents.runtime.AgentPositionService;
 import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentRecruitService;
+import server.agents.runtime.AgentRegistrationRuntime;
 import server.agents.runtime.AgentRecoveryTickService;
 import server.agents.runtime.AgentRecoveryTeleportService;
 import server.agents.runtime.AgentReturnScrollService;
@@ -328,19 +329,7 @@ public class BotManager {
     }
 
     private BotEntry registerBotInternal(int ownerCharId, Character owner, Character bot, boolean normalizeSpawnState) {
-        return AgentLifecycleService.registerAgent(
-                ownerCharId,
-                owner,
-                bot,
-                normalizeSpawnState,
-                new AgentLifecycleService.RegisterHooks(
-                        BotMovementManager.cfg.TICK_MS,
-                        TimerManager.getInstance()::register,
-                        this::tick,
-                        AgentBotManagerSchedulerRuntime::cancelScheduledTask,
-                        defaultFormationState(),
-                        AgentSpawnPlacementRuntime::normalizeSpawnedAgent,
-                        () -> randMs(30_000, 31_000)));
+        return AgentRegistrationRuntime.registerAgent(ownerCharId, owner, bot, normalizeSpawnState, this::tick);
     }
 
     public void removeBot(int ownerCharId) {

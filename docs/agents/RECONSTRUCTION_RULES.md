@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Agent registration hook wiring now lives in
+  `server.agents.runtime.AgentRegistrationRuntime`. BotManager supplies only
+  the temporary live tick callback while Agent runtime owns the legacy tick
+  period, timer registration, replacement-task cancellation, default formation,
+  spawn normalization, and spawn-status delay hook construction.
 - Offline Agent load hook wiring now lives in
   `server.agents.runtime.AgentOfflineLoadRuntime`. BotManager keeps only the
   `loadOfflineBot` compatibility delegate while Agent runtime owns the
