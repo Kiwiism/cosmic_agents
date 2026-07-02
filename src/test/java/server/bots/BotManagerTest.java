@@ -137,7 +137,7 @@ class BotManagerTest {
         when(sourceBot.getClient()).thenReturn(new client.BotClient(0, 0));
         when(observerBot.getId()).thenReturn(11);
 
-        Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
+        Map<Integer, List<BotEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
         bots.put(owner.getId(), List.of(sourceEntry, observerEntry));
 
         try (MockedStatic<AgentOfferService> offers = mockStatic(AgentOfferService.class)) {
@@ -161,7 +161,7 @@ class BotManagerTest {
 
         when(owner.getId()).thenReturn(78);
 
-        Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
+        Map<Integer, List<BotEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
         bots.put(owner.getId(), List.of(observerEntry));
 
         TimerManager inlineTimer = mock(TimerManager.class);
@@ -605,7 +605,7 @@ class BotManagerTest {
         }).when(bot).changeKeybinding(anyInt(), any(KeyBinding.class));
 
         BotEntry entry = new BotEntry(bot, owner, task);
-        Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
+        Map<Integer, List<BotEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
         bots.put(owner.getId(), new CopyOnWriteArrayList<>(List.of(entry)));
         try {
             assertTrue(manager.cleanupBotRuntimeState(bot));
@@ -645,7 +645,7 @@ class BotManagerTest {
         AgentBotModeStateRuntime.setGrinding(entry, true);
         entry.moveTarget = new Point(100, 100);
 
-        Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
+        Map<Integer, List<BotEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
         bots.put(owner.getId(), new CopyOnWriteArrayList<>(List.of(entry)));
         try {
             AgentTickFailureRuntime.handleFailure(entry, owner.getId(), bot.getId(), new NullPointerException("bad drop"));
@@ -983,7 +983,7 @@ class BotManagerTest {
         BotEntry anchorEntry = new BotEntry(followAnchor, owner, null);
 
         BotManager manager = BotManager.getInstance();
-        Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
+        Map<Integer, List<BotEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
         bots.put(owner.getId(), List.of(followerEntry, anchorEntry));
         try {
             AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map);
@@ -1144,7 +1144,7 @@ class BotManagerTest {
         when(bot.getMap()).thenReturn(map);
 
         @SuppressWarnings("unchecked")
-        Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
+        Map<Integer, List<BotEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
         @SuppressWarnings("unchecked")
         Map<Integer, Long> sharedCooldown = (Map<Integer, Long>) field(AgentPotionService.class, "potShareCooldownUntil").get(null);
         @SuppressWarnings("unchecked")
@@ -1193,7 +1193,7 @@ class BotManagerTest {
         when(owner.getId()).thenReturn(79);
         when(owner.getTrade()).thenReturn(null);
 
-        Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
+        Map<Integer, List<BotEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
         Map<Integer, Long> sharedCooldown = (Map<Integer, Long>) field(AgentPotionService.class, "potShareCooldownUntil").get(null);
         Map<Integer, Long> hpBackoff = (Map<Integer, Long>) field(AgentPotionService.class, "potShareHpBackoffUntil").get(null);
 
@@ -1223,7 +1223,7 @@ class BotManagerTest {
         when(owner.getMapId()).thenReturn(1000);
         when(owner.getTrade()).thenReturn(null);
 
-        Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
+        Map<Integer, List<BotEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
         Map<Integer, Long> sharedCooldown = (Map<Integer, Long>) field(AgentAmmoService.class, "ammoShareCooldownUntil").get(null);
         Map<String, Long> backoff = (Map<String, Long>) field(AgentAmmoService.class, "ammoShareBackoffUntil").get(null);
         String backoffKey = owner.getId() + ":" + WeaponType.BOW.name();
@@ -1257,7 +1257,7 @@ class BotManagerTest {
         when(bot.getTrade()).thenReturn(null);
         when(bot.getMap()).thenReturn(map);
 
-        Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
+        Map<Integer, List<BotEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
         Map<Integer, Long> sharedCooldown = (Map<Integer, Long>) field(AgentPotionService.class, "potShareCooldownUntil").get(null);
         Map<Integer, Long> hpBackoff = (Map<Integer, Long>) field(AgentPotionService.class, "potShareHpBackoffUntil").get(null);
 
@@ -1290,7 +1290,7 @@ class BotManagerTest {
         when(bot.getTrade()).thenReturn(null);
         when(bot.getMap()).thenReturn(map);
 
-        Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
+        Map<Integer, List<BotEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
         Map<Integer, Long> sharedCooldown = (Map<Integer, Long>) field(AgentAmmoService.class, "ammoShareCooldownUntil").get(null);
         Map<String, Long> backoff = (Map<String, Long>) field(AgentAmmoService.class, "ammoShareBackoffUntil").get(null);
         String backoffKey = owner.getId() + ":" + WeaponType.BOW.name();
@@ -1330,7 +1330,7 @@ class BotManagerTest {
         BotEntry ignored499Entry = new BotEntry(ignored499, owner, null);
 
         @SuppressWarnings("unchecked")
-        Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
+        Map<Integer, List<BotEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
         bots.put(owner.getId(), List.of(needyEntry, nonBow600Entry, bow3000Entry, ignored499Entry, nonBow800Entry));
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks = mockStatic(AgentAttackExecutionProvider.class, invocation -> {
@@ -1365,7 +1365,7 @@ class BotManagerTest {
         BotEntry bow3000Entry = new BotEntry(bow3000, owner, null);
 
         @SuppressWarnings("unchecked")
-        Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
+        Map<Integer, List<BotEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
         bots.put(owner.getId(), List.of(needyEntry, bow3000Entry));
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks = mockStatic(AgentAttackExecutionProvider.class,

@@ -18,6 +18,28 @@ import static org.mockito.Mockito.mockStatic;
 
 class AgentChatRouteRuntimeTest {
     @Test
+    void compactChatRouteUsesAgentRuntimeDefaults() {
+        Character leader = mock(Character.class);
+        AgentReplyChannel channel = AgentReplyChannel.MAP;
+
+        try (MockedStatic<AgentChatIngressService> ingress = mockStatic(AgentChatIngressService.class)) {
+            AgentChatRouteRuntime.handleChat(
+                    leader,
+                    "follow me",
+                    channel,
+                    (leaderId, commandLeader, agentName) -> null,
+                    (leaderId, commandLeader, agentName, targetName) -> null,
+                    (leaderId, agentName) -> true);
+
+            ingress.verify(() -> AgentChatIngressService.handleChat(
+                    eq(leader),
+                    eq("follow me"),
+                    eq(channel),
+                    any(AgentChatIngressService.Hooks.class)));
+        }
+    }
+
+    @Test
     void delegatesChatThroughAgentIngressHooks() {
         Character leader = mock(Character.class);
         AgentReplyChannel channel = AgentReplyChannel.MAP;

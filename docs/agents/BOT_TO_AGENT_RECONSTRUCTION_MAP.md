@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Chat-route default registry and formation config handoff moved from
+  BotManager to `server.agents.runtime.AgentChatRouteRuntime`. BotManager now
+  supplies only temporary recruit/transfer/dismiss callbacks for chat routing.
 - Dead BotManager reply/sanitizer compatibility helpers were removed; Agent
   dialogue/reply runtime classes own those utilities directly.
 - Dead BotManager grind/navigation/combat compatibility helper wrappers were

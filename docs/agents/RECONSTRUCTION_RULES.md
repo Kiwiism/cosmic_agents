@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Chat-route default registry and formation config ownership now lives in
+  `AgentChatRouteRuntime.handleChat(...)`. BotManager no longer stores the
+  active-entry registry map or passes follow stagger / snap range config into
+  chat routing.
 - Dead BotManager reply/sanitizer utility wrappers were removed. Reply routing
   and chat sanitization remain in Agent-owned dialogue/reply runtime classes.
 - Dead BotManager grind/navigation/combat helper wrappers were removed after

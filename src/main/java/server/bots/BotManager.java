@@ -92,7 +92,6 @@ import java.awt.*;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class BotManager {
@@ -109,11 +108,6 @@ public class BotManager {
     public static String botCombatConfigLine(String name) { return AgentCombatConfig.configFieldLine(name); }
     public static String setBotCombatConfig(String name, String value) { return AgentCombatConfig.setConfigField(name, value); }
 
-    // ownerCharId → list of owned bot entries (1:N)
-    private final Map<Integer, List<BotEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
-    // ownerCharId → cluster-anchor town position. First bot to warp picks a random
-    // portal in the return map; later bots warp to a randomized nearby offset.
-    // Cleared when the owner becomes active again.
 
     // -------------------------------------------------------------------------
     // Public API
@@ -237,13 +231,9 @@ public class BotManager {
                 owner,
                 message,
                 channel,
-                bots,
                 this::recruitBot,
                 this::giveBot,
-                this::dismissBot,
-                AgentFormationRuntime.defaultFormationState(),
-                cfg.FOLLOW_STAGGER,
-                BotMovementManager.cfg.FOLLOW_Y_CAP);
+                this::dismissBot);
     }
 
     // -------------------------------------------------------------------------
