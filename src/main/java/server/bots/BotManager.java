@@ -877,12 +877,14 @@ public class BotManager {
                         mapBot,
                         new AgentTrackedMapChangeTickService.Hooks((trackedEntry, trackedBot) -> {
                             if (!perf) {
-                                return handleTrackedMapChange(trackedEntry, trackedBot);
+                                return AgentMapTransitionRuntime.handleTrackedMapChange(
+                                        trackedEntry, trackedBot, this::issueGrind, this::issueFollowOwner);
                             }
                             long tMapChange = System.nanoTime();
                             boolean changed = false;
                             try {
-                                changed = handleTrackedMapChange(trackedEntry, trackedBot);
+                                changed = AgentMapTransitionRuntime.handleTrackedMapChange(
+                                        trackedEntry, trackedBot, this::issueGrind, this::issueFollowOwner);
                             } finally {
                                 if (changed) {
                                     AgentPerformanceMonitor.record("tick-map-change", System.nanoTime() - tMapChange);
@@ -1264,10 +1266,6 @@ public class BotManager {
 
     private boolean groundAfterMapChange(BotEntry entry, Character bot) {
         return AgentMapTransitionRuntime.groundAfterMapChange(entry, bot);
-    }
-
-    private boolean handleTrackedMapChange(BotEntry entry, Character bot) {
-        return AgentMapTransitionRuntime.handleTrackedMapChange(entry, bot, this::issueGrind, this::issueFollowOwner);
     }
 
     private boolean handleDeadTick(BotEntry entry, Character bot, Character owner) {

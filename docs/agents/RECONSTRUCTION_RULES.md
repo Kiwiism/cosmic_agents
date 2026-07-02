@@ -62,7 +62,9 @@ Recent reconstruction notes:
 - Map transition hook construction now lives in
   `server.agents.runtime.AgentMapTransitionRuntime`. BotManager should pass
   only temporary mode callbacks until follow/grind mode commands are fully
-  reconstructed out of BotManager.
+  reconstructed out of BotManager. The live tick gate now calls
+  `AgentMapTransitionRuntime.handleTrackedMapChange` directly instead of a
+  BotManager wrapper.
 - Recovery teleport hook construction now lives in
   `server.agents.runtime.AgentRecoveryTeleportRuntime`. BotManager should pass
   only legacy distance thresholds until movement recovery configuration is
