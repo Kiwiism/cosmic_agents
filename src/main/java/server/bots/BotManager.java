@@ -47,7 +47,7 @@ import server.agents.runtime.AgentIdlePhysicsRuntime;
 import server.agents.runtime.AgentLeaderSessionService;
 import server.agents.runtime.AgentLeaderSafetyService;
 import server.agents.runtime.AgentLifecycleChatCommandRuntime;
-import server.agents.runtime.AgentLiveTickContextService;
+import server.agents.runtime.AgentLiveTickContextRuntime;
 import server.agents.runtime.AgentLiveModeTickService;
 import server.agents.runtime.AgentLiveTickGateService;
 import server.agents.runtime.AgentLocalAttackMoveWindowRuntime;
@@ -559,11 +559,12 @@ public class BotManager {
                         this::tickStandaloneMoveTarget,
                         () -> AgentIdlePhysicsRuntime.tickIdleEntry(ownerlessEntry, ownerlessBot)),
                 this::handleDeadTick,
-                (liveEntry, liveBot, liveOwner) -> AgentLiveTickContextService.prepareLiveTickContext(
+                (liveEntry, liveBot, liveOwner) -> AgentLiveTickContextRuntime.prepareLiveTickContext(
                         liveEntry,
                         liveBot,
                         liveOwner,
-                        liveTickContextHooks()),
+                        this::resolveFollowAnchor,
+                        this::captureTargetSnapshot),
                 AgentPerformanceMonitor::enabled,
                 (gateEntry, gateBot, gateOwner, gateFollowAnchor, liveContext, gateRunAiTick, perf) ->
                         AgentLiveTickGateService.tickLiveGates(
@@ -588,18 +589,6 @@ public class BotManager {
                                         nowMs),
                                 liveModeTickHooks(perf)));
     }
-    private AgentLiveTickContextService.Hooks liveTickContextHooks() {
-        return new AgentLiveTickContextService.Hooks(
-                BotMovementManager::refreshMovementProfile,
-                this::resolveFollowAnchor,
-                this::captureTargetSnapshot,
-                AgentTickStateMaintenanceService::updateObservedLeaderMotion,
-                AgentBotOwnerMotionStateRuntime::rememberOwnerPosition,
-                AgentTickStateMaintenanceService::clearFarmAnchorOnMapChange,
-                AgentTickStateMaintenanceService::clearPatrolOnMapChange,
-                AgentLocalAttackMoveWindowRuntime::clearFollowActionMoveWindowIfSettled);
-    }
-
     private AgentLiveModeTickService.Hooks liveModeTickHooks(boolean perf) {
         return new AgentLiveModeTickService.Hooks(
                 (shopEntry, shopBot, shopRunAiTick) -> {

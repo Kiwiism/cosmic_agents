@@ -1,0 +1,32 @@
+package server.agents.runtime;
+
+import client.Character;
+import server.agents.integration.AgentBotOwnerMotionStateRuntime;
+import server.bots.BotEntry;
+import server.bots.BotMovementManager;
+
+public final class AgentLiveTickContextRuntime {
+    private AgentLiveTickContextRuntime() {
+    }
+
+    public static AgentLiveTickContextService.Context prepareLiveTickContext(
+            BotEntry entry,
+            Character agent,
+            Character leader,
+            AgentLiveTickContextService.FollowAnchorResolver followAnchorResolver,
+            AgentLiveTickContextService.TargetSnapshotCapture targetSnapshotCapture) {
+        return AgentLiveTickContextService.prepareLiveTickContext(
+                entry,
+                agent,
+                leader,
+                new AgentLiveTickContextService.Hooks(
+                        BotMovementManager::refreshMovementProfile,
+                        followAnchorResolver,
+                        targetSnapshotCapture,
+                        AgentTickStateMaintenanceService::updateObservedLeaderMotion,
+                        AgentBotOwnerMotionStateRuntime::rememberOwnerPosition,
+                        AgentTickStateMaintenanceService::clearFarmAnchorOnMapChange,
+                        AgentTickStateMaintenanceService::clearPatrolOnMapChange,
+                        AgentLocalAttackMoveWindowRuntime::clearFollowActionMoveWindowIfSettled));
+    }
+}

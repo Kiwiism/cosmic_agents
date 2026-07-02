@@ -22,6 +22,11 @@ Recent map updates:
   only the active-entry lookup and legacy formation config values while Agent
   runtime owns state lookup/write, offset application, reply routing, and
   fallback leader help messages.
+- Live tick context hook wiring moved from BotManager to
+  `server.agents.runtime.AgentLiveTickContextRuntime`. BotManager now passes
+  only temporary follow-anchor and target-snapshot callbacks while Agent
+  runtime owns movement-profile refresh, observed leader motion, remembered
+  leader position, map-change cleanup, and follow action-window cleanup.
 - Anchored farm hook wiring moved from BotManager to
   `server.agents.runtime.AgentAnchoredFarmRuntime`. BotManager now passes only
   legacy movement config values while Agent runtime owns local-opportunity,

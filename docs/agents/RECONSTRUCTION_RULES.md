@@ -3425,6 +3425,11 @@ Recent reconstruction notes:
   the temporary active-entry source plus legacy stagger/snap config values while
   Agent runtime owns formation state lookup/write, offset application, reply
   routing, and the legacy help/status text path.
+- Live tick context hook construction now lives in
+  `server.agents.runtime.AgentLiveTickContextRuntime`. BotManager keeps only
+  temporary callbacks for follow-anchor resolution and target snapshot capture,
+  while Agent runtime owns movement-profile refresh, leader motion observation,
+  map-change cleanup, and follow action-window cleanup.
 
 Initial reconstruction order:
 
