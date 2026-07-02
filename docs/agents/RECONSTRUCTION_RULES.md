@@ -29,6 +29,11 @@ Recent reconstruction notes:
   now lives in `server.agents.runtime.AgentGrindTargetRuntime`. BotManager keeps
   compatibility wrappers for legacy tests/callers, but production grind-mode
   fallback/tail hooks now call the Agent runtime bridge directly.
+- Grind combat helper hook construction for priority ranged target selection
+  and AoE repositioning now lives in
+  `server.agents.runtime.AgentGrindCombatRuntime`. BotManager keeps
+  compatibility wrappers for legacy tests/callers, but production grind
+  commitment/engagement hooks now call Agent runtime helpers directly.
 - Local-opportunity attack hook construction now lives in
   `server.agents.runtime.AgentLocalOpportunityAttackRuntime`. Its temporary
   grind navigation dependency now points at `AgentGrindNavigationRuntime`.

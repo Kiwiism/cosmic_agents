@@ -5,7 +5,6 @@ import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
-import server.agents.capabilities.combat.AgentAoeRepositionService;
 import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 import server.agents.capabilities.combat.AgentCombatConfig;
@@ -14,7 +13,6 @@ import server.agents.capabilities.combat.AgentGrindTargetSearchService;
 import server.agents.capabilities.combat.AgentGrindTargetCommitmentService;
 import server.agents.capabilities.combat.AgentGrindModeTickService;
 import server.agents.capabilities.combat.AgentLocalOpportunityAttackService;
-import server.agents.capabilities.combat.AgentRangedPriorityTargetSelector;
 import server.agents.capabilities.combat.AgentGrindRangedEngagementService;
 import server.agents.capabilities.combat.AgentGrindNavigationTailService;
 import server.agents.capabilities.quest.AgentPartyQuestSyncService;
@@ -44,6 +42,7 @@ import server.agents.runtime.AgentFollowTargetPositionService;
 import server.agents.runtime.AgentFollowMapSyncRuntime;
 import server.agents.runtime.AgentFollowOpportunityTickService;
 import server.agents.runtime.AgentFormationCommandService;
+import server.agents.runtime.AgentGrindCombatRuntime;
 import server.agents.runtime.AgentGrindNavigationRuntime;
 import server.agents.runtime.AgentGrindModeDispatchService;
 import server.agents.runtime.AgentIdleModeTickService;
@@ -542,7 +541,7 @@ public class BotManager {
     // bounded-chase deadline expires, or the target dies/clears.
     private static Point resolveAoeReposition(BotEntry entry, Character bot, Monster target,
                                               AgentAttackPlan attackPlan, Point botPos) {
-        return AgentAoeRepositionService.resolveAoeReposition(entry, bot, target, attackPlan, botPos);
+        return AgentGrindCombatRuntime.resolveAoeReposition(entry, bot, target, attackPlan, botPos);
     }
 
     public static Point selectGrindNavigationTarget(BotEntry entry, Point botPos, Point combatTargetPos) {
@@ -949,7 +948,7 @@ public class BotManager {
 
     private static AgentGrindTargetCommitmentService.Hooks grindTargetCommitmentHooks() {
         return new AgentGrindTargetCommitmentService.Hooks(
-                BotManager::selectPriorityRangedAttackTarget,
+                AgentGrindCombatRuntime::selectPriorityRangedAttackTarget,
                 AgentAttackExecutionProvider::findCloserThreatMob);
     }
 
@@ -958,9 +957,9 @@ public class BotManager {
                 AgentAttackExecutionProvider::getEquippedWeaponType,
                 AgentAttackExecutionProvider::shouldDegenerateRangedAttack,
                 AgentAttackExecutionProvider::shouldRetreatFromNearbyTarget,
-                BotManager::selectCrossRegionRetreatTarget,
+                AgentGrindNavigationRuntime::selectCrossRegionRetreatTarget,
                 AgentCombatRangePolicy::isTargetInAttackRange,
-                BotManager::resolveAoeReposition,
+                AgentGrindCombatRuntime::resolveAoeReposition,
                 AgentCombatRangePolicy::canUseAttackPlanNow,
                 AgentBotCombatAttackRuntime::attackMonster,
                 AgentCombatAmmoCounter::isRangedAmmoWeapon,
@@ -986,7 +985,7 @@ public class BotManager {
                                                    Character bot,
                                                    Point botPos,
                                                    Monster preferredTarget) {
-        return AgentRangedPriorityTargetSelector.selectPriorityRangedAttackTarget(
+        return AgentGrindCombatRuntime.selectPriorityRangedAttackTarget(
                 entry,
                 bot,
                 botPos,
