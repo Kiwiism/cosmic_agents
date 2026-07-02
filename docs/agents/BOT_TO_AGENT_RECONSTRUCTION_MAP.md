@@ -47,6 +47,11 @@ Recent map updates:
   `server.agents.runtime.AgentScriptTaskRuntime`. BotManager now passes only
   the legacy stop-distance value while Agent runtime owns start/completion
   callback composition over the existing script task services.
+- Grind-mode hook wiring moved from BotManager to
+  `server.agents.runtime.AgentGrindModeRuntime`. BotManager now passes only
+  the movement-core callback and legacy loot-radius value while Agent runtime
+  owns target search, no-target fallback, target commitment, ranged engagement,
+  navigation tail, and combat/navigation side-effect hook composition.
 - Anchored farm hook wiring moved from BotManager to
   `server.agents.runtime.AgentAnchoredFarmRuntime`. BotManager now passes only
   legacy movement config values while Agent runtime owns local-opportunity,

@@ -12,7 +12,8 @@ Target package groups:
   `AgentLiveTickContextRuntime` and gate dispatch through
   `AgentLiveTickGateRuntime` / `AgentLiveModeTickRuntime`, with tick-core
   composition through `AgentTickCoreRuntime` and script task composition
-  through `AgentScriptTaskRuntime`, while BotManager remains only a temporary
+  through `AgentScriptTaskRuntime`. Grind-mode hook composition now enters
+  through `AgentGrindModeRuntime`, while BotManager remains only a temporary
   compatibility caller for legacy entry points.
 - `server.agents.model`: identity, mode, profile, leader reference.
 - `server.agents.commands`: command parsing/routing/result boundaries.

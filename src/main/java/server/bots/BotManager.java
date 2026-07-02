@@ -4,17 +4,9 @@ import server.agents.capabilities.navigation.AgentNavigationGraphService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
-import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentAttackPlan;
-import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 import server.agents.capabilities.combat.AgentCombatConfig;
-import server.agents.capabilities.combat.AgentCombatRangePolicy;
-import server.agents.capabilities.combat.AgentGrindTargetSearchService;
-import server.agents.capabilities.combat.AgentGrindTargetCommitmentService;
-import server.agents.capabilities.combat.AgentGrindModeTickService;
 import server.agents.capabilities.combat.AgentLocalOpportunityAttackService;
-import server.agents.capabilities.combat.AgentGrindRangedEngagementService;
-import server.agents.capabilities.combat.AgentGrindNavigationTailService;
 import server.agents.capabilities.quest.AgentPartyQuestSyncService;
 
 import server.agents.capabilities.dialogue.AgentChatIngressService;
@@ -34,8 +26,8 @@ import server.agents.runtime.AgentFollowTargetRuntime;
 import server.agents.runtime.AgentFollowTargetPositionService;
 import server.agents.runtime.AgentFormationCommandRuntime;
 import server.agents.runtime.AgentGrindCombatRuntime;
+import server.agents.runtime.AgentGrindModeRuntime;
 import server.agents.runtime.AgentGrindNavigationRuntime;
-import server.agents.runtime.AgentGrindNoTargetFallbackService;
 import server.agents.runtime.AgentGrindTargetRuntime;
 import server.agents.runtime.AgentLeaderSessionService;
 import server.agents.runtime.AgentLeaderSafetyService;
@@ -87,7 +79,6 @@ import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotAmmoStateRuntime;
 import server.agents.integration.AgentBotBuffStateRuntime;
 import server.agents.integration.AgentBotCommandParser;
-import server.agents.integration.AgentBotCombatAttackRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatDeathRuntime;
 import server.agents.integration.AgentBotCombatPlanRuntime;
@@ -582,68 +573,15 @@ public class BotManager {
      */
     private LocalOpportunityAttackResult tickGrindMode(BotEntry entry, Character bot, Point botPos,
             Point targetPos, boolean runAiTick) {
-        AgentGrindModeTickService.Result result = AgentGrindModeTickService.tickGrindMode(
+        AgentLiveModeTickRuntime.LocalAttackResult result = AgentGrindModeRuntime.tickGrindMode(
                 entry,
                 bot,
                 botPos,
                 targetPos,
                 runAiTick,
-                new AgentGrindModeTickService.Hooks(
-                        grindTargetSearchHooks(),
-                        grindNoTargetFallbackHooks(),
-                        grindTargetCommitmentHooks(),
-                        grindRangedEngagementHooks(),
-                        grindNavigationTailHooks(),
-                        AgentCombatConfig.cfg.GRIND_SEEK_RANGE,
-                        BotManager.cfg.LOOT_RADIUS));
+                this::stepMovementCore,
+                BotManager.cfg.LOOT_RADIUS);
         return new LocalOpportunityAttackResult(result.consumedTick(), result.targetPos());
-    }
-
-    private static AgentGrindTargetSearchService.SearchHooks grindTargetSearchHooks() {
-        return new AgentGrindTargetSearchService.SearchHooks(
-                (entry, bot) -> AgentBotCombatTargetRuntime.findPatrolTarget(entry, bot, AgentCombatConfig.cfg),
-                (entry, bot) -> AgentBotCombatTargetRuntime.findGrindTarget(entry, bot, AgentCombatConfig.cfg),
-                AgentCombatConfig.cfg.GRIND_RETARGET_INTERVAL_MS);
-    }
-
-    private AgentGrindNoTargetFallbackService.Hooks grindNoTargetFallbackHooks() {
-        return new AgentGrindNoTargetFallbackService.Hooks(
-                BotMovementManager::tickSwimming,
-                BotMovementManager::tickAirborne,
-                AgentGrindTargetRuntime::resolvePatrolWanderTarget,
-                AgentGrindTargetRuntime::resolveNoGrindTargetPosition,
-                this::stepMovementCore);
-    }
-
-    private static AgentGrindTargetCommitmentService.Hooks grindTargetCommitmentHooks() {
-        return new AgentGrindTargetCommitmentService.Hooks(
-                AgentGrindCombatRuntime::selectPriorityRangedAttackTarget,
-                AgentAttackExecutionProvider::findCloserThreatMob);
-    }
-
-    private AgentGrindRangedEngagementService.Hooks grindRangedEngagementHooks() {
-        return new AgentGrindRangedEngagementService.Hooks(
-                AgentAttackExecutionProvider::getEquippedWeaponType,
-                AgentAttackExecutionProvider::shouldDegenerateRangedAttack,
-                AgentAttackExecutionProvider::shouldRetreatFromNearbyTarget,
-                AgentGrindNavigationRuntime::selectCrossRegionRetreatTarget,
-                AgentCombatRangePolicy::isTargetInAttackRange,
-                AgentGrindCombatRuntime::resolveAoeReposition,
-                AgentCombatRangePolicy::canUseAttackPlanNow,
-                AgentBotCombatAttackRuntime::attackMonster,
-                AgentCombatAmmoCounter::isRangedAmmoWeapon,
-                AgentCombatRangePolicy::isTargetJumpable,
-                BotPhysicsEngine::calculateMaxJumpHeight,
-                BotMovementManager::initiateJump,
-                BotPhysicsEngine::idleOnGround,
-                BotMovementManager::broadcastMovement);
-    }
-
-    private static AgentGrindNavigationTailService.Hooks grindNavigationTailHooks() {
-        return new AgentGrindNavigationTailService.Hooks(
-                AgentGrindNavigationRuntime::selectGrindNavigationTarget,
-                AgentAttackExecutionProvider::shouldRetreatFromNearbyTarget,
-                AgentGrindTargetRuntime::convenientLootTarget);
     }
 
     private void handleBotTickFailure(BotEntry entry, int ownerCharId, int botCharId, Throwable t) {

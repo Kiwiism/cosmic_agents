@@ -3453,6 +3453,12 @@ Recent reconstruction notes:
   compatibility queue methods and supplies the legacy movement stop-distance
   config while Agent runtime owns script task start/completion callback
   composition.
+- Grind-mode hook construction now lives in
+  `server.agents.runtime.AgentGrindModeRuntime`. BotManager keeps only the
+  temporary movement-core callback and legacy loot-radius config while Agent
+  runtime owns grind target search, no-target fallback, target commitment,
+  ranged engagement, navigation tail, and combat/navigation side-effect hook
+  wiring.
 
 Initial reconstruction order:
 
