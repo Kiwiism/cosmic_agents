@@ -60,7 +60,7 @@ import server.agents.runtime.AgentLiveModeTickService;
 import server.agents.runtime.AgentLiveTickGateService;
 import server.agents.runtime.AgentLocalAttackMoveWindowService;
 import server.agents.runtime.AgentMapEnvironmentService;
-import server.agents.runtime.AgentMapTransitionService;
+import server.agents.runtime.AgentMapTransitionRuntime;
 import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentMonsterControlService;
 import server.agents.runtime.AgentMovementPhaseRuntime;
@@ -1383,32 +1383,11 @@ public class BotManager {
     }
 
     private boolean groundAfterMapChange(BotEntry entry, Character bot) {
-        return AgentMapTransitionService.groundAfterMapChange(entry, bot, mapTransitionHooks());
+        return AgentMapTransitionRuntime.groundAfterMapChange(entry, bot);
     }
 
     private boolean handleTrackedMapChange(BotEntry entry, Character bot) {
-        return AgentMapTransitionService.handleTrackedMapChange(
-                entry,
-                bot,
-                new AgentMapTransitionService.MapChangeHooks(
-                        mapTransitionHooks(),
-                        AgentPartyQuestHooks::requiresGrind,
-                        this::issueGrind,
-                        AgentPartyQuestHooks::requiresFollow,
-                        this::issueFollowOwner,
-                        AgentBotPqRuntime::resetKpqStage5Claimed,
-                        AgentShopService::onMapChange,
-                        AgentBotManagerStatusRuntime::checkManagerStatus));
-    }
-
-    private AgentMapTransitionService.GroundingHooks mapTransitionHooks() {
-        return new AgentMapTransitionService.GroundingHooks(
-                BotMovementManager::buildFhIndex,
-                BotPhysicsEngine::findGroundPoint,
-                BotPhysicsEngine::teleportTo,
-                BotMovementManager::resetEntryStateAfterTeleport,
-                AgentNavigationGraphService::warmGraphAsync,
-                BotMovementManager::broadcastMovement);
+        return AgentMapTransitionRuntime.handleTrackedMapChange(entry, bot, this::issueGrind, this::issueFollowOwner);
     }
 
     private boolean handleDeadTick(BotEntry entry, Character bot, Character owner) {

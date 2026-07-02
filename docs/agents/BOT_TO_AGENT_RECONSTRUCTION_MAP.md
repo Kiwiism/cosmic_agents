@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Map transition hook wiring moved from BotManager to
+  `server.agents.runtime.AgentMapTransitionRuntime`. BotManager now passes
+  only its temporary grind/follow mode callbacks while Agent runtime owns
+  grounding, graph warmup, PQ reset, shop map-change, and status hooks.
 - Recovery teleport hook wiring moved from BotManager to
   `server.agents.runtime.AgentRecoveryTeleportRuntime`. BotManager now passes
   only the legacy distance thresholds while Agent runtime owns ground lookup,
