@@ -362,7 +362,7 @@ public class BotManager {
                 bot,
                 owner,
                 runAiTick,
-                entryToTick -> AgentScriptTaskRuntime.tick(entryToTick, BotMovementManager.cfg.STOP_DIST));
+                AgentScriptTaskRuntime::tick);
     }
 
     /**
@@ -401,7 +401,7 @@ public class BotManager {
                 AgentDeathTickRuntime::handleDeadTick,
                 AgentTargetSnapshotRuntime::resolveFollowAnchor,
                 AgentTargetSnapshotRuntime::captureTargetSnapshot,
-                entryToTick -> AgentScriptTaskRuntime.tick(entryToTick, BotMovementManager.cfg.STOP_DIST),
+                AgentScriptTaskRuntime::tick,
                 this::issueGrind,
                 this::issueFollowOwner,
                 AgentLocalOpportunityAttackRuntime::tryLocalOpportunityAttackForLiveMode,

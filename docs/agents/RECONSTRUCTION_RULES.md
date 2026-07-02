@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Script-task tick default stop-distance ownership now lives in
+  `AgentScriptTaskRuntime.tick(entry)`. BotManager no longer passes
+  `BotMovementManager` stop-distance config into common tick or tick-core
+  script-task callbacks.
 - Tick-core default movement distance config ownership now lives in
   `AgentTickCoreRuntime.tickCore(...)`. BotManager no longer passes teleport,
   out-of-bounds teleport, grind-party teleport multiplier, or follow distance

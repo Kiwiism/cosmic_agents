@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Script-task tick default stop-distance handoff moved from BotManager to
+  `server.agents.runtime.AgentScriptTaskRuntime`. BotManager now passes
+  `AgentScriptTaskRuntime::tick` directly into common tick and tick-core
+  wiring.
 - BotManager tick-core callback wiring now uses direct Agent runtime method
   references for leader/session lookup, inactive leader safety, map transition
   grounding, ownerless move-target ticking, death ticks, target snapshots,
