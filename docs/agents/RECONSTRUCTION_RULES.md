@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Recovery teleport hook construction now lives in
+  `server.agents.runtime.AgentRecoveryTeleportRuntime`. BotManager should pass
+  only legacy distance thresholds until movement recovery configuration is
+  moved into Agent-owned runtime config.
 - Follow map-sync hook construction now lives in
   `server.agents.runtime.AgentFollowMapSyncRuntime`. The temporary public
   `BotMovementManager.resetEntryState` bridge exists only until movement state

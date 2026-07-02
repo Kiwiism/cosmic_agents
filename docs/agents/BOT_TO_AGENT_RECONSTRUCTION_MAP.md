@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Recovery teleport hook wiring moved from BotManager to
+  `server.agents.runtime.AgentRecoveryTeleportRuntime`. BotManager now passes
+  only the legacy distance thresholds while Agent runtime owns ground lookup,
+  physics teleport, post-teleport reset, and movement broadcast hooks.
 - Follow map-sync hook wiring moved from BotManager to
   `server.agents.runtime.AgentFollowMapSyncRuntime`. BotManager now delegates
   cross-map follow synchronization while Agent runtime owns the temporary

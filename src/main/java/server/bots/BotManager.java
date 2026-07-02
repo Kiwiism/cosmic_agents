@@ -76,7 +76,7 @@ import server.agents.runtime.AgentRecruitRuntime;
 import server.agents.runtime.AgentRegistrationRuntime;
 import server.agents.runtime.AgentReloginRuntime;
 import server.agents.runtime.AgentRecoveryTickService;
-import server.agents.runtime.AgentRecoveryTeleportService;
+import server.agents.runtime.AgentRecoveryTeleportRuntime;
 import server.agents.runtime.AgentRespawnRuntime;
 import server.agents.runtime.AgentReturnScrollService;
 import server.agents.runtime.AgentRecruitCommandService;
@@ -1473,32 +1473,22 @@ public class BotManager {
     }
 
     private boolean recoverTeleportDistance(BotEntry entry, Character bot, Point targetPos) {
-        return AgentRecoveryTeleportService.recoverTeleportDistance(
+        return AgentRecoveryTeleportRuntime.recoverTeleportDistance(
                 entry,
                 bot,
                 targetPos,
                 BotMovementManager.cfg.TELEPORT_DIST,
-                BotMovementManager.cfg.OOB_TELEPORT_DIST,
-                recoveryTeleportHooks());
+                BotMovementManager.cfg.OOB_TELEPORT_DIST);
     }
 
     private boolean recoverGrindPartyTeleportDistance(BotEntry entry, Character bot, Character partyAnchor) {
-        return AgentRecoveryTeleportService.recoverGrindPartyTeleportDistance(
+        return AgentRecoveryTeleportRuntime.recoverGrindPartyTeleportDistance(
                 entry,
                 bot,
                 partyAnchor,
                 BotMovementManager.cfg.TELEPORT_DIST,
                 BotMovementManager.cfg.OOB_TELEPORT_DIST,
-                cfg.GRIND_PARTY_TELEPORT_DIST_MULTIPLIER,
-                recoveryTeleportHooks());
-    }
-
-    private AgentRecoveryTeleportService.RecoveryHooks recoveryTeleportHooks() {
-        return new AgentRecoveryTeleportService.RecoveryHooks(
-                BotPhysicsEngine::findGroundPoint,
-                BotPhysicsEngine::teleportTo,
-                BotMovementManager::resetEntryStateAfterTeleport,
-                BotMovementManager::broadcastMovement);
+                cfg.GRIND_PARTY_TELEPORT_DIST_MULTIPLIER);
     }
 
     boolean stepMovementOnly(BotEntry entry, long tickAtMs) {
