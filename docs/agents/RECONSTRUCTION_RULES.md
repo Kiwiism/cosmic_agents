@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- BotManager test-only tick harness methods were removed. The perf harness now
+  calls `AgentCommonTickRuntime`, `AgentScriptTaskRuntime`, and
+  `AgentMovementOnlyStepRuntime` directly, so BotManager no longer owns
+  test-only common tick or full tick execution hooks.
 - Chat-route default registry and formation config ownership now lives in
   `AgentChatRouteRuntime.handleChat(...)`. BotManager no longer stores the
   active-entry registry map or passes follow stagger / snap range config into

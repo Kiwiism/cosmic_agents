@@ -4,7 +4,10 @@ import server.agents.capabilities.navigation.AgentNavigationGraphService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
+import server.agents.runtime.AgentCommonTickRuntime;
+import server.agents.runtime.AgentMovementOnlyStepRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
+import server.agents.runtime.AgentScriptTaskRuntime;
 
 import server.agents.capabilities.navigation.AgentNavigationMapLoader;
 
@@ -48,7 +51,7 @@ import static org.mockito.Mockito.when;
 /**
  * Pure-code perf harness for the bot tick. Mirrors the {@link BotMovementSimulationLab}
  * mocking approach so it runs without a live server. Drives N follow-mode bots through
- * {@link BotManager#runCommonTickSystemsForTest} + {@link BotManager#stepMovementOnly}
+ * {@link AgentCommonTickRuntime#runCommonTickSystems} + {@link AgentMovementOnlyStepRuntime#stepMovementOnly}
  * for many ticks and prints a per-section timing report drawn from
  * {@link AgentPerformanceMonitor#snapshot()}.
  *
@@ -111,7 +114,6 @@ public class BotFollowTickPerfHarness {
     // -----------------------------------------------------------------------
 
     private static final class Scenario {
-        final BotManager manager = BotManager.getInstance();
         final MapleMap map;
         final Character owner;
         final List<BotEntry> entries;
@@ -182,7 +184,7 @@ public class BotFollowTickPerfHarness {
                 entry.lastTickWasAi = runAiTick;
                 entry.lastTickAtMs = System.currentTimeMillis();
                 try {
-                    manager.runCommonTickSystemsForTest(entry, bot, owner, runAiTick);
+                    AgentCommonTickRuntime.runCommonTickSystems(entry, bot, owner, runAiTick, AgentScriptTaskRuntime::tick);
                 } catch (Throwable t) {
                     // Swallow per-tick — some mocked methods may NPE on missing state.
                     // We still get useful timing for sections that DID execute.
@@ -191,7 +193,7 @@ public class BotFollowTickPerfHarness {
                     AgentMovementTargetSnapshot snap = AgentBotMovementTargetSideEffects.captureTargetSnapshot(entry);
                     Point ownerPos = snap.rawOwnerPosition();
                     entry.lastOwnerPos = new Point(ownerPos);
-                    manager.stepMovementOnly(entry, snap.primaryTargetPosition(), ownerPos, runAiTick);
+                    AgentMovementOnlyStepRuntime.stepMovementOnly(entry, snap.primaryTargetPosition(), runAiTick);
                 } catch (Throwable t) {
                     // ignore
                 }

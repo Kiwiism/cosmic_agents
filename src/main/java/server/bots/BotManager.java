@@ -10,8 +10,6 @@ import server.agents.capabilities.quest.AgentPartyQuestSyncService;
 import server.agents.capabilities.dialogue.AgentWhisperCommandService;
 
 import server.agents.runtime.AgentChatRouteRuntime;
-import server.agents.runtime.AgentCommonTickRuntime;
-import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentFormationService;
 import server.agents.runtime.AgentFormationRuntime;
@@ -29,13 +27,11 @@ import server.agents.runtime.AgentReloginRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeCleanupService;
 import server.agents.runtime.AgentScriptTaskQueueService;
-import server.agents.runtime.AgentScriptTaskRuntime;
 import server.agents.runtime.AgentTargetSnapshot;
 import server.agents.runtime.AgentTargetSnapshotRuntime;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSpawnPositionService;
 import server.agents.runtime.AgentSpawnRuntime;
-import server.agents.runtime.AgentTickCoreRuntime;
 import server.agents.runtime.AgentTickRuntime;
 
 import server.agents.capabilities.looting.AgentGrindLootTargetService;
@@ -64,7 +60,6 @@ import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotPotionStateRuntime;
 import server.agents.integration.AgentBotPqRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
 import server.agents.integration.AgentBotShopStateRuntime;
 import server.agents.integration.AgentBotTargetedCommandMatch;
@@ -262,40 +257,6 @@ public class BotManager {
 
     private void tick(BotEntry entry, int ownerCharId, int botCharId) {
         AgentTickRuntime.tick(entry, ownerCharId, botCharId, this::issueGrind, this::issueFollowOwner);
-    }
-
-    /** Test-only hook: invokes Agent common tick systems on a caller-owned entry. */
-    void runCommonTickSystemsForTest(BotEntry entry, Character bot, Character owner, boolean runAiTick) {
-        AgentCommonTickRuntime.runCommonTickSystems(
-                entry,
-                bot,
-                owner,
-                runAiTick,
-                AgentScriptTaskRuntime::tick);
-    }
-
-    /**
-     * Test-only entry point that runs the full bot tick (including all common systems,
-     * AI, navigation, and movement) against a {@link BotEntry} the caller already owns.
-     * Bypasses the {@link #bots} registry lookup so harnesses can drive mocked bots
-     * without going through {@code registerBotInternal}.
-     */
-    void runTickForTest(BotEntry entry) {
-        if (!AgentBotRuntimeIdentityRuntime.hasBot(entry)) {
-            return;
-        }
-        int botCharId = AgentBotRuntimeIdentityRuntime.botId(entry);
-        int ownerCharId = AgentBotRuntimeIdentityRuntime.ownerId(entry);
-        long startedAt = AgentPerformanceMonitor.enabled() ? System.nanoTime() : 0L;
-        try {
-            AgentTickCoreRuntime.tickCore(entry, ownerCharId, botCharId, this::issueGrind, this::issueFollowOwner);
-        } catch (Throwable t) {
-            log.warn("runTickForTest: tickCore threw for bot {}", AgentBotRuntimeIdentityRuntime.botName(entry), t);
-        } finally {
-            if (startedAt != 0L) {
-                AgentPerformanceMonitor.record("tick-total", System.nanoTime() - startedAt);
-            }
-        }
     }
 
     public boolean shouldOfferTownForAwayCommand(BotEntry entry) {

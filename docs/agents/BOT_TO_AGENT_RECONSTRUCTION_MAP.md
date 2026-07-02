@@ -12,6 +12,8 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- BotManager test-only tick harness helpers were removed. Test/perf harnesses
+  now call the Agent tick/common/movement runtime classes directly.
 - Chat-route default registry and formation config handoff moved from
   BotManager to `server.agents.runtime.AgentChatRouteRuntime`. BotManager now
   supplies only temporary recruit/transfer/dismiss callbacks for chat routing.
