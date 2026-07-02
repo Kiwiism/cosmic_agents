@@ -12,6 +12,12 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Top-level chat ingress ordering moved from BotManager to
+  `server.agents.capabilities.dialogue.AgentChatIngressService`. BotManager now
+  supplies temporary hooks for pending-offer response routing, recruit/
+  transfer/formation/dismiss command routing, active-entry lookup, targeted
+  routing, and untargeted routing while Agent dialogue owns the chat ingress
+  early-return order.
 - Untargeted chat routing moved from BotManager to
   `server.agents.capabilities.dialogue.AgentUntargetedChatRouteService`.
   BotManager now supplies temporary hooks for follow-target command

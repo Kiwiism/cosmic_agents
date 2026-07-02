@@ -24,6 +24,7 @@ import server.agents.capabilities.combat.AgentGrindNavigationTailService;
 import server.agents.capabilities.quest.AgentPartyQuestSyncService;
 
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
+import server.agents.capabilities.dialogue.AgentChatIngressService;
 import server.agents.capabilities.dialogue.AgentTargetedChatRouteService;
 import server.agents.capabilities.dialogue.AgentUntargetedChatRouteService;
 import server.agents.capabilities.dialogue.AgentWhisperCommandService;
@@ -539,60 +540,47 @@ public class BotManager {
     }
 
     public void handleChat(Character owner, String message, AgentReplyChannel channel) {
-        if (handlePendingLootOfferResponse(owner, message)) {
-            return;
-        }
+        AgentChatIngressService.handleChat(owner, message, channel, chatIngressHooks());
+    }
 
-        if (AgentRecruitCommandService.handleRecruitCommand(
-                owner,
-                message,
-                new AgentRecruitCommandService.Hooks(
-                        this::recruitBot,
-                        Character::yellowMessage))) {
-            return;
-        }
-
-        if (AgentTransferCommandService.handleTransferCommand(
-                owner,
-                message,
-                new AgentTransferCommandService.Hooks(
-                        this::giveBot,
-                        Character::yellowMessage))) {
-            return;
-        }
-
-        if (AgentFormationCommandService.handleFormationCommand(
-                owner,
-                message,
-                formationCommandHooks())) {
-            return;
-        }
-        List<BotEntry> entries = bots.get(owner.getId());
-        if (entries == null || entries.isEmpty()) return;
-
-        if (AgentDismissCommandService.handleDismissCommand(
-                owner,
-                message,
-                new AgentDismissCommandService.Hooks(
-                        this::dismissBot,
-                        Character::yellowMessage))) {
-            return;
-        }
-
-        if (AgentTargetedChatRouteService.handleTargetedChat(
-                owner,
-                entries,
-                message,
-                channel,
-                targetedChatHooks())) {
-            return;
-        }
-        AgentUntargetedChatRouteService.handleUntargetedChat(
-                owner,
-                entries,
-                message,
-                channel,
-                untargetedChatHooks());
+    private AgentChatIngressService.Hooks chatIngressHooks() {
+        return new AgentChatIngressService.Hooks(
+                this::handlePendingLootOfferResponse,
+                (leader, message) -> AgentRecruitCommandService.handleRecruitCommand(
+                        leader,
+                        message,
+                        new AgentRecruitCommandService.Hooks(
+                                this::recruitBot,
+                                Character::yellowMessage)),
+                (leader, message) -> AgentTransferCommandService.handleTransferCommand(
+                        leader,
+                        message,
+                        new AgentTransferCommandService.Hooks(
+                                this::giveBot,
+                                Character::yellowMessage)),
+                (leader, message) -> AgentFormationCommandService.handleFormationCommand(
+                        leader,
+                        message,
+                        formationCommandHooks()),
+                bots::get,
+                (leader, message) -> AgentDismissCommandService.handleDismissCommand(
+                        leader,
+                        message,
+                        new AgentDismissCommandService.Hooks(
+                                this::dismissBot,
+                                Character::yellowMessage)),
+                (leader, entries, message, channel) -> AgentTargetedChatRouteService.handleTargetedChat(
+                        leader,
+                        entries,
+                        message,
+                        channel,
+                        targetedChatHooks()),
+                (leader, entries, message, channel) -> AgentUntargetedChatRouteService.handleUntargetedChat(
+                        leader,
+                        entries,
+                        message,
+                        channel,
+                        untargetedChatHooks()));
     }
     private boolean handlePendingLootOfferResponse(Character speaker, String message) {
         return AgentPendingOfferResponseService.handlePendingOfferResponse(

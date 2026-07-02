@@ -17,6 +17,12 @@ Rules:
 
 Recent reconstruction notes:
 
+- Top-level chat ingress ordering now lives in
+  `server.agents.capabilities.dialogue.AgentChatIngressService`. BotManager
+  keeps temporary hooks for pending-offer response routing, recruit/transfer/
+  formation/dismiss command routing, active-entry lookup, targeted routing, and
+  untargeted routing. The same early-return order and no-entry fall-through are
+  preserved.
 - Untargeted chat routing now lives in
   `server.agents.capabilities.dialogue.AgentUntargetedChatRouteService`.
   BotManager keeps temporary hooks for follow-target command application,
