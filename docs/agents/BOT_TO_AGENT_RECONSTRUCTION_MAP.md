@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Follow-target command application moved from BotManager to
+  `server.agents.runtime.AgentFollowTargetCommandService`. BotManager now
+  supplies temporary hooks for target resolution, reply queueing, delay
+  scheduling, auto-equip, potion-share checks, and follow-mode entry while
+  Agent runtime owns the per-entry command application order.
 - Follow-target name resolution moved from BotManager to
   `server.agents.runtime.AgentFollowTargetResolutionService`. BotManager now
   supplies temporary candidate-list assembly and follow-mode application while

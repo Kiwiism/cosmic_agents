@@ -38,6 +38,7 @@ import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentFollowAnchorService;
 import server.agents.runtime.AgentFormationService;
 import server.agents.runtime.AgentFollowIdleMovementService;
+import server.agents.runtime.AgentFollowTargetCommandService;
 import server.agents.runtime.AgentFollowTargetResolutionService;
 import server.agents.runtime.AgentFollowTargetPositionService;
 import server.agents.runtime.AgentFollowMapSyncService;
@@ -255,34 +256,32 @@ public class BotManager {
     }
 
     private boolean applyFollowTargetCommand(Character owner, List<BotEntry> entries, String targetToken) {
-        Character target = resolveFollowTarget(owner, targetToken);
-        if (target == null) {
-            return true;
-        }
-        for (BotEntry entry : entries) {
-            if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry)
-                    || AgentBotRuntimeIdentityRuntime.botIs(entry, target.getId())) {
-                continue;
-            }
-            AgentBotManagerReplyRuntime.queueReply(entry, randomReply(List.of(
-                    "ok",
-                    "k",
-                    "sure",
-                    "omw",
-                    "got it",
-                    "following " + target.getName(),
-                    "ok, following " + target.getName()
-            )));
-            AgentBotManagerSchedulerRuntime.afterDelay(randMs(250, 750), () -> {
-                BotEquipManager.autoEquip(
-                        AgentBotRuntimeIdentityRuntime.bot(entry),
-                        AgentBotRuntimeIdentityRuntime.owner(entry),
-                        AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
-                AgentPotionService.checkPotShareOnModeStart(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
-                issueFollow(entry, target);
-            });
-        }
-        return true;
+        return AgentFollowTargetCommandService.applyFollowTargetCommand(
+                owner,
+                entries,
+                targetToken,
+                new AgentFollowTargetCommandService.Hooks(
+                        this::resolveFollowTarget,
+                        target -> randomReply(List.of(
+                                "ok",
+                                "k",
+                                "sure",
+                                "omw",
+                                "got it",
+                                "following " + target.getName(),
+                                "ok, following " + target.getName()
+                        )),
+                        AgentBotManagerReplyRuntime::queueReply,
+                        () -> randMs(250, 750),
+                        AgentBotManagerSchedulerRuntime::afterDelay,
+                        entry -> BotEquipManager.autoEquip(
+                                AgentBotRuntimeIdentityRuntime.bot(entry),
+                                AgentBotRuntimeIdentityRuntime.owner(entry),
+                                AgentBotOfferStateRuntime.pendingLootOfferItem(entry)),
+                        entry -> AgentPotionService.checkPotShareOnModeStart(
+                                entry,
+                                AgentBotRuntimeIdentityRuntime.bot(entry)),
+                        this::issueFollow));
     }
 
     public static String randomReply(List<String> list) {

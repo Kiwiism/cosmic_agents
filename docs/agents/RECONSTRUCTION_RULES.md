@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Follow-target command application now lives in
+  `server.agents.runtime.AgentFollowTargetCommandService`. BotManager keeps
+  temporary hooks for target resolution, reply queueing, delay scheduling,
+  auto-equip, potion-share checks, and follow-mode entry. The same skip rules,
+  reply variants, random delay window, and side-effect order are preserved.
 - Follow-target name resolution now lives in
   `server.agents.runtime.AgentFollowTargetResolutionService`. BotManager keeps
   temporary candidate-list assembly and follow-mode application hooks. The same
