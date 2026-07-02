@@ -12,14 +12,14 @@ import server.agents.integration.AgentBotInventoryRuntimeAdapters;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 
 public class BotInventoryManager {
-    static void tickPassiveLoot(BotEntry entry, Character bot) {
+    public static void tickPassiveLoot(BotEntry entry, Character bot) {
         AgentPassiveLootRuntimeService.tickPassiveLoot(
                 entry,
                 bot,
                 AgentBotInventoryRuntimeAdapters.passiveLootRuntimeCallbacks());
     }
 
-    static void tickManualTrade(BotEntry entry, Character bot) {
+    public static void tickManualTrade(BotEntry entry, Character bot) {
         AgentManualTradeRuntimeService.tickManualTrade(
                 entry,
                 bot,
@@ -59,7 +59,7 @@ public class BotInventoryManager {
                 AgentBotInventoryRuntimeAdapters.tradeRuntimeCallbacks(entry, bot));
     }
 
-    static void tickTrade(BotEntry entry, Character bot) {
+    public static void tickTrade(BotEntry entry, Character bot) {
         AgentTradeTickRuntimeService.tickTrade(
                 entry,
                 bot,

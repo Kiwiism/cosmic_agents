@@ -4,9 +4,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraphService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
-import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
-import server.agents.capabilities.combat.AgentBuffService;
 import server.agents.capabilities.combat.AgentAoeRepositionService;
 import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
@@ -28,10 +26,9 @@ import server.agents.capabilities.dialogue.AgentTargetedChatRouteService;
 import server.agents.capabilities.dialogue.AgentUntargetedChatRouteService;
 import server.agents.capabilities.dialogue.AgentWhisperCommandService;
 
-import server.agents.runtime.AgentActionLockPhysicsRuntime;
 import server.agents.runtime.AgentAnchoredFarmModeTickService;
 import server.agents.runtime.AgentAnchoredFarmTickService;
-import server.agents.runtime.AgentCommonTickService;
+import server.agents.runtime.AgentCommonTickRuntime;
 import server.agents.runtime.AgentDeathTickService;
 import server.agents.runtime.AgentDismissCommandService;
 import server.agents.runtime.AgentDismissRuntime;
@@ -62,7 +59,6 @@ import server.agents.runtime.AgentLocalAttackMoveWindowService;
 import server.agents.runtime.AgentMapEnvironmentService;
 import server.agents.runtime.AgentMapTransitionRuntime;
 import server.agents.runtime.AgentModeService;
-import server.agents.runtime.AgentMonsterControlService;
 import server.agents.runtime.AgentMovementPhaseRuntime;
 import server.agents.runtime.AgentMovementOnlyRuntime;
 import server.agents.runtime.AgentMovementTickRuntime;
@@ -122,15 +118,10 @@ import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotAmmoStateRuntime;
 import server.agents.integration.AgentBotBuffStateRuntime;
 import server.agents.integration.AgentBotCommandParser;
-import server.agents.integration.AgentBotCombatActionLockRuntime;
 import server.agents.integration.AgentBotCombatAttackRuntime;
-import server.agents.integration.AgentBotCombatBuffRuntime;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
-import server.agents.integration.AgentBotCombatDamageRuntime;
 import server.agents.integration.AgentBotCombatDeathRuntime;
-import server.agents.integration.AgentBotCombatHealRuntime;
 import server.agents.integration.AgentBotCombatPlanRuntime;
-import server.agents.integration.AgentBotCombatSkillCacheRuntime;
 import server.agents.integration.AgentBotCombatTargetRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
@@ -1404,36 +1395,7 @@ public class BotManager {
     }
 
     private boolean runCommonTickSystems(BotEntry entry, Character bot, Character owner, boolean runAiTick) {
-        return AgentCommonTickService.runCommonTickSystems(
-                entry,
-                bot,
-                owner,
-                runAiTick,
-                new AgentCommonTickService.CommonTickHooks(
-                        (tickEntry, tickBot) -> AgentBotCombatDamageRuntime.tickMobDamage(
-                                tickEntry, tickBot, AgentCombatConfig.cfg, BotMovementManager::tickDown),
-                        (tickEntry, tickBot) -> AgentBotDeathStateRuntime.isDead(tickEntry),
-                        (tickEntry, tickBot) -> AgentBotCombatDeathRuntime.enterDeadState(
-                                tickEntry, tickBot, false, AgentCombatConfig.cfg),
-                        AgentMonsterControlService::releaseControlledMonsters,
-                        BotInventoryManager::tickPassiveLoot,
-                        AgentPotionService::tickPotionCheck,
-                        AgentPotionService::tickPassiveRecovery,
-                        AgentBuildService::checkLevelUp,
-                        (tickEntry, tickBot, tickOwner) -> AgentBotManagerStatusRuntime.tickAfkCheck(tickEntry, tickOwner),
-                        BotInventoryManager::tickTrade,
-                        BotInventoryManager::tickManualTrade,
-                        AgentPartyQuestHooks::tick,
-                        this::tickScriptTasks,
-                        AgentPartyQuestHooks::isNpcLocked,
-                        AgentBotCombatActionLockRuntime::tickActionLock,
-                        AgentBotCombatSkillCacheRuntime::rebuildSkillCacheIfNeeded,
-                        (tickEntry, tickBot) -> AgentBotCombatHealRuntime.tickSupportHealing(
-                                tickEntry, tickBot, AgentCombatConfig.cfg),
-                        (tickEntry, tickBot) -> AgentBotCombatBuffRuntime.tickBuffs(
-                                tickEntry, tickBot, AgentCombatConfig.cfg),
-                        AgentBuffService::tick,
-                        this::tickActionLocked));
+        return AgentCommonTickRuntime.runCommonTickSystems(entry, bot, owner, runAiTick, this::tickScriptTasks);
     }
 
     /**
@@ -1506,10 +1468,6 @@ public class BotManager {
     }
     private static void tickStuckDetection(BotEntry entry) {
         AgentStuckDetectionRuntime.tickStuckDetection(entry, cfg.ENABLE_UNSTUCK);
-    }
-
-    private boolean tickActionLocked(BotEntry entry) {
-        return AgentActionLockPhysicsRuntime.tickActionLocked(entry);
     }
 
 

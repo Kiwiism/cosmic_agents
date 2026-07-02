@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Common tick hook wiring moved from BotManager to
+  `server.agents.runtime.AgentCommonTickRuntime`. BotManager now passes only
+  the temporary script-task callback while Agent runtime owns combat damage,
+  death-state, monster-control, loot, supplies, build, AFK, trade, PQ,
+  action-lock, skill-cache, heal, buff, and buff-pot hook construction.
 - Standalone move-target hook wiring moved from BotManager to
   `server.agents.runtime.AgentStandaloneMoveTargetRuntime`. BotManager now
   delegates ownerless move-target ticking while Agent runtime owns map-change,

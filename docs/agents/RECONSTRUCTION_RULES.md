@@ -17,6 +17,9 @@ Rules:
 
 Recent reconstruction notes:
 
+- Common tick hook construction now lives in
+  `server.agents.runtime.AgentCommonTickRuntime`. BotManager should only pass
+  the temporary script-task tick callback until script tasks are reconstructed.
 - Standalone move-target hook construction now lives in
   `server.agents.runtime.AgentStandaloneMoveTargetRuntime`. BotManager passes
   only legacy movement config values for this ownerless movement path.
