@@ -12,6 +12,12 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Untargeted chat routing moved from BotManager to
+  `server.agents.capabilities.dialogue.AgentUntargetedChatRouteService`.
+  BotManager now supplies temporary hooks for follow-target command
+  application, group-supply classification/responder selection, reply-channel
+  state, Agent chat dispatch, typo suggestions, and reply queueing while Agent
+  dialogue owns the untargeted route ordering.
 - Targeted name-prefix chat routing moved from BotManager to
   `server.agents.capabilities.dialogue.AgentTargetedChatRouteService`.
   BotManager now supplies temporary hooks for targeted-command resolution,

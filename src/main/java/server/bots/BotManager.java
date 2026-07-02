@@ -25,6 +25,7 @@ import server.agents.capabilities.quest.AgentPartyQuestSyncService;
 
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.dialogue.AgentTargetedChatRouteService;
+import server.agents.capabilities.dialogue.AgentUntargetedChatRouteService;
 import server.agents.capabilities.dialogue.AgentWhisperCommandService;
 
 import server.agents.runtime.AgentActionLockPhysicsService;
@@ -586,42 +587,13 @@ public class BotManager {
                 targetedChatHooks())) {
             return;
         }
-        String followTargetToken = AgentChatCommandClassifier.matchFollowTarget(message);
-        if (followTargetToken != null) {
-            applyFollowTargetCommand(owner, entries, followTargetToken);
-            return;
-        }
-
-        // Group supply requests ("need pots", "anyone have hp pots", "need arrows"
-        // etc.) elicit a single response from the bot group. Broadcasting these
-        // would have every bot run handleNeedPotionCommand independently, each
-        // selecting the same best-stocked donor → duplicate offer messages and
-        // duplicate trade requests to the owner.
-        if (AgentChatCommandClassifier.isGroupSupplyRequest(message)) {
-            BotEntry responder = AgentGroupSupplyResponderSelector.select(owner, entries);
-            if (responder != null) {
-                AgentBotReplyChannelStateRuntime.setReplyChannel(responder, channel);
-                handleAgentChat(responder, message);
-            }
-            return;
-        }
-
-        // No name prefix — typo-suggest once via the first bot, otherwise broadcast.
-        if (AgentLlmConfig.typoSuggesterEnabled) {
-            String typo = AgentCommandTypoSuggester.suggest(message);
-            if (typo != null) {
-                BotEntry first = entries.get(0);
-                AgentBotReplyChannelStateRuntime.setReplyChannel(first, channel);
-                AgentBotManagerReplyRuntime.queueReply(first, "did you mean '" + typo + "'?");
-                return;
-            }
-        }
-        for (BotEntry entry : entries) {
-            AgentBotReplyChannelStateRuntime.setReplyChannel(entry, channel);
-            handleAgentChat(entry, message);
-        }
+        AgentUntargetedChatRouteService.handleUntargetedChat(
+                owner,
+                entries,
+                message,
+                channel,
+                untargetedChatHooks());
     }
-
     private boolean handlePendingLootOfferResponse(Character speaker, String message) {
         return AgentPendingOfferResponseService.handlePendingOfferResponse(
                 bots.values(),
@@ -651,6 +623,19 @@ public class BotManager {
                 () -> AgentLlmConfig.enabled,
                 server.agents.capabilities.dialogue.llm.AgentLlmReplyService::maybeRespond,
                 Character::yellowMessage);
+    }
+
+    private AgentUntargetedChatRouteService.Hooks untargetedChatHooks() {
+        return new AgentUntargetedChatRouteService.Hooks(
+                AgentChatCommandClassifier::matchFollowTarget,
+                this::applyFollowTargetCommand,
+                AgentChatCommandClassifier::isGroupSupplyRequest,
+                AgentGroupSupplyResponderSelector::select,
+                AgentBotReplyChannelStateRuntime::setReplyChannel,
+                BotManager::handleAgentChat,
+                () -> AgentLlmConfig.typoSuggesterEnabled,
+                AgentCommandTypoSuggester::suggest,
+                AgentBotManagerReplyRuntime::queueReply);
     }
 
     // -------------------------------------------------------------------------

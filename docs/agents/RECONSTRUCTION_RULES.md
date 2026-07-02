@@ -17,6 +17,13 @@ Rules:
 
 Recent reconstruction notes:
 
+- Untargeted chat routing now lives in
+  `server.agents.capabilities.dialogue.AgentUntargetedChatRouteService`.
+  BotManager keeps temporary hooks for follow-target command application,
+  group-supply classification/responder selection, reply-channel state,
+  Agent chat dispatch, typo suggestions, and reply queueing. The same
+  follow-all priority, single group-supply responder, one-shot typo suggestion,
+  and broadcast-to-all fallback are preserved.
 - Targeted name-prefix chat routing now lives in
   `server.agents.capabilities.dialogue.AgentTargetedChatRouteService`.
   BotManager keeps temporary hooks for targeted-command resolution,
