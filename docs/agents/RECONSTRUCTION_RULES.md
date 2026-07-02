@@ -83,6 +83,9 @@ Recent reconstruction notes:
   BotManager chat route hooks no longer own the candidate/resolve/apply wrappers;
   the Agent runtime bridge preserves the legacy reply list, delay, auto-equip,
   potion-share check, and follow-start order.
+- Legacy BotManager random reply and delay utility wrappers were removed after
+  follow-target routing moved to Agent runtime. Agent modules now call
+  `AgentDialogueSelector` and `AgentRandom` directly.
 - Idle/trade physics hook construction now lives in
   `server.agents.runtime.AgentIdlePhysicsRuntime`. The temporary public
   `BotPhysicsEngine.resolveIdleGroundStance` accessor exists only until physics

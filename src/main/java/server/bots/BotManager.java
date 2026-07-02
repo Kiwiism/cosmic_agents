@@ -17,7 +17,6 @@ import server.agents.capabilities.combat.AgentGrindRangedEngagementService;
 import server.agents.capabilities.combat.AgentGrindNavigationTailService;
 import server.agents.capabilities.quest.AgentPartyQuestSyncService;
 
-import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.dialogue.AgentChatIngressService;
 import server.agents.capabilities.dialogue.AgentTargetedChatRouteService;
 import server.agents.capabilities.dialogue.AgentUntargetedChatRouteService;
@@ -63,7 +62,6 @@ import server.agents.runtime.AgentOwnerlessTickService;
 import server.agents.runtime.AgentOfflineLoadRuntime;
 import server.agents.runtime.AgentPartyLifecycleService;
 import server.agents.runtime.AgentPositionService;
-import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentRecruitRuntime;
 import server.agents.runtime.AgentRegistrationRuntime;
 import server.agents.runtime.AgentReloginRuntime;
@@ -199,15 +197,6 @@ public class BotManager {
     private record LocalOpportunityAttackResult(boolean consumedTick, Point targetPos) {}
 
     private static final int PLATFORM_EDGE_INSET_PX = 12;
-    public static String randomReply(List<String> list) {
-        return AgentDialogueSelector.randomReply(list);
-    }
-
-    /** Uniform random delay in [lo, hi) ms — use wherever a fixed delay would feel robotic. */
-    public static long randMs(int lo, int hi) {
-        return AgentRandom.randMs(lo, hi);
-    }
-
     // -------------------------------------------------------------------------
     // Public API
     // -------------------------------------------------------------------------
