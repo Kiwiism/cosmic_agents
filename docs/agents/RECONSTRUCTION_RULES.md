@@ -71,6 +71,10 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentFollowMapSyncRuntime`. The temporary public
   `BotMovementManager.resetEntryState` bridge exists only until movement state
   reset behavior moves fully into Agent movement modules.
+- Follow idle movement fast-path config-bound wiring now lives in
+  `server.agents.runtime.AgentFollowIdleMovementRuntime`. BotManager keeps only
+  a compatibility wrapper for legacy tests/callers; production live-mode hooks
+  call the Agent runtime bridge directly.
 - Idle/trade physics hook construction now lives in
   `server.agents.runtime.AgentIdlePhysicsRuntime`. The temporary public
   `BotPhysicsEngine.resolveIdleGroundStance` accessor exists only until physics

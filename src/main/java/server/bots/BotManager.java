@@ -34,7 +34,7 @@ import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentFollowAnchorService;
 import server.agents.runtime.AgentFormationService;
-import server.agents.runtime.AgentFollowIdleMovementService;
+import server.agents.runtime.AgentFollowIdleMovementRuntime;
 import server.agents.runtime.AgentFollowTargetCandidateService;
 import server.agents.runtime.AgentFollowTargetCommandService;
 import server.agents.runtime.AgentFollowTargetResolutionService;
@@ -745,7 +745,7 @@ public class BotManager {
                             followOpportunity.consumedTick(),
                             followOpportunity.targetPos());
                 },
-                BotManager::tryFollowIdleMovementFastPath,
+                AgentFollowIdleMovementRuntime::tryFollowIdleMovementFastPath,
                 (scriptEntry, scriptBot, scriptBotPos, scriptTargetPos, scriptRunAiTick) -> {
                     AgentScriptedMoveCombatTickService.Result scriptedMoveCombat =
                             AgentScriptedMoveCombatTickService.tickScriptedMoveCombat(
@@ -1320,13 +1320,7 @@ public class BotManager {
     }
 
     static boolean tryFollowIdleMovementFastPath(BotEntry entry, Character bot, Point targetPos, long nowMs) {
-        return AgentFollowIdleMovementService.tryFollowIdleMovementFastPath(
-                entry,
-                bot,
-                targetPos,
-                nowMs,
-                BotMovementManager.cfg.FOLLOW_DIST,
-                BotMovementManager.cfg.STOP_DIST);
+        return AgentFollowIdleMovementRuntime.tryFollowIdleMovementFastPath(entry, bot, targetPos, nowMs);
     }
 
     private void stepMovementCore(BotEntry entry,
