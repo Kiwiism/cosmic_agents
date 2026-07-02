@@ -1,0 +1,81 @@
+schemaVersion: 1
+
+# Copy this file to a real override location later. Keep generated catalog data
+# replaceable; put hand-tuned map/NPC quirks here.
+
+placements:
+  - mapId: 1000001
+    lifeIndex: "0"
+    npcId: 11000
+    note: "Example shop NPC override."
+    interactionBox:
+      left: 100
+      right: 100
+      up: 60
+      down: 140
+    timing:
+      firstReadDelayMsRange: [900, 2400]
+      repeatReadDelayMsRange: [400, 1200]
+    approach:
+      preferredFootholdIds: [11]
+      avoidedFootholdIds: []
+      allowLowerPlatform: true
+      allowHigherPlatform: false
+      clickFromBelow: false
+      clickFromAbove: false
+      maxCandidates: 8
+      manualPoints:
+        - x: 120
+          y: 45
+          footholdId: 11
+          note: "Example reviewed standing point."
+    safety:
+      riskLevel: safe-direct
+      fallbackBehavior: move-closer
+      confidence: manual
+      doNotAutoUse: false
+
+  - mapId: 103000800
+    npcId: 9020001
+    note: "Example PQ NPC where scripted stage state may matter."
+    interactionTypes: [event-script-inferred]
+    safety:
+      riskLevel: script-sensitive
+      fallbackBehavior: abort-and-log
+      confidence: manual
+      doNotAutoUse: true
+
+  - mapId: 261040000
+    npcId: 2111020
+    note: "Example NPC/object with no generated foothold candidate."
+    interactionBox:
+      left: 160
+      right: 160
+      up: 120
+      down: 240
+    approach:
+      manualPoints:
+        - x: -120
+          y: 7
+          footholdId: 1
+          note: "Review in client before enabling."
+    safety:
+      riskLevel: manual-review
+      fallbackBehavior: abort-and-log
+      confidence: manual
+      doNotAutoUse: true
+
+riskLevels:
+  safe-direct: "Known quest/shop action can be direct-called after validation."
+  script-sensitive: "Script may teleport, change state, or require custom modeling."
+  manual-review: "Catalog only; do not execute automatically."
+
+interactionTypeNotes:
+  shop: "SQL shop data links this NPC to a shop."
+  quest-start: "Quest.wz Check child 0 references this NPC."
+  quest-complete: "Quest.wz Check child 1 references this NPC."
+  storage-inferred: "Name suggests storage; needs runtime/API confirmation."
+  travel-inferred: "Name suggests travel; script behavior must be modeled."
+  job-inferred: "Name suggests job or advancement flow; prerequisites matter."
+  event-script-inferred: "Likely event/PQ/script-sensitive; do not automate blindly."
+  talk-script-unknown: "NPC has no extracted shop or quest relationship yet."
