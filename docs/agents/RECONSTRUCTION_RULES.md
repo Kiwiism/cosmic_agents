@@ -17,6 +17,14 @@ Rules:
 
 Recent reconstruction notes:
 
+- Spawn placement hook wiring now lives in
+  `server.agents.runtime.AgentSpawnPlacementRuntime`. BotManager no longer owns
+  the legacy BotPhysics/BotMovement placement hook list for online placement or
+  spawn normalization; the same teleport, movement reset, death-state clear,
+  map tracking, graph warmup, cadence reset, broadcast invalidation, movement
+  broadcast, HP update, and party join hooks are preserved. The legacy
+  foothold-index builder is temporarily public until movement internals are
+  reconstructed into Agent movement modules.
 - Spawn SQL failure handling now lives in
   `server.agents.runtime.AgentLifecycleService.spawnAgentForLeaderQuietly`.
   BotManager supplies the temporary logger hook and compatibility result

@@ -88,8 +88,8 @@ import server.agents.runtime.AgentShopVisitTickService;
 import server.agents.runtime.AgentTargetSnapshot;
 import server.agents.runtime.AgentTargetSnapshotService;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.AgentSpawnPlacementRuntime;
 import server.agents.runtime.AgentSpawnPositionService;
-import server.agents.runtime.AgentSpawnPlacementService;
 import server.agents.runtime.AgentStandaloneMoveTargetTickService;
 import server.agents.runtime.AgentStuckDetectionService;
 import server.agents.runtime.AgentTickFailurePolicy;
@@ -302,7 +302,7 @@ public class BotManager {
                         this::resolveSpawnPosition,
                         this::registerSpawnedBot,
                         this::loadOfflineBot,
-                        BotManager::placeSpawnedOnlineBot,
+                        AgentSpawnPlacementRuntime::placeSpawnedOnlineAgent,
                         this::issueFollowOwner,
                         (botChar, map, pos) -> botChar.forceChangeMap(map, map.findClosestPortal(pos))),
                 (agentName, leader, e) -> log.warn(
@@ -351,15 +351,6 @@ public class BotManager {
                 MapleMap::addPlayer);
     }
 
-    static void placeSpawnedOnlineBot(BotEntry entry, Character botChar, MapleMap spawnMap, Point spawnPos) {
-        AgentSpawnPlacementService.placeSpawnedOnlineAgent(
-                entry,
-                botChar,
-                spawnMap,
-                spawnPos,
-                spawnPlacementHooks());
-    }
-
     public Point resolveSpawnPosition(MapleMap map, Point desiredPosition) {
         return AgentSpawnPositionService.resolveSpawnPosition(map, desiredPosition);
     }
@@ -376,33 +367,8 @@ public class BotManager {
                         this::tick,
                         AgentBotManagerSchedulerRuntime::cancelScheduledTask,
                         defaultFormationState(),
-                        this::normalizeSpawnedBot,
+                        AgentSpawnPlacementRuntime::normalizeSpawnedAgent,
                         () -> randMs(30_000, 31_000)));
-    }
-
-    private void normalizeSpawnedBot(BotEntry entry) {
-        AgentSpawnPlacementService.normalizeSpawnedAgent(entry, spawnPlacementHooks());
-    }
-
-    private static AgentSpawnPlacementService.Hooks spawnPlacementHooks() {
-        return new AgentSpawnPlacementService.Hooks(
-                AgentSpawnPositionService::resolveSpawnPosition,
-                BotPhysicsEngine::teleportTo,
-                BotMovementManager::resetEntryStateAfterTeleport,
-                AgentBotDeathStateRuntime::clear,
-                (entry, map, mapId) -> AgentBotMapStateRuntime.setMapTracking(
-                        entry,
-                        mapId,
-                        map != null && map.getFootholds() != null ? BotMovementManager.buildFhIndex(map) : null),
-                (entry, map) -> AgentNavigationGraphService.warmGraphAsync(
-                        map,
-                        AgentBotMovementStateRuntime.movementProfile(entry)),
-                AgentBotTickCadenceStateRuntime::reset,
-                AgentBotMovementStateRuntime::clearMoveDirection,
-                AgentBotMovementBroadcastStateRuntime::invalidate,
-                BotMovementManager::broadcastMovement,
-                Character::updatePartyMemberHP,
-                AgentPartyLifecycleService::joinAgentToLeaderParty);
     }
 
     public void removeBot(int ownerCharId) {

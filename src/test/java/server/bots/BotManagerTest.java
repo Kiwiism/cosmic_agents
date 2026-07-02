@@ -24,6 +24,7 @@ import server.agents.integration.AgentBotCombatAttackRuntime;
 import server.agents.integration.AgentBotCombatPlanRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.AgentSpawnPlacementRuntime;
 import server.agents.runtime.AgentTargetSnapshot;
 import client.Character;
 import client.BuffStat;
@@ -578,7 +579,7 @@ class BotManagerTest {
         entry.airVelX = 6;
         AgentBotNavigationDebugStateRuntime.setNavTargetPosition(entry, new Point(120, 100));
 
-        BotManager.placeSpawnedOnlineBot(entry, bot, map, new Point(80, 100));
+        AgentSpawnPlacementRuntime.placeSpawnedOnlineAgent(entry, bot, map, new Point(80, 100));
 
         assertEquals(new Point(80, 100), bot.getPosition());
         assertFalse(entry.inAir);

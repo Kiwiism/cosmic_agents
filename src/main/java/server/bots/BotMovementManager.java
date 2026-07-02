@@ -975,7 +975,7 @@ public class BotMovementManager {
         bot.getMap().broadcastMessage(bot, movePacket, false);
     }
 
-    static Map<Integer, Foothold> buildFhIndex(MapleMap map) {
+    public static Map<Integer, Foothold> buildFhIndex(MapleMap map) {
         Map<Integer, Foothold> index = new HashMap<>();
         for (Foothold foothold : map.getFootholds().getAllFootholds()) {
             index.put(foothold.getId(), foothold);

@@ -12,6 +12,12 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Spawn placement hook wiring moved from BotManager to
+  `server.agents.runtime.AgentSpawnPlacementRuntime`. BotManager now references
+  Agent runtime placement entry points from spawn/register hooks, while Agent
+  runtime owns the legacy placement hook bundle until movement/physics are
+  reconstructed. `BotMovementManager.buildFhIndex` is temporarily public only
+  for this Agent runtime hook seam.
 - Spawn SQL failure handling moved from BotManager to
   `server.agents.runtime.AgentLifecycleService.spawnAgentForLeaderQuietly`.
   BotManager now keeps the compatibility `spawnBotForOwner` result wrapper and
