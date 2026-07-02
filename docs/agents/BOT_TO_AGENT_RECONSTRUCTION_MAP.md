@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Follow map-sync and teleport recovery dispatch moved from BotManager to
+  `server.agents.runtime.AgentRecoveryTickService`. BotManager now supplies
+  temporary hooks for follow map sync, grind-party recovery teleport, and
+  target-distance recovery teleport.
 - Anchored-farm mode dispatch moved from BotManager to
   `server.agents.runtime.AgentAnchoredFarmModeTickService`. BotManager now
   supplies only the temporary anchored-farm tick hook and performance timing.

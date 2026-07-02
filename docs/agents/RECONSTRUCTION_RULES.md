@@ -3089,6 +3089,11 @@ Recent reconstruction notes:
   temporary compatibility adapter for the existing anchored-farm tick body and
   performance timing. The same farm-anchor presence check and consumed-tick
   result are preserved.
+- Follow map-sync and teleport recovery dispatch now lives in
+  `server.agents.runtime.AgentRecoveryTickService`. BotManager keeps temporary
+  compatibility hooks for follow-map synchronization, grind-party distance
+  recovery, and target-distance recovery. The same shop-visit follow-sync guard,
+  short-circuit order, and consumed/fall-through behavior are preserved.
 
 Initial reconstruction order:
 

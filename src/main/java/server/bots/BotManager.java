@@ -58,6 +58,7 @@ import server.agents.runtime.AgentOwnerlessTickService;
 import server.agents.runtime.AgentPartyLifecycleService;
 import server.agents.runtime.AgentPositionService;
 import server.agents.runtime.AgentRandom;
+import server.agents.runtime.AgentRecoveryTickService;
 import server.agents.runtime.AgentRecoveryTeleportService;
 import server.agents.runtime.AgentReturnScrollService;
 import server.agents.runtime.AgentRuntimeConfig;
@@ -1139,17 +1140,15 @@ public class BotManager {
             return;
         }
 
-        // Map change and teleport checks only apply when following a live anchor.
-        // Shop visits are intentional same-map detours and must not be pulled back
-        // to the owner while walking to the NPC.
-        if (!AgentBotShopStateRuntime.shopVisitPending(entry) && syncFollowMap(entry, bot, followAnchor)) {
-            return;
-        }
-        if (recoverGrindPartyTeleportDistance(entry, bot, followAnchor)) {
-            return;
-        }
-        // Teleport if hopelessly far — applies to both follow and grind (catches falling off map)
-        if (recoverTeleportDistance(entry, bot, targetPos)) {
+        if (AgentRecoveryTickService.tickRecovery(
+                entry,
+                bot,
+                followAnchor,
+                targetPos,
+                new AgentRecoveryTickService.Hooks(
+                        this::syncFollowMap,
+                        this::recoverGrindPartyTeleportDistance,
+                        this::recoverTeleportDistance))) {
             return;
         }
 
