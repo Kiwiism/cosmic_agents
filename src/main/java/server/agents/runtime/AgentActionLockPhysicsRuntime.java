@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementPhaseDispatchService;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 
 public final class AgentActionLockPhysicsRuntime {
     private AgentActionLockPhysicsRuntime() {
@@ -11,8 +11,8 @@ public final class AgentActionLockPhysicsRuntime {
         return AgentActionLockPhysicsService.tickActionLocked(
                 entry,
                 AgentMapEnvironmentService::isSwimMap,
-                locked -> BotMovementManager.tickSwimming(locked, null),
-                locked -> BotMovementManager.tickAirborne(locked, null),
-                locked -> BotMovementManager.tickGrounded(locked, null));
+                locked -> AgentMovementPhaseDispatchService.tickSwimming(locked, null),
+                locked -> AgentMovementPhaseDispatchService.tickAirborne(locked, null),
+                locked -> AgentMovementPhaseDispatchService.tickGrounded(locked, null));
     }
 }

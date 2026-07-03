@@ -1,6 +1,8 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
+import server.agents.capabilities.movement.AgentJumpActionService;
+import server.agents.capabilities.movement.AgentMovementPhaseDispatchService;
 
 import client.Character;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
@@ -15,7 +17,6 @@ import server.agents.capabilities.combat.AgentGrindTargetSearchService;
 import server.agents.integration.AgentBotCombatAttackRuntime;
 import server.agents.integration.AgentBotCombatTargetRuntime;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 import server.bots.BotPhysicsEngine;
 
 import java.awt.Point;
@@ -74,8 +75,8 @@ public final class AgentGrindModeRuntime {
     private static AgentGrindNoTargetFallbackService.Hooks grindNoTargetFallbackHooks(
             AgentLiveModeTickRuntime.MovementCoreStep movementCoreStep) {
         return new AgentGrindNoTargetFallbackService.Hooks(
-                BotMovementManager::tickSwimming,
-                BotMovementManager::tickAirborne,
+                AgentMovementPhaseDispatchService::tickSwimming,
+                AgentMovementPhaseDispatchService::tickAirborne,
                 AgentGrindTargetRuntime::resolvePatrolWanderTarget,
                 AgentGrindTargetRuntime::resolveNoGrindTargetPosition,
                 movementCoreStep::step);
@@ -100,7 +101,7 @@ public final class AgentGrindModeRuntime {
                 AgentCombatAmmoCounter::isRangedAmmoWeapon,
                 AgentCombatRangePolicy::isTargetJumpable,
                 BotPhysicsEngine::calculateMaxJumpHeight,
-                BotMovementManager::initiateJump,
+                AgentJumpActionService::initiateJump,
                 BotPhysicsEngine::idleOnGround,
                 AgentMovementBroadcastService::broadcastMovement);
     }

@@ -1,6 +1,7 @@
 package server.agents.capabilities.movement.fidget;
 
 import server.agents.capabilities.movement.AgentJumpActionService;
+import server.agents.capabilities.movement.AgentMovementPhaseDispatchService;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
@@ -21,7 +22,6 @@ import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
 import server.agents.runtime.AgentRandom;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 import server.bots.BotPhysicsEngine;
 import server.maps.Foothold;
 import tools.PacketCreator;
@@ -283,7 +283,7 @@ public final class AgentFidgetService {
         }
         if (AgentBotMovementStateRuntime.inAir(entry)) {
             tickActiveAirborne(entry, now);
-            BotMovementManager.tickAirborne(entry, null);
+            AgentMovementPhaseDispatchService.tickAirborne(entry, null);
             return true;
         }
         return executeGrounded(entry, botPos, targetPos, now);

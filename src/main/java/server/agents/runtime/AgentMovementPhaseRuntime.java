@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementPhaseDispatchService;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 
 import java.awt.Point;
 
@@ -16,9 +16,9 @@ public final class AgentMovementPhaseRuntime {
     private static AgentMovementPhaseService.MovementPhaseHooks hooks() {
         return new AgentMovementPhaseService.MovementPhaseHooks(
                 (entry, target) -> AgentMapEnvironmentService.isSwimMap(entry),
-                BotMovementManager::tickClimbing,
-                BotMovementManager::tickSwimming,
-                BotMovementManager::tickAirborne,
-                BotMovementManager::tickGrounded);
+                AgentMovementPhaseDispatchService::tickClimbing,
+                AgentMovementPhaseDispatchService::tickSwimming,
+                AgentMovementPhaseDispatchService::tickAirborne,
+                AgentMovementPhaseDispatchService::tickGrounded);
     }
 }

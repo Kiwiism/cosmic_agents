@@ -116,9 +116,10 @@ Capability bins:
   `AgentGroundMovementPolicy` and stateful `AgentGroundMovementService`; the
   old bot movement methods now delegate. Navigation jump/rope reach probes
   route through `AgentJumpProbeService`; ground and rope jump initiation routes
-  through `AgentJumpActionService` while the underlying physics implementation
-  remains a later migration slice. Remaining movement phase, rope, swim, and
-  airborne runtime slices continue to migrate.
+  through `AgentJumpActionService`; movement phase dispatch routes through
+  `AgentMovementPhaseDispatchService` while the underlying physics implementation and
+  phase bodies remain later migration slices. Remaining climb, ground, rope,
+  swim, and airborne runtime slices continue to migrate.
 - `supplies`
 - `trade`
 - `shop`

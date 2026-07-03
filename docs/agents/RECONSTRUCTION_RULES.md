@@ -3799,6 +3799,11 @@ Recent reconstruction notes:
   Agent-owned action service directly. `BotMovementManager.initiateJump` and
   `initiateRopeJump` remain temporary delegates with the same air-velocity and
   movement-broadcast timing.
+- Movement phase dispatch now enters `AgentMovementPhaseDispatchService`; action-lock,
+  idle physics, grind, fidget, and live movement phase runtimes no longer wire
+  their hooks directly to `BotMovementManager` phase methods. The phase method
+  bodies remain temporary bot delegates until climb/swim/air/ground are moved
+  one at a time.
 
 Initial reconstruction order:
 
