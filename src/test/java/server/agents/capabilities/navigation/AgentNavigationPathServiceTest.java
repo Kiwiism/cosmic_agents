@@ -3,6 +3,7 @@ package server.agents.capabilities.navigation;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfile;
+import server.maps.MapleMap;
 import server.maps.Foothold;
 
 import java.awt.Point;
@@ -70,6 +71,19 @@ class AgentNavigationPathServiceTest {
         assertTrue(AgentNavigationPathService.shouldUsePreciseWalkTarget(walkHandoff));
         assertFalse(AgentNavigationPathService.shouldUsePreciseWalkTarget(noMoveWalk));
         assertFalse(AgentNavigationPathService.shouldUsePreciseWalkTarget(null));
+    }
+
+    @Test
+    void edgeUsabilityAllowsNonPortalEdgesAndRequiresOpenPortal() {
+        MapleMap map = new MapleMap(910000001, 0, 0, 910000001, 1.0f);
+        AgentNavigationGraph graph = graphWithRegion(new AgentNavigationGraph.Region(1, List.of(new AgentNavigationGraph.Segment(
+                new Foothold(new Point(0, 100), new Point(100, 100), 1)))));
+
+        assertTrue(AgentNavigationPathService.isEdgeUsable(graph, map,
+                edge(1, 2, AgentNavigationGraph.EdgeType.WALK, new Point(0, 100), new Point(10, 100), 10)));
+        assertFalse(AgentNavigationPathService.isEdgeUsable(graph, map,
+                new AgentNavigationGraph.Edge(1, 2, AgentNavigationGraph.EdgeType.PORTAL,
+                        new Point(0, 100), new Point(10, 100), 0, 0, 0, 42, 0, 10)));
     }
 
     private static AgentNavigationGraph graphWithRegion(AgentNavigationGraph.Region region) {

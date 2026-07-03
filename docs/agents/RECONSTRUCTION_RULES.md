@@ -3988,6 +3988,9 @@ Recent reconstruction notes:
 - Leading no-op walk collapse and precise walk-target policy now live in
   `AgentNavigationPathService`; `BotNavigationManager` retains compatibility
   delegates for existing tests and remaining internal calls.
+- Navigation edge usability policy now lives in `AgentNavigationPathService`.
+  The rule is unchanged: walk/jump/drop/climb edges are always usable and portal
+  edges require an existing open portal.
 
 Initial reconstruction order:
 

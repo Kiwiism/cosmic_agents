@@ -4,6 +4,7 @@ import client.Character;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.bots.BotNavigationManager;
 import server.maps.MapleMap;
+import server.maps.Portal;
 
 import java.awt.Point;
 import java.util.List;
@@ -116,6 +117,20 @@ public final class AgentNavigationPathService {
         return edge != null
                 && edge.type == AgentNavigationGraph.EdgeType.WALK
                 && !isNoMovementWalk(edge.startPoint, edge.endPoint);
+    }
+
+    public static boolean isEdgeUsable(AgentNavigationGraph graph, Character bot, AgentNavigationGraph.Edge edge) {
+        return isEdgeUsable(graph, bot.getMap(), edge);
+    }
+
+    public static boolean isEdgeUsable(AgentNavigationGraph graph, MapleMap map, AgentNavigationGraph.Edge edge) {
+        return switch (edge.type) {
+            case WALK, JUMP, DROP, CLIMB -> true;
+            case PORTAL -> {
+                Portal portal = map.getPortal(edge.portalId);
+                yield portal != null && portal.getPortalStatus();
+            }
+        };
     }
 
     private static boolean isNoMovementWalk(Point start, Point end) {

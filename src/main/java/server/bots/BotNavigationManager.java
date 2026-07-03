@@ -1088,7 +1088,7 @@ public final class BotNavigationManager {
     }
 
     private static boolean isEdgeUsable(AgentNavigationGraph graph, Character bot, AgentNavigationGraph.Edge edge) {
-        return isEdgeUsable(graph, bot.getMap(), edge);
+        return AgentNavigationPathService.isEdgeUsable(graph, bot, edge);
     }
 
     private static boolean sameEdge(AgentNavigationGraph.Edge left, AgentNavigationGraph.Edge right) {
@@ -1126,13 +1126,7 @@ public final class BotNavigationManager {
     }
 
     private static boolean isEdgeUsable(AgentNavigationGraph graph, MapleMap map, AgentNavigationGraph.Edge edge) {
-        return switch (edge.type) {
-            case WALK, JUMP, DROP, CLIMB -> true;
-            case PORTAL -> {
-                Portal portal = map.getPortal(edge.portalId);
-                yield portal != null && portal.getPortalStatus();
-            }
-        };
+        return AgentNavigationPathService.isEdgeUsable(graph, map, edge);
     }
 
     private static boolean usePortal(Character bot, int portalId) {
