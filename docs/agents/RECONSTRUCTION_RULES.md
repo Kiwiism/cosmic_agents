@@ -3994,6 +3994,10 @@ Recent reconstruction notes:
 - Navigation climb-start side effects now live in
   `AgentNavigationClimbExecutionService`. Rope attachment and movement
   broadcast ordering are unchanged.
+- Explicit drop edge execution now lives in
+  `AgentNavigationDropExecutionService`. The same airborne/climbing/down-jump
+  guards, walk-off-drop no-op, drop-readiness check, edge target state write,
+  queued down-jump, and movement broadcast ordering are preserved.
 - Combat grind-target region scoring, path-cost checks, and sibling occupancy
   checks now use `AgentNavigationRegionService` and
   `AgentNavigationPathService`. Target scoring policy and path-cost behavior

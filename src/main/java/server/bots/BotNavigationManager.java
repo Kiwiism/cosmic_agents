@@ -3,6 +3,7 @@ package server.bots;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationCommittedEdgeService;
 import server.agents.capabilities.navigation.AgentNavigationClimbExecutionService;
+import server.agents.capabilities.navigation.AgentNavigationDropExecutionService;
 import server.agents.capabilities.navigation.AgentNavigationEdgeExecutionStateService;
 import server.agents.capabilities.navigation.AgentNavigationEdgeReadinessService;
 import server.agents.capabilities.navigation.AgentNavigationGrindTargetService;
@@ -256,7 +257,8 @@ public final class BotNavigationManager {
 
         return switch (edge.type) {
             case JUMP -> tryExecuteJump(graph, entry, bot, rawTargetPos, edge);
-            case DROP -> tryExecuteDrop(graph, entry, bot, botPos, rawTargetPos, edge);
+            case DROP -> AgentNavigationDropExecutionService.tryExecuteDrop(graph, entry, bot, botPos, edge)
+                    ? new NavigationDirective(rawTargetPos, true) : null;
             case CLIMB -> tryExecuteClimb(graph, entry, bot, botPos, rawTargetPos, edge);
             case PORTAL -> isReadyForEdge(botPos, edge)
                     && AgentNavigationPortalService.tryExecutePortal(entry, bot, edge.portalId)
@@ -296,32 +298,6 @@ public final class BotNavigationManager {
         AgentBotNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
         AgentNavigationEdgeExecutionStateService.setEdgeExecutionTarget(entry, edge);
         AgentJumpActionService.initiateJump(entry, bot, edge.launchStepX);
-        return new NavigationDirective(rawTargetPos, true);
-    }
-
-    private static NavigationDirective tryExecuteDrop(AgentNavigationGraph graph,
-                                                      BotEntry entry,
-                                                      Character bot,
-                                                      Point botPos,
-                                                      Point rawTargetPos,
-                                                      AgentNavigationGraph.Edge edge) {
-        if (AgentBotMovementStateRuntime.inAir(entry) || AgentBotClimbStateRuntime.climbing(entry) || AgentBotMovementStateRuntime.downJumpPending(entry)) {
-            return null;
-        }
-
-        if (edge.launchStepX != 0) {
-            // Walk-off drops are not an explicit action. Keep steering in the authored direction
-            // and let ground physics carry the bot into a fall with preserved momentum.
-            return null;
-        }
-
-        if (!canExecuteDropFromCurrentPosition(graph, bot.getMap(), botPos, edge)) {
-            return null;
-        }
-
-        AgentNavigationEdgeExecutionStateService.setEdgeExecutionTarget(entry, edge);
-        AgentQueuedMovementActionService.queueDownJump(entry, bot);
-        AgentMovementBroadcastService.broadcastMovement(entry);
         return new NavigationDirective(rawTargetPos, true);
     }
 
