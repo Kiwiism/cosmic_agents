@@ -70,13 +70,13 @@ import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 import server.agents.integration.AgentBotSkillBuffDebugStateRuntime;
 import server.agents.capabilities.combat.data.AgentAttackDataProvider;
+import server.agents.runtime.AgentRuntimeRegistry;
 import server.life.Monster;
 import server.life.MonsterStats;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 
 import java.awt.*;
-import java.lang.reflect.Field;
 import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -1697,8 +1697,7 @@ class BotCombatManagerTest {
         BotEntry siblingEntry = new BotEntry(siblingBot, owner, null);
         siblingEntry.grinding = true;
 
-        BotManager manager = BotManager.getInstance();
-        Map<Integer, List<BotEntry>> bots = botEntries(manager);
+        Map<Integer, List<BotEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
         bots.put(owner.getId(), new CopyOnWriteArrayList<>(List.of(entry, siblingEntry)));
         try (MockedStatic<AgentNavigationGraphService> graphProvider =
                      Mockito.mockStatic(AgentNavigationGraphService.class, Mockito.CALLS_REAL_METHODS)) {
@@ -2002,10 +2001,4 @@ class BotCombatManagerTest {
         return skill;
     }
 
-    @SuppressWarnings("unchecked")
-    private static Map<Integer, List<BotEntry>> botEntries(BotManager manager) throws Exception {
-        Field field = BotManager.class.getDeclaredField("bots");
-        field.setAccessible(true);
-        return (Map<Integer, List<BotEntry>>) field.get(manager);
-    }
 }

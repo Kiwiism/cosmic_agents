@@ -71,6 +71,10 @@ Recent reconstruction notes:
   read shared tick/loot/follow config from `AgentRuntimeConfig` instead of
   `BotManager.cfg`. This preserves the same values while removing another
   test-only dependency on the BotManager compatibility alias.
+- BotManager parity tests for owner-gained trade item notifications, cleanup
+  on leaving Agent control, and combat sibling target occupancy now call
+  Agent-owned notification, cleanup, and runtime-registry services directly
+  instead of reaching those behaviors through `BotManager.getInstance()`.
 - Manual and spawned registration entry points now enter through
   `AgentInteractionRuntime`, which supplies the Agent tick callback. BotManager
   no longer owns a private tick callback.

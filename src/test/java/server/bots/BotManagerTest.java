@@ -19,6 +19,7 @@ import server.agents.capabilities.combat.AgentRangedPriorityTargetSelector;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.capabilities.looting.AgentLootTargetService;
 import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
+import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
 
 import server.agents.integration.AgentBotCombatAttackRuntime;
 import server.agents.integration.AgentBotCombatPlanRuntime;
@@ -26,6 +27,7 @@ import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import server.agents.runtime.AgentFollowIdleMovementRuntime;
 import server.agents.runtime.AgentGrindTargetRuntime;
 import server.agents.runtime.AgentMovementOnlyStepRuntime;
+import server.agents.runtime.AgentRuntimeCleanupService;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentSpawnPlacementRuntime;
@@ -128,7 +130,6 @@ class BotManagerTest {
     @Test
     @SuppressWarnings("unchecked")
     void shouldSkipOwnerGainOfferScanForOwnBotTradeItems() throws Exception {
-        BotManager manager = BotManager.getInstance();
         Character owner = mock(Character.class);
         Character sourceBot = mock(Character.class);
         Character observerBot = mock(Character.class);
@@ -145,7 +146,7 @@ class BotManagerTest {
         bots.put(owner.getId(), List.of(sourceEntry, observerEntry));
 
         try (MockedStatic<AgentOfferService> offers = mockStatic(AgentOfferService.class)) {
-            manager.notifyOwnerGainedTradeItem(owner, tradedEquip, sourceBot);
+            AgentOwnerItemNotificationService.notifyOwnerGainedTradeItem(owner, tradedEquip, sourceBot);
 
             offers.verifyNoInteractions();
         } finally {
@@ -156,7 +157,6 @@ class BotManagerTest {
     @Test
     @SuppressWarnings("unchecked")
     void shouldNotifyBotsForNonOwnBotTradeItems() throws Exception {
-        BotManager manager = BotManager.getInstance();
         Character owner = mock(Character.class);
         Character observerBot = mock(Character.class);
         Character sourcePlayer = mock(Character.class);
@@ -177,7 +177,7 @@ class BotManagerTest {
              MockedStatic<TimerManager> timer = mockStatic(TimerManager.class)) {
             timer.when(TimerManager::getInstance).thenReturn(inlineTimer);
 
-            manager.notifyOwnerGainedTradeItem(owner, tradedEquip, sourcePlayer);
+            AgentOwnerItemNotificationService.notifyOwnerGainedTradeItem(owner, tradedEquip, sourcePlayer);
 
             offers.verify(() -> AgentOfferService.notifyOwnerGainedEquip(observerEntry, observerBot, tradedEquip));
         } finally {
@@ -586,7 +586,6 @@ class BotManagerTest {
     @Test
     @SuppressWarnings("unchecked")
     void shouldCleanBotRuntimeStateWhenLeavingBotControl() throws Exception {
-        BotManager manager = BotManager.getInstance();
         Character owner = mock(Character.class);
         Character bot = mock(Character.class);
         ScheduledFuture<?> task = mock(ScheduledFuture.class);
@@ -612,7 +611,7 @@ class BotManagerTest {
         Map<Integer, List<BotEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
         bots.put(owner.getId(), new CopyOnWriteArrayList<>(List.of(entry)));
         try {
-            assertTrue(manager.cleanupBotRuntimeState(bot));
+            assertTrue(AgentRuntimeCleanupService.cleanupAgentRuntimeState(bot));
 
             assertFalse(bots.containsKey(owner.getId()));
             assertEquals(7, keymap.get(91).getType());
