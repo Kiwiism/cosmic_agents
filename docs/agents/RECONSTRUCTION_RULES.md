@@ -23,6 +23,9 @@ Recent reconstruction notes:
   behind that Agent boundary while future slices move scoring, reservation,
   unequip, recommendation, and auto-equip logic into equipment capability
   classes.
+- Equipment service job/weapon compatibility now calls
+  `AgentWeaponCompatibilityPolicy` directly instead of delegating through the
+  legacy bot optimizer.
 - Inventory/trade tick entry ownership moved fully to
   `server.agents.capabilities.inventory.AgentInventoryTickRuntime`.
   `AgentCommonTickRuntime` and legacy parity tests now call the Agent inventory

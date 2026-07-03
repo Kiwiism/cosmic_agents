@@ -67,10 +67,10 @@ public final class AgentEquipmentService {
     }
 
     public static boolean isWeaponCompatible(Character agent, WeaponType weaponType) {
-        return BotEquipManager.isWeaponCompatible(agent, weaponType);
+        return AgentWeaponCompatibilityPolicy.isWeaponCompatible(agent, weaponType);
     }
 
     public static boolean isMageJob(Job job) {
-        return BotEquipManager.isMageJob(job);
+        return AgentWeaponCompatibilityPolicy.isMageJob(job);
     }
 }
