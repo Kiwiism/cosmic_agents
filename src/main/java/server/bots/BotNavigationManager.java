@@ -1144,31 +1144,8 @@ public final class BotNavigationManager {
                                                                   MapleMap map,
                                                                   Point botPos,
                                                                   AgentNavigationGraph.Edge edge) {
-        if (edge.type != AgentNavigationGraph.EdgeType.CLIMB) {
-            return false;
-        }
-
-        if (edge.launchStepX != 0 && botPos.y != edge.startPoint.y) {
-            Rope rope = findRopeForRegion(map, graph.getRegion(edge.fromRegionId));
-            if (!isTopRopeJumpExitReady(rope, botPos, edge)) {
-                // Rope-exit jump edges are authored from a specific climb height. Launching from
-                // any other Y changes the ballistic arc; climb movement reaches the authored
-                // first climbable pixel before this executes.
-                return false;
-            }
-        }
-
-        AgentNavigationGraph.Region toRegion = graph.getRegion(edge.toRegionId);
-        if (toRegion != null && toRegion.isRopeRegion) {
-            return Math.abs(botPos.y - edge.startPoint.y) <= AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2;
-        }
-
-        if (edge.launchStepX == 0) {
-            Rope rope = findRopeForRegion(map, graph.getRegion(edge.fromRegionId));
-            return rope != null && isTopStepOffExit(rope, botPos, edge);
-        }
-
-        return Math.abs(botPos.y - edge.startPoint.y) <= AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2;
+        return AgentNavigationRopeEdgeService.canExecuteClimbExitFromCurrentPosition(
+                graph, botPos, edge, region -> findRopeForRegion(map, region));
     }
 
     private static boolean isTopRopeJumpExitReady(Rope rope, Point botPos, AgentNavigationGraph.Edge edge) {

@@ -4020,6 +4020,10 @@ Recent reconstruction notes:
 - Rope/climb navigation entry and exit predicates now live in
   `AgentNavigationRopeEdgeService`; `BotNavigationManager` delegates while
   side-effecting climb attach/broadcast behavior remains unchanged.
+- Climb-exit execution readiness now lives in
+  `AgentNavigationRopeEdgeService`; `BotNavigationManager` supplies only the
+  existing region-to-rope lookup so rope-to-rope, top step-off, and rope-jump
+  exit timing stay unchanged.
 - Grind-mode path target clamping now lives in
   `AgentNavigationGrindTargetService`; `BotNavigationManager` delegates with
   the same live grinding flag and raw target fallback behavior.

@@ -91,6 +91,69 @@ class AgentNavigationRopeEdgeServiceTest {
                         0, 0, 0, 0, 300, 100, 240, 100)));
     }
 
+    @Test
+    void climbExitReadinessRejectsNonClimbEdges() {
+        AgentNavigationGraph graph = graph(
+                new AgentNavigationGraph.Region(1, 300, 100, 240, false),
+                new AgentNavigationGraph.Region(2, List.of(
+                        new AgentNavigationGraph.Segment(new Foothold(new Point(300, 100), new Point(360, 100), 2)))));
+        AgentNavigationGraph.Edge walk = edge(1, 2, AgentNavigationGraph.EdgeType.WALK,
+                new Point(300, 100), new Point(360, 100), 0, 0, 0, 300, 100, 240);
+
+        assertFalse(AgentNavigationRopeEdgeService.canExecuteClimbExitFromCurrentPosition(
+                graph, new Point(300, 100), walk, region -> new Rope(300, 100, 240, false)));
+    }
+
+    @Test
+    void climbExitReadinessAllowsRopeToRopeWithinLegacyYWindow() {
+        int jumpY = AgentMovementPhysicsConfig.configuredJumpYThreshold();
+        AgentNavigationGraph.Region fromRope = new AgentNavigationGraph.Region(1, 300, 100, 240, false);
+        AgentNavigationGraph.Region toRope = new AgentNavigationGraph.Region(2, 360, 90, 230, false);
+        AgentNavigationGraph graph = graph(fromRope, toRope);
+        AgentNavigationGraph.Edge ropeToRope = edge(1, 2, AgentNavigationGraph.EdgeType.CLIMB,
+                new Point(300, 100), new Point(360, 90), 0, 0, 1, 300, 100, 240);
+
+        assertTrue(AgentNavigationRopeEdgeService.canExecuteClimbExitFromCurrentPosition(
+                graph, new Point(300, 100), ropeToRope, region -> new Rope(300, 100, 240, false)));
+        assertFalse(AgentNavigationRopeEdgeService.canExecuteClimbExitFromCurrentPosition(
+                graph, new Point(300, 100 + jumpY * 2 + 1), ropeToRope, region -> new Rope(300, 100, 240, false)));
+    }
+
+    @Test
+    void climbExitReadinessAllowsTopStepOffOnlyAtTopExitWindow() {
+        Rope rope = new Rope(300, 100, 240, false);
+        AgentNavigationGraph graph = graph(
+                new AgentNavigationGraph.Region(1, 300, 100, 240, false),
+                new AgentNavigationGraph.Region(2, List.of(
+                        new AgentNavigationGraph.Segment(new Foothold(new Point(300, 98), new Point(360, 98), 2)))));
+        AgentNavigationGraph.Edge topStepOff = edge(1, 2, AgentNavigationGraph.EdgeType.CLIMB,
+                new Point(300, 100), new Point(300, 98), 0, 0, 0, 300, 100, 240);
+
+        assertTrue(AgentNavigationRopeEdgeService.canExecuteClimbExitFromCurrentPosition(
+                graph, new Point(300, 102), topStepOff, region -> rope));
+        assertFalse(AgentNavigationRopeEdgeService.canExecuteClimbExitFromCurrentPosition(
+                graph, new Point(300, 240), topStepOff, region -> rope));
+    }
+
+    @Test
+    void climbExitReadinessRequiresAuthoredRopeJumpStartHeight() {
+        Rope rope = new Rope(300, 100, 240, false);
+        int firstClimbableY = AgentNavigationPhysicsService.firstClimbableY(rope);
+        AgentNavigationGraph graph = graph(
+                new AgentNavigationGraph.Region(1, 300, 100, 240, false),
+                new AgentNavigationGraph.Region(2, List.of(
+                        new AgentNavigationGraph.Segment(new Foothold(new Point(330, 90), new Point(390, 90), 2)))));
+        AgentNavigationGraph.Edge jumpExit = edge(1, 2, AgentNavigationGraph.EdgeType.CLIMB,
+                new Point(300, firstClimbableY), new Point(360, 90), 0, 0, 1, 300, 100, 240);
+
+        assertTrue(AgentNavigationRopeEdgeService.canExecuteClimbExitFromCurrentPosition(
+                graph, new Point(300, firstClimbableY + AgentMovementKinematicsService.climbStepPerTick() + 2),
+                jumpExit, region -> rope));
+        assertFalse(AgentNavigationRopeEdgeService.canExecuteClimbExitFromCurrentPosition(
+                graph, new Point(300, firstClimbableY + AgentMovementKinematicsService.climbStepPerTick() + 3),
+                jumpExit, region -> rope));
+    }
+
     private static AgentNavigationGraph.Edge edge(int fromRegionId,
                                                   int toRegionId,
                                                   AgentNavigationGraph.EdgeType type,
@@ -118,5 +181,19 @@ class AgentNavigationRopeEdgeServiceTest {
                                                   int ropeBottomY) {
         return new AgentNavigationGraph.Edge(fromRegionId, toRegionId, type,
                 start, end, launchMinX, launchMaxX, launchStepX, 0, ropeX, ropeTopY, ropeBottomY, 100);
+    }
+
+    private static AgentNavigationGraph graph(AgentNavigationGraph.Region... regions) {
+        Map<Integer, AgentNavigationGraph.Region> regionsById = new java.util.HashMap<>();
+        for (AgentNavigationGraph.Region region : regions) {
+            regionsById.put(region.id, region);
+        }
+        return new AgentNavigationGraph(100,
+                1,
+                List.of(regions),
+                regionsById,
+                Map.of(),
+                Map.of(),
+                Set.of());
     }
 }

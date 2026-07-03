@@ -13,6 +13,11 @@ public final class AgentNavigationRopeEdgeService {
     private AgentNavigationRopeEdgeService() {
     }
 
+    @FunctionalInterface
+    public interface RopeResolver {
+        Rope findRope(AgentNavigationGraph.Region region);
+    }
+
     public static boolean canGrabRopeAtCurrentPosition(Point botPos, Rope rope) {
         return Math.abs(botPos.x - rope.x()) <= AgentMovementPhysicsConfig.configuredRopeGrabX()
                 && botPos.y >= AgentNavigationPhysicsService.firstClimbableY(rope)
@@ -78,5 +83,36 @@ public final class AgentNavigationRopeEdgeService {
                 && botPos.x == rope.x()
                 && botPos.y >= firstClimbableY
                 && botPos.y <= firstClimbableY + AgentMovementKinematicsService.climbStepPerTick() + 2;
+    }
+
+    public static boolean canExecuteClimbExitFromCurrentPosition(AgentNavigationGraph graph,
+                                                                 Point botPos,
+                                                                 AgentNavigationGraph.Edge edge,
+                                                                 RopeResolver ropeResolver) {
+        if (edge.type != AgentNavigationGraph.EdgeType.CLIMB) {
+            return false;
+        }
+
+        if (edge.launchStepX != 0 && botPos.y != edge.startPoint.y) {
+            Rope rope = ropeResolver.findRope(graph.getRegion(edge.fromRegionId));
+            if (!isTopRopeJumpExitReady(rope, botPos, edge)) {
+                // Rope-exit jump edges are authored from a specific climb height. Launching from
+                // any other Y changes the ballistic arc; climb movement reaches the authored
+                // first climbable pixel before this executes.
+                return false;
+            }
+        }
+
+        AgentNavigationGraph.Region toRegion = graph.getRegion(edge.toRegionId);
+        if (toRegion != null && toRegion.isRopeRegion) {
+            return Math.abs(botPos.y - edge.startPoint.y) <= AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2;
+        }
+
+        if (edge.launchStepX == 0) {
+            Rope rope = ropeResolver.findRope(graph.getRegion(edge.fromRegionId));
+            return rope != null && isTopStepOffExit(rope, botPos, edge);
+        }
+
+        return Math.abs(botPos.y - edge.startPoint.y) <= AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2;
     }
 }
