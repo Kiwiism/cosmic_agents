@@ -6,7 +6,12 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 
 import server.agents.runtime.AgentPerformanceMonitor;
 
+import server.agents.capabilities.movement.AgentClimbMovementPolicy;
+import server.agents.capabilities.movement.AgentClimbMovementService;
+import server.agents.capabilities.movement.AgentJumpActionService;
+import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementProfile;
+import server.agents.capabilities.movement.AgentMovementStateResetService;
 
 import client.Character;
 import constants.game.CharacterStance;
@@ -219,7 +224,7 @@ public final class BotNavigationManager {
         AgentNavigationGraph.Edge edge = reuseCommittedEdge(graph, entry, startRegionId,
                 AgentBotNavigationDebugStateRuntime.navTargetRegionId(entry));
         if (edge == null) {
-            BotMovementManager.clearNavigationState(entry);
+            AgentMovementStateResetService.clearNavigationState(entry);
             return false;
         }
 
@@ -233,7 +238,7 @@ public final class BotNavigationManager {
     }
 
     private static void clearNavigation(BotEntry entry) {
-        BotMovementManager.clearNavigationState(entry);
+        AgentMovementStateResetService.clearNavigationState(entry);
     }
 
     private static AgentMovementTargetSnapshot captureTargetSnapshot(BotEntry entry, Point rawTargetPos) {
@@ -449,7 +454,7 @@ public final class BotNavigationManager {
 
         AgentBotNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
         setEdgeExecutionTarget(entry, edge);
-        BotMovementManager.initiateJump(entry, bot, edge.launchStepX);
+        AgentJumpActionService.initiateJump(entry, bot, edge.launchStepX);
         return new NavigationDirective(rawTargetPos, true);
     }
 
@@ -475,7 +480,7 @@ public final class BotNavigationManager {
 
         setEdgeExecutionTarget(entry, edge);
         BotPhysicsEngine.queueDownJump(entry, bot);
-        BotMovementManager.broadcastMovement(entry);
+        AgentMovementBroadcastService.broadcastMovement(entry);
         return new NavigationDirective(rawTargetPos, true);
     }
 
@@ -530,13 +535,13 @@ public final class BotNavigationManager {
             // physics consume the request on the next tick, just like other input-driven actions.
             AgentBotNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
             BotPhysicsEngine.queueTopRopeEntry(entry, bot, rope, edge.endPoint.y);
-            BotMovementManager.broadcastMovement(entry);
+            AgentMovementBroadcastService.broadcastMovement(entry);
             return new NavigationDirective(rawTargetPos, true);
         }
 
         if (canExecuteGroundRopeJumpEntryFromCurrentPosition(botPos, edge)) {
             AgentBotNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
-            BotMovementManager.initiateRopeJump(entry, bot, edge.launchStepX);
+            AgentJumpActionService.initiateRopeJump(entry, bot, edge.launchStepX);
             return new NavigationDirective(rawTargetPos, true);
         }
 
@@ -558,10 +563,10 @@ public final class BotNavigationManager {
         if (toRegion != null && toRegion.isRopeRegion) {
             // Rope-to-rope: jump to the other rope
             Rope targetRope = findRopeForRegion(bot.getMap(), toRegion);
-            if (targetRope == null || BotMovementManager.sameRope(AgentBotClimbStateRuntime.climbRope(entry), targetRope)) {
+            if (targetRope == null || AgentClimbMovementPolicy.sameRope(AgentBotClimbStateRuntime.climbRope(entry), targetRope)) {
                 return null;
             }
-            BotMovementManager.jumpToRope(entry, bot, edge.launchStepX);
+            AgentClimbMovementService.jumpToRope(entry, bot, edge.launchStepX);
             return new NavigationDirective(rawTargetPos, true);
         }
 
@@ -578,7 +583,7 @@ public final class BotNavigationManager {
         if (isTopRopeJumpExitReady(sourceRope, botPos, edge) && botPos.y != edge.startPoint.y) {
             startClimbing(entry, bot, sourceRope, edge.startPoint.y);
         }
-        BotMovementManager.jumpOffRope(entry, bot, edge.launchStepX);
+        AgentClimbMovementService.jumpOffRope(entry, bot, edge.launchStepX);
         return new NavigationDirective(rawTargetPos, true);
     }
 
@@ -612,7 +617,7 @@ public final class BotNavigationManager {
         AgentBotNavigationDebugStateRuntime.setPortalUseCooldownUntilMs(
                 entry, System.currentTimeMillis() + PORTAL_USE_COOLDOWN_MS);
         clearNavigation(entry);
-        BotMovementManager.resetEntryState(entry);
+        AgentMovementStateResetService.resetEntryState(entry);
         return new NavigationDirective(rawTargetPos, true);
     }
 
@@ -1433,7 +1438,7 @@ public final class BotNavigationManager {
 
     private static void startClimbing(BotEntry entry, Character bot, Rope rope, int climbY) {
         BotPhysicsEngine.attachToRope(entry, bot, rope, climbY);
-        BotMovementManager.broadcastMovement(entry);
+        AgentMovementBroadcastService.broadcastMovement(entry);
     }
 
     private static void setEdgeExecutionTarget(BotEntry entry, AgentNavigationGraph.Edge edge) {

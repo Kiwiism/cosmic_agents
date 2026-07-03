@@ -3024,6 +3024,11 @@ Recent reconstruction notes:
   navigation-facing `jumpOffRope`, `jumpToRope`, `sameRope`,
   `shouldHoldClimbIdle`, and `shouldSnapToClimbTarget` compatibility shims
   remain until BotNavigationManager migrates.
+- BotNavigationManager movement side effects now call Agent movement services
+  directly for navigation-state clear/reset, jump initiation, rope jump,
+  rope-transfer jump, jump-off-rope, same-rope comparison, and movement
+  broadcast. Remaining BotMovementManager references in BotNavigationManager
+  are navigation config constants and comments for later policy extraction.
 - Potion-share low-donor deflection templates now live in
   `AgentDialogueCatalog`; AgentPotionService preserves the same delayed map-chat
   callback and random selection timing while delegating the wording and owner

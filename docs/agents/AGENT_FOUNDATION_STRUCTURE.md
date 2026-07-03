@@ -132,7 +132,9 @@ Capability bins:
   `AgentGroundMovementRuntimeService` owns grounded tick orchestration.
   Dead bot-side grounded, climb, swim, and airborne phase-body clutter has been
   removed; remaining cleanup slices continue to remove temporary navigation and
-  physics seams.
+  physics seams. BotNavigationManager now calls Agent movement services directly
+  for movement side effects, with only movement config constants left for a
+  later navigation-policy extraction.
 - `supplies`
 - `trade`
 - `shop`
