@@ -12,6 +12,7 @@ import server.agents.capabilities.movement.AgentFallbackMovementService;
 import server.agents.capabilities.movement.AgentFootholdIndexService;
 import server.agents.capabilities.movement.AgentGroundMovementPolicy;
 import server.agents.capabilities.movement.AgentGroundMovementService;
+import server.agents.capabilities.movement.AgentJumpActionService;
 import server.agents.capabilities.movement.AgentJumpProbeService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
@@ -850,8 +851,7 @@ public class BotMovementManager {
     }
 
     public static void initiateJump(BotEntry entry, Character bot, int dx) {
-        BotPhysicsEngine.beginGroundJump(entry, bot, resolveAirVelocityX(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry), dx));
-        broadcastMovement(entry);
+        AgentJumpActionService.initiateJump(entry, bot, dx);
     }
 
     private static void initiateFixedArcJump(BotEntry entry, Character bot, int dx) {
@@ -876,16 +876,11 @@ public class BotMovementManager {
     }
 
     public static void initiateRopeJump(BotEntry entry, Character bot, int dx) {
-        BotPhysicsEngine.beginClimbUpJump(entry, bot, resolveAirVelocityX(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry), dx));
-        broadcastMovement(entry);
+        AgentJumpActionService.initiateRopeJump(entry, bot, dx);
     }
 
     private static int resolveAirVelocityX(MapleMap map, AgentMovementProfile profile, int dx) {
-        if (dx == 0) {
-            return 0;
-        }
-        int walkStep = BotPhysicsEngine.walkStep(map, profile);
-        return dx > 0 ? walkStep : -walkStep;
+        return AgentJumpActionService.resolveAirVelocityX(map, profile, dx);
     }
 
     public static void broadcastMovement(BotEntry entry) {

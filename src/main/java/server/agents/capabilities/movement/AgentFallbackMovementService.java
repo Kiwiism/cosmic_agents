@@ -6,7 +6,6 @@ import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 import server.bots.BotPhysicsEngine;
 import server.maps.Foothold;
 import server.maps.MapleMap;
@@ -47,7 +46,7 @@ public final class AgentFallbackMovementService {
                     BotPhysicsEngine.walkStep(map, movementProfile(entry)) * 2);
             if (Math.abs(ropeDx) <= ropeJumpRange
                     && BotPhysicsEngine.canReachRopeFromGround(map, botPos, rope, movementProfile(entry))) {
-                BotMovementManager.initiateRopeJump(entry, bot, ropeDx);
+                AgentJumpActionService.initiateRopeJump(entry, bot, ropeDx);
                 return true;
             }
         }
@@ -58,7 +57,7 @@ public final class AgentFallbackMovementService {
         // Without this, bot stays grounded forever since walking on platforms
         // never closes vertical distance to a swimming target.
         if (shouldJumpUpIntoSwim(entry, botPos, targetPos)) {
-            BotMovementManager.initiateJump(entry, bot, 0);
+            AgentJumpActionService.initiateJump(entry, bot, 0);
             return true;
         }
 
@@ -76,7 +75,7 @@ public final class AgentFallbackMovementService {
         }
 
         if (shouldUseJump(entry, botPos, steeringTarget, stepX)) {
-            BotMovementManager.initiateJump(entry, bot, steeringTarget.x - botPos.x);
+            AgentJumpActionService.initiateJump(entry, bot, steeringTarget.x - botPos.x);
             return true;
         }
 

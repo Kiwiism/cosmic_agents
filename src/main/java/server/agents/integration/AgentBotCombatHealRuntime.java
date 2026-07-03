@@ -1,5 +1,6 @@
 package server.agents.integration;
 
+import server.agents.capabilities.movement.AgentJumpActionService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 
 import client.Character;
@@ -14,7 +15,6 @@ import server.agents.capabilities.combat.AgentCombatSupportPolicy;
 import server.agents.capabilities.combat.AgentCombatTargetSelector;
 import server.agents.runtime.AgentFollowAnchorService;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 import server.combat.CombatFormulaProvider;
 import server.life.Monster;
 
@@ -69,7 +69,7 @@ public final class AgentBotCombatHealRuntime {
             if (anchor != null && anchor != bot && anchor.getMap() == bot.getMap()) {
                 int dx = anchor.getPosition().x - bot.getPosition().x;
                 if (Math.abs(dx) >= config.JUMP_HEAL_LEADER_AHEAD_PX) {
-                    BotMovementManager.initiateJump(entry, bot, dx);
+                    AgentJumpActionService.initiateJump(entry, bot, dx);
                     jumpHealing = true;
                 }
             }

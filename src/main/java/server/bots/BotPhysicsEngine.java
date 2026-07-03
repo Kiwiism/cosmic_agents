@@ -691,7 +691,7 @@ public final class BotPhysicsEngine {
         syncCharacterState(entry);
     }
 
-    static void beginGroundJump(BotEntry entry, Character bot, int airVelX) {
+    public static void beginGroundJump(BotEntry entry, Character bot, int airVelX) {
         AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
         // In swim maps, physics owns horizontal motion — drop any committed
         // airVelX/fixedAirArc the caller passed so swim integrator can steer.
@@ -730,7 +730,7 @@ public final class BotPhysicsEngine {
         launchAirborne(entry, bot, bot.getPosition(), -jumpForcePerTick(AgentBotMovementStateRuntime.movementProfile(entry)), airVelX, false);
     }
 
-    static void beginClimbUpJump(BotEntry entry, Character bot, int airVelX) {
+    public static void beginClimbUpJump(BotEntry entry, Character bot, int airVelX) {
         AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
         launchAirborne(entry, bot, bot.getPosition(), -jumpForcePerTick(AgentBotMovementStateRuntime.movementProfile(entry)), airVelX, true);
     }

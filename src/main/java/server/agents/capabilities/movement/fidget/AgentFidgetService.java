@@ -1,5 +1,6 @@
 package server.agents.capabilities.movement.fidget;
 
+import server.agents.capabilities.movement.AgentJumpActionService;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
@@ -384,7 +385,7 @@ public final class AgentFidgetService {
             AgentBotFidgetStateRuntime.setAirSteerDir(entry, Integer.signum(jumpDx));
         }
 
-        BotMovementManager.initiateJump(entry, bot, jumpDx);
+        AgentJumpActionService.initiateJump(entry, bot, jumpDx);
         AgentBotFidgetStateRuntime.setNextJumpAtMs(entry, now + AgentRandom.randMs(200, 400));
     }
 

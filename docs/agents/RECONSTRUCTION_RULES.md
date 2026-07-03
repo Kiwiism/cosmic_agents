@@ -3794,6 +3794,11 @@ Recent reconstruction notes:
   `AgentJumpProbeService`; `BotMovementManager` keeps temporary compatibility
   wrappers while the underlying `BotPhysicsEngine` implementation migrates in a
   later physics slice. Jump landing and rope reach results are unchanged.
+- Ground and rope jump initiation now lives in `AgentJumpActionService`;
+  fallback movement, fidget jumps, and support-heal jump positioning call the
+  Agent-owned action service directly. `BotMovementManager.initiateJump` and
+  `initiateRopeJump` remain temporary delegates with the same air-velocity and
+  movement-broadcast timing.
 
 Initial reconstruction order:
 
