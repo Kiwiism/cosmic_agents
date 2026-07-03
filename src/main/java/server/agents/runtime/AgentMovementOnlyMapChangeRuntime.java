@@ -3,12 +3,12 @@ package server.agents.runtime;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
+import server.agents.capabilities.movement.AgentFootholdIndexService;
 
 import client.Character;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 import server.bots.BotPhysicsEngine;
 
 public final class AgentMovementOnlyMapChangeRuntime {
@@ -20,7 +20,7 @@ public final class AgentMovementOnlyMapChangeRuntime {
                 entry,
                 agent,
                 new AgentMovementOnlyMapChangeService.Hooks(
-                        BotMovementManager::buildFhIndex,
+                        AgentFootholdIndexService::buildFhIndex,
                         BotPhysicsEngine::findGroundPoint,
                         BotPhysicsEngine::teleportTo,
                         AgentMovementStateResetService::resetEntryStateAfterTeleport,

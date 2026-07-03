@@ -103,6 +103,11 @@ Recent reconstruction notes:
   fidget, airshow, and command-mode callers now clear navigation/transient
   movement state through the Agent service; `BotMovementManager` keeps only
   compatibility delegates.
+- Foothold-index construction moved to
+  `server.agents.capabilities.movement.AgentFootholdIndexService`. Agent
+  spawn-placement and map-change hook bundles no longer call
+  `BotMovementManager.buildFhIndex`; the bot method remains a compatibility
+  delegate for legacy tests and harnesses.
 - Non-legacy Agent config and supply tests now use `AgentRuntimeConfig` and
   `AgentRuntimeRegistry` directly instead of compiling through
   `server.bots.BotManager`; this removed the final compatibility-shell test

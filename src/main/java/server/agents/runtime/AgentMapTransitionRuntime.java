@@ -3,6 +3,7 @@ package server.agents.runtime;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
+import server.agents.capabilities.movement.AgentFootholdIndexService;
 
 import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
@@ -11,7 +12,6 @@ import server.agents.capabilities.shop.AgentShopService;
 import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotPqRuntime;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 import server.bots.BotPhysicsEngine;
 
 import java.util.function.Consumer;
@@ -44,7 +44,7 @@ public final class AgentMapTransitionRuntime {
 
     private static AgentMapTransitionService.GroundingHooks groundingHooks() {
         return new AgentMapTransitionService.GroundingHooks(
-                BotMovementManager::buildFhIndex,
+                AgentFootholdIndexService::buildFhIndex,
                 BotPhysicsEngine::findGroundPoint,
                 BotPhysicsEngine::teleportTo,
                 AgentMovementStateResetService::resetEntryStateAfterTeleport,

@@ -3,6 +3,7 @@ package server.agents.runtime;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
+import server.agents.capabilities.movement.AgentFootholdIndexService;
 
 import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
@@ -12,7 +13,6 @@ import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotTickCadenceStateRuntime;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 import server.bots.BotPhysicsEngine;
 import server.maps.MapleMap;
 
@@ -43,7 +43,7 @@ public final class AgentSpawnPlacementRuntime {
                 (entry, map, mapId) -> AgentBotMapStateRuntime.setMapTracking(
                         entry,
                         mapId,
-                        map != null && map.getFootholds() != null ? BotMovementManager.buildFhIndex(map) : null),
+                        map != null && map.getFootholds() != null ? AgentFootholdIndexService.buildFhIndex(map) : null),
                 (entry, map) -> AgentNavigationGraphService.warmGraphAsync(
                         map,
                         AgentBotMovementStateRuntime.movementProfile(entry)),

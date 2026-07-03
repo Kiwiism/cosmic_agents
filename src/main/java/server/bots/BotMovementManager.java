@@ -9,6 +9,7 @@ import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.movement.AgentClimbMovementPolicy;
 import server.agents.capabilities.movement.AgentFallbackMovementService;
+import server.agents.capabilities.movement.AgentFootholdIndexService;
 import server.agents.capabilities.movement.AgentGroundMovementPolicy;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
@@ -38,7 +39,6 @@ import server.maps.MapleMap;
 import server.maps.Rope;
 
 import java.awt.*;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -910,11 +910,7 @@ public class BotMovementManager {
     }
 
     public static Map<Integer, Foothold> buildFhIndex(MapleMap map) {
-        Map<Integer, Foothold> index = new HashMap<>();
-        for (Foothold foothold : map.getFootholds().getAllFootholds()) {
-            index.put(foothold.getId(), foothold);
-        }
-        return index;
+        return AgentFootholdIndexService.buildFhIndex(map);
     }
 
     private static JumpLanding wrapLanding(BotPhysicsEngine.JumpLanding landing) {
