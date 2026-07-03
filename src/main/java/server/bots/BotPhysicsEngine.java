@@ -7,6 +7,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfile;
+import server.agents.capabilities.movement.AgentGroundTravelState;
 
 import client.Character;
 import constants.game.CharacterStance;
@@ -104,12 +105,9 @@ public final class BotPhysicsEngine {
     public record GroundMotion(int stepX, boolean lostGround) {
     }
 
-    record GroundTravelState(double physX, double hspeed, double carryMs) {
-    }
-
     record GroundStepResult(Point point,
                             Foothold foothold,
-                            GroundTravelState state,
+                            AgentGroundTravelState state,
                             int stepX,
                             int velocityX,
                             boolean lostGround) {
@@ -950,7 +948,7 @@ public final class BotPhysicsEngine {
         Point currentPos = bot.getPosition();
         int desiredDir = AgentBotMovementStateRuntime.moveDirection(entry);
         GroundStepResult step = simulateGroundMotion(map, currentPos, foothold, desiredDir,
-                new GroundTravelState(AgentBotMovementPhysicsStateRuntime.physicsX(entry),
+                new AgentGroundTravelState(AgentBotMovementPhysicsStateRuntime.physicsX(entry),
                         AgentBotMovementPhysicsStateRuntime.horizontalSpeed(entry),
                         AgentBotMovementPhysicsStateRuntime.groundPhysicsCarryMs(entry)),
                 AgentBotMovementStateRuntime.movementProfile(entry));
@@ -982,21 +980,21 @@ public final class BotPhysicsEngine {
         return new GroundMotion(step.stepX(), false);
     }
 
-    static GroundTravelState initialGroundTravelState(Point position) {
-        return new GroundTravelState(position.x, 0.0, 0.0);
+    static AgentGroundTravelState initialGroundTravelState(Point position) {
+        return new AgentGroundTravelState(position.x, 0.0, 0.0);
     }
 
     static GroundStepResult simulateGroundMotion(MapleMap map,
                                                  Point currentPos,
                                                  Foothold foothold,
                                                  int desiredDir,
-                                                 GroundTravelState state,
+                                                 AgentGroundTravelState state,
                                                  AgentMovementProfile profile) {
         if (map == null || currentPos == null || foothold == null || state == null) {
             return new GroundStepResult(currentPos, foothold, state, 0, 0, true);
         }
 
-        GroundTravelState displaced = applyGroundDisplacement(map, foothold, desiredDir, state, profile);
+        AgentGroundTravelState displaced = applyGroundDisplacement(map, foothold, desiredDir, state, profile);
         int newX = (int) Math.round(displaced.physX());
         int stepX = newX - currentPos.x;
         GroundStepPreview preview = previewGroundStep(map, currentPos, foothold, newX);
@@ -1027,7 +1025,7 @@ public final class BotPhysicsEngine {
     static WalkOffLanding simulateWalkOffLanding(MapleMap map,
                                                  Point from,
                                                  int desiredDir,
-                                                 GroundTravelState initialState,
+                                                 AgentGroundTravelState initialState,
                                                  AgentMovementProfile profile) {
         if (map == null || from == null || desiredDir == 0 || initialState == null) {
             return null;
@@ -1040,7 +1038,7 @@ public final class BotPhysicsEngine {
 
         Point cursor = new Point(from);
         Foothold currentFoothold = foothold;
-        GroundTravelState state = initialState;
+        AgentGroundTravelState state = initialState;
         int elapsedMs = 0;
         for (int i = 0; i < 256; i++) {
             GroundStepResult step = simulateGroundMotion(map, cursor, currentFoothold, desiredDir, state, profile);
@@ -1080,7 +1078,7 @@ public final class BotPhysicsEngine {
 
         double landingHSpeed = landingGroundHSpeed(map, landing.foothold(),
                 landing.incomingDeltaX(), landing.incomingDeltaY(), profile);
-        GroundTravelState state = new GroundTravelState(landing.point().x, landingHSpeed, 0.0);
+        AgentGroundTravelState state = new AgentGroundTravelState(landing.point().x, landingHSpeed, 0.0);
         Point cursor = new Point(landing.point());
         Foothold currentFoothold = landing.foothold();
         for (int i = 0; i < ticks; i++) {
@@ -1753,10 +1751,10 @@ public final class BotPhysicsEngine {
         return Math.round(airVelPerTick * (1000f / cfg.TICK_MS));
     }
 
-    private static GroundTravelState applyGroundDisplacement(MapleMap map,
+    private static AgentGroundTravelState applyGroundDisplacement(MapleMap map,
                                                              Foothold foothold,
                                                              int desiredDir,
-                                                             GroundTravelState state,
+                                                             AgentGroundTravelState state,
                                                              AgentMovementProfile profile) {
         GroundStepCounter counter = groundPhysicsSteps(state.carryMs(), map);
         if (counter.steps() == 0) {
@@ -1769,7 +1767,7 @@ public final class BotPhysicsEngine {
             hspeed = applyGroundPhysicsStep(hspeed, foothold, desiredDir, profile);
             physX += hspeed;
         }
-        return new GroundTravelState(physX, hspeed, counter.carryMs());
+        return new AgentGroundTravelState(physX, hspeed, counter.carryMs());
     }
 
     private record GroundStepCounter(int steps, double carryMs) {

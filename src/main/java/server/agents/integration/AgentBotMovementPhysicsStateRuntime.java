@@ -1,6 +1,7 @@
 package server.agents.integration;
 
 import server.bots.BotEntry;
+import server.agents.capabilities.movement.AgentGroundTravelState;
 
 import java.awt.Point;
 
@@ -141,7 +142,7 @@ public final class AgentBotMovementPhysicsStateRuntime {
         entry.setLastGroundFhId(footholdId);
     }
 
-    public static Object groundTravelState(BotEntry entry) {
+    public static AgentGroundTravelState groundTravelState(BotEntry entry) {
         return entry.groundTravelState();
     }
 }

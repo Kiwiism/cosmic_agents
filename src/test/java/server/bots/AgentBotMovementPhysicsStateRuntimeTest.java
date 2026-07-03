@@ -2,6 +2,7 @@ package server.bots;
 
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
+import server.agents.capabilities.movement.AgentGroundTravelState;
 
 import java.awt.Point;
 
@@ -74,8 +75,7 @@ class AgentBotMovementPhysicsStateRuntimeTest {
         entry.hspeed = 3.25;
         entry.groundPhysicsCarryMs = 8.0;
 
-        BotPhysicsEngine.GroundTravelState state =
-                (BotPhysicsEngine.GroundTravelState) AgentBotMovementPhysicsStateRuntime.groundTravelState(entry);
+        AgentGroundTravelState state = AgentBotMovementPhysicsStateRuntime.groundTravelState(entry);
 
         assertEquals(12.5, state.physX());
         assertEquals(3.25, state.hspeed());

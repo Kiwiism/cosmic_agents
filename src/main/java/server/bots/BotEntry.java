@@ -5,6 +5,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.build.AgentBuildService;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
+import server.agents.capabilities.movement.AgentGroundTravelState;
 
 import client.Character;
 import client.inventory.Item;
@@ -132,8 +133,8 @@ public class BotEntry {
         fallPeakPhysY = Double.POSITIVE_INFINITY;
     }
 
-    public Object groundTravelState() {
-        return new BotPhysicsEngine.GroundTravelState(physX, hspeed, groundPhysicsCarryMs);
+    public AgentGroundTravelState groundTravelState() {
+        return new AgentGroundTravelState(physX, hspeed, groundPhysicsCarryMs);
     }
 
     public double horizontalSpeed() {

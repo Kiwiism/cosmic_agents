@@ -144,7 +144,9 @@ Capability bins:
   physics runtime seams for later extraction. Packet-facing movement snapshot
   reads enter through `AgentMovementSnapshotService` and use
   `AgentMovementPacketSnapshot` so broadcast code no longer depends on the bot
-  physics snapshot type.
+  physics snapshot type. Continuous walking integration state is represented as
+  `AgentGroundTravelState` while the old physics implementation continues to
+  supply the same `physX`, `hspeed`, and carry-ms values.
 - `supplies`
 - `trade`
 - `shop`

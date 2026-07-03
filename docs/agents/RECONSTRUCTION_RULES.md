@@ -3916,6 +3916,10 @@ Recent reconstruction notes:
   `AgentMovementSnapshotService` and `AgentMovementPacketSnapshot`; the service
   preserves the legacy `BotPhysicsEngine.movementSnapshot` behavior while
   isolating broadcast packet code from the bot physics snapshot type.
+- Continuous walking ground-travel state now uses Agent-owned
+  `AgentGroundTravelState`. `BotEntry`, the Agent movement physics adapter,
+  and the physics integrator still preserve the exact legacy `physX`, `hspeed`,
+  and carry-ms values.
 
 Initial reconstruction order:
 

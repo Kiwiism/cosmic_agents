@@ -3,7 +3,6 @@ package server.bots;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
-
 import server.agents.runtime.AgentPerformanceMonitor;
 
 import server.agents.capabilities.movement.AgentClimbMovementPolicy;
@@ -742,7 +741,7 @@ public final class BotNavigationManager {
 
         BotPhysicsEngine.WalkOffLanding liveOutcome = BotPhysicsEngine.simulateWalkOffLanding(
                 AgentBotRuntimeIdentityRuntime.botMap(entry), botPos, Integer.signum(edge.launchStepX),
-                (BotPhysicsEngine.GroundTravelState) AgentBotMovementPhysicsStateRuntime.groundTravelState(entry),
+                AgentBotMovementPhysicsStateRuntime.groundTravelState(entry),
                 AgentBotMovementStateRuntime.movementProfile(entry));
         if (matchesDirectionalDrop(edge, graph, liveOutcome)) {
             // Like rope top step-offs, once the continuous-control exit is naturally executable
