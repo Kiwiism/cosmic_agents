@@ -4,6 +4,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationCommittedEdgeService;
 import server.agents.capabilities.navigation.AgentNavigationEdgeReadinessService;
 import server.agents.capabilities.navigation.AgentNavigationGrindTargetService;
+import server.agents.capabilities.navigation.AgentNavigationLaunchWindowService;
 import server.agents.capabilities.navigation.AgentNavigationPhysicsService;
 import server.agents.capabilities.navigation.AgentNavigationPathService;
 import server.agents.capabilities.navigation.AgentNavigationRegionService;
@@ -1184,40 +1185,13 @@ public final class BotNavigationManager {
     static boolean isWithinJumpLaunchWindow(AgentNavigationGraph graph,
                                             Point botPos,
                                             AgentNavigationGraph.Edge edge) {
-        if (botPos == null || edge.type != AgentNavigationGraph.EdgeType.JUMP || !edge.containsLaunchX(botPos.x)) {
-            return false;
-        }
-
-        AgentNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);
-        if (fromRegion == null) {
-            return false;
-        }
-
-        Point expectedLaunchPoint = fromRegion.pointAt(botPos.x);
-        return Math.abs(botPos.y - expectedLaunchPoint.y) <= AgentMovementPhysicsConfig.configuredJumpYThreshold();
+        return AgentNavigationLaunchWindowService.isWithinJumpLaunchWindow(graph, botPos, edge);
     }
 
     static boolean isWithinDropLaunchWindow(AgentNavigationGraph graph,
                                             Point botPos,
                                             AgentNavigationGraph.Edge edge) {
-        if (botPos == null
-                || edge.type != AgentNavigationGraph.EdgeType.DROP
-                || edge.launchStepX != 0
-                || !edge.containsLaunchX(botPos.x)) {
-            return false;
-        }
-
-        if (graph == null) {
-            return Math.abs(botPos.y - edge.startPoint.y) <= AgentMovementPhysicsConfig.configuredJumpYThreshold();
-        }
-
-        AgentNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);
-        if (fromRegion == null || fromRegion.isRopeRegion) {
-            return false;
-        }
-
-        Point expectedLaunchPoint = fromRegion.pointAt(botPos.x);
-        return Math.abs(botPos.y - expectedLaunchPoint.y) <= AgentMovementPhysicsConfig.configuredJumpYThreshold();
+        return AgentNavigationLaunchWindowService.isWithinDropLaunchWindow(graph, botPos, edge);
     }
 
     private static int selectedJumpLaunchX(BotEntry entry,

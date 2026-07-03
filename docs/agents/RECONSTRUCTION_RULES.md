@@ -4003,6 +4003,9 @@ Recent reconstruction notes:
 - Grind-mode path target clamping now lives in
   `AgentNavigationGrindTargetService`; `BotNavigationManager` delegates with
   the same live grinding flag and raw target fallback behavior.
+- Jump/drop navigation launch-window checks now live in
+  `AgentNavigationLaunchWindowService`; `BotNavigationManager` delegates while
+  preserving the null-graph straight-drop fallback.
 
 Initial reconstruction order:
 
