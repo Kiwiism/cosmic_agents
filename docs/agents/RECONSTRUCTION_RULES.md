@@ -3818,6 +3818,11 @@ Recent reconstruction notes:
   detection runtime no longer imports `BotMovementManager`. The same random
   left/right ground jump, navigation-state clear, five-second cooldown, and
   movement broadcast are preserved.
+- Swim phase runtime now enters `AgentSwimMovementService`; the Agent service
+  owns swim timer ticking, swim intent calculation, swim physics dispatch, and
+  movement broadcast. `BotMovementManager.tickSwimming` remains a temporary
+  delegate, and the old private swim intent helper is dead compatibility
+  clutter to remove in a later cleanup slice.
 
 Initial reconstruction order:
 

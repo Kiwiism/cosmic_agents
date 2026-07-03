@@ -14,7 +14,7 @@ public final class AgentMovementPhaseDispatchService {
     }
 
     public static void tickSwimming(BotEntry entry, Point targetPos) {
-        BotMovementManager.tickSwimming(entry, targetPos);
+        AgentSwimMovementService.tickSwimming(entry, targetPos);
     }
 
     public static void tickAirborne(BotEntry entry, Point targetPos) {

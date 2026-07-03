@@ -22,6 +22,7 @@ import server.agents.capabilities.movement.AgentMovementProfileService;
 import server.agents.capabilities.movement.AgentMovementRecoveryService;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.movement.AgentMovementTimers;
+import server.agents.capabilities.movement.AgentSwimMovementService;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
 
 import client.Character;
@@ -437,15 +438,7 @@ public class BotMovementManager {
     }
 
     public static void tickSwimming(BotEntry entry, Point targetPos) {
-        long startedAt = System.nanoTime();
-        try {
-            BotPhysicsEngine.tickMotionTimers(entry);
-            computeSwimIntents(entry, targetPos);
-            BotPhysicsEngine.applySwimMotion(entry);
-            broadcastMovement(entry);
-        } finally {
-            AgentPerformanceMonitor.record("move-swim", System.nanoTime() - startedAt);
-        }
+        AgentSwimMovementService.tickSwimming(entry, targetPos);
     }
 
     /**

@@ -243,6 +243,26 @@ public final class BotPhysicsEngine {
         return AgentMovementPhysicsConfig.configuredRopeGrabX();
     }
 
+    public static int configuredSwimArrivalRadiusPx() {
+        return cfg.SWIM_ARRIVAL_RADIUS_PX;
+    }
+
+    public static int configuredSwimJumpCooldownMs() {
+        return cfg.SWIM_JUMP_COOLDOWN_MS;
+    }
+
+    public static int configuredSwimLevelBandPx() {
+        return cfg.SWIM_LEVEL_BAND_PX;
+    }
+
+    public static int configuredSwimDownBandPx() {
+        return cfg.SWIM_DOWN_BAND_PX;
+    }
+
+    public static int configuredSwimJumpTriggerDyPx() {
+        return cfg.SWIM_JUMP_TRIGGER_DY_PX;
+    }
+
     private static AgentMovementProfile profileOrBase(AgentMovementProfile profile) {
         return profile != null ? profile : AgentMovementProfile.base();
     }
@@ -908,7 +928,7 @@ public final class BotPhysicsEngine {
         syncCharacterState(entry);
     }
 
-    static void tickMotionTimers(BotEntry entry) {
+    public static void tickMotionTimers(BotEntry entry) {
         if (AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry) > 0L) {
             AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry,
                     Math.max(0L, AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry) - cfg.TICK_MS));
@@ -1093,7 +1113,7 @@ public final class BotPhysicsEngine {
      * This matches the real client behavior
      * where SWIMMING physics applies only while airborne underwater.
      */
-    static void applySwimMotion(BotEntry entry) {
+    public static void applySwimMotion(BotEntry entry) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         MapleMap map = bot.getMap();
         Point pos = bot.getPosition();
