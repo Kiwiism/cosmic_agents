@@ -4013,6 +4013,12 @@ Recent reconstruction notes:
 - Navigation edge execution dispatch now lives in
   `AgentNavigationEdgeExecutor`. The bot navigation shell only adapts the
   Agent-owned directive record back to the legacy `NavigationDirective` type.
+- Live navigation target resolution and committed-edge continuation now live
+  in `AgentNavigationTargetService`. `BotNavigationManager.resolveTarget` and
+  `tryExecuteCommittedEdgeAfterGroundMovement` are compatibility delegates
+  that adapt the Agent-owned directive result back to the legacy wrapper type.
+  Directional-drop waypoint matching still reads the legacy walk-off physics
+  result until the physics engine body moves in a later slice.
 - Combat grind-target region scoring, path-cost checks, and sibling occupancy
   checks now use `AgentNavigationRegionService` and
   `AgentNavigationPathService`. Target scoring policy and path-cost behavior

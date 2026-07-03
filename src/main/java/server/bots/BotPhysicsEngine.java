@@ -178,10 +178,10 @@ public final class BotPhysicsEngine {
                                   boolean lostGround) {
     }
 
-    record WalkOffLanding(Point launchPoint,
-                          int launchStepX,
-                          JumpLanding landing,
-                          int travelTimeMs) {
+    public record WalkOffLanding(Point launchPoint,
+                                 int launchStepX,
+                                 JumpLanding landing,
+                                 int travelTimeMs) {
     }
 
     private enum AirCollisionType {
@@ -1015,18 +1015,18 @@ public final class BotPhysicsEngine {
                 stepX, velocityFromDeltaX(displaced.physX() - currentPos.x), false);
     }
 
-    static WalkOffLanding simulateWalkOffLanding(MapleMap map,
-                                                 Point from,
-                                                 int desiredDir,
-                                                 AgentMovementProfile profile) {
+    public static WalkOffLanding simulateWalkOffLanding(MapleMap map,
+                                                        Point from,
+                                                        int desiredDir,
+                                                        AgentMovementProfile profile) {
         return simulateWalkOffLanding(map, from, desiredDir, initialGroundTravelState(from), profile);
     }
 
-    static WalkOffLanding simulateWalkOffLanding(MapleMap map,
-                                                 Point from,
-                                                 int desiredDir,
-                                                 AgentGroundTravelState initialState,
-                                                 AgentMovementProfile profile) {
+    public static WalkOffLanding simulateWalkOffLanding(MapleMap map,
+                                                        Point from,
+                                                        int desiredDir,
+                                                        AgentGroundTravelState initialState,
+                                                        AgentMovementProfile profile) {
         if (map == null || from == null || desiredDir == 0 || initialState == null) {
             return null;
         }
