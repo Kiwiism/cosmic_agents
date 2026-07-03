@@ -2,6 +2,7 @@ package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationCommittedEdgeService;
+import server.agents.capabilities.navigation.AgentNavigationEdgeExecutionStateService;
 import server.agents.capabilities.navigation.AgentNavigationEdgeReadinessService;
 import server.agents.capabilities.navigation.AgentNavigationGrindTargetService;
 import server.agents.capabilities.navigation.AgentNavigationLaunchWindowService;
@@ -359,7 +360,7 @@ public final class BotNavigationManager {
         }
 
         AgentBotNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
-        setEdgeExecutionTarget(entry, edge);
+        AgentNavigationEdgeExecutionStateService.setEdgeExecutionTarget(entry, edge);
         AgentJumpActionService.initiateJump(entry, bot, edge.launchStepX);
         return new NavigationDirective(rawTargetPos, true);
     }
@@ -384,7 +385,7 @@ public final class BotNavigationManager {
             return null;
         }
 
-        setEdgeExecutionTarget(entry, edge);
+        AgentNavigationEdgeExecutionStateService.setEdgeExecutionTarget(entry, edge);
         AgentQueuedMovementActionService.queueDownJump(entry, bot);
         AgentMovementBroadcastService.broadcastMovement(entry);
         return new NavigationDirective(rawTargetPos, true);
@@ -1189,10 +1190,6 @@ public final class BotNavigationManager {
     private static void startClimbing(BotEntry entry, Character bot, Rope rope, int climbY) {
         AgentRopeMovementService.attachToRope(entry, bot, rope, climbY);
         AgentMovementBroadcastService.broadcastMovement(entry);
-    }
-
-    private static void setEdgeExecutionTarget(BotEntry entry, AgentNavigationGraph.Edge edge) {
-        AgentBotNavigationDebugStateRuntime.setNavWaypoint(entry, edge.endPoint, false);
     }
 
     private static Point adjustPathTarget(BotEntry entry,

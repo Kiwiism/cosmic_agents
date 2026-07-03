@@ -4007,6 +4007,10 @@ Recent reconstruction notes:
   `AgentNavigationCommittedEdgeService`. `BotNavigationManager` supplies the
   current climb-exit readiness callback and next-edge search callback so rope
   exit timing and replacement choice stay unchanged.
+- Navigation edge execution target state now lives in
+  `AgentNavigationEdgeExecutionStateService`. Jump and drop execution still
+  happen in the temporary bot navigation shell, but the nav-waypoint state
+  write is Agent-owned.
 - Navigation edge readiness thresholds now live in
   `AgentNavigationEdgeReadinessService`; `BotNavigationManager` delegates while
   execution sequencing remains in the temporary bot navigation shell.

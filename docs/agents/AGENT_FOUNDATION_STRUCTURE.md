@@ -177,6 +177,8 @@ Capability bins:
   `AgentNavigationCommittedEdgeService`; the temporary bot navigation shell
   still supplies current path search, climb-exit readiness, edge-usability,
   and rope-entry callbacks.
+  Navigation edge execution target state lives in
+  `AgentNavigationEdgeExecutionStateService`.
   Edge execution readiness thresholds live in
   `AgentNavigationEdgeReadinessService`.
   Rope/climb edge entry and exit predicates live in
