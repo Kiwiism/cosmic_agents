@@ -2995,6 +2995,9 @@ Recent reconstruction notes:
 - Ground precise-navigation stop-distance and directional-drop edge detection
   now live in `AgentGroundMovementPolicy`; BotMovementManager preserves the same
   compatibility helper and ground action planning inputs.
+- Ground mob-avoidance lane scanning and simulated landing-region checks now
+  live in `AgentMobAvoidanceService`; BotMovementManager preserves the same
+  follow/grind guards and fixed-arc jump decision point.
 - Potion-share low-donor deflection templates now live in
   `AgentDialogueCatalog`; AgentPotionService preserves the same delayed map-chat
   callback and random selection timing while delegating the wording and owner

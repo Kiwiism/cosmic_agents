@@ -126,7 +126,8 @@ Capability bins:
   `AgentSwimMovementService`; airborne runtime lives in
   `AgentAirborneMovementService`; climb runtime lives in
   `AgentClimbMovementService`; grind target shaping lives in
-  `AgentGroundTargetService`. Remaining ground runtime and cleanup slices
+  `AgentGroundTargetService`; mob-avoidance lane scanning and landing checks
+  live in `AgentMobAvoidanceService`. Remaining ground runtime and cleanup slices
   continue to migrate.
 - `supplies`
 - `trade`

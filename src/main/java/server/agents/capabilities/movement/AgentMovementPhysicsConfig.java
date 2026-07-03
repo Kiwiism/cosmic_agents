@@ -16,6 +16,7 @@ public final class AgentMovementPhysicsConfig {
     private static final int STOP_DIST = 30;
     private static final int FOLLOW_DIST = 80;
     private static final int GRIND_EDGE_MARGIN = 40;
+    private static final int MOB_AVOID_LOOKAHEAD_STEPS = 3;
     private static final int JUMP_Y_THRESHOLD = 30;
     private static final int TELEPORT_DIST = 4000;
     private static final int OUT_OF_BOUNDS_TELEPORT_DIST = 600;
@@ -66,6 +67,10 @@ public final class AgentMovementPhysicsConfig {
 
     public static int configuredGrindEdgeMargin() {
         return GRIND_EDGE_MARGIN;
+    }
+
+    public static int configuredMobAvoidLookaheadSteps() {
+        return MOB_AVOID_LOOKAHEAD_STEPS;
     }
 
     public static int configuredJumpYThreshold() {

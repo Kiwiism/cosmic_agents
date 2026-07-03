@@ -6,7 +6,6 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 
 import server.agents.runtime.AgentPerformanceMonitor;
 
-import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.movement.AgentClimbMovementService;
 import server.agents.capabilities.movement.AgentAirborneMovementService;
 import server.agents.capabilities.movement.AgentClimbMovementPolicy;
@@ -20,6 +19,7 @@ import server.agents.capabilities.movement.AgentJumpProbeService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
+import server.agents.capabilities.movement.AgentMobAvoidanceService;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementProfileService;
 import server.agents.capabilities.movement.AgentMovementRecoveryService;
@@ -41,8 +41,6 @@ import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSwimStateRuntime;
-import server.agents.capabilities.combat.data.AgentMobHitboxProvider;
-import server.life.Monster;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Rope;
@@ -611,108 +609,10 @@ public class BotMovementManager {
             }
             return MoveAction.idle();
         }
-        if (shouldJumpToAvoidMob(entry, currentFh, botPos, stepX)) {
+        if (AgentMobAvoidanceService.shouldJumpToAvoidMob(entry, currentFh, botPos, stepX)) {
             return MoveAction.jump(stepX);
         }
         return MoveAction.walk(stepX);
-    }
-
-    private static boolean shouldJumpToAvoidMob(BotEntry entry, Foothold currentFh, Point botPos, int stepX) {
-        if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry) || currentFh == null || botPos == null || stepX == 0) {
-            return false;
-        }
-        if ((!AgentBotModeStateRuntime.following(entry) && !AgentBotModeStateRuntime.grinding(entry))
-                || AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
-                || AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry)) {
-            return false;
-        }
-
-        Monster blockingMob = firstBlockingMobInWalkLane(entry, currentFh, botPos, stepX);
-        if (blockingMob == null) {
-            return false;
-        }
-
-        return simulatedJumpLandsInCurrentRegion(entry, currentFh, botPos, stepX);
-    }
-
-    private static Monster firstBlockingMobInWalkLane(BotEntry entry, Foothold currentFh, Point botPos, int stepX) {
-        MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
-        int direction = Integer.signum(stepX);
-        int lookahead = Math.max(Math.abs(stepX),
-                BotPhysicsEngine.walkStep(map, AgentBotMovementStateRuntime.movementProfile(entry))
-                        * Math.max(1, cfg.MOB_AVOID_LOOKAHEAD_STEPS));
-        int laneEndX = botPos.x + direction * lookahead;
-        Rectangle lane = inclusiveRectangle(
-                Math.min(botPos.x, laneEndX),
-                botPos.y - AgentCombatConfig.cfg.MOB_TOUCH_SWEEP_HEIGHT,
-                Math.max(botPos.x, laneEndX),
-                botPos.y);
-
-        Monster nearest = null;
-        int nearestDistance = Integer.MAX_VALUE;
-        for (Monster mob : map.getAllMonsters()) {
-            if (!mob.isAlive() || !isMobInCurrentGroundRegion(entry, currentFh, mob)) {
-                continue;
-            }
-
-            Rectangle bounds = AgentMobHitboxProvider.getInstance().getMobBounds(mob);
-            if (bounds == null) {
-                bounds = inclusiveRectangle(mob.getPosition().x, mob.getPosition().y, mob.getPosition().x, mob.getPosition().y);
-            }
-            if (!lane.intersects(bounds) && !lane.contains(mob.getPosition())) {
-                continue;
-            }
-
-            int mobEdgeX = direction > 0 ? bounds.x : bounds.x + bounds.width;
-            int distance = Math.max(0, direction > 0 ? mobEdgeX - botPos.x : botPos.x - mobEdgeX);
-            if (distance < nearestDistance) {
-                nearestDistance = distance;
-                nearest = mob;
-            }
-        }
-        return nearest;
-    }
-
-    private static boolean isMobInCurrentGroundRegion(BotEntry entry, Foothold currentFh, Monster mob) {
-        Foothold mobFoothold = BotPhysicsEngine.findGroundFoothold(AgentBotRuntimeIdentityRuntime.botMap(entry), mob.getPosition());
-        if (mobFoothold != null && mobFoothold.getId() == currentFh.getId()) {
-            return true;
-        }
-
-        AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(
-                AgentBotRuntimeIdentityRuntime.botMap(entry), AgentBotMovementStateRuntime.movementProfile(entry));
-        if (graph == null) {
-            return false;
-        }
-
-        int currentRegionId = BotNavigationManager.resolveCurrentRegionId(
-                graph, entry, AgentBotRuntimeIdentityRuntime.botMap(entry), AgentBotRuntimeIdentityRuntime.bot(entry).getPosition());
-        int mobRegionId = BotNavigationManager.resolveTargetRegionId(
-                graph, entry, AgentBotRuntimeIdentityRuntime.botMap(entry), mob.getPosition());
-        return currentRegionId >= 0 && currentRegionId == mobRegionId;
-    }
-
-    private static boolean simulatedJumpLandsInCurrentRegion(BotEntry entry, Foothold currentFh, Point botPos, int stepX) {
-        MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
-        AgentMovementProfile profile = AgentBotMovementStateRuntime.movementProfile(entry);
-        int airVelX = resolveAirVelocityX(map, profile, stepX);
-        JumpLanding landing = simulateJumpLanding(map, botPos, airVelX, profile);
-        if (landing == null || landing.point() == null || landing.foothold() == null) {
-            return false;
-        }
-
-        AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
-        if (graph == null) {
-            return landing.foothold().getId() == currentFh.getId();
-        }
-
-        int currentRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, map, botPos);
-        int landingRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, map, landing.point());
-        return currentRegionId >= 0 && currentRegionId == landingRegionId;
-    }
-
-    private static Rectangle inclusiveRectangle(int left, int top, int right, int bottom) {
-        return new Rectangle(left, top, Math.max(1, right - left + 1), Math.max(1, bottom - top + 1));
     }
 
     public static int resolveGroundStepX(BotEntry entry, Point botPos, Point targetPos, int stopDist, int followDist) {
