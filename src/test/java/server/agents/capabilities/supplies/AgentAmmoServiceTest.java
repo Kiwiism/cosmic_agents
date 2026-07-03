@@ -9,11 +9,10 @@ import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotAmmoRuntime;
+import server.agents.runtime.AgentRuntimeRegistry;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 import testutil.Items;
 
-import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 
@@ -27,8 +26,7 @@ import static org.mockito.Mockito.when;
 class AgentAmmoServiceTest {
     @Test
     @SuppressWarnings("unchecked")
-    void ownerAmmoShareSchedulesThroughAgentAmmoRuntime() throws Exception {
-        BotManager manager = BotManager.getInstance();
+    void ownerAmmoShareSchedulesThroughAgentAmmoRuntime() {
         Character owner = mock(Character.class);
         Character requestingBot = mock(Character.class);
         Character donorBot = ammoBot(22, 100000000, 1000);
@@ -39,7 +37,7 @@ class AgentAmmoServiceTest {
         when(owner.getMapId()).thenReturn(100000000);
         when(owner.getTrade()).thenReturn(null);
 
-        Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
+        Map<Integer, List<BotEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
         bots.put(owner.getId(), List.of(entry, donorEntry));
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks = mockStatic(AgentAttackExecutionProvider.class);
@@ -65,11 +63,5 @@ class AgentAmmoServiceTest {
         when(bot.getMapId()).thenReturn(mapId);
         when(bot.getInventory(InventoryType.USE)).thenReturn(use);
         return bot;
-    }
-
-    private static Field field(Class<?> owner, String name) throws ReflectiveOperationException {
-        Field field = owner.getDeclaredField(name);
-        field.setAccessible(true);
-        return field;
     }
 }

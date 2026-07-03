@@ -63,6 +63,10 @@ Recent reconstruction notes:
   source no longer imports `server.bots.BotManager` or calls
   `BotManager.getInstance()`. BotManager remains as a legacy compatibility
   facade whose methods delegate to Agent runtime/capability modules.
+- Non-legacy Agent config and supply tests now use `AgentRuntimeConfig` and
+  `AgentRuntimeRegistry` directly instead of compiling through
+  `server.bots.BotManager`, reducing the remaining test gate before deleting
+  the BotManager compatibility shell.
 - Manual and spawned registration entry points now enter through
   `AgentInteractionRuntime`, which supplies the Agent tick callback. BotManager
   no longer owns a private tick callback.

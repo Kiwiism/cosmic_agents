@@ -1,13 +1,12 @@
 package server.agents.runtime;
 
 import org.junit.jupiter.api.Test;
-import server.bots.BotManager;
 
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentRuntimeConfigTest {
     @Test
-    void botManagerConfigIsCompatibilityAliasForAgentRuntimeConfig() {
-        assertSame(AgentRuntimeConfig.cfg, BotManager.cfg);
+    void agentRuntimeConfigExposesRuntimeTickSettings() {
+        assertTrue(AgentRuntimeConfig.cfg.AI_TICK_MS > 0);
     }
 }

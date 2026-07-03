@@ -4,10 +4,9 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotPotionRuntime;
+import server.agents.runtime.AgentRuntimeRegistry;
 import server.bots.BotEntry;
-import server.bots.BotManager;
 
-import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 
@@ -22,8 +21,7 @@ import static org.mockito.Mockito.when;
 class AgentPotionServiceTest {
     @Test
     @SuppressWarnings("unchecked")
-    void ownerPotionShareSchedulesThroughAgentPotionRuntime() throws Exception {
-        BotManager manager = BotManager.getInstance();
+    void ownerPotionShareSchedulesThroughAgentPotionRuntime() {
         Character owner = mock(Character.class);
         Character requestingBot = mock(Character.class);
         Character donorBot = mock(Character.class);
@@ -35,7 +33,7 @@ class AgentPotionServiceTest {
         when(owner.getTrade()).thenReturn(null);
         when(donorBot.getMapId()).thenReturn(100000000);
 
-        Map<Integer, List<BotEntry>> bots = (Map<Integer, List<BotEntry>>) field(BotManager.class, "bots").get(manager);
+        Map<Integer, List<BotEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
         bots.put(owner.getId(), List.of(entry, donorEntry));
 
         try (MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class, CALLS_REAL_METHODS);
@@ -51,11 +49,5 @@ class AgentPotionServiceTest {
         } finally {
             bots.remove(owner.getId());
         }
-    }
-
-    private static Field field(Class<?> owner, String name) throws ReflectiveOperationException {
-        Field field = owner.getDeclaredField(name);
-        field.setAccessible(true);
-        return field;
     }
 }
