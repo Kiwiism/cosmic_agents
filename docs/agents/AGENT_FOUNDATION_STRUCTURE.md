@@ -80,6 +80,8 @@ Capability bins:
   and summary formatting live in `AgentEquipmentRecommendationService`;
   fixed-weapon DP solve/score/scan/debug branch helpers live in
   `AgentEquipmentOptimizer`;
+  live equip-plan move execution and post-plan infeasible-equipment cleanup
+  live in `AgentEquipmentPlanExecutor`;
   optimizer result data lives in `AgentEquipmentOptimizerResult`;
   fixed-weapon DP result and score data live in `AgentEquipmentDpResult` and
   `AgentEquipmentScore`;

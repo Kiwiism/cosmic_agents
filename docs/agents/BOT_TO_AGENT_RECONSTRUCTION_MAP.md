@@ -19,6 +19,9 @@ Recent map updates:
   calls in `BotEquipManager` now delegate to `AgentEquipmentOptimizer`; the
   stale private bot-side DP helper copy was deleted. Remaining work: continue
   moving auto-equip execution/debug orchestration out of `BotEquipManager`.
+- Equipment plan application moved from `BotEquipManager` to
+  `AgentEquipmentPlanExecutor`, including the live equip move loop and
+  post-plan infeasible-equipment sweep.
 - Production callers of `server.bots.BotEquipManager` now call
   `server.agents.capabilities.equipment.AgentEquipmentService`. The old bot
   class remains the legacy implementation behind that Agent boundary until

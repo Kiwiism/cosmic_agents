@@ -24,6 +24,9 @@ Recent reconstruction notes:
   Agent-owned class. The stale private bot-side DP solver and local scoring
   helpers were removed after the caller migration compiled and passed focused
   equipment tests.
+- Equipment plan application side effects now live in
+  `AgentEquipmentPlanExecutor`. `BotEquipManager` no longer owns the
+  `InventoryManipulator` move loop or post-plan infeasible-equipment sweep.
 - Production equipment callers now enter through
   `server.agents.capabilities.equipment.AgentEquipmentService`.
   `server.bots.BotEquipManager` remains the legacy optimizer implementation

@@ -7,7 +7,6 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.WeaponType;
-import client.inventory.manipulator.InventoryManipulator;
 import config.YamlConfig;
 import constants.inventory.EquipSlot;
 import org.slf4j.Logger;
@@ -20,6 +19,7 @@ import server.agents.capabilities.equipment.AgentEquipmentDpResult;
 import server.agents.capabilities.equipment.AgentEquipmentOptimizer;
 import server.agents.capabilities.equipment.AgentEquipmentOptimizerHooks;
 import server.agents.capabilities.equipment.AgentEquipmentOptimizerResult;
+import server.agents.capabilities.equipment.AgentEquipmentPlanExecutor;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy.EquipUsefulnessHooks;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy.RelevantStat;
@@ -131,11 +131,11 @@ public class BotEquipManager {
         }
 
         if (bestPicks != null) {
-            applyEquipPlan(bot, ii, eqdInv, currentBySlot, bestPicks, bestWeapon, dpSlots);
+            AgentEquipmentPlanExecutor.applyEquipPlan(bot, currentBySlot, bestPicks, bestWeapon, dpSlots);
             // Sweep currently-equipped items whose reqs aren't met against the bot's now-final
             // stats. This catches gear left equipped via prior trade-debug or stat changes that
             // would otherwise stick because applyEquipPlan only emits moves into occupied slots.
-            unequipInfeasibleEquipped(bot, ii);
+            AgentEquipmentPlanExecutor.unequipInfeasibleEquipped(bot, ii);
         }
 
         if (anyCapHit) {
@@ -524,42 +524,6 @@ public class BotEquipManager {
         return sim;
     }
 
-    /**
-     * Emits equip moves to realize the optimizer's chosen set. Conservative: only emits a
-     * move when the target differs from the currently-equipped item AND the target sits in
-     * the EQUIP inventory (positive position). Manipulator handles displacement of the old
-     * item (and 2H↔shield / overall↔pants auto-unequips). Does NOT proactively unequip
-     * gear when target is empty — that would downgrade without a replacement.
-     */
-    private static void applyEquipPlan(Character bot, ItemInformationProvider ii, Inventory eqdInv,
-                                        Map<Short, Equip> currentBySlot, Map<Short, Equip> picks,
-                                        Equip targetWeapon, List<Short> dpSlots) {
-        // Order: weapon first (handles 2H↔1H eviction), overall before pants, then others.
-        List<Short> order = new ArrayList<>();
-        order.add((short) -11);
-        if (dpSlots.contains((short) -5)) order.add((short) -5);
-        if (dpSlots.contains((short) -6)) order.add((short) -6);
-        for (Short s : dpSlots) {
-            if (s != (short) -5 && s != (short) -6) order.add(s);
-        }
-        Map<Short, Equip> full = new HashMap<>(picks);
-        full.put((short) -11, targetWeapon);
-        for (Short slot : order) {
-            Equip target = full.get(slot);
-            Equip current = currentBySlot.get(slot);
-            if (target == null) continue;
-            if (target == current) continue;
-            short pos = target.getPosition();
-            if (pos <= 0) continue; // already in an EQUIPPED slot — skip to avoid swap loops
-            InventoryManipulator.handleItemMove(bot.getClient(), InventoryType.EQUIP,
-                    pos, slot, (short) 1);
-        }
-    }
-
-    /**
-     * True if the bot meets job/level/fame for {@code equip} but fails only on stat
-     * requirements. Used to seed the weapon lookahead pool.
-     */
     static boolean statOnlyBlocked(Character bot, ItemInformationProvider ii, Equip equip) {
         return AgentEquipmentReservePolicy.statOnlyBlocked(bot, ii, equip);
     }
@@ -707,25 +671,6 @@ public class BotEquipManager {
 
     public static String unequipAll(Character bot) {
         return AgentEquipmentUnequipService.unequipAll(bot);
-    }
-
-    /**
-     * Unequips any currently-worn non-cash item whose reqs no longer hold against the bot's
-     * current totals. Used after {@link #applyEquipPlan} to clean up gear the optimizer chose
-     * to leave bare (e.g. boots whose dex prereq was satisfied only by a now-removed overall).
-     */
-    private static void unequipInfeasibleEquipped(Character bot, ItemInformationProvider ii) {
-        Inventory eqdInv = bot.getInventory(InventoryType.EQUIPPED);
-        List<Short> bad = new ArrayList<>();
-        for (Item it : eqdInv.list()) {
-            if (!(it instanceof Equip e)) continue;
-            if (ii.isCash(e.getItemId())) continue;
-            if (!ii.canWearEquipment(bot, e, e.getPosition())) bad.add(e.getPosition());
-        }
-        if (bad.isEmpty()) return;
-        short[] arr = new short[bad.size()];
-        for (int i = 0; i < arr.length; i++) arr[i] = bad.get(i);
-        unequipSlot(bot, arr);
     }
 
     public static String unequipSlot(Character bot, short[] slots) {
