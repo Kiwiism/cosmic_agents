@@ -1,7 +1,10 @@
 package server.agents.capabilities.navigation;
 
 import org.junit.jupiter.api.Test;
+import client.Character;
+import server.bots.BotEntry;
 import server.maps.Foothold;
+import server.maps.MapleMap;
 
 import java.awt.Point;
 import java.util.List;
@@ -9,6 +12,9 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class AgentNavigationWaypointServiceTest {
     @Test
@@ -54,6 +60,23 @@ class AgentNavigationWaypointServiceTest {
                 AgentNavigationWaypointService.selectStraightDropWaypoint(null, new Point(125, 40), drop));
         assertEquals(new Point(120, 40),
                 AgentNavigationWaypointService.selectStraightDropWaypoint(graphWithRopeRegion(1), new Point(125, 40), drop));
+    }
+
+    @Test
+    void entryBackedJumpLaunchSelectionCachesStableLaunchX() {
+        MapleMap map = new MapleMap(910000010, 0, 0, 910000010, 1.0f);
+        AgentNavigationGraph graph = graphWithGroundRegion(1, 500, 530, 107);
+        Character bot = mock(Character.class);
+        when(bot.getMap()).thenReturn(map);
+        BotEntry entry = new BotEntry(bot, null, null);
+        AgentNavigationGraph.Edge jump = edge(AgentNavigationGraph.EdgeType.JUMP,
+                new Point(520, 107), new Point(480, 36), 516, 523, -8);
+
+        int first = AgentNavigationWaypointService.selectJumpLaunchX(entry, graph, jump);
+        int second = AgentNavigationWaypointService.selectJumpLaunchX(entry, graph, jump);
+
+        assertTrue(first >= 519 && first <= 520);
+        assertEquals(first, second);
     }
 
     private static AgentNavigationGraph graphWithGroundRegion(int regionId, int x1, int x2, int y) {

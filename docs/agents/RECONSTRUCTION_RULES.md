@@ -4014,8 +4014,11 @@ Recent reconstruction notes:
 - Stale `BotNavigationManager.NO_MOVEMENT_WALK_TOLERANCE` was removed after
   no-movement walk policy moved to `AgentNavigationPathService`.
 - Pure jump and straight-drop waypoint selection now lives in
-  `AgentNavigationWaypointService`; entry-backed random jump launch selection
-  and directional-drop physics matching remain in `BotNavigationManager`.
+  `AgentNavigationWaypointService`; directional-drop physics matching remains in
+  `BotNavigationManager`.
+- Entry-backed cached/random jump launch X selection now lives in
+  `AgentNavigationWaypointService`; `BotNavigationManager` delegates through a
+  temporary helper while larger waypoint routing migrates.
 
 Initial reconstruction order:
 
