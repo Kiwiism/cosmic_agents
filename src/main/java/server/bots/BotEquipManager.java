@@ -17,6 +17,7 @@ import server.agents.capabilities.combat.data.AgentAttackDataProvider;
 import server.agents.capabilities.equipment.AgentAutoEquipThrottle;
 import server.agents.capabilities.equipment.AgentEquipRecommendation;
 import server.agents.capabilities.equipment.AgentEquipmentDebugReportFormatter;
+import server.agents.capabilities.equipment.AgentEquipmentDpResult;
 import server.agents.capabilities.equipment.AgentEquipmentOptimizerResult;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy.EquipUsefulnessHooks;
@@ -26,6 +27,7 @@ import server.agents.capabilities.equipment.AgentEquipmentRecommendationPolicy;
 import server.agents.capabilities.equipment.AgentEquipmentRecommendationPolicy.RecommendationScope;
 import server.agents.capabilities.equipment.AgentEquipmentRecommendationService;
 import server.agents.capabilities.equipment.AgentEquipmentScoringPolicy;
+import server.agents.capabilities.equipment.AgentEquipmentScore;
 import server.agents.capabilities.equipment.AgentEquipmentSlotResolver;
 import server.agents.capabilities.equipment.AgentEquipmentStatSnapshot;
 import server.agents.capabilities.equipment.AgentEquipmentUnequipService;
@@ -58,7 +60,6 @@ public class BotEquipManager {
     private static final short[] RING_SLOTS = {-12, -13, -15, -16};
     /** Hard cap on Pareto-frontier size per DP step to bound worst-case runtime. */
     private static final int MAX_PARETO_STATES = 2000;
-    record EquipScore(int damage, int statSum) {}
     record WeaponScoreBreakdown(int rawMax, int preCycleDamage, int cycleMs, int normalizedDamage) {}
 
     /**
@@ -110,11 +111,11 @@ public class BotEquipManager {
         AgentEquipmentStatSnapshot naked = nakedBase(bot, ii, eqdInv);
 
         Map<Short, Equip> bestPicks = null;
-        EquipScore bestScore = null;
+        AgentEquipmentScore bestScore = null;
         Equip bestWeapon = currentWeapon;
         boolean anyCapHit = false;
         for (Equip w : weaponPool) {
-            DpResult r = solveForWeapon(bot, ii, naked, w, dpSlots, currentBySlot, bySlot, mob, reqRel);
+            AgentEquipmentDpResult r = solveForWeapon(bot, ii, naked, w, dpSlots, currentBySlot, bySlot, mob, reqRel);
             if (r == null) continue;
             if (r.paretoCapHit()) anyCapHit = true;
             if (bestScore == null || compareScores(r.score(), bestScore) > 0) {
@@ -125,7 +126,7 @@ public class BotEquipManager {
         }
         // Every weapon failed reqs — fall back to a no-weapon plan so the armor pass still runs.
         if (bestPicks == null && !weaponPool.contains(null)) {
-            DpResult r = solveForWeapon(bot, ii, naked, null, dpSlots, currentBySlot, bySlot, mob, reqRel);
+            AgentEquipmentDpResult r = solveForWeapon(bot, ii, naked, null, dpSlots, currentBySlot, bySlot, mob, reqRel);
             if (r != null) {
                 bestScore = r.score();
                 bestPicks = r.picks();
@@ -218,11 +219,11 @@ public class BotEquipManager {
                 + " luk " + naked.luk() + " watk " + naked.watk() + " mag " + naked.magic()
                 + " acc " + naked.totalAcc());
 
-        record Branch(Equip weapon, DpResult result) {}
+        record Branch(Equip weapon, AgentEquipmentDpResult result) {}
         List<Branch> branches = new ArrayList<>();
         boolean anyCap = false;
         for (Equip w : weaponPool) {
-            DpResult r = solveForWeapon(bot, ii, naked, w, dpSlots, currentBySlot, bySlot, mob, reqRel);
+            AgentEquipmentDpResult r = solveForWeapon(bot, ii, naked, w, dpSlots, currentBySlot, bySlot, mob, reqRel);
             if (r != null) {
                 branches.add(new Branch(w, r));
                 if (r.paretoCapHit()) anyCap = true;
@@ -231,7 +232,7 @@ public class BotEquipManager {
         // Last-resort fallback: every weapon's reqs failed against the bare snapshot. Try a
         // no-weapon branch so we still produce a best-effort armor plan instead of giving up.
         if (branches.isEmpty() && !weaponPool.contains(null)) {
-            DpResult r = solveForWeapon(bot, ii, naked, null, dpSlots, currentBySlot, bySlot, mob, reqRel);
+            AgentEquipmentDpResult r = solveForWeapon(bot, ii, naked, null, dpSlots, currentBySlot, bySlot, mob, reqRel);
             if (r != null) branches.add(new Branch(null, r));
         }
         branches.sort((a, b) -> compareScores(b.result().score(), a.result().score()));
@@ -243,7 +244,7 @@ public class BotEquipManager {
             for (int i = 0; i < show; i++) {
                 Branch b = branches.get(i);
                 String wName = b.weapon() == null ? "(no weapon)" : ii.getName(b.weapon().getItemId());
-                EquipScore s = b.result().score();
+                AgentEquipmentScore s = b.result().score();
                 AgentEquipmentStatSnapshot branchSnap = snapshotForBranch(naked, b.weapon(), b.result().picks());
                 WeaponType wt = b.weapon() != null ? ii.getWeaponType(b.weapon().getItemId()) : null;
                 WeaponScoreBreakdown breakdown = weaponScoreBreakdown(branchSnap, b.weapon(), wt, mob);
@@ -370,18 +371,18 @@ public class BotEquipManager {
         for (Item it : eqdInv.list()) {
             if (it instanceof Equip e && !ii.isCash(e.getItemId())) currentBySlot.put(e.getPosition(), e);
         }
-        record Br(Equip w, DpResult r) {}
+        record Br(Equip w, AgentEquipmentDpResult r) {}
         List<Br> sorted = new ArrayList<>();
         boolean[] reqRel = scanReqRelevantDims(bySlot, ii);
         for (Equip w : weaponPool) {
-            DpResult r = solveForWeapon(bot, ii, naked, w, dpSlots, currentBySlot, bySlot, mob, reqRel);
+            AgentEquipmentDpResult r = solveForWeapon(bot, ii, naked, w, dpSlots, currentBySlot, bySlot, mob, reqRel);
             if (r != null) sorted.add(new Br(w, r));
         }
         sorted.sort((a, b) -> compareScores(b.r().score(), a.r().score()));
         for (int i = 0; i < sorted.size(); i++) {
             Br b = sorted.get(i);
             String wName = b.w() == null ? "(none)" : ii.getName(b.w().getItemId());
-            EquipScore s = b.r().score();
+            AgentEquipmentScore s = b.r().score();
             AgentEquipmentStatSnapshot branchSnap = snapshotForBranch(naked, b.w(), b.r().picks());
             WeaponType wt = b.w() != null ? ii.getWeaponType(b.w().getItemId()) : null;
             WeaponScoreBreakdown breakdown = weaponScoreBreakdown(branchSnap, b.w(), wt, mob);
@@ -467,10 +468,6 @@ public class BotEquipManager {
         return bySlot;
     }
 
-    record DpResult(Map<Short, Equip> picks, EquipScore score, boolean paretoCapHit) {
-        DpResult(Map<Short, Equip> picks, EquipScore score) { this(picks, score, false); }
-    }
-
     /**
      * Runs the autoEquip DP after merging {@code extras} into the receiver's candidate pool.
      * Used by the trade request/offer path so its recommendations match what autoEquip would
@@ -531,10 +528,10 @@ public class BotEquipManager {
                 ? OptimizerHooks.from(ii)
                 : OptimizerHooks.futureFrom(ii, bot);
         Map<Short, Equip> bestPicks = null;
-        EquipScore bestScore = null;
+        AgentEquipmentScore bestScore = null;
         Equip bestWeapon = null;
         for (Equip w : weaponPool) {
-            DpResult r = solveForWeapon(bot, hooks, naked, w, dpSlots, currentBySlot, bySlot, mob, reqRel);
+            AgentEquipmentDpResult r = solveForWeapon(bot, hooks, naked, w, dpSlots, currentBySlot, bySlot, mob, reqRel);
             if (r == null) continue;
             if (bestScore == null || compareScores(r.score(), bestScore) > 0) {
                 bestScore = r.score();
@@ -543,7 +540,7 @@ public class BotEquipManager {
             }
         }
         if (bestPicks == null && !weaponPool.contains(null)) {
-            DpResult r = solveForWeapon(bot, hooks, naked, null, dpSlots, currentBySlot, bySlot, mob, reqRel);
+            AgentEquipmentDpResult r = solveForWeapon(bot, hooks, naked, null, dpSlots, currentBySlot, bySlot, mob, reqRel);
             if (r != null) { bestPicks = r.picks(); bestWeapon = null; }
         }
         return new AgentEquipmentOptimizerResult(bestWeapon, bestPicks != null ? bestPicks : Map.of());
@@ -600,7 +597,7 @@ public class BotEquipManager {
      * "empty" option, then prunes dominated states. Slot-collision constraints (2H↔shield,
      * overall↔pants) enforced inline. Returns the best validated final state, or null.
      */
-    static DpResult solveForWeapon(Character bot, ItemInformationProvider ii,
+    static AgentEquipmentDpResult solveForWeapon(Character bot, ItemInformationProvider ii,
                                             AgentEquipmentStatSnapshot naked, Equip weapon,
                                             List<Short> dpSlots,
                                             Map<Short, Equip> currentBySlot,
@@ -610,7 +607,7 @@ public class BotEquipManager {
                 mob, scanReqRelevantDims(bySlot, ii));
     }
 
-    static DpResult solveForWeapon(Character bot, ItemInformationProvider ii,
+    static AgentEquipmentDpResult solveForWeapon(Character bot, ItemInformationProvider ii,
                                             AgentEquipmentStatSnapshot naked, Equip weapon,
                                             List<Short> dpSlots,
                                             Map<Short, Equip> currentBySlot,
@@ -621,7 +618,7 @@ public class BotEquipManager {
                               currentBySlot, bySlot, mob, reqRel);
     }
 
-    static DpResult solveForWeapon(Character bot, OptimizerHooks hooks,
+    static AgentEquipmentDpResult solveForWeapon(Character bot, OptimizerHooks hooks,
                                             AgentEquipmentStatSnapshot naked, Equip weapon,
                                             List<Short> dpSlots,
                                             Map<Short, Equip> currentBySlot,
@@ -631,7 +628,7 @@ public class BotEquipManager {
                 mob, scanReqRelevantDims(bySlot, hooks));
     }
 
-    private static DpResult solveForWeapon(Character bot, OptimizerHooks hooks,
+    private static AgentEquipmentDpResult solveForWeapon(Character bot, OptimizerHooks hooks,
                                             AgentEquipmentStatSnapshot naked, Equip weapon,
                                             List<Short> dpSlots,
                                             Map<Short, Equip> currentBySlot,
@@ -691,10 +688,10 @@ public class BotEquipManager {
         }
 
         DpNode best = null;
-        EquipScore bestScore = null;
+        AgentEquipmentScore bestScore = null;
         for (DpNode node : frontier) {
             if (!validateReqs(hooks, node, dpSlots, weapon)) continue;
-            EquipScore s = scoreNode(node, weapon, wt, mob);
+            AgentEquipmentScore s = scoreNode(node, weapon, wt, mob);
             if (bestScore == null || compareScores(s, bestScore) > 0) {
                 bestScore = s;
                 best = node;
@@ -710,7 +707,7 @@ public class BotEquipManager {
             for (DpNode node : frontier) {
                 DpNode relaxed = relaxToFeasible(hooks, node, dpSlots, weapon);
                 if (relaxed == null) continue;
-                EquipScore s = scoreNode(relaxed, weapon, wt, mob);
+                AgentEquipmentScore s = scoreNode(relaxed, weapon, wt, mob);
                 if (bestScore == null || compareScores(s, bestScore) > 0) {
                     bestScore = s;
                     best = relaxed;
@@ -723,7 +720,7 @@ public class BotEquipManager {
         for (int i = 0; i < n; i++) {
             if (best.picks[i] != null) picks.put(dpSlots.get(i), best.picks[i]);
         }
-        return new DpResult(picks, bestScore, capHit[0]);
+        return new AgentEquipmentDpResult(picks, bestScore, capHit[0]);
     }
 
     private static DpNode pinSafeSingletonSlots(AgentEquipmentStatSnapshot init, OptimizerHooks hooks,
@@ -955,15 +952,15 @@ public class BotEquipManager {
         return new DpNode(s, hp, mp, statSum, picks);
     }
 
-    private static EquipScore scoreNode(DpNode node, Equip weapon, WeaponType wt, AgentMapDamageProfile mob) {
+    private static AgentEquipmentScore scoreNode(DpNode node, Equip weapon, WeaponType wt, AgentMapDamageProfile mob) {
         if (isMageJob(node.snap.job())) {
-            return new EquipScore(magicScore(node.snap), node.statSum);
+            return new AgentEquipmentScore(magicScore(node.snap), node.statSum);
         }
-        if (wt == null) return new EquipScore(0, node.statSum);
+        if (wt == null) return new AgentEquipmentScore(0, node.statSum);
         int dmg = damageWith(node.snap, null, wt, mob);
         int cycleMs = weapon != null ? weaponCycleMs(weapon.getItemId()) : 0;
         if (cycleMs > 0) dmg = (int) (dmg * 1000.0 / cycleMs);
-        return new EquipScore(dmg, node.statSum);
+        return new AgentEquipmentScore(dmg, node.statSum);
     }
 
     private static AgentEquipmentStatSnapshot snapshotForBranch(AgentEquipmentStatSnapshot naked, Equip weapon, Map<Short, Equip> picks) {
@@ -1213,7 +1210,7 @@ public class BotEquipManager {
         return AgentEquipmentSlotResolver.slotsFromName(name);
     }
 
-    private static int compareScores(EquipScore left, EquipScore right) {
+    private static int compareScores(AgentEquipmentScore left, AgentEquipmentScore right) {
         int cmp = Integer.compare(left.damage(), right.damage());
         if (cmp != 0) return cmp;
         return Integer.compare(left.statSum(), right.statSum());

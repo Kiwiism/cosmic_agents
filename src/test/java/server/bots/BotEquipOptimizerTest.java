@@ -1,6 +1,7 @@
 package server.bots;
 
 import server.agents.capabilities.equipment.AgentMapDamageProfile;
+import server.agents.capabilities.equipment.AgentEquipmentDpResult;
 import server.agents.capabilities.equipment.AgentEquipmentStatSnapshot;
 
 import client.Character;
@@ -76,7 +77,7 @@ class BotEquipOptimizerTest {
         AgentMapDamageProfile mob =
                 new AgentMapDamageProfile(/*wdef*/ 50, /*avoid*/ 30, /*level*/ 55);
 
-        BotEquipManager.DpResult resultW1 = BotEquipManager.solveForWeapon(
+        AgentEquipmentDpResult resultW1 = BotEquipManager.solveForWeapon(
                 bot, hooks, naked, w1, asList(CHAIN_SLOTS), currentBySlot, bySlot, mob);
 
         assertNotNull(resultW1, "DP should find a feasible chain that unlocks W1");
@@ -125,9 +126,9 @@ class BotEquipOptimizerTest {
         AgentMapDamageProfile mob =
                 new AgentMapDamageProfile(50, 30, 55);
 
-        BotEquipManager.DpResult resultW0 = BotEquipManager.solveForWeapon(
+        AgentEquipmentDpResult resultW0 = BotEquipManager.solveForWeapon(
                 bot, hooks, naked, w0, asList(CHAIN_SLOTS), currentBySlot, bySlot, mob);
-        BotEquipManager.DpResult resultW1 = BotEquipManager.solveForWeapon(
+        AgentEquipmentDpResult resultW1 = BotEquipManager.solveForWeapon(
                 bot, hooks, naked, w1, asList(CHAIN_SLOTS), currentBySlot, bySlot, mob);
 
         assertNotNull(resultW0);
@@ -162,7 +163,7 @@ class BotEquipOptimizerTest {
         AgentEquipmentStatSnapshot naked = new AgentEquipmentStatSnapshot(
                 4, 30, 4, 4, 0, 0, 0, 50, 0, Job.BOWMAN);
 
-        BotEquipManager.DpResult result = BotEquipManager.solveForWeapon(
+        AgentEquipmentDpResult result = BotEquipManager.solveForWeapon(
                 bot, hooks, naked, w1, asList(shortChain), currentBySlot, bySlot, null);
 
         assertEquals(null, result,
@@ -236,7 +237,7 @@ class BotEquipOptimizerTest {
         AgentMapDamageProfile mob =
                 new AgentMapDamageProfile(/*wdef*/ 70, /*avoid*/ 0, /*level*/ 40);
 
-        BotEquipManager.DpResult result = BotEquipManager.solveForWeapon(
+        AgentEquipmentDpResult result = BotEquipManager.solveForWeapon(
                 bot, hooks, naked, claw, List.of(S_GLOVE), currentBySlot, bySlot, mob);
 
         assertNotNull(result, "expected a feasible plan");
@@ -298,7 +299,7 @@ class BotEquipOptimizerTest {
         AgentMapDamageProfile mob =
                 new AgentMapDamageProfile(/*wdef*/ 0, /*avoid*/ 0, /*level*/ 50);
 
-        BotEquipManager.DpResult result = BotEquipManager.solveForWeapon(
+        AgentEquipmentDpResult result = BotEquipManager.solveForWeapon(
                 bot, hooks, naked, /*weapon*/ null, List.of(S_HAT), currentBySlot, bySlot, mob);
 
         assertNotNull(result, "expected a feasible plan");

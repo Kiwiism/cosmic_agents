@@ -1,6 +1,7 @@
 package server.bots;
 
 import server.agents.capabilities.equipment.AgentMapDamageProfile;
+import server.agents.capabilities.equipment.AgentEquipmentDpResult;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.equipment.AgentEquipmentStatSnapshot;
 
@@ -941,9 +942,9 @@ class BotEquipManagerTest {
 
         long startedAt = System.nanoTime();
         boolean anyCap = false;
-        BotEquipManager.DpResult best = null;
+        AgentEquipmentDpResult best = null;
         for (Equip weapon : bySlot.get((short) -11)) {
-            BotEquipManager.DpResult result = BotEquipManager.solveForWeapon(
+            AgentEquipmentDpResult result = BotEquipManager.solveForWeapon(
                     bot, f.hooks(), naked, weapon, dpSlots, currentBySlot, bySlot, mob);
             if (result == null) continue;
             anyCap |= result.paretoCapHit();

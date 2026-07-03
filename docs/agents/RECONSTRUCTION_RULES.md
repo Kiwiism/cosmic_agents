@@ -3681,6 +3681,10 @@ Recent reconstruction notes:
   lives in `AgentEquipmentStatSnapshot`; swap math, derived accuracy, and the
   legacy INT-plus-MATK magic behavior are unchanged while `BotEquipManager`
   no longer owns that nested model type.
+- Fixed-weapon equipment DP result and lexicographic score data now live in
+  `AgentEquipmentDpResult` and `AgentEquipmentScore`; DP branch selection,
+  score comparison, and pareto-cap reporting are unchanged while
+  `BotEquipManager` no longer owns those nested model types.
 
 Initial reconstruction order:
 

@@ -78,6 +78,8 @@ Capability bins:
   recommendation filtering, result construction, recommended-item collection,
   and summary formatting live in `AgentEquipmentRecommendationService`;
   optimizer result data lives in `AgentEquipmentOptimizerResult`;
+  fixed-weapon DP result and score data live in `AgentEquipmentDpResult` and
+  `AgentEquipmentScore`;
   optimizer stat snapshot data lives in `AgentEquipmentStatSnapshot`;
   unequip command execution lives in `AgentEquipmentUnequipService`.
 - `supplies`
