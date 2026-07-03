@@ -27,6 +27,7 @@ import server.agents.capabilities.equipment.AgentEquipmentRecommendationPolicy.R
 import server.agents.capabilities.equipment.AgentEquipmentRecommendationService;
 import server.agents.capabilities.equipment.AgentEquipmentScoringPolicy;
 import server.agents.capabilities.equipment.AgentEquipmentSlotResolver;
+import server.agents.capabilities.equipment.AgentEquipmentStatSnapshot;
 import server.agents.capabilities.equipment.AgentEquipmentUnequipService;
 import server.agents.capabilities.equipment.AgentMapDamageProfile;
 import server.agents.capabilities.equipment.AgentWeaponCompatibilityPolicy;
@@ -45,7 +46,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.ToIntFunction;
 
 public class BotEquipManager {
 
@@ -107,7 +107,7 @@ public class BotEquipManager {
         if (currentWeapon != null && !weaponPool.contains(currentWeapon)) weaponPool.add(currentWeapon);
         if (weaponPool.isEmpty()) weaponPool.add(null);
 
-        StatSnapshot naked = nakedBase(bot, ii, eqdInv);
+        AgentEquipmentStatSnapshot naked = nakedBase(bot, ii, eqdInv);
 
         Map<Short, Equip> bestPicks = null;
         EquipScore bestScore = null;
@@ -213,7 +213,7 @@ public class BotEquipManager {
         if (currentWeapon != null && !weaponPool.contains(currentWeapon)) weaponPool.add(currentWeapon);
         if (weaponPool.isEmpty()) weaponPool.add(null);
 
-        StatSnapshot naked = nakedBase(bot, ii, eqdInv);
+        AgentEquipmentStatSnapshot naked = nakedBase(bot, ii, eqdInv);
         out.add("naked: str " + naked.str() + " dex " + naked.dex() + " int " + naked.int_()
                 + " luk " + naked.luk() + " watk " + naked.watk() + " mag " + naked.magic()
                 + " acc " + naked.totalAcc());
@@ -244,7 +244,7 @@ public class BotEquipManager {
                 Branch b = branches.get(i);
                 String wName = b.weapon() == null ? "(no weapon)" : ii.getName(b.weapon().getItemId());
                 EquipScore s = b.result().score();
-                StatSnapshot branchSnap = snapshotForBranch(naked, b.weapon(), b.result().picks());
+                AgentEquipmentStatSnapshot branchSnap = snapshotForBranch(naked, b.weapon(), b.result().picks());
                 WeaponType wt = b.weapon() != null ? ii.getWeaponType(b.weapon().getItemId()) : null;
                 WeaponScoreBreakdown breakdown = weaponScoreBreakdown(branchSnap, b.weapon(), wt, mob);
                 String tag = i == 0 ? "*" : " ";
@@ -303,7 +303,7 @@ public class BotEquipManager {
      */
     @SuppressWarnings("unchecked")
     private static String writeAutoEquipDumpFile(Character bot, ItemInformationProvider ii,
-            Inventory eqpInv, Inventory eqdInv, AgentMapDamageProfile mob, StatSnapshot naked,
+            Inventory eqpInv, Inventory eqdInv, AgentMapDamageProfile mob, AgentEquipmentStatSnapshot naked,
             Map<Short, List<Equip>> bySlot, List<Short> dpSlots, List<Equip> weaponPool,
             List<?> branches, boolean anyCap) {
         java.time.LocalDateTime now = java.time.LocalDateTime.now();
@@ -382,7 +382,7 @@ public class BotEquipManager {
             Br b = sorted.get(i);
             String wName = b.w() == null ? "(none)" : ii.getName(b.w().getItemId());
             EquipScore s = b.r().score();
-            StatSnapshot branchSnap = snapshotForBranch(naked, b.w(), b.r().picks());
+            AgentEquipmentStatSnapshot branchSnap = snapshotForBranch(naked, b.w(), b.r().picks());
             WeaponType wt = b.w() != null ? ii.getWeaponType(b.w().getItemId()) : null;
             WeaponScoreBreakdown breakdown = weaponScoreBreakdown(branchSnap, b.w(), wt, mob);
             sb.append(i == 0 ? "[*] " : "[ ] ").append(wName)
@@ -526,7 +526,7 @@ public class BotEquipManager {
         if (currentWeapon != null && !weaponPool.contains(currentWeapon)) weaponPool.add(currentWeapon);
         if (weaponPool.isEmpty()) weaponPool.add(null);
 
-        StatSnapshot naked = nakedBase(bot, ii, eqdInv);
+        AgentEquipmentStatSnapshot naked = nakedBase(bot, ii, eqdInv);
         OptimizerHooks hooks = scope == RecommendationScope.IMMEDIATE
                 ? OptimizerHooks.from(ii)
                 : OptimizerHooks.futureFrom(ii, bot);
@@ -595,13 +595,13 @@ public class BotEquipManager {
     }
 
     /**
-     * Pareto-DP across {@code dpSlots} for a fixed weapon. Frontier carries (StatSnapshot,
+     * Pareto-DP across {@code dpSlots} for a fixed weapon. Frontier carries (AgentEquipmentStatSnapshot,
      * def, hp, mp, statSum, picks[]); per-slot transition tries each candidate plus an
      * "empty" option, then prunes dominated states. Slot-collision constraints (2H↔shield,
      * overall↔pants) enforced inline. Returns the best validated final state, or null.
      */
     static DpResult solveForWeapon(Character bot, ItemInformationProvider ii,
-                                            StatSnapshot naked, Equip weapon,
+                                            AgentEquipmentStatSnapshot naked, Equip weapon,
                                             List<Short> dpSlots,
                                             Map<Short, Equip> currentBySlot,
                                             Map<Short, List<Equip>> bySlot,
@@ -611,7 +611,7 @@ public class BotEquipManager {
     }
 
     static DpResult solveForWeapon(Character bot, ItemInformationProvider ii,
-                                            StatSnapshot naked, Equip weapon,
+                                            AgentEquipmentStatSnapshot naked, Equip weapon,
                                             List<Short> dpSlots,
                                             Map<Short, Equip> currentBySlot,
                                             Map<Short, List<Equip>> bySlot,
@@ -622,7 +622,7 @@ public class BotEquipManager {
     }
 
     static DpResult solveForWeapon(Character bot, OptimizerHooks hooks,
-                                            StatSnapshot naked, Equip weapon,
+                                            AgentEquipmentStatSnapshot naked, Equip weapon,
                                             List<Short> dpSlots,
                                             Map<Short, Equip> currentBySlot,
                                             Map<Short, List<Equip>> bySlot,
@@ -632,13 +632,13 @@ public class BotEquipManager {
     }
 
     private static DpResult solveForWeapon(Character bot, OptimizerHooks hooks,
-                                            StatSnapshot naked, Equip weapon,
+                                            AgentEquipmentStatSnapshot naked, Equip weapon,
                                             List<Short> dpSlots,
                                             Map<Short, Equip> currentBySlot,
                                             Map<Short, List<Equip>> bySlot,
                                             AgentMapDamageProfile mob,
                                             boolean[] reqRel) {
-        StatSnapshot init = weapon != null ? naked.swap(null, weapon) : naked;
+        AgentEquipmentStatSnapshot init = weapon != null ? naked.swap(null, weapon) : naked;
         boolean is2H = weapon != null && hooks.isTwoHanded(weapon.getItemId());
         WeaponType wt = weapon != null ? hooks.getWeaponType(weapon.getItemId()) : null;
         boolean[] capHit = {false};
@@ -678,7 +678,7 @@ public class BotEquipManager {
                             if (isRingSlot(dpSlots.get(j)) && prev.picks[j] == cand) continue candLoop;
                         }
                     }
-                    StatSnapshot ns = prev.snap.swap(null, cand);
+                    AgentEquipmentStatSnapshot ns = prev.snap.swap(null, cand);
                     int nHp = prev.hp + cand.getHp();
                     int nMp = prev.mp + cand.getMp();
                     int nStat = prev.statSum + usefulStatSum(cand, ns.job());
@@ -726,10 +726,10 @@ public class BotEquipManager {
         return new DpResult(picks, bestScore, capHit[0]);
     }
 
-    private static DpNode pinSafeSingletonSlots(StatSnapshot init, OptimizerHooks hooks,
+    private static DpNode pinSafeSingletonSlots(AgentEquipmentStatSnapshot init, OptimizerHooks hooks,
                                                 List<Short> dpSlots, Map<Short, List<Equip>> bySlot,
                                                 int n) {
-        StatSnapshot snap = init;
+        AgentEquipmentStatSnapshot snap = init;
         int hp = 0, mp = 0, statSum = 0;
         Equip[] picks = new Equip[n];
         for (int i = 0; i < n; i++) {
@@ -758,10 +758,10 @@ public class BotEquipManager {
     }
 
     private static final class DpNode {
-        final StatSnapshot snap;
+        final AgentEquipmentStatSnapshot snap;
         final int hp, mp, statSum;
         final Equip[] picks;
-        DpNode(StatSnapshot snap, int hp, int mp, int statSum, Equip[] picks) {
+        DpNode(AgentEquipmentStatSnapshot snap, int hp, int mp, int statSum, Equip[] picks) {
             this.snap = snap; this.hp = hp; this.mp = mp;
             this.statSum = statSum; this.picks = picks;
         }
@@ -837,7 +837,7 @@ public class BotEquipManager {
 
     private record DpSignature(int damage, int acc, int str, int dex, int int_, int luk) {
         static DpSignature from(DpNode node, WeaponType wt, boolean[] reqRel) {
-            StatSnapshot s = node.snap;
+            AgentEquipmentStatSnapshot s = node.snap;
             return new DpSignature(
                     damagePotential(node, wt),
                     isMageJob(s.job()) ? 0 : s.totalAcc(),
@@ -851,7 +851,7 @@ public class BotEquipManager {
     private static int[] nodeVec(DpNode n, WeaponType wt, boolean[] reqRel) {
         // Preserve score drivers plus stat gates, not every raw stat. statSum is deliberately
         // excluded here; it only breaks ties after exact-signature dedup and final scoring.
-        StatSnapshot s = n.snap;
+        AgentEquipmentStatSnapshot s = n.snap;
         int reqCount = 0;
         if (reqRel != null) for (boolean b : reqRel) if (b) reqCount++;
         int[] vec = new int[2 + reqCount];
@@ -876,11 +876,11 @@ public class BotEquipManager {
     }
 
     private static boolean allPicksMeetReqs(DpNode node, OptimizerHooks hooks, List<Short> dpSlots) {
-        StatSnapshot s = node.snap;
+        AgentEquipmentStatSnapshot s = node.snap;
         for (int i = 0; i < dpSlots.size(); i++) {
             Equip p = node.picks[i];
             if (p == null) continue;
-            StatSnapshot withoutSelf = s.swap(p, null);
+            AgentEquipmentStatSnapshot withoutSelf = s.swap(p, null);
             if (!hooks.meetsReqs(p, withoutSelf.job(), withoutSelf.level(),
                     withoutSelf.str(), withoutSelf.dex(), withoutSelf.int_(),
                     withoutSelf.luk(), withoutSelf.fame())) {
@@ -892,14 +892,14 @@ public class BotEquipManager {
 
     private static boolean validateReqs(OptimizerHooks hooks, DpNode node,
                                          List<Short> dpSlots, Equip weapon) {
-        StatSnapshot s = node.snap;
+        AgentEquipmentStatSnapshot s = node.snap;
         // Equip-order constraint: each item's reqs must be satisfied by the stats present
         // BEFORE that item is worn — an item's own contribution cannot count toward its own
         // prereq. So check each pick (and the weapon) against the snapshot with that pick's
         // stats removed. If every pick passes its without-self check, a valid wear order
         // exists (equip the highest-margin items last).
         if (weapon != null) {
-            StatSnapshot withoutSelf = s.swap(weapon, null);
+            AgentEquipmentStatSnapshot withoutSelf = s.swap(weapon, null);
             if (!hooks.meetsReqs(weapon, withoutSelf.job(), withoutSelf.level(),
                     withoutSelf.str(), withoutSelf.dex(), withoutSelf.int_(),
                     withoutSelf.luk(), withoutSelf.fame())) return false;
@@ -907,7 +907,7 @@ public class BotEquipManager {
         for (int i = 0; i < dpSlots.size(); i++) {
             Equip p = node.picks[i];
             if (p == null) continue;
-            StatSnapshot withoutSelf = s.swap(p, null);
+            AgentEquipmentStatSnapshot withoutSelf = s.swap(p, null);
             if (!hooks.meetsReqs(p, withoutSelf.job(), withoutSelf.level(),
                     withoutSelf.str(), withoutSelf.dex(), withoutSelf.int_(),
                     withoutSelf.luk(), withoutSelf.fame())) return false;
@@ -922,7 +922,7 @@ public class BotEquipManager {
      */
     private static DpNode relaxToFeasible(OptimizerHooks hooks, DpNode node,
                                            List<Short> dpSlots, Equip weapon) {
-        StatSnapshot s = node.snap;
+        AgentEquipmentStatSnapshot s = node.snap;
         int hp = node.hp, mp = node.mp, statSum = node.statSum;
         Equip[] picks = node.picks.clone();
         boolean changed = true;
@@ -933,7 +933,7 @@ public class BotEquipManager {
                 if (p == null) continue;
                 // Equip-order: check p's reqs against the snapshot with p removed (an item's
                 // own stats can't satisfy its own req).
-                StatSnapshot withoutSelf = s.swap(p, null);
+                AgentEquipmentStatSnapshot withoutSelf = s.swap(p, null);
                 if (!hooks.meetsReqs(p, withoutSelf.job(), withoutSelf.level(),
                         withoutSelf.str(), withoutSelf.dex(), withoutSelf.int_(),
                         withoutSelf.luk(), withoutSelf.fame())) {
@@ -947,7 +947,7 @@ public class BotEquipManager {
             }
         }
         if (weapon != null) {
-            StatSnapshot withoutWeapon = s.swap(weapon, null);
+            AgentEquipmentStatSnapshot withoutWeapon = s.swap(weapon, null);
             if (!hooks.meetsReqs(weapon, withoutWeapon.job(), withoutWeapon.level(),
                     withoutWeapon.str(), withoutWeapon.dex(), withoutWeapon.int_(),
                     withoutWeapon.luk(), withoutWeapon.fame())) return null;
@@ -966,8 +966,8 @@ public class BotEquipManager {
         return new EquipScore(dmg, node.statSum);
     }
 
-    private static StatSnapshot snapshotForBranch(StatSnapshot naked, Equip weapon, Map<Short, Equip> picks) {
-        StatSnapshot snap = weapon != null ? naked.swap(null, weapon) : naked;
+    private static AgentEquipmentStatSnapshot snapshotForBranch(AgentEquipmentStatSnapshot naked, Equip weapon, Map<Short, Equip> picks) {
+        AgentEquipmentStatSnapshot snap = weapon != null ? naked.swap(null, weapon) : naked;
         for (Equip pick : picks.values()) {
             if (pick != null) {
                 snap = snap.swap(null, pick);
@@ -976,7 +976,7 @@ public class BotEquipManager {
         return snap;
     }
 
-    private static WeaponScoreBreakdown weaponScoreBreakdown(StatSnapshot sim, Equip weapon, WeaponType wt,
+    private static WeaponScoreBreakdown weaponScoreBreakdown(AgentEquipmentStatSnapshot sim, Equip weapon, WeaponType wt,
                                                              AgentMapDamageProfile mob) {
         if (isMageJob(sim.job()) || wt == null) {
             return new WeaponScoreBreakdown(0, 0, 0, 0);
@@ -992,8 +992,8 @@ public class BotEquipManager {
     }
 
     /** Naked stat snapshot: bot totals minus all currently-equipped non-cash gear. */
-    private static StatSnapshot nakedBase(Character bot, ItemInformationProvider ii, Inventory eqdInv) {
-        StatSnapshot sim = StatSnapshot.of(bot);
+    private static AgentEquipmentStatSnapshot nakedBase(Character bot, ItemInformationProvider ii, Inventory eqdInv) {
+        AgentEquipmentStatSnapshot sim = AgentEquipmentStatSnapshot.of(bot);
         for (Item it : eqdInv.list()) {
             if (it instanceof Equip e && !ii.isCash(e.getItemId())) sim = sim.swap(e, null);
         }
@@ -1172,7 +1172,7 @@ public class BotEquipManager {
     }
 
     private static boolean meetsReqsNaked(Character bot, ItemInformationProvider ii,
-                                          StatSnapshot naked, Equip equip) {
+                                          AgentEquipmentStatSnapshot naked, Equip equip) {
         return ii.meetsEquipRequirements(equip, bot.getJob(), bot.getLevel(),
                 naked.str(), naked.dex(), naked.int_(), naked.luk(), bot.getFame());
     }
@@ -1225,7 +1225,7 @@ public class BotEquipManager {
      * {@code max(1, uniform[min,max] - wdef)} where min ≈ max/2 (low-mastery proxy). Falls back
      * to raw max when no map context (town, recommendations from trade).
      */
-    private static int damageWith(StatSnapshot sim, ItemInformationProvider ii, WeaponType wtype,
+    private static int damageWith(AgentEquipmentStatSnapshot sim, ItemInformationProvider ii, WeaponType wtype,
                                    AgentMapDamageProfile mobProfile) {
         int rawMax = rawPhysicalMax(sim, wtype);
         if (rawMax <= 0) return 0;
@@ -1244,7 +1244,7 @@ public class BotEquipManager {
         return Math.max(1, (int) Math.round(expectedAfterDef * hitChance * 1000.0));
     }
 
-    private static int rawPhysicalMax(StatSnapshot sim, WeaponType wtype) {
+    private static int rawPhysicalMax(AgentEquipmentStatSnapshot sim, WeaponType wtype) {
         if (wtype == null) return 0;
         WeaponType effective = wtype;
         if (sim.job() != null && sim.job().isA(Job.THIEF) && effective == WeaponType.DAGGER_OTHER) {
@@ -1311,7 +1311,7 @@ public class BotEquipManager {
         return AgentEquipmentScoringPolicy.usefulStatSum(e, job);
     }
 
-    private static int magicScore(StatSnapshot sim) {
+    private static int magicScore(AgentEquipmentStatSnapshot sim) {
         // Weights INT and MAGIC almost equally — INT*1.1 nudges main-stat ties toward INT
         // (matches v83 mage growth where INT scales magic damage and unlocks better gear).
         return (int) Math.round(sim.int_() * 1.1d) + sim.magic();
@@ -1361,44 +1361,6 @@ public class BotEquipManager {
     }
 
     // ---- helper records / pruning ------------------------------------------------------
-
-    /**
-     * Snapshot of bot totals plus job/level/fame for non-mutating wearability checks.
-     * {@code flatAcc} = total accuracy minus its derived (dex/luk) component, so {@link #swap}
-     * can recompute total accuracy after stat changes without re-reading the live bot state.
-     */
-    record StatSnapshot(int str, int dex, int int_, int luk, int watk, int magic, int flatAcc,
-                                int level, int fame, Job job) {
-        static StatSnapshot of(Character bot) {
-            int totalAcc = CombatFormulaProvider.getInstance().getTotalAccuracy(bot);
-            int derived = (int) Math.floor(bot.getTotalDex() * 0.8d + bot.getTotalLuk() * 0.5d);
-            int flatAcc = Math.max(0, totalAcc - Math.max(0, derived));
-            return new StatSnapshot(bot.getTotalStr(), bot.getTotalDex(), bot.getTotalInt(),
-                    bot.getTotalLuk(), bot.getTotalWatk(), bot.getTotalMagic(), flatAcc,
-                    bot.getLevel(), bot.getFame(), bot.getJob());
-        }
-
-        StatSnapshot swap(Equip removed, Equip added) {
-            return new StatSnapshot(
-                    str + d(added, removed, e -> (int) e.getStr()),
-                    dex + d(added, removed, e -> (int) e.getDex()),
-                    int_ + d(added, removed, e -> (int) e.getInt()),
-                    luk + d(added, removed, e -> (int) e.getLuk()),
-                    watk + d(added, removed, e -> (int) e.getWatk()),
-                    magic + d(added, removed, e -> (int) e.getInt()) + d(added, removed, e -> (int) e.getMatk()),
-                    flatAcc + d(added, removed, e -> (int) e.getAcc()),
-                    level, fame, job);
-        }
-
-        int totalAcc() {
-            int derived = (int) Math.floor(dex * 0.8d + luk * 0.5d);
-            return Math.max(0, derived + flatAcc);
-        }
-
-        private static int d(Equip a, Equip r, ToIntFunction<Equip> g) {
-            return (a != null ? g.applyAsInt(a) : 0) - (r != null ? g.applyAsInt(r) : 0);
-        }
-    }
 
     /**
      * Drops items strictly dominated by another in {@code items} (every relevant stat ≤,
@@ -1618,7 +1580,7 @@ public class BotEquipManager {
         };
     }
 
-    private static int statByIdx(StatSnapshot s, int idx) {
+    private static int statByIdx(AgentEquipmentStatSnapshot s, int idx) {
         return switch (idx) {
             case 0 -> s.str();
             case 1 -> s.dex();

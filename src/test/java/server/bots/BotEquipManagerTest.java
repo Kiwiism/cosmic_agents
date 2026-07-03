@@ -2,6 +2,7 @@ package server.bots;
 
 import server.agents.capabilities.equipment.AgentMapDamageProfile;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
+import server.agents.capabilities.equipment.AgentEquipmentStatSnapshot;
 
 import client.Character;
 import client.Job;
@@ -934,7 +935,7 @@ class BotEquipManagerTest {
                 (short) -9, oldRaggedyCape,
                 (short) -4, sapphireEarrings,
                 (short) -49, medal);
-        BotEquipManager.StatSnapshot naked = new BotEquipManager.StatSnapshot(
+        AgentEquipmentStatSnapshot naked = new AgentEquipmentStatSnapshot(
                 4, 35, 4, 227, 21, 24, 25, 50, 2, Job.ASSASSIN);
         AgentMapDamageProfile mob = new AgentMapDamageProfile(120, 16, 41);
 

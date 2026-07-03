@@ -1,6 +1,7 @@
 package server.bots;
 
 import server.agents.capabilities.equipment.AgentMapDamageProfile;
+import server.agents.capabilities.equipment.AgentEquipmentStatSnapshot;
 
 import client.Character;
 import client.Job;
@@ -67,7 +68,7 @@ class BotEquipOptimizerTest {
         Map<Short, Equip> currentBySlot = new HashMap<>();
         currentBySlot.put((short) -11, w0);
 
-        BotEquipManager.StatSnapshot naked = new BotEquipManager.StatSnapshot(
+        AgentEquipmentStatSnapshot naked = new AgentEquipmentStatSnapshot(
                 /*str*/ 4, /*dex*/ 30, /*int_*/ 4, /*luk*/ 4,
                 /*watk*/ 0, /*magic*/ 0, /*flatAcc*/ 0,
                 /*level*/ 50, /*fame*/ 0, Job.BOWMAN);
@@ -119,7 +120,7 @@ class BotEquipOptimizerTest {
         Map<Short, Equip> currentBySlot = new HashMap<>();
         currentBySlot.put((short) -11, w0);
 
-        BotEquipManager.StatSnapshot naked = new BotEquipManager.StatSnapshot(
+        AgentEquipmentStatSnapshot naked = new AgentEquipmentStatSnapshot(
                 4, 30, 4, 4, 0, 0, 0, 50, 0, Job.BOWMAN);
         AgentMapDamageProfile mob =
                 new AgentMapDamageProfile(50, 30, 55);
@@ -158,7 +159,7 @@ class BotEquipOptimizerTest {
         BotEquipManager.OptimizerHooks hooks = bowHooks(reqDexByItem);
         Map<Short, Equip> currentBySlot = new HashMap<>();
 
-        BotEquipManager.StatSnapshot naked = new BotEquipManager.StatSnapshot(
+        AgentEquipmentStatSnapshot naked = new AgentEquipmentStatSnapshot(
                 4, 30, 4, 4, 0, 0, 0, 50, 0, Job.BOWMAN);
 
         BotEquipManager.DpResult result = BotEquipManager.solveForWeapon(
@@ -228,7 +229,7 @@ class BotEquipOptimizerTest {
         Map<Short, List<Equip>> bySlot = new LinkedHashMap<>();
         bySlot.put(S_GLOVE, List.of(arbion, pwg, redMarker));
 
-        BotEquipManager.StatSnapshot naked = new BotEquipManager.StatSnapshot(
+        AgentEquipmentStatSnapshot naked = new AgentEquipmentStatSnapshot(
                 /*str*/ 4, /*dex*/ 50, /*int_*/ 4, /*luk*/ 152,
                 /*watk*/ 0, /*magic*/ 0, /*flatAcc*/ 0,
                 /*level*/ 38, /*fame*/ 0, Job.ASSASSIN);
@@ -290,7 +291,7 @@ class BotEquipOptimizerTest {
         Map<Short, List<Equip>> bySlot = new LinkedHashMap<>();
         bySlot.put(S_HAT, List.of(guiltian, matty));
 
-        BotEquipManager.StatSnapshot naked = new BotEquipManager.StatSnapshot(
+        AgentEquipmentStatSnapshot naked = new AgentEquipmentStatSnapshot(
                 /*str*/ 4, /*dex*/ 4, /*int_*/ 200, /*luk*/ 42,
                 /*watk*/ 0, /*magic*/ 200, /*flatAcc*/ 0,
                 /*level*/ 46, /*fame*/ 0, Job.CLERIC);

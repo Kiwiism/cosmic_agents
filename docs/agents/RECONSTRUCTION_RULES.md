@@ -3677,6 +3677,10 @@ Recent reconstruction notes:
   `AgentEquipmentOptimizerResult`; `BotEquipManager.runOptimizerWithExtras`
   remains the temporary DP execution seam but no longer exports a bot-owned
   nested result record.
+- The optimizer stat snapshot used for non-mutating wearability checks now
+  lives in `AgentEquipmentStatSnapshot`; swap math, derived accuracy, and the
+  legacy INT-plus-MATK magic behavior are unchanged while `BotEquipManager`
+  no longer owns that nested model type.
 
 Initial reconstruction order:
 
