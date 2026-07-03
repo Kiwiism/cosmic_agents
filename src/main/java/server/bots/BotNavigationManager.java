@@ -9,6 +9,7 @@ import server.agents.capabilities.navigation.AgentNavigationPhysicsService;
 import server.agents.capabilities.navigation.AgentNavigationPathService;
 import server.agents.capabilities.navigation.AgentNavigationRegionService;
 import server.agents.capabilities.navigation.AgentNavigationRopeEdgeService;
+import server.agents.capabilities.navigation.AgentNavigationWaypointService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.runtime.AgentPerformanceMonitor;
@@ -674,13 +675,14 @@ public final class BotNavigationManager {
                                             BotEntry entry,
                                             Point botPos,
                                             AgentNavigationGraph.Edge edge) {
+        if (entry == null) {
+            return AgentNavigationWaypointService.selectJumpWaypoint(graph, botPos, edge);
+        }
         AgentNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);
         if (fromRegion == null || fromRegion.isRopeRegion) {
             return new Point(edge.startPoint);
         }
-        int targetX = entry == null
-                ? edge.containsLaunchX(botPos.x) ? botPos.x : botPos.x < edge.launchMinX ? edge.launchMinX : edge.launchMaxX
-                : selectedJumpLaunchX(entry, graph, edge);
+        int targetX = selectedJumpLaunchX(entry, graph, edge);
         return fromRegion.pointAt(targetX);
     }
 
@@ -728,14 +730,7 @@ public final class BotNavigationManager {
             return new Point(edge.endPoint);
         }
         if (edge.launchStepX == 0) {
-            AgentNavigationGraph.Region fromRegion = graph != null ? graph.getRegion(edge.fromRegionId) : null;
-            if (fromRegion == null || fromRegion.isRopeRegion) {
-                return new Point(edge.startPoint);
-            }
-            int targetX = edge.containsLaunchX(botPos.x)
-                    ? botPos.x
-                    : botPos.x < edge.launchMinX ? edge.launchMinX : edge.launchMaxX;
-            return fromRegion.pointAt(targetX);
+            return AgentNavigationWaypointService.selectStraightDropWaypoint(graph, botPos, edge);
         }
 
         if (hasReachedDirectionalDropRunway(botPos, edge)) {

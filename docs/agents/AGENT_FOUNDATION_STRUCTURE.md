@@ -182,6 +182,8 @@ Capability bins:
   `AgentNavigationGrindTargetService`.
   Jump/drop launch-window and directional-drop runway checks live in
   `AgentNavigationLaunchWindowService`.
+  Pure jump and straight-drop waypoint selection lives in
+  `AgentNavigationWaypointService`.
   Dead bot-only landing-region helper code has been removed rather than moved.
 - `supplies`
 - `trade`
