@@ -1,6 +1,7 @@
 package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
@@ -106,7 +107,7 @@ class AgentInventoryLegacyParityTest {
         when(bot.getTrade()).thenReturn(trade);
 
         AgentInventoryTickRuntime.tickManualTrade(entry, bot);
-        AgentBotManualTradeStateRuntime.setTimeoutMs(entry, BotMovementManager.cfg.TICK_MS);
+        AgentBotManualTradeStateRuntime.setTimeoutMs(entry, AgentMovementPhysicsConfig.configuredMovementTickMs());
 
         try (MockedStatic<Trade> trades = mockStatic(Trade.class)) {
             AgentInventoryTickRuntime.tickManualTrade(entry, bot);

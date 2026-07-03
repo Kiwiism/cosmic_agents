@@ -3,6 +3,7 @@ package server.bots;
 import server.agents.runtime.AgentRuntimeConfig;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
@@ -151,7 +152,7 @@ final class BotMovementSimulationLab {
 
     void step(int ticks) {
         for (int tick = 0; tick < ticks; tick++) {
-            elapsedMs += BotMovementManager.cfg.TICK_MS;
+            elapsedMs += AgentMovementPhysicsConfig.configuredMovementTickMs();
 
             List<PendingStep> pending = new ArrayList<>(bots.size());
             for (Map.Entry<String, BotEntry> botEntry : bots.entrySet()) {
@@ -182,7 +183,7 @@ final class BotMovementSimulationLab {
 
     void stepRaw(String botName, Point targetPos, boolean runAiTick) {
         BotEntry entry = requireBot(botName);
-        elapsedMs += BotMovementManager.cfg.TICK_MS;
+        elapsedMs += AgentMovementPhysicsConfig.configuredMovementTickMs();
         entry.lastTickWasAi = runAiTick;
         entry.lastTickAtMs = elapsedMs;
 
@@ -233,7 +234,7 @@ final class BotMovementSimulationLab {
     private void refreshFormation(Character owner) {
         List<BotEntry> followers = followersOf(owner);
         AgentFormationService.FormationState formation = followers.isEmpty()
-                ? AgentFormationService.defaultStagger(AgentRuntimeConfig.cfg.FOLLOW_STAGGER, BotMovementManager.cfg.FOLLOW_Y_CAP)
+                ? AgentFormationService.defaultStagger(AgentRuntimeConfig.cfg.FOLLOW_STAGGER, AgentMovementPhysicsConfig.configuredFollowYCap())
                 : AgentFormationRuntime.formationStateFor(followers.getFirst());
         AgentFormationRuntime.setFormationState(owner, formation.type(), formation.px(), formation.snapRange(), followers);
     }
@@ -262,7 +263,7 @@ final class BotMovementSimulationLab {
     }
 
     private static boolean consumeAiTick(BotEntry entry) {
-        entry.aiTickAccumulatorMs += BotMovementManager.cfg.TICK_MS;
+        entry.aiTickAccumulatorMs += AgentMovementPhysicsConfig.configuredMovementTickMs();
         if (entry.aiTickAccumulatorMs < AgentRuntimeConfig.cfg.AI_TICK_MS) {
             return false;
         }

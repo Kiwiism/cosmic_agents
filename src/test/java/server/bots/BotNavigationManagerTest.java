@@ -1,6 +1,7 @@
 package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationCommittedEdgeService;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.navigation.AgentNavigationEdgeReadinessService;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationTargetService;
@@ -603,7 +604,7 @@ class BotNavigationManagerTest {
         assertFalse(path.isEmpty());
         assertEquals(AgentNavigationGraph.EdgeType.CLIMB, path.getFirst().type);
         assertEquals(targetRegionId, path.getFirst().toRegionId);
-        assertTrue(path.getFirst().endPoint.y <= target.y + BotMovementManager.cfg.JUMP_Y_THRESH);
+        assertTrue(path.getFirst().endPoint.y <= target.y + AgentMovementPhysicsConfig.configuredJumpYThreshold());
     }
 
     @Test

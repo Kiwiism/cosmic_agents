@@ -1,6 +1,7 @@
 package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
@@ -584,13 +585,13 @@ class BotMovementManagerTest {
         entry.observedOwnerStepX = 4;
 
         int stoppedStep = BotMovementManager.resolveGroundStepX(
-                entry, new Point(0, 100), new Point(20, 100), BotMovementManager.cfg.STOP_DIST, BotMovementManager.cfg.FOLLOW_DIST);
+                entry, new Point(0, 100), new Point(20, 100), AgentMovementPhysicsConfig.configuredStopDist(), AgentMovementPhysicsConfig.configuredFollowDist());
         assertEquals(0, stoppedStep,
                 "follow should stop anywhere inside STOP_DIST instead of micro-throttling to an exact point");
 
         int walkStep = BotPhysicsEngine.walkStep(map, entry.movementProfile);
         int followStep = BotMovementManager.resolveGroundStepX(
-                entry, new Point(0, 100), new Point(90, 100), BotMovementManager.cfg.STOP_DIST, BotMovementManager.cfg.FOLLOW_DIST);
+                entry, new Point(0, 100), new Point(90, 100), AgentMovementPhysicsConfig.configuredStopDist(), AgentMovementPhysicsConfig.configuredFollowDist());
 
         assertEquals(walkStep, followStep,
                 "follow should restart at FOLLOW_DIST using normal full-speed movement");
@@ -612,7 +613,7 @@ class BotMovementManagerTest {
 
         int walkStep = BotPhysicsEngine.walkStep(map, entry.movementProfile);
         int step = BotMovementManager.resolveGroundStepX(
-                entry, new Point(0, 100), new Point(60, 100), BotMovementManager.cfg.STOP_DIST, BotMovementManager.cfg.FOLLOW_DIST);
+                entry, new Point(0, 100), new Point(60, 100), AgentMovementPhysicsConfig.configuredStopDist(), AgentMovementPhysicsConfig.configuredFollowDist());
 
         assertEquals(walkStep, step,
                 "fast follow bots should keep full walk speed instead of being micro-throttled");

@@ -1,6 +1,7 @@
 package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.navigation.AgentNavigationPathService;
 import server.agents.capabilities.navigation.AgentNavigationRegionService;
 
@@ -1518,8 +1519,8 @@ class BotManagerTest {
                 AgentNavigationRegionService::resolveCurrentRegionId,
                 AgentNavigationRegionService::resolveTargetRegionId,
                 AgentNavigationPathService::findPath,
-                BotMovementManager.cfg.GRIND_EDGE_MARGIN,
-                BotMovementManager.cfg.JUMP_Y_THRESH);
+                AgentMovementPhysicsConfig.configuredGrindEdgeMargin(),
+                AgentMovementPhysicsConfig.configuredJumpYThreshold());
     }
 
     private static MapleMap createEmptyTestMap(int mapId) {

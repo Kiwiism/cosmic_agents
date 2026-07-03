@@ -3912,6 +3912,12 @@ Recent reconstruction notes:
   legacy `BotMovementManager.adjustGrindingTargetPosition` helper delegates to
   the Agent service. Same-region edge clamping, cross-region no-op behavior,
   graph warmup fallback, and grind-edge margin are unchanged.
+- Movement config reads in remaining bot-named tests and movement simulation
+  harnesses now use `AgentMovementPhysicsConfig` directly. The unused
+  `BotMovementManager.configured*` compatibility accessors were removed; the
+  only remaining direct `BotMovementManager.cfg` test reference verifies the
+  temporary shared config object with `BotPhysicsEngine` until the physics
+  slice migrates that seam.
 - Packet-facing movement snapshot retrieval now enters through
   `AgentMovementSnapshotService` and `AgentMovementPacketSnapshot`; the service
   preserves the legacy `BotPhysicsEngine.movementSnapshot` behavior while

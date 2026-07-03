@@ -16,7 +16,6 @@ import server.agents.capabilities.movement.AgentGroundTargetService;
 import server.agents.capabilities.movement.AgentJumpActionService;
 import server.agents.capabilities.movement.AgentJumpProbeService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
-import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementProfileService;
@@ -80,42 +79,6 @@ public class BotMovementManager {
     }
 
     static Config cfg = bindConfig(new Config());
-
-    public static int configuredWalkVelocityPxs() {
-        return AgentMovementPhysicsConfig.configuredWalkVelocityPxs();
-    }
-
-    public static int configuredTickMs() {
-        return AgentMovementPhysicsConfig.configuredMovementTickMs();
-    }
-
-    public static int configuredFollowDist() {
-        return AgentMovementPhysicsConfig.configuredFollowDist();
-    }
-
-    public static int configuredStopDist() {
-        return AgentMovementPhysicsConfig.configuredStopDist();
-    }
-
-    public static int configuredTeleportDist() {
-        return AgentMovementPhysicsConfig.configuredTeleportDist();
-    }
-
-    public static int configuredOutOfBoundsTeleportDist() {
-        return AgentMovementPhysicsConfig.configuredOutOfBoundsTeleportDist();
-    }
-
-    public static int configuredFollowYCap() {
-        return AgentMovementPhysicsConfig.configuredFollowYCap();
-    }
-
-    public static int configuredJumpYThreshold() {
-        return AgentMovementPhysicsConfig.configuredJumpYThreshold();
-    }
-
-    public static int configuredGrindEdgeMargin() {
-        return AgentMovementPhysicsConfig.configuredGrindEdgeMargin();
-    }
 
     private static Config bindConfig(Config config) {
         BotPhysicsEngine.cfg = config;

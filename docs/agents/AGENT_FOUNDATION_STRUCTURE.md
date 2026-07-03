@@ -140,7 +140,8 @@ Capability bins:
   physics seams. The old bot navigation manager has been deleted after callers
   moved to Agent services. Navigation calls Agent movement services directly
   for movement side effects and reads navigation-facing movement thresholds
-  from `AgentMovementPhysicsConfig`; climb-step reads route through
+  from `AgentMovementPhysicsConfig`; remaining bot-named tests now read those
+  values directly from the Agent config as well. Climb-step reads route through
   `AgentMovementKinematicsService`; remaining references are navigation and
   physics runtime seams for later extraction. Packet-facing movement snapshot
   reads enter through `AgentMovementSnapshotService` and use

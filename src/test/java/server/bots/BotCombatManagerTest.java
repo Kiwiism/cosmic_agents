@@ -1,6 +1,7 @@
 package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
@@ -1288,8 +1289,8 @@ class BotCombatManagerTest {
         assertFalse(entry.climbing);
         assertTrue(entry.climbUpIntent);
         assertEquals(new Point(100, 200), bot.getPosition());
-        assertEquals(-Math.round(1.5f * BotMovementManager.cfg.TICK_MS / 8.0f), entry.airVelX);
-        assertEquals(-3.5f * BotMovementManager.cfg.TICK_MS / 8.0f, entry.velY, 1.0e-4f);
+        assertEquals(-Math.round(1.5f * AgentMovementPhysicsConfig.configuredMovementTickMs() / 8.0f), entry.airVelX);
+        assertEquals(-3.5f * AgentMovementPhysicsConfig.configuredMovementTickMs() / 8.0f, entry.velY, 1.0e-4f);
         assertEquals(1, entry.facingDir);
         assertEquals(CharacterStance.JUMP_RIGHT_STANCE, bot.getStance());
         assertDamageDirection(map, bot, 2, 0);
@@ -1314,7 +1315,7 @@ class BotCombatManagerTest {
         assertTrue(entry.climbUpIntent);
         assertEquals(new Point(100, 200), bot.getPosition());
         assertEquals(12.5f, entry.velY, 1.0e-4f);
-        assertEquals(Math.round(1.5f * BotMovementManager.cfg.TICK_MS / 8.0f), entry.airVelX);
+        assertEquals(Math.round(1.5f * AgentMovementPhysicsConfig.configuredMovementTickMs() / 8.0f), entry.airVelX);
         assertEquals(-1, entry.facingDir);
         assertEquals(CharacterStance.JUMP_LEFT_STANCE, bot.getStance());
         assertDamageDirection(map, bot, 2, 1);

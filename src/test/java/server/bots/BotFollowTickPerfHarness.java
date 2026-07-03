@@ -3,6 +3,7 @@ package server.bots;
 import server.agents.runtime.AgentRuntimeConfig;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
@@ -205,7 +206,7 @@ public class BotFollowTickPerfHarness {
         }
 
         private static boolean consumeAiTick(BotEntry entry) {
-            entry.aiTickAccumulatorMs += BotMovementManager.cfg.TICK_MS;
+            entry.aiTickAccumulatorMs += AgentMovementPhysicsConfig.configuredMovementTickMs();
             if (entry.aiTickAccumulatorMs < AgentRuntimeConfig.cfg.AI_TICK_MS) {
                 return false;
             }
