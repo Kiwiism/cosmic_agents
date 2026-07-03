@@ -3790,6 +3790,10 @@ Recent reconstruction notes:
   `calcStepX`, and `updateStepX` are temporary compatibility delegates. The
   same stop/follow hysteresis, graph-warmup local stop distance, movement
   profile scaling, and `wasMovingX` state updates are preserved.
+- Navigation jump/rope probe calls now route through
+  `AgentJumpProbeService`; `BotMovementManager` keeps temporary compatibility
+  wrappers while the underlying `BotPhysicsEngine` implementation migrates in a
+  later physics slice. Jump landing and rope reach results are unchanged.
 
 Initial reconstruction order:
 

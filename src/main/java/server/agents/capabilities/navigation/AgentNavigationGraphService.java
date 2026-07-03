@@ -1,5 +1,6 @@
 package server.agents.capabilities.navigation;
 
+import server.agents.capabilities.movement.AgentJumpProbeService;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
@@ -11,7 +12,6 @@ import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Portal;
 import server.maps.Rope;
-import server.bots.BotMovementManager;
 import server.bots.BotPhysicsEngine;
 
 import java.awt.*;
@@ -1585,7 +1585,7 @@ public final class AgentNavigationGraphService {
                 boolean canTopGrab = Math.abs(anchor.x - ropeX) <= AgentMovementPhysicsConfig.configuredRopeGrabX()
                         && anchor.y < rope.topY()
                         && rope.topY() - anchor.y <= AgentMovementPhysicsConfig.configuredMaxSnapDrop();
-                boolean canJumpGrab = BotMovementManager.canReachRopeFromGround(map, anchor, rope, movementProfile);
+                boolean canJumpGrab = AgentJumpProbeService.canReachRopeFromGround(map, anchor, rope, movementProfile);
                 boolean canTopStep = anchor.y <= rope.topY() + AgentMovementPhysicsConfig.configuredJumpYThreshold()
                         && Math.abs(anchor.x - ropeX) <= AgentMovementPhysicsConfig.configuredRopeGrabX();
 

@@ -12,6 +12,7 @@ import server.agents.capabilities.movement.AgentFallbackMovementService;
 import server.agents.capabilities.movement.AgentFootholdIndexService;
 import server.agents.capabilities.movement.AgentGroundMovementPolicy;
 import server.agents.capabilities.movement.AgentGroundMovementService;
+import server.agents.capabilities.movement.AgentJumpProbeService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
@@ -186,27 +187,27 @@ public class BotMovementManager {
     }
 
     static JumpLanding simulateJumpLanding(MapleMap map, Point from, int stepX) {
-        return wrapLanding(BotPhysicsEngine.simulateJumpLanding(map, from, stepX));
+        return wrapLanding(AgentJumpProbeService.simulateJumpLanding(map, from, stepX));
     }
 
     public static JumpLanding simulateJumpLanding(MapleMap map, Point from, int stepX, AgentMovementProfile profile) {
-        return wrapLanding(BotPhysicsEngine.simulateJumpLanding(map, from, stepX, profile));
+        return wrapLanding(AgentJumpProbeService.simulateJumpLanding(map, from, stepX, profile));
     }
 
     static JumpLanding simulateRopeJumpLanding(MapleMap map, Point from, int stepX) {
-        return wrapLanding(BotPhysicsEngine.simulateRopeJumpLanding(map, from, stepX));
+        return wrapLanding(AgentJumpProbeService.simulateRopeJumpLanding(map, from, stepX, AgentMovementProfile.base()));
     }
 
     static JumpLanding simulateRopeJumpLanding(MapleMap map, Point from, int stepX, AgentMovementProfile profile) {
-        return wrapLanding(BotPhysicsEngine.simulateRopeJumpLanding(map, from, stepX, profile));
+        return wrapLanding(AgentJumpProbeService.simulateRopeJumpLanding(map, from, stepX, profile));
     }
 
     static boolean canReachRopeFromGround(MapleMap map, Point from, Rope rope) {
-        return BotPhysicsEngine.canReachRopeFromGround(map, from, rope);
+        return AgentJumpProbeService.canReachRopeFromGround(map, from, rope);
     }
 
     public static boolean canReachRopeFromGround(MapleMap map, Point from, Rope rope, AgentMovementProfile profile) {
-        return BotPhysicsEngine.canReachRopeFromGround(map, from, rope, profile);
+        return AgentJumpProbeService.canReachRopeFromGround(map, from, rope, profile);
     }
 
     public static boolean refreshMovementProfile(BotEntry entry) {

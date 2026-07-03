@@ -114,7 +114,9 @@ Capability bins:
 - `movement`
   Ground horizontal step decisions are split between pure
   `AgentGroundMovementPolicy` and stateful `AgentGroundMovementService`; the
-  old bot movement methods now delegate while the remaining movement phase,
+  old bot movement methods now delegate. Navigation jump/rope reach probes
+  route through `AgentJumpProbeService` while the underlying physics
+  implementation remains a later migration slice. Remaining movement phase,
   jump, rope, swim, and airborne runtime slices continue to migrate.
 - `supplies`
 - `trade`
