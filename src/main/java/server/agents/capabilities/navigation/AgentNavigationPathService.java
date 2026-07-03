@@ -1,6 +1,7 @@
 package server.agents.capabilities.navigation;
 
 import client.Character;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.bots.BotNavigationManager;
 import server.maps.MapleMap;
 
@@ -57,6 +58,24 @@ public final class AgentNavigationPathService {
                                                                          int targetRegionId,
                                                                          Point targetPos) {
         return BotNavigationManager.findPathForTargetScore(graph, map, startPos, startRegionId, targetRegionId, targetPos);
+    }
+
+    public static int intraRegionTravelCost(AgentNavigationGraph graph, Point from, Point to) {
+        int dx = Math.abs(to.x - from.x);
+        return Math.max(0, (int) Math.round((dx * 1000.0) / Math.max(1.0, graph.movementProfile.walkVelocityPxs())));
+    }
+
+    public static int intraRegionTravelCost(AgentNavigationGraph graph, int regionId, Point from, Point to) {
+        AgentNavigationGraph.Region region = graph.getRegion(regionId);
+        if (region != null && region.isRopeRegion) {
+            int travel = Math.abs(to.y - from.y);
+            return Math.max(0, (int) Math.round((travel * 1000.0) / Math.max(1, AgentMovementPhysicsConfig.configuredClimbSpeedPxs())));
+        }
+        return intraRegionTravelCost(graph, from, to);
+    }
+
+    public static int heuristic(AgentNavigationGraph graph, Point from, Point targetPos) {
+        return intraRegionTravelCost(graph, from, targetPos);
     }
 
     public static PathOptimality measureOptimality(AgentNavigationGraph graph,

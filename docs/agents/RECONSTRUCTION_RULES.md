@@ -3982,6 +3982,9 @@ Recent reconstruction notes:
 - Movement tick target resolution and committed-edge continuation now enter
   through `AgentNavigationTargetService`. The service delegates to the current
   resolver body until the live path-following implementation moves.
+- Path intra-region travel cost and heuristic calculations now live in
+  `AgentNavigationPathService`; the remaining bot search loop delegates to the
+  Agent-owned calculations.
 
 Initial reconstruction order:
 

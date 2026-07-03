@@ -170,6 +170,7 @@ Capability bins:
   itself now lives in `AgentNavigationRegionService`; the bot navigation
   manager delegates to it temporarily. Movement tick target resolution and
   committed-edge continuation enter through `AgentNavigationTargetService`.
+  Path cost and heuristic calculations live in `AgentNavigationPathService`.
 - `supplies`
 - `trade`
 - `shop`

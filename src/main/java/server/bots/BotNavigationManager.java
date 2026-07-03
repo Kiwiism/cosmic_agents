@@ -2,6 +2,7 @@ package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationPhysicsService;
+import server.agents.capabilities.navigation.AgentNavigationPathService;
 import server.agents.capabilities.navigation.AgentNavigationRegionService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
@@ -1326,21 +1327,15 @@ public final class BotNavigationManager {
     }
 
     private static int intraRegionTravelCost(AgentNavigationGraph graph, Point from, Point to) {
-        int dx = Math.abs(to.x - from.x);
-        return Math.max(0, (int) Math.round((dx * 1000.0) / Math.max(1.0, graph.movementProfile.walkVelocityPxs())));
+        return AgentNavigationPathService.intraRegionTravelCost(graph, from, to);
     }
 
     private static int intraRegionTravelCost(AgentNavigationGraph graph, int regionId, Point from, Point to) {
-        AgentNavigationGraph.Region region = graph.getRegion(regionId);
-        if (region != null && region.isRopeRegion) {
-            int travel = Math.abs(to.y - from.y);
-            return Math.max(0, (int) Math.round((travel * 1000.0) / Math.max(1, AgentMovementPhysicsConfig.configuredClimbSpeedPxs())));
-        }
-        return intraRegionTravelCost(graph, from, to);
+        return AgentNavigationPathService.intraRegionTravelCost(graph, regionId, from, to);
     }
 
     private static int heuristic(AgentNavigationGraph graph, Point from, Point targetPos) {
-        return intraRegionTravelCost(graph, from, targetPos);
+        return AgentNavigationPathService.heuristic(graph, from, targetPos);
     }
 
     static boolean shouldUsePreciseWalkTarget(AgentNavigationGraph.Edge edge) {
