@@ -3975,9 +3975,9 @@ Recent reconstruction notes:
   `AgentNavigationPathService`. The Agent service owns `findPath`,
   target-score path search, optimality measurement, slow-path logging,
   path reconstruction, next-edge selection, and the copied search algorithm.
-  `BotNavigationManager` keeps public compatibility delegates; its old
-  package-private `runSearch` body remains temporary test/compatibility clutter
-  until the follow-up cleanup removes it.
+  `BotNavigationManager` keeps public/package-private compatibility delegates,
+  and its `runSearch` compatibility method now wraps the Agent-owned
+  `SearchOutcome` instead of retaining a duplicate search body.
 - Combat grind-target region scoring, path-cost checks, and sibling occupancy
   checks now use `AgentNavigationRegionService` and
   `AgentNavigationPathService`. Target scoring policy and path-cost behavior

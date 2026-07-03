@@ -177,7 +177,7 @@ Capability bins:
   Committed-edge comparison, retention, committed ground-edge refresh, pending
   climb-exit refresh, and reuse/staleness policy live in
   `AgentNavigationCommittedEdgeService`; the temporary bot navigation shell
-  still supplies current path search, climb-exit readiness, edge-usability,
+  now supplies Agent-backed path search, climb-exit readiness, edge-usability,
   and rope-entry callbacks.
   Navigation edge execution target state lives in
   `AgentNavigationEdgeExecutionStateService`.

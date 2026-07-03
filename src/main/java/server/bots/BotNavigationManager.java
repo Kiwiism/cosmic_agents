@@ -15,7 +15,6 @@ import server.agents.capabilities.navigation.AgentNavigationWaypointService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.runtime.AgentPerformanceMonitor;
-
 import server.agents.capabilities.movement.AgentClimbMovementPolicy;
 import server.agents.capabilities.movement.AgentClimbMovementService;
 import server.agents.capabilities.movement.AgentGroundCollisionService;
@@ -30,8 +29,6 @@ import server.agents.capabilities.movement.AgentRopeMovementService;
 
 import client.Character;
 import constants.game.CharacterStance;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
@@ -51,21 +48,15 @@ import server.maps.Portal;
 import server.maps.Rope;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class BotNavigationManager {
-    private static final Logger log = LoggerFactory.getLogger(BotNavigationManager.class);
     // After a bot takes a portal, suppress further portal usage for this long. Prevents a bot from
     // immediately re-entering a portal (e.g. bouncing back through the return portal). Gates ONLY
     // portal execution — movement, attacks and every other action continue unaffected.
     private static final long PORTAL_USE_COOLDOWN_MS = 250L;
-    private static final long SLOW_PATHFIND_WARN_NS = 50_000_000L;
 
     /** Throttle warmup notifications per (ownerId -> mapId -> lastNotifyMs). */
     private static final Map<Integer, Map<Integer, Long>> WARMUP_NOTIFIED = new ConcurrentHashMap<>();
@@ -78,36 +69,6 @@ public final class BotNavigationManager {
             this.targetPos = targetPos;
             this.consumedTick = consumedTick;
         }
-    }
-
-    private static final class SearchNode {
-        final SearchState state;
-        final int cost;
-        final int score;
-
-        SearchNode(SearchState state, int cost, int score) {
-            this.state = state;
-            this.cost = cost;
-            this.score = score;
-        }
-    }
-
-    // viaPortal: true when this state was reached by a PORTAL edge. It distinguishes "arrived here
-    // by teleport" from "arrived by walk/jump/etc." so the search can charge the portal cooldown to
-    // a portal that chains straight off another portal (see runSearch). The flag is part of the
-    // dedup key, so a region reachable both ways is explored under both costs.
-    private record SearchState(int regionId, Point point, boolean viaPortal) {
-    }
-
-    private record PathfindProfile(long elapsedNs,
-                                   int expandedNodes,
-                                   int staleNodes,
-                                   int edgeChecks,
-                                   int usableEdges,
-                                   int relaxations,
-                                   int openPeak,
-                                   int bestGoalCost,
-                                   int resultEdges) {
     }
 
     public static NavigationDirective resolveTarget(BotEntry entry, Point rawTargetPos, boolean runAiTick) {
@@ -765,116 +726,10 @@ public final class BotNavigationManager {
                                    String pathfindCaller,
                                    boolean zeroHeuristic,
                                    boolean instrument) {
-        long startedAt = System.nanoTime();
-        PathfindProfile profile = null;
-        try {
-            PriorityQueue<SearchNode> open = new PriorityQueue<>(Comparator.comparingInt(node -> node.score));
-            Map<SearchState, Integer> gScore = new HashMap<>();
-            Map<SearchState, SearchState> cameFrom = new HashMap<>();
-            Map<SearchState, AgentNavigationGraph.Edge> cameByEdge = new HashMap<>();
-            SearchState startState = new SearchState(startRegionId, new Point(startPos), false);
-            SearchState bestGoalState = null;
-            int bestGoalCost = Integer.MAX_VALUE;
-            int expandedNodes = 0;
-            int staleNodes = 0;
-            int edgeChecks = 0;
-            int usableEdges = 0;
-            int relaxations = 0;
-            int openPeak = 1;
-
-            gScore.put(startState, 0);
-            open.add(new SearchNode(startState, 0, zeroHeuristic ? 0 : heuristic(graph, startPos, targetPos)));
-
-            while (!open.isEmpty()) {
-                SearchNode current = open.poll();
-                if (current.cost != gScore.getOrDefault(current.state, Integer.MAX_VALUE)) {
-                    staleNodes++;
-                    continue;
-                }
-                if (bestGoalState != null && current.score >= bestGoalCost) {
-                    break;
-                }
-                expandedNodes++;
-
-                if (current.state.regionId == targetRegionId) {
-                    int goalCost = current.cost + intraRegionTravelCost(graph, current.state.regionId, current.state.point, targetPos);
-                    if (goalCost < bestGoalCost) {
-                        bestGoalCost = goalCost;
-                        bestGoalState = current.state;
-                    }
-                }
-
-                for (AgentNavigationGraph.Edge edge : graph.getOutgoing(current.state.regionId)) {
-                    edgeChecks++;
-                    if (!isEdgeUsable(graph, map, edge)) {
-                        continue;
-                    }
-                    usableEdges++;
-
-                    boolean isPortal = edge.type == AgentNavigationGraph.EdgeType.PORTAL;
-                    // Portals are free on their own (edge.cost == 0). Charge PORTAL_USE_COOLDOWN_MS
-                    // only when the bot enters a portal *through the exit* of the one it just took —
-                    // i.e. it landed on a portal and immediately re-enters without walking. A
-                    // viaPortal state's point IS the previous portal's exit, so this is exactly when
-                    // that exit coincides with this portal's entry. That covers the "return to old
-                    // position" round-trip and co-located A>B>C hops, but NOT A>B>walk>C>D (the bot
-                    // walked off the exit first, so the entry points differ and it stays free).
-                    boolean enteredThroughExit = current.state.viaPortal
-                            && current.state.point.equals(edge.startPoint);
-                    int edgeCost = isPortal && enteredThroughExit ? (int) PORTAL_USE_COOLDOWN_MS : edge.cost;
-                    int tentativeCost = current.cost + intraRegionTravelCost(graph, current.state.regionId, current.state.point, edge.startPoint) + edgeCost;
-                    SearchState nextState = new SearchState(edge.toRegionId, edge.endPoint, isPortal);
-                    if (tentativeCost >= gScore.getOrDefault(nextState, Integer.MAX_VALUE)) {
-                        continue;
-                    }
-
-                    relaxations++;
-                    gScore.put(nextState, tentativeCost);
-                    cameFrom.put(nextState, current.state);
-                    cameByEdge.put(nextState, edge);
-                    int fScore = tentativeCost + (zeroHeuristic ? 0 : heuristic(graph, edge.endPoint, targetPos));
-                    open.add(new SearchNode(nextState, tentativeCost, fScore));
-                    openPeak = Math.max(openPeak, open.size());
-                }
-            }
-
-            List<AgentNavigationGraph.Edge> path = reconstructPath(startState, bestGoalState, cameFrom, cameByEdge);
-            profile = new PathfindProfile(
-                    System.nanoTime() - startedAt,
-                    expandedNodes,
-                    staleNodes,
-                    edgeChecks,
-                    usableEdges,
-                    relaxations,
-                    openPeak,
-                    bestGoalCost,
-                    path.size());
-            boolean usesPortal = false;
-            for (AgentNavigationGraph.Edge edge : path) {
-                if (edge.type == AgentNavigationGraph.EdgeType.PORTAL) {
-                    usesPortal = true;
-                    break;
-                }
-            }
-            return new SearchOutcome(path, bestGoalCost, expandedNodes, usesPortal);
-        } finally {
-            if (instrument) {
-                if (profile == null) {
-                    profile = new PathfindProfile(
-                            System.nanoTime() - startedAt,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            Integer.MAX_VALUE,
-                            0);
-                }
-                logSlowPathfind(graph, map, startPos, startRegionId, targetRegionId, targetPos, pathfindCaller, profile);
-                AgentPerformanceMonitor.recordPathfind(pathfindCaller, System.nanoTime() - startedAt);
-            }
-        }
+        AgentNavigationPathService.SearchOutcome outcome = AgentNavigationPathService.runSearch(
+                graph, map, startPos, startRegionId, targetRegionId, targetPos,
+                pathfindCaller, zeroHeuristic, instrument);
+        return new SearchOutcome(outcome.path(), outcome.cost(), outcome.expandedNodes(), outcome.usesPortal());
     }
 
     /** Result of a single {@link #runSearch} call. */
@@ -922,70 +777,6 @@ public final class BotNavigationManager {
                 optimality.optimalUsesPortal(),
                 optimality.currentExpanded(),
                 optimality.optimalExpanded());
-    }
-
-    private static void logSlowPathfind(AgentNavigationGraph graph,
-                                        MapleMap map,
-                                        Point startPos,
-                                        int startRegionId,
-                                        int targetRegionId,
-                                        Point targetPos,
-                                        String pathfindCaller,
-                                        PathfindProfile profile) {
-        if (profile.elapsedNs() < SLOW_PATHFIND_WARN_NS) {
-            return;
-        }
-        int regionCount = graph != null && graph.regions != null ? graph.regions.size() : -1;
-        int outgoingFromStart = graph != null ? graph.getOutgoing(startRegionId).size() : -1;
-        String caller = pathfindCaller == null || pathfindCaller.isBlank() ? "default" : pathfindCaller;
-        int bestGoalCost = profile.bestGoalCost() == Integer.MAX_VALUE ? -1 : profile.bestGoalCost();
-        log.warn(
-                "Slow bot pathfind: caller={} took {} ms map={} startRegion={} targetRegion={} regions={} startOut={} startPos=({}, {}) targetPos=({}, {}) expanded={} stale={} edgeChecks={} usableEdges={} relaxations={} openPeak={} bestGoalCost={} resultEdges={}",
-                caller,
-                String.format("%.1f", profile.elapsedNs() / 1_000_000.0),
-                map != null ? map.getId() : -1,
-                startRegionId,
-                targetRegionId,
-                regionCount,
-                outgoingFromStart,
-                startPos != null ? startPos.x : -1,
-                startPos != null ? startPos.y : -1,
-                targetPos != null ? targetPos.x : -1,
-                targetPos != null ? targetPos.y : -1,
-                profile.expandedNodes(),
-                profile.staleNodes(),
-                profile.edgeChecks(),
-                profile.usableEdges(),
-                profile.relaxations(),
-                profile.openPeak(),
-                bestGoalCost,
-                profile.resultEdges());
-    }
-
-    private static List<AgentNavigationGraph.Edge> reconstructPath(SearchState startState,
-                                                                 SearchState goalState,
-                                                                 Map<SearchState, SearchState> cameFrom,
-                                                                 Map<SearchState, AgentNavigationGraph.Edge> cameByEdge) {
-        if (goalState == null || !cameByEdge.containsKey(goalState)) {
-            return List.of();
-        }
-
-        List<AgentNavigationGraph.Edge> path = new ArrayList<>();
-        SearchState cursor = goalState;
-        while (!cursor.equals(startState)) {
-            AgentNavigationGraph.Edge edge = cameByEdge.get(cursor);
-            if (edge == null) {
-                return List.of();
-            }
-
-            path.add(0, edge);
-            SearchState previousState = cameFrom.get(cursor);
-            if (previousState == null) {
-                return List.of();
-            }
-            cursor = previousState;
-        }
-        return path;
     }
 
     static AgentNavigationGraph.Edge collapseLeadingWalkEdges(List<AgentNavigationGraph.Edge> path) {
