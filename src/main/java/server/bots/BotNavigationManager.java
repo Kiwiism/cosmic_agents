@@ -7,6 +7,7 @@ import server.agents.capabilities.navigation.AgentNavigationDropExecutionService
 import server.agents.capabilities.navigation.AgentNavigationEdgeExecutionStateService;
 import server.agents.capabilities.navigation.AgentNavigationEdgeReadinessService;
 import server.agents.capabilities.navigation.AgentNavigationGrindTargetService;
+import server.agents.capabilities.navigation.AgentNavigationJumpExecutionService;
 import server.agents.capabilities.navigation.AgentNavigationLaunchWindowService;
 import server.agents.capabilities.navigation.AgentNavigationPhysicsService;
 import server.agents.capabilities.navigation.AgentNavigationPathService;
@@ -256,7 +257,8 @@ public final class BotNavigationManager {
         }
 
         return switch (edge.type) {
-            case JUMP -> tryExecuteJump(graph, entry, bot, rawTargetPos, edge);
+            case JUMP -> AgentNavigationJumpExecutionService.tryExecuteJump(graph, entry, bot, edge)
+                    ? new NavigationDirective(rawTargetPos, true) : null;
             case DROP -> AgentNavigationDropExecutionService.tryExecuteDrop(graph, entry, bot, botPos, edge)
                     ? new NavigationDirective(rawTargetPos, true) : null;
             case CLIMB -> tryExecuteClimb(graph, entry, bot, botPos, rawTargetPos, edge);
@@ -265,40 +267,6 @@ public final class BotNavigationManager {
                     ? new NavigationDirective(rawTargetPos, true) : null;
             default -> null;
         };
-    }
-
-    private static NavigationDirective tryExecuteJump(AgentNavigationGraph graph,
-                                                      BotEntry entry,
-                                                      Character bot,
-                                                      Point rawTargetPos,
-                                                      AgentNavigationGraph.Edge edge) {
-        if (AgentBotMovementStateRuntime.inAir(entry) || AgentBotClimbStateRuntime.climbing(entry)) {
-            return null;
-        }
-        Point botPos = bot.getPosition();
-        if (!canExecuteSelectedJumpFromCurrentPosition(graph, entry, bot.getMap(), botPos, edge)) {
-            // Bot may be standing at the top of a rope region whose bottom is the jump entry.
-            // Grab the rope and descend — tickClimbing will naturally drive toward edge.startPoint.
-            if (edge.startPoint.y > botPos.y) {
-                AgentNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);
-                if (fromRegion != null && fromRegion.isRopeRegion) {
-                    Rope rope = findRopeForRegion(bot.getMap(), fromRegion);
-                    if (rope != null && canGrabRopeAtCurrentPosition(botPos, rope)) {
-                        // Attach at bot's current Y — tickClimbing will drive it down to startPoint.
-                        // Using edge.startPoint.y would teleport the bot rather than letting it climb.
-                        AgentNavigationClimbExecutionService.startClimbing(entry, bot, rope, botPos.y);
-                        return new NavigationDirective(rawTargetPos, true);
-                    }
-                }
-            }
-            AgentBotNavigationDebugStateRuntime.setLastEdgeBlockReason(entry, "jump-pos");
-            return null;
-        }
-
-        AgentBotNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
-        AgentNavigationEdgeExecutionStateService.setEdgeExecutionTarget(entry, edge);
-        AgentJumpActionService.initiateJump(entry, bot, edge.launchStepX);
-        return new NavigationDirective(rawTargetPos, true);
     }
 
     private static NavigationDirective tryExecuteClimb(AgentNavigationGraph graph,

@@ -3998,6 +3998,10 @@ Recent reconstruction notes:
   `AgentNavigationDropExecutionService`. The same airborne/climbing/down-jump
   guards, walk-off-drop no-op, drop-readiness check, edge target state write,
   queued down-jump, and movement broadcast ordering are preserved.
+- Jump edge execution now lives in `AgentNavigationJumpExecutionService`.
+  The same in-air/climbing guards, selected jump readiness calculation,
+  top-of-rope fallback attach, block reason, edge target state write, and
+  jump action initiation behavior are preserved.
 - Combat grind-target region scoring, path-cost checks, and sibling occupancy
   checks now use `AgentNavigationRegionService` and
   `AgentNavigationPathService`. Target scoring policy and path-cost behavior

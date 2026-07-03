@@ -179,6 +179,7 @@ Capability bins:
   Portal edge execution lives in `AgentNavigationPortalService`.
   Climb-start side effects live in `AgentNavigationClimbExecutionService`.
   Explicit drop edge execution lives in `AgentNavigationDropExecutionService`.
+  Jump edge execution lives in `AgentNavigationJumpExecutionService`.
   Committed-edge comparison, retention, committed ground-edge refresh, pending
   climb-exit refresh, and reuse/staleness policy live in
   `AgentNavigationCommittedEdgeService`; the temporary bot navigation shell
