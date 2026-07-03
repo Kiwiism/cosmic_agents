@@ -62,7 +62,7 @@ public final class AgentFallbackMovementService {
         }
 
         if (shouldUseDownJump(entry, botPos, targetPos, rope)) {
-            BotPhysicsEngine.queueDownJump(entry, bot);
+            AgentQueuedMovementActionService.queueDownJump(entry, bot);
             AgentMovementBroadcastService.broadcastMovement(entry);
             return true;
         }

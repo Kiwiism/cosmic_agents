@@ -55,12 +55,12 @@ public final class AgentGroundMovementRuntimeService {
     }
 
     private static void performDownJump(BotEntry entry) {
-        BotPhysicsEngine.beginDownJump(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+        AgentQueuedMovementActionService.beginDownJump(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
         AgentMovementBroadcastService.broadcastMovement(entry);
     }
 
     private static void performTopRopeEntry(BotEntry entry) {
-        BotPhysicsEngine.beginTopRopeEntry(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+        AgentQueuedMovementActionService.beginTopRopeEntry(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
         AgentMovementBroadcastService.broadcastMovement(entry);
     }
 }

@@ -13,6 +13,7 @@ import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
+import server.agents.capabilities.movement.AgentQueuedMovementActionService;
 
 import client.Character;
 import constants.game.CharacterStance;
@@ -480,7 +481,7 @@ public final class BotNavigationManager {
         }
 
         setEdgeExecutionTarget(entry, edge);
-        BotPhysicsEngine.queueDownJump(entry, bot);
+        AgentQueuedMovementActionService.queueDownJump(entry, bot);
         AgentMovementBroadcastService.broadcastMovement(entry);
         return new NavigationDirective(rawTargetPos, true);
     }
@@ -535,7 +536,7 @@ public final class BotNavigationManager {
             // Top-of-rope entry is a separate intent from down-jump. Queue it and let grounded
             // physics consume the request on the next tick, just like other input-driven actions.
             AgentBotNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
-            BotPhysicsEngine.queueTopRopeEntry(entry, bot, rope, edge.endPoint.y);
+            AgentQueuedMovementActionService.queueTopRopeEntry(entry, bot, rope, edge.endPoint.y);
             AgentMovementBroadcastService.broadcastMovement(entry);
             return new NavigationDirective(rawTargetPos, true);
         }

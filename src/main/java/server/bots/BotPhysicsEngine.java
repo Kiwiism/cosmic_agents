@@ -703,7 +703,7 @@ public final class BotPhysicsEngine {
         syncCharacterState(entry);
     }
 
-    static void queueTopRopeEntry(BotEntry entry, Character bot, Rope rope, int y) {
+    public static void queueTopRopeEntry(BotEntry entry, Character bot, Rope rope, int y) {
         idleOnGround(entry, bot);
         AgentBotClimbStateRuntime.queueRopeEntry(entry, rope, y);
         syncCharacterState(entry);

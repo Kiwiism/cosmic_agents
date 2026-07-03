@@ -3920,6 +3920,10 @@ Recent reconstruction notes:
   `AgentGroundTravelState`. `BotEntry`, the Agent movement physics adapter,
   and the physics integrator still preserve the exact legacy `physX`, `hspeed`,
   and carry-ms values.
+- Queued down-jump and top-rope entry actions now enter through
+  `AgentQueuedMovementActionService`. The service still delegates to the
+  legacy physics implementation, but Agent movement/navigation callers no
+  longer reach those queue/begin methods directly.
 
 Initial reconstruction order:
 

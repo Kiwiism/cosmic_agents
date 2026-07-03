@@ -19,7 +19,7 @@ public final class AgentGroundActionExecutor {
         });
 
         if (action.type() == AgentGroundAction.Type.CROUCH) {
-            BotPhysicsEngine.queueDownJump(entry, bot);
+            AgentQueuedMovementActionService.queueDownJump(entry, bot);
             AgentMovementBroadcastService.broadcastMovement(entry);
             return;
         }
