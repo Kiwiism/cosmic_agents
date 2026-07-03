@@ -3673,6 +3673,10 @@ Recent reconstruction notes:
   `AgentEquipmentDebugReportFormatter`; the chat-visible debug flow and dump
   contents are unchanged while `BotEquipManager` keeps the temporary optimizer
   branch walk.
+- The optimizer result returned to Agent recommendation code now lives in
+  `AgentEquipmentOptimizerResult`; `BotEquipManager.runOptimizerWithExtras`
+  remains the temporary DP execution seam but no longer exports a bot-owned
+  nested result record.
 
 Initial reconstruction order:
 

@@ -77,6 +77,7 @@ Capability bins:
   immediate/future eligibility rules live in `AgentEquipmentRecommendationPolicy`;
   recommendation filtering, result construction, recommended-item collection,
   and summary formatting live in `AgentEquipmentRecommendationService`;
+  optimizer result data lives in `AgentEquipmentOptimizerResult`;
   unequip command execution lives in `AgentEquipmentUnequipService`.
 - `supplies`
 - `trade`

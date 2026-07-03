@@ -79,7 +79,7 @@ public final class AgentEquipmentRecommendationService {
                                                                        RecommendationScope scope) {
         Inventory receiverEquippedInv = receiver.getInventory(InventoryType.EQUIPPED);
         List<AgentEquipRecommendation> recommendations = new ArrayList<>();
-        BotEquipManager.OptimizerResult opt = BotEquipManager.runOptimizerWithExtras(receiver, holderItems, scope);
+        AgentEquipmentOptimizerResult opt = BotEquipManager.runOptimizerWithExtras(receiver, holderItems, scope);
         if (opt.weapon() != null && holderItems.contains(opt.weapon())) {
             Equip cur = (Equip) receiverEquippedInv.getItem((short) -11);
             recommendations.add(new AgentEquipRecommendation((short) -11, cur, opt.weapon()));
@@ -140,7 +140,7 @@ public final class AgentEquipmentRecommendationService {
         }
 
         Inventory receiverEquippedInv = receiver.getInventory(InventoryType.EQUIPPED);
-        BotEquipManager.OptimizerResult opt = BotEquipManager.runOptimizerWithExtras(receiver, List.of(candidate), scope);
+        AgentEquipmentOptimizerResult opt = BotEquipManager.runOptimizerWithExtras(receiver, List.of(candidate), scope);
         if (opt.weapon() == candidate) {
             Equip cur = (Equip) receiverEquippedInv.getItem((short) -11);
             return new AgentEquipRecommendation((short) -11, cur, candidate);

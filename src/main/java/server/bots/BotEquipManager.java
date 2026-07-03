@@ -17,6 +17,7 @@ import server.agents.capabilities.combat.data.AgentAttackDataProvider;
 import server.agents.capabilities.equipment.AgentAutoEquipThrottle;
 import server.agents.capabilities.equipment.AgentEquipRecommendation;
 import server.agents.capabilities.equipment.AgentEquipmentDebugReportFormatter;
+import server.agents.capabilities.equipment.AgentEquipmentOptimizerResult;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy.EquipUsefulnessHooks;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy.RelevantStat;
@@ -470,21 +471,17 @@ public class BotEquipManager {
         DpResult(Map<Short, Equip> picks, EquipScore score) { this(picks, score, false); }
     }
 
-    /** Outcome of {@link #runOptimizerWithExtras}: the picked weapon (may be null) and
-     *  non-ring slot picks. Picks omit slots the optimizer chose to leave empty. */
-    public record OptimizerResult(Equip weapon, Map<Short, Equip> picks) {}
-
     /**
      * Runs the autoEquip DP after merging {@code extras} into the receiver's candidate pool.
      * Used by the trade request/offer path so its recommendations match what autoEquip would
      * actually do. The {@code extras} are still subject to scope-appropriate requirement and
      * weapon-compat filters before entering the DP.
      */
-    public static OptimizerResult runOptimizerWithExtras(Character bot, Collection<Equip> extras) {
+    public static AgentEquipmentOptimizerResult runOptimizerWithExtras(Character bot, Collection<Equip> extras) {
         return runOptimizerWithExtras(bot, extras, RecommendationScope.IMMEDIATE);
     }
 
-    public static OptimizerResult runOptimizerWithExtras(Character bot, Collection<Equip> extras,
+    public static AgentEquipmentOptimizerResult runOptimizerWithExtras(Character bot, Collection<Equip> extras,
                                                           RecommendationScope scope) {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         Inventory eqpInv = bot.getInventory(InventoryType.EQUIP);
@@ -549,7 +546,7 @@ public class BotEquipManager {
             DpResult r = solveForWeapon(bot, hooks, naked, null, dpSlots, currentBySlot, bySlot, mob, reqRel);
             if (r != null) { bestPicks = r.picks(); bestWeapon = null; }
         }
-        return new OptimizerResult(bestWeapon, bestPicks != null ? bestPicks : Map.of());
+        return new AgentEquipmentOptimizerResult(bestWeapon, bestPicks != null ? bestPicks : Map.of());
     }
 
     /**
