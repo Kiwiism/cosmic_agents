@@ -34,12 +34,17 @@ Recent reconstruction notes:
 - Dead `BotEquipManager` recommendation wrapper methods were removed after
   scans showed no source or test callers. Recommendation entry points remain
   Agent-owned.
+- Auto-equip execution and debug branch reporting now enter through
+  `AgentEquipmentAutoEquipService`. `AgentEquipmentService` calls the Agent
+  service directly, and the old `BotEquipManager.autoEquip` /
+  `autoEquipDebug` methods are compatibility delegates only. The next
+  equipment slice should remove the now-dead private auto-equip helper copy
+  from the bot shell.
 - Production equipment callers now enter through
   `server.agents.capabilities.equipment.AgentEquipmentService`.
-  `server.bots.BotEquipManager` remains the legacy optimizer implementation
-  behind that Agent boundary while future slices move scoring, reservation,
-  unequip, recommendation, and auto-equip logic into equipment capability
-  classes.
+  `server.bots.BotEquipManager` remains a shrinking compatibility shell while
+  future slices remove duplicate private helper bodies and remaining test-only
+  seams.
 - Equipment service job/weapon compatibility now calls
   `AgentWeaponCompatibilityPolicy` directly instead of delegating through the
   legacy bot optimizer.

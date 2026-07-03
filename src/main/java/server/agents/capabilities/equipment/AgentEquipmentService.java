@@ -6,7 +6,6 @@ import client.inventory.Equip;
 import client.inventory.Item;
 import client.inventory.WeaponType;
 import server.ItemInformationProvider;
-import server.bots.BotEquipManager;
 
 import java.util.Collection;
 import java.util.List;
@@ -20,15 +19,15 @@ public final class AgentEquipmentService {
     }
 
     public static void autoEquip(Character agent, Character leader, Item pendingOffer) {
-        BotEquipManager.autoEquip(agent, leader, pendingOffer);
+        AgentEquipmentAutoEquipService.autoEquip(agent, leader, pendingOffer);
     }
 
     public static void autoEquip(Character agent, Character leader, Item pendingOffer, boolean force) {
-        BotEquipManager.autoEquip(agent, leader, pendingOffer, force);
+        AgentEquipmentAutoEquipService.autoEquip(agent, leader, pendingOffer, force);
     }
 
     public static List<String> autoEquipDebug(Character agent) {
-        return BotEquipManager.autoEquipDebug(agent);
+        return AgentEquipmentAutoEquipService.autoEquipDebug(agent);
     }
 
     public static String unequipSlot(Character agent, short[] slots) {

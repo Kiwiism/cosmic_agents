@@ -1,4 +1,4 @@
-package server.bots;
+package server.agents.capabilities.equipment;
 
 import client.Character;
 import client.Job;
@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.ItemInformationProvider;
 import server.agents.capabilities.equipment.AgentAutoEquipThrottle;
-import server.agents.capabilities.equipment.AgentEquipmentAutoEquipService;
 import server.agents.capabilities.equipment.AgentEquipmentDebugReportFormatter;
 import server.agents.capabilities.equipment.AgentEquipmentDpResult;
 import server.agents.capabilities.equipment.AgentEquipmentOptimizer;
@@ -48,9 +47,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class BotEquipManager {
+public final class AgentEquipmentAutoEquipService {
 
-    private static final Logger log = LoggerFactory.getLogger(BotEquipManager.class);
+    private static final Logger log = LoggerFactory.getLogger(AgentEquipmentAutoEquipService.class);
     private static final java.nio.file.Path EQUIP_LOG_DIR = java.nio.file.Path.of("logs", "bot-equip");
     private static final java.time.format.DateTimeFormatter EQUIP_LOG_FILE_FMT =
             java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HHmmss");
@@ -72,19 +71,198 @@ public class BotEquipManager {
      * Called on mode change (follow / stop / grind).
      */
     public static void autoEquip(Character bot, Character owner, Item pendingOffer) {
-        AgentEquipmentAutoEquipService.autoEquip(bot, owner, pendingOffer);
+        autoEquip(bot, owner, pendingOffer, false);
     }
 
     public static void autoEquip(Character bot, Character owner, Item pendingOffer, boolean force) {
-        AgentEquipmentAutoEquipService.autoEquip(bot, owner, pendingOffer, force);
+        if (!shouldRunAutoEquip(bot, System.currentTimeMillis(), force)) {
+            return;
+        }
+
+        ItemInformationProvider ii = ItemInformationProvider.getInstance();
+        Inventory eqpInv = bot.getInventory(InventoryType.EQUIP);
+        Inventory eqdInv = bot.getInventory(InventoryType.EQUIPPED);
+        AgentMapDamageProfile mob = AgentMapDamageProfile.snapshotByAvoid(bot);
+
+        Map<Short, List<Equip>> bySlot = collectAutoEquipCandidates(bot, ii, eqpInv, eqdInv, pendingOffer);
+        Map<Short, Equip> currentBySlot = new HashMap<>();
+        for (Item it : eqdInv.list()) {
+            if (it instanceof Equip e && !ii.isCash(e.getItemId())) {
+                currentBySlot.put(e.getPosition(), e);
+            }
+        }
+
+        List<Short> dpSlots = AgentEquipmentSlotResolver.buildDpSlots(bySlot, currentBySlot);
+        boolean[] reqRel = AgentEquipmentOptimizer.scanReqRelevantDims(bySlot, ii);
+
+        // Outer weapon pool: currently-wearable + stat-only-blocked + currently equipped.
+        List<Equip> weaponPool = new ArrayList<>(bySlot.getOrDefault((short) -11, List.of()));
+        Equip currentWeapon = compatibleWeaponOrNull(bot, ii, (Equip) eqdInv.getItem((short) -11));
+        if (currentWeapon != null && !weaponPool.contains(currentWeapon)) weaponPool.add(currentWeapon);
+        if (weaponPool.isEmpty()) weaponPool.add(null);
+
+        AgentEquipmentStatSnapshot naked = nakedBase(bot, ii, eqdInv);
+
+        Map<Short, Equip> bestPicks = null;
+        AgentEquipmentScore bestScore = null;
+        Equip bestWeapon = currentWeapon;
+        boolean anyCapHit = false;
+        for (Equip w : weaponPool) {
+            AgentEquipmentDpResult r = AgentEquipmentOptimizer.solveForWeapon(bot, ii, naked, w, dpSlots, currentBySlot, bySlot, mob, reqRel);
+            if (r == null) continue;
+            if (r.paretoCapHit()) anyCapHit = true;
+            if (bestScore == null || AgentEquipmentOptimizer.compareScores(r.score(), bestScore) > 0) {
+                bestScore = r.score();
+                bestPicks = r.picks();
+                bestWeapon = w;
+            }
+        }
+        // Every weapon failed reqs — fall back to a no-weapon plan so the armor pass still runs.
+        if (bestPicks == null && !weaponPool.contains(null)) {
+            AgentEquipmentDpResult r = AgentEquipmentOptimizer.solveForWeapon(bot, ii, naked, null, dpSlots, currentBySlot, bySlot, mob, reqRel);
+            if (r != null) {
+                bestScore = r.score();
+                bestPicks = r.picks();
+                bestWeapon = null;
+                if (r.paretoCapHit()) anyCapHit = true;
+            }
+        }
+
+        if (bestPicks != null) {
+            AgentEquipmentPlanExecutor.applyEquipPlan(bot, currentBySlot, bestPicks, bestWeapon, dpSlots);
+            // Sweep currently-equipped items whose reqs aren't met against the bot's now-final
+            // stats. This catches gear left equipped via prior trade-debug or stat changes that
+            // would otherwise stick because applyEquipPlan only emits moves into occupied slots.
+            AgentEquipmentPlanExecutor.unequipInfeasibleEquipped(bot, ii);
+        }
+
+        if (anyCapHit) {
+            // DP frontier overflowed — too many Pareto-incomparable items in the bot's bag for
+            // the optimizer to exhaustively enumerate. The chosen set is best-effort under an
+            // admissible-bound truncation; the owner should clean up redundant gear.
+            try {
+                AgentBotEquipmentRuntime.sayMapNow(bot,
+                        "inventory's too cluttered, cant fully optimize gear - try selling/dropping spares");
+            } catch (Throwable ignored) {
+                // Don't let a chat error block the equip pass.
+            }
+        }
     }
+
     static boolean shouldRunAutoEquip(Character bot, long nowMs, boolean force) {
         return AgentAutoEquipThrottle.shouldRun(bot, nowMs, force);
     }
 
     public static List<String> autoEquipDebug(Character bot) {
-        return AgentEquipmentAutoEquipService.autoEquipDebug(bot);
+        ItemInformationProvider ii = ItemInformationProvider.getInstance();
+        Inventory eqpInv = bot.getInventory(InventoryType.EQUIP);
+        Inventory eqdInv = bot.getInventory(InventoryType.EQUIPPED);
+        AgentMapDamageProfile mob = AgentMapDamageProfile.snapshotByAvoid(bot);
+
+        List<String> out = new ArrayList<>();
+        if (mob == null) {
+            out.add("autoequip: no mob context (in town?) - cant benchmark");
+        } else {
+            out.add("autoequip mob: avd " + mob.mobAvoid()
+                    + " wdef " + mob.mobWdef() + " lv " + mob.mobLevel());
+        }
+
+        Map<Short, List<Equip>> bySlot = collectAutoEquipCandidates(bot, ii, eqpInv, eqdInv, null);
+        Map<Short, Equip> currentBySlot = new HashMap<>();
+        for (Item it : eqdInv.list()) {
+            if (it instanceof Equip e && !ii.isCash(e.getItemId())) currentBySlot.put(e.getPosition(), e);
+        }
+
+        List<Short> dpSlots = AgentEquipmentSlotResolver.buildDpSlots(bySlot, currentBySlot);
+        boolean[] reqRel = AgentEquipmentOptimizer.scanReqRelevantDims(bySlot, ii);
+
+        List<Equip> weaponPool = new ArrayList<>(bySlot.getOrDefault((short) -11, List.of()));
+        Equip currentWeapon = compatibleWeaponOrNull(bot, ii, (Equip) eqdInv.getItem((short) -11));
+        if (currentWeapon != null && !weaponPool.contains(currentWeapon)) weaponPool.add(currentWeapon);
+        if (weaponPool.isEmpty()) weaponPool.add(null);
+
+        AgentEquipmentStatSnapshot naked = nakedBase(bot, ii, eqdInv);
+        out.add("naked: str " + naked.str() + " dex " + naked.dex() + " int " + naked.int_()
+                + " luk " + naked.luk() + " watk " + naked.watk() + " mag " + naked.magic()
+                + " acc " + naked.totalAcc());
+
+        record Branch(Equip weapon, AgentEquipmentDpResult result) {}
+        List<Branch> branches = new ArrayList<>();
+        boolean anyCap = false;
+        for (Equip w : weaponPool) {
+            AgentEquipmentDpResult r = AgentEquipmentOptimizer.solveForWeapon(bot, ii, naked, w, dpSlots, currentBySlot, bySlot, mob, reqRel);
+            if (r != null) {
+                branches.add(new Branch(w, r));
+                if (r.paretoCapHit()) anyCap = true;
+            }
+        }
+        // Last-resort fallback: every weapon's reqs failed against the bare snapshot. Try a
+        // no-weapon branch so we still produce a best-effort armor plan instead of giving up.
+        if (branches.isEmpty() && !weaponPool.contains(null)) {
+            AgentEquipmentDpResult r = AgentEquipmentOptimizer.solveForWeapon(bot, ii, naked, null, dpSlots, currentBySlot, bySlot, mob, reqRel);
+            if (r != null) branches.add(new Branch(null, r));
+        }
+        branches.sort((a, b) -> AgentEquipmentOptimizer.compareScores(b.result().score(), a.result().score()));
+
+        if (branches.isEmpty()) {
+            out.add("autoequip: no weapon found and no items wearable");
+        } else {
+            int show = Math.min(3, branches.size());
+            for (int i = 0; i < show; i++) {
+                Branch b = branches.get(i);
+                String wName = b.weapon() == null ? "(no weapon)" : ii.getName(b.weapon().getItemId());
+                AgentEquipmentScore s = b.result().score();
+                AgentEquipmentStatSnapshot branchSnap = AgentEquipmentOptimizer.snapshotForBranch(naked, b.weapon(), b.result().picks());
+                WeaponType wt = b.weapon() != null ? ii.getWeaponType(b.weapon().getItemId()) : null;
+                AgentWeaponScoreBreakdown breakdown = AgentEquipmentOptimizer.weaponScoreBreakdown(branchSnap, b.weapon(), wt, mob);
+                String tag = i == 0 ? "*" : " ";
+                out.add(tag + " W=" + wName
+                        + " dmg=" + s.damage()
+                        + " rawMax=" + breakdown.rawMax()
+                        + " preCycle=" + breakdown.preCycleDamage()
+                        + " cycle=" + breakdown.cycleMs() + "ms"
+                        + " stat=" + s.statSum());
+            }
+
+            // Diff vs current for the winning branch.
+            Branch best = branches.get(0);
+            List<String> diffs = new ArrayList<>();
+            for (Map.Entry<Short, Equip> e : best.result().picks().entrySet()) {
+                Equip cur = currentBySlot.get(e.getKey());
+                if (cur != e.getValue()) {
+                    diffs.add(AgentEquipmentSlotResolver.slotLabel(e.getKey()) + ":"
+                            + (cur == null ? "-" : ii.getName(cur.getItemId()))
+                            + ">" + ii.getName(e.getValue().getItemId()));
+                }
+            }
+            Equip currentWp = (Equip) eqdInv.getItem((short) -11);
+            if (best.weapon() != currentWp) {
+                diffs.add(0, "weapon:" + (currentWp == null ? "-" : ii.getName(currentWp.getItemId()))
+                        + ">" + (best.weapon() == null ? "-" : ii.getName(best.weapon().getItemId())));
+            }
+            if (diffs.isEmpty()) {
+                out.add("changes: none (already optimal)");
+            } else {
+                // Chunk into lines of ≤3 changes to avoid one giant message.
+                for (int i = 0; i < diffs.size(); i += 3) {
+                    out.add("change: " + String.join(", ", diffs.subList(i, Math.min(i + 3, diffs.size()))));
+                }
+            }
+            if (anyCap) out.add("WARN: pareto cap hit, result is best-effort");
+        }
+
+        out.add("range: " + AgentBotRangeReportRuntime.rangeReport(bot));
+
+        // Full dump to disk — chat is too narrow for inventory + per-branch breakdown.
+        String filePath = writeAutoEquipDumpFile(bot, ii, eqpInv, eqdInv, mob, naked,
+                bySlot, dpSlots, weaponPool, branches, anyCap);
+        if (filePath != null) out.add("dump: " + filePath);
+
+        String botName = bot != null ? bot.getName() : "?";
+        log.info("autoEquipDebug[{}]:\n  {}", botName, String.join("\n  ", out));
+        return out;
     }
+
     /**
      * Writes a comprehensive autoEquip decision dump to {@code logs/bot-equip/}, mirroring the
      * format of {@link server.agents.monitoring.AgentPathLogger}. Captures everything the optimizer saw: mob profile,

@@ -72,9 +72,10 @@ Capability bins:
   detection, DP slot ordering, and display labels live in
   `AgentEquipmentSlotResolver`; pure scoring helpers live in
   `AgentEquipmentScoringPolicy`; auto-equip duplicate-trigger state lives in
-  `AgentAutoEquipThrottle`; auto-equip debug dump formatting lives in
-  `AgentEquipmentDebugReportFormatter`; owned/incoming reserve entry points
-  route directly to `AgentEquipmentReservePolicy`; recommendation
+  `AgentAutoEquipThrottle`; auto-equip execution and debug branch reporting
+  live in `AgentEquipmentAutoEquipService`; auto-equip debug dump formatting
+  lives in `AgentEquipmentDebugReportFormatter`; owned/incoming reserve entry
+  points route directly to `AgentEquipmentReservePolicy`; recommendation
   immediate/future eligibility rules live in `AgentEquipmentRecommendationPolicy`;
   recommendation filtering, result construction, recommended-item collection,
   and summary formatting live in `AgentEquipmentRecommendationService`;
