@@ -1201,7 +1201,7 @@ public final class BotNavigationManager {
             return false;
         }
         int launchX = selectedJumpLaunchX(entry, graph, edge);
-        int tolerance = Math.max(1, BotPhysicsEngine.walkStep(map,
+        int tolerance = Math.max(1, AgentMovementKinematicsService.walkStep(map,
                 entry != null ? AgentBotMovementStateRuntime.movementProfile(entry) : null));
         return Math.abs(botPos.x - launchX) <= tolerance;
     }
@@ -1306,7 +1306,7 @@ public final class BotNavigationManager {
 
         int width = Math.max(0, maxX - minX);
         int margin = Math.min(width / 2, Math.max(1,
-                BotPhysicsEngine.walkStep(AgentBotRuntimeIdentityRuntime.botMap(entry), AgentBotMovementStateRuntime.movementProfile(entry)) * 2));
+                AgentMovementKinematicsService.walkStep(AgentBotRuntimeIdentityRuntime.botMap(entry), AgentBotMovementStateRuntime.movementProfile(entry)) * 2));
         int randomMinX = minX + margin;
         int randomMaxX = maxX - margin;
         if (randomMinX > randomMaxX) {

@@ -43,7 +43,7 @@ public final class AgentFallbackMovementService {
 
             int ropeDx = rope.x() - botPos.x;
             int ropeJumpRange = Math.max(AgentMovementPhysicsConfig.configuredRopeGrabX() * 2,
-                    BotPhysicsEngine.walkStep(map, movementProfile(entry)) * 2);
+                    AgentMovementKinematicsService.walkStep(map, movementProfile(entry)) * 2);
             if (Math.abs(ropeDx) <= ropeJumpRange
                     && BotPhysicsEngine.canReachRopeFromGround(map, botPos, rope, movementProfile(entry))) {
                 AgentJumpActionService.initiateRopeJump(entry, bot, ropeDx);
@@ -123,7 +123,7 @@ public final class AgentFallbackMovementService {
         }
 
         MapleMap map = map(entry);
-        int walkStep = BotPhysicsEngine.walkStep(map, movementProfile(entry));
+        int walkStep = AgentMovementKinematicsService.walkStep(map, movementProfile(entry));
         int searchX = Math.max(walkStep * 4, 90);
         Rope best = null;
         int bestScore = Integer.MAX_VALUE;
@@ -213,7 +213,7 @@ public final class AgentFallbackMovementService {
             return false;
         }
         return Math.abs(targetPos.x - botPos.x) <= Math.max(AgentMovementPhysicsConfig.configuredFollowDist(),
-                BotPhysicsEngine.walkStep(map, movementProfile(entry)) * 4);
+                AgentMovementKinematicsService.walkStep(map, movementProfile(entry)) * 4);
     }
 
     private static boolean shouldConsiderFallbackDrop(BotEntry entry, MapleMap map, Point botPos, Point targetPos) {
@@ -239,7 +239,7 @@ public final class AgentFallbackMovementService {
         Point endpoint = direction < 0
                 ? new Point(foothold.getX1(), foothold.getY1())
                 : new Point(foothold.getX2(), foothold.getY2());
-        int step = direction * Math.max(1, BotPhysicsEngine.walkStep(map, profile));
+        int step = direction * Math.max(1, AgentMovementKinematicsService.walkStep(map, profile));
         Point ahead = new Point(endpoint.x + step, endpoint.y);
         return BotPhysicsEngine.isGroundFarBelow(map, ahead) ? ahead : null;
     }
@@ -275,7 +275,7 @@ public final class AgentFallbackMovementService {
 
         MapleMap map = map(entry);
         int direction = Integer.signum(stepX);
-        int jumpStep = direction * BotPhysicsEngine.walkStep(map, movementProfile(entry));
+        int jumpStep = direction * AgentMovementKinematicsService.walkStep(map, movementProfile(entry));
         BotPhysicsEngine.JumpLanding landing =
                 BotPhysicsEngine.simulateJumpLanding(map, botPos, jumpStep, movementProfile(entry));
         return isUsefulJumpProbeLanding(botPos, steeringTarget, direction, landing);

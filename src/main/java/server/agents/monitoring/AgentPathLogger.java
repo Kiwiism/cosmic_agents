@@ -1,6 +1,7 @@
 package server.agents.monitoring;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
+import server.agents.capabilities.movement.AgentMovementKinematicsService;
 
 import client.Character;
 import java.awt.*;
@@ -28,7 +29,6 @@ import server.bots.BotEntry;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.bots.BotNavigationManager;
-import server.bots.BotPhysicsEngine;
 import server.maps.MapleMap;
 import server.maps.Rope;
 
@@ -285,7 +285,7 @@ public final class AgentPathLogger {
                 .append(" jump=").append(requested.totalJumpStat()).append("%")
                 .append(" rawSpeed=").append(bot.getTotalMoveSpeedStat()).append("%")
                 .append(" rawJump=").append(bot.getTotalJumpStat()).append("%")
-                .append(" walkStep=").append(BotPhysicsEngine.walkStep(map, requested))
+                .append(" walkStep=").append(AgentMovementKinematicsService.walkStep(map, requested))
                 .append(" walkVel=").append(String.format("%.1f", requested.walkVelocityPxs()))
                 .append(" jumpForce=").append(String.format("%.1f", requested.jumpSpeedPxs()))
                 .append("\n");

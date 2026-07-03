@@ -3,6 +3,7 @@ package server.agents.capabilities.movement.fidget;
 import server.agents.capabilities.movement.AgentJumpActionService;
 import server.agents.capabilities.movement.AgentMovementPhaseDispatchService;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
+import server.agents.capabilities.movement.AgentMovementKinematicsService;
 
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 
@@ -192,7 +193,7 @@ public final class AgentFidgetService {
         if (bot == null) {
             return false;
         }
-        int walkStep = BotPhysicsEngine.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
+        int walkStep = AgentMovementKinematicsService.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         int absDx = Math.abs(targetPos.x - botPos.x);
         return absDx <= AgentMovementPhysicsConfig.configuredFollowDist() + walkStep * 3;
     }
@@ -249,7 +250,7 @@ public final class AgentFidgetService {
             return false;
         }
 
-        int walkStep = BotPhysicsEngine.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
+        int walkStep = AgentMovementKinematicsService.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         int absDx = Math.abs(targetPos.x - botPos.x);
         int ownerStep = AgentBotOwnerMotionStateRuntime.maxObservedOwnerStep(entry);
         return absDx <= AgentMovementPhysicsConfig.configuredFollowDist() + walkStep
@@ -368,7 +369,7 @@ public final class AgentFidgetService {
                                           Point targetPos,
                                           long now,
                                           boolean diagonal) {
-        int walkStep = BotPhysicsEngine.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
+        int walkStep = AgentMovementKinematicsService.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         int jumpDx;
         if (diagonal) {
             int jumpDir = nextDiagonalJumpDir(entry, bot, botPos);
@@ -393,7 +394,7 @@ public final class AgentFidgetService {
         Point origin = AgentBotFidgetStateRuntime.originPos(entry);
         if (origin != null && botPos != null) {
             int dxFromOrigin = botPos.x - origin.x;
-            int bias = Math.max(8, BotPhysicsEngine.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry)));
+            int bias = Math.max(8, AgentMovementKinematicsService.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry)));
             if (dxFromOrigin >= bias) {
                 return -1;
             }
@@ -415,7 +416,7 @@ public final class AgentFidgetService {
         }
 
         int dir = AgentBotFidgetStateRuntime.moveDir(entry) == 0 ? 1 : AgentBotFidgetStateRuntime.moveDir(entry);
-        int walkStep = BotPhysicsEngine.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
+        int walkStep = AgentMovementKinematicsService.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         if (!BotPhysicsEngine.canWalkGroundStep(bot.getMap(), botPos, dir * walkStep)) {
             dir = -dir;
             AgentBotFidgetStateRuntime.setMoveDir(entry, dir);
@@ -439,7 +440,7 @@ public final class AgentFidgetService {
 
     private static int nextSidewaysDir(BotEntry entry, Character bot, Point botPos) {
         Point origin = AgentBotFidgetStateRuntime.originPos(entry);
-        int walkStep = BotPhysicsEngine.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
+        int walkStep = AgentMovementKinematicsService.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         if (origin != null && botPos != null) {
             int dxFromOrigin = botPos.x - origin.x;
             int bound = Math.max(12, walkStep * 2);

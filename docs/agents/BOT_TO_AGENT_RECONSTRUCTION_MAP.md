@@ -103,6 +103,11 @@ Recent map updates:
   movement report snapshots no longer read those calculations directly from
   `BotPhysicsEngine`; the Agent service remains a temporary delegation seam
   until the physics simulation body is migrated.
+- Remaining external walk-step calculation reads moved to
+  `AgentMovementKinematicsService.walkStep(...)`. Fidget, fallback movement,
+  path logging, and the temporary navigation shim now use the Agent movement
+  kinematics seam instead of calling `BotPhysicsEngine.walkStep(...)`
+  directly.
 - Movement countdown helper ownership moved to `AgentMovementTimers`; Agent
   combat, common tick, inventory/trade, shop, supplies, and stuck-detection
   callback bundles no longer depend on `BotMovementManager` for tick-down or

@@ -105,6 +105,11 @@ Recent reconstruction notes:
   jump force, rope-jump force, gravity-per-tick, max jump height, jump travel,
   rope-jump travel, and rope-grab simulation travel. These methods delegate to
   the current physics implementation until the simulation body moves.
+- Remaining external walk-step calculation reads moved to
+  `AgentMovementKinematicsService.walkStep(...)`. Fidget, fallback movement,
+  path logging, and the remaining navigation shim no longer read walk-step
+  directly from `BotPhysicsEngine`; side-effect physics calls still migrate in
+  later slices.
 - Movement countdown helpers moved to
   `server.agents.capabilities.movement.AgentMovementTimers`. Agent combat,
   common-tick, inventory/trade, shop, supplies, and stuck-detection callback
