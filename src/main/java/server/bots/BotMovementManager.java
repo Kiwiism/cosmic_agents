@@ -13,6 +13,7 @@ import server.agents.capabilities.movement.AgentFootholdIndexService;
 import server.agents.capabilities.movement.AgentGroundMovementPolicy;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.movement.AgentMovementTimers;
@@ -168,11 +169,11 @@ public class BotMovementManager {
     }
 
     static int walkStep(MapleMap map) {
-        return BotPhysicsEngine.walkStep(map);
+        return AgentMovementKinematicsService.walkStep(map);
     }
 
     public static int walkStep(MapleMap map, AgentMovementProfile profile) {
-        return BotPhysicsEngine.walkStep(map, profile);
+        return AgentMovementKinematicsService.walkStep(map, profile);
     }
 
     static int velocityFromDeltaX(double deltaX) {

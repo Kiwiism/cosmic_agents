@@ -1,5 +1,7 @@
 package server.agents.capabilities.navigation;
 
+import server.agents.capabilities.movement.AgentMovementKinematicsService;
+
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.bots.BotMovementManager;
@@ -262,7 +264,7 @@ public final class AgentNavigationProbe {
                 map.getId(),
                 graph.movementProfile.totalSpeedStat(),
                 graph.movementProfile.totalJumpStat(),
-                BotMovementManager.walkStep(map, graph.movementProfile),
+                AgentMovementKinematicsService.walkStep(map, graph.movementProfile),
                 graph.regions.size(), walkEdges, jumpEdges, dropEdges, climbEdges, portalEdges);
     }
 
@@ -367,7 +369,7 @@ public final class AgentNavigationProbe {
     }
 
     private static void probeJump(MapleMap map, AgentNavigationGraph graph, Point point) {
-        int walkStep = BotMovementManager.walkStep(map, graph.movementProfile);
+        int walkStep = AgentMovementKinematicsService.walkStep(map, graph.movementProfile);
         int regionId = graph.findRegionId(map, point);
 
         System.out.printf("%nJump probe %d,%d  region=%d%n", point.x, point.y, regionId);

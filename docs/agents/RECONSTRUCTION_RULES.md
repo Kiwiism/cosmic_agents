@@ -108,6 +108,11 @@ Recent reconstruction notes:
   spawn-placement and map-change hook bundles no longer call
   `BotMovementManager.buildFhIndex`; the bot method remains a compatibility
   delegate for legacy tests and harnesses.
+- Walk-step kinematics entry ownership moved to
+  `server.agents.capabilities.movement.AgentMovementKinematicsService`. Agent
+  navigation graph/probe and movement report runtime callers now enter through
+  the Agent kinematics service; `BotMovementManager.walkStep` remains a
+  compatibility delegate while deeper physics simulation still migrates.
 - Non-legacy Agent config and supply tests now use `AgentRuntimeConfig` and
   `AgentRuntimeRegistry` directly instead of compiling through
   `server.bots.BotManager`; this removed the final compatibility-shell test

@@ -1,8 +1,9 @@
 package server.agents.integration;
 
+import server.agents.capabilities.movement.AgentMovementKinematicsService;
+
 import client.Character;
 import server.agents.capabilities.movement.AgentMovementKinematicsSnapshot;
-import server.bots.BotMovementManager;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.bots.BotPhysicsEngine;
 import server.maps.FieldLimit;
@@ -35,7 +36,7 @@ public final class AgentBotMovementKinematicsRuntime {
         AgentMovementKinematicsSnapshot.MapMovementProfile mapMovementProfile = map == null
                 ? null
                 : new AgentMovementKinematicsSnapshot.MapMovementProfile(
-                        BotMovementManager.walkStep(map, profile),
+                        AgentMovementKinematicsService.walkStep(map, profile),
                         BotPhysicsEngine.climbStepPerTick(),
                         BotPhysicsEngine.maxJumpHorizontalTravel(map, profile),
                         BotPhysicsEngine.maxRopeJumpHorizontalTravel(map, profile));

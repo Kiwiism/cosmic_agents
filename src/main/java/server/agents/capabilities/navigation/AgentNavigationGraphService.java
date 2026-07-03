@@ -1,5 +1,7 @@
 package server.agents.capabilities.navigation;
 
+import server.agents.capabilities.movement.AgentMovementKinematicsService;
+
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
@@ -1573,7 +1575,7 @@ public final class AgentNavigationGraphService {
         }
 
         int ropeX = rope.x();
-        int walkStep = BotMovementManager.walkStep(map, movementProfile);
+        int walkStep = AgentMovementKinematicsService.walkStep(map, movementProfile);
         JumpBuildStats stats = new JumpBuildStats();
         for (AgentNavigationGraph.Region ground : groundRegions) {
             for (Point anchor : anchorsByRegionId.getOrDefault(ground.id, List.of())) {
@@ -1643,7 +1645,7 @@ public final class AgentNavigationGraphService {
         }
 
         int ropeX = rope.x();
-        int jumpStep = BotMovementManager.walkStep(map, movementProfile);
+        int jumpStep = AgentMovementKinematicsService.walkStep(map, movementProfile);
         int maxRopeJumpDx = BotPhysicsEngine.maxRopeGrabSimulationHorizontalTravel(map, movementProfile);
 
         // Direct step-off at the top of the rope
@@ -2128,12 +2130,12 @@ public final class AgentNavigationGraphService {
     private static int dropLaunchStep(AgentNavigationGraph.Region region, MapleMap map, Point anchor, AgentMovementProfile movementProfile) {
         Point left = region.leftPoint();
         if (Math.abs(anchor.x - left.x) <= ENDPOINT_ANCHOR_SPACING_PX && Math.abs(anchor.y - left.y) <= 12) {
-            return -BotMovementManager.walkStep(map, movementProfile);
+            return -AgentMovementKinematicsService.walkStep(map, movementProfile);
         }
 
         Point right = region.rightPoint();
         if (Math.abs(anchor.x - right.x) <= ENDPOINT_ANCHOR_SPACING_PX && Math.abs(anchor.y - right.y) <= 12) {
-            return BotMovementManager.walkStep(map, movementProfile);
+            return AgentMovementKinematicsService.walkStep(map, movementProfile);
         }
 
         return 0;
