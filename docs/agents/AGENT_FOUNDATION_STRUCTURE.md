@@ -78,6 +78,8 @@ Capability bins:
   immediate/future eligibility rules live in `AgentEquipmentRecommendationPolicy`;
   recommendation filtering, result construction, recommended-item collection,
   and summary formatting live in `AgentEquipmentRecommendationService`;
+  fixed-weapon DP solve/score/scan/debug branch helpers live in
+  `AgentEquipmentOptimizer`;
   optimizer result data lives in `AgentEquipmentOptimizerResult`;
   fixed-weapon DP result and score data live in `AgentEquipmentDpResult` and
   `AgentEquipmentScore`;

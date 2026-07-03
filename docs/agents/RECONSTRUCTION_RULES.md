@@ -17,6 +17,13 @@ Rules:
 
 Recent reconstruction notes:
 
+- Fixed-weapon equipment DP execution now enters through
+  `server.agents.capabilities.equipment.AgentEquipmentOptimizer`.
+  `BotEquipManager` auto-equip, debug, and future-recommendation branches call
+  the Agent optimizer directly, and optimizer parity tests now exercise the
+  Agent-owned class. A stale private bot-side copy remains as cleanup debt and
+  should be removed in the next equipment slice once no hidden test/package
+  access depends on it.
 - Production equipment callers now enter through
   `server.agents.capabilities.equipment.AgentEquipmentService`.
   `server.bots.BotEquipManager` remains the legacy optimizer implementation
