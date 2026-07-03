@@ -176,8 +176,8 @@ Capability bins:
   from the bot navigation shell.
   Path cost, heuristic, no-op walk collapse, precise walk-target policy, edge
   usability policy, production path search entry points, next-edge selection,
-  optimality measurement, slow-path logging, and path reconstruction live in
-  `AgentNavigationPathService`.
+  optimality measurement, slow-path logging, path reconstruction, and the old
+  private bot path helper ownership live in `AgentNavigationPathService`.
   Navigation graph warmup notification throttling lives in
   `AgentNavigationWarmupService`.
   Portal edge execution lives in `AgentNavigationPortalService`.

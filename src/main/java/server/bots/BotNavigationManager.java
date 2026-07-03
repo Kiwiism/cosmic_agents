@@ -1,6 +1,5 @@
 package server.bots;
 
-import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationCommittedEdgeService;
 import server.agents.capabilities.navigation.AgentNavigationEdgeReadinessService;
 import server.agents.capabilities.navigation.AgentNavigationLaunchWindowService;
@@ -76,14 +75,6 @@ public final class BotNavigationManager {
         return AgentNavigationWaypointService.selectDropWaypoint(entry, graph, botPos, edge);
     }
 
-    private static AgentNavigationGraph.Edge findNextEdge(AgentNavigationGraph graph,
-                                                        Character bot,
-                                                        int startRegionId,
-                                                        int targetRegionId,
-                                                        Point targetPos) {
-        return AgentNavigationPathService.findNextEdge(graph, bot, startRegionId, targetRegionId, targetPos);
-    }
-
     public static List<AgentNavigationGraph.Edge> findPath(AgentNavigationGraph graph,
                                                          Character bot,
                                                          int startRegionId,
@@ -108,27 +99,6 @@ public final class BotNavigationManager {
                                                                 int targetRegionId,
                                                                 Point targetPos) {
         return AgentNavigationPathService.findPathForTargetScore(graph, map, startPos, startRegionId, targetRegionId, targetPos);
-    }
-
-    /**
-     * Production pathfinding heuristic toggle. When {@code true} (default) the search runs the
-     * admissible h=0 (Dijkstra) variant: optimal-cost paths, no portal-skipping. Flip to
-     * {@code false} to restore the legacy dx/walk-speed heuristic (faster per search, but on
-     * Kerning City ~19% of cross-region paths were non-optimal and ~7% walked past a usable
-     * portal — see {@code BotNavigationProbe --measure}). The legacy {@link #heuristic} and the
-     * {@link #runSearch} zeroHeuristic branch are both retained; this is the single knob.
-     */
-    static boolean useAdmissibleHeuristic = true;
-
-    private static List<AgentNavigationGraph.Edge> findPath(AgentNavigationGraph graph,
-                                                          MapleMap map,
-                                                          Point startPos,
-                                                          int startRegionId,
-                                                          int targetRegionId,
-                                                          Point targetPos,
-                                                          String pathfindCaller) {
-        return AgentNavigationPathService.findPath(graph, map, startPos, startRegionId, targetRegionId, targetPos,
-                pathfindCaller, useAdmissibleHeuristic, true);
     }
 
     /**
@@ -260,10 +230,6 @@ public final class BotNavigationManager {
 
     static boolean isTopStepOffExit(Rope rope, Point botPos, AgentNavigationGraph.Edge edge) {
         return AgentNavigationRopeEdgeService.isTopStepOffExit(rope, botPos, edge);
-    }
-
-    private static Rope findRopeForRegion(MapleMap map, AgentNavigationGraph.Region region) {
-        return AgentNavigationGraphService.findRopeFromRegion(map, region);
     }
 
 }

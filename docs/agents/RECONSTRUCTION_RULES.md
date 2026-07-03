@@ -4039,6 +4039,10 @@ Recent reconstruction notes:
 - Default committed-edge reuse wiring now lives in
   `AgentNavigationCommittedEdgeService`; the bot navigation shell no longer
   supplies local edge-usability or rope-entry callbacks.
+- Dead private pathfinding and rope lookup helpers have been removed from
+  `BotNavigationManager`; pathfinding and rope lookup ownership now stays in
+  `AgentNavigationPathService`, `AgentNavigationTargetService`, and
+  `AgentNavigationGraphService`.
 - Combat grind-target region scoring, path-cost checks, and sibling occupancy
   checks now use `AgentNavigationRegionService` and
   `AgentNavigationPathService`. Target scoring policy and path-cost behavior
