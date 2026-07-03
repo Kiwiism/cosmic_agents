@@ -7,7 +7,6 @@ import server.agents.capabilities.navigation.AgentNavigationPathService;
 import server.agents.capabilities.navigation.AgentNavigationRegionService;
 import server.agents.capabilities.navigation.AgentNavigationRopeEdgeService;
 import server.agents.capabilities.navigation.AgentNavigationTargetService;
-import server.agents.capabilities.navigation.AgentNavigationWaypointService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import client.Character;
@@ -50,22 +49,6 @@ public final class BotNavigationManager {
                                                      Point botPos,
                                                      AgentNavigationGraph.Edge edge) {
         return AgentNavigationEdgeReadinessService.canExecuteDropFromCurrentPosition(graph, botPos, edge);
-    }
-
-    static Point selectJumpWaypoint(BotEntry entry, Point botPos, AgentNavigationGraph.Edge edge) {
-        return AgentNavigationWaypointService.selectJumpWaypoint(entry, botPos, edge);
-    }
-
-    static Point selectJumpWaypoint(AgentNavigationGraph graph, Point botPos, AgentNavigationGraph.Edge edge) {
-        return AgentNavigationWaypointService.selectJumpWaypoint(graph, botPos, edge);
-    }
-
-    static Point selectClimbWaypoint(BotEntry entry, Point botPos, AgentNavigationGraph.Edge edge) {
-        return AgentNavigationWaypointService.selectClimbWaypoint(entry, botPos, edge);
-    }
-
-    static Point selectClimbWaypoint(AgentNavigationGraph graph, BotEntry entry, Point botPos, AgentNavigationGraph.Edge edge) {
-        return AgentNavigationWaypointService.selectClimbWaypoint(graph, entry, botPos, edge);
     }
 
     public static List<AgentNavigationGraph.Edge> findPath(AgentNavigationGraph graph,

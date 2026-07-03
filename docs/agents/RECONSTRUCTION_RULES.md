@@ -4046,6 +4046,9 @@ Recent reconstruction notes:
 - Directional drop waypoint tests now target `AgentNavigationWaypointService`
   directly, allowing the temporary `BotNavigationManager.selectDropWaypoint`
   compatibility delegate to be removed.
+- Jump and climb waypoint tests now target `AgentNavigationWaypointService`
+  directly, allowing the temporary `BotNavigationManager` jump/climb waypoint
+  delegates to be removed.
 - Combat grind-target region scoring, path-cost checks, and sibling occupancy
   checks now use `AgentNavigationRegionService` and
   `AgentNavigationPathService`. Target scoring policy and path-cost behavior

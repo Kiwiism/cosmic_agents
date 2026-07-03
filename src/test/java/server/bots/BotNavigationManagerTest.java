@@ -5,6 +5,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
 import server.agents.capabilities.navigation.AgentNavigationMapLoader;
+import server.agents.capabilities.navigation.AgentNavigationWaypointService;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentFallbackMovementService;
@@ -299,18 +300,18 @@ class BotNavigationManagerTest {
                 516, 523, -8, 0, 0, 0, 0, 850
         );
 
-        Point firstTarget = BotNavigationManager.selectJumpWaypoint(entry, new Point(449, 113), jump);
-        Point secondTarget = BotNavigationManager.selectJumpWaypoint(entry, new Point(540, 113), jump);
-        Point thirdTarget = BotNavigationManager.selectJumpWaypoint(entry, new Point(520, 113), jump);
+        Point firstTarget = AgentNavigationWaypointService.selectJumpWaypoint(entry, new Point(449, 113), jump);
+        Point secondTarget = AgentNavigationWaypointService.selectJumpWaypoint(entry, new Point(540, 113), jump);
+        Point thirdTarget = AgentNavigationWaypointService.selectJumpWaypoint(entry, new Point(520, 113), jump);
 
         assertTrue(firstTarget.x >= 519 && firstTarget.x <= 520);
         assertEquals(107, firstTarget.y);
         assertEquals(firstTarget, secondTarget);
         assertEquals(firstTarget, thirdTarget);
 
-        assertEquals(new Point(516, 107), BotNavigationManager.selectJumpWaypoint(graph, new Point(449, 113), jump));
-        assertEquals(new Point(523, 107), BotNavigationManager.selectJumpWaypoint(graph, new Point(540, 113), jump));
-        assertEquals(new Point(520, 107), BotNavigationManager.selectJumpWaypoint(graph, new Point(520, 113), jump));
+        assertEquals(new Point(516, 107), AgentNavigationWaypointService.selectJumpWaypoint(graph, new Point(449, 113), jump));
+        assertEquals(new Point(523, 107), AgentNavigationWaypointService.selectJumpWaypoint(graph, new Point(540, 113), jump));
+        assertEquals(new Point(520, 107), AgentNavigationWaypointService.selectJumpWaypoint(graph, new Point(520, 113), jump));
     }
 
     @Test
@@ -520,9 +521,9 @@ class BotNavigationManagerTest {
         );
 
         assertEquals(new Point(-1251, -107),
-                BotNavigationManager.selectClimbWaypoint(entry, new Point(-1251, -107), climbExit));
+                AgentNavigationWaypointService.selectClimbWaypoint(entry, new Point(-1251, -107), climbExit));
         assertEquals(new Point(-1251, -107),
-                BotNavigationManager.selectClimbWaypoint(entry, new Point(-1251, -109), climbExit));
+                AgentNavigationWaypointService.selectClimbWaypoint(entry, new Point(-1251, -109), climbExit));
     }
 
     @Test
@@ -540,7 +541,7 @@ class BotNavigationManagerTest {
         );
 
         assertEquals(new Point(-1251, -107),
-                BotNavigationManager.selectClimbWaypoint(entry, new Point(-1251, -104), climbExit));
+                AgentNavigationWaypointService.selectClimbWaypoint(entry, new Point(-1251, -104), climbExit));
     }
 
     @Test
@@ -558,7 +559,7 @@ class BotNavigationManagerTest {
         );
 
         assertEquals(new Point(707, -734),
-                BotNavigationManager.selectClimbWaypoint(entry, new Point(707, -764), climbExit));
+                AgentNavigationWaypointService.selectClimbWaypoint(entry, new Point(707, -764), climbExit));
     }
 
     @Test
