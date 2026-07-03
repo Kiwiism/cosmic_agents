@@ -3,8 +3,11 @@ package server.agents.capabilities.navigation;
 import org.junit.jupiter.api.Test;
 import client.Character;
 import server.bots.BotEntry;
+import server.agents.integration.AgentBotClimbStateRuntime;
+import server.agents.integration.AgentBotMovementStateRuntime;
 import server.maps.Foothold;
 import server.maps.MapleMap;
+import server.maps.Rope;
 
 import java.awt.Point;
 import java.util.List;
@@ -77,6 +80,59 @@ class AgentNavigationWaypointServiceTest {
 
         assertTrue(first >= 519 && first <= 520);
         assertEquals(first, second);
+    }
+
+    @Test
+    void climbWaypointUsesEndPointWhenAirborne() {
+        BotEntry entry = new BotEntry(null, null, null);
+        AgentBotMovementStateRuntime.setInAir(entry, true);
+        AgentNavigationGraph.Edge edge = edge(AgentNavigationGraph.EdgeType.CLIMB,
+                new Point(100, 200), new Point(100, 120), 0, 0, 0);
+
+        assertEquals(new Point(100, 120),
+                AgentNavigationWaypointService.selectClimbWaypoint(null, entry, new Point(100, 190), edge,
+                        (graph, e, botPos, climbEdge) -> false));
+    }
+
+    @Test
+    void climbWaypointHoldsPositionOnlyWhenJumpExitReady() {
+        BotEntry entry = new BotEntry(null, null, null);
+        AgentBotClimbStateRuntime.setClimbingOnRope(entry, new Rope(100, 80, 220, false));
+        AgentNavigationGraph graph = graphWithRopeRegion(1);
+        AgentNavigationGraph.Edge jumpExit = edge(AgentNavigationGraph.EdgeType.CLIMB,
+                new Point(100, 120), new Point(150, 80), 0, 0, 4);
+        Point botPos = new Point(100, 120);
+
+        assertEquals(botPos,
+                AgentNavigationWaypointService.selectClimbWaypoint(graph, entry, botPos, jumpExit,
+                        (g, e, p, climbEdge) -> true));
+        assertEquals(new Point(100, 120),
+                AgentNavigationWaypointService.selectClimbWaypoint(graph, entry, new Point(100, 130), jumpExit,
+                        (g, e, p, climbEdge) -> false));
+    }
+
+    @Test
+    void climbWaypointKeepsRopeXForZeroStepExitWhileClimbing() {
+        BotEntry entry = new BotEntry(null, null, null);
+        Rope rope = new Rope(300, 100, 240, false);
+        AgentBotClimbStateRuntime.setClimbingOnRope(entry, rope);
+        AgentNavigationGraph.Edge edge = edge(AgentNavigationGraph.EdgeType.CLIMB,
+                new Point(300, 100), new Point(260, 90), 0, 0, 0);
+
+        assertEquals(new Point(300, 90),
+                AgentNavigationWaypointService.selectClimbWaypoint(null, entry, new Point(300, 110), edge,
+                        (graph, e, botPos, climbEdge) -> false));
+    }
+
+    @Test
+    void climbWaypointUsesStartPointWhenNotClimbing() {
+        BotEntry entry = new BotEntry(null, null, null);
+        AgentNavigationGraph.Edge edge = edge(AgentNavigationGraph.EdgeType.CLIMB,
+                new Point(300, 100), new Point(260, 90), 0, 0, 0);
+
+        assertEquals(new Point(300, 100),
+                AgentNavigationWaypointService.selectClimbWaypoint(null, entry, new Point(300, 110), edge,
+                        (graph, e, botPos, climbEdge) -> false));
     }
 
     private static AgentNavigationGraph graphWithGroundRegion(int regionId, int x1, int x2, int y) {

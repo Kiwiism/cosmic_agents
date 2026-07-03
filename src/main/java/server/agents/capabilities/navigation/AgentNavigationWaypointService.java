@@ -1,10 +1,12 @@
 package server.agents.capabilities.navigation;
 
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
+import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
+import server.maps.Rope;
 
 import java.awt.Point;
 import java.util.concurrent.ThreadLocalRandom;
@@ -83,5 +85,31 @@ public final class AgentNavigationWaypointService {
                 : ThreadLocalRandom.current().nextInt(randomMinX, randomMaxX + 1);
         AgentBotNavigationDebugStateRuntime.rememberNavJumpLaunch(entry, edge, selectedX);
         return selectedX;
+    }
+
+    public static Point selectClimbWaypoint(AgentNavigationGraph graph,
+                                            BotEntry entry,
+                                            Point botPos,
+                                            AgentNavigationGraph.Edge edge,
+                                            ClimbExitReadiness climbExitReadiness) {
+        if (AgentBotMovementStateRuntime.inAir(entry)) {
+            return new Point(edge.endPoint);
+        }
+        if (AgentBotClimbStateRuntime.climbing(entry) && edge.launchStepX != 0) {
+            if (graph != null && climbExitReadiness.canExecute(graph, entry, botPos, edge)) {
+                return new Point(botPos);
+            }
+            return new Point(edge.startPoint);
+        }
+        if (AgentBotClimbStateRuntime.climbing(entry)) {
+            Rope climbRope = AgentBotClimbStateRuntime.climbRope(entry);
+            int ropeX = climbRope != null ? climbRope.x() : edge.startPoint.x;
+            return new Point(ropeX, edge.endPoint.y);
+        }
+        return new Point(edge.startPoint);
+    }
+
+    public interface ClimbExitReadiness {
+        boolean canExecute(AgentNavigationGraph graph, BotEntry entry, Point botPos, AgentNavigationGraph.Edge edge);
     }
 }

@@ -4019,6 +4019,8 @@ Recent reconstruction notes:
 - Entry-backed cached/random jump launch X selection now lives in
   `AgentNavigationWaypointService`; `BotNavigationManager` delegates through a
   temporary helper while larger waypoint routing migrates.
+- Climb waypoint selection now lives in `AgentNavigationWaypointService` with
+  `BotNavigationManager` supplying the existing climb-exit readiness callback.
 
 Initial reconstruction order:
 

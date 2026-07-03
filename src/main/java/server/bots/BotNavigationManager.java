@@ -691,30 +691,17 @@ public final class BotNavigationManager {
     }
 
     static Point selectClimbWaypoint(AgentNavigationGraph graph, BotEntry entry, Point botPos, AgentNavigationGraph.Edge edge) {
-        if (AgentBotMovementStateRuntime.inAir(entry)) {
-            return new Point(edge.endPoint);
-        }
-        if (AgentBotClimbStateRuntime.climbing(entry) && edge.launchStepX != 0) {
-            // Jump-off and rope-to-rope exits: only hold position when the exit can execute
-            // immediately; otherwise keep steering toward the authored launch anchor.
-            // Graphgen and physics both treat edge.startPoint as the required on-rope launch Y;
-            // steering toward edge.endPoint here would be a runtime-only model mismatch because
-            // a climbing bot cannot physically approach the off-rope landing point.
-            if (graph != null && canExecuteClimbExitFromCurrentPosition(graph, AgentBotRuntimeIdentityRuntime.botMap(entry), botPos, edge)) {
-                return new Point(botPos);
-            }
-            return new Point(edge.startPoint);
-        }
-        if (AgentBotClimbStateRuntime.climbing(entry)) {
-            // launchStepX==0: keep holding climb direction on the rope and let physics dismount
-            // the bot at the boundary. The on-rope steering target should stay on the rope X;
-            // trying to snap to an off-rope landing point is a runtime-only constraint and can
-            // re-clamp the bot back onto the rope top/bottom.
-            Rope climbRope = AgentBotClimbStateRuntime.climbRope(entry);
-            int ropeX = climbRope != null ? climbRope.x() : edge.startPoint.x;
-            return new Point(ropeX, edge.endPoint.y);
-        }
-        return new Point(edge.startPoint);
+        return AgentNavigationWaypointService.selectClimbWaypoint(
+                graph,
+                entry,
+                botPos,
+                edge,
+                (readinessGraph, readinessEntry, readinessBotPos, readinessEdge) ->
+                        canExecuteClimbExitFromCurrentPosition(
+                                readinessGraph,
+                                AgentBotRuntimeIdentityRuntime.botMap(readinessEntry),
+                                readinessBotPos,
+                                readinessEdge));
     }
 
     private static AgentNavigationGraph resolveActiveGraph(MapleMap map, AgentMovementProfile movementProfile) {
