@@ -59,11 +59,11 @@ public final class AgentEquipmentService {
     }
 
     public static boolean shouldReserveOwnedItem(Character agent, Item item) {
-        return BotEquipManager.shouldReserveOwnedItem(agent, item);
+        return AgentEquipmentReservePolicy.shouldReserveOwnedItem(agent, item);
     }
 
     public static boolean wouldReserveIncomingItem(Character agent, ItemInformationProvider ii, Equip equip) {
-        return BotEquipManager.wouldReserveIncomingItem(agent, ii, equip);
+        return AgentEquipmentReservePolicy.wouldReserveIncomingItem(agent, ii, equip);
     }
 
     public static boolean isWeaponCompatible(Character agent, WeaponType weaponType) {

@@ -2,6 +2,7 @@ package server.agents.capabilities.equipment;
 
 import client.Character;
 import client.Job;
+import client.inventory.Item;
 import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
 
@@ -26,5 +27,13 @@ class AgentEquipmentServiceTest {
         assertTrue(AgentEquipmentService.isMageJob(Job.MAGICIAN));
         assertTrue(AgentEquipmentService.isMageJob(Job.BISHOP));
         assertFalse(AgentEquipmentService.isMageJob(Job.ASSASSIN));
+    }
+
+    @Test
+    void shouldExposeAgentOwnedReserveBoundaryForNonEquipItems() {
+        Character agent = mock(Character.class);
+        Item item = mock(Item.class);
+
+        assertFalse(AgentEquipmentService.shouldReserveOwnedItem(agent, item));
     }
 }

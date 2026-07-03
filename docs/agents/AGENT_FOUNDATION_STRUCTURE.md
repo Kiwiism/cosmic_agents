@@ -71,7 +71,8 @@ Capability bins:
   capability boundary for future extraction. Slot alias resolution lives in
   `AgentEquipmentSlotResolver`; pure scoring helpers live in
   `AgentEquipmentScoringPolicy`; auto-equip duplicate-trigger state lives in
-  `AgentAutoEquipThrottle`.
+  `AgentAutoEquipThrottle`; owned/incoming reserve entry points route directly
+  to `AgentEquipmentReservePolicy`.
 - `supplies`
 - `trade`
 - `shop`

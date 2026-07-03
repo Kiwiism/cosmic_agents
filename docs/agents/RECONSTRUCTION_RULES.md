@@ -3650,6 +3650,10 @@ Recent reconstruction notes:
 - The remaining BotManager grind-mode adapter method was removed. Tick-core
   wiring now passes `AgentGrindModeRuntime.tickGrindMode` directly with the
   temporary movement-core callback and legacy loot-radius value.
+- Equipment reserve service routing now enters `AgentEquipmentReservePolicy`
+  directly through `AgentEquipmentService`; owned-item and incoming-item
+  reserve behavior is unchanged, but production service callers no longer
+  traverse the temporary `BotEquipManager` optimizer shell for that decision.
 
 Initial reconstruction order:
 
