@@ -133,8 +133,9 @@ Capability bins:
   Dead bot-side grounded, climb, swim, and airborne phase-body clutter has been
   removed; remaining cleanup slices continue to remove temporary navigation and
   physics seams. BotNavigationManager now calls Agent movement services directly
-  for movement side effects, with only movement config constants left for a
-  later navigation-policy extraction.
+  for movement side effects and reads navigation-facing movement thresholds
+  from `AgentMovementPhysicsConfig`; remaining references are navigation and
+  physics runtime seams for later extraction.
 - `supplies`
 - `trade`
 - `shop`

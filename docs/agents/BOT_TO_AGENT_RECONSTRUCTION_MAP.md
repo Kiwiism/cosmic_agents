@@ -85,6 +85,10 @@ Recent map updates:
   graph call sites. `BotMovementManager` compatibility accessors now delegate
   stop/follow/teleport/jump-threshold/grind-margin/follow-Y-cap values to the
   Agent-owned source.
+- Navigation-facing movement config reads moved to `AgentMovementPhysicsConfig`.
+  `BotNavigationManager` now reads jump-Y, stop-distance, rope-grab,
+  grind-margin, snap-drop, and climb-speed values from the Agent-owned source
+  instead of `BotMovementManager.cfg` / `BotPhysicsEngine.cfg`.
 - Movement countdown helper ownership moved to `AgentMovementTimers`; Agent
   combat, common tick, inventory/trade, shop, supplies, and stuck-detection
   callback bundles no longer depend on `BotMovementManager` for tick-down or

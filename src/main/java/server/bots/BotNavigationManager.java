@@ -10,6 +10,7 @@ import server.agents.capabilities.movement.AgentClimbMovementPolicy;
 import server.agents.capabilities.movement.AgentClimbMovementService;
 import server.agents.capabilities.movement.AgentJumpActionService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 
@@ -776,7 +777,7 @@ public final class BotNavigationManager {
             return false;
         }
         int xTolerance = Math.max(6, Math.abs(edge.launchStepX) + 2);
-        int yTolerance = BotMovementManager.cfg.JUMP_Y_THRESH * 2;
+        int yTolerance = AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2;
         return Math.abs(outcome.landing().point().x - edge.endPoint.x) <= xTolerance
                 && Math.abs(outcome.landing().point().y - edge.endPoint.y) <= yTolerance;
     }
@@ -1173,10 +1174,10 @@ public final class BotNavigationManager {
         int dy = Math.abs(botPos.y - edge.startPoint.y);
 
         return switch (edge.type) {
-            case JUMP -> dx <= JUMP_READY_X_TOLERANCE && dy <= BotMovementManager.cfg.JUMP_Y_THRESH;
-            case DROP, CLIMB, PORTAL -> dx <= EDGE_READY_X_TOLERANCE && dy <= BotMovementManager.cfg.JUMP_Y_THRESH * 2;
-            default -> dx <= BotMovementManager.cfg.STOP_DIST + 8
-                    && dy <= BotMovementManager.cfg.JUMP_Y_THRESH * 2;
+            case JUMP -> dx <= JUMP_READY_X_TOLERANCE && dy <= AgentMovementPhysicsConfig.configuredJumpYThreshold();
+            case DROP, CLIMB, PORTAL -> dx <= EDGE_READY_X_TOLERANCE && dy <= AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2;
+            default -> dx <= AgentMovementPhysicsConfig.configuredStopDist() + 8
+                    && dy <= AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2;
         };
     }
 
@@ -1223,7 +1224,7 @@ public final class BotNavigationManager {
             return false;
         }
         if (dir == 0) {
-            return Math.abs(toPos.y - previous.y) <= BotMovementManager.cfg.JUMP_Y_THRESH;
+            return Math.abs(toPos.y - previous.y) <= AgentMovementPhysicsConfig.configuredJumpYThreshold();
         }
 
         for (int x = fromPos.x + dir; x != toPos.x + dir; x += dir) {
@@ -1252,7 +1253,7 @@ public final class BotNavigationManager {
         }
 
         Point expectedLaunchPoint = fromRegion.pointAt(botPos.x);
-        return Math.abs(botPos.y - expectedLaunchPoint.y) <= BotMovementManager.cfg.JUMP_Y_THRESH;
+        return Math.abs(botPos.y - expectedLaunchPoint.y) <= AgentMovementPhysicsConfig.configuredJumpYThreshold();
     }
 
     static boolean isWithinDropLaunchWindow(AgentNavigationGraph graph,
@@ -1266,7 +1267,7 @@ public final class BotNavigationManager {
         }
 
         if (graph == null) {
-            return Math.abs(botPos.y - edge.startPoint.y) <= BotMovementManager.cfg.JUMP_Y_THRESH;
+            return Math.abs(botPos.y - edge.startPoint.y) <= AgentMovementPhysicsConfig.configuredJumpYThreshold();
         }
 
         AgentNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);
@@ -1275,7 +1276,7 @@ public final class BotNavigationManager {
         }
 
         Point expectedLaunchPoint = fromRegion.pointAt(botPos.x);
-        return Math.abs(botPos.y - expectedLaunchPoint.y) <= BotMovementManager.cfg.JUMP_Y_THRESH;
+        return Math.abs(botPos.y - expectedLaunchPoint.y) <= AgentMovementPhysicsConfig.configuredJumpYThreshold();
     }
 
     private static int selectedJumpLaunchX(BotEntry entry,
@@ -1328,7 +1329,7 @@ public final class BotNavigationManager {
         AgentNavigationGraph.Region region = graph.getRegion(regionId);
         if (region != null && region.isRopeRegion) {
             int travel = Math.abs(to.y - from.y);
-            return Math.max(0, (int) Math.round((travel * 1000.0) / Math.max(1, BotMovementManager.cfg.CLIMB_SPEED_PXS)));
+            return Math.max(0, (int) Math.round((travel * 1000.0) / Math.max(1, AgentMovementPhysicsConfig.configuredClimbSpeedPxs())));
         }
         return intraRegionTravelCost(graph, from, to);
     }
@@ -1349,21 +1350,21 @@ public final class BotNavigationManager {
     }
 
     private static boolean canGrabRopeAtCurrentPosition(Point botPos, Rope rope) {
-        return Math.abs(botPos.x - rope.x()) <= BotMovementManager.cfg.ROPE_GRAB_X
+        return Math.abs(botPos.x - rope.x()) <= AgentMovementPhysicsConfig.configuredRopeGrabX()
                 && botPos.y >= BotPhysicsEngine.firstClimbableY(rope)
                 && botPos.y <= rope.bottomY();
     }
 
     private static boolean canAttachToRopeFromTopPlatform(AgentNavigationGraph.Edge edge, Point botPos, Rope rope) {
-        return Math.abs(botPos.x - rope.x()) <= BotMovementManager.cfg.ROPE_GRAB_X
+        return Math.abs(botPos.x - rope.x()) <= AgentMovementPhysicsConfig.configuredRopeGrabX()
                 && edge.endPoint.y == BotPhysicsEngine.firstClimbableY(rope)
                 && botPos.y < rope.topY()
-                && rope.topY() - botPos.y <= BotPhysicsEngine.cfg.MAX_SNAP_DROP;
+                && rope.topY() - botPos.y <= AgentMovementPhysicsConfig.configuredMaxSnapDrop();
     }
 
     private static boolean canGrabRopeFromTopPlatform(AgentNavigationGraph.Edge edge, Point botPos, Rope rope) {
-        return edge.startPoint.y <= rope.topY() + BotMovementManager.cfg.JUMP_Y_THRESH
-                && Math.abs(botPos.x - rope.x()) <= BotMovementManager.cfg.ROPE_GRAB_X;
+        return edge.startPoint.y <= rope.topY() + AgentMovementPhysicsConfig.configuredJumpYThreshold()
+                && Math.abs(botPos.x - rope.x()) <= AgentMovementPhysicsConfig.configuredRopeGrabX();
     }
 
     private static boolean canExecuteClimbEntryFromCurrentPosition(MapleMap map,
@@ -1382,7 +1383,7 @@ public final class BotNavigationManager {
             return false;
         }
         return edge.containsLaunchX(botPos.x)
-                && Math.abs(botPos.y - edge.startPoint.y) <= BotMovementManager.cfg.JUMP_Y_THRESH * 2;
+                && Math.abs(botPos.y - edge.startPoint.y) <= AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2;
     }
 
     private static boolean canExecuteClimbExitFromCurrentPosition(AgentNavigationGraph graph,
@@ -1405,7 +1406,7 @@ public final class BotNavigationManager {
 
         AgentNavigationGraph.Region toRegion = graph.getRegion(edge.toRegionId);
         if (toRegion != null && toRegion.isRopeRegion) {
-            return Math.abs(botPos.y - edge.startPoint.y) <= BotMovementManager.cfg.JUMP_Y_THRESH * 2;
+            return Math.abs(botPos.y - edge.startPoint.y) <= AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2;
         }
 
         if (edge.launchStepX == 0) {
@@ -1413,7 +1414,7 @@ public final class BotNavigationManager {
             return rope != null && isTopStepOffExit(rope, botPos, edge);
         }
 
-        return Math.abs(botPos.y - edge.startPoint.y) <= BotMovementManager.cfg.JUMP_Y_THRESH * 2;
+        return Math.abs(botPos.y - edge.startPoint.y) <= AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2;
     }
 
     private static boolean isTopRopeJumpExitReady(Rope rope, Point botPos, AgentNavigationGraph.Edge edge) {
@@ -1422,7 +1423,7 @@ public final class BotNavigationManager {
         // climbStep below the top. Non-top anchors are single-point launch windows whose arcs
         // are precomputed by simulateRopeJumpLanding — launching from any other Y misses the
         // destination. The bot reaches non-top anchors exactly via the precise-target snap in
-        // BotMovementManager.shouldSnapToClimbTarget (sub-tick clamp; the only one in the
+        // AgentClimbMovementService.shouldSnapToClimbTarget (sub-tick clamp; the only one in the
         // physics path), so the bypass `botPos.y == edge.startPoint.y` in
         // canExecuteClimbExitFromCurrentPosition covers those without tolerance here.
         if (rope == null || botPos == null || edge == null || edge.launchStepX == 0) {
@@ -1458,8 +1459,8 @@ public final class BotNavigationManager {
             return rawTargetPos;
         }
 
-        int safeLeft = targetRegion.minX + BotMovementManager.cfg.GRIND_EDGE_MARGIN;
-        int safeRight = targetRegion.maxX - BotMovementManager.cfg.GRIND_EDGE_MARGIN;
+        int safeLeft = targetRegion.minX + AgentMovementPhysicsConfig.configuredGrindEdgeMargin();
+        int safeRight = targetRegion.maxX - AgentMovementPhysicsConfig.configuredGrindEdgeMargin();
         if (safeLeft >= safeRight) {
             return rawTargetPos;
         }
@@ -1592,8 +1593,8 @@ public final class BotNavigationManager {
             return false;
         }
         return edge.startPoint.y == rope.topY()
-                && Math.abs(edge.endPoint.y - rope.topY()) <= BotMovementManager.cfg.JUMP_Y_THRESH * 2
-                && botPos.y <= rope.topY() + BotMovementManager.cfg.JUMP_Y_THRESH * 2;
+                && Math.abs(edge.endPoint.y - rope.topY()) <= AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2
+                && botPos.y <= rope.topY() + AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2;
     }
 
     private static Rope findRopeForRegion(MapleMap map, AgentNavigationGraph.Region region) {

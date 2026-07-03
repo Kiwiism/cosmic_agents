@@ -85,6 +85,10 @@ Recent reconstruction notes:
   and navigation graph call sites now read these values from Agent-owned config
   while `BotMovementManager` delegates its compatibility accessors to the same
   source.
+- Navigation-facing movement config reads moved to
+  `AgentMovementPhysicsConfig`. `BotNavigationManager` no longer reads
+  `BotMovementManager.cfg` for jump-Y, stop-distance, rope-grab, grind-margin,
+  or climb-speed thresholds while preserving the same legacy values.
 - Movement countdown helpers moved to
   `server.agents.capabilities.movement.AgentMovementTimers`. Agent combat,
   common-tick, inventory/trade, shop, supplies, and stuck-detection callback

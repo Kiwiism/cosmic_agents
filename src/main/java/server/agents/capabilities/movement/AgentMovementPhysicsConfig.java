@@ -10,6 +10,7 @@ public final class AgentMovementPhysicsConfig {
     private static final double HFORCE_PXS = 16.667;
     private static final float JUMP_SPEED_PXS = 555.0f;
     private static final float ROPE_JUMP_SPEED_PXS = 375.0f;
+    private static final float CLIMB_SPEED_PXS = 100.0f;
     private static final int ROPE_GRAB_X = 8;
     private static final int MAX_SNAP_DROP = 16;
     private static final int MAX_SLOPE_UP = 26;
@@ -43,6 +44,10 @@ public final class AgentMovementPhysicsConfig {
 
     public static float configuredRopeJumpSpeedPxs() {
         return ROPE_JUMP_SPEED_PXS;
+    }
+
+    public static float configuredClimbSpeedPxs() {
+        return CLIMB_SPEED_PXS;
     }
 
     public static int configuredRopeGrabX() {
