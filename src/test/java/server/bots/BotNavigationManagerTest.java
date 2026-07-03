@@ -1,5 +1,6 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationCommittedEdgeService;
 import server.agents.capabilities.navigation.AgentNavigationEdgeReadinessService;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationLaunchWindowService;
@@ -192,7 +193,7 @@ class BotNavigationManagerTest {
 
     @Test
     void shouldDropStaleCollapsedWalkEdgeWhenBotEntersIntermediateRegion() {
-        // Regression: pathlog-SLASH-2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â collapsed r358ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢r355 WALK edge (via r359),
+        // Regression: pathlog-SLASH-2026-04-02 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â collapsed r358ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢r355 WALK edge (via r359),
         // bot steps into r359 mid-traverse; old code returned null here (fromRegionId mismatch),
         // dropping the edge every tick and causing an oscillation loop.
         AgentNavigationGraph.Edge collapsedWalk = new AgentNavigationGraph.Edge(
@@ -207,8 +208,8 @@ class BotNavigationManagerTest {
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, 355);
         AgentNavigationGraph graph = mock(AgentNavigationGraph.class);
 
-        // Bot is in intermediate region 359 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â neither source (358) nor destination (355)
-        AgentNavigationGraph.Edge result = BotNavigationManager.reuseCommittedEdge(graph, entry, 359, 355);
+        // Bot is in intermediate region 359 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â neither source (358) nor destination (355)
+        AgentNavigationGraph.Edge result = AgentNavigationCommittedEdgeService.reuseCommittedEdge(graph, entry, 359, 355);
 
         assertNull(result, "Stale collapsed WALK edge must be dropped once the bot leaves its source region");
     }
@@ -227,7 +228,7 @@ class BotNavigationManagerTest {
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, 355);
         AgentNavigationGraph graph = mock(AgentNavigationGraph.class);
 
-        AgentNavigationGraph.Edge result = BotNavigationManager.reuseCommittedEdge(graph, entry, 355, 355);
+        AgentNavigationGraph.Edge result = AgentNavigationCommittedEdgeService.reuseCommittedEdge(graph, entry, 355, 355);
 
         assertNull(result, "WALK edge must be dropped once bot reaches destination region");
     }
@@ -450,7 +451,7 @@ class BotNavigationManagerTest {
         entry.navEdge = staleDrop;
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, staleDrop.toRegionId);
 
-        assertNull(BotNavigationManager.reuseCommittedEdge(graph, entry, 1, 3),
+        assertNull(AgentNavigationCommittedEdgeService.reuseCommittedEdge(graph, entry, 1, 3),
                 "non-AI reuse must drop stale grounded edges whose destination no longer matches the live target");
     }
 
@@ -467,7 +468,7 @@ class BotNavigationManagerTest {
                 -35, 45, -7, 0, 0, 0, 0, 750
         );
 
-        assertTrue(BotNavigationManager.shouldRetainCommittedGroundEdge(committedDrop, replacementJump),
+        assertTrue(AgentNavigationCommittedEdgeService.shouldRetainCommittedGroundEdge(committedDrop, replacementJump),
                 "equivalent first exits into the same destination region should not thrash mid-approach");
     }
 
@@ -484,7 +485,7 @@ class BotNavigationManagerTest {
                 40, 40, 0, 0, 0, 300
         );
 
-        assertFalse(BotNavigationManager.shouldRetainCommittedGroundEdge(committedDrop, replacementDrop),
+        assertFalse(AgentNavigationCommittedEdgeService.shouldRetainCommittedGroundEdge(committedDrop, replacementDrop),
                 "grounded replans must still refresh when the better first edge changes destination region");
     }
 
@@ -581,7 +582,7 @@ class BotNavigationManagerTest {
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, 14);
         AgentNavigationGraph graph = mock(AgentNavigationGraph.class);
 
-        AgentNavigationGraph.Edge reused = BotNavigationManager.reuseCommittedEdge(graph, entry, 20, 14);
+        AgentNavigationGraph.Edge reused = AgentNavigationCommittedEdgeService.reuseCommittedEdge(graph, entry, 20, 14);
 
         assertEquals(entry.navEdge, reused);
     }
@@ -710,18 +711,18 @@ class BotNavigationManagerTest {
 
     @Test
     void shouldNotDismountFromRopeTopOnNonAiTickWhenFollowTargetIsAbove() {
-        // Regression: pathlog-Preston-2026-05-07T034012 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â bot at firstClimbableY of a rope
+        // Regression: pathlog-Preston-2026-05-07T034012 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â bot at firstClimbableY of a rope
         // whose top sits 1px below an above-foothold. Owner above the rope makes the raw follow
         // target's dy negative, so on every non-AI physics tick tickClimbing computed
         // climbVerticalDir=-1 and advanceClimb landed the bot onto the foothold above (climbing
         // cleared). The following AI tick saw the bot in the foothold region and re-grabbed the
-        // rope. Region oscillated r=foothold ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Â r=rope at 50ms cadence for 10+ seconds.
+        // rope. Region oscillated r=foothold ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â r=rope at 50ms cadence for 10+ seconds.
         //
         // Climb direction is an AI-decided intent. Non-AI ticks must integrate the previously
         // chosen climbVerticalDir, not derive a fresh direction from the raw follow target.
         MapleMap map = new MapleMap(910000200, 0, 0, 910000200, 1.0f);
         FootholdTree footholds = new FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
-        // Foothold above the rope top (y=0), 2px gap to rope.topY=2 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â same geometry as Preston r114/r173.
+        // Foothold above the rope top (y=0), 2px gap to rope.topY=2 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â same geometry as Preston r114/r173.
         footholds.insert(new Foothold(new Point(80, 0), new Point(120, 0), 1));
         map.setFootholds(footholds);
         Rope rope = new Rope(100, 2, 154, false);
@@ -738,7 +739,7 @@ class BotNavigationManagerTest {
         assertEquals(BotPhysicsEngine.firstClimbableY(rope), bot.getPosition().y);
         assertEquals(0, entry.climbVerticalDir, "fresh attach must not carry stale climb intent");
 
-        // Follow target far above the bot ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â without the fix, dy<0 forces climb-up which dismounts.
+        // Follow target far above the bot ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â without the fix, dy<0 forces climb-up which dismounts.
         Point followTargetAbove = new Point(50, -54);
 
         // No nav edge committed (rope-entry was just executed; reuseCommittedEdge would drop it

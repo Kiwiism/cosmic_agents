@@ -4058,6 +4058,9 @@ Recent reconstruction notes:
   `AgentNavigationRegionService` directly; the matching
   `BotNavigationManager` compatibility delegates and record adapters have been
   removed.
+- Committed-edge reuse and retention tests now target
+  `AgentNavigationCommittedEdgeService` directly; the matching
+  `BotNavigationManager` compatibility delegates have been removed.
 - Combat grind-target region scoring, path-cost checks, and sibling occupancy
   checks now use `AgentNavigationRegionService` and
   `AgentNavigationPathService`. Target scoring policy and path-cost behavior

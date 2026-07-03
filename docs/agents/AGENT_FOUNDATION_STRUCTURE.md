@@ -195,7 +195,8 @@ Capability bins:
   `AgentNavigationCommittedEdgeService`; the temporary bot navigation shell
   now supplies only compatibility delegates while Agent navigation owns the
   default path search, climb-exit readiness, edge-usability, and rope-entry
-  callback wiring.
+  callback wiring. Bot committed-edge compatibility delegates have been
+  removed from the navigation shell.
   Navigation edge execution target state lives in
   `AgentNavigationEdgeExecutionStateService`.
   Edge execution readiness thresholds plus jump/drop and selected-jump

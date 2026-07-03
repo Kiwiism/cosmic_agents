@@ -1,9 +1,6 @@
 package server.bots;
 
-import server.agents.capabilities.navigation.AgentNavigationCommittedEdgeService;
 import server.agents.capabilities.navigation.AgentNavigationTargetService;
-
-import server.agents.capabilities.navigation.AgentNavigationGraph;
 
 import java.awt.*;
 
@@ -27,16 +24,4 @@ public final class BotNavigationManager {
     public static boolean tryExecuteCommittedEdgeAfterGroundMovement(BotEntry entry, Point rawTargetPos) {
         return AgentNavigationTargetService.tryExecuteCommittedEdgeAfterGroundMovement(entry, rawTargetPos);
     }
-    static AgentNavigationGraph.Edge reuseCommittedEdge(AgentNavigationGraph graph,
-                                                      BotEntry entry,
-                                                      int startRegionId,
-                                                      int targetRegionId) {
-        return AgentNavigationCommittedEdgeService.reuseCommittedEdge(graph, entry, startRegionId, targetRegionId);
-    }
-
-    static boolean shouldRetainCommittedGroundEdge(AgentNavigationGraph.Edge current,
-                                                   AgentNavigationGraph.Edge replacement) {
-        return AgentNavigationCommittedEdgeService.shouldRetainCommittedGroundEdge(current, replacement);
-    }
-
 }
