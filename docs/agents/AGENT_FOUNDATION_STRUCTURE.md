@@ -177,6 +177,7 @@ Capability bins:
   Navigation graph warmup notification throttling lives in
   `AgentNavigationWarmupService`.
   Portal edge execution lives in `AgentNavigationPortalService`.
+  Climb-start side effects live in `AgentNavigationClimbExecutionService`.
   Committed-edge comparison, retention, committed ground-edge refresh, pending
   climb-exit refresh, and reuse/staleness policy live in
   `AgentNavigationCommittedEdgeService`; the temporary bot navigation shell

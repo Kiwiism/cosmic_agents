@@ -3991,6 +3991,9 @@ Recent reconstruction notes:
 - Portal edge execution now lives in `AgentNavigationPortalService`. The same
   portal-open check, enter-portal result check, 250 ms cooldown, navigation
   clear, and entry movement reset ordering are preserved.
+- Navigation climb-start side effects now live in
+  `AgentNavigationClimbExecutionService`. Rope attachment and movement
+  broadcast ordering are unchanged.
 - Combat grind-target region scoring, path-cost checks, and sibling occupancy
   checks now use `AgentNavigationRegionService` and
   `AgentNavigationPathService`. Target scoring policy and path-cost behavior

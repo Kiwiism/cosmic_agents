@@ -2,6 +2,7 @@ package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationCommittedEdgeService;
+import server.agents.capabilities.navigation.AgentNavigationClimbExecutionService;
 import server.agents.capabilities.navigation.AgentNavigationEdgeExecutionStateService;
 import server.agents.capabilities.navigation.AgentNavigationEdgeReadinessService;
 import server.agents.capabilities.navigation.AgentNavigationGrindTargetService;
@@ -27,7 +28,6 @@ import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.movement.AgentQueuedMovementActionService;
-import server.agents.capabilities.movement.AgentRopeMovementService;
 
 import client.Character;
 import constants.game.CharacterStance;
@@ -284,7 +284,7 @@ public final class BotNavigationManager {
                     if (rope != null && canGrabRopeAtCurrentPosition(botPos, rope)) {
                         // Attach at bot's current Y — tickClimbing will drive it down to startPoint.
                         // Using edge.startPoint.y would teleport the bot rather than letting it climb.
-                        startClimbing(entry, bot, rope, botPos.y);
+                        AgentNavigationClimbExecutionService.startClimbing(entry, bot, rope, botPos.y);
                         return new NavigationDirective(rawTargetPos, true);
                     }
                 }
@@ -363,12 +363,12 @@ public final class BotNavigationManager {
             // endPoint. Using endPoint.y (rope top) would teleport a bot at the bottom of the
             // rope all the way to the top instantly.
             AgentBotNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
-            startClimbing(entry, bot, rope, botPos.y);
+            AgentNavigationClimbExecutionService.startClimbing(entry, bot, rope, botPos.y);
             return new NavigationDirective(rawTargetPos, true);
         }
         if (canAttachToRopeFromTopPlatform(edge, botPos, rope)) {
             AgentBotNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
-            startClimbing(entry, bot, rope, edge.endPoint.y);
+            AgentNavigationClimbExecutionService.startClimbing(entry, bot, rope, edge.endPoint.y);
             return new NavigationDirective(rawTargetPos, true);
         }
         if (canGrabRopeFromTopPlatform(edge, botPos, rope)) {
@@ -422,7 +422,7 @@ public final class BotNavigationManager {
         // Jump off rope
         Rope sourceRope = findRopeForRegion(bot.getMap(), graph.getRegion(edge.fromRegionId));
         if (isTopRopeJumpExitReady(sourceRope, botPos, edge) && botPos.y != edge.startPoint.y) {
-            startClimbing(entry, bot, sourceRope, edge.startPoint.y);
+            AgentNavigationClimbExecutionService.startClimbing(entry, bot, sourceRope, edge.startPoint.y);
         }
         AgentClimbMovementService.jumpOffRope(entry, bot, edge.launchStepX);
         return new NavigationDirective(rawTargetPos, true);
@@ -868,11 +868,6 @@ public final class BotNavigationManager {
 
     private static boolean isTopRopeJumpExitReady(Rope rope, Point botPos, AgentNavigationGraph.Edge edge) {
         return AgentNavigationRopeEdgeService.isTopRopeJumpExitReady(rope, botPos, edge);
-    }
-
-    private static void startClimbing(BotEntry entry, Character bot, Rope rope, int climbY) {
-        AgentRopeMovementService.attachToRope(entry, bot, rope, climbY);
-        AgentMovementBroadcastService.broadcastMovement(entry);
     }
 
     private static Point adjustPathTarget(BotEntry entry,
