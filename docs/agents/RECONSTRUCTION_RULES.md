@@ -3998,6 +3998,11 @@ Recent reconstruction notes:
   `AgentNavigationCommittedEdgeService`. `BotNavigationManager` supplies only
   the existing `findNextEdge` callback so path search ordering and edge choice
   remain unchanged while ownership moves into the Agent navigation capability.
+- Committed-edge reuse/staleness policy now lives in
+  `AgentNavigationCommittedEdgeService`. `BotNavigationManager` supplies only
+  edge-usability and rope-entry callbacks while the Agent service owns the
+  stored target update, completion checks, retarget checks, climb retention,
+  and airborne arc retention rules.
 - Navigation edge readiness thresholds now live in
   `AgentNavigationEdgeReadinessService`; `BotNavigationManager` delegates while
   execution sequencing remains in the temporary bot navigation shell.

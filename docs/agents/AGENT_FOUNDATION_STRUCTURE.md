@@ -172,9 +172,10 @@ Capability bins:
   committed-edge continuation enter through `AgentNavigationTargetService`.
   Path cost, heuristic, no-op walk collapse, precise walk-target policy, and
   edge usability policy live in `AgentNavigationPathService`.
-  Committed-edge comparison, retention, and committed ground-edge refresh policy
-  live in `AgentNavigationCommittedEdgeService`; the temporary bot navigation
-  shell still supplies current path search callbacks.
+  Committed-edge comparison, retention, committed ground-edge refresh, and
+  reuse/staleness policy live in `AgentNavigationCommittedEdgeService`; the
+  temporary bot navigation shell still supplies current path search,
+  edge-usability, and rope-entry callbacks.
   Edge execution readiness thresholds live in
   `AgentNavigationEdgeReadinessService`.
   Rope/climb edge entry and exit predicates live in

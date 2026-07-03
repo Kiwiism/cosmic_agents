@@ -326,71 +326,8 @@ public final class BotNavigationManager {
                                                       BotEntry entry,
                                                       int startRegionId,
                                                       int targetRegionId) {
-        AgentNavigationGraph.Edge edge = (AgentNavigationGraph.Edge) AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry);
-        if (edge == null) {
-            return null;
-        }
-        if (targetRegionId < 0) {
-            return null;
-        }
-        int previousTargetRegionId = AgentBotNavigationDebugStateRuntime.navTargetRegionId(entry);
-        // Update stored target in-place rather than discarding. The Y-snap offset causes
-        // followBase.x to differ between AI and non-AI ticks, making targetRegionId fluctuate
-        // even when the owner hasn't meaningfully moved. Relying on structural checks below
-        // (start-region match, usability, arrival) is sufficient to detect actual invalidity.
-        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
-        if (!isEdgeUsable(graph, AgentBotRuntimeIdentityRuntime.bot(entry), edge)) {
-            return null;
-        }
-        if (AgentBotClimbStateRuntime.climbing(entry) && isRopeEntryEdge(graph, edge)) {
-            return null;
-        }
-        if (startRegionId == edge.toRegionId && !AgentBotMovementStateRuntime.inAir(entry) && !AgentBotClimbStateRuntime.climbing(entry)
-                && edge.fromRegionId != edge.toRegionId) {
-            // Self-loop edges (intra-region portals) inherently start and end in the same
-            // region. Completion is signalled by execution (tryExecutePortal teleporting the
-            // bot), not by a region change — don't retire on region match.
-            return null;
-        }
-        // Once the resolved target is back in the bot's current region, any committed edge that
-        // would leave that region is stale. Keeping it causes follow/formation loops where the
-        // bot repeatedly runs toward an old jump/drop/portal after the live follow target has
-        // snapped back onto the current platform.
-        if (!AgentBotMovementStateRuntime.inAir(entry) && !AgentBotClimbStateRuntime.climbing(entry)
-                && startRegionId >= 0 && startRegionId == targetRegionId
-                && edge.toRegionId != startRegionId) {
-            return null;
-        }
-        if (startRegionId == edge.fromRegionId) {
-            if (!AgentBotMovementStateRuntime.inAir(entry) && !AgentBotClimbStateRuntime.climbing(entry)
-                    && previousTargetRegionId >= 0
-                    && previousTargetRegionId != targetRegionId
-                    && edge.toRegionId != targetRegionId) {
-                return null;
-            }
-            return edge;
-        }
-        // While climbing, always keep the edge — findGroundFoothold gives false positives
-        // (returns the platform below/behind the rope as the "current" region), which would
-        // otherwise drop the exit edge the moment the bot enters the destination region's Y range.
-        if (AgentBotClimbStateRuntime.climbing(entry) && (startRegionId < 0 || startRegionId != edge.toRegionId)) {
-            return edge;
-        }
-        // DROP/JUMP arcs may enter the destination region before the bot touches down.
-        // Keep the edge until landing. Only retain if the bot is in a region consistent with
-        // this arc (destination or unmapped) — prevents looping in a wrong region mid-air.
-        if (AgentBotMovementStateRuntime.inAir(entry) && (startRegionId < 0 || startRegionId == edge.toRegionId)
-                && (edge.type == AgentNavigationGraph.EdgeType.DROP
-                    || edge.type == AgentNavigationGraph.EdgeType.JUMP)) {
-            return edge;
-        }
-        if (AgentBotMovementStateRuntime.inAir(entry) && edge.type == AgentNavigationGraph.EdgeType.CLIMB && edge.launchStepX != 0) {
-            // Rope-exit jump arcs use the same sampled ballistic model as JUMP/DROP edges.
-            // Keep the committed edge until the bot actually lands or grabs a rope again;
-            // otherwise mid-air replans can steer the bot off the authored landing path.
-            return edge;
-        }
-        return null;
+        return AgentNavigationCommittedEdgeService.reuseCommittedEdge(graph, entry, startRegionId, targetRegionId,
+                BotNavigationManager::isEdgeUsable, BotNavigationManager::isRopeEntryEdge);
     }
 
     private static NavigationDirective tryExecuteEdge(AgentNavigationGraph graph,
