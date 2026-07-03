@@ -69,6 +69,11 @@ Recent map updates:
   longer imports `server.bots.BotManager` or calls `BotManager.getInstance()`.
   The production `BotManager` compatibility shell has been deleted after
   focused runtime/config/supply/combat parity tests passed.
+- Movement profile physics baseline constants moved to
+  `server.agents.capabilities.movement.AgentMovementPhysicsConfig`.
+  `AgentMovementProfile` now reads Agent-owned walk, horizontal-force, jump,
+  and rope-jump baselines directly; the remaining bot movement/physics files
+  read the same constants while their runtime bodies are reconstructed.
 - Manual and spawned registration entry points moved to
   `AgentInteractionRuntime`; BotManager no longer owns the private tick
   callback used by registration.
@@ -1114,7 +1119,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotOwnershipService.java` | `server.agents.auth.AgentOwnershipService` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotPathLogger.java` | `server.agents.monitoring.AgentPathLogger` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotPerformanceMonitor.java` | `server.agents.runtime.AgentPerformanceMonitor` | `MIGRATED_TO_AGENT` |
-| `src/main/java/server/bots/BotPhysicsEngine.java` | `server.agents.capabilities.movement.AgentPhysicsEngine` | `MIGRATE_TO_AGENT` |
+| `src/main/java/server/bots/BotPhysicsEngine.java` | `server.agents.capabilities.movement.AgentPhysicsEngine` | `SPLIT_TO_MULTIPLE_AGENT_MODULES`; movement-profile physics baseline values moved to `AgentMovementPhysicsConfig`; remaining collision, ground, air, rope, swim, and packet-visible physics runtime still migrates in later slices |
 | `src/main/java/server/bots/BotPotionManager.java` | `server.agents.capabilities.supplies.AgentPotionService`, `server.agents.capabilities.supplies.AgentAutopotPolicy`, `server.agents.capabilities.supplies.AgentPotionInventoryPolicy`, `server.agents.capabilities.supplies.AgentPassiveRecoveryPolicy`, `server.agents.capabilities.dialogue.AgentDialogueCatalog` | `MIGRATED_TO_AGENT`; potion tick orchestration, autopot setup/debug reporting, low-pot supply sharing, donor selection, passive recovery, and grind-start supply reporting now live in Agent supplies |
 | `src/main/java/server/bots/BotScript.java` | `server.agents.plans.AgentScript` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotScriptContext.java` | `server.agents.plans.AgentScriptContext` | `MIGRATED_TO_AGENT` |

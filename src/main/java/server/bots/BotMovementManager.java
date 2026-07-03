@@ -10,6 +10,7 @@ import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.movement.AgentClimbMovementPolicy;
 import server.agents.capabilities.movement.AgentFallbackMovementService;
 import server.agents.capabilities.movement.AgentGroundMovementPolicy;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementTimingPolicy;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
@@ -121,7 +122,7 @@ public class BotMovementManager {
     static Config cfg = bindConfig(new Config());
 
     public static int configuredWalkVelocityPxs() {
-        return cfg.WALK_VEL;
+        return AgentMovementPhysicsConfig.configuredWalkVelocityPxs();
     }
 
     public static int configuredTickMs() {

@@ -48,6 +48,9 @@ Target package groups:
 - `server.agents.commands`: command parsing/routing/result boundaries.
 - `server.agents.plans`: objective and plan execution framework.
 - `server.agents.capabilities`: domain-specific action bins.
+  Movement profile physics baselines live in
+  `server.agents.capabilities.movement.AgentMovementPhysicsConfig`; the
+  remaining legacy physics runtime still awaits reconstruction.
 - `server.agents.events`: event bus and listener interfaces.
 - `server.agents.policy`: replaceable decision rules.
 - `server.agents.profiles`: configurable behavior profiles.

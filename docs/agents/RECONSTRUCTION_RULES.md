@@ -63,6 +63,12 @@ Recent reconstruction notes:
   production source no longer imports `server.bots.BotManager` or calls
   `BotManager.getInstance()`, focused runtime/config/supply/combat parity tests
   passed, and the production `server.bots.BotManager` file has been deleted.
+- Movement profile physics baseline ownership moved to
+  `server.agents.capabilities.movement.AgentMovementPhysicsConfig`.
+  `AgentMovementProfile` no longer imports `server.bots.BotMovementManager` or
+  `server.bots.BotPhysicsEngine` for walk, horizontal-force, jump, or rope-jump
+  baseline values; the temporary bot movement/physics runtime reads the same
+  Agent-owned constants to preserve behavior.
 - Non-legacy Agent config and supply tests now use `AgentRuntimeConfig` and
   `AgentRuntimeRegistry` directly instead of compiling through
   `server.bots.BotManager`; this removed the final compatibility-shell test

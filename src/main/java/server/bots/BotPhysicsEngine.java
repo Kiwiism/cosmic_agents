@@ -5,6 +5,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
 import server.agents.capabilities.combat.AgentCombatConfig;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfile;
 
 import client.Character;
@@ -219,15 +220,15 @@ public final class BotPhysicsEngine {
     }
 
     public static double configuredHorizontalForcePxs() {
-        return cfg.HFORCE_PXS;
+        return AgentMovementPhysicsConfig.configuredHorizontalForcePxs();
     }
 
     public static float configuredJumpSpeedPxs() {
-        return cfg.JUMP_SPEED_PXS;
+        return AgentMovementPhysicsConfig.configuredJumpSpeedPxs();
     }
 
     public static float configuredRopeJumpSpeedPxs() {
-        return cfg.JUMP_ROPE_PXS;
+        return AgentMovementPhysicsConfig.configuredRopeJumpSpeedPxs();
     }
 
     public static int configuredMaxSnapDrop() {

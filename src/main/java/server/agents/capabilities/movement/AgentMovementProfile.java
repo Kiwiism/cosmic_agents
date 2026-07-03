@@ -1,8 +1,6 @@
 package server.agents.capabilities.movement;
 
 import client.Character;
-import server.bots.BotMovementManager;
-import server.bots.BotPhysicsEngine;
 import server.maps.FieldLimit;
 import server.maps.MapleMap;
 
@@ -64,18 +62,18 @@ public record AgentMovementProfile(int totalSpeedStat, int totalJumpStat) implem
     }
 
     public double walkVelocityPxs() {
-        return BotMovementManager.configuredWalkVelocityPxs() * speedMultiplier();
+        return AgentMovementPhysicsConfig.configuredWalkVelocityPxs() * speedMultiplier();
     }
 
     public double hForcePxs() {
-        return BotPhysicsEngine.configuredHorizontalForcePxs() * speedMultiplier();
+        return AgentMovementPhysicsConfig.configuredHorizontalForcePxs() * speedMultiplier();
     }
 
     public float jumpSpeedPxs() {
-        return (float) (BotPhysicsEngine.configuredJumpSpeedPxs() * jumpMultiplier());
+        return (float) (AgentMovementPhysicsConfig.configuredJumpSpeedPxs() * jumpMultiplier());
     }
 
     public float ropeJumpSpeedPxs() {
-        return (float) (BotPhysicsEngine.configuredRopeJumpSpeedPxs() * jumpMultiplier());
+        return (float) (AgentMovementPhysicsConfig.configuredRopeJumpSpeedPxs() * jumpMultiplier());
     }
 }
