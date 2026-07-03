@@ -201,7 +201,7 @@ public final class BotPhysicsEngine {
 
     private record RopeGrabResult(Point point, int ticks) {}
 
-    enum AirborneStepResult {
+    public enum AirborneStepResult {
         WALL,
         CEILING,
         LANDED,
@@ -1318,7 +1318,7 @@ public final class BotPhysicsEngine {
      * One physics step: apply air steering from intent, advance position, resolve collision, apply result.
      * All collision outcome methods are private — movement must not call them directly.
      */
-    static AirborneStepResult stepAirborne(BotEntry entry, Character bot) {
+    public static AirborneStepResult stepAirborne(BotEntry entry, Character bot) {
         // Apply air steering from intent. Movement sets moveDir=0 for committed trajectories.
         if (AgentBotMovementStateRuntime.hasMoveDirection(entry)) {
             applyAirSteering(entry, AgentBotMovementStateRuntime.moveDirection(entry));

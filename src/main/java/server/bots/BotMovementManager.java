@@ -7,6 +7,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.runtime.AgentPerformanceMonitor;
 
 import server.agents.capabilities.combat.AgentCombatConfig;
+import server.agents.capabilities.movement.AgentAirborneMovementService;
 import server.agents.capabilities.movement.AgentClimbMovementPolicy;
 import server.agents.capabilities.movement.AgentFallbackMovementService;
 import server.agents.capabilities.movement.AgentFootholdIndexService;
@@ -342,6 +343,10 @@ public class BotMovementManager {
     }
 
     public static void tickAirborne(BotEntry entry, Point targetPos) {
+        if (useAgentAirborneMovement()) {
+            AgentAirborneMovementService.tickAirborne(entry, targetPos);
+            return;
+        }
         long startedAt = System.nanoTime();
         try {
             AgentBotSwimStateRuntime.setSwimming(entry, false);
@@ -390,6 +395,10 @@ public class BotMovementManager {
         } finally {
             AgentPerformanceMonitor.record("move-air", System.nanoTime() - startedAt);
         }
+    }
+
+    private static boolean useAgentAirborneMovement() {
+        return true;
     }
 
     private static boolean successfullyGrabbedRope(BotEntry entry, Character bot, Point botPos) {

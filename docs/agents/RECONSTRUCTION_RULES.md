@@ -3823,6 +3823,12 @@ Recent reconstruction notes:
   movement broadcast. `BotMovementManager.tickSwimming` remains a temporary
   delegate, and the old private swim intent helper is dead compatibility
   clutter to remove in a later cleanup slice.
+- Airborne phase runtime now enters `AgentAirborneMovementService`; the Agent
+  service owns swim-mode clearing, motion timer ticks, air steering intent,
+  rope-grab checks, airborne physics stepping, jump-cooldown clearing, movement
+  broadcast, and performance timing. `BotMovementManager.tickAirborne` remains
+  a temporary compatibility shell while old unreachable helper code is cleaned
+  up in a later slice.
 
 Initial reconstruction order:
 
