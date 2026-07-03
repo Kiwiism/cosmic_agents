@@ -232,15 +232,15 @@ public final class BotPhysicsEngine {
     }
 
     public static int configuredMaxSnapDrop() {
-        return cfg.MAX_SNAP_DROP;
+        return AgentMovementPhysicsConfig.configuredMaxSnapDrop();
     }
 
     public static int configuredMaxSlopeUp() {
-        return cfg.MAX_SLOPE_UP;
+        return AgentMovementPhysicsConfig.configuredMaxSlopeUp();
     }
 
     public static int configuredRopeGrabX() {
-        return cfg.ROPE_GRAB_X;
+        return AgentMovementPhysicsConfig.configuredRopeGrabX();
     }
 
     private static AgentMovementProfile profileOrBase(AgentMovementProfile profile) {

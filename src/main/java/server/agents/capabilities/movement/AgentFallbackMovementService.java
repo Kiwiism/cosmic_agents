@@ -43,7 +43,7 @@ public final class AgentFallbackMovementService {
             }
 
             int ropeDx = rope.x() - botPos.x;
-            int ropeJumpRange = Math.max(BotPhysicsEngine.configuredRopeGrabX() * 2,
+            int ropeJumpRange = Math.max(AgentMovementPhysicsConfig.configuredRopeGrabX() * 2,
                     BotPhysicsEngine.walkStep(map, movementProfile(entry)) * 2);
             if (Math.abs(ropeDx) <= ropeJumpRange
                     && BotPhysicsEngine.canReachRopeFromGround(map, botPos, rope, movementProfile(entry))) {
@@ -106,7 +106,7 @@ public final class AgentFallbackMovementService {
         if (entry == null || !AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry) || botPos == null || targetPos == null || stepX == 0) {
             return false;
         }
-        if (targetPos.y <= botPos.y + BotPhysicsEngine.configuredMaxSnapDrop()) {
+        if (targetPos.y <= botPos.y + AgentMovementPhysicsConfig.configuredMaxSnapDrop()) {
             return false;
         }
         Point ahead = new Point(botPos.x + stepX, botPos.y);
@@ -135,20 +135,20 @@ public final class AgentFallbackMovementService {
             }
 
             if (dy < 0) {
-                if (rope.topY() >= botPos.y - BotPhysicsEngine.configuredMaxSnapDrop()) {
+                if (rope.topY() >= botPos.y - AgentMovementPhysicsConfig.configuredMaxSnapDrop()) {
                     continue;
                 }
-                if (rope.bottomY() < botPos.y - BotPhysicsEngine.configuredMaxSnapDrop()) {
+                if (rope.bottomY() < botPos.y - AgentMovementPhysicsConfig.configuredMaxSnapDrop()) {
                     continue;
                 }
                 if (rope.topY() > targetPos.y + BotMovementManager.configuredFollowYCap()) {
                     continue;
                 }
             } else {
-                if (rope.bottomY() <= botPos.y + BotPhysicsEngine.configuredMaxSnapDrop()) {
+                if (rope.bottomY() <= botPos.y + AgentMovementPhysicsConfig.configuredMaxSnapDrop()) {
                     continue;
                 }
-                if (rope.topY() > botPos.y + BotPhysicsEngine.configuredMaxSlopeUp()) {
+                if (rope.topY() > botPos.y + AgentMovementPhysicsConfig.configuredMaxSlopeUp()) {
                     continue;
                 }
                 if (rope.bottomY() < targetPos.y - BotMovementManager.configuredFollowYCap()) {
@@ -176,9 +176,9 @@ public final class AgentFallbackMovementService {
         // motion as the real client. attachY snaps to rope.topY in the caller.
         return botPos != null
                 && rope != null
-                && Math.abs(botPos.x - rope.x()) <= BotPhysicsEngine.configuredRopeGrabX()
-                && botPos.y >= rope.topY() - BotPhysicsEngine.configuredMaxSnapDrop()
-                && botPos.y <= rope.bottomY() + BotPhysicsEngine.configuredMaxSnapDrop();
+                && Math.abs(botPos.x - rope.x()) <= AgentMovementPhysicsConfig.configuredRopeGrabX()
+                && botPos.y >= rope.topY() - AgentMovementPhysicsConfig.configuredMaxSnapDrop()
+                && botPos.y <= rope.bottomY() + AgentMovementPhysicsConfig.configuredMaxSnapDrop();
     }
 
     private static Point resolveFallbackLedgeTarget(BotEntry entry, Point botPos, Point targetPos, Rope rope) {
@@ -222,7 +222,7 @@ public final class AgentFallbackMovementService {
             return false;
         }
         int dy = targetPos.y - botPos.y;
-        if (dy < Math.max(BotPhysicsEngine.configuredMaxSnapDrop() * 3, 90)) {
+        if (dy < Math.max(AgentMovementPhysicsConfig.configuredMaxSnapDrop() * 3, 90)) {
             return false;
         }
 
@@ -313,8 +313,8 @@ public final class AgentFallbackMovementService {
             return false;
         }
 
-        boolean targetIsAboveOrLevel = steeringTarget.y <= botPos.y + BotPhysicsEngine.configuredMaxSnapDrop();
-        boolean landingIsAboveOrLevel = landingPoint.y <= botPos.y + BotPhysicsEngine.configuredMaxSnapDrop();
+        boolean targetIsAboveOrLevel = steeringTarget.y <= botPos.y + AgentMovementPhysicsConfig.configuredMaxSnapDrop();
+        boolean landingIsAboveOrLevel = landingPoint.y <= botPos.y + AgentMovementPhysicsConfig.configuredMaxSnapDrop();
         return targetIsAboveOrLevel && landingIsAboveOrLevel;
     }
 }

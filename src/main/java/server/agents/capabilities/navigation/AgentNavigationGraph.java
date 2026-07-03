@@ -3,6 +3,7 @@ package server.agents.capabilities.navigation;
 import server.agents.capabilities.movement.AgentMovementProfile;
 
 import server.bots.BotPhysicsEngine;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 
@@ -387,7 +388,7 @@ public final class AgentNavigationGraph implements Serializable {
             if (!region.isRopeRegion) {
                 continue;
             }
-            if (Math.abs(position.x - region.minX) <= BotPhysicsEngine.configuredRopeGrabX()
+            if (Math.abs(position.x - region.minX) <= AgentMovementPhysicsConfig.configuredRopeGrabX()
                     && position.y >= region.minY
                     && position.y <= region.maxY) {
                 return region.id;

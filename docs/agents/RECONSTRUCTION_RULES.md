@@ -69,6 +69,10 @@ Recent reconstruction notes:
   `server.bots.BotPhysicsEngine` for walk, horizontal-force, jump, or rope-jump
   baseline values; the temporary bot movement/physics runtime reads the same
   Agent-owned constants to preserve behavior.
+- Rope-grab, snap-drop, and slope-up physics threshold reads also moved to
+  `AgentMovementPhysicsConfig`. Agent movement fallback and navigation graph
+  code now read those thresholds from Agent-owned config while the legacy
+  physics engine keeps the collision/simulation body for later slices.
 - Non-legacy Agent config and supply tests now use `AgentRuntimeConfig` and
   `AgentRuntimeRegistry` directly instead of compiling through
   `server.bots.BotManager`; this removed the final compatibility-shell test

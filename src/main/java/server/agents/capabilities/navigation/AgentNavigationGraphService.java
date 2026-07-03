@@ -1,6 +1,7 @@
 package server.agents.capabilities.navigation;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1577,14 +1578,14 @@ public final class AgentNavigationGraphService {
         for (AgentNavigationGraph.Region ground : groundRegions) {
             for (Point anchor : anchorsByRegionId.getOrDefault(ground.id, List.of())) {
                 int firstClimbableY = BotPhysicsEngine.firstClimbableY(rope);
-                boolean canGrab = Math.abs(anchor.x - ropeX) <= BotPhysicsEngine.configuredRopeGrabX()
+                boolean canGrab = Math.abs(anchor.x - ropeX) <= AgentMovementPhysicsConfig.configuredRopeGrabX()
                         && anchor.y >= firstClimbableY && anchor.y <= rope.bottomY();
-                boolean canTopGrab = Math.abs(anchor.x - ropeX) <= BotPhysicsEngine.configuredRopeGrabX()
+                boolean canTopGrab = Math.abs(anchor.x - ropeX) <= AgentMovementPhysicsConfig.configuredRopeGrabX()
                         && anchor.y < rope.topY()
-                        && rope.topY() - anchor.y <= BotPhysicsEngine.configuredMaxSnapDrop();
+                        && rope.topY() - anchor.y <= AgentMovementPhysicsConfig.configuredMaxSnapDrop();
                 boolean canJumpGrab = BotMovementManager.canReachRopeFromGround(map, anchor, rope, movementProfile);
                 boolean canTopStep = anchor.y <= rope.topY() + BotMovementManager.configuredJumpYThreshold()
-                        && Math.abs(anchor.x - ropeX) <= BotPhysicsEngine.configuredRopeGrabX();
+                        && Math.abs(anchor.x - ropeX) <= AgentMovementPhysicsConfig.configuredRopeGrabX();
 
                 if (canGrab) {
                     Point ropePoint = new Point(ropeX, Math.max(firstClimbableY, Math.min(anchor.y, rope.bottomY())));
@@ -1796,7 +1797,7 @@ public final class AgentNavigationGraphService {
         // Portal WZ positions can sit a few pixels below the foothold surface they belong to,
         // causing findBelow to skip the correct foothold and land on the next lower platform.
         // Probe MAX_SNAP_DROP above the portal position so findBelow always finds the right foothold.
-        int snapUp = BotPhysicsEngine.configuredMaxSnapDrop();
+        int snapUp = AgentMovementPhysicsConfig.configuredMaxSnapDrop();
         AgentNavigationGraph.Region from = findRegionBelow(map, regionsById, regionIdByFootholdId,
                 new Point(portal.getPosition().x, portal.getPosition().y - snapUp));
         AgentNavigationGraph.Region to = findRegionBelow(map, regionsById, regionIdByFootholdId,
@@ -1827,7 +1828,7 @@ public final class AgentNavigationGraphService {
         }
 
         for (Portal portal : map.getPortals()) {
-            int snapUp = BotPhysicsEngine.configuredMaxSnapDrop();
+            int snapUp = AgentMovementPhysicsConfig.configuredMaxSnapDrop();
             Point portalProbe = new Point(portal.getPosition().x, portal.getPosition().y - snapUp);
             addFeatureX(featureXs, findRegionIdBelow(map, regionIdByFootholdId, portalProbe), portal.getPosition().x);
             if (portal.getTargetMapId() != map.getId()) {
