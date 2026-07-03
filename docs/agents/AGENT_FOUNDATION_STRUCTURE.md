@@ -130,8 +130,8 @@ Capability bins:
   live in `AgentMobAvoidanceService`; ground action planning/execution routes
   through `AgentGroundActionPlanner` and `AgentGroundActionExecutor`.
   `AgentGroundMovementRuntimeService` owns grounded tick orchestration.
-  Dead bot-side grounded helper clutter has been removed; remaining cleanup
-  slices continue to remove temporary climb/swim/air compatibility clutter and
+  Dead bot-side grounded, climb, swim, and airborne phase-body clutter has been
+  removed; remaining cleanup slices continue to remove temporary navigation and
   physics seams.
 - `supplies`
 - `trade`

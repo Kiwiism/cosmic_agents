@@ -3018,6 +3018,12 @@ Recent reconstruction notes:
   removed after grounded runtime moved to Agent services. The local climb
   `MoveAction` helper remains temporarily because climb cleanup is a separate
   slice.
+- Dead BotMovementManager climb, airborne, and swim phase bodies were removed
+  after those runtime paths moved to `AgentClimbMovementService`,
+  `AgentAirborneMovementService`, and `AgentSwimMovementService`. The
+  navigation-facing `jumpOffRope`, `jumpToRope`, `sameRope`,
+  `shouldHoldClimbIdle`, and `shouldSnapToClimbTarget` compatibility shims
+  remain until BotNavigationManager migrates.
 - Potion-share low-donor deflection templates now live in
   `AgentDialogueCatalog`; AgentPotionService preserves the same delayed map-chat
   callback and random selection timing while delegating the wording and owner

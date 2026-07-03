@@ -4,8 +4,6 @@ import server.agents.capabilities.navigation.AgentNavigationGraphService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
-import server.agents.runtime.AgentPerformanceMonitor;
-
 import server.agents.capabilities.movement.AgentClimbMovementService;
 import server.agents.capabilities.movement.AgentAirborneMovementService;
 import server.agents.capabilities.movement.AgentClimbMovementPolicy;
@@ -28,18 +26,15 @@ import server.agents.capabilities.movement.AgentSwimMovementService;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
 
 import client.Character;
-import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotGrindSearchStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
-import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.agents.integration.AgentBotSwimStateRuntime;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Rope;
@@ -48,45 +43,6 @@ import java.awt.*;
 import java.util.Map;
 
 public class BotMovementManager {
-    enum ActionType {
-        IDLE,
-        WALK,
-        CROUCH,
-        JUMP,
-        CLIMB_UP,
-        CLIMB_DOWN
-    }
-
-    record MoveAction(ActionType type, int stepX) {
-        private static final MoveAction IDLE = new MoveAction(ActionType.IDLE, 0);
-        private static final MoveAction CROUCH = new MoveAction(ActionType.CROUCH, 0);
-        private static final MoveAction CLIMB_UP = new MoveAction(ActionType.CLIMB_UP, 0);
-        private static final MoveAction CLIMB_DOWN = new MoveAction(ActionType.CLIMB_DOWN, 0);
-
-        static MoveAction idle() {
-            return IDLE;
-        }
-
-        static MoveAction walk(int stepX) {
-            return new MoveAction(ActionType.WALK, stepX);
-        }
-
-        static MoveAction crouch() {
-            return CROUCH;
-        }
-
-        static MoveAction jump(int stepX) {
-            return new MoveAction(ActionType.JUMP, stepX);
-        }
-
-        static MoveAction climbUp() {
-            return CLIMB_UP;
-        }
-
-        static MoveAction climbDown() {
-            return CLIMB_DOWN;
-        }
-    }
 
     public static final class JumpLanding {
         private final Point point;
@@ -229,64 +185,7 @@ public class BotMovementManager {
     }
 
     public static void tickClimbing(BotEntry entry, Point targetPos, boolean runAiTick) {
-        if (useAgentClimbMovement()) {
-            AgentClimbMovementService.tickClimbing(entry, targetPos, runAiTick);
-            return;
-        }
-        long startedAt = System.nanoTime();
-        try {
-            Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-            // Null rope is handled inside advanceClimb/holdClimb — they call beginFall internally.
-            BotPhysicsEngine.tickMotionTimers(entry);
-            Point botPos = bot.getPosition();
-            int dy = targetPos.y - botPos.y;
-            Rope climbRope = AgentBotClimbStateRuntime.climbRope(entry);
-            int dxOwner = targetPos.x - climbRope.x();
-
-            // If not navigating, allow jumping off when target is far away horizontally
-            if (runAiTick && !AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
-                    && Math.abs(dxOwner) > cfg.FOLLOW_DIST
-                    && climbRope.bottomY() < targetPos.y) {
-                jumpOffRope(entry, bot, dxOwner);
-                return;
-            }
-
-            boolean climbIdle = shouldHoldClimbIdle(entry, dy, dxOwner);
-            if (climbIdle) {
-                BotPhysicsEngine.holdClimb(entry, bot);
-                broadcastMovement(entry);
-                return;
-            }
-
-            if (shouldSnapToClimbTarget(entry, targetPos, dy)) {
-                BotPhysicsEngine.attachToRope(entry, bot, climbRope, targetPos.y);
-                broadcastMovement(entry);
-                return;
-            }
-
-            if (!runAiTick && !AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
-                // No committed nav edge → no AI-decided climb intent. On non-AI ticks the
-                // navDirective falls through to the raw follow target (resolveTarget can't run
-                // findNextEdge here), and using its dy to choose a direction can dismount the bot
-                // off the rope-top onto the foothold above — pathlog-Preston-2026-05-07 oscillation.
-                // Integrate the cached intent instead; the next AI tick will refresh direction.
-                if (!AgentBotClimbStateRuntime.hasClimbVerticalDirection(entry)) {
-                    BotPhysicsEngine.holdClimb(entry, bot);
-                } else {
-                    BotPhysicsEngine.advanceClimb(entry, bot);
-                }
-                broadcastMovement(entry);
-                return;
-            }
-
-            // Committed climb edges must reach the exact launch anchor so execution can hand off.
-            MoveAction action = dy < 0
-                    ? MoveAction.climbUp()
-                    : dy > 0 ? MoveAction.climbDown() : MoveAction.idle();
-            applyClimbAction(entry, bot, action);
-        } finally {
-            AgentPerformanceMonitor.record("move-climb", System.nanoTime() - startedAt);
-        }
+        AgentClimbMovementService.tickClimbing(entry, targetPos, runAiTick);
     }
 
     static void jumpOffRope(BotEntry entry, Character bot, int dx) {
@@ -299,21 +198,6 @@ public class BotMovementManager {
         Rope sourceRope = AgentBotClimbStateRuntime.climbRope(entry);
         int airVelX = resolveAirVelocityX(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry), dx);
         BotPhysicsEngine.beginRopeTransferJump(entry, bot, sourceRope, airVelX);
-        broadcastMovement(entry);
-    }
-
-    private static void applyClimbAction(BotEntry entry, Character bot, MoveAction action) {
-        AgentBotClimbStateRuntime.setClimbVerticalDirection(entry, switch (action.type()) {
-            case CLIMB_UP -> -1;
-            case CLIMB_DOWN -> 1;
-            default -> 0;
-        });
-
-        if (!AgentBotClimbStateRuntime.hasClimbVerticalDirection(entry)) {
-            BotPhysicsEngine.holdClimb(entry, bot);
-        } else {
-            BotPhysicsEngine.advanceClimb(entry, bot);
-        }
         broadcastMovement(entry);
     }
 
@@ -345,191 +229,16 @@ public class BotMovementManager {
                 BotPhysicsEngine.climbStepPerTick());
     }
 
-    public static void tickAirborne(BotEntry entry, Point targetPos) {
-        if (useAgentAirborneMovement()) {
-            AgentAirborneMovementService.tickAirborne(entry, targetPos);
-            return;
-        }
-        long startedAt = System.nanoTime();
-        try {
-            AgentBotSwimStateRuntime.setSwimming(entry, false);
-            BotPhysicsEngine.tickMotionTimers(entry);
-
-            Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-            Point botPos = bot.getPosition();
-
-            if (successfullyGrabbedRope(entry, bot, botPos)) {
-                return;
-            }
-
-            // Set air steering intent. Gated by shouldApplyAirSteering to preserve
-            // fixed ballistic path for committed nav jumps/drops.
-            // If fidget manager already set moveDir (non-zero), preserve it.
-            if (!AgentBotMovementStateRuntime.hasMoveDirection(entry) && targetPos != null && shouldApplyAirSteering(entry)) {
-                int dx = targetPos.x - botPos.x;
-                AgentBotMovementStateRuntime.setMoveDirection(entry,
-                        Math.abs(dx) > BotPhysicsEngine.cfg.SWIM_ARRIVAL_RADIUS_PX
-                                ? Integer.signum(dx) : 0);
-            }
-
-            BotPhysicsEngine.AirborneStepResult result = BotPhysicsEngine.stepAirborne(entry, bot);
-            if (result == BotPhysicsEngine.AirborneStepResult.WALL) {
-                if (successfullyGrabbedRope(entry, bot, bot.getPosition())) {
-                    return;
-                }
-                broadcastMovement(entry);
-                return;
-            }
-            if (result == BotPhysicsEngine.AirborneStepResult.CEILING) {
-                broadcastMovement(entry);
-                return;
-            }
-            if (result == BotPhysicsEngine.AirborneStepResult.LANDED) {
-                AgentBotMovementPhysicsStateRuntime.clearJumpCooldown(entry);
-                broadcastMovement(entry);
-                return;
-            }
-
-            // CONTINUE — position advanced, check for rope grab at new position
-            if (successfullyGrabbedRope(entry, bot, bot.getPosition())) {
-                return;
-            }
-            broadcastMovement(entry);
-        } finally {
-            AgentPerformanceMonitor.record("move-air", System.nanoTime() - startedAt);
-        }
-    }
-
-    private static boolean useAgentClimbMovement() {
-        return true;
-    }
-
-    private static boolean useAgentAirborneMovement() {
-        return true;
-    }
-
-    private static boolean successfullyGrabbedRope(BotEntry entry, Character bot, Point botPos) {
-        if (!AgentBotClimbStateRuntime.climbUpIntent(entry)) {
-            return false;
-        }
-
-        for (Rope rope : bot.getMap().getRopes()) {
-            if (sameRope(AgentBotClimbStateRuntime.blockedRopeGrab(entry), rope)) {
-                continue;
-            }
-            if (Math.abs(rope.x() - botPos.x) > BotPhysicsEngine.cfg.ROPE_GRAB_X) {
-                continue;
-            }
-            if (botPos.y < rope.topY() || botPos.y > rope.bottomY() + 2) {
-                continue;
-            }
-
-            BotPhysicsEngine.attachToRope(entry, bot, rope, botPos.y);
-            broadcastMovement(entry);
-            return true;
-        }
-
-        return false;
-    }
-
     static boolean sameRope(Rope left, Rope right) {
         return AgentClimbMovementPolicy.sameRope(left, right);
     }
 
-    private static boolean shouldApplyAirSteering(BotEntry entry) {
-        if (AgentBotMovementPhysicsStateRuntime.fixedAirArc(entry)) {
-            return false;
-        }
-        if (AgentBotMovementStateRuntime.hasDownJumpGracePeriod(entry)) {
-            return false;
-        }
-        AgentNavigationGraph.Edge navEdge = (AgentNavigationGraph.Edge) AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry);
-        if (navEdge == null) {
-            return true;
-        }
-        return navEdge.type != AgentNavigationGraph.EdgeType.JUMP
-                && navEdge.type != AgentNavigationGraph.EdgeType.DROP
-                && !(navEdge.type == AgentNavigationGraph.EdgeType.CLIMB
-                && navEdge.launchStepX != 0);
+    public static void tickAirborne(BotEntry entry, Point targetPos) {
+        AgentAirborneMovementService.tickAirborne(entry, targetPos);
     }
 
     public static void tickSwimming(BotEntry entry, Point targetPos) {
         AgentSwimMovementService.tickSwimming(entry, targetPos);
-    }
-
-    /**
-     * Translate a nav target into the discrete swim controls the real client exposes:
-     * steer L/R (continuous), JUMP burst (one-shot), UP/DOWN held.
-     * No continuous velocity steering — physics integrates the intents.
-     */
-    private static void computeSwimIntents(BotEntry entry, Point targetPos) {
-        // Capture last vertical hold for hysteresis. Without sticky-middle,
-        // a target sinking faster than the bot's UP-terminal sink rate causes
-        // dy to oscillate across the LEVEL_BAND boundary every tick — bot
-        // alternates UP-hold (slow sink) and free-sink, visibly stuttering.
-        int prevVerticalHold = AgentBotSwimStateRuntime.swimVerticalHold(entry);
-
-        // Default to "no input": bot drifts under swim gravity.
-        AgentBotSwimStateRuntime.clearSwimInput(entry);
-
-        // Player can't dispatch movement input (strafe/jump/up/down) while
-        // CUserLocal::IsAttacking is true. Mirror that here: during animation
-        // lock the integrator still ticks (drag + gravity, collision) but no
-        // intent is set, so the bot just floats in place.
-        if (AgentBotCombatCooldownStateRuntime.hasAttackCooldown(entry)) {
-            return;
-        }
-
-        if (targetPos == null) {
-            // Idle in water — hold UP so the bot doesn't sink endlessly.
-            AgentBotSwimStateRuntime.setSwimVerticalHold(entry, -1);
-            return;
-        }
-
-        Point pos = AgentBotRuntimeIdentityRuntime.bot(entry).getPosition();
-        int dx = targetPos.x - pos.x;
-        int dy = targetPos.y - pos.y;
-
-        // Horizontal steer.
-        int hRadius = BotPhysicsEngine.cfg.SWIM_ARRIVAL_RADIUS_PX;
-        if (dx >  hRadius) AgentBotSwimStateRuntime.setSwimMoveDirection(entry, 1);
-        else if (dx < -hRadius) AgentBotSwimStateRuntime.setSwimMoveDirection(entry, -1);
-
-        // Arrival band: bot is essentially on top of the target both axes.
-        // Hold UP just to maintain altitude, no burst, no horizontal push —
-        // prevents the jump/sink oscillation when bot overshoots target by a
-        // few px (was: any dy<0 fired a 1000+ px/s burst, then bot fell back
-        // through level, repeat).
-        int levelBand = BotPhysicsEngine.cfg.SWIM_LEVEL_BAND_PX;
-        if (Math.abs(dx) <= hRadius && Math.abs(dy) <= levelBand) {
-            AgentBotSwimStateRuntime.setSwimMoveDirection(entry, 0);
-            AgentBotSwimStateRuntime.setSwimVerticalHold(entry, -1);
-            return;
-        }
-
-        // Vertical intent with hysteresis around band boundaries. The middle
-        // band (LEVEL < dy <= DOWN) is "sticky" — we keep whichever hold was
-        // active last tick so the bot doesn't flip-flop between UP and free
-        // sink as dy crosses LEVEL_BAND each frame while chasing a target
-        // that sinks faster than UP-terminal.
-        long now = System.currentTimeMillis();
-        int jumpTrigger = BotPhysicsEngine.cfg.SWIM_JUMP_TRIGGER_DY_PX;
-        int downBand = BotPhysicsEngine.cfg.SWIM_DOWN_BAND_PX;
-        if (dy <= -jumpTrigger && now >= AgentBotSwimStateRuntime.swimNextJumpAtMs(entry)) {
-            AgentBotSwimStateRuntime.setSwimJumpRequested(entry, true);
-            AgentBotSwimStateRuntime.setSwimNextJumpAtMs(entry, now + BotPhysicsEngine.cfg.SWIM_JUMP_COOLDOWN_MS);
-            AgentBotSwimStateRuntime.setSwimVerticalHold(entry, -1);
-        } else if (dy <= levelBand) {
-            AgentBotSwimStateRuntime.setSwimVerticalHold(entry, -1);        // clearly above target → UP
-        } else if (dy > downBand) {
-            AgentBotSwimStateRuntime.setSwimVerticalHold(entry, 1);         // clearly far below → DOWN
-        } else {
-            // Middle band: persist last hold to avoid stutter. If we were
-            // sinking (free or DOWN), keep that — UP would just slow our
-            // descent and let target pull further away. If we were UP-holding
-            // and now drifted past LEVEL, switch to free sink so we catch up.
-            AgentBotSwimStateRuntime.setSwimVerticalHold(entry, prevVerticalHold > 0 ? 1 : 0);
-        }
     }
 
     public static void tickGrounded(BotEntry entry, Point targetPos) {
@@ -570,11 +279,6 @@ public class BotMovementManager {
 
     public static void initiateJump(BotEntry entry, Character bot, int dx) {
         AgentJumpActionService.initiateJump(entry, bot, dx);
-    }
-
-    private static void initiateFixedArcJump(BotEntry entry, Character bot, int dx) {
-        initiateJump(entry, bot, dx);
-        AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, true);
     }
 
     public static void tickUnstuck(BotEntry entry) {
