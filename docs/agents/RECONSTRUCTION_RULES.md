@@ -3978,6 +3978,10 @@ Recent reconstruction notes:
   `BotNavigationManager` keeps public/package-private compatibility delegates,
   and its `runSearch` compatibility method now wraps the Agent-owned
   `SearchOutcome` instead of retaining a duplicate search body.
+- Dead `BotNavigationManager` path-search helper shims for intra-region cost,
+  heuristic calculation, map-edge usability, slow-path logging, and path
+  reconstruction were removed after the compatibility search method delegated
+  to `AgentNavigationPathService`.
 - Combat grind-target region scoring, path-cost checks, and sibling occupancy
   checks now use `AgentNavigationRegionService` and
   `AgentNavigationPathService`. Target scoring policy and path-cost behavior

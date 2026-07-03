@@ -796,10 +796,6 @@ public final class BotNavigationManager {
         return AgentNavigationCommittedEdgeService.shouldRetainCommittedGroundEdge(current, replacement);
     }
 
-    private static boolean isEdgeUsable(AgentNavigationGraph graph, MapleMap map, AgentNavigationGraph.Edge edge) {
-        return AgentNavigationPathService.isEdgeUsable(graph, map, edge);
-    }
-
     private static boolean usePortal(Character bot, int portalId) {
         Portal portal = bot.getMap().getPortal(portalId);
         if (portal == null || !portal.getPortalStatus()) {
@@ -889,18 +885,6 @@ public final class BotNavigationManager {
                                            AgentNavigationGraph graph,
                                            AgentNavigationGraph.Edge edge) {
         return AgentNavigationWaypointService.selectJumpLaunchX(entry, graph, edge);
-    }
-
-    private static int intraRegionTravelCost(AgentNavigationGraph graph, Point from, Point to) {
-        return AgentNavigationPathService.intraRegionTravelCost(graph, from, to);
-    }
-
-    private static int intraRegionTravelCost(AgentNavigationGraph graph, int regionId, Point from, Point to) {
-        return AgentNavigationPathService.intraRegionTravelCost(graph, regionId, from, to);
-    }
-
-    private static int heuristic(AgentNavigationGraph graph, Point from, Point targetPos) {
-        return AgentNavigationPathService.heuristic(graph, from, targetPos);
     }
 
     static boolean shouldUsePreciseWalkTarget(AgentNavigationGraph.Edge edge) {
