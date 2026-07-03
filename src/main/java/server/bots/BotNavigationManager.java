@@ -3,6 +3,7 @@ package server.bots;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationCommittedEdgeService;
 import server.agents.capabilities.navigation.AgentNavigationEdgeReadinessService;
+import server.agents.capabilities.navigation.AgentNavigationGrindTargetService;
 import server.agents.capabilities.navigation.AgentNavigationPhysicsService;
 import server.agents.capabilities.navigation.AgentNavigationPathService;
 import server.agents.capabilities.navigation.AgentNavigationRegionService;
@@ -1348,23 +1349,8 @@ public final class BotNavigationManager {
                                           AgentNavigationGraph graph,
                                           int targetRegionId,
                                           Point rawTargetPos) {
-        if (rawTargetPos == null || !AgentBotModeStateRuntime.grinding(entry) || targetRegionId < 0) {
-            return rawTargetPos;
-        }
-
-        AgentNavigationGraph.Region targetRegion = graph.getRegion(targetRegionId);
-        if (targetRegion == null || targetRegion.isRopeRegion) {
-            return rawTargetPos;
-        }
-
-        int safeLeft = targetRegion.minX + AgentMovementPhysicsConfig.configuredGrindEdgeMargin();
-        int safeRight = targetRegion.maxX - AgentMovementPhysicsConfig.configuredGrindEdgeMargin();
-        if (safeLeft >= safeRight) {
-            return rawTargetPos;
-        }
-
-        int clampedX = Math.max(safeLeft, Math.min(safeRight, rawTargetPos.x));
-        return targetRegion.pointAt(clampedX);
+        return AgentNavigationGrindTargetService.adjustPathTarget(
+                AgentBotModeStateRuntime.grinding(entry), graph, targetRegionId, rawTargetPos);
     }
 
     private static int landingRegionId(AgentNavigationGraph graph, BotPhysicsEngine.JumpLanding landing) {

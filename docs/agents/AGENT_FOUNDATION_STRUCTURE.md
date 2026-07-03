@@ -178,6 +178,8 @@ Capability bins:
   `AgentNavigationEdgeReadinessService`.
   Rope/climb edge entry and exit predicates live in
   `AgentNavigationRopeEdgeService`.
+  Grind-mode path target clamping lives in
+  `AgentNavigationGrindTargetService`.
 - `supplies`
 - `trade`
 - `shop`
