@@ -48,7 +48,7 @@ public final class AgentGroundActionExecutor {
         // Otherwise subpixel uphill/transition movement gets zeroed every tick and the agent
         // can stall forever short of a valid launch window.
         if (AgentBotMovementStateRuntime.movementVelocityX(entry) == 0 && action.type() == AgentGroundAction.Type.IDLE) {
-            BotPhysicsEngine.idleOnGround(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+            AgentMovementPoseService.idleOnGround(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
         }
         AgentMovementBroadcastService.broadcastMovement(entry);
     }

@@ -64,6 +64,8 @@ Target package groups:
   `server.agents.capabilities.movement.AgentFootholdIndexService`.
   Walk-step, climb-step, jump-force, gravity, and jump/rope range kinematics
   live in `server.agents.capabilities.movement.AgentMovementKinematicsService`.
+  Pose and stance side effects enter through
+  `server.agents.capabilities.movement.AgentMovementPoseService`.
 - `server.agents.events`: event bus and listener interfaces.
 - `server.agents.policy`: replaceable decision rules.
 - `server.agents.profiles`: configurable behavior profiles.

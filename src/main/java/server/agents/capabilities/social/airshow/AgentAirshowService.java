@@ -1,6 +1,7 @@
 package server.agents.capabilities.social.airshow;
 
 import server.agents.capabilities.movement.AgentMovementStateResetService;
+import server.agents.capabilities.movement.AgentMovementPoseService;
 
 import client.Character;
 import constants.game.CharacterStance;
@@ -18,7 +19,6 @@ import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
 import server.bots.BotEntry;
-import server.bots.BotPhysicsEngine;
 import server.maps.MapleMap;
 import tools.PacketCreator;
 
@@ -181,7 +181,7 @@ public final class AgentAirshowService {
             return;
         }
         AgentBotAirshowStateRuntime.stop(entry);
-        BotPhysicsEngine.teleportTo(entry, bot, previousPosition);
+        AgentMovementPoseService.teleportTo(entry, bot, previousPosition);
         bot.setStance(previousStance);
         AgentBotMovementBroadcastStateRuntime.invalidate(entry);
         sendMovementPacket(bot, previousPosition, 0, 0, previousStance);

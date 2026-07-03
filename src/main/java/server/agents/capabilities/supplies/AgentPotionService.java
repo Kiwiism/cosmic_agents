@@ -16,6 +16,7 @@ import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
+import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.trade.AgentSupplyShareTradeService;
 import server.agents.capabilities.supplies.AgentAutopotPolicy.AutopotChoice;
 import server.agents.capabilities.supplies.AgentAutopotPolicy.PotionRanking;
@@ -31,7 +32,6 @@ import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.bots.BotEntry;
-import server.bots.BotPhysicsEngine;
 import server.StatEffect;
 
 import java.util.List;
@@ -424,7 +424,7 @@ public final class AgentPotionService {
             return false;
         }
         return !AgentBotMovementStateRuntime.hasMoveDirection(entry)
-                && BotPhysicsEngine.isStandingStance(BotPhysicsEngine.resolveStance(entry));
+                && AgentMovementPoseService.isStandingResolvedStance(entry);
     }
 
 }

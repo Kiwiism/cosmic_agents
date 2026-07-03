@@ -9,7 +9,6 @@ import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
-import server.bots.BotPhysicsEngine;
 
 /**
  * Agent-owned movement reset and transient-state cleanup.
@@ -19,7 +18,7 @@ public final class AgentMovementStateResetService {
     }
 
     public static void resetEntryState(BotEntry entry) {
-        BotPhysicsEngine.resetMotion(entry, AgentBotRuntimeIdentityRuntime.bot(entry).getPosition());
+        AgentMovementPoseService.resetMotion(entry, AgentBotRuntimeIdentityRuntime.bot(entry).getPosition());
         clearTransientState(entry);
     }
 

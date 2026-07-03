@@ -3,6 +3,7 @@ package server.agents.runtime;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
+import server.agents.capabilities.movement.AgentMovementPoseService;
 
 import client.Character;
 import server.agents.capabilities.shop.AgentShopService;
@@ -82,7 +83,7 @@ public final class AgentLeaderSafetyRuntime {
                 () -> scrollAgentToTown(entry, agent, leaderCharId),
                 () -> AgentLeaderSafetyService.idleInactiveAgentInPlace(
                         entry,
-                        () -> BotPhysicsEngine.idleOnGround(entry, agent),
+                        () -> AgentMovementPoseService.idleOnGround(entry, agent),
                         () -> AgentMovementBroadcastService.broadcastMovement(entry)));
     }
 
@@ -100,7 +101,7 @@ public final class AgentLeaderSafetyRuntime {
                 new AgentLeaderSafetyService.TownScrollHooks(
                         agent::getMap,
                         () -> AgentLeaderSafetyService.markInactiveTownReturnHandled(entry),
-                        () -> BotPhysicsEngine.idleOnGround(entry, agent),
+                        () -> AgentMovementPoseService.idleOnGround(entry, agent),
                         () -> AgentReturnScrollService.tryUseNearestTownReturnScroll(agent),
                         agent::changeMap,
                         () -> AgentMapTransitionRuntime.groundAfterMapChange(entry, agent),

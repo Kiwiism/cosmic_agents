@@ -110,6 +110,13 @@ Recent reconstruction notes:
   path logging, and the remaining navigation shim no longer read walk-step
   directly from `BotPhysicsEngine`; side-effect physics calls still migrate in
   later slices.
+- Pose and stance side-effect entry points moved to
+  `AgentMovementPoseService`. Agent idle physics, anchored farm, leader safety,
+  combat death/facing, fidget, airshow restore, potion stance checks, ground
+  action idle, and movement reset now enter through the Agent pose seam for
+  idle, prone, reset, teleport, dead, resolved stance, and sync operations.
+  The service delegates to the current physics engine until those internals
+  migrate.
 - Movement countdown helpers moved to
   `server.agents.capabilities.movement.AgentMovementTimers`. Agent combat,
   common-tick, inventory/trade, shop, supplies, and stuck-detection callback

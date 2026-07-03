@@ -2,10 +2,10 @@ package server.agents.runtime;
 
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementPhaseDispatchService;
+import server.agents.capabilities.movement.AgentMovementPoseService;
 
 import client.Character;
 import server.bots.BotEntry;
-import server.bots.BotPhysicsEngine;
 
 public final class AgentIdlePhysicsRuntime {
     private AgentIdlePhysicsRuntime() {
@@ -24,9 +24,9 @@ public final class AgentIdlePhysicsRuntime {
                 AgentMapEnvironmentService::isSwimMap,
                 entry -> AgentMovementPhaseDispatchService.tickSwimming(entry, null),
                 entry -> AgentMovementPhaseDispatchService.tickAirborne(entry, null),
-                BotPhysicsEngine::resolveIdleGroundStance,
-                BotPhysicsEngine::resolveStance,
-                BotPhysicsEngine::idleOnGround,
+                AgentMovementPoseService::resolveIdleGroundStance,
+                AgentMovementPoseService::resolveStance,
+                AgentMovementPoseService::idleOnGround,
                 AgentMovementBroadcastService::broadcastMovement);
     }
 }

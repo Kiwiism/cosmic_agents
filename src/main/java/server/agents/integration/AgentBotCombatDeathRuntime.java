@@ -6,8 +6,8 @@ import client.Character;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
+import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.bots.BotEntry;
-import server.bots.BotPhysicsEngine;
 
 public final class AgentBotCombatDeathRuntime {
     private AgentBotCombatDeathRuntime() {
@@ -17,7 +17,7 @@ public final class AgentBotCombatDeathRuntime {
                                       boolean announceDeath,
                                       AgentCombatConfig.Config config) {
         AgentBotCombatActionStateRuntime.clearActionState(entry);
-        BotPhysicsEngine.markDead(entry, bot);
+        AgentMovementPoseService.markDead(entry, bot);
         AgentMovementBroadcastService.broadcastMovement(entry);
         AgentBotDeathStateRuntime.enterDeadState(entry, System.currentTimeMillis(), config.BOT_DEAD_MS);
         if (announceDeath) {
