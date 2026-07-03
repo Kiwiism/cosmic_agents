@@ -5,7 +5,6 @@ import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSwimStateRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.bots.BotEntry;
-import server.bots.BotPhysicsEngine;
 
 import java.awt.Point;
 
@@ -18,7 +17,7 @@ public final class AgentSwimMovementService {
         try {
             AgentMotionTimerService.tickMotionTimers(entry);
             computeSwimIntents(entry, targetPos);
-            BotPhysicsEngine.applySwimMotion(entry);
+            AgentSwimPhysicsService.applySwimMotion(entry);
             AgentMovementBroadcastService.broadcastMovement(entry);
         } finally {
             AgentPerformanceMonitor.record("move-swim", System.nanoTime() - startedAt);

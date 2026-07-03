@@ -10,7 +10,6 @@ import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSwimStateRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.bots.BotEntry;
-import server.bots.BotPhysicsEngine;
 import server.maps.Rope;
 
 import java.awt.Point;
@@ -39,19 +38,19 @@ public final class AgentAirborneMovementService {
                                 ? Integer.signum(dx) : 0);
             }
 
-            BotPhysicsEngine.AirborneStepResult result = BotPhysicsEngine.stepAirborne(entry, agent);
-            if (result == BotPhysicsEngine.AirborneStepResult.WALL) {
+            AgentAirborneStepResult result = AgentAirbornePhysicsService.stepAirborne(entry, agent);
+            if (result == AgentAirborneStepResult.WALL) {
                 if (successfullyGrabbedRope(entry, agent, agent.getPosition())) {
                     return;
                 }
                 AgentMovementBroadcastService.broadcastMovement(entry);
                 return;
             }
-            if (result == BotPhysicsEngine.AirborneStepResult.CEILING) {
+            if (result == AgentAirborneStepResult.CEILING) {
                 AgentMovementBroadcastService.broadcastMovement(entry);
                 return;
             }
-            if (result == BotPhysicsEngine.AirborneStepResult.LANDED) {
+            if (result == AgentAirborneStepResult.LANDED) {
                 AgentBotMovementPhysicsStateRuntime.clearJumpCooldown(entry);
                 AgentMovementBroadcastService.broadcastMovement(entry);
                 return;

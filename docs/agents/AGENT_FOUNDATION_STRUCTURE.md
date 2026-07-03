@@ -153,7 +153,8 @@ Capability bins:
   collision and ledge queries enter through `AgentGroundCollisionService`.
   Rope, ladder, and jump-launch actions enter through
   `AgentRopeMovementService`. Combat-driven knockback movement enters through
-  `AgentKnockbackMovementService`.
+  `AgentKnockbackMovementService`. Airborne and swim integration enter through
+  `AgentAirbornePhysicsService` and `AgentSwimPhysicsService`.
 - `supplies`
 - `trade`
 - `shop`

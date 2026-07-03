@@ -3941,6 +3941,10 @@ Recent reconstruction notes:
   `AgentKnockbackMovementService`. Combat damage code still preserves the
   legacy facing-direction and airborne velocity behavior while no longer
   calling knockback physics directly.
+- Airborne and swim integration entry points now route through
+  `AgentAirbornePhysicsService` and `AgentSwimPhysicsService`. The Agent
+  airborne phase uses `AgentAirborneStepResult` instead of the legacy bot enum,
+  while preserving the same wall/ceiling/land/continue outcomes.
 
 Initial reconstruction order:
 
