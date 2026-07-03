@@ -16,8 +16,8 @@ Recent map updates:
   `BotEquipManager.solveForWeapon` test/production usage to
   `AgentEquipmentOptimizer.solveForWeapon`. Branch score comparison,
   requirement-dimension scanning, branch snapshots, and weapon score breakdown
-  calls in `BotEquipManager` now delegate to `AgentEquipmentOptimizer`.
-  Remaining work: remove the stale private bot-side DP helper copy and continue
+  calls in `BotEquipManager` now delegate to `AgentEquipmentOptimizer`; the
+  stale private bot-side DP helper copy was deleted. Remaining work: continue
   moving auto-equip execution/debug orchestration out of `BotEquipManager`.
 - Production callers of `server.bots.BotEquipManager` now call
   `server.agents.capabilities.equipment.AgentEquipmentService`. The old bot
