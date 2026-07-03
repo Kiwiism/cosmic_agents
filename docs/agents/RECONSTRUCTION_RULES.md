@@ -3985,6 +3985,9 @@ Recent reconstruction notes:
 - Navigation graph warmup notification throttling now lives in
   `AgentNavigationWarmupService`. The same leader/map throttle, walkable
   foothold threshold, and visible fallback message text are preserved.
+- Bot navigation target resolution now calls Agent-owned movement reset and
+  movement target snapshot services directly instead of keeping local
+  `clearNavigation` / `captureTargetSnapshot` forwarding helpers.
 - Combat grind-target region scoring, path-cost checks, and sibling occupancy
   checks now use `AgentNavigationRegionService` and
   `AgentNavigationPathService`. Target scoring policy and path-cost behavior
