@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.runtime.AgentRuntimeConfig;
+
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
@@ -204,10 +206,10 @@ public class BotFollowTickPerfHarness {
 
         private static boolean consumeAiTick(BotEntry entry) {
             entry.aiTickAccumulatorMs += BotMovementManager.cfg.TICK_MS;
-            if (entry.aiTickAccumulatorMs < BotManager.cfg.AI_TICK_MS) {
+            if (entry.aiTickAccumulatorMs < AgentRuntimeConfig.cfg.AI_TICK_MS) {
                 return false;
             }
-            entry.aiTickAccumulatorMs -= BotManager.cfg.AI_TICK_MS;
+            entry.aiTickAccumulatorMs -= AgentRuntimeConfig.cfg.AI_TICK_MS;
             return true;
         }
     }

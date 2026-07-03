@@ -27,6 +27,7 @@ import server.agents.runtime.AgentFollowIdleMovementRuntime;
 import server.agents.runtime.AgentGrindTargetRuntime;
 import server.agents.runtime.AgentMovementOnlyStepRuntime;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentSpawnPlacementRuntime;
 import server.agents.runtime.AgentTargetSnapshot;
 import server.agents.runtime.AgentTargetSnapshotRuntime;
@@ -785,7 +786,7 @@ class BotManagerTest {
         Character bot = mockMovingBot(new Point(100, 100), createEmptyTestMap(910000034));
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
         AgentBotGrindWanderStateRuntime.setWanderDirection(entry, 1);
-        MapItem nearbyLoot = mockLoot(1, new Point(100 + BotManager.cfg.LOOT_RADIUS, 100));
+        MapItem nearbyLoot = mockLoot(1, new Point(100 + AgentRuntimeConfig.cfg.LOOT_RADIUS, 100));
         AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, nearbyLoot);
 
         Point target = AgentGrindTargetRuntime.resolveNoGrindTargetPosition(entry, bot.getPosition());
@@ -799,8 +800,8 @@ class BotManagerTest {
         MapleMap map = spy(createEmptyTestMap(910000035));
         Character bot = mockMovingBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
-        MapItem passiveLoot = mockLoot(1, new Point(100 + BotManager.cfg.LOOT_RADIUS, 100));
-        MapItem activeLoot = mockLoot(2, new Point(100 + BotManager.cfg.LOOT_RADIUS + 1, 100));
+        MapItem passiveLoot = mockLoot(1, new Point(100 + AgentRuntimeConfig.cfg.LOOT_RADIUS, 100));
+        MapItem activeLoot = mockLoot(2, new Point(100 + AgentRuntimeConfig.cfg.LOOT_RADIUS + 1, 100));
         int passiveLootObjectId = passiveLoot.getObjectId();
         int activeLootObjectId = activeLoot.getObjectId();
         doReturn(List.of(passiveLoot, activeLoot)).when(map).getDroppedItems();
@@ -808,7 +809,7 @@ class BotManagerTest {
         doReturn(activeLoot).when(map).getMapObject(activeLootObjectId);
 
         assertEquals(activeLoot, AgentLootTargetService.findNearestGrindLootTarget(
-                entry, bot, BotManager.cfg.LOOT_RADIUS, AgentBotGrindLootStateRuntime::isRetrySuppressed));
+                entry, bot, AgentRuntimeConfig.cfg.LOOT_RADIUS, AgentBotGrindLootStateRuntime::isRetrySuppressed));
     }
 
     @Test
@@ -816,7 +817,7 @@ class BotManagerTest {
         MapleMap map = spy(createEmptyTestMap(910000131));
         Character bot = mockMovingBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
-        MapItem loot = mockLoot(1, new Point(100 + BotManager.cfg.LOOT_RADIUS + 1, 100));
+        MapItem loot = mockLoot(1, new Point(100 + AgentRuntimeConfig.cfg.LOOT_RADIUS + 1, 100));
         int lootObjectId = loot.getObjectId();
         Character dropBotOwner = mock(Character.class);
         Character dropBot = mock(Character.class);
@@ -832,7 +833,7 @@ class BotManagerTest {
         try {
 
             assertNull(AgentLootTargetService.findNearestGrindLootTarget(
-                    entry, bot, BotManager.cfg.LOOT_RADIUS, AgentBotGrindLootStateRuntime::isRetrySuppressed));
+                    entry, bot, AgentRuntimeConfig.cfg.LOOT_RADIUS, AgentBotGrindLootStateRuntime::isRetrySuppressed));
         } finally {
             AgentRuntimeRegistry.entriesByLeaderId().clear();
         }
@@ -843,7 +844,7 @@ class BotManagerTest {
         MapleMap map = spy(createEmptyTestMap(910000132));
         Character bot = mockMovingBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
-        MapItem loot = mockLoot(1, new Point(100 + BotManager.cfg.LOOT_RADIUS + 21, 100));
+        MapItem loot = mockLoot(1, new Point(100 + AgentRuntimeConfig.cfg.LOOT_RADIUS + 21, 100));
         int lootObjectId = loot.getObjectId();
         Character dropBotOwner = mock(Character.class);
         Character dropBot = mock(Character.class);
@@ -870,7 +871,7 @@ class BotManagerTest {
         MapleMap map = spy(createEmptyTestMap(910000037));
         Character bot = mockMovingBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
-        MapItem loot = mockLoot(1, new Point(100 + BotManager.cfg.LOOT_RADIUS, 100));
+        MapItem loot = mockLoot(1, new Point(100 + AgentRuntimeConfig.cfg.LOOT_RADIUS, 100));
         int lootObjectId = loot.getObjectId();
         AgentBotGrindWanderStateRuntime.setWanderDirection(entry, 1);
         AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, loot);
@@ -881,7 +882,7 @@ class BotManagerTest {
         bot.setPosition(new Point(99, 100));
 
         assertNull(AgentLootTargetService.findNearestGrindLootTarget(
-                entry, bot, BotManager.cfg.LOOT_RADIUS, AgentBotGrindLootStateRuntime::isRetrySuppressed));
+                entry, bot, AgentRuntimeConfig.cfg.LOOT_RADIUS, AgentBotGrindLootStateRuntime::isRetrySuppressed));
     }
 
     @Test
@@ -889,14 +890,14 @@ class BotManagerTest {
         MapleMap map = spy(createEmptyTestMap(910000038));
         Character bot = mockMovingBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
-        MapItem loot = mockLoot(1, new Point(100 + BotManager.cfg.LOOT_RADIUS + 1, 100));
+        MapItem loot = mockLoot(1, new Point(100 + AgentRuntimeConfig.cfg.LOOT_RADIUS + 1, 100));
         Inventory fullEquip = mock(Inventory.class);
         when(fullEquip.isFull()).thenReturn(true);
         when(bot.getInventory(InventoryType.EQUIP)).thenReturn(fullEquip);
         doReturn(List.of(loot)).when(map).getDroppedItems();
 
         assertNull(AgentLootTargetService.findNearestGrindLootTarget(
-                entry, bot, BotManager.cfg.LOOT_RADIUS, AgentBotGrindLootStateRuntime::isRetrySuppressed));
+                entry, bot, AgentRuntimeConfig.cfg.LOOT_RADIUS, AgentBotGrindLootStateRuntime::isRetrySuppressed));
     }
 
     @Test
@@ -904,13 +905,13 @@ class BotManagerTest {
         MapleMap map = spy(createEmptyTestMap(910000039));
         Character bot = mockMovingBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
-        MapItem pass = mockLoot(1, new Point(100 + BotManager.cfg.LOOT_RADIUS + 1, 100), 4001008, 0, 0);
+        MapItem pass = mockLoot(1, new Point(100 + AgentRuntimeConfig.cfg.LOOT_RADIUS + 1, 100), 4001008, 0, 0);
         int passObjectId = pass.getObjectId();
         doReturn(List.of(pass)).when(map).getDroppedItems();
         doReturn(pass).when(map).getMapObject(passObjectId);
 
         assertNull(AgentLootTargetService.findNearestGrindLootTarget(
-                entry, bot, BotManager.cfg.LOOT_RADIUS, AgentBotGrindLootStateRuntime::isRetrySuppressed));
+                entry, bot, AgentRuntimeConfig.cfg.LOOT_RADIUS, AgentBotGrindLootStateRuntime::isRetrySuppressed));
     }
 
     @Test
@@ -919,13 +920,13 @@ class BotManagerTest {
         Character bot = mockMovingBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
         entry.kpq.state = 4; // KPQ stage 1 SECOND_WALK: coupons should no longer be looted.
-        MapItem coupon = mockLoot(1, new Point(100 + BotManager.cfg.LOOT_RADIUS + 1, 100), 4001007, 0, 0);
+        MapItem coupon = mockLoot(1, new Point(100 + AgentRuntimeConfig.cfg.LOOT_RADIUS + 1, 100), 4001007, 0, 0);
         int couponObjectId = coupon.getObjectId();
         doReturn(List.of(coupon)).when(map).getDroppedItems();
         doReturn(coupon).when(map).getMapObject(couponObjectId);
 
         assertNull(AgentLootTargetService.findNearestGrindLootTarget(
-                entry, bot, BotManager.cfg.LOOT_RADIUS, AgentBotGrindLootStateRuntime::isRetrySuppressed));
+                entry, bot, AgentRuntimeConfig.cfg.LOOT_RADIUS, AgentBotGrindLootStateRuntime::isRetrySuppressed));
     }
 
     @Test
@@ -933,14 +934,14 @@ class BotManagerTest {
         MapleMap map = spy(createEmptyTestMap(910000041));
         Character bot = mockMovingBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
-        MapItem questDrop = mockLoot(1, new Point(100 + BotManager.cfg.LOOT_RADIUS + 1, 100), 4000000, 0, 2000);
+        MapItem questDrop = mockLoot(1, new Point(100 + AgentRuntimeConfig.cfg.LOOT_RADIUS + 1, 100), 4000000, 0, 2000);
         int questDropObjectId = questDrop.getObjectId();
         when(bot.needQuestItem(2000, 4000000)).thenReturn(false);
         doReturn(List.of(questDrop)).when(map).getDroppedItems();
         doReturn(questDrop).when(map).getMapObject(questDropObjectId);
 
         assertNull(AgentLootTargetService.findNearestGrindLootTarget(
-                entry, bot, BotManager.cfg.LOOT_RADIUS, AgentBotGrindLootStateRuntime::isRetrySuppressed));
+                entry, bot, AgentRuntimeConfig.cfg.LOOT_RADIUS, AgentBotGrindLootStateRuntime::isRetrySuppressed));
     }
 
     @Test
@@ -950,7 +951,7 @@ class BotManagerTest {
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
         Point botPos = bot.getPosition();
         Point mobPos = new Point(500, 100);
-        Point lootPos = new Point(100 + BotManager.cfg.LOOT_RADIUS + 21, 100);
+        Point lootPos = new Point(100 + AgentRuntimeConfig.cfg.LOOT_RADIUS + 21, 100);
         MapItem loot = mockLoot(1, lootPos);
         int lootObjectId = loot.getObjectId();
         AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, loot);

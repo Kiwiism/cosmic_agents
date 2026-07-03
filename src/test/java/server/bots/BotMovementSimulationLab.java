@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.runtime.AgentRuntimeConfig;
+
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
@@ -231,7 +233,7 @@ final class BotMovementSimulationLab {
     private void refreshFormation(Character owner) {
         List<BotEntry> followers = followersOf(owner);
         AgentFormationService.FormationState formation = followers.isEmpty()
-                ? AgentFormationService.defaultStagger(BotManager.cfg.FOLLOW_STAGGER, BotMovementManager.cfg.FOLLOW_Y_CAP)
+                ? AgentFormationService.defaultStagger(AgentRuntimeConfig.cfg.FOLLOW_STAGGER, BotMovementManager.cfg.FOLLOW_Y_CAP)
                 : AgentFormationRuntime.formationStateFor(followers.getFirst());
         AgentFormationRuntime.setFormationState(owner, formation.type(), formation.px(), formation.snapRange(), followers);
     }
@@ -261,11 +263,11 @@ final class BotMovementSimulationLab {
 
     private static boolean consumeAiTick(BotEntry entry) {
         entry.aiTickAccumulatorMs += BotMovementManager.cfg.TICK_MS;
-        if (entry.aiTickAccumulatorMs < BotManager.cfg.AI_TICK_MS) {
+        if (entry.aiTickAccumulatorMs < AgentRuntimeConfig.cfg.AI_TICK_MS) {
             return false;
         }
 
-        entry.aiTickAccumulatorMs -= BotManager.cfg.AI_TICK_MS;
+        entry.aiTickAccumulatorMs -= AgentRuntimeConfig.cfg.AI_TICK_MS;
         return true;
     }
 

@@ -67,6 +67,10 @@ Recent reconstruction notes:
   `AgentRuntimeRegistry` directly instead of compiling through
   `server.bots.BotManager`, reducing the remaining test gate before deleting
   the BotManager compatibility shell.
+- Movement simulation, follow perf harness, and BotManager parity tests now
+  read shared tick/loot/follow config from `AgentRuntimeConfig` instead of
+  `BotManager.cfg`. This preserves the same values while removing another
+  test-only dependency on the BotManager compatibility alias.
 - Manual and spawned registration entry points now enter through
   `AgentInteractionRuntime`, which supplies the Agent tick callback. BotManager
   no longer owns a private tick callback.
