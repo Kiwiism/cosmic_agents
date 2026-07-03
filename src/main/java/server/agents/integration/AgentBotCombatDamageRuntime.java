@@ -1,5 +1,7 @@
 package server.agents.integration;
 
+import server.agents.capabilities.movement.AgentMovementTimers;
+
 import client.BuffStat;
 import client.Character;
 import server.agents.capabilities.combat.AgentCombatConfig;
@@ -77,7 +79,7 @@ public final class AgentBotCombatDamageRuntime {
                             broadcastDirection, false, 0, false, 0, 0, 0), false);
             AgentBotCombatCooldownStateRuntime.setMobHitCooldownMs(
                     entry,
-                    BotMovementManager.delayAfterCurrentTick(config.MOB_HIT_COOLDOWN_MS));
+                    AgentMovementTimers.delayAfterCurrentTick(config.MOB_HIT_COOLDOWN_MS));
             AgentBotCombatAlertRuntime.markAlerted(entry);
             return;
         }
@@ -90,7 +92,7 @@ public final class AgentBotCombatDamageRuntime {
 
         AgentBotCombatCooldownStateRuntime.setMobHitCooldownMs(
                 entry,
-                BotMovementManager.delayAfterCurrentTick(config.MOB_HIT_COOLDOWN_MS));
+                AgentMovementTimers.delayAfterCurrentTick(config.MOB_HIT_COOLDOWN_MS));
         AgentBotCombatAlertRuntime.markAlerted(entry);
 
         if (bot.getHp() <= 0) {

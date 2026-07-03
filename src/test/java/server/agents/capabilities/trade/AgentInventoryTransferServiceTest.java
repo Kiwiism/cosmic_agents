@@ -3,10 +3,10 @@ package server.agents.capabilities.trade;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.capabilities.movement.AgentMovementTimers;
 import server.agents.capabilities.inventory.AgentInventoryDropService;
 import server.agents.integration.AgentBotInventoryStateRuntime;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 
 import java.util.function.BiFunction;
 
@@ -43,10 +43,7 @@ class AgentInventoryTransferServiceTest {
         Character bot = mock(Character.class);
         BotEntry entry = new BotEntry(bot, null, null);
 
-        try (MockedStatic<AgentInventoryDropService> drops = mockStatic(AgentInventoryDropService.class);
-             MockedStatic<BotMovementManager> movement = mockStatic(BotMovementManager.class)) {
-            movement.when(() -> BotMovementManager.delayAfterCurrentTick(20_000)).thenReturn(20_050);
-
+        try (MockedStatic<AgentInventoryDropService> drops = mockStatic(AgentInventoryDropService.class)) {
             AgentInventoryTransferService.executeChoice("scrolls", false, entry, bot);
 
             drops.verify(() -> AgentInventoryDropService.dropCategory(
@@ -54,7 +51,8 @@ class AgentInventoryTransferServiceTest {
                     eq(entry),
                     eq(bot),
                     any(BiFunction.class)));
-            assertEquals(20_050, AgentBotInventoryStateRuntime.lootInhibitMs(entry));
+            assertEquals(AgentMovementTimers.delayAfterCurrentTick(20_000),
+                    AgentBotInventoryStateRuntime.lootInhibitMs(entry));
         }
     }
 

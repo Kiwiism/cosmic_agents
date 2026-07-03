@@ -1,5 +1,7 @@
 package server.agents.capabilities.trade;
 
+import server.agents.capabilities.movement.AgentMovementTimers;
+
 import client.Character;
 import client.inventory.Item;
 import config.YamlConfig;
@@ -28,7 +30,6 @@ import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
-import server.bots.BotMovementManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,7 +58,7 @@ public final class AgentInventoryTransferService {
                 AgentInventorySellTrashService::collectSellTrashEquips);
         AgentBotInventoryStateRuntime.setLootInhibitMs(
                 entry,
-                BotMovementManager.delayAfterCurrentTick(20_000));
+                AgentMovementTimers.delayAfterCurrentTick(20_000));
     }
 
     public static void startTradeTransfer(String category, BotEntry entry, Character agent) {
@@ -116,7 +117,7 @@ public final class AgentInventoryTransferService {
                 () -> AgentBotPendingTradeStateRuntime.queueRetry(
                         entry,
                         () -> startTradeTransfer(item, recipient, entry, agent),
-                        BotMovementManager.delayAfterCurrentTick(10_000)),
+                        AgentMovementTimers.delayAfterCurrentTick(10_000)),
                 reply -> AgentBotInventoryRuntime.replyNow(entry, reply));
     }
 

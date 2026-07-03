@@ -53,7 +53,8 @@ Target package groups:
   movement tick duration plus rope-grab and snap/slope thresholds used by
   navigation and fallback movement. Movement command distances and caps also
   live there while the remaining legacy movement/physics runtime still awaits
-  reconstruction.
+  reconstruction. Movement tick countdown helpers live in
+  `server.agents.capabilities.movement.AgentMovementTimers`.
 - `server.agents.events`: event bus and listener interfaces.
 - `server.agents.policy`: replaceable decision rules.
 - `server.agents.profiles`: configurable behavior profiles.

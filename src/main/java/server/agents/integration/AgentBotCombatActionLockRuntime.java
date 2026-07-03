@@ -1,7 +1,8 @@
 package server.agents.integration;
 
+import server.agents.capabilities.movement.AgentMovementTimers;
+
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 
 public final class AgentBotCombatActionLockRuntime {
     private AgentBotCombatActionLockRuntime() {
@@ -9,9 +10,9 @@ public final class AgentBotCombatActionLockRuntime {
 
     public static void tickActionLock(BotEntry entry) {
         if (AgentBotCombatCooldownStateRuntime.hasAttackCooldown(entry)) {
-            AgentBotCombatCooldownStateRuntime.tickAttackCooldown(entry, BotMovementManager::tickDown);
+            AgentBotCombatCooldownStateRuntime.tickAttackCooldown(entry, AgentMovementTimers::tickDown);
         } else if (AgentBotCombatCooldownStateRuntime.hasMoveWindow(entry)) {
-            AgentBotCombatCooldownStateRuntime.tickMoveWindow(entry, BotMovementManager::tickDown);
+            AgentBotCombatCooldownStateRuntime.tickMoveWindow(entry, AgentMovementTimers::tickDown);
         }
     }
 }

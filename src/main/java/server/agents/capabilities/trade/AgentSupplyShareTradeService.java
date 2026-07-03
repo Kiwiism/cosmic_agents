@@ -1,5 +1,7 @@
 package server.agents.capabilities.trade;
 
+import server.agents.capabilities.movement.AgentMovementTimers;
+
 import client.Character;
 import client.inventory.Item;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
@@ -7,7 +9,6 @@ import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 
 import java.util.List;
 
@@ -44,7 +45,7 @@ public final class AgentSupplyShareTradeService {
             AgentBotPendingTradeStateRuntime.queueRetry(
                     entry,
                     () -> startSupplyShareTransfer(category, items, recipient, entry, agent, maxQty),
-                    BotMovementManager.delayAfterCurrentTick(10_000));
+                    AgentMovementTimers.delayAfterCurrentTick(10_000));
             return;
         }
         AgentBotPendingTradeStateRuntime.setShareBudget(entry, maxQty);

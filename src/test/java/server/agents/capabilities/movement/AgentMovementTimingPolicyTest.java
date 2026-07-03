@@ -22,6 +22,12 @@ class AgentMovementTimingPolicyTest {
     }
 
     @Test
+    void timersUseConfiguredMovementTick() {
+        assertEquals(200, AgentMovementTimers.tickDown(250));
+        assertEquals(950, AgentMovementTimers.delayAfterCurrentTick(1000));
+    }
+
+    @Test
     void negativeTickDurationPreservesLegacyNonIncreasingDelay() {
         assertEquals(250, AgentMovementTimingPolicy.tickDown(250, -100));
         assertEquals(1000, AgentMovementTimingPolicy.delayAfterCurrentTick(1000, -100));

@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementTimers;
+
 import client.Character;
 import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.combat.AgentBuffService;
@@ -16,7 +18,6 @@ import server.agents.integration.AgentBotCombatSkillCacheRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 
 import java.util.function.Consumer;
 
@@ -40,7 +41,7 @@ public final class AgentCommonTickRuntime {
     private static AgentCommonTickService.CommonTickHooks hooks(Consumer<BotEntry> tickScriptTasks) {
         return new AgentCommonTickService.CommonTickHooks(
                 (entry, agent) -> AgentBotCombatDamageRuntime.tickMobDamage(
-                        entry, agent, AgentCombatConfig.cfg, BotMovementManager::tickDown),
+                        entry, agent, AgentCombatConfig.cfg, AgentMovementTimers::tickDown),
                 (entry, agent) -> AgentBotDeathStateRuntime.isDead(entry),
                 (entry, agent) -> AgentBotCombatDeathRuntime.enterDeadState(
                         entry, agent, false, AgentCombatConfig.cfg),

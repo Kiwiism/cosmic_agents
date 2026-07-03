@@ -85,6 +85,10 @@ Recent map updates:
   graph call sites. `BotMovementManager` compatibility accessors now delegate
   stop/follow/teleport/jump-threshold/grind-margin/follow-Y-cap values to the
   Agent-owned source.
+- Movement countdown helper ownership moved to `AgentMovementTimers`; Agent
+  combat, common tick, inventory/trade, shop, supplies, and stuck-detection
+  callback bundles no longer depend on `BotMovementManager` for tick-down or
+  delay-after-current-tick helpers.
 - Manual and spawned registration entry points moved to
   `AgentInteractionRuntime`; BotManager no longer owns the private tick
   callback used by registration.
@@ -1117,7 +1121,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotLootEligibility.java` | `server.agents.capabilities.looting.AgentLootEligibility` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotMakerManager.java` | `server.agents.capabilities.build.AgentMakerService` | `MIGRATED_TO_AGENT`; Maker crystal and trash-disassembly batch orchestration moved unchanged |
 | `src/main/java/server/bots/BotManager.java` | `server.agents.runtime`, `commands`, `events`, capability orchestrators | `MIGRATED_TO_AGENT`; runtime/lifecycle/tick/chat/command/config/test callers moved to Agent runtime, registry, lifecycle, notification, cleanup, movement, combat, supply, and dialogue services; production bot file deleted after compile and focused parity tests passed |
-| `src/main/java/server/bots/BotMovementManager.java` | `server.agents.capabilities.movement` | `SPLIT_TO_MULTIPLE_AGENT_MODULES`; cooldown/delay countdown math, climb idle/snap/rope identity decision policy, ground horizontal step policy, and movement command distance/config reads are Agent-owned |
+| `src/main/java/server/bots/BotMovementManager.java` | `server.agents.capabilities.movement` | `SPLIT_TO_MULTIPLE_AGENT_MODULES`; cooldown/delay countdown math and helper entry points, climb idle/snap/rope identity decision policy, ground horizontal step policy, and movement command distance/config reads are Agent-owned |
 | `src/main/java/server/bots/BotMovementTargetSideEffects.java` | `server.agents.integration.AgentBotMovementTargetSideEffects` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotMovementProfile.java` | `server.agents.capabilities.movement.AgentMovementProfile` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotNavigationDebugOverlay.java` | `server.agents.capabilities.navigation.AgentNavigationDebugOverlay` | `MIGRATED_TO_AGENT` |

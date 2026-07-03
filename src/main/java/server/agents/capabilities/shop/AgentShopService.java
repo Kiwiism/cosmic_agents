@@ -1,5 +1,7 @@
 package server.agents.capabilities.shop;
 
+import server.agents.capabilities.movement.AgentMovementTimers;
+
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 import server.agents.capabilities.combat.AgentCombatConfig;
@@ -37,7 +39,6 @@ import server.Shop;
 import server.ShopFactory;
 import server.ShopItem;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.bots.BotNavigationManager;
@@ -174,7 +175,7 @@ public final class AgentShopService {
         if (AgentBotShopStateRuntime.shopApproachDelayMs(entry) > 0) {
             AgentBotShopStateRuntime.setShopApproachDelayMs(
                     entry,
-                    BotMovementManager.tickDown(AgentBotShopStateRuntime.shopApproachDelayMs(entry)));
+                    AgentMovementTimers.tickDown(AgentBotShopStateRuntime.shopApproachDelayMs(entry)));
             return false;
         }
 

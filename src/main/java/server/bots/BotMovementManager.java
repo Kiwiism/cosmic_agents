@@ -12,7 +12,7 @@ import server.agents.capabilities.movement.AgentFallbackMovementService;
 import server.agents.capabilities.movement.AgentGroundMovementPolicy;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfile;
-import server.agents.capabilities.movement.AgentMovementTimingPolicy;
+import server.agents.capabilities.movement.AgentMovementTimers;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
 
 import client.Character;
@@ -163,11 +163,11 @@ public class BotMovementManager {
     }
 
     public static int tickDown(int remainingMs) {
-        return AgentMovementTimingPolicy.tickDown(remainingMs, AgentMovementPhysicsConfig.configuredMovementTickMs());
+        return AgentMovementTimers.tickDown(remainingMs);
     }
 
     public static int delayAfterCurrentTick(int durationMs) {
-        return AgentMovementTimingPolicy.delayAfterCurrentTick(durationMs, AgentMovementPhysicsConfig.configuredMovementTickMs());
+        return AgentMovementTimers.delayAfterCurrentTick(durationMs);
     }
 
     static int walkStep(MapleMap map) {

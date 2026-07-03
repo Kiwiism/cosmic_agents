@@ -1,5 +1,7 @@
 package server.agents.capabilities.supplies;
 
+import server.agents.capabilities.movement.AgentMovementTimers;
+
 import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.capabilities.combat.AgentCombatConfig;
 
@@ -29,7 +31,6 @@ import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 import server.bots.BotPhysicsEngine;
 import server.StatEffect;
 
@@ -169,12 +170,12 @@ public final class AgentPotionService {
 
     public static void tickPotionCheck(BotEntry entry, Character bot) {
         if (AgentBotPotionStateRuntime.hasPotCheckDelay(entry)) {
-            AgentBotPotionStateRuntime.tickPotCheckDelay(entry, BotMovementManager::tickDown);
+            AgentBotPotionStateRuntime.tickPotCheckDelay(entry, AgentMovementTimers::tickDown);
             return;
         }
         AgentBotPotionStateRuntime.setPotCheckTimerMs(
                 entry,
-                BotMovementManager.delayAfterCurrentTick(AgentRuntimeConfig.cfg.POT_CHECK_INTERVAL_MS));
+                AgentMovementTimers.delayAfterCurrentTick(AgentRuntimeConfig.cfg.POT_CHECK_INTERVAL_MS));
 
         long startedAt = AgentPerformanceMonitor.start();
         setupAutopotForBot(bot);
@@ -265,13 +266,13 @@ public final class AgentPotionService {
             return;
         }
         if (AgentBotPotionStateRuntime.hasMpRecoveryDelay(entry)) {
-            AgentBotPotionStateRuntime.tickMpRecoveryDelay(entry, BotMovementManager::tickDown);
+            AgentBotPotionStateRuntime.tickMpRecoveryDelay(entry, AgentMovementTimers::tickDown);
             return;
         }
 
         AgentBotPotionStateRuntime.setMpRecoveryTimerMs(
                 entry,
-                BotMovementManager.delayAfterCurrentTick(AgentRuntimeConfig.cfg.MP_RECOVERY_INTERVAL_MS));
+                AgentMovementTimers.delayAfterCurrentTick(AgentRuntimeConfig.cfg.MP_RECOVERY_INTERVAL_MS));
 
         int hpRecovery = hpFull ? 0 : calculatePassiveHpRecovery(entry, bot);
         int mpRecovery = mpFull ? 0 : calculatePassiveMpRecovery(entry, bot);

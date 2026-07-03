@@ -1,5 +1,7 @@
 package server.agents.integration;
 
+import server.agents.capabilities.movement.AgentMovementTimers;
+
 import client.Character;
 import config.YamlConfig;
 import server.ItemInformationProvider;
@@ -37,14 +39,14 @@ public final class AgentBotInventoryRuntimeAdapters {
     public static AgentPassiveLootRuntimeService.RuntimeCallbacks passiveLootRuntimeCallbacks() {
         return AgentPassiveLootRuntimeService.RuntimeCallbacks.of(
                 AgentBotInventoryStateRuntime::hasLootInhibit,
-                entry -> AgentBotInventoryStateRuntime.tickLootInhibit(entry, BotMovementManager::tickDown),
+                entry -> AgentBotInventoryStateRuntime.tickLootInhibit(entry, AgentMovementTimers::tickDown),
                 AgentBotPendingTradeStateRuntime::hasActiveSequence,
-                entry -> AgentBotInventoryStateRuntime.tickInventoryFullWarnCooldown(entry, BotMovementManager::tickDown),
+                entry -> AgentBotInventoryStateRuntime.tickInventoryFullWarnCooldown(entry, AgentMovementTimers::tickDown),
                 System::currentTimeMillis,
                 () -> AgentRuntimeConfig.cfg.LOOT_RADIUS,
                 AgentBotInventoryStateRuntime::canWarnInventoryFull,
                 AgentBotInventoryRuntime::replyNow,
-                () -> BotMovementManager.delayAfterCurrentTick(AgentRuntimeConfig.cfg.INV_FULL_WARN_CD_MS),
+                () -> AgentMovementTimers.delayAfterCurrentTick(AgentRuntimeConfig.cfg.INV_FULL_WARN_CD_MS),
                 AgentBotInventoryStateRuntime::setInventoryFullWarnCooldownMs,
                 AgentBotRuntimeIdentityRuntime::owner,
                 AgentBotOfferStateRuntime::pendingLootOfferItem,
@@ -58,7 +60,7 @@ public final class AgentBotInventoryRuntimeAdapters {
     public static AgentManualTradeRuntimeService.RuntimeCallbacks manualTradeRuntimeCallbacks(BotEntry entry) {
         return AgentManualTradeRuntimeService.RuntimeCallbacks.of(
                 () -> AgentBotPendingTradeStateRuntime.hasActiveSequence(entry),
-                BotMovementManager::tickDown,
+                AgentMovementTimers::tickDown,
                 BotMovementManager::configuredTickMs,
                 peer -> peer.getClient() instanceof client.BotClient,
                 (peerId, ownerId) -> AgentOwnershipService.getInstance().isAuthorizedOwner(peerId, ownerId),
@@ -68,9 +70,9 @@ public final class AgentBotInventoryRuntimeAdapters {
 
     public static AgentTradeTickRuntimeService.RuntimeCallbacks tradeTickRuntimeCallbacks() {
         return AgentTradeTickRuntimeService.RuntimeCallbacks.of(
-                BotMovementManager::tickDown,
+                AgentMovementTimers::tickDown,
                 Character::getTrade,
-                BotMovementManager::delayAfterCurrentTick,
+                AgentMovementTimers::delayAfterCurrentTick,
                 BotMovementManager::configuredTickMs,
                 AgentBotRuntimeIdentityRuntime::owner,
                 (agent, owner) -> AgentEquipmentService.autoEquip(agent, owner, null),
