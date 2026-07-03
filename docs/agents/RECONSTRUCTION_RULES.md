@@ -3814,6 +3814,10 @@ Recent reconstruction notes:
   move-target runtime uses `AgentMovementProfileService` for profile refresh.
   These paths no longer depend on `BotMovementManager` for config/profile
   access.
+- Stuck recovery jump action now lives in `AgentMovementRecoveryService`; stuck
+  detection runtime no longer imports `BotMovementManager`. The same random
+  left/right ground jump, navigation-state clear, five-second cooldown, and
+  movement broadcast are preserved.
 
 Initial reconstruction order:
 

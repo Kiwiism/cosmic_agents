@@ -3,8 +3,8 @@ package server.agents.runtime;
 import server.agents.capabilities.movement.AgentMovementTimers;
 
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+import server.agents.capabilities.movement.AgentMovementRecoveryService;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 
 public final class AgentStuckDetectionRuntime {
     private AgentStuckDetectionRuntime() {
@@ -15,7 +15,7 @@ public final class AgentStuckDetectionRuntime {
                 entry,
                 new AgentStuckDetectionService.StuckDetectionHooks(
                         AgentMovementTimers::tickDown,
-                        BotMovementManager::tickUnstuck,
+                        AgentMovementRecoveryService::tickUnstuck,
                         AgentMovementPhysicsConfig.configuredMovementTickMs(),
                         enableUnstuck));
     }

@@ -120,8 +120,9 @@ Capability bins:
   `AgentMovementPhaseDispatchService` while the underlying physics implementation and
   phase bodies remain later migration slices. Movement speed/jump profile
   refresh lives in `AgentMovementProfileService`, and movement timing/distance
-  reads come from `AgentMovementPhysicsConfig`. Remaining climb, ground, rope,
-  swim, and airborne runtime slices continue to migrate.
+  reads come from `AgentMovementPhysicsConfig`. Stuck recovery lives in
+  `AgentMovementRecoveryService`. Remaining climb, ground, rope, swim, and
+  airborne runtime slices continue to migrate.
 - `supplies`
 - `trade`
 - `shop`

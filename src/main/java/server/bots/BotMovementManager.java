@@ -19,6 +19,7 @@ import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementProfileService;
+import server.agents.capabilities.movement.AgentMovementRecoveryService;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.movement.AgentMovementTimers;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
@@ -32,7 +33,6 @@ import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
@@ -45,7 +45,6 @@ import server.maps.Rope;
 
 import java.awt.*;
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class BotMovementManager {
     enum ActionType {
@@ -845,20 +844,8 @@ public class BotMovementManager {
         AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, true);
     }
 
-    /**
-     * Fires a random recovery action when the bot has been stuck in the same spot.
-     * Clears the nav edge so A* replans on the next AI tick.
-     */
     public static void tickUnstuck(BotEntry entry) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        int walkStep = BotPhysicsEngine.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
-        switch (ThreadLocalRandom.current().nextInt(2)) {
-            case 0 -> BotPhysicsEngine.beginGroundJump(entry, bot, -walkStep); // jump left
-            default -> BotPhysicsEngine.beginGroundJump(entry, bot, walkStep); // jump right
-        }
-        clearNavigationState(entry);
-        AgentBotMovementStuckStateRuntime.setUnstuckCooldownMs(entry, delayAfterCurrentTick(5000));
-        broadcastMovement(entry);
+        AgentMovementRecoveryService.tickUnstuck(entry);
     }
 
     public static void initiateRopeJump(BotEntry entry, Character bot, int dx) {
