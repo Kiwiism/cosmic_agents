@@ -11,16 +11,13 @@ import server.agents.capabilities.navigation.AgentNavigationTargetService;
 import server.agents.capabilities.navigation.AgentNavigationWaypointService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
-import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfile;
 
 import client.Character;
-import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.maps.MapleMap;
-import server.maps.Foothold;
 import server.maps.Rope;
 
 import java.awt.*;
@@ -112,56 +109,7 @@ public final class BotNavigationManager {
                                     AgentNavigationGraph graph,
                                     Point botPos,
                                     AgentNavigationGraph.Edge edge) {
-        if (AgentBotMovementStateRuntime.inAir(entry)) {
-            return new Point(edge.endPoint);
-        }
-        if (edge.launchStepX == 0) {
-            return AgentNavigationWaypointService.selectStraightDropWaypoint(graph, botPos, edge);
-        }
-
-        if (hasReachedDirectionalDropRunway(botPos, edge)) {
-            return new Point(edge.endPoint);
-        }
-
-        AgentNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);
-        if (fromRegion == null || fromRegion.isRopeRegion) {
-            return new Point(edge.endPoint);
-        }
-
-        BotPhysicsEngine.WalkOffLanding liveOutcome = BotPhysicsEngine.simulateWalkOffLanding(
-                AgentBotRuntimeIdentityRuntime.botMap(entry), botPos, Integer.signum(edge.launchStepX),
-                AgentBotMovementPhysicsStateRuntime.groundTravelState(entry),
-                AgentBotMovementStateRuntime.movementProfile(entry));
-        if (matchesDirectionalDrop(edge, graph, liveOutcome)) {
-            // Like rope top step-offs, once the continuous-control exit is naturally executable
-            // we stop targeting an intermediate anchor and just keep feeding the authored
-            // direction until physics performs the dismount.
-            return new Point(edge.endPoint);
-        }
-        return new Point(edge.startPoint);
-    }
-
-    private static boolean hasReachedDirectionalDropRunway(Point botPos, AgentNavigationGraph.Edge edge) {
-        return AgentNavigationLaunchWindowService.hasReachedDirectionalDropRunway(botPos, edge);
-    }
-
-    private static boolean matchesDirectionalDrop(AgentNavigationGraph.Edge edge,
-                                                  AgentNavigationGraph graph,
-                                                  BotPhysicsEngine.WalkOffLanding outcome) {
-        if (outcome == null || outcome.landing() == null) {
-            return false;
-        }
-        Foothold landingFoothold = outcome.landing().foothold();
-        if (landingFoothold == null) {
-            return false;
-        }
-        if (graph.regionIdByFootholdId.getOrDefault(landingFoothold.getId(), -1) != edge.toRegionId) {
-            return false;
-        }
-        int xTolerance = Math.max(6, Math.abs(edge.launchStepX) + 2);
-        int yTolerance = AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2;
-        return Math.abs(outcome.landing().point().x - edge.endPoint.x) <= xTolerance
-                && Math.abs(outcome.landing().point().y - edge.endPoint.y) <= yTolerance;
+        return AgentNavigationWaypointService.selectDropWaypoint(entry, graph, botPos, edge);
     }
 
     private static AgentNavigationGraph.Edge findNextEdge(AgentNavigationGraph graph,

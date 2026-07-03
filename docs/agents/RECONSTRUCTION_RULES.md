@@ -4026,6 +4026,10 @@ Recent reconstruction notes:
   removed after live target resolution moved to `AgentNavigationTargetService`.
   Remaining BotNavigationManager methods are compatibility/test-facing
   delegates or waypoint/readiness helpers still awaiting Agent test migration.
+- Directional-drop waypoint selection now lives in
+  `AgentNavigationWaypointService`. `AgentNavigationTargetService` and the
+  `BotNavigationManager` compatibility shell both call the same Agent-owned
+  method, preserving the walk-off landing match behavior.
 - Combat grind-target region scoring, path-cost checks, and sibling occupancy
   checks now use `AgentNavigationRegionService` and
   `AgentNavigationPathService`. Target scoring policy and path-cost behavior
