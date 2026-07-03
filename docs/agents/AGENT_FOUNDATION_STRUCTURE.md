@@ -179,8 +179,8 @@ Capability bins:
   and rope-entry callbacks.
   Navigation edge execution target state lives in
   `AgentNavigationEdgeExecutionStateService`.
-  Edge execution readiness thresholds live in
-  `AgentNavigationEdgeReadinessService`.
+  Edge execution readiness thresholds and jump/drop execution readiness
+  predicates live in `AgentNavigationEdgeReadinessService`.
   Rope/climb edge entry and exit predicates live in
   `AgentNavigationRopeEdgeService`.
   Grind-mode path target clamping lives in

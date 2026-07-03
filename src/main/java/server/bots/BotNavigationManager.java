@@ -498,16 +498,7 @@ public final class BotNavigationManager {
                                                      MapleMap map,
                                                      Point botPos,
                                                      AgentNavigationGraph.Edge edge) {
-        if (edge.type != AgentNavigationGraph.EdgeType.DROP) {
-            return false;
-        }
-        if (edge.launchStepX != 0) {
-            return false;
-        }
-        if (!isWithinDropLaunchWindow(graph, botPos, edge)) {
-            return false;
-        }
-        return true;
+        return AgentNavigationEdgeReadinessService.canExecuteDropFromCurrentPosition(graph, botPos, edge);
     }
 
     private static NavigationDirective tryExecutePortal(BotEntry entry,
@@ -1039,10 +1030,7 @@ public final class BotNavigationManager {
                                                      MapleMap map,
                                                      Point botPos,
                                                      AgentNavigationGraph.Edge edge) {
-        if (edge.type != AgentNavigationGraph.EdgeType.JUMP) {
-            return false;
-        }
-        return isWithinJumpLaunchWindow(graph, botPos, edge);
+        return AgentNavigationEdgeReadinessService.canExecuteJumpFromCurrentPosition(graph, botPos, edge);
     }
 
     private static boolean canExecuteSelectedJumpFromCurrentPosition(AgentNavigationGraph graph,

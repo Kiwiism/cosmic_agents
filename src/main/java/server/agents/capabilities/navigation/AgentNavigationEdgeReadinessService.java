@@ -28,4 +28,25 @@ public final class AgentNavigationEdgeReadinessService {
                     && dy <= AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2;
         };
     }
+
+    public static boolean canExecuteJumpFromCurrentPosition(AgentNavigationGraph graph,
+                                                            Point botPos,
+                                                            AgentNavigationGraph.Edge edge) {
+        if (edge.type != AgentNavigationGraph.EdgeType.JUMP) {
+            return false;
+        }
+        return AgentNavigationLaunchWindowService.isWithinJumpLaunchWindow(graph, botPos, edge);
+    }
+
+    public static boolean canExecuteDropFromCurrentPosition(AgentNavigationGraph graph,
+                                                            Point botPos,
+                                                            AgentNavigationGraph.Edge edge) {
+        if (edge.type != AgentNavigationGraph.EdgeType.DROP) {
+            return false;
+        }
+        if (edge.launchStepX != 0) {
+            return false;
+        }
+        return AgentNavigationLaunchWindowService.isWithinDropLaunchWindow(graph, botPos, edge);
+    }
 }

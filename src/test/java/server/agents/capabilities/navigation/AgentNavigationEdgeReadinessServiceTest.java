@@ -2,8 +2,12 @@ package server.agents.capabilities.navigation;
 
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+import server.maps.Foothold;
 
 import java.awt.Point;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -46,9 +50,49 @@ class AgentNavigationEdgeReadinessServiceTest {
         assertFalse(AgentNavigationEdgeReadinessService.isReadyForEdge(new Point(readyX, jumpY * 2 + 1), walk));
     }
 
+    @Test
+    void jumpExecutionRequiresJumpEdgeAndLaunchWindow() {
+        AgentNavigationGraph graph = graphWithGroundRegion(1, -100, 100, 0);
+        AgentNavigationGraph.Edge jump = edge(AgentNavigationGraph.EdgeType.JUMP);
+        AgentNavigationGraph.Edge drop = edge(AgentNavigationGraph.EdgeType.DROP);
+        int jumpY = AgentMovementPhysicsConfig.configuredJumpYThreshold();
+
+        assertTrue(AgentNavigationEdgeReadinessService.canExecuteJumpFromCurrentPosition(graph, new Point(0, jumpY), jump));
+        assertFalse(AgentNavigationEdgeReadinessService.canExecuteJumpFromCurrentPosition(graph, new Point(0, jumpY + 1), jump));
+        assertFalse(AgentNavigationEdgeReadinessService.canExecuteJumpFromCurrentPosition(graph, new Point(0, 0), drop));
+    }
+
+    @Test
+    void dropExecutionRequiresStraightDropEdgeAndLaunchWindow() {
+        AgentNavigationGraph graph = graphWithGroundRegion(1, -100, 100, 0);
+        AgentNavigationGraph.Edge drop = edge(AgentNavigationGraph.EdgeType.DROP);
+        AgentNavigationGraph.Edge directionalDrop = new AgentNavigationGraph.Edge(1, 2, AgentNavigationGraph.EdgeType.DROP,
+                new Point(0, 0), new Point(100, 0),
+                -20, 20, 1, 1, 0, 0, 0, 100);
+        AgentNavigationGraph.Edge jump = edge(AgentNavigationGraph.EdgeType.JUMP);
+        int jumpY = AgentMovementPhysicsConfig.configuredJumpYThreshold();
+
+        assertTrue(AgentNavigationEdgeReadinessService.canExecuteDropFromCurrentPosition(graph, new Point(0, jumpY), drop));
+        assertFalse(AgentNavigationEdgeReadinessService.canExecuteDropFromCurrentPosition(graph, new Point(0, jumpY + 1), drop));
+        assertFalse(AgentNavigationEdgeReadinessService.canExecuteDropFromCurrentPosition(graph, new Point(0, 0), directionalDrop));
+        assertFalse(AgentNavigationEdgeReadinessService.canExecuteDropFromCurrentPosition(graph, new Point(0, 0), jump));
+    }
+
     private static AgentNavigationGraph.Edge edge(AgentNavigationGraph.EdgeType type) {
         return new AgentNavigationGraph.Edge(1, 2, type,
                 new Point(0, 0), new Point(100, 0),
                 -20, 20, 0, 1, 0, 0, 0, 100);
+    }
+
+    private static AgentNavigationGraph graphWithGroundRegion(int regionId, int x1, int x2, int y) {
+        AgentNavigationGraph.Region ground = new AgentNavigationGraph.Region(regionId, List.of(
+                new AgentNavigationGraph.Segment(new Foothold(new Point(x1, y), new Point(x2, y), regionId))));
+        return new AgentNavigationGraph(100,
+                1,
+                List.of(ground),
+                Map.of(regionId, ground),
+                Map.of(),
+                Map.of(),
+                Set.of());
     }
 }
