@@ -1,6 +1,7 @@
 package server.agents.capabilities.navigation;
 
 import server.agents.capabilities.movement.AgentJumpProbeService;
+import server.agents.capabilities.movement.AgentGroundCollisionService;
 import server.agents.capabilities.movement.AgentGroundingService;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
 
@@ -1398,7 +1399,7 @@ public final class AgentNavigationGraphService {
         if (isBlockedWallBoundaryLaunch(map, launchPoint)) {
             return null;
         }
-        if (!BotPhysicsEngine.canStartDownJump(map, launchPoint)
+        if (!AgentGroundCollisionService.canStartDownJump(map, launchPoint)
                 || from.isForbidFallDownAt(launchX)
                 || dropLaunchStep(from, map, launchPoint, movementProfile) != 0) {
             return null;
@@ -1556,7 +1557,7 @@ public final class AgentNavigationGraphService {
         if (fromPoint == null || launchPoint == null || fromPoint.equals(launchPoint)) {
             return false;
         }
-        return BotPhysicsEngine.canWalkGroundStep(map, fromPoint, launchPoint.x - fromPoint.x);
+        return AgentGroundCollisionService.canWalkGroundStep(map, fromPoint, launchPoint.x - fromPoint.x);
     }
 
     // --- Rope entry edges: ground/rope region → rope region ---

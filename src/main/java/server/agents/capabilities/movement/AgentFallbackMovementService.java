@@ -70,7 +70,7 @@ public final class AgentFallbackMovementService {
         Point steeringTarget = rope == null ? targetPos : new Point(rope.x(), targetPos.y);
             int stepX = AgentGroundMovementService.resolveGroundStepX(entry, botPos, steeringTarget,
                 AgentMovementPhysicsConfig.configuredStopDist(), AgentMovementPhysicsConfig.configuredFollowDist());
-        if (stepX == 0 || BotPhysicsEngine.canWalkGroundStep(map, botPos, stepX)) {
+        if (stepX == 0 || AgentGroundCollisionService.canWalkGroundStep(map, botPos, stepX)) {
             return false;
         }
 
@@ -109,7 +109,7 @@ public final class AgentFallbackMovementService {
             return false;
         }
         Point ahead = new Point(botPos.x + stepX, botPos.y);
-        return BotPhysicsEngine.isGroundFarBelow(map(entry), ahead);
+        return AgentGroundCollisionService.isGroundFarBelow(map(entry), ahead);
     }
 
     private static Rope selectNearbyRope(BotEntry entry, Point botPos, Point targetPos) {
@@ -209,7 +209,7 @@ public final class AgentFallbackMovementService {
         }
         MapleMap map = map(entry);
         if (!shouldConsiderFallbackDrop(entry, map, botPos, targetPos)
-                || !BotPhysicsEngine.canStartDownJump(map, botPos)) {
+                || !AgentGroundCollisionService.canStartDownJump(map, botPos)) {
             return false;
         }
         return Math.abs(targetPos.x - botPos.x) <= Math.max(AgentMovementPhysicsConfig.configuredFollowDist(),
@@ -241,7 +241,7 @@ public final class AgentFallbackMovementService {
                 : new Point(foothold.getX2(), foothold.getY2());
         int step = direction * Math.max(1, AgentMovementKinematicsService.walkStep(map, profile));
         Point ahead = new Point(endpoint.x + step, endpoint.y);
-        return BotPhysicsEngine.isGroundFarBelow(map, ahead) ? ahead : null;
+        return AgentGroundCollisionService.isGroundFarBelow(map, ahead) ? ahead : null;
     }
 
     private static Point chooseBetterLedgeTarget(Point botPos, Point targetPos, Point left, Point right) {

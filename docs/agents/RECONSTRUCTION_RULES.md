@@ -3929,6 +3929,10 @@ Recent reconstruction notes:
   Agent movement callers no longer call legacy `applyGroundMotion`,
   `syncAndDetectGround`, `stopGroundMotion`, `velocityFromDeltaX`, or
   `tickMotionTimers` directly.
+- Grounded collision and ledge queries now route through
+  `AgentGroundCollisionService`. The service preserves legacy query results,
+  including `isGroundFarBelow(null, position) == true`, while callers move away
+  from direct `BotPhysicsEngine` access.
 
 Initial reconstruction order:
 

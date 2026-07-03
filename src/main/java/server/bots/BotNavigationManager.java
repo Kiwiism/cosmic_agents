@@ -7,6 +7,7 @@ import server.agents.runtime.AgentPerformanceMonitor;
 
 import server.agents.capabilities.movement.AgentClimbMovementPolicy;
 import server.agents.capabilities.movement.AgentClimbMovementService;
+import server.agents.capabilities.movement.AgentGroundCollisionService;
 import server.agents.capabilities.movement.AgentJumpActionService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
@@ -1576,7 +1577,7 @@ public final class BotNavigationManager {
     }
 
     private static boolean shouldPreferRopeRegion(MapleMap map, Point position) {
-        return BotPhysicsEngine.isGroundFarBelow(map, position);
+        return AgentGroundCollisionService.isGroundFarBelow(map, position);
     }
 
     private static boolean isRopeEntryEdge(AgentNavigationGraph graph, AgentNavigationGraph.Edge edge) {

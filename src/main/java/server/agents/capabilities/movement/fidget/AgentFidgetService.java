@@ -1,6 +1,7 @@
 package server.agents.capabilities.movement.fidget;
 
 import server.agents.capabilities.movement.AgentJumpActionService;
+import server.agents.capabilities.movement.AgentGroundCollisionService;
 import server.agents.capabilities.movement.AgentMovementPhaseDispatchService;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
@@ -420,10 +421,10 @@ public final class AgentFidgetService {
 
         int dir = AgentBotFidgetStateRuntime.moveDir(entry) == 0 ? 1 : AgentBotFidgetStateRuntime.moveDir(entry);
         int walkStep = AgentMovementKinematicsService.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
-        if (!BotPhysicsEngine.canWalkGroundStep(bot.getMap(), botPos, dir * walkStep)) {
+        if (!AgentGroundCollisionService.canWalkGroundStep(bot.getMap(), botPos, dir * walkStep)) {
             dir = -dir;
             AgentBotFidgetStateRuntime.setMoveDir(entry, dir);
-            if (!BotPhysicsEngine.canWalkGroundStep(bot.getMap(), botPos, dir * walkStep)) {
+            if (!AgentGroundCollisionService.canWalkGroundStep(bot.getMap(), botPos, dir * walkStep)) {
                 AgentMovementPoseService.idleOnGround(entry, bot);
                 AgentMovementBroadcastService.broadcastMovement(entry);
                 return;

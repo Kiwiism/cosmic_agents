@@ -149,7 +149,8 @@ Capability bins:
   supply the same `physX`, `hspeed`, and carry-ms values. Queued down-jump and
   top-rope entry actions enter through `AgentQueuedMovementActionService`.
   Grounded physics entry points enter through `AgentGroundPhysicsService`, and
-  movement timer countdowns enter through `AgentMotionTimerService`.
+  movement timer countdowns enter through `AgentMotionTimerService`. Grounded
+  collision and ledge queries enter through `AgentGroundCollisionService`.
 - `supplies`
 - `trade`
 - `shop`
