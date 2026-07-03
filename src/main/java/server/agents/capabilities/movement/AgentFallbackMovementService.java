@@ -69,7 +69,7 @@ public final class AgentFallbackMovementService {
         }
 
         Point steeringTarget = rope == null ? targetPos : new Point(rope.x(), targetPos.y);
-            int stepX = BotMovementManager.resolveGroundStepX(entry, botPos, steeringTarget,
+            int stepX = AgentGroundMovementService.resolveGroundStepX(entry, botPos, steeringTarget,
                 AgentMovementPhysicsConfig.configuredStopDist(), AgentMovementPhysicsConfig.configuredFollowDist());
         if (stepX == 0 || BotPhysicsEngine.canWalkGroundStep(map, botPos, stepX)) {
             return false;

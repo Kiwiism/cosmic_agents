@@ -111,6 +111,11 @@ Capability bins:
   unequip command execution lives in `AgentEquipmentUnequipService`.
   The production `server.bots.BotEquipManager` file has been deleted; historical
   equipment tests still carry old class/package names until test cleanup.
+- `movement`
+  Ground horizontal step decisions are split between pure
+  `AgentGroundMovementPolicy` and stateful `AgentGroundMovementService`; the
+  old bot movement methods now delegate while the remaining movement phase,
+  jump, rope, swim, and airborne runtime slices continue to migrate.
 - `supplies`
 - `trade`
 - `shop`

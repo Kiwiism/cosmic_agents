@@ -3785,6 +3785,11 @@ Recent reconstruction notes:
   slot, and weapon compatibility policies directly instead of bot-owned wrapper
   methods for slot lookup, expected-damage scoring, useful-stat scoring, mage
   checks, or weapon compatibility.
+- Ground horizontal step resolution now lives in
+  `AgentGroundMovementService`; `BotMovementManager.resolveGroundStepX`,
+  `calcStepX`, and `updateStepX` are temporary compatibility delegates. The
+  same stop/follow hysteresis, graph-warmup local stop distance, movement
+  profile scaling, and `wasMovingX` state updates are preserved.
 
 Initial reconstruction order:
 

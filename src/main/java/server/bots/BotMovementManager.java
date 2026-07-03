@@ -11,6 +11,7 @@ import server.agents.capabilities.movement.AgentClimbMovementPolicy;
 import server.agents.capabilities.movement.AgentFallbackMovementService;
 import server.agents.capabilities.movement.AgentFootholdIndexService;
 import server.agents.capabilities.movement.AgentGroundMovementPolicy;
+import server.agents.capabilities.movement.AgentGroundMovementService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
@@ -772,14 +773,7 @@ public class BotMovementManager {
     }
 
     public static int resolveGroundStepX(BotEntry entry, Point botPos, Point targetPos, int stopDist, int followDist) {
-        if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry) || botPos == null || targetPos == null) {
-            return 0;
-        }
-        if (AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)) {
-            int localStopDist = Math.min(stopDist, 12);
-            return updateStepX(entry, AgentBotRuntimeIdentityRuntime.botMap(entry), botPos.x, targetPos.x, localStopDist, localStopDist);
-        }
-        return updateStepX(entry, AgentBotRuntimeIdentityRuntime.botMap(entry), botPos.x, targetPos.x, stopDist, followDist);
+        return AgentGroundMovementService.resolveGroundStepX(entry, botPos, targetPos, stopDist, followDist);
     }
 
     private static void applyGroundAction(BotEntry entry, Foothold currentFh, MoveAction action) {
@@ -835,36 +829,23 @@ public class BotMovementManager {
     }
 
     static int calcStepX(MapleMap map, int botX, int targetX, boolean wasMovingX) {
-        return calcStepX(map, AgentMovementProfile.base(), botX, targetX, wasMovingX, cfg.STOP_DIST, cfg.FOLLOW_DIST);
+        return AgentGroundMovementService.calcStepX(map, botX, targetX, wasMovingX);
     }
 
     static int calcStepX(MapleMap map, int botX, int targetX, boolean wasMovingX, int stopDist, int followDist) {
-        return calcStepX(map, AgentMovementProfile.base(), botX, targetX, wasMovingX, stopDist, followDist);
+        return AgentGroundMovementService.calcStepX(map, botX, targetX, wasMovingX, stopDist, followDist);
     }
 
     static int calcStepX(MapleMap map, AgentMovementProfile profile, int botX, int targetX, boolean wasMovingX, int stopDist, int followDist) {
-        return AgentGroundMovementPolicy.calcStepX(
-                botX,
-                targetX,
-                wasMovingX,
-                stopDist,
-                followDist,
-                BotPhysicsEngine.walkStep(map, profile));
+        return AgentGroundMovementService.calcStepX(map, profile, botX, targetX, wasMovingX, stopDist, followDist);
     }
 
     static int updateStepX(BotEntry entry, MapleMap map, int botX, int targetX) {
-        return updateStepX(entry, map, botX, targetX, cfg.STOP_DIST, cfg.FOLLOW_DIST);
+        return AgentGroundMovementService.updateStepX(entry, map, botX, targetX);
     }
 
     static int updateStepX(BotEntry entry, MapleMap map, int botX, int targetX, int stopDist, int followDist) {
-        int stepX = calcStepX(map, AgentBotMovementStateRuntime.movementProfile(entry), botX, targetX,
-                AgentBotMovementStateRuntime.wasMovingX(entry), stopDist, followDist);
-        if (stepX == 0) {
-            AgentBotMovementStateRuntime.setWasMovingX(entry, false);
-            return 0;
-        }
-        AgentBotMovementStateRuntime.setWasMovingX(entry, true);
-        return stepX;
+        return AgentGroundMovementService.updateStepX(entry, map, botX, targetX, stopDist, followDist);
     }
 
     public static void initiateJump(BotEntry entry, Character bot, int dx) {
