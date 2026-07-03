@@ -15,6 +15,7 @@ import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.movement.AgentQueuedMovementActionService;
+import server.agents.capabilities.movement.AgentRopeMovementService;
 
 import client.Character;
 import constants.game.CharacterStance;
@@ -1440,7 +1441,7 @@ public final class BotNavigationManager {
     }
 
     private static void startClimbing(BotEntry entry, Character bot, Rope rope, int climbY) {
-        BotPhysicsEngine.attachToRope(entry, bot, rope, climbY);
+        AgentRopeMovementService.attachToRope(entry, bot, rope, climbY);
         AgentMovementBroadcastService.broadcastMovement(entry);
     }
 

@@ -8,7 +8,6 @@ import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.bots.BotEntry;
-import server.bots.BotPhysicsEngine;
 import server.maps.Rope;
 
 import java.awt.Point;
@@ -41,22 +40,22 @@ public final class AgentClimbMovementService {
             }
 
             if (shouldHoldClimbIdle(entry, dy, dxOwner)) {
-                BotPhysicsEngine.holdClimb(entry, agent);
+                AgentRopeMovementService.holdClimb(entry, agent);
                 AgentMovementBroadcastService.broadcastMovement(entry);
                 return;
             }
 
             if (shouldSnapToClimbTarget(entry, targetPos, dy)) {
-                BotPhysicsEngine.attachToRope(entry, agent, climbRope, targetPos.y);
+                AgentRopeMovementService.attachToRope(entry, agent, climbRope, targetPos.y);
                 AgentMovementBroadcastService.broadcastMovement(entry);
                 return;
             }
 
             if (!runAiTick && !AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
                 if (!AgentBotClimbStateRuntime.hasClimbVerticalDirection(entry)) {
-                    BotPhysicsEngine.holdClimb(entry, agent);
+                    AgentRopeMovementService.holdClimb(entry, agent);
                 } else {
-                    BotPhysicsEngine.advanceClimb(entry, agent);
+                    AgentRopeMovementService.advanceClimb(entry, agent);
                 }
                 AgentMovementBroadcastService.broadcastMovement(entry);
                 return;
@@ -74,7 +73,7 @@ public final class AgentClimbMovementService {
     public static void jumpOffRope(BotEntry entry, Character agent, int dx) {
         int airVelX = AgentJumpActionService.resolveAirVelocityX(
                 agent.getMap(), AgentBotMovementStateRuntime.movementProfile(entry), dx);
-        BotPhysicsEngine.beginJumpOffRope(entry, agent, airVelX);
+        AgentRopeMovementService.beginJumpOffRope(entry, agent, airVelX);
         AgentMovementBroadcastService.broadcastMovement(entry);
     }
 
@@ -82,7 +81,7 @@ public final class AgentClimbMovementService {
         Rope sourceRope = AgentBotClimbStateRuntime.climbRope(entry);
         int airVelX = AgentJumpActionService.resolveAirVelocityX(
                 agent.getMap(), AgentBotMovementStateRuntime.movementProfile(entry), dx);
-        BotPhysicsEngine.beginRopeTransferJump(entry, agent, sourceRope, airVelX);
+        AgentRopeMovementService.beginRopeTransferJump(entry, agent, sourceRope, airVelX);
         AgentMovementBroadcastService.broadcastMovement(entry);
     }
 
@@ -94,9 +93,9 @@ public final class AgentClimbMovementService {
         });
 
         if (!AgentBotClimbStateRuntime.hasClimbVerticalDirection(entry)) {
-            BotPhysicsEngine.holdClimb(entry, agent);
+            AgentRopeMovementService.holdClimb(entry, agent);
         } else {
-            BotPhysicsEngine.advanceClimb(entry, agent);
+            AgentRopeMovementService.advanceClimb(entry, agent);
         }
         AgentMovementBroadcastService.broadcastMovement(entry);
     }

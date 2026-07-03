@@ -4,7 +4,6 @@ import client.Character;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.bots.BotEntry;
-import server.bots.BotPhysicsEngine;
 import server.maps.MapleMap;
 
 public final class AgentJumpActionService {
@@ -12,7 +11,7 @@ public final class AgentJumpActionService {
     }
 
     public static void initiateJump(BotEntry entry, Character agent, int dx) {
-        BotPhysicsEngine.beginGroundJump(entry, agent,
+        AgentRopeMovementService.beginGroundJump(entry, agent,
                 resolveAirVelocityX(agent.getMap(), AgentBotMovementStateRuntime.movementProfile(entry), dx));
         AgentMovementBroadcastService.broadcastMovement(entry);
     }
@@ -23,7 +22,7 @@ public final class AgentJumpActionService {
     }
 
     public static void initiateRopeJump(BotEntry entry, Character agent, int dx) {
-        BotPhysicsEngine.beginClimbUpJump(entry, agent,
+        AgentRopeMovementService.beginClimbUpJump(entry, agent,
                 resolveAirVelocityX(agent.getMap(), AgentBotMovementStateRuntime.movementProfile(entry), dx));
         AgentMovementBroadcastService.broadcastMovement(entry);
     }

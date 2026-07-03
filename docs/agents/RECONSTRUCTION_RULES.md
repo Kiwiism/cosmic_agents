@@ -3933,6 +3933,10 @@ Recent reconstruction notes:
   `AgentGroundCollisionService`. The service preserves legacy query results,
   including `isGroundFarBelow(null, position) == true`, while callers move away
   from direct `BotPhysicsEngine` access.
+- Rope, ladder, and jump-launch action entry points now route through
+  `AgentRopeMovementService`. The service preserves legacy attach/hold/advance
+  and ground/rope jump behavior while removing direct physics action calls from
+  Agent movement callers and old movement/navigation shims.
 
 Initial reconstruction order:
 

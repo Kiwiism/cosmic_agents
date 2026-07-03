@@ -23,6 +23,7 @@ import server.agents.capabilities.movement.AgentMovementProfileService;
 import server.agents.capabilities.movement.AgentMovementRecoveryService;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.movement.AgentMovementTimers;
+import server.agents.capabilities.movement.AgentRopeMovementService;
 import server.agents.capabilities.movement.AgentSwimMovementService;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
 
@@ -191,14 +192,14 @@ public class BotMovementManager {
 
     static void jumpOffRope(BotEntry entry, Character bot, int dx) {
         int airVelX = resolveAirVelocityX(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry), dx);
-        BotPhysicsEngine.beginJumpOffRope(entry, bot, airVelX);
+        AgentRopeMovementService.beginJumpOffRope(entry, bot, airVelX);
         broadcastMovement(entry);
     }
 
     static void jumpToRope(BotEntry entry, Character bot, int dx) {
         Rope sourceRope = AgentBotClimbStateRuntime.climbRope(entry);
         int airVelX = resolveAirVelocityX(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry), dx);
-        BotPhysicsEngine.beginRopeTransferJump(entry, bot, sourceRope, airVelX);
+        AgentRopeMovementService.beginRopeTransferJump(entry, bot, sourceRope, airVelX);
         broadcastMovement(entry);
     }
 

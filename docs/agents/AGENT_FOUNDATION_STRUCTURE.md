@@ -151,6 +151,8 @@ Capability bins:
   Grounded physics entry points enter through `AgentGroundPhysicsService`, and
   movement timer countdowns enter through `AgentMotionTimerService`. Grounded
   collision and ledge queries enter through `AgentGroundCollisionService`.
+  Rope, ladder, and jump-launch actions enter through
+  `AgentRopeMovementService`.
 - `supplies`
 - `trade`
 - `shop`

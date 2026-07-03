@@ -82,7 +82,7 @@ public final class AgentAirborneMovementService {
                 continue;
             }
 
-            BotPhysicsEngine.attachToRope(entry, agent, rope, agentPosition.y);
+            AgentRopeMovementService.attachToRope(entry, agent, rope, agentPosition.y);
             AgentMovementBroadcastService.broadcastMovement(entry);
             return true;
         }

@@ -5,7 +5,6 @@ import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
-import server.bots.BotPhysicsEngine;
 
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -21,8 +20,8 @@ public final class AgentMovementRecoveryService {
         Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
         int walkStep = AgentMovementKinematicsService.walkStep(agent.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         switch (ThreadLocalRandom.current().nextInt(2)) {
-            case 0 -> BotPhysicsEngine.beginGroundJump(entry, agent, -walkStep);
-            default -> BotPhysicsEngine.beginGroundJump(entry, agent, walkStep);
+            case 0 -> AgentRopeMovementService.beginGroundJump(entry, agent, -walkStep);
+            default -> AgentRopeMovementService.beginGroundJump(entry, agent, walkStep);
         }
         AgentMovementStateResetService.clearNavigationState(entry);
         AgentBotMovementStuckStateRuntime.setUnstuckCooldownMs(entry, AgentMovementTimers.delayAfterCurrentTick(5000));
