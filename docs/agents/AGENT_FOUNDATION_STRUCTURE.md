@@ -174,6 +174,8 @@ Capability bins:
   edge usability policy live in `AgentNavigationPathService`.
   Committed-edge comparison and retention policy live in
   `AgentNavigationCommittedEdgeService`.
+  Edge execution readiness thresholds live in
+  `AgentNavigationEdgeReadinessService`.
 - `supplies`
 - `trade`
 - `shop`

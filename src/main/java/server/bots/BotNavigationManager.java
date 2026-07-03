@@ -2,6 +2,7 @@ package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationCommittedEdgeService;
+import server.agents.capabilities.navigation.AgentNavigationEdgeReadinessService;
 import server.agents.capabilities.navigation.AgentNavigationPhysicsService;
 import server.agents.capabilities.navigation.AgentNavigationPathService;
 import server.agents.capabilities.navigation.AgentNavigationRegionService;
@@ -55,8 +56,6 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public final class BotNavigationManager {
     private static final Logger log = LoggerFactory.getLogger(BotNavigationManager.class);
-    private static final int JUMP_READY_X_TOLERANCE = 10;
-    private static final int EDGE_READY_X_TOLERANCE = 14;
     private static final int NO_MOVEMENT_WALK_TOLERANCE = 4;
     // After a bot takes a portal, suppress further portal usage for this long. Prevents a bot from
     // immediately re-entering a portal (e.g. bouncing back through the return portal). Gates ONLY
@@ -1118,15 +1117,7 @@ public final class BotNavigationManager {
     }
 
     private static boolean isReadyForEdge(Point botPos, AgentNavigationGraph.Edge edge) {
-        int dx = Math.abs(botPos.x - edge.startPoint.x);
-        int dy = Math.abs(botPos.y - edge.startPoint.y);
-
-        return switch (edge.type) {
-            case JUMP -> dx <= JUMP_READY_X_TOLERANCE && dy <= AgentMovementPhysicsConfig.configuredJumpYThreshold();
-            case DROP, CLIMB, PORTAL -> dx <= EDGE_READY_X_TOLERANCE && dy <= AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2;
-            default -> dx <= AgentMovementPhysicsConfig.configuredStopDist() + 8
-                    && dy <= AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2;
-        };
+        return AgentNavigationEdgeReadinessService.isReadyForEdge(botPos, edge);
     }
 
     static boolean canExecuteJumpFromCurrentPosition(AgentNavigationGraph graph,

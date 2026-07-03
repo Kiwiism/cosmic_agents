@@ -3994,6 +3994,9 @@ Recent reconstruction notes:
 - Committed navigation edge equality and retention policy now live in
   `AgentNavigationCommittedEdgeService`; `BotNavigationManager` delegates while
   remaining committed-edge execution code migrates later.
+- Navigation edge readiness thresholds now live in
+  `AgentNavigationEdgeReadinessService`; `BotNavigationManager` delegates while
+  execution sequencing remains in the temporary bot navigation shell.
 
 Initial reconstruction order:
 
