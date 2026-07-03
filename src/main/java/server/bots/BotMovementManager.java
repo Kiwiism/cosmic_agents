@@ -226,7 +226,7 @@ public class BotMovementManager {
                 targetPos,
                 dy,
                 AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry),
-                BotPhysicsEngine.climbStepPerTick());
+                AgentMovementKinematicsService.climbStepPerTick());
     }
 
     static boolean sameRope(Rope left, Rope right) {

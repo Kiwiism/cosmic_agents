@@ -89,6 +89,11 @@ Recent map updates:
   `BotNavigationManager` now reads jump-Y, stop-distance, rope-grab,
   grind-margin, snap-drop, and climb-speed values from the Agent-owned source
   instead of `BotMovementManager.cfg` / `BotPhysicsEngine.cfg`.
+- External climb-step calculation reads moved to
+  `AgentMovementKinematicsService.climbStepPerTick()`. Agent navigation,
+  climb movement, movement report snapshots, and remaining bot compatibility
+  code use the Agent-owned calculation; the physics engine retains only its
+  own internal use until the simulation body is migrated.
 - Movement countdown helper ownership moved to `AgentMovementTimers`; Agent
   combat, common tick, inventory/trade, shop, supplies, and stuck-detection
   callback bundles no longer depend on `BotMovementManager` for tick-down or

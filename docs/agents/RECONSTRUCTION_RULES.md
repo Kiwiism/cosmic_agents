@@ -89,6 +89,11 @@ Recent reconstruction notes:
   `AgentMovementPhysicsConfig`. `BotNavigationManager` no longer reads
   `BotMovementManager.cfg` for jump-Y, stop-distance, rope-grab, grind-margin,
   or climb-speed thresholds while preserving the same legacy values.
+- External climb-step calculation reads moved to
+  `AgentMovementKinematicsService.climbStepPerTick()`. Agent navigation,
+  climb movement, movement report snapshots, and remaining bot shims now use
+  the Agent-owned calculation while `BotPhysicsEngine` keeps its internal
+  simulation body for later migration.
 - Movement countdown helpers moved to
   `server.agents.capabilities.movement.AgentMovementTimers`. Agent combat,
   common-tick, inventory/trade, shop, supplies, and stuck-detection callback

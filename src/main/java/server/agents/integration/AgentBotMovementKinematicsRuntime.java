@@ -37,7 +37,7 @@ public final class AgentBotMovementKinematicsRuntime {
                 ? null
                 : new AgentMovementKinematicsSnapshot.MapMovementProfile(
                         AgentMovementKinematicsService.walkStep(map, profile),
-                        BotPhysicsEngine.climbStepPerTick(),
+                        AgentMovementKinematicsService.climbStepPerTick(),
                         BotPhysicsEngine.maxJumpHorizontalTravel(map, profile),
                         BotPhysicsEngine.maxRopeJumpHorizontalTravel(map, profile));
 
@@ -46,7 +46,7 @@ public final class AgentBotMovementKinematicsRuntime {
                 bot.getTotalMoveSpeedStat(),
                 bot.getTotalJumpStat(),
                 map != null && FieldLimit.MOVEMENTSKILLS.check(map.getFieldLimit()),
-                BotPhysicsEngine.climbStepPerTick(),
+                AgentMovementKinematicsService.climbStepPerTick(),
                 mapMovementProfile);
     }
 }

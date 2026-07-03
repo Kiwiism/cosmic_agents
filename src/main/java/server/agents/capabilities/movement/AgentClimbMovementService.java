@@ -121,6 +121,6 @@ public final class AgentClimbMovementService {
                 targetPos,
                 dy,
                 AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry),
-                BotPhysicsEngine.climbStepPerTick());
+                AgentMovementKinematicsService.climbStepPerTick());
     }
 }

@@ -61,7 +61,7 @@ Target package groups:
   `server.agents.capabilities.movement.AgentMovementStateResetService`.
   Foothold index construction lives in
   `server.agents.capabilities.movement.AgentFootholdIndexService`.
-  Walk-step kinematics live in
+  Walk-step and climb-step kinematics live in
   `server.agents.capabilities.movement.AgentMovementKinematicsService`.
 - `server.agents.events`: event bus and listener interfaces.
 - `server.agents.policy`: replaceable decision rules.
@@ -134,7 +134,8 @@ Capability bins:
   removed; remaining cleanup slices continue to remove temporary navigation and
   physics seams. BotNavigationManager now calls Agent movement services directly
   for movement side effects and reads navigation-facing movement thresholds
-  from `AgentMovementPhysicsConfig`; remaining references are navigation and
+  from `AgentMovementPhysicsConfig`; climb-step reads route through
+  `AgentMovementKinematicsService`; remaining references are navigation and
   physics runtime seams for later extraction.
 - `supplies`
 - `trade`

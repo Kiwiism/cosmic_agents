@@ -10,6 +10,7 @@ import server.agents.capabilities.movement.AgentClimbMovementPolicy;
 import server.agents.capabilities.movement.AgentClimbMovementService;
 import server.agents.capabilities.movement.AgentJumpActionService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
+import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
@@ -1434,7 +1435,7 @@ public final class BotNavigationManager {
                 && edge.startPoint.y == firstClimbableY
                 && botPos.x == rope.x()
                 && botPos.y >= firstClimbableY
-                && botPos.y <= firstClimbableY + BotPhysicsEngine.climbStepPerTick() + 2;
+                && botPos.y <= firstClimbableY + AgentMovementKinematicsService.climbStepPerTick() + 2;
     }
 
     private static void startClimbing(BotEntry entry, Character bot, Rope rope, int climbY) {

@@ -1712,7 +1712,7 @@ public final class AgentNavigationGraphService {
                                           Set<String> edgeKeys) {
         Point probe = new Point(rope.x(), rope.topY() - 3);
         Point landPoint = map.getPointBelow(probe);
-        if (landPoint == null || landPoint.y > rope.topY() + BotPhysicsEngine.climbStepPerTick() + 2) {
+        if (landPoint == null || landPoint.y > rope.topY() + AgentMovementKinematicsService.climbStepPerTick() + 2) {
             return;
         }
 
@@ -1758,7 +1758,7 @@ public final class AgentNavigationGraphService {
 
     private static List<Integer> ropeTransferAnchorYs(Rope rope) {
         List<Integer> ys = new ArrayList<>();
-        int step = Math.max(1, BotPhysicsEngine.climbStepPerTick());
+        int step = Math.max(1, AgentMovementKinematicsService.climbStepPerTick());
         int firstClimbableY = BotPhysicsEngine.firstClimbableY(rope);
         for (int y = firstClimbableY; y <= rope.bottomY(); y += step) {
             ys.add(y);

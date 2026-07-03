@@ -14,4 +14,9 @@ public final class AgentMovementKinematicsService {
     public static int walkStep(MapleMap map, AgentMovementProfile profile) {
         return BotPhysicsEngine.walkStep(map, profile);
     }
+
+    public static int climbStepPerTick() {
+        return Math.max(1, Math.round(AgentMovementPhysicsConfig.configuredClimbSpeedPxs()
+                * AgentMovementPhysicsConfig.configuredMovementTickMs() / 1000.0f));
+    }
 }
