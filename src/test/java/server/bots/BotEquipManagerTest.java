@@ -2,6 +2,7 @@ package server.bots;
 
 import server.agents.capabilities.equipment.AgentMapDamageProfile;
 import server.agents.capabilities.equipment.AgentEquipmentDpResult;
+import server.agents.capabilities.equipment.AgentEquipmentOptimizerHooks;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.equipment.AgentEquipmentStatSnapshot;
 
@@ -1049,8 +1050,8 @@ class BotEquipManagerTest {
             return e;
         }
 
-        BotEquipManager.OptimizerHooks hooks() {
-            return new BotEquipManager.OptimizerHooks() {
+        AgentEquipmentOptimizerHooks hooks() {
+            return new AgentEquipmentOptimizerHooks() {
                 @Override public boolean isTwoHanded(int itemId) { return false; }
                 @Override public WeaponType getWeaponType(int itemId) { return weaponTypes.getOrDefault(itemId, WeaponType.NOT_A_WEAPON); }
                 @Override public boolean isOverall(int itemId) { return overalls.contains(itemId); }

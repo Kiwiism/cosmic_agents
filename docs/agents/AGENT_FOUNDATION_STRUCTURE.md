@@ -81,6 +81,8 @@ Capability bins:
   fixed-weapon DP result and score data live in `AgentEquipmentDpResult` and
   `AgentEquipmentScore`;
   optimizer stat snapshot data lives in `AgentEquipmentStatSnapshot`;
+  optimizer metadata and requirement hooks live in
+  `AgentEquipmentOptimizerHooks`;
   unequip command execution lives in `AgentEquipmentUnequipService`.
 - `supplies`
 - `trade`

@@ -3685,6 +3685,10 @@ Recent reconstruction notes:
   `AgentEquipmentDpResult` and `AgentEquipmentScore`; DP branch selection,
   score comparison, and pareto-cap reporting are unchanged while
   `BotEquipManager` no longer owns those nested model types.
+- The equipment optimizer metadata/requirement hook interface now lives in
+  `AgentEquipmentOptimizerHooks`; immediate and future requirement hook
+  adapters preserve the same ItemInformationProvider calls and test stubbing
+  surface while `BotEquipManager` no longer owns that boundary type.
 
 Initial reconstruction order:
 

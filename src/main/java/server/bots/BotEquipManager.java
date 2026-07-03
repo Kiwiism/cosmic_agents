@@ -18,6 +18,7 @@ import server.agents.capabilities.equipment.AgentAutoEquipThrottle;
 import server.agents.capabilities.equipment.AgentEquipRecommendation;
 import server.agents.capabilities.equipment.AgentEquipmentDebugReportFormatter;
 import server.agents.capabilities.equipment.AgentEquipmentDpResult;
+import server.agents.capabilities.equipment.AgentEquipmentOptimizerHooks;
 import server.agents.capabilities.equipment.AgentEquipmentOptimizerResult;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy.EquipUsefulnessHooks;
@@ -524,9 +525,9 @@ public class BotEquipManager {
         if (weaponPool.isEmpty()) weaponPool.add(null);
 
         AgentEquipmentStatSnapshot naked = nakedBase(bot, ii, eqdInv);
-        OptimizerHooks hooks = scope == RecommendationScope.IMMEDIATE
-                ? OptimizerHooks.from(ii)
-                : OptimizerHooks.futureFrom(ii, bot);
+        AgentEquipmentOptimizerHooks hooks = scope == RecommendationScope.IMMEDIATE
+                ? AgentEquipmentOptimizerHooks.from(ii)
+                : AgentEquipmentOptimizerHooks.futureFrom(ii, bot);
         Map<Short, Equip> bestPicks = null;
         AgentEquipmentScore bestScore = null;
         Equip bestWeapon = null;
@@ -544,51 +545,6 @@ public class BotEquipManager {
             if (r != null) { bestPicks = r.picks(); bestWeapon = null; }
         }
         return new AgentEquipmentOptimizerResult(bestWeapon, bestPicks != null ? bestPicks : Map.of());
-    }
-
-    /**
-     * Narrow surface of {@link ItemInformationProvider} that the optimizer's DP needs.
-     * Tests stub these directly with lambdas — Mockito cannot instrument II in unit tests
-     * because of its static WZ-data initializer.
-     */
-    interface OptimizerHooks {
-        boolean isTwoHanded(int itemId);
-        WeaponType getWeaponType(int itemId);
-        boolean isOverall(int itemId);
-        boolean meetsReqs(Equip equip, Job job, int level, int str, int dex, int int_, int luk, int fame);
-        default Map<String, Integer> getEquipStats(int itemId) { return Map.of(); }
-
-        static OptimizerHooks from(ItemInformationProvider ii) {
-            return new OptimizerHooks() {
-                @Override public boolean isTwoHanded(int itemId) { return ii.isTwoHanded(itemId); }
-                @Override public WeaponType getWeaponType(int itemId) { return ii.getWeaponType(itemId); }
-                @Override public boolean isOverall(int itemId) {
-                    return "MaPn".equals(ii.getEquipmentSlot(itemId));
-                }
-                @Override public boolean meetsReqs(Equip e, Job job, int lvl, int s, int d, int i, int l, int f) {
-                    return ii.meetsEquipRequirements(e, job, lvl, s, d, i, l, f);
-                }
-                @Override public Map<String, Integer> getEquipStats(int itemId) { return ii.getEquipStats(itemId); }
-            };
-        }
-
-        static OptimizerHooks futureFrom(ItemInformationProvider ii, Character bot) {
-            final Job botJob = bot != null ? bot.getJob() : null;
-            final int level = bot != null && bot.getLevel() > 0 ? bot.getLevel() : Short.MAX_VALUE;
-            final int fame = bot != null ? bot.getFame() : 0;
-            final int max = Integer.MAX_VALUE / 4;
-            return new OptimizerHooks() {
-                @Override public boolean isTwoHanded(int itemId) { return ii.isTwoHanded(itemId); }
-                @Override public WeaponType getWeaponType(int itemId) { return ii.getWeaponType(itemId); }
-                @Override public boolean isOverall(int itemId) {
-                    return "MaPn".equals(ii.getEquipmentSlot(itemId));
-                }
-                @Override public boolean meetsReqs(Equip e, Job job, int lvl, int s, int d, int i, int l, int f) {
-                    return ii.meetsEquipRequirements(e, botJob, level, max, max, max, max, fame);
-                }
-                @Override public Map<String, Integer> getEquipStats(int itemId) { return ii.getEquipStats(itemId); }
-            };
-        }
     }
 
     /**
@@ -614,11 +570,11 @@ public class BotEquipManager {
                                             Map<Short, List<Equip>> bySlot,
                                             AgentMapDamageProfile mob,
                                             boolean[] reqRel) {
-        return solveForWeapon(bot, OptimizerHooks.from(ii), naked, weapon, dpSlots,
+        return solveForWeapon(bot, AgentEquipmentOptimizerHooks.from(ii), naked, weapon, dpSlots,
                               currentBySlot, bySlot, mob, reqRel);
     }
 
-    static AgentEquipmentDpResult solveForWeapon(Character bot, OptimizerHooks hooks,
+    static AgentEquipmentDpResult solveForWeapon(Character bot, AgentEquipmentOptimizerHooks hooks,
                                             AgentEquipmentStatSnapshot naked, Equip weapon,
                                             List<Short> dpSlots,
                                             Map<Short, Equip> currentBySlot,
@@ -628,7 +584,7 @@ public class BotEquipManager {
                 mob, scanReqRelevantDims(bySlot, hooks));
     }
 
-    private static AgentEquipmentDpResult solveForWeapon(Character bot, OptimizerHooks hooks,
+    private static AgentEquipmentDpResult solveForWeapon(Character bot, AgentEquipmentOptimizerHooks hooks,
                                             AgentEquipmentStatSnapshot naked, Equip weapon,
                                             List<Short> dpSlots,
                                             Map<Short, Equip> currentBySlot,
@@ -723,7 +679,7 @@ public class BotEquipManager {
         return new AgentEquipmentDpResult(picks, bestScore, capHit[0]);
     }
 
-    private static DpNode pinSafeSingletonSlots(AgentEquipmentStatSnapshot init, OptimizerHooks hooks,
+    private static DpNode pinSafeSingletonSlots(AgentEquipmentStatSnapshot init, AgentEquipmentOptimizerHooks hooks,
                                                 List<Short> dpSlots, Map<Short, List<Equip>> bySlot,
                                                 int n) {
         AgentEquipmentStatSnapshot snap = init;
@@ -765,7 +721,7 @@ public class BotEquipManager {
     }
 
     private static List<DpNode> paretoPruneNodes(List<DpNode> nodes, boolean[] capHitOut,
-                                                   OptimizerHooks hooks, List<Short> dpSlots,
+                                                   AgentEquipmentOptimizerHooks hooks, List<Short> dpSlots,
                                                    WeaponType wt, boolean[] reqRel) {
         if (nodes.size() <= 1) return nodes;
         nodes = dedupEquivalentNodes(nodes, wt, reqRel, hooks, dpSlots);
@@ -811,7 +767,7 @@ public class BotEquipManager {
     }
 
     private static List<DpNode> dedupEquivalentNodes(List<DpNode> nodes, WeaponType wt, boolean[] reqRel,
-                                                     OptimizerHooks hooks, List<Short> dpSlots) {
+                                                     AgentEquipmentOptimizerHooks hooks, List<Short> dpSlots) {
         Map<DpSignature, DpNode> bestValidBySignature = new LinkedHashMap<>();
         Map<DpSignature, DpNode> bestSpeculativeBySignature = new LinkedHashMap<>();
         for (DpNode node : nodes) {
@@ -872,7 +828,7 @@ public class BotEquipManager {
         return strict;
     }
 
-    private static boolean allPicksMeetReqs(DpNode node, OptimizerHooks hooks, List<Short> dpSlots) {
+    private static boolean allPicksMeetReqs(DpNode node, AgentEquipmentOptimizerHooks hooks, List<Short> dpSlots) {
         AgentEquipmentStatSnapshot s = node.snap;
         for (int i = 0; i < dpSlots.size(); i++) {
             Equip p = node.picks[i];
@@ -887,7 +843,7 @@ public class BotEquipManager {
         return true;
     }
 
-    private static boolean validateReqs(OptimizerHooks hooks, DpNode node,
+    private static boolean validateReqs(AgentEquipmentOptimizerHooks hooks, DpNode node,
                                          List<Short> dpSlots, Equip weapon) {
         AgentEquipmentStatSnapshot s = node.snap;
         // Equip-order constraint: each item's reqs must be satisfied by the stats present
@@ -917,7 +873,7 @@ public class BotEquipManager {
      * remaining set is self-consistent. Cascading: dropping a stat-giving pick may invalidate
      * another. Returns null iff the weapon itself fails reqs against the bare snapshot.
      */
-    private static DpNode relaxToFeasible(OptimizerHooks hooks, DpNode node,
+    private static DpNode relaxToFeasible(AgentEquipmentOptimizerHooks hooks, DpNode node,
                                            List<Short> dpSlots, Equip weapon) {
         AgentEquipmentStatSnapshot s = node.snap;
         int hp = node.hp, mp = node.mp, statSum = node.statSum;
@@ -1497,7 +1453,7 @@ public class BotEquipManager {
     }
 
     private static boolean[] scanReqRelevantDims(Map<Short, List<Equip>> bySlot,
-                                                  OptimizerHooks hooks) {
+                                                  AgentEquipmentOptimizerHooks hooks) {
         return scanReqRelevantDims(bySlot, hooks::getEquipStats);
     }
 

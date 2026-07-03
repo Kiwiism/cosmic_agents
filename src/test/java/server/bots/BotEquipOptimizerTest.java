@@ -2,6 +2,7 @@ package server.bots;
 
 import server.agents.capabilities.equipment.AgentMapDamageProfile;
 import server.agents.capabilities.equipment.AgentEquipmentDpResult;
+import server.agents.capabilities.equipment.AgentEquipmentOptimizerHooks;
 import server.agents.capabilities.equipment.AgentEquipmentStatSnapshot;
 
 import client.Character;
@@ -32,7 +33,7 @@ import static org.mockito.Mockito.when;
  * enough DEX to unlock a much stronger weapon. The Pareto-DP must enumerate the full
  * combination, not just per-slot best.
  *
- * Tests stub {@link BotEquipManager.OptimizerHooks} via lambdas — Mockito cannot
+ * Tests stub {@link AgentEquipmentOptimizerHooks} via lambdas — Mockito cannot
  * instrument {@link server.ItemInformationProvider} in unit tests due to its WZ-data
  * static initializer, so the optimizer is decoupled from II behind this small interface.
  */
@@ -65,7 +66,7 @@ class BotEquipOptimizerTest {
             reqDexByItem.put(chain.getItemId(), 0);
         }
 
-        BotEquipManager.OptimizerHooks hooks = bowHooks(reqDexByItem);
+        AgentEquipmentOptimizerHooks hooks = bowHooks(reqDexByItem);
         Map<Short, Equip> currentBySlot = new HashMap<>();
         currentBySlot.put((short) -11, w0);
 
@@ -117,7 +118,7 @@ class BotEquipOptimizerTest {
             reqDexByItem.put(chain.getItemId(), 0);
         }
 
-        BotEquipManager.OptimizerHooks hooks = bowHooks(reqDexByItem);
+        AgentEquipmentOptimizerHooks hooks = bowHooks(reqDexByItem);
         Map<Short, Equip> currentBySlot = new HashMap<>();
         currentBySlot.put((short) -11, w0);
 
@@ -157,7 +158,7 @@ class BotEquipOptimizerTest {
             reqDexByItem.put(chain.getItemId(), 0);
         }
 
-        BotEquipManager.OptimizerHooks hooks = bowHooks(reqDexByItem);
+        AgentEquipmentOptimizerHooks hooks = bowHooks(reqDexByItem);
         Map<Short, Equip> currentBySlot = new HashMap<>();
 
         AgentEquipmentStatSnapshot naked = new AgentEquipmentStatSnapshot(
@@ -213,7 +214,7 @@ class BotEquipOptimizerTest {
         when(redMarker.getWdef()).thenReturn((short) 7);
         when(redMarker.getPosition()).thenReturn((short) 3);
 
-        BotEquipManager.OptimizerHooks hooks = new BotEquipManager.OptimizerHooks() {
+        AgentEquipmentOptimizerHooks hooks = new AgentEquipmentOptimizerHooks() {
             @Override public boolean isTwoHanded(int itemId) { return false; }
             @Override public WeaponType getWeaponType(int itemId) {
                 return itemId == CLAW_ID ? WeaponType.CLAW : null;
@@ -279,7 +280,7 @@ class BotEquipOptimizerTest {
         reqLukByItem.put(GUILTIAN_ID, 43);
         reqLukByItem.put(MATTY_ID, 38);
 
-        BotEquipManager.OptimizerHooks hooks = new BotEquipManager.OptimizerHooks() {
+        AgentEquipmentOptimizerHooks hooks = new AgentEquipmentOptimizerHooks() {
             @Override public boolean isTwoHanded(int itemId) { return false; }
             @Override public WeaponType getWeaponType(int itemId) { return null; }
             @Override public boolean isOverall(int itemId) { return false; }
@@ -345,8 +346,8 @@ class BotEquipOptimizerTest {
     }
 
     /** Hooks for a bow scenario: weapons are 2H BOW; reqs are DEX-only via the lookup map. */
-    private static BotEquipManager.OptimizerHooks bowHooks(Map<Integer, Integer> reqDexByItem) {
-        return new BotEquipManager.OptimizerHooks() {
+    private static AgentEquipmentOptimizerHooks bowHooks(Map<Integer, Integer> reqDexByItem) {
+        return new AgentEquipmentOptimizerHooks() {
             @Override public boolean isTwoHanded(int itemId) { return itemId == W0_ID || itemId == W1_ID; }
             @Override public WeaponType getWeaponType(int itemId) {
                 return (itemId == W0_ID || itemId == W1_ID) ? WeaponType.BOW : null;
