@@ -1,6 +1,7 @@
 package server.agents.capabilities.navigation;
 
 import server.agents.capabilities.movement.AgentJumpProbeService;
+import server.agents.capabilities.movement.AgentGroundingService;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
@@ -1716,7 +1717,7 @@ public final class AgentNavigationGraphService {
             return;
         }
 
-        Foothold foothold = BotPhysicsEngine.findGroundFoothold(map, landPoint);
+        Foothold foothold = AgentGroundingService.findGroundFoothold(map, landPoint);
         if (foothold == null) {
             return;
         }

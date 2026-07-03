@@ -57,7 +57,7 @@ public final class AgentMovementBroadcastService {
     // (in front of tiles/walls). While airborne, clients keep sending the last-known
     // ground fh, so cache it on the bot entry.
     private static int resolveBroadcastFhId(BotEntry entry, Character bot) {
-        Foothold fh = BotPhysicsEngine.findGroundFoothold(bot.getMap(), bot.getPosition());
+        Foothold fh = AgentGroundingService.findGroundFoothold(bot.getMap(), bot.getPosition());
         if (fh != null) {
             AgentBotMovementPhysicsStateRuntime.setLastGroundFhId(entry, fh.getId());
         }

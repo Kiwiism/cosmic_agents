@@ -117,6 +117,11 @@ Recent reconstruction notes:
   idle, prone, reset, teleport, dead, resolved stance, and sync operations.
   The service delegates to the current physics engine until those internals
   migrate.
+- Ground lookup entry points moved to `AgentGroundingService`. Follow target
+  snapping, leader safety town clustering, combat ground lookup, movement
+  broadcast foothold IDs, mob avoidance, fidget movement, fallback movement,
+  and navigation graph lookup now call the Agent grounding seam for
+  `findGroundPoint` and `findGroundFoothold`.
 - Movement countdown helpers moved to
   `server.agents.capabilities.movement.AgentMovementTimers`. Agent combat,
   common-tick, inventory/trade, shop, supplies, and stuck-detection callback

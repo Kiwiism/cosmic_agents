@@ -66,6 +66,8 @@ Target package groups:
   live in `server.agents.capabilities.movement.AgentMovementKinematicsService`.
   Pose and stance side effects enter through
   `server.agents.capabilities.movement.AgentMovementPoseService`.
+  Ground point and foothold lookup enters through
+  `server.agents.capabilities.movement.AgentGroundingService`.
 - `server.agents.events`: event bus and listener interfaces.
 - `server.agents.policy`: replaceable decision rules.
 - `server.agents.profiles`: configurable behavior profiles.

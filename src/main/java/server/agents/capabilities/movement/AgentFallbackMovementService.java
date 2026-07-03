@@ -189,7 +189,7 @@ public final class AgentFallbackMovementService {
             return null;
         }
 
-        Foothold foothold = BotPhysicsEngine.findGroundFoothold(map, botPos);
+        Foothold foothold = AgentGroundingService.findGroundFoothold(map, botPos);
         if (foothold == null) {
             return null;
         }
@@ -225,8 +225,8 @@ public final class AgentFallbackMovementService {
             return false;
         }
 
-        Foothold currentFoothold = BotPhysicsEngine.findGroundFoothold(map, botPos);
-        Foothold targetFoothold = BotPhysicsEngine.findGroundFoothold(map, targetPos);
+        Foothold currentFoothold = AgentGroundingService.findGroundFoothold(map, botPos);
+        Foothold targetFoothold = AgentGroundingService.findGroundFoothold(map, targetPos);
         return currentFoothold == null
                 || targetFoothold == null
                 || currentFoothold.getId() != targetFoothold.getId();

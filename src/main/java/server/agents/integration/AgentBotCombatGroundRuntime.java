@@ -1,7 +1,7 @@
 package server.agents.integration;
 
 import client.Character;
-import server.bots.BotPhysicsEngine;
+import server.agents.capabilities.movement.AgentGroundingService;
 import server.maps.Foothold;
 
 import java.awt.Point;
@@ -15,6 +15,6 @@ public final class AgentBotCombatGroundRuntime {
             return null;
         }
 
-        return BotPhysicsEngine.findGroundFoothold(bot.getMap(), position);
+        return AgentGroundingService.findGroundFoothold(bot.getMap(), position);
     }
 }

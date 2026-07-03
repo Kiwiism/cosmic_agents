@@ -4,6 +4,7 @@ import server.agents.capabilities.movement.AgentJumpActionService;
 import server.agents.capabilities.movement.AgentMovementPhaseDispatchService;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
+import server.agents.capabilities.movement.AgentGroundingService;
 
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 
@@ -428,7 +429,7 @@ public final class AgentFidgetService {
             }
         }
 
-        Foothold currentFh = BotPhysicsEngine.findGroundFoothold(bot.getMap(), botPos);
+        Foothold currentFh = AgentGroundingService.findGroundFoothold(bot.getMap(), botPos);
         if (currentFh == null) {
             AgentMovementBroadcastService.broadcastMovement(entry);
             return;

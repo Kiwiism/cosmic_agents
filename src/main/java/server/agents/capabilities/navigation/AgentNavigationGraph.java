@@ -2,7 +2,7 @@ package server.agents.capabilities.navigation;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
 
-import server.bots.BotPhysicsEngine;
+import server.agents.capabilities.movement.AgentGroundingService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.maps.Foothold;
 import server.maps.MapleMap;
@@ -372,7 +372,7 @@ public final class AgentNavigationGraph implements Serializable {
             return -1;
         }
 
-        Foothold foothold = BotPhysicsEngine.findGroundFoothold(map, position);
+        Foothold foothold = AgentGroundingService.findGroundFoothold(map, position);
         if (foothold != null) {
             int regionId = regionIdByFootholdId.getOrDefault(foothold.getId(), -1);
             if (regionId >= 0) {

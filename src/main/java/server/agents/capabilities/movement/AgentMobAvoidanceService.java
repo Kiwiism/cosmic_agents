@@ -81,7 +81,7 @@ public final class AgentMobAvoidanceService {
 
     static boolean isMobInCurrentGroundRegion(BotEntry entry, Foothold currentFoothold, Monster mob) {
         MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
-        Foothold mobFoothold = BotPhysicsEngine.findGroundFoothold(map, mob.getPosition());
+        Foothold mobFoothold = AgentGroundingService.findGroundFoothold(map, mob.getPosition());
         if (mobFoothold != null && mobFoothold.getId() == currentFoothold.getId()) {
             return true;
         }

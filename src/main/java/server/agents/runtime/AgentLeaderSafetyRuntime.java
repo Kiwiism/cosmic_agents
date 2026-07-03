@@ -3,6 +3,7 @@ package server.agents.runtime;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
+import server.agents.capabilities.movement.AgentGroundingService;
 import server.agents.capabilities.movement.AgentMovementPoseService;
 
 import client.Character;
@@ -127,7 +128,7 @@ public final class AgentLeaderSafetyRuntime {
                 entries,
                 formation,
                 PLATFORM_EDGE_INSET_PX,
-                BotPhysicsEngine::findGroundPoint);
+                AgentGroundingService::findGroundPoint);
     }
 
     private static AgentFormationService.FormationState defaultFormationState() {

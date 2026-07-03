@@ -113,6 +113,9 @@ Recent map updates:
   Agent movement seam for idle, prone, reset, teleport, dead, stance resolve,
   standing-check, and character-state sync operations; the seam remains a
   compatibility delegate until the physics body moves.
+- Ground lookup entry points moved to `AgentGroundingService`. Agent runtime,
+  combat, movement, fidget, broadcast, and navigation graph callers no longer
+  call `BotPhysicsEngine.findGroundPoint` or `findGroundFoothold` directly.
 - Movement countdown helper ownership moved to `AgentMovementTimers`; Agent
   combat, common tick, inventory/trade, shop, supplies, and stuck-detection
   callback bundles no longer depend on `BotMovementManager` for tick-down or

@@ -2,10 +2,10 @@ package server.agents.runtime;
 
 import client.Character;
 import constants.game.CharacterStance;
+import server.agents.capabilities.movement.AgentGroundingService;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.bots.BotNavigationManager;
-import server.bots.BotPhysicsEngine;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 
@@ -28,8 +28,8 @@ public final class AgentFollowTargetPositionService {
         }
 
         if (snapRange > 0 && map != null) {
-            Point below = BotPhysicsEngine.findGroundPoint(map, followBase);
-            Point above = BotPhysicsEngine.findGroundPoint(map, new Point(followBase.x, leaderPos.y - snapRange));
+            Point below = AgentGroundingService.findGroundPoint(map, followBase);
+            Point above = AgentGroundingService.findGroundPoint(map, new Point(followBase.x, leaderPos.y - snapRange));
             boolean belowOk = below != null && Math.abs(below.y - leaderPos.y) <= snapRange;
             boolean aboveOk = above != null && Math.abs(above.y - leaderPos.y) <= snapRange;
             if (belowOk || aboveOk) {
@@ -83,13 +83,13 @@ public final class AgentFollowTargetPositionService {
             }
         }
 
-        Foothold leaderFh = BotPhysicsEngine.findGroundFoothold(map, leaderPos);
+        Foothold leaderFh = AgentGroundingService.findGroundFoothold(map, leaderPos);
         if (leaderFh != null) {
             int x1 = Math.min(leaderFh.getX1(), leaderFh.getX2());
             int x2 = Math.max(leaderFh.getX1(), leaderFh.getX2());
             targetX = Math.max(x1, Math.min(x2, targetX));
         }
-        Point fallback = map == null ? null : BotPhysicsEngine.findGroundPoint(map, new Point(targetX, leaderPos.y));
+        Point fallback = map == null ? null : AgentGroundingService.findGroundPoint(map, new Point(targetX, leaderPos.y));
         return fallback != null ? fallback : new Point(targetX, leaderPos.y);
     }
 
