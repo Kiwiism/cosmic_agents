@@ -17,8 +17,8 @@ Recent map updates:
   `AgentEquipmentOptimizer.solveForWeapon`. Branch score comparison,
   requirement-dimension scanning, branch snapshots, and weapon score breakdown
   calls in `BotEquipManager` now delegate to `AgentEquipmentOptimizer`; the
-  stale private bot-side DP helper copy was deleted. Remaining work: continue
-  moving auto-equip execution/debug orchestration out of `BotEquipManager`.
+  stale private bot-side DP helper copy was deleted. The production
+  `BotEquipManager` file has since been removed.
 - Equipment plan application moved from `BotEquipManager` to
   `AgentEquipmentPlanExecutor`, including the live equip move loop and
   post-plan infeasible-equipment sweep.
@@ -30,45 +30,37 @@ Recent map updates:
   callers moved to Agent recommendation APIs.
 - Auto-equip execution and debug branch reporting moved to
   `AgentEquipmentAutoEquipService`. Production `AgentEquipmentService` calls
-  the Agent implementation directly, and `BotEquipManager.autoEquip` /
-  `autoEquipDebug` are temporary compatibility delegates.
+  the Agent implementation directly.
 - Production callers of `server.bots.BotEquipManager` now call
-  `server.agents.capabilities.equipment.AgentEquipmentService`. The old bot
-  class remains a shrinking compatibility shell until remaining duplicate
-  private helper bodies and test seams are removed.
+  `server.agents.capabilities.equipment.AgentEquipmentService`; the old
+  production bot class was deleted after focused equipment tests passed.
 - `AgentEquipmentService.isMageJob` and `isWeaponCompatible` now call
   `AgentWeaponCompatibilityPolicy` directly, removing those production
   compatibility reads from the legacy bot optimizer surface.
 - Equipment slot alias resolution moved from `BotEquipManager.slotsFromName`
-  to `AgentEquipmentSlotResolver`; the old method delegates to the Agent
-  resolver until remaining tests/callers are migrated.
+  to `AgentEquipmentSlotResolver`; the bot shell has since been deleted.
 - Useful-stat scoring and expected damage after monster defense moved from
-  `BotEquipManager` to `AgentEquipmentScoringPolicy`; legacy optimizer methods
-  delegate to Agent scoring policy.
+  `BotEquipManager` to `AgentEquipmentScoringPolicy`.
 - Auto-equip throttle state moved from `BotEquipManager` to
-  `AgentAutoEquipThrottle`; the legacy optimizer delegates to the Agent-owned
-  throttle state.
+  `AgentAutoEquipThrottle`.
 - Owned and incoming equipment reserve service entry points now call
   `AgentEquipmentReservePolicy` directly through `AgentEquipmentService`,
   removing another production compatibility hop through `BotEquipManager`.
 - Equipment recommendation immediate/future candidate eligibility moved to
-  `AgentEquipmentRecommendationPolicy`; the legacy optimizer still calls the
-  same rule while DP extraction remains a later equipment slice.
+  `AgentEquipmentRecommendationPolicy`.
 - Equipment unequip command execution moved to `AgentEquipmentUnequipService`;
   `AgentEquipmentService` now handles unequip requests without entering the
   temporary `BotEquipManager` shell.
 - Equipment recommendation filtering, recommendation result construction,
   single-item recommendation checks, recommended-item collection, and
   recommendation summary formatting moved to `AgentEquipmentRecommendationService`.
-  That service still calls `BotEquipManager.runOptimizerWithExtras` as the
-  explicitly temporary DP optimizer seam.
+  Its optimizer orchestration now enters Agent-owned equipment services.
 - Auto-equip debug dump header/item-row/map-id formatting moved to
-  `AgentEquipmentDebugReportFormatter`; `BotEquipManager.autoEquipDebug` still
-  owns the optimizer branch walk until the DP/debug runtime is extracted.
+  `AgentEquipmentDebugReportFormatter`; auto-equip/debug execution now lives in
+  `AgentEquipmentAutoEquipService`.
 - The equipment optimizer external result type moved to
-  `AgentEquipmentOptimizerResult`; `BotEquipManager.runOptimizerWithExtras`
-  remains the temporary DP execution seam but no longer exposes a bot-owned
-  nested result record to Agent callers.
+  `AgentEquipmentOptimizerResult` and is used by Agent-owned optimization
+  services.
 - `server.bots.BotInventoryManager` inventory/trade tick entry points moved to
   `server.agents.capabilities.inventory.AgentInventoryTickRuntime`.
   Production common ticks and legacy parity tests now call Agent inventory
@@ -1100,7 +1092,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotCombatManager.java` | `server.agents.capabilities.combat`, `server.agents.capabilities.dialogue`, and `server.agents.integration.AgentBotCombatReportRuntime` | `MIGRATED_TO_AGENT`; source file deleted after config, combat planning, target search, AoE reposition, damage/death, support, skill-cache, debug-stat, packet execution, and combat reply behavior moved to Agent-owned modules |
 | `src/main/java/server/bots/BotCommandParser.java` | `server.agents.integration.AgentBotCommandParser` and `server.agents.commands.AgentCommandParser` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotEntry.java` | `server.agents.runtime.AgentSession` and capability state objects | `SPLIT_TO_MULTIPLE_AGENT_MODULES`; message queue now uses Agent-owned queued message type |
-| `src/main/java/server/bots/BotEquipManager.java` | `server.agents.capabilities.equipment.AgentEquipmentService` and equipment capability classes | `SPLIT_TO_MULTIPLE_AGENT_MODULES`; production callers now enter through `AgentEquipmentService`. Map-damage benchmark snapshot/selection lives in `AgentMapDamageProfile`, production weapon/job compatibility plus self-reserve weapon track labels live in `AgentWeaponCompatibilityPolicy`, slot alias resolution, ring slot detection, DP slot ordering, and display labels live in `AgentEquipmentSlotResolver`, useful-stat and defense-adjusted damage scoring lives in `AgentEquipmentScoringPolicy`, auto-equip duplicate-trigger state lives in `AgentAutoEquipThrottle`, auto-equip execution and debug branch reporting live in `AgentEquipmentAutoEquipService`, auto-equip debug report formatting lives in `AgentEquipmentDebugReportFormatter`, recommendation result data uses `AgentEquipRecommendation`, optimizer result data uses `AgentEquipmentOptimizerResult`, fixed-weapon DP result/score data uses `AgentEquipmentDpResult` and `AgentEquipmentScore`, optimizer stat snapshot data uses `AgentEquipmentStatSnapshot`, optimizer metadata/requirement hooks use `AgentEquipmentOptimizerHooks`, weapon-branch debug score breakdown data uses `AgentWeaponScoreBreakdown`, recommendation candidate eligibility lives in `AgentEquipmentRecommendationPolicy`, recommendation filtering/result construction/summary formatting lives in `AgentEquipmentRecommendationService`, unequip command execution lives in `AgentEquipmentUnequipService`, and owned/incoming equipment reserve, requirement-gate, requirement-comparison, and future-track policy lives in `AgentEquipmentReservePolicy`; reserve, recommendation, unequip, slot, scoring, auto-equip/debug, and weapon-compatibility entry points no longer delegate through BotEquipManager, while remaining duplicate private helper bodies and test-only seams are temporary cleanup targets |
+| `src/main/java/server/bots/BotEquipManager.java` | `server.agents.capabilities.equipment.AgentEquipmentService` and equipment capability classes | `MIGRATED_TO_AGENT`; production callers now enter through `AgentEquipmentService`. Map-damage benchmark snapshot/selection lives in `AgentMapDamageProfile`, production weapon/job compatibility plus self-reserve weapon track labels live in `AgentWeaponCompatibilityPolicy`, slot alias resolution, ring slot detection, DP slot ordering, and display labels live in `AgentEquipmentSlotResolver`, useful-stat and defense-adjusted damage scoring lives in `AgentEquipmentScoringPolicy`, auto-equip duplicate-trigger state lives in `AgentAutoEquipThrottle`, auto-equip execution and debug branch reporting live in `AgentEquipmentAutoEquipService`, auto-equip debug report formatting lives in `AgentEquipmentDebugReportFormatter`, recommendation result data uses `AgentEquipRecommendation`, optimizer result data uses `AgentEquipmentOptimizerResult`, fixed-weapon DP result/score data uses `AgentEquipmentDpResult` and `AgentEquipmentScore`, optimizer stat snapshot data uses `AgentEquipmentStatSnapshot`, optimizer metadata/requirement hooks use `AgentEquipmentOptimizerHooks`, weapon-branch debug score breakdown data uses `AgentWeaponScoreBreakdown`, recommendation candidate eligibility lives in `AgentEquipmentRecommendationPolicy`, recommendation filtering/result construction/summary formatting lives in `AgentEquipmentRecommendationService`, unequip command execution lives in `AgentEquipmentUnequipService`, and owned/incoming equipment reserve, requirement-gate, requirement-comparison, and future-track policy lives in `AgentEquipmentReservePolicy`; production bot file deleted after compile and focused equipment tests passed |
 | `src/main/java/server/bots/BotFallbackMovementManager.java` | `server.agents.capabilities.movement.AgentFallbackMovementService` | `MIGRATED_TO_AGENT`; fallback steering, rope/drop/swim/jump immediate actions, and ledge targeting moved unchanged |
 | `src/main/java/server/bots/BotFidgetManager.java` | `server.agents.capabilities.movement.fidget.AgentFidgetService` | `MIGRATED_TO_AGENT`; active fidget state machine and social/greeting fidget start behavior moved unchanged, while BotEntry and movement/physics helpers remain temporary backing seams |
 | `src/main/java/server/bots/BotFidgetSideEffects.java` | `server.agents.integration.AgentBotFidgetSideEffects` | `MIGRATED_TO_AGENT` |

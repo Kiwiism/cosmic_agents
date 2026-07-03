@@ -94,6 +94,8 @@ Capability bins:
   weapon-branch debug score breakdown data lives in
   `AgentWeaponScoreBreakdown`;
   unequip command execution lives in `AgentEquipmentUnequipService`.
+  The production `server.bots.BotEquipManager` file has been deleted; historical
+  equipment tests still carry old class/package names until test cleanup.
 - `supplies`
 - `trade`
 - `shop`

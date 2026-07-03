@@ -36,15 +36,13 @@ Recent reconstruction notes:
   Agent-owned.
 - Auto-equip execution and debug branch reporting now enter through
   `AgentEquipmentAutoEquipService`. `AgentEquipmentService` calls the Agent
-  service directly, and the old `BotEquipManager.autoEquip` /
-  `autoEquipDebug` methods are compatibility delegates only. The next
-  equipment slice should remove the now-dead private auto-equip helper copy
-  from the bot shell.
+  service directly, and the old `server.bots.BotEquipManager` production file
+  has been deleted after compile and focused equipment tests passed.
 - Production equipment callers now enter through
   `server.agents.capabilities.equipment.AgentEquipmentService`.
-  `server.bots.BotEquipManager` remains a shrinking compatibility shell while
-  future slices remove duplicate private helper bodies and remaining test-only
-  seams.
+  Equipment runtime behavior now lives in Agent-owned equipment capability
+  classes; remaining historical test names can be renamed in a later test
+  cleanup without changing behavior.
 - Equipment service job/weapon compatibility now calls
   `AgentWeaponCompatibilityPolicy` directly instead of delegating through the
   legacy bot optimizer.
@@ -3678,8 +3676,8 @@ Recent reconstruction notes:
   traverse the temporary `BotEquipManager` optimizer shell for that decision.
 - Equipment recommendation candidate eligibility now lives in
   `AgentEquipmentRecommendationPolicy`; immediate and future recommendation
-  scopes preserve the same can-wear/stat-only gates while the legacy optimizer
-  remains the temporary DP execution seam.
+  scopes preserve the same can-wear/stat-only gates through Agent-owned
+  equipment services.
 - Equipment unequip command execution now lives in
   `AgentEquipmentUnequipService`; unequip-all and unequip-slot reply strings,
   cash-item skipping, free-slot guards, slot ordering, and item move side
@@ -3688,21 +3686,19 @@ Recent reconstruction notes:
 - Equipment recommendation filtering and result construction now live in
   `AgentEquipmentRecommendationService`; trade recommendation, single-item
   offer checks, recommended-item collection, and summary formatting preserve the
-  same filters and reply wording. The service still calls
-  `BotEquipManager.runOptimizerWithExtras` as the temporary DP optimizer seam.
+  same filters and reply wording. Optimizer orchestration now enters
+  Agent-owned equipment services.
 - Auto-equip debug dump formatting for headers, item rows, requirement summaries,
   self-reserve markers, and safe map IDs now lives in
   `AgentEquipmentDebugReportFormatter`; the chat-visible debug flow and dump
-  contents are unchanged while `BotEquipManager` keeps the temporary optimizer
-  branch walk.
+  contents are unchanged, and auto-equip/debug execution now lives in
+  `AgentEquipmentAutoEquipService`.
 - The optimizer result returned to Agent recommendation code now lives in
-  `AgentEquipmentOptimizerResult`; `BotEquipManager.runOptimizerWithExtras`
-  remains the temporary DP execution seam but no longer exports a bot-owned
-  nested result record.
+  `AgentEquipmentOptimizerResult`; Agent-owned optimization services now own
+  that DP execution entry.
 - The optimizer stat snapshot used for non-mutating wearability checks now
   lives in `AgentEquipmentStatSnapshot`; swap math, derived accuracy, and the
-  legacy INT-plus-MATK magic behavior are unchanged while `BotEquipManager`
-  no longer owns that nested model type.
+  legacy INT-plus-MATK magic behavior are unchanged.
 - Fixed-weapon equipment DP result and lexicographic score data now live in
   `AgentEquipmentDpResult` and `AgentEquipmentScore`; DP branch selection,
   score comparison, and pareto-cap reporting are unchanged while
