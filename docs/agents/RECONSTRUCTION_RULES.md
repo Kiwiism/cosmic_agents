@@ -17,11 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
-- Inventory/trade tick entry ownership moved to
+- Inventory/trade tick entry ownership moved fully to
   `server.agents.capabilities.inventory.AgentInventoryTickRuntime`.
-  `AgentCommonTickRuntime` now calls the Agent inventory tick facade directly;
-  `server.bots.BotInventoryManager` remains only as a temporary compatibility
-  shell for legacy/test callers.
+  `AgentCommonTickRuntime` and legacy parity tests now call the Agent inventory
+  tick facade directly; `server.bots.BotInventoryManager` has been deleted.
 - BotManager runtime/lifecycle/tick reconstruction milestone audit: production
   source no longer imports `server.bots.BotManager` or calls
   `BotManager.getInstance()`. BotManager remains as a legacy compatibility

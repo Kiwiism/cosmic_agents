@@ -14,7 +14,6 @@ import server.bots.BotEntry;
 
 /**
  * Agent-owned entry points for inventory, loot, and trade tick behavior.
- * BotInventoryManager delegates here only as a temporary compatibility shell.
  */
 public final class AgentInventoryTickRuntime {
     private AgentInventoryTickRuntime() {

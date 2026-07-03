@@ -17,6 +17,7 @@ import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
+import server.agents.capabilities.inventory.AgentInventoryTickRuntime;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.capabilities.inventory.AgentInventorySellTrashPolicy;
 import server.agents.capabilities.trade.AgentTradeSequenceRuntimeService;
@@ -47,7 +48,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class BotInventoryManagerTest {
+class AgentInventoryLegacyParityTest {
     @Test
     void shouldOnlyAnnounceTradeInviteOnFirstBatchOfSequence() {
         BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
@@ -104,11 +105,11 @@ class BotInventoryManagerTest {
         when(bot.getId()).thenReturn(99);
         when(bot.getTrade()).thenReturn(trade);
 
-        BotInventoryManager.tickManualTrade(entry, bot);
+        AgentInventoryTickRuntime.tickManualTrade(entry, bot);
         AgentBotManualTradeStateRuntime.setTimeoutMs(entry, BotMovementManager.cfg.TICK_MS);
 
         try (MockedStatic<Trade> trades = mockStatic(Trade.class)) {
-            BotInventoryManager.tickManualTrade(entry, bot);
+            AgentInventoryTickRuntime.tickManualTrade(entry, bot);
 
             trades.verify(() -> Trade.cancelTrade(bot, Trade.TradeResult.NO_RESPONSE));
             assertNull(AgentBotManualTradeStateRuntime.tradeRef(entry));
